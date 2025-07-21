@@ -1,0 +1,118 @@
+To fix this code, we need to address the issues in the approach and ensure the correct calculation of safe squares where the new piece can be placed without being captured by any existing pieces. The original code attempts to use inclusion-exclusion principle but it has several flaws, including incorrect sorting and counting mechanisms, and it doesn't handle large inputs efficiently.
+
+### Approaches
+1. **Problem Analysis**: The goal is to count the number of empty squares that are not under attack by any existing pieces. The existing pieces can attack along rows, columns, and both diagonals.
+2. **Key Insight**: The safe squares are those not in any row, column, or diagonal that is already occupied by an existing piece.
+3. **Inclusion-Exclusion Principle**: We need to use this principle to correctly account for overlaps (squares attacked by multiple pieces in different ways).
+4. **Efficiency**: Given the constraints (N up to 10^9 and M up to 10^3), we need an efficient way to count the safe squares without iterating through all possible squares.
+
+### Solution Code
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+typedef long long ll;
+
+int main() {
+    ll N, M;
+    cin >> N >> M;
+    
+    set<ll> rows, cols;
+    set<ll> diag1, diag2; // diag1: x + y, diag2: x - y
+    
+    for (int i = 0; i < M; ++i) {
+        ll a, b;
+        cin >> a >> b;
+        rows.insert(a);
+        cols.insert(b);
+        diag1.insert(a + b);
+        diag2.insert(a - b);
+    }
+    
+    ll unsafe = 0;
+    
+    // Rows and columns
+    unsafe += rows.size() * N;
+    unsafe += cols.size() * N;
+    unsafe -= rows.size() * cols.size(); // Overlap between rows and columns
+    
+    // Diagonals (x + y)
+    for (ll d : diag1) {
+        ll min_x = max(1LL, d - N);
+        ll max_x = min(N, d - 1);
+        if (max_x >= min_x) {
+            unsafe += (max_x - min_x + 1);
+        }
+    }
+    
+    // Diagonals (x - y)
+    for (ll d : diag2) {
+        ll min_x = max(1LL, 1 + d);
+        ll max_x = min(N, N + d);
+        if (max_x >= min_x) {
+            unsafe += (max_x - min_x + 1);
+        }
+    }
+    
+    // Overlap between diagonals and rows/columns
+    for (ll r : rows) {
+        for (ll d : diag1) {
+            ll y = d - r;
+            if (y >= 1 && y <= N) {
+                unsafe -= 1;
+            }
+        }
+        for (ll d : diag2) {
+            ll y = r - d;
+            if (y >= 1 && y <= N) {
+                unsafe -= 1;
+            }
+        }
+    }
+    
+    for (ll c : cols) {
+        for (ll d : diag1) {
+            ll x = d - c;
+            if (x >= 1 && x <= N) {
+                unsafe -= 1;
+            }
+        }
+        for (ll d : diag2) {
+            ll x = c + d;
+            if (x >= 1 && x <= N) {
+                unsafe -= 1;
+            }
+        }
+    }
+    
+    // Overlap between both diagonals
+    for (ll d1 : diag1) {
+        for (ll d2 : diag2) {
+            ll x = (d1 + d2) / 2;
+            ll y = (d1 - d2) / 2;
+            if ((d1 + d2) % 2 == 0 && (d1 - d2) % 2 == 0 && x >= 1 && x <= N && y >= 1 && y <= N) {
+                unsafe += 1;
+            }
+        }
+    }
+    
+    // Total safe squares
+    ll total = N * N;
+    ll safe = total - unsafe;
+    
+    cout << safe << endl;
+    
+    return 0;
+}
+```
+
+### Explanation
+1. **Initialization**: We read the grid size `N` and the number of existing pieces `M`.
+2. **Tracking Attacked Lines**: We use sets to store rows, columns, and both diagonals (`x + y` and `x - y`) that are under attack by existing pieces.
+3. **Counting Unsafe Squares**: 
+   - **Rows and Columns**: The total number of squares attacked by rows or columns is calculated, adjusting for overlaps.
+   - **Diagonals**: For each diagonal, we calculate the range of squares it attacks and add these to the unsafe count.
+4. **Overlaps Adjustment**: We adjust for overlaps between diagonals and rows/columns, and between both types of diagonals.
+5. **Final Calculation**: The safe squares are obtained by subtracting the total unsafe squares from the total squares (`N^2`).
+
+This approach efficiently handles large inputs by using set operations and mathematical calculations to avoid brute-force checks.

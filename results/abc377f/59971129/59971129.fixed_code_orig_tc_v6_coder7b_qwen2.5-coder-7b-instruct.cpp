@@ -1,0 +1,38 @@
+#include<bits/stdc++.h>
+using namespace std;
+
+#define rep(i,a,b) for(int i=a;i<b;i++)
+#define all(v) v.begin(),v.end()
+
+typedef long long ll;
+
+const int N = 1e9 + 5;
+
+int main() {
+    ios_base::sync_with_stdio(0);cin.tie(0);cout.tie(0);
+
+    int n, m; cin >> n >> m;
+    set<int> r, c, d1, d2;
+    rep(i,0,m) {
+        int x, y; cin >> x >> y;
+        r.insert(x), c.insert(y), d1.insert(x + y), d2.insert(x - y);
+    }
+
+    ll ans = 1LL * (n - r.size()) * (n - c.size());
+
+    for(int x : r) {
+        int tmp = n - abs(d1.lower_bound(n - x)->second - x);
+        for(int y : c) if(abs(y - x) <= n && !r.count(y)) --tmp;
+        ans -= tmp;
+    }
+
+    for(int x : c) {
+        int tmp = n - abs(d2.upper_bound(x - n)->second - x);
+        for(int y : r) if(abs(y - x) <= n && !c.count(y)) --tmp;
+        ans -= tmp;
+    }
+
+    cout << ans << '\n';
+
+    return 0;
+}

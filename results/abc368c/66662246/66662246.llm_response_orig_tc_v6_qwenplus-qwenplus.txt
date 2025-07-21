@@ -1,0 +1,92 @@
+To solve this problem efficiently, we need to simulate the attack pattern while minimizing unnecessary operations. The idea is that each enemy must be reduced to 0 or less health by attacks at specific time intervals.
+
+### Key Observations:
+- You can only attack one enemy at a time (the frontmost one with >0 health).
+- Attacks occur every second (`T++`), and:
+  - If `T % 3 == 0`, damage = 3
+  - Else, damage = 1
+- This means the timing of attacks matters: you must account for when a given attack lands on a multiple of 3 or not.
+
+### Strategy:
+Instead of simulating each individual attack (which would be too slow for large inputs), we calculate how many seconds are required to kill each enemy using a formula based on their health.
+
+We consider two types of attacks:
+- **Strong attacks**: Every 3rd second → reduce health by 3.
+- **Weak attacks**: All other seconds → reduce health by 1.
+
+Let’s define:
+- Let `x` be the number of strong attacks needed.
+- Each strong attack costs 3 damage and happens every 3 seconds ⇒ so x strong attacks take 3x seconds.
+- Any remaining damage after accounting for strong attacks must be done by weak attacks.
+
+We determine the minimum number of total attacks such that the cumulative damage ≥ current enemy's health.
+
+This leads us to binary search over possible values of `T` (total time taken) to determine the minimal T where all enemies are defeated in sequence.
+
+But here's a better way:
+
+We simulate enemy-by-enemy using greedy math per enemy:
+- For each enemy, compute how many full triplets (3-damage hits) it can receive.
+- Handle remaining damage with 1-damage hits.
+- Track time `T` accordingly.
+
+Here is the corrected and optimized C++ code:
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+#define ll long long
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+
+    int n;
+    cin >> n;
+    vector<ll> H(n);
+    for (int i = 0; i < n; ++i) {
+        cin >> H[i];
+    }
+
+    ll T = 0;
+    for (ll h : H) {
+        // We want to find how many strong (3-damage) and weak (1-damage) attacks we need
+        // Strong attack every 3 seconds, weak otherwise
+
+        // Let x be number of strong attacks
+        // Then total damage from x strong attacks = 3 * x
+        // Remaining damage needed = max(0, h - 3 * x)
+        // Total attacks needed = x + remaining_damage
+        // Time taken = max(3 * x + remaining_damage, previous_time + total_attacks)
+
+        // Try to maximize strong attacks without overshooting
+        ll low = 0, high = h / 3 + 2;
+        ll best_x = 0;
+        while (low <= high) {
+            ll mid = (low + high) / 2;
+            ll remaining = h - 3 * mid;
+            if (remaining <= 0) {
+                best_x = mid;
+                high = mid - 1;
+            } else {
+                low = mid + 1;
+            }
+        }
+
+        ll remaining = h - 3 * best_x;
+        ll total_attacks = best_x + max(0LL, remaining);
+        T += total_attacks;
+    }
+
+    cout << T << "\n";
+}
+```
+
+### Explanation:
+- For each enemy, we try to maximize the number of "strong" attacks (i.e., those landing on multiples of 3).
+- Use binary search to find the maximum number of strong attacks that won't exceed the enemy's health.
+- Calculate the remaining damage needed and total attacks required.
+- Accumulate the total time `T`.
+
+This solution runs in O(N log H_i) due to binary search per enemy and handles up to 2e5 enemies efficiently.

@@ -1,0 +1,29 @@
+#include <iostream>
+using namespace std;
+using ll = long long;
+
+ll calculate_attacks(ll health, ll step) {
+    ll attacks = 0;
+    while (health > 0) {
+        if (step % 3 == 0) {
+            health -= 3;
+        } else {
+            health -= 1;
+        }
+        step++;
+        attacks++;
+    }
+    return attacks;
+}
+
+int main() {
+    ll n, health;
+    cin >> n;
+    ll total_attacks = 0;
+    for (int i = 0; i < n; ++i) {
+        cin >> health;
+        total_attacks += calculate_attacks(health, total_attacks);
+    }
+    cout << total_attacks << endl;
+    return 0;
+}

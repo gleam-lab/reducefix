@@ -1,0 +1,55 @@
+#include <bits/stdc++.h>
+#define rep(i, n) for (int i = 0; i < (int)(n); i++)
+#define repi(i, a, b) for (int i = (int)(a); i < (int)(b); i++)
+#define rrep(i, n) for (int i = n-1; i >= (int)(0); i--)
+#define rrepi(i, a, b) for (int i = (int)(a); i > (int)(b); i--)
+#define ALL(a) (a).begin(),(a).end()
+#define ALL_(a) (a),(a)+size(a)
+#define IF_T if(Is_test)
+
+#define ll long long
+using namespace std;
+
+// Custom hash for pair<int, int>
+struct phash {
+    inline size_t operator()(const pair<int, int>& p) const {
+        const auto h1 = hash<ll>()(p.first);
+        const auto h2 = hash<ll>()(p.second);
+        return h1 ^ (h2 << 1);
+    }
+};
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    ll N;
+    int M;
+    cin >> N >> M;
+
+    unordered_set<pair<int, int>, phash> attacked;
+    vector<pair<int, int>> directions = {
+        {2,1}, {1,2}, {-1,2}, {-2,1}, {-2,-1}, {-1,-2}, {1,-2}, {2,-1}
+    };
+
+    rep(i, M) {
+        int a, b;
+        cin >> a >> b;
+        // Convert to 0-based index
+        a--; b--;
+        // Add current piece itself (to not count it as available)
+        attacked.insert({a, b});
+        // Add all squares that this piece can attack
+        for (auto [dx, dy] : directions) {
+            int nx = a + dx;
+            int ny = b + dy;
+            if (nx >= 0 && ny >= 0 && nx < N && ny < N) {
+                attacked.insert({nx, ny});
+            }
+        }
+    }
+
+    // Total number of cells: N*N
+    // Subtract the number of attacked positions
+    cout << (N * N) - (ll)attacked.size() << "\n";
+}

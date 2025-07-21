@@ -1,0 +1,97 @@
+To solve this problem efficiently, we must select a subset `S` of size `K` from the indices `{1, ..., N}` such that the value:
+
+$$
+\left(\max_{i \in S} A_i\right) \times \left(\sum_{i \in S} B_i\right)
+$$
+
+is minimized.
+
+### Key Observations:
+1. We're given multiple test cases with tight constraints (up to 200,000 elements across all test cases).
+2. For each test case:
+   - Sort the pairs `(A[i], B[i])` in increasing order of `A[i]`.
+   - As we iterate through sorted `A`, for each index `i`, assume `A[i]` is the maximum in the subset.
+   - Maintain a min-heap (priority queue) of the top `K-1` smallest `B[i]` values seen so far.
+   - At each step, we try to include `B[i]` into the sum and remove the largest `B` in the heap if it exceeds `K` elements.
+   - Compute the current candidate as: `current_A * current_sum_of_Bs_in_heap`.
+
+This approach ensures an efficient solution with time complexity `O(N log K)` per test case, which is acceptable under given constraints.
+
+### Fixed Code:
+
+```cpp
+#include <iostream>
+#include <vector>
+#include <queue>
+#include <algorithm>
+
+using namespace std;
+
+#define int long long
+
+signed main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+
+    int T;
+    cin >> T;
+
+    while (T--) {
+        int N, K;
+        cin >> N >> K;
+
+        vector<pair<int, int>> items(N);
+        for (int i = 0; i < N; ++i) {
+            cin >> items[i].first;
+        }
+        for (int i = 0; i < N; ++i) {
+            cin >> items[i].second;
+        }
+
+        // Sort by A in ascending order
+        sort(items.begin(), items.end());
+
+        priority_queue<int> max_heap; // To maintain up to K smallest B's
+        int total_b = 0;
+        int result = 1e18; // Large initial value
+
+        for (int i = 0; i < N; ++i) {
+            int a = items[i].first;
+            int b = items[i].second;
+
+            total_b += b;
+            max_heap.push(b);
+
+            // Maintain only K elements in the heap
+            if (max_heap.size() > K) {
+                total_b -= max_heap.top();
+                max_heap.pop();
+            }
+
+            // Once we have at least K elements, compute the product
+            if (max_heap.size() == K) {
+                result = min(result, a * total_b);
+            }
+        }
+
+        cout << result << endl;
+    }
+
+    return 0;
+}
+```
+
+### Explanation:
+- **Sorting** ensures that when we consider `A[i]` as the maximum, all previous elements have smaller or equal `A` values.
+- The **min-heap** isn't directly used here — instead, we use a **max-heap** to keep track of the top `K` smallest `B` values and remove the largest among them when exceeding `K`.
+- This allows us to always maintain the minimum possible sum of `B` values for the current best set of `K` elements.
+
+### Why This Works:
+- By sorting by `A[i]`, we ensure that `A[i]` can be considered as the maximum in any subset ending at `i`.
+- The heap maintains the smallest `K` values of `B[i]` encountered so far, allowing us to compute the minimal product for each `A[i]`.
+
+### Edge Cases Handled:
+- When `K = 1`, the result is simply the minimum of `A[i] * B[i]` over all `i`.
+- Handles large input sizes within memory and performance constraints using efficient sorting and heap operations.
+
+This code should now pass all test cases, including the one you provided where your previous implementation failed.

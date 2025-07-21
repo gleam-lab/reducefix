@@ -1,0 +1,35 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define rep(i, n) for (int i = 0; i < (int)(n); i++)
+using ll = long long;
+
+int main() {
+    int n;
+    cin >> n;
+    vector<ll> data(n);
+    rep(i, n) {
+        cin >> data[i];
+    }
+
+    ll sum = 0;
+    int i = 0;
+    while (i < n) {
+        // If we are at the last element, just add it normally
+        if (i == n - 1) {
+            sum += data[i];
+            break;
+        }
+
+        // Check if the next element is worth pairing with current
+        if (2 * data[i + 1] > data[i] + data[i + 1]) {
+            sum += 2 * data[i + 1];
+            i += 2; // Skip the next one as it's used in pair
+        } else {
+            sum += data[i];
+            i++;
+        }
+    }
+
+    cout << sum << endl;
+    return 0;
+}

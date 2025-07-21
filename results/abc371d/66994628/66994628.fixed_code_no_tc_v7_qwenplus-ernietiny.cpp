@@ -1,0 +1,26 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    int n, q;
+    cin >> n; // Number of patches
+    
+    // Patch data: x[i] represents patch number and p[i] represents patch value
+    for (int i = 1; i <= n; ++i) {
+        cin >> x[i] >> p[i]; // Read patch numbers and patch values
+        // Assuming sum[i] is the sum of patches within the range [x[i], x[i+1]-1]
+        sum[i] = p[i]; // Initialize sum array with patch values
+    }
+    
+    cin >> q; // Number of queries
+    while (q--) { // Process each query
+        int l, r; // Lower and upper bounds for query range
+        cin >> l >> r; // Read the range of the query
+        // Use lower_bound to find the index of the patch with the given value
+        l = lower_bound(x + 1, x + n + 1, l) - x - 1; // Adjust the range to exclude the patch number itself
+        r = upper_bound(x + 1, x + n + 1, r) - x - 1; // Adjust the range to exclude the patch number within the range
+        // Calculate the difference between sum[r-1] and sum[l-1]
+        cout << sum[r - 1] - sum[l - 1] << endl; // Output the result
+    }
+    return 0; // Return 0 to indicate successful completion of the program
+}

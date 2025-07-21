@@ -1,0 +1,55 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+const int INF = INT_MAX;
+const int MAXN = 105;
+
+int n, x;
+int a[MAXN], p[MAXN], b[MAXN], q[MAXN];
+
+// Function to calculate the cost based on the given number of items
+int calculateCost(int mid) {
+    vector<int> dp(mid + 1, INF);
+    dp[0] = 0;
+
+    for (int i = 1; i <= n; ++i) {
+        for (int j = mid; j >= 0; --j) {
+            if (j >= a[i]) {
+                dp[j] = min(dp[j], dp[j - a[i]] + p[i]);
+            }
+            if (j >= b[i]) {
+                dp[j] = min(dp[j], dp[j - b[i]] + q[i]);
+            }
+        }
+    }
+
+    return dp[mid];
+}
+
+int binarySearch() {
+    int left = 0, right = x + 1;
+    while (left < right) {
+        int mid = left + (right - left) / 2;
+        if (calculateCost(mid) <= x) {
+            left = mid + 1;
+        } else {
+            right = mid;
+        }
+    }
+    return left - 1;
+}
+
+int main() {
+    ios::sync_with_stdio(0);
+    cin.tie(0);
+    cout.tie(0);
+
+    cin >> n >> x;
+    for (int i = 1; i <= n; ++i) {
+        cin >> a[i] >> p[i] >> b[i] >> q[i];
+    }
+
+    cout << binarySearch() << endl;
+
+    return 0;
+}

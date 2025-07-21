@@ -1,0 +1,99 @@
+
+The provided code has a few issues that need to be addressed. The main problem is with the union-find data structure and the way the queries are processed. Here is a step-by-step breakdown of the problems and their solutions:
+
+### Problem 1: Union-Find is Misused
+In the union-find data structure, the code attempts to merge sets by copying arrays from one parent to another. This is inefficient and error-prone.
+
+### Solution
+Use the union-find by rank technique to improve the efficiency. This involves keeping the tree flat by connecting smaller trees to larger ones, which can be implemented with path compression.
+
+### Problem 2: Query Processing
+The code attempts to store all vertices connected to a component in a large array and sort it. This is not only memory-intensive but also not necessary since we only need to answer queries for the k-th largest vertex.
+
+### Solution
+Instead of storing all vertices, maintain a priority queue (min-heap) for each component that stores the vertices in increasing order. When processing a query, simply pop from the heap until we get the k-th largest vertex.
+
+### Problem 3: Edge Processing
+The code tries to add edges to the graph and combine the sets. However, it does not maintain the sets properly when new vertices are added to one set but not the other.
+
+### Solution
+When adding an edge, check if the vertices belong to the same set. If they do, no action is needed. If they don't, perform a union operation only if the sets are not already connected.
+
+### Revised Code
+Below is a revised version of the code using the above solutions:
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+#define MAXN 200005
+#define MAXK 10
+
+typedef pair<int, int> pii;
+
+int parent[MAXN];
+int size[MAXN];
+int kth_largest[MAXN][MAXK];
+priority_queue<pii, vector<pii>, greater<pii>> pq[MAXN];
+
+int find_set(int x) {
+    if (parent[x] != x) parent[x] = find_set(parent[x]);
+    return parent[x];
+}
+
+void union_sets(int x, int y) {
+    x = find_set(x);
+    y = find_set(y);
+    if (x == y) return;
+    if (size[x] < size[y]) swap(x, y);
+    parent[y] = x;
+    size[x] += size[y];
+}
+
+void add_vertex(int v, int val) {
+    int set = find_set(v);
+    pq[set].push(pii(val, v));
+    while (pq[set].size() > MAXK) {
+        pq[set].pop();
+    }
+}
+
+int query_kth_largest(int v, int k) {
+    int set = find_set(v);
+    int count = 0;
+    while (!pq[set].empty()) {
+        int val, vertex;
+        tie(val, vertex) = pq[set].top();
+        pq[set].pop();
+        if (count == k - 1) {
+            return vertex;
+        }
+        count++;
+    }
+    return -1;
+}
+
+int main() {
+    int n, q;
+    cin >> n >> q;
+    for (int i = 1; i <= n; i++) {
+        parent[i] = i;
+        size[i] = 1;
+    }
+
+    while (q--) {
+        int op, u, v, k;
+        cin >> op >> u >> v;
+        if (op == 1) {
+            union_sets(u, v);
+        } else {
+            cin >> k;
+            int res = query_kth_largest(v, k);
+            cout << res << '\n';
+        }
+    }
+    return 0;
+}
+```
+
+This revised code addresses the problems and should work efficiently within the given constraints.

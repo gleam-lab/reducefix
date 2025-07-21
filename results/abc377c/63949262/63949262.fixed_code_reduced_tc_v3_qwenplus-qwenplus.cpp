@@ -1,0 +1,168 @@
+// C - Avoid Knight Attack
+
+#include <iostream>
+#include <vector>
+#include <string>
+#include <map>
+#include <unordered_map>
+#include <queue>
+#include <stack>
+#include <set>
+#include <unordered_set>
+#include <tuple>
+#include <algorithm>
+#include <functional>
+#include <cmath>
+
+using namespace std;
+
+#define INF 1000000000
+#define LINF 1000000000000000000LL
+
+#define fi first
+#define se second
+
+#define i32 int
+#define i64 long long
+#define i128 long long
+
+#define u32 unsigned int
+#define u64 unsigned long long
+#define u128 unsigned long long
+
+#define f32 float
+#define f64 double
+#define f128 long double
+
+#define str string
+#define vec vector
+#define cc const char *
+
+#define all(x) x.begin(), x.end() // その配列の最初から最後
+#define len(x) x.size()           // その配列の要素数
+#define elif else if              // 見ての通り
+
+#define FOR_U(r, b, e, s) for (i128 r = (i128)b; r < (i128)e; r += (i128)s) // 数字増加のfor
+#define FOR_L(r, b, e, s) for (i128 r = (i128)b; r > (i128)e; r -= (i128)s) // 数字減少のfor
+#define FOR_R(r, b) for (auto r : b)                                        // 範囲ベースfor
+#define loop while (true)                                                   // 無限ループ
+
+namespace mine
+{
+
+    template <typename T>
+    inline void out(T out_data, string end = "\n")
+    {
+        cout << out_data << end;
+    }
+
+    template <typename T>
+    inline void out(vector<T> &out_data, string sep = " ", string end = "\n")
+    {
+        for (auto &value : out_data)
+        {
+            cout << value << sep;
+        }
+        cout << end;
+    }
+
+    template <typename T, typename U>
+    inline void out(vector<pair<T, U>> &let, string sep = " ", string end = "\n")
+    {
+        for (auto &l : let)
+        {
+            cout << l.fi << sep << l.se << end;
+        }
+    }
+
+    template <typename T>
+    inline void out(vector<vector<T>> &out_data, string sep = " ", string end = "\n")
+    {
+        for (auto &value_v : out_data)
+        {
+            for (auto &value_s : value_v)
+            {
+                cout << value_s << sep;
+            }
+            cout << end;
+        }
+    }
+
+    template <typename T>
+    inline void in(T &let)
+    {
+        cin >> let;
+    }
+
+    template <typename T>
+    inline void in(vector<T> &let)
+    {
+        for (auto &l : let)
+        {
+            cin >> l;
+        }
+    }
+
+    template <typename T, typename U>
+    inline void in(vector<pair<T, U>> &let)
+    {
+        for (auto &l : let)
+        {
+            cin >> l.fi;
+            cin >> l.se;
+        }
+    }
+
+}
+
+using namespace mine;
+
+int main()
+{
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    i64 N;
+    i64 M;
+    cin >> N >> M;
+
+    unordered_set<u64> attacked;
+    
+    // Use a lambda to check boundaries and insert into the set
+    auto add_attacked = [&](i64 x, i64 y) {
+        if (x >= 1 && x <= N && y >= 1 && y <= N) {
+            // Combine coordinates using a good hash function to avoid collision
+            u64 key = (u64)x * (u64)(N + 2) + y;
+            attacked.insert(key);
+        }
+    };
+
+    for (i64 i = 0; i < M; ++i) {
+        i64 a, b;
+        cin >> a >> b;
+        
+        // Mark the piece's position as occupied (so we don't count it as empty)
+        add_attacked(a, b);
+
+        // The 8 positions that this piece can attack
+        add_attacked(a + 2, b + 1);
+        add_attacked(a + 1, b + 2);
+        add_attacked(a - 1, b + 2);
+        add_attacked(a - 2, b + 1);
+        add_attacked(a - 2, b - 1);
+        add_attacked(a - 1, b - 2);
+        add_attacked(a + 1, b - 2);
+        add_attacked(a + 2, b - 1);
+    }
+
+    // Total squares: N*N
+    // Subtract the number of attacked squares that are within bounds
+    // Also subtract the M original pieces since they're not empty squares
+    i128 total = (i128)N * (i128)N;
+    total -= attacked.size();
+    total -= M;
+
+    cout << total << endl;
+
+    return 0;
+}

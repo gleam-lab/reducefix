@@ -1,0 +1,48 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+typedef long long ll;
+
+// Binary search with prefix sum to find the k-th smallest distance
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int N, Q;
+    cin >> N >> Q;
+    
+    vector<int> A(N);
+    for (int i = 0; i < N; ++i) {
+        cin >> A[i];
+    }
+    sort(A.begin(), A.end());
+
+    for (int q = 0; q < Q; ++q) {
+        int b;
+        int k;
+        cin >> b >> k;
+
+        // Binary search on the answer (distance)
+        ll low = 0;
+        ll high = 2e8 + 1; // upper bound of possible distances
+
+        while (low < high) {
+            ll mid = (low + high) / 2;
+
+            // Use binary search to count how many points have distance <= mid from b
+            int left = lower_bound(A.begin(), A.end(), b - mid) - A.begin();
+            int right = upper_bound(A.begin(), A.end(), b + mid) - A.begin();
+            int count = right - left;
+
+            if (count >= k) {
+                high = mid;
+            } else {
+                low = mid + 1;
+            }
+        }
+
+        cout << low << "\n";
+    }
+
+    return 0;
+}

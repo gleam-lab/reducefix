@@ -1,0 +1,136 @@
+To fix this code, we need to correctly compute the number of empty squares where a new piece can be placed without being captured by any existing pieces. The existing pieces can capture squares in the same row, column, or along the two diagonals (i+j and i-j). The solution involves calculating the total number of squares that are not under attack by any existing piece.
+
+### Approaches
+1. **Initialization**: Read the input values and store the positions of the existing pieces.
+2. **Tracking Attacks**: For each existing piece, track the rows, columns, and diagonals it attacks. Use sets to avoid duplicates.
+3. **Calculate Total Safe Squares**: 
+   - Compute the total number of squares (N^2).
+   - Subtract the squares under attack by any existing piece (union of all attacked squares).
+   - Account for overlaps (squares attacked by multiple pieces) to avoid double-counting using the inclusion-exclusion principle.
+
+### Solution Code
+```cpp
+#include<bits/stdc++.h>
+
+using namespace std;
+using ll = long long;
+
+int main() {
+    ios_base::sync_with_stdio(false), cin.tie(nullptr);
+    cout.precision(12);
+
+    ll N, M;
+    cin >> N >> M;
+
+    set<ll> rows, cols, diag1, diag2;
+    set<pair<ll, ll>> pieces;
+
+    for (int i = 0; i < M; ++i) {
+        ll a, b;
+        cin >> a >> b;
+        rows.insert(a);
+        cols.insert(b);
+        diag1.insert(a - b);
+        diag2.insert(a + b);
+        pieces.insert({a, b});
+    }
+
+    ll unsafe = 0;
+
+    // Rows and columns
+    unsafe += rows.size() * N;
+    unsafe += cols.size() * N;
+    unsafe -= rows.size() * cols.size(); // subtract intersections counted twice
+
+    // Diagonals (a - b)
+    for (auto d : diag1) {
+        ll x_minus_y = d;
+        // Calculate the number of (x, y) such that x - y = d and 1 <= x, y <= N
+        ll x_low = max(1LL, 1 + x_minus_y);
+        ll x_high = min(N, N + x_minus_y);
+        if (x_high < x_low) continue;
+        unsafe += x_high - x_low + 1;
+    }
+
+    // Diagonals (a + b)
+    for (auto d : diag2) {
+        ll x_plus_y = d;
+        // Calculate the number of (x, y) such that x + y = d and 1 <= x, y <= N
+        ll x_low = max(1LL, x_plus_y - N);
+        ll x_high = min(N, x_plus_y - 1);
+        if (x_high < x_low) continue;
+        unsafe += x_high - x_low + 1;
+    }
+
+    // Subtract squares that are counted in both diagonals
+    for (auto d1 : diag1) {
+        for (auto d2 : diag2) {
+            // Solve x - y = d1 and x + y = d2
+            if ((d1 + d2) % 2 != 0) continue;
+            ll x = (d1 + d2) / 2;
+            ll y = (d2 - d1) / 2;
+            if (x >= 1 && x <= N && y >= 1 && y <= N) {
+                unsafe--;
+            }
+        }
+    }
+
+    // Subtract squares that are in rows and diagonals
+    for (auto r : rows) {
+        for (auto d : diag1) {
+            ll y = r - d;
+            if (y >= 1 && y <= N) {
+                unsafe--;
+            }
+        }
+        for (auto d : diag2) {
+            ll y = d - r;
+            if (y >= 1 && y <= N) {
+                unsafe--;
+            }
+        }
+    }
+
+    // Subtract squares that are in columns and diagonals
+    for (auto c : cols) {
+        for (auto d : diag1) {
+            ll x = d + c;
+            if (x >= 1 && x <= N) {
+                unsafe--;
+            }
+        }
+        for (auto d : diag2) {
+            ll x = d - c;
+            if (x >= 1 && x <= N) {
+                unsafe--;
+            }
+        }
+    }
+
+    // Add back squares that are in rows, columns, and diagonals (inclusion-exclusion)
+    for (auto r : rows) {
+        for (auto c : cols) {
+            if (diag1.count(r - c) && diag2.count(r + c)) {
+                unsafe += 1;
+            }
+        }
+    }
+
+    // Subtract the number of existing pieces (since they are not empty)
+    ll total = N * N - M - unsafe;
+    cout << total << "\n";
+
+    return 0;
+}
+```
+
+### Explanation
+1. **Initialization**: We read the input values and store the positions of the existing pieces in sets to track which rows, columns, and diagonals are under attack.
+2. **Tracking Attacks**: For each existing piece, we add its row, column, and both diagonals to respective sets.
+3. **Calculate Total Safe Squares**: 
+   - **Rows and Columns**: The number of squares under attack in rows and columns is computed and adjusted for overlaps.
+   - **Diagonals**: For each diagonal (i-j and i+j), we compute the number of squares under attack.
+   - **Overlap Adjustment**: We adjust for overlaps where squares are counted multiple times (e.g., squares under attack by both rows and columns, or both diagonals) using the inclusion-exclusion principle.
+4. **Final Calculation**: The total number of safe squares is computed by subtracting the number of unsafe squares and the existing pieces from the total squares (N^2).
+
+This approach ensures that all possible attacks are accounted for, and overlaps are correctly handled to provide the accurate number of safe squares.

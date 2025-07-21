@@ -1,0 +1,49 @@
+#include <bits/stdc++.h>
+#define int long long
+#define f first
+#define s second
+using namespace std;
+
+signed main() {
+    ios_base::sync_with_stdio(0);
+    cin.tie(0);
+    cout.tie(0);
+
+    int t; cin >> t;
+    while(t--) {
+        int n, k; cin >> n >> k;
+        vector<pair<int,int>> v(n);
+        for(int i=0;i<n;i++) cin >> v[i].f;
+        for(int i=0;i<n;i++) cin >> v[i].s;
+        
+        // Sort based on A_i in descending order to maximize A_i
+        sort(begin(v), end(v), [&](const pair<int,int>& a, const pair<int,int>& b){
+            return a.f > b.f;
+        });
+
+        // Use a max-heap to keep track of B_i's sum efficiently
+        priority_queue<int> pq;
+        int sum_b = 0;
+        for(int i=0; i<k; i++) {
+            pq.push(-v[i].s); // Push negative because we use a max-heap as a min-heap
+            sum_b += v[i].s;
+        }
+
+        int result = LLONG_MAX;
+        for(int i=k; i<n; i++) {
+            // Calculate current result
+            result = min(result, -pq.top() * v[i].f + sum_b);
+
+            // Update the heap and sum
+            sum_b -= pq.top();
+            pq.pop();
+            pq.push(-v[i].s);
+            sum_b += v[i].s;
+        }
+        
+        // Final check after the loop ends
+        result = min(result, -pq.top() * v[n-1].f + sum_b);
+
+        cout << result << '\n';
+    }
+}

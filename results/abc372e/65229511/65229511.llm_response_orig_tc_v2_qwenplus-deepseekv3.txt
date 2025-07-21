@@ -1,0 +1,92 @@
+After analyzing the failing test cases and the code, I identified that the issue lies in the union operation of the Union-Find data structure. The current implementation doesn't properly merge the sets of connected nodes when two components are united. Specifically, when merging two sets, it's not correctly updating all the necessary information in the `cnt` array.
+
+Here's the corrected implementation:
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+#define rep(i, n) for(int i=0;i<(n);i++)
+#define all(a) a.begin(), a.end()
+#define rall(a) a.rbegin(), a.rend()
+using ll = long long;
+using pi = pair<int, int>;
+const int di[]={1,-1,0,0};
+const int dj[]={0,0,1,-1};
+const int INF=1e9;
+struct UnionFind {
+    vector<int> parent, rank;
+    UnionFind(int n) : parent(n), rank(n, 0) {
+        for (int i = 0; i < n; i++) 
+            parent[i] = i;
+    }
+    int findRoot(int x) {
+        if (parent[x] != x) 
+            parent[x] = findRoot(parent[x]);
+        return parent[x];
+    }
+    bool unite(int x, int y) {
+        int rx = findRoot(x), ry = findRoot(y);
+        if (rx == ry) return false;
+        if (rank[rx] < rank[ry]) {
+            parent[rx] = ry;
+        } else {
+            parent[ry] = rx;
+            if (rank[rx] == rank[ry])
+                rank[rx]++;
+        }
+        return true;
+    }
+};
+int main(){
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int n, q;
+    cin >> n >> q;
+    UnionFind uf(n);
+    vector<set<int>> cnt(n);
+    rep(i, n) cnt[i].insert(i+1);
+    vector<int> ans;
+    rep(qi, q) {
+        int com;
+        cin >> com;
+        if(com==1) {
+            int u, v;
+            cin >> u >> v;
+            int ru = uf.findRoot(u-1);
+            int rv = uf.findRoot(v-1);
+            if(ru!=rv) {
+                if(cnt[ru].size() < cnt[rv].size()) {
+                    swap(ru, rv);
+                }
+                uf.unite(ru, rv);
+                for(int x : cnt[rv]) {
+                    cnt[ru].insert(x);
+                }
+                cnt[rv].clear();
+            }
+        }
+        if(com==2) {
+            int v, k;
+            cin >> v >> k;
+            int root = uf.findRoot(v-1);
+            if(cnt[root].size() < k) {
+                ans.push_back(-1);
+            } else {
+                auto it = cnt[root].rbegin();
+                advance(it, k-1);
+                ans.push_back(*it);
+            }
+        }
+    }
+    for(auto x:ans) cout << x << endl;
+    return 0;
+}
+```
+
+Key changes made:
+1. Fixed the initialization of `cnt` to store vertex numbers directly (1-based) instead of 0-based indices.
+2. Simplified the union operation by directly merging the smaller set into the larger one after the union operation is performed.
+3. Removed unnecessary checks and variables in the union operation.
+4. Ensured proper handling of vertex numbers in both type 1 and type 2 queries.
+
+The main issue was that the original code wasn't correctly maintaining the set of connected vertices after union operations, leading to incorrect answers for type 2 queries. The new implementation properly merges the sets and maintains the correct connected components information throughout all operations.

@@ -1,0 +1,20 @@
+#include<bits/stdc++.h>
+using namespace std;
+#define N 1000000000LL
+typedef long long ll;
+int main(){
+    ios::sync_with_stdio(false);cin.tie(0);
+    ll n,m,a,b,ans=0,sz=0;
+    set<ll>st[4];
+    cin>>n>>m;
+    for(ll i=0;i<m;++i){
+        cin>>a>>b;
+        st[0].insert(a);
+        st[1].insert(b);
+        st[2].insert(a+b);
+        st[3].insert(abs(a-b));
+    }
+    ans=n*n-(sz=st[0].size())*(sz=st[1].size())+(sz=st[2].size())+(sz=st[3].size())-2*m;
+    cout<<max(ans,0LL)<<'\n';
+    return 0;
+}

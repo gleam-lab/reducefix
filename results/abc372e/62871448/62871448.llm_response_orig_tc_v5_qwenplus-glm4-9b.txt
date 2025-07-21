@@ -1,0 +1,71 @@
+
+The problem is a typical union-find problem with an additional feature that we need to keep track of the size of each component for future queries. However, there are several parts of your code that are problematic or incorrect. Let's go through some of the main issues:
+
+1. Your union-find implementation is not correct. You are attempting to use the `as` array to store the size of the subtree when performing the union operation, but you are not updating the sizes correctly. Moreover, the `as` array is initialized with -1, which doesn't make sense for storing sizes.
+
+2. Your union operation is only called when the roots of the two vertices are different, which is correct, but you are not updating the size array properly. The sizes should be combined based on the sizes of the components before they are unioned.
+
+3. In your find function, you are not path compressing, which can lead to inefficient trees. Path compression is essential in a union-find structure to keep the tree flat.
+
+4. Your code is not handling the type 2 query correctly. The `as[gtf(ix)][iy-1]` line is trying to get the k-th largest vertex number, but the array `as` is not storing the vertices in any particular order.
+
+Given these problems, let's rewrite the code:
+
+```cpp
+#include<bits/stdc++.h>
+using namespace std;
+const int MAXN = 200005;
+int parent[MAXN];
+int size[MAXN];
+
+int find(int x) {
+    if (x != parent[x]) parent[x] = find(parent[x]);
+    return parent[x];
+}
+
+void unionVertices(int u, int v) {
+    int rootU = find(u);
+    int rootV = find(v);
+    if (rootU != rootV) {
+        // Union by size
+        if (size[rootU] < size[rootV]) {
+            parent[rootU] = rootV;
+            size[rootV] += size[rootU];
+        } else {
+            parent[rootV] = rootU;
+            size[rootU] += size[rootV];
+        }
+    }
+}
+
+int main() {
+    int n, q;
+    cin >> n >> q;
+    for (int i = 1; i <= n; i++) {
+        parent[i] = i;
+        size[i] = 1;
+    }
+    while (q--) {
+        int type;
+        cin >> type;
+        if (type == 1) {
+            int u, v;
+            cin >> u >> v;
+            unionVertices(u, v);
+        } else {
+            int v, k;
+            cin >> v >> k;
+            int rootV = find(v);
+            sort(size + 1, size + 1 + size[rootV]); // Sort the sizes of the component
+            if (k <= size[rootV]) {
+                cout << size[rootV + size[rootV] - k] << endl;
+            } else {
+                cout << -1 << endl;
+            }
+        }
+    }
+    return 0;
+}
+```
+
+This code initializes the union-find structure with path compression and union by size to ensure that the tree remains flat. When processing type 2 queries, it sorts the sizes of the component to find the k-th largest vertex number. This solution should work within the constraints of the problem.

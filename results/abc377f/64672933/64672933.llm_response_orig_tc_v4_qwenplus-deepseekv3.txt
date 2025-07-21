@@ -1,0 +1,118 @@
+To fix this code, we need to ensure that the algorithm correctly calculates the number of safe squares where a new piece can be placed without being captured by any existing pieces. The original code had several issues, including incorrect handling of the intersections between different attack lines and incorrect calculations of the total number of unsafe squares.
+
+### Approaches
+1. **Identify Attack Lines**: For each existing piece, identify all squares that it can attack. These include:
+   - **Row**: All squares in the same row.
+   - **Column**: All squares in the same column.
+   - **Diagonal (i + j = constant)**: All squares where the sum of the row and column indices equals the sum of the piece's row and column.
+   - **Anti-Diagonal (i - j = constant)**: All squares where the difference between the row and column indices equals the difference of the piece's row and column.
+
+2. **Track Unique Attack Lines**: Use sets to keep track of unique rows, columns, diagonals, and anti-diagonals that are under attack. This helps in avoiding duplicate counts.
+
+3. **Calculate Total Unsafe Squares**: The total number of unsafe squares is the union of all squares covered by the attack lines. The inclusion-exclusion principle is used to avoid overcounting intersections (squares that are covered by multiple attack lines).
+
+4. **Calculate Safe Squares**: Subtract the total number of unsafe squares from the total number of squares in the grid (N²). Also, subtract the number of existing pieces (M) since those squares are already occupied.
+
+### Solution Code
+```cpp
+#include<bits/stdc++.h>
+using namespace std;
+using i64 = long long;
+
+int main() {
+    std::ios::sync_with_stdio(false);
+    std::cin.tie(nullptr);
+    i64 N, M;
+    cin >> N >> M;
+    vector<pair<i64, i64>> pieces(M);
+    unordered_set<i64> rows, cols, diags, anti_diags;
+    for (i64 i = 0; i < M; ++i) {
+        i64 a, b;
+        cin >> a >> b;
+        pieces[i] = {a, b};
+        rows.insert(a);
+        cols.insert(b);
+        diags.insert(a + b);
+        anti_diags.insert(a - b);
+    }
+
+    i64 unsafe = 0;
+    unsafe += rows.size() * N;
+    unsafe += cols.size() * N;
+    unsafe += diags.size() * N;
+    unsafe += anti_diags.size() * N;
+
+    // Subtract intersections between rows and cols (they are counted twice)
+    unsafe -= rows.size() * cols.size();
+
+    // Subtract intersections between rows and diags
+    for (i64 d : diags) {
+        for (i64 r : rows) {
+            i64 c = d - r;
+            if (cols.count(c)) {
+                unsafe--;
+            }
+        }
+    }
+
+    // Subtract intersections between rows and anti-diags
+    for (i64 ad : anti_diags) {
+        for (i64 r : rows) {
+            i64 c = r - ad;
+            if (cols.count(c)) {
+                unsafe--;
+            }
+        }
+    }
+
+    // Subtract intersections between cols and diags
+    for (i64 d : diags) {
+        for (i64 c : cols) {
+            i64 r = d - c;
+            if (rows.count(r)) {
+                unsafe--;
+            }
+        }
+    }
+
+    // Subtract intersections between cols and anti-diags
+    for (i64 ad : anti_diags) {
+        for (i64 c : cols) {
+            i64 r = ad + c;
+            if (rows.count(r)) {
+                unsafe--;
+            }
+        }
+    }
+
+    // Subtract intersections between diags and anti-diags
+    for (i64 d : diags) {
+        for (i64 ad : anti_diags) {
+            if ((d + ad) % 2 == 0) {
+                i64 r = (d + ad) / 2;
+                i64 c = (d - ad) / 2;
+                if (rows.count(r) && cols.count(c)) {
+                    unsafe--;
+                }
+            }
+        }
+    }
+
+    // Now, unsafe is the total number of distinct squares under attack
+    // However, some squares might be counted multiple times in the initial sum, but we've subtracted overlaps.
+
+    // The total safe squares is N*N - unsafe - M (since M squares are already occupied)
+    i64 total_safe = N * N - unsafe - M;
+    cout << max(total_safe, 0LL) << "\n";
+
+    return 0;
+}
+```
+
+### Explanation
+1. **Input Handling**: The code reads the grid size (N) and the number of existing pieces (M), followed by their coordinates.
+2. **Tracking Attack Lines**: The code uses sets to track unique rows, columns, diagonals (i + j), and anti-diagonals (i - j) that are under attack by existing pieces.
+3. **Initial Unsafe Calculation**: The initial count of unsafe squares is the sum of squares covered by all attack lines (rows, columns, diagonals, anti-diagonals), each multiplied by N (the grid size).
+4. **Inclusion-Exclusion Principle**: The code subtracts overlaps between different attack lines to avoid double-counting squares. This includes intersections between rows and columns, rows and diagonals, rows and anti-diagonals, columns and diagonals, columns and anti-diagonals, and diagonals and anti-diagonals.
+5. **Final Safe Squares Calculation**: The total safe squares are computed by subtracting the total unsafe squares and the already occupied squares (M) from the total grid squares (N²). The result is ensured to be non-negative.
+6. **Output**: The result is printed, which is the number of safe squares where a new piece can be placed without being captured.

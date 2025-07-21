@@ -1,0 +1,33 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+double EuclideanDistance(int x1, int y1, int x2, int y2) {
+    double dx = x2 - x1;
+    double dy = y2 - y1;
+    return sqrt(dx * dx + dy * dy);
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int n;
+    cin >> n;
+    
+    vector<pair<int, int>> points(n);
+    for (int i = 0; i < n; ++i) {
+        cin >> points[i].first >> points[i].second;
+    }
+
+    double total_cost = 0.0;
+    for (int i = 0; i < n - 1; ++i) {
+        total_cost += EuclideanDistance(points[i].first, points[i].second, points[i + 1].first, points[i + 1].second);
+    }
+
+    // Return to origin
+    total_cost += EuclideanDistance(points[n - 1].first, points[n - 1].second, 0, 0);
+
+    cout << fixed << setprecision(12) << total_cost << '\n';
+
+    return 0;
+}

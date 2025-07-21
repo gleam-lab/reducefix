@@ -1,0 +1,89 @@
+
+The provided code seems to be an attempt at implementing a union-find data structure with path compression and union by size, but there are several issues that need to be addressed:
+
+1. **Union by Size:**
+   - The union update is not correct. When merging the two sets, it should not remove all elements but rather merge them in reverse order to keep the size as small as possible. Also, the set containing all elements from both sets should be assigned to the smaller set.
+
+2. **Path Compression:**
+   - The path compression is not applied when merging sets. It should be applied to the smaller set during the union operation to flatten the structure, which makes future operations faster.
+
+3. **Querying the k-th Largest:**
+   - The current implementation is not efficient for querying the k-th largest vertex. The vector `v[a]` is supposed to contain the vertices in decreasing order, but it is not being maintained this way.
+
+4. **Incorrect Usage of `par`:**
+   - The `par` function is meant to find the representative of a set, but it's not being used correctly in the union operation. The union operation should first find the representatives of both sets before deciding how to unite them.
+
+Let's address these issues step by step and provide a corrected version of the code.
+
+```cpp
+#include <iostream>
+#include <vector>
+#include <algorithm>
+
+using namespace std;
+
+const int MAX_N = 2e5 + 5;
+
+int parent[MAX_N + 1];
+int size[MAX_N + 1];
+vector<int> adj_list[MAX_N + 1];
+
+int find_set(int x) {
+    if (parent[x] != x) {
+        parent[x] = find_set(parent[x]);
+    }
+    return parent[x];
+}
+
+void union_sets(int x, int y) {
+    int rootX = find_set(x);
+    int rootY = find_set(y);
+    if (rootX != rootY) {
+        if (size[rootX] < size[rootY]) {
+            swap(rootX, rootY);
+        }
+        parent[rootY] = rootX;
+        size[rootX] += size[rootY];
+        // Merge the adjacency lists
+        for (int node : adj_list[rootY]) {
+            adj_list[rootX].push_back(node);
+        }
+        adj_list[rootY].clear();
+    }
+}
+
+int main() {
+    int N, Q;
+    cin >> N >> Q;
+
+    // Initialize parent and size arrays
+    for (int i = 1; i <= N; ++i) {
+        parent[i] = i;
+        size[i] = 1;
+    }
+
+    // Process queries
+    for (int q = 0; q < Q; ++q) {
+        int type, u, v;
+        cin >> type >> u >> v;
+        if (type == 1) {
+            union_sets(u, v);
+        } else if (type == 2) {
+            int rootV = find_set(v);
+            int k;
+            cin >> k;
+            // Keep a sorted list of all vertices in the connected component
+            sort(adj_list[rootV].rbegin(), adj_list[rootV].rend());
+            if (k > 1 && k <= adj_list[rootV].size()) {
+                cout << adj_list[rootV][k - 1] << '\n';
+            } else {
+                cout << -1 << '\n';
+            }
+        }
+    }
+
+    return 0;
+}
+```
+
+This corrected version of the code implements the union-find data structure correctly, merges adjacency lists when unitsing sets, and sorts them for quick querying.

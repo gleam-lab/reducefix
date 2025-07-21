@@ -1,0 +1,97 @@
+To solve this problem efficiently, we need to find the k-th smallest distance from a given point `B_j` to all points in the array `A`. Given the constraints (`N, Q <= 1e5`), we must aim for a solution with complexity better than O(N log N) per query.
+
+### Key Observations:
+1. **Binary Search on Distance**:
+   - For each query `(b, k)`, we can binary search the minimal distance `d` such that there are at least `k` elements in `A` within distance `d` of `b`.
+   - This is efficient if we can count how many elements in `A` lie within `[b-d, b+d]` quickly.
+
+2. **Preprocessing with Sorted Array and Prefix Sum (or Map)**:
+   - Sort the list `A` once.
+   - Use binary search (`lower_bound` and `upper_bound`) to count how many elements fall within a specific range around `b`.
+
+3. **Efficient Range Counting**:
+   - Since `A` is sorted, we can use `std::lower_bound` and `std::upper_bound` to find the number of elements within a given range.
+
+---
+
+### Why the Original Code Fails:
+- The original code tries to use a frequency map with cumulative counts, but it assumes uniform distribution and uses interpolation, which leads to incorrect results for sparse or widely varying values.
+- It lacks proper binary searching over actual distances and instead relies on approximations, leading to errors like returning `150000006` instead of correct larger distances.
+
+---
+
+### Correct Strategy:
+- Sort the array `A`.
+- For each query `(b, k)`:
+  - Binary search over possible distances `d` from 0 to `2 * 1e8` (since max coordinate difference is `2*1e8`).
+  - In each step, count how many points in `A` are within `[b-d, b+d]` using binary search on the sorted array.
+  - Adjust binary search bounds accordingly until you find the minimal `d` where exactly `k` points are within or closer.
+
+---
+
+### Final C++ Code:
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+#define ll long long
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int N, Q;
+    cin >> N >> Q;
+
+    vector<ll> A(N);
+    for (int i = 0; i < N; ++i) {
+        cin >> A[i];
+    }
+
+    sort(A.begin(), A.end());
+
+    while (Q--) {
+        ll b;
+        int k;
+        cin >> b >> k;
+
+        // Binary search on the answer (distance)
+        ll low = 0, high = 2e8 + 10; // since |a_i|, |b_j| <= 1e8
+        ll ans = high;
+
+        while (low <= high) {
+            ll mid = (low + high) / 2;
+            ll left = b - mid;
+            ll right = b + mid;
+
+            // Find first index >= left
+            auto l = lower_bound(A.begin(), A.end(), left);
+            // Find first index > right
+            auto r = upper_bound(A.begin(), A.end(), right);
+
+            int count = r - l;
+
+            if (count >= k) {
+                ans = mid;
+                high = mid - 1;
+            } else {
+                low = mid + 1;
+            }
+        }
+
+        cout << ans << '\n';
+    }
+
+    return 0;
+}
+```
+
+---
+
+### Explanation:
+- We sort the list `A` once at the beginning — O(N log N)
+- Each query involves a binary search over `d` from 0 to `2e8`, and inside each step we do two binary searches on `A` — O(log(max_dist) * log N) per query
+- Total time complexity: O(N log N + Q log(max_dist) * log N), which is acceptable for `N, Q <= 1e5`
+
+This approach ensures correctness and efficiency across all edge cases and large inputs.

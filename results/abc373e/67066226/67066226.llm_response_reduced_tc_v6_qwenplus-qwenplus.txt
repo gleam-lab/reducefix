@@ -1,0 +1,89 @@
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+#define all(x) (x).begin(), (x).end()
+
+int main() {
+    ios_base::sync_with_stdio(0);
+    cin.tie(0);
+    int n, m;
+    ll k;
+    cin >> n >> m >> k;
+    vector<ll> a(n);
+    for (int i = 0; i < n; i++) {
+        cin >> a[i];
+        k -= a[i];
+    }
+
+    // Create sorted version of votes
+    vector<pair<ll, int>> sorted_a(n);
+    for (int i = 0; i < n; i++) {
+        sorted_a[i] = {a[i], i};
+    }
+    sort(all(sorted_a));
+
+    vector<ll> ans(n, -1);
+
+    // Precompute prefix sums of sorted votes
+    vector<ll> prefix(n + 1);
+    for (int i = 0; i < n; i++) {
+        prefix[i + 1] = prefix[i] + sorted_a[i].first;
+    }
+
+    for (int idx = 0; i < n; i++) {
+        ll ai = sorted_a[idx].first;
+        int pos = idx; // position in sorted array
+
+        // Binary search on additional votes needed
+        ll low = 0, high = k;
+        ll res = k + 1;
+
+        while (low <= high) {
+            ll mid = (low + high) / 2;
+            ll target = ai + mid;
+
+            // We want to ensure that at least (N-M) candidates have <= target votes
+            // So find the number of candidates with current votes > target
+            // and calculate how many extra votes are needed to bring them down
+
+            // Use binary search to find how many candidates already have > target votes
+            int cnt = n - (upper_bound(all(sorted_a), make_pair(target, n)) - sorted_a.begin());
+
+            if (cnt < m) {
+                // Already enough, candidate is elected without needing more votes
+                res = 0;
+                break;
+            }
+
+            // Need to reduce votes of top (cnt - (m-1)) candidates to <= target
+            int need_to_reduce = cnt - (m - 1);
+            int start_idx = n - need_to_reduce;
+
+            ll required_votes = 0;
+            for (int i = start_idx; i < n; i++) {
+                if (sorted_a[i].second == idx) continue; // skip current candidate
+                if (sorted_a[i].first > target) {
+                    required_votes += sorted_a[i].first - target;
+                }
+            }
+
+            if (required_votes <= mid) {
+                // Enough to give mid votes to candidate i
+                res = mid;
+                high = mid - 1;
+            } else {
+                low = mid + 1;
+            }
+        }
+
+        if (res > k) {
+            ans[sorted_a[idx].second] = -1;
+        } else {
+            ans[sorted_a[idx].second] = res;
+        }
+    }
+
+    for (auto x : ans) cout << x << ' ';
+}
+```

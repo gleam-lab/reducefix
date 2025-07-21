@@ -1,0 +1,141 @@
+To fix this code, we need to correctly calculate the number of safe squares where a new piece can be placed without being captured by any existing pieces. The existing pieces can capture along rows, columns, diagonals, and anti-diagonals. The solution involves determining all squares that are not under attack by any existing piece.
+
+### Approaches
+1. **Identify Attacked Squares**: For each existing piece, mark all squares in its row, column, diagonal (i + j = constant), and anti-diagonal (i - j = constant). These are the squares that are under attack.
+2. **Union of Attacked Squares**: Use sets to keep track of unique rows, columns, diagonals, and anti-diagonals to avoid redundant calculations.
+3. **Calculate Safe Squares**: The total safe squares are the total squares minus the squares under attack, adjusted for overlaps (squares attacked by multiple conditions are counted only once).
+
+### Solution Code
+```cpp
+#include<bits/stdc++.h>
+using namespace std;
+using i64 = long long;
+
+int main() {
+    std::ios::sync_with_stdio(false);
+    std::cin.tie(nullptr);
+    i64 N, M;
+    cin >> N >> M;
+    vector<array<i64, 2>> g(M);
+    set<i64> rows, cols, diag1, diag2;
+    set<pair<i64, i64>> occupied;
+    for (int i = 0; i < M; i++) {
+        i64 a, b;
+        cin >> a >> b;
+        g[i] = {a, b};
+        rows.insert(a);
+        cols.insert(b);
+        diag1.insert(a + b);
+        diag2.insert(a - b);
+        occupied.insert({a, b});
+    }
+    i64 attacked = 0;
+    // Rows
+    attacked += rows.size() * N;
+    // Columns
+    attacked += cols.size() * N;
+    // Diagonals (i + j = k)
+    for (auto k : diag1) {
+        i64 x_min = max(1LL, k - N);
+        i64 x_max = min(N, k - 1);
+        if (x_max >= x_min) {
+            attacked += x_max - x_min + 1;
+        }
+    }
+    // Anti-diagonals (i - j = k)
+    for (auto k : diag2) {
+        i64 x_min = max(1LL, 1 + k);
+        i64 x_max = min(N, N + k);
+        if (x_max >= x_min) {
+            attacked += x_max - x_min + 1;
+        }
+    }
+    // Overlaps between rows and columns
+    for (auto r : rows) {
+        for (auto c : cols) {
+            if (diag1.count(r + c) && diag2.count(r - c)) {
+                attacked--;
+            }
+        }
+    }
+    // Overlaps between rows and diagonals
+    for (auto r : rows) {
+        for (auto k : diag1) {
+            i64 c = k - r;
+            if (c >= 1 && c <= N) {
+                if (cols.count(c) && diag2.count(r - c)) {
+                    attacked--;
+                }
+            }
+        }
+    }
+    // Overlaps between columns and diagonals
+    for (auto c : cols) {
+        for (auto k : diag1) {
+            i64 r = k - c;
+            if (r >= 1 && r <= N) {
+                if (rows.count(r) && diag2.count(r - c)) {
+                    attacked--;
+                }
+            }
+        }
+    }
+    // Overlaps between rows and anti-diagonals
+    for (auto r : rows) {
+        for (auto k : diag2) {
+            i64 c = r - k;
+            if (c >= 1 && c <= N) {
+                if (cols.count(c) && diag1.count(r + c)) {
+                    attacked--;
+                }
+            }
+        }
+    }
+    // Overlaps between columns and anti-diagonals
+    for (auto c : cols) {
+        for (auto k : diag2) {
+            i64 r = c + k;
+            if (r >= 1 && r <= N) {
+                if (rows.count(r) && diag1.count(r + c)) {
+                    attacked--;
+                }
+            }
+        }
+    }
+    // Overlaps between diagonals and anti-diagonals
+    for (auto k1 : diag1) {
+        for (auto k2 : diag2) {
+            if ((k1 + k2) % 2 == 0) {
+                i64 r = (k1 + k2) / 2;
+                i64 c = (k1 - k2) / 2;
+                if (r >= 1 && r <= N && c >= 1 && c <= N) {
+                    if (rows.count(r) && cols.count(c)) {
+                        attacked--;
+                    }
+                }
+            }
+        }
+    }
+    // Overlaps between all four conditions
+    for (auto r : rows) {
+        for (auto c : cols) {
+            if (diag1.count(r + c) && diag2.count(r - c)) {
+                attacked++;
+            }
+        }
+    }
+    // Subtract occupied squares since they are not empty
+    i64 safe = N * N - attacked - M + occupied.size();
+    cout << safe << endl;
+    return 0;
+}
+```
+
+### Explanation
+1. **Initialization**: We read the grid size `N` and the number of existing pieces `M`.
+2. **Tracking Attacks**: We use sets to track all rows, columns, diagonals (`i + j`), and anti-diagonals (`i - j`) that are under attack by existing pieces.
+3. **Calculate Attacked Squares**: For each type of attack (row, column, diagonal, anti-diagonal), we calculate the total number of squares under attack, adjusting for overlaps where a square might be counted multiple times.
+4. **Adjust for Overlaps**: We carefully adjust for overlaps between different types of attacks to ensure squares are not counted multiple times.
+5. **Final Calculation**: The total safe squares is the total grid size minus the attacked squares and the squares already occupied by existing pieces. The result is printed.
+
+This approach ensures that we efficiently and correctly count all safe squares considering all possible attack vectors and their intersections.

@@ -1,0 +1,93 @@
+
+This problem is a challenging combinatorial geometry problem. Here's a strategy to solve it:
+
+1. **Understand the Capturing Mechanism**:
+   - Each piece captures squares based on four diagonals:
+     - `i + j = constant`
+     - `i - j = constant`
+   - For each piece, calculate its potential capturing diagonals based on its position and store them.
+
+2. **Representation of Diagonals**:
+   - Instead of storing all the coordinates captured by a piece, store the equations of the diagonals. This reduces the complexity as you only need to consider a few diagonals per piece.
+
+3. **Counting Free Squares**:
+   - Start by assuming all squares can be placed without being captured.
+   - Subtract the squares captured by each piece by considering the diagonals.
+   - Use sets to efficiently manage and remove the affected squares.
+
+4. **Edge Cases**:
+   - Consider the edges of the grid and the case where a piece is placed on the corner of the grid.
+
+Let's implement the solution based on the above strategy:
+
+```cpp
+#include <iostream>
+#include <vector>
+#include <set>
+using namespace std;
+
+long long countFreeSquares(int N, int M, vector<pair<int, int>>& pieces) {
+    // We only care about the unique diagonals since each piece can capture the same set of squares.
+    set<pair<int, int>> diagonals; // (constant, piece_count)
+    vector<pair<int, int>> lines;
+
+    for (auto& p : pieces) {
+        int x = p.first, y = p.second;
+        // Diagonals based on i + j and i - j
+        diagonals.insert({x + y, 1});
+        diagonals.insert({y - x, 1});
+        lines.push_back({x, 1}); // x-th line (column x)
+        lines.push_back({y, 1}); // y-th line (row y)
+    }
+
+    // Add all possible diagonals
+    for (int i = 1; i <= N; ++i) {
+        diagonals.insert({i, 1});
+        diagonals.insert({-i, 1});
+    }
+
+    // Subtract the counts of captured squares
+    for (auto& line : lines) {
+        int x = line.first;
+        for (int i = 1; i <= N; ++i) {
+            if (i != x) {
+                if (diagonals.find({x + i, line.second}) != diagonals.end()) {
+                    diagonals[{x + i, line.second}]++;
+                }
+                if (diagonals.find({i + x, line.second}) != diagonals.end()) {
+                    diagonals[{i + x, line.second}]++;
+                }
+                if (diagonals.find({-x - i, line.second}) != diagonals.end()) {
+                    diagonals[{-x - i, line.second}]++;
+                }
+                if (diagonals.find({-i - x, line.second}) != diagonals.end()) {
+                    diagonals[{-i - x, line.second}]++;
+                }
+            }
+        }
+    }
+
+    // Calculate the number of free squares
+    long long freeSquares = N * N;
+    for (auto& diag : diagonals) {
+        if (diag.second > 1) {
+            freeSquares -= (diag.second - 1) * (diag.second - 1);
+        }
+    }
+
+    return freeSquares;
+}
+
+int main() {
+    int N, M;
+    cin >> N >> M;
+    vector<pair<int, int>> pieces(M);
+    for (int i = 0; i < M; ++i) {
+        cin >> pieces[i].first >> pieces[i].second;
+    }
+    cout << countFreeSquares(N, M, pieces) << endl;
+    return 0;
+}
+```
+
+This is a simplified approach that assumes that for each line or diagonal, the number of squares captured by it can be calculated independently. However, this does not handle overlapping capturing areas optimally. Further optimization will involve more complex logic to account for overlapping areas effectively.

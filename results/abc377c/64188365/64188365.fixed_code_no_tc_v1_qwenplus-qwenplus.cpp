@@ -1,0 +1,39 @@
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+
+int main() {
+    ll n, m;
+    cin >> n >> m;
+
+    set<pair<ll, ll>> blocked;
+    vector<pair<ll, ll>> knight_moves = {
+        {2, 1}, {1, 2}, {-1, 2}, {-2, 1},
+        {-2, -1}, {-1, -2}, {1, -2}, {2, -1}
+    };
+
+    for (ll i = 0; i < m; ++i) {
+        ll a, b;
+        cin >> a >> b;
+        // Convert to 0-based index
+        a--; b--;
+
+        // Add the position of the existing piece
+        blocked.insert({a, b});
+
+        // Mark all squares that this piece can attack
+        for (auto [dx, dy] : knight_moves) {
+            ll na = a + dx;
+            ll nb = b + dy;
+            if (na >= 0 && na < n && nb >= 0 && nb < n) {
+                blocked.insert({na, nb});
+            }
+        }
+    }
+
+    // Total number of cells is n * n
+    // Subtract the number of blocked cells
+    cout << n * n - (ll)blocked.size() << endl;
+
+    return 0;
+}

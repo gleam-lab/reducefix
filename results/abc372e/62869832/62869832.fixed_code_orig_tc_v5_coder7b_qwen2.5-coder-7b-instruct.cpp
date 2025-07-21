@@ -1,0 +1,48 @@
+#include<bits/stdc++.h>
+using namespace std;
+
+const int MAXN = 2e5 + 10;
+
+vector<int> adj[MAXN];
+priority_queue<int, vector<int>, greater<int>> pq[MAXN];
+
+void addEdge(int u, int v) {
+    adj[u].push_back(v);
+    adj[v].push_back(u);
+}
+
+void updatePQ(int u, int v) {
+    pq[u].push(v);
+    if(pq[u].size() > 10) pq[u].pop();
+}
+
+int getKthLargest(int u, int k) {
+    while(!pq[u].empty() && pq[u].top() < k) pq[u].pop();
+    if(pq[u].empty()) return -1;
+    else return pq[u].top();
+}
+
+int main() {
+    ios::sync_with_stdio(false); cin.tie(nullptr);
+
+    int n, q;
+    cin >> n >> q;
+
+    for(int i = 1; i <= n; ++i) {
+        addEdge(i, i);
+    }
+
+    int type, u, v, k;
+    while(q--) {
+        cin >> type;
+        if(type == 1) {
+            cin >> u >> v;
+            addEdge(u, v);
+        } else {
+            cin >> u >> k;
+            cout << getKthLargest(u, k) << '\n';
+        }
+    }
+
+    return 0;
+}

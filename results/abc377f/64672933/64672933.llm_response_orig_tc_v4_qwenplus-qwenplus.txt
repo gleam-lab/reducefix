@@ -1,0 +1,117 @@
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+using i64 = long long;
+
+int main() {
+    std::ios::sync_with_stdio(false);
+    std::cin.tie(nullptr);
+
+    i64 N, M;
+    cin >> N >> M;
+
+    set<i64> rows, cols;
+    set<i64> diag1, diag2;  // x + y and x - y
+
+    for (i64 i = 0; i < M; ++i) {
+        i64 a, b;
+        cin >> a >> b;
+        rows.insert(a);
+        cols.insert(b);
+        diag1.insert(a + b);
+        diag2.insert(a - b);
+    }
+
+    // Total number of squares attacked in each direction
+    i64 attacked_squares = 0;
+
+    // Rows and columns
+    attacked_squares += rows.size() * N;
+    attacked_squares += cols.size() * N;
+
+    // Diagonals x + y
+    for (auto d : diag1) {
+        // Number of points on diagonal x+y=d inside the grid [1,N]x[1,N]
+        i64 lo = max(1LL, d - N);
+        i64 hi = min(N, d - 1);
+        if (lo <= hi)
+            attacked_squares += (hi - lo + 1);
+    }
+
+    // Diagonals x - y
+    for (auto d : diag2) {
+        i64 lo = max(1LL, 1 + d);
+        i64 hi = min(N, N + d);
+        if (lo <= hi)
+            attacked_squares += (hi - lo + 1);
+    }
+
+    // Remove double-counted intersections: row-col, row-diag1, row-diag2, col-diag1, col-diag2, diag1-diag2
+    for (auto r : rows) {
+        for (auto c : cols) {
+            attacked_squares--; // subtract intersection of row and column
+        }
+        for (auto d1 : diag1) {
+            i64 b = d1 - r;
+            if (b >= 1 && b <= N)
+                attacked_squares--; // subtract intersection of row and diag1
+        }
+        for (auto d2 : diag2) {
+            i64 b = r - d2;
+            if (b >= 1 && b <= N)
+                attacked_squares--; // subtract intersection of row and diag2
+        }
+    }
+
+    for (auto c : cols) {
+        for (auto d1 : diag1) {
+            i64 a = d1 - c;
+            if (a >= 1 && a <= N)
+                attacked_squares--; // subtract intersection of column and diag1
+        }
+        for (auto d2 : diag2) {
+            i64 a = c + d2;
+            if (a >= 1 && a <= N)
+                attacked_squares--; // subtract intersection of column and diag2
+        }
+    }
+
+    for (auto d1 : diag1) {
+        for (auto d2 : diag2) {
+            // Solve:
+            // x + y = d1
+            // x - y = d2
+            // => x = (d1 + d2)/2, y = (d1 - d2)/2
+            if ((d1 + d2) % 2 == 0 && (d1 - d2) % 2 == 0) {
+                i64 x = (d1 + d2) / 2;
+                i64 y = (d1 - d2) / 2;
+                if (x >= 1 && x <= N && y >= 1 && y <= N)
+                    attacked_squares--; // subtract intersection of diag1 and diag2
+            }
+        }
+    }
+
+    // Subtract overlaps with pieces themselves (they are counted multiple times)
+    for (i64 i = 0; i < M; ++i) {
+        i64 a, b;
+        cin >> a >> b; // Read again to process
+        i64 d1 = a + b;
+        i64 d2 = a - b;
+
+        // Each piece is counted in row, col, diag1, diag2 -> total 4 times
+        attacked_squares -= 3; // Already counted once, remove 3 extra counts
+
+        // Check overlaps with other intersections
+        if (cols.count(b)) attacked_squares++;
+        if (rows.count(a)) attacked_squares++;
+
+        if (diag1.count(d1)) attacked_squares++;
+        if (diag2.count(d2)) attacked_squares++;
+    }
+
+    // Total available positions
+    cout << N * N - attacked_squares << "\n";
+
+    return 0;
+}
+```

@@ -1,0 +1,36 @@
+#include <iostream>
+#include <map>
+
+int main() {
+    int q;
+    std::cin >> q;
+
+    std::map<int, int> m;
+    int ans = 0;
+
+    for (int i = 0; i < q; ++i) {
+        int n, x;
+        std::cin >> n;
+
+        if (n == 1) {
+            std::cin >> x;
+            if (m.find(x) == m.end()) {
+                m[x] = 1;
+                ans++;
+            } else {
+                m[x]++;
+            }
+        } else if (n == 2) {
+            std::cin >> x;
+            m[x]--;
+            if (m[x] == 0) {
+                m.erase(x);
+                ans--;
+            }
+        } else if (n == 3) {
+            std::cout << ans << std::endl;
+        }
+    }
+
+    return 0;
+}

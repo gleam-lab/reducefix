@@ -1,0 +1,45 @@
+#include<bits/stdc++.h>
+
+using namespace std;
+
+int main() {
+    int N;
+    cin >> N;
+    vector<long long> H(N);
+    for (int i = 0; i < N; i++) {
+        cin >> H[i];
+    }
+
+    long long T = 0;
+    // We'll use a queue to track which enemies still have health > 0
+    queue<int> q;
+    
+    // Initialize the queue with all positions
+    for (int i = 0; i < N; ++i) {
+        if (H[i] > 0) {
+            q.push(i);
+        }
+    }
+
+    while (!q.empty()) {
+        int idx = q.front();
+        q.pop();
+        
+        T++;
+        
+        // Attack this enemy
+        if (T % 3 == 0) {
+            H[idx] -= 3;
+        } else {
+            H[idx] -= 1;
+        }
+        
+        // If the enemy still has health, push it back for future attacks
+        if (H[idx] > 0) {
+            q.push(idx);
+        }
+    }
+    
+    cout << T << endl;
+    return 0;
+}

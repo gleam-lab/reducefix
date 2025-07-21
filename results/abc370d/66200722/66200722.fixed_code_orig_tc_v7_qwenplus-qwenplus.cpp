@@ -1,0 +1,95 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+const int INF = 1 << 30;
+
+template <typename T>
+struct Grid {
+    int H, W;
+    vector<vector<T>> data;
+    Grid(int H, int W) : H(H), W(W), data(H, vector<T>(W)) {}
+    T &operator()(int r, int c) { return data[r][c]; }
+    const T &operator()(int r, int c) const { return data[r][c]; }
+};
+
+template <typename T>
+struct DSU {
+    vector<T> parent, size;
+    DSU(int n) : parent(n), size(n, 1) {
+        for (T i = 0; i < n; ++i) parent[i] = i;
+    }
+    T find(T x) {
+        if (x != parent[x]) parent[x] = find(parent[x]);
+        return parent[x];
+    }
+    bool unite(T x, T y) {
+        x = find(x);
+        y = find(y);
+        if (x == y) return false;
+        if (size[x] < size[y]) swap(x, y);
+        parent[y] = x;
+        size[x] += size[y];
+        return true;
+    }
+    bool same(T x, T y) { return find(x) == find(y); }
+    T sz(T x) { return size[find(x)]; }
+};
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+
+    int H, W, Q;
+    cin >> H >> W >> Q;
+
+    Grid<bool> has_wall(H, W);
+    for (int i = 0; i < H; ++i)
+        for (int j = 0; j < W; ++j)
+            has_wall(i, j) = true;
+
+    auto in_bounds = [&](int r, int c) {
+        return 0 <= r && r < H && 0 <= c && c < W;
+    };
+
+    // For each row and column, track next/prev existing walls
+    vector<set<int>> row_walls(H), col_walls(W);
+    for (int i = 0; i < H; ++i)
+        for (int j = 0; j < W; ++j)
+            row_walls[i].insert(j), col_walls[j].insert(i);
+
+    while (Q--) {
+        int R, C;
+        cin >> R >> C;
+        R--, C--;
+
+        if (!has_wall(R, C)) {
+            // Bomb at this location already exploded before
+            // Check directions
+            vector<pair<int, int>> dirs{{-1, 0}, {1, 0}, {0, -1}, {0, 1}};
+            for (auto [dr, dc] : dirs) {
+                int nr = R + dr, nc = C + dc;
+                while (in_bounds(nr, nc) && !has_wall(nr, nc)) {
+                    nr += dr;
+                    nc += dc;
+                }
+                if (in_bounds(nr, nc) && has_wall(nr, nc)) {
+                    has_wall(nr, nc) = false;
+                    row_walls[nr].erase(nc);
+                    col_walls[nc].erase(nr);
+                }
+            }
+        } else {
+            has_wall(R, C) = false;
+            row_walls[R].erase(C);
+            col_walls[C].erase(R);
+        }
+    }
+
+    int remaining = 0;
+    for (int i = 0; i < H; ++i)
+        for (int j = 0; j < W; ++j)
+            remaining += has_wall(i, j);
+
+    cout << remaining << endl;
+    return 0;
+}

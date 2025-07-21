@@ -1,0 +1,92 @@
+The original code uses a Union-Find data structure with an ordered_set to keep track of connected vertices and answer k-th largest queries. However, there are a few issues to fix:
+
+1. The ordered_set insertion/merging is inefficient for large N (up to 2e5)
+2. The code maintains only up to 30 elements in each set, which may not be enough for k up to 10
+3. The initial insertion of negative values is unnecessary and complicates the code
+
+Here's the fixed version that:
+- Uses path compression and union by size
+- Maintains sorted vectors for each component (limited to 10 elements since k ≤ 10)
+- Merges smaller sets into larger ones efficiently
+
+```cpp
+#include <iostream>
+#include <vector>
+#include <algorithm>
+
+using namespace std;
+
+const int N = 2e5 + 5;
+
+int parent[N];
+vector<int> component[N];
+
+int find(int u) {
+    if (parent[u] != u) {
+        parent[u] = find(parent[u]);
+    }
+    return parent[u];
+}
+
+void merge(int u, int v) {
+    u = find(u);
+    v = find(v);
+    if (u == v) return;
+    
+    if (component[u].size() < component[v].size()) {
+        swap(u, v);
+    }
+    
+    parent[v] = u;
+    for (int x : component[v]) {
+        component[u].push_back(x);
+    }
+    sort(component[u].rbegin(), component[u].rend());
+    if (component[u].size() > 10) {
+        component[u].resize(10);
+    }
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int n, q;
+    cin >> n >> q;
+    
+    for (int i = 1; i <= n; i++) {
+        parent[i] = i;
+        component[i] = {i};
+    }
+    
+    while (q--) {
+        int type;
+        cin >> type;
+        if (type == 1) {
+            int u, v;
+            cin >> u >> v;
+            merge(u, v);
+        } else {
+            int v, k;
+            cin >> v >> k;
+            v = find(v);
+            if (k > component[v].size()) {
+                cout << "-1\n";
+            } else {
+                cout << component[v][k-1] << "\n";
+            }
+        }
+    }
+    
+    return 0;
+}
+```
+
+Key improvements:
+1. Each component maintains a sorted vector of its vertices in descending order
+2. When merging, we combine the smaller set into the larger one and keep only the top 10 elements
+3. The k-th largest query can be answered in O(1) time by accessing the pre-sorted vector
+4. Much more efficient memory usage compared to the original ordered_set approach
+5. Cleaner and more straightforward implementation
+
+This solution handles the worst case constraints efficiently (N,Q ≤ 2e5) while answering k-th largest queries in constant time after the merge operations.

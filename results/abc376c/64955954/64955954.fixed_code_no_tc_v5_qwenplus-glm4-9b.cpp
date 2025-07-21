@@ -1,0 +1,49 @@
+#include <iostream>
+#include <vector>
+#include <limits>
+
+using namespace std;
+
+int main() {
+    int N;
+    cin >> N;
+    vector<int> A(N);
+    vector<int> B(N - 1);
+    
+    for (int i = 0; i < N; ++i) {
+        cin >> A[i];
+    }
+    for (int i = 0; i < N - 1; ++i) {
+        cin >> B[i];
+    }
+    
+    // Initialize the maximum size of the box that can be used
+    int max_size = 0;
+    
+    // Iterate over each toy from the largest to the smallest
+    for (int i = N - 1; i >= 0; --i) {
+        // If the current toy cannot fit into any of the existing boxes
+        if (A[i] > max_size) {
+            // The size of the box must be at least the size of the current toy
+            max_size = A[i];
+        }
+    }
+    
+    // Check if the newly purchased box can accommodate all toys
+    int can_fit = 1;
+    for (int size : B) {
+        if (size < max_size) {
+            can_fit = 0;
+            break;
+        }
+    }
+    
+    // Output the minimum size of the box if it can fit all toys, otherwise -1
+    if (can_fit) {
+        cout << max_size << endl;
+    } else {
+        cout << -1 << endl;
+    }
+    
+    return 0;
+}

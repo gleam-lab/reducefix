@@ -1,0 +1,56 @@
+// C - Avoid Knight Attack
+
+#include <iostream>
+#include <unordered_set>
+#include <vector>
+#include <utility>
+
+using namespace std;
+
+// Pair hash for unordered_set
+struct pair_hash {
+    template <class T1, class T2>
+    size_t operator()(const pair<T1, T2>& p) const {
+        auto h1 = hash<T1>{}(p.first);
+        auto h2 = hash<T2>{}(p.second);
+        return h1 ^ (h2 << 16);
+    }
+};
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    long long N;
+    int M;
+    cin >> N >> M;
+
+    unordered_set<pair<long long, long long>, pair_hash> attacked;
+
+    vector<pair<long long, long long>> directions = {
+        {2, 1}, {1, 2}, {-1, 2}, {-2, 1},
+        {-2, -1}, {-1, -2}, {1, -2}, {2, -1}
+    };
+
+    for (int _ = 0; _ < M; ++_) {
+        long long a, b;
+        cin >> a >> b;
+        // Mark the current piece's position as occupied
+        attacked.insert({a, b});
+        // For each of 8 possible attack positions from this piece
+        for (auto [dx, dy] : directions) {
+            long long x = a + dx;
+            long long y = b + dy;
+            if (x >= 1 && x <= N && y >= 1 && y <= N) {
+                attacked.insert({x, y});
+            }
+        }
+    }
+
+    // Total squares: N * N
+    unsigned __int128 total = static_cast<unsigned __int128>(N) * static_cast<unsigned __int128>(N);
+    // Subtract number of attacked squares
+    cout << (total - static_cast<unsigned __int128>(attacked.size())) << "\n";
+
+    return 0;
+}

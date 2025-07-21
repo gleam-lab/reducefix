@@ -1,0 +1,84 @@
+
+The problem involves simulating the process of sea-level rise and the subsequent sinking of land areas on an island. The island is represented as a grid of H rows and W columns, and each cell in this grid has an elevation value indicating its height relative to the sea level. Each year, the sea level rises by 1 unit, and areas adjacent to the sea or those that have sunk due to previous years' rises will sink if their elevation is less than or equal to the new sea level. This process creates a new "landmass" as the sea claims other areas.
+
+### Problem Analysis
+The main challenge is to efficiently simulate this process for Y years and to compute the area of the remaining land after each year. Direct simulation would be computationally expensive, especially for large Y, so an optimized approach is necessary.
+
+### Optimized Approach
+1. **Initial Setup**: Read the grid and initialize variables.
+2. **Initial Land and Sea Definitions**: Determine which cells are initially at the sea level and which are land.
+3. **Simulation for Each Year**:
+   - For each year, simulate the sea-level rise and update the landmass accordingly.
+   - Use a flood fill algorithm to propagate the sinking process.
+   - Maintain a count of the land area that remains above sea level.
+4. **Efficiency Considerations**:
+   - Instead of simulating each cell individually, use a priority queue to process cells that sink first and then propagate the effect to their neighbors.
+   - Keep track of the land area and update it as cells sink.
+5. **Output**: After simulating for Y years, output the area of the land that remains for each year.
+
+### Corrected Code
+```cpp
+#include <iostream>
+#include <vector>
+#include <queue>
+using namespace std;
+
+int main() {
+    int h, w, y;
+    cin >> h >> w >> y;
+    vector<vector<int>> grid(h, vector<int>(w));
+    for (int i = 0; i < h; ++i) {
+        for (int j = 0; j < w; ++j) {
+            cin >> grid[i][j];
+        }
+    }
+
+    // Directions for flood fill (up, down, left, right)
+    const vector<pair<int, int>> directions = {{-1, 0}, {1, 0}, {0, -1}, {0, 1}};
+    queue<pair<int, int>> q;
+    vector<vector<bool>> visited(h, vector<bool>(w, false));
+
+    // Initialize the queue with all cells at sea level
+    for (int i = 0; i < h; ++i) {
+        q.push({i, 0});
+        visited[i][0] = true;
+        q.push({i, w - 1});
+        visited[i][w - 1] = true;
+    }
+    for (int i = 1; i < w - 1; ++i) {
+        q.push({0, i});
+        visited[0][i] = true;
+        q.push({h - 1, i});
+        visited[h - 1][i] = true;
+    }
+
+    // Total area of land initially
+    int totalLand = h * w;
+
+    // Process the queue for Y years
+    for (int year = 0; year < y; ++year) {
+        int currentYearLand = totalLand;
+        while (!q.empty()) {
+            auto [x, y] = q.front();
+            q.pop();
+            int level = grid[x][y];
+            for (auto& dir : directions) {
+                int nx = x + dir.first;
+                int ny = y + dir.second;
+                if (nx >= 0 && nx < h && ny >= 0 && ny < w) {
+                    if (!visited[nx][ny] && grid[nx][ny] < level) {
+                        q.push({nx, ny});
+                        visited[nx][ny] = true;
+                    }
+                }
+            }
+        }
+        // Output the remaining land area
+        cout << totalLand - currentYearLand << endl;
+    }
+
+    return 0;
+}
+```
+
+This code initializes the simulation by finding all the cells at the initial sea level and adding them to a queue for processing. It then simulates the sinking of land area for Y years, updating the total land area that remains above sea level each year. The use of a queue ensures that the algorithm processes cells in the correct order, and the use of a visited array prevents reprocessing of cells.

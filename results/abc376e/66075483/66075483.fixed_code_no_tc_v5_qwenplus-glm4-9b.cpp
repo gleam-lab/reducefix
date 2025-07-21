@@ -1,0 +1,49 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+const int N = 2e5 + 9;
+
+struct Pair {
+    int a, b;
+};
+
+int main() {
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, k;
+        cin >> n >> k;
+        vector<Pair> A(n + 1), B(n + 1);
+        for (int i = 1; i <= n; ++i) {
+            cin >> A[i].a;
+            A[i].b = i;
+        }
+        for (int i = 1; i <= n; ++i) {
+            cin >> B[i].a;
+            B[i].b = i;
+        }
+
+        vector<int> idx(n + 1);
+        iota(idx.begin(), idx.end(), 1);
+
+        sort(idx.begin() + 1, idx.end(), [A](int a, int b) {
+            return A[a].a > A[b].a;
+        });
+
+        long long sum = 0, ans = LLONG_MAX;
+        int count = 0;
+        for (int i = 1; i <= n; ++i) {
+            sum += B[idx[i]].a;
+            count++;
+            if (count >= k) {
+                sum -= B[idx[i - k + 1]].a;
+                ans = min(ans, (long long)A[idx[i - k + 1]].a * sum);
+            }
+        }
+
+        cout << ans << endl;
+    }
+    return 0;
+}

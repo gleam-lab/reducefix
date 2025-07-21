@@ -1,0 +1,47 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    long long N;
+    int M;
+    cin >> N >> M;
+
+    // Set to store all positions that are either occupied by a piece or attacked
+    set<pair<long long, long long>> blocked;
+
+    // All 8 possible knight moves
+    vector<pair<long long, long long>> directions = {
+        {2, 1}, {1, 2}, {-1, 2}, {-2, 1},
+        {-2, -1}, {-1, -2}, {1, -2}, {2, -1}
+    };
+
+    for (int i = 0; i < M; ++i) {
+        long long a, b;
+        cin >> a >> b;
+
+        pair<long long, long long> pos(a, b);
+        blocked.insert(pos);  // Mark the current position as occupied
+
+        // For each of the 8 attacking positions
+        for (const auto& d : directions) {
+            long long x = a + d.first;
+            long long y = b + d.second;
+
+            if (x >= 1 && x <= N && y >= 1 && y <= N) {
+                blocked.insert({x, y});
+            }
+        }
+    }
+
+    // Total number of cells: N*N
+    // Subtract the number of blocked (occupied or attackable) cells
+    long long totalCells = N * N;
+    long long blockedCount = blocked.size();
+
+    cout << (totalCells - blockedCount) << endl;
+
+    return 0;
+}

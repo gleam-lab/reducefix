@@ -1,0 +1,59 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+typedef long long ll;
+
+const int MAXN = 1e5 + 5;
+
+ll a[MAXN];
+
+// Binary search helper to find k-th smallest distance from b to elements in a
+ll query_kth_distance(ll b, int k, int n) {
+    // Binary search on answer (distance)
+    ll low = 0, high = 2e8; // Distance can't exceed 2e8 since coords are within [-1e8,1e8]
+    ll answer = 0;
+    
+    while (low <= high) {
+        ll mid = (low + high) / 2;
+        // Find number of points within [b - mid, b + mid]
+        ll left = b - mid;
+        ll right = b + mid;
+        
+        int l = lower_bound(a, a + n, left) - a;
+        int r = upper_bound(a, a + n, right) - a;
+        int count = r - l;
+        
+        if (count >= k) {
+            answer = mid;
+            high = mid - 1;
+        } else {
+            low = mid + 1;
+        }
+    }
+    
+    return answer;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+    cout.tie(0);
+    
+    int N, Q;
+    cin >> N >> Q;
+    
+    for (int i = 0; i < N; ++i) {
+        cin >> a[i];
+    }
+    
+    sort(a, a + N);
+    
+    while (Q--) {
+        ll b;
+        int k;
+        cin >> b >> k;
+        cout << query_kth_distance(b, k, N) << "\n";
+    }
+    
+    return 0;
+}

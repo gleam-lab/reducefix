@@ -1,0 +1,38 @@
+#include<bits/stdc++.h>
+using namespace std;
+
+int main() {
+    int n, m;
+    cin >> n >> m;
+    
+    vector<int> a(2 * n + 1);
+    for(int i = 1; i <= n; ++i) {
+        cin >> a[i];
+        a[i] %= m;
+        a[i + n] = a[i];
+    }
+    
+    vector<int> prefix_sum(2 * n + 1, 0);
+    map<int, int> count_map;
+    int result = 0;
+    
+    for(int i = 1; i <= 2 * n; ++i) {
+        prefix_sum[i] = (prefix_sum[i - 1] + a[i]) % m;
+        
+        // When window exceeds size n, decrement the count of the element leaving the window
+        if(i > n) {
+            count_map[prefix_sum[i - n]]--;
+        }
+        
+        // Add the number of valid subarrays ending at i with sum divisible by m
+        if(i >= n) {
+            result += count_map[prefix_sum[i]];
+        }
+        
+        // Count current prefix sum modulo m
+        count_map[prefix_sum[i]]++;
+    }
+    
+    cout << result;
+    return 0;
+}

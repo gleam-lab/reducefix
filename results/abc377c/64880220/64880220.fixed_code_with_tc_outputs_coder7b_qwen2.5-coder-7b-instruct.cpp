@@ -1,0 +1,32 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    map<pair<long long, long long>, int> ex;
+    long long n, m;
+    cin >> n >> m;
+    long long ans = 0;
+    vector<int> dx = {2, 1, -1, -2, -2, -1, 1, 2};
+    vector<int> dy = {1, 2, 2, 1, -1, -2, -2, -1};
+    for (int i = 0; i < m; i++) {
+        long long a, b;
+        cin >> a >> b;
+        pair<long long, long long> p = make_pair(a, b);
+        if (!ex.count(p)) {
+            ex[p] = 1;
+            ans++;
+        }
+        for (int j = 0; j < 8; j++) {
+            long long x = a + dx[j];
+            long long y = b + dy[j];
+            if (x >= 1 && x <= n && y >= 1 && y <= n) {
+                pair<long long, long long> q = make_pair(x, y);
+                if (!ex.count(q)) {
+                    ex[q] = 1;
+                    ans++;
+                }
+            }
+        }
+    }
+    cout << n * n - ans << endl;
+}

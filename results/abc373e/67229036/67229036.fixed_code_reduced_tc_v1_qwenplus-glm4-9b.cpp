@@ -1,0 +1,44 @@
+#include<bits/stdc++.h>
+using namespace std;
+#define int long long
+const int N = 2e5 + 5;
+int n, m, k, sum, cnt, a[N], b[N], c[N];
+bool check(int x, int y)
+{
+    int z = lower_bound(b + 1, b + 1 + n, x + y + 1) - b - 1;
+    if (z < n - m)
+        return 0;
+    // The inequality ensures that candidate i can get the x additional votes and still have more votes than i + m - 1
+    return (x + y + 1) * (z - n + m) - (c[z] - c[n - m - 1] - max(x, b[n - m])) >= k - y;
+}
+
+signed main()
+{
+    ios::sync_with_stdio(0), cin.tie(0), cout.tie(0);
+    cin >> n >> m >> k;
+    for (int i = 1; i <= n; i++)
+        cin >> a[i];
+    sum = accumulate(a, a + n, 0LL);
+    for (int i = 1; i <= n; i++)
+        b[i] = a[i];
+    sort(b + 1, b + n + 1);
+    for (int i = 1; i <= n; i++)
+        c[i] = c[i - 1] + b[i];
+    for (int i = 1; i <= n; i++)
+    {
+        int l = 0, r = k + 1;
+        while (l < r - 1)
+        {
+            int mid = (l + r) / 2;
+            if (check(a[i], mid))
+                r = mid;
+            else
+                l = mid;
+        }
+        if (r <= k)
+            cout << r - sum - a[i] << " ";
+        else
+            cout << "-1 ";
+    }
+    return 0;
+}

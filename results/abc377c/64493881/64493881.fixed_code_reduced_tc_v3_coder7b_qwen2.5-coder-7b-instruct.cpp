@@ -1,0 +1,63 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define ll long long
+#define mod 1000000007
+#define v(type) vector<type>
+#define pb push_back
+#define mp make_pair
+#define ff first
+#define ss second
+#define sz(x) ((int)(x).size())
+#define all(x) (x).begin(), (x).end()
+#define rall(x) (x).rbegin(), (x).rend()
+#define clr(x) memset(x, 0, sizeof(x))
+#define tr(it, a) for(auto it = a.begin(); it != a.end(); it++)
+#define PI 3.141592653589793238462
+typedef pair<ll, ll> pii;
+typedef pair<double, double> pll;
+typedef vector<ll> vi;
+typedef vector<string> vs;
+typedef vector<pii> vpii;
+typedef vector<pll> vpll;
+const ll mod1 = 1e9 + 7;
+const ll mod2 = 998244353;
+const ll INF = 1e18;
+const double eps = 1e-9;
+const double PI2 = acos(-1.0);
+ll power(ll x, ll y) { ll res = 1; x = x % mod; while (y > 0) { if (y & 1) res = (res * x) % mod; y = y >> 1; x = (x * x) % mod; } return res; }
+ll modInverse(ll a, ll m) { return power(a, m - 2); }
+bool isPowerOfTwo(long long n) { if (n == 0) return false; return (n & (n - 1)) == 0; }
+bool isPerfectSquare(ll x) { if (x >= 0) { ll sr = sqrt(x); return (sr * sr == x); } return false; }
+ll fact[200001];
+void factorial() { fact[0] = 1; for (int i = 1; i <= 200000; i++) fact[i] = fact[i - 1] * i % mod; }
+ll nCr(ll n, ll r) { if (r > n) return 0; return fact[n] * modInverse(fact[r], mod) % mod * modInverse(fact[n - r], mod) % mod; }
+int dx[] = {-1, 1, 0, 0, -1, -1, 1, 1};
+int dy[] = {0, 0, -1, 1, -1, 1, -1, 1};
+class Solution {
+public:
+    int countSquares(int n, int m, vector<int>& a, vector<int>& b) {
+        unordered_set<int> st;
+        for (int i = 0; i < m; i++) {
+            int u = a[i], v = b[i];
+            for (int k = 0; k < 8; k++) {
+                int x = u + dx[k], y = v + dy[k];
+                if (x >= 1 && x <= n && y >= 1 && y <= n) st.insert(x * n + y);
+            }
+        }
+        return n * n - st.size();
+    }
+};
+int main() {
+    ios_base::sync_with_stdio(false), cin.tie(NULL), cout.tie(NULL);
+    int t = 1;
+    // cin >> t;
+    while (t--) {
+        int n, m;
+        cin >> n >> m;
+        vector<int> a(m), b(m);
+        for (int i = 0; i < m; i++) cin >> a[i] >> b[i];
+        Solution ob;
+        cout << ob.countSquares(n, m, a, b) << endl;
+    }
+    return 0;
+}

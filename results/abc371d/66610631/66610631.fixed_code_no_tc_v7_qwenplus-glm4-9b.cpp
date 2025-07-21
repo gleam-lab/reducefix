@@ -1,0 +1,37 @@
+#include<bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+const int N = 1e6+7;
+int n, m;
+int a[N], b[N], c[N];
+
+int main() {
+    cin >> n;
+    for(int i = 1; i <= n; i++) {
+        cin >> a[i];
+    }
+    for(int i = 1; i <= n; i++) {
+        cin >> b[i];
+        c[i] = c[i - 1] + b[i]; // Calculate prefix sums of b
+    }
+    cin >> m;
+    while(m--) {
+        int l, r;
+        cin >> l >> r;
+        if(l > r) {
+            swap(l, r); // Ensure l is the smaller index
+        }
+        auto left = lower_bound(a + 1, a + n + 1, l);
+        auto right = upper_bound(a + 1, a + n + 1, r);
+        if(left == a + 1 && right == a + n + 1) {
+            cout << c[n] << endl;
+        } else if(left == a + 1) {
+            cout << c[n] - c[right - a - 1] << endl;
+        } else if(right == a + n + 1) {
+            cout << c[n] - c[left - a - 1] << endl;
+        } else {
+            cout << c[right - a - 1] - c[left - a - 1] << endl;
+        }
+    }
+    return 0;
+}

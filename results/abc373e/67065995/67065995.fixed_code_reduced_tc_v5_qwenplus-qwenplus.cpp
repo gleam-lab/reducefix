@@ -1,0 +1,66 @@
+#include <bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+#define all(x) (x).begin(), (x).end()
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int N, M;
+    ll K;
+    cin >> N >> M >> K;
+    vector<ll> A(N);
+    for (int i = 0; i < N; ++i) {
+        cin >> A[i];
+        K -= A[i];
+    }
+
+    // Create sorted version of A to help determine relative positions
+    vector<int> ord(N);
+    iota(all(ord), 0);
+    sort(all(ord), [&](int i, int j) { return A[i] < A[j]; });
+    vector<ll> sortedA = A;
+    sort(all(sortedA));
+
+    // Prefix sum array for efficient range calculations
+    vector<ll> prefix(N + 1);
+    for (int i = 0; i < N; ++i)
+        prefix[i + 1] = prefix[i] + sortedA[i];
+
+    vector<ll> result(N, -1);
+
+    // For each candidate, binary search on minimum votes needed
+    for (int idx = 0; idx < N; ++idx) {
+        int i = ord[idx]; // Original index of the current candidate
+        ll low = 0, high = K + 1;
+        
+        while (low <= high) {
+            ll mid = (low + high) / 2;
+            ll total = A[i] + mid;
+
+            // Find how many candidates have strictly more votes than this total
+            // We need at most M-1 candidates > total
+            // So we ensure rank is at least N - M + 1
+            int pos = upper_bound(all(sortedA), total) - sortedA.begin();
+            int numGreater = N - pos;
+
+            if (numGreater < M) {
+                // Candidate can be elected with this X
+                high = mid - 1;
+            } else {
+                // Need more votes
+                low = mid + 1;
+            }
+        }
+
+        if (result[i] == -1 && low <= K)
+            result[i] = low;
+    }
+
+    for (auto x : result)
+        cout << x << ' ';
+    cout << '\n';
+
+    return 0;
+}

@@ -1,0 +1,53 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+#define ll long long
+
+void solve()
+{
+    int n;
+    cin >> n;
+    vector<int> a(n), b(n - 1);
+    for (auto &tt : a)
+        cin >> tt;
+    for (auto &tt : b)
+        cin >> tt;
+    
+    sort(a.begin(), a.end());
+    sort(b.begin(), b.end());
+
+    // We will use a pointer approach to match smallest toys with smallest boxes
+    int i = 0, j = 0;
+    while (i < n && j < n - 1)
+    {
+        if (a[i] <= b[j])
+        {
+            ++i; // Toy a[i] fits in box b[j], so move to next toy
+        }
+        ++j; // Always move to next box
+    }
+
+    // If all toys were matched, then no extra box needed
+    if (i == n)
+    {
+        cout << 0 << endl;
+        return;
+    }
+
+    // Otherwise, we need a box that can fit the largest unmatched toy
+    cout << a.back() << endl;
+}
+
+int main()
+{
+    std::ios::sync_with_stdio(false);
+    std::cin.tie(nullptr);
+
+    int t = 1;
+    // cin >> t;
+    while (t--)
+    {
+        solve();
+    }
+    return 0;
+}

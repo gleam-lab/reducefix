@@ -1,0 +1,201 @@
+import os
+import subprocess
+from typing import List, Tuple, Set
+import sys
+
+def run_program(program_path: str, input_data: bytes) -> bytes:
+    result = subprocess.run(
+        [program_path], 
+        input=input_data,
+        capture_output=True,
+        check=True,  
+        timeout=10   
+    )
+    return result.stdout
+
+def create_input_bytes(H: int, W: int, Y: int, grid: List[List[int]], years: List[int]) -> bytes:
+    lines = []
+    lines.append(f"{H} {W} {Y}\n")
+    for row in grid:
+        lines.append(" ".join(map(str, row)) + "\n")
+    return "".join(lines).encode("utf-8")
+
+def test_interesting(params: Tuple[int, int, int, List[List[int]], List[int]]) -> bool:
+    H, W, Y, grid, years = params
+    input_data = create_input_bytes(H, W, Y, grid, years)
+    try:
+        wa_output = run_program("./wa", input_data)
+        ac_output = run_program("./ac", input_data)
+        return (wa_output.strip() != ac_output.strip())
+    except Exception as e:
+        print(f"[Error] Running programs: {e}")
+        return False
+
+def get_subgrid(grid: List[List[int]], kept_rows: List[int], kept_cols: List[int]) -> List[List[int]]:
+    subgrid = []
+    for i in kept_rows:
+        if i < 0 or i >= len(grid):
+            continue
+        row = []
+        for j in kept_cols:
+            if j < 0 or j >= len(grid[i]):
+                continue
+            row.append(grid[i][j])
+        if row:
+            subgrid.append(row)
+    return subgrid
+
+def reduce_input(input_file: str, output_file: str):
+    if not os.path.exists(input_file):
+        print(f"[Error] Input file not found: {input_file}", file=sys.stderr)
+        return
+    
+    with open(input_file, "r", encoding="utf-8") as f:
+        lines = [line.rstrip("\n") for line in f]
+    
+    if not lines:
+        raise ValueError("Input file is empty")
+    
+    first_line = lines[0].split()
+    if len(first_line) != 3:
+        raise ValueError("First line must contain H W Y")
+    
+    H, W, Y = map(int, first_line)
+    grid = []
+    for i in range(1, H + 1):
+        if i >= len(lines):
+            break
+        row = list(map(int, lines[i].split()))
+        if len(row) != W:
+            raise ValueError(f"Row {i} has incorrect number of elements")
+        grid.append(row)
+    
+    original_H = H
+    original_W = W
+    original_grid = [row[:] for row in grid]
+    original_years = list(range(1, Y + 1))
+    full_params = (H, W, Y, grid, original_years)
+    
+    if not test_interesting(full_params):
+        print("[Error] Initial input does not produce differing outputs")
+        return
+    
+    print(f"[Info] Starting ddmin reduction for H={H}, W={W}, Y={Y}")
+    current_rows = list(range(H))
+    current_cols = list(range(W))
+    granularity = 2
+    
+    while True:
+        print(f"[Reduce] Current rows: {len(current_rows)}, cols: {len(current_cols)} | Granularity: {granularity}")
+        
+        # Try removing a block of rows
+        made_progress = False
+        chunk_size = max(1, len(current_rows) // granularity)
+        start_idx = 0
+        
+        print(f"   1) Trying to remove row chunks (size ~{chunk_size})...")
+        while start_idx < len(current_rows):
+            chunk = current_rows[start_idx:start_idx+chunk_size]
+            new_rows = [r for r in current_rows if r not in chunk]
+            reduced_grid = get_subgrid(original_grid, new_rows, current_cols)
+            if len(reduced_grid) == 0 or any(len(row) == 0 for row in reduced_grid):
+                start_idx += chunk_size
+                continue
+            
+            params = (len(reduced_grid), len(reduced_grid[0]), Y, reduced_grid, original_years)
+            if test_interesting(params):
+                print(f"      Success! Removed rows {chunk}, new size: {len(reduced_grid)}x{len(reduced_grid[0])}")
+                current_rows = new_rows
+                granularity = 2
+                made_progress = True
+                break
+            start_idx += chunk_size
+        
+        if made_progress:
+            continue
+        
+        # Try keeping only a block of rows
+        print(f"   2) Trying to keep only row chunks (size ~{chunk_size})...")
+        start_idx = 0
+        while start_idx < len(current_rows):
+            chunk = current_rows[start_idx:start_idx+chunk_size]
+            if not chunk or chunk == current_rows:
+                start_idx += chunk_size
+                continue
+            
+            params = (len(chunk), W, Y, get_subgrid(original_grid, chunk, current_cols), original_years)
+            if test_interesting(params):
+                print(f"      Success! Keeping only rows {chunk}, new size: {len(chunk)}x{W}")
+                current_rows = chunk
+                granularity = 2
+                made_progress = True
+                break
+            start_idx += chunk_size
+        
+        if made_progress:
+            continue
+        
+        # Try removing a block of columns
+        chunk_size = max(1, len(current_cols) // granularity)
+        print(f"   3) Trying to remove column chunks (size ~{chunk_size})...")
+        start_idx = 0
+        while start_idx < len(current_cols):
+            chunk = current_cols[start_idx:start_idx+chunk_size]
+            new_cols = [c for c in current_cols if c not in chunk]
+            reduced_grid = get_subgrid(original_grid, current_rows, new_cols)
+            if len(reduced_grid) == 0 or any(len(row) == 0 for row in reduced_grid):
+                start_idx += chunk_size
+                continue
+            
+            params = (H, len(reduced_grid[0]), Y, reduced_grid, original_years)
+            if test_interesting(params):
+                print(f"      Success! Removed columns {chunk}, new size: {len(reduced_grid)}x{len(reduced_grid[0])}")
+                current_cols = new_cols
+                granularity = 2
+                made_progress = True
+                break
+            start_idx += chunk_size
+        
+        if made_progress:
+            continue
+        
+        # Try keeping only a block of columns
+        print(f"   4) Trying to keep only column chunks (size ~{chunk_size})...")
+        start_idx = 0
+        while start_idx < len(current_cols):
+            chunk = current_cols[start_idx:start_idx+chunk_size]
+            if not chunk or chunk == current_cols:
+                start_idx += chunk_size
+                continue
+            
+            params = (H, len(chunk), Y, get_subgrid(original_grid, current_rows, chunk), original_years)
+            if test_interesting(params):
+                print(f"      Success! Keeping only columns {chunk}, new size: {H}x{len(chunk)}")
+                current_cols = chunk
+                granularity = 2
+                made_progress = True
+                break
+            start_idx += chunk_size
+        
+        if made_progress:
+            continue
+        
+        # Increase granularity if no progress
+        if granularity < max(len(current_rows), len(current_cols)):
+            granularity = min(granularity * 2, max(len(current_rows), len(current_cols)))
+            print(f"   No progress. Increasing granularity to {granularity}")
+        else:
+            print("[Info] Reached minimal input")
+            break
+    
+    final_grid = get_subgrid(original_grid, current_rows, current_cols)
+    H_final = len(final_grid)
+    W_final = len(final_grid[0]) if final_grid else 0
+    Y_final = Y
+    
+    output_data = create_input_bytes(H_final, W_final, Y_final, final_grid, [])
+    
+    with open(output_file, "wb") as f:
+        f.write(output_data)
+    
+    print(f"[Done] Reduced input written to {output_file}: {H_final}x{W_final} grid")

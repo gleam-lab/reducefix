@@ -1,0 +1,61 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+using ll = long long;
+const int MAXN = 2 * 10e5 + 5;
+const ll INF = 1e18;
+
+void solve() {
+    int n, k; cin >> n >> k;
+    vector<pair<ll, ll>> ab(n);
+    for (int i = 0; i < n; i++) cin >> ab[i].first;
+    for (int i = 0; i < n; i++) cin >> ab[i].second;
+    
+    // Sort pairs by the first element (A_i)
+    sort(ab.begin(), ab.end());
+
+    // Priority queue to store the B_i values in decreasing order
+    priority_queue<ll, vector<ll>, greater<ll>> pq;
+    
+    // Calculate prefix sums of B_i
+    vector<ll> prefix_sum(n + 1, 0);
+    for (int i = 1; i <= n; i++) {
+        prefix_sum[i] = prefix_sum[i - 1] + ab[i - 1].second;
+    }
+    
+    // Push the first k-1 B_i values into the priority queue
+    for (int i = 0; i < k - 1; i++) {
+        pq.push(ab[i].second);
+    }
+    
+    // Initialize the answer with the smallest prefix sum
+    ll ans = INF;
+    ll min_prefix_sum = prefix_sum[k - 1];
+    
+    // Iterate over the remaining A_i values
+    for (int i = k - 1; i < n; i++) {
+        // Update the answer with the current best
+        ans = min(ans, ab[i].first * min_prefix_sum);
+        
+        // Update the prefix sums for the priority queue
+        if (i + 1 <= n) {
+            min_prefix_sum = prefix_sum[k - 1];
+            for (int j = k - 1; j < i + 1; j++) {
+                min_prefix_sum += pq.top();
+                pq.pop();
+                pq.push(ab[j].second);
+            }
+        }
+    }
+    
+    // Output the answer for this test case
+    cout << ans << '\n';
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int t; cin >> t;
+    while (t--) solve();
+    return 0;
+}

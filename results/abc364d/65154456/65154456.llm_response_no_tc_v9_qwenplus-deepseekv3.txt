@@ -1,0 +1,114 @@
+To fix this code, we need to address several issues:
+
+1. **Memory Allocation**: The original code allocates an array of size \(2 \times 10^8 + 5\), which is too large and unnecessary. Given the constraints, \(N\) can be up to \(10^5\), so it's better to sort the list of \(a_i\) and use binary search to find the distances efficiently.
+
+2. **Binary Search Logic**: The original approach attempts to use a frequency array and prefix sums to find the \(k_j\)-th closest point, which is incorrect. The correct approach involves sorting the \(a_i\) array and then, for each query \(B_j\), finding the \(k_j\)-th smallest distance in the sorted list of distances from \(B_j\) to each \(a_i\).
+
+3. **Efficiency**: Given \(N\) and \(Q\) can be up to \(10^5\), the solution must run in \(O(N \log N + Q \log N)\) time. Sorting the \(a_i\) array once allows us to perform binary searches for each query efficiently.
+
+### Approaches
+
+1. **Sorting**: First, sort the array \(a_i\) to allow efficient binary search operations.
+2. **Binary Search for Closest Points**: For each query point \(B_j\), the distances from \(B_j\) to the sorted \(a_i\) can be found using binary search. The idea is to find the range of points around \(B_j\) such that the \(k_j\)-th smallest distance is within this range.
+3. **Calculating Distances**: The distances are calculated as the absolute differences between \(B_j\) and the \(a_i\) values. By maintaining a sorted list, we can efficiently find the \(k_j\)-th smallest distance.
+
+### Solution Code
+
+```cpp
+#include<bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+
+int main() {
+    ios::sync_with_stdio(0);
+    cin.tie(0);
+    cout.tie(0);
+
+    int N, Q;
+    cin >> N >> Q;
+    vector<ll> a(N);
+    for (int i = 0; i < N; ++i) {
+        cin >> a[i];
+    }
+    sort(a.begin(), a.end());
+
+    while (Q--) {
+        ll b;
+        int k;
+        cin >> b >> k;
+        int left = 0, right = N - 1;
+        while (left <= right) {
+            int mid = left + (right - left) / 2;
+            if (a[mid] < b) {
+                left = mid + 1;
+            } else {
+                right = mid - 1;
+            }
+        }
+        int pos = left;
+        int low = max(0, pos - k);
+        int high = min(N - 1, pos + k - 1);
+        vector<ll> temp;
+        for (int i = low; i <= high; ++i) {
+            temp.push_back(abs(a[i] - b));
+        }
+        sort(temp.begin(), temp.end());
+        cout << temp[k - 1] << endl;
+    }
+
+    return 0;
+}
+```
+
+Wait, no. The above approach might not be efficient enough for the largest constraints. For \(N = 10^5\), each query could involve collecting \(2k\) elements around the insertion point, which could lead to \(O(Q \cdot k \log k)\) time, which is not acceptable when \(k\) is up to \(10^5\) and \(Q = 10^5\). 
+
+So, we need a more efficient approach. A better way is to realize that the \(k_j\)-th smallest distance can be found by binary searching the distance \(d\) such that exactly \(k_j\) points have a distance \(\leq d\) from \(B_j\). This can be done by using two binary searches for each query: one to find the number of elements <= \(B_j + d\) and >= \(B_j - d\), and checking if this count is >= \(k_j\).
+
+Here is the corrected code:
+
+```cpp
+#include<bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+
+int main() {
+    ios::sync_with_stdio(0);
+    cin.tie(0);
+    cout.tie(0);
+
+    int N, Q;
+    cin >> N >> Q;
+    vector<ll> a(N);
+    for (int i = 0; i < N; ++i) {
+        cin >> a[i];
+    }
+    sort(a.begin(), a.end());
+
+    while (Q--) {
+        ll b;
+        int k;
+        cin >> b >> k;
+        ll left = 0, right = 2e14;
+        ll answer = 0;
+        while (left <= right) {
+            ll mid = left + (right - left) / 2;
+            auto it_l = lower_bound(a.begin(), a.end(), b - mid);
+            auto it_r = upper_bound(a.begin(), a.end(), b + mid);
+            int count = it_r - it_l;
+            if (count >= k) {
+                answer = mid;
+                right = mid - 1;
+            } else {
+                left = mid + 1;
+            }
+        }
+        cout << answer << endl;
+    }
+
+    return 0;
+}
+```
+
+This approach uses binary search on the possible distances \(d\) and checks how many elements fall within the range \([B_j - d, B_j + d]\). If this count is at least \(k_j\), we try a smaller \(d\); otherwise, we try a larger \(d\). This ensures that we find the smallest \(d\) such that there are at least \(k_j\) elements within \(d\) distance of \(B_j\). The time complexity is \(O(N \log N + Q \log D)\), where \(D\) is the maximum possible distance (up to \(2 \times 10^{14}\) in this case), which is efficient enough for the given constraints.
+
+This solution is correct and efficient, handling the constraints within acceptable time limits.

@@ -1,0 +1,80 @@
+#include <iostream>
+#include <vector>
+#include <set>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int H, W, Q;
+    cin >> H >> W >> Q;
+
+    // For each row and column, maintain a set of wall positions
+    vector<set<int>> rows(H), cols(W);
+
+    // Initially, all cells have walls
+    for (int i = 0; i < H; ++i) {
+        for (int j = 0; j < W; ++j) {
+            rows[i].insert(j);
+            cols[j].insert(i);
+        }
+    }
+
+    while (Q--) {
+        int R, C;
+        cin >> R >> C;
+        --R; --C;
+
+        // Check if there's a wall at (R, C)
+        auto it = rows[R].find(C);
+        if (it != rows[R].end()) {
+            // Wall exists, remove it
+            rows[R].erase(it);
+            cols[C].erase(C); // This is correct: erase the row index from cols[C]
+        } else {
+            // Wall doesn't exist, look in 4 directions
+            // Left
+            if (!rows[R].empty() && *rows[R].begin() < C) {
+                auto it = prev(rows[R].lower_bound(C));
+                if (it != rows[R].end() && *it < C) {
+                    cols[*it].erase(R);
+                    rows[R].erase(it);
+                }
+            }
+            // Right
+            if (!rows[R].empty() && *rows[R].rbegin() > C) {
+                auto it = rows[R].upper_bound(C);
+                if (it != rows[R].end()) {
+                    cols[*it].erase(R);
+                    rows[R].erase(it);
+                }
+            }
+            // Up
+            if (!cols[C].empty() && *cols[C].begin() < R) {
+                auto it = prev(cols[C].lower_bound(R));
+                if (it != cols[C].end() && *it < R) {
+                    rows[*it].erase(C);
+                    cols[C].erase(it);
+                }
+            }
+            // Down
+            if (!cols[C].empty() && *cols[C].rbegin() > R) {
+                auto it = cols[C].upper_bound(R);
+                if (it != cols[C].end()) {
+                    rows[*it].erase(C);
+                    cols[C].erase(it);
+                }
+            }
+        }
+    }
+
+    // Count remaining walls
+    long long remaining = 0;
+    for (int i = 0; i < H; ++i) {
+        remaining += rows[i].size();
+    }
+
+    cout << remaining << endl;
+    return 0;
+}

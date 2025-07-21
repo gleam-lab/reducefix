@@ -1,0 +1,60 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+typedef long long ll;
+
+struct Point {
+    ll x, idx;
+};
+
+bool cmp(const Point& a, const Point& b) {
+    return a.x < b.x;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int n, q;
+    cin >> n >> q;
+    
+    vector<ll> a(n);
+    for (int i = 0; i < n; ++i) {
+        cin >> a[i];
+    }
+    
+    vector<vector<Point>> points(q);
+    for (int i = 0; i < q; ++i) {
+        ll b, k;
+        cin >> b >> k;
+        --k; // Convert to zero-based index
+        points[i].push_back({b, k});
+    }
+    
+    sort(points.begin(), points.end());
+    
+    int cur_i = 0;
+    multiset<ll> s;
+    
+    for (const auto& p : points) {
+        ll b = p[0].x;
+        int k = p[0].idx;
+        
+        while (cur_i < n && a[cur_i] <= b) {
+            s.insert(abs(a[cur_i] - b));
+            ++cur_i;
+        }
+        
+        while (!s.empty() && *s.begin() > abs(a[cur_i - 1] - b)) {
+            s.erase(s.begin());
+        }
+        
+        if (!s.empty()) {
+            cout << *(s.begin() + k) << '\n';
+        } else {
+            cout << "Invalid\n";
+        }
+    }
+    
+    return 0;
+}

@@ -1,0 +1,111 @@
+To solve this problem efficiently, we need to manage a dynamic undirected graph where nodes are connected by edges and queries ask for the k-th largest node in a connected component.
+
+### Key Observations:
+1. **Union-Find (Disjoint Set Union - DSU)** is ideal for managing connectivity.
+2. For each query of type 2 (asking for the k-th largest), we need efficient access to sorted elements in each connected component.
+3. Since `k` is small (up to 10), maintaining only the top 10 largest values per component suffices.
+
+### Efficient Approach:
+- Use **Union-Find** to track connected components.
+- Maintain a **sorted set (multiset or ordered list)** per component root storing up to the **top 10 largest vertex values**.
+- When two sets merge, combine them and keep only the top 10 largest values (to avoid unnecessary overhead).
+- This ensures that even with large N and Q, operations remain fast enough.
+
+Here's the corrected and optimized C++ implementation:
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+#define rep(i, n) for(int i = 0; i < (n); i++)
+#define all(a) a.begin(), a.end()
+#define rall(a) a.rbegin(), a.rend()
+typedef long long ll;
+using pii = pair<int, int>;
+
+const int MAX_K = 10;
+
+struct UnionFind {
+    vector<int> parent;
+    vector<vector<int>> top_nodes;
+
+    UnionFind(int n) {
+        parent.resize(n);
+        iota(parent.begin(), parent.end(), 0);
+        top_nodes.resize(n);
+        for (int i = 0; i < n; ++i)
+            top_nodes[i].push_back(i);
+    }
+
+    int find(int x) {
+        if (parent[x] != x)
+            parent[x] = find(parent[x]);
+        return parent[x];
+    }
+
+    void unite(int x, int y) {
+        int rx = find(x), ry = find(y);
+        if (rx == ry) return;
+
+        // Always merge smaller into larger
+        if (top_nodes[rx].size() < top_nodes[ry].size())
+            swap(rx, ry);
+
+        // Merge ry's top nodes into rx's
+        top_nodes[rx].insert(top_nodes[rx].end(), all(top_nodes[ry]));
+        sort(rall(top_nodes[rx])); // Sort descending
+
+        // Keep only the first MAX_K elements
+        if (top_nodes[rx].size() > MAX_K)
+            top_nodes[rx].resize(MAX_K);
+
+        parent[ry] = rx;
+        top_nodes[ry].clear();
+    }
+};
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int n, q;
+    cin >> n >> q;
+
+    UnionFind uf(n);
+    vector<int> ans;
+
+    while (q--) {
+        int t;
+        cin >> t;
+        if (t == 1) {
+            int u, v;
+            cin >> u >> v;
+            u--; v--;
+            uf.unite(u, v);
+        } else if (t == 2) {
+            int v, k;
+            cin >> v >> k;
+            v--;
+
+            auto& nodes = uf.top_nodes[uf.find(v)];
+            if ((int)nodes.size() < k)
+                ans.push_back(-1);
+            else
+                ans.push_back(nodes[k - 1] + 1); // Convert back to 1-based index
+        }
+    }
+
+    for (auto x : ans)
+        cout << x << '\n';
+
+    return 0;
+}
+```
+
+### Why This Works:
+- **Union-Find** keeps track of connected components.
+- Each component maintains a sorted list of its **largest 10 vertices**, which allows answering Type 2 queries in O(1) after initial sorting.
+- Merging uses size-based optimization to ensure good performance.
+- Sorting only the necessary elements avoids expensive full-sorts on large data.
+
+This solution is efficient and handles constraints up to `N, Q ≤ 2 * 10^5`.

@@ -1,0 +1,57 @@
+#include <bits/stdc++.h>
+#define ll long long
+#define vi vector<ll>
+#define vpii vector<pair<ll,ll>>
+#define pb push_back
+#define mp make_pair
+#define rep(i,a,b) for(ll i=a;i<b;i++)
+#define all(x) begin(x), end(x)
+
+using namespace std;
+
+struct Node {
+    int idx, valA, valB;
+};
+
+bool cmp(Node a, Node b) {
+    return a.valA * b.valB > b.valA * b.valB;
+}
+
+ll solve(int n, int k, vi &a, vi &b) {
+    vpii pairs;
+    rep(i, 0, n) pairs.pb(mp(a[i], b[i]));
+    sort(all(pairs), cmp);
+
+    priority_queue<ll> pq;
+    ll sumB = 0, res = LLONG_MAX;
+    rep(i, 0, k) {
+        sumB += pairs[i].second;
+        pq.push(-pairs[i].second);
+    }
+
+    res = min(res, (ll)pairs[k-1].first * sumB);
+
+    rep(i, k, n) {
+        sumB -= pq.top();
+        pq.pop();
+        sumB += pairs[i].second;
+        pq.push(-pairs[i].second);
+        res = min(res, (ll)pairs[i].first * sumB);
+    }
+    return res;
+}
+
+int main() {
+    ios_base::sync_with_stdio(0); cin.tie(0); cout.tie(0);
+    
+    int t; cin >> t;
+    while(t--) {
+        int n, k; cin >> n >> k;
+        vi a(n), b(n);
+        rep(i, 0, n) cin >> a[i];
+        rep(i, 0, n) cin >> b[i];
+
+        cout << solve(n, k, a, b) << '\n';
+    }
+    return 0;
+}

@@ -1,0 +1,81 @@
+#include <iostream>
+#include <vector>
+#include <set>
+#include <algorithm>
+
+using namespace std;
+
+typedef long long int ll;
+typedef unsigned long long int ull;
+
+#define pb push_back
+#define pf push_front
+#define lb lower_bound
+#define ub upper_bound
+
+#define all(v) v.begin(),v.end() 
+#define rall(v) v.rbegin(),v.rend()
+
+#define typeOfData int
+#include <ext/pb_ds/assoc_container.hpp> 
+#include <ext/pb_ds/tree_policy.hpp> 
+#include <ext/pb_ds/detail/standard_policies.hpp>
+using namespace __gnu_pbds;
+
+template <typename T>
+using ordered_set = tree<T, null_type, less<T>, rb_tree_tag, tree_order_statistics_node_update>;
+
+int U[227509];
+ordered_set<int> V[227509];
+
+int Find(int u) {
+    if(U[u] == u) return u;
+    return U[u] = Find(U[u]);
+}
+
+void Union(int u, int v) {
+    u = Find(u);
+    v = Find(v);
+    if(u == v) return;
+    // Ensure u is the smaller set
+    if(V[u].size() > V[v].size()) swap(u, v);
+    // Merge u into v
+    for(auto num : V[u]) {
+        V[v].insert(num);
+    }
+    U[u] = v;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int N, Q;
+    cin >> N >> Q;
+
+    for(int i = 1; i <= N; ++i) {
+        V[i].insert(-i);
+        U[i] = i;
+    }
+
+    while(Q--) {
+        int cmd;
+        cin >> cmd;
+        if(cmd == 1) {
+            int u, v;
+            cin >> u >> v;
+            Union(u, v);
+        } else {
+            int v, k;
+            cin >> v >> k;
+            int root = Find(v);
+            if((int)V[root].size() < k) {
+                cout << -1 << "\n";
+            } else {
+                cout << -(*V[root].find_by_order(k-1)) << "\n";
+            }
+        }
+    }
+
+    return 0;
+}

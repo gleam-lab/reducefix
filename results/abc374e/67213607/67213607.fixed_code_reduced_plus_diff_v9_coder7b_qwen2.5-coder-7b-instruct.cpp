@@ -1,0 +1,61 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+const int MAXN = 105;
+const int INF = 2e9;
+
+int n, x;
+int a[MAXN], p[MAXN], b[MAXN], q[MAXN];
+
+int min_cost(int mid) {
+    vector<vector<int>> dp(b[0] + 1, vector<int>(a[0] + 1, INF));
+    dp[0][0] = 0;
+
+    for (int i = 1; i <= n; ++i) {
+        vector<vector<int>> new_dp(b[i] + 1, vector<int>(a[i] + 1, INF));
+        for (int j = 0; j <= b[i]; ++j) {
+            for (int k = 0; k <= a[i]; ++k) {
+                if ((mid - j * a[i]) >= 0) {
+                    new_dp[j][k] = min(new_dp[j][k], dp[j][k] + j * p[i]);
+                }
+                if ((mid - k * b[i]) >= 0) {
+                    new_dp[j][k] = min(new_dp[j][k], dp[j][k] + k * q[i]);
+                }
+                if ((mid - j * a[i] - k * b[i]) >= 0) {
+                    new_dp[j][k] = min(new_dp[j][k], dp[j][k] + j * p[i] + k * q[i]);
+                }
+                if ((mid - j * a[i] - k * b[i]) > 0) {
+                    new_dp[j][k] = min(new_dp[j][k], dp[j][k] + j * p[i] + (mid - j * a[i] - k * b[i]) / b[i] * q[i]);
+                }
+                if ((mid - j * a[i] - k * b[i]) % b[i] != 0) {
+                    new_dp[j][k] = min(new_dp[j][k], dp[j][k] + j * p[i] + (mid - j * a[i] - k * b[i]) / b[i] * q[i] + q[i]);
+                }
+            }
+        }
+        swap(dp, new_dp);
+    }
+
+    return dp[b[n]][a[n]];
+}
+
+int binary_search() {
+    int l = 0, r = 1000000005;
+    while (l <= r) {
+        int mid = (l + r) >> 1;
+        if (min_cost(mid) <= x) {
+            l = mid + 1;
+        } else {
+            r = mid - 1;
+        }
+    }
+    return l - 1;
+}
+
+int main() {
+    cin >> n >> x;
+    for (int i = 1; i <= n; ++i) {
+        cin >> a[i] >> p[i] >> b[i] >> q[i];
+    }
+    cout << binary_search() << endl;
+    return 0;
+}

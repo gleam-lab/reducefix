@@ -1,0 +1,76 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define rep(i, n) for (int i = 0; i < (n); ++i)
+
+using ll = long long;
+using pli = pair<ll, int>;
+using vi = vector<int>;
+using vvi = vector<vi>;
+using vpli = vector<pli>;
+using deq = deque<int>;
+
+const ll INF = 1e18;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+
+    int H, W, Q;
+    cin >> H >> W >> Q;
+
+    vvi grid(H, vi(W, 0));
+    vpli rows(H), cols(W);
+
+    ll remaining_walls = H * W; // Initially, all cells have one wall each.
+
+    for (int q = 0; q < Q; ++q) {
+        ll R, C;
+        cin >> R >> C;
+        --R; --C; // Convert to 0-based index.
+
+        if (grid[R][C] == 0) {
+            // The cell is already bombarded or destroyed.
+            continue;
+        }
+
+        // Bombarding the cell at (R, C).
+        grid[R][C] = -1; // This cell is now bombarded.
+        remaining_walls -= 4; // Four walls are destroyed if they exist.
+
+        // Check horizontal walls.
+        if (C > 0) {
+            auto wall = upper_bound(cols[R].begin(), cols[R].end(), C - 1);
+            if (wall != cols[R].end() && *wall == C - 1) {
+                cols[R].erase(wall);
+                remaining_walls++;
+            }
+        }
+        if (C < W - 1) {
+            auto wall = lower_bound(cols[R].begin(), cols[R].end(), C + 1);
+            if (wall != cols[R].begin() && prev(wall) == C + 1) {
+                cols[R].erase(prev(wall));
+                remaining_walls++;
+            }
+        }
+
+        // Check vertical walls.
+        if (R > 0) {
+            auto wall = upper_bound(rows[C].begin(), rows[C].end(), R - 1);
+            if (wall != rows[C].end() && *wall == R - 1) {
+                rows[C].erase(wall);
+                remaining_walls++;
+            }
+        }
+        if (R < H - 1) {
+            auto wall = lower_bound(rows[C].begin(), rows[C].end(), R + 1);
+            if (wall != rows[C].begin() && prev(wall) == R + 1) {
+                rows[C].erase(prev(wall));
+                remaining_walls++;
+            }
+        }
+    }
+
+    cout << remaining_walls << '\n';
+
+    return 0;
+}

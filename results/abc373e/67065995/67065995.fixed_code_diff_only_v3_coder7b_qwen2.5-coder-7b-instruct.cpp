@@ -1,0 +1,36 @@
+#include <bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+#define all(x) (x).begin(), (x).end()
+
+int main() {
+    ios_base::sync_with_stdio(0);
+    cin.tie(0);
+    int n, m;
+    ll k;
+    cin >> n >> m >> k;
+    vector<ll> a(n);
+    for(int i = 0; i < n; i++) {
+        cin >> a[i];
+        k -= a[i];
+    }
+    vector<int> ord(n);
+    iota(all(ord), 0);
+    sort(all(ord), [&](int i, int j) { return a[i] < a[j]; });
+    vector<ll> ans(n, -1);
+    for(int i = 0; i < n; i++) {
+        ll l = 0, r = k;
+        while(l <= r) {
+            ll mid = (l + r) / 2;
+            int above = upper_bound(all(a), a[i] + mid) - begin(a);
+            int below = max(i + 1, n - m);
+            if(above > below) {
+                ans[ord[i]] = min(ans[ord[i]], mid);
+                r = mid - 1;
+            } else {
+                l = mid + 1;
+            }
+        }
+    }
+    for(auto i : ans) cout << i << ' ';
+}

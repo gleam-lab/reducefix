@@ -1,0 +1,98 @@
+#include <iostream>
+#include <vector>
+#include <unordered_map>
+#include <algorithm>
+#include <cstring>
+
+using namespace std;
+
+struct UnionFind {
+    vector<int> parent;
+    vector<int> size;
+
+    UnionFind(int n) : parent(n), size(n, 1) {
+        for (int i = 0; i < n; ++i) {
+            parent[i] = i;
+        }
+    }
+
+    int find(int x) {
+        if (parent[x] != x) parent[x] = find(parent[x]);
+        return parent[x];
+    }
+
+    void unite(int x, int y) {
+        x = find(x);
+        y = find(y);
+        if (x != y) {
+            if (size[x] < size[y]) swap(x, y);
+            parent[y] = x;
+            size[x] += size[y];
+        }
+    }
+
+    int getSize(int x) {
+        return size[find(x)];
+    }
+};
+
+int main() {
+    int h, w, q;
+    cin >> h >> w >> q;
+
+    UnionFind uf(h * w);
+    vector<vector<int>> grid(h, vector<int>(w));
+    vector<vector<int>> queries(h, vector<int>(w, 0));
+
+    for (int i = 0; i < q; ++i) {
+        int r, c;
+        cin >> r >> c;
+        --r; --c;
+        queries[r][c]++;
+    }
+
+    for (int i = 0; i < q; ++i) {
+        int r, c;
+        cin >> r >> c;
+        --r; --c;
+        if (queries[r][c] == 1) {
+            // Place a bomb and destroy the wall
+            grid[r][c] = 0;
+        } else {
+            // Find and destroy the first walls in all four directions
+            // Up
+            for (int j = r - 1; j >= 0 && grid[j][c] == 1; --j) {
+                grid[j][c] = 0;
+                if (j > 0) uf.unite(j, j + 1);
+            }
+            // Down
+            for (int j = r + 1; j < h && grid[j][c] == 1; ++j) {
+                grid[j][c] = 0;
+                if (j < h - 1) uf.unite(j - 1, j);
+            }
+            // Left
+            for (int j = c - 1; j >= 0 && grid[r][j] == 1; --j) {
+                grid[r][j] = 0;
+                if (j > 0) uf.unite(j, j + 1);
+            }
+            // Right
+            for (int j = c + 1; j < w && grid[r][j] == 1; ++j) {
+                grid[r][j] = 0;
+                if (j < w - 1) uf.unite(j - 1, j);
+            }
+        }
+    }
+
+    int remainingWalls = 0;
+    for (int i = 0; i < h; ++i) {
+        for (int j = 0; j < w; ++j) {
+            if (grid[i][j] == 1) {
+                remainingWalls++;
+            }
+        }
+    }
+
+    cout << remainingWalls << endl;
+
+    return 0;
+}

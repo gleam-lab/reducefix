@@ -1,0 +1,69 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define int long long
+const int MAXN = 1010;
+const int MAXH = 1e5 + 5;
+
+int H, W, Y;
+int grid[MAXN][MAXN];
+bool vis[MAXN][MAXN];
+
+struct Cell {
+    int r, c, h;
+    bool operator<(const Cell& other) const {
+        return h > other.h; // min-heap
+    }
+};
+
+int dx[] = {0, 0, 1, -1};
+int dy[] = {1, -1, 0, 0};
+
+priority_queue<Cell> pq;
+
+int32_t main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+    cout.tie(0);
+
+    cin >> H >> W >> Y;
+    for (int i = 0; i < H; ++i)
+        for (int j = 0; j < W; ++j)
+            cin >> grid[i][j];
+
+    // Mark boundary cells and push into priority queue
+    for (int i = 0; i < H; ++i) {
+        for (int j = 0; j < W; ++j) {
+            if (i == 0 || i == H - 1 || j == 0 || j == W - 1) {
+                vis[i][j] = true;
+                pq.push({i, j, grid[i][j]});
+            }
+        }
+    }
+
+    int total = H * W;
+    vector<int> ans(Y + 2, 0); // ans[year] = remaining area
+
+    int level = 1;
+    for (int year = 1; year <= Y; ++year) {
+        while (!pq.empty() && pq.top().h <= year) {
+            Cell cur = pq.top(); pq.pop();
+            if (!vis[cur.r][cur.c]) continue;
+            total--;
+
+            for (int d = 0; d < 4; ++d) {
+                int nr = cur.r + dx[d];
+                int nc = cur.c + dy[d];
+                if (nr >= 0 && nr < H && nc >= 0 && nc < W && !vis[nr][nc]) {
+                    vis[nr][nc] = true;
+                    pq.push({nr, nc, grid[nr][nc]});
+                }
+            }
+        }
+        ans[year] = total;
+    }
+
+    for (int year = 1; year <= Y; ++year)
+        cout << ans[year] << '\n';
+
+    return 0;
+}

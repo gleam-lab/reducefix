@@ -1,0 +1,29 @@
+#include<bits/stdc++.h>
+using namespace std;
+const int MAXN = 200005;
+int n, q, x[MAXN], p[MAXN];
+map<int, int> sum;
+
+int main() {
+    cin >> n;
+    for (int i = 1; i <= n; i++) {
+        cin >> x[i];
+    }
+    for (int i = 1; i <= n; i++) {
+        cin >> p[i];
+        sum[x[i]] += p[i];
+    }
+    cin >> q;
+    while (q--) {
+        int L, R;
+        cin >> L >> R;
+        auto it_l = sum.lower_bound(L);
+        auto it_r = sum.upper_bound(R);
+        int ans = 0;
+        for (auto it = it_l; it != it_r; ++it) {
+            ans += it->second;
+        }
+        cout << ans << endl;
+    }
+    return 0;
+}

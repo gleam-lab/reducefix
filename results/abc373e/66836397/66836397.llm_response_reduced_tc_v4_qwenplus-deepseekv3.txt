@@ -1,0 +1,89 @@
+To fix this code, we need to address the problem of determining the minimum additional votes each candidate needs to guarantee their election, regardless of how the remaining votes are distributed among the other candidates. The previous approach had some logical flaws and didn't correctly handle all possible cases, especially edge cases like when there's only one candidate or when the remaining votes are insufficient.
+
+### Approaches
+1. **Sorting and Binary Search**: For each candidate, we need to determine the minimum votes they need to add such that no more than `M-1` candidates can have votes strictly greater than theirs. This involves:
+   - Sorting the initial votes to efficiently compute the required conditions.
+   - For each candidate, perform a binary search to find the minimum additional votes `X` that ensures their election.
+   - During the binary search, check if the candidate can secure their position by ensuring that the number of candidates with more votes than theirs is less than `M` after redistribution of the remaining votes.
+
+2. **Efficient Calculation**: For each candidate, after adding `X` votes, we need to check:
+   - The position of the candidate in the sorted list of votes.
+   - The remaining votes that can be distributed to other candidates to ensure that no more than `M-1` candidates exceed the candidate's vote count.
+
+### Solution Code
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    ll N, M, K;
+    cin >> N >> M >> K;
+    vector<ll> A(N);
+    ll sum = 0;
+    for (ll &a : A) {
+        cin >> a;
+        sum += a;
+    }
+    ll rem = K - sum;
+
+    vector<ll> sorted_A = A;
+    sort(sorted_A.begin(), sorted_A.end());
+    vector<ll> prefix(N + 1, 0);
+    for (int i = 0; i < N; ++i) {
+        prefix[i + 1] = prefix[i] + sorted_A[i];
+    }
+
+    for (int i = 0; i < N; ++i) {
+        ll a_i = A[i];
+        ll low = 0, high = rem;
+        ll ans = -1;
+
+        while (low <= high) {
+            ll mid = (low + high) / 2;
+            ll new_a_i = a_i + mid;
+
+            auto it = upper_bound(sorted_A.begin(), sorted_A.end(), new_a_i);
+            ll cnt_greater = sorted_A.end() - it;
+            
+            if (cnt_greater < M) {
+                ans = mid;
+                high = mid - 1;
+                continue;
+            }
+
+            ll pos = it - sorted_A.begin();
+            ll start = pos - (M - 1 - cnt_greater);
+            if (start <= 0) {
+                low = mid + 1;
+                continue;
+            }
+
+            ll required = new_a_i * (M - cnt_greater - 1) - (prefix[pos] - prefix[pos - (M - cnt_greater - 1)]);
+            if (required <= rem - mid) {
+                ans = mid;
+                high = mid - 1;
+            } else {
+                low = mid + 1;
+            }
+        }
+
+        cout << ans << " \n"[i == N - 1];
+    }
+
+    return 0;
+}
+```
+
+### Explanation
+- **Initial Setup**: The code reads the number of candidates `N`, the threshold `M`, and the total votes `K`. It also reads the initial votes `A` for each candidate and calculates the remaining votes `rem` that can be distributed.
+- **Sorting and Prefix Sum**: The votes are sorted to facilitate efficient binary search operations. A prefix sum array is constructed to quickly compute sums of vote ranges.
+- **Binary Search for Each Candidate**: For each candidate, the code performs a binary search to find the minimum additional votes `X` needed. The search checks if the candidate can be placed in a position where no more than `M-1` candidates have votes strictly greater than theirs:
+  - **Upper Bound Check**: Determines how many candidates currently have votes greater than the candidate's new vote count after adding `X`.
+  - **Condition Check**: If fewer than `M` candidates have more votes, the candidate is guaranteed to be elected. Otherwise, it checks if the remaining votes can be distributed in a way that ensures the candidate's position.
+- **Output**: The results for each candidate are printed, indicating the minimum votes needed or `-1` if it's impossible to guarantee their election.
+
+This approach ensures that the solution is efficient and handles all edge cases correctly, leveraging sorting and binary search to achieve the desired results.

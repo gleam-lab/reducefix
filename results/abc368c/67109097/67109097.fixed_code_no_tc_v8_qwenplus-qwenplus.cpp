@@ -1,0 +1,45 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+
+int main() {
+    int N;
+    cin >> N;
+    vector<long long> H(N);
+    for (int i = 0; i < N; ++i) {
+        cin >> H[i];
+    }
+
+    long long T = 0;
+
+    // Priority queue to track enemies with their attack timing
+    priority_queue<long long, vector<long long>, greater<long long>> pq;
+
+    for (int t = 1; ; ++t) {
+        // Every 3rd second, deal 3 damage to the front enemy
+        if (t % 3 == 0) {
+            while (!H.empty() && H[0] <= 0) {
+                H.erase(H.begin());
+            }
+            if (H.empty()) break;
+            H[0] -= 3;
+            if (H[0] <= 0) {
+                H.erase(H.begin());
+            }
+        } else {
+            // Deal 1 damage to the front enemy
+            while (!H.empty() && H[0] <= 0) {
+                H.erase(H.begin());
+            }
+            if (H.empty()) break;
+            H[0]--;
+            if (H[0] <= 0) {
+                H.erase(H.begin());
+            }
+        }
+        T++;
+    }
+
+    cout << T << endl;
+    return 0;
+}

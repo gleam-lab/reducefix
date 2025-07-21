@@ -1,0 +1,73 @@
+To solve this problem efficiently, we need to simulate the attacks on enemies in such a way that each attack reduces the health of the frontmost enemy. The twist is that every third second (when `T` is divisible by 3), the damage dealt increases from 1 to 3.
+
+The key idea is to determine how many seconds it takes for each enemy to die **in sequence**, taking into account the timing of when they actually start being attacked — because we can only attack one enemy at a time.
+
+---
+
+### Strategy:
+
+- We will iterate through each enemy.
+- For each enemy, we calculate how many attacks are needed to reduce its health to zero or less:
+    - Every 3 attacks include two 1-damage attacks and one 3-damage attack → total damage per cycle = 5.
+    - So, we can compute full cycles (`H[i] / 5`) and remaining damage (`H[i] % 5`).
+- However, since we must align these attacks with the global timer `T`, which continues incrementing across all enemies, we must also track how many of those attacks were "triplet" attacks (i.e., where T was divisible by 3) to correctly schedule extra damage.
+
+We simulate the process using a greedy approach:
+- Use a queue to track how many triplet attacks are available in the next few steps.
+- If there's no available triple attack, use normal attacks.
+- If a triple attack is available and needed, consume it.
+
+This ensures we precisely model how long it takes to defeat each enemy considering the increasing power at intervals.
+
+Here's the corrected and efficient implementation:
+
+```cpp
+#include <iostream>
+#include <vector>
+#include <queue>
+
+using namespace std;
+using ll = long long;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+
+    int N;
+    cin >> N;
+    vector<ll> H(N);
+    for (int i = 0; i < N; ++i) {
+        cin >> H[i];
+    }
+
+    ll T = 0;
+    queue<ll> triple_attacks; // Stores times where triple attack is available
+
+    for (ll h : H) {
+        // Determine how many attacks of each type are needed
+        ll full_cycles = h / 5;
+        ll remainder = h % 5;
+
+        // Add three attacks per full cycle: two regular, one triple
+        for (ll i = 0; i < full_cycles; ++i) {
+            triple_attacks.push(T + 2);
+            T += 3;
+        }
+
+        // Now handle the remainder
+        while (remainder > 0) {
+            if (!triple_attacks.empty() && triple_attacks.front() == T) {
+                // Triple attack available
+                remainder -= 3;
+                triple_attacks.pop();
+            } else {
+                // Regular attack
+                remainder -= 1;
+            }
+            T++;
+        }
+    }
+
+    cout << T << endl;
+}
+```

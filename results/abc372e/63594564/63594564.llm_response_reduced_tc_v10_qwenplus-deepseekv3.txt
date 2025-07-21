@@ -1,0 +1,93 @@
+To fix this code, we need to ensure that the merging of sets and the maintenance of the top k largest elements in each connected component is handled correctly. The original approach attempts to merge two sorted lists and truncate them to the top 10 elements, but it fails to maintain the correct order and size constraints during the union operation.
+
+### Approaches
+
+1. **Union-Find Data Structure**: This will help efficiently manage the connected components of the graph.
+2. **Maintaining Top k Elements**: For each connected component, maintain a sorted list (in descending order) of the vertices. During a union operation, merge the two sorted lists from the components being united and keep only the top 10 elements.
+3. **Efficient Merging**: The merging of two sorted lists can be done in O(m + n) time where m and n are the sizes of the lists. Since we only keep the top 10 elements, the merging process is bounded by O(10) operations per union, making it efficient.
+
+### Solution Code
+
+```cpp
+#include <bits/stdc++.h>
+
+using namespace std;
+
+vector<int> parent;
+vector<vector<int>> top_k;
+
+int find_set(int v) {
+    if (v == parent[v])
+        return v;
+    return parent[v] = find_set(parent[v]);
+}
+
+void union_sets(int a, int b) {
+    a = find_set(a);
+    b = find_set(b);
+    if (a == b)
+        return;
+    if (top_k[a].size() < top_k[b].size())
+        swap(a, b);
+    vector<int> merged;
+    int i = 0, j = 0;
+    while (i < top_k[a].size() && j < top_k[b].size() && merged.size() < 10) {
+        if (top_k[a][i] > top_k[b][j]) {
+            merged.push_back(top_k[a][i]);
+            i++;
+        } else {
+            merged.push_back(top_k[b][j]);
+            j++;
+        }
+    }
+    while (i < top_k[a].size() && merged.size() < 10) {
+        merged.push_back(top_k[a][i]);
+        i++;
+    }
+    while (j < top_k[b].size() && merged.size() < 10) {
+        merged.push_back(top_k[b][j]);
+        j++;
+    }
+    top_k[a] = merged;
+    parent[b] = a;
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int n, q;
+    cin >> n >> q;
+    parent.resize(n + 1);
+    top_k.resize(n + 1);
+    for (int i = 1; i <= n; ++i) {
+        parent[i] = i;
+        top_k[i] = {i};
+    }
+
+    while (q--) {
+        int t, u, v;
+        cin >> t >> u >> v;
+        if (t == 1) {
+            union_sets(u, v);
+        } else {
+            int root = find_set(u);
+            if (top_k[root].size() < v) {
+                cout << -1 << '\n';
+            } else {
+                cout << top_k[root][v - 1] << '\n';
+            }
+        }
+    }
+
+    return 0;
+}
+```
+
+### Explanation
+
+1. **Initialization**: The `parent` array keeps track of the root parent of each vertex, initialized to each vertex being its own parent. The `top_k` array maintains a list of the top 10 largest vertices in each connected component, initially containing just the vertex itself.
+2. **Union Operation**: When merging two components, the algorithm merges their sorted lists of vertices. The merging is done such that the largest elements from both lists are combined into a new list, which is then truncated to the top 10 elements. The root of the smaller component is linked to the root of the larger component to maintain efficiency.
+3. **Query Handling**: For a type 2 query, the algorithm checks the root of the given vertex and retrieves the k-th largest element from its `top_k` list. If the list doesn't have enough elements, it returns -1.
+
+This approach ensures that each union operation is handled in constant time (due to the fixed size of 10 elements), making the overall complexity efficient and suitable for large inputs.

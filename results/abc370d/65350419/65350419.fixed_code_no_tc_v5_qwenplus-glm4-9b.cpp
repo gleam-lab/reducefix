@@ -1,0 +1,48 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define rep(i, n) for (int i = 0; i < (n); ++i)
+
+using ll = long long;
+
+int main() {
+    int h, w, q;
+    cin >> h >> w >> q;
+    vector<int> walls(h, w); // Total walls in each row
+
+    while (q--) {
+        int r, c;
+        cin >> r >> c;
+        --r; --c; // Convert to 0-indexed
+
+        // Check if there's a wall at (r, c) and destroy it
+        if (--walls[r] == 0) {
+            continue; // No wall to destroy, just decrement the count
+        }
+
+        // If there was a wall, destroy walls around (r, c)
+        // Vertical walls
+        if (r > 0 && walls[r - 1] > 0) {
+            --walls[r - 1];
+        }
+        if (r < h - 1 && walls[r + 1] > 0) {
+            --walls[r + 1];
+        }
+
+        // Horizontal walls
+        if (c > 0 && walls[r] > c) {
+            --walls[r];
+        }
+        if (c < w - 1 && walls[r] > w - c - 1) {
+            --walls[r];
+        }
+    }
+
+    // Calculate the total remaining walls
+    ll remaining_walls = 0;
+    for (int i = 0; i < h; ++i) {
+        remaining_walls += walls[i];
+    }
+
+    cout << remaining_walls << endl;
+    return 0;
+}

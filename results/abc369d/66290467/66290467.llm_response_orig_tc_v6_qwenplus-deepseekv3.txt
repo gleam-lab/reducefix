@@ -1,0 +1,65 @@
+The issue in the original code is that the dynamic programming approach only considers the immediate previous two states (i-1 and i-2), which doesn't account for the optimal strategy where we might want to skip more than one monster in a row to maximize the experience gain. 
+
+The correct approach should consider that when we defeat a monster, we can get either 1x or 2x its value, depending on whether we defeated the previous monster or skipped it. The optimal solution requires tracking two states at each step:
+1. The maximum experience when the current monster is defeated (either 1x or 2x)
+2. The maximum experience when the current monster is skipped (0x)
+
+Here's the corrected solution:
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+#define rep(i, n) for (int(i) = 0; (i) < (n); ++(i))
+#define drep(i, n) for (int(i) = (n) - 1; (i) >= 0; --(i))
+
+int main() {
+    int n;
+    cin >> n;
+    vector<ll> a(n, 0);
+    rep(i, n) cin >> a[i];
+
+    if (n == 1) {
+        cout << a[0] << endl;
+        return 0;
+    } else if (n == 2) {
+        cout << a[0] + 2 * a[1] << endl;
+        return 0;
+    }
+
+    // dp[i][0] = max experience when we skip monster i
+    // dp[i][1] = max experience when we defeat monster i
+    vector<vector<ll>> dp(n, vector<ll>(2, 0));
+    
+    dp[0][0] = 0;
+    dp[0][1] = a[0];
+    dp[1][0] = dp[0][1];
+    dp[1][1] = dp[0][1] + 2 * a[1];
+
+    for (int i = 2; i < n; ++i) {
+        // If we skip current monster, we must have defeated previous one
+        dp[i][0] = dp[i-1][1];
+        
+        // If we defeat current monster, we can either:
+        // 1. Defeat previous one (get 1x current)
+        // 2. Skip previous one (get 2x current)
+        dp[i][1] = max(dp[i-1][1] + a[i], dp[i-1][0] + 2 * a[i]);
+    }
+
+    cout << max(dp[n-1][0], dp[n-1][1]) << endl;
+
+    return 0;
+}
+```
+
+This solution maintains two states at each step:
+1. `dp[i][0]` - maximum experience if we skip the i-th monster
+2. `dp[i][1]` - maximum experience if we defeat the i-th monster
+
+The transitions are:
+- To skip the i-th monster, we must have defeated the (i-1)-th monster
+- To defeat the i-th monster, we can either:
+  - Defeat the (i-1)-th monster (get 1x value for i-th)
+  - Skip the (i-1)-th monster (get 2x value for i-th)
+
+The final answer is the maximum between skipping or defeating the last monster. This approach correctly handles the alternating pattern of 1s and large values in the failing test case, giving the optimal experience gain.

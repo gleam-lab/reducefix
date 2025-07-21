@@ -1,0 +1,1 @@
+dis[v] = min(dis[u] + a[v] + w, dis[v]);

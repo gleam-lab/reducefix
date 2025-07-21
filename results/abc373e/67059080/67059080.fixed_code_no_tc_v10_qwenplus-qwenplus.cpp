@@ -1,0 +1,83 @@
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+
+int main() {
+  ios::sync_with_stdio(false);
+  cin.tie(nullptr);
+
+  int N, M;
+  ll K;
+  cin >> N >> M >> K;
+
+  vector<ll> A(N);
+  for (int i = 0; i < N; ++i) {
+    cin >> A[i];
+  }
+
+  ll total_current = accumulate(A.begin(), A.end(), 0LL);
+  ll remaining_votes = K - total_current;
+
+  vector<ll> result(N, -1);
+
+  // Create a list of candidates with original indices
+  vector<pair<ll, int>> candidates(N);
+  for (int i = 0; i < N; ++i) {
+    candidates[i] = {A[i], i};
+  }
+
+  // Sort by current votes
+  sort(candidates.begin(), candidates.end());
+
+  // Prefix sum array for efficient range sum queries
+  vector<ll> prefix(N + 1);
+  for (int i = 0; i < N; ++i) {
+    prefix[i + 1] = prefix[i] + candidates[i].first;
+  }
+
+  // For each candidate, determine the minimum additional votes needed
+  for (int i = 0; i < N; ++i) {
+    int idx = candidates[i].second;
+    ll current = candidates[i].first;
+
+    // Binary search on the number of additional votes needed
+    ll low = 0;
+    ll high = remaining_votes;
+    ll answer = -1;
+
+    while (low <= high) {
+      ll mid = (low + high) / 2;
+      ll strengthened = current + mid;
+
+      // We need to find how many candidates have strictly more than 'strengthened'
+      int cnt = N - (upper_bound(candidates.begin(), candidates.end(), make_pair(strengthened, N)) - candidates.begin());
+
+      if (cnt < M) {
+        // Not enough candidates defeated, increase strength
+        low = mid + 1;
+        answer = mid;
+      } else {
+        // Too many candidates defeated, decrease strength
+        high = mid - 1;
+      }
+    }
+
+    if (answer != -1 && answer <= remaining_votes) {
+      result[idx] = answer;
+    } else {
+      // Check if already winning without any extra votes
+      ll cnt = N - (upper_bound(candidates.begin(), candidates.end(), make_pair(current, N)) - candidates.begin());
+      if (cnt < M) {
+        result[idx] = 0;
+      }
+    }
+  }
+
+  // Print the result in original candidate order
+  for (int i = 0; i < N; ++i) {
+    cout << result[i] << " ";
+  }
+  cout << "\n";
+
+  return 0;
+}

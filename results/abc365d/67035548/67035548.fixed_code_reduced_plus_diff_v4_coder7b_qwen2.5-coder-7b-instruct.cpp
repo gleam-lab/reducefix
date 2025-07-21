@@ -1,0 +1,29 @@
+#include <iostream>
+#include <string>
+#include <vector>
+#include <algorithm>
+
+using namespace std;
+
+int main() {
+    int n;
+    string s;
+    cin >> n >> s;
+
+    int wins = 0;
+    char prev = s[0];
+    for (int i = 1; i < n; ++i) {
+        if (s[i] == 'P' && prev == 'S') {
+            wins += 2;
+        } else if (s[i] == 'R' && prev == 'P') {
+            wins += 2;
+        } else if (s[i] == 'S' && prev == 'R') {
+            wins += 2;
+        }
+        prev = s[i];
+    }
+
+    cout << wins << endl;
+
+    return 0;
+}

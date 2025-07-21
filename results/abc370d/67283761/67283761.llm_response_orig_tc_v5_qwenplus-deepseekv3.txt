@@ -1,0 +1,203 @@
+To fix this code, we need to address the inefficient handling of the grid and the queries. The original approach using a 2D vector for the grid and attempting to cache directions is too slow for large inputs (H and W up to 4×10^5 and Q up to 2×10^5). Instead, we should use more efficient data structures like hash sets to track the walls and perform the necessary operations in constant time.
+
+### Approaches
+1. **Grid Representation**: Use a set to keep track of walls that still exist. This allows O(1) checks for the presence of walls.
+2. **Query Processing**:
+   - If there's a wall at the query position, remove it.
+   - If there's no wall, search in the four directions (up, down, left, right) for the nearest wall and remove it if found.
+3. **Efficient Search**: For each direction, use binary search (via set operations) to find the nearest wall in logarithmic time.
+
+### Solution Code
+```cpp
+#include <iostream>
+#include <vector>
+#include <set>
+#include <algorithm>
+
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int H, W, Q;
+    cin >> H >> W >> Q;
+
+    set<pair<int, int>> walls;
+    for (int i = 1; i <= H; ++i) {
+        for (int j = 1; j <= W; ++j) {
+            walls.insert({i, j});
+        }
+    }
+
+    while (Q--) {
+        int R, C;
+        cin >> R >> C;
+
+        auto pos = make_pair(R, C);
+        if (walls.find(pos) != walls.end()) {
+            walls.erase(pos);
+        } else {
+            // Search up
+            auto it = walls.lower_bound({R, C});
+            if (it != walls.begin()) {
+                --it;
+                if (it->second == C && it->first < R) {
+                    walls.erase(it);
+                    continue;
+                }
+                ++it;
+            }
+
+            // Search down
+            it = walls.lower_bound({R + 1, C});
+            if (it != walls.end() && it->second == C) {
+                walls.erase(it);
+                continue;
+            }
+
+            // Search left
+            it = walls.lower_bound({R, 0});
+            pair<int, int> left_candidate = {0, 0};
+            bool found_left = false;
+            for (; it != walls.end() && it->first == R; ++it) {
+                if (it->second < C) {
+                    left_candidate = *it;
+                    found_left = true;
+                } else {
+                    break;
+                }
+            }
+            if (found_left) {
+                walls.erase(left_candidate);
+                continue;
+            }
+
+            // Search right
+            it = walls.lower_bound({R, C + 1});
+            if (it != walls.end() && it->first == R) {
+                walls.erase(it);
+                continue;
+            }
+        }
+    }
+
+    cout << walls.size() << '\n';
+
+    return 0;
+}
+```
+
+Wait, but this implementation might still be too slow for the largest inputs because of the way it searches left and right directions. A more efficient way is needed to handle the horizontal searches.
+
+Let's optimize the horizontal searches by using sets for each row to store columns with walls. Similarly, for vertical searches, use sets for each column to store rows with walls. This way, we can efficiently find the nearest wall in any direction using set operations (upper_bound, lower_bound).
+
+Here's the optimized approach:
+
+1. **Data Structures**:
+   - `row_walls`: A vector of sets, where each set contains the column indices of walls in that row.
+   - `col_walls`: A vector of sets, where each set contains the row indices of walls in that column.
+   - `walls`: A set of all remaining wall positions for quick lookup.
+
+2. **Processing Queries**:
+   - For each query (R, C):
+     - If (R, C) is in `walls`, remove it from all data structures.
+     - Otherwise, search for the nearest wall in each of the four directions using the sets and remove them if found.
+
+3. **Efficiency**:
+   - Each set operation (insertion, deletion, search) is O(log N), where N is the number of elements in the set.
+   - There are O(Q) queries, and each query performs O(1) operations in the worst case (each direction), leading to an overall O(Q log N) time complexity, which is feasible for the given constraints.
+
+### Final Solution Code
+```cpp
+#include <iostream>
+#include <vector>
+#include <set>
+#include <algorithm>
+
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int H, W, Q;
+    cin >> H >> W >> Q;
+
+    set<pair<int, int>> walls;
+    vector<set<int>> row_walls(H + 1);
+    vector<set<int>> col_walls(W + 1);
+
+    for (int i = 1; i <= H; ++i) {
+        for (int j = 1; j <= W; ++j) {
+            walls.insert({i, j});
+            row_walls[i].insert(j);
+            col_walls[j].insert(i);
+        }
+    }
+
+    while (Q--) {
+        int R, C;
+        cin >> R >> C;
+
+        if (walls.count({R, C})) {
+            walls.erase({R, C});
+            row_walls[R].erase(C);
+            col_walls[C].erase(R);
+        } else {
+            // Search up
+            auto it = col_walls[C].lower_bound(R);
+            if (it != col_walls[C].begin()) {
+                --it;
+                int r = *it;
+                walls.erase({r, C});
+                row_walls[r].erase(C);
+                col_walls[C].erase(it);
+                continue;
+            }
+
+            // Search down
+            it = col_walls[C].lower_bound(R + 1);
+            if (it != col_walls[C].end()) {
+                int r = *it;
+                walls.erase({r, C});
+                row_walls[r].erase(C);
+                col_walls[C].erase(it);
+                continue;
+            }
+
+            // Search left
+            it = row_walls[R].lower_bound(C);
+            if (it != row_walls[R].begin()) {
+                --it;
+                int c = *it;
+                walls.erase({R, c});
+                row_walls[R].erase(it);
+                col_walls[c].erase(R);
+                continue;
+            }
+
+            // Search right
+            it = row_walls[R].lower_bound(C + 1);
+            if (it != row_walls[R].end()) {
+                int c = *it;
+                walls.erase({R, c});
+                row_walls[R].erase(it);
+                col_walls[c].erase(R);
+                continue;
+            }
+        }
+    }
+
+    cout << walls.size() << '\n';
+
+    return 0;
+}
+```
+
+### Explanation
+- **Initialization**: We initialize the grid by marking all cells as walls and storing their positions in sets for rows and columns.
+- **Query Processing**:
+  - For each query, if the cell has a wall, it is removed from all data structures.
+  - If there's no wall, we search in each direction (up, down, left, right) for the nearest wall using binary search (via `lower_bound` on sets) and remove it if found.
+- **Efficiency**: The use of sets allows each search and deletion operation to be performed in logarithmic time relative to the number of elements, making the solution efficient and scalable for large inputs. The total time complexity is O(Q log N), where N is the number of walls, which is optimal for the given problem constraints.

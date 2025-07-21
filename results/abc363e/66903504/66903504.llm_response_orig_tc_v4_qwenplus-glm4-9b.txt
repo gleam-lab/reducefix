@@ -1,0 +1,76 @@
+
+To solve this problem, we can use a flood fill algorithm (similar to the "paint bucket" tool in graphics programs). The basic idea is to start with all cells above the initial sea level and proceed to mark entire regions that are connected to these cells. Each of these regions can sink if the sea level rises to the elevation of the first cell in the region. If the sea level rises to the elevation of a cell, we mark it as sinking by setting its value to the sea level (which is 0 in this problem). Then, we check adjacent cells to see if they will also sink and repeat the process.
+
+The steps are as follows:
+
+1. Initialize a matrix `F` the same size as `A` to keep track of whether a cell is above sea level or will sink.
+2. Use a flood fill to mark all connected components of cells initially above sea level. Each component will be marked with the elevation of its highest cell.
+3. Increment the sea level and set all cells with an elevation less than or equal to the current sea level to sink.
+4. Check adjacent cells to see if they have become submerged and need to be marked as sinking.
+5. Repeat steps 3 and 4 until the sea level has risen for `Y` years.
+6. At each year, calculate the area of the island that remains above sea level and print it.
+
+Let's implement this algorithm:
+
+```cpp
+#include<bits/stdc++.h>
+using namespace std;
+
+int main() {
+    int H, W, Y;
+    cin >> H >> W >> Y;
+
+    vector<vector<int>> A(H, vector<int>(W));
+    vector<vector<int>> F(H + 1, vector<int>(W + 1, -1)); // extra layer for boundary conditions
+    vector<pair<int, int>> directions = {{1, 0}, {0, 1}, {-1, 0}, {0, -1}}; // up, right, down, left
+
+    // Read the elevation matrix
+    for (int i = 0; i < H; ++i) {
+        for (int j = 0; j < W; ++j) {
+            cin >> A[i][j];
+        }
+    }
+
+    // Initialize flood fill
+    queue<pair<int, int>> q;
+    F[1][1] = A[0][0];
+    q.push({0, 0});
+
+    // Perform flood fill
+    while (!q.empty()) {
+        auto [x, y] = q.front();
+        q.pop();
+        for (auto [dx, dy] : directions) {
+            int nx = x + dx;
+            int ny = y + dy;
+            if (nx < 0 || nx >= H || ny < 0 || ny >= W) continue;
+            if (F[nx + 1][ny + 1] != -1) continue;
+            if (A[nx][ny] < F[x + 1][y + 1]) continue; // cell is not higher than the current highest
+            F[nx + 1][ny + 1] = A[nx][ny];
+            q.push({nx, ny});
+        }
+    }
+
+    // Process each year
+    long long remaining_area = H * W;
+    for (int i = 0; i < Y; ++i) {
+        long long to_sink = 0;
+        for (int x = 0; x < H; ++x) {
+            for (int y = 0; y < W; ++y) {
+                if (A[x][y] <= i && F[x + 1][y + 1] != -1) {
+                    // This cell and its region will sink
+                    to_sink += F[x + 1][y + 1];
+                    A[x][y] = 0;
+                    F[x + 1][y + 1] = -1; // No longer above sea level
+                }
+            }
+        }
+        remaining_area -= to_sink;
+        cout << remaining_area << endl;
+    }
+
+    return 0;
+}
+```
+
+This code uses a flood fill to find connected components of cells above the sea level, then iterates through each year, marking cells for sinking if their elevation is less than or equal to the current sea level and updating the remaining area of the island.

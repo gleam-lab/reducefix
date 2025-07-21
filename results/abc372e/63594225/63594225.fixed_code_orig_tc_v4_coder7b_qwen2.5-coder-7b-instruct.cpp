@@ -1,0 +1,53 @@
+#include "bits/stdc++.h"
+
+using namespace std;
+
+#define ff first
+#define ss second
+#define ll long long
+#define SZ(s) (int)s.size()
+
+const int N = 2e5 + 5;
+
+vector<int> adj[N];
+bool visited[N];
+
+void dfs(int node) {
+    visited[node] = true;
+    for(auto &child : adj[node])
+        if(!visited[child])
+            dfs(child);
+}
+
+int main() {
+    ios_base::sync_with_stdio(false); cin.tie(nullptr);
+
+    int n, m;
+    cin >> n >> m;
+    for(int i = 1; i <= m; ++i) {
+        int type;
+        cin >> type;
+        if(type == 1) {
+            int u, v;
+            cin >> u >> v;
+            adj[u].push_back(v);
+            adj[v].push_back(u);
+        } else {
+            int u, k;
+            cin >> u >> k;
+            memset(visited, false, sizeof(visited));
+            dfs(u);
+            vector<int> nodes;
+            for(int i = 1; i <= n; ++i)
+                if(visited[i])
+                    nodes.push_back(i);
+            sort(nodes.begin(), nodes.end());
+            if(k > nodes.size())
+                cout << "-1\n";
+            else
+                cout << nodes[k - 1] << "\n";
+        }
+    }
+
+    return 0;
+}

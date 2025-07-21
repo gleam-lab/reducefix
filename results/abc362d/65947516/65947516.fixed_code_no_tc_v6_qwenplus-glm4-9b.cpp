@@ -1,0 +1,72 @@
+#include<queue>
+#include<vector>
+#include<cstdio>
+#include<climits>
+#include<algorithm>
+using namespace std;
+
+typedef long long ll;
+typedef pair<int, int> pii;
+
+const int N = 2e5 + 5;
+int n, m;
+ll a[N];
+ll dis[N];
+vector<pii> g[N]; // Using vector of pairs for adjacency list
+
+struct node {
+    int id;
+    ll dist; // Using long long for distances to handle large values
+    bool operator<(const node& x) const {
+        return dist > x.dist;
+    }
+};
+
+void dijkstra() {
+    memset(dis, 0x3f, sizeof(dis)); // Initialize distances with largest possible value
+    priority_queue<node> pq; // Max-heap to store vertices
+    dis[1] = 0;
+    pq.push({1, 0});
+
+    while (!pq.empty()) {
+        node cur = pq.top();
+        pq.pop();
+
+        int curNode = cur.id;
+        ll curDist = cur.dist;
+
+        if (curDist > dis[curNode]) continue; // Skip processing if already processed and not minimal
+
+        for (auto& edge : g[curNode]) {
+            int nextNode = edge.first;
+            ll edgeWeight = edge.second;
+            ll nextDist = dis[curNode] + edgeWeight + a[nextNode];
+
+            if (nextDist < dis[nextNode]) {
+                dis[nextNode] = nextDist;
+                pq.push({nextNode, nextDist});
+            }
+        }
+    }
+}
+
+int main() {
+    scanf("%d%d", &n, &m);
+    for (int i = 1; i <= n; i++) {
+        scanf("%lld", &a[i]);
+    }
+
+    for (int i = 0; i < m; i++) {
+        int u, v, w;
+        scanf("%d%d%d", &u, &v, &w);
+        g[u].push_back({v, w});
+        g[v].push_back({u, w});
+    }
+
+    dijkstra();
+
+    for (int i = 2; i <= n; i++) {
+        printf("%lld ", dis[i]);
+    }
+    return 0;
+}

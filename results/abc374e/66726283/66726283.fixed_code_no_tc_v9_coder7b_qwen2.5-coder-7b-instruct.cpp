@@ -1,0 +1,60 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+typedef long long ll;
+
+const int N = 105;
+
+ll n, x;
+ll a[N], b[N], p[N], q[N];
+
+ll c[N];
+
+// Function to check if it's possible to achieve the target value within mid budget
+bool check(ll mid) {
+    for (ll i = 1; i <= n; ++i) {
+        c[i] = INT_MAX;
+        for (ll j = 0; j <= b[i]; ++j) {
+            ll cost1 = j * p[i] + q[i] * ((mid - j * a[i] + b[i] - 1) / b[i]);
+            ll cost2 = j * q[i] + p[i] * ((mid - j * b[i] + a[i] - 1) / a[i]);
+            c[i] = min(c[i], min(cost1, cost2));
+        }
+    }
+
+    ll total_cost = 0;
+    for (ll i = 1; i <= n; ++i) {
+        total_cost += c[i];
+    }
+
+    return total_cost <= x;
+}
+
+signed main() {
+    ios::sync_with_stdio(0);
+    cin.tie(0);
+    cout.tie(0);
+
+    cin >> n;
+    for (ll i = 1; i <= n; ++i) {
+        cin >> a[i] >> p[i] >> b[i] >> q[i];
+    }
+
+    ll l = 1, r = 1e18; // Adjust the upper limit based on problem constraints
+    while (l < r) {
+        ll mid = (l + r) / 2;
+        if (check(mid)) {
+            l = mid + 1;
+        } else {
+            r = mid;
+        }
+    }
+
+    // Since we need the smallest value that satisfies the condition, we check l - 1 as well
+    if (check(l - 1)) {
+        cout << l - 1 << endl;
+    } else {
+        cout << l << endl;
+    }
+
+    return 0;
+}

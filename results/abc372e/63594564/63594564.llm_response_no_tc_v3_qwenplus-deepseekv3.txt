@@ -1,0 +1,85 @@
+To fix this code, we need to address the inefficiency in merging the sorted vectors during the `uni` operation. The current approach merges the entire vectors first and then trims them to size 10, which is inefficient and unnecessary. Instead, we should merge only the top 10 elements from each vector and keep the merged result sorted in descending order.
+
+### Approaches
+1. **Union-Find Data Structure**: We use the union-find (disjoint set) data structure to manage the connected components of the graph.
+2. **Top-K Maintenance**: For each connected component, maintain a sorted list (in descending order) of the top 10 vertex numbers. This allows efficient retrieval of the k-th largest vertex.
+3. **Efficient Merging**: When merging two components, merge their top 10 lists and keep only the top 10 elements from the merged list. This ensures that we only handle a small, fixed number of elements during each merge operation, keeping the operations efficient.
+
+### Solution Code
+```cpp
+#include <bits/stdc++.h>
+
+using namespace std;
+
+vector<int> p;
+vector<vector<int>> top;
+
+int par(int x) {
+    if (p[x] == x) return x;
+    return p[x] = par(p[x]);
+}
+
+void uni(int a, int b) {
+    a = par(a), b = par(b);
+    if (a == b) return;
+    if (top[a].size() < top[b].size()) swap(a, b);
+    vector<int> merged;
+    int i = 0, j = 0;
+    while (i < top[a].size() && j < top[b].size() && merged.size() < 10) {
+        if (top[a][i] > top[b][j]) {
+            merged.push_back(top[a][i]);
+            i++;
+        } else {
+            merged.push_back(top[b][j]);
+            j++;
+        }
+    }
+    while (i < top[a].size() && merged.size() < 10) {
+        merged.push_back(top[a][i]);
+        i++;
+    }
+    while (j < top[b].size() && merged.size() < 10) {
+        merged.push_back(top[b][j]);
+        j++;
+    }
+    top[a] = merged;
+    p[b] = a;
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int n, q;
+    cin >> n >> q;
+    p.resize(n + 1);
+    top.resize(n + 1);
+    for (int i = 1; i <= n; i++) {
+        p[i] = i;
+        top[i].push_back(i);
+    }
+    while (q--) {
+        int t, a, b;
+        cin >> t >> a >> b;
+        if (t == 1) {
+            uni(a, b);
+        } else {
+            a = par(a);
+            if (top[a].size() < b) {
+                cout << -1 << '\n';
+            } else {
+                cout << top[a][b - 1] << '\n';
+            }
+        }
+    }
+
+    return 0;
+}
+```
+
+### Explanation
+1. **Initialization**: We initialize the parent array `p` and the `top` vector, which stores the top 10 vertex numbers for each component. Initially, each vertex is its own parent, and its `top` list contains only itself.
+2. **Union Operation (`uni`)**: When merging two components, we merge their `top` lists by selecting the largest elements from both lists up to a maximum of 10 elements. This ensures that the merged list remains sorted in descending order and contains the top 10 elements.
+3. **Query Handling**: For type 2 queries, we check if the connected component of vertex `v` has at least `k` vertices. If not, we return `-1`. Otherwise, we return the k-th largest vertex from the `top` list.
+
+This approach efficiently handles the operations within the constraints, ensuring that each merge and query operation is performed in constant time relative to the fixed size of the top lists (10 elements).

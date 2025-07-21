@@ -1,0 +1,101 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define ll long long
+
+ll dx[4] = {0, 1, 0, -1};
+ll dy[4] = {1, 0, -1, 0};
+
+int main() {
+    ll h, w, y;
+    cin >> h >> w >> y;
+    vector<vector<ll>> A(h, vector<ll>(w));
+    for (ll i = 0; i < h; ++i) {
+        for (ll j = 0; j < w; ++j) {
+            cin >> A[i][j];
+        }
+    }
+
+    // Total number of cells
+    ll total = h * w;
+
+    // visited array to mark processed cells
+    vector<vector<bool>> visited(h, vector<bool>(w, false));
+
+    // Priority queue to process cells in increasing order of height
+    priority_queue<vector<ll>, vector<vector<ll>>, greater<vector<ll>>> pq;
+
+    // Initialize the queue with the border cells and mark them as visited
+    for (ll i = 0; i < h; ++i) {
+        if (!visited[i][0]) {
+            pq.push({A[i][0], i, 0});
+            visited[i][0] = true;
+        }
+        if (!visited[i][w-1]) {
+            pq.push({A[i][w-1], i, w-1});
+            visited[i][w-1] = true;
+        }
+    }
+    for (ll j = 1; j < w - 1; ++j) {
+        if (!visited[0][j]) {
+            pq.push({A[0][j], 0, j});
+            visited[0][j] = true;
+        }
+        if (!visited[h-1][j]) {
+            pq.push({A[h-1][j], h-1, j});
+            visited[h-1][j] = true;
+        }
+    }
+
+    // Process each year
+    ll year = 0;
+    ll current_year = 0;
+    ll removed = 0;
+
+    // To store the next cell that becomes exposed to sea level in future years
+    vector<vector<ll>> removal_year(h, vector<ll>(w, 0));
+
+    while (!pq.empty() && current_year <= y) {
+        auto top = pq.top();
+        ll val = top[0], x = top[1], y_coord = top[2];
+        pq.pop();
+
+        // If the value is larger than current year, we can't process further now
+        if (val > current_year) {
+            removal_year[x][y_coord] = val;
+            continue;
+        }
+
+        // This cell is submerged this year
+        removed++;
+        for (ll d = 0; d < 4; ++d) {
+            ll nx = x + dx[d];
+            ll ny = y_coord + dy[d];
+            if (nx >= 0 && nx < h && ny >= 0 && ny < w && !visited[nx][ny]) {
+                pq.push({A[nx][ny], nx, ny});
+                visited[nx][ny] = true;
+            }
+        }
+
+        removal_year[x][y_coord] = val;
+        current_year = val;
+    }
+
+    // Now build the answer using the removal_year array
+    vector<ll> area(y + 2, total);  // area[i] = remaining area at year i
+    for (ll i = 0; i < h; ++i) {
+        for (ll j = 0; j < w; ++j) {
+            ll r_year = removal_year[i][j];
+            if (r_year <= y) {
+                for (ll k = r_year; k <= y; ++k) {
+                    area[k]--;
+                }
+            }
+        }
+    }
+
+    for (ll i = 1; i <= y; ++i) {
+        cout << area[i] << endl;
+    }
+
+    return 0;
+}

@@ -1,0 +1,54 @@
+#include <iostream>
+#include <vector>
+#include <set>
+
+using namespace std;
+using ll = long long;
+
+int main() {
+    int T;
+    cin >> T;
+    
+    while (T--) {
+        int N, K;
+        cin >> N >> K;
+        vector<ll> A(N), B(N);
+        
+        for (int i = 0; i < N; ++i) {
+            cin >> A[i];
+        }
+        for (int i = 0; i < N; ++i) {
+            cin >> B[i];
+        }
+        
+        // pair the elements of A and B
+        vector<pair<ll, ll>> AB(N);
+        for (int i = 0; i < N; ++i) {
+            AB[i] = {A[i], B[i]};
+        }
+        
+        // sort the pairs by A[i] in ascending order
+        sort(AB.begin(), AB.end());
+        
+        // calculate the sum of B for the first K elements
+        ll sum_B = 0;
+        for (int i = 0; i < K; ++i) {
+            sum_B += AB[i].second;
+        }
+        
+        // the initial answer is the first K elements
+        ll ans = AB[K - 1].first * sum_B;
+        
+        // iterate through the remaining elements
+        for (int i = K; i < N; ++i) {
+            sum_B -= AB[K - 1].second; // subtract the smallest B[i] from sum_B
+            sum_B += AB[i].second;    // add the next largest B[i] to sum_B
+            ans = min(ans, AB[i].first * sum_B); // update the answer
+            K++; // move to the next element
+        }
+        
+        cout << ans << endl;
+    }
+    
+    return 0;
+}

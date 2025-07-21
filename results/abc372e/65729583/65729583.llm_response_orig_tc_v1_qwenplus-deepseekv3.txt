@@ -1,0 +1,88 @@
+To fix this code, we need to ensure that the union-find data structure properly maintains the connected components and efficiently answers the k-th largest element queries. The original code uses an ordered_set (from the GNU Policy-Based Data Structures) to keep track of vertices in each component, but it might not handle the merging of components optimally, especially when the components are large.
+
+### Approaches
+1. **Union-Find Data Structure**: This will help in efficiently merging sets and finding the root of any element.
+2. **Balanced Tree for Each Component**: Each component will maintain a balanced binary search tree (like `std::set`) to keep track of the vertices in sorted order. This allows efficient insertion, deletion, and k-th largest element queries.
+3. **Path Compression and Union by Size**: Optimize the union-find operations to ensure near constant time complexity for find and union operations.
+4. **Efficient Merging**: When merging two components, always merge the smaller set into the larger one to keep the operations efficient.
+
+### Solution Code
+
+```cpp
+#include <iostream>
+#include <vector>
+#include <set>
+#include <algorithm>
+
+using namespace std;
+
+const int MAXN = 2e5 + 5;
+
+int parent[MAXN];
+set<int> components[MAXN];
+
+int find(int u) {
+    if (parent[u] != u) {
+        parent[u] = find(parent[u]);
+    }
+    return parent[u];
+}
+
+void unite(int u, int v) {
+    u = find(u);
+    v = find(v);
+    if (u == v) return;
+    if (components[u].size() < components[v].size()) {
+        swap(u, v);
+    }
+    parent[v] = u;
+    for (int x : components[v]) {
+        components[u].insert(x);
+    }
+    components[v].clear();
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int N, Q;
+    cin >> N >> Q;
+
+    for (int i = 1; i <= N; ++i) {
+        parent[i] = i;
+        components[i].insert(i);
+    }
+
+    while (Q--) {
+        int type;
+        cin >> type;
+        if (type == 1) {
+            int u, v;
+            cin >> u >> v;
+            unite(u, v);
+        } else {
+            int v, k;
+            cin >> v >> k;
+            v = find(v);
+            if (components[v].size() < k) {
+                cout << -1 << '\n';
+            } else {
+                auto it = components[v].end();
+                advance(it, -k);
+                cout << *it << '\n';
+            }
+        }
+    }
+
+    return 0;
+}
+```
+
+### Explanation
+1. **Initialization**: We initialize each vertex to be its own parent and store each vertex in its own set.
+2. **Union Operation**: When merging two vertices, we find their roots. If the roots are different, we merge the smaller set into the larger one to maintain efficiency. The vertices from the smaller set are added to the larger set, and the smaller set is cleared.
+3. **Find Operation**: Uses path compression to optimize future queries, ensuring near constant time complexity.
+4. **Query Operation**: For a query asking for the k-th largest element in a component, we check the size of the component. If it's too small, we return -1. Otherwise, we use an iterator to find the k-th largest element by moving from the end of the set back by k positions.
+
+This approach ensures that each union and find operation is efficient, and the k-th largest element queries are handled in logarithmic time relative to the size of the component. The solution efficiently handles the constraints with a time complexity of O(N log N) for the union-find operations and O(log N) per query.

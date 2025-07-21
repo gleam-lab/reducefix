@@ -1,0 +1,101 @@
+To solve this problem, we need to efficiently handle both adding edges and querying the k-th largest connected vertex. Here's a step-by-step approach to achieve this:
+
+1. **Union-Find Data Structure**: To manage connected components efficiently, we use a Union-Find (Disjoint Set Union) data structure. This will help us quickly determine which vertices are connected and merge sets when edges are added.
+
+2. **Priority Queue**: For each set managed by the Union-Find structure, we maintain a priority queue to store the degrees of the vertices in that set. This allows us to efficiently find the k-th largest degree.
+
+3. **Handling Queries**:
+   - For Type 1 queries (adding an edge), we union the sets containing the two vertices and update the priority queues accordingly.
+   - For Type 2 queries (finding the k-th largest degree), we access the relevant priority queue and return the k-th element if it exists.
+
+Here is the corrected C++ code implementing the above approach:
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+struct DSU {
+    vector<int> parent, rank, size, pqIndex;
+    priority_queue<pair<int, int>, vector<pair<int, int>>, greater<pair<int, int>>> pq;
+    
+    DSU(int n) : parent(n + 1), rank(n + 1, 0), size(n + 1, 1), pqIndex(n + 1, -1) {
+        iota(parent.begin(), parent.end(), 0);
+    }
+    
+    int find(int u) {
+        if (parent[u] != u) {
+            parent[u] = find(parent[u]);
+        }
+        return parent[u];
+    }
+    
+    void unite(int u, int v) {
+        u = find(u);
+        v = find(v);
+        
+        if (u == v) return;
+        
+        if (rank[u] > rank[v]) {
+            swap(u, v);
+        } else if (rank[u] == rank[v]) {
+            rank[v]++;
+        }
+        
+        parent[u] = v;
+        size[v] += size[u];
+        
+        // Update priority queue for set u
+        pq.erase(pq.begin() + pqIndex[u]);
+        pq.push({size[u], u});
+        pqIndex[u] = pq.size() - 1;
+        
+        // Update priority queue for set v
+        pq.push({size[v], v});
+        pqIndex[v] = pq.size() - 1;
+    }
+    
+    int getKthLargest(int u, int k) {
+        u = find(u);
+        auto it = pq.lower_bound({k, 0});
+        if (it != pq.end() && (*it).first >= k) {
+            return (*it).second;
+        }
+        return -1;
+    }
+};
+
+int main() {
+    ios::sync_with_stdio(false); cin.tie(nullptr);
+    
+    int n, q;
+    cin >> n >> q;
+    
+    DSU dsu(n);
+    
+    while (q--) {
+        int op, ix, iy;
+        cin >> op >> ix >> iy;
+        
+        if (op == 1) {
+            dsu.unite(ix, iy);
+        } else {
+            cout << dsu.getKthLargest(ix, iy) << "\n";
+        }
+    }
+    
+    return 0;
+}
+```
+
+### Explanation:
+1. **DSU Class**:
+   - `find`: Path compression to find the root of a node.
+   - `unite`: Union by rank to merge two sets and update the priority queue.
+   - `getKthLargest`: Finds the k-th smallest element in the priority queue corresponding to the set containing the given node.
+
+2. **Main Function**:
+   - Reads the number of nodes and queries.
+   - Initializes the DSU structure.
+   - Processes each query, either by unifying sets or querying the k-th largest element.
+
+This solution ensures efficient handling of both operations within the given constraints.

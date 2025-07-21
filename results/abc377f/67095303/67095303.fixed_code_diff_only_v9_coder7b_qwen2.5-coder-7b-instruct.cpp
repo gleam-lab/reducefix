@@ -1,0 +1,111 @@
+#include<bits/stdc++.h>
+#define int long long
+#define PII pair<int,int>
+#define inf 1e9+7
+
+using namespace std;
+
+int qpowm(int a, int b, int m) {
+    int r = 1;
+    while (b) {
+        if (b & 1)(r *= a) %= m;
+        (a *= a) %= m, b >>= 1;
+    }
+    return r;
+}
+
+int qpow(int a, int b) {
+    int r = 1;
+    while (b) {
+        if (b & 1)r *= a;
+        a *= a;
+        b >>= 1;
+    }
+    return r;
+}
+
+void solve() {
+    int n, m;
+    cin >> n >> m;
+    set<int> horizontal, vertical, diagonal1, diagonal2; // diagonal1 for i+j=d, diagonal2 for i-j=d
+
+    for (int i = 0; i < m; i++) {
+        int x, y;
+        cin >> x >> y;
+        horizontal.insert(x);
+        vertical.insert(y);
+        diagonal1.insert(x + y);
+        diagonal2.insert(x - y);
+    }
+
+    int ans = (n - horizontal.size()) * (n - vertical.size());
+
+    for (auto d : diagonal1) {
+        // i+j=d 的对角线
+        set<int> s; // 记录已经被算过的行坐标
+        for (auto x : horizontal) { // 找到所有和该对角线相交的水平线
+            if (1 <= d - x && d - x <= n) {
+                s.insert(x);
+            }
+        }
+
+        for (auto y : vertical) { // 找到所有和该对角线相交的垂直线
+            if (1 <= d - y && d - y <= n) {
+                s.insert(d - y);
+            }
+        }
+
+        int len = 0;
+        if (d <= n + 1) { // 在左上部分，列坐标1~d-1
+            len = d - 1;
+        } else { // 在右下部分，列坐标d-n~n
+            len = n - (d - n) + 1;
+        }
+        ans -= (len - s.size()); // 所有这条对角线上y的取值（每个y对应一个x）减去 已经减去的x值（也就是已经减去了的点）
+    }
+
+    for (auto d : diagonal2) {
+        // i-j=d 的对角线
+        set<int> s; // 记录已经被算过的行坐标
+        for (auto x : horizontal) { // 找到所有和该对角线相交的水平线
+            if (1 <= x - d && x - d <= n) {
+                s.insert(x);
+            }
+        }
+
+        for (auto y : vertical) { // 找到所有和该对角线相交的垂直线
+            if (1 <= d + y && d + y <= n) {
+                s.insert(d + y);
+            }
+        }
+
+        for (auto e : diagonal1) {
+            // i+j==e, i-j==d
+            if ((e + d) % 2 == 0 && (e - d) % 2 == 0) {
+                int si = (e + d) / 2, sj = (e - d) / 2;
+                if (si >= 1 && si <= n && sj >= 1 && sj <= n) {
+                    s.insert(si);
+                }
+            }
+        }
+
+        int len = 0;
+        if (d <= 0) { // 在右上部分，列坐标1-d~n
+            len = n - (1 - d) + 1;
+        } else { // 在左下部分，列坐标1-n-d
+            len = n - d;
+        }
+        ans -= (len - s.size()); // 所有这条对角线上y的取值（每个y对应一个x）减去 已经减去的x值（也就是已经减去了的点）
+    }
+
+    cout << ans << endl;
+}
+
+signed main() {
+    int t;
+    cin >> t;
+    while (t--) {
+        solve();
+    }
+    return 0;
+}

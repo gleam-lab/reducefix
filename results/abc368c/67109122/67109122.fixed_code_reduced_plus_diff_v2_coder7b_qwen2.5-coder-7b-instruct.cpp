@@ -1,0 +1,47 @@
+#include<bits/stdc++.h>
+#define mod 1000000007
+using namespace std;
+
+typedef long long ll;
+
+int main() {
+    ios_base::sync_with_stdio(false); cin.tie(0); cout.tie(0);
+    int n;
+    cin >> n;
+    vector<ll> h(n+1);
+    for(int i=1;i<=n;i++)cin>>h[i];
+
+    ll t=0;
+    for(int i=1;i<=n;i++){
+        if(h[i]==0)continue;
+        if((t+1)%3==0){
+            h[i]-=3;
+            if(h[i]>0)t+=1;
+        }
+        else{
+            h[i]-=1;
+            t+=1;
+        }
+    }
+
+    while(true){
+        bool flag=true;
+        for(int i=1;i<=n;i++){
+            if(h[i]>0){
+                flag=false;
+                if((t+1)%3==0){
+                    h[i]-=3;
+                    if(h[i]>0)t+=1;
+                }
+                else{
+                    h[i]-=1;
+                    t+=1;
+                }
+            }
+        }
+        if(flag)break;
+    }
+
+    cout<<t<<endl;
+    return 0;
+}

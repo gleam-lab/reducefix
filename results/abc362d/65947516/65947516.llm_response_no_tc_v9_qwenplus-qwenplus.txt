@@ -1,0 +1,101 @@
+The issue in the given code lies in **how the path weight is computed** and how **vertex weights are applied** during the Dijkstra traversal.
+
+### Problem Analysis
+
+In this problem:
+- The **path cost includes both vertex and edge weights**, meaning:
+  - When moving from vertex `u` to vertex `v`, the total cost includes:
+    - The **edge weight** `B_j`
+    - The **vertex weight of u**, since you're leaving it
+    - But **not** the vertex weight of v yet (since you're arriving at it)
+
+Thus, for the shortest path computation:
+- You must **add A[u]** (vertex weight) only once when exiting that node.
+- The destination node's vertex weight (**A[v]**) should be added **once at the end** when computing the final result.
+
+### What Was Wrong in Your Code:
+1. In the Dijkstra loop:
+   ```cpp
+   dis[i.first] = dis[now.id] + i.second + a[now.id];
+   ```
+   This correctly adds the edge weight and the source vertex weight.
+2. However, at the end you do:
+   ```cpp
+   printf("%lld ",dis[i]+a[i]);
+   ```
+   This is correct because we have not included A[i] in the distance calculation — it's added once at the end.
+
+But there was one major bug:
+- In the initial setup, `dis[1] = 0;` — but this omits `A[1]`, which should be included because the path starts at vertex 1.
+  - So, `dis[1]` should actually be initialized as `A[1]`.
+
+### Fixed Code
+
+```cpp
+#include <queue>
+#include <vector>
+#include <cstdio>
+#include <cstring>
+#include <climits>
+#include <algorithm>
+using namespace std;
+typedef long long ll;
+typedef pair<ll, int> pli;
+
+const int N = 2e5 + 5;
+
+int n, m;
+ll a[N];
+ll dis[N];
+bool vis[N];
+vector<pli> g[N]; // {to, weight}
+
+void dijkstra() {
+    memset(dis, 0x3f, sizeof(dis));
+    memset(vis, 0, sizeof(vis));
+    dis[1] = a[1]; // Start with vertex 1's weight
+    priority_queue<pli, vector<pli>, greater<pli>> q;
+    q.push({dis[1], 1});
+    
+    while (!q.empty()) {
+        auto [d, u] = q.top(); q.pop();
+        if (vis[u]) continue;
+        vis[u] = true;
+        
+        for (auto &[v, b] : g[u]) {
+            if (dis[v] > dis[u] + b + a[v]) {
+                dis[v] = dis[u] + b + a[v];
+                q.push({dis[v], v});
+            }
+        }
+    }
+}
+
+int main() {
+    scanf("%d%d", &n, &m);
+    for (int i = 1; i <= n; ++i)
+        scanf("%lld", &a[i]);
+    
+    for (int i = 0; i < m; ++i) {
+        int u, v;
+        ll b;
+        scanf("%d%d%lld", &u, &v, &b);
+        g[u].push_back({v, b});
+        g[v].push_back({u, b});
+    }
+
+    dijkstra();
+
+    for (int i = 2; i <= n; ++i)
+        printf("%lld ", dis[i]);
+
+    return 0;
+}
+```
+
+### Summary of Fixes:
+- Initialize `dis[1] = a[1]` (start point includes vertex 1’s value).
+- For each move from `u` to `v`, update `dis[v] = dis[u] + edge_weight + a[v]`.
+- Output just `dis[i]` (no need to add `a[i]` again).
+
+This version is efficient (`O(M log N)`), handles large constraints well, and fixes all algorithmic errors.

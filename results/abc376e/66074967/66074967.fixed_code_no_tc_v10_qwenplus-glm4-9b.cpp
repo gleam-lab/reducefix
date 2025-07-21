@@ -1,0 +1,50 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+#define int long long
+const int N = 200010;
+
+int n, k;
+vector<pair<int, int>> a, b;
+
+int solve() {
+    sort(a.begin(), a.end());
+    sort(b.begin(), b.end());
+
+    int ans = LLONG_MAX;
+    vector<int> prefix_sum(n + 1, 0);
+    for (int i = 0; i < n; ++i) {
+        prefix_sum[i + 1] = prefix_sum[i] + b[i].first;
+    }
+
+    int max_a = 0;
+    for (int i = 0; i <= n - k; ++i) {
+        max_a = max(max_a, a[i].first);
+        int sum = prefix_sum[i + k - 1] - prefix_sum[i];
+        ans = min(ans, max_a * sum);
+    }
+
+    return ans;
+}
+
+int main() {
+    cin >> n >> k;
+    a.resize(n);
+    b.resize(n);
+    for (int i = 0; i < n; ++i) {
+        cin >> a[i].first >> b[i].first;
+        a[i].second = i;
+        b[i].second = i;
+    }
+    sort(a.begin(), a.end(), [](const pair<int, int>& p1, const pair<int, int>& p2) {
+        return p1.first > p2.first;
+    });
+    sort(b.begin(), b.end(), [](const pair<int, int>& p1, const pair<int, int>& p2) {
+        return p1.first > p2.first;
+    });
+
+    cout << solve() << endl;
+    return 0;
+}

@@ -1,0 +1,79 @@
+After analyzing the incorrect code and the failing test case, I identified several issues in the original implementation:
+
+1. The main problem was in how edge weights were calculated. The code was adding the vertex weight to the edge weight when constructing the adjacency list, which is incorrect. The vertex weight should only be added when entering the vertex, not for each edge.
+
+2. The priority queue comparator was incorrect (using `greater<pair<int, int>>` instead of `greater<pair<ll, int>>`).
+
+3. The final output added the vertex weight again when it was already included in the path calculation.
+
+Here's the corrected implementation that properly handles the path weight calculation:
+
+```cpp
+#include <iostream>
+#include <vector>
+#include <queue>
+#include <algorithm>
+#include <climits>
+using namespace std;
+typedef long long ll;
+
+const ll INF = 1e18;
+
+void solve() {
+    int n, m;
+    cin >> n >> m;
+
+    vector<ll> A(n);
+    for (ll &a : A) cin >> a;
+    
+    vector<vector<pair<int, ll>>> adj(n);
+    for (int i = 0; i < m; i++) {
+        int u, v;
+        ll b;
+        cin >> u >> v >> b;
+        u--; v--;
+        adj[u].emplace_back(v, b);
+        adj[v].emplace_back(u, b);
+    }
+
+    vector<ll> dist(n, INF);
+    dist[0] = A[0];
+    priority_queue<pair<ll, int>, vector<pair<ll, int>>, greater<pair<ll, int>>> pq;
+    pq.emplace(dist[0], 0);
+
+    while (!pq.empty()) {
+        auto [d, u] = pq.top();
+        pq.pop();
+        if (d > dist[u]) continue;
+        
+        for (auto [v, b] : adj[u]) {
+            ll new_dist = d + b + A[v];
+            if (new_dist < dist[v]) {
+                dist[v] = new_dist;
+                pq.emplace(dist[v], v);
+            }
+        }
+    }
+
+    for (int i = 1; i < n; i++) {
+        cout << dist[i] << " \n"[i == n-1];
+    }
+}
+
+int main() {
+    ios::sync_with_stdio(0);
+    cin.tie(0);
+    solve();
+    return 0;
+}
+```
+
+Key changes made:
+1. Removed the incorrect addition of vertex weights to edge weights in the adjacency list construction
+2. Fixed the priority queue comparator to properly compare `ll` values
+3. Initialize the distance to vertex 1 with its own weight (A[0])
+4. For each edge traversal, properly calculate the new distance as current distance + edge weight + destination vertex weight
+5. Simplified the output formatting
+6. Removed unnecessary includes and code not relevant to the problem
+
+This implementation correctly computes the minimum path weights from vertex 1 to all other vertices, taking into account both vertex and edge weights appropriately. The time complexity is O(N + M log N) due to the priority queue operations, which is efficient enough for the given constraints.

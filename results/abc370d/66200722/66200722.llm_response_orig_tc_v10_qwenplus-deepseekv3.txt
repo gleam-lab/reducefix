@@ -1,0 +1,115 @@
+To fix this code, we need to handle the queries correctly by efficiently tracking the walls and their destruction. The original approach tried to use Union-Find and maps to manage the walls, but it was inefficient and incorrect for large inputs. 
+
+Here's the corrected approach:
+1. Use a set to track the walls in each row and column.
+2. For each query, check if the wall at the given position exists. If it does, remove it.
+3. If the wall doesn't exist, find the nearest walls in the four directions (up, down, left, right) and remove them.
+
+This approach ensures that we efficiently handle each query in logarithmic time relative to the number of walls in each row or column, leveraging the ordered nature of sets for quick lookups.
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int H, W, Q;
+    cin >> H >> W >> Q;
+
+    vector<set<int>> row_walls(H + 1);
+    vector<set<int>> col_walls(W + 1);
+    set<pair<int, int>> walls;
+
+    for (int i = 1; i <= H; ++i) {
+        row_walls[i].insert(0);
+        row_walls[i].insert(W + 1);
+    }
+    for (int j = 1; j <= W; ++j) {
+        col_walls[j].insert(0);
+        col_walls[j].insert(H + 1);
+    }
+
+    long long remaining = (long long)H * W;
+
+    while (Q--) {
+        int R, C;
+        cin >> R >> C;
+
+        if (walls.count({R, C})) {
+            walls.erase({R, C});
+            row_walls[R].erase(C);
+            col_walls[C].erase(R);
+            remaining++;
+        } else {
+            walls.insert({R, C});
+            row_walls[R].insert(C);
+            col_walls[C].insert(R);
+            remaining--;
+        }
+
+        // Check up
+        auto it = col_walls[C].lower_bound(R);
+        if (*it != R) {
+            int up = *prev(it);
+            if (up >= 1 && !walls.count({up, C})) {
+                walls.insert({up, C});
+                row_walls[up].insert(C);
+                col_walls[C].insert(up);
+                remaining--;
+            }
+        }
+
+        // Check down
+        it = col_walls[C].upper_bound(R);
+        if (*it != R) {
+            int down = *it;
+            if (down <= H && !walls.count({down, C})) {
+                walls.insert({down, C});
+                row_walls[down].insert(C);
+                col_walls[C].insert(down);
+                remaining--;
+            }
+        }
+
+        // Check left
+        it = row_walls[R].lower_bound(C);
+        if (*it != C) {
+            int left = *prev(it);
+            if (left >= 1 && !walls.count({R, left})) {
+                walls.insert({R, left});
+                row_walls[R].insert(left);
+                col_walls[left].insert(R);
+                remaining--;
+            }
+        }
+
+        // Check right
+        it = row_walls[R].upper_bound(C);
+        if (*it != C) {
+            int right = *it;
+            if (right <= W && !walls.count({R, right})) {
+                walls.insert({R, right});
+                row_walls[R].insert(right);
+                col_walls[right].insert(R);
+                remaining--;
+            }
+        }
+    }
+
+    cout << remaining << '\n';
+
+    return 0;
+}
+```
+
+### Explanation
+1. **Initialization**: We initialize sets for each row and column to keep track of walls. We also use a global set to track all walls for quick existence checks.
+2. **Query Processing**: For each query:
+   - If the wall exists at the given position, it is removed, and the remaining wall count is incremented.
+   - If the wall does not exist, it is added, and the remaining wall count is decremented.
+3. **Neighbor Checks**: For each newly placed wall, we check the nearest walls in the four cardinal directions (up, down, left, right). If these walls exist and are not already in the set, they are added, and the remaining count is decremented.
+4. **Output**: The total number of remaining walls after all queries is printed.
+
+This approach efficiently handles each query in logarithmic time, making it suitable for large input sizes as specified in the problem constraints.

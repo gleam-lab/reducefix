@@ -1,0 +1,84 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+#define ll long long
+const int MAXN = 1005;
+int h, w, y;
+vector<vector<int>> A(MAXN, vector<int>(MAXN));
+
+struct Node {
+    int x, y, h;
+    bool operator<(const Node& other) const {
+        return h > other.h;
+    }
+};
+
+int bfs(int start_h) {
+    queue<Node> q;
+    vector<vector<bool>> visited(h, vector<bool>(w, false));
+    int count = 0;
+
+    for (int i = 0; i < h; ++i) {
+        for (int j = 0; j < w; ++j) {
+            if (!visited[i][j] && A[i][j] <= start_h) {
+                q.push({i, j, A[i][j]});
+                visited[i][j] = true;
+                count++;
+            }
+        }
+    }
+
+    int dx[] = {0, 1, 0, -1};
+    int dy[] = {1, 0, -1, 0};
+
+    while (!q.empty()) {
+        Node node = q.front();
+        q.pop();
+
+        for (int k = 0; k < 4; ++k) {
+            int nx = node.x + dx[k];
+            int ny = node.y + dy[k];
+
+            if (nx >= 0 && nx < h && ny >= 0 && ny < w && !visited[nx][ny] && A[nx][ny] <= start_h) {
+                q.push({nx, ny, A[nx][ny]});
+                visited[nx][ny] = true;
+                count++;
+            }
+        }
+    }
+
+    return count;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    cin >> h >> w >> y;
+
+    for (int i = 0; i < h; ++i) {
+        for (int j = 0; j < w; ++j) {
+            cin >> A[i][j];
+        }
+    }
+
+    set<int> heights;
+    for (int i = 0; i < h; ++i) {
+        for (int j = 0; j < w; ++j) {
+            heights.insert(A[i][j]);
+        }
+    }
+
+    vector<int> result(y);
+    for (auto it = heights.begin(); it != heights.end() && y > 0; ++it) {
+        result[--y] = h * w - bfs(*it);
+    }
+
+    reverse(result.begin(), result.end());
+
+    for (int i = 0; i < y; ++i) {
+        cout << result[i] << '\n';
+    }
+
+    return 0;
+}

@@ -1,0 +1,45 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define rep(i,n) for(int i = 0; i < (n); ++i)
+using ll = long long;
+
+// Direction vectors for all 8 possible attack positions
+const array<array<int,2>,8> dirs = {{
+    {2,1}, {1,2}, {-1,2}, {-2,1},
+    {-2,-1}, {-1,-2}, {1,-2}, {2,-1}
+}};
+
+int main() {
+    ll n;
+    int m;
+    cin >> n >> m;
+    
+    set<pair<ll,ll>> occupied;
+    set<pair<ll,ll>> attacked;
+
+    rep(i, m) {
+        ll a, b;
+        cin >> a >> b;
+        // Convert to 0-based indexing
+        a--;
+        b--;
+        occupied.emplace(a, b);
+        // Add the current piece to attacked set as well since we cannot place there
+        attacked.emplace(a, b);
+        
+        // For each attack direction
+        for (auto [dx, dy] : dirs) {
+            ll nx = a + dx;
+            ll ny = b + dy;
+            if (nx >= 0 && ny >= 0 && nx < n && ny < n) {
+                attacked.emplace(nx, ny);
+            }
+        }
+    }
+
+    // Total cells = n*n
+    // Subtract the number of attacked cells
+    cout << n * n - (ll)attacked.size() << endl;
+
+    return 0;
+}

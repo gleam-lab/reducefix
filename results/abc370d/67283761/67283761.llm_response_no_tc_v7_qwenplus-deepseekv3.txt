@@ -1,0 +1,129 @@
+To fix this code, we need to address several issues:
+
+1. **Incorrect Direction Handling**: The original code attempts to cache distances for each direction, but it doesn't correctly handle the dynamic nature of wall destruction. The cache becomes outdated as walls are destroyed.
+
+2. **Inefficient Search**: The code checks each direction by incrementally moving outward, which can be inefficient for large grids, leading to potential timeouts.
+
+3. **Logical Flaws**: The logic for updating the cache is flawed, particularly in how it updates `cache[j][next.first][next.second]`.
+
+### Approaches
+1. **Union-Find Data Structure**: To efficiently manage the walls and find the nearest walls in each direction, we can use Union-Find (Disjoint Set Union, DSU) with path splitting. This allows us to quickly find the next wall in any direction.
+2. **Separate Data Structures for Directions**: We'll maintain separate DSU structures for each direction (left, right, up, down) to handle the dynamic wall destruction efficiently.
+
+### Solution Code
+```cpp
+#include <iostream>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+struct DSU {
+    vector<int> parent;
+    DSU(int size) : parent(size) {
+        for (int i = 0; i < size; ++i) parent[i] = i;
+    }
+    int find(int u) {
+        if (parent[u] != u) parent[u] = find(parent[u]);
+        return parent[u];
+    }
+    void unite(int u, int v) {
+        u = find(u);
+        v = find(v);
+        if (u != v) parent[u] = v;
+    }
+};
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int H, W, Q;
+    cin >> H >> W >> Q;
+    
+    vector<vector<bool>> walls(H, vector<bool>(W, true));
+    int remaining = H * W;
+    
+    DSU left(H * W);
+    DSU right(H * W);
+    DSU up(H * W);
+    DSU down(H * W);
+    
+    while (Q--) {
+        int r, c;
+        cin >> r >> c;
+        --r; --c;
+        
+        if (walls[r][c]) {
+            walls[r][c] = false;
+            --remaining;
+        } else {
+            // Check left
+            int pos = r * W + c;
+            int next_pos = pos - 1;
+            if (c > 0) {
+                int root = left.find(next_pos);
+                int nr = root / W;
+                int nc = root % W;
+                if (walls[nr][nc]) {
+                    walls[nr][nc] = false;
+                    --remaining;
+                    left.unite(next_pos, next_pos - 1);
+                }
+            }
+            
+            // Check right
+            next_pos = pos + 1;
+            if (c < W - 1) {
+                int root = right.find(next_pos);
+                int nr = root / W;
+                int nc = root % W;
+                if (walls[nr][nc]) {
+                    walls[nr][nc] = false;
+                    --remaining;
+                    right.unite(next_pos, next_pos + 1);
+                }
+            }
+            
+            // Check up
+            next_pos = pos - W;
+            if (r > 0) {
+                int root = up.find(next_pos);
+                int nr = root / W;
+                int nc = root % W;
+                if (walls[nr][nc]) {
+                    walls[nr][nc] = false;
+                    --remaining;
+                    up.unite(next_pos, next_pos - W);
+                }
+            }
+            
+            // Check down
+            next_pos = pos + W;
+            if (r < H - 1) {
+                int root = down.find(next_pos);
+                int nr = root / W;
+                int nc = root % W;
+                if (walls[nr][nc]) {
+                    walls[nr][nc] = false;
+                    --remaining;
+                    down.unite(next_pos, next_pos + W);
+                }
+            }
+        }
+    }
+    
+    cout << remaining << '\n';
+    
+    return 0;
+}
+```
+
+### Explanation
+1. **Initialization**: We initialize the grid with walls present in all cells. The `remaining` variable keeps track of the number of walls left.
+2. **Union-Find Structures**: Four DSU structures (`left`, `right`, `up`, `down`) are used to manage the connectivity of cells in each direction. When a wall is destroyed, the DSU structures help in efficiently finding the next wall in each direction.
+3. **Processing Queries**: For each query:
+   - If the cell has a wall, it is destroyed and `remaining` is decremented.
+   - If the cell is already empty, the algorithm checks in all four directions (left, right, up, down) for the nearest wall using the DSU structures. If a wall is found, it is destroyed, and the DSU structures are updated to reflect this change.
+4. **Output**: After processing all queries, the number of remaining walls is printed.
+
+This approach ensures efficient handling of dynamic wall destruction and checks, leveraging Union-Find to maintain and query the nearest walls in logarithmic time.

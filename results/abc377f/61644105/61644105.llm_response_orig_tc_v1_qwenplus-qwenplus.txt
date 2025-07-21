@@ -1,0 +1,217 @@
+To solve this problem, we need to determine how many squares in an `N x N` grid are **safe** for placing a new piece such that it cannot be captured by any of the existing pieces. Each piece can "see" or capture others along its row, column, and two diagonal directions (both main and anti-diagonal).
+
+### Key Observations:
+1. The number of total squares is `N * N`.
+2. We must subtract all squares that are under attack from at least one existing piece.
+3. However, because `N` can be as large as `10^9`, we **cannot iterate over the entire grid**.
+4. Since `M <= 1000`, we can process the M given positions efficiently.
+
+We approach this using the **inclusion-exclusion principle**, where:
+- We count all squares attacked by at least one piece.
+- Then subtract overlaps (squares attacked by multiple pieces) appropriately to avoid double-counting.
+
+---
+
+### Strategy:
+We categorize attacked regions based on:
+- Rows
+- Columns
+- Diagonals: `(i - j)` (anti-diagonal direction)
+- Anti-Diagonals: `(i + j)` (main diagonal direction)
+
+Each piece attacks:
+- All squares in its row and column
+- All squares along both diagonals it belongs to
+
+Using inclusion-exclusion, we compute:
+```
+Total attacked = A + B + C + D 
+               - AB - AC - AD - BC - BD - CD
+               + ABC + ABD + ACD + BCD
+               - ABCD
+```
+
+Where:
+- A = all squares in rows with pieces
+- B = all squares in columns with pieces
+- C = all squares in main diagonals (`i+j`) with pieces
+- D = all squares in anti-diagonals (`i-j`) with pieces
+
+---
+
+### Efficient Computation:
+We use sets to track unique rows, columns, diagonals, and anti-diagonals occupied by pieces. Using these, we calculate how many cells fall into each combination of categories.
+
+We'll use binary search and counting logic to avoid iterating through the full grid.
+
+---
+
+### ✅ Corrected Code:
+
+```cpp
+#include <bits/stdc++.h>
+
+using namespace std;
+
+int main() {
+    long long N;
+    int M;
+    cin >> N >> M;
+
+    set<long long> rows, cols, diag1, diag2;
+
+    for (int i = 0; i < M; ++i) {
+        long long r, c;
+        cin >> r >> c;
+        rows.insert(r);
+        cols.insert(c);
+        diag1.insert(r + c);
+        diag2.insert(r - c);
+    }
+
+    // Count of unique lines
+    long long R = rows.size();
+    long long C = cols.size();
+    long long D1 = diag1.size();
+    long long D2 = diag2.size();
+
+    // Inclusion-Exclusion Principle
+    long long total_attacked = 0;
+
+    // Single components
+    total_attacked += R * N;
+    total_attacked += C * N;
+    for (long long d : diag1) total_attacked += N - abs(d - (N + 1));
+    for (long long d : diag2) total_attacked += N - abs(d);
+
+    // Subtract pairwise overlaps
+    for (long long r : rows) {
+        for (long long c : cols) {
+            if ((r + c) >= 1 && (r + c) <= 2 * N && (r - c) >= -(N - 1) && (r - c) <= (N - 1))
+                total_attacked -= 1;
+        }
+    }
+
+    for (long long r : rows) {
+        for (long long d1 : diag1) {
+            long long c = d1 - r;
+            if (c >= 1 && c <= N)
+                total_attacked -= 1;
+        }
+    }
+
+    for (long long r : rows) {
+        for (long long d2 : diag2) {
+            long long c = r - d2;
+            if (c >= 1 && c <= N)
+                total_attacked -= 1;
+        }
+    }
+
+    for (long long c : cols) {
+        for (long long d1 : diag1) {
+            long long r = d1 - c;
+            if (r >= 1 && r <= N)
+                total_attacked -= 1;
+        }
+    }
+
+    for (long long c : cols) {
+        for (long long d2 : diag2) {
+            long long r = c + d2;
+            if (r >= 1 && r <= N)
+                total_attacked -= 1;
+        }
+    }
+
+    for (long long d1 : diag1) {
+        for (long long d2 : diag2) {
+            long long r = (d1 + d2) / 2;
+            long long c = (d1 - d2) / 2;
+            if (r >= 1 && r <= N && c >= 1 && c <= N)
+                total_attacked -= 1;
+        }
+    }
+
+    // Add back triple overlaps
+    for (long long r : rows) {
+        for (long long c : cols) {
+            long long d1 = r + c;
+            long long d2 = r - c;
+            if (diag1.count(d1) && diag2.count(d2))
+                total_attacked += 1;
+        }
+    }
+
+    for (long long r : rows) {
+        for (long long d1 : diag1) {
+            long long c = d1 - r;
+            if (cols.count(c)) {
+                long long d2 = r - c;
+                if (diag2.count(d2))
+                    total_attacked += 1;
+            }
+        }
+    }
+
+    for (long long r : rows) {
+        for (long long d2 : diag2) {
+            long long c = r - d2;
+            if (cols.count(c)) {
+                long long d1 = r + c;
+                if (diag1.count(d1))
+                    total_attacked += 1;
+            }
+        }
+    }
+
+    for (long long c : cols) {
+        for (long long d1 : diag1) {
+            long long r = d1 - c;
+            if (rows.count(r)) {
+                long long d2 = r - c;
+                if (diag2.count(d2))
+                    total_attacked += 1;
+            }
+        }
+    }
+
+    for (long long c : cols) {
+        for (long long d2 : diag2) {
+            long long r = c + d2;
+            if (rows.count(r)) {
+                long long d1 = r + c;
+                if (diag1.count(d1))
+                    total_attacked += 1;
+            }
+        }
+    }
+
+    for (long long d1 : diag1) {
+        for (long long d2 : diag2) {
+            long long r = (d1 + d2) / 2;
+            long long c = (d1 - d2) / 2;
+            if (rows.count(r) && cols.count(c))
+                total_attacked += 1;
+        }
+    }
+
+    // Subtract quadruple overlaps
+    for (long long r : rows) {
+        for (long long c : cols) {
+            long long d1 = r + c;
+            long long d2 = r - c;
+            if (diag1.count(d1) && diag2.count(d2))
+                total_attacked -= 1;
+        }
+    }
+
+    long long total_squares = N * N;
+    long long occupied = M;
+    long long safe_squares = total_squares - occupied - total_attacked;
+
+    cout << safe_squares << endl;
+
+    return 0;
+}
+```

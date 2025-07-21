@@ -1,0 +1,39 @@
+#include<bits/stdc++.h>
+#define ll long long
+using namespace std;
+
+ll n, m, mn = 200005;
+vector<int> b[200005];
+
+void dfs(int x, int cnt, vector<bool>& vis) {
+    vis[x] = true;
+    cnt++;
+
+    for(int neighbor : b[x]) {
+        if (!vis[neighbor]) {
+            if (neighbor == 1) {
+                mn = min(mn, (ll)cnt);
+            } else {
+                dfs(neighbor, cnt, vis);
+            }
+        }
+    }
+
+    vis[x] = false; // backtrack
+}
+
+int main() {
+    cin >> n >> m;
+
+    for(int i = 1; i <= m; i++) {
+        int u, v;
+        cin >> u >> v;
+        b[u].push_back(v);
+    }
+
+    vector<bool> visited(n + 1, false);
+    dfs(1, 0, visited);
+
+    cout << (mn == 200005 ? -1 : mn);
+    return 0;
+}

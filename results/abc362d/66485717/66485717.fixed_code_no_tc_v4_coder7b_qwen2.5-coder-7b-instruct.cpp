@@ -1,0 +1,72 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+#define ll long long
+#define INF 1e18
+
+struct Edge {
+    int to, cost;
+};
+
+struct Node {
+    int node, dist;
+    bool operator<(const Node &other) const {
+        return dist > other.dist;
+    }
+};
+
+vector<Edge> adj[200005];
+ll dist[200005];
+
+void dijkstra(int start, int n) {
+    priority_queue<Node> pq;
+    fill(dist, dist + n + 1, INF);
+    dist[start] = 0;
+    pq.push({start, 0});
+
+    while (!pq.empty()) {
+        Node current = pq.top();
+        pq.pop();
+
+        int u = current.node;
+        if (current.dist > dist[u])
+            continue;
+
+        for (auto &edge : adj[u]) {
+            int v = edge.to;
+            ll weight = edge.cost;
+
+            if (dist[v] > dist[u] + weight) {
+                dist[v] = dist[u] + weight;
+                pq.push({v, dist[v]});
+            }
+        }
+    }
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(NULL);
+
+    int n, m;
+    cin >> n >> m;
+
+    for (int i = 1; i <= n; i++) {
+        cin >> dist[i];
+    }
+
+    for (int i = 0; i < m; i++) {
+        int u, v, w;
+        cin >> u >> v >> w;
+        adj[u].push_back({v, w});
+        adj[v].push_back({u, w});
+    }
+
+    dijkstra(1, n);
+
+    for (int i = 2; i <= n; i++) {
+        cout << dist[i] << " ";
+    }
+
+    return 0;
+}

@@ -1,0 +1,74 @@
+#include <iostream>
+#include <set>
+#include <vector>
+
+using namespace std;
+using ll = long long;
+
+void solve() {
+    int H, W, Q;
+    cin >> H >> W >> Q;
+
+    // Create a set for each row and each column
+    vector<set<int>> rows(H), cols(W);
+
+    // Initially, all cells have a wall
+    for (int i = 0; i < H; ++i) {
+        for (int j = 0; j < W; ++j) {
+            rows[i].insert(j);
+            cols[j].insert(i);
+        }
+    }
+
+    while (Q--) {
+        int R, C;
+        cin >> R >> C;
+
+        // Get the range to destroy walls
+        auto get_range = [&](const set<int>& s, int start, int direction) {
+            set<int> range;
+            auto it = s.lower_bound(start);
+            if (it != s.end()) {
+                range.insert(*it);
+            }
+            it = s.lower_bound(start);
+            if (it != s.end()) it--;
+            while (it != s.begin()) {
+                if (s.find(start + direction * (*it - start)) == s.end()) {
+                    range.insert(*it);
+                }
+                it--;
+            }
+            return range;
+        };
+
+        // Check if there is a wall at (R, C)
+        if (rows[R].find(C) != rows[R].end()) {
+            rows[R].erase(C);
+            cols[C].erase(R);
+        } else {
+            // No wall at (R, C), destroy walls around it
+            set<int> to_destroy_rows = get_range(rows, R, -1);
+            set<int> to_destroy_cols = get_range(cols, C, -1);
+
+            for (int r : to_destroy_rows) rows[r].erase(C);
+            for (int r : to_destroy_rows) cols[C].erase(r);
+            for (int c : to_destroy_cols) cols[c].erase(R);
+            for (int c : to_destroy_cols) rows[R].erase(c);
+        }
+    }
+
+    // Calculate the number of remaining walls
+    ll remaining_walls = 0;
+    for (const auto& row : rows) remaining_walls += row.size();
+    for (const auto& col : cols) remaining_walls += col.size();
+
+    cout << remaining_walls << endl;
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+    solve();
+    return 0;
+}

@@ -1,0 +1,126 @@
+To fix this code, we need to ensure that for each candidate, the minimum number of additional votes required to guarantee their election is computed correctly. The key idea is to determine, for each candidate, the number of votes they need to have so that no more than M-1 candidates have strictly more votes than them, considering the remaining votes.
+
+### Approaches
+1. **Sorting and Prefix Sums**: 
+   - Sort the candidates' votes to efficiently compute the required votes.
+   - Use prefix sums to quickly calculate the sum of votes of certain ranges of candidates.
+
+2. **Binary Search for Minimum Votes**:
+   - For each candidate, perform a binary search to determine the minimum additional votes (X) they need to ensure that at least N - M candidates have votes less than or equal to their new vote count (A_i + X).
+   - The binary search should check if the total remaining votes (K) can cover the necessary votes for the candidate to meet the condition.
+
+3. **Edge Cases Handling**:
+   - If a candidate already has enough votes to be elected, output 0.
+   - If it's impossible for the candidate to be elected even if they receive all the remaining votes, output -1.
+
+### Solution Code
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+#define all(x) (x).begin(), (x).end()
+
+int main() {
+    ios_base::sync_with_stdio(0);
+    cin.tie(0);
+    int N, M;
+    ll K;
+    cin >> N >> M >> K;
+    vector<ll> A(N);
+    for (int i = 0; i < N; ++i) {
+        cin >> A[i];
+    }
+    ll total = accumulate(all(A), 0LL);
+    ll remaining = K - total;
+    vector<int> ord(N);
+    iota(all(ord), 0);
+    sort(all(ord), [&](int i, int j) { return A[i] < A[j]; });
+    vector<ll> sorted_A(N);
+    for (int i = 0; i < N; ++i) {
+        sorted_A[i] = A[ord[i]];
+    }
+    vector<ll> prefix(N + 1);
+    for (int i = 0; i < N; ++i) {
+        prefix[i + 1] = prefix[i] + sorted_A[i];
+    }
+    vector<ll> ans(N, -1);
+    for (int idx = 0; idx < N; ++idx) {
+        int i = ord[idx];
+        ll low = 0;
+        ll high = remaining;
+        ll best = -1;
+        while (low <= high) {
+            ll mid = (low + high) / 2;
+            ll new_vote = A[i] + mid;
+            int pos = upper_bound(all(sorted_A), new_vote) - sorted_A.begin();
+            if (idx < pos) pos--;
+            int higher = N - pos;
+            if (higher < M) {
+                best = mid;
+                high = mid - 1;
+            } else {
+                int needed_pos = N - M;
+                ll min_required = sorted_A[needed_pos];
+                if (new_vote <= min_required) {
+                    ll sum_needed = 0;
+                    if (needed_pos < N - 1) {
+                        sum_needed = (new_vote + 1) * (N - 1 - needed_pos) - (prefix[N] - prefix[needed_pos + 1]);
+                    }
+                    if (sum_needed <= remaining - mid) {
+                        best = mid;
+                        high = mid - 1;
+                    } else {
+                        low = mid + 1;
+                    }
+                } else {
+                    ll sum_needed = 0;
+                    if (needed_pos < idx) {
+                        sum_needed = (new_vote + 1) * (needed_pos + 1 - (idx + 1)) - (prefix[needed_pos + 1] - prefix[idx + 1]);
+                    }
+                    sum_needed += max(0LL, (new_vote - sorted_A[idx]));
+                    if (sum_needed <= remaining - mid) {
+                        best = mid;
+                        high = mid - 1;
+                    } else {
+                        low = mid + 1;
+                    }
+                }
+            }
+        }
+        ans[i] = best;
+    }
+    for (int i = 0; i < N; ++i) {
+        if (ans[i] == -1) {
+            ll new_vote = A[i] + remaining;
+            int pos = upper_bound(all(sorted_A), new_vote) - sorted_A.begin();
+            if (N - pos < M) {
+                ans[i] = remaining;
+            }
+        }
+    }
+    for (int i = 0; i < N; ++i) {
+        if (ans[i] == -1) {
+            int pos = upper_bound(all(sorted_A), A[i]) - sorted_A.begin();
+            if (N - pos < M) {
+                ans[i] = 0;
+            }
+        }
+    }
+    for (ll &x : ans) {
+        if (x == -1) {
+            cout << -1 << ' ';
+        } else {
+            cout << x << ' ';
+        }
+    }
+    cout << endl;
+    return 0;
+}
+```
+
+### Explanation
+1. **Sorting and Prefix Sums**: The candidates' votes are sorted to facilitate binary search and prefix sum calculations. This allows efficient computation of the sum of votes in any subrange.
+2. **Binary Search**: For each candidate, the binary search determines the minimum additional votes needed to ensure that no more than M-1 candidates have strictly more votes. The search checks if the remaining votes can cover the required votes to elevate the candidate's position.
+3. **Edge Cases Handling**: After the binary search, additional checks are performed to handle cases where a candidate might already be elected or cannot be elected even with all remaining votes.
+
+This approach ensures that each candidate's minimum required votes are computed efficiently and correctly, adhering to the problem constraints and requirements.

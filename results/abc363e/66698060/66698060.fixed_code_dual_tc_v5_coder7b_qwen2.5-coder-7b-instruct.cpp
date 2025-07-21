@@ -1,0 +1,57 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios_base::sync_with_stdio(false); cin.tie(NULL); cout.tie(NULL);
+    
+    int h, w, y;
+    cin >> h >> w >> y;
+    vector<vector<int>> grid(h, vector<int>(w));
+    for(int i = 0; i < h; ++i) {
+        for(int j = 0; j < w; ++j) {
+            cin >> grid[i][j];
+        }
+    }
+
+    set<pair<int, pair<int, int>>> pq;
+    vector<vector<bool>> visited(h, vector<bool>(w, false));
+
+    auto add_to_pq = [&](int x, int y) {
+        if(x >= 0 && x < h && y >= 0 && y < w && !visited[x][y]) {
+            pq.insert({grid[x][y], {x, y}});
+            visited[x][y] = true;
+        }
+    };
+
+    for(int i = 0; i < h; ++i) {
+        add_to_pq(i, 0);
+        add_to_pq(i, w - 1);
+    }
+    for(int j = 1; j < w - 1; ++j) {
+        add_to_pq(0, j);
+        add_to_pq(h - 1, j);
+    }
+
+    int total_area = h * w;
+    int removed_area = 0;
+
+    for(int step = 0; step < y; ++step) {
+        auto [height, [cx, cy]] = *pq.begin();
+        pq.erase(pq.begin());
+
+        if(height <= step + 1) {
+            removed_area += 1;
+        } else {
+            break;
+        }
+
+        add_to_pq(cx - 1, cy);
+        add_to_pq(cx + 1, cy);
+        add_to_pq(cx, cy - 1);
+        add_to_pq(cx, cy + 1);
+    }
+
+    cout << total_area - removed_area << '\n';
+
+    return 0;
+}

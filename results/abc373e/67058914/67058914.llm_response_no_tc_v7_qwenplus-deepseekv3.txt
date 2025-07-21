@@ -1,0 +1,91 @@
+To fix this code, we need to ensure that for each candidate, we correctly compute the minimum number of additional votes required to guarantee their election, considering the worst-case scenario where other candidates receive as many votes as possible to prevent the candidate's election. The incorrect code attempts to solve this problem but has logical flaws in the approach, particularly in how it calculates the number of candidates that could surpass the current candidate's vote count.
+
+### Approaches
+1. **Sorting and Prefix Sums**: 
+   - First, sort the candidates based on their current votes. This helps in efficiently determining the number of candidates that could potentially surpass the current candidate's vote count.
+   - Use prefix sums to quickly compute the total votes required for other candidates to surpass the current candidate's vote count.
+
+2. **Binary Search for Minimum Votes**:
+   - For each candidate, use binary search to determine the minimum number of additional votes needed such that even if the remaining votes are optimally distributed among other candidates, the current candidate still meets the election criteria (i.e., fewer than M candidates have more votes than them).
+
+3. **Edge Cases Handling**:
+   - If a candidate already has enough votes to secure their position (i.e., even if all remaining votes go to the top M-1 candidates, they cannot surpass the current candidate), output `0`.
+   - If it's impossible for the candidate to secure their position (i.e., even if all remaining votes go to the current candidate, there are still M or more candidates with higher votes), output `-1`.
+
+### Solution Code
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+
+int main() {
+    int N, M;
+    ll K;
+    cin >> N >> M >> K;
+    vector<ll> A(N);
+    for (int i = 0; i < N; ++i) {
+        cin >> A[i];
+    }
+
+    vector<pair<ll, int>> sorted_A(N);
+    for (int i = 0; i < N; ++i) {
+        sorted_A[i] = {A[i], i};
+    }
+    sort(sorted_A.begin(), sorted_A.end());
+
+    vector<ll> prefix(N + 1, 0);
+    for (int i = 0; i < N; ++i) {
+        prefix[i + 1] = prefix[i] + sorted_A[i].first;
+    }
+
+    ll total_remaining = K - prefix[N];
+    vector<ll> res(N, -1);
+
+    for (int i = 0; i < N; ++i) {
+        ll a_i = sorted_A[i].first;
+        ll low = 0, high = total_remaining;
+        ll best = -1;
+
+        while (low <= high) {
+            ll mid = (low + high) / 2;
+            ll new_a_i = a_i + mid;
+            auto it = upper_bound(sorted_A.begin(), sorted_A.end(), make_pair(new_a_i, N));
+            int cnt = sorted_A.end() - it;
+
+            if (cnt < M) {
+                best = mid;
+                high = mid - 1;
+            } else {
+                low = mid + 1;
+            }
+        }
+
+        if (best != -1) {
+            res[sorted_A[i].second] = best;
+        } else {
+            res[sorted_A[i].second] = -1;
+        }
+    }
+
+    for (int i = 0; i < N; ++i) {
+        cout << res[i] << " ";
+    }
+    cout << endl;
+
+    return 0;
+}
+```
+
+### Explanation
+1. **Sorting and Prefix Sums**:
+   - The candidates' votes are sorted to facilitate efficient binary search operations. The prefix sums array helps in quickly calculating the total votes up to any point in the sorted list.
+
+2. **Binary Search for Minimum Votes**:
+   - For each candidate, we perform a binary search to find the minimum number of additional votes (`mid`) that ensures the candidate's total votes (`new_a_i`) are such that fewer than `M` candidates can surpass them even if the remaining votes are distributed optimally to other candidates.
+   - The `upper_bound` function is used to find the position in the sorted list where the candidate's new vote count would place them, helping to determine how many candidates could potentially surpass them.
+
+3. **Edge Cases Handling**:
+   - If during the binary search, we find a valid number of votes (`mid`) that ensures the candidate meets the criteria, we store this as the result for that candidate.
+   - If no such number of votes is found within the remaining votes (`total_remaining`), the candidate cannot be elected, and we store `-1`.
+
+This approach ensures that we efficiently and correctly determine the minimum votes required for each candidate to be guaranteed election, considering all possible distributions of the remaining votes.

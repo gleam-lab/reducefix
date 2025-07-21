@@ -1,0 +1,67 @@
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+
+int N, M;
+ll K;
+
+int main() {
+    std::cin.tie(nullptr)->sync_with_stdio(false);
+    cin >> N >> M >> K;
+
+    vector<ll> A(N + 5);
+    for (int i = 1; i <= N; ++i) {
+        cin >> A[i];
+    }
+
+    vector<pair<ll, int>> candidates(N + 5);
+    for (int i = 1; i <= N; ++i) {
+        candidates[i] = {A[i], i};
+    }
+
+    // Sort candidates by the number of votes they received
+    sort(candidates.begin() + 1, candidates.begin() + N + 1, [](const pair<ll, int>& a, const pair<ll, int>& b) {
+        return a.first > b.first;
+    });
+
+    vector<ll> additional_votes(N + 5, 0);
+    ll votes_needed_for_min_winner = 0;
+    ll total_votes_so_far = 0;
+
+    // Calculate the number of additional votes needed for the candidate with the minimum number of votes
+    // that can still win if they get all remaining votes
+    for (int i = 1; i <= N; ++i) {
+        if (i >= M) {
+            votes_needed_for_min_winner = candidates[i].first + (K - total_votes_so_far);
+            break;
+        }
+        total_votes_so_far += candidates[i].first;
+    }
+
+    // Assign the minimum number of additional votes needed for each candidate
+    for (int i = 1; i <= N; ++i) {
+        if (i < M) {
+            additional_votes[candidates[i].second] = votes_needed_for_min_winner - candidates[i].first;
+        } else {
+            additional_votes[candidates[i].second] = 0;
+        }
+    }
+
+    // Ensure the votes needed do not exceed the remaining votes
+    for (int i = 1; i <= N; ++i) {
+        if (additional_votes[i] > K - total_votes_so_far) {
+            additional_votes[i] = K - total_votes_so_far;
+        }
+    }
+
+    // Output the result
+    for (int i = 1; i <= N; ++i) {
+        if (additional_votes[i] < 0) {
+            additional_votes[i] = -1;
+        }
+        cout << additional_votes[i] << " ";
+    }
+    cout << endl;
+
+    return 0;
+}

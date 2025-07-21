@@ -1,0 +1,71 @@
+#include <bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+#define all(x) (x).begin(), (x).end()
+
+int main() {
+    ios_base::sync_with_stdio(0);
+    cin.tie(0);
+    int h, w, y;
+    cin >> h >> w >> y;
+    vector<vector<int>> height(h, vector<int>(w));
+    vector<vector<bool>> visited(h, vector<bool>(w, false));
+    priority_queue<tuple<int, int, int>, vector<tuple<int, int, int>>, greater<>> pq;
+
+    for (int i = 0; i < h; ++i) {
+        for (int j = 0; j < w; ++j) {
+            cin >> height[i][j];
+            // Add boundary cells to the priority queue
+            if (i == 0 || i == h - 1 || j == 0 || j == w - 1) {
+                pq.emplace(height[i][j], i, j);
+                visited[i][j] = true;
+            }
+        }
+    }
+
+    int di[4] = {-1, 1, 0, 0};
+    int dj[4] = {0, 0, -1, 1};
+
+    // To store the year when each cell sinks
+    vector<vector<int>> sink_year(h, vector<int>(w, Y + 2)); // Initially set to a large value
+
+    // Process using Dijkstra-like BFS
+    while (!pq.empty()) {
+        auto [H, r, c] = pq.top();
+        pq.pop();
+
+        // If already processed with a lower or equal sea level, skip
+        if (sink_year[r][c] <= H) continue;
+
+        sink_year[r][c] = H;
+
+        for (int k = 0; k < 4; ++k) {
+            int nr = r + di[k];
+            int nc = c + dj[k];
+            if (nr >= 0 && nr < h && nc >= 0 && nc < w && !visited[nr][nc]) {
+                visited[nr][nc] = true;
+                pq.emplace(max(H, height[nr][nc]), nr, nc);
+            }
+        }
+    }
+
+    // Count how many cells sink at each year
+    vector<int> count(y + 2, 0); // Year from 0 to Y
+    for (int i = 0; i < h; ++i) {
+        for (int j = 0; j < w; ++j) {
+            int s = sink_year[i][j];
+            if (s <= y) {
+                count[s]++;
+            }
+        }
+    }
+
+    // Output remaining area for each year
+    int total_remaining = h * w;
+    for (int i = 1; i <= y; ++i) {
+        total_remaining -= count[i];
+        cout << total_remaining << '\n';
+    }
+
+    return 0;
+}

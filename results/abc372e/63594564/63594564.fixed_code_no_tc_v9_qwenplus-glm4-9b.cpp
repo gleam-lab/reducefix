@@ -1,0 +1,63 @@
+#include <iostream>
+#include <vector>
+#include <set>
+#include <algorithm>
+
+using namespace std;
+
+#define MAXN 200005
+#define MAX edges.size()
+
+vector<int> edges[MAXN];
+
+// This function finds the root of the tree using path compression
+int findRoot(int v) {
+    if (v == edges[v].back())
+        return v;
+    return edges[v].back() = findRoot(edges[v].back());
+}
+
+// This function connects two vertices
+void connect(int u, int v) {
+    int rootU = findRoot(u);
+    int rootV = findRoot(v);
+    if (rootU != rootV) {
+        edges[rootU].push_back(rootV);
+        edges[rootV].push_back(rootU);
+    }
+}
+
+// This function returns the k-th largest vertex in the connected component of vertex v
+int kthLargest(int v, int k) {
+    int root = findRoot(v);
+    set<int> vertexSet(edges[root].begin(), edges[root].end());
+    vertexSet.erase(root); // Exclude the root itself from the set
+    if (k > vertexSet.size())
+        return -1; // There are fewer than k vertices
+    vector<int> vertexList(vertexSet.begin(), vertexSet.end());
+    return vertexList.back(); // The k-th largest vertex
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int n, q;
+    cin >> n >> q;
+    for (int i = 1; i <= n; ++i)
+        edges[i].push_back(i); // Every vertex is initially connected to itself
+
+    for (int i = 0; i < q; ++i) {
+        int type, a, b;
+        cin >> type >> a >> b;
+
+        if (type == 1) {
+            connect(a, b);
+        } else {
+            int result = kthLargest(b, b - 1); // Convert k to zero-indexed
+            cout << result << '\n';
+        }
+    }
+
+    return 0;
+}

@@ -1,0 +1,80 @@
+#include <bits/stdc++.h>
+using namespace std;
+using i64 = int64_t;
+using pii = pair<int, int>;
+
+struct Init {
+    Init() {
+        ios::sync_with_stdio(false);
+        cin.tie(nullptr);
+        cout << fixed << setprecision(12);
+    }
+} init;
+
+int main() {
+    int H, W, Y;
+    cin >> H >> W >> Y;
+    vector<vector<int>> A(H, vector<int>(W));
+    for (int i = 0; i < H; ++i) {
+        for (int j = 0; j < W; ++j) {
+            cin >> A[i][j];
+        }
+    }
+
+    // We will use a priority queue to simulate the cells sinking year by year
+    priority_queue<pii, vector<pii>, greater<pii>> pq;
+    vector<vector<bool>> vis(H, vector<bool>(W, false));
+
+    // Initialize the perimeter of the island as starting points
+    for (int i = 0; i < H; ++i) {
+        for (int j = 0; j < W; ++j) {
+            if (i == 0 || i == H - 1 || j == 0 || j == W - 1) {
+                pq.push({A[i][j], i * W + j});
+                vis[i][j] = true;
+            }
+        }
+    }
+
+    // Total number of cells
+    int remaining = H * W;
+
+    // To store result for each year
+    vector<int> res(Y + 1, 0);
+
+    // Directions for BFS
+    vector<int> dx = {-1, 0, 1, 0};
+    vector<int> dy = {0, 1, 0, -1};
+
+    // Yearly simulation
+    for (int year = 1; year <= Y; ++year) {
+        // Process all cells with elevation <= current year
+        while (!pq.empty() && pq.top().first <= year) {
+            auto [elevation, pos] = pq.top();
+            pq.pop();
+
+            int x = pos / W;
+            int y = pos % W;
+
+            if (!vis[x][y]) continue;
+
+            remaining--;
+            for (int d = 0; d < 4; ++d) {
+                int nx = x + dx[d];
+                int ny = y + dy[d];
+                if (nx >= 0 && nx < H && ny >= 0 && ny < W && !vis[nx][ny]) {
+                    vis[nx][ny] = true;
+                    pq.push({A[nx][ny], nx * W + ny});
+                }
+            }
+        }
+
+        res[year] = remaining;
+    }
+
+    // Output results for years 1 to Y
+    for (int i = 1; i <= Y; ++i) {
+        cout << res[i] << "\n";
+    }
+
+    return 0;
+}

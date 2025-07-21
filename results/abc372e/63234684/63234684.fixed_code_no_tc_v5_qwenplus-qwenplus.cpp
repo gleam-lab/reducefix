@@ -1,0 +1,88 @@
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+#define rep(i, n) for (int i = 0; i < (n); i++)
+
+struct UnionFind {
+    vector<int> parent, size;
+    vector<vector<int>> components;
+
+    UnionFind(int n) {
+        parent.resize(n);
+        size.resize(n, 1);
+        components.resize(n);
+        for (int i = 0; i < n; ++i) {
+            parent[i] = i;
+            components[i].push_back(i);
+        }
+    }
+
+    int find(int x) {
+        if (parent[x] != x)
+            parent[x] = find(parent[x]);
+        return parent[x];
+    }
+
+    bool unite(int x, int y) {
+        x = find(x);
+        y = find(y);
+        if (x == y) return false;
+
+        // Ensure x has the larger component
+        if (size[x] < size[y]) swap(x, y);
+        
+        // Merge smaller component into larger one
+        for (int node : components[y]) {
+            components[x].push_back(node);
+        }
+
+        // Maintain sorted order by descending value
+        // Since both components[x] and components[y] were already sorted,
+        // we can merge them efficiently
+        sort(components[x].rbegin(), components[x].rend());
+        // Keep only top 10 elements as per constraints (k <= 10)
+        if (components[x].size() > 10)
+            components[x].resize(10);
+
+        parent[y] = x;
+        size[x] += size[y];
+        return true;
+    }
+
+    vector<int>& getComponent(int x) {
+        return components[find(x)];
+    }
+};
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+    
+    int N, Q;
+    cin >> N >> Q;
+
+    UnionFind uf(N);
+
+    while (Q--) {
+        int type;
+        cin >> type;
+        if (type == 1) {
+            int u, v;
+            cin >> u >> v;
+            u--; v--;
+            uf.unite(u, v);
+        } else {
+            int v, k;
+            cin >> v >> k;
+            v--;
+            auto& comp = uf.getComponent(v);
+            if ((int)comp.size() < k) {
+                cout << -1 << '\n';
+            } else {
+                cout << comp[k-1] + 1 << '\n';  // Convert back to 1-based index
+            }
+        }
+    }
+
+    return 0;
+}

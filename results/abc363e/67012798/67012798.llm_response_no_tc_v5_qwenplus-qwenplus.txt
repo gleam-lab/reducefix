@@ -1,0 +1,113 @@
+```cpp
+#include <bits/stdc++.h>
+
+using namespace std;
+
+constexpr int dx[] = {-1, 1, 0, 0};
+constexpr int dy[] = {0, 0, -1, 1};
+
+int main()
+{
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int H, W, Y;
+    cin >> H >> W >> Y;
+
+    vector<vector<int>> A(H, vector<int>(W));
+    for (int i = 0; i < H; i++)
+    {
+        for (int j = 0; j < W; j++)
+        {
+            cin >> A[i][j];
+        }
+    }
+
+    int total = H * W;
+    vector<vector<bool>> isSubmerged(H, vector<bool>(W, false));
+    vector<vector<int>> earliestYear(H, vector<int>(W, INT_MAX));
+
+    // BFS queue for each year
+    vector<queue<pair<int, int>>> yearQueues(Y + 2); // Year 1 to Y
+
+    // Initialize borders: cells that will sink in year == their elevation
+    for (int i = 0; i < H; i++)
+    {
+        for (int j = 0; j < W; j++)
+        {
+            if (i == 0 || i == H - 1 || j == 0 || j == W - 1)
+            {
+                int year = A[i][j];
+                if (year <= Y)
+                {
+                    yearQueues[year].push({i, j});
+                    earliestYear[i][j] = year;
+                }
+            }
+        }
+    }
+
+    // Multi-source BFS by years
+    for (int year = 1; year <= Y; year++)
+    {
+        queue<pair<int, int>> q = yearQueues[year];
+        yearQueues[year] = queue<pair<int, int>>(); // Clear current queue
+
+        while (!q.empty())
+        {
+            auto [x, y] = q.front();
+            q.pop();
+
+            if (isSubmerged[x][y])
+                continue;
+
+            isSubmerged[x][y] = true;
+
+            for (int d = 0; d < 4; d++)
+            {
+                int nx = x + dx[d];
+                int ny = y + dy[d];
+
+                if (nx < 0 || ny < 0 || nx >= H || ny >= W)
+                    continue;
+
+                if (!isSubmerged[nx][ny] && A[nx][ny] <= year && earliestYear[nx][ny] > year)
+                {
+                    earliestYear[nx][ny] = year;
+                    yearQueues[year].push({nx, ny});
+                }
+            }
+        }
+
+        // Carry over this year's changes to the next year
+        // This ensures all cells sinking at the same year are processed together
+        while (!yearQueues[year].empty())
+        {
+            auto cell = yearQueues[year].front();
+            yearQueues[year].pop();
+            yearQueues[Y + 1].push(cell); // Use a dummy queue beyond Y to carry over
+        }
+    }
+
+    // Track remaining area
+    vector<int> result(Y);
+    result[0] = total;
+
+    for (int year = 1; year <= Y; year++)
+    {
+        while (!yearQueues[year].empty())
+        {
+            result[year - 1]--;
+            yearQueues[year].pop();
+        }
+
+        if (year < Y)
+            result[year] = result[year - 1];
+    }
+
+    for (int year = 0; year < Y; year++)
+        cout << result[year] << "\n";
+
+    return 0;
+}
+```

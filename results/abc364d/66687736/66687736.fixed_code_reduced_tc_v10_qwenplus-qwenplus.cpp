@@ -1,0 +1,51 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define ll long long
+#define rep(i,n) for(int i=0;i<(int)n;i++)
+#define vi vector<int>
+#define vl vector<ll>
+#define pb push_back
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+    
+    int N, Q;
+    cin >> N >> Q;
+    
+    vi a(N);
+    for (int i = 0; i < N; ++i) {
+        cin >> a[i];
+    }
+    
+    // Sort the A points
+    sort(a.begin(), a.end());
+    
+    // Process each query
+    while (Q--) {
+        int b, k;
+        cin >> b >> k;
+        
+        // Binary search on distance
+        ll low = 0, high = 2e8 + 10; // Max possible distance is 2*1e8
+        ll answer = high;
+        
+        while (low <= high) {
+            ll mid = (low + high) / 2;
+            
+            // Find first position >= b - mid
+            int left = lower_bound(a.begin(), a.end(), b - mid) - a.begin();
+            // Find first position > b + mid
+            int right = upper_bound(a.begin(), a.end(), b + mid) - a.begin();
+            
+            if (right - left >= k) {
+                answer = mid;
+                high = mid - 1;
+            } else {
+                low = mid + 1;
+            }
+        }
+        
+        cout << answer << "\n";
+    }
+}

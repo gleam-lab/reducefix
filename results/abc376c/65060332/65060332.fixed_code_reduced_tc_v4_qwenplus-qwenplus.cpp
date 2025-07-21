@@ -1,0 +1,53 @@
+#include <bits/stdc++.h>
+#define ll long long
+using namespace std;
+
+const int N = 2e5 + 5;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    ll n;
+    cin >> n;
+
+    vector<ll> A(n), B(n - 1);
+
+    for (ll i = 0; i < n; ++i) {
+        cin >> A[i];
+    }
+
+    for (ll i = 0; i < n - 1; ++i) {
+        cin >> B[i];
+    }
+
+    sort(A.begin(), A.end());
+    sort(B.begin(), B.end());
+
+    ll need = -1;
+    ll b_idx = 0;
+
+    for (ll a : A) {
+        if (b_idx < B.size() && B[b_idx] >= a) {
+            b_idx++;
+        } else {
+            if (need == -1) {
+                need = a;
+            } else {
+                // Can't accommodate more than one toy in the extra box
+                cout << -1 << "\n";
+                return 0;
+            }
+        }
+    }
+
+    if (need == -1) {
+        // All toys fit in existing boxes, so we don't need an extra box
+        // But problem requires purchasing one box
+        cout << *max_element(A.begin(), A.end()) << "\n";
+    } else {
+        cout << need << "\n";
+    }
+
+    return 0;
+}

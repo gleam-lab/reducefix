@@ -1,0 +1,183 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+
+constexpr int dx[] = {-1, 1, 0, 0};
+constexpr int dy[] = {0, 0, -1, 1};
+
+int main()
+{
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int H, W, Y;
+    cin >> H >> W >> Y;
+
+    vector<vector<int>> A(H, vector<int>(W));
+    for (int i = 0; i < H; i++)
+    {
+        for (int j = 0; j < W; j++)
+        {
+            cin >> A[i][j];
+        }
+    }
+
+    // Initially all land is above sea level
+    vector<vector<bool>> above(H, vector<bool>(W, true));
+
+    // Priority queue (min-heap) to process cells in increasing order of elevation
+    priority_queue<tuple<int, int, int>, vector<tuple<int, int, int>>, greater<tuple<int, int, int>>> pq;
+
+    // Mark border cells and add them to the queue
+    for (int i = 0; i < H; i++)
+    {
+        for (int j = 0; j < W; j++)
+        {
+            if (i == 0 || i == H - 1 || j == 0 || j == W - 1)
+            {
+                above[i][j] = false;
+                pq.emplace(A[i][j], i, j);
+            }
+        }
+    }
+
+    // Array to keep track of visited cells
+    vector<vector<bool>> visited(H, vector<bool>(W, false));
+
+    // Process the queue
+    while (!pq.empty())
+    {
+        auto [elevation, x, y] = pq.top();
+        pq.pop();
+
+        if (visited[x][y])
+            continue;
+        visited[x][y] = true;
+
+        for (int d = 0; d < 4; d++)
+        {
+            int nx = x + dx[d];
+            int ny = y + dy[d];
+
+            if (nx < 0 || ny < 0 || nx >= H || ny >= W || !above[nx][ny])
+                continue;
+
+            if (A[nx][ny] <= elevation)
+            {
+                above[nx][ny] = false;
+                pq.emplace(elevation, nx, ny);
+            }
+        }
+    }
+
+    // For each year, we need to count how many cells have elevation > current year
+    // We will preprocess all cells by elevation
+    vector<int> count(100001, 0);  // count[e] = number of cells with elevation e
+    for (int i = 0; i < H; i++)
+    {
+        for (int j = 0; j < W; j++)
+        {
+            count[A[i][j]]++;
+        }
+    }
+
+    // Total area remaining above elevation y
+    vector<int> area_above(Y + 2, 0);  // index from 0 to Y+1
+
+    // Start from maximum possible elevation
+    int total_remaining = H * W;
+    for (int e = 1; e <= Y + 1; e++)
+    {
+        total_remaining -= count[e];
+        area_above[e] = total_remaining;
+    }
+
+    // But some areas were already submerged due to connectivity
+    // So now simulate over years and output correct values
+    // We'll maintain a grid that tracks whether cell is submerged or not
+    vector<vector<bool>> submerged(H, vector<bool>(W, false));
+    vector<vector<int>> grid = A;
+
+    // Queue for BFS processing as sea level rises
+    vector<vector<bool>> processed(H, vector<bool>(W, false));
+    priority_queue<tuple<int, int, int>, vector<tuple<int, int, int>>, greater<tuple<int, int, int>>> q;
+
+    for (int i = 0; i < H; i++)
+    {
+        for (int j = 0; j < W; j++)
+        {
+            if ((i == 0 || i == H - 1 || j == 0 || j == W - 1))
+            {
+                q.emplace(grid[i][j], i, j);
+                submerged[i][j] = true;
+            }
+        }
+    }
+
+    // Events: when a cell gets submerged
+    vector<int> year_submerged(H * W + 5, Y + 2);  // year_submerged[cell_index] = year it got submerged
+    int idx = 0;
+    for (int i = 0; i < H; i++)
+    {
+        for (int j = 0; j < W; j++, idx++)
+        {
+            year_submerged[idx] = Y + 2;
+        }
+    }
+
+    int time = 0;
+    vector<vector<bool>> visited2(H, vector<bool>(W, false));
+    while (!q.empty())
+    {
+        auto [elev, x, y] = q.top();
+        q.pop();
+
+        if (visited2[x][y]) continue;
+        visited2[x][y] = true;
+
+        time = elev;
+
+        idx = x * W + y;
+        year_submerged[idx] = elev;
+
+        for (int d = 0; d < 4; d++)
+        {
+            int nx = x + dx[d];
+            int ny = y + dy[d];
+
+            if (nx < 0 || ny < 0 || nx >= H || ny >= W)
+                continue;
+
+            if (!submerged[nx][ny])
+            {
+                submerged[nx][ny] = true;
+                q.emplace(max(elev, grid[nx][ny]), nx, ny);
+            }
+        }
+    }
+
+    // Build prefix count of how many cells get submerged at or before year i
+    vector<int> sub_count(Y + 2, 0);
+    for (int i = 0; i < H * W; i++)
+    {
+        if (year_submerged[i] <= Y)
+        {
+            sub_count[year_submerged[i]]++;
+        }
+    }
+
+    // Now compute cumulative submergence
+    vector<int> total_submerged(Y + 2, 0);
+    for (int i = 1; i <= Y; i++)
+    {
+        total_submerged[i] = total_submerged[i - 1] + sub_count[i];
+    }
+
+    // Output result
+    for (int i = 1; i <= Y; i++)
+    {
+        cout << H * W - total_submerged[i] << endl;
+    }
+
+    return 0;
+}

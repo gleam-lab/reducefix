@@ -1,0 +1,40 @@
+#include<bits/stdc++.h>
+
+using namespace std;
+
+int main() {
+    int N;
+    cin >> N;
+    vector<int> H(N + 9);
+    for (int i = 0; i < N; i++) {
+        cin >> H[i];
+    }
+    long long T = 0;
+    
+    for (int i = 0; i < N; i++) {
+        int health = H[i];
+        if (health % 3 == 0) {
+            T += (health / 3) * 3;  // If health is a multiple of 3, attack thrice
+            health = 0;
+        } else if (health % 3 == 1) {
+            T += ((health - 1) / 3) * 3 + 1;  // If health is 1 mod 3, attack until health is 0 or 2
+            health = 0;
+        } else {  // health % 3 == 2
+            T += (health / 3) * 3 + 2;  // If health is 2 mod 3, attack twice
+            health = 2;
+        }
+        H[i] = health;  // Update the health of the enemy
+        
+        while (health > 0) {  // If there's still health left
+            if (T % 3 == 0) {
+                health -= 3;
+            } else {
+                health -= 1;
+            }
+            T++;
+        }
+    }
+    
+    cout << T << endl;
+    return 0;
+}

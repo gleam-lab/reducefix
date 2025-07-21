@@ -1,0 +1,29 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+  int n;
+  cin >> n;
+  
+  // Using pair of doubles to store coordinates
+  using point = pair<double, double>;
+  vector<point> points;
+  double x, y;
+  
+  // Reading the coordinates
+  for (int i = 0; i < n; ++i) {
+    cin >> x >> y;
+    points.push_back({x, y});
+  }
+  
+  double ans = 0.0;
+  // Calculating the total distance
+  for (int i = 0; i < n; ++i) {
+    ans += hypot(points[i].first - points[0].first, points[i].second - points[0].second);
+    ans += hypot(points[i].first - points[(i + 1) % n].first, points[i].second - points[(i + 1) % n].second);
+  }
+  
+  // Output the result with high precision
+  printf("%.12f\n", ans);
+  return 0;
+}

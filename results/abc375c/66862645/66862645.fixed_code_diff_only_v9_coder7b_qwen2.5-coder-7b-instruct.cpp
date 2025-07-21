@@ -1,0 +1,29 @@
+#include <iostream>
+#include <cmath>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+
+    long long n;
+    cin >> n;
+
+    long double x = 0, y = 0, total_cost = 0;
+
+    for(long long i = 0; i < n; ++i) {
+        long long nx, ny;
+        cin >> nx >> ny;
+
+        total_cost += sqrt(pow(nx - x, 2) + pow(ny - y, 2));
+        x = nx;
+        y = ny;
+    }
+
+    total_cost += sqrt(x*x + y*y); // Return to the origin
+
+    cout.precision(10);
+    cout << total_cost << "\n";
+
+    return 0;
+}

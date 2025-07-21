@@ -1,0 +1,44 @@
+#include<bits/stdc++.h>
+using namespace std;
+using i64 = long long;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    i64 N, M;
+    cin >> N >> M;
+    vector<pair<i64, i64>> g(M);
+    vector<i64> A, B, C, D;
+    for(int i = 0; i < M; ++i){
+        i64 a, b;
+        cin >> a >> b;
+        g[i] = {a, b};
+        A.push_back(a + b);
+        B.push_back(a - b);
+        C.push_back(a);
+        D.push_back(b);
+    }
+    sort(begin(A), end(A)); A.erase(unique(begin(A), end(A)), end(A));
+    sort(begin(B), end(B)); B.erase(unique(begin(B), end(B)), end(B));
+    sort(begin(C), end(C)); C.erase(unique(begin(C), end(C)), end(C));
+    sort(begin(D), end(D)); D.erase(unique(begin(D), end(D)), end(D));
+    
+    i64 ans = N*N - M;
+    set<i64> X, Y;
+    for(auto& [a, b]: g){
+        if(!X.count(a)){
+            auto it = upper_bound(begin(B), end(B), a-b+1);
+            if(it != end(B)) ans -= (*it-a+b+1);
+            else ans -= N-(a-b+1);
+            X.insert(a);
+        }
+        if(!Y.count(b)){
+            auto it = upper_bound(begin(A), end(A), a+b-1);
+            if(it != end(A)) ans -= (*it-a-b+1);
+            else ans -= N-(a+b-1);
+            Y.insert(b);
+        }
+    }
+    cout << ans << '\n';
+    return 0;
+}

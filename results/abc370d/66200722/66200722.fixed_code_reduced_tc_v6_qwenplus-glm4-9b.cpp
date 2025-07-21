@@ -1,0 +1,86 @@
+#include <iostream>
+#include <vector>
+#include <set>
+#include <map>
+#include <algorithm>
+using namespace std;
+
+struct UnionFind {
+    vector<int> parent;
+    vector<int> rank;
+    int components;
+
+    UnionFind(int n) : parent(n), rank(n, 0), components(n) {
+        for (int i = 0; i < n; ++i) {
+            parent[i] = i;
+        }
+    }
+
+    int find(int x) {
+        if (parent[x] != x) {
+            parent[x] = find(parent[x]); // path compression
+        }
+        return parent[x];
+    }
+
+    bool unionSets(int x, int y) {
+        int xRoot = find(x);
+        int yRoot = find(y);
+        if (xRoot != yRoot) {
+            // union by rank
+            if (rank[xRoot] > rank[yRoot]) {
+                parent[yRoot] = xRoot;
+            } else if (rank[xRoot] < rank[yRoot]) {
+                parent[xRoot] = yRoot;
+            } else {
+                parent[yRoot] = xRoot;
+                rank[xRoot]++;
+            }
+            components--;
+            return true;
+        }
+        return false;
+    }
+};
+
+int main() {
+    int h, w, q;
+    cin >> h >> w >> q;
+
+    vector<vector<int>> grid(h, vector<int>(w, 1)); // walls initialized to 1
+
+    UnionFind uf(h * w);
+    int currentComponent = 0;
+
+    for (int i = 0; i < h; ++i) {
+        for (int j = 0; j < w; ++j) {
+            if (grid[i][j] == 0) {
+                int index = i * w + j;
+                uf.unionSets(index, (i + 1) * w + j); // union with the cell below
+                uf.unionSets(index, (i) * w + (j + 1)); // union with the cell to the right
+            }
+        }
+    }
+
+    for (int i = 0; i < q; ++i) {
+        int r, c;
+        cin >> r >> c;
+        r--; c--;
+
+        int index = r * w + c;
+        grid[r][c] = 0; // remove the wall
+
+        int leftComponent = find(r * w + (c - 1) % w);
+        int rightComponent = find(r * w + ((c + 1) % w));
+        int upComponent = find((r - 1) * w + c);
+        int downComponent = find((r + 1) * w + c);
+
+        uf.unionSets(leftComponent, rightComponent);
+        uf.unionSets(downComponent, upComponent);
+
+        currentComponent = uf.components;
+    }
+
+    cout << currentComponent << endl;
+    return 0;
+}

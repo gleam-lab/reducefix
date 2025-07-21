@@ -1,0 +1,101 @@
+
+The problem involves managing an undirected graph where we can add edges and query the k-th largest connected vertex for a given vertex. The provided code is incorrect and doesn't handle the union-find structure and queries properly. Hereâs a step-by-step guide to fix the code:
+
+### Key Points to Consider:
+
+1. **Union-Find Data Structure**: We need to keep track of connected components using the union-find data structure. This allows us to efficiently merge components (add edges) and find the root of a component (to check if two vertices are connected).
+
+2. **Tracking k-th Largest Vertex**: For each component, we need to keep track of the k-th largest vertex. This can be done by maintaining a sorted list of vertices for each component.
+
+3. **Efficient Queries**: For query type 2, we need to find the k-th largest vertex in the component that contains the given vertex.
+
+### Corrected Solution:
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+const int MAX = 2e5 + 5;
+vector<int> graph[MAX];
+int parent[MAX];
+int size[MAX];
+int rank[MAX];
+int kth_largest[MAX][10]; // Use a fixed size array of 10 to store k-th largest vertices
+
+int find_set(int u) {
+    if (parent[u] != u) {
+        parent[u] = find_set(parent[u]); // Path compression
+    }
+    return parent[u];
+}
+
+void union_sets(int u, int v) {
+    int root_u = find_set(u);
+    int root_v = find_set(v);
+
+    if (root_u != root_v) {
+        // Union by rank
+        if (rank[root_u] < rank[root_v]) {
+            parent[root_u] = root_v;
+            size[root_v] += size[root_u];
+        } else if (rank[root_u] > rank[root_v]) {
+            parent[root_v] = root_u;
+            size[root_u] += size[root_v];
+        } else {
+            parent[root_v] = root_u;
+            rank[root_u]++;
+            size[root_u] += size[root_v];
+        }
+
+        // Add k-th largest vertices from both sets into one set
+        for (int k = 0; k < 10; ++k) {
+            if (kth_largest[root_v][k] != -1) {
+                kth_largest[root_u][k] = kth_largest[root_v][k];
+            }
+        }
+    }
+}
+
+int main() {
+    int n, q;
+    cin >> n >> q;
+
+    for (int i = 1; i <= n; ++i) {
+        parent[i] = i;
+        size[i] = 1;
+        for (int k = 0; k < 10; ++k) {
+            kth_largest[i][k] = -1;
+        }
+    }
+
+    while (q--) {
+        int type, u, v, k;
+        cin >> type;
+
+        if (type == 1) {
+            cin >> u >> v;
+            union_sets(u, v);
+        } else {
+            cin >> v >> k;
+            int root_v = find_set(v);
+            if (k > size[root_v]) {
+                cout << -1 << endl;
+            } else {
+                cout << kth_largest[root_v][k-1] << endl;
+            }
+        }
+    }
+
+    return 0;
+}
+```
+
+### Explanation:
+
+1. **Union-Find Initialization**: We initialize parent pointers for each vertex and size of each component to 1. The `rank` array is used for union by rank.
+
+2. **Union by Rank and Size**: When merging two components, we attach the smaller component to the larger one to keep the tree flat, and we update the size of the new component.
+
+3. **Maintaining k-th Largest Vertices**: For each component, we maintain a list of k-th largest vertices. By merging components, we combine their lists.
+
+4. **Querying**: For each query type 2, we find the root of the component for the given vertex and output the k-th largest vertex if it exists.

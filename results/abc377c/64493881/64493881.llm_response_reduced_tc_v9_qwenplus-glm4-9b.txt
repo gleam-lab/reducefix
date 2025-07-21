@@ -1,0 +1,103 @@
+
+The problem is asking for the number of empty squares on a grid where a new piece can be placed without being captured by any of the existing pieces. The captured squares are calculated based on the movement patterns explained in the problem statement.
+
+Given the constraints, especially with the grid size \( N^2 \) possibly reaching \( 10^{18} \), it is not feasible to calculate the captured squares for each empty square directly due to memory and time limitations. Instead, we need to approach this problem using a more efficient method.
+
+The key observation is that the movement patterns create areas on the grid where pieces can capture each other. We can use this to our advantage by marking the parts of the grid that are safe from any piece's capture.
+
+Here is a step-by-step approach:
+
+1. For each piece, calculate the range of squares it can capture using its movement pattern.
+2. Use a union-find data structure to merge areas that are connected and share pieces.
+3. Count the number of squares that are in the merge areas but are not occupied by pieces.
+
+Let's implement this approach:
+
+```cpp
+#include <iostream>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+class Sub {
+public:
+    int solve() {
+        int N, M;
+        cin >> N >> M;
+
+        vector<pair<int, int>> pieces(M);
+        for (int i = 0; i < M; ++i) {
+            cin >> pieces[i].first >> pieces[i].second;
+        }
+
+        vector<int> parent(N * N + 1);
+        vector<int> rank(N * N + 1);
+        iota(parent.begin(), parent.end(), 1);
+        fill(rank.begin(), rank.end(), 0);
+
+        auto find = [&](int x) {
+            if (parent[x] != x) {
+                parent[x] = find(parent[x]);
+            }
+            return parent[x];
+        };
+
+        auto unionSet = [&](int x, int y) {
+            int rootX = find(x);
+            int rootY = find(y);
+            if (rootX != rootY) {
+                if (rank[rootX] > rank[rootY]) {
+                    parent[rootY] = rootX;
+                } else if (rank[rootX] < rank[rootY]) {
+                    parent[rootX] = rootY;
+                } else {
+                    parent[rootY] = rootX;
+                    rank[rootX]++;
+                }
+            }
+        };
+
+        // Connect pieces based on their capturing area
+        for (auto &p : pieces) {
+            int a = p.first, b = p.second;
+            int dx[] = {2, 1, 1, 2, -2, -1, -1, -2};
+            int dy[] = {1, 2, -2, -1, 1, 2, -2, -1};
+
+            for (int i = 0; i < 8; ++i) {
+                int nextA = a + dx[i], nextB = b + dy[i];
+                if (nextA > 0 && nextA <= N && nextB > 0 && nextB <= N) {
+                    int nextIndex = nextA * N + nextB;
+                    unionSet(p.first * N + p.second, nextIndex);
+                }
+            }
+        }
+
+        // Calculate the number of safe squares
+        vector<int> size(N * N + 1, 0);
+        for (int i = 1; i <= N * N; ++i) {
+            if (find(i) == i && count(pieces.begin(), pieces.end(), make_pair(i / N, i % N)) == 0) {
+                int root = find(i);
+                size[root]++;
+            }
+        }
+
+        int totalEmpty = N * N;
+        for (int s : size) {
+            if (s > 0) {
+                totalEmpty -= s;
+            }
+        }
+
+        cout << totalEmpty << endl;
+        return 0;
+    }
+};
+
+int main() {
+    Sub sub;
+    sub.solve();
+    return 0;
+}
+```
+
+This code calculates the number of safe squares by using the union-find data structure to merge areas connected by pieces. It then counts the size of each connected component and subtracts it from the total number of empty squares.

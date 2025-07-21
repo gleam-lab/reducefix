@@ -1,0 +1,124 @@
+To fix this code, we need to ensure that we correctly compute the number of safe squares where a new piece can be placed without being captured by any existing pieces. The initial approach tried to count the unsafe squares by considering rows, columns, and diagonals, but it had several logical errors and inefficiencies.
+
+### Approaches
+1. **Identify Unsafe Squares**: 
+   - **Rows and Columns**: Any square in the same row or column as an existing piece is unsafe.
+   - **Diagonals (i + j = a + b and i - j = a - b)**: Any square on the same diagonals as an existing piece is unsafe.
+
+2. **Count Safe Squares**: 
+   - Calculate the total number of squares (N²).
+   - Subtract the number of squares that are unsafe due to any existing piece.
+   - Avoid double-counting squares that are unsafe for multiple reasons (e.g., same row and same diagonal).
+
+3. **Efficient Calculation**:
+   - Use sets to keep track of unique rows, columns, and diagonals to avoid redundant checks.
+   - Calculate intersections between different sets (e.g., squares that are in both a row and a diagonal) to adjust counts accurately.
+
+### Solution Code
+```cpp
+#include<bits/stdc++.h>
+using namespace std;
+using i64 = long long;
+
+int main() {
+    std::ios::sync_with_stdio(false);
+    std::cin.tie(nullptr);
+    i64 N, M;
+    cin >> N >> M;
+    vector<pair<i64, i64>> pieces(M);
+    unordered_set<i64> rows, cols, diag1, diag2;
+    for (int i = 0; i < M; ++i) {
+        i64 a, b;
+        cin >> a >> b;
+        pieces[i] = {a, b};
+        rows.insert(a);
+        cols.insert(b);
+        diag1.insert(a + b);
+        diag2.insert(a - b);
+    }
+    
+    i64 unsafe = 0;
+    
+    // Rows and columns
+    unsafe += rows.size() * N;
+    unsafe += cols.size() * N;
+    // Subtract intersections of rows and columns
+    unsafe -= rows.size() * cols.size();
+    
+    // Diagonals (i+j)
+    for (auto d : diag1) {
+        i64 min_x_plus_y = max(1LL, d - N);
+        i64 max_x_plus_y = min(N, d - 1);
+        i64 count = max_x_plus_y - min_x_plus_y + 1;
+        unsafe += count;
+    }
+    
+    // Diagonals (i-j)
+    for (auto d : diag2) {
+        i64 min_x_minus_y = max(1LL - N, d);
+        i64 max_x_minus_y = min(N - 1LL, d);
+        i64 count = N - abs(d);
+        unsafe += count;
+    }
+    
+    // Subtract intersections between rows and diag1/diag2
+    for (auto r : rows) {
+        for (auto d : diag1) {
+            i64 y = d - r;
+            if (y >= 1 && y <= N) {
+                unsafe--;
+            }
+        }
+        for (auto d : diag2) {
+            i64 y = r - d;
+            if (y >= 1 && y <= N) {
+                unsafe--;
+            }
+        }
+    }
+    
+    // Subtract intersections between columns and diag1/diag2
+    for (auto c : cols) {
+        for (auto d : diag1) {
+            i64 x = d - c;
+            if (x >= 1 && x <= N) {
+                unsafe--;
+            }
+        }
+        for (auto d : diag2) {
+            i64 x = c + d;
+            if (x >= 1 && x <= N) {
+                unsafe--;
+            }
+        }
+    }
+    
+    // Add back intersections between rows, columns, and diag1/diag2 that were subtracted multiple times
+    for (auto r : rows) {
+        for (auto c : cols) {
+            if (diag1.count(r + c) && diag2.count(r - c)) {
+                unsafe++;
+            }
+        }
+    }
+    
+    // Subtract the original pieces themselves (they are occupied, not unsafe for placement)
+    unsafe -= M;
+    
+    i64 total_safe = N * N - unsafe;
+    cout << total_safe << "\n";
+    
+    return 0;
+}
+```
+
+### Explanation
+1. **Input Handling**: The code reads the grid size \( N \) and the number of existing pieces \( M \). It then reads the positions of these pieces.
+2. **Tracking Unsafe Areas**: Using sets, it tracks rows, columns, and two types of diagonals (i + j and i - j) that are covered by existing pieces.
+3. **Counting Unsafe Squares**: 
+   - **Rows and Columns**: It calculates the total squares covered by any row or column, adjusting for overlaps.
+   - **Diagonals**: For each diagonal, it computes the valid range of squares and counts them, adjusting for overlaps with rows and columns.
+4. **Adjustments**: It corrects for over-counting squares that fall into multiple categories (e.g., same row and same diagonal) by subtracting overlaps and adding back intersections that were subtracted multiple times.
+5. **Final Calculation**: The total safe squares are computed by subtracting the unsafe squares and the occupied squares from the total grid squares \( N^2 \).
+
+This approach ensures efficiency and correctness, even for large values of \( N \) up to \( 10^9 \), by leveraging set operations and mathematical calculations to avoid brute-force methods.

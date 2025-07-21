@@ -1,0 +1,25 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+const int INF = (int)1e9 + 7;
+
+int main() {
+    int n, q;
+    cin >> n >> q;
+    vector<int> as(n);
+    for (int i = 0; i < n; ++i) {
+        cin >> as[i];
+    }
+
+    while (q--) {
+        int b, k;
+        cin >> b >> k;
+        // Get the k-th closest point to b from the array as
+        // k is 1-based index, we need k-1 to be 0-based index
+        auto it = upper_bound(as.begin(), as.end(), b) - 1;
+        int dist = abs(as[k - 1] - b);
+        cout << dist << endl;
+    }
+
+    return 0;
+}

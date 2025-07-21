@@ -1,0 +1,111 @@
+To solve this problem efficiently, we need to manage dynamic connectivity in an undirected graph and answer queries about the k-th largest vertex connected to a given node.
+
+### Key Concepts:
+
+1. **Union-Find (Disjoint Set Union - DSU):**
+   - Efficiently manage connected components.
+   - Track parent of each node and path-compress for faster lookups.
+
+2. **Maintaining Top 10 Largest Nodes:**
+   - Each component's representative maintains a sorted list (descending) of up to the top 10 largest vertices in that component.
+   - When merging two components, merge their top 10 lists, sort them, and keep only the top 10.
+
+3. **Efficient Merging:**
+   - To ensure performance, always merge the smaller set into the larger one (union by size/rank).
+   - This ensures amortized logarithmic complexity per operation.
+
+4. **Query Handling:**
+   - For Type 1 (`add edge`), perform union with proper merging of top vertices.
+   - For Type 2 (`k-th largest`), simply access the k-th element from the root's list or return `-1` if there are fewer than `k` nodes.
+
+---
+
+Here is the complete, corrected C++ code:
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+const int MAXN = 2e5 + 5;
+
+int parent[MAXN];
+vector<int> top_vertex[MAXN]; // Stores up to top 10 largest nodes
+
+// Find with path compression
+int find(int x) {
+    if (parent[x] != x)
+        parent[x] = find(parent[x]);
+    return parent[x];
+}
+
+// Merge two sets: small into large
+void unite(int x, int y) {
+    int fx = find(x);
+    int fy = find(y);
+    if (fx == fy) return;
+
+    // Always merge smaller into larger for efficiency
+    if (top_vertex[fx].size() < top_vertex[fy].size())
+        swap(fx, fy);
+
+    // Merge the lists
+    vector<int> merged;
+    merged.reserve(top_vertex[fx].size() + top_vertex[fy].size());
+    merged.insert(merged.end(), top_vertex[fx].begin(), top_vertex[fx].end());
+    merged.insert(merged.end(), top_vertex[fy].begin(), top_vertex[fy].end());
+
+    // Sort and keep top 10
+    sort(merged.begin(), merged.end(), greater<int>());
+    if (merged.size() > 10)
+        merged.resize(10);
+
+    // Update parent
+    parent[fy] = fx;
+    top_vertex[fx] = merged;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int N, Q;
+    cin >> N >> Q;
+
+    // Initialize DSU
+    for (int i = 1; i <= N; ++i) {
+        parent[i] = i;
+        top_vertex[i] = {i};
+    }
+
+    while (Q--) {
+        int type;
+        cin >> type;
+
+        if (type == 1) {
+            int u, v;
+            cin >> u >> v;
+            unite(u, v);
+        } else {
+            int v, k;
+            cin >> v >> k;
+            int root = find(v);
+            if (top_vertex[root].size() < k)
+                cout << -1 << '\n';
+            else
+                cout << top_vertex[root][k - 1] << '\n';
+        }
+    }
+
+    return 0;
+}
+```
+
+---
+
+### Why This Works:
+
+- The use of **path compression** and **union-by-size** makes the DSU operations nearly constant time per operation.
+- Maintaining only the **top 10 elements** per component keeps the merge operations efficient.
+- The sorting of at most 20 elements (from two top-10 lists) during union is trivial computationally.
+
+This solution runs efficiently even under the maximum constraints (`N, Q ≤ 2×10⁵`).

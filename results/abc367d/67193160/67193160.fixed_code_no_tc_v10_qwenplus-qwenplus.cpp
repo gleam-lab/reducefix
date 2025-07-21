@@ -1,0 +1,42 @@
+#include<bits/stdc++.h>
+using namespace std;
+
+typedef long long ll;
+const int N = 1e6 + 5;
+
+int n, m;
+ll a[N * 2], prefix[N * 2];
+map<int, int> freq;
+ll ans = 0;
+
+int main() {
+    ios::sync_with_stdio(0);
+    cin.tie(0);
+    cout.tie(0);
+
+    cin >> n >> m;
+    
+    for(int i = 1; i <= n; ++i) {
+        cin >> a[i];
+        a[i + n] = a[i];  // Duplicate array for circular handling
+    }
+
+    // Compute prefix sums modulo m
+    prefix[0] = 0;
+    for(int i = 1; i < 2 * n; ++i) {
+        prefix[i] = (prefix[i - 1] + a[i]) % m;
+        
+        // For the first window, just update frequency map
+        if(i <= n) {
+            ans += freq[prefix[i]]++;
+        }
+        // After first window, also decrement counts from out-of-window prefixes
+        else {
+            freq[prefix[i - n]]--;
+            ans += freq[prefix[i]]++;
+        }
+    }
+
+    cout << ans;
+    return 0;
+}

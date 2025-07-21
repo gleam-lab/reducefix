@@ -1,0 +1,116 @@
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+
+int main() {
+  ios::sync_with_stdio(false);
+  cin.tie(nullptr);
+
+  int N, M;
+  ll K;
+  cin >> N >> M >> K;
+  vector<ll> A(N);
+  for (ll &a : A) {
+    cin >> a;
+  }
+  ll total_current = accumulate(A.begin(), A.end(), 0LL);
+  ll remaining = K - total_current;
+
+  // We'll process each candidate by sorting the votes
+  vector<pair<ll, int>> sortedA(N);
+  for (int i = 0; i < N; ++i) {
+    sortedA[i] = {A[i], i};
+  }
+  sort(sortedA.begin(), sortedA.end());
+
+  // prefix sum of sorted values
+  vector<ll> prefix(N + 1);
+  for (int i = 0; i < N; ++i) {
+    prefix[i + 1] = prefix[i] + sortedA[i].first;
+  }
+
+  vector<ll> res(N);
+
+  // For each candidate, find how many extra votes they need
+  for (int i = 0; i < N; ++i) {
+    int idx = sortedA[i].second;
+    ll cur = sortedA[i].first;
+
+    // Binary search on minimal X such that candidate i is elected
+    ll low = 0, high = remaining;
+    ll answer = -1;
+
+    auto computeNeed = [&](ll x, ll limit) {
+      ll l = 0, r = limit;
+      ll needed = 0;
+      while (l < r) {
+        ll m = (l + r) / 2;
+        ll target = cur + x + 1;
+        ll sumTopM = prefix[limit] - prefix[limit - m];
+        ll required = m * target - sumTopM;
+        if (required <= remaining - x)
+          l = m + 1;
+        else
+          r = m;
+      }
+
+      // Now check at l-1
+      ll target = cur + x + 1;
+      ll sumTopM = prefix[limit] - prefix[limit - (l - 1)];
+      ll required = (l - 1) * target - sumTopM;
+      if (required <= remaining - x)
+        return l - 1;
+      return l - 2;
+    };
+
+    // We want to make sure candidate i has enough votes so fewer than M candidates have more.
+    while (low <= high) {
+      ll mid = (low + high) / 2;
+      ll total = cur + mid;
+
+      // Find how many candidates currently have strictly more than total
+      int pos = upper_bound(sortedA.begin(), sortedA.end(), make_pair(total, N)) - sortedA.begin();
+
+      // How many candidates are above us?
+      int above = N - pos;
+
+      // Exclude current candidate from consideration
+      if (sortedA[pos].second == idx && sortedA[pos].first > total) {
+        pos++;
+        above = N - pos;
+      }
+
+      ll need = M - above - 1;
+      if (need <= 0) {
+        // Already good
+        answer = mid;
+        high = mid - 1;
+        continue;
+      }
+
+      if (pos - i - 1 >= need) {
+        // Enough candidates below to push them up
+        ll sumTop = prefix[pos] - prefix[pos - need];
+        ll target = total + 1;
+        ll required = need * target - sumTop;
+        if (required <= remaining - mid) {
+          answer = mid;
+          high = mid - 1;
+        } else {
+          low = mid + 1;
+        }
+      } else {
+        low = mid + 1;
+      }
+    }
+
+    res[idx] = answer;
+  }
+
+  for (ll x : res) {
+    cout << (x == -1 ? -1 : x) << ' ';
+  }
+  cout << '\n';
+
+  return 0;
+}

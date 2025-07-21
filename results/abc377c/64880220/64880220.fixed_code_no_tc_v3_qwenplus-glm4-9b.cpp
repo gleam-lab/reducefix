@@ -1,0 +1,51 @@
+#include <iostream>
+#include <vector>
+using namespace std;
+
+int main() {
+    long long n, m;
+    cin >> n >> m;
+    vector<vector<int>> grid(n, vector<int>(n, 0));
+    vector<pair<long long, long long>> occupied_positions;
+
+    for (int i = 0; i < m; ++i) {
+        long long a, b;
+        cin >> a >> b;
+        --a, --b; // Convert to 0-based index
+        grid[a][b] = 1;
+        for (int k = 0; k < 8; ++k) {
+            long long nx = a + 2 * (k & 1) - (k & 2);
+            long long ny = b + 2 * ((k >> 1) & 1) - ((k >> 1) & 2);
+            if (0 <= nx && nx < n && 0 <= ny && ny < n) {
+                grid[nx][ny] = 1;
+            }
+        }
+        occupied_positions.push_back({a, b});
+        for (int k = 0; k < 8; ++k) {
+            long long nx = a + 2 * (k & 1) - (k & 2);
+            long long ny = b + 2 * ((k >> 1) & 1) - ((k >> 1) & 2);
+            occupied_positions.push_back({nx, ny});
+        }
+    }
+
+    long long empty_cells = 0;
+    for (int i = 0; i < n; ++i) {
+        for (int j = 0; j < n; ++j) {
+            if (grid[i][j] == 0) {
+                bool is_occupied = false;
+                for (auto& pos : occupied_positions) {
+                    if (pos.first == i && pos.second == j) {
+                        is_occupied = true;
+                        break;
+                    }
+                }
+                if (!is_occupied) {
+                    ++empty_cells;
+                }
+            }
+        }
+    }
+
+    cout << empty_cells << endl;
+    return 0;
+}

@@ -1,0 +1,58 @@
+#include <iostream>
+#include <string>
+using namespace std;
+
+// Function to determine the winner of a single round of RPS
+// Returns 1 if player1 wins, -1 if player2 wins, 0 for draw
+int rps(char player1, char player2) {
+    if (player1 == player2) return 0;
+    if ((player1 == 'R' && player2 == 'S') ||
+        (player1 == 'S' && player2 == 'P') ||
+        (player1 == 'P' && player2 == 'R')) {
+        return 1;  // player1 wins
+    } else {
+        return -1; // player2 wins
+    }
+}
+
+char winning_move(char opponent) {
+    if (opponent == 'R') return 'P';  // Paper beats Rock
+    if (opponent == 'S') return 'R';  // Rock beats Scissors
+    if (opponent == 'P') return 'S';  // Scissors beats Paper
+    return 'X'; // Invalid input
+}
+
+int main() {
+    int n;
+    string s;
+    cin >> n >> s;
+
+    int max_score = 0;
+    int current_score = 0;
+
+    // Try starting with each possible move: 'R', 'P', 'S'
+    for (char start : {'R', 'P', 'S'}) {
+        char current_move = start;
+        int score = 0;
+
+        for (char c : s) {
+            int result = rps(current_move, c);
+            if (result == 1) {
+                score++;
+                // Continue with the same move since we won
+            } else if (result == 0) {
+                // Draw, change to opponent's move
+                current_move = winning_move(c); // Get the move that beats opponent's move
+            } else {
+                // We lost, change to the winning move against opponent
+                current_move = winning_move(c);
+            }
+        }
+
+        max_score = max(max_score, score);
+    }
+
+    cout << max_score << endl;
+
+    return 0;
+}

@@ -1,0 +1,28 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+#define INF (long long)1e18+7
+
+int main(){
+    ios_base::sync_with_stdio(false);
+    cin.tie(NULL);
+
+    int n;
+    long long dp[2] = {0, -INF};
+    cin >> n;
+
+    for (int i = 0; i < n; i++) {
+        long long x;
+        cin >> x;
+        if (x % 2 == 0) {
+            dp[0] = max(dp[0], dp[1] + 2 * x);
+            dp[1] = max(dp[1], dp[0] + x);
+        } else {
+            dp[0] = max(dp[0], dp[1] + x);
+            dp[1] = max(dp[1], dp[0]);
+        }
+    }
+
+    cout << max(dp[0], dp[1]) << endl;
+    return 0;
+}

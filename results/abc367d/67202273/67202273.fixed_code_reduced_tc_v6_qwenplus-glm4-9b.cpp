@@ -1,0 +1,1 @@
+ans=ans+cnt[sum[i-n]]--;

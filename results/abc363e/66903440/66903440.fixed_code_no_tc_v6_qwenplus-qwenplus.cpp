@@ -1,0 +1,71 @@
+#include <bits/stdc++.h>
+using namespace std;
+using ll = int64_t;
+
+const int INF = 1000000001;
+
+#define rep(i, n) for (int i = 0; i < (n); ++i)
+#define all(x) (x).begin(), (x).end()
+
+int dx[4] = {1, -1, 0, 0};
+int dy[4] = {0, 0, 1, -1};
+
+int main() {
+    cin.tie(0)->sync_with_stdio(0);
+
+    int H, W, Y;
+    cin >> H >> W >> Y;
+    vector<vector<int>> A(H, vector<int>(W));
+    rep(i, H) rep(j, W) cin >> A[i][j];
+
+    // visited array to mark if a cell is already submerged
+    vector<vector<bool>> submerged(H, vector<bool>(W, false));
+
+    // Queue for BFS grouped by elevation threshold
+    vector<queue<pair<int, int>>> q(Y + 2);  // up to Y+1 inclusive
+
+    // Initialize boundary cells
+    rep(i, H) rep(j, W) {
+        if (i == 0 || i == H - 1 || j == 0 || j == W - 1) {
+            if (!submerged[i][j]) {
+                submerged[i][j] = true;
+                q[A[i][j]].push({i, j});
+            }
+        }
+    }
+
+    int remaining = H * W;
+
+    // Process each year
+    for (int year = 1; year <= Y; ++year) {
+        queue<pair<int, int>> process;
+
+        // Move all cells with elevation <= current sea level to process queue
+        while (!q[year].empty()) {
+            auto [x, y] = q[year].front();
+            q[year].pop();
+            process.push({x, y});
+        }
+
+        while (!process.empty()) {
+            auto [x, y] = process.front();
+            process.pop();
+            remaining--;
+
+            rep(d, 4) {
+                int nx = x + dx[d];
+                int ny = y + dy[d];
+                if (nx >= 0 && nx < H && ny >= 0 && ny < W && !submerged[nx][ny]) {
+                    submerged[nx][ny] = true;
+                    if (A[nx][ny] <= year) {
+                        process.push({nx, ny});
+                    } else {
+                        q[A[nx][ny]].push({nx, ny});
+                    }
+                }
+            }
+        }
+
+        cout << remaining << "\n";
+    }
+}

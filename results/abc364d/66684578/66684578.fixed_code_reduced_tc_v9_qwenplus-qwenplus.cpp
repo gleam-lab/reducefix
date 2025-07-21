@@ -1,0 +1,109 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+#define ll long long
+#define rep(i, n) for (int i = 0; i < (int)n; ++i)
+
+const int INF = 2e8 + 5;
+
+// Structure to represent a node in segment tree
+struct Node {
+    int cnt;
+    ll sum;
+};
+
+// Segment Tree class
+class SegmentTree {
+private:
+    vector<Node> tree;
+    int size;
+
+public:
+    SegmentTree(int sz) {
+        size = 1;
+        while (size < sz) size *= 2;
+        tree.resize(2 * size);
+        fill(tree.begin(), tree.end(), Node{0, 0});
+    }
+
+    // Insert a value into the segment tree
+    void insert(int val) {
+        int pos = val + INF; // Shift negative values to positive indices
+        pos += size - 1;
+        tree[pos].cnt++;
+        tree[pos].sum += val;
+        pos /= 2;
+        while (pos > 0) {
+            tree[pos].cnt = tree[2 * pos].cnt + tree[2 * pos + 1].cnt;
+            tree[pos].sum = tree[2 * pos].sum + tree[2 * pos + 1].sum;
+            pos /= 2;
+        }
+    }
+
+    // Query the sum of the first k elements
+    ll query(int k) {
+        return query(k, 0, size, 0);
+    }
+
+private:
+    ll query(int k, int l, int r, int node) {
+        if (r - l == 1) {
+            return (ll)k * (l - INF);
+        }
+        int mid = (l + r) / 2;
+        int left_cnt = tree[2 * node + 1].cnt; // Left child is at 2*node+1
+        if (k <= left_cnt) {
+            return query(k, l, mid, 2 * node + 1);
+        } else {
+            ll left_sum = (ll)left_cnt * mid;
+            return left_sum + query(k - left_cnt, mid, r, 2 * node + 2);
+        }
+    }
+};
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int N, Q;
+    cin >> N >> Q;
+
+    vector<int> A(N);
+    for (int i = 0; i < N; ++i) {
+        cin >> A[i];
+    }
+
+    // Sort A for binary search later
+    sort(A.begin(), A.end());
+
+    // Process queries
+    for (int i = 0; i < Q; ++i) {
+        int b, k;
+        cin >> b >> k;
+
+        // Find the insertion point of b in A
+        int idx = lower_bound(A.begin(), A.end(), b) - A.begin();
+
+        // Binary search on distance
+        ll low = 0, high = 2e8 + 5;
+        ll answer = 0;
+
+        while (low <= high) {
+            ll mid = (low + high) / 2;
+            int left = lower_bound(A.begin(), A.begin() + idx, b - mid) - A.begin();
+            int right = upper_bound(A.begin(), A.end(), b + mid) - A.begin();
+            int count = (idx - left) + (right - idx);
+
+            if (count >= k) {
+                answer = mid;
+                high = mid - 1;
+            } else {
+                low = mid + 1;
+            }
+        }
+
+        cout << answer << '\n';
+    }
+
+    return 0;
+}

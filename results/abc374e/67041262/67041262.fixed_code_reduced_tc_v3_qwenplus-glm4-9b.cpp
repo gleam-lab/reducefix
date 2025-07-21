@@ -1,0 +1,53 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+
+using namespace std;
+using ll = long long;
+
+ll min_cost(ll W, ll a, ll p, ll b, ll q) {
+    ll best = LLONG_MAX;
+    ll x0 = W / a;
+    ll y0 = W / b;
+
+    // Try all combinations of x and y such that the total weight does not exceed W
+    for (ll x = max(0, x0); x <= W / a; ++x) {
+        ll rem = W - a * x;
+        ll y = max(0, (rem + b - 1) / b);  // This ensures ceil(rem / b)
+        best = min(best, p * x + q * y);
+    }
+
+    return best;
+}
+
+bool can(ll W, int N, ll X, const vector<ll>& A, const vector<ll>& P, const vector<ll>& B, const vector<ll>& Q) {
+    ll sum = 0;
+    for (int i = 0; i < N; ++i) {
+        ll c = min_cost(W, A[i], P[i], B[i], Q[i]);
+        sum += c;
+        if (sum > X) return false;
+    }
+    return true;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int N;
+    ll X;
+    cin >> N >> X;
+    vector<ll> A(N), P(N), B(N), Q(N);
+    for (int i = 0; i < N; ++i) {
+        cin >> A[i] >> P[i] >> B[i] >> Q[i];
+    }
+
+    ll lo = 0, hi = X + 1;  // The upper bound is set to X+1 to cover the case where the minimum cost is 0
+    while (hi - lo > 1) {
+        ll mid = (lo + hi) / 2;
+        if (can(mid, N, X, A, P, B, Q)) lo = mid;
+        else hi = mid;
+    }
+    cout << lo << "\n";
+    return 0;
+}

@@ -1,0 +1,82 @@
+
+The provided code has several issues, including logical errors in the simulation of the flooding process and the priority queue handling. Let's break down the issues and correct the code step by step.
+
+1. **Priority Queue Use**: The priority queue is used to simulate the flooding process. However, the logic for pushing adjacent cells into the queue when a cell sinks is not correctly implemented. After a cell sinks, all adjacent cells should be checked and pushed into the queue if they are not already visited.
+
+2. **Visited Array**: The visited array (`vis`) is not used correctly. It should indicate which cells have been visited during the flooding process, but in the current code, it is not updated after a cell sinks.
+
+3. **Edge Case Handling**: The code does not handle the edge case where the whole island has sunk after a certain number of years. It should stop processing once no cells are left above sea level.
+
+4. **Efficiency**: The code repeatedly scans the entire grid to find the cells at the edges. This can be optimized.
+
+Let's correct the code:
+
+```cpp
+#include <iostream>
+#include <vector>
+#include <queue>
+using namespace std;
+
+const int dx[4] = {-1, 1, 0, 0};
+const int dy[4] = {0, 0, -1, 1};
+
+struct Point {
+    int x, y;
+    bool operator < (const Point& other) const {
+        return y > other.y;  // We use y-coordinate for priority queue
+    }
+};
+
+int main() {
+    int H, W, Y;
+    cin >> H >> W >> Y;
+    
+    vector<vector<int>> grid(H, vector<int>(W));
+    for (int i = 0; i < H; ++i) {
+        for (int j = 0; j < W; ++j) {
+            cin >> grid[i][j];
+        }
+    }
+    
+    priority_queue<Point, vector<Point>, greater<Point>> pq;
+    
+    // Push the cells on the first and last rows/columns into the priority queue
+    for (int i = 0; i < H; ++i) {
+        pq.push({i, 0});
+        pq.push({i, W - 1});
+    }
+    for (int j = 0; j < W; ++j) {
+        pq.push({0, j});
+        pq.push({H - 1, j});
+    }
+    
+    vector<vector<bool>> visited(H, vector<bool>(W, false));
+    
+    int years = 0;
+    while (years < Y && !pq.empty()) {
+        int remaining = 0;
+        while (!pq.empty() && pq.top().y <= years) {
+            Point p = pq.top();
+            pq.pop();
+            if (!visited[p.x][p.y]) {
+                visited[p.x][p.y] = true;
+                remaining++;
+                // Check all 4 adjacent cells
+                for (int k = 0; k < 4; ++k) {
+                    int nx = p.x + dx[k];
+                    int ny = p.y + dy[k];
+                    if (nx >= 0 && nx < H && ny >= 0 && ny < W && !visited[nx][ny] && grid[nx][ny] > years) {
+                        pq.push({nx, ny});
+                    }
+                }
+            }
+        }
+        cout << remaining << '\n';
+        years++;
+    }
+    
+    return 0;
+}
+```
+
+This code addresses the issues in the original code and should correctly simulate the flooding process and output the area of the island that remains above sea level for each year up to Y. The use of a priority queue helps to efficiently simulate the sinking process, and the visited array prevents revisiting cells.

@@ -1,0 +1,57 @@
+#include <bits/stdc++.h>
+#define INF 0x3f3f3f3f3f3f3f3f
+using namespace std;
+typedef long long ll;
+const int MAXN = 2e5 + 10;
+
+vector<ll> vec[MAXN];
+ll step[MAXN];
+bool vis[MAXN];
+
+int main() {
+    ll n, m, u, v;
+    scanf("%lld %lld", &n, &m);
+    for (ll i = 1; i <= m; i++) {
+        scanf("%lld %lld", &u, &v);
+        vec[u].push_back(v);
+    }
+
+    // BFS from node 1
+    queue<ll> q;
+    q.push(1);
+    vis[1] = true;
+    step[1] = 0;
+
+    while (!q.empty()) {
+        ll top = q.front();
+        q.pop();
+
+        for (ll to : vec[top]) {
+            if (!vis[to]) {
+                vis[to] = true;
+                step[to] = step[top] + 1;
+                q.push(to);
+            }
+        }
+    }
+
+    // Look for cycle back to node 1 from any node reachable from 1
+    ll min_cycle = INF;
+    for (ll i = 1; i <= n; i++) {
+        if (i != 1 && vis[i]) {
+            for (ll neighbor : vec[i]) {
+                if (neighbor == 1) {
+                    min_cycle = min(min_cycle, step[i] + 1);
+                }
+            }
+        }
+    }
+
+    if (min_cycle == INF) {
+        printf("-1\n");
+    } else {
+        printf("%lld\n", min_cycle);
+    }
+
+    return 0;
+}

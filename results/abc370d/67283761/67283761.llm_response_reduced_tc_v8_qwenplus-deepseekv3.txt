@@ -1,0 +1,108 @@
+To fix this code, we need to ensure that the algorithm correctly handles the queries and accurately counts the remaining walls after all operations. The initial approach attempted to use a cache to store the nearest walls in each direction, but it was flawed in its implementation, leading to incorrect results in certain cases.
+
+### Approaches
+1. **Initialization**: The grid is initialized with walls in all cells.
+2. **Processing Queries**: For each query:
+   - If the cell has a wall, remove it.
+   - If the cell doesn't have a wall, search in the four directions (up, down, left, right) for the nearest wall and remove it.
+3. **Efficient Search**: To efficiently find the nearest wall in each direction, we use sets to maintain the positions of walls in each row and column. This allows us to use binary search (via `lower_bound` and `upper_bound`) to quickly locate the nearest walls in logarithmic time.
+
+### Solution Code
+```cpp
+#include <iostream>
+#include <vector>
+#include <set>
+#include <algorithm>
+
+using namespace std;
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int H, W, Q;
+    cin >> H >> W >> Q;
+
+    vector<set<int>> rowWalls(H + 1);
+    vector<set<int>> colWalls(W + 1);
+
+    for (int i = 1; i <= H; ++i) {
+        rowWalls[i].insert(0);
+        rowWalls[i].insert(W + 1);
+    }
+    for (int j = 1; j <= W; ++j) {
+        colWalls[j].insert(0);
+        colWalls[j].insert(H + 1);
+    }
+
+    int broken = 0;
+
+    while (Q--) {
+        int R, C;
+        cin >> R >> C;
+
+        if (rowWalls[R].count(C)) {
+            rowWalls[R].erase(C);
+            colWalls[C].erase(R);
+            broken++;
+        } else {
+            // Left
+            auto it = rowWalls[R].lower_bound(C);
+            --it;
+            int left = *it;
+            if (left != 0) {
+                rowWalls[R].erase(left);
+                colWalls[left].erase(R);
+                broken++;
+            }
+
+            // Right
+            it = rowWalls[R].upper_bound(C);
+            int right = *it;
+            if (right != W + 1) {
+                rowWalls[R].erase(right);
+                colWalls[right].erase(R);
+                broken++;
+            }
+
+            // Up
+            it = colWalls[C].lower_bound(R);
+            --it;
+            int up = *it;
+            if (up != 0) {
+                colWalls[C].erase(up);
+                rowWalls[up].erase(C);
+                broken++;
+            }
+
+            // Down
+            it = colWalls[C].upper_bound(R);
+            int down = *it;
+            if (down != H + 1) {
+                colWalls[C].erase(down);
+                rowWalls[down].erase(C);
+                broken++;
+            }
+        }
+    }
+
+    cout << H * W - broken << '\n';
+
+    return 0;
+}
+```
+
+### Explanation
+1. **Initialization**: 
+   - Two vectors of sets, `rowWalls` and `colWalls`, are initialized to keep track of walls in each row and column. Boundary values (0 and W+1 for rows, 0 and H+1 for columns) are added to handle edge cases.
+   
+2. **Processing Queries**:
+   - For each query, if the cell (R, C) has a wall, it is removed from both `rowWalls` and `colWalls`, and the broken count is incremented.
+   - If the cell doesn't have a wall, the algorithm searches for the nearest walls in all four directions using binary search:
+     - **Left and Right**: Using `lower_bound` and `upper_bound` on the row sets to find the nearest walls horizontally.
+     - **Up and Down**: Similarly, using column sets to find the nearest walls vertically.
+   - Upon finding a wall in any direction, it is removed, and the broken count is incremented.
+
+3. **Output**: The result is computed as the total number of cells minus the count of broken walls, giving the remaining walls.
+
+This approach ensures that each query is processed in logarithmic time relative to the number of walls in the row or column, making the overall complexity efficient for the given constraints.

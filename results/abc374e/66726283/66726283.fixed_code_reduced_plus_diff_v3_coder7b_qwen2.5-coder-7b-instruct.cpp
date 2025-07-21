@@ -1,0 +1,51 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+const int INF = 1e9;
+const int MAXN = 100005;
+
+int n, x;
+int a[MAXN], p[MAXN], b[MAXN], q[MAXN];
+
+bool check(int mid) {
+    vector<int> dp(mid + 1, INF);
+    dp[0] = 0;
+    
+    for (int i = 1; i <= n; ++i) {
+        for (int j = mid; j >= 0; --j) {
+            if (j >= a[i]) {
+                dp[j] = min(dp[j], dp[j - a[i]] + p[i]);
+            }
+            if (j >= b[i]) {
+                dp[j] = min(dp[j], dp[j - b[i]] + q[i]);
+            }
+        }
+    }
+    
+    int ans = accumulate(dp.begin(), dp.end(), 0);
+    return ans <= x;
+}
+
+signed main() {
+    ios::sync_with_stdio(0);
+    cin.tie(0);
+    cout.tie(0);
+    
+    cin >> n >> x;
+    for (int i = 1; i <= n; ++i) {
+        cin >> a[i] >> p[i] >> b[i] >> q[i];
+    }
+    
+    int l = 0, r = x;
+    while (l < r) {
+        int mid = (l + r) / 2;
+        if (check(mid)) {
+            r = mid;
+        } else {
+            l = mid + 1;
+        }
+    }
+    
+    cout << l << endl;
+    return 0;
+}

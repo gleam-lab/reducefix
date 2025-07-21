@@ -1,0 +1,50 @@
+#include<bits/stdc++.h>
+using namespace std;
+using ll = long long;
+using PII = pair<int, int>;
+#define x first
+#define y second
+#define all(x) x.begin(),x.end()
+#define zjj master
+const int N = 2e5+10, INF = 0x3f3f3f3f;
+int n, m;
+
+struct BIT {
+    int tr[N];
+    void add(int x, int v) { for (; x <= n; x += x&-x) tr[x] += v; }
+    int sum(int x) { int res = 0; for (; x; x -= x&-x) res += tr[x]; return res; }
+};
+
+BIT bit;
+
+void solve()
+{
+    cin >> n >> m >> bit.tr[0];
+    for (int i = 1; i <= n; i++) cin >> bit.tr[i], bit.add(i, bit.tr[i]-bit.tr[i-1]);
+    
+    auto erase = [&](int r, int c) -> void {
+        int l = lower_bound(all(bit.tr), c) - bit.tr.begin();
+        bit.add(l, -1);
+        bit.add(l+1, 1);
+    };
+
+    int q;
+    cin >> q;
+    while(q--)
+    {
+        int r, c; cin >> r >> c;
+        if(bit.sum(r)>c) erase(r, c);
+    }
+
+    ll ans = 0;
+    for (int i = 1; i <= n; i++) ans += bit.sum(i)*(m-bit.sum(i));
+    cout << ans << "\n";
+}
+
+signed main()
+{
+    ios::sync_with_stdio(0); cin.tie(0); cout.tie(0);
+    int T = 1;
+    while (T--) solve();
+    return 0;
+}

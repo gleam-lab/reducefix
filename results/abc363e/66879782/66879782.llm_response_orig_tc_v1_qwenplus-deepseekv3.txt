@@ -1,0 +1,95 @@
+To fix this code, we need to address the problem of determining the area of the island that remains above sea level each year as the sea level rises. The original approach attempts to use a priority queue to track when each section sinks, but it fails to correctly account for the dynamic nature of the sinking process, especially for sections not adjacent to the sea.
+
+### Approaches
+1. **Priority Queue for Sinking Time Calculation**: 
+   - We use a priority queue (min-heap) to process sections in order of their elevation. This helps determine the earliest time each section will sink.
+   - Sections adjacent to the sea (border sections) are processed first since they are the first to potentially sink.
+   - For each section, its sinking time is the maximum of its elevation and the minimum sinking time of its adjacent sections that have already been processed.
+
+2. **Counting Sunk Sections**:
+   - After determining the sinking time for each section, we create a prefix sum array to keep track of how many sections sink at or before each year.
+   - The remaining area each year is then calculated by subtracting the sunk sections from the total area.
+
+### Solution Code
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+#define all(x) (x).begin(), (x).end()
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int h, w, y;
+    cin >> h >> w >> y;
+    vector<vector<int>> height(h, vector<int>(w));
+    vector<vector<int>> sink(h, vector<int>(w, INT_MAX));
+    priority_queue<pair<int, pair<int, int>>, vector<pair<int, pair<int, int>>>, greater<pair<int, pair<int, int>>>> pq;
+    int di[4][2] = {{-1, 0}, {1, 0}, {0, -1}, {0, 1}};
+
+    for (int i = 0; i < h; i++) {
+        for (int j = 0; j < w; j++) {
+            cin >> height[i][j];
+            if (i == 0 || i == h - 1 || j == 0 || j == w - 1) {
+                sink[i][j] = height[i][j];
+                pq.push({sink[i][j], {i, j}});
+            }
+        }
+    }
+
+    while (!pq.empty()) {
+        auto current = pq.top();
+        pq.pop();
+        int current_h = current.first;
+        int r = current.second.first;
+        int c = current.second.second;
+        if (current_h > sink[r][c]) continue;
+        for (int k = 0; k < 4; k++) {
+            int nr = r + di[k][0];
+            int nc = c + di[k][1];
+            if (nr >= 0 && nr < h && nc >= 0 && nc < w) {
+                int new_sink = max(height[nr][nc], sink[r][c]);
+                if (new_sink < sink[nr][nc]) {
+                    sink[nr][nc] = new_sink;
+                    pq.push({sink[nr][nc], {nr, nc}});
+                }
+            }
+        }
+    }
+
+    vector<int> cnt(y + 2, 0);
+    for (int i = 0; i < h; i++) {
+        for (int j = 0; j < w; j++) {
+            if (sink[i][j] <= y) {
+                cnt[sink[i][j]]++;
+            }
+        }
+    }
+
+    for (int i = 1; i <= y; i++) {
+        cnt[i] += cnt[i - 1];
+    }
+
+    for (int i = 1; i <= y; i++) {
+        cout << h * w - cnt[i] << '\n';
+    }
+
+    return 0;
+}
+```
+
+### Explanation
+1. **Initialization**:
+   - The `height` matrix stores the elevation of each section.
+   - The `sink` matrix initializes to `INT_MAX`, except for border sections which are set to their elevation and added to the priority queue.
+
+2. **Processing with Priority Queue**:
+   - The priority queue processes sections in order of their elevation. For each section, it checks adjacent sections. If an adjacent section's sinking time can be minimized (based on the current section's sinking time and its own elevation), it updates the adjacent section's sinking time and adds it to the queue.
+
+3. **Counting Sunk Sections**:
+   - The `cnt` array counts how many sections sink at each year. After processing all sections, a prefix sum is computed to accumulate the total sunk sections up to each year.
+
+4. **Output**:
+   - For each year from 1 to Y, the remaining area is calculated by subtracting the total sunk sections up to that year from the total area (H × W).
+
+This approach efficiently calculates the sinking times using a priority queue and ensures correct results by dynamically updating the sinking times of adjacent sections, providing the correct remaining area for each year.

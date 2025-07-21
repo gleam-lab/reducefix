@@ -1,0 +1,56 @@
+#include<bits/stdc++.h>
+using namespace std;
+using i64 = long long;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    i64 N, M;
+    cin >> N >> M;
+    vector<array<int,2>> g(M);
+    vector<i64> A, B, C, D;
+    for(int i=0;i<M;++i){
+        i64 a, b;
+        cin >> a >> b;
+        g[i]={a, b};
+        A.push_back(a+b);
+        B.push_back(a-b);
+        C.push_back(a);
+        D.push_back(b);
+    }
+    sort(A.begin(), A.end());A.erase(unique(A.begin(), A.end()), A.end());
+    sort(B.begin(), B.end());B.erase(unique(B.begin(), B.end()), B.end());
+    sort(C.begin(), C.end());C.erase(unique(C.begin(), C.end()), C.end());
+    sort(D.begin(), D.end());D.erase(unique(D.begin(), D.end()), D.end());
+
+    auto check=[&](int a, int b, int c, int d)->int{
+        i64 res=0;
+        for(i64 x=1;x<=N;++x){
+            for(i64 y=1;y<=N;++y){
+                bool ok=true;
+                if(a && x+y==g[0][0])ok=false;
+                if(b && x-y==g[0][1])ok=false;
+                if(c && x==g[0][2])ok=false;
+                if(d && y==g[0][3])ok=false;
+                if(ok)res++;
+            }
+        }
+        return res;
+    };
+
+    i64 ans=0;
+    ans=N*N-M;
+    for(auto &p:g){
+        i64 a=p[0], b=p[1];
+        ans-=((a+b-1)/2-(a+b+N)/2+1)*2+(a-b-1)/2-(a-b+N)/2+1;
+        ans+=(N-a+b)*(N-a-b)-(a+b-1)/2-(a+b+N)/2+1;
+        ans+=(N+a-b)*(N+a-b)-(a-b-1)/2-(a-b+N)/2+1;
+        ans+=(N-a-b)*(N+a+b)-(a+b-1)/2-(a+b+N)/2+1;
+        ans+=(N+a+b)*(N+a+b)-(a+b-1)/2-(a+b+N)/2+1;
+        ans+=(N-a+b)*(N-a-b)-(a+b-1)/2-(a+b+N)/2+1;
+    }
+
+    cout<<ans<<"\n";
+
+    return 0;
+}

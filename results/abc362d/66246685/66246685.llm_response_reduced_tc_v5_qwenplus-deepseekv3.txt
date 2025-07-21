@@ -1,0 +1,71 @@
+To fix this code, we need to correctly compute the minimum weight of a path from vertex 1 to each other vertex, considering both the vertex weights (A_i) and the edge weights (B_j). The original code uses a BFS approach, which is not suitable for finding shortest paths in weighted graphs (unless the weights are uniform). Instead, we should use Dijkstra's algorithm, which is efficient for graphs with non-negative weights.
+
+### Approaches
+1. **Graph Representation**: Represent the graph using adjacency lists where each entry includes the neighboring vertex and the combined weight of the edge and the neighboring vertex's weight. This combined weight is crucial because moving to a vertex `v` from `u` via edge `(u, v)` with weight `B_j` incurs a total cost of `B_j + A_v`.
+2. **Priority Queue**: Use a priority queue (min-heap) to always expand the least costly path first, which is the core idea behind Dijkstra's algorithm.
+3. **Distance Tracking**: Maintain a distance array initialized to infinity, except for the starting vertex (vertex 1), which is initialized to its own weight `A_1`.
+
+### Solution Code
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+using P = pair<ll, ll>;
+
+const ll INF = 1LL << 60;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    ll N, M;
+    cin >> N >> M;
+    
+    vector<ll> A(N);
+    for (int i = 0; i < N; ++i) {
+        cin >> A[i];
+    }
+    
+    vector<vector<P>> G(N);
+    for (int i = 0; i < M; ++i) {
+        ll u, v, b;
+        cin >> u >> v >> b;
+        u--; v--;
+        G[u].emplace_back(v, b + A[v]);
+        G[v].emplace_back(u, b + A[u]);
+    }
+    
+    vector<ll> dist(N, INF);
+    dist[0] = A[0];
+    priority_queue<P, vector<P>, greater<P>> pq;
+    pq.emplace(dist[0], 0);
+    
+    while (!pq.empty()) {
+        auto [current_dist, u] = pq.top();
+        pq.pop();
+        
+        if (current_dist > dist[u]) continue;
+        
+        for (auto [v, cost] : G[u]) {
+            if (dist[v] > dist[u] + cost) {
+                dist[v] = dist[u] + cost;
+                pq.emplace(dist[v], v);
+            }
+        }
+    }
+    
+    for (int i = 1; i < N; ++i) {
+        cout << dist[i] << (i == N - 1 ? "\n" : " ");
+    }
+    
+    return 0;
+}
+```
+
+### Explanation
+1. **Initialization**: The graph is built using adjacency lists where each edge from `u` to `v` is stored along with the combined weight `B_j + A_v`. This setup ensures that the cost of traversing an edge and arriving at a vertex is accounted for in a single step.
+2. **Dijkstra's Algorithm**: The algorithm starts from vertex 1 (0-indexed as 0) with an initial distance equal to its own weight `A[0]`. The priority queue is used to process vertices in order of increasing current known distance.
+3. **Relaxation**: For each vertex `u` extracted from the priority queue, the algorithm checks all its neighbors `v`. If a shorter path to `v` via `u` is found, the distance to `v` is updated, and `v` is added to the priority queue for further processing.
+4. **Output**: After processing all vertices, the distances from vertex 1 to each other vertex are printed, which represent the minimum path weights as required.
+
+This approach efficiently handles the constraints and ensures correctness by leveraging Dijkstra's algorithm for shortest path computation in weighted graphs.

@@ -1,0 +1,46 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    int N;
+    string S;
+    cin >> N >> S;
+    
+    // Initialize variables
+    int wins = 0; // Number of games Takahashi wins
+    char lastMove = ' '; // Last move made by Takahashi
+    
+    // Iterate through each game
+    for(int i = 0; i < N; ++i) {
+        char currentMove = S[i];
+        
+        // Determine Takahashi's move based on Aoki's move
+        if(currentMove == 'R') { // If Aoki plays Rock
+            if(lastMove != 'P') { // Takahashi can play Paper to win
+                wins++;
+                lastMove = 'P';
+            } else { // Otherwise, he must play Scissors or Rock
+                lastMove = (lastMove == 'R' ? 'S' : 'R');
+            }
+        } else if(currentMove == 'P') { // If Aoki plays Paper
+            if(lastMove != 'S') { // Takahashi can play Scissors to win
+                wins++;
+                lastMove = 'S';
+            } else { // Otherwise, he must play Rock or Paper
+                lastMove = (lastMove == 'P' ? 'R' : 'P');
+            }
+        } else { // If Aoki plays Scissors
+            if(lastMove != 'R') { // Takahashi can play Rock to win
+                wins++;
+                lastMove = 'R';
+            } else { // Otherwise, he must play Paper or Scissors
+                lastMove = (lastMove == 'S' ? 'P' : 'S');
+            }
+        }
+    }
+    
+    // Output the maximum number of games Takahashi could have won
+    cout << wins << endl;
+    
+    return 0;
+}

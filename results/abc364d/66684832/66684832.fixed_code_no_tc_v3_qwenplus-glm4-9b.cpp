@@ -1,0 +1,55 @@
+#include <iostream>
+#include <algorithm>
+#include <vector>
+using namespace std;
+
+int main() {
+    int n, q;
+    cin >> n >> q;
+    vector<int> a(n);
+    vector<pair<int, int>> queries;
+    
+    // Read the coordinates of points A
+    for (int i = 0; i < n; i++) {
+        cin >> a[i];
+    }
+    
+    // Read the queries which consist of points B and the k-th closest requirement
+    for (int i = 0; i < q; i++) {
+        int b, k;
+        cin >> b >> k;
+        queries.emplace_back(b, k);
+    }
+    
+    // To efficiently answer the queries, we use a sorted vector of points A
+    sort(a.begin(), a.end());
+    
+    // To answer each query efficiently, we need to find the k-th closest point from B to each point in A
+    // We first calculate the distances from B to each point in A and store them in a vector
+    vector<int> distances;
+    for (int i = 0; i < n; i++) {
+        distances.emplace_back(abs(a[i] - queries[0].first));
+    }
+    
+    // Sort the distances to get the closest points first
+    sort(distances.begin(), distances.end());
+    
+    // For each query, we find the k-th smallest distance and output it
+    for (auto& q : queries) {
+        // Binary search to find the k-th closest point
+        int lo = 0, hi = n - 1;
+        while (lo < hi) {
+            int mid = (lo + hi + 1) / 2;
+            if (distances[mid] > distances[lo]) {
+                hi = mid - 1;
+            } else {
+                lo = mid;
+            }
+        }
+        
+        // Output the k-th closest distance
+        cout << distances[lo] << endl;
+    }
+    
+    return 0;
+}

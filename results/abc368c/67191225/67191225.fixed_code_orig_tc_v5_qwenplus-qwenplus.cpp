@@ -1,0 +1,48 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+
+using ll = long long;
+
+int main() {
+    std::ios::sync_with_stdio(false);
+    std::cin.tie(nullptr);
+
+    int N;
+    std::cin >> N;
+    std::vector<ll> H(N);
+    for (int i = 0; i < N; ++i) {
+        std::cin >> H[i];
+    }
+
+    ll T = 0;
+    for (int i = 0; i < N; ++i) {
+        // Determine how many attacks are needed to reduce this enemy to 0 or less
+        ll h = H[i];
+        ll full_cycles = h / 5;
+        ll remainder = h % 5;
+
+        T += full_cycles * 3;
+        
+        if (remainder > 0) {
+            T += 1;
+            if (T % 3 == 0) {
+                if (remainder >= 3) {
+                    // Already taken care of by the +1 attack (which does -3)
+                } else {
+                    // Need an extra attack to compensate for weaker third attack
+                    T += 1;
+                }
+            } else {
+                if (remainder >= 2) {
+                    // Already covered by two +1 attacks
+                } else {
+                    // Need one more attack
+                    T += 1;
+                }
+            }
+        }
+    }
+
+    std::cout << T << '\n';
+}

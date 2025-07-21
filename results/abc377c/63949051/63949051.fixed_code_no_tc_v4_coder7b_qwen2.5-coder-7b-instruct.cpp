@@ -1,0 +1,35 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+
+typedef long long ll;
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(NULL);
+    
+    ll n, m;
+    cin >> n >> m;
+    
+    set<pair<ll, ll>> pieces;
+    for (ll i = 0; i < m; ++i) {
+        ll x, y;
+        cin >> x >> y;
+        pieces.insert({x, y});
+        
+        // Check all possible positions a knight can move to from (x, y)
+        if (x + 2 <= n && y + 1 <= n) pieces.insert({x + 2, y + 1});
+        if (x + 1 <= n && y + 2 <= n) pieces.insert({x + 1, y + 2});
+        if (x - 1 >= 1 && y + 2 <= n) pieces.insert({x - 1, y + 2});
+        if (x - 2 >= 1 && y + 1 <= n) pieces.insert({x - 2, y + 1});
+        if (x - 2 >= 1 && y - 1 >= 1) pieces.insert({x - 2, y - 1});
+        if (x - 1 >= 1 && y - 2 >= 1) pieces.insert({x - 1, y - 2});
+        if (x + 1 <= n && y - 2 >= 1) pieces.insert({x + 1, y - 2});
+        if (x + 2 <= n && y - 1 >= 1) pieces.insert({x + 2, y - 1});
+    }
+    
+    // The total number of squares minus the number of squares attacked by knights
+    cout << n * n - pieces.size();
+    
+    return 0;
+}

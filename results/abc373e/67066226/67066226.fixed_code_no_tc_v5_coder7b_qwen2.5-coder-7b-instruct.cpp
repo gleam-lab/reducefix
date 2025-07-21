@@ -1,0 +1,53 @@
+#include <bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+
+int main() {
+    ios_base::sync_with_stdio(0);
+    cin.tie(0);
+    int n, m;
+    ll k;
+    cin >> n >> m >> k;
+    vector<ll> a(n);
+    for(int i = 0; i < n; ++i) {
+        cin >> a[i];
+        k -= a[i];
+    }
+
+    // Calculate the maximum number of votes needed for a candidate to win
+    vector<ll> max_votes_needed(n);
+    for(int i = 0; i < n; ++i) {
+        ll needed = k / (n - i - 1) + (k % (n - i - 1) > 0 ? 1 : 0);
+        max_votes_needed[i] = a[i] + needed;
+    }
+
+    // Determine the minimum additional votes needed for each candidate to win
+    vector<ll> min_additional_votes(n);
+    for(int i = 0; i < n; ++i) {
+        if(a[i] >= max_votes_needed[i]) {
+            min_additional_votes[i] = 0;
+        } else {
+            min_additional_votes[i] = max_votes_needed[i] - a[i];
+        }
+    }
+
+    // Ensure that no candidate can win by giving all remaining votes to another candidate
+    for(int i = 0; i < n; ++i) {
+        bool can_win = true;
+        for(int j = 0; j < n; ++j) {
+            if(i != j && a[j] + k - min_additional_votes[i] > a[i]) {
+                can_win = false;
+                break;
+            }
+        }
+        if(!can_win) {
+            min_additional_votes[i] = -1;
+        }
+    }
+
+    // Output the results
+    for(ll v : min_additional_votes) {
+        cout << v << " ";
+    }
+    return 0;
+}

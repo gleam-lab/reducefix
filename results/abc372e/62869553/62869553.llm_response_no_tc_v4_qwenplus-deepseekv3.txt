@@ -1,0 +1,76 @@
+The provided code aims to process queries on an undirected graph, initially with no edges, and supports two types of operations: adding edges and querying the k-th largest vertex in the connected component of a given vertex. The code uses a disjoint-set (Union-Find) data structure with path compression and tracks the top 10 largest vertices in each component. However, there are several issues in the code that need to be fixed.
+
+### Issues in the Original Code
+1. **Input Reading**: The code reads `q` and `n` in the wrong order (`cin>>q>>n` instead of `cin>>n>>q`).
+2. **Loop Iteration**: The loop runs `n` times instead of `q` times, which is incorrect since `q` is the number of queries.
+3. **Merging Components**: When merging two components, the code incorrectly copies the top 10 vertices of one component into the next 10 positions of the other component's array, leading to incorrect sorting and potential out-of-bounds access.
+4. **Sorting**: The sorting is done on 20 elements (0 to 19) instead of the top 10, which is unnecessary and incorrect.
+5. **Initialization**: The initialization of the `as` array (for storing top vertices) is done for `n` vertices, but the loop for processing queries runs `n` times instead of `q`.
+
+### Fixed Code
+```cpp
+#include<bits/stdc++.h>
+using namespace std;
+
+int fa[200005];
+vector<int> as[200005]; // Using vectors to dynamically store top elements
+int n, q;
+
+int gtf(int x) {
+    if (fa[x] != x) {
+        fa[x] = gtf(fa[x]);
+    }
+    return fa[x];
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    cin >> n >> q;
+    for (int i = 1; i <= n; i++) {
+        fa[i] = i;
+        as[i].push_back(i); // Initially, each vertex is its own component with itself as the only element
+    }
+    while (q--) {
+        int op, u, v, k;
+        cin >> op;
+        if (op == 1) {
+            cin >> u >> v;
+            int fu = gtf(u);
+            int fv = gtf(v);
+            if (fu != fv) {
+                // Merge the smaller set into the larger set to minimize merge operations
+                if (as[fu].size() < as[fv].size()) {
+                    swap(fu, fv);
+                }
+                // Merge fv into fu
+                for (int num : as[fv]) {
+                    as[fu].push_back(num);
+                }
+                // Sort in descending order and keep only top 10
+                sort(as[fu].begin(), as[fu].end(), greater<int>());
+                if (as[fu].size() > 10) {
+                    as[fu].resize(10);
+                }
+                fa[fv] = fu;
+            }
+        } else {
+            cin >> v >> k;
+            int fv = gtf(v);
+            if (as[fv].size() < k) {
+                cout << -1 << "\n";
+            } else {
+                cout << as[fv][k - 1] << "\n";
+            }
+        }
+    }
+    return 0;
+}
+```
+
+### Explanation
+1. **Input Reading**: Correctly reads `n` (number of vertices) and `q` (number of queries).
+2. **Union-Find**: Uses path compression in the `gtf` function for efficient parent finding.
+3. **Merging Components**: When merging two components, the smaller component is merged into the larger one to minimize the number of elements that need to be processed. The top 10 elements are maintained by sorting and resizing the vector.
+4. **Query Handling**: For type 2 queries, checks if the connected component has at least `k` elements and prints the k-th largest or `-1` if not.
+5. **Efficiency**: The use of vectors and merging smaller sets into larger ones ensures efficient operations, especially given the constraints (k ≤ 10). The overall complexity is manageable within the problem's constraints.

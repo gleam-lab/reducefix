@@ -1,0 +1,95 @@
+To solve this problem correctly, we need to **detect the shortest cycle in an undirected graph**. The provided code attempts a BFS approach but fails in certain cases due to incorrect handling of back-edge detection and cycle length calculation.
+
+---
+
+### Key Issues in Original Code:
+
+1. **Incorrect Cycle Detection Logic**: The original `bfs()` function tries to return `dep[u]` when a visited node is encountered again. However, this doesn't guarantee that the detected cycle is the shortest one or even valid (i.e., not parent).
+
+2. **BFS for Shortest Cycle**: To find the **shortest cycle**, we must perform a **layer-wise BFS**, keeping track of levels (`depth`) from each starting node. If a **cross edge** (not parent) connects to an already visited node at the same level or previous level, it may form a cycle.
+
+3. **Multiple Starts Required**: The cycle might not start at node 1. Hence, we should consider performing BFS from each unvisited node if the graph is disconnected.
+
+4. **Cycle Length Calculation**: When detecting a back edge, the total cycle length is `dep[u] + dep[v] + 1`.
+
+---
+
+### Strategy for Fix:
+
+- Use BFS with queue storing `{node, parent, depth}`.
+- For each unvisited node, initiate BFS.
+- If a neighbor is visited and not the parent:
+  - If it's at the same level: cycle length = current depth * 2
+  - If it's at one level less: cycle length = current depth + previous depth + 1
+- Track the minimum such cycle length found across all BFS traversals.
+
+---
+
+Here is the corrected C++ implementation:
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+using pii = pair<int, int>;
+
+const int N = 200005;
+vector<vector<int>> g(N);
+int n, m;
+
+int bfs(int start, vector<bool>& visited) {
+    vector<int> dep(n + 1, 0);
+    queue<pii> q;
+    q.push({start, -1});
+    dep[start] = 0;
+    visited[start] = true;
+
+    int min_cycle = INT_MAX;
+
+    while (!q.empty()) {
+        auto [u, parent] = q.front();
+        q.pop();
+
+        for (int v : g[u]) {
+            if (!visited[v]) {
+                visited[v] = true;
+                dep[v] = dep[u] + 1;
+                q.push({v, u});
+            } else if (v != parent) {
+                // Found a back edge
+                min_cycle = min(min_cycle, dep[u] + dep[v] + 1);
+            }
+        }
+    }
+
+    return (min_cycle == INT_MAX) ? -1 : min_cycle;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    cin >> n >> m;
+
+    for (int i = 0; i < m; ++i) {
+        int u, v;
+        cin >> u >> v;
+        g[u].push_back(v);
+        g[v].push_back(u);
+    }
+
+    vector<bool> visited(n + 1, false);
+    int ans = INT_MAX;
+
+    for (int i = 1; i <= n; ++i) {
+        if (!visited[i]) {
+            int res = bfs(i, visited);
+            if (res != -1)
+                ans = min(ans, res);
+        }
+    }
+
+    cout << ((ans == INT_MAX) ? -1 : ans) << '\n';
+
+    return 0;
+}
+```

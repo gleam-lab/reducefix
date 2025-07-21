@@ -1,0 +1,101 @@
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+
+int main() {
+    cin.tie(0)->sync_with_stdio(0);
+
+    int H, W, Y;
+    cin >> H >> W >> Y;
+    vector<vector<int>> A(H, vector<int>(W));
+    for (int i = 0; i < H; ++i) {
+        for (int j = 0; j < W; ++j) {
+            cin >> A[i][j];
+        }
+    }
+
+    // Initialize remaining area
+    int remaining = H * W;
+
+    // 2D array to track if a cell is still above sea level
+    vector<vector<bool>> alive(H, vector<bool>(W, true));
+
+    // For each height, store list of (i,j)
+    vector<vector<pair<int, int>>> height_map(Y + 2);  // up to Y+1
+
+    // Prepare data
+    for (int i = 0; i < H; ++i) {
+        for (int j = 0; j < W; ++j) {
+            int h = A[i][j];
+            if (h <= Y) {
+                height_map[h].push_back({i, j});
+            }
+        }
+    }
+
+    // Directions for BFS
+    int dx[] = {0, 1, 0, -1};
+    int dy[] = {1, 0, -1, 0};
+
+    // Use visited for BFS
+    vector<vector<bool>> visited(H, vector<bool>(W, false));
+
+    // Start from outside and mark all reachable cells with elevation <= current year
+    queue<pair<int, int>> q;
+
+    // Initialize border cells
+    for (int i = 0; i < H; ++i) {
+        for (int j = 0; j < W; ++j) {
+            if (i == 0 || i == H - 1 || j == 0 || j == W - 1) {
+                visited[i][j] = true;
+                q.push({i, j});
+                if (A[i][j] > 0) {
+                    remaining--;
+                }
+            }
+        }
+    }
+
+    // Process year by year
+    for (int year = 1; year <= Y; ++year) {
+        // Add new cells that become submerged this year
+        for (auto [i, j] : height_map[year]) {
+            if (!visited[i][j]) {
+                bool neighbor_submerged = false;
+                for (int d = 0; d < 4; ++d) {
+                    int ni = i + dx[d];
+                    int nj = j + dy[d];
+                    if (ni >= 0 && ni < H && nj >= 0 && nj < W && visited[ni][nj]) {
+                        neighbor_submerged = true;
+                        break;
+                    }
+                }
+                if (neighbor_submerged) {
+                    visited[i][j] = true;
+                    q.push({i, j});
+                    remaining--;
+                }
+            }
+        }
+
+        // BFS to flood fill from newly submerged cells
+        while (!q.empty()) {
+            auto [i, j] = q.front();
+            q.pop();
+
+            for (int d = 0; d < 4; ++d) {
+                int ni = i + dx[d];
+                int nj = j + dy[d];
+                if (ni >= 0 && ni < H && nj >= 0 && nj < W && !visited[ni][nj] && A[ni][nj] <= year) {
+                    visited[ni][nj] = true;
+                    q.push({ni, nj});
+                    remaining--;
+                }
+            }
+        }
+
+        cout << remaining << "\n";
+    }
+
+    return 0;
+}

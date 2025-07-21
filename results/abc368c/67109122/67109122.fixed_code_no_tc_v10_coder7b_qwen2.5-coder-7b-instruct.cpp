@@ -1,0 +1,20 @@
+#include<bits/stdc++.h>
+
+using namespace std;
+
+int main() {
+    int N;
+    cin >> N;
+    vector<int> H(N + 1); // Changed size to N+1 for easier indexing
+    for (int i = 1; i <= N; i++) cin >> H[i];
+    long long T = 0;
+    for (int i = 1; i <= N; i++) {
+        while (H[i] > 0) { // Loop to handle continuous attacks on an enemy
+            if (T % 3 == 0)H[i] -= 3;
+            else H[i] -= 1;
+            T++;
+        }
+    }
+    cout << T << endl;
+    return 0;
+}

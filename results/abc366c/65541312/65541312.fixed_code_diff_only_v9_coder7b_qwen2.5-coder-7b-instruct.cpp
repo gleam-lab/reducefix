@@ -1,0 +1,40 @@
+#include<bits/stdc++.h>
+using namespace std;
+
+void solve()
+{
+    int q;
+    cin >> q;
+    set<int> st;
+    for (int i = 0; i < q; i++) {
+        int a;
+        cin >> a;
+        if (a == 1) {
+            int x;
+            cin >> x;
+            st.insert(x); // Inserting the element into the set
+        }
+        else if (a == 2) { // Corrected the condition for type 2 queries
+            int y;
+            cin >> y;
+            st.erase(st.find(y)); // Erasing the element from the set
+        }
+        else if (a == 3) {
+            cout << st.size() << endl; // Printing the size of the set
+        }
+    }
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(NULL);
+    cout.tie(NULL);
+
+    int t = 1;
+    cin >> t;
+    while (t--) {
+        solve();
+    }
+
+    return 0;
+}

@@ -1,0 +1,96 @@
+#include <bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+#define all(x) (x).begin(), (x).end()
+
+int main() {
+    ios_base::sync_with_stdio(0);
+    cin.tie(0);
+    int N, M;
+    ll K;
+    cin >> N >> M >> K;
+    vector<ll> A(N);
+    for (int i = 0; i < N; ++i) {
+        cin >> A[i];
+        K -= A[i];
+    }
+
+    // ord stores indices sorted by current votes A[i]
+    vector<int> ord(N);
+    iota(all(ord), 0);
+    sort(ord.begin(), ord.end(), [&](int i, int j) { return A[i] < A[j]; });
+
+    vector<ll> sortedA = A;
+    sort(all(sortedA));
+
+    vector<ll> prefix(N + 1, 0);
+    for (int i = 0; i < N; ++i) {
+        prefix[i + 1] = prefix[i] + sortedA[i];
+    }
+
+    vector<ll> res(N, -1);
+
+    for (int idx = 0; idx < N; ++idx) {
+        int i = ord[idx]; // original index
+        ll low = 0, high = K + 1;
+
+        while (low <= high) {
+            ll mid = (low + high) / 2;
+            ll target = A[i] + mid;
+
+            // Find how many candidates have votes > target
+            // First find the first candidate in sortedA with votes > target
+            int pos = upper_bound(sortedA.begin(), sortedA.end(), target) - sortedA.begin();
+            int worse = N - pos;
+
+            if (worse >= M) {
+                // Already in top M candidates
+                low = mid + 1;
+                continue;
+            }
+
+            // Need to make sure even if remaining ballots are distributed to maximize others,
+            // we still have at least (N - M) candidates with less or equal votes.
+            //
+            // So we assume that all unassigned ballots go to making other candidates have > target
+
+            // How many candidates can potentially get > target?
+            // All those who currently have > target or could be boosted above target with remaining votes
+            int need_to_block = M - worse;
+
+            // We exclude self from this calculation
+            ll total_needed = 0;
+            int left = pos;
+            int right = N;
+
+            // Binary search on the number of candidates we need to cap at target
+            int l = pos, r = N;
+            while (l < r) {
+                int m = (l + r) / 2;
+                // Number of candidates between pos and m-1: m - pos
+                // Total votes needed to bring them down to target
+                ll total = (m - pos) * target + mid - (prefix[m] - prefix[pos]);
+                if (total <= K) {
+                    l = m + 1;
+                } else {
+                    r = m;
+                }
+            }
+
+            ll required = (l - 1 - pos) * target + mid - (prefix[l - 1] - prefix[pos]);
+            if ((l - 1 - pos) >= need_to_block && required <= K) {
+                low = mid + 1;
+            } else {
+                high = mid - 1;
+            }
+        }
+
+        if (high == K + 1)
+            res[i] = -1;
+        else
+            res[i] = max((ll)0, high + 1);
+    }
+
+    for (auto x : res)
+        cout << x << ' ';
+}

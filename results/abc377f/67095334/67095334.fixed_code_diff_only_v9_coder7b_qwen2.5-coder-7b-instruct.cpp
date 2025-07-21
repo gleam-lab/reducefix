@@ -1,0 +1,72 @@
+#include<bits/stdc++.h>
+#define int long long
+#define PII pair<int,int>
+#define inf 1e9+7
+
+using namespace std;
+
+int qpowm(int a, int b, int m) {
+	int r = 1;
+	while (b) {
+		if (b & 1)(r *= a) %= m;
+		(a *= a) %= m, b >>= 1;
+	}
+	return r;
+}
+
+int qpow(int a, int b) {
+	int r = 1;
+	while (b) {
+		if (b & 1)r *= a;
+		a *= a;
+		b >>= 1;
+	}
+	return r;
+}
+
+void solve() {
+	int n, m;
+	cin >> n >> m;
+	vector<PII>pieces(m);
+	for (int i = 0; i < m; ++i) cin >> pieces[i].first >> pieces[i].second;
+
+	set<int>rows, cols, diag1, diag2;
+
+	for (const auto& p : pieces) {
+		rows.insert(p.first);
+		cols.insert(p.second);
+		diag1.insert(p.first + p.second);
+		diag2.insert(p.first - p.second);
+	}
+
+	int ans = (n - rows.size()) * (n - cols.size());
+
+	for (const auto& [row, col] : pieces) {
+		int d1 = row + col;
+		int d2 = row - col;
+
+		int cnt1 = 0, cnt2 = 0;
+
+		for (int i = 1; i <= n; ++i) {
+			if (diag1.count(i + col)) ++cnt1;
+			if (diag2.count(col - i)) ++cnt2;
+		}
+
+		for (int i = 1; i <= n; ++i) {
+			if (diag1.count(row + i)) ++cnt1;
+			if (diag2.count(row - i)) ++cnt2;
+		}
+
+		ans -= min(cnt1, cnt2);
+	}
+
+	cout << ans << endl;
+}
+
+signed main() {
+	int t = 1;
+	while (t--) {
+		solve();
+	}
+	return 0;
+}

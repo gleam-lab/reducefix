@@ -1,0 +1,42 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+#define ll long long
+
+void solve()
+{
+    int n;
+    cin >> n;
+    vector<int> a(n), b(n - 1);
+    for (auto &tt : a)
+        cin >> tt;
+    for (auto &tt : b)
+        cin >> tt;
+    sort(a.rbegin(), a.rend()); // Sort in descending order for easier comparison
+    sort(b.begin(), b.end());
+    
+    int x = -1;
+    for (int i = 0; i < n - 1; ++i)
+    {
+        if (a[0] <= b[i]) // Check if the largest toy can fit in the current box
+        {
+            x = b[i]; // Update the smallest box size needed
+            break; // No need to check further as we found the smallest box
+        }
+    }
+    cout << x << endl;
+}
+
+int main()
+{
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t = 1;
+    cin >> t;
+    while (t--)
+    {
+        solve();
+    }
+    return 0;
+}

@@ -1,0 +1,33 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+#define rep(i, n) for (int i = 0; i < (int)(n); i++)
+using ll = long long;
+
+int main() {
+    int n;
+    cin >> n;
+    vector<int> data(n);
+    rep(i, n) {
+        cin >> data[i];
+    }
+
+    // Initialize variables to store the maximum experience points
+    ll max_points = 0;
+
+    // Iterate through each monster
+    for(int i = 0; i < n; ++i) {
+        // Calculate the points if we defeat this monster
+        ll defeat_points = data[i];
+        if((i + 1) % 2 == 0) { // Check if the monster is at an even index (considering 1-based indexing)
+            defeat_points *= 2;
+        }
+
+        // Add the points to the total
+        max_points += defeat_points;
+    }
+
+    // Output the result
+    cout << max_points << endl;
+    return 0;
+}

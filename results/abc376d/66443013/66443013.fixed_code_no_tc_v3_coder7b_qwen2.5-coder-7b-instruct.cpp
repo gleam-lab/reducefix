@@ -1,0 +1,36 @@
+#include<bits/stdc++.h>
+using namespace std;
+using ll=long long;
+vector<vector<ll>>graph;
+vector<bool>seen;
+const ll inf=1LL<<60;
+ll ans=inf;
+void dfs(ll n,ll hen){
+  seen[n]=true;
+  for(auto x:graph[n]){
+    if(seen[x]&&x!=1)continue; // Only consider back edges
+    if(x==1){
+      if(hen!=1){
+        ans=min(ans,hen+1);
+      }
+      continue;
+    }
+    dfs(x,hen+1);
+  }
+  seen[n]=false; // Backtrack
+}
+
+int main(){
+  ll n,m;
+  cin>>n>>m;
+  graph.resize(n+1);
+  seen.resize(n+1,false);
+  for(int i=0;i<m;i++){
+    ll a,b;
+    cin>>a>>b;
+    graph[a].push_back(b);
+  }
+  dfs(1,0);
+  if(ans!=inf)cout<<ans<<endl;
+  else cout<<"-1"<<endl;
+}

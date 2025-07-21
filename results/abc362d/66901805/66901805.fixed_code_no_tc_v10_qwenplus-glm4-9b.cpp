@@ -1,0 +1,51 @@
+#include<bits/stdc++.h>
+using namespace std;
+#define int long long 
+vector<pair<int,pair<int, int>>>G[200005]; // Using a vector to store edges and their weights
+int dist[200005], dist2[200005], a[200005], n, m;
+int INF = 1e18;
+
+// Function to perform Dijkstra's algorithm
+void dijkstra(int src) {
+    priority_queue<pair<int, int>, vector<pair<int, int>>, greater<pair<int, int>>> pq; // Min-heap for efficient retrieval of theæå°è·ç¦»èç¹
+    pq.push({0, src}); // Start with source vertex
+    dist[src] = 0; // Distance to itself is 0
+    while (!pq.empty()) {
+        int d = pq.top().first;
+        int u = pq.top().second;
+        pq.pop();
+        if (d != dist[u]) continue; // If extracted node is not the shortest path, skip processing
+        for (const auto& [v, weight] : G[u]) {
+            int d2 = d + a[v] + weight; // Calculate distance through this edge
+            if (d2 < dist[v]) { // If new distance is shorter, update and push to the priority queue
+                dist[v] = d2;
+                pq.push({d2, v});
+            }
+        }
+    }
+}
+
+signed main() {
+    scanf("%lld%lld", &n, &m);
+    for (int i = 1; i <= n; ++i) {
+        scanf("%lld", &a[i]);
+    }
+    for (int i = 1; i <= m; ++i) {
+        int u, v, w;
+        scanf("%lld%lld%lld", &u, &v, &w);
+        G[u].push_back({v, w}); // Store edges in the graph
+        G[v].push_back({u, w}); // Since the graph is undirected
+    }
+    // Initialize distances to a large value
+    fill(dist, dist + n + 1, INF);
+    fill(dist2, dist2 + n + 1, INF);
+
+    // Run Dijkstra's algorithm from vertex 1
+    dijkstra(1);
+
+    // Output the results for each vertex 2 through N
+    for (int i = 2; i <= n; ++i) {
+        cout << dist[i] << (i == n ? "\n" : " ");
+    }
+    return 0;
+}

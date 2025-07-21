@@ -1,0 +1,51 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define int long long
+const int N=105;
+int n;
+int x;
+int a[N], b[N], p[N], q[N];
+
+int c[N];
+bool check(int mid) {
+    for (int i = 1; i <= n; i++) {
+        c[i] = INT_MAX;
+        // Calculate cost of option 1
+        int cost1 = 0;
+        for (int j = 0; j <= b[i]; j++) {
+            cost1 = min(cost1, mid * p[i] + (b[i] - j) * q[i]);
+        }
+        // Calculate cost of option 2
+        int cost2 = 0;
+        for (int j = 0; j <= a[i]; j++) {
+            cost2 = min(cost2, mid * q[i] + (a[i] - j) * p[i]);
+        }
+        c[i] = min(cost1, cost2);
+    }
+    int ans = 0;
+    for (int i = 1; i <= n; i++) {
+        ans += c[i];
+    }
+    return ans <= x;
+}
+
+signed main() {
+    ios::sync_with_stdio(0);
+    cin.tie(0);
+    cout.tie(0);
+    cin >> n;
+    for (int i = 1; i <= n; i++) {
+        cin >> a[i] >> p[i] >> b[i] >> q[i];
+    }
+    int l = 0, r = n;
+    while (l < r) {
+        int mid = (l + r + 1) / 2; // Ensure that check is called with the correct mid value
+        if (check(mid)) {
+            l = mid;
+        } else {
+            r = mid - 1;
+        }
+    }
+    cout << l << '\n';
+    return 0;
+}

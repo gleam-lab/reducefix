@@ -1,0 +1,35 @@
+#include<bits/stdc++.h>
+using namespace std;
+
+const int MAXN = 100005;
+vector<int> a[MAXN], b[MAXN];
+
+void solve() {
+    int n, q; cin >> n >> q;
+    for(int i = 1; i <= n; i++) {
+        int x; cin >> x;
+        a[x].push_back(i);
+    }
+    
+    for(int i = 1; i <= q; i++) {
+        int x, k; cin >> x >> k;
+        b[x].push_back(k);
+    }
+
+    for(int i = -100000000; i <= 100000000; i++) {
+        sort(a[i].begin(), a[i].end());
+    }
+
+    for(int i = 1; i <= q; i++) {
+        int x = b[i][0];
+        int ans = a[x][b[i][1]-1];
+        cout << abs(ans - i) << endl;
+    }
+}
+
+int main() {
+    ios_base::sync_with_stdio(false); cin.tie(NULL); cout.tie(NULL);
+    int t = 1; //cin >> t;
+    while(t--) solve();
+    return 0;
+}

@@ -1,0 +1,53 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios_base::sync_with_stdio(false); cin.tie(0); cout.tie(0);
+
+    int N;
+    cin >> N;
+    string S;
+    cin >> S;
+
+    const vector<char> hand = {'R', 'P', 'S'};
+
+    auto get_score = [&](char use, char opponent) -> int {
+        if ((use == 'R' && opponent == 'S') || (use == 'P' && opponent == 'R') || (use == 'S' && opponent == 'P')) return 1;
+        return 0;
+    };
+
+    int total = 0;
+    vector<int> dp(N + 1, 0);
+    for (int i = 1; i <= N; ++i) {
+        int best = 0;
+        for (char use : hand) {
+            int score = dp[i - 1] + get_score(use, S[i - 1]);
+            best = max(best, score);
+        }
+        dp[i] = best;
+    }
+
+    total = dp[N];
+
+    fill(dp.begin(), dp.end(), 0);
+    int best_first_char = 0;
+    for (char first : hand) {
+        int score = get_score(first, S[0]);
+        best_first_char = max(best_first_char, score);
+    }
+    dp[0] = best_first_char;
+
+    for (int i = 1; i < N; ++i) {
+        int best = 0;
+        for (char use : hand) {
+            int score = dp[i - 1] + get_score(use, S[i - 1]);
+            best = max(best, score);
+        }
+        dp[i] = best;
+    }
+
+    total = max(total, dp[N - 1]);
+
+    cout << total;
+    return 0;
+}

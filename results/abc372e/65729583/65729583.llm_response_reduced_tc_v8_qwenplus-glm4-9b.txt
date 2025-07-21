@@ -1,0 +1,101 @@
+
+This problem involves handling an undirected graph with `N` vertices and `0` edges. We are given `Q` queries to process. Each query can either add an edge between two vertices or find the k-th largest vertex connected to a given vertex.
+
+Given the constraints where `N` and `Q` can be as large as 200,000, an efficient approach is necessary to handle the operations within the time limits. The operations we need to handle are:
+
+1. Adding an edge between two vertices (`u` and `v`).
+2. Finding the k-th largest connected vertex to a given vertex `v`.
+
+The provided solution uses the Union-Find data structure along with a segment tree to keep track of the sizes of the connected components. However, there are several aspects that can be improved:
+
+1. **Management of Connected Components**: Instead of directly using the Union-Find structure, we should manage the connected components using a more efficient approach.
+2. **Data Structure for k-th Largest Element**: The current solution is using an `ordered_set`, which is not optimal for frequent insertions and deletions. Instead, we can use a balanced binary search tree (like `std::set` or `std::map`) which will also maintain the order of elements.
+3. **Efficiency**: The provided solution may not be efficient enough for certain cases, especially when repeatedly adding edges to large connected components.
+
+### Revised Solution:
+
+```cpp
+#include <iostream>
+#include <vector>
+#include <set>
+#include <algorithm>
+
+using namespace std;
+
+const int N = 2e5 + 9;
+
+int parent[N];
+vector<int> components[1 << 17]; // Large enough to hold all connected components
+
+void find_parent(int v) {
+    if (parent[v] != v)
+        parent[v] = find_parent(parent[v]);
+}
+
+void union_sets(int u, int v) {
+    find_parent(u);
+    find_parent(v);
+    if (parent[u] != parent[v]) {
+        if (components[parent[v]].size() < components[parent[u]].size()) {
+            swap(parent[u], parent[v]);
+            swap(components[parent[u]], components[parent[v]]);
+        }
+        components[parent[u]].insert(v);
+        parent[v] = parent[u];
+    }
+}
+
+int find_kth_largest(int v, int k) {
+    find_parent(v);
+    int size = components[parent[v]].size();
+    if (k > size)
+        return -1; // k-th element doesn't exist if k > size
+    return *upper_bound(components[parent[v]].rbegin(), components[parent[v]].rend(), -k); // Upper bound in reverse order
+}
+
+int main() {
+    int n, q;
+    cin >> n >> q;
+
+    vector<pair<int, int>> queries;
+    for (int i = 0; i < q; ++i) {
+        int type;
+        cin >> type;
+        if (type == 1) {
+            int u, v;
+            cin >> u >> v;
+            queries.push_back({u, v});
+        } else {
+            int v, k;
+            cin >> v >> k;
+            queries.push_back({v, k});
+        }
+    }
+
+    // Initialize parent array
+    for (int i = 0; i <= n; ++i)
+        parent[i] = i;
+
+    // Process queries
+    for (auto& q : queries) {
+        if (q.first == 1) {
+            int u = q.second.first;
+            int v = q.second.second;
+            union_sets(u, v);
+        } else {
+            int v = q.second.first;
+            int k = q.second.second;
+            cout << find_kth_largest(v, k) << endl;
+        }
+    }
+
+    return 0;
+}
+```
+
+### Explanation:
+
+1. **Union-Find Structure**: We use the `parent` array to maintain the parent of each vertex. The `find_parent` function is used to find the root of the component containing the vertex `v`.
+2. **Union Function**: The `union_sets` function finds the roots of the components containing `u` and `v`, and unites them if they are not in the same component. If `v` is in a smaller component, it swaps the components and their roots to maintain the size invariant.
+3. **k-th Largest Element**: The `find_kth_largest` function finds the k-th largest element in the component containing `v`. It uses `std::upper_bound` in reverse order to find the k-th largest element.
+4. **Efficiency**: This solution uses the Union-Find data structure with path compression and union by size, ensuring nearly constant-time operations. The `std::set` is used to maintain the order of vertices within each component, allowing for efficient retrieval of the k-th largest element.

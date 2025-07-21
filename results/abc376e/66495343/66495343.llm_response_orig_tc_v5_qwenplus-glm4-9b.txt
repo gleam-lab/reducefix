@@ -1,0 +1,203 @@
+
+The problem is to find the minimum possible value of a specific expression involving two sequences, `A` and `B`, and a subset `S` of their indices. The expression is:
+
+\[
+\left(\max_{i \in S} A_i\right) \times \left(\sum_{i \in S} B_i\right)
+\]
+
+Given the constraints, a direct approach would be too slow. Instead, we need to find a more efficient solution.
+
+Here's the problem's failing case:
+
+```
+200000
+1 1
+51
+402523
+1 1
+255
+2
+1 1
+40
+6
+1 1
+222
+6425
+1 1
+165991
+3788
+1 1
+60
+1
+1 1
+6
+7377
+1 1
+23875
+1
+1 1
+6
+31766
+1 1
+380
+1
+1 1
+4
+30
+1 1
+1 1
+8534
+40143
+1 1
+62
+2579
+1 1
+75041
+3
+1 1
+20
+94
+1 1
+556
+179165
+1 1
+6780
+432
+1 1
+162
+15
+1 1
+18821
+8558
+1 1
+488
+6
+1 1
+1
+3
+1 1
+11
+6
+1 1
+196
+1294
+1 1
+2832
+1083
+1 1
+447
+459
+1 1
+2
+112825
+1 1
+2763
+452
+1 1
+220
+4567
+1 1
+1
+165
+1 1
+4049
+26241
+1 1
+161010
+2670
+1 1
+491
+119
+1 1
+2147
+5358
+1 1
+79
+3407
+1 1
+16370
+4140
+1 1
+110
+505578
+1 1
+70
+180
+1 1
+2
+```
+
+The provided solution uses a priority queue to keep track of the sum of the last `k-1` elements of sequence `B`, along with a maximum-heap to keep track of the maximum value of sequence `A`. This approach has some issues, which are detailed in the next section.
+
+### Issues with the provided solution
+
+1. **Priority Queue (Min-Heap) Usage**: The provided solution uses a priority queue (min-heap) to keep track of the sum of the last `k-1` elements of sequence `B`. However, since the maximum value of `A` is multiplied with the sum, it's more efficient to use a max-heap. This is because the max-heap will allow us to quickly access the largest sum, which is beneficial when we want to minimize the expression.
+
+2. **Efficiency**: The provided solution sorts the pairs of `(A[i], B[i])` and then iterates through them. This sorting step is `O(N log N)`, which makes the overall complexity `O(TN log N)`. Given the constraints, this approach is not efficient enough.
+
+### Improved Approach
+
+To solve this problem efficiently, we can follow these steps:
+
+1. Calculate prefix sums for `B` to quickly compute the sum of any subsequence.
+2. Use a max-heap to keep track of the `k` largest sums of `B` in the current window.
+3. For each element `A[i]`, update the max-heap with the new sum and then compute the expression using the maximum value from the max-heap.
+4. Keep track of the minimum value of the expression as we iterate through the sequences.
+
+This approach has a complexity of `O(N log K)`, which is more efficient given the problem's constraints.
+
+Here's the improved code:
+
+```cpp
+#include <iostream>
+#include <vector>
+#include <stack>
+#include <algorithm>
+using namespace std;
+
+int main() {
+    int T;
+    cin >> T;
+    while (T--) {
+        int N, K;
+        cin >> N >> K;
+        vector<int> A(N), B(N);
+        for (int i = 0; i < N; ++i) {
+            cin >> A[i];
+        }
+        for (int i = 0; i < N; ++i) {
+            cin >> B[i];
+        }
+
+        vector<long long> prefixSum(N + 1, 0);
+        for (int i = 1; i <= N; ++i) {
+            prefixSum[i] = prefixSum[i - 1] + B[i - 1];
+        }
+
+        long long minResult = LLONG_MAX;
+        stack<pair<int, long long>> maxHeap; // stores (index, sum)
+        long long sum = 0;
+
+        for (int i = 0; i < N; ++i) {
+            // Maintain only k largest sums in the heap
+            while (!maxHeap.empty() && maxHeap.top().second <= prefixSum[i] - prefixSum[i - K + 1]) {
+                sum -= maxHeap.top().second;
+                maxHeap.pop();
+            }
+
+            // Calculate the current result
+            long long currentResult = A[i] * sum;
+            minResult = min(minResult, currentResult);
+
+            // Update the heap with the current sum
+            maxHeap.push({i, prefixSum[i] - prefixSum[i - K + 1]});
+            sum += prefixSum[i] - prefixSum[i - K + 1];
+        }
+
+        cout << minResult << endl;
+    }
+    return 0;
+}
+```
+
+This improved solution uses a max-heap to efficiently keep track of the `k` largest sums, and it calculates the prefix sums for sequence `B` to enable fast sum computation.

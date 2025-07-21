@@ -1,0 +1,22 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+
+using namespace std;
+
+int main() {
+    int n;
+    long long dp0 = 0, dp1 = -1;
+    cin >> n;
+
+    for (int i = 0; i < n; i++) {
+        long long x;
+        cin >> x;
+        long long temp = max(dp0, dp1 + 2 * x);
+        dp0 = dp1 + 2 * x;
+        dp1 = max(dp0 - x, dp1);
+    }
+
+    cout << max(dp0, dp1) << endl;
+    return 0;
+}

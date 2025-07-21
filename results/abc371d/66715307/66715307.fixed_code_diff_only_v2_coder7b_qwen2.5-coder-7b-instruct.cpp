@@ -1,0 +1,23 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int n, x[200050], p[200050], q, a[200050];
+
+int main() {
+    cin >> n;
+    for (int i = 1; i <= n; i++) cin >> x[i];
+    for (int i = 1; i <= n; i++) {
+        cin >> p[i];
+        a[i] = a[i - 1] + p[i];
+    }
+    cin >> q;
+    sort(x + 1, x + n + 1); // Sort the array to use binary search
+    for (int i = 1; i <= q; i++) {
+        int l, r; cin >> l >> r;
+        auto it1 = lower_bound(x + 1, x + n + 1, l); // Find the first element not less than l
+        auto it2 = upper_bound(x + 1, x + n + 1, r); // Find the first element greater than r
+        int l1 = it1 - x, r2 = it2 - x; // Calculate the indices based on iterators
+        cout << a[r2 - 1] - a[l1 - 2] << endl; // Adjust indices to avoid out-of-bound access
+    }
+    return 0;
+}

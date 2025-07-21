@@ -1,0 +1,67 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+
+#define all(x) x.begin(), x.end()
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int N, K;
+    cin >> N >> K;
+    vector<int> A(N);
+    for (int i = 0; i < N; ++i) {
+        cin >> A[i];
+    }
+
+    if (K == 0) {
+        // No removals, the answer is max(A) - min(A)
+        int min_val = *min_element(all(A));
+        int max_val = *max_element(all(A));
+        cout << max_val - min_val << "\n";
+        return 0;
+    }
+
+    // We need to remove K elements such that the remaining subsequence has minimum possible (max - min)
+    // Since we can choose any K elements to remove, but must keep the rest in order,
+    // we want to find a subsequence of length (N-K) with minimal (max - min)
+
+    // Let's consider a sliding window approach:
+    // Try all windows of size W = N - K, and compute min and max in each window.
+    // The minimal (max - min) among all such windows is our answer.
+
+    int W = N - K;
+    deque<int> min_deq, max_deq;
+    int result = INT_MAX;
+
+    for (int i = 0; i < N; ++i) {
+        // Maintain deque for min
+        while (!min_deq.empty() && A[i] <= A[min_deq.back()])
+            min_deq.pop_back();
+        min_deq.push_back(i);
+
+        // Remove elements out of window
+        while (!min_deq.empty() && min_deq.front() <= i - W)
+            min_deq.pop_front();
+
+        // Maintain deque for max
+        while (!max_deq.empty() && A[i] >= A[max_deq.back()])
+            max_deq.push_back(i);
+        max_deq.push_back(i);
+
+        while (!max_deq.empty() && max_deq.front() <= i - W)
+            max_deq.pop_front();
+
+        // Once the window is valid (i >= W - 1), update result
+        if (i >= W - 1) {
+            int current_min = A[min_deq.front()];
+            int current_max = A[max_deq.front()];
+            result = min(result, current_max - current_min);
+        }
+    }
+
+    cout << result << "\n";
+
+    return 0;
+}

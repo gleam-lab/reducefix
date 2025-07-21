@@ -1,0 +1,58 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+
+using namespace std;
+
+typedef long long ll;
+
+int main() {
+    ios_base::sync_with_stdio(0);
+    cin.tie(0);
+    
+    int n, m;
+    ll k;
+    cin >> n >> m >> k;
+    
+    vector<ll> votes(n);
+    ll total_votes = 0;
+    for (int i = 0; i < n; ++i) {
+        cin >> votes[i];
+        total_votes += votes[i];
+    }
+    
+    // Sort votes and find the k-th largest vote
+    vector<ll> sorted_votes = votes;
+    sort(sorted_votes.rbegin(), sorted_votes.rend());
+    
+    // Calculate the minimum votes needed to win
+    ll min_votes_needed = sorted_votes[m-1] + 1;
+    
+    // Calculate remaining votes after all candidates have min_votes_needed
+    ll remaining_votes = k - total_votes;
+    
+    // Check if there are enough votes to guarantee a win for all candidates
+    if (remaining_votes < n * min_votes_needed) {
+        cout << "-1 ";
+        return 0;
+    }
+    
+    // Calculate the minimum additional votes needed for each candidate
+    vector<ll> additional_votes_needed(n, min_votes_needed - votes[0]);
+    
+    // Adjust the additional votes needed based on the difference between the first and last candidate
+    ll difference = votes[n-1] - votes[0];
+    ll excess_votes = remaining_votes - n * min_votes_needed;
+    for (ll i = 1; i < n; ++i) {
+        additional_votes_needed[i] -= excess_votes / n;
+        excess_votes -= excess_votes / n;
+    }
+    
+    // Output the result
+    for (ll vote : additional_votes_needed) {
+        cout << (vote > 0 ? vote : "-1") << " ";
+    }
+    cout << endl;
+    
+    return 0;
+}

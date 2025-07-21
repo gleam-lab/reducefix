@@ -1,0 +1,35 @@
+#include<bits/stdc++.h>
+using namespace std;
+const int N = 1e6 + 5;
+int n, m, k, sum, cnt, a[N], b[N], d[N];
+
+int main() {
+    ios::sync_with_stdio(0);
+    cin.tie(0);
+    cout.tie(0);
+
+    int i, j, x, y, z, t;
+    cin >> n >> m;
+
+    for (i = 1; i <= n; i++) {
+        cin >> a[i];
+        a[i + n] = a[i]; // Ensure array is doubled to handle wrap-around correctly
+    }
+
+    b[0] = 1; // Initialize the frequency array with one occurrence of remainder 0
+
+    for (i = 1; i < n * 2; i++) {
+        if (i >= n) {
+            b[d[i - n] % m]--; // Decrement the count of the previous remainder
+        }
+        d[i] = d[i - 1] + a[i]; // Calculate the cumulative sum modulo m
+        sum += b[d[i] % m]; // Add the number of times this remainder has been seen before
+        if (i < n) {
+            b[d[i] % m]++; // Increment the count of the current remainder
+        }
+    }
+
+    cout << sum << endl; // Print the total count of pairs that sum up to a multiple of m
+
+    return 0;
+}

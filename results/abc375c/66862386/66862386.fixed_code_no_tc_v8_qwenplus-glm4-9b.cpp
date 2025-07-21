@@ -1,0 +1,26 @@
+#include <iostream>
+#include <cmath>
+using namespace std;
+
+int main() {
+    long double ans = 0.0;
+    int nowX = 0, nowY = 0;
+    int nextX, nextY;
+    int N;
+
+    cin >> N;
+    
+    for (int i = 0; i < N; i++) {
+        cin >> nextX >> nextY;
+        ans += sqrt(pow(nextX - nowX, 2) + pow(nextY - nowY, 2));
+        nowX = nextX;
+        nowY = nextY;
+    }
+    
+    // Add the distance back to the origin
+    ans += sqrt(pow(nowX - 0, 2) + pow(nowY - 0, 2));
+    
+    cout << fixed << setprecision(10) << ans << endl;
+
+    return 0;
+}

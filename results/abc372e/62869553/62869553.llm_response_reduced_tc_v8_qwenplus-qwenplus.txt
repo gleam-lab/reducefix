@@ -1,0 +1,108 @@
+To solve this problem efficiently, we need to maintain dynamic connectivity between nodes and answer queries about the top-k largest node numbers connected to a specific node.
+
+### Key Observations:
+1. **Union-Find with Additional Tracking**: We can use the Disjoint Set Union (DSU) data structure to manage connected components.
+2. **Maintain Top-k Elements**: For each component root, we'll store the top 10 largest elements in a sorted list (descending order).
+3. **Efficient Merging**: When two sets are merged, we merge their top-k lists and keep only the top 10 largest values.
+4. **Path Compression & Union by Size/Height**: Standard optimizations for DSU to ensure almost constant time per operation.
+
+### Data Structures Used:
+- `parent[]`: Tracks parent of each node.
+- `root_data[]`: A vector associated with each root containing up to 10 largest nodes in descending order.
+
+### Time Complexity:
+- Each DSU operation is nearly O(α(N)) where α is the inverse Ackermann function.
+- Each query is O(1) due to fixed-size top-k storage.
+
+Here's the corrected and efficient implementation:
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+const int K_LIMIT = 10;
+
+int N, Q;
+vector<int> root_data[200005]; // Each root keeps track of top 10 nodes
+int parent[200005];
+int size[200005];
+
+// Find with path compression
+int find(int x) {
+    if (parent[x] != x) {
+        parent[x] = find(parent[x]);
+    }
+    return parent[x];
+}
+
+// Merge two sets ensuring we preserve top K_LIMIT elements
+void unite(int x, int y) {
+    int fx = find(x);
+    int fy = find(y);
+    if (fx == fy) return;
+
+    // Always merge smaller set into larger one
+    if (size[fx] < size[fy]) swap(fx, fy);
+
+    // Append the top elements from fy to fx
+    for (int val : root_data[fy]) {
+        root_data[fx].push_back(val);
+    }
+
+    // Sort and retain only top K_LIMIT elements
+    sort(root_data[fx].begin(), root_data[fx].end(), greater<int>());
+    if (root_data[fx].size() > K_LIMIT)
+        root_data[fx].resize(K_LIMIT);
+
+    // Update DSU
+    parent[fy] = fx;
+    size[fx] += size[fy];
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    cin >> N >> Q;
+
+    // Initialize DSU and root data
+    for (int i = 1; i <= N; ++i) {
+        parent[i] = i;
+        size[i] = 1;
+        root_data[i].push_back(i); // Start with itself
+    }
+
+    while (Q--) {
+        int type;
+        cin >> type;
+
+        if (type == 1) {
+            int u, v;
+            cin >> u >> v;
+            unite(u, v);
+        } else if (type == 2) {
+            int v, k;
+            cin >> v >> k;
+            int root = find(v);
+            if (k <= root_data[root].size()) {
+                cout << root_data[root][k - 1] << '\n';
+            } else {
+                cout << "-1\n";
+            }
+        }
+    }
+
+    return 0;
+}
+```
+
+### Explanation:
+- **Initialization**: Each node starts as its own parent with itself as the only value in its list.
+- **Unite Operation**:
+  - Combines top-k lists of two components.
+  - Sorts and retains only the top 10 largest values.
+- **Query Type 2**:
+  - Finds the root of the queried node.
+  - Returns the k-th largest value or `-1` if not enough elements.
+
+This solution ensures correctness and efficiency even for maximum constraints.

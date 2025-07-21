@@ -1,0 +1,60 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int n, m;
+    cin >> n >> m;
+
+    vector<int> a(2 * n + 1);
+    for (int i = 1; i <= n; ++i) {
+        cin >> a[i];
+        a[i] %= m;
+        a[i + n] = a[i];
+    }
+
+    // Prefix sum mod array
+    vector<int> prefix(2 * n + 1);
+    for (int i = 1; i <= 2 * n; ++i) {
+        prefix[i] = (prefix[i - 1] + a[i]) % m;
+    }
+
+    // We need to count how many subarrays of the original array (length <=n) have max (sum mod m)
+    // Use BIT or Segment Tree to maintain counts efficiently
+
+    // Fenwick Tree implementation
+    const int OFFSET = 1e6 + 5;
+    vector<int> bit(OFFSET * 2);
+
+    auto update = [&](int idx, int val) {
+        for (++idx; idx < (int)bit.size(); idx += idx & -idx)
+            bit[idx] += val;
+    };
+
+    auto query = [&](int idx) {
+        int res = 0;
+        for (++idx; idx > 0; idx -= idx & -idx)
+            res += bit[idx];
+        return res;
+    };
+
+    long long ans = 0;
+    update(prefix[0], 1);
+    for (int i = 1; i <= 2 * n; ++i) {
+        // Count how many previous prefix[j] satisfy (prefix[i] - prefix[j] + m) % m == max value (m-1)
+        // This simplifies to looking for prefix[j] == prefix[i] - (m-1)
+        int target = (prefix[i] - (m - 1) + m) % m;
+        ans += query(target);
+        update(prefix[i], 1);
+
+        // Remove prefix values that are out of window (more than n elements back)
+        if (i >= n) {
+            update(prefix[i - n], -1);
+        }
+    }
+
+    cout << ans << "\n";
+    return 0;
+}

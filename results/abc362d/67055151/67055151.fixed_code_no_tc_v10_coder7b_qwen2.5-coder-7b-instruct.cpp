@@ -1,0 +1,73 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+#define ll long long
+
+struct Edge {
+    ll u, v, w;
+    Edge(ll u, ll v, ll w) : u(u), v(v), w(w) {}
+};
+
+struct Vertex {
+    ll id, dist;
+    Vertex(ll id, ll dist) : id(id), dist(dist) {}
+    bool operator>(const Vertex &other) const { return dist > other.dist; }
+};
+
+void dijkstra(const vector<vector<Edge>>& graph, vector<ll>& dist, ll start) {
+    int n = graph.size();
+    dist.assign(n, LLONG_MAX);
+    dist[start] = 0;
+
+    priority_queue<Vertex, vector<Vertex>, greater<Vertex>> pq;
+    pq.push(Vertex(start, 0));
+
+    while (!pq.empty()) {
+        Vertex current = pq.top(); pq.pop();
+        ll u = current.id, d = current.dist;
+
+        if (d > dist[u]) continue;
+
+        for (const auto& edge : graph[u]) {
+            ll v = edge.v, w = edge.w;
+            if (dist[u] + w < dist[v]) {
+                dist[v] = dist[u] + w;
+                pq.push(Vertex(v, dist[v]));
+            }
+        }
+    }
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(NULL);
+
+    ll n, m;
+    cin >> n >> m;
+
+    vector<ll> a(n);
+    for (ll i = 0; i < n; ++i) {
+        cin >> a[i];
+    }
+
+    vector<vector<Edge>> graph(n);
+    for (ll i = 0; i < m; ++i) {
+        ll u, v, w;
+        cin >> u >> v >> w;
+        --u, --v;
+        graph[u].emplace_back(u, v, w);
+        graph[v].emplace_back(v, u, w);
+    }
+
+    vector<ll> dist(n - 1, LLONG_MAX);
+    for (ll i = 1; i < n; ++i) {
+        dijkstra(graph, dist, i);
+    }
+
+    for (ll i = 0; i < n - 1; ++i) {
+        cout << dist[i] << ' ';
+    }
+    cout << endl;
+
+    return 0;
+}

@@ -1,0 +1,58 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+
+    int N;
+    cin >> N;
+    vector<long long> A(N), B(N - 1);
+
+    for (int i = 0; i < N; ++i) cin >> A[i];
+    for (int i = 0; i < N - 1; ++i) cin >> B[i];
+
+    sort(A.begin(), A.end());
+    sort(B.begin(), B.end());
+
+    multiset<long long> box_sizes;
+    int j = 0;
+    for (int i = 0; i < N - 1; ++i) {
+        while (j < N - 1 && B[i] >= A[j]) {
+            box_sizes.insert(B[i]);
+            ++j;
+        }
+        if (j == N) {
+            cout << -1 << endl;
+            return 0;
+        }
+        auto it = box_sizes.lower_bound(A[j]);
+        if (it == box_sizes.end()) {
+            cout << -1 << endl;
+            return 0;
+        }
+        box_sizes.erase(it);
+        ++j;
+    }
+
+    // The required size of the additional box is such that it can fit remaining toy A[N-1]
+    // Check if all toys are already placed, and we just need to place A[N-1]
+    if (j < N) {
+        // We still have one toy left: A[N-1]
+        // Find the smallest x >= A[N-1] that is not used by any other box
+        // Since B is sorted, we find the smallest x >= A[N-1] that is not in B
+        // Or more precisely, since we've already used some boxes from B, check whether
+        // there's an unused box >= A[N-1], otherwise use A[N-1]
+
+        // But we already consumed N-1 boxes. If all boxes are used, then x must be A[N-1]
+        // or larger. Otherwise, we can reuse one of the unassigned boxes.
+
+        // However, since all boxes were used, we must buy a new one.
+        cout << A.back() << endl;
+    } else {
+        // All toys are matched, but this shouldn't happen unless we bought a box unnecessarily
+        cout << -1 << endl;
+    }
+
+    return 0;
+}

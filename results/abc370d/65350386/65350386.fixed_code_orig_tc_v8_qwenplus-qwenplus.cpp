@@ -1,0 +1,76 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define rep(i,n) for(int i = 0; i < (n); i++)
+using ll = long long;
+
+int main() {
+    int h, w, q;
+    cin >> h >> w >> q;
+    
+    // tate[j] is the set of rows in column j that have a wall
+    vector<set<int>> tate(w);
+    // yoko[i] is the set of columns in row i that have a wall
+    vector<set<int>> yoko(h);
+
+    // Initialize all walls present
+    for (int i = 0; i < h; ++i) {
+        for (int j = 0; j < w; ++j) {
+            tate[j].insert(i);
+            yoko[i].insert(j);
+        }
+    }
+
+    for (int qi = 0; qi < q; ++qi) {
+        int r, c;
+        cin >> r >> c;
+        r--; c--;
+
+        if (tate[c].count(r)) {
+            // There's a wall at (r,c), destroy it
+            tate[c].erase(r);
+            yoko[r].erase(c);
+        } else {
+            // Look up (row < r)
+            auto it = tate[c].lower_bound(r);
+            if (it != tate[c].begin()) {
+                --it;
+                int destroy_r = *it;
+                tate[c].erase(destroy_r);
+                yoko[destroy_r].erase(c);
+            }
+
+            // Look down (row > r)
+            it = tate[c].lower_bound(r);
+            if (it != tate[c].end()) {
+                int destroy_r = *it;
+                tate[c].erase(destroy_r);
+                yoko[destroy_r].erase(c);
+            }
+
+            // Look left (col < c)
+            auto jt = yoko[r].lower_bound(c);
+            if (jt != yoko[r].begin()) {
+                --jt;
+                int destroy_c = *jt;
+                yoko[r].erase(destroy_c);
+                tate[destroy_c].erase(r);
+            }
+
+            // Look right (col > c)
+            jt = yoko[r].lower_bound(c);
+            if (jt != yoko[r].end()) {
+                int destroy_c = *jt;
+                yoko[r].erase(destroy_c);
+                tate[destroy_c].erase(r);
+            }
+        }
+    }
+
+    // Count remaining walls
+    int ans = 0;
+    for (int j = 0; j < w; ++j) {
+        ans += tate[j].size();
+    }
+    cout << ans << "\n";
+    return 0;
+}

@@ -1,0 +1,94 @@
+To fix this code, we need to correctly determine the minimum number of additional votes each candidate needs to guarantee their election, regardless of how the remaining votes are distributed among other candidates. The previous approach had some logical flaws in the binary search and the way it calculated the required votes.
+
+### Approaches
+
+1. **Sort and Compute Prefix Sums**: 
+   - First, sort the candidates' votes in ascending order to facilitate efficient calculations.
+   - Compute prefix sums of the sorted votes to quickly calculate sums of ranges of votes.
+
+2. **Binary Search for Each Candidate**:
+   - For each candidate, perform a binary search to find the minimum additional votes `X` such that, even if all other candidates receive as many votes as possible, the candidate will still be elected.
+   - The condition for election is that the number of candidates with more votes than the candidate is less than `M`.
+
+3. **Calculate Required Votes**:
+   - For each candidate in the sorted list, determine how many candidates would have more votes if the candidate receives `X` additional votes.
+   - Ensure that at most `M - 1` candidates can have more votes than the candidate after adding `X` votes.
+
+### Solution Code
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+#define all(x) (x).begin(), (x).end()
+
+int main() {
+    ios_base::sync_with_stdio(0);
+    cin.tie(0);
+    int n, m;
+    ll k;
+    cin >> n >> m >> k;
+    vector<ll> a(n);
+    for (int i = 0; i < n; i++) {
+        cin >> a[i];
+    }
+    vector<int> ord(n);
+    iota(all(ord), 0);
+    sort(all(ord), [&](int i, int j) { return a[i] < a[j]; });
+    auto b = a;
+    sort(all(b));
+    vector<ll> pref(n + 1);
+    for (int i = 0; i < n; i++) {
+        pref[i + 1] = b[i] + pref[i];
+    }
+    vector<ll> ans(n, -1);
+    for (int idx = 0; idx < n; idx++) {
+        int i = ord[idx];
+        ll low = 0;
+        ll high = k;
+        ll res = -1;
+        while (low <= high) {
+            ll mid = (low + high) / 2;
+            ll new_val = a[i] + mid;
+            auto it = upper_bound(all(b), new_val);
+            ll cnt = b.end() - it;
+            if (cnt < m) {
+                res = mid;
+                high = mid - 1;
+            } else {
+                ll pos = it - b.begin();
+                ll needed = 0;
+                if (n - pos >= m) {
+                    ll start = n - m;
+                    needed = (pref[n] - pref[start]) - (new_val + 1) * (n - start) + (new_val + 1 - b[start]) * (n - start);
+                    if (start < idx) {
+                        needed -= (new_val + 1 - b[idx]);
+                    }
+                } else {
+                    needed = 0;
+                }
+                if (mid <= k - needed) {
+                    res = mid;
+                    high = mid - 1;
+                } else {
+                    low = mid + 1;
+                }
+            }
+        }
+        ans[i] = res;
+    }
+    for (auto num : ans) {
+        cout << num << ' ';
+    }
+    return 0;
+}
+```
+
+### Explanation
+
+- **Sorting and Prefix Sums**: The candidates' votes are sorted to easily compute how many candidates have more votes than a given candidate after adding `X` votes. The prefix sums array allows efficient calculation of the total votes needed to ensure certain conditions.
+- **Binary Search**: For each candidate, the binary search determines the minimum `X` such that adding `X` votes ensures the candidate is among the top `M` candidates. The search adjusts the range based on whether the current midpoint meets the condition.
+- **Election Condition**: The condition checks if the number of candidates with more votes than the candidate (after adding `X` votes) is less than `M`. If not, it calculates the additional votes needed to demote enough candidates to satisfy the condition.
+- **Edge Cases**: The solution handles cases where a candidate already has enough votes or cannot possibly secure enough votes by setting `res` accordingly during the binary search.
+
+This approach ensures the solution is efficient and correct for all test cases, including edge cases with large constraints.

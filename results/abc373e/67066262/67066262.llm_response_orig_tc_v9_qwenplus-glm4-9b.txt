@@ -1,0 +1,83 @@
+
+### Problem Analysis
+
+In this problem, we are given an election scenario with `N` candidates and `K` votes. Each candidate has received a certain number of votes, and we need to determine the minimum number of additional votes each candidate needs to guarantee their election, given a threshold `M` for the number of candidates that can receive more votes than them.
+
+The challenge is to efficiently compute the required number of votes for each candidate, considering the constraints on the number of candidates that can receive more votes and the remaining votes available.
+
+### Solution Strategy
+
+1. **Sorting Candidates by Votes**: Start by sorting the candidates based on the number of votes they have received. This helps in easily determining how many candidates have fewer votes than a given candidate.
+
+2. **Cumulative Sum**: Compute a cumulative sum of the sorted list of votes to quickly determine how many votes the top candidates have collectively.
+
+3. **Binary Search for Minimum Votes**: For each candidate, use binary search to determine the minimum number of additional votes required to ensure that no more than `M` other candidates can outvote them. The binary search will operate over the range of possible additional votes from 0 to `K - sum(A)`.
+
+4. **Edge Cases**: Handle cases where a candidate already has more votes than required to be the top or where it is impossible for a candidate to ever secure the victory.
+
+### Detailed Steps
+
+1. **Input Reading**: Read the number of candidates `N`, the threshold `M`, and the total number of votes `K`. Read the votes received by each candidate into a list `A`.
+
+2. **Initial Checks**: If the first candidate already has more votes than `N - M`, they are guaranteed to win. Similarly, if the last candidate is at the top and cannot win, their value should be `-1`.
+
+3. **Sorting and Cumulative Sum**: Sort the list of votes `A`. Compute the cumulative sum of the sorted votes for quick access to the total votes of the top candidates.
+
+4. **Binary Search Implementation**: For each candidate, perform a binary search to find the minimum number of additional votes required. This involves checking if adding a certain number of votes to the current candidate's total will ensure they are in the top `M` vote recipients.
+
+5. **Output**: After computing the required votes for all candidates, print the results.
+
+### Python Code Implementation
+
+```python
+from bisect import bisect_left, bisect_right
+
+def min_votes_needed(N, M, K, A):
+    # Sort candidates by the number of votes they have received
+    A.sort()
+    
+    # Calculate the maximum votes any candidate can get such that they guarantee victory
+    max_victory_votes = N - M + 1
+    
+    # Initialize the result list with -1
+    result = [-1] * N
+    
+    # Iterate over each candidate
+    for i, votes_received in enumerate(A):
+        if votes_received >= max_victory_votes:
+            # If the candidate already has more than the required votes, they can win with 0 additional votes
+            result[i] = 0
+            continue
+        
+        # Calculate the minimum votes needed to guarantee victory
+        remaining_votes = K - sum(A)
+        votes_needed = max_victory_votes - votes_received
+        
+        # Binary search to find the minimum additional votes needed
+        lo, hi = 0, remaining_votes
+        while lo < hi:
+            mid = (lo + hi + 1) // 2
+            # Find the number of candidates who would have more votes if this candidate gets 'mid' additional votes
+            candidates_with_more_votes = N - bisect_left(A, votes_received + mid + 1)
+            
+            if candidates_with_more_votes <= M:
+                hi = mid - 1
+            else:
+                lo = mid
+        
+        result[i] = lo
+    
+    return result
+
+# Read input
+N, M, K = map(int, input().split())
+A = list(map(int, input().split()))
+
+# Calculate the minimum votes needed
+result = min_votes_needed(N, M, K, A)
+
+# Print the result
+print(*result)
+```
+
+This code reads the input, processes each candidate to determine the minimum additional votes needed to guarantee victory, and prints the results. It uses a binary search within a loop to efficiently determine the minimum votes needed for each candidate.

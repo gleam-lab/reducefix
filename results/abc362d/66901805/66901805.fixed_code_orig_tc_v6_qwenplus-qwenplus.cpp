@@ -1,0 +1,1 @@
+cost += A[u] + B(u,v) + A[v]

@@ -1,0 +1,54 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+const int MAXN = 200001;
+
+vector<int> adj[MAXN];
+int n, m, dist[MAXN], source, minDist;
+
+void bfs() {
+    queue<int> q;
+    q.push(source);
+    dist[source] = 0;
+
+    while (!q.empty()) {
+        int u = q.front();
+        q.pop();
+
+        for (int v : adj[u]) {
+            if (dist[v] == -1) { // If v is not visited
+                dist[v] = dist[u] + 1;
+                q.push(v);
+            }
+            // Update the minimum distance from source to 1
+            minDist = min(minDist, dist[v]);
+        }
+    }
+}
+
+int main() {
+    cin >> n >> m;
+    for (int i = 1; i <= m; ++i) {
+        int u, v;
+        cin >> u >> v;
+        adj[u].push_back(v);
+        adj[v].push_back(u); // Since it's an undirected graph
+    }
+
+    // Initially set all distances to -1 and minDist to a large number
+    fill(dist, dist + MAXN, -1);
+    minDist = INT_MAX;
+    source = 1; // Starting from node 1
+
+    bfs();
+
+    if (minDist == INT_MAX) {
+        cout << "-1" << endl; // No path exists from 1 to any other node
+    } else {
+        cout << minDist << endl;
+    }
+
+    return 0;
+}

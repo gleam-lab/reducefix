@@ -1,0 +1,83 @@
+To fix this code, we need to address the issue where the bomb placement at (R_q, C_q) does not correctly handle the destruction of the first walls in the four directions when there is no wall at (R_q, C_q). The original code incorrectly handles the directions and misses some conditions, leading to wrong wall counts.
+
+### Approaches
+1. **Initialization**: We will maintain two sets for each row and column to keep track of the remaining walls. This allows efficient lookup and deletion operations.
+2. **Query Processing**: For each query:
+   - If there is a wall at (R_q, C_q), remove it.
+   - If there is no wall, find the closest walls in the four directions (up, down, left, right) and remove them if they exist.
+3. **Counting Remaining Walls**: After processing all queries, the remaining walls are counted by checking the sets.
+
+### Solution Code
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+#define rep(i, n) for (ll i = 0; i < (ll)(n); i++)
+#define rep2(i, s, n) for (ll i = (s); i < (ll)(n); i++)
+#define all(x) x.begin(), x.end()
+template<typename T> inline bool chmax(T &a, T b) { return ((a < b) ? (a = b, true) : (false)); }
+template<typename T> inline bool chmin(T &a, T b) { return ((a > b) ? (a = b, true) : (false)); }
+
+int main() {
+    int H, W, Q;
+    cin >> H >> W >> Q;
+    vector<set<int>> row(H), col(W);
+    rep(i, H) rep(j, W) {
+        row[i].insert(j);
+        col[j].insert(i);
+    }
+    ll ans = (ll)H * W;
+    ll cnt = 0;
+    auto erase = [&](int r, int c) {
+        if (row[r].count(c)) {
+            cnt++;
+            row[r].erase(c);
+            col[c].erase(r);
+        }
+    };
+    rep(itr, Q) {
+        int R, C;
+        cin >> R >> C;
+        R--; C--;
+        if (row[R].count(C)) {
+            erase(R, C);
+            continue;
+        }
+        // Up
+        auto it = col[C].lower_bound(R);
+        if (it != col[C].begin()) {
+            --it;
+            erase(*it, C);
+            it = col[C].lower_bound(R);
+        }
+        // Down
+        it = col[C].lower_bound(R);
+        if (it != col[C].end()) {
+            erase(*it, C);
+        }
+        // Left
+        it = row[R].lower_bound(C);
+        if (it != row[R].begin()) {
+            --it;
+            erase(R, *it);
+            it = row[R].lower_bound(C);
+        }
+        // Right
+        it = row[R].lower_bound(C);
+        if (it != row[R].end()) {
+            erase(R, *it);
+        }
+    }
+    cout << ans - cnt << endl;
+    return 0;
+}
+```
+
+### Explanation
+- **Initialization**: We initialize sets `row` and `col` to keep track of the walls in each row and column. This helps in efficiently finding the nearest walls when a bomb is placed.
+- **Query Processing**: For each query:
+  - If there's a wall at (R_q, C_q), it is removed directly.
+  - If there's no wall, we look for the first walls in the four directions (up, down, left, right) using the `lower_bound` method to find the closest walls and remove them if they exist.
+- **Counting Remaining Walls**: The total remaining walls are calculated by subtracting the count of destroyed walls (`cnt`) from the initial total walls (`H * W`).
+
+This approach ensures the correct handling of wall destruction in all directions and efficiently processes each query in logarithmic time due to the use of sets.

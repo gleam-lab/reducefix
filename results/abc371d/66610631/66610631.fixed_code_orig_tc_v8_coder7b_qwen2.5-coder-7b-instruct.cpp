@@ -1,0 +1,29 @@
+#include<bits/stdc++.h>
+using namespace std;
+using LL = __int128;
+typedef long long ll;
+const int N = 1e6+7;
+
+// Function to perform binary search on the array 'a' to find the first element greater than or equal to 'x'
+auto bs(vector<int>& a, int x) {
+    auto it = lower_bound(a.begin(), a.end(), x);
+    return it == a.end() ? a.size() : it - a.begin();
+}
+
+int main() {
+    ios_base::sync_with_stdio(false); cin.tie(0);
+    int n, m;
+    cin >> n;
+    vector<int> a(n+1, 0), b(n+1, 0), c(n+1, 0);
+    for(int i=1; i<=n; i++) cin >> a[i];
+    for(int i=1; i<=n; i++) cin >> b[i], c[i] = b[i] + c[i-1];
+    cin >> m;
+    while(m--) {
+        int l, r;
+        cin >> l >> r;
+        // Using binary search to count numbers within range [l, r]
+        int cnt_l = bs(a, l-1), cnt_r = bs(a, r);
+        cout << 1LL * (cnt_r - cnt_l) * (r-l+1) + c[cnt_r] - c[cnt_l] << '\n';
+    }
+    return 0;
+}

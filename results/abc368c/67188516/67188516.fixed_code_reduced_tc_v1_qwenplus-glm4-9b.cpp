@@ -1,0 +1,40 @@
+#include <iostream>
+#include <vector>
+
+using namespace std;
+
+int main() {
+    int N;
+    cin >> N;
+    vector<long long> H(N);
+    for (int i = 0; i < N; ++i) {
+        cin >> H[i];
+    }
+    
+    long long T = 0;
+    for (int i = 0; i < N; ++i) {
+        if (H[i] > 0) {
+            // Calculate how many full and partial attacks are needed to reduce H[i] to 0 or less
+            long long full_attacks = H[i] / 3;
+            long long partial_attacks = H[i] % 3;
+            
+            // Add full attacks
+            T += full_attacks;
+            
+            // If there are partial attacks, we need to add one more attack
+            // The position of the enemy in the sequence matters because of the modulo 3 pattern
+            if (partial_attacks > 0) {
+                T += 1;
+                // Adjust the position to reflect the change in T
+                int position = (T - 1) % 3;
+                // If the position is 0 or 1, we need to adjust the sequence by adding one more attack
+                if (position < 2) {
+                    T += 1;
+                }
+            }
+        }
+    }
+    
+    cout << T << endl;
+    return 0;
+}

@@ -1,0 +1,49 @@
+#include<bits/stdc++.h>
+using namespace std;
+using i64 = long long;
+
+int main() {
+    std::ios::sync_with_stdio(false);
+    std::cin.tie(nullptr);
+    i64 N, M;
+    cin >> N >> M;
+    vector<array<i64,2>> pieces(M);
+    vector<i64> rows(M), cols(M);
+    vector<pair<i64, i64>> diag1(M), diag2(M), anti_diag1(M), anti_diag2(M);
+
+    for (i64 i = 0; i < M; ++i) {
+        cin >> rows[i] >> cols[i];
+        pieces[i] = {rows[i], cols[i]};
+        diag1[i] = {rows[i] + cols[i], i};
+        diag2[i] = {rows[i] - cols[i], i};
+        anti_diag1[i] = {rows[i] - cols[i], i};
+        anti_diag2[i] = {rows[i] + cols[i], i};
+    }
+
+    sort(diag1.begin(), diag1.end());
+    sort(diag2.begin(), diag2.end());
+    sort(anti_diag1.begin(), anti_diag1.end());
+    sort(anti_diag2.begin(), anti_diag2.end());
+
+    i64 ans = N * N;
+
+    // Remove captured squares in rows and columns
+    for (i64 i = 0; i < M; ++i) {
+        ans -= N; // Remove all squares in row
+        ans -= N; // Remove all squares in column
+    }
+
+    // Remove captured squares in diagonals and anti-diagonals
+    for (i64 i = 0; i < M; ++i) {
+        i64 diagStart = lower_bound(diag1.begin(), diag1.end(), make_pair(pieces[i][0] + pieces[i][1], i)) - diag1.begin();
+        i64 diagEnd = lower_bound(diag2.begin(), diag2.end(), make_pair(pieces[i][0] - pieces[i][1], i)) - diag2.begin();
+        i64 anti_diagStart = lower_bound(anti_diag1.begin(), anti_diag1.end(), make_pair(pieces[i][0] - pieces[i][1], i)) - anti_diag1.begin();
+        i64 anti_diagEnd = lower_bound(anti_diag2.begin(), anti_diag2.end(), make_pair(pieces[i][0] + pieces[i][1], i)) - anti_diag2.begin();
+
+        ans -= diagEnd - diagStart; // Remove squares in main diagonal
+        ans -= anti_diagEnd - anti_diagStart; // Remove squares in anti-diagonal
+    }
+
+    cout << ans << "\n";
+    return 0;
+}

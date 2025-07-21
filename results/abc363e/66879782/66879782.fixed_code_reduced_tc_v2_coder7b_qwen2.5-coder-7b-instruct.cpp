@@ -1,0 +1,77 @@
+#include <bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+#define all(x) (x).begin(), (x).end()
+
+struct Point {
+    int x, y, h;
+};
+
+bool operator<(const Point &a, const Point &b) {
+    return a.h > b.h;
+}
+
+int main() {
+    ios_base::sync_with_stdio(0);
+    cin.tie(0);
+
+    int h, w, y;
+    cin >> h >> w >> y;
+
+    vector<vector<int>> height(h, vector<int>(w));
+    vector<vector<bool>> visited(h, vector<bool>(w, false));
+
+    for (int i = 0; i < h; ++i) {
+        for (int j = 0; j < w; ++j) {
+            cin >> height[i][j];
+        }
+    }
+
+    priority_queue<Point> pq;
+    int di[4][2] = {{-1, 0}, {1, 0}, {0, -1}, {0, 1}};
+
+    for (int i = 0; i < h; ++i) {
+        for (int j = 0; j < w; ++j) {
+            if (i == 0 || i == h - 1 || j == 0 || j == w - 1) {
+                pq.push({i, j, height[i][j]});
+                visited[i][j] = true;
+            }
+        }
+    }
+
+    vector<int> res(y + 1, 0);
+    res[0] = h * w;
+
+    while (!pq.empty()) {
+        auto [r, c, H] = pq.top();
+        pq.pop();
+
+        for (int k = 0; k < 4; ++k) {
+            int nr = r + di[k][0];
+            int nc = c + di[k][1];
+
+            if (nr < 0 || nr >= h || nc < 0 || nc >= w || visited[nr][nc] || height[nr][nc] <= H) continue;
+
+            visited[nr][nc] = true;
+            pq.push({nr, nc, H});
+        }
+    }
+
+    for (int i = 1; i <= y; ++i) {
+        int cnt = 0;
+        for (int j = 0; j < h; ++j) {
+            for (int k = 0; k < w; ++k) {
+                if (height[j][k] > i) {
+                    cnt++;
+                }
+            }
+        }
+        res[i] = res[i - 1] - cnt;
+    }
+
+    for (int i = 1; i <= y; ++i) {
+        cout << res[i] << '\n';
+    }
+
+    return 0;
+}

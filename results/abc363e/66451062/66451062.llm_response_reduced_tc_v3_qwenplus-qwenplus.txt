@@ -1,0 +1,104 @@
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+#define int long long
+const int MAXN = 1005;
+
+int H, W, Y;
+int grid[MAXN][MAXN];
+bool visited[MAXN][MAXN];
+
+struct Cell {
+    int r, c, val;
+    bool operator<(const Cell& other) const {
+        return val > other.val;
+    }
+};
+
+// This map will store for each height, the list of cells with that height
+map<int, vector<pair<int, int>>> heightMap;
+
+// DSU (Disjoint Set Union) data structure
+class DSU {
+public:
+    vector<int> parent, size;
+    int remaining;
+
+    DSU(int n) {
+        parent.resize(n);
+        size.resize(n);
+        remaining = n;
+        for (int i = 0; i < n; ++i) {
+            parent[i] = i;
+            size[i] = 1;
+        }
+    }
+
+    int find(int x) {
+        if (parent[x] != x)
+            parent[x] = find(parent[x]);
+        return parent[x];
+    }
+
+    void unite(int x, int y) {
+        int xr = find(x), yr = find(y);
+        if (xr == yr) return;
+        if (size[xr] < size[yr]) swap(xr, yr);
+        parent[yr] = xr;
+        size[xr] += size[yr];
+        remaining--;
+    }
+};
+
+int get_index(int r, int c) {
+    return r * W + c;
+}
+
+signed main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0); cout.tie(0);
+
+    cin >> H >> W >> Y;
+    for (int i = 0; i < H; ++i)
+        for (int j = 0; j < W; ++j)
+            cin >> grid[i][j];
+
+    // Initialize height map
+    for (int i = 0; i < H; ++i) {
+        for (int j = 0; j < W; ++j) {
+            heightMap[grid[i][j]].push_back({i, j});
+        }
+    }
+
+    DSU dsu(H * W);
+
+    // Directions for connecting adjacent cells
+    int dr[] = {-1, 0, 1, 0};
+    int dc[] = {0, 1, 0, -1};
+
+    // Process from lowest to highest elevation
+    for (auto& [height, cells] : heightMap) {
+        // Connect current cells with neighbors if they have <= height
+        for (auto [r, c] : cells) {
+            // Try connecting with all four neighbors
+            for (int d = 0; d < 4; ++d) {
+                int nr = r + dr[d];
+                int nc = c + dc[d];
+                if (nr >= 0 && nr < H && nc >= 0 && nc < W) {
+                    if (grid[nr][nc] <= height && visited[nr][nc]) {
+                        dsu.unite(get_index(r, c), get_index(nr, nc));
+                    }
+                }
+            }
+            visited[r][c] = true;
+        }
+
+        // Store result for this height
+        if (height > Y)
+            break;
+        cout << H * W - dsu.remaining << "\n";
+    }
+
+    return 0;
+}
+```

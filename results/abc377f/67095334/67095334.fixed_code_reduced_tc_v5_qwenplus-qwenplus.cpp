@@ -1,0 +1,116 @@
+#include <bits/stdc++.h>
+#define int long long
+using namespace std;
+
+void solve() {
+    int n, m;
+    cin >> n >> m;
+
+    set<int> rows, cols;
+    set<int> diag1, diag2;  // i+j and i-j
+
+    for (int i = 0; i < m; ++i) {
+        int r, c;
+        cin >> r >> c;
+        rows.insert(r);
+        cols.insert(c);
+        diag1.insert(r + c);
+        diag2.insert(r - c);
+    }
+
+    // First part: all squares not in any row or column with a piece
+    int safe_squares = (n - rows.size()) * (n - cols.size());
+
+    // Second part: subtract squares that are on diagonals but not already removed by row/col check
+    auto process_diag1 = [&](int d) {
+        // Count how many points are on this diagonal that were NOT already excluded by row or col
+        int intersect_count = 0;
+
+        // Check intersection with each row that has a piece
+        for (auto r : rows) {
+            int c = d - r;
+            if (c >= 1 && c <= n) {
+                // This square would have been excluded already due to row
+                intersect_count++;
+            }
+        }
+
+        // Check intersection with each column that has a piece
+        for (auto c : cols) {
+            int r = d - c;
+            if (r >= 1 && r <= n) {
+                // This square would have been excluded already due to column
+                if (!rows.count(r)) {
+                    intersect_count++;
+                }
+            }
+        }
+
+        // Calculate total squares on this diagonal
+        int len;
+        if (d <= n + 1) {
+            len = d - 1;
+        } else {
+            len = 2 * n + 1 - d;
+        }
+
+        return len - intersect_count;
+    };
+
+    auto process_diag2 = [&](int d) {
+        // Count how many points are on this diagonal that were NOT already removed by row or col
+        int intersect_count = 0;
+
+        // Check intersection with each row that has a piece
+        for (auto r : rows) {
+            int c = r - d;
+            if (c >= 1 && c <= n) {
+                // This square would have been excluded already due to row
+                intersect_count++;
+            }
+        }
+
+        // Check intersection with each column that has a piece
+        for (auto c : cols) {
+            int r = d + c;
+            if (r >= 1 && r <= n) {
+                // This square would have been excluded already due to column
+                if (!rows.count(r)) {
+                    intersect_count++;
+                }
+            }
+        }
+
+        // Calculate total squares on this diagonal
+        int len;
+        if (d < 0) {
+            len = n + d;
+        } else if (d > 0) {
+            len = n - d;
+        } else {
+            len = n;
+        }
+
+        return len - intersect_count;
+    };
+
+    // Subtract the overcounted squares from diagonal 1 (i+j=d)
+    for (auto d : diag1) {
+        safe_squares -= process_diag1(d);
+    }
+
+    // Subtract the overcounted squares from diagonal 2 (i-j=d)
+    for (auto d : diag2) {
+        safe_squares -= process_diag2(d);
+    }
+
+    cout << safe_squares << endl;
+}
+
+signed main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    solve();
+    return 0;
+}

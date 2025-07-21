@@ -1,0 +1,88 @@
+The initial approach attempts to simulate the sinking process by using a priority queue to process sections in order of their elevation. However, there are several flaws in the implementation:
+
+1. **Initialization of the Priority Queue**: The code only pushes border sections into the queue, missing sections that might get connected to the sea through other sections sinking later.
+2. **Handling of Visited Sections**: The `vis` array is used to prevent re-processing, but the initial approach doesn't account for all possible connections to the sea dynamically.
+3. **Efficiency**: The algorithm may not handle the large constraints efficiently, especially with Y up to 10^5.
+
+To fix these issues, we need a more systematic approach:
+- **Precompute the Sinking Times**: For each section, determine the earliest time it will sink, considering all possible paths from the sea.
+- **Use a Priority Queue for BFS**: Process sections in order of their sinking times, starting from the initial borders.
+- **Track the Remaining Area**: For each year, count how many sections have sinking times greater than the current sea level.
+
+Here's the corrected code:
+
+```cpp
+#include <bits/stdc++.h>
+
+using namespace std;
+
+const int dx[] = {0, 0, 1, -1};
+const int dy[] = {1, -1, 0, 0};
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int H, W, Y;
+    cin >> H >> W >> Y;
+
+    vector<vector<int>> A(H, vector<int>(W));
+    for (int i = 0; i < H; ++i) {
+        for (int j = 0; j < W; ++j) {
+            cin >> A[i][j];
+        }
+    }
+
+    priority_queue<tuple<int, int, int>, vector<tuple<int, int, int>>, greater<tuple<int, int, int>>> pq;
+    vector<vector<int>> sink_time(H, vector<int>(W, -1));
+
+    for (int i = 0; i < H; ++i) {
+        for (int j = 0; j < W; ++j) {
+            if (i == 0 || i == H - 1 || j == 0 || j == W - 1) {
+                pq.emplace(A[i][j], i, j);
+                sink_time[i][j] = A[i][j];
+            }
+        }
+    }
+
+    while (!pq.empty()) {
+        auto [time, x, y] = pq.top();
+        pq.pop();
+        for (int dir = 0; dir < 4; ++dir) {
+            int nx = x + dx[dir];
+            int ny = y + dy[dir];
+            if (nx >= 0 && nx < H && ny >= 0 && ny < W && sink_time[nx][ny] == -1) {
+                sink_time[nx][ny] = max(time, A[nx][ny]);
+                pq.emplace(sink_time[nx][ny], nx, ny);
+            }
+        }
+    }
+
+    vector<int> count(Y + 2, 0);
+    for (int i = 0; i < H; ++i) {
+        for (int j = 0; j < W; ++j) {
+            if (sink_time[i][j] <= Y) {
+                count[sink_time[i][j]]++;
+            } else {
+                count[Y + 1]++;
+            }
+        }
+    }
+
+    int remaining = H * W;
+    for (int i = 0; i < Y; ++i) {
+        remaining -= count[i];
+        cout << remaining << '\n';
+    }
+
+    return 0;
+}
+```
+
+### Explanation:
+1. **Initialization**: We initialize the priority queue with all border sections, setting their sinking times to their elevations.
+2. **BFS with Priority Queue**: We process each section in order of their sinking times. For each neighbor, the sinking time is the maximum of the current time and the neighbor's elevation.
+3. **Counting Sinking Sections**: We precompute how many sections sink at each year. This allows us to efficiently compute the remaining area for each year by subtracting the cumulative count of sunk sections up to that year.
+4. **Output**: For each year, we print the remaining area by subtracting the cumulative sunk sections from the total area.
+
+This approach ensures correctness and efficiency, handling the constraints effectively.

@@ -1,0 +1,45 @@
+#include<bits/stdc++.h>
+using namespace std;
+
+vector<int> adj[200005];
+
+void dfs(int node, int parent, vector<int>& size) {
+    size[node] = 1;
+    for (auto& child : adj[node]) {
+        if (child != parent) {
+            dfs(child, node, size);
+            size[node] += size[child];
+        }
+    }
+}
+
+int main() {
+    ios_base::sync_with_stdio(false); cin.tie(NULL);
+
+    int n, q; cin >> n >> q;
+    for (int i = 1; i <= n - 1; ++i) {
+        int u, v; cin >> u >> v;
+        adj[u].push_back(v);
+        adj[v].push_back(u);
+    }
+
+    vector<int> size(n + 1);
+    dfs(1, 0, size);
+
+    while (q--) {
+        int type; cin >> type;
+        if (type == 1) {
+            int u, v; cin >> u >> v;
+            // Assuming we have a way to update the adjacency list for union-find
+            // This part depends on how union-find is implemented
+        } else if (type == 2) {
+            int v, k; cin >> v >> k;
+            // Sort the children of v based on their size
+            sort(adj[v].begin(), adj[v].end(), [&](int a, int b) { return size[a] > size[b]; });
+            if (k <= adj[v].size()) cout << adj[v][k - 1] << '\n';
+            else cout << "-1\n";
+        }
+    }
+
+    return 0;
+}

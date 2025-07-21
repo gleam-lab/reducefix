@@ -1,0 +1,39 @@
+#include<bits/stdc++.h>
+#define INF 0x3f3f3f3f3f3f3f3f
+using namespace std;
+typedef long long ll;
+const int MAXN=2e5+10;
+vector<ll> vec[MAXN];
+queue<ll> q;
+ll step[MAXN];
+bool vis[MAXN];
+
+int main(){
+    ll n,m,u,v;
+    scanf("%lld %lld",&n,&m);
+    for(ll i=1;i<=m;i++){
+        scanf("%lld %lld",&u,&v);
+        vec[u].push_back(v);
+    }
+    q.push(1);
+    step[1] = 0; // Initialize the step for the starting node
+    vis[1] = true;
+    while(!q.empty()){
+        ll top=q.front();
+        q.pop();
+        for(ll i=0;i<vec[top].size();i++){
+            ll to=vec[top][i];
+            if(to==1){ // Check if we have reached the target node
+                printf("%lld\n",step[top]); // Print the steps taken to reach the target
+                return 0;
+            }
+            if(!vis[to]){ // If the node has not been visited
+                step[to]=step[top]+1; // Update the step count
+                vis[to]=true; // Mark the node as visited
+                q.push(to); // Add the node to the queue
+            }
+        }
+    }
+    printf("-1"); // If no path is found
+    return 0;
+}

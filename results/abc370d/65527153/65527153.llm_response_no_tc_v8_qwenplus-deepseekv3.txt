@@ -1,0 +1,103 @@
+To fix this code, we need to ensure that the logic correctly handles both the destruction of walls at the bomb's location and the destruction of the first walls in the four directions (up, down, left, right) when the bomb's location is already empty.
+
+### Analysis of the Original Code
+1. **Initialization**: The original code initializes sets for each row and column to track the presence of walls. This is a good approach for efficiently managing the grid.
+2. **Bomb Placement Logic**: 
+   - If the bomb's location has a wall, it is destroyed.
+   - If not, the code attempts to find the nearest walls in the four directions. However, the logic for finding and destroying these walls is incorrect. Specifically, the code does not correctly handle the cases where there are no walls in certain directions and does not properly decrement the iterator to find the previous wall.
+
+### Issues in the Original Code
+1. **Finding Nearest Walls**: The code uses `lower_bound` to find the next wall in the row and column, but it does not correctly handle the case where there are no walls to the left or above.
+2. **Erasing Walls**: The code attempts to erase walls found in the four directions, but the logic for checking and erasing is flawed, leading to incorrect results or potential runtime errors.
+
+### Fixed Approach
+1. **Correct Direction Handling**: For each direction (left, right, up, down), we need to find the nearest wall if it exists. If no wall is found in a direction, we skip that direction.
+2. **Efficient Lookup and Erasure**: Use the `set` data structure's `lower_bound` and `upper_bound` methods to efficiently find the nearest walls in each direction.
+
+### Solution Code
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+using PII = pair<int, int>;
+#define x first
+#define y second
+#define all(x) x.begin(),x.end()
+
+const int N = 200020, INF = 0x3f3f3f3f;
+
+void solve() {
+    int H, W, Q;
+    cin >> H >> W >> Q;
+    vector<set<int>> row(H + 1), col(W + 1);
+    for (int i = 1; i <= H; ++i) {
+        for (int j = 1; j <= W; ++j) {
+            row[i].insert(j);
+            col[j].insert(i);
+        }
+    }
+
+    auto erase = [&](int r, int c) {
+        row[r].erase(c);
+        col[c].erase(r);
+    };
+
+    while (Q--) {
+        int r, c;
+        cin >> r >> c;
+        if (row[r].count(c)) {
+            erase(r, c);
+            continue;
+        }
+
+        // Left
+        auto it = row[r].lower_bound(c);
+        if (it != row[r].begin()) {
+            --it;
+            erase(r, *it);
+        }
+
+        // Right
+        it = row[r].upper_bound(c);
+        if (it != row[r].end()) {
+            erase(r, *it);
+        }
+
+        // Up
+        auto it2 = col[c].lower_bound(r);
+        if (it2 != col[c].begin()) {
+            --it2;
+            erase(*it2, c);
+        }
+
+        // Down
+        it2 = col[c].upper_bound(r);
+        if (it2 != col[c].end()) {
+            erase(*it2, c);
+        }
+    }
+
+    ll ans = 0;
+    for (int i = 1; i <= H; ++i) {
+        ans += row[i].size();
+    }
+    cout << ans << "\n";
+}
+
+int main() {
+    ios::sync_with_stdio(0);
+    cin.tie(0);
+    cout.tie(0);
+    solve();
+    return 0;
+}
+```
+
+### Explanation
+1. **Initialization**: We initialize sets for each row and column to keep track of walls. Each cell starts with a wall.
+2. **Bomb Placement**: For each query:
+   - If the bomb's location has a wall, it is removed.
+   - If not, we find the nearest walls in the four directions (left, right, up, down) using `lower_bound` and `upper_bound`, and remove them if they exist.
+3. **Result Calculation**: After processing all queries, we count the remaining walls by summing the sizes of the sets for each row.
+
+This approach ensures efficient handling of the grid and queries, leveraging the properties of sets to quickly locate and remove walls.

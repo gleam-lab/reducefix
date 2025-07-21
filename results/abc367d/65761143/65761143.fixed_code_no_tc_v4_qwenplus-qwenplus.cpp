@@ -1,0 +1,54 @@
+#include <bits/stdc++.h>
+using LL = long long;
+
+void solve() {
+    int n, m; std::cin >> n >> m;
+    std::vector<int> a(n);
+
+    int sum = 0;
+    for (int &x : a) {
+        std::cin >> x;
+        x %= m;
+        sum = (sum + x) % m;
+    }
+
+    LL res = 0;
+    std::map<int, int> cnt[2]; // cnt[0] for prefix sums, cnt[1] for (prefix - total_sum)
+    cnt[0][0] = 1; // One occurrence of prefix sum 0 before starting
+    int prefix = 0;
+
+    for (int x : a) {
+        prefix = (prefix + x) % m;
+
+        // Count how many times this prefix has appeared before
+        res += cnt[0][prefix];
+        
+        // For condition: (prefix[j] - sum) ≡ prefix[i] mod m
+        // We need to count occurrences of (prefix - sum) mod m in the map
+        int target = (prefix - sum + m) % m;
+        res += cnt[1][target];
+
+        // Update maps for next iteration
+        cnt[0][prefix]++;
+        cnt[1][prefix]++;
+    }
+
+    std::cout << res << '\n';
+}
+
+int main() {
+    std::ios::sync_with_stdio(false);
+    std::cin.tie(0); std::cout.tie(0);
+#ifndef ONLINE_JUDGE
+    static std::ifstream in("in.txt");
+    static std::ofstream out("out.txt");
+    std::cin.rdbuf(in.rdbuf());
+    std::cout.rdbuf(out.rdbuf());
+#endif
+
+    int T = 1;
+    // std::cin >> T;
+    while (T--) solve();
+
+    return 0;
+}

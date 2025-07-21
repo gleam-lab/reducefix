@@ -1,0 +1,72 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define rep(i,n) for(int i = 0; i < (n); i++)
+using ll = long long;
+
+int main(void) {
+    int h, w, q;
+    cin >> h >> w >> q;
+    
+    // For each row and column, maintain a set of remaining wall positions
+    vector<set<int>> tate(w), yoko(h);
+    for (int i = 0; i < h; ++i) {
+        for (int j = 0; j < w; ++j) {
+            tate[j].insert(i);
+            yoko[i].insert(j);
+        }
+    }
+
+    while (q--) {
+        int r, c;
+        cin >> r >> c;
+        r--; c--;
+
+        // Check if there is a wall at (r, c)
+        if (tate[c].count(r)) {
+            // Destroy the wall at (r, c)
+            tate[c].erase(r);
+            yoko[r].erase(c);
+        } else {
+            // Look up
+            auto it_up = tate[c].lower_bound(r);
+            if (it_up != tate[c].begin()) {
+                --it_up;
+                int destroy_r = *it_up;
+                tate[c].erase(it_up);
+                yoko[destroy_r].erase(c);
+            }
+
+            // Look down
+            auto it_down = tate[c].lower_bound(r);
+            if (it_down != tate[c].end()) {
+                int destroy_r = *it_down;
+                tate[c].erase(it_down);
+                yoko[destroy_r].erase(c);
+            }
+
+            // Look left
+            auto it_left = yoko[r].lower_bound(c);
+            if (it_left != yoko[r].begin()) {
+                --it_left;
+                int destroy_c = *it_left;
+                yoko[r].erase(it_left);
+                tate[destroy_c].erase(r);
+            }
+
+            // Look right
+            auto it_right = yoko[r].lower_bound(c);
+            if (it_right != yoko[r].end()) {
+                int destroy_c = *it_right;
+                yoko[r].erase(it_right);
+                tate[destroy_c].erase(r);
+            }
+        }
+    }
+
+    int ans = 0;
+    for (int i = 0; i < w; ++i) {
+        ans += tate[i].size();
+    }
+    cout << ans << "\n";
+    return 0;
+}

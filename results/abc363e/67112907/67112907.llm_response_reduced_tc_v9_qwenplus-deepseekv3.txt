@@ -1,0 +1,74 @@
+After analyzing the failing test case and the code, I identified the issue. The problem is that for a single cell island (1x1), the code doesn't properly handle the sinking logic because it only checks the borders (which don't exist for a single cell). Here's the fixed code that correctly handles all cases:
+
+```cpp
+#include <bits/stdc++.h>
+
+using u32 = unsigned;
+using i64 = long long;
+using u64 = unsigned long long;
+
+using i128 = __int128;
+using u128 = unsigned __int128;
+
+constexpr int d[4][2] = {{0, 1}, {0, -1}, {1, 0}, {-1, 0}};
+
+int32_t main() {
+    std::ios::sync_with_stdio(false);
+    std::cin.tie(nullptr);
+
+    int H, W, Y;
+    std::cin >> H >> W >> Y;
+
+    std::vector A(H, std::vector<int>(W));
+    for (int i = 0; i < H; i++) {
+        for (int j = 0; j < W; j++) {
+            std::cin >> A[i][j];
+        }
+    }
+
+    std::priority_queue<std::array<int, 3>, std::vector<std::array<int, 3>>, std::greater<std::array<int, 3>>> pq;
+    std::vector vis(H, std::vector<char>(W));
+    
+    // Handle all border cells
+    for (int i = 0; i < H; i++) {
+        for (int j = 0; j < W; j++) {
+            if (i == 0 || i == H-1 || j == 0 || j == W-1) {
+                pq.push({A[i][j], i, j});
+                vis[i][j] = 1;
+            }
+        }
+    }
+
+    int ans = H * W;
+    for (int i = 1; i <= Y; i++) {
+        while (!pq.empty()) {
+            auto [h, x, y] = pq.top();
+            if (h >= i) break;
+            pq.pop();
+            ans--;
+            for (int j = 0; j < 4; j++) {
+                int dx = x + d[j][0], dy = y + d[j][1];
+                if (dx < 0 || dx >= H || dy < 0 || dy >= W) continue;
+                if (vis[dx][dy]) continue;
+                vis[dx][dy] = 1;
+                pq.push({A[dx][dy], dx, dy});
+            }
+        }
+        std::cout << ans << "\n";
+    }
+
+    return 0;
+}
+```
+
+Key fixes:
+1. Removed the `--A[i][j]` operation which incorrectly adjusted the elevation values
+2. Changed the border handling to include all border cells in a single loop, which properly handles the 1x1 case
+3. Changed the sea level check from `h > i` to `h >= i` to match the problem's "not greater than" condition
+4. Changed the output loop to start from i=1 to match the problem's 1-based year counting
+
+The algorithm now correctly:
+1. Uses a priority queue to process cells in order of elevation
+2. Starts from all border cells and propagates inward as the sea level rises
+3. Tracks the remaining area correctly for all years
+4. Handles edge cases including single-cell islands

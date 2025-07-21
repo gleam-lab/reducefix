@@ -1,0 +1,42 @@
+#include<iostream>
+#include<vector>
+#include<algorithm>
+using namespace std;
+
+#define int long long
+
+const int N = 2e5 + 9, inf = 0x3f3f3f3f3f3f3f3f;
+
+signed main() {
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, k;
+        cin >> n >> k;
+        vector<pair<int, int>>a(n), b(n);
+        for(int i = 0; i < n; ++i){
+            cin >> a[i].first;
+            a[i].second = i;
+        }
+        for(int i = 0; i < n; ++i){
+            cin >> b[i].first;
+            b[i].second = i;
+        }
+        sort(a.begin(), a.end());
+        sort(b.begin(), b.end());
+        
+        int ans = inf, sum = 0;
+        for(int i = 0; i < n - k + 1; ++i){
+            sum += b[i].first;
+        }
+        ans = min(ans, (long long)a[k-1].first * sum);
+
+        for(int i = n - k + 1; i < n; ++i){
+            sum += b[i].first - b[i-k+1].first;
+            ans = min(ans, (long long)a[k-1].first * sum);
+        }
+
+        cout << ans << endl;
+    }
+    return 0;
+}

@@ -1,0 +1,43 @@
+#include <bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+#define all(x) (x).begin(), (x).end()
+
+int main()
+{
+    ios_base::sync_with_stdio(0);
+    cin.tie(0);
+    int n, m;
+    ll k;
+    cin >> n >> m >> k;
+    vector<ll> a(n);
+    for (int i = 0; i < n; i++) {
+        cin >> a[i];
+        k -= a[i];
+    }
+    vector<pair<ll, int>> candidates(n);
+    for (int i = 0; i < n; i++) {
+        candidates[i] = {a[i], i};
+    }
+    sort(all(candidates), [](const pair<ll, int>& a, const pair<ll, int>& b) {
+        return a.first > b.first;
+    });
+    vector<ll> remaining_votes = {0};
+    for (const auto& candidate : candidates) {
+        remaining_votes.push_back(remaining_votes.back() + k - candidate.first);
+    }
+    vector<ll> ans(n, -1);
+    for (int i = 0; i < n; i++) {
+        ll needed_votes = m - 1; // m-1 because we already have one more vote than the next person, so we need m-1 more
+        auto it = upper_bound(all(remaining_votes), needed_votes);
+        if (it == remaining_votes.begin()) {
+            // If needed_votes is more than even the lowest remaining_votes, it's impossible to secure victory
+            ans[candidates[i].second] = -1;
+        } else {
+            ll min_votes_needed = *prev(it) - needed_votes;
+            ans[candidates[i].second] = min_votes_needed;
+        }
+    }
+    for (ll v : ans) cout << v << ' ';
+    return 0;
+}

@@ -1,0 +1,91 @@
+To fix this code, we need to address the following issues:
+
+1. **Initialization**: The code correctly initializes the borders of the grid, but it should also handle cases where the grid is smaller than 2x2 (i.e., when all cells are borders).
+
+2. **Priority Queue**: The priority queue is used to process cells in order of their elevation. The current implementation processes cells from the border inwards, which is correct for the flood fill approach.
+
+3. **Efficiency**: The original code uses a 2D array for `vis` and processes each level up to Y. Given the constraints (Y up to 10^5 and grid up to 1000x1000), we need to ensure the solution is efficient.
+
+4. **Floating Point**: The `eps` (epsilon) constant is defined but unused, which is unnecessary here.
+
+5. **Output**: The output should correctly reflect the remaining area after each year's sea level rise.
+
+6. **Edge Cases**: The code should handle edge cases where the grid is 1x1 or Y is larger than the maximum elevation in the grid.
+
+### Fixed Code
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+#define int long long
+#define close ios::sync_with_stdio(false); cin.tie(0); cout.tie(0);
+
+struct Node {
+    int x, y, val;
+    bool operator<(const Node &a) const {
+        return val > a.val; // Min-heap based on elevation
+    }
+};
+
+signed main() {
+    close;
+    int h, w; cin >> h >> w;
+    int Y; cin >> Y;
+    vector<vector<int>> grid(h, vector<int>(w));
+    for (int i = 0; i < h; i++) {
+        for (int j = 0; j < w; j++) {
+            cin >> grid[i][j];
+        }
+    }
+
+    priority_queue<Node> q;
+    vector<vector<bool>> vis(h, vector<bool>(w, false));
+
+    // Push all border cells into the priority queue
+    for (int i = 0; i < h; i++) {
+        for (int j = 0; j < w; j++) {
+            if (i == 0 || i == h - 1 || j == 0 || j == w - 1) {
+                q.push({i, j, grid[i][j]});
+                vis[i][j] = true;
+            }
+        }
+    }
+
+    int res = h * w;
+    vector<int> ans(Y + 1, res); // ans[0] is initial state (sea level 0)
+
+    for (int level = 1; level <= Y; level++) {
+        while (!q.empty() && q.top().val <= level) {
+            Node cur = q.top(); q.pop();
+            ans[level]--; // Decrement the remaining area
+            for (int k = 0; k < 4; k++) {
+                int nx = cur.x + (k == 2) - (k == 3);
+                int ny = cur.y + (k == 0) - (k == 1);
+                if (nx >= 0 && nx < h && ny >= 0 && ny < w && !vis[nx][ny]) {
+                    vis[nx][ny] = true;
+                    q.push({nx, ny, grid[nx][ny]});
+                }
+            }
+        }
+        if (level < Y) {
+            ans[level + 1] = ans[level]; // Carry forward if no more cells to process
+        }
+    }
+
+    for (int i = 1; i <= Y; i++) {
+        cout << ans[i] << '\n';
+    }
+
+    return 0;
+}
+```
+
+### Explanation
+1. **Initialization**: The grid is read into a 2D vector, and the border cells are pushed into a priority queue (min-heap based on elevation). This ensures that we process cells from the lowest elevation upwards.
+
+2. **Flood Fill**: For each sea level from 1 to Y, the algorithm checks cells in the priority queue. If a cell's elevation is less than or equal to the current sea level, it is "sunk" (processed), and its neighbors are added to the queue if they haven't been processed yet.
+
+3. **Efficiency**: The use of a priority queue ensures that each cell is processed only once, and the 2D `vis` array prevents reprocessing. The total number of operations is O(H*W log(H*W)) for the initial processing and O(Y) for the output, which is efficient given the constraints.
+
+4. **Output**: The results for each year are stored in an array `ans` and printed sequentially. This ensures that each query is answered in constant time after the initial processing.
+
+This approach efficiently handles the problem by leveraging a priority queue to process cells in order of elevation, ensuring correctness and optimal performance.

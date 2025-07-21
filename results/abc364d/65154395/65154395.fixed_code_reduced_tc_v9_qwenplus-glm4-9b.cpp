@@ -1,0 +1,47 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+const int INF = 1e9;
+const int N = 2e5 + 5;
+
+int n, q;
+int a[N], b[N], k[N];
+int ans[N];
+
+struct Pair {
+    int dist;
+    int idx;
+} dists[N];
+
+bool compare(const Pair& p1, const Pair& p2) {
+    return p1.dist < p2.dist;
+}
+
+void solve() {
+    cin >> n >> q;
+    for (int i = 0; i < n; i++) {
+        cin >> a[i];
+    }
+    for (int i = 0; i < q; i++) {
+        cin >> b[i] >> k[i];
+        ans[i] = INF;
+    }
+
+    for (int i = 0; i < n; i++) {
+        for (int j = 0; j < q; j++) {
+            dists[j].dist = abs(a[i] - b[j]);
+            dists[j].idx = i;
+        }
+        sort(dists, dists + q, compare);
+        ans[dists[k[j] - 1].idx] = min(ans[dists[k[j] - 1].idx], dists[k[j] - 1].dist);
+    }
+
+    for (int i = 0; i < q; i++) {
+        cout << ans[i] << endl;
+    }
+}
+
+int main() {
+    solve();
+    return 0;
+}

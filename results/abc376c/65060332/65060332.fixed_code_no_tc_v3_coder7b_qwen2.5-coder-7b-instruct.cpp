@@ -1,0 +1,47 @@
+#include<bits/stdc++.h>
+#define ll long long
+using namespace std;
+
+const int MAXN = 2 * 100005;
+ll a[MAXN], b[MAXN];
+
+bool check(int x, int n, vector<int>& A, vector<int>& B) {
+    sort(A.begin(), A.end());
+    sort(B.begin(), B.end());
+    
+    for (int i = 0; i < n - 1; ++i) {
+        if (B[i] >= A[n - 1]) return true;
+        if (B[i] < A[i]) return false;
+    }
+    
+    return true;
+}
+
+int main() {
+    int n;
+    cin >> n;
+    
+    for (int i = 0; i < n; ++i) {
+        cin >> a[i];
+    }
+    
+    for (int i = 0; i < n - 1; ++i) {
+        cin >> b[i];
+    }
+    
+    // Check if we can use any of the existing boxes without buying a new one
+    bool found = false;
+    for (int i = 0; i < n - 1; ++i) {
+        if (b[i] >= a[n - 1]) {
+            cout << a[n - 1] << endl;
+            found = true;
+            break;
+        }
+    }
+    
+    if (!found) {
+        cout << -1 << endl;
+    }
+    
+    return 0;
+}

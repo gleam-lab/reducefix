@@ -1,0 +1,63 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+const int MAXN = 1e5 + 5;
+
+int N, Q;
+vector<long long> A;
+vector<pair<long long, int>> queries[MAXN]; // {b_j, index}
+long long answers[MAXN];
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    cin >> N >> Q;
+    A.resize(N);
+    for (int i = 0; i < N; ++i) {
+        cin >> A[i];
+    }
+    sort(A.begin(), A.end());
+    
+    vector<long long> prefix_sum(N + 1);
+    for (int i = 0; i < N; ++i) {
+        prefix_sum[i + 1] = prefix_sum[i] + A[i];
+    }
+    
+    for (int j = 0; j < Q; ++j) {
+        long long b;
+        int k;
+        cin >> b >> k;
+        queries[j].push_back({b, j});
+    }
+    
+    // Function to compute the distance of k-th closest point
+    auto get_kth_distance = [&](long long b, int k) -> long long {
+        // Binary search for the smallest radius r such that there are at least k points within distance r from b
+        long long low = 0, high = 2e14;
+        while (low < high) {
+            long long mid = (low + high) / 2;
+            auto left = lower_bound(A.begin(), A.end(), b - mid);
+            auto right = upper_bound(A.begin(), A.end(), b + mid);
+            if (right - left >= k) {
+                high = mid;
+            } else {
+                low = mid + 1;
+            }
+        }
+        return low;
+    };
+    
+    // Process each query
+    for (int j = 0; j < Q; ++j) {
+        auto [b, k] = queries[j][0];
+        answers[j] = get_kth_distance(b, k);
+    }
+    
+    // Output results
+    for (int j = 0; j < Q; ++j) {
+        cout << answers[j] << "\n";
+    }
+    
+    return 0;
+}

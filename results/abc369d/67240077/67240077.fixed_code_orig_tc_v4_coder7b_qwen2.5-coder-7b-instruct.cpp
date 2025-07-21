@@ -1,0 +1,38 @@
+#include <bits/stdc++.h>
+#define INF 0x3f3f3f3f3f3f3f3f
+using namespace std;
+
+typedef long long ll;
+const int MAXN = 2e5 + 10;
+
+ll a[MAXN], f[MAXN][2], cnt[MAXN][2];
+
+int main() {
+    ll n;
+    cin >> n;
+    for (ll i = 1; i <= n; i++) {
+        cin >> a[i];
+    }
+
+    // Initialize base case
+    f[1][0] = 0;
+    f[1][1] = a[1];
+    cnt[1][0] = 0;
+    cnt[1][1] = 1;
+
+    for (ll i = 2; i <= n; i++) {
+        // Option 1: Do not double the previous number
+        f[i][0] = max(f[i - 1][0], f[i - 1][1]);
+        cnt[i][0] = cnt[i - 1][f[i][0] == f[i - 1][1]];
+
+        // Option 2: Double the previous number
+        ll option1 = f[i - 1][0] + a[i] * (cnt[i - 1][0] % 2 ? 2 : 1);
+        ll option2 = f[i - 1][1] + a[i] * (cnt[i - 1][1] % 2 ? 2 : 1);
+
+        f[i][1] = max(option1, option2);
+        cnt[i][1] = cnt[i - 1][option1 == option2] + (option1 > option2 ? 1 : 0);
+    }
+
+    cout << max(f[n][0], f[n][1]) << endl;
+    return 0;
+}

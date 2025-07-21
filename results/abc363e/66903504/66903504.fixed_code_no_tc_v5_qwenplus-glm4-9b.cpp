@@ -1,0 +1,71 @@
+#include<bits/stdc++.h>
+using namespace std;
+using ll = long long;
+using pii = pair<int, int>;
+
+int H, W, Y;
+vector<vector<int>> A;
+vector<vector<bool>> visited;
+vector<pii> directions{{0, 1}, {1, 0}, {0, -1}, {-1, 0}};
+
+void floodFill(int x, int y, int level) {
+    queue<pii> q;
+    q.push({x, y});
+    visited[x][y] = true;
+
+    while (!q.empty()) {
+        auto [i, j] = q.front();
+        q.pop();
+
+        for (auto [di, dj] : directions) {
+            int ni = i + di, nj = j + dj;
+            if (ni >= 0 && ni < H && nj >= 0 && nj < W) {
+                if (!visited[ni][nj] && A[ni][nj] <= level) {
+                    visited[ni][nj] = true;
+                    q.push({ni, nj});
+                }
+            }
+        }
+    }
+}
+
+int main() {
+    cin >> H >> W >> Y;
+    A.resize(H, vector<int>(W));
+    visited.resize(H, vector<bool>(W, false));
+
+    for (int i = 0; i < H; i++) {
+        for (int j = 0; j < W; j++) {
+            cin >> A[i][j];
+        }
+    }
+
+    for (int i = 0; i < H; i++) {
+        for (int j = 0; j < W; j++) {
+            if (i == 0 || i == H - 1 || j == 0 || j == W - 1 || A[i][j] < Y) {
+                floodFill(i, j, A[i][j]);
+            }
+        }
+    }
+
+    int remaining = 0;
+    for (int i = 0; i < H; i++) {
+        for (int j = 0; j < W; j++) {
+            if (!visited[i][j]) {
+                remaining++;
+            }
+        }
+    }
+
+    for (int y = 1; y <= Y; y++) {
+        for (int i = 0; i < H; i++) {
+            for (int j = 0; j < W; j++) {
+                if (A[i][j] <= y) {
+                    floodFill(i, j, A[i][j]);
+                }
+            }
+        }
+    }
+
+    cout << remaining << endl;
+}

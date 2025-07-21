@@ -1,0 +1,93 @@
+After analyzing the code, I found the following issues that need to be fixed:
+
+1. The Union-Find (Disjoint Set Union) implementation is incomplete - it doesn't properly merge the sets when unions are performed.
+2. The ordered_set (pb_ds tree) approach for maintaining connected vertices is inefficient for large N (up to 2×10^5) and Q (up to 2×10^5).
+3. The code tries to keep only 30 elements in each set, which may not be sufficient when k can be up to 10 but the component size can be much larger.
+4. The initial insertion of negative values (-i) is unnecessary and makes the code harder to understand.
+
+Here's the fixed version using a more efficient approach with Union-Find and maintaining separate sets for each component's vertices:
+
+```cpp
+#include <iostream>
+#include <vector>
+#include <set>
+#include <algorithm>
+using namespace std;
+
+const int MAXN = 2e5 + 5;
+
+int parent[MAXN];
+vector<int> component[MAXN];
+
+int find(int u) {
+    if (parent[u] != u) {
+        parent[u] = find(parent[u]);
+    }
+    return parent[u];
+}
+
+void unite(int u, int v) {
+    u = find(u);
+    v = find(v);
+    if (u == v) return;
+    
+    if (component[u].size() < component[v].size()) {
+        swap(u, v);
+    }
+    
+    parent[v] = u;
+    component[u].insert(component[u].end(), component[v].begin(), component[v].end());
+    component[v].clear();
+    
+    if (component[u].size() > 10) {
+        nth_element(component[u].begin(), component[u].begin() + 10, component[u].end(), greater<int>());
+        component[u].resize(10);
+    }
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int n, q;
+    cin >> n >> q;
+    
+    for (int i = 1; i <= n; ++i) {
+        parent[i] = i;
+        component[i] = {i};
+    }
+    
+    while (q--) {
+        int cmd;
+        cin >> cmd;
+        if (cmd == 1) {
+            int u, v;
+            cin >> u >> v;
+            unite(u, v);
+        } else {
+            int v, k;
+            cin >> v >> k;
+            v = find(v);
+            if (k > component[v].size()) {
+                cout << "-1\n";
+            } else {
+                nth_element(component[v].begin(), component[v].begin() + k - 1, component[v].end(), greater<int>());
+                cout << component[v][k - 1] << '\n';
+            }
+        }
+    }
+    
+    return 0;
+}
+```
+
+Key improvements:
+
+1. Uses standard Union-Find with path compression
+2. Maintains component vectors that store vertices in each connected component
+3. Limits the component vectors to keep only the top 10 largest elements (since k ≤ 10)
+4. Uses nth_element for efficient partial sorting when needed
+5. More efficient memory usage by clearing merged components
+6. Simpler and more direct approach without unnecessary data structures
+
+This solution should handle the constraints efficiently while providing correct results for all queries. The use of nth_element ensures that we don't do full sorting when we only need the k-th largest element.

@@ -1,0 +1,93 @@
+The issue in your code is related to **how you handle the path weight calculation** for each node. In particular, you're adding `a[now.id]` (vertex weight) **every time** you move from a node to its neighbor, which leads to including the vertex weight multiple times if it's visited more than once on a path.
+
+### Problem Breakdown
+
+Each edge connects two nodes and has a cost. Each node also has a cost. When calculating the total path cost from node 1 to node i:
+
+- You should include the **node's weight only once**, when you arrive at that node.
+- The current implementation mistakenly includes `a[now.id]` every time an edge from `now.id` is considered, effectively counting node weights multiple times along a path.
+
+### Correct Strategy
+
+To avoid double-counting the vertex weight:
+- Initialize the distance to `a[1]` at the start node (since we are at node 1).
+- Then, during traversal, when moving from node A to B:
+  - Only add the edge weight (`w`) and the destination node weight (`a[B]`), because we're arriving at B for the first time.
+
+This ensures that each node's weight is included exactly once in the shortest path.
+
+---
+
+### Fix Summary
+
+- Change this line:
+```cpp
+if(dis[i.first] > dis[now.id] + i.second + a[i.first])
+```
+- Remove `+a[now.id]` from the expression — that was the error.
+
+Also, since we must always count node 1’s weight, initialize `dis[1] = a[1];`.
+
+---
+
+### Fixed C++ Code
+
+```cpp
+#include<queue>
+#include<vector>
+#include<cstdio>
+#include<climits>
+#include<cstring>
+#include<algorithm>
+using namespace std;
+typedef long long ll;
+typedef pair<ll, int> pli;
+const int N = 2e5 + 5;
+
+int n, m;
+ll a[N];
+ll dis[N];
+bool vis[N];
+vector<pli> g[N];
+
+void dijkstra() {
+    priority_queue<pli, vector<pli>, greater<pli>> pq;
+    fill(dis, dis + n + 1, LLONG_MAX);
+    memset(vis, false, sizeof(vis));
+    
+    dis[1] = a[1]; // Include starting node's weight
+    pq.push({dis[1], 1});
+
+    while (!pq.empty()) {
+        auto [d, u] = pq.top(); pq.pop();
+        if (vis[u]) continue;
+        vis[u] = true;
+
+        for (auto& [v, w] : g[u]) {
+            if (!vis[v] && dis[v] > dis[u] + w + a[v]) {
+                dis[v] = dis[u] + w + a[v];
+                pq.push({dis[v], v});
+            }
+        }
+    }
+}
+
+int main() {
+    scanf("%d%d", &n, &m);
+    for (int i = 1; i <= n; ++i) scanf("%lld", &a[i]);
+    for (int i = 1; i <= m; ++i) {
+        int u, v;
+        ll w;
+        scanf("%d%d%lld", &u, &v, &w);
+        g[u].emplace_back(v, w);
+        g[v].emplace_back(u, w);
+    }
+
+    dijkstra();
+
+    for (int i = 2; i <= n; ++i)
+        printf("%lld ", dis[i]);
+
+    return 0;
+}
+```

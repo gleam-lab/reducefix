@@ -1,0 +1,130 @@
+```cpp
+#include <bits/stdc++.h>
+#include <ext/pb_ds/assoc_container.hpp>
+#include <ext/pb_ds/tree_policy.hpp>
+using namespace std;
+using namespace __gnu_pbds;
+
+typedef long long ll;
+typedef pair<ll, ll> pll;
+typedef tree<int,null_type,less<>,rb_tree_tag,tree_order_statistics_node_update> ordered_set;
+
+#define all(x) (x).begin(), (x).end()
+#define FOR(i, a, b) for (int i = (a); i < (b); ++i)
+#define pb push_back
+
+bool inBounds(const pll &p, ll n) {
+    return 1 <= p.first && p.first <= n && 1 <= p.second && p.second <= n;
+}
+
+void solve() {
+    ll n, m;
+    cin >> n >> m;
+
+    set<ll> rows, cols;
+    set<ll> diag1, diag2; // i - j and i + j
+
+    vector<pll> pieces(m);
+    for (auto &[x, y] : pieces) {
+        cin >> x >> y;
+        rows.insert(x);
+        cols.insert(y);
+        diag1.insert(x - y);
+        diag2.insert(x + y);
+    }
+
+    // Total squares available
+    ll total = n * n;
+
+    // Subtract all squares threatened by existing pieces
+    total -= (ll)rows.size() * n; // Rows
+    total -= (ll)cols.size() * n; // Columns
+    total += (ll)rows.size() * cols.size(); // Overlap: squares already counted in both row and column removals
+
+    // Now subtract the diagonal threats, adjusting for overlap with rows/cols
+    set<pll> attacked;
+
+    // Diagonal 1: i - j = d
+    for (ll d : diag1) {
+        ll count = n - abs(d);
+        total -= count;
+
+        // Add overlapping cells (already removed by row or column)
+        set<pll> overlap;
+        for (ll r : rows) {
+            ll c = r - d;
+            if (inBounds({r, c}, n)) overlap.insert({r, c});
+        }
+        for (ll c : cols) {
+            ll r = c + d;
+            if (inBounds({r, c}, n)) overlap.insert({r, c});
+        }
+        total += overlap.size();
+    }
+
+    // Diagonal 2: i + j = d
+    for (ll d : diag2) {
+        ll count;
+        if (d <= n + 1)
+            count = d - 1;
+        else
+            count = 2 * n - d + 1;
+        total -= count;
+
+        // Add overlapping cells
+        set<pll> overlap;
+        for (ll r : rows) {
+            ll c = d - r;
+            if (inBounds({r, c}, n)) overlap.insert({r, c});
+        }
+        for (ll c : cols) {
+            ll r = d - c;
+            if (inBounds({r, c}, n)) overlap.insert({r, c});
+        }
+
+        // Also check intersections with diag1 diagonals
+        for (ll od : diag1) {
+            // Solve:
+            // i - j = od
+            // i + j = d
+            // => i = (d + od)/2, j = (d - od)/2
+            if ((d + od) % 2 == 0) {
+                ll i = (d + od) / 2;
+                ll j = (d - od) / 2;
+                if (inBounds({i, j}, n)) overlap.insert({i, j});
+            }
+        }
+
+        total += overlap.size();
+    }
+
+    // Now subtract overlaps between diag1 and diag2 not yet accounted for
+    // These are cells that were on both types of diagonals but not on any row/col
+    for (ll d1 : diag1) {
+        for (ll d2 : diag2) {
+            if ((d1 + d2) % 2 == 0) {
+                ll i = (d2 + d1) / 2;
+                ll j = (d2 - d1) / 2;
+                if (inBounds({i, j}, n) && !rows.count(i) && !cols.count(j))
+                    attacked.insert({i, j});
+            }
+        }
+    }
+
+    // Subtract those double-counted diagonals
+    total -= attacked.size();
+
+    // Subtract occupied squares
+    for (auto [x, y] : pieces)
+        total--;
+
+    cout << total << endl;
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+    solve();
+    return 0;
+}
+```

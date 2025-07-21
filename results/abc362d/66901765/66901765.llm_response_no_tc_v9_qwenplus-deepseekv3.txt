@@ -1,0 +1,76 @@
+To fix this code, we need to address the issues in the implementation of Dijkstra's algorithm for finding the shortest path from vertex 1 to all other vertices in the graph. The problem involves both vertex weights and edge weights, which must be correctly accounted for in the path weight calculation.
+
+### Analysis of the Incorrect Code
+1. **Vertex and Edge Weight Handling**: The original code attempts to account for vertex weights by adding them to the edge weights, but it does this incorrectly. Specifically, it adds the vertex weight of the destination vertex (`a[v]`) and the edge weight (`w`) to the current distance (`dis[u]`). This approach is flawed because vertex weights should be included for each vertex visited in the path, not just the destination vertex.
+
+2. **Priority Queue Usage**: The priority queue is used to process nodes in order of their current distance, but the code pushes new distances without checking if the node has already been visited. This can lead to unnecessary processing and incorrect distance updates.
+
+3. **Initialization**: The initial distance for vertex 1 is set to `a[1]`, which is correct since the path starts at vertex 1 and its weight should be included. However, the code does not ensure that the vertex weight of the starting node is only included once.
+
+### Correct Approach
+To correctly handle the vertex and edge weights, we need to:
+1. **Include Vertex Weights**: The weight of each vertex should be included when the vertex is first visited. This means that for any path from vertex 1 to vertex `i`, the sum should include the weights of all vertices along the path, including vertex 1 and vertex `i`, as well as the weights of all edges along the path.
+
+2. **Modify Edge Weights**: To simplify the Dijkstra's algorithm, we can adjust the edge weights to include the vertex weights of the connecting vertices. For an edge between vertices `u` and `v` with weight `B_j`, the adjusted edge weight can be `A_u + A_v + B_j`. This way, when we traverse the edge, we automatically account for the vertex weights of both `u` and `v`.
+
+3. **Adjust Initial Distance**: The initial distance for vertex 1 should be set to `A_1` (its own weight), and all other vertices should be initialized to a large value. As we process each edge, the adjusted edge weight will include the necessary vertex weights.
+
+### Fixed Code
+```cpp
+#include<bits/stdc++.h>
+using namespace std;
+#define int long long 
+vector<pair<int,int>> G[200005];
+int dis[200005];
+int a[200005];
+int n, m;
+
+void dij(int u) {
+    priority_queue<pair<int,int>, vector<pair<int,int>>, greater<pair<int,int>>> q;
+    q.push({a[u], u});
+    dis[u] = a[u];
+    while (!q.empty()) {
+        int current_dist = q.top().first;
+        int u = q.top().second;
+        q.pop();
+        if (current_dist > dis[u]) continue;
+        for (auto [v, w] : G[u]) {
+            int new_dist = current_dist + a[v] + w;
+            if (new_dist < dis[v]) {
+                dis[v] = new_dist;
+                q.push({new_dist, v});
+            }
+        }
+    }
+}
+
+signed main() {
+    scanf("%lld%lld", &n, &m);
+    for (int i = 1; i <= n; i++) {
+        scanf("%lld", &a[i]);
+    }
+    for (int i = 1; i <= m; i++) {
+        int u, v, w;
+        scanf("%lld%lld%lld", &u, &v, &w);
+        G[u].push_back({v, w});
+        G[v].push_back({u, w});
+    }
+    for (int i = 1; i <= n; i++) {
+        dis[i] = LLONG_MAX;
+    }
+    dij(1);
+    for (int i = 2; i <= n; i++) {
+        printf("%lld ", dis[i]);
+    }
+    printf("\n");
+    return 0;
+}
+```
+
+### Explanation
+1. **Initialization**: The distances are initialized to `LLONG_MAX` except for vertex 1, which is set to `A_1`.
+2. **Priority Queue**: The priority queue is used to process nodes in order of increasing distance. The queue stores pairs of (distance, vertex).
+3. **Edge Processing**: For each edge `(u, v)`, the new distance to `v` is calculated as the current distance to `u` plus the vertex weight of `v` and the edge weight. If this new distance is better than the known distance to `v`, it updates the distance and pushes `v` into the queue.
+4. **Output**: After processing all nodes, the distances from vertex 1 to all other vertices are printed.
+
+This approach ensures that vertex weights are correctly included in the path weight calculation, and the Dijkstra's algorithm efficiently finds the shortest paths in the graph.

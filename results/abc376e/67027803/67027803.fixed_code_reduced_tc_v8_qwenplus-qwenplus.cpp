@@ -1,0 +1,76 @@
+#include<bits/stdc++.h>
+using namespace std;
+
+using ll = long long;
+const ll INF = 1LL << 60;
+
+void solve() {
+  int n, k; cin >> n >> k;
+  vector<pair<ll, ll>> items(n);
+  
+  for (int i = 0; i < n; ++i) {
+    cin >> items[i].first;
+  }
+  for (int i = 0; i < n; ++i) {
+    cin >> items[i].second;
+  }
+
+  // Sort by A_i in ascending order
+  sort(items.begin(), items.end());
+
+  if (k == 1) {
+    ll ans = INF;
+    for (int i = 0; i < n; ++i) {
+      ans = min(ans, items[i].first * items[i].second);
+    }
+    cout << ans << '\n';
+    return;
+  }
+
+  // Max heap to keep the k-1 smallest B values
+  priority_queue<pair<ll, int>> pq; // (B_i, index)
+  vector<bool> used(n, false);
+  ll sum_b = 0;
+
+  // Initialize with first k-1 elements
+  for (int i = 0; i < k - 1; ++i) {
+    pq.push({items[i].second, i});
+    used[i] = true;
+    sum_b += items[i].second;
+  }
+
+  ll ans = INF;
+
+  // Try every element as the max A_i in the subset
+  for (int i = k - 1; i < n; ++i) {
+    // Current item will be included
+    auto [a, b] = items[i];
+    ll current_sum = sum_b + b;
+    ans = min(ans, a * current_sum);
+
+    // If there are larger B values in the queue, replace one
+    if (!pq.empty() && pq.top().first > b) {
+      // Remove the largest B from the set
+      sum_b -= pq.top().first;
+      used[pq.top().second] = false;
+      pq.pop();
+
+      // Add the new smaller B
+      pq.push({b, i});
+      used[i] = true;
+      sum_b += b;
+    } else {
+      // We don't add the current B to the queue since we only maintain k-1 elements
+      used[i] = false;
+    }
+  }
+
+  cout << ans << '\n';
+}
+
+int main() {
+  ios::sync_with_stdio(false);
+  cin.tie(nullptr);
+  int t; cin >> t;
+  while (t--) solve();
+}

@@ -1,0 +1,76 @@
+#include <iostream>
+#include <vector>
+#include <queue>
+#include <algorithm>
+using namespace std;
+#define int long long
+
+const int INF = 1e18;
+
+signed main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int T;
+    cin >> T;
+    while (T--) {
+        int N, K;
+        cin >> N >> K;
+
+        vector<pair<int, int>> A(N);
+        for (int i = 0; i < N; ++i) {
+            cin >> A[i].first;
+        }
+        vector<int> B(N);
+        for (int i = 0; i < N; ++i) {
+            cin >> B[i];
+        }
+
+        // Pair A with index to keep track of corresponding B value
+        vector<pair<int, int>> pairs(N);
+        for (int i = 0; i < N; ++i) {
+            pairs[i] = {A[i].first, i};
+        }
+
+        // Sort by A_i ascending
+        sort(pairs.begin(), pairs.end());
+
+        // Precompute suffix sums of B based on sorted A
+        vector<int> suffix_sum(N + 1, 0);
+        for (int i = N - 1; i >= 0; --i) {
+            suffix_sum[i] = suffix_sum[i + 1] + B[pairs[i].second];
+        }
+
+        // Use sliding window with a max-heap to maintain top K smallest B values
+        priority_queue<int> max_heap;
+        int sum_b = 0;
+
+        // Initialize the first K-1 elements
+        for (int i = 0; i < K - 1; ++i) {
+            sum_b += B[pairs[i].second];
+            max_heap.push(B[pairs[i].second]);
+        }
+
+        int result = INF;
+
+        // Slide window and update result
+        for (int i = K - 1; i < N; ++i) {
+            // Add current element
+            sum_b += B[pairs[i].second];
+            max_heap.push(B[pairs[i].second]);
+
+            // Maintain heap size K
+            if (max_heap.size() > K) {
+                sum_b -= max_heap.top();
+                max_heap.pop();
+            }
+
+            // Current max A_i is pairs[i].first
+            result = min(result, pairs[i].first * sum_b);
+        }
+
+        cout << result << '\n';
+    }
+
+    return 0;
+}

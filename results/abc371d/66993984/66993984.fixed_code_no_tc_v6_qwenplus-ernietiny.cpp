@@ -1,0 +1,37 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    int n, q;
+    cin >> n; // Number of elements in the array x
+    
+    // Initialize the array p with all values 0
+    for (int i = 1; i <= n; i++) {
+        p[i] = 0; // Initialize p array with all 0 values
+    }
+    
+    // Read the elements from the input
+    for (int i = 0; i < n; i++) {
+        cin >> x[i]; // Elements from array x
+    }
+    
+    // Calculate the sum of elements in the array x using previous sum values
+    map<int, int> sum; // Initialize the sum map with all previous sums as keys and their corresponding values as values
+    for (int i = 1; i <= n; i++) { // Iterate through each element in the array x
+        sum[x[i]] = sum[x[i-1]] + p[i]; // Update the sum of current element with the sum of previous elements and current element's value
+    }
+    
+    // Read the number of queries q from the input
+    cin >> q; // Number of queries to perform
+    
+    // Process each query and calculate the difference between two subsequent elements in the array x
+    while (q--) { // Process each query for q elements
+        int L, R; // Read the left and right indices of the query elements
+        cin >> L >> R; // Read the indices of the elements to be calculated
+        // Calculate the difference between two subsequent elements using lower_bound and upper_bound functions
+        int difference = lower_bound(x + 1, x + n + 1, L) - x - 1; // Using lower_bound to find the index of element L in x array
+        cout << sum[difference] - sum[R - 1] << endl; // Calculate and print the difference between two subsequent elements in x array
+    }
+    
+    return 0; // Return 0 to indicate successful completion of the program
+}

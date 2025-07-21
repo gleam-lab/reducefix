@@ -1,0 +1,189 @@
+```cpp
+#include <bits/stdc++.h>
+
+using namespace std;
+
+#define MAX_N 1003
+
+int n, m;
+int row[MAX_N], col[MAX_N];
+set<int> rows, cols;
+set<pair<int, int>> pieces;
+map<int, int> diag1cnt, diag2cnt;
+
+long long total_empty;
+long long attacked = 0;
+
+// For inclusion-exclusion
+map<int, int> row_attack_count;
+map<int, int> col_attack_count;
+map<int, int> diag1_attack_count; // x - y
+map<int, int> diag2_attack_count; // x + y
+
+vector<int> diag1_list, diag2_list;
+
+int main() {
+    scanf("%d %d", &n, &m);
+    for (int i = 0; i < m; ++i) {
+        scanf("%d %d", &row[i], &col[i]);
+        pieces.insert({row[i], col[i]});
+        rows.insert(row[i]);
+        cols.insert(col[i]);
+        int d1 = row[i] - col[i];
+        int d2 = row[i] + col[i];
+        diag1cnt[d1]++;
+        diag2cnt[d2]++;
+    }
+
+    total_empty = (long long)n * n - m;
+
+    // All squares attacked by any piece via row, col, diag1, diag2
+    set<int> attacked_rows, attacked_cols;
+    set<int> attacked_diag1, attacked_diag2;
+
+    for (int i = 0; i < m; ++i) {
+        int x = row[i], y = col[i];
+
+        // Row and column
+        if (!attacked_rows.count(x)) {
+            attacked_rows.insert(x);
+            attacked += n - 1; // This row has one piece, rest are attacked
+        }
+        if (!attacked_cols.count(y)) {
+            attacked_cols.insert(y);
+            attacked += n - 1; // This column
+        }
+
+        // Diagonals
+        int d1 = x - y;
+        int d2 = x + y;
+        if (!attacked_diag1.count(d1)) {
+            // Number of squares on this diagonal: depends on size
+            int cnt = 0;
+            if (-n < d1 && d1 < n) cnt = n - abs(d1);
+            else cnt = 2*n - abs(d1) - 1;
+            attacked += cnt - 1; // minus 1 because the piece itself is not empty
+            attacked_diag1.insert(d1);
+        }
+
+        if (!attacked_diag2.count(d2)) {
+            int cnt = 0;
+            if (d2 <= n) cnt = d2;
+            else cnt = 2*n + 1 - d2;
+            attacked += cnt - 1;
+            attacked_diag2.insert(d2);
+        }
+    }
+
+    // Overlaps (Inclusion-Exclusion)
+    long long overlap = 0;
+
+    // Row-Column intersections (pieces themselves counted in both row and col)
+    for (int r : rows) {
+        for (int c : cols) {
+            if (!pieces.count({r, c})) {
+                overlap++;
+            }
+        }
+    }
+
+    // Row-Diagonal overlaps
+    map<pair<int, int>, int> row_diag1_map;
+    map<pair<int, int>, int> row_diag2_map;
+    for (int i = 0; i < m; ++i) {
+        int x = row[i], y = col[i];
+        int d1 = x - y;
+        int d2 = x + y;
+        row_diag1_map[{x, d1}]++;
+        row_diag2_map[{x, d2}]++;
+    }
+
+    for (int i = 0; i < m; ++i) {
+        int x = row[i], y = col[i];
+        int d1 = x - y;
+        int d2 = x + y;
+
+        // Row-diag1 overlap
+        auto it1 = row_diag1_map.find({x, d1});
+        if (it1 != row_diag1_map.end() && it1->second > 1) {
+            // Points on both row and diag1
+            int min_y = max(1, x - d1);
+            int max_y = min(n, x - d1);
+            for (int y_candidate = min_y; y_candidate <= max_y; ++y_candidate) {
+                if (y_candidate != y && !pieces.count({x, y_candidate})) {
+                    overlap++;
+                }
+            }
+        }
+
+        // Row-diag2 overlap
+        auto it2 = row_diag2_map.find({x, d2});
+        if (it2 != row_diag2_map.end() && it2->second > 1) {
+            int y_candidate = d2 - x;
+            if (1 <= y_candidate && y_candidate <= n && y_candidate != y && !pieces.count({x, y_candidate})) {
+                overlap++;
+            }
+        }
+    }
+
+    // Column-Diagonal overlaps
+    map<pair<int, int>, int> col_diag1_map;
+    map<pair<int, int>, int> col_diag2_map;
+    for (int i = 0; i < m; ++i) {
+        int x = row[i], y = col[i];
+        int d1 = x - y;
+        int d2 = x + y;
+        col_diag1_map[{y, d1}]++;
+        col_diag2_map[{y, d2}]++;
+    }
+
+    for (int i = 0; i < m; ++i) {
+        int x = row[i], y = col[i];
+        int d1 = x - y;
+        int d2 = x + y;
+
+        // Col-diag1 overlap
+        auto it1 = col_diag1_map.find({y, d1});
+        if (it1 != col_diag1_map.end() && it1->second > 1) {
+            int x_candidate = d1 + y;
+            if (1 <= x_candidate && x_candidate <= n && x_candidate != x && !pieces.count({x_candidate, y})) {
+                overlap++;
+            }
+        }
+
+        // Col-diag2 overlap
+        auto it2 = col_diag2_map.find({y, d2});
+        if (it2 != col_diag2_map.end() && it2->second > 1) {
+            int x_candidate = d2 - y;
+            if (1 <= x_candidate && x_candidate <= n && x_candidate != x && !pieces.count({x_candidate, y})) {
+                overlap++;
+            }
+        }
+    }
+
+    // Diagonal-Diagonal overlaps
+    map<pair<int, int>, int> diag1_diag2_map;
+    for (int i = 0; i < m; ++i) {
+        int x = row[i], y = col[i];
+        int d1 = x - y;
+        int d2 = x + y;
+        diag1_diag2_map[{d1, d2}]++;
+    }
+
+    for (auto& [diag_pair, count] : diag1_diag2_map) {
+        if (count > 1) {
+            int d1 = diag_pair.first;
+            int d2 = diag_pair.second;
+            int x = (d1 + d2) / 2;
+            int y = (d2 - d1) / 2;
+            if (x >= 1 && x <= n && y >= 1 && y <= n && !pieces.count({x, y})) {
+                overlap++;
+            }
+        }
+    }
+
+    long long ans = total_empty - attacked + overlap;
+    cout << ans << endl;
+    return 0;
+}
+```

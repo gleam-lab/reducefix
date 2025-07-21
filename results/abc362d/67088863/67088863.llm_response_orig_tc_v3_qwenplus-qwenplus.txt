@@ -1,0 +1,113 @@
+To solve this problem correctly, we need to compute the **minimum weight of a path from vertex 1 to each other vertex** in a graph where:
+
+- Each **vertex** has its own weight.
+- Each **edge** also has its own weight.
+- The total path cost includes both the **vertex weights** and **edge weights** along the path.
+
+---
+
+### Key Observations:
+
+1. **Path Weight Definition**: A path's weight is defined as the sum of:
+   - All vertex weights along the path (including start and end),
+   - Plus all edge weights connecting them.
+
+2. This means, for example, if there is an edge between `u` and `v` with weight `B`, then when moving from `u` to `v`, we include:
+   - `A[u]` (already included in previous node's contribution),
+   - `B` (the edge weight),
+   - `A[v]` (which should be added at destination).
+
+3. Therefore, we must initialize the starting node's cost with its vertex weight (`A[0]`) and add `A[v]` only once per node during traversal.
+
+4. **Dijkstra’s Algorithm** is appropriate here since all weights are non-negative.
+
+5. In the original code:
+   - There was an incorrect final addition of `A[i]` again at the output step.
+   - Edge weights were being added with `val[a]` and `val[b]`, but this double-counts the vertex weights unless handled carefully in initialization.
+
+---
+
+### Fix Summary:
+
+- Initialize `dist[0] = A[0]`
+- For each edge `(u, v)` with weight `w`, create bidirectional edges with weight `w + A[v]` and `w + A[u]` respectively
+- Use Dijkstra's algorithm to find shortest paths from node 0
+- Output `dist[i]` directly for nodes 1 to N-1
+
+---
+
+### Corrected Code:
+
+```cpp
+#include <iostream>
+#include <vector>
+#include <queue>
+#include <algorithm>
+using namespace std;
+typedef long long ll;
+
+const ll INF = 1e18;
+
+void solve() {
+    int n, m;
+    cin >> n >> m;
+
+    vector<ll> A(n);
+    for (int i = 0; i < n; ++i) {
+        cin >> A[i];
+    }
+
+    vector<vector<pair<int, ll>>> adj(n);
+    for (int i = 0; i < m; ++i) {
+        int u, v;
+        ll w;
+        cin >> u >> v >> w;
+        u--; v--;
+        adj[u].push_back({v, w + A[v]});
+        adj[v].push_back({u, w + A[u]});
+    }
+
+    vector<ll> dist(n, INF);
+    dist[0] = A[0]; // Starting from node 1 (index 0), include its own weight
+
+    priority_queue<pair<ll, int>, vector<pair<ll, int>>, greater<pair<ll, int>>> pq;
+    pq.push({dist[0], 0});
+
+    while (!pq.empty()) {
+        auto [d, u] = pq.top();
+        pq.pop();
+
+        if (d > dist[u]) continue;
+
+        for (auto [v, cost] : adj[u]) {
+            if (dist[v] > d + cost) {
+                dist[v] = d + cost;
+                pq.push({dist[v], v});
+            }
+        }
+    }
+
+    for (int i = 1; i < n; ++i) {
+        cout << dist[i] << " ";
+    }
+    cout << "\n";
+}
+
+int main() {
+    ios::sync_with_stdio(0);
+    cin.tie(0); cout.tie(0);
+
+    solve();
+}
+```
+
+---
+
+### Explanation:
+
+- We use Dijkstra's algorithm with a min-priority queue to ensure optimal performance.
+- The adjacency list stores pairs of `(neighbor, edge_weight + neighbor_vertex_weight)`
+- The starting node gets initialized with its own vertex weight.
+- No additional correction is made at output — because the vertex weight is already accounted for in the graph construction.
+
+This solution runs in `O(M log N)` time and handles all constraints efficiently.

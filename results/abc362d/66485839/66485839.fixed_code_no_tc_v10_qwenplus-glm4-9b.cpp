@@ -1,0 +1,74 @@
+#include <iostream>
+#include <vector>
+#include <queue>
+
+using namespace std;
+
+const int MAX_N = 200010;
+int N, M;
+vector<pair<int, int>> graph[MAX_N]; // graph[i] will contain pairs (neighbor, edge_weight)
+int vertex_weights[MAX_N];
+
+// Data structure for Dijkstra's algorithm
+struct Node {
+    int vertex;
+    long long distance;
+    bool operator>(const Node& other) const {
+        return distance > other.distance;
+    }
+};
+
+void dijkstra(int start) {
+    priority_queue<Node, vector<Node>, greater<Node>> pq;
+    fill_n(vertex_weights, MAX_N, __LONG_LONG_MAX__);
+    vertex_weights[start] = 0;
+    pq.push(Node{start, 0});
+
+    while (!pq.empty()) {
+        Node current = pq.top();
+        pq.pop();
+
+        int current_vertex = current.vertex;
+        long long current_distance = current.distance;
+
+        if (current_distance > vertex_weights[current_vertex]) continue;
+
+        for (auto &edge : graph[current_vertex]) {
+            int neighbor = edge.first;
+            long long weight = edge.second + vertex_weights[current_vertex];
+            if (weight < vertex_weights[neighbor]) {
+                vertex_weights[neighbor] = weight;
+                pq.push(Node{neighbor, weight});
+            }
+        }
+    }
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    cin >> N >> M;
+
+    fill_n(vertex_weights, MAX_N, __LONG_LONG_MAX__);
+
+    for (int i = 1; i <= N; ++i) {
+        cin >> vertex_weights[i];
+    }
+
+    for (int i = 1; i <= M; ++i) {
+        int u, v, w;
+        cin >> u >> v >> w;
+        graph[u].push_back({v, w});
+        graph[v].push_back({u, w});
+    }
+
+    dijkstra(1);
+
+    for (int i = 2; i <= N; ++i) {
+        cout << vertex_weights[i] << (i == N ? "" : " ");
+    }
+    cout << endl;
+
+    return 0;
+}

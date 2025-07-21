@@ -1,0 +1,63 @@
+#include<bits/stdc++.h>
+using namespace std;
+
+const int MAXN = 2e5 + 5;
+vector<int> adj[MAXN];
+int degree[MAXN];
+priority_queue<int, vector<int>, greater<int>> pq[MAXN];
+
+void addEdge(int u, int v) {
+    adj[u].push_back(v);
+    adj[v].push_back(u);
+    degree[u]++;
+    degree[v]++;
+}
+
+void updatePQ(int v) {
+    pq[v].reset();
+    for(auto u : adj[v]) {
+        if(degree[u] > 1) pq[v].push(u);
+    }
+    while(pq[v].size() > 10) pq[v].pop();
+}
+
+void removeEdge(int u, int v) {
+    auto it = find(adj[u].begin(), adj[u].end(), v);
+    adj[u].erase(it);
+    it = find(adj[v].begin(), adj[v].end(), u);
+    adj[v].erase(it);
+    degree[u]--;
+    degree[v]--;
+    updatePQ(u);
+    updatePQ(v);
+}
+
+int getKthLargest(int v, int k) {
+    if(k > pq[v].size()) return -1;
+    return pq[v].top();
+}
+
+int main() {
+    ios_base::sync_with_stdio(false); cin.tie(NULL); cout.tie(NULL);
+
+    int n, m;
+    cin >> n >> m;
+
+    for(int i = 1; i <= n; i++) {
+        addEdge(i, i);
+    }
+
+    for(int i = 0; i < m; i++) {
+        int type, u, v;
+        cin >> type >> u >> v;
+        if(type == 1) {
+            addEdge(u, v);
+        } else {
+            int k;
+            cin >> k;
+            cout << getKthLargest(u, k) << '\n';
+        }
+    }
+
+    return 0;
+}

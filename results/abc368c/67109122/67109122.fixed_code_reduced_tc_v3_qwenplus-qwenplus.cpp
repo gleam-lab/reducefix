@@ -1,0 +1,36 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+
+int main() {
+    int N;
+    cin >> N;
+    vector<long long> H(N);
+    for (int i = 0; i < N; i++) {
+        cin >> H[i];
+    }
+
+    long long T = 0;
+
+    for (int i = 0; i < N; ++i) {
+        // Determine how many full attack cycles we can do against this enemy
+        // Each cycle is 3 attacks: two -1 and one -3 => total damage = 5
+        long long full_cycles = H[i] / 5;
+        long long remaining_health = H[i] % 5;
+
+        T += full_cycles * 3;
+
+        // Apply the remaining damage needed to kill the enemy
+        while (remaining_health > 0) {
+            T++;
+            if (T % 3 == 0) {
+                remaining_health -= 3;
+            } else {
+                remaining_health -= 1;
+            }
+        }
+    }
+
+    cout << T << endl;
+    return 0;
+}

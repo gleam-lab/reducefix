@@ -1,0 +1,48 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+const int MAXN = 200010;
+char s[MAXN];
+char c[MAXN];
+
+int solve(int n) {
+    // Try all three possible initial choices and simulate greedily
+    int best = 0;
+    
+    // We try starting with each of 'P', 'R', 'S' as the first move
+    for (char first : {'P', 'R', 'S'}) {
+        c[0] = first;
+        int count = 1; // we have one character so far
+        
+        for (int i = 1; i < n; i++) {
+            // Determine the optimal move for current position
+            if (s[i] == 'P') c[i] = 'S';
+            else if (s[i] == 'R') c[i] = 'P';
+            else c[i] = 'R';
+
+            // Check conflict with previous character
+            if (c[i] == c[i - 1]) {
+                c[i] = s[i]; // use original if there's a conflict
+            } else {
+                count++;
+            }
+        }
+        
+        best = max(best, count);
+    }
+    
+    return best;
+}
+
+int main() {
+    int t;
+    scanf("%d", &t);
+    while (t--) {
+        int n;
+        scanf("%d", &n);
+        scanf("%s", s);
+        printf("%d\n", solve(n));
+    }
+    
+    return 0;
+}

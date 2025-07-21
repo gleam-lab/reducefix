@@ -1,0 +1,89 @@
+To fix this code, we need to address several issues related to the algorithm used to simulate the sinking of the island sections as the sea level rises each year. The main problem lies in the approach to determine when each section sinks into the sea, particularly how the priority queue is used to propagate the sinking condition to adjacent sections.
+
+### Issues in the Original Code
+1. **Priority Queue Handling**: The original code uses a priority queue to process sections in order of their elevation, but it does not correctly handle the propagation of the sinking condition to all adjacent sections that should sink at the same sea level.
+2. **Sink Time Calculation**: The `sink` array is intended to store the sea level at which each section sinks, but the logic for updating this array is flawed, leading to incorrect results.
+3. **Efficiency**: The original approach might not efficiently handle the large constraints, especially with `Y` up to 100,000 and grid sizes up to 1000x1000.
+
+### Approach
+1. **Priority Queue for Sinking Sections**: Use a priority queue to process sections starting from the borders, similar to Dijkstra's algorithm, where the priority is the elevation of the section. This ensures that sections are processed in the order they would sink as the sea level rises.
+2. **Sink Time Propagation**: For each section processed, check its adjacent sections. If an adjacent section's elevation is less than or equal to the current sea level, update its sink time and add it to the priority queue.
+3. **Prefix Sum for Efficient Querying**: After determining the sink times for all sections, use a prefix sum array to efficiently compute the remaining area for each year up to `Y`.
+
+### Solution Code
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+#define all(x) (x).begin(), (x).end()
+
+int main() {
+    ios_base::sync_with_stdio(0);
+    cin.tie(0);
+    int h, w, y;
+    cin >> h >> w >> y;
+    vector<vector<int>> height(h, vector<int>(w));
+    vector<vector<int>> sink(h, vector<int>(w, INT_MAX));
+    priority_queue<pair<int, pair<int, int>>, vector<pair<int, pair<int, int>>>, greater<pair<int, pair<int, int>>>> pq;
+    int di[4][2] = {{-1, 0}, {1, 0}, {0, -1}, {0, 1}};
+
+    for (int i = 0; i < h; i++) {
+        for (int j = 0; j < w; j++) {
+            cin >> height[i][j];
+            if (i == 0 || i == h - 1 || j == 0 || j == w - 1) {
+                sink[i][j] = height[i][j];
+                pq.push({height[i][j], {i, j}});
+            }
+        }
+    }
+
+    while (!pq.empty()) {
+        auto current = pq.top();
+        pq.pop();
+        int H = current.first;
+        int r = current.second.first;
+        int c = current.second.second;
+        if (H > sink[r][c]) continue;
+        for (int i = 0; i < 4; i++) {
+            int nr = r + di[i][0];
+            int nc = c + di[i][1];
+            if (nr < 0 || nr >= h || nc < 0 || nc >= w) continue;
+            if (max(H, height[nr][nc]) < sink[nr][nc]) {
+                sink[nr][nc] = max(H, height[nr][nc]);
+                pq.push({sink[nr][nc], {nr, nc}});
+            }
+        }
+    }
+
+    vector<int> count(y + 2, 0);
+    for (int i = 0; i < h; i++) {
+        for (int j = 0; j < w; j++) {
+            if (sink[i][j] <= y) {
+                count[sink[i][j]]++;
+            }
+        }
+    }
+
+    vector<int> prefix(y + 1, 0);
+    prefix[0] = count[0];
+    for (int i = 1; i <= y; i++) {
+        prefix[i] = prefix[i - 1] + count[i];
+    }
+
+    for (int i = 1; i <= y; i++) {
+        cout << h * w - prefix[i] << '\n';
+    }
+
+    return 0;
+}
+```
+
+### Explanation
+1. **Initialization**: The code reads the grid dimensions and the number of years `Y`. It initializes the `height` and `sink` matrices, where `sink` will store the sea level at which each section sinks.
+2. **Priority Queue Setup**: Sections on the borders are added to the priority queue with their respective elevations, as they are the first to potentially sink.
+3. **Processing Sections**: The priority queue processes each section in order of elevation. For each section, adjacent sections are checked. If an adjacent section's elevation is less than or equal to the current sea level, its sink time is updated, and it is added to the queue.
+4. **Counting Sink Times**: After processing all sections, the code counts how many sections sink at each sea level up to `Y`.
+5. **Prefix Sum Calculation**: A prefix sum array is used to accumulate the counts, allowing efficient calculation of the remaining island area for each year.
+6. **Output**: For each year, the remaining area is computed by subtracting the prefix sum from the total grid area and printed.
+
+This approach ensures correctness and efficiency, handling the constraints effectively.

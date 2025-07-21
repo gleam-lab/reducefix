@@ -1,0 +1,33 @@
+#include <vector>
+#include <iostream>
+#include <algorithm>
+
+using m_int = long long;
+using std::cin;
+using std::cout;
+using std::vector;
+
+int main() {
+    m_int n, q; cin >> n >> q;
+    vector<m_int> a(n);
+    
+    for (m_int i = 0; i < n; ++i) {
+        cin >> a[i];
+    }
+    std::sort(a.begin(), a.end());
+
+    while (q--) {
+        m_int b, k; cin >> b >> k;
+
+        // Calculate distances from point B_j to each point A_i
+        vector<m_int> distances;
+        for (m_int ai : a) {
+            distances.push_back(abs(ai - b));
+        }
+        
+        // Find the k-th closest distance
+        m_int kthClosestDistance = distances[k - 1];
+
+        cout << kthClosestDistance << "\n";
+    }
+}

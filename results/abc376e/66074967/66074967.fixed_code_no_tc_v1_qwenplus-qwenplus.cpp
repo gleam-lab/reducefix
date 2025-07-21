@@ -1,0 +1,58 @@
+#include <iostream>
+#include <vector>
+#include <queue>
+#include <algorithm>
+using namespace std;
+#define int long long
+
+signed main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int T;
+    cin >> T;
+
+    while (T--) {
+        int N, K;
+        cin >> N >> K;
+
+        vector<pair<int, int>> items(N); // {A_i, B_i}
+        for (int i = 0; i < N; ++i) {
+            cin >> items[i].first;
+        }
+        for (int i = 0; i < N; ++i) {
+            cin >> items[i].second;
+        }
+
+        // Sort items by A_i in increasing order
+        sort(items.begin(), items.end());
+
+        // Min-heap to maintain the top K largest B_i values
+        priority_queue<int, vector<int>, greater<>> pq;
+        int sum_B = 0;
+        int res = 1e18; // Large initial value
+
+        // Start from the K-th item to ensure we can form a subset of size K
+        for (int i = 0; i < N; ++i) {
+            int A_i = items[i].first;
+            int B_i = items[i].second;
+
+            pq.push(B_i);
+            sum_B += B_i;
+
+            if (pq.size() > K) {
+                sum_B -= pq.top();
+                pq.pop();
+            }
+
+            if (pq.size() == K) {
+                // Since we're sorted by A_i, A_i is the maximum among selected K
+                res = min(res, A_i * sum_B);
+            }
+        }
+
+        cout << res << '\n';
+    }
+
+    return 0;
+}

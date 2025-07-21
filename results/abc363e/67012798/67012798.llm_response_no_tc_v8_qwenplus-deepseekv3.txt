@@ -1,0 +1,105 @@
+The issue with the original code is that it only processes the boundary cells (edges of the grid) initially and marks them as sunk if their elevation is less than or equal to the current sea level. However, it fails to consider that during the flooding process, newly sunk cells can cause adjacent cells to sink as well, even if they are not on the boundary, as long as their elevation is not greater than the current sea level. Additionally, the original code does not correctly handle the dynamic nature of the flooding over time.
+
+To fix this, we need to:
+1. For each sea level `i`, process all cells that have an elevation equal to `i` and are adjacent to already sunk cells or the sea.
+2. Use a priority queue or multiple queues to efficiently process cells based on their elevation and the current sea level.
+3. Ensure that once a cell is sunk, it is not processed again.
+
+Here's the corrected code:
+
+```cpp
+#include <bits/stdc++.h>
+
+using namespace std;
+
+constexpr int dx[] = {-1, 1, 0, 0};
+constexpr int dy[] = {0, 0, -1, 1};
+
+int main()
+{
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int H, W, Y;
+    cin >> H >> W >> Y;
+
+    vector<vector<int>> A(H, vector<int>(W));
+    for (int i = 0; i < H; i++)
+    {
+        for (int j = 0; j < W; j++)
+        {
+            cin >> A[i][j];
+        }
+    }
+
+    vector<vector<bool>> sunk(H, vector<bool>(W, false));
+    priority_queue<pair<int, pair<int, int>>, vector<pair<int, pair<int, int>>>, greater<pair<int, pair<int, int>>>> pq;
+
+    for (int i = 0; i < H; i++)
+    {
+        for (int j = 0; j < W; j++)
+        {
+            if (i == 0 || i == H - 1 || j == 0 || j == W - 1)
+            {
+                pq.push({A[i][j], {i, j}});
+                sunk[i][j] = true;
+            }
+        }
+    }
+
+    int ans = H * W;
+    vector<int> res(Y + 1, 0);
+
+    for (int i = 1; i <= Y; i++)
+    {
+        while (!pq.empty() && pq.top().first <= i)
+        {
+            auto current = pq.top();
+            pq.pop();
+            int x = current.second.first;
+            int y = current.second.second;
+
+            if (A[x][y] > i)
+            {
+                continue;
+            }
+
+            ans--;
+
+            for (int d = 0; d < 4; d++)
+            {
+                int nx = x + dx[d];
+                int ny = y + dy[d];
+
+                if (nx < 0 || ny < 0 || nx >= H || ny >= W)
+                {
+                    continue;
+                }
+
+                if (!sunk[nx][ny])
+                {
+                    sunk[nx][ny] = true;
+                    pq.push({A[nx][ny], {nx, ny}});
+                }
+            }
+        }
+
+        res[i] = ans;
+    }
+
+    for (int i = 1; i <= Y; i++)
+    {
+        cout << res[i] << endl;
+    }
+
+    return 0;
+}
+```
+
+### Explanation:
+1. **Initialization**: We read the grid dimensions and the elevations of each cell.
+2. **Priority Queue Setup**: We initialize a priority queue to process cells in order of their elevation. Boundary cells are added to the queue initially.
+3. **Flooding Process**: For each sea level `i` from 1 to `Y`, we process all cells in the queue with elevation <= `i`. These cells are marked as sunk, and their adjacent cells are checked and added to the queue if they haven't been sunk yet.
+4. **Result Calculation**: The remaining area above sea level for each year is stored in an array and printed at the end.
+
+This approach ensures that all cells are processed in the correct order, and the flooding propagates correctly from the boundaries inward, considering the dynamic nature of the rising sea levels.

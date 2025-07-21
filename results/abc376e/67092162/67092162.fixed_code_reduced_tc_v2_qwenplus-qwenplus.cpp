@@ -1,0 +1,66 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+const int maxN = 2e5 + 5;
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+    cout.tie(nullptr);
+
+    int t;
+    cin >> t;
+    
+    while (t--) {
+        int n, k;
+        cin >> n >> k;
+        
+        vector<pair<int, int>> items(n);
+        
+        // Read A values
+        for (int i = 0; i < n; ++i) {
+            cin >> items[i].first;
+        }
+        
+        // Read B values
+        for (int i = 0; i < n; ++i) {
+            cin >> items[i].second;
+        }
+        
+        // Sort by A value
+        sort(items.begin(), items.end());
+        
+        // Max heap to keep track of the smallest K B values
+        priority_queue<int> pq;
+        long long sum_b = 0;
+        
+        // Take first K elements
+        for (int i = 0; i < k; ++i) {
+            sum_b += items[i].second;
+            pq.push(-items[i].second); // Use negative to simulate min-heap
+        }
+        
+        long long result = 1LL * items[k - 1].first * sum_b;
+        
+        // Process remaining elements
+        for (int i = k; i < n; ++i) {
+            // If current B is smaller than the largest B in our window
+            if (-pq.top() > items[i].second) {
+                // Remove the largest B from our window
+                sum_b += pq.top();
+                pq.pop();
+                
+                // Add current B to our window
+                sum_b += items[i].second;
+                pq.push(-items[i].second);
+                
+                // Update result
+                result = min(result, 1LL * items[i].first * sum_b);
+            }
+        }
+        
+        cout << result << "\n";
+    }
+
+    return 0;
+}

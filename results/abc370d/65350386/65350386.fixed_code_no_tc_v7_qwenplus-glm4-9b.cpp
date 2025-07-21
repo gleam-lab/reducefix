@@ -1,0 +1,49 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define rep(i, n) for (int i = 0; i < (n); i++)
+#define all(v) (v).begin(), (v).end()
+#define sz(a) ((int)(a).size())
+using ll = long long;
+
+int main() {
+    int h, w, q;
+    cin >> h >> w >> q;
+    vector<vector<int>> walls(h, vector<int>(w, 1));  // wall grid
+    vector<vector<bool>> visited(h, vector<bool>(w, false));  // visited grid
+
+    rep(qi, q) {
+        int r, c;
+        cin >> r >> c;
+        r--; c--;
+        if (walls[r][c] == 1) {  // if there is a wall at the position
+            walls[r][c] = 0;  // destroy the wall
+        } else {  // if there is no wall at the position
+            // destroy walls up and down
+            for (int i = r - 1; i >= 0 && walls[i][c] == 0; i--) {
+                walls[i][c] = 1;
+            }
+            for (int i = r + 1; i < h && walls[i][c] == 0; i++) {
+                walls[i][c] = 1;
+            }
+
+            // destroy walls left and right
+            for (int j = c - 1; j >= 0 && walls[r][j] == 0; j--) {
+                walls[r][j] = 1;
+            }
+            for (int j = c + 1; j < w && walls[r][j] == 0; j++) {
+                walls[r][j] = 1;
+            }
+        }
+    }
+
+    // calculate the number of remaining walls
+    ll ans = 0;
+    for (int i = 0; i < h; i++) {
+        for (int j = 0; j < w; j++) {
+            ans += walls[i][j];
+        }
+    }
+
+    cout << ans << endl;
+    return 0;
+}

@@ -1,0 +1,79 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios_base::sync_with_stdio(false); cin.tie(0); cout.tie(0);
+
+    long long n, m;
+    cin >> n >> m;
+
+    set<long long> rows, cols, diag1, diag2;
+
+    for(long long i = 0; i < m; ++i) {
+        long long x, y;
+        cin >> x >> y;
+        rows.insert(x);
+        cols.insert(y);
+        diag1.insert(x + y);
+        diag2.insert(x - y);
+    }
+
+    long long free_rows = n - rows.size();
+    long long free_cols = n - cols.size();
+
+    long long total_free_squares = free_rows * free_cols;
+
+    for(auto& d1 : diag1) {
+        set<long long> used_cols;
+        for(auto& row : rows) {
+            if(1 <= d1 - row && d1 - row <= n) {
+                used_cols.insert(row);
+            }
+        }
+        for(auto& col : cols) {
+            if(1 <= d1 - col && d1 - col <= n) {
+                used_cols.insert(col);
+            }
+        }
+        long long used_length = 0;
+        if(d1 <= n + 1) {
+            used_length = d1 - 1;
+        } else {
+            used_length = n - (d1 - n) + 1;
+        }
+        total_free_squares -= (used_length - used_cols.size());
+    }
+
+    for(auto& d2 : diag2) {
+        set<long long> used_cols;
+        for(auto& row : rows) {
+            if(1 <= row - d2 && row - d2 <= n) {
+                used_cols.insert(row);
+            }
+        }
+        for(auto& col : cols) {
+            if(1 <= d2 + col && d2 + col <= n) {
+                used_cols.insert(col);
+            }
+        }
+        for(auto& d1 : diag1) {
+            if((d1 + d2) % 2 == 0 && (d1 - d2) % 2 == 0) {
+                long long si = (d1 + d2) / 2, sj = (d1 - d2) / 2;
+                if(si >= 2 && si <= n && sj >= 1 && sj <= n) {
+                    used_cols.insert(si);
+                }
+            }
+        }
+        long long used_length = 0;
+        if(d2 <= 0) {
+            used_length = n - (1 - d2) + 1;
+        } else {
+            used_length = n - d2;
+        }
+        total_free_squares -= (used_length - used_cols.size());
+    }
+
+    cout << total_free_squares << '\n';
+
+    return 0;
+}

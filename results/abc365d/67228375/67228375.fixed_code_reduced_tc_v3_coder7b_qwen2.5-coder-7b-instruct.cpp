@@ -1,0 +1,35 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define endl "\n"
+#define MOD 1000000007
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(0);
+
+    map<char, char> beats = {{'R', 'P'}, {'P', 'S'}, {'S', 'R'}};
+    int n;
+    cin >> n;
+    string s;
+    cin >> s;
+    
+    // Initialize variables to keep track of wins
+    int wins = 0;
+    char last_move = ' ';
+    
+    // Iterate through each move in the game
+    for (int i = 0; i < n; i++) {
+        // If it's the first move or the previous move did not beat the current one
+        if (last_move == ' ' || beats[last_move] != s[i]) {
+            // Increment wins since Takahashi can win this round
+            wins++;
+        }
+        // Update the last move to the current one
+        last_move = s[i];
+    }
+
+    // Print the maximum number of games Takahashi could have won
+    cout << wins << endl;
+
+    return 0;
+}

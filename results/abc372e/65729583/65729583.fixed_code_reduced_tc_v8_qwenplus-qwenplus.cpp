@@ -1,0 +1,91 @@
+#include <iostream>
+#include <vector>
+#include <ext/pb_ds/assoc_container.hpp>
+#include <ext/pb_ds/tree_policy.hpp>
+
+using namespace std;
+using namespace __gnu_pbds;
+
+typedef long long int ll;
+typedef unsigned long long int ull;
+
+#define pb push_back
+#define pf push_front
+
+// Ordered set with greater comparator to store vertices in descending order
+template<typename T>
+using ordered_set = tree<T, null_type, greater<T>, rb_tree_tag, tree_order_statistics_node_update>;
+
+const int MAXN = 2 * 100000 + 5;
+
+int parent[MAXN];
+ordered_set<int> components[MAXN];
+
+int find(int u) {
+    if (parent[u] != u) {
+        parent[u] = find(parent[u]);
+    }
+    return parent[u];
+}
+
+void unite(int u, int v) {
+    int rootU = find(u);
+    int rootV = find(v);
+
+    if (rootU == rootV) return;
+
+    // Always merge smaller component into larger one for efficiency
+    if (components[rootU].size() < components[rootV].size()) {
+        swap(rootU, rootV);
+    }
+
+    // Move all elements from rootV to rootU
+    for (auto val : components[rootV]) {
+        components[rootU].insert(val);
+    }
+
+    // Clear the smaller component
+    components[rootV].clear();
+
+    // Update parent
+    parent[rootV] = rootU;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+
+    int N, Q;
+    cin >> N >> Q;
+
+    // Initialize DSU
+    for (int i = 1; i <= N; ++i) {
+        parent[i] = i;
+        components[i].insert(i); // Store vertices in descending order
+    }
+
+    while (Q--) {
+        int type;
+        cin >> type;
+
+        if (type == 1) {
+            int u, v;
+            cin >> u >> v;
+            unite(u, v);
+        } else if (type == 2) {
+            int v, k;
+            cin >> v >> k;
+
+            int root = find(v);
+            if ((int)components[root].size() < k) {
+                cout << -1 << '\n';
+            } else {
+                // Since we're using greater<T>, the k-th largest is at position k-1
+                auto it = components[root].find_by_order(k - 1);
+                cout << *it << '\n';
+            }
+        }
+    }
+
+    return 0;
+}

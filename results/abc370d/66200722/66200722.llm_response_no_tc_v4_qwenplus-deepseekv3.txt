@@ -1,0 +1,98 @@
+To fix this code, we need to ensure that the algorithm correctly handles the destruction of walls based on the queries and efficiently tracks the remaining walls. The original approach attempted to use Union-Find (Disjoint Set Union, DSU) to manage the walls, but it seems overly complicated and likely incorrect for the problem's requirements.
+
+### Approaches
+
+1. **Initialization**: Start with a grid where each cell is initialized with a wall (represented as `1`).
+2. **Processing Queries**: For each query:
+   - If the cell has a wall, simply remove it.
+   - If the cell does not have a wall, look in the four cardinal directions (up, down, left, right) for the nearest wall and remove it if found.
+3. **Tracking Walls**: Use a hash set or a similar structure to efficiently check the presence of walls and update their status.
+4. **Efficiency**: Given the constraints, we need an O(1) or O(log n) per query solution. Using hash sets for rows and columns allows us to efficiently find the nearest walls in the required directions.
+
+### Solution Code
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+void solve() {
+    int h, w, q;
+    cin >> h >> w >> q;
+    
+    unordered_map<int, unordered_set<int>> row_walls, col_walls;
+    long long remaining_walls = (long long)h * w;
+    
+    while (q--) {
+        int r, c;
+        cin >> r >> c;
+        r--; c--;
+        
+        if (row_walls[r].count(c) == 0) {
+            row_walls[r].insert(c);
+            col_walls[c].insert(r);
+            remaining_walls--;
+        } else {
+            // Check up
+            auto it_up = col_walls[c].lower_bound(r);
+            if (it_up != col_walls[c].begin()) {
+                --it_up;
+                int pos = *it_up;
+                if (row_walls[pos].count(c)) {
+                    row_walls[pos].erase(c);
+                    col_walls[c].erase(pos);
+                    remaining_walls--;
+                }
+            }
+            // Check down
+            auto it_down = col_walls[c].upper_bound(r);
+            if (it_down != col_walls[c].end()) {
+                int pos = *it_down;
+                if (row_walls[pos].count(c)) {
+                    row_walls[pos].erase(c);
+                    col_walls[c].erase(pos);
+                    remaining_walls--;
+                }
+            }
+            // Check left
+            auto it_left = row_walls[r].lower_bound(c);
+            if (it_left != row_walls[r].begin()) {
+                --it_left;
+                int pos = *it_left;
+                if (col_walls[pos].count(r)) {
+                    col_walls[pos].erase(r);
+                    row_walls[r].erase(pos);
+                    remaining_walls--;
+                }
+            }
+            // Check right
+            auto it_right = row_walls[r].upper_bound(c);
+            if (it_right != row_walls[r].end()) {
+                int pos = *it_right;
+                if (col_walls[pos].count(r)) {
+                    col_walls[pos].erase(r);
+                    row_walls[r].erase(pos);
+                    remaining_walls--;
+                }
+            }
+        }
+    }
+    
+    cout << remaining_walls << endl;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    solve();
+    return 0;
+}
+```
+
+### Explanation
+
+1. **Initialization**: The grid size `h x w` is initialized, and all cells are considered to have walls initially. The total number of walls is `h * w`.
+2. **Processing Queries**: For each query:
+   - If the cell `(r, c)` has a wall, it is removed, and the count of remaining walls is decremented.
+   - If the cell `(r, c)` does not have a wall, the algorithm checks the four directions (up, down, left, right) for the nearest wall using `lower_bound` and `upper_bound` operations on sets, ensuring efficient lookups.
+3. **Tracking Walls**: Two hash maps (`row_walls` and `col_walls`) are used to keep track of walls in each row and column, allowing O(1) average time complexity for insertions, deletions, and lookups.
+4. **Efficiency**: The use of hash sets ensures that each query is processed in average O(1) time for the presence check and O(log n) time for directional checks, making the solution efficient and scalable within the given constraints.

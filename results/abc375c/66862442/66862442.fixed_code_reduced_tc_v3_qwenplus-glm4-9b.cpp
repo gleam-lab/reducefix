@@ -1,0 +1,38 @@
+#include <iostream>
+#include <cmath>
+#include <vector>
+
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    cout.tie(nullptr);
+
+    long long N;
+    cin >> N;
+    vector<pair<long long, long long>> points(N);
+
+    for (int i = 0; i < N; ++i) {
+        cin >> points[i].first >> points[i].second;
+    }
+
+    long long total_cost = 0;
+    long long prev_x = 0, prev_y = 0;
+
+    for (const auto& point : points) {
+        long long x = point.first, y = point.second;
+        total_cost += sqrt(pow(prev_x - x, 2) + pow(prev_y - y, 2));
+        prev_x = x;
+        prev_y = y;
+    }
+
+    // Calculate the cost to return to the origin
+    total_cost += sqrt(pow(prev_x, 2) + pow(prev_y, 2));
+
+    // Print the result with precision up to 10^-6
+    cout.precision(10);
+    cout << fixed << total_cost << '\n';
+
+    return 0;
+}

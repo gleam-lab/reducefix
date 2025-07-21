@@ -1,0 +1,23 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(0);
+
+    int N;
+    cin >> N;
+    long long x = 0, y = 0, sum = 0;
+
+    for (int i = 0; i < N; ++i) {
+        long long dx, dy;
+        cin >> dx >> dy;
+        sum += abs(dx - x) + abs(dy - y); // Manhattan distance
+        x = dx;
+        y = dy;
+    }
+
+    sum += abs(x) + abs(y); // Return to origin
+
+    cout << sum << '\n';
+}

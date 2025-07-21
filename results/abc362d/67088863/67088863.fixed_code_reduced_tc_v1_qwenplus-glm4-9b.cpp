@@ -1,0 +1,59 @@
+#include <iostream>
+#include <vector>
+#include <queue>
+#include <limits>
+using namespace std;
+
+const long long INF = std::numeric_limits<long long>::max();
+
+void solve() {
+    int n, m;
+    cin >> n >> m;
+
+    vector<long long> val(n);
+    for (int i = 0; i < n; ++i) cin >> val[i];
+
+    vector<vector<pair<int, long long>>> adj(n);
+    for (int i = 0; i < m; ++i) {
+        int a, b, w;
+        cin >> a >> b >> w;
+        a--, b--;
+        adj[a].push_back({b, w});
+        adj[b].push_back({a, w});
+    }
+
+    vector<long long> dist(n, INF);
+    dist[0] = 0;
+
+    priority_queue<pair<long long, int>, vector<pair<long long, int>>, greater<pair<long long, int>>> pq;
+    pq.push({0, 0});
+
+    while (!pq.empty()) {
+        auto [w, v] = pq.top();
+        pq.pop();
+        if (dist[v] < w) continue;
+
+        for (auto [u, weight] : adj[v]) {
+            long long newDist = w + weight;
+            if (newDist < dist[u]) {
+                dist[u] = newDist;
+                pq.push({dist[u], u});
+            }
+        }
+    }
+
+    for (int i = 1; i < n; ++i) {
+        cout << (dist[i] + val[i] <= INF ? dist[i] + val[i] : INF) << " ";
+    }
+    cout << endl;
+}
+
+int main() {
+    ios::sync_with_stdio(0);
+    cin.tie(0);
+
+    int t = 1;
+    while (t--) solve();
+
+    return 0;
+}

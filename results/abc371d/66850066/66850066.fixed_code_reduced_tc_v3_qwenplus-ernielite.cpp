@@ -1,0 +1,53 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+using ll = long long;
+using Graph = vector<vector<int>>;
+
+// 定义方向数组用于BFS或其它遍历操作
+int dx[4] = {1, 0, -1, 0};
+int dy[4] = {0, 1, 0, -1};
+
+// 定义辅助函数来计算前缀和数组P
+void calculatePrefixSum(vector<ll>& P, vector<ll>& prefixSums, int N) {
+    P[0] = 0;
+    for (int i = 1; i <= N; ++i) {
+        P[i] = P[i - 1] + prefixSums[i - 1]; // 累加前缀和数组
+    }
+}
+
+int main() {
+    int N;
+    cin >> N;
+    vector<ll> P(N + 1), X(N); // 初始化前缀和数组P和下标数组X
+    vector<ll> prefixSums(N + 1); // 新增前缀和数组以用于计算累加值
+    
+    rep(i, N) {
+        cin >> X[i]; // 读取下标X值
+        prefixSums[i + 1] = prefixSums[i] + (ll)X[i]; // 计算累加前缀和（从下标1开始）
+    }
+    
+    // 计算前缀和数组P（使用辅助函数）
+    calculatePrefixSum(P, prefixSums, N);
+    
+    map<int, int> x_to_ptr; // 使用map来存储X值到索引的映射关系
+    rep(i, N) {
+        x_to_ptr.emplace(X[i], i); // 将X值作为键，索引作为值存入map中
+    }
+    
+    int Q; // 查询次数
+    cin >> Q;
+    rep(q, Q) {
+        int L, R; // 查询的左右边界值
+        cin >> L >> R; // 读取左右边界值L和R
+        // 使用map的lower_bound和upper_bound来找到边界对应的索引l和r（注意处理边界情况）
+        auto X_l = x_to_ptr.lower_bound(L); // 注意这里需要检查X_l是否指向了L或L之前的元素（即是否为map的begin）
+        auto X_r = x_to_ptr.upper_bound(R); // 同理，需要检查X_r是否指向了R之后的元素（即是否为map的end）
+        int l = (X_l == x_to_ptr.begin()) ? -1 : (X_l - 1)->second; // 如果X_l指向的是第一个元素，则说明没有小于L的元素，因此l为-1（这里需要根据实际情况处理）
+        int r = (X_r == x_to_ptr.end()) ? N : X_r->second; // 如果X_r指向的是map的end，则r为N（因为数组索引从0开始）
+        // 在这里我们还需要确保l和r是有效的索引，因为如果它们越界或不存在，我们需要处理它们（例如，可以设定为N或者不进行操作）
+        // 这里没有提供l和r具体越界情况的处理，需要根据实际需求进行相应调整。以下假设是合理的情况下进行的计算。
+        int ans = (l >= 0 && r < N) ? P[r] - P[l] : 0; // 检查l和r是否在有效范围内并计算差值，如果不在范围内则不进行操作或返回错误信息（视具体需求而定）
+        cout << ans << endl; // 输出结果到标准输出流中（即控制台）
+    }
+}

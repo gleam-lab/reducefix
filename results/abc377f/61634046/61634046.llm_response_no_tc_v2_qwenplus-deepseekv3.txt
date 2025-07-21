@@ -1,0 +1,129 @@
+To fix this code, we need to correctly calculate the number of safe squares where a new piece can be placed without being captured by any existing pieces. The original code had several issues, including incorrect variable names, missing edge cases, and inefficient handling of large input sizes. Here’s the corrected version:
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+typedef long long ll;
+
+int main() {
+    ll N;
+    int M;
+    cin >> N >> M;
+    
+    unordered_set<ll> rows, cols, diag1, diag2;
+    for (int i = 0; i < M; ++i) {
+        ll a, b;
+        cin >> a >> b;
+        rows.insert(a);
+        cols.insert(b);
+        diag1.insert(a + b);
+        diag2.insert(a - b);
+    }
+    
+    ll unsafe = 0;
+    
+    // Rows and columns
+    ll row_count = rows.size();
+    ll col_count = cols.size();
+    unsafe += N * row_count + N * col_count - row_count * col_count;
+    
+    // Diagonals (a + b)
+    ll diag1_count = diag1.size();
+    for (ll d : diag1) {
+        ll start = max(1LL, d - N);
+        ll end = min(N, d - 1);
+        if (start > end) continue;
+        unsafe += end - start + 1;
+    }
+    
+    // Diagonals (a - b)
+    ll diag2_count = diag2.size();
+    for (ll d : diag2) {
+        ll start_row = max(1LL, 1 + d);
+        ll end_row = min(N, N + d);
+        if (start_row > end_row) continue;
+        unsafe += end_row - start_row + 1;
+    }
+    
+    // Intersections: rows and diag1
+    for (ll r : rows) {
+        for (ll d : diag1) {
+            ll c = d - r;
+            if (c >= 1 && c <= N) {
+                if (cols.find(c) == cols.end() && diag2.find(r - c) == diag2.end()) {
+                    unsafe--;
+                }
+            }
+        }
+    }
+    
+    // Intersections: rows and diag2
+    for (ll r : rows) {
+        for (ll d : diag2) {
+            ll c = r - d;
+            if (c >= 1 && c <= N) {
+                if (cols.find(c) == cols.end() && diag1.find(r + c) == diag1.end()) {
+                    unsafe--;
+                }
+            }
+        }
+    }
+    
+    // Intersections: cols and diag1
+    for (ll c : cols) {
+        for (ll d : diag1) {
+            ll r = d - c;
+            if (r >= 1 && r <= N) {
+                if (rows.find(r) == rows.end() && diag2.find(r - c) == diag2.end()) {
+                    unsafe--;
+                }
+            }
+        }
+    }
+    
+    // Intersections: cols and diag2
+    for (ll c : cols) {
+        for (ll d : diag2) {
+            ll r = d + c;
+            if (r >= 1 && r <= N) {
+                if (rows.find(r) == rows.end() && diag1.find(r + c) == diag1.end()) {
+                    unsafe--;
+                }
+            }
+        }
+    }
+    
+    // Intersections: diag1 and diag2
+    for (ll d1 : diag1) {
+        for (ll d2 : diag2) {
+            ll r = (d1 + d2) / 2;
+            ll c = (d1 - d2) / 2;
+            if (r >= 1 && r <= N && c >= 1 && c <= N && (d1 + d2) % 2 == 0 && (d1 - d2) % 2 == 0) {
+                if (rows.find(r) == rows.end() && cols.find(c) == cols.end()) {
+                    unsafe--;
+                }
+            }
+        }
+    }
+    
+    // Total safe squares
+    ll total = N * N;
+    ll safe = total - unsafe;
+    
+    cout << safe << endl;
+    
+    return 0;
+}
+```
+
+### Explanation:
+1. **Input Handling**: The code reads the grid size `N` and the number of existing pieces `M`. It then stores the positions of these pieces in sets for rows, columns, and the two types of diagonals (sum and difference).
+2. **Unsafe Squares Calculation**:
+   - **Rows and Columns**: The total unsafe squares due to rows and columns are calculated by considering all squares in the affected rows and columns, subtracting the overlaps.
+   - **Diagonals (a + b)**: For each diagonal defined by `a + b = constant`, the code calculates the range of valid squares and counts them.
+   - **Diagonals (a - b)**: Similarly, for diagonals defined by `a - b = constant`, the valid squares are counted.
+3. **Intersection Adjustments**: The code adjusts for overlaps between different sets (rows with diagonals, columns with diagonals, and between diagonals) to avoid double-counting unsafe squares.
+4. **Final Calculation**: The total safe squares are computed by subtracting the unsafe squares from the total grid squares (`N^2`).
+
+This approach ensures that all edge cases and large input sizes are handled efficiently, providing the correct count of safe squares.

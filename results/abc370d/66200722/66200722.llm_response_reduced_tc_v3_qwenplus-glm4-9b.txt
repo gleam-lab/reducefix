@@ -1,0 +1,88 @@
+
+```cpp
+#include <iostream>
+#include <vector>
+#include <map>
+#include <algorithm>
+
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int h, w, q;
+    cin >> h >> w >> q;
+
+    vector<map<int, int>> grid(h), vertical(h);
+    vector<map<int, int>> horizontal(w), vertical2(w);
+    int idx = 0;
+    map<pair<int, int>, int> idx_map;
+    pair<int, int> coordinates[h][w];
+    vector<pair<pair<int, int>, int>> queries;
+
+    // Initialize grid and idx_map
+    for (int i = 0; i < h; ++i) {
+        for (int j = 0; j < w; ++j) {
+            coordinates[i][j] = {i, j};
+            idx_map[{i, j}] = idx++;
+        }
+    }
+
+    // Read queries and store them with their coordinates
+    for (int q_idx = 0; q_idx < q; ++q_idx) {
+        int r, c;
+        cin >> r >> c;
+        queries.emplace_back({{r, c}, q_idx});
+    }
+
+    // Sort queries by row, then by column
+    sort(queries.begin(), queries.end());
+
+    // Set to keep track of destroyed walls
+    set<int> destroyed_walls;
+
+    // Process each query
+    for (auto& [coord, q_idx] : queries) {
+        int i = coord.first - 1, j = coord.second - 1;
+
+        // Check if the wall exists and destroy it if it does
+        if (grid[i][j]) {
+            destroyed_walls.insert(idx_map[{i, j}]);
+        } else {
+            // Find the first wall in each direction
+            int r1 = upper_bound(grid.begin(), grid.end(), i, [](auto a, int target) {
+                return a.first > target;
+            }) - grid.begin() - 1;
+
+            int r2 = lower_bound(grid.begin(), grid.end(), i, [](auto a, int target) {
+                return a.first < target;
+            }) - grid.begin();
+
+            int c1 = upper_bound(horizontal[i].begin(), horizontal[i].end(), j, [](auto a, int target) {
+                return a.first > target;
+            }) - horizontal[i].begin() - 1;
+
+            int c2 = lower_bound(horizontal[i].begin(), horizontal[i].end(), j, [](auto a, int target) {
+                return a.first < target;
+            }) - horizontal[i].begin();
+
+            // Mark all these walls as destroyed
+            if (r1 >= 0) destroyed_walls.insert(idx_map[coordinates[r1][j]]);
+            if (r2 < h) destroyed_walls.insert(idx_map[coordinates[r2][j]]);
+            if (c1 >= 0) destroyed_walls.insert(idx_map[coordinates[i][c1]]);
+            if (c2 < w) destroyed_walls.insert(idx_map[coordinates[i][c2]]);
+        }
+    }
+
+    // Calculate the number of remaining walls
+    long long remaining_walls = (long long)h * w;
+    for (auto wall : destroyed_walls) {
+        remaining_walls--;
+    }
+
+    cout << remaining_walls << endl;
+
+    return 0;
+}
+```

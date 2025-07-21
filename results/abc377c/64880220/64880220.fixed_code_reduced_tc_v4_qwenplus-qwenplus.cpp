@@ -1,0 +1,45 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    long long N, M;
+    cin >> N >> M;
+    
+    // Set to store all occupied squares and attacked squares
+    unordered_set<long long> blocked;
+    
+    // Function to convert (a, b) to a unique integer to avoid pair hash issues
+    auto encode = [&](long long a, long long b) {
+        return a * 1000000000LL + b;
+    };
+    
+    vector<pair<long long, long long>> directions = {
+        {2, 1}, {1, 2}, {-1, 2}, {-2, 1},
+        {-2, -1}, {-1, -2}, {1, -2}, {2, -1}
+    };
+    
+    for (long long i = 0; i < M; ++i) {
+        long long a, b;
+        cin >> a >> b;
+        
+        long long key = encode(a, b);
+        blocked.insert(key); // Mark the piece itself
+        
+        // Mark all squares that this piece can attack
+        for (auto [dx, dy] : directions) {
+            long long x = a + dx;
+            long long y = b + dy;
+            
+            if (x >= 1 && x <= N && y >= 1 && y <= N) {
+                long long attack_key = encode(x, y);
+                blocked.insert(attack_key);
+            }
+        }
+    }
+    
+    // Total squares not blocked and not occupied by pieces
+    cout << (N * N - (long long)blocked.size()) << endl;
+}

@@ -1,0 +1,64 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define int long long
+#define PII pair<int, int>
+
+const int INF = 1e18;
+
+signed main() {
+    ios::sync_with_stdio(0);
+    cin.tie(0);
+    cout.tie(0);
+
+    int t;
+    cin >> t;
+
+    while (t--) {
+        int n, k;
+        cin >> n >> k;
+
+        vector<PII> items(n);
+        for (int i = 0; i < n; ++i) {
+            cin >> items[i].first;
+        }
+        for (int i = 0; i < n; ++i) {
+            cin >> items[i].second;
+        }
+
+        // Sort items by A_i ascending
+        sort(items.begin(), items.end());
+
+        int sum_b = 0;
+        priority_queue<int> max_heap; // To keep the smallest K-1 B_i's
+
+        // Initialize with first K-1 elements
+        for (int i = 0; i < k - 1; ++i) {
+            sum_b += items[i].second;
+            max_heap.push(items[i].second);
+        }
+
+        int res = INF;
+
+        // Try each candidate for maximum A_i in subset
+        for (int i = k - 1; i < n; ++i) {
+            // Add current B to set
+            sum_b += items[i].second;
+            max_heap.push(items[i].second);
+
+            // Maintain only smallest K-1 elements
+            if (max_heap.size() > k) {
+                int top = max_heap.top();
+                max_heap.pop();
+                sum_b -= top;
+            }
+
+            // Compute current value: A * sum(B)
+            int current_value = items[i].first * sum_b;
+            res = min(res, current_value);
+        }
+
+        cout << res << '\n';
+    }
+
+    return 0;
+}

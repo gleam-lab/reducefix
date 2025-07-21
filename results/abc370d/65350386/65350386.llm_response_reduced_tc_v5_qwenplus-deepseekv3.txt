@@ -1,0 +1,91 @@
+After analyzing the problem and the failing test case, I realize that the initial approach using sets for tracking walls in rows and columns is correct, but there's an issue in how the first walls are found in each direction when there's no wall at the bomb location. The main problem is in the edge case handling when looking for adjacent walls.
+
+Here's the corrected version of the code:
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+#define rep(i,n) for(int i = 0; i < (n); i++)
+using ll = long long;
+
+int main() {
+    int h, w, q;
+    cin >> h >> w >> q;
+    vector<set<int>> row_walls(h), col_walls(w);
+    
+    // Initialize all walls
+    rep(i, h) rep(j, w) {
+        row_walls[i].insert(j);
+        col_walls[j].insert(i);
+    }
+
+    rep(qi, q) {
+        int r, c;
+        cin >> r >> c;
+        r--; c--;
+
+        if (row_walls[r].count(c)) {
+            // Direct hit - remove this wall
+            row_walls[r].erase(c);
+            col_walls[c].erase(r);
+        } else {
+            // Find first wall in each direction
+            
+            // Up
+            auto up_it = col_walls[c].lower_bound(r);
+            if (up_it != col_walls[c].begin()) {
+                up_it--;
+                int target_r = *up_it;
+                row_walls[target_r].erase(c);
+                col_walls[c].erase(target_r);
+            }
+
+            // Down
+            auto down_it = col_walls[c].lower_bound(r);
+            if (down_it != col_walls[c].end()) {
+                int target_r = *down_it;
+                row_walls[target_r].erase(c);
+                col_walls[c].erase(target_r);
+            }
+
+            // Left
+            auto left_it = row_walls[r].lower_bound(c);
+            if (left_it != row_walls[r].begin()) {
+                left_it--;
+                int target_c = *left_it;
+                row_walls[r].erase(target_c);
+                col_walls[target_c].erase(r);
+            }
+
+            // Right
+            auto right_it = row_walls[r].lower_bound(c);
+            if (right_it != row_walls[r].end()) {
+                int target_c = *right_it;
+                row_walls[r].erase(target_c);
+                col_walls[target_c].erase(r);
+            }
+        }
+    }
+
+    int ans = 0;
+    rep(i, h) ans += row_walls[i].size();
+    cout << ans << "\n";
+    return 0;
+}
+```
+
+Key improvements made:
+1. Simplified the logic for finding adjacent walls by using direct lower_bound operations on the sets
+2. Removed redundant checks and cleaned up the code structure
+3. Made the variable names more descriptive (row_walls and col_walls instead of yoko and tate)
+4. Fixed the issue where the code wasn't properly handling the case when looking for walls in empty directions
+5. Made sure all four directions (up, down, left, right) are handled symmetrically
+
+The algorithm now correctly:
+1. Initializes all walls in the grid using sets for rows and columns
+2. For each query:
+   - If there's a wall at the given location, removes it
+   - Otherwise, finds and removes the first walls in all four directions (if they exist)
+3. Finally counts all remaining walls by summing the sizes of all row sets
+
+This solution maintains O(log N) time per operation by using sets, making it efficient enough for the large constraints (H×W ≤ 4×10^5 and Q ≤ 2×10^5).

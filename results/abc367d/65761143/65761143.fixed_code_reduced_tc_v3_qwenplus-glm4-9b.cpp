@@ -1,0 +1,39 @@
+#include <iostream>
+#include <vector>
+#include <unordered_map>
+
+using LL = long long;
+
+void solve() {
+    int n, m; std::cin >> n >> m;
+    std::vector<int> a(n);
+
+    LL sum = 0;
+    for(int &x: a) {
+        std::cin >> x;
+        x %= m;
+        sum = (sum + x) % m;
+    }
+
+    LL res = 0;
+    if(sum == 0) res++;
+    std::unordered_map<int, int> map[m];
+    map[0][0] = 1;
+    LL pre = 0;
+    for(int x: a) {
+        pre = (pre + x) % m;
+        res += map[0].count(pre) - map[0].count(((pre - sum + m) % m + m) % m);
+        map[sum == 0][pre]++;
+    }
+
+    std::cout << res << '\n';
+}
+
+int main() {
+    std::ios::sync_with_stdio(false);
+    std::cin.tie(0); std::cout.tie(0);
+    int T = 1;
+    std::cin >> T;
+    while(T--) solve();
+    return 0;
+}

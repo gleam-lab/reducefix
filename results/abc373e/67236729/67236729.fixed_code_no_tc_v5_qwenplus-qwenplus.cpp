@@ -1,0 +1,93 @@
+#include <bits/stdc++.h>
+using namespace std;
+using i64 = long long;
+
+template <typename T>
+bool chmin(T &a, const T &b) {
+    return b < a ? a = b, true : false;
+}
+
+template <typename T>
+bool chmax(T &a, const T &b) {
+    return a < b ? a = b, true : false;
+}
+
+void solve() {
+    int N;
+    i64 M, K;
+    cin >> N >> M >> K;
+    vector<i64> A(N);
+    for (auto &x : A)
+        cin >> x;
+
+    i64 used = 0;
+    for (auto x : A)
+        used += x;
+    i64 rem = K - used;
+
+    if (M == N) {
+        cout << "0 ";
+        for (int i = 1; i < N; ++i)
+            cout << "0 ";
+        cout << "\n";
+        return;
+    }
+
+    // Sort all candidates except current one
+    vector<i64> sorted_A = A;
+    sort(sorted_A.begin(), sorted_A.end());
+
+    auto compute_min_votes = [&](int idx) {
+        i64 me = A[idx];
+        vector<i64> others;
+        for (int i = 0; i < N; ++i)
+            if (i != idx)
+                others.push_back(A[i]);
+        sort(others.begin(), others.end());
+
+        i64 low = 0, high = rem + 1;
+        while (low < high) {
+            i64 mid = (low + high) / 2;
+            i64 cnt = 0;
+            for (int i = N - 1; i >= 0 && cnt < M; --i) {
+                if (others[i] > me + mid)
+                    cnt++;
+            }
+            if (cnt < M)
+                high = mid;
+            else
+                low = mid + 1;
+        }
+
+        if (low > rem)
+            return -1LL;
+        return low;
+    };
+
+    vector<i64> res(N);
+    for (int i = 0; i < N; ++i) {
+        res[i] = compute_min_votes(i);
+        if (res[i] == -1) {
+            // Check if already elected without any additional votes
+            i64 cnt = 0;
+            for (auto x : A)
+                if (x > A[i])
+                    cnt++;
+            if (cnt < M)
+                res[i] = 0;
+        }
+    }
+
+    for (auto x : res)
+        cout << x << " ";
+    cout << "\n";
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    solve();
+
+    return 0;
+}

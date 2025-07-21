@@ -1,0 +1,1 @@
+val + it.second + a[it.first-1]

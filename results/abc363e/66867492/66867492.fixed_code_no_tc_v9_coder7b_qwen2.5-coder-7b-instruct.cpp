@@ -1,0 +1,90 @@
+#include <iostream>
+#include <vector>
+#include <queue>
+#include <algorithm>
+
+using namespace std;
+
+const int INF = 1e9 + 10;
+const int MAX_H = 1000;
+const int MAX_W = 1000;
+const int MAX_Y = 100000;
+
+int H, W, Y;
+vector<vector<int>> A(MAX_H, vector<int>(MAX_W));
+vector<vector<bool>> visited(MAX_H, vector<bool>(MAX_W));
+
+struct Cell {
+    int height, y, x;
+    Cell(int h, int y, int x) : height(h), y(y), x(x) {}
+    bool operator<(const Cell& other) const {
+        return height > other.height;
+    }
+};
+
+void bfs(vector<vector<int>>& A, vector<vector<bool>>& visited, int targetHeight) {
+    queue<pair<int, int>> q;
+    vector<pair<int, int>> directions = {{0, 1}, {1, 0}, {0, -1}, {-1, 0}};
+    
+    for (int i = 0; i < H; ++i) {
+        if (!visited[i][0]) {
+            q.emplace(i, 0);
+            visited[i][0] = true;
+        }
+        if (!visited[i][W - 1]) {
+            q.emplace(i, W - 1);
+            visited[i][W - 1] = true;
+        }
+    }
+
+    for (int i = 1; i < W - 1; ++i) {
+        if (!visited[0][i]) {
+            q.emplace(0, i);
+            visited[0][i] = true;
+        }
+        if (!visited[H - 1][i]) {
+            q.emplace(H - 1, i);
+            visited[H - 1][i] = true;
+        }
+    }
+
+    while (!q.empty()) {
+        auto [y, x] = q.front();
+        q.pop();
+
+        for (auto& dir : directions) {
+            int ny = y + dir.first;
+            int nx = x + dir.second;
+
+            if (ny >= 0 && ny < H && nx >= 0 && nx < W && !visited[ny][nx] && A[ny][nx] <= targetHeight) {
+                visited[ny][nx] = true;
+                q.emplace(ny, nx);
+            }
+        }
+    }
+}
+
+int main() {
+    cin >> H >> W >> Y;
+    for (int i = 0; i < H; ++i) {
+        for (int j = 0; j < W; ++j) {
+            cin >> A[i][j];
+        }
+    }
+
+    for (int i = 1; i <= Y; ++i) {
+        fill(all(visited), false);
+        bfs(A, visited, i);
+        int remainingArea = 0;
+        for (int j = 0; j < H; ++j) {
+            for (int k = 0; k < W; ++k) {
+                if (!visited[j][k]) {
+                    ++remainingArea;
+                }
+            }
+        }
+        cout << remainingArea << endl;
+    }
+
+    return 0;
+}

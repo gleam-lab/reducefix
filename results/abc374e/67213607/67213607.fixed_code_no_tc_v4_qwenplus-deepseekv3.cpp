@@ -1,0 +1,74 @@
+#include<bits/stdc++.h>
+using namespace std;
+
+long long n, x, a[105], p[105], b[105], q[105];
+
+long long calculate_cost(long long mid) {
+    long long total = 0;
+    for(int i = 1; i <= n; i++) {
+        long long min_cost = LLONG_MAX;
+        
+        // Iterate possible j (number of a[i] tasks)
+        // Need to limit j to prevent negative time remaining
+        long long max_j = min(b[i], mid / a[i] + 2);
+        for(long long j = 0; j <= max_j; j++) {
+            long long time_remaining = mid - j * a[i];
+            if(time_remaining < 0) {
+                min_cost = min(min_cost, j * p[i]);
+                continue;
+            }
+            
+            long long k = time_remaining / b[i];
+            long long cost = j * p[i] + k * q[i];
+            if(time_remaining % b[i] != 0) {
+                cost += q[i]; // need one more b[i] task
+            }
+            min_cost = min(min_cost, cost);
+        }
+        
+        // Also check combinations starting with b[i] tasks
+        long long max_k = min(a[i], mid / b[i] + 2);
+        for(long long k = 0; k <= max_k; k++) {
+            long long time_remaining = mid - k * b[i];
+            if(time_remaining < 0) {
+                min_cost = min(min_cost, k * q[i]);
+                continue;
+            }
+            
+            long long j = time_remaining / a[i];
+            long long cost = k * q[i] + j * p[i];
+            if(time_remaining % a[i] != 0) {
+                cost += p[i]; // need one more a[i] task
+            }
+            min_cost = min(min_cost, cost);
+        }
+        
+        if(min_cost == LLONG_MAX) return LLONG_MAX; // can't complete
+        total += min_cost;
+        if(total > x) return LLONG_MAX; // early exit if exceeds budget
+    }
+    return total;
+}
+
+int main() {
+    cin >> n >> x;
+    for(int i = 1; i <= n; i++) {
+        cin >> a[i] >> p[i] >> b[i] >> q[i];
+    }
+    
+    long long l = 0, r = 1e18, ans = 0;
+    while(l <= r) {
+        long long mid = l + (r - l) / 2;
+        long long cost = calculate_cost(mid);
+        
+        if(cost <= x) {
+            ans = mid;
+            l = mid + 1;
+        } else {
+            r = mid - 1;
+        }
+    }
+    
+    cout << ans << endl;
+    return 0;
+}

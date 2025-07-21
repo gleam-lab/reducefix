@@ -1,0 +1,39 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int N;
+    cin >> N;
+    vector<long long> X(N), P(N);
+    for(int i = 0; i < N; ++i) cin >> X[i];
+    for(int i = 0; i < N; ++i) cin >> P[i];
+
+    // Prefix sum array for P
+    partial_sum(P.begin(), P.end(), P.begin());
+
+    int Q;
+    cin >> Q;
+    while(Q--) {
+        int L, R;
+        cin >> L >> R;
+
+        // Find the first element that is not less than L
+        auto it_L = lower_bound(X.begin(), X.end(), L);
+        // Find the first element that is greater than R
+        auto it_R = upper_bound(X.begin(), X.end(), R);
+
+        int idx_L = it_L - X.begin();
+        int idx_R = it_R - X.begin();
+
+        // If R is not found or if R is equal to an element, we need to adjust idx_R
+        if(it_R != X.end() && *it_R == R) idx_R--;
+
+        long long ans = P[idx_R] - (idx_L > 0 ? P[idx_L - 1] : 0);
+        cout << ans << '\n';
+    }
+
+    return 0;
+}

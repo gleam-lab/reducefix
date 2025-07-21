@@ -1,0 +1,27 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+#define INF (long long)1e18  // Fixed: Was too small, caused incorrect comparisons
+
+int main(){
+    int n;
+    long long dp0 = 0, dp1 = -INF, x;
+    
+    cin >> n;
+
+    for (int i = 0; i < n; ++i) {
+        cin >> x;
+        // Store previous dp0 before updating
+        long long prev_dp0 = dp0;
+        
+        // Transition states correctly:
+        // dp0[i] = max(dp0[i-1], dp1[i-1] + 2*x)
+        dp0 = max(dp0, dp1 + 2 * x);
+        
+        // dp1[i] = max(dp1[i-1], dp0[i-1] + x)
+        dp1 = max(dp1, prev_dp0 + x);
+    }
+
+    cout << max(dp0, dp1) << endl;
+    return 0;
+}

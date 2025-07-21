@@ -1,0 +1,117 @@
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+using i64 = long long;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    i64 N, M;
+    cin >> N >> M;
+
+    set<i64> row_set, col_set, diag1_set, diag2_set;
+    set<pair<i64, i64>> piece_set;
+
+    for (i64 i = 0; i < M; ++i) {
+        i64 a, b;
+        cin >> a >> b;
+        row_set.insert(a);
+        col_set.insert(b);
+        diag1_set.insert(a + b);
+        diag2_set.insert(a - b);
+        piece_set.emplace(a, b);
+    }
+
+    i64 total_attacked = 0;
+
+    // Count attacked cells from rows and columns
+    total_attacked += N * (row_set.size() + col_set.size());
+
+    // Subtract overlap between rows and columns (double-counted)
+    for (auto r : row_set) {
+        for (auto c : col_set) {
+            if (piece_set.count({r, c}) == 0) {
+                total_attacked--;
+            }
+        }
+    }
+
+    // Add diagonal attacks: diag1 (x+y=c)
+    for (auto d : diag1_set) {
+        // The number of valid (x,y) such that x+y=d and 1<=x,y<=N
+        i64 len = min(d - 1, N) - max(i64(1), d - N) + 1;
+        total_attacked += len;
+    }
+
+    // Add diagonal attacks: diag2 (x-y=c)
+    for (auto d : diag2_set) {
+        // x - y = d => x = y + d
+        i64 low = max(i64(1), i64(1) - d);
+        i64 high = min(N, N - d);
+        if (low <= high) {
+            total_attacked += high - low + 1;
+        }
+    }
+
+    // Subtract overlaps between diagonals and each other
+    // First, count intersections between diag1 and diag2
+    for (auto d1 : diag1_set) {
+        for (auto d2 : diag2_set) {
+            // Solve:
+            // x + y = d1
+            // x - y = d2
+            // => x = (d1 + d2) / 2
+            // => y = (d1 - d2) / 2
+            if ((d1 + d2) % 2 == 0 && (d1 - d2) % 2 == 0) {
+                i64 x = (d1 + d2) / 2;
+                i64 y = (d1 - d2) / 2;
+                if (1 <= x && x <= N && 1 <= y && y <= N) {
+                    if (piece_set.count({x, y}) == 0) {
+                        total_attacked -= 1;
+                    }
+                }
+            }
+        }
+    }
+
+    // Subtract overlaps between diag1 and rows/cols
+    for (auto d : diag1_set) {
+        for (auto r : row_set) {
+            i64 c = d - r;
+            if (1 <= c && c <= N && piece_set.count({r, c}) == 0) {
+                total_attacked -= 1;
+            }
+        }
+        for (auto c : col_set) {
+            i64 r = d - c;
+            if (1 <= r && r <= N && piece_set.count({r, c}) == 0) {
+                total_attacked -= 1;
+            }
+        }
+    }
+
+    // Subtract overlaps between diag2 and rows/cols
+    for (auto d : diag2_set) {
+        for (auto r : row_set) {
+            i64 c = r - d;
+            if (1 <= c && c <= N && piece_set.count({r, c}) == 0) {
+                total_attacked -= 1;
+            }
+        }
+        for (auto c : col_set) {
+            i64 r = d + c;
+            if (1 <= r && r <= N && piece_set.count({r, c}) == 0) {
+                total_attacked -= 1;
+            }
+        }
+    }
+
+    // Total empty squares
+    i64 total_empty = N * N - M;
+
+    // Answer is total empty minus attacked ones
+    cout << total_empty - total_attacked << "\n";
+
+    return 0;
+}
+```

@@ -1,0 +1,62 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define rep(i,n) for(long long i=0;i<n;i++)
+using ll = long long;
+
+// Function to compute minimum cost to buy at least x candies of one type using two packs
+ll min_cost(ll a, ll b, ll p, ll q, ll x) {
+    // dp[i] = minimum cost to buy exactly i candies
+    vector<ll> dp(x + 1, 1e18);
+    dp[0] = 0;
+    
+    // Fill the dp table
+    for (ll i = 0; i <= x; ++i) {
+        if (i + a <= x) dp[i + a] = min(dp[i + a], dp[i] + p);
+        if (i + b <= x) dp[i + b] = min(dp[i + b], dp[i] + q);
+    }
+    
+    // Take minimum prefix in case we can buy more than needed
+    for (ll i = 1; i <= x; ++i) {
+        dp[i] = min(dp[i], dp[i-1]);
+    }
+    
+    return dp[x];
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+    
+    int n;
+    ll x;
+    cin >> n >> x;
+    
+    vector<ll> a(n), b(n), p(n), q(n);
+    for (int i = 0; i < n; ++i) {
+        cin >> a[i] >> p[i] >> b[i] >> q[i];
+    }
+
+    // Binary search on the number of children that can be satisfied
+    ll low = 0, high = 1e18;
+    ll answer = 0;
+    
+    while (low <= high) {
+        ll mid = (low + high) / 2;
+        ll total_cost = 0;
+        
+        for (int i = 0; i < n; ++i) {
+            total_cost += min_cost(a[i], b[i], p[i], q[i], mid);
+            if (total_cost > x) break; // Avoid overflow
+        }
+        
+        if (total_cost <= x) {
+            answer = mid;
+            low = mid + 1;
+        } else {
+            high = mid - 1;
+        }
+    }
+    
+    cout << answer << '\n';
+    return 0;
+}

@@ -1,0 +1,48 @@
+#include <iostream>
+#include <set>
+
+using namespace std;
+
+void Solve()
+{
+    ll Q;
+    cin >> Q;
+    set<ll> s;
+    while (Q--)
+    {
+        ll a;
+        cin >> a;
+        if (a == 1)
+        {
+            ll tp;
+            cin >> tp;
+            s.insert(tp);
+        }
+        else if (a == 2)
+        {
+            ll tp;
+            cin >> tp;
+            s.erase(s.find(tp));
+        }
+        else
+        {
+            cout << s.size() << "\n";
+        }
+    }
+}
+
+int main()
+{
+    ios_base::sync_with_stdio(false);
+    cin.tie(0);
+    cout.tie(0);
+
+    int t = 1;
+    cin >> t;
+    while (t--)
+    {
+        Solve();
+    }
+
+    return 0;
+}

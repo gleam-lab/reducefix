@@ -1,0 +1,72 @@
+#include <bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+#define all(x) (x).begin(), (x).end()
+
+int main() {
+    ios_base::sync_with_stdio(0);
+    cin.tie(0);
+    int N, M;
+    ll K;
+    cin >> N >> M >> K;
+    vector<ll> A(N);
+    for (int i = 0; i < N; ++i) {
+        cin >> A[i];
+    }
+
+    ll total_so_far = accumulate(all(A), 0LL);
+    ll remaining = K - total_so_far;
+
+    // We will process candidates in sorted order of current votes
+    vector<int> idx(N);
+    iota(all(idx), 0);
+    sort(all(idx), [&](int i, int j) { return A[i] < A[j]; });
+    vector<ll> sorted_A = A;
+    sort(all(sorted_A));
+
+    vector<ll> prefix_sum(N + 1);
+    for (int i = 0; i < N; ++i) {
+        prefix_sum[i + 1] = prefix_sum[i] + sorted_A[i];
+    }
+
+    vector<ll> result(N);
+
+    for (int i = 0; i < N; ++i) {
+        int original_idx = idx[i];
+        ll current_votes = A[original_idx];
+
+        // Binary search on the minimum number of additional votes needed
+        ll low = 0;
+        ll high = remaining + 1; // +1 to ensure upper bound
+
+        while (low < high) {
+            ll mid = (low + high) / 2;
+            ll new_vote_total = current_votes + mid;
+
+            // Find how many candidates have votes >= new_vote_total
+            // These are the candidates that could potentially beat us
+            int pos = upper_bound(sorted_A.begin(), sorted_A.end(), new_vote_total) - sorted_A.begin();
+            int num_better = N - pos;
+
+            // We can allow at most M-1 candidates to have more votes than us
+            if (num_better < M) {
+                // Already good, try fewer additional votes
+                high = mid;
+            } else {
+                // Need more votes
+                low = mid + 1;
+            }
+        }
+
+        if (low <= remaining)
+            result[original_idx] = low;
+        else
+            result[original_idx] = -1; // Cannot guarantee victory
+    }
+
+    for (auto x : result)
+        cout << x << ' ';
+    cout << '\n';
+
+    return 0;
+}

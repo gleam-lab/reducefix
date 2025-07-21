@@ -1,0 +1,51 @@
+#include <iostream>
+#include <vector>
+#include <cmath>
+
+using namespace std;
+
+int main()
+{
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    i32 N;
+    cin >> N;
+
+    i32 piece_num;
+    cin >> piece_num;
+
+    vector<pair<int, int>> pieces(piece_num);
+    for (auto& p : pieces) {
+        cin >> p.first >> p.second;
+    }
+
+    vector<vector<bool>> board(N, vector<bool>(N, false));
+
+    for (const auto& p : pieces) {
+        int x = p.first - 1, y = p.second - 1;
+        board[x][y] = true;
+
+        if (x + 2 < N && y + 1 < N) board[x + 2][y + 1] = true;
+        if (x + 1 < N && y + 2 < N) board[x + 1][y + 2] = true;
+        if (x - 1 >= 0 && y + 2 < N) board[x - 1][y + 2] = true;
+        if (x - 2 >= 0 && y + 1 < N) board[x - 2][y + 1] = true;
+        if (x - 2 >= 0 && y - 1 >= 0) board[x - 2][y - 1] = true;
+        if (x - 1 >= 0 && y - 2 >= 0) board[x - 1][y - 2] = true;
+        if (x + 1 < N && y - 2 >= 0) board[x + 1][y - 2] = true;
+        if (x + 2 < N && y - 1 >= 0) board[x + 2][y - 1] = true;
+    }
+
+    i128 count = 0;
+    for (i128 i = 0; i < N; ++i) {
+        for (i128 j = 0; j < N; ++j) {
+            if (!board[i][j]) {
+                count++;
+            }
+        }
+    }
+
+    cout << count << endl;
+
+    return 0;
+}

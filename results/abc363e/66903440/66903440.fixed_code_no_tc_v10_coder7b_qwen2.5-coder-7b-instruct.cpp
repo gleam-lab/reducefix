@@ -1,0 +1,57 @@
+#include<bits/stdc++.h>
+using namespace std;
+
+int dx[]={1,0,-1,0,1,1,-1,-1};
+int dy[]={0,1,0,-1,1,-1,1,-1};
+
+int main(){
+    ios_base::sync_with_stdio(false);cin.tie(NULL);cout.tie(NULL);
+    
+    int H,W,Y;
+    cin >> H >> W >> Y;
+    vector<vector<int>>A(H,vector<int>(W));
+    for(int i=0; i<H; ++i)
+        for(int j=0; j<W; ++j)
+            cin >> A[i][j];
+
+    int total = H * W;
+    vector<vector<bool>> seen(H, vector<bool>(W, false));
+
+    queue<pair<int,int>> q;
+    for(int i=0; i<H; ++i){
+        for(int j=0; j<W; ++j){
+            if(i == 0 || i == H-1 || j == 0 || j == W-1)
+                q.push({i,j}), seen[i][j] = true;
+        }
+    }
+
+    while(!q.empty() && --total > 0){
+        int x = q.front().first, y = q.front().second;
+        q.pop();
+
+        for(int k=0; k<8; ++k){
+            int nx = x + dx[k], ny = y + dy[k];
+            if(nx >= 0 && nx < H && ny >= 0 && ny < W && !seen[nx][ny] && A[nx][ny] <= A[x][y])
+                q.push({nx,ny}), seen[nx][ny] = true;
+        }
+    }
+
+    vector<int> areas(Y+1, total);
+    for(int i=0; i<Y; ++i){
+        while(!q.empty() && A[q.front().first][q.front().second] <= i+1){
+            int x = q.front().first, y = q.front().second;
+            q.pop();
+            for(int k=0; k<8; ++k){
+                int nx = x + dx[k], ny = y + dy[k];
+                if(nx >= 0 && nx < H && ny >= 0 && ny < W && !seen[nx][ny] && A[nx][ny] <= i+1)
+                    q.push({nx,ny}), seen[nx][ny] = true;
+            }
+        }
+        areas[i+1] = total - q.size();
+    }
+
+    for(int i=0; i<Y; ++i)
+        cout << areas[i] << endl;
+
+    return 0;
+}

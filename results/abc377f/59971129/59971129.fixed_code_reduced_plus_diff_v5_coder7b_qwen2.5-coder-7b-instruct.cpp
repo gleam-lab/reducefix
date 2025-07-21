@@ -1,0 +1,62 @@
+#include<bits/stdc++.h>
+using namespace std;
+
+#define all(v) v.begin(),v.end()
+#define rep(i,n) for(int i=0;i<n;i++)
+#define reps(i,s,n) for(int i=s;i<n;i++)
+#define rrep(i,n) for(int i=n-1;i>=0;i--)
+#define rreps(i,s,n) for(int i=n-1;i>=s;i--)
+
+#define INF 1e18
+#define MOD 1000000007
+
+#define vi vector<int>
+#define vl vector<long long>
+#define vvi vector<vector<int>>
+#define vvl vector<vector<long long>>
+
+typedef pair<int,int> pii;
+typedef pair<long long,long long> pll;
+
+int main(){
+    ios_base::sync_with_stdio(false);cin.tie(NULL);
+
+    int n,m; cin>>n>>m;
+    set<pii> s;
+    rep(i,m){
+        int x,y; cin>>x>>y;
+        s.insert({x,y});
+    }
+
+    int ans = 0;
+    rep(i,n){
+        rep(j,n){
+            if(s.find({i+1,j+1}) == s.end()){
+                bool ok = true;
+                for(int k=1;k<=n;k++){
+                    if(k != i+1 && s.find({k,j+1}) != s.end()){
+                        ok = false; break;
+                    }
+                    if(k != j+1 && s.find({i+1,k}) != s.end()){
+                        ok = false; break;
+                    }
+                }
+                if(ok){
+                    int d = abs(i-j);
+                    for(int k=1;k<=n;k++){
+                        if(abs(k-i) == d && s.find({k,j+1}) != s.end()){
+                            ok = false; break;
+                        }
+                        if(abs(k-j) == d && s.find({i+1,k}) != s.end()){
+                            ok = false; break;
+                        }
+                    }
+                }
+                if(ok) ans++;
+            }
+        }
+    }
+    cout<<ans<<endl;
+
+    return 0;
+}

@@ -1,0 +1,180 @@
+To fix this code, we need to correctly calculate the number of safe squares where the new piece can be placed without being captured by any existing pieces. The original code had several issues, including incorrect variable names, swap of `n` and `m` in the input, and incorrect calculations for the number of squares covered by the existing pieces.
+
+### Approaches
+1. **Initialization and Input Handling**: Correctly read the grid size `N` and the number of existing pieces `M`. Then, read the positions of these pieces.
+2. **Tracking Occupied Lines**: For each existing piece, track the rows, columns, and diagonals (both types) it controls. These are stored in sets to avoid duplicates.
+3. **Calculate Total Controlled Squares**: Using inclusion-exclusion principle, compute the total number of squares controlled by at least one existing piece. This involves:
+   - Squares in the same row or column as any existing piece.
+   - Squares in the same diagonals (sum or difference of coordinates) as any existing piece.
+   - Adjust for overlaps where squares are controlled by multiple conditions (rows, columns, and diagonals).
+4. **Compute Safe Squares**: Subtract the total controlled squares from the total grid squares (`N^2`) to find the number of safe squares. Adjust for the squares already occupied by existing pieces.
+
+### Solution Code
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    long long N, M;
+    cin >> N >> M;
+    
+    unordered_set<long long> rows, cols, diag1, diag2;
+    unordered_set<long long> occupied;
+    
+    for (int i = 0; i < M; ++i) {
+        long long a, b;
+        cin >> a >> b;
+        rows.insert(a);
+        cols.insert(b);
+        diag1.insert(a + b);
+        diag2.insert(a - b);
+        occupied.insert((a - 1) * N + b);
+    }
+    
+    long long total = N * N;
+    long long unsafe = 0;
+    
+    unsafe += rows.size() * N;
+    unsafe += cols.size() * N;
+    
+    for (long long d : diag1) {
+        long long cnt = 0;
+        if (d <= N + 1) {
+            cnt = d - 1;
+        } else {
+            cnt = 2 * N - d + 1;
+        }
+        unsafe += cnt;
+    }
+    
+    for (long long d : diag2) {
+        long long cnt = 0;
+        if (d >= 0) {
+            cnt = N - d;
+        } else {
+            cnt = N + d;
+        }
+        unsafe += cnt;
+    }
+    
+    // Overlaps between rows and columns
+    unsafe -= rows.size() * cols.size();
+    
+    // Overlaps between rows and diag1
+    for (long long r : rows) {
+        for (long long d : diag1) {
+            long long c = d - r;
+            if (1 <= c && c <= N) {
+                unsafe--;
+            }
+        }
+    }
+    
+    // Overlaps between rows and diag2
+    for (long long r : rows) {
+        for (long long d : diag2) {
+            long long c = r - d;
+            if (1 <= c && c <= N) {
+                unsafe--;
+            }
+        }
+    }
+    
+    // Overlaps between columns and diag1
+    for (long long c : cols) {
+        for (long long d : diag1) {
+            long long r = d - c;
+            if (1 <= r && r <= N) {
+                unsafe--;
+            }
+        }
+    }
+    
+    // Overlaps between columns and diag2
+    for (long long c : cols) {
+        for (long long d : diag2) {
+            long long r = d + c;
+            if (1 <= r && r <= N) {
+                unsafe--;
+            }
+        }
+    }
+    
+    // Overlaps between diag1 and diag2
+    for (long long d1 : diag1) {
+        for (long long d2 : diag2) {
+            if ((d1 + d2) % 2 == 0) {
+                long long r = (d1 + d2) / 2;
+                long long c = (d1 - d2) / 2;
+                if (1 <= r && r <= N && 1 <= c && c <= N) {
+                    unsafe++;
+                }
+            }
+        }
+    }
+    
+    // Overlaps between rows, columns, and diag1
+    for (long long r : rows) {
+        for (long long c : cols) {
+            if (diag1.count(r + c)) {
+                unsafe++;
+            }
+        }
+    }
+    
+    // Overlaps between rows, columns, and diag2
+    for (long long r : rows) {
+        for (long long c : cols) {
+            if (diag2.count(r - c)) {
+                unsafe++;
+            }
+        }
+    }
+    
+    // Overlaps between rows, diag1, and diag2
+    for (long long r : rows) {
+        for (long long d1 : diag1) {
+            long long c = d1 - r;
+            if (1 <= c && c <= N && diag2.count(r - c)) {
+                unsafe--;
+            }
+        }
+    }
+    
+    // Overlaps between columns, diag1, and diag2
+    for (long long c : cols) {
+        for (long long d1 : diag1) {
+            long long r = d1 - c;
+            if (1 <= r && r <= N && diag2.count(r - c)) {
+                unsafe--;
+            }
+        }
+    }
+    
+    // All four overlaps (rows, columns, diag1, diag2)
+    for (long long r : rows) {
+        for (long long c : cols) {
+            if (diag1.count(r + c) && diag2.count(r - c)) {
+                unsafe++;
+            }
+        }
+    }
+    
+    long long safe = total - unsafe;
+    safe += occupied.size(); // since occupied squares were subtracted multiple times
+    safe -= M; // because occupied squares were initially counted in total
+    
+    cout << safe << endl;
+    
+    return 0;
+}
+```
+
+### Explanation
+1. **Initialization**: We read the grid size `N` and the number of existing pieces `M`.
+2. **Tracking Conditions**: We use unordered sets to store rows, columns, and the two types of diagonals (sum and difference of coordinates) that existing pieces control.
+3. **Inclusion-Exclusion Principle**: We calculate the total unsafe squares by first adding the squares controlled by rows, columns, and diagonals, then subtracting overlaps where squares are controlled by multiple conditions.
+4. **Adjust for Overlaps**: We carefully adjust for overlaps between different conditions (rows and columns, rows and diagonals, columns and diagonals, etc.) to ensure accurate counts.
+5. **Final Safe Squares Calculation**: Subtract the total unsafe squares from the grid size `N^2`, adjust for the squares already occupied by existing pieces, and print the result.
+
+This approach ensures we accurately count all squares that are not under attack by any existing piece, considering all possible overlaps and edge cases.

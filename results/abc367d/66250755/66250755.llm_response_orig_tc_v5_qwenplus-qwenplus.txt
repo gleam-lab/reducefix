@@ -1,0 +1,68 @@
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int n, m;
+    cin >> n >> m;
+    vector<long long> a(n * 2 + 1), prefix_sum(n * 2 + 1);
+    
+    for (int i = 1; i <= n; ++i) {
+        cin >> a[i];
+        a[i] %= m;
+        a[i + n] = a[i];
+    }
+
+    // Compute prefix sums modulo m
+    for (int i = 1; i <= 2 * n; ++i) {
+        prefix_sum[i] = (prefix_sum[i - 1] + a[i]) % m;
+    }
+
+    // Use a Fenwick Tree to count valid subarrays efficiently
+    class FenwickTree {
+    public:
+        vector<int> tree;
+        int size;
+
+        FenwickTree(int size_) : size(size_), tree(size_ + 1, 0) {}
+
+        void update(int idx, int delta) {
+            for (++idx; idx < (int)tree.size(); idx += idx & -idx)
+                tree[idx] += delta;
+        }
+
+        int query(int idx) {
+            int res = 0;
+            for (++idx; idx > 0; idx -= idx & -idx)
+                res += tree[idx];
+            return res;
+        }
+    };
+
+    FenwickTree ft(m);
+    long long result = 0;
+
+    // We want prefix[j] >= prefix[i], so we process from the end
+    for (int i = 2 * n; i >= n + 1; --i) {
+        ft.update(prefix_sum[i], 1);
+    }
+
+    for (int i = 1; i <= n; ++i) {
+        // Remove prefix_sum[i - 1] from the tree
+        if (i > 1) ft.update(prefix_sum[i - 1], -1);
+        
+        // Add prefix_sum[i + n - 1] to the tree
+        ft.update(prefix_sum[i + n - 1], 1);
+
+        // Count how many prefix_sum[j] >= prefix_sum[i - 1]
+        // This is equivalent to sum of counts from prefix_sum[i - 1] to m - 1
+        result += ft.query(m - 1) - ft.query(prefix_sum[i - 1] - 1);
+    }
+
+    cout << result << "\n";
+    return 0;
+}
+```

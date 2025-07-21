@@ -1,0 +1,46 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define ll long long
+
+void solve() {
+    ll n;
+    cin >> n;
+    vector<ll> A(n), B(n - 1);
+    for (ll i = 0; i < n; ++i) cin >> A[i];
+    for (ll i = 0; i < n - 1; ++i) cin >> B[i];
+
+    sort(A.begin(), A.end());
+    sort(B.begin(), B.end());
+
+    multiset<ll> b_set(B.begin(), B.end());
+
+    ll required = -1;
+
+    // Try to match largest toys with available boxes first
+    ll j = n - 2; // index for B
+    for (ll i = n - 1; i >= 0; --i) {
+        if (j >= 0 && A[i] <= B[j]) {
+            --j; // use box B[j]
+        } else {
+            // We need a new box of size at least A[i]
+            // But we want the smallest such box
+            if (required == -1 || A[i] < required)
+                required = A[i];
+        }
+    }
+
+    if (required != -1) {
+        cout << required << endl;
+    } else {
+        // If all toys can be placed in existing boxes, then minimal x is smallest toy not used
+        // Or more precisely, the smallest toy that cannot fit in any box
+        // But since we sorted descending and matched biggest first, this case should have been caught
+        cout << -1 << endl;
+    }
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+    solve();
+}

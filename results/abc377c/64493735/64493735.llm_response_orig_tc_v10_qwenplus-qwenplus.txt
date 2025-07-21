@@ -1,0 +1,81 @@
+To solve this problem efficiently given the constraints (especially with `N` up to `1e9` and `M` up to `2e5`), we must avoid representing the full board as a grid or matrix due to memory and performance limitations.
+
+## Key Observations:
+- The total number of cells is `N * N`.
+- Each existing piece attacks 8 specific positions relative to its location.
+- We only need to **count** how many unique cells are either:
+  - Occupied by another piece
+  - Or can be attacked by any of the placed pieces
+
+We can use a `std::unordered_set` (or similar structure) to store all forbidden positions, including both occupied and attackable ones.
+
+### Steps:
+1. Read input values for `N` and `M`, followed by the positions of each piece.
+2. For each piece at `(a, b)`:
+   - Add `(a, b)` to the forbidden set (occupied position)
+   - Generate the 8 possible attack positions based on knight-like moves.
+   - For each generated position `(x, y)`:
+     - If it's within bounds `[1, N]`, add it to the forbidden set.
+3. The answer is:  
+   `N * N - size_of_forbidden_set`
+
+This ensures we don't count duplicate forbidden positions more than once.
+
+---
+
+Here is the corrected and optimized C++ code:
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int64_t N;
+    int M;
+    cin >> N >> M;
+
+    // Use a pair hash function for unordered_set
+    using pii = pair<int64_t, int64_t>;
+    struct PairHash {
+        size_t operator()(const pii& p) const {
+            return hash<int64_t>{}(p.first) ^ (hash<int64_t>{}(p.second) << 32);
+        }
+    };
+
+    unordered_set<pii, PairHash> forbidden;
+
+    vector<pii> offsets = {
+        {2, 1}, {1, 2}, {-1, 2}, {-2, 1},
+        {-2, -1}, {-1, -2}, {1, -2}, {2, -1}
+    };
+
+    for (int i = 0; i < M; ++i) {
+        int64_t a, b;
+        cin >> a >> b;
+        forbidden.insert({a, b});
+
+        for (auto [dx, dy] : offsets) {
+            int64_t x = a + dx;
+            int64_t y = b + dy;
+            if (1 <= x && x <= N && 1 <= y && y <= N) {
+                forbidden.insert({x, y});
+            }
+        }
+    }
+
+    cout << (N * N - forbidden.size()) << '\n';
+}
+```
+
+---
+
+### Why This Works:
+- Efficiently handles large `N` by never storing the whole board.
+- Avoids double-counting using a set.
+- Time complexity is `O(M)` for processing each piece and its 8 potential moves.
+- Space complexity is `O(M)` since each piece affects at most a constant number of new positions.
+
+This solution will work correctly even when `N` is as large as `1e9`.

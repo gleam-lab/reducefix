@@ -1,0 +1,134 @@
+To solve this problem, we need to compute the minimum path cost from vertex 1 to every other vertex in a **connected undirected graph**, where the cost of a path is defined as the **sum of all vertex weights and edge weights along that path**.
+
+---
+
+### Key Observations:
+
+- Each vertex has a weight (`A[i]`), and each edge has a weight (`B[j]`).
+- When traversing from one node to another, you pay:
+  - The weight of the **starting node**
+  - All **edge weights** along the way
+  - All **vertex weights** of nodes visited on the path
+
+This makes it slightly different from classic Dijkstra's because we must **include the vertex weight at the point of entry into the node**, not when leaving it. Hence, for any path from `u -> v`, the total cost includes:
+```cpp
+cost += A[u] + B(u,v) + A[v]
+```
+So when calculating the shortest path using Dijkstra's algorithm, we must be careful about how we model the costs.
+
+---
+
+### Correct Approach:
+
+Use **Dijkstra’s algorithm** with a priority queue (min-heap) to maintain the shortest distances to each node.
+
+#### Vertex Weight Handling:
+
+- Initialize distance to vertex 1 as just `A[1]`.
+- For every transition from `u -> v` via an edge with weight `w`, the cost added is:
+  ```cpp
+  cost = dist[u] + w + A[v];
+  ```
+
+Thus, the algorithm proceeds as follows:
+1. Use adjacency list to store the graph.
+2. Initialize `dist[1] = A[1]`, and others to infinity.
+3. Run Dijkstra's algorithm starting from vertex 1.
+4. For each edge `(u, v)` with weight `w`, update `dist[v]` as:
+   ```cpp
+   dist[v] = min(dist[v], dist[u] + w + A[v]);
+   ```
+5. After the algorithm completes, output `dist[2]`, `dist[3]`, ..., `dist[N]`.
+
+---
+
+### Fixes in Your Code:
+
+Your code had a bug in modeling the path cost correctly. In particular:
+
+- You initialized `dis[1] = A[1]` — correct.
+- But during traversal, you did:
+  ```cpp
+  dis[v] = min(dis[v], dis[u] + a[v] + w);
+  ```
+  which is also correct — but your implementation used BFS instead of Dijkstra's (queue instead of a priority_queue). This leads to incorrect results for graphs with varying edge/vertex weights.
+
+---
+
+### Final Working Code:
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+#define int long long
+
+const int INF = 1e18;
+
+vector<vector<pair<int, int>>> G(200005); // Adjacency list: {v, weight}
+int dist[200005]; // Distance array
+int A[200005]; // Vertex weights
+
+signed main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int N, M;
+    cin >> N >> M;
+
+    for(int i = 1; i <= N; ++i) {
+        cin >> A[i];
+        dist[i] = INF;
+    }
+
+    for(int i = 1; i <= M; ++i) {
+        int u, v, w;
+        cin >> u >> v >> w;
+        G[u].push_back({v, w});
+        G[v].push_back({u, w});
+    }
+
+    priority_queue<pair<int, int>, vector<pair<int, int>>, greater<>> pq;
+    dist[1] = A[1]; // Start from vertex 1 with its own weight
+    pq.push({dist[1], 1});
+
+    while (!pq.empty()) {
+        auto [d, u] = pq.top(); pq.pop();
+        if (d > dist[u]) continue;
+
+        for (auto &[v, w] : G[u]) {
+            int new_cost = d + w + A[v]; // Edge weight + destination vertex weight
+            if (new_cost < dist[v]) {
+                dist[v] = new_cost;
+                pq.push({dist[v], v});
+            }
+        }
+    }
+
+    for(int i = 2; i <= N; ++i) {
+        cout << dist[i] << ' ';
+    }
+    cout << '\n';
+
+    return 0;
+}
+```
+
+---
+
+### Why This Works:
+
+- We use a **priority queue** for efficient extraction of the node with the smallest tentative distance.
+- We ensure that **each node is only relaxed if we find a strictly better path**.
+- The cost calculation includes:
+  - The cumulative cost up to current node
+  - The edge weight
+  - The target node's weight (only once, upon arrival)
+
+---
+
+### Complexity:
+
+- Time: `O(M log N)` due to Dijkstra's with a binary heap.
+- Space: `O(N + M)` for the adjacency list and auxiliary arrays.
+
+This will work efficiently even under tight constraints like `N, M ~ 2 * 10^5`.

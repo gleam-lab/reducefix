@@ -1,0 +1,71 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+const int INF = 1e9;
+
+struct Cell {
+    int x, y, level;
+};
+
+bool isValid(int x, int y, int n, int m) {
+    return x >= 0 && x < n && y >= 0 && y < m;
+}
+
+int bfs(vector<vector<int>>& heights, int n, int m, int targetLevel) {
+    queue<Cell> q;
+    vector<vector<bool>> visited(n, vector<bool>(m, false));
+
+    for (int i = 0; i < n; ++i) {
+        for (int j = 0; j < m; ++j) {
+            if (heights[i][j] <= targetLevel) {
+                q.push({i, j, heights[i][j]});
+                visited[i][j] = true;
+            }
+        }
+    }
+
+    int area = 0;
+    vector<vector<int>> dirs = {{0, 1}, {0, -1}, {1, 0}, {-1, 0}};
+    while (!q.empty()) {
+        auto [x, y, level] = q.front(); q.pop();
+        area++;
+
+        for (auto& dir : dirs) {
+            int nx = x + dir[0];
+            int ny = y + dir[1];
+
+            if (isValid(nx, ny, n, m) && !visited[nx][ny] && heights[nx][ny] <= level) {
+                visited[nx][ny] = true;
+                q.push({nx, ny, heights[nx][ny]});
+            }
+        }
+    }
+
+    return area;
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int n, m, y;
+    cin >> n >> m >> y;
+
+    vector<vector<int>> heights(n, vector<int>(m));
+    for (int i = 0; i < n; ++i) {
+        for (int j = 0; j < m; ++j) {
+            cin >> heights[i][j];
+        }
+    }
+
+    vector<int> results(y);
+    for (int i = 0; i < y; ++i) {
+        results[i] = bfs(heights, n, m, i + 1);
+    }
+
+    for (int i = 0; i < y; ++i) {
+        cout << (n * m - results[i]) << "\n";
+    }
+
+    return 0;
+}

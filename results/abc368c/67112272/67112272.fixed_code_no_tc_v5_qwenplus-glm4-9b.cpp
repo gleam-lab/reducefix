@@ -1,0 +1,30 @@
+#include<bits/stdc++.h>
+using namespace std;
+
+#define rep(i, n) for (int i = 0; i < (n); i++)
+using ll = long long;
+
+int main() {
+    ll n; cin >> n;
+    vector<ll> health(n);
+    ll total_steps = 0;
+
+    for (ll i = 0; i < n; i++) {
+        cin >> health[i];
+        // Calculate the number of full 3-steps and remaining hits needed
+        ll full_3_steps = health[i] / 3;
+        ll remaining_hits = health[i] % 3;
+
+        // Add the full 3-steps to the total steps
+        total_steps += full_3_steps * 3;
+
+        // If there are remaining hits, we need to add them to the total steps
+        // If there are 2 remaining hits, we need an additional 3-step (since 2%3 == 2)
+        // If there is 1 remaining hit, we just add 1 to the total steps
+        if (remaining_hits > 0) {
+            total_steps += (remaining_hits == 2) ? 3 : 1;
+        }
+    }
+
+    cout << total_steps << endl;
+}

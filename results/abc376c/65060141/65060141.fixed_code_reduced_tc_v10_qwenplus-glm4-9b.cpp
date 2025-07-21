@@ -1,0 +1,54 @@
+#include<bits/stdc++.h>
+#define ll long long
+using namespace std;
+
+const ll N = 2e5 + 5;
+ll a[N], b[N];
+
+int main() {
+    ll n, i, j, mx = 0;
+    cin >> n;
+    for (i = 0; i < n; i++) {
+        cin >> a[i];
+    }
+    for (i = 0; i < n - 1; i++) {
+        cin >> b[i];
+    }
+    // Sort toy sizes in ascending order
+    sort(a, a + n);
+    // Sort box sizes in ascending order
+    sort(b, b + n - 1);
+
+    // Initialize variables to track the minimum size of box and the toy that requires it
+    ll minBoxSize = LLONG_MAX;
+    ll requiredSize = -1;
+
+    // Check if the largest toy can fit into any of the existing boxes
+    for (i = 0; i < n - 1; i++) {
+        if (a[n - 1] <= b[i]) {
+            minBoxSize = min(minBoxSize, b[i]);
+            break;
+        }
+    }
+
+    // If the largest toy cannot fit into any existing box, find the smallest box that can fit the largest toy
+    if (minBoxSize == LLONG_MAX) {
+        for (i = 0; i < n; i++) {
+            if (a[i] > b[i - 1]) {
+                minBoxSize = b[i - 1];
+                requiredSize = a[i];
+                break;
+            }
+        }
+    }
+
+    // If we found a box that can fit the largest toy, calculate the minimum size of box needed
+    if (requiredSize != -1) {
+        ll k = ceil(log2(requiredSize)); // Find the smallest power of 2 that is greater than or equal to requiredSize
+        cout << minBoxSize + k;
+    } else {
+        cout << -1; // If it's impossible to fit any toy into any box, output -1
+    }
+
+    return 0;
+}

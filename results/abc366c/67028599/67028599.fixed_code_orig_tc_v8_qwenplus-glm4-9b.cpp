@@ -1,0 +1,29 @@
+#include<bits/stdc++.h>
+
+using namespace std;
+
+int main() {
+    int q;
+    cin >> q;
+
+    set<int> h;
+    int type, x;
+    while( q-- ) {
+        cin >> type;
+        if ( type == 1 ) {
+            cin >> x;
+            h.insert(x);
+        } else if ( type == 2 ) {
+            cin >> x;
+            h.erase(x);
+        } else {
+            if ( !h.empty() ) {
+                cout << h.size() << endl;
+            } else {
+                cout << "0" << endl; // Check if the set is empty before printing size
+            }
+        }
+    }
+
+    return 0;
+}

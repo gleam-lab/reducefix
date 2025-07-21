@@ -1,0 +1,35 @@
+#include<bits/stdc++.h>
+using namespace std;
+const int N=1e6+5;
+int n,m,k,sum,cnt,a[N],b[N],d[N];
+int main()
+{
+	ios::sync_with_stdio(0),cin.tie(0),cout.tie(0); 
+	int i,j,x,y,z,t;
+	
+	// Reading input
+	cin>>n>>m;
+	for(i=1;i<=n;i++)
+	{
+		cin>>a[i];
+		a[i+n] = a[i]; // Extend the array to handle wrap-around
+	}
+	
+	// Initialize count array to track frequency of remainders
+	b[0] = n;
+	for(i=1;i<=n*2;i++)
+	{
+		d[i] = d[i-1] + a[i]; // Compute prefix sums
+		if (i >= n) {
+			b[d[i] % m]--; // Decrease count for the current remainder
+		}
+		sum += b[d[i] % m]; // Add current count to sum
+		if (i < n) {
+			b[d[i] % m]++; // Increase count for the current remainder
+		}
+	}
+	
+	// Output the result
+	cout << sum;
+	return 0;
+}

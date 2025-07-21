@@ -1,0 +1,84 @@
+The provided code attempts to solve the problem using Dijkstra's algorithm to find the shortest path from vertex 1 to all other vertices, where the path weight is defined as the sum of vertex weights and edge weights. However, there are a few issues in the code that need to be addressed:
+
+1. **Vertex Weight Handling**: The vertex weights are only added at the starting vertex (vertex 1) and the destination vertex (vertex y), but the intermediate vertices' weights are not accounted for correctly. This is because in the Dijkstra's relaxation step, only the destination vertex's weight is added, which is incorrect. The correct approach should include the vertex weight of the current vertex (x) and the edge weight (dw) when moving to vertex y.
+
+2. **Data Types**: The code uses `i128` (128-bit integer) for distances, which is unnecessary and can lead to inefficiencies. The problem constraints allow the use of standard 64-bit integers (`long long`) since all weights are up to \(10^9\) and the sum can reach up to \(2 \times 10^5 \times 10^9 = 2 \times 10^{14}\), which fits within the range of a 64-bit integer.
+
+3. **Priority Queue Comparator**: The comparator in the `Node` struct is incorrect for a min-heap. It should prioritize nodes with smaller weights, but the current implementation does the opposite.
+
+4. **Edge Cases**: The code should handle cases where the vertex weight of vertex 1 is zero, and ensure that the initial distance is set correctly.
+
+Here is the corrected code:
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+using ll = long long;
+constexpr ll INF = 1e18;
+
+struct Node {
+    int x;
+    ll w;
+    bool operator < (const Node& other) const {
+        return w > other.w; // For min-heap
+    }
+};
+
+void solve() {
+    int n, m;
+    cin >> n >> m;
+    vector<ll> a(n + 1);
+    for (int i = 1; i <= n; ++i) {
+        cin >> a[i];
+    }
+    
+    vector<vector<pair<int, ll>>> g(n + 1);
+    for (int i = 0; i < m; ++i) {
+        int u, v;
+        ll b;
+        cin >> u >> v >> b;
+        g[u].emplace_back(v, b);
+        g[v].emplace_back(u, b);
+    }
+    
+    vector<ll> dist(n + 1, INF);
+    vector<bool> vis(n + 1, false);
+    priority_queue<Node> pq;
+    
+    dist[1] = a[1];
+    pq.push({1, dist[1]});
+    
+    while (!pq.empty()) {
+        auto [x, w] = pq.top();
+        pq.pop();
+        if (vis[x]) continue;
+        vis[x] = true;
+        for (const auto& [y, dw] : g[x]) {
+            if (dist[x] + dw + a[y] < dist[y]) {
+                dist[y] = dist[x] + dw + a[y];
+                pq.push({y, dist[y]});
+            }
+        }
+    }
+    
+    for (int i = 2; i <= n; ++i) {
+        cout << dist[i] << (i == n ? "\n" : " ");
+    }
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    solve();
+    return 0;
+}
+```
+
+### Key Fixes:
+1. **Vertex Weight Handling**: The distance update now correctly includes the vertex weight of the destination vertex (y) when moving from vertex x to y.
+2. **Data Types**: Changed from `i128` to `long long` for efficiency and simplicity.
+3. **Priority Queue Comparator**: Corrected to form a min-heap by reversing the comparison.
+4. **Edge Cases**: The initial distance for vertex 1 is set to its vertex weight, and the relaxation step correctly updates distances for all vertices.
+
+This corrected code should now efficiently compute the minimum path weights from vertex 1 to all other vertices in the graph.

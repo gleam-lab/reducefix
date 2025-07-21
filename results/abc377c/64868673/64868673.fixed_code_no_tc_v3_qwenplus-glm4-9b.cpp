@@ -1,0 +1,41 @@
+#include <iostream>
+#include <vector>
+#include <set>
+using namespace std;
+
+int main() {
+    long long n, m;
+    cin >> n >> m;
+    set<pair<long long, long long>> occupied;
+    vector<pair<long long, long long>> pieces(m);
+    
+    for (int i = 0; i < m; i++) {
+        long long a, b;
+        cin >> a >> b;
+        pieces[i] = {a, b};
+        occupied.insert({a, b});
+    }
+    
+    long long safe_spaces = n * n;
+    
+    // Check each piece and mark the spaces that cannot be occupied
+    for (const auto& p : pieces) {
+        long long i = p.first, j = p.second;
+        long long x, y;
+        vector<pair<int, int>> to_check = {
+            {2, 1}, {1, 2}, {-1, 2}, {-2, 1},
+            {-2, -1}, {-1, -2}, {1, -2}, {2, -1}
+        };
+        
+        for (const auto& dir : to_check) {
+            x = i + dir.first;
+            y = j + dir.second;
+            if (x >= 1 && x <= n && y >= 1 && y <= n) {
+                safe_spaces--;
+                occupied.insert({x, y});
+            }
+        }
+    }
+    
+    cout << safe_spaces << endl;
+}

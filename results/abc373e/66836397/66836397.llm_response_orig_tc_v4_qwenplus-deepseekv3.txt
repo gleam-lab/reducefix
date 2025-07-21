@@ -1,0 +1,93 @@
+To fix this code, we need to analyze the problem and the incorrect solution. The problem involves determining the minimum number of additional votes each candidate needs to be elected, given that after all votes are counted, a candidate is elected if the number of candidates with more votes than them is less than M. The incorrect solution attempts to solve this using binary search and some calculations, but it fails on the first test case where all candidates should output 0.
+
+### Analysis
+1. **Problem Understanding**: Each candidate needs to ensure that after distributing the remaining votes, the number of candidates with more votes than them is less than M. If a candidate already has enough votes to satisfy this condition, the answer is 0. If it's impossible to satisfy the condition even with all remaining votes, the answer is -1.
+
+2. **Incorrect Solution**: The original code sorts the votes and uses binary search to find the minimum additional votes for each candidate. However, it fails to correctly handle cases where the candidate is already in a position to be elected without any additional votes.
+
+3. **Key Insight**: For a candidate to be elected, they must be in the top M candidates after all votes are distributed. This means that after adding their additional votes, the number of candidates with strictly more votes should be less than M. 
+
+4. **Correct Approach**: 
+   - Sort the candidates' votes to easily determine their rank.
+   - For each candidate, calculate the minimum additional votes needed to ensure that at most M-1 candidates have more votes than them.
+   - If the candidate is already in a position where fewer than M candidates have more votes, the answer is 0.
+   - If it's impossible to achieve the condition even by allocating all remaining votes to the candidate, the answer is -1.
+
+### Solution Code
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+using ll = long long;
+
+int main() {
+    ll N, M, K;
+    cin >> N >> M >> K;
+    vector<ll> A(N);
+    for (ll &a : A) cin >> a;
+    
+    ll total_votes = accumulate(A.begin(), A.end(), 0LL);
+    ll remaining = K - total_votes;
+    
+    vector<ll> sorted_A = A;
+    sort(sorted_A.begin(), sorted_A.end(), greater<ll>());
+    
+    vector<ll> prefix_sum(N + 1, 0);
+    for (int i = 0; i < N; ++i) {
+        prefix_sum[i + 1] = prefix_sum[i] + sorted_A[i];
+    }
+    
+    for (int i = 0; i < N; ++i) {
+        ll current = A[i];
+        ll low = 0, high = remaining;
+        ll answer = -1;
+        
+        while (low <= high) {
+            ll mid = low + (high - low) / 2;
+            ll new_votes = current + mid;
+            
+            // Find the number of candidates with votes > new_votes
+            auto it = upper_bound(sorted_A.begin(), sorted_A.end(), new_votes, greater<ll>());
+            ll count = it - sorted_A.begin();
+            
+            if (count < M) {
+                answer = mid;
+                high = mid - 1;
+            } else {
+                low = mid + 1;
+            }
+        }
+        
+        // Check if the candidate is already elected without any additional votes
+        auto it = upper_bound(sorted_A.begin(), sorted_A.end(), current, greater<ll>());
+        ll count = it - sorted_A.begin();
+        if (count < M) {
+            answer = 0;
+        }
+        
+        // If it's impossible to be elected even with all remaining votes
+        if (answer == -1) {
+            ll new_votes = current + remaining;
+            it = upper_bound(sorted_A.begin(), sorted_A.end(), new_votes, greater<ll>());
+            count = it - sorted_A.begin();
+            if (count < M) {
+                answer = remaining;
+            }
+        }
+        
+        cout << answer << (i == N - 1 ? "\n" : " ");
+    }
+    
+    return 0;
+}
+```
+
+### Explanation
+1. **Input Handling**: The code reads the number of candidates (N), the threshold (M), the total votes (K), and the current votes for each candidate (A).
+2. **Initial Setup**: It calculates the total votes already cast and the remaining votes that can be distributed.
+3. **Sorting and Prefix Sum**: The votes are sorted in descending order to facilitate rank determination, and a prefix sum array is built for efficient range sum queries.
+4. **Binary Search for Each Candidate**: For each candidate, the code performs a binary search to find the minimum additional votes needed to ensure their rank is within the top M candidates. The binary search checks if the candidate's new vote count (current votes + additional votes) places them in a position where fewer than M candidates have more votes.
+5. **Edge Cases Handling**: The code checks if the candidate is already in a valid position (output 0) or if it's impossible to achieve the desired rank even with all remaining votes (output -1).
+6. **Output**: The results for each candidate are printed, separated by spaces, with a newline at the end.
+
+This approach ensures that the solution is efficient and handles all edge cases correctly, providing the correct minimum additional votes for each candidate to be elected.

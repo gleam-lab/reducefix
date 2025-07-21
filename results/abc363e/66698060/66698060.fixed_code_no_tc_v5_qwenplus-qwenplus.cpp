@@ -1,0 +1,89 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define ll long long
+#define rep(i,n) for(ll i=0;i<(ll)n;i++)
+#define vi vector<int>
+#define vl vector<ll>
+#define vb vector<bool>
+#define vvb vector<vector<bool>>
+#define vvl vector<vector<ll>>
+#define pii pair<int, int>
+#define pll pair<ll, ll>
+#define pq_priority greater<pll>
+#define fi first
+#define se second
+#define pb push_back
+#define all(a) a.begin(), a.end()
+#define sz(x) ((ll)(x).size())
+
+const ll dx[4] = {-1, 0, 1, 0};
+const ll dy[4] = {0, 1, 0, -1};
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+    
+    ll h, w, y;
+    cin >> h >> w >> y;
+    vvl grid(h, vl(w));
+    rep(i,h) rep(j,w) cin >> grid[i][j];
+
+    // Binary matrix to mark if a cell is submerged
+    vvb submerged(h, vb(w, false));
+
+    // Priority queue to simulate the sea rising and spreading
+    priority_queue<pll, vector<pll>, greater<pll>> pq;
+
+    // Mark boundary cells as initially submerged
+    for (ll i = 0; i < h; ++i) {
+        for (ll j = 0; j < w; ++j) {
+            if (i == 0 || i == h-1 || j == 0 || j == w-1) {
+                pq.push({grid[i][j], i * w + j});
+                submerged[i][j] = true;
+            }
+        }
+    }
+
+    // Prepare an array to store year-by-year results
+    vl remaining(y+2, 0);
+    ll total = h * w;
+
+    // We'll process in order of increasing elevation using the min heap
+    while (!pq.empty()) {
+        auto [elev, pos] = pq.top();
+        pq.pop();
+
+        ll i = pos / w;
+        ll j = pos % w;
+
+        // The cell submerges in year `min(elev, y)`
+        ll year = min(elev, y);
+        remaining[year]++;
+
+        // Spread to neighbors if they haven't been processed yet
+        for (ll d = 0; d < 4; ++d) {
+            ll ni = i + dx[d];
+            ll nj = j + dy[d];
+            if (ni >= 0 && ni < h && nj >= 0 && nj < w && !submerged[ni][nj]) {
+                // Only add to queue if its elevation <= max year
+                if (grid[ni][nj] <= y) {
+                    submerged[ni][nj] = true;
+                    pq.push({grid[ni][nj], ni * w + nj});
+                }
+            }
+        }
+    }
+
+    // Build prefix sum from high to low
+    vl suffix_sum(y+2, 0);
+    for (ll i = y; i >= 1; --i) {
+        suffix_sum[i] = suffix_sum[i+1] + remaining[i];
+    }
+
+    // Total area above sea level at year i is total cells minus submerged ones up to that year
+    for (ll i = 1; i <= y; ++i) {
+        cout << total - suffix_sum[i] << "\n";
+    }
+
+    return 0;
+}

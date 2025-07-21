@@ -1,0 +1,32 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    int n;
+    scanf("%d", &n);
+    string s(n + 1), t(n + 1);
+    cin >> s;
+    
+    // Transform 'P' to 'S', 'R' to 'P', 'S' to 'R'
+    transform(begin(s), end(s), begin(t), begin(t), [](char x, char y){
+        return x == 'P' ? 'S' : (x == 'R' ? 'P' : 'R');
+    });
+    
+    // Count maximum length of alternating characters in both strings
+    int ans = 0;
+    for (int i = 1; i <= n; ++i) {
+        int cnt1 = 1, cnt2 = 1;
+        for (int j = i + 1; j <= n; ++j) {
+            if (t[j] != t[j - 1]) cnt1++;
+            else break;
+        }
+        for (int j = i + 1; j <= n; ++j) {
+            if (s[j] != s[j - 1]) cnt2++;
+            else break;
+        }
+        ans = max({ans, cnt1, cnt2});
+    }
+    
+    printf("%d\n", ans);
+    return 0;
+}

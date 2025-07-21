@@ -1,0 +1,61 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+const int N = 2e5 + 5;
+vector<int> g[N];
+int n, m, dep[N], par[N];
+
+bool dfs(int u, int p) {
+    par[u] = p;
+    for (auto v : g[u]) {
+        if (v == p) continue; // Skip the parent node
+        if (dep[v]) return true; // Cycle detected
+        dep[v] = dep[u] + 1;
+        if (dfs(v, u)) return true;
+    }
+    return false;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    cout.tie(nullptr);
+
+    cin >> n >> m;
+    for (int i = 1; i <= m; i++) {
+        int u, v;
+        cin >> u >> v;
+        g[u].push_back(v);
+    }
+
+    bool foundCycle = false;
+    for (int i = 1; i <= n; i++) {
+        if (dep[i]) continue; // Skip already visited nodes
+        dep[i] = 1;
+        if (dfs(i, -1)) {
+            foundCycle = true;
+            break;
+        }
+    }
+
+    if (!foundCycle) {
+        cout << "-1\n";
+        return 0;
+    }
+
+    int min_edges = INT_MAX;
+    for (int i = 1; i <= n; i++) {
+        if (par[i] != -1) {
+            int current = i;
+            int count = 0;
+            do {
+                current = par[current];
+                count++;
+            } while (current != i); // Loop until we find the start of the cycle again
+            min_edges = min(min_edges, count);
+        }
+    }
+
+    cout << min_edges << "\n";
+    return 0;
+}

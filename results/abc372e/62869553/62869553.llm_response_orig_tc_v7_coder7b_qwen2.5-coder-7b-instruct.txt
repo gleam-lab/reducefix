@@ -1,0 +1,115 @@
+To fix your code, we need to address several issues:
+
+1. **Union-Find Data Structure**: Your current implementation of Union-Find might not be efficient enough for the constraints. We need to ensure that path compression and union by rank are properly implemented to keep the operations close to O(\(\alpha(n)\)).
+
+2. **Handling Queries Efficiently**: For each query, we need to efficiently find the connected component and then sort the nodes in that component. Sorting can be expensive, so we need to minimize it.
+
+3. **Edge Cases**: Handle cases where there are no edges or the graph has only one node.
+
+Here's a revised version of your code:
+
+```cpp
+#include<bits/stdc++.h>
+using namespace std;
+
+const int MAXN = 200005;
+vector<int> parent(MAXN), size(MAXN);
+
+void init(int n) {
+    iota(parent.begin(), parent.end(), 0);
+    fill(size.begin(), size.end(), 1);
+}
+
+int find(int u) {
+    if (parent[u] != u) {
+        parent[u] = find(parent[u]);
+    }
+    return parent[u];
+}
+
+void unite(int u, int v) {
+    u = find(u);
+    v = find(v);
+    if (u == v) return;
+    if (size[u] > size[v]) swap(u, v);
+    parent[u] = v;
+    size[v] += size[u];
+}
+
+vector<int> getConnectedComponents(int n, vector<vector<int>>& edges) {
+    vector<vector<int>> components(n + 1);
+    for (auto& e : edges) {
+        components[find(e[0])].push_back(e[1]);
+        components[find(e[1])].push_back(e[0]);
+    }
+    return components;
+}
+
+vector<int> solveQueries(int n, vector<vector<int>>& edges, vector<pair<int, pair<int, int>>>& queries) {
+    init(n);
+    vector<vector<int>> result;
+    for (auto& query : queries) {
+        int type = query.first;
+        int v = query.second.first;
+        int k = query.second.second;
+        
+        if (type == 1) {
+            int u = query.second.first;
+            int v = query.second.second;
+            unite(u, v);
+        } else if (type == 2) {
+            vector<int> component;
+            int root = find(v);
+            for (int i = 1; i <= n; ++i) {
+                if (find(i) == root && i != v) {
+                    component.push_back(i);
+                }
+            }
+            if (component.size() < k) {
+                result.push_back(-1);
+            } else {
+                nth_element(component.begin(), component.begin() + k - 1, component.end());
+                result.push_back(component[k - 1]);
+            }
+        }
+    }
+    return result;
+}
+
+int main() {
+    ios_base::sync_with_stdio(false); cin.tie(NULL);
+    
+    int n, q;
+    cin >> n >> q;
+    vector<vector<int>> edges;
+    vector<pair<int, pair<int, int>>> queries;
+    
+    for (int i = 0; i < q; ++i) {
+        int op, ix, iy;
+        cin >> op >> ix >> iy;
+        if (op == 1) {
+            edges.push_back({ix, iy});
+        } else {
+            queries.push_back({op, {ix, iy}});
+        }
+    }
+    
+    auto result = solveQueries(n, edges, queries);
+    
+    for (int ans : result) {
+        cout << ans << '\n';
+    }
+    
+    return 0;
+}
+```
+
+### Explanation:
+1. **Initialization**: We initialize the Union-Find structure using `init` function.
+2. **Find Operation**: Path compression is used to speed up future queries.
+3. **Unite Operation**: Union by rank ensures that smaller trees are always attached under larger trees.
+4. **Solving Queries**:
+   - For type 1 queries, we simply unite the two nodes.
+   - For type 2 queries, we first find all nodes in the same connected component as the queried node, excluding the queried node itself. Then, we use `nth_element` to find the k-th largest element efficiently.
+
+This approach ensures that both union and find operations are nearly constant time, making the solution efficient for large inputs.

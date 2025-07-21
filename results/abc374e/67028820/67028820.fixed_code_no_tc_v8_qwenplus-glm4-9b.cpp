@@ -1,0 +1,48 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+
+#define int long long
+#define ld long double
+
+int n, x;
+vector<int> a, b, p, q;
+
+bool canMake(int mid) {
+    ld total_cost = 0;
+    for (int i = 0; i < n; i++) {
+        int x_a = mid / a[i];
+        int x_b = mid / b[i];
+        int temp = mid - x_b * b[i];
+
+        if (p[i] >= q[i]) {
+            total_cost += x_a * p[i];
+        } else {
+            total_cost += x_b * q[i];
+            if (temp < a[i]) {
+                total_cost += (a[i] - temp) * p[i];
+            }
+        }
+    }
+
+    return total_cost <= (ld)x;
+}
+
+signed main() {
+    cin >> n >> x;
+    a.resize(n);
+    b.resize(n);
+    p.resize(n);
+    q.resize(n);
+    for (int i = 0; i < n; i++) cin >> a[i] >> p[i] >> b[i] >> q[i];
+
+    int left = 0, right = 1e10;
+    while (left < right) {
+        int mid = (left + right + 1) / 2;
+        if (canMake(mid)) left = mid;
+        else right = mid - 1;
+    }
+
+    cout << left;
+    return 0;
+}

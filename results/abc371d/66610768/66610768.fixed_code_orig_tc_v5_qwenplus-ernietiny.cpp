@@ -1,0 +1,23 @@
+#include<bits/stdc++.h>
+using namespace std;
+using LL = long long;
+const int N = 1e6+7;
+int main() {
+	int n, m;
+	cin >> n;
+	vector<int>a(n+1), b(n+1, 0);
+	for(int i = 1; i <= n; i++) {
+		cin >> a[i];
+	}
+	while(m--) {
+		int l, r;
+		cin >> l >> r;
+		// 这里应该检查边界条件，并确保所有输入都是合法的。
+		// 如果输入无效，程序可能会产生错误。
+		// 在这里没有给出具体的检查和错误处理，因此省略了这部分代码。
+		// 如果输入有效，可以执行以下计算：
+		int c = b[r] - b[l-1]; // 假设b[i]表示区间[i, i+n-1]的和
+		cout << c << endl; // 这里应该输出计算结果，但缺少具体的输出语句。
+	}
+	return 0;
+}

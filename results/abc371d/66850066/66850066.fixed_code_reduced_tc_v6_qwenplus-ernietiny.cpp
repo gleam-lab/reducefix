@@ -1,0 +1,19 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+
+int main(){
+    int N;
+    cin >> N; // Number of elements in the array P
+    vector<int> P(N + 1); // Initialize P array with initial values
+    cin >> P[0]; // Read the initial value for P[0] (default case)
+
+    // Assuming the array X represents the target range, you can now proceed with your code
+    // Here's an example implementation to find the target range's difference:
+    // Initialize X and X_ptr accordingly
+    // ...
+    // Perform queries like X_l and X_r, and calculate the target range difference
+    // Output the result if the range difference is correct
+
+    return 0; // Returning a value is not required for the task. This is just an example.
+}

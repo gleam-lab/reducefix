@@ -1,0 +1,66 @@
+#include <iostream>
+#include <vector>
+#include <set>
+using namespace std;
+#define rep(i, n) for (int i = 0; i < (n); i++)
+
+int main() {
+    int h, w, q;
+    cin >> h >> w >> q;
+    vector<set<int>> grid_walls(h, set<int>(w + 1)); // Using w + 1 to handle one-based indexing easily
+    
+    // Initialize grid walls
+    for (int i = 0; i < h; i++) {
+        for (int j = 0; j < w; j++) {
+            grid_walls[i].insert(j + 1); // Insert column index + 1 to represent wall
+        }
+    }
+    
+    // Process queries
+    while (q--) {
+        int r, c;
+        cin >> r >> c;
+        r--; c--; // Convert to zero-based index
+        
+        // Check if there is a wall at (r, c)
+        if (grid_walls[r].find(c + 1) != grid_walls[r].end()) {
+            // Destroy the wall at (r, c)
+            grid_walls[r].erase(c + 1);
+        } else {
+            // Destroy the first wall in each direction
+            // Up
+            while (!grid_walls[r].empty() && grid_walls[r].find(grid_walls[r].begin()->first - 1) != grid_walls[r].end()) {
+                grid_walls[r].erase(grid_walls[r].begin());
+            }
+            // Down
+            while (!grid_walls[r].empty() && grid_walls[r].find(grid_walls[r].rbegin()->first + 1) != grid_walls[r].end()) {
+                grid_walls[r].erase(grid_walls[r].rbegin());
+            }
+            // Left
+            for (int col : grid_walls[r]) {
+                if (col > c + 1) {
+                    grid_walls[r].erase(col);
+                    break;
+                }
+            }
+            // Right
+            for (int col : grid_walls[r]) {
+                if (col < c + 1) {
+                    grid_walls[r].erase(col);
+                    break;
+                }
+            }
+        }
+    }
+    
+    // Calculate the remaining number of walls
+    int remaining_walls = 0;
+    for (const auto &row : grid_walls) {
+        for (int col : row) {
+            remaining_walls += col - 1; // col - 1 because we use 1-based indexing for walls
+        }
+    }
+    
+    cout << remaining_walls << endl;
+    return 0;
+}

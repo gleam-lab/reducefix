@@ -1,0 +1,65 @@
+#include <iostream>
+#include <vector>
+#include <set>
+#include <algorithm>
+
+using namespace std;
+
+int main() {
+    int h, w, q;
+    cin >> h >> w >> q;
+
+    vector<vector<bool>> grid(h + 2, vector<bool>(w + 2, true));
+
+    for (int i = 0; i <= h; i++) {
+        for (int j = 0; j <= w; j++) {
+            if (i == 0 || i == h + 1 || j == 0 || j == w + 1) {
+                grid[i][j] = false; // Set boundary walls to false
+            }
+        }
+    }
+
+    vector<pair<int, int>> queries(q);
+    for (int i = 0; i < q; i++) {
+        int r, c;
+        cin >> r >> c;
+        queries[i] = {r, c};
+    }
+
+    sort(queries.begin(), queries.end());
+
+    vector<pair<int, int>> to_destroy;
+    int remaining_walls = (h + 1) * (w + 1); // Initial count of walls
+
+    for (const auto& q : queries) {
+        int r = q.first, c = q.second;
+        if (grid[r][c]) {
+            // Bomb destroys the wall at (r, c)
+            grid[r][c] = false;
+            to_destroy.push_back({r, c});
+            remaining_walls--;
+        }
+    }
+
+    // Remove walls in rows and columns that are affected by the bomb
+    for (const auto& p : to_destroy) {
+        int r = p.first, c = p.second;
+        // Remove walls in the row
+        for (int j = 1; j <= w; j++) {
+            if (grid[r][j]) {
+                grid[r][j] = false;
+                remaining_walls--;
+            }
+        }
+        // Remove walls in the column
+        for (int i = 1; i <= h; i++) {
+            if (grid[i][c]) {
+                grid[i][c] = false;
+                remaining_walls--;
+            }
+        }
+    }
+
+    cout << remaining_walls << endl;
+    return 0;
+}

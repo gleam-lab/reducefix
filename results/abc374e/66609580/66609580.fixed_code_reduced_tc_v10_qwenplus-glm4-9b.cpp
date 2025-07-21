@@ -1,0 +1,55 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <numeric>
+#include <bit>
+
+using namespace std;
+
+int n;
+long long a[110], b[110], p[110], q[110], x;
+
+inline long long gcd(long long x, long long y) {
+    return y == 0 ? x : gcd(y, x % y);
+}
+
+inline long long lcm(long long x, long long y) {
+    return x / gcd(x, y) * y;
+}
+
+inline long long lower_bound(long long l, long long r, long long val) {
+    while (l < r) {
+        long long mid = l + (r - l) / 2;
+        if (val >= mid) l = mid;
+        else r = mid;
+    }
+    return l;
+}
+
+bool check(long long v) {
+    long long cnt = 0;
+    for (int i = 1; i <= n; i++) {
+        long long _lcm = lcm(a[i], b[i]);
+        long long vm = max(0LL, (v / _lcm - 1) * min(p[i] * (_lcm / a[i]), q[i] * (_lcm / b[i])));
+        cnt += vm;
+        if (cnt > x) return 0;
+    }
+    return 1;
+}
+
+int main() {
+    ios::sync_with_stdio(0);
+    cin.tie(0), cout.tie(0);
+    cin >> n >> x;
+    for (int i = 0; i <= n; ++i) {
+        cin >> a[i] >> p[i] >> b[i] >> q[i];
+    }
+    long long l = 0, r = 1e18;
+    while (l + 1 < r) {
+        long long mid = (l + r) / 2;
+        if (check(mid)) l = mid;
+        else r = mid;
+    }
+    cout << l << '\n';
+    return 0;
+}

@@ -1,0 +1,111 @@
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+struct RangeQuery {
+    vector<vector<int>> nodes;
+    vector<int> lazy;
+    vector<vector<int>> nums;
+
+    RangeQuery(int n) {
+        int size = 1;
+        while (size < n) size *= 2;
+        nodes.resize(2 * size);
+        lazy.resize(2 * size, 0);
+        nums.resize(2 * size, vector<int>(2));
+    }
+
+    void update(int l, int r, int val) {
+        update(l, r, val, 1, 1, nodes.size());
+    }
+
+    void update(int l, int r, int val, int start, int left, int right) {
+        if (lazy[start] != 0) {
+            nums[start][0] += lazy[start];
+            nums[start][1] += lazy[start] * (right - left);
+            lazy[2 * start] += lazy[start];
+            lazy[2 * start + 1] += lazy[start];
+            lazy[start] = 0;
+        }
+        if (r <= left || right <= l) return;
+        if (l <= left && right <= r) {
+            nums[start][0] += val;
+            nums[start][1] += val * (right - left);
+            lazy[2 * start] += val;
+            lazy[2 * start + 1] += val;
+            return;
+        }
+        int mid = (left + right) / 2;
+        update(l, r, val, 2 * start, left, mid);
+        update(l, r, val, 2 * start + 1, mid, right);
+        nums[start][0] = nums[2 * start][0] + nums[2 * start + 1][0];
+        nums[start][1] = nums[2 * start][1] + nums[2 * start + 1][1];
+    }
+
+    int query(int idx) {
+        return query(idx, 1, 1, nodes.size());
+    }
+
+    int query(int idx, int start, int left, int right) {
+        if (lazy[start] != 0) {
+            nums[start][0] += lazy[start];
+            nums[start][1] += lazy[start] * (right - left);
+            lazy[2 * start] += lazy[start];
+            lazy[2 * start + 1] += lazy[start];
+            lazy[start] = 0;
+        }
+        if (idx <= left && right <= idx) return nums[start][0];
+        int mid = (left + right) / 2;
+        if (idx <= mid) return query(idx, 2 * start, left, mid);
+        return query(idx, 2 * start + 1, mid, right);
+    }
+};
+
+int main() {
+    int n, m, k;
+    cin >> n >> m >> k;
+    vector<long long> a(n);
+    for (int i = 0; i < n; i++) {
+        cin >> a[i];
+    }
+    sort(a.rbegin(), a.rend());
+    vector<long long> pref(n);
+    pref[0] = a[0];
+    for (int i = 1; i < n; i++) {
+        pref[i] = pref[i - 1] + a[i];
+    }
+    vector<int> ans(n, -1);
+    vector<long long> votes_needed(n, -1);
+    RangeQuery rq(n);
+    for (int i = 0; i < n; i++) {
+        long long votes = pref[i] + (i >= m ? 1 : 0) - k;
+        if (votes > 0) {
+            long long current_votes = votes - (i < m ? 1 : 0);
+            int needed_votes = min(k - current_votes + 1, m - i);
+            votes_needed[i] = needed_votes;
+            rq.update(i, n - 1, needed_votes, 1, 0, n);
+        }
+    }
+    for (int i = 0; i < n; i++) {
+        if (votes_needed[i] == -1) {
+            ans[i] = -1;
+            continue;
+        }
+        int available = k - pref[i] - (i < m ? 1 : 0) + 1;
+        if (available < votes_needed[i]) {
+            ans[i] = -1;
+        } else {
+            ans[i] = votes_needed[i] - available;
+        }
+    }
+    for (int i = 0; i < n; i++) {
+        if (ans[i] == -1) {
+            cout << -1 << ' ';
+        } else {
+            cout << ans[i] << ' ';
+        }
+    }
+    return 0;
+}
+```

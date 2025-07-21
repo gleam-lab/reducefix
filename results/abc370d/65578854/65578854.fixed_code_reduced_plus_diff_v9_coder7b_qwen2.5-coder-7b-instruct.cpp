@@ -1,0 +1,38 @@
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+
+const int MAXN = 400005;
+vector<vector<pair<int, int>>> adj[MAXN];
+bool visited[MAXN];
+
+void dfs(int u) {
+    visited[u] = true;
+    for(auto [v, d] : adj[u]) {
+        if(!visited[v])
+            dfs(v);
+    }
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);cin.tie(NULL);
+    int H, W, Q;
+    cin >> H >> W >> Q;
+    for(int i = 1; i <= H; i++) {
+        for(int j = 1; j <= W; j++) {
+            adj[i].push_back({j, 0});
+            adj[j].push_back({i, 1});
+        }
+    }
+    while(Q--) {
+        int R, C;
+        cin >> R >> C;
+        R++; C++;
+        dfs(R);
+        memset(visited, false, sizeof(visited));
+        dfs(C);
+        memset(visited, false, sizeof(visited));
+    }
+    cout << H * W - adj[1][0].second - adj[1][1].second << "\n";
+    return 0;
+}

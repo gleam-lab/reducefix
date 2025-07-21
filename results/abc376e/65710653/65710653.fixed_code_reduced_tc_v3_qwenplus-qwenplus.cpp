@@ -1,0 +1,59 @@
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+using pll = pair<long long, long long>;
+
+#define rep(i, a, b) for(long long i = (a); i < (b); i++)
+#define rrep(i, a, b) for(long long i = (b)-1; i >= (a); i--)
+#define all(x) (x).begin(), (x).end()
+
+void solve() {
+    ll N, K;
+    cin >> N >> K;
+    vector<pll> items(N);
+    for (int i = 0; i < N; ++i) cin >> items[i].first;
+    for (int i = 0; i < N; ++i) cin >> items[i].second;
+
+    // Sort by A_i ascending
+    sort(items.begin(), items.end());
+
+    // Min-heap to keep track of smallest K B_i values
+    multiset<ll> top_k_bs;
+    ll sum_b = 0;
+
+    // Initialize with first K elements
+    for (int i = 0; i < K; ++i) {
+        top_k_bs.insert(items[i].second);
+        sum_b += items[i].second;
+    }
+
+    ll ans = sum_b * items[K - 1].first;
+
+    // Try each possible maximum A_i
+    for (int i = K; i < N; ++i) {
+        // If current B_i is larger than the smallest in our set
+        if (items[i].second > *top_k_bs.begin()) {
+            // Remove the smallest B_i
+            sum_b -= *top_k_bs.begin();
+            top_k_bs.erase(top_k_bs.begin());
+            // Add current B_i
+            top_k_bs.insert(items[i].second);
+            sum_b += items[i].second;
+        }
+        // Update answer with current max A_i and sum of B_i
+        ans = min(ans, sum_b * items[i].first);
+    }
+
+    cout << ans << '\n';
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int T;
+    cin >> T;
+    while (T--) solve();
+    
+    return 0;
+}

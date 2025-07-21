@@ -1,0 +1,47 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+
+using namespace std;
+
+struct Point {
+    int x, y, d;
+};
+
+bool canPlace(int r, int c, const vector<Point>& pieces) {
+    int n = pieces.size();
+    for (int i = 0; i < n; ++i) {
+        int x = pieces[i].x, y = pieces[i].y, d = pieces[i].d;
+        if (r == x || c == y || abs(r - c) == abs(x - y)) {
+            return false;
+        }
+        if (d == 0 && r + c == x + y) {
+            return false;
+        }
+        if (d == 1 && r - c == x - y) {
+            return false;
+        }
+    }
+    return true;
+}
+
+int main() {
+    int N, M;
+    cin >> N >> M;
+    vector<Point> pieces(M);
+    for (int i = 0; i < M; ++i) {
+        cin >> pieces[i].x >> pieces[i].y;
+        pieces[i].d = (pieces[i].x + pieces[i].y) % 2;
+    }
+
+    int ans = 0;
+    for (int r = 1; r <= N; ++r) {
+        for (int c = 1; c <= N; ++c) {
+            if (canPlace(r, c, pieces)) {
+                ans++;
+            }
+        }
+    }
+    cout << ans << endl;
+    return 0;
+}

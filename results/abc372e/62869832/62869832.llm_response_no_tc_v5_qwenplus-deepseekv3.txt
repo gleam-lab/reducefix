@@ -1,0 +1,81 @@
+To fix this code, we need to address several issues:
+
+1. **Input Reading**: The original code incorrectly reads `N` and `Q` and processes the queries in the wrong order.
+2. **Union-Find Data Structure**: The implementation of the Union-Find (Disjoint Set Union - DSU) is mostly correct but needs to be optimized for large inputs.
+3. **Handling Connected Components**: The code attempts to maintain the top 10 largest vertices in each connected component, but the merging logic is flawed. Specifically, it incorrectly merges the arrays and sorts them, leading to potential errors.
+4. **Query Processing**: The code processes each query but doesn't correctly handle the cases where the connected component has fewer than `k` vertices.
+
+### Approaches
+1. **Union-Find with Path Compression**: Use the Union-Find data structure to efficiently manage and merge connected components.
+2. **Maintain Top k Elements**: For each connected component, maintain a sorted list (in descending order) of the top 10 largest vertices. When merging two components, merge their lists and keep only the top 10 elements to ensure efficiency.
+3. **Input Handling**: Correctly read `N` and `Q` and process each query in the given order.
+
+### Solution Code
+```cpp
+#include<bits/stdc++.h>
+using namespace std;
+
+const int MAX_N = 200005;
+
+vector<int> as[MAX_N];
+int fa[MAX_N];
+int n, q;
+
+int find(int x) {
+    if (fa[x] != x) {
+        fa[x] = find(fa[x]);
+    }
+    return fa[x];
+}
+
+void merge(int x, int y) {
+    x = find(x);
+    y = find(y);
+    if (x == y) return;
+    if (as[x].size() < as[y].size()) {
+        swap(x, y);
+    }
+    fa[y] = x;
+    as[x].insert(as[x].end(), as[y].begin(), as[y].end());
+    sort(as[x].begin(), as[x].end(), greater<int>());
+    if (as[x].size() > 10) {
+        as[x].resize(10);
+    }
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(NULL);
+    cin >> n >> q;
+    for (int i = 1; i <= n; i++) {
+        fa[i] = i;
+        as[i].push_back(i);
+    }
+    while (q--) {
+        int op, u, v, k;
+        cin >> op;
+        if (op == 1) {
+            cin >> u >> v;
+            merge(u, v);
+        } else {
+            cin >> v >> k;
+            int root = find(v);
+            if (k > as[root].size()) {
+                cout << -1 << "\n";
+            } else {
+                cout << as[root][k-1] << "\n";
+            }
+        }
+    }
+    return 0;
+}
+```
+
+### Explanation
+1. **Initialization**: The `fa` array is initialized to each vertex being its own parent, and each vertex's list `as` contains only itself initially.
+2. **Find Operation**: The `find` function uses path compression to efficiently locate the root of a vertex's component.
+3. **Merge Operation**: The `merge` function combines two components by merging their vertex lists, sorting the combined list in descending order, and keeping only the top 10 elements for efficiency.
+4. **Query Processing**: For each query:
+   - **Type 1 (Add Edge)**: Calls `merge` to combine the components of vertices `u` and `v`.
+   - **Type 2 (Query k-th Largest)**: Finds the root of vertex `v` and checks if the component has at least `k` vertices. If not, it outputs `-1`; otherwise, it outputs the `k-th` largest vertex in the component's list.
+5. **Efficiency**: Path compression and union by size (implicit in the merge operation) ensure near-constant time per operation, making the solution efficient for large inputs. Maintaining only the top 10 elements in each component's list ensures the sorting and merging operations are also efficient.

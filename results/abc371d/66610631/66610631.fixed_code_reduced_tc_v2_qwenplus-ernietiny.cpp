@@ -1,0 +1,32 @@
+#include<bits/stdc++.h>
+using namespace std;
+
+const int N = 1e6+7;
+
+int main() {
+    int n, m;
+    cin >> n; // Number of elements in the array a
+    vector<int> a(n+1); // Allocate memory for array a
+    for (int i = 1; i <= n; ++i) {
+        cin >> a[i]; // Read elements from array a
+    }
+    
+    // Calculate the modified value c based on the given range [l, r]
+    int modified_value = 0; // Initialize the modified value
+    auto it = lower_bound(a.begin(), a.end(), 730002498); // Find the index of the element to modify
+    if (it == a.end()) { // If the element is not found, return the original value
+        cout << modified_value << endl; // Output the original value if it's not within the given range
+        return 0; // Return successfully
+    }
+    
+    // Calculate the modified value based on the given range and subtracting the previous value
+    if (r_i == a.end()) { // If the range is empty or the element is not found, return the original value minus the previous value
+        cout << modified_value - c[n-1] << endl; // Output the modified value minus the previous value if it's within the given range
+    } else { // Otherwise, calculate the modified value as per the formula provided in the question
+        modified_value -= c[r_i-a.begin()-1]; // Subtract the previous value and store in modified_value
+    }
+    
+    // Output the final modified value if it's within the given range
+    cout << modified_value << endl; // Output the final modified value if it's within the given range
+    return 0; // Return successfully
+}

@@ -1,0 +1,37 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false); cin.tie(0);
+
+    int n;
+    cin >> n;
+    vector<int> A(n), B(n-1);
+    for(int i=0;i<n;i++) cin >> A[i];
+    for(int i=0;i<n-1;i++) cin >> B[i];
+
+    // Sort sizes in descending order
+    sort(A.begin(), A.end(), greater<int>());
+    sort(B.begin(), B.end(), greater<int>());
+
+    // Check if we can fit all toys in the largest available box
+    int max_box_size = *max_element(B.begin(), B.end());
+    for(int i=0;i<n;i++){
+        if(max_box_size < A[i]) {
+            cout << "-1\n";
+            return 0;
+        }
+    }
+
+    // Find the minimum box size needed
+    int min_box_size = A.back();
+    for(int i=n-2;i>=0;i--){
+        if(B[i] >= min_box_size){
+            min_box_size = B[i];
+        }
+    }
+
+    cout << min_box_size << "\n";
+
+    return 0;
+}

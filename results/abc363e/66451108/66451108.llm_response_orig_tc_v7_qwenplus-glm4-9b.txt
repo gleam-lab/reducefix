@@ -1,0 +1,100 @@
+
+This problem is about simulating the process of ocean tides rising and causing the land to sink. Given an initial elevation grid of an island, we need to determine the area of the island that remains above sea level each year for a given number of years after the tide starts to rise.
+
+The approach to solve this problem efficiently involves:
+
+1. Identifying the landmass with the lowest elevation, as this will determine the sea level.
+2. Simulating the process of sinking for each year, where land adjacent to the sea level will also sink and affect the sea level.
+3. Using a priority queue (or a similar data structure) to keep track of the sinking process efficiently.
+
+Let's analyze the provided code and identify the issues and necessary corrections.
+
+### Issues in the Provided Code:
+1. The boundary conditions are not handled properly. The code is not checking if the newly computed landmass is still within the grid boundaries.
+2. The tide level increment is done in the loop, which will lead to a non-proportional increase in computation as the years progress.
+3. The priority queue is used to process nodes that have the highest elevation first, but it should be used to process nodes that have the lowest elevation first (since that's where the land will start sinking).
+4. The code is not optimized for performance and is not using the given constraints effectively.
+
+### Corrected Code:
+To address these issues, we'll use a priority queue to keep track of the nodes that are about to sink. We'll then update the tide level and the area of the remaining landmass each year. The corrected approach is as follows:
+
+1. Initialize a priority queue and add all boundary nodes (top, bottom, left, right edges) to it.
+2. Each year, calculate the tide level by finding the minimum elevation in the priority queue.
+3. For each node at the current tide level, remove it from the queue and check its neighbors (up, down, left, right).
+4. If a neighbor has an elevation that is not greater than the current tide level, add it to the queue.
+5. Update the area of the landmass by removing nodes that have sunk from the total landmass.
+6. Repeat the process for the number of years given.
+
+This approach is more efficient than the original as it prioritizes nodes based on their elevation and removes nodes from the queue once they have sunk, reducing the size of the queue over time.
+
+Given the constraints, the corrected code should work efficiently within the provided limits. 
+
+Here's a simplified version of how the corrected code might look:
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+#define int long long
+#define close ios::sync_with_stdio(false); cin.tie(0); cout.tie(0);
+#define MAXN 110
+#define LIMIT 22
+#define inf 0x3f3f3f3f3f3f
+#define endl '\n'
+const double eps = 1e-7;
+int dx[] = {0,0,1,-1};
+int dy[] = {1,-1,0,0};
+const int MOD = 1e9 + 7;
+
+struct Node {
+    int x,y,val;
+    bool operator <(const Node &a) const {
+        return val > a.val;
+    }
+};
+
+signed main() {
+    close;
+    int h, w, y; cin >> h >> w >> y;
+    vector<vector<int>> grid(h, vector<int>(w));
+    for (int i = 0; i < h; i++) {
+        for (int j = 0; j < w; j++) {
+            cin >> grid[i][j];
+        }
+    }
+
+    priority_queue<Node> pq;
+    // Add all boundary nodes to the priority queue
+    for (int i = 0; i < h; i++) {
+        pq.push({i, 0, grid[i][0]});
+        pq.push({i, w - 1, grid[i][w - 1]});
+    }
+    for (int i = 1; i < w - 1; i++) {
+        pq.push({0, i, grid[0][i]});
+        pq.push({h - 1, i, grid[h - 1][i]});
+    }
+
+    int total_area = h * w;
+    while (y--) {
+        Node node = pq.top(); pq.pop();
+        int current_tide = node.val;
+        // Update the area of the landmass that remains above the current tide level
+        total_area -= count_if(grid.begin(), grid.end(), [&](const vector<int>& row) {
+            return min_element(row.begin(), row.end()) >= current_tide;
+        });
+        // Add the neighboring nodes to the queue if they have not yet sunk
+        for (int i = 0; i < 4; i++) {
+            int nx = node.x + dx[i], ny = node.y + dy[i];
+            if (nx >= 0 && nx < h && ny >= 0 && ny < w && grid[nx][ny] > current_tide) {
+                pq.push({nx, ny, grid[nx][ny]});
+            }
+        }
+    }
+
+    for (int i = 0; i < y; i++) {
+        cout << total_area << endl;
+    }
+    return 0;
+}
+```
+
+This code initializes the priority queue with the boundary nodes, then processes each year as described above. The `count_if` function is used to find the number of nodes that have not yet sunk below the current tide level. The output is the remaining area of the landmass after each year.

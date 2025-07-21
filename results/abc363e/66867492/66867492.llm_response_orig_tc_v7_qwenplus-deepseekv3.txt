@@ -1,0 +1,82 @@
+To fix this code, we need to carefully analyze the problem and the algorithm used. The problem involves simulating the rising sea level and determining the remaining island area each year. The incorrect code likely has issues with how it processes the sinking sections and updates the remaining area.
+
+### Analysis
+1. **Problem Understanding**: The island is represented as a grid where each cell has an elevation. As the sea level rises by 1 each year, sections adjacent to the sea or already sunk sections with elevation ≤ the current sea level will sink. This process propagates to adjacent sections.
+2. **Algorithm**: We can use a priority queue (min-heap) to process sections in order of their elevation. For each year, we process all sections that sink due to the current sea level and their adjacent sections.
+3. **Issues in Original Code**: 
+   - The initial sinking of border sections might not be correctly handled.
+   - The priority queue might not be correctly updated when new sections sink.
+   - The order in which sections are processed might not be optimal, leading to incorrect counts.
+
+### Solution Code
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int H, W, Y;
+    cin >> H >> W >> Y;
+    vector<vector<int>> A(H, vector<int>(W));
+    for (int i = 0; i < H; ++i) {
+        for (int j = 0; j < W; ++j) {
+            cin >> A[i][j];
+        }
+    }
+
+    vector<vector<bool>> sunk(H, vector<bool>(W, false));
+    priority_queue<tuple<int, int, int>, vector<tuple<int, int, int>>, greater<tuple<int, int, int>>> pq;
+
+    // Push all border cells into the priority queue
+    for (int i = 0; i < H; ++i) {
+        pq.emplace(A[i][0], i, 0);
+        sunk[i][0] = true;
+        if (W > 1) {
+            pq.emplace(A[i][W-1], i, W-1);
+            sunk[i][W-1] = true;
+        }
+    }
+    for (int j = 1; j < W-1; ++j) {
+        pq.emplace(A[0][j], 0, j);
+        sunk[0][j] = true;
+        if (H > 1) {
+            pq.emplace(A[H-1][j], H-1, j);
+            sunk[H-1][j] = true;
+        }
+    }
+
+    int remaining = H * W;
+    const int dx[] = {1, 0, -1, 0};
+    const int dy[] = {0, 1, 0, -1};
+
+    for (int year = 1; year <= Y; ++year) {
+        while (!pq.empty() && get<0>(pq.top()) <= year) {
+            auto [elev, i, j] = pq.top();
+            pq.pop();
+            --remaining;
+            for (int d = 0; d < 4; ++d) {
+                int ni = i + dx[d];
+                int nj = j + dy[d];
+                if (ni >= 0 && ni < H && nj >= 0 && nj < W && !sunk[ni][nj]) {
+                    sunk[ni][nj] = true;
+                    pq.emplace(A[ni][nj], ni, nj);
+                }
+            }
+        }
+        cout << remaining << '\n';
+    }
+
+    return 0;
+}
+```
+
+### Explanation
+1. **Initialization**: The grid elevations are read, and a priority queue (min-heap) is initialized to process sections in order of their elevation.
+2. **Border Processing**: All border sections of the grid are added to the priority queue and marked as sunk initially since they are adjacent to the sea.
+3. **Yearly Simulation**: For each year:
+   - The priority queue is processed to sink all sections with elevation ≤ the current sea level.
+   - Each sunk section's adjacent sections are checked and added to the queue if they haven't been sunk yet.
+   - The remaining area is updated and printed for each year.
+4. **Efficiency**: The use of a priority queue ensures that sections are processed in the correct order, and the algorithm efficiently propagates the sinking process to adjacent sections, maintaining an optimal time complexity.

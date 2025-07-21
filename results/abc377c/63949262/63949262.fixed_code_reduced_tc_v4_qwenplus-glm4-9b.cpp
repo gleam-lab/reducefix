@@ -1,0 +1,86 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+
+using namespace std;
+
+#define INF 1000000000
+#define LINF 1000000000000000000
+
+#define fi first
+#define se second
+
+#define i32 int
+#define i64 long long
+
+#define u32 unsigned int
+#define u64 unsigned long long
+
+#define f64 double
+
+#define str string
+#define vec vector
+
+#define FOR_U(r, b, e, s) for (i64 r = (i64)b; r < (i64)e; r += (i64)s)
+#define FOR_L(r, b, e, s) for (i64 r = (i64)b; r > (i64)e; r -= (i64)s)
+#define FOR_R(r, b) for (auto r : b)
+
+using namespace std;
+
+int main() {
+    i64 N, M;
+    cin >> N >> M;
+
+    vector<pair<i64, i64>> captured_positions;
+    for (i64 i = 0; i < M; ++i) {
+        i64 x, y;
+        cin >> x >> y;
+        captured_positions.push_back(make_pair(x, y));
+    }
+
+    // Sort the positions to start capturing
+    sort(captured_positions.begin(), captured_positions.end());
+
+    // Calculate the number of cells that can be captured by each piece
+    i64 captured_cells = 0;
+    for (size_t i = 0; i < captured_positions.size(); ++i) {
+        i64 x = captured_positions[i].fi;
+        i64 y = captured_positions[i].se;
+
+        // For each piece, calculate the number of cells it can capture
+        // The piece can capture cells within the same "line" and also in the diagonals
+        // The maximum distance it can capture is 2 in both directions
+
+        // Check horizontal line
+        if (i == 0 || captured_positions[i - 1].fi == x) {
+            captured_cells += (min(x + 2, N + 1) - x) * 2;
+        }
+
+        // Check vertical line
+        if (i == 0 || captured_positions[i - 1].se == y) {
+            captured_cells += (min(y + 2, N + 1) - y) * 2;
+        }
+
+        // Check diagonals (both left and right)
+        if (i == 0 || captured_positions[i - 1].fi == x - 1 && captured_positions[i - 1].se == y - 1) {
+            captured_cells += (min(x + 1, N + 1) - x) * 2;
+        }
+        if (i == 0 || captured_positions[i - 1].fi == x + 1 && captured_positions[i - 1].se == y - 1) {
+            captured_cells += (min(x - 1, N + 1) - x) * 2;
+        }
+
+        // Check diagonals (both left and right) in the opposite direction
+        if (i == 0 || captured_positions[i - 1].fi == x - 1 && captured_positions[i - 1].se == y + 1) {
+            captured_cells += (min(x + 1, N + 1) - x) * 2;
+        }
+        if (i == 0 || captured_positions[i - 1].fi == x + 1 && captured_positions[i - 1].se == y + 1) {
+            captured_cells += (min(x - 1, N + 1) - x) * 2;
+        }
+    }
+
+    // Total cells are N * N
+    // Cells that can be placed without being captured are total cells - captured cells
+    cout << (N * N) - captured_cells << endl;
+
+    return 0;
+}

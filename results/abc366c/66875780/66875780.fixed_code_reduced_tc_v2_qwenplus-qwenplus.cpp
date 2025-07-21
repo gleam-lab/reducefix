@@ -1,0 +1,59 @@
+#include <iostream>
+#include <unordered_map>
+using namespace std;
+
+void fastIO()
+{
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    cout.tie(nullptr);
+}
+
+void Solve()
+{
+    long long Q;
+    cin >> Q;
+    
+    unordered_map<long long, int> counts;
+    int distinct = 0;
+    
+    while (Q--)
+    {
+        int type;
+        cin >> type;
+        
+        if (type == 1 || type == 2)
+        {
+            long long x;
+            cin >> x;
+            
+            if (type == 1)
+            {
+                if (counts[x] == 0)
+                    distinct++;
+                counts[x]++;
+            }
+            else // type == 2
+            {
+                counts[x]--;
+                if (counts[x] == 0)
+                    distinct--;
+            }
+        }
+        else if (type == 3)
+        {
+            cout << distinct << "\n";
+        }
+    }
+}
+
+int main()
+{
+    fastIO();
+    int t = 1;
+    while (t--)
+    {
+        Solve();
+    }
+    return 0;
+}

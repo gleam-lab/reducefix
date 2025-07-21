@@ -1,0 +1,29 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+  int n;
+  cin >> n;
+
+  long double px = 0, py = 0;
+  long double ans = 0;
+  long double x, y;
+
+  vector<pair<long double, long double>> points(n);
+  for (int i = 0; i < n; ++i) {
+    cin >> x >> y;
+    points[i] = {x, y};
+    ans += sqrt((x - px) * (x - px) + (y - py) * (y - py));
+    px = x;
+    py = y;
+  }
+
+  // Return to origin
+  ans += sqrt(px * px + py * py);
+
+  // Print with sufficient precision
+  cout.precision(15);
+  cout << fixed << ans << endl;
+
+  return 0;
+}

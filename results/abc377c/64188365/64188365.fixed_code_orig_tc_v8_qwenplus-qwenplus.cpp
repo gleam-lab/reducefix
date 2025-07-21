@@ -1,0 +1,51 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define rep(i,n) for(int i = 0; i < (n); ++i)
+using ll = long long;
+
+// Direction vectors for the 8 possible attack positions
+const int dx[8] = {2,1,-1,-2,-2,-1,1,2};
+const int dy[8] = {1,2,2,1,-1,-2,-2,-1};
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    ll N, M;
+    cin >> N >> M;
+    
+    set<pair<ll, ll>> occupied;
+    set<pair<ll, ll>> attacked;
+    
+    for (ll i = 0; i < M; ++i) {
+        ll a, b;
+        cin >> a >> b;
+        // Convert to 0-based index
+        occupied.emplace(a-1, b-1);
+    }
+    
+    // For each existing piece, mark the squares it can attack
+    for (auto [x, y] : occupied) {
+        for (int d = 0; d < 8; ++d) {
+            ll nx = x + dx[d];
+            ll ny = y + dy[d];
+            if (nx >= 0 && nx < N && ny >= 0 && ny < N) {
+                // Only consider positions within bounds
+                attacked.emplace(nx, ny);
+            }
+        }
+    }
+    
+    // Remove positions that are already occupied (they cannot be attacked positions)
+    for (auto pos : occupied) {
+        attacked.erase(pos);
+    }
+    
+    // Total squares = N*N - occupied squares - attacked squares
+    ll total = N * N;
+    ll result = total - occupied.size() - attacked.size();
+    
+    cout << result << endl;
+    
+    return 0;
+}

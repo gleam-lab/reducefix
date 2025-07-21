@@ -1,0 +1,49 @@
+#include<bits/stdc++.h>
+using namespace std;
+using ll=int64_t;
+#define rep(i,n) for(int i=0;i<n;i++)
+#define all(x) x.begin(),x.end()
+#define pb push_back
+#define sz(x) (ll)x.size()
+template<typename T>bool chmin(T& a,T b){if(a>b){a=b;return true;}return false;}
+template<typename T>bool chmax(T& a,T b){if(a<b){a=b;return true;}return false;}
+
+int dx[]={1,0,-1,0,1,1,-1,-1};
+int dy[]={0,1,0,-1,1,-1,1,-1};
+int main(){
+    cin.tie(0)->sync_with_stdio(0);
+    cin.tie(nullptr);
+
+    int H,W,Y;
+    cin>>H>>W>>Y;
+    vector<vector<int>>A(H,vector<int>(W));
+    rep(i,H)rep(j,W)cin>>A[i][j];
+    int ans=H*W;
+    vector<vector<bool>>F(H,vector<bool>(W,false));
+    vector<queue<pair<int,int>>>Q(100001);
+    rep(i,H)rep(j,W){
+        if(A[i][j]>Y){
+            F[i][j]=true;
+            ans--;
+        }else{
+            Q[A[i][j]].push({i,j});
+        }
+    }
+    for(int y=1;y<=Y;y++){
+        while(!Q[y].empty()){
+            auto [i,j]=Q[y].front();
+            Q[y].pop();
+            rep(k,4){
+                int ni=i+dx[k];
+                int nj=j+dy[k];
+                if(ni>=0&&ni<H&&nj>=0&&nj<W&&!F[ni][nj]){
+                    F[ni][nj]=true;
+                    ans--;
+                    Q[max(A[ni][nj],y)].push({ni,nj});
+                }
+            }
+        }
+        cout<<ans<<endl;
+    }
+
+}

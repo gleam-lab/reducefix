@@ -1,0 +1,111 @@
+To solve this problem efficiently, we need to simulate bomb placements on a grid and track which walls remain. The key challenge lies in efficiently finding the nearest undestroyed wall in each of the four cardinal directions when placing a bomb at a cell that already has no wall.
+
+### Key Observations:
+
+- We start with all cells having walls.
+- When a bomb is placed:
+  - If the current cell has a wall → destroy it.
+  - If not, find the first existing wall in each of the up, down, left, and right directions and destroy them (if any).
+- To do this efficiently:
+  - Use `std::set` for each row and column to store the indices of remaining walls.
+  - Sets allow logarithmic time insertions, deletions, and searches (like `upper_bound`, `lower_bound`).
+
+### Fixing Issues in the Provided Code:
+
+1. **Incorrect logic for finding the nearest wall above and to the left**:
+   - Using `--set.upper_bound(x)` can lead to incorrect results if there are multiple entries or if it's invalid.
+   - Need to ensure we correctly find the first wall in each direction.
+
+2. **Handling edge cases**:
+   - Ensure proper bounds checking.
+   - Avoid dereferencing an invalid iterator.
+
+3. **Efficiency considerations**:
+   - Maintain one set per row and one per column to represent positions of walls.
+   - Each query processes in `O(log N)` time where `N` is number of walls in a row/column.
+
+Here's the corrected and efficient code:
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+
+    int h, w, q;
+    cin >> h >> w >> q;
+
+    vector<set<int>> rows(h), cols(w);
+    for (int i = 0; i < h; ++i) {
+        for (int j = 0; j < w; ++j) {
+            rows[i].insert(j);
+            cols[j].insert(i);
+        }
+    }
+
+    while (q--) {
+        int r, c;
+        cin >> r >> c;
+        r--; c--;
+
+        auto& row_set = rows[r];
+        auto& col_set = cols[c];
+
+        if (row_set.find(c) != row_set.end()) {
+            // Wall exists here, just remove it
+            row_set.erase(c);
+            col_set.erase(r);
+        } else {
+            // Look in four directions
+
+            // Up (in column c, less than r)
+            auto up = col_set.lower_bound(r);
+            if (up != col_set.begin()) {
+                up--;
+                int ur = *up;
+                int uc = c;
+                rows[ur].erase(uc);
+                cols[uc].erase(ur);
+            }
+
+            // Down (in column c, greater than r)
+            auto down = col_set.upper_bound(r);
+            if (down != col_set.end()) {
+                int dr = *down;
+                int dc = c;
+                rows[dr].erase(dc);
+                cols[dc].erase(dr);
+            }
+
+            // Left (in row r, less than c)
+            auto left = row_set.lower_bound(c);
+            if (left != row_set.begin()) {
+                left--;
+                int lr = r;
+                int lc = *left;
+                rows[lr].erase(lc);
+                cols[lc].erase(lr);
+            }
+
+            // Right (in row r, greater than c)
+            auto right = row_set.upper_bound(c);
+            if (right != row_set.end()) {
+                int rr = r;
+                int rc = *right;
+                rows[rr].erase(rc);
+                cols[rc].erase(rr);
+            }
+        }
+    }
+
+    long long ans = 0;
+    for (int i = 0; i < h; ++i) {
+        ans += rows[i].size();
+    }
+    cout << ans << endl;
+
+    return 0;
+}
+```

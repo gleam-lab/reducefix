@@ -1,0 +1,53 @@
+#include <vector>
+#include <iostream>
+using namespace std;
+
+int main() {
+    int H, W, Q;
+    cin >> H >> W >> Q;
+    
+    // Initialize the grid with all cells being walls
+    vector<vector<bool>> grid(H, vector<bool>(W, true));
+    
+    while(Q--) {
+        int r, c;
+        cin >> r >> c;
+        
+        // Convert 1-based index to 0-based index
+        --r, --c;
+        
+        if(grid[r][c]) {
+            // If the cell has a wall, remove it
+            grid[r][c] = false;
+        } else {
+            // Otherwise, remove the nearest walls in all four directions
+            for(int dr = -1; dr <= 1; dr++) {
+                for(int dc = -1; dc <= 1; dc++) {
+                    if(dr == 0 && dc == 0) continue; // Skip the center cell itself
+                    
+                    int nr = r + dr, nc = c + dc;
+                    
+                    // Move in the direction until we hit a boundary or a wall
+                    while(nr >= 0 && nr < H && nc >= 0 && nc < W) {
+                        if(grid[nr][nc]) {
+                            // Remove the wall and break out of the loop
+                            grid[nr][nc] = false;
+                            break;
+                        }
+                        nr += dr;
+                        nc += dc;
+                    }
+                }
+            }
+        }
+    }
+
+    // Count the remaining walls and output the result
+    int remaining_walls = 0;
+    for(const auto& row : grid) {
+        remaining_walls += count(row.begin(), row.end(), true);
+    }
+    cout << remaining_walls << endl;
+
+    return 0;
+}

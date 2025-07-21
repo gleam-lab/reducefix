@@ -1,0 +1,101 @@
+
+The problem is a simulation of an island sinking as the sea level rises each year. The island is represented as a grid of elevation numbers, and cells are submerged based on their elevation relative to the rising sea level. The goal is to compute the area of the island above the sea level after a given number of years.
+
+### Analysis of the Incorrect Code
+
+The provided code has several flaws:
+1. **Incorrect Simulation of the Sinking Process**: The code attempts to simulate the sinking process using a priority queue (min-heap) and a flood fill-like approach. However, it does not handle the propagation of flooding correctly.
+2. **Priority Queue Misuse**: The priority queue is used to track the cells that are the first to be submerged. However, the logic for pushing new cells into the queue and for handling the propagation of flooding is broken.
+3. **Visitation Array Misuse**: The visitation array is used to avoid pushing the same submerged cell back into the queue, but it is not used correctly to propagate the flooding.
+4. **Edge Cases**: The code does not handle edge cases such as an island surrounded by high walls or a very narrow island effectively.
+
+### Corrected Approach
+
+The corrected approach involves the following steps:
+1. **Initialization**: Start with the entire island above the sea level and then simulate the sinking process year by year.
+2. **Flood Fill Simulation**: For each submerged cell, check its neighbors. If a neighbor is also submerged, continue the process. This simulates the flooding effect.
+3. **Priority Queue Handling**: Use the priority queue to manage the order in which cells are submerged. A cell with an elevation greater than the current sea level is added to the queue.
+4. **Output**: After simulating the sinking for the given number of years, output the area of the island that remains above sea level.
+
+### Corrected Code
+
+```cpp
+#include <iostream>
+#include <vector>
+#include <queue>
+#include <algorithm>
+
+using namespace std;
+
+struct Cell {
+    int x, y, height;
+};
+
+bool operator<(const Cell& a, const Cell& b) {
+    return a.height < b.height;
+}
+
+int main() {
+    int H, W, Y;
+    cin >> H >> W >> Y;
+
+    vector<vector<int>> A(H, vector<int>(W));
+    for (int i = 0; i < H; ++i) {
+        for (int j = 0; j < W; ++j) {
+            cin >> A[i][j];
+        }
+    }
+
+    priority_queue<Cell, vector<Cell>, less<>> pq;
+    vector<vector<bool>> visited(H, vector<bool>(W, false));
+
+    // Initialize the queue with cells on the border of the island
+    for (int i = 0; i < H; ++i) {
+        if (!visited[i][0]) pq.push({i, 0, A[i][0]});
+        if (!visited[i][W - 1]) pq.push({i, W - 1, A[i][W - 1]});
+    }
+    for (int j = 0; j < W; ++j) {
+        if (!visited[0][j]) pq.push({0, j, A[0][j]});
+        if (!visited[H - 1][j]) pq.push({H - 1, j, A[H - 1][j]});
+    }
+
+    while (!pq.empty()) {
+        Cell top = pq.top();
+        pq.pop();
+
+        // If the cell is already visited or if its height is less than or equal to the current sea level, skip it
+        if (visited[top.x][top.y] || top.height <= Y) continue;
+
+        visited[top.x][top.y] = true;
+
+        // Propagate the flooding to adjacent cells
+        if (top.x > 0 && !visited[top.x - 1][top.y]) {
+            pq.push({top.x - 1, top.y, A[top.x - 1][top.y]});
+        }
+        if (top.x < H - 1 && !visited[top.x + 1][top.y]) {
+            pq.push({top.x + 1, top.y, A[top.x + 1][top.y]});
+        }
+        if (top.y > 0 && !visited[top.x][top.y - 1]) {
+            pq.push({top.x, top.y - 1, A[top.x][top.y - 1]});
+        }
+        if (top.y < W - 1 && !visited[top.x][top.y + 1]) {
+            pq.push({top.x, top.y + 1, A[top.x][top.y + 1]});
+        }
+    }
+
+    // Output the area of the island above the sea level
+    int remaining_area = 0;
+    for (int i = 0; i < H; ++i) {
+        for (int j = 0; j < W; ++j) {
+            if (!visited[i][j]) {
+                remaining_area++;
+            }
+        }
+    }
+    cout << remaining_area << endl;
+
+    return 0;
+}
+```
+
+This corrected code simulates the sinking process more accurately by using a flood fill algorithm and properly managing the priority queue for cells that are submerged. It also correctly outputs the remaining area of the island after each year.

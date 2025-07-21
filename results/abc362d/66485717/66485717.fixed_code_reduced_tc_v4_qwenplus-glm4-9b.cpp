@@ -1,0 +1,64 @@
+#include <iostream>
+#include <vector>
+#include <queue>
+#include <algorithm>
+using namespace std;
+
+using i64 = long long;
+
+struct Edge {
+    int to;
+    int cost;
+    bool operator < (const Edge& other) const {
+        return cost > other.cost; // Max-heap based on negative cost
+    }
+};
+
+int main() {
+    int n, m;
+    cin >> n >> m;
+    
+    vector<i64> a(n + 1);
+    vector<vector<Edge>> graph(n + 1);
+    
+    for (int i = 1; i <= n; ++i) {
+        cin >> a[i];
+    }
+    
+    for (int i = 0; i < m; ++i) {
+        int u, v, cost;
+        cin >> u >> v >> cost;
+        graph[u].emplace_back(v, cost);
+        graph[v].emplace_back(u, cost);
+    }
+    
+    // Priority queue to process vertices based on the minimum cost path
+    priority_queue<Edge, vector<Edge>, greater<Edge>> pq;
+    vector<i64> dist(n + 1, i64_MAX);
+    dist[1] = a[1]; // Start from node 1 with its weight
+    
+    pq.push({1, dist[1]});
+    
+    while (!pq.empty()) {
+        int cur = pq.top().to;
+        i64 cost = -pq.top().cost; // Negate to simulate max-heap
+        pq.pop();
+        
+        if (cost > dist[cur]) continue;
+        
+        for (auto& edge : graph[cur]) {
+            i64 next_cost = cost + edge.cost + a[edge.to];
+            if (next_cost < dist[edge.to]) {
+                dist[edge.to] = next_cost;
+                pq.push({edge.to, -next_cost}); // Push negated cost back into heap
+            }
+        }
+    }
+    
+    for (int i = 2; i <= n; ++i) {
+        cout << dist[i] << (i < n ? " " : "");
+    }
+    cout << endl;
+    
+    return 0;
+}

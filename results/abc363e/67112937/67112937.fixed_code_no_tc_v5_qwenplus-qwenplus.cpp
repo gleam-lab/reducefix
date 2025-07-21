@@ -1,0 +1,76 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+
+constexpr int d[4][2] = {{0, 1}, {0, -1}, {1, 0}, {-1, 0}};
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int H, W, Y;
+    cin >> H >> W >> Y;
+
+    vector<vector<int>> A(H, vector<int>(W));
+    for (int i = 0; i < H; ++i) {
+        for (int j = 0; j < W; ++j) {
+            cin >> A[i][j];
+        }
+    }
+
+    // Priority queue to process cells in increasing order of elevation
+    priority_queue<tuple<int, int, int>, vector<tuple<int, int, int>>, greater<>> pq;
+    vector<vector<bool>> visited(H, vector<bool>(W, false));
+
+    // Mark and add all border cells to the priority queue
+    for (int i = 0; i < H; ++i) {
+        for (int j = 0; j < W; ++j) {
+            if (i == 0 || i == H - 1 || j == 0 || j == W - 1) {
+                pq.emplace(A[i][j], i, j);
+                visited[i][j] = true;
+            }
+        }
+    }
+
+    // To store the year when each cell gets submerged
+    vector<vector<int>> submerged_year(H, vector<int>(W, -1));
+
+    // BFS to simulate submersion over time
+    while (!pq.empty()) {
+        auto [height, x, y] = pq.top();
+        pq.pop();
+
+        submerged_year[x][y] = height;
+
+        for (auto &dir: d) {
+            int nx = x + dir[0], ny = y + dir[1];
+            if (nx >= 0 && nx < H && ny >= 0 && ny < W && !visited[nx][ny]) {
+                visited[nx][ny] = true;
+                pq.emplace(max(height, A[nx][ny]), nx, ny);
+            }
+        }
+    }
+
+    // Count how many cells remain unsubmerged at each year
+    vector<int> remaining(Y + 2, H * W);  // Start with full area
+
+    for (int i = 0; i < H; ++i) {
+        for (int j = 0; j < W; ++j) {
+            if (submerged_year[i][j] != -1 && submerged_year[i][j] <= Y) {
+                remaining[submerged_year[i][j]]--;
+            }
+        }
+    }
+
+    // Accumulate the remaining cells per year
+    for (int i = 1; i <= Y; ++i) {
+        remaining[i] = remaining[i - 1];
+    }
+
+    // Output results
+    for (int i = 1; i <= Y; ++i) {
+        cout << remaining[i] << "\n";
+    }
+
+    return 0;
+}

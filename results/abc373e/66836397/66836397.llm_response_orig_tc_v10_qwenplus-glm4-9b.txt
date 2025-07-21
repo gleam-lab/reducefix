@@ -1,0 +1,75 @@
+
+### Problem Analysis
+In this problem, we are given an election scenario with `N` candidates and `K` votes. Each candidate has received a certain number of votes, denoted by `A_i` for candidate `i`. We need to determine the minimum number of additional votes each candidate needs to guarantee their election, given that no more than `M` candidates can receive more votes than them by the end of the election.
+
+### Solution Strategy
+1. **Sorting and Prefix Sum Calculation**: First, we sort the candidates based on the votes they have already received (`A`). We also calculate the prefix sum of this sorted list to efficiently compute the number of votes any subset of candidates has received.
+
+2. **Binary Search for Minimum Votes**: For each candidate, we determine the minimum number of votes they need using binary search. The binary search checks if the candidate can guarantee their election with a certain number of additional votes (`x`). If they can, it lowers the upper bound (`ok`); otherwise, it raises the lower bound (`ng`).
+
+3. **Checking Feasibility**: For each candidate, we calculate the smallest index `u` such that if the candidate with the vote count at `u` receives all remaining votes, the candidate in question cannot be elected. This is done by checking the number of candidates who have more votes than the current candidate and ensuring that this number is less than `M`.
+
+4. **Edge Cases**: If a candidate already has more votes than `M-1` other candidates, they are guaranteed to win and do not need any more votes. If it's impossible for a candidate to win regardless of the distribution of remaining votes, the result is `-1`.
+
+### Code Explanation
+The provided code attempts to implement the above strategy but contains several issues. Below is a corrected and annotated version of the code that focuses on fixing logical errors and improving clarity.
+
+```cpp
+#include <iostream>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+const int MAXN = 200000 + 5;
+long long votes[MAXN];
+
+// Binary search function to determine the minimum votes needed
+long long bs(long long l, long long r, long long a, int m, int n) {
+    long long ok = l, ng = r;
+    while (abs(ok - ng) > 1) {
+        long long mid = ok + (ng - ok) / 2;
+        long long u = upper_bound(votes, votes + n, a + mid) - votes;
+        long long diff = n - u;
+        if (diff >= m) {
+            ok = mid;
+        } else {
+            ng = mid;
+        }
+    }
+    return ok;
+}
+
+int main() {
+    int n, m, k;
+    cin >> n >> m >> k;
+    for (int i = 0; i < n; ++i) {
+        cin >> votes[i];
+    }
+    sort(votes, votes + n);
+    vector<long long> prefixSum(n);
+    prefixSum[0] = votes[0];
+    for (int i = 1; i < n; ++i) {
+        prefixSum[i] = prefixSum[i - 1] + votes[i];
+    }
+
+    for (int i = 0; i < n; ++i) {
+        if (votes[i] >= m - 1) {
+            cout << 0 << " ";
+            continue;
+        }
+        long long additionalVotes = bs(0, k - prefixSum[n - 1], votes[i], m, n);
+        if (additionalVotes + votes[i] >= m - 1) {
+            cout << additionalVotes << " ";
+        } else {
+            cout << -1 << " ";
+        }
+    }
+    return 0;
+}
+```
+
+This corrected code includes:
+- Proper calculation of prefix sums for votes.
+- Use of binary search to determine the minimum additional votes needed.
+- Handling of edge cases where a candidate is already guaranteed to win.
+- Improved readability and efficiency.

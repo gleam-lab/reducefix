@@ -1,0 +1,58 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define rep(i, n) for (int i = 0; i < (n); ++i)
+using ll = long long;
+
+// Function to compute the minimum number of attacks needed for one enemy
+ll compute_attacks(ll h) {
+    // Each attack cycle: 3 attacks -> 1+1+3=5 damage
+    // x full cycles of 3 attacks: 5*x damage
+    ll x = h / 5;
+    ll ans = x * 3;
+    h -= x * 5;
+
+    // Remaining damage needed is h (0 <= h < 5)
+    if (h == 4) ans += 2; // 1 + 3
+    else if (h == 3) ans += 1; // direct 3
+    else if (h == 2 || h == 1) ans += h; // small hits
+
+    return ans;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+
+    int n;
+    cin >> n;
+    vector<ll> H(n);
+    for (int i = 0; i < n; ++i) {
+        cin >> H[i];
+    }
+
+    // Binary search on total time T
+    ll low = 0, high = 2e18; // large enough upper bound
+    while (low < high) {
+        ll mid = (low + high) / 2;
+        
+        // Check if we can finish all enemies in 'mid' seconds
+        bool done = true;
+        ll carry = 0; // leftover damage to next enemy
+
+        for (int i = n - 1; i >= 0; --i) {
+            ll dmg = (mid / 3) * 3 + (mid % 3);
+            ll effective_dmg = max(0LL, dmg - carry);
+            if (H[i] > effective_dmg) {
+                done = false;
+                carry = H[i] - effective_dmg;
+            } else {
+                carry = 0;
+            }
+        }
+
+        if (done) high = mid;
+        else low = mid + 1;
+    }
+
+    cout << low << endl;
+}

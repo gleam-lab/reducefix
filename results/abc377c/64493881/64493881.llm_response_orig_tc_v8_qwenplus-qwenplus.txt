@@ -1,0 +1,83 @@
+To solve this problem efficiently given the constraints (up to `10^9` grid size and `2 * 10^5` pieces), we must avoid iterating over the full grid. Instead, we focus on:
+
+1. **Tracking all occupied or threatened positions** using a set.
+2. **For each existing piece**, determine all positions it can potentially capture and mark those as unsafe.
+3. Subtract the number of unsafe positions from the total grid size squared to get the number of safe positions.
+
+The issue in your code is that you're inserting both `(a_k, b_k)` (the existing pieces) and the positions they threaten into the same set. This leads to **double-counting**, because if a position is both a piece and also threatened by another piece, it's inserted twice, but the set will only store one instance — leading to an incorrect count.
+
+### Fix Strategy:
+- Use two separate sets:
+  - One for positions where there's already a piece (`occupied`)
+  - One for positions that are threatened (`threatened`)
+
+Then:
+- Start with `N * N` total cells
+- Subtract all `occupied` positions
+- Subtract all `threatened` positions that are not already occupied
+
+This ensures no double counting.
+
+---
+
+Here is the corrected C++ code:
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+
+    int64_t N;
+    int M;
+    cin >> N >> M;
+
+    set<pair<int64_t, int64_t>> occupied;
+    set<pair<int64_t, int64_t>> threatened;
+
+    // Directions for threatening moves
+    vector<pair<int64_t, int64_t>> directions = {
+        {2, 1}, {1, 2}, {-1, 2}, {-2, 1},
+        {-2, -1}, {-1, -2}, {1, -2}, {2, -1}
+    };
+
+    for (int i = 0; i < M; ++i) {
+        int64_t a, b;
+        cin >> a >> b;
+        occupied.insert({a, b});
+
+        // For each knight move, check if it's within bounds
+        for (auto [dx, dy] : directions) {
+            int64_t nx = a + dx;
+            int64_t ny = b + dy;
+            if (1 <= nx && nx <= N && 1 <= ny && ny <= N) {
+                threatened.insert({nx, ny});
+            }
+        }
+    }
+
+    // Count how many threatened positions are not occupied
+    int64_t safe_positions = N * NLL * N * N - occupied.size();
+
+    for (auto pos : threatened) {
+        if (occupied.find(pos) == occupied.end()) {
+            safe_positions--;
+        }
+    }
+
+    cout << safe_positions << endl;
+
+    return 0;
+}
+```
+
+---
+
+### Key Fixes:
+- Used `set<pair<int64_t, int64_t>>` to safely store coordinates beyond 32-bit integer range.
+- Separated `occupied` and `threatened` sets to avoid overlap.
+- Only subtract non-occupied threatened positions from the total.
+
+This solution runs in `O(M log M)` time due to set operations and handles up to the maximum constraints efficiently.

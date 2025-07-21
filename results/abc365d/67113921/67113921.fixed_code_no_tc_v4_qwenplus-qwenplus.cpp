@@ -1,0 +1,37 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(NULL);
+
+    int N;
+    string S;
+    cin >> N;
+    cin >> S;
+
+    int wins = 0;
+    char last_move = 'X'; // Track the last move we played, initially invalid
+
+    for (char c : S) {
+        char counter_move;
+        if (c == 'R') {
+            counter_move = 'P';
+        } else if (c == 'P') {
+            counter_move = 'S';
+        } else { // c == 'S'
+            counter_move = 'R';
+        }
+
+        // If our counter move is different from the last one we used,
+        // we can use it and increase the win count
+        if (counter_move != last_move) {
+            wins++;
+            last_move = counter_move;
+        }
+        // Else, we do nothing (we tied or lost if opponent changed)
+    }
+
+    cout << wins;
+    return 0;
+}

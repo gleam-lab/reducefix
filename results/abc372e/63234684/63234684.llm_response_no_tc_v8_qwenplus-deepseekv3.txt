@@ -1,0 +1,93 @@
+To fix this code, we need to address several issues:
+
+1. **Handling k-th Largest Element**: The current approach sorts the entire list of connected vertices and keeps only the top 9 elements. However, the problem requires maintaining the k-th largest element where k can be up to 10. This approach is inefficient and incorrect because it doesn't properly handle the dynamic nature of the queries.
+
+2. **Indexing in Type 2 Queries**: The code incorrectly checks `uf.uni[uf.root(a)].size() <= b` where `b` is the zero-based index for the k-th largest element. The user's input is 1-based, and the code should adjust for this.
+
+3. **Efficiency**: The initial approach involves sorting and truncating lists, which is not efficient for large inputs (up to 200,000 queries). A better approach is needed to maintain the top 10 largest elements efficiently.
+
+4. **Union-Find Data Structure**: The current implementation merges two sets by sorting and truncating, which is not optimal. Instead, we should merge the sets while maintaining the top 10 elements in sorted order without sorting the entire list every time.
+
+### Approaches
+1. **Union-Find with Sorted Lists**: For each set, maintain a sorted list of the top 10 largest elements. When merging two sets, merge their top 10 lists and keep only the top 10 elements from the combined list. This ensures that we always have the necessary elements for any k up to 10.
+
+2. **Efficient Merging**: Use a priority queue or a vector to merge the top elements from both sets. This avoids the overhead of sorting the entire list each time.
+
+3. **Correct Indexing**: Ensure that the k-th largest element is correctly accessed, considering 1-based indexing from the user's input.
+
+### Solution Code
+```cpp
+#include<bits/stdc++.h>
+using namespace std;
+using ll = long long;
+#define rep(i,n) for(int i = 0;i<n;i++)
+using P = pair<int,int>;
+using T = tuple<int,int,int>;
+
+struct Union_Find {
+    vector<int> par;
+    vector<vector<int>> top;
+
+    Union_Find(int n) {
+        par.resize(n, -1);
+        top.resize(n);
+        rep(i, n) {
+            top[i].push_back(i);
+        }
+    }
+
+    int root(int v) {
+        if (par[v] == -1) return v;
+        else return par[v] = root(par[v]);
+    }
+
+    bool issame(int x, int y) {
+        return root(x) == root(y);
+    }
+
+    void merge(int x, int y) {
+        x = root(x), y = root(y);
+        if (x == y) return;
+        if (top[x].size() < top[y].size()) swap(x, y);
+        vector<int> merged;
+        merge(top[x].begin(), top[x].end(), top[y].begin(), top[y].end(), back_inserter(merged), greater<int>());
+        if (merged.size() > 10) merged.resize(10);
+        top[x] = merged;
+        par[y] = x;
+    }
+};
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int n, q;
+    cin >> n >> q;
+    Union_Find uf(n);
+
+    rep(i, q) {
+        int ty, a, b;
+        cin >> ty >> a >> b;
+        a--, b--;
+        if (ty == 1) {
+            uf.merge(a, b);
+        } else {
+            int root_a = uf.root(a);
+            if (uf.top[root_a].size() < b + 1) {
+                cout << -1 << '\n';
+            } else {
+                cout << uf.top[root_a][b] + 1 << '\n';
+            }
+        }
+    }
+}
+```
+
+### Explanation
+1. **Union-Find Structure**: The `Union_Find` class maintains a parent array `par` for tracking the root of each node and a `top` array of vectors. Each `top` vector stores the largest elements (up to 10) in the set.
+
+2. **Merge Operation**: When merging two sets, the elements from both sets' `top` vectors are merged in descending order, and only the top 10 elements are retained. This ensures efficient merging without sorting the entire list each time.
+
+3. **Query Handling**: For Type 2 queries, the code checks if the requested k-th largest element exists in the `top` vector of the root node. If it does, it returns the element; otherwise, it returns `-1`.
+
+4. **Efficiency**: By maintaining only the top 10 elements and using efficient merging (via `std::merge`), the solution handles the constraints effectively, ensuring both correctness and performance.

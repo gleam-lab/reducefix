@@ -1,0 +1,50 @@
+#include <iostream>
+#include <set>
+#include <utility>
+#include <vector>
+
+using namespace std;
+
+using i32 = int;
+using i64 = long long;
+using i128 = long long; // 一部のコンパイラでは__int128が使えるが、ここでは使わない
+
+// Knight move patterns: (dx, dy)
+const vector<pair<i32, i32>> knight_moves = {
+    {2, 1}, {1, 2}, {-1, 2}, {-2, 1},
+    {-2, -1}, {-1, -2}, {1, -2}, {2, -1}
+};
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    i32 N;
+    i32 M;
+    cin >> N >> M;
+
+    set<pair<i32, i32>> attacked_or_occupied;
+
+    for (i32 _ = 0; _ < M; ++_) {
+        i32 a, b;
+        cin >> a >> b;
+
+        // 元の駒自身は攻撃対象にならない（問題文より）
+        attacked_or_occupied.insert({a, b});
+
+        // この駒が攻撃するマスを記録
+        for (auto [dx, dy] : knight_moves) {
+            i32 na = a + dx;
+            i32 nb = b + dy;
+            if (1 <= na && na <= N && 1 <= nb && nb <= N) {
+                attacked_or_occupied.insert({na, nb});
+            }
+        }
+    }
+
+    // 答え = 全マス数 - 攻撃されるか占有されているマスの数
+    i64 ans = 1LL * N * N - static_cast<i64>(attacked_or_occupied.size());
+    cout << ans << '\n';
+
+    return 0;
+}

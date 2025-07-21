@@ -1,0 +1,46 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+const int N = 1 << 20;
+
+int n, q;
+long long a[N];
+vector<long long> sorted_a;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    cout.tie(nullptr);
+
+    cin >> n >> q;
+    for (int i = 0; i < n; ++i) {
+        cin >> a[i];
+    }
+    sort(a, a + n);
+    
+    while (q--) {
+        long long b, k;
+        cin >> b >> k;
+        
+        // Binary search on distance
+        long long low = 0, high = 2e14; // safe upper bound
+        
+        while (low < high) {
+            long long mid = (low + high) / 2;
+            
+            // Find range of A elements within distance <= mid from b using binary search
+            auto left = lower_bound(a, a + n, b - mid);
+            auto right = upper_bound(a, a + n, b + mid);
+            
+            if ((right - left) >= k) {
+                high = mid;
+            } else {
+                low = mid + 1;
+            }
+        }
+        
+        cout << low << "\n";
+    }
+
+    return 0;
+}

@@ -1,0 +1,52 @@
+#include <bits/stdc++.h>
+#define int long long
+using namespace std;
+
+const int N = 2e5 + 5;
+
+vector<int> g[N];
+int n, m, ans = -1;
+
+// We track distances from node 1 and then check if we can come back to 1 with minimal cycle length.
+int dist[N];
+
+void bfs(int start) {
+    queue<int> q;
+    q.push(start);
+    memset(dist, -1, sizeof(dist));
+    dist[start] = 0;
+
+    while (!q.empty()) {
+        int u = q.front();
+        q.pop();
+        for (int v : g[u]) {
+            if (dist[v] == -1) {
+                dist[v] = dist[u] + 1;
+                q.push(v);
+            }
+            // If we revisit node 1, that means there's a cycle.
+            // The total distance is dist[u] + dist[v] + 1 (current edge)
+            // But since one path is dist[u], and the other path is dist[v], this edge creates a cycle.
+            // So the minimal cycle length would be max(dist[u], dist[v]) + 1
+            else if (v == 1) {
+                if (ans == -1 || dist[u] + 1 < ans)
+                    ans = dist[u] + 1;
+            }
+        }
+    }
+}
+
+signed main() {
+    cin >> n >> m;
+    for (int i = 1; i <= m; i++) {
+        int u, v;
+        cin >> u >> v;
+        g[u].push_back(v);
+    }
+
+    bfs(1);
+
+    cout << ans << endl;
+
+    return 0;
+}

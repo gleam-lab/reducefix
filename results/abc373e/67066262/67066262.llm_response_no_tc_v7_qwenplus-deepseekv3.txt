@@ -1,0 +1,90 @@
+To fix this code, we need to correct the approach to determine the minimum additional votes each candidate needs to guarantee their election. The key is to ensure that for each candidate, after adding the votes, the number of candidates with strictly more votes is less than M. 
+
+### Approaches
+1. **Sorting and Binary Search**: For each candidate, we sort the votes and use binary search to find the minimum votes needed such that the candidate is among the top candidates after adding votes.
+2. **Check Feasibility**: For each candidate, we check if after adding `X` votes, the number of candidates with votes strictly greater than the candidate's votes (after addition) is less than M. This involves:
+   - Sorting the votes to identify the threshold.
+   - Using binary search to find the minimal `X` that satisfies the condition.
+3. **Edge Cases**: Handle cases where candidates are already elected or cannot be elected under any circumstances.
+
+### Solution Code
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+#define all(x) (x).begin(), (x).end()
+
+int main() {
+    ios_base::sync_with_stdio(0);
+    cin.tie(0);
+    int n, m;
+    ll k;
+    cin >> n >> m >> k;
+    vector<ll> a(n);
+    ll total = 0;
+    for (int i = 0; i < n; ++i) {
+        cin >> a[i];
+        total += a[i];
+    }
+    ll remaining = k - total;
+    
+    vector<int> ord(n);
+    iota(all(ord), 0);
+    sort(all(ord), [&](int i, int j) { return a[i] < a[j]; });
+    vector<ll> sorted_a = a;
+    sort(all(sorted_a));
+    
+    vector<ll> prefix(n + 1, 0);
+    for (int i = 0; i < n; ++i) {
+        prefix[i + 1] = prefix[i] + sorted_a[i];
+    }
+    
+    vector<ll> ans(n, -1);
+    for (int i = 0; i < n; ++i) {
+        ll original = a[ord[i]];
+        ll low = 0, high = remaining;
+        ll best = -1;
+        while (low <= high) {
+            ll mid = (low + high) / 2;
+            ll new_votes = original + mid;
+            
+            // Find the number of candidates with votes > new_votes
+            auto it = upper_bound(all(sorted_a), new_votes);
+            ll cnt = sorted_a.end() - it;
+            
+            if (new_votes > sorted_a[n - m]) {
+                cnt = n - m - (binary_search(all(sorted_a), new_votes) ? 1 : 0);
+            } else {
+                cnt = n - (it - sorted_a.begin());
+            }
+            
+            if (cnt < m) {
+                best = mid;
+                high = mid - 1;
+            } else {
+                low = mid + 1;
+            }
+        }
+        if (best != -1 && best <= remaining) {
+            ans[ord[i]] = best;
+        } else {
+            ans[ord[i]] = -1;
+        }
+    }
+    
+    for (int i = 0; i < n; ++i) {
+        cout << ans[i] << ' ';
+    }
+    cout << '\n';
+    return 0;
+}
+```
+
+### Explanation
+1. **Initialization**: The code reads the number of candidates `n`, the threshold `m`, and the total votes `k`. It initializes the votes for each candidate and computes the remaining votes.
+2. **Sorting**: The candidates' votes are sorted to facilitate binary search operations.
+3. **Binary Search**: For each candidate, a binary search is performed to find the minimal additional votes `X` such that after adding `X` votes, the candidate is among the top `n - m` candidates (i.e., fewer than `m` candidates have more votes).
+4. **Feasibility Check**: The binary search checks if the candidate's votes (after addition) ensure they are within the top `n - m` candidates. If feasible, the minimal `X` is recorded; otherwise, it's marked as `-1`.
+5. **Output**: The results for each candidate are printed, indicating the minimal votes needed or `-1` if election is impossible.
+
+This approach ensures efficiency and correctness by leveraging sorting and binary search to handle large input sizes within the constraints.

@@ -1,0 +1,37 @@
+#include <iostream>
+using namespace std;
+
+int main() {
+    int n, m;
+    cin >> n >> m;
+    
+    vector<pair<int, int>> pieces;
+    for (int i = 0; i < m; ++i) {
+        int a, b;
+        cin >> a >> b;
+        pieces.push_back({a, b});
+    }
+
+    // To find the number of empty squares where you can place your piece without it being captured by any existing pieces.
+    long ans = n * n; // Total number of squares
+
+    // Process each piece and mark the squares that it can capture
+    for (const auto& [a, b] : pieces) {
+        // The pieces can capture squares 2 steps away in one direction and 1 step away in the perpendicular direction
+        // This gives us 8 possible positions for the piece to capture
+        for (int dx = -2; dx <= 2; dx++) {
+            for (int dy = -1; dy <= 1; dy++) {
+                int ax = a + dx * 2;
+                int ay = b + dy * 1;
+                // Check if the position is within the grid boundaries and not already captured
+                if (ax >= 1 && ax <= n && ay >= 1 && ay <= n) {
+                    ans--; // We cannot place a piece here
+                }
+            }
+        }
+    }
+
+    cout << ans << endl;
+
+    return 0;
+}

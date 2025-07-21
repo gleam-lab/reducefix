@@ -1,0 +1,279 @@
+### Problem Description
+Score : 550 points
+
+### Problem Statement
+
+There is a grid of N^2 squares with N rows and N columns.
+Let (i,j) denote the square at the i-th row from the top (1\leq i\leq N) and j-th column from the left (1\leq j\leq N).
+
+Each square is either empty or has a piece placed on it.
+There are M pieces placed on the grid, and the k-th (1\leq k\leq M) piece is placed on square (a\_k,b\_k).
+
+You want to place your piece on an **empty square** in such a way that it **cannot be captured by any of the existing pieces**.
+
+A piece placed on square (i,j) can capture pieces that satisfy any of the following conditions:
+
+* Placed in row i
+* Placed in column j
+* Placed on any square (a,b)\ (1\leq a\leq N,1\leq b\leq N) where i+j=a+b
+* Placed on any square (a,b)\ (1\leq a\leq N,1\leq b\leq N) where i-j=a-b
+
+For example, a piece placed on square (4,4) can capture pieces placed on the squares shown in blue in the following figure:
+
+![](https://img.atcoder.jp/abc377/b0741e9d4d5765a5eeaf1b7f03310f3c.png)
+
+How many squares can you place your piece on?
+
+### Constraints
+
+* 1\leq N\leq10^9
+* 1\leq M\leq10^3
+* 1\leq a\_k\leq N,1\leq b\_k\leq N\ (1\leq k\leq M)
+* (a\_k,b\_k)\neq(a\_l,b\_l)\ (1\leq k\lt l\leq M)
+* All input values are integers.
+
+---
+
+### Input
+
+The input is given from Standard Input in the following format:
+
+```
+N M
+a_1 b_1
+a_2 b_2
+\vdots
+a_M b_M
+
+```
+
+### Output
+
+Print the number of empty squares where you can place your piece without it being captured by any existing pieces.
+
+---
+
+### Sample Input 1
+
+```
+8 6
+1 4
+2 1
+3 8
+4 5
+5 2
+8 3
+
+```
+
+### Sample Output 1
+
+```
+2
+
+```
+
+The existing pieces can capture pieces placed on the squares shown in blue in the following figure:
+
+![](https://img.atcoder.jp/abc377/49766c3613371e99673e5722bd64ad58.png)
+
+Therefore, you can place your piece on only two squares: squares (6,6) and (7,7).
+
+---
+
+### Sample Input 2
+
+```
+1000000000 1
+1 1
+
+```
+
+### Sample Output 2
+
+```
+999999997000000002
+
+```
+
+Out of 10^{18} squares, the squares that cannot be used are: squares in row 1, squares in column 1, and squares (1,1), (2,2), \ldots, (10^9,10^9), totaling 3\times10^9-2 squares.
+
+Note that the answer may be 2^{32} or greater.
+
+---
+
+### Sample Input 3
+
+```
+20 10
+1 4
+7 11
+7 15
+8 10
+11 6
+12 5
+13 1
+15 2
+20 10
+20 15
+
+```
+
+### Sample Output 3
+
+```
+77
+
+```
+
+### Your Incorrect Code
+```cpp
+#include<bits/stdc++.h>
+#define int long long
+#define PII pair<int,int>
+#define inf 1e9+7
+
+using namespace std;
+
+int qpowm(int a, int b, int m) {
+	int r = 1;
+	while (b) {
+		if (b & 1)(r *= a) %= m;
+		(a *= a) %= m, b >>= 1;
+	}
+	return r;
+}
+
+int qpow(int a, int b) {
+	int r = 1;
+	while (b) {
+		if (b & 1)r *= a;
+		a *= a;
+		b >>= 1;
+	}
+	return r;
+}
+
+
+void solve() {
+	int n, q;
+	cin >> n >> q;
+	set<int>h, v, d1, d2;//d1 存 i+j=d 的对角线 d2 存i-j=d的对角线
+
+	for (int i = 1, x, y; i <= q; i++) {
+		cin >> x >> y;
+		h.insert(x);
+		v.insert(y);
+		d1.insert(x + y);
+		d2.insert(x - y);
+	}
+
+	int ans = (n - (int)h.size()) * (n - (int)v.size());
+
+	for (auto d : d1) {
+		//i+j=d 的对角线
+		set<int>s;//记录已经被算过的行坐标
+		for (auto x : h) {// 找到所有和该对角线相交的水平线
+			if (1 <= d - x && d - x <= n) {
+				s.insert(x);
+			}
+		}
+
+		for (auto y : v) {// 找到所有和该对角线相交的垂直线
+			if (1 <= d - y && d - y <= n) {
+				s.insert(d - y);
+			}
+		}
+
+		int len = 0;
+		if (d <= n + 1) { //在左上部分，列坐标1~d-1
+			len = d - 1;
+		} else {//在右下部分，列坐标d-n~n
+			len = n - (d - n) +1;
+		}
+		ans = ans - (len - s.size());//所有这条对角线上y的取值（每个y对应一个x）减去 已经减去的x值（也就是已经减去了的点）
+	}
+
+
+
+	for (auto d : d2) {
+		//i-j=d 的对角线
+		set<int>s;//记录已经被算过的行坐标
+		for (auto x : h) {// 找到所有和该对角线相交的水平线
+			if (1 <= x - d && x - d <= n) {
+				s.insert(x);
+			}
+		}
+
+		for (auto y : v) {// 找到所有和该对角线相交的垂直线
+			if (1 <= d + y && d + y <= n) {
+				s.insert(d + y);
+			}
+		}
+
+		for (auto e : d1) {
+			//i+j==e,i-j==d
+			if ((e + d) % 2 == 0 && (e - d) % 2 == 0) {
+				int si = (e + d) / 2, sj = (e - d) / 2;
+				if (si >= 2 && si <= n && sj >= 1 && sj <= n) {
+					s.insert(si);
+				}
+			}
+		}
+
+
+		int len = 0;
+		if (d <= 0) { //在右上部分，列坐标1-d~n
+			len = n - (1 - d) +1;
+		} else {//在左下部分，列坐标1-n-d
+			len = n - d;
+		}
+		ans = ans - (len - s.size());//所有这条对角线上y的取值（每个y对应一个x）减去 已经减去的x值（也就是已经减去了的点）
+	}
+
+	cout << ans << endl;
+}
+
+signed main() {
+
+	int _ = 1;
+//	cin>>_;
+	while (_--) {
+		solve();
+	}
+
+	return 0;
+}
+```
+
+### Failing Case
+Input:
+```
+65536 2
+24092 36350
+1077 11183
+
+```
+Your Output:
+```
+4294523758
+
+```
+Expected Output:
+```
+4294523759
+
+```
+Error Analysis: Line 1: Got '4294523758', Expected '4294523759'
+
+### Your Task
+Fix the C++ code to pass ALL test cases (including hidden ones).
+
+### Critical Guidelines
+1. Focus on algorithmic correctness - NO hard-coded values or special cases
+2. Ensure proper data structures and complexity (aim for O(N log N) or better when possible)
+3. Handle edge cases (empty input, single elements, max constraints)
+4. Use standard C++20 features; avoid non-portable code
+
+### Output Format
+Provide ONLY the complete fixed C++ code in a single ```cpp block.

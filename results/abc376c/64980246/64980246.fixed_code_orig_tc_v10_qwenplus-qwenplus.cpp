@@ -1,0 +1,62 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+#define ll long long
+
+void solve() {
+    int n;
+    cin >> n;
+    vector<ll> a(n), b(n - 1);
+    for (auto &x : a) cin >> x;
+    for (auto &x : b) cin >> x;
+
+    sort(a.begin(), a.end());
+    sort(b.begin(), b.end());
+
+    multiset<ll> ms;
+    int i = 0, j = 0;
+    ll x = -1;
+
+    while (i < n || j < n - 1) {
+        if (j < n - 1 && (i == n || a[i] > b[j])) {
+            ms.insert(b[j]);
+            j++;
+        } else {
+            if (ms.empty()) {
+                // Cannot place this toy
+                cout << -1 << endl;
+                return;
+            }
+            auto it = ms.lower_bound(a[i]);
+            if (it != ms.end()) {
+                ms.erase(it);
+                i++;
+            } else {
+                // Try to use the smallest box available
+                // Since we cannot fit this toy in any box, try to store it in purchased box
+                if (x == -1) {
+                    x = a[i];
+                    i++;
+                } else {
+                    // Cannot find valid configuration
+                    cout << -1 << endl;
+                    return;
+                }
+            }
+        }
+    }
+
+    cout << x << endl;
+}
+
+int main() {
+    std::ios::sync_with_stdio(false);
+    std::cin.tie(nullptr);
+
+    int t = 1;
+    // cin >> t;
+    while (t--) {
+        solve();
+    }
+    return 0;
+}

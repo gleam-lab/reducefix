@@ -1,0 +1,77 @@
+#include <bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+#define all(x) (x).begin(), (x).end()
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int N, M;
+    ll K;
+    cin >> N >> M >> K;
+    vector<ll> A(N);
+    for (int i = 0; i < N; ++i) {
+        cin >> A[i];
+    }
+
+    // We'll compute how many votes each candidate needs to be safe
+    vector<ll> result(N, -1);
+
+    // Create a list of indices sorted by current vote counts
+    vector<int> idx(N);
+    iota(idx.begin(), idx.end(), 0);
+    sort(idx.begin(), idx.end(), [&](int i, int j) { return A[i] < A[j]; });
+
+    // Sorted copy of A
+    vector<ll> sortedA = A;
+    sort(sortedA.begin(), sortedA.end());
+
+    // Prefix sums of sortedA
+    vector<ll> prefix(N + 1);
+    for (int i = 0; i < N; ++i) {
+        prefix[i + 1] = prefix[i] + sortedA[i];
+    }
+
+    for (int i = 0; i < N; ++i) {
+        int pos = i; // position in the sorted array
+        ll myVotes = A[i];
+
+        // Binary search for minimal X such that candidate is guaranteed to win
+        ll low = 0, high = K;
+        bool possible = false;
+
+        while (low <= high) {
+            ll mid = (low + high) / 2;
+            ll totalRequired = 0;
+
+            // Number of candidates with strictly higher votes than this candidate after getting mid votes
+            ll neededHigher = N - M;
+
+            // Find number of candidates with votes > (myVotes + mid)
+            int cnt = N - (upper_bound(sortedA.begin(), sortedA.end(), myVotes + mid) - sortedA.begin());
+
+            if (cnt < neededHigher) {
+                // Already good, we can try fewer additional votes
+                possible = true;
+                high = mid - 1;
+            } else {
+                // Need more votes, try increasing
+                low = mid + 1;
+            }
+        }
+
+        if (possible) {
+            result[i] = max(0LL, low);
+        } else {
+            result[i] = -1;
+        }
+    }
+
+    for (ll val : result) {
+        cout << val << " ";
+    }
+    cout << endl;
+
+    return 0;
+}

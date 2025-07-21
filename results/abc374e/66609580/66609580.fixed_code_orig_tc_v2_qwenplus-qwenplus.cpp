@@ -1,0 +1,70 @@
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+
+const ll INF = 1e18;
+
+int n;
+ll a[110], b[110], p[110], q[110], x;
+
+inline ll lcm(ll a, ll b) {
+    return a / gcd(a, b) * b;
+}
+
+bool check(ll v) {
+    ll total = 0;
+    for (int i = 1; i <= n; ++i) {
+        ll g = gcd(a[i], b[i]);
+        ll l = lcm(a[i], b[i]);
+        
+        // Full cycles
+        ll full_cycles = v / l;
+        ll val_full = full_cycles * min(p[i] * (l / a[i]), q[i] * (l / b[i]));
+        total += val_full;
+
+        if (total > x) return false;
+
+        // Remaining part
+        ll rem = v - full_cycles * l;
+        ll max_cost = INF;
+
+        for (ll j = 0; j * a[i] <= rem; ++j) {
+            ll remaining = rem - j * a[i];
+            ll k = (remaining + b[i] - 1) / b[i];
+            if (k < 0) k = 0;
+            max_cost = min(max_cost, j * p[i] + k * q[i]);
+        }
+
+        total += max_cost;
+
+        if (total > x) return false;
+    }
+    return true;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    cout.tie(nullptr);
+
+    cin >> n >> x;
+    for (int i = 1; i <= n; ++i) {
+        cin >> a[i] >> p[i] >> b[i] >> q[i];
+    }
+
+    ll left = 0, right = 1;
+    while (check(right)) {
+        right <<= 1;
+    }
+
+    while (left < right) {
+        ll mid = (left + right + 1) / 2;
+        if (check(mid)) {
+            left = mid;
+        } else {
+            right = mid - 1;
+        }
+    }
+
+    cout << left << '\n';
+}

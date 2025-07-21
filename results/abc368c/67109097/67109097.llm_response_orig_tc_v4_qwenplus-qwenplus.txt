@@ -1,0 +1,95 @@
+To solve this problem efficiently, we need to simulate the attack pattern correctly and calculate how many total attacks (`T`) are needed until all enemies' health drops to zero or below.
+
+### Key Observations:
+- Every turn `T` increases by 1.
+- On every 3rd turn (i.e., when `T % 3 == 0`), the attack does **3 damage**, otherwise it does **1 damage**.
+- We must determine how many of each type of attack is needed for each enemy so that its health reaches 0 or less.
+
+### Strategy:
+For each enemy with health `H[i]`, we can break down the number of attacks needed into two types:
+- Let’s say an enemy needs `x` triple attacks (each doing 3 damage) and `y` single attacks (each doing 1 damage).
+- Then: `3*x + y >= H[i]`
+- And the total attacks for this enemy will be `x + y`.
+
+We want to **minimize** the total `T` across all enemies. Since the attacks are applied sequentially and only one enemy is attacked at a time (the first alive one), we need to simulate the order.
+
+However, instead of simulating step-by-step (which would be too slow for large N), we can use a **greedy + binary search approach**:
+
+1. **Binary Search on Total T**: We can binary search on possible values of `T` (from 0 to some upper bound like sum of all healths multiplied by 3).
+2. For a given value of `T`, determine if it's possible to reduce all enemies’ health to ≤ 0 within `T` steps using the correct attack pattern.
+3. The check function determines whether, in `T` turns, you can kill all enemies.
+
+### Complexity:
+- Time complexity: O(N * log M), where M is the maximum possible value of `T` (say, up to 6e14).
+
+Here's the fixed and efficient implementation:
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+typedef long long ll;
+
+bool is_possible(const vector<ll>& H, ll T) {
+    int n = H.size();
+    vector<ll> h(n);
+    for (int i = 0; i < n; ++i) h[i] = H[i];
+
+    // We'll simulate how many attacks are used per enemy
+    ll attacks_used = 0;
+    for (int i = 0; i < n; ++i) {
+        if (h[i] <= 0) continue;
+        ll remaining_attacks = T - attacks_used;
+        if (remaining_attacks <= 0) return false;
+
+        // Determine how many triple attacks can occur in remaining_attacks
+        ll triple_turns = remaining_attacks / 3;
+        ll single_turns = remaining_attacks - triple_turns;
+
+        // Now distribute these attacks to minimize damage
+        // Try to maximize triple attacks
+        ll max_damage = triple_turns * 3 + single_turns * 1;
+        if (h[i] > max_damage) return false;
+
+        // Compute minimum number of attacks needed to eliminate h[i]
+        // Use greedy method: as many triple attacks as possible
+        ll needed_triple = (h[i] + 2) / 3;
+        ll needed_single = max(0LL, h[i] - 3 * needed_triple);
+        ll total_needed = needed_triple + needed_single;
+
+        // Check if enough attacks remain
+        if (total_needed > remaining_attacks) return false;
+
+        attacks_used += total_needed;
+    }
+    return true;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int N;
+    cin >> N;
+    vector<ll> H(N);
+    ll total_health = 0;
+    for (int i = 0; i < N; ++i) {
+        cin >> H[i];
+        total_health += H[i];
+    }
+
+    ll low = 0;
+    ll high = 3 * total_health; // Upper bound estimation
+
+    while (low < high) {
+        ll mid = (low + high) / 2;
+        if (is_possible(H, mid)) {
+            high = mid;
+        } else {
+            low = mid + 1;
+        }
+    }
+
+    cout << low << endl;
+}
+```

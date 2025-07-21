@@ -1,0 +1,45 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+int main() {
+    long long N, M;
+    cin >> N >> M;
+    
+    // Offset array for capturing pieces
+    const vector<int> dx = {1, 1, -1, -1, 2, 2, -2, -2};
+    const vector<int> dy = {2, -2, 2, -2, 1, -1, 1, -1};
+    
+    vector<pair<long long, long long>> pieces(M);
+    for (long long i = 0; i < M; ++i) {
+        cin >> pieces[i].first >> pieces[i].second;
+    }
+    
+    // Sort pieces to optimize the process of marking captured cells
+    sort(pieces.begin(), pieces.end());
+    
+    // Use a bitset with N*N bits to mark occupied and captured cells
+    bitset<(N * N) * 2> captured; // Each cell can have up to 8 captured cells
+    
+    long long ans = (N * N) - M; // Start with total cells minus existing pieces
+    for (const auto& piece : pieces) {
+        long long i = piece.first - 1;
+        long long j = piece.second - 1;
+        
+        // Check and mark captured cells for this piece
+        for (int k = 0; k < 8; ++k) {
+            long long ni = i + dx[k];
+            long long nj = j + dy[k];
+            
+            if (ni < 0 || ni >= N || nj < 0 || nj >= N) continue; // Skip out-of-bound cells
+            
+            if (!captured.test(ni * (N * 2) + nj)) { // If not already marked
+                captured.set(ni * (N * 2) + nj); // Mark this cell as captured
+                ans--; // Decrease the count of available cells
+            }
+        }
+    }
+    
+    cout << ans << endl;
+}

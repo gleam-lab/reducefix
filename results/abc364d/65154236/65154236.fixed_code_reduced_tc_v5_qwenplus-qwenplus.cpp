@@ -1,0 +1,49 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+typedef long long ll;
+
+const int MAXN = 1e5 + 5;
+
+ll a[MAXN];
+
+// Binary search helper to find the k-th smallest distance from b
+ll get_kth_distance(int n, ll b, int k) {
+    // We will use binary search on the possible distance values [0, 1e18]
+    ll low = 0, high = 2e18;
+    while (low < high) {
+        ll mid = (low + high) / 2;
+        // Count how many points in A are within distance `mid` of b
+        int left = lower_bound(a, a + n, b - mid) - a;
+        int right = upper_bound(a, a + n, b + mid) - a;
+        int count = right - left;
+        if (count >= k)
+            high = mid;
+        else
+            low = mid + 1;
+    }
+    return low;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    cout.tie(nullptr);
+
+    int N, Q;
+    cin >> N >> Q;
+
+    for (int i = 0; i < N; ++i)
+        cin >> a[i];
+
+    sort(a, a + N);
+
+    for (int i = 0; i < Q; ++i) {
+        ll b;
+        int k;
+        cin >> b >> k;
+        cout << get_kth_distance(N, b, k) << "\n";
+    }
+
+    return 0;
+}

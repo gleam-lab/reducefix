@@ -1,0 +1,61 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+#define ll long long
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+    
+    int N, Q;
+    cin >> N >> Q;
+    
+    vector<ll> A(N);
+    for (int i = 0; i < N; ++i) {
+        cin >> A[i];
+    }
+    
+    // Sort A once so we can use binary search later
+    sort(A.begin(), A.end());
+    
+    for (int q = 0; q < Q; ++q) {
+        ll B;
+        int k;
+        cin >> B >> k;
+        
+        // Binary search to find the closest point
+        auto it = lower_bound(A.begin(), A.end(), B);
+        
+        // Two pointers to simulate a sliding window of distances
+        int left = (it - A.begin()) - 1;
+        int right = it - A.begin();
+        
+        // We need to find the k-th smallest distance
+        ll result = 0;
+        int count = 0;
+        
+        while (count < k) {
+            if (left < 0) {
+                result = abs(A[right++] - B);
+            } else if (right >= N) {
+                result = abs(A[left--] - B);
+            } else {
+                ll dist_left = abs(A[left] - B);
+                ll dist_right = abs(A[right] - B);
+                
+                if (dist_left <= dist_right) {
+                    result = dist_left;
+                    --left;
+                } else {
+                    result = dist_right;
+                    ++right;
+                }
+            }
+            ++count;
+        }
+        
+        cout << result << "\n";
+    }
+
+    return 0;
+}

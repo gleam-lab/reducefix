@@ -1,0 +1,57 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+#define int long long
+const int N = 2e5 + 9;
+
+int t, n, k;
+vector<int> A, B, sa, sb;
+
+int main() {
+    cin >> t;
+    while (t--) {
+        cin >> n >> k;
+        A.resize(n);
+        B.resize(n);
+
+        for (int i = 0; i < n; i++) {
+            cin >> A[i];
+        }
+        for (int i = 0; i < n; i++) {
+            cin >> B[i];
+        }
+
+        // Create separate arrays for the indices and values of A for sorting
+        sa.resize(n);
+        sb.resize(n);
+        for (int i = 0; i < n; i++) {
+            sa[i] = i;
+            sb[i] = A[i];
+        }
+
+        // Sort by values of A
+        sort(sa.begin(), sa.end(), [&](int a, int b) {
+            return sb[a] < sb[b];
+        });
+
+        // Calculate prefix sums
+        vector<int> sumB(n);
+        sumB[0] = B[0];
+        for (int i = 1; i < n; i++) {
+            sumB[i] = sumB[i - 1] + B[i];
+        }
+
+        // Try all possible groups of size k
+        int min_result = INT_MAX;
+        for (int i = 0; i <= n - k; i++) {
+            int maxA = A[sa[i]];
+            int sumBk = sumB[n - 1] - sumB[n - k - i];
+            min_result = min(min_result, maxA * sumBk);
+        }
+
+        cout << min_result << endl;
+    }
+    return 0;
+}

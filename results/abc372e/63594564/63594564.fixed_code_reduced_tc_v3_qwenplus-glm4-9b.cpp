@@ -1,0 +1,65 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+#define ll long long
+#define N 200005
+
+vector<pair<int, int>> adj[N];
+int parent[N];
+
+int find_set(int v) {
+    if (parent[v] == v) return v;
+    return parent[v] = find_set(parent[v]);
+}
+
+void union_sets(int u, int v) {
+    u = find_set(u);
+    v = find_set(v);
+    if (u != v) {
+        parent[v] = u;
+    }
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int n, q;
+    cin >> n >> q;
+
+    for (int i = 1; i <= n; i++) {
+        parent[i] = i;
+    }
+
+    while (q--) {
+        int type, u, v, k;
+        cin >> type >> u >> v;
+        if (type == 1) {
+            // Union operation
+            union_sets(u, v);
+        } else {
+            // Find representative of vertex v
+            int root = find_set(v);
+            // Count the number of vertices in the set represented by root
+            int count = 0;
+            for (auto &edge : adj[root]) {
+                if (find_set(edge.first) == root) count++;
+            }
+            // If k is greater than the number of vertices, return -1
+            if (k > count) {
+                cout << "-1\n";
+            } else {
+                // Otherwise, output the k-th largest vertex
+                int value = INT_MAX;
+                for (auto &edge : adj[root]) {
+                    if (find_set(edge.first) == root) {
+                        if (--k == 0) value = edge.first;
+                    }
+                }
+                cout << value << '\n';
+            }
+        }
+    }
+
+    return 0;
+}

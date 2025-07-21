@@ -1,0 +1,24 @@
+#include<bits/stdc++.h>
+using namespace std;
+const int maxn = 2e5 + 7;
+int n, q, x[maxn], p[maxn];
+long long sum[maxn];
+
+int main() {
+    cin >> n;
+    for (int i = 1; i <= n; ++i) {
+        cin >> x[i] >> p[i];
+        sum[i] = sum[i - 1] + p[i];
+    }
+    cin >> q;
+    while (q--) {
+        int l, r;
+        cin >> l >> r;
+        auto it_l = lower_bound(x + 1, x + n + 1, l);
+        auto it_r = upper_bound(x + 1, x + n + 1, r);
+        if (it_l == x + n + 1 || *it_l > r) --it_l; // Adjust for strict less than condition in upper bound
+        if (it_r == x + n + 1 || *it_r < l) --it_r; // Adjust for strict greater than condition in lower bound
+        cout << sum[it_r - x] - sum[it_l - x - 1] << endl;
+    }
+    return 0;
+}

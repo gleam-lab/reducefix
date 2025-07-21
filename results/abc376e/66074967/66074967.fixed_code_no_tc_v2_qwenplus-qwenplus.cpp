@@ -1,0 +1,56 @@
+#include <iostream>
+#include <vector>
+#include <queue>
+#include <algorithm>
+using namespace std;
+#define int long long
+
+signed main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int T;
+    cin >> T;
+
+    while (T--) {
+        int N, K;
+        cin >> N >> K;
+
+        vector<pair<int, int>> items(N); // (A_i, B_i)
+        for (int i = 0; i < N; ++i) {
+            cin >> items[i].first;
+        }
+        for (int i = 0; i < N; ++i) {
+            cin >> items[i].second;
+        }
+
+        // Sort by A_i in increasing order
+        sort(items.begin(), items.end());
+
+        // Min-heap to maintain the K largest B_i values among the first i elements
+        priority_queue<int, vector<int>, greater<>> pq;
+        int sumB = 0;
+        int res = 1e18; // Large initial value
+
+        for (int i = 0; i < N; ++i) {
+            int A_i = items[i].first;
+            int B_i = items[i].second;
+
+            pq.push(B_i);
+            sumB += B_i;
+
+            if (pq.size() > K) {
+                sumB -= pq.top();
+                pq.pop();
+            }
+
+            if (pq.size() == K) {
+                res = min(res, A_i * sumB);
+            }
+        }
+
+        cout << res << '\n';
+    }
+
+    return 0;
+}

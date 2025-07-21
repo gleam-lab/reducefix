@@ -1,0 +1,26 @@
+#include<bits/stdc++.h>
+using namespace std;
+int n, q, x[200005], p[200005];
+map<int, int> sum;
+
+int main() {
+    cin >> n;
+    for (int i = 1; i <= n; i++) {
+        cin >> x[i];
+    }
+    for (int i = 1; i <= n; i++) {
+        cin >> p[i];
+        sum[i] = (i > 1) ? sum[i - 1] + p[i] : p[i];
+    }
+    cin >> q;
+    while (q--) {
+        int L, R;
+        cin >> L >> R;
+        auto it1 = lower_bound(x + 1, x + n + 1, L);
+        auto it2 = upper_bound(x + 1, x + n + 1, R);
+        // Ensure it2 does not go out of bounds and adjust indices for 0-based index offset
+        int c = it1 - x;
+        int d = (it2 == x + n + 1) ? n : (it2 - x);
+        cout << sum[d] - sum[c - 1] << endl;
+    }
+}

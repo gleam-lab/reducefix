@@ -1,0 +1,32 @@
+#include<bits/stdc++.h>
+#define INF 0x3f3f3f3f3f3f3f3f
+using namespace std;
+typedef long long ll;
+const int MAXN=2e5+10;
+ll a[MAXN],f[MAXN][2],cnt[MAXN][2];
+int main(){
+    ll n;
+    scanf("%lld",&n);
+    for(ll i=1;i<=n;i++){
+        scanf("%lld",&a[i]);
+    }
+    f[1][0] = 0; // Initialize f[1][0] to 0 as it's not defined before
+    f[1][1] = a[1]; // Initialize f[1][1] to a[1]
+    cnt[1][0] = 0; // Initialize cnt[1][0] to 0
+    cnt[1][1] = 1; // Initialize cnt[1][1] to 1 since we're considering a[1]
+
+    for(ll i=2;i<=n;i++){
+        f[i][0] = max(f[i-1][0], f[i-1][1]); // Max of previous states without including current element
+        cnt[i][0] = (f[i-1][0] == f[i-1][1]) ? cnt[i-1][1] : cnt[i-1][0]; // Count of elements when excluding current element
+        
+        // Calculate the values when including current element
+        ll include_cnt = cnt[i-1][0] + 1;
+        ll value = a[i] * ((include_cnt % 2 == 0) ? 2 : 1);
+
+        f[i][1] = max(f[i-1][0] + value, f[i-1][1] + value); // Max of including current element with even or odd count
+        cnt[i][1] = (f[i-1][0] + value > f[i-1][1] + value) ? include_cnt : cnt[i-1][1]; // Update count based on inclusion
+    }
+
+    printf("%lld", max(f[n][0], f[n][1])); // Output the maximum result
+    return 0;
+}

@@ -1,0 +1,68 @@
+#include <iostream>
+#include <vector>
+#include <queue>
+#include <limits>
+
+using namespace std;
+
+struct Edge {
+    int to, cost;
+};
+
+const int MAXN = 2e5 + 5;
+vector<Edge> adj[MAXN];
+long long dist[MAXN];
+
+void dijkstra(int start, int n) {
+    fill(dist, dist + n, numeric_limits<long long>::max());
+    priority_queue<pair<long long, int>, vector<pair<long long, int>>, greater<pair<long long, int>>> pq;
+    dist[start] = 0;
+    pq.push({0, start});
+
+    while (!pq.empty()) {
+        auto [d, u] = pq.top(); pq.pop();
+
+        if (d > dist[u]) continue;
+
+        for (auto &[v, w] : adj[u]) {
+            if (dist[u] + w < dist[v]) {
+                dist[v] = dist[u] + w;
+                pq.push({dist[v], v});
+            }
+        }
+    }
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int n, m;
+    cin >> n >> m;
+
+    for (int i = 0; i < n; ++i) {
+        adj[i].clear();
+    }
+
+    vector<int> weights(n);
+    for (int i = 0; i < n; ++i) {
+        cin >> weights[i];
+    }
+
+    for (int i = 0; i < m; ++i) {
+        int u, v, w;
+        cin >> u >> v >> w;
+        --u, --v;
+        adj[u].emplace_back(v, w + weights[u]);
+        adj[v].emplace_back(u, w + weights[v]);
+    }
+
+    dijkstra(0, n);
+
+    for (int i = 1; i < n; ++i) {
+        cout << dist[i] + weights[i] << " ";
+    }
+    cout << endl;
+
+    return 0;
+}

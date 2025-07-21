@@ -1,0 +1,51 @@
+#include <bits/stdc++.h>
+#define IOS ios::sync_with_stdio(0); cin.tie(0); cout.tie(0);
+#define endl "\n"
+#define pb push_back
+using namespace std;
+
+const int N = 2e5 + 10, INF = 1e9 + 7;
+vector<int> adj[N];
+int dist[N];
+
+void solve() {
+    int n, m;
+    cin >> n >> m;
+    
+    for (int i = 0; i < m; ++i) {
+        int u, v;
+        cin >> u >> v;
+        adj[u].pb(v);
+    }
+    
+    // BFS from node 1
+    queue<int> q;
+    q.push(1);
+    dist[1] = 0;
+    
+    while (!q.empty()) {
+        int u = q.front();
+        q.pop();
+        
+        for (int v : adj[u]) {
+            if (dist[v] == INF) {
+                dist[v] = dist[u] + 1;
+                q.push(v);
+            }
+        }
+    }
+    
+    cout << (dist[1] == INF ? -1 : dist[1]);
+}
+
+signed main() {
+    IOS;
+    memset(dist, 0x3f, sizeof dist);
+    
+    int T = 1;
+    while (T--) {
+        solve();
+    }
+    
+    return 0;
+}

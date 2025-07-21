@@ -1,0 +1,79 @@
+#include <iostream>
+#include <vector>
+#include <queue>
+#include <climits>
+
+using namespace std;
+
+const int MAXN = 200100; // Maximum number of vertices
+vector<pair<int, int>> graph[MAXN]; // Adjacency list representation of the graph
+int vertex_weight[MAXN]; // Weight of each vertex
+int distances[MAXN]; // Distance from the source vertex (vertex 1) to each vertex
+
+void dijkstra(int source) {
+    priority_queue<pair<int, int>, vector<pair<int, int>>, greater<pair<int, int>>> pq;
+
+    // Initialize distances to all other nodes to infinity
+    fill(distances, distances + MAXN, INT_MAX);
+    
+    // Distance from source to itself is 0
+    distances[source] = 0;
+    
+    // Push the source with distance 0 into the priority queue
+    pq.push({0, source});
+
+    while (!pq.empty()) {
+        // Get the vertex with the smallest distance
+        int current_distance = pq.top().first;
+        int current_vertex = pq.top().second;
+        pq.pop();
+        
+        // If the popped vertex has a distance that is not up to date, skip it
+        if (current_distance > distances[current_vertex]) continue;
+
+        // Visit all the adjacent vertices
+        for (auto& edge : graph[current_vertex]) {
+            int adjacent_vertex = edge.first;
+            int edge_weight = edge.second;
+
+            // Calculate the new distance
+            int new_distance = current_distance + vertex_weight[adjacent_vertex] + edge_weight;
+
+            // If the new distance is smaller, update the distance and push it into the priority queue
+            if (new_distance < distances[adjacent_vertex]) {
+                distances[adjacent_vertex] = new_distance;
+                pq.push({new_distance, adjacent_vertex});
+            }
+        }
+    }
+}
+
+int main() {
+    int N, M;
+    cin >> N >> M;
+
+    // Read the weights of the vertices
+    for (int i = 1; i <= N; i++) {
+        cin >> vertex_weight[i];
+    }
+
+    // Read the edges
+    for (int i = 0; i < M; i++) {
+        int u, v, b;
+        cin >> u >> v >> b;
+        graph[u].push_back({v, b});
+        graph[v].push_back({u, b});
+    }
+
+    // Run Dijkstra's algorithm from vertex 1
+    dijkstra(1);
+
+    // Output the minimum weights for paths to all other vertices
+    for (int i = 2; i <= N; i++) {
+        // Output distances to all except vertex 1, since the problem statement
+        // does not ask for distance to vertex 1
+        cout << distances[i] << " ";
+    }
+
+    return 0;
+}

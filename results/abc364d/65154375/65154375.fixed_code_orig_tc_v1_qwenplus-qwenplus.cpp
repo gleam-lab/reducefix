@@ -1,0 +1,64 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+typedef long long ll;
+
+const int MAX_COORD = 200000001; // Range from -1e8 to 1e8
+const int OFFSET = 100000000;   // Offset to make all coordinates non-negative
+
+void solve() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int N, Q;
+    cin >> N >> Q;
+
+    vector<int> freq(MAX_COORD, 0); // Frequency array for counts at each offset position
+
+    // Read A_i and update frequency map
+    for (int i = 0; i < N; ++i) {
+        int a;
+        cin >> a;
+        int idx = a + OFFSET;
+        freq[idx]++;
+    }
+
+    // Precompute prefix sums of the frequency array
+    vector<ll> prefix(MAX_COORD + 2, 0); // Extra space to avoid overflow in binary search
+    for (int i = 0; i < MAX_COORD; ++i) {
+        prefix[i + 1] = prefix[i] + freq[i];
+    }
+
+    // Process queries
+    for (int q = 0; q < Q; ++q) {
+        int b, k;
+        cin >> b >> k;
+        int pos = b + OFFSET;
+
+        // Binary search for the smallest radius r such that there are at least k points within distance r
+        int low = 0;
+        int high = 200000000; // Max possible distance
+        int answer = 0;
+
+        while (low <= high) {
+            int mid = (low + high) / 2;
+            int left = max(0, pos - mid);
+            int right = min(MAX_COORD - 1, pos + mid);
+            ll count = prefix[right + 1] - prefix[left];
+
+            if (count >= k) {
+                answer = mid;
+                high = mid - 1;
+            } else {
+                low = mid + 1;
+            }
+        }
+
+        cout << answer << '\n';
+    }
+}
+
+int main() {
+    solve();
+    return 0;
+}

@@ -1,0 +1,30 @@
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int n;
+    cin >> n;
+
+    long double total = 0.0;
+    long double curr_x = 0.0, curr_y = 0.0;
+
+    for (int i = 0; i < n; ++i) {
+        long double x, y;
+        cin >> x >> y;
+        total += sqrt((curr_x - x) * (curr_x - x) + (curr_y - y) * (curr_y - y));
+        curr_x = x;
+        curr_y = y;
+    }
+
+    // Return to origin
+    total += sqrt(curr_x * curr_x + curr_y * curr_y);
+
+    cout.precision(15);
+    cout << fixed << total << endl;
+
+    return 0;
+}

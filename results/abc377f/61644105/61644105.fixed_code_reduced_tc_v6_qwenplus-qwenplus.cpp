@@ -1,0 +1,178 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+
+const int MAX_M = 2000;
+
+long long N;
+int M;
+
+set<long long> rows, cols;
+set<pair<long long, long long>> diag1, diag2;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    cin >> N >> M;
+
+    vector<tuple<long long, long long>> pieces(M);
+    for (auto &[a, b] : pieces) {
+        cin >> a >> b;
+    }
+
+    // Store all occupied lines/diagonals
+    set<long long> row_set, col_set;
+    set<long long> diag1_set, diag2_set;  // Diag1: i-j, Diag2: i+j
+
+    for (auto [a, b] : pieces) {
+        row_set.insert(a);
+        col_set.insert(b);
+        diag1_set.insert(a - b);
+        diag2_set.insert(a + b);
+    }
+
+    // Count total squares attacked by any of the lines/diagonals
+    // Inclusion-Exclusion Principle
+
+    // Total grid size
+    long long total = N * N;
+
+    // Number of squares on any row or column or diagonal
+    long long attack_count = 0;
+
+    // For each unique row
+    for (long long r : row_set) {
+        attack_count += N;  // entire row
+    }
+
+    // For each unique column
+    for (long long c : col_set) {
+        attack_count += N;  // entire column
+    }
+
+    // For each unique diagonal of type i - j
+    for (long long d : diag1_set) {
+        long long low = max(1LL, d + 1);
+        long long high = min(N, N + d);
+        if (low <= high) {
+            attack_count += high - low + 1;
+        }
+    }
+
+    // For each unique diagonal of type i + j
+    for (long long s : diag2_set) {
+        long long low = max(1LL, s - N);
+        long long high = min(N, s - 1);
+        if (low <= high) {
+            attack_count += high - low + 1;
+        }
+    }
+
+    // Subtract overcounts: intersections of two sets
+    // Rows x Columns
+    for (long long r : row_set) {
+        for (long long c : col_set) {
+            // square (r,c) is counted twice
+            attack_count--;
+        }
+    }
+
+    // Rows x Diag1
+    for (long long r : row_set) {
+        for (long long d : diag1_set) {
+            long long c = r - d;
+            if (1 <= c && c <= N)
+                attack_count--;
+        }
+    }
+
+    // Rows x Diag2
+    for (long long r : row_set) {
+        for (long long s : diag2_set) {
+            long long c = s - r;
+            if (1 <= c && c <= N)
+                attack_count--;
+        }
+    }
+
+    // Cols x Diag1
+    for (long long c : col_set) {
+        for (long long d : diag1_set) {
+            long long r = d + c;
+            if (1 <= r && r <= N)
+                attack_count--;
+        }
+    }
+
+    // Cols x Diag2
+    for (long long c : col_set) {
+        for (long long s : diag2_set) {
+            long long r = s - c;
+            if (1 <= r && r <= N)
+                attack_count--;
+        }
+    }
+
+    // Diag1 x Diag2
+    for (long long d : diag1_set) {
+        for (long long s : diag2_set) {
+            long long r = (s + d) / 2;
+            long long c = (s - d) / 2;
+            if ((s + d) % 2 == 0 && (s - d) % 2 == 0) {
+                if (1 <= r && r <= N && 1 <= c && c <= N)
+                    attack_count--;
+        }
+    }
+
+    // Add back undercounts: intersections of three sets
+    // Rows x Cols x Diag1
+    for (auto [r, c, ignore] : pieces) {
+        long long d = r - c;
+        if (diag1_set.count(d)) {
+            attack_count++;
+        }
+    }
+
+    // Rows x Cols x Diag2
+    for (auto [r, c, ignore] : pieces) {
+        long long s = r + c;
+        if (diag2_set.count(s)) {
+            attack_count++;
+        }
+    }
+
+    // Rows x Diag1 x Diag2
+    for (auto [r, c, ignore] : pieces) {
+        long long d = r - c;
+        long long s = r + c;
+        if (row_set.count(r) && diag1_set.count(d) && diag2_set.count(s)) {
+            attack_count++;
+        }
+    }
+
+    // Cols x Diag1 x Diag2
+    for (auto [r, c, ignore] : pieces) {
+        long long d = r - c;
+        long long s = r + c;
+        if (col_set.count(c) && diag1_set.count(d) && diag2_set.count(s)) {
+            attack_count++;
+        }
+    }
+
+    // Subtract final intersection: rows x cols x diag1 x diag2
+    for (auto [r, c, ignore] : pieces) {
+        long long d = r - c;
+        long long s = r + c;
+        if (row_set.count(r) && col_set.count(c) && diag1_set.count(d) && diag2_set.count(s)) {
+            attack_count--;
+        }
+    }
+
+    // Now subtract all occupied squares
+    long long result = total - attack_count;
+
+    cout << result << endl;
+
+    return 0;
+}

@@ -1,0 +1,38 @@
+#include <iostream>
+#include <vector>
+#include <cmath>
+
+int main() {
+    std::ios::sync_with_stdio(false);
+    std::cin.tie(nullptr);
+
+    int N;
+    std::cin >> N;
+
+    long double total = 0; // Use long double for higher precision
+    std::vector<std::pair<long long, long long>> points(N);
+
+    // Read all points
+    for(int i = 0; i < N; ++i) {
+        std::cin >> points[i].first >> points[i].second;
+    }
+
+    // Calculate the total distance
+    for(int i = 0; i < N - 1; ++i) {
+        long long dx = points[i].first - points[i+1].first;
+        long long dy = points[i].second - points[i+1].second;
+        total += std::sqrt(dx*dx + dy*dy); // Use sqrt function for distance calculation
+    }
+
+    // Add distance back to origin
+    long long dx = points[N-1].first - points[0].first;
+    long long dy = points[N-1].second - points[0].second;
+    total += std::sqrt(dx*dx + dy*dy);
+
+    // Print the result with high precision
+    std::cout.setf(std::ios_base::fixed | std::ios_base::showpoint);
+    std::cout.precision(15);
+    std::cout << total << '\n';
+
+    return 0;
+}

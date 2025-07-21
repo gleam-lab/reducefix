@@ -1,0 +1,51 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+typedef long long ll;
+const int N = 2e6 + 7;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+
+    int n;
+    cin >> n;
+    vector<ll> a(n), b(n), c(n + 1, 0);
+    
+    for (int i = 0; i < n; ++i) {
+        cin >> a[i];
+    }
+    for (int i = 0; i < n; ++i) {
+        cin >> b[i];
+        if (i > 0) c[i] = c[i - 1] + b[i];
+        else c[i] = b[i];
+    }
+
+    // Ensure prefix sums are correctly computed
+    for (int i = 0; i < n; ++i) {
+        c[i] = (i == 0 ? 0 : c[i - 1]) + b[i];
+    }
+
+    int m;
+    cin >> m;
+    while (m--) {
+        ll l, r;
+        cin >> l >> r;
+
+        // Binary search to find the range in array 'a' where values are within [l, r]
+        auto left = lower_bound(a.begin(), a.end(), l);
+        auto right = upper_bound(a.begin(), a.end(), r);
+
+        int li = left - a.begin();
+        int ri = right - a.begin();
+
+        // Sum of corresponding b values using prefix sums
+        if (li >= n) {
+            cout << 0 << endl;
+        } else {
+            cout << c[ri - 1] - (li > 0 ? c[li - 1] : 0) << endl;
+        }
+    }
+
+    return 0;
+}

@@ -1,0 +1,106 @@
+To solve this problem correctly, we need to compute the **minimum path weight from vertex 0 (vertex 1 in 1-based indexing) to every other vertex**, where the **path weight** is defined as:
+
+> Sum of all **vertex weights** and **edge weights** along the path.
+
+---
+
+### Issues with Your Original Code
+
+1. **Incorrect Algorithm**: You used a simple queue (like BFS), which doesn't guarantee shortest paths in weighted graphs.
+2. **Wrong Relaxation Strategy**: The cost calculation was not handled properly using Dijkstra's algorithm.
+3. **Missing Priority Queue**: For finding minimum-weight paths in weighted graphs, we must use a priority queue.
+
+---
+
+### Correct Approach: Dijkstra’s Algorithm
+
+We'll model the graph as an adjacency list and use **Dijkstra’s algorithm** with a **priority queue** to ensure we always process the next closest node.
+
+- Each node will store the **minimum cost to reach it**.
+- The cost includes:
+  - Starting node's weight (`A[0]`)
+  - All intermediate edge weights
+  - Destination node's weight (`A[i]`)
+
+We treat each edge as a transition from one node to another with cost = `B_j + A_v`.
+
+---
+
+### Optimizations
+
+- Since `N` and `M` are up to `2e5`, we must ensure O(N log N) time complexity by using a **priority_queue**.
+- We skip relaxing nodes if we already found a shorter path to them.
+
+---
+
+### Fixed C++ Code
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+using P = pair<ll, int>; // (cost, node)
+
+const ll INF = 1e18;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+
+    int N, M;
+    cin >> N >> M;
+
+    vector<ll> A(N);
+    for (int i = 0; i < N; ++i) {
+        cin >> A[i];
+    }
+
+    vector<vector<P>> G(N); // Adjacency list: G[u] contains (v, B_uv)
+    for (int i = 0; i < M; ++i) {
+        int u, v;
+        ll b;
+        cin >> u >> v >> b;
+        u--; v--;
+        G[u].push_back({b, v});
+        G[v].push_back({b, u});
+    }
+
+    vector<ll> dist(N, INF);
+    dist[0] = A[0]; // Start from node 0 with its value included
+
+    priority_queue<P, vector<P>, greater<P>> pq;
+    pq.push({dist[0], 0});
+
+    while (!pq.empty()) {
+        auto [d, u] = pq.top(); pq.pop();
+        if (d > dist[u]) continue;
+
+        for (auto [b, v] : G[u]) {
+            ll new_cost = d + b + A[v]; // current cost + edge + target vertex
+            if (new_cost < dist[v]) {
+                dist[v] = new_cost;
+                pq.push({new_cost, v});
+            }
+        }
+    }
+
+    for (int i = 1; i < N; ++i) {
+        cout << dist[i] << " ";
+    }
+    cout << "\n";
+
+    return 0;
+}
+```
+
+---
+
+### Explanation of Key Points
+
+- `dist[0] = A[0]`: The starting point includes the value at node 1 (index 0).
+- When moving from node `u` to `v`:
+  - Cost += `B_uv` (edge weight)
+  - Cost += `A[v]` (vertex weight)
+- The final result for each node is stored in `dist[i]`.
+
+This solution ensures correctness and efficiency even for large input sizes.

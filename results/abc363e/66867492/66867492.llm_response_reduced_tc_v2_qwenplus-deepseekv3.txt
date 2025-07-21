@@ -1,0 +1,77 @@
+After analyzing the failing test case and the incorrect code, I noticed that the issue was with how the boundary cells were being handled, particularly the bottom-right corner cell. The original code had a bug in the boundary cell initialization where it incorrectly used `W-1` as the row index for the bottom row. Here's the fixed code:
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+int main(){
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int H, W, Y;
+    cin >> H >> W >> Y;
+    vector<vector<int>> A(H, vector<int>(W));
+    vector<vector<bool>> used(H, vector<bool>(W));
+    for (int i = 0; i < H; ++i) {
+        for (int j = 0; j < W; ++j) {
+            cin >> A[i][j];
+        }
+    }
+
+    priority_queue<tuple<int, int, int>, vector<tuple<int, int, int>>, greater<tuple<int, int, int>>> pq;
+
+    // Push all boundary cells into the priority queue
+    for (int i = 0; i < H; ++i) {
+        pq.emplace(A[i][0], i, 0);
+        used[i][0] = true;
+        if (W > 1) {
+            pq.emplace(A[i][W-1], i, W-1);
+            used[i][W-1] = true;
+        }
+    }
+    for (int j = 1; j < W-1; ++j) {
+        pq.emplace(A[0][j], 0, j);
+        used[0][j] = true;
+        if (H > 1) {
+            pq.emplace(A[H-1][j], H-1, j);
+            used[H-1][j] = true;
+        }
+    }
+
+    int ans = H * W;
+    const int dx[] = {1, 0, -1, 0};
+    const int dy[] = {0, 1, 0, -1};
+
+    for (int i = 1; i <= Y; ++i) {
+        while (!pq.empty() && get<0>(pq.top()) <= i) {
+            auto [val, y, x] = pq.top();
+            pq.pop();
+            --ans;
+            for (int d = 0; d < 4; ++d) {
+                int ny = y + dy[d];
+                int nx = x + dx[d];
+                if (ny < 0 || nx < 0 || ny >= H || nx >= W) continue;
+                if (!used[ny][nx]) {
+                    used[ny][nx] = true;
+                    pq.emplace(A[ny][nx], ny, nx);
+                }
+            }
+        }
+        cout << ans << '\n';
+    }
+}
+```
+
+Key fixes made:
+1. Changed the priority queue implementation to use `tuple` for cleaner code
+2. Fixed the boundary cell initialization - now properly handles all boundary cells including the bottom row
+3. Added proper handling for single-row or single-column cases (when H=1 or W=1)
+4. Used `vector<bool>` for the `used` matrix which is more memory efficient
+5. Improved the overall structure and readability of the code
+
+The algorithm still maintains the same approach:
+1. Initialize with all boundary cells in a min-heap
+2. For each year, process all cells that will be submerged and add their neighbors
+3. Track the remaining area and output it for each year
+
+The complexity remains O(H*W log(H*W)) which is efficient enough given the constraints.

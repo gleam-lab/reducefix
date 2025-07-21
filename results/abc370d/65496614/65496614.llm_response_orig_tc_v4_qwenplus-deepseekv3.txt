@@ -1,0 +1,109 @@
+To fix this code, we need to address the main issue in the original implementation, which incorrectly handles the destruction of walls during the bomb placement. The original approach uses sets to track remaining walls in rows and columns, but it doesn't efficiently manage the dynamic changes during the bomb placement process, especially when walls are destroyed in the four directions (up, down, left, right).
+
+### Approach
+1. **Data Structures**: Use separate sets for each row and column to keep track of the existing walls. This allows efficient queries for the nearest walls in any direction.
+2. **Bomb Placement Handling**:
+   - **If the cell has a wall**: Simply destroy it and update the corresponding row and column sets.
+   - **If the cell is empty**: For each direction (up, down, left, right), find the nearest wall using the sets and destroy it. This requires checking the sets for the nearest elements in the specified direction and updating them accordingly.
+
+### Solution Code
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int H, W, Q;
+    cin >> H >> W >> Q;
+    
+    vector<set<int>> rows(H + 2);
+    vector<set<int>> cols(W + 2);
+    
+    for (int i = 1; i <= H; ++i) {
+        for (int j = 1; j <= W; ++j) {
+            rows[i].insert(j);
+            cols[j].insert(i);
+        }
+    }
+    
+    int ans = H * W;
+    
+    while (Q--) {
+        int R, C;
+        cin >> R >> C;
+        
+        auto it_row = rows[R].find(C);
+        if (it_row != rows[R].end()) {
+            rows[R].erase(it_row);
+            cols[C].erase(R);
+            ans--;
+        } else {
+            // Up
+            auto it_col = cols[C].lower_bound(R);
+            if (it_col != cols[C].begin()) {
+                --it_col;
+                int r = *it_col;
+                auto it = rows[r].find(C);
+                if (it != rows[r].end()) {
+                    rows[r].erase(it);
+                    cols[C].erase(r);
+                    ans--;
+                }
+            }
+            
+            // Down
+            it_col = cols[C].lower_bound(R);
+            if (it_col != cols[C].end()) {
+                int r = *it_col;
+                auto it = rows[r].find(C);
+                if (it != rows[r].end()) {
+                    rows[r].erase(it);
+                    cols[C].erase(r);
+                    ans--;
+                }
+            }
+            
+            // Left
+            auto it_row_l = rows[R].lower_bound(C);
+            if (it_row_l != rows[R].begin()) {
+                --it_row_l;
+                int c = *it_row_l;
+                auto it = cols[c].find(R);
+                if (it != cols[c].end()) {
+                    cols[c].erase(it);
+                    rows[R].erase(c);
+                    ans--;
+                }
+            }
+            
+            // Right
+            it_row_l = rows[R].lower_bound(C);
+            if (it_row_l != rows[R].end()) {
+                int c = *it_row_l;
+                auto it = cols[c].find(R);
+                if (it != cols[c].end()) {
+                    cols[c].erase(it);
+                    rows[R].erase(c);
+                    ans--;
+                }
+            }
+        }
+    }
+    
+    cout << ans << endl;
+    
+    return 0;
+}
+```
+
+### Explanation
+1. **Initialization**: We initialize sets for each row and column to keep track of the walls. Each cell (i, j) is initially present in the sets for row i and column j.
+2. **Processing Queries**:
+   - **Direct Hit**: If the bomb is placed on a cell with a wall (found in the row or column set), the wall is removed, and the sets are updated.
+   - **Indirect Hit**: If the cell is empty, the algorithm checks the four directions (up, down, left, right) for the nearest walls using the sets. The nearest walls in each direction are removed, and the sets are updated accordingly.
+3. **Efficiency**: Using sets allows efficient searching (O(log N) per operation) for the nearest walls in each direction. The overall complexity is O(Q log N), where Q is the number of queries and N is the grid dimension, making it efficient for large inputs.
+4. **Output**: After processing all queries, the remaining walls are counted by subtracting the destroyed walls from the initial total (H * W).
+
+This approach ensures that the solution is both efficient and correct, handling all edge cases and large inputs within acceptable time limits.

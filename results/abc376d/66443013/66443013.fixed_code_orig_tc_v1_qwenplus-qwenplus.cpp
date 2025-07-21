@@ -1,0 +1,63 @@
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+
+map<ll, vector<ll>> graph;
+map<ll, bool> visited;
+
+ll min_cycle = -1;
+
+// DFS-based cycle detection with path tracking
+bool dfs(ll node, ll parent, ll depth, map<ll, ll>& current_path) {
+    if (visited[node]) return false;
+    
+    visited[node] = true;
+    current_path[node] = depth;
+
+    for (auto neighbor : graph[node]) {
+        if (neighbor == parent) continue;
+
+        if (current_path.count(neighbor)) {
+            // Found a cycle
+            ll cycle_length = depth - current_path[neighbor] + 1;
+            if (min_cycle == -1 || cycle_length < min_cycle) {
+                min_cycle = cycle_length;
+            }
+            return true;
+        }
+
+        if (!visited[neighbor]) {
+            if (dfs(neighbor, node, depth + 1, current_path)) {
+                return true;
+            }
+        }
+    }
+
+    current_path.erase(node);
+    return false;
+}
+
+int main() {
+    ll n, m;
+    cin >> n >> m;
+
+    for (ll i = 0; i < m; ++i) {
+        ll a, b;
+        cin >> a >> b;
+        graph[a].push_back(b);
+        graph[b].push_back(a); // Since the graph is undirected
+    }
+
+    for (ll i = 1; i <= n; ++i) {
+        if (!visited[i]) {
+            map<ll, ll> path;
+            if (dfs(i, -1, 0, path)) {
+                // Found a cycle in this component
+                break;
+            }
+        }
+    }
+
+    cout << (min_cycle != -1 ? min_cycle : -1) << endl;
+    return 0;
+}

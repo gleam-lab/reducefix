@@ -1,0 +1,52 @@
+#include<bits/stdc++.h>
+using namespace std;
+
+vector<int> adj[200005];
+
+void addEdge(int u, int v){
+    adj[u].push_back(v);
+    adj[v].push_back(u);
+}
+
+priority_queue<int, vector<int>, greater<int>> pq[200005];
+
+void updatePQ(int u, int v){
+    pq[u].push(v);
+    if(pq[u].size() > 10){
+        pq[u].pop();
+    }
+}
+
+int getKthLargest(int u, int k){
+    while(!pq[u].empty() && pq[u].top() < k){
+        pq[u].pop();
+    }
+    if(pq[u].empty()) return -1;
+    return pq[u].top();
+}
+
+int main(){
+    ios_base::sync_with_stdio(false); cin.tie(NULL);
+
+    int n, q;
+    cin >> n >> q;
+
+    for(int i = 1; i <= n; i++){
+        updatePQ(i, i);
+    }
+
+    for(int i = 0; i < q; i++){
+        int type, u, v;
+        cin >> type >> u >> v;
+
+        if(type == 1){
+            addEdge(u, v);
+            updatePQ(u, v);
+            updatePQ(v, u);
+        } else {
+            cout << getKthLargest(u, v) << '\n';
+        }
+    }
+
+    return 0;
+}

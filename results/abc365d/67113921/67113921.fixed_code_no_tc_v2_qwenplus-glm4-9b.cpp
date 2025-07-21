@@ -1,0 +1,41 @@
+#include <iostream>
+#include <string>
+
+using namespace std;
+
+int main() {
+    int N;
+    string S;
+    cin >> N >> S;
+
+    // Check for invalid input
+    if (N < 0 || N != S.size()) {
+        cout << "Invalid input" << endl;
+        return 1;
+    }
+
+    int wins = 0;
+    char winmove;
+    char prev = 'a'; // Initialize to a character that is not 'R', 'P', or 'S'
+
+    for (char c : S) {
+        if (c == 'R') {
+            winmove = 'P';
+        } else if (c == 'P') {
+            winmove = 'S';
+        } else if (c == 'S') {
+            winmove = 'R';
+        }
+
+        // Increment wins if the current move beats the previous move
+        if (winmove != prev) {
+            wins++;
+            prev = winmove;
+        } else {
+            prev = c;
+        }
+    }
+
+    cout << wins << endl;
+    return 0;
+}

@@ -1,0 +1,30 @@
+#include <bits/stdc++.h>
+#define int long long
+#define f first
+#define s second
+using namespace std;
+signed main() {
+	int t; cin >> t;
+	while(t--) {
+		int n, k; cin >> n >> k;
+		vector<int> a(n), b(n);
+		for(int i=0;i<n;i++) cin >> a[i];
+		for(int i=0;i<n;i++) cin >> b[i];
+		
+		// Sort indices based on the value of A in descending order
+		vector<int> idx(n);
+		iota(idx.begin(), idx.end(), 0);
+		sort(idx.begin(), idx.end(), [&](int i, int j){ return a[i] > a[j]; });
+		
+		long long sum_b = 0;
+		for(int i=0;i<k;i++) sum_b += b[idx[i]];
+		
+		long long ans = sum_b * a[idx[k-1]];
+		for(int i=k;i<n;i++) {
+			sum_b += b[idx[i]] - b[idx[i-k]];
+			ans = min(ans, sum_b * a[idx[i]]);
+		}
+		
+		cout << ans << '\n';
+	}
+}

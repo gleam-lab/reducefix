@@ -1,0 +1,28 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int N;
+    cin >> N;
+
+    double curX = 0, curY = 0;
+    double total = 0;          // 使用double来存储浮点数
+
+    for (int i = 0; i < N; ++i) {
+        long long x, y;
+        cin >> x >> y;
+
+        double dx = curX - x;
+        double dy = curY - y;
+        total += sqrt(dx * dx + dy * dy); // 计算欧几里得距离并累加到总成本中
+
+        curX = x; curY = y;
+    }
+    total += sqrt(curX * curX + curY * curY); // 原点へ戻る
+
+    // 直接输出double类型的结果，避免字符串化带来的精度问题
+    printf("%.10f\n", total);
+}

@@ -1,0 +1,47 @@
+#include<iostream>
+#include<vector>
+#include<algorithm>
+using namespace std;
+
+const int INF = 1e18;
+
+int main() {
+    ios_base::sync_with_stdio(false);cin.tie(NULL);
+
+    int t;
+    cin >> t;
+    while(t--){
+        int n, k;
+        cin >> n >> k;
+        vector<pair<int, int>> A(n), B(n);
+        for(int i = 0; i < n; ++i){
+            cin >> A[i].first >> A[i].second;
+        }
+        for(int i = 0; i < n; ++i){
+            cin >> B[i].first >> B[i].second;
+        }
+
+        // Sort based on A's first element (value of A_i)
+        sort(A.begin(), A.end());
+        // Sort based on B's first element (value of B_i)
+        sort(B.begin(), B.end());
+
+        long long ans = INF;
+        priority_queue<long long, vector<long long>, greater<long long>> pq;
+        long long sum = 0;
+        
+        for(int i = 0; i < n; ++i){
+            pq.push(B[i].first);
+            sum += B[i].first;
+            if(pq.size() > k){
+                sum -= pq.top();
+                pq.pop();
+            }
+            if(pq.size() == k){
+                ans = min(ans, (long long)A[i].first * sum);
+            }
+        }
+        cout << ans << '\n';
+    }
+    return 0;
+}

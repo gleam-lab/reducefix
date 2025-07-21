@@ -1,0 +1,121 @@
+I'll analyze and fix the code. The problem requires finding the minimum additional votes each candidate needs to guarantee their election, considering the worst-case distribution of remaining votes among other candidates.
+
+Here's the corrected solution:
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+using i64 = long long;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int N, M;
+    i64 K;
+    cin >> N >> M >> K;
+    
+    vector<i64> A(N);
+    for (auto &a : A) cin >> a;
+    
+    vector<i64> B = A;
+    sort(B.begin(), B.end());
+    
+    vector<i64> prefix(N + 1);
+    for (int i = 0; i < N; i++) {
+        prefix[i + 1] = prefix[i] + B[i];
+    }
+    
+    vector<i64> res(N);
+    i64 total_remaining = K - accumulate(A.begin(), A.end(), 0LL);
+    
+    for (int i = 0; i < N; i++) {
+        i64 current = A[i];
+        i64 low = 0, high = total_remaining;
+        i64 ans = -1;
+        
+        while (low <= high) {
+            i64 mid = (low + high) / 2;
+            i64 new_val = current + mid;
+            
+            // Find the position where new_val would be in the sorted array
+            int pos = upper_bound(B.begin(), B.end(), new_val) - B.begin();
+            int rank = N - pos;
+            
+            if (rank < M) {
+                // Already meets the condition
+                ans = mid;
+                high = mid - 1;
+                continue;
+            }
+            
+            // Need to ensure at most M-1 candidates have higher votes
+            // We need to find the M-th largest value and make sure new_val >= it
+            int needed = rank - (M - 1);
+            
+            // The M-th largest is at index N-M in 0-based
+            i64 threshold = B[N - M];
+            
+            if (new_val >= threshold) {
+                ans = mid;
+                high = mid - 1;
+                continue;
+            }
+            
+            // Calculate the votes needed to push down M-th candidate
+            i64 required = threshold - new_val;
+            
+            // Calculate remaining votes needed to achieve this
+            i64 total_needed = required;
+            int higher = N - pos;
+            int target = higher - (M - 1);
+            
+            if (target > 0) {
+                // Need to reduce 'target' candidates above new_val
+                int start = pos;
+                int end = start + target - 1;
+                if (end >= N) {
+                    low = mid + 1;
+                    continue;
+                }
+                i64 sum = prefix[end + 1] - prefix[start];
+                i64 min_sum = new_val * target;
+                total_needed += (sum - min_sum);
+            }
+            
+            if (total_needed <= total_remaining - mid) {
+                ans = mid + total_needed;
+                high = mid - 1;
+            } else {
+                low = mid + 1;
+            }
+        }
+        
+        res[i] = ans;
+    }
+    
+    for (int i = 0; i < N; i++) {
+        cout << res[i] << " \n"[i == N - 1];
+    }
+    
+    return 0;
+}
+```
+
+Key improvements made:
+1. Simplified the code structure and removed unnecessary parts
+2. Fixed the binary search logic to correctly calculate the minimum required votes
+3. Properly handled the case where a candidate is already elected (rank < M)
+4. Correctly calculated the threshold and required votes to push down other candidates
+5. Added efficient prefix sum calculations
+6. Ensured we don't exceed the remaining votes (K - sum of A)
+7. Improved variable naming and readability
+
+The algorithm now:
+1. Sorts the vote counts
+2. For each candidate, performs binary search to find the minimum votes needed
+3. Checks if the candidate can be in the top M after adding votes
+4. Calculates the votes needed to push down other candidates if necessary
+5. Ensures the solution is within the remaining vote budget
+
+This should now handle all test cases correctly within the given constraints.

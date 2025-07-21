@@ -1,0 +1,81 @@
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+using pii = pair<int, int>;
+#define x first
+#define y second
+#define all(x) (x).begin(), (x).end()
+#define pb push_back
+
+const int N = 200020;
+
+int H, W, Q;
+
+void solve() {
+    cin >> H >> W >> Q;
+
+    // For each row and column, we maintain a set of remaining wall positions
+    vector<set<int>> rowWalls(H + 1), colWalls(W + 1);
+    for (int i = 1; i <= H; ++i) {
+        for (int j = 1; j <= W; ++j) {
+            rowWalls[i].insert(j);
+            colWalls[j].insert(i);
+        }
+    }
+
+    auto eraseWall = [&](int r, int c) {
+        rowWalls[r].erase(c);
+        colWalls[c].erase(r);
+    };
+
+    while (Q--) {
+        int r, c;
+        cin >> r >> c;
+
+        if (rowWalls[r].count(c)) {
+            // Wall already exists here, just remove it
+            eraseWall(r, c);
+            continue;
+        }
+
+        // We look in four directions: left, right, up, down
+
+        // Left
+        auto it = rowWalls[r].lower_bound(c);
+        if (it != rowWalls[r].begin()) {
+            --it;
+            eraseWall(r, *it);
+        }
+
+        // Right
+        it = rowWalls[r].lower_bound(c);
+        if (it != rowWalls[r].end()) {
+            eraseWall(r, *it);
+        }
+
+        // Up
+        auto jt = colWalls[c].lower_bound(r);
+        if (jt != colWalls[c].begin()) {
+            --jt;
+            eraseWall(*jt, c);
+        }
+
+        // Down
+        jt = colWalls[c].lower_bound(r);
+        if (jt != colWalls[c].end()) {
+            eraseWall(*jt, c);
+        }
+    }
+
+    ll ans = 0;
+    for (int i = 1; i <= H; ++i) {
+        ans += rowWalls[i].size();
+    }
+    cout << ans << '\n';
+}
+
+int main() {
+    ios::sync_with_stdio(false); cin.tie(nullptr); cout.tie(nullptr);
+    solve();
+    return 0;
+}

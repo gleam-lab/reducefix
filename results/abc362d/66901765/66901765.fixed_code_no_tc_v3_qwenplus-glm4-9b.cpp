@@ -1,0 +1,48 @@
+#include<bits/stdc++.h>
+using namespace std;
+#define int long long 
+vector<pair<int,pair<int,int>>>G[200005]; // Store edges with weights and vertex weights
+int dis[200005]; // Distance to each vertex from vertex 1
+int a[200005]; // Weight of each vertex
+int n, m; // Number of vertices and edges
+int vis[200005]; // Visited array for Dijkstra's algorithm
+
+void dijkstra(int start) {
+    priority_queue<pair<int, int>, vector<pair<int, int>>, greater<pair<int, int>>> pq; // Min-heap for Dijkstra's algorithm
+    pq.push({0, start}); // Start from vertex 1 with distance 0
+    while (!pq.empty()) {
+        int currentDis = pq.top().first;
+        int u = pq.top().second;
+        pq.pop();
+        if (vis[u] != 0) continue; // If already visited, skip
+        vis[u] = currentDis; // Mark as visited
+        for (auto e : G[u]) {
+            int v = e.first;
+            int weight = e.second.first + a[v]; // Edge weight + vertex weight
+            if (currentDis + weight < dis[v]) { // Relax the edge
+                dis[v] = currentDis + weight;
+                pq.push({dis[v], v});
+            }
+        }
+    }
+}
+
+signed main() {
+    scanf("%lld%lld", &n, &m);
+    for (int i = 1; i <= n; ++i) {
+        scanf("%lld", &a[i]);
+    }
+    for (int i = 0; i < m; ++i) {
+        int u, v, w;
+        scanf("%lld%lld%lld", &u, &v, &w);
+        G[u].push_back({v, {w, a[v]}});
+        G[v].push_back({u, {w, a[u]}});
+    }
+    memset(dis, 0x3f, sizeof(dis)); // Initialize distances with infinity
+    dijkstra(1); // Run Dijkstra's algorithm from vertex 1
+    for (int i = 2; i <= n; ++i) {
+        cout << dis[i] << " ";
+    }
+    cout << "\n";
+    return 0;
+}

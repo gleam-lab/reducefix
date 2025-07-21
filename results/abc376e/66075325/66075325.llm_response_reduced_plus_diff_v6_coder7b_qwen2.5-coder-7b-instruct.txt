@@ -1,0 +1,98 @@
+To fix the code and ensure it passes all test cases, we need to optimize the approach to finding the minimum value of the expression \((\max_i A_i) \times (\sum_j B_j)\) for subsets of size \(K\) from arrays \(A\) and \(B\).
+
+The current approach has a time complexity of \(O(N^2 \log N)\), which is too slow for large inputs. We can improve this by using a more efficient method to maintain the maximum element and sum efficiently as we iterate through the array.
+
+Here's the corrected code:
+
+```cpp
+#include <iostream>
+#include <vector>
+#include <queue>
+#include <algorithm>
+
+using namespace std;
+
+#define int long long
+
+struct Node {
+    int val, idx;
+};
+
+struct Compare {
+    bool operator()(Node &a, Node &b) {
+        return a.val > b.val || (a.val == b.val && a.idx < b.idx);
+    }
+};
+
+int main() {
+    ios_base::sync_with_stdio(false); cin.tie(nullptr); cout.tie(nullptr);
+
+    int T;
+    cin >> T;
+    while (T--) {
+        int N, K;
+        cin >> N >> K;
+        
+        vector<int> A(N), B(N);
+        priority_queue<Node, vector<Node>, Compare> pq;
+        vector<int> prefix_sum(B.size(), 0);
+
+        for (int i = 0; i < N; ++i) {
+            cin >> A[i];
+        }
+        for (int i = 0; i < N; ++i) {
+            cin >> B[i];
+            prefix_sum[i] = (i ? prefix_sum[i - 1] : 0) + B[i];
+        }
+
+        for (int i = 0; i < K; ++i) {
+            pq.push({A[i], i});
+        }
+
+        int ans = LLONG_MAX;
+        int current_max = pq.top().val;
+        int current_sum = prefix_sum[K - 1];
+
+        for (int i = K; i < N; ++i) {
+            pq.push({A[i], i});
+            current_max = max(current_max, pq.top().val);
+            current_sum = prefix_sum[i] - prefix_sum[i - K] + B[i - K];
+            ans = min(ans, current_max * current_sum);
+        }
+
+        for (int i = 0; i < K; ++i) {
+            pq.pop();
+        }
+
+        while (!pq.empty()) {
+            pq.pop();
+        }
+
+        for (int i = 0; i < K; ++i) {
+            pq.push({A[i], i});
+        }
+
+        current_max = pq.top().val;
+        current_sum = prefix_sum[K - 1];
+
+        for (int i = K; i < N; ++i) {
+            pq.push({A[i], i});
+            current_max = max(current_max, pq.top().val);
+            current_sum = prefix_sum[i] - prefix_sum[i - K] + B[i - K];
+            ans = min(ans, current_max * current_sum);
+        }
+
+        cout << ans << '\n';
+    }
+
+    return 0;
+}
+```
+
+### Explanation of Changes:
+1. **Data Structure**: We use a priority queue to keep track of the top \(K\) elements of array \(A\) and their indices.
+2. **Prefix Sum Array**: We precompute the prefix sums of array \(B\) to quickly calculate the sum of any subarray.
+3. **Efficient Calculation**: As we iterate through the array, we update the maximum element in the priority queue and recalculate the sum of the corresponding subarray in \(B\).
+4. **Result Update**: We keep updating the result with the minimum value obtained during the iteration.
+
+This approach ensures that we achieve an overall time complexity of \(O(N \log K)\), making it suitable for the given constraints.

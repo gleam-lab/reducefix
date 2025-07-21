@@ -1,0 +1,59 @@
+#include<bits/stdc++.h>
+using namespace std;
+
+const int MAXN = 2 * 1e5 + 5;
+vector<int> adj[MAXN];
+
+void addEdge(int u, int v) {
+    adj[u].push_back(v);
+    adj[v].push_back(u);
+}
+
+void dfs(int node, int parent, vector<int>& dist) {
+    for(auto child : adj[node]) {
+        if(child != parent) {
+            dist[child] = dist[node] + 1;
+            dfs(child, node, dist);
+        }
+    }
+}
+
+int main() {
+    ios_base::sync_with_stdio(false); cin.tie(NULL); cout.tie(NULL);
+
+    int n, q;
+    cin >> n >> q;
+
+    vector<vector<int>> dist(n + 1, vector<int>(11, -1));
+    vector<int> size(n + 1, 1);
+    vector<bool> visited(n + 1, false);
+
+    for(int i = 1; i <= n; i++) {
+        dist[i][0] = i;
+    }
+
+    while(q--) {
+        int type, u, v;
+        cin >> type >> u >> v;
+
+        if(type == 1) {
+            addEdge(u, v);
+            visited[u] = true;
+            visited[v] = true;
+        } else {
+            if(!visited[v]) {
+                cout << "-1" << endl;
+                continue;
+            }
+            vector<int> sortedDist = dist[v];
+            sort(sortedDist.begin(), sortedDist.end());
+            if(k > size[v]) {
+                cout << "-1" << endl;
+            } else {
+                cout << sortedDist[k - 1] << endl;
+            }
+        }
+    }
+
+    return 0;
+}

@@ -1,0 +1,51 @@
+#include <iostream>
+#include <vector>
+#include <set>
+#include <utility>
+
+using namespace std;
+
+using i32 = int;
+using i64 = long long;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    i32 N;
+    i32 M;
+    cin >> N >> M;
+
+    vector<pair<i32, i32>> pieces(M);
+    for (auto &p : pieces) {
+        cin >> p.first >> p.second;
+    }
+
+    set<pair<i32, i32>> forbidden;
+
+    // The 8 possible attack moves
+    const vector<pair<i32, i32>> knight_moves = {
+        {2, 1}, {1, 2}, {-1, 2}, {-2, 1},
+        {-2, -1}, {-1, -2}, {1, -2}, {2, -1}
+    };
+
+    for (const auto &[x, y] : pieces) {
+        // Add the piece itself to forbidden (as we cannot place on it)
+        forbidden.emplace(x, y);
+
+        // Check each of the 8 positions this piece can attack
+        for (const auto &[dx, dy] : knight_moves) {
+            i32 nx = x + dx;
+            i32 ny = y + dy;
+            if (1 <= nx && nx <= N && 1 <= ny && ny <= N) {
+                forbidden.emplace(nx, ny);
+            }
+        }
+    }
+
+    // Total number of cells: N * N
+    // Subtract number of forbidden cells
+    cout << (1LL * N * N - forbidden.size()) << '\n';
+
+    return 0;
+}

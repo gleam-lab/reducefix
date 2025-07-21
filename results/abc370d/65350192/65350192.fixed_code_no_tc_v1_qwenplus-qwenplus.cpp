@@ -1,0 +1,75 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define rep(i,n) for(int i = 0; i < (n); i++)
+using ll = long long;
+
+int main() {
+    int h, w, q;
+    cin >> h >> w >> q;
+    vector<set<int>> rows(h), cols(w);
+
+    // Initialize all walls present
+    for (int i = 0; i < h; ++i) {
+        for (int j = 0; j < w; ++j) {
+            rows[i].insert(j);
+            cols[j].insert(i);
+        }
+    }
+
+    while (q--) {
+        int r, c;
+        cin >> r >> c;
+        r--; c--;
+
+        if (rows[r].count(c)) {
+            // Wall exists at the position, remove it
+            rows[r].erase(c);
+            cols[c].erase(r);
+        } else {
+            // Look in four directions
+
+            // Down direction (in column c, above r)
+            auto down = cols[c].lower_bound(r + 1);
+            if (down != cols[c].end()) {
+                int row = *down;
+                rows[row].erase(c);
+                cols[c].erase(down);
+            }
+
+            // Up direction (in column c, below r)
+            auto up = cols[c].lower_bound(r);
+            if (up != cols[c].begin()) {
+                --up;
+                int row = *up;
+                rows[row].erase(c);
+                cols[c].erase(up);
+            }
+
+            // Right direction (in row r, to right of c)
+            auto right = rows[r].lower_bound(c + 1);
+            if (right != rows[r].end()) {
+                int col = *right;
+                cols[col].erase(r);
+                rows[r].erase(right);
+            }
+
+            // Left direction (in row r, to left of c)
+            auto left = rows[r].lower_bound(c);
+            if (left != rows[r].begin()) {
+                --left;
+                int col = *left;
+                cols[col].erase(r);
+                rows[r].erase(left);
+            }
+        }
+    }
+
+    // Count remaining walls
+    int ans = 0;
+    for (int i = 0; i < h; ++i) {
+        ans += rows[i].size();
+    }
+    cout << ans << "\n";
+
+    return 0;
+}

@@ -1,0 +1,53 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int N;
+    cin >> N;
+
+    vector<long long> A(N), B(N - 1);
+    for (int i = 0; i < N; ++i) cin >> A[i];
+    for (int i = 0; i < N - 1; ++i) cin >> B[i];
+
+    sort(A.begin(), A.end());
+    sort(B.begin(), B.end());
+
+    // Check if it's possible to place N-1 smallest toys in the N-1 boxes
+    bool possible = true;
+    for (int i = 0; i < N - 1; ++i) {
+        if (A[i] > B[i]) {
+            possible = false;
+            break;
+        }
+    }
+
+    if (!possible) {
+        cout << -1 << '\n';
+        return 0;
+    }
+
+    // The minimum size of the extra box is such that it can fit the largest toy
+    // or help rearrange one toy from the N-1 placed ones into the new box
+    long long min_box_size = A.back();  // candidate for storing the largest toy
+
+    // Try to find if we can swap a toy from A[N-1] with some box B[i]
+    // We check for each i: what is the smallest x such that A[i] <= x and x >= A[N-1], B[i] <= other B[j]
+    for (int i = 0; i < N - 1; ++i) {
+        if (B[i] >= A[i]) continue;  // no problem here, don't need to replace this
+        // We must move A[i] to the new box => new box size must be at least A[i]
+        // And put A[N-1] in B[i] => must have A[N-1] <= B[i]
+        if (A.back() <= B[i]) {
+            min_box_size = min(min_box_size, (long long)A[i]);
+        }
+    }
+
+    cout << min_box_size << '\n';
+
+    return 0;
+}

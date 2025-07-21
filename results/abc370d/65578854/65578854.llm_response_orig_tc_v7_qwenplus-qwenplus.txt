@@ -1,0 +1,121 @@
+To solve this problem efficiently, we need to simulate bomb placements on a grid and update the remaining walls accordingly. The key challenge is efficiently tracking and updating visible walls in each of the four directions after placing a bomb where that cell has already been cleared.
+
+---
+
+### Key Observations:
+
+1. **Each cell initially has a wall.**
+2. **When a bomb is placed at an empty cell**, it destroys the first visible wall in each of the 4 directions:
+   - Up (above)
+   - Down (below)
+   - Left
+   - Right
+
+3. A naive approach would be too slow for large grids and many queries due to repeated linear scans.
+
+---
+
+### Efficient Strategy:
+
+Use `std::set` for each row and column to maintain the positions of existing walls. This allows efficient:
+- Insertion/deletion (O(log N))
+- Binary search for nearest walls in all directions using `lower_bound()`/`upper_bound()`
+
+---
+
+### Implementation Details:
+
+- Maintain two arrays of sets:
+  - `row_walls[i]`: set of columns with walls in row i
+  - `col_walls[j]`: set of rows with walls in column j
+
+- For each query:
+  - If there's a wall at the current position → destroy it.
+  - Else, find and destroy the closest walls in the four directions simultaneously.
+
+---
+
+### Full Corrected C++ Code:
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int H, W, Q;
+    cin >> H >> W >> Q;
+
+    vector<set<int>> row_walls(H), col_walls(W);
+    for (int i = 0; i < H; ++i) {
+        for (int j = 0; j < W; ++j) {
+            row_walls[i].insert(j);
+            col_walls[j].insert(i);
+        }
+    }
+
+    long long total_remaining = (long long)H * W;
+
+    auto destroy_wall = [&](int r, int c) {
+        if (row_walls[r].count(c)) {
+            row_walls[r].erase(c);
+            col_walls[c].erase(r);
+            total_remaining--;
+        }
+    };
+
+    while (Q--) {
+        int R, C;
+        cin >> R >> C;
+        R--; C--;
+
+        // If there's a wall here, destroy it directly
+        if (row_walls[R].count(C)) {
+            destroy_wall(R, C);
+            continue;
+        }
+
+        // UP: look above for nearest wall in column C
+        auto it = col_walls[C].lower_bound(R);
+        if (it != col_walls[C].begin()) {
+            it--;
+            destroy_wall(*it, C);
+        }
+
+        // DOWN: look below for nearest wall in column C
+        it = col_walls[C].lower_bound(R);
+        if (it != col_walls[C].end()) {
+            destroy_wall(*it, C);
+        }
+
+        // LEFT: look left in the same row
+        it = row_walls[R].lower_bound(C);
+        if (it != row_walls[R].begin()) {
+            it--;
+            destroy_wall(R, *it);
+        }
+
+        // RIGHT: look right in the same row
+        it = row_walls[R].lower_bound(C);
+        if (it != row_walls[R].end()) {
+            destroy_wall(R, *it);
+        }
+    }
+
+    cout << total_remaining << endl;
+    return 0;
+}
+```
+
+---
+
+### Why This Works:
+
+- Each wall destruction happens in O(log N) time due to set operations.
+- Total complexity is approximately O(Q log H + Q log W), which is efficient enough given constraints:
+  - H × W ≤ 4 × 10⁵
+  - Q ≤ 2 × 10⁵
+
+This solution ensures correctness and efficiency even for edge cases like full grid or dense queries.

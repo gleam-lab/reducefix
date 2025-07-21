@@ -1,0 +1,80 @@
+To fix this code, we need to address the issue of correctly simulating the sinking of sections as the sea level rises each year. The problem involves identifying sections that will sink at each sea level and propagating this sinking to adjacent sections efficiently. 
+
+### Approaches
+1. **Priority Queue for Minimum Sea Level**: We use a priority queue (min-heap) to process sections in order of their elevation. This allows us to efficiently determine the sections that will sink at each sea level.
+2. **Dijkstra-like Propagation**: Similar to Dijkstra's algorithm, we propagate the sinking to adjacent sections, ensuring that sections are processed in the correct order to avoid unnecessary checks.
+3. **Prefix Sum Array**: We maintain a prefix sum array to keep track of the number of sections that sink at each sea level, allowing us to answer queries for each year in constant time.
+
+### Solution Code
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+typedef long long ll;
+#define all(x) (x).begin(), (x).end()
+
+int main() {
+    ios_base::sync_with_stdio(0);
+    cin.tie(0);
+    int h, w, y;
+    cin >> h >> w >> y;
+    vector<vector<int>> height(h, vector<int>(w));
+    vector<vector<int>> sink(h, vector<int>(w, INT_MAX));
+    priority_queue<pair<int, pair<int, int>>, vector<pair<int, pair<int, int>>>, greater<pair<int, pair<int, int>>>> pq;
+    int di[4][2] = {{-1, 0}, {1, 0}, {0, -1}, {0, 1}};
+
+    for (int i = 0; i < h; i++) {
+        for (int j = 0; j < w; j++) {
+            cin >> height[i][j];
+            if (i == 0 || i == h - 1 || j == 0 || j == w - 1) {
+                sink[i][j] = height[i][j];
+                pq.push({height[i][j], {i, j}});
+            }
+        }
+    }
+
+    while (!pq.empty()) {
+        auto [H, p] = pq.top();
+        auto [r, c] = p;
+        pq.pop();
+        if (sink[r][c] < H) continue;
+        for (int k = 0; k < 4; k++) {
+            int nr = r + di[k][0];
+            int nc = c + di[k][1];
+            if (nr < 0 || nr >= h || nc < 0 || nc >= w) continue;
+            if (sink[nr][nc] > max(height[nr][nc], H)) {
+                sink[nr][nc] = max(height[nr][nc], H);
+                pq.push({sink[nr][nc], {nr, nc}});
+            }
+        }
+    }
+
+    vector<int> cnt(y + 2, 0);
+    for (int i = 0; i < h; i++) {
+        for (int j = 0; j < w; j++) {
+            if (sink[i][j] <= y) {
+                cnt[sink[i][j]]++;
+            }
+        }
+    }
+
+    for (int i = 1; i <= y; i++) {
+        cnt[i] += cnt[i - 1];
+    }
+
+    for (int i = 1; i <= y; i++) {
+        cout << h * w - cnt[i] << '\n';
+    }
+
+    return 0;
+}
+```
+
+### Explanation
+1. **Initialization**: We read the dimensions of the island and the number of years. We then initialize the height matrix and a sink matrix to keep track of the sea level at which each section sinks.
+2. **Priority Queue Setup**: The initial sections (those on the borders) are added to the priority queue with their respective heights, as they will sink when the sea level reaches their height.
+3. **Processing Sections**: Using a Dijkstra-like approach, we process each section from the priority queue. For each section, we check its neighbors and update their sinking levels if a lower level is found, pushing them into the queue if necessary.
+4. **Counting Sunk Sections**: We use a prefix sum array to count how many sections sink at each sea level. This allows us to efficiently compute the remaining island area for each year by subtracting the sunk sections from the total area.
+5. **Output**: Finally, we print the remaining island area for each year from 1 to Y.
+
+This approach ensures that we efficiently propagate the sinking process and answer each query in constant time after an initial O(HW log HW) preprocessing step.

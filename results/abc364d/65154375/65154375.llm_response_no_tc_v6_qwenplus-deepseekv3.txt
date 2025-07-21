@@ -1,0 +1,81 @@
+The original code has several issues, primarily related to how it handles the distances and the binary search approach. Here's a corrected version that efficiently solves the problem by sorting the array of A points and using binary search to find the k-th closest point for each query.
+
+### Issues in the Original Code:
+1. **Memory Usage**: The array `a` is declared with size `2e8 + 5`, which is excessively large and unnecessary. This leads to memory issues.
+2. **Binary Search Logic**: The binary search logic is incorrectly applied to count distances, and the approach doesn't correctly identify the k-th closest point.
+3. **Distance Calculation**: The distance calculations are not properly managed, leading to incorrect results.
+
+### Fixed Approach:
+1. **Sort the A Points**: Sorting the array allows for efficient binary search operations to find the closest points.
+2. **Binary Search for k-th Closest**: For each query point B_j, perform a binary search to find the range of distances that includes the k-th closest point.
+3. **Efficient Distance Calculation**: Use the sorted array to quickly determine the distances in a sorted manner without explicitly storing all distances.
+
+### Solution Code:
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+
+void solve() {
+    int N, Q;
+    cin >> N >> Q;
+    vector<ll> A(N);
+    for (int i = 0; i < N; ++i) {
+        cin >> A[i];
+    }
+    sort(A.begin(), A.end());
+
+    while (Q--) {
+        ll b;
+        int k;
+        cin >> b >> k;
+        k--; // Convert to 0-based index for easier handling
+
+        // Lambda to count how many elements are <= x
+        auto count_less_equal = [&](ll x) {
+            return upper_bound(A.begin(), A.end(), x) - A.begin();
+        };
+
+        // Binary search to find the k-th closest element
+        ll left = -2e18, right = 2e18;
+        ll answer = 0;
+        while (left <= right) {
+            ll mid = left + (right - left) / 2;
+            ll cnt = count_less_equal(b + mid) - count_less_equal(b - mid - 1);
+            if (cnt > k) {
+                right = mid - 1;
+                answer = mid;
+            } else {
+                left = mid + 1;
+            }
+        }
+
+        // Now, find the exact k-th closest element
+        vector<ll> candidates;
+        ll low = b - answer, high = b + answer;
+        auto lower = lower_bound(A.begin(), A.end(), low);
+        auto upper = upper_bound(A.begin(), A.end(), high);
+        for (auto it = lower; it != upper; ++it) {
+            candidates.push_back(abs(*it - b));
+        }
+        sort(candidates.begin(), candidates.end());
+        cout << candidates[k] << endl;
+    }
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    solve();
+    return 0;
+}
+```
+
+### Explanation:
+1. **Sorting**: The array `A` is sorted to facilitate efficient binary search operations.
+2. **Binary Search for Range**: For each query point `b`, the binary search determines the smallest distance `answer` such that there are at least `k + 1` points within `b ± answer`.
+3. **Candidate Collection**: After determining the range, collect all points within `b ± answer`, compute their distances to `b`, sort these distances, and pick the k-th smallest distance.
+4. **Efficiency**: The binary search runs in O(log(max_distance)) per query, and collecting and sorting the candidates is efficient due to the constraints (each query processes a limited number of points).
+
+This approach ensures correctness and efficiency, handling the constraints effectively.

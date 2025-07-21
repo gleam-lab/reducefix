@@ -1,0 +1,39 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+
+using namespace std;
+using ll = long long;
+
+ll calculate_attacks(vector<ll>& healths, ll t) {
+    ll total_attacks = 0;
+    for (ll h : healths) {
+        if (h > 0) {
+            if (t % 3 == 0) {
+                total_attacks += (h + 2) / 3; // Each full cycle (3 attacks) reduces health by 3, so total cycles needed is (h + 2) / 3
+            } else {
+                total_attacks += h; // Each attack reduces health by 1
+            }
+        }
+    }
+    return total_attacks;
+}
+
+int main() {
+    ll n;
+    cin >> n;
+    vector<ll> healths(n);
+    for (ll& h : healths) {
+        cin >> h;
+    }
+
+    ll t = 0;
+    ll total_attacks = 0;
+    while (t + total_attacks < n) {
+        total_attacks += calculate_attacks(healths, t);
+        t += total_attacks;
+    }
+
+    cout << t << endl;
+    return 0;
+}

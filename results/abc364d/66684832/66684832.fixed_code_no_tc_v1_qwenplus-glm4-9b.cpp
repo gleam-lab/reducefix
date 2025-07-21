@@ -1,0 +1,60 @@
+#include <iostream>
+#include <algorithm>
+#include <vector>
+using namespace std;
+#define int long long
+
+int n, q;
+vector<int> a;
+vector<pair<int, int>> queries;
+
+int main() {
+    cin >> n >> q;
+    a.resize(n);
+    for (int i = 0; i < n; ++i) {
+        cin >> a[i];
+    }
+    for (int i = 0; i < q; ++i) {
+        int b, k;
+        cin >> b >> k;
+        queries.emplace_back(b, k);
+    }
+    
+    // Sort the array and queries by the point B_j
+    sort(a.begin(), a.end());
+    sort(queries.begin(), queries.end(), [](const pair<int, int>& x, const pair<int, int>& y) {
+        return x.first < y.first;
+    });
+    
+    // Prepare to answer each query
+    int ans = 0;
+    vector<int> pos_a(n + 1);
+    pos_a[0] = -1e9; // A virtual point to handle edge cases
+    for (int i = 0; i < n; ++i) {
+        pos_a[i + 1] = a[i];
+    }
+    pos_a[n + 1] = 1e9; // A virtual point to handle edge cases
+    
+    for (const auto& q : queries) {
+        int b = q.first;
+        int k = q.second;
+        
+        // Binary search to find the k-th closest point to B_j
+        int l = 0, r = n;
+        while (l + 1 < r) {
+            int mid = l + (r - l) / 2;
+            if (b - pos_a[mid + 1] <= pos_a[mid + 2] - b) {
+                r = mid;
+            } else {
+                l = mid;
+            }
+        }
+        
+        // Calculate the k-th closest distance
+        int kth_closest_index = l + (b - pos_a[l + 1] <= pos_a[l + 2] - b ? l + 1 : l);
+        int distance = min(abs(b - pos_a[kth_closest_index]), abs(b - pos_a[kth_closest_index + 1]));
+        cout << distance << '\n';
+    }
+    
+    return 0;
+}

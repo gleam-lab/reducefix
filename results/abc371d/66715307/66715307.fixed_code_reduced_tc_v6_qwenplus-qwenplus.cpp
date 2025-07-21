@@ -1,0 +1,46 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    int n;
+    cin >> n;
+    
+    vector<int> x(n), p(n);
+    for (int i = 0; i < n; ++i) cin >> x[i];
+    for (int i = 0; i < n; ++i) cin >> p[i];
+    
+    // Precompute prefix sums of p
+    vector<long long> a(n + 1, 0);
+    for (int i = 0; i < n; ++i) {
+        a[i + 1] = a[i] + p[i];
+    }
+    
+    int q;
+    cin >> q;
+    
+    while (q--) {
+        int l, r;
+        cin >> l >> r;
+        
+        // Binary search to find the first index where x >= l
+        int left1 = 0, right1 = n;
+        while (left1 < right1) {
+            int mid = (left1 + right1) / 2;
+            if (x[mid] < l) left1 = mid + 1;
+            else right1 = mid;
+        }
+        
+        // Binary search to find the last index where x <= r
+        int left2 = 0, right2 = n;
+        while (left2 < right2) {
+            int mid = (left2 + right2) / 2;
+            if (x[mid] <= r) left2 = mid + 1;
+            else right2 = mid;
+        }
+        
+        // Sum of p from index left1 to left2 - 1
+        cout << a[left2] - a[left1] << endl;
+    }
+    
+    return 0;
+}

@@ -1,0 +1,28 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+
+using namespace std;
+
+int main() {
+    int n, k;
+    cin >> n >> k;
+    vector<int> a(n);
+    for (int i = 0; i < n; ++i) {
+        cin >> a[i];
+    }
+    
+    sort(a.begin(), a.end());
+    
+    // The optimal strategy to minimize the difference between max and min is to remove the k largest or smallest elements.
+    // Removing k largest elements:
+    int minMaxDiff1 = a[n - k - 1] - a[0];
+    
+    // Removing k smallest elements:
+    int minMaxDiff2 = a[n - 1] - a[k];
+    
+    // The result is the minimum of the two possible differences.
+    cout << min(minMaxDiff1, minMaxDiff2) << endl;
+    
+    return 0;
+}

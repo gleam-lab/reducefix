@@ -1,0 +1,84 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define rep(i, n) for(int i = 0; i < (n); i++)
+#define all(a) a.begin(), a.end()
+#define rall(a) a.rbegin(), a.rend()
+using ll = long long;
+using pi = pair<int, int>;
+
+struct UnionFind {
+    vector<int> parent, rank;
+    UnionFind(int n) : parent(n), rank(n, 0) {
+        for (int i = 0; i < n; i++) parent[i] = i;
+    }
+    int findRoot(int x) {
+        if (parent[x] != x) parent[x] = findRoot(parent[x]);
+        return parent[x];
+    }
+    bool unite(int x, int y) {
+        int rootX = findRoot(x);
+        int rootY = findRoot(y);
+        if (rootX != rootY) {
+            if (rank[rootX] > rank[rootY]) {
+                parent[rootY] = rootX;
+            } else if (rank[rootX] < rank[rootY]) {
+                parent[rootX] = rootY;
+            } else {
+                parent[rootY] = rootX;
+                rank[rootX]++;
+            }
+            return true;
+        }
+        return false;
+    }
+};
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int n, q;
+    cin >> n >> q;
+    UnionFind uf(n);
+    vector<int> size(n, 1); // To store the size of each component
+
+    while (q--) {
+        int com;
+        cin >> com;
+        if (com == 1) {
+            int u, v;
+            cin >> u >> v;
+            u--; v--;
+            int rootU = uf.findRoot(u);
+            int rootV = uf.findRoot(v);
+            if (rootU != rootV) {
+                if (size[rootU] < size[rootV]) {
+                    swap(rootU, rootV);
+                }
+                uf.unite(rootU, rootV);
+                size[rootU] += size[rootV];
+            }
+        } else if (com == 2) {
+            int v, k;
+            cin >> v >> k;
+            v--;
+            int rootV = uf.findRoot(v);
+            if (size[rootV] < k) {
+                cout << -1 << endl;
+            } else {
+                set<int> &connected = uf.parent;
+                auto it = connected.lower_bound(uf.findRoot(v));
+                int count = 0;
+                while (it != connected.end() && uf.findRoot(*it) == rootV) {
+                    count++;
+                    if (count == k) {
+                        cout << *it + 1 << endl;
+                        break;
+                    }
+                    it++;
+                }
+            }
+        }
+    }
+
+    return 0;
+}

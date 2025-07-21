@@ -1,0 +1,60 @@
+#include<bits/stdc++.h>
+using namespace std;
+#define int long long
+#define PII pair<int,int>
+
+const int N=2e5+10;
+
+int a[N], b[N];
+PII sa[N];
+
+signed main() {
+    ios::sync_with_stdio(0); cin.tie(0); cout.tie(0);
+    int t;
+    cin >> t;
+
+    while(t--) {
+        int n, k;
+        cin >> n >> k;
+
+        for(int i=0; i<n; i++)
+            cin >> sa[i].first;
+        
+        for(int i=0; i<n; i++)
+            cin >> sa[i].second;
+        
+        sort(sa, sa+n);
+
+        int res = LLONG_MAX;
+        if(k == 1) {
+            for(int i=0; i<n; i++)
+                res = min(res, sa[i].first * sa[i].second);
+            cout << res << endl;
+            continue;
+        }
+
+        priority_queue<int> q;
+        int sum = 0;
+
+        for(int i=0; i<n; i++) {
+            int current_a = sa[i].first;
+            int current_b = sa[i].second;
+
+            if(i < k-1) {
+                sum += current_b;
+                q.push(current_b);
+            } else {
+                res = min(res, current_a * (sum + current_b));
+                if(!q.empty() && current_b < q.top()) {
+                    sum -= q.top();
+                    q.pop();
+                    sum += current_b;
+                    q.push(current_b);
+                }
+            }
+        }
+
+        cout << res << endl;
+    }
+    return 0;
+}

@@ -1,0 +1,58 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+#define ll long long
+
+const ll INF = 1e18;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int n, m;
+    cin >> n >> m;
+    vector<ll> A(n);
+    for (int i = 0; i < n; ++i) cin >> A[i];
+
+    // Build graph: each edge stores (neighbor, weight)
+    vector<vector<pair<int, ll>>> graph(n);
+    for (int i = 0; i < m; ++i) {
+        int u, v;
+        ll b;
+        cin >> u >> v >> b;
+        u--; v--;
+        graph[u].emplace_back(v, b);
+        graph[v].emplace_back(u, b);
+    }
+
+    // Dijkstra's algorithm using a priority queue
+    vector<ll> dist(n, INF);
+    dist[0] = A[0];  // Starting node includes its own vertex weight
+
+    using T = tuple<ll, int>;  // (distance, node)
+    priority_queue<T, vector<T>, greater<T>> heap;
+    heap.push({dist[0], 0});
+
+    while (!heap.empty()) {
+        auto [d, u] = heap.top();
+        heap.pop();
+
+        if (d > dist[u]) continue;
+
+        for (auto [v, w] : graph[u]) {
+            ll new_dist = d + w + A[v];  // current distance + edge weight + destination vertex weight
+            if (new_dist < dist[v]) {
+                dist[v] = new_dist;
+                heap.push({dist[v], v});
+            }
+        }
+    }
+
+    // Output distances from node 1 to all other nodes
+    for (int i = 1; i < n; ++i) {
+        cout << dist[i] << " ";
+    }
+    cout << "\n";
+
+    return 0;
+}

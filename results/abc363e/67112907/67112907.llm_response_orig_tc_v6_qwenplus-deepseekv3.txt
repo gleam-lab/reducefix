@@ -1,0 +1,91 @@
+To fix this code, we need to correctly simulate the sinking of sections of the island as the sea level rises each year. The initial approach was to use a priority queue to process sections in order of their elevation, but it missed some critical details in the sinking process, especially regarding the adjacency and simultaneous sinking of sections.
+
+### Approaches
+1. **Initialization**: The island is represented as a grid of elevations. The sea level rises by 1 each year, starting from 0.
+2. **Priority Queue**: Use a min-heap to process sections in order of their elevation. This helps efficiently determine which sections sink as the sea level rises.
+3. **BFS for Adjacent Sections**: When a section sinks, its adjacent sections (vertically or horizontally) that meet the sinking condition should also sink. This is handled using a BFS approach to ensure all connected sections are processed.
+4. **Tracking Sunk Sections**: A visited matrix keeps track of sections that have already sunk to avoid reprocessing.
+5. **Output the Result**: For each year, after processing all sections that sink at the current sea level, the remaining area is output.
+
+### Solution Code
+```cpp
+#include <bits/stdc++.h>
+
+using namespace std;
+
+constexpr int d[4][2] = {{0, 1}, {0, -1}, {1, 0}, {-1, 0}};
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int H, W, Y;
+    cin >> H >> W >> Y;
+
+    vector<vector<int>> A(H, vector<int>(W));
+    for (int i = 0; i < H; i++) {
+        for (int j = 0; j < W; j++) {
+            cin >> A[i][j];
+        }
+    }
+
+    priority_queue<tuple<int, int, int>, vector<tuple<int, int, int>>, greater<tuple<int, int, int>>> pq;
+    vector<vector<bool>> vis(H, vector<bool>(W, false));
+
+    // Initialize the priority queue with border sections
+    for (int i = 0; i < H; i++) {
+        if (!vis[i][0]) {
+            pq.push({A[i][0], i, 0});
+            vis[i][0] = true;
+        }
+        if (!vis[i][W - 1]) {
+            pq.push({A[i][W - 1], i, W - 1});
+            vis[i][W - 1] = true;
+        }
+    }
+    for (int j = 0; j < W; j++) {
+        if (!vis[0][j]) {
+            pq.push({A[0][j], 0, j});
+            vis[0][j] = true;
+        }
+        if (!vis[H - 1][j]) {
+            pq.push({A[H - 1][j], H - 1, j});
+            vis[H - 1][j] = true;
+        }
+    }
+
+    int ans = H * W;
+    vector<int> res(Y);
+    for (int y = 1; y <= Y; y++) {
+        while (!pq.empty()) {
+            auto [h, x, j] = pq.top();
+            if (h > y) break;
+            pq.pop();
+            ans--;
+            for (int k = 0; k < 4; k++) {
+                int nx = x + d[k][0];
+                int nj = j + d[k][1];
+                if (nx >= 0 && nx < H && nj >= 0 && nj < W && !vis[nx][nj]) {
+                    vis[nx][nj] = true;
+                    pq.push({A[nx][nj], nx, nj});
+                }
+            }
+        }
+        res[y - 1] = ans;
+    }
+
+    for (int y = 0; y < Y; y++) {
+        cout << res[y] << "\n";
+    }
+
+    return 0;
+}
+```
+
+### Explanation
+1. **Initialization**: The grid is read from input, and each cell's elevation is stored.
+2. **Priority Queue Setup**: The border sections are added to the priority queue because they are adjacent to the sea and will sink first as the sea level rises.
+3. **Processing Each Year**: For each year, the sea level rises by 1. The priority queue processes sections in order of their elevation. Sections with elevation less than or equal to the current sea level sink, and their adjacent sections are checked and added to the queue if they meet the sinking condition.
+4. **Tracking and Output**: The remaining area of the island is tracked for each year and stored in a result vector, which is printed at the end.
+
+This approach ensures that all sections are processed in the correct order, and the BFS-like propagation from the priority queue handles the simultaneous sinking of adjacent sections efficiently. The complexity is optimized by using a priority queue to process sections in elevation order.

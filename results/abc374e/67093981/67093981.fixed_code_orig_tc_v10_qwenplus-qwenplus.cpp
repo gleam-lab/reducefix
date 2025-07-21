@@ -1,0 +1,79 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+typedef long long ll;
+
+struct Item {
+    int a, p, b, q;
+};
+
+int N;
+ll X;
+vector<Item> items;
+vector<vector<ll>> dp;
+
+ll compute_cost(int idx, ll n) {
+    ll rem = n % (items[idx].a * items[idx].b);
+    ll full_blocks = n / (items[idx].a * items[idx].b);
+    return dp[idx][rem] + full_blocks * (items[idx].p * items[idx].b + items[idx].q * items[idx].a);
+}
+
+bool is_possible(ll total) {
+    ll cost_sum = 0;
+    for (int i = 0; i < N; ++i) {
+        cost_sum += compute_cost(i, total);
+        if (cost_sum > X)
+            return false;
+    }
+    return true;
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    cin >> N >> X;
+    items.resize(N);
+    dp.resize(N);
+
+    for (int i = 0; i < N; ++i) {
+        int a, p, b, q;
+        cin >> a >> p >> b >> q;
+        
+        // Ensure the more efficient option (by cost per unit) is stored first
+        if ((ll)a * q < (ll)b * p) {
+            swap(a, b);
+            swap(p, q);
+        }
+        
+        items[i] = {a, p, b, q};
+        int lcm = a * b; // since a and b are guaranteed to be coprime
+        dp[i].resize(lcm + 1);
+        dp[i][0] = 0;
+        
+        // Build the DP table for this item up to LCM(a,b)
+        for (int j = 1; j <= lcm; ++j) {
+            dp[i][j] = p + (j >= a ? dp[i][j - a] : 0);
+            if (j >= b)
+                dp[i][j] = min(dp[i][j], q + dp[i][j - b]);
+        }
+    }
+
+    ll low = 0, high = 1e18;
+    ll answer = 0;
+
+    while (low <= high) {
+        ll mid = (low + high) / 2;
+        if (is_possible(mid)) {
+            answer = mid;
+            low = mid + 1;
+        } else {
+            high = mid - 1;
+        }
+    }
+
+    cout << answer << endl;
+    return 0;
+}

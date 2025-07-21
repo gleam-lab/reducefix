@@ -1,0 +1,84 @@
+To fix this code, we need to address the issue where the program fails to correctly calculate the remaining area of the island for each year when the sea level rises. The incorrect code seems to have a problem with the priority queue and the way it processes the sections of the island. 
+
+### Approaches
+1. **Initialization**: We first read the input dimensions and the elevation grid.
+2. **Priority Queue Setup**: We use a priority queue to process sections of the island in order of their elevation. This helps in efficiently determining which sections will sink as the sea level rises.
+3. **BFS for Sinking Sections**: For each year, as the sea level rises, we process all sections that are at or below the current sea level. Using a BFS approach, we mark adjacent sections that are also at or below the current sea level as sunk.
+4. **Tracking Remaining Area**: We keep track of the remaining area of the island by decrementing a counter each time a section sinks.
+
+### Solution Code
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+struct Node {
+    int x, y, val;
+    bool operator<(const Node &a) const {
+        return val > a.val;
+    }
+};
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+    cout.tie(0);
+    
+    int h, w, y;
+    cin >> h >> w >> y;
+    vector<vector<int>> grid(h, vector<int>(w));
+    for (int i = 0; i < h; ++i) {
+        for (int j = 0; j < w; ++j) {
+            cin >> grid[i][j];
+        }
+    }
+
+    vector<vector<bool>> vis(h, vector<bool>(w, false));
+    priority_queue<Node> q;
+    
+    // Push all border cells into the priority queue
+    for (int i = 0; i < h; ++i) {
+        q.push({i, 0, grid[i][0]});
+        q.push({i, w-1, grid[i][w-1]});
+        vis[i][0] = vis[i][w-1] = true;
+    }
+    for (int j = 1; j < w-1; ++j) {
+        q.push({0, j, grid[0][j]});
+        q.push({h-1, j, grid[h-1][j]});
+        vis[0][j] = vis[h-1][j] = true;
+    }
+
+    int res = h * w;
+    vector<int> ans(y + 1, res); // ans[0] is initial state, ans[1] is after 1 year, etc.
+    
+    for (int level = 1; level <= y; ++level) {
+        while (!q.empty() && q.top().val <= level) {
+            Node cur = q.top();
+            q.pop();
+            res--;
+            for (int k = 0; k < 4; ++k) {
+                int nx = cur.x + (k == 2) - (k == 3);
+                int ny = cur.y + (k == 0) - (k == 1);
+                if (nx >= 0 && nx < h && ny >= 0 && ny < w && !vis[nx][ny]) {
+                    vis[nx][ny] = true;
+                    q.push({nx, ny, grid[nx][ny]});
+                }
+            }
+        }
+        ans[level] = res;
+    }
+    
+    for (int i = 1; i <= y; ++i) {
+        cout << ans[i] << '\n';
+    }
+    
+    return 0;
+}
+```
+
+### Explanation
+1. **Initialization**: The dimensions of the island (h, w) and the number of years (y) are read first. The elevation grid is then read into a 2D vector.
+2. **Priority Queue Setup**: Border sections of the island are added to a priority queue (min-heap based on elevation) and marked as visited. This is because these sections are adjacent to the sea and will be the first to sink as the sea level rises.
+3. **Processing Each Year**: For each year, the sea level rises by 1. The priority queue processes all sections with elevation less than or equal to the current sea level. For each such section, the remaining area is decremented, and its adjacent sections are checked and added to the queue if they meet the criteria.
+4. **Output**: The results for each year are stored in an array and printed sequentially after processing all years.
+
+This approach ensures that we efficiently process each section of the island in the correct order, leveraging a priority queue to handle the elevation checks and BFS to propagate the sinking effect to adjacent sections. The solution handles all edge cases, including the single-element case, by correctly initializing and processing the priority queue.

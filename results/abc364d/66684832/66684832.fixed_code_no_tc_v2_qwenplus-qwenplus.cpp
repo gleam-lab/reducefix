@@ -1,0 +1,50 @@
+#include <iostream>
+#include <algorithm>
+#include <vector>
+using namespace std;
+
+#define int long long
+#define endl '\n'
+
+const int N = 1e5 + 9;
+
+int n, q;
+int a[N];
+
+signed main() {
+    ios::sync_with_stdio(false);
+    cin >> n >> q;
+    
+    for (int i = 0; i < n; i++) {
+        cin >> a[i];
+    }
+    sort(a, a + n);
+
+    for (int j = 0; j < q; j++) {
+        int b, k;
+        cin >> b >> k;
+        
+        // Binary search to find the k-th smallest distance
+        int left = 0;
+        int right = max(abs(a[0] - b), abs(a[n-1] - b));
+        
+        while (left < right) {
+            int mid = (left + right) / 2;
+            // Find first position where a[i] >= b - mid
+            int low = lower_bound(a, a + n, b - mid) - a;
+            // Find first position where a[i] > b + mid
+            int high = upper_bound(a, a + n, b + mid) - a;
+            int count = high - low;
+            
+            if (count >= k) {
+                right = mid;
+            } else {
+                left = mid + 1;
+            }
+        }
+
+        cout << left << endl;
+    }
+
+    return 0;
+}

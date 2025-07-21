@@ -1,0 +1,61 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+
+#define rep(i,n) for(int i=0;i<(n);i++)
+#define rep1(i,n) for(int i=1;i<=(n);i++)
+#define all(x) (x).begin(),(x).end()
+
+typedef long long ll;
+typedef pair<int,int> P;
+
+const int INF=1e9;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+    cout.tie(0);
+
+    int h,w,q;
+    cin>>h>>w>>q;
+    vector<vector<int>> grid(h,vector<int>(w,1));
+    while(q--) {
+        int x,y;
+        cin>>x>>y;
+        --x,--y;
+        if(grid[x][y]==0) {
+            for(int i=x-1;i>=0;i--) {
+                if(grid[i][y]==1) {
+                    grid[i][y]=0;
+                    break;
+                }
+            }
+            for(int i=x+1;i<h;i++) {
+                if(grid[i][y]==1) {
+                    grid[i][y]=0;
+                    break;
+                }
+            }
+            for(int i=y-1;i>=0;i--) {
+                if(grid[x][i]==1) {
+                    grid[x][i]=0;
+                    break;
+                }
+            }
+            for(int i=y+1;i<w;i++) {
+                if(grid[x][i]==1) {
+                    grid[x][i]=0;
+                    break;
+                }
+            }
+        } else {
+            grid[x][y]=0;
+        }
+    }
+    int cnt=0;
+    for(auto &v:grid) {
+        cnt+=count(all(v),1);
+    }
+    cout<<cnt<<endl;
+    return 0;
+}

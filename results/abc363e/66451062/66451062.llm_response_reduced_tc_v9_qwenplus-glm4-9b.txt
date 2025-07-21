@@ -1,0 +1,119 @@
+
+The described problem is a 2D simulation of flood dynamics on an island grid where the sea level increases annually. The objective is to determine the area of the island that remains above sea level after a specified number of years. The area of the island sinking depends on the elevation of the grid cells relative to the rising sea level.
+
+Here is the analysis of the provided code and the steps to fix the issue:
+
+### Issues in the provided code:
+1. The main issue is how the algorithm updates the state of the grid as the sea level rises. The code contains a number of logical errors and inefficiencies.
+
+2. The code uses a priority queue to simulate the sinking process, but it does not correctly propagate the sinking through adjacent cells when a cell is submerged.
+
+3. The code initializes the simulation by adding cells on the borders to the priority queue and then continuously checks for cells to be added to the queue, which is not efficient.
+
+4. The code does not account for the fact that once a cell is submerged, it does not need to be checked again for subsequent years.
+
+### Steps to fix the code:
+1. Use a boolean matrix to represent whether a cell is above or below sea level.
+
+2. Initialize the matrix based on the elevation of each cell.
+
+3. Use a queue or priority queue to process cells that sink first and then propagate the sinking to adjacent cells within the same year.
+
+4. After processing a year's sinking, update the matrix and reset any cells that have been submerged (so they are not processed again).
+
+5. Keep a running total of the area above sea level.
+
+Given this analysis, here is a corrected version of the code:
+
+```cpp
+#include <iostream>
+#include <vector>
+#include <queue>
+using namespace std;
+
+const int MAXN = 1000;
+int H, W, Y;
+int grid[MAXN][MAXN];
+bool submerged[MAXN][MAXN];
+vector<pair<int, int>> neighbors[MAXN * MAXN];
+
+void init_neighbors() {
+    int index = 0;
+    for (int i = 0; i < H; ++i) {
+        for (int j = 0; j < W; ++j) {
+            neighbors[index].push_back({i, j - 1});
+            neighbors[index].push_back({i, j + 1});
+            neighbors[index].push_back({i - 1, j});
+            neighbors[index].push_back({i + 1, j});
+            index++;
+        }
+    }
+}
+
+void simulate_rising_sea(int year) {
+    queue<int> q;
+    for (int i = 0; i < H; ++i) {
+        if (grid[i][0] <= year) {
+            q.push(i * W);
+        }
+        if (grid[i][W - 1] <= year) {
+            q.push(i * W + W - 1);
+        }
+    }
+    for (int i = 0; i < W; ++i) {
+        if (grid[0][i] <= year) {
+            q.push(i);
+        }
+        if (grid[H - 1][i] <= year) {
+            q.push((H - 1) * W + i);
+        }
+    }
+
+    while (!q.empty()) {
+        int pos = q.front(); q.pop();
+        int x = pos / W;
+        int y = pos % W;
+
+        for (auto& p : neighbors[pos]) {
+            int nx = p.first;
+            int ny = p.second;
+            if (nx >= 0 && nx < H && ny >= 0 && ny < W) {
+                if (!submerged[nx][ny] && grid[nx][ny] <= year) {
+                    q.push(nx * W + ny);
+                    submerged[nx][ny] = true;
+                }
+            }
+        }
+    }
+}
+
+int main() {
+    cin >> H >> W >> Y;
+    for (int i = 0; i < H; ++i) {
+        for (int j = 0; j < W; ++j) {
+            cin >> grid[i][j];
+        }
+    }
+
+    init_neighbors();
+    memset(submerged, false, sizeof(submerged));
+
+    int total_area = H * W;
+    for (int year = 1; year <= Y; ++year) {
+        simulate_rising_sea(year);
+        // Calculate the area above sea level this year
+        for (int i = 0; i < H; ++i) {
+            for (int j = 0; j < W; ++j) {
+                if (!submerged[i][j]) {
+                    total_area--;
+                }
+            }
+        }
+        cout << total_area << endl;
+    }
+
+    return 0;
+}
+```
+
+This corrected code initializes the simulation environment and performs the sinking simulation for each year, updating the area above sea level as required.

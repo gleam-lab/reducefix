@@ -1,0 +1,119 @@
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+
+int main() {
+  ios::sync_with_stdio(false);
+  cin.tie(nullptr);
+
+  int N, M;
+  ll K;
+  cin >> N >> M >> K;
+
+  vector<ll> A(N);
+  for (int i = 0; i < N; ++i) {
+    cin >> A[i];
+  }
+
+  // Total remaining votes
+  ll total_remaining = K;
+  for (ll a : A) {
+    total_remaining -= a;
+  }
+
+  vector<ll> sorted_A = A;
+  sort(sorted_A.begin(), sorted_A.end());
+
+  vector<ll> prefix_sum(N + 1, 0);
+  for (int i = 1; i <= N; ++i) {
+    prefix_sum[i] = prefix_sum[i - 1] + sorted_A[i - 1];
+  }
+
+  vector<ll> result(N);
+
+  for (int i = 0; i < N; ++i) {
+    ll current = A[i];
+
+    // Binary search on the minimum number of additional votes needed
+    ll low = 0;
+    ll high = total_remaining;
+    ll answer = -1;
+
+    while (low <= high) {
+      ll mid = (low + high) / 2;
+      ll total_available = total_remaining - mid;
+      ll target = current + mid;
+
+      // Find how many candidates have votes > target in the current state
+      // We use binary search on the sorted list of original votes
+      int pos = lower_bound(sorted_A.begin(), sorted_A.end(), target + 1) - sorted_A.begin();
+      int stronger = N - pos;
+
+      // If there are already at least M candidates with more than target, we can't win
+      if (stronger >= M) {
+        low = mid + 1;
+        continue;
+      }
+
+      // We need to ensure that at most M-1 candidates can get strictly more than us
+
+      // Try to cap top (N - M + 1) other candidates to <= target
+      // So we only consider top (M - 1) candidates who might be above us
+      // Let's find how many candidates among others are less than or equal to target
+      // Use binary search again on sorted_A
+      int idx = upper_bound(sorted_A.begin(), sorted_A.end(), target) - sorted_A.begin();
+
+      // Exclude our own vote from consideration
+      int exclude_self = (A[i] <= target) ? 1 : 0;
+      int count_other_le_target = idx - exclude_self;
+
+      // We want to raise these candidates up to target if they're below
+      // and ensure we don't allow more than (M - 1) people to have > our value
+      // So we need to cap (count_other_le_target) candidates to at most `target`
+
+      int need_to_cap = count_other_le_target;
+      int allowed_stronger = M - 1 - stronger;
+
+      if (allowed_stronger < 0) {
+        low = mid + 1;
+        continue;
+      }
+
+      if (allowed_stronger >= need_to_cap) {
+        answer = mid;
+        high = mid - 1;
+      } else {
+        // Need to choose top `allowed_stronger` candidates and increase them to `target`
+        ll required = 0;
+        int start = idx - allowed_stronger - exclude_self;
+
+        if (start < 0) {
+          answer = mid;
+          high = mid - 1;
+          continue;
+        }
+
+        ll sum = prefix_sum[start + allowed_stronger] - prefix_sum[start];
+        required = allowed_stronger * target - sum;
+
+        if (required <= total_available) {
+          answer = mid;
+          high = mid - 1;
+        } else {
+          low = mid + 1;
+        }
+      }
+    }
+
+    result[i] = (answer == -1) ? -1 : answer;
+  }
+
+  for (ll val : result) {
+    cout << val << " ";
+  }
+  cout << "\n";
+
+  return 0;
+}
+```

@@ -1,0 +1,55 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+const int maxN = 2e5 + 5;
+long long t, n, k, a[maxN], b[maxN];
+
+struct Node {
+    int first, second;
+};
+
+bool cmp(Node &p1, Node &p2) {
+    if (p1.first != p2.first) return p1.first > p2.first;
+    return p1.second < p2.second;
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+    cout.tie(nullptr);
+
+    cin >> t;
+    while (t--) {
+        cin >> n >> k;
+        vector<Node> vec(n);
+        long long sum = 0, ans = LLONG_MAX;
+
+        for (int i = 0; i < n; ++i) cin >> a[i];
+        for (int i = 0; i < n; ++i) cin >> b[i];
+
+        for (int i = 0; i < n; ++i) vec[i] = {a[i], b[i]};
+        sort(vec.begin(), vec.end(), cmp);
+
+        priority_queue<long long> pq;
+        for (int i = 0; i < k; ++i) {
+            sum += vec[i].second;
+            pq.push(-vec[i].second);
+        }
+
+        ans = min(ans, static_cast<long long>(vec[k - 1].first) * sum);
+
+        for (int i = k; i < n; ++i) {
+            if (-pq.top() > vec[i].second) {
+                sum += vec[i].second;
+                sum -= -pq.top();
+                pq.pop();
+                pq.push(-vec[i].second);
+            }
+            ans = min(ans, static_cast<long long>(vec[i].first) * sum);
+        }
+
+        cout << ans << '\n';
+    }
+
+    return 0;
+}

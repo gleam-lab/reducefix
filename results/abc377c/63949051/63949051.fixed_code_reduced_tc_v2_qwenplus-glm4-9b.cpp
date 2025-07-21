@@ -1,0 +1,63 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+
+using namespace std;
+
+#define INF 1000000000
+
+#define fi first
+#define se second
+
+typedef long long ll;
+
+void solve() {
+    int N, M;
+    cin >> N >> M;
+
+    vector<pair<ll, ll>> pieces(M);
+    for (int i = 0; i < M; ++i) {
+        cin >> pieces[i].fi >> pieces[i].se;
+    }
+
+    // To store the capture range for each piece
+    vector<vector<pair<ll, ll>>> capture(M);
+
+    // Calculate the capture range for each piece
+    for (int i = 0; i < M; ++i) {
+        ll x = pieces[i].fi;
+        ll y = pieces[i].se;
+        capture[i].push_back({x + 2, y + 1});
+        capture[i].push_back({x + 1, y + 2});
+        capture[i].push_back({x - 1, y + 2});
+        capture[i].push_back({x - 2, y + 1});
+        capture[i].push_back({x - 2, y - 1});
+        capture[i].push_back({x - 1, y - 2});
+        capture[i].push_back({x + 1, y - 2});
+        capture[i].push_back({x + 2, y - 1});
+    }
+
+    // To store the cells that cannot be placed
+    set<pair<ll, ll>> capture_set;
+
+    // Add the capture cells to the set
+    for (const auto& piece : capture) {
+        for (const auto& cell : piece) {
+            if (cell.fi >= 1 && cell.fi <= N && cell.se >= 1 && cell.se <= N) {
+                capture_set.insert(cell);
+            }
+        }
+    }
+
+    // Calculate the number of cells that can be placed
+    ll total_cells = N * N;
+    ll cannot_place = capture_set.size();
+    ll can_place = total_cells - cannot_place;
+
+    cout << can_place << endl;
+}
+
+int main() {
+    solve();
+    return 0;
+}

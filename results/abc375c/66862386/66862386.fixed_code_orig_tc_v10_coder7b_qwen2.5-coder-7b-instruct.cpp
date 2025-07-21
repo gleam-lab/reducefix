@@ -1,0 +1,27 @@
+#include <iostream>
+#include <cmath>
+#include <iomanip>
+
+int main() {
+    int n;
+    std::cin >> n;
+    
+    long double ans = 0;
+    long double x = 0, y = 0;
+
+    for(int i = 0; i < n; ++i) {
+        int nx, ny;
+        std::cin >> nx >> ny;
+        
+        ans += std::sqrt((x - nx) * (x - nx) + (y - ny) * (y - ny));
+        x = nx;
+        y = ny;
+    }
+
+    // Return to origin
+    ans += std::sqrt(x * x + y * y);
+    
+    std::cout << std::fixed << std::setprecision(15) << ans << '\n';
+
+    return 0;
+}

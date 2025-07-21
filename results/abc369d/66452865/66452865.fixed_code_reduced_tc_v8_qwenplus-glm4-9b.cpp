@@ -1,0 +1,26 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+
+using namespace std;
+
+int main() {
+    int N;
+    cin >> N;
+    vector<long long> A(N);
+    for (int i = 0; i < N; i++) cin >> A[i];
+    
+    vector<long long> dp(2);
+    dp[0] = 0; // No operation
+    dp[1] = A[0]; // Take the first element
+    
+    for (int i = 1; i < N; i++) {
+        vector<long long> new_dp(2);
+        new_dp[0] = max(dp[0], dp[1]); // No operation or taking the previous operation
+        new_dp[1] = max(dp[0] + A[i], dp[1] + A[i]); // Take current element or build on the previous take
+        dp = new_dp;
+    }
+    
+    cout << max(dp[0], dp[1]) << endl;
+    return 0;
+}

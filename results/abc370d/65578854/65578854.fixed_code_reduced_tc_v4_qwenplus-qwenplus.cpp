@@ -1,0 +1,85 @@
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+
+#define rep(i, n) for (ll i = 0; i < (ll)(n); i++)
+#define rep2(i, s, n) for (ll i = (s); i < (ll)(n); i++)
+
+int main() {
+    int H, W, Q;
+    cin >> H >> W >> Q;
+    
+    // For each row, keep track of columns that still have walls
+    vector<set<int>> rowWalls(H);
+    // For each column, keep track of rows that still have walls
+    vector<set<int>> colWalls(W);
+
+    // Initialize all walls
+    for (int r = 0; r < H; ++r) {
+        for (int c = 0; c < W; ++c) {
+            rowWalls[r].insert(c);
+            colWalls[c].insert(r);
+        }
+    }
+
+    ll remainingWalls = (ll)H * W;
+
+    auto destroyWall = [&](int r, int c) {
+        if (rowWalls[r].count(c) == 0) return false; // Already destroyed
+
+        // Remove from row and column sets
+        rowWalls[r].erase(c);
+        colWalls[c].erase(r);
+        remainingWalls--;
+        return true;
+    };
+
+    for (int q = 0; q < Q; ++q) {
+        int R, C;
+        cin >> R >> C;
+        R--; C--;
+
+        if (destroyWall(R, C)) continue; // Bomb destroyed itself
+
+        // Look up
+        {
+            auto it = colWalls[C].lower_bound(R);
+            if (it != colWalls[C].begin()) {
+                --it;
+                if (*it < R) {
+                    destroyWall(*it, C);
+                }
+            }
+        }
+
+        // Look down
+        {
+            auto it = colWalls[C].lower_bound(R);
+            if (it != colWalls[C].end() && *it > R) {
+                destroyWall(*it, C);
+            }
+        }
+
+        // Look left
+        {
+            auto it = rowWalls[R].lower_bound(C);
+            if (it != rowWalls[R].begin()) {
+                --it;
+                if (*it < C) {
+                    destroyWall(R, *it);
+                }
+            }
+        }
+
+        // Look right
+        {
+            auto it = rowWalls[R].lower_bound(C);
+            if (it != rowWalls[R].end() && *it > C) {
+                destroyWall(R, *it);
+            }
+        }
+    }
+
+    cout << remainingWalls << endl;
+    return 0;
+}

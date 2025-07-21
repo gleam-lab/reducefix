@@ -1,0 +1,89 @@
+To fix this code, we need to address the issues related to the algorithm's correctness and efficiency. The problem involves simulating the sinking of island sections as the sea level rises each year, where sections adjacent to the sea or already sunk sections will sink if their elevation is not greater than the current sea level. The original code attempts to use a priority queue to manage the sections that are at risk of sinking, but it has several flaws, including incorrect handling of the sinking process and inefficient updates.
+
+### Approaches
+1. **Initialization**: We start by marking all the border sections of the island as potential candidates to sink first, as they are adjacent to the sea.
+2. **Priority Queue**: We use a priority queue to process sections in increasing order of their elevation. This allows us to efficiently determine which sections will sink at each sea level.
+3. **BFS-like Processing**: For each sea level, we process all sections that can sink at that level. For each sunk section, we check its adjacent sections and add them to the queue if they haven't been processed yet and their elevation is not greater than the current sea level.
+4. **Tracking Remaining Area**: We maintain a count of the remaining sections above sea level and update this count as sections sink each year.
+
+### Solution Code
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+#define ll long long
+
+ll dx[4] = {0, 1, 0, -1};
+ll dy[4] = {1, 0, -1, 0};
+
+int main() {
+    ll h, w, y;
+    cin >> h >> w >> y;
+    ll ans = h * w;
+    vector<vector<ll>> room(h, vector<ll>(w));
+    vector<vector<bool>> used(h, vector<bool>(w, false));
+    priority_queue<pair<ll, pair<ll, ll>>, vector<pair<ll, pair<ll, ll>>>, greater<pair<ll, pair<ll, ll>>>> pq;
+
+    for (ll i = 0; i < h; ++i) {
+        for (ll j = 0; j < w; ++j) {
+            cin >> room[i][j];
+        }
+    }
+
+    // Push border cells into the priority queue
+    for (ll i = 0; i < h; ++i) {
+        if (!used[i][0]) {
+            pq.push({room[i][0], {i, 0}});
+            used[i][0] = true;
+        }
+        if (!used[i][w - 1]) {
+            pq.push({room[i][w - 1], {i, w - 1}});
+            used[i][w - 1] = true;
+        }
+    }
+    for (ll j = 1; j < w - 1; ++j) {
+        if (!used[0][j]) {
+            pq.push({room[0][j], {0, j}});
+            used[0][j] = true;
+        }
+        if (!used[h - 1][j]) {
+            pq.push({room[h - 1][j], {h - 1, j}});
+            used[h - 1][j] = true;
+        }
+    }
+
+    ll current_level = 0;
+    vector<ll> result(y);
+    for (ll year = 1; year <= y; ++year) {
+        current_level = year;
+        while (!pq.empty() && pq.top().first <= current_level) {
+            auto top = pq.top();
+            pq.pop();
+            ll elevation = top.first;
+            ll i = top.second.first;
+            ll j = top.second.second;
+            ans--;
+            for (ll k = 0; k < 4; ++k) {
+                ll ni = i + dx[k];
+                ll nj = j + dy[k];
+                if (ni >= 0 && ni < h && nj >= 0 && nj < w && !used[ni][nj]) {
+                    used[ni][nj] = true;
+                    pq.push({room[ni][nj], {ni, nj}});
+                }
+            }
+        }
+        result[year - 1] = ans;
+    }
+
+    for (ll i = 0; i < y; ++i) {
+        cout << result[i] << endl;
+    }
+
+    return 0;
+}
+```
+
+### Explanation
+1. **Initialization**: The border sections of the island are pushed into a priority queue because they are adjacent to the sea and will be the first to sink as the sea level rises.
+2. **Priority Queue Processing**: The priority queue processes sections in order of increasing elevation. For each year, sections with elevation less than or equal to the current sea level are removed from the queue, and their adjacent sections are checked and added to the queue if they meet the sinking criteria.
+3. **Tracking Remaining Area**: The remaining area of the island is decremented each time a section sinks. The results for each year are stored in a vector and printed at the end.
+4. **Efficiency**: The algorithm efficiently processes each section only once, leveraging the priority queue to handle sections in order of their elevation, ensuring optimal performance even for large input sizes.

@@ -1,0 +1,43 @@
+#include <iostream>
+#include <vector>
+#include <set>
+
+using namespace std;
+
+#define INF 1000000000
+#define MAX_N 1000000000
+
+int main() {
+    int N, M;
+    cin >> N >> M;
+
+    set<pair<int, int>> occupied;
+    vector<pair<int, int>> pieces(M);
+
+    for (int i = 0; i < M; ++i) {
+        cin >> pieces[i].first >> pieces[i].second;
+    }
+
+    for (int i = 0; i < M; ++i) {
+        int x = pieces[i].first;
+        int y = pieces[i].second;
+
+        // Check the positions that can be captured
+        for (int dx = -2; dx <= 2; ++dx) {
+            for (int dy = -2; dy <= 2; ++dy) {
+                if (dx == 0 && dy == 0) continue; // Skip the current position itself
+                int nx = x + dx;
+                int ny = y + dy;
+                if (nx >= 1 && nx <= N && ny >= 1 && ny <= N) {
+                    occupied.insert({nx, ny});
+                }
+            }
+        }
+    }
+
+    // Calculate the number of empty cells
+    long long empty_cells = (long long)N * N - occupied.size();
+    cout << empty_cells << endl;
+
+    return 0;
+}

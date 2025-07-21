@@ -1,0 +1,51 @@
+#include <iostream>
+#include <vector>
+#include <string>
+using namespace std;
+
+int main() {
+    int N;
+    string S;
+    cin >> N;
+    cin >> S;
+    
+    // Mapping from hand to next possible moves
+    vector<char> hand = {'R', 'P', 'S'};
+    vector<char> nextMoves = hand; // Initially, all moves are available
+    int total1 = 0, total2 = 0;
+    int round = 0; // To determine if it's the first or second round
+
+    while (nextMoves.size() > 0) {
+        int roundScore = 0;
+        string roundMoves;
+
+        for (char move : nextMoves) {
+            for (int i = round; i < N; ++i) {
+                if ((move == 'R' && S[i] == 'S') || (move == 'P' && S[i] == 'R') || (move == 'S' && S[i] == 'P')) {
+                    roundScore++;
+                    break;
+                }
+            }
+            roundMoves += move;
+        }
+
+        // Update next possible moves
+        nextMoves.clear();
+        for (char m : hand) {
+            if (roundMoves.find(m) == string::npos) {
+                nextMoves.push_back(m);
+            }
+        }
+
+        if (round == 0) {
+            total1 = roundScore;
+        } else {
+            total2 = roundScore;
+        }
+
+        round++;
+    }
+
+    cout << max(total1, total2);
+    return 0;
+}

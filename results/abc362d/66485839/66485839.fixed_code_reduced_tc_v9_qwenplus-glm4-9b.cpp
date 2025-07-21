@@ -1,0 +1,102 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+#define INT long long 
+#define pb push_back
+
+template <class T>
+using V = vector<T>;
+template <class T>
+using VC = V<T>;
+
+struct DSU {
+private:
+    vector<int> parent, size;
+
+public:
+    DSU(int n) : parent(n), size(n, 1) {
+        iota(parent.begin(), parent.end(), 0);
+    }
+
+    int find(int x) {
+        if (x != parent[x])
+            parent[x] = find(parent[x]);
+        return parent[x];
+    }
+
+    bool merge(int x, int y) {
+        x = find(x);
+        y = find(y);
+        if (x == y)
+            return false;
+        if (size[x] < size[y])
+            swap(x, y);
+        parent[x] = y;
+        size[y] += size[x];
+        return true;
+    }
+};
+
+constexpr int N = 2e5 + 10;
+INT inf = 1e18;
+
+VC<VC<pair<int, INT>>> adj(N);
+
+void dijkstra(INT src) {
+    priority_queue<pair<INT, int>, VC<pair<INT, int>>, greater<pair<INT, int>>> pq;
+    V<INT> dist(N, inf);
+    dist[src] = 0;
+    pq.push({0, src});
+
+    while (!pq.empty()) {
+        auto [d, u] = pq.top();
+        pq.pop();
+
+        if (d > dist[u])
+            continue;
+
+        for (auto &edge : adj[u]) {
+            int v = edge.first;
+            INT weight = edge.second;
+            if (dist[u] + weight < dist[v]) {
+                dist[v] = dist[u] + weight;
+                pq.push({dist[v], v});
+            }
+        }
+    }
+
+    return dist;
+}
+
+void solve() {
+    INT n, m;
+    cin >> n >> m;
+    V<INT> vertex_weights(n + 1);
+    for (INT i = 1; i <= n; i++) {
+        cin >> vertex_weights[i];
+        adj[i].push_back({i - 1, vertex_weights[i]}); // Add virtual edge from vertex i-1 to i
+    }
+
+    for (INT i = 0; i < m; i++) {
+        INT u, v, b;
+        cin >> u >> v >> b;
+        adj[u].push_back({v, b});
+        adj[v].push_back({u, b});
+    }
+
+    VC<INT> results(n);
+    for (INT i = 2; i <= n; i++) {
+        VC<INT> dist = dijkstra(i);
+        results[i - 1] = dist[1]; // Distance from vertex 1 to vertex i
+    }
+
+    for (INT i = 0; i < n - 1; i++) {
+        cout << results[i] << (i < n - 2 ? ' ' : '\n');
+    }
+}
+
+int main() {
+    cin.tie(nullptr)->sync_with_stdio(false);
+    solve();
+    return 0;
+}

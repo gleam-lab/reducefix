@@ -1,0 +1,84 @@
+To fix this code, we need to ensure that the Dijkstra's algorithm implementation correctly accounts for the weights of both vertices and edges in the path. The original code attempts to use Dijkstra's algorithm but might have issues with how the vertex weights are incorporated into the edge weights during relaxation.
+
+### Approaches
+1. **Graph Representation**: Represent the graph using an adjacency list where each edge includes the neighboring vertex and the combined weight of the edge and the neighboring vertex's weight. This ensures that when we traverse an edge, we automatically account for the vertex weight of the destination.
+2. **Priority Queue**: Use a priority queue to implement Dijkstra's algorithm, which helps in efficiently extracting the vertex with the current minimum distance.
+3. **Initialization**: Initialize the distance of the starting vertex (vertex 1) to its own weight (A_1) since the path starts here. Other vertices should be initialized to a large value (infinity).
+4. **Relaxation**: For each vertex extracted from the priority queue, relax all its adjacent edges by updating the distances if a shorter path is found. The new distance should be the current distance plus the edge weight and the neighboring vertex's weight.
+
+### Solution Code
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+using i64 = long long;
+constexpr i64 inf = 1e18;
+
+struct Edge {
+    int to;
+    i64 weight;
+    Edge(int to, i64 weight) : to(to), weight(weight) {}
+};
+
+struct Node {
+    int vertex;
+    i64 distance;
+    Node(int vertex, i64 distance) : vertex(vertex), distance(distance) {}
+    bool operator<(const Node& other) const {
+        return distance > other.distance;
+    }
+};
+
+void solve() {
+    int n, m;
+    cin >> n >> m;
+    vector<i64> a(n + 1);
+    for (int i = 1; i <= n; ++i) {
+        cin >> a[i];
+    }
+    vector<vector<Edge>> graph(n + 1);
+    for (int i = 0; i < m; ++i) {
+        int u, v;
+        i64 b;
+        cin >> u >> v >> b;
+        graph[u].emplace_back(v, b + a[v]);
+        graph[v].emplace_back(u, b + a[u]);
+    }
+    vector<i64> dist(n + 1, inf);
+    priority_queue<Node> pq;
+    dist[1] = a[1];
+    pq.emplace(1, dist[1]);
+    while (!pq.empty()) {
+        Node current = pq.top();
+        pq.pop();
+        int u = current.vertex;
+        i64 d = current.distance;
+        if (d > dist[u]) continue;
+        for (const Edge& edge : graph[u]) {
+            int v = edge.to;
+            i64 new_dist = d + edge.weight;
+            if (new_dist < dist[v]) {
+                dist[v] = new_dist;
+                pq.emplace(v, dist[v]);
+            }
+        }
+    }
+    for (int i = 2; i <= n; ++i) {
+        cout << dist[i] << (i == n ? "\n" : " ");
+    }
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    solve();
+    return 0;
+}
+```
+
+### Explanation
+1. **Graph Representation**: The graph is represented using an adjacency list where each edge stores the destination vertex and the combined weight of the edge and the destination vertex's weight. This allows us to directly use these weights in Dijkstra's algorithm without additional adjustments during relaxation.
+2. **Priority Queue**: The priority queue (min-heap) is used to always expand the vertex with the current smallest tentative distance. The `Node` struct overloads the `<` operator to ensure the heap is ordered correctly.
+3. **Initialization**: The distance to vertex 1 is initialized to its own weight `A_1`, as the path starts here. All other distances are initialized to a very large value (infinity).
+4. **Relaxation**: For each vertex processed, we check all its adjacent edges. The new distance to a neighbor is the current vertex's distance plus the edge weight and the neighbor's vertex weight. If this new distance is smaller than the previously recorded distance, it updates the distance and pushes the neighbor into the priority queue.
+5. **Output**: After processing all vertices, the distances from vertex 1 to all other vertices are printed, providing the minimum path weights as required.

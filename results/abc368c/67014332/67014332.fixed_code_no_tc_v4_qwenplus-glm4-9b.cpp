@@ -1,0 +1,28 @@
+#include<bits/stdc++.h>
+using namespace std;
+using ll = long long;
+
+int main() {
+    ll n, ans = 0;
+    cin >> n;
+    vector<ll> health(n);
+    for (ll i = 0; i < n; i++) {
+        cin >> health[i];
+    }
+
+    // Iterate through each enemy
+    for (ll i = 0; i < n; i++) {
+        // Calculate the number of full 3's and remaining health
+        ll full_3_s = health[i] / 3;
+        ll remainder = health[i] % 3;
+
+        // Add the cost for full 3's, which is every 3 attacks
+        ans += full_3_s * 3;
+
+        // For the remaining health, calculate the cost
+        // If remainder is 1 or 2, it takes 1 or 2 more attacks respectively
+        ans += (remainder == 1) ? 1 : 2;
+    }
+
+    cout << ans;
+}

@@ -1,0 +1,61 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    long long n, m;
+    cin >> n >> m;
+    set<pair<long long, long long>> c;
+    vector<vector<bool>> board(n, vector<bool>(n, false));
+
+    // Mark all positions that can be captured
+    rep(i, m) {
+        long long a, b;
+        cin >> a >> b;
+        a--, b--;
+        board[a][b] = true;
+        if (a + 2 < n) {
+            if (b + 1 < n) {
+                c.emplace(a + 2, b + 1);
+            }
+            if (b - 1 >= 0) {
+                c.emplace(a + 2, b - 1);
+            }
+        }
+        if (a + 1 < n) {
+            if (b + 2 < n) {
+                c.emplace(a + 1, b + 2);
+            }
+            if (b - 2 >= 0) {
+                c.emplace(a + 1, b - 2);
+            }
+        }
+        if (a - 2 >= 0) {
+            if (b + 1 < n) {
+                c.emplace(a - 2, b + 1);
+            }
+            if (b - 1 >= 0) {
+                c.emplace(a - 2, b - 1);
+            }
+        }
+        if (a - 1 >= 0) {
+            if (b + 2 < n) {
+                c.emplace(a - 1, b + 2);
+            }
+            if (b - 2 >= 0) {
+                c.emplace(a - 1, b - 2);
+            }
+        }
+    }
+
+    // Count empty squares that are not in the capture set
+    long long ans = 0;
+    for (long long i = 0; i < n; ++i) {
+        for (long long j = 0; j < n; ++j) {
+            if (!board[i][j] && c.find({i, j}) == c.end()) {
+                ++ans;
+            }
+        }
+    }
+
+    cout << ans << endl;
+}

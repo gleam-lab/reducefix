@@ -1,0 +1,36 @@
+#include <iostream>
+#include <map>
+using namespace std;
+
+int main() {
+    int q;
+    cin >> q;
+    
+    map<int, int> ball_count;
+    int unique_balls = 0;
+    
+    while (q--) {
+        int type;
+        cin >> type;
+        
+        if (type == 1) {
+            int x;
+            cin >> x;
+            if (ball_count[x] == 0) {
+                unique_balls++;
+            }
+            ball_count[x]++;
+        } else if (type == 2) {
+            int x;
+            cin >> x;
+            if (ball_count[x] == 1) {
+                unique_balls--;
+            }
+            ball_count[x]--;
+        } else if (type == 3) {
+            cout << unique_balls << endl;
+        }
+    }
+    
+    return 0;
+}

@@ -1,0 +1,57 @@
+#include<bits/stdc++.h>
+using namespace std;
+
+vector<int> adj[200005];
+
+void dfs(int node, int parent) {
+    for(auto child : adj[node]) {
+        if(child != parent) {
+            dfs(child, node);
+            adj[node].insert(adj[node].end(), adj[child].begin(), adj[child].end());
+        }
+    }
+}
+
+int main() {
+    ios_base::sync_with_stdio(false); cin.tie(NULL);
+
+    int n, q;
+    cin >> n >> q;
+
+    vector<pair<int, pair<int, int>>> queries(q);
+    for(int i = 0; i < q; ++i) {
+        cin >> queries[i].first >> queries[i].second.first >> queries[i].second.second;
+    }
+
+    vector<vector<int>> ans(q, vector<int>(10));
+
+    // Build the tree
+    for(int i = 1; i <= n; ++i) {
+        adj[i].push_back(i);
+    }
+    
+    for(int i = 0; i < q; ++i) {
+        if(queries[i].first == 1) {
+            int u = queries[i].second.first, v = queries[i].second.second;
+            adj[u].push_back(v);
+            adj[v].push_back(u);
+        } else {
+            int v = queries[i].second.first, k = queries[i].second.second;
+            sort(adj[v].begin(), adj[v].end());
+            if(k > adj[v].size()) {
+                ans[i][0] = -1;
+            } else {
+                ans[i][0] = adj[v][adj[v].size() - k];
+            }
+        }
+    }
+
+    // Process the queries
+    for(int i = 0; i < q; ++i) {
+        if(queries[i].first == 2) {
+            cout << ans[i][0] << "\n";
+        }
+    }
+
+    return 0;
+}

@@ -1,0 +1,42 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    long long n, m;
+    cin >> n >> m;
+    
+    // Initialize a set to store all positions of pieces
+    set<pair<long long, long long>> pieces;
+    for(long long i = 0; i < m; ++i) {
+        long long a, b;
+        cin >> a >> b;
+        pieces.insert({a, b});
+    }
+
+    // Directions for the moves a piece can make
+    vector<int> dx = {1, 1, -1, -1, 2, 2, -2, -2};
+    vector<int> dy = {2, -2, 2, -2, 1, -1, 1, -1};
+
+    long long count = 0;
+    // Iterate over each cell in the grid
+    for(long long i = 1; i <= n; ++i) {
+        for(long long j = 1; j <= n; ++j) {
+            bool valid = true;
+            // Check all possible moves from this cell
+            for(long long k = 0; k < 8; ++k) {
+                long long x = i + dx[k], y = j + dy[k];
+                // If the move goes out of bounds, skip
+                if(x < 1 || x > n || y < 1 || y > n) continue;
+                // If there's a piece in the target position, this cell is invalid
+                if(pieces.count({x, y})) {
+                    valid = false;
+                    break;
+                }
+            }
+            // If no moves are invalid, this cell is valid
+            if(valid) count++;
+        }
+    }
+    cout << count << endl;
+    return 0;
+}

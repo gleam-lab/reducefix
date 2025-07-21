@@ -1,0 +1,94 @@
+#include<bits/stdc++.h>
+using namespace std;
+using ll = long long;
+using P = pair<int, int>;
+
+#define rep(i,n) for(int i = 0; i < (n); ++i)
+#define rep2(i,s,t) for(int i = (s); i < (t); ++i)
+
+int main() {
+    cin.tie(0)->sync_with_stdio(0);
+    cin.tie(nullptr);
+
+    int H, W, Y;
+    cin >> H >> W >> Y;
+    vector<vector<int>> A(H, vector<int>(W));
+    vector<vector<bool>> visited(H, vector<bool>(W, false));
+    vector<vector<bool>> flood(H, vector<bool>(W, false));
+
+    rep(i, H) {
+        rep(j, W) {
+            cin >> A[i][j];
+            if (i == 0 || i == H - 1 || j == 0 || j == W - 1) {
+                flood[i][j] = true;
+            }
+        }
+    }
+
+    vector<vector<int>> dist(H, vector<int>(W, numeric_limits<int>::max()));
+    queue<P> Q;
+    int ans = H * W;
+
+    // Initialize the BFS queue
+    rep(i, H) {
+        rep(j, W) {
+            if (flood[i][j]) {
+                Q.push({i, j});
+                dist[i][j] = 0;
+            }
+        }
+    }
+
+    // BFS to calculate the minimum distance to the sea level
+    while (!Q.empty()) {
+        P p = Q.front();
+        Q.pop();
+        int x = p.first, y = p.second;
+        for (int d = 0; d < 4; ++d) {
+            int nx = x + (d & 1), ny = y + (1 - d & 1);
+            if (nx < 0 || nx >= H || ny < 0 || ny >= W) continue;
+            if (dist[nx][ny] > dist[x][y] + 1) {
+                dist[nx][ny] = dist[x][y] + 1;
+                Q.push({nx, ny});
+            }
+        }
+    }
+
+    // Calculate the area of the island that remains above sea level
+    rep(i, H) {
+        rep(j, W) {
+            if (!visited[i][j] && dist[i][j] > A[i][j]) {
+                ans--;
+                flood_island(A, visited, flood, Q, i, j);
+            }
+        }
+    }
+
+    // Output the area for each year
+    rep(y, Y) {
+        int current_area = ans;
+        rep(i, H) {
+            rep(j, W) {
+                if (!visited[i][j] && A[i][j] >= y + 1) {
+                    current_area--;
+                    flood_island(A, visited, flood, Q, i, j);
+                }
+            }
+        }
+        cout << current_area << '\n';
+    }
+
+    return 0;
+}
+
+void flood_island(vector<vector<int>>& A, vector<vector<bool>>& visited, vector<vector<bool>>& flood, queue<P>& Q, int x, int y) {
+    static const vector<P> dirs = {{1, 0}, {-1, 0}, {0, -1}, {0, 1}};
+    visited[x][y] = true;
+    for (const auto& dir : dirs) {
+        int nx = x + dir.first, ny = y + dir.second;
+        if (nx >= 0 && nx < A.size() && ny >= 0 && ny < A[0].size() && !visited[nx][ny] && A[nx][ny] >= A[x][y]) {
+            flood[nx][ny] = true;
+            Q.push({nx, ny});
+        }
+    }
+}

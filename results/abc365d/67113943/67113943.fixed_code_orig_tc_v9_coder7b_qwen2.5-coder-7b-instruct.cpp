@@ -1,0 +1,32 @@
+#include <iostream>
+#include <string>
+#include <vector>
+#include <algorithm>
+
+using namespace std;
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(NULL);
+
+    int N;
+    string S;
+    cin >> N >> S;
+
+    vector<int> moves(3); // To keep track of occurrences of R, P, S
+    for (char c : S) {
+        switch(c) {
+            case 'R': moves[0]++; break;
+            case 'P': moves[1]++; break;
+            case 'S': moves[2]++; break;
+        }
+    }
+
+    // The maximum number of wins is determined by the most frequent move minus the second most frequent move
+    sort(moves.begin(), moves.end());
+    int max_wins = moves[2] + min(moves[0], moves[1]);
+
+    cout << max_wins;
+
+    return 0;
+}

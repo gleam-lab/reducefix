@@ -1,0 +1,89 @@
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+
+int main() {
+  int N, M;
+  ll K;
+  cin >> N >> M >> K;
+  vector<ll> A(N);
+  for (ll &a : A) {
+    cin >> a;
+    K -= a;
+  }
+
+  // Create indexed list of votes
+  vector<pair<ll, int>> sorted_votes(N);
+  for (int i = 0; i < N; ++i) {
+    sorted_votes[i] = {A[i], i};
+  }
+  sort(sorted_votes.begin(), sorted_votes.end());
+
+  vector<ll> prefix_sum(N + 1);
+  for (int i = 0; i < N; ++i) {
+    prefix_sum[i + 1] = prefix_sum[i] + sorted_votes[i].first;
+  }
+
+  vector<ll> result(N);
+
+  for (int i = 0; i < N; ++i) {
+    ll base = A[i];
+    int idx_in_sorted = -1;
+    for (int j = 0; j < N; ++j) {
+      if (sorted_votes[j].second == i) {
+        idx_in_sorted = j;
+        break;
+      }
+    }
+
+    // Binary search on additional votes needed
+    ll low = 0, high = K;
+    ll answer = -1;
+
+    while (low <= high) {
+      ll mid = (low + high) / 2;
+      ll current_total = base + mid;
+
+      // We need to ensure that at most M-1 candidates can have strictly more than current_total
+      // So find how many candidates can potentially get more than current_total
+
+      // Binary search in sorted_votes for the first candidate > current_total
+      int left = 0, right = N;
+      while (left < right) {
+        int m = (left + right) / 2;
+        if (sorted_votes[m].first > current_total)
+          right = m;
+        else
+          left = m + 1;
+      }
+      int count_strictly_greater = N - left;
+
+      // Check if those candidates can be filled with remaining votes
+      // We assume all those candidates increase as little as possible to exceed current_total
+      // Total required is sum(max(0, current_total + 1 - sorted_votes[j].first) for j in [left, N))
+
+      ll needed = (current_total + 1) * (N - left) - (prefix_sum[N] - prefix_sum[left]);
+      if (sorted_votes[idx_in_sorted].first + mid > current_total) {
+        // Avoid counting self
+        needed -= (sorted_votes[idx_in_sorted].first + mid - current_total);
+      }
+
+      if (needed <= K - mid && count_strictly_greater < M) {
+        answer = mid;
+        high = mid - 1;
+      } else {
+        low = mid + 1;
+      }
+    }
+
+    result[i] = (answer != -1 ? answer : -1);
+  }
+
+  for (ll val : result) {
+    cout << val << " ";
+  }
+
+  return 0;
+}
+```

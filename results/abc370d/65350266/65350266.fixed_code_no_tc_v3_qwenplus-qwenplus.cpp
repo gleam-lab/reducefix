@@ -1,0 +1,80 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define rep(i,n) for(int i = 0; i < (n); i++)
+using ll = long long;
+
+int main() {
+    int H, W, Q;
+    cin >> H >> W >> Q;
+    
+    vector<set<int>> row(W), col(H);
+    for (int i = 0; i < H; ++i) {
+        for (int j = 0; j < W; ++j) {
+            row[j].insert(i);
+            col[i].insert(j);
+        }
+    }
+
+    while (Q--) {
+        int r, c;
+        cin >> r >> c;
+        r--; c--;
+
+        // Check if there's a wall at (r, c)
+        auto it = col[r].find(c);
+        if (it != col[r].end()) {
+            // Destroy the bomb placed wall
+            col[r].erase(it);
+            row[c].erase(r);
+        } else {
+            // Up
+            {
+                auto it = row[c].lower_bound(r);
+                if (it != row[c].begin()) {
+                    --it;
+                    int tr = *it;
+                    row[c].erase(it);
+                    col[tr].erase(c);
+                }
+            }
+
+            // Down
+            {
+                auto it = row[c].lower_bound(r);
+                if (it != row[c].end()) {
+                    int tr = *it;
+                    row[c].erase(it);
+                    col[tr].erase(c);
+                }
+            }
+
+            // Left
+            {
+                auto it = col[r].lower_bound(c);
+                if (it != col[r].begin()) {
+                    --it;
+                    int tc = *it;
+                    col[r].erase(it);
+                    row[tc].erase(r);
+                }
+            }
+
+            // Right
+            {
+                auto it = col[r].lower_bound(c);
+                if (it != col[r].end()) {
+                    int tc = *it;
+                    col[r].erase(it);
+                    row[tc].erase(r);
+                }
+            }
+        }
+    }
+
+    int ans = 0;
+    for (int i = 0; i < W; ++i) {
+        ans += row[i].size();
+    }
+    cout << ans << endl;
+    return 0;
+}

@@ -1,0 +1,44 @@
+#include <iostream>
+#include <string>
+using namespace std;
+
+int main() {
+    int N;
+    string S;
+    cin >> N >> S;
+    
+    if (N < 1 || S.length() != N) {
+        cout << "Invalid input" << endl;
+        return 0;
+    }
+
+    char past = 'N';
+    int ans = 0;
+    for (char c : S) {
+        if (c == 'P') {
+            if (past == 'S') {
+                ans++;
+                past = 'P';
+            } else {
+                past = 'P';
+            }
+        } else if (c == 'R') {
+            if (past == 'P') {
+                ans++;
+                past = 'R';
+            } else {
+                past = 'R';
+            }
+        } else if (c == 'S') {
+            if (past == 'R') {
+                ans++;
+                past = 'S';
+            } else {
+                past = 'S';
+            }
+        }
+    }
+    
+    cout << ans;
+    return 0;
+}

@@ -1,0 +1,44 @@
+#include <iostream>
+#include <string>
+#include <vector>
+#include <limits>
+#include <algorithm>
+using namespace std;
+
+int main() {
+    int N;
+    long long X;
+    cin >> N >> X;
+    vector<pair<long long, pair<int, int>>> A(N); // Pair of cost and (power, speed)
+
+    for (int i = 0; i < N; ++i) {
+        long long cost;
+        int power, speed;
+        cin >> cost >> power >> speed;
+        A[i] = {cost, {power, speed}};
+    }
+
+    sort(A.begin(), A.end(), [](const pair<long long, pair<int, int>>& a, const pair<long long, pair<int, int>>& b) {
+        if (a.first == b.first)
+            return a.second.first > b.second.first;
+        return a.first < b.first;
+    });
+
+    long long currentCost = 0, currentPower = 0;
+    for (const auto& [cost, machine] : A) {
+        long long maxPower = min(X - currentCost, currentPower);
+        if ((maxPower - machine.first) % machine.second.second != 0) {
+            cout << 0 << endl;
+            return 0;
+        }
+        long long maxSpeed = (maxPower - machine.first) / machine.second.second;
+        currentCost += cost;
+        currentPower = max(currentPower, maxPower + maxSpeed * machine.second.second);
+        if (currentPower >= X) {
+            cout << X << endl;
+            return 0;
+        }
+    }
+
+    cout << currentPower << endl;
+}

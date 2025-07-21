@@ -1,0 +1,50 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int n, m;
+    long long k;
+    cin >> n >> m >> k;
+    vector<long long> a(n);
+    for(int i = 0; i < n; ++i) {
+        cin >> a[i];
+        k -= a[i];
+    }
+
+    // Sort candidates based on their current vote count
+    vector<pair<long long, int>> candidates(n);
+    for(int i = 0; i < n; ++i) candidates[i] = {a[i], i};
+    sort(candidates.rbegin(), candidates.rend());
+
+    // Binary search to find the minimum additional votes needed
+    vector<long long> min_votes(n, -1);
+    for(int i = 0; i < n; ++i) {
+        long long lo = 0, hi = k + 1;
+        while(lo < hi) {
+            long long mid = (lo + hi) / 2;
+            long long votes_needed = 0;
+            int higher_rank_count = 0;
+            for(int j = 0; j < n; ++j) {
+                if(j != i) {
+                    if(candidates[j].first < candidates[i].first + mid) {
+                        votes_needed += candidates[i].first + mid - candidates[j].first;
+                    } else {
+                        ++higher_rank_count;
+                    }
+                }
+            }
+            if(higher_rank_count < m) {
+                hi = mid;
+            } else {
+                lo = mid + 1;
+            }
+        }
+        if(hi <= k) min_votes[candidates[i].second] = hi;
+    }
+
+    for(long long x : min_votes) cout << x << " ";
+    return 0;
+}

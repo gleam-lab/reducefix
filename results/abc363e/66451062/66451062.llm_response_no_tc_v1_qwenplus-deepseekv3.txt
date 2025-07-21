@@ -1,0 +1,104 @@
+The initial approach uses a priority queue to simulate the sinking of sections as the sea level rises each year. However, there are several issues in the code that need to be addressed:
+
+1. **Incorrect Initialization of Visited Array**: The initial code marks the perimeter sections as visited. However, some sections on the perimeter might have higher elevations and should not be marked as visited initially if their elevation is above the current sea level.
+
+2. **Priority Queue Misuse**: The priority queue is used to process sections in order of their elevation, but the logic inside the loop does not correctly handle the propagation of sinking when the sea level rises each year. The queue should be processed for each sea level incrementally.
+
+3. **Resetting for Each Year**: The code does not correctly handle the cumulative effect of rising sea levels over multiple years. The sinking sections from previous years should affect the current year's calculations.
+
+4. **Efficiency**: The original code may not efficiently handle the constraints, especially with large values of Y (up to 10^5).
+
+To fix these issues, we can precompute the earliest time each section sinks and then answer queries based on the number of sections that remain above the sea level for each year.
+
+### Fixed Code
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+#define int long long
+#define close ios::sync_with_stdio(false); cin.tie(0); cout.tie(0);
+#define MAXN 1005
+#define inf 0x3f3f3f3f3f3f
+#define endl '\n'
+const double eps = 1e-7;
+int dx[] = {0, 0, 1, -1};
+int dy[] = {1, -1, 0, 0};
+const int MOD = 1e9 + 7;
+
+struct Node {
+    int x, y, val;
+    bool operator<(const Node &a) const {
+        return val > a.val;
+    }
+};
+
+signed main() {
+    close;
+    int h, w, y;
+    cin >> h >> w >> y;
+    vector<vector<int>> grid(h, vector<int>(w));
+    for (int i = 0; i < h; i++) {
+        for (int j = 0; j < w; j++) {
+            cin >> grid[i][j];
+        }
+    }
+
+    vector<vector<int>> earliest(h, vector<int>(w, inf));
+    priority_queue<Node> q;
+    for (int i = 0; i < h; i++) {
+        for (int j = 0; j < w; j++) {
+            if (i == 0 || i == h - 1 || j == 0 || j == w - 1) {
+                earliest[i][j] = grid[i][j];
+                q.push({i, j, earliest[i][j]});
+            }
+        }
+    }
+
+    while (!q.empty()) {
+        Node cur = q.top();
+        q.pop();
+        for (int i = 0; i < 4; i++) {
+            int nx = cur.x + dx[i];
+            int ny = cur.y + dy[i];
+            if (nx >= 0 && nx < h && ny >= 0 && ny < w) {
+                int new_earliest = max(earliest[cur.x][cur.y], grid[nx][ny]);
+                if (new_earliest < earliest[nx][ny]) {
+                    earliest[nx][ny] = new_earliest;
+                    q.push({nx, ny, earliest[nx][ny]});
+                }
+            }
+        }
+    }
+
+    vector<int> cnt(1e5 + 2, 0);
+    for (int i = 0; i < h; i++) {
+        for (int j = 0; j < w; j++) {
+            cnt[earliest[i][j]]++;
+        }
+    }
+
+    int total = h * w;
+    vector<int> res(y + 1);
+    for (int i = 1; i <= y; i++) {
+        if (i <= 1e5) {
+            total -= cnt[i];
+        }
+        res[i] = total;
+    }
+
+    for (int i = 1; i <= y; i++) {
+        cout << res[i] << endl;
+    }
+
+    return 0;
+}
+```
+
+### Explanation
+1. **Initialization**: We read the grid dimensions and elevation data.
+2. **Earliest Sinking Time Calculation**: For each section on the perimeter, we initialize its earliest sinking time to its elevation. Using a priority queue, we propagate the earliest sinking time to adjacent sections, updating the earliest time a section sinks based on the maximum of its own elevation and the sinking time of its neighbors.
+3. **Counting Sinking Sections**: We count how many sections sink at each possible sea level.
+4. **Query Processing**: For each year (sea level), we compute the remaining sections by subtracting the cumulative count of sections that have sunk up to that sea level.
+5. **Output**: We print the remaining area for each year from 1 to Y.
+
+This approach ensures that we efficiently precompute the sinking times and answer each query in constant time, making it suitable for large values of Y.

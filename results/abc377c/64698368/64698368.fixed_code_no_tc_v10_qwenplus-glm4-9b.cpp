@@ -1,0 +1,68 @@
+#include <iostream>
+#include <set>
+#include <cmath>
+using namespace std;
+
+int N, M;
+set<pair<int, int>> st;
+set<pair<int, int>> blocked;
+
+void set_insert(int a, int b, const set<pair<int, int>>& &st) {
+    if (0 <= a && a < N && 0 <= b && b < N) {
+        st.insert({a, b});
+    }
+}
+
+void filter_blocked() {
+    set<pair<int, int>> new_blocked;
+    for (const auto& blocked_point : blocked) {
+        int a = blocked_point.first, b = blocked_point.second;
+        // Check all possible captures
+        set_insert(a + 2, b + 1, new_blocked);
+        set_insert(a + 1, b + 2, new_blocked);
+        set_insert(a - 1, b + 2, new_blocked);
+        set_insert(a - 2, b + 1, new_blocked);
+        set_insert(a - 2, b - 1, new_blocked);
+        set_insert(a - 1, b - 2, new_blocked);
+        set_insert(a + 1, b - 2, new_blocked);
+        set_insert(a + 2, b - 1, new_blocked);
+    }
+    blocked = new_blocked;
+}
+
+int main() {
+    cin >> N >> M;
+    vector<pair<int, int>> pos(M);
+
+    for (int i = 0; i < M; ++i) {
+        cin >> pos[i].first >> pos[i].second;
+        pos[i].first--; pos[i].second--;
+        set_insert(pos[i].first, pos[i].second, blocked);
+    }
+
+    filter_blocked();
+
+    int count = 0;
+    for (int i = 0; i < N; ++i) {
+        for (int j = 0; j < N; ++j) {
+            if (blocked.find({i, j}) == blocked.end()) {
+                // Check if the point is not captured by any other piece
+                bool is_safe = true;
+                for (const auto& point : pos) {
+                    for (const auto& cap : {{0, 0}, {2, 1}, {1, 2}, {-1, 2}, {-2, 1}, {-2, -1}, {-1, -2}, {1, -2}, {2, -1}}) {
+                        if (i + cap.first >= 0 && i + cap.first < N && j + cap.second >= 0 && j + cap.second < N && blocked.find({i + cap.first, j + cap.second}) != blocked.end()) {
+                            is_safe = false;
+                            break;
+                        }
+                    }
+                    if (!is_safe) break;
+                }
+                if (is_safe) count++;
+            }
+        }
+    }
+
+    cout << count << endl;
+
+    return 0;
+}

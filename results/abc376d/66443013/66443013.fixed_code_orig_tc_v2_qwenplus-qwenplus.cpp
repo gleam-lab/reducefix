@@ -1,0 +1,53 @@
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+
+map<ll, vector<ll>> graph;
+map<ll, bool> visited;
+const ll INF = 1LL << 60;
+ll ans = INF;
+
+// Use BFS instead of DFS to find the shortest path
+void bfs(ll start) {
+    queue<pair<ll, ll>> q;
+    q.push({start, 0});
+    visited[start] = true;
+
+    while (!q.empty()) {
+        auto [node, dist] = q.front();
+        q.pop();
+
+        for (auto neighbor : graph[node]) {
+            if (neighbor == 1) {
+                ans = min(ans, dist + 1);
+                continue;
+            }
+            if (!visited[neighbor]) {
+                visited[neighbor] = true;
+                q.push({neighbor, dist + 1});
+            }
+        }
+    }
+}
+
+int main() {
+    ll n, m;
+    cin >> n >> m;
+
+    for (ll i = 0; i < m; ++i) {
+        ll a, b;
+        cin >> a >> b;
+        graph[a].push_back(b);
+        if (!visited.count(a)) visited[a] = false;
+        if (!visited.count(b)) visited[b] = false;
+    }
+
+    bfs(1);
+
+    if (ans != INF)
+        cout << ans << endl;
+    else
+        cout << -1 << endl;
+
+    return 0;
+}

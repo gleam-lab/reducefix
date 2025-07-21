@@ -1,0 +1,138 @@
+To fix this code, we need to address several issues:
+
+1. **Incorrect Approach**: The original code attempts to calculate the number of unsafe squares by individually checking each condition (rows, columns, diagonals) and then tries to correct overlaps. This approach is inefficient and incorrect, especially for large grids (N up to 1e9).
+
+2. **Complexity**: The problem constraints require an efficient solution (O(M) or O(M^2)), not O(N^2) which is infeasible for large N.
+
+3. **Correct Logic**: The correct approach involves:
+   - Identifying all squares that are under attack by any existing piece (rows, columns, diagonals).
+   - Using inclusion-exclusion to count these squares accurately, considering overlaps.
+   - The answer is the total squares (N^2) minus the unsafe squares, plus the squares that are both empty and safe.
+
+4. **Edge Cases**: Handling cases where M=1 or when all squares are unsafe (like Sample Input 2).
+
+Here’s the corrected code:
+
+```cpp
+#include<bits/stdc++.h>
+using namespace std;
+using i64 = long long;
+
+int main() {
+    std::ios::sync_with_stdio(false);
+    std::cin.tie(nullptr);
+    i64 N, M;
+    cin >> N >> M;
+    vector<pair<i64, i64>> pieces(M);
+    set<i64> rows, cols, diag1, diag2;
+    set<pair<i64, i64>> occupied;
+
+    for (int i = 0; i < M; i++) {
+        i64 a, b;
+        cin >> a >> b;
+        pieces[i] = {a, b};
+        rows.insert(a);
+        cols.insert(b);
+        diag1.insert(a + b);
+        diag2.insert(a - b);
+        occupied.insert({a, b});
+    }
+
+    i64 unsafe = 0;
+
+    // Rows and columns
+    unsafe += rows.size() * N;
+    unsafe += cols.size() * N;
+    unsafe -= rows.size() * cols.size(); // subtract overlaps
+
+    // Diagonals (a+b and a-b)
+    unsafe += diag1.size() * N;
+    for (auto d : diag1) {
+        i64 min_x = max(1LL, d - N);
+        i64 max_x = min(N, d - 1);
+        if (max_x < min_x) continue;
+        unsafe -= (max_x - min_x + 1);
+    }
+
+    unsafe += diag2.size() * N;
+    for (auto d : diag2) {
+        i64 min_x = max(1LL, 1 - d);
+        i64 max_x = min(N, N - d);
+        if (max_x < min_x) continue;
+        unsafe -= (max_x - min_x + 1);
+    }
+
+    // Overlaps between rows and diag1
+    for (auto r : rows) {
+        for (auto d : diag1) {
+            i64 y = d - r;
+            if (y >= 1 && y <= N) {
+                unsafe--;
+            }
+        }
+    }
+
+    // Overlaps between rows and diag2
+    for (auto r : rows) {
+        for (auto d : diag2) {
+            i64 y = r - d;
+            if (y >= 1 && y <= N) {
+                unsafe--;
+            }
+        }
+    }
+
+    // Overlaps between cols and diag1
+    for (auto c : cols) {
+        for (auto d : diag1) {
+            i64 x = d - c;
+            if (x >= 1 && x <= N) {
+                unsafe--;
+            }
+        }
+    }
+
+    // Overlaps between cols and diag2
+    for (auto c : cols) {
+        for (auto d : diag2) {
+            i64 x = c + d;
+            if (x >= 1 && x <= N) {
+                unsafe--;
+            }
+        }
+    }
+
+    // Overlaps between diag1 and diag2
+    for (auto d1 : diag1) {
+        for (auto d2 : diag2) {
+            if ((d1 + d2) % 2 == 0) {
+                i64 x = (d1 + d2) / 2;
+                i64 y = (d1 - d2) / 2;
+                if (x >= 1 && x <= N && y >= 1 && y <= N) {
+                    unsafe++;
+                }
+            }
+        }
+    }
+
+    // Finally, subtract the occupied squares that were counted multiple times
+    unsafe -= M;
+
+    i64 total_safe = N * N - unsafe;
+    cout << total_safe << "\n";
+
+    return 0;
+}
+```
+
+### Explanation:
+1. **Initialization**: We read the grid size `N` and the number of pieces `M`. We store the positions of the pieces in a set to avoid duplicates and track occupied squares.
+
+2. **Unsafe Squares Calculation**:
+   - **Rows and Columns**: Each piece affects all squares in its row and column. We use inclusion-exclusion to avoid double-counting overlaps.
+   - **Diagonals**: Each piece affects squares on its two diagonals (sum and difference of coordinates). We calculate the affected ranges and adjust for overlaps.
+   - **Overlaps**: We handle overlaps between different conditions (e.g., a square that is in both a row and a diagonal) to ensure accurate counting.
+
+3. **Final Count**: The total safe squares is the grid size minus the unsafe squares. The result is printed.
+
+This approach ensures efficiency and correctness within the problem constraints.

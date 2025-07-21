@@ -1,0 +1,45 @@
+#include <iostream>
+#include <vector>
+#include <unordered_set>
+using namespace std;
+
+#define v(type) vector<type>
+#define p(ate,bte) pair<ate,bte>
+#define m(ate,bte) map<ate,bte>
+#define s(type) set<type>
+
+int solve() {
+    int N, M;
+    cin >> N >> M;
+
+    unordered_set<p(int, int>> occupied;
+    for (int i = 0; i < M; ++i) {
+        int a, b;
+        cin >> a >> b;
+        occupied.emplace(a, b);
+        
+        // Check all possible moves from the current piece position
+        for (int dx = -2; dx <= 2; ++dx) {
+            for (int dy = -2; dy <= 2; ++dy) {
+                if (dx == 0 && dy == 0) continue; // Skip the current position itself
+                int nx = a + dx, ny = b + dy;
+                if (nx >= 1 && nx <= N && ny >= 1 && ny <= N) {
+                    occupied.emplace(nx, ny);
+                }
+            }
+        }
+    }
+
+    // Calculate the number of free squares
+    int free_squares = N * N;
+    free_squares -= occupied.size();
+
+    cout << free_squares << endl;
+
+    return 0;
+}
+
+int main() {
+    cin.tie(0);
+    return solve();
+}

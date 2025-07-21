@@ -1,0 +1,66 @@
+#include<bits/stdc++.h>
+using namespace std;
+
+struct UnionFind {
+    int n, num_groups;
+    vector<int> p;
+    UnionFind(int n): n(n), num_groups(n), p(n,-1){}
+    int leader(int x){
+        if(p[x]<0)return x;
+        return p[x]=leader(p[x]);
+    }
+    int merge(int x,int y){
+        x=leader(x),y=leader(y);
+        if(x==y)return x;
+        if(-p[x]<-p[y])swap(x,y);
+        p[x]+=p[y];
+        p[y]=x;
+        num_groups--;
+        return x;
+    }
+    int size(int x){return -p[leader(x)];}
+    bool same(int x,int y){return leader(x)==leader(y);}
+};
+
+int main(){
+    int h,w,q;cin>>h>>w>>q;
+    vector<set<int>> s(h),t(w);
+    UnionFind uf(h*w+2);
+    int id=0;
+    while(q--){
+        int r,c;cin>>r>>c;r--;c--;
+        if(s[r].find(c)!=s[r].end()){
+            for(int i=-1;i<=1;++i){
+                if(i==0)continue;
+                if(s[r].find(c+i)!=s[r].end())continue;
+                int x=s[r].lower_bound(c+i)->second;
+                int y=t[c+i].lower_bound(r)->second;
+                if(uf.same(x,y))continue;
+                uf.merge(x,y);
+            }
+            s[r].erase(c);
+            t[c].erase(r);
+        }else{
+            int x=id++;
+            s[r].insert({c,x});
+            t[c].insert({r,x});
+            for(int i=-1;i<=1;++i){
+                if(i==0)continue;
+                if(s[r].find(c+i)!=s[r].end())continue;
+                int y=s[r].lower_bound(c+i)->second;
+                if(uf.same(x,y))continue;
+                uf.merge(x,y);
+            }
+            for(int i=-1;i<=1;++i){
+                if(i==0)continue;
+                if(t[c].find(r+i)!=t[c].end())continue;
+                int y=t[c].lower_bound(r+i)->second;
+                if(uf.same(x,y))continue;
+                uf.merge(x,y);
+            }
+        }
+    }
+    int ans=h*w-uf.num_groups+1;
+    cout<<ans<<endl;
+    return 0;
+}

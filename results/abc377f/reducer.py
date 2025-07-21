@@ -1,0 +1,146 @@
+import os
+import subprocess
+from typing import List, Tuple, Set
+import sys
+
+def run_program(program_path: str, input_data: bytes) -> bytes:
+    result = subprocess.run(
+        [program_path], 
+        input=input_data,
+        capture_output=True,
+        check=True,  
+        timeout=10   
+    )
+    return result.stdout
+
+def create_input_bytes(n: int, pieces: List[Tuple[int, int]]) -> bytes:
+    lines = [f"{n} {len(pieces)}\n"]
+    for a, b in pieces:
+        lines.append(f"{a} {b}\n")
+    return "".join(lines).encode("utf-8")
+
+def test_interesting(n: int, pieces: List[Tuple[int, int]]) -> bool:
+    input_data = create_input_bytes(n, pieces)
+    try:
+        wa_output = run_program("./wa", input_data)
+        ac_output = run_program("./ac", input_data)
+        return wa_output.strip() != ac_output.strip()
+    except subprocess.CalledProcessError:
+        return False
+
+def reduce_pieces_ddmin(original_n: int, original_pieces: List[Tuple[int, int]]) -> List[Tuple[int, int]]:
+    if not test_interesting(original_n, original_pieces):
+        print("[Error] 初始输入并未造成 WA 与 AC 不一致，无法缩减。")
+        return original_pieces
+    
+    print(f"[Info] 初始棋子数={len(original_pieces)}，开始 ddmin 缩减...\n")
+    current_pieces = original_pieces.copy()
+    granularity = 2
+    
+    while len(current_pieces) >= 1:
+        print(f"[Reduce] 当前棋子数={len(current_pieces)}")
+        print(f"         尝试粒度: {granularity}")
+        num_pieces = len(current_pieces)
+        subset_size = max(1, num_pieces // granularity)
+        start_idx = 0
+        made_progress = False
+        
+        def check_candidate(candidate_pieces: List[Tuple[int, int]]) -> bool:
+            return test_interesting(original_n, candidate_pieces)
+        
+        print(f"         1) 尝试『移除』大小约={subset_size} 的分块...")
+        while start_idx < num_pieces:
+            block = current_pieces[start_idx:start_idx + subset_size]
+            candidate_pieces = [p for i, p in enumerate(current_pieces) if i not in range(start_idx, start_idx + subset_size)]
+            print(f"            - 移除 {block} ... ", end="")
+            if check_candidate(candidate_pieces):
+                print(f"成功! 新棋子数={len(candidate_pieces)}")
+                current_pieces = candidate_pieces
+                granularity = 2
+                made_progress = True
+                break
+            else:
+                print("失败")
+                start_idx += subset_size
+        
+        if made_progress:
+            continue
+        
+        print(f"         2) 尝试『只保留』大小约={subset_size} 的分块...")
+        start_idx = 0
+        while start_idx < num_pieces:
+            block = current_pieces[start_idx:start_idx + subset_size]
+            candidate_pieces = block
+            if len(candidate_pieces) == 0 or len(candidate_pieces) == num_pieces:
+                start_idx += subset_size
+                continue
+            print(f"            - 只保留 {block} ... ", end="")
+            if check_candidate(candidate_pieces):
+                print(f"成功! 新棋子数={len(candidate_pieces)}")
+                current_pieces = candidate_pieces
+                granularity = 2
+                made_progress = True
+                break
+            else:
+                print("失败")
+            start_idx += subset_size
+        
+        if made_progress:
+            continue
+        
+        if granularity < num_pieces:
+            new_gran = min(granularity * 2, num_pieces)
+            print(f"         -> 无进展，增大粒度至 {new_gran}\n")
+            granularity = new_gran
+        else:
+            print("\n[Reduce] 已无法进一步缩减 —— 到达 1-minimal。")
+            break
+    
+    print(f"\n[Result] 缩减后棋子数={len(current_pieces)}")
+    return current_pieces
+
+def reduce_input(input_file: str, output_file: str):
+    if not os.path.exists(input_file):
+        print(f"[Error] 输入文件不存在: {input_file}", file=sys.stderr)
+        return
+    
+    with open(input_file, "r", encoding="utf-8") as f:
+        lines = [line.rstrip("\n") for line in f]
+    
+    if not lines:
+        raise ValueError("输入文件为空")
+    
+    first_line = lines[0].strip().split()
+    if len(first_line) != 2:
+        raise ValueError(f"第一行应包含两个整数: N M")
+    
+    N_str, M_str = first_line
+    if not N_str.isdigit() or not M_str.isdigit():
+        raise ValueError(f"非数字输入: N={N_str}, M={M_str}")
+    
+    N = int(N_str)
+    M = int(M_str)
+    
+    if len(lines) != M + 1:
+        raise ValueError(f"期望 {M + 1} 行输入，实际为 {len(lines)} 行")
+    
+    pieces = []
+    for i in range(1, M + 1):
+        line = lines[i].strip()
+        if not line:
+            continue
+        a_str, b_str = line.split()
+        if not a_str.isdigit() or not b_str.isdigit():
+            raise ValueError(f"非数字坐标: ({a_str},{b_str})")
+        a = int(a_str)
+        b = int(b_str)
+        pieces.append((a, b))
+    
+    reduced_pieces = reduce_pieces_ddmin(N, pieces)
+    
+    output_data = create_input_bytes(N, reduced_pieces)
+    
+    with open(output_file, "wb") as f:
+        f.write(output_data)
+    
+    print(f"[Info] 缩减过程完成，结果已写入: {output_file}")

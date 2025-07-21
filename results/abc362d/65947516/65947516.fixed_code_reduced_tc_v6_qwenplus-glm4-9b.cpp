@@ -1,0 +1,54 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+#define ll long long
+#define N 200005
+#define INF 1e18
+
+vector<pair<int, ll>> adj[N];
+ll a[N], dist[N];
+
+void dijkstra(int src) {
+    priority_queue<pair<ll, int>, vector<pair<ll, int>>, greater<pair<ll, int>>> pq;
+    pq.push({0, src});
+    dist[src] = a[src]; // Include vertex weight in initial distance
+
+    while (!pq.empty()) {
+        auto [d, u] = pq.top();
+        pq.pop();
+
+        if (d != dist[u]) continue;
+
+        for (auto &[v, w] : adj[u]) {
+            ll newDist = d + w + a[v];
+            if (newDist < dist[v]) {
+                dist[v] = newDist;
+                pq.push({newDist, v});
+            }
+        }
+    }
+}
+
+int main() {
+    int n, m;
+    scanf("%d %d", &n, &m);
+
+    for (int i = 1; i <= n; i++) {
+        scanf("%lld", &a[i]);
+    }
+
+    for (int i = 0; i < m; i++) {
+        int u, v, w;
+        scanf("%d %d %d", &u, &v, &w);
+        adj[u].push_back({v, w});
+        adj[v].push_back({u, w});
+    }
+
+    dijkstra(1);
+
+    for (int i = 2; i <= n; i++) {
+        printf("%lld ", dist[i] + a[i]);
+    }
+
+    return 0;
+}

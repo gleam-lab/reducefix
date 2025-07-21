@@ -1,0 +1,156 @@
+# START --- abc376d/reducer.py --- START
+import os
+import subprocess
+from typing import List, Tuple, Optional
+import sys
+
+def run_program(program_path: str, input_data: bytes) -> bytes:
+    result = subprocess.run(
+        [program_path], 
+        input=input_data,
+        capture_output=True,
+        check=True,  
+        timeout=10   
+    )
+    return result.stdout
+
+def create_input_bytes(nodes: List[int], edges: List[Tuple[int, int]]) -> bytes:
+    # Map original node numbers to compressed indices
+    node_map = {node: idx+1 for idx, node in enumerate(sorted(nodes))}
+    m = len(edges)
+    lines = [f"{len(nodes)} {m}\n"]
+    for a, b in edges:
+        if a in node_map and b in node_map:
+            lines.append(f"{node_map[a]} {node_map[b]}\n")
+    return "".join(lines).encode("utf-8")
+
+def test_interesting(original_nodes: List[int], original_edges: List[Tuple[int, int]]) -> bool:
+    input_data = create_input_bytes(original_nodes, original_edges)
+    try:
+        wa_output = run_program("./wa", input_data).strip()
+        ac_output = run_program("./ac", input_data).strip()
+        return wa_output != ac_output
+    except subprocess.CalledProcessError:
+        return False
+
+def reduce_input(input_file: str, output_file: str):
+    if not os.path.exists(input_file):
+        print(f"[Error] 输入文件不存在: {input_file}", file=sys.stderr)
+        return
+    
+    with open(input_file, "r", encoding="utf-8") as f:
+        lines = [line.rstrip("\n") for line in f]
+    
+    if not lines:
+        raise ValueError("输入文件为空")
+    
+    # Parse input
+    first_line = lines[0].split()
+    if len(first_line) != 2:
+        raise ValueError(f"第一行应包含两个整数: {lines[0]}")
+    
+    N = int(first_line[0])
+    M = int(first_line[1])
+    
+    edges = []
+    for line in lines[1:M+1]:
+        if not line.strip():
+            continue
+        a_str, b_str = line.split()
+        a, b = int(a_str), int(b_str)
+        edges.append((a, b))
+    
+    # Initial nodes are all unique nodes in the edges
+    all_nodes = set()
+    for a, b in edges:
+        all_nodes.add(a)
+        all_nodes.add(b)
+    all_nodes = sorted(all_nodes)
+    
+    # If 1 is not in the nodes, add it (required for problem)
+    if 1 not in all_nodes:
+        all_nodes.append(1)
+        all_nodes.sort()
+    
+    # We'll use DDmin algorithm similar to the example
+    current_nodes = all_nodes.copy()
+    granularity = 2
+    
+    def check_candidate(candidate_nodes: List[int]) -> bool:
+        if 1 not in candidate_nodes:
+            return False
+        # Only keep edges where both endpoints are in candidate_nodes
+        candidate_edges = [(a, b) for a, b in edges if a in candidate_nodes and b in candidate_nodes]
+        return test_interesting(candidate_nodes, candidate_edges)
+    
+    print(f"[Info] 初始节点数={len(current_nodes)}, 开始 ddmin 缩减...\n")
+    
+    while True:
+        print(f"[Reduce] 当前节点集大小={len(current_nodes)}: {current_nodes}")
+        print(f"         尝试粒度: {granularity}")
+        
+        num_nodes = len(current_nodes)
+        subset_size = max(1, num_nodes // granularity)
+        made_progress = False
+        
+        # Try removing a subset
+        print(f"         1) 尝试『移除』大小约={subset_size} 的分块...")
+        for start_idx in range(0, num_nodes, subset_size):
+            block = current_nodes[start_idx:start_idx + subset_size]
+            candidate_nodes = [n for n in current_nodes if n not in block]
+            
+            # Always keep node 1
+            if 1 not in candidate_nodes:
+                continue
+                
+            print(f"            - 移除 {block} ... ", end="")
+            if check_candidate(candidate_nodes):
+                print(f"成功! 新节点集大小={len(candidate_nodes)}")
+                current_nodes = candidate_nodes
+                granularity = 2
+                made_progress = True
+                break
+        if made_progress:
+            continue
+            
+        # Try keeping only a subset
+        print(f"         2) 尝试『只保留』大小约={subset_size} 的分块...")
+        for start_idx in range(0, num_nodes, subset_size):
+            block = current_nodes[start_idx:start_idx + subset_size]
+            candidate_nodes = block.copy()
+            
+            # Make sure to include node 1
+            if 1 not in candidate_nodes:
+                continue
+                
+            print(f"            - 只保留 {block} ... ", end="")
+            if check_candidate(candidate_nodes):
+                print(f"成功! 新节点集大小={len(candidate_nodes)}")
+                current_nodes = candidate_nodes
+                granularity = 2
+                made_progress = True
+                break
+        if made_progress:
+            continue
+            
+        # Increase granularity or finish
+        if granularity < num_nodes:
+            new_gran = min(granularity * 2, num_nodes)
+            print(f"         -> 无进展，增大粒度至 {new_gran}\n")
+            granularity = new_gran
+        else:
+            print("\n[Reduce] 已无法进一步缩减 —— 到达 1-minimal。")
+            break
+    
+    # Final edges are those between kept nodes
+    final_edges = [(a, b) for a, b in edges if a in current_nodes and b in current_nodes]
+    
+    # Create input bytes
+    output_bytes = create_input_bytes(current_nodes, final_edges)
+    
+    with open(output_file, "wb") as f:
+        f.write(output_bytes)
+    
+    print(f"[Info] 缩减过程完成，结果已写入: {output_file}")
+    print(f"         最终节点集大小={len(current_nodes)}, 边数={len(final_edges)}")
+# END --- abc376d/reducer.py --- END

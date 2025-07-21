@@ -1,0 +1,41 @@
+#include <bits/stdc++.h>
+#define int long long
+using namespace std;
+
+const int N = 2e5 + 5;
+
+vector<int> dist(N, -1);
+vector<vector<int>> g(N);
+
+signed main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+    
+    int n, m;
+    cin >> n >> m;
+    
+    for (int i = 0; i < m; ++i) {
+        int u, v;
+        cin >> u >> v;
+        g[u].push_back(v);
+    }
+    
+    queue<int> q;
+    q.push(1);
+    dist[1] = 0;
+    
+    while (!q.empty()) {
+        int u = q.front();
+        q.pop();
+        
+        for (int v : g[u]) {
+            if (dist[v] == -1) {
+                dist[v] = dist[u] + 1;
+                q.push(v);
+            }
+        }
+    }
+    
+    cout << dist[1] << '\n';
+    return 0;
+}

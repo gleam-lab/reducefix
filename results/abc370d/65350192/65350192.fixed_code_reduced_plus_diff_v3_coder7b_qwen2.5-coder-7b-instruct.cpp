@@ -1,0 +1,36 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define rep(i,n) for(int i = 0; i < (n); i++)
+using ll = long long;
+
+int main(void) {
+    ios_base::sync_with_stdio(false);
+    cin.tie(0);
+
+    int h, w, q;
+    cin >> h >> w >> q;
+    vector<vector<bool>> grid(h, vector<bool>(w));
+    rep(i,h) rep(j,w) grid[i][j] = true;
+
+    while(q--) {
+        int r, c;
+        cin >> r >> c;
+        r--; c--;
+
+        if(grid[r][c]) {
+            grid[r][c] = false;
+        } else {
+            for(int i=r-1; i>=0 && !grid[i][c]; --i) grid[i][c] = false;
+            for(int i=r+1; i<h && !grid[i][c]; ++i) grid[i][c] = false;
+            for(int j=c-1; j>=0 && !grid[r][j]; --j) grid[r][j] = false;
+            for(int j=c+1; j<w && !grid[r][j]; ++j) grid[r][j] = false;
+        }
+    }
+
+    int count = 0;
+    rep(i,h) rep(j,w) if(grid[i][j]) count++;
+
+    cout << count << '\n';
+
+    return 0;
+}

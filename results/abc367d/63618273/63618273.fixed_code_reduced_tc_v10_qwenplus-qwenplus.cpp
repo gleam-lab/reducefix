@@ -1,0 +1,48 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+using ll = long long;
+typedef pair<int, int> PII;
+
+const int N = 2e5 + 10;
+const int mod = 1e9 + 7;
+
+void solve() {
+    int n, M;
+    cin >> n >> M;
+    vector<ll> a(n + 2); // +2 to safely handle prefix sums
+    for (int i = 1; i <= n; ++i) {
+        cin >> a[i];
+    }
+
+    // Compute prefix sums
+    vector<ll> s(n + 2);
+    for (int i = 1; i <= n; ++i) {
+        s[i] = s[i - 1] + a[i];
+        s[i] %= M; // Keep the prefix sum modulo M
+    }
+
+    map<ll, ll> freq;
+    ll ans = 0;
+
+    // We want to count how many times (s[j] - s[i]) % M == 0
+    // That is equivalent to s[j] % M == s[i] % M
+    // So we count frequencies of each remainder
+
+    for (int i = 0; i <= n; ++i) {
+        ans += freq[s[i]];
+        freq[s[i]]++;
+    }
+
+    cout << ans << "\n";
+}
+
+int main() {
+    cin.tie(0);
+    ios::sync_with_stdio(0);
+    ll t = 1;
+    while (t--) {
+        solve();
+    }
+    return 0;
+}

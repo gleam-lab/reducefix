@@ -1,0 +1,47 @@
+#include <iostream>
+#include <vector>
+#include <string>
+#include <set>
+
+using namespace std;
+
+#define ll long long
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(0);
+    
+    ll N, M;
+    cin >> N >> M;
+    
+    set<pair<ll, ll>> pieces;
+    set<pair<ll, ll>> attacks;
+    
+    for(ll i = 0; i < M; ++i) {
+        ll x, y;
+        cin >> x >> y;
+        
+        pieces.insert({x, y});
+        
+        if(x + 2 <= N && y + 1 <= N) attacks.insert({x + 2, y + 1});
+        if(x + 1 <= N && y + 2 <= N) attacks.insert({x + 1, y + 2});
+        if(x - 1 >= 1 && y + 2 <= N) attacks.insert({x - 1, y + 2});
+        if(x - 2 >= 1 && y + 1 <= N) attacks.insert({x - 2, y + 1});
+        if(x - 2 >= 1 && y - 1 >= 1) attacks.insert({x - 2, y - 1});
+        if(x - 1 >= 1 && y - 2 >= 1) attacks.insert({x - 1, y - 2});
+        if(x + 1 <= N && y - 2 >= 1) attacks.insert({x + 1, y - 2});
+        if(x + 2 <= N && y - 1 >= 1) attacks.insert({x + 2, y - 1});
+    }
+    
+    ll total_empty = N * N;
+    ll total_attacked = attacks.size();
+    
+    for(auto& attack : attacks) {
+        if(pieces.find(attack) != pieces.end()) continue;
+        total_attacked--;
+    }
+    
+    cout << total_empty - total_attacked << endl;
+    
+    return 0;
+}

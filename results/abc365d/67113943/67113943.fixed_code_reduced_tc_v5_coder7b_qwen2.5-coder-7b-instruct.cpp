@@ -1,0 +1,42 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(NULL);
+
+    int N;
+    string S;
+    cin >> N;
+    cin >> S;
+    
+    // Initialize variables
+    int wins = 0;
+    char prevMove = 'X'; // Using 'X' as an initial value which does not conflict with 'R', 'P', 'S'
+
+    // Iterate through each move in the string S
+    for (int i = 0; i < N; ++i) {
+        char currentMove = S[i];
+        
+        // Determine the winning move based on the current move
+        char winMove;
+        if (currentMove == 'R') {
+            winMove = 'P';
+        } else if (currentMove == 'P') {
+            winMove = 'S';
+        } else { // currentMove == 'S'
+            winMove = 'R';
+        }
+
+        // Check if the previous move was the same as the winning move
+        if (prevMove != winMove) {
+            wins++; // Increment the win count
+            prevMove = winMove; // Update the previous move to the winning move
+        }
+    }
+
+    // Output the maximum number of games Takahashi could have won
+    cout << wins << endl;
+
+    return 0;
+}

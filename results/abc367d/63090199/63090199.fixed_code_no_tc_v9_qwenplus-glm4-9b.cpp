@@ -1,0 +1,38 @@
+#include<bits/stdc++.h>
+using namespace std;
+int n, m;
+int main(){
+    cin >> n >> m;
+    vector<int> nums(n);
+    for(int i = 0; i < n; i++){
+        cin >> nums[i];
+    }
+    vector<int> prefix_sum(n + 1, 0);
+    for(int i = 0; i < n; i++){
+        prefix_sum[i + 1] = prefix_sum[i] + nums[i];
+    }
+    int count = 0;
+    // Use a map to store remainders and their counts
+    unordered_map<int, int> remainders;
+    for(int t = 1; t <= n; t++){
+        int step = prefix_sum[t];
+        // Check for each s from 1 to t-1
+        for(int s = 1; s < t; s++){
+            int diff = step - prefix_sum[s];
+            if(diff % m == 0){
+                count++;
+            }
+            // Update the remainders map for the current t
+            int remainder = (diff * n) % m;
+            remainders[remainder]--;
+            if(remainders[remainder] == 0){
+                remainders.erase(remainder);
+            }
+        }
+        // Update the remainders map for the case where s = t
+        int remainder = (step * n) % m;
+        remainders[remainder]++;
+    }
+    cout << count << endl;
+    return 0;
+}

@@ -1,0 +1,29 @@
+#include <vector>
+#include <iostream>
+#include <algorithm>
+#include <cmath>
+#include <string>
+#include <numeric>
+
+using namespace std;
+
+#define INF (long long)1e18  // Fix: was too small, caused incorrect comparisons
+
+int main(){
+    int n;
+    long long dp0 = 0;                // No stock at hand
+    long long dp1 = -INF;             // Holding stock
+    long long x;
+
+    cin >> n;
+
+    for (int i = 0; i < n; i++) {
+        cin >> x;
+        long long prev_dp0 = dp0;
+        dp0 = max(dp0, dp1 + 2 * x);  // Sell stock if held
+        dp1 = max(dp1, prev_dp0 - x); // Buy stock using profit
+    }
+
+    cout << dp0 << endl;  // Final profit cannot be negative
+    return 0;
+}

@@ -1,0 +1,60 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+typedef long long ll;
+
+int main() {
+    ios_base::sync_with_stdio(0);
+    cin.tie(0);
+
+    int n, m;
+    ll k;
+    cin >> n >> m >> k;
+
+    vector<ll> a(n);
+    for(int i = 0; i < n; ++i) {
+        cin >> a[i];
+        k -= a[i];
+    }
+
+    vector<int> indices(n);
+    iota(indices.begin(), indices.end(), 0);
+    sort(indices.begin(), indices.end(), [&](int i, int j){ return a[i] < a[j]; });
+
+    vector<ll> pref(n + 1);
+    for(int i = 0; i < n; ++i) {
+        pref[i + 1] = a[i] + pref[i];
+    }
+
+    vector<ll> ans(n, -1);
+    for(int i = 0; i < n; ++i) {
+        ll target_votes = a[i] + 1;
+        int count_greater = 0;
+        for(int j = i + 1; j < n; ++j) {
+            if(a[j] > target_votes) ++count_greater;
+        }
+
+        if(count_greater < m) {
+            ans[indices[i]] = 0;
+            continue;
+        }
+
+        ll min_additional_votes = 0;
+        for(int j = i + 1; j < n; ++j) {
+            if(a[j] > target_votes) {
+                min_additional_votes += a[j] - target_votes;
+            }
+        }
+
+        if(min_additional_votes > k) {
+            ans[indices[i]] = -1;
+        } else {
+            ans[indices[i]] = min_additional_votes;
+        }
+    }
+
+    for(ll x : ans) cout << x << " ";
+    cout << endl;
+
+    return 0;
+}

@@ -1,0 +1,45 @@
+#include <bits/stdc++.h>
+#define ll long long
+using namespace std;
+
+const int N = 2e5 + 5;
+
+ll a[N], b[N];
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int n;
+    cin >> n;
+    for (int i = 1; i <= n; ++i) {
+        cin >> a[i];
+    }
+    for (int i = 1; i < n; ++i) {
+        cin >> b[i];
+    }
+
+    // Sort toys and boxes in ascending order
+    sort(a + 1, a + n + 1);
+    sort(b + 1, b + n);
+
+    int l = 1, r = 1;
+    // Try to fit the smallest toys into the smallest boxes
+    while (l <= n && r < n) {
+        if (b[r] >= a[l]) {
+            ++l;
+        }
+        ++r;
+    }
+
+    // If all toys fit into boxes, no extra box is needed
+    if (l > n) {
+        cout << 0 << endl;
+        return 0;
+    }
+
+    // The largest toy that couldn't be placed determines the required extra box size
+    cout << a[l] << endl;
+
+    return 0;
+}

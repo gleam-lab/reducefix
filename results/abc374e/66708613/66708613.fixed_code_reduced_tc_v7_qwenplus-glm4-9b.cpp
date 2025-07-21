@@ -1,0 +1,63 @@
+#include <iostream>
+#include <string>
+#include <queue>
+#include <vector>
+#include <assert>
+#include <random>
+#include <set>
+#include <map>
+#include <unordered_map>
+#include <bitset>
+#include <numeric>
+#include <algorithm>
+using namespace std;
+using ll = long long;
+const int inf = 1<<30;
+const ll INF = 1LL<<62;
+using P = pair<ll, int>;
+using PP = pair<int, P>;
+const ll MOD = 998244353;
+const int dy[] = {-1, 0, 1, 0};
+const int dx[] = {0, 1, 0, -1};
+
+int main() {
+    int N;
+    ll X;
+    cin >> N >> X;
+    vector<ll> A(N), P(N), B(N), Q(N);
+    
+    for (int i = 0; i < N; i++) {
+        cin >> A[i] >> P[i] >> B[i] >> Q[i];
+    }
+
+    ll ub = 1LL<<60, lb = 0; // min(Wi)=lbãéæã§ãã
+    while (ub - lb > 1) {
+        ll mid = (ub + lb) / 2;
+        ll res = X;
+        bool can_buy = true;
+        for (int i = 0; i < N; i++) {
+            ll val = INF;
+            for (ll s = 0; s <= B[i]; s++) { // æ©æ¢°sãB[i]ä»£ã¾ã§ä½¿ã
+                ll t = (max(0LL, mid - A[i] * s) + B[i] - 1) / B[i];
+                val = min(val, s * P[i] + t * Q[i]);
+            }
+            for (ll t = 0; t <= A[i]; t++) { // æ©æ¢°tãA[i]å°ã¾ã§ä½¿ã
+                ll s = (max(0LL, mid - B[i] * t) + A[i] - 1) / A[i];
+                val = min(val, t * Q[i] + s * P[i]);
+            }
+            if (val == INF) {
+                can_buy = false; // If we cannot achieve the processing capacity with the given budget, set flag to false.
+            }
+            res -= val;
+        }
+        if (can_buy) {
+            lb = mid;
+        } else {
+            ub = mid;
+        }
+    }
+   
+    cout << lb << endl; // Output the minimum processing capacity that can be achieved within budget X.
+    
+    return 0;
+}

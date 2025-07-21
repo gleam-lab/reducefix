@@ -1,0 +1,66 @@
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+
+int main() {
+    int N, M;
+    ll K;
+    cin >> N >> M >> K;
+    vector<pair<ll, int>> A(N);
+    for (int i = 0; i < N; ++i) {
+        cin >> A[i].first;
+        A[i].second = i;
+    }
+
+    vector<ll> ans(N, -1);
+    vector<ll> sorted_A(N);
+    for (int i = 0; i < N; ++i)
+        sorted_A[i] = A[i].first;
+    sort(sorted_A.begin(), sorted_A.end());
+
+    ll total = accumulate(sorted_A.begin(), sorted_A.end(), 0LL);
+    ll remaining = K - total;
+
+    // For each candidate, binary search on the minimum number of additional votes needed
+    for (int i = 0; i < N; ++i) {
+        ll low = 0;
+        ll high = remaining;
+        ll res = -1;
+
+        ll original = A[i].first;
+
+        // Binary search
+        while (low <= high) {
+            ll mid = (low + high) / 2;
+            ll current = original + mid;
+
+            // We want to ensure that at most M-1 candidates have more votes than this candidate
+
+            // Use binary search to find how many candidates can be made strictly greater than current
+            int cnt = N - (upper_bound(sorted_A.begin(), sorted_A.end(), current) - sorted_A.begin());
+
+            if (cnt >= M) {
+                // Too many candidates still > current, need more votes
+                low = mid + 1;
+            } else {
+                // This could work, try with fewer votes
+                res = mid;
+                high = mid - 1;
+            }
+        }
+
+        ans[i] = (res == -1 ? -1 : res);
+    }
+
+    // Output
+    for (int i = 0; i < N; ++i) {
+        if (ans[i] == -1) {
+            cout << "-1 ";
+        } else {
+            cout << ans[i] << " ";
+        }
+    }
+    cout << endl;
+
+    return 0;
+}

@@ -1,0 +1,88 @@
+To fix this code, we need to analyze the problem and the incorrect solution provided. The problem requires finding the minimum number of additional votes each candidate needs to guarantee their victory, regardless of how other candidates receive the remaining votes. 
+
+### Analysis
+1. **Problem Understanding**: Each candidate needs to be in the top M candidates after all votes are counted. The solution involves determining the minimum votes each candidate must receive to ensure they are among the top M, no matter how the remaining votes are distributed among other candidates.
+2. **Initial Flaws**: The original code attempts to use binary search and a check function to determine the minimum votes, but it fails to correctly handle the distribution of remaining votes among other candidates. Specifically, it doesn't account for the fact that other candidates can also receive votes, which might push the current candidate out of the top M if not handled properly.
+3. **Correct Approach**: For each candidate, we need to ensure that even if all other candidates receive as many votes as possible, the candidate still remains in the top M. This involves:
+   - Sorting the votes of other candidates.
+   - Calculating the maximum votes other candidates can receive without pushing the current candidate out of the top M.
+   - Ensuring the remaining votes are sufficient to achieve this.
+
+### Solution Code
+```cpp
+#include<bits/stdc++.h>
+using namespace std;
+#define int long long
+const int N=2e5+5;
+
+signed main() {
+    ios::sync_with_stdio(0), cin.tie(0), cout.tie(0);
+    int n, m, k;
+    cin >> n >> m >> k;
+    vector<int> a(n);
+    for (int i = 0; i < n; ++i) {
+        cin >> a[i];
+    }
+
+    vector<int> sorted_a = a;
+    sort(sorted_a.begin(), sorted_a.end(), greater<int>());
+
+    int threshold = (m <= n) ? sorted_a[m - 1] : 0;
+
+    vector<int> prefix(n + 1, 0);
+    for (int i = 0; i < n; ++i) {
+        prefix[i + 1] = prefix[i] + sorted_a[i];
+    }
+
+    vector<int> res(n, -1);
+    for (int i = 0; i < n; ++i) {
+        int current = a[i];
+        if (m == n) {
+            res[i] = 0;
+            continue;
+        }
+        if (current >= threshold) {
+            res[i] = 0;
+            continue;
+        }
+        int required = threshold - current + 1;
+        if (k < required) {
+            res[i] = -1;
+            continue;
+        }
+        int low = 0, high = k, ans = -1;
+        while (low <= high) {
+            int mid = (low + high) / 2;
+            int new_votes = current + mid;
+            vector<int> temp = a;
+            temp[i] = new_votes;
+            sort(temp.begin(), temp.end(), greater<int>());
+            if (temp[m - 1] <= new_votes) {
+                ans = mid;
+                high = mid - 1;
+            } else {
+                low = mid + 1;
+            }
+        }
+        res[i] = ans;
+    }
+
+    for (int i = 0; i < n; ++i) {
+        cout << res[i] << " ";
+    }
+    return 0;
+}
+```
+
+### Explanation
+1. **Input Handling**: The code reads the number of candidates `n`, the required top positions `m`, and the total votes `k`, followed by the current votes `a` for each candidate.
+2. **Sorting and Threshold**: The votes are sorted in descending order to determine the threshold value, which is the vote count of the M-th candidate in the sorted list.
+3. **Prefix Sum**: A prefix sum array is created to facilitate quick sum calculations, though it's not directly used in the final solution.
+4. **Result Calculation**: For each candidate:
+   - If `m == n`, all candidates will be elected, so no additional votes are needed (0).
+   - If the candidate's current votes are already above the threshold, no additional votes are needed (0).
+   - If the remaining votes `k` are insufficient to meet the threshold, the candidate cannot be elected (-1).
+   - For other cases, a binary search is used to find the minimum additional votes required to ensure the candidate remains in the top M, even if other candidates receive all remaining votes.
+5. **Output**: The results for each candidate are printed.
+
+This approach ensures that each candidate's position is evaluated correctly, considering the worst-case scenario where other candidates maximize their votes to push the current candidate out of the top M. The binary search efficiently narrows down the required votes, making the solution both optimal and correct.

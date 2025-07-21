@@ -1,0 +1,82 @@
+#include <iostream>
+#include <vector>
+#include <map>
+
+using namespace std;
+
+int main() {
+    long long n, m;
+    cin >> n >> m;
+    
+    vector<pair<long long, long long>> pieces(m);
+    map<long long, long long> row_positions, col_positions;
+    map<long long, long long> diag1_positions, diag2_positions;
+    map<long long, long long> cross_diag1_positions, cross_diag2_positions;
+
+    for (long long i = 0; i < m; ++i) {
+        long long x, y;
+        cin >> x >> y;
+        pieces[i] = {x, y};
+
+        // Track positions for each row, column, and diagonals
+        row_positions[x]++;
+        col_positions[y]++;
+        diag1_positions[x + y]++;
+        diag2_positions[x - y]++;
+        cross_diag1_positions[x + y]++;
+        cross_diag2_positions[x - y]++;
+    }
+
+    long long free_squares = n * n;
+    long long captured_by_row = 0, captured_by_col = 0;
+    long long captured_by_diag1 = 0, captured_by_diag2 = 0;
+    long long captured_by_cross_diag1 = 0, captured_by_cross_diag2 = 0;
+
+    for (const auto& pos : row_positions) {
+        if (pos.second > 1) {
+            captured_by_row += pos.second;
+        }
+    }
+    
+    for (const auto& pos : col_positions) {
+        if (pos.second > 1) {
+            captured_by_col += pos.second;
+        }
+    }
+    
+    for (const auto& pos : diag1_positions) {
+        if (pos.second > 1) {
+            captured_by_diag1 += pos.second;
+        }
+    }
+    
+    for (const auto& pos : diag2_positions) {
+        if (pos.second > 1) {
+            captured_by_diag2 += pos.second;
+        }
+    }
+    
+    for (const auto& pos : cross_diag1_positions) {
+        if (pos.second > 1) {
+            captured_by_cross_diag1 += pos.second;
+        }
+    }
+    
+    for (const auto& pos : cross_diag2_positions) {
+        if (pos.second > 1) {
+            captured_by_cross_diag2 += pos.second;
+        }
+    }
+
+    // Subtract captured squares from total squares
+    free_squares -= captured_by_row;
+    free_squares -= captured_by_col;
+    free_squares -= captured_by_diag1;
+    free_squares -= captured_by_diag2;
+    free_squares -= captured_by_cross_diag1;
+    free_squares -= captured_by_cross_diag2;
+
+    cout << free_squares << endl;
+
+    return 0;
+}

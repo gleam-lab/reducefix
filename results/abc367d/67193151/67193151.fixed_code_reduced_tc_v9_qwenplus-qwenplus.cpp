@@ -1,0 +1,35 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+const int N = 1e6 + 5;
+int n, m;
+long long a[N * 2];
+map<int, int> freq;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    cout.tie(nullptr);
+
+    cin >> n >> m;
+    for (int i = 1; i <= n; ++i) {
+        cin >> a[i];
+        a[i + n] = a[i]; // duplicate array for circular handling
+    }
+
+    long long total = 0;
+    long long prefix_sum = 0;
+    freq[0] = 1; // initial frequency for mod 0
+
+    for (int i = 1; i < 2 * n; ++i) {
+        prefix_sum += a[i];
+        int mod = ((prefix_sum % m) + m) % m; // ensure non-negative mod
+        total += freq[mod];
+        if (i < n) {
+            freq[mod]++;
+        }
+    }
+
+    cout << total << endl;
+    return 0;
+}

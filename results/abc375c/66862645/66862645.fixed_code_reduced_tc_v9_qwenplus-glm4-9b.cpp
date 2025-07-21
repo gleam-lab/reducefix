@@ -1,0 +1,34 @@
+#include <iostream>
+#include <cmath>
+#include <vector>
+using namespace std;
+
+int main() {
+    int N;
+    cin >> N;
+    vector<pair<int, int>> points(N + 1);
+    vector<long long> x(N + 1), y(N + 1);
+
+    // Reading points and storing them in arrays
+    for (int i = 1; i <= N; ++i) {
+        cin >> points[i].first >> points[i].second;
+        x[i] = points[i].first;
+        y[i] = points[i].second;
+    }
+
+    // Calculate the cost of traveling from the origin to the first point
+    long long ans = sqrt((x[1] - 0LL) * (x[1] - 0LL) + (y[1] - 0LL) * (y[1] - 0LL));
+
+    // Calculate the cost of traveling between consecutive points
+    for (int i = 2; i <= N; ++i) {
+        ans += sqrt((x[i] - x[i - 1]) * (x[i] - x[i - 1]) + (y[i] - y[i - 1]) * (y[i] - y[i - 1]));
+    }
+
+    // Calculate the cost of returning from the last point to the origin
+    ans += sqrt((x[N] - 0LL) * (x[N] - 0LL) + (y[N] - 0LL) * (y[N] - 0LL));
+
+    // Output the total cost
+    cout << ans << endl;
+
+    return 0;
+}

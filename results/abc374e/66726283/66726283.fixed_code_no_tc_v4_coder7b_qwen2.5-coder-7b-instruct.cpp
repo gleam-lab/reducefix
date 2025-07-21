@@ -1,0 +1,59 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+#define ll long long
+const int N = 105;
+
+int n, x;
+int a[N], b[N], p[N], q[N];
+ll dp[N][100001];
+
+// Function to calculate the minimum cost for a given production capacity
+bool check(int mid) {
+    // Initialize the DP table with infinity
+    memset(dp, 0x3f, sizeof(dp));
+    dp[0][0] = 0; // Base case: no cost for producing 0 units
+    
+    for (int i = 1; i <= n; ++i) {
+        for (int j = 0; j <= mid; ++j) {
+            if (j >= a[i]) {
+                dp[i][j] = min(dp[i][j], dp[i - 1][j - a[i]] + p[i]); // Using machine S_i
+            }
+            if (j >= b[i]) {
+                dp[i][j] = min(dp[i][j], dp[i - 1][j - b[i]] + q[i]); // Using machine T_i
+            }
+        }
+    }
+
+    // Check if the total cost is within the budget
+    for (int j = 0; j <= mid; ++j) {
+        if (dp[n][j] <= x) {
+            return true;
+        }
+    }
+    return false;
+}
+
+signed main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+    cout.tie(0);
+
+    cin >> n >> x;
+    for (int i = 1; i <= n; ++i) {
+        cin >> a[i] >> p[i] >> b[i] >> q[i];
+    }
+
+    int l = 0, r = 1e9; // Adjusted range based on constraints
+    while (l < r) {
+        int mid = l + (r - l + 1) / 2; // Right bias to avoid infinite loop
+        if (check(mid)) {
+            l = mid;
+        } else {
+            r = mid - 1;
+        }
+    }
+
+    cout << l << '\n';
+    return 0;
+}

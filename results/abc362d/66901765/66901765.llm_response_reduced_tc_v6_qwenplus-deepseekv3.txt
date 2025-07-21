@@ -1,0 +1,71 @@
+To fix this code, we need to address several issues:
+
+1. **Initialization of Distances**: The initial distance for vertex 1 should be `a[1]` (the weight of the vertex itself), and the distances for other vertices should be initialized to a very large value (infinity). The current code uses `memset` with `0x3f`, which is not the correct way to initialize a `long long` array to infinity. Instead, we should manually set each distance to `LLONG_MAX` or a similar large value.
+
+2. **Priority Queue Handling**: The priority queue should be a min-heap, but the current implementation uses a max-heap by default. We need to invert the sign of the distances when pushing and popping to simulate a min-heap.
+
+3. **Visited Array**: The current implementation marks vertices as visited after processing them, but it doesn't prevent revisiting vertices with outdated distances. We should ensure that we only process each vertex once if we have the smallest distance for it.
+
+4. **Edge and Vertex Weights**: The path weight is the sum of the weights of the vertices and edges in the path. However, the current code adds the vertex weight of the destination vertex (`a[v]`) to the edge weight (`w`), which might not be correct. The correct approach is to include the vertex weights as part of the path cost, but we need to ensure that the vertex weight is only counted once per vertex in the path.
+
+Here is the corrected code:
+
+```cpp
+#include<bits/stdc++.h>
+using namespace std;
+#define int long long 
+vector<pair<int,int>>G[200005];
+int dis[200005], a[200005], n, m;
+bool vis[200005];
+
+void dij(int u) {
+    priority_queue<pair<int,int>, vector<pair<int,int>>, greater<pair<int,int>>> q;
+    dis[u] = a[u];
+    q.push({dis[u], u});
+    while(!q.empty()) {
+        int u = q.top().second;
+        int current_dis = q.top().first;
+        q.pop();
+        if (current_dis > dis[u]) continue;
+        for(auto [v, w] : G[u]) {
+            int new_dis = dis[u] + w + a[v];
+            if (new_dis < dis[v]) {
+                dis[v] = new_dis;
+                q.push({dis[v], v});
+            }
+        }
+    }
+}
+
+signed main() {
+    scanf("%lld%lld", &n, &m);
+    for(int i = 1; i <= n; i++) {
+        scanf("%lld", &a[i]);
+        dis[i] = LLONG_MAX;
+    }
+    for(int i = 1; i <= m; i++) {
+        int u, v, w;
+        scanf("%lld%lld%lld", &u, &v, &w);
+        G[u].push_back({v, w});
+        G[v].push_back({u, w});
+    }
+    dij(1);
+    for(int i = 2; i <= n; i++) {
+        if (dis[i] == LLONG_MAX) {
+            cout << -1 << ' ';
+        } else {
+            cout << dis[i] << ' ';
+        }
+    }
+    cout << "\n";
+    return 0;
+}
+```
+
+### Key Fixes:
+1. **Initialization**: The distances are initialized to `LLONG_MAX` to correctly represent infinity.
+2. **Priority Queue**: Changed to a min-heap using `greater<pair<int,int>>`.
+3. **Relaxation Condition**: Only updates and pushes to the queue if a shorter path is found.
+4. **Vertex Weights**: The vertex weight of the starting vertex is included in the initial distance, and the vertex weights of subsequent vertices are added when moving through edges.
+
+This code should now correctly compute the minimum path weights from vertex 1 to all other vertices, considering both vertex and edge weights.

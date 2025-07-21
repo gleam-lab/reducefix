@@ -1,0 +1,50 @@
+#include <bits/stdc++.h>
+#define forn(i,n) for(int i=0;i<n;++i)
+#define fora(i,a,b) for(int i=a;i<=b;++i)
+#define ford(i,a,b) for(int i=a;i>=b;--i)
+#define trav(a,x) for(auto&a:x)
+#define sz(x) (int)(x).size()
+#define pb push_back
+#define fi first
+#define se second
+using namespace std;
+typedef long long ll;
+typedef pair<int,int> pii;
+const int INF = 1e9+7;
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(NULL);
+
+    int H,W,Q;
+    cin>>H>>W>>Q;
+    vector<vector<bool>> grid(H,vector<bool>(W,true));
+    
+    forn(q,Q){
+        int r,c;
+        cin>>r>>c;
+        --r,--c;
+        if(grid[r][c]){
+            grid[r][c]=false;
+        }
+        else{
+            fora(dr,-1,1){
+                fora(dc,-1,1){
+                    if(dr==0&&dc==0) continue;
+                    int nr=r+dr,nc=c+dc;
+                    while(nr>=0&&nr<H&&nc>=0&&nc<W){
+                        if(grid[nr][nc]) break;
+                        grid[nr][nc]=true;
+                        nr+=dr,nc+=dc;
+                    }
+                }
+            }
+        }
+    }
+
+    int ans=0;
+    trav(row,grid) trav(cell,row) ans+=(cell?1:0);
+    cout<<ans<<"\n";
+
+    return 0;
+}

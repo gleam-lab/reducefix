@@ -1,0 +1,89 @@
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+
+int main() {
+  ios::sync_with_stdio(false);
+  cin.tie(nullptr);
+
+  int N, M;
+  ll K;
+  cin >> N >> M >> K;
+
+  vector<ll> A(N);
+  for (int i = 0; i < N; ++i) {
+    cin >> A[i];
+  }
+
+  vector<ll> sorted_A = A;
+  sort(sorted_A.begin(), sorted_A.end());
+
+  vector<ll> prefix(N + 1);
+  for (int i = 1; i <= N; ++i) {
+    prefix[i] = prefix[i - 1] + sorted_A[i - 1];
+  }
+
+  ll total_remaining = K - (prefix[N] - accumulate(A.begin(), A.end(), 0LL));
+
+  vector<ll> result(N, -1);
+
+  // Prepare prefix sums of top M-1 candidates below current one
+  vector<ll> suffix_max(N);
+  partial_sum(sorted_A.rbegin(), sorted_A.rend(), suffix_max.rbegin(), plus<ll>());
+
+  for (int i = 0; i < N; ++i) {
+    ll base = A[i];
+
+    // Binary search on required additional votes
+    ll low = 0, high = total_remaining;
+    ll answer = -1;
+
+    while (low <= high) {
+      ll mid = (low + high) / 2;
+      ll current_total = base + mid;
+
+      // Find how many candidates are strictly greater than current_total
+      int count_above = N - (upper_bound(sorted_A.begin(), sorted_A.end(), current_total) - sorted_A.begin());
+
+      if (count_above >= M) {
+        low = mid + 1;
+        continue;
+      }
+
+      // Need to ensure at most M-1 candidates > current_total
+      // So we may have to boost current_total to push some candidates below it
+
+      int remaining_candidates = M - 1 - count_above;
+      if (remaining_candidates <= 0) {
+        result[i] = mid;
+        break;
+      }
+
+      // Binary search among the candidates below us to find minimum needed
+      int left = 0, right = N;
+      while (left < right) {
+        int m = (left + right) / 2;
+        ll needed = current_total * (m) - (prefix[m] - (i < m ? A[i] : 0));
+        if (needed <= total_remaining - mid) {
+          right = m;
+        } else {
+          left = m + 1;
+        }
+      }
+
+      int extra_needed = max(0, left - (N - count_above));
+      if (extra_needed <= total_remaining - mid) {
+        result[i] = mid;
+        low = mid + 1;
+      } else {
+        low = mid + 1;
+      }
+    }
+  }
+
+  for (int i = 0; i < N; ++i) {
+    cout << max(0LL, result[i]) << " ";
+  }
+
+  return 0;
+}

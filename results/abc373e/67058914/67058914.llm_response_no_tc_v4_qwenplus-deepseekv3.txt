@@ -1,0 +1,116 @@
+To fix this code, we need to address several issues related to the logic used to determine the minimum additional votes required for each candidate to guarantee their victory. The original code attempts to sort the candidates by their current votes and then uses binary search to find the minimal additional votes, but it has logical flaws in how it calculates whether a candidate can be elected.
+
+### Approaches
+
+1. **Sorting and Binary Search**: 
+   - First, we sort the candidates based on their current votes in ascending order. This helps in systematically analyzing each candidate's position relative to others.
+   - For each candidate, we need to determine the minimum number of additional votes they need so that at least `N - M` candidates have votes less than or equal to theirs after all remaining votes are distributed.
+
+2. **Binary Search for Minimum Votes**:
+   - For each candidate, perform a binary search to find the smallest number of additional votes `X` such that distributing the remaining votes (after giving `X` to the candidate) ensures that no more than `M - 1` candidates exceed their votes.
+   - The key insight is that after giving `X` votes to candidate `i`, the total votes of candidate `i` becomes `A_i + X`. The other candidates can receive votes up to `A_i + X` (or more if they already have more votes).
+
+3. **Handling Edge Cases**:
+   - If a candidate already has enough votes to be in the top `M`, they need 0 additional votes.
+   - If it's impossible for a candidate to be in the top `M` even after receiving all remaining votes, they should return -1.
+
+### Solution Code
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int N, M;
+    ll K;
+    cin >> N >> M >> K;
+
+    vector<ll> A(N);
+    for (int i = 0; i < N; ++i) {
+        cin >> A[i];
+    }
+
+    vector<int> original_indices(N);
+    iota(original_indices.begin(), original_indices.end(), 0);
+    sort(original_indices.begin(), original_indices.end(), [&](int i, int j) {
+        return A[i] < A[j];
+    });
+
+    vector<ll> sorted_A(N);
+    for (int i = 0; i < N; ++i) {
+        sorted_A[i] = A[original_indices[i]];
+    }
+
+    vector<ll> prefix_sum(N + 1);
+    for (int i = 0; i < N; ++i) {
+        prefix_sum[i + 1] = prefix_sum[i] + sorted_A[i];
+    }
+
+    ll remaining_votes = K - prefix_sum[N];
+
+    vector<ll> result(N, -1);
+
+    for (int idx = 0; idx < N; ++idx) {
+        ll current_votes = sorted_A[idx];
+        ll low = 0;
+        ll high = remaining_votes;
+        ll best_X = -1;
+
+        while (low <= high) {
+            ll mid = (low + high) / 2;
+            ll total_i = current_votes + mid;
+
+            int left = 0;
+            int right = N;
+            while (left < right) {
+                int mid_pos = (left + right) / 2;
+                if (sorted_A[mid_pos] <= total_i) {
+                    left = mid_pos + 1;
+                } else {
+                    right = mid_pos;
+                }
+            }
+            int count_above = N - left;
+
+            if (count_above < M) {
+                best_X = mid;
+                high = mid - 1;
+            } else {
+                low = mid + 1;
+            }
+        }
+
+        if (best_X != -1) {
+            result[original_indices[idx]] = best_X;
+        } else {
+            result[original_indices[idx]] = -1;
+        }
+    }
+
+    for (int i = 0; i < N; ++i) {
+        cout << result[i] << ' ';
+    }
+    cout << '\n';
+
+    return 0;
+}
+```
+
+### Explanation
+
+1. **Sorting and Initial Setup**: 
+   - The candidates are sorted based on their current votes to facilitate binary search operations. The original indices are stored to map back the results correctly.
+
+2. **Binary Search for Each Candidate**:
+   - For each candidate, a binary search is performed to find the smallest `X` (additional votes) such that after adding `X` to the candidate's votes, no more than `M - 1` candidates have votes exceeding the candidate's new total.
+   - The binary search adjusts the range of `X` based on whether the current mid value allows the candidate to meet the victory condition.
+
+3. **Edge Cases Handling**:
+   - If a candidate cannot achieve the required position even with all remaining votes, they are marked with `-1`.
+   - If a candidate already meets the condition, they are marked with `0`.
+
+This approach efficiently checks each candidate's potential with binary search, ensuring the solution is both correct and optimal within the constraints.

@@ -1,0 +1,63 @@
+#include <iostream>
+#include <algorithm>
+#include <vector>
+
+using namespace std;
+using ll = long long;
+
+struct Node {
+    ll val;
+    int idx;
+};
+
+int main() {
+    cin.tie(nullptr)->sync_with_stdio(false);
+    ll N, M, K;
+    cin >> N >> M >> K;
+
+    vector<Node> candidates(N);
+    for (int i = 0; i < N; ++i) {
+        cin >> candidates[i].val;
+        candidates[i].idx = i + 1;
+    }
+
+    sort(candidates.begin(), candidates.end(), [](const Node& a, const Node& b) {
+        return a.val < b.val;
+    });
+
+    vector<ll> prefix_sum(N + 1);
+    prefix_sum[0] = 0;
+    for (int i = 1; i <= N; ++i) {
+        prefix_sum[i] = prefix_sum[i - 1] + candidates[i].val;
+    }
+
+    ll total_votes_so_far = prefix_sum[N];
+    K -= total_votes_so_far;
+
+    vector<ll> additional_votes_needed(N);
+
+    for (int i = 0; i < N; ++i) {
+        int remaining_candidates = N - (i + 1);
+        ll votes_needed = 0;
+
+        if (remaining_candidates >= M) {
+            // Calculate the number of votes the current candidate needs to ensure victory
+            ll votes_needed_to_win = M * candidates[i].val - (prefix_sum[i] - prefix_sum[0]);
+            additional_votes_needed[i] = votes_needed_to_win - K;
+        } else {
+            // If the remaining candidates are less than M, they cannot win
+            additional_votes_needed[i] = -1;
+        }
+    }
+
+    sort(additional_votes_needed.begin(), additional_votes_needed.end(), [](ll a, ll b) {
+        if (a < 0 && b < 0) return a > b;
+        return a < 0;
+    });
+
+    for (ll needed_votes : additional_votes_needed) {
+        cout << needed_votes << ' ';
+    }
+
+    return 0;
+}

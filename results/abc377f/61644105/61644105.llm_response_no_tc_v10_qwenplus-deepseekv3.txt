@@ -1,0 +1,117 @@
+To fix this code, we need to address several issues:
+
+1. **Variable Naming**: The original code swaps `N` and `M` in the input, which is incorrect. The grid size is `N` and the number of pieces is `M`.
+2. **Data Structures**: The original code uses arrays to store rows, columns, and diagonals, which is inefficient and incorrect for large `N` (up to 1e9). Instead, we should use sets or hash sets to store unique values.
+3. **Inclusion Principle**: The original code attempts to use the inclusion-exclusion principle but does so incorrectly. We need to correctly calculate the number of unsafe squares by considering rows, columns, diagonals, and anti-diagonals covered by the existing pieces.
+4. **Efficiency**: The original code has inefficiencies in sorting and searching arrays. Using sets avoids these issues and provides O(1) lookups.
+
+Here is the corrected code:
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    long long N, M;
+    cin >> N >> M;
+
+    unordered_set<long long> rows, cols, diags, anti_diags;
+
+    for (int i = 0; i < M; ++i) {
+        long long a, b;
+        cin >> a >> b;
+        rows.insert(a);
+        cols.insert(b);
+        diags.insert(a - b);
+        anti_diags.insert(a + b);
+    }
+
+    long long unsafe = 0;
+
+    // Rows and columns
+    unsafe += rows.size() * N;
+    unsafe += cols.size() * N;
+    unsafe -= rows.size() * cols.size(); // Overlap between rows and columns
+
+    // Diagonals (a - b = constant)
+    for (long long d : diags) {
+        // Calculate the number of cells in the diagonal d = a - b
+        long long min_a = max(1LL, 1 + d);
+        long long max_a = min(N, N + d);
+        if (max_a >= min_a) {
+            unsafe += (max_a - min_a + 1);
+        }
+    }
+
+    // Anti-diagonals (a + b = constant)
+    for (long long s : anti_diags) {
+        // Calculate the number of cells in the anti-diagonal s = a + b
+        long long min_a = max(1LL, s - N);
+        long long max_a = min(N, s - 1);
+        if (max_a >= min_a) {
+            unsafe += (max_a - min_a + 1);
+        }
+    }
+
+    // Overlap between diagonals and anti-diagonals
+    for (long long d : diags) {
+        for (long long s : anti_diags) {
+            // Find intersection point (a, b) where a - b = d and a + b = s
+            long long a = (d + s) / 2;
+            long long b = (s - d) / 2;
+            if ((d + s) % 2 == 0 && (s - d) % 2 == 0 && a >= 1 && a <= N && b >= 1 && b <= N) {
+                unsafe--;
+            }
+        }
+    }
+
+    // Overlap between rows/columns and diagonals/anti-diagonals
+    for (long long r : rows) {
+        for (long long d : diags) {
+            long long b = r - d;
+            if (b >= 1 && b <= N) {
+                unsafe--;
+            }
+        }
+        for (long long s : anti_diags) {
+            long long b = s - r;
+            if (b >= 1 && b <= N) {
+                unsafe--;
+            }
+        }
+    }
+
+    for (long long c : cols) {
+        for (long long d : diags) {
+            long long a = c + d;
+            if (a >= 1 && a <= N) {
+                unsafe--;
+            }
+        }
+        for (long long s : anti_diags) {
+            long long a = s - c;
+            if (a >= 1 && a <= N) {
+                unsafe--;
+            }
+        }
+    }
+
+    // Total safe squares
+    long long total = N * N;
+    long long safe = total - unsafe;
+
+    cout << safe << endl;
+
+    return 0;
+}
+```
+
+### Explanation:
+1. **Input Handling**: The grid size `N` and the number of pieces `M` are read first. Then, the positions of the pieces are read and stored in sets for rows, columns, diagonals (`a - b`), and anti-diagonals (`a + b`).
+2. **Unsafe Squares Calculation**: 
+   - **Rows and Columns**: The number of squares covered by rows and columns is calculated, then adjusted for overlaps.
+   - **Diagonals and Anti-diagonals**: For each unique diagonal and anti-diagonal, the number of squares they cover is calculated and added to the unsafe count.
+   - **Overlaps**: The overlaps between diagonals and anti-diagonals, as well as overlaps between rows/columns and diagonals/anti-diagonals, are subtracted from the unsafe count to avoid double-counting.
+3. **Safe Squares**: The total number of safe squares is the total grid size minus the unsafe squares.
+
+This approach efficiently calculates the number of safe squares using set operations to handle large constraints (up to 1e9) correctly.

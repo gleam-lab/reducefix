@@ -1,0 +1,75 @@
+#include <iostream>
+#include <vector>
+#include <set>
+#include <cmath>
+
+using namespace std;
+
+int main()
+{
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    // 以下問題毎にコーディング
+
+    int N;
+    cin >> N;
+
+    int piece_num;
+    cin >> piece_num;
+
+    set<pair<int, int>> anti_dup;
+    pair<int, int> p;
+
+    FOR_U(_, 0, piece_num, 1)
+    {
+        cin >> p.first;
+        cin >> p.second;
+
+        anti_dup.insert(p);
+
+        if (p.first + 2 <= N && p.second + 1 <= N)
+        {
+            anti_dup.insert({p.first + 2, p.second + 1});
+        }
+
+        if (p.first + 1 <= N && p.second + 2 <= N)
+        {
+            anti_dup.insert({p.first + 1, p.second + 2});
+        }
+
+        if (p.first - 1 >= 1 && p.second + 2 <= N)
+        {
+            anti_dup.insert({p.first - 1, p.second + 2});
+        }
+
+        if (p.first - 2 >= 1 && p.second + 1 <= N)
+        {
+            anti_dup.insert({p.first - 2, p.second + 1});
+        }
+
+        if (p.first - 2 >= 1 && p.second - 1 >= 1)
+        {
+            anti_dup.insert({p.first - 2, p.second - 1});
+        }
+
+        if (p.first - 1 >= 1 && p.second - 2 >= 1)
+        {
+            anti_dup.insert({p.first - 1, p.second - 2});
+        }
+
+        if (p.first + 1 <= N && p.second - 2 >= 1)
+        {
+            anti_dup.insert({p.first + 1, p.second - 2});
+        }
+
+        if (p.first + 2 <= N && p.second - 1 >= 1)
+        {
+            anti_dup.insert({p.first + 2, p.second - 1});
+        }
+    }
+
+    cout << (long long)pow(N, 2) - anti_dup.size() << endl;
+
+    return 0;
+}

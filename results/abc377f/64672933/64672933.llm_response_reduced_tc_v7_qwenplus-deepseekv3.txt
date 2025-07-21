@@ -1,0 +1,126 @@
+To fix this code, we need to correctly calculate the number of safe squares where the new piece can be placed without being captured by any existing pieces. The existing pieces can capture along rows, columns, and both diagonals (i+j and i-j). The goal is to count the number of empty squares not under attack by any existing piece.
+
+### Approaches
+1. **Identify Forbidden Squares**: For each existing piece, mark all squares it can capture (same row, same column, same i+j diagonal, same i-j diagonal).
+2. **Union of Forbidden Squares**: Calculate the total number of unique forbidden squares by considering all existing pieces. This involves:
+   - Rows: For each existing piece, all squares in its row are forbidden.
+   - Columns: For each existing piece, all squares in its column are forbidden.
+   - Diagonals (i+j): For each existing piece, all squares where i+j equals the piece's i+j are forbidden.
+   - Diagonals (i-j): For each existing piece, all squares where i-j equals the piece's i-j are forbidden.
+3. **Count Safe Squares**: Subtract the total number of forbidden squares from the total grid squares (N^2). Adjust for overlaps where squares might be forbidden by multiple pieces or multiple conditions.
+
+### Solution Code
+```cpp
+#include<bits/stdc++.h>
+using namespace std;
+using i64 = long long;
+
+int main() {
+    std::ios::sync_with_stdio(false);
+    std::cin.tie(nullptr);
+    i64 N, M;
+    cin >> N >> M;
+    vector<pair<i64, i64>> pieces(M);
+    set<i64> rows, cols, diag1, diag2;
+    for (int i = 0; i < M; ++i) {
+        i64 a, b;
+        cin >> a >> b;
+        pieces[i] = {a, b};
+        rows.insert(a);
+        cols.insert(b);
+        diag1.insert(a + b);
+        diag2.insert(a - b);
+    }
+
+    i64 forbidden = 0;
+    // Rows
+    forbidden += rows.size() * N;
+    // Columns
+    forbidden += cols.size() * N;
+    // Diagonals a + b
+    for (auto s : diag1) {
+        i64 x_min = max(1LL, s - N);
+        i64 x_max = min(N, s - 1);
+        if (x_min > x_max) continue;
+        forbidden += x_max - x_min + 1;
+    }
+    // Diagonals a - b
+    for (auto d : diag2) {
+        i64 x_min = max(1LL, 1 + d);
+        i64 x_max = min(N, N + d);
+        if (x_min > x_max) continue;
+        forbidden += x_max - x_min + 1;
+    }
+
+    // Overlaps between rows and columns
+    i64 row_col_intersect = 0;
+    for (auto a : rows) {
+        for (auto b : cols) {
+            if (diag1.count(a + b) && diag2.count(a - b)) {
+                row_col_intersect++;
+            }
+        }
+    }
+    forbidden -= row_col_intersect;
+
+    // Overlaps between rows and diagonals (i+j)
+    i64 row_diag1_intersect = 0;
+    for (auto a : rows) {
+        for (auto s : diag1) {
+            i64 b = s - a;
+            if (b >= 1 && b <= N && cols.count(b) && diag2.count(a - b)) {
+                row_diag1_intersect++;
+            }
+        }
+    }
+    forbidden -= row_diag1_intersect;
+
+    // Overlaps between columns and diagonals (i-j)
+    i64 col_diag2_intersect = 0;
+    for (auto b : cols) {
+        for (auto d : diag2) {
+            i64 a = b + d;
+            if (a >= 1 && a <= N && rows.count(a) && diag1.count(a + b)) {
+                col_diag2_intersect++;
+            }
+        }
+    }
+    forbidden -= col_diag2_intersect;
+
+    // Overlaps between diagonals (i+j) and diagonals (i-j)
+    i64 diag1_diag2_intersect = 0;
+    for (auto s : diag1) {
+        for (auto d : diag2) {
+            if ((s + d) % 2 != 0) continue;
+            i64 a = (s + d) / 2;
+            i64 b = (s - d) / 2;
+            if (a >= 1 && a <= N && b >= 1 && b <= N && rows.count(a) && cols.count(b)) {
+                diag1_diag2_intersect++;
+            }
+        }
+    }
+    forbidden -= diag1_diag2_intersect;
+
+    // Overlaps between all four conditions (row, column, diag1, diag2)
+    i64 all_intersect = 0;
+    for (auto [a, b] : pieces) {
+        if (rows.count(a) && cols.count(b) && diag1.count(a + b) && diag2.count(a - b)) {
+            all_intersect++;
+        }
+    }
+    forbidden += all_intersect;
+
+    i64 total = N * N - forbidden;
+    cout << total << "\n";
+
+    return 0;
+}
+```
+
+### Explanation
+1. **Input Handling**: We read the grid size `N` and the number of existing pieces `M`.
+2. **Forbidden Squares Calculation**: For each piece, we mark all squares in its row, column, and both diagonals (i+j and i-j) as forbidden.
+3. **Overlap Adjustment**: To avoid double-counting squares that are forbidden by multiple conditions, we adjust the total forbidden count by considering overlaps between rows and columns, rows and diagonals, columns and diagonals, and between the diagonals themselves.
+4. **Final Count**: The safe squares are calculated by subtracting the total forbidden squares (adjusted for overlaps) from the total grid squares (N^2).
+
+This approach ensures that we accurately count all safe squares while efficiently handling the constraints and avoiding overlaps.

@@ -1,0 +1,30 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+int main() {
+    int n, k;
+    cin >> n >> k;
+    vector<int> a(n);
+
+    for (int i = 0; i < n; i++) {
+        cin >> a[i];
+    }
+
+    sort(a.rbegin(), a.rend()); // Sort in descending order
+
+    // Calculate the minimum possible value of max(B) - min(B)
+    // Case 1: Remove the smallest k elements
+    int min_max_diff_1 = a[k] - a[0];
+
+    // Case 2: Remove the largest k elements
+    int min_max_diff_2 = a[n - k - 1] - a[n - 1];
+
+    // The answer is the minimum difference from the two cases
+    int result = min(min_max_diff_1, min_max_diff_2);
+
+    cout << result << endl;
+
+    return 0;
+}

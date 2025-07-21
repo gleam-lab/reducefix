@@ -1,0 +1,96 @@
+
+Given the problem, it is evident that there are multiple ways to approach the solution. However, considering accuracy and computational complexity, we should aim for a solution that avoids redundant calculations and optimizes the use of space. The original approach seemed to use a priority queue to simulate a wave-like phenomenon, where the sea level rises and sections of the island below the new sea level sink. Each year, this process is repeated, and the remaining area of the island above sea level is calculated.
+
+To improve the original code and fix the issue, here is a step-by-step breakdown of the logic:
+
+1. **Initialization**: 
+   - Read the grid dimensions `H`, `W`, and the number of years `Y`.
+   - Read the grid values `A`.
+
+2. **Create a 2D array for visited nodes (`vis`)**:
+   - This will help in avoiding processing the same node multiple times.
+
+3. **Process the Peripheral Nodes**:
+   - Add all nodes on the perimeter of the grid to the priority queue with the formula `(A[i][j] - i - j)`. The subtraction of `i` and `j` is used to order the nodes such that the higher nodes are processed first in case of ties.
+   - Mark these nodes as visited.
+
+4. **Process the priority queue for `Y` years**:
+   - Each element in the priority queue represents a node in the grid that is below the current sea level.
+   - Pop the topmost element from the priority queue, and check its neighbors.
+   - If a neighbor is higher, then it will remain above the sea level and must be processed next.
+   - Update the area of the remaining island.
+
+5. **Output the remaining area for each year**.
+
+Here is a revised version of the code based on the logic:
+
+```cpp
+#include <iostream>
+#include <vector>
+#include <queue>
+#include <array>
+
+using namespace std;
+
+int main() {
+    int H, W, Y;
+    cin >> H >> W >> Y;
+
+    vector<vector<int>> A(H, vector<int>(W));
+    for (int i = 0; i < H; ++i) {
+        for (int j = 0; j < W; ++j) {
+            cin >> A[i][j];
+        }
+    }
+
+    vector<vector<int>> vis(H, vector<int>(W, 0));
+    priority_queue<array<int, 3>, vector<array<int, 3>>, greater<array<int, 3>>> pq;
+
+    // Process nodes on the perimeter
+    for (int i = 0; i < H; ++i) {
+        pq.push({A[i][0], i, 0});
+        pq.push({A[i][W - 1], i, W - 1});
+        vis[i][0] = vis[i][W - 1] = 1;
+    }
+    for (int j = 0; j < W; ++j) {
+        pq.push({A[0][j], 0, j});
+        pq.push({A[H - 1][j], H - 1, j});
+        vis[0][j] = vis[H - 1][j] = 1;
+    }
+
+    int remaining_area = H * W;
+    while (Y--) {
+        int next_remaining_area = 0;
+        while (!pq.empty()) {
+            auto [height, x, y] = pq.top();
+            pq.pop();
+
+            if (vis[x][y]) {
+                continue;
+            }
+
+            vis[x][y] = 1;
+            next_remaining_area++;
+
+            // Check the four possible neighbors
+            for (int dx : {-1, 0, 1}) {
+                for (int dy : {-1, 0, 1}) {
+                    int nx = x + dx, ny = y + dy;
+                    if (nx >= 0 && nx < H && ny >= 0 && ny < W && !vis[nx][ny]) {
+                        if (A[nx][ny] > height + 1) {
+                            pq.push({A[nx][ny], nx, ny});
+                            vis[nx][ny] = 1;
+                        }
+                    }
+                }
+            }
+        }
+        remaining_area = next_remaining_area;
+        cout << remaining_area << '\n';
+    }
+
+    return 0;
+}
+```
+
+This version processes each node once, improves the handling of visited nodes, and should correctly simulate the wave of rising sea level and sinking islands. Each iteration of the loop now represents a year, and the remaining area is printed after processing that year's changes.

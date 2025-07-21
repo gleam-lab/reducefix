@@ -1,0 +1,130 @@
+#include<bits/stdc++.h>
+using namespace std;
+
+const int MAXN = 2e5 + 5;
+const int LOGMAXN = 20; // Log base 2 of MAXN for LCA
+
+vector<int> adj[MAXN]; // Adjacency list for the graph
+int parent[MAXN][LOGMAXN]; // Array to store the log-based parent for LCA
+int depth[MAXN]; // Depth array for DFS traversal
+priority_queue<int, vector<int>, greater<int>> pq[MAXN]; // Min heap to maintain smallest edges
+
+void dfs(int node, int par, int d) {
+    parent[node][0] = par;
+    depth[node] = d;
+    
+    for (int i = 1; i < LOGMAXN; ++i) {
+        if (parent[node][i - 1] != -1) {
+            parent[node][i] = parent[parent[node][i - 1]][i - 1];
+        }
+    }
+
+    for (auto &neighbor : adj[node]) {
+        if (neighbor == par) continue;
+        
+        pq[node].push(neighbor); // Push neighbor into min heap
+        
+        while (pq[node].size() > 10) { // Maintain at most 10 smallest neighbors
+            pq[node].pop();
+        }
+        
+        dfs(neighbor, node, d + 1);
+    }
+}
+
+int lca(int u, int v) {
+    if (depth[u] < depth[v]) swap(u, v);
+    
+    int diff = depth[u] - depth[v];
+    for (int i = 0; i < LOGMAXN; ++i) {
+        if ((diff >> i) & 1) {
+            u = parent[u][i];
+        }
+    }
+    
+    if (u == v) return u;
+    
+    for (int i = LOGMAXN - 1; i >= 0; --i) {
+        if (parent[u][i] != parent[v][i]) {
+            u = parent[u][i];
+            v = parent[v][i];
+        }
+    }
+    
+    return parent[u][0];
+}
+
+int getKthLargest(int u, int v, int k) {
+    int ancestor = lca(u, v);
+    
+    if (ancestor == u) {
+        return pq[v].size() >= k ? pq[v].top() : -1;
+    } else if (ancestor == v) {
+        return pq[u].size() >= k ? pq[u].top() : -1;
+    } else {
+        priority_queue<int, vector<int>, greater<int>> mergedPq;
+        while (!pq[u].empty()) {
+            mergedPq.push(pq[u].top());
+            pq[u].pop();
+        }
+        while (!pq[v].empty()) {
+            mergedPq.push(pq[v].top());
+            pq[v].pop();
+        }
+        
+        for (int i = 0; i < k - 1; ++i) {
+            mergedPq.pop();
+        }
+        
+        return mergedPq.empty() ? -1 : mergedPq.top();
+    }
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(NULL);
+
+    int n, q;
+    cin >> n >> q;
+    
+    memset(parent, -1, sizeof(parent));
+    
+    for (int i = 1; i <= n; ++i) {
+        parent[i][0] = -1;
+    }
+    
+    for (int i = 0; i < n - 1; ++i) {
+        int u, v;
+        cin >> u >> v;
+        adj[u].push_back(v);
+        adj[v].push_back(u);
+    }
+    
+    dfs(1, -1, 0);
+    
+    for (int i = 0; i < q; ++i) {
+        int type, u, v, k;
+        cin >> type;
+        
+        if (type == 1) {
+            cin >> u >> v;
+            adj[u].push_back(v);
+            adj[v].push_back(u);
+            pq[u].push(v);
+            pq[v].push(u);
+            
+            while (pq[u].size() > 10) {
+                pq[u].pop();
+            }
+            
+            while (pq[v].size() > 10) {
+                pq[v].pop();
+            }
+        } else {
+            cin >> u >> k;
+            cout << getKthLargest(u, v, k) << "\n";
+        }
+    }
+    
+    return 0;
+}

@@ -1,0 +1,91 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+#define LL long long
+#define INF 1e18
+
+typedef pair<LL, LL> PLL;
+
+struct Edge {
+    int u, v, w;
+};
+
+struct DisjointSetUnion {
+    vector<int> parent, rank;
+
+    DisjointSetUnion(int n) {
+        parent.resize(n + 1);
+        rank.resize(n + 1, 0);
+        for (int i = 1; i <= n; i++) parent[i] = i;
+    }
+
+    int find(int node) {
+        if (parent[node] != node) parent[node] = find(parent[node]);
+        return parent[node];
+    }
+
+    void unionSets(int u, int v) {
+        int pu = find(u), pv = find(v);
+        if (pu != pv) {
+            if (rank[pu] > rank[pv]) parent[pv] = pu;
+            else if (rank[pu] < rank[pv]) parent[pu] = pv;
+            else {
+                parent[pv] = pu;
+                rank[pu]++;
+            }
+        }
+    }
+};
+
+void solve() {
+    int n, m;
+    cin >> n >> m;
+    vector<int> a(n + 1);
+    vector<vector<pair<int, int>>> adj(n + 1);
+
+    for (int i = 1; i <= n; i++) cin >> a[i];
+
+    for (int i = 0; i < m; i++) {
+        int u, v, w;
+        cin >> u >> v >> w;
+        adj[u].push_back({v, w});
+        adj[v].push_back({u, w});
+    }
+
+    priority_queue<PLL, vector<PLL>, greater<PLL>> pq;
+    vector<LL> dist(n + 1, INF);
+    vector<bool> visited(n + 1, false);
+
+    pq.push({a[1], 1});
+    dist[1] = a[1];
+
+    while (!pq.empty()) {
+        auto [d, u] = pq.top();
+        pq.pop();
+
+        if (visited[u]) continue;
+        visited[u] = true;
+
+        for (auto &[v, w] : adj[u]) {
+            if (dist[u] + w + a[v] < dist[v]) {
+                dist[v] = dist[u] + w + a[v];
+                pq.push({dist[v], v});
+            }
+        }
+    }
+
+    for (int i = 2; i <= n; i++) cout << dist[i] << " ";
+    cout << endl;
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(NULL);
+
+    int t = 1;
+    while (t--) {
+        solve();
+    }
+
+    return 0;
+}

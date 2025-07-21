@@ -1,0 +1,85 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <set>
+#include <cmath>
+
+using namespace std;
+
+typedef long long ll;
+
+ll n, m;
+vector<ll> row, col, up, down;
+
+bool exists(const vector<ll>& arr, ll val) {
+    return binary_search(arr.begin(), arr.end(), val);
+}
+
+ll count_in_range(const vector<ll>& arr, ll start, ll end) {
+    return upper_bound(arr.begin(), arr.end(), end) - lower_bound(arr.begin(), arr.end(), start);
+}
+
+int main() {
+    cin >> n >> m;
+    
+    for (int i = 0; i < m; ++i) {
+        ll x, y;
+        cin >> x >> y;
+        row.push_back(y);
+        col.push_back(x);
+        up.push_back(y - x);
+        down.push_back(x + y);
+    }
+    
+    sort(row.begin(), row.end());
+    sort(col.begin(), col.end());
+    sort(up.begin(), up.end());
+    sort(down.begin(), down.end());
+    
+    set<ll> unique_row(row.begin(), row.end());
+    set<ll> unique_col(col.begin(), col.end());
+    set<ll> unique_up(up.begin(), up.end());
+    set<ll> unique_down(down.begin(), down.end());
+    
+    ll total_squares = n * n;
+    ll occupied_by_rows = m * unique_row.size();
+    ll occupied_by_cols = m * unique_col.size();
+    ll occupied_by_up = m * unique_up.size();
+    ll occupied_by_down = m * unique_down.size();
+    
+    ll occupied_by_two = 0;
+    for (auto& r : unique_row) {
+        for (auto& u : unique_up) {
+            if (u == r - r) continue;
+            occupied_by_two += count_in_range(up, u - m, u - 1) + count_in_range(down, u + 1, u + m);
+        }
+        for (auto& d : unique_down) {
+            if (d == r + r) continue;
+            occupied_by_two += count_in_range(up, d - m, d - 1) + count_in_range(down, d + 1, d + m);
+        }
+    }
+    
+    ll occupied_by_three = 0;
+    for (auto& r : unique_row) {
+        for (auto& c : unique_col) {
+            if (exists(up, r - c) || exists(down, r + c)) {
+                occupied_by_three++;
+            }
+        }
+    }
+    
+    ll occupied_by_four = 0;
+    for (auto& r : unique_row) {
+        for (auto& c : unique_col) {
+            if (exists(up, r - c) && exists(down, r + c)) {
+                occupied_by_four++;
+            }
+        }
+    }
+    
+    ll result = total_squares - (occupied_by_rows + occupied_by_cols + occupied_by_up + occupied_by_down - occupied_by_two + occupied_by_three - occupied_by_four);
+    
+    cout << result << endl;
+    
+    return 0;
+}

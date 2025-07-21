@@ -1,0 +1,33 @@
+#include<bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+
+int main(){
+    int n, q;
+    cin >> n;
+    vector<ll> x(n), p(n);
+    for(int i = 0; i < n; i++) cin >> x[i];
+    for(int i = 0; i < n; i++) cin >> p[i];
+    
+    // Precompute prefix sums of p
+    vector<ll> sum(n + 1, 0);
+    for(int i = 1; i <= n; i++) {
+        sum[i] = sum[i - 1] + p[i - 1];
+    }
+    
+    cin >> q;
+    while(q--) {
+        ll L, R;
+        cin >> L >> R;
+        
+        // Find first index where x[i] >= L
+        int c = lower_bound(x.begin(), x.end(), L) - x.begin();
+        // Find first index where x[i] > R
+        int d = upper_bound(x.begin(), x.end(), R) - x.begin();
+        
+        // Convert to prefix sum indices and output result
+        cout << sum[d] - sum[c] << endl;
+    }
+    
+    return 0;
+}

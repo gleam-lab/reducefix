@@ -1,0 +1,80 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define ll long long
+#define rep(i,r) for(ll i=0;i<(ll)r;i++)
+#define vi vector<int>
+#define vl vector<ll>
+#define vb vector<bool>
+
+int main() {
+    ll h, w, q;
+    cin >> h >> w >> q;
+
+    // For each row, keep track of walls in ordered sets
+    vector<set<ll>> rows(h);
+    // For each column, keep track of walls in ordered sets
+    vector<set<ll>> cols(w);
+
+    // Initially, all cells have walls
+    for (ll r = 0; r < h; ++r) {
+        for (ll c = 0; c < w; ++c) {
+            rows[r].insert(c);
+            cols[c].insert(r);
+        }
+    }
+
+    rep(qq, q) {
+        ll r, c;
+        cin >> r >> c;
+        r--;
+        c--;
+
+        if (rows[r].find(c) != rows[r].end()) {
+            // Wall exists at this position, remove it
+            rows[r].erase(c);
+            cols[c].erase(r);
+        } else {
+            // Look in four directions and remove the first wall seen in each direction
+            vector<pair<ll, ll>> to_remove;
+
+            // Up
+            auto up = cols[c].lower_bound(r);
+            if (up != cols[c].begin()) {
+                --up;
+                to_remove.push_back({*up, c});
+            }
+
+            // Down
+            auto down = cols[c].upper_bound(r);
+            if (down != cols[c].end()) {
+                to_remove.push_back({*down, c});
+            }
+
+            // Left
+            auto left = rows[r].lower_bound(c);
+            if (left != rows[r].begin()) {
+                --left;
+                to_remove.push_back({r, *left});
+            }
+
+            // Right
+            auto right = rows[r].upper_bound(c);
+            if (right != rows[r].end()) {
+                to_remove.push_back({r, *right});
+            }
+
+            // Remove the found walls
+            for (auto [rr, cc] : to_remove) {
+                rows[rr].erase(cc);
+                cols[cc].erase(rr);
+            }
+        }
+    }
+
+    // Count remaining walls
+    ll ans = 0;
+    rep(r, h) ans += rows[r].size();
+    cout << ans << endl;
+
+    return 0;
+}

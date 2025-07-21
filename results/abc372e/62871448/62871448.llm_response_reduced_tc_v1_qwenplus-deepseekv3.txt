@@ -1,0 +1,79 @@
+To fix this code, we need to address the incorrect handling of the connected components and the k-th largest vertex queries. The original code attempts to maintain an array of the top 10 largest vertices in each component, but it fails to correctly merge these arrays when components are joined. Additionally, the k-th largest query does not handle the case where there are fewer than k vertices connected correctly.
+
+### Approaches
+1. **Union-Find Data Structure**: Use the Union-Find (Disjoint Set Union, DSU) data structure to efficiently manage and merge connected components.
+2. **Top K Elements**: For each component, maintain a set (or a sorted list) of the top 10 largest vertices to efficiently answer k-th largest queries.
+3. **Merge Operation**: When merging two components, merge their top 10 lists and keep only the largest 10 elements to maintain the constraint that k is at most 10.
+
+### Solution Code
+```cpp
+#include<bits/stdc++.h>
+using namespace std;
+
+const int MAXN = 200005;
+
+int parent[MAXN];
+vector<int> component[MAXN]; // Stores top 10 elements of each component's vertices
+
+int find(int u) {
+    if (parent[u] != u) {
+        parent[u] = find(parent[u]);
+    }
+    return parent[u];
+}
+
+void merge(int u, int v) {
+    u = find(u);
+    v = find(v);
+    if (u == v) return;
+    if (component[u].size() < component[v].size()) {
+        swap(u, v);
+    }
+    parent[v] = u;
+    component[u].insert(component[u].end(), component[v].begin(), component[v].end());
+    sort(component[u].begin(), component[u].end(), greater<int>());
+    if (component[u].size() > 10) {
+        component[u].resize(10);
+    }
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int N, Q;
+    cin >> N >> Q;
+
+    for (int i = 1; i <= N; ++i) {
+        parent[i] = i;
+        component[i] = {i};
+    }
+
+    while (Q--) {
+        int op, u, v, k;
+        cin >> op;
+        if (op == 1) {
+            cin >> u >> v;
+            merge(u, v);
+        } else {
+            cin >> v >> k;
+            int root = find(v);
+            if (component[root].size() < k) {
+                cout << "-1\n";
+            } else {
+                cout << component[root][k-1] << "\n";
+            }
+        }
+    }
+
+    return 0;
+}
+```
+
+### Explanation
+1. **Union-Find Initialization**: The `parent` array is initialized such that each vertex is its own parent, indicating it is in its own component initially. The `component` array is initialized to store each vertex as the sole member of its component.
+2. **Find Operation**: The `find` function uses path compression to efficiently determine the root parent of a vertex, which represents its component.
+3. **Merge Operation**: The `merge` function connects two components. It ensures the larger component absorbs the smaller one (union by size) and merges their top 10 lists. The merged list is then sorted in descending order and truncated to maintain only the top 10 elements.
+4. **Query Handling**: For type 2 queries, the root of the queried vertex is found, and the k-th largest element is retrieved from the component's top 10 list. If the component has fewer than k elements, `-1` is printed.
+
+This approach ensures efficient handling of dynamic connectivity and k-th largest queries within the constraints, leveraging Union-Find and maintaining sorted lists of component elements.

@@ -1,0 +1,100 @@
+To fix this code, we need to address the incorrect logic used to determine the minimum number of additional votes each candidate needs to guarantee their victory. The original approach had flaws in the binary search and the condition checks, leading to incorrect results in some cases.
+
+### Approaches
+1. **Sorting and Binary Search**: 
+   - Sort the candidates based on their current votes.
+   - For each candidate, determine the minimum additional votes they need to ensure they are among the top candidates such that fewer than `M` candidates have more votes than them.
+   - Use binary search to efficiently find this minimum number of votes.
+
+2. **Key Conditions**:
+   - After sorting, the top `M` candidates (or fewer if there are ties) will be elected. For a candidate to be elected, they must ensure that no more than `M-1` candidates have strictly more votes than them.
+   - The binary search for each candidate checks how many votes are needed to place them in a position where this condition holds.
+
+3. **Efficiency**:
+   - Sorting the candidates takes `O(N log N)` time.
+   - Binary search for each candidate combined with the necessary condition checks takes `O(N log K)` time, where `K` is the maximum possible additional votes.
+
+### Solution Code
+```cpp
+#include <iostream>
+#include <algorithm>
+#include <vector>
+using namespace std;
+
+typedef long long ll;
+typedef struct {
+    ll a;
+    int idx;
+} node;
+
+vector<node> A;
+vector<ll> psum;
+ll K;
+int N, M;
+
+bool is_possible(ll x, int i) {
+    ll total_votes = A[i].a + x;
+    int idx = upper_bound(A.begin(), A.end(), node{total_votes, -1}, [](node a, node b) {
+        return a.a < b.a;
+    }) - A.begin();
+    int l = N - M;
+    if (idx <= l) {
+        return false;
+    }
+    ll sum = psum[idx] - psum[l];
+    ll required = (idx - l) * total_votes - sum;
+    if (required <= K - x) {
+        return true;
+    }
+    return false;
+}
+
+int main() {
+    scanf("%d %d %lld", &N, &M, &K);
+    A.resize(N);
+    psum.resize(N + 1, 0);
+    for (int i = 0; i < N; i++) {
+        scanf("%lld", &A[i].a);
+        A[i].idx = i;
+    }
+    sort(A.begin(), A.end(), [](node a, node b) {
+        return a.a < b.a;
+    });
+    for (int i = 1; i <= N; i++) {
+        psum[i] = psum[i - 1] + A[i - 1].a;
+    }
+    K -= psum[N];
+    vector<ll> res(N, -1);
+    for (int i = 0; i < N; i++) {
+        ll low = 0, high = K;
+        ll ans = -1;
+        while (low <= high) {
+            ll mid = (low + high) / 2;
+            if (is_possible(mid, i)) {
+                ans = mid;
+                high = mid - 1;
+            } else {
+                low = mid + 1;
+            }
+        }
+        if (ans != -1) {
+            res[A[i].idx] = ans;
+        } else {
+            res[A[i].idx] = -1;
+        }
+    }
+    for (int i = 0; i < N; i++) {
+        printf("%lld ", res[i]);
+    }
+    printf("\n");
+    return 0;
+}
+```
+
+### Explanation
+1. **Input Handling**: The input is read, including the number of candidates `N`, the threshold `M`, and the total votes `K`. The votes for each candidate are stored in a vector of structures that also keep track of their original indices.
+2. **Sorting and Prefix Sum**: The candidates are sorted based on their current votes, and a prefix sum array is constructed to facilitate quick sum calculations over ranges.
+3. **Binary Search for Minimum Votes**: For each candidate, a binary search is performed to find the minimum additional votes `X` needed such that, after adding `X` votes, the candidate is guaranteed to be elected. The condition checked during the binary search ensures that no more than `M-1` candidates can have more votes than the current candidate after distributing the remaining votes.
+4. **Result Construction**: The results are stored in a vector based on the original indices of the candidates and printed in the required order.
+
+This approach efficiently handles the constraints and ensures that each candidate's minimum required votes are computed correctly, taking into account the worst-case distribution of remaining votes among other candidates.

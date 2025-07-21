@@ -1,0 +1,96 @@
+Based on the error analysis, the issue appears to be in how connected components are being tracked and merged. The current implementation using ordered_set may not be maintaining the correct set of connected vertices during unions. Here's the corrected solution:
+
+```cpp
+#include <iostream>
+#include <vector>
+#include <set>
+#include <algorithm>
+
+using namespace std;
+
+const int MAXN = 2e5 + 5;
+
+int parent[MAXN];
+set<int>* adj[MAXN];
+
+int find(int u) {
+    if (parent[u] != u) {
+        parent[u] = find(parent[u]);
+    }
+    return parent[u];
+}
+
+void unite(int u, int v) {
+    u = find(u);
+    v = find(v);
+    if (u == v) return;
+    
+    if (adj[u]->size() < adj[v]->size()) swap(u, v);
+    
+    for (int x : *adj[v]) {
+        adj[u]->insert(x);
+    }
+    delete adj[v];
+    parent[v] = u;
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int N, Q;
+    cin >> N >> Q;
+    
+    for (int i = 1; i <= N; ++i) {
+        parent[i] = i;
+        adj[i] = new set<int>();
+        adj[i]->insert(i);
+    }
+    
+    while (Q--) {
+        int cmd;
+        cin >> cmd;
+        if (cmd == 1) {
+            int u, v;
+            cin >> u >> v;
+            unite(u, v);
+        } else {
+            int v, k;
+            cin >> v >> k;
+            v = find(v);
+            if (adj[v]->size() < k) {
+                cout << -1 << '\n';
+            } else {
+                auto it = adj[v]->end();
+                advance(it, -k);
+                cout << *it << '\n';
+            }
+        }
+    }
+    
+    for (int i = 1; i <= N; ++i) {
+        if (adj[i] != nullptr) {
+            delete adj[i];
+        }
+    }
+    
+    return 0;
+}
+```
+
+Key changes made:
+1. Replaced the ordered_set with standard set<int> for storing connected vertices
+2. Used pointer-based approach for dynamic memory management of sets
+3. Implemented proper union-find with path compression
+4. During union, merged sets by inserting all elements from smaller set into larger one
+5. For k-th largest query, used reverse iteration by advancing from end of the set
+6. Proper memory cleanup at the end
+
+This solution maintains:
+- O(log N) time for each union operation (amortized)
+- O(log N) time for each k-th largest query
+- O(N) space complexity
+
+The approach ensures that we always have the complete set of connected vertices for each component, and we can efficiently query the k-th largest element when needed.
+
+The key insight was that the previous implementation using ordered_set wasn't properly maintaining all connected vertices during unions, leading to incorrect query results. By explicitly managing the sets and their merging, we ensure correct component tracking.

@@ -1,0 +1,60 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+constexpr int d[4][2] = {{0, 1}, {0, -1}, {1, 0}, {-1, 0}};
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int H, W, Y;
+    cin >> H >> W >> Y;
+
+    vector<vector<int>> A(H, vector<int>(W));
+    for (int i = 0; i < H; ++i) {
+        for (int j = 0; j < W; ++j) {
+            cin >> A[i][j];
+        }
+    }
+
+    // Min-heap: stores {elevation, x, y}
+    priority_queue<array<int, 3>, vector<array<int, 3>>, greater<array<int, 3>>> pq;
+    vector<vector<bool>> vis(H, vector<bool>(W, false));
+
+    // Initialize the border cells
+    for (int i = 0; i < H; ++i) {
+        for (int j = 0; j < W; ++j) {
+            if (i == 0 || i == H - 1 || j == 0 || j == W - 1) {
+                pq.push({A[i][j], i, j});
+                vis[i][j] = true;
+            }
+        }
+    }
+
+    int remaining = H * W;
+    vector<int> result(Y);
+
+    // Process all years in advance
+    for (int year = 0; year < Y; ++year) {
+        while (!pq.empty() && pq.top()[0] <= year) {
+            auto [h, x, y] = pq.top();
+            pq.pop();
+            --remaining;
+
+            for (int k = 0; k < 4; ++k) {
+                int dx = x + d[k][0], dy = y + d[k][1];
+                if (dx >= 0 && dx < H && dy >= 0 && dy < W && !vis[dx][dy]) {
+                    vis[dx][dy] = true;
+                    pq.push({A[dx][dy], dx, dy});
+                }
+            }
+        }
+        result[year] = remaining;
+    }
+
+    for (int year = 0; year < Y; ++year) {
+        cout << result[year] << '\n';
+    }
+
+    return 0;
+}

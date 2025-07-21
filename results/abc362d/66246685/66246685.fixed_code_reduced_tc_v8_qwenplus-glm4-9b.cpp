@@ -1,0 +1,53 @@
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+using VL = vector<ll>;
+using P = pair<ll, ll>;
+const ll inf = 1000000000;
+
+int main() {
+    ll N, M;
+    cin >> N >> M;
+
+    vector<ll> A(N), B(M);
+    vector<vector<pair<ll, ll>>> G(N);
+    vector<ll> ans(N, inf);
+
+    for (ll i = 0; i < N; i++) {
+        cin >> A[i];
+    }
+    for (ll i = 0; i < M; i++) {
+        ll u, v, b;
+        cin >> u >> v >> b;
+        u--; v--; // Convert to zero-indexed
+        G[u].push_back({v, b});
+        G[v].push_back({u, b});
+    }
+
+    // Start Dijkstra's algorithm from vertex 1
+    priority_queue<P, vector<P>, greater<P>> pq;
+    pq.push({A[0], 0}); // (distance, vertex)
+    ans[0] = A[0]; // Distance to itself is its own vertex weight
+
+    while (!pq.empty()) {
+        auto [dist, u] = pq.top();
+        pq.pop();
+
+        if (dist > ans[u]) continue; // Skip if we have a better distance already
+
+        for (auto [v, weight] : G[u]) {
+            ll new_dist = dist + weight + A[v]; // Total weight: vertex weight + edge weight
+            if (new_dist < ans[v]) {
+                ans[v] = new_dist;
+                pq.push({new_dist, v});
+            }
+        }
+    }
+
+    // Output the minimum weight for paths to all vertices from vertex 1
+    for (ll i = 1; i < N; i++) {
+        cout << ans[i] << (i < N - 1 ? " " : "\n");
+    }
+
+    return 0;
+}

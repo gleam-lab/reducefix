@@ -1,0 +1,72 @@
+#include <iostream>
+#include <vector>
+#include <queue>
+#include <algorithm>
+using namespace std;
+
+using i32 = int32_t;
+using i64 = int64_t;
+using u32 = uint32_t;
+using u64 = uint64_t;
+
+struct Pair {
+    i64 elevation;
+    i32 x, y;
+};
+
+// Comparator for priority queue to sort Pair by elevation
+struct cmp {
+    bool operator()(const Pair& a, const Pair& b) {
+        return a.elevation < b.elevation;
+    }
+};
+
+int main() {
+    i32 H, W, Y;
+    cin >> H >> W >> Y;
+
+    vector<vector<i32>> A(H, vector<i32>(W));
+    for (i32 i = 0; i < H; ++i) for (i32 j = 0; j < W; ++j) cin >> A[i][j];
+
+    priority_queue<Pair, vector<Pair>, cmp> pq;
+    vector<vector<bool>> visited(H, vector<bool>(W, false));
+
+    // Initialize the priority queue with the edges of the island
+    for (i32 i = 0; i < W; ++i) {
+        pq.push({A[0][i], 0, i});
+        visited[0][i] = true;
+        pq.push({A[H - 1][i], H - 1, i});
+        visited[H - 1][i] = true;
+    }
+    for (i32 i = 0; i < H; ++i) {
+        pq.push({A[i][0], i, 0});
+        visited[i][0] = true;
+        pq.push({A[i][W - 1], i, W - 1});
+        visited[i][W - 1] = true;
+    }
+
+    vector<u64> remainingArea(Y);
+    for (i32 year = 0; year < Y; ++year) {
+        u64 currentArea = 0;
+        while (!pq.empty()) {
+            Pair top = pq.top();
+            pq.pop();
+            if (top.elevation <= year) {
+                currentArea++;
+                for (auto& dir : {{0, 1}, {0, -1}, {1, 0}, {-1, 0}}) {
+                    i32 nx = top.x + dir[0];
+                    i32 ny = top.y + dir[1];
+                    if (nx >= 0 && nx < H && ny >= 0 && ny < W && !visited[nx][ny]) {
+                        visited[nx][ny] = true;
+                        pq.push({A[nx][ny], nx, ny});
+                    }
+                }
+            }
+        }
+        remainingArea[year] = currentArea;
+    }
+
+    for (auto area : remainingArea) cout << area << '\n';
+
+    return 0;
+}

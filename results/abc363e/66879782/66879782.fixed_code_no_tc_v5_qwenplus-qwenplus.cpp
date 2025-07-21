@@ -1,0 +1,75 @@
+#include <bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+#define all(x) (x).begin(), (x).end()
+
+int main()
+{
+    ios_base::sync_with_stdio(0);
+    cin.tie(0);
+    int h, w, y;
+    cin >> h >> w >> y;
+    vector<vector<int>> height(h, vector<int>(w));
+    vector<vector<int>> sink_year(h, vector<int>(w, INT_MAX));
+    
+    // Min-heap to process the boundary cells by elevation
+    priority_queue<pair<int, pair<int, int>>, vector<pair<int, pair<int, int>>>, greater<pair<int, pair<int, int>>>> pq;
+
+    // Directions: up, down, left, right
+    vector<pair<int, int>> dirs = {{-1, 0}, {1, 0}, {0, -1}, {0, 1}};
+
+    for (int i = 0; i < h; ++i) {
+        for (int j = 0; j < w; ++j) {
+            cin >> height[i][j];
+            // Border cells are directly connected to the sea
+            if (i == 0 || i == h - 1 || j == 0 || j == w - 1) {
+                sink_year[i][j] = height[i][j];
+                pq.push({height[i][j], {i, j}});
+            }
+        }
+    }
+
+    vector<vector<bool>> visited(h, vector<bool>(w, false));
+
+    while (!pq.empty()) {
+        auto [current_elevation, pos] = pq.top();
+        auto [r, c] = pos;
+        pq.pop();
+
+        if (visited[r][c]) continue;
+        visited[r][c] = true;
+
+        for (auto [dr, dc] : dirs) {
+            int nr = r + dr;
+            int nc = c + dc;
+            if (nr >= 0 && nr < h && nc >= 0 && nc < w && !visited[nr][nc]) {
+                int new_sink_year = max(current_elevation, height[nr][nc]);
+                if (sink_year[nr][nc] > new_sink_year) {
+                    sink_year[nr][nc] = new_sink_year;
+                    pq.push({sink_year[nr][nc], {nr, nc}});
+                }
+            }
+        }
+    }
+
+    // Count how many cells sink at each year
+    vector<int> sink_count(y + 2, 0); // sink_count[i] = number of cells sunk at year i
+    for (int i = 0; i < h; ++i) {
+        for (int j = 0; j < w; ++j) {
+            if (sink_year[i][j] <= y) {
+                sink_count[sink_year[i][j]]++;
+            }
+        }
+    }
+
+    // Prefix sum to get cumulative sunk area
+    vector<int> cum_sink(y + 2, 0);
+    for (int i = 1; i <= y; ++i) {
+        cum_sink[i] = cum_sink[i - 1] + sink_count[i];
+    }
+
+    // Output remaining area for each year
+    for (int i = 1; i <= y; ++i) {
+        cout << h * w - cum_sink[i] << '\n';
+    }
+}

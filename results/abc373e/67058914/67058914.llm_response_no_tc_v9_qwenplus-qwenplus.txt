@@ -1,0 +1,117 @@
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+
+int main() {
+    int N, M;
+    ll K;
+    cin >> N >> M >> K;
+    vector<ll> A(N);
+    ll sum_A = 0;
+    for (int i = 0; i < N; ++i) {
+        cin >> A[i];
+        sum_A += A[i];
+    }
+    ll remaining = K - sum_A;
+
+    vector<int> ids(N);
+    iota(ids.begin(), ids.end(), 0);
+
+    // Sort candidates by votes
+    vector<ll> sorted_A = A;
+    sort(sorted_A.begin(), sorted_A.end());
+
+    vector<ll> prefix(N + 1);
+    for (int i = 1; i <= N; ++i) {
+        prefix[i] = prefix[i - 1] + sorted_A[i - 1];
+    }
+
+    vector<ll> res(N);
+
+    for (int i = 0; i < N; ++i) {
+        ll ai = A[i];
+        // Binary search on required additional votes
+        ll low = 0, high = remaining;
+        ll ans = -1;
+        while (low <= high) {
+            ll mid = (low + high) / 2;
+            ll total = ai + mid;
+
+            // We want to ensure that at most M-1 candidates have more than total
+            // So we find how many candidates have votes > total
+            // Then determine if we can reduce those counts using the remaining votes
+
+            int idx = lower_bound(sorted_A.begin(), sorted_A.end(), total + 1) - sorted_A.begin();
+            int cnt = N - idx;
+            int need_to_reduce = cnt;
+
+            // We can use up to (remaining - mid) votes to boost other candidates below `total`
+            // To prevent them from having more than candidate i
+
+            // We want to raise enough of the top `cnt` candidates to at least `total`
+
+            // Binary search on how many top candidates we can leave above `total`
+            // and how many we must suppress
+
+            int ok = -1;
+            int l = 0, r = need_to_reduce;
+            while (l <= r) {
+                int m = (l + r) / 2;
+                // Keep m candidates above total
+                // Need to push (need_to_reduce - m) candidates to be <= total
+                // So they should have total or less
+                // Use binary search to calculate cost
+
+                ll cost = 0;
+                if (m > 0) {
+                    int left = N - m;
+                    ll min_votes_needed = total * m - (prefix[N] - prefix[left]);
+                    if (min_votes_needed <= (remaining - mid)) {
+                        ok = m;
+                        l = m + 1;
+                    } else {
+                        r = m - 1;
+                    }
+                } else {
+                    ok = 0;
+                    l = m + 1;
+                }
+            }
+
+            if (ok >= 0) {
+                // If we can make at least (M) candidates not exceed total
+                // then this `mid` is acceptable
+                if (cnt - ok < M) {
+                    ans = mid;
+                    high = mid - 1;
+                } else {
+                    low = mid + 1;
+                }
+            } else {
+                low = mid + 1;
+            }
+        }
+
+        if (ans == -1) {
+            // Check if already elected
+            int higher = 0;
+            for (int j = 0; j < N; ++j) {
+                if (A[j] > A[i]) higher++;
+            }
+            if (higher < M) {
+                res[i] = 0;
+            } else {
+                res[i] = -1;
+            }
+        } else {
+            res[i] = ans;
+        }
+    }
+
+    for (ll x : res) cout << x << " ";
+    cout << "\n";
+
+    return 0;
+}
+```

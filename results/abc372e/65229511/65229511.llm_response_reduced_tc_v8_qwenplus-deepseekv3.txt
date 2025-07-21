@@ -1,0 +1,89 @@
+To fix this code, we need to ensure that the union-find data structure correctly maintains the sets of connected vertices and allows efficient k-th largest element queries. The issue in the original code arises because the merging of sets is not correctly handled when the roots are united, leading to incorrect set sizes and missing elements.
+
+### Approaches
+1. **Union-Find Data Structure**: This structure helps efficiently manage and merge sets of connected vertices, ensuring that the connected components are tracked correctly.
+2. **Balanced Merging**: When merging two sets, the smaller set is merged into the larger set to optimize performance. This approach ensures that each element is processed a logarithmic number of times over all operations.
+3. **Maintaining Sorted Elements**: Each set of connected vertices is maintained in a sorted order (specifically, a set to allow efficient insertion and deletion). This setup allows for efficient k-th largest element queries by leveraging the reverse iterator of the set.
+
+### Solution Code
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+#define rep(i, n) for(int i=0;i<(n);i++)
+#define all(a) a.begin(), a.end()
+#define rall(a) a.rbegin(), a.rend()
+using ll = long long;
+using pi = pair<int, int>;
+const int INF=1e9;
+
+struct UnionFind {
+    vector<int> parent, rank;
+    vector<set<int>> elements;
+    UnionFind(int n) : parent(n), rank(n, 0), elements(n) {
+        for (int i = 0; i < n; i++) {
+            parent[i] = i;
+            elements[i].insert(i);
+        }
+    }
+    int findRoot(int x) {
+        if (parent[x] != x) 
+            parent[x] = findRoot(parent[x]);
+        return parent[x];
+    }
+    void unite(int x, int y) {
+        int rx = findRoot(x);
+        int ry = findRoot(y);
+        if (rx == ry) return;
+        if (elements[rx].size() < elements[ry].size()) 
+            swap(rx, ry);
+        parent[ry] = rx;
+        for (int elem : elements[ry]) 
+            elements[rx].insert(elem);
+        elements[ry].clear();
+    }
+};
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int n, q;
+    cin >> n >> q;
+    UnionFind uf(n);
+    vector<int> ans;
+    rep(qi, q) {
+        int com;
+        cin >> com;
+        if (com == 1) {
+            int u, v;
+            cin >> u >> v;
+            u--; v--;
+            uf.unite(u, v);
+        } else if (com == 2) {
+            int v, k;
+            cin >> v >> k;
+            v--;
+            int root = uf.findRoot(v);
+            if ((int)uf.elements[root].size() < k) 
+                ans.push_back(-1);
+            else {
+                auto it = uf.elements[root].rbegin();
+                advance(it, k - 1);
+                ans.push_back(*it + 1);
+            }
+        }
+    }
+    for (auto x : ans) 
+        cout << x << endl;
+    return 0;
+}
+```
+
+### Explanation
+1. **Union-Find Initialization**: The `UnionFind` structure is initialized with each vertex as its own parent and a set containing only itself.
+2. **Unite Operation**: The `unite` function merges two sets. It ensures the smaller set is merged into the larger one to maintain efficiency. All elements of the smaller set are inserted into the larger set, and the smaller set is cleared.
+3. **Query Processing**: For each query:
+   - **Type 1 (1 u v)**: The vertices `u` and `v` are merged into the same set.
+   - **Type 2 (2 v k)**: The root of vertex `v` is found. The k-th largest element in the set of the root is retrieved using a reverse iterator. If the set size is smaller than `k`, `-1` is returned.
+4. **Output**: The answers to Type 2 queries are collected in a vector and printed at the end.
+
+This approach ensures efficient handling of dynamic graph connectivity and queries with optimal time complexity.

@@ -1,0 +1,93 @@
+#include <iostream>
+#include <vector>
+#include <map>
+
+using namespace std;
+
+const int MAXN = 400010;
+
+struct UnionFind {
+    vector<int> parent, rank;
+    UnionFind(int n) : parent(n), rank(n, 1) {
+        for (int i = 0; i < n; i++) parent[i] = i;
+    }
+    
+    int find(int u) {
+        if (parent[u] != u) parent[u] = find(parent[u]);
+        return parent[u];
+    }
+
+    void unite(int u, int v) {
+        int pu = find(u), pv = find(v);
+        if (pu == pv) return;
+        
+        if (rank[pu] < rank[pv]) swap(pu, pv);
+        parent[pv] = pu;
+        if (rank[pu] == rank[pv]) rank[pu]++;
+    }
+};
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(NULL);
+
+    int h, w, q;
+    cin >> h >> w >> q;
+
+    vector<map<int, int>> s(h), t(w);
+    UnionFind uf(h * w + 10);
+
+    for (int qi = 0; qi < q; qi++) {
+        int r, c;
+        cin >> r >> c;
+        r--, c--;
+
+        if (!s[r].contains(c)) {
+            s[r][c] = qi;
+            t[c][r] = qi;
+            
+            int id = r * w + c;
+            int id_up = (r - 1) * w + c;
+            int id_down = (r + 1) * w + c;
+            int id_left = r * w + (c - 1);
+            int id_right = r * w + (c + 1);
+
+            if (id_up >= 0 && s[r - 1].contains(c)) {
+                uf.unite(id, id_up);
+            }
+            if (id_down < h * w && s[r + 1].contains(c)) {
+                uf.unite(id, id_down);
+            }
+            if (id_left >= 0 && t[c - 1].contains(r)) {
+                uf.unite(id, id_left);
+            }
+            if (id_right < w && t[c + 1].contains(r)) {
+                uf.unite(id, id_right);
+            }
+        } else {
+            int id = s[r][c];
+            int lead_id = uf.find(id);
+
+            int min_r = lead_id / w;
+            int min_c = lead_id % w;
+            while (min_r > 0 && !s[min_r - 1].contains(min_c)) min_r--;
+            while (min_c > 0 && !t[min_c - 1].contains(min_r)) min_c--;
+
+            for (int rr = min_r; rr <= r; rr++) {
+                for (int cc = min_c; cc <= c; cc++) {
+                    int cur_id = rr * w + cc;
+                    if (uf.find(cur_id) == lead_id) {
+                        s[rr].erase(cc);
+                        t[cc].erase(rr);
+                    }
+                }
+            }
+        }
+    }
+
+    int ans = h * w;
+    for (int i = 0; i < h; i++) ans -= s[i].size();
+    cout << ans << endl;
+
+    return 0;
+}

@@ -1,0 +1,80 @@
+To fix this code, we need to ensure that the data structure and algorithm efficiently handle the union-find operations while maintaining the top k largest elements in each connected component. The original code attempted to store a static number of elements (40) which is insufficient for the constraints. Instead, we should use a more dynamic approach, possibly using balanced binary search trees or heaps to maintain the top k elements during the union operations.
+
+Here's the corrected approach:
+
+1. **Union-Find Data Structure**: Implement path compression and union by rank or size to keep the operations efficient.
+2. **Tracking Top Elements**: For each root, maintain a set or multiset of the top 10 largest elements in the component. This allows efficient merging and querying.
+3. **Efficient Merging**: When merging two components, combine their sets and keep only the top 10 elements to ensure the operations remain O(log N).
+
+Here's the fixed code:
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+const int MAXN = 2e5 + 5;
+int parent[MAXN];
+int size[MAXN];
+multiset<int> top_elements[MAXN];
+
+int find(int u) {
+    if (parent[u] != u) {
+        parent[u] = find(parent[u]);
+    }
+    return parent[u];
+}
+
+void unite(int u, int v) {
+    u = find(u);
+    v = find(v);
+    if (u == v) return;
+    if (size[u] < size[v]) swap(u, v);
+    parent[v] = u;
+    size[u] += size[v];
+    top_elements[u].insert(top_elements[v].begin(), top_elements[v].end());
+    top_elements[v].clear();
+    while (top_elements[u].size() > 10) {
+        top_elements[u].erase(top_elements[u].begin());
+    }
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int N, Q;
+    cin >> N >> Q;
+    
+    for (int i = 1; i <= N; ++i) {
+        parent[i] = i;
+        size[i] = 1;
+        top_elements[i].insert(i);
+    }
+    
+    while (Q--) {
+        int op, u, v;
+        cin >> op >> u >> v;
+        if (op == 1) {
+            unite(u, v);
+        } else {
+            int root = find(u);
+            if (top_elements[root].size() < v) {
+                cout << "-1\n";
+            } else {
+                auto it = top_elements[root].end();
+                advance(it, -v);
+                cout << *it << '\n';
+            }
+        }
+    }
+    
+    return 0;
+}
+```
+
+### Explanation
+1. **Union-Find Data Structure**: The `find` function uses path compression to flatten the structure of the tree, making future queries faster. The `unite` function uses union by size to ensure that the smaller tree is always attached to the root of the larger tree.
+2. **Tracking Top Elements**: Each root node maintains a multiset of the top 10 largest elements in its component. When two components are merged, their multisets are combined, and only the top 10 elements are retained.
+3. **Efficient Querying**: For a type 2 query, the code checks if the component has at least `k` elements. If not, it outputs `-1`. Otherwise, it retrieves the `k`-th largest element by accessing the appropriate position in the multiset using reverse iterators.
+
+This approach ensures that each union operation is efficient (O(log N)) and each query operation is constant time (O(1)), making the solution scalable for large inputs.

@@ -1,0 +1,109 @@
+
+The given C++ code attempts to solve the problem using the Union-Find data structure but has several issues that cause it to fail some test cases. Below, I will outline the problems I observed in the code and provide the corrected version.
+
+### Issues in the Incorrect Code
+1. **Union Find Representation**: The Union-Find structure is implemented using an array `parent`, but the code does not maintain a `size` array or `components` vector to quickly find the number of vertices in the same component, which is necessary for the k-th largest vertex computation.
+2. **Edge Duplication Handling**: The code attempts to handle edge duplication by checking if the roots of the vertices are different and then merging the smaller tree into the larger one. This might lead to incorrect merging and size calculations.
+3. **Component Size Calculation**: The code uses a `set<int>` to store vertices in each component. If the component size is less than `k`, it should print `-1`, but the code currently pushes `-2` to the `ans` vector, which is incorrect.
+4. **Query Handling**: The code does not handle queries properly. It should merge components and handle the k-th largest vertex query without errors.
+
+### Corrected Code
+```cpp
+#include <iostream>
+#include <vector>
+#include <algorithm>
+
+using namespace std;
+
+class UnionFind {
+private:
+    vector<int> parent;
+    vector<int> rank;
+
+public:
+    UnionFind(int size) : parent(size), rank(size, 0) {
+        for (int i = 0; i < size; ++i) {
+            parent[i] = i;
+        }
+    }
+
+    int findRoot(int x) {
+        if (parent[x] != x) {
+            parent[x] = findRoot(parent[x]);
+        }
+        return parent[x];
+    }
+
+    bool unite(int x, int y) {
+        int rootX = findRoot(x);
+        int rootY = findRoot(y);
+
+        if (rootX == rootY) {
+            return false;
+        }
+
+        if (rank[rootX] < rank[rootY]) {
+            parent[rootX] = rootY;
+        } else if (rank[rootX] > rank[rootY]) {
+            parent[rootY] = rootX;
+        } else {
+            parent[rootY] = rootX;
+            rank[rootX]++;
+        }
+        return true;
+    }
+
+    int getSize(int x) {
+        int root = findRoot(x);
+        int size = 1;
+        for (int i = 0; i < parent.size(); ++i) {
+            if (findRoot(i) == root) {
+                size++;
+            }
+        }
+        return size;
+    }
+};
+
+int main() {
+    int n, q;
+    cin >> n >> q;
+
+    UnionFind uf(n);
+
+    while (q--) {
+        int type;
+        cin >> type;
+
+        if (type == 1) {
+            int u, v;
+            cin >> u >> v;
+            uf.unite(u, v);
+        } else if (type == 2) {
+            int v, k;
+            cin >> v >> k;
+            int root = uf.findRoot(v);
+            int size = uf.getSize(root);
+            if (k > size) {
+                cout << -1 << endl;
+            } else {
+                vector<int> components;
+                for (int i = 0; i < n; ++i) {
+                    if (uf.findRoot(i) == root) {
+                        components.push_back(i);
+                    }
+                }
+                sort(components.rbegin(), components.rend());
+                cout << components[k - 1] + 1 << endl;
+            }
+        }
+    }
+
+    return 0;
+}
+```
+
+### Explanation of the Corrected Code
+1. **Union-Find Class**: The `UnionFind` class now has a `getSize` method that returns the size of the component for a given vertex.
+2. **Query Handling**: For type 1 queries, the code simply calls `unite` to merge components. For type 2 queries, it first finds the root of the vertex, then calculates the size of its component, checks if `k` is within bounds, and finally finds and prints the k-th largest vertex.
+3. **Component Size Calculation**: Instead of using a `set`, the code now uses a `vector` to store all vertices in the component and sorts it in descending order to efficiently find the k-th largest vertex.

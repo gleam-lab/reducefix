@@ -1,0 +1,80 @@
+#include <iostream>
+#include <vector>
+#include <queue>
+#include <cstring>
+
+using namespace std;
+
+const int MAXN = 1010;
+int vis[MAXN][MAXN];
+int grid[MAXN][MAXN];
+int h, w, y;
+vector<pair<int, int>> directions = {{1, 0}, {-1, 0}, {0, 1}, {0, -1}};
+
+struct Node {
+    int x, y, level;
+    bool operator<(const Node &other) const {
+        return level < other.level;
+    }
+};
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+
+    cin >> h >> w >> y;
+    for (int i = 0; i < h; ++i) {
+        for (int j = 0; j < w; ++j) {
+            cin >> grid[i][j];
+        }
+    }
+
+    // Initialize priority queue and visited array
+    priority_queue<Node> pq;
+    memset(vis, 0, sizeof(vis));
+
+    // Start from edges of the grid
+    for (int i = 0; i < h; ++i) {
+        vis[i][0] = vis[i][w - 1] = 1;
+        pq.emplace(i, 0, grid[i][0]);
+        pq.emplace(i, w - 1, grid[i][w - 1]);
+    }
+    for (int j = 1; j < w - 1; ++j) {
+        vis[0][j] = vis[h - 1][j] = 1;
+        pq.emplace(0, j, grid[0][j]);
+        pq.emplace(h - 1, j, grid[h - 1][j]);
+    }
+
+    // Process each year
+    int remainingArea = h * w;
+    for (int currentYear = 1; currentYear <= y; ++currentYear) {
+        while (!pq.empty() && pq.top().level <= currentYear) {
+            Node node = pq.top();
+            pq.pop();
+
+            for (auto& dir : directions) {
+                int nx = node.x + dir.first;
+                int ny = node.y + dir.second;
+
+                if (nx >= 0 && nx < h && ny >= 0 && ny < w && !vis[nx][ny] && grid[nx][ny] > currentYear) {
+                    vis[nx][ny] = 1;
+                    pq.emplace(nx, ny, grid[nx][ny]);
+                }
+            }
+        }
+
+        // Count remaining areas
+        remainingArea = 0;
+        for (int i = 0; i < h; ++i) {
+            for (int j = 0; j < w; ++j) {
+                if (!vis[i][j]) {
+                    remainingArea++;
+                }
+            }
+        }
+
+        cout << remainingArea << "\n";
+    }
+
+    return 0;
+}

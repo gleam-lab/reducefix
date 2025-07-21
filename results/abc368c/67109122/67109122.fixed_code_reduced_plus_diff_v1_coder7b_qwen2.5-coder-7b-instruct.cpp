@@ -1,0 +1,27 @@
+#include<bits/stdc++.h>
+using namespace std;
+
+int main(){
+    int n; cin >> n;
+    vector<long long> h(n), t(n, 0);
+    for(int i=0;i<n;++i){
+        cin >> h[i];
+    }
+    
+    long long ans = 0;
+    while(true){
+        bool flag = false;
+        for(int i=0;i<n;++i){
+            if(h[i]>0){
+                ++t[i];
+                ans++;
+                if(t[i]%3==0) h[i]-=3;
+                else h[i]--;
+                flag = true;
+            }
+        }
+        if(!flag) break;
+    }
+    cout << ans << '\n';
+    return 0;
+}

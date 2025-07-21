@@ -1,0 +1,46 @@
+#include <iostream>
+#include <vector>
+#include <cmath>
+#include <iomanip>
+
+using namespace std;
+
+// Function to calculate Euclidean distance between two points
+double euclidean_distance(const pair<int, int>& p1, const pair<int, int>& p2) {
+    return sqrt(pow(p1.first - p2.first, 2) + pow(p1.second - p2.second, 2));
+}
+
+void solve() {
+    int n;
+    cin >> n;
+    
+    vector<pair<int, int>> points(n);
+    for(int i = 0; i < n; ++i) {
+        cin >> points[i].first >> points[i].second;
+    }
+
+    double total_cost = 0.0;
+
+    // Calculate cost from origin to first point
+    total_cost += euclidean_distance({0, 0}, points[0]);
+
+    // Calculate cost between consecutive points
+    for(int i = 0; i < n - 1; ++i) {
+        total_cost += euclidean_distance(points[i], points[i+1]);
+    }
+
+    // Calculate cost from last point back to origin
+    total_cost += euclidean_distance(points[n-1], {0, 0});
+
+    // Output the result with high precision
+    cout << fixed << setprecision(20) << total_cost << endl;
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    solve();
+
+    return 0;
+}

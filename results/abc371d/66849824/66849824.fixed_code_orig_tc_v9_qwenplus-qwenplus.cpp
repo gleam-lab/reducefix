@@ -1,0 +1,74 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+using ll = long long;
+using Graph = vector<vector<int>>;
+
+#define rep(i,n) for (int i=0; i<(n); ++i)
+#define reps(i,n) for (int i=0; i<=(n); ++i)
+#define all(x) (x).begin(), (x).end()
+#define rall(x) (x).rbegin(), (x).rend()
+#define pb(a) push_back(a)
+#define Yes(b) cout << ((b)?"Yes":"No") << endl
+#define YES(b) cout << ((b)?"YES":"NO") << endl
+
+int dx[4] = {1, 0, -1, 0};
+int dy[4] = {0, 1, 0, -1};
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+
+    int N;
+    cin >> N;
+    vector<ll> P(N + 1), X(N);
+    P[0] = 0;
+    rep(i, N) cin >> X[i];
+    rep(i, N) {
+        ll p;
+        cin >> p;
+        P[i + 1] = P[i] + p;
+    }
+
+    // Sort X and build prefix sum accordingly
+    vector<pair<ll, ll>> sorted_X_P;
+    rep(i, N) {
+        sorted_X_P.emplace_back(X[i], P[i + 1]);
+    }
+    sort(all(sorted_X_P));
+    
+    vector<ll> sorted_X(N), prefix_sum(N + 1, 0);
+    rep(i, N) {
+        sorted_X[i] = sorted_X_P[i].first;
+        prefix_sum[i + 1] = sorted_X_P[i].second;
+    }
+
+    // Prefix sum computation
+    rep(i, N) {
+        prefix_sum[i + 1] += prefix_sum[i];
+    }
+
+    map<ll, int> x_to_idx;
+    rep(i, N) {
+        if (x_to_idx.find(sorted_X[i]) == x_to_idx.end()) {
+            x_to_idx[sorted_X[i]] = i;
+        }
+    }
+
+    int Q;
+    cin >> Q;
+    rep(q, Q) {
+        ll L, R;
+        cin >> L >> R;
+        auto left = lower_bound(sorted_X.begin(), sorted_X.end(), L);
+        auto right = upper_bound(sorted_X.begin(), sorted_X.end(), R);
+
+        int l = left - sorted_X.begin();
+        int r = right - sorted_X.begin();
+
+        ll ans = prefix_sum[r] - prefix_sum[l];
+        cout << ans << endl;
+    }
+
+    return 0;
+}

@@ -1,0 +1,29 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+  int Q; cin >> Q;
+  map<int, int> counts;
+  int unique_count = 0;
+
+  while(Q--) {
+    int type; cin >> type;
+    if(type == 1) {
+      int x; cin >> x;
+      if(counts[x] == 0)
+        unique_count++;
+      counts[x]++;
+    } 
+    else if(type == 2) {
+      int x; cin >> x;
+      counts[x]--;
+      if(counts[x] == 0)
+        unique_count--;
+    } 
+    else if(type == 3) {
+      cout << unique_count << endl;
+    }
+  }
+
+  return 0;
+}

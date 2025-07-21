@@ -1,0 +1,60 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+const int MAXN = 200010;
+char s[MAXN];
+char c[MAXN];
+
+int solve() {
+    int n;
+    scanf("%d", &n);
+    scanf("%s", s + 1); // 1-based indexing
+
+    // Mapping: beat opponent's move
+    auto get_counter = [](char ch) {
+        if (ch == 'P') return 'S';
+        if (ch == 'R') return 'P';
+        return 'R';
+    };
+
+    int max_win = 0;
+
+    // Try all possibilities for the first character:
+    // original or counter, depending on whether we change it or not
+    for (int fix_first = 0; fix_first <= 1; ++fix_first) {
+        int win_count = 0;
+        char prev;
+
+        if (fix_first) {
+            // Change first character to beat opponent's first move
+            c[1] = get_counter(s[1]);
+            prev = c[1];
+            win_count++;
+        } else {
+            // Don't change first character
+            c[1] = s[1];
+            prev = c[1];
+        }
+
+        for (int i = 2; i <= n; ++i) {
+            c[i] = get_counter(s[i]);
+
+            if (c[i] != prev) {
+                win_count++;
+                prev = c[i];
+            } else {
+                // Lose or draw, so don't increment win_count
+                prev = c[i];
+            }
+        }
+
+        max_win = max(max_win, win_count);
+    }
+
+    return max_win;
+}
+
+int main() {
+    printf("%d\n", solve());
+    return 0;
+}

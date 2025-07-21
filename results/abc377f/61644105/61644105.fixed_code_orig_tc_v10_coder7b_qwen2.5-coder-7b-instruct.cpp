@@ -1,0 +1,43 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+
+#define LL long long
+
+const int MAXN = 1e3 + 10;
+
+LL n, m, ans;
+int row[MAXN], col[MAXN], up[2][MAXN], down[2][MAXN];
+bool used_row[MAXN], used_col[MAXN], used_up[2][MAXN], used_down[2][MAXN];
+
+int main() {
+    cin >> n >> m;
+    memset(used_row, false, sizeof(used_row));
+    memset(used_col, false, sizeof(used_col));
+    memset(used_up, false, sizeof(used_up));
+    memset(used_down, false, sizeof(used_down));
+    
+    for(int i = 0; i < m; ++i) {
+        LL x, y; cin >> x >> y;
+        --x, --y;
+        row[y] = true;
+        col[x] = true;
+        up[(x+y)%2][y-x+500] = true;
+        down[(x-y)%2][x+y] = true;
+    }
+    
+    for(int i = 0; i < n; ++i) 
+        if(!row[i]) ++ans;
+    for(int i = 0; i < n; ++i) 
+        if(!col[i]) ++ans;
+    for(int i = 0; i < 2; ++i)
+        for(int j = 0; j < n; ++j)
+            if(!up[i][j]) ++ans;
+    for(int i = 0; i < 2; ++i)
+        for(int j = 0; j < n; ++j)
+            if(!down[i][j]) ++ans;
+            
+    cout << ans << endl;
+    
+    return 0;
+}

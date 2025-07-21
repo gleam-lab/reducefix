@@ -1,0 +1,44 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+
+int main() {
+    int n;
+    std::cin >> n;
+    std::vector<int> a(n), b(n-1);
+
+    for(int i = 0; i < n; ++i) std::cin >> a[i];
+    for(int i = 0; i < n-1; ++i) std::cin >> b[i];
+
+    // Sort both arrays
+    std::sort(a.begin(), a.end());
+    std::sort(b.begin(), b.end());
+
+    // Initialize the minimum size needed as the maximum element in b array
+    int min_size = *std::max_element(b.begin(), b.end());
+
+    // Check if any toy can fit into this minimum size box
+    bool can_fit = true;
+    for(int i = 0; i < n; ++i) {
+        if(a[i] > min_size) {
+            can_fit = false;
+            break;
+        }
+    }
+
+    // If no toy can fit, we need to increase the size
+    if(!can_fit) {
+        // Find the smallest box which can accommodate the largest toy
+        for(int i = 0; i < n-1; ++i) {
+            if(b[i] >= a[n-1]) {
+                min_size = b[i];
+                break;
+            }
+        }
+    }
+
+    // Output the result
+    std::cout << min_size << std::endl;
+
+    return 0;
+}

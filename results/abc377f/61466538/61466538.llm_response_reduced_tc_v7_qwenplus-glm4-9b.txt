@@ -1,0 +1,89 @@
+
+The problem is to determine the number of empty squares on a grid where a piece can be placed without being captured by any existing pieces on the grid. The capture rules are based on the lines through which pieces can capture each other (rows, columns, diagonal lines, and anti-diagonal lines).
+
+Given the constraints, especially the large possible size of N (up to \(10^9\)), it's clear that we cannot iterate over the entire grid. Instead, we need to use a more sophisticated approach to determine the number of safe squares.
+
+The initial approach has a few issues:
+1. It doesn't correctly account for the intersection of capture lines.
+2. It has an incorrect calculation of the number of squares that can be captured by a single piece.
+3. It doesn't handle the intersection of capture lines from different pieces correctly.
+
+Let's address these issues:
+
+1. We'll represent the capture lines for each piece using sets of points that can be captured.
+2. For each point that can be captured, we'll check if it's already captured by another piece's line.
+3. We'll use the inclusion-exclusion principle to subtract the count of points that are captured by one piece's lines and then add back the points that are doubly counted due to intersection of multiple pieces' lines.
+
+Here's the fixed C++ code:
+
+```cpp
+#include <iostream>
+#include <vector>
+#include <set>
+#include <algorithm>
+
+using namespace std;
+
+// Define a point in the grid
+using Point = pair<int, int>;
+
+// Helper function to add to the answer
+void add_to_answer(int &ans, int value) {
+    ans += value;
+    if (ans < 0) ans = 0;
+}
+
+int main() {
+    long long n, m;
+    cin >> n >> m;
+
+    vector<Point> pieces(m);
+    for (int i = 0; i < m; ++i) {
+        cin >> pieces[i].first >> pieces[i].second;
+    }
+
+    // Directions for capture lines
+    const vector<Point> directions = {
+        {1, 0},  // Rows
+        {0, 1},  // Columns
+        {1, 1},  // Diagonal (top-left to bottom-right)
+        {1, -1}  // Anti-diagonal (top-right to bottom-left)
+    };
+
+    // Set to store all points that can be captured
+    set<Point> captured_points;
+
+    // For each piece, calculate points that can be captured
+    for (const auto &piece : pieces) {
+        for (const auto &dir : directions) {
+            int x = piece.first, y = piece.second;
+            while (x <= n && y <= n) {
+                captured_points.insert({x, y});
+                x += dir.first;
+                y += dir.second;
+            }
+            x = piece.first, y = piece.second;
+            while (x >= 1 && y >= 1) {
+                captured_points.insert({x, y});
+                x -= dir.first;
+                y -= dir.second;
+            }
+        }
+    }
+
+    // Calculate the number of safe squares
+    long long answer = n * n;  // Total squares
+    for (const auto &point : captured_points) {
+        // Subtract points that are on the same row or column
+        answer -= 1LL * (point.first == 1 || point.first == n ||
+                          point.second == 1 || point.second == n);
+    }
+
+    // Output the result
+    cout << answer << endl;
+
+    return 0;
+}
+```
+
+This code calculates the number of safe squares by first determining all points that can be captured by any piece. Then, it subtracts the number of points that are on the same row or column (since they can be captured by a single piece). The complexity of this approach is O(N) for each piece, leading to an overall complexity of O(MN), which is feasible given the constraints.

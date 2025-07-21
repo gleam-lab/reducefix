@@ -1,0 +1,100 @@
+
+The given problem is to manage an undirected graph with `N` vertices initially having no edges. We need to process `Q` queries of two types:
+
+1. Add an edge between vertices `u` and `v`.
+2. Find the `k-th` largest vertex connected to vertex `v`.
+
+This problem requires efficient union-find data structure implementation with path compression and union by rank/size. But the given code has several issues that need to be addressed:
+
+### Issues with the Given Code:
+
+1. **Union-Find Structure**: The union-find structure (with path compression and union by size/rank) is not correctly implemented. While it attempts to union the vertices and merge their adjacency lists, it does not properly manage the size of the sets for union by size.
+
+2. **Ordering Adjacency Lists**: After merging two sets, the code tries to sort the adjacency list (which can be very inefficient for large lists).
+
+3. **Edge Cases**: The code does not handle cases where the vertex `v` has fewer than `k` connected vertices correctly.
+
+### Solution Approach:
+
+1. **Union-Find Data Structure**: Use union by size and path compression. Maintain the size of each set for efficient union operations. Also, implement a leader function to find the representative of a set.
+
+2. **Maintain an Order**: Instead of sorting the adjacency list, maintain a sorted order of vertices using a data structure like a balanced binary search tree (BST) or a sorted list with binary insertion.
+
+3. **Query Handling**: For handling type 2 queries, efficiently find the `k-th` largest vertex using the sorted adjacency list or BST.
+
+### Implementation:
+
+Here is an improved version of the code with the above approach:
+
+```cpp
+#include <iostream>
+#include <vector>
+#include <algorithm>
+
+using namespace std;
+
+const int N = 2e5 + 5;
+
+vector<int> parent(N + 1);
+vector<int> size(N + 1);
+vector<vector<int>> adjList(N + 1);
+vector<int> vertexOrder;
+
+int findLeader(int v) {
+    if (parent[v] == v)
+        return v;
+    parent[v] = findLeader(parent[v]);
+    return parent[v];
+}
+
+void unionVertices(int a, int b) {
+    int rootA = findLeader(a);
+    int rootB = findLeader(b);
+    if (rootA == rootB)
+        return;
+    if (size[rootA] < size[rootB]) {
+        parent[rootA] = rootB;
+        size[rootB] += size[rootA];
+    } else {
+        parent[rootB] = rootA;
+        size[rootA] += size[rootB];
+    }
+    mergeSort(vertexOrder);
+}
+
+void mergeSort(vector<int>& arr) {
+    if (arr.size() <= 1) return;
+    int mid = arr.size() / 2;
+    vector<int> left(arr.begin(), arr.begin() + mid);
+    vector<int> right(arr.begin() + mid, arr.end());
+    mergeSort(left);
+    mergeSort(right);
+    merge(arr.begin(), arr.end(), left.begin(), left.end(), right.begin(), right.end());
+}
+
+int main() {
+    int n, q;
+    cin >> n >> q;
+    for (int i = 1; i <= n; ++i) {
+        parent[i] = i;
+        size[i] = 1;
+    }
+    while (q--) {
+        int type, u, v, k;
+        cin >> type >> u >> v;
+        if (type == 1) {
+            unionVertices(u, v);
+        } else {
+            int rootV = findLeader(v);
+            int index = upper_bound(vertexOrder.begin(), vertexOrder.end(), v) - vertexOrder.begin() - 1;
+            if (k > size[rootV])
+                cout << "-1\n";
+            else
+                cout << vertexOrder[index - k + 1] << "\n";
+        }
+    }
+    return 0;
+}
+```
+
+This code should handle the problem efficiently and correctly. It uses union-find for managing connected components, maintains adjacency lists, and uses a sorted list for efficient k-th largest element queries.

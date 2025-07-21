@@ -1,0 +1,48 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+using namespace std;
+using namespace std::chrono;
+
+#define ll long long
+#define MOD 1e9 + 7
+
+ll gcd(ll a, ll b) {
+    while (b != 0) {
+        a %= b;
+        swap(a, b);
+    }
+    return a;
+}
+
+void solve() {
+    ll n;
+    cin >> n;
+    string s;
+    cin >> s;
+    vector<ll> vowels = {0, 1, 0, 1};
+    ll ans = 0;
+    ll cnt = 0;
+    for (int i = 0; i < n; i++) {
+        cnt++;
+        if (i < n - 1 && s[i] == s[i + 1]) {
+            cnt++;
+            ans += vowels[s[i] - '<'] * (cnt - 1);
+            cnt = 0;
+        }
+    }
+    ans += vowels[s[n - 1] - '<'] * cnt;
+    cout << ans << "\n";
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(NULL);
+    cout.tie(NULL);
+    ll t;
+    cin >> t;
+    while (t--) {
+        solve();
+    }
+    return 0;
+}

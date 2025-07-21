@@ -1,0 +1,48 @@
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+
+// Function to calculate number of attacks needed for an enemy
+ll compute_attacks(ll t, ll h) {
+    // Binary search bounds
+    ll low = 0, high = 2 * h; // upper bound generous enough
+
+    while (low < high) {
+        ll mid = (low + high) / 2;
+        ll damage = 0;
+
+        // Calculate total damage after 'mid' attacks starting at time 't'
+        for (ll i = 1; i <= mid; ++i) {
+            if ((t + i) % 3 == 0)
+                damage += 3;
+            else
+                damage += 1;
+        }
+
+        if (damage >= h)
+            high = mid;
+        else
+            low = mid + 1;
+    }
+
+    return low;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int n;
+    cin >> n;
+    vector<ll> H(n);
+    for (int i = 0; i < n; ++i) cin >> H[i];
+
+    ll T = 0;
+    for (ll h : H) {
+        ll attacks_needed = compute_attacks(T, h);
+        T += attacks_needed;
+    }
+
+    cout << T << endl;
+    return 0;
+}

@@ -1,0 +1,32 @@
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+
+int main() {
+  int N;
+  string S;
+  cin >> N >> S;
+
+  // Each of these variables tracks the number of sequences ending in R, P, or S
+  ll r = 0, p = 0, s = 0;
+
+  for (char c : S) {
+    if (c == 'R') {
+      // Rock beats Scissors, so new R sequences can start after S or extend existing R sequences
+      ll new_r = max(s + 1, r);
+      r = new_r;
+    } else if (c == 'P') {
+      // Paper beats Rock, so new P sequences can start after R or extend existing P sequences
+      ll new_p = max(r + 1, p);
+      p = new_p;
+    } else if (c == 'S') {
+      // Scissors beat Paper, so new S sequences can start after P or extend existing S sequences
+      ll new_s = max(p + 1, s);
+      s = new_s;
+    }
+  }
+
+  // The answer is the maximum number of non-empty sequences we can form
+  cout << max({r, p, s}) << endl;
+  return 0;
+}

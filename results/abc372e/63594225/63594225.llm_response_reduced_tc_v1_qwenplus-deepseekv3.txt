@@ -1,0 +1,82 @@
+To fix this code, we need to address the issue where the union operation is not correctly merging the sorted lists and maintaining the top k elements. The main problem is that merging two sorted lists in a way that keeps the largest elements and then truncating to 100 elements is not sufficient for maintaining the correct top k elements, especially when k is up to 10. Instead, we should maintain a sorted list of up to 10 elements for each connected component to efficiently answer the queries.
+
+### Approaches
+1. **Union-Find Data Structure**: This will help in efficiently managing the connected components.
+2. **Maintaining Sorted Lists**: For each connected component, maintain a sorted list (in descending order) of the top 10 elements. This list should be updated during the union operation.
+3. **Efficient Merging**: When merging two connected components, merge their top 10 lists into a new sorted list and take the top 10 elements from this merged list. This ensures that we always have the top 10 elements ready for any query.
+
+### Solution Code
+```cpp
+#include "bits/stdc++.h"
+
+using namespace std;
+
+#define ff first
+#define ss second
+#define ll long long
+#define SZ(s) (int)s.size()
+
+int const N = 2e5 + 5;
+
+vector<vector<int>> v;
+
+vector<int> p;
+
+int par(int x) {
+    if(p[x] == x) return x;
+    return p[x] = par(p[x]);
+}
+
+void uni(int a, int b) {
+    a = par(a), b = par(b);
+    if(a == b) return;
+    
+    vector<int> merged;
+    int i = 0, j = 0;
+    while ((i < SZ(v[a]) || j < SZ(v[b])) && SZ(merged) < 10) {
+        if (j >= SZ(v[b]) || (i < SZ(v[a]) && v[a][i] >= v[b][j])) {
+            merged.push_back(v[a][i]);
+            i++;
+        } else {
+            merged.push_back(v[b][j]);
+            j++;
+        }
+    }
+    v[a] = merged;
+    p[b] = a;
+    return;
+}
+
+signed main() {
+    ios_base::sync_with_stdio(false); cin.tie(nullptr);
+
+    int n, q;
+    cin >> n >> q;
+    p.resize(n+1);
+    v.resize(n+1);
+    for(int i = 1; i <= n; i++) {
+        p[i] = i;
+        v[i].push_back(i);
+    }
+    while(q--) {
+        int t, a, b;
+        cin >> t >> a >> b;
+        if(t == 1) {
+            uni(a, b);
+        }
+        else {
+            a = par(a);
+            cout << (SZ(v[a]) < b ? -1 : v[a][b-1]) << '\n';
+        }
+    }
+
+    return 0;
+}
+```
+
+### Explanation
+1. **Union-Find Data Structure**: The `par` function implements path compression to efficiently find the root parent of a node. The `uni` function merges two sets if they are not already connected.
+2. **Maintaining Sorted Lists**: For each node, the list `v[i]` initially contains the node itself. During the union operation, the top elements from two lists are merged into a new list while ensuring the merged list is sorted in descending order and contains at most 10 elements.
+3. **Efficient Query Handling**: For each type 2 query, the code checks the size of the connected component's list. If the size is less than `k`, it returns `-1`; otherwise, it returns the `k-th` largest element from the maintained top 10 list.
+
+This approach ensures that the operations are efficient (O(1) for path compression and O(10) for merging) and the queries are answered in constant time, making the solution optimal for large input sizes.

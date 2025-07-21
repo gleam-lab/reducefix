@@ -1,0 +1,38 @@
+#include<bits/stdc++.h>
+using namespace std;
+using ll = long long;
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(0); cout.tie(0);
+
+    int n;
+    cin >> n;
+    vector<ll> h(n);
+    for(int i = 0; i < n; ++i){
+        cin >> h[i];
+    }
+
+    ll t = 0;
+    while(true){
+        bool done = true;
+        for(int i = 0; i < n; ++i){
+            if(h[i] > 0){
+                done = false;
+                if((t+1)%3 == 0){
+                    h[i] -= 3;
+                } else {
+                    h[i]--;
+                }
+                if(h[i] <= 0){
+                    h[i] = 0;
+                }
+            }
+        }
+        if(done) break;
+        t++;
+    }
+    cout << t << endl;
+
+    return 0;
+}

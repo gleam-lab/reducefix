@@ -1,0 +1,28 @@
+#include<bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+
+vector<int> a;
+
+void solve(void) {
+    int n, q; cin >> n >> q;
+    a.resize(n);
+    for(int i = 0; i < n; i++) {
+        cin >> a[i];
+    }
+    sort(a.begin(), a.end());
+    for(int i = 0; i < q; i++){
+        int x, k; cin >> x >> k;
+        auto it = lower_bound(a.begin(), a.end(), x);
+        int pos = it - a.begin() + 1;
+        if(pos + k - 1 < n) cout << a[pos + k - 1] - x << endl;
+        else cout << a[n - 1] - x << endl;
+    }
+}
+
+int main(){
+    ios::sync_with_stdio(0), cin.tie(0), cout.tie(0);
+    int t = 1; //cin >> t;
+    while (t--) solve();
+    return 0;
+}

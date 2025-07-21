@@ -1,0 +1,59 @@
+#include <iostream>
+#include <vector>
+#include <queue>
+#include <algorithm>
+using namespace std;
+#define int long long
+
+const int INF = 1e18;
+
+signed main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int T;
+    cin >> T;
+    while (T--) {
+        int N, K;
+        cin >> N >> K;
+        vector<int> A(N), B(N);
+        for (int i = 0; i < N; ++i) cin >> A[i];
+        for (int i = 0; i < N; ++i) cin >> B[i];
+
+        // Pair up A[i] with B[i], and sort by A[i]
+        vector<pair<int, int>> items(N);
+        for (int i = 0; i < N; ++i) {
+            items[i] = {A[i], B[i]};
+        }
+        sort(items.begin(), items.end());
+
+        // Min-heap to maintain the K largest B's seen so far
+        priority_queue<int, vector<int>, greater<>> min_heap;
+        int sum_b = 0;
+        int result = INF;
+
+        for (int i = 0; i < N; ++i) {
+            int a_val = items[i].first;
+            int b_val = items[i].second;
+
+            // Add current B value
+            sum_b += b_val;
+            min_heap.push(b_val);
+
+            // If heap size exceeds K, remove the smallest B
+            if (min_heap.size() > K) {
+                sum_b -= min_heap.top();
+                min_heap.pop();
+            }
+
+            // If we've selected exactly K elements, compute cost
+            if (min_heap.size() == K) {
+                result = min(result, a_val * sum_b);
+            }
+        }
+
+        cout << result << '\n';
+    }
+
+    return 0;
+}

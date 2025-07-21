@@ -1,0 +1,72 @@
+#include<bits/stdc++.h>
+using namespace std;
+using ll = long long;
+#define rep(i,n) for(int i = 0; i < n; ++i)
+using P = pair<int, int>;
+using T = tuple<int, int, int>;
+
+struct Union_Find {
+    vector<int> sz, par;
+    vector<vector<int>> uni;
+  
+    Union_Find(int n) {
+        sz.resize(n + 1, 1);
+        par.resize(n + 1, -1);
+        uni.resize(n + 1);
+    }
+  
+    int root(int v) {
+        if (par[v] == -1) return v;
+        return par[v] = root(par[v]);
+    }
+  
+    bool issame(int x, int y) {
+        return root(x) == root(y);
+    }
+  
+    void merge(int x, int y) {
+        x = root(x);
+        y = root(y);
+        if (y > x) swap(x, y);
+        if (x == y) return;
+        sz[x] += sz[y];
+        par[y] = x;
+        if (uni[x].size() + uni[y].size() > 10) {
+            merge_sets(x, y);
+        }
+    }
+  
+    void merge_sets(int x, int y) {
+        vector<int> combined;
+        set_intersection(uni[x].begin(), uni[x].end(), uni[y].begin(), uni[y].end(), back_inserter(combined));
+        combined.resize(10);
+        uni[x] = move(combined);
+        uni[y].clear();
+    }
+  
+    vector<int> get_neighbors(int v) {
+        return uni[root(v)];
+    }
+};
+
+int main() {
+    int n, q;
+    cin >> n >> q;
+    Union_Find uf(n);
+  
+    rep(i, q) {
+        int ty, a, b;
+        cin >> ty >> a >> b;
+        a--, b--;
+        if (ty == 1) {
+            uf.merge(a, b);
+        } else {
+            vector<int> neighbors = uf.get_neighbors(b);
+            if (neighbors.size() <= b) {
+                cout << -1 << endl;
+            } else {
+                cout << neighbors[b] << endl;
+            }
+        }
+    }
+}

@@ -1,0 +1,71 @@
+#include<bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+
+const int INF = 0x3f3f3f3f;
+const int MAXN = 100010;
+const int MAXQ = 100010;
+
+int a[MAXN], b[MAXQ];
+int k[MAXQ];
+vector<int> dists[MAXQ];
+
+void preprocess() {
+    for(int i = 1; i <= MAXN; i++) {
+        a[i] = 0;
+    }
+    for(int i = 1; i <= MAXQ; i++) {
+        dists[i].clear();
+    }
+}
+
+void add_point(int idx, int val) {
+    int n = dists[idx].size();
+    if(n == 0 || dists[idx][n-1] != val) {
+        dists[idx].push_back(val);
+    } else {
+        dists[idx][n-1]++;
+    }
+}
+
+int query(int idx, int kth) {
+    return dists[idx][kth-1];
+}
+
+void solve() {
+    int n, q; cin >> n >> q;
+    preprocess();
+    for(int i = 1; i <= n; i++) {
+        cin >> a[i];
+    }
+    sort(a+1, a+n+1);
+    for(int i = 1; i <= q; i++) {
+        cin >> b[i] >> k[i];
+        int lo = 1, hi = n;
+        while(lo < hi) {
+            int mid = (lo + hi) / 2;
+            if(b[i] >= a[mid]) {
+                lo = mid + 1;
+            } else {
+                hi = mid;
+            }
+        }
+        if(b[i] < a[lo]) {
+            add_point(i, a[lo] - b[i]);
+        } else {
+            add_point(i, b[i] - a[lo-1]);
+        }
+    }
+    for(int i = 1; i <= q; i++) {
+        cout << query(i, k[i]) << endl;
+    }
+}
+
+int main() {
+    ios_base::sync_with_stdio(false); cin.tie(NULL);
+    int t = 1;
+    while(t--) {
+        solve();
+    }
+    return 0;
+}

@@ -1,0 +1,61 @@
+#include<bits/stdc++.h>
+using namespace std;
+#define int long long
+
+const int INF = 1LL << 60;
+
+vector<vector<pair<int, int>>> G(200005); // Adjacency list for graph
+int A[200005]; // Vertex weights
+int dist[200005]; // Distance array
+
+void dijkstra(int start) {
+    priority_queue<pair<int, int>, vector<pair<int, int>>, greater<pair<int, int>>> pq;
+    dist[start] = A[start];
+    pq.emplace(dist[start], start);
+    
+    while (!pq.empty()) {
+        int u = pq.top().second;
+        int current_dist = pq.top().first;
+        pq.pop();
+        
+        if (current_dist > dist[u]) continue;
+        
+        for (auto [v, edge_weight] : G[u]) {
+            int new_dist = current_dist + edge_weight + A[v];
+            if (new_dist < dist[v]) {
+                dist[v] = new_dist;
+                pq.emplace(new_dist, v);
+            }
+        }
+    }
+}
+
+signed main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+    cout.tie(0);
+    
+    int N, M;
+    cin >> N >> M;
+    
+    for (int i = 1; i <= N; ++i) {
+        cin >> A[i];
+        dist[i] = INF;
+    }
+    
+    for (int i = 0; i < M; ++i) {
+        int u, v, b;
+        cin >> u >> v >> b;
+        G[u].emplace_back(v, b);
+        G[v].emplace_back(u, b);
+    }
+    
+    dijkstra(1);
+    
+    for (int i = 2; i <= N; ++i) {
+        cout << dist[i] << " ";
+    }
+    cout << "\n";
+    
+    return 0;
+}

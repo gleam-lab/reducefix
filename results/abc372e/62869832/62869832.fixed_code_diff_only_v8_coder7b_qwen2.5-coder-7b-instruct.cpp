@@ -1,0 +1,52 @@
+#include<bits/stdc++.h>
+using namespace std;
+
+const int MAXN = 2e5 + 5;
+vector<int> adj[MAXN];
+priority_queue<int> pq[MAXN];
+
+void addEdge(int u, int v) {
+    adj[u].push_back(v);
+    adj[v].push_back(u);
+}
+
+void updatePriorityQueue(int node) {
+    pq[node].push(-node); // Using negative for max heap behavior
+    for (int neighbor : adj[node]) {
+        pq[node].push(-neighbor);
+    }
+    while (pq[node].size() > 10) pq[node].pop();
+}
+
+int getKthLargest(int node, int k) {
+    if (pq[node].size() < k) return -1;
+    priority_queue<int> temp = pq[node];
+    while (--k) temp.pop();
+    return -temp.top(); // Negate again to get the actual value
+}
+
+int main() {
+    int n, q;
+    cin >> n >> q;
+    
+    for (int i = 1; i <= n; ++i) {
+        updatePriorityQueue(i);
+    }
+
+    for (int i = 0; i < q; ++i) {
+        int type, u, v, k;
+        cin >> type;
+        
+        if (type == 1) {
+            cin >> u >> v;
+            addEdge(u, v);
+            updatePriorityQueue(u);
+            updatePriorityQueue(v);
+        } else if (type == 2) {
+            cin >> u >> k;
+            cout << getKthLargest(u, k) << "\n";
+        }
+    }
+
+    return 0;
+}

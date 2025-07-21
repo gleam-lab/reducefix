@@ -1,0 +1,58 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+#define int long long 
+
+const int MAXN = 2 * 100005;
+const int INF = 1e18;
+
+int N, M;
+vector<pair<int, int>> G[MAXN];
+int A[MAXN], D[MAXN];
+
+void dijkstra(int start) {
+    priority_queue<pair<long long, int>, vector<pair<long long, int>>, greater<>> pq;
+    fill(D, D+N, INF);
+    D[start] = A[start];
+    pq.push({D[start], start});
+    
+    while (!pq.empty()) {
+        auto [dist, node] = pq.top(); pq.pop();
+        
+        if (dist > D[node]) continue;
+        
+        for (auto [neighbor, weight] : G[node]) {
+            long long new_dist = dist + weight + A[neighbor];
+            
+            if (new_dist < D[neighbor]) {
+                D[neighbor] = new_dist;
+                pq.push({new_dist, neighbor});
+            }
+        }
+    }
+}
+
+signed main() {
+    ios::sync_with_stdio(false); cin.tie(NULL);
+    
+    cin >> N >> M;
+    
+    for (int i = 1; i <= N; ++i) {
+        cin >> A[i];
+    }
+    
+    for (int i = 1; i <= M; ++i) {
+        int u, v, b;
+        cin >> u >> v >> b;
+        G[u].push_back({v, b});
+        G[v].push_back({u, b});
+    }
+    
+    dijkstra(1);
+    
+    for (int i = 2; i <= N; ++i) {
+        cout << D[i] << " ";
+    }
+    
+    return 0;
+}

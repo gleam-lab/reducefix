@@ -1,0 +1,31 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define rep(i, n) for (int i = 0; i < (n); ++i)
+using ll = long long;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int n;
+    cin >> n;
+    vector<ll> h(n);
+    rep(i, n) cin >> h[i];
+
+    ll ans = 0;
+    priority_queue<pair<ll, int>, vector<pair<ll, int>>, greater<>> pq;
+    rep(i, n) pq.push({h[i], i});
+
+    while (!pq.empty()) {
+        auto [hp, idx] = pq.top();
+        pq.pop();
+
+        hp -= ans % 3 ? 3 : 1;
+        if (hp <= 0) continue;
+
+        ans++;
+        pq.push({hp, idx});
+    }
+
+    cout << ans << endl;
+}

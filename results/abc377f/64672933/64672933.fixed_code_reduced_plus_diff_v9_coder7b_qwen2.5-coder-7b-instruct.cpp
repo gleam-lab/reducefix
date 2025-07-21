@@ -1,0 +1,67 @@
+#include<bits/stdc++.h>
+using namespace std;
+using i64 = long long;
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    i64 N, M;
+    cin >> N >> M;
+    
+    vector<pair<i64, i64>> pieces(M);
+    for(i64 i = 0; i < M; ++i){
+        cin >> pieces[i].first >> pieces[i].second;
+    }
+    
+    set<pair<i64, i64>> occupied;
+    for(auto &p : pieces){
+        occupied.insert(p);
+    }
+    
+    i64 ans = N*N - M;
+    
+    set<i64> diag_sum, diag_diff, row, col;
+    for(auto &[r, c] : pieces){
+        diag_sum.insert(r+c);
+        diag_diff.insert(r-c);
+        row.insert(r);
+        col.insert(c);
+    }
+    
+    for(auto r : row){
+        if(row.size() > 1){
+            ans -= N-1;
+        }else{
+            ans -= N-2;
+        }
+    }
+    
+    for(auto c : col){
+        if(col.size() > 1){
+            ans -= N-1;
+        }else{
+            ans -= N-2;
+        }
+    }
+    
+    for(auto ds : diag_sum){
+        if(diag_sum.size() > 1){
+            ans -= N-1;
+        }else{
+            ans -= N-2;
+        }
+    }
+    
+    for(auto dd : diag_diff){
+        if(diag_diff.size() > 1){
+            ans -= N-1;
+        }else{
+            ans -= N-2;
+        }
+    }
+    
+    cout << ans << '\n';
+    
+    return 0;
+}

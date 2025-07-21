@@ -1,0 +1,113 @@
+To solve this problem efficiently, we need to support two types of queries on a dynamic undirected graph:
+
+1. **Add an edge** between two vertices.
+2. **Find the k-th largest vertex number** in the connected component that includes a given vertex.
+
+This is essentially a **Union-Find (Disjoint Set Union)** problem with an additional requirement: each set must maintain a sorted list (in descending order) of its elements so that we can quickly answer queries about the `k-th` largest element.
+
+---
+
+### Strategy
+
+We'll use the **Union-FInd (DSU)** data structure with path compression and union by size/rank for efficiency.
+
+Each disjoint set will also maintain a **sorted vector** (or array) of the node values it contains, sorted in descending order. This allows us to answer type 2 queries in O(1) time after sorting.
+
+Key optimizations:
+- When merging two sets, merge their sorted lists and keep only the top 10 elements (since k ≤ 10).
+- Sorting only the top 10 elements ensures efficient merging.
+
+---
+
+### Implementation Details
+
+- Maintain parent array (`parent[]`) for DSU.
+- Maintain a map or array (`component[]`) where each root maps to a sorted list of all nodes in its component.
+- For each union operation:
+  - If both components are different, merge their lists.
+  - Keep only the top 10 largest elements.
+  - Update the merged component under the new root.
+
+---
+
+### Final Code
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+const int MAXN = 2 * 1e5 + 5;
+
+int parent[MAXN];
+vector<int> component[MAXN];
+
+int find(int x) {
+    if (parent[x] != x)
+        parent[x] = find(parent[x]);
+    return parent[x];
+}
+
+void unite(int x, int y) {
+    int px = find(x), py = find(y);
+    if (px == py) return;
+    
+    // Always merge smaller into larger
+    if (component[px].size() < component[py].size())
+        swap(px, py);
+
+    // Merge py's component into px's
+    component[px].insert(component[px].end(), component[py].begin(), component[py].end());
+    sort(component[px].rbegin(), component[px].rend());  // Sort descending
+    if (component[px].size() > 10)
+        component[px].resize(10);  // Keep only top 10
+    parent[py] = px;
+    component[py].clear();  // Clear to avoid future interference
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int N, Q;
+    cin >> N >> Q;
+
+    for (int i = 1; i <= N; ++i) {
+        parent[i] = i;
+        component[i] = {i};
+    }
+
+    while (Q--) {
+        int op;
+        cin >> op;
+        if (op == 1) {
+            int u, v;
+            cin >> u >> v;
+            unite(u, v);
+        } else {
+            int v, k;
+            cin >> v >> k;
+            int root = find(v);
+            if (component[root].size() < k)
+                cout << -1 << '\n';
+            else
+                cout << component[root][k - 1] << '\n';
+        }
+    }
+
+    return 0;
+}
+```
+
+---
+
+### Time Complexity Analysis
+
+- **Union Operation**: Merging two vectors of up to 10 elements takes O(1) time.
+- **Find Operation**: Path compression makes it nearly O(1).
+- **Query Type 2**: O(1), since we just access the k-th element of the sorted vector.
+
+Total complexity per query is **O(1)** amortized, making the solution efficient even for maximum constraints.
+
+---
+
+This code handles all edge cases correctly, including when there are fewer than `k` elements in a component, and maintains correct DSU state with fast query answering.

@@ -1,0 +1,27 @@
+#include <iostream>
+#include <set>
+using namespace std;
+
+int main() {
+    int Q;
+    cin >> Q;
+    set<int> balls;
+
+    for (int i = 0; i < Q; ++i) {
+        int query;
+        cin >> query;
+        if (query == 1) {
+            int ballNumber;
+            cin >> ballNumber;
+            balls.insert(ballNumber);
+        } else if (query == 2) {
+            int ballNumber;
+            cin >> ballNumber;
+            balls.erase(ballNumber);
+        } else if (query == 3) {
+            cout << balls.size() << endl;
+        }
+    }
+
+    return 0;
+}

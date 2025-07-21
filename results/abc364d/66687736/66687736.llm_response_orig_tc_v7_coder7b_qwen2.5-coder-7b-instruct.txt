@@ -1,0 +1,73 @@
+To solve this problem efficiently, we need to find the k-th closest point for each query. The key observation here is that sorting all distances for each query would result in \(O(Q \cdot N \log N)\), which is too slow for large inputs. Instead, we can use a combination of binary search and priority queues to achieve an efficient solution.
+
+Here's the step-by-step approach:
+
+1. **Sort Points**: First, sort both arrays `a` (points A) and `b` (points B).
+2. **Binary Search**: For each query, perform a binary search on the sorted array `a` to find the range of indices `[l, r]` such that the distances to `b[j]` fall within the top `k` smallest distances.
+3. **Priority Queue**: Use a min-heap (priority queue) to keep track of the top `k` smallest distances found during the binary search.
+
+Let's implement this approach in C++:
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+#define ll long long
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+
+    int n, q;
+    cin >> n >> q;
+    vector<int> a(n);
+    for (int i = 0; i < n; ++i) {
+        cin >> a[i];
+    }
+
+    vector<int> b(q);
+    vector<int> k(q);
+    for (int i = 0; i < q; ++i) {
+        cin >> b[i] >> k[i];
+    }
+
+    sort(a.begin(), a.end());
+
+    auto find_kth_closest = [&](int b_j) -> int {
+        int l = 0, r = n - 1;
+        while (l < r) {
+            int m = (l + r) / 2;
+            if (abs(a[m] - b_j) >= abs(a[l] - b_j)) {
+                r = m;
+            } else {
+                l = m + 1;
+            }
+        }
+
+        priority_queue<pair<int, int>, vector<pair<int, int>>, greater<>> pq;
+        for (int i = max(l - k, 0); i <= min(l + k, n - 1); ++i) {
+            int dist = abs(a[i] - b_j);
+            pq.push({dist, a[i]});
+            if (pq.size() > k) {
+                pq.pop();
+            }
+        }
+
+        return pq.top().first;
+    };
+
+    for (int i = 0; i < q; ++i) {
+        cout << find_kth_closest(b[i]) << '\n';
+    }
+
+    return 0;
+}
+```
+
+### Explanation:
+1. **Sorting**: We first sort the array `a` to facilitate the binary search.
+2. **Binary Search**: For each query, we perform a binary search to find the starting index `l` such that the distance from `b_j` to `a[l]` is the smallest among the first `k` elements.
+3. **Min-Heap**: We then use a min-heap to maintain the top `k` smallest distances. We iterate over the range `[l - k, l + k]` and push distances into the heap. If the heap size exceeds `k`, we pop the largest element.
+4. **Result**: The root of the min-heap at the end of processing will give us the k-th smallest distance.
+
+This approach ensures that we handle each query in \(O(\log N + k \log k)\) time, making it efficient even for large inputs.

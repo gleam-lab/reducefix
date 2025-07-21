@@ -1,0 +1,39 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+
+using namespace std;
+
+int main() {
+    int n, q;
+    cin >> n >> q;
+    vector<int> points(n + 1);
+    for (int i = 0; i < n; ++i) {
+        cin >> points[i];
+    }
+
+    // Create a vector to store distances between all points A_i and B_j
+    vector<pair<int, int>> distances;
+    for (int j = 0; j < q; ++j) {
+        int b, k;
+        cin >> b >> k;
+        // Calculate distances from all A_i to B_j
+        for (int i = 0; i < n; ++i) {
+            int distance = abs(points[i] - b);
+            distances.emplace_back(distance, k - 1); // k-1 because k is 1-based
+        }
+    }
+
+    // Sort distances by the distance value
+    sort(distances.begin(), distances.end());
+
+    // Output the k-th closest distance for each B_j
+    for (int j = 0; j < q; ++j) {
+        // We need to output the k-th closest distance for each B_j
+        // Since the distances are sorted, we just need to access the j-th element of the sorted distances vector
+        // that corresponds to B_j
+        cout << distances[j * n].first << endl;
+    }
+
+    return 0;
+}

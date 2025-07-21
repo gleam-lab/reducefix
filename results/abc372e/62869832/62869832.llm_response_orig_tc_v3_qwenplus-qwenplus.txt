@@ -1,0 +1,114 @@
+To solve this problem efficiently, we need to manage dynamic connectivity in an undirected graph and answer queries about the k-th largest vertex in a connected component.
+
+### Key Observations:
+1. **Union-Find (Disjoint Set Union - DSU)** is ideal for maintaining connected components dynamically.
+2. Each component should maintain a sorted list of its vertices in descending order so that answering "k-th largest" is efficient.
+3. Since `k` is small (up to 10), we can keep only the top 10 largest elements in each set for fast query handling.
+
+### Data Structures Used:
+- **Parent array** (`parent[]`) for union-find.
+- **Sorted lists** (`tops[]`) associated with each root node storing up to the 10 largest vertices in the component.
+
+### Strategy:
+- **Type 1 Query (Add Edge):**
+  - Perform union operation using path compression.
+  - When two sets are merged, merge their sorted lists and retain only the top 10 largest elements.
+
+- **Type 2 Query (Find k-th Largest):**
+  - Find the root of the queried vertex.
+  - Return the k-th element from the sorted list if it exists; otherwise, return `-1`.
+
+This approach ensures that both operations run in near-constant time due to union-find optimizations, and queries are handled in O(1) per query due to pre-sorted data.
+
+Here's the corrected and optimized C++ implementation:
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+const int MAXN = 2e5 + 5;
+const int TOP_K = 10;
+
+int parent[MAXN];
+vector<int> tops[MAXN];
+
+int find(int x) {
+    if (parent[x] != x)
+        parent[x] = find(parent[x]);
+    return parent[x];
+}
+
+void unite(int u, int v) {
+    int pu = find(u);
+    int pv = find(v);
+    if (pu == pv) return;
+
+    // Always merge smaller into larger for efficiency
+    if (tops[pu].size() < tops[pv].size())
+        swap(pu, pv);
+
+    // Merge the lists
+    vector<int> merged;
+    auto& a = tops[pu];
+    auto& b = tops[pv];
+
+    int i = 0, j = 0;
+    while (i < a.size() && j < b.size()) {
+        if (a[i] > b[j])
+            merged.push_back(a[i++]);
+        else
+            merged.push_back(b[j++]);
+    }
+    while (i < a.size() && merged.size() < TOP_K)
+        merged.push_back(a[i++]);
+    while (j < b.size() && merged.size() < TOP_K)
+        merged.push_back(b[j++]);
+
+    tops[pu] = merged;
+    parent[pv] = pu;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int N, Q;
+    cin >> N >> Q;
+
+    // Initialize DSU and tops
+    for (int i = 1; i <= N; ++i) {
+        parent[i] = i;
+        tops[i] = {i};
+    }
+
+    while (Q--) {
+        int type;
+        cin >> type;
+        if (type == 1) {
+            int u, v;
+            cin >> u >> v;
+            unite(u, v);
+        } else {
+            int v, k;
+            cin >> v >> k;
+            int root = find(v);
+            if (tops[root].size() < k)
+                cout << -1 << '\n';
+            else
+                cout << tops[root][k - 1] << '\n';
+        }
+    }
+
+    return 0;
+}
+```
+
+### Why This Works:
+- Efficient merging keeps only necessary elements.
+- Queries are answered in constant time using precomputed data.
+- Path compression in DSU ensures almost O(1) time complexity for operations.
+
+### Time Complexity:
+- **Union Operation**: Nearly O(α(N)) where α is the inverse Ackermann function.
+- **Query Operation**: O(1)
+- **Overall**: Efficient enough for constraints up to `2 * 10^5`.

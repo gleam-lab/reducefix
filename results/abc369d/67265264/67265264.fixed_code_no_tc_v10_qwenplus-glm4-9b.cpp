@@ -1,0 +1,41 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+using namespace std;
+#define ios ios_base::sync_with_stdio(0);cin.tie(0);cout.tie(0)
+#define ll long long
+#define mod 1000000007
+const int N = 1e5 + 5;
+
+ll dp[N][2];
+
+ll exp(int i, bool parity) {
+    if (i == n - 1)
+        return parity ? v[i] : 2 * v[i];
+    if (dp[i][parity] != -1)
+        return dp[i][parity];
+    
+    ll take = exp(i + 1, !parity) + (parity ? v[i] : 2 * v[i]);
+    ll leave = exp(i + 1, parity);
+    
+    return dp[i][parity] = max(take, leave);
+}
+
+void solve() {
+    cin >> n;
+    vector<ll> v(n, 0);
+    for (auto &val : v)
+        cin >> val;
+    memset(dp, -1, sizeof(dp));
+    cout << exp(0, 1) << '\n';
+}
+
+int main() {
+    ios;
+    int q;
+    cin >> q;
+    while (q--) {
+        solve();
+    }
+    return 0;
+}

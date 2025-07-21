@@ -1,0 +1,114 @@
+Here's the corrected version of your C++ code that addresses the issues mentioned in the failing test cases:
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+
+struct SegTree {
+    int size;
+    vector<ll> tree;
+    
+    SegTree(int n) : size(1) {
+        while(size < n) size *= 2;
+        tree.assign(2*size, 0);
+    }
+    
+    void update(int pos, int val) {
+        pos += size;
+        tree[pos] = val;
+        while(pos > 1) {
+            pos /= 2;
+            tree[pos] = tree[2*pos] + tree[2*pos+1];
+        }
+    }
+    
+    ll sum(int l, int r) {
+        l += size;
+        r += size;
+        ll res = 0;
+        while(l <= r) {
+            if(l % 2 == 1) res += tree[l++];
+            if(r % 2 == 0) res += tree[r--];
+            l /= 2;
+            r /= 2;
+        }
+        return res;
+    }
+};
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int H, W, Q;
+    cin >> H >> W >> Q;
+    
+    vector<vector<bool>> grid(H, vector<bool>(W, true));
+    SegTree row[H], col[W];
+    
+    for(int i = 0; i < H; ++i) row[i] = SegTree(W);
+    for(int j = 0; j < W; ++j) col[j] = SegTree(H);
+    
+    for(int i = 0; i < H; ++i) {
+        for(int j = 0; j < W; ++j) {
+            row[i].update(j, 1);
+            col[j].update(i, 1);
+        }
+    }
+    
+    int ans = H * W;
+    
+    for(int i = 0; i < Q; ++i) {
+        int R, C;
+        cin >> R >> C;
+        --R; --C;
+        
+        if(grid[R][C]) {
+            grid[R][C] = false;
+            --ans;
+            
+            row[R].update(C, 0);
+            col[C].update(R, 0);
+            
+            int left = 0, right = W-1, up = 0, down = H-1;
+            
+            while(left <= right) {
+                int mid = (left + right) / 2;
+                if(row[R].sum(mid+1, right) > 0) {
+                    right = mid;
+                } else {
+                    left = mid + 1;
+                }
+            }
+            
+            if(left < W) {
+                row[R].update(left, 1);
+                ++ans;
+            }
+            
+            left = 0, right = H-1;
+            
+            while(up <= down) {
+                int mid = (up + down) / 2;
+                if(col[C].sum(mid+1, down) > 0) {
+                    down = mid;
+                } else {
+                    up = mid + 1;
+                }
+            }
+            
+            if(up < H) {
+                col[C].update(up, 1);
+                ++ans;
+            }
+        }
+    }
+    
+    cout << ans << '\n';
+    
+    return 0;
+}
+```
+
+This solution uses a segment tree to efficiently handle range updates and queries for both rows and columns. It maintains the count of walls in each row and column and updates them accordingly when a bomb is placed. This ensures that the time complexity remains efficient even for large inputs.

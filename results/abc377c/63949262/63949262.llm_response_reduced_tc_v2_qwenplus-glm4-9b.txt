@@ -1,0 +1,93 @@
+
+The problem requires us to determine the number of empty squares on an NxN grid where we can place a piece without it being captured by any existing pieces. The capturing rules are complex and depend on the position of the existing pieces.
+
+### Analysis of the Problem
+Given the constraints, especially with N being as large as \(10^9\), it is impractical to iterate over each cell in the grid to check if it can be safely occupied. Instead, we need to identify the regions of the grid that are safe from capture based on the positions of existing pieces.
+
+### Key Observations
+1. The capture range of a piece is determined by its position, and the capture range overlaps for certain patterns.
+2. We can use the positions of the existing pieces to define the boundaries of safe regions.
+
+### Solution Approach
+1. For each piece, determine the boundaries of the grid that are potentially in capture range.
+2. Use these boundaries to mark the safe regions on the grid.
+3. Count the number of cells in these safe regions.
+
+### Implementation Steps
+1. Define a structure to store the boundaries of the capture range for each piece.
+2. For each piece, update the boundaries.
+3. Merge overlapping or contiguous regions to simplify the counting.
+4. Count the cells in the final safe regions.
+
+### Corrected Code
+```cpp
+#include <iostream>
+#include <vector>
+#include <algorithm>
+
+using namespace std;
+
+const int MAX_N = 1000000000;
+
+struct Boundary {
+    int x;
+    int y;
+    int type;
+};
+
+int main() {
+    int N, M;
+    cin >> N >> M;
+    vector<Boundary> boundaries;
+
+    for (int i = 0; i < M; ++i) {
+        int a, b;
+        cin >> a >> b;
+
+        // Add the boundaries for the current piece
+        boundaries.push_back({a - 2, b - 1, 1}); // (i-2, j-1)
+        boundaries.push_back({a - 2, b, 1});     // (i-2, j)
+        boundaries.push_back({a - 2, b + 1, 1}); // (i-2, j+1)
+        boundaries.push_back({a - 1, b + 2, 1}); // (i-1, j+2)
+        boundaries.push_back({a + 1, b + 2, 1}); // (i+1, j+2)
+        boundaries.push_back({a + 2, b + 1, 1}); // (i+2, j+1)
+        boundaries.push_back({a + 2, b, 1});     // (i+2, j)
+        boundaries.push_back({a + 2, b - 1, 1}); // (i+2, j-1)
+        boundaries.push_back({a - 1, b - 2, 1}); // (i-1, j-2)
+        boundaries.push_back({a + 1, b - 2, 1}); // (i+1, j-2)
+    }
+
+    // Sort the boundaries by x and y and type
+    sort(boundaries.begin(), boundaries.end());
+
+    // Merge overlapping or contiguous regions
+    vector<Boundary> merged_boundaries;
+    for (auto &b : boundaries) {
+        if (!merged_boundaries.empty() && merged_boundaries.back().x == b.x && merged_boundaries.back().type == b.type) {
+            merged_boundaries.back().y = b.y;
+        } else {
+            merged_boundaries.push_back(b);
+        }
+    }
+
+    // Count the number of safe cells
+    long long safe_cells = 0;
+    for (int i = 0; i < merged_boundaries.size(); ++i) {
+        if (merged_boundaries[i].type == 1) {
+            if (i == 0 || merged_boundaries[i - 1].type == -1) {
+                int x_start = merged_boundaries[i].x;
+                int x_end = x_start + 1;
+                int y_start = max(1, (i == 0 ? 1 : merged_boundaries[i].y));
+                int y_end = min(N, (i == merged_boundaries.size() - 1 ? N : merged_boundaries[i + 1].y));
+                safe_cells += (x_end - x_start) * (y_end - y_start);
+            }
+        }
+    }
+
+    cout << N * N - safe_cells << endl;
+
+    return 0;
+}
+```
+
+This code defines the boundaries for each piece, sorts them, merges overlapping regions, and counts the number of safe cells. It ensures that the computation remains efficient even for large values of N and M.

@@ -1,0 +1,39 @@
+#include <iostream>
+#include <vector>
+#include <set>
+#include <cmath>
+
+using namespace std;
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(NULL);
+
+    long long N, M;
+    cin >> N >> M;
+
+    set<pair<long long, long long>> occupied_positions;
+    
+    for(long long i = 0; i < M; ++i) {
+        long long x, y;
+        cin >> x >> y;
+        --x, --y; // Convert 1-based indexing to 0-based
+        occupied_positions.insert({x, y});
+
+        // Add positions that can capture this piece
+        for(long long dx = -2; dx <= 2; ++dx) {
+            for(long long dy = -2; dy <= 2; dy++) {
+                if(abs(dx) + abs(dy) == 3 && dx != 0 && dy != 0) {
+                    long long nx = x + dx, ny = y + dy;
+                    if(nx >= 0 && nx < N && ny >= 0 && ny < N) {
+                        occupied_positions.insert({nx, ny});
+                    }
+                }
+            }
+        }
+    }
+
+    cout << (N * N) - occupied_positions.size() << '\n';
+
+    return 0;
+}

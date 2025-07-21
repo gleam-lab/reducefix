@@ -1,0 +1,50 @@
+#include<bits/stdc++.h>
+using namespace std;
+#define INF LLONG_MAX
+
+int n, m;
+long long a[200005], dis[200005];
+vector<pair<long long, int>> g[200005];
+
+struct cmp {
+    bool operator()(pair<long long, int>& a, pair<long long, int>& b) {
+        return a.first > b.first;
+    }
+};
+
+void dijkstra() {
+    priority_queue<pair<long long, int>, vector<pair<long long, int>>, cmp> pq;
+    pq.push({a[1], 1});
+    while (!pq.empty()) {
+        auto [dist, u] = pq.top(); pq.pop();
+        if (dist != dis[u]) continue;
+        for (auto [v, w] : g[u]) {
+            if (dis[v] > dist + w + a[v]) {
+                dis[v] = dist + w + a[v];
+                pq.push({dis[v], v});
+            }
+        }
+    }
+}
+
+int main() {
+    ios_base::sync_with_stdio(false); cin.tie(0); cout.tie(0);
+
+    cin >> n >> m;
+    for (int i = 1; i <= n; ++i) cin >> a[i];
+    for (int i = 0; i < m; ++i) {
+        int u, v, w; cin >> u >> v >> w;
+        g[u].emplace_back(w, v);
+        g[v].emplace_back(w, u);
+    }
+
+    memset(dis, 0x3f, sizeof(dis));
+    dis[1] = 0;
+    dijkstra();
+
+    for (int i = 2; i <= n; ++i) {
+        cout << min(dis[i], a[i]) << " ";
+    }
+
+    return 0;
+}

@@ -1,0 +1,84 @@
+To fix this code, we need to address the algorithm used to determine when each cell sinks into the sea. The original approach uses a priority queue to propagate the sinking from borders, but it might not correctly handle all cases, especially when multiple adjacent cells have the same elevation. 
+
+### Approaches
+The correct approach involves:
+1. **Priority Queue (Min-Heap)**: Start by processing the border cells first since they are adjacent to the sea. For each cell, the time it sinks is the maximum of its own elevation and the minimum sinking time of its adjacent cells that have already been processed.
+2. **Dijkstra-like Algorithm**: Treat each cell's sinking time as a value to be minimized based on its neighbors. Use a priority queue to always process the cell with the smallest current sinking time next.
+3. **Prefix Sum Array**: After determining the sinking time for each cell, use a prefix sum array to efficiently compute the number of cells that remain above sea level for each year.
+
+### Solution Code
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+#define all(x) (x).begin(), (x).end()
+
+int main() {
+    ios_base::sync_with_stdio(0);
+    cin.tie(0);
+    int h, w, y;
+    cin >> h >> w >> y;
+    vector<vector<int>> height(h, vector<int>(w));
+    vector<vector<int>> sink_time(h, vector<int>(w, INT_MAX));
+    priority_queue<pair<int, pair<int, int>>, vector<pair<int, pair<int, int>>>, greater<pair<int, pair<int, int>>>> pq;
+    int di[4][2] = {{-1, 0}, {1, 0}, {0, -1}, {0, 1}};
+
+    for (int i = 0; i < h; i++) {
+        for (int j = 0; j < w; j++) {
+            cin >> height[i][j];
+            if (i == 0 || i == h - 1 || j == 0 || j == w - 1) {
+                sink_time[i][j] = height[i][j];
+                pq.push({height[i][j], {i, j}});
+            }
+        }
+    }
+
+    while (!pq.empty()) {
+        auto current = pq.top();
+        pq.pop();
+        int current_time = current.first;
+        int r = current.second.first;
+        int c = current.second.second;
+        if (current_time > sink_time[r][c]) continue;
+        for (int i = 0; i < 4; i++) {
+            int nr = r + di[i][0];
+            int nc = c + di[i][1];
+            if (nr < 0 || nr >= h || nc < 0 || nc >= w) continue;
+            int new_time = max(height[nr][nc], current_time);
+            if (new_time < sink_time[nr][nc]) {
+                sink_time[nr][nc] = new_time;
+                pq.push({new_time, {nr, nc}});
+            }
+        }
+    }
+
+    vector<int> count(y + 2, 0);
+    for (int i = 0; i < h; i++) {
+        for (int j = 0; j < w; j++) {
+            if (sink_time[i][j] <= y) {
+                count[sink_time[i][j]]++;
+            }
+        }
+    }
+
+    vector<int> prefix(y + 1, 0);
+    prefix[0] = count[0];
+    for (int i = 1; i <= y; i++) {
+        prefix[i] = prefix[i - 1] + count[i];
+    }
+
+    for (int i = 1; i <= y; i++) {
+        cout << h * w - prefix[i] << '\n';
+    }
+
+    return 0;
+}
+```
+
+### Explanation
+1. **Initialization**: The code reads the grid dimensions and elevations. It initializes a `sink_time` matrix to store the time each cell sinks, initially set to infinity except for border cells.
+2. **Priority Queue Processing**: The priority queue processes each cell by its sinking time. For each cell, it checks its neighbors. The sinking time for a neighbor is the maximum of its own elevation and the current cell's sinking time. If this calculated time is better (smaller) than the previously recorded time, it updates the neighbor's time and adds it to the queue.
+3. **Counting Sinking Times**: After determining the sinking times for all cells, the code counts how many cells sink at each year up to the maximum year `Y`.
+4. **Prefix Sum Calculation**: A prefix sum array is used to efficiently compute the cumulative number of cells that have sunk by each year. The result for each year is derived by subtracting the prefix sum from the total number of cells, giving the number of cells remaining above sea level.
+
+This approach ensures optimal performance by leveraging a priority queue to propagate sinking times efficiently and a prefix sum array for quick range queries.

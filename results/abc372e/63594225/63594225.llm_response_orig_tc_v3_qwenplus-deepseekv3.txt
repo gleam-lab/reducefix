@@ -1,0 +1,94 @@
+After analyzing the problem and the incorrect code, I found that the main issue is with the merging logic and the way we maintain the top k elements in each connected component. The original code attempts to merge two sorted lists and keep only the top 100 elements, but this approach is inefficient and incorrect for handling large graphs.
+
+Here's the corrected solution that uses a more efficient approach with Union-Find (Disjoint Set Union) and priority queues to maintain the top 10 largest elements in each component (since k is at most 10):
+
+```cpp
+#include <bits/stdc++.h>
+
+using namespace std;
+
+vector<int> parent;
+vector<priority_queue<int>> components;
+
+int find(int u) {
+    if (parent[u] != u) {
+        parent[u] = find(parent[u]);
+    }
+    return parent[u];
+}
+
+void unite(int u, int v) {
+    u = find(u);
+    v = find(v);
+    if (u == v) return;
+    
+    if (components[u].size() < components[v].size()) {
+        swap(u, v);
+    }
+    
+    priority_queue<int> temp;
+    while (!components[v].empty()) {
+        temp.push(components[v].top());
+        components[v].pop();
+    }
+    
+    while (!temp.empty()) {
+        components[u].push(temp.top());
+        temp.pop();
+        if (components[u].size() > 10) {
+            components[u].pop();
+        }
+    }
+    
+    parent[v] = u;
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int N, Q;
+    cin >> N >> Q;
+    
+    parent.resize(N+1);
+    components.resize(N+1);
+    
+    for (int i = 1; i <= N; i++) {
+        parent[i] = i;
+        components[i].push(i);
+    }
+    
+    while (Q--) {
+        int t, u, v;
+        cin >> t >> u >> v;
+        
+        if (t == 1) {
+            unite(u, v);
+        } else {
+            int root = find(u);
+            if (components[root].size() < v) {
+                cout << "-1\n";
+            } else {
+                priority_queue<int> temp = components[root];
+                for (int i = 0; i < v-1; i++) {
+                    temp.pop();
+                }
+                cout << temp.top() << '\n';
+            }
+        }
+    }
+    
+    return 0;
+}
+```
+
+Key improvements:
+1. Uses Union-Find with path compression for efficient component tracking
+2. Each component maintains a priority queue (max-heap) that keeps only the top 10 largest elements
+3. When merging components, we combine their priority queues while maintaining the size constraint (keeping only top 10 elements)
+4. For query operations, we directly access the k-th largest element from the priority queue of the component
+
+This solution efficiently handles the constraints (N and Q up to 2×10^5) with:
+- O(α(N)) for Union-Find operations (with path compression)
+- O(k log k) for merging components (since k is at most 10)
+- O(k) for query operations (since we need to pop k-1 elements to get the k-th largest)

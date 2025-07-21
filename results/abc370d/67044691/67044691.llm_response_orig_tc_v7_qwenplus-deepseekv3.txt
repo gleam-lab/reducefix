@@ -1,0 +1,98 @@
+To fix this code, we need to correctly handle the destruction of walls as per the problem's specifications. The issue in the original code arises from incorrect handling of the neighbors when a bomb is placed on an empty cell. Specifically, the code fails to correctly identify and destroy the first walls in each direction (up, down, left, right) from the bomb's position.
+
+### Approaches
+1. **Initialization**: Start with all cells having walls. We can use sets to keep track of the walls in each row and column for efficient querying and deletion.
+2. **Query Processing**: For each query:
+   - If the cell has a wall, destroy it.
+   - If the cell does not have a wall, find the first walls in each of the four directions (up, down, left, right) and destroy them.
+3. **Efficient Lookup**: Use binary search (via `upper_bound` and `lower_bound`) to efficiently find the nearest walls in each direction.
+
+### Solution Code
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int H, W, Q;
+    cin >> H >> W >> Q;
+    
+    vector<set<int>> rows(H);
+    vector<set<int>> cols(W);
+    for (int i = 0; i < H; ++i) {
+        for (int j = 0; j < W; ++j) {
+            rows[i].insert(j);
+            cols[j].insert(i);
+        }
+    }
+    
+    while (Q--) {
+        int R, C;
+        cin >> R >> C;
+        R--; C--;
+        
+        if (rows[R].count(C)) {
+            rows[R].erase(C);
+            cols[C].erase(R);
+        } else {
+            // Check up, down, left, right for the first walls
+            vector<pair<int, int>> targets;
+            
+            // Up (first wall above)
+            auto it_up = cols[C].lower_bound(R);
+            if (it_up != cols[C].begin()) {
+                --it_up;
+                targets.emplace_back(*it_up, C);
+            }
+            
+            // Down (first wall below)
+            auto it_down = cols[C].upper_bound(R);
+            if (it_down != cols[C].end()) {
+                targets.emplace_back(*it_down, C);
+            }
+            
+            // Left (first wall to the left)
+            auto it_left = rows[R].lower_bound(C);
+            if (it_left != rows[R].begin()) {
+                --it_left;
+                targets.emplace_back(R, *it_left);
+            }
+            
+            // Right (first wall to the right)
+            auto it_right = rows[R].upper_bound(C);
+            if (it_right != rows[R].end()) {
+                targets.emplace_back(R, *it_right);
+            }
+            
+            for (auto [r, c] : targets) {
+                rows[r].erase(c);
+                cols[c].erase(r);
+            }
+        }
+    }
+    
+    int ans = 0;
+    for (int i = 0; i < H; ++i) {
+        ans += rows[i].size();
+    }
+    cout << ans << '\n';
+    
+    return 0;
+}
+```
+
+### Explanation
+1. **Initialization**: The code initializes sets for each row and column to keep track of walls. Each cell (i, j) is added to the respective row and column sets.
+2. **Query Processing**: For each query:
+   - If the cell (R, C) has a wall (checked via `rows[R].count(C)`), the wall is removed from both the row and column sets.
+   - If the cell does not have a wall, the code searches for the nearest walls in each of the four directions using binary search operations (via `lower_bound` and `upper_bound`):
+     - **Up**: The first wall above (R, C) is found by decrementing the iterator obtained from `lower_bound`.
+     - **Down**: The first wall below (R, C) is found by incrementing the iterator obtained from `upper_bound`.
+     - **Left**: The first wall to the left of (R, C) is found by decrementing the iterator obtained from `lower_bound`.
+     - **Right**: The first wall to the right of (R, C) is found by incrementing the iterator obtained from `upper_bound`.
+3. **Wall Removal**: Any walls found in the four directions are removed from both the row and column sets.
+4. **Result Calculation**: After processing all queries, the total remaining walls are counted by summing the sizes of all row sets (or column sets, as they are symmetric).
+
+This approach ensures efficient processing of each query in logarithmic time relative to the number of walls in the respective row or column, leading to an overall time complexity of O(Q log (H + W)), which is optimal for the given constraints.

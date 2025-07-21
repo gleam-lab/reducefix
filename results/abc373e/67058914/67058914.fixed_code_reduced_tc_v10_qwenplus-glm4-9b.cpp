@@ -1,0 +1,72 @@
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+
+int N, M;
+ll K;
+
+struct Node {
+  ll val;
+  int idx;
+};
+
+bool is_victory_possible(ll votes, const vector<Node>& sorted_candidates, int remaining_candidates) {
+  ll votes_sum = 0;
+  for (int i = 0; i < remaining_candidates; ++i) {
+    votes_sum += sorted_candidates[i].val;
+    if (votes_sum >= votes + i) return true;
+  }
+  return false;
+}
+
+int main() {
+  cin >> N >> M >> K;
+
+  vector<Node> candidates(N);
+  vector<ll> votes(N);
+  
+  for (int i = 0; i < N; ++i) {
+    cin >> votes[i];
+    candidates[i] = {votes[i], i + 1};
+  }
+
+  // Sort by votes in ascending order and index in descending order
+  sort(candidates.begin(), candidates.end(), [](const Node& a, const Node& b) {
+    if (a.val == b.val) return a.idx > b.idx;
+    return a.val < b.val;
+  });
+
+  vector<ll> required_votes(N, -1);
+
+  // Calculate the minimum votes required for each candidate to guarantee their victory
+  for (int i = 0; i < N; ++i) {
+    if (i < M - 1) {
+      required_votes[candidates[i].idx - 1] = 0; // If there are less than M candidates remaining, they're automatically the winners
+      continue;
+    }
+
+    ll votes_needed = LLONG_MAX;
+    for (int j = i + 1; j < N; ++j) {
+      if (j < M - 1) {
+        votes_needed = 0; // There are at least M candidates, no need for additional votes
+        break;
+      }
+
+      if (!is_victory_possible(candidates[i].val + votes_needed, candidates.substr(0, j + 1), j + 1)) {
+        votes_needed++;
+      } else {
+        break;
+      }
+    }
+
+    required_votes[candidates[i].idx - 1] = votes_needed;
+  }
+
+  // Output the result
+  for (ll vote : required_votes) {
+    cout << vote << " ";
+  }
+  cout << endl;
+
+  return 0;
+}

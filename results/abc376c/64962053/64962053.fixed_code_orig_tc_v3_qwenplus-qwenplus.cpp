@@ -1,0 +1,30 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    int N;
+    cin >> N;
+    vector<long long> A(N), B(N - 1);
+    for (int i = 0; i < N; ++i) cin >> A[i];
+    for (int i = 0; i < N - 1; ++i) cin >> B[i];
+
+    sort(A.begin(), A.end());
+    sort(B.begin(), B.end());
+
+    multiset<long long> b_set(B.begin(), B.end());
+
+    // Try to assign the largest toys first to maximize matching with available boxes
+    for (int i = N - 1; i >= 0; --i) {
+        auto it = b_set.lower_bound(A[i]);
+        if (it != b_set.end()) {
+            b_set.erase(it);
+        } else {
+            // If we can't place this toy in any box, we need a new box of at least A[i]
+            cout << A[i] << endl;
+            return 0;
+        }
+    }
+
+    // All toys could be placed, which should not happen since one toy must go into the new box
+    cout << -1 << endl;
+}

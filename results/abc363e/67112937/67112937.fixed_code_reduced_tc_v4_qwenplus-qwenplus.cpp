@@ -1,0 +1,74 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+constexpr int d[4][2] = {{0, 1}, {0, -1}, {1, 0}, {-1, 0}};
+
+int32_t main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int H, W, Y;
+    cin >> H >> W >> Y;
+
+    vector<vector<int>> A(H, vector<int>(W));
+    for (int i = 0; i < H; ++i) {
+        for (int j = 0; j < W; ++j) {
+            cin >> A[i][j];
+        }
+    }
+
+    // Combine all border cells into a priority queue
+    priority_queue<tuple<int, int, int>, vector<tuple<int, int, int>>, greater<>> pq;
+    vector<vector<bool>> vis(H, vector<bool>(W, false));
+
+    auto add_border = [&](int x, int y) {
+        if (!vis[x][y]) {
+            vis[x][y] = true;
+            pq.emplace(A[x][y], x, y);
+        }
+    };
+
+    // Add all boundary cells
+    for (int i = 0; i < H; ++i) {
+        add_border(i, 0);
+        if (W > 1) add_border(i, W - 1);
+    }
+    for (int j = 1; j < W - 1; ++j) {
+        add_border(0, j);
+        if (H > 1) add_border(H - 1, j);
+    }
+
+    int remaining = H * W;
+    vector<int> ans(Y + 2);  // Store answers for year 0 to Y
+
+    // Process in order of increasing sea level
+    for (int year = 1; !pq.empty() && year <= Y; ++year) {
+        while (!pq.empty() && get<0>(pq.top()) <= year) {
+            auto [h, x, y] = pq.top();
+            pq.pop();
+            if (vis[x][y]) {
+                --remaining;
+                vis[x][y] = false;  // Mark as sunk
+                for (auto& dir : d) {
+                    int nx = x + dir[0], ny = y + dir[1];
+                    if (nx >= 0 && nx < H && ny >= 0 && ny < W && vis[nx][ny] == false) {
+                        pq.emplace(A[nx][ny], nx, ny);
+                    }
+                }
+            }
+        }
+        ans[year] = remaining;
+    }
+
+    // Fill any missing answers with the last computed value
+    for (int i = 1; i <= Y; ++i) {
+        if (ans[i] == 0) ans[i] = ans[i - 1];
+    }
+
+    // Output results
+    for (int i = 1; i <= Y; ++i) {
+        cout << ans[i] << '\n';
+    }
+
+    return 0;
+}

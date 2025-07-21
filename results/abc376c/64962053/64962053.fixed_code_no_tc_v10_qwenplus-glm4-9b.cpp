@@ -1,0 +1,49 @@
+#include <iostream>
+#include <algorithm>
+#include <vector>
+
+using namespace std;
+
+int main() {
+    int n;
+    cin >> n;
+    vector<int> toys(n);
+    vector<int> boxes(n - 1);
+    
+    for (int i = 0; i < n; ++i) {
+        cin >> toys[i];
+    }
+    for (int i = 0; i < n - 1; ++i) {
+        cin >> boxes[i];
+    }
+    
+    sort(toys.begin(), toys.end());
+    sort(boxes.begin(), boxes.end());
+    
+    // Start with the assumption that we can use the largest box size from the existing boxes
+    int min_box_size = boxes.back();
+    
+    // Check from the end of toys and boxes if we can find a configuration where the largest box is enough
+    for (int i = n - 1; i >= 0; --i) {
+        if (toys[i] <= min_box_size) {
+            // If the largest toy fits into the largest box, then it's possible to fit all toys without needing a new box
+            cout << min_box_size << endl;
+            return 0;
+        }
+        // Check if there is any box that can fit the current toy
+        int j = n - 2;
+        while (j >= i && toys[i] > boxes[j]) {
+            j--;
+        }
+        // Update the smallest box size needed to fit the current toy
+        if (j == i - 1) {
+            min_box_size = toys[i];
+        } else {
+            min_box_size = min(min_box_size, boxes[j]);
+        }
+    }
+    
+    // If no such box size is found, output -1
+    cout << -1 << endl;
+    return 0;
+}

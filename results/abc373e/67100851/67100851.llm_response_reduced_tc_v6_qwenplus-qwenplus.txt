@@ -1,0 +1,137 @@
+```cpp
+#include <iostream>
+#include <vector>
+#include <algorithm>
+
+using namespace std;
+
+typedef long long ll;
+
+struct Candidate {
+    ll votes;
+    int index;
+};
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    ll N, M, K;
+    cin >> N >> M >> K;
+    
+    vector<Candidate> candidates(N);
+    ll total = 0;
+    
+    for (int i = 0; i < N; ++i) {
+        cin >> candidates[i].votes;
+        total += candidates[i].votes;
+        candidates[i].index = i;
+    }
+    
+    ll remaining = K - total;
+    
+    // Sort candidates by current votes
+    sort(candidates.begin(), candidates.end(), [](const Candidate &a, const Candidate &b) {
+        return a.votes < b.votes;
+    });
+    
+    vector<ll> prefix_sum(N + 1, 0);
+    for (int i = 0; i < N; ++i) {
+        prefix_sum[i + 1] = prefix_sum[i] + candidates[i].votes;
+    }
+    
+    vector<ll> result(N);
+    
+    for (int i = 0; i < N; ++i) {
+        int pos = i;  // position in sorted list
+        
+        // Binary search for minimum X
+        ll low = 0;
+        ll high = remaining;
+        ll answer = -1;
+        
+        while (low <= high) {
+            ll mid = (low + high) / 2;
+            ll target_votes = candidates[i].votes + mid;
+            
+            // We want to find the smallest index where votes > target_votes
+            // This means we're looking for the first candidate with votes > target_votes
+            int left = 0, right = N;
+            while (left < right) {
+                int m = (left + right) / 2;
+                if (candidates[m].votes > target_votes)
+                    right = m;
+                else
+                    left = m + 1;
+            }
+            
+            int cnt_better = N - left;
+            
+            // We need at least (M) candidates with more votes than this one to lose
+            if (cnt_better >= M) {
+                // Even with our additional votes, at least M candidates still have more
+                low = mid + 1;
+                continue;
+            }
+            
+            // To guarantee win, we must ensure that even if all other candidates get
+            // as many of the remaining votes as possible, not enough can surpass us
+            
+            // We need at most (N - M) candidates (excluding ourselves) to have ≥ our final score
+            // So we need to be among the top M+1 candidates
+            
+            // Find how many candidates currently have ≥ our target score
+            int j = upper_bound(candidates.begin(), candidates.end(), Candidate{target_votes, -1},
+                                [](const Candidate &a, const Candidate &b) {
+                                    return a.votes < b.votes;
+                                }) - candidates.begin();
+            
+            // If we are in top M, we already win
+            if (N - j < M) {
+                answer = mid;
+                high = mid - 1;
+                continue;
+            }
+            
+            // We need to raise our score to beat enough candidates
+            // We calculate how many would need to be beaten
+            int l = N - M;
+            if (i >= l) l--;
+            
+            if (j <= l) {
+                low = mid + 1;
+                continue;
+            }
+            
+            // Calculate minimal required
+            ll required_votes = (l >= 0 ? (prefix_sum[j] - prefix_sum[l]) : 0);
+            ll needed_for_us = (j - l) * (target_votes + 1) - required_votes;
+            
+            if (needed_for_us <= remaining - mid) {
+                answer = mid;
+                high = mid - 1;
+            } else {
+                low = mid + 1;
+            }
+        }
+        
+        result[candidates[i].index] = (answer == -1 ? -1 : max(0LL, answer));
+    }
+    
+    // Handle edge case: when M > N, everyone wins
+    if (M > N) {
+        for (int i = 0; i < N; ++i) {
+            if (result[i] == -1 || result[i] > remaining)
+                result[i] = 0;
+        }
+    }
+    
+    for (int i = 0; i < N; ++i) {
+        cout << result[i];
+        if (i < N - 1) cout << " ";
+    }
+    cout << endl;
+    
+    return 0;
+}
+```

@@ -1,0 +1,54 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+#define ll long long
+#define vi vector<int>
+#define vll vector<ll>
+#define pb push_back
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+    
+    int N, Q;
+    cin >> N >> Q;
+    
+    vll A(N);
+    for (int i = 0; i < N; ++i) {
+        cin >> A[i];
+    }
+    
+    // Sort the A array once
+    sort(A.begin(), A.end());
+    
+    // Process each query
+    while (Q--) {
+        ll b;
+        int k;
+        cin >> b >> k;
+        
+        // Binary search on answer
+        ll low = 0, high = 2e14; // Max possible distance
+        while (low < high) {
+            ll mid = (low + high) / 2;
+            
+            // Find number of elements in A within [b - mid, b + mid]
+            ll left = b - mid;
+            ll right = b + mid;
+            
+            auto l = lower_bound(A.begin(), A.end(), left);
+            auto r = upper_bound(A.begin(), A.end(), right);
+            int count = r - l;
+            
+            if (count >= k) {
+                high = mid;
+            } else {
+                low = mid + 1;
+            }
+        }
+        
+        cout << low << "\n";
+    }
+    
+    return 0;
+}

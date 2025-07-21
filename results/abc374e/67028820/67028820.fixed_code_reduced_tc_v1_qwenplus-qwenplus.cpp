@@ -1,0 +1,45 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+
+#define int long long
+#define ld long double
+
+int n, x;
+vector<int> a, b, q, p;
+
+bool canMake(int mid) {
+    ld total_cost = 0;
+    for (int i = 0; i < n; i++) {
+        // Calculate how much we need of each resource
+        ld needed_a = (ld)mid / a[i];
+        ld needed_b = (ld)mid / b[i];
+
+        // Cost using A and B
+        ld cost_a = needed_a * p[i];
+        ld cost_b = needed_b * q[i];
+
+        // Choose the cheaper option
+        total_cost += min(cost_a, cost_b);
+    }
+
+    return (int)(ceil(total_cost)) <= x;
+}
+
+signed main() {
+    cin >> n >> x;
+    a.resize(n); b.resize(n); p.resize(n); q.resize(n);
+    for (int i = 0; i < n; i++) cin >> a[i] >> p[i] >> b[i] >> q[i];
+
+    int left = 0, right = 1e10;
+    while (left < right) {
+        int mid = (left + right + 1) >> 1;
+
+        if (canMake(mid)) left = mid;
+        else right = mid - 1;
+    }
+
+    cout << left;
+
+    return 0;
+}

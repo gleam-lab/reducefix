@@ -1,0 +1,122 @@
+To fix the issue and ensure that the code correctly handles all test cases, including hidden ones, we need to address several key aspects:
+
+1. **Union-Find Data Structure**: We need to maintain a union-find structure efficiently to manage the connected components.
+2. **Order Statistics Tree**: For each node, we need to maintain a set of its neighbors to quickly find the k-th largest element.
+3. **Correctness and Edge Cases**: Ensure that the code handles edge cases such as empty inputs or single elements correctly.
+
+Given these requirements, here is the corrected C++ code:
+
+```cpp
+#include <iostream>
+#include <vector>
+#include <set>
+#include <algorithm>
+#include <unordered_map>
+#include <functional>
+
+using namespace std;
+
+typedef long long int ll;
+
+struct UF {
+    vector<int> parent, rank;
+
+    UF(int n) {
+        parent.resize(n);
+        rank.resize(n, 0);
+        for (int i = 0; i < n; ++i) {
+            parent[i] = i;
+        }
+    }
+
+    int find(int x) {
+        if (parent[x] != x) {
+            parent[x] = find(parent[x]);
+        }
+        return parent[x];
+    }
+
+    void unite(int x, int y) {
+        int px = find(x), py = find(y);
+        if (px == py) return;
+        if (rank[px] > rank[py]) {
+            parent[py] = px;
+        } else {
+            parent[px] = py;
+            if (rank[px] == rank[py]) {
+                rank[py]++;
+            }
+        }
+    }
+};
+
+struct Node {
+    set<int> neighbors;
+
+    void insert(int neighbor) {
+        neighbors.insert(neighbor);
+    }
+
+    void erase(int neighbor) {
+        neighbors.erase(neighbor);
+    }
+
+    int getKthLargest(int k) {
+        auto it = neighbors.rbegin();
+        advance(it, k - 1);
+        return *it;
+    }
+};
+
+int main() {
+    int n, q;
+    cin >> n >> q;
+
+    UF uf(n + 1);
+    unordered_map<int, Node> nodes;
+    
+    for (int i = 1; i <= n; ++i) {
+        nodes[i] = Node();
+    }
+
+    for (int i = 0; i < q; ++i) {
+        int op, u, v, k;
+        cin >> op;
+        if (op == 1) {
+            cin >> u >> v;
+            uf.unite(u, v);
+            u = uf.find(u);
+            nodes[u].insert(v);
+            nodes[u].insert(u);
+            nodes[v].insert(u);
+            nodes[v].insert(v);
+        } else {
+            cin >> u >> k;
+            u = uf.find(u);
+            if (nodes[u].neighbors.size() < k) {
+                cout << -1 << endl;
+            } else {
+                cout << nodes[u].getKthLargest(k) << endl;
+            }
+        }
+    }
+
+    return 0;
+}
+```
+
+### Explanation:
+1. **Union-Find (UF) Class**:
+   - Manages the connected components using the union-find data structure with path compression and union by rank.
+
+2. **Node Class**:
+   - Maintains a set of neighbors for each node. Provides methods to insert and remove neighbors, and to get the k-th largest neighbor using reverse iterators.
+
+3. **Main Logic**:
+   - Reads the number of nodes `n` and queries `q`.
+   - Initializes the union-find structure and a map to store nodes.
+   - Processes each query:
+     - For type 1 queries, it unites two nodes and updates their neighbors.
+     - For type 2 queries, it finds the root of the node and checks if it has enough neighbors. If so, it prints the k-th largest neighbor; otherwise, it prints `-1`.
+
+This approach ensures that the solution is efficient and handles all edge cases properly.

@@ -1,0 +1,93 @@
+To fix this code, we need to address the issue where the initial incorrect output was 1217 instead of the expected 773. The problem involves simulating the destruction of walls in a grid based on a series of bomb placements. The key is to efficiently track which walls have been destroyed and correctly identify the walls to be destroyed in each query.
+
+### Approaches
+1. **Data Structures**: Use sets to track the remaining walls in each row and column for efficient look-up and deletion. Specifically:
+   - For each column, maintain a set of rows that still have walls.
+   - For each row, maintain a set of columns that still have walls.
+2. **Query Processing**:
+   - For each query, if the specified cell has a wall, remove it from both the row and column sets.
+   - If the cell does not have a wall, look for the nearest walls in the four directions (up, down, left, right) and remove them if they exist.
+3. **Efficiency**: Using sets allows for O(log n) time complexity for insertions, deletions, and searches, which is crucial given the constraints (up to 400,000 cells and 200,000 queries).
+
+### Solution Code
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+#define rep(i, n) for(int i = 0; i < (n); i++)
+using ll = long long;
+
+int main() {
+    int h, w, q;
+    cin >> h >> w >> q;
+    vector<set<int>> row_walls(h), col_walls(w);
+    rep(i, h) rep(j, w) {
+        row_walls[i].insert(j);
+        col_walls[j].insert(i);
+    }
+    int ans = h * w;
+    rep(qi, q) {
+        int r, c;
+        cin >> r >> c;
+        r--; c--;
+        if (row_walls[r].count(c)) {
+            row_walls[r].erase(c);
+            col_walls[c].erase(r);
+            ans--;
+        } else {
+            // Up
+            auto it_up = col_walls[c].lower_bound(r);
+            if (it_up != col_walls[c].begin()) {
+                it_up--;
+                int i = *it_up;
+                if (row_walls[i].count(c)) {
+                    row_walls[i].erase(c);
+                    col_walls[c].erase(i);
+                    ans--;
+                }
+            }
+            // Down
+            auto it_down = col_walls[c].lower_bound(r);
+            if (it_down != col_walls[c].end()) {
+                int i = *it_down;
+                if (row_walls[i].count(c)) {
+                    row_walls[i].erase(c);
+                    col_walls[c].erase(i);
+                    ans--;
+                }
+            }
+            // Left
+            auto it_left = row_walls[r].lower_bound(c);
+            if (it_left != row_walls[r].begin()) {
+                it_left--;
+                int j = *it_left;
+                if (col_walls[j].count(r)) {
+                    col_walls[j].erase(r);
+                    row_walls[r].erase(j);
+                    ans--;
+                }
+            }
+            // Right
+            auto it_right = row_walls[r].lower_bound(c);
+            if (it_right != row_walls[r].end()) {
+                int j = *it_right;
+                if (col_walls[j].count(r)) {
+                    col_walls[j].erase(r);
+                    row_walls[r].erase(j);
+                    ans--;
+                }
+            }
+        }
+    }
+    cout << ans << "\n";
+    return 0;
+}
+```
+
+### Explanation
+1. **Initialization**: We initialize sets for each row and column to keep track of the walls. Initially, all cells have walls, so all sets are populated with their respective indices.
+2. **Processing Queries**: For each query:
+   - If the cell (r, c) has a wall, it is removed from both the row and column sets, and the wall count is decremented.
+   - If the cell does not have a wall, we search for the nearest walls in the four directions (up, down, left, right) using set operations (lower_bound for efficient search). Each found wall is removed from both sets, and the count is decremented.
+3. **Output**: The remaining wall count is printed after all queries are processed.
+
+This approach ensures efficient handling of each query with logarithmic time complexity for set operations, making it suitable for large input sizes.

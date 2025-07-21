@@ -1,0 +1,78 @@
+To fix this code, we need to address the issue where the output does not match the expected results for certain test cases. The primary problem lies in how the sea level rise and the sinking of sections are being simulated. The original code uses a priority queue to process sections in order of their elevation, but it seems to incorrectly handle the propagation of sinking to adjacent sections when the sea level rises.
+
+### Approaches
+1. **Priority Queue Initialization**: We start by pushing all the border sections into a priority queue. These sections are the first to be considered for sinking as the sea level rises.
+2. **Processing Sinking Sections**: For each year, we process all sections in the priority queue that have an elevation less than or equal to the current sea level. Each time a section sinks, we check its adjacent sections (up, down, left, right) and add them to the queue if they haven't been processed yet and their elevation is less than or equal to the current sea level.
+3. **Tracking Remaining Area**: We maintain a count of the remaining sections above sea level, decrementing it each time a section sinks.
+
+### Solution Code
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+#define ll long long
+
+ll dx[4] = {0, 1, 0, -1}, dy[4] = {1, 0, -1, 0};
+
+int main() {
+    ll h, w, y;
+    cin >> h >> w >> y;
+    ll ans = h * w;
+    vector<vector<ll>> room(h, vector<ll>(w));
+    vector<vector<bool>> used(h, vector<bool>(w, false));
+    priority_queue<tuple<ll, ll, ll>, vector<tuple<ll, ll, ll>>, greater<tuple<ll, ll, ll>>> pq;
+
+    for (ll i = 0; i < h; ++i) {
+        for (ll j = 0; j < w; ++j) {
+            cin >> room[i][j];
+        }
+    }
+
+    // Push border cells into the priority queue
+    for (ll i = 0; i < h; ++i) {
+        if (!used[i][0]) {
+            pq.push({room[i][0], i, 0});
+            used[i][0] = true;
+        }
+        if (!used[i][w - 1]) {
+            pq.push({room[i][w - 1], i, w - 1});
+            used[i][w - 1] = true;
+        }
+    }
+    for (ll j = 1; j < w - 1; ++j) {
+        if (!used[0][j]) {
+            pq.push({room[0][j], 0, j});
+            used[0][j] = true;
+        }
+        if (!used[h - 1][j]) {
+            pq.push({room[h - 1][j], h - 1, j});
+            used[h - 1][j] = true;
+        }
+    }
+
+    ll current_sea_level = 0;
+    for (ll year = 1; year <= y; ++year) {
+        current_sea_level = year;
+        while (!pq.empty() && get<0>(pq.top()) <= current_sea_level) {
+            auto [elev, i, j] = pq.top();
+            pq.pop();
+            ans--;
+            for (ll k = 0; k < 4; ++k) {
+                ll ni = i + dx[k], nj = j + dy[k];
+                if (ni >= 0 && ni < h && nj >= 0 && nj < w && !used[ni][nj]) {
+                    used[ni][nj] = true;
+                    pq.push({room[ni][nj], ni, nj});
+                }
+            }
+        }
+        cout << ans << '\n';
+    }
+    return 0;
+}
+```
+
+### Explanation
+1. **Initialization**: The code reads the island dimensions (H, W) and the number of years Y. It initializes a priority queue to manage sections based on their elevation, starting with the border sections.
+2. **Processing Each Year**: For each year, the sea level increases by 1. The priority queue processes sections that are at or below the current sea level. Each time a section sinks, its adjacent sections are checked and added to the queue if they meet the sinking criteria.
+3. **Output**: After processing each year, the remaining area of the island is printed. The area is maintained by decrementing a counter each time a section sinks.
+
+This approach ensures that the simulation accurately reflects the rising sea level and the subsequent sinking of sections, providing the correct remaining area for each year. The use of a priority queue guarantees that sections are processed in the correct order, and the `used` matrix prevents redundant processing of sections.

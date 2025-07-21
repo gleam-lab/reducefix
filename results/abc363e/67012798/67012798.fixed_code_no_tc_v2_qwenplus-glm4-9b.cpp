@@ -1,0 +1,72 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+struct PairHash {
+    template <class T1, class T2>
+    size_t operator () (const pair<T1,T2> &pair) const {
+        auto hash1 = hash<T1>{}(pair.first);
+        auto hash2 = hash<T2>{}(pair.second);
+        return hash1 ^ hash2;
+    }
+};
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int H, W, Y;
+    cin >> H >> W >> Y;
+
+    vector<vector<int>> A(H, vector<int>(W));
+    for (int i = 0; i < H; i++) {
+        for (int j = 0; j < W; j++) {
+            cin >> A[i][j];
+        }
+    }
+
+    vector<vector<bool>> island(H, vector<bool>(W, true));
+    unordered_map<int, vector<pair<int, int>>, PairHash> pq;
+    queue<int> years;
+    for (int i = 0; i < H; i++) {
+        for (int j = 0; j < W; j++) {
+            if ((i == 0 || i == H - 1 || j == 0 || j == W - 1) || A[i][j] == 0) {
+                island[i][j] = false;
+                pq[0].push_back({i, j});
+            }
+        }
+    }
+
+    int initial_count = 0;
+    for (int y = 0; y <= Y; y++) {
+        if (!pq[y].empty()) {
+            queue<pair<int, int>> current_queue;
+            initial_count += pq[y].size();
+            while (!pq[y].empty()) {
+                auto [x, y] = pq[y].front();
+                pq[y].pop();
+                current_queue.push({x, y});
+                island[x][y] = false;
+                for (int d = 0; d < 4; d++) {
+                    int nx = x + dx[d], ny = y + dy[d];
+                    if (nx < 0 || nx >= H || ny < 0 || ny >= W) continue;
+                    if (island[nx][ny]) {
+                        island[nx][ny] = false;
+                        pq[y + 1].push_back({nx, ny});
+                    }
+                }
+            }
+        }
+        if (!current_queue.empty()) {
+            years.push(y + 1);
+            pq[y + 1].swap(current_queue);
+        }
+    }
+
+    while (!years.empty()) {
+        int y = years.front();
+        years.pop();
+        cout << H * W - initial_count + pq[y].size() << endl;
+    }
+
+    return 0;
+}

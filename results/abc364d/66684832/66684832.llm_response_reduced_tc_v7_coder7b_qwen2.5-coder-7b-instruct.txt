@@ -1,0 +1,81 @@
+To solve this problem efficiently, we need to determine the k-th closest point to each query point on the number line. The brute-force approach of calculating all distances and sorting them for each query would be too slow for large inputs (O(Q * N * log N)). Instead, we can use a more efficient method involving binary search and prefix sums.
+
+Here's a step-by-step breakdown of the solution:
+
+1. **Sort Points**: First, sort all points \(A_i\) to facilitate efficient range queries.
+2. **Prefix Sum Array**: Compute a prefix sum array to quickly calculate the cumulative sum of distances.
+3. **Binary Search**: For each query, use binary search to find the k-th smallest distance.
+
+Let's implement this approach in C++:
+
+```cpp
+#include <iostream>
+#include <algorithm>
+#include <vector>
+#include <cmath>
+
+using namespace std;
+
+#define ll long long
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int n, q;
+    cin >> n >> q;
+
+    vector<ll> a(n), b(q), k(q);
+    for (int i = 0; i < n; ++i) {
+        cin >> a[i];
+    }
+    for (int i = 0; i < q; ++i) {
+        cin >> b[i] >> k[i];
+    }
+
+    // Sort points A
+    sort(a.begin(), a.end());
+
+    // Calculate prefix sums of distances
+    vector<ll> prefix_sums(n + 1, 0);
+    for (int i = 0; i < n; ++i) {
+        prefix_sums[i + 1] = prefix_sums[i] + abs(a[i]);
+    }
+
+    // Process each query
+    for (int i = 0; i < q; ++i) {
+        ll target_distance = k[i];
+        ll left = 0, right = 1e8;
+        while (left < right) {
+            ll mid = (left + right) / 2;
+            auto it = lower_bound(a.begin(), a.end(), b[i] - mid);
+            int count_less_than_mid = it - a.begin();
+            auto it2 = upper_bound(a.begin(), a.end(), b[i] + mid);
+            int count_greater_than_mid = a.end() - it2;
+            int total_count = count_less_than_mid + count_greater_than_mid;
+
+            if (total_count >= target_distance) {
+                right = mid;
+            } else {
+                left = mid + 1;
+            }
+        }
+
+        // Calculate the exact k-th smallest distance
+        int count_less_than_left = lower_bound(a.begin(), a.end(), b[i] - left) - a.begin();
+        ll kth_distance = prefix_sums[count_less_than_left + target_distance - 1] - prefix_sums[count_less_than_left];
+
+        cout << kth_distance << endl;
+    }
+
+    return 0;
+}
+```
+
+### Explanation:
+1. **Sorting**: We sort the points \(A_i\) to facilitate binary search.
+2. **Prefix Sums**: We compute the prefix sums of distances from the origin to each point. This helps in quickly calculating the sum of distances within any range.
+3. **Binary Search**: For each query, we perform binary search to find the minimum distance `mid` such that there are at least `target_distance` points within the range `[b[i] - mid, b[i] + mid]`.
+4. **Exact Distance Calculation**: Once we have the minimum distance `mid`, we use the prefix sums to calculate the exact k-th smallest distance.
+
+This approach ensures that we handle large inputs efficiently and correctly.

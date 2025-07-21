@@ -1,0 +1,87 @@
+
+### Problem Analysis
+
+The problem involves simulating the rising sea level on an island represented as a grid. Each cell in the grid has an elevation, and depending on its elevation relative to the rising sea level, it may sink into the sea. The task is to compute the area of the island that remains above the sea level after each year of sea level rise.
+
+### Key Observations
+
+1. **Boundary Elevation**: Cells on the boundary (edges of the grid) will always sink if their elevation is less than or equal to the sea level.
+2. **Flood Propagation**: When a cell sinks, it can potentially cause adjacent cells to sink as well if they meet the criteria (elevation less than or equal to the sea level).
+3. **Efficiency Considerations**: Given the constraints, a direct simulation for each year would be inefficient. We need a more optimized approach to handle the flood propagation efficiently.
+
+### Solution Strategy
+
+1. **Initial Setup**: Read the grid and initialize necessary data structures.
+2. **Priority Queue**: Use a priority queue to manage cells that are on the boundary or have just sunk and can potentially cause adjacent cells to sink.
+3. **Flood Propagation**: Implement a function to propagate the sinking effect from a cell to its adjacent cells.
+4. **Compute Remaining Area**: For each year, update the sea level and use the flood propagation function to adjust the grid accordingly. Compute the remaining area of the island above the sea level.
+5. **Optimization**: Use a set or a similar data structure to keep track of cells that are still above the sea level, as this set will be updated dynamically.
+
+### Corrected and Optimized Code
+
+```cpp
+#include <iostream>
+#include <vector>
+#include <queue>
+#include <algorithm>
+
+using namespace std;
+
+struct Cell {
+    int x, y, height;
+};
+
+struct Comparator {
+    bool operator()(const Cell& a, const Cell& b) const {
+        return a.height < b.height;
+    }
+};
+
+int main() {
+    int h, w, y;
+    cin >> h >> w >> y;
+    vector<vector<int>> grid(h, vector<int>(w));
+    priority_queue<Cell, vector<Cell>, Comparator> pq;
+    set<pair<int, int>> alive;
+
+    // Read the grid and initialize the priority queue
+    for (int i = 0; i < h; ++i) {
+        for (int j = 0; j < w; ++j) {
+            cin >> grid[i][j];
+            if (i == 0 || i == h - 1 || j == 0 || j == w - 1) {
+                pq.push({i, j, grid[i][j]});
+            }
+            alive.insert({i, j});
+        }
+    }
+
+    // Function to propagate the sinking
+    auto propagate = [&](int x, int y) {
+        if (x < 0 || x >= h || y < 0 || y >= w || grid[x][y] <= y) return;
+        grid[x][y] = y;
+        if (alive.count({x, y})) {
+            alive.erase({x, y});
+        }
+        pq.push({x, y, grid[x][y]});
+    };
+
+    // Process each year
+    for (int year = 0; year < y; ++year) {
+        while (!pq.empty()) {
+            Cell c = pq.top(); pq.pop();
+            propagate(c.x, c.y);
+        }
+
+        // Calculate the remaining area
+        int remaining_area = 0;
+        for (const auto& p : alive) {
+            remaining_area += grid[p.first][p.second] - year;
+        }
+        cout << remaining_area << '\n';
+    }
+
+    return 0;
+}
+```
+
+This code initializes the priority queue with boundary cells and uses a set to track cells that are still above the sea level. For each year, it processes cells from the priority queue, updates the grid, and calculates the remaining area of the island. The use of a priority queue ensures that we always process the lowest cells first, simulating the correct order of sinking.

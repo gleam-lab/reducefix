@@ -1,0 +1,62 @@
+#include <iostream>
+#include <vector>
+#include <queue>
+#include <algorithm>
+
+using namespace std;
+typedef long long ll;
+
+const ll INF = 1e18;
+
+void solve() {
+    int n, m;
+    cin >> n >> m;
+
+    vector<ll> A(n);
+    for (ll &a : A) cin >> a;
+
+    vector<vector<pair<int, ll>>> adj(n);
+    for (int i = 0; i < m; ++i) {
+        int u, v;
+        ll b;
+        cin >> u >> v >> b;
+        u--; v--;
+        // For each edge, add to both nodes' adjacency lists
+        // When going from u to v, we include A[u] (vertex weight) and b (edge weight)
+        adj[u].push_back({v, A[u] + b});
+        adj[v].push_back({u, A[v] + b});
+    }
+
+    vector<ll> dist(n, INF);
+    dist[0] = 0; // Start from node 1 (index 0)
+
+    priority_queue<pair<ll, int>, vector<pair<ll, int>>, greater<>> pq;
+    pq.push({0, 0});
+
+    while (!pq.empty()) {
+        auto [d, u] = pq.top();
+        pq.pop();
+
+        if (d > dist[u]) continue;
+
+        for (auto &[v, cost] : adj[u]) {
+            if (dist[v] > dist[u] + cost) {
+                dist[v] = dist[u] + cost;
+                pq.push({dist[v], v});
+            }
+        }
+    }
+
+    // Add A[i] for final answer since path weight ends at vertex i
+    for (int i = 1; i < n; ++i) {
+        cout << dist[i] + A[i] << " ";
+    }
+    cout << endl;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    solve();
+}

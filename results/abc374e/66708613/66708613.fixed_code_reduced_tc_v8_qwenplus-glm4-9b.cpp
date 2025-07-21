@@ -1,0 +1,75 @@
+#include<iostream>
+#include<string>
+#include<queue>
+#include<vector>
+#include<cassert>
+#include<random>
+#include<set>
+#include<map>
+#include<cassert>
+#include<unordered_map>
+#include<bitset>
+#include<numeric>
+#include<algorithm>
+using namespace std;
+using ll = long long;
+const int inf=1<<30;
+const ll INF=1LL<<62;
+using P = pair<ll,int>;
+using PP = pair<int,P>; 
+const ll MOD=998244353;
+const int dy[]={-1,0,1,0};
+const int dx[]={0,1,0,-1};
+
+struct Range {
+    ll min;
+    ll max;
+    ll cost;
+};
+
+struct State {
+    ll budget;
+    ll capacity;
+};
+
+int main() {
+    int N;
+    ll X;
+    cin >> N >> X;
+    vector<Range> ranges(N);
+
+    for (int i = 0; i < N; i++) {
+        cin >> ranges[i].min >> ranges[i].max >> ranges[i].cost >> ranges[i].max;
+    }
+
+    ll lb = 0, ub = 1LL << 60;
+
+    while (ub - lb > 1) {
+        ll mid = (ub + lb) / 2;
+        ll currentCapacity = 0;
+        ll currentBudget = X;
+
+        for (int i = 0; i < N; i++) {
+            ll val = INF;
+            if (mid >= ranges[i].min) {
+                val = min(val, (mid - ranges[i].min + ranges[i].max - 1) / ranges[i].max * ranges[i].cost);
+                if (val > currentBudget) break;
+                currentBudget -= val;
+            }
+            if (mid >= ranges[i].max) {
+                val = min(val, (mid - ranges[i].max + ranges[i].min - 1) / ranges[i].min * ranges[i].cost);
+                if (val > currentBudget) break;
+                currentBudget -= val;
+            }
+        }
+
+        if (currentBudget >= 0) {
+            ub = mid;
+            currentCapacity = mid;
+        } else {
+            lb = mid;
+        }
+    }
+
+    cout << lb << endl;
+}

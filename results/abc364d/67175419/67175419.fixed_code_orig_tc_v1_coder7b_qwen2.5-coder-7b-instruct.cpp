@@ -1,0 +1,38 @@
+#include<bits/stdc++.h>
+using namespace std;
+
+const int MAX = 1e5 + 5;
+long long arr[MAX], pos[MAX];
+
+bool cmp(pair<long long, long long> &a, pair<long long, long long> &b){
+    return a.first < b.first;
+}
+
+int main(){
+    ios_base::sync_with_stdio(false);
+    cin.tie(NULL);
+
+    int n, q;
+    cin >> n >> q;
+    
+    for(int i = 1; i <= n; ++i){
+        cin >> arr[i];
+        pos[arr[i]] = i;
+    }
+
+    vector<pair<long long, long long>> v;
+    for(int i = 1; i <= q; ++i){
+        long long b, k;
+        cin >> b >> k;
+        v.push_back({abs(b - arr[1]), 1});
+        for(int j = 2; j <= n; ++j){
+            v.push_back({abs(b - arr[j]) + abs(arr[j] - arr[pos[b] + j - 1]), j});
+        }
+        sort(v.begin(), v.end(), cmp);
+
+        cout << arr[v[k - 1].second] - b << "\n";
+
+        v.clear();
+    }
+    return 0;
+}

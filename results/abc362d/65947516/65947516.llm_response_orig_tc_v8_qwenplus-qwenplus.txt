@@ -1,0 +1,147 @@
+The issue in the provided code lies in **how the path cost is calculated**. Specifically, the final result for each node `i` (from 2 to N) was computed as:
+
+```cpp
+dis[i] + a[i]
+```
+
+This assumes that the destination vertex's weight (`a[i]`) should be added at the end. However, according to the problem statement:
+
+> The weight of a path from vertex 1 to vertex i is defined as the sum of the weights of the vertices and edges that appear on the path.
+
+That means:
+- We **do include** the weight of vertex 1 if it's part of the path,
+- But we must **include** the weight of all intermediate vertices along the path,
+- And finally, we **must include** the weight of the destination vertex `i`.
+
+However, in Dijkstra's algorithm implementation:
+- When moving from node `u` to node `v`, the total path cost includes `a[u]` (vertex u's weight),
+- But not `a[v]` yet — only the edge weight and current accumulated cost.
+
+So when you reach node `v`, the cost stored in `dis[v]` represents:
+```cpp
+cost_to_v = cost_to_u + edge_weight(u->v) + a[u]
+```
+But **not** including `a[v]` in the total path cost.
+
+Hence, the correct final answer for reaching node `v` is:
+```cpp
+dis[v] + a[v]
+```
+Which matches what the original code did.
+
+### BUT there is a subtle bug here: **the start node's weight is included twice**
+
+In the original code:
+- The starting distance is set to `0` via `dis[1] = 0`.
+- Then, during the first expansion from node 1 to its neighbors, the code adds `a[1]` into the cost.
+
+So, the total path cost ends up being:
+```cpp
+a[1] + edge_cost + a[next_node]
+```
+which is correct.
+
+But when printing the final result, the code again adds `a[i]` to `dis[i]`, which leads to double-counting `a[i]` **if** `dis[i]` already includes `a[i]` somewhere in the path.
+
+---
+
+## ✅ Correct Fix:
+We must ensure that the node weight is **only counted once** — **when entering the node**, not at the time of leaving it.
+
+Thus, the correct approach is:
+- Do **not** add `a[now.id]` in the edge update step.
+- Instead, when computing the final path cost, the path cost is:
+  ```cpp
+  dis[i] + a[i]
+  ```
+  where `dis[i]` is the minimum cost to reach `i` using edges only (and excluding the weight of `i` itself), so adding `a[i]` accounts for the weight of the destination node exactly once.
+
+---
+
+### ✅ Summary of Fixes:
+1. Remove `+ a[now.id]` from this line:
+   ```cpp
+   if(dis[i.first] > dis[now.id] + i.second)
+   ```
+2. Ensure `dis[1] = a[1]` because the path starts at node 1, and its weight must be included.
+
+---
+
+Here is the corrected and complete C++ code:
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+typedef pair<ll, ll> pll;
+
+const ll INF = 1e18;
+const int N = 2e5 + 5;
+
+int n, m;
+ll a[N];
+vector<pll> g[N];
+ll dis[N];
+
+void dijkstra() {
+    fill(dis, dis + n + 1, INF);
+    priority_queue<pll, vector<pll>, greater<pll>> pq;
+
+    dis[1] = a[1]; // Include A_1 as part of the path
+    pq.push({dis[1], 1});
+
+    while (!pq.empty()) {
+        ll d = pq.top().first;
+        ll u = pq.top().second;
+        pq.pop();
+
+        if (d > dis[u]) continue;
+
+        for (auto &edge : g[u]) {
+            ll v = edge.first;
+            ll w = edge.second;
+
+            if (dis[v] > dis[u] + w + a[v]) {
+                dis[v] = dis[u] + w + a[v];
+                pq.push({dis[v], v});
+            }
+        }
+    }
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+
+    cin >> n >> m;
+    for (int i = 1; i <= n; ++i) cin >> a[i];
+
+    for (int i = 0; i < m; ++i) {
+        int u, v;
+        ll w;
+        cin >> u >> v >> w;
+        g[u].push_back({v, w});
+        g[v].push_back({u, w});
+    }
+
+    dijkstra();
+
+    for (int i = 2; i <= n; ++i) {
+        cout << dis[i] << " ";
+    }
+    cout << "\n";
+
+    return 0;
+}
+```
+
+---
+
+### Key Changes:
+- Set `dis[1] = a[1]` to correctly account for the weight of the starting node.
+- Update path cost as `dis[u] + w + a[v]` — this ensures the weight of the target node is added when entering it.
+- Final output is simply `dis[i]`, since it now includes the destination node's weight.
+
+---
+
+This version runs in `O(M log N)` with proper use of Dijkstra’s algorithm and handles large constraints efficiently.

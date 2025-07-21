@@ -1,0 +1,38 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+#define endl "\n"
+#define int long long
+
+void solve() {
+    int n, k;
+    cin >> n >> k;
+    vector<int> A(n);
+    for (int i = 0; i < n; ++i) {
+        cin >> A[i];
+    }
+
+    // We need to remove K elements to minimize the difference between max and min in the remaining N-K elements
+    int remove = k;
+    int window_size = n - k;
+
+    // Sort array
+    sort(A.begin(), A.end());
+
+    // Initialize answer with maximum possible difference at the start
+    int ans = A.back() - A.front();
+
+    // Try all possible windows of size window_size in sorted array
+    for (int i = 0; i + window_size - 1 < n; ++i) {
+        ans = min(ans, A[i + window_size - 1] - A[i]);
+    }
+
+    cout << ans;
+}
+
+signed main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(NULL);
+    solve();
+    return 0;
+}

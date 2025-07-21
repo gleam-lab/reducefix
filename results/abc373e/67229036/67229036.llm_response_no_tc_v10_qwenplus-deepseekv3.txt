@@ -1,0 +1,77 @@
+To fix this code, we need to ensure that the logic correctly determines the minimum number of additional votes each candidate needs to guarantee their election. The key steps involve:
+1. Sorting the candidates' votes to determine their relative positions.
+2. Calculating the required votes for each candidate to ensure they are among the top M candidates, considering the worst-case scenario where other candidates receive as many votes as possible.
+3. Using binary search to efficiently find the minimum votes required for each candidate.
+
+### Approaches
+1. **Sorting and Sum Calculation**: First, we sort the array of votes to easily find the top M candidates. We also compute prefix sums to quickly calculate the sum of votes required for certain conditions.
+2. **Binary Search for Each Candidate**: For each candidate, perform a binary search to find the minimum number of additional votes (X) they need. The condition to check during the binary search ensures that even if the other candidates receive all remaining votes, the candidate will still be among the top M.
+3. **Condition Check**: The check involves ensuring that the candidate's total votes (current votes + X) are enough to place them in the top M, even if the other candidates maximize their votes.
+
+### Solution Code
+```cpp
+#include<bits/stdc++.h>
+using namespace std;
+#define int long long
+const int N=2e5+5;
+int n, m, k;
+int a[N], sorted_a[N], prefix[N];
+
+bool is_possible(int candidate_votes, int x) {
+    int total_votes = candidate_votes + x;
+    int pos = upper_bound(sorted_a + 1, sorted_a + n + 1, total_votes) - sorted_a - 1;
+    int rank = n - pos;
+    if (rank < m) {
+        return true;
+    } else {
+        int same_or_higher = (n - pos + 1);
+        if (same_or_higher <= m) {
+            return true;
+        } else {
+            int needed = 0;
+            int start = n - m + 1;
+            if (start <= pos) {
+                needed = (total_votes + 1) * (pos - start + 1) - (prefix[pos] - prefix[start - 1]);
+            }
+            return (needed <= (k - x));
+        }
+    }
+}
+
+signed main() {
+    ios::sync_with_stdio(0), cin.tie(0), cout.tie(0);
+    cin >> n >> m >> k;
+    int total_initial = 0;
+    for (int i = 1; i <= n; i++) {
+        cin >> a[i];
+        total_initial += a[i];
+        sorted_a[i] = a[i];
+    }
+    sort(sorted_a + 1, sorted_a + n + 1);
+    for (int i = 1; i <= n; i++) {
+        prefix[i] = prefix[i - 1] + sorted_a[i];
+    }
+    int remaining = k - total_initial;
+    for (int i = 1; i <= n; i++) {
+        int l = 0, r = remaining;
+        int ans = -1;
+        while (l <= r) {
+            int mid = (l + r) / 2;
+            if (is_possible(a[i], mid)) {
+                ans = mid;
+                r = mid - 1;
+            } else {
+                l = mid + 1;
+            }
+        }
+        cout << (ans <= remaining ? ans : -1) << " ";
+    }
+    return 0;
+}
+```
+
+### Explanation
+1. **Sorting and Prefix Sums**: The array of votes is sorted to facilitate easy comparison. Prefix sums are computed to quickly access sums of ranges of sorted votes.
+2. **Binary Search**: For each candidate, we perform a binary search to find the minimum votes they need to secure their position. The search checks if the candidate's total votes (current + X) can place them in the top M.
+3. **Condition Check**: The function `is_possible` checks if, after adding X votes, the candidate's rank is within the top M. If not, it calculates the votes needed to surpass the next highest candidates, ensuring the total votes used do not exceed the remaining votes.
+4. **Output**: For each candidate, we print the minimum X or -1 if it's impossible to secure their position with the remaining votes. This ensures the solution is both efficient and correct within the problem constraints.

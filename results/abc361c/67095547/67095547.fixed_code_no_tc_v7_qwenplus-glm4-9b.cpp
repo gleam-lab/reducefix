@@ -1,0 +1,51 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+
+using namespace std;
+
+int main() {
+    int n, k;
+    cin >> n >> k;
+    vector<int> a(n);
+    
+    for (int i = 0; i < n; ++i) {
+        cin >> a[i];
+    }
+    
+    // We need to consider the impact of removing elements on the max and min of the remaining elements
+    // To minimize the difference between the max and min of the remaining sequence, we need to:
+    // 1. Consider removing the largest K elements from the ends to keep the smallest possible max.
+    // 2. Consider removing the smallest K elements from the ends to keep the largest possible min.
+    
+    // Create a vector of indices
+    vector<int> indices(n);
+    iota(indices.begin(), indices.end(), 0);
+    
+    // Sort indices based on values in a to get the order of removal
+    sort(indices.begin(), indices.end(), [&](int i, int j) {
+        return a[i] < a[j];
+    });
+    
+    // To find the minimum possible value of the difference between the maximum and minimum of B,
+    // we need to consider the difference between the max of the first n-k elements and the min of the last n-k elements
+    int min_diff = INT_MAX;
+    
+    // Calculate the difference for the smallest k and largest k elements removed
+    int k_elements_removed = k;
+    int max_of_remaining = *max_element(a.begin() + k_elements_removed, a.end());
+    int min_of_remaining = *min_element(a.begin(), a.begin() + k_elements_removed);
+    
+    min_diff = min(min_diff, max_of_remaining - min_of_remaining);
+    
+    // Since we want to minimize the difference, we consider removing all k elements from one end and compare
+    // the max of the remaining elements from the other end with the min of the removed elements
+    int max_of_removal = *max_element(a.begin(), a.begin() + k);
+    int min_of_removal = *min_element(a.begin() + k, a.end());
+    
+    min_diff = min(min_diff, max_of_removal - min_of_removal);
+    
+    cout << min_diff << endl;
+    
+    return 0;
+}

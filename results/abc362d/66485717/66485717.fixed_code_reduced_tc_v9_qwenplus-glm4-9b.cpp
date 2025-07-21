@@ -1,0 +1,63 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define int long long
+#define pb push_back
+
+struct Edge {
+    int u, v, w;
+};
+
+const int MAX_N = 2e5 + 10;
+int n, m;
+vector<Edge> graph[MAX_N];
+int vertex_weights[MAX_N];
+vector<int> dist(MAX_N, LONG_LONG_MAX);
+
+void dijkstra(int start) {
+    priority_queue<pair<int, int>, vector<pair<int, int>>, greater<pair<int, int>>> pq;
+    pq.push({0, start});
+    dist[start] = vertex_weights[start];
+
+    while (!pq.empty()) {
+        auto [current_dist, u] = pq.top();
+        pq.pop();
+
+        if (current_dist > dist[u]) continue;
+
+        for (auto &edge : graph[u]) {
+            int v = edge.v;
+            int weight = edge.w + vertex_weights[v];
+
+            if (current_dist + weight < dist[v]) {
+                dist[v] = current_dist + weight;
+                pq.push({dist[v], v});
+            }
+        }
+    }
+}
+
+int main() {
+    cin >> n >> m;
+    for (int i = 1; i <= n; ++i) {
+        cin >> vertex_weights[i];
+    }
+
+    for (int i = 0; i < m; ++i) {
+        int u, v, w;
+        cin >> u >> v >> w;
+        graph[u].push_back({u, v, w});
+        graph[v].push_back({v, u, w});
+    }
+
+    dijkstra(1);
+
+    for (int i = 2; i <= n; ++i) {
+        if (dist[i] < LONG_LONG_MAX) {
+            cout << dist[i] << " ";
+        } else {
+            cout << "INF "; //INF for unreachable nodes
+        }
+    }
+    cout << endl;
+    return 0;
+}

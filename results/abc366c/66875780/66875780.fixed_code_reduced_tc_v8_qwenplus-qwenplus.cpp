@@ -1,0 +1,62 @@
+#include <iostream>
+#include <unordered_map>
+using namespace std;
+
+// Fast IO
+void fastIO()
+{
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    cout.tie(nullptr);
+}
+
+void Solve()
+{
+    long long Q;
+    cin >> Q;
+    
+    unordered_map<long long, int> freq;
+    int distinct = 0;
+    
+    while (Q--)
+    {
+        long long type;
+        cin >> type;
+        
+        if (type == 1)
+        {
+            long long x;
+            cin >> x;
+            if (freq[x] == 0)
+                distinct++;
+            freq[x]++;
+        }
+        else if (type == 2)
+        {
+            long long x;
+            cin >> x;
+            freq[x]--;
+            if (freq[x] == 0)
+                distinct--;
+        }
+        else
+        {
+            cout << distinct << "\n";
+        }
+    }
+}
+
+int main()
+{
+    fastIO();
+    
+    int t = 1;
+    // If multiple test cases are expected, uncomment the following line
+    // cin >> t;
+    while (t--)
+    {
+        Solve();
+    }
+    
+    return 0;
+}

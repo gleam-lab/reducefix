@@ -1,0 +1,100 @@
+To fix this code, we need to address several issues:
+
+1. **Union-Find Data Structure**: The current implementation correctly handles union operations but the approach to maintaining the connected vertices is inefficient. Storing all connected vertices in a set for each root is not scalable for large N and Q (up to 2 × 10^5), leading to potential time complexity issues.
+
+2. **Handling Type 2 Queries**: The current method for finding the k-th largest vertex in the connected component involves traversing a set in reverse, which is not efficient for large sets. Given that k is at most 10, we can optimize by maintaining only the top 10 largest vertices in each connected component.
+
+3. **Correctness of Output**: The current code outputs `-2` for the case where there are fewer than `k` connected vertices, but the problem expects `-1`. Also, the vertex indices should be adjusted back to 1-based before output.
+
+4. **Efficiency**: The current approach might lead to O(Q * N) time complexity in the worst case, which is not feasible for the given constraints. We need a more efficient approach, possibly leveraging the fact that k is small (≤10).
+
+### Fixed Code
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+#define rep(i, n) for(int i=0;i<(n);i++)
+#define all(a) a.begin(), a.end()
+#define rall(a) a.rbegin(), a.rend()
+using ll = long long;
+using pi = pair<int, int>;
+const int INF=1e9;
+struct UnionFind {
+    vector<int> parent, rank;
+    vector<multiset<int>> top;
+    UnionFind(int n) : parent(n), rank(n, 0), top(n) {
+        for (int i = 0; i < n; i++) {
+            parent[i] = i;
+            top[i].insert(i);
+        }
+    }
+    int findRoot(int x) {
+        if (parent[x] != x) 
+            parent[x] = findRoot(parent[x]);
+        return parent[x];
+    }
+    void unite(int x, int y) {
+        int rx = findRoot(x), ry = findRoot(y);
+        if (rx == ry) return;
+        if (rank[rx] < rank[ry]) {
+            parent[rx] = ry;
+            for (int num : top[rx]) {
+                top[ry].insert(num);
+                if (top[ry].size() > 10)
+                    top[ry].erase(top[ry].begin());
+            }
+            top[rx].clear();
+        } else {
+            parent[ry] = rx;
+            for (int num : top[ry]) {
+                top[rx].insert(num);
+                if (top[rx].size() > 10)
+                    top[rx].erase(top[rx].begin());
+            }
+            top[ry].clear();
+            if (rank[rx] == rank[ry])
+                rank[rx]++;
+        }
+    }
+};
+int main(){
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int n, q;
+    cin >> n >> q;
+    UnionFind uf(n);
+    vector<int> ans;
+    rep(qi, q) {
+        int com;
+        cin >> com;
+        if(com==1) {
+            int u, v;
+            cin >> u >> v;
+            u--; v--;
+            uf.unite(u, v);
+        }
+        if(com==2) {
+            int v, k;
+            cin >> v >> k;
+            v--;
+            int root = uf.findRoot(v);
+            if ((int)uf.top[root].size() < k) {
+                ans.push_back(-1);
+            } else {
+                auto it = uf.top[root].rbegin();
+                advance(it, k-1);
+                ans.push_back(*it + 1);
+            }
+        }
+    }
+    for(auto x : ans) cout << x << endl;
+    return 0;
+}
+```
+
+### Explanation
+1. **Union-Find with Top Elements**: The `UnionFind` structure now includes a `multiset` for each root to keep track of the top 10 largest vertices in its connected component. This ensures efficient merging and querying.
+2. **Efficient Merging**: When two components are merged, the top 10 elements from the smaller component are inserted into the larger component's set, maintaining only the top 10 elements to optimize both time and space.
+3. **Handling Queries**: For Type 2 queries, the k-th largest element is directly accessed from the root's set in O(k) time, leveraging the reverse iterator of the multiset.
+4. **Correct Output**: The output correctly returns `-1` when there are fewer than `k` connected vertices and adjusts the vertex indices back to 1-based.
+
+This approach ensures the solution is efficient and handles the constraints effectively.

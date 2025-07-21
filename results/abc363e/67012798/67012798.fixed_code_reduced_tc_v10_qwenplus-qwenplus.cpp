@@ -1,0 +1,111 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+
+constexpr int dx[] = {-1, 1, 0, 0};
+constexpr int dy[] = {0, 0, -1, 1};
+
+int main()
+{
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int H, W, Y;
+    cin >> H >> W >> Y;
+
+    vector<vector<int>> A(H, vector<int>(W));
+    for (int i = 0; i < H; ++i)
+    {
+        for (int j = 0; j < W; ++j)
+        {
+            cin >> A[i][j];
+        }
+    }
+
+    // Total land area
+    int totalArea = H * W;
+
+    // Create a grid to track if a cell is submerged
+    vector<vector<bool>> submerged(H, vector<bool>(W, false));
+
+    // Use a priority queue (min-heap) to process cells in increasing order of elevation
+    using Cell = pair<int, pair<int, int>>;
+    priority_queue<Cell, vector<Cell>, greater<>> pq;
+
+    // Mark boundary cells and add them to the queue
+    for (int i = 0; i < H; ++i)
+    {
+        for (int j = 0; j < W; ++j)
+        {
+            if (i == 0 || i == H - 1 || j == 0 || j == W - 1)
+            {
+                pq.push({A[i][j], {i, j}});
+                submerged[i][j] = true;
+                --totalArea; // these are submerged initially
+            }
+        }
+    }
+
+    // Process each year
+    vector<int> result(Y + 2); // result[year]
+    result[0] = totalArea;    // No year has passed yet
+
+    // We will keep track of the current year being processed
+    int currYear = 0;
+
+    // To process events year-by-year
+    while (!pq.empty())
+    {
+        auto [elevation, pos] = pq.top();
+        pq.pop();
+
+        auto [x, y] = pos;
+
+        // If elevation > current year, we need to update all years in between
+        while (currYear < elevation)
+        {
+            ++currYear;
+            result[currYear] = totalArea;
+        }
+
+        // BFS flood fill from this cell if it's still relevant
+        queue<pair<int, int>> bfs;
+        bfs.push({x, y});
+
+        while (!bfs.empty())
+        {
+            auto [cx, cy] = bfs.front();
+            bfs.pop();
+
+            for (int d = 0; d < 4; ++d)
+            {
+                int nx = cx + dx[d];
+                int ny = cy + dy[d];
+
+                if (nx >= 0 && ny >= 0 && nx < H && ny < W && !submerged[nx][ny])
+                {
+                    submerged[nx][ny] = true;
+                    --totalArea;
+
+                    if (A[nx][ny] <= Y)
+                        pq.push({A[nx][ny], {nx, ny}});
+                }
+            }
+        }
+    }
+
+    // Fill remaining years with whatever is left
+    while (currYear < Y)
+    {
+        ++currYear;
+        result[currYear] = totalArea;
+    }
+
+    // Output results
+    for (int i = 1; i <= Y; ++i)
+    {
+        cout << result[i] << '\n';
+    }
+
+    return 0;
+}

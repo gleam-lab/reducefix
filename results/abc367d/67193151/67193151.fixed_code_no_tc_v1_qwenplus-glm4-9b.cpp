@@ -1,0 +1,39 @@
+#include<bits/stdc++.h>
+using namespace std;
+const int N=1e6+5;
+int n,m,k,sum,cnt,a[N],b[N],d[N];
+
+int main()
+{
+    ios::sync_with_stdio(0),cin.tie(0),cout.tie(0); 
+    int i, j, x, y, z, t;
+    cin >> n >> m;
+    
+    // Extend array a to include its duplicate for circular processing
+    for(i = 1; i <= n; i++)
+        cin >> a[i];
+    for(i = 1; i <= n; i++)
+        a[i + n] = a[i];
+    
+    // Initialize frequency array b
+    b[0] = 1;
+    for(i = 1; i <= 2 * n; i++)
+    {
+        // Subtract from frequency if this is the end of the first array
+        if(i >= n)
+            b[d[i - n] % m]--;
+        
+        // Update the sum based on the frequency of the current prefix sum modulo m
+        sum += b[d[i - 1] % m];
+        
+        // Increment frequency of the current prefix sum modulo m
+        if(i < n)
+            b[d[i] % m]++;
+        
+        // Calculate the current prefix sum
+        d[i] = d[i - 1] + a[i];
+    }
+    
+    cout << sum;
+    return 0;
+}

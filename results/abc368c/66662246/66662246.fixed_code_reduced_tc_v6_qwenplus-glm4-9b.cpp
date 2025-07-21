@@ -1,0 +1,37 @@
+#include <iostream>
+#include <vector>
+
+using namespace std;
+
+int main() {
+    int n;
+    cin >> n;
+    vector<int> healths(n);
+    for (int i = 0; i < n; ++i) {
+        cin >> healths[i];
+    }
+
+    long long totalTurns = 0;
+    int turn = 1;
+
+    for (int i = 0; i < n; ++i) {
+        if (healths[i] > 0) {
+            int currentTurn = turn;
+            while (healths[i] > 0) {
+                if (currentTurn % 3 == 0) {
+                    healths[i] -= 3;
+                } else {
+                    healths[i] -= 1;
+                }
+
+                totalTurns++;
+                currentTurn++;
+            }
+        }
+        turn++;
+    }
+
+    cout << totalTurns << endl;
+
+    return 0;
+}

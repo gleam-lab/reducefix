@@ -1,0 +1,45 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define ll long long
+
+void solve() {
+    ll n;
+    cin >> n;
+    vector<ll> a(n), b(n - 1);
+
+    for (ll i = 0; i < n; ++i)
+        cin >> a[i];
+    for (ll i = 0; i < n - 1; ++i)
+        cin >> b[i];
+
+    sort(a.begin(), a.end());
+    sort(b.begin(), b.end());
+
+    // Match largest toys with largest available boxes
+    ll extra_box_needed = -1;
+    int j = n - 2; // index for boxes
+
+    for (int i = n - 1; i >= 0; --i) {
+        if (j >= 0 && a[i] <= b[j]) {
+            j--; // use this box
+        } else {
+            // Need to put a[i] in the extra box
+            if (extra_box_needed == -1) {
+                extra_box_needed = a[i];
+            } else {
+                // More than one toy can't fit => invalid
+                cout << -1 << endl;
+                return;
+            }
+        }
+    }
+
+    if (extra_box_needed == -1)
+        cout << -1 << endl; // all toys could be placed without an extra box, but we must buy one
+    else
+        cout << extra_box_needed << endl;
+}
+
+int main() {
+    solve();
+}

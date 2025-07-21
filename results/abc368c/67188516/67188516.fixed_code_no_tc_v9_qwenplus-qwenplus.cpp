@@ -1,0 +1,62 @@
+#include <iostream>
+#include <vector>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int N;
+    cin >> N;
+    vector<long long> H(N);
+    for (int i = 0; i < N; ++i) {
+        cin >> H[i];
+    }
+
+    long long T = 0;
+    for (int i = 0; i < N; ++i) {
+        long long h = H[i];
+
+        // Calculate number of triple attacks needed
+        long long triple_attacks = h / 3;
+        // Remaining damage after triple attacks
+        long long remaining = h % 3;
+
+        // Apply triple attacks
+        T += triple_attacks * 3;
+
+        if (remaining == 1) {
+            if (T % 3 != 2) {
+                // We need to wait at most 2 turns to get a "non-triple" turn
+                long long wait = (3 - (T % 3)) % 3;
+                T += wait;
+            }
+            T += 1;
+        } else if (remaining == 2) {
+            if (T % 3 == 0) {
+                // We can use two normal attacks
+                T += 2;
+            } else if (T % 3 == 1) {
+                // One triple attack now would be better
+                T += 1;
+                // One triple attack will be used in the next enemy
+                if (i + 1 < N) {
+                    H[i + 1] -= 3;
+                }
+            } else {
+                // T % 3 == 2, we can do one more attack now
+                T += 1;
+                // And adjust the current enemy's health
+                if (i + 1 < N) {
+                    H[i + 1] -= 2;
+                }
+            }
+        }
+
+        // Ensure T is not a multiple of 3 before moving to next enemy
+        if (T % 3 == 0) T++;
+    }
+
+    cout << T << endl;
+    return 0;
+}

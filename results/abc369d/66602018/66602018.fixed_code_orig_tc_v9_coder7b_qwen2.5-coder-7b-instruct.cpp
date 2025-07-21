@@ -1,0 +1,26 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+
+using namespace std;
+
+int main() {
+    int n;
+    cin >> n;
+    vector<long long> nums(n);
+    for(int i = 0; i < n; ++i) {
+        cin >> nums[i];
+    }
+    
+    // Sort the array to maximize the sum of pairs
+    sort(nums.begin(), nums.end());
+    
+    long long result = 0;
+    // Sum up every other element starting from the second last
+    for(int i = n - 2; i >= 0; i -= 2) {
+        result += nums[i];
+    }
+    
+    cout << result << endl;
+    return 0;
+}

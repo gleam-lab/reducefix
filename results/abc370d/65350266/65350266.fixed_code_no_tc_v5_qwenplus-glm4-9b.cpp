@@ -1,0 +1,71 @@
+#include <iostream>
+#include <vector>
+using namespace std;
+
+int main() {
+    int h, w, q;
+    cin >> h >> w >> q;
+    
+    // Initialize the grid with walls
+    vector<vector<int>> grid(h, vector<int>(w, 1)); // 1 represents a wall
+    
+    // Keep track of the number of walls in each row and column
+    vector<int> rowWalls(h, w);
+    vector<int> colWalls(w, h);
+    
+    // Process each query
+    for (int i = 0; i < q; i++) {
+        int r, c;
+        cin >> r >> c;
+        r--; c--; // Convert to 0-based indexing
+        
+        // Check if there is a wall at the given position
+        if (grid[r][c] == 1) {
+            // If there is a wall, destroy it
+            grid[r][c] = 0;
+            rowWalls[r]--;
+            colWalls[c]--;
+        } else {
+            // If there is no wall, destroy the first walls in the row and column
+            // from the given position in the four directions
+            // Check the row to the left
+            for (int j = c - 1; j >= 0 && grid[r][j] == 1; j--) {
+                grid[r][j] = 0;
+                rowWalls[r]--;
+                colWalls[j]--;
+            }
+            // Check the row to the right
+            for (int j = c + 1; j < w && grid[r][j] == 1; j++) {
+                grid[r][j] = 0;
+                rowWalls[r]--;
+                colWalls[j]--;
+            }
+            // Check the column above
+            for (int i = r - 1; i >= 0 && grid[i][c] == 1; i--) {
+                grid[i][c] = 0;
+                rowWalls[i]--;
+                colWalls[c]--;
+            }
+            // Check the column below
+            for (int i = r + 1; i < h && grid[i][c] == 1; i++) {
+                grid[i][c] = 0;
+                rowWalls[i]--;
+                colWalls[c]--;
+            }
+        }
+    }
+    
+    // Calculate the total number of remaining walls
+    int remainingWalls = 0;
+    for (int i = 0; i < h; i++) {
+        remainingWalls += rowWalls[i];
+    }
+    for (int j = 0; j < w; j++) {
+        remainingWalls += colWalls[j];
+    }
+    
+    // Output the result
+    cout << remainingWalls << endl;
+    
+    return 0;
+}

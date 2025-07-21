@@ -1,0 +1,54 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+const int MAXN = 105;
+int A[MAXN], P[MAXN], B[MAXN], Q[MAXN];
+long long X, ans = 0;
+
+struct Machine {
+    int type, cost, rate;
+};
+
+bool canMeetCapacity(long long capacity, const vector<Machine>& machines) {
+    long long totalCost = 0;
+    for (const auto& m : machines) {
+        if (m.type == 1) { // Type S
+            totalCost += ceil((double)(capacity - m.rate * B[machines.size() - 1]) / A[machines.size() - 1]) * m.cost;
+        } else { // Type T
+            totalCost += ceil((double)(capacity - m.rate * A[machines.size() - 1]) / B[machines.size() - 1]) * m.cost;
+        }
+        if (totalCost > X) return false;
+    }
+    return true;
+}
+
+int main() {
+    cin >> X >> A[1] >> P[1] >> B[1] >> Q[1];
+    for (int i = 2; i <= 100; ++i) {
+        cin >> A[i] >> P[i] >> B[i] >> Q[i];
+    }
+
+    vector<Machine> machines;
+    for (int i = 1; i <= 100; ++i) {
+        machines.push_back({1, P[i], A[i]});
+        machines.push_back({2, Q[i], B[i]});
+    }
+
+    sort(machines.begin(), machines.end(), [](const Machine& a, const Machine& b) {
+        return a.cost * b.rate < b.cost * a.rate;
+    });
+
+    long long l = 0, r = X + 1;
+    while (l < r) {
+        long long mid = (l + r) / 2;
+        if (canMeetCapacity(mid, machines)) {
+            ans = mid;
+            l = mid + 1;
+        } else {
+            r = mid;
+        }
+    }
+
+    cout << ans << endl;
+    return 0;
+}

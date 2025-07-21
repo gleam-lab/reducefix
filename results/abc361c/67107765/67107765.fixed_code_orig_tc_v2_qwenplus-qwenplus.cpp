@@ -1,0 +1,63 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+#define fi first
+#define se second
+#define pb push_back
+#define chmax(x, y) x = max(x, y)
+#define chmin(x, y) x = min(x, y)
+
+using ll = long long;
+using P = pair<int, int>;
+
+const int INF = 1001001001;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int n, k;
+    cin >> n >> k;
+    vector<int> A(n);
+    for (int i = 0; i < n; ++i) {
+        cin >> A[i];
+    }
+
+    // We will use a sliding window of size (n - K)
+    int window_size = n - k;
+    deque<int> min_deque, max_deque;
+    ll res = LLONG_MAX;
+
+    for (int i = 0; i < n; ++i) {
+        // Maintain deque for min
+        while (!min_deque.empty() && A[i] <= A[min_deque.back()]) {
+            min_deque.pop_back();
+        }
+        min_deque.push_back(i);
+
+        // Maintain deque for max
+        while (!max_deque.empty() && A[i] >= A[max_deque.back()]) {
+            max_deque.pop_back();
+        }
+        max_deque.push_back(i);
+
+        // Remove elements out of the window
+        if (i >= window_size) {
+            while (!min_deque.empty() && min_deque.front() <= i - window_size) {
+                min_deque.pop_front();
+            }
+            while (!max_deque.empty() && max_deque.front() <= i - window_size) {
+                max_deque.pop_front();
+            }
+        }
+
+        // Calculate result when window is valid
+        if (i >= window_size - 1) {
+            int current_min = A[min_deque.front()];
+            int current_max = A[max_deque.front()];
+            chmin(res, (ll)(current_max - current_min));
+        }
+    }
+
+    cout << res << endl;
+}

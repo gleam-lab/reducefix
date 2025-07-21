@@ -1,0 +1,53 @@
+#include<bits/stdc++.h>
+using namespace std;
+
+void solve() {
+    int n;
+    cin >> n;
+    string s;
+    cin >> s;
+    
+    vector<int> freq(3, 0); // Frequency of P, R, S
+    for(char ch : s) {
+        freq[ch-'A']++;
+    }
+    
+    int total = n;
+    int ans = 0;
+    
+    while(total > 1) {
+        int p = freq[0], r = freq[1], s = freq[2];
+        if(p == 0 || r == 0 || s == 0) break;
+        
+        if(p >= r && p >= s) {
+            ans += min(r, s);
+            freq[0] -= min(r, s);
+            freq[1] -= min(r, s);
+            freq[2] -= min(r, s);
+        } else if(r >= p && r >= s) {
+            ans += min(p, s);
+            freq[0] -= min(p, s);
+            freq[1] -= min(p, s);
+            freq[2] -= min(p, s);
+        } else {
+            ans += min(p, r);
+            freq[0] -= min(p, r);
+            freq[1] -= min(p, r);
+            freq[2] -= min(p, r);
+        }
+        total -= 2 * min({p, r, s});
+    }
+    
+    cout << ans << endl;
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(NULL);
+    int t;
+    cin >> t;
+    while(t--) {
+        solve();
+    }
+    return 0;
+}

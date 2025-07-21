@@ -1,0 +1,67 @@
+#include <bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+#define all(x) (x).begin(), (x).end()
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int N, M;
+    ll K;
+    cin >> N >> M >> K;
+    vector<ll> A(N);
+    for (ll &a : A) {
+        cin >> a;
+        K -= a;
+    }
+
+    // Create sorted copy of A
+    vector<ll> sorted_A = A;
+    sort(all(sorted_A));
+
+    // Precompute prefix sums
+    vector<ll> prefix(N + 1, 0);
+    for (int i = 0; i < N; ++i) {
+        prefix[i + 1] = prefix[i] + sorted_A[i];
+    }
+
+    vector<ll> result(N, -1);
+
+    for (int i = 0; i < N; ++i) {
+        ll current = A[i];
+
+        // Binary search on minimum additional votes needed
+        ll low = 0, high = K;
+        ll answer = K + 1;
+
+        while (low <= high) {
+            ll mid = (low + high) / 2;
+            ll required = current + mid;
+
+            // Find how many candidates have votes > required
+            // First find the first index in sorted_A where votes > required
+            int idx = N - (upper_bound(all(sorted_A), required) - sorted_A.begin());
+
+            if (idx < M) {
+                // Candidate can be elected with this X
+                answer = mid;
+                high = mid - 1;
+            } else {
+                // Need more votes
+                low = mid + 1;
+            }
+        }
+
+        if (answer <= K)
+            result[i] = answer;
+        else
+            result[i] = -1;
+    }
+
+    for (ll val : result)
+        cout << val << " ";
+    cout << "\n";
+
+    return 0;
+}

@@ -1,0 +1,62 @@
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+using VL = vector<ll>;
+using P = pair<ll, ll>;
+
+const ll inf = 1000000000;
+
+int main() {
+    ll N, M;
+    cin >> N >> M;
+
+    VL A(N), B(M), ans(N, LLONG_MAX);
+    VL dist(N, LLONG_MAX);
+    vector<vector<pair<ll, ll>>> G(N);
+    
+    for (ll i = 0; i < N; i++) {
+        cin >> A[i];
+    }
+
+    for (ll i = 0; i < M; i++) {
+        ll u, v, b;
+        cin >> u >> v >> b;
+        u--; v--;
+        G[u].push_back({v, b});
+        G[v].push_back({u, b});
+    }
+
+    // Using Dijkstra's algorithm to find the shortest path from vertex 1 to all other vertices
+    priority_queue<P, VL, greater<P>> pq;
+    pq.push({A[0], 0}); // Push the starting vertex with its weight
+    dist[0] = A[0]; // Distance to itself is its own weight
+
+    while (!pq.empty()) {
+        ll cur = pq.top().second;
+        ll d = pq.top().first;
+        pq.pop();
+
+        if (d > dist[cur]) continue;
+
+        for (auto [next, weight] : G[cur]) {
+            ll nextDist = d + weight;
+            if (nextDist < dist[next]) {
+                dist[next] = nextDist;
+                pq.push({nextDist, next});
+            }
+        }
+    }
+
+    // Calculate the answer for each vertex from 2 to N
+    for (ll i = 1; i < N; i++) {
+        ans[i] = dist[i] - A[i]; // Subtract the vertex weight since it's included in the path distance
+    }
+
+    // Output the results for vertices 2 to N
+    for (ll i = 1; i < N; i++) {
+        cout << ans[i] << " ";
+    }
+    cout << endl;
+
+    return 0;
+}

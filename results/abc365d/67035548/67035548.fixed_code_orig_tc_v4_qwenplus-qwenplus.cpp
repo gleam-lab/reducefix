@@ -1,0 +1,63 @@
+#include <iostream>
+#include include <string>
+#include <vector>
+using namespace std;
+
+// Determine outcome of a single move against opponent's move
+int getOutcome(char my_move, char op_move) {
+    if (my_move == op_move) return 0; // draw
+    if ((my_move == 'R' && op_move == 'S') ||
+        (my_move == 'S' && op_move == 'P') ||
+        (my_move == 'P' && op_move == 'R'))
+        return 1; // win
+    return -1; // lose
+}
+
+// Return the winning move for a given opponent move
+char winningMove(char op_move) {
+    if (op_move == 'R') return 'P';
+    if (op_move == 'S') return 'R';
+    if (op_move == 'P') return 'S';
+    return 'X'; // should not happen
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int n;
+    string s;
+    cin >> n >> s;
+
+    // Forward pass: greedily choose best move from left to right
+    int forward_score = 0;
+    char last_move = 'X'; // no move yet
+
+    for (char c : s) {
+        char best_move = winningMove(c);
+        if (getOutcome(best_move, c) > 0) {
+            forward_score++;
+            last_move = best_move;
+        } else {
+            // Can't win, skip (we keep last move)
+            last_move = c; // we may use this in some tie-breaking or analysis
+        }
+    }
+
+    // Backward pass: greedily choose best move from right to left
+    int backward_score = 0;
+    last_move = 'X';
+
+    for (int i = n - 1; i >= 0; --i) {
+        char best_move = winningMove(s[i]);
+        if (getOutcome(best_move, s[i]) > 0) {
+            backward_score++;
+            last_move = best_move;
+        } else {
+            last_move = s[i];
+        }
+    }
+
+    cout << max(forward_score, backward_score) << endl;
+    return 0;
+}

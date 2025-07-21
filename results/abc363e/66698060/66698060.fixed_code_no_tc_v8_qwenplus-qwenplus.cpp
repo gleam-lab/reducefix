@@ -1,0 +1,79 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define ll long long
+#define rep(i,n) for(ll i=0;i<(ll)n;i++)
+#define vi vector<int>
+#define vl vector<ll>
+#define vb vector<bool>
+#define vvb vector<vector<bool>>
+#define vvl vector<vector<ll>>
+#define pll pair<ll,ll>
+#define vpll vector<pair<ll,ll>>
+#define pushb push_back
+#define popb pop_back
+#define fi first
+#define se second
+#define all(a) a.begin(),a.end()
+#define INF (1LL << 60)
+
+ll dx[4] = {0, 1, 0, -1};
+ll dy[4] = {1, 0, -1, 0};
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+
+    ll h, w, y;
+    cin >> h >> w >> y;
+
+    vvl grid(h, vl(w));
+    rep(i, h) rep(j, w) cin >> grid[i][j];
+
+    // Initialize visited matrix
+    vvb visited(h, vb(w, false));
+
+    // Priority queue to process cells in increasing order of elevation
+    priority_queue<pll, vector<pll>, greater<pll>> pq;
+
+    // Add boundary cells to the queue
+    for (ll i = 0; i < h; ++i) {
+        for (ll j = 0; j < w; ++j) {
+            if (i == 0 || i == h - 1 || j == 0 || j == w - 1) {
+                pq.push({grid[i][j], i * w + j});
+                visited[i][j] = true;
+            }
+        }
+    }
+
+    vvl years_left(1e5 + 2, 0);  // To store how many cells sink at each year
+    ll remaining = h * w;
+
+    while (!pq.empty()) {
+        auto [height, pos] = pq.top();
+        pq.pop();
+
+        ll x = pos / w;
+        ll y_pos = pos % w;
+
+        for (ll dir = 0; dir < 4; ++dir) {
+            ll nx = x + dx[dir];
+            ll ny = y_pos + dy[dir];
+
+            if (nx >= 0 && nx < h && ny >= 0 && ny < w && !visited[nx][ny]) {
+                visited[nx][ny] = true;
+                pq.push({grid[nx][ny], nx * w + ny});
+            }
+        }
+
+        // Record that this cell will disappear at 'height' years
+        if (height <= y) {
+            years_left[height]++;
+        }
+    }
+
+    // Process the sinking events cumulatively
+    for (ll i = 1; i <= y; ++i) {
+        remaining -= years_left[i];
+        cout << remaining << "\n";
+    }
+}

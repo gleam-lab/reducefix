@@ -1,0 +1,78 @@
+To fix this code, we need to address several issues:
+
+1. **Input Reading**: The original code incorrectly swaps `n` and `q` when reading the input, leading to incorrect processing of queries.
+2. **Union-Find Data Structure**: The union operation is incomplete. When merging two sets, the code attempts to merge the top 10 elements but fails to properly combine and sort them.
+3. **Dynamic Maintenance of Top Elements**: The code maintains a static array for the top elements, but when merging two sets, it doesn't correctly handle the merging and sorting of these elements.
+
+### Approaches
+1. **Union-Find with Path Compression**: Use the union-find data structure to manage connected components.
+2. **Maintaining Sorted Lists**: For each component, maintain a sorted list (in descending order) of the top 10 largest vertices. When two components are merged, combine their lists, sort them, and keep only the top 10 elements.
+3. **Efficient Merging**: To ensure efficiency, merge the smaller component into the larger one (union by size) and update the top elements list during each union operation.
+
+### Solution Code
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+const int MAXN = 200005;
+int parent[MAXN], size[MAXN];
+vector<int> top[MAXN];
+
+int find(int x) {
+    if (parent[x] != x) {
+        parent[x] = find(parent[x]);
+    }
+    return parent[x];
+}
+
+void unite(int x, int y) {
+    x = find(x);
+    y = find(y);
+    if (x == y) return;
+    if (size[x] < size[y]) swap(x, y);
+    parent[y] = x;
+    size[x] += size[y];
+    vector<int> merged = top[x];
+    merged.insert(merged.end(), top[y].begin(), top[y].end());
+    sort(merged.rbegin(), merged.rend());
+    if (merged.size() > 10) merged.resize(10);
+    top[x] = merged;
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int N, Q;
+    cin >> N >> Q;
+    
+    for (int i = 1; i <= N; ++i) {
+        parent[i] = i;
+        size[i] = 1;
+        top[i] = {i};
+    }
+    
+    while (Q--) {
+        int op, u, v;
+        cin >> op >> u >> v;
+        if (op == 1) {
+            unite(u, v);
+        } else {
+            int root = find(u);
+            if (v > top[root].size()) {
+                cout << -1 << '\n';
+            } else {
+                cout << top[root][v - 1] << '\n';
+            }
+        }
+    }
+    
+    return 0;
+}
+```
+
+### Explanation
+1. **Initialization**: Initialize each vertex as its own parent with a size of 1. Each vertex's top list initially contains only itself.
+2. **Union Operation**: When merging two components, the larger component absorbs the smaller one. The top elements of both components are combined, sorted in descending order, and truncated to the top 10 elements.
+3. **Query Handling**: For each type 2 query, the root of the queried vertex is found. The k-th largest element in the root's top list is then retrieved (or -1 if the list is shorter than k).
+4. **Efficiency**: Path compression and union by size ensure near-constant time per operation, making the solution efficient for large inputs. The merging of top lists is efficient due to the constraint on k (k ≤ 10), keeping the operations within feasible limits.

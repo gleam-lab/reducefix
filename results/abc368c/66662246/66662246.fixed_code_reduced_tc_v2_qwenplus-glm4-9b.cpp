@@ -1,0 +1,22 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define rep(i, n) for (int i = 0; i < (n); ++i)
+
+int main() {
+    int n;
+    cin >> n;
+    vector<int> h(n);
+    for (int i = 0; i < n; ++i) cin >> h[i];
+
+    long long t = 0; // Total number of turns
+    for (int i = 0; i < n; ++i) {
+        if (h[i] % 3 == 0) {
+            // If the health is a multiple of 3, attack it 3 times at a cost of 1 turn
+            t += 3;
+        } else {
+            // If the health is not a multiple of 3, attack it a number of times equal to its health
+            t += h[i];
+        }
+    }
+    cout << t << endl;
+}

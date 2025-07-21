@@ -1,0 +1,46 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <set>
+using namespace std;
+
+int main() {
+    long long t;
+    cin >> t;
+    while (t--) {
+        long long n, k;
+        cin >> n >> k;
+        vector<long long> a(n), b(n);
+        for (long long i = 0; i < n; ++i) {
+            cin >> a[i];
+        }
+        for (long long i = 0; i < n; ++i) {
+            cin >> b[i];
+        }
+
+        vector<pair<long long, long long>> ab(n);
+        for (long long i = 0; i < n; ++i) {
+            ab[i] = {a[i], b[i]};
+        }
+        sort(ab.begin(), ab.end(), greater<pair<long long, long long>>());
+
+        long long sum_b = 0;
+        multiset<long long> b_values;
+        for (long long i = 0; i < k; ++i) {
+            sum_b += ab[i].second;
+            b_values.insert(ab[i].second);
+        }
+
+        long long min_val = ab[k - 1].first * sum_b;
+        for (long long i = 0; i < n - k; ++i) {
+            sum_b -= *b_values.rbegin();
+            sum_b += ab[i + k].second;
+            b_values.erase(b_values.upper_bound(ab[i].second));
+            b_values.insert(ab[i + k].second);
+            min_val = min(min_val, ab[i + k].first * sum_b);
+        }
+
+        cout << min_val << endl;
+    }
+    return 0;
+}

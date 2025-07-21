@@ -1,0 +1,46 @@
+#include<bits/stdc++.h>
+using namespace std;
+using i64 = long long;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    i64 N, M;
+    cin >> N >> M;
+    vector<array<i64, 2>> pieces(M);
+    set<array<i64, 2>> occupied;
+    for (int i = 0; i < M; i++) {
+        i64 a, b;
+        cin >> a >> b;
+        pieces[i] = {a, b};
+        occupied.insert({a, b});
+    }
+
+    i64 ans = N * N;
+    for (auto [a, b] : pieces) {
+        // Check row and column captures
+        for (i64 i = 1; i <= N; ++i) {
+            if (occupied.count({i, b}) || occupied.count({a, i})) {
+                --ans;
+                break;
+            }
+        }
+
+        // Check diagonal captures
+        for (i64 i = 1; i <= N; ++i) {
+            if (i != a && i != b && occupied.count({a + i - b, i})) {
+                --ans;
+                break;
+            }
+        }
+        for (i64 i = 1; i <= N; ++i) {
+            if (i != a && i != b && occupied.count({a - i + b, i})) {
+                --ans;
+                break;
+            }
+        }
+    }
+
+    cout << ans << '\n';
+    return 0;
+}

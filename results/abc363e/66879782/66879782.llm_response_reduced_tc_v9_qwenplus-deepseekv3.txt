@@ -1,0 +1,87 @@
+To fix this code, we need to ensure that it correctly calculates the area of the island that remains above sea level for each year from 1 to Y. The original code uses a priority queue to determine when each section sinks, but it may not handle the propagation of sinking correctly, especially when sections are adjacent to multiple sinking sections.
+
+### Approaches
+1. **Priority Queue with Dijkstra-like Algorithm**: We use a priority queue to process sections in order of their sinking time. The idea is similar to Dijkstra's algorithm where we propagate the sinking time from the borders inward.
+2. **Sinking Time Calculation**: For each section, the sinking time is the maximum of its elevation and the minimum sinking time of its adjacent sections. This ensures that a section sinks as soon as any adjacent section sinks and the current sea level is at least its elevation.
+3. **Prefix Sum Array**: After calculating the sinking times for all sections, we use a prefix sum array to efficiently compute the remaining area for each year.
+
+### Solution Code
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+#define all(x) (x).begin(), (x).end()
+
+int main() {
+    ios_base::sync_with_stdio(0);
+    cin.tie(0);
+    int h, w, y;
+    cin >> h >> w >> y;
+    vector<vector<int>> height(h, vector<int>(w));
+    vector<vector<int>> sink(h, vector<int>(w, INT_MAX));
+    priority_queue<pair<int, pair<int, int>>, vector<pair<int, pair<int, int>>>, greater<pair<int, pair<int, int>>>> pq;
+    int di[4][2] = {{-1, 0}, {1, 0}, {0, -1}, {0, 1}};
+    
+    for (int i = 0; i < h; ++i) {
+        for (int j = 0; j < w; ++j) {
+            cin >> height[i][j];
+            if (i == 0 || i == h - 1 || j == 0 || j == w - 1) {
+                sink[i][j] = height[i][j];
+                pq.push({sink[i][j], {i, j}});
+            }
+        }
+    }
+    
+    while (!pq.empty()) {
+        auto current = pq.top();
+        pq.pop();
+        int current_time = current.first;
+        int r = current.second.first;
+        int c = current.second.second;
+        
+        if (current_time > sink[r][c]) continue;
+        
+        for (int k = 0; k < 4; ++k) {
+            int nr = r + di[k][0];
+            int nc = c + di[k][1];
+            if (nr < 0 || nr >= h || nc < 0 || nc >= w) continue;
+            int new_time = max(height[nr][nc], current_time);
+            if (new_time < sink[nr][nc]) {
+                sink[nr][nc] = new_time;
+                pq.push({sink[nr][nc], {nr, nc}});
+            }
+        }
+    }
+    
+    vector<int> cnt(y + 2, 0);
+    for (int i = 0; i < h; ++i) {
+        for (int j = 0; j < w; ++j) {
+            if (sink[i][j] <= y) {
+                cnt[sink[i][j]]++;
+            }
+        }
+    }
+    
+    vector<int> prefix(y + 1, 0);
+    prefix[0] = cnt[0];
+    for (int i = 1; i <= y; ++i) {
+        prefix[i] = prefix[i - 1] + cnt[i];
+    }
+    
+    for (int i = 1; i <= y; ++i) {
+        cout << h * w - prefix[i] << '\n';
+    }
+    
+    return 0;
+}
+```
+
+### Explanation
+1. **Initialization**: We read the dimensions of the island (h, w) and the number of years (y). A 2D vector `height` stores the elevation of each section, and another 2D vector `sink` stores the time when each section sinks, initialized to `INT_MAX`.
+2. **Priority Queue Setup**: Border sections (those on the perimeter of the island) are added to the priority queue with their sinking time set to their elevation.
+3. **Processing Sinking Times**: Using a priority queue, we process each section in order of increasing sinking time. For each section, we check its adjacent sections. If an adjacent section can sink earlier due to the current section's sinking time, we update its sinking time and add it to the queue.
+4. **Counting Sinking Sections**: We count how many sections sink at each year using an array `cnt`.
+5. **Prefix Sum Calculation**: A prefix sum array `prefix` is used to accumulate the total number of sections sunk by each year, allowing efficient computation of the remaining area.
+6. **Output Results**: For each year from 1 to y, we output the remaining area by subtracting the prefix sum from the total area of the island.
+
+This approach ensures that we efficiently compute the sinking times and the remaining area for each year, adhering to the constraints and providing the correct results for all test cases.

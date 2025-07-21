@@ -1,0 +1,31 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+
+int main() {
+    int n;
+    std::cin >> n;
+    std::vector<long long> va(n), vb(n-1);
+
+    for(int i = 0; i < n; ++i) {
+        std::cin >> va[i];
+    }
+
+    for(int i = 0; i < n-1; ++i) {
+        std::cin >> vb[i];
+    }
+
+    std::sort(va.begin(), va.end());
+    std::sort(vb.begin(), vb.end());
+
+    for(int i = 0; i < n-1; ++i) {
+        if(va[i+1] < vb[i]) {
+            std::cout << -1 << '\n';
+            return 0;
+        }
+    }
+
+    std::cout << va[n-1] << '\n';
+
+    return 0;
+}

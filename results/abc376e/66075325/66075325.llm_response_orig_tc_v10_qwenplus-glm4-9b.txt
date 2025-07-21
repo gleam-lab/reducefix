@@ -1,0 +1,78 @@
+
+The problem requires finding the minimum possible value of the expression \(\left(\max\_{i \in S} A\_i\right) \times \left(\sum\_{i \in S} B\_i\right)\), where \(S\) is a subset of \(\{1, 2, \dots, N\}\) with size \(K\). Given the constraints, an efficient solution is necessary.
+
+### Your Approach
+The provided code uses sorting and a priority queue (min-heap) to maintain the sum of the \(B\) values for a subset of size \(K\). The idea is to iterate over the sequences \(A\) and \(B\), adding elements to the sum and the heap, and removing the smallest sum whenever the heap size exceeds \(K\). The goal is to calculate the expression using the maximum \(A\) value and the sum from the heap.
+
+### Issues with Your Code
+1. **Incorrect Condition**: The code only considers the sum up to \(n-2\) and not \(n-1\). This results in missing potential minimum values.
+2. **Priority Queue Misuse**: The priority queue should store pairs of (sum, index) to maintain the correct order of removal, but only the sum is used.
+3. **Variable Initialization**: The variable `ans` is initialized to `inf` but is not ever updated in the loop, which means the output will always be `inf`.
+
+### Corrected Solution
+Here is a corrected version of the solution:
+
+```cpp
+#include <iostream>
+#include <vector>
+#include <queue>
+#include <algorithm>
+using namespace std;
+
+struct pair_hash {
+    template <class T1, class T2>
+    std::size_t operator () (const std::pair<T1,T2> &pair) const {
+        auto hash1 = std::hash<T1>{}(pair.first);
+        auto hash2 = std::hash<T2>{}(pair.second);
+        return hash1 ^ hash2;
+    }
+};
+
+int main() {
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, k;
+        cin >> n >> k;
+        vector<int> A(n), B(n);
+        for (int i = 0; i < n; i++) {
+            cin >> A[i];
+        }
+        for (int i = 0; i < n; i++) {
+            cin >> B[i];
+        }
+
+        // Pairing A and B and sorting by A
+        vector<pair<int, int>> ab(n);
+        for (int i = 0; i < n; i++) {
+            ab[i] = {A[i], B[i]};
+        }
+        sort(ab.begin(), ab.end());
+
+        // Priority queue to maintain the sum of B values for the last k elements
+        priority_queue<int, vector<int>, greater<int>> pq;
+        long long ans = LLONG_MAX;
+        long long sum = 0;
+
+        for (int i = 0; i < n; i++) {
+            sum += ab[i].second;
+            pq.push(ab[i].second);
+            if (pq.size() > k) {
+                sum -= pq.top();
+                pq.pop();
+            }
+            if (pq.size() == k) {
+                ans = min(ans, (long long) pq.top() * sum);
+            }
+        }
+
+        cout << ans << endl;
+    }
+    return 0;
+}
+```
+
+### Explanation
+1. **Sorting**: We first sort the array `ab` by the values in `A`.
+2. **Priority Queue**: We use a min-heap to store the sums of the last \(k\) \(B\) values. We maintain the sum of these \(k\) values and calculate the expression when we have exactly \(k\) elements in the heap.
+3. **Result**: The minimum value of the expression is stored in `ans` and printed.

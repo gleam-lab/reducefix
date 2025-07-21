@@ -1,0 +1,66 @@
+#include<bits/stdc++.h>
+using namespace std;
+
+#define ll long long
+#define vi vector<int>
+#define vvi vector<vector<int>>
+#define vl vector<ll>
+#define vvl vector<vector<ll>>
+#define pb push_back
+#define mp make_pair
+#define all(x) x.begin(),x.end()
+
+const int N = 2e5 + 5;
+vector<int> adj[N];
+priority_queue<int, vector<int>, greater<int>> pq[N];
+
+void addEdge(int u, int v){
+    adj[u].pb(v);
+    adj[v].pb(u);
+}
+
+void dfs(int u, int par){
+    for(auto v : adj[u]){
+        if(v == par) continue;
+        pq[u].push(v);
+        dfs(v, u);
+        while(pq[u].size() > 10) pq[u].pop();
+    }
+}
+
+int kthLargest(int u, int k){
+    if(k > pq[u].size()) return -1;
+    priority_queue<int, vector<int>, greater<int>> temp = pq[u];
+    for(int i = 1; i <= k - 1; ++i){
+        temp.pop();
+    }
+    return temp.top();
+}
+
+int main(){
+    ios_base::sync_with_stdio(false);
+    cin.tie(NULL);
+    
+    int n, q;
+    cin >> n >> q;
+    
+    for(int i = 1; i < n; ++i){
+        int u, v;
+        cin >> u >> v;
+        addEdge(u, v);
+    }
+    
+    dfs(1, -1);
+    
+    while(q--){
+        int type, u, k;
+        cin >> type >> u >> k;
+        if(type == 1){
+            // No need to update pq here as we only use it for querying
+        } else {
+            cout << kthLargest(u, k) << "\n";
+        }
+    }
+    
+    return 0;
+}

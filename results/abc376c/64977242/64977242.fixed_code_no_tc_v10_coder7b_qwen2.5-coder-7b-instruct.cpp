@@ -1,0 +1,40 @@
+#include <iostream>
+#include <string>
+#include <vector>
+#include <algorithm>
+
+using namespace std;
+
+int N;
+vector<long long> A, B;
+
+int main() {
+    cin >> N;
+    A.resize(N);
+    B.resize(N-1);
+    for (int i = 0; i < N; i++) cin >> A[i];
+    for (int i = 0; i < N - 1; i++) cin >> B[i];
+
+    sort(A.begin(), A.end());
+    sort(B.begin(), B.end());
+
+    bool canStore = true;
+    for (int i = 0; i < N - 1; i++) {
+        if (A[i] > B[i]) {
+            canStore = false;
+            break;
+        }
+    }
+
+    if (!canStore) {
+        cout << -1 << endl;
+        return 0;
+    }
+
+    long long maxBoxSize = *max_element(B.begin(), B.end());
+    long long minTargetValue = max(maxBoxSize + 1, *min_element(A.begin(), A.end()));
+
+    cout << minTargetValue << endl;
+
+    return 0;
+}

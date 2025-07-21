@@ -1,0 +1,80 @@
+To fix this code, we need to ensure that the algorithm correctly processes the queries and maintains the connected components efficiently. The main issue with the original code is that it does not correctly merge the sets of connected vertices for Type 1 queries and does not correctly handle the k-th largest vertex query for Type 2 queries.
+
+### Approaches
+1. **Union-Find Data Structure**: This helps efficiently manage the connected components. Each component will have its own set of vertices.
+2. **Balanced Binary Search Trees (BSTs)**: For each component, maintain a BST of its vertices to efficiently query the k-th largest element. In C++, we can use `std::set` or `std::multiset` for this purpose.
+3. **Merging Components**: When merging two components, combine their BSTs and keep only the top 10 elements to ensure the queries are processed in O(1) time.
+
+### Solution Code
+```cpp
+#include<bits/stdc++.h>
+using namespace std;
+
+const int MAXN = 2e5 + 5;
+int parent[MAXN];
+multiset<int, greater<int>> components[MAXN];
+
+int find(int u) {
+    if (parent[u] != u) {
+        parent[u] = find(parent[u]);
+    }
+    return parent[u];
+}
+
+void merge(int u, int v) {
+    u = find(u);
+    v = find(v);
+    if (u == v) return;
+    if (components[u].size() < components[v].size()) {
+        swap(u, v);
+    }
+    for (int x : components[v]) {
+        components[u].insert(x);
+    }
+    components[v].clear();
+    parent[v] = u;
+    while (components[u].size() > 10) {
+        components[u].erase(--components[u].end());
+    }
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(NULL);
+
+    int N, Q;
+    cin >> N >> Q;
+
+    for (int i = 1; i <= N; ++i) {
+        parent[i] = i;
+        components[i].insert(i);
+    }
+
+    while (Q--) {
+        int op, u, v;
+        cin >> op >> u >> v;
+        if (op == 1) {
+            merge(u, v);
+        } else {
+            u = find(u);
+            if (components[u].size() < v) {
+                cout << "-1\n";
+            } else {
+                auto it = components[u].begin();
+                advance(it, v - 1);
+                cout << *it << "\n";
+            }
+        }
+    }
+
+    return 0;
+}
+```
+
+### Explanation
+1. **Initialization**: We initialize the Union-Find data structure where each vertex is its own parent and has a multiset containing only itself.
+2. **Find Operation**: This operation uses path compression to efficiently find the root of any vertex.
+3. **Merge Operation**: When merging two components, we ensure the larger component absorbs the smaller one to maintain efficiency. We merge their multisets and keep only the top 10 elements to ensure queries can be answered in constant time.
+4. **Query Handling**: For Type 2 queries, we find the root of the queried vertex and check if the size of its multiset is sufficient to answer the query. If not, we return -1; otherwise, we return the k-th largest element.
+
+This approach ensures that each operation is handled efficiently, with the Union-Find operations nearly constant time due to path compression and the multiset operations logarithmic in the size of the component, which is capped at 10 for answering queries.

@@ -1,0 +1,48 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+
+#define int long long
+
+int n, x;
+vector<int> a, b, p, q;
+
+bool canMake(int mid) {
+    int total_cost = 0;
+    for (int i = 0; i < n; i++) {
+        int temp = mid;
+        // Compare p[i]/a[i] vs q[i]/b[i] using cross multiplication to avoid floating points
+        if (p[i] * b[i] < q[i] * a[i]) {
+            int x = temp / a[i];
+            total_cost += x * p[i];
+            temp -= x * a[i];
+            // The remaining temp should be multiplied by q[i]/b[i]
+            total_cost += (temp * q[i] + b[i] - 1) / b[i]; // Ceiling division
+        } else {
+            int x = temp / b[i];
+            total_cost += x * q[i];
+            temp -= x * b[i];
+            // The remaining temp should be multiplied by p[i]/a[i]
+            total_cost += (temp * p[i] + a[i] - 1) / a[i]; // Ceiling division
+        }
+        if (total_cost > x) return false;
+    }
+    return total_cost <= x;
+}
+
+signed main() {
+    cin >> n >> x;
+    a.resize(n); b.resize(n); p.resize(n); q.resize(n);
+    for (int i = 0; i < n; i++) cin >> a[i] >> p[i] >> b[i] >> q[i];
+
+    int left = 0, right = 1e18;
+    while (left < right) {
+        int mid = (left + right + 1) >> 1;
+        if (canMake(mid)) left = mid;
+        else right = mid - 1;
+    }
+
+    cout << left;
+
+    return 0;
+}

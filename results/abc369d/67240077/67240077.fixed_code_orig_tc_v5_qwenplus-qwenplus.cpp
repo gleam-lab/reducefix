@@ -1,0 +1,42 @@
+#include <bits/stdc++.h>
+#define INF 0x3f3f3f3f3f3f3f3f
+using namespace std;
+typedef long long ll;
+const int MAXN = 2e5 + 10;
+
+ll a[MAXN], f[MAXN][2];
+ll cnt_even[MAXN][2], cnt_odd[MAXN][2];
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    ll n;
+    cin >> n;
+    for (ll i = 1; i <= n; ++i) {
+        cin >> a[i];
+    }
+
+    // Initialize base case
+    f[0][0] = 0; // even count, no element chosen
+    f[0][1] = -INF; // odd count, invalid initially
+
+    for (ll i = 1; i <= n; ++i) {
+        // Option 1: don't take current element
+        f[i][0] = max(f[i-1][0], f[i-1][1]);
+        
+        // Option 2: take current element
+        ll val_even = a[i];       // if previous was even, now becomes odd
+        ll val_odd = a[i] * 2;     // if previous was odd, now becomes even (double)
+
+        // If we take the current element and previous was even -> current is odd
+        ll option1 = f[i-1][0] + val_even;
+        // If we take the current element and previous was odd -> current is even
+        ll option2 = f[i-1][1] + val_odd;
+
+        f[i][1] = max(option1, option2);
+    }
+
+    cout << max(f[n][0], f[n][1]) << endl;
+    return 0;
+}

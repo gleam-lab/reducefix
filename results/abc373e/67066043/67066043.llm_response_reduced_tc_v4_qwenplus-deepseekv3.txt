@@ -1,0 +1,95 @@
+To fix this code, we need to ensure that for each candidate, we correctly compute the minimum number of additional votes required to guarantee their election, even in the worst-case scenario where other candidates receive all remaining votes in a way that is most unfavorable to the candidate in question.
+
+### Approach
+1. **Sort the Candidates**: First, sort the candidates based on their current votes in ascending order. This helps in efficiently determining how many candidates could potentially surpass the given candidate when additional votes are allocated.
+2. **Binary Search for Minimum Votes**: For each candidate, perform a binary search to determine the minimum number of additional votes (X) they need such that, even if the remaining votes are allocated to other candidates in the worst possible way (i.e., to as many candidates as possible to surpass the given candidate), the given candidate still remains among the top M-1 candidates.
+3. **Check Feasibility**: For each candidate during the binary search, check if the remaining votes (K - total allocated so far) can feasibly cover the worst-case scenario where other candidates receive votes up to the candidate's new total (A_i + X) or just above it, ensuring the candidate remains in the top M-1.
+
+### Solution Code
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+#define all(x) (x).begin(), (x).end()
+
+int main() {
+    ios_base::sync_with_stdio(0);
+    cin.tie(0);
+    int N, M;
+    ll K;
+    cin >> N >> M >> K;
+    vector<ll> A(N);
+    ll sum_A = 0;
+    for (int i = 0; i < N; ++i) {
+        cin >> A[i];
+        sum_A += A[i];
+    }
+    ll remaining = K - sum_A;
+    
+    vector<int> ord(N);
+    iota(all(ord), 0);
+    sort(all(ord), [&](int i, int j) { return A[i] < A[j]; });
+    vector<ll> sorted_A(N);
+    for (int i = 0; i < N; ++i) {
+        sorted_A[i] = A[ord[i]];
+    }
+    
+    vector<ll> prefix(N + 1);
+    for (int i = 0; i < N; ++i) {
+        prefix[i + 1] = prefix[i] + sorted_A[i];
+    }
+    
+    vector<ll> ans(N, -1);
+    for (int idx = 0; idx < N; ++idx) {
+        ll current = sorted_A[idx];
+        ll low = 0, high = remaining;
+        ll best_X = remaining + 1;
+        
+        while (low <= high) {
+            ll mid = (low + high) / 2;
+            ll new_votes = current + mid;
+            
+            int pos = upper_bound(all(sorted_A), new_votes) - sorted_A.begin();
+            int above = N - pos;
+            
+            if (above < M) {
+                best_X = mid;
+                high = mid - 1;
+            } else {
+                int start = pos;
+                int end = N - M;
+                if (start > end) {
+                    low = mid + 1;
+                    continue;
+                }
+                ll required = (new_votes + 1) * (end - start + 1) - (prefix[end + 1] - prefix[start]);
+                if (required <= remaining - mid) {
+                    best_X = mid;
+                    high = mid - 1;
+                } else {
+                    low = mid + 1;
+                }
+            }
+        }
+        
+        if (best_X <= remaining) {
+            ans[ord[idx]] = best_X;
+        } else {
+            ans[ord[idx]] = -1;
+        }
+    }
+    
+    for (int i = 0; i < N; ++i) {
+        cout << ans[i] << " ";
+    }
+    cout << endl;
+    
+    return 0;
+}
+```
+
+### Explanation
+1. **Sorting and Prefix Sum**: The candidates are sorted by their current votes to facilitate efficient binary search and prefix sum computations. The prefix sum array helps in quickly calculating the total votes needed for a range of candidates.
+2. **Binary Search**: For each candidate, a binary search is performed to find the minimum X such that, even if up to M-1 other candidates receive votes to surpass the candidate's new total (A_i + X), the candidate remains elected. The binary search checks feasibility by ensuring the remaining votes can cover the worst-case scenario where other candidates are boosted just above the candidate's new total.
+3. **Feasibility Check**: During each binary search step, the algorithm checks if the remaining votes (after allocating X votes to the candidate) can cover the votes needed to push up to M-1 candidates above the candidate's new total. If feasible, X is a candidate solution; otherwise, the search continues.
+4. **Output**: The results for each candidate are stored in an array and printed, ensuring the solution handles all edge cases and constraints efficiently.

@@ -1,0 +1,62 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+struct Node {
+    int x, y, d;
+    Node() {}
+    Node(int _x, int _y, int _d) : x(_x), y(_y), d(_d) {}
+};
+
+bool isValid(int x, int y, int n, int m) {
+    return x >= 0 && x < n && y >= 0 && y < m;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int h, w, q;
+    cin >> h >> w >> q;
+    
+    vector<vector<int>> grid(h, vector<int>(w, 1));
+    vector<vector<queue<Node>>> qgrid(h, vector<queue<Node>>(w));
+    
+    while(q--) {
+        int r, c;
+        cin >> r >> c;
+        --r, --c;
+        
+        if(grid[r][c]) {
+            grid[r][c] = 0;
+        } else {
+            for(int dx = -1; dx <= 1; dx++) {
+                for(int dy = -1; dy <= 1; dy++) {
+                    if(dx == 0 && dy == 0) continue;
+                    int nx = r + dx, ny = c + dy;
+                    
+                    if(isValid(nx, ny, h, w)) {
+                        while(!qgrid[nx][ny].empty()) {
+                            Node node = qgrid[nx][ny].front();
+                            qgrid[nx][ny].pop();
+                            
+                            if(node.d == 0 || (abs(node.x - r) != abs(node.y - c))) {
+                                grid[node.x][node.y] = 0;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    int ans = 0;
+    for(int i = 0; i < h; i++) {
+        for(int j = 0; j < w; j++) {
+            ans += grid[i][j];
+        }
+    }
+
+    cout << ans << '\n';
+
+    return 0;
+}

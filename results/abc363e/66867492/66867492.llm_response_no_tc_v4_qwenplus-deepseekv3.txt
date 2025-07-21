@@ -1,0 +1,108 @@
+### Analysis of the Incorrect Code
+The initial approach uses a priority queue to process sections in order of their elevation, starting from the borders of the island. The idea is to simulate the sinking process as the sea level rises each year. However, there are several issues in the code:
+
+1. **Priority Queue Initialization**: The priority queue is initialized with border sections, but there's a mistake in pushing the bottom-right corner sections. Specifically, `pq.push( { A[H-1][i], W-1, 0 } );` should be `pq.push( { A[H-1][i], H-1, i } );`.
+
+2. **Duplicate Processing**: The code attempts to avoid processing the same section multiple times by using a `used` matrix. However, the logic for pushing new sections into the queue is flawed. The condition `if( chmax( used[ny][nx], 1 ) )` is incorrect because `chmax` returns true only if the value is increased, which might not always be the case here.
+
+3. **Efficiency**: With large constraints (H, W up to 1000 and Y up to 100000), the current approach might not be efficient enough due to the high number of operations per year.
+
+### Fixed Approach
+To fix these issues:
+1. Correct the initialization of the priority queue to include all border sections accurately.
+2. Use a more efficient way to mark sections as processed to avoid duplicates.
+3. Optimize the processing by pre-sorting all sections by their elevation and processing them in order. This way, we can answer each year's query in constant time after preprocessing.
+
+### Solution Code
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+struct Init { 
+    Init() { 
+        ios::sync_with_stdio(false); 
+        cin.tie(nullptr); 
+        cout << fixed << setprecision(12); 
+    } 
+} init;
+
+int main() {
+    int H, W, Y;
+    cin >> H >> W >> Y;
+    vector<vector<int>> A(H, vector<int>(W));
+    for (int i = 0; i < H; ++i) {
+        for (int j = 0; j < W; ++j) {
+            cin >> A[i][j];
+        }
+    }
+
+    priority_queue<tuple<int, int, int>, vector<tuple<int, int, int>>, greater<tuple<int, int, int>>> pq;
+    vector<vector<bool>> visited(H, vector<bool>(W, false));
+
+    // Push all border sections into the priority queue
+    for (int i = 0; i < H; ++i) {
+        if (!visited[i][0]) {
+            pq.emplace(A[i][0], i, 0);
+            visited[i][0] = true;
+        }
+        if (!visited[i][W-1]) {
+            pq.emplace(A[i][W-1], i, W-1);
+            visited[i][W-1] = true;
+        }
+    }
+    for (int j = 1; j < W-1; ++j) {
+        if (!visited[0][j]) {
+            pq.emplace(A[0][j], 0, j);
+            visited[0][j] = true;
+        }
+        if (!visited[H-1][j]) {
+            pq.emplace(A[H-1][j], H-1, j);
+            visited[H-1][j] = true;
+        }
+    }
+
+    int ans = H * W;
+    vector<int> res(Y + 1, ans); // res[i] is the answer for year i
+    int current_year = 1;
+    const int dx[] = {1, 0, -1, 0};
+    const int dy[] = {0, 1, 0, -1};
+
+    while (!pq.empty() && current_year <= Y) {
+        auto [elev, i, j] = pq.top();
+        if (elev > current_year) {
+            res[current_year] = ans;
+            ++current_year;
+            continue;
+        }
+        pq.pop();
+        --ans;
+        res[current_year] = ans;
+        for (int d = 0; d < 4; ++d) {
+            int ni = i + dy[d];
+            int nj = j + dx[d];
+            if (ni >= 0 && ni < H && nj >= 0 && nj < W && !visited[ni][nj]) {
+                visited[ni][nj] = true;
+                pq.emplace(A[ni][nj], ni, nj);
+            }
+        }
+    }
+
+    // Fill remaining years if the sea level hasn't reached all sections yet
+    for (int y = current_year + 1; y <= Y; ++y) {
+        res[y] = ans;
+    }
+
+    for (int y = 1; y <= Y; ++y) {
+        cout << res[y] << '\n';
+    }
+
+    return 0;
+}
+```
+
+### Explanation
+1. **Initialization**: The priority queue is initialized with all border sections of the island, marking them as visited to avoid duplicates.
+2. **Processing**: For each year, the sea level rises by 1. Sections with elevation less than or equal to the current sea level are processed (sunk), and their adjacent sections are added to the queue if not already visited.
+3. **Efficiency**: By processing sections in order of their elevation, we ensure that each section is processed only once, leading to an efficient O(HW log HW) preprocessing time. The results for each year are stored in an array and printed after processing.
+
+This approach ensures correctness and efficiency, handling large input sizes within acceptable time limits.

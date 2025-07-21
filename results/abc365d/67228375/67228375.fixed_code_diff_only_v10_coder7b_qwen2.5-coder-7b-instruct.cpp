@@ -1,0 +1,37 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define endl "\n"
+#define MOD 1000000007
+
+int main() {
+
+    ios_base::sync_with_stdio(false);
+    cin.tie(0);
+
+    map<char, char> beats = {{'R', 'P'}, {'P', 'S'}, {'S', 'R'}};
+    int n;
+    cin >> n;
+    string s;
+    cin >> s;
+    
+    // Initialize counters for the number of moves required to win with each possible first move
+    vector<int> total_1(3, 1); // R, P, S respectively
+    
+    // Track the last move
+    char last_move = s[0];
+    
+    // Calculate the number of moves required to win starting with each possible first move
+    for (int i = 1; i < n; i++) {
+        if (beats[s[i]] == last_move) {
+            last_move = s[i];
+            continue;
+        }
+        last_move = beats[s[i]];
+        total_1[(s[i] - 'A') % 3]++;
+    }
+    
+    // The result is the maximum value among the three counters
+    cout << *max_element(total_1.begin(), total_1.end()) << endl;
+
+    return 0;
+}

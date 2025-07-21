@@ -1,0 +1,42 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int64_t N;
+    int M;
+    cin >> N >> M;
+
+    unordered_set<int64_t> attacked_or_occupied;
+    // We'll use a hash function to map (a, b) to a unique key: (a << 32) | b
+    // Since a and b are up to 1e9, we need at least 32 bits for each
+
+    const int dx[] = {2, 1, -1, -2, -2, -1, 1, 2};
+    const int dy[] = {1, 2, 2, 1, -1, -2, -2, -1};
+
+    for (int i = 0; i < M; ++i) {
+        int64_t a, b;
+        cin >> a >> b;
+
+        // Add the piece's position
+        attacked_or_occupied.insert((a << 32) | b);
+
+        // Generate all 8 possible attacked positions
+        for (int d = 0; d < 8; ++d) {
+            int64_t na = a + dx[d];
+            int64_t nb = b + dy[d];
+
+            if (1 <= na && na <= N && 1 <= nb && nb <= N) {
+                attacked_or_occupied.insert((na << 32) | nb);
+            }
+        }
+    }
+
+    // Total number of squares: N * N
+    // Subtract the number of occupied or attacked squares
+    cout << (N * N - static_cast<int64_t>(attacked_or_occupied.size())) << "\n";
+
+    return 0;
+}

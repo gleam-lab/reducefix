@@ -1,0 +1,54 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int N;
+    cin >> N;
+    vector<long long> A(N);
+    vector<long long> B(N - 1);
+
+    for (int i = 0; i < N; ++i) cin >> A[i];
+    for (int i = 0; i < N - 1; ++i) cin >> B[i];
+
+    sort(A.begin(), A.end());
+    sort(B.begin(), B.end());
+
+    // Check if it's possible to assign toys to boxes without the extra box
+    // We will try to match largest toy with largest available box, and see where we fail
+    int ptr = 0;
+    int extra_needed_at = -1;
+
+    for (int i = 0; i < N; ++i) {
+        if (ptr < N - 1 && A[i] <= B[ptr]) {
+            ptr++;
+        } else {
+            // This toy cannot fit in any remaining box
+            if (extra_needed_at == -1) {
+                extra_needed_at = i;
+            } else {
+                // More than one toy needs an extra box => impossible
+                cout << -1 << endl;
+                return 0;
+            }
+        }
+    }
+
+    if (extra_needed_at == -1) {
+        // All toys fit, so the smallest toy can be put in the extra box
+        // So minimal x is 1 (or A[A.size()-1], but we can choose smaller)
+        cout << A.back() << endl;
+        return 0;
+    }
+
+    // We need to find the minimal x such that the extra box of size x can fit the unassigned toy
+    // and the rest still can be assigned to the B boxes
+
+    // The toy at extra_needed_at is the only one that needs the extra box
+    // So minimal x is A[extra_needed_at]
+    cout << A[extra_needed_at] << endl;
+
+    return 0;
+}

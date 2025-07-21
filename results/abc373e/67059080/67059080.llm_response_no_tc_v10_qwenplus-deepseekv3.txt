@@ -1,0 +1,95 @@
+To fix this code, we need to address the logical errors in determining the minimum additional votes each candidate needs to guarantee their election. The key insight is to ensure that for each candidate, after adding X votes, the number of candidates with more votes than them is less than M, regardless of how the remaining votes are distributed among other candidates.
+
+### Approaches
+1. **Sorting and Prefix Sums**: First, sort the candidates by their current votes. This helps in efficiently determining how many votes are needed to ensure a candidate's position.
+2. **Binary Search for Minimum Votes**: For each candidate, use binary search to find the minimum number of additional votes (X) such that, after adding X votes to the candidate, the number of candidates with more votes is less than M.
+3. **Handling Edge Cases**: 
+   - If a candidate already has enough votes to be elected (i.e., fewer than M candidates have more votes), then X = 0.
+   - If it's impossible for a candidate to be elected (i.e., even after all remaining votes are given to them, they still have M or more candidates with more votes), then X = -1.
+
+### Solution Code
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+
+int N, M;
+ll K;
+vector<ll> A;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    cin >> N >> M >> K;
+    A.resize(N);
+    for (int i = 0; i < N; ++i) {
+        cin >> A[i];
+    }
+
+    vector<ll> sorted_A = A;
+    sort(sorted_A.begin(), sorted_A.end());
+
+    vector<ll> prefix(N + 1, 0);
+    for (int i = 0; i < N; ++i) {
+        prefix[i + 1] = prefix[i] + sorted_A[i];
+    }
+
+    ll remaining_votes = K - prefix[N];
+
+    vector<ll> res(N, -1);
+
+    for (int i = 0; i < N; ++i) {
+        ll current = A[i];
+
+        // Find the position in sorted array where elements are > current
+        auto it = upper_bound(sorted_A.begin(), sorted_A.end(), current);
+        int cnt_greater = sorted_A.end() - it;
+
+        if (cnt_greater < M) {
+            res[i] = 0;
+            continue;
+        }
+
+        // Binary search for the minimal X such that after adding X to current,
+        // the number of candidates with > current + X is < M
+        ll low = 0, high = remaining_votes;
+        ll answer = -1;
+
+        while (low <= high) {
+            ll mid = (low + high) / 2;
+            ll new_val = current + mid;
+
+            // Find the smallest index where sorted_A[i] > new_val
+            it = upper_bound(sorted_A.begin(), sorted_A.end(), new_val);
+            cnt_greater = sorted_A.end() - it;
+
+            if (cnt_greater < M) {
+                answer = mid;
+                high = mid - 1;
+            } else {
+                low = mid + 1;
+            }
+        }
+
+        // Check if answer is feasible (total votes used <= remaining_votes)
+        if (answer != -1) {
+            res[i] = answer;
+        }
+    }
+
+    for (int i = 0; i < N; ++i) {
+        cout << res[i] << ' ';
+    }
+    cout << '\n';
+
+    return 0;
+}
+```
+
+### Explanation
+1. **Sorting and Prefix Sums**: The candidates' votes are sorted to facilitate binary search operations. The prefix sum array helps in quickly calculating the sum of votes for any subset of candidates.
+2. **Binary Search**: For each candidate, we perform a binary search to find the smallest number of additional votes (X) such that, when added to the candidate's current votes, the number of candidates with more votes becomes less than M. This involves checking if the new vote count (current + X) ensures the candidate's position in the sorted list is such that fewer than M candidates are ahead.
+3. **Edge Handling**: Candidates who already meet the election condition (fewer than M candidates ahead) are immediately marked with X = 0. If it's impossible to meet the condition even with all remaining votes, the candidate is marked with X = -1.
+
+This approach efficiently handles the constraints and ensures correctness by leveraging sorting and binary search, making it suitable for large input sizes.

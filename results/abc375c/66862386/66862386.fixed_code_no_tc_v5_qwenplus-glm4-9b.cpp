@@ -1,0 +1,33 @@
+#include <iostream>
+#include <cmath>
+#include <vector>
+using namespace std;
+
+int main() {
+    long long N;
+    cin >> N;
+    vector<long long> X(N), Y(N);
+    
+    long long nowX = 0, nowY = 0, nextX, nextY;
+    long double ans = 0.0;
+    
+    for (int i = 0; i < N; ++i) {
+        cin >> X[i] >> Y[i];
+    }
+
+    ans += sqrt(nowX * nowX + nowY * nowY); // Cost from origin to the first point
+    
+    for (int i = 0; i < N; ++i) {
+        nextX = X[i];
+        nextY = Y[i];
+        ans += sqrt((nextX - nowX) * (nextX - nowX) + (nextY - nowY) * (nextY - nowY));
+        nowX = nextX;
+        nowY = nextY;
+    }
+    
+    ans += sqrt((nowX - 0) * (nowX - 0) + (nowY - 0) * (nowY - 0)); // Cost from the last point back to the origin
+
+    cout << fixed << setprecision(10) << ans << endl;
+    
+    return 0;
+}

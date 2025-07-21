@@ -1,0 +1,22 @@
+#include<bits/stdc++.h>
+using namespace std;
+
+int main() {
+    int q;
+    cin >> q;
+    set<int> h; // Set to store unique elements
+    while(q--) {
+        int type, x;
+        cin >> type;
+        if(type == 1) {
+            cin >> x;
+            h.insert(x); // Insert element into the set
+        } else if(type == 2) {
+            cin >> x;
+            h.erase(h.find(x)); // Erase element from the set if it exists
+        } else {
+            cout << h.size() << endl; // Output the size of the set
+        }
+    }
+    return 0;
+}

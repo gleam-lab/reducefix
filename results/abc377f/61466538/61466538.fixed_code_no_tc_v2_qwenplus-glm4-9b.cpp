@@ -1,0 +1,76 @@
+#include <iostream>
+#include <vector>
+#include <set>
+#include <cmath>
+
+using namespace std;
+
+int main() {
+    long long n, m;
+    cin >> n >> m;
+
+    vector<pair<int, int>> occupied;
+    vector<int> occupied_rows, occupied_cols, occupied_diag1, occupied_diag2, occupied_rev_diag1, occupied_rev_diag2;
+
+    for (int i = 0; i < m; ++i) {
+        int a, b;
+        cin >> a >> b;
+        occupied.emplace_back(a, b);
+        occupied_rows.emplace_back(a);
+        occupied_cols.emplace_back(b);
+        occupied_diag1.emplace_back(a + b);
+        occupied_diag2.emplace_back(a - b);
+        occupied_rev_diag1.emplace_back(n - a + b);
+        occupied_rev_diag2.emplace_back(n - a - b);
+    }
+
+    // Count unique occupied rows, columns, diagonals, and reverse diagonals
+    int occupied_row_count = unique(occupied_rows.begin(), occupied_rows.end()) - occupied_rows.begin();
+    int occupied_col_count = unique(occupied_cols.begin(), occupied_cols.end()) - occupied_cols.begin();
+    int occupied_diag1_count = unique(occupied_diag1.begin(), occupied_diag1.end()) - occupied_diag1.begin();
+    int occupied_diag2_count = unique(occupied_diag2.begin(), occupied_diag2.end()) - occupied_diag2.begin();
+    int occupied_rev_diag1_count = unique(occupied_rev_diag1.begin(), occupied_rev_diag1.end()) - occupied_rev_diag1.begin();
+    int occupied_rev_diag2_count = unique(occupied_rev_diag2.begin(), occupied_rev_diag2.end()) - occupied_rev_diag2.begin();
+
+    // Calculate the number of free squares
+    long long free_squares = n * n;
+
+    // Subtract squares in occupied rows and columns
+    free_squares -= occupied_row_count * n;
+    free_squares -= occupied_col_count * n;
+
+    // Add back the intersection of rows and columns
+    free_squares += occupied_row_count * occupied_col_count;
+
+    // Subtract squares in occupied diagonals
+    free_squares -= occupied_diag1_count + occupied_diag2_count + occupied_rev_diag1_count + occupied_rev_diag2_count;
+
+    // Add back the intersection of diagonals
+    // For each pair of diagonals, we need to find the intersection and add it back
+    set<pair<int, int>> diag_pairs;
+    for (int i = 1; i <= n; ++i) {
+        for (int j = 1; j <= n; ++j) {
+            diag_pairs.insert({i + j, i - j});
+        }
+    }
+    for (int d1 : occupied_diag1) {
+        for (int d2 : occupied_diag2) {
+            if (diag_pairs.count({d1, d2})) {
+                free_squares += 1;
+            }
+        }
+    }
+
+    // Add back the intersection of reverse diagonals
+    for (int d1 : occupied_rev_diag1) {
+        for (int d2 : occupied_rev_diag2) {
+            if (diag_pairs.count({d1, d2})) {
+                free_squares += 1;
+            }
+        }
+    }
+
+    cout << free_squares << endl;
+
+    return 0;
+}

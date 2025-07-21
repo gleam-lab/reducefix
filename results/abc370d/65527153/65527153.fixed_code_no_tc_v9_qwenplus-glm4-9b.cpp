@@ -1,0 +1,95 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+const int MAXN = 403;
+int H, W, Q;
+vector<vector<int>> grid(MAXN);
+
+void destroy_walls(int r, int c) {
+    // Ensure the grid is large enough
+    for (int i = 0; i < H; i++) {
+        grid[i].clear();
+    }
+    for (int i = 0; i < H; i++) {
+        for (int j = 0; j < W; j++) {
+            if (i == r && j == c) {
+                grid[i].push_back(j);
+            } else {
+                grid[i].push_back(0);
+            }
+        }
+    }
+    // Destroy walls in the row
+    for (int j = 0; j < W; j++) {
+        int first = -1;
+        for (int i = 0; i < H; i++) {
+            if (grid[i][j] == 1) {
+                first = i;
+                break;
+            }
+        }
+        int last = -1;
+        for (int i = H - 1; i >= 0; i--) {
+            if (grid[i][j] == 1) {
+                last = i;
+                break;
+            }
+        }
+        if (first != -1 && last != -1) {
+            for (int i = first; i <= last; i++) {
+                grid[i][j] = -1;
+            }
+        }
+    }
+    // Destroy walls in the column
+    for (int i = 0; i < H; i++) {
+        int first = -1;
+        for (int j = 0; j < W; j++) {
+            if (grid[i][j] == 1) {
+                first = j;
+                break;
+            }
+        }
+        int last = -1;
+        for (int j = W - 1; j >= 0; j--) {
+            if (grid[i][j] == 1) {
+                last = j;
+                break;
+            }
+        }
+        if (first != -1 && last != -1) {
+            for (int j = first; j <= last; j++) {
+                grid[i][j] = -1;
+            }
+        }
+    }
+}
+
+int main() {
+    cin >> H >> W >> Q;
+    for (int i = 1; i <= H; i++) {
+        grid[i].resize(W);
+    }
+    for (int i = 0; i < H; i++) {
+        for (int j = 0; j < W; j++) {
+            grid[i][j] = 1;
+        }
+    }
+    int r, c;
+    while (Q--) {
+        cin >> r >> c;
+        destroy_walls(r - 1, c - 1); // Convert to 0-based index
+    }
+    int remaining = 0;
+    for (int i = 0; i < H; i++) {
+        for (int j = 0; j < W; j++) {
+            if (grid[i][j] == 1) {
+                remaining++;
+            }
+        }
+    }
+    cout << remaining << endl;
+    return 0;
+}

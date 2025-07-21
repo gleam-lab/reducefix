@@ -1,0 +1,50 @@
+#include<bits/stdc++.h>
+using namespace std;
+
+const int INF = INT_MAX / 2;
+vector<pair<int, int>> G[200005];
+int n, m;
+long long d[200005];
+
+void dijkstra(int start) {
+    priority_queue<pair<long long, int>, vector<pair<long long, int>>, greater<>> pq;
+    fill(d, d + n + 1, INF);
+    d[start] = 0;
+    pq.push({d[start], start});
+
+    while (!pq.empty()) {
+        auto [dist, u] = pq.top(); pq.pop();
+        if (dist > d[u]) continue;
+
+        for (auto &[v, w] : G[u]) {
+            long long new_dist = dist + v + w;
+            if (new_dist < d[v]) {
+                d[v] = new_dist;
+                pq.push({new_dist, v});
+            }
+        }
+    }
+}
+
+signed main() {
+    scanf("%lld %lld", &n, &m);
+    for (int i = 1; i <= n; ++i) {
+        scanf("%lld", &d[i]);
+    }
+
+    for (int i = 0; i < m; ++i) {
+        int u, v, w;
+        scanf("%lld %lld %lld", &u, &v, &w);
+        G[u].emplace_back(v, w);
+        G[v].emplace_back(u, w); // Since it's an undirected graph
+    }
+
+    dijkstra(1);
+
+    for (int i = 2; i <= n; ++i) {
+        printf("%lld ", d[i]);
+    }
+    printf("\n");
+
+    return 0;
+}

@@ -1,0 +1,46 @@
+#include<bits/stdc++.h>
+using namespace std;
+using ll = long long;
+using VI = vector<int>;
+using P = pair<int, int>;
+constexpr int INF = 1001001001;
+constexpr ll LINF = 1001001001001001001ll;
+#define rep(i, n) for (ll i = 0; i < (ll)(n); i++)
+#define rep2(i, k, n) for (ll i = k; i < (ll)(n); i++)
+#define OUT(x) cout << #x << ":" << x << endl
+
+int main(){
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+    cout.tie(0);
+    int t;
+    cin >> t;
+    while(t--){
+        int n, k;
+        cin >> n >> k;
+        vector<ll> a(n), b(n);
+        priority_queue<pair<ll,ll>,vector<pair<ll,ll>>,greater<pair<ll,ll>>> pq_b;
+        for(int i=0;i<n;i++){
+            cin >> a[i];
+        }
+        for(int i=0;i<n;i++){
+            cin >> b[i];
+            pq_b.push({b[i],a[i]});
+        }
+        sort(a.begin(),a.end());
+        ll sum = 0;
+        for(int i=0;i<k;i++){
+            sum+=pq_b.top().first;
+            pq_b.pop();
+        }
+        ll ans = a[k-1]*sum;
+        for(int i=k;i<n;i++){
+            sum-=pq_b.top().first;
+            sum+=pq_b.top().second;
+            pq_b.pop();
+            pq_b.push({b[i],a[i]});
+            ans=min(ans,a[i]*sum);
+        }
+        cout<<ans<<"\n";
+    }
+}

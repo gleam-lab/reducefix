@@ -1,0 +1,89 @@
+#include<bits/stdc++.h>
+using namespace std;
+
+typedef long long ll;
+
+int main() {
+    ll N, M;
+    cin >> N >> M;
+    set<ll> rows, cols, diag1, diag2;
+    set<pair<ll, ll>> pieces;
+
+    for (int i = 0; i < M; ++i) {
+        ll a, b;
+        cin >> a >> b;
+        rows.insert(a);
+        cols.insert(b);
+        diag1.insert(a - b);
+        diag2.insert(a + b);
+        pieces.insert({a, b});
+    }
+
+    ll bad_rows = rows.size();
+    ll bad_cols = cols.size();
+    ll bad_diag1 = diag1.size();
+    ll bad_diag2 = diag2.size();
+
+    ll total_bad = bad_rows * N + bad_cols * N - bad_rows * bad_cols;
+
+    for (auto d : diag1) {
+        ll cnt = 0;
+        if (d >= 0) {
+            cnt = N - d;
+        } else {
+            cnt = N + d;
+        }
+        total_bad += cnt;
+    }
+
+    for (auto d : diag2) {
+        ll cnt;
+        if (d <= N + 1) {
+            cnt = d - 1;
+        } else {
+            cnt = 2 * N - d + 1;
+        }
+        total_bad += cnt;
+    }
+
+    for (auto d : diag1) {
+        for (auto d2 : diag2) {
+            ll i = (d + d2) / 2;
+            ll j = (d2 - d) / 2;
+            if ((d + d2) % 2 == 0 && (d2 - d) % 2 == 0 && i >= 1 && i <= N && j >= 1 && j <= N) {
+                if (pieces.find({i, j}) == pieces.end()) {
+                    total_bad--;
+                }
+            }
+        }
+    }
+
+    for (auto it : pieces) {
+        ll i = it.first;
+        ll j = it.second;
+        if (rows.count(i) && cols.count(j)) {
+            total_bad++;
+        }
+        if (diag1.count(i - j) && diag2.count(i + j)) {
+            total_bad++;
+        }
+        if (rows.count(i) && diag1.count(i - j)) {
+            total_bad--;
+        }
+        if (rows.count(i) && diag2.count(i + j)) {
+            total_bad--;
+        }
+        if (cols.count(j) && diag1.count(i - j)) {
+            total_bad--;
+        }
+        if (cols.count(j) && diag2.count(i + j)) {
+            total_bad--;
+        }
+    }
+
+    ll total_squares = N * N;
+    ll answer = total_squares - total_bad - M;
+    cout << answer << endl;
+
+    return 0;
+}

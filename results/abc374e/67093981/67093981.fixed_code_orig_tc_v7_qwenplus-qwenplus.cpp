@@ -1,0 +1,77 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <climits>
+using namespace std;
+
+typedef long long ll;
+
+struct Item {
+    int a, p, b, q;
+};
+
+ll cost(int n, const Item& item, vector<ll>& dp) {
+    int ab = item.a * item.b;
+    ll full_cycles = n / ab;
+    int remainder = n % ab;
+    return full_cycles * item.p * item.b + dp[remainder];
+}
+
+bool is_possible(int N, const vector<Item>& items, ll total_candies, ll max_cost) {
+    vector<vector<ll>> dp(N);
+    for (int i = 0; i < N; ++i) {
+        int ab = items[i].a * items[i].b;
+        dp[i].resize(ab, LLONG_MAX);
+        dp[i][0] = 0;
+        for (int j = 1; j < ab; ++j) {
+            if (j >= items[i].a) dp[i][j] = min(dp[i][j], dp[i][j - items[i].a] + items[i].p);
+            if (j >= items[i].b) dp[i][j] = min(dp[i][j], dp[i][j - items[i].b] + items[i].q);
+        }
+    }
+
+    ll total = 0;
+    for (int i = 0; i < N; ++i) {
+        int ab = items[i].a * items[i].b;
+        ll full_cycles = total_candies / ab;
+        ll rem = total_candies % ab;
+        ll c = full_cycles * items[i].p * item.b + dp[i][rem];
+        total += c;
+        if (total > max_cost) return false;
+    }
+    return true;
+}
+
+int main() {
+    int N;
+    ll X;
+    cin >> N >> X;
+
+    vector<Item> items(N);
+
+    for (int i = 0; i < N; ++i) {
+        cin >> items[i].a >> items[i].p >> items[i].b >> items[i].q;
+        // Ensure a <= b and corresponding cost is adjusted accordingly
+        if (items[i].a * items[i].q < items[i].b * items[i].p) {
+            swap(items[i].a, items[i].b);
+            swap(items[i].p, items[i].q);
+        }
+    }
+
+    ll low = 0, high = 1e18;
+    ll answer = 0;
+
+    while (low <= high) {
+        ll mid = low + (high - low) / 2;
+        vector<vector<ll>> dp(N);
+        if (is_possible(N, items, mid, X)) {
+            answer = mid;
+            low = mid + 1;
+        } else {
+            high = mid - 1;
+        }
+    }
+
+    cout << answer << endl;
+
+    return 0;
+}

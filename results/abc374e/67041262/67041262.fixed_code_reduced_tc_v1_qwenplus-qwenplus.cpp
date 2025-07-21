@@ -1,0 +1,68 @@
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+
+// Calculate minimum cost to achieve at least W units of weight using two items
+ll min_cost(ll W, ll a, ll p, ll b, ll q) {
+    // Ensure we don't do unnecessary work by checking edge/base cases first
+
+    // Try swapping so that a <= b (to reduce number of cases)
+    if (a > b) {
+        swap(a, b);
+        swap(p, q);
+    }
+
+    ll best = LLONG_MAX;
+
+    // We try all possible x in the range [max(0, (W * b - some slack)/ (a*b/b))]
+    // but practically up to min(W/a, b) iterations is sufficient due to efficiency considerations.
+    // This ensures O(b) complexity per call.
+
+    // Try all y such that y <= min(W / b, a)
+    // Then compute required x: x = ceil((W - b*y)/a)
+    for (ll y = 0; y <= min(W / b, (ll)2e5); ++y) {
+        ll rem = W - b * y;
+        ll x = (rem <= 0 ? 0 : (rem + a - 1) / a);
+        best = min(best, p * x + q * y);
+
+        // Early termination if further y will only increase cost
+        if (p * x + q * y == best && q > p) break;
+    }
+
+    return best;
+}
+
+bool can(ll W, int N, ll X,
+         const vector<ll>& A, const vector<ll>& P,
+         const vector<ll>& B, const vector<ll>& Q) {
+    ll total_cost = 0;
+    for (int i = 0; i < N; ++i) {
+        ll cost = min_cost(W, A[i], P[i], B[i], Q[i]);
+        if (total_cost + cost > X) return false;
+        total_cost += cost;
+    }
+    return total_cost <= X;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int N;
+    ll X;
+    cin >> N >> X;
+    vector<ll> A(N), P(N), B(N), Q(N);
+    for (int i = 0; i < N; ++i) {
+        cin >> A[i] >> P[i] >> B[i] >> Q[i];
+    }
+
+    ll lo = 0, hi = 1LL << 60;
+    while (hi - lo > 1) {
+        ll mid = (lo + hi) / 2;
+        if (can(mid, N, X, A, P, B, Q)) lo = mid;
+        else hi = mid;
+    }
+
+    cout << lo << "\n";
+    return 0;
+}

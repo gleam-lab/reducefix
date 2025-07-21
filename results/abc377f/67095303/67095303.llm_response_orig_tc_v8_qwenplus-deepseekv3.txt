@@ -1,0 +1,135 @@
+To fix this code, we need to analyze the problem and identify why the initial solution failed on the given test case. The problem involves counting the number of empty squares on an N x N grid where a new piece can be placed without being captured by any existing pieces. The existing pieces can capture along rows, columns, and two types of diagonals (i + j = constant and i - j = constant).
+
+### Analysis of the Initial Solution
+1. **Data Structures**: The initial solution uses sets to store rows, columns, and diagonals that are already occupied by existing pieces. This is a good approach to avoid duplicates.
+2. **Calculation of Safe Squares**: The initial approach calculates the number of safe squares by subtracting the squares covered by rows, columns, and diagonals from the total squares. However, it seems to have an issue in accurately counting the overlaps between these sets, leading to an incorrect count in some cases.
+
+### Issues in the Initial Solution
+1. **Overlap Counting**: The initial solution attempts to subtract overlaps between rows, columns, and diagonals, but the method used might not account for all overlaps correctly, especially between diagonals and rows/columns.
+2. **Diagonal Length Calculation**: The calculation of the length of diagonals might be incorrect in certain scenarios, particularly for large grids.
+
+### Corrected Approach
+1. **Inclusion-Exclusion Principle**: We need to accurately count the squares covered by at least one of the rows, columns, or diagonals and then subtract this from the total squares to get the safe squares.
+2. **Diagonal Coverage**: Ensure that the diagonals are correctly represented and their overlaps with rows and columns are properly accounted for.
+3. **Efficiency**: Given the constraints (N up to 10^9 and M up to 10^3), the solution must efficiently handle large grids without excessive computation.
+
+### Solution Code
+```cpp
+#include<bits/stdc++.h>
+#define int long long
+using namespace std;
+
+void solve() {
+    int N, M;
+    cin >> N >> M;
+    set<int> rows, cols, diag1, diag2;
+    
+    for (int i = 0; i < M; ++i) {
+        int a, b;
+        cin >> a >> b;
+        rows.insert(a);
+        cols.insert(b);
+        diag1.insert(a + b);
+        diag2.insert(a - b);
+    }
+    
+    int total_covered = 0;
+    
+    // Rows and columns
+    total_covered += rows.size() * N;
+    total_covered += cols.size() * N;
+    total_covered -= rows.size() * cols.size();
+    
+    // Diagonals (i + j = d)
+    for (int d : diag1) {
+        int min_i = max(1LL, d - N);
+        int max_i = min(N, d - 1);
+        if (min_i > max_i) continue;
+        int cnt = max_i - min_i + 1;
+        total_covered += cnt;
+        
+        // Subtract overlaps with rows
+        for (int r : rows) {
+            if (d - r >= 1 && d - r <= N) {
+                total_covered--;
+            }
+        }
+        
+        // Subtract overlaps with columns
+        for (int c : cols) {
+            if (d - c >= 1 && d - c <= N) {
+                total_covered--;
+            }
+        }
+        
+        // Subtract overlaps with other diagonals (i - j = e)
+        for (int e : diag2) {
+            int i = (d + e) / 2;
+            int j = (d - e) / 2;
+            if ((d + e) % 2 == 0 && (d - e) % 2 == 0 && i >= 1 && i <= N && j >= 1 && j <= N) {
+                total_covered--;
+            }
+        }
+    }
+    
+    // Diagonals (i - j = e)
+    for (int e : diag2) {
+        int min_j = max(1LL, 1 - e);
+        int max_j = min(N, N - e);
+        if (min_j > max_j) continue;
+        int cnt = max_j - min_j + 1;
+        total_covered += cnt;
+        
+        // Subtract overlaps with rows
+        for (int r : rows) {
+            if (r - e >= 1 && r - e <= N) {
+                total_covered--;
+            }
+        }
+        
+        // Subtract overlaps with columns
+        for (int c : cols) {
+            if (e + c >= 1 && e + c <= N) {
+                total_covered--;
+            }
+        }
+        
+        // Subtract overlaps with other diagonals (i + j = d)
+        for (int d : diag1) {
+            int i = (d + e) / 2;
+            int j = (d - e) / 2;
+            if ((d + e) % 2 == 0 && (d - e) % 2 == 0 && i >= 1 && i <= N && j >= 1 && j <= N) {
+                total_covered--;
+            }
+        }
+    }
+    
+    // Total safe squares
+    int total_squares = N * N;
+    int safe_squares = total_squares - total_covered + M; // Adding M because existing pieces are already counted in rows/cols/diags
+    cout << safe_squares << endl;
+}
+
+signed main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(NULL);
+    
+    int _ = 1;
+    // cin >> _;
+    while (_--) {
+        solve();
+    }
+    
+    return 0;
+}
+```
+
+### Explanation
+1. **Data Structures**: We use sets to store rows, columns, and diagonals occupied by existing pieces to avoid duplicates.
+2. **Coverage Calculation**: 
+   - **Rows and Columns**: The total coverage is calculated by adding the squares covered by rows and columns and then subtracting the overlaps (squares covered by both rows and columns).
+   - **Diagonals (i + j = d)**: For each diagonal, we calculate the number of squares it covers, subtract overlaps with rows, columns, and other diagonals (i - j = e).
+   - **Diagonals (i - j = e)**: Similarly, we calculate coverage for these diagonals and subtract overlaps.
+3. **Safe Squares**: The total safe squares are obtained by subtracting the total covered squares from the total grid squares and adding the count of existing pieces (since they were subtracted twice in the overlap calculations).
+
+This approach ensures that all overlaps are correctly accounted for, providing the accurate count of safe squares.

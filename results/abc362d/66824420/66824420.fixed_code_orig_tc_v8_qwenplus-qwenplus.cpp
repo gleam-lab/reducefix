@@ -1,0 +1,1 @@
+vector<long long> dist(n + 1, 1E10 + 0);

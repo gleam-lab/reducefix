@@ -1,0 +1,79 @@
+To fix this code, we need to address a few key issues:
+1. **Initialization of `sink` array**: The `sink` array should store the sea level at which each cell sinks, but the initial approach incorrectly sets `sink[i][j]` to `INT_MAX` for interior cells. Instead, it should be initialized to a high value, but the logic for updating it should ensure that we correctly propagate the sinking levels.
+2. **Priority Queue Handling**: The priority queue should prioritize cells with lower elevations first, as they will sink earlier. The current approach pushes cells with their own elevations, which may not correctly propagate the earliest sinking time.
+3. **Prefix Sum Calculation**: The prefix sum should accumulate the number of cells that sink at each sea level, but the current approach may incorrectly account for cells that sink at levels beyond `Y`.
+
+Here’s the corrected code:
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+#define all(x) (x).begin(), (x).end()
+
+int main() {
+    ios_base::sync_with_stdio(0);
+    cin.tie(0);
+    int h, w, y;
+    cin >> h >> w >> y;
+    vector<vector<int>> height(h, vector<int>(w));
+    vector<vector<int>> sink(h, vector<int>(w, INT_MAX));
+    priority_queue<pair<int, pair<int, int>>, vector<pair<int, pair<int, int>>>, greater<pair<int, pair<int, int>>>> pq;
+    int di[4][2] = {{-1, 0}, {1, 0}, {0, -1}, {0, 1}};
+    
+    for (int i = 0; i < h; ++i) {
+        for (int j = 0; j < w; ++j) {
+            cin >> height[i][j];
+            if (i == 0 || i == h - 1 || j == 0 || j == w - 1) {
+                sink[i][j] = height[i][j];
+                pq.push({sink[i][j], {i, j}});
+            }
+        }
+    }
+    
+    while (!pq.empty()) {
+        auto [H, p] = pq.top();
+        auto [r, c] = p;
+        pq.pop();
+        for (int i = 0; i < 4; ++i) {
+            int nr = r + di[i][0];
+            int nc = c + di[i][1];
+            if (nr < 0 || nr >= h || nc < 0 || nc >= w) continue;
+            if (sink[nr][nc] > max(H, height[nr][nc])) {
+                sink[nr][nc] = max(H, height[nr][nc]);
+                pq.push({sink[nr][nc], {nr, nc}});
+            }
+        }
+    }
+    
+    vector<int> cnt(y + 2, 0);
+    for (int i = 0; i < h; ++i) {
+        for (int j = 0; j < w; ++j) {
+            if (sink[i][j] <= y) {
+                cnt[sink[i][j]]++;
+            } else {
+                cnt[y + 1]++;
+            }
+        }
+    }
+    
+    vector<int> pref(y + 1, 0);
+    pref[0] = cnt[0];
+    for (int i = 1; i <= y; ++i) {
+        pref[i] = pref[i - 1] + cnt[i];
+    }
+    
+    for (int i = 1; i <= y; ++i) {
+        cout << h * w - pref[i] << '\n';
+    }
+    
+    return 0;
+}
+```
+
+### Key Fixes:
+1. **Initialization**: The `sink` array is initialized to `INT_MAX` for all cells except the border cells, which are initialized to their own heights.
+2. **Priority Queue**: The priority queue is used to process cells in order of their sinking levels. The sinking level of a cell is the maximum of its own height and the sinking level of its adjacent cells.
+3. **Prefix Sum**: The `cnt` array counts how many cells sink at each sea level. The `pref` array accumulates these counts to provide the total number of cells sunk up to each sea level. The remaining area is then calculated by subtracting the prefix sum from the total area.
+
+This approach ensures that the solution is both correct and efficient, handling the constraints effectively.

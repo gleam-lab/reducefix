@@ -1,0 +1,136 @@
+```cpp
+#include <bits/stdc++.h>
+
+using namespace std;
+
+int main() {
+    long long N, M;
+    cin >> N >> M;
+
+    set<long long> rows, cols;
+    set<pair<long long, long long>> diag1, diag2;
+
+    for (int i = 0; i < M; ++i) {
+        long long a, b;
+        cin >> a >> b;
+
+        rows.insert(a);
+        cols.insert(b);
+        diag1.insert({a + b, a}); // (x+y)
+        diag2.insert({a - b, a}); // (x-y)
+    }
+
+    // Total empty squares = all squares - occupied by pieces
+    long long totalEmpty = N * N - M;
+
+    // Count how many squares are attacked via rows, columns, and diagonals
+    long long attackedByRow = rows.size() * N;
+    long long attackedByCol = cols.size() * N;
+
+    // For diagonal attacks: each unique (x+y) covers min and max range of that diagonal
+    long long attackedByDiag1 = 0;
+    for (auto [s, x] : diag1) {
+        long long count = min(s - 1, N) - max(s - N, 1LL) + 1;
+        attackedByDiag1 += count;
+    }
+
+    // For diagonal attacks: each unique (x-y) covers min and max range of that diagonal
+    long long attackedByDiag2 = 0;
+    for (auto [d, x] : diag2) {
+        long long start = max(1LL, x - d);
+        long long end = min(N, x + d);
+        long long count = end - start + 1;
+        attackedByDiag2 += count;
+    }
+
+    // Inclusion-Exclusion: subtract overlaps
+
+    // Row & Column overlaps
+    long long rowColOverlap = 0;
+    for (long long r : rows) {
+        for (long long c : cols) {
+            rowColOverlap++;
+        }
+    }
+
+    // Row & Diag1 overlaps
+    long long rowDiag1Overlap = 0;
+    for (long long r : rows) {
+        for (auto [s, x] : diag1) {
+            long long c = s - r;
+            if (c >= 1 && c <= N) {
+                rowDiag1Overlap++;
+            }
+        }
+    }
+
+    // Row & Diag2 overlaps
+    long long rowDiag2Overlap = 0;
+    for (long long r : rows) {
+        for (auto [d, x] : diag2) {
+            long long c = d + r;
+            if (c >= 1 && c <= N) {
+                rowDiag2Overlap++;
+            }
+        }
+    }
+
+    // Col & Diag1 overlaps
+    long long colDiag1Overlap = 0;
+    for (long long c : cols) {
+        for (auto [s, x] : diag1) {
+            long long r = s - c;
+            if (r >= 1 && r <= N) {
+                colDiag1Overlap++;
+            }
+        }
+    }
+
+    // Col & Diag2 overlaps
+    long long colDiag2Overlap = 0;
+    for (long long c : cols) {
+        for (auto [d, x] : diag2) {
+            long long r = c + d;
+            if (r >= 1 && r <= N) {
+                colDiag2Overlap++;
+            }
+        }
+    }
+
+    // Diag1 & Diag2 overlaps
+    long long diag1Diag2Overlap = 0;
+    for (auto [s, x1] : diag1) {
+        for (auto [d, x2] : diag2) {
+            long long r = (s + d) / 2;
+            long long c = (s - d) / 2;
+            if (r >= 1 && r <= N && c >= 1 && c <= N) {
+                diag1Diag2Overlap++;
+            }
+        }
+    }
+
+    // Full overlap: row, col, diag1, diag2
+    long long fullOverlap = 0;
+    for (long long r : rows) {
+        for (long long c : cols) {
+            long long d1 = r + c;
+            long long d2 = r - c;
+            if (diag1.find({d1, r}) != diag1.end() && diag2.find({d2, r}) != diag2.end()) {
+                fullOverlap++;
+            }
+        }
+    }
+
+    // Inclusion-Exclusion Principle
+    long long totalAttacked = attackedByRow + attackedByCol + attackedByDiag1 + attackedByDiag2
+                            - rowColOverlap - rowDiag1Overlap - rowDiag2Overlap
+                            - colDiag1Overlap - colDiag2Overlap - diag1Diag2Overlap
+                            + fullOverlap;
+
+    // Subtract attacked squares from empty ones to get safe positions
+    long long answer = totalEmpty - totalAttacked;
+    cout << answer << endl;
+
+    return 0;
+}
+```

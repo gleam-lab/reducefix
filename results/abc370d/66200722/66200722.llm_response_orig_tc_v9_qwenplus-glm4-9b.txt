@@ -1,0 +1,126 @@
+
+To solve the problem, we need to keep track of the walls in the grid and simulate the process of placing bombs and destroying walls.
+
+Here are the steps to approach the problem:
+
+1. **Initialization**: Start by initializing a grid of size `H x W` with all cells containing walls. Also, prepare a Union-Find data structure to manage the connectivity of cells that are connected vertically or horizontally.
+
+2. **Processing Queries**:
+   - For each query, check the cell `(R, C)` given by the query.
+   - If there is a wall at `(R, C)`, destroy it and move on to the next query.
+   - If there is no wall at `(R, C)`, destroy the first walls encountered when looking up, down, left, and right. This means:
+     - For left and right, look for the next wall in the same row.
+     - For up and down, look for the next wall in the same column and connected to the current row.
+   - After destroying walls, update the Union-Find structure to reflect the new connectivity.
+
+3. **Count Remaining Walls**:
+   - After processing all queries, count the number of walls that remain in the grid.
+
+Let's attempt to refactor the provided code to incorporate these steps.
+
+```cpp
+#include <iostream>
+#include <vector>
+#include <map>
+using namespace std;
+
+const int MAX_H = 100000;
+const int MAX_W = 49001; // Since there can be a maximum of 200000 queries.
+
+vector<vector<int>> grid(MAX_H, vector<int>(MAX_W, 1)); // 1 means wall, 0 means no wall
+
+// Union-Find structure
+struct UnionFind {
+    vector<int> parent;
+    int components;
+
+    UnionFind(int n) : parent(n), components(n) {
+        for (int i = 0; i < n; ++i) {
+            parent[i] = i;
+        }
+    }
+
+    int find(int x) {
+        if (parent[x] != x) {
+            parent[x] = find(parent[x]);
+        }
+        return parent[x];
+    }
+
+    void unite(int x, int y) {
+        int rootX = find(x);
+        int rootY = find(y);
+        if (rootX != rootY) {
+            parent[rootY] = rootX;
+            components--;
+        }
+    }
+
+    int count_components() const {
+        return components;
+    }
+};
+
+int solve() {
+    int H, W, Q;
+    cin >> H >> W >> Q;
+
+    UnionFind uf(H + W);
+
+    for (int i = 0; i < Q; ++i) {
+        int R, C;
+        cin >> R >> C;
+        R--; C--;
+        // Find the first and last walls in the column and row
+        int first_row = -1, last_row = -1, first_col = -1, last_col = -1;
+
+        for (int r = 0; r < H; ++r) {
+            if (grid[r][C]) {
+                if (first_row == -1) first_row = r;
+                last_row = r;
+            }
+        }
+
+        for (int c = 0; c < W; ++c) {
+            if (grid[R][c]) {
+                if (first_col == -1) first_col = c;
+                last_col = c;
+            }
+        }
+
+        for (int r = first_row; r <= last_row; ++r) {
+            if (r != R && grid[r][C]) {
+                uf.unite(r, R);
+            }
+        }
+
+        for (int c = first_col; c <= last_col; ++c) {
+            if (c != C && grid[R][c]) {
+                uf.unite(c, R);
+            }
+        }
+
+        // Destroy the wall at (R, C)
+        grid[R][C] = 0;
+    }
+
+    // Count the number of walls left
+    int remaining_walls = 0;
+    for (int r = 0; r < H; ++r) {
+        for (int c = 0; c < W; ++c) {
+            if (grid[r][c]) {
+                remaining_walls++;
+            }
+        }
+    }
+
+    return remaining_walls;
+}
+
+int main() {
+    cout << solve() << endl;
+    return 0;
+}
+```
+
+This code initializes the grid with walls, processes each query by destroying walls and updating the Union-Find structure, and finally counts the number of walls remaining in the grid. The Union-Find structure is used to keep track of the connectivity of rows and columns, allowing us to efficiently destroy walls in connected components.

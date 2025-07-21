@@ -1,0 +1,26 @@
+#include<bits/stdc++.h>
+using namespace std;
+#define ll long long int
+const ll mod = 1e9 + 7;
+
+int n, m, a[400005], t[1000005], an, w[400005];
+
+int main() {
+    cin >> n >> m;
+    for (int i = 1; i <= n; i++) {
+        cin >> a[i];
+        a[i] %= m;
+        a[i + n] = a[i];
+    }
+    for (int i = 1; i < 2 * n; i++) {
+        w[i + 1] = (w[i] + a[i]) % m;
+        if (i > n) t[w[i - n]]--;
+        if (i >= n) {
+            an += t[w[i]];
+            an %= mod;
+        }
+        t[w[i]]++;
+    }
+    cout << an << endl;
+    return 0;
+}

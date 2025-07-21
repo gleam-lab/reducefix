@@ -1,0 +1,43 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    int n, k;
+    cin >> n >> k;
+    vector<int> A(n);
+    for (int i = 0; i < n; ++i) {
+        cin >> A[i];
+    }
+
+    // We will try to keep a subsequence of N - K elements in original order
+    // The goal is to minimize max(B) - min(B), where B is the resulting subsequence
+
+    // Strategy:
+    // Since we must keep exactly N-K elements and preserve their order,
+    // we can slide a window of size (N-K) over the array and compute
+    // the diff between max and min in each window.
+    // Then, return the minimum such difference.
+
+    // To do this efficiently, use a multiset to maintain the window elements
+    // and track min and max in O(logN) time per sliding step
+
+    int window_size = n - k;
+    multiset<int> window;
+    for (int i = 0; i < window_size; ++i) {
+        window.insert(A[i]);
+    }
+
+    int result = *window.rbegin() - *window.begin();
+
+    for (int i = window_size; i < n; ++i) {
+        // Remove the element going out of the window
+        window.erase(window.find(A[i - window_size]));
+        // Add the new element coming into the window
+        window.insert(A[i]);
+        // Update the minimum difference
+        result = min(result, *window.rbegin() - *window.begin());
+    }
+
+    cout << result << endl;
+    return 0;
+}

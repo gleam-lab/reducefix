@@ -1,0 +1,44 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+const int N = 2e5 + 5;
+vector<int> g[N];
+int n, m, dep[N], par[N];
+
+void dfs(int u, int p) {
+    par[u] = p;
+    dep[u] = dep[p] + 1;
+    for (int v : g[u]) if (v != p) dfs(v, u);
+}
+
+int lca(int u, int v) {
+    if (dep[u] > dep[v]) swap(u, v);
+    for (int k = 18; k >= 0; --k) if ((dep[v] - dep[u]) & (1 << k)) v = par[v];
+    if (u == v) return u;
+    for (int k = 18; k >= 0; --k) if (par[u] != par[v]) u = par[u], v = par[v];
+    return par[u];
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr), cout.tie(nullptr);
+
+    cin >> n >> m;
+    for (int i = 1; i <= m; ++i) {
+        int u, v;
+        cin >> u >> v;
+        g[u].push_back(v), g[v].push_back(u);
+    }
+
+    dfs(1, 0);
+
+    int q;
+    cin >> q;
+    while (q--) {
+        int u, v;
+        cin >> u >> v;
+        cout << dep[u] + dep[v] - 2 * dep[lca(u, v)] << '\n';
+    }
+
+    return 0;
+}

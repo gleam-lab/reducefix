@@ -1,0 +1,151 @@
+#include <iostream>
+#include <algorithm>
+#include <vector>
+using namespace std;
+
+typedef long long ll;
+
+struct Candidate {
+    ll a;
+    int idx;
+};
+
+bool compareByA(const Candidate &x, const Candidate &y) {
+    if (x.a == y.a) {
+        return x.idx < y.idx;
+    }
+    return x.a > y.a;
+}
+
+bool compareByIdx(const Candidate &x, const Candidate &y) {
+    return x.idx < y.idx;
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int N, M;
+    ll K;
+    cin >> N >> M >> K;
+
+    vector<Candidate> candidates(N);
+    for (int i = 0; i < N; ++i) {
+        cin >> candidates[i].a;
+        candidates[i].idx = i;
+    }
+
+    sort(candidates.begin(), candidates.end(), compareByA);
+    vector<ll> prefixSum(N + 1, 0);
+    for (int i = 1; i <= N; ++i) {
+        prefixSum[i] = prefixSum[i - 1] + candidates[i - 1].a;
+    }
+
+    ll total_used = prefixSum[N];
+    ll remaining = K - total_used;
+
+    vector<ll> answer(N, -1);
+
+    for (int i = 0; i < N; ++i) {
+        ll current_a = candidates[i].a;
+        int rank = i + 1;
+
+        if (rank <= M) {
+            // Candidate is already in top M, 0 votes needed
+            answer[candidates[i].idx] = 0;
+            continue;
+        }
+
+        // Binary search for the minimum X
+        ll left = 0;
+        ll right = remaining;
+        ll min_X = -1;
+
+        while (left <= right) {
+            ll mid = (left + right) / 2;
+            ll new_a = current_a + mid;
+            int pos = upper_bound(candidates.begin(), candidates.end(), Candidate{new_a, N}, compareByA) - candidates.begin();
+
+            if (pos < M) {
+                // Candidate is in top M with X=mid
+                min_X = mid;
+                right = mid - 1;
+            } else {
+                // Need more votes
+                left = mid + 1;
+            }
+        }
+
+        // Check if the found min_X is feasible
+        if (min_X != -1) {
+            // Verify that distributing the remaining votes (min_X + others) doesn't allow others to surpass new_a
+            ll new_a = current_a + min_X;
+            int pos = upper_bound(candidates.begin(), candidates.end(), Candidate{new_a, N}, compareByA) - candidates.begin();
+
+            if (pos <= M) {
+                answer[candidates[i].idx] = min_X;
+            } else {
+                // The required votes to surpass M candidates might be more complex
+                // Need to ensure that after adding X, at least M candidates are not strictly greater
+                // The previous check might not be sufficient, so we need to compute the total votes needed to ensure M-1 candidates have <= new_a
+                ll total = 0;
+                int upper_pos = upper_bound(candidates.begin(), candidates.end(), Candidate{new_a, N}, compareByA) - candidates.begin();
+                int lower_pos = lower_bound(candidates.begin(), candidates.end(), Candidate{new_a, N}, compareByA) - candidates.begin();
+
+                if (upper_pos >= M) {
+                    // The new_a is not enough to be in top M
+                    answer[candidates[i].idx] = -1;
+                } else {
+                    // Now, let's find the minimal X such that after adding X, the candidate is in top M
+                    // The new approach is to ensure that the M-th candidate's votes (after possible additions) is <= new_a
+                    // So, the minimal X is max(0, (current_a + X) must be >= (A[M-1] - X_others)), but this is complex
+                    // Instead, set X to be (A[M-1] - current_a + 1) if possible, but need to ensure that the remaining votes can cover this X and others
+                    // So binary search between current_a and A[M-1] + remaining
+                    ll low = 0;
+                    ll high = remaining;
+                    ll best_X = -1;
+                    while (low <= high) {
+                        ll mid_X = (low + high) / 2;
+                        ll test_a = current_a + mid_X;
+                        int test_pos = upper_bound(candidates.begin(), candidates.end(), Candidate{test_a, N}, compareByA) - candidates.begin();
+                        if (test_pos <= M) {
+                            best_X = mid_X;
+                            high = mid_X - 1;
+                        } else {
+                            low = mid_X + 1;
+                        }
+                    }
+                    if (best_X != -1 && best_X <= remaining) {
+                        answer[candidates[i].idx] = best_X;
+                    } else {
+                        answer[candidates[i].idx] = -1;
+                    }
+                }
+            }
+        } else {
+            answer[candidates[i].idx] = -1;
+        }
+    }
+
+    sort(candidates.begin(), candidates.end(), compareByIdx);
+
+    for (int i = 0; i < N; ++i) {
+        if (answer[i] == -1) {
+            // Check if the candidate is already in top M without any additional votes
+            ll current_a = candidates[i].a;
+            int pos = upper_bound(candidates.begin(), candidates.end(), Candidate{current_a, N}, compareByA) - candidates.begin();
+            if (pos <= M) {
+                answer[i] = 0;
+            } else {
+                answer[i] = -1;
+            }
+        }
+    }
+
+    for (int i = 0; i < N; ++i) {
+        cout << answer[i] << " ";
+    }
+    cout << "\n";
+
+    return 0;
+}

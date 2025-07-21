@@ -1,0 +1,75 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+#define LL long long
+#define PII pair<int, int>
+
+struct Edge {
+    int u, v, w;
+};
+
+struct Node {
+    int u, dist;
+    bool operator<(const Node &other) const {
+        return dist > other.dist;
+    }
+};
+
+const int MAXN = 2e5 + 10;
+const LL INF = 1e18;
+
+vector<PII> adj[MAXN];
+LL dist[MAXN];
+
+void dijkstra(int start, int n) {
+    priority_queue<Node> pq;
+    fill(dist, dist + n + 1, INF);
+    dist[start] = 0;
+    pq.push({start, 0});
+    
+    while (!pq.empty()) {
+        Node node = pq.top(); pq.pop();
+        
+        if (node.dist > dist[node.u])
+            continue;
+        
+        for (auto &[v, w] : adj[node.u]) {
+            LL new_dist = dist[node.u] + w + min(node.dist, dist[v]);
+            if (new_dist < dist[v]) {
+                dist[v] = new_dist;
+                pq.push({v, new_dist});
+            }
+        }
+    }
+}
+
+int main() {
+    ios::sync_with_stdio(false); cin.tie(0); cout.tie(0);
+    
+    int n, m;
+    cin >> n >> m;
+    
+    for (int i = 1; i <= n; ++i) {
+        adj[i].clear();
+    }
+    
+    for (int i = 1; i <= n; ++i) {
+        cin >> dist[i];
+    }
+    
+    for (int i = 0; i < m; ++i) {
+        int u, v, w;
+        cin >> u >> v >> w;
+        adj[u].push_back({v, w});
+        adj[v].push_back({u, w});
+    }
+    
+    dijkstra(1, n);
+    
+    for (int i = 2; i <= n; ++i) {
+        cout << dist[i] << " ";
+    }
+    cout << endl;
+    
+    return 0;
+}

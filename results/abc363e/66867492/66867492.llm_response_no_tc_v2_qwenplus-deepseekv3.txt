@@ -1,0 +1,92 @@
+To fix this code, we need to address several issues. The primary problem is that the code incorrectly processes the sea level rise and the sinking of adjacent sections. The current approach uses a priority queue to manage the sections that might sink, but it has logical flaws in how it handles the boundary conditions and the sinking process.
+
+### Analysis of Issues
+1. **Initialization of Boundary Sections**: The code attempts to initialize the priority queue with the boundary sections of the island. However, it incorrectly pushes some sections (like `A[H-1][i]` with `W-1` as the row index) and misses others.
+2. **Priority Queue Handling**: The priority queue is supposed to process sections in order of their elevation, but the current implementation may not correctly handle all sections as the sea level rises.
+3. **Sinking Logic**: The sinking logic checks if a section's elevation is less than or equal to the current sea level, but the process of adding adjacent sections to the queue may not be efficient or correct, leading to incorrect area calculations.
+
+### Corrected Approach
+1. **Correct Boundary Initialization**: Properly initialize the priority queue with all boundary sections of the island.
+2. **Efficient Sinking Process**: Use a min-heap to process sections in order of their elevation. For each sea level, process all sections that can sink at that level and propagate the sinking to adjacent sections.
+3. **Area Calculation**: Maintain a count of the remaining sections above sea level and decrement it as sections sink.
+
+### Fixed Code
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int H, W, Y;
+    cin >> H >> W >> Y;
+    vector<vector<int>> A(H, vector<int>(W));
+    for (int i = 0; i < H; ++i) {
+        for (int j = 0; j < W; ++j) {
+            cin >> A[i][j];
+        }
+    }
+    
+    vector<vector<bool>> sunk(H, vector<bool>(W, false));
+    priority_queue<tuple<int, int, int>, vector<tuple<int, int, int>>, greater<tuple<int, int, int>>> pq;
+    
+    // Initialize the priority queue with boundary sections
+    for (int i = 0; i < H; ++i) {
+        if (!sunk[i][0]) {
+            pq.push(make_tuple(A[i][0], i, 0));
+            sunk[i][0] = true;
+        }
+        if (!sunk[i][W-1]) {
+            pq.push(make_tuple(A[i][W-1], i, W-1));
+            sunk[i][W-1] = true;
+        }
+    }
+    for (int j = 1; j < W-1; ++j) {
+        if (!sunk[0][j]) {
+            pq.push(make_tuple(A[0][j], 0, j));
+            sunk[0][j] = true;
+        }
+        if (!sunk[H-1][j]) {
+            pq.push(make_tuple(A[H-1][j], H-1, j));
+            sunk[H-1][j] = true;
+        }
+    }
+    
+    int remaining = H * W;
+    vector<int> result(Y + 1, remaining);
+    
+    int dx[] = {1, 0, -1, 0};
+    int dy[] = {0, 1, 0, -1};
+    
+    for (int year = 1; year <= Y; ++year) {
+        while (!pq.empty() && get<0>(pq.top()) <= year) {
+            auto [elev, i, j] = pq.top();
+            pq.pop();
+            remaining--;
+            for (int d = 0; d < 4; ++d) {
+                int ni = i + dy[d];
+                int nj = j + dx[d];
+                if (ni >= 0 && ni < H && nj >= 0 && nj < W && !sunk[ni][nj]) {
+                    pq.push(make_tuple(A[ni][nj], ni, nj));
+                    sunk[ni][nj] = true;
+                }
+            }
+        }
+        result[year] = remaining;
+    }
+    
+    for (int year = 1; year <= Y; ++year) {
+        cout << result[year] << '\n';
+    }
+    
+    return 0;
+}
+```
+
+### Explanation
+1. **Initialization**: The priority queue is initialized with all boundary sections of the island, ensuring that all edge sections are considered first.
+2. **Processing Sinking Sections**: For each year, sections with elevation less than or equal to the current sea level are processed. The sinking propagates to adjacent sections if they meet the criteria.
+3. **Area Tracking**: The remaining area is tracked and updated year by year, with results stored in an array for efficient output.
+
+This approach ensures correctness and efficiency, handling the constraints and edge cases appropriately.

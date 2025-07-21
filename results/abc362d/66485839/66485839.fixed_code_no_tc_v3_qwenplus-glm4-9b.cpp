@@ -1,0 +1,76 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define int long long 
+
+struct DSU {
+private:
+    vector<int> fa, sz;
+public:
+    DSU(int n) : fa(n + 1), sz(n + 1, 1) {
+        iota(fa.begin(), fa.end(), 0);
+    }
+    int find(int x) {
+        if (fa[x] == x) return x;
+        return fa[x] = find(fa[x]);
+    }
+    bool same(int x, int y) {
+        return find(x) == find(y);
+    }
+    bool merge(int x, int y) {
+        x = find(x), y = find(y);
+        if (x == y) return false;
+        if (sz[x] < sz[y]) swap(x, y);
+        fa[x] = y;
+        sz[y] += sz[x];
+        return true;
+    }
+    int size(int x) {
+        return sz[find(x)];
+    }
+};
+
+const int N = 2e5 + 10;
+const long long INF = 1e18;
+vector<pair<int, long long>> adj[N];
+vector<int> vertex_weights(N);
+
+void dijkstra(int start, vector<long long>& dist) {
+    priority_queue<pair<long long, int>, vector<pair<long long, int>>, greater<pair<long long, int>>> pq;
+    pq.push({0, start});
+    dist[start] = vertex_weights[start];
+    while (!pq.empty()) {
+        auto [d, u] = pq.top();
+        pq.pop();
+        if (d != dist[u]) continue;
+        for (auto &[v, w] : adj[u]) {
+            if (dist[u] + w < dist[v]) {
+                dist[v] = dist[u] + w;
+                pq.push({dist[v], v});
+            }
+        }
+    }
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+
+    int n, m;
+    cin >> n >> m;
+    for (int i = 1; i <= n; ++i) cin >> vertex_weights[i];
+
+    for (int i = 0; i < m; ++i) {
+        int u, v, w;
+        cin >> u >> v >> w;
+        adj[u].emplace_back(v, w);
+        adj[v].emplace_back(u, w);
+    }
+
+    vector<long long> dist(n + 1, INF);
+    dijkstra(1, dist);
+
+    for (int i = 2; i <= n; ++i) cout << dist[i] << " ";
+    cout << "\n";
+
+    return 0;
+}

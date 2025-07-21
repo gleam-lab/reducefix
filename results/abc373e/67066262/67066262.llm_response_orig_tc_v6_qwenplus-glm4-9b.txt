@@ -1,0 +1,74 @@
+
+It seems that the provided code is attempting to use a binary search approach to find the minimum number of additional votes each candidate needs to guarantee their victory. However, there are several issues with the logic on how it tries to determine this.
+
+The main problem with the code is the handling of the conditions under which a candidate can guarantee their victory. The current implementation looks for the maximum votes a candidate can get by using a binary search on the total votes that could be allocated to that candidate, but it doesn't correctly consider how the remaining votes will possibly be distributed among the other candidates trying to compete with them.
+
+To correct the logic and get the correct answer, we must:
+
+1. Keep track of the number of votes each candidate has already received.
+2. Calculate how many more votes each candidate needs to surpass all other candidates except the top "M" ones.
+3. Sort candidates based on their current votes and consider them for the minimum votes they need one by one.
+4. For each candidate, determine the scenario where they are at their minimum and at most get votes equal to or less than what is left.
+5. Account for the fact that there are still uncounted votes that could be distributed among the remaining candidates.
+
+Below is a revised version of the code that aims to address these issues:
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+#define all(x) (x).begin(), (x).end()
+
+int main() {
+    ios_base::sync_with_stdio(0);
+    cin.tie(0);
+    int n, m;
+    ll k;
+    cin >> n >> m >> k;
+    vector<ll> a(n, 0);
+    k -= accumulate(a.begin(), a.end(), 0LL); // subtract already counted votes from total votes k
+
+    // Sort candidates by the votes they have received
+    sort(a.begin(), a.end(), greater<ll>());
+
+    vector<ll> votes_needed(n, -1);
+    vector<ll> votes_highest_competition(n, -1);
+    int count_votes_needed = 0;
+
+    // Calculate additional votes needed for each candidate to be certain to win
+    for (int i = 0; i < n; ++i) {
+        if (i + 1 >= m) {
+            break; // This candidate is in the top M already, does not need additional votes
+        }
+        // Calculate votes needed to surpass all candidates with more votes than current one
+        votes_needed[i] = accumulate(a.begin() + i, a.begin() + m, 0LL);
+        count_votes_needed += votes_needed[i];
+    }
+
+    // Check if the remaining votes are sufficient for the votes_needed for the other candidates
+    ll min_votes_needed = count_votes_needed;
+    for (int i = 0; i < n; ++i) {
+        if (a[i] > 0 && votes_needed[i] != -1) {
+            votes_highest_competition[i] = votes_needed[i] - a[i];
+            min_votes_needed = min(min_votes_needed, votes_highest_competition[i]);
+        }
+    }
+
+    // Output the result
+    for (int i = 0; i < n; ++i) {
+        if (min_votes_needed == -1) {
+            // If no votes are needed, candidate already has a guarantee of victory
+            cout << 0 << " ";
+        } else if (a[i] > 0 && votes_needed[i] != -1) {
+            // If votes_needed is less than the highest competition vote needed, it's guaranteed to win
+            cout << (votes_needed[i] > votes_highest_competition[i] ? 0 : votes_highest_competition[i] - votes_needed[i]) << " ";
+        } else {
+            // If votes_needed is higher than the highest competition vote needed, cannot guarantee victory
+            cout << -1 << " ";
+        }
+    }
+    return 0;
+}
+```
+
+There are still some assumptions in this code that might need to be adjusted depending on the actual requirements, such as whether any candidate can potentially get more votes than they currently have. However, it aims to address the main issue in the initial code regarding the binary search and vote distribution.

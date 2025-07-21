@@ -1,0 +1,57 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    int n, k;
+    cin >> n >> k;
+    int m = n - k;
+    vector<int> a(n);
+    
+    for (int i = 0; i < n; ++i) {
+        cin >> a[i];
+    }
+
+    // We need to find the minimum difference between max and min
+    // over all contiguous subarrays of length m in the original array
+    deque<int> minDeque(m);
+    deque<int> maxDeque(m);
+    for (int i = 0; i < m; ++i) {
+        while (!minDeque.empty() && a[i] <= a[minDeque.back()]) {
+            minDeque.pop_back();
+        }
+        while (!maxDeque.empty() && a[i] >= a[maxDeque.back()]) {
+            maxDeque.pop_back();
+        }
+        minDeque.push_back(i);
+        maxDeque.push_back(i);
+    }
+
+    int result = INT_MAX;
+    for (int i = m; i <= n; ++i) {
+        // Update result
+        result = min(result, a[maxDeque.front()] - a[minDeque.front()]);
+        
+        // Remove elements out of window
+        if (maxDeque.front() == i - m) {
+            maxDeque.pop_front();
+        }
+        if (minDeque.front() == i - m) {
+            minDeque.pop_front();
+        }
+        
+        // Add new element
+        if (i < n) {
+            while (!minDeque.empty() && a[i] <= a[minDeque.back()]) {
+                minDeque.pop_back();
+            }
+            while (!maxDeque.empty() && a[i] >= a[maxDeque.back()]) {
+                maxDeque.pop_back();
+            }
+            minDeque.push_back(i);
+            maxDeque.push_back(i);
+        }
+    }
+
+    cout << result << endl;
+    return 0;
+}

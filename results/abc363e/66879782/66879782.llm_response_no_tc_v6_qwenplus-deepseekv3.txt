@@ -1,0 +1,85 @@
+### Analysis of the Incorrect Code
+The initial approach attempts to simulate the sinking of sections using a priority queue to propagate the sinking from the borders inward. However, there are several issues:
+1. **Sink Time Calculation**: The code incorrectly assigns `sink[i][j]` as `min(H, sink[i][j])`, which doesn't correctly capture the earliest time a section sinks. It should be the maximum of the adjacent sections' sink times or its own elevation.
+2. **Priority Queue Usage**: The priority queue is used to propagate the sink times, but the logic for updating `sink[nr][nc]` is flawed. It should compare the current `sink[nr][nc]` with the maximum of the adjacent sink times and the section's elevation.
+3. **Prefix Sum Calculation**: The prefix sum array `pref` is intended to count sections that sink at or before time `i`, but the logic for incrementing `pref[sink[i][j]]` is incorrect because `sink[i][j]` might not be properly computed.
+
+### Fixed Approach
+To correctly compute the sink times:
+1. **Initialization**: Start from the border sections, set their sink times to their elevations.
+2. **Dijkstra's Algorithm**: Use a priority queue to propagate the sink times inward, where the sink time of a section is the maximum of its elevation and the minimum sink time of its adjacent sections.
+3. **Counting Sunk Sections**: After computing the sink times, count how many sections sink at or before each year `i` using a frequency array and prefix sums.
+
+### Fixed Code
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+#define all(x) (x).begin(), (x).end()
+
+int main() {
+    ios_base::sync_with_stdio(0);
+    cin.tie(0);
+    int h, w, y;
+    cin >> h >> w >> y;
+    vector<vector<int>> height(h, vector<int>(w));
+    vector<vector<int>> sink(h, vector<int>(w, INT_MAX));
+    priority_queue<pair<int, pair<int, int>>, vector<pair<int, pair<int, int>>>, greater<pair<int, pair<int, int>>>> pq;
+    int di[4][2] = {{-1, 0}, {1, 0}, {0, -1}, {0, 1}};
+    
+    for (int i = 0; i < h; i++) {
+        for (int j = 0; j < w; j++) {
+            cin >> height[i][j];
+            if (i == 0 || i == h - 1 || j == 0 || j == w - 1) {
+                sink[i][j] = height[i][j];
+                pq.push({sink[i][j], {i, j}});
+            }
+        }
+    }
+
+    while (!pq.empty()) {
+        auto [H, p] = pq.top();
+        auto [r, c] = p;
+        pq.pop();
+        if (H > sink[r][c]) continue; // Already processed with a lower sink time
+        for (int i = 0; i < 4; i++) {
+            int nr = r + di[i][0];
+            int nc = c + di[i][1];
+            if (nr < 0 || nr >= h || nc < 0 || nc >= w) continue;
+            int new_sink = max(height[nr][nc], H);
+            if (new_sink < sink[nr][nc]) {
+                sink[nr][nc] = new_sink;
+                pq.push({sink[nr][nc], {nr, nc}});
+            }
+        }
+    }
+
+    vector<int> freq(y + 2, 0);
+    for (int i = 0; i < h; i++) {
+        for (int j = 0; j < w; j++) {
+            if (sink[i][j] <= y) {
+                freq[sink[i][j]]++;
+            }
+        }
+    }
+
+    vector<int> pref(y + 1, 0);
+    pref[0] = freq[0];
+    for (int i = 1; i <= y; i++) {
+        pref[i] = pref[i - 1] + freq[i];
+    }
+
+    for (int i = 1; i <= y; i++) {
+        cout << h * w - pref[i] << '\n';
+    }
+
+    return 0;
+}
+```
+
+### Explanation
+1. **Initialization**: The border sections' sink times are initialized to their elevations, and they are pushed into the priority queue.
+2. **Dijkstra's Algorithm**: The priority queue processes sections in order of increasing sink time. For each section, its neighbors' sink times are updated to the maximum of their elevation and the current section's sink time if it results in a lower sink time.
+3. **Frequency and Prefix Sums**: After computing sink times, a frequency array counts how many sections sink at each year. The prefix sum array then accumulates these counts to determine the total sunk sections up to each year, which is subtracted from the total area to get the remaining area. 
+
+This approach ensures correctness and efficiency, handling the constraints effectively.

@@ -1,0 +1,181 @@
+To solve this problem, we need to determine how many empty grid cells are **safe** — i.e., not attacked by any of the M pieces already placed on an N x N board. Each piece attacks in 4 directions: same row, same column, and two diagonal directions.
+
+Given that `N` can be up to `10^9`, we cannot iterate through all grid cells. Instead, we must use a **mathematical inclusion-exclusion approach**, counting:
+- Total number of safe positions = total cells - (attacked positions + occupied positions) + overlaps
+
+We track the unique rows, columns, diagonals (`i+j`), and anti-diagonals (`i-j`) that contain at least one piece. Using set operations and combinatorics, we compute the exact number of positions under attack or occupied.
+
+---
+
+### Key Fixes in Code:
+1. **Input Parsing**: Original code had swapped `N` and `M` in `scanf`. Corrected.
+2. **Counting Safe Cells**: Fixed the logic using inclusion-exclusion over attacked lines.
+3. **Unique Sorting**: Ensured proper deduplication of lines.
+4. **Corrected Overlaps**: Properly subtract overlapping counts between diagonals, rows, and columns.
+
+Here's the corrected C++ code:
+
+```cpp
+#include <bits/stdc++.h>
+
+using namespace std;
+
+#define MAX_M 1005
+
+int main() {
+    long long N;
+    int M;
+    cin >> N >> M;
+
+    set<int> rows, cols;
+    set<long long> diag1, diag2; // i + j, i - j
+
+    for (int i = 0; i < M; ++i) {
+        int x, y;
+        cin >> x >> y;
+        rows.insert(x);
+        cols.insert(y);
+        diag1.insert(1LL * x + y);
+        diag2.insert(1LL * x - y);
+    }
+
+    long long total_cells = N * N;
+
+    // Remove occupied cells
+    long long occupied = M;
+
+    // Count attacked positions from rows, cols, diag1, diag2
+    long long attacked_rows = rows.size() * N;
+    long long attacked_cols = cols.size() * N;
+
+    long long attacked_diag1 = 0;
+    for (long long d : diag1) {
+        // For i + j = d, number of cells is:
+        if (d >= 2 && d <= 2 * N)
+            attacked_diag1 += min(d - 1, N) - max(d - N, 1) + 1;
+    }
+
+    long long attacked_diag2 = 0;
+    for (long long d : diag2) {
+        // For i - j = d => i = j + d
+        // Valid when i ∈ [1, N], so j ∈ [max(1, 1 - d), min(N, N - d)]
+        int low = max(1LL, 1 - d);
+        int high = min(N, N - d);
+        if (low <= high)
+            attacked_diag2 += high - low + 1;
+    }
+
+    // Inclusion-Exclusion: subtract overlaps
+
+    // Rows & Columns
+    long long overlap_rc = 0;
+    for (int r : rows) {
+        for (int c : cols) {
+            overlap_rc++;
+        }
+    }
+
+    // Rows & Diag1
+    long long overlap_r_d1 = 0;
+    for (int r : rows) {
+        for (long long d : diag1) {
+            int c = d - r;
+            if (1 <= c && c <= N)
+                overlap_r_d1++;
+        }
+    }
+
+    // Rows & Diag2
+    long long overlap_r_d2 = 0;
+    for (int r : rows) {
+        for (long long d : diag2) {
+            int c = r - d;
+            if (1 <= c && c <= N)
+                overlap_r_d2++;
+        }
+    }
+
+    // Cols & Diag1
+    long long overlap_c_d1 = 0;
+    for (int c : cols) {
+        for (long long d : diag1) {
+            int r = d - c;
+            if (1 <= r && r <= N)
+                overlap_c_d1++;
+        }
+    }
+
+    // Cols & Diag2
+    long long overlap_c_d2 = 0;
+    for (int c : cols) {
+        for (long long d : diag2) {
+            int r = c + d;
+            if (1 <= r && r <= N)
+                overlap_c_d2++;
+        }
+    }
+
+    // Diag1 & Diag2
+    long long overlap_d1_d2 = 0;
+    for (long long d1 : diag1) {
+        for (long long d2 : diag2) {
+            // Solve:
+            // i + j = d1
+            // i - j = d2
+            // => i = (d1 + d2) / 2, j = (d1 - d2) / 2
+            if ((d1 + d2) % 2 == 0) {
+                long long i = (d1 + d2) / 2;
+                long long j = (d1 - d2) / 2;
+                if (1 <= i && i <= N && 1 <= j && j <= N)
+                    overlap_d1_d2++;
+            }
+        }
+    }
+
+    // Triple overlaps
+    long long triple_rc_d1 = 0, triple_rc_d2 = 0, triple_rd1_d2 = 0, triple_cd1_d2 = 0;
+    for (int r : rows) {
+        for (int c : cols) {
+            long long d1 = r + c;
+            long long d2 = r - c;
+            if (diag1.count(d1)) triple_rc_d1++;
+            if (diag2.count(d2)) triple_rc_d2++;
+        }
+    }
+
+    for (long long d1 : diag1) {
+        for (long long d2 : diag2) {
+            long long i = (d1 + d2) / 2;
+            long long j = (d1 - d2) / 2;
+            if (1 <= i && i <= N && 1 <= j && j <= N) {
+                if (rows.count(i) || cols.count(j)) {
+                    triple_rd1_d2++;
+                }
+            }
+        }
+    }
+
+    // Quad overlaps
+    long long quad = 0;
+    for (int r : rows) {
+        for (int c : cols) {
+            long long d1 = r + c;
+            long long d2 = r - c;
+            if (diag1.count(d1) && diag2.count(d2))
+                quad++;
+        }
+    }
+
+    // Apply Inclusion-Exclusion
+    long long attacked =
+        attacked_rows + attacked_cols + attacked_diag1 + attacked_diag2
+      - overlap_rc - overlap_r_d1 - overlap_r_d2 - overlap_c_d1 - overlap_c_d2 - overlap_d1_d2
+      + triple_rc_d1 + triple_rc_d2 + triple_rd1_d2 + triple_cd1_d2
+      - quad;
+
+    long long answer = total_cells - attacked - occupied;
+    cout << answer << endl;
+
+    return 0;
+}
+```

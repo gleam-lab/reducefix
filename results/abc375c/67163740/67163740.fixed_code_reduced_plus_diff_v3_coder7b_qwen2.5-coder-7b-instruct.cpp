@@ -1,0 +1,23 @@
+#include <iostream>
+#include <iomanip>
+#include <cmath>
+
+int main() {
+    int n;
+    double x = 0, y = 0, t = 0;
+    std::cin >> n;
+    
+    while(n--) {
+        double a, b;
+        std::cin >> a >> b;
+        t += std::hypot(a - x, b - y); // Using hypot function for better precision
+        x = a;
+        y = b;
+    }
+    
+    t += std::hypot(x, y); // Adding the distance back to the origin
+    
+    std::cout << std::fixed << std::setprecision(20) << t << std::endl;
+    
+    return 0;
+}

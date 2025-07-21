@@ -1,0 +1,83 @@
+To fix this code, we need to ensure that the algorithm correctly computes the minimum number of additional votes each candidate needs to guarantee their victory, considering the constraints. The original code had issues in the binary search logic and the way it calculated the required votes. 
+
+### Approaches
+1. **Sorting and Prefix Sums**: 
+   - Sort the candidates' votes to efficiently determine the number of candidates that need to be surpassed.
+   - Use prefix sums to quickly calculate the sum of votes needed to ensure a candidate's position.
+
+2. **Binary Search**:
+   - For each candidate, perform a binary search to find the minimum additional votes needed such that the number of candidates with more votes is less than `M`.
+
+3. **Validation**:
+   - For each candidate during the binary search, check if the remaining votes can accommodate the required additional votes without exceeding the total remaining votes.
+
+### Solution Code
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+
+int main() {
+    ios_base::sync_with_stdio(0);
+    cin.tie(0);
+    int N, M;
+    ll K;
+    cin >> N >> M >> K;
+    vector<ll> A(N);
+    for (int i = 0; i < N; ++i) {
+        cin >> A[i];
+    }
+    vector<ll> sortedA = A;
+    sort(sortedA.begin(), sortedA.end());
+    vector<ll> prefix(N + 1, 0);
+    for (int i = 0; i < N; ++i) {
+        prefix[i + 1] = prefix[i] + sortedA[i];
+    }
+    vector<ll> res(N, -1);
+    for (int i = 0; i < N; ++i) {
+        ll current = A[i];
+        int idx = lower_bound(sortedA.begin(), sortedA.end(), current) - sortedA.begin();
+        ll low = 0, high = K, ans = -1;
+        while (low <= high) {
+            ll mid = (low + high) / 2;
+            ll new_val = current + mid;
+            int pos = upper_bound(sortedA.begin(), sortedA.end(), new_val) - sortedA.begin();
+            int cnt = N - pos;
+            if (cnt < M) {
+                ll required = 0;
+                if (pos > N - M) {
+                    required = (N - M - (pos - (N - M))) * new_val - (prefix[N - M] - prefix[pos - (N - M)]);
+                }
+                if (required <= K - mid) {
+                    ans = mid;
+                    high = mid - 1;
+                } else {
+                    low = mid + 1;
+                }
+            } else {
+                low = mid + 1;
+            }
+        }
+        res[i] = ans;
+    }
+    for (int i = 0; i < N; ++i) {
+        cout << res[i] << ' ';
+    }
+    return 0;
+}
+```
+
+### Explanation
+1. **Sorting and Prefix Sums**: 
+   - The candidates' votes are sorted to facilitate efficient binary search operations. The prefix sum array allows quick calculation of the sum of votes up to any index, which is crucial for determining the required votes in the binary search step.
+
+2. **Binary Search**:
+   - For each candidate, we perform a binary search to find the minimum additional votes (`mid`) such that after adding `mid` votes, the candidate's position ensures they are among the top `M` candidates.
+   - The upper bound is used to find the position of the candidate's new vote count in the sorted array. The number of candidates with more votes is `N - pos`.
+   - If this count is less than `M`, it means the candidate is in the top `M`. We then check if the required votes to adjust other candidates (if any) can be accommodated within the remaining votes (`K - mid`).
+
+3. **Validation**:
+   - The required votes to ensure other candidates do not surpass the current candidate's new vote count are calculated using the prefix sum array. If the total required votes do not exceed the remaining votes, the candidate's result is updated to the current `mid`.
+   - The binary search continues to find the minimum such `mid`.
+
+This approach ensures that the solution efficiently and correctly computes the minimum additional votes for each candidate to guarantee their victory within the constraints.

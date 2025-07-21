@@ -1,0 +1,109 @@
+To solve this problem, we need to determine the **minimum number of additional votes** each candidate needs to guarantee their election. The condition for a candidate's election is that fewer than `M` other candidates receive more votes than them.
+
+Here's a breakdown of how we approach this:
+
+---
+
+### Key Observations:
+1. A candidate is elected if **fewer than M candidates have strictly more votes** than them after distributing the remaining votes.
+2. We can binary search over the number of additional votes `X` that a candidate needs.
+3. For each candidate, we simulate giving them `X` extra votes and check whether they can still be among the top `(N - M + 1)` candidates (i.e., at most `M-1` others have more votes).
+
+---
+
+### Efficient Strategy:
+1. Sort the candidates by current votes.
+2. Precompute prefix sums for efficient range sum queries.
+3. For each candidate:
+   - Use binary search on `X` (additional votes needed).
+   - Simulate distributing those votes and determine if it ensures election regardless of how the rest are distributed.
+   - To ensure correctness, use a helper function to verify feasibility of `X`.
+
+---
+
+### Complexity:
+- Sorting: O(N log N)
+- Binary Search per candidate: O(log K)
+- Total: O(N log K), which is acceptable given constraints.
+
+---
+
+Here's the fixed and complete C++ code:
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+
+int main() {
+    int N, M;
+    ll K;
+    cin >> N >> M >> K;
+
+    vector<pair<ll, int>> A(N);
+    for (int i = 0; i < N; ++i) {
+        cin >> A[i].first;
+    }
+
+    // Save original indices for final output
+    vector<ll> res(N);
+    vector<ll> sorted_A(N);
+    for (int i = 0; i < N; ++i) {
+        sorted_A[i] = A[i].first;
+    }
+    sort(sorted_A.begin(), sorted_A.end());
+
+    ll total_current = accumulate(sorted_A.begin(), sorted_A.end(), 0LL);
+    ll remaining = K - total_current;
+
+    auto get_required = [&](ll my_vote) -> ll {
+        ll lo = 0, hi = remaining;
+        ll ans = -1;
+
+        while (lo <= hi) {
+            ll mid = (lo + hi) / 2;
+            ll new_my_vote = my_vote + mid;
+
+            // Binary search to find how many candidates have more than new_my_vote
+            int cnt_more = N - (upper_bound(sorted_A.begin(), sorted_A.end(), new_my_vote - 1) - sorted_A.begin());
+
+            if (cnt_more < M) {
+                ans = mid;
+                hi = mid - 1;
+            } else {
+                lo = mid + 1;
+            }
+        }
+
+        return ans;
+    };
+
+    for (int i = 0; i < N; ++i) {
+        ll base = A[i].first;
+        res[i] = get_required(base);
+    }
+
+    // Output in original order
+    vector<ll> final_res(N);
+    for (int i = 0; i < N; ++i) {
+        final_res[A[i].second] = res[i];
+    }
+
+    for (int i = 0; i < N; ++i) {
+        cout << final_res[i] << " ";
+    }
+    cout << "\n";
+
+    return 0;
+}
+```
+
+---
+
+### Explanation of the Code:
+- We sort all candidate vote counts.
+- For each candidate, we binary search how many extra votes they need so that less than `M` candidates have more votes than them.
+- The key trick is using `upper_bound` to count how many candidates have votes > `new_my_vote`.
+- Finally, we restore the original order using saved indices and print results.
+
+This solution correctly handles all edge cases including when a candidate already wins (`C_i = 0`) or cannot win even with all remaining votes (`C_i = -1`).

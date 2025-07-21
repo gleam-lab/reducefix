@@ -1,0 +1,31 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    int n, q;
+    cin >> n; // Number of patches
+    
+    // Read patch values into corresponding arrays
+    vector<int> patches(n);
+    for (int i = 0; i < n; ++i) {
+        cin >> patches[i];
+    }
+    
+    // Calculate sum of patches based on previous patches
+    vector<int> sum(n); // Initialize sum array with the same size as patches
+    for (int i = 0; i < n; ++i) {
+        sum[i] = patches[i]; // Assign the patch value to the corresponding index in sum array
+    }
+    
+    // Read query values from query lines
+    while (q--) { // Process q queries
+        int L, R; // Range to find the sum of patches outside the range [patches[l], patches[r] inclusive]
+        cin >> L >> R; // Read the lower and upper bounds of the range to find the sum
+        
+        // Calculate the sum outside the range using binary search
+        int mid = L + (R - L) / 2; // Find the middle index within the range to find the correct sum
+        cout << sum[mid] - sum[l] << endl; // Output the correct sum within the range [patches[r-1], patches[n]]
+    }
+    
+    return 0; // Return 0 to indicate successful completion of the program
+}

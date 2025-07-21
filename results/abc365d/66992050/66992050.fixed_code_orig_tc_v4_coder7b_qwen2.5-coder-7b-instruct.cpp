@@ -1,0 +1,43 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int N;
+    cin >> N;
+    string S;
+    cin >> S;
+
+    int ans = 0;
+    char prev = 'N';
+
+    for (char c : S) {
+        if (c == 'P') {
+            if (!(prev == 'S')) {
+                ans++;
+                prev = 'S';
+            } else {
+                prev = 'P';
+            }
+        } else if (c == 'R') {
+            if (!(prev == 'P')) {
+                ans++;
+                prev = 'P';
+            } else {
+                prev = 'R';
+            }
+        } else if (c == 'S') {
+            if (!(prev == 'R')) {
+                ans++;
+                prev = 'R';
+            } else {
+                prev = 'S';
+            }
+        }
+    }
+
+    cout << ans << '\n';
+    return 0;
+}

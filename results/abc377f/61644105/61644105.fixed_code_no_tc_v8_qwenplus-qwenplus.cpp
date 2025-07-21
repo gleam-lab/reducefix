@@ -1,0 +1,110 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+
+const int MAX_M = 1000;
+
+set<long long> rowSet, colSet;
+set<pair<long long, long long>> diagUpSet, diagDownSet;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    long long N;
+    int M;
+    cin >> N >> M;
+
+    for (int i = 0; i < M; ++i) {
+        long long a, b;
+        cin >> a >> b;
+        
+        rowSet.insert(a);
+        colSet.insert(b);
+        diagUpSet.insert({a - b, 0});   // We only care about the diagonal identifier
+        diagDownSet.insert({a + b, 0});
+    }
+
+    // Total number of squares that are either empty or not threatened
+    long long total = N * N;
+
+    // Subtract all squares threatened by any piece
+
+    // Rows and columns occupied by pieces
+    total -= (long long) rowSet.size() * N;
+    total -= (long long) colSet.size() * N;
+
+    // Diagonals (\)
+    for (auto p : diagUpSet) {
+        long long d = p.first;
+        long long start_row = max(1LL, d >= 0 ? 1 : 1 - d);
+        long long end_row = min(N, d >= 0 ? N - d : N);
+        long long count = end_row - start_row + 1;
+        total -= count;
+    }
+
+    // Diagonals (/)
+    for (auto p : diagDownSet) {
+        long long s = p.first;
+        long long start_row = max(1LL, s <= N + N ? s - N : 1);
+        long long end_row = min(N, s <= N ? 1 : s - 1);
+        long long count = end_row - start_row + 1;
+        total -= count;
+    }
+
+    // Now add back over-subtracted intersections
+
+    // Intersections between rows and columns
+    for (auto r : rowSet) {
+        for (auto c : colSet) {
+            total += 1; // Add back squares that were subtracted twice
+        }
+    }
+
+    // Intersections between rows and up-diagonals
+    for (auto r : rowSet) {
+        for (auto d : diagUpSet) {
+            long long c = r - d.first;
+            if (c >= 1 && c <= N) {
+                total += 1; // Add back squares that were subtracted twice
+            }
+        }
+    }
+
+    // Intersections between columns and down-diagonals
+    for (auto c : colSet) {
+        for (auto s : diagDownSet) {
+            long long r = s.first - c;
+            if (r >= 1 && r <= N) {
+                total += 1; // Add back squares that were subtracted twice
+            }
+        }
+    }
+
+    // Intersections between up-diagonals and down-diagonals
+    for (auto d : diagUpSet) {
+        for (auto s : diagDownSet) {
+            long long r = (s.first + d.first) / 2;
+            long long c = (s.first - d.first) / 2;
+            if ((s.first + d.first) % 2 == 0 && r >= 1 && r <= N && c >= 1 && c <= N) {
+                total += 1; // Add back squares that were subtracted twice
+            }
+        }
+    }
+
+    // Subtract back triple overlaps: row-col-diag
+    for (auto r : rowSet) {
+        for (auto c : colSet) {
+            long long diagUp = r - c;
+            long long diagDown = r + c;
+            if (diagUpSet.count({diagUp, 0}) && diagDownSet.count({diagDown, 0})) {
+                total -= 1; // Remove one extra addition
+            }
+        }
+    }
+
+    // Print final answer
+    cout << total << endl;
+
+    return 0;
+}

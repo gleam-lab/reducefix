@@ -1,0 +1,51 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <map>
+using namespace std;
+
+int main() {
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, k;
+        cin >> n >> k;
+        vector<int> A(n);
+        vector<int> B(n);
+        vector<pair<int, int>> AB(n); // pair of (B[i], i)
+        
+        for (int i = 0; i < n; i++) {
+            cin >> A[i];
+        }
+        for (int i = 0; i < n; i++) {
+            cin >> B[i];
+            AB[i] = {B[i], i};
+        }
+        
+        sort(AB.begin(), AB.end()); // Sort by B[i] ascending
+
+        long long ans = LLONG_MAX;
+        long long sum = 0;
+        int count = 0;
+        
+        // We need to consider the last K elements in sorted B
+        for (int i = n - 1; i >= n - k; i--) {
+            sum += AB[i].first;
+            count++;
+            if (count == k) {
+                // Calculate the product of max A[i] in the subset and sum of B[i] in the subset
+                ans = min(ans, max(A[AB[i].second]) * sum);
+                sum -= AB[i].first;
+                count--;
+            }
+        }
+        
+        if (n == 1) {
+            // If there's only one element, the answer is A[0] * B[0]
+            ans = A[0] * B[0];
+        }
+        
+        cout << ans << endl;
+    }
+    return 0;
+}

@@ -1,0 +1,32 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false); cin.tie(0); cout.tie(0);
+
+    int N;
+    cin >> N;
+    vector<pair<long long, long long>> points(N);
+    
+    // Read points into a vector of pairs
+    for(int i = 0; i < N; ++i) {
+        cin >> points[i].first >> points[i].second;
+    }
+
+    // Function to calculate Euclidean distance between two points
+    auto dist = [](const pair<long long, long long>& p1, const pair<long long, long long>& p2) {
+        return sqrt((p1.first - p2.first) * (p1.first - p2.first) + (p1.second - p2.second) * (p1.second - p2.second));
+    };
+
+    // Calculate the total distance traveled
+    double total_distance = 0;
+    for(int i = 0; i < N; ++i) {
+        total_distance += dist(points[i], (i == 0 ? make_pair(0LL, 0LL) : points[i-1]));
+    }
+    total_distance += dist(points[0], points[N-1]);
+
+    // Output the result with high precision
+    cout << setprecision(15) << total_distance << '\n';
+
+    return 0;
+}

@@ -1,0 +1,24 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+
+int main() {
+    int n;
+    std::cin >> n;
+    if (n == 0) {
+        std::cout << "0" << std::endl;
+        return 0;
+    }
+
+    std::vector<long long> dp(2, 0);
+    std::cin >> dp[1];
+
+    for (int i = 1; i < n; ++i) {
+        long long temp0 = dp[0];
+        dp[0] = max(dp[1] + (i + 1) * dp[1], dp[0]);
+        dp[1] = max(dp[0] + (i + 1) * dp[1], dp[1]);
+    }
+
+    std::cout << max(dp[0], dp[1]) << std::endl;
+    return 0;
+}

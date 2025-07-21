@@ -1,0 +1,50 @@
+#include<bits/stdc++.h>
+#define INF 0x3f3f3f3f3f3f3f3f
+using namespace std;
+typedef long long ll;
+const int MAXN=2e5+10;
+vector<int> vec[MAXN];
+queue<int> q;
+int step[MAXN];
+bool vis[MAXN];
+
+int bfs(int start){
+    memset(step, -1, sizeof(step));
+    memset(vis, false, sizeof(vis));
+    q.push(start);
+    vis[start] = true;
+    step[start] = 0;
+
+    while(!q.empty()){
+        int u = q.front();
+        q.pop();
+
+        for(int v : vec[u]){
+            if(u == 1 && v != 1){ // Found a cycle involving node 1
+                return step[v] + 1; // Return length of the cycle
+            }
+            if(!vis[v]){
+                vis[v] = true;
+                step[v] = step[u] + 1;
+                q.push(v);
+            }
+        }
+    }
+
+    return -1; // No cycle found
+}
+
+int main(){
+    int n, m;
+    cin >> n >> m;
+    for(int i = 1; i <= m; i++){
+        int u, v;
+        cin >> u >> v;
+        vec[u].push_back(v);
+    }
+
+    int result = bfs(1); // Start BFS from node 1
+    cout << result << endl;
+
+    return 0;
+}

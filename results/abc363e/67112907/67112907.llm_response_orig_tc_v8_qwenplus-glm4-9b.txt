@@ -1,0 +1,99 @@
+
+The problem is about simulating the process of sea level rise on an island and determining the remaining area above sea level. The initial configuration of the island is given as a grid with elevation values, and the sea level starts at 0. Each year, the sea level rises by 1 unit, and sections of the island that are not above the new sea level will sink.
+
+The provided code correctly implements the algorithm for determining the remaining area above sea level after each year. The algorithm uses a priority queue to process the sinking of sections of the island, starting from the edges, and then moving inward. 
+
+However, there are a few issues with the code that need to be addressed:
+
+1. **Priority Queue Error**: The code is attempting to push 2D indices into the priority queue, but it is using the wrong template type. The priority queue should store 3-element arrays `[elevation, row, column]`, but the code is using `std::array<int, 3>` incorrectly.
+
+2. **Initial Fill of Priority Queue**: The code tries to initially fill the priority queue with the edges of the island, but it is missing some cases (e.g., the bottom row and right column).
+
+3. **Edge Cases**: The code does not handle the case where the entire island sink instantly (when sea level equals or exceeds the maximum elevation).
+
+4. **Output**: The code prints the remaining area for each year, but there might be a mistake in how the area is calculated (e.g., double-counting).
+
+Here is the corrected and improved version of the code:
+
+```cpp
+#include <iostream>
+#include <vector>
+#include <queue>
+#include <algorithm>
+
+using namespace std;
+
+using i32 = int32_t;
+using i64 = int64_t;
+
+struct Point {
+    int h, x, y;
+};
+
+struct Compare {
+    bool operator()(const Point& a, const Point& b) {
+        return a.h < b.h;
+    }
+};
+
+int main() {
+    int H, W, Y;
+    cin >> H >> W >> Y;
+
+    vector<vector<i32>> A(H, vector<i32>(W));
+    for (int i = 0; i < H; i++) {
+        for (int j = 0; j < W; j++) {
+            cin >> A[i][j];
+        }
+    }
+
+    priority_queue<Point, vector<Point>, Compare> pq;
+    vector<vector<bool>> visited(H, vector<bool>(W, false));
+
+    // Initialize the priority queue with the edges
+    for (int i = 0; i < H; i++) {
+        pq.push({A[i][0], i, 0});
+        visited[i][0] = true;
+    }
+    for (int i = 1; i < W; i++) {
+        pq.push({A[0][i], 0, i});
+        visited[0][i] = true;
+    }
+    for (int i = 1; i < H; i++) {
+        pq.push({A[i][W - 1], i, W - 1});
+        visited[i][W - 1] = true;
+    }
+    for (int i = 0; i < W - 1; i++) {
+        pq.push({A[H - 1][i], H - 1, i});
+        visited[H - 1][i] = true;
+    }
+
+    int ans = H * W;
+    for (int year = 0; year < Y; year++) {
+        while (!pq.empty()) {
+            auto [h, x, y] = pq.top();
+            if (h <= year) {
+                pq.pop();
+                ans--;
+                // Process adjacent cells that are not visited
+                for (int dx = -1; dx <= 1; dx++) {
+                    for (int dy = -1; dy <= 1; dy++) {
+                        int nx = x + dx, ny = y + dy;
+                        if (nx >= 0 && nx < H && ny >= 0 && ny < W && !visited[nx][ny]) {
+                            visited[nx][ny] = true;
+                            pq.push({A[nx][ny], nx, ny});
+                        }
+                    }
+                }
+            } else {
+                break;
+            }
+        }
+        cout << ans << '\n';
+    }
+
+    return 0;
+}
+```
+
+This version of the code fixes the priority queue initialization issue, ensures all edges of the island are added to the priority queue, and processes adjacent cells correctly. The output is also directly calculated using the variable `ans`, ensuring the area is not double-counted.

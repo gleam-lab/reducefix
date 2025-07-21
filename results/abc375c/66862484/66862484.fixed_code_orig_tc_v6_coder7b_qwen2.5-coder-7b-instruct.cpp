@@ -1,0 +1,33 @@
+#include <iostream>
+#include <vector>
+#include <cmath>
+
+int main() {
+    std::ios_base::sync_with_stdio(false);
+    std::cin.tie(nullptr);
+
+    int N;
+    std::cin >> N;
+
+    std::vector<std::pair<int, int>> points(N);
+    for (int i = 0; i < N; ++i) {
+        std::cin >> points[i].first >> points[i].second;
+    }
+
+    double total_cost = 0.0;
+    for (size_t i = 1; i < N; ++i) {
+        int dx = points[i].first - points[i - 1].first;
+        int dy = points[i].second - points[i - 1].second;
+        total_cost += std::hypot(dx, dy);
+    }
+
+    // Calculate the distance from the last point back to the origin
+    int dx_last_to_origin = points[0].first - points[N - 1].first;
+    int dy_last_to_origin = points[0].second - points[N - 1].second;
+    total_cost += std::hypot(dx_last_to_origin, dy_last_to_origin);
+
+    // Output the result with precision up to 15 decimal places
+    std::cout << std::fixed << std::setprecision(15) << total_cost << std::endl;
+
+    return 0;
+}

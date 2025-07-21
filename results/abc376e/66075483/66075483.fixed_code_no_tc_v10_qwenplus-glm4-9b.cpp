@@ -1,0 +1,57 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+const int N = 2e5 + 9;
+
+int n, k;
+long long a[N], b[N];
+
+int main() {
+    int t;
+    cin >> t;
+    while (t--) {
+        cin >> n >> k;
+        for (int i = 0; i < n; ++i) {
+            cin >> a[i];
+        }
+        for (int i = 0; i < n; ++i) {
+            cin >> b[i];
+        }
+
+        // Sort indices of A by A values
+        vector<int> indices(n);
+        for (int i = 0; i < n; ++i) {
+            indices[i] = i;
+        }
+        sort(indices.begin(), indices.end(), [&](int i, int j) {
+            return a[i] < a[j];
+        });
+
+        long long best = LLONG_MAX;
+        long long s = 0, min_s = 0;
+        int count = 1;
+
+        // Iterate over sorted A indices
+        for (int i = 0; i < n; ++i) {
+            if (count < k) {
+                s += b[indices[i]];
+                count++;
+                min_s = min(min_s, s);
+            } else {
+                s -= b[indices[i - k + 1]]; // Remove b value from the oldest in the window
+                s += b[indices[i]];          // Add b value from the new one
+                min_s = min(min_s, s);      // Update min_s with the smallest sum encountered
+            }
+
+            // Check if this window has k elements
+            if (count == k) {
+                best = min(best, (long long)a[indices[i]] * min_s);
+            }
+        }
+
+        cout << best << endl;
+    }
+    return 0;
+}

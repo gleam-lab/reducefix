@@ -1,0 +1,89 @@
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+#define all(x) (x).begin(), (x).end()
+
+int main() {
+    ios_base::sync_with_stdio(0);
+    cin.tie(0);
+    int N, M;
+    ll K;
+    cin >> N >> M >> K;
+    vector<ll> A(N);
+    for (int i = 0; i < N; ++i) {
+        cin >> A[i];
+    }
+
+    vector<int> idx(N);
+    iota(idx.begin(), idx.end(), 0);
+
+    // Sort by current votes
+    sort(idx.begin(), idx.end(), [&](int a, int b) { return A[a] < A[b]; });
+
+    vector<ll> result(N, -1);
+
+    for (int i = 0; i < N; ++i) {
+        int pos = i;
+
+        // Binary search on the number of extra votes needed
+        ll low = 0, high = K + 1;
+        while (low < high) {
+            ll mid = (low + high) / 2;
+
+            ll required = 0;
+            ll total_used = 0;
+
+            ll target_vote = A[idx[i]] + mid;
+
+            // Find how many candidates have votes strictly greater than target_vote
+            int count_above = N - (upper_bound(idx.begin(), idx.end(), idx[i], [&](int x, int y) { return A[x] < A[y]; }) - idx.begin());
+
+            // We want at most M-1 candidates to have more votes than us after distribution
+            int need_to_limit = max(0, count_above - (M - 1));
+            if (need_to_limit == 0) {
+                result[idx[i]] = 0;
+                break;
+            }
+
+            // Use greedy to reduce those who are above our new score
+            for (int j = N - 1; j >= 0 && need_to_limit > 0; --j) {
+                int cur_idx = idx[j];
+                if (cur_idx == idx[i]) continue;
+
+                if (A[cur_idx] > target_vote) {
+                    ll reduce = A[cur_idx] - target_vote;
+                    required += reduce;
+                    total_used += reduce;
+                    A[cur_idx] = target_vote;
+                    need_to_limit--;
+                }
+            }
+
+            // Restore original values (since we're in a binary search loop)
+            for (int j = N - 1; j >= 0 && need_to_limit > 0; --j) {
+                int cur_idx = idx[j];
+                if (cur_idx == idx[i]) continue;
+                A[cur_idx] += total_used;
+            }
+
+            if (required <= K - (A[idx[i]] - (A[idx[i]] - mid))) {
+                high = mid;
+            } else {
+                low = mid + 1;
+            }
+        }
+
+        if (result[idx[i]] == -1) {
+            result[idx[i]] = low;
+        }
+    }
+
+    for (ll val : result) {
+        cout << val << ' ';
+    }
+    cout << '\n';
+
+    return 0;
+}
+```

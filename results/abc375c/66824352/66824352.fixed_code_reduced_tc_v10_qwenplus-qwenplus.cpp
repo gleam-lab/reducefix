@@ -1,0 +1,31 @@
+#include <iostream>
+#include <iomanip>
+#include <cmath>
+
+using namespace std;
+
+int main() {
+    int n;
+    cin >> n;
+    
+    long long total = 0;
+    long long curr_x = 0, curr_y = 0;
+    long long next_x, next_y;
+
+    for (int i = 0; i < n; ++i) {
+        cin >> next_x >> next_y;
+        long long dx = curr_x - next_x;
+        long long dy = curr_y - next_y;
+        total += sqrtl(static_cast<long double>(dx * dx + dy * dy));
+        curr_x = next_x;
+        curr_y = next_y;
+    }
+
+    // Return to origin
+    total += sqrtl(static_cast<long double>(curr_x * curr_x + curr_y * curr_y));
+
+    // Print with sufficient precision
+    cout << fixed << setprecision(15) << static_cast<long double>(total) << endl;
+
+    return 0;
+}

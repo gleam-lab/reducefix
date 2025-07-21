@@ -1,0 +1,34 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+bool canStore(vector<int>& toys, vector<int>& boxes, int size) {
+    priority_queue<int, vector<int>, greater<int>> pq(boxes.begin(), boxes.end());
+    for(int toy : toys) {
+        if(pq.empty() || pq.top() < toy) return false;
+        pq.pop();
+    }
+    return true;
+}
+
+int main() {
+    int n;
+    cin >> n;
+    vector<int> toys(n), boxes(n-1);
+    for(int i = 0; i < n; ++i) cin >> toys[i];
+    for(int i = 0; i < n-1; ++i) cin >> boxes[i];
+
+    sort(toys.begin(), toys.end());
+    sort(boxes.begin(), boxes.end());
+
+    int low = 1, high = 1e9 + 1;
+    while(low < high) {
+        int mid = (low + high) / 2;
+        if(canStore(toys, boxes, mid)) high = mid;
+        else low = mid + 1;
+    }
+
+    if(canStore(toys, boxes, low)) cout << low << endl;
+    else cout << -1 << endl;
+
+    return 0;
+}

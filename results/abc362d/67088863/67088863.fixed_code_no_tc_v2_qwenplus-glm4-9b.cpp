@@ -1,0 +1,62 @@
+#include <iostream>
+#include <vector>
+#include <queue>
+#include <algorithm>
+using namespace std;
+typedef long long ll;
+
+const int N = 2e5 + 5;
+const ll INF = 1e18;
+
+vector<ll> val(N);
+vector<vector<pair<int, ll>>> adj(N);
+
+void dijkstra() {
+    priority_queue<pair<ll, int>, vector<pair<ll, int>>, greater<pair<ll, int>>> pq;
+    vector<ll> dist(N, INF);
+
+    pq.push({0, 0});
+    dist[0] = 0;
+
+    while (!pq.empty()) {
+        auto [w, v] = pq.top();
+        pq.pop();
+
+        if (dist[v] < w) continue;
+
+        for (auto &neigh : adj[v]) {
+            int to = neigh.first;
+            ll weight = neigh.second;
+
+            if (dist[v] + weight < dist[to]) {
+                dist[to] = dist[v] + weight;
+                pq.push({dist[to], to});
+            }
+        }
+    }
+}
+
+int main() {
+    int n, m;
+    cin >> n >> m;
+
+    for (int i = 0; i < n; ++i) {
+        cin >> val[i];
+    }
+
+    for (int i = 0; i < m; ++i) {
+        int u, v, w;
+        cin >> u >> v >> w;
+        adj[u].emplace_back(v, w);
+        adj[v].emplace_back(u, w); // Note the bidirectional edge
+    }
+
+    dijkstra();
+
+    for (int i = 1; i < n; ++i) {
+        cout << dist[i] + val[i] << " ";
+    }
+    cout << endl;
+
+    return 0;
+}

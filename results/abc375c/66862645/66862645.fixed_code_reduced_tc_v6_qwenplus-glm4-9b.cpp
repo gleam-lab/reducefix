@@ -1,0 +1,30 @@
+#include <iostream>
+#include <vector>
+#include <cmath>
+
+using namespace std;
+
+int main() {
+    int N;
+    cin >> N;
+
+    vector<pair<double, double>> points(N + 2); // +2 for the start at origin and end at origin
+
+    for (int i = 0; i < N; i++) {
+        cin >> points[i].first >> points[i].second;
+    }
+    
+    points[N] = {0, 0}; // Add the origin after the last point
+    points[N + 1] = {0, 0}; // Add the origin again for returning to the origin
+
+    double total_cost = 0.0;
+
+    for (int i = 1; i < N + 2; i++) {
+        total_cost += sqrt(pow(points[i].first - points[i - 1].first, 2) + pow(points[i].second - points[i - 1].second, 2));
+    }
+
+    cout.precision(10);
+    cout << fixed << total_cost << endl;
+
+    return 0;
+}

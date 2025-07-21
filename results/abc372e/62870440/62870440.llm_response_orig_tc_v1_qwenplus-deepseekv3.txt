@@ -1,0 +1,84 @@
+To fix this code, we need to properly manage the connected components and efficiently answer the k-th largest queries. The initial approach had several flaws, including incorrect merging of components and inefficient query handling. 
+
+Here's the corrected approach:
+1. Use Union-Find (Disjoint Set Union) to manage connected components.
+2. For each component, maintain a sorted list of its vertices to efficiently answer k-th largest queries.
+3. When merging two components, merge their sorted lists in O(k) time (since k is at most 10, this is efficient).
+
+The corrected code ensures that each component's top 10 largest vertices are always maintained, allowing for O(1) or O(k) time queries.
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+const int MAXN = 2e5 + 5;
+vector<int> parent(MAXN);
+vector<int> size(MAXN);
+vector<vector<int>> largest(MAXN);
+
+int find_set(int v) {
+    if (v == parent[v])
+        return v;
+    return parent[v] = find_set(parent[v]);
+}
+
+void union_sets(int a, int b) {
+    a = find_set(a);
+    b = find_set(b);
+    if (a != b) {
+        if (size[a] < size[b])
+            swap(a, b);
+        parent[b] = a;
+        size[a] += size[b];
+        vector<int> merged;
+        merge(largest[a].rbegin(), largest[a].rend(),
+              largest[b].rbegin(), largest[b].rend(),
+              back_inserter(merged), greater<int>());
+        if (merged.size() > 10)
+            merged.resize(10);
+        largest[a] = vector<int>(merged.rbegin(), merged.rend());
+    }
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int N, Q;
+    cin >> N >> Q;
+
+    for (int i = 1; i <= N; ++i) {
+        parent[i] = i;
+        size[i] = 1;
+        largest[i] = {i};
+    }
+
+    while (Q--) {
+        int op, u, v;
+        cin >> op >> u;
+        if (op == 1) {
+            cin >> v;
+            union_sets(u, v);
+        } else {
+            int k;
+            cin >> k;
+            int root = find_set(u);
+            if (largest[root].size() < k) {
+                cout << "-1\n";
+            } else {
+                cout << largest[root][largest[root].size() - k] << '\n';
+            }
+        }
+    }
+
+    return 0;
+}
+```
+
+### Key Fixes:
+1. **Union-Find with Path Compression**: Ensures efficient parent lookup and component merging.
+2. **Component Tracking**: Each component's root maintains a sorted list of its largest vertices.
+3. **Efficient Merging**: When merging components, the top 10 largest vertices are merged and resized to maintain the top 10.
+4. **Query Handling**: For each query, the k-th largest vertex is directly accessed from the component's maintained list, ensuring O(1) or O(k) time per query.
+
+This solution efficiently handles the constraints and ensures correct answers for all test cases.

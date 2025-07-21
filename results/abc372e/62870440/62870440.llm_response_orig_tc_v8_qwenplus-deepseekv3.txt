@@ -1,0 +1,79 @@
+To fix this code, we need to address the incorrect handling of connected components and the k-th largest element queries. The initial approach tried to merge sets and maintain sorted arrays, but it didn't correctly handle the merging and querying operations, leading to incorrect outputs.
+
+### Approaches
+1. **Union-Find Data Structure**: We'll use the Union-Find (Disjoint Set Union, DSU) data structure to efficiently manage the connected components of the graph.
+2. **Balanced Binary Search Trees**: For each connected component, we'll maintain a balanced binary search tree (like a `std::multiset`) to keep track of the vertices in sorted order. This allows us to efficiently query the k-th largest element.
+3. **Path Compression and Union by Size**: To optimize the Union-Find operations, we'll use path compression and union by size or rank.
+4. **Merging Sets**: When merging two sets, we'll combine their respective balanced binary search trees, always merging the smaller set into the larger one to maintain efficiency.
+
+### Solution Code
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+const int MAXN = 200005;
+
+int parent[MAXN];
+int size[MAXN];
+multiset<int> components[MAXN];
+
+int find_set(int v) {
+    if (v == parent[v])
+        return v;
+    return parent[v] = find_set(parent[v]);
+}
+
+void union_sets(int u, int v) {
+    u = find_set(u);
+    v = find_set(v);
+    if (u != v) {
+        if (size[u] < size[v])
+            swap(u, v);
+        parent[v] = u;
+        size[u] += size[v];
+        components[u].insert(components[v].begin(), components[v].end());
+        components[v].clear();
+    }
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int N, Q;
+    cin >> N >> Q;
+
+    for (int i = 1; i <= N; ++i) {
+        parent[i] = i;
+        size[i] = 1;
+        components[i].insert(i);
+    }
+
+    while (Q--) {
+        int op, u, v;
+        cin >> op >> u >> v;
+        if (op == 1) {
+            union_sets(u, v);
+        } else {
+            int root = find_set(u);
+            if (components[root].size() < v) {
+                cout << "-1\n";
+            } else {
+                auto it = components[root].end();
+                advance(it, -v);
+                cout << *it << "\n";
+            }
+        }
+    }
+
+    return 0;
+}
+```
+
+### Explanation
+1. **Initialization**: We initialize the parent array for the Union-Find structure, where each node is its own parent initially. Each node's size is set to 1, and each node's component is initialized to contain only itself in a `multiset`.
+2. **Union Operation**: When merging two sets, we find the roots of both nodes. If they are in different sets, we merge the smaller set into the larger one to optimize performance. The `multiset` of the smaller set is merged into the larger set's `multiset`.
+3. **Find Operation**: The find operation uses path compression to flatten the structure of the tree, making future queries faster.
+4. **Query Operation**: For a query asking for the k-th largest element in a component, we check if the component has at least k elements. If not, we output -1. Otherwise, we access the k-th largest element by moving an iterator from the end of the `multiset` back by k positions.
+
+This approach ensures that each operation is handled efficiently, with union and find operations being nearly constant time due to path compression and union by size, and the query operation being logarithmic in the size of the component due to the use of a balanced binary search tree.

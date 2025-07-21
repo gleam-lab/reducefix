@@ -1,0 +1,60 @@
+#include<bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+
+const int MAXN = 100005;
+
+vector<ll> a[MAXN], b[MAXN];
+
+void preprocess(vector<ll>& arr) {
+    sort(arr.begin(), arr.end());
+    vector<ll> sorted_arr = arr;
+    map<ll, int> mp;
+    for(int i = 0; i < sorted_arr.size(); i++) {
+        if(mp.find(sorted_arr[i]) == mp.end()) {
+            mp[sorted_arr[i]] = i + 1;
+        }
+    }
+    for(auto& it : arr) {
+        arr[it] = mp[it];
+    }
+}
+
+int query(vector<ll>& arr, int k) {
+    int l = 0, r = arr.size() - 1;
+    while(l < r) {
+        int mid = (l + r) >> 1;
+        if(arr[mid] < k) l = mid + 1;
+        else r = mid;
+    }
+    return arr[l] - 1;
+}
+
+void solve() {
+    int n, q; cin >> n >> q;
+    for(int i = 1; i <= n; i++) {
+        int x; cin >> x;
+        a[x].push_back(i);
+    }
+    for(int i = 1; i <= q; i++) {
+        int x, k; cin >> x >> k;
+        b[x].push_back(k);
+    }
+    for(int i = 1; i <= 200000; i++) {
+        preprocess(a[i]);
+    }
+    for(int i = 1; i <= 200000; i++) {
+        preprocess(b[i]);
+    }
+    for(int i = 1; i <= q; i++) {
+        int ans = query(b[i], query(a[i], b[i][0]));
+        cout << ans << endl;
+    }
+}
+
+int main() {
+    ios_base::sync_with_stdio(false); cin.tie(NULL); cout.tie(NULL);
+    int t = 1; //cin >> t;
+    while(t--) solve();
+    return 0;
+}

@@ -1,0 +1,40 @@
+#include<bits/stdc++.h>
+#define int long long
+
+using namespace std;
+
+int main() {
+    int n, m;
+    cin >> n >> m;
+    vector<pair<int, int>> pieces(m);
+    vector<bool> rows(n+1, false), cols(n+1, false);
+    vector<pair<int, int>> dia1(n+1), dia2(n+1), anti_dia1(n+1), anti_dia2(n+1);
+
+    for (int i = 0; i < m; ++i) {
+        int a, b;
+        cin >> a >> b;
+        pieces[i] = {a, b};
+        rows[a] = true;
+        cols[b] = true;
+        dia1[a+b-1].first = a;
+        dia1[a+b-1].second = b;
+        dia2[a-b+1].first = a;
+        dia2[a-b+1].second = b;
+        anti_dia1[n+a-b].first = a;
+        anti_dia1[n+a-b].second = b;
+        anti_dia2[n+a+b].first = a;
+        anti_dia2[n+a+b].second = b;
+    }
+
+    // Count captures
+    int captures = 0;
+    for (int i = 0; i < m; ++i) {
+        int a = pieces[i].first, b = pieces[i].second;
+        captures += rows[a] + cols[b] + dia1[a+b-1].second + dia2[a-b+1].second
+                    + anti_dia1[n+a-b].second + anti_dia2[n+a+b].second;
+    }
+
+    // Total squares minus the number of captures
+    cout << (n * n) - captures << endl;
+    return 0;
+}

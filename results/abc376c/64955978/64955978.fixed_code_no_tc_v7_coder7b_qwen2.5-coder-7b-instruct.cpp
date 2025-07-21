@@ -1,0 +1,48 @@
+#include<bits/stdc++.h>
+#define ll long long
+#define yes cout<<"YES\n"
+#define no cout<<"NO\n"
+#define sp ' '
+using namespace std;
+
+void solve(){
+    ll N;
+    cin >> N;
+    vector<ll> a(N), b(N - 1);
+    for(int i = 0; i < N; i++) cin >> a[i];
+    for(int i = 0; i < N - 1; i++) cin >> b[i];
+
+    sort(a.begin(), a.end());
+    sort(b.begin(), b.end());
+
+    // Find the smallest box size that can hold all toys
+    ll max_needed_size = *max_element(a.begin(), a.end());
+    bool found = false;
+
+    for(ll x = max_needed_size; x <= 1e9; x++){
+        vector<bool> used(N - 1, false);
+        int i = 0;
+        while(i < N && !used[i]){
+            if(x >= a[i] && (!used[i - 1] || x >= a[i - 1])){
+                used[i - 1] = true;
+                i++;
+            }else{
+                break;
+            }
+        }
+        if(i == N){
+            found = true;
+            cout << x << endl;
+            break;
+        }
+    }
+
+    if(!found) cout << -1 << endl;
+}
+
+int main(){
+    ios::sync_with_stdio(0);
+    cin.tie(0);
+    solve();
+    return 0;
+}

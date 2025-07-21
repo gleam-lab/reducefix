@@ -1,0 +1,42 @@
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+
+int main(){
+  int N;
+  string S;
+  cin >> N >> S;
+  
+  char past = 'N';  // Previous move in the sequence
+  int ans = 0;      // Count of required moves
+
+  for(char c : S){
+    if(c == 'P'){
+      if(past != 'S'){
+        ans++;
+        past = 'S';  // After playing P, to beat next R
+      } else {
+        past = 'P';
+      }
+    }
+    else if(c == 'R'){
+      if(past != 'P'){
+        ans++;
+        past = 'P';  // After playing R, to beat next S
+      } else {
+        past = 'R';
+      }
+    }
+    else if(c == 'S'){ // S
+      if(past != 'R'){
+        ans++;
+        past = 'R';  // After playing S, to beat next P
+      } else {
+        past = 'S';
+      }
+    }
+  }
+
+  cout << ans;
+  return 0;
+}

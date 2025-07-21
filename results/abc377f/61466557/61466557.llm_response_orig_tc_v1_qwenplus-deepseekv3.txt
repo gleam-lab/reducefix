@@ -1,0 +1,143 @@
+To fix this code, we need to address several issues. The primary problem lies in the incorrect calculation of the safe squares where the new piece can be placed without being captured by any existing pieces. The original code attempts to subtract the unsafe squares from the total squares but fails to correctly account for overlaps between different types of unsafe squares (rows, columns, diagonals, and anti-diagonals). 
+
+### Approaches
+
+1. **Identify Unsafe Squares**: 
+   - **Rows and Columns**: Any square in the same row or column as an existing piece is unsafe.
+   - **Diagonals (i - j = constant)** and **Anti-diagonals (i + j = constant)**: Any square on the same diagonal or anti-diagonal as an existing piece is unsafe.
+
+2. **Calculate Total Safe Squares**:
+   - The total number of squares is \( N^2 \).
+   - Subtract the unsafe squares from rows, columns, diagonals, and anti-diagonals.
+   - Avoid double-counting squares that fall into multiple unsafe categories (like being in both a row and a diagonal of existing pieces).
+
+3. **Efficient Computation**:
+   - Use sets to track unique rows, columns, diagonals, and anti-diagonals that are already occupied by existing pieces.
+   - Calculate the number of squares in each unique diagonal and anti-diagonal, ensuring they are within the grid bounds.
+
+### Solution Code
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+typedef long long ll;
+typedef pair<ll, ll> pll;
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(NULL);
+    
+    ll n, m;
+    cin >> n >> m;
+    vector<pll> queens(m);
+    for (auto &[a, b] : queens) {
+        cin >> a >> b;
+    }
+    
+    unordered_set<ll> rows, cols, diag1, diag2;
+    for (auto [a, b] : queens) {
+        rows.insert(a);
+        cols.insert(b);
+        diag1.insert(a - b);
+        diag2.insert(a + b);
+    }
+    
+    ll unsafe = 0;
+    
+    // Rows and columns
+    unsafe += rows.size() * n;
+    unsafe += cols.size() * n;
+    unsafe -= rows.size() * cols.size(); // Subtract overlaps
+    
+    // Diagonals (i - j = d)
+    for (ll d : diag1) {
+        ll i_min = max(1LL, 1 + d);
+        ll i_max = min(n, n + d);
+        if (i_min > i_max) continue;
+        ll cnt = i_max - i_min + 1;
+        unsafe += cnt;
+        
+        // Subtract overlaps with rows and columns
+        for (ll r : rows) {
+            ll c = r - d;
+            if (1 <= c && c <= n) {
+                unsafe--;
+            }
+        }
+        for (ll c : cols) {
+            ll r = c + d;
+            if (1 <= r && r <= n) {
+                unsafe--;
+            }
+        }
+        // Add back overlaps subtracted twice (rows and cols intersection)
+        for (ll r : rows) {
+            if (cols.count(r - d)) {
+                unsafe++;
+            }
+        }
+    }
+    
+    // Anti-diagonals (i + j = d)
+    for (ll d : diag2) {
+        ll i_min = max(1LL, d - n);
+        ll i_max = min(n, d - 1);
+        if (i_min > i_max) continue;
+        ll cnt = i_max - i_min + 1;
+        unsafe += cnt;
+        
+        // Subtract overlaps with rows and columns
+        for (ll r : rows) {
+            ll c = d - r;
+            if (1 <= c && c <= n) {
+                unsafe--;
+            }
+        }
+        for (ll c : cols) {
+            ll r = d - c;
+            if (1 <= r && r <= n) {
+                unsafe--;
+            }
+        }
+        // Add back overlaps subtracted twice (rows and cols intersection)
+        for (ll r : rows) {
+            if (cols.count(d - r)) {
+                unsafe++;
+            }
+        }
+    }
+    
+    // Subtract overlaps between diagonals and anti-diagonals
+    unordered_set<pll> intersections;
+    for (ll d1 : diag1) {
+        for (ll d2 : diag2) {
+            ll i = (d1 + d2) / 2;
+            ll j = (d2 - d1) / 2;
+            if ((d1 + d2) % 2 == 0 && 1 <= i && i <= n && 1 <= j && j <= n) {
+                intersections.insert({i, j});
+            }
+        }
+    }
+    unsafe -= intersections.size();
+    
+    // Add back squares that are in queens' positions (they are already counted in rows/cols/diags)
+    unsafe += m;
+    
+    ll total_safe = n * n - unsafe;
+    cout << max(total_safe, 0LL) << endl;
+    
+    return 0;
+}
+```
+
+### Explanation
+1. **Input Handling**: The code reads the grid size \( N \) and the number of queens \( M \), followed by their positions.
+2. **Tracking Unsafe Areas**: Using sets, it tracks rows, columns, diagonals (i - j), and anti-diagonals (i + j) that are occupied by queens to identify unsafe squares.
+3. **Calculating Unsafe Squares**: 
+   - **Rows and Columns**: The total unsafe squares from rows and columns are calculated, adjusting for overlaps.
+   - **Diagonals and Anti-diagonals**: For each unique diagonal, the number of squares is calculated, adjusting for overlaps with rows and columns.
+4. **Overlap Adjustments**: The code subtracts overlaps between different categories (rows, columns, diagonals, anti-diagonals) to avoid double-counting.
+5. **Final Calculation**: The total safe squares are computed by subtracting the unsafe squares from the total grid squares \( N^2 \), ensuring the result is non-negative.
+
+This approach efficiently calculates the safe squares while handling all edge cases and overlaps correctly.

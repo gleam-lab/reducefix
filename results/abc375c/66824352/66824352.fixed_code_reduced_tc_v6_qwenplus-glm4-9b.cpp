@@ -1,0 +1,33 @@
+#include <iostream>
+#include <vector>
+#include <cmath>
+using namespace std;
+
+int main() {
+    int n;
+    cin >> n;
+    vector<pair<double, double>> points;
+    double x = 0.0, y = 0.0;
+    
+    for (int i = 0; i < n; ++i) {
+        double xi, yi;
+        cin >> xi >> yi;
+        points.push_back({x, y});
+        points.push_back({xi, yi});
+        x = xi;
+        y = yi;
+    }
+    points.push_back({x, y}); // Add the final return to the origin
+
+    double total_cost = 0.0;
+    for (int i = 0; i < points.size(); i += 2) {
+        double xi = points[i].first;
+        double yi = points[i].second;
+        double xj = points[i + 1].first;
+        double yj = points[i + 1].second;
+        total_cost += sqrt((xi - xj) * (xi - xj) + (yi - yj) * (yi - yj));
+    }
+
+    cout << fixed << setprecision(10) << total_cost << endl;
+    return 0;
+}

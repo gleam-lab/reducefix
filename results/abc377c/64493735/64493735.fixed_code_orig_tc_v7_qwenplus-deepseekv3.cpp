@@ -1,0 +1,43 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+typedef long long ll;
+typedef pair<int, int> pii;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    ll N, M;
+    cin >> N >> M;
+    
+    set<pii> forbidden;
+    set<pii> pieces;
+    
+    for (int i = 0; i < M; ++i) {
+        int a, b;
+        cin >> a >> b;
+        pieces.emplace(a, b);
+        
+        int dx[] = {2, 1, -1, -2, -2, -1, 1, 2};
+        int dy[] = {1, 2, 2, 1, -1, -2, -2, -1};
+        
+        for (int k = 0; k < 8; ++k) {
+            int x = a + dx[k];
+            int y = b + dy[k];
+            if (x >= 1 && x <= N && y >= 1 && y <= N) {
+                forbidden.emplace(x, y);
+            }
+        }
+    }
+    
+    ll total = N * N;
+    ll forbidden_count = forbidden.size();
+    ll pieces_count = pieces.size();
+    
+    ll answer = total - forbidden_count - pieces_count;
+    
+    cout << answer << '\n';
+    
+    return 0;
+}

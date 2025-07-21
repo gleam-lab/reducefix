@@ -1,0 +1,89 @@
+To fix this code, we need to address several issues in the way the connected components and their top k largest vertices are managed. The original approach attempts to maintain a sorted list of vertices for each component, but it has flaws in merging these lists and in handling queries efficiently. Here’s a corrected version that uses a more efficient approach with Union-Find (Disjoint Set Union, DSU) and priority queues to keep track of the largest elements in each component.
+
+### Approaches
+1. **Union-Find (DSU)**: To efficiently manage and merge connected components.
+2. **Priority Queues**: For each component, maintain a priority queue that keeps track of the largest elements. This allows efficient access to the k-th largest element.
+3. **Merging Priority Queues**: When merging two components, the priority queues of the components are merged while ensuring that the size remains manageable (specifically, we keep at most 10 elements to meet the constraint k ≤ 10).
+
+### Solution Code
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+const int MAXN = 200005;
+int fa[MAXN];
+priority_queue<int> components[MAXN];
+
+int find(int x) {
+    if (fa[x] != x) {
+        fa[x] = find(fa[x]);
+    }
+    return fa[x];
+}
+
+void merge(int u, int v) {
+    u = find(u);
+    v = find(v);
+    if (u == v) return;
+    if (components[u].size() < components[v].size()) {
+        swap(u, v);
+    }
+    fa[v] = u;
+    priority_queue<int> temp;
+    while (!components[v].empty()) {
+        temp.push(components[v].top());
+        components[v].pop();
+    }
+    while (!temp.empty()) {
+        if (components[u].size() < 10) {
+            components[u].push(temp.top());
+        } else if (temp.top() > components[u].top()) {
+            components[u].pop();
+            components[u].push(temp.top());
+        }
+        temp.pop();
+    }
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int N, Q;
+    cin >> N >> Q;
+    for (int i = 1; i <= N; ++i) {
+        fa[i] = i;
+        components[i].push(i);
+    }
+    while (Q--) {
+        int op, u, v;
+        cin >> op >> u >> v;
+        if (op == 1) {
+            merge(u, v);
+        } else {
+            int root = find(u);
+            if (components[root].size() < v) {
+                cout << "-1\n";
+            } else {
+                vector<int> temp;
+                int res = -1;
+                for (int i = 0; i < v; ++i) {
+                    res = components[root].top();
+                    temp.push_back(res);
+                    components[root].pop();
+                }
+                cout << res << "\n";
+                for (int num : temp) {
+                    components[root].push(num);
+                }
+            }
+        }
+    }
+    return 0;
+}
+```
+
+### Explanation
+1. **Initialization**: Each vertex is initially its own parent in the DSU structure, and each vertex starts with a priority queue containing only itself.
+2. **Merge Operation**: When merging two components, the larger component's priority queue is retained. The smaller component's elements are merged into the larger one, keeping only the top 10 elements to ensure efficiency and meet the query constraints.
+3. **Query Operation**: For a query asking for the k-th largest element in the component of vertex `v`, the algorithm checks if there are at least `k` elements. If not, it returns `-1`. Otherwise, it temporarily pops the top `k` elements from the priority queue, returns the k-th largest, and then restores the elements back to the queue.
+This approach efficiently handles the constraints and ensures that each operation (merge and query) is performed in logarithmic time relative to the number of elements involved.

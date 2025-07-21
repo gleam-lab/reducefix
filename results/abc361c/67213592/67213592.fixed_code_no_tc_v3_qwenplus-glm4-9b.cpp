@@ -1,0 +1,29 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+int main() {
+    int n, k;
+    cin >> n >> k;
+    vector<int> A(n);
+    for (int i = 0; i < n; ++i) {
+        cin >> A[i];
+    }
+
+    // First, we find the K smallest elements to remove
+    sort(A.begin(), A.end());
+    vector<int> smallest(k);
+    smallest.assign(A.begin(), A.begin() + k);
+
+    // Now we need to find the maximum of the remaining elements and the minimum of the removed elements
+    // We remove the smallest K elements, so we take the largest element from the remaining (K+1 to n-1)
+    int max_of_remaining = A[n - k - 1];
+
+    // The minimum of the removed elements is the first element we removed (which is now the K-th smallest)
+    int min_of_removed = smallest.front();
+
+    // The answer is the difference between the maximum of the remaining elements and the minimum of the removed elements
+    cout << max_of_remaining - min_of_removed << endl;
+    return 0;
+}

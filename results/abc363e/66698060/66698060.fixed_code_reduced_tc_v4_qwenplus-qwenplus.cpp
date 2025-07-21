@@ -1,0 +1,112 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define ll long long
+#define rep(i,n) for(ll i=0;i<(ll)n;i++)
+#define vi vector<int>
+#define vl vector<ll>
+#define vb vector<bool>
+#define vvl vector<vector<ll>>
+#define vvb vector<vector<bool>>
+#define pll pair<ll, ll>
+#define pq priority_queue
+
+// Directions: up, right, down, left
+ll dx[4] = {-1, 0, 1, 0};
+ll dy[4] = {0, 1, 0, -1};
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+
+    ll h, w, y;
+    cin >> h >> w >> y;
+
+    vvl grid(h, vl(w));
+    vvb visited(h, vb(w, false));
+
+    priority_queue<pll, vector<pll>, greater<pll>> pq;
+
+    // Read the island map
+    rep(i, h) {
+        rep(j, w) {
+            cin >> grid[i][j];
+        }
+    }
+
+    // Initialize the perimeter of the island as visited and add to priority queue
+    rep(i, h) {
+        if (!visited[i][0]) {
+            visited[i][0] = true;
+            pq.push({grid[i][0], i * w + 0});
+        }
+        if (!visited[i][w-1]) {
+            visited[i][w-1] = true;
+            pq.push({grid[i][w-1], i * w + (w - 1)});
+        }
+    }
+    rep(j, w) {
+        if (!visited[0][j]) {
+            visited[0][j] = true;
+            pq.push({grid[0][j], 0 * w + j});
+        }
+        if (!visited[h-1][j]) {
+            visited[h-1][j] = true;
+            pq.push({grid[h-1][j], (h - 1) * w + j});
+        }
+    }
+
+    ll remaining = h * w;
+
+    while (!pq.empty() && pq.top().first <= y) {
+        ll val = pq.top().first;
+        ll pos = pq.top().second;
+        pq.pop();
+
+        ll x = pos / w;
+        ll y_pos = pos % w;
+
+        remaining--;
+        rep(dir, 4) {
+            ll nx = x + dx[dir];
+            ll ny = y_pos + dy[dir];
+            if (nx >= 0 && nx < h && ny >= 0 && ny < w && !visited[nx][ny]) {
+                visited[nx][ny] = true;
+                pq.push({grid[nx][ny], nx * w + ny});
+            }
+        }
+    }
+
+    // We need to output the area for each year from 1 to Y
+    vl result(y + 2, remaining); // Default case: nothing changes after last event
+
+    // Prepare events sorted by elevation
+    vector<tuple<ll, ll, ll>> events;
+    rep(i, h) rep(j, w) {
+        if (!visited[i][j]) {
+            events.emplace_back(grid[i][j], i, j);
+        }
+    }
+    sort(events.begin(), events.end());
+
+    // Process events in increasing order of elevation
+    vl yearly_remaining = result;
+    ll idx = 0;
+    for (ll year = 1; year <= y; ++year) {
+        while (idx < events.size() && get<0>(events[idx]) == year) {
+            ll x = get<1>(events[idx]);
+            ll y = get<2>(events[idx]);
+            if (!visited[x][y]) {
+                visited[x][y] = true;
+                remaining--;
+            }
+            idx++;
+        }
+        result[year] = remaining;
+    }
+
+    for (ll year = 1; year <= y; ++year) {
+        cout << result[year] << "\n";
+    }
+
+    return 0;
+}

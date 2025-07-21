@@ -1,0 +1,145 @@
+```cpp
+#include <bits/stdc++.h>
+
+using i64 = long long;
+
+constexpr int dx[] = {0, 1, 0, -1};
+constexpr int dy[] = {1, 0, -1, 0};
+
+int main() {
+    std::ios::sync_with_stdio(false);
+    std::cin.tie(nullptr);
+
+    int H, W, Y;
+    std::cin >> H >> W >> Y;
+
+    std::vector<std::vector<int>> A(H, std::vector<int>(W));
+    for (int i = 0; i < H; ++i) {
+        for (int j = 0; j < W; ++j) {
+            std::cin >> A[i][j];
+        }
+    }
+
+    // Create a grid to store whether a cell is submerged
+    std::vector<std::vector<bool>> submerged(H, std::vector<bool>(W, false));
+
+    // Priority queue to process cells in increasing order of elevation
+    std::priority_queue<std::tuple<int, int, int>, std::vector<std::tuple<int, int, int>>, std::greater<>> pq;
+
+    // Initialize the queue with the boundary (ocean) cells
+    for (int i = 0; i < H; ++i) {
+        for (int j = 0; j < W; ++j) {
+            if (i == 0 || i == H - 1 || j == 0 || j == W - 1) {
+                submerged[i][j] = true;
+                pq.emplace(A[i][j], i, j);
+            }
+        }
+    }
+
+    // Process all cells in order of elevation
+    while (!pq.empty()) {
+        auto [h, x, y] = pq.top();
+        pq.pop();
+
+        for (int d = 0; d < 4; ++d) {
+            int nx = x + dx[d];
+            int ny = y + dy[d];
+            if (nx >= 0 && nx < H && ny >= 0 && ny < W && !submerged[nx][ny]) {
+                submerged[nx][ny] = true;
+                pq.emplace(A[nx][ny], nx, ny);
+            }
+        }
+    }
+
+    // Prepare an array to track remaining area over time
+    std::vector<int> area(Y + 2, H * W);  // area[0] = initial total area
+
+    // Reset submerged matrix and simulate year-by-year
+    for (int y = 1; y <= Y; ++y) {
+        area[y] = area[y - 1];
+    }
+
+    // Re-initialize submerged matrix
+    std::vector<std::vector<bool>> visited(H, std::vector<bool>(W, false));
+    std::queue<std::pair<int, int>> q;
+
+    for (int i = 0; i < H; ++i) {
+        for (int j = 0; j < W; ++j) {
+            if (i == 0 || i == H - 1 || j == 0 || j == W - 1) {
+                if (A[i][j] <= 0) {
+                    visited[i][j] = true;
+                    area[0]--;
+                    q.emplace(i, j);
+                }
+            }
+        }
+    }
+
+    while (!q.empty()) {
+        auto [x, y] = q.front();
+        q.pop();
+
+        for (int d = 0; d < 4; ++d) {
+            int nx = x + dx[d];
+            int ny = y + dy[d];
+            if (nx >= 0 && nx < H && ny >= 0 && ny < W && !visited[nx][ny] && A[nx][ny] <= 0) {
+                visited[nx][ny] = true;
+                area[0]--;
+                q.emplace(nx, ny);
+            }
+        }
+    }
+
+    // For each year, submerge cells whose height equals this year
+    std::vector<std::vector<int>> cells_by_year(Y + 2);
+    for (int i = 0; i < H; ++i) {
+        for (int j = 0; j < W; ++j) {
+            if (!(i == 0 || i == H - 1 || j == 0 || j == W - 1)) {
+                if (A[i][j] <= Y) {
+                    cells_by_year[A[i][j]].push_back(i * W + j);
+                }
+            }
+        }
+    }
+
+    // Simulate each year
+    for (int year = 1; year <= Y; ++year) {
+        area[year] = area[year - 1];
+
+        std::queue<std::pair<int, int>> q;
+
+        for (int cell : cells_by_year[year]) {
+            int i = cell / W;
+            int j = cell % W;
+
+            if (!visited[i][j]) {
+                visited[i][j] = true;
+                area[year]--;
+                q.emplace(i, j);
+            }
+        }
+
+        // Flood fill from newly submerged cells
+        while (!q.empty()) {
+            auto [x, y] = q.front();
+            q.pop();
+
+            for (int d = 0; d < 4; ++d) {
+                int nx = x + dx[d];
+                int ny = y + dy[d];
+                if (nx >= 0 && nx < H && ny >= 0 && ny < W && !visited[nx][ny] && A[nx][ny] <= year) {
+                    visited[nx][ny] = true;
+                    area[year]--;
+                    q.emplace(nx, ny);
+                }
+            }
+        }
+    }
+
+    for (int i = 1; i <= Y; ++i) {
+        std::cout << area[i] << "\n";
+    }
+
+    return 0;
+}
+```

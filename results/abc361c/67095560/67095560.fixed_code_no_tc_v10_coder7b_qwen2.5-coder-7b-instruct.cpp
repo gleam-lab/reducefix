@@ -1,0 +1,26 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+#define endl "\n"
+
+void solve() {
+    int n, k;
+    cin >> n >> k;
+    vector<int> a(n);
+    for (int &x : a) cin >> x;
+
+    sort(a.begin(), a.end());
+    
+    // The optimal strategy is to remove the smallest k/2 elements and the largest k/2 elements
+    // This minimizes the difference between the maximum and minimum values of the resulting sequence
+    int ans = a[k - 1] - a[n - k];
+
+    cout << ans << endl;
+}
+
+signed main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(NULL);
+    solve();
+    return 0;
+}

@@ -1,0 +1,92 @@
+
+The given code attempts to simulate the flooding of an island over a given number of years. It uses a breadth-first search (BFS) approach to determine which parts of the island will be flooded at each year's end. The BFS starts from the edges of the island (assuming they are below sea level), and then propagates inward.
+
+However, the code seems to have several issues that need to be addressed:
+
+1. **Initialization:** The BFS queue is initialized with the elevation of each cell, but the BFS should start from the cells that are initially below sea level (either on the edge or adjacent to already flooded cells). This part of the code is not correctly implemented.
+
+2. **BFS Propagation:** The BFS should continue to propagate until all cells that will be flooded this year are processed. The current code does not handle this correctly, as it processes all cells that will be flooded in one go, which is not accurate.
+
+3. **Edge Handling:** The code seems to improperly handle the edge cases where the first and last rows or columns of the island are involved. It should be careful when modifying bounds within loops.
+
+4. **Output Timing:** The code attempts to output the area of the island that remains above sea level at every year's end, but the timing of the output may not match the problem's requirements if it floods the entire island within the first year.
+
+5. **Performance Issues:** Given the constraints, especially with Y up to 100,000, the current approach may be inefficient. The BFS should ensure that we only perform minimal operations on cells that are still above sea level, and the current code may be recalculating flood areas unnecessarily.
+
+Here is a revised version of the code that attempts to address some of these points:
+
+```cpp
+#include<bits/stdc++.h>
+using namespace std;
+
+int H, W, Y;
+vector<vector<int>> A, F;
+vector<queue<pair<int, int>>> Q;
+
+void bfs(int startElev) {
+    int dx[4] = {1, 0, -1, 0};
+    int dy[4] = {0, 1, 0, -1};
+
+    queue<pair<int, int>> q;
+    for (int i = 0; i < H; ++i) {
+        for (int j = 0; j < W; ++j) {
+            if (A[i][j] == startElev) {
+                q.push({i, j});
+                F[i][j] = false;
+            }
+        }
+    }
+
+    while (!q.empty()) {
+        int x = q.front().first;
+        int y = q.front().second;
+        q.pop();
+
+        for (int k = 0; k < 4; ++k) {
+            int nx = x + dx[k];
+            int ny = y + dy[k];
+            if (nx >= 0 && nx < H && ny >= 0 && ny < W && A[nx][ny] > startElev && F[nx][ny]) {
+                F[nx][ny] = false;
+                Q[A[nx][ny]].push({nx, ny});
+                q.push({nx, ny});
+            }
+        }
+    }
+}
+
+int main() {
+    cin >> H >> W >> Y;
+    A.resize(H, vector<int>(W));
+    F.resize(H, vector<bool>(W, true));
+    Q.resize(100000);
+
+    for (int i = 0; i < H; ++i) {
+        for (int j = 0; j < W; ++j) {
+            cin >> A[i][j];
+        }
+    }
+
+    int currYear = 0;
+    while (currYear < min(Y, 100000) && !F[0][0]) {
+        bfs(A[0][0]);
+        currYear++;
+    }
+
+    for (int i = 0; i < Y; ++i) {
+        // Output the area that remains above sea level after 'i' years
+        int remainingArea = 0;
+        for (int x = 0; x < H; ++x) {
+            for (int y = 0; y < W; ++y) {
+                if (F[x][y]) {
+                    remainingArea++;
+                }
+            }
+        }
+        cout << remainingArea << endl;
+    }
+
+    return 0;
+}
+```
+
+This revised version initializes the BFS queue with the cells that are below sea level, and then performs the BFS until the entire island is flooded or until `Y` years have passed. It outputs the remaining area above sea level at each year's end. This is still an approximation and may not work for the highest values of `Y` due to complexity issues. For the highest `Y` values, a more efficient algorithm would be required.

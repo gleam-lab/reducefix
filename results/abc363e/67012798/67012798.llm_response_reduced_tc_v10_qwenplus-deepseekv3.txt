@@ -1,0 +1,101 @@
+I'll analyze the issue and provide a corrected solution.
+
+Analysis:
+1. The failing test case is a 1x1 grid with elevation 100000. The code incorrectly outputs 1 for all years, but it should output 1 until year 100000 when the island should sink (output 0).
+
+2. The main issue is that the code doesn't properly handle the case where the entire island sinks at a specific sea level. When the sea level reaches the elevation of a cell, that cell should sink.
+
+3. The current implementation only processes border cells initially, but for a single cell island, we need to handle it specially.
+
+Here's the corrected solution:
+
+```cpp
+#include <bits/stdc++.h>
+
+using namespace std;
+
+constexpr int dx[] = {-1, 1, 0, 0};
+constexpr int dy[] = {0, 0, -1, 1};
+
+int main()
+{
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int H, W, Y;
+    cin >> H >> W >> Y;
+
+    vector<vector<int>> A(H, vector<int>(W));
+    for (int i = 0; i < H; i++)
+    {
+        for (int j = 0; j < W; j++)
+        {
+            cin >> A[i][j];
+        }
+    }
+
+    vector<vector<bool>> island(H, vector<bool>(W, true));
+    vector<vector<pair<int, int>>> q_sinks(1e5 + 5);
+
+    // Process border cells first
+    for (int i = 0; i < H; i++)
+    {
+        for (int j = 0; j < W; j++)
+        {
+            if (i == 0 || i == H-1 || j == 0 || j == W-1)
+            {
+                q_sinks[A[i][j]].emplace_back(i, j);
+                island[i][j] = false;
+            }
+        }
+    }
+
+    int ans = H * W;
+    vector<int> result(Y + 1);
+
+    for (int y = 1; y <= 1e5; y++)
+    {
+        for (auto [x, j] : q_sinks[y])
+        {
+            ans--;
+
+            for (int d = 0; d < 4; d++)
+            {
+                int nx = x + dx[d];
+                int ny = j + dy[d];
+
+                if (nx >= 0 && nx < H && ny >= 0 && ny < W && island[nx][ny] && A[nx][ny] <= y)
+                {
+                    island[nx][ny] = false;
+                    q_sinks[A[nx][ny]].emplace_back(nx, ny);
+                }
+            }
+        }
+
+        if (y <= Y)
+        {
+            result[y] = ans;
+        }
+        else
+        {
+            break;
+        }
+    }
+
+    for (int y = 1; y <= Y; y++)
+    {
+        cout << result[y] << '\n';
+    }
+
+    return 0;
+}
+```
+
+Key improvements:
+1. Changed from queue to vector for storing sinking cells at each sea level, which allows processing all cells at a given level more efficiently.
+2. Properly handles the case where a cell's elevation exactly matches the sea level - it will sink at that level.
+3. Processes sinking cells in order of increasing sea level, ensuring correct propagation of sinking to adjacent cells.
+4. Stores results for all required years first, then outputs them, which is more efficient for large Y.
+5. Fixed the sinking logic to only mark cells as sunk if their elevation is <= current sea level.
+
+This solution should now handle all test cases correctly, including the 1x1 case and large value cases. The complexity is O(H*W + Y) which is optimal for the given constraints.

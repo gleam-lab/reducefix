@@ -1,0 +1,41 @@
+#include<bits/stdc++.h>
+#define ll long long
+using namespace std;
+
+bool check(vector<ll>& A, vector<ll>& B, ll mid) {
+    multiset<ll> s;
+    for(auto b : B) s.insert(b);
+    for(int i = 0; i < A.size(); ++i) {
+        auto it = s.lower_bound(A[i]);
+        if(it == s.end()) return false;
+        else {
+            s.erase(it);
+        }
+    }
+    return true;
+}
+
+int main() {
+    ll n;
+    cin >> n;
+    vector<ll> A(n), B(n-1);
+    for(int i = 0; i < n; ++i) cin >> A[i];
+    for(int i = 0; i < n-1; ++i) cin >> B[i];
+
+    sort(A.begin(), A.end());
+    sort(B.begin(), B.end());
+
+    ll low = *max_element(A.begin(), A.end()), high = 1e9, ans = -1;
+    while(low <= high) {
+        ll mid = (low + high) / 2;
+        if(check(A, B, mid)) {
+            ans = mid;
+            high = mid - 1;
+        } else {
+            low = mid + 1;
+        }
+    }
+
+    cout << ans << endl;
+    return 0;
+}

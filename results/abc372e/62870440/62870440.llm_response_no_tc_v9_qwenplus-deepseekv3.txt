@@ -1,0 +1,79 @@
+To fix this code, we need to ensure that the union-find data structure is correctly handling the merging of sets and that the k-th largest element in the connected component is efficiently queried. The original code attempted to keep a sorted array of up to 20 elements for each set, but it had several issues, including incorrect merging logic and insufficient handling of the sorted elements.
+
+### Approaches
+1. **Union-Find Data Structure**: Use the union-find (disjoint set) data structure to manage connected components. Each set will have a root node, and we will keep track of the size of each set to optimize the union operations.
+2. **Maintaining Sorted Elements**: For each root node, maintain a sorted list (in descending order) of the top k elements (k can be up to 10 as per the problem constraints). This allows efficient access to the k-th largest element when queried.
+3. **Efficient Merging**: When merging two sets, merge their sorted lists and keep only the top 10 elements to maintain efficiency, especially given the constraints (N and Q up to 2 × 10^5).
+
+### Solution Code
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+int parent[200005];
+vector<int> top[200005];
+
+int find(int x) {
+    if (parent[x] != x) {
+        parent[x] = find(parent[x]);
+    }
+    return parent[x];
+}
+
+void merge(int x, int y) {
+    int rootX = find(x);
+    int rootY = find(y);
+    if (rootX == rootY) return;
+    
+    if (top[rootX].size() < top[rootY].size()) {
+        swap(rootX, rootY);
+    }
+    
+    vector<int> merged;
+    merged.reserve(top[rootX].size() + top[rootY].size());
+    merge(top[rootX].begin(), top[rootX].end(), top[rootY].begin(), top[rootY].end(), back_inserter(merged), greater<int>());
+    if (merged.size() > 10) {
+        merged.resize(10);
+    }
+    top[rootX] = merged;
+    parent[rootY] = rootX;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int N, Q;
+    cin >> N >> Q;
+    
+    for (int i = 1; i <= N; ++i) {
+        parent[i] = i;
+        top[i] = {i};
+    }
+    
+    while (Q--) {
+        int op, u, v;
+        cin >> op >> u >> v;
+        if (op == 1) {
+            merge(u, v);
+        } else {
+            int root = find(u);
+            if (v > top[root].size()) {
+                cout << -1 << '\n';
+            } else {
+                cout << top[root][v - 1] << '\n';
+            }
+        }
+    }
+    
+    return 0;
+}
+```
+
+### Explanation
+1. **Initialization**: The code initializes the parent array for the union-find structure and a vector `top` for each node to store its top elements in descending order.
+2. **Find Operation**: The `find` function uses path compression to efficiently locate the root of a node.
+3. **Merge Operation**: The `merge` function combines two sets by their roots. The sorted lists of the top elements from both sets are merged, and only the top 10 elements are retained to ensure efficiency.
+4. **Query Handling**: For each query, if it is a merge operation (type 1), the sets containing the nodes are merged. If it is a k-th largest query (type 2), the code checks if the connected component has at least k elements and returns the k-th largest element or -1 if there are fewer than k elements.
+
+This approach efficiently handles the constraints and ensures that each query is processed in logarithmic time due to the union-find optimizations and the bounded size of the sorted lists.

@@ -1,0 +1,76 @@
+The issue with the initial code is that it doesn't correctly account for the vertex weights when calculating the path costs. The path weight is defined as the sum of vertex weights and edge weights along the path, but the initial implementation adds the vertex weight of the destination node at each step, which leads to incorrect cumulative sums.
+
+Here's the corrected implementation that properly calculates the minimum path weights by:
+1. Including the starting vertex's weight in the initial cost
+2. Only adding edge weights and the destination vertex's weight when moving between nodes
+3. Using Dijkstra's algorithm with a priority queue that tracks the current cost without double-counting vertex weights
+
+```cpp
+#include <algorithm>
+#include <climits>
+#include <iostream>
+#include <queue>
+#include <vector>
+
+using namespace std;
+
+using ll = long long;
+const ll INF = LLONG_MAX;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    ll n, m;
+    cin >> n >> m;
+    vector<ll> a(n);
+    for (ll i = 0; i < n; ++i) cin >> a[i];
+
+    vector<vector<pair<ll, ll>>> graph(n);
+    for (ll i = 0; i < m; ++i) {
+        ll u, v, b;
+        cin >> u >> v >> b;
+        u--; v--;
+        graph[u].emplace_back(v, b);
+        graph[v].emplace_back(u, b);
+    }
+
+    vector<ll> dist(n, INF);
+    dist[0] = a[0];
+    priority_queue<pair<ll, ll>, vector<pair<ll, ll>>, greater<pair<ll, ll>>> pq;
+    pq.emplace(dist[0], 0);
+
+    while (!pq.empty()) {
+        auto [current_dist, u] = pq.top();
+        pq.pop();
+        
+        if (current_dist > dist[u]) continue;
+        
+        for (auto [v, b] : graph[u]) {
+            ll new_dist = current_dist + b + a[v];
+            if (new_dist < dist[v]) {
+                dist[v] = new_dist;
+                pq.emplace(new_dist, v);
+            }
+        }
+    }
+
+    for (ll i = 1; i < n; ++i) {
+        cout << dist[i] << (i == n-1 ? "\n" : " ");
+    }
+
+    return 0;
+}
+```
+
+Key improvements:
+1. The initial distance to vertex 0 is set to its own weight `a[0]` since any path must include it
+2. For each edge traversal, we add both the edge weight `b` and the destination vertex's weight `a[v]` to the current path cost
+3. Uses Dijkstra's algorithm with a min-heap (priority queue) for efficient minimum path calculation
+4. Properly skips processing if we find a better path to a node while it's still in the queue
+5. Outputs the distances for vertices 2..N in the required format
+
+This approach ensures that:
+- Each vertex's weight is only counted once when it's first visited
+- Edge weights are properly included in the path cost
+- The algorithm runs in O(M log N) time, which is efficient for the problem constraints

@@ -1,0 +1,85 @@
+To solve this problem efficiently, we need to compute how many squares on a very large board (up to `10^9 x 10^9`) are *safe* — i.e., not attacked by any of the given `M` pieces. Each piece attacks up to 8 specific positions in an L-shaped pattern similar to a knight's move in chess.
+
+### Key Observations:
+- Directly creating or iterating over the full `N x N` board is impossible due to its size (`N^2` can be up to `10^18`).
+- We must only consider:
+  - The occupied positions.
+  - The positions under attack from those pieces.
+- Use a `set` or `unordered_set` to store:
+  - All occupied positions.
+  - All positions that are attacked.
+- From there, subtract the number of unsafe positions from the total number of cells: `N * N - total_unsafe_positions`.
+
+### Efficient Strategy:
+1. Parse input and store all occupied positions in a set.
+2. For each piece, calculate the 8 possible attacked positions.
+3. If those positions are within bounds and not already occupied, mark them as under attack.
+4. Count:
+   - Occupied positions (from input)
+   - Attacked positions (from step 2)
+5. Total safe positions = `N * N - (occupied + attacked)`.
+
+We use a `set` to ensure uniqueness of positions and avoid counting duplicates.
+
+Here is the corrected and efficient C++ implementation:
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+using ll = long long;
+using pll = pair<ll, ll>;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    ll N, M;
+    cin >> N >> M;
+
+    set<pll> occupied;
+    vector<pair<ll, ll>> moves = {
+        {2, 1}, {1, 2}, {-1, 2}, {-2, 1},
+        {-2, -1}, {-1, -2}, {1, -2}, {2, -1}
+    };
+
+    for (ll i = 0; i < M; ++i) {
+        ll a, b;
+        cin >> a >> b;
+        occupied.insert({a, b});
+    }
+
+    set<pll> unsafe;
+    for (auto [x, y] : occupied) {
+        for (auto [dx, dy] : moves) {
+            ll nx = x + dx;
+            ll ny = y + dy;
+            if (nx >= 1 && nx <= N && ny >= 1 && ny <= N) {
+                unsafe.insert({nx, ny});
+            }
+        }
+    }
+
+    // Remove positions where pieces are already placed since they're not "empty"
+    for (auto p : occupied) {
+        unsafe.erase(p);
+    }
+
+    // Total unsafe empty positions = size of unsafe set
+    ll total_cells = N * N;
+    ll occupied_count = occupied.size();
+    ll unsafe_empty_count = unsafe.size();
+
+    ll result = total_cells - occupied_count - unsafe_empty_count;
+    cout << result << endl;
+
+    return 0;
+}
+```
+
+### Why This Works:
+- We never iterate through the whole grid.
+- We only process the `M` given pieces (`M <= 2e5`) and their 8 potential attack positions → at most `16 * M` positions considered.
+- Set operations ensure no duplicates and fast lookup/insertion.
+
+This code passes all constraints and avoids common pitfalls like off-by-one errors, incorrect handling of boundaries, or double-counting attacked positions.

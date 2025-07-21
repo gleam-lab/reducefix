@@ -1,0 +1,62 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+constexpr int dx[] = {0, 1, 0, -1};
+constexpr int dy[] = {1, 0, -1, 0};
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int H, W, Y;
+    cin >> H >> W >> Y;
+
+    vector<vector<int>> A(H, vector<int>(W));
+    for (int i = 0; i < H; ++i) {
+        for (int j = 0; j < W; ++j) {
+            cin >> A[i][j];
+        }
+    }
+
+    // Initialize visited matrix and priority queue
+    vector<vector<bool>> vis(H, vector<bool>(W, false));
+    priority_queue<tuple<int, int, int>, vector<tuple<int, int, int>>, greater<>> pq;
+
+    // Push all boundary cells into the priority queue
+    for (int i = 0; i < H; ++i) {
+        for (int j = 0; j < W; ++j) {
+            if (i == 0 || i == H - 1 || j == 0 || j == W - 1) {
+                vis[i][j] = true;
+                pq.emplace(A[i][j], i, j);
+            }
+        }
+    }
+
+    int remaining = H * W;
+
+    // Process each year
+    for (int year = 1; year <= Y; ++year) {
+        while (!pq.empty() && get<0>(pq.top()) <= year) {
+            auto [h, x, y] = pq.top();
+            pq.pop();
+
+            if (!vis[x][y]) {
+                --remaining;
+                vis[x][y] = true;
+            }
+
+            for (int dir = 0; dir < 4; ++dir) {
+                int nx = x + dx[dir];
+                int ny = y + dy[dir];
+
+                if (nx >= 0 && nx < H && ny >= 0 && ny < W && !vis[nx][ny]) {
+                    pq.emplace(A[nx][ny], nx, ny);
+                    vis[nx][ny] = true; // Mark as visited when added to queue
+                }
+            }
+        }
+        cout << remaining << '\n';
+    }
+
+    return 0;
+}

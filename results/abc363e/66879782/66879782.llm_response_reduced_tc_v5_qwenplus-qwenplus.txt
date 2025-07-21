@@ -1,0 +1,73 @@
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+
+int main() {
+    ios_base::sync_with_stdio(0);
+    cin.tie(0);
+    int H, W, Y;
+    cin >> H >> W >> Y;
+
+    vector<vector<int>> A(H, vector<int>(W));
+    for (int i = 0; i < H; ++i)
+        for (int j = 0; j < W; ++j)
+            cin >> A[i][j];
+
+    // We'll use a priority queue to simulate the flood spreading from borders inward
+    priority_queue<tuple<int, int, int>, vector<tuple<int, int, int>>, greater<>> pq;
+    vector<vector<bool>> visited(H, vector<bool>(W, false));
+
+    // Directions: up, down, left, right
+    vector<pair<int, int>> dirs = {{-1, 0}, {1, 0}, {0, -1}, {0, 1}};
+
+    // Initialize the perimeter cells
+    for (int i = 0; i < H; ++i) {
+        for (int j = 0; j < W; ++j) {
+            if (i == 0 || i == H - 1 || j == 0 || j == W - 1) {
+                pq.emplace(A[i][j], i, j);
+                visited[i][j] = true;
+            }
+        }
+    }
+
+    // Array to track year-by-year area loss
+    vector<int> yearly_loss(Y + 2, 0);
+
+    while (!pq.empty()) {
+        auto [height, x, y] = pq.top();
+        pq.pop();
+
+        // Process this cell's neighbors
+        for (auto [dx, dy] : dirs) {
+            int nx = x + dx, ny = y + dy;
+            if (nx >= 0 && nx < H && ny >= 0 && ny < W && !visited[nx][ny]) {
+                if (A[nx][ny] <= Y) {
+                    yearly_loss[A[nx][ny]]++;
+                }
+
+                // The new max height that causes this cell to sink is min(current, neighbor's height)
+                int new_sink_year = min(height, A[nx][ny]);
+                A[nx][ny] = new_sink_year;  // Mark as visited with sink year
+
+                visited[nx][ny] = true;
+                pq.emplace(new_sink_year, nx, ny);
+            }
+        }
+    }
+
+    // Build prefix sum of losses
+    vector<int> total_lost(Y + 2, 0);
+    for (int i = 1; i <= Y; ++i) {
+        total_lost[i] = total_lost[i - 1] + yearly_loss[i];
+    }
+
+    // Output remaining area per year
+    int total_area = H * W;
+    for (int i = 1; i <= Y; ++i) {
+        cout << total_area - total_lost[i] << '\n';
+    }
+
+    return 0;
+}
+```

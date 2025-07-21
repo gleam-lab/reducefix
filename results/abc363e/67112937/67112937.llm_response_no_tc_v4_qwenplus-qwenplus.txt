@@ -1,0 +1,95 @@
+```cpp
+#include <bits/stdc++.h>
+
+using namespace std;
+
+constexpr int d[4][2] = {{0, 1}, {0, -1}, {1, 0}, {-1, 0}};
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int H, W, Y;
+    cin >> H >> W >> Y;
+
+    vector<vector<int>> A(H, vector<int>(W));
+    for (int i = 0; i < H; i++) {
+        for (int j = 0; j < W; j++) {
+            cin >> A[i][j];
+        }
+    }
+
+    // We need to process cells in order of increasing elevation
+    // To efficiently simulate the flooding process
+
+    // Create a min-heap priority queue: stores (elevation, x, y)
+    priority_queue<tuple<int, int, int>, vector<tuple<int, int, int>>, greater<>> pq;
+
+    // Visited array to mark cells that have sunk
+    vector<vector<bool>> vis(H, vector<bool>(W, false));
+
+    // Initialize the queue with the boundary cells
+    for (int i = 0; i < H; i++) {
+        for (int j = 0; j < W; j++) {
+            if (i == 0 || i == H-1 || j == 0 || j == W-1) {
+                pq.emplace(A[i][j], i, j);
+                vis[i][j] = true;
+            }
+        }
+    }
+
+    // Total land area
+    int remaining = H * W;
+
+    // Events will store the year when each cell gets flooded
+    vector<vector<int>> flooded_year(H, vector<int>(W, -1));
+
+    // Process the priority queue to determine when each cell gets flooded
+    while (!pq.empty()) {
+        auto [h, x, y] = pq.top();
+        pq.pop();
+
+        flooded_year[x][y] = h;
+        
+        for (int k = 0; k < 4; ++k) {
+            int nx = x + d[k][0];
+            int ny = y + d[k][1];
+            if (nx >= 0 && nx < H && ny >= 0 && ny < W && !vis[nx][ny]) {
+                vis[nx][ny] = true;
+                pq.emplace(max(h, A[nx][ny]), nx, ny); // The cell floods at max(current height, neighbor's height)
+            }
+        }
+    }
+
+    // For each year, count how many cells have not been flooded yet
+    // Or have flooded_year > current year
+    vector<int> results(Y + 2); // results[year] will store the area above sea level at that year
+
+    // Initialize all years to total area
+    for (int i = 0; i <= Y; ++i) {
+        results[i] = H * W;
+    }
+
+    // For each cell, decrement the area from its flooded year onwards
+    for (int i = 0; i < H; i++) {
+        for (int j = 0; j < W; j++) {
+            int year = flooded_year[i][j];
+            if (year != -1 && year <= Y) {
+                results[year]--;
+            }
+        }
+    }
+
+    // Compute prefix minimum or cumulative counts correctly
+    for (int i = 1; i <= Y; i++) {
+        results[i] = min(results[i], results[i-1]);
+    }
+
+    // Output the results for each year
+    for (int i = 1; i <= Y; i++) {
+        cout << results[i] << "\n";
+    }
+
+    return 0;
+}
+```

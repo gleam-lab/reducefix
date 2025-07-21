@@ -1,0 +1,96 @@
+To fix this code, we need to address several issues. The primary issue is that the initial approach didn't correctly handle the case where there are no edges (M=0), leading to incorrect output for the distance from vertex 1 to vertex 2. Additionally, the initial code used a Dijkstra's algorithm implementation but didn't properly account for the vertex weights in the path calculation.
+
+### Approaches
+1. **Problem Analysis**: We need to find the minimum weight path from vertex 1 to every other vertex in a graph where the path weight is the sum of vertex weights and edge weights along the path. Each vertex `i` has a weight `A_i`, and each edge `j` has a weight `B_j` connecting vertices `U_j` and `V_j`.
+
+2. **Algorithm Selection**: Dijkstra's algorithm is suitable here because it efficiently computes the shortest paths from a single source in a graph with non-negative weights. The key modification is to include the vertex weights in the path cost calculation. Specifically, the cost to move from vertex `u` to vertex `v` via edge `j` should be `A_u + B_j + A_v`.
+
+3. **Edge Cases**: Special consideration is needed for cases where there are no edges (M=0). In such cases, if N > 1, the distance from vertex 1 to any other vertex would be infinity (or a very large number) since there's no path.
+
+4. **Implementation Details**: 
+   - Use a priority queue to implement Dijkstra's algorithm.
+   - Initialize distances to a large value (infinity) except for the source vertex (vertex 1), which is initialized to `A_1`.
+   - For each edge, update the distance to the adjacent vertex considering the sum of the current vertex's distance, the edge weight, and the adjacent vertex's weight.
+
+### Solution Code
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+using i64 = long long;
+
+constexpr i64 INF = 1LL << 60;
+
+struct Edge {
+    int to;
+    i64 cost;
+};
+
+struct Node {
+    int vertex;
+    i64 distance;
+    bool operator<(const Node& other) const {
+        return distance > other.distance;
+    }
+};
+
+void solve() {
+    int N, M;
+    cin >> N >> M;
+    vector<i64> A(N + 1);
+    for (int i = 1; i <= N; ++i) {
+        cin >> A[i];
+    }
+    vector<vector<Edge>> graph(N + 1);
+    for (int i = 0; i < M; ++i) {
+        int U, V;
+        i64 B;
+        cin >> U >> V >> B;
+        graph[U].push_back({V, B});
+        graph[V].push_back({U, B});
+    }
+    
+    vector<i64> dist(N + 1, INF);
+    priority_queue<Node> pq;
+    dist[1] = A[1];
+    pq.push({1, dist[1]});
+    
+    while (!pq.empty()) {
+        Node current = pq.top();
+        pq.pop();
+        int u = current.vertex;
+        i64 d = current.distance;
+        if (d > dist[u]) continue;
+        for (const Edge& edge : graph[u]) {
+            int v = edge.to;
+            i64 cost = edge.cost;
+            if (dist[v] > dist[u] + cost + A[v]) {
+                dist[v] = dist[u] + cost + A[v];
+                pq.push({v, dist[v]});
+            }
+        }
+    }
+    
+    for (int i = 2; i <= N; ++i) {
+        if (dist[i] == INF) {
+            cout << "-1 ";
+        } else {
+            cout << dist[i] << " \n"[i == N];
+        }
+    }
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    solve();
+    return 0;
+}
+```
+
+### Explanation
+1. **Initialization**: The vertices and edges are read from the input. The vertex weights are stored in array `A`, and the graph is represented as an adjacency list of `Edge` structures.
+2. **Dijkstra's Algorithm**: The algorithm starts from vertex 1 with initial distance `A[1]`. For each vertex processed, the algorithm relaxes the distances to adjacent vertices by considering the sum of the current vertex's distance, the edge weight, and the adjacent vertex's weight.
+3. **Priority Queue**: The priority queue ensures that the vertex with the smallest current distance is processed next, optimizing the path calculation.
+4. **Output**: For each vertex from 2 to N, the computed minimum distance is printed. If a vertex is unreachable, `-1` is printed (though the problem guarantees connectivity, this is a safeguard).
+
+This approach ensures efficient computation of the shortest paths with proper handling of vertex and edge weights, including edge cases like no edges between vertices.

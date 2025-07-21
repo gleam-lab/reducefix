@@ -1,0 +1,117 @@
+To fix this code, we need to accurately count the number of safe squares where a new piece can be placed without being captured by any existing pieces. The main issue with the original code is that it incorrectly calculates the intersections of rows, columns, and diagonals, leading to an inaccurate count of safe squares.
+
+### Approaches
+1. **Identify Forbidden Squares**: 
+   - **Rows and Columns**: Any square in the same row or column as an existing piece is forbidden.
+   - **Diagonals**: Any square on the same diagonal (either \(i + j = a + b\) or \(i - j = a - b\)) as an existing piece is forbidden.
+
+2. **Calculate Total Safe Squares**:
+   - **Total Empty Squares**: The total number of squares is \(N^2\), minus the squares occupied by existing pieces (\(M\)).
+   - **Forbidden Squares**: Calculate the union of all forbidden squares due to rows, columns, and diagonals. This requires careful intersection handling to avoid double-counting.
+
+3. **Inclusion-Exclusion Principle**:
+   - Use the principle to subtract the union of forbidden regions from the total empty squares.
+
+### Solution Code
+```cpp
+#include<bits/stdc++.h>
+#define int long long
+using namespace std;
+
+void solve() {
+    int N, M;
+    cin >> N >> M;
+    set<int> rows, cols, diag1, diag2;
+    for (int i = 0; i < M; ++i) {
+        int a, b;
+        cin >> a >> b;
+        rows.insert(a);
+        cols.insert(b);
+        diag1.insert(a + b);
+        diag2.insert(a - b);
+    }
+
+    // Total safe squares: N^2 - M - (forbidden)
+    int forbidden = 0;
+
+    // Rows and columns
+    forbidden += rows.size() * N;
+    forbidden += cols.size() * (N - rows.size());
+
+    // Diagonals: i + j = d and i - j = d
+    for (int d : diag1) {
+        // Number of squares on i + j = d
+        int cnt = min(d - 1, 2 * N - d + 1);
+        if (d <= N + 1) cnt = d - 1;
+        else cnt = 2 * N - d + 1;
+        // Subtract squares already forbidden by rows or columns
+        int intersect = 0;
+        for (int r : rows) {
+            int c = d - r;
+            if (1 <= c && c <= N) ++intersect;
+        }
+        for (int c : cols) {
+            int r = d - c;
+            if (1 <= r && r <= N) ++intersect;
+        }
+        cnt -= intersect;
+        forbidden += max(0LL, cnt);
+    }
+
+    for (int d : diag2) {
+        // Number of squares on i - j = d
+        int cnt;
+        if (d >= 0) cnt = N - d;
+        else cnt = N + d;
+        // Subtract squares already forbidden by rows or columns
+        int intersect = 0;
+        for (int r : rows) {
+            int c = r - d;
+            if (1 <= c && c <= N) ++intersect;
+        }
+        for (int c : cols) {
+            int r = d + c;
+            if (1 <= r && r <= N) ++intersect;
+        }
+        cnt -= intersect;
+        forbidden += max(0LL, cnt);
+    }
+
+    // Subtract intersections of diag1 and diag2
+    for (int d1 : diag1) {
+        for (int d2 : diag2) {
+            if ((d1 + d2) % 2 != 0) continue;
+            int i = (d1 + d2) / 2;
+            int j = (d1 - d2) / 2;
+            if (1 <= i && i <= N && 1 <= j && j <= N) {
+                if (rows.count(i) || cols.count(j)) continue;
+                if (diag1.count(i + j) && diag2.count(i - j)) {
+                    forbidden--;
+                }
+            }
+        }
+    }
+
+    int total_empty = N * N - M;
+    int safe = total_empty - forbidden;
+    cout << safe << endl;
+}
+
+signed main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int _ = 1;
+    while (_--) solve();
+    return 0;
+}
+```
+
+### Explanation
+1. **Input Handling**: Read the grid size \(N\) and the number of existing pieces \(M\). For each piece, record its row, column, and the diagonals it affects.
+2. **Forbidden Squares Calculation**:
+   - **Rows and Columns**: Any square in the same row or column as an existing piece is forbidden. The count is straightforward.
+   - **Diagonals**: For each diagonal \(i + j = d\) or \(i - j = d\), calculate the number of squares on the diagonal. Subtract any squares already forbidden by rows or columns to avoid double-counting.
+   - **Intersection Handling**: Ensure squares that lie at the intersection of two diagonals are only counted once.
+3. **Safe Squares Calculation**: The total safe squares are the total empty squares minus the forbidden squares, accounting for overlaps.
+
+This approach ensures accurate counting of safe squares while efficiently handling large constraints using set operations and careful intersection checks.

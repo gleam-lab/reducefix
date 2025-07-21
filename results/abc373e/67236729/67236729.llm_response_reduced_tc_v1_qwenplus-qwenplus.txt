@@ -1,0 +1,95 @@
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+using i64 = long long;
+
+constexpr int N = 2e5 + 10;
+
+void solve() {
+    i64 n, m, k;
+    cin >> n >> m >> k;
+    
+    vector<i64> A(n);
+    for (auto &x : A) {
+        cin >> x;
+    }
+    
+    i64 remaining = k;
+    for (auto x : A) {
+        remaining -= x;
+    }
+    
+    if (m == n) {
+        // All candidates will be elected regardless of anything
+        for (int i = 0; i < n; ++i) cout << 0 << " ";
+        cout << "\n";
+        return;
+    }
+
+    vector<i64> sortedA = A;
+    sort(sortedA.begin(), sortedA.end());
+
+    // Build prefix sum from largest to smallest
+    vector<i64> prefix(n + 1);
+    for (int i = n - 1; i >= 0; --i) {
+        prefix[i] = prefix[i + 1] + sortedA[i];
+    }
+
+    auto compute_min_votes = [&](i64 candidate_votes) -> i64 {
+        // Binary search over the number of additional votes needed
+        i64 l = 0, r = remaining + 1;
+        while (l < r) {
+            i64 mid = (l + r) / 2;
+            i64 target = candidate_votes + mid;
+
+            // Find how many candidates have more than our target
+            auto it = upper_bound(sortedA.begin(), sortedA.end(), target);
+            int cnt = n - (it - sortedA.begin());
+
+            if (cnt < m) {
+                // We are in top M candidates already
+                r = mid;
+                continue;
+            }
+
+            // Take M candidates that have highest votes excluding ours
+            int idx = (it - sortedA.begin()) - (m - cnt);
+            if (idx < 0) {
+                // Not enough candidates can surpass us
+                r = mid;
+                continue;
+            }
+
+            i64 total_needed = 0;
+            if (m - cnt > 0) {
+                total_needed = prefix[idx] - prefix[it - sortedA.begin()];
+            }
+
+            i64 extra = max(0LL, total_needed - (mid + remaining - mid));
+            if (extra >= 0) {
+                l = mid + 1;
+            } else {
+                r = mid;
+            }
+        }
+        return l;
+    };
+
+    for (int i = 0; i < n; ++i) {
+        i64 need = compute_min_votes(A[i]);
+        if (need > remaining) {
+            cout << -1 << " ";
+        } else {
+            cout << need << " ";
+        }
+    }
+    cout << "\n";
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    solve();
+    return 0;
+}
+```

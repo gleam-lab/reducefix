@@ -1,0 +1,76 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+
+const int MAXN = 4e5 + 5;
+
+struct Node {
+    int x, y, d;
+};
+
+bool cmp(const Node &a, const Node &b) {
+    if (a.d == b.d) return a.x < b.x || (a.x == b.x && a.y < b.y);
+    return a.d > b.d;
+}
+
+int main() {
+    ios::sync_with_stdio(false); cin.tie(nullptr);
+
+    int h, w, q;
+    cin >> h >> w >> q;
+
+    vector<string> grid(h);
+    for (int i = 0; i < h; i++) {
+        cin >> grid[i];
+    }
+
+    vector<unordered_set<int>> bombs(w);
+    vector<vector<int>> dist(h, vector<int>(w, INT_MAX));
+
+    for (int i = 0; i < q; i++) {
+        int r, c;
+        cin >> r >> c;
+        r--, c--;
+        bombs[c].insert(r);
+        dist[r][c] = 0;
+    }
+
+    priority_queue<Node, vector<Node>, decltype(cmp)> pq(cmp);
+    for (int c = 0; c < w; c++) {
+        for (auto it = bombs[c].begin(); it != bombs[c].end(); it++) {
+            pq.push({*it, c, 0});
+        }
+    }
+
+    while (!pq.empty()) {
+        auto [x, y, d] = pq.top();
+        pq.pop();
+
+        if (d > dist[x][y]) continue;
+
+        int dx[] = {0, 0, 1, -1};
+        int dy[] = {1, -1, 0, 0};
+
+        for (int i = 0; i < 4; i++) {
+            int nx = x + dx[i], ny = y + dy[i];
+
+            if (nx >= 0 && nx < h && ny >= 0 && ny < w) {
+                if (dist[nx][ny] > dist[x][y] + 1) {
+                    dist[nx][ny] = dist[x][y] + 1;
+                    pq.push({nx, ny, dist[nx][ny]});
+                }
+            }
+        }
+    }
+
+    int ans = 0;
+    for (int i = 0; i < h; i++) {
+        for (int j = 0; j < w; j++) {
+            if (grid[i][j] == '#' && dist[i][j] == INT_MAX) ans++;
+        }
+    }
+
+    cout << ans << '\n';
+
+    return 0;
+}

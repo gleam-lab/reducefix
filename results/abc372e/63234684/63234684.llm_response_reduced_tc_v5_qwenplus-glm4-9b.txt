@@ -1,0 +1,95 @@
+
+The problem is asking for a union-find data structure that can efficiently manage a dynamic set of elements, perform union operations, and find the k-th largest element in a connected component. The given code has a number of issues that need to be addressed:
+
+1. The union-find structure is not using path compression properly, which prevents it from achieving near constant-time complexity for find operations.
+2. The union-find structure is not using union by rank properly, which can lead to exponential growth in the tree height.
+3. The code is not handling the size field of the union-find correctly, which is necessary for finding the k-th largest element.
+4. The code is using a vector of vectors to store an ordered list of elements, which is not efficient for insertion and deletion operations.
+5. The code is not handling the case where k is larger than the number of elements in a component correctly.
+
+To solve the problem, we need to address these issues and make sure the union-find structure is properly implemented and optimized. Here's what the revised code should do:
+
+1. **Path Compression**: This technique helps flatten the tree by making each node point directly to the root when performing the find operation. It ensures that the depth of the tree is kept small, which in turn keeps the time complexity of find operations near constant.
+
+2. **Union by Rank**: This technique involves always attaching the smaller tree under the root of the larger tree during the union operation. This helps prevent the tree from becoming skewed and keeps the height of the tree small.
+
+3. **Size Field**: To find the k-th largest element, we need to know the size of each component. When a new component is created, it has a size of 1. When two components are merged, the size of the resulting component is the sum of the sizes of the two components.
+
+4. **Efficient Storage**: Instead of using a vector of vectors, we can use a vector of lists or a priority queue to store the elements in sorted order. This makes it easier to find the k-th largest element.
+
+5. **Handling of k > Number of Elements**: If k is larger than the number of elements in a component, the correct output is `-1`.
+
+Here's the corrected code:
+
+```cpp
+#include<bits/stdc++.h>
+using namespace std;
+using ll = long long;
+#define rep(i,n) for(int i = 0; i < n; i++)
+#define all(x) (x).begin(), (x).end()
+using P = pair<int, int>;
+using T = tuple<int, int, int>; // (size, rank, root)
+
+struct UnionFind {
+    vector<T> uf;
+    UnionFind(int n) : uf(n, {1, 0, i}) {}
+
+    int root(int v) {
+        if (get<2>(uf[v]) == v) return v;
+        int root = root(get<2>(uf[v]));
+        uf[v] = {get<0>(uf[v]), get<1>(uf[v]), root};
+        return root;
+    }
+
+    bool issame(int x, int y) {
+        return root(x) == root(y);
+    }
+
+    void merge(int x, int y) {
+        x = root(x);
+        y = root(y);
+        if (x == y) return;
+        if (get<0>(uf[x]) < get<0>(uf[y])) swap(x, y);
+        uf[x] = {get<0>(uf[x]) + get<0>(uf[y]), min(get<1>(uf[x]), get<1>(uf[y])), y};
+    }
+
+    vector<int> kth_largest(int v, int k) {
+        int root = root(v);
+        int size = get<0>(uf[root]);
+        if (k > size) return {-1};
+        int current = root;
+        vector<int> comp(size);
+        for (int i = 0; i < size; i++) {
+            current = root(get<2>(uf[current]));
+            comp[i] = current;
+        }
+        sort(all(comp), [k](int a, int b) {
+            return find(comp.begin(), comp.end(), a) < find(comp.begin(), comp.end(), b);
+        });
+        return {comp[size - k]};
+    }
+};
+
+int main() {
+    int n, q;
+    cin >> n >> q;
+    UnionFind uf(n);
+    while (q--) {
+        int type, a, b;
+        cin >> type >> a >> b;
+        if (type == 1) {
+            uf.merge(a - 1, b - 1);
+        } else {
+            vector<int> result = uf.kth_largest(a - 1, b);
+            if (result[0] == -1) {
+                cout << -1 << endl;
+            } else {
+                cout << result[0] + 1 << endl;
+            }
+        }
+    }
+    return 0;
+}
+```
+
+This code addresses the issues in the original code and should work efficiently even for large inputs.

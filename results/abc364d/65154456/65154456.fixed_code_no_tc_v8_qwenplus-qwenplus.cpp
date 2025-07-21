@@ -1,0 +1,52 @@
+#include <bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+
+void solve() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int N, Q;
+    cin >> N >> Q;
+
+    vector<ll> A(N);
+    for (int i = 0; i < N; ++i) {
+        cin >> A[i];
+    }
+
+    // Sort A so we can perform binary search operations efficiently
+    sort(A.begin(), A.end());
+
+    for (int q = 0; q < Q; ++q) {
+        ll b;
+        int k;
+        cin >> b >> k;
+
+        // Binary search on distance
+        ll low = 0;
+        ll high = 2e8 + 1; // Max possible distance is ~2*1e8
+
+        while (low < high) {
+            ll mid = (low + high) / 2;
+
+            // Count how many points have distance <= mid from b
+            // This uses lower_bound and upper_bound to find the range
+            auto left = lower_bound(A.begin(), A.end(), b - mid);
+            auto right = upper_bound(A.begin(), A.end(), b + mid);
+            int count = right - left;
+
+            if (count >= k) {
+                high = mid;
+            } else {
+                low = mid + 1;
+            }
+        }
+
+        cout << low << "\n";
+    }
+}
+
+int main() {
+    solve();
+    return 0;
+}

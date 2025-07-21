@@ -1,0 +1,37 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define rep(i, n) for (int i = 0; i < (n); ++i)
+using ll = long long;
+
+int main()
+{
+    int n;
+    cin >> n;
+    vector<ll> H(n);
+    rep(i, n) cin >> H[i];
+
+    ll T = 0;
+
+    // We simulate the process round by round
+    while (true)
+    {
+        bool all_zero = true;
+        for (int i = 0; i < n; ++i)
+        {
+            if (H[i] <= 0)
+                continue;
+            all_zero = false;
+            T++;
+            if (T % 3 == 0)
+                H[i] -= 3;
+            else
+                H[i] -= 1;
+            // Break inner loop to start next round
+            break;
+        }
+        if (all_zero)
+            break;
+    }
+
+    cout << T << endl;
+}

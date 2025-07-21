@@ -1,0 +1,92 @@
+To solve this problem efficiently, we need to handle both adding edges and querying the k-th largest neighbor efficiently. Here's a step-by-step approach to fix your code:
+
+1. **Union-Find Data Structure**: Use a Union-Find structure to manage the connected components. This helps in quickly identifying which set a node belongs to.
+
+2. **Sorted Set per Component**: Maintain a sorted set for each component that stores the neighbors' indices. This allows us to efficiently find the k-th largest element.
+
+3. **Efficient Updates**: When adding an edge, merge the sets and update the sorted sets accordingly.
+
+4. **Query Handling**: For each query, get the sorted set corresponding to the component of the queried node and return the k-th largest element if it exists.
+
+Here's the corrected code:
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+const int MAXN = 2 * 100005;
+
+struct UF {
+    vector<int> parent, rank, size;
+    vector<set<int>> neighbors;
+
+    UF(int n) {
+        parent.resize(n + 1), rank.resize(n + 1), size.resize(n + 1);
+        iota(parent.begin(), parent.end(), 0);
+        fill(rank.begin(), rank.end(), 0);
+        fill(size.begin(), size.end(), 1);
+        neighbors.resize(n + 1);
+    }
+
+    int find(int x) {
+        if (parent[x] != x) {
+            parent[x] = find(parent[x]);
+        }
+        return parent[x];
+    }
+
+    void unite(int x, int y) {
+        int px = find(x), py = find(y);
+        if (px == py) return;
+
+        if (rank[px] > rank[py]) {
+            parent[py] = px;
+            size[px] += size[py];
+            neighbors[px].insert(neighbors[py].begin(), neighbors[py].end());
+        } else {
+            parent[px] = py;
+            size[py] += size[px];
+            neighbors[py].insert(neighbors[px].begin(), neighbors[px].end());
+            if (rank[px] == rank[py]) rank[py]++;
+        }
+    }
+
+    int kthLargest(int x, int k) {
+        int px = find(x);
+        if (neighbors[px].size() < k) return -1;
+        auto it = neighbors[px].rbegin();
+        advance(it, k - 1);
+        return *it;
+    }
+};
+
+int main() {
+    ios::sync_with_stdio(false); cin.tie(nullptr);
+
+    int n, q;
+    cin >> n >> q;
+
+    UF uf(n);
+    
+    while (q--) {
+        int op, u, v;
+        cin >> op >> u >> v;
+
+        if (op == 1) {
+            uf.unite(u, v);
+        } else {
+            cout << uf.kthLargest(v, u) << "\n";
+        }
+    }
+
+    return 0;
+}
+```
+
+### Explanation:
+1. **Union-Find Initialization**: We initialize the Union-Find structure with `n` nodes.
+2. **Find Function**: This function uses path compression to find the root of a node.
+3. **Unite Function**: This function merges two sets based on their ranks and sizes. It also merges the sorted sets of the two components.
+4. **Kth Largest Function**: This function returns the k-th largest element in the sorted set of the component containing the queried node.
+
+This approach ensures efficient union operations and quick queries, making it suitable for large inputs up to \(2 \times 10^5\) vertices and edges.

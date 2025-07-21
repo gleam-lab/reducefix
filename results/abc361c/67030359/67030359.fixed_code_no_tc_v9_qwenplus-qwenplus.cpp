@@ -1,0 +1,42 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+
+#define all(x) x.begin(), x.end()
+#define vi vector<int>
+#define eb emplace_back
+
+int main() {
+  ios_base::sync_with_stdio(0);
+  cin.tie(0);
+  cout.tie(0);
+
+  int N, K;
+  cin >> N >> K;
+  vi A(N);
+  for (int i = 0; i < N; ++i) {
+    cin >> A[i];
+  }
+
+  // We will use a sliding window of size (N-K) to find the minimal difference
+  // between max and min in any subsequence of length (N-K)
+  int res = numeric_limits<int>::max();
+  multiset<int> window;
+
+  for (int i = 0; i < N; ++i) {
+    window.insert(A[i]);
+
+    if (i >= N - K - 1) {
+      // Window size reached N-K
+      int curr_min = *window.begin();
+      int curr_max = *window.rbegin();
+      res = min(res, curr_max - curr_min);
+      
+      // Remove the element going out of the window
+      window.erase(window.find(A[i - (N - K - 1)])); // Fix the index for removal
+    }
+  }
+
+  cout << res << endl;
+  return 0;
+}

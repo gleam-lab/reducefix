@@ -1,0 +1,38 @@
+#include <bits/stdc++.h>
+using namespace std;
+const int maxN=2e5+5;
+int t,n,k,a[maxN],b[maxN];
+pair<int,int> p[maxN];
+bool cmp(pair<int,int>p1,pair<int,int>p2){
+  if(p1.first!=p2.first) return p1.first<p2.first;
+  return p1.second<p2.second;
+}
+int main() 
+{
+    ios_base::sync_with_stdio(0);
+    cin.tie(0);
+    cout.tie(0);
+    
+    cin>>t;
+    while(t--){
+      cin>>n>>k;
+      vector<pair<int,int>> vec(n);
+      int sum=0,ans;
+      for(int i=0;i<n;i++) cin>>vec[i].first;
+      for(int i=0;i<n;i++) cin>>vec[i].second;
+      sort(vec.begin(),vec.end());
+      for(int i=0;i<k;i++){
+        sum+=vec[i].second;
+      }
+      ans=vec[k-1].first*sum;
+      for(int i=k;i<n;i++){
+        if(vec[i].second<vec[i-k].second){
+          sum-=vec[i-k].second;
+          sum+=vec[i].second;
+        }
+        ans=min(ans,sum*vec[i].first);
+      }
+      cout<<ans<<"\n";
+    }
+    return 0;
+}

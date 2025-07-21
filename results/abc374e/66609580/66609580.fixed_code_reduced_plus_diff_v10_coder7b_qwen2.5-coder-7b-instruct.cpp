@@ -1,0 +1,62 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <numeric>
+
+using namespace std;
+
+#define dout if (false) cerr
+
+long long gcd(long long a, long long b) {
+    while (b != 0) {
+        long long t = b;
+        b = a % b;
+        a = t;
+    }
+    return a;
+}
+
+bool check(const vector<long long>& a, const vector<long long>& p, const vector<long long>& b, const vector<long long>& q, long long x, long long v) {
+    long long cnt = 0;
+    for (size_t i = 0; i < a.size(); ++i) {
+        long long lcm_ab = a[i] / gcd(a[i], b[i]) * b[i];
+        long long vm = max(0LL, (v / lcm_ab - 1) * min(p[i] * (lcm_ab / a[i]), q[i] * (lcm_ab / b[i])));
+        dout << vm;
+        cnt += vm;
+        long long val = max(0LL, v / lcm_ab - 1) * lcm_ab, ms = LLONG_MAX >> 1;
+        for (long long j = 0; (j - 1) * a[i] <= v - val; ++j) {
+            ms = min(ms, j * p[i] + max(0LL, ((v - val - j * a[i]) / b[i] + !!((v - val - j * a[i]) % b[i])) * q[i]));
+        }
+        dout << '\n' << v << ',' << i << ':' << vm << ' ' << ms << ' ' << vm + ms << '\n';
+        cnt += ms;
+        if (cnt > x) return false;
+    }
+    return true;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr), cout.tie(nullptr);
+
+    int n;
+    long long x;
+    cin >> n >> x;
+
+    vector<long long> a(n), p(n), b(n), q(n);
+    for (auto& ai : a) cin >> ai;
+    for (auto& pi : p) cin >> pi;
+    for (auto& bi : b) cin >> bi;
+    for (auto& qi : q) cin >> qi;
+
+    long long l = 0, r = UINT_MAX;
+    while (l + 1 < r) {
+        long long mid = (l + r) >> 1;
+        if (check(a, p, b, q, x, mid)) l = mid;
+        else r = mid;
+        dout << '\n';
+    }
+
+    cout << l << '\n';
+
+    return 0;
+}

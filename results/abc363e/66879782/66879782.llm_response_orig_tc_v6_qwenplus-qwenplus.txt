@@ -1,0 +1,125 @@
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+
+int main() {
+    ios_base::sync_with_stdio(0);
+    cin.tie(0);
+    int H, W, Y;
+    cin >> H >> W >> Y;
+
+    const int MAX_HEIGHT = 1e5 + 5;
+    vector<vector<int>> grid(H, vector<int>(W));
+    vector<vector<bool>> visited(H, vector<bool>(W, false));
+
+    // Input the grid
+    for (int i = 0; i < H; ++i) {
+        for (int j = 0; j < W; ++j) {
+            cin >> grid[i][j];
+        }
+    }
+
+    // Store cells by their height
+    vector<vector<pair<int, int>>> height_cells(MAX_HEIGHT);
+
+    for (int i = 0; i < H; ++i) {
+        for (int j = 0; j < W; ++j) {
+            height_cells[grid[i][j]].push_back({i, j});
+        }
+    }
+
+    // Union-Find data structure
+    vector<int> parent(H * W), size(H * W, 1);
+    iota(parent.begin(), parent.end(), 0);
+
+    function<int(int)> find = [&](int x) {
+        return parent[x] == x ? x : parent[x] = find(parent[x]);
+    };
+
+    auto unite = [&](int x, int y) {
+        int fx = find(x), fy = find(y);
+        if (fx != fy) {
+            parent[fx] = fy;
+            size[fy] += size[fx];
+        }
+    };
+
+    // Directions for adjacency
+    int dx[4] = {-1, 1, 0, 0};
+    int dy[4] = {0, 0, -1, 1};
+
+    // To store the number of surviving land cells after year i
+    vector<int> remaining(Y + 2, 0);  // 1-based indexing up to Y
+
+    // Set for tracking all outer boundary cells (initially connected to sea)
+    queue<pair<int, int>> q;
+
+    // Mark and enqueue boundary cells
+    for (int i = 0; i < H; ++i) {
+        for (int j = 0; j < W; ++j) {
+            if (i == 0 || i == H - 1 || j == 0 || j == W - 1) {
+                int h = grid[i][j];
+                if (h <= Y) {
+                    int idx = i * W + j;
+                    visited[i][j] = true;
+                    q.push({i, j});
+                    remaining[h]++;
+                }
+            }
+        }
+    }
+
+    // BFS process to simulate sinking from boundaries
+    while (!q.empty()) {
+        auto [r, c] = q.front(); q.pop();
+        for (int k = 0; k < 4; ++k) {
+            int nr = r + dx[k], nc = c + dy[k];
+            if (nr >= 0 && nr < H && nc >= 0 && nc < W && !visited[nr][nc]) {
+                int nh = grid[nr][nc];
+                if (nh <= Y) {
+                    visited[nr][nc] = true;
+                    q.push({nr, nc});
+                    remaining[nh]++;
+                    unite(r * W + c, nr * W + nc);
+                }
+            }
+        }
+    }
+
+    // For each height h, compute total number of cells with height <= h
+    vector<int> count(Y + 2, 0);
+    for (int i = 0; i < H; ++i) {
+        for (int j = 0; j < W; ++j) {
+            if (grid[i][j] <= Y) {
+                count[grid[i][j]]++;
+            }
+        }
+    }
+
+    // Compute prefix sums
+    for (int i = 1; i <= Y; ++i) {
+        count[i] += count[i - 1];
+    }
+
+    // For each year, output the area above sea level
+    for (int y = 1; y <= Y; ++y) {
+        int total = 0;
+        unordered_map<int, bool> roots;
+
+        for (auto &cell: height_cells[y]) {
+            int r = cell.first, c = cell.second;
+            if (visited[r][c]) continue;
+            int root = find(r * W + c);
+            if (!roots.count(root)) {
+                roots[root] = true;
+                total += size[root];
+            }
+        }
+
+        cout << count[y] - total << "\n";
+    }
+
+    return 0;
+}
+```

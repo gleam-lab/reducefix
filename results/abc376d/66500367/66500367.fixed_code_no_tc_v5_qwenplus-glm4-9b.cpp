@@ -1,0 +1,45 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+using ll = long long;
+using pii = pair<int, int>;
+
+const int N = 2e5 + 5;
+vector<int> g[N];
+int n, m, dep[N];
+
+int bfs() {
+    queue<int> q;
+    q.push(1);
+    dep[1] = 1;
+    while (!q.empty()) {
+        int u = q.front();
+        q.pop();
+        for (int v : g[u]) {
+            if (v != dep[u]) { // Check if we have visited v from parent u
+                if (dep[v])
+                    return dep[u];
+                dep[v] = dep[u] + 1;
+                q.push(v);
+            }
+        }
+    }
+    return -1;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    cout.tie(nullptr);
+    
+    cin >> n >> m;
+    for (int i = 1; i <= m; i++) {
+        int u, v;
+        cin >> u >> v;
+        g[u].push_back(v);
+        g[v].push_back(u); // Assuming undirected graph
+    }
+
+    cout << bfs() << '\n';
+    return 0;
+}

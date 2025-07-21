@@ -1,0 +1,77 @@
+#include <iostream>
+#include <vector>
+#include <set>
+
+using namespace std;
+
+typedef long long ll;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    ll n, m; cin >> n >> m;
+    vector<pair<ll, ll>> pieces(m);
+    set<pair<ll, ll>> rows, cols, diag1, diag2;
+
+    for (ll i = 0; i < m; ++i) {
+        ll a, b; cin >> a >> b;
+        rows.insert({a, i}); // Row and index of the piece
+        cols.insert({b, i}); // Column and index of the piece
+        diag1.insert({a - b, i}); // Diagonal (a - b) and index of the piece
+        diag2.insert({a + b, i}); // Diagonal (a + b) and index of the piece
+    }
+
+    ll count = n * n; // Total number of squares
+
+    // Subtract squares in occupied rows and columns
+    for (auto &r : rows) count -= n;
+    for (auto &c : cols) count -= n;
+
+    // Add back the overlap of rows and columns
+    for (auto &i : rows) {
+        for (auto &j : cols) {
+            if (i.first == j.first) count++;
+        }
+    }
+
+    // Subtract squares in occupied diagonals
+    for (auto &d : diag1) count -= (n - abs(d.first));
+    for (auto &d : diag2) count -= (n - abs(d.first));
+
+    // Add back the overlap of diagonals and rows/columns
+    set<pair<ll, ll>> diag1_to_row, diag1_to_col, diag2_to_row, diag2_to_col;
+
+    for (auto &d : diag1) {
+        diag1_to_row.insert({d.first, d.second}); // Diagonal and index of the piece
+        diag1_to_col.insert({-d.first, d.second}); // Diagonal and index of the piece
+    }
+    for (auto &d : diag2) {
+        diag2_to_row.insert({d.first, d.second}); // Diagonal and index of the piece
+        diag2_to_col.insert({-d.first, d.second}); // Diagonal and index of the piece
+    }
+
+    for (auto &i : diag1_to_row) {
+        for (auto &j : rows) {
+            if (i.first == j.first) count++;
+        }
+    }
+    for (auto &i : diag1_to_col) {
+        for (auto &j : cols) {
+            if (i.first == j.first) count++;
+        }
+    }
+    for (auto &i : diag2_to_row) {
+        for (auto &j : rows) {
+            if (i.first == j.first) count++;
+        }
+    }
+    for (auto &i : diag2_to_col) {
+        for (auto &j : cols) {
+            if (i.first == j.first) count++;
+        }
+    }
+
+    cout << count << '\n';
+    return 0;
+}

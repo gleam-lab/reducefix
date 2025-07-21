@@ -1,0 +1,32 @@
+#include <bits/stdc++.h>
+using namespace std;
+int n, x[200050], p[200050], q, a[200050];
+int main(){
+    cin >> n;
+    for (int i = 0; i < n; i++) cin >> x[i];
+    for (int i = 0; i < n; i++){
+        cin >> p[i];
+        a[i] = i > 0 ? a[i - 1] + p[i] : 0;
+    }
+    cin >> q;
+    int sum;
+    for (int i = 0; i < q; i++){
+        int l, r; cin >> l >> r;
+        int l1 = 0, r1 = n - 1;
+        while (l1 < r1){
+            int mid = l1 + (r1 - l1 + 1) / 2;
+            if (x[mid] >= l) r1 = mid - 1;
+            else l1 = mid;
+        }
+        int l2 = 0, r2 = n - 1;
+        while (l2 < r2){
+            int mid = l2 + (r2 - l2 + 1) / 2;
+            if (x[mid] <= r) l2 = mid + 1;
+            else r2 = mid;
+        }
+        if (x[l2] >= l && x[r1] <= r) sum = a[r2 - 1] - (l1 > 0 ? a[l1 - 1] : 0);
+        else sum = 0;
+        cout << sum << endl;
+    }
+    return 0;
+}

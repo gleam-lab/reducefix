@@ -1,0 +1,99 @@
+### Analysis of the Original Code
+The problem involves simulating a game where a player faces a sequence of moves (Rock, Paper, Scissors) and tries to maximize their score by choosing moves that beat the opponent's moves. The player cannot use the same move twice in a row, which adds a constraint to the decision-making process.
+
+The original code attempts to solve this by:
+1. Simulating two scenarios: 
+   - One where the first move is chosen based on the first opponent's move (implicitly starting with any move except the one that would lose to the first opponent's move).
+   - Another where the first move is forced to be different from the first opponent's move.
+2. For each scenario, it iterates through the sequence, choosing moves that beat the opponent's current move if possible, and otherwise defaults to the opponent's move (which doesn't gain or lose points).
+3. It tracks the available moves for the next step, ensuring no consecutive duplicates.
+
+**Issues in the Original Code:**
+1. **Initialization of `next`**: The first scenario initializes `next` with all three moves, which doesn't properly enforce the constraint of not repeating moves. This can lead to incorrect scoring.
+2. **Handling of Default Moves**: When no winning move is available, the code defaults to the opponent's move, which might not be optimal and could affect future moves due to the no-repeat constraint.
+3. **Redundant Scenarios**: The two scenarios are not sufficiently distinct, and the second scenario's initialization is arbitrary, potentially missing better first moves.
+
+### Fixed Code
+The fixed approach involves:
+1. **Dynamic Programming (DP)**: Using DP to track the maximum score achievable at each position with each possible move, considering the no-repeat constraint.
+2. **State Tracking**: For each position, we track the best score for each possible move, ensuring that the next move is different from the current one.
+3. **Initialization**: Properly initialize the DP table for the first move, considering all possible initial moves.
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    int N;
+    cin >> N;
+    string S;
+    cin >> S;
+    
+    // DP[i][c] = max score up to position i, ending with move c
+    vector<vector<int>> dp(N, vector<int>(3, 0));
+    
+    // Map characters to indices: R=0, P=1, S=2
+    auto charToIdx = [](char c) {
+        if (c == 'R') return 0;
+        if (c == 'P') return 1;
+        return 2;
+    };
+    
+    // Initialize first move
+    for (int c = 0; c < 3; ++c) {
+        char myMove;
+        if (c == 0) myMove = 'R';
+        else if (c == 1) myMove = 'P';
+        else myMove = 'S';
+        
+        int oppIdx = charToIdx(S[0]);
+        if ((myMove == 'R' && S[0] == 'S') ||
+            (myMove == 'P' && S[0] == 'R') ||
+            (myMove == 'S' && S[0] == 'P')) {
+            dp[0][c] = 1;
+        } else {
+            dp[0][c] = 0;
+        }
+    }
+    
+    for (int i = 1; i < N; ++i) {
+        int oppIdx = charToIdx(S[i]);
+        for (int curr = 0; curr < 3; ++curr) {
+            int maxPrev = 0;
+            for (int prev = 0; prev < 3; ++prev) {
+                if (prev == curr) continue; // Cannot repeat moves
+                maxPrev = max(maxPrev, dp[i-1][prev]);
+            }
+            
+            char myMove;
+            if (curr == 0) myMove = 'R';
+            else if (curr == 1) myMove = 'P';
+            else myMove = 'S';
+            
+            int gain = 0;
+            if ((myMove == 'R' && S[i] == 'S') ||
+                (myMove == 'P' && S[i] == 'R') ||
+                (myMove == 'S' && S[i] == 'P')) {
+                gain = 1;
+            }
+            dp[i][curr] = maxPrev + gain;
+        }
+    }
+    
+    int maxScore = 0;
+    for (int c = 0; c < 3; ++c) {
+        maxScore = max(maxScore, dp[N-1][c]);
+    }
+    cout << maxScore << endl;
+    
+    return 0;
+}
+```
+
+### Key Improvements
+1. **Dynamic Programming**: The DP table tracks the maximum score achievable at each position for each possible move, ensuring optimal substructure and overlapping subproblems are handled efficiently.
+2. **No-Repeat Constraint**: By iterating over previous moves and skipping the current move, the constraint is naturally enforced.
+3. **Initialization**: The first move is initialized for all possible moves, allowing the DP to explore all initial options.
+4. **Efficiency**: The solution runs in O(N) time with constant factors (3 moves per step), making it efficient for large N.
+
+This approach ensures correctness across all edge cases and efficiently maximizes the score while adhering to the constraints.

@@ -1,0 +1,58 @@
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+using P = pair<ll, ll>; // (cost, node)
+
+const ll INF = 1e18;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+
+    int N, M;
+    cin >> N >> M;
+
+    vector<ll> A(N);
+    for (int i = 0; i < N; ++i) {
+        cin >> A[i];
+    }
+
+    vector<vector<P>> graph(N);
+    for (int i = 0; i < M; ++i) {
+        int u, v;
+        ll b;
+        cin >> u >> v >> b;
+        u--; v--;
+        graph[u].push_back({b, v});
+        graph[v].push_back({b, u});
+    }
+
+    priority_queue<P, vector<P>, greater<P>> pq;
+    vector<ll> dist(N, INF);
+
+    // Start from node 0 with cost A[0]
+    pq.push({A[0], 0});
+    dist[0] = A[0];
+
+    while (!pq.empty()) {
+        auto [cost, u] = pq.top();
+        pq.pop();
+
+        if (cost > dist[u]) continue;
+
+        for (auto [b, v] : graph[u]) {
+            ll new_cost = cost + b + A[v]; // path cost = current cost + edge weight + destination vertex weight
+            if (new_cost < dist[v]) {
+                dist[v] = new_cost;
+                pq.push({new_cost, v});
+            }
+        }
+    }
+
+    for (int i = 1; i < N; ++i) {
+        cout << dist[i] << " ";
+    }
+    cout << "\n";
+
+    return 0;
+}

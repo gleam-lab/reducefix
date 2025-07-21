@@ -1,0 +1,94 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+typedef long long ll;
+typedef pair<int, int> pii;
+
+const ll INF = 1e18;
+
+// Function to check if a position is within bounds
+bool inBounds(const pii &a, const ll n) {
+    return 1 <= a.first && a.first <= n && 1 <= a.second && a.second <= n;
+}
+
+// Function to calculate the number of valid positions
+ll countValidPositions(ll n, vector<pii> &queens) {
+    unordered_set<ll> rows, cols, diag1, diag2;
+    
+    // Collect all occupied rows, columns, and diagonals
+    for(auto &q : queens) {
+        rows.insert(q.first);
+        cols.insert(q.second);
+        diag1.insert(q.first - q.second);
+        diag2.insert(q.first + q.second);
+    }
+    
+    // Calculate total positions
+    ll total_positions = n * n;
+    
+    // Subtract positions attacked by rows and columns
+    total_positions -= rows.size() * n;
+    total_positions -= cols.size() * n;
+    
+    // Add back positions attacked by both rows and columns (over-subtracted)
+    total_positions += rows.size() * cols.size();
+    
+    // Check each diagonal
+    for(auto &d : diag1) {
+        set<pii> occupied_in_diag;
+        
+        // Collect positions in the current diagonal
+        for(auto &r : rows) {
+            pii pos = {r, r - d};
+            if(inBounds(pos, n)) occupied_in_diag.insert(pos);
+        }
+        for(auto &c : cols) {
+            pii pos = {c + d, c};
+            if(inBounds(pos, n)) occupied_in_diag.insert(pos);
+        }
+        
+        // Calculate attack range on this diagonal
+        ll attack_range = n - abs(d);
+        total_positions -= attack_range;
+        total_positions += occupied_in_diag.size();
+    }
+    
+    // Check each anti-diagonal
+    for(auto &d : diag2) {
+        set<pii> occupied_in_antidiag;
+        
+        // Collect positions in the current anti-diagonal
+        for(auto &r : rows) {
+            pii pos = {r, d - r};
+            if(inBounds(pos, n)) occupied_in_antidiag.insert(pos);
+        }
+        for(auto &c : cols) {
+            pii pos = {d - c, c};
+            if(inBounds(pos, n)) occupied_in_antidiag.insert(pos);
+        }
+        
+        // Calculate attack range on this anti-diagonal
+        ll attack_range = min(d, 2*n-d-1);
+        total_positions -= attack_range;
+        total_positions += occupied_in_antidiag.size();
+    }
+    
+    return total_positions;
+}
+
+// Main function
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(NULL);
+
+    ll n, m;
+    cin >> n >> m;
+    vector<pii> queens(m);
+    for(ll i = 0; i < m; i++) {
+        cin >> queens[i].first >> queens[i].second;
+    }
+
+    cout << countValidPositions(n, queens) << endl;
+
+    return 0;
+}

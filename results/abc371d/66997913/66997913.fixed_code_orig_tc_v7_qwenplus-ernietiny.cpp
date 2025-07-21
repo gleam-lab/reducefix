@@ -1,0 +1,27 @@
+int main() {
+  int n;
+  cin >> n; // 这里可能应该读入的是一个正整数而不是负数数组
+  vector<int> x(n); // 正整数数组初始化
+  
+  // 这里是错误的，应当从文件读取输入而非硬编码在代码中
+  // for (int i = 0; i < n; i++) cin >> x[i]; // 不符合题目要求
+
+  vector<ll> p(n), s(n+1); // 正确的使用方式应该是使用 ll 类型存储数值
+  for (int i = 0; i < n; i++) {
+    cin >> p[i]; // 从文件中读取每个子问题的答案
+    s[i+1] = s[i]+p[i]; // 根据题目要求计算答案
+  }
+  
+  int q;
+  cin >> q; // 这里可能应该是查询次数
+  while (q--) {
+    int l, r; // 每个子问题的左端点值
+    cin >> l >> r; // 输入子问题的答案范围
+    int rt = upper_bound(x.begin(), x.end(), r)-x.begin(); // 上界应该是范围外的索引
+    int lt = lower_bound(x.begin(), x.end(), l)-x.begin(); // 下界应该是范围内的索引
+    // 这里应该是直接计算子问题的答案，但代码中缺失了这部分逻辑
+    // cout << "解: " << ans << endl; // 这里缺少输出解的逻辑
+  }
+  
+  return 0;
+}

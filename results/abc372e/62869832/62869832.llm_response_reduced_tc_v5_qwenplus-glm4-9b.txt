@@ -1,0 +1,110 @@
+
+This problem is essentially about union-find (also known as disjoint-set) data structure but with a special operation on the elements: rank sorting.
+
+### Explanation of the Problem
+
+The problem involves managing an undirected graph where you can add edges and query the k-th largest vertex connected to a given vertex. We need to efficiently handle two types of operations:
+
+1. **Adding an edge**: This operation merges two sets of vertices.
+2. **Querying the k-th largest vertex**: This operation retrieves the k-th largest vertex from the set of vertices connected to a given vertex.
+
+### Analysis of the Given Code
+
+The code provided is based on the union-find data structure with path compression and union by rank. However, there are several issues:
+
+1. **Union Find Implementation**: The union operation does not correctly merge the trees by rank.
+2. **Rank Sorting**: The `as[]` array intended to store sorted vertices is not used correctly. Moreover, it's not updated after each union operation.
+3. **Edge Case Handling**: The code does not handle the case where there are fewer than k vertices connected to the given vertex correctly (it should print `-1` rather than the k-th largest vertex).
+
+### Corrected Approach
+
+1. **Union Find with Path Compression and Union by Rank**:
+    - Use `fa[]` to keep track of the parent of each vertex.
+    - Use `rank[]` to keep track of the rank of each tree to ensure the union by rank property.
+
+2. **Rank Sorting**:
+    - Instead of using the `as[]` array, maintain a list of vertices for each root (parent).
+    - Sort the list whenever a new edge is added or a union operation is performed.
+
+3. **Querying the k-th Largest Vertex**:
+    - Find the root of the vertex.
+    - Retrieve the k-th largest vertex from the list of vertices attached to this root.
+
+4. **Edge Case Handling**:
+    - When querying the k-th largest vertex, if the size of the list is less than k, output `-1`.
+
+### Implementation
+
+Here's a basic sketch of how the implementation could look:
+
+```cpp
+#include <iostream>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+vector<int> parent;
+vector<int> rank;
+vector<vector<int>> components;
+
+int find(int x) {
+    if (parent[x] != x) {
+        parent[x] = find(parent[x]);  // Path compression
+    }
+    return parent[x];
+}
+
+void union_sets(int x, int y) {
+    int rootX = find(x);
+    int rootY = find(y);
+    if (rootX != rootY) {
+        if (rank[rootX] > rank[rootY]) {
+            parent[rootY] = rootX;
+            components[rootX].insert(end(components[rootX]), components[rootY].begin(), components[rootY].end());
+            components[rootX].sort(reverse_order());
+        } else if (rank[rootX] < rank[rootY]) {
+            parent[rootX] = rootY;
+            components[rootY].insert(end(components[rootY]), components[rootX].begin(), components[rootX].end());
+            components[rootY].sort(reverse_order());
+        } else {
+            parent[rootY] = rootX;
+            rank[rootX]++;
+            components[rootX].insert(end(components[rootX]), components[rootY].begin(), components[rootY].end());
+            components[rootX].sort(reverse_order());
+        }
+    }
+}
+
+int main() {
+    int n, q;
+    cin >> n >> q;
+    parent.resize(n + 1);
+    rank.resize(n + 1);
+    components.resize(n + 1);
+
+    for (int i = 1; i <= n; i++) {
+        parent[i] = i;
+        rank[i] = 0;
+        components[i].push_back(i);
+    }
+
+    while (q--) {
+        int op, u, v;
+        cin >> op >> u >> v;
+        if (op == 1) {
+            union_sets(u, v);
+        } else {
+            int rootV = find(v);
+            if (k > components[rootV].size()) {
+                cout << -1 << '\n';
+            } else {
+                cout << components[rootV][k-1] << '\n';
+            }
+        }
+    }
+
+    return 0;
+}
+```
+
+This code initializes the union-find data structure and processes the queries according to the problem description. Note that this is a basic implementation and might require further optimization for larger inputs.

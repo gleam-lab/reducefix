@@ -1,0 +1,101 @@
+To fix this code, we need to correctly simulate the process of placing bombs and destroying walls in the grid. The initial approach was incorrect because it didn't properly handle the simultaneous destruction of walls in all four directions (up, down, left, right). The solution should efficiently track which walls are destroyed and ensure that the destruction process follows the problem's specifications.
+
+### Approaches
+1. **Initialization**: Start by initializing a grid with all walls present.
+2. **Processing Queries**: For each query:
+   - If the cell still has a wall, destroy it.
+   - If the cell doesn't have a wall, look in the four directions (up, down, left, right) for the nearest wall that hasn't been destroyed yet. Destroy those walls.
+3. **Tracking Walls**: Use sets to maintain the walls in each row and column. This allows efficient look-up of the nearest walls in the four directions.
+4. **Efficient Lookup**: For each row, maintain a set of columns that still have walls. Similarly, for each column, maintain a set of rows that still have walls. This allows efficient searching for the nearest walls in any direction.
+
+### Solution Code
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+void solve() {
+    int h, w, q;
+    cin >> h >> w >> q;
+    
+    vector<set<int>> row_walls(h + 1), col_walls(w + 1);
+    for (int i = 1; i <= h; ++i) {
+        row_walls[i].insert(0);
+        row_walls[i].insert(w + 1);
+    }
+    for (int j = 1; j <= w; ++j) {
+        col_walls[j].insert(0);
+        col_walls[j].insert(h + 1);
+    }
+    
+    long long remaining = (long long)h * w;
+    
+    while (q--) {
+        int r, c;
+        cin >> r >> c;
+        
+        if (!row_walls[r].count(c)) {
+            // Wall exists, destroy it
+            row_walls[r].insert(c);
+            col_walls[c].insert(r);
+            remaining--;
+        } else {
+            // No wall, destroy the first walls in four directions
+            // Left
+            auto it_left = row_walls[r].lower_bound(c);
+            it_left--;
+            int left = *it_left;
+            if (left >= 1 && !row_walls[r].count(left)) {
+                row_walls[r].insert(left);
+                col_walls[left].insert(r);
+                remaining--;
+            }
+            
+            // Right
+            auto it_right = row_walls[r].lower_bound(c);
+            int right = *it_right;
+            if (right <= w && !row_walls[r].count(right)) {
+                row_walls[r].insert(right);
+                col_walls[right].insert(r);
+                remaining--;
+            }
+            
+            // Up
+            auto it_up = col_walls[c].lower_bound(r);
+            it_up--;
+            int up = *it_up;
+            if (up >= 1 && !col_walls[c].count(up)) {
+                col_walls[c].insert(up);
+                row_walls[up].insert(c);
+                remaining--;
+            }
+            
+            // Down
+            auto it_down = col_walls[c].lower_bound(r);
+            int down = *it_down;
+            if (down <= h && !col_walls[c].count(down)) {
+                col_walls[c].insert(down);
+                row_walls[down].insert(c);
+                remaining--;
+            }
+        }
+    }
+    
+    cout << remaining << endl;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    solve();
+    return 0;
+}
+```
+
+### Explanation
+1. **Initialization**: We initialize sets for each row and column to keep track of walls. Initially, all walls are present, so the sets start empty except for boundary markers (0 and w+1 for rows, 0 and h+1 for columns).
+2. **Processing Queries**: For each query:
+   - If the cell (r, c) has a wall (not in the row_walls[r] set), we add it to the sets to mark it as destroyed and decrement the remaining walls count.
+   - If the cell doesn't have a wall, we look in the four directions (left, right, up, down) for the nearest wall that hasn't been destroyed yet. Using the sets, we efficiently find these walls, mark them as destroyed, and adjust the remaining count.
+3. **Efficiency**: Using sets allows us to perform lookups and insertions in logarithmic time, making the solution efficient even for large grids and many queries. The solution processes each query in O(log W + log H) time per direction, where W and H are the grid dimensions.
+
+This approach ensures that we correctly simulate the wall destruction process while efficiently tracking the remaining walls, leading to the correct count after all queries.

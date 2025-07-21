@@ -1,0 +1,28 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+// Function to calculate Euclidean distance between two points
+double Euclid(int x1, int x2, int y1, int y2) {
+    return sqrt(pow(x1 - x2, 2) + pow(y1 - y2, 2));
+}
+
+int main() {
+    int n; cin >> n;
+    double ans = 0; 
+    vector<int> x(n + 1), y(n + 1);
+    
+    // Reading the coordinates of the points
+    rep(i, n) cin >> x[i] >> y[i];
+    
+    // Adding the starting point to make it easier to handle the loop
+    x[n] = x[0]; y[n] = y[0];
+    
+    // Calculating the total cost
+    rep(i, n) {
+        ans += Euclid(x[i], x[i + 1], y[i], y[i + 1]);
+    }
+    
+    // Outputting the result with high precision
+    cout << fixed << setprecision(12) << ans << endl;
+    return 0;
+}

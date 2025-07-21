@@ -1,0 +1,50 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define ll long long
+
+void solve() {
+    ll n;
+    cin >> n;
+    vector<ll> A(n), B(n - 1);
+
+    for (ll i = 0; i < n; ++i) cin >> A[i];
+    for (ll i = 0; i < n - 1; ++i) cin >> B[i];
+
+    sort(A.begin(), A.end());
+    sort(B.begin(), B.end());
+
+    // Use binary search to find the minimum required size of extra box
+    ll low = 1, high = 1e18, answer = -1;
+
+    while (low <= high) {
+        ll mid = (low + high) / 2;
+
+        // Create a temporary list of available boxes: B + [mid]
+        vector<ll> boxes = B;
+        boxes.push_back(mid);
+        sort(boxes.begin(), boxes.end());
+
+        // Try to assign toys greedily
+        int toy_ptr = 0;
+        for (int box_ptr = 0; box_ptr < boxes.size() && toy_ptr < n; ++box_ptr) {
+            if (A[toy_ptr] <= boxes[box_ptr]) {
+                ++toy_ptr;
+            }
+        }
+
+        if (toy_ptr == n) {
+            // All toys can be placed; try smaller x
+            answer = mid;
+            high = mid - 1;
+        } else {
+            // Not all toys can be placed; need larger x
+            low = mid + 1;
+        }
+    }
+
+    cout << answer << endl;
+}
+
+int main() {
+    solve();
+}

@@ -1,0 +1,70 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+typedef long long ll;
+
+struct Edge {
+    ll to, cost;
+};
+
+struct Vertex {
+    ll id, dist;
+};
+
+bool operator<(const Vertex &a, const Vertex &b) {
+    return a.dist > b.dist;
+}
+
+vector<ll> dijkstra(const vector<vector<Edge>>& adj, const vector<ll>& weight, ll start) {
+    ll n = adj.size();
+    vector<ll> dist(n, LLONG_MAX);
+    dist[start] = weight[start];
+    priority_queue<Vertex> pq;
+    pq.push({start, dist[start]});
+    
+    while (!pq.empty()) {
+        Vertex u = pq.top(); pq.pop();
+        if (u.dist != dist[u.id]) continue;
+        
+        for (Edge& e : adj[u.id]) {
+            ll v = e.to, w = e.cost;
+            if (dist[u.id] + w < dist[v]) {
+                dist[v] = dist[u.id] + w;
+                pq.push({v, dist[v]});
+            }
+        }
+    }
+    
+    return dist;
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(NULL);
+    
+    ll n, m;
+    cin >> n >> m;
+    vector<ll> weight(n);
+    for (ll i = 0; i < n; ++i) cin >> weight[i];
+    
+    vector<vector<Edge>> adj(n);
+    for (ll i = 0; i < m; ++i) {
+        ll u, v, b;
+        cin >> u >> v >> b;
+        --u, --v;
+        adj[u].emplace_back(v, b);
+        adj[v].emplace_back(u, b);
+    }
+    
+    vector<ll> result(n - 1);
+    result[0] = weight[1];
+    for (ll i = 2; i < n; ++i) {
+        vector<ll> dist = dijkstra(adj, weight, i - 1);
+        result[i - 2] = dist.back() + weight[i];
+    }
+    
+    for (ll i = 0; i < n - 1; ++i) cout << result[i] << " ";
+    cout << endl;
+    
+    return 0;
+}

@@ -1,0 +1,121 @@
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+typedef long long ll;
+typedef pair<ll, ll> pll;
+
+#define all(x) (x).begin(), (x).end()
+#define FOR(i, a, b) for (ll i = (a); i < (b); ++i)
+
+bool inBounds(const pll &p, ll n) {
+    return 1 <= p.first && p.first <= n && 1 <= p.second && p.second <= n;
+}
+
+void solve() {
+    ll N, M;
+    cin >> N >> M;
+
+    set<pll> pieces;
+    set<ll> rows, cols, diag1, diag2;
+
+    for (ll i = 0; i < M; ++i) {
+        ll a, b;
+        cin >> a >> b;
+        pieces.insert({a, b});
+        rows.insert(a);
+        cols.insert(b);
+        diag1.insert(a - b);
+        diag2.insert(a + b);
+    }
+
+    // Total number of squares
+    ll total = N * N;
+
+    // Subtract all squares attacked by existing pieces
+
+    // Rows and columns
+    ll attackedByRow = rows.size() * N;
+    ll attackedByCol = cols.size() * N;
+    ll attackedByRowAndColOverlap = rows.size() * cols.size(); // Overlap correction
+
+    total -= attackedByRow;
+    total -= attackedByCol;
+    total += attackedByRowAndColOverlap;
+
+    // Diagonal 1: i - j = constant
+    for (ll d : diag1) {
+        ll count;
+        if (N + N - 1 == 2 * N - 1) { // always true, but to keep logic
+            if (abs(d) < N)
+                count = N - abs(d);
+            else
+                count = 2 * N - 1 - abs(d);
+        }
+        total -= count;
+    }
+
+    // Diagonal 2: i + j = constant
+    for (ll s : diag2) {
+        ll count;
+        if (s <= N + 1)
+            count = s - 1;
+        else
+            count = 2 * N + 1 - s;
+        total -= count;
+    }
+
+    // Now add back overlaps between diagonals and rows/cols
+
+    // Intersections with diagonal 1 (i-j = d)
+    for (ll d : diag1) {
+        set<pll> intersections;
+        for (ll r : rows) {
+            pll p = {r, r - d};
+            if (inBounds(p, N)) intersections.insert(p);
+        }
+        for (ll c : cols) {
+            pll p = {c + d, c};
+            if (inBounds(p, N)) intersections.insert(p);
+        }
+        total += intersections.size();
+    }
+
+    // Intersections with diagonal 2 (i+j = s)
+    for (ll s : diag2) {
+        set<pll> intersections;
+        for (ll r : rows) {
+            pll p = {r, s - r};
+            if (inBounds(p, N)) intersections.insert(p);
+        }
+        for (ll c : cols) {
+            pll p = {s - c, c};
+            if (inBounds(p, N)) intersections.insert(p);
+        }
+        for (ll od : diag1) {
+            // Solve i - j = od and i + j = s
+            ll i = (s + od) / 2;
+            ll j = (s - od) / 2;
+            if ((s + od) % 2 == 0 && (s - od) % 2 == 0 && inBounds({i, j}, N))
+                intersections.insert({i, j});
+        }
+        total += intersections.size();
+    }
+
+    // Remove overlaps due to same piece counted multiple times
+    for (auto [x, y] : pieces) {
+        // Each piece is counted once per row, col, diag1, diag2
+        // So we over-subtract it multiple times. We want to subtract only once.
+        total += 3; // since it was removed 4 times (row, col, diag1, diag2), but should be once
+    }
+
+    cout << total << "\n";
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+    solve();
+    return 0;
+}
+```

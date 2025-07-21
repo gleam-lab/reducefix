@@ -1,0 +1,93 @@
+
+The problem you've presented is about managing a dynamic union-find data structure with path compression and union by rank to keep track of the connected components of an undirected graph. This data structure is used to efficiently handle two types of operations:
+
+1. **Adding edges**: This is a union operation where the two vertices become part of the same connected component.
+2. **Finding the k-th largest vertex**: This requires accessing and sorting the vertices of the connected component to which the query vertex belongs.
+
+The given C++ code has several issues and does not implement the required functionality correctly. Here are some of the main problems:
+
+1. **Incorrect Union-Find Operations**: The union operation and path compression are not implemented correctly. The rank (size) of the trees is not maintained, which is essential for the union by rank optimization.
+
+2. **Incorrect Query Handling**: The queries are not handled correctly. For type 1 queries, the union operation does not actually merge the sets (it only copies the second set into the first). For type 2 queries, the code attempts to access elements of an array that it should not be accessing.
+
+3. **Incorrect Sorting**: The attempt to sort the vertices is incorrect because the union-find structure is not being updated properly, and the array `as` is being used incorrectly.
+
+4. **Off-by-One Error**: Indexing starts at 1, but in C++, array indexing starts at 0. This causes off-by-one errors when accessing elements in arrays.
+
+To correct the issues, we can simplify and rewrite the code using a correct union-find data structure with path compression and union by rank, and fix the queries.
+
+Here's a corrected version of the code:
+
+```cpp
+#include <iostream>
+#include <vector>
+#include <algorithm>
+
+using namespace std;
+
+const int MAX_N = 200005;
+int parent[MAX_N], rank[MAX_N];
+
+// Initialize the union-find structure
+void initialize(int n) {
+    for (int i = 0; i <= n; ++i) {
+        parent[i] = i;
+        rank[i] = 0;
+    }
+}
+
+// Find the root of the set containing x with path compression
+int find(int x) {
+    if (parent[x] != x) {
+        parent[x] = find(parent[x]);
+    }
+    return parent[x];
+}
+
+// Union by rank of two sets
+void unionSets(int x, int y) {
+    int rootX = find(x);
+    int rootY = find(y);
+    if (rootX != rootY) {
+        if (rank[rootX] > rank[rootY]) {
+            parent[rootY] = rootX;
+        } else if (rank[rootX] < rank[rootY]) {
+            parent[rootX] = rootY;
+        } else {
+            parent[rootY] = rootX;
+            rank[rootX] += 1;
+        }
+    }
+}
+
+int main() {
+    int n, q;
+    cin >> n >> q;
+    initialize(n);
+
+    while (q--) {
+        int type, u, v, k;
+        cin >> type >> u >> v;
+        if (type == 1) {
+            unionSets(u, v);
+        } else if (type == 2) {
+            int rootV = find(v);
+            vector<int> connectedVertices;
+            for (int i = 1; i <= n; ++i) {
+                if (find(i) == rootV) {
+                    connectedVertices.push_back(i);
+                }
+            }
+            if (k <= connectedVertices.size()) {
+                cout << connectedVertices[connectedVertices.size() - k] << endl;
+            } else {
+                cout << "-1" << endl;
+            }
+        }
+    }
+
+    return 0;
+}
+```
+
+This code initializes the union-find structure, processes the queries, and handles the two types of operations correctly. For the second type of query, it finds the root of the connected component containing the vertex `v`, then collects all vertices in that component, and finally prints the k-th largest vertex. If there are fewer than k vertices, it prints `-1`.

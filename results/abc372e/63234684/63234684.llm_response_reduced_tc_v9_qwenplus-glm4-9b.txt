@@ -1,0 +1,81 @@
+
+The given code has issues with the implementation of the Union-Find data structure and the handling of queries. The main problems are:
+
+1. **Union-Find Structure**: The structure does not correctly maintain the size of sets, and it does not efficiently merge the smallest set into the largest set to minimize tree height.
+2. **Query Handling**: The code is not handling queries efficiently. It is not maintaining a sorted list of vertices in each connected component, which is needed to find the k-th largest vertex.
+3. **Edge Cases**: The code does not handle cases where `k` is larger than the number of vertices in the connected component of `v` correctly.
+
+To address these issues, we need to:
+
+1. **Optimize the Union-Find Structure**: Use path compression and union by rank (or size) to keep the tree flat and operations efficient.
+2. **Maintain Sorted Lists**: For each connected component, maintain a sorted list of vertices. This will allow us to efficiently find the k-th largest vertex.
+3. **Handle Edge Cases**: Ensure that when `k` is larger than the number of vertices in a connected component, the output is `-1`.
+
+Here is a revised version of the code:
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+#define rep(i, n) for (int i = 0; i < n; i++)
+using P = pair<int, int>;
+
+struct UnionFind {
+    vector<int> parent;
+    vector<vector<P>> adj; // Adjacency list to store vertex value and its index
+
+    UnionFind(int n) : parent(n, -1) {}
+
+    int root(int v) {
+        if (parent[v] == -1) return v;
+        return parent[v] = root(parent[v]);
+    }
+
+    bool issame(int x, int y) {
+        return root(x) == root(y);
+    }
+
+    void merge(int x, int y) {
+        x = root(x), y = root(y);
+        if (x == y) return;
+
+        // Union by size
+        if (adj[y].size() < adj[x].size()) swap(x, y);
+        parent[x] = y;
+
+        // Append all nodes from y to x
+        for (auto &p : adj[y]) adj[x].emplace_back(p.first, adj[x].size());
+        sort(adj[x].rbegin(), adj[x].rend()); // Keep the list sorted
+
+        adj[y].clear(); // Clear the y's adjacency list
+    }
+};
+
+int main() {
+    int n, q;
+    cin >> n >> q;
+    UnionFind uf(n);
+
+    while (q--) {
+        int t, u, v;
+        cin >> t >> u >> v;
+        u--, v--;
+
+        if (t == 1) {
+            uf.merge(u, v);
+        } else {
+            if (uf.issame(u, v)) { // Only consider queries within the same connected component
+                if (uf.adj[uf.root(v)].size() < v) {
+                    cout << -1 << endl;
+                } else {
+                    cout << uf.adj[uf.root(v)][v].first + 1 << endl; // Output the 1-based index
+                }
+            }
+        }
+    }
+
+    return 0;
+}
+```
+
+This code optimizes the Union-Find structure by using union by size and path compression. It maintains a sorted list of vertices for each connected component, which allows us to efficiently find the k-th largest vertex. The code also handles the edge case where `k` is larger than the number of vertices in the connected component correctly.

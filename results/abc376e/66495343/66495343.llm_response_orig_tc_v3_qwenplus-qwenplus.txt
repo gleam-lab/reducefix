@@ -1,0 +1,90 @@
+To solve this problem efficiently and correctly, we need to find the minimum value of the expression:
+
+$$
+\left(\max_{i \in S} A_i\right) \times \left(\sum_{i \in S} B_i\right)
+$$
+
+where $S$ is a subset of size $K$ from indices $\{1, 2, ..., N\}$.
+
+---
+
+### Key Observations:
+1. **Sorting by `A[i]`**: Since we want to control the maximum `A[i]` in the subset, it's beneficial to sort all elements by `A[i]`. This allows us to consider each element as a potential candidate for being the max `A[i]` in a subset.
+
+2. **Sliding Window with Max Heap**:
+   - We can maintain a window of size `K`, where we always include the current element (as the max `A[i]`) and pick `K-1` smallest `B[i]` values before it.
+   - To efficiently keep track of the smallest `K-1` `B[i]` values, we use a max-heap (to remove largest of small `B[i]` when exceeding `K-1`).
+   - As we slide through sorted pairs `(A[i], B[i])`, we update the sum of selected `B[i]`.
+
+3. **Complexity**: Sorting takes $O(N \log N)$ per test case, and each heap operation (insert/pop) is $O(\log K)$, leading to overall acceptable performance across all test cases.
+
+---
+
+### Corrected Code
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+#define int long long
+#define PII pair<int, int>
+#define fi first
+#define se second
+#define ar array<int, 3>
+
+signed main() {
+    ios::sync_with_stdio(0);
+    cin.tie(0);
+    cout.tie(0);
+
+    int t;
+    cin >> t;
+
+    while (t--) {
+        int n, k;
+        cin >> n >> k;
+
+        vector<PII> v(n);
+        for (int i = 0; i < n; ++i) cin >> v[i].fi;
+        for (int i = 0; i < n; ++i) cin >> v[i].se;
+
+        // Sort by A[i]
+        sort(v.begin(), v.end());
+
+        // Min-heap for maintaining top K smallest B[i] values
+        priority_queue<int, vector<int>, greater<int>> pq;
+        int sum_b = 0;
+        int res = numeric_limits<int>::max();
+
+        // First pass: build initial sum of first K-1 B[i]
+        for (int i = 0; i < k - 1; ++i) {
+            sum_b += v[i].se;
+            pq.push(v[i].se);
+        }
+
+        // Slide through the rest
+        for (int i = k - 1; i < n; ++i) {
+            sum_b += v[i].se;
+            pq.push(v[i].se);
+
+            // Maintain only K elements
+            if (pq.size() > k) {
+                sum_b -= pq.top();
+                pq.pop();
+            }
+
+            // Compute current cost
+            res = min(res, v[i].fi * sum_b);
+        }
+
+        cout << res << '\n';
+    }
+}
+```
+
+---
+
+### Why This Works:
+- By sorting the array based on `A[i]`, we ensure that any subset ending at index `i` has `A[i]` as the maximum.
+- Using a **min-heap**, we efficiently maintain the smallest `K` values of `B[i]` up to index `i`.
+- At every step, we calculate the product of `A[i]` and the sum of those `K` values, updating the result accordingly.
+
+This approach ensures correctness and efficiency even for large constraints.

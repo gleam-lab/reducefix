@@ -1,0 +1,72 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define rep(i,n) for(int i = 0; i < (n); i++)
+using ll = long long;
+
+int main() {
+    int h, w, q;
+    cin >> h >> w >> q;
+    
+    // For each row and column, track the set of positions with walls
+    vector<set<int>> rows(h), cols(w);
+    
+    // Initialize all walls present
+    for (int i = 0; i < h; ++i)
+        for (int j = 0; j < w; ++j) {
+            rows[i].insert(j);
+            cols[j].insert(i);
+        }
+
+    while (q--) {
+        int r, c;
+        cin >> r >> c;
+        r--; c--;
+
+        // Check if there's a wall at (r,c)
+        if (rows[r].count(c)) {
+            // Destroy wall at (r,c)
+            rows[r].erase(c);
+            cols[c].erase(r);
+        } else {
+            // Up
+            auto it_up = cols[c].lower_bound(r);
+            if (it_up != cols[c].begin()) {
+                int up = *prev(it_up);
+                rows[up].erase(c);
+                cols[c].erase(up);
+            }
+
+            // Down
+            auto it_down = cols[c].lower_bound(r);
+            if (it_down != cols[c].end()) {
+                int down = *it_down;
+                rows[down].erase(c);
+                cols[c].erase(down);
+            }
+
+            // Left
+            auto it_left = rows[r].lower_bound(c);
+            if (it_left != rows[r].begin()) {
+                int left = *prev(it_left);
+                cols[left].erase(r);
+                rows[r].erase(left);
+            }
+
+            // Right
+            auto it_right = rows[r].lower_bound(c);
+            if (it_right != rows[r].end()) {
+                int right = *it_right;
+                cols[right].erase(r);
+                rows[r].erase(right);
+            }
+        }
+    }
+
+    // Count remaining walls
+    int ans = 0;
+    for (int i = 0; i < h; ++i)
+        ans += rows[i].size();
+
+    cout << ans << endl;
+    return 0;
+}

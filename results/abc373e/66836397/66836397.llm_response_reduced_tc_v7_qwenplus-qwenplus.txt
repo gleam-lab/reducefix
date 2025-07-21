@@ -1,0 +1,112 @@
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+#define rep(i, x, limit) for (int i = (x); i < (limit); i++)
+#define all(x) x.begin(), x.end()
+#define ll long long
+
+void solve() {
+    ll N, M, K;
+    cin >> N >> M >> K;
+    vector<ll> A(N);
+    ll total = 0;
+    for (int i = 0; i < N; ++i) {
+        cin >> A[i];
+        total += A[i];
+    }
+    ll rem = K - total;
+
+    vector<pair<ll, int>> sortedA(N);
+    for (int i = 0; i < N; ++i) {
+        sortedA[i] = {A[i], i};
+    }
+    sort(all(sortedA));
+
+    vector<ll> prefix(N + 1);
+    for (int i = 0; i < N; ++i) {
+        prefix[i + 1] = prefix[i] + sortedA[i].first;
+    }
+
+    vector<int> idxToPos(N);
+    for (int i = 0; i < N; ++i) {
+        idxToPos[sortedA[i].second] = i;
+    }
+
+    vector<ll> res(N);
+
+    for (int i = 0; i < N; ++i) {
+        ll ai = A[i];
+        int pos = idxToPos[i];
+
+        // Binary search for the minimum X
+        ll low = 0, high = rem;
+        ll ans = -1;
+        while (low <= high) {
+            ll mid = (low + high) / 2;
+            ll newAi = ai + mid;
+
+            // Find how many candidates have votes strictly greater than newAi
+            int l = 0, r = N;
+            while (l < r) {
+                int m = (l + r) / 2;
+                if (sortedA[m].first > newAi)
+                    r = m;
+                else
+                    l = m + 1;
+            }
+            int cnt = l;
+
+            // Number of candidates with votes > newAi
+            int need = M - (N - cnt);
+            if (need <= 0) {
+                ans = mid;
+                high = mid - 1;
+            } else {
+                // Need to block these 'need' candidates
+                if (pos >= cnt) {
+                    // We are not in the top, so we can try to reduce top candidates
+                    int start = max(0, cnt - need);
+                    ll cost = 0;
+                    for (int j = start; j < cnt; ++j) {
+                        cost += max(0LL, sortedA[j].first - newAi + 1);
+                    }
+                    if (cost <= rem - mid) {
+                        ans = mid;
+                        high = mid - 1;
+                    } else {
+                        low = mid + 1;
+                    }
+                } else {
+                    // We're in the top group
+                    int start = max(0, cnt - (need - 1));
+                    ll cost = 0;
+                    for (int j = start; j < cnt; ++j) {
+                        if (sortedA[j].second == i) continue;
+                        cost += max(0LL, sortedA[j].first - newAi + 1);
+                    }
+                    if (cost <= rem - mid) {
+                        ans = mid;
+                        high = mid - 1;
+                    } else {
+                        low = mid + 1;
+                    }
+                }
+            }
+        }
+
+        res[i] = (ans == -1 ? -1 : ans);
+    }
+
+    for (int i = 0; i < N; ++i) {
+        cout << res[i] << " ";
+    }
+    cout << "\n";
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    solve();
+}
+```

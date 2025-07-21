@@ -1,0 +1,85 @@
+To fix this code, we need to address several issues in the original implementation. The main problem lies in how the connected vertices are managed and merged during the union operations. The original code attempts to maintain a sorted list of the largest vertices in each connected component, but it has flaws in the merging logic and efficiency.
+
+### Analysis of the Original Code
+1. **Union Logic**: The original code merges two components by combining their vertex lists in descending order, but it only keeps the top 100 elements. This approach is inefficient and can lead to incorrect results when `k` is small (<=10) because it may discard necessary vertices during the merge.
+2. **Efficiency**: The merging process is O(m + n) where m and n are the sizes of the two lists, which can be too slow for large N and Q (up to 2 × 10^5).
+
+### Correct Approach
+1. **Union-Find with Tracking Top Elements**: Instead of merging entire lists, we should only keep track of the top 10 largest vertices in each component. This ensures that the merging process is efficient (O(10)) per operation.
+2. **Handling Queries**: For each type 2 query, we directly access the k-th largest vertex from the top 10 list of the component, which is O(1) since the list is maintained in sorted order.
+
+### Solution Code
+```cpp
+#include <bits/stdc++.h>
+
+using namespace std;
+
+#define ff first
+#define ss second
+#define ll long long
+#define SZ(s) (int)s.size()
+
+int const N = 2e5 + 5;
+
+vector<set<int, greater<int>>> v;
+
+vector<int> p;
+
+int par(int x) {
+    if (p[x] == x) return x;
+    return p[x] = par(p[x]);
+}
+
+void uni(int a, int b) {
+    a = par(a), b = par(b);
+    if (a == b) return;
+    if (v[a].size() < v[b].size()) swap(a, b);
+    for (int x : v[b]) {
+        v[a].insert(x);
+        if (v[a].size() > 10) {
+            auto it = prev(v[a].end());
+            v[a].erase(it);
+        }
+    }
+    p[b] = a;
+    return;
+}
+
+signed main() {
+    ios_base::sync_with_stdio(false); cin.tie(nullptr);
+
+    int n, q;
+    cin >> n >> q;
+    p.resize(n + 1);
+    v.resize(n + 1);
+    for (int i = 1; i <= n; i++) {
+        p[i] = i;
+        v[i].insert(i);
+    }
+    while (q--) {
+        int t, a, b;
+        cin >> t >> a >> b;
+        if (t == 1) {
+            uni(a, b);
+        } else {
+            a = par(a);
+            if (v[a].size() < b) {
+                cout << -1 << '\n';
+            } else {
+                auto it = v[a].begin();
+                advance(it, b - 1);
+                cout << *it << '\n';
+            }
+        }
+    }
+
+    return 0;
+}
+```
+
+### Explanation
+1. **Union-Find Data Structure**: This structure helps in efficiently managing the connected components. The `par` function finds the root of a vertex, and `uni` merges two components.
+2. **Tracking Top Elements**: Each component maintains a set of its vertices in descending order, limited to the top 10 elements. This ensures quick access for queries and efficient merging.
+3. **Query Handling**: For type 2 queries, the code checks if the component has at least `k` vertices. If not, it returns `-1`. Otherwise, it retrieves the k-th largest vertex directly from the set.
+
+This approach ensures efficiency and correctness within the given constraints, handling up to 200,000 vertices and queries efficiently.

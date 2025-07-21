@@ -1,0 +1,52 @@
+#include <iostream>
+#include <algorithm>
+#include <vector>
+using namespace std;
+
+typedef struct { int a, p, b, q; } p;
+
+int N, X;
+p A[100];
+
+long long calculate_cost(int i, int n) {
+    long long d = n / (A[i].a * A[i].b);
+    long long rem = n % (A[i].a * A[i].b);
+    return dp[i][rem] + d * A[i].p * A[i].b;
+}
+
+bool is_feasible(int n) {
+    long long total_cost = 0;
+    for (int i = 0; i < N; i++) {
+        total_cost += calculate_cost(i, n);
+        if (total_cost > X) return false;
+    }
+    return true;
+}
+
+int main() {
+    scanf("%d %d", &N, &X);
+
+    for (int i = 0, a, p, b, q; i < N; i++) {
+        scanf("%d %d %d %d", &a, &p, &b, &q);
+        if (a * q < b * p) swap(a, b), swap(p, q);
+        A[i] = {a, p, b, q};
+        // Initialize dp table for each element
+        dp[i][0] = 0;
+        for (int j = 1; j <= a * b; j++) {
+            dp[i][j] = min(dp[i][max(0, j - a)] + p, dp[i][max(0, j - b)] + q);
+        }
+    }
+
+    int lo = 0, hi = 1e9;
+    while (hi - lo > 1) {
+        int mid = (hi + lo) / 2;
+        if (is_feasible(mid)) lo = mid;
+        else hi = mid - 1;
+    }
+
+    // Check if the upper bound is feasible
+    if (lo != hi && is_feasible(hi)) lo = hi;
+    printf("%d\n", lo);
+
+    return 0;
+}

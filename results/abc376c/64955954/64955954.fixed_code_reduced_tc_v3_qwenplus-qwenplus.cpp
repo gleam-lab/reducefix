@@ -1,0 +1,54 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    int N;
+    cin >> N;
+    vector<long long> A(N), B(N - 1);
+
+    for (int i = 0; i < N; ++i) cin >> A[i];
+    for (int i = 0; i < N - 1; ++i) cin >> B[i];
+
+    sort(A.begin(), A.end());
+    sort(B.begin(), B.end());
+
+    // Check if all toys can be placed without the new box
+    bool possible = true;
+    for (int i = 0; i < N - 1; ++i) {
+        if (B[i] < A[i]) {
+            possible = false;
+            break;
+        }
+    }
+    if (possible) {
+        cout << -1 << endl;
+        return 0;
+    }
+
+    // Binary search for minimal x
+    long long left = 1, right = 1e18, answer = -1;
+    while (left <= right) {
+        long long mid = (left + right) / 2;
+        vector<long long> C = B;
+        C.push_back(mid);
+        sort(C.begin(), C.end());
+
+        bool can_place = true;
+        for (int i = 0; i < N; ++i) {
+            if (C[i] < A[i]) {
+                can_place = false;
+                break;
+            }
+        }
+
+        if (can_place) {
+            answer = mid;
+            right = mid - 1;
+        } else {
+            left = mid + 1;
+        }
+    }
+
+    cout << answer << endl;
+    return 0;
+}

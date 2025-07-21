@@ -1,0 +1,52 @@
+#include<iostream>
+#include<algorithm>
+using namespace std;
+
+const int MAXN = 2e5 + 5;
+long long T, N, K, A[MAXN], B[MAXN], ans[MAXN];
+
+struct Node {
+    long long value, index;
+    bool operator<(const Node &other) const { return value > other.value; }
+};
+
+void solve(int casenum) {
+    cin >> N >> K;
+    vector<Node> nodes(N);
+    for (int i = 0; i < N; ++i) {
+        cin >> nodes[i].value;
+        nodes[i].index = i;
+    }
+    for (int i = 0; i < N; ++i) {
+        cin >> B[i];
+    }
+
+    sort(nodes.begin(), nodes.end());
+    long long sum = 0, max_value = 0;
+    priority_queue<long long> pq;
+
+    for (int i = 0; i < N; ++i) {
+        sum += B[nodes[i].index];
+        pq.push(B[nodes[i].index]);
+        if (pq.size() > K) {
+            sum -= pq.top();
+            pq.pop();
+        }
+        if (pq.size() == K) {
+            max_value = nodes[i].value;
+            ans[casenum - 1] = max_value * sum;
+        }
+    }
+}
+
+int main() {
+    ios::sync_with_stdio(false); cin.tie(0); cout.tie(0);
+    cin >> T;
+    for (int casenum = 1; casenum <= T; ++casenum) {
+        solve(casenum);
+    }
+    for (int i = 0; i < T; ++i) {
+        cout << ans[i] << '\n';
+    }
+    return 0;
+}

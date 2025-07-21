@@ -1,0 +1,92 @@
+To solve this problem correctly, we need to simulate the attacks efficiently without explicitly looping step-by-step through every time unit `T` (which would be too slow for large inputs).
+
+### Key Observations:
+
+- You attack **only the frontmost enemy with health > 0**.
+- Each second:
+  - If `T % 3 == 0`, the attack does **3 damage**
+  - Else, it does **1 damage**
+
+This means that in a span of 3 seconds, you can do:
+- First attack: 1 damage
+- Second attack: 1 damage
+- Third attack: 3 damage  
+→ Total: 5 damage over 3 seconds
+
+Hence, for an enemy with health `H[i]`, the number of such 3-second blocks needed is:
+```cpp
+full_blocks = H[i] / 5
+```
+Each full block takes 3 seconds → contributes `full_blocks * 3` to total T.
+
+Remaining health (`rem = H[i] % 5`) determines how many extra seconds are needed:
+- For `rem == 1`: 1 more attack (1 sec)
+- For `rem == 2`: 2 more attacks (2 secs)
+- For `rem == 3`: 3 more attacks (3 secs)
+- For `rem == 4`: 4 more attacks (4 secs)
+
+BUT there's a twist: The timing of these attacks matters because the power depends on `T`.
+
+We must calculate how many **initial idle seconds** (i.e., before we reach this enemy) affect when the attack sequence starts for this enemy. This is because the value of `T` carries over from one enemy to the next.
+
+---
+
+### Strategy:
+- Keep track of current time `T`.
+- For each enemy:
+  - Compute how much damage it will take in the upcoming seconds starting at current `T`.
+  - Simulate how many seconds it takes to kill this enemy based on the pattern of attack strengths.
+  - Update `T` accordingly.
+
+We simulate only the essential attack timings using modular arithmetic.
+
+Here is the fixed and correct implementation:
+
+```cpp
+#include <iostream>
+#include <vector>
+
+using ll = long long;
+
+int main() {
+    int N;
+    std::cin >> N;
+    std::vector<ll> H(N);
+    for (int i = 0; i < N; ++i) {
+        std::cin >> H[i];
+    }
+
+    ll T = 0;
+
+    for (ll h : H) {
+        // We will simulate how many steps it takes to reduce h to 0 or less
+        // starting from current T
+
+        // Try up to 5 steps to align the T%3 pattern
+        while (h > 0) {
+            if (T % 3 == 0) {
+                h -= 3;
+            } else {
+                h -= 1;
+            }
+            T++;
+            // Optimization: once we are aligned at the start of a 3-cycle,
+            // we can batch process full cycles of 3 seconds yielding 5 damage
+            if (T % 3 == 0 && h >= 5) {
+                ll full_cycles = h / 5;
+                h -= full_cycles * 5;
+                T += full_cycles * 3;
+            }
+        }
+    }
+
+    std::cout << T << std::endl;
+}
+```
+
+### Why this works:
+- It uses a greedy approach simulating the attacks directly but optimizes by batching full 3-second cycles where possible.
+- It ensures that the timing and damage logic exactly follows the rules.
+- Handles all edge cases including alignment issues and modulo-based behavior correctly.
+
+This solution runs in O(N) time in practice due to the batch processing of full cycles.

@@ -1,0 +1,63 @@
+#include <bits/stdc++.h>
+
+#define forn(i,n) for(int i=0;i<n;i++)
+#define form(i,m,n) for(int i=m;i<=n;i++)
+#define ford(i,n) for(int i=n-1;i>=0;i--)
+#define mod 1000000007
+#define pb push_back
+#define mp make_pair
+#define fi first
+#define se second
+#define sz(x) ((int)x.size())
+#define vi vector<int>
+#define vvi vector<vi>
+#define vl vector<long long>
+#define pll pair<ll,ll>
+#define plvl pair<ll,vl>
+#define pvlv pair<vll,ll>
+#define all(v) v.begin(),v.end()
+#define rall(v) v.rbegin(),v.rend()
+
+typedef long long ll;
+const int inf = 1e9+7;
+const ll INF = 1e18+7;
+const double pi = acos(-1.0);
+
+void solve() {
+    int n,m,q;
+    cin >> n >> m >> q;
+    vvi grid(n,vi(m,1));
+    vi dr = {0,0,-1,1};
+    vi dc = {-1,1,0,0};
+    while(q--) {
+        int r,c;
+        cin >> r >> c;
+        --r;--c;
+        if(grid[r][c]==0) continue;
+        grid[r][c]=0;
+        forn(k,4){
+            int x=r,y=c;
+            bool flag=false;
+            while(true){
+                x+=dr[k];y+=dc[k];
+                if(x<0||x>=n||y<0||y>=m||grid[x][y]) break;
+                flag=true;
+                grid[x][y]=0;
+            }
+            if(flag) break;
+        }
+    }
+    int ans=0;
+    forn(i,n) forn(j,m) ans+=(grid[i][j]);
+    cout << ans << "\n";
+}
+
+int main(){
+    ios_base::sync_with_stdio(false);cin.tie(NULL);cout.tie(NULL);
+    int t=1;
+    //cin >> t;
+    while(t--){
+        solve();
+    }
+    return 0;
+}

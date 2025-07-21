@@ -1,0 +1,130 @@
+```cpp
+#include <iostream>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+const int MAXN = 200000 + 10;
+
+struct Candidate {
+    long long votes;
+    int index;
+};
+
+Candidate candidates[MAXN];
+long long prefix_sum[MAXN];
+
+bool is_candidate_elected(long long additional_votes, int candidate_idx, long long total_remaining_votes, int N, int M) {
+    // Add the additional votes to the current candidate
+    long long target = candidates[candidate_idx].votes + additional_votes;
+    
+    // Binary search to find how many candidates have votes strictly greater than target
+    int left = 0, right = N - 1;
+    while (left <= right) {
+        int mid = (left + right) / 2;
+        if (candidates[mid].votes > target)
+            left = mid + 1;
+        else
+            right = mid - 1;
+    }
+    int num_strictly_greater = N - left;
+
+    if (num_strictly_greater < M) return true; // Already elected
+
+    // Need to assign remaining votes to maximize competitors' votes
+    long long need = 0;
+    int limit = N - M;
+    for (int i = left; i < limit; ++i) {
+        need += max(0LL, target + 1 - candidates[i].votes);
+        if (need > total_remaining_votes) return false;
+    }
+
+    return true;
+}
+
+int main() {
+    int N, M;
+    long long K;
+    cin >> N >> M >> K;
+
+    vector<long long> A(N);
+    long long total_current = 0;
+
+    for (int i = 0; i < N; ++i) {
+        cin >> A[i];
+        total_current += A[i];
+    }
+
+    long long remaining = K - total_current;
+
+    // Prepare sorted list of candidates by votes
+    vector<pair<long long, int>> sorted_candidates(N);
+    for (int i = 0; i < N; ++i) {
+        sorted_candidates[i] = {A[i], i};
+    }
+    sort(sorted_candidates.begin(), sorted_candidates.end());
+
+    vector<int> result(N);
+
+    for (int i = 0; i < N; ++i) {
+        long long low = 0, high = remaining;
+        bool can_win = false;
+
+        // Check if already winning with zero additional votes
+        long long original_votes = A[i];
+        int count = 0;
+        for (int j = 0; j < N; ++j) {
+            if (j == i) continue;
+            if (A[j] > original_votes) count++;
+        }
+        if (count < M) {
+            result[i] = 0;
+            continue;
+        }
+
+        // Binary search for minimum required additional votes
+        long long answer = -1;
+        long long l = 0, r = remaining;
+
+        while (l <= r) {
+            long long mid = (l + r) / 2;
+            long long new_vote = A[i] + mid;
+
+            // Count how many candidates have more than new_vote
+            int idx = upper_bound(sorted_candidates.begin(), sorted_candidates.end(), make_pair(new_vote, N+1)) - sorted_candidates.begin();
+            if (idx >= N || sorted_candidates[idx].second != i) idx--;
+
+            if (idx >= N - M) {
+                // We are in top M-1 so we win
+                answer = mid;
+                r = mid - 1;
+            } else {
+                // Need to block at most M candidates from being better than us
+                long long needed_to_block = 0;
+                for (int j = idx; j < N - M + 1 && j < N; ++j) {
+                    if (sorted_candidates[j].second == i) continue;
+                    needed_to_block += max(0LL, new_vote + 1 - sorted_candidates[j].first);
+                    if (needed_to_block > remaining - mid) break;
+                }
+
+                if (needed_to_block <= remaining - mid) {
+                    answer = mid;
+                    r = mid - 1;
+                } else {
+                    l = mid + 1;
+                }
+            }
+        }
+
+        result[i] = (answer == -1 ? -1 : static_cast<int>(answer));
+    }
+
+    for (int i = 0; i < N; ++i) {
+        cout << result[i];
+        if (i < N - 1) cout << " ";
+    }
+    cout << endl;
+
+    return 0;
+}
+```

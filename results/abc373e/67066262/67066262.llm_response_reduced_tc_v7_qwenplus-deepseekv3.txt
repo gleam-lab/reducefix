@@ -1,0 +1,82 @@
+To fix this code, we need to address the logic used to determine the minimum additional votes required for each candidate to guarantee their victory. The previous approach had flaws in how it calculated the necessary votes and did not correctly handle all edge cases.
+
+### Approaches
+1. **Sorting and Binary Search**: For each candidate, we need to determine the minimum number of votes they must receive from the remaining ballots such that no more than `M-1` candidates have a strictly higher vote count. This involves:
+   - Sorting the original vote counts to efficiently find the threshold vote counts.
+   - Using binary search to find the minimal additional votes for each candidate.
+2. **Prefix Sums**: Utilize prefix sums to quickly calculate the total votes required for other candidates to stay below the threshold, ensuring the candidate in question remains in the top `M` candidates.
+3. **Edge Cases**: Handle cases where candidates are already guaranteed to win (0 additional votes needed) or cannot possibly win (output -1).
+
+### Solution Code
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+#define all(x) (x).begin(), (x).end()
+
+int main() {
+    ios_base::sync_with_stdio(0);
+    cin.tie(0);
+    int N, M;
+    ll K;
+    cin >> N >> M >> K;
+    vector<ll> A(N);
+    for (int i = 0; i < N; ++i) {
+        cin >> A[i];
+    }
+    
+    vector<ll> sortedA = A;
+    sort(all(sortedA));
+    vector<ll> prefix(N + 1);
+    for (int i = 0; i < N; ++i) {
+        prefix[i + 1] = prefix[i] + sortedA[i];
+    }
+    
+    vector<ll> ans(N, -1);
+    for (int i = 0; i < N; ++i) {
+        ll current = A[i];
+        ll low = 0, high = K - (prefix[N] - prefix[0]);
+        ll minX = -1;
+        
+        while (low <= high) {
+            ll mid = low + (high - low) / 2;
+            ll total = current + mid;
+            
+            // Find the number of candidates with votes > total
+            auto it = upper_bound(all(sortedA), total);
+            ll cnt = sortedA.end() - it;
+            
+            if (A[i] + mid > total) {
+                cnt--;
+            }
+            
+            if (cnt < M) {
+                minX = mid;
+                high = mid - 1;
+            } else {
+                low = mid + 1;
+            }
+        }
+        
+        if (minX != -1) {
+            ans[i] = minX;
+        }
+    }
+    
+    for (int i = 0; i < N; ++i) {
+        cout << ans[i] << ' ';
+    }
+    cout << '\n';
+    
+    return 0;
+}
+```
+
+### Explanation
+1. **Initialization and Sorting**: The input is read, and the vote counts are sorted to facilitate binary search and prefix sum calculations.
+2. **Prefix Sum Array**: A prefix sum array is constructed to quickly compute the sum of votes up to any index in the sorted array.
+3. **Binary Search for Each Candidate**: For each candidate, binary search is used to find the minimal additional votes (`minX`) required such that no more than `M-1` candidates have votes strictly greater than the candidate's current votes plus `minX`.
+4. **Upper Bound Check**: The `upper_bound` function determines the number of candidates with votes exceeding the candidate's potential total votes. If the count is less than `M`, the candidate can win with `minX` votes.
+5. **Output**: The results for all candidates are printed, indicating the minimal votes needed or -1 if winning is impossible.
+
+This approach ensures that the solution is efficient (O(N log N)) and handles all edge cases correctly, including scenarios where candidates are already winners or cannot possibly win.

@@ -1,0 +1,35 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main(){
+    int n;
+    cin >> n; // Number of elements
+    
+    // Create and populate the array x[] with the input values
+    for (int i = 1; i <= n; ++i) cin >> x[i];
+    
+    // Sort the array p[] to ensure the same values are always grouped together
+    sort(x, x + n);
+    
+    // Main logic for the problem
+    int q; // Number of queries
+    cin >> q; // Number of queries to process
+    
+    // Calculate the difference between adjacent elements in array x[]
+    long long diff = 0; // Initialize the difference variable
+    for (int i = 1; i < n; ++i) { // Process each query separately
+        int l, r; // Left and right indices for the query range
+        cin >> l >> r; // Input the left and right indices of the query range
+        
+        // Calculate the difference between adjacent elements in the query range
+        while (l < r) { // While the range is not empty
+            diff += x[l + 1] - x[r]; // Add the difference between adjacent elements to the overall difference
+            ++l; // Move to the next element in the range
+            --r; // Decrement the range index to process the next range boundary
+        }
+        
+        // Output the difference for each query
+        cout << diff << endl; // Output the calculated difference for each query
+    }
+    return 0;
+}

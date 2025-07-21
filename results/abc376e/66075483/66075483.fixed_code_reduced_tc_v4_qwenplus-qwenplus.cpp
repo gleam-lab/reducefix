@@ -1,0 +1,65 @@
+#include <iostream>
+#include <vector>
+#include <queue>
+#include <algorithm>
+using namespace std;
+#define int long long
+
+signed main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int T;
+    cin >> T;
+    
+    while (T--) {
+        int N, K;
+        cin >> N >> K;
+        
+        vector<pair<int, int>> A(N);
+        for (int i = 0; i < N; ++i) {
+            cin >> A[i].first;
+        }
+        
+        vector<int> B(N);
+        for (int i = 0; i < N; ++i) {
+            cin >> B[i];
+        }
+        
+        // Pair A and B together
+        vector<pair<int, int>> items(N);
+        for (int i = 0; i < N; ++i) {
+            items[i] = {A[i].first, B[i]};
+        }
+        
+        // Sort items by A value
+        sort(items.begin(), items.end());
+        
+        // Min-heap to maintain top K smallest B values
+        priority_queue<int, vector<int>, greater<>> pq;
+        
+        int sum_B = 0;
+        // Initialize with the first K elements
+        for (int i = 0; i < K; ++i) {
+            pq.push(items[i].second);
+            sum_B += items[i].second;
+        }
+        
+        int result = items[K - 1].first * sum_B;
+        
+        // Try each possible maximum A in the subset
+        for (int i = K; i < N; ++i) {
+            if (items[i].second > pq.top()) {
+                sum_B -= pq.top();
+                pq.pop();
+                pq.push(items[i].second);
+                sum_B += items[i].second;
+            }
+            result = min(result, items[i].first * sum_B);
+        }
+        
+        cout << result << "\n";
+    }
+
+    return 0;
+}

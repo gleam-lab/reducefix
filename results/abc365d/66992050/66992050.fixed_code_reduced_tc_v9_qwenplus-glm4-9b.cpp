@@ -1,0 +1,31 @@
+#include <iostream>
+using namespace std;
+using ll = long long;
+
+int main() {
+    int N;
+    string S;
+    cin >> N >> S;
+    char past = 'N';
+    int ans = 0;
+    for (char c : S) {
+        if (c == 'P') {
+            if (past == 'R' || past == 'N') {
+                ans++;
+                past = 'S';
+            } 
+        } else if (c == 'R') {
+            if (past == 'S' || past == 'N') {
+                ans++;
+                past = 'P';
+            }
+        } else if (c == 'S') {
+            if (past == 'P' || past == 'N') {
+                ans++;
+                past = 'R';
+            }
+        }
+    }
+    cout << ans;
+    return 0;
+}

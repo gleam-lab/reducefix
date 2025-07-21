@@ -1,0 +1,84 @@
+To fix this code, we need to address the primary issue where the code incorrectly handles the scenario when there are no walls left to destroy in any of the four directions (up, down, left, right). The original code does not properly check if the sets are empty before accessing elements, which can lead to segmentation faults or incorrect behavior. Additionally, the logic for checking the first walls in each direction can be simplified and made more robust.
+
+### Approaches
+1. **Initialization**: Initialize two sets for each row and column to keep track of walls. `tate[c]` will keep track of rows with walls in column `c`, and `yoko[r]` will keep track of columns with walls in row `r`.
+2. **Processing Queries**: For each query:
+   - If there is a wall at the given position (R_q, C_q), remove it.
+   - If there is no wall, find the nearest walls in each of the four directions (up, down, left, right) and remove them.
+3. **Efficiency**: Using sets allows efficient searching and deletion operations, which is crucial given the constraints (H × W ≤ 4 × 10^5 and Q ≤ 2 × 10^5).
+
+### Solution Code
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+#define rep(i, n) for (int i = 0; i < (n); i++)
+using ll = long long;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int h, w, q;
+    cin >> h >> w >> q;
+    vector<set<int>> tate(w), yoko(h);
+    rep(i, h) rep(j, w) {
+        tate[j].insert(i + 1);
+        yoko[i].insert(j + 1);
+    }
+
+    rep(qi, q) {
+        int r, c;
+        cin >> r >> c;
+        if (tate[c - 1].count(r)) {
+            tate[c - 1].erase(r);
+            yoko[r - 1].erase(c);
+        } else {
+            // Up
+            auto it_up = tate[c - 1].lower_bound(r);
+            if (it_up != tate[c - 1].begin()) {
+                --it_up;
+                int tmp_r = *it_up;
+                tate[c - 1].erase(tmp_r);
+                yoko[tmp_r - 1].erase(c);
+            }
+            // Down
+            auto it_down = tate[c - 1].lower_bound(r);
+            if (it_down != tate[c - 1].end()) {
+                int tmp_r = *it_down;
+                tate[c - 1].erase(tmp_r);
+                yoko[tmp_r - 1].erase(c);
+            }
+            // Left
+            auto it_left = yoko[r - 1].lower_bound(c);
+            if (it_left != yoko[r - 1].begin()) {
+                --it_left;
+                int tmp_c = *it_left;
+                yoko[r - 1].erase(tmp_c);
+                tate[tmp_c - 1].erase(r);
+            }
+            // Right
+            auto it_right = yoko[r - 1].lower_bound(c);
+            if (it_right != yoko[r - 1].end()) {
+                int tmp_c = *it_right;
+                yoko[r - 1].erase(tmp_c);
+                tate[tmp_c - 1].erase(r);
+            }
+        }
+    }
+
+    int ans = 0;
+    rep(i, w) ans += tate[i].size();
+    cout << ans << "\n";
+
+    return 0;
+}
+```
+
+### Explanation
+1. **Initialization**: We initialize `tate` and `yoko` sets where `tate[c]` contains all rows that have walls in column `c`, and `yoko[r]` contains all columns that have walls in row `r`.
+2. **Query Processing**:
+   - **Direct Hit**: If the bomb's position (R_q, C_q) has a wall, it is removed from both sets.
+   - **Indirect Hit**: If no wall exists at the bomb's position, the nearest walls in each of the four directions (up, down, left, right) are found using `lower_bound` and removed if they exist.
+3. **Result Calculation**: After processing all queries, the total number of remaining walls is calculated by summing the sizes of all `tate` sets (columns), which still contain wall positions.
+
+This approach ensures that each query is processed efficiently, and the solution handles edge cases where walls might not exist in one or more directions from the bomb's position.

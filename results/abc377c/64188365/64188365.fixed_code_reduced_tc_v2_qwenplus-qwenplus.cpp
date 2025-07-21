@@ -1,0 +1,37 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define rep(i,n) for(int i = 0; i < (n); ++i)
+using ll = long long;
+
+int main() {
+    ll n, m;
+    cin >> n >> m;
+    
+    set<pair<ll, ll>> occupied;
+    
+    // Define all 8 possible attack directions
+    const array<array<ll, 2>, 8> directions = {{
+        {2, 1}, {1, 2}, {-1, 2}, {-2, 1},
+        {-2, -1}, {-1, -2}, {1, -2}, {2, -1}
+    }};
+    
+    rep(i, m) {
+        ll a, b;
+        cin >> a >> b;
+        // Convert to 0-based indexing
+        a--; b--;
+        occupied.insert({a, b});
+        
+        // Add all attacked positions
+        for (const auto& dir : directions) {
+            ll ni = a + dir[0];
+            ll nj = b + dir[1];
+            if (ni >= 0 && ni < n && nj >= 0 && nj < n) {
+                occupied.insert({ni, nj});
+            }
+        }
+    }
+    
+    // Total cells - occupied/unavailable cells
+    cout << (n * n - (ll)occupied.size()) << endl;
+}

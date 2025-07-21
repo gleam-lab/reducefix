@@ -1,0 +1,74 @@
+I analyzed the issue with your code and found that the problem lies in how you're calculating the indices `l` and `r` for the prefix sum calculation. The current approach using `lower_bound` and `upper_bound` on the map isn't correctly identifying the range of elements that fall within [L, R]. Here's the corrected version:
+
+```cpp
+#include <bits/stdc++.h>
+
+using namespace std;
+using ll=long long;
+using Graph = vector<vector<int>>;
+
+#define rep(i,n) for (int i=0; i<(n); ++i)
+#define reps(i,n) for (int i=0; i<=(n); ++i)
+#define all(x) (x).begin(), (x).end()
+#define rall(x) (x).rbegin(), (x).rend()
+#define pb(a) push_back(a)
+#define Yes(b) cout << ((b)?"Yes":"No") << endl
+#define YES(b) cout << ((b)?"YES":"NO") << endl
+
+int dx[4]={1,0,-1,0};
+int dy[4]={0,1,0,-1};
+
+int main(){
+    int N;
+    cin >> N;
+    vector<int> X(N), P(N+1);
+    P[0] = 0;
+    rep(i, N) cin >> X[i];
+    rep(i, N){
+        int p;
+        cin >> p;
+        P[i+1] = P[i] + p;
+    }
+    
+    // Create a vector of pairs (X[i], i) and sort it by X[i]
+    vector<pair<int, int>> sorted_X;
+    rep(i, N){
+        sorted_X.emplace_back(X[i], i);
+    }
+    sort(all(sorted_X));
+    
+    int Q;
+    cin >> Q;
+    rep(q, Q){
+        int L, R;
+        cin >> L >> R;
+        // Find the first X[i] >= L
+        auto it_l = lower_bound(all(sorted_X), make_pair(L, 0));
+        // Find the first X[i] > R
+        auto it_r = upper_bound(all(sorted_X), make_pair(R, N));
+        
+        int l = (it_l == sorted_X.end()) ? N : it_l->second;
+        int r = (it_r == sorted_X.end()) ? N : it_r->second;
+        
+        // The sum should include elements from l to r-1
+        // So we need to find the minimal l and maximal r where X[i] is in [L, R]
+        // The correct way is:
+        // l is the smallest index with X[i] >= L
+        // r is the smallest index with X[i] > R
+        // Then the sum is P[r] - P[l]
+        cout << P[r] - P[l] << endl;
+    }
+}
+```
+
+Key changes made:
+1. Changed the data structure from a map to a sorted vector of pairs (X[i], i) because:
+   - Maps are sorted by key, but we need to maintain the original indices
+   - The vector approach makes it easier to use binary search with pairs
+2. Corrected the binary search logic using `lower_bound` and `upper_bound` on the sorted vector
+3. The prefix sum is now calculated between the correct indices:
+   - `l` is the first index where X[i] >= L
+   - `r` is the first index where X[i] > R
+   - The sum is then P[r] - P[l]
+
+This approach ensures that we correctly identify all elements in the range [L, R] and calculate their sum using the prefix sums. The complexity is O(N log N) for sorting and O(Q log N) for the queries, which should be efficient enough for typical problem constraints.

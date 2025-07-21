@@ -1,0 +1,37 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    int n;
+    cin >> n;
+    vector<long long> va(n), vb(n);
+    for (int i = 0; i < n; i++) cin >> va[i];
+    for (int i = 1; i < n; i++) cin >> vb[i];
+    
+    sort(va.begin(), va.end());
+    sort(vb.begin(), vb.end());
+
+    long long ans = LLONG_MAX;
+    bool flag = false;
+    for(int i=n-1;i>=1;i--){
+        if(vb[i]<va[i]){
+            if(vb[i]>=va[i-1]){
+                ans=min(ans,vb[i]);
+                flag=true;
+            }else{
+                cout<<"-1"<<endl;
+                return 0;
+            }
+        }else{
+            ans=min(ans,vb[i]);
+            flag=true;
+        }
+    }
+    if(!flag){
+        cout<<va[0]<<endl;
+    }else{
+        cout<<ans<<endl;
+    }
+
+    return 0;
+}

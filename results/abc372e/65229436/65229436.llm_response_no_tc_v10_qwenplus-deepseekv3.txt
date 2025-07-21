@@ -1,0 +1,96 @@
+To fix this code, we need to address several issues:
+
+1. **Initialization of Sets**: The initial sets should include all vertices, but in the given code, each set only contains its own index. This doesn't affect the correctness but is a minor inefficiency.
+
+2. **Union-Find Operations**: The union operation correctly merges the sets, but the way the sets are merged could be optimized for better performance, especially considering the constraints.
+
+3. **Handling Type 2 Queries**: The current approach uses `rbegin()` and `advance()` to find the k-th largest element, which is not efficient for large sets. However, since k is limited to 10, this might not be a major issue, but it's better to ensure correctness.
+
+4. **Output Handling**: The code pushes `-2` into the answer vector for cases where the size is less than k, but it should push `-1` to match the problem requirements. Also, the output adds 1 to the answer, which is correct since the vertices are 1-indexed.
+
+Here’s the corrected and optimized version of the code:
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+#define rep(i, n) for(int i = 0; i < (n); i++)
+#define all(a) a.begin(), a.end()
+#define rall(a) a.rbegin(), a.rend()
+using ll = long long;
+using pi = pair<int, int>;
+const int INF = 1e9;
+
+struct UnionFind {
+    vector<int> parent, rank;
+    UnionFind(int n) : parent(n), rank(n, 0) {
+        for (int i = 0; i < n; i++) 
+            parent[i] = i;
+    }
+    int findRoot(int x) {
+        if (parent[x] != x) 
+            parent[x] = findRoot(parent[x]);
+        return parent[x];
+    }
+    bool unite(int x, int y) {
+        int rx = findRoot(x), ry = findRoot(y);
+        if (rx == ry) return false;
+        if (rank[rx] < rank[ry]) {
+            parent[rx] = ry;
+        } else {
+            parent[ry] = rx;
+            if (rank[rx] == rank[ry])
+                rank[rx]++;
+        }
+        return true;
+    }
+};
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int n, q;
+    cin >> n >> q;
+    UnionFind uf(n);
+    vector<set<int>> sets(n);
+    rep(i, n) sets[i].insert(i + 1); // vertices are 1-indexed
+    vector<int> ans;
+    rep(qi, q) {
+        int com;
+        cin >> com;
+        if (com == 1) {
+            int u, v;
+            cin >> u >> v;
+            int ru = uf.findRoot(u - 1);
+            int rv = uf.findRoot(v - 1);
+            if (ru != rv) {
+                if (sets[ru].size() < sets[rv].size()) swap(ru, rv);
+                uf.unite(ru, rv);
+                int rnew = uf.findRoot(ru);
+                for (int x : sets[rv]) sets[rnew].insert(x);
+                sets[rv].clear();
+            }
+        } else if (com == 2) {
+            int v, k;
+            cin >> v >> k;
+            int root = uf.findRoot(v - 1);
+            if (sets[root].size() < k) {
+                ans.push_back(-1);
+            } else {
+                auto it = sets[root].rbegin();
+                advance(it, k - 1);
+                ans.push_back(*it);
+            }
+        }
+    }
+    for (auto x : ans) cout << x << endl;
+    return 0;
+}
+```
+
+### Key Fixes:
+1. **Vertex Indexing**: The sets now store 1-indexed vertex numbers directly, so no need to adjust by +1 in the output.
+2. **Correct Output for Insufficient Size**: Pushes `-1` instead of `-2` when the connected component has fewer than `k` vertices.
+3. **Efficient Union Handling**: The union operation merges the smaller set into the larger one to optimize performance.
+4. **Direct Access in Sets**: Uses `rbegin()` and `advance()` to find the k-th largest element, which is acceptable since `k` is small (≤ 10).
+
+This code should now handle all cases correctly and efficiently within the given constraints.

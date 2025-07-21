@@ -1,0 +1,42 @@
+#include <iostream>
+using namespace std;
+using ll = long long;
+
+int main() {
+    ll n;
+    cin >> n;
+    ll total_attacks = 0;
+    ll current_attack_count = 0;
+    ll current_section_sum = 0;
+
+    for (ll i = 0; i < n; ++i) {
+        ll health;
+        cin >> health;
+
+        // Check if the current enemy's health can be fully dealt with in the current section
+        if (current_section_sum + health <= 3 * current_attack_count) {
+            // If so, add the enemy's health to the current section sum
+            current_section_sum += health;
+        } else {
+            // If not, we need to wrap up the current section
+            // The number of attacks needed to finish the current section is the maximum of
+            // (current_section_sum + health) divided by 3 or the current attack count
+            ll needed_attacks = (current_section_sum + health) / 3;
+            total_attacks += needed_attacks;
+            current_attack_count = needed_attacks;
+            current_section_sum = health;
+        }
+        // If the attack count reaches 3, we increase the attack count by 3 and reset the section sum
+        if (current_attack_count == 3) {
+            total_attacks += 3;
+            current_attack_count = 0;
+            current_section_sum = 0;
+        }
+    }
+
+    // If there's an ongoing section after the loop ends, we need to finish it
+    total_attacks += (current_section_sum + 2 * current_attack_count) / 3;
+
+    cout << total_attacks;
+    return 0;
+}

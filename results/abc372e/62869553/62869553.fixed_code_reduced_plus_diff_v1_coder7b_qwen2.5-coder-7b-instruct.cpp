@@ -1,0 +1,59 @@
+#include<bits/stdc++.h>
+using namespace std;
+
+#define MAXN 200005
+vector<int> adj[MAXN];
+set<int> st[MAXN];
+
+void addEdge(int u, int v) {
+    adj[u].push_back(v);
+    adj[v].push_back(u);
+    st[u].insert(v);
+    st[v].insert(u);
+}
+
+void dfs(int u, int p, set<int>& s) {
+    for(auto& v : adj[u]) {
+        if(v == p) continue;
+        dfs(v, u, s);
+        st[u].merge(st[v]);
+    }
+}
+
+void preprocess() {
+    for(int i = 1; i <= n; ++i) {
+        dfs(i, -1, st[i]);
+    }
+}
+
+int findKthLargest(set<int>& s, int k) {
+    auto it = s.rbegin();
+    advance(it, k - 1);
+    return *it;
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(NULL);
+
+    cin >> n >> q;
+    for(int i = 1; i <= n; ++i) {
+        addEdge(i, i + 1);
+    }
+
+    preprocess();
+
+    while(q--) {
+        int type, u, k;
+        cin >> type >> u >> k;
+        if(type == 1) {
+            int v;
+            cin >> v;
+            addEdge(u, v);
+        } else {
+            cout << findKthLargest(st[u], k) << '\n';
+        }
+    }
+
+    return 0;
+}

@@ -1,0 +1,54 @@
+#include <iostream>
+#include <vector>
+#include <set>
+using namespace std;
+
+long long count_attacks(int x, int y, const vector<pair<int, int>>& pieces) {
+    long long result = 0;
+    // Directions of attacks
+    vector<pair<int, int>> directions = {
+        {1, 2}, {2, 1}, {2, -1}, {1, -2},
+        {-1, -2}, {-2, -1}, {-2, 1}, {-1, 2}
+    };
+    for (int i = 0; i < 8; ++i) {
+        int nx = x + directions[i].first;
+        int ny = y + directions[i].second;
+        if (nx >= 1 && nx <= pieces.size() && ny >= 1 && ny <= pieces.size()) {
+            result++;
+        }
+    }
+    return result;
+}
+
+int main() {
+    long long n, m;
+    cin >> n >> m;
+    vector<pair<int, int>> pieces(m);
+    set<pair<int, int>> positions;
+    for (int i = 0; i < m; ++i) {
+        int x, y;
+        cin >> x >> y;
+        pieces[i] = {x, y};
+        positions.insert({x, y});
+    }
+
+    long long result = (n * n) - m; // Start with total squares minus pieces placed
+
+    // For each possible position (x, y), check if it's safe from all pieces
+    for (int x = 1; x <= n; ++x) {
+        for (int y = 1; y <= n; ++y) {
+            if (positions.find({x, y}) == positions.end()) { // Ensure the position is empty
+                long long attacks = 0;
+                for (int i = 0; i < m; ++i) {
+                    attacks += count_attacks(pieces[i].first, pieces[i].second, pieces);
+                }
+                if (attacks == 0) { // If no piece can attack this position, add to result
+                    result++;
+                }
+            }
+        }
+    }
+
+    cout << result << endl;
+    return 0;
+}

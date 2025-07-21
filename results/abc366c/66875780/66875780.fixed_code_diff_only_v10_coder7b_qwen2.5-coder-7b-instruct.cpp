@@ -1,0 +1,39 @@
+#include <iostream>
+#include <set>
+#include <unordered_map>
+
+using namespace std;
+
+// Function to handle the queries
+void handleQueries(int Q) {
+    set<int> s; // Set to store unique elements
+    unordered_map<int, int> countMap; // Map to keep track of the count of each element
+
+    while (Q--) {
+        int a;
+        cin >> a;
+        if (a == 1) {
+            int tp;
+            cin >> tp;
+            s.insert(tp); // Insert the element into the set
+            countMap[tp]++; // Increment the count in the map
+        } else if (a == 2) {
+            int tp;
+            cin >> tp;
+            s.erase(tp); // Erase the element from the set
+            countMap[tp]--; // Decrement the count in the map
+            if (countMap[tp] == 0) {
+                countMap.erase(tp); // Remove the entry from the map if count becomes zero
+            }
+        } else {
+            cout << s.size() << "\n"; // Print the size of the set, which represents the number of unique elements
+        }
+    }
+}
+
+int main() {
+    int Q;
+    cin >> Q;
+    handleQueries(Q); // Call the function to handle the queries
+    return 0;
+}

@@ -1,0 +1,17 @@
+#include <iostream>
+#include <climits>
+using namespace std;
+
+int main() {
+    int n;
+    cin >> n;
+    long long dp0 = 0, dp1 = LLONG_MIN;
+    for (int i = 0; i < n; ++i) {
+        long long x;
+        cin >> x;
+        dp1 = max(dp1, dp0 + 2 * x);
+        dp0 = max(dp0, dp1 + x);
+    }
+    cout << max(dp0, dp1) << endl;
+    return 0;
+}

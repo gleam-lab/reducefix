@@ -1,0 +1,40 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define rep(i,n) for(int i = 0; i < (n); ++i)
+
+using ll = long long;
+
+int main() {
+    ll n, m;
+    cin >> n >> m;
+    vector<pair<ll, ll>> pieces(M);
+
+    rep(i, m) {
+        ll a, b;
+        cin >> a >> b;
+        pieces[i] = {a - 1, b - 1}; // Store 0-indexed positions
+    }
+
+    set<pair<ll, ll>> occupied;
+    occupied.insert({0, 0});
+
+    // Initialize the occupied set with all the pieces and their potential moves
+    for (const auto& p : pieces) {
+        auto [x, y] = p;
+        occupied.insert({x, y});
+        if (x + 2 < n) occupied.insert({x + 2, y + 1});
+        if (x + 1 < n) occupied.insert({x + 1, y + 2});
+        if (x - 1 < n) occupied.insert({x - 1, y + 2});
+        if (x - 2 < n) occupied.insert({x - 2, y + 1});
+        if (x - 2 < n && y - 1 >= 0) occupied.insert({x - 2, y - 1});
+        if (x - 1 < n && y - 2 >= 0) occupied.insert({x - 1, y - 2});
+        if (x + 1 < n && y - 2 >= 0) occupied.insert({x + 1, y - 2});
+        if (x + 2 < n && y - 1 >= 0) occupied.insert({x + 2, y - 1});
+    }
+
+    // Calculate the number of free cells
+    ll free_cells = n * n - occupied.size();
+
+    cout << free_cells << endl;
+    return 0;
+}

@@ -1,0 +1,52 @@
+#include <iostream>
+#include <vector>
+#include <queue>
+#include <algorithm>
+using namespace std;
+
+struct Node {
+    int h, x, y;
+    bool operator<(const Node& other) const {
+        return h > other.h;
+    }
+};
+
+int main() {
+    ios_base::sync_with_stdio(0); cin.tie(0); cout.tie(0);
+
+    int H, W, Y; cin >> H >> W >> Y;
+    vector<vector<int>> A(H, vector<int>(W));
+    for(int i = 0; i < H; ++i)
+        for(int j = 0; j < W; ++j)
+            cin >> A[i][j];
+
+    vector<vector<bool>> visited(H, vector<bool>(W, false));
+    priority_queue<Node> pq;
+    for(int i = 0; i < H; ++i) {
+        pq.emplace(A[i][0], i, 0);
+        pq.emplace(A[i][W-1], i, W-1);
+    }
+    for(int j = 0; j < W; ++j) {
+        pq.emplace(A[0][j], 0, j);
+        pq.emplace(A[H-1][j], H-1, j);
+    }
+
+    while(!pq.empty()) {
+        auto [h, x, y] = pq.top(); pq.pop();
+        if(visited[x][y]) continue;
+        visited[x][y] = true;
+        for(int k = 0; k < 4; ++k) {
+            int nx = x + (k%2)*((k/2==0)?1:-1), ny = y + ((k%2!=0)?1:-1);
+            if(nx>=0 && nx<H && ny>=0 && ny<W && !visited[nx][ny])
+                pq.emplace(max(h, A[nx][ny]), nx, ny);
+        }
+    }
+
+    int ans = H*W;
+    for(int i = 0; i < Y; ++i) {
+        ans -= count_if(begin(visited), end(visited), [](auto&& v){return accumulate(begin(v), end(v), 0); });
+        cout << ans << '\n';
+    }
+
+    return 0;
+}

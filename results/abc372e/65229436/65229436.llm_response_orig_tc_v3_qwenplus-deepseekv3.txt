@@ -1,0 +1,99 @@
+Based on the error analysis, the issue appears to be in the handling of the k-th largest element query. The problem requires finding the k-th largest vertex in the connected component, but the current implementation has some incorrect cases. Here's the fixed code:
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+#define rep(i, n) for(int i=0;i<(n);i++)
+#define all(a) a.begin(), a.end()
+#define rall(a) a.rbegin(), a.rend()
+using ll = long long;
+using pi = pair<int, int>;
+const int di[]={1,-1,0,0};
+const int dj[]={0,0,1,-1};
+const int INF=1e9;
+
+struct UnionFind {
+    vector<int> parent, rank;
+    vector<set<int>> components;
+    
+    UnionFind(int n) : parent(n), rank(n, 0), components(n) {
+        for (int i = 0; i < n; i++) {
+            parent[i] = i;
+            components[i].insert(i);
+        }
+    }
+    
+    int findRoot(int x) {
+        if (parent[x] != x) 
+            parent[x] = findRoot(parent[x]);
+        return parent[x];
+    }
+    
+    void unite(int x, int y) {
+        int rx = findRoot(x), ry = findRoot(y);
+        if (rx == ry) return;
+        
+        if (rank[rx] < rank[ry]) {
+            parent[rx] = ry;
+            components[ry].insert(all(components[rx]));
+            components[rx].clear();
+        } else {
+            parent[ry] = rx;
+            components[rx].insert(all(components[ry]));
+            components[ry].clear();
+            if (rank[rx] == rank[ry])
+                rank[rx]++;
+        }
+    }
+    
+    int kthLargest(int v, int k) {
+        int root = findRoot(v);
+        if ((int)components[root].size() < k)
+            return -2;
+        
+        auto it = components[root].rbegin();
+        advance(it, k-1);
+        return *it;
+    }
+};
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int n, q;
+    cin >> n >> q;
+    UnionFind uf(n);
+    vector<int> ans;
+    
+    rep(qi, q) {
+        int com;
+        cin >> com;
+        if (com == 1) {
+            int u, v;
+            cin >> u >> v;
+            u--; v--;
+            uf.unite(u, v);
+        } else if (com == 2) {
+            int v, k;
+            cin >> v >> k;
+            v--;
+            ans.push_back(uf.kthLargest(v, k));
+        }
+    }
+    
+    for (auto x : ans) 
+        cout << (x == -2 ? -1 : x + 1) << '\n';
+    
+    return 0;
+}
+```
+
+Key changes made:
+1. Reorganized the UnionFind structure to include the components sets directly as a member variable
+2. Changed the union operation to properly merge the sets and maintain the components
+3. Added a separate kthLargest function to handle the query logic
+4. Fixed the output format to properly convert internal -2 to -1 for the final output
+5. Simplified the main loop by removing redundant data structures
+
+The main issue was in the handling of the sets during union operations. The new implementation ensures that when we merge two components, we properly merge their sets and clear the smaller one. The k-th largest query is now handled by a dedicated function that checks the size and returns the appropriate element from the set's reverse iterator.

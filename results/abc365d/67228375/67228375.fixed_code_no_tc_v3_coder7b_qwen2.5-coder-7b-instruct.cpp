@@ -1,0 +1,36 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define endl "\n"
+#define MOD 1000000007
+
+
+int main() {
+
+    ios_base::sync_with_stdio(false);
+    cin.tie(0);
+
+    map<char, char> beats = {{'R', 'P'}, {'P', 'S'}, {'S', 'R'}};
+    int n;
+    cin >> n;
+    string s;
+    cin >> s;
+    int wins = 0;
+    char last_move = s[0];
+    bool can_win_next = true;
+    for (int i = 1; i < n; i++) {
+        if (s[i] != last_move && beats[last_move] != s[i]) {
+            wins++;
+            can_win_next = false;
+        } else {
+            if (can_win_next) {
+                wins++;
+                can_win_next = false;
+            }
+        }
+        last_move = s[i];
+    }
+    cout << wins << endl;
+
+    return 0;
+
+}

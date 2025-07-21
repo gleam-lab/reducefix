@@ -1,0 +1,79 @@
+To fix this code, we need to address several issues:
+
+1. **Input Reading**: The original code incorrectly reads `q` (number of queries) before `n` (number of vertices). The problem specifies `N` first, then `Q`.
+
+2. **Union-Find Data Structure**: The `as` array is used to keep track of the top 10 largest vertices in each component. However, the merging logic is flawed. When merging two components, it should combine their top 10 vertices and sort them in descending order to maintain the top 10 largest.
+
+3. **Edge Cases**: The code doesn't handle cases where the number of connected vertices is less than `k` for Type 2 queries, leading to incorrect outputs or segmentation faults.
+
+4. **Efficiency**: The merging process should be efficient to handle the constraints (up to 200,000 queries).
+
+Here’s the corrected code:
+
+```cpp
+#include<bits/stdc++.h>
+using namespace std;
+
+const int MAXN = 200005;
+vector<int> as[MAXN];
+int fa[MAXN];
+
+int gtf(int x) {
+    if (x == fa[x]) return x;
+    return fa[x] = gtf(fa[x]);
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int N, Q;
+    cin >> N >> Q;
+
+    for (int i = 1; i <= N; i++) {
+        fa[i] = i;
+        as[i].push_back(i);
+    }
+
+    while (Q--) {
+        int op, u, v;
+        cin >> op >> u >> v;
+
+        if (op == 1) {
+            int root_u = gtf(u);
+            int root_v = gtf(v);
+            if (root_u != root_v) {
+                if (as[root_u].size() < as[root_v].size()) {
+                    swap(root_u, root_v);
+                }
+                // Merge the smaller list into the larger one
+                for (int num : as[root_v]) {
+                    as[root_u].push_back(num);
+                }
+                // Sort in descending order and keep only top 10
+                sort(as[root_u].rbegin(), as[root_u].rend());
+                if (as[root_u].size() > 10) {
+                    as[root_u].resize(10);
+                }
+                fa[root_v] = root_u;
+            }
+        } else {
+            int root = gtf(u);
+            if (v > as[root].size()) {
+                cout << -1 << '\n';
+            } else {
+                cout << as[root][v - 1] << '\n';
+            }
+        }
+    }
+
+    return 0;
+}
+```
+
+### Explanation:
+1. **Input Handling**: The code reads `N` (number of vertices) and `Q` (number of queries) correctly.
+2. **Union-Find**: The `gtf` function implements path compression for efficient union-find operations.
+3. **Merging Components**: When merging two components, the smaller component's vertices are added to the larger component's list. The combined list is then sorted in descending order and truncated to keep only the top 10 largest vertices.
+4. **Type 2 Queries**: For each query, it checks if the requested `k-th` largest vertex exists in the connected component. If not, it outputs `-1`; otherwise, it outputs the vertex number from the sorted list.
+5. **Efficiency**: The use of path compression and merging smaller components into larger ones ensures the solution remains efficient within the problem constraints.

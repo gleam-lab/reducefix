@@ -1,0 +1,67 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+struct Candidate {
+    long long votes;
+    int index;
+};
+
+bool canWin(vector<Candidate>& candidates, int M, long long K, int i, long long x) {
+    vector<int> leaders;
+    for (int j = 0; j < candidates.size(); ++j) {
+        if (candidates[j].votes + x > candidates[i].votes) {
+            leaders.push_back(j);
+        }
+    }
+    if (leaders.size() <= M) {
+        return true;
+    }
+    long long totalVotesNeeded = 0;
+    for (int j : leaders) {
+        totalVotesNeeded += (candidates[j].votes + x + 1) * (M + 1 - leaders.size());
+    }
+    return totalVotesNeeded <= K - x;
+}
+
+int main() {
+    int N, M;
+    long long K;
+    cin >> N >> M >> K;
+    
+    vector<Candidate> candidates(N);
+    for (int i = 0; i < N; ++i) {
+        cin >> candidates[i].votes;
+        candidates[i].index = i;
+    }
+    
+    sort(candidates.begin(), candidates.end(), [](const Candidate& a, const Candidate& b) {
+        return a.votes < b.votes;
+    });
+    
+    vector<long long> results(N, -1);
+    for (int i = 0; i < N; ++i) {
+        if (canWin(candidates, M, K, i, 0)) {
+            results[i] = 0;
+            continue;
+        }
+        long long left = 0, right = K;
+        while (left < right) {
+            long long mid = left + (right - left) / 2;
+            if (canWin(candidates, M, K, i, mid)) {
+                right = mid;
+            } else {
+                left = mid + 1;
+            }
+        }
+        results[i] = left;
+    }
+    
+    for (int i = 0; i < N; ++i) {
+        cout << results[i] << " ";
+    }
+    cout << endl;
+    
+    return 0;
+}

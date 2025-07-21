@@ -1,0 +1,45 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+#define ll long long
+
+void solve() {
+    ll N;
+    cin >> N;
+    
+    vector<ll> A(N), B(N - 1);
+    for (int i = 0; i < N; ++i) cin >> A[i];
+    for (int i = 0; i < N - 1; ++i) cin >> B[i];
+
+    sort(A.begin(), A.end());
+    sort(B.begin(), B.end());
+
+    multiset<ll> bSet;
+    for (ll val : B) bSet.insert(val);
+
+    int j = 0;
+    for (int i = 0; i < N; ++i) {
+        auto it = bSet.lower_bound(A[i]);
+        if (it != bSet.end()) {
+            bSet.erase(it);
+        } else {
+            // This toy cannot fit in any box, so we need the new box
+            if (j == 0) {
+                j++;
+            } else {
+                cout << -1 << endl;
+                return;
+            }
+        }
+    }
+
+    // The smallest x that can accommodate the unplaced toy is the next available size
+    cout << A[N - 1] << endl;
+}
+
+int main() {
+    ios::sync_with_stdio(0);
+    cin.tie(0);
+    solve();
+    return 0;
+}

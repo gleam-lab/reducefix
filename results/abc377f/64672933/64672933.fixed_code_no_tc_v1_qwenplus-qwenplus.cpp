@@ -1,0 +1,118 @@
+#include <bits/stdc++.h>
+using namespace std;
+using i64 = long long;
+
+int main() {
+    std::ios::sync_with_stdio(false);
+    std::cin.tie(nullptr);
+
+    i64 N, M;
+    cin >> N >> M;
+
+    set<i64> rows, cols;
+    set<i64> diag1, diag2; // x + y and x - y
+
+    for (i64 i = 0; i < M; ++i) {
+        i64 a, b;
+        cin >> a >> b;
+        rows.insert(a);
+        cols.insert(b);
+        diag1.insert(a + b);
+        diag2.insert(a - b);
+    }
+
+    // Total squares attacked = 
+    // |rows| * N + |cols| * N 
+    // - |rows| * |cols| (overcounted intersections)
+    // + |diag1| * N - (overlap with rows/cols)
+    // + |diag2| * N - (overlap with rows/cols)
+    // But we need to carefully subtract overlaps only once.
+
+    i64 total_attacked = 0;
+
+    // Rows
+    total_attacked += rows.size() * N;
+
+    // Columns
+    total_attacked += cols.size() * N;
+
+    // Subtract overlapping row-column intersections
+    total_attacked -= rows.size() * cols.size();
+
+    // Diagonal 1: x + y = c
+    for (auto d : diag1) {
+        // Number of points on diagonal x + y = d in grid N x N
+        i64 lo = max(1LL, d - N);
+        i64 hi = min(N, d - 1);
+        if (lo <= hi) {
+            total_attacked += (hi - lo + 1);
+        }
+    }
+
+    // Diagonal 2: x - y = c
+    for (auto d : diag2) {
+        i64 lo = max(1LL, 1 + d);
+        i64 hi = min(N, N + d);
+        if (lo <= hi) {
+            total_attacked += (hi - lo + 1);
+        }
+    }
+
+    // Now subtract overlap between diagonals and rows/columns
+
+    // Overlap between diag1 and rows/cols
+    for (auto d : diag1) {
+        // x + y = d
+        for (auto r : rows) {
+            i64 c = d - r;
+            if (c >= 1 && c <= N) {
+                total_attacked -= 1;
+            }
+        }
+        for (auto c : cols) {
+            i64 r = d - c;
+            if (r >= 1 && r <= N) {
+                total_attacked -= 1;
+            }
+        }
+    }
+
+    // Overlap between diag2 and rows/cols
+    for (auto d : diag2) {
+        // x - y = d
+        for (auto r : rows) {
+            i64 c = r - d;
+            if (c >= 1 && c <= N) {
+                total_attacked -= 1;
+            }
+        }
+        for (auto c : cols) {
+            i64 r = d + c;
+            if (r >= 1 && r <= N) {
+                total_attacked -= 1;
+            }
+        }
+    }
+
+    // Subtract overlap between diag1 and diag2
+    for (auto d1 : diag1) {
+        for (auto d2 : diag2) {
+            // Solve:
+            // x + y = d1
+            // x - y = d2
+            i64 x = (d1 + d2) / 2;
+            i64 y = d1 - x;
+            if ((d1 + d2) % 2 == 0 && x >= 1 && x <= N && y >= 1 && y <= N) {
+                total_attacked -= 1;
+            }
+        }
+    }
+
+    // Total empty squares = N*N minus occupied or attacked squares
+    i64 total_occupied = M;
+    i64 total_empty_safe = N * N - total_attacked - total_occupied;
+
+    cout << total_empty_safe << "\n";
+
+    return 0;
+}

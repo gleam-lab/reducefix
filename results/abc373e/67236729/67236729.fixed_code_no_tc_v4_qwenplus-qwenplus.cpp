@@ -1,0 +1,83 @@
+#include <bits/stdc++.h>
+using namespace std;
+using i64 = long long;
+
+const int N = 200010;
+
+i64 a[N], sorted_a[N];
+
+void solve() {
+    i64 n, m, k;
+    cin >> n >> m >> k;
+    i64 remaining = k;
+    for (int i = 0; i < n; ++i) {
+        cin >> a[i];
+        remaining -= a[i];
+    }
+
+    // If all candidates are to be elected, everyone already wins
+    if (m == n) {
+        for (int i = 0; i < n; ++i) cout << "0 ";
+        cout << "\n";
+        return;
+    }
+
+    // Sort the votes to allow binary search on top candidates
+    copy(a, a + n, sorted_a);
+    sort(sorted_a, sorted_a + n);
+
+    // Precompute suffix sums: sum of top x candidates
+    i64 suf_sum[N] = {0};
+    for (int i = n - 1; i >= 0; --i) {
+        suf_sum[i] = suf_sum[i + 1] + sorted_a[i];
+    }
+
+    vector<i64> res(n);
+
+    for (int i = 0; i < n; ++i) {
+        i64 lo = 0, hi = remaining, ans = -1;
+
+        while (lo <= hi) {
+            i64 mid = (lo + hi) / 2;
+            i64 target = a[i] + mid;
+
+            // Find how many candidates have strictly more than target
+            int cnt = n - (upper_bound(sorted_a, sorted_a + n, target) - sorted_a);
+
+            if (cnt >= m) {
+                // Too many candidates ahead, not good enough
+                lo = mid + 1;
+                continue;
+            }
+
+            // Need to raise the worst (m - cnt) candidates to at least target
+            int need_raise = m - cnt;
+            i64 total_needed = 0;
+
+            // The indices of the candidates we may need to boost
+            int idx = n - (m - cnt);
+            if (idx < 0) idx = 0;
+
+            total_needed = max(0LL, (target + 1) * need_raise - (suf_sum[idx] + (idx > 0 ? suf_sum[0] - suf_sum[idx] : 0)));
+
+            if (total_needed <= mid) {
+                // We can guarantee win with this number of votes
+                ans = mid;
+                hi = mid - 1;
+            } else {
+                lo = mid + 1;
+            }
+        }
+
+        res[i] = ans;
+    }
+
+    for (auto x : res) cout << x << " ";
+    cout << "\n";
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    solve();
+}

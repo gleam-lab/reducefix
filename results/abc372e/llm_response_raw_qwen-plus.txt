@@ -1,0 +1,140 @@
+```python
+import os
+import subprocess
+from typing import List, Tuple, Set, Optional
+import sys
+
+def run_program(program_path: str, input_data: bytes) -> bytes:
+    result = subprocess.run(
+        [program_path], 
+        input=input_data,
+        capture_output=True,
+        check=True,  
+        timeout=10   
+    )
+    return result.stdout
+
+def create_input_bytes(queries: List[str], N: int) -> bytes:
+    lines = [f"{N} {len(queries)}\n"] + [q + "\n" for q in queries]
+    return "".join(lines).encode("utf-8")
+
+def test_interesting(queries: List[str], N: int) -> bool:
+    if not queries:
+        return False
+    input_data = create_input_bytes(queries, N)
+    try:
+        wa_output = run_program("./wa", input_data)
+        ac_output = run_program("./ac", input_path)
+        return (wa_output.strip() != ac_output.strip())
+    except:
+        return False
+
+def parse_input(input_file: str) -> Tuple[int, List[str]]:
+    with open(input_file, "r", encoding="utf-8") as f:
+        lines = [line.rstrip("\n") for line in f]
+    
+    if not lines:
+        raise ValueError("Input file is empty")
+    
+    header = lines[0].split()
+    if len(header) != 2:
+        raise ValueError(f"Invalid header: {lines[0]}")
+    
+    N = int(header[0])
+    Q = int(header[1])
+    
+    queries = lines[1:1+Q]
+    if len(queries) != Q:
+        raise ValueError(f"Expected {Q} queries, found {len(queries)}")
+    
+    return N, queries
+
+def reduce_queries_ddmin(original_queries: List[str], N: int) -> List[str]:
+    if not test_interesting(original_queries, N):
+        print("[Error] Initial input does not produce different outputs")
+        return original_queries
+    
+    print("[Info] Starting ddmin reduction for queries...")
+    current_queries = original_queries.copy()
+    granularity = 2
+    
+    while len(current_queries) >= 1:
+        print(f"[Reduce] Current query count={len(current_queries)}, granularity={granularity}")
+        
+        subset_size = max(1, len(current_queries) // granularity)
+        made_progress = False
+        
+        # Try removing a block
+        start_idx = 0
+        while start_idx < len(current_queries):
+            end_idx = min(start_idx + subset_size, len(current_queries))
+            block = current_queries[start_idx:end_idx]
+            
+            candidate = current_queries[:start_idx] + current_queries[end_idx:]
+            print(f"  Trying to remove {len(block)} queries...", end=" ")
+            
+            if test_interesting(candidate, N):
+                print(f"Success! New query count={len(candidate)}")
+                current_queries = candidate
+                granularity = 2
+                made_progress = True
+                break
+            else:
+                print("Failed")
+                start_idx += subset_size
+        
+        if made_progress:
+            continue
+        
+        # Try keeping only a block
+        start_idx = 0
+        while start_idx < len(current_queries):
+            end_idx = min(start_idx + subset_size, len(current_queries))
+            block = current_queries[start_idx:end_idx]
+            
+            if len(block) == 0 or len(block) == len(current_queries):
+                start_idx += subset_size
+                continue
+            
+            print(f"  Trying to keep only {len(block)} queries...", end=" ")
+            if test_interesting(block, N):
+                print(f"Success! New query count={len(block)}")
+                current_queries = block
+                granularity = 2
+                made_progress = True
+                break
+            else:
+                print("Failed")
+                start_idx += subset_size
+        
+        if made_progress:
+            continue
+        
+        if granularity < len(current_queries):
+            granularity = min(granularity * 2, len(current_queries))
+            print(f"  Increasing granularity to {granularity}")
+        else:
+            print("[Info] Reached minimal interesting set")
+            break
+    
+    return current_queries
+
+def reduce_input(input_file: str, output_file: str):
+    if not os.path.exists(input_file):
+        print(f"[Error] Input file does not exist: {input_file}", file=sys.stderr)
+        return
+    
+    try:
+        N, queries = parse_input(input_file)
+    except Exception as e:
+        print(f"[Error] Failed to parse input: {e}", file=sys.stderr)
+        return
+    
+    reduced_queries = reduce_queries_ddmin(queries, N)
+    
+    output_data = create_input_bytes(reduced_queries, N)
+    with open(output_file, "wb") as f:
+        f.write(output_data)
+    
+    print(f"[Info] Reduced input written to {output_file}, {len(reduced_queries)} queries remaining")
+```

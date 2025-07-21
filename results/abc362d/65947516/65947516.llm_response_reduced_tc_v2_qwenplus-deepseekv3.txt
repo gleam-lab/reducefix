@@ -1,0 +1,80 @@
+To fix this code, we need to address several issues. The primary problem lies in how the path weight is calculated and how the Dijkstra's algorithm is implemented. The weight of a path is defined as the sum of the weights of the vertices and edges that appear on the path. However, the current implementation incorrectly includes the weight of the starting vertex in the edge relaxation step, which leads to incorrect path weight calculations.
+
+### Approaches
+1. **Path Weight Calculation**: The correct path weight should include the sum of vertex weights and edge weights along the path. The vertex weight of the starting vertex (vertex 1) should be included once, and the vertex weights of intermediate vertices should be included once when they are traversed.
+2. **Dijkstra's Algorithm**: We need to modify the relaxation step to correctly account for the vertex weights. Specifically, when moving from vertex `u` to vertex `v`, the total cost should include the edge weight `B_j` and the vertex weight `A_v` of the destination vertex `v`.
+3. **Initialization**: Ensure that the initial distance for vertex 1 is set to `A_1` since it is the starting point, and all other vertices are initialized to a large value (infinity).
+
+### Solution Code
+```cpp
+#include<queue>
+#include<vector>
+#include<cstdio>
+#include<cstring>
+#include<climits> 
+#include<algorithm>
+using namespace std;
+typedef long long ll;
+typedef pair<ll, int> pli;
+const int N = 2e5 + 5;
+int n, m;
+ll a[N];
+ll dis[N];
+vector<pair<int, ll>> g[N];
+
+void dijkstra() {
+    priority_queue<pli, vector<pli>, greater<pli>> pq;
+    for (int i = 1; i <= n; ++i) {
+        dis[i] = LLONG_MAX;
+    }
+    dis[1] = a[1];
+    pq.push({dis[1], 1});
+    
+    while (!pq.empty()) {
+        ll current_dist = pq.top().first;
+        int u = pq.top().second;
+        pq.pop();
+        
+        if (current_dist > dis[u]) continue;
+        
+        for (auto &edge : g[u]) {
+            int v = edge.first;
+            ll w = edge.second;
+            
+            if (dis[v] > dis[u] + w + a[v]) {
+                dis[v] = dis[u] + w + a[v];
+                pq.push({dis[v], v});
+            }
+        }
+    }
+}
+
+int main() {
+    scanf("%d%d", &n, &m);
+    for (int i = 1; i <= n; ++i) {
+        scanf("%lld", &a[i]);
+    }
+    for (int i = 1; i <= m; ++i) {
+        int u, v;
+        ll w;
+        scanf("%d%d%lld", &u, &v, &w);
+        g[u].push_back({v, w});
+        g[v].push_back({u, w});
+    }
+    
+    dijkstra();
+    
+    for (int i = 2; i <= n; ++i) {
+        printf("%lld ", dis[i]);
+    }
+    return 0;
+}
+```
+
+### Explanation
+1. **Initialization**: The `dis` array is initialized to `LLONG_MAX` (infinity) except for vertex 1, which is set to `A_1` because the path starts here.
+2. **Priority Queue**: A min-heap is used to always expand the vertex with the current minimum distance.
+3. **Relaxation Step**: For each neighbor `v` of vertex `u`, the algorithm checks if the path from `u` to `v` offers a shorter path than previously known. The new distance is calculated as the sum of the current distance to `u`, the edge weight between `u` and `v`, and the vertex weight of `v`.
+4. **Output**: After processing all vertices, the distances from vertex 1 to all other vertices are printed for `i=2` to `N`.
+
+This approach ensures that the path weights are correctly calculated by including the vertex weights of the starting and destination vertices along with the edge weights, providing the correct minimum path weights from vertex 1 to all other vertices.

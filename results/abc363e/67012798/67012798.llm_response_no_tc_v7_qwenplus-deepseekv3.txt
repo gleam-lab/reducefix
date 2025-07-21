@@ -1,0 +1,99 @@
+The original code had several issues, primarily related to the handling of the sinking process and the queue management. Here's the corrected and optimized version:
+
+1. **Initialization**: We need to properly initialize the queues for each possible sea level, but the original code only handled levels up to 10^5, which is correct but inefficient for large Y.
+
+2. **Sinking Logic**: The original code didn't correctly handle the case where a section's elevation matches the sea level exactly. It also didn't account for the fact that sections could be added to the queue multiple times if they are adjacent to multiple already sunk sections.
+
+3. **Efficiency**: For large H and W (up to 1000 each) and Y up to 10^5, we need an efficient way to track which sections sink at each sea level without reprocessing everything every time.
+
+Here’s the fixed code that addresses these issues:
+
+```cpp
+#include <bits/stdc++.h>
+
+using namespace std;
+
+constexpr int dx[] = {-1, 1, 0, 0};
+constexpr int dy[] = {0, 0, -1, 1};
+
+int main()
+{
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int H, W, Y;
+    cin >> H >> W >> Y;
+
+    vector<vector<int>> A(H, vector<int>(W));
+    for (int i = 0; i < H; i++)
+    {
+        for (int j = 0; j < W; j++)
+        {
+            cin >> A[i][j];
+        }
+    }
+
+    vector<queue<pair<int, int>>> q(1e5 + 2);
+    vector<vector<bool>> sunk(H, vector<bool>(W, false));
+    int ans = H * W;
+
+    // Initialize the border sections
+    for (int i = 0; i < H; i++)
+    {
+        for (int j = 0; j < W; j++)
+        {
+            if (i == 0 || i == H - 1 || j == 0 || j == W - 1)
+            {
+                if (!sunk[i][j])
+                {
+                    q[A[i][j]].push({i, j});
+                    sunk[i][j] = true;
+                }
+            }
+        }
+    }
+
+    for (int y = 1; y <= Y; y++)
+    {
+        while (!q[y].empty())
+        {
+            auto [x, y_] = q[y].front();
+            q[y].pop();
+            ans--;
+
+            for (int d = 0; d < 4; d++)
+            {
+                int nx = x + dx[d];
+                int ny = y_ + dy[d];
+
+                if (nx < 0 || ny < 0 || nx >= H || ny >= W || sunk[nx][ny])
+                {
+                    continue;
+                }
+
+                if (A[nx][ny] <= y)
+                {
+                    sunk[nx][ny] = true;
+                    q[y].push({nx, ny});
+                }
+                else
+                {
+                    sunk[nx][ny] = true;
+                    q[A[nx][ny]].push({nx, ny});
+                }
+            }
+        }
+        cout << ans << '\n';
+    }
+
+    return 0;
+}
+```
+
+### Key Fixes:
+1. **Proper Queue Initialization**: The border sections are correctly added to the queue corresponding to their elevation.
+2. **Sinking Logic**: When processing a section, adjacent sections are checked. If their elevation is <= current sea level, they sink now; otherwise, they are scheduled to sink when the sea level reaches their elevation.
+3. **Efficiency**: By using a separate queue for each possible sea level, we ensure that each section is processed exactly once, leading to an overall O(H*W + Y) time complexity, which is optimal for the given constraints.
+4. **Edge Cases**: Handles cases where the island is completely sunk or remains entirely above sea level correctly.
+
+This solution efficiently tracks the sinking process and provides the correct remaining area for each year up to Y.

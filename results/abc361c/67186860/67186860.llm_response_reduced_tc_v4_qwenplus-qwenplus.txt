@@ -1,0 +1,128 @@
+To solve this problem correctly and efficiently, we need to understand the core idea:
+
+We are given a sequence of integers `A` of length `N`, and an integer `K`. We can remove **exactly** `K` elements from this sequence. After removal, we want the resulting sequence `B` (which must maintain the original order of the remaining elements) to have the **minimum possible difference between its maximum and minimum values**.
+
+---
+
+### Key Observations:
+
+1. The final sequence `B` will consist of `N - K` elements.
+2. Since the order must be preserved, the selected elements must form a **contiguous subsequence** of length `N - K`.
+3. Therefore, the problem reduces to checking all contiguous subsequences of length `N - K` in the original array and computing the min difference between max and min of those subsequences.
+
+This leads to a sliding window approach:
+- Slide a window of size `N - K` over the array.
+- For each window, compute the `max` and `min` efficiently.
+- Track the minimal `max - min`.
+
+---
+
+### Efficient Implementation:
+
+To do this efficiently:
+- Use a **multiset** or two **heaps/deques** (one for max, one for min) to maintain the current window's max and min in O(log N) time per operation.
+- Total complexity becomes `O(N log N)` which is acceptable for `N <= 2 * 10^5`.
+
+Here's the corrected and optimized code:
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    int n, k;
+    cin >> n >> k;
+    vector<int> A(n);
+    for (int i = 0; i < n; ++i)
+        cin >> A[i];
+
+    int window_size = n - k;
+    
+    // Using multisets to maintain min and max in the sliding window
+    multiset<int> min_set, max_set;
+    
+    // Initialize first window
+    for (int i = 0; i < window_size; ++i) {
+        min_set.push_back(A[i]);
+        max_set.push_back(A[i]);
+    }
+
+    int res = INT_MAX;
+    for (int i = 0; i <= n - window_size; ++i) {
+        // Add new element into window
+        if (i + window_size < n) {
+            min_set.insert(A[i + window_size]);
+            max_set.insert(A[i + window_size]);
+        }
+        
+        // Remove element going out of window
+        if (i > 0) {
+            auto it_min = min_set.find(A[i - 1]);
+            min_set.erase(it_min);
+            
+            auto it_max = max_set.find(A[i - 1]);
+            max_set.erase(it_max);
+        }
+
+        // Update result
+        res = min(res, *max_set.rbegin() - *min_set.begin());
+    }
+
+    cout << res << endl;
+    return 0;
+}
+```
+
+---
+
+Wait! There's no `.push_back()` in `multiset`. Let me correct that mistake.
+
+Actually, in C++, you just use `.insert(value)` to insert into a `multiset`. Also, the logic above with two multisets is conceptually correct but inefficient and unnecessary.
+
+Let’s simplify using only one `multiset`.
+
+### Final Optimized and Correct Code:
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    int n, k;
+    cin >> n >> k;
+    vector<int> A(n);
+    for (int i = 0; i < n; ++i)
+        cin >> A[i];
+
+    int window_size = n - k;
+    multiset<int> window;
+    
+    // Initialize first window
+    for (int i = 0; i < window_size; ++i)
+        window.insert(A[i]);
+
+    int res = INT_MAX;
+    for (int i = 0; i <= n - window_size; ++i) {
+        // Compute current window's diff
+        res = min(res, *window.rbegin() - *window.begin());
+
+        // Move window forward
+        if (i + window_size < n) {
+            window.erase(window.find(A[i])); // Remove outgoing element
+            window.insert(A[i + window_size]); // Add incoming element
+        }
+    }
+
+    cout << res << endl;
+    return 0;
+}
+```
+
+---
+
+### Why This Works:
+- We're maintaining a window of size `N-K` using a `multiset`, allowing duplicates.
+- We slide the window by removing the oldest element and inserting the newest one.
+- Each insertion/removal and access to min/max is logarithmic in time.
+
+This guarantees correctness and efficiency for large inputs.

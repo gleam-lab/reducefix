@@ -1,0 +1,67 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+using i64 = long long;
+constexpr i64 INF = 9223372036854775807; // Maximum value for 64-bit signed integer
+
+struct Node {
+    int vertex;
+    i64 cost;
+    bool operator<(const Node& other) const {
+        return cost > other.cost; // min-heap
+    }
+};
+
+void solve() {
+    int n, m;
+    cin >> n >> m;
+    vector<i64> A(n + 1);
+    for (int i = 1; i <= n; ++i) {
+        cin >> A[i];
+    }
+
+    vector<vector<pair<int, i64>>> graph(n + 1);
+    for (int i = 0; i < m; ++i) {
+        int u, v;
+        i64 b;
+        cin >> u >> v >> b;
+        graph[u].emplace_back(v, b);
+        graph[v].emplace_back(u, b);
+    }
+
+    vector<i64> dist(n + 1, INF);
+    priority_queue<Node> pq;
+
+    dist[1] = A[1]; // Start from vertex 1 with its weight
+    pq.push({1, dist[1]});
+
+    while (!pq.empty()) {
+        auto [u, cost] = pq.top();
+        pq.pop();
+
+        if (cost > dist[u]) continue;
+
+        for (auto [v, edgeCost] : graph[u]) {
+            i64 newCost = cost + edgeCost + A[v]; // path weight to v
+            if (newCost < dist[v]) {
+                dist[v] = newCost;
+                pq.push({v, newCost});
+            }
+        }
+    }
+
+    for (int i = 2; i <= n; ++i) {
+        cout << dist[i] << " ";
+    }
+    cout << "\n";
+}
+
+int main() {
+    cin.tie(nullptr)->sync_with_stdio(false);
+    int t = 1;
+    // cin >> t;
+    while (t--) {
+        solve();
+    }
+    return 0;
+}

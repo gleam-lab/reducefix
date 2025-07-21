@@ -1,0 +1,25 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <climits>
+
+using namespace std;
+
+int main() {
+    int n;
+    long long dp[2]; // dp[0] for dp0, dp[1] for dp1
+    dp[0] = 0;
+    dp[1] = LLONG_MIN;
+    cin >> n;
+
+    for (int i = 0; i < n; i++) {
+        long long x;
+        cin >> x;
+        long long temp = dp[0];
+        dp[0] = max(dp[1] + 2 * x, dp[0]);
+        dp[1] = max(temp + x, dp[1]);
+    }
+
+    cout << max(dp[0], dp[1]) << endl;
+    return 0;
+}

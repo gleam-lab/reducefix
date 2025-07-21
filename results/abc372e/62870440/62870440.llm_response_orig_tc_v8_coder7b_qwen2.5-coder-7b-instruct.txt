@@ -1,0 +1,111 @@
+```cpp
+#include<bits/stdc++.h>
+using namespace std;
+
+vector<int> adj[200005];
+
+void dfs(int node, int parent, vector<int>& depth, vector<vector<int>>& level) {
+    depth[node] = depth[parent] + 1;
+    level[depth[node]].push_back(node);
+    for(auto& child : adj[node]) {
+        if(child == parent) continue;
+        dfs(child, node, depth, level);
+    }
+}
+
+void preprocess(vector<int>& depth, vector<vector<int>>& level, vector<vector<int>>& up) {
+    int n = depth.size();
+    int max_level = *max_element(depth.begin(), depth.end());
+    
+    up.assign(max_level + 1, vector<int>(n));
+    for(int i = 0; i < n; ++i) {
+        up[0][i] = i;
+    }
+
+    for(int k = 1; k <= max_level; ++k) {
+        for(int i = 0; i < n; ++i) {
+            up[k][i] = up[k-1][up[k-1][i]];
+        }
+    }
+}
+
+int LCA(int u, int v, vector<int>& depth, vector<vector<int>>& up) {
+    if(depth[u] > depth[v])
+        swap(u, v);
+
+    int diff = depth[v] - depth[u];
+
+    for(int i = 0; diff > 0; ++i) {
+        if(diff & 1)
+            v = up[i][v];
+        diff >>= 1;
+    }
+
+    if(u == v)
+        return u;
+
+    for(int i = up.size() - 1; i >= 0; --i) {
+        if(up[i][u] != up[i][v]) {
+            u = up[i][u];
+            v = up[i][v];
+        }
+    }
+
+    return up[0][u];
+}
+
+void addEdge(int u, int v) {
+    adj[u].push_back(v);
+    adj[v].push_back(u);
+}
+
+int kthAncestor(int node, int k, vector<int>& depth, vector<vector<int>>& up) {
+    if(k >= depth[node])
+        return -1;
+
+    for(int i = 0; k > 0; ++i) {
+        if(k & 1)
+            node = up[i][node];
+        k >>= 1;
+    }
+
+    return node;
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(NULL);
+
+    int n, q;
+    cin >> n >> q;
+
+    vector<int> depth(n + 1), level[n + 1];
+    vector<vector<int>> up;
+
+    for(int i = 1; i <= n; ++i) {
+        cin >> depth[i];
+    }
+
+    for(int i = 1; i < n; ++i) {
+        int u, v;
+        cin >> u >> v;
+        addEdge(u, v);
+    }
+
+    preprocess(depth, level, up);
+
+    while(q--) {
+        int type, u, k;
+        cin >> type >> u >> k;
+
+        if(type == 1) {
+            // No need to handle edge addition in this problem
+        } else {
+            int ancestor = kthAncestor(u, k, depth, up);
+            cout << (ancestor != -1 ? ancestor : -1) << "\n";
+        }
+    }
+
+    return 0;
+}
+```

@@ -1,0 +1,52 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+typedef long long ll;
+
+vector<int> getMinVotesToWin(int n, int m, vector<int>& a) {
+    vector<int> ans(n, -1);
+    vector<int> b = a;
+    sort(b.begin(), b.end());
+    reverse(b.begin(), b.end());
+
+    for(int i = 0; i < n; ++i) {
+        int needed = 0;
+        for(int j = 0; j < n; ++j) {
+            if(j != i && b[j] > b[i]) {
+                needed++;
+            }
+        }
+
+        if(needed <= m) {
+            ans[i] = b[i] - a[i];
+        }
+    }
+
+    return ans;
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(NULL);
+
+    int n, m;
+    ll k;
+    cin >> n >> m >> k;
+    vector<ll> a(n);
+    for(int i = 0; i < n; ++i) {
+        cin >> a[i];
+        k -= a[i];
+    }
+
+    vector<ll> minVotes = getMinVotesToWin(n, m, a);
+
+    for(int i = 0; i < n; ++i) {
+        if(minVotes[i] >= 0) {
+            cout << minVotes[i] << " ";
+        } else {
+            cout << "-1 ";
+        }
+    }
+
+    return 0;
+}

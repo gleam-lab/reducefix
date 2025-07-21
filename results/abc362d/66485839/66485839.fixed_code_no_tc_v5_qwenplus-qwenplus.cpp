@@ -1,0 +1,63 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+using i64 = long long;
+constexpr i64 INF = 1e18;
+
+struct Node {
+    int node;
+    i64 dist;
+    bool operator<(const Node& other) const {
+        return dist > other.dist; // min-heap
+    }
+};
+
+int main() {
+    cin.tie(nullptr)->sync_with_stdio(false);
+    
+    int N, M;
+    cin >> N >> M;
+    
+    vector<i64> A(N + 1);
+    for (int i = 1; i <= N; ++i) {
+        cin >> A[i];
+    }
+    
+    vector<vector<pair<int, i64>>> graph(N + 1);
+    for (int i = 0; i < M; ++i) {
+        int U, V, B;
+        cin >> U >> V >> B;
+        graph[U].emplace_back(V, B);
+        graph[V].emplace_back(U, B);
+    }
+    
+    vector<i64> minPath(N + 1, INF);
+    priority_queue<Node> pq;
+    
+    // Start from node 1, path weight is just A[1] (being on the node)
+    minPath[1] = A[1];
+    pq.push({1, A[1]});
+    
+    while (!pq.empty()) {
+        auto [u, dist] = pq.top();
+        pq.pop();
+        
+        if (dist > minPath[u]) continue;
+        
+        for (auto [v, edgeCost] : graph[u]) {
+            i64 newDist = dist + edgeCost + A[v]; // current path cost to v
+            
+            if (newDist < minPath[v]) {
+                minPath[v] = newDist;
+                pq.push({v, newDist});
+            }
+        }
+    }
+    
+    for (int i = 2; i <= N; ++i) {
+        cout << minPath[i] << " ";
+    }
+    cout << "\n";
+    
+    return 0;
+}

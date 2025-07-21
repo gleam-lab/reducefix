@@ -1,0 +1,47 @@
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+#define rep(i, n) for (ll i = 0; i < (ll)(n); i++)
+#define rep2(i, s, n) for (ll i = (s); i < (ll)(n); i++)
+#define all(x) x.begin(), x.end()
+template<typename T> inline bool chmax(T &a, T b) { return ((a < b) ? (a = b, true) : (false)); }
+template<typename T> inline bool chmin(T &a, T b) { return ((a > b) ? (a = b, true) : (false)); }
+
+int main() {
+    int H, W, Q;
+    cin >> H >> W >> Q;
+    vector<vector<bool>> grid(H, vector<bool>(W, true));
+    ll ans = H * W;
+
+    while(Q--) {
+        int R, C;
+        cin >> R >> C;
+        R--; C--;
+
+        if(grid[R][C]) {
+            ans--;
+            grid[R][C] = false;
+            continue;
+        }
+
+        for(int i = R-1; i >= 0 && !grid[i][C]; i--) {
+            ans--;
+            grid[i][C] = false;
+        }
+        for(int i = R+1; i < H && !grid[i][C]; i++) {
+            ans--;
+            grid[i][C] = false;
+        }
+        for(int j = C-1; j >= 0 && !grid[R][j]; j--) {
+            ans--;
+            grid[R][j] = false;
+        }
+        for(int j = C+1; j < W && !grid[R][j]; j++) {
+            ans--;
+            grid[R][j] = false;
+        }
+    }
+
+    cout << ans << endl;
+    return 0;
+}

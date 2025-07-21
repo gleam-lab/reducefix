@@ -1,0 +1,91 @@
+To fix this code, we need to address the issue where the program incorrectly calculates the maximum processing capacity that can be achieved within the given budget. The problem arises from the way the code checks all possible combinations of buying machines from each supplier, which can lead to overflow and incorrect results, especially when dealing with large values.
+
+### Approaches
+1. **Problem Analysis**: The task is to determine the maximum processing capacity achievable by purchasing machines from N suppliers, each offering two types of machines with different processing capacities and costs, within a budget X.
+2. **Binary Search**: We use binary search to find the maximum processing capacity that can be achieved within the budget. The binary search checks if a given processing capacity is feasible by calculating the minimum cost required to achieve that capacity across all suppliers.
+3. **Cost Calculation**: For each supplier, we calculate the minimum cost required to achieve the target processing capacity by considering both types of machines. This involves checking possible combinations of buying machines from both types to meet the target capacity at the lowest cost.
+4. **Edge Cases**: Handle cases where it's impossible to achieve any processing capacity within the budget (e.g., all machines are too expensive).
+
+### Solution Code
+```cpp
+#include<iostream>
+#include<vector>
+#include<algorithm>
+#include<climits>
+using namespace std;
+using ll = long long;
+
+int main() {
+    int N;
+    ll X;
+    cin >> N >> X;
+    vector<ll> A(N), P(N), B(N), Q(N);
+    
+    for (int i = 0; i < N; i++) {
+        cin >> A[i] >> P[i] >> B[i] >> Q[i];
+    }
+
+    auto feasible = [&](ll x) {
+        ll total_cost = 0;
+        for (int i = 0; i < N; i++) {
+            ll min_cost = LLONG_MAX;
+            // Iterate possible number of type A machines
+            ll max_a = min(x / A[i] + 1, B[i] + 1);
+            for (ll s = 0; s <= max_a; s++) {
+                ll remaining = x - s * A[i];
+                if (remaining <= 0) {
+                    min_cost = min(min_cost, s * P[i]);
+                    continue;
+                }
+                ll t = (remaining + B[i] - 1) / B[i];
+                if (t < 0) t = 0;
+                min_cost = min(min_cost, s * P[i] + t * Q[i]);
+            }
+            // Iterate possible number of type B machines
+            ll max_b = min(x / B[i] + 1, A[i] + 1);
+            for (ll t = 0; t <= max_b; t++) {
+                ll remaining = x - t * B[i];
+                if (remaining <= 0) {
+                    min_cost = min(min_cost, t * Q[i]);
+                    continue;
+                }
+                ll s = (remaining + A[i] - 1) / A[i];
+                if (s < 0) s = 0;
+                min_cost = min(min_cost, t * Q[i] + s * P[i]);
+            }
+            if (min_cost == LLONG_MAX) {
+                return false;
+            }
+            total_cost += min_cost;
+            if (total_cost > X) {
+                return false;
+            }
+        }
+        return total_cost <= X;
+    };
+
+    ll low = 0;
+    ll high = 1LL << 60;
+    ll ans = 0;
+    while (low <= high) {
+        ll mid = low + (high - low) / 2;
+        if (feasible(mid)) {
+            ans = mid;
+            low = mid + 1;
+        } else {
+            high = mid - 1;
+        }
+    }
+    cout << ans << endl;
+    return 0;
+}
+```
+
+### Explanation
+1. **Binary Search Setup**: The binary search is initialized with `low` and `high` bounds to cover the possible range of processing capacities.
+2. **Feasibility Check**: The `feasible` function checks if a given processing capacity `x` can be achieved within the budget `X` by calculating the minimum cost required for each supplier to contribute to the total processing capacity.
+3. **Cost Calculation**: For each supplier, the function calculates the minimum cost by considering both types of machines. This involves checking possible numbers of machines of each type (`s` and `t`) that can meet the target capacity `x` at the lowest cost.
+4. **Binary Search Execution**: The binary search adjusts the bounds based on whether the current mid-value processing capacity is feasible. The loop continues until the search space is exhausted, and the maximum feasible processing capacity is stored in `ans`.
+5. **Output**: The maximum feasible processing capacity is printed.
+
+This approach ensures that the solution is efficient and correct, handling all edge cases and large input sizes appropriately.

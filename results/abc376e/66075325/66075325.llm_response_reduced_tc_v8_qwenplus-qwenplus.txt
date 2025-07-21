@@ -1,0 +1,80 @@
+```cpp
+#include <iostream>
+#include <vector>
+#include <queue>
+#include <algorithm>
+using namespace std;
+#define int long long
+
+signed main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int T;
+    cin >> T;
+    
+    while (T--) {
+        int N, K;
+        cin >> N >> K;
+        
+        vector<pair<int, int>> A(N);
+        for (int i = 0; i < N; ++i) {
+            cin >> A[i].first;
+        }
+        
+        vector<int> B(N);
+        for (int i = 0; i < N; ++i) {
+            cin >> B[i];
+        }
+        
+        // Pair A with its index so we can retrieve corresponding B value
+        for (int i = 0; i < N; ++i) {
+            A[i].second = i;
+        }
+        
+        // Sort by A[i] ascending
+        sort(A.begin(), A.end());
+        
+        // Minimize max(A_i) * sum(B_i)
+        // We'll maintain a min-heap of size K to track top K elements by B[i]
+        priority_queue<int, vector<int>, greater<>> pq;
+        int sumB = 0;
+        int result = 1e18;  // Large initial value
+        
+        // First take the last K elements based on sorted A
+        // Then slide window backward
+        for (int i = N - 1; i >= 0; --i) {
+            // We want to consider including this element in our set S
+            // Since we're processing from right to left, we build up the set
+            if (pq.size() < K - 1) {
+                pq.push(B[A[i].second]);
+                sumB += B[A[i].second];
+            } else {
+                // We always include current A[i] which contributes to max(A)
+                // So we take its B value and sum of K-1 smallest B values from previous elements
+                int currentMaxA = A[i].first;
+                result = min(result, currentMaxA * (sumB + B[A[i].second]));
+                
+                // Now maintain heap: add next and remove largest if needed
+                int candidate = B[A[i].second];
+                if (!pq.empty() && candidate > pq.top()) {
+                    sumB -= pq.top();
+                    pq.pop();
+                    pq.push(candidate);
+                    sumB += candidate;
+                }
+            }
+        }
+        
+        // Handle case when exactly K elements are present at end
+        if (pq.size() == K - 1) {
+            int currentMaxA = A[0].first;
+            result = min(result, currentMaxA * (sumB + B[A[0].second]));
+        }
+        
+        cout << result << '\n';
+    }
+    
+    return 0;
+}
+```

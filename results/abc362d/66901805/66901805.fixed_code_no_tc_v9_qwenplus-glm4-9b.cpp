@@ -1,0 +1,59 @@
+#include<bits/stdc++.h>
+using namespace std;
+#define int long long 
+vector<pair<int, int>> G[200005];
+int dist[200005], n, m, a[200005];
+vector<int> result;
+
+void dijkstra(int start) {
+    priority_queue<pair<int, int>, vector<pair<int, int>>, greater<pair<int, int>>> pq;
+    pq.push({0, start});
+    dist[start] = a[start]; // Initialize distances with vertex weights
+
+    while (!pq.empty()) {
+        int u = pq.top().second;
+        int d = pq.top().first;
+        pq.pop();
+
+        if (d > dist[u]) continue; // Skip processing if already found a better path
+
+        for (auto edge : G[u]) {
+            int v = edge.first;
+            int weight = edge.second;
+            int newDist = d + a[v] + weight;
+
+            if (newDist < dist[v]) {
+                dist[v] = newDist;
+                pq.push({newDist, v});
+            }
+        }
+    }
+}
+
+signed main() {
+    scanf("%lld %lld", &n, &m);
+    for (int i = 1; i <= n; ++i) {
+        cin >> a[i];
+    }
+
+    for (int i = 1; i <= m; ++i) {
+        int u, v, w;
+        cin >> u >> v >> w;
+        G[u].push_back({v, w});
+        G[v].push_back({u, w});
+    }
+
+    dijkstra(1); // Run Dijkstra's algorithm starting from vertex 1
+
+    // Output the minimum distances for all vertices except the first one
+    for (int i = 2; i <= n; ++i) {
+        result.push_back(dist[i]);
+    }
+
+    for (size_t i = 0; i < result.size(); ++i) {
+        if (i > 0) cout << " ";
+        cout << result[i];
+    }
+    cout << "\n";
+    return 0;
+}

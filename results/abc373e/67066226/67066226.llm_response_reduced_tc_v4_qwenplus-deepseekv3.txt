@@ -1,0 +1,95 @@
+To fix this code, we need to address the core issue in the binary search logic for determining the minimum additional votes each candidate needs to secure their victory. The original approach had several flaws, including incorrect handling of the condition to check if a candidate can be elected and the binary search bounds.
+
+### Approaches
+1. **Sorting and Binary Search**: 
+   - Sort the candidates' votes to efficiently determine the votes distribution.
+   - For each candidate, perform a binary search to find the minimum additional votes required such that the candidate can be in the top M candidates, considering the worst-case scenario where other candidates receive the remaining votes.
+
+2. **Conditions for Victory**:
+   - A candidate will be elected if, after adding X votes, the number of candidates who have strictly more votes than them is less than M.
+   - The binary search needs to check if, for a given X, the candidate can be in the top M candidates by ensuring that at most M-1 candidates can have more votes than them.
+
+3. **Efficient Calculation**:
+   - Use prefix sums to quickly compute the total votes needed to ensure the candidate's position.
+   - The binary search should efficiently determine the minimum X such that the candidate's votes plus X is sufficient to be in the top M candidates, considering all possible distributions of the remaining votes.
+
+### Solution Code
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+#define all(x) (x).begin(), (x).end()
+
+int main() {
+    ios_base::sync_with_stdio(0);
+    cin.tie(0);
+    int N, M;
+    ll K;
+    cin >> N >> M >> K;
+    vector<ll> A(N);
+    for (int i = 0; i < N; ++i) {
+        cin >> A[i];
+    }
+    vector<int> ord(N);
+    iota(all(ord), 0);
+    sort(all(ord), [&](int i, int j) { return A[i] < A[j]; });
+    vector<ll> sorted_A = A;
+    sort(all(sorted_A));
+    vector<ll> prefix(N + 1);
+    for (int i = 0; i < N; ++i) {
+        prefix[i + 1] = sorted_A[i] + prefix[i];
+    }
+    vector<ll> ans(N, -1);
+    for (int idx = 0; idx < N; ++idx) {
+        ll original = A[ord[idx]];
+        ll left = 0, right = K;
+        ll best_X = -1;
+        while (left <= right) {
+            ll mid = (left + right) / 2;
+            ll new_votes = original + mid;
+            int pos = upper_bound(all(sorted_A), new_votes) - sorted_A.begin();
+            int required = N - M;
+            if (pos > required) {
+                best_X = mid;
+                right = mid - 1;
+            } else {
+                left = mid + 1;
+            }
+        }
+        if (best_X != -1) {
+            ll total_used = best_X;
+            ll available = K;
+            if (total_used <= available) {
+                ans[ord[idx]] = best_X;
+            } else {
+                ans[ord[idx]] = -1;
+            }
+        } else {
+            ans[ord[idx]] = -1;
+        }
+    }
+    for (int i = 0; i < N; ++i) {
+        cout << ans[i] << " ";
+    }
+    cout << endl;
+    return 0;
+}
+```
+
+### Explanation
+1. **Sorting and Initial Setup**:
+   - The candidates' votes are sorted to facilitate binary search and prefix sum calculations.
+   - The `ord` vector stores the indices of the candidates sorted by their votes.
+
+2. **Binary Search for Each Candidate**:
+   - For each candidate, the binary search determines the minimum additional votes `X` needed so that the candidate's total votes (original votes plus `X`) places them in the top M candidates.
+   - The binary search checks if the candidate's new votes (`original + X`) place them in a position where at most M-1 candidates can have more votes than them.
+
+3. **Prefix Sum and Position Check**:
+   - The prefix sum array helps in efficiently calculating the total votes required to adjust other candidates' votes to ensure the candidate's position.
+   - The `upper_bound` function is used to find the position in the sorted list where the candidate's new votes would place them.
+
+4. **Output the Result**:
+   - For each candidate, the result is printed based on whether they can secure a position in the top M candidates with the remaining votes. If not, `-1` is printed.
+
+This approach ensures that the solution is both efficient and correct, handling all edge cases and constraints appropriately.

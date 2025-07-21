@@ -1,0 +1,80 @@
+#include <iostream>
+#include <vector>
+#include <queue>
+#include <algorithm>
+using namespace std;
+
+typedef long long ll;
+
+struct Item {
+    int a, b;
+};
+
+bool compareByA(const Item &x, const Item &y) {
+    return x.a < y.a;
+}
+
+void solve() {
+    int T;
+    cin >> T;
+    while (T--) {
+        int N, K;
+        cin >> N >> K;
+        vector<Item> items(N);
+        for (int i = 0; i < N; ++i)
+            cin >> items[i].a;
+        for (int i = 0; i < N; ++i)
+            cin >> items[i].b;
+        
+        // Sort items by A
+        sort(items.begin(), items.end(), compareByA);
+
+        ll sumB = 0;
+        priority_queue<int> min_heap; // To maintain the K smallest B's
+
+        ll res = 1e18;
+
+        for (int i = 0; i < N; ++i) {
+            if (i + K - 1 < N) { // Try to use this as max A in subset
+                sumB = 0;
+                priority_queue<int, vector<int>, greater<>> topK; // Get top K-1 smallest after i
+                for (int j = i + 1; j <= i + K - 1; ++j) {
+                    topK.push(items[j].b);
+                }
+                sumB += items[i].b;
+                while (!topK.empty()) {
+                    sumB += topK.top();
+                    topK.pop();
+                }
+                res = min(res, (ll)items[i].a * sumB);
+            }
+
+            // Maintain a sliding window of K largest B values among previous items
+            if (K > 1) {
+                min_heap.push(items[i].b);
+                if (min_heap.size() > K - 1) {
+                    min_heap.pop(); // Remove the largest
+                }
+                if (i >= K - 1) {
+                    // We have selected K-1 smallest from [0..i]
+                    // Add current item i as max A
+                    ll total = 0;
+                    priority_queue<int, vector<int>, greater<>> temp_heap = min_heap;
+                    while (!temp_heap.empty()) {
+                        total += temp_heap.top();
+                        temp_heap.pop();
+                    }
+                    res = min(res, (ll)items[i].a * total);
+                }
+            }
+        }
+        cout << res << endl;
+    }
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    solve();
+    return 0;
+}

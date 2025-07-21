@@ -1,0 +1,59 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+using ll = long long;
+using Graph = vector<vector<int>>;
+
+#define rep(i,n) for (int i=0; i<(n); ++i)
+#define reps(i,n) for (int i=0; i<=(n); ++i)
+#define all(x) (x).begin(), (x).rbegin()
+#define pb(a) push_back(a)
+
+int dx[4] = {1, 0, -1, 0};
+int dy[4] = {0, 1, 0, -1};
+
+int main() {
+    int N;
+    cin >> N;
+    vector<int> P(N + 1), X(N);
+    
+    rep(i, N) cin >> X[i];
+    rep(i, N) {
+        int p;
+        cin >> p;
+        P[i + 1] = P[i] + p;
+    }
+
+    // Create a sorted list of (X[i], i) pairs
+    vector<pair<int, int>> sorted_X_idx(N);
+    rep(i, N) {
+        sorted_X_idx[i] = {X[i], i};
+    }
+    sort(all(sorted_X_idx));
+
+    // Map X[i] to prefix sum index
+    map<int, int> x_to_idx;
+    rep(i, N) {
+        x_to_idx[sorted_X_idx[i].first] = sorted_X_idx[i].second;
+    }
+
+    int Q;
+    cin >> Q;
+    rep(q, Q) {
+        int L, R;
+        cin >> L >> R;
+
+        // Find the first X >= L
+        auto l_it = x_to_idx.lower_bound(L);
+        int l_idx = (l_it != x_to_idx.end()) ? l_it->second : N;
+
+        // Find the first X > R
+        auto r_it = x_to_idx.upper_bound(R);
+        int r_idx = (r_it != x_to_idx.end()) ? r_it->second : N;
+
+        int ans = P[r_idx] - P[l_idx];
+        cout << ans << endl;
+    }
+
+    return 0;
+}

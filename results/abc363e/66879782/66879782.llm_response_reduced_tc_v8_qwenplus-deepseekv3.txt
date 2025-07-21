@@ -1,0 +1,80 @@
+To fix this code, we need to correctly simulate the process of the island sinking as the sea level rises each year. The key insight is to determine for each cell the earliest year it will sink, which is the maximum elevation along any path from the cell to the boundary (since water can propagate inward from the boundaries). This can be efficiently computed using a priority queue (min-heap) to process cells in order of their sinking times.
+
+### Approaches
+1. **Priority Queue Initialization**: Start by adding all boundary cells to a priority queue, where each boundary cell's sinking time is its own elevation.
+2. **Dijkstra-like Propagation**: Use the priority queue to process cells in increasing order of their sinking times. For each cell, check its neighbors. If a neighbor's elevation is less than or equal to the current cell's sinking time, the neighbor's sinking time is set to the current cell's sinking time, and it is added to the queue.
+3. **Prefix Sum Calculation**: After determining the sinking times for all cells, compute a prefix sum array to quickly answer the queries for each year. The prefix sum array will store the cumulative count of cells that have sunk by each year.
+
+### Solution Code
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+#define all(x) (x).begin(), (x).end()
+
+int main() {
+    ios_base::sync_with_stdio(0);
+    cin.tie(0);
+    int h, w, y;
+    cin >> h >> w >> y;
+    vector<vector<int>> height(h, vector<int>(w));
+    vector<vector<int>> sink(h, vector<int>(w, INT_MAX));
+    priority_queue<pair<int, pair<int, int>>, vector<pair<int, pair<int, int>>>, greater<pair<int, pair<int, int>>>> pq;
+    int di[4][2] = {{-1, 0}, {1, 0}, {0, -1}, {0, 1}};
+
+    for (int i = 0; i < h; ++i) {
+        for (int j = 0; j < w; ++j) {
+            cin >> height[i][j];
+            if (i == 0 || i == h - 1 || j == 0 || j == w - 1) {
+                sink[i][j] = height[i][j];
+                pq.push({sink[i][j], {i, j}});
+            }
+        }
+    }
+
+    while (!pq.empty()) {
+        auto current = pq.top();
+        pq.pop();
+        int current_h = current.first;
+        int r = current.second.first;
+        int c = current.second.second;
+        if (current_h > sink[r][c]) continue;
+        for (int k = 0; k < 4; ++k) {
+            int nr = r + di[k][0];
+            int nc = c + di[k][1];
+            if (nr < 0 || nr >= h || nc < 0 || nc >= w) continue;
+            if (sink[nr][nc] > max(height[nr][nc], current_h)) {
+                sink[nr][nc] = max(height[nr][nc], current_h);
+                pq.push({sink[nr][nc], {nr, nc}});
+            }
+        }
+    }
+
+    vector<int> cnt(y + 2, 0);
+    for (int i = 0; i < h; ++i) {
+        for (int j = 0; j < w; ++j) {
+            if (sink[i][j] <= y) {
+                cnt[sink[i][j]]++;
+            }
+        }
+    }
+
+    for (int i = 1; i <= y; ++i) {
+        cnt[i] += cnt[i - 1];
+    }
+
+    for (int i = 1; i <= y; ++i) {
+        cout << h * w - cnt[i] << '\n';
+    }
+
+    return 0;
+}
+```
+
+### Explanation
+1. **Initialization**: The input is read, and the boundary cells are initialized in the priority queue with their respective heights as their sinking times.
+2. **Priority Queue Processing**: The priority queue processes each cell in order of increasing sinking time. For each cell, its neighbors are checked. If a neighbor's elevation is less than or equal to the current cell's sinking time, the neighbor's sinking time is updated to the maximum of its own elevation and the current cell's sinking time, and it is added to the queue.
+3. **Prefix Sum Array**: After processing all cells, a prefix sum array is constructed to keep track of how many cells have sunk by each year. This allows for O(1) per query responses after O(HW) preprocessing.
+4. **Output**: For each year from 1 to Y, the output is the total number of cells minus the number of cells that have sunk by that year, derived from the prefix sum array.
+
+This approach efficiently calculates the sinking times for all cells using a Dijkstra-like algorithm with a priority queue, ensuring optimal performance for large grids. The prefix sum array then allows for quick responses to each query.

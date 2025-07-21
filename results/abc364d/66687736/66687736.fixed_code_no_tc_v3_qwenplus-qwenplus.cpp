@@ -1,0 +1,43 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+#define ll long long
+#define vi vector<int>
+#define pb push_back
+#define rep(i, n) for(int i = 0; i < (int)n; ++i)
+
+// Binary search to find the k-th smallest distance from b to elements in a
+int query(const vi& a, int b, int k) {
+    int left = 0, right = 2e8 + 1;
+    while (left < right) {
+        int mid = (left + right) / 2;
+        // Count how many a[i] are in [b - mid, b + mid]
+        int l = lower_bound(a.begin(), a.end(), b - mid) - a.begin();
+        int r = upper_bound(a.begin(), a.end(), b + mid) - a.begin();
+        if (r - l < k) {
+            left = mid + 1;
+        } else {
+            right = mid;
+        }
+    }
+    return left;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+    
+    int N, Q;
+    cin >> N >> Q;
+    
+    vi a(N);
+    rep(i, N) cin >> a[i];
+    
+    sort(a.begin(), a.end());
+    
+    rep(q, Q) {
+        int b, k;
+        cin >> b >> k;
+        cout << query(a, b, k) << '\n';
+    }
+}

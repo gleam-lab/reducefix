@@ -1,0 +1,101 @@
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+
+int main() {
+  std::cin.tie(nullptr)->sync_with_stdio(false);
+  int N, M;
+  ll K;
+  cin >> N >> M >> K;
+  vector<ll> A(N);
+  for (int i = 0; i < N; ++i) {
+    cin >> A[i];
+  }
+
+  // Total votes already used
+  ll total_used = accumulate(A.begin(), A.end(), 0LL);
+  ll remaining = K - total_used;
+
+  vector<ll> sorted_A = A;
+  sort(sorted_A.begin(), sorted_A.end());
+
+  vector<ll> prefix_sum(N + 1);
+  for (int i = 0; i < N; ++i) {
+    prefix_sum[i + 1] = prefix_sum[i] + sorted_A[i];
+  }
+
+  vector<ll> res(N);
+
+  for (int i = 0; i < N; ++i) {
+    ll a_i = A[i];
+
+    // Binary search on minimal X such that candidate i wins with X additional votes
+    ll low = 0, high = remaining;
+    ll ans = -1;
+
+    while (low <= high) {
+      ll mid = (low + high) / 2;
+      ll cur_total = a_i + mid;
+
+      // After using `mid` votes on candidate i, we have `remaining - mid` left to distribute among others
+
+      // We want to determine how many candidates can be strictly greater than cur_total
+      // Find the first index in sorted_A where value > cur_total
+      int idx = upper_bound(sorted_A.begin(), sorted_A.end(), cur_total) - sorted_A.begin();
+      int num_greater = N - idx;
+
+      // Try to boost up to `idx` candidates to at most cur_total
+      // We can use binary search to see how many of them can be brought to <= cur_total
+
+      // The idea is to find how many top candidates can be capped at cur_total using the available remaining - mid
+
+      // To cap the top `x` candidates from position idx to N-1:
+      // Need to increase them to cur_total if they're below it.
+      // But since we are trying to make as few candidates > cur_total as possible,
+      // we try to bring as many as possible down.
+
+      // We want to know maximum number of candidates we can cap to <= cur_total using the budget = remaining - mid
+
+      ll budget = remaining - mid;
+
+      // Use binary search on how many can be brought to <= cur_total
+      int l = 0, r = idx;
+      int max_cap = 0;
+      while (l <= r) {
+        int m = (l + r) / 2;
+        ll need = cur_total * m - (prefix_sum[idx] - prefix_sum[idx - m]);
+        if (need <= budget) {
+          max_cap = m;
+          l = m + 1;
+        } else {
+          r = m - 1;
+        }
+      }
+
+      int total_above = idx - max_cap + (mid == 0 ? 0 : 1); // count of candidates > cur_total
+      if (total_above < M) {
+        ans = mid;
+        high = mid - 1;
+      } else {
+        low = mid + 1;
+      }
+    }
+
+    if (ans == -1) {
+      // Check if already winning
+      int idx = upper_bound(sorted_A.begin(), sorted_A.end(), a_i) - sorted_A.begin();
+      int cnt = N - idx;
+      if (cnt < M) ans = 0;
+      else ans = -1;
+    }
+
+    res[i] = ans;
+  }
+
+  for (ll x : res) cout << x << " ";
+  cout << "\n";
+
+  return 0;
+}
+```

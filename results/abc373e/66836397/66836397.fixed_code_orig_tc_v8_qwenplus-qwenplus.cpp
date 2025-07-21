@@ -1,0 +1,81 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+using ll = long long;
+
+template<typename T>
+void print_vec(const vector<T>& v) {
+    for (size_t i = 0; i < v.size(); ++i) {
+        cout << v[i] << " \n"[i + 1 == v.size()];
+    }
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int N, M;
+    ll K;
+    cin >> N >> M >> K;
+    vector<ll> A(N);
+    ll total = 0;
+    for (int i = 0; i < N; ++i) {
+        cin >> A[i];
+        total += A[i];
+    }
+
+    ll remaining = K - total;
+    if (remaining < 0) {
+        remaining = 0;
+    }
+
+    // Create a sorted copy of A to use in binary search
+    vector<ll> sorted_A = A;
+    sort(sorted_A.begin(), sorted_A.end());
+
+    vector<int> idx(N);
+    iota(idx.begin(), idx.end(), 0);
+
+    // Sort indices based on A values
+    sort(idx.begin(), idx.end(), [&](int i, int j) { return A[i] < A[j]; });
+
+    // Precompute prefix sums of the sorted array
+    vector<ll> prefix(N + 1, 0);
+    for (int i = 0; i < N; ++i)
+        prefix[i + 1] = prefix[i] + sorted_A[i];
+
+    vector<ll> result(N);
+
+    for (int i = 0; i < N; ++i) {
+        ll ai = A[i];
+        ll x = 0; // minimum additional votes needed
+
+        // Binary search for minimal x such that candidate i is guaranteed to be in top M
+        ll low = 0, high = remaining;
+        while (low <= high) {
+            ll mid = (low + high) / 2;
+            ll new_score = ai + mid;
+
+            // Number of candidates with score > new_score
+            int cnt = N - (upper_bound(sorted_A.begin(), sorted_A.end(), new_score) - sorted_A.begin());
+
+            if (cnt < M) {
+                // Candidate can be in top M with this many votes
+                result[i] = mid;
+                break;
+            } else {
+                // Need more votes
+                low = mid + 1;
+            }
+        }
+
+        if (low > high) {
+            // No solution found
+            result[i] = -1;
+        }
+    }
+
+    print_vec(result);
+
+    return 0;
+}

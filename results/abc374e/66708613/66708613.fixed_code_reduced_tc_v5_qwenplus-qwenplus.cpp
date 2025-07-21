@@ -1,0 +1,78 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+using namespace std;
+using ll = long long;
+
+const int inf = 1 << 30;
+const ll INF = 1LL << 62;
+
+// Binary search for the maximum processing capacity that can be achieved
+bool canAchieve(ll capacity, const vector<ll>& A, const vector<ll>& P, 
+                const vector<ll>& B, const vector<ll>& Q, ll budget) {
+    ll total_cost = 0;
+    
+    for (int i = 0; i < A.size(); ++i) {
+        ll min_cost = INF;
+        
+        // Try all possible numbers of machine A (up to what's needed)
+        for (ll s = 0; s <= B[i]; ++s) {
+            ll remaining = max(0LL, capacity - A[i] * s);
+            ll t = (remaining + B[i] - 1) / B[i];  // ceil division
+            if (t >= 0 && s * P[i] + t * Q[i] <= INF)
+                min_cost = min(min_cost, s * P[i] + t * Q[i]);
+        }
+        
+        // Also try swapping roles of A and B
+        for (ll t = 0; t <= A[i]; ++t) {
+            ll remaining = max(0LL, capacity - B[i] * t);
+            ll s = (remaining + A[i] - 1) / A[i];  // ceil division
+            if (s >= 0 && t * Q[i] + s * P[i] <= INF)
+                min_cost = min(min_cost, t * Q[i] + s * P[i]);
+        }
+        
+        if (min_cost == INF || budget < min_cost)
+            return false;
+        
+        budget -= min_cost;
+    }
+    
+    return true;
+}
+
+int main() {
+    int N;
+    ll X;
+    cin >> N >> X;
+    
+    vector<ll> A(N), P(N), B(N), Q(N);
+    
+    for (int i = 0; i < N; ++i) {
+        cin >> A[i] >> P[i] >> B[i] >> Q[i];
+    }
+    
+    // Check if it's impossible to buy at least one of each machine
+    for (int i = 0; i < N; ++i) {
+        if (X < P[i] && X < Q[i]) {
+            cout << 0 << endl;
+            return 0;
+        }
+    }
+    
+    // Binary search on processing capacity
+    ll low = 0, high = 1LL << 60;
+    ll result = 0;
+    
+    while (low <= high) {
+        ll mid = (low + high) / 2;
+        
+        if (canAchieve(mid, A, P, B, Q, X)) {
+            result = mid;
+            low = mid + 1;
+        } else {
+            high = mid - 1;
+        }
+    }
+    
+    cout << result << endl;
+}

@@ -1,0 +1,94 @@
+To solve the problem correctly, we need to simulate the rising sea levels and keep track of which parts of the island remain above water. The key steps include:
+
+1. Parsing the input to get the grid representing the island elevations.
+2. For each sea level rise from 1 to Y, determine which sections of the island will sink based on their relative elevation compared to the current sea level.
+3. Keep track of the number of sections remaining above water after each sea level rise.
+4. Output the results for each sea level.
+
+Here's the corrected C++ code:
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+#define all(x) (x).begin(), (x).end()
+
+struct Cell {
+    int x, y, elevation;
+    bool operator<(const Cell& other) const {
+        return elevation > other.elevation;
+    }
+};
+
+int main() {
+    ios_base::sync_with_stdio(0);
+    cin.tie(0);
+    
+    int h, w, y;
+    cin >> h >> w >> y;
+    vector<vector<int>> height(h, vector<int>(w));
+    vector<vector<bool>> visited(h, vector<bool>(w, false));
+    vector<vector<int>> sink(h, vector<int>(w, INT_MAX));
+    priority_queue<Cell> pq;
+    int di[4][2] = {{-1,0},{1,0},{0,-1},{0,1}};
+    
+    // Read the heights and initialize the priority queue
+    for(int i = 0; i < h; ++i) {
+        for(int j = 0; j < w; ++j) {
+            cin >> height[i][j];
+            sink[i][j] = INT_MAX;
+            if(i == 0 || i == h - 1 || j == 0 || j == w - 1) {
+                sink[i][j] = height[i][j];
+                pq.push({i, j, height[i][j]});
+            }
+        }
+    }
+    
+    // Process each cell in the priority queue
+    while (!pq.empty()) {
+        auto [r, c, H] = pq.top();
+        pq.pop();
+        if (visited[r][c]) continue;
+        visited[r][c] = true;
+        
+        for (int k = 0; k < 4; ++k) {
+            int nr = r + di[k][0];
+            int nc = c + di[k][1];
+            if (nr < 0 || nr >= h || nc < 0 || nc >= w) continue;
+            if (height[nr][nc] <= H && sink[nr][nc] > H) {
+                sink[nr][nc] = H;
+                pq.push({nr, nc, H});
+            }
+        }
+    }
+    
+    // Calculate the areas above each sea level
+    vector<int> pref(y + 1, 0);
+    for (int i = 0; i < h; ++i) {
+        for (int j = 0; j < w; ++j) {
+            if (sink[i][j] <= y) {
+                pref[sink[i][j]]++;
+            }
+        }
+    }
+    
+    for (int i = 1; i <= y; ++i) {
+        pref[i] += pref[i - 1];
+        cout << h * w - pref[i] << '\n';
+    }
+    
+    return 0;
+}
+```
+
+This solution follows these steps:
+
+1. **Reading Input**: We read the dimensions of the island `h` and `w`, and the number of sea level rises `y`. We then read the elevation grid and initialize the `sink` array and priority queue.
+
+2. **Processing the Priority Queue**: We use a priority queue to process cells starting from the lowest elevation. For each cell, we mark it as visited and check its neighbors. If a neighbor has an elevation less than or equal to the current cell's elevation and hasn't been marked as visited yet, we update its sink level and push it back into the priority queue.
+
+3. **Calculating Areas**: After processing all cells, we calculate the number of cells above each sea level using a prefix sum approach.
+
+4. **Output**: Finally, we output the number of cells above each sea level for the first `y` levels.
+
+This approach ensures that we efficiently simulate the rising sea levels and accurately compute the areas above water for each level.

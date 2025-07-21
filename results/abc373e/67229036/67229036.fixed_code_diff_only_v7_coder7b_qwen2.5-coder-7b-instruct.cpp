@@ -1,0 +1,51 @@
+#include<bits/stdc++.h>
+using namespace std;
+#define ll long long
+const int N=2e5+5;
+int n,m,k,sum,cnt,a[N],b[N],c[N];
+
+// Function to check if candidate i can win with x more votes
+bool check(int i, int x){
+    // Find the position of the candidate with rank m + 1 after adding x votes to candidate i's count
+    int z = lower_bound(b+1, b+1+n, a[i] + x + 1) - b - 1;
+    
+    // Check if there are at least m candidates with more votes than candidate i after adding x votes
+    if(z < n - m)
+        return false;
+    
+    // Calculate the required votes for candidate i to win considering the votes of other candidates
+    ll needed_votes = (a[i] + x + 1LL) * (z - n + m) - (c[z] - c[n-m-1] - max(a[i], b[n-m]));
+    
+    // Return true if the required votes are within the remaining votes
+    return needed_votes <= k - x;
+}
+
+signed main(){
+    ios::sync_with_stdio(0); cin.tie(0); cout.tie(0);
+    int i, j, x, y, z, t;
+    cin >> n >> m >> k;
+    for(i = 1; i <= n; i++){
+        cin >> a[i]; 
+        k -= a[i]; 
+        b[i] = a[i];
+    }
+    sort(b + 1, b + n + 1);
+    for(i = 1; i <= n; i++)
+        c[i] = c[i-1] + b[i];
+    
+    for(i = 1; i <= n; i++){
+        int l = 0, r = k + 1;
+        while(l < r){
+            int mid = (l + r) / 2;
+            if(check(i, mid))
+                r = mid;
+            else
+                l = mid + 1;
+        }
+        if(l <= k)
+            cout << l << " ";
+        else
+            cout << "-1 ";
+    }
+    return 0;
+}

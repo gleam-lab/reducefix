@@ -1,0 +1,32 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int N;
+    cin >> N;
+
+    long double total = 0.0;
+    int currX = 0, currY = 0;
+    int nextX, nextY;
+
+    for (int i = 0; i < N; ++i) {
+        cin >> nextX >> nextY;
+        long double dx = static_cast<long double>(currX - nextX);
+        long double dy = static_cast<long double>(currY - nextY);
+        total += sqrt(dx * dx + dy * dy);
+        currX = nextX;
+        currY = nextY;
+    }
+
+    // Return to origin
+    long double dx = static_cast<long double>(currX);
+    long double dy = static_cast<long double>(currY);
+    total += sqrt(dx * dx + dy * dy);
+
+    cout << fixed << setprecision(15) << total << endl;
+
+    return 0;
+}

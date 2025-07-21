@@ -1,0 +1,90 @@
+To fix this code, we need to ensure that for each candidate, we correctly determine the minimum number of additional votes they need to secure their victory. The key insight is that a candidate i will be elected if, after adding X votes to their count, there are fewer than M candidates with more votes than them. 
+
+### Approaches
+1. **Sort the Candidates**: First, we sort the candidates based on their current votes to efficiently determine the threshold.
+2. **Binary Search for Minimum Votes**: For each candidate, perform a binary search to find the minimum X such that adding X votes to candidate i ensures that at most M-1 candidates can have more votes than them, even if the remaining votes are distributed to other candidates in the worst possible way.
+3. **Check Feasibility**: During the binary search, for a given X, we need to check if it's possible to distribute the remaining votes such that at most M-1 candidates exceed the new vote count of candidate i (A_i + X). This involves:
+   - Determining the number of candidates that would need to surpass A_i + X.
+   - Calculating the total votes required to make these candidates surpass A_i + X and ensuring this doesn't exceed the remaining votes (K - sum(A_i)).
+
+### Solution Code
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+#define all(x) (x).begin(), (x).end()
+
+int main() {
+    ios_base::sync_with_stdio(0);
+    cin.tie(0);
+    int N, M;
+    ll K;
+    cin >> N >> M >> K;
+    vector<ll> A(N);
+    ll sum_A = 0;
+    for (int i = 0; i < N; ++i) {
+        cin >> A[i];
+        sum_A += A[i];
+    }
+    ll remaining = K - sum_A;
+
+    vector<int> ord(N);
+    iota(all(ord), 0);
+    sort(all(ord), [&](int i, int j) { return A[i] < A[j]; });
+    vector<ll> sorted_A = A;
+    sort(all(sorted_A));
+
+    vector<ll> prefix(N + 1);
+    for (int i = 0; i < N; ++i) {
+        prefix[i + 1] = prefix[i] + sorted_A[i];
+    }
+
+    vector<ll> ans(N, -1);
+    for (int i = 0; i < N; ++i) {
+        ll low = 0, high = remaining;
+        ll best_X = -1;
+        while (low <= high) {
+            ll mid = (low + high) / 2;
+            ll new_vote = sorted_A[i] + mid;
+            
+            // Find the first index where sorted_A[j] > new_vote
+            auto it = upper_bound(all(sorted_A), new_vote);
+            int cnt = sorted_A.end() - it;
+            
+            if (cnt < M) {
+                best_X = mid;
+                high = mid - 1;
+            } else {
+                int idx = it - sorted_A.begin();
+                int needed = cnt - (M - 1);
+                ll total_needed = 0;
+                for (int j = idx; j < idx + needed; ++j) {
+                    if (j >= N) break;
+                    total_needed += (new_vote + 1 - sorted_A[j]);
+                }
+                if (total_needed <= remaining - mid) {
+                    best_X = mid;
+                    high = mid - 1;
+                } else {
+                    low = mid + 1;
+                }
+            }
+        }
+        ans[ord[i]] = best_X != -1 ? best_X : -1;
+    }
+
+    for (int i = 0; i < N; ++i) {
+        cout << ans[i] << ' ';
+    }
+    cout << '\n';
+    return 0;
+}
+```
+
+### Explanation
+1. **Sorting Candidates**: The candidates are sorted based on their current votes to facilitate binary search and prefix sum calculations.
+2. **Binary Search**: For each candidate, we perform a binary search to determine the minimum X. The search checks if adding X votes to the candidate ensures that no more than M-1 candidates can surpass their vote count.
+3. **Feasibility Check**: For each mid value in the binary search, we check if the remaining votes can be distributed such that any candidates surpassing the new vote count (A_i + mid) do not exceed M-1. If feasible, we adjust the search range to find a smaller X; otherwise, we search for a larger X.
+4. **Output**: The results are stored in an array and printed, indicating the minimum votes needed for each candidate to secure victory or -1 if it's impossible.
+
+This approach efficiently checks the feasibility for each candidate using binary search and ensures optimal performance even for large input sizes.

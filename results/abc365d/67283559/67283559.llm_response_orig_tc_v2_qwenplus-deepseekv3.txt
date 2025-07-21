@@ -1,0 +1,100 @@
+To fix this code, we need to analyze why the initial solution is failing and how to correct it. The problem involves simulating a game where two players choose moves (Rock, Paper, Scissors) in each round, and the outcome is determined by the standard game rules. The goal is to maximize the score by strategically choosing moves based on the opponent's sequence.
+
+### Analysis
+1. **Initial Approach**: The original code attempts to simulate the game by iterating through the opponent's moves and selecting the best possible move for each round. It maintains a set of possible moves (`next` vector) that can be used in the next round, excluding the move used in the current round. However, this approach fails to account for optimal move selection over multiple rounds, leading to suboptimal scores.
+
+2. **Problem**: The initial code's logic doesn't effectively maximize the score because it makes greedy choices in each round without considering future implications. Specifically, it doesn't account for the best possible sequence of moves that could lead to higher scores over multiple rounds.
+
+3. **Solution**: To maximize the score, we need to:
+   - **Track the best possible move** for each round, considering not just the immediate win but also the potential for future wins.
+   - **Use dynamic programming or memoization** to remember the best moves for each position in the sequence.
+   - **Avoid recalculating** the same scenarios repeatedly by storing intermediate results.
+
+### Corrected Approach
+1. **Dynamic Programming**: We use a DP approach where `dp[i][last_move]` represents the maximum score achievable starting from the i-th round, given that the last move used was `last_move`.
+2. **Transitions**: For each round, we consider all possible moves (R, P, S) that can be used, except the one used in the previous round (as per the problem's constraints). We then recursively compute the maximum score from the remaining rounds.
+3. **Memoization**: To optimize, we memoize the results of subproblems to avoid redundant calculations.
+
+### Solution Code
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+unordered_map<char, int> score_map = {
+    {'R', 1}, // beats Scissors
+    {'P', 1}, // beats Rock
+    {'S', 1}  // beats Paper
+};
+
+unordered_map<char, char> beats = {
+    {'R', 'S'},
+    {'P', 'R'},
+    {'S', 'P'}
+};
+
+int max_score(int index, char last_move, const string &S, vector<vector<int>> &dp) {
+    if (index == S.size()) {
+        return 0;
+    }
+    if (dp[index][last_move] != -1) {
+        return dp[index][last_move];
+    }
+    int max_val = 0;
+    for (char move : {'R', 'P', 'S'}) {
+        if (move != last_move) {
+            int current = (beats[move] == S[index]) ? 1 : 0;
+            current += max_score(index + 1, move, S, dp);
+            if (current > max_val) {
+                max_val = current;
+            }
+        }
+    }
+    dp[index][last_move] = max_val;
+    return max_val;
+}
+
+int main() {
+    int N;
+    cin >> N;
+    string S;
+    cin >> S;
+    
+    // Initialize DP table. We use 4 states (0: no last move, 1: R, 2: P, 3: S)
+    vector<vector<int>> dp(N + 1, vector<int>(4, -1));
+    
+    // Convert last_move to index: 0 (no move), 1 (R), 2 (P), 3 (S)
+    auto char_to_index = [](char c) {
+        if (c == 'R') return 1;
+        if (c == 'P') return 2;
+        if (c == 'S') return 3;
+        return 0;
+    };
+    
+    function<int(int, char)> memo = [&](int i, char last) {
+        if (i == N) return 0;
+        int idx = char_to_index(last);
+        if (dp[i][idx] != -1) return dp[i][idx];
+        int res = 0;
+        for (char m : {'R', 'P', 'S'}) {
+            if (m != last) {
+                int gain = (beats[m] == S[i]) ? 1 : 0;
+                res = max(res, gain + memo(i + 1, m));
+            }
+        }
+        dp[i][idx] = res;
+        return res;
+    };
+    
+    int total = memo(0, '\0');
+    cout << total << endl;
+    return 0;
+}
+```
+
+### Explanation
+1. **Dynamic Programming Setup**: The `dp` table is initialized to store the maximum score achievable from each position `i` with a given `last_move`.
+2. **Memoization Function**: The `memo` function calculates the maximum score recursively. For each position `i`, it checks all possible moves (R, P, S) that are different from the last move used. The score for each move is calculated based on whether it beats the opponent's move at `i`.
+3. **Base Case**: When the end of the string `S` is reached, the function returns 0 as no more moves can be made.
+4. **Result Calculation**: The maximum score is computed by calling `memo(0, '\0')`, starting from the first position with no previous move.
+
+This approach ensures that we consider all possible move sequences, maximizing the score while respecting the constraint that the same move cannot be used consecutively. The use of memoization avoids redundant calculations, making the solution efficient.

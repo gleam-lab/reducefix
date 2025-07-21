@@ -1,0 +1,33 @@
+#include <bits/stdc++.h>
+#define INF 0x3f3f3f3f3f3f3f3f
+using namespace std;
+typedef long long ll;
+const int MAXN = 2e5 + 10;
+
+ll a[MAXN], f[MAXN][2];
+// f[i][0] = max sum up to i without taking the i-th element
+// f[i][1] = max sum up to i with taking the i-th element
+
+int main() {
+    ll n;
+    scanf("%lld", &n);
+    for (ll i = 1; i <= n; ++i) {
+        scanf("%lld", &a[i]);
+    }
+
+    // Initialize base cases
+    f[0][0] = 0;
+    f[0][1] = a[1];
+
+    for (ll i = 1; i <= n; ++i) {
+        // If we don't take the i-th element, it's the max of taking or not taking i-1
+        f[i][0] = max(f[i-1][0], f[i-1][1]);
+
+        // If we take the i-th element, previous must not be taken
+        f[i][1] = f[i-1][0] + a[i];
+    }
+
+    // The answer is the maximum of taking or not taking the last element
+    printf("%lld\n", max(f[n][0], f[n][1]));
+    return 0;
+}

@@ -1,0 +1,94 @@
+To solve this problem efficiently, we need to handle two types of queries on a dynamically evolving undirected graph:
+
+1. **Adding edges** between two vertices.
+2. **Querying the k-th largest vertex number** among all vertices connected to a given vertex.
+
+### Key Observations:
+- Since vertices are numbered from `1` to `N`, and queries can ask for up to the 10th largest connected node, we only need to maintain the top 10 largest nodes in each connected component.
+- We can use **Disjoint Set Union (DSU)** with path compression to manage connected components efficiently.
+- Additionally, for each set (component), we'll maintain a sorted list (descending order) of the top 10 largest node values.
+
+### Approach:
+- Use DSU where each root maintains a sorted list (top 10 largest node values).
+- When merging two sets, merge their lists, sort them, and keep the top 10.
+- For Type 2 queries, simply return the k-th element from the list at the root of the queried node (or -1 if there aren't enough elements).
+
+### Efficient Implementation:
+- The union operation merges only the top 10 lists → O(1) per union for this part.
+- Querying is O(1) as we directly access the stored list.
+
+Here's the corrected and optimized C++ implementation:
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+const int MAXN = 2e5 + 5;
+const int K_MAX = 10;
+
+int parent[MAXN];
+vector<int> top_nodes[MAXN];
+
+// Find function with path compression
+int find(int x) {
+    if (parent[x] != x)
+        parent[x] = find(parent[x]);
+    return parent[x];
+}
+
+// Merge two sets, keeping only top K_MAX largest nodes
+void unite(int x, int y) {
+    int fx = find(x);
+    int fy = find(y);
+    if (fx == fy) return;
+
+    // Always attach smaller tree to larger tree
+    if (top_nodes[fx].size() < top_nodes[fy].size())
+        swap(fx, fy);
+
+    // Merge the lists
+    for (int node : top_nodes[fy])
+        top_nodes[fx].push_back(node);
+
+    // Sort and keep only top K_MAX largest nodes
+    sort(top_nodes[fx].begin(), top_nodes[fx].end(), greater<int>());
+    if (top_nodes[fx].size() > K_MAX)
+        top_nodes[fx].resize(K_MAX);
+
+    parent[fy] = fx;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int N, Q;
+    cin >> N >> Q;
+
+    // Initialize DSU
+    for (int i = 1; i <= N; ++i) {
+        parent[i] = i;
+        top_nodes[i].push_back(i);
+    }
+
+    while (Q--) {
+        int type;
+        cin >> type;
+        if (type == 1) {
+            int u, v;
+            cin >> u >> v;
+            unite(u, v);
+        } else if (type == 2) {
+            int v, k;
+            cin >> v >> k;
+            int root = find(v);
+            if (k <= top_nodes[root].size())
+                cout << top_nodes[root][k - 1] << '\n';
+            else
+                cout << "-1\n";
+        }
+    }
+
+    return 0;
+}
+```

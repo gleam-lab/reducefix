@@ -1,0 +1,54 @@
+#include <bits/stdc++.h>
+#define int long long
+using namespace std;
+
+const int N = 2e5 + 5;
+
+int n, m;
+vector<int> g[N];
+int ans = -1;
+
+// BFS is more suitable for shortest cycle detection
+void bfs(int start) {
+    vector<int> dist(n + 1, -1);
+    queue<int> q;
+    
+    dist[start] = 0;
+    q.push(start);
+    
+    while (!q.empty()) {
+        int u = q.front();
+        q.pop();
+        
+        for (int v : g[u]) {
+            if (dist[v] == -1) {
+                dist[v] = dist[u] + 1;
+                q.push(v);
+            } 
+            // If it's already visited and it's not parent node, then check for cycle
+            else if (v != start && dist[v] >= dist[u]) {  // Ensure we're not checking the direct parent edge
+                if (ans == -1)
+                    ans = dist[u] + dist[v] + 1;
+                else
+                    ans = min(ans, dist[u] + dist[v] + 1);
+            }
+        }
+    }
+}
+
+signed main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+    
+    cin >> n >> m;
+    for (int i = 1; i <= m; i++) {
+        int u, v;
+        cin >> u >> v;
+        g[u].push_back(v);
+    }
+
+    bfs(1);
+
+    cout << ans << "\n";
+    return 0;
+}

@@ -1,0 +1,44 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+
+using namespace std;
+using ll = long long;
+
+const int MOD = 1e9 + 7, N = 2e5 + 5;
+
+void solve() {
+    int n;
+    cin >> n;
+    vector<ll> v(n);
+    ll dp[n + 1][2];
+    for (ll &x : v)
+        cin >> x;
+
+    // Initialize dp array
+    for (int i = 0; i < n + 1; ++i) {
+        dp[i][0] = dp[i][1] = 0;
+    }
+
+    // Calculate dp values
+    for (int i = 1; i <= n; ++i) {
+        dp[i][0] = max(dp[i - 1][0], dp[i - 1][1] + 2 * v[i - 1]);
+        dp[i][1] = max(dp[i - 1][0] + v[i - 1], dp[i - 1][1]);
+    }
+
+    // The result is the maximum of the last two states
+    cout << max(dp[n][0], dp[n][1]) << '\n';
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(NULL);
+    cout.tie(NULL);
+
+    int t = 1;
+    cin >> t;
+    while (t--) {
+        solve();
+    }
+    return 0;
+}

@@ -1,0 +1,49 @@
+#include <iostream>
+#include <unordered_set>
+#include <vector>
+#include <utility>
+
+using namespace std;
+
+// Hash specialization for pair<i64, i64>
+struct pair_hash {
+    inline size_t operator()(const pair<long long, long long>& v) const {
+        return v.first * 1000000000LL + v.second;
+    }
+};
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    long long N;
+    int M;
+    cin >> N >> M;
+
+    unordered_set<pair<long long, long long>, pair_hash> attacked;
+
+    vector<pair<long long, long long>> directions = {
+        {2, 1}, {1, 2}, {-1, 2}, {-2, 1},
+        {-2, -1}, {-1, -2}, {1, -2}, {2, -1}
+    };
+
+    for (int i = 0; i < M; ++i) {
+        long long a, b;
+        cin >> a >> b;
+        // Insert the piece itself to avoid placing on it
+        attacked.insert({a, b});
+        // For each direction, mark the attacked positions
+        for (auto& dir : directions) {
+            long long na = a + dir.first;
+            long long nb = b + dir.second;
+            if (na >= 1 && na <= N && nb >= 1 && nb <= N) {
+                attacked.insert({na, nb});
+            }
+        }
+    }
+
+    // Total number of cells is N*N, subtract the number of attacked or occupied cells
+    cout << (i128)N * N - (i128)attacked.size() << "\n";
+
+    return 0;
+}

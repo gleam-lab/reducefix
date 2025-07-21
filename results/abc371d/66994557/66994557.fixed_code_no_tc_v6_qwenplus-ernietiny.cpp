@@ -1,0 +1,30 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    int n, q;
+    cin >> n; // 输入数据量
+    
+    // 初始化数组和变量
+    vector<int> x(n), p(n); // 使用vector来存储输入数据
+    vector<int> sum(n + 1); // 使用vector来存储数组sum
+    
+    // 处理输入数据
+    for (int i = 0; i < n; ++i) {
+        cin >> x[i] >> p[i]; // 读取每个数的值和对应的权重
+        sum[i] = sum[i - 1] + p[i]; // 更新数组sum
+    }
+    
+    // 处理查询操作
+    while (q--) {
+        int L, R; // 查询区间左端点和右端点
+        cin >> L >> R; // 读取查询区间左端点和右端点
+        // 使用二分查找找到对应的区间和
+        int l = lower_bound(x.begin(), x.end(), L) - x.begin() + 1; // 获取左端点的索引位置
+        int r = upper_bound(sum.begin(), sum.end(), R) - sum.begin(); // 获取右端点的索引位置
+        // 计算区间和的差值并输出结果
+        cout << sum[r] - sum[l] << endl; // 这里需要保证在正确的索引位置上执行减法操作，并输出结果
+    }
+    
+    return 0; // 返回0表示程序正常结束
+}

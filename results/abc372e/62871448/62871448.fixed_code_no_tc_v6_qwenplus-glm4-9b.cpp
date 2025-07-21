@@ -1,0 +1,66 @@
+#include<bits/stdc++.h>
+using namespace std;
+int parent[200005];
+vector<int> graph[200005];
+int rank[200005], size[200005];
+
+int find(int v) {
+    if (parent[v] == v) return v;
+    return parent[v] = find(parent[v]);
+}
+
+void unionSets(int u, int v) {
+    u = find(u);
+    v = find(v);
+    if (u != v) {
+        if (rank[u] > rank[v]) {
+            parent[v] = u;
+            size[u] += size[v];
+        } else if (rank[u] < rank[v]) {
+            parent[u] = v;
+            size[v] += size[u];
+        } else {
+            parent[v] = u;
+            size[u] += size[v];
+            rank[u]++;
+        }
+    }
+}
+
+int main() {
+    int n, q;
+    cin >> n >> q;
+    for (int i = 1; i <= n; ++i) {
+        parent[i] = i;
+        size[i] = 1;
+        rank[i] = 0;
+    }
+    
+    while (q--) {
+        int op, v, k;
+        cin >> op >> v >> k;
+        v++;
+        if (op == 1) {
+            int u;
+            cin >> u;
+            unionSets(v, u);
+        } else {
+            int root = find(v);
+            if (k > size[root]) {
+                cout << -1 << endl;
+            } else {
+                vector<int> sortedNodes = {};
+                for (int neighbor : graph[root]) {
+                    int neighborRoot = find(neighbor);
+                    if (neighborRoot == root && neighbor != v) {
+                        sortedNodes.push_back(neighbor);
+                    }
+                }
+                sort(sortedNodes.begin(), sortedNodes.end(), greater<int>());
+                cout << sortedNodes[k-1] << endl;
+            }
+        }
+    }
+    
+    return 0;
+}

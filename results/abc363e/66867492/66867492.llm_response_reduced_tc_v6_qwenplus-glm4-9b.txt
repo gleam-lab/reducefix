@@ -1,0 +1,104 @@
+
+The problem involves simulating the effect of rising sea levels on an island's surface. The island is represented as a grid, and each cell has an elevation. Each year, sea level rises by 1 unit, and any cell adjacent to the sea or submerged cells (cells with elevation less than or equal to the sea level) will also submerge. The task is to compute the area of the island that remains above sea level after a given number of years.
+
+There are a few issues in the provided code that need to be addressed:
+
+1. **Incorrect Data Structures and Logic for Maintaining Submerged Cells**: The code uses a priority queue to keep track of cells that are submerged. However, the logic for updating the submerged cells and checking for adjacent submerged cells is incorrect. The code should maintain a 2D array to track submerged cells and update this array whenever a cell submerges.
+
+2. **Incorrect Initialization of Priority Queue**: The code initializes the priority queue with edges of the grid and some other cells. However, the order in which cells are pushed into the queue is not guaranteed to be correct, which might lead to incorrectæ·¹æ²¡é¡ºåº.
+
+3. **Incorrect Calculation of Remaining Area**: The code uses a variable `ans` to keep track of the remaining area. This variable is updated incorrectly as the code does not properly compute the area above the current sea level.
+
+To address these issues, the following approach can be taken:
+
+1. Initialize a 2D array `submerged` of the same size as the grid to keep track of submerged cells.
+2. Use a priority queue to keep track of the cells that are submerged or will submerge based on their elevations.
+3. For each year, update the `submerged` array based on the cells that will submerge and print the remaining area.
+
+Here is a revised version of the code:
+
+```cpp
+#include <iostream>
+#include <vector>
+#include <queue>
+using namespace std;
+
+struct Cell {
+    int x, y, elevation;
+    Cell(int x, int y, int elevation) : x(x), y(y), elevation(elevation) {}
+    bool operator>(const Cell& other) const {
+        return elevation > other.elevation; // Use '>' for max heap to prioritize lower elevations
+    }
+};
+
+int main() {
+    int H, W, Y;
+    cin >> H >> W >> Y;
+    vector<vector<int>> grid(H, vector<int>(W));
+    vector<vector<bool>> submerged(H, vector<bool>(W, false));
+
+    // Read the grid elevations
+    for (int i = 0; i < H; ++i) {
+        for (int j = 0; j < W; ++j) {
+            cin >> grid[i][j];
+        }
+    }
+
+    priority_queue<Cell> pq;
+    vector<vector<bool>> visited(H, vector<bool>(W, false));
+
+    // Initialize the priority queue with cells that will submerged at year 1
+    for (int i = 0; i < H; ++i) {
+        for (int j = 0; j < W; ++j) {
+            if (i == 0 || i == H - 1 || j == 0 || j == W - 1) {
+                pq.push(Cell(i, j, grid[i][j]));
+                submerged[i][j] = true;
+            }
+        }
+    }
+
+    // Process each year
+    for (int year = 1; year <= Y; ++year) {
+        vector<pair<int, int>> new_submerged;
+        while (!pq.empty()) {
+            Cell top = pq.top();
+            pq.pop();
+            int x = top.x, y = top.y;
+            for (int dx = -1; dx <= 1; ++dx) {
+                int nx = x + dx;
+                for (int dy = -1; dy <= 1; ++dy) {
+                    int ny = y + dy;
+                    if (nx < 0 || nx >= H || ny < 0 || ny >= W || submerged[ny][nx] || visited[ny][nx]) continue;
+                    if (grid[ny][nx] <= year) {
+                        submerged[ny][nx] = true;
+                        new_submerged.emplace_back(nx, ny);
+                    }
+                }
+            }
+        }
+
+        // Update the priority queue with new submerged cells
+        for (auto p : new_submerged) {
+            pq.push(Cell(p.first, p.second, grid[p.first][p.second]));
+        }
+
+        // Calculate the remaining area
+        int remaining_area = 0;
+        for (int i = 0; i < H; ++i) {
+            for (int j = 0; j < W; ++j) {
+                if (!submerged[i][j]) {
+                    remaining_area++;
+                }
+            }
+        }
+
+        cout << remaining_area << endl;
+    }
+
+    return 0;
+}
+```
+
+This code initializes the priority queue with boundary cells, then iteratively processes each year, updating the submerged cells and calculating the remaining area. The remaining area is then printed for each year.
+
+Please note that this code assumes that the input format is correct and does not contain any error handling for invalid input formats.

@@ -1,0 +1,24 @@
+#include<bits/stdc++.h>
+using namespace std;
+
+int main() {
+    int n;
+    cin >> n;
+    string s(n, ' ');
+    cin >> s;
+    
+    vector<int> cnt(3, 0); // Count of P, R, S
+    for(char c : s) {
+        cnt[c-'A']++;
+    }
+    
+    // The optimal strategy is to always play the move that will maximize the number of different moves in the next round
+    int ans = 0;
+    for(int i = 0; i < 3; ++i) {
+        int other_two = cnt[(i+1)%3] + cnt[(i+2)%3];
+        ans = max(ans, min(cnt[i], other_two));
+    }
+    
+    cout << ans << endl;
+    return 0;
+}

@@ -1,0 +1,76 @@
+#include <bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+#define all(x) (x).begin(), (x).end()
+
+int main() {
+    ios_base::sync_with_stdio(0);
+    cin.tie(0);
+    int n, m;
+    ll k;
+    cin >> n >> m >> k;
+    vector<ll> a(n);
+    for (int i = 0; i < n; i++) {
+        cin >> a[i];
+        k -= a[i];
+    }
+
+    // Sort indices based on the number of votes
+    vector<int> ord(n);
+    iota(all(ord), 0);
+    sort(all(ord), [&](int i, int j) { return a[i] < a[j]; });
+
+    // Calculate prefix sums for sorted votes
+    vector<ll> pref(n + 1);
+    for (int i = 0; i < n; i++) {
+        pref[i + 1] = a[ord[i]] + pref[i];
+    }
+
+    // Initialize answer array with -1
+    vector<ll> ans(n, -1);
+
+    // Iterate over each candidate
+    for (int i = 0; i < n; i++) {
+        // Calculate the number of candidates that could surpass this candidate
+        int can_surpass = n - m - (i >= n - m ? 1 : 0);
+        
+        // If there are no candidates that could surpass, the current candidate is guaranteed to win
+        if (can_surpass == 0) {
+            ans[ord[i]] = 0;
+            continue;
+        }
+
+        // Binary search to find the minimum number of votes needed
+        ll l = 0, r = k + 1;
+        while (l <= r) {
+            ll mid = (l + r) / 2;
+            ll votes_needed = 0;
+
+            // Calculate the total votes needed to surpass the current candidate
+            for (int j = 0; j < can_surpass; j++) {
+                int idx = ord[j];
+                if (a[idx] > a[ord[i]]) {
+                    votes_needed += max(0LL, a[idx] - a[ord[i]] + mid);
+                } else {
+                    votes_needed += mid;
+                }
+            }
+
+            // Check if the calculated votes are within the remaining votes
+            if (votes_needed > k) {
+                r = mid - 1;
+            } else {
+                l = mid + 1;
+            }
+        }
+
+        // The minimum number of votes needed is one less than the last valid value
+        if (l != k + 1) {
+            ans[ord[i]] = l - 1;
+        }
+    }
+
+    // Output the results
+    for (auto i : ans) cout << i << ' ';
+    return 0;
+}

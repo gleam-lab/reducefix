@@ -1,0 +1,56 @@
+#include<bits/stdc++.h>
+#define ll long long
+using namespace std;
+
+const int MAXN = 200005;
+
+vector<int> adj[MAXN];
+bool visited[MAXN];
+
+// Function to perform DFS and find the minimum cycle length
+void dfs(int node, int parent, int &minCycleLength) {
+    visited[node] = true;
+    int minSubtreeDist = INT_MAX;
+    
+    for(auto neighbor : adj[node]) {
+        if(!visited[neighbor]) {
+            dfs(neighbor, node, minCycleLength);
+            minSubtreeDist = min(minSubtreeDist, 1 + minSubtreeDist);
+        } else if(neighbor != parent) {
+            // If we encounter a backedge, calculate the cycle length
+            minCycleLength = min(minCycleLength, 1 + minSubtreeDist);
+        }
+    }
+}
+
+int main() {
+    ios_base::sync_with_stdio(false); cin.tie(NULL);
+
+    int n, m;
+    cin >> n >> m;
+    
+    for(int i = 0; i < m; ++i) {
+        int u, v;
+        cin >> u >> v;
+        adj[u].push_back(v);
+        adj[v].push_back(u);
+    }
+
+    int minCycleLength = INT_MAX;
+    memset(visited, false, sizeof(visited));
+    
+    // Start DFS from each unvisited node
+    for(int i = 1; i <= n; ++i) {
+        if(!visited[i]) {
+            dfs(i, -1, minCycleLength);
+        }
+    }
+    
+    if(minCycleLength == INT_MAX) {
+        cout << -1 << endl;
+    } else {
+        cout << minCycleLength << endl;
+    }
+
+    return 0;
+}

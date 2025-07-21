@@ -1,0 +1,79 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+const int MAXN = 200005;
+const int KMAX = 10;
+
+int parent[MAXN];
+set<int, greater<int>> group[MAXN]; // Stores top K elements in descending order
+
+// Find with path compression
+int find(int x) {
+    if (parent[x] != x)
+        parent[x] = find(parent[x]);
+    return parent[x];
+}
+
+// Merge two sets: small-to-large heuristic
+void unite(int x, int y) {
+    x = find(x);
+    y = find(y);
+    if (x == y) return;
+
+    // Always merge smaller set into larger one
+    if (group[x].size() < group[y].size()) {
+        swap(x, y);
+        swap(group[x], group[y]);
+    }
+
+    // Merge the contents of y into x
+    for (int val : group[y]) {
+        group[x].insert(val);
+        if (group[x].size() > KMAX) {
+            // Remove the smallest (last) element if we exceed K
+            auto it = group[x].end();
+            --it;
+            group[x].erase(it);
+        }
+    }
+    
+    parent[y] = x;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+    cout.tie(0);
+
+    int N, Q;
+    cin >> N >> Q;
+
+    // Initialize DSU
+    for (int i = 1; i <= N; ++i) {
+        parent[i] = i;
+        group[i].insert(i);
+    }
+
+    while (Q--) {
+        int type;
+        cin >> type;
+        if (type == 1) {
+            int u, v;
+            cin >> u >> v;
+            unite(u, v);
+        } else {
+            int v, k;
+            cin >> v >> k;
+            int root = find(v);
+            if (group[root].size() < k) {
+                cout << -1 << '\n';
+            } else {
+                auto it = group[root].begin();
+                advance(it, k - 1);
+                cout << *it << '\n';
+            }
+        }
+    }
+
+    return 0;
+}

@@ -1,0 +1,75 @@
+After analyzing the failing test cases and the incorrect output, I identified that the main issue with the original code was in the approach to selecting the subset S of size K. The code tried to maintain a priority queue of the smallest B_i values, but this strategy doesn't necessarily minimize the product of maximum A_i and sum of B_i.
+
+Here's the corrected approach:
+1. Sort the pairs by A_i
+2. For each possible maximum A_i (from index K-1 to N-1), we need to select K-1 elements with the smallest B_i from the previous i-1 elements
+3. Use a max-heap to maintain the largest K-1 B_i values among the first i-1 elements
+4. Keep track of the sum of these K-1 B_i values
+
+The fixed code implements this approach correctly:
+
+```cpp
+#include <bits/stdc++.h>
+#define int long long
+#define f first
+#define s second
+using namespace std;
+
+signed main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t; cin >> t;
+    while(t--) {
+        int n, k; cin >> n >> k;
+        vector<pair<int,int>> v(n);
+        for(int i=0;i<n;i++) cin >> v[i].f;
+        for(int i=0;i<n;i++) cin >> v[i].s;
+        
+        sort(v.begin(), v.end());
+        
+        if(k == 1) {
+            int min_val = LLONG_MAX;
+            for(int i=0;i<n;i++) {
+                min_val = min(min_val, v[i].f * v[i].s);
+            }
+            cout << min_val << '\n';
+            continue;
+        }
+        
+        priority_queue<int> pq;
+        int sum = 0;
+        
+        for(int i=0;i<k-1;i++) {
+            pq.push(v[i].s);
+            sum += v[i].s;
+        }
+        
+        int ans = LLONG_MAX;
+        
+        for(int i=k-1;i<n;i++) {
+            ans = min(ans, v[i].f * (sum + v[i].s));
+            if(!pq.empty() && v[i].s < pq.top()) {
+                sum -= pq.top();
+                pq.pop();
+                sum += v[i].s;
+                pq.push(v[i].s);
+            }
+        }
+        
+        cout << ans << '\n';
+    }
+    return 0;
+}
+```
+
+Key improvements:
+1. Added special case handling for k=1 since it's trivial
+2. Used proper initialization of sum and priority queue
+3. Correctly maintained the sum of K-1 smallest B_i values before each candidate maximum A_i
+4. More efficient updates of the priority queue when a better B_i is found
+5. Used LLONG_MAX for proper initialization of minimum value
+6. Added ios_base::sync_with_stdio(false) and cin.tie(nullptr) for faster I/O
+7. Properly structured the loop to consider each possible maximum A_i
+
+This approach ensures we correctly find the minimum possible value of (max A_i in S) * (sum of B_i in S) for all test cases, including edge cases where K=1 or K=N.

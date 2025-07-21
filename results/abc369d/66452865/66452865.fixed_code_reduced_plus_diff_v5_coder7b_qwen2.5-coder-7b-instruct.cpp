@@ -1,0 +1,32 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+
+using namespace std;
+
+int main() {
+  int N;
+  cin >> N;
+  vector<long long> A(N);
+  for (int i = 0; i < N; i++) cin >> A[i];
+  
+  // Initialize dp array with two states: escape and attack
+  vector<vector<long long>> dp(2, vector<long long>(N));
+  dp[0][0] = 0; // Starting state: no action taken
+  dp[1][0] = A[0]; // Starting state: attack the first element
+  
+  // Iterate through each element
+  for (int i = 1; i < N; i++) {
+    // If we choose to escape
+    dp[0][i] = max(dp[0][i-1], dp[1][i-1]);
+    // If we choose to attack
+    dp[1][i] = max(dp[1][i-1], dp[0][i-1]) + A[i];
+    // Special case for the second element to handle the additional bonus
+    if (i == 1) dp[1][i] = max(dp[1][i], dp[0][i-1] + 2 * A[i]);
+  }
+  
+  // The answer is the maximum value between escaping or attacking the last element
+  cout << max(dp[0][N-1], dp[1][N-1]) << endl;
+  
+  return 0;
+}

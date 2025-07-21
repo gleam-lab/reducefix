@@ -1,0 +1,55 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+const int OFFSET = 1e8;
+const int MAXN = 2e5 + 5;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int N, Q;
+    cin >> N >> Q;
+
+    vector<int> A(N);
+    for (int i = 0; i < N; ++i) {
+        cin >> A[i];
+    }
+
+    // Sort A once so we can perform binary search later
+    sort(A.begin(), A.end());
+
+    while (Q--) {
+        int b, k;
+        cin >> b >> k;
+
+        // Binary search on distance
+        int low = 0;
+        int high = 2 * 1e8 + 5;
+        int answer = high;
+
+        while (low <= high) {
+            int mid = (low + high) / 2;
+
+            // Count number of elements within distance <= mid from b
+            int left = b - mid;
+            int right = b + mid;
+
+            auto l = lower_bound(A.begin(), A.end(), left);
+            auto r = upper_bound(A.begin(), A.end(), right);
+
+            int count = r - l;
+
+            if (count >= k) {
+                answer = mid;
+                high = mid - 1;
+            } else {
+                low = mid + 1;
+            }
+        }
+
+        cout << answer << "\n";
+    }
+
+    return 0;
+}

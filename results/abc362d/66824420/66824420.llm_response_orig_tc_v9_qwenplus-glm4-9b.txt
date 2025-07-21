@@ -1,0 +1,76 @@
+
+The problem asks for finding the minimum weight of a path from vertex 1 to each of the other vertices in a connected undirected graph. The weight of a path is the sum of the weights of the vertices and edges on the path.
+
+Your code has several issues that cause it to fail on the failing case. Let's analyze the problem and the code to find the issues.
+
+### Analysis of the problem
+- The graph is connected, so there exists a path between any two vertices.
+- The problem tells us that the sum of weights on a path is the sum of the weights of vertices and the weights of the edges on the path.
+- We should find the shortest path from vertex 1 to all other vertices, considering both the weights of the vertices and the weights of the edges.
+
+### Issues in the code
+1. **Initialization of distance array**: You initialize the distance array with a very large value (`1E10+0`) which is fine, but you also set the distance to the starting vertex (vertex 1) as the weight of the vertex itself (`dist[1] = a[0]`). This is incorrect because you should consider the weight of the edge connecting vertex 0 to vertex 1.
+
+2. **Priority queue (min-heap) usage**: You use a priority queue to process vertices in increasing order of their distances. However, you only push the distance to the next vertex if it is strictly smaller than the current distance. This means that if multiple paths have the same weight, only one may be considered. This is not guaranteed to find the shortest path if there are multiple paths of the same weight.
+
+3. **Edge weight inclusion**: You include the weight of the vertex when calculating the total distance (`total_dist = val + it.second + a[it.first-1]`). This is redundant because the weight of the vertex `a[it.first - 1]` is already included in the edge weight `it.second`.
+
+### Corrected code
+Here is the corrected code with the mentioned issues addressed:
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    int n, m;
+    cin >> n >> m;
+    int a[n];
+    for (int i = 0; i < n; ++i) {
+        cin >> a[i];
+    }
+    vector<vector<pair<int, int>>> adj(n + 1);
+    for (int j = 0; j < m; ++j) {
+        int u, v, w;
+        cin >> u >> v >> w;
+        adj[u].push_back({v, w});
+        adj[v].push_back({u, w});
+    }
+
+    // Initialize distances with a large value
+    vector<long long> dist(n + 1, 1e10);
+    // Set the distance to the starting vertex (vertex 1)
+    dist[1] = a[0]; 
+
+    // Priority queue to process vertices in increasing order of their distances
+    priority_queue<pair<long long, int>, vector<pair<long long, int>>, greater<pair<long long, int>>> q;
+    q.push({ dist[1], 1 });
+
+    // Process the graph
+    while (!q.empty()) {
+        auto cur = q.top();
+        q.pop();
+
+        long long d = cur.first;
+        int ver = cur.second;
+
+        // Process all adjacent vertices
+        for (auto &nxt : adj[ver]) {
+            int adjVer = nxt.first;
+            long long adjDis = nxt.second + a[adjVer - 1];  // Consider vertex weight
+            if (d + adjDis < dist[adjVer]) {
+                dist[adjVer] = d + adjDis;
+                q.push({ dist[adjVer], adjVer });
+            }
+        }
+    }
+
+    // Output the distances from vertex 1 to all other vertices
+    for (int i = 2; i <= n; ++i) {
+        cout << dist[i] << " ";
+    }
+    cout << endl;
+}
+```
+
+This code should now correctly find the minimum weight of a path from vertex 1 to each other vertex.

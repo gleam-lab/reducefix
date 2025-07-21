@@ -1,0 +1,99 @@
+
+The problem is about processing a series of queries on an undirected graph, where the graph initially has no edges and all vertices are unconnected. The queries are of two types: adding an edge between two vertices and querying the k-th largest vertex connected to a vertex v.
+
+From the provided code, it seems like there are issues with the union-find data structure (used for finding connected components) and the way vertices are being merged and information about connected vertices is stored.
+
+### Analysis of the Code
+1. **Union-Find Data Structure**: The code does not properly update the parent pointers when merging sets. It uses the `gtf` function to find the root of a vertex's set but doesn't ensure that the root pointer of a vertex points to the root of its set.
+
+2. **Path Compression**: The code does not implement path compression in the union-find structure. Path compression is crucial for maintaining a flat structure of the tree and making find operations faster.
+
+3. **Data Storage for Connected Vertices**: The code attempts to store the k-th largest vertex connected to each vertex in an array `as`. However, the logic for updating this array is flawed and doesn't correctly handle the merging of sets.
+
+4. **Edge Addition**: The code does not properly check if the vertices being connected are already in the same set before adding an edge.
+
+### Proposed Solution
+1. **Implement Union-Find with Path Compression**: This ensures efficient find operations and helps maintain a flat tree structure.
+
+2. **Union by Rank**: Always attach the smaller tree under the root of the larger tree during union operations to keep the tree shallow.
+
+3. **Correct Data Storage**: Instead of trying to maintain a sorted list of connected vertices for each vertex, use a set or a priority queue to efficiently find the k-th largest element.
+
+4. **Edge Addition**: Before adding an edge, use the union-find structure to check if the vertices are already connected.
+
+### Sample Code
+Here is a simplified version of the code implementing the above suggestions:
+
+```cpp
+#include <iostream>
+#include <vector>
+#include <set>
+
+using namespace std;
+
+struct UnionFind {
+    vector<int> parent;
+    vector<int> rank;
+
+    UnionFind(int size) : parent(size + 1), rank(size + 1, 0) {
+        for (int i = 0; i <= size; i++) {
+            parent[i] = i;
+        }
+    }
+
+    int find(int x) {
+        if (parent[x] != x) {
+            parent[x] = find(parent[x]); // Path compression
+        }
+        return parent[x];
+    }
+
+    void unite(int x, int y) {
+        int rootX = find(x);
+        int rootY = find(y);
+        if (rootX != rootY) {
+            if (rank[rootX] > rank[rootY]) {
+                parent[rootY] = rootX;
+            } else if (rank[rootX] < rank[rootY]) {
+                parent[rootX] = rootY;
+            } else {
+                parent[rootY] = rootX;
+                rank[rootX]++;
+            }
+        }
+    }
+};
+
+int main() {
+    int N, Q;
+    cin >> N >> Q;
+
+    UnionFind uf(N);
+
+    for (int i = 0; i < Q; i++) {
+        int op, u, v;
+        cin >> op >> u >> v;
+        if (op == 1) {
+            uf.unite(u, v);
+        } else {
+            int rootV = uf.find(v);
+            set<int> connected;
+            for (int j = 1; j <= N; j++) {
+                if (uf.find(j) == rootV) {
+                    connected.insert(j);
+                }
+            }
+
+            if (k <= connected.size()) {
+                cout << *prev(connected.end()) << endl;
+            } else {
+                cout << -1 << endl;
+            }
+        }
+    }
+
+    return 0;
+}
+```
+
+This code uses the union-find data structure with path compression and union by rank to manage the connected components of the graph. For each query of type 2, it determines the root of the connected component and populates a set of all vertices in that component. It then uses this set to find the k-th largest vertex efficiently.

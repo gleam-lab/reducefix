@@ -1,0 +1,189 @@
+
+(large list of integers, truncated for brevity)
+...
+-99851 0
+5
+0 100000
+50000 60000
+99990 100000
+100000 150000
+190000 200000
+```
+
+### Explanation
+The problem is a range sum query problem where given an array `x` and an array `p` of the same length `n`, you need to quickly compute the sum of `p` elements where the corresponding `x` elements fall within a specified range `[l, r]`.
+
+The provided code incorrectly uses `upper_bound` and `lower_bound` on the `x` array to find indices for the sum range in the `p` array, which leads to incorrect results. The correct approach involves using a data structure like a segment tree or binary indexed tree (Fenwick tree) to efficiently compute the sum of `p` elements for indices where `x` values fall within the specified range.
+
+### Task
+Modify the code to correctly solve the problem using a **segment tree** or **binary indexed tree (Fenwick tree)**.
+
+To keep the solution concise, I'll provide a template for a segment tree solution. Your task is to fill in the missing parts.
+
+### Template for Segment Tree Solution
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+
+const int MAXN = 200005; // Maximum possible value of n + some extra for safety
+
+struct SegmentTree {
+    vector<ll> tree;
+    vector<int> lazy;
+    int n;
+
+    SegmentTree(int _n) : n(_n) {
+        tree.resize(4 * n, 0);
+        lazy.resize(4 * n, 0);
+    }
+
+    void updateRange(int L, int R, int delta) {
+        // Fill this function
+    }
+
+    ll queryRange(int L, int R) {
+        // Fill this function
+        return 0;
+    }
+
+    void build(const vector<ll>& arr, int node = 1, int start = 0, int end = 0) {
+        if (start == end) {
+            tree[node] = arr[start];
+        } else {
+            int mid = (start + end) / 2;
+            build(arr, node * 2, start, mid);
+            build(arr, node * 2 + 1, mid + 1, end);
+            tree[node] = tree[node * 2] + tree[node * 2 + 1];
+        }
+    }
+};
+
+int main() {
+    int n;
+    cin >> n;
+    vector<int> x(n);
+    for (int i = 0; i < n; i++) cin >> x[i];
+    vector<ll> p(n);
+    for (int i = 0; i < n; i++) cin >> p[i];
+    
+    SegmentTree segTree(n);
+    // Build the segment tree based on some transformation of p
+    // Fill this part
+    
+    int q;
+    cin >> q;
+    for (int i = 0; i < q; i++) {
+        int l, r;
+        cin >> l >> r;
+        // Use segTree to find the sum of p values where x values are in range [l, r]
+        // Fill this part
+    }
+    return 0;
+}
+```
+
+To solve this problem using a segment tree, you need to:
+1. **Transform the `p` array** so that you can use a segment tree to query the sum of `p` values for indices where `x` values are in the specified range `[l, r]`.
+2. **Implement the `updateRange` function** (not strictly necessary for this problem, but provided for completeness).
+3. **Implement the `queryRange` function** to correctly compute the sum of `p` values for indices where `x` values fall within `[l, r]`.
+
+Given the constraints, a **sorted order transformation** approach is viable:
+- Sort `x` and `p` together based on `x`.
+- Use the segment tree to store prefix sums of `p` based on the sorted order.
+- For each query, use binary search to find the range in the sorted order corresponding to the `x` range `[l, r]`, and then use the segment tree to get the sum of `p` for that range.
+
+Please fill in the missing parts of the segment tree implementation.
+To solve this, you can follow these steps:
+1. Create a pair array to store both `x` and `p` values together.
+2. Sort this pair array based on `x` values.
+3. Use the segment tree to store the cumulative sum of `p` values in sorted order.
+4. For each query, use binary search to find the indices in the sorted pair array corresponding to the `x` range `[l, r]`.
+5. Use the segment tree to get the sum of `p` values for the indices found in the previous step.
+Let's proceed with the implementation.
+
+### Implementation
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+
+const int MAXN = 200005; // Maximum possible value of n + some extra for safety
+
+struct SegmentTree {
+    vector<ll> tree;
+    int n;
+
+    SegmentTree(int _n) : n(_n) {
+        tree.resize(4 * n, 0);
+    }
+
+    void build(const vector<ll>& arr, int node = 1, int start = 0, int end = 0) {
+        if (start == end) {
+            tree[node] = arr[start];
+        } else {
+            int mid = (start + end) / 2;
+            build(arr, node * 2, start, mid);
+            build(arr, node * 2 + 1, mid + 1, end);
+            tree[node] = tree[node * 2] + tree[node * 2 + 1];
+        }
+    }
+
+    ll queryRange(int L, int R) {
+        return queryRangeUtil(L, R, 1, 0, n - 1);
+    }
+
+private:
+    ll queryRangeUtil(int L, int R, int node, int start, int end) {
+        if (R < start || end < L) return 0;
+        if (L <= start && end <= R) return tree[node];
+
+        int mid = (start + end) / 2;
+        ll leftSum = queryRangeUtil(L, R, node * 2, start, mid);
+        ll rightSum = queryRangeUtil(L, R, node * 2 + 1, mid + 1, end);
+        return leftSum + rightSum;
+    }
+};
+
+int main() {
+    int n;
+    cin >> n;
+    vector<pair<int, ll>> xp(n);
+    for (int i = 0; i < n; i++) {
+        cin >> xp[i].first;  // x[i]
+        cin >> xp[i].second; // p[i]
+    }
+    
+    sort(xp.begin(), xp.end());
+    
+    vector<ll> prefixSum(n);
+    prefixSum[0] = xp[0].second;
+    for (int i = 1; i < n; i++) {
+        prefixSum[i] = prefixSum[i - 1] + xp[i].second;
+    }
+    
+    SegmentTree segTree(n);
+    segTree.build(prefixSum);
+    
+    int q;
+    cin >> q;
+    for (int i = 0; i < q; i++) {
+        int l, r;
+        cin >> l >> r;
+        
+        auto itL = lower_bound(xp.begin(), xp.end(), make_pair(l, 0));
+        auto itR = upper_bound(xp.begin(), xp.end(), make_pair(r, LLONG_MAX));
+        
+        int idxL = itL - xp.begin();
+        int idxR = itR - xp.begin() - (itR != xp.end() && xp[itR - xp.begin()].first == r);
+        
+        ll result = segTree.queryRange(idxL, idxR);
+        cout << result << endl;
+    }
+    return 0;
+}
+```
+In this implementation:
+- We store both `x` and `p` values together in a pair array `xp`.
+- We sort `xp` based on `x` values.
+- We build a prefix sum array

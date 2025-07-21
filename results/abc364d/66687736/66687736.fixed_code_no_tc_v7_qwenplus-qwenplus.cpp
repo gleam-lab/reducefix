@@ -1,0 +1,49 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+#define ll long long
+#define vi vector<int>
+#define vll vector<ll>
+#define pii pair<int, int>
+#define pll pair<ll, ll>
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+    
+    int N, Q;
+    cin >> N >> Q;
+    
+    vi A(N);
+    for (int i = 0; i < N; ++i) {
+        cin >> A[i];
+    }
+    
+    // Sort the A array for binary search usage
+    sort(A.begin(), A.end());
+    
+    for (int q = 0; q < Q; ++q) {
+        int b, k;
+        cin >> b >> k;
+        
+        // Binary search to find the k-th closest distance
+        int l = 0, r = 1e9;
+        while (l < r) {
+            int mid = (l + r) / 2;
+            
+            // Find lower and upper bounds of values in A within [b - mid, b + mid]
+            int left = lower_bound(A.begin(), A.end(), b - mid) - A.begin();
+            int right = upper_bound(A.begin(), A.end(), b + mid) - A.begin();
+            
+            if (right - left >= k) {
+                r = mid;
+            } else {
+                l = mid + 1;
+            }
+        }
+        
+        cout << l << "\n";
+    }
+    
+    return 0;
+}

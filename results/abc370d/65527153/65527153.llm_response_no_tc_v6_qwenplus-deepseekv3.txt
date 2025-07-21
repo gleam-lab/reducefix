@@ -1,0 +1,107 @@
+To fix this code, we need to address several issues:
+
+1. **Initialization Efficiency**: Initializing sets for each row and column with every cell is inefficient, especially since H and W can be as large as 4e5. This results in O(H*W) time, which is too slow.
+
+2. **Handling Queries**: The logic for destroying walls in the four directions (up, down, left, right) needs to correctly identify the first wall in each direction if the bomb cell is already empty. The current implementation has flaws in how it checks for adjacent walls and handles edge cases where no walls exist in a direction.
+
+3. **Performance**: Using sets for each row and column is acceptable, but we need to ensure that each operation (insertion, deletion, searching) is efficient, leveraging the logarithmic complexity of set operations.
+
+### Approaches
+1. **Efficient Initialization**: Instead of pre-filling the sets, we can dynamically handle walls. Initially, all walls are present, and we can represent their existence using sets for rows and columns.
+
+2. **Query Processing**: For each query:
+   - If the bomb cell has a wall, destroy it.
+   - If the bomb cell is empty, find the first walls in each of the four directions (up, down, left, right) and destroy them if they exist.
+
+3. **Correctness**: Ensure that the logic for finding the first walls correctly handles cases where no walls exist in a direction.
+
+### Solution Code
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int H, W, Q;
+    cin >> H >> W >> Q;
+
+    vector<set<int>> row_walls(H + 1);
+    vector<set<int>> col_walls(W + 1);
+
+    for (int i = 1; i <= H; ++i) {
+        row_walls[i].insert(0);
+        row_walls[i].insert(W + 1);
+    }
+    for (int j = 1; j <= W; ++j) {
+        col_walls[j].insert(0);
+        col_walls[j].insert(H + 1);
+    }
+
+    ll total_walls = (ll)H * W;
+    while (Q--) {
+        int R, C;
+        cin >> R >> C;
+
+        if (row_walls[R].count(C)) {
+            row_walls[R].erase(C);
+            col_walls[C].erase(R);
+            total_walls--;
+        } else {
+            // Up
+            auto it = col_walls[C].lower_bound(R);
+            it--;
+            int up = *it;
+            if (up != 0 && row_walls[up].count(C)) {
+                row_walls[up].erase(C);
+                col_walls[C].erase(up);
+                total_walls--;
+            }
+
+            // Down
+            it = col_walls[C].lower_bound(R);
+            int down = *it;
+            if (down != H + 1 && row_walls[down].count(C)) {
+                row_walls[down].erase(C);
+                col_walls[C].erase(down);
+                total_walls--;
+            }
+
+            // Left
+            it = row_walls[R].lower_bound(C);
+            it--;
+            int left = *it;
+            if (left != 0 && col_walls[left].count(R)) {
+                col_walls[left].erase(R);
+                row_walls[R].erase(left);
+                total_walls--;
+            }
+
+            // Right
+            it = row_walls[R].lower_bound(C);
+            int right = *it;
+            if (right != W + 1 && col_walls[right].count(R)) {
+                col_walls[right].erase(R);
+                row_walls[R].erase(right);
+                total_walls--;
+            }
+        }
+    }
+
+    cout << total_walls << '\n';
+    return 0;
+}
+```
+
+### Explanation
+1. **Initialization**: We initialize sets for each row and column to keep track of walls. The sets are initially empty except for sentinel values to handle boundaries.
+
+2. **Query Processing**:
+   - **Direct Hit**: If the bomb cell (R, C) has a wall, it is removed from both row and column sets.
+   - **Empty Cell**: If the bomb cell is empty, we look for the first walls in each direction (up, down, left, right) using set operations (lower_bound and decrement to find previous elements). If these walls exist, they are removed.
+
+3. **Efficiency**: The use of sets ensures that each insertion, deletion, and search operation is O(log N), which is efficient given the constraints. The total number of walls is tracked dynamically to avoid recounting after each query.
+
+This approach efficiently handles the constraints and ensures correctness by properly managing the set operations and edge cases.

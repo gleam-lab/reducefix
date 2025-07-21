@@ -1,0 +1,56 @@
+#include<bits/stdc++.h>
+using namespace std;
+
+vector<int> graph[200005];
+int parent[200005];
+
+int find(int x) {
+    if (parent[x] == x) return x;
+    parent[x] = find(parent[x]);
+    return parent[x];
+}
+
+int combine(int x, int y) {
+    int rootX = find(x);
+    int rootY = find(y);
+    if (rootX != rootY) {
+        parent[rootY] = rootX;
+    }
+}
+
+int main() {
+    int N, Q;
+    cin >> N >> Q;
+
+    for (int i = 1; i <= N; ++i) {
+        parent[i] = i;
+    }
+
+    while (Q--) {
+        int op, v, k;
+        cin >> op >> v >> k;
+
+        if (op == 1) {
+            int u;
+            cin >> u;
+            combine(u, v);
+        } else if (op == 2) {
+            int rootV = find(v);
+            vector<int> connectedNodes;
+            for (int neighbor : graph[rootV]) {
+                connectedNodes.push_back(neighbor);
+            }
+
+            // Sort connected nodes in descending order
+            sort(connectedNodes.begin(), connectedNodes.end(), greater<int>());
+
+            if (k <= connectedNodes.size()) {
+                cout << connectedNodes[k - 1] << endl;
+            } else {
+                cout << -1 << endl;
+            }
+        }
+    }
+
+    return 0;
+}

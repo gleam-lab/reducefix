@@ -1,0 +1,9 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+long long calculateVotesNeeded(long long votes, int rank, int totalCandidates, int M) {
+    return max(0LL, (M * (totalCandidates - rank)) - votes + 1);
+}
+
+int main() {
+    ios_base::sync_witheczy

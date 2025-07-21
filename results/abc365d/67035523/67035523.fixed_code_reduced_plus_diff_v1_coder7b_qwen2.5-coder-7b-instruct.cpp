@@ -1,0 +1,67 @@
+#include <iostream> // cout, endl, cin
+#include <string> // string, to_string, stoi
+#include <vector> // vector
+#include <algorithm> // min, max, swap, sort, reverse, lower_bound, upper_bound
+#include <utility> // pair, make_pair
+#include <tuple> // tuple, make_tuple
+#include <cstdint> // int64_t, int*_t
+#include <cstdio> // printf
+#include <map> // map
+#include <queue> // queue, priority_queue
+#include <set> // set
+#include <stack> // stack
+#include <deque> // deque
+#include <unordered_map> // unordered_map
+#include <unordered_set> // unordered_set
+#include <bitset> // bitset
+#include <cctype> // isupper, islower, isdigit, toupper, tolower
+#include<cmath>
+#include<iomanip>
+using namespace std;
+
+int cmp(char x, char y) {
+    if (x == 'P') {
+        if (y == 'P') return 0;
+        if (y == 'R') return 1;
+        if (y == 'S') return -1;
+    }
+    if (x == 'R') {
+        if (y == 'P') return -1;
+        if (y == 'R') return 0;
+        if (y == 'S') return 1;
+    }
+    if (x == 'S') {
+        if (y == 'P') return 1;
+        if (y == 'R') return -1;
+        if (y == 'S') return 0;
+    }
+    if (x == 'X') return -100;
+}
+
+char win(char x) {
+    if (x == 'R') return 'P';
+    if (x == 'S') return 'R';
+    if (x == 'P') return 'S';
+}
+
+int main() {
+    int n;
+    string s;
+    cin >> n >> s;
+    vector<int> siz(n + 1);
+    char rsp[n + 1];
+    int pos = 0;
+    int c = 1;
+    siz[n] = 'X';
+    char prev = 'A';
+    int ans = 0;
+    for (int i = 0; i < n; i++) {
+        if (prev != win(s[i])) {
+            ans++;
+            prev = win(s[i]);
+        } else {
+            prev = s[i];
+        }
+    }
+    cout << ans;
+}

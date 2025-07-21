@@ -1,0 +1,89 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+constexpr int MAX_H = 1000;
+constexpr int MAX_W = 1000;
+constexpr int MAX_Y = 100000;
+constexpr int DIRS = 4;
+constexpr int dx[DIRS] = {-1, 1, 0, 0};
+constexpr int dy[DIRS] = {0, 0, -1, 1};
+
+int H, W, Y;
+int A[MAX_H][MAX_W];
+bool visited[MAX_H][MAX_W];
+int area[MAX_Y + 2];
+
+struct Cell {
+    int x, y, h;
+    bool operator<(const Cell& other) const {
+        return h > other.h; // min-heap
+    }
+};
+
+priority_queue<Cell> pq;
+
+void process(int year) {
+    while (!pq.empty()) {
+        auto [x, y, h] = pq.top();
+        if (h > year) break;
+        pq.pop();
+        if (visited[x][y]) continue;
+        visited[x][y] = true;
+        for (int i = 0; i < DIRS; ++i) {
+            int nx = x + dx[i], ny = y + dy[i];
+            if (nx >= 0 && nx < H && ny >= 0 && ny < W && !visited[nx][ny]) {
+                pq.push({nx, ny, A[nx][ny]});
+                visited[nx][ny] = true;
+            }
+        }
+    }
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    cin >> H >> W >> Y;
+    for (int i = 0; i < H; ++i)
+        for (int j = 0; j < W; ++j)
+            cin >> A[i][j];
+
+    // Initialize visited and priority queue with boundary cells
+    for (int i = 0; i < H; ++i) {
+        for (int j = 0; j < W; ++j) {
+            if (i == 0 || i == H - 1 || j == 0 || j == W - 1) {
+                visited[i][j] = true;
+                pq.push({i, j, A[i][j]});
+            }
+        }
+    }
+
+    // Prepare array to track how many cells sink each year
+    vector<int> sinkYear(MAX_Y + 2, 0);
+    int totalLand = H * W;
+
+    // Process years in increasing order
+    for (int year = 1; year <= Y; ++year) {
+        // Sink cells whose elevation <= current year
+        while (!pq.empty() && pq.top().h <= year) {
+            auto [x, y, h] = pq.top(); pq.pop();
+            if (!visited[x][y]) {
+                --totalLand;
+                for (int i = 0; i < DIRS; ++i) {
+                    int nx = x + dx[i], ny = y + dy[i];
+                    if (nx >= 0 && nx < H && ny >= 0 && ny < W && !visited[nx][ny]) {
+                        visited[nx][ny] = true;
+                        pq.push({nx, ny, A[nx][ny]});
+                    }
+                }
+            }
+        }
+        area[year] = totalLand;
+    }
+
+    // Output results
+    for (int i = 1; i <= Y; ++i)
+        cout << area[i] << "\n";
+
+    return 0;
+}

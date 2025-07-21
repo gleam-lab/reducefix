@@ -1,0 +1,67 @@
+#include<bits/stdc++.h>
+using namespace std;
+using ll = long long;
+
+int main() {
+    ios_base::sync_with_stdio(false), cin.tie(nullptr);
+    int H, W, Y;
+    cin >> H >> W >> Y;
+    vector<vector<int>> A(H, vector<int>(W));
+    for (int i = 0; i < H; ++i) {
+        for (int j = 0; j < W; ++j) {
+            cin >> A[i][j];
+        }
+    }
+
+    // We only need to keep track of the highest level that affects each cell
+    vector<vector<int>> level(H, vector<int>(W, INT_MAX));
+    queue<pair<int, int>> q;
+    for (int i = 0; i < H; ++i) {
+        for (int j = 0; j < W; ++j) {
+            if (A[i][j] < level[i][j]) {
+                level[i][j] = A[i][j];
+                q.push({i, j});
+            }
+        }
+    }
+
+    while (!q.empty()) {
+        auto [x, y] = q.front();
+        q.pop();
+        for (int k = 0; k < 4; ++k) {
+            int nx = x + dx[k], ny = y + dy[k];
+            if (nx >= 0 && nx < H && ny >= 0 && ny < W && level[nx][ny] > A[x][y] + 1) {
+                level[nx][ny] = A[x][y] + 1;
+                q.push({nx, ny});
+            }
+        }
+    }
+
+    // Calculate the initial area above the highest affected level
+    vector<vector<bool>> visited(H, vector<bool>(W, false));
+    function<void(int, int)> dfs = [&](int x, int y) {
+        if (visited[x][y] || level[x][y] == INT_MAX) return;
+        visited[x][y] = true;
+        dfs(x - 1, y);
+        dfs(x + 1, y);
+        dfs(x, y - 1);
+        dfs(x, y + 1);
+    };
+
+    int remaining_area = 0;
+    for (int i = 0; i < H; ++i) {
+        for (int j = 0; j < W; ++j) {
+            if (!visited[i][j]) {
+                dfs(i, j);
+                remaining_area++;
+            }
+        }
+    }
+
+    // Output the area each year
+    for (int y = 0; y < Y; ++y) {
+        cout << remaining_area << "\n";
+    }
+
+    return 0;
+}

@@ -1,0 +1,49 @@
+#include <iostream>
+#include <unordered_set>
+#include <vector>
+#include <utility>
+
+using namespace std;
+
+// Define a custom hash for pairs to use in unordered_set
+struct pair_hash {
+    template <class T1, class T2>
+    size_t operator()(const pair<T1, T2>& p) const {
+        auto h1 = hash<T1>{}(p.first);
+        auto h2 = hash<T2>{}(p.second);
+        return h1 ^ (h2 << 16);
+    }
+};
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int64_t N;
+    int M;
+    cin >> N >> M;
+
+    unordered_set<pair<int64_t, int64_t>, pair_hash> occupied;
+
+    vector<pair<int64_t, int64_t>> attack_offsets = {
+        {2, 1}, {1, 2}, {-1, 2}, {-2, 1},
+        {-2, -1}, {-1, -2}, {1, -2}, {2, -1}
+    };
+
+    for (int i = 0; i < M; ++i) {
+        int64_t a, b;
+        cin >> a >> b;
+        occupied.insert({a, b});
+        for (auto [dx, dy] : attack_offsets) {
+            int64_t x = a + dx;
+            int64_t y = b + dy;
+            if (x >= 1 && x <= N && y >= 1 && y <= N) {
+                occupied.insert({x, y});
+            }
+        }
+    }
+
+    // Total squares: N * N
+    // Subtract the number of occupied squares
+    cout << (int64_t(N) * int64_t(N)) - occupied.size() << "\n";
+}

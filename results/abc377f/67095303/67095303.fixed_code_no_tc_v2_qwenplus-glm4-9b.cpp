@@ -1,0 +1,38 @@
+#include<bits/stdc++.h>
+#define int long long
+using namespace std;
+
+int main() {
+    int n, m;
+    cin >> n >> m;
+    vector<int> a(m), b(m);
+    
+    for (int i = 0; i < m; ++i) {
+        cin >> a[i] >> b[i];
+    }
+    
+    // Calculate the number of occupied squares
+    int occupied = 0;
+    for (int i = 1; i <= n; ++i) {
+        for (int j = 1; j <= n; ++j) {
+            bool is_occupied = false;
+            for (int k = 0; k < m; ++k) {
+                if (a[k] == i || b[k] == j || (i + j) == (a[k] + b[k]) || (i - j) == (a[k] - b[k])) {
+                    is_occupied = true;
+                    break;
+                }
+            }
+            if (is_occupied) {
+                ++occupied;
+            }
+        }
+    }
+    
+    // Calculate the total number of squares minus occupied squares
+    int total_squares = n * n;
+    int free_squares = total_squares - occupied;
+    
+    cout << free_squares << endl;
+    
+    return 0;
+}

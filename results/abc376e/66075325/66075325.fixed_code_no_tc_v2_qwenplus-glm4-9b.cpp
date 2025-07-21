@@ -1,0 +1,47 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+const int N = 2e5 + 9;
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(0);
+
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, k;
+        cin >> n >> k;
+
+        vector<pair<int, int>> a(n), b(n);
+        for (int i = 0; i < n; ++i) {
+            cin >> a[i].first;
+            a[i].second = i;
+        }
+        for (int i = 0; i < n; ++i) {
+            cin >> b[i].first;
+            b[i].second = i;
+        }
+
+        // Sort by A values, then by B values if A values are equal
+        sort(a.begin(), a.end());
+        sort(b.begin(), b.end(), [](const pair<int, int>& x, const pair<int, int>& y) {
+            return x.first < y.first || (x.first == y.first && x.second < y.second);
+        });
+
+        long long ans = LLONG_MAX;
+        for (int i = 0; i <= n - k; ++i) {
+            long long sumB = 0;
+            for (int j = i; j < i + k; ++j) {
+                sumB += b[j].first;
+            }
+            ans = min(ans, (long long)a[i + k - 1].first * sumB);
+        }
+
+        cout << ans << endl;
+    }
+
+    return 0;
+}

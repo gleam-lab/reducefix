@@ -1,0 +1,30 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+
+int main() {
+    int N;
+    cin >> N;
+    vector<long long> H(N);
+    for (int i = 0; i < N; ++i) {
+        cin >> H[i];
+    }
+
+    long long T = 0;
+
+    // We will simulate the process using a queue to track when each enemy gets attacked
+    queue<int> attackTimes[3];  // attackTimes[t % 3] tells which enemy is being attacked at time T
+
+    int idx = 0;
+    while (idx < N || !attackTimes[0].empty() || !attackTimes[1].empty() || !attackTimes[2].empty()) {
+        int mod = T % 3;
+        if (idx < N) {
+            attackTimes[H[idx] / 3 + (H[idx] % 3 != 0)].push(idx);
+            idx++;
+        }
+        T++;
+    }
+
+    cout << T << endl;
+    return 0;
+}

@@ -1,0 +1,39 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define ll long long
+
+void solve() {
+    ll n;
+    cin >> n;
+    vector<ll> a(n), b(n - 1);
+    for (ll i = 0; i < n; ++i) cin >> a[i];
+    for (ll i = 0; i < n - 1; ++i) cin >> b[i];
+
+    sort(a.begin(), a.end());
+    sort(b.begin(), b.end());
+
+    multiset<ll> box_sizes;
+    for (ll x : b) box_sizes.insert(x);
+
+    ll required = -1;
+
+    // Try to place largest toys first greedily
+    for (ll i = n - 1; i >= 0; --i) {
+        auto it = box_sizes.lower_bound(a[i]);
+        if (it != box_sizes.end()) {
+            // Box found, use it
+            box_sizes.erase(it);
+        } else {
+            // Need a new box of at least size a[i]
+            required = a[i];
+        }
+    }
+
+    cout << required << endl;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    solve();
+}

@@ -1,0 +1,73 @@
+#include <bits/stdc++.h>
+#include <ext/pb_ds/assoc_container.hpp>
+#include <ext/pb_ds/tree_policy.hpp>
+using namespace std;
+using namespace __gnu_pbds;
+typedef tree<long long, null_type, less_equal<long long>, rb_tree_tag, tree_order_statistics_node_update> pbds;
+#define fast_io()                     \
+    ios_base::sync_with_stdio(false); \
+    cin.tie(NULL);                    \
+    cout.tie(NULL)
+#define ll long long
+#define pb push_back
+#define mp make_pair
+#define fi first
+#define se second
+#define all(v) (v).begin(), (v).end()
+const ll MOD = 1e9 + 7;
+const ll INF = 1e18;
+vector<char> s{'<', '^', '>', 'v'};
+ll gcd(ll a, ll b)
+{
+    while (b)
+    {
+        a %= b;
+        swap(a, b);
+    }
+    return a;
+}
+ll lcm(ll a, ll b)
+{
+    return a / gcd(a, b) * b;
+}
+
+void solve()
+{
+    ll n;
+    cin >> n;
+    string s;
+    cin >> s;
+    ll ans = 0;
+    ll cnt = 1; // Start with count as 1
+    for (int i = 1; i < n; i++)
+    {
+        if (s[i] == s[i - 1])
+        {
+            cnt++; // If same character, increment count
+        }
+        else
+        {
+            ans += (cnt + 1) / 2; // Calculate answer for previous sequence
+            cnt = 1; // Reset count for new sequence
+        }
+    }
+    ans += (cnt + 1) / 2; // Calculate answer for last sequence
+    cout << ans << "\n";
+}
+
+int main()
+{
+    fast_io();
+#ifndef ONLINE_JUDGE
+    freopen("input.txt", "r", stdin);
+    freopen("output.txt", "w", stdout);
+#endif
+    int t = 1;
+    // cin >> t;
+    // compute();
+    while (t--)
+    {
+        solve();
+    }
+    return 0;
+}

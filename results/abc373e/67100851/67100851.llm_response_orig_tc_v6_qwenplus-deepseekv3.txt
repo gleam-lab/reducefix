@@ -1,0 +1,91 @@
+To fix this code, we need to ensure that the logic correctly determines the minimum number of additional votes each candidate needs to guarantee their victory, or if they cannot secure victory under any circumstances. The original code had several issues, including incorrect binary search conditions and improper handling of the remaining votes.
+
+### Approaches
+
+1. **Sorting and Prefix Sums**: 
+   - Sort the candidates' votes to easily determine the threshold for victory.
+   - Compute prefix sums to quickly calculate the total votes required for a candidate to surpass others.
+
+2. **Binary Search**:
+   - For each candidate, perform a binary search to determine the minimum number of additional votes needed. The binary search checks if the candidate can secure their position by ensuring that at most M-1 candidates have more votes after the distribution of remaining votes.
+
+### Solution Code
+```cpp
+#include <iostream>
+#include <algorithm>
+#include <vector>
+using namespace std;
+
+typedef long long ll;
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int N, M;
+    ll K;
+    cin >> N >> M >> K;
+
+    vector<ll> A(N);
+    for (int i = 0; i < N; ++i) {
+        cin >> A[i];
+    }
+
+    vector<ll> sorted_A = A;
+    sort(sorted_A.begin(), sorted_A.end());
+
+    vector<ll> prefix(N + 1, 0);
+    for (int i = 0; i < N; ++i) {
+        prefix[i + 1] = prefix[i] + sorted_A[i];
+    }
+
+    vector<ll> res(N, -1);
+    ll remaining = K;
+    for (int i = 0; i < N; ++i) {
+        remaining -= A[i];
+    }
+
+    for (int i = 0; i < N; ++i) {
+        ll target = A[i];
+        int pos = upper_bound(sorted_A.begin(), sorted_A.end(), target) - sorted_A.begin();
+
+        if (pos <= N - M) {
+            // The candidate is not in the top M initially, need to add votes
+            ll low = 0, high = remaining;
+            ll best = -1;
+            while (low <= high) {
+                ll mid = (low + high) / 2;
+                ll new_val = target + mid;
+                int new_pos = upper_bound(sorted_A.begin(), sorted_A.end(), new_val) - sorted_A.begin();
+                if (new_pos > N - M) {
+                    best = mid;
+                    high = mid - 1;
+                } else {
+                    low = mid + 1;
+                }
+            }
+            if (best != -1) {
+                res[i] = best;
+            }
+        } else {
+            // The candidate is already in the top M, no need to add votes
+            res[i] = 0;
+        }
+    }
+
+    for (int i = 0; i < N; ++i) {
+        cout << res[i] << " ";
+    }
+    cout << "\n";
+
+    return 0;
+}
+```
+
+### Explanation
+1. **Input Handling**: The code reads the number of candidates `N`, the threshold `M`, the total votes `K`, and the current votes `A[i]` for each candidate.
+2. **Sorting and Prefix Sum**: The votes are sorted to facilitate binary search and prefix sums are computed to quickly access the sum of the top votes.
+3. **Binary Search for Minimum Votes**: For each candidate, if they are not already in the top `M` candidates, a binary search is performed to find the minimum number of additional votes needed to place them in the top `M`. The binary search checks different vote counts to see if they push the candidate into the top `M`.
+4. **Output**: The results for each candidate are printed, indicating either the minimum votes needed or `0` if they are already in the top `M`, or `-1` if it's impossible to secure their position with the remaining votes.
+
+This approach efficiently checks each candidate's position and uses binary search to minimize the additional votes required, ensuring optimal performance even for large input sizes.

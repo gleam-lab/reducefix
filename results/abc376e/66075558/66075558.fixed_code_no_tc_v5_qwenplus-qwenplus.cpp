@@ -1,0 +1,69 @@
+#include <iostream>
+#include <vector>
+#include <queue>
+#include <algorithm>
+using namespace std;
+
+#define int long long
+
+signed main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int T;
+    cin >> T;
+
+    while (T--) {
+        int N, K;
+        cin >> N >> K;
+
+        vector<int> A(N);
+        vector<int> B(N);
+
+        for (int i = 0; i < N; ++i) {
+            cin >> A[i];
+        }
+
+        for (int i = 0; i < N; ++i) {
+            cin >> B[i];
+        }
+
+        // Pair up A[i] with B[i], and sort by A[i]
+        vector<pair<int, int>> items(N);
+        for (int i = 0; i < N; ++i) {
+            items[i] = {A[i], B[i]};
+        }
+        sort(items.begin(), items.end());
+
+        // Minimize (max_A_in_subset) * (sum_B_in_subset)
+        // We'll iterate through each item as the "max_A" in the subset,
+        // and try to pick K-1 smallest B's from previous elements to minimize total sum.
+
+        priority_queue<int> max_heap; // max heap to remove largest B when size > K-1
+        int sum_B = 0;
+        int result = 1e18; // large number
+
+        for (int i = 0; i < N; ++i) {
+            int current_A = items[i].first;
+            int current_B = items[i].second;
+
+            sum_B += current_B;
+            max_heap.push(current_B);
+
+            // Keep only K smallest B values
+            if (max_heap.size() > K) {
+                sum_B -= max_heap.top();
+                max_heap.pop();
+            }
+
+            // Once we have at least K elements, we can compute the product
+            if (max_heap.size() == K) {
+                result = min(result, current_A * sum_B);
+            }
+        }
+
+        cout << result << "\n";
+    }
+
+    return 0;
+}

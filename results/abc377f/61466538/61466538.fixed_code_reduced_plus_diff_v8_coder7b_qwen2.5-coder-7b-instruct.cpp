@@ -1,0 +1,64 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+const int INF = 1e9;
+
+long long count_safe_positions(long long n, long long m, vector<pair<long long, long long>>& positions) {
+    set<long long> rows, cols, diagonals[2];
+    for(auto [i, j]: positions){
+        rows.insert(i);
+        cols.insert(j);
+        diagonals[0].insert(i - j);
+        diagonals[1].insert(i + j);
+    }
+    long long safe_positions = n * n;
+    safe_positions -= rows.size() * n;
+    safe_positions -= cols.size() * n;
+    safe_positions += rows.size() * cols.size();
+
+    for(auto &d: diagonals[0]){
+        set<pair<long long, long long>> intersecting_positions;
+        for(auto &r: rows){
+            long long j = r - d;
+            if(j > 0 && j <= n) intersecting_positions.insert({r, j});
+        }
+        for(auto &c: cols){
+            long long i = c + d;
+            if(i > 0 && i <= n) intersecting_positions.insert({i, c});
+        }
+        safe_positions -= (n - abs(d));
+        safe_positions += intersecting_positions.size();
+    }
+
+    for(auto &d: diagonals[1]){
+        set<pair<long long, long long>> intersecting_positions;
+        for(auto &r: rows){
+            long long j = r + d;
+            if(j > 0 && j <= n) intersecting_positions.insert({r, j});
+        }
+        for(auto &c: cols){
+            long long i = c - d;
+            if(i > 0 && i <= n) intersecting_positions.insert({i, c});
+        }
+        safe_positions -= (d < n ? (d - 1) : (2 * n - d + 1));
+        safe_positions += intersecting_positions.size();
+    }
+    return safe_positions;
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    long long n, m;
+    cin >> n >> m;
+    vector<pair<long long, long long>> positions(m);
+    for(auto &p: positions){
+        cin >> p.first >> p.second;
+    }
+
+    long long result = count_safe_positions(n, m, positions);
+    cout << result << '\n';
+
+    return 0;
+}

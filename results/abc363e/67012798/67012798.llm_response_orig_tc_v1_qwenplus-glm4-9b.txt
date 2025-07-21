@@ -1,0 +1,98 @@
+
+The given code has a few fundamental problems that lead to an incorrect result. Here are the main issues and how to fix them:
+
+1. **Initialization of the `island` array**: The `island` array is used to keep track of which cells are still above sea level. Initially, the assumption is to mark cells adjacent to the edges as filled with water, but this does not take into account that some cells inside the island might also be adjacent to the edges if they have a smaller elevation than the cells next to the edge. The correct approach is to mark those cells as well.
+
+2. **Queue Initialization**: The code tries to initialize more than 100,000 queues, which is impossible. Instead, you should use a single queue and push elements into it based on the current sea level.
+
+3. **Breadth-First Search (BFS) Implementation**: The BFS is not correctly implemented because it doesn't check if the cells it's trying to push to the queue are already marked as sinking or not.
+
+4. **Updating the Sea Level**: After processing each sea level, the sea level in the queue should be incremented for the next iteration.
+
+Let's fix these issues step by step:
+
+1. Initialize the `island` array so it marks all cells that are adjacent to the edges or adjacent to cells that are adjacent to the edges.
+
+2. Use a single queue and push cells into it based on the current sea level.
+
+3. Properly handle BFS by checking whether the cell has already been marked as sinking before pushing it into the queue.
+
+4. Increment the sea level in the queue after processing each sea level.
+
+Here's the corrected code:
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int H, W, Y;
+    cin >> H >> W >> Y;
+    vector<vector<int>> A(H, vector<int>(W));
+    for (int i = 0; i < H; i++) {
+        for (int j = 0; j < W; j++) {
+            cin >> A[i][j];
+        }
+    }
+
+    // Initialize island array
+    vector<vector<bool>> island(H, vector<bool>(W, true));
+    deque<pair<int, int>> q;
+    for (int i = 0; i < H; i++) {
+        for (int j = 0; j < W; j++) {
+            if (i == 0 || i == H - 1 || j == 0 || j == W - 1 || (i > 0 && j > 0 && A[i][j] <= A[i - 1][j] && A[i][j] <= A[i][j - 1])) {
+                q.push({i, j});
+                island[i][j] = false;
+            }
+        }
+    }
+
+    int ans = H * W;
+    while (!q.empty()) {
+        int level = q.front().first;
+        q.pop();
+
+        // Process all cells at the current sea level
+        while (!q.empty() && q.front().first == level) {
+            auto [x, y] = q.front();
+            q.pop();
+
+            // Process all adjacent cells
+            for (int dx = -1; dx <= 1; dx++) {
+                for (int dy = -1; dy <= 1; dy++) {
+                    int nx = x + dx, ny = y + dy;
+                    if (nx >= 0 && nx < H && ny >= 0 && ny < W && island[nx][ny]) {
+                        if (A[nx][ny] <= level) {
+                            island[nx][ny] = false;
+                            q.push({nx, ny, level + 1});
+                        }
+                    }
+                }
+            }
+        }
+
+        // Update the remaining area above sea level
+        ans -= count(island.begin(), island.end(), true);
+        for (int i = 0; i < H; i++) {
+            for (int j = 0; j < W; j++) {
+                if (island[i][j]) {
+                    island[i][j] = false;
+                }
+            }
+        }
+    }
+
+    // Output the results for each year
+    for (int i = 0; i < Y; i++) {
+        cout << ans << endl;
+        ans -= q.size();
+    }
+
+    return 0;
+}
+```
+
+This code assumes that the BFS should start from the lowest possible elevation and propagate upwards, marking cells as sinking when the sea level rises to their elevation. After processing each sea level, it recalculates the area above sea level and prints the result. Note that this problem is complex and may require optimization to handle all edge cases, especially for very large input sizes.

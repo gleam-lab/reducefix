@@ -1,0 +1,74 @@
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+#define rep(i,n) for(long long i=0;i<n;i++)
+using ll = long long;
+
+// Function to compute the minimum cost to buy 'need' items of a product,
+// given two types of purchase options: (a, p) and (b, q)
+ll f(ll a, ll b, ll p, ll q, ll need) {
+    // Use DP to find minimum cost to get up to 'max_buy' items
+    ll max_buy = max(a, b) * 1000; // Heuristic - large enough to handle cycles
+
+    vector<ll> dp(max_buy + 10, 1e18);
+    dp[0] = 0;
+
+    // Fill DP table
+    for (ll i = 0; i <= max_buy; ++i) {
+        if (i + a <= max_buy) dp[i + a] = min(dp[i + a], dp[i] + p);
+        if (i + b <= max_buy) dp[i + b] = min(dp[i + b], dp[i] + q);
+    }
+
+    // Precompute prefix minimums to ensure optimal values
+    for (ll i = 1; i <= max_buy; ++i) {
+        dp[i] = min(dp[i], dp[i - 1]);
+    }
+
+    // Now use greedy with the precomputed DP to calculate cost for 'need'
+    ll total_cost = 0;
+    ll cycle_items = a * b / __gcd(a, b); // LCM of a and b
+    ll cycle_cost = dp[cycle_items]; // Cost for one full cycle
+
+    // Full cycles contribute uniformly
+    ll full_cycles = need / cycle_items;
+    total_cost += full_cycles * cycle_cost;
+    need %= cycle_items;
+
+    // Remaining items can be covered using our precomputed dp
+    total_cost += dp[need];
+
+    return total_cost;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+
+    int n;
+    ll x;
+    cin >> n >> x;
+    vector<ll> a(n), b(n), p(n), q(n);
+
+    rep(i, n) {
+        cin >> a[i] >> p[i] >> b[i] >> q[i];
+    }
+
+    // Binary search on the maximum number of items we can buy
+    ll left = 0, right = 1e5 * n; // upper bound on total items possible
+    while (left < right) {
+        ll mid = (left + right + 1) / 2;
+
+        ll total_cost = 0;
+        rep(i, n) {
+            total_cost += f(a[i], b[i], p[i], q[i], mid);
+            if (total_cost > x) break;
+        }
+
+        if (total_cost <= x) left = mid;
+        else right = mid - 1;
+    }
+
+    cout << left << '\n';
+    return 0;
+}
+```

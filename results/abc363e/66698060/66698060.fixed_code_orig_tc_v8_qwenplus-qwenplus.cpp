@@ -1,0 +1,81 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define ll long long
+
+ll dx[4] = {0, 1, 0, -1};
+ll dy[4] = {1, 0, -1, 0};
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    ll h, w, y;
+    cin >> h >> w >> y;
+
+    vector<vector<ll>> A(h, vector<ll>(w));
+    for (ll i = 0; i < h; ++i) {
+        for (ll j = 0; j < w; ++j) {
+            cin >> A[i][j];
+        }
+    }
+
+    // Create a grid to track whether a cell has been flooded
+    vector<vector<bool>> flooded(h, vector<bool>(w, false));
+
+    // Priority queue to process cells in increasing order of elevation
+    priority_queue<vector<ll>, vector<vector<ll>>, greater<vector<ll>>> pq;
+    vector<vector<bool>> visited(h, vector<bool>(w, false));
+
+    // Insert border cells into the priority queue
+    for (ll i = 0; i < h; ++i) {
+        pq.push({A[i][0], i, 0});
+        pq.push({A[i][w-1], i, w-1});
+        visited[i][0] = true;
+        visited[i][w-1] = true;
+    }
+
+    for (ll j = 1; j < w-1; ++j) {
+        pq.push({A[0][j], 0, j});
+        pq.push({A[h-1][j], h-1, j});
+        visited[0][j] = true;
+        visited[h-1][j] = true;
+    }
+
+    ll total_area = h * w;
+
+    // We'll store results and output at the end
+    vector<ll> result(y + 2); // 1-based index up to Y
+
+    // Process all years simultaneously using BFS with time tracking
+    ll year = 0;
+    while (year < y) {
+        ++year;
+
+        // Flood as much as possible this year
+        while (!pq.empty() && pq.top()[0] <= year) {
+            auto top = pq.top();
+            pq.pop();
+            ll i = top[1], j = top[2];
+
+            if (flooded[i][j]) continue;
+            flooded[i][j] = true;
+            --total_area;
+
+            for (ll d = 0; d < 4; ++d) {
+                ll ni = i + dx[d], nj = j + dy[d];
+                if (ni >= 0 && ni < h && nj >= 0 && nj < w && !visited[ni][nj]) {
+                    pq.push({A[ni][nj], ni, nj});
+                    visited[ni][nj] = true;
+                }
+            }
+        }
+
+        result[year] = total_area;
+    }
+
+    for (ll i = 1; i <= y; ++i) {
+        cout << result[i] << "\n";
+    }
+
+    return 0;
+}

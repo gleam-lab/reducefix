@@ -1,0 +1,136 @@
+To fix this code, we need to ensure that the calculation of the safe squares is accurate, especially considering the intersections of different attack lines (rows, columns, diagonals, and anti-diagonals). The previous approach had issues with accurately accounting for overlaps, leading to incorrect counts.
+
+### Approaches
+1. **Identify Attack Lines**: For each queen, identify the row, column, diagonal (i - j), and anti-diagonal (i + j) it controls.
+2. **Calculate Total Squares Under Attack**: Use inclusion-exclusion principles to avoid double-counting squares that fall under multiple attack lines.
+3. **Compute Safe Squares**: Subtract the total attacked squares from the total number of squares (N^2) to find the safe squares.
+
+### Solution Code
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+typedef long long ll;
+typedef pair<ll, ll> pll;
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(NULL);
+
+    ll N, M;
+    cin >> N >> M;
+    vector<pll> queens(M);
+    for (ll i = 0; i < M; ++i) {
+        cin >> queens[i].first >> queens[i].second;
+    }
+
+    set<ll> rows, cols, diag1, diag2;
+    for (auto &q : queens) {
+        ll i = q.first, j = q.second;
+        rows.insert(i);
+        cols.insert(j);
+        diag1.insert(i - j);
+        diag2.insert(i + j);
+    }
+
+    ll total = N * N;
+    ll attacked = 0;
+
+    // Rows and columns
+    ll row_count = rows.size();
+    ll col_count = cols.size();
+    attacked += row_count * N;
+    attacked += col_count * N;
+    attacked -= row_count * col_count;
+
+    // Diagonals (i - j)
+    for (ll d : diag1) {
+        ll cnt;
+        if (d >= 0) {
+            cnt = N - d;
+        } else {
+            cnt = N + d;
+        }
+        attacked += cnt;
+    }
+
+    // Anti-diagonals (i + j)
+    for (ll d : diag2) {
+        ll cnt;
+        if (d <= N + 1) {
+            cnt = d - 1;
+        } else {
+            cnt = 2 * N - d + 1;
+        }
+        attacked += cnt;
+    }
+
+    // Subtract intersections between rows/columns and diagonals/anti-diagonals
+    for (ll d : diag1) {
+        for (ll r : rows) {
+            ll c = r - d;
+            if (c >= 1 && c <= N) {
+                attacked--;
+            }
+        }
+        for (ll c : cols) {
+            ll r = c + d;
+            if (r >= 1 && r <= N) {
+                attacked--;
+            }
+        }
+    }
+
+    for (ll d : diag2) {
+        for (ll r : rows) {
+            ll c = d - r;
+            if (c >= 1 && c <= N) {
+                attacked--;
+            }
+        }
+        for (ll c : cols) {
+            ll r = d - c;
+            if (r >= 1 && r <= N) {
+                attacked--;
+            }
+        }
+    }
+
+    // Subtract intersections between diagonals and anti-diagonals
+    set<pll> intersections;
+    for (ll d1 : diag1) {
+        for (ll d2 : diag2) {
+            ll i = (d1 + d2) / 2;
+            ll j = (d2 - d1) / 2;
+            if ((d1 + d2) % 2 == 0 && (d2 - d1) % 2 == 0) {
+                if (i >= 1 && i <= N && j >= 1 && j <= N) {
+                    intersections.insert({i, j});
+                }
+            }
+        }
+    }
+    attacked -= intersections.size();
+
+    // Add back the squares that are counted multiple times in the intersections
+    for (auto &p : intersections) {
+        ll i = p.first, j = p.second;
+        if (rows.count(i) || cols.count(j) || diag1.count(i - j) || diag2.count(i + j)) {
+            attacked++;
+        }
+    }
+
+    total -= attacked;
+    cout << total << endl;
+
+    return 0;
+}
+```
+
+### Explanation
+1. **Reading Input**: The code starts by reading the grid size N and the number of queens M, followed by their positions.
+2. **Tracking Attack Lines**: For each queen, it records the row, column, diagonal (i - j), and anti-diagonal (i + j) it controls using sets to avoid duplicates.
+3. **Calculating Attacked Squares**: The initial count of attacked squares includes all squares in the rows and columns of the queens. Then, it adds squares along each diagonal and anti-diagonal.
+4. **Adjusting for Overlaps**: It subtracts squares counted multiple times (e.g., squares at the intersection of a row and a diagonal) to avoid double-counting.
+5. **Final Count**: The total safe squares are computed by subtracting the total attacked squares from the grid's total squares (N^2), and the result is printed.
+
+This approach ensures accurate calculation by meticulously handling overlaps and using set operations to manage unique positions.

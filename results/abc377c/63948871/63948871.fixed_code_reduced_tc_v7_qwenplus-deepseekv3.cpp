@@ -1,0 +1,185 @@
+#include <iostream>
+#include <vector>
+#include <string>
+#include <map>
+#include <unordered_map>
+#include <queue>
+#include <stack>
+#include <set>
+#include <unordered_set>
+#include <tuple>
+#include <algorithm>
+#include <functional>
+#include <cmath>
+
+using namespace std;
+
+#define INF 1000000000
+#define LINF 1000000000000000000
+
+#define fi first
+#define se second
+
+#define i32 int
+#define i64 long int
+#define i128 long long
+
+#define u32 unsigned int
+#define u64 unsigned long int
+#define u128 unsigned long long
+
+#define f32 float
+#define f64 double
+#define f128 long double
+
+#define str string
+#define vec vector
+#define cc const char *
+
+#define all(x) x.begin(), x.end()
+#define len(x) x.size()
+#define elif else if
+
+#define FOR_U(r, b, e, s) for (i128 r = (i128)b; r < (i128)e; r += (i128)s)
+#define FOR_L(r, b, e, s) for (i128 r = (i128)b; r > (i128)e; r -= (i128)s)
+#define FOR_R(r, b) for (auto r : b)
+#define loop while (true)
+
+namespace mine
+{
+
+    template <typename T>
+    inline void out(T out_data, string end = "\n")
+    {
+        cout << out_data << end;
+    }
+
+    template <typename T>
+    inline void out(vector<T> &out_data, string sep = " ", string end = "\n")
+    {
+        for (auto &value : out_data)
+        {
+            cout << value << sep;
+        }
+        cout << end;
+    }
+
+    template <typename T, typename U>
+    inline void out(vector<pair<T, U>> &let, string sep = " ", string end = "\n")
+    {
+        for (auto &l : let)
+        {
+            cout << l.fi << sep << l.se << end;
+        }
+    }
+
+    template <typename T>
+    inline void out(vector<vector<T>> &out_data, string sep = " ", string end = "\n")
+    {
+        for (auto &value_v : out_data)
+        {
+            for (auto &value_s : value_v)
+            {
+                cout << value_s << sep;
+            }
+            cout << end;
+        }
+    }
+
+    template <typename T>
+    inline void in(T &let)
+    {
+        cin << let;
+    }
+
+    template <typename T>
+    inline void in(vector<T> &let)
+    {
+        for (auto &l : let)
+        {
+            cin >> l;
+        }
+    }
+
+    template <typename T, typename U>
+    inline void in(vector<pair<T, U>> &let)
+    {
+        for (auto &l : let)
+        {
+            cin >> l.fi;
+            cin >> l.se;
+        }
+    }
+
+}
+
+using namespace mine;
+
+int main()
+{
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    i64 N;
+    cin >> N;
+
+    i64 M;
+    cin >> M;
+
+    set<pair<i64, i64>> unsafe;
+    pair<i64, i64> p;
+
+    FOR_U(_, 0, M, 1)
+    {
+        cin >> p.fi >> p.se;
+        unsafe.insert(p);
+
+        if (p.fi + 2 <= N && p.se + 1 <= N)
+        {
+            unsafe.insert(make_pair(p.fi + 2, p.se + 1));
+        }
+
+        if (p.fi + 1 <= N && p.se + 2 <= N)
+        {
+            unsafe.insert(make_pair(p.fi + 1, p.se + 2));
+        }
+
+        if (p.fi - 1 >= 1 && p.se + 2 <= N)
+        {
+            unsafe.insert(make_pair(p.fi - 1, p.se + 2));
+        }
+
+        if (p.fi - 2 >= 1 && p.se + 1 <= N)
+        {
+            unsafe.insert(make_pair(p.fi - 2, p.se + 1));
+        }
+
+        if (p.fi - 2 >= 1 && p.se - 1 >= 1)
+        {
+            unsafe.insert(make_pair(p.fi - 2, p.se - 1));
+        }
+
+        if (p.fi - 1 >= 1 && p.se - 2 >= 1)
+        {
+            unsafe.insert(make_pair(p.fi - 1, p.se - 2));
+        }
+
+        if (p.fi + 1 <= N && p.se - 2 >= 1)
+        {
+            unsafe.insert(make_pair(p.fi + 1, p.se - 2));
+        }
+
+        if (p.fi + 2 <= N && p.se - 1 >= 1)
+        {
+            unsafe.insert(make_pair(p.fi + 2, p.se - 1));
+        }
+    }
+
+    i128 total_squares = (i128)N * N;
+    i128 unsafe_squares = (i128)unsafe.size();
+    i128 safe_squares = total_squares - unsafe_squares;
+
+    cout << safe_squares << endl;
+
+    return 0;
+}

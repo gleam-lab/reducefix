@@ -1,0 +1,94 @@
+
+The problem is asking how many additional votes each candidate needs to ensure that they are elected, given that a candidate is elected if the number of candidates who have received more votes than them is less than M.
+
+To understand the problem, let's break down the key information:
+
+1. There are N candidates.
+2. Each candidate is given a unique number from 1 to N.
+3. There are K total votes.
+4. So far, the number of votes each candidate has received is given by the array `A`.
+5. A candidate is elected if they are in the top M candidates with the most votes.
+
+The goal is to determine the minimum number of additional votes each candidate needs to guarantee their election, given the total number of remaining votes (K - the sum of votes already counted).
+
+Let's understand the approach:
+
+1. We need to determine the minimum number of votes required for each candidate to be in the top M candidates.
+2. For each candidate, we can use a binary search to find the minimum number of additional votes required to guarantee that they are in the top M candidates.
+
+The binary search will work as follows:
+1. Initialize the search range for the number of votes (`l` = 0, `r` = K).
+2. If the candidate is already in the top M candidates with the given votes, then they don't need additional votes (`l = r`).
+3. Otherwise, iterate through the search range, and for each value of `m` in the range:
+   - Calculate the number of votes the candidate would have if they received `m` additional votes (`current_votes = A[candidate] + m`).
+   - Count how many candidates would have more votes than the current candidate, if the current candidate received `m` additional votes.
+   - If the number of candidates with more votes is still more than M, increment `l`.
+   - Otherwise, decrement `r`.
+4. After the loop, `r` should be the minimum number of additional votes needed for the candidate to guarantee their election (if it's feasible within the total number of remaining votes).
+
+Now, let's implement the code to solve this problem.
+
+```cpp
+#include <iostream>
+#include <vector>
+#include <algorithm>
+
+using namespace std;
+
+int main() {
+    int N, M, K;
+    cin >> N >> M >> K;
+    vector<long long> A(N);
+    long long sum_votes = 0;
+    for (int i = 0; i < N; ++i) {
+        cin >> A[i];
+        sum_votes += A[i];
+    }
+    vector<long long> additional_votes(N, -1); // -1 means unable to guarantee victory
+
+    for (int i = 0; i < N; ++i) {
+        // Binary search for the minimum additional votes needed
+        long long l = 0, r = K - sum_votes + 1; // r is the max additional votes needed
+        while (l + 1 < r) {
+            long long m = (l + r) / 2;
+            long long current_votes = A[i] + m;
+            long long ahead = 0;
+            // Count how many candidates have more votes than the current candidate
+            for (int j = 0; j < N; ++j) {
+                if (A[j] + m > current_votes) {
+                    ahead++;
+                }
+            }
+            // Adjust binary search bounds
+            if (ahead < M) {
+                r = m;
+            } else {
+                l = m;
+            }
+        }
+
+        // Check if the candidate can be elected with `r` additional votes
+        if (r <= K - sum_votes) {
+            long long ahead = 0;
+            for (int j = 0; j < N; ++j) {
+                if (A[j] + r > A[i] + r) {
+                    ahead++;
+                }
+            }
+            if (ahead < M) {
+                additional_votes[i] = r;
+            }
+        }
+    }
+
+    // Output the result
+    for (int i = 0; i < N; ++i) {
+        cout << additional_votes[i] << " ";
+    }
+    cout << endl;
+
+    return 0;
+}
+```
+
+This code iterates over each candidate, performs a binary search to find the minimum number of additional votes needed to guarantee an election, and checks whether that number is feasible within the total number of remaining votes. If a candidate can't guarantee an election, the result for that candidate is set to -1.

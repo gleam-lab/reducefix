@@ -1,0 +1,59 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+const int MAXN = 200010;
+char s[MAXN], c[MAXN];
+
+int solve() {
+    int n;
+    scanf("%d", &n);
+    scanf("%s", s + 1);
+
+    // Function to compute the max number of wins after modifying the sequence
+    function<int()> computeMaxWins = [&]() {
+        int count = n;
+        for (int i = 1; i <= n; ++i) {
+            if (s[i] == 'P') c[i] = 'S';
+            else if (s[i] == 'R') c[i] = 'P';
+            else c[i] = 'R';
+        }
+
+        // Eliminate adjacent duplicates
+        for (int i = 2; i <= n; ++i) {
+            if (c[i] == c[i - 1]) {
+                c[i] = s[i];  // Replace with original character
+                count--;
+            }
+        }
+        return count;
+    };
+
+    int ans = computeMaxWins();
+
+    // Try a different initial change: shift starting point by changing first character
+    // This is one possible strategy to break sequences of same characters early
+    if (n >= 2) {
+        // Change first character back to original and re-compute
+        c[1] = s[1];
+        int count = n - 1;
+
+        for (int i = 2; i <= n; ++i) {
+            if (s[i] == 'P') c[i] = 'S';
+            else if (s[i] == 'R') c[i] = 'P';
+            else c[i] = 'R';
+
+            if (c[i] == c[i - 1]) {
+                c[i] = s[i];
+                count--;
+            }
+        }
+        ans = max(ans, count);
+    }
+
+    return ans;
+}
+
+int main() {
+    printf("%d\n", solve());
+    return 0;
+}

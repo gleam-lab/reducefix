@@ -1,0 +1,36 @@
+#include <iostream>
+#include <vector>
+#include <numeric>
+#include <unordered_set>
+
+using namespace std;
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int n, m;
+    cin >> n >> m;
+
+    vector<int> arr(n);
+    for (int i = 0; i < n; ++i) {
+        cin >> arr[i];
+    }
+
+    long long count = 0;
+    for (int start = 0; start < n; ++start) {
+        long long sum = 0;
+        unordered_set<long long> seen_sums;
+        for (int length = 1; length <= n; ++length) {
+            sum += arr[(start + length - 1) % n];
+            if (seen_sums.count(sum % m)) {
+                count += seen_sums.size();
+            }
+            seen_sums.insert(sum % m);
+        }
+    }
+
+    cout << count << '\n';
+
+    return 0;
+}

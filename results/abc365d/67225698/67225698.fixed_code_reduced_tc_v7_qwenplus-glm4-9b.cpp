@@ -1,0 +1,43 @@
+#include <iostream>
+#include <vector>
+#include <string>
+
+using namespace std;
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(NULL);
+
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        string s;
+        cin >> s;
+        
+        vector<long long> dp(n + 1, 0);
+        dp[0] = 1; // Base case: one way to have a count of 0
+
+        for (int i = 1; i <= n; i++) {
+            if (s[i - 1] == 'L') {
+                dp[i] = dp[i - 1]; // Carry forward the previous count
+            } else if (s[i - 1] == 'R') {
+                dp[i] = dp[i - 1] * 2; // Each 'R' doubles the count of the previous position
+            }
+        }
+
+        long long total = 0, max_climb = 0;
+        for (int i = 1; i <= n; i++) {
+            if (dp[i] > max_climb) {
+                max_climb = dp[i]; // Update the maximum climb
+            } else {
+                total += max_climb - dp[i] + 1; // Add the number of ways to climb up to max_climb - dp[i]
+            }
+        }
+
+        cout << total << '\n';
+    }
+
+    return 0;
+}

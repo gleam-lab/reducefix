@@ -1,0 +1,50 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+using ll = long long;
+
+ll f(ll a, ll b, ll p, ll q, ll x) {
+    ll z = x;
+    ll ans = 0;
+    ll pq = min(p, q);
+    vector<ll> dp(10010, 1e10);
+    dp[0] = 0; // iåè²·ãæã®æå°å¤
+    for (ll i = 0; i < 10010; i++) {
+        if (i - a >= 0) dp[i] = min(dp[i], dp[i - a] + (i / a) * p);
+        if (i - b >= 0) dp[i] = min(dp[i], dp[i - b] + (i / b) * q);
+    }
+
+    ll tt = a * b;
+    ll t = (ll)(x / tt);
+    ans += dp[tt] * t;
+    x %= tt;
+    ans += dp[x];
+    return ans;
+}
+
+int main() {
+    int n, x;
+    cin >> n >> x;
+    vector<int> a(n), b(n);
+    vector<ll> p(n), q(n);
+    for (int i = 0; i < n; i++) {
+        cin >> a[i] >> p[i] >> b[i] >> q[i];
+    }
+
+    ll now; // wã®åè£
+    ll l = 0, r = 1e9;
+    while (r - l > 1) {
+        now = (r + l) / 2;
+        ll tmp = 0;
+        for (int i = 0; i < n; i++) {
+            tmp += f(a[i], b[i], p[i], q[i], Now);
+        }
+        if (tmp <= x) l = now;
+        else r = now;
+    }
+
+    cout << l;
+    return 0;
+}

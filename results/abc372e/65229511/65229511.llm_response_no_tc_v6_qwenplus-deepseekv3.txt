@@ -1,0 +1,95 @@
+The initial code uses a Union-Find (Disjoint Set Union, DSU) data structure to manage connected components and a set to keep track of vertices in each component to answer queries about the k-th largest vertex in a connected component. However, the approach has a flaw in how it merges sets when performing union operations, leading to incorrect results or inefficiencies.
+
+### Analysis
+1. **Union-Find with Set Merging**: The code attempts to merge sets by always merging the smaller set into the larger one, which is a good strategy for efficiency. However, the way it updates the root and clears the old set is incorrect. Specifically, after merging, it clears the wrong set (`rold` is not correctly identified), and the merging logic is unnecessarily complex.
+
+2. **Handling Type 2 Queries**: The code checks if the size of the connected component is less than `k` and then uses a reverse iterator to find the k-th largest element. This part is correct in principle, but the inefficiency in the merging affects the correctness.
+
+### Solution
+To fix the code:
+1. **Correct Merging**: Ensure that when merging two sets, the smaller set is merged into the larger one, and the root is correctly updated. After merging, the smaller set should be incorporated into the larger set, and the smaller set's container should be cleared to avoid memory leaks.
+
+2. **Efficiency**: The merging operation should be O(1) amortized per element moved, and the k-th largest query should be O(k) per query, which is acceptable given the constraints (k ≤ 10).
+
+### Fixed Code
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+#define rep(i, n) for(int i=0;i<(n);i++)
+#define all(a) a.begin(), a.end()
+#define rall(a) a.rbegin(), a.rend()
+using ll = long long;
+using pi = pair<int, int>;
+const int di[]={1,-1,0,0};
+const int dj[]={0,0,1,-1};
+const int INF=1e9;
+struct UnionFind {
+    vector<int> parent, rank;
+    UnionFind(int n) : parent(n), rank(n, 0) {
+        for (int i = 0; i < n; i++) 
+            parent[i] = i;
+    }
+    int findRoot(int x) {
+        if (parent[x] != x) 
+            parent[x] = findRoot(parent[x]);
+        return parent[x];
+    }
+    bool unite(int x, int y) {
+        int rx = findRoot(x), ry = findRoot(y);
+        if (rx == ry) return false;
+        if (rank[rx] < rank[ry]) {
+            parent[rx] = ry;
+        } else {
+            parent[ry] = rx;
+            if (rank[rx] == rank[ry])
+                rank[rx]++;
+        }
+        return true;
+    }
+};
+int main(){
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int n, q;
+    cin >> n >> q;
+    UnionFind uf(n);
+    vector<set<int>> cnt(n);
+    rep(i, n) cnt[i].insert(i+1);  // Store vertices as 1-based
+    vector<int> ans;
+    rep(qi, q) {
+        int com;
+        cin >> com;
+        if(com==1) {
+            int u, v;
+            cin >> u >> v;
+            int ru = uf.findRoot(u-1);
+            int rv = uf.findRoot(v-1);
+            if(ru != rv) {
+                if(cnt[ru].size() < cnt[rv].size()) swap(ru, rv);
+                uf.parent[rv] = ru;
+                cnt[ru].insert(all(cnt[rv]));
+                cnt[rv].clear();
+            }
+        }
+        if(com==2) {
+            int v, k;
+            cin >> v >> k;
+            int root = uf.findRoot(v-1);
+            if(cnt[root].size() < k) ans.push_back(-1);
+            else {
+                auto it = cnt[root].rbegin();
+                advance(it, k-1);
+                ans.push_back(*it);
+            }
+        }
+    }
+    for(auto x:ans) cout << x << endl;
+    return 0;
+}
+```
+
+### Explanation
+1. **Union-Find Structure**: The `UnionFind` class manages the connected components with path compression and union by rank for efficiency.
+2. **Set Handling**: Each root maintains a set of vertices in its component. When merging, the smaller set is merged into the larger one to ensure O(log n) per element moved on average.
+3. **Query Handling**: For type 2 queries, the root's set is used to quickly access the k-th largest element by leveraging the set's ordered nature.
+4. **Efficiency**: The merging operations are efficient due to the union by size strategy, and queries are handled in O(k) time per query, which is optimal given the constraints.

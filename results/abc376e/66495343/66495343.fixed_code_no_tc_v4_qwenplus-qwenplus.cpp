@@ -1,0 +1,62 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+#define int long long
+#define PII pair<int, int>
+
+const int INF = 1e18;
+
+signed main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0), cout.tie(0);
+
+    int T;
+    cin >> T;
+
+    while (T--) {
+        int N, K;
+        cin >> N >> K;
+
+        vector<PII> items(N);  // Pair A_i and B_i
+
+        for (int i = 0; i < N; ++i) {
+            cin >> items[i].first;
+        }
+        for (int i = 0; i < N; ++i) {
+            cin >> items[i].second;
+        }
+
+        // Sort by A_i ascending
+        sort(items.begin(), items.end());
+
+        int sum_b = 0;
+        priority_queue<int> max_heap;  // To keep the smallest K-1 B_i values
+
+        int result = INF;
+
+        for (int i = 0; i < N; ++i) {
+            int current_A = items[i].first;
+            int current_B = items[i].second;
+
+            // Always add current B to the heap
+            max_heap.push(-current_B);  // Use negative for min-heap behavior
+            sum_b += current_B;
+
+            // If we have more than K-1 elements in heap, remove the largest B
+            if (max_heap.size() > K - 1) {
+                int remove = -max_heap.top();
+                max_heap.pop();
+                sum_b -= remove;
+            }
+
+            // Once we've processed at least K-1 smaller A's, we can consider this as the max A
+            if (i >= K - 1) {
+                result = min(result, current_A * sum_b);
+            }
+        }
+
+        cout << result << '\n';
+    }
+
+    return 0;
+}

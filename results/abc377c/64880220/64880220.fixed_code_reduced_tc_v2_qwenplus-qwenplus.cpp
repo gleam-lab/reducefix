@@ -1,0 +1,45 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    long long N, M;
+    cin >> N >> M;
+
+    // Directions from which a piece can be captured
+    vector<pair<long long, long long>> directions = {
+        {2, 1}, {1, 2}, {-1, 2}, {-2, 1},
+        {-2, -1}, {-1, -2}, {1, -2}, {2, -1}
+    };
+
+    unordered_set<uint64_t> occupied_or_threatened;
+
+    auto hash_pair = [](long long x, long long y) {
+        return (uint64_t)x << 32 | (uint32_t)y;
+    };
+
+    for (long long i = 0; i < M; ++i) {
+        long long a, b;
+        cin >> a >> b;
+
+        // Mark the current piece's position
+        occupied_or_threatened.insert(hash_pair(a, b));
+
+        // Mark all threatened positions by this piece
+        for (auto [dx, dy] : directions) {
+            long long x = a + dx;
+            long long y = b + dy;
+            if (x >= 1 && x <= N && y >= 1 && y <= N) {
+                occupied_or_threatened.insert(hash_pair(x, y));
+            }
+        }
+    }
+
+    // Total squares = N*N
+    // Subtract the number of occupied or threatened squares
+    cout << (N * NLL) - (long long)occupied_or_threatened.size() << endl;
+
+    return 0;
+}

@@ -1,0 +1,110 @@
+To fix this code, we need to address the main issue: the current approach incorrectly handles the sinking of sections based on their elevation relative to the sea level. The problem requires that sections sink if they are adjacent to the sea (or previously sunk sections) and their elevation is not greater than the current sea level. The original code only checks sections on the border initially and does not account for the dynamic nature of the sinking process as the sea level rises.
+
+### Approaches
+1. **Initialization**: We start by reading the input values and storing the elevation matrix.
+2. **Priority Queue**: Use a priority queue (min-heap) to process sections in order of their elevation. This helps efficiently determine which sections will sink as the sea level rises.
+3. **Union-Find (Disjoint Set Union - DSU)**: Utilize DSU to manage connected sections and efficiently count the remaining sections above sea level. The DSU helps in grouping sections and tracking the size of the island dynamically.
+4. **Processing**: For each year, we process sections with elevation less than or equal to the current sea level. We mark these sections as sunk and adjust the count of remaining sections accordingly.
+
+### Solution Code
+```cpp
+#include <bits/stdc++.h>
+
+using namespace std;
+
+constexpr int dx[] = {-1, 1, 0, 0};
+constexpr int dy[] = {0, 0, -1, 1};
+
+struct DSU {
+    vector<int> parent;
+    vector<int> size;
+    int components;
+
+    DSU(int n) : parent(n), size(n, 1), components(n) {
+        iota(parent.begin(), parent.end(), 0);
+    }
+
+    int find(int x) {
+        if (parent[x] != x) {
+            parent[x] = find(parent[x]);
+        }
+        return parent[x];
+    }
+
+    bool unite(int x, int y) {
+        x = find(x);
+        y = find(y);
+        if (x == y) return false;
+        if (size[x] < size[y]) swap(x, y);
+        parent[y] = x;
+        size[x] += size[y];
+        components--;
+        return true;
+    }
+};
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int H, W, Y;
+    cin >> H >> W >> Y;
+
+    vector<vector<int>> A(H, vector<int>(W));
+    for (int i = 0; i < H; i++) {
+        for (int j = 0; j < W; j++) {
+            cin >> A[i][j];
+        }
+    }
+
+    priority_queue<pair<int, pair<int, int>>, vector<pair<int, pair<int, int>>>, greater<pair<int, pair<int, int>>>> pq;
+    vector<vector<bool>> sunk(H, vector<bool>(W, false));
+
+    for (int i = 0; i < H; i++) {
+        for (int j = 0; j < W; j++) {
+            if (i == 0 || i == H - 1 || j == 0 || j == W - 1) {
+                pq.push({A[i][j], {i, j}});
+                sunk[i][j] = true;
+            }
+        }
+    }
+
+    DSU dsu(H * W);
+    int remaining = H * W;
+
+    vector<int> res(Y + 1);
+    for (int y = 1; y <= Y; y++) {
+        while (!pq.empty() && pq.top().first <= y) {
+            auto [val, pos] = pq.top();
+            pq.pop();
+            int i = pos.first;
+            int j = pos.second;
+            remaining--;
+
+            for (int d = 0; d < 4; d++) {
+                int ni = i + dx[d];
+                int nj = j + dy[d];
+                if (ni < 0 || ni >= H || nj < 0 || nj >= W) continue;
+                if (!sunk[ni][nj]) {
+                    sunk[ni][nj] = true;
+                    pq.push({A[ni][nj], {ni, nj}});
+                }
+            }
+        }
+        res[y] = remaining;
+    }
+
+    for (int y = 1; y <= Y; y++) {
+        cout << res[y] << '\n';
+    }
+
+    return 0;
+}
+```
+
+### Explanation
+1. **Initialization**: We read the grid dimensions and the number of years, followed by the elevation data for each grid cell.
+2. **Priority Queue Setup**: Border cells are added to a min-heap priority queue, and marked as sunk. This queue helps process cells in ascending order of their elevation.
+3. **Dynamic Processing**: For each year, we process all cells in the queue with elevation ≤ current sea level. These cells are marked as sunk, and their neighbors are checked. If a neighbor hasn't been sunk yet, it is added to the queue.
+4. **Result Calculation**: The remaining cells above sea level are tracked and stored for each year. The results are printed year by year.
+5. **Efficiency**: Using a priority queue ensures that each cell is processed exactly once at the appropriate sea level, making the solution efficient with a time complexity of O(HW log(HW) + Y log(HW)). The DSU was initially considered but ultimately not used in the final solution as the priority queue and Boolean checks suffice for counting the remaining sections.

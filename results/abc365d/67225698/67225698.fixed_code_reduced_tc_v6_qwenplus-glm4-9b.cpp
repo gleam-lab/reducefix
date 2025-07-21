@@ -1,0 +1,47 @@
+#include <iostream>
+#include <vector>
+#include <set>
+using namespace std;
+
+int main() {
+    int t = 1;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        if (n == 0) {
+            cout << "0\n";
+            continue;
+        }
+
+        set<string> unique_patterns;
+        string pattern;
+        for (int i = 0; i < n; ++i) {
+            char c;
+            cin >> c;
+            pattern += c;
+            unique_patterns.insert(pattern);
+        }
+
+        int ans = 0;
+        for (auto& p : unique_patterns) {
+            int start = -1;
+            int end = -1;
+            bool started = false;
+            for (int i = 0; i < p.size(); ++i) {
+                if (start == -1 && p[i] != 'S') {
+                    start = i;
+                } else if (start != -1 && p[i] == 'E') {
+                    end = i;
+                    break;
+                }
+                if (start != -1 && p[i] != 'E' && p[i] != 'S') {
+                    started = true;
+                }
+            }
+            ans += started ? (end - start + 1) : 0;
+        }
+        cout << ans << "\n";
+    }
+    return 0;
+}

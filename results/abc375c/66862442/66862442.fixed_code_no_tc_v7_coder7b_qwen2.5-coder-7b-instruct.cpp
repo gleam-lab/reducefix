@@ -1,0 +1,28 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int N;
+    cin >> N;
+
+    double curX = 0, curY = 0;
+    double total = 0;          // Use double for precision
+
+    for (int i = 0; i < N; ++i) {
+        double x, y;
+        cin >> x >> y;
+
+        double dx = curX - x;
+        double dy = curY - y;
+        total += sqrt(dx * dx + dy * dy); // Correctly calculate Euclidean distance
+
+        curX = x; curY = y;
+    }
+    total += sqrt(curX * curX + curY * curY); // Correctly calculate distance back to origin
+
+    // Directly print the result as it's already in double precision
+    printf("%.6f\n", total);
+}

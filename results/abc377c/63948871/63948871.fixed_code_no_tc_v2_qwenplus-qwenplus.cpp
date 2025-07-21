@@ -1,0 +1,52 @@
+#include <iostream>
+#include <set>
+#include <vector>
+
+using namespace std;
+
+using i64 = long long;
+using PII = pair<i64, i64>;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    i64 N, M;
+    cin >> N >> M;
+
+    set<PII> attacked_positions;
+    vector<PII> pieces;
+
+    for (i64 i = 0; i < M; ++i) {
+        i64 a, b;
+        cin >> a >> b;
+        pieces.emplace_back(a, b);
+    }
+
+    // Define the 8 possible attack directions
+    const vector<PII> directions{
+        {2, 1}, {1, 2}, {-1, 2}, {-2, 1},
+        {-2, -1}, {-1, -2}, {1, -2}, {2, -1}
+    };
+
+    for (const auto& [a, b] : pieces) {
+        // Add current piece to attacked positions (cannot place on occupied squares)
+        attacked_positions.insert({a, b});
+
+        for (const auto& [dx, dy] : directions) {
+            i64 x = a + dx;
+            i64 y = b + dy;
+            if (x >= 1 && x <= N && y >= 1 && y <= N) {
+                attacked_positions.insert({x, y});
+            }
+        }
+    }
+
+    // Total grid size is N * N
+    i64 total_cells = static_cast<i64>(N) * static_cast<i64>(N);
+    i64 unavailable_cells = static_cast<i64>(attacked_positions.size());
+
+    cout << (total_cells - unavailable_cells) << endl;
+
+    return 0;
+}

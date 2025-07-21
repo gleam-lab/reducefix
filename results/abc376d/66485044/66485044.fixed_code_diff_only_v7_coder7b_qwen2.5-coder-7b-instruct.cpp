@@ -1,0 +1,34 @@
+#include<bits/stdc++.h>
+#define INF 0x3f3f3f3f3f3f3f3f
+using namespace std;
+typedef long long ll;
+const int MAXN=2e5+10;
+vector<int> vec[MAXN];
+queue<int> q;
+int step[MAXN];
+bool vis[MAXN];
+int main(){
+    int n,m,u,v;
+    scanf("%d %d",&n,&m);
+    for(int i=1;i<=m;i++){
+        scanf("%d %d",&u,&v);
+        vec[u].push_back(v);
+    }
+    q.push(1);
+    step[1] = 0; // Initialize the starting node's step as 0
+    while(!q.empty()){
+        int top=q.front();
+        vis[top]=true;
+        q.pop();
+        for(int i=0;i<vec[top].size();i++){
+            int to=vec[top][i];
+            if(step[to] > step[top] + 1){ // Only enqueue if a shorter path is found
+                step[to]=step[top]+1;
+                q.push(to);
+            }
+        }
+    }
+    if(step[n] == INF) printf("-1"); // If the target node is not reachable
+    else printf("%d", step[n]); // Print the shortest path length
+    return 0;
+}

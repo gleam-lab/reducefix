@@ -1,0 +1,43 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+typedef long long ll;
+
+bool canPlace(vector<ll>& a, vector<ll>& b, ll mid) {
+    sort(a.begin(), a.end());
+    sort(b.begin(), b.end());
+    
+    int j = 0;
+    for(int i = 0; i < a.size(); ++i) {
+        while(j < b.size() && b[j] < a[i]) {
+            ++j;
+        }
+        if(j == b.size()) return false;
+        if(b[j] >= a[i]) ++j;
+    }
+    return true;
+}
+
+int main() {
+    ios_base::sync_with_stdio(false); cin.tie(NULL);
+    
+    ll n;
+    cin >> n;
+    
+    vector<ll> a(n), b(n-1);
+    for(int i = 0; i < n; ++i) cin >> a[i];
+    for(int i = 0; i < n-1; ++i) cin >> b[i];
+    
+    ll low = *max_element(a.begin(), a.end()), high = 1e9 + 1;
+    
+    while(low < high) {
+        ll mid = low + (high - low) / 2;
+        
+        if(canPlace(a, b, mid)) high = mid;
+        else low = mid + 1;
+    }
+    
+    cout << (low == 1e9 + 1 ? -1 : low) << '\n';
+    
+    return 0;
+}

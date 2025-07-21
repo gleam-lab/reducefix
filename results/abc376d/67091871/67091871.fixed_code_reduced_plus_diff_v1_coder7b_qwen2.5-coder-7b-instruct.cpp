@@ -1,0 +1,54 @@
+#include <bits/stdc++.h>
+#define ll long long
+using namespace std;
+
+const int MAXN = 200005;
+vector<int> adj[MAXN];
+bool visited[MAXN];
+
+// Function to perform DFS and find the minimum cycle length
+void dfs(int node, int parent, int depth, int &minCycle) {
+    if (visited[node]) {
+        minCycle = min(minCycle, depth);
+        return;
+    }
+    visited[node] = true;
+    for (int neighbor : adj[node]) {
+        if (neighbor != parent) {
+            dfs(neighbor, node, depth + 1, minCycle);
+        }
+    }
+}
+
+int main() {
+    ios_base::sync_with_stdio(false); cin.tie(NULL);
+
+    int n, m;
+    cin >> n >> m;
+
+    // Build the graph
+    for (int i = 0; i < m; ++i) {
+        int u, v;
+        cin >> u >> v;
+        adj[u].push_back(v);
+        adj[v].push_back(u);
+    }
+
+    int minCycle = INT_MAX;
+    bool hasCycle = false;
+
+    // Check each unvisited node as a starting point for DFS
+    for (int i = 1; i <= n; ++i) {
+        if (!visited[i]) {
+            dfs(i, -1, 0, minCycle);
+            if (minCycle < INT_MAX) {
+                hasCycle = true;
+                break;
+            }
+        }
+    }
+
+    cout << (hasCycle ? minCycle : -1) << endl;
+
+    return 0;
+}

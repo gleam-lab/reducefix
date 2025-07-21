@@ -1,0 +1,63 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+using i64 = long long;
+
+int main() {
+    i64 N, M;
+    cin >> N >> M;
+    vector<array<i64, 2>> pieces(M);
+
+    for (i64 i = 0; i < M; ++i) {
+        i64 a, b;
+        cin >> a >> b;
+        pieces[i] = {a - 1, b - 1}; // Convert to 0-based index
+    }
+
+    // Line sets
+    vector<vector<i64>> line_sets(4);
+    for (const auto& p : pieces) {
+        line_sets[0].push_back(p[0]); // x coordinate
+        line_sets[1].push_back(p[1]); // y coordinate
+        line_sets[2].push_back(p[0] + p[1]); // x + y
+        line_sets[3].push_back(p[0] - p[1]); // x - y
+    }
+
+    // Sort line sets
+    for (auto& lines : line_sets) {
+        sort(lines.begin(), lines.end());
+    }
+
+    // Calculate the number of attackable cells
+    i64 attackable = 0;
+    for (auto& lines : line_sets) {
+        auto it = unique(lines.begin(), lines.end());
+        attackable += distance(it, lines.end());
+    }
+
+    // Calculate the number of cells not attacked
+    i64 n_cells = N * N;
+    for (i64 x = 0; x < N; ++x) {
+        if (find(line_sets[0].begin(), line_sets[0].end(), x) != line_sets[0].end()) break;
+        attackable++;
+    }
+    for (i64 y = 0; y < N; ++y) {
+        if (find(line_sets[1].begin(), line_sets[1].end(), y) != line_sets[1].end()) break;
+        attackable++;
+    }
+    for (i64 d = 0; d < 2 * N; ++d) {
+        if (find(line_sets[2].begin(), line_sets[2].end(), d) != line_sets[2].end()) break;
+        attackable++;
+    }
+    for (i64 d = 0; d < 2 * N; ++d) {
+        if (find(line_sets[3].begin(), line_sets[3].end(), d) != line_sets[3].end()) break;
+        attackable++;
+    }
+
+    // The answer is the total cells minus the attackable cells
+    cout << n_cells - attackable << endl;
+
+    return 0;
+}

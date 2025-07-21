@@ -1,0 +1,1 @@
+if (beats[s[i]] == last_move)

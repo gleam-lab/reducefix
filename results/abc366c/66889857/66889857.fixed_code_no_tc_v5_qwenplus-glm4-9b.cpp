@@ -1,0 +1,22 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define rep(i, n) for (int i = 0; i < (int)(n); i++)
+
+int main() {
+  int Q, x;
+  cin >> Q;
+  
+  set<int> a;
+  while (Q--) {
+    cin >> x;
+    if (x == 1) {
+      cin >> y;
+      a.insert(y);
+    } else if (x == 2) {
+      cin >> y;
+      a.erase(y);
+    } else if (x == 3) {
+      cout << a.size() << endl;
+    }
+  }
+}

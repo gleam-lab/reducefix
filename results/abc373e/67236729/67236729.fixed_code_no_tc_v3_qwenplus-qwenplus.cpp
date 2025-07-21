@@ -1,0 +1,70 @@
+#include <bits/stdc++.h>
+using namespace std;
+using i64 = long long;
+
+constexpr int N = 200000 + 10;
+
+void solve() {
+    i64 n, m, k;
+    cin >> n >> m >> k;
+    vector<i64> A(n);
+    for (auto &x : A) cin >> x, k -= x;
+
+    if (m == n) {
+        // All candidates can be elected since no one needs to beat everyone else
+        for (int i = 0; i < n; ++i) cout << 0 << " ";
+        cout << "\n";
+        return;
+    }
+
+    vector<i64> sortedA = A;
+    sort(sortedA.begin(), sortedA.end());
+
+    // prefix sum from the end
+    vector<i64> suffixSum(n + 1);
+    for (int i = n - 1; i >= 0; --i) {
+        suffixSum[i] = suffixSum[i + 1] + sortedA[i];
+    }
+
+    auto requiredVotes = [&](i64 base, i64 extra) -> bool {
+        // How many candidates have votes > base + extra?
+        // Binary search first candidate with value > base + extra
+        int pos = upper_bound(sortedA.begin(), sortedA.end(), base + extra) - sortedA.begin();
+        int needBeat = m - (n - pos); // Number of people we must beat
+
+        if (needBeat <= 0) return true;
+
+        // We need to take top `needBeat` people and replace them with base+extra
+        i64 total = suffixSum[pos] - suffixSum[pos + needBeat];
+        i64 needed = (base + extra + 1) * needBeat - total;
+
+        return needed <= extra;
+    };
+
+    for (i64 a : A) {
+        i64 low = 0, high = k, answer = -1;
+        while (low <= high) {
+            i64 mid = (low + high) / 2;
+            if (requiredVotes(a, mid)) {
+                answer = mid;
+                high = mid - 1;
+            } else {
+                low = mid + 1;
+            }
+        }
+        cout << (answer <= k ? answer : -1) << " ";
+    }
+    cout << "\n";
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    cout.tie(nullptr);
+
+    int T = 1;
+    // cin >> T;
+    while (T--) solve();
+
+    return 0;
+}

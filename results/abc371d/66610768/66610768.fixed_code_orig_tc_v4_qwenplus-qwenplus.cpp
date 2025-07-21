@@ -1,0 +1,49 @@
+#include <bits/stdc++.h>
+using namespace std;
+using LL = long long;
+const int N = 2e5 + 7;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int n;
+    cin >> n;
+    vector<LL> a(n), b(n);
+    for (int i = 0; i < n; ++i) cin >> a[i];
+    for (int i = 0; i < n; ++i) cin >> b[i];
+
+    // Prefix sum of b values
+    vector<LL> prefix_b(n + 1, 0);
+    for (int i = 0; i < n; ++i)
+        prefix_b[i + 1] = prefix_b[i] + b[i];
+
+    // Sort the pairs by a's values
+    vector<pair<LL, LL>> pairs(n);
+    for (int i = 0; i < n; ++i)
+        pairs[i] = {a[i], b[i]};
+    sort(pairs.begin(), pairs.end());
+
+    // Build prefix sums based on sorted a values
+    vector<LL> sorted_prefix(n + 1, 0);
+    for (int i = 0; i < n; ++i)
+        sorted_prefix[i + 1] = sorted_prefix[i] + pairs[i].second;
+
+    int m;
+    cin >> m;
+    while (m--) {
+        LL l, r;
+        cin >> l >> r;
+
+        // Binary search to find range in sorted a
+        auto left = lower_bound(pairs.begin(), pairs.end(), make_pair(l, numeric_limits<LL>::min()));
+        auto right = upper_bound(pairs.begin(), pairs.end(), make_pair(r, numeric_limits<LL>::max()));
+
+        int li = left - pairs.begin();
+        int ri = right - pairs.begin();
+
+        cout << sorted_prefix[ri] - sorted_prefix[li] << "\n";
+    }
+
+    return 0;
+}

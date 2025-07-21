@@ -1,0 +1,56 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+const int MAXN = 2e5 + 10;
+
+int n, q, points[MAXN];
+long long distances[MAXN];
+
+// This function calculates the number of elements less than or equal to x.
+int lower_bound(int x) {
+    int l = 0, r = n, m;
+    while (l < r) {
+        m = (l + r) / 2;
+        if (points[m] <= x)
+            l = m + 1;
+        else
+            r = m;
+    }
+    return l;
+}
+
+int main() {
+    scanf("%d %d", &n, &q);
+    for (int i = 1; i <= n; i++) {
+        scanf("%d", &points[i]);
+    }
+    sort(points + 1, points + n + 1);
+
+    for (int j = 0; j < q; j++) {
+        long long b, k;
+        scanf("%lld %lld", &b, &k);
+        int index = lower_bound(b);
+        long long distance = abs(b - points[index]);
+        distances[j] = distance * distance; // We store the square of the distance to avoid floating-point operations.
+    }
+
+    for (int j = 0; j < q; j++) {
+        long long ans = 0;
+        // Binary search for the k-th smallest distance.
+        int l = 0, r = q, m;
+        while (l < r) {
+            m = (l + r) / 2;
+            if (distances[m] <= distances[j])
+                l = m + 1;
+            else
+                r = m;
+        }
+        // Calculate the k-th smallest distance.
+        for (int i = l; i < q && i < l + k; i++) {
+            ans = max(ans, distances[i]);
+        }
+        printf("%lld\n", ans);
+    }
+
+    return 0;
+}

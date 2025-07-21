@@ -1,0 +1,23 @@
+#include <iostream>
+#include <limits>
+using namespace std;
+
+#define INF LLONG_MIN
+
+int main() {
+    int n;
+    long long dp0, dp1, x;
+    dp0 = 0;
+    dp1 = -INF;
+    cin >> n;
+
+    for (int i = 0; i < n; i++) {
+        cin >> x;
+        long long next_dp0 = max(dp1 + (2 * x), dp0); // Calculate next dp0
+        dp1 = max(dp0 + x, dp1); // Update dp1
+        dp0 = next_dp0; // Update dp0 with the newly calculated value
+    }
+
+    cout << max(dp0, dp1) << endl; // Output the maximum of dp0 and dp1
+    return 0;
+}

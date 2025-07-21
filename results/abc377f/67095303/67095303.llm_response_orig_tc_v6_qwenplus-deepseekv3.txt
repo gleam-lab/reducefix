@@ -1,0 +1,166 @@
+To fix this code, we need to correctly calculate the number of safe squares where a new piece can be placed without being captured by any existing pieces. The primary issue in the original code was incorrect handling of the diagonal intersections and the counting of squares that are already covered by multiple conditions (rows, columns, or diagonals).
+
+### Approaches
+1. **Identify Forbidden Squares**: The squares that are either occupied or can be captured by existing pieces must be identified. These include:
+   - All squares in the same row as any existing piece.
+   - All squares in the same column as any existing piece.
+   - All squares on the same diagonal (both types: i + j = constant and i - j = constant) as any existing piece.
+2. **Count Unique Forbidden Squares**: Use sets to track unique rows, columns, and diagonals to avoid double-counting.
+3. **Calculate Safe Squares**: The total safe squares is the total squares minus the union of all forbidden squares. The inclusion-exclusion principle is applied to correctly account for overlaps between rows, columns, and diagonals.
+
+### Solution Code
+```cpp
+#include<bits/stdc++.h>
+#define int long long
+using namespace std;
+
+void solve() {
+    int N, M;
+    cin >> N >> M;
+    set<int> rows, cols, diag1, diag2;
+
+    for (int i = 0; i < M; ++i) {
+        int a, b;
+        cin >> a >> b;
+        rows.insert(a);
+        cols.insert(b);
+        diag1.insert(a + b);
+        diag2.insert(a - b);
+    }
+
+    int total = N * N - M;
+
+    int forbidden_rows = rows.size();
+    int forbidden_cols = cols.size();
+    int forbidden_diag1 = diag1.size();
+    int forbidden_diag2 = diag2.size();
+
+    int row_col = forbidden_rows * N + forbidden_cols * N - forbidden_rows * forbidden_cols;
+    int row_diag1 = 0, row_diag2 = 0, col_diag1 = 0, col_diag2 = 0, diag1_diag2 = 0;
+
+    for (int d : diag1) {
+        int l = max(1LL, d - N);
+        int r = min(N, d - 1);
+        if (l > r) continue;
+        int cnt = r - l + 1;
+        row_diag1 += cnt;
+    }
+
+    for (int d : diag2) {
+        int l = max(1LL, 1 - d);
+        int r = min(N, N - d);
+        if (l > r) continue;
+        int cnt = r - l + 1;
+        row_diag2 += cnt;
+    }
+
+    for (int d : diag1) {
+        int l = max(1LL, d - N);
+        int r = min(N, d - 1);
+        if (l > r) continue;
+        int cnt = r - l + 1;
+        col_diag1 += cnt;
+    }
+
+    for (int d : diag2) {
+        int l = max(1LL, 1 + d);
+        int r = min(N, N + d);
+        if (l > r) continue;
+        int cnt = r - l + 1;
+        col_diag2 += cnt;
+    }
+
+    for (int d1 : diag1) {
+        for (int d2 : diag2) {
+            if ((d1 + d2) % 2 != 0) continue;
+            int i = (d1 + d2) / 2;
+            int j = (d1 - d2) / 2;
+            if (i >= 1 && i <= N && j >= 1 && j <= N) {
+                diag1_diag2++;
+            }
+        }
+    }
+
+    int row_col_diag1 = 0;
+    for (int r : rows) {
+        for (int d : diag1) {
+            int j = d - r;
+            if (j >= 1 && j <= N) {
+                row_col_diag1++;
+            }
+        }
+    }
+
+    int row_col_diag2 = 0;
+    for (int r : rows) {
+        for (int d : diag2) {
+            int j = r - d;
+            if (j >= 1 && j <= N) {
+                row_col_diag2++;
+            }
+        }
+    }
+
+    int row_diag1_diag2 = 0;
+    for (int r : rows) {
+        for (int d1 : diag1) {
+            for (int d2 : diag2) {
+                if ((d1 + d2) % 2 != 0) continue;
+                int i = (d1 + d2) / 2;
+                int j = (d1 - d2) / 2;
+                if (i == r && j >= 1 && j <= N) {
+                    row_diag1_diag2++;
+                }
+            }
+        }
+    }
+
+    int col_diag1_diag2 = 0;
+    for (int c : cols) {
+        for (int d1 : diag1) {
+            for (int d2 : diag2) {
+                if ((d1 + d2) % 2 != 0) continue;
+                int i = (d1 + d2) / 2;
+                int j = (d1 - d2) / 2;
+                if (j == c && i >= 1 && i <= N) {
+                    col_diag1_diag2++;
+                }
+            }
+        }
+    }
+
+    int row_col_diag1_diag2 = 0;
+    for (int r : rows) {
+        for (int c : cols) {
+            int d1 = r + c;
+            int d2 = r - c;
+            if (diag1.find(d1) != diag1.end() && diag2.find(d2) != diag2.end()) {
+                row_col_diag1_diag2++;
+            }
+        }
+    }
+
+    int total_forbidden = (forbidden_rows * N) + (forbidden_cols * N) - (forbidden_rows * forbidden_cols);
+    total_forbidden += forbidden_diag1 * N - row_col_diag1;
+    total_forbidden += forbidden_diag2 * N - row_col_diag2;
+    total_forbidden -= (row_diag1 + row_diag2 + col_diag1 + col_diag2 - row_col_diag1 - row_col_diag2 - diag1_diag2);
+    total_forbidden += (row_diag1_diag2 + col_diag1_diag2 - row_col_diag1_diag2);
+
+    int safe_squares = total - total_forbidden;
+    cout << safe_squares << endl;
+}
+
+signed main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+    solve();
+    return 0;
+}
+```
+
+### Explanation
+1. **Input Handling**: The code reads the grid size \( N \) and the number of existing pieces \( M \), followed by the positions of these pieces.
+2. **Tracking Forbidden Areas**: Sets are used to store the rows, columns, and diagonals (both \( i + j \) and \( i - j \)) that are occupied by existing pieces to avoid duplication.
+3. **Inclusion-Exclusion Principle**: The code calculates the total number of forbidden squares by considering overlaps between rows, columns, and diagonals. This ensures that squares covered by multiple conditions are not double-counted.
+4. **Safe Squares Calculation**: The total safe squares are derived by subtracting the total forbidden squares from the total available squares (\( N^2 \)), adjusted for the existing pieces.
+5. **Output**: The result is printed, which is the count of safe squares where a new piece can be placed without being captured by any existing pieces.

@@ -1,0 +1,103 @@
+To fix this code, we need to ensure that the algorithm correctly simulates the rising sea level and accurately tracks the remaining island area each year. The original code attempts to use a priority queue to process sections in order of their elevation, but it has some issues in handling the initial boundaries and the propagation of sinking sections.
+
+### Approaches
+1. **Initial Setup**: The island is represented as a grid of elevations. The sea level starts at 0 and rises by 1 each year.
+2. **Boundary Processing**: Sections on the island's boundary are the first candidates to sink as the sea level rises. These sections are added to a priority queue (min-heap) to process them in order of increasing elevation.
+3. **BFS Propagation**: When a section sinks, its adjacent sections (vertically and horizontally) are checked. If their elevation is not greater than the current sea level, they also sink, and this process propagates.
+4. **Result Tracking**: For each year, the remaining area is calculated by subtracting the sunk sections from the total area.
+
+### Solution Code
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+#define int long long
+#define close ios::sync_with_stdio(false); cin.tie(0); cout.tie(0);
+const int inf = 0x3f3f3f3f3f3f;
+const int MOD = 1e9 + 7;
+
+struct Node {
+    int x, y, val;
+    bool operator < (const Node &a) const {
+        return val > a.val;
+    }
+};
+
+signed main() {
+    close;
+    int h, w; cin >> h >> w;
+    int Y; cin >> Y;
+    vector<vector<int>> grid(h, vector<int>(w));
+    for (int i = 0; i < h; i++) {
+        for (int j = 0; j < w; j++) {
+            cin >> grid[i][j];
+        }
+    }
+
+    vector<vector<bool>> vis(h, vector<bool>(w, false));
+    priority_queue<Node> q;
+    
+    // Add boundary cells to the priority queue
+    for (int i = 0; i < h; i++) {
+        if (!vis[i][0]) {
+            q.push({i, 0, grid[i][0]});
+            vis[i][0] = true;
+        }
+        if (w > 1 && !vis[i][w-1]) {
+            q.push({i, w-1, grid[i][w-1]});
+            vis[i][w-1] = true;
+        }
+    }
+    for (int j = 1; j < w-1; j++) {
+        if (!vis[0][j]) {
+            q.push({0, j, grid[0][j]});
+            vis[0][j] = true;
+        }
+        if (h > 1 && !vis[h-1][j]) {
+            q.push({h-1, j, grid[h-1][j]});
+            vis[h-1][j] = true;
+        }
+    }
+
+    int res = h * w;
+    vector<int> ans(Y + 1, res); // ans[0] is initial state, ans[1] is after 1 year, etc.
+    int current_level = 1;
+    int sunk = 0;
+
+    while (current_level <= Y && !q.empty()) {
+        while (!q.empty() && q.top().val <= current_level) {
+            Node cur = q.top(); q.pop();
+            sunk++;
+            for (int i = 0; i < 4; i++) {
+                int nx = cur.x + (i == 2) - (i == 3);
+                int ny = cur.y + (i == 0) - (i == 1);
+                if (nx >= 0 && nx < h && ny >= 0 && ny < w && !vis[nx][ny]) {
+                    vis[nx][ny] = true;
+                    q.push({nx, ny, grid[nx][ny]});
+                }
+            }
+        }
+        ans[current_level] = res - sunk;
+        current_level++;
+    }
+
+    // Fill remaining years if Y is larger than levels processed
+    for (int i = current_level; i <= Y; i++) {
+        ans[i] = ans[current_level - 1];
+    }
+
+    for (int i = 1; i <= Y; i++) {
+        cout << ans[i] << endl;
+    }
+
+    return 0;
+}
+```
+
+### Explanation
+1. **Input Handling**: The grid dimensions and elevations are read from input, and the number of years `Y` is specified.
+2. **Priority Queue Initialization**: The boundary sections of the grid are added to a priority queue (min-heap) to start the sinking simulation.
+3. **Simulation Loop**: For each year, sections with elevation less than or equal to the current sea level are processed. Their adjacent sections are checked and added to the queue if they meet the sinking criteria.
+4. **Result Calculation**: The remaining island area is tracked for each year by subtracting the sunk sections from the total area. If the sea level exceeds the maximum elevation in the queue, the remaining area stabilizes and is copied for subsequent years.
+5. **Output**: The results for each year are printed, showing the remaining island area after each year's sea level rise.
+
+This approach efficiently handles the propagation of sinking sections and ensures accurate results within the constraints.

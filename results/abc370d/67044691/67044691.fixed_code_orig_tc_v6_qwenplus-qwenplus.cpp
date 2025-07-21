@@ -1,0 +1,88 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+#define ll long long
+#define rep(i, r) for(ll i = 0; i < (ll)r; ++i)
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+
+    ll h, w, q;
+    cin >> h >> w >> q;
+
+    // Use ordered sets to maintain positions of walls in each row and column
+    vector<set<ll>> rows(h), cols(w);
+
+    // Initialize all walls present
+    rep(i, h) rep(j, w) {
+        rows[i].insert(j);
+        cols[j].insert(i);
+    }
+
+    auto process_query = [&](ll r, ll c) {
+        // Check if there's a wall at (r, c)
+        if (rows[r].count(c)) {
+            // Destroy wall at the bomb position
+            rows[r].erase(c);
+            cols[c].erase(r);
+        } else {
+            // Find first walls in four directions
+            vector<pair<ll, ll>> destroy;
+
+            // Up
+            if (!cols[c].empty()) {
+                auto it = cols[c].lower_bound(r);
+                if (it != cols[c].begin()) {
+                    --it;
+                    destroy.push_back({*it, c});
+                }
+            }
+
+            // Down
+            if (!cols[c].empty()) {
+                auto it = cols[c].upper_bound(r);
+                if (it != cols[c].end()) {
+                    destroy.push_back({*it, c});
+                }
+            }
+
+            // Left
+            if (!rows[r].empty()) {
+                auto it = rows[r].lower_bound(c);
+                if (it != rows[r].begin()) {
+                    --it;
+                    destroy.push_back({r, *it});
+                }
+            }
+
+            // Right
+            if (!rows[r].empty()) {
+                auto it = rows[r].upper_bound(c);
+                if (it != rows[r].end()) {
+                    destroy.push_back({r, *it});
+                }
+            }
+
+            // Remove those walls
+            for (auto [x, y] : destroy) {
+                rows[x].erase(y);
+                cols[y].erase(x);
+            }
+        }
+    };
+
+    rep(_, q) {
+        ll r, c;
+        cin >> r >> c;
+        --r; --c;
+        process_query(r, c);
+    }
+
+    // Count remaining walls
+    ll ans = 0;
+    rep(i, h) ans += rows[i].size();
+    cout << ans << endl;
+
+    return 0;
+}

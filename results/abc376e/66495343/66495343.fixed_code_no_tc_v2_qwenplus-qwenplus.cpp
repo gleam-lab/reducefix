@@ -1,0 +1,61 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+#define int long long
+#define PII pair<int, int>
+
+const int INF = 1e18;
+
+signed main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int T;
+    cin >> T;
+
+    while (T--) {
+        int N, K;
+        cin >> N >> K;
+
+        vector<PII> items(N);
+        for (int i = 0; i < N; ++i) {
+            cin >> items[i].first;
+        }
+        for (int i = 0; i < N; ++i) {
+            cin >> items[i].second;
+        }
+
+        // Sort by A_i ascending
+        sort(items.begin(), items.end());
+
+        int sum_B = 0;
+        priority_queue<int> max_heap; // To keep the smallest K B_i values
+        int res = INF;
+
+        for (int i = 0; i < N; ++i) {
+            int a = items[i].first;
+            int b = items[i].second;
+
+            if (max_heap.size() < K) {
+                sum_B += b;
+                max_heap.push(b);
+            } else {
+                // If current b is smaller than the largest in heap, replace it
+                if (!max_heap.empty() && b < max_heap.top()) {
+                    sum_B -= max_heap.top();
+                    max_heap.pop();
+                    sum_B += b;
+                    max_heap.push(b);
+                }
+            }
+
+            if (max_heap.size() == K) {
+                res = min(res, a * sum_B);
+            }
+        }
+
+        cout << res << '\n';
+    }
+
+    return 0;
+}

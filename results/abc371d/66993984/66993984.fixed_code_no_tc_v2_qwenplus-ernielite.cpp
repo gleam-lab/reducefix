@@ -1,0 +1,1 @@
+map<int, int> sum{{0, 0}}; // Initialize with a default value of 0 for sum[0]

@@ -1,0 +1,90 @@
+To fix this code, we need to properly handle the queries where:
+1. If there is a wall at the given position, we simply remove it.
+2. If there is no wall, we find the first walls in the four directions (up, down, left, right) and remove them.
+
+The initial code had issues in correctly identifying the first walls in the four directions when there is no wall at the bomb position. The main problems were:
+1. Incorrect handling of the lower_bound and upper_bound operations for finding adjacent walls.
+2. Not properly checking if the iterators are valid before dereferencing them.
+3. Missing cases where no walls exist in certain directions.
+
+Here's the corrected code that addresses these issues:
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+#define rep(i,n) for(int i = 0; i < (n); i++)
+using ll = long long;
+
+int main() {
+    int h, w, q;
+    cin >> h >> w >> q;
+    vector<set<int>> rows(h), cols(w);
+    rep(i, h) rep(j, w) {
+        rows[i].insert(j);
+        cols[j].insert(i);
+    }
+    int remaining = h * w;
+    rep(qi, q) {
+        int r, c;
+        cin >> r >> c;
+        r--; c--;
+        if (rows[r].count(c)) {
+            rows[r].erase(c);
+            cols[c].erase(r);
+            remaining--;
+        } else {
+            // Check up
+            auto it = cols[c].lower_bound(r);
+            if (it != cols[c].begin()) {
+                it--;
+                int i = *it;
+                rows[i].erase(c);
+                cols[c].erase(it);
+                remaining--;
+            }
+            // Check down
+            it = cols[c].upper_bound(r);
+            if (it != cols[c].end()) {
+                int i = *it;
+                rows[i].erase(c);
+                cols[c].erase(it);
+                remaining--;
+            }
+            // Check left
+            it = rows[r].lower_bound(c);
+            if (it != rows[r].begin()) {
+                it--;
+                int j = *it;
+                rows[r].erase(it);
+                cols[j].erase(r);
+                remaining--;
+            }
+            // Check right
+            it = rows[r].upper_bound(c);
+            if (it != rows[r].end()) {
+                int j = *it;
+                rows[r].erase(it);
+                cols[j].erase(r);
+                remaining--;
+            }
+        }
+    }
+    cout << remaining << "\n";
+    return 0;
+}
+```
+
+### Explanation
+1. **Data Structures**: We use two sets of sets, `rows` and `cols`, to keep track of the walls. `rows[i]` contains all columns in row `i` that have walls, and `cols[j]` contains all rows in column `j` that have walls.
+2. **Initialization**: Initially, all cells have walls, so we populate `rows` and `cols` accordingly.
+3. **Query Processing**:
+   - If the bomb position has a wall, we remove it from both `rows` and `cols`.
+   - If there is no wall, we:
+     - **Up**: Find the first wall above using `lower_bound` and decrementing the iterator.
+     - **Down**: Find the first wall below using `upper_bound`.
+     - **Left**: Find the first wall to the left using `lower_bound` and decrementing the iterator.
+     - **Right**: Find the first wall to the right using `upper_bound`.
+   - For each found wall, we remove it from both `rows` and `cols`.
+4. **Output**: The remaining walls count is maintained by decrementing `remaining` whenever a wall is removed.
+
+This approach ensures that we efficiently handle each query in logarithmic time relative to the number of walls in the respective row or column, leading to an overall complexity of O(Q log N), which is optimal for the given constraints.

@@ -1,0 +1,102 @@
+The original code has a few issues that need to be addressed to ensure correctness and efficiency:
+
+1. **Indexing Issue**: The code uses 0-based indexing for vertices, but the problem uses 1-based indexing. The conversion should be handled carefully.
+2. **Union-Find Data Structure**: The `merge` function attempts to maintain a sorted list of the top 9 largest vertices in each component. However, the approach is inefficient because it sorts the entire list every time a merge occurs, which can be too slow for large N and Q (up to 2×10^5).
+3. **Handling k-th Largest Query**: The query handling assumes that `b` in the type 2 query directly corresponds to the index, but it should be adjusted to `k-1` (since the list is sorted in descending order) and checked against the size of the list.
+
+To fix these issues, we can:
+- Use 1-based indexing directly or handle the conversion properly.
+- Instead of sorting the entire list every merge, maintain a priority queue (or a sorted list) of the top 10 largest vertices in each component. This can be done more efficiently by merging the top elements from both components.
+- Correctly handle the indexing for the k-th largest query.
+
+Here's the fixed code:
+
+```cpp
+#include<bits/stdc++.h>
+using namespace std;
+using ll = long long;
+#define rep(i,n) for(int i = 0;i<n;i++)
+using P = pair<int,int>;
+using T = tuple<int,int,int>;
+
+struct Union_Find{
+    vector<int> par;
+    vector<priority_queue<int, vector<int>, greater<int>>> top; // min-heap to keep top 10 largest
+
+    Union_Find(int n){
+        par.resize(n+1, -1); // 1-based indexing
+        top.resize(n+1);
+        for(int i=1; i<=n; i++){
+            top[i].push(i);
+        }
+    }
+
+    int root(int v){
+        if(par[v] == -1) return v;
+        else return par[v] = root(par[v]);
+    }
+
+    bool issame(int x, int y){
+        return root(x) == root(y);
+    }
+
+    void merge(int x, int y){
+        x = root(x), y = root(y);
+        if(x == y) return;
+        if(top[x].size() < top[y].size()) swap(x, y);
+        par[y] = x;
+        while(!top[y].empty()){
+            int val = top[y].top();
+            top[y].pop();
+            top[x].push(val);
+            if(top[x].size() > 10) top[x].pop();
+        }
+    }
+
+    vector<int> get_top(int v){
+        v = root(v);
+        vector<int> res;
+        while(!top[v].empty()){
+            res.push_back(top[v].top());
+            top[v].pop();
+        }
+        reverse(res.begin(), res.end());
+        for(int num : res){
+            top[v].push(num);
+        }
+        return res;
+    }
+};
+
+int main(){
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int n, q;
+    cin >> n >> q;
+    Union_Find uf(n);
+
+    rep(i,q){
+        int ty, a, b;
+        cin >> ty >> a >> b;
+        if(ty == 1){
+            uf.merge(a, b);
+        }
+        else{
+            vector<int> top = uf.get_top(a);
+            if(top.size() < b){
+                cout << -1 << "\n";
+            }
+            else{
+                cout << top[b-1] << "\n";
+            }
+        }
+    }
+}
+```
+
+### Explanation:
+1. **Union-Find Structure**: The `Union_Find` class now maintains a `priority_queue` (min-heap) for each component to keep track of the top 10 largest vertices. This ensures efficient merging and querying.
+2. **Merge Operation**: When merging two components, the smaller heap is merged into the larger one, and only the top 10 elements are retained. This reduces the time complexity compared to sorting the entire list every time.
+3. **Query Handling**: For a type 2 query, the top elements are retrieved in descending order (by reversing the min-heap), and the k-th largest element is accessed directly if it exists.
+4. **Efficiency**: The use of heaps ensures that each merge and query operation has a time complexity of O(log 10) ≈ O(1), making the solution efficient for large inputs.

@@ -1,0 +1,54 @@
+#include <bits/stdc++.h>
+#define ll long long
+using namespace std;
+
+const int N = 2e5 + 5;
+
+ll a[N], b[N];
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+
+    int n;
+    cin >> n;
+    for (int i = 1; i <= n; ++i) {
+        cin >> a[i];
+    }
+    for (int i = 1; i < n; ++i) {
+        cin >> b[i];
+    }
+
+    sort(a + 1, a + n + 1);
+    sort(b + 1, b + n);
+
+    multiset<ll> unused_boxes;
+    int j = n - 1;
+    ll required = 0;
+
+    // Try to assign largest toys to largest boxes
+    for (int i = n; i >= 1; --i) {
+        // Use as many boxes as needed
+        while (j >= 1 && b[j] >= a[i]) {
+            unused_boxes.insert(b[j]);
+            j--;
+        }
+
+        if (!unused_boxes.empty()) {
+            // Use the smallest possible box that fits this toy
+            auto it = unused_boxes.lower_bound(a[i]);
+            if (it != unused_boxes.end()) {
+                unused_boxes.erase(it);
+            } else {
+                // No suitable box found in unused, try next smaller toy
+                continue;
+            }
+        } else {
+            // Need to use a new box for this toy
+            required = max(required, a[i]);
+        }
+    }
+
+    cout << required << endl;
+    return 0;
+}

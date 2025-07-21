@@ -1,0 +1,107 @@
+To solve this problem efficiently, we need to handle both adding edges and querying the k-th largest connected vertex number. The key challenge is to maintain the connectivity and efficiently retrieve the k-th largest element in the set of connected vertices for each query. 
+
+We can use a combination of Union-Find (Disjoint Set Union) and Binary Indexed Tree (BIT) to achieve this. Here's how we can implement it:
+
+1. **Union-Find**: This helps in managing the connected components efficiently. We union sets when an edge is added and find the root of a component when querying.
+
+2. **Binary Indexed Tree (BIT)**: This is used to maintain a frequency array of vertices in each connected component. We update this BIT whenever an edge is added or removed. The BIT allows us to quickly get the k-th largest element in logarithmic time.
+
+Here's the corrected implementation:
+
+```cpp
+#include<bits/stdc++.h>
+using namespace std;
+
+const int MAXN = 200005;
+int parent[MAXN], bit[MAXN];
+
+int find(int x) {
+    if (parent[x] != x) parent[x] = find(parent[x]);
+    return parent[x];
+}
+
+void unionSets(int x, int y) {
+    x = find(x), y = find(y);
+    if (x == y) return;
+    parent[y] = x;
+}
+
+int query(int idx) {
+    int sum = 0;
+    while (idx > 0) {
+        sum += bit[idx];
+        idx -= idx & (-idx);
+    }
+    return sum;
+}
+
+void update(int idx, int val) {
+    while (idx < MAXN) {
+        bit[idx] += val;
+        idx += idx & (-idx);
+    }
+}
+
+int kthLargest(int n, vector<int> &freq) {
+    for (int i = 1; i <= n; ++i) freq[i] = query(i);
+    sort(freq.begin() + 1, freq.end());
+    reverse(freq.begin() + 1, freq.end());
+    int count = 0;
+    for (int i = 1; i <= n; ++i) {
+        if (freq[i] == 0) break;
+        count++;
+        if (count == freq.size()) return i;
+    }
+    return -1;
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(NULL);
+
+    int n, q;
+    cin >> n >> q;
+
+    for (int i = 1; i <= n; ++i) {
+        parent[i] = i;
+        update(i, 1);
+    }
+
+    vector<int> freq(n + 1, 0);
+    freq[1] = 1;
+
+    while (q--) {
+        int type, u, v, k;
+        cin >> type;
+        if (type == 1) {
+            cin >> u >> v;
+            if (find(u) != find(v)) {
+                unionSets(u, v);
+                freq[find(u)] += freq[find(v)];
+                freq[find(v)] = 0;
+                update(find(u), 1);
+                update(find(v), -1);
+            }
+        } else {
+            cin >> u >> k;
+            cout << kthLargest(n, freq) << "\n";
+        }
+    }
+
+    return 0;
+}
+```
+
+### Explanation:
+1. **Union-Find**:
+   - `find` function finds the root of the set containing `x`.
+   - `unionSets` function unites the sets containing `x` and `y`.
+
+2. **Binary Indexed Tree (BIT)**:
+   - `update` function updates the BIT at index `idx` by adding `val`.
+   - `query` function returns the prefix sum up to index `idx`, which gives the cumulative frequency of vertices up to that point.
+
+3. **Frequency Array**:
+   - The `freq` array keeps track of the number of occurrences of each vertex in the current connected component. It is updated whenever a new edge is added or removed.
+
+This approach ensures efficient handling of both operations within the required constraints.

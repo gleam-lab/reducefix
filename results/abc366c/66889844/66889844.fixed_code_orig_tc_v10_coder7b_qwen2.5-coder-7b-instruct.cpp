@@ -1,0 +1,32 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+  ios_base::sync_with_stdio(false);
+  cin.tie(NULL);
+
+  int q;
+  cin >> q;
+  map<int, int> m;
+
+  while(q--) {
+    int t;
+    cin >> t;
+    if(t == 1) {
+      int x;
+      cin >> x;
+      m[x]++;
+    } else if(t == 2) {
+      int x;
+      cin >> x;
+      if(m.find(x) != m.end()) {
+        m[x]--;
+        if(m[x] == 0) m.erase(x);
+      }
+    } else {
+      cout << m.size() << '\n';
+    }
+  }
+
+  return 0;
+}

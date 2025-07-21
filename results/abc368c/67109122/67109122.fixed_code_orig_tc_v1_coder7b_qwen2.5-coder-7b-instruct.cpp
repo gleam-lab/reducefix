@@ -1,0 +1,24 @@
+#include<bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+
+int main(){
+    ios_base::sync_with_stdio(false);cin.tie(0);
+    int n;cin>>n;
+    vector<ll> h(n+1), dp(n+1);
+    for(int i=1;i<=n;++i)cin>>h[i],dp[i]=h[i];
+    
+    for(int i=1;i<=n;++i){
+        if(i%3==0){
+            dp[i]-=3;
+        }
+        else{
+            dp[i]-=1;
+        }
+        if(dp[i]<0)dp[i]=0;
+    }
+
+    ll ans=accumulate(dp.begin(),dp.end(),0LL);
+    cout<<ans+n<<endl;
+    return 0;
+}

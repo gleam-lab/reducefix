@@ -1,0 +1,86 @@
+To fix this code, we need to address several issues. The original code attempts to maintain a sorted list of the largest vertices for each connected component, but it has flaws in how it merges these lists and handles the queries. Here's a detailed analysis and the corrected solution:
+
+### Issues in the Original Code:
+1. **Input Reading**: The code incorrectly reads `q` and `n` in the wrong order. It should be `n` first, then `q`.
+2. **Merging Logic**: The code attempts to merge the top 20 elements of two components, but it incorrectly appends the elements and doesn't maintain the sorted order properly. It also doesn't handle the case where the merged list might have more than 20 elements.
+3. **Initialization**: The initial setup for the adjacency lists is incorrect. Each vertex should initially know only itself, but the code initializes with 20 elements, which is unnecessary.
+4. **Query Handling**: The code doesn't correctly handle the case where the requested k-th largest element doesn't exist (i.e., fewer than k elements are connected).
+
+### Corrected Approach:
+1. **Union-Find Data Structure**: Use the union-find (disjoint set) data structure to manage connected components efficiently.
+2. **Sorted Lists**: For each component, maintain a sorted list (in descending order) of the largest up to 10 elements (since k can be up to 10). This ensures that merging two components can be done efficiently by merging their top 10 elements and keeping the top 10 from the combined list.
+3. **Efficiency**: By limiting the stored elements to 10, each merge operation is O(1), making the overall complexity O(Q α(N)), where α is the inverse Ackermann function, which is efficient for the given constraints.
+
+### Fixed Code:
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+const int MAX_N = 200005;
+vector<int> parent(MAX_N);
+vector<vector<int>> top_elements(MAX_N);
+
+int find_root(int x) {
+    if (parent[x] != x) {
+        parent[x] = find_root(parent[x]);
+    }
+    return parent[x];
+}
+
+void merge(int u, int v) {
+    int root_u = find_root(u);
+    int root_v = find_root(v);
+    if (root_u == root_v) return;
+
+    if (top_elements[root_u].size() < top_elements[root_v].size()) {
+        swap(root_u, root_v);
+    }
+
+    vector<int> merged;
+    merge(top_elements[root_u].begin(), top_elements[root_u].end(),
+          top_elements[root_v].begin(), top_elements[root_v].end(),
+          back_inserter(merged), greater<int>());
+    if (merged.size() > 10) {
+        merged.resize(10);
+    }
+    top_elements[root_u] = merged;
+    parent[root_v] = root_u;
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int N, Q;
+    cin >> N >> Q;
+
+    for (int i = 1; i <= N; ++i) {
+        parent[i] = i;
+        top_elements[i] = {i};
+    }
+
+    while (Q--) {
+        int op, u, v;
+        cin >> op >> u >> v;
+        if (op == 1) {
+            merge(u, v);
+        } else {
+            int root = find_root(u);
+            if (v > (int)top_elements[root].size()) {
+                cout << -1 << '\n';
+            } else {
+                cout << top_elements[root][v - 1] << '\n';
+            }
+        }
+    }
+
+    return 0;
+}
+```
+
+### Explanation:
+1. **Union-Find**: The `find_root` function uses path compression to efficiently find the root of a node. The `merge` function unions two sets by size and merges their top 10 elements.
+2. **Top Elements Management**: Each component's root maintains a sorted list of its top 10 largest elements. When merging two components, the top elements are merged and truncated to the top 10, ensuring efficient operations.
+3. **Query Handling**: For each type 2 query, the code checks if the requested k-th largest element exists in the component's top elements list and outputs it or `-1` if it doesn't.
+
+This approach ensures that the solution is both correct and efficient, handling the constraints effectively.

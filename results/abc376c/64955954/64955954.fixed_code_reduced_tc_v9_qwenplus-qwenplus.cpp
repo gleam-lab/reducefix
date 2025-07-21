@@ -1,0 +1,66 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int N;
+    cin >> N;
+
+    vector<long long> A(N), B(N - 1);
+    for (int i = 0; i < N; ++i) cin >> A[i];
+    for (int i = 0; i < N - 1; ++i) cin >> B[i];
+
+    sort(A.begin(), A.end());
+    sort(B.begin(), B.end());
+
+    // We need to find the minimum x such that we can assign each toy to a box:
+    // - Each toy fits in its box (A[i] <= box it's assigned to)
+    // - Each box holds exactly one toy
+    // - One additional box of size x is available
+
+    // We try to match the smallest toys with the smallest boxes,
+    // and see what's the minimal x needed to cover the largest unmatched toy
+
+    // Strategy:
+    // Try greedy assignment: assign smallest toys to smallest boxes if possible
+    // If a toy cannot be placed in any remaining box, we will have to put it in the new box.
+    // Among all such unplaceable toys, we need to choose the smallest x that can contain them.
+
+    // To minimize x, we want to place only one toy in the new box (the largest unplaceable one)
+
+    // So we do a greedy approach:
+    // - Sort both A and B
+    // - Try to match toys with boxes from smallest to largest
+    // - Count how many toys can be placed in the existing boxes
+    // - The largest unplaced toy will require the new box
+
+    priority_queue<int, vector<int>, greater<>> pq;
+    multiset<int> boxes(B.begin(), B.end());
+
+    // Greedily try to assign toys to boxes
+    int j = 0;
+    for (int i = 0; i < N && j < N - 1; ++i) {
+        auto it = boxes.lower_bound(A[i]);
+        if (it != boxes.end()) {
+            boxes.erase(it); // Use this box
+            ++j;
+        } else {
+            // Cannot place this toy, would need the extra box
+            pq.push(A[i]);
+        }
+    }
+
+    if (pq.empty()) {
+        // All toys can be placed in existing boxes
+        cout << 0 << endl;
+        return 0;
+    }
+
+    // Only one toy can go into the new box, so we just need the largest toy among those that couldn't be placed
+    int min_x = pq.top();
+    cout << min_x << endl;
+
+    return 0;
+}

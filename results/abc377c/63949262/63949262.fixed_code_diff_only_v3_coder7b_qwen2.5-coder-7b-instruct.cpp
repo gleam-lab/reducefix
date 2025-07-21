@@ -1,0 +1,35 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+
+typedef long long ll;
+
+const int MAXN = 1e9;
+
+int main() {
+    ios_base::sync_with_stdio(false); cin.tie(0); cout.tie(0);
+
+    ll n, m;
+    cin >> n >> m;
+
+    set<pair<ll, ll>> pieces;
+    for (ll i = 0; i < m; ++i) {
+        ll x, y;
+        cin >> x >> y;
+        pieces.insert({x, y});
+
+        // Check all possible positions a knight can move to
+        vector<pair<ll, ll>> moves = {{2, 1}, {1, 2}, {-1, 2}, {-2, 1}, {-2, -1}, {-1, -2}, {1, -2}, {2, -1}};
+        for (auto &move : moves) {
+            ll nx = x + move.first, ny = y + move.second;
+            if (nx >= 1 && nx <= n && ny >= 1 && ny <= n) {
+                pieces.insert({nx, ny});
+            }
+        }
+    }
+
+    ll total_empty = n * n - pieces.size();
+    cout << total_empty << endl;
+
+    return 0;
+}

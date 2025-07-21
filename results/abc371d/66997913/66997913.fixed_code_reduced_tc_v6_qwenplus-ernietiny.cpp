@@ -1,0 +1,30 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+int main() {
+  int n;
+  cin >> n; // Number of elements in the vector x
+  vector<int> x(n);
+  for (int i = 0; i < n; i++) cin >> x[i]; // Input elements for x
+  
+  // Sort the elements in ascending order to handle range queries efficiently
+  sort(x.begin(), x.end());
+  
+  int q;
+  cin >> q; // Number of queries
+  vector<pair<int, int>> query; // Store the range query pairs
+  for (int i = 0; i < q; i++) {
+    int l, r; // Range query elements
+    cin >> l >> r; // Elements to be queried
+    // Calculate the answer based on the sorted range
+    int ans = upper_bound(x.begin(), x.end(), r) - x.begin(); // Using upper_bound for efficient range query
+    query.push_back({ans, l}); // Store the answer for later retrieval
+  }
+  
+  // Calculate the final answer based on the sorted range and print it out
+  int final_answer = lower_bound(x.begin(), x.end(), query[0].second) - x.begin(); // Using lower_bound for range query with a specific range
+  cout << final_answer << endl; // Output the final answer if provided in the input data
+  return 0;
+}

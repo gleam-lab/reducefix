@@ -1,0 +1,53 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+
+int main() {
+    int N;
+    cin >> N;
+    vector<long long> H(N);
+    for (int i = 0; i < N; ++i) {
+        cin >> H[i];
+    }
+
+    long long T = 0;
+
+    // We'll simulate the process in batches of 3 attacks: two single-damage, one triple-damage
+    // Each batch takes 3 seconds and can reduce enemy health by up to 5 (1+1+3)
+    // We use binary search to find the minimal number of such batches needed
+
+    // High value for binary search - safe upper bound based on max H_i * N
+    long long low = 0, high = 2e18;
+
+    while (low < high) {
+        long long mid = (low + high) / 2;
+        long long rem = mid % 3;
+        long long full_cycles = mid / 3;
+        bool possible = true;
+
+        // For each enemy, calculate how many attacks we can allocate
+        for (int i = 0; i < N; ++i) {
+            if (!possible) break;
+
+            // Each enemy can be attacked at most floor((full_cycles + (rem > 0)) / (N - i))
+            long long attacks = full_cycles * 2 + (rem >= 1 ? 1 : 0);
+            if (mid >= 3 * full_cycles + 1) attacks += (rem >= 2 ? 1 : 0);
+
+            // Triple attacks contribute 3 damage, single attacks contribute 1
+            long long tri = attacks / 3;
+            long long sin = attacks % 3;
+            long long dmg = tri * 3 + sin;
+
+            if (dmg < H[i]) possible = false;
+        }
+
+        if (possible) {
+            high = mid;
+        } else {
+            low = mid + 1;
+        }
+    }
+
+    cout << low << endl;
+    return 0;
+}

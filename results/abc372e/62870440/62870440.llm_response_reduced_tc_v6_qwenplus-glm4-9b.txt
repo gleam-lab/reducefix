@@ -1,0 +1,89 @@
+
+The main problem with your code seems to be that the union-find structure is not being used correctly for the union operation, and the data structure `as` is not implemented as expected to store the k-th largest vertex.
+
+Here are the steps to fix the code:
+
+1. **Union-Find Structure**: 
+   - Union-find should be correct for merging sets and finding the representative of a set.
+   - The union operation should set the parent of one root to be the other root.
+   - The find operation should path-compress to make the tree flatter for faster future operations.
+
+2. **Data Structure for k-th Largest**:
+   - You need a data structure to store the k-th largest vertex for each component.
+   - This could be a priority queue (max heap) for each component.
+   - When a new edge is added and the two components are merged, merge the priority queues and keep the top k elements.
+
+3. **Processing Queries**:
+   - For adding an edge, merge the sets and update the priority queues accordingly.
+   - For finding the k-th largest, find the representative of the vertex, then retrieve the value from the priority queue.
+
+Here's a draft of how you could implement this:
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+struct UnionFind {
+    vector<int> parent, rank;
+
+    UnionFind(int size) : parent(size), rank(size, 0) {
+        for (int i = 0; i < size; ++i) parent[i] = i;
+    }
+
+    int find(int u) {
+        if (parent[u] != u) parent[u] = find(parent[u]); // path compression
+        return parent[u];
+    }
+
+    void unite(int u, int v) {
+        int rootU = find(u);
+        int rootV = find(v);
+        if (rootU != rootV) {
+            if (rank[rootU] > rank[rootV]) {
+                parent[rootV] = rootU;
+            } else if (rank[rootU] < rank[rootV]) {
+                parent[rootU] = rootV;
+            } else {
+                parent[rootV] = rootU;
+                rank[rootU]++;
+            }
+        }
+    }
+};
+
+vector<priority_queue<int>> kthLargest;
+UnionFind uf;
+
+void addEdge(int u, int v) {
+    uf.unite(u, v);
+}
+
+int getKthLargest(int v, int k) {
+    v = uf.find(v);
+    if (kthLargest[v].size() < k) {
+        return -1;
+    }
+    return kthLargest[v][k - 1];
+}
+
+int main() {
+    int n, q;
+    cin >> n >> q;
+    uf = UnionFind(n);
+    kthLargest.resize(n);
+
+    int op, u, v, k;
+    while (q--) {
+        cin >> op >> u >> v;
+        if (op == 1) {
+            addEdge(u, v);
+        } else if (op == 2) {
+            cin >> k;
+            cout << getKthLargest(v, k) << endl;
+        }
+    }
+    return 0;
+}
+```
+
+This code initializes a Union-Find structure, processes each query, and handles union and find operations correctly. Note that the priority queues for the k-th largest values are not initialized for each component; you might need to add logic to maintain these as edges are added and components are merged.

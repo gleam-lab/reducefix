@@ -1,0 +1,52 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <iomanip>
+
+using ll = long long;
+
+int main() {
+    int n, m, k;
+    std::cin >> n >> m >> k;
+    
+    std::vector<ll> votes(n);
+    ll total_votes = 0;
+    
+    for (int i = 0; i < n; ++i) {
+        std::cin >> votes[i];
+        total_votes += votes[i];
+    }
+    
+    std::vector<ll> sorted_votes(votes.begin(), votes.end());
+    std::sort(sorted_votes.begin(), sorted_votes.end(), std::greater<ll>());
+
+    std::vector<ll> needed_votes(n, -1);
+    
+    for (int i = 0; i < n; ++i) {
+        ll more_votes_than_i = 0;
+        ll votes_needed = m - 1; // candidate i needs m-1 votes to be one of the top m
+        
+        for (int j = 0; j < n; ++j) {
+            if (sorted_votes[j] > votes[i]) {
+                more_votes_than_i++;
+            }
+            if (more_votes_than_i == i) {
+                break;
+            }
+        }
+        
+        ll votes_left = k - total_votes;
+        
+        if (votes_needed <= votes_left) {
+            needed_votes[i] = votes_needed - votes[i]; // votes needed to reach m seats
+        } else {
+            needed_votes[i] = -1; // not possible to reach m seats
+        }
+    }
+    
+    for (int i = 0; i < n; ++i) {
+        std::cout << needed_votes[i] << (i < n - 1 ? " " : "\n");
+    }
+    
+    return 0;
+}

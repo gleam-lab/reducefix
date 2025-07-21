@@ -1,0 +1,110 @@
+To fix this code, we need to ensure that the logic correctly handles the queries as described in the problem statement. The main issue with the original code is that it doesn't efficiently track and update the walls that are destroyed, especially when a bomb is placed on an already destroyed cell. The caching mechanism used in the original code is also flawed, leading to incorrect destruction of walls in some cases.
+
+### Approaches
+1. **Initial Setup**: Initialize a grid with all walls present (represented as `true`).
+2. **Handling Queries**: For each query:
+   - If the cell has a wall, destroy it.
+   - If the cell does not have a wall, look in the four directions (up, down, left, right) for the first wall in each direction and destroy them.
+3. **Efficiency**: Use efficient data structures to keep track of the nearest walls in each direction for each cell. This can be achieved using binary indexed trees (Fenwick trees) or segment trees for dynamic queries and updates, but given the constraints, we can manage with simpler structures for this problem.
+
+### Solution Code
+```cpp
+#include <vector>
+#include <iostream>
+#include <set>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int H, W, Q;
+    cin >> H >> W >> Q;
+    
+    vector<vector<bool>> grid(H + 2, vector<bool>(W + 2, false));
+    vector<set<int>> row_walls(H + 2);
+    vector<set<int>> col_walls(W + 2);
+    
+    for (int i = 1; i <= H; ++i) {
+        for (int j = 1; j <= W; ++j) {
+            grid[i][j] = true;
+            row_walls[i].insert(j);
+            col_walls[j].insert(i);
+        }
+    }
+    
+    int broken = 0;
+    
+    while (Q--) {
+        int r, c;
+        cin >> r >> c;
+        
+        if (grid[r][c]) {
+            grid[r][c] = false;
+            row_walls[r].erase(c);
+            col_walls[c].erase(r);
+            broken++;
+        } else {
+            // Check up
+            auto it = col_walls[c].lower_bound(r);
+            if (it != col_walls[c].begin()) {
+                --it;
+                int i = *it;
+                if (grid[i][c]) {
+                    grid[i][c] = false;
+                    row_walls[i].erase(c);
+                    col_walls[c].erase(i);
+                    broken++;
+                }
+            }
+            // Check down
+            it = col_walls[c].upper_bound(r);
+            if (it != col_walls[c].end()) {
+                int i = *it;
+                if (grid[i][c]) {
+                    grid[i][c] = false;
+                    row_walls[i].erase(c);
+                    col_walls[c].erase(i);
+                    broken++;
+                }
+            }
+            // Check left
+            it = row_walls[r].lower_bound(c);
+            if (it != row_walls[r].begin()) {
+                --it;
+                int j = *it;
+                if (grid[r][j]) {
+                    grid[r][j] = false;
+                    row_walls[r].erase(j);
+                    col_walls[j].erase(r);
+                    broken++;
+                }
+            }
+            // Check right
+            it = row_walls[r].upper_bound(c);
+            if (it != row_walls[r].end()) {
+                int j = *it;
+                if (grid[r][j]) {
+                    grid[r][j] = false;
+                    row_walls[r].erase(j);
+                    col_walls[j].erase(r);
+                    broken++;
+                }
+            }
+        }
+    }
+    
+    cout << H * W - broken << '\n';
+    
+    return 0;
+}
+```
+
+### Explanation
+1. **Initialization**: The grid is initialized with walls in all cells. Additionally, sets are maintained for each row and column to keep track of the walls.
+2. **Query Processing**:
+   - **Direct Destruction**: If the cell has a wall, it is destroyed, and the corresponding entries in the sets are removed.
+   - **Indirect Destruction**: If the cell does not have a wall, the first walls in the four cardinal directions are found using binary search within the sets. These walls are then destroyed if they exist.
+3. **Efficiency**: Using sets allows for efficient insertion, deletion, and searching operations (O(log N) per operation), making the solution suitable for large input sizes.
+
+This approach ensures that all queries are processed correctly and efficiently, adhering to the problem constraints and requirements.

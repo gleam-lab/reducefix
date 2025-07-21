@@ -1,0 +1,52 @@
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+
+int main() {
+  int N;
+  string S;
+  cin >> N >> S;
+
+  // We will track the current move of the player
+  // Start with a neutral state that doesn't interfere with the first move
+  char current_move = 'N';  // Can be 'R', 'P', 'S', or 'N' (neutral)
+  int changes = 0;
+
+  for (char c : S) {
+    // If current move is already correct, continue
+    if (current_move == c) continue;
+
+    // Need to change move
+    bool change_needed = false;
+
+    // Determine if we can transition directly or need an intermediate change
+    if (current_move == 'N') {
+      // From neutral, can go directly to desired move
+      change_needed = true;
+    } else if ((current_move == 'R' && c == 'S') ||
+               (current_move == 'S' && c == 'P') ||
+               (current_move == 'P' && c == 'R')) {
+      // These are losing transitions - must change
+      change_needed = true;
+    } else if (current_move == 'R' && c == 'P') {
+      // Rock to Paper (win), we can transition directly
+      change_needed = true;
+    } else if (current_move == 'P' && c == 'S') {
+      // Paper to Scissors (win), we can transition directly
+      change_needed = true;
+    } else if (current_move == 'S' && c == 'R') {
+      // Scissors to Rock (win), we can transition directly
+      change_needed = true;
+    } else {
+      // Same type of move (e.g. R to R), no change needed
+    }
+
+    if (change_needed) {
+      changes++;
+      current_move = c;
+    }
+  }
+
+  cout << changes << endl;
+  return 0;
+}

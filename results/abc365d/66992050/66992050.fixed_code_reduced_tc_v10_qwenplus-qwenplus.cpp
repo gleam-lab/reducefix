@@ -1,0 +1,35 @@
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+
+int main(){
+  int N;
+  string S;
+  cin >> N >> S;
+  
+  // Each move corresponds to what beats it
+  unordered_map<char, char> beats = {
+    {'R', 'S'},  // Rock beats Scissors
+    {'S', 'P'},  // Scissors beats Paper
+    {'P', 'R'}   // Paper beats Rock
+  };
+
+  char last_move = 'N';  // No previous move at start
+  int win_count = 0;
+
+  for (char c : S) {
+    if (last_move == 'N' || beats[c] == last_move) {
+      // If first move or opponent played what beats our last move, we must switch
+      win_count++;
+      last_move = c;
+    } else {
+      // Else, we can keep the same move to continue winning
+      // So no increment needed
+      // But update last_move to current one
+      last_move = c;
+    }
+  }
+
+  cout << win_count;
+  return 0;
+}

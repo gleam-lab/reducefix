@@ -1,0 +1,73 @@
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+
+int main() {
+  ios::sync_with_stdio(false);
+  cin.tie(nullptr);
+
+  int N, M;
+  ll K;
+  cin >> N >> M >> K;
+
+  vector<ll> A(N);
+  for (int i = 0; i < N; ++i) {
+    cin >> A[i];
+  }
+
+  ll total_current = 0;
+  for (ll a : A) total_current += a;
+  ll remaining = K - total_current;
+
+  vector<ll> sorted_A = A;
+  sort(sorted_A.begin(), sorted_A.end());
+
+  vector<ll> prefix_sum(N + 1);
+  for (int i = 1; i <= N; ++i) {
+    prefix_sum[i] = prefix_sum[i - 1] + sorted_A[i - 1];
+  }
+
+  vector<ll> result(N);
+
+  // For each candidate, calculate the minimum number of votes needed
+  for (int i = 0; i < N; ++i) {
+    ll current = A[i];
+
+    // Binary search on additional votes needed
+    ll low = 0, high = remaining;
+    ll answer = -1;
+
+    while (low <= high) {
+      ll mid = (low + high) / 2;
+      ll total = current + mid;
+
+      // We need to ensure that at most M-1 candidates have more votes than this one
+
+      // Number of candidates strictly greater than 'total'
+      int cnt = N - (upper_bound(sorted_A.begin(), sorted_A.end(), total) - sorted_A.begin());
+
+      if (cnt < M) {
+        // This many votes guarantees victory
+        answer = mid;
+        high = mid - 1;
+      } else {
+        // Need more votes
+        low = mid + 1;
+      }
+    }
+
+    if (answer > remaining)
+      result[i] = -1;
+    else if (answer < 0)
+      result[i] = -1;
+    else
+      result[i] = answer;
+  }
+
+  for (int i = 0; i < N; ++i) {
+    cout << max(0LL, result[i]) << " ";
+  }
+  cout << "\n";
+
+  return 0;
+}

@@ -1,0 +1,53 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+#define endl "\n"
+#define int long long
+
+void solve() {
+    int N, K;
+    cin >> N >> K;
+    vector<int> A(N);
+    for (int i = 0; i < N; ++i) {
+        cin >> A[i];
+    }
+
+    // We need to remove K elements from A such that the remaining sequence has minimum difference between max and min
+    // Strategy: Try all possible windows of size (N-K) in the array and compute the min difference between max and min in each window
+    // The answer is the minimum among these differences
+
+    int windowSize = N - K;
+    deque<int> minQ, maxQ;
+    int res = LLONG_MAX;
+
+    for (int i = 0; i < N; ++i) {
+        // Remove out of window elements
+        while (!minQ.empty() && minQ.front() <= i - windowSize)
+            minQ.pop_front();
+        while (!maxQ.empty() && maxQ.front() <= i - windowSize)
+            maxQ.pop_front();
+
+        // Add current element to deques
+        while (!minQ.empty() && A[minQ.back()] >= A[i])
+            minQ.pop_back();
+        while (!maxQ.empty() && A[maxQ.back()] <= A[i])
+            maxQ.pop_back();
+
+        minQ.push_back(i);
+        maxQ.push_back(i);
+
+        // Start checking once window is full
+        if (i >= windowSize - 1) {
+            res = min(res, A[maxQ.front()] - A[minQ.front()]);
+        }
+    }
+
+    cout << res << endl;
+}
+
+signed main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(NULL);
+    solve();
+    return 0;
+}

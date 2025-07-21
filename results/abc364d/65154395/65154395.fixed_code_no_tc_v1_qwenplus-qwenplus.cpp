@@ -1,0 +1,66 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+typedef long long ll;
+
+void solve() {
+    int N, Q;
+    cin >> N >> Q;
+
+    vector<long long> A(N);
+    for (int i = 0; i < N; ++i) {
+        cin >> A[i];
+    }
+
+    // Sort the A array for binary search operations
+    sort(A.begin(), A.end());
+
+    for (int q = 0; q < Q; ++q) {
+        long long b;
+        int k;
+        cin >> b >> k;
+
+        // Binary search to find the k-th closest element
+        // Create a custom comparator based on distance to b
+        auto cmp = [b](long long x, long long y) {
+            return abs(x - b) < abs(y - b);
+        };
+
+        // Since we can't directly sort by distance and keep original values,
+        // we use a priority queue (min-heap) approach indirectly.
+
+        // We will perform a binary search on distances
+        // Minimum possible distance is 0, max is 2e8
+        ll low = 0, high = 2e8;
+        ll answer = -1;
+
+        while (low <= high) {
+            ll mid = (low + high) / 2;
+            // Count how many elements have distance <= mid from b
+            ll left = b - mid;
+            ll right = b + mid;
+
+            // Find lower and upper bounds in sorted A
+            auto l = lower_bound(A.begin(), A.end(), left);
+            auto r = upper_bound(A.begin(), A.end(), right);
+
+            int count = r - l;
+            if (count >= k) {
+                answer = mid;
+                high = mid - 1;
+            } else {
+                low = mid + 1;
+            }
+        }
+
+        cout << answer << "\n";
+    }
+}
+
+int main() {
+    ios::sync_with_stdio(0);
+    cin.tie(0);
+    cout.tie(0);
+    solve();
+    return 0;
+}

@@ -1,0 +1,52 @@
+#include <iostream>
+#include <vector>
+#include <set>
+
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    long long N;
+    cin >> N;
+
+    int M;
+    cin >> M;
+
+    vector<pair<int, int>> pieces(M);
+    for (int i = 0; i < M; ++i) {
+        cin >> pieces[i].first >> pieces[i].second;
+    }
+
+    set<pair<int, int>> forbidden;
+
+    for (const auto& p : pieces) {
+        forbidden.insert({p.first, p.second});
+
+        // Check all 8 directions
+        int a = p.first, b = p.second;
+
+        // (i+2,j+1)
+        if (a + 2 <= N && b + 1 <= N) forbidden.insert({a + 2, b + 1});
+        // (i+1,j+2)
+        if (a + 1 <= N && b + 2 <= N) forbidden.insert({a + 1, b + 2});
+        // (i-1,j+2)
+        if (a - 1 >= 1 && b + 2 <= N) forbidden.insert({a - 1, b + 2});
+        // (i-2,j+1)
+        if (a - 2 >= 1 && b + 1 <= N) forbidden.insert({a - 2, b + 1});
+        // (i-2,j-1)
+        if (a - 2 >= 1 && b - 1 >= 1) forbidden.insert({a - 2, b - 1});
+        // (i-1,j-2)
+        if (a - 1 >= 1 && b - 2 >= 1) forbidden.insert({a - 1, b - 2});
+        // (i+1,j-2)
+        if (a + 1 <= N && b - 2 >= 1) forbidden.insert({a + 1, b - 2});
+        // (i+2,j-1)
+        if (a + 2 <= N && b - 1 >= 1) forbidden.insert({a + 2, b - 1});
+    }
+
+    long long total = N * N;
+    cout << (total - forbidden.size()) << endl;
+
+    return 0;
+}

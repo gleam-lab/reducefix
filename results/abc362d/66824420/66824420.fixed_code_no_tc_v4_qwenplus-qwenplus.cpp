@@ -1,0 +1,58 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    int N, M;
+    cin >> N >> M;
+    
+    long long A[N];
+    for (int i = 0; i < N; ++i) {
+        cin >> A[i];
+    }
+
+    // Build adjacency list: each edge stores the destination and its weight
+    vector<vector<pair<int, long long>>> adj(N + 1); // 1-indexed vertices
+    for (int i = 0; i < M; ++i) {
+        int U, V;
+        long long B;
+        cin >> U >> V >> B;
+        adj[U].push_back({V, B});
+        adj[V].push_back({U, B});
+    }
+
+    // Dijkstra's algorithm
+    const long long INF = 1e18;
+    vector<long long> dist(N + 1, INF);
+    dist[1] = A[0]; // Start from node 1, include A[0] (vertex weight of node 1)
+
+    priority_queue<pair<long long, int>, vector<pair<long long, int>>, greater<>> pq;
+    pq.push({dist[1], 1});
+
+    while (!pq.empty()) {
+        auto [d, u] = pq.top();
+        pq.pop();
+
+        if (d > dist[u]) continue;
+
+        for (auto [v, edge_weight] : adj[u]) {
+            // The total cost to move to v:
+            // current path cost to u (dist[u]) 
+            // + edge weight
+            // + vertex weight of v (A[v - 1])
+            long long new_dist = dist[u] + edge_weight + A[v - 1];
+
+            if (new_dist < dist[v]) {
+                dist[v] = new_dist;
+                pq.push({dist[v], v});
+            }
+        }
+    }
+
+    // Output results for nodes 2 to N
+    for (int i = 2; i <= N; ++i) {
+        cout << dist[i] << " ";
+    }
+    cout << "\n";
+
+    return 0;
+}

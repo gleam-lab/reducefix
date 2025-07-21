@@ -1,0 +1,52 @@
+#include <bits/stdc++.h>
+#define ll long long
+using namespace std;
+
+const int N = 2e5 + 5;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+    
+    ll n;
+    cin >> n;
+    
+    vector<ll> A(n), B(n - 1);
+    
+    for (ll i = 0; i < n; ++i) {
+        cin >> A[i];
+    }
+    
+    for (ll i = 0; i < n - 1; ++i) {
+        cin >> B[i];
+    }
+    
+    sort(A.begin(), A.end());
+    sort(B.begin(), B.end());
+    
+    // We try to match the largest toys with the largest boxes
+    ll extra_toys = 0;
+    ll max_extra_toy_size = 0;
+    ll i = n - 1, j = n - 2;
+    
+    while (i >= 0 && j >= 0) {
+        if (B[j] >= A[i]) {
+            i--;
+            j--;
+        } else {
+            // Need an extra box for this toy
+            extra_toys++;
+            max_extra_toy_size = max(max_extra_toy_size, A[i]);
+            i--;
+        }
+    }
+    
+    // If more than one toy can't be placed, we need more than one extra box -> impossible
+    if (extra_toys > 1) {
+        cout << -1 << '\n';
+    } else {
+        cout << max_extra_toy_size << '\n';
+    }
+
+    return 0;
+}

@@ -1,0 +1,29 @@
+#include <iostream>
+#include <vector>
+using namespace std;
+
+int main() {
+    int N;
+    cin >> N;
+    vector<long long> A(N);
+    for (int i = 0; i < N; i++) cin >> A[i];
+    
+    vector<long long> dp(2, 0);
+    for (int i = 0; i < N; i++) {
+        vector<long long> p(2);
+        swap(p, dp);
+        
+        // Case 1: Do not take the current element
+        p[0] = max(p[0], dp[0]);
+        
+        // Case 2: Take the current element
+        p[1] = max(p[1], dp[0] + A[i]);
+        if (i > 0) p[1] = max(p[1], dp[1] + A[i]);
+        
+        dp = p;
+    }
+    
+    long long ans = max(dp[0], dp[1]);
+    cout << ans << endl;
+    return 0;
+}

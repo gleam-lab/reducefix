@@ -1,0 +1,72 @@
+#include <iostream>
+#include <algorithm>
+#include <climits>
+using namespace std;
+
+typedef struct { int a, p, b, q; } Machine;
+Machine A[100];
+long long dp[100][10000];  // dp[i][j]: min cost to produce j units using machine i
+
+int N, X;
+
+// Calculate the minimum cost to produce 'n' units on machine 'i'
+long long cost(int i, int n) {
+    int cycle = A[i].a * A[i].b;
+    long long full_cycles = n / cycle;
+    int remainder = n % cycle;
+    return full_cycles * (A[i].p * A[i].b + A[i].q * A[i].a) + dp[i][remainder];
+}
+
+// Check if we can produce 'n' units within budget X
+bool isPossible(int n) {
+    long long total_cost = 0;
+    for (int i = 0; i < N; i++) {
+        total_cost += cost(i, n);
+        if (total_cost > X) return false;
+    }
+    return true;
+}
+
+int main() {
+    cin >> N >> X;
+
+    // Initialize each machine and precompute DP tables
+    for (int i = 0; i < N; i++) {
+        int a, p, b, q;
+        cin >> a >> p >> b >> q;
+
+        // Ensure a*p <= b*q by swapping if necessary
+        if ((long long)a * q > (long long)b * p) {
+            swap(a, b);
+            swap(p, q);
+        }
+
+        A[i] = {a, p, b, q};
+
+        // Initialize DP table for this machine
+        dp[i][0] = 0;
+        for (int j = 1; j <= a * b; j++) {
+            int prev1 = (j - a >= 0) ? j - a : 0;
+            int prev2 = (j - b >= 0) ? j - b : 0;
+            dp[i][j] = min(dp[i][prev1] + p, dp[i][prev2] + q);
+        }
+    }
+
+    // Binary search for maximum units that can be produced within budget X
+    int low = 0;
+    int high = 1e6;  // Safe upper bound based on constraints
+    int answer = 0;
+
+    while (low <= high) {
+        int mid = (low + high) / 2;
+        if (isPossible(mid)) {
+            answer = mid;
+            low = mid + 1;
+        } else {
+            high = mid - 1;
+        }
+    }
+
+    cout << answer << endl;
+    return 0;
+}

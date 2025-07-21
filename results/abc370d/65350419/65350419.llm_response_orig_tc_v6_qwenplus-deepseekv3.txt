@@ -1,0 +1,103 @@
+To fix this code, we need to properly handle the queries and the destruction of walls in the grid. The initial approach was to use sets to keep track of the walls in each row and column, but it had some issues in how it handled the destruction of the first walls in the four directions when a bomb was placed on an empty cell. 
+
+### Approaches
+1. **Data Structures**: Use two arrays of sets, one for each row and one for each column, to keep track of the walls. Each set will store the column indices for the walls in a row (for row sets) and the row indices for the walls in a column (for column sets).
+2. **Query Processing**:
+   - For each query, check if the cell (R, C) has a wall. If it does, remove it from the sets.
+   - If there is no wall, find the first walls in the four directions (up, down, left, right) and remove them. The first wall in a direction is the closest wall in that direction from (R, C) that hasn't been destroyed yet.
+3. **Efficiency**: Using sets allows for efficient insertion and deletion operations (logarithmic time complexity), which is crucial given the constraints.
+
+### Solution Code
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+#define rep(i, n) for(int i = 0; i < (n); i++)
+using ll = long long;
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int h, w, q;
+    cin >> h >> w >> q;
+    
+    vector<set<int>> row(h), col(w);
+    rep(i, h) rep(j, w) {
+        row[i].insert(j);
+        col[j].insert(i);
+    }
+    
+    int remaining = h * w;
+    
+    rep(qi, q) {
+        int r, c;
+        cin >> r >> c;
+        r--; c--;
+        
+        if (row[r].count(c)) {
+            row[r].erase(c);
+            col[c].erase(r);
+            remaining--;
+        } else {
+            // Up
+            auto it_up = col[c].lower_bound(r);
+            if (it_up != col[c].begin()) {
+                it_up--;
+                int tmp = *it_up;
+                if (row[tmp].count(c)) {
+                    row[tmp].erase(c);
+                    col[c].erase(tmp);
+                    remaining--;
+                }
+            }
+            
+            // Down
+            auto it_down = col[c].lower_bound(r);
+            if (it_down != col[c].end()) {
+                int tmp = *it_down;
+                if (row[tmp].count(c)) {
+                    row[tmp].erase(c);
+                    col[c].erase(tmp);
+                    remaining--;
+                }
+            }
+            
+            // Left
+            auto it_left = row[r].lower_bound(c);
+            if (it_left != row[r].begin()) {
+                it_left--;
+                int tmp = *it_left;
+                if (col[tmp].count(r)) {
+                    col[tmp].erase(r);
+                    row[r].erase(tmp);
+                    remaining--;
+                }
+            }
+            
+            // Right
+            auto it_right = row[r].lower_bound(c);
+            if (it_right != row[r].end()) {
+                int tmp = *it_right;
+                if (col[tmp].count(r)) {
+                    col[tmp].erase(r);
+                    row[r].erase(tmp);
+                    remaining--;
+                }
+            }
+        }
+    }
+    
+    cout << remaining << "\n";
+    return 0;
+}
+```
+
+### Explanation
+1. **Data Structures**: We use `row` and `col` arrays of sets. `row[i]` contains column indices of walls in row `i`, and `col[j]` contains row indices of walls in column `j`.
+2. **Initialization**: Initially, all cells have walls, so we populate the sets with all possible indices.
+3. **Query Processing**:
+   - For each query, if there's a wall at (R, C), we remove it from both `row[R]` and `col[C]`.
+   - If there's no wall, we search for the closest walls in the four directions using `lower_bound` to efficiently navigate the sets. If such walls are found, they are removed.
+4. **Output**: After processing all queries, the remaining walls count is printed.
+
+This approach ensures efficient handling of each query in logarithmic time, making it suitable for large inputs as specified in the problem constraints.

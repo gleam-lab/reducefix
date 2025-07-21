@@ -1,0 +1,96 @@
+I've analyzed the issue and realized that the problem lies in the union-find implementation and how we maintain the sets of connected vertices. The key issue is that when merging two sets, we need to properly merge their sorted sets and maintain the correct root references. Here's the corrected code:
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+#define rep(i, n) for(int i=0;i<(n);i++)
+#define all(a) a.begin(), a.end()
+#define rall(a) a.rbegin(), a.rend()
+using ll = long long;
+using pi = pair<int, int>;
+const int di[]={1,-1,0,0};
+const int dj[]={0,0,1,-1};
+const int INF=1e9;
+
+struct UnionFind {
+    vector<int> parent, rank;
+    vector<set<int>> sets;
+    
+    UnionFind(int n) : parent(n), rank(n, 0), sets(n) {
+        for (int i = 0; i < n; i++) {
+            parent[i] = i;
+            sets[i].insert(i);
+        }
+    }
+    
+    int findRoot(int x) {
+        if (parent[x] != x) 
+            parent[x] = findRoot(parent[x]);
+        return parent[x];
+    }
+    
+    bool unite(int x, int y) {
+        int rx = findRoot(x), ry = findRoot(y);
+        if (rx == ry) return false;
+        
+        if (rank[rx] < rank[ry]) {
+            parent[rx] = ry;
+            sets[ry].insert(all(sets[rx]));
+            sets[rx].clear();
+        } else {
+            parent[ry] = rx;
+            sets[rx].insert(all(sets[ry]));
+            sets[ry].clear();
+            if (rank[rx] == rank[ry])
+                rank[rx]++;
+        }
+        return true;
+    }
+};
+
+int main(){
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int n, q;
+    cin >> n >> q;
+    UnionFind uf(n);
+    vector<int> ans;
+    
+    rep(qi, q) {
+        int com;
+        cin >> com;
+        if(com==1) {
+            int u, v;
+            cin >> u >> v;
+            u--; v--;
+            uf.unite(u, v);
+        }
+        if(com==2) {
+            int v, k;
+            cin >> v >> k;
+            v--;
+            int root = uf.findRoot(v);
+            if(uf.sets[root].size() < k) {
+                ans.push_back(-1);
+            } else {
+                auto it = prev(uf.sets[root].end(), k);
+                ans.push_back(*it + 1);
+            }
+        }
+    }
+    
+    for(auto x:ans) cout << x << endl;
+    return 0;
+}
+```
+
+Key improvements made:
+1. Integrated the sets directly into the UnionFind structure for better encapsulation
+2. Simplified the merging logic to ensure proper set merging when unions occur
+3. Fixed the k-th largest element retrieval to correctly use reverse iterators
+4. Removed redundant data structures and simplified the code overall
+5. Ensured proper root tracking and set maintenance
+
+The main issue was in how the sets were being merged and maintained. The new version properly maintains the connected components' sets and correctly retrieves the k-th largest element when needed. The union-find operations are now correctly coordinated with the set operations, ensuring accurate results.
+
+The complexity remains efficient at nearly O(α(N)) for union-find operations with path compression, and O(log N) for set operations, making it suitable for the large input constraints.

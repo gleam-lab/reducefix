@@ -1,0 +1,34 @@
+#include<bits/stdc++.h>
+using namespace std;
+int n, m;
+int main(){
+    cin >> n >> m;
+    vector<int> nums(n);
+    for(int i = 0; i < n; i++){
+        cin >> nums[i];
+    }
+    vector<int> prefixsum(n+1, 0);
+    for(int i = 0; i < n; i++){
+        prefixsum[i+1] = prefixsum[i] + nums[i];
+    }
+    int count = 0;
+    // Using a map to count occurrences of remainders
+    map<int, int> remainder_count;
+    for(int i = 0; i <= n; i++){
+        remainder_count[prefixsum[i] % m]++;
+    }
+    // Calculate the number of valid (s, t) pairs
+    for(int s = 1; s <= n; s++){
+        for(int t = s; t <= n; t++){
+            int step = (t == n) ? prefixsum[n] - prefixsum[s] : prefixsum[t] - prefixsum[s];
+            if(step % m == 0){
+                int needed = step / m;
+                if(remainder_count[needed] > 0){
+                    count++;
+                }
+            }
+        }
+    }
+    cout << count << endl;
+    return 0;
+}

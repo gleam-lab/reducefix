@@ -1,0 +1,62 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    int H, W, Y;
+    cin >> H >> W >> Y;
+    vector<vector<int>> A(H, vector<int>(W));
+    for (int i = 0; i < H; ++i) {
+        for (int j = 0; j < W; ++j) {
+            cin >> A[i][j];
+        }
+    }
+
+    vector<vector<bool>> visited(H, vector<bool>(W, false));
+
+    queue<pair<int, int>> q;
+    for (int i = 0; i < H; ++i) {
+        q.emplace(i, 0);
+        q.emplace(i, W - 1);
+        visited[i][0] = true;
+        visited[i][W - 1] = true;
+    }
+    for (int j = 1; j < W - 1; ++j) {
+        q.emplace(0, j);
+        q.emplace(H - 1, j);
+        visited[0][j] = true;
+        visited[H - 1][j] = true;
+    }
+
+    vector<int> areas(Y + 1, H * W);
+
+    while (!q.empty()) {
+        int y = q.front().first, x = q.front().second;
+        q.pop();
+
+        for (int d = 0; d < 4; ++d) {
+            int ny = y + dy[d], nx = x + dx[d];
+            if (ny < 0 || nx < 0 || ny >= H || nx >= W) continue;
+            if (visited[ny][nx]) continue;
+
+            if (A[ny][nx] <= i) {
+                visited[ny][nx] = true;
+                q.emplace(ny, nx);
+                areas[i]++;
+            }
+        }
+    }
+
+    reverse(all(areas));
+
+    for (int i = 1; i <= Y; ++i) {
+        areas[i] += areas[i - 1];
+    }
+
+    reverse(all(areas));
+
+    for (int i = 1; i <= Y; ++i) {
+        cout << areas[i] << endl;
+    }
+
+    return 0;
+}

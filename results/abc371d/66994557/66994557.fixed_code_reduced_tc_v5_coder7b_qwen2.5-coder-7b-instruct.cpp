@@ -1,0 +1,36 @@
+#include<bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(NULL);
+
+    int n, q;
+    cin >> n;
+    vector<int> x(n + 1), p(n + 1);
+    vector<long long> prefix_sum(n + 1, 0);
+
+    // Read positions and populations of villages
+    for (int i = 1; i <= n; ++i) {
+        cin >> x[i] >> p[i];
+    }
+
+    // Calculate prefix sums for population
+    for (int i = 1; i <= n; ++i) {
+        prefix_sum[i] = prefix_sum[i - 1] + p[i];
+    }
+
+    cin >> q;
+    while (q--) {
+        int L, R;
+        cin >> L >> R;
+        // Find indices using binary search
+        auto it_l = lower_bound(begin(x), end(x), L) - begin(x);
+        auto it_r = upper_bound(begin(x), end(x), R) - begin(x);
+
+        // Output the result for the current query
+        cout << prefix_sum[it_r - 1] - prefix_sum[it_l - 1] << '\n';
+    }
+    
+    return 0;
+}

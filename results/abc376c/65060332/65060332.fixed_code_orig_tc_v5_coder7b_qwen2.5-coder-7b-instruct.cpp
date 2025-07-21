@@ -1,0 +1,39 @@
+#include<bits/stdc++.h>
+#define ll long long
+using namespace std;
+
+const int N = 2e5 + 5;
+
+int main() {
+    ios_base::sync_with_stdio(false); cin.tie(0); cout.tie(0);
+
+    int n;
+    cin >> n;
+
+    vector<int> a(n), b(n - 1);
+
+    for(int i = 0; i < n; i++) cin >> a[i];
+
+    sort(a.begin(), a.end());
+
+    for(int i = 0; i < n - 1; i++) cin >> b[i];
+
+    sort(b.begin(), b.end());
+
+    int j = n - 2;
+    ll ans = 0;
+
+    for(int i = n - 1; i >= 0; i--) {
+        while(j >= 0 && b[j] < a[i]) j--;
+
+        if(j == -1) break;
+
+        ans += abs(a[i] - b[j]);
+        j--;
+    }
+
+    if(j != -1) cout << -1;
+    else cout << ans;
+
+    return 0;
+}

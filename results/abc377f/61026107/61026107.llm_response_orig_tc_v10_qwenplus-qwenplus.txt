@@ -1,0 +1,97 @@
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+
+void solve() {
+    ll N, M;
+    cin >> N >> M;
+
+    set<ll> rows, cols;
+    set<ll> diag1, diag2;
+
+    for (ll i = 0; i < M; ++i) {
+        ll x, y;
+        cin >> x >> y;
+        rows.insert(x);
+        cols.insert(y);
+        diag1.insert(x - y);
+        diag2.insert(x + y);
+    }
+
+    ll total_cells = N * N;
+    ll bad_cells = 0;
+
+    // Count how many cells are in any of the dangerous lines
+    unordered_set<ll> visited_rows(rows.begin(), rows.end());
+    unordered_set<ll> visited_cols(cols.begin(), cols.end());
+    unordered_set<ll> visited_d1(diag1.begin(), diag1.end());
+    unordered_set<ll> visited_d2(diag2.begin(), diag2.end());
+
+    // Add all row and column cells
+    bad_cells += (ll)rows.size() * N;
+    bad_cells += (ll)cols.size() * N;
+
+    // Remove overlaps: cells that were counted both by row and column
+    for (auto r : rows) {
+        for (auto c : cols) {
+            // This cell is already double-counted
+            bad_cells--;
+        }
+    }
+
+    // Add diagonal 1 (x - y)
+    for (auto d : diag1) {
+        ll count = N - abs(d);
+        bad_cells += count;
+        // Subtract overlaps with rows and columns
+        for (ll i = 1; i <= N; ++i) {
+            ll x = i;
+            ll y = i - d;
+            if (y < 1 || y > N) continue;
+            if (visited_rows.count(x)) bad_cells--;
+            if (visited_cols.count(y)) bad_cells--;
+            if (visited_rows.count(x) && visited_cols.count(y)) bad_cells++; // avoid over-subtracting
+        }
+    }
+
+    // Add diagonal 2 (x + y)
+    for (auto d : diag2) {
+        ll count = N - abs(N - d);
+        bad_cells += count;
+        // Subtract overlaps with rows and columns
+        for (ll i = 1; i <= N; ++i) {
+            ll x = i;
+            ll y = d - i;
+            if (y < 1 || y > N) continue;
+            if (visited_rows.count(x)) bad_cells--;
+            if (visited_cols.count(y)) bad_cells--;
+            if (visited_rows.count(x) && visited_cols.count(y)) bad_cells++; // avoid over-subtracting
+        }
+    }
+
+    // Now subtract full overlaps between diagonals (x - y = d1, x + y = d2 => x = (d1 + d2)/2, y = (d2 - d1)/2)
+    for (auto d1 : diag1) {
+        for (auto d2 : diag2) {
+            if ((d1 + d2) % 2 != 0) continue;
+            ll x = (d1 + d2) / 2;
+            ll y = d2 - x;
+            if (x >= 1 && x <= N && y >= 1 && y <= N) {
+                bad_cells--; // this cell was triple-counted
+            }
+        }
+    }
+
+    // Also subtract overlaps between row/col and diagonals
+    // For each piece, its own square may have been quadruple-counted
+    // So we add back M (number of pieces), since they are not empty anyway
+    cout << total_cells - bad_cells + M << "\n";
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+    solve();
+    return 0;
+}
+```

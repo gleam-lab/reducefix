@@ -1,0 +1,41 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+typedef long long ll;
+
+vector<ll> prefixSum(vector<ll>& arr) {
+    vector<ll> ps(arr.size() + 1, 0);
+    for (size_t i = 1; i <= arr.size(); ++i) {
+        ps[i] = ps[i - 1] + arr[i - 1];
+    }
+    return ps;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int n;
+    cin >> n;
+    vector<ll> a(n), b(n);
+    for (int i = 0; i < n; ++i) {
+        cin >> a[i];
+    }
+    for (int i = 0; i < n; ++i) {
+        cin >> b[i];
+    }
+
+    auto c = prefixSum(b);
+    int q;
+    cin >> q;
+    while (q--) {
+        int l, r;
+        cin >> l >> r;
+        --l, --r; // Convert to zero-based index
+
+        ll sum = c[r + 1] - c[max(0LL, l)];
+        cout << sum << '\n';
+    }
+
+    return 0;
+}

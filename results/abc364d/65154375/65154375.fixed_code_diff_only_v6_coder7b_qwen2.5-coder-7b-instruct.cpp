@@ -1,0 +1,40 @@
+#include<bits/stdc++.h>
+#define endl "\n"
+using namespace std;
+typedef long long ll;
+
+const int MAXN = 100010;
+const int MAXQ = 100010;
+int a[MAXN], b[MAXQ], k[MAXQ];
+vector<int> distances[MAXQ];
+
+bool compare(int x, int y) {
+    return x < y;
+}
+
+void solve(void) {
+    int n, q; cin >> n >> q;
+    for(int i = 1; i <= n; i++) {
+        cin >> a[i];
+    }
+    for(int i = 1; i <= q; i++) {
+        cin >> b[i] >> k[i];
+    }
+
+    for(int i = 1; i <= q; i++) {
+        for(int j = 1; j <= n; j++) {
+            distances[i].push_back(abs(a[j] - b[i]));
+        }
+        sort(distances[i].begin(), distances[i].end());
+    }
+
+    for(int i = 1; i <= q; i++) {
+        cout << distances[i][k[i]-1] << endl;
+    }
+}
+
+int main() {
+    ios::sync_with_stdio(0), cin.tie(0), cout.tie(0);
+    solve();
+    return 0;
+}

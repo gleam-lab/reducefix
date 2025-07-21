@@ -1,0 +1,26 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    int n, x[200050], p[200050], q, a[200050];
+    cin >> n; // Number of elements in array x
+    for (int i = 1; i <= n; ++i) cin >> x[i]; // Read the elements of array x
+    
+    // Simple modified array p for calculation of difference
+    for (int i = 1; i <= n; ++i) p[i] = x[i] - a[i - 1]; // a[i] = a[i-1] + p[i]
+    
+    // Read the query value q
+    cin >> q; // Number of queries
+    
+    // Sort the elements in ascending order to handle queries efficiently
+    sort(x + 1, x + n + 1); // Sort array x
+    
+    // Main logic for calculating difference between two consecutive elements in sorted array
+    for (int i = 1; i < q; ++i) { // Process q queries
+        int l, r; // Left and right indices for querying the difference
+        cin >> l >> r; // Read the indices of the element to be compared
+        int diff = p[r] - p[l - 1]; // Calculate difference between two consecutive elements
+        cout << diff << endl; // Output the difference value
+    }
+    return 0;
+}

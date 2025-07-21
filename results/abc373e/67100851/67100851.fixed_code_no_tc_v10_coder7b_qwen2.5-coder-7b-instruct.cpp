@@ -1,0 +1,66 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <climits>
+using namespace std;
+
+// Function to check if candidate i can win with at least x additional votes
+bool canWin(vector<long long>& votes, int m, int n, long long x, int i) {
+    vector<long long> sortedVotes(votes);
+    sort(sortedVotes.begin(), sortedVotes.end());
+    
+    // Calculate the total votes required for candidate i to win
+    long long totalVotesRequired = 0;
+    for(int j = n - m; j < n; ++j) {
+        totalVotesRequired += sortedVotes[j];
+    }
+    totalVotesRequired += x + 1; // Adding one vote more than the current maximum
+    
+    // Check if candidate i's votes plus x are sufficient
+    if(votes[i] + x >= totalVotesRequired) {
+        return true;
+    }
+    return false;
+}
+
+int main() {
+    int n, m;
+    long long k;
+    cin >> n >> m >> k;
+    
+    vector<long long> votes(n);
+    for(int i = 0; i < n; ++i) {
+        cin >> votes[i];
+    }
+    
+    vector<long long> results(n, LLONG_MAX); // Initialize results with maximum value
+    
+    // For each candidate, determine the minimum additional votes needed
+    for(int i = 0; i < n; ++i) {
+        if(m == n) { // Special case when every candidate can win
+            results[i] = 0;
+        } else {
+            long long low = 0, high = k;
+            while(low <= high) {
+                long long mid = low + (high - low) / 2;
+                if(canWin(votes, m, n, mid, i)) {
+                    results[i] = min(results[i], mid);
+                    high = mid - 1;
+                } else {
+                    low = mid + 1;
+                }
+            }
+            if(results[i] == LLONG_MAX) {
+                results[i] = -1; // Candidate cannot win under any circumstances
+            }
+        }
+    }
+    
+    // Output the results
+    for(int i = 0; i < n; ++i) {
+        cout << results[i] << " ";
+    }
+    cout << endl;
+    
+    return 0;
+}

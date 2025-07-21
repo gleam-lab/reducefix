@@ -1,0 +1,77 @@
+#include <bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int N, M;
+    ll K;
+    cin >> N >> M >> K;
+
+    vector<ll> A(N);
+    for (ll &a : A) {
+        cin >> a;
+        K -= a;
+    }
+
+    // Create list of indices sorted by corresponding A[i]
+    vector<int> ord(N);
+    iota(ord.begin(), ord.end(), 0);
+    sort(ord.begin(), ord.end(), [&](int i, int j) { return A[i] < A[j]; });
+    
+    vector<ll> sortedA = A;
+    sort(sortedA.begin(), sortedA.end());
+
+    // Compute prefix sums
+    vector<ll> prefix(N + 1);
+    for (int i = 0; i < N; ++i)
+        prefix[i + 1] = prefix[i] + sortedA[i];
+
+    vector<ll> res(N, -1);
+
+    for (int idx = 0; idx < N; ++idx) {
+        int pos = find(ord.begin(), ord.end(), idx) - ord.begin();
+        ll low = 0, high = K + 1;
+        ll targetVote = sortedA[pos];
+        res[idx] = -1;
+
+        while (low < high) {
+            ll mid = (low + high) / 2;
+            ll total = A[idx] + mid;
+
+            // Find how many candidates can have more votes than total
+            ll right = upper_bound(sortedA.begin(), sortedA.end(), total) - sortedA.begin();
+
+            // We want at most M-1 candidates to have more votes than this one
+            ll need = 0;
+            ll available = K - mid;
+            if (N - right >= M) {
+                // Need to reduce top (N - right) candidates' advantage
+                ll cap = total - 1;
+                ll cnt = N - right;
+                ll sum = prefix[N] - prefix[right];
+                need = max(0LL, sum - cnt * cap);
+            }
+
+            if (need <= available && mid <= K) {
+                high = mid;
+                res[idx] = mid;
+            } else {
+                low = mid + 1;
+            }
+        }
+
+        if (res[idx] == -1 && low <= K)
+            res[idx] = low;
+        else if (res[idx] == -1)
+            res[idx] = -1;
+    }
+
+    for (ll val : res)
+        cout << val << " ";
+    cout << endl;
+
+    return 0;
+}

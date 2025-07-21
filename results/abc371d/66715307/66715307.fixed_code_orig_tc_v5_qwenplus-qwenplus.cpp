@@ -1,0 +1,51 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+const int MAXN = 200050;
+
+int n;
+long long x[MAXN], p[MAXN], a[MAXN];
+vector<pair<long long, int>> sorted_x;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+
+    cin >> n;
+    for (int i = 1; i <= n; ++i) {
+        cin >> x[i];
+    }
+    for (int i = 1; i <= n; ++i) {
+        cin >> p[i];
+        a[i] = a[i - 1] + p[i];
+    }
+
+    // Prepare sorted x with indices
+    vector<pair<long long, int>> sorted(n);
+    for (int i = 1; i <= n; ++i) {
+        sorted[i - 1] = {x[i], i};
+    }
+    sort(sorted.begin(), sorted.end());
+
+    // Build prefix sums for each sorted position
+    vector<long long> prefix_sum(n + 1, 0);
+    for (int i = 1; i <= n; ++i) {
+        prefix_sum[i] = prefix_sum[i - 1] + p[sorted[i - 1].second];
+    }
+
+    int q;
+    cin >> q;
+    while (q--) {
+        long long l, r;
+        cin >> l >> r;
+
+        // Binary search to find left and right bounds
+        int left_idx = lower_bound(sorted.begin(), sorted.end(), make_pair(l, 0)) - sorted.begin();
+        int right_idx = upper_bound(sorted.begin(), sorted.end(), make_pair(r, numeric_limits<int>::max())) - sorted.begin();
+
+        // Sum from left_idx to right_idx - 1 in the prefix sum array
+        cout << prefix_sum[right_idx] - prefix_sum[left_idx] << "\n";
+    }
+
+    return 0;
+}

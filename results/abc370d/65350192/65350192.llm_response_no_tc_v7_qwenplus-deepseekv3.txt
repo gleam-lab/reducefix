@@ -1,0 +1,93 @@
+To fix this code, we need to address the following issues:
+
+1. **Initialization**: The code initializes sets for each row and column, but the way it is done can be optimized. Each cell (i, j) should be represented in both the row and column sets.
+
+2. **Query Processing**:
+   - When a bomb is placed on a cell with a wall, the wall is removed from both the row and column sets.
+   - When there is no wall at the bomb's position, the code should find the nearest walls in all four directions (up, down, left, right) and remove them. The current implementation has flaws in how it checks for these nearest walls, especially when the sets are empty or the iterators are at the beginning/end.
+
+3. **Edge Cases**: The code should handle cases where there are no walls in a particular direction by checking if the iterator is valid before dereferencing or moving it.
+
+4. **Efficiency**: Given the constraints, the solution needs to efficiently handle up to 200,000 queries on a grid that can have up to 400,000 cells. Using sets for rows and columns allows for O(log n) insertion and deletion operations, which is acceptable.
+
+### Fixed Code
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+#define rep(i,n) for(int i = 0; i < (n); i++)
+using ll = long long;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int h, w, q;
+    cin >> h >> w >> q;
+    vector<set<int>> row(h), col(w);
+    rep(i, h) rep(j, w) {
+        row[i].insert(j);
+        col[j].insert(i);
+    }
+
+    rep(qi, q) {
+        int r, c;
+        cin >> r >> c;
+        r--; c--;
+
+        if (row[r].count(c)) {
+            row[r].erase(c);
+            col[c].erase(r);
+        } else {
+            // Up
+            auto it = col[c].lower_bound(r);
+            if (it != col[c].begin()) {
+                --it;
+                int i = *it;
+                row[i].erase(c);
+                col[c].erase(it);
+            }
+            // Down
+            it = col[c].lower_bound(r);
+            if (it != col[c].end()) {
+                int i = *it;
+                row[i].erase(c);
+                col[c].erase(it);
+            }
+            // Left
+            it = row[r].lower_bound(c);
+            if (it != row[r].begin()) {
+                --it;
+                int j = *it;
+                row[r].erase(it);
+                col[j].erase(r);
+            }
+            // Right
+            it = row[r].lower_bound(c);
+            if (it != row[r].end()) {
+                int j = *it;
+                row[r].erase(it);
+                col[j].erase(r);
+            }
+        }
+    }
+
+    int ans = 0;
+    rep(i, h) ans += row[i].size();
+    cout << ans << '\n';
+
+    return 0;
+}
+```
+
+### Explanation
+1. **Initialization**: We initialize two vectors of sets, `row` and `col`, where `row[i]` contains all column indices with walls in row `i`, and `col[j]` contains all row indices with walls in column `j`.
+
+2. **Query Processing**:
+   - **Wall Present**: If there's a wall at the bomb's position, it is removed from both `row` and `col`.
+   - **No Wall Present**: For each direction (up, down, left, right), we use `lower_bound` to find the nearest wall. If found, we remove it from both `row` and `col`.
+
+3. **Edge Cases**: Before dereferencing iterators or moving them, we check if they are valid (not at `begin()` or `end()`).
+
+4. **Efficiency**: Using sets ensures O(log n) time complexity for each insertion and deletion, making the solution efficient enough for the given constraints.
+
+This approach ensures that all operations are performed in logarithmic time, making the solution both correct and efficient.

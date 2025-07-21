@@ -1,0 +1,85 @@
+I've analyzed the code and found the main issue lies in the Union operation and how the sets are being managed. The original code tries to use an ordered_set (from GNU PBDS) to store connected vertices, but this approach is inefficient and doesn't scale well for large N (up to 2×10^5). Here's the fixed version:
+
+```cpp
+#include <iostream>
+#include <vector>
+#include <set>
+#include <algorithm>
+
+using namespace std;
+
+const int N = 2e5 + 9;
+int parent[N];
+vector<int> adj[N]; // Stores up to 10 largest connected vertices for each component
+
+int Find(int u) {
+    if (parent[u] == u) return u;
+    return parent[u] = Find(parent[u]);
+}
+
+void Union(int u, int v) {
+    u = Find(u);
+    v = Find(v);
+    if (u == v) return;
+    
+    if (adj[u].size() < adj[v].size()) swap(u, v);
+    
+    // Merge v's list into u's list
+    adj[u].insert(adj[u].end(), adj[v].begin(), adj[v].end());
+    adj[v].clear();
+    
+    // Sort and keep only top 10 elements
+    sort(adj[u].begin(), adj[u].end(), greater<int>());
+    if (adj[u].size() > 10) adj[u].resize(10);
+    
+    parent[v] = u;
+}
+
+int main() {
+    cin.tie(0); ios_base::sync_with_stdio(0);
+    
+    int n, q;
+    cin >> n >> q;
+    
+    for (int i = 1; i <= n; i++) {
+        parent[i] = i;
+        adj[i].push_back(i); // Each node is initially connected to itself
+    }
+    
+    while (q--) {
+        int cmd;
+        cin >> cmd;
+        if (cmd == 1) {
+            int u, v;
+            cin >> u >> v;
+            Union(u, v);
+        } else {
+            int v, k;
+            cin >> v >> k;
+            v = Find(v);
+            if (adj[v].size() < k) {
+                cout << -1 << "\n";
+            } else {
+                cout << adj[v][k-1] << "\n";
+            }
+        }
+    }
+    
+    return 0;
+}
+```
+
+Key improvements made:
+1. Replaced the ordered_set with a simple vector that stores connected vertices for each component
+2. For each component, we maintain only the top 10 largest vertices (since k is limited to 10)
+3. During Union operations, we merge the vectors and keep only the top 10 elements
+4. The Find operation uses path compression for efficiency
+5. The code is simplified and more readable while maintaining the required functionality
+
+This approach is much more efficient because:
+- We only store up to 10 elements per component
+- Sorting and merging operations are limited to small vectors
+- Union operations are nearly constant time with path compression
+- Query operations are O(1) since we maintain the top elements sorted
+
+The solution now handles the upper constraint limits (N, Q ≤ 2×10^5) efficiently.

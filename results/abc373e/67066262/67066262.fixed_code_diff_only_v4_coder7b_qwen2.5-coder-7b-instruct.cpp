@@ -1,0 +1,65 @@
+#include <bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+
+int main() {
+    ios_base::sync_with_stdio(0);
+    cin.tie(0);
+    int n, m;
+    ll k;
+    cin >> n >> m >> k;
+    vector<ll> a(n);
+    for(int i = 0; i < n; i++) {
+        cin >> a[i];
+        k -= a[i];
+    }
+    
+    // Sort candidates based on their current votes
+    vector<pair<ll, int>> candidates;
+    for(int i = 0; i < n; i++)
+        candidates.push_back({a[i], i});
+    sort(candidates.begin(), candidates.end());
+    
+    // Calculate prefix sums of sorted votes
+    vector<ll> pref(n + 1);
+    for(int i = 0; i < n; i++)
+        pref[i + 1] = pref[i] + candidates[i].first;
+    
+    // Initialize answers as -1 (indicating failure)
+    vector<ll> ans(n, -1);
+    
+    for(int i = 0; i < n; i++) {
+        ll x = candidates[i].second;
+        
+        // Binary search for the minimum additional votes needed
+        ll l = 0, r = k + 1;
+        while(r - l > 1) {
+            ll mid = (l + r) / 2;
+            
+            // Count the number of candidates that can surpass candidate x with mid votes
+            ll rid = upper_bound(candidates.begin(), candidates.end(), make_pair(candidates[x].first + mid, INT_MAX)) - candidates.begin();
+            ll lid = n - m - (x >= n - m ? 1 : 0);
+            ll cnt = 0;
+            if(rid > lid)
+                cnt += (rid - lid) * (candidates[x].first + mid) - (pref[rid] - pref[lid]);
+            if(lid <= i && i < rid)
+                cnt--;
+            else
+                cnt += mid;
+            
+            if(cnt > k)
+                r = mid;
+            else
+                l = mid;
+        }
+        
+        // Update answer if a valid solution is found
+        if(l != k)
+            ans[candidates[x].second] = r;
+    }
+    
+    // Print the results
+    for(auto i : ans)
+        cout << i << " ";
+    return 0;
+}

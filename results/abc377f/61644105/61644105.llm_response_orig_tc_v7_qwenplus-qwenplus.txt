@@ -1,0 +1,121 @@
+To solve this problem efficiently given the constraints, we need to avoid explicitly iterating over a potentially huge grid of size $ N \times N $ where $ N \leq 10^9 $. Instead, we can use coordinate transformations and inclusion-exclusion principles to count the number of **safe** positions.
+
+Each piece attacks in four directions: same row, same column, same diagonal (`i - j = const`), and same anti-diagonal (`i + j = const`). We'll compute:
+- Total number of squares: `N * N`
+- Subtract all squares that are attacked by any existing piece
+- Correct for overlaps using Inclusion-Exclusion Principle
+
+The key idea is to track unique rows, columns, diagonals (`i-j`), and anti-diagonals (`i+j`) used by the pieces. Then calculate how many positions they cover and adjust for overlaps.
+
+Here's the corrected C++ code:
+
+```cpp
+#include <bits/stdc++.h>
+
+using namespace std;
+
+int main() {
+    long long N, M;
+    cin >> N >> M;
+
+    set<long long> rows, cols, diag1, diag2;
+
+    for (int i = 0; i < M; ++i) {
+        long long x, y;
+        cin >> x >> y;
+        rows.insert(x);
+        cols.insert(y);
+        diag1.insert(x - y);
+        diag2.insert(x + y);
+    }
+
+    long long ans = N * N;
+    ans -= N * (rows.size() + cols.size());
+    ans -= (diag1.size() + diag2.size()) * N;
+    ans += rows.size() * cols.size();
+    ans += diag1.size() * diag2.size();
+
+    // Intersections of row/col with diag1/diag2
+    for (long long r : rows) {
+        for (long long d1 : diag1) {
+            long long c = r - d1;
+            if (c >= 1 && c <= N) ans++;
+        }
+        for (long long d2 : diag2) {
+            long long c = d2 - r;
+            if (c >= 1 && c <= N) ans++;
+        }
+    }
+
+    for (long long c : cols) {
+        for (long long d1 : diag1) {
+            long long r = d1 + c;
+            if (r >= 1 && r <= N) ans++;
+        }
+        for (long long d2 : diag2) {
+            long long r = d2 - c;
+            if (r >= 1 && r <= N) ans++;
+        }
+    }
+
+    for (long long d1 : diag1) {
+        for (long long d2 : diag2) {
+            long long r = (d2 + d1) / 2;
+            long long c = (d2 - d1) / 2;
+            if (r >= 1 && r <= N && c >= 1 && c <= N) ans++;
+        }
+    }
+
+    // Remove duplicates from triple overlaps
+    for (long long r : rows) {
+        for (long long c : cols) {
+            long long d1 = r - c;
+            long long d2 = r + c;
+            if (diag1.count(d1)) ans--;
+            if (diag2.count(d2)) ans--;
+        }
+    }
+
+    for (long long r : rows) {
+        for (long long d1 : diag1) {
+            long long c = r - d1;
+            if (c >= 1 && c <= N && cols.count(c)) ans--;
+        }
+        for (long long d2 : diag2) {
+            long long c = d2 - r;
+            if (c >= 1 && c <= N && cols.count(c)) ans--;
+        }
+    }
+
+    for (long long c : cols) {
+        for (long long d1 : diag1) {
+            long long r = d1 + c;
+            if (r >= 1 && r <= N && rows.count(r)) ans--;
+        }
+        for (long long d2 : diag2) {
+            long long r = d2 - c;
+            if (r >= 1 && r <= N && rows.count(r)) ans--;
+        }
+    }
+
+    for (long long d1 : diag1) {
+        for (long long d2 : diag2) {
+            long long r = (d2 + d1) / 2;
+            long long c = (d2 - d1) / 2;
+            if (r >= 1 && r <= N && c >= 1 && c <= N &&
+                rows.count(r) && cols.count(c)) ans++;
+        }
+    }
+
+    cout << ans << endl;
+    return 0;
+}
+```
+
+### Explanation:
+- We use `set`s to collect unique rows, columns, and diagonals.
+- Apply Inclusion-Exclusion carefully to subtract overlaps between rows, columns, and diagonals.
+- Avoid O(N²) operations — only process the M provided pieces (up to 1000).
+- Handle integer division safely when computing intersections of diagonals.
+
+This approach ensures efficient execution even for large `N`.

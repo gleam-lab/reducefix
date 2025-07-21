@@ -1,0 +1,85 @@
+#include <iostream>
+#include <vector>
+#include <set>
+using namespace std;
+
+int main() {
+    int h, w, q;
+    cin >> h >> w >> q;
+    
+    vector<vector<set<int>>> row_walls(h, vector<set<int>>(w));
+    vector<vector<set<int>>> col_walls(w, vector<set<int>>(h));
+
+    // Initialize the wall sets
+    for (int i = 0; i < h; ++i) {
+        for (int j = 0; j < w; ++j) {
+            row_walls[i][j].insert(j); // Walls corresponding to each column in the row
+            col_walls[j][i].insert(i); // Walls corresponding to each row in the column
+        }
+    }
+    
+    for (int i = 0; i < q; ++i) {
+        int r, c;
+        cin >> r >> c;
+        --r; --c; // Convert to 0-indexed
+        
+        pair<set<int>::iterator, bool> row_status = row_walls[r][c].erase(c);
+        pair<set<int>::iterator, bool> col_status = col_walls[c][r].erase(r);
+        
+        int count_destroyed_walls = 0;
+        
+        // Destroy wall if it exists
+        if (row_status.second || col_status.second) {
+        } else {
+            // No wall at (r, c), find and destroy first walls in each direction
+            int count_row = 0, count_col = 0;
+            
+            // Up
+            while (count_row < h && !row_walls[count_row][c].empty()) {
+                int idx = *(row_walls[count_row][c].begin());
+                row_walls[count_row][c].erase(idx);
+                col_walls[idx][c].erase(count_row);
+                count_destroyed_walls++;
+                count_row++;
+            }
+            
+            // Down
+            while (count_row < h && !row_walls[count_row][c].empty()) {
+                int idx = *(row_walls[count_row][c].end() - 1);
+                row_walls[count_row][c].erase(idx);
+                col_walls[idx][c].erase(count_row);
+                count_destroyed_walls++;
+                count_row++;
+            }
+            
+            // Left
+            while (count_col < w && !col_walls[c][r].empty()) {
+                int idx = *(col_walls[c][r].begin());
+                col_walls[c][r].erase(idx);
+                row_walls[idx][r].erase(c);
+                count_destroyed_walls++;
+                count_col++;
+            }
+            
+            // Right
+            while (count_col < w && !col_walls[c][r].empty()) {
+                int idx = *(col_walls[c][r].end() - 1);
+                col_walls[c][r].erase(idx);
+                row_walls[idx][r].erase(c);
+                count_destroyed_walls++;
+                count_col++;
+            }
+        }
+    }
+    
+    int remaining_walls = 0;
+    for (int i = 0; i < h; ++i) {
+        for (int j = 0; j < w; ++j) {
+            remaining_walls += row_walls[i][j].size();
+            remaining_walls += col_walls[j][i].size();
+        }
+    }
+    
+    cout << remaining_walls << endl;
+    return 0;
+}

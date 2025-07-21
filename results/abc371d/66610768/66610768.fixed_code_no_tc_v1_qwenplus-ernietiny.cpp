@@ -1,0 +1,28 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    int n, m;
+    cin >> n; // Number of elements in the array a
+    vector<int> a(n + 1); // Allocate memory for array a
+    for (int i = 1; i <= n; ++i) {
+        cin >> a[i]; // Read elements from the array a
+    }
+    
+    // Fixed code block
+    while (m--) { // While loop to process multiple cases
+        int l, r; // Read the range of interest from the user
+        cin >> l >> r; // Read the lower and upper bounds of the range
+        auto lower_bound = lower_bound(a.begin(), a.end(), l); // Find the index of element l in array a
+        auto upper_bound = upper_bound(a.begin(), a.end(), r); // Find the index of element r in array a
+        int i = lower_bound - a.begin(); // Calculate the index of element in array a corresponding to l
+        int j = upper_bound - a.begin(); // Calculate the index of element in array a corresponding to r
+        // Calculate the difference between corresponding elements in the current range and calculate output
+        if (r >= a[n]) { // Check if range [l, r] is within the array bounds
+            cout << (r - a[n]) << endl; // Output the difference if it exists
+        } else { // If not within bounds, output the difference from the next element after range [l, r]
+            cout << (upper_bound - i - 1) - (lower_bound - i - 1) << endl; // Calculate the difference and output it
+        }
+    }
+    return 0;
+}

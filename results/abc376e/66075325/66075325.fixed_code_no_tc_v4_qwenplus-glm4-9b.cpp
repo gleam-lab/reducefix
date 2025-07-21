@@ -1,0 +1,67 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+#define int long long
+const int N = 200005;
+
+int n, k;
+vector<pair<int, int>> a, b;
+vector<int> ans;
+
+int solve() {
+    int n = a.size(), k = b[0].second;
+    vector<int> prefixSum(n + 1, 0);
+    
+    // Compute prefix sums of B array
+    for (int i = 1; i <= n; ++i) {
+        prefixSum[i] = prefixSum[i - 1] + b[i].first;
+    }
+    
+    // Sort A array by descending order and store original indices
+    sort(a.begin(), a.end(), greater<pair<int, int>>());
+    
+    // Initialize maximum value of A and sum of B
+    int maxA = a[0].first, sumB = prefixSum[k];
+    
+    // Calculate the answer for each possible starting index of the subset S
+    for (int i = 0; i <= n - k; ++i) {
+        if (i > 0) {
+            maxA = a[min(k - 1, (int)a.size())].first; // Get the maximum of the first k elements of A
+            sumB = prefixSum[k + i - 1] - prefixSum[i];  // Update sum of B to the next subset
+        }
+        
+        // Calculate the current value of the expression
+        ans.push_back(maxA * sumB);
+    }
+    
+    // The result is the minimum value of the calculated values
+    return *min_element(ans.begin(), ans.end());
+}
+
+int main() {
+    int t;
+    cin >> t;
+    
+    while (t--) {
+        int n, k;
+        cin >> n >> k;
+        a.resize(n);
+        b.resize(n);
+        
+        for (int i = 0; i < n; ++i) {
+            cin >> a[i].first;
+            a[i].second = i + 1; // Store 1-based index
+        }
+        
+        for (int i = 0; i < n; ++i) {
+            cin >> b[i].first;
+            b[i].second = i + 1; // Store 1-based index
+        }
+        
+        cout << solve() << endl;
+    }
+    
+    return 0;
+}

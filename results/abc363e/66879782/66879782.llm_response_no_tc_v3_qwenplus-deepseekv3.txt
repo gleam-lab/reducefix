@@ -1,0 +1,86 @@
+To fix this code, we need to address several issues:
+
+1. **Handling of Sinking Process**: The original code attempts to use a priority queue to propagate the sinking process from the borders inward. However, it doesn't correctly account for the fact that sections can sink if they are adjacent to already sunk sections, and their elevation is not greater than the current sea level. The approach should ensure that all sections sink at the earliest possible sea level when they become adjacent to the sea.
+
+2. **Efficiency**: The original code might not efficiently handle the large constraints (H, W up to 1000 and Y up to 100000). The fixed code should use a more efficient approach to precompute the sinking levels and then answer each query in constant time.
+
+3. **Correctness in Sinking Logic**: The sinking should propagate correctly, considering that new sections start sinking when the sea level reaches their elevation or when they are adjacent to already sunk sections.
+
+The fixed code uses a Dijkstra-like approach to determine the earliest sea level at which each section sinks, starting from the borders. Then, it uses a prefix sum array to efficiently answer each query about the remaining area for each sea level.
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+#define all(x) (x).begin(), (x).end()
+
+int main() {
+    ios_base::sync_with_stdio(0);
+    cin.tie(0);
+    int h, w, y;
+    cin >> h >> w >> y;
+    vector<vector<int>> height(h, vector<int>(w));
+    vector<vector<int>> sink(h, vector<int>(w, INT_MAX));
+    priority_queue<pair<int, pair<int, int>>, vector<pair<int, pair<int, int>>>, greater<pair<int, pair<int, int>>>> pq;
+    int di[4][2] = {{-1, 0}, {1, 0}, {0, -1}, {0, 1}};
+    
+    for (int i = 0; i < h; i++) {
+        for (int j = 0; j < w; j++) {
+            cin >> height[i][j];
+            if (i == 0 || i == h - 1 || j == 0 || j == w - 1) {
+                sink[i][j] = height[i][j];
+                pq.push({height[i][j], {i, j}});
+            }
+        }
+    }
+    
+    while (!pq.empty()) {
+        auto [H, p] = pq.top();
+        auto [r, c] = p;
+        pq.pop();
+        if (sink[r][c] < H) continue; // Already processed with a lower value
+        for (int i = 0; i < 4; i++) {
+            int nr = r + di[i][0];
+            int nc = c + di[i][1];
+            if (nr < 0 || nr >= h || nc < 0 || nc >= w) continue;
+            int new_sink = max(H, height[nr][nc]);
+            if (new_sink < sink[nr][nc]) {
+                sink[nr][nc] = new_sink;
+                pq.push({new_sink, {nr, nc}});
+            }
+        }
+    }
+    
+    vector<int> count(y + 2, 0); // count[i] will store the number of sections that sink at sea level i
+    for (int i = 0; i < h; i++) {
+        for (int j = 0; j < w; j++) {
+            if (sink[i][j] <= y) {
+                count[sink[i][j]]++;
+            }
+        }
+    }
+    
+    vector<int> prefix(y + 1, 0);
+    prefix[0] = count[0];
+    for (int i = 1; i <= y; i++) {
+        prefix[i] = prefix[i - 1] + count[i];
+    }
+    
+    for (int i = 1; i <= y; i++) {
+        cout << h * w - prefix[i] << '\n';
+    }
+    
+    return 0;
+}
+```
+
+### Explanation:
+1. **Initialization**: The code reads the island's elevation data and initializes the sinking levels for border sections to their elevation values, pushing these into a priority queue.
+
+2. **Dijkstra-like Propagation**: Using a priority queue, the code propagates the sinking process inward. For each section, if it can sink at a lower sea level by being adjacent to a sunk section, its sinking level is updated and it is added back to the queue.
+
+3. **Counting Sunk Sections**: The code counts how many sections sink at each sea level and uses a prefix sum to efficiently compute the total sunk area up to each sea level.
+
+4. **Query Processing**: For each query (sea level), the remaining area is the total area minus the sunk area up to that sea level, computed in constant time using the prefix sum array.
+
+This approach ensures correctness and efficiency, handling the constraints effectively.

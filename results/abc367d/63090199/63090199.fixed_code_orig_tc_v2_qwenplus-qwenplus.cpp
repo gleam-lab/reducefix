@@ -1,0 +1,33 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    int n, m;
+    cin >> n >> m;
+    vector<int> nums(n);
+    for (int i = 0; i < n; ++i) {
+        cin >> nums[i];
+    }
+
+    // Use a map to count frequencies of prefix sum mod m
+    unordered_map<int, int> mod_count;
+    long long prefix_sum = 0;
+    long long result = 0;
+
+    // Initialize with mod 0 having one count for empty subarray
+    mod_count[0] = 1;
+
+    for (int i = 0; i < n; ++i) {
+        prefix_sum += nums[i];
+        int current_mod = ((prefix_sum % m) + m) % m; // Ensure non-negative
+
+        // Count how many times this mod has been seen before
+        result += mod_count[current_mod];
+
+        // Increment the count for this mod value
+        mod_count[current_mod]++;
+    }
+
+    cout << result << endl;
+    return 0;
+}

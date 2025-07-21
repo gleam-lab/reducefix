@@ -1,0 +1,95 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+
+const int MAXN = 400005;
+
+vector<vector<int>> grid(MAXN, vector<int>(MAXN, 1));
+vector<vector<int>> rows(MAXN), cols(MAXN);
+queue<pair<int, int>> q;
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int h, w, q;
+    cin >> h >> w >> q;
+
+    for (int i = 1; i <= h; ++i) {
+        rows[i].push_back(0);
+        rows[i].push_back(w + 1);
+    }
+    for (int j = 1; j <= w; ++j) {
+        cols[j].push_back(0);
+        cols[j].push_back(h + 1);
+    }
+
+    for (int i = 1; i <= h; ++i) {
+        for (int j = 1; j <= w; ++j) {
+            grid[i][j] = 1;
+        }
+    }
+
+    for (int i = 1; i <= h; ++i) {
+        for (int j = 1; j <= w; ++j) {
+            rows[i].push_back(j);
+            cols[j].push_back(i);
+        }
+    }
+
+    for (int i = 1; i <= h; ++i) {
+        sort(rows[i].begin(), rows[i].end());
+    }
+    for (int j = 1; j <= w; ++j) {
+        sort(cols[j].begin(), cols[j].end());
+    }
+
+    for (int i = 1; i <= h; ++i) {
+        for (int j = 1; j <= w; ++j) {
+            if (grid[i][j]) {
+                q.push({i, j});
+            }
+        }
+    }
+
+    while (!q.empty()) {
+        auto [x, y] = q.front(); q.pop();
+
+        if (!grid[x][y]) continue;
+
+        grid[x][y] = 0;
+
+        auto it_r = upper_bound(rows[x].begin(), rows[x].end(), y);
+        if (it_r != rows[x].end() && *(it_r + 1) - x > 1) {
+            q.push({*(it_r + 1), y});
+        }
+        if (it_r != rows[x].begin()) {
+            --it_r;
+            if (x - *it_r > 1) {
+                q.push({*it_r, y});
+            }
+        }
+
+        auto it_c = upper_bound(cols[y].begin(), cols[y].end(), x);
+        if (it_c != cols[y].end() && *(it_c + 1) - y > 1) {
+            q.push({x, *(it_c + 1)});
+        }
+        if (it_c != cols[y].begin()) {
+            --it_c;
+            if (y - *it_c > 1) {
+                q.push({x, *it_c});
+            }
+        }
+    }
+
+    int cnt = 0;
+    for (int i = 1; i <= h; ++i) {
+        for (int j = 1; j <= w; ++j) {
+            cnt += grid[i][j];
+        }
+    }
+
+    cout << cnt << '\n';
+
+    return 0;
+}

@@ -1,0 +1,74 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int N;
+    cin >> N;
+    vector<long long> A(N);
+    vector<long long> B(N - 1);
+
+    for (int i = 0; i < N; ++i) {
+        cin >> A[i];
+    }
+    for (int i = 0; i < N - 1; ++i) {
+        cin >> B[i];
+    }
+
+    sort(A.begin(), A.end());
+    sort(B.begin(), B.end());
+
+    // Check if it's possible to assign toys to boxes (excluding one toy)
+    // We will check if all but one toy can be placed in the available boxes
+
+    int j = 0;
+    int unassigned = 0;
+
+    for (int i = 0; i < N; ++i) {
+        if (j < N - 1 && A[i] <= B[j]) {
+            j++;
+        } else {
+            unassigned++;
+        }
+    }
+
+    if (unassigned > 1) {
+        cout << -1 << endl;
+        return 0;
+    }
+
+    // Binary search on x (the size of the additional box)
+    long long low = 1;
+    long long high = 1e18;
+    long long answer = -1;
+
+    while (low <= high) {
+        long long mid = (low + high) / 2;
+
+        // Try to match all toys with B + [mid]
+        vector<long long> C = B;
+        C.push_back(mid);
+        sort(C.begin(), C.end());
+
+        int ptr = 0;
+        int matched = 0;
+
+        for (int i = 0; i < N; ++i) {
+            if (ptr < N && A[i] <= C[ptr]) {
+                matched++;
+                ptr++;
+            }
+        }
+
+        if (matched == N) {
+            answer = mid;
+            high = mid - 1;
+        } else {
+            low = mid + 1;
+        }
+    }
+
+    cout << answer << endl;
+}

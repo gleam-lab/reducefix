@@ -1,0 +1,66 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int n, m;
+    cin >> n >> m;
+
+    vector<long long> prefix_sums(2 * n + 1);
+    for (int i = 1; i <= n; ++i) {
+        int a;
+        cin >> a;
+        a %= m;
+        prefix_sums[i] = (prefix_sums[i - 1] + a) % m;
+        if (i > 0) prefix_sums[i + n] = (prefix_sums[i + n - 1] + a) % m;
+    }
+
+    // Coordinate compression for the prefix sums
+    vector<long long> sorted_sums;
+    for (int i = 0; i <= 2 * n; ++i) {
+        sorted_sums.push_back(prefix_sums[i]);
+    }
+    sort(sorted_sums.begin(), sorted_sums.end());
+    auto end_unique = unique(sorted_sums.begin(), sorted_sums.end());
+    sorted_sums.erase(end_unique, sorted_sums.end());
+
+    // Fenwick Tree for counting frequencies of prefix sums
+    int size = sorted_sums.size();
+    vector<int> tree(size + 2); // 1-based indexing
+
+    auto update = [&](int idx, int delta) {
+        while (idx < size + 2) {
+            tree[idx] += delta;
+            idx += idx & -idx;
+        }
+    };
+
+    auto query = [&](int idx) {
+        int res = 0;
+        while (idx > 0) {
+            res += tree[idx];
+            idx -= idx & -idx;
+        }
+        return res;
+    };
+
+    int result = 0;
+    for (int i = 0; i <= 2 * n; ++i) {
+        int rank = lower_bound(sorted_sums.begin(), sorted_sums.end(), prefix_sums[i]) - sorted_sums.begin() + 1;
+        
+        // Count how many times this prefix sum has occurred before
+        if (i > 0) {
+            result += query(rank - 1); // count previous equal values
+        }
+
+        // Update only for the first n+1 prefix sums to avoid double counting
+        if (i <= n) {
+            update(rank, 1);
+        }
+    }
+
+    cout << result << endl;
+    return 0;
+}

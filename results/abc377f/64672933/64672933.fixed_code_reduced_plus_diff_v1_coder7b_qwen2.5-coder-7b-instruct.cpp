@@ -1,0 +1,28 @@
+#include<bits/stdc++.h>
+using namespace std;
+using i64 = long long;
+
+int main() {
+    ios_base::sync_with_stdio(false); cin.tie(0);
+    i64 n, m;
+    cin >> n >> m;
+    vector<pair<i64, i64>> a(m);
+    set<i64> r, c, d1, d2;
+    for(int i=0;i<m;++i){
+        cin >> a[i].first >> a[i].second;
+        r.insert(a[i].first);
+        c.insert(a[i].second);
+        d1.insert(a[i].first+a[i].second);
+        d2.insert(a[i].first-a[i].second);
+    }
+    i64 ans = n*n - m;
+    for(auto [x,y]: a){
+        if(r.find(x)==r.end()) ++ans;
+        if(c.find(y)==c.end()) ++ans;
+        if(d1.find(x+y)==d1.end()) ++ans;
+        if(d2.find(x-y)==d2.end()) ++ans;
+        if(r.size()==1&&c.size()==1&&d1.size()==1&&d2.size()==1) --ans;
+    }
+    cout << ans << '\n';
+    return 0;
+}

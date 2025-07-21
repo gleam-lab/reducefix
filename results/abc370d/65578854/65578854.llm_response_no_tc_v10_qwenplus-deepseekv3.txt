@@ -1,0 +1,79 @@
+To fix this code, we need to address several issues related to how the walls are being tracked and destroyed. The original code uses sets to keep track of remaining walls, but it has some logical flaws in how it processes the bomb placements and searches for the nearest walls in each direction.
+
+### Issues in the Original Code:
+1. **Initialization of Sets**: The sets `X` and `Y` are initialized to include all walls, but the way they are used to track walls is flipped. `X[r]` should contain columns `c` where walls exist at `(r, c)`, and `Y[c]` should contain rows `r` where walls exist at `(r, c)`.
+2. **Direction Handling**: The code attempts to find the nearest wall in each direction (up, down, left, right) but has incorrect logic in handling these searches. Specifically, the search for the left and right directions was incorrectly using `X[R].lower_bound(R)` instead of `C`.
+3. **Efficiency**: The original approach might not be efficient enough for the given constraints (H × W up to 400,000 and Q up to 200,000), but with proper implementation using sets, it should be feasible.
+
+### Fixed Code:
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+#define rep(i, n) for (ll i = 0; i < (ll)(n); i++)
+#define rep2(i, s, n) for (ll i = (s); i < (ll)(n); i++)
+#define all(x) x.begin(), x.end()
+
+int main() {
+    int H, W, Q;
+    cin >> H >> W >> Q;
+    vector<set<int>> row(H), col(W);
+    rep(i, H) rep(j, W) {
+        row[i].insert(j);
+        col[j].insert(i);
+    }
+    ll ans = (ll)H * W;
+    ll cnt = 0;
+    auto erase = [&](int r, int c) {
+        if (row[r].count(c)) {
+            cnt++;
+            row[r].erase(c);
+            col[c].erase(r);
+        }
+    };
+    rep(itr, Q) {
+        int R, C;
+        cin >> R >> C;
+        R--; C--;
+        if (row[R].count(C)) {
+            erase(R, C);
+            continue;
+        }
+        // Up
+        auto it = col[C].lower_bound(R);
+        if (it != col[C].begin()) {
+            --it;
+            erase(*it, C);
+        }
+        // Down
+        it = col[C].upper_bound(R);
+        if (it != col[C].end()) {
+            erase(*it, C);
+        }
+        // Left
+        it = row[R].lower_bound(C);
+        if (it != row[R].begin()) {
+            --it;
+            erase(R, *it);
+        }
+        // Right
+        it = row[R].upper_bound(C);
+        if (it != row[R].end()) {
+            erase(R, *it);
+        }
+    }
+    cout << ans - cnt << endl;
+    return 0;
+}
+```
+
+### Explanation:
+1. **Initialization**: The `row` and `col` sets are initialized to keep track of walls. `row[r]` contains all columns `c` where there is a wall at `(r, c)`, and `col[c]` contains all rows `r` where there is a wall at `(r, c)`.
+2. **Bomb Placement**: For each query, if there is a wall at `(R, C)`, it is destroyed. Otherwise, the code searches for the nearest walls in each direction:
+   - **Up**: The largest row less than `R` in `col[C]`.
+   - **Down**: The smallest row greater than `R` in `col[C]`.
+   - **Left**: The largest column less than `C` in `row[R]`.
+   - **Right**: The smallest column greater than `C` in `row[R]`.
+3. **Efficiency**: Using sets ensures that each search operation is O(log W) or O(log H), making the overall complexity O(Q log (H + W)), which is efficient given the constraints.
+
+This approach ensures that all operations are handled correctly and efficiently, providing the correct count of remaining walls after all queries.

@@ -1,0 +1,39 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+using ll = long long;
+typedef pair<int, int> PII;
+const int N = 2e5 + 10;
+
+void solve() {
+    int n, M;
+    cin >> n >> M;
+    vector<ll> a(n + 1);
+    for (int i = 1; i <= n; i++) {
+        cin >> a[i];
+    }
+
+    // Prefix sum array
+    vector<ll> prefix(n + 1);
+    for (int i = 1; i <= n; i++) {
+        prefix[i] = prefix[i - 1] + a[i];
+    }
+
+    map<ll, ll> freq;
+    ll ans = 0;
+
+    for (int i = 0; i <= n; i++) {
+        ll rem = ((prefix[i] % M) + M) % M;  // Ensure non-negative remainder
+        ans += freq[rem];
+        freq[rem]++;
+    }
+
+    cout << ans << "\n";
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    solve();
+    return 0;
+}

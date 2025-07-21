@@ -1,0 +1,53 @@
+#include <bits/stdc++.h>
+using namespace std;
+const int maxN = 2e5 + 5;
+
+int t, n, k;
+long long a[maxN], b[maxN];
+pair<long long, long long> p[maxN];
+
+bool cmp(pair<long long, long long>& p1, pair<long long, long long>& p2) {
+    return p1.first < p2.first || (p1.first == p2.first && p1.second < p2.second);
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+    cout.tie(nullptr);
+
+    cin >> t;
+    while (t--) {
+        cin >> n >> k;
+        priority_queue<long long> q;
+        long long sum = 0, ans;
+        for (int i = 1; i <= n; ++i)
+            cin >> a[i];
+        for (int i = 1; i <= n; ++i)
+            cin >> b[i];
+        for (int i = 1; i <= n; ++i)
+            p[i] = {a[i], b[i]};
+        
+        sort(p + 1, p + n + 1, cmp);
+
+        sum = 0;
+        for (int i = 1; i <= k; ++i) {
+            sum += p[i].second;
+            q.push(p[i].second);
+        }
+        ans = p[k].first * sum;
+
+        for (int i = k + 1; i <= n; ++i) {
+            if (q.top() > p[i].second) {
+                sum -= q.top();
+                q.pop();
+                sum += p[i].second;
+                q.push(p[i].second);
+            }
+            ans = min(ans, sum * p[i].first);
+        }
+
+        cout << ans << "\n";
+    }
+
+    return 0;
+}

@@ -1,0 +1,96 @@
+To fix this code, we need to ensure that the logic correctly handles both scenarios in each query: when the bomb is placed on a cell with a wall and when it is placed on a cell without a wall. The original code attempts to use sets to track walls in each row and column, but the logic for finding the first walls in the four directions when there's no wall at the bomb location is flawed.
+
+### Approaches
+
+1. **Initialization**: We start by assuming all cells have walls, so we initialize sets for each row and column to track the presence of walls.
+2. **Processing Queries**: For each query:
+   - **If there's a wall at the bomb location**: Remove it from the respective row and column sets.
+   - **If there's no wall at the bomb location**: 
+     - **Up and Down Directions**: Check the column of the bomb location for the nearest walls above and below the bomb.
+     - **Left and Right Directions**: Check the row of the bomb location for the nearest walls to the left and right of the bomb.
+     - Remove these walls if they exist.
+3. **Counting Remaining Walls**: After processing all queries, count the remaining walls by summing the sizes of all row sets (or column sets, since they should be consistent).
+
+### Solution Code
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+#define rep(i, n) for(int i = 0; i < (n); i++)
+using ll = long long;
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int h, w, q;
+    cin >> h >> w >> q;
+    
+    vector<set<int>> row_walls(h), col_walls(w);
+    rep(i, h) rep(j, w) {
+        row_walls[i].insert(j);
+        col_walls[j].insert(i);
+    }
+    
+    rep(qi, q) {
+        int r, c;
+        cin >> r >> c;
+        r--; c--;
+        
+        if (row_walls[r].count(c)) {
+            row_walls[r].erase(c);
+            col_walls[c].erase(r);
+        } else {
+            auto it_up = col_walls[c].lower_bound(r);
+            if (it_up != col_walls[c].begin()) {
+                --it_up;
+                int i = *it_up;
+                row_walls[i].erase(c);
+                col_walls[c].erase(i);
+            }
+            
+            auto it_down = col_walls[c].lower_bound(r);
+            if (it_down != col_walls[c].end()) {
+                int i = *it_down;
+                row_walls[i].erase(c);
+                col_walls[c].erase(i);
+            }
+            
+            auto it_left = row_walls[r].lower_bound(c);
+            if (it_left != row_walls[r].begin()) {
+                --it_left;
+                int j = *it_left;
+                row_walls[r].erase(j);
+                col_walls[j].erase(r);
+            }
+            
+            auto it_right = row_walls[r].lower_bound(c);
+            if (it_right != row_walls[r].end()) {
+                int j = *it_right;
+                row_walls[r].erase(j);
+                col_walls[j].erase(r);
+            }
+        }
+    }
+    
+    int ans = 0;
+    rep(i, h) ans += row_walls[i].size();
+    cout << ans << "\n";
+    
+    return 0;
+}
+```
+
+### Explanation
+
+1. **Initialization**: We initialize two sets for each row and column to keep track of walls. `row_walls[i]` contains the column indices of walls in row `i`, and `col_walls[j]` contains the row indices of walls in column `j`.
+2. **Processing Queries**: For each query, we check if the specified cell `(r, c)` has a wall:
+   - **If it has a wall**: Remove it from both `row_walls[r]` and `col_walls[c]`.
+   - **If it does not have a wall**: 
+     - **Up Direction**: Use `lower_bound` to find the first wall above `(r, c)` in the column. If found, remove it.
+     - **Down Direction**: Use `lower_bound` to find the first wall below `(r, c)` in the column. If found, remove it.
+     - **Left Direction**: Use `lower_bound` to find the first wall to the left of `(r, c)` in the row. If found, remove it.
+     - **Right Direction**: Use `lower_bound` to find the first wall to the right of `(r, c)` in the row. If found, remove it.
+3. **Counting Remaining Walls**: After processing all queries, we sum the sizes of all `row_walls` sets (or `col_walls` sets) to get the total number of remaining walls, which is then printed.
+
+This approach efficiently handles each query in logarithmic time relative to the number of walls in the affected row or column, ensuring optimal performance for large grids and queries.

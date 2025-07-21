@@ -1,0 +1,71 @@
+#include <bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int n, m;
+    ll k;
+    cin >> n >> m >> k;
+    vector<ll> a(n);
+    for(int i = 0; i < n; ++i) {
+        cin >> a[i];
+        k -= a[i];
+    }
+
+    // Calculate the prefix sum array
+    vector<ll> pref(n + 1);
+    for(int i = 0; i < n; ++i) {
+        pref[i + 1] = pref[i] + a[i];
+    }
+
+    // Initialize the answer array with -1
+    vector<ll> ans(n, -1);
+
+    // Iterate over each candidate
+    for(int i = 0; i < n; ++i) {
+        // The maximum number of votes that can be distributed among the remaining candidates
+        ll max_votes = k - (pref[n] - pref[i]);
+
+        // The minimum number of votes needed to ensure the candidate wins
+        ll min_votes_needed = 0;
+
+        // Binary search to find the minimum number of votes needed
+        ll l = 0, r = max_votes;
+        while(l <= r) {
+            ll mid = (l + r) / 2;
+            ll total_votes = mid + a[i];
+
+            // Calculate the number of candidates that have more votes than the current candidate
+            ll count = 0;
+            for(int j = 0; j < n; ++j) {
+                if(j != i && a[j] > total_votes) {
+                    count++;
+                }
+            }
+
+            // If the count is less than m, the candidate wins
+            if(count < m) {
+                r = mid - 1;
+                min_votes_needed = mid;
+            } else {
+                l = mid + 1;
+            }
+        }
+
+        // If no valid solution is found, set the answer to -1
+        if(min_votes_needed > max_votes) {
+            ans[i] = -1;
+        } else {
+            ans[i] = min_votes_needed;
+        }
+    }
+
+    // Print the results
+    for(ll x : ans) {
+        cout << x << " ";
+    }
+    return 0;
+}

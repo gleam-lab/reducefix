@@ -1,0 +1,56 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+#define ll long long
+#define mod 1000000007
+
+int main() {
+    ios_base::sync_with_stdio(0); cin.tie(0); cout.tie(0);
+    
+    int h, w, y;
+    cin >> h >> w >> y;
+    vector<vector<int>> grid(h, vector<int>(w));
+    for(int i = 0; i < h; i++)
+        for(int j = 0; j < w; j++)
+            cin >> grid[i][j];
+
+    priority_queue<pair<int, pair<int, int>>, vector<pair<int, pair<int, int>>>, greater<>> pq;
+    vector<vector<bool>> visited(h, vector<bool>(w, false));
+    for(int i = 0; i < h; i++) {
+        pq.push({grid[i][0], {i, 0}});
+        visited[i][0] = true;
+    }
+    for(int i = 1; i < w; i++) {
+        pq.push({grid[0][i], {0, i}});
+        visited[0][i] = true;
+    }
+    for(int i = 1; i < h; i++) {
+        pq.push({grid[i][w-1], {i, w-1}});
+        visited[i][w-1] = true;
+    }
+    for(int i = 0; i < w-1; i++) {
+        pq.push({grid[h-1][i], {h-1, i}});
+        visited[h-1][i] = true;
+    }
+
+    while(!pq.empty() && y--) {
+        auto [height, coord] = pq.top(); pq.pop();
+        if(height > y) break;
+        int x = coord.first, y = coord.second;
+        visited[x][y] = false;
+        for(int i = 0; i < 4; i++) {
+            int nx = x + d[i][0], ny = y + d[i][1];
+            if(nx < 0 || nx >= h || ny < 0 || ny >= w || visited[nx][ny]) continue;
+            pq.push({grid[nx][ny], {nx, ny}});
+            visited[nx][ny] = true;
+        }
+    }
+
+    int count = 0;
+    for(int i = 0; i < h; i++)
+        for(int j = 0; j < w; j++)
+            if(!visited[i][j]) count++;
+    cout << count << endl;
+
+    return 0;
+}

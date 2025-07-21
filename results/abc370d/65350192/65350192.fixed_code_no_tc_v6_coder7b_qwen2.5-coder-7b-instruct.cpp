@@ -1,0 +1,34 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define rep(i,n) for(int i = 0; i < (n); i++)
+using ll = long long;
+
+int main(void) {
+    int h, w, q;
+    cin >> h >> w >> q;
+    vector<vector<bool>> grid(h, vector<bool>(w, true));
+    while (q--) {
+        int r, c;
+        cin >> r >> c;
+        --r, --c; // Convert to zero-indexed
+        if (grid[r][c]) { // If there's a wall at this position
+            grid[r][c] = false; // Destroy it
+        } else { // Otherwise, look in all four directions
+            for (int dr = -1; dr <= 1; ++dr) {
+                for (int dc = -1; dc <= 1; ++dc) {
+                    if (abs(dr) == abs(dc)) continue; // Skip diagonals
+                    int nr = r + dr, nc = c + dc;
+                    while (nr >= 0 && nr < h && nc >= 0 && nc < w) { // Stay within bounds
+                        if (!grid[nr][nc]) break; // Stop if we encounter a destroyed wall
+                        grid[nr][nc] = false; // Destroy the wall
+                        nr += dr, nc += dc; // Move further in the same direction
+                    }
+                }
+            }
+        }
+    }
+    int ans = 0;
+    for (const auto &row : grid) ans += count(row.begin(), row.end(), true);
+    cout << ans << '\n';
+    return 0;
+}

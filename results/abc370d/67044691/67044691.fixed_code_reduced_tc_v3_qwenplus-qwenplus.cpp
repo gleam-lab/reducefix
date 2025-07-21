@@ -1,0 +1,83 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define ll long long
+#define rep(i,r) for(ll i=0;i<(ll)r;i++)
+#define vi vector<int>
+#define vl vector<ll>
+#define vd vector<double>
+#define vb vector<bool>
+#define vs vector<string>
+#define vc vector<char>
+#define ull unsigned long long
+#define chmax(a,b) a=max(a,b)
+#define chmin(a,b) a=min(a,b)
+
+int main(){
+    ll h, w, q;
+    cin >> h >> w >> q;
+    vector<set<ll>> rows(h), cols(w);
+
+    // Initialize all walls present
+    for (ll i = 0; i < h; ++i) {
+        for (ll j = 0; j < w; ++j) {
+            rows[i].insert(j);
+            cols[j].insert(i);
+        }
+    }
+
+    while (q--) {
+        ll r, c;
+        cin >> r >> c;
+        r--; c--;
+
+        auto it = rows[r].find(c);
+        if (it != rows[r].end()) {
+            // Wall exists at (r,c), destroy it
+            rows[r].erase(it);
+            cols[c].erase(r);
+        } else {
+            // Bomb placed on empty cell, destroy first wall in each direction
+            // Right
+            auto rit = rows[r].upper_bound(c);
+            if (rit != rows[r].end()) {
+                ll rc = *rit;
+                rows[r].erase(rc);
+                cols[rc].erase(r);
+            }
+
+            // Left
+            if (rit != rows[r].begin()) {
+                auto lit = prev(rit);
+                if (*lit < c) {
+                    ll lc = *lit;
+                    rows[r].erase(lc);
+                    cols[lc].erase(r);
+                }
+            }
+
+            // Down
+            auto dit = cols[c].upper_bound(r);
+            if (dit != cols[c].end()) {
+                ll dr = *dit;
+                cols[c].erase(dr);
+                rows[dr].erase(c);
+            }
+
+            // Up
+            if (dit != cols[c].begin()) {
+                auto uit = prev(dit);
+                if (*uit < r) {
+                    ll ur = *uit;
+                    cols[c].erase(ur);
+                    rows[ur].erase(c);
+                }
+            }
+        }
+    }
+
+    ll ans = 0;
+    rep(i, h) ans += rows[i].size();
+    cout << ans << endl;
+
+    return 0;
+}

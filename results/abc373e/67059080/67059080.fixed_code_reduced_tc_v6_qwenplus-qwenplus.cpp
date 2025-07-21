@@ -1,0 +1,83 @@
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+
+int main() {
+  ios::sync_with_stdio(false);
+  cin.tie(nullptr);
+
+  int N, M;
+  ll K;
+  cin >> N >> M >> K;
+
+  vector<pair<ll, int>> A(N);
+  for (int i = 0; i < N; ++i) {
+    cin >> A[i].first;
+    A[i].second = i;
+  }
+
+  // Sort the candidates by current votes
+  sort(A.begin(), A.end());
+
+  // Prefix sum of sorted votes
+  vector<ll> prefix(N + 1);
+  for (int i = 0; i < N; ++i)
+    prefix[i + 1] = prefix[i] + A[i].first;
+
+  ll total_remaining = K - prefix[N];
+
+  vector<ll> result(N);
+  for (int i = 0; i < N; ++i) {
+    int idx = A[i].second;
+    ll current = A[i].first;
+
+    // Binary search on required additional votes
+    ll low = 0;
+    ll high = total_remaining;
+    ll answer = -1;
+
+    while (low <= high) {
+      ll mid = (low + high) / 2;
+      ll needed = 0;
+      ll my_total = current + mid;
+
+      // Number of candidates already stronger than me
+      int left = i;
+      int right = N - 1;
+      int stronger = N - (upper_bound(A.begin(), A.end(), make_pair(my_total, N)) - A.begin());
+
+      if (stronger >= M) {
+        low = mid + 1;
+        continue;
+      }
+
+      // Need to block at most (M - stronger - 1) candidates from getting more than me
+      int need_to_block = max(0, M - stronger - 1);
+      int available_to_block = i;
+
+      if (available_to_block < need_to_block) {
+        // Not enough candidates below to block
+        low = mid + 1;
+        continue;
+      }
+
+      // Take the strongest `need_to_block` candidates below me and raise them above me
+      ll cost = my_total * need_to_block - (prefix[i] - prefix[i - need_to_block]);
+
+      if (cost <= total_remaining - mid) {
+        answer = mid;
+        high = mid - 1;
+      } else {
+        low = mid + 1;
+      }
+    }
+
+    result[idx] = (answer == -1 ? -1 : answer);
+  }
+
+  for (int i = 0; i < N; ++i)
+    cout << result[i] << " ";
+  cout << "\n";
+
+  return 0;
+}

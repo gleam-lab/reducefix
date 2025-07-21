@@ -1,0 +1,94 @@
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+using ll = long long;
+
+#define rep(i, x, limit) for (int i = (x); i < (limit); i++)
+
+void solve() {
+    ll N, M, K;
+    cin >> N >> M >> K;
+    vector<ll> A(N);
+    ll total = 0;
+    for (int i = 0; i < N; ++i) {
+        cin >> A[i];
+        total += A[i];
+    }
+    ll rem = K - total;
+
+    vector<pair<ll, int>> sorted_A(N);
+    for (int i = 0; i < N; ++i) {
+        sorted_A[i] = {A[i], i};
+    }
+    sort(sorted_A.begin(), sorted_A.end());
+
+    vector<ll> prefix_sum(N + 1, 0);
+    for (int i = 0; i < N; ++i) {
+        prefix_sum[i + 1] = prefix_sum[i] + sorted_A[i].first;
+    }
+
+    vector<ll> res(N);
+
+    for (int idx = 0; idx < N; ++idx) {
+        ll a_i = A[idx];
+        // Binary search for the minimum X such that candidate idx is elected
+        ll low = 0, high = rem;
+        ll ans = -1;
+        while (low <= high) {
+            ll mid = (low + high) / 2;
+            ll new_vote = a_i + mid;
+
+            // Find how many candidates have votes > new_vote
+            // Use binary search on sorted_A
+            ll left = 0, right = N;
+            while (left < right) {
+                ll m = (left + right) / 2;
+                if (sorted_A[m].first > new_vote) {
+                    right = m;
+                } else {
+                    left = m + 1;
+                }
+            }
+            ll greater_count = left;
+
+            // We need at least M candidates with more votes than this one to NOT be elected
+            // So we must ensure less than M candidates can have more votes than this one
+            // That means: remaining votes should be enough to reduce those potential competitors
+
+            // The number of candidates that currently have <= new_vote but could end up > new_vote
+            ll needed_above = max(0LL, M - (N - greater_count));
+
+            if (needed_above == 0) {
+                ans = mid;
+                high = mid - 1;
+            } else {
+                // Need to make sure that at least "needed_above" candidates cannot surpass new_vote
+                ll l = max(0LL, greater_count - needed_above);
+                ll r = greater_count;
+
+                ll required = needed_above * (new_vote + 1) - (prefix_sum[r] - prefix_sum[l]);
+                if (required <= rem - mid) {
+                    ans = mid;
+                    high = mid - 1;
+                } else {
+                    low = mid + 1;
+                }
+            }
+        }
+
+        res[idx] = (ans != -1) ? ans : -1;
+    }
+
+    for (int i = 0; i < N; ++i) {
+        cout << res[i] << " ";
+    }
+    cout << "\n";
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    solve();
+}
+```

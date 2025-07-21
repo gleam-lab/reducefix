@@ -1,0 +1,69 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+const int MAXN = 1010;
+const int INF = 1e9 + 7;
+
+struct Cell {
+    int x, y, height;
+    bool operator<(const Cell &other) const {
+        return height > other.height;
+    }
+};
+
+int h, w, y;
+int grid[MAXN][MAXN];
+bool visited[MAXN][MAXN];
+
+int dx[] = {0, 1, 0, -1};
+int dy[] = {1, 0, -1, 0};
+
+void bfs(int level) {
+    memset(visited, false, sizeof(visited));
+    queue<Cell> q;
+    for (int i = 0; i < h; ++i) {
+        for (int j = 0; j < w; ++j) {
+            if (!visited[i][j] && grid[i][j] > level) {
+                visited[i][j] = true;
+                q.push({i, j, grid[i][j]});
+            }
+        }
+    }
+
+    int area = 0;
+    while (!q.empty()) {
+        Cell cell = q.front();
+        q.pop();
+        area++;
+        for (int k = 0; k < 4; ++k) {
+            int nx = cell.x + dx[k];
+            int ny = cell.y + dy[k];
+            if (nx >= 0 && nx < h && ny >= 0 && ny < w && !visited[nx][ny] && grid[nx][ny] > level) {
+                visited[nx][ny] = true;
+                q.push({nx, ny, grid[nx][ny]});
+            }
+        }
+    }
+    cout << area << endl;
+}
+
+int main() {
+    cin >> h >> w >> y;
+    for (int i = 0; i < h; ++i) {
+        for (int j = 0; j < w; ++j) {
+            cin >> grid[i][j];
+        }
+    }
+
+    sort(grid, grid + h * w);
+    int last_height = -1;
+    for (int i = 0; i < y; ++i) {
+        int level = grid[i];
+        if (level != last_height) {
+            bfs(level);
+            last_height = level;
+        }
+    }
+
+    return 0;
+}

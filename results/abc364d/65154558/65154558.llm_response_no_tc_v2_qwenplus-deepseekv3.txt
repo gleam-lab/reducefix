@@ -1,0 +1,83 @@
+### Analysis of the Incorrect Code
+
+The provided code attempts to solve the problem by using a binary search approach to find the k-th closest distance for each query. However, it has several critical issues:
+
+1. **Memory Allocation**: The array `a` is declared with size `N = 2e8 + 5`, which is unnecessarily large and impractical for the given constraints (up to 10^5 elements). This leads to high memory usage and potential stack overflow.
+2. **Coordinate Handling**: The code shifts all coordinates by 100,000,000 to handle negative values, but this is not necessary and complicates the logic. A better approach is to sort the array and use binary search to find the k-th closest element.
+3. **Binary Search Logic**: The `check` function and the binary search logic are flawed. The current implementation does not correctly compute the distances or find the k-th closest element.
+4. **Efficiency**: The approach is not efficient enough for the given constraints (N and Q up to 10^5). Sorting the array once and using binary search for each query would be more efficient.
+
+### Corrected Approach
+
+1. **Sort the Array**: First, sort the array `a` to facilitate efficient distance calculations.
+2. **Binary Search for Each Query**: For each query `(b_j, k_j)`, use binary search to find the k-th closest distance. The idea is to find the smallest distance `d` such that there are at least `k_j` elements in `a` within distance `d` from `b_j`.
+3. **Efficient Distance Calculation**: For each `b_j`, compute the distances from `b_j` to all elements in `a` indirectly by leveraging the sorted array and binary search.
+
+### Fixed Code
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+typedef long long ll;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int N, Q;
+    cin >> N >> Q;
+    vector<ll> a(N);
+    for (int i = 0; i < N; ++i) {
+        cin >> a[i];
+    }
+    sort(a.begin(), a.end());
+
+    while (Q--) {
+        ll b, k;
+        cin >> b >> k;
+        k--; // convert to 0-based index
+
+        // Binary search the k-th smallest distance
+        ll left = 0, right = 2e14;
+        ll answer = 0;
+        while (left <= right) {
+            ll mid = (left + right) / 2;
+            // Count the number of elements <= a[i] <= b + mid and >= b - mid
+            ll lower = b - mid;
+            ll upper = b + mid;
+            auto it_l = lower_bound(a.begin(), a.end(), lower);
+            auto it_u = upper_bound(a.begin(), a.end(), upper);
+            ll count = it_u - it_l;
+
+            if (count <= k) {
+                left = mid + 1;
+            } else {
+                answer = mid;
+                right = mid - 1;
+            }
+        }
+
+        // Now find the exact k-th distance
+        vector<ll> distances;
+        auto it_l = lower_bound(a.begin(), a.end(), b - answer);
+        auto it_u = upper_bound(a.begin(), a.end(), b + answer);
+        for (auto it = it_l; it != it_u; ++it) {
+            distances.push_back(abs(*it - b));
+        }
+        sort(distances.begin(), distances.end());
+        cout << distances[k] << '\n';
+    }
+
+    return 0;
+}
+```
+
+### Explanation
+
+1. **Sorting the Array**: The array `a` is sorted to allow efficient binary search operations.
+2. **Binary Search for Distance**: For each query, we perform a binary search to find the smallest distance `d` such that there are at least `k` elements within `d` distance from `b_j`.
+3. **Counting Elements**: Using `lower_bound` and `upper_bound`, we count how many elements fall within the range `[b_j - d, b_j + d]`.
+4. **Finding the k-th Distance**: Once the appropriate distance `d` is found, we collect all elements within this range, compute their distances to `b_j`, sort these distances, and output the k-th smallest distance.
+
+This approach ensures that the solution is efficient and meets the problem constraints, handling up to 10^5 elements and queries effectively.

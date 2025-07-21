@@ -1,0 +1,65 @@
+#include <iostream>
+#include <string>
+#include <vector>
+#include <unordered_map>
+#include <algorithm>
+using namespace std;
+
+int main() {
+    int N;
+    ll X;
+    cin >> N >> X;
+    vector<ll> A(N), P(N), B(N), Q(N);
+
+    for (int i = 0; i < N; i++) {
+        cin >> A[i] >> P[i] >> B[i] >> Q[i];
+    }
+
+    auto can_buy = [&]() {
+        for (int i = 0; i < N; i++) {
+            if (X < P[i] || X < Q[i]) {
+                // One of the machines cannot be bought with the budget X
+                return false;
+            }
+        }
+        return true;
+    };
+
+    if (!can_buy()) {
+        cout << 0 << endl;
+        return 0;
+    }
+
+    auto f = [&](ll x) {
+        // Calculate the minimum cost to achieve at least x processing capacity
+        ll res = X; // Start with the budget X
+        for (int i = 0; i < N; i++) {
+            ll val = INF;
+            for (ll s = 0; s <= B[i]; s++) { // Try using machine s from 0 to B[i]
+                ll t = (max(0LL, x - A[i] * s) + B[i] - 1) / B[i];
+                val = min(val, s * P[i] + t * Q[i]);
+            }
+            for (ll t = 0; t <= A[i]; t++) { // Try using machine t from 0 to A[i]
+                ll s = (max(0LL, x - B[i] * t) + A[i] - 1) / A[i];
+                val = min(val, t * Q[i] + s * P[i]);
+            }
+            if (val == INF) {
+                return false; // It's impossible to achieve the required processing capacity
+            }
+            res -= val;
+        }
+        return res >= 0;
+    };
+
+    ll ub = 1LL << 62, lb = 0; // Initial bounds for binary search
+    while (ub - lb > 1) {
+        ll mid = (ub + lb) / 2;
+        if (f(mid)) {
+            ub = mid; // Update upper bound if the capacity is achievable
+        } else {
+            lb = mid; // Update lower bound otherwise
+        }
+    }
+
+    cout << lb << endl; // Output the minimum achievable processing capacity
+}

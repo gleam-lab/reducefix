@@ -1,0 +1,78 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <cmath>
+
+using namespace std;
+
+int main() {
+    long long n, m;
+    cin >> n >> m;
+    
+    vector<pair<long long, long long>> pieces(n * n);
+    for (long long i = 0; i < m; i++) {
+        long long a, b;
+        cin >> a >> b;
+        pieces.push_back({a, b});
+    }
+    
+    // Sort pieces by their first and second coordinates
+    sort(pieces.begin(), pieces.end());
+    
+    // We will use a sweep line algorithm to find the number of safe positions
+    vector<pair<long long, long long>> events;
+    
+    // Collect all events where a new piece is placed
+    for (auto& p : pieces) {
+        events.emplace_back(p.first, p.second);
+        events.emplace_back(p.first, p.second + 1);
+        events.emplace_back(p.first + 1, p.second);
+        events.emplace_back(p.first + 1, p.second + 1);
+    }
+    
+    // Sort events
+    sort(events.begin(), events.end());
+    
+    // Sweep line to calculate the number of safe positions
+    long long safe_positions = (n * n) - m; // Start with total positions, subtract number of pieces
+    long long current_x = 0, current_y = 0;
+    vector<long long> active piece indicators (n + 1, 0);
+    
+    for (auto& event : events) {
+        long long x = event.first, y = event.second;
+        
+        if (x == current_x) {
+            // Horizontal event
+            for (long long dy = current_y; dy < y; dy++) {
+                if (active[dy % n] == 0) safe_positions--;
+            }
+        } else {
+            // Vertical event
+            for (long long dx = current_x; dx < x; dx++) {
+                if (active[dx % n] == 0) safe_positions--;
+            }
+        }
+        
+        if (y == 0) {
+            // New piece placed
+            safe_positions--;
+        } else {
+            // Remove piece
+            safe_positions++;
+        }
+        
+        // Update the active piece indicators
+        if (y == 0) {
+            active[x % n] = 1;
+        } else {
+            active[x % n] = 0;
+        }
+        
+        current_x = x;
+        current_y = y;
+    }
+    
+    cout << safe_positions << endl;
+    
+    return 0;
+}

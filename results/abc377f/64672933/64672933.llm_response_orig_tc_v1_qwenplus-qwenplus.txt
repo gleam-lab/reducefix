@@ -1,0 +1,146 @@
+To solve this problem efficiently given the constraints, we need to understand that:
+
+- The grid is of size `N x N`, where `N` can be as large as `10^9`.
+- There are `M` pieces on the board (`M <= 1000`), and we must find how many **empty squares** are **not attacked** by any of these pieces.
+- Each piece attacks:
+  - All cells in its **row**
+  - All cells in its **column**
+  - All cells along its **diagonal (x + y = constant)**
+  - All cells along its **anti-diagonal (x - y = constant)**
+
+Given the sparsity of pieces and the enormity of the grid, we **cannot simulate the entire grid**. Instead, we compute the total number of attacked positions using **sets** for rows, columns, diagonals, and anti-diagonals.
+
+We then subtract from the total number of grid squares, also accounting for overlaps where a cell might be counted multiple times due to being on both a row/column or diagonal/anti-diagonal.
+
+Here is the corrected and optimized C++ implementation:
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    long long N, M;
+    cin >> N >> M;
+
+    set<long long> rows, cols, diag1, diag2;
+    set<pair<long long, long long>> occupied;
+
+    for (int i = 0; i < M; ++i) {
+        long long a, b;
+        cin >> a >> b;
+        rows.insert(a);
+        cols.insert(b);
+        diag1.insert(a + b);
+        diag2.insert(a - b);
+        occupied.insert({a, b});
+    }
+
+    long long attacked = 0;
+
+    // Count attacked cells on attacked rows
+    attacked += rows.size() * N;
+
+    // Count attacked cells on attacked columns
+    attacked += cols.size() * N;
+
+    // Count attacked cells on attacked diagonals (a + b)
+    for (auto d : diag1) {
+        long long low = max(1LL, d - N);
+        long long high = min(N, d - 1);
+        if (low <= high) {
+            attacked += (high - low + 1);
+        }
+    }
+
+    // Count attacked cells on attacked anti-diagonals (a - b)
+    for (auto d : diag2) {
+        long long low = max(1LL, 1 + d);
+        long long high = min(N, N + d);
+        if (low <= high) {
+            attacked += (high - low + 1);
+        }
+    }
+
+    // Remove over-counted cells that were counted more than once
+
+    // Intersections: rows × columns
+    for (auto r : rows) {
+        for (auto c : cols) {
+            attacked -= 1; // was double counted
+        }
+    }
+
+    // Intersections: rows × diag1
+    for (auto r : rows) {
+        for (auto d : diag1) {
+            long long c = d - r;
+            if (1 <= c && c <= N) {
+                attacked -= 1;
+            }
+        }
+    }
+
+    // Intersections: rows × diag2
+    for (auto r : rows) {
+        for (auto d : diag2) {
+            long long c = r - d;
+            if (1 <= c && c <= N) {
+                attacked -= 1;
+            }
+        }
+    }
+
+    // Intersections: cols × diag1
+    for (auto c : cols) {
+        for (auto d : diag1) {
+            long long r = d - c;
+            if (1 <= r && r <= N) {
+                attacked -= 1;
+            }
+        }
+    }
+
+    // Intersections: cols × diag2
+    for (auto c : cols) {
+        for (auto d : diag2) {
+            long long r = d + c;
+            if (1 <= r && r <= N) {
+                attacked -= 1;
+            }
+        }
+    }
+
+    // Intersections: diag1 × diag2
+    for (auto d1 : diag1) {
+        for (auto d2 : diag2) {
+            long long r = (d1 + d2) / 2;
+            long long c = (d1 - d2) / 2;
+            if ((d1 + d2) % 2 == 0 && (d1 - d2) % 2 == 0 &&
+                1 <= r && r <= N && 1 <= c && c <= N) {
+                attacked -= 1;
+            }
+        }
+    }
+
+    // Now remove cells with pieces themselves
+    attacked -= M;
+
+    // Total unattacked empty squares
+    long long total = N * N - attacked;
+
+    cout << total << '\n';
+
+    return 0;
+}
+```
+
+### Key Points:
+- We use `set`s to store unique attack lines (rows, cols, diag1, diag2).
+- For each line type, we calculate how many cells it affects.
+- We subtract overlaps between every pair of attack sources to avoid overcounting.
+- Finally, we subtract the original `M` occupied cells since they're not valid placements.
+
+This approach runs in time proportional to `O(M^2)` — acceptable for `M ≤ 1000`.

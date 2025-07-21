@@ -1,0 +1,44 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+
+using namespace std;
+
+typedef long long ll;
+
+int main() {
+    ll n, m;
+    cin >> n >> m;
+
+    vector<pair<ll, ll>> pieces(m);
+    for (ll i = 0; i < m; ++i) {
+        cin >> pieces[i].first >> pieces[i].second;
+    }
+
+    // Use bitset to track captured rows, columns, and diagonals
+    vector<bool> rows(n + 1, false), cols(n + 1, false);
+    vector<pair<ll, ll>> diagonals[2 * n + 1];
+    vector<pair<ll, ll>> anti_diagonals[2 * n + 1];
+
+    for (const auto& p : pieces) {
+        rows[p.first] = true;
+        cols[p.second] = true;
+        diagonals[p.first - p.second + n].push_back(p);
+        anti_diagonals[p.first + p.second - n].push_back(p);
+    }
+
+    // Calculate the number of squares that can be placed
+    ll result = n * n;
+
+    // Subtract captured squares
+    for (ll i = 1; i <= n; ++i) {
+        result -= rows[i] ? 1 : 0;
+        result -= cols[i] ? 1 : 0;
+        result -= diagonals[i].size();
+        result -= anti_diagonals[i].size();
+    }
+
+    cout << result << endl;
+
+    return 0;
+}

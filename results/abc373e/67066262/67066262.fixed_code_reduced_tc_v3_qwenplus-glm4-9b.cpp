@@ -1,0 +1,50 @@
+#include <bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(0);
+    int n, m, k;
+    cin >> n >> m >> k;
+    vector<ll> a(n);
+    for (int i = 0; i < n; i++) {
+        cin >> a[i];
+    }
+
+    // Sort candidates based on the votes they have currently received
+    sort(a.begin(), a.end());
+
+    // If the number of leading candidates is already less than m, they all need 0 votes
+    if (n - m < 1) {
+        for (int i = 0; i < n; i++) cout << 0 << (i < n - 1 ? ' ' : '\n');
+        return 0;
+    }
+
+    // Calculate the votes needed for each candidate to guarantee victory
+    vector<ll> votes_needed(n);
+    for (int i = 0; i < m; i++) {
+        if (i > 0 && a[i] == a[i - 1]) continue; // Skip duplicates since votes needed will be the same
+        ll max_votes = a[i] + k - (n - m) * a[i];
+        votes_needed[i] = max_votes - a[i];
+    }
+
+    // Sort the votes needed to find the minimum votes needed for the top m candidates
+    sort(votes_needed.begin(), votes_needed.end());
+
+    // Update the votes needed for all candidates, ensuring they cannot be overtaken
+    for (int i = 0; i < n; i++) {
+        if (i < m) {
+            a[i] = votes_needed[i];
+        } else {
+            a[i] = votes_needed[m - 1];
+        }
+    }
+
+    // Output the votes needed for each candidate
+    for (int i = 0; i < n; i++) {
+        cout << max(0LL, a[i] - max(a[i] - k + (n - m) * a[i], a[i])) << (i < n - 1 ? ' ' : '\n');
+    }
+
+    return 0;
+}

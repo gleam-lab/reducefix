@@ -1,0 +1,53 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+#define dout(x) cerr << #x << " : " << x << endl
+
+#define ll long long
+
+ll gcd(ll a, ll b) {
+    if (b == 0) return a;
+    return gcd(b, a % b);
+}
+
+bool check(ll v) {
+    ll cnt = 0;
+    for (int i = 1; i <= n; ++i) {
+        ll lcm = a[i] / gcd(a[i], b[i]) * b[i];
+        ll vm = max(0LL, (v / lcm - 1) * min(p[i] * (lcm / a[i]), q[i] * (lcm / b[i])));
+        dout(vm);
+        cnt += vm;
+        ll val = max(0LL, v / lcm - 1) * lcm, ms = LLONG_MAX >> 1;
+        for (ll j = 0; (j - 1) * a[i] <= v - val; ++j) {
+            ms = min(ms, j * p[i] + max(0LL, ((v - val - j * a[i]) / b[i] + !!((v - val - j * a[i]) % b[i])) * q[i]));
+        }
+        dout('\n' << v << ',' << i << ':' << vm << ' ' << ms << ' ' << vm + ms << '\n');
+        cnt += ms;
+        if (cnt > x) return false;
+    }
+    return true;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    cin >> n >> x;
+    vector<ll> a(n + 1), p(n + 1), b(n + 1), q(n + 1);
+    for (int i = 1; i <= n; ++i) {
+        cin >> a[i] >> p[i] >> b[i] >> q[i];
+    }
+
+    ll l = 0, r = 1e18;
+    while (l < r) {
+        ll mid = l + (r - l) / 2;
+        if (check(mid)) {
+            l = mid + 1;
+        } else {
+            r = mid;
+        }
+    }
+
+    cout << l - 1 << endl;
+    return 0;
+}

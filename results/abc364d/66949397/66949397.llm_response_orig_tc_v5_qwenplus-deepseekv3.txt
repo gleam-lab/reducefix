@@ -1,0 +1,103 @@
+To fix this code, we need to correctly find the k-th closest point to each query point B_j. The original approach used binary search on the distance, but it seems to have issues with large values and precision. Instead, we can directly compute the distances, sort them, and then pick the k-th smallest distance.
+
+Here's the corrected approach:
+1. For each query point B_j, compute the absolute distances from all points in A to B_j.
+2. Sort these distances.
+3. Select the k_j-th smallest distance from the sorted list.
+
+This approach ensures correctness but may not be efficient for large N and Q (both up to 10^5). However, given the constraints, we need an efficient solution. The initial binary search approach was on the right track but needs proper bounds and checks.
+
+Here's the fixed code:
+
+```cpp
+#include <vector>
+#include <iostream>
+#include <algorithm>
+#include <cmath>
+
+using namespace std;
+
+using m_int = long long;
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    m_int n, q;
+    cin >> n >> q;
+    vector<m_int> a(n);
+    
+    for (m_int i = 0; i < n; ++i) {
+        cin >> a[i];
+    }
+    sort(a.begin(), a.end());
+
+    while (q--) {
+        m_int b, k;
+        cin >> b >> k;
+
+        vector<m_int> distances(n);
+        for (m_int i = 0; i < n; ++i) {
+            distances[i] = abs(a[i] - b);
+        }
+        nth_element(distances.begin(), distances.begin() + k - 1, distances.end());
+        cout << distances[k - 1] << "\n";
+    }
+}
+```
+
+However, the above code might not be efficient enough due to the O(NQ) time complexity, which is too slow for N and Q up to 10^5. We need a more efficient solution. 
+
+Here's an optimized approach using binary search on the answer and counting the number of points within a certain distance using lower and upper bounds:
+
+```cpp
+#include <vector>
+#include <iostream>
+#include <algorithm>
+#include <cmath>
+
+using namespace std;
+
+using m_int = long long;
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    m_int n, q;
+    cin >> n >> q;
+    vector<m_int> a(n);
+    
+    for (m_int i = 0; i < n; ++i) {
+        cin >> a[i];
+    }
+    sort(a.begin(), a.end());
+
+    while (q--) {
+        m_int b, k;
+        cin >> b >> k;
+
+        m_int left = 0;
+        m_int right = 2e14; // Sufficiently large to cover the maximum possible distance
+
+        while (left < right) {
+            m_int mid = left + (right - left) / 2;
+            m_int cnt = upper_bound(a.begin(), a.end(), b + mid) - lower_bound(a.begin(), a.end(), b - mid);
+
+            if (cnt >= k) {
+                right = mid;
+            } else {
+                left = mid + 1;
+            }
+        }
+        cout << left << "\n";
+    }
+}
+```
+
+Key improvements:
+1. Binary search range is set to a sufficiently large value (2e14) to cover the maximum possible distance.
+2. For each midpoint distance, count the number of points within the range [b - mid, b + mid] using `lower_bound` and `upper_bound`.
+3. Adjust the binary search bounds based on whether the count meets or exceeds k.
+
+This approach ensures O(Q log N log(max_distance)) time complexity, which is efficient enough for the given constraints. The binary search on the answer combined with the counting using sorted properties ensures correctness and efficiency.

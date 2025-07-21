@@ -1,0 +1,94 @@
+To fix this code, we need to ensure that the logic correctly handles the destruction of walls according to the problem's specifications. The key issue in the original code was that it didn't properly handle the case where the bomb is placed on a cell that already has no wall, leading to incorrect destruction of the first walls in the four directions.
+
+### Approaches
+1. **Initialization**: We start with all cells having walls (represented as `true` in a 2D boolean array `coo`).
+2. **Handling Queries**: For each query:
+   - If there's a wall at `(R_q, C_q)`, destroy it.
+   - If there's no wall at `(R_q, C_q)`, destroy the first walls in the four directions (up, down, left, right) from `(R_q, C_q)` that are still present.
+3. **Efficient Lookup**: To efficiently find the first walls in each direction, we use sets to keep track of the columns and rows that still have walls.
+
+### Solution Code
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    int h, w, q;
+    cin >> h >> w >> q;
+
+    vector<vector<bool>> coo(h + 2, vector<bool>(w + 2, true));
+    vector<set<int>> row(h + 2);
+    vector<set<int>> col(w + 2);
+
+    for (int i = 1; i <= h; ++i) {
+        for (int j = 1; j <= w; ++j) {
+            row[i].insert(j);
+            col[j].insert(i);
+        }
+    }
+
+    while (q--) {
+        int r, c;
+        cin >> r >> c;
+
+        if (coo[r][c]) {
+            coo[r][c] = false;
+            row[r].erase(c);
+            col[c].erase(r);
+        } else {
+            // Up
+            auto it_up = col[c].lower_bound(r);
+            if (it_up != col[c].begin()) {
+                --it_up;
+                coo[*it_up][c] = false;
+                row[*it_up].erase(c);
+                col[c].erase(it_up);
+            }
+
+            // Down
+            auto it_down = col[c].lower_bound(r);
+            if (it_down != col[c].end()) {
+                coo[*it_down][c] = false;
+                row[*it_down].erase(c);
+                col[c].erase(it_down);
+            }
+
+            // Left
+            auto it_left = row[r].lower_bound(c);
+            if (it_left != row[r].begin()) {
+                --it_left;
+                coo[r][*it_left] = false;
+                row[r].erase(it_left);
+                col[*it_left].erase(r);
+            }
+
+            // Right
+            auto it_right = row[r].lower_bound(c);
+            if (it_right != row[r].end()) {
+                coo[r][*it_right] = false;
+                row[r].erase(it_right);
+                col[*it_right].erase(r);
+            }
+        }
+    }
+
+    int ans = 0;
+    for (int i = 1; i <= h; ++i) {
+        for (int j = 1; j <= w; ++j) {
+            ans += coo[i][j];
+        }
+    }
+
+    cout << ans << endl;
+    return 0;
+}
+```
+
+### Explanation
+- **Initialization**: The grid `coo` is initialized to `true` (indicating walls present). Sets `row` and `col` are initialized to keep track of columns and rows that still have walls.
+- **Handling Queries**: For each query:
+  - If there's a wall at `(R_q, C_q)`, it is directly destroyed, and the corresponding entries in `row` and `col` are updated.
+  - If there's no wall, the code searches for the first walls in the four directions using `lower_bound` on the sets. If found, these walls are destroyed, and the sets are updated accordingly.
+- **Counting Remaining Walls**: After processing all queries, the code counts the remaining walls by summing the `true` values in the `coo` array.
+
+This approach ensures that the solution efficiently handles the destruction of walls and correctly counts the remaining walls after all queries.

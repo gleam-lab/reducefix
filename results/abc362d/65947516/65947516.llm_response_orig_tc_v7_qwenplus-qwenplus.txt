@@ -1,0 +1,98 @@
+The issue in the provided code is a misunderstanding of how to calculate the path cost correctly. In this problem, each path's total weight includes:
+
+- The **vertex weight** for every vertex along the path (including both endpoints).
+- The **edge weight** for every edge connecting vertices on the path.
+
+However, the current implementation only adds `a[now.id]` when transitioning to adjacent nodes and then adds it again during initialization. This leads to incorrect accounting of the starting vertex weight and final vertex weight.
+
+---
+
+### Key Fixes:
+1. **Correctly account for vertex weights:**
+   - When computing the shortest path from node 1 to all other nodes, you must include the weight of node 1 at the start.
+   - You must also include the weight of the destination node in the final result (since the definition of path cost includes both endpoints).
+
+2. **Fix Dijkstra's algorithm logic:**
+   - The distance to node `u` should be computed as:  
+     `dis[u] = dis[v] + edge_weight + a[u]`
+   - Where `v` is the previous node, and `a[u]` is the vertex weight being added only once when reaching `u`.
+
+3. **Initialize `dis[1]` with `a[1]`:**
+   - Since the path starts at node 1, its own weight must be included.
+
+4. **At output, add `a[i]` to `dis[i]` if not already included.**
+
+---
+
+Here's the corrected C++ implementation:
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+typedef pair<ll, int> pli;
+
+const int N = 2e5 + 5;
+int n, m;
+ll a[N];
+vector<pli> g[N];
+ll dis[N];
+
+void dijkstra() {
+    priority_queue<pli, vector<pli>, greater<pli>> pq;
+    for (int i = 1; i <= n; ++i)
+        dis[i] = LLONG_MAX;
+    
+    dis[1] = a[1]; // Start path with A_1 included
+    pq.push({dis[1], 1});
+
+    while (!pq.empty()) {
+        auto [d, u] = pq.top(); pq.pop();
+        if (d > dis[u]) continue;
+        for (auto &[v, w_edge] : g[u]) {
+            ll new_cost = d + w_edge + a[v]; // Include A_v when moving to v
+            if (new_cost < dis[v]) {
+                dis[v] = new_cost;
+                pq.push({dis[v], v});
+            }
+        }
+    }
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+
+    cin >> n >> m;
+    for (int i = 1; i <= n; ++i) {
+        cin >> a[i];
+    }
+
+    for (int i = 0; i < m; ++i) {
+        int u, v;
+        ll w;
+        cin >> u >> v >> w;
+        g[u].push_back({v, w});
+        g[v].push_back({u, w});
+    }
+
+    dijkstra();
+
+    for (int i = 2; i <= n; ++i)
+        cout << dis[i] << " ";
+    cout << '\n';
+
+    return 0;
+}
+```
+
+---
+
+### Explanation of Fix:
+
+- We initialize the distance to node `1` as `A[1]`, because that’s the starting point.
+- On each move from `u` to `v`, we add both the edge weight `B` and the vertex weight `A[v]`.
+- This ensures that each time we reach a new node, its vertex weight is accounted for exactly once — which aligns with the definition of the path cost.
+- Finally, since the output expects the full path cost from node `1` to `i`, including `A_i`, we print `dis[i]` directly (as it already includes `A_i`).
+
+This approach runs in `O(M log N)` using Dijkstra’s algorithm with a priority queue and is optimal for the given constraints.

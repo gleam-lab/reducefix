@@ -1,0 +1,73 @@
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+
+struct Node {
+    ll val;
+    int idx;
+};
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int N, M;
+    ll K;
+    cin >> N >> M >> K;
+
+    vector<Node> a(N + 5);
+    for (int i = 1; i <= N; ++i) {
+        cin >> a[i].val;
+        a[i].idx = i;
+    }
+
+    sort(a.begin() + 1, a.begin() + N + 1, [](const auto& A, const auto& B) -> bool {
+        return A.val < B.val;
+    });
+
+    vector<ll> pre(N + 5);
+    pre[0] = 0;
+    for (int i = 1; i <= N; ++i) {
+        pre[i] = pre[i - 1] + a[i].val;
+    }
+
+    K -= pre[N];
+
+    vector<ll> ans(N + 5, -1);
+    for (int i = 1; i <= N; ++i) {
+        ll cur = a[i].val + K;
+        int idx = upper_bound(a.begin() + i + 1, a.begin() + N + 1, (Node){cur, 0}, [](const auto& A, const auto& B) -> bool {
+            return A.val < B.val;
+        }) - a.begin();
+
+        if (idx == N || a[idx].val > cur) {
+            ans[a[i].idx] = 0;
+            continue;
+        }
+
+        int cnt = N - idx + 1;
+        if (cnt >= M) {
+            ans[a[i].idx] = -1;
+            continue;
+        }
+
+        ll target = cur + 1;
+        int L = 0, R = K;
+        while (L < R) {
+            int M = (L + R + 1) / 2;
+            if (target * M - (pre[idx - 1] - pre[max(0, idx - M)]) >= K) {
+                L = M;
+            } else {
+                R = M - 1;
+            }
+        }
+
+        ans[a[i].idx] = L - (idx - L < i);
+    }
+
+    for (int i = 1; i <= N; ++i) {
+        cout << ans[i] << ' ';
+    }
+
+    return 0;
+}

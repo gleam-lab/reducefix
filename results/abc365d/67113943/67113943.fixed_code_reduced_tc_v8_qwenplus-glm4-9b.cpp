@@ -1,0 +1,30 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main(){
+    ios_base::sync_with_stdio(false);
+    cin.tie(NULL);
+
+    int N;
+    string S;
+    cin >> N;
+    cin >> S;
+
+    // In the first character, count as winning if it's 'R'
+    int wins = (S[0] == 'R') ? 1 : 0;
+    char prev = S[0];
+
+    // Loop through the string starting from the second character
+    for (int i = 1; i < N; ++i){
+        if (prev == 'R' && S[i] == 'P') {
+            wins++;
+        } else if (prev == 'P' && S[i] == 'S') {
+            wins++;
+        } else if (prev == 'S' && S[i] == 'R') {
+            wins++;
+        }
+        prev = S[i];
+    }
+    
+    cout << wins;
+}

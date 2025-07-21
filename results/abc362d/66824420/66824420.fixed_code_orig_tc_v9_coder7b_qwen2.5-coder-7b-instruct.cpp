@@ -1,0 +1,64 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+typedef long long ll;
+
+struct Edge {
+    int v, w;
+};
+
+void dijkstra(vector<vector<Edge>>& adj, vector<ll>& dist, int src) {
+    priority_queue<pair<ll, int>, vector<pair<ll, int>>, greater<pair<ll, int>>> pq;
+    dist[src] = 0;
+    pq.push({0, src});
+
+    while (!pq.empty()) {
+        auto [d, u] = pq.top(); pq.pop();
+        if (d > dist[u]) continue;
+        for (auto& e : adj[u]) {
+            int v = e.v, w = e.w;
+            ll newDist = dist[u] + w + dist[v];
+            if (newDist < dist[v]) {
+                dist[v] = newDist;
+                pq.push({dist[v], v});
+            }
+        }
+    }
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int n, m;
+    cin >> n >> m;
+    
+    vector<ll> a(n);
+    for (int i = 0; i < n; ++i) {
+        cin >> a[i];
+    }
+
+    vector<vector<Edge>> adj(n + 1);
+    for (int i = 0; i < m; ++i) {
+        int u, v, w;
+        cin >> u >> v >> w;
+        adj[u].push_back({v, w});
+        adj[v].push_back({u, w});
+    }
+
+    vector<ll> dist(n + 1, LLONG_MAX);
+    dist[1] = a[0];
+
+    for (int i = 2; i <= n; ++i) {
+        vector<ll> tempDist(n + 1, LLONG_MAX);
+        dijkstra(adj, tempDist, 1);
+        dist[i] = tempDist[i];
+    }
+
+    for (int i = 2; i <= n; ++i) {
+        cout << dist[i] << " ";
+    }
+    cout << endl;
+
+    return 0;
+}

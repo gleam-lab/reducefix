@@ -1,0 +1,41 @@
+#include <iostream>
+#include <vector>
+using namespace std;
+
+int main() {
+    int N;
+    cin >> N;
+    vector<int> H(N);
+    for (int i = 0; i < N; ++i) {
+        cin >> H[i];
+    }
+
+    int T = 0;
+    for (int health : H) {
+        // Each enemy needs a number of attacks to reduce its health to 0 or less.
+        // If health is 0 or less, no more attacks are needed.
+        if (health > 0) {
+            if (T % 3 != 0) {
+                // If T is not a multiple of 3, we can only attack with 1 damage.
+                if (health == 1) {
+                    T++;
+                } else {
+                    // If health is greater than 1, we can attack until we can't anymore in one step.
+                    T += health - 1;
+                }
+            } else {
+                // If T is a multiple of 3, we can attack with 3 damage.
+                if (health >= 3) {
+                    T += (health - 3);
+                } else {
+                    // If health is less than 3 but not 0 or 1, we need extra steps.
+                    T += 2;
+                }
+                // If health is 1 or 0, we can handle it in the next iteration or by continuing if needed.
+            }
+        }
+    }
+
+    cout << T << endl;
+    return 0;
+}

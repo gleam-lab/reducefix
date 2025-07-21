@@ -1,0 +1,22 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+using namespace std;
+using ll = long long;
+
+int main() {
+    int n;
+    cin >> n;
+    vector<ll> h(n);
+    for (int i = 0; i < n; ++i) {
+        cin >> h[i];
+    }
+    
+    ll t = 0;
+    for (ll health : h) {
+        t += (health + 2) / 3; // This equation ensures that we add the minimum number of moves needed to reduce the health to 0 or less.
+    }
+
+    cout << t << endl;
+    return 0;
+}

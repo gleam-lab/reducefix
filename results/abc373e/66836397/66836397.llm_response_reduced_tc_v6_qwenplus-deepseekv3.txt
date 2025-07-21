@@ -1,0 +1,74 @@
+To fix this code, we need to address the issue of determining the minimum number of additional votes each candidate needs to guarantee their victory. The original code had a logical flaw in the function `f` that checks if a candidate can be elected with a certain number of additional votes. Here's the corrected version:
+
+### Fixed Code
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+
+int main() {
+    ll N, M, K;
+    cin >> N >> M >> K;
+    vector<ll> A(N);
+    ll sum = 0;
+    for (ll i = 0; i < N; ++i) {
+        cin >> A[i];
+        sum += A[i];
+    }
+    ll remaining = K - sum;
+
+    vector<ll> sorted_A = A;
+    sort(sorted_A.begin(), sorted_A.end());
+    vector<ll> prefix_sum(N + 1, 0);
+    for (ll i = 0; i < N; ++i) {
+        prefix_sum[i + 1] = prefix_sum[i] + sorted_A[i];
+    }
+
+    for (ll i = 0; i < N; ++i) {
+        ll a_i = A[i];
+        ll low = 0, high = remaining, ans = -1;
+        while (low <= high) {
+            ll mid = (low + high) / 2;
+            ll new_a_i = a_i + mid;
+
+            auto it = upper_bound(sorted_A.begin(), sorted_A.end(), new_a_i);
+            ll upper_cnt = sorted_A.end() - it;
+            
+            if (upper_cnt < M) {
+                ans = mid;
+                high = mid - 1;
+            } else {
+                ll pos = it - sorted_A.begin();
+                ll lower_pos = pos - (M - 1);
+                if (lower_pos <= 0) {
+                    low = mid + 1;
+                    continue;
+                }
+                ll required = new_a_i * (M - 1) - (prefix_sum[pos] - prefix_sum[lower_pos]);
+                if (required <= remaining - mid) {
+                    low = mid + 1;
+                } else {
+                    ans = mid;
+                    high = mid - 1;
+                }
+            }
+        }
+        cout << ans << (i == N - 1 ? "\n" : " ");
+    }
+    return 0;
+}
+```
+
+### Explanation
+1. **Input Handling**: The code reads the number of candidates `N`, the threshold `M`, and the total votes `K`. It then reads the votes each candidate has received so far, stored in vector `A`.
+
+2. **Sorting and Prefix Sum**: The votes are sorted to facilitate binary search operations. A prefix sum array is constructed to quickly compute sums of ranges in the sorted array.
+
+3. **Binary Search for Minimum Votes**: For each candidate, the code performs a binary search to determine the minimum number of additional votes (`mid`) needed. The binary search checks if the candidate can be in the top `M` candidates after receiving `mid` additional votes:
+   - **Upper Bound Check**: Determines how many candidates have more votes than the candidate's new vote count.
+   - **Threshold Check**: If fewer than `M` candidates have more votes, the candidate is elected.
+   - **Required Votes Calculation**: If more candidates have votes, it calculates the votes needed to ensure the candidate's position and checks if it's feasible with the remaining votes.
+
+4. **Output**: The result for each candidate is printed, indicating the minimum additional votes needed or `-1` if it's impossible.
+
+This approach ensures that the solution is efficient and handles the constraints correctly, providing the correct minimum votes for each candidate to guarantee their election.

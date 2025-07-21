@@ -1,0 +1,47 @@
+#include <bits/stdc++.h>
+#define ll long long
+using namespace std;
+
+vector<vector<int>> adj;
+vector<bool> visited;
+int min_dist = INT_MAX;
+
+void dfs(int node, int dist) {
+    if (visited[node]) return;
+    visited[node] = true;
+    if (dist > min_dist) return;
+    if (adj[node].empty()) {
+        min_dist = min(min_dist, dist);
+        return;
+    }
+    for (auto neighbor : adj[node]) {
+        dfs(neighbor, dist + 1);
+    }
+}
+
+int main() {
+    ios_base::sync_with_stdio(false); cin.tie(NULL);
+
+    int n, m;
+    cin >> n >> m;
+    adj.resize(n + 1);
+    visited.assign(n + 1, false);
+
+    for (int i = 0; i < m; ++i) {
+        int u, v;
+        cin >> u >> v;
+        adj[u].push_back(v);
+        adj[v].push_back(u);
+    }
+
+    for (int i = 1; i <= n; ++i) {
+        visited.assign(n + 1, false);
+        min_dist = INT_MAX;
+        dfs(i, 0);
+        if (min_dist != INT_MAX) break;
+    }
+
+    cout << (min_dist == INT_MAX ? -1 : min_dist) << endl;
+
+    return 0;
+}

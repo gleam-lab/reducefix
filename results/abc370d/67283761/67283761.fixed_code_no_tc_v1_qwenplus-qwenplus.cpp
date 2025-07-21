@@ -1,0 +1,65 @@
+#include <iostream>
+#include <vector>
+#include <set>
+#include <algorithm>
+
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int H, W, Q;
+    cin >> H >> W >> Q;
+
+    // We'll use a set to store the positions of existing walls
+    set<pair<int, int>> walls;
+    for (int i = 0; i < H; ++i) {
+        for (int j = 0; j < W; ++j) {
+            walls.emplace(i, j);
+        }
+    }
+
+    vector<vector<bool>> has_bomb(H, vector<bool>(W, false));
+
+    for (int q = 0; q < Q; ++q) {
+        int r, c;
+        cin >> r >> c;
+        --r; --c;
+
+        if (!has_bomb[r][c]) {
+            // Bomb placed on a cell with wall
+            auto it = walls.find({r, c});
+            if (it != walls.end()) {
+                walls.erase(it);
+            }
+            has_bomb[r][c] = true;
+        } else {
+            // Bomb placed on a cell without wall
+            // Look in all four directions and remove first wall found
+            int dirs[4][2] = {{-1, 0}, {1, 0}, {0, -1}, {0, 1}}; // Up, Down, Left, Right
+
+            for (auto [dr, dc] : dirs) {
+                int nr = r + dr;
+                int nc = c + dc;
+
+                while (nr >= 0 && nr < H && nc >= 0 && nc < W) {
+                    if (has_bomb[nr][nc]) {
+                        // Move further in the same direction
+                        nr += dr;
+                        nc += dc;
+                    } else {
+                        // Found first wall in this direction
+                        if (walls.count({nr, nc})) {
+                            walls.erase({nr, nc});
+                        }
+                        break;
+                    }
+                }
+            }
+        }
+    }
+
+    cout << walls.size() << endl;
+    return 0;
+}

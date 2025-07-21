@@ -1,0 +1,128 @@
+
+```cpp
+#include <iostream>
+#include <vector>
+#include <set>
+#include <algorithm>
+using namespace std;
+
+#define rep(i, n) for (int i = 0; i < (int)(n); ++i)
+
+using ll = long long;
+
+struct UnionFind {
+    vector<vector<int>> parent;
+    vector<vector<int>> rank;
+
+    UnionFind(int size) {
+        parent.resize(size + 1);
+        rank.resize(size + 1);
+        for (int i = 0; i <= size; ++i) {
+            parent[i].push_back(i);
+            rank[i].push_back(0);
+        }
+    }
+
+    int find(int x) {
+        if (parent[x][0] != x) {
+            int root = find(parent[x][0]);
+            parent[x][0] = root; // path compression
+            return root;
+        }
+        return x;
+    }
+
+    bool unite(int x, int y) {
+        int rootX = find(x);
+        int rootY = find(y);
+        if (rootX == rootY) return false;
+
+        // union by rank
+        if (rank[rootX] > rank[rootY]) {
+            parent[rootY].push_back(rootX);
+        } else if (rank[rootX] < rank[rootY]) {
+            parent[rootX].push_back(rootY);
+        } else {
+            parent[rootX].push_back(rootY);
+            rank[rootY]++;
+        }
+        return true;
+    }
+};
+
+int main() {
+    int h, w, q;
+    cin >> h >> w >> q;
+
+    vector<vector<bool>> grid(h + 2, vector<bool>(w + 2, true));
+    vector<vector<int>> ru(h + 2, vector<int>(w + 2, 0));
+    vector<vector<int>> rd(h + 2, vector<int>(w + 2, 0));
+    vector<vector<int>> ld(h + 2, vector<int>(w + 2, 0));
+    vector<vector<int>> lu(h + 2, vector<int>(w + 2, 0));
+
+    for (int i = 1; i <= h + 1; ++i) {
+        for (int j = 1; j <= w + 1; ++j) {
+            ru[i][j] = ru[i - 1][j];
+            rd[i][j] = rd[i + 1][j];
+            ld[i][j] = ld[i][j - 1];
+            lu[i][j] = lu[i][j + 1];
+        }
+    }
+
+    UnionFind uf(h * w + 1);
+    set<pair<int, int>> queries;
+
+    for (int i = 0; i < q; ++i) {
+        int r, c;
+        cin >> r >> c;
+        queries.emplace(r, c);
+    }
+
+    for (auto &p : queries) {
+        int r = p.first, c = p.second;
+        if (grid[r][c]) {
+            grid[r][c] = false;
+            int index = (r - 1) * w + (c - 1);
+            // Destroy walls in 4 directions
+            uf.unite(index, (r - 1) * w + c); // up
+            uf.unite(index, r * w + c - 1); // down
+            uf.unite(index, (r - 1) * w); // left
+            uf.unite(index, r * w + 1); // right
+            continue;
+        }
+        // Find the first wall in 4 directions
+        int index = (r - 1) * w + (c - 1);
+        int firstUp = uf.find(index);
+        int firstDown = uf.find(index);
+        int firstLeft = uf.find(index);
+        int firstRight = uf.find(index);
+
+        if (ru[r][c] == 0) {
+            uf.unite(index, firstUp);
+            ru[r][c] = firstUp;
+        }
+        if (rd[r][c] == 0) {
+            uf.unite(index, firstDown);
+            rd[r][c] = firstDown;
+        }
+        if (ld[r][c] == 0) {
+            uf.unite(index, firstLeft);
+            ld[r][c] = firstLeft;
+        }
+        if (lu[r][c] == 0) {
+            uf.unite(index, firstRight);
+            lu[r][c] = firstRight;
+        }
+    }
+
+    int remainingWalls = 0;
+    for (int i = 1; i <= h; ++i) {
+        for (int j = 1; j <= w; ++j) {
+            remainingWalls += grid[i][j] ? 1 : 0;
+        }
+    }
+
+    cout << remainingWalls << endl;
+    return 0;
+}
+```

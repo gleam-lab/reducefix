@@ -1,0 +1,54 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(0); cin.tie(0); cout.tie(0);
+
+    int H, W, Y;
+    cin >> H >> W >> Y;
+
+    vector<vector<int>> A(H, vector<int>(W));
+    for(int i = 0; i < H; ++i)
+        for(int j = 0; j < W; ++j)
+            cin >> A[i][j];
+
+    auto is_valid = [&](int x, int y) {
+        return x >= 0 && x < H && y >= 0 && y < W;
+    };
+
+    auto bfs = [&](int h) {
+        queue<pair<int, int>> q;
+        vector<vector<bool>> visited(H, vector<bool>(W, false));
+        for(int i = 0; i < H; ++i) {
+            if(A[i][0] <= h) q.emplace(i, 0), visited[i][0] = true;
+            if(A[i][W-1] <= h) q.emplace(i, W-1), visited[i][W-1] = true;
+        }
+        for(int j = 0; j < W; ++j) {
+            if(A[0][j] <= h) q.emplace(0, j), visited[0][j] = true;
+            if(A[H-1][j] <= h) q.emplace(H-1, j), visited[H-1][j] = true;
+        }
+        while(!q.empty()) {
+            auto [x, y] = q.front(); q.pop();
+            for(auto& [dx, dy] : vector<pair<int, int>>{{0, 1}, {0, -1}, {1, 0}, {-1, 0}}) {
+                int nx = x + dx, ny = y + dy;
+                if(is_valid(nx, ny) && !visited[nx][ny] && A[nx][ny] <= h) {
+                    visited[nx][ny] = true;
+                    q.emplace(nx, ny);
+                }
+            }
+        }
+        int cnt = 0;
+        for(int i = 0; i < H; ++i)
+            for(int j = 0; j < W; ++j)
+                cnt += !visited[i][j];
+        return cnt;
+    };
+
+    for(int i = 0; i < Y; ++i) {
+        int h;
+        cin >> h;
+        cout << bfs(h) << '\n';
+    }
+
+    return 0;
+}

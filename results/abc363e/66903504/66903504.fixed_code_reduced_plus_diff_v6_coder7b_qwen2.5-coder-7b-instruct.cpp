@@ -1,0 +1,58 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+    
+    int H, W, Y;
+    cin >> H >> W >> Y;
+    vector<vector<int>> A(H, vector<int>(W));
+    for (int i = 0; i < H; ++i) {
+        for (int j = 0; j < W; ++j) {
+            cin >> A[i][j];
+        }
+    }
+    
+    // Priority queue to handle the sea level rise events
+    priority_queue<pair<int, pair<int, int>>, vector<pair<int, pair<int, int>>>, greater<pair<int, pair<int, int>>>> pq;
+    for (int i = 0; i < H; ++i) {
+        for (int j = 0; j < W; ++j) {
+            pq.push({A[i][j], {i, j}});
+        }
+    }
+    
+    vector<vector<bool>> visited(H, vector<bool>(W, false));
+    vector<pair<int, int>> directions{{0, 1}, {1, 0}, {-1, 0}, {0, -1}};
+    
+    for (int y = 1; y <= Y; ++y) {
+        // Process all cells that can be reached by the current sea level
+        while (!pq.empty() && pq.top().first <= y) {
+            auto [height, pos] = pq.top(); pq.pop();
+            if (visited[pos.first][pos.second]) continue;
+            visited[pos.first][pos.second] = true;
+            
+            // Sink the cell and its neighbors
+            for (auto &dir : directions) {
+                int ni = pos.first + dir.first, nj = pos.second + dir.second;
+                if (ni >= 0 && ni < H && nj >= 0 && nj < W && !visited[ni][nj] && A[ni][nj] <= y) {
+                    pq.push({A[ni][nj], {ni, nj}});
+                }
+            }
+        }
+        
+        // Count the remaining land area
+        int count = 0;
+        for (int i = 0; i < H; ++i) {
+            for (int j = 0; j < W; ++j) {
+                if (!visited[i][j]) {
+                    ++count;
+                }
+            }
+        }
+        
+        cout << count << '\n';
+    }
+    
+    return 0;
+}

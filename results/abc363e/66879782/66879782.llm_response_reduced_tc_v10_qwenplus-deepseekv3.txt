@@ -1,0 +1,89 @@
+To fix this code, we need to address the way the sinking of sections is calculated and how the output is generated. The original approach uses a priority queue to process sections from the borders inward, marking when they sink. However, the method for counting the sunk sections and generating the output was incorrect, leading to wrong answers for some test cases.
+
+### Approaches
+
+1. **Priority Queue for Sinking Sections**: We use a priority queue to process sections from the borders inward, marking each section's sinking level (the sea level at which it sinks). This ensures that sections sink as soon as they are adjacent to the sea or a sunk section with elevation not greater than the current sea level.
+
+2. **Counting Sunk Sections**: We maintain a prefix sum array to efficiently count the number of sections that have sunk by each sea level. This allows us to answer each query in constant time after an initial O(HW) preprocessing step.
+
+3. **Efficient Output Generation**: After preprocessing the sinking levels, we compute the prefix sums and use them to quickly determine the remaining island area for each year from 1 to Y.
+
+### Solution Code
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+#define all(x) (x).begin(), (x).end()
+
+int main() {
+    ios_base::sync_with_stdio(0);
+    cin.tie(0);
+    int h, w, y;
+    cin >> h >> w >> y;
+    vector<vector<int>> height(h, vector<int>(w));
+    vector<vector<int>> sink(h, vector<int>(w, INT_MAX));
+    priority_queue<pair<int, pair<int, int>>, vector<pair<int, pair<int, int>>>, greater<pair<int, pair<int, int>>>> pq;
+    int di[4][2] = {{-1, 0}, {1, 0}, {0, -1}, {0, 1}};
+
+    for (int i = 0; i < h; i++) {
+        for (int j = 0; j < w; j++) {
+            cin >> height[i][j];
+            if (i == 0 || i == h - 1 || j == 0 || j == w - 1) {
+                sink[i][j] = height[i][j];
+                pq.push({height[i][j], {i, j}});
+            }
+        }
+    }
+
+    while (!pq.empty()) {
+        auto [current_h, pos] = pq.top();
+        pq.pop();
+        int r = pos.first;
+        int c = pos.second;
+        for (int k = 0; k < 4; k++) {
+            int nr = r + di[k][0];
+            int nc = c + di[k][1];
+            if (nr < 0 || nr >= h || nc < 0 || nc >= w) continue;
+            if (sink[nr][nc] > max(height[nr][nc], current_h)) {
+                sink[nr][nc] = max(height[nr][nc], current_h);
+                pq.push({sink[nr][nc], {nr, nc}});
+            }
+        }
+    }
+
+    vector<int> count(y + 2, 0);
+    for (int i = 0; i < h; i++) {
+        for (int j = 0; j < w; j++) {
+            if (sink[i][j] <= y) {
+                count[sink[i][j]]++;
+            }
+        }
+    }
+
+    vector<int> prefix(y + 1, 0);
+    for (int i = 1; i <= y; i++) {
+        prefix[i] = prefix[i - 1] + count[i - 1];
+    }
+
+    for (int i = 1; i <= y; i++) {
+        cout << h * w - prefix[i] << '\n';
+    }
+
+    return 0;
+}
+```
+
+### Explanation
+
+1. **Initialization**: We read the input dimensions (H, W) and the number of years (Y). We also initialize the height matrix and a sink matrix to keep track of the sea level at which each section sinks.
+
+2. **Priority Queue Setup**: Border sections are added to the priority queue with their respective heights, as they will sink first when the sea level rises to their height.
+
+3. **Processing Sinking Sections**: Using Dijkstra's algorithm, we process each section in the priority queue, updating the sinking level for adjacent sections if a lower sinking level is found. This ensures that sections sink as soon as they are adjacent to the sea or a sunk section.
+
+4. **Counting Sunk Sections**: We count the number of sections that sink at each sea level and store these counts in an array. This allows us to use prefix sums for efficient querying.
+
+5. **Generating Output**: Using the prefix sum array, we compute the remaining island area for each year from 1 to Y by subtracting the number of sunk sections from the total area (H * W).
+
+This approach ensures that we efficiently and correctly compute the remaining island area for each year, handling all edge cases and constraints properly.

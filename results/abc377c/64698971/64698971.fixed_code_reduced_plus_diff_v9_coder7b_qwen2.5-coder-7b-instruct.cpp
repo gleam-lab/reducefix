@@ -1,0 +1,50 @@
+#include <iostream>
+#include <vector>
+#include <set>
+#include <algorithm>
+#include <utility>
+
+using namespace std;
+
+bool isValidMove(const pair<int, int>& pos, int N, const set<pair<int, int>>& occupied) {
+    return pos.first >= 0 && pos.first < N && pos.second >= 0 && pos.second < N && occupied.find(pos) == occupied.end();
+}
+
+int main() {
+    long long N, M;
+    cin >> N >> M;
+
+    set<pair<int, int>> occupied;
+    for(long long i = 0; i < M; ++i) {
+        long long x, y;
+        cin >> x >> y;
+        --x; --y; // Adjusting to zero-based index
+        occupied.insert({x, y});
+    }
+
+    long long total_empty_squares = N * N;
+    long long safe_squares = 0;
+
+    for(long long i = 0; i < N; ++i) {
+        for(long long j = 0; j < N; ++j) {
+            if(!occupied.count({i, j})) {
+                vector<pair<long long, long long>> moves = {{2, 1}, {1, 2}, {-1, 2}, {-2, 1}, {-2, -1}, {-1, -2}, {1, -2}, {2, -1}};
+                bool is_safe = true;
+                for(const auto& move : moves) {
+                    pair<long long, long long> next_pos = {i + move.first, j + move.second};
+                    if(isValidMove(next_pos, N, occupied)) {
+                        is_safe = false;
+                        break;
+                    }
+                }
+                if(is_safe) {
+                    ++safe_squares;
+                }
+            }
+        }
+    }
+
+    cout << total_empty_squares - safe_squares << endl;
+
+    return 0;
+}

@@ -1,0 +1,81 @@
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+#define all(x) (x).begin(), (x).end()
+
+int main() {
+    ios_base::sync_with_stdio(0);
+    cin.tie(0);
+    
+    int h, w, y;
+    cin >> h >> w >> y;
+    
+    int height[h][w];
+    for (int i = 0; i < h; ++i)
+        for (int j = 0; j < w; ++j)
+            cin >> height[i][j];
+    
+    // Priority queue to process cells in increasing order of elevation
+    priority_queue<pair<int, pair<int, int>>, vector<pair<int, pair<int, int>>>, greater<>> pq;
+    int dirs[4][2] = {{-1, 0}, {1, 0}, {0, -1}, {0, 1}};
+    
+    // Initialize: boundary cells are connected to the sea
+    bool visited[h][w];
+    memset(visited, false, sizeof(visited));
+    
+    // Prepare a grid to track when a cell sinks
+    int sink_year[h][w];
+    for (int i = 0; i < h; ++i)
+        for (int j = 0; j < w; ++j) {
+            if (i == 0 || i == h - 1 || j == 0 || j == w - 1) {
+                pq.push({height[i][j], {i, j}});
+                sink_year[i][j] = height[i][j];
+                visited[i][j] = true;
+            } else {
+                sink_year[i][j] = INT_MAX;
+            }
+        }
+
+    // Multi-source BFS using priority queue (Dijkstra-like algorithm)
+    while (!pq.empty()) {
+        auto [H, pos] = pq.top();
+        auto [r, c] = pos;
+        pq.pop();
+
+        for (auto &dir : dirs) {
+            int nr = r + dir[0];
+            int nc = c + dir[1];
+            if (nr < 0 || nr >= h || nc < 0 || nc >= w) continue;
+
+            // A new way to reach this cell with H being the "flood" level
+            if (!visited[nr][nc] && height[nr][nc] <= H) {
+                visited[nr][nc] = true;
+                sink_year[nr][nc] = H;
+                pq.push({H, {nr, nc}});
+            }
+        }
+    }
+
+    // Count how many cells sink at each year
+    vector<int> area_by_year(y + 2, 0);  // Using up to Y+1 for safety
+    for (int i = 0; i < h; ++i) {
+        for (int j = 0; j < w; ++j) {
+            int sink_time = sink_year[i][j];
+            if (sink_time <= y)
+                area_by_year[sink_time]++;
+        }
+    }
+
+    // Prefix sum: cumulative area sunk by year i
+    for (int i = 1; i <= y; ++i)
+        area_by_year[i] += area_by_year[i - 1];
+
+    // Total area above water at year i is total - sunk up to i
+    ll total_area = 1LL * h * w;
+    for (int i = 1; i <= y; ++i)
+        cout << total_area - area_by_year[i] << '\n';
+
+    return 0;
+}
+```

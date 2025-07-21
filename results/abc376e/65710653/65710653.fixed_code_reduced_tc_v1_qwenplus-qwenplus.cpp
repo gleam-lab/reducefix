@@ -1,0 +1,78 @@
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+using pll = pair<ll, ll>;
+
+#define rep(i, a, b) for(ll i = (a); i < (b); ++i)
+#define per(i, a, b) for(ll i = (b)-1; i >= (a); --i)
+#define min(a, b) ((a) < (b) ? (a) : (b))
+
+void solve() {
+    ll N, K;
+    cin >> N >> K;
+    vector<pll> items(N);
+    for (ll i = 0; i < N; ++i) cin >> items[i].first;
+    for (ll i = 0; i < N; ++i) cin >> items[i].second;
+
+    // Sort by A_i ascending
+    sort(items.begin(), items.end());
+
+    // Min-heap to maintain the K smallest B values among the largest A's so far
+    multiset<ll, greater<ll>> top_k_b;  // Sorted descending for easy removal of max
+    multiset<ll> remaining_b;          // Store the rest for potential inclusion
+
+    ll sum = 0;
+
+    // Initialize with last K elements (those with largest A values)
+    for (ll i = N - K; i < N; ++i) {
+        top_k_b.insert(items[i].second);
+        sum += items[i].second;
+    }
+
+    // The minimum value considering these K items
+    ll result = sum * items[N - K].first;
+
+    // Now slide window to the left
+    for (ll i = N - K - 1; i >= 0; --i) {
+        // Current item might be better than the worst in the top K (which has max A)
+        // Worst in current top K is the one with biggest B (because we want to minimize sum*B)
+        ll current_b = items[i].second;
+
+        if (top_k_b.empty() || current_b < *top_k_b.begin()) {
+            // This B is better than worst in top K
+            remaining_b.insert(current_b);
+        } else {
+            remaining_b.insert(current_b);
+        }
+
+        // Maintain size of top K set
+        while (top_k_b.size() < K) {
+            // Take best from remaining (smallest B)
+            ll best = *remaining_b.begin();
+            sum += best;
+            top_k_b.insert(best);
+            remaining_b.erase(remaining_b.begin());
+        }
+
+        // If top_k_b has more than K elements, remove the largest B (worst contributor)
+        while (top_k_b.size() > K) {
+            ll worst = *top_k_b.begin();
+            sum -= worst;
+            top_k_b.erase(top_k_b.find(worst));
+            remaining_b.insert(worst);
+        }
+
+        // Now compute candidate answer
+        result = min(result, sum * items[i].first);
+    }
+
+    cout << result << "\n";
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    ll T;
+    cin >> T;
+    while (T--) solve();
+}

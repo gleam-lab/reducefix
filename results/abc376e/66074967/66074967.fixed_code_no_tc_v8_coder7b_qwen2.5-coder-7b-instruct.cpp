@@ -1,0 +1,44 @@
+#include<iostream>
+#include<vector>
+#include<algorithm>
+using namespace std;
+
+const int INF = 1e9;
+
+int main() {
+    ios_base::sync_with_stdio(false); cin.tie(0); cout.tie(0);
+
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, k;
+        cin >> n >> k;
+
+        vector<pair<int, int>> A(n), B(n);
+        for(int i = 0; i < n; ++i) {
+            cin >> A[i].first;
+            A[i].second = i + 1;
+        }
+        for(int i = 0; i < n; ++i) {
+            cin >> B[i].first;
+            B[i].second = i + 1;
+        }
+
+        sort(A.begin(), A.end());
+        sort(B.begin(), B.end());
+
+        int ans = INF;
+        for(int i = 0; i <= n - k; ++i) {
+            int max_A = A[i + k - 1].first;
+            int sum_B = 0;
+            for(int j = 0; j < k; ++j) {
+                sum_B += B[A[i + j].second - 1].first;
+            }
+            ans = min(ans, max_A * sum_B);
+        }
+
+        cout << ans << '\n';
+    }
+
+    return 0;
+}

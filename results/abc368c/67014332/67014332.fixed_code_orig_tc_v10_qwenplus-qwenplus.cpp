@@ -1,0 +1,52 @@
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    ll n;
+    cin >> n;
+    vector<ll> H(n);
+    for (ll i = 0; i < n; ++i) {
+        cin >> H[i];
+    }
+
+    // We simulate the process, but in reverse to optimize
+    // For each enemy, we compute how many attacks it needs
+    // Then we determine when those attacks would occur considering every 3rd attack is a triple damage
+
+    ll time = 0;
+
+    for (ll h : H) {
+        // Binary search to find minimum number of hits required
+        ll low = 0, high = 2e18;
+        ll ans = 0;
+
+        while (low <= high) {
+            ll mid = (low + high) / 2;
+            // total triple attacks: floor(mid / 3)
+            // total single attacks: mid - floor(mid / 3)
+            // total damage = 3 * triple_attacks + 1 * single_attacks
+            ll triple = mid / 3;
+            ll single = mid - triple;
+            ll damage = 3 * triple + 1 * single;
+
+            if (damage >= h) {
+                ans = mid;
+                high = mid - 1;
+            } else {
+                low = mid + 1;
+            }
+        }
+
+        // The earliest time this enemy can be finished is 'ans' attacks
+        // But we must ensure that these attacks are scheduled after previous enemies
+        // Each attack happens only on frontmost alive enemy
+        // So we accumulate time and take max(ans, time) because earlier enemies block attacks
+        time = max(time, ans) + 1;
+    }
+
+    cout << time - 1 << '\n';
+}

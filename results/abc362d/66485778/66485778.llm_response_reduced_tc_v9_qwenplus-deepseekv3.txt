@@ -1,0 +1,76 @@
+To fix this code, we need to address the issue with the incorrect output for the failing test case. The problem involves finding the minimum path weight from vertex 1 to all other vertices in a graph where the path weight is the sum of vertex weights and edge weights along the path. The original code uses Dijkstra's algorithm with a priority queue but fails to handle the initialization of the distance array correctly, especially for the case where there are no edges (M=0).
+
+### Approaches
+1. **Problem Analysis**: The problem requires finding the shortest path from vertex 1 to all other vertices in a weighted graph where both vertices and edges contribute to the path weight. The graph is connected, ensuring paths exist between all vertices.
+2. **Algorithm Selection**: Dijkstra's algorithm is suitable here because it efficiently finds the shortest path in graphs with non-negative weights. The path weight is the sum of vertex weights (A_i) and edge weights (B_j) along the path.
+3. **Initialization**: The distance from vertex 1 to itself should be initialized to the weight of vertex 1 (A_1). For other vertices, the initial distance should be infinity or a very large number.
+4. **Edge Handling**: For each edge, the weight of the path through that edge should include the vertex weights of both endpoints and the edge weight. This requires updating the adjacency list to reflect the total weight contribution when moving from one vertex to another.
+
+### Solution Code
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+#define int long long
+
+struct Node {
+    int x;
+    int64_t w;
+    bool operator < (const Node& other) const {
+        return w > other.w;
+    }
+};
+
+void solve() {
+    int n, m;
+    cin >> n >> m;
+    vector<int64_t> a(n + 1);
+    for (int i = 1; i <= n; ++i) {
+        cin >> a[i];
+    }
+    vector<vector<pair<int, int64_t>>> g(n + 1);
+    for (int i = 0; i < m; ++i) {
+        int u, v;
+        int64_t b;
+        cin >> u >> v >> b;
+        g[u].emplace_back(v, b + a[v]);
+        g[v].emplace_back(u, b + a[u]);
+    }
+    vector<int64_t> d(n + 1, LLONG_MAX);
+    vector<bool> vis(n + 1, false);
+    priority_queue<Node> pq;
+    d[1] = a[1];
+    pq.push({1, d[1]});
+    while (!pq.empty()) {
+        Node node = pq.top();
+        pq.pop();
+        int x = node.x;
+        if (vis[x]) continue;
+        vis[x] = true;
+        for (const auto& [y, cost] : g[x]) {
+            if (d[x] + cost < d[y]) {
+                d[y] = d[x] + cost;
+                pq.push({y, d[y]});
+            }
+        }
+    }
+    for (int i = 2; i <= n; ++i) {
+        cout << d[i] << (i == n ? '\n' : ' ');
+    }
+}
+
+signed main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    solve();
+    return 0;
+}
+```
+
+### Explanation
+1. **Initialization**: The distance array `d` is initialized to `LLONG_MAX` (a very large number representing infinity), except for vertex 1, which is set to `a[1]` (its own weight).
+2. **Priority Queue**: A priority queue is used to implement Dijkstra's algorithm, always expanding the vertex with the current minimum path weight.
+3. **Graph Construction**: The adjacency list `g` is constructed such that each edge from `u` to `v` has a weight of `b + a[v]`, where `b` is the edge weight and `a[v]` is the vertex weight of `v`. This ensures that moving to vertex `v` includes its weight in the path cost.
+4. **Relaxation**: For each vertex `x` extracted from the priority queue, the algorithm relaxes all adjacent edges. If a shorter path to a neighboring vertex `y` is found, the distance is updated and `y` is added to the priority queue.
+5. **Output**: After processing all vertices, the distances from vertex 1 to all other vertices are printed. The output format ensures that spaces separate the distances, with a newline at the end.
+
+This approach efficiently computes the shortest paths in the graph while correctly handling the combined weights of vertices and edges, ensuring optimal performance even for large inputs.

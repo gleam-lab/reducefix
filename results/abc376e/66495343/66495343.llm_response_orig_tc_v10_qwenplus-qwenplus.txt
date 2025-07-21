@@ -1,0 +1,99 @@
+To solve this problem efficiently, we must compute the minimum value of the expression:
+
+$$
+\left(\max_{i \in S} A_i\right) \times \left(\sum_{i \in S} B_i\right)
+$$
+
+for all subsets $ S $ of size $ K $ from a given list of pairs $(A_i, B_i)$.
+
+### Key Observations:
+1. We are allowed to choose any subset of size $ K $ from the given elements.
+2. The cost function depends on two factors:
+   - The **maximum** of selected $ A_i $ values.
+   - The **sum** of selected $ B_i $ values.
+3. Sorting by $ A_i $ allows us to consider the largest $ A_i $ at each step and combine it with the best possible sum of $ B_i $ values.
+
+### Efficient Strategy:
+- Sort all pairs by $ A_i $ in increasing order.
+- Use a min-heap (priority queue) to maintain the smallest $ K $ values of $ B_i $ up to the current $ A_i $. This ensures:
+  - We always keep the $ K $ smallest $ B_i $'s among the lower $ A_i $'s to combine with the current $ A_i $.
+  - As we iterate, we can update the total $ B $-sum dynamically and ensure the max $ A $ is fixed as we're processing sorted data.
+- At each step, calculate the product `current_A * current_sum_of_B`, and track the minimum across all such combinations.
+
+This approach ensures an overall time complexity of $ O(N \log N) $ per test case due to sorting and heap operations, which fits within the constraints.
+
+Here's the corrected and optimized C++ code:
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+#define int long long
+#define PII pair<int, int>
+#define fi first
+#define se second
+
+const int INF = 1e18;
+
+int T;
+
+signed main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+
+    cin >> T;
+
+    while (T--) {
+        int N, K;
+        cin >> N >> K;
+
+        vector<PII> pairs(N);
+        for (int i = 0; i < N; ++i) {
+            cin >> pairs[i].fi;
+        }
+        for (int i = 0; i < N; ++i) {
+            cin >> pairs[i].se;
+        }
+
+        // Sort by A_i in ascending order
+        sort(pairs.begin(), pairs.end());
+
+        priority_queue<int> min_heap; // use a min-heap to store B_i values
+        int sum_b = 0;
+        int result = INF;
+
+        for (int i = 0; i < N; ++i) {
+            int a = pairs[i].fi;
+            int b = pairs[i].se;
+
+            if (min_heap.size() < K) {
+                sum_b += b;
+                min_heap.push(-b); // Use max-heap as min-heap by negating values
+            } else {
+                // Maintain only the smallest K B values
+                if (!min_heap.empty() && b < -min_heap.top()) {
+                    sum_b += b + min_heap.top();
+                    min_heap.pop();
+                    min_heap.push(-b);
+                }
+            }
+
+            if (min_heap.size() == K) {
+                result = min(result, a * sum_b);
+            }
+        }
+
+        cout << result << '\n';
+    }
+
+    return 0;
+}
+```
+
+### Explanation:
+- **Sorting**: Ensures that when we process an element, all previously considered elements have smaller or equal `A_i`.
+- **Heap**: Maintains the smallest `K` `B_i` values to combine with current `A_i`. Using a max-heap with negated values simulates a min-heap.
+- **Sum Tracking**: Dynamically updates the sum of selected `B_i` values to avoid recomputation.
+- **Result Update**: Only when we have exactly `K` items in the heap do we compute the product and update the answer.
+
+This solution is both correct and efficient for large inputs, satisfying all constraints and edge cases.

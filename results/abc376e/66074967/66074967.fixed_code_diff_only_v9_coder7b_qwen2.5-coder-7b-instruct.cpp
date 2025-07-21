@@ -1,0 +1,47 @@
+#include<iostream>
+#include<algorithm>
+using namespace std;
+
+typedef pair<long long, long long> pll;
+
+long long solve(long long n, long long k, vector<long long>& a, vector<long long>& b) {
+    // Sort indices based on A values in descending order
+    vector<pair<long long, long long>> idx(n);
+    for (long long i = 0; i < n; ++i) {
+        idx[i] = {a[i], i};
+    }
+    sort(idx.begin(), idx.end(), greater<pll>());
+
+    // Select the top K elements from B corresponding to the sorted A indices
+    long long max_a = idx[k - 1].first;
+    long long sum_b = 0;
+    for (long long i = 0; i < k; ++i) {
+        sum_b += b[idx[i].second];
+    }
+
+    return max_a * sum_b;
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(0);
+
+    long long t;
+    cin >> t;
+    while (t--) {
+        long long n, k;
+        cin >> n >> k;
+        vector<long long> a(n), b(n);
+        for (long long i = 0; i < n; ++i) {
+            cin >> a[i];
+        }
+        for (long long i = 0; i < n; ++i) {
+            cin >> b[i];
+        }
+
+        long long result = solve(n, k, a, b);
+        cout << result << '\n';
+    }
+
+    return 0;
+}

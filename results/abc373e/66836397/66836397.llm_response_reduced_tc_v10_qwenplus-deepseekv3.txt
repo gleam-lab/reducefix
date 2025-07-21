@@ -1,0 +1,91 @@
+To fix this code, we need to ensure that for each candidate, we correctly determine the minimum number of additional votes they need to guarantee their election, considering all possible distributions of the remaining votes among other candidates. The problem involves finding for each candidate the smallest X such that, after adding X votes to candidate i, no more than M-1 candidates have strictly more votes than candidate i, regardless of how the remaining votes are distributed.
+
+### Approaches
+1. **Sorting and Binary Search**: For each candidate, we can use binary search to determine the minimum X. The binary search will check if a particular X is sufficient to ensure the candidate's election.
+2. **Upper Bound and Calculations**: For a given X, we first determine how many candidates currently have more votes than candidate i after adding X votes. Then, we check if the remaining votes can be distributed in such a way that no more than M-1 candidates end up with more votes than candidate i.
+3. **Efficient Calculation with Prefix Sums**: We use prefix sums to efficiently calculate the total votes needed for other candidates to stay below or equal to candidate i's votes after adding X.
+
+### Solution Code
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    ll N, M, K;
+    cin >> N >> M >> K;
+    vector<ll> A(N);
+    ll sum = 0;
+    for (ll &a : A) {
+        cin >> a;
+        sum += a;
+    }
+    ll rem = K - sum;
+
+    vector<ll> B = A;
+    sort(B.begin(), B.end());
+    vector<ll> prefix(N + 1, 0);
+    for (int i = 0; i < N; ++i) {
+        prefix[i + 1] = prefix[i] + B[i];
+    }
+
+    for (int i = 0; i < N; ++i) {
+        ll a_i = A[i];
+        ll left = 0, right = rem;
+        ll res = -1;
+
+        while (left <= right) {
+            ll mid = (left + right) / 2;
+            ll new_a_i = a_i + mid;
+
+            ll pos = upper_bound(B.begin(), B.end(), new_a_i) - B.begin();
+            ll upper_cnt = N - pos;
+
+            if (upper_cnt < M) {
+                res = mid;
+                right = mid - 1;
+            } else {
+                left = mid + 1;
+            }
+        }
+
+        if (res != -1) {
+            ll new_a_i = a_i + res;
+            ll pos = upper_bound(B.begin(), B.end(), new_a_i) - B.begin();
+            ll upper_cnt = N - pos;
+
+            if (upper_cnt >= M) {
+                res = -1;
+            } else {
+                ll needed = 0;
+                if (pos > N - M) {
+                    ll start = N - M;
+                    ll can_use = max(0LL, new_a_i - B[start] + 1);
+                    needed = can_use * (pos - start) - (prefix[pos] - prefix[start] - (upper_cnt ? a_i : 0));
+                }
+                if (needed <= rem - res) {
+                    res = res;
+                } else {
+                    res = -1;
+                }
+            }
+        }
+
+        cout << res << " \n"[i == N - 1];
+    }
+
+    return 0;
+}
+```
+
+### Explanation
+1. **Input Handling**: The code reads the number of candidates (N), the threshold (M), total votes (K), and the current votes for each candidate (A).
+2. **Sorting and Prefix Sum**: The candidates' votes are sorted to facilitate binary search and prefix sums are computed for efficient range sum queries.
+3. **Binary Search for Each Candidate**: For each candidate, the code performs a binary search to determine the minimum X (additional votes) needed. The search checks if adding X votes to the candidate ensures that no more than M-1 candidates have more votes.
+4. **Validation**: After determining a potential X, the code validates whether the remaining votes can be distributed such that the candidate's condition holds. This involves checking if the votes needed to keep other candidates below the threshold are feasible with the remaining votes.
+5. **Output**: The results for each candidate are printed, with -1 indicating it's impossible to guarantee their election.
+
+This approach efficiently checks each candidate's condition using binary search and prefix sums, ensuring optimal performance even for large input sizes.

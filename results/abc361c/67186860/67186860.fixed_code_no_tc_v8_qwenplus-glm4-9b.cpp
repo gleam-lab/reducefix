@@ -1,0 +1,32 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    int n, k;
+    cin >> n >> k;
+    vector<int> A(n);
+    for (int i = 0; i < n; i++) {
+        cin >> A[i];
+    }
+    
+    // Sort the array to easily find the minimum and maximum values
+    sort(A.begin(), A.end());
+    
+    // If removing k elements from the start or end of the sorted array
+    // will not affect the min and max values, then k should be even
+    // or exactly half of n (which is not the case here since k < n).
+    // This condition is not necessary since we're always removing k elements,
+    // but it's good to understand the reasoning behind it.
+
+    // Calculate the answer by considering the effect of removing k elements
+    // on the minimum and maximum of the remaining elements.
+    int ans = INT_MAX;
+    for (int i = 0; i <= n - k; i++) {
+        int max_val = *max_element(A.begin() + i, A.begin() + i + k);
+        int min_val = *min_element(A.begin() + i, A.begin() + i + k);
+        ans = min(ans, max_val - min_val);
+    }
+    
+    cout << ans << endl;
+    return 0;
+}

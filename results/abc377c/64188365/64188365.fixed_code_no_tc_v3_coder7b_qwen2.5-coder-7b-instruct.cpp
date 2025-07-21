@@ -1,0 +1,50 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define rep(i,n) for(int i = 0; i < (n); ++i)
+using ll = long long;
+
+int main() {
+    long long n, m, a, b;
+    cin >> n >> m;
+    int ans = 0;
+    set<pair<long long, long long>> c;
+    rep(i, m) {
+        cin >> a >> b;
+        a--, b--;
+        c.emplace(a, b);
+        // Check all possible positions the piece can capture
+        if (a + 2 < n) {
+            if (b + 1 < n && !c.count({a + 2, b + 1})) {
+                ans++;
+            }
+            if (b - 1 >= 0 && !c.count({a + 2, b - 1})) {
+                ans++;
+            }
+        }
+        if (a + 1 < n) {
+            if (b + 2 < n && !c.count({a + 1, b + 2})) {
+                ans++;
+            }
+            if (b - 2 >= 0 && !c.count({a + 1, b - 2})) {
+                ans++;
+            }
+        }
+        if (a - 2 >= 0) {
+            if (b + 1 < n && !c.count({a - 2, b + 1})) {
+                ans++;
+            }
+            if (b - 1 >= 0 && !c.count({a - 2, b - 1})) {
+                ans++;
+            }
+        }
+        if (a - 1 >= 0) {
+            if (b + 2 < n && !c.count({a - 1, b + 2})) {
+                ans++;
+            }
+            if (b - 2 >= 0 && !c.count({a - 1, b - 2})) {
+                ans++;
+            }
+        }
+    }
+    cout << n * n - ans << endl;
+}

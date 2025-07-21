@@ -1,0 +1,45 @@
+#include<bits/stdc++.h>
+using namespace std;
+
+void solve()
+{
+	int q;
+	cin >> q;
+	unordered_set<int> st; // Using unordered_set for O(1) average time complexity for insert and erase operations
+	for (int i = 0; i < q; i++)
+	{
+		int a;
+		cin >> a;
+		if (a == 1)
+		{
+			int x;
+			cin >> x;
+			st.insert(x); // Inserting element into the set
+		}
+		else if (a == 2)
+		{
+			int y;
+			cin >> y;
+			st.erase(y); // Erasing element from the set
+		}
+		else if (a == 3)
+		{
+			cout << st.size() << endl; // Printing the size of the set which represents the number of unique elements
+		}
+	}
+}
+
+int main()
+{
+#ifndef ONLINE_JUDGE
+	freopen("input.txt", "r", stdin);
+	freopen("output.txt", "w", stdout);
+#endif
+
+	int t = 1;
+	// cin >> t;
+	while (t--)
+	{
+		solve();
+	}
+}

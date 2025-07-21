@@ -1,0 +1,89 @@
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+#define rep(i, n) for (int i = 0; i < (n); i++)
+using P = pair<int, int>;
+using T = tuple<int, int, int>;
+
+struct Union_Find {
+    vector<int> sz, par;
+    vector<vector<int>> top_k;
+
+    Union_Find(int n) {
+        sz.resize(n, 1);
+        par.resize(n, -1);
+        top_k.resize(n);
+        for (int i = 0; i < n; ++i)
+            top_k[i].push_back(i);
+    }
+
+    int root(int v) {
+        if (par[v] == -1) return v;
+        else return par[v] = root(par[v]);
+    }
+
+    bool issame(int x, int y) {
+        return root(x) == root(y);
+    }
+
+    void merge(int x, int y) {
+        x = root(x), y = root(y);
+        if (x == y) return;
+        // Always merge smaller into larger
+        if (sz[x] < sz[y]) swap(x, y);
+        sz[x] += sz[y];
+        sz[y] = 0;
+
+        // Merge the top_k lists and keep top 10 largest elements
+        vector<int>& large = top_k[x];
+        const vector<int>& small = top_k[y];
+
+        // Merge two sorted arrays (descending order)
+        vector<int> merged;
+        int i = 0, j = 0;
+        while (i < large.size() && j < small.size() && merged.size() < 10) {
+            if (large[i] > small[j])
+                merged.push_back(large[i++]);
+            else
+                merged.push_back(small[j++]);
+        }
+        while (i < large.size() && merged.size() < 10)
+            merged.push_back(large[i++]);
+        while (j < small.size() && merged.size() < 10)
+            merged.push_back(small[j++]);
+
+        large = merged;
+        par[y] = x;
+    }
+};
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+
+    int n, q;
+    cin >> n >> q;
+    Union_Find uf(n);
+
+    while (q--) {
+        int ty, a, b;
+        cin >> ty >> a >> b;
+        a--;  // Convert to 0-based index
+
+        if (ty == 1) {
+            b--;  // Convert to 0-based index
+            uf.merge(a, b);
+        } else {  // Type 2 query
+            int k = b;
+            int r = uf.root(a);
+            const auto& conn = uf.top_k[r];
+            if (k > (int)conn.size()) {
+                cout << -1 << "\n";
+            } else {
+                cout << conn[k - 1] + 1 << "\n";  // Convert back to 1-based output
+            }
+        }
+    }
+
+    return 0;
+}

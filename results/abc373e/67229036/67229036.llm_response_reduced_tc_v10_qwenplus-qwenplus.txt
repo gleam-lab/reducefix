@@ -1,0 +1,92 @@
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+#define int long long
+
+const int N = 2 * 100000 + 5;
+
+int n, m, k;
+int a[N];
+int sorted_votes[N];
+int prefix_sum[N];
+
+// Function to compute the minimum additional votes needed for candidate with current_votes to guarantee win
+int compute_min_additional_votes(int current_votes) {
+    int l = 0, r = k + 1;
+    
+    while (l < r) {
+        int mid = (l + r) / 2;
+        int total = current_votes + mid;
+        
+        // Binary search to find how many candidates have votes >= total
+        int low = 1, high = n;
+        while (low <= high) {
+            int mid_idx = (low + high) / 2;
+            if (sorted_votes[mid_idx] < total)
+                low = mid_idx + 1;
+            else
+                high = mid_idx - 1;
+        }
+        
+        int idx = low; // First index where sorted_votes >= total
+        int num_above = n - idx + 1;
+
+        // Need at most M-1 candidates above us
+        int max_can_afford = min(n, idx - 1);
+        int extra_needed = 0;
+
+        if (max_can_afford >= m) {
+            // We need to raise the bottom M candidates (excluding ourselves) to at least total
+            int pos = max(1LL, idx - m + 1);
+            extra_needed = (total - sorted_votes[pos]) * (m - 1) + (total - current_votes);
+        } else {
+            extra_needed = (total - current_votes) + (prefix_sum[idx - 1] - prefix_sum[idx - 1 - max_can_afford]);
+        }
+
+        if (extra_needed > k) {
+            l = mid + 1;
+        } else {
+            r = mid;
+        }
+    }
+
+    if (l > k)
+        return -1;
+    return l;
+}
+
+signed main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    cout.tie(nullptr);
+
+    cin >> n >> m >> k;
+    for (int i = 1; i <= n; ++i) {
+        cin >> a[i];
+    }
+
+    // Sort votes to use in binary search
+    for (int i = 1; i <= n; ++i) {
+        sorted_votes[i] = a[i];
+    }
+    sort(sorted_votes + 1, sorted_votes + n + 1);
+
+    // Precompute prefix sums of sorted votes
+    for (int i = 1; i <= n; ++i) {
+        prefix_sum[i] = prefix_sum[i - 1] + sorted_votes[i];
+    }
+
+    // For each candidate, compute required additional votes
+    for (int i = 1; i <= n; ++i) {
+        int res = compute_min_additional_votes(a[i]);
+        if (res == 0 && a[i] == 0) {
+            // Special case: if a[i] is zero and it's not possible to get enough votes
+            cout << "-1 ";
+        } else {
+            cout << res << " ";
+        }
+    }
+
+    return 0;
+}
+```

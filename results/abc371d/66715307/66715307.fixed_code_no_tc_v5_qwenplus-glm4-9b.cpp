@@ -1,0 +1,52 @@
+#include <iostream>
+#include <vector>
+using namespace std;
+int n;
+vector<int> x, p, prefix_sum;
+
+int main() {
+    cin >> n;
+    x.resize(n + 1);
+    p.resize(n + 1);
+    prefix_sum.resize(n + 1);
+
+    for (int i = 1; i <= n; i++) {
+        cin >> x[i];
+    }
+
+    for (int i = 1; i <= n; i++) {
+        cin >> p[i];
+        prefix_sum[i] = prefix_sum[i - 1] + p[i];
+    }
+
+    int q;
+    cin >> q;
+    for (int i = 1; i <= q; i++) {
+        int l, r;
+        cin >> l >> r;
+        int low = 1, high = n;
+        while (low < high) {
+            int mid = low + (high - low) / 2;
+            if (x[mid] >= l) {
+                high = mid;
+            } else {
+                low = mid + 1;
+            }
+        }
+        int l1 = low;
+
+        low = 1, high = n;
+        while (low < high) {
+            int mid = low + (high - low) / 2;
+            if (x[mid] <= r) {
+                low = mid + 1;
+            } else {
+                high = mid;
+            }
+        }
+        int r1 = low - 1;
+
+        cout << prefix_sum[r1] - prefix_sum[l1 - 1] << endl;
+    }
+    return 0;
+}

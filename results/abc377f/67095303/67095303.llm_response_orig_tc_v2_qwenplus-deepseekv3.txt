@@ -1,0 +1,110 @@
+To fix this code, we need to ensure that all the squares where the new piece can be placed without being captured by any existing pieces are correctly counted. The previous approach had some issues in accurately calculating the intersections between different attack paths (rows, columns, and diagonals). 
+
+### Approaches
+1. **Identify Attack Paths**: The existing pieces can attack along their rows, columns, and both diagonals (i+j and i-j).
+2. **Union of Attack Paths**: Calculate the total number of squares under attack by considering all rows, columns, and diagonals covered by the existing pieces. The union of these attack paths gives the total number of unsafe squares.
+3. **Calculate Safe Squares**: Subtract the unsafe squares from the total number of squares (N^2) to get the number of safe squares. However, since some squares are counted multiple times (e.g., a square might be in the row and column of different pieces), we need to use inclusion-exclusion principle to avoid overcounting.
+
+### Solution Code
+```cpp
+#include<bits/stdc++.h>
+#define int long long
+using namespace std;
+
+void solve() {
+    int N, M;
+    cin >> N >> M;
+    set<int> rows, cols, diag1, diag2;
+    for (int i = 0; i < M; ++i) {
+        int a, b;
+        cin >> a >> b;
+        rows.insert(a);
+        cols.insert(b);
+        diag1.insert(a + b);
+        diag2.insert(a - b);
+    }
+
+    int unsafe = 0;
+
+    // Rows and columns
+    unsafe += rows.size() * N;
+    unsafe += cols.size() * N;
+    unsafe -= rows.size() * cols.size(); // subtract intersections counted twice
+
+    // Diagonals (i+j)
+    for (auto d : diag1) {
+        // The number of (i,j) with i+j = d is min(d-1, N) - max(1, d-N) + 1
+        int low = max(1LL, d - N);
+        int high = min(N, d - 1);
+        if (low > high) continue;
+        unsafe += (high - low + 1);
+    }
+
+    // Diagonals (i-j)
+    for (auto d : diag2) {
+        // The number of (i,j) with i-j = d is min(N, N - d) - max(1, 1 - d) + 1
+        int low = max(1LL, 1 - d);
+        int high = min(N, N - d);
+        if (low > high) continue;
+        unsafe += (high - low + 1);
+    }
+
+    // Subtract intersections between rows/columns and diagonals that were counted twice
+    for (auto r : rows) {
+        for (auto d1 : diag1) {
+            int c = d1 - r;
+            if (cols.count(c)) {
+                unsafe--;
+            }
+        }
+        for (auto d2 : diag2) {
+            int c = r - d2;
+            if (cols.count(c)) {
+                unsafe--;
+            }
+        }
+    }
+
+    for (auto c : cols) {
+        for (auto d1 : diag1) {
+            int r = d1 - c;
+            if (rows.count(r)) {
+                unsafe--;
+            }
+        }
+        for (auto d2 : diag2) {
+            int r = c + d2;
+            if (rows.count(r)) {
+                unsafe--;
+            }
+        }
+    }
+
+    // Add back triple intersections (if any square is in row, column, and both diagonals)
+    // These are squares that are exactly the positions of existing pieces
+    // Since each existing piece is counted in all four sets, they were subtracted three times too many (once for each pair)
+    // So we need to add back M (since each existing piece was subtracted three times, but should only be subtracted once)
+    unsafe -= M;
+
+    // The safe squares are total squares minus unsafe squares, but also need to subtract the existing pieces (since they are not empty)
+    int total = N * N - M;
+    int safe = total - unsafe;
+    cout << safe << endl;
+}
+
+signed main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+    solve();
+    return 0;
+}
+```
+
+### Explanation
+1. **Input Handling**: The code reads the grid size `N` and the number of existing pieces `M`, followed by their positions.
+2. **Tracking Attack Paths**: The existing pieces' positions are stored in sets for rows, columns, and both diagonals (i+j and i-j).
+3. **Calculating Unsafe Squares**: The unsafe squares are those under attack by any existing piece. This includes squares in the same row, column, or either diagonal of any existing piece.
+4. **Inclusion-Exclusion Principle**: To avoid overcounting squares that are in multiple attack paths (e.g., same row and column of different pieces), the code adjusts the count by subtracting intersections and adding back overlaps.
+5. **Final Safe Squares Calculation**: The total number of safe squares is derived by subtracting the unsafe squares and the existing pieces from the total squares (N^2).
+
+This approach ensures that all possible attack paths are considered, and intersections are correctly handled to provide an accurate count of safe squares.

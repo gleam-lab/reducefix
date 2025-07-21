@@ -1,0 +1,112 @@
+To fix this code, we need to ensure that the algorithm correctly computes the k-th closest point from points A to each query point B. The original code attempted to use a binary search approach with a frequency array, but it was incorrect and inefficient for large inputs. 
+
+### Approaches
+1. **Sorting and Binary Search**: 
+   - First, sort the array of points A to facilitate efficient binary search operations.
+   - For each query point B_j, the distances to all points A_i can be computed dynamically. Since the array A is sorted, we can use binary search to find the range of points around B_j that are the closest.
+   - The k-th closest distance can then be found by considering the distances from B_j to the points in A in the vicinity of B_j, sorted by their absolute differences.
+
+2. **Efficient Distance Calculation**:
+   - For each query point B_j, compute the absolute differences between B_j and all points A_i. However, since N can be up to 10^5 and Q up to 10^5, a brute-force approach would be O(NQ), which is too slow.
+   - Instead, leverage the sorted array A to find the k-th closest point using binary search. Specifically:
+     - Use the sorted array to find the lower and upper bounds around B_j such that the k-th smallest distance falls within this range.
+     - Collect the distances within this range, sort them, and pick the k-th smallest.
+
+### Solution Code
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+typedef long long ll;
+
+int main() {
+    ios::sync_with_stdio(0);
+    cin.tie(0);
+    
+    int N, Q;
+    cin >> N >> Q;
+    vector<ll> A(N);
+    for (int i = 0; i < N; ++i) {
+        cin >> A[i];
+    }
+    sort(A.begin(), A.end());
+    
+    while (Q--) {
+        ll b;
+        int k;
+        cin >> b >> k;
+        vector<ll> distances;
+        int idx = lower_bound(A.begin(), A.end(), b) - A.begin();
+        
+        int left = max(0, idx - 100000);
+        int right = min(N, idx + 100000);
+        for (int i = left; i < right; ++i) {
+            distances.push_back(abs(A[i] - b));
+        }
+        sort(distances.begin(), distances.end());
+        cout << distances[k - 1] << '\n';
+    }
+    
+    return 0;
+}
+```
+
+Wait, but this is still O(N log N) per query, which is not efficient enough for N=1e5 and Q=1e5. So, we need a better approach.
+
+Plan B: For each query, we can binary search the answer. The idea is to find the smallest distance d such that there are at least k points in A with distance <= d to B_j. 
+
+Here's how it works:
+
+1. Binary search the candidate distance d.
+2. For each mid value d during the binary search, count how many points in A have |A_i - B_j| <= d. This can be done using upper_bound and lower_bound on the sorted array A.
+3. Adjust the binary search range based on whether the count is >= k (then we try smaller d) or < k (then we try larger d).
+4. The smallest d for which the count >= k is the answer.
+
+This approach is O(log(max distance) * log N) per query, which is efficient enough.
+
+Here's the corrected code:
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+typedef long long ll;
+
+int main() {
+    ios::sync_with_stdio(0);
+    cin.tie(0);
+    
+    int N, Q;
+    cin >> N >> Q;
+    vector<ll> A(N);
+    for (int i = 0; i < N; ++i) {
+        cin >> A[i];
+    }
+    sort(A.begin(), A.end());
+    
+    while (Q--) {
+        ll b;
+        int k;
+        cin >> b >> k;
+        ll low = 0, high = 2e18;
+        ll answer = 0;
+        while (low <= high) {
+            ll mid = low + (high - low) / 2;
+            auto it_low = lower_bound(A.begin(), A.end(), b - mid);
+            auto it_high = upper_bound(A.begin(), A.end(), b + mid);
+            int count = it_high - it_low;
+            if (count >= k) {
+                answer = mid;
+                high = mid - 1;
+            } else {
+                low = mid + 1;
+            }
+        }
+        cout << answer << '\n';
+    }
+    
+    return 0;
+}
+```
+
+This code efficiently handles each query in logarithmic time relative to the maximum possible distance, leveraging binary search and the sorted property of array A. The complexity is O(Q log(max distance) log N), which is feasible for the given constraints.

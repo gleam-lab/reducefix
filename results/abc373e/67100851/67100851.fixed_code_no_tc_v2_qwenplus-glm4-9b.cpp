@@ -1,0 +1,74 @@
+#include <iostream>
+#include <algorithm>
+using namespace std;
+
+typedef struct {
+    long long a;
+    int idx;
+} node;
+node A[200001];
+long long psum[200001], K;
+int N, M;
+bool f(long long k, int l, int r) {
+    while (r - l > 1) {
+        int m = (l + r) / 2;
+        long long req = (r - m) * (A[m].a + k + 1) - (psum[r] - psum[m]);
+        if (req <= K - psum[N]) {
+            r = m;
+        } else {
+            l = m;
+        }
+    }
+    long long req = (r - l) * (A[l].a + k + 1) - (psum[r] - psum[l]);
+    if (req <= K - psum[N]) return true;
+    return false;
+}
+
+int main() {
+    scanf("%d %d %lld", &N, &M, &K);
+    psum[0] = 0;
+    for (int i = 0; i < N; i++) {
+        scanf("%lld", &A[i].a);
+        A[i].idx = i;
+    }
+    sort(A, A + N, [](node a, node b) { return a.a < b.a; });
+    for (int i = 1; i <= N; i++) psum[i] = psum[i - 1] + A[i - 1].a;
+
+    for (int i = 0; i < N; i++) {
+        long long votes_needed = -1;
+        if (i + 1 < N && i + 1 >= M) {
+            votes_needed = A[i + 1].a - A[i].a + 1;
+        }
+        if (votes_needed != -1) {
+            long long l = 0, r = K - (psum[N] - psum[i + 1]);
+            while (r - l > 1) {
+                long long mid = (l + r) / 2;
+                if (f(mid, i + 1, N)) r = mid;
+                else l = mid;
+            }
+            if (r > l && f(r - 1, i + 1, N)) r--;
+            A[i].a = r;
+        } else {
+            long long l = 0, r = K - psum[N];
+            while (r - l > 1) {
+                long long mid = (l + r) / 2;
+                if (f(mid, i, N)) r = mid;
+                else l = mid;
+            }
+            if (r > l && f(r - 1, i, N)) r--;
+            A[i].a = r;
+        }
+
+        if (A[i].a == -1) A[i].a = -1;
+        else A[i].a = max(A[i].a, (long long)(A[i].a + 1 - (psum[N] - psum[i + 1])));
+
+        if (A[i].a >= K - psum[N]) A[i].a = -1;
+    }
+
+    sort(A, A + N, [](node a, node b) { return a.idx < b.idx; });
+    for (int i = 0; i < N; i++) {
+        if (A[i].a == -1) printf("-1 ");
+        else printf("%lld ", A[i].a);
+    }
+    printf("\n");
+}

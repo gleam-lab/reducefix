@@ -1,0 +1,93 @@
+To fix this code, we need to address several issues related to the handling of connected components and the merging of their vertex lists. The original code attempts to maintain sorted lists of vertices in each component, but it has inefficiencies and incorrect merging strategies that can lead to wrong answers or performance issues, especially given the constraints.
+
+### Analysis of Issues
+1. **Merge Strategy**: The current merging method uses a two-pointer technique to merge two sorted lists, but it doesn't correctly handle the merging of large lists, and it arbitrarily truncates the list to 100 elements, which can lead to incorrect results for the k-th largest queries when k is small but the actual component is large.
+2. **Efficiency**: The merging process is O(n) in the worst case for each union operation, which is too slow for N and Q up to 2 × 10^5.
+3. **Handling k**: The query requires the k-th largest vertex, but the current approach may lose necessary information by truncating the list.
+
+### Solution Approach
+1. **Union-Find Data Structure**: Maintain the parent and size of each component using the union-find (disjoint set) data structure with path compression and union by size for efficiency.
+2. **Sorted Lists**: For each component, maintain a sorted list (or a priority queue) of its vertices. However, since k is up to 10, we only need to keep track of the top 10 largest vertices in each component to answer queries efficiently.
+3. **Efficient Merging**: When merging two components, merge their top 10 lists by selecting the top 10 elements from the combined lists of both components. This ensures that each merge operation is O(10), which is constant time per operation, making the overall approach efficient.
+
+### Fixed Code
+```cpp
+#include <bits/stdc++.h>
+
+using namespace std;
+
+const int N = 2e5 + 5;
+
+vector<int> parent;
+vector<priority_queue<int, vector<int>, greater<int>>> top_k;
+
+int find(int u) {
+    if (parent[u] != u) {
+        parent[u] = find(parent[u]);
+    }
+    return parent[u];
+}
+
+void unite(int u, int v) {
+    u = find(u);
+    v = find(v);
+    if (u == v) return;
+    if (top_k[u].size() < top_k[v].size()) {
+        swap(u, v);
+    }
+    parent[v] = u;
+    while (!top_k[v].empty()) {
+        top_k[u].push(top_k[v].top());
+        top_k[v].pop();
+        if (top_k[u].size() > 10) {
+            top_k[u].pop();
+        }
+    }
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int n, q;
+    cin >> n >> q;
+    parent.resize(n + 1);
+    top_k.resize(n + 1);
+    for (int i = 1; i <= n; ++i) {
+        parent[i] = i;
+        top_k[i].push(i);
+    }
+
+    while (q--) {
+        int t, a, b;
+        cin >> t >> a >> b;
+        if (t == 1) {
+            unite(a, b);
+        } else {
+            a = find(a);
+            if (top_k[a].size() < b) {
+                cout << -1 << '\n';
+            } else {
+                vector<int> temp;
+                while (!top_k[a].empty()) {
+                    temp.push_back(top_k[a].top());
+                    top_k[a].pop();
+                }
+                reverse(temp.begin(), temp.end());
+                cout << temp[b - 1] << '\n';
+                for (int num : temp) {
+                    top_k[a].push(num);
+                }
+            }
+        }
+    }
+
+    return 0;
+}
+```
+
+### Explanation
+1. **Union-Find**: The `find` function uses path compression to efficiently find the root parent of a node. The `unite` function merges two components by size, ensuring the smaller component is merged into the larger one for efficiency.
+2. **Top-k Maintenance**: Each component maintains a priority queue (min-heap) of the top 10 largest vertices. During merging, the heaps of both components are combined, and only the top 10 elements are kept.
+3. **Query Handling**: For a type 2 query, the root component's heap is checked. If the heap size is less than k, `-1` is returned. Otherwise, the heap elements are temporarily extracted to form a sorted list (in descending order) to quickly access the k-th largest element.
+4. **Efficiency**: Each merge operation is O(10 log 10) due to heap operations, and each query is O(10 log 10) for extracting and reinserting elements, making the overall complexity O(Q * 10 log 10), which is efficient for the given constraints.

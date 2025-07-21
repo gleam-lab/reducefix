@@ -1,0 +1,44 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+const int N = 1e6 + 5;
+int n, m;
+long long a[2 * N];
+map<int, int> freq;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    cout.tie(nullptr);
+
+    cin >> n >> m;
+    for (int i = 1; i <= n; ++i) {
+        cin >> a[i];
+        a[i + n] = a[i]; // Duplicate array for circular handling
+    }
+
+    long long sum = 0;
+    long long prefix_sum = 0;
+    freq[0] = 1; // To count subarrays that start from index 0
+
+    for (int i = 1; i < 2 * n; ++i) {
+        prefix_sum += a[i];
+        int rem = ((prefix_sum % m) + m) % m;
+
+        // If we are past the original array length, remove the contribution from the first element of that segment
+        if (i > n) {
+            int old_rem = ((a[i - n] + m) % m);
+            sum -= freq[old_rem];
+        }
+
+        sum += freq[rem];
+
+        // Only record prefix sums from the first n elements (original array)
+        if (i < n) {
+            freq[rem]++;
+        }
+    }
+
+    cout << sum << "\n";
+    return 0;
+}

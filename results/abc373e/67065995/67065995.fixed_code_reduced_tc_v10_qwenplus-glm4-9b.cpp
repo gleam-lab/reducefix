@@ -1,0 +1,60 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <limits>
+
+using namespace std;
+
+long long get_min_votes_needed(int idx, long long current_votes, long long remaining_votes, const vector<long long>& votes, long long m, long long n, vector<long long>& prefix_sum) {
+    // We need to find the minimum votes idx must get from remaining_votes to ensure it is one of the top m candidates
+    long long target votes_needed = votes[idx] + remaining_votes - prefix_sum[n - m] + prefix_sum[n - m - 1];
+    if (current_votes - votes[idx] + remaining_votes >= target) return 0; // Already has enough votes
+    long long additional_votes_needed = target - current_votes + votes[idx];
+    if (additional_votes_needed > remaining_votes) return -1; // Impossible to secure victory
+    return additional_votes_needed;
+}
+
+int main() {
+    int n, m;
+    long long k;
+    cin >> n >> m >> k;
+
+    vector<long long> votes(n);
+    for (int i = 0; i < n; ++i) {
+        cin >> votes[i];
+    }
+
+    // Sort and reverse to get the descending order
+    sort(votes.begin(), votes.end(), greater<long long>());
+
+    // Calculate prefix sums of votes
+    vector<long long> prefix_sum(n + 1, 0);
+    for (int i = 1; i <= n; ++i) {
+        prefix_sum[i] = prefix_sum[i - 1] + votes[i - 1];
+    }
+
+    // Calculate the minimum votes needed for each candidate
+    vector<long long> min_votes_needed(n, -1);
+    for (int i = 0; i < n; ++i) {
+        if (i < m) {
+            // If the candidate is already in the top m, calculate if they need any additional votes
+            min_votes_needed[i] = get_min_votes_needed(i, votes[i], k - prefix_sum[n - m], votes, m, n, prefix_sum);
+        } else {
+            // If the candidate is not in the top m, calculate the votes needed to reach the minimum of top m
+            long long min_top_m_votes = votes[0] + prefix_sum[m - 1] - prefix_sum[m];
+            if (votes[i] + k - prefix_sum[n - m] >= min_top_m_votes) {
+                min_votes_needed[i] = 0;
+            } else {
+                min_votes_needed[i] = min_top_m_votes - (votes[i] + k - prefix_sum[n - m]);
+            }
+        }
+    }
+
+    // Output the result
+    for (const auto& votes_needed : min_votes_needed) {
+        cout << votes_needed << " ";
+    }
+    cout << endl;
+
+    return 0;
+}

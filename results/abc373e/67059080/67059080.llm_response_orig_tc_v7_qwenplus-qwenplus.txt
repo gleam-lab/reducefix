@@ -1,0 +1,100 @@
+To solve this problem correctly, we need to determine the **minimum number of additional votes** each candidate needs to guarantee that they are among the top `M` candidates after all votes are tallied.
+
+### Key Observations:
+
+1. **Victory Condition**: Candidate `i` wins if fewer than `M` other candidates have more votes than them.
+2. **Remaining Votes**: The total number of remaining votes is `K - sum(A)`, which is a finite resource.
+3. For each candidate `i`, we want to find the minimum number of additional votes `X` such that, even in the worst-case distribution of the rest of the votes (i.e., all other candidates get as many votes as possible), candidate `i` still has enough to be among the top `M`.
+
+---
+
+### Efficient Strategy:
+
+- Sort the array of current votes.
+- Precompute prefix sums for efficient range queries.
+- For each candidate:
+  - Binary search over the number of additional votes `X`.
+  - Check whether with `X` additional votes, candidate `i` can ensure at most `M - 1` other candidates have strictly more votes than them, even when others use up the remaining votes optimally.
+
+---
+
+### Corrected and Optimized Code:
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int N, M;
+    ll K;
+    cin >> N >> M >> K;
+
+    vector<pair<ll, int>> A(N);
+    for (int i = 0; i < N; ++i) {
+        cin >> A[i].first;
+        A[i].second = i;
+    }
+
+    // Store original indices to reconstruct output order
+    vector<int> original_index(N);
+    for (int i = 0; i < N; ++i)
+        original_index[A[i].second] = i;
+
+    sort(A.begin(), A.end());
+
+    vector<ll> prefix(N + 1);
+    for (int i = 1; i <= N; ++i)
+        prefix[i] = prefix[i - 1] + A[i - 1].first;
+
+    ll total_remaining = K - prefix[N];
+
+    vector<ll> res(N);
+
+    for (int i = 0; i < N; ++i) {
+        ll lo = 0, hi = total_remaining;
+        ll answer = -1;
+
+        while (lo <= hi) {
+            ll mid = (lo + hi) / 2;
+            ll cur_vote = A[i].first + mid;
+
+            // Find how many candidates have votes > cur_vote
+            int cnt = N - (int)(upper_bound(A.begin(), A.end(), make_pair(cur_vote, N)) - A.begin());
+
+            // Subtract 1 if current candidate is counted in upper_bound
+            if (A[i].first + mid > cur_vote)
+                cnt--;
+
+            if (cnt >= M) {
+                lo = mid + 1;
+            } else {
+                answer = mid;
+                hi = mid - 1;
+            }
+        }
+
+        res[A[i].second] = answer;
+    }
+
+    for (int i = 0; i < N; ++i)
+        cout << res[i] << " ";
+    cout << "\n";
+
+    return 0;
+}
+```
+
+---
+
+### Explanation:
+
+- We sort the array to efficiently compare vote counts.
+- We use binary search to find the minimum number of votes needed for each candidate to secure a position in the top `M`.
+- For each candidate, we simulate giving them `X` votes and count how many candidates would have more votes than them using `upper_bound`.
+- If the number of such candidates is less than `M`, the candidate is guaranteed to win.
+
+This approach ensures **O(N log K)** time complexity, which is acceptable for the given constraints (`N ≤ 2e5`, `K ≤ 1e12`).

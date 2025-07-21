@@ -1,0 +1,190 @@
+To fix this code, we need to address the incorrect calculation of the number of safe squares where the new piece can be placed without being captured by any existing pieces. The original code attempted to use inclusion-exclusion principle, but it had several issues, including incorrect handling of the constraints and overlapping conditions.
+
+### Approaches
+1. **Problem Analysis**: The problem involves determining the number of empty squares on an N x N grid where a new piece can be placed without being captured by any existing M pieces. The existing pieces can capture along rows, columns, and both diagonals (sum and difference diagonals).
+
+2. **Key Insight**: The solution requires calculating the total number of squares that are not under attack by any existing piece. This can be efficiently done by:
+   - Calculating the union of all squares attacked by the existing pieces.
+   - Subtracting this union from the total number of squares (N^2) to get the safe squares.
+
+3. **Inclusion-Exclusion Principle**: To avoid double-counting squares that are attacked along multiple directions by the same or different pieces, we use the inclusion-exclusion principle. This involves:
+   - Adding the squares attacked by each piece individually.
+   - Subtracting the squares attacked by pairs of pieces intersecting.
+   - Adding back the squares attacked by triples of pieces intersecting, and so on.
+
+4. **Efficient Calculation**: Given the constraints (N can be up to 10^9 and M up to 10^3), we need an efficient way to compute these intersections without iterating over all possible squares. This involves:
+   - Using sets to track unique rows, columns, sum diagonals (i + j), and difference diagonals (i - j).
+   - Calculating the overlaps between these sets to apply the inclusion-exclusion principle correctly.
+
+### Solution Code
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    long long N, M;
+    cin >> N >> M;
+    
+    unordered_set<long long> rows, cols, sums, diffs;
+    vector<pair<long long, long long>> pieces(M);
+    
+    for (int i = 0; i < M; ++i) {
+        long long a, b;
+        cin >> a >> b;
+        pieces[i] = {a, b};
+        rows.insert(a);
+        cols.insert(b);
+        sums.insert(a + b);
+        diffs.insert(a - b);
+    }
+    
+    long long total = N * N;
+    
+    long long row_attack = rows.size() * N;
+    long long col_attack = cols.size() * N;
+    
+    long long sum_attack = 0;
+    for (long long s : sums) {
+        long long min_xplusy = max(1LL + 1, s - N);
+        long long max_xplusy = min(N + N, s);
+        long long count = max_xplusy - min_xplusy + 1;
+        sum_attack += count;
+    }
+    
+    long long diff_attack = 0;
+    for (long long d : diffs) {
+        long long min_xminusy = max(1LL - N, d);
+        long long max_xminusy = min(N - 1LL, d);
+        long long count = max_xminusy - min_xminusy + 1;
+        diff_attack += count;
+    }
+    
+    long long row_col = 0;
+    for (long long r : rows) {
+        for (long long c : cols) {
+            if (sums.count(r + c) || diffs.count(r - c)) {
+                continue;
+            }
+            row_col++;
+        }
+    }
+    
+    long long row_sum = 0;
+    for (long long r : rows) {
+        for (long long s : sums) {
+            long long c = s - r;
+            if (c >= 1 && c <= N) {
+                row_sum++;
+            }
+        }
+    }
+    
+    long long row_diff = 0;
+    for (long long r : rows) {
+        for (long long d : diffs) {
+            long long c = r - d;
+            if (c >= 1 && c <= N) {
+                row_diff++;
+            }
+        }
+    }
+    
+    long long col_sum = 0;
+    for (long long c : cols) {
+        for (long long s : sums) {
+            long long r = s - c;
+            if (r >= 1 && r <= N) {
+                col_sum++;
+            }
+        }
+    }
+    
+    long long col_diff = 0;
+    for (long long c : cols) {
+        for (long long d : diffs) {
+            long long r = d + c;
+            if (r >= 1 && r <= N) {
+                col_diff++;
+            }
+        }
+    }
+    
+    long long sum_diff = 0;
+    for (long long s : sums) {
+        for (long long d : diffs) {
+            if ((s - d) % 2 != 0) continue;
+            long long r = (s + d) / 2;
+            long long c = (s - d) / 2;
+            if (r >= 1 && r <= N && c >= 1 && c <= N) {
+                sum_diff++;
+            }
+        }
+    }
+    
+    long long row_col_sum = 0;
+    for (long long r : rows) {
+        for (long long c : cols) {
+            if (sums.count(r + c)) {
+                row_col_sum++;
+            }
+        }
+    }
+    
+    long long row_col_diff = 0;
+    for (long long r : rows) {
+        for (long long c : cols) {
+            if (diffs.count(r - c)) {
+                row_col_diff++;
+            }
+        }
+    }
+    
+    long long row_sum_diff = 0;
+    for (long long r : rows) {
+        for (long long s : sums) {
+            long long c = s - r;
+            if (c >= 1 && c <= N && diffs.count(r - c)) {
+                row_sum_diff++;
+            }
+        }
+    }
+    
+    long long col_sum_diff = 0;
+    for (long long c : cols) {
+        for (long long s : sums) {
+            long long r = s - c;
+            if (r >= 1 && r <= N && diffs.count(r - c)) {
+                col_sum_diff++;
+            }
+        }
+    }
+    
+    long long row_col_sum_diff = 0;
+    for (long long r : rows) {
+        for (long long c : cols) {
+            if (sums.count(r + c) && diffs.count(r - c)) {
+                row_col_sum_diff++;
+            }
+        }
+    }
+    
+    long long attacked = row_attack + col_attack + sum_attack + diff_attack
+                       - row_col - row_sum - row_diff - col_sum - col_diff - sum_diff
+                       + row_col_sum + row_col_diff + row_sum_diff + col_sum_diff
+                       - row_col_sum_diff;
+    
+    long long safe = total - attacked;
+    cout << safe << endl;
+    
+    return 0;
+}
+```
+
+### Explanation
+1. **Input Handling**: The code reads the grid size N and the number of existing pieces M. It then reads the positions of these pieces.
+2. **Sets Initialization**: The code initializes sets to store the rows, columns, sum diagonals (i + j), and difference diagonals (i - j) that are occupied by existing pieces.
+3. **Attack Calculation**: It calculates the number of squares attacked by each piece along rows, columns, sum diagonals, and difference diagonals.
+4. **Inclusion-Exclusion Principle**: The code applies the inclusion-exclusion principle to avoid double-counting squares that are attacked along multiple directions. It calculates intersections between rows and columns, rows and diagonals, columns and diagonals, and all three (rows, columns, and diagonals).
+5. **Final Calculation**: The total number of safe squares is computed by subtracting the number of attacked squares from the total squares (N^2). The result is printed.
+
+This approach ensures that all possible squares under attack are accounted for efficiently, and the inclusion-exclusion principle correctly handles overlaps to provide the accurate count of safe squares.

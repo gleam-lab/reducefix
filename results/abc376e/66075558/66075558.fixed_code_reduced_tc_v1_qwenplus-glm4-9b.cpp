@@ -1,0 +1,45 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+int main() {
+    int t, n, k;
+    cin >> t;
+    while (t--) {
+        cin >> n >> k;
+        vector<pair<int, int>> A(n);
+        vector<pair<int, int>> B(n);
+        vector<int> sum(n);
+        
+        for (int i = 0; i < n; i++) {
+            cin >> A[i].first;
+            A[i].second = i;
+        }
+        for (int i = 0; i < n; i++) {
+            cin >> B[i].first;
+            B[i].second = i;
+        }
+        
+        // Sort A by values descending, and B by values descending
+        sort(A.rbegin(), A.rend());
+        sort(B.rbegin(), B.rend());
+        
+        // Prefix sum of B for quick access
+        for (int i = 0; i < k - 1; i++) {
+            sum[i] = B[i].first;
+        }
+        for (int i = k - 1; i < n; i++) {
+            sum[i] = sum[i - 1] + B[i].first;
+        }
+        
+        long long ans = LLONG_MAX;
+        // Calculate minimum possible value
+        for (int i = k - 1; i < n; i++) {
+            ans = min(ans, B[i].first * sum[i]);
+        }
+        
+        cout << ans << endl;
+    }
+    return 0;
+}

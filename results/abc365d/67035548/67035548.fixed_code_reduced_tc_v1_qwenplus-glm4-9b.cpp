@@ -1,0 +1,34 @@
+#include <iostream>
+#include <string>
+#include <vector>
+using namespace std;
+
+int cmp(char x, char y) {
+    if (x == 'P' || y == 'P') return 0;
+    if (x == 'R') return (y == 'S') - (y == 'P');
+    return (x == 'S') - (x == 'P');
+}
+
+int main() {
+    int n;
+    string s;
+    cin >> n >> s;
+    
+    vector<int> dp(n + 1, 1); // dp[i] represents the longest sequence ending at position i
+    for (int i = 1; i < n; ++i) {
+        dp[i] = dp[i - 1] + 1;
+        for (int j = i - 1; j >= 0; --j) {
+            if (cmp(s[i], s[j]) == 0) {
+                dp[i] = max(dp[i], dp[j] + 1);
+            }
+        }
+    }
+    
+    int maxWin = 0;
+    for (int i = 1; i <= n; ++i) {
+        if (dp[i] > maxWin) maxWin = dp[i];
+    }
+    
+    cout << maxWin;
+    return 0;
+}

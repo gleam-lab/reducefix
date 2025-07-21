@@ -1,0 +1,134 @@
+To fix this code, we need to correctly calculate the number of safe squares where a new piece can be placed without being captured by any existing pieces. The original code had several issues, including incorrect variable names, incorrect sorting and unique operations, and incorrect counting methods. The fixed code addresses these issues by properly processing the rows, columns, and diagonals (both main and anti-diagonals) that are controlled by the existing pieces.
+
+### Approaches
+
+1. **Initialization and Input Reading**: Read the grid size and the positions of the existing pieces.
+2. **Tracking Controlled Areas**: For each existing piece, track the rows, columns, and diagonals it controls:
+   - **Rows and Columns**: Each piece controls all squares in its row and column.
+   - **Diagonals**: Each piece controls squares on its main diagonal (i - j = constant) and anti-diagonal (i + j = constant).
+3. **Unique and Sorted Lists**: Store unique and sorted lists of rows, columns, main diagonals, and anti-diagonals to avoid redundancy.
+4. **Inclusion-Exclusion Principle**: Use this principle to accurately count the total number of unsafe squares by considering overlaps between different controlled areas (rows, columns, and diagonals).
+5. **Calculate Safe Squares**: Subtract the total unsafe squares from the total number of squares to get the number of safe squares.
+
+### Solution Code
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    long long N, M;
+    cin >> N >> M;
+    
+    set<long long> rows, cols, diag1, diag2;
+    for (int i = 0; i < M; ++i) {
+        long long a, b;
+        cin >> a >> b;
+        rows.insert(a);
+        cols.insert(b);
+        diag1.insert(a - b);
+        diag2.insert(a + b);
+    }
+    
+    long long unsafe = 0;
+    
+    // Rows and columns
+    unsafe += rows.size() * N;
+    unsafe += cols.size() * N;
+    unsafe -= rows.size() * cols.size(); // Overlap between rows and columns
+    
+    // Diagonals
+    for (auto d : diag1) {
+        long long min_a = max(1LL, 1 + d);
+        long long max_a = min(N, N + d);
+        if (max_a >= min_a) {
+            unsafe += max_a - min_a + 1;
+        }
+    }
+    
+    for (auto d : diag2) {
+        long long min_a = max(1LL, d - N);
+        long long max_a = min(N, d - 1);
+        if (max_a >= min_a) {
+            unsafe += max_a - min_a + 1;
+        }
+    }
+    
+    // Overlap between rows and diag1
+    for (auto r : rows) {
+        for (auto d : diag1) {
+            long long b = r - d;
+            if (1 <= b && b <= N) {
+                unsafe -= 1;
+            }
+        }
+    }
+    
+    // Overlap between rows and diag2
+    for (auto r : rows) {
+        for (auto d : diag2) {
+            long long b = d - r;
+            if (1 <= b && b <= N) {
+                unsafe -= 1;
+            }
+        }
+    }
+    
+    // Overlap between columns and diag1
+    for (auto c : cols) {
+        for (auto d : diag1) {
+            long long a = d + c;
+            if (1 <= a && a <= N) {
+                unsafe -= 1;
+            }
+        }
+    }
+    
+    // Overlap between columns and diag2
+    for (auto c : cols) {
+        for (auto d : diag2) {
+            long long a = d - c;
+            if (1 <= a && a <= N) {
+                unsafe -= 1;
+            }
+        }
+    }
+    
+    // Overlap between diag1 and diag2
+    for (auto d1 : diag1) {
+        for (auto d2 : diag2) {
+            long long a = (d1 + d2) / 2;
+            long long b = (d2 - d1) / 2;
+            if ((d1 + d2) % 2 == 0 && (d2 - d1) % 2 == 0 && 1 <= a && a <= N && 1 <= b && b <= N) {
+                unsafe += 1;
+            }
+        }
+    }
+    
+    // Overlap between all four: row, column, diag1, diag2
+    for (auto r : rows) {
+        for (auto c : cols) {
+            long long d1 = r - c;
+            long long d2 = r + c;
+            if (diag1.count(d1) && diag2.count(d2)) {
+                unsafe -= 1;
+            }
+        }
+    }
+    
+    long long total = N * N;
+    long long safe = total - unsafe;
+    cout << safe << endl;
+    
+    return 0;
+}
+```
+
+### Explanation
+
+1. **Initialization and Input Reading**: The code reads the grid size \( N \) and the number of existing pieces \( M \), followed by their positions.
+2. **Tracking Controlled Areas**: Using sets to store unique rows, columns, main diagonals (`a - b`), and anti-diagonals (`a + b`), the code ensures each controlled area is only counted once.
+3. **Counting Unsafe Squares**: The total unsafe squares are calculated by summing the areas controlled by rows, columns, and both types of diagonals and then adjusting for overlaps using the inclusion-exclusion principle.
+4. **Overlap Adjustments**: The code checks for overlaps between rows and columns, rows and diagonals, columns and diagonals, and between the diagonals themselves to ensure no double-counting.
+5. **Final Calculation**: The safe squares are obtained by subtracting the total unsafe squares from the total grid squares \( N^2 \), and the result is printed.
+
+This approach efficiently calculates the safe squares by leveraging set operations and careful counting, ensuring correctness even for large grid sizes up to \( 10^9 \).

@@ -1,0 +1,34 @@
+#include<bits/stdc++.h>
+using namespace std;
+using ll = long long;
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+    ll n, m;
+    cin >> n >> m;
+    vector<pair<ll, ll>> pieces(m);
+    set<ll> rows, cols, diagonals1, diagonals2;
+    for(int i = 0; i < m; ++i){
+        ll r, c;
+        cin >> r >> c;
+        pieces[i] = {r, c};
+        rows.insert(r);
+        cols.insert(c);
+        diagonals1.insert(r+c-1);
+        diagonals2.insert(r-c);
+    }
+    ll empty_squares = n*n - m;
+    for(auto& [r, c]: pieces){
+        if(rows.count(r+1)) --empty_squares;
+        if(rows.count(r-1)) --empty_squares;
+        if(cols.count(c+1)) --empty_squares;
+        if(cols.count(c-1)) --empty_squares;
+        if(diagonals1.count(r+c)) --empty_squares;
+        if(diagonals1.count(r+c-2)) --empty_squares;
+        if(diagonals2.count(r-c)) --empty_squares;
+        if(diagonals2.count(r-c+2)) --empty_squares;
+    }
+    cout << empty_squares << '\n';
+    return 0;
+}

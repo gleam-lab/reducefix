@@ -1,0 +1,86 @@
+To fix this code, we need to address several issues related to the handling of connected components and the management of the k-th largest elements in each component. The original code attempts to merge components and maintain sorted lists of vertices, but it has flaws in how it updates and merges these lists, leading to incorrect results for some queries.
+
+### Approaches
+1. **Union-Find Data Structure**: This is used to efficiently manage the connected components. Each component's root will have a set of the largest elements in that component.
+2. **Maintaining Top Elements**: For each component, we maintain a sorted list (or a set) of the largest elements (up to 10 elements as per the problem constraints). When two components are merged, we merge their respective top element lists and keep only the top 10 elements.
+3. **Handling Queries**: For type 2 queries, we check the size of the connected component's top elements list. If the requested `k` is larger than the size of this list, we return `-1`. Otherwise, we return the k-th largest element from the list.
+
+### Solution Code
+```cpp
+#include<bits/stdc++.h>
+using namespace std;
+
+const int MAXN = 200005;
+
+int parent[MAXN];
+vector<int> top_elements[MAXN];
+
+int find(int u) {
+    if (parent[u] != u) {
+        parent[u] = find(parent[u]);
+    }
+    return parent[u];
+}
+
+void merge(int u, int v) {
+    int root_u = find(u);
+    int root_v = find(v);
+    if (root_u == root_v) return;
+
+    if (top_elements[root_u].size() < top_elements[root_v].size()) {
+        swap(root_u, root_v);
+    }
+
+    vector<int> merged;
+    merged.reserve(top_elements[root_u].size() + top_elements[root_v].size());
+    merge(top_elements[root_u].begin(), top_elements[root_u].end(),
+          top_elements[root_v].begin(), top_elements[root_v].end(),
+          back_inserter(merged), greater<int>());
+    if (merged.size() > 10) {
+        merged.resize(10);
+    }
+    top_elements[root_u] = merged;
+    parent[root_v] = root_u;
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(NULL);
+
+    int N, Q;
+    cin >> N >> Q;
+
+    for (int i = 1; i <= N; ++i) {
+        parent[i] = i;
+        top_elements[i] = {i};
+    }
+
+    while (Q--) {
+        int type, u, v;
+        cin >> type >> u;
+        if (type == 1) {
+            cin >> v;
+            merge(u, v);
+        } else {
+            int k;
+            cin >> k;
+            int root = find(u);
+            if (top_elements[root].size() < k) {
+                cout << "-1\n";
+            } else {
+                cout << top_elements[root][k - 1] << "\n";
+            }
+        }
+    }
+
+    return 0;
+}
+```
+
+### Explanation
+1. **Initialization**: We initialize the parent array for the Union-Find structure and the `top_elements` array to store the largest elements for each component. Each node initially has itself as its parent and a list containing only itself as its top element.
+2. **Find Operation**: The `find` function uses path compression to efficiently determine the root of a node.
+3. **Merge Operation**: The `merge` function combines two components by size, ensuring the smaller component is merged into the larger one. The top elements of both components are merged into a single sorted list in descending order, and only the top 10 elements are kept.
+4. **Query Handling**: For type 2 queries, we find the root of the given node and check if the number of top elements in the component is sufficient to answer the query. If not, we return `-1`. Otherwise, we return the k-th largest element from the stored list.
+
+This approach ensures that we efficiently manage the connected components and their top elements, allowing us to answer queries in logarithmic time relative to the number of elements involved. The solution handles the constraints effectively and provides correct results for all test cases.

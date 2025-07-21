@@ -1,0 +1,92 @@
+To address the problem described, we need to implement a data structure that efficiently supports both adding edges and querying the k-th largest element among the neighbors of a vertex. Here's a revised version of your code using a combination of Union-Find and multiset to achieve this:
+
+```cpp
+#include "bits/stdc++.h"
+
+using namespace std;
+
+#define ff first
+#define ss second
+#define ll long long
+#define SZ(s) (int)s.size()
+
+const int MAXN = 2e5 + 5;
+
+vector<int> parent(MAXN), rank(MAXN);
+multiset<int> neighbors[MAXN];
+
+int find(int x) {
+    if (parent[x] != x) 
+        parent[x] = find(parent[x]);
+    return parent[x];
+}
+
+void unite(int x, int y) {
+    x = find(x), y = find(y);
+    if (x == y) return;
+    
+    if (rank[x] > rank[y])
+        swap(x, y);
+    
+    parent[x] = y;
+    if (rank[x] == rank[y])
+        rank[y]++;
+    
+    // Merge the multisets
+    auto it = neighbors[x].begin();
+    while(it != neighbors[x].end()) {
+        neighbors[y].insert(*it++);
+    }
+    neighbors[x].clear();
+}
+
+int main() {
+    ios_base::sync_with_stdio(false); cin.tie(nullptr);
+
+    int n, q;
+    cin >> n >> q;
+
+    // Initialize Union-Find
+    for (int i = 1; i <= n; ++i) {
+        parent[i] = i;
+        rank[i] = 0;
+        neighbors[i].insert(i);
+    }
+
+    while (q--) {
+        int t, u, v;
+        cin >> t >> u >> v;
+
+        if (t == 1) {
+            // Add an edge between u and v
+            unite(u, v);
+        } else {
+            // Find the representative of u
+            int rep = find(u);
+            
+            // Check if there are at least k neighbors
+            if (neighbors[rep].size() < v) {
+                cout << "-1\n";
+            } else {
+                // Get the k-th largest neighbor
+                auto it = neighbors[rep].rbegin();
+                advance(it, v - 1);
+                cout << *it << '\n';
+            }
+        }
+    }
+
+    return 0;
+}
+```
+
+### Explanation
+1. **Union-Find Initialization**: We initialize the Union-Find data structure with each node being its own parent and having a rank of 0. Each node also has a multiset of its neighbors initialized with itself.
+  
+2. **Find Operation**: This operation finds the root of the set containing a particular element, performing path compression to flatten the tree structure.
+
+3. **Unite Operation**: This operation merges two sets. It ensures that the smaller tree is always attached under the larger tree to keep the height low. After merging, it combines the multisets of neighbors of the two sets.
+
+4. **Query Operation**: For each query, we determine the representative of the queried vertex. If the number of neighbors is less than `k`, we output `-1`. Otherwise, we use the reverse iterator to access the k-th largest element in the multiset of neighbors.
+
+This solution maintains efficient operations for union, find, and query, ensuring that it can handle up to \(2 \times 10^5\) nodes and queries within reasonable time limits.

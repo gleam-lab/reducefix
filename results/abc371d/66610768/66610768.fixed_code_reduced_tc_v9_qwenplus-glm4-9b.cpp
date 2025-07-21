@@ -1,0 +1,43 @@
+#include<bits/stdc++.h>
+using namespace std;
+using LL = __int128;
+typedef long long ll;
+const int N = 1e6+7;
+vector<pair<int, int>> a;
+vector<LL> c;
+
+int main() {
+    int n;
+    cin >> n;
+    a.resize(n+1);
+    c.resize(n+1);
+    for(int i = 1; i <= n; i++) {
+        cin >> a[i].first;
+        a[i].second = i;
+    }
+    sort(a.begin(), a.end()); // Sort by value of a[i]
+
+    for(int i = 1; i <= n; i++) {
+        cin >> c[a[i].second];
+        if (i > 1) {
+            c[a[i].second] += c[a[i-1].second];
+        }
+    }
+
+    int m;
+    cin >> m;
+    while(m--) {
+        int l, r;
+        cin >> l >> r;
+        auto l_i = lower_bound(a.begin(), a.end(), make_pair(l, 1e9));
+        auto r_j = upper_bound(a.begin(), a.end(), make_pair(r, 1e9));
+        int i = l_i - a.begin();
+        int j = r_j - a.begin();
+        if (l >= a[n].first) {
+            cout << c[n] - c[a[i-1].second] << endl;
+        } else {
+            cout << c[a[j-1].second] - c[a[i-1].second] << endl;
+        }
+    }
+    return 0;
+}

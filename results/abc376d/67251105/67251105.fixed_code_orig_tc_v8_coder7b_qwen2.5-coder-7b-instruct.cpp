@@ -1,0 +1,53 @@
+#include <bits/stdc++.h>
+using namespace std;
+const long long INF = 1LL << 60;
+const long long MOD = 998244353LL;
+
+int main() {
+    ios_base::sync_with_stdio(false); cin.tie(0); cout.tie(0);
+
+    int N, M;
+    cin >> N >> M;
+    vector<vector<int>> G(N);
+    for(int i = 0; i < M; i++) {
+        int u, v;
+        cin >> u >> v;
+        u--, v--;
+        G[u].push_back(v);
+    }
+
+    vector<int> dist(N, -1);
+    queue<pair<int, int>> que;
+    que.push({0, 0});
+    dist[0] = 0;
+
+    while(!que.empty()) {
+        auto [pos, d] = que.front();
+        que.pop();
+        for(auto& nex : G[pos]) {
+            if(dist[nex] != -1) continue;
+            dist[nex] = d + 1;
+            que.push({nex, d + 1});
+        }
+    }
+
+    bool reachable = false;
+    for(int i = 1; i < N; i++) {
+        if(dist[i] == -1) continue;
+        reachable = true;
+        break;
+    }
+
+    if(!reachable) {
+        cout << -1 << '\n';
+    } else {
+        int ans = INF;
+        for(int i = 1; i < N; i++) {
+            if(dist[i] == -1) continue;
+            ans = min(ans, dist[i]);
+        }
+        cout << ans + 1 << '\n';
+    }
+
+    return 0;
+}

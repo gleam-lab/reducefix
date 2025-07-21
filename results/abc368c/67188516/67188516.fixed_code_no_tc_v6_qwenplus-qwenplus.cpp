@@ -1,0 +1,43 @@
+#include <iostream>
+#include <vector>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int N;
+    cin >> N;
+    vector<long long> H(N);
+    for (int i = 0; i < N; ++i) {
+        cin >> H[i];
+    }
+
+    long long T = 0;
+    long long bonus_count = 0; // Number of times a "bonus" attack (damage 3) can be used
+
+    for (int i = 0; i < N; ++i) {
+        // Subtract the effect of previously used bonus attacks
+        long long remaining = H[i] - bonus_count;
+
+        if (remaining > 0) {
+            // Compute number of full turns needed to kill this enemy
+            long long normal_attacks = max(0LL, remaining - (bonus_count > 0 ? 1 : 0));
+            long long total_attacks = normal_attacks + (remaining > 0 && bonus_count == 0);
+
+            // Each bonus attack comes every 3 turns
+            long long new_bonuses = total_attacks / 3;
+            long long leftover_attacks = total_attacks % 3;
+
+            T += total_attacks;
+            bonus_count += new_bonuses;
+            bonus_count -= leftover_attacks;
+        } else {
+            // No attacks needed, just pass time
+            continue;
+        }
+    }
+
+    cout << T << endl;
+    return 0;
+}

@@ -1,0 +1,26 @@
+#include <iostream>
+#include <vector>
+#include <cmath>
+#include <algorithm>
+
+using namespace std;
+
+int main() {
+    int N;
+    cin >> N;
+    vector<long long> H(N);
+    for (int i = 0; i < N; i++) {
+        cin >> H[i];
+    }
+    long long T = 0;
+    for (long long i = 0; i < N; i++) {
+        // Calculate the number of full rounds needed
+        long long full_rounds = (H[i] + 2) / 3;
+        // Calculate the remainder health after full rounds
+        long long remainder = H[i] % 3;
+        // Update T with the full rounds and additional attacks if needed
+        T += full_rounds + remainder;
+    }
+    cout << T << endl;
+    return 0;
+}

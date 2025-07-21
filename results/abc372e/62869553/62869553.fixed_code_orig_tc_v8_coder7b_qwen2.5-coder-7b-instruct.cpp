@@ -1,0 +1,49 @@
+#include<bits/stdc++.h>
+using namespace std;
+
+vector<int> adj[200005];
+
+void addEdge(int u, int v){
+    adj[u].push_back(v);
+    adj[v].push_back(u);
+}
+
+void dfs(int node, vector<bool>& visited, priority_queue<int>& pq){
+    visited[node] = true;
+    for(auto it : adj[node]){
+        if(!visited[it])
+            dfs(it, visited, pq);
+    }
+    pq.push(node);
+}
+
+int kthLargest(int node, int k){
+    vector<bool> visited(n + 1, false);
+    priority_queue<int> pq;
+    dfs(node, visited, pq);
+    while(k > 1 && !pq.empty()){
+        pq.pop();
+        k--;
+    }
+    return pq.empty() ? -1 : pq.top();
+}
+
+int main(){
+    ios_base::sync_with_stdio(false);
+    cin.tie(NULL);
+
+    int n, q;
+    cin >> n >> q;
+    
+    for(int i = 0; i < q; i++){
+        int type, u, v;
+        cin >> type >> u >> v;
+        if(type == 1){
+            addEdge(u, v);
+        } else {
+            cout << kthLargest(u, v) << endl;
+        }
+    }
+
+    return 0;
+}

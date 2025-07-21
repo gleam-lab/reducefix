@@ -1,0 +1,81 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int N;
+    cin >> N;
+    vector<long long> A(N), B(N - 1);
+    
+    for (int i = 0; i < N; ++i) cin >> A[i];
+    for (int i = 0; i < N - 1; ++i) cin >> B[i];
+
+    sort(A.begin(), A.end());
+    sort(B.begin(), B.end());
+
+    // We will use binary search to find the minimal x that works
+    // First, check which toys can be matched to boxes without the new box
+    // Then the unmatched toy must go into the new box
+
+    // Let's try greedy matching:
+    // Match smallest toy to smallest possible box that fits it
+
+    vector<bool> used(N, false);
+    int b_ptr = 0;
+    int matched = 0;
+
+    priority_queue<int, vector<int>, greater<int>> pq;
+
+    // Sort both in ascending order
+    sort(A.begin(), A.end());
+    sort(B.begin(), B.end());
+
+    // Try to match toys with boxes
+    int j = 0;
+    for (int i = 0; i < N && j < N - 1;) {
+        if (A[i] <= B[j]) {
+            // This toy can go in this box
+            i++;
+            j++;
+        } else {
+            // Box too small, try next box
+            j++;
+        }
+    }
+
+    if (j == N - 1 && N - 1 >= N) {
+        cout << -1 << endl;
+        return 0;
+    }
+
+    if (j == N - 1) {
+        // Only one toy cannot be matched
+        cout << A[N - 1] << endl;
+        return 0;
+    }
+
+    // If we get here, all boxes have been used but not all toys
+    // So we need to find which toy cannot be matched and require a new box for it
+
+    // Find the first toy that couldn't be matched
+    int i = 0;
+    j = 0;
+    while (i < N && j < N - 1) {
+        if (A[i] <= B[j]) {
+            i++;
+            j++;
+        } else {
+            j++;
+        }
+    }
+
+    if (i < N) {
+        cout << A[i] << endl;
+    } else {
+        cout << -1 << endl;
+    }
+
+    return 0;
+}

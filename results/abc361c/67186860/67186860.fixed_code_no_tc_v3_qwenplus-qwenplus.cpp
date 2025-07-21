@@ -1,0 +1,58 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    int n, k;
+    cin >> n >> k;
+    vector<int> A(n);
+    for (int i = 0; i < n; ++i) {
+        cin >> A[i];
+    }
+
+    // We need to remove exactly K elements
+    // So we will keep N - K elements in B
+    int len_B = n - k;
+
+    // To find the minimum possible value of max(B) - min(B),
+    // we try all windows of size len_B in the original array,
+    // and choose the one with minimal (max - min)
+
+    // Use a sliding window approach with two deques:
+    // - max_deque: maintains indices of elements in current window in decreasing order of values
+    // - min_deque: maintains indices of elements in current window in increasing order of values
+
+    deque<int> max_deque, min_deque;
+    for (int i = 0; i < len_B; ++i) {
+        while (!max_deque.empty() && A[i] >= A[max_deque.back()])
+            max_deque.pop_back();
+        while (!min_deque.empty() && A[i] <= A[min_deque.back()])
+            min_deque.pop_back();
+
+        max_deque.push_back(i);
+        min_deque.push_back(i);
+    }
+
+    int result = A[max_deque.front()] - A[min_deque.front()];
+    
+    for (int i = len_B; i < n; ++i) {
+        // Remove elements out of the current window
+        if (max_deque.front() == i - len_B)
+            max_deque.pop_front();
+        if (min_deque.front() == i - len_B)
+            min_deque.pop_front();
+
+        // Add new element
+        while (!max_deque.empty() && A[i] >= A[max_deque.back()])
+            max_deque.pop_back();
+        while (!min_deque.empty() && A[i] <= A[min_deque.back()])
+            min_deque.pop_back();
+
+        max_deque.push_back(i);
+        min_deque.push_back(i);
+
+        result = min(result, A[max_deque.front()] - A[min_deque.front()]);
+    }
+
+    cout << result << endl;
+    return 0;
+}

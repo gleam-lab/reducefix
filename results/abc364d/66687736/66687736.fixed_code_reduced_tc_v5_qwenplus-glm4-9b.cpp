@@ -1,0 +1,42 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define ll long long
+#define rep(i, n) for (int i = 0; i < (int)n; ++i)
+#define vi vector<int>
+#define vl vector<ll>
+#define vd vector<double>
+#define vb vector<bool>
+#define vs vector<string>
+#define vc vector<char>
+
+int main() {
+    ll n, q; cin >> n >> q;
+    vl a(n), b(q);
+    rep(i, n) cin >> a[i];
+    
+    for (int i = 0; i < q; ++i) {
+        cin >> b[i];
+    }
+    
+    sort(a.begin(), a.end());
+    
+    for (int i = 0; i < q; ++i) {
+        ll k = b[i];
+        // Binary search to find k-th closest point to b[i]
+        int low = 0, high = n - 1;
+        while (low < high) {
+            int mid = (low + high) / 2;
+            if (a[mid] >= b[i]) {
+                high = mid;
+            } else {
+                low = mid + 1;
+            }
+        }
+        
+        // Calculate the distance of the k-th closest point
+        ll distance = abs(a[low] - b[i]);
+        cout << distance << endl;
+    }
+    
+    return 0;
+}

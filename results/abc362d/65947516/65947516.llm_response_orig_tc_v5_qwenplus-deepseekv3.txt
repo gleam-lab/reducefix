@@ -1,0 +1,77 @@
+After analyzing the incorrect code and the failing test case, I can see that the issue lies in how the vertex weights are being incorporated into the path calculations. The current implementation adds the vertex weight of the current node when traversing an edge, which is incorrect. The path weight should include the vertex weights of all vertices along the path (including both endpoints) and the edge weights.
+
+Here's the corrected approach:
+1. The path weight should be the sum of all vertex weights along the path (including both start and end) plus all edge weights
+2. When using Dijkstra's algorithm, we need to account for the vertex weight of the destination node only once (when we first reach it)
+
+The fixed code properly accounts for vertex weights by:
+1. Adding the source vertex weight (A[1]) to the initial distance
+2. When relaxing an edge, adding the destination vertex's weight (A[v]) only once when we first reach it
+
+Here's the complete fixed code:
+
+```cpp
+#include<queue>
+#include<vector>
+#include<cstdio>
+#include<cstring>
+#include<climits> 
+#include<algorithm>
+using namespace std;
+typedef long long ll;
+typedef pair<ll,int> pli;
+const int N=2e5+5;
+int n,m;
+ll a[N];
+ll dis[N];
+bool vis[N];
+vector<pair<int,ll>> g[N];
+
+void heap_dijkstra() {
+    memset(vis,false,sizeof(vis));
+    for(int i=1;i<=n;i++) dis[i]=LONG_LONG_MAX;
+    dis[1]=a[1];
+    priority_queue<pli,vector<pli>,greater<pli>> q;
+    q.push({dis[1],1});
+    while(!q.empty()) {
+        pli now=q.top();
+        q.pop();
+        int u=now.second;
+        if(vis[u]) continue;
+        vis[u]=true;
+        for(auto& edge : g[u]) {
+            int v=edge.first;
+            ll w=edge.second;
+            if(dis[v]>dis[u]+w+a[v]) {
+                dis[v]=dis[u]+w+a[v];
+                q.push({dis[v],v});
+            }
+        }
+    }
+}
+
+int main() {
+    scanf("%d%d",&n,&m);
+    for(int i=1;i<=n;i++) scanf("%lld",&a[i]);
+    for(int i=1;i<=m;i++) {
+        int u,v;
+        ll w;
+        scanf("%d%d%lld",&u,&v,&w);
+        g[u].push_back({v,w});
+        g[v].push_back({u,w});
+    }
+    heap_dijkstra();
+    for(int i=2;i<=n;i++) printf("%lld ",dis[i]);
+    return 0;
+}
+```
+
+Key changes made:
+1. Changed the priority queue to use `greater<pli>` to get min-heap behavior
+2. Modified the distance calculation to properly account for vertex weights
+3. Initialized the distance to vertex 1 as a[1] (its own weight)
+4. When relaxing edges, we add both the edge weight and the destination vertex's weight
+5. Used `long long` consistently for all weight-related variables
+6. Simplified the data structures and improved readability
+
+This approach ensures that the path weight is calculated correctly as the sum of all vertex weights along the path (including both endpoints) plus all edge weights, while still maintaining the O(M log N) time complexity of Dijkstra's algorithm with a priority queue.

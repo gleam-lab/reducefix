@@ -1,0 +1,94 @@
+To fix this code, we need to address several issues related to the handling of the sets and the logic for finding the nearest walls in the four directions. The original code attempts to use sets to keep track of the remaining walls in each row and column, but it has some logical flaws in how it searches for the nearest walls and removes them.
+
+### Issues in the Original Code:
+1. **Initialization**: The initial sets for rows and columns are correctly populated, but the logic for removing walls when a bomb is placed at an empty cell is flawed.
+2. **Finding Nearest Walls**: The code attempts to find the nearest walls in the four directions, but it incorrectly checks the conditions for the existence of walls and their removal.
+3. **Index Handling**: The code uses `prev` and `next` iterators without proper bounds checking, leading to potential undefined behavior.
+4. **Efficiency**: The original approach might not be efficient enough due to the nested operations on sets.
+
+### Fixed Approach:
+1. **Use Sets for Rows and Columns**: Maintain a set for each row and column to track the remaining walls. This allows efficient insertion and deletion operations.
+2. **Check for Direct Wall**: First, check if the bomb's cell has a wall. If it does, remove it directly.
+3. **Find Nearest Walls in Four Directions**: For each direction (up, down, left, right), find the nearest wall by querying the respective set. The nearest wall is the first wall encountered in the direction of the search.
+4. **Remove the Nearest Walls**: If a nearest wall is found, remove it from both the row and column sets.
+
+### Solution Code:
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+#define rep(i,n) for(int i = 0; i < (n); i++)
+using ll = long long;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int h, w, q;
+    cin >> h >> w >> q;
+    
+    vector<set<int>> row_walls(h), col_walls(w);
+    rep(i, h) rep(j, w) {
+        row_walls[i].insert(j);
+        col_walls[j].insert(i);
+    }
+    
+    while (q--) {
+        int r, c;
+        cin >> r >> c;
+        r--; c--;
+        
+        if (row_walls[r].count(c)) {
+            row_walls[r].erase(c);
+            col_walls[c].erase(r);
+        } else {
+            // Up
+            auto it_up = col_walls[c].lower_bound(r);
+            if (it_up != col_walls[c].begin()) {
+                --it_up;
+                int i = *it_up;
+                row_walls[i].erase(c);
+                col_walls[c].erase(i);
+            }
+            
+            // Down
+            auto it_down = col_walls[c].lower_bound(r);
+            if (it_down != col_walls[c].end()) {
+                int i = *it_down;
+                row_walls[i].erase(c);
+                col_walls[c].erase(i);
+            }
+            
+            // Left
+            auto it_left = row_walls[r].lower_bound(c);
+            if (it_left != row_walls[r].begin()) {
+                --it_left;
+                int j = *it_left;
+                row_walls[r].erase(j);
+                col_walls[j].erase(r);
+            }
+            
+            // Right
+            auto it_right = row_walls[r].lower_bound(c);
+            if (it_right != row_walls[r].end()) {
+                int j = *it_right;
+                row_walls[r].erase(j);
+                col_walls[j].erase(r);
+            }
+        }
+    }
+    
+    int ans = 0;
+    rep(i, h) ans += row_walls[i].size();
+    cout << ans << '\n';
+    
+    return 0;
+}
+```
+
+### Explanation:
+1. **Initialization**: The code initializes sets `row_walls` and `col_walls` to keep track of the walls in each row and column, respectively.
+2. **Query Processing**: For each query, it checks if the specified cell has a wall. If it does, the wall is removed. If not, it searches for the nearest walls in the four directions (up, down, left, right) using the `lower_bound` method to efficiently find the nearest walls in logarithmic time.
+3. **Wall Removal**: For each found nearest wall in any direction, the wall is removed from both the row and column sets.
+4. **Result Calculation**: After processing all queries, the total number of remaining walls is calculated by summing the sizes of all row sets.
+
+This approach ensures correctness and efficiency, handling all edge cases and constraints appropriately.

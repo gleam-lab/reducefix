@@ -1,0 +1,26 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+
+int main() {
+    ios_base::sync_with_stdio(false); cin.tie(NULL);
+    
+    long long n, m; cin >> n >> m;
+    unordered_set<long long> bad;
+    for(long long i = 0; i < m; ++i) {
+        long long x, y; cin >> x >> y;
+        --x, --y;
+        for(long long dx = -2; dx <= 2; ++dx) {
+            for(long long dy = -2; dy <= 2; ++dy) {
+                if(abs(dx) + abs(dy) == 3) {
+                    long long nx = x + dx, ny = y + dy;
+                    if(nx >= 0 && nx < n && ny >= 0 && ny < n) {
+                        bad.insert(nx * n + ny);
+                    }
+                }
+            }
+        }
+    }
+    cout << n * n - bad.size() << '\n';
+    return 0;
+}

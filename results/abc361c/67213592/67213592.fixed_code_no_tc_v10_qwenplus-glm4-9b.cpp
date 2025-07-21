@@ -1,0 +1,44 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+int main() {
+    int n, k;
+    cin >> n >> k;
+
+    vector<int> A(n);
+    for (int i = 0; i < n; i++) {
+        cin >> A[i];
+    }
+
+    // Sort the array to easily find the minimum and maximum values
+    sort(A.begin(), A.end());
+
+    // Initialize pointers for the sliding window
+    int left = 0;
+    int right = n - 1;
+
+    // Initialize the answer with the maximum possible difference
+    // which is the difference between the minimum element and
+    // the element that will be removed (the last element)
+    long long answer = A[0] - A[k];
+
+    // Slide the window to find the minimum possible value of B
+    for (int i = 1; i <= n - k; i++) {
+        // Move the 'right' pointer to remove the largest element
+        // or 'left' pointer to remove the smallest element
+        if (A[right] - A[left] > A[right - k] - A[left]) {
+            right--;
+        } else {
+            left++;
+        }
+        // Update the answer with the new minimum possible difference
+        answer = min(answer, (long long)A[right] - A[left]);
+    }
+
+    // Output the result
+    cout << answer << endl;
+
+    return 0;
+}

@@ -1,0 +1,53 @@
+#include <bits/stdc++.h>
+#define ll long long
+using namespace std;
+
+void solve() {
+    ll N;
+    cin >> N;
+    
+    vector<ll> A(N), B(N - 1);
+    for (ll i = 0; i < N; ++i) cin >> A[i];
+    for (ll i = 0; i < N - 1; ++i) cin >> B[i];
+
+    // Sort toys and boxes in descending order
+    sort(A.begin(), A.end(), greater<ll>());
+    sort(B.begin(), B.end(), greater<ll>());
+
+    // We need to find the smallest x such that we can assign all toys to boxes
+    // Try to match largest toys with largest available boxes, one toy will go into the new box
+
+    ll required = -1;
+    ll b_idx = 0;
+
+    for (ll i = 0; i < N; ++i) {
+        if (b_idx < N - 1 && B[b_idx] >= A[i]) {
+            b_idx++;
+        } else {
+            // This toy must go to the purchased box
+            if (required == -1) {
+                required = A[i];
+            } else {
+                // Only one toy can go to the purchased box
+                cout << -1 << endl;
+                return;
+            }
+        }
+    }
+
+    if (required == -1) {
+        // All toys fit in existing boxes -- not possible since we need to use the new box
+        cout << -1 << endl;
+    } else {
+        cout << required << endl;
+    }
+}
+
+int main() {
+    ios::sync_with_stdio(0);
+    cin.tie(0);
+
+    solve();
+
+    return 0;
+}

@@ -1,0 +1,89 @@
+#include <bits/stdc++.h>
+using namespace std;
+using i64 = int64_t;
+
+struct Init {
+    Init() {
+        ios::sync_with_stdio(false);
+        cin.tie(nullptr);
+        cout << fixed << setprecision(12);
+    }
+} init;
+
+using vi = vector<int>;
+using vvi = vector<vi>;
+using Pi = pair<int, int>;
+
+int main() {
+    int H, W, Y;
+    cin >> H >> W >> Y;
+    vvi A(H, vi(W));
+    for (auto &row : A) {
+        for (auto &val : row) {
+            cin >> val;
+        }
+    }
+
+    // Mark all border cells as connected to the sea
+    vector<vector<bool>> visited(H, vector<bool>(W, false));
+    priority_queue<Pi, vector<Pi>, greater<Pi>> pq;  // {elevation, index}
+
+    // Push borders into min-heap
+    for (int i = 0; i < H; ++i) {
+        for (int j = 0; j < W; ++j) {
+            if (i == 0 || i == H - 1 || j == 0 || j == W - 1) {
+                pq.emplace(A[i][j], i * W + j);
+                visited[i][j] = true;
+            }
+        }
+    }
+
+    int remaining = H * W;
+    vi results(Y + 2);  // store results for each year
+
+    // Process in order of increasing elevation using a min-heap
+    while (!pq.empty()) {
+        auto [elev, pos] = pq.top();
+        pq.pop();
+
+        int year = elev;
+        if (year > Y) continue;
+
+        do {
+            remaining--;
+            int i = pos / W;
+            int j = pos % W;
+
+            const int dx[] = {-1, 0, 1, 0};
+            const int dy[] = {0, 1, 0, -1};
+
+            for (int d = 0; d < 4; ++d) {
+                int ni = i + dx[d];
+                int nj = j + dy[d];
+                if (ni >= 0 && ni < H && nj >= 0 && nj < W && !visited[ni][nj]) {
+                    visited[ni][nj] = true;
+                    pq.emplace(A[ni][nj], ni * W + nj);
+                }
+            }
+
+            // Continue draining for same or lower elevation (flood fill style)
+            if (!pq.empty() && pq.top().first <= year) {
+                elev = pq.top().first;
+                pos = pq.top().second;
+                pq.pop();
+            } else {
+                break;
+            }
+        } while (elev <= year);
+
+        results[year] = remaining;
+    }
+
+    // Fill missing years with previous values
+    for (int y = 1; y <= Y; ++y) {
+        if (results[y] == 0) results[y] = results[y - 1];
+        cout << results[y] << '\n';
+    }
+
+    return 0;
+}

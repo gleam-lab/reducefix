@@ -1,0 +1,59 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+#define ll long long
+
+const ll INF = 1e18;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    ll N, M;
+    cin >> N >> M;
+    vector<ll> A(N);
+    for (ll i = 0; i < N; ++i) {
+        cin >> A[i];
+    }
+
+    // Build the graph
+    vector<vector<pair<ll, ll>>> graph(N);
+    for (ll i = 0; i < M; ++i) {
+        ll u, v, b;
+        cin >> u >> v >> b;
+        u--; v--;
+        graph[u].push_back({v, b});
+        graph[v].push_back({u, b});
+    }
+
+    // Dijkstra's algorithm with custom cost calculation
+    vector<ll> dist(N, INF);
+    dist[0] = A[0]; // Starting node includes its own vertex weight only
+
+    using P = pair<ll, ll>; // (cost, node)
+    priority_queue<P, vector<P>, greater<P>> heap;
+    heap.push({dist[0], 0});
+
+    while (!heap.empty()) {
+        auto [d, u] = heap.top();
+        heap.pop();
+
+        if (d > dist[u]) continue;
+
+        for (auto [v, b] : graph[u]) {
+            ll new_cost = dist[u] + b + A[v]; // path cost to reach v via u
+            if (new_cost < dist[v]) {
+                dist[v] = new_cost;
+                heap.push({dist[v], v});
+            }
+        }
+    }
+
+    // Output results for nodes 2..N
+    for (ll i = 1; i < N; ++i) {
+        cout << dist[i] << " ";
+    }
+    cout << "\n";
+
+    return 0;
+}

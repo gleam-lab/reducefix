@@ -1,0 +1,36 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    int n, q;
+    cin >> n;
+    
+    vector<long long> x(n + 2), p(n + 2);
+    for (int i = 1; i <= n; ++i) cin >> x[i];
+    for (int i = 1; i <= n; ++i) cin >> p[i];
+    
+    // Prefix sum of p
+    vector<long long> sum(n + 2, 0);
+    for (int i = 1; i <= n; ++i) {
+        sum[i] = sum[i - 1] + p[i];
+    }
+
+    cin >> q;
+    while (q--) {
+        long long L, R;
+        cin >> L >> R;
+        
+        // Find first x >= L
+        int left = lower_bound(x.begin() + 1, x.begin() + n + 1, L) - x.data();
+        // Find last x <= R
+        int right = upper_bound(x.begin() + 1, x.begin() + n + 1, R) - x.data() - 1;
+        
+        if (left > right) {
+            cout << 0 << '\n';
+        } else {
+            cout << sum[right] - sum[left - 1] << '\n';
+        }
+    }
+
+    return 0;
+}

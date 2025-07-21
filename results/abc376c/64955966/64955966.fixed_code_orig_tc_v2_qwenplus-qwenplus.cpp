@@ -1,0 +1,37 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+#define ll long long
+
+void solve() {
+    ll N;
+    cin >> N;
+    vector<ll> A(N), B(N - 1);
+
+    for (ll i = 0; i < N; ++i) cin >> A[i];
+    for (ll i = 0; i < N - 1; ++i) cin >> B[i];
+
+    sort(A.begin(), A.end());
+    sort(B.begin(), B.end());
+
+    multiset<ll> toys(A.begin(), A.end());
+
+    // Try to fit the smallest toys into the smallest boxes
+    for (ll i = 0; i < N - 1; ++i) {
+        auto it = toys.lower_bound(B[i]);
+        if (it == toys.end()) {
+            cout << -1 << endl;
+            return;
+        }
+        toys.erase(it);
+    }
+
+    // The remaining toy is the one we need the custom box for
+    cout << *toys.begin() << endl;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    solve();
+}

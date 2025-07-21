@@ -1,0 +1,68 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define rep(i, n) for(int i = 0; i < (n); i++)
+#define all(a) a.begin(), a.end()
+
+using ll = long long;
+
+int n, q, parent[200001];
+vector<int> size(200001, 1);
+
+// Find the root of the vertex v with path compression
+int findRoot(int v) {
+    if (parent[v] == v) return v;
+    parent[v] = findRoot(parent[v]);
+    return parent[v];
+}
+
+// Union by size
+void unite(int u, int v) {
+    int rootU = findRoot(u);
+    int rootV = findRoot(v);
+    if (rootU != rootV) {
+        if (size[rootU] < size[rootV]) swap(rootU, rootV);
+        parent[rootU] = rootV;
+        size[rootV] += size[rootU];
+    }
+}
+
+// Find the k-th largest vertex connected to v
+int kthLargest(int v, int k) {
+    int rootV = findRoot(v);
+    vector<int> adj;
+    for (int i = 1; i <= n; i++) {
+        if (findRoot(i) == rootV && i != v) {
+            adj.push_back(i);
+        }
+    }
+    if (adj.size() < k) return -1;
+    sort(all(adj), greater<int>());
+    return adj[k-1];
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    cin >> n >> q;
+    rep(i, n + 1) {
+        parent[i] = i;
+    }
+
+    while (q--) {
+        int type;
+        cin >> type;
+        if (type == 1) {
+            int u, v;
+            cin >> u >> v;
+            unite(u, v);
+        } else if (type == 2) {
+            int v, k;
+            cin >> v >> k;
+            int result = kthLargest(v, k);
+            cout << result << '\n';
+        }
+    }
+
+    return 0;
+}

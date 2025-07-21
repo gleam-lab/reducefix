@@ -1,0 +1,30 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    int n, q;
+    cin >> n; // Number of elements in x array
+    
+    // Read elements from x array and corresponding p values
+    for (int i = 1; i <= n; ++i) {
+        cin >> x[i]; // Element x[i] from which sum is to be calculated
+    }
+    
+    // Calculate sum using a sorted version of the array
+    vector<int> sumArr(n); // Allocate space for the sum array
+    for (int i = 0; i < n; ++i) { // Copy values to the array initially
+        sumArr[i] = sum[i]; // Use existing values in the sum array for now
+    }
+    
+    // Process each query separately and calculate difference
+    while (q--) {
+        int l, r; // Query elements l and r in sorted order
+        cin >> l >> r; // Read elements to calculate difference
+        // Update sum using lower_bound and upper_bound in sorted order
+        sumArr[r - 1] -= sumArr[l - 1]; // Subtract corresponding elements in sorted order
+        // Output difference if required
+        cout << sumArr[r - 1] - sumArr[l - 1] << endl; // Adjust the output based on requirement
+    }
+    
+    return 0; // Returning 0 for simplicity as this is just a snippet of code
+}

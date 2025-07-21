@@ -1,0 +1,28 @@
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+#define rep(i, n) for (int i = 0; i < (n); ++i)
+#define drep(i, n) for (int i = (n) - 1; i >= 0; --i)
+
+int main() {
+    int n;
+    cin >> n;
+    vector<ll> a(n, 0);
+    rep(i, n) cin >> a[i];
+
+    if (n == 0) return 0;
+
+    vector<ll> dp(n, 0);
+    vector<ll> sum(n, 0);
+
+    dp[0] = a[0];
+    sum[0] = a[0];
+    for (int i = 1; i < n; ++i) {
+        dp[i] = max(dp[i - 1] + a[i], sum[i - 1] + a[i]);
+        sum[i] = max(sum[i - 1], dp[i - 1]);
+    }
+
+    cout << dp[n - 1] << endl;
+
+    return 0;
+}

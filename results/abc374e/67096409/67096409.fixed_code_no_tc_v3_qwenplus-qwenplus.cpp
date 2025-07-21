@@ -1,0 +1,65 @@
+#include <iostream>
+#include <algorithm>
+using namespace std;
+
+typedef struct { int a, p, b, q; } Pattern;
+Pattern A[100];
+long long dp[100][10000];  // dp[i][j] = min cost to make j copies with machine i
+
+int N, X;
+
+// Calculate the minimum cost for machine i to produce 'n' copies
+long long cost(int i, int n) {
+    if (n == 0) return 0;
+    long long d = n / (A[i].a * A[i].b);
+    int rem = n % (A[i].a * A[i].b);
+    return d * A[i].p * A[i].b + dp[i][rem];
+}
+
+// Check if it's possible to make 'n' total copies within budget X
+bool isPossible(int n) {
+    long long totalCost = 0;
+    for (int i = 0; i < N; i++) {
+        totalCost += cost(i, n);
+        if (totalCost > X) return false;
+    }
+    return true;
+}
+
+int main() {
+    cin >> N >> X;
+
+    for (int i = 0; i < N; i++) {
+        int a, p, b, q;
+        cin >> a >> p >> b >> q;
+
+        // Ensure a*q <= b*p (prefer using first option if equal)
+        if (a * q < b * p) {
+            swap(a, b);
+            swap(p, q);
+        }
+
+        A[i] = {a, p, b, q};
+
+        // Initialize DP for this machine
+        dp[i][0] = 0;
+        for (int j = 1; j < a * b; j++) {
+            dp[i][j] = 1e18;  // Set high as default
+            if (j - a >= 0) dp[i][j] = min(dp[i][j], dp[i][j - a] + p);
+            if (j - b >= 0) dp[i][j] = min(dp[i][j], dp[i][j - b] + q);
+        }
+    }
+
+    // Binary search for maximum copies
+    int lo = 0, hi = 1e9;
+    while (lo < hi) {
+        int mid = (lo + hi + 1) / 2;
+        if (isPossible(mid)) {
+            lo = mid;
+        } else {
+            hi = mid - 1;
+        }
+    }
+
+    cout << lo << endl;
+}

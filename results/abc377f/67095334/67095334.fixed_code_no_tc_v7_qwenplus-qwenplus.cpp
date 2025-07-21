@@ -1,0 +1,112 @@
+#include <bits/stdc++.h>
+#define int long long
+
+using namespace std;
+
+void solve() {
+    int n, m;
+    cin >> n >> m;
+
+    set<int> rows, cols;
+    set<int> diag1, diag2;  // diag1: i+j, diag2: i-j
+
+    for (int i = 0; i < m; ++i) {
+        int x, y;
+        cin >> x >> y;
+        rows.insert(x);
+        cols.insert(y);
+        diag1.insert(x + y);
+        diag2.insert(x - y);
+    }
+
+    // Total safe cells = total empty cells not attacked
+    // Start with all empty cells
+    int ans = n * n;
+
+    // Subtract cells attacked by row and column
+    ans -= (rows.size() + cols.size()) * n;
+
+    // Add back the intersections (they were subtracted twice)
+    for (auto r : rows) {
+        for (auto c : cols) {
+            // (r,c) was subtracted twice, add once
+            ans += 1;
+        }
+    }
+
+    // Now handle diagonal attacks (d1: i+j, d2: i-j)
+    auto compute_diag_cells = [&](int d, bool is_sum) -> int {
+        // Calculate how many cells on this diagonal exist in grid
+        // i + j = d or i - j = d
+        if (is_sum) {
+            // i + j = d
+            if (d < 2 || d > 2*n) return 0;
+            if (d <= n+1) return d - 1;
+            else return 2*n + 1 - d;
+        } else {
+            // i - j = d
+            if (d < -(n-1) || d > n-1) return 0;
+            return n - abs(d);
+        }
+    };
+
+    // Process each diagonal from d1: i+j
+    for (auto d : diag1) {
+        int total_on_diag = compute_diag_cells(d, true);
+        int blocked_by_row_or_col = 0;
+
+        // Count intersections with attacked rows
+        for (auto r : rows) {
+            int c = d - r;
+            if (c >= 1 && c <= n) {
+                ++blocked_by_row_or_col;
+            }
+        }
+
+        // Count intersections with attacked columns (not already counted)
+        for (auto c : cols) {
+            int r = d - c;
+            if (r >= 1 && r <= n && !rows.count(r)) {
+                ++blocked_by_row_or_col;
+            }
+        }
+
+        ans -= (total_on_diag - blocked_by_row_or_col);
+    }
+
+    // Process each diagonal from d2: i-j
+    for (auto d : diag2) {
+        int total_on_diag = compute_diag_cell(d, false);
+        int blocked_by_row_or_col = 0;
+
+        // Count intersections with attacked rows
+        for (auto r : rows) {
+            int c = r - d;
+            if (c >= 1 && c <= n) {
+                ++blocked_by_row_or_col;
+            }
+        }
+
+        // Count intersections with attacked columns (not already counted)
+        for (auto c : cols) {
+            int r = c + d;
+            if (r >= 1 && r <= n && !rows.count(r)) {
+                ++blocked_by_row_or_col;
+            }
+        }
+
+        ans -= (total_on_diag - blocked_by_row_or_col);
+    }
+
+    // Subtract cells that are occupied (since they're not empty)
+    ans -= m;
+
+    cout << max(0LL, ans) << "\n";
+}
+
+signed main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    solve();
+    return 0;
+}

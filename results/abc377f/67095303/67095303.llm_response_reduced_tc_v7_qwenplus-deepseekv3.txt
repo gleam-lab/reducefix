@@ -1,0 +1,129 @@
+To fix this code, we need to ensure that the calculation of the number of safe squares is accurate by considering all possible attack lines (rows, columns, and both diagonals) from existing pieces. The initial approach was on the right track but missed some edge cases and had incorrect calculations for the diagonal intersections.
+
+### Approaches
+1. **Identify Attack Lines**: For each existing piece, mark its row, column, and the two diagonals (i+j and i-j) as unsafe.
+2. **Calculate Safe Squares**: The total safe squares are computed by:
+   - Subtracting the squares covered by any row or column from the total grid.
+   - Then, adding back the squares that were subtracted twice (intersections of rows and columns).
+   - Subtract the squares covered by the diagonals, ensuring that we do not double-count any squares already covered by rows or columns.
+   - Use inclusion-exclusion principles to accurately count the unique unsafe squares.
+
+### Solution Code
+```cpp
+#include<bits/stdc++.h>
+#define int long long
+using namespace std;
+
+void solve() {
+    int N, M;
+    cin >> N >> M;
+    set<int> rows, cols, diag1, diag2;
+    for (int i = 0; i < M; ++i) {
+        int a, b;
+        cin >> a >> b;
+        rows.insert(a);
+        cols.insert(b);
+        diag1.insert(a + b);
+        diag2.insert(a - b);
+    }
+
+    int unsafe = 0;
+
+    // Rows and columns contribution
+    unsafe += rows.size() * N;
+    unsafe += cols.size() * N;
+    unsafe -= rows.size() * cols.size();
+
+    // Diagonals contribution
+    for (auto d : diag1) {
+        int min_x = max(1LL, d - N);
+        int max_x = min(N, d - 1);
+        int len = max_x - min_x + 1;
+        unsafe += len;
+    }
+
+    for (auto d : diag2) {
+        int min_x = max(1LL, 1 + d);
+        int max_x = min(N, N + d);
+        int len = max_x - min_x + 1;
+        unsafe += len;
+    }
+
+    // Subtract intersections between rows/columns and diagonals
+    for (auto d : diag1) {
+        // Intersection with rows
+        for (auto r : rows) {
+            int c = d - r;
+            if (1 <= c && c <= N) {
+                unsafe--;
+            }
+        }
+        // Intersection with columns
+        for (auto c : cols) {
+            int r = d - c;
+            if (1 <= r && r <= N) {
+                unsafe--;
+            }
+        }
+    }
+
+    for (auto d : diag2) {
+        // Intersection with rows
+        for (auto r : rows) {
+            int c = r - d;
+            if (1 <= c && c <= N) {
+                unsafe--;
+            }
+        }
+        // Intersection with columns
+        for (auto c : cols) {
+            int r = d + c;
+            if (1 <= r && r <= N) {
+                unsafe--;
+            }
+        }
+    }
+
+    // Add back double subtracted intersections (rows, columns, and diagonals)
+    for (auto d1 : diag1) {
+        for (auto d2 : diag2) {
+            int i = (d1 + d2) / 2;
+            int j = (d1 - d2) / 2;
+            if ((d1 + d2) % 2 == 0 && (d1 - d2) % 2 == 0 && 1 <= i && i <= N && 1 <= j && j <= N) {
+                if (rows.count(i) && cols.count(j)) {
+                    unsafe++;
+                }
+            }
+        }
+    }
+
+    int total = N * N - M;
+    int safe = total - unsafe;
+    cout << safe << endl;
+}
+
+signed main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int _ = 1;
+    while (_--) {
+        solve();
+    }
+    
+    return 0;
+}
+```
+
+### Explanation
+1. **Initialization**: We read the grid size `N` and the number of pieces `M`. We then initialize sets to keep track of rows, columns, and diagonals (both types) that are under attack by the existing pieces.
+2. **Marking Attack Lines**: For each piece, its row, column, and the two diagonals (i+j and i-j) are marked by inserting them into respective sets.
+3. **Calculating Unsafe Squares**: We compute the total unsafe squares by:
+   - Adding squares covered by any row or column.
+   - Adjusting for overlaps where rows and columns intersect.
+   - Adding squares covered by the diagonals.
+   - Subtracting overlaps where diagonals intersect with rows or columns to avoid double counting.
+   - Correcting for any squares that were subtracted more than once by adding back intersections that meet specific conditions.
+4. **Result Calculation**: The total safe squares are then derived by subtracting the unsafe squares and the existing pieces from the total grid squares, `N*N`.
+
+This approach ensures all edge cases are handled, and the solution efficiently computes the safe squares using set operations and inclusion-exclusion principles.

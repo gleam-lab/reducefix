@@ -1,0 +1,53 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <climits>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int n, k;
+    cin >> n >> k;
+    vector<int> A(n);
+    for (int i = 0; i < n; ++i) {
+        cin >> A[i];
+    }
+
+    // We need to remove K elements such that the remaining array has minimum (max - min)
+    // Since we can only remove elements and not reorder them,
+    // the problem reduces to finding a subsequence of length (n-K) with minimal (max - min)
+
+    // Let's try all windows of size (n-K) in the sorted array
+    // For each window, check if its elements appear in A as a subsequence
+
+    vector<int> sorted_A = A;
+    sort(sorted_A.begin(), sorted_A.end());
+
+    int window_size = n - k;
+    long long min_diff = LLONG_MAX;
+
+    for (int i = 0; i + window_size <= n; ++i) {
+        // We have a window [sorted_A[i], sorted_A[i+window_size-1]]
+        int low_val = sorted_A[i];
+        int high_val = sorted_A[i + window_size - 1];
+
+        // Check if these values form a valid subsequence in original array
+        // That is, we can find window_size elements in A, in order, within this range
+
+        int count = 0;
+        for (int j = 0; j < n && count < window_size; ++j) {
+            if (A[j] >= low_val && A[j] <= high_val) {
+                count++;
+            }
+        }
+
+        if (count == window_size) {
+            min_diff = min(min_diff, 1LL * (high_val - low_val));
+        }
+    }
+
+    cout << min_diff << endl;
+    return 0;
+}

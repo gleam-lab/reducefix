@@ -1,0 +1,29 @@
+#include <iostream>
+using namespace std;
+
+int main() {
+    int N;
+    string S;
+    cin >> N;
+    cin >> S;
+
+    int wins = 0;
+    char winmove = 'R'; // Initially, the winning move for 'R' is 'P', 'P' for 'S', 'S' for 'R'
+
+    for (int i = 0; i < N; i++) {
+        if (S[i] == 'R') {
+            winmove = 'P'; // If the opponent plays 'R', the winning move is 'P'
+        } else if (S[i] == 'P') {
+            winmove = 'S'; // If the opponent plays 'P', the winning move is 'S'
+        } else if (S[i] == 'S') {
+            winmove = 'R'; // If the opponent plays 'S', the winning move is 'R'
+        }
+
+        // Check if the current winning move is different from the previous one
+        if (winmove != 'R' && winmove != S[i]) { // The condition is specific to 'R' vs 'P' and 'S' vs 'R'
+            wins++; // Increment wins if the move changes from 'R' to 'P' or from 'S' to 'R'
+        }
+    }
+
+    cout << wins << endl; // Output the number of wins
+}

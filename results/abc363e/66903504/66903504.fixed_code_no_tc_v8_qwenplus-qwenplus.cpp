@@ -1,0 +1,63 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+using ll = int64_t;
+const int INF = 1000000001;
+
+#define rep(i, n) for (int i = 0; i < (int)n; ++i)
+#define all(x) x.begin(), x.end()
+
+int dx[] = {1, -1, 0, 0};
+int dy[] = {0, 0, 1, -1};
+
+int main() {
+    cin.tie(0)->sync_with_stdio(0);
+
+    int H, W, Y;
+    cin >> H >> W >> Y;
+    vector<vector<int>> A(H, vector<int>(W));
+    rep(i, H) rep(j, W) cin >> A[i][j];
+
+    // Initialize a visited matrix to track land still above water
+    vector<vector<bool>> alive(H, vector<bool>(W, true));
+
+    // Prepare queues for multi-level BFS based on elevation
+    vector<queue<pair<int, int>>> q(Y + 2);  // up to Y+1 years
+
+    // Mark borders as initially submerged
+    rep(i, H) {
+        rep(j, W) {
+            if (i == 0 || i == H - 1 || j == 0 || j == W - 1) {
+                alive[i][j] = false;
+                if (A[i][j] <= Y) {
+                    q[A[i][j]].push({i, j});
+                }
+            }
+        }
+    }
+
+    int remaining = H * W;
+    remaining -= (H * 2 + W * 2 - 4);  // subtract border cells
+
+    // Multi-source BFS over time
+    for (int year = 1; year <= Y; ++year) {
+        queue<pair<int, int>> current_q = q[year];
+        while (!current_q.empty()) {
+            auto [x, y] = current_q.front(); current_q.pop();
+
+            for (int d = 0; d < 4; ++d) {
+                int nx = x + dx[d], ny = y + dy[d];
+                if (nx >= 0 && nx < H && ny >= 0 && ny < W && alive[nx][ny]) {
+                    int h = A[nx][ny];
+                    if (h <= year) {
+                        alive[nx][ny] = false;
+                        remaining--;
+                        q[h].push({nx, ny});
+                    }
+                }
+            }
+        }
+
+        cout << remaining << '\n';
+    }
+}

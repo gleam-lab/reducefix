@@ -1,0 +1,75 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define rep(i,n) for(long long i=0;i<n;i++)
+using ll = long long;
+
+ll compute_min_cost(ll a, ll b, ll p, ll q, ll required) {
+    // We want to buy at least 'required' number of items with minimum cost
+    // using either (a,p) or (b,q)
+    
+    // First find the LCM of a and b to limit our DP range
+    ll g = gcd(a, b);
+    ll lcm = a / g * b;
+
+    // dp[i]: minimum cost to get exactly i items
+    vector<ll> dp(lcm + 1, 1e18);
+    dp[0] = 0;
+    
+    for (ll i = 0; i <= lcm; i++) {
+        if (i + a <= lcm) dp[i + a] = min(dp[i + a], dp[i] + p);
+        if (i + b <= lcm) dp[i + b] = min(dp[i + b], dp[i] + q);
+        
+        // Optimization: early termination if we can already satisfy requirement
+        if (dp[i] == 1e18) continue;  // skip unreachable states
+    }
+
+    // For values beyond lcm, use periodicity property
+    ll full_cycles = required / lcm;
+    ll remainder = required % lcm;
+    
+    ll min_cost = 1e18;
+    // Check all values >= remainder to handle cases where more than needed is bought
+    for (ll i = remainder; i <= lcm; i++) {
+        min_cost = min(min_cost, dp[i] + full_cycles * dp[lcm]);
+    }
+    
+    return min_cost;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+    
+    ll n, x;
+    cin >> n >> x;
+    
+    vector<ll> a(n), p(n), b(n), q(n);
+    for (ll i = 0; i < n; i++) {
+        cin >> a[i] >> p[i] >> b[i] >> q[i];
+    }
+    
+    // Binary search on the answer (number of items that can be bought)
+    ll left = 0, right = 1e6;  // Adjust this if needed based on constraints
+    ll answer = 0;
+    
+    while (left <= right) {
+        ll mid = (left + right) / 2;
+        ll total_cost = 0;
+        
+        for (ll i = 0; i < n; i++) {
+            ll cost = compute_min_cost(a[i], b[i], p[i], q[i], mid);
+            total_cost += cost;
+            if (total_cost > x) break;
+        }
+        
+        if (total_cost <= x) {
+            answer = mid;
+            left = mid + 1;
+        } else {
+            right = mid - 1;
+        }
+    }
+    
+    cout << answer << "\n";
+    return 0;
+}

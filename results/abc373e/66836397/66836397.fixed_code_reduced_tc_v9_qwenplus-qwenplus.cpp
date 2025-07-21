@@ -1,0 +1,82 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+#define rep(i, x, limit) for (int i = (x); i < (limit); i++)
+#define all(x) x.begin(), x.end()
+#define rall(x) x.rbegin(), x.rend()
+#define el '\n'
+#define spa ' '
+
+using ll = long long;
+constexpr ll infl = 1LL << 60;
+
+int main() {
+    ll N, M, K;
+    cin >> N >> M >> K;
+    vector<ll> A(N);
+    ll total = 0;
+    rep(i, 0,N) {
+        cin >> A[i];
+        total += A[i];
+    }
+    ll rem = K - total;
+
+    vector<pair<ll, int>> sortedA(N);
+    rep(i,0,N) sortedA[i] = {A[i], i};
+    sort(all(sortedA));
+
+    vector<ll> prefix(N + 1, 0);
+    rep(i,0,N) prefix[i+1] = prefix[i] + sortedA[i].first;
+
+    vector<ll> res(N);
+
+    rep(i,0,N) {
+        ll ai = A[i];
+
+        // Binary search on required additional votes
+        ll low = 0, high = rem;
+        ll ans = -1;
+
+        while (low <= high) {
+            ll mid = (low + high) / 2;
+            ll newAi = ai + mid;
+            ll remAfter = rem - mid;
+
+            // Find how many candidates have strictly more votes than newAi
+            // by finding the first index where A[j] > newAi
+            ll r = upper_bound(all(sortedA), make_pair(newAi, N)) - sortedA.begin();
+
+            // Number of candidates with more votes is N - r
+            if (N - r < M) {
+                ans = mid;
+                high = mid - 1;
+                continue;
+            }
+
+            // We need to ensure that less than M candidates can have >= votes than i
+            // So we try to see if it's possible to block M candidates from surpassing i
+
+            ll needM = M;
+            ll l = max(0LL, r - needM);
+
+            ll cnt = (newAi + 1) * (r - l) - (prefix[r] - prefix[l]);
+
+            if (cnt <= remAfter) {
+                ans = mid;
+                high = mid - 1;
+            } else {
+                low = mid + 1;
+            }
+        }
+
+        res[i] = (ans == -1 ? -1 : ans);
+    }
+
+    rep(i,0,N) {
+        if (i > 0) cout << ' ';
+        cout << res[i];
+    }
+    cout << el;
+
+    return 0;
+}

@@ -1,0 +1,54 @@
+#include<bits/stdc++.h>
+using namespace std;
+
+vector<int> adj[200005];
+
+void dfs(int node, int parent, vector<int>& sz, vector<int>& ans) {
+    sz[node] = 1;
+    for (auto child : adj[node]) {
+        if (child == parent) continue;
+        dfs(child, node, sz, ans);
+        sz[node] += sz[child];
+    }
+    sort(ans.begin(), ans.end());
+    ans.resize(min((int)ans.size(), 10));
+}
+
+int getKthLargest(int node, int k, vector<int>& sz, vector<vector<int>>& dp) {
+    if (dp[node][k] != -1) return dp[node][k];
+    int l = 0, r = adj[node].size() - 1;
+    while (l <= r) {
+        int mid = (l + r) / 2;
+        if (sz[adj[node][mid]] >= k) {
+            dp[node][k] = adj[node][mid];
+            l = mid + 1;
+        } else {
+            r = mid - 1;
+        }
+    }
+    return dp[node][k];
+}
+
+int main() {
+    int n, q;
+    cin >> n >> q;
+    for (int i = 0; i < n - 1; ++i) {
+        int u, v;
+        cin >> u >> v;
+        adj[u].push_back(v);
+        adj[v].push_back(u);
+    }
+    vector<int> sz(n + 1), ans(n + 1);
+    vector<vector<int>> dp(n + 1, vector<int>(11, -1));
+    dfs(1, -1, sz, ans);
+    for (int i = 0; i < q; ++i) {
+        int type, v, k;
+        cin >> type >> v >> k;
+        if (type == 1) {
+            // Handle union operation if needed, but not necessary here as we only need to maintain connectivity
+        } else {
+            cout << getKthLargest(v, k, sz, dp) << '\n';
+        }
+    }
+    return 0;
+}

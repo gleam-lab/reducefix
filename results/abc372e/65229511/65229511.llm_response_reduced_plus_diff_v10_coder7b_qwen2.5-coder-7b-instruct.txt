@@ -1,0 +1,115 @@
+To solve this problem efficiently, we need to handle both adding edges and querying the k-th largest connected vertex for each node. Using a union-find structure along with sets to maintain the connections can help manage the operations effectively.
+
+### Key Points:
+1. **Union-Find Data Structure**: This will help in managing connected components efficiently.
+2. **Sets for Connected Vertices**: For each component, maintain a set of connected vertices which allows us to quickly insert and remove vertices while also maintaining sorted order.
+
+### Steps to Fix the Code:
+1. **Union-Find Initialization**: Initialize the union-find structure with the appropriate number of components.
+2. **Union Operation**: When adding an edge, union the two components containing the endpoints of the edge. Merge the smaller set into the larger set to keep the height balanced.
+3. **Query Operation**: For each query, find the root of the component containing the queried vertex and retrieve the k-th largest element from the corresponding set.
+
+### Optimizations:
+1. **Lazy Union**: Instead of immediately updating ranks during union, do so only when necessary.
+2. **Path Compression**: During find operations, flatten the structure to make future operations faster.
+
+### Corrected Code:
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+#define rep(i, n) for(int i=0;i<(n);i++)
+#define all(a) a.begin(), a.end()
+#define rall(a) a.rbegin(), a.rend()
+using ll = long long;
+using pi = pair<int, int>;
+const int di[] = {1, -1, 0, 0};
+const int dj[] = {0, 0, 1, -1};
+const int INF = 1e9;
+
+struct UnionFind {
+    vector<int> parent, rank, size;
+    UnionFind(int n) : parent(n), rank(n, 0), size(n, 1) {
+        iota(all(parent), 0);
+    }
+
+    int findRoot(int x) {
+        if (parent[x] != x) 
+            parent[x] = findRoot(parent[x]);
+        return parent[x];
+    }
+
+    bool unite(int x, int y) {
+        int rx = findRoot(x), ry = findRoot(y);
+        if (rx == ry) return false;
+        if (rank[rx] < rank[ry]) {
+            parent[rx] = ry;
+            size[ry] += size[rx];
+        } else {
+            parent[ry] = rx;
+            size[rx] += size[ry];
+            if (rank[rx] == rank[ry]) 
+                rank[rx]++;
+        }
+        return true;
+    }
+
+    int getComponentSize(int x) {
+        return size[findRoot(x)];
+    }
+};
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int n, q;
+    cin >> n >> q;
+    UnionFind uf(n);
+    vector<set<int>> cnt(n);
+    rep(i, n) cnt[i].insert(i + 1);
+
+    vector<int> ans;
+    rep(qi, q) {
+        int com;
+        cin >> com;
+        if (com == 1) {
+            int u, v;
+            cin >> u >> v;
+            u--; v--;
+            int ru = uf.findRoot(u), rv = uf.findRoot(v);
+            if (ru != rv) {
+                if (cnt[ru].size() < cnt[rv].size())
+                    swap(ru, rv);
+                uf.unite(ru, rv);
+                int rnew = uf.findRoot(ru), rold = (rnew == ru ? rv : ru);
+                for (int x : cnt[rv])
+                    cnt[rnew].insert(x);
+                cnt[rold].clear();
+            }
+        }
+        if (com == 2) {
+            int v, k;
+            cin >> v >> k;
+            v--;
+            if (cnt[uf.findRoot(v)].size() < k) 
+                ans.push_back(-1);
+            else {
+                auto it = cnt[uf.findRoot(v)].rbegin();
+                advance(it, k - 1);
+                ans.push_back(*it);
+            }
+        }
+    }
+
+    for (auto x : ans) cout << x << endl;
+
+    return 0;
+}
+```
+
+### Explanation:
+1. **Union-Find Initialization**: We initialize the union-find structure with each vertex as its own parent.
+2. **Union Operation**: When unifying two components, we merge the smaller set into the larger one to keep the tree flat.
+3. **Query Operation**: For each query, we find the root of the component and fetch the k-th largest element using the properties of the set.
+
+This approach ensures that both union and find operations are efficient, making the solution suitable for large inputs within the given constraints.

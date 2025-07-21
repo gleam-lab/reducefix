@@ -1,0 +1,133 @@
+To fix this code, we need to address the following issues:
+1. **Understanding the Problem**: The problem requires counting the number of empty squares where a new piece can be placed without being captured by any existing pieces. A piece can capture along rows, columns, and the two diagonals (i+j and i-j).
+2. **Initial Approach**: The initial code attempts to calculate the safe squares by subtracting the unsafe squares (those under attack by existing pieces) from the total squares. It uses sets to track rows, columns, and diagonals under attack.
+3. **Issues in the Code**:
+   - **Diagonal Calculations**: The initial code incorrectly calculates the number of safe squares by considering the diagonals separately without accounting for overlaps between different diagonals and rows/columns.
+   - **Efficiency**: The nested loops over diagonals and rows/columns lead to an O(M^2) complexity, which is acceptable for M up to 10^3 but can be optimized.
+   - **Overcounting**: The initial approach might overcount or undercount squares that are unsafe due to multiple conditions (e.g., a square is in both a row and a diagonal under attack).
+
+### Fixed Approach
+1. **Total Squares**: The total number of squares is `N * N`.
+2. **Unsafe Squares**: A square is unsafe if it lies in any row, column, or diagonal that is under attack by existing pieces.
+3. **Inclusion-Exclusion Principle**: To avoid overcounting, we use inclusion-exclusion to calculate the total unsafe squares:
+   - Sum of squares under attack in rows, columns, and diagonals.
+   - Subtract squares counted in the intersections of rows and columns, rows and diagonals, columns and diagonals.
+   - Add back squares counted in all three (rows, columns, and diagonals).
+
+### Solution Code
+```cpp
+#include<bits/stdc++.h>
+#define int long long
+using namespace std;
+
+void solve() {
+    int N, M;
+    cin >> N >> M;
+    set<int> rows, cols, diag1, diag2;
+    for (int i = 0; i < M; ++i) {
+        int a, b;
+        cin >> a >> b;
+        rows.insert(a);
+        cols.insert(b);
+        diag1.insert(a + b);
+        diag2.insert(a - b);
+    }
+
+    int unsafe = 0;
+
+    // Rows and columns
+    unsafe += rows.size() * N;
+    unsafe += cols.size() * N;
+    unsafe -= rows.size() * cols.size(); // Intersection of rows and columns
+
+    // Diagonals (i+j)
+    for (auto d : diag1) {
+        int min_i = max(1LL, d - N);
+        int max_i = min(N, d - 1);
+        if (min_i > max_i) continue;
+        unsafe += (max_i - min_i + 1);
+    }
+
+    // Diagonals (i-j)
+    for (auto d : diag2) {
+        int min_i = max(1LL, 1 + d);
+        int max_i = min(N, N + d);
+        if (min_i > max_i) continue;
+        unsafe += (max_i - min_i + 1);
+    }
+
+    // Subtract intersections of rows and diag1
+    for (auto r : rows) {
+        for (auto d : diag1) {
+            int c = d - r;
+            if (1 <= c && c <= N) {
+                unsafe--;
+            }
+        }
+    }
+
+    // Subtract intersections of cols and diag1
+    for (auto c : cols) {
+        for (auto d : diag1) {
+            int r = d - c;
+            if (1 <= r && r <= N) {
+                unsafe--;
+            }
+        }
+    }
+
+    // Subtract intersections of rows and diag2
+    for (auto r : rows) {
+        for (auto d : diag2) {
+            int c = r - d;
+            if (1 <= c && c <= N) {
+                unsafe--;
+            }
+        }
+    }
+
+    // Subtract intersections of cols and diag2
+    for (auto c : cols) {
+        for (auto d : diag2) {
+            int r = d + c;
+            if (1 <= r && r <= N) {
+                unsafe--;
+            }
+        }
+    }
+
+    // Add back intersections of rows, cols, and diag1 or diag2 (triple intersections)
+    for (auto r : rows) {
+        for (auto c : cols) {
+            if (diag1.find(r + c) != diag1.end()) {
+                unsafe++;
+            }
+            if (diag2.find(r - c) != diag2.end()) {
+                unsafe++;
+            }
+        }
+    }
+
+    int total = N * N;
+    int safe = total - unsafe + M; // Adding M because the existing pieces' squares are already counted in unsafe but they are not empty
+    cout << safe << endl;
+}
+
+signed main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+    solve();
+    return 0;
+}
+```
+
+### Explanation
+1. **Reading Input**: The code reads the grid size `N` and the number of existing pieces `M`, followed by their positions.
+2. **Tracking Unsafe Areas**: Sets are used to store rows, columns, and diagonals under attack by existing pieces.
+3. **Calculating Unsafe Squares**: The unsafe squares are calculated by:
+   - Counting squares in attacked rows and columns, adjusting for overlaps.
+   - Adding squares in attacked diagonals (`i+j` and `i-j`).
+   - Adjusting for overlaps between rows/columns and diagonals using the inclusion-exclusion principle.
+4. **Final Safe Squares**: The total safe squares are derived by subtracting the unsafe squares from the total squares and adding back the positions of existing pieces (since they are empty but counted in unsafe squares).
+
+This approach ensures that all overlaps are correctly accounted for, providing an accurate count of safe squares where a new piece can be placed.

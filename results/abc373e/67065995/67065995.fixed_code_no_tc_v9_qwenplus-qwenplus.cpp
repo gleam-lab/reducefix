@@ -1,0 +1,62 @@
+#include <bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+#define all(x) (x).begin(), (x).end()
+
+int main() {
+    ios_base::sync_with_stdio(0);
+    cin.tie(0);
+    int n, m;
+    ll k;
+    cin >> n >> m >> k;
+    vector<ll> a(n);
+    for (int i = 0; i < n; ++i) {
+        cin >> a[i];
+    }
+
+    vector<int> ord(n);
+    iota(all(ord), 0);
+    sort(all(ord), [&](int i, int j) { return a[i] < a[j]; });
+    vector<ll> sorted_a = a;
+    sort(all(sorted_a));
+
+    vector<ll> prefix(n + 1);
+    for (int i = 0; i < n; ++i) {
+        prefix[i + 1] = prefix[i] + sorted_a[i];
+    }
+
+    vector<ll> res(n, -1);
+
+    for (int idx = 0; idx < n; ++idx) {
+        int i = ord[idx]; // original index
+        ll ai = a[i];
+
+        ll low = 0, high = k + 1;
+        while (low <= high) {
+            ll mid = (low + high) / 2;
+            ll target = ai + mid;
+
+            // Find how many candidates have votes > target
+            // using binary search on the sorted array
+            int pos = lower_bound(sorted_a.begin(), sorted_a.end(), target + 1) - sorted_a.begin();
+            int stronger = n - pos;
+
+            if (stronger >= m) {
+                // Not enough to guarantee top M
+                low = mid + 1;
+            } else {
+                high = mid - 1;
+            }
+        }
+
+        // Now check if it's possible to achieve this within remaining votes
+        if (low <= k) {
+            res[i] = low;
+        } else {
+            res[i] = -1;
+        }
+    }
+
+    for (auto x : res) cout << x << " ";
+    cout << "\n";
+}

@@ -1,0 +1,47 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+
+#define ll long long
+
+const int N = 1e3 + 5;
+
+ll n, m;
+vector<pair<int, int>> pieces;
+
+int main() {
+    cin >> n >> m;
+    for(int i = 0; i < m; ++i) {
+        int a, b;
+        cin >> a >> b;
+        pieces.push_back({a, b});
+    }
+
+    set<int> rows, cols, diagonals1, diagonals2;
+    for(auto [r, c] : pieces) {
+        rows.insert(r);
+        cols.insert(c);
+        diagonals1.insert(r + c);
+        diagonals2.insert(r - c);
+    }
+
+    ll total_squares = n * n;
+    ll occupied_by_rows = rows.size() * n;
+    ll occupied_by_cols = cols.size() * n;
+    ll occupied_by_diagonals1 = diagonals1.size() * n;
+    ll occupied_by_diagonals2 = diagonals2.size() * n;
+
+    ll double_counted = 0;
+    for(auto [r, c] : pieces) {
+        if(rows.count(r) > 1) ++double_counted;
+        if(cols.count(c) > 1) ++double_counted;
+        if(diagonals1.count(r + c) > 1) ++double_counted;
+        if(diagonals2.count(r - c) > 1) ++double_counted;
+    }
+    double_counted /= 2;
+
+    ll result = total_squares - occupied_by_rows - occupied_by_cols - occupied_by_diagonals1 - occupied_by_diagonals2 + double_counted;
+    cout << result << endl;
+
+    return 0;
+}

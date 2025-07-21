@@ -1,0 +1,29 @@
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+#define rep(i, n) for (int(i) = 0; (i) < (n); ++(i))
+
+int main() {
+    int n;
+    cin >> n;
+    vector<ll> a(n);
+    rep(i, n) cin >> a[i];
+
+    if (n == 1) {
+        cout << a[0] << endl;
+        return 0;
+    }
+
+    // dp[i]: maximum experience up to and including i-th enemy
+    vector<ll> dp(n);
+    dp[0] = a[0];
+    dp[1] = max(a[0] + 2 * a[1], 2 * a[0] + a[1]);
+
+    for (int i = 2; i < n; ++i) {
+        dp[i] = max(dp[i - 2] + 2 * a[i], dp[i - 1] + a[i]);
+    }
+
+    cout << dp[n - 1] << endl;
+
+    return 0;
+}

@@ -1,0 +1,47 @@
+#include <bits/stdc++.h>
+using namespace std;
+int main(){
+    int N;
+    cin >> N;
+    string S;
+    cin >> S;
+    char p = S[0]; // This will hold the character taken from string S for each hand
+    int total = 0;
+
+    for (int i = 0; i < N; ++i) {
+        char c = S[i]; // Current character in string S
+        int score = 0;
+        char winChar = 0;
+
+        // Determine the winning character
+        if (c == 'R') {
+            winChar = 'S';
+        } else if (c == 'P') {
+            winChar = 'R';
+        } else { // c == 'S'
+            winChar = 'P';
+        }
+
+        // If the current character is the same as the character from the first round, no score is earned
+        if (p == c) {
+            continue;
+        }
+
+        // If there's a win, increase the score
+        if (p == winChar) {
+            score = 1;
+        }
+
+        // Print the character used for the win
+        cout << p << " vs " << c << ": " << (score ? "Win" : "Lose") << endl;
+
+        // Update the total score
+        total += score;
+
+        // Update the character for the next round
+        p = (winChar == 'R') ? 'P' : 'P'; // If last win was with S, next round is with P, vice versa
+    }
+
+    // Output the total score
+    cout << "Total score: " << total << endl;
+}

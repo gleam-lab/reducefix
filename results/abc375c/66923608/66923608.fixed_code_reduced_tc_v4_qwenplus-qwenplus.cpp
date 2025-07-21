@@ -1,0 +1,37 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+double euclid(double x1, double y1, double x2, double y2) {
+    return sqrt((x1 - x2) * (x1 - x2) + (y1 - y2) * (y1 - y2));
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int n;
+    cin >> n;
+
+    vector<double> x(n), y(n);
+
+    for (int i = 0; i < n; ++i) {
+        cin >> x[i] >> y[i];
+    }
+
+    double total = 0.0;
+
+    // From origin to first point
+    total += euclid(0.0, 0.0, x[0], y[0]);
+
+    // Between all consecutive points
+    for (int i = 0; i < n - 1; ++i) {
+        total += euclid(x[i], y[i], x[i + 1], y[i + 1]);
+    }
+
+    // From last point back to origin
+    total += euclid(x[n - 1], y[n - 1], 0.0, 0.0);
+
+    cout << fixed << setprecision(15) << total << endl;
+
+    return 0;
+}

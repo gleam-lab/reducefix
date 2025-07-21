@@ -1,0 +1,101 @@
+
+The problem is a simulation of bomb explosions in a grid which destroys walls. The main challenge is to efficiently handle the destruction of walls based on the given queries, as both the grid size and the number of queries can become quite large.
+
+Here's a step-by-step approach to solving the problem:
+
+1. **Initialization**: 
+   - Create a grid initialized with walls (`true` for all cells).
+   - Keep a count of the total number of walls, which is `H * W` at the beginning.
+
+2. **Processing Queries**:
+   - For each query, read the coordinates `(R_q, C_q)`.
+   - If there's a wall at `(R_q, C_q)`, destroy it and decrement the wall count.
+   - If there's no wall at `(R_q, C_q)`, simulate the explosion:
+     - Check upwards, downwards, left, and right from `(R_q, C_q)`.
+     - For each direction, find the first wall and destroy it.
+     - To do this efficiently, use a breadth-first search (BFS) from the point of explosion. For each direction, start BFS from the point `(R_q, C_q)` and move in that direction until you hit the boundary of the grid or a wall without any gaps.
+
+3. **Efficiency Considerations**:
+   - Instead of checking each cell individually when a bomb is placed, use BFS to simulate the explosion in the four directions simultaneously. This reduces the number of operations compared to a naive approach.
+   - Keep track of the number of walls destroyed and subtract this from the total number of walls to get the count of remaining walls.
+
+4. **Edge Cases**:
+   - Ensure the BFS does not go out of bounds of the grid.
+   - Handle cases where there are no walls in the direction of the explosion.
+
+5. **Output**:
+   - After processing all queries, output the number of remaining walls.
+
+Here's a revised version of the code with a more efficient BFS approach:
+
+```cpp
+#include <iostream>
+#include <vector>
+#include <queue>
+
+using namespace std;
+
+struct Point {
+    int x, y;
+};
+
+const int MAXN = 4e5 + 5;
+
+vector<Point> directions = {
+    {0, -1}, // left
+    {0, 1},  // right
+    {-1, 0}, // up
+    {1, 0}   // down
+};
+
+int H, W, Q;
+vector<vector<bool>> grid(MAXN, vector<bool>(MAXN, true));
+int wallCount = 0;
+
+void destroyWalls(int r, int c, int dr, int dc) {
+    queue<Point> q;
+    q.push({r, c});
+    grid[r][c] = false;
+    wallCount--;
+    while (!q.empty()) {
+        Point current = q.front();
+        q.pop();
+        for (Point dir : directions) {
+            int nx = current.x + dr * dir.x;
+            int ny = current.y + dc * dir.y;
+            if (nx < 0 || nx >= H || ny < 0 || ny >= W || !grid[nx][ny]) continue;
+            if (ny + dc > 0 && ny + dc < W && grid[nx][ny] && !grid[nx][ny + dc]) {
+                q.push({nx, ny});
+                grid[nx][ny] = false;
+                wallCount--;
+            }
+            if (nx + dr > 0 && nx + dr < H && grid[nx][ny] && !grid[nx + dr][ny]) {
+                q.push({nx, ny});
+                grid[nx][ny] = false;
+                wallCount--;
+            }
+        }
+    }
+}
+
+int main() {
+    cin >> H >> W >> Q;
+    for (int i = 0; i < H; ++i) {
+        for (int j = 0; j < W; ++j) {
+            cin >> grid[i][j];
+            if (grid[i][j]) wallCount++;
+        }
+    }
+    for (int i = 0; i < Q; ++i) {
+        int r, c;
+        cin >> r >> c;
+        if (!grid[r - 1][c - 1]) {
+            destroyWalls(r - 1, c - 1, 0, 0);
+        }
+    }
+    cout << wallCount << endl;
+    return 0;
+}
+```
+
+This code initializes the grid, processes each query, and destroys walls using BFS. The BFS ensures that all walls in the path of the explosion are destroyed efficiently.

@@ -1,0 +1,109 @@
+To solve this problem correctly, we need to simulate the rising sea levels and keep track of which parts of the island remain above water after each rise. The key steps involve:
+
+1. Reading the input grid.
+2. For each sea level rise from 1 to Y, determine which sections of the island will be submerged.
+3. Using BFS (Breadth-First Search) to propagate the submersion effect to connected sections.
+4. Counting the remaining land areas after each sea level rise.
+
+Here's the corrected implementation:
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+const int dx[] = {-1, 1, 0, 0};
+const int dy[] = {0, 0, -1, 1};
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int H, W, Y;
+    cin >> H >> W >> Y;
+
+    vector<vector<int>> A(H, vector<int>(W));
+    for (int i = 0; i < H; i++) {
+        for (int j = 0; j < W; j++) {
+            cin >> A[i][j];
+        }
+    }
+
+    // Initialize the island matrix where true means the section is above water
+    vector<vector<bool>> island(H, vector<bool>(W, true));
+
+    // Priority queue to handle sea level rises
+    priority_queue<pair<int, pair<int, int>>, vector<pair<int, pair<int, int>>>, greater<>> pq;
+
+    // Add boundary cells to the queue
+    for (int i = 0; i < H; i++) {
+        for (int j = 0; j < W; j++) {
+            if (i == 0 || i == H - 1 || j == 0 || j == W - 1) {
+                pq.push({A[i][j], {i, j}});
+                island[i][j] = false;
+            }
+        }
+    }
+
+    // Function to perform BFS to mark all connected cells as submerged
+    function<void(int)> bfs = [&](int sea_level) {
+        queue<pair<int, int>> q;
+        vector<vector<bool>> visited(H, vector<bool>(W, false));
+        
+        while (!pq.empty()) {
+            auto [height, pos] = pq.top();
+            pq.pop();
+            
+            if (height > sea_level) break;
+            
+            int x = pos.first, y = pos.second;
+            if (visited[x][y]) continue;
+            visited[x][y] = true;
+            
+            q.push({x, y});
+            
+            while (!q.empty()) {
+                auto [cx, cy] = q.front();
+                q.pop();
+                
+                for (int d = 0; d < 4; d++) {
+                    int nx = cx + dx[d];
+                    int ny = cy + dy[d];
+                    
+                    if (nx < 0 || ny < 0 || nx >= H || ny >= W || visited[nx][ny] || A[nx][ny] > sea_level) continue;
+                    
+                    visited[nx][ny] = true;
+                    q.push({nx, ny});
+                    island[nx][ny] = false;
+                }
+            }
+        }
+    };
+
+    // Process each sea level rise
+    for (int i = 1; i <= Y; i++) {
+        bfs(i);
+        
+        // Count the remaining land areas
+        int ans = 0;
+        for (int j = 0; j < H; j++) {
+            for (int k = 0; k < W; k++) {
+                if (island[j][k]) {
+                    ans++;
+                }
+            }
+        }
+        
+        cout << ans << endl;
+    }
+
+    return 0;
+}
+```
+
+### Explanation:
+1. **Initialization**: We initialize the `island` matrix to mark all sections initially as above water.
+2. **Boundary Cells**: We add all boundary cells to a priority queue based on their elevation.
+3. **BFS Function**: The `bfs` function uses a priority queue to process each cell and its neighbors, marking them as submerged if their elevation is less than or equal to the current sea level.
+4. **Processing Sea Level Rises**: For each sea level rise, we call the `bfs` function to update the `island` matrix. Then, we count the remaining land areas and print the result.
+
+This approach ensures that we efficiently simulate the rising sea levels and correctly count the remaining land areas using BFS.

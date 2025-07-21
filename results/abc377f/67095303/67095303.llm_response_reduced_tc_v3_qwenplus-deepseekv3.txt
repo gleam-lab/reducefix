@@ -1,0 +1,138 @@
+To fix this code, we need to ensure that the calculation of the number of safe squares correctly accounts for all the squares that are under attack by any of the existing pieces. The initial approach had some logical flaws in how it handled the overlapping conditions between different types of attacking lines (rows, columns, and diagonals). The corrected approach involves:
+
+1. **Initial Calculation**: Calculate the total number of squares not in any row, column, or diagonal that is under attack. This is done by considering the safe rows and columns first.
+2. **Adjust for Overlaps**: Subtract the squares that are under attack by any of the diagonals, ensuring we don't double-count squares that are already excluded by rows or columns.
+3. **Diagonal Handling**: For each diagonal, calculate the number of squares that are in the diagonal but not already excluded by rows or columns, and then subtract these from the initial count.
+
+### Approaches
+1. **Rows and Columns**: First, count the safe squares not in any row or column that has an existing piece. This is done by multiplying the number of safe rows by the number of safe columns.
+2. **Diagonals (i + j = d)**: For each diagonal defined by `i + j = d`, calculate the number of squares on this diagonal that are not already under attack by any row or column.
+3. **Diagonals (i - j = d)**: Similarly, for each diagonal defined by `i - j = d`, calculate the number of squares on this diagonal not under attack by any row or column.
+4. **Intersections**: Ensure that intersections between diagonals and rows or columns are correctly accounted for to avoid double-counting.
+
+### Solution Code
+```cpp
+#include<bits/stdc++.h>
+#define int long long
+#define PII pair<int,int>
+#define inf 1e9+7
+
+using namespace std;
+
+void solve() {
+    int N, M;
+    cin >> N >> M;
+    set<int> rows, cols, diag1, diag2;
+    for (int i = 0; i < M; ++i) {
+        int a, b;
+        cin >> a >> b;
+        rows.insert(a);
+        cols.insert(b);
+        diag1.insert(a + b);
+        diag2.insert(a - b);
+    }
+
+    int safe_rows = N - rows.size();
+    int safe_cols = N - cols.size();
+    int ans = safe_rows * safe_cols;
+
+    // For diag1 (i + j = d)
+    for (int d : diag1) {
+        int i_min = max(1LL, d - N);
+        int i_max = min(N, d - 1);
+        int cnt = i_max - i_min + 1;
+
+        set<int> affected_rows;
+        for (int i : rows) {
+            if (d - i >= 1 && d - i <= N) {
+                affected_rows.insert(i);
+            }
+        }
+        set<int> affected_cols;
+        for (int j : cols) {
+            if (d - j >= 1 && d - j <= N) {
+                affected_cols.insert(d - j);
+            }
+        }
+
+        int total_affected = affected_rows.size() + affected_cols.size();
+        for (int i : affected_rows) {
+            if (affected_cols.count(i)) {
+                total_affected--;
+            }
+        }
+
+        cnt -= affected_rows.size();
+        cnt -= affected_cols.size();
+        cnt += total_affected;
+        ans -= cnt;
+    }
+
+    // For diag2 (i - j = d)
+    for (int d : diag2) {
+        int i_min = max(1LL, 1 + d);
+        int i_max = min(N, N + d);
+        int cnt = i_max - i_min + 1;
+
+        set<int> affected_rows;
+        for (int i : rows) {
+            if (i - d >= 1 && i - d <= N) {
+                affected_rows.insert(i);
+            }
+        }
+        set<int> affected_cols;
+        for (int j : cols) {
+            if (j + d >= 1 && j + d <= N) {
+                affected_cols.insert(j + d);
+            }
+        }
+
+        int total_affected = affected_rows.size() + affected_cols.size();
+        for (int i : affected_rows) {
+            if (affected_cols.count(i)) {
+                total_affected--;
+            }
+        }
+
+        cnt -= affected_rows.size();
+        cnt -= affected_cols.size();
+        cnt += total_affected;
+        ans -= cnt;
+    }
+
+    // Now, handle intersections between diag1 and diag2
+    for (int d1 : diag1) {
+        for (int d2 : diag2) {
+            if ((d1 + d2) % 2 != 0) continue;
+            int i = (d1 + d2) / 2;
+            int j = (d1 - d2) / 2;
+            if (i >= 1 && i <= N && j >= 1 && j <= N) {
+                if (!rows.count(i) && !cols.count(j)) {
+                    ans++;
+                }
+            }
+        }
+    }
+
+    cout << ans << endl;
+}
+
+signed main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int _ = 1;
+    // cin >> _;
+    while (_--) {
+        solve();
+    }
+    return 0;
+}
+```
+
+### Explanation
+1. **Initial Calculation**: The total number of safe squares is initially calculated as the product of the number of safe rows and columns.
+2. **Diagonals (i + j = d)**: For each diagonal, we calculate the number of squares on the diagonal that are not already attacked by any row or column. This is done by adjusting the count of squares on the diagonal by subtracting those that are in attacking rows or columns.
+3. **Diagonals (i - j = d)**: Similarly, for each diagonal `i - j = d`, we adjust the count by subtracting squares attacked by rows or columns.
+4. **Intersections**: Finally, we handle intersections between diagonals of type `i + j = d` and `i - j = d` to ensure squares at their intersection are not double-counted.
+
+This approach ensures that all squares under attack are correctly accounted for, and the final count of safe squares is accurate.

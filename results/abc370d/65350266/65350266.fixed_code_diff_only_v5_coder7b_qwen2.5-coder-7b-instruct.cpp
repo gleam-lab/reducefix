@@ -1,0 +1,73 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define rep(i,n) for(int i = 0; i < (n); i++)
+using ll = long long;
+
+int main(void) {
+    int h, w, q;
+    cin >> h >> w >> q;
+    vector<vector<bool>> grid(h, vector<bool>(w, true));
+    int count = h * w;
+    
+    while(q--) {
+        int r, c;
+        cin >> r >> c;
+        r--; c--;
+        
+        if(grid[r][c]) {
+            grid[r][c] = false;
+            count--;
+        } else {
+            bool up = false, down = false, left = false, right = false;
+            
+            // Check up
+            for(int i = r - 1; i >= 0; --i) {
+                if(grid[i][c]) {
+                    grid[i][c] = false;
+                    count--;
+                    up = true;
+                    break;
+                }
+            }
+            
+            // Check down
+            for(int i = r + 1; i < h; ++i) {
+                if(grid[i][c]) {
+                    grid[i][c] = false;
+                    count--;
+                    down = true;
+                    break;
+                }
+            }
+            
+            // Check left
+            for(int j = c - 1; j >= 0; --j) {
+                if(grid[r][j]) {
+                    grid[r][j] = false;
+                    count--;
+                    left = true;
+                    break;
+                }
+            }
+            
+            // Check right
+            for(int j = c + 1; j < w; ++j) {
+                if(grid[r][j]) {
+                    grid[r][j] = false;
+                    count--;
+                    right = true;
+                    break;
+                }
+            }
+            
+            // If no wall was found in any direction, remove the wall at (r, c)
+            if(!up && !down && !left && !right) {
+                grid[r][c] = false;
+                count--;
+            }
+        }
+    }
+    
+    cout << count << endl;
+    return 0;
+}

@@ -1,0 +1,58 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    int n, k;
+    cin >> n >> k;
+    vector<int> A(n);
+    for (int i = 0; i < n; ++i) {
+        cin >> A[i];
+    }
+
+    // We will use a sliding window approach to find the minimum possible value
+    // of (max - min) over all subsequences of length N-K.
+
+    // Since the elements must remain in order, we consider all consecutive segments
+    // of length L = n - k in the array A.
+
+    int L = n - k;
+    deque<int> max_deque, min_deque;
+    int min_range = numeric_limits<int>::max();
+
+    // Process first window
+    for (int i = 0; i < L; ++i) {
+        while (!max_deque.empty() && A[i] >= A[max_deque.back()])
+            max_deque.pop_back();
+        while (!min_deque.empty() && A[i] <= A[min_deque.back()])
+            min_deque.pop_back();
+        max_deque.push_back(i);
+        min_deque.push_back(i);
+    }
+
+    // Slide the window
+    for (int i = L; i < n; ++i) {
+        // Current window result
+        min_range = min(min_range, A[max_deque.front()] - A[min_deque.front()]);
+
+        // Remove elements outside the window
+        while (!max_deque.empty() && max_deque.front() <= i - L)
+            max_deque.pop_front();
+        while (!min_deque.empty() && min_deque.front() <= i - L)
+            min_deque.pop_front();
+
+        // Add new element
+        while (!max_deque.empty() && A[i] >= A[max_deque.back()])
+            max_deque.pop_back();
+        while (!min_deque.empty() && A[i] <= A[min_deque.back()])
+            min_deque.pop_back();
+
+        max_deque.push_back(i);
+        min_deque.push_back(i);
+    }
+
+    // Check last window
+    min_range = min(min_range, A[max_deque.front()] - A[min_deque.front()]);
+    cout << min_range << endl;
+
+    return 0;
+}

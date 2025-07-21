@@ -1,0 +1,41 @@
+#include <iostream>
+#include <vector>
+#include <string>
+#include <set>
+
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+
+    long long N, M;
+    cin >> N >> M;
+
+    set<pair<long long, long long>> positions;
+
+    for(long long i = 0; i < M; ++i) {
+        long long x, y;
+        cin >> x >> y;
+        positions.insert({x, y});
+
+        long long dx[] = {2, 1, -1, -2, -2, -1, 1, 2};
+        long long dy[] = {1, 2, 2, 1, -1, -2, -2, -1};
+
+        for(int j = 0; j < 8; ++j) {
+            long long nx = x + dx[j];
+            long long ny = y + dy[j];
+
+            if(nx > 0 && nx <= N && ny > 0 && ny <= N) {
+                positions.insert({nx, ny});
+            }
+        }
+    }
+
+    long long total_positions = N * N;
+    long long valid_positions = total_positions - positions.size();
+
+    cout << valid_positions << endl;
+
+    return 0;
+}

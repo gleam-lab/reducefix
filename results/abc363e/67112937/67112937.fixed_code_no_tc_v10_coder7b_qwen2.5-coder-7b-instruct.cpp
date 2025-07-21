@@ -1,0 +1,76 @@
+#include <iostream>
+#include <queue>
+#include <vector>
+
+using namespace std;
+
+const int MAXN = 1005;
+
+int H, W, Y;
+int A[MAXN][MAXN];
+bool visited[MAXN][MAXN];
+
+struct Point {
+    int x, y, h;
+    bool operator<(const Point& other) const {
+        return h > other.h;
+    }
+};
+
+int dx[] = {0, 0, 1, -1};
+int dy[] = {1, -1, 0, 0};
+
+void bfs(int level) {
+    queue<Point> q;
+    for (int i = 0; i < H; ++i) {
+        for (int j = 0; j < W; ++j) {
+            if (!visited[i][j] && A[i][j] <= level) {
+                q.push({i, j, A[i][j]});
+                visited[i][j] = true;
+            }
+        }
+    }
+
+    while (!q.empty()) {
+        Point p = q.front();
+        q.pop();
+
+        for (int k = 0; k < 4; ++k) {
+            int nx = p.x + dx[k], ny = p.y + dy[k];
+            if (nx >= 0 && nx < H && ny >= 0 && ny < W && !visited[nx][ny] && A[nx][ny] <= level) {
+                q.push({nx, ny, A[nx][ny]});
+                visited[nx][ny] = true;
+            }
+        }
+    }
+}
+
+int main() {
+    cin >> H >> W >> Y;
+    for (int i = 0; i < H; ++i) {
+        for (int j = 0; j < W; ++j) {
+            cin >> A[i][j];
+        }
+    }
+
+    vector<int> areas(Y);
+    for (int level = 1; level <= Y; ++level) {
+        fill(visited, visited + H, false);
+        bfs(level);
+        int count = 0;
+        for (int i = 0; i < H; ++i) {
+            for (int j = 0; j < W; ++j) {
+                if (!visited[i][j]) {
+                    ++count;
+                }
+            }
+        }
+        areas[level - 1] = count;
+    }
+
+    for (int i = 0; i < Y; ++i) {
+        cout << areas[i] << endl;
+    }
+
+    return 0;
+}

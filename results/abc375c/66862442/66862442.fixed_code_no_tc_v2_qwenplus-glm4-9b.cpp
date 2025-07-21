@@ -1,0 +1,42 @@
+#include <iostream>
+#include <cmath>
+#include <vector>
+
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int N;
+    cin >> N;
+
+    vector<pair<double, double>> points;
+    double originX = 0.0, originY = 0.0;
+
+    for (int i = 0; i < N; ++i) {
+        double x, y;
+        cin >> x >> y;
+        points.emplace_back(x, y);
+    }
+
+    double totalCost = 0.0;
+
+    for (int i = 0; i < N; ++i) {
+        double dx = points[i].first - originX;
+        double dy = points[i].second - originY;
+        totalCost += sqrt(dx * dx + dy * dy);
+        originX = points[i].first;
+        originY = points[i].second;
+    }
+    
+    // Adding the distance back to the origin
+    double dx = originX - 0.0;
+    double dy = originY - 0.0;
+    totalCost += sqrt(dx * dx + dy * dy);
+
+    cout.precision(10);
+    cout << fixed << totalCost << '\n';
+
+    return 0;
+}

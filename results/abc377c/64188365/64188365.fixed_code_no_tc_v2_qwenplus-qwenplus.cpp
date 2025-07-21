@@ -1,0 +1,39 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define rep(i,n) for(int i = 0; i < (n); ++i)
+using ll = long long;
+
+int main() {
+    ll N, M;
+    cin >> N >> M;
+
+    set<pair<ll, ll>> occupied;
+    vector<pair<ll, ll>> deltas = {
+        {2, 1}, {1, 2}, {-1, 2}, {-2, 1},
+        {-2, -1}, {-1, -2}, {1, -2}, {2, -1}
+    };
+
+    for (ll i = 0; i < M; ++i) {
+        ll a, b;
+        cin >> a >> b;
+        // Convert to 0-based indexing
+        a--; b--;
+        occupied.insert({a, b});
+        
+        // Check all 8 possible target squares that this piece can attack
+        for (auto [dx, dy] : deltas) {
+            ll nx = a + dx;
+            ll ny = b + dy;
+            if (nx >= 0 && nx < N && ny >= 0 && ny < N) {
+                // Mark attacked squares as unavailable
+                occupied.insert({nx, ny});
+            }
+        }
+    }
+
+    // Total number of cells: N*N
+    // Subtract the number of occupied or attacked cells
+    cout << (N * N) - (ll)occupied.size() << endl;
+
+    return 0;
+}

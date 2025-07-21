@@ -1,0 +1,26 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define rep(i,n) for(int i = 0; i < (n); ++i)
+using ll = long long;
+
+int main() {
+    long long n, m, a, b;
+    cin >> n >> m;
+    set<pair<ll, ll>> c;
+    rep(i, m) {
+        cin >> a >> b;
+        --a, --b;
+        c.emplace(a, b);
+        rep(dx, 3) {
+            rep(dy, 3) {
+                if (!(dx == 1 && dy == 1) && !(dx == 1 && dy == 2) && !(dx == 2 && dy == 1)) {
+                    ll nx = a + dx * 2, ny = b + dy * 2;
+                    if (nx >= 0 && nx < n && ny >= 0 && ny < n) {
+                        c.emplace(nx, ny);
+                    }
+                }
+            }
+        }
+    }
+    cout << n * n - c.size() << endl;
+}

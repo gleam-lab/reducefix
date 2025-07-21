@@ -1,0 +1,116 @@
+To solve this problem efficiently, we need to handle both adding edges and querying the k-th largest vertex connected to a given vertex. Here's a step-by-step approach to achieve this:
+
+1. **Union-Find Data Structure**: This will help us manage the connectivity of vertices efficiently.
+2. **Sorted Set**: For each component, we will maintain a sorted set of connected vertices to allow quick access to the k-th largest element.
+
+### Steps to Implement
+
+1. **Union-Find Operations**:
+   - Union operation to merge two components.
+   - Find operation to get the root of a component.
+
+2. **Maintain Sorted Sets**:
+   - For each component, use a sorted set to store the connected vertices.
+   - When adding an edge, update the sorted sets of the connected components.
+   - When querying, find the component of the vertex and return the k-th largest element from its sorted set.
+
+### Code Implementation
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+const int MAXN = 200005;
+
+struct DSU {
+    vector<int> parent, rank;
+    vector<set<int>> sets;
+
+    DSU(int n) {
+        parent.resize(n + 1);
+        rank.resize(n + 1, 1);
+        for (int i = 1; i <= n; ++i) {
+            parent[i] = i;
+            sets.push_back({i});
+        }
+    }
+
+    int find(int x) {
+        if (parent[x] != x) {
+            parent[x] = find(parent[x]);
+        }
+        return parent[x];
+    }
+
+    void unite(int x, int y) {
+        int px = find(x), py = find(y);
+        if (px == py) return;
+
+        if (rank[px] > rank[py]) {
+            swap(px, py);
+        }
+
+        parent[px] = py;
+        rank[py] += rank[px];
+
+        // Merge sets
+        auto &s1 = sets[px], &s2 = sets[py];
+        s2.insert(s1.begin(), s1.end());
+        s1.clear();
+        sets.erase(sets.begin() + px);
+    }
+
+    const set<int>& getSet(int x) {
+        return sets[find(x)];
+    }
+};
+
+int main() {
+    ios::sync_with_stdio(false); cin.tie(nullptr);
+
+    int n, q;
+    cin >> n >> q;
+
+    DSU dsu(n);
+
+    while (q--) {
+        int op, u, v;
+        cin >> op >> u >> v;
+
+        if (op == 1) {
+            dsu.unite(u, v);
+        } else {
+            int root = dsu.find(v);
+            const auto& s = dsu.getSet(root);
+            if (v > n || s.size() < u) {
+                cout << "-1\n";
+            } else {
+                auto it = prev(s.upper_bound(v));
+                cout << *it << "\n";
+            }
+        }
+    }
+
+    return 0;
+}
+```
+
+### Explanation
+
+1. **DSU Initialization**:
+   - Each vertex starts as its own parent.
+   - We maintain a sorted set for each component.
+
+2. **Find Operation**:
+   - Path compression to speed up future operations.
+
+3. **Unite Operation**:
+   - Union by rank to keep the tree flat.
+   - Merge the sorted sets of the two components.
+
+4. **Query Operation**:
+   - Find the component of the given vertex.
+   - Check if the component has at least `k` elements.
+   - Return the k-th largest element using the sorted set.
+
+This solution ensures efficient handling of both union and query operations, making it suitable for large inputs within the given constraints.

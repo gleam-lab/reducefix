@@ -1,0 +1,38 @@
+#include<bits/stdc++.h>
+using namespace std;
+using ll=long long;
+map<ll,vector<ll>>graph;
+map<ll,bool>seen;
+const ll inf=1LL<<60;
+ll ans=inf;
+bool vis[10001]; // To keep track of visited nodes
+
+void dfs(ll n,ll hen){
+    seen[n]=true;
+    vis[n] = true;
+    for(auto x:graph[n]){
+        if(x==1){
+            if(hen<ans){
+                ans = hen;
+            }
+        } else if(!seen[x] && !vis[x]){ // Check if x is not visited and not marked as visited
+            dfs(x, hen + 1);
+        }
+    }
+    seen[n] = false;
+    vis[n] = false; // Unmark the node
+}
+
+int main(){
+    ll n,m;
+    cin>>n>>m;
+    for(int i=0;i<m;i++){
+        ll a,b;
+        cin>>a>>b;
+        graph[a].push_back(b);
+        graph[b].push_back(a); // Assuming undirected graph
+    }
+    dfs(1,0);
+    if(ans==inf)cout<<-1<<endl;
+    else cout<<ans<<endl;
+}

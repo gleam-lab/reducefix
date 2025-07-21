@@ -1,0 +1,64 @@
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+#define rep(i, n) for (ll i = 0; i < (ll)(n); i++)
+#define rep2(i, s, n) for (ll i = (s); i < (ll)(n); i++)
+#define all(x) x.begin(), x.end()
+template<typename T> inline bool chmax(T &a, T b) { return ((a < b) ? (a = b, true) : (false)); }
+template<typename T> inline bool chmin(T &a, T b) { return ((a > b) ? (a = b, true) : (false)); }
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+    cout.tie(nullptr);
+
+    int H, W, Q;
+    cin >> H >> W >> Q;
+
+    vector<vector<bool>> grid(H, vector<bool>(W));
+    vector<multiset<int>> rows(H), cols(W);
+
+    auto destroyWall = [&](int r, int c) {
+        if (!grid[r][c]) {
+            grid[r][c] = true;
+            rows[r].insert(c);
+            cols[c].insert(r);
+        } else {
+            grid[r][c] = false;
+            rows[r].erase(rows[r].find(c));
+            cols[c].erase(cols[c].find(r));
+        }
+    };
+
+    while (Q--) {
+        int R, C;
+        cin >> R >> C;
+        R--, C--;
+
+        destroyWall(R, C);
+
+        int r = R, c = C;
+        while (r >= 0 && grid[r][C]) r--;
+        if (r >= 0) destroyWall(r, C);
+
+        r = R, c = C;
+        while (r < H && grid[r][C]) r++;
+        if (r < H) destroyWall(r, C);
+
+        r = R, c = C;
+        while (c >= 0 && grid[R][c]) c--;
+        if (c >= 0) destroyWall(R, c);
+
+        r = R, c = C;
+        while (c < W && grid[R][c]) c++;
+        if (c < W) destroyWall(R, c);
+    }
+
+    ll count = 0;
+    for (const auto& row : rows) count += row.size();
+    for (const auto& col : cols) count += col.size();
+
+    cout << count / 2 << '\n';
+
+    return 0;
+}

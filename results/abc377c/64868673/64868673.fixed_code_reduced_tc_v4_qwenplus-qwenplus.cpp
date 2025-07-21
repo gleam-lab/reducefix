@@ -1,0 +1,47 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    long long N;
+    int M;
+    cin >> N >> M;
+    
+    // The 8 possible attack positions relative to a piece
+    vector<pair<long long, long long>> attack_offsets = {
+        {2, 1}, {1, 2}, {-1, 2}, {-2, 1},
+        {-2, -1}, {-1, -2}, {1, -2}, {2, -1}
+    };
+    
+    unordered_set<string> attacked_positions;
+    auto hash = [&](long long x, long long y) {
+        return to_string(x) + "," + to_string(y);
+    };
+    
+    for (int i = 0; i < M; ++i) {
+        long long a, b;
+        cin >> a >> b;
+        
+        // Mark the position itself as occupied
+        attacked_positions.insert(hash(a, b));
+        
+        // Mark all potentially attacked positions by this piece
+        for (auto [dx, dy] : attack_offsets) {
+            long long x = a + dx;
+            long long y = b + dy;
+            
+            if (x >= 1 && x <= N && y >= 1 && y <= N) {
+                attacked_positions.insert(hash(x, y));
+            }
+        }
+    }
+    
+    // Total positions = N*N
+    // Occupied or attacked positions = attacked_positions.size()
+    // Available positions = total - occupied/attacked
+    cout << (N * NLL - static_cast<long long>(attacked_positions.size())) << endl;
+    
+    return 0;
+}

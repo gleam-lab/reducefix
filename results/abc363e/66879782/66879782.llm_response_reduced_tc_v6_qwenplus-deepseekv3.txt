@@ -1,0 +1,87 @@
+To fix this code, we need to ensure that the algorithm correctly calculates the area of the island that remains above sea level for each year from 1 to Y. The original code uses a priority queue to propagate the sinking condition from the borders inward, but it might not handle all cases correctly, especially when multiple sections sink simultaneously.
+
+### Approaches
+1. **Initialization**: The island's elevation data is read into a 2D array. The borders of the island are initially considered to sink first as they are adjacent to the sea.
+2. **Priority Queue**: Use a priority queue to process sections in order of their elevation. This helps in determining when each section sinks as the sea level rises.
+3. **Sinking Propagation**: For each section processed, check its neighboring sections. If a neighbor's elevation is not greater than the current sea level, it will sink at the same time or later, and we add it to the queue.
+4. **Prefix Sum Array**: Maintain a prefix sum array to count how many sections sink at each sea level. This allows efficient calculation of the remaining area for each year.
+
+### Solution Code
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+#define all(x) (x).begin(), (x).end()
+
+int main() {
+    ios_base::sync_with_stdio(0);
+    cin.tie(0);
+    int h, w, y;
+    cin >> h >> w >> y;
+    vector<vector<int>> height(h, vector<int>(w));
+    vector<vector<int>> sink(h, vector<int>(w, INT_MAX));
+    priority_queue<pair<int, pair<int, int>>, vector<pair<int, pair<int, int>>>, greater<pair<int, pair<int, int>>>> pq;
+    int di[4][2] = {{-1, 0}, {1, 0}, {0, -1}, {0, 1}};
+    
+    for (int i = 0; i < h; i++) {
+        for (int j = 0; j < w; j++) {
+            cin >> height[i][j];
+            if (i == 0 || i == h - 1 || j == 0 || j == w - 1) {
+                sink[i][j] = height[i][j];
+                pq.push({height[i][j], {i, j}});
+            }
+        }
+    }
+    
+    while (!pq.empty()) {
+        auto [H, p] = pq.top();
+        auto [r, c] = p;
+        pq.pop();
+        if (sink[r][c] < H) continue;
+        for (int i = 0; i < 4; i++) {
+            int nr = r + di[i][0];
+            int nc = c + di[i][1];
+            if (nr < 0 || nr >= h || nc < 0 || nc >= w) continue;
+            if (height[nr][nc] <= H) {
+                if (sink[nr][nc] > H) {
+                    sink[nr][nc] = H;
+                    pq.push({H, {nr, nc}});
+                }
+            } else {
+                if (sink[nr][nc] > height[nr][nc]) {
+                    sink[nr][nc] = height[nr][nc];
+                    pq.push({height[nr][nc], {nr, nc}});
+                }
+            }
+        }
+    }
+    
+    vector<int> cnt(y + 2, 0);
+    for (int i = 0; i < h; i++) {
+        for (int j = 0; j < w; j++) {
+            if (sink[i][j] <= y) {
+                cnt[sink[i][j]]++;
+            }
+        }
+    }
+    
+    for (int i = 1; i <= y; i++) {
+        cnt[i] += cnt[i - 1];
+    }
+    
+    for (int i = 1; i <= y; i++) {
+        cout << h * w - cnt[i] << '\n';
+    }
+    
+    return 0;
+}
+```
+
+### Explanation
+1. **Initialization**: The code reads the island's dimensions (h, w) and the number of years (y). It initializes a 2D array `height` to store the elevation of each section and another 2D array `sink` to store the sea level at which each section sinks.
+2. **Priority Queue Handling**: The borders of the island are added to the priority queue with their respective elevations, as they are adjacent to the sea and will sink first when the sea level reaches their elevation.
+3. **Sinking Propagation**: The priority queue processes each section in order of elevation. For each section, the code checks its neighbors. If a neighbor's elevation is not greater than the current sea level, it updates the neighbor's sink level and adds it to the queue.
+4. **Prefix Sum Calculation**: The code uses a prefix sum array `cnt` to count the number of sections that sink at each sea level. This allows efficient calculation of the remaining area for each year by subtracting the cumulative count of sunk sections from the total area.
+5. **Output**: For each year from 1 to y, the code outputs the remaining area of the island above the sea level.
+
+This approach ensures that the solution efficiently handles the propagation of sinking sections and calculates the remaining area for each year in optimal time complexity.

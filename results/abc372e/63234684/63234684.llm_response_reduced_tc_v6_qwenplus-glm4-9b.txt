@@ -1,0 +1,111 @@
+
+The problem involves managing an undirected graph using union-find data structure and processing two types of queries: adding edges and querying for the k-th largest neighbor of a given vertex.
+
+Here's a detailed explanation of the failing case and the necessary changes to the code:
+
+### Failing Case Explanation:
+The failing case provides a sequence of queries that test the edge case where the number of neighbors is less than k. The given code fails in this case because it assumes that the union-find structure maintains a sorted list of vertices in each connected component, but it doesn't handle the reduction of the list size after merging properly.
+
+### Code Improvements:
+1. **Redundant Union-Find Structures**: The code uses multiple union-find structures to store the vertices and their neighbors. Instead, it should use a single union-find structure to keep track of connected components and maintain a list of vertices for each component.
+2. **Maintaining Order**: The code should ensure that after merging two components, the vertices are sorted in descending order to make the k-th largest query efficient.
+3. **Edge Cases**: Implement checks to handle cases where k is greater than the number of neighbors.
+
+### Modified Code:
+```cpp
+#include<bits/stdc++.h>
+using namespace std;
+using ll = long long;
+#define rep(i,n) for(int i = 0; i < n; i++)
+using P = pair<int, int>;
+using T = tuple<int, int, int>;
+
+struct Union_Find {
+    vector<int> parent, size, value;
+    vector<vector<int>> component;
+
+    Union_Find(int n) {
+        parent.resize(n);
+        size.resize(n, 1);
+        value.resize(n, -1); // -1 indicates unused vertices
+        for (int i = 0; i < n; i++) {
+            parent[i] = i;
+        }
+    }
+
+    int find_set(int x) {
+        if (parent[x] != x) {
+            parent[x] = find_set(parent[x]);
+        }
+        return parent[x];
+    }
+
+    void union_set(int x, int y) {
+        int rootX = find_set(x);
+        int rootY = find_set(y);
+
+        if (rootX != rootY) {
+            if (size[rootX] < size[rootY]) swap(rootX, rootY);
+            parent[rootY] = rootX;
+            size[rootX] += size[rootY];
+
+            // Merge component lists
+            component[rootX].insert(end(component[rootX]), begin(component[rootY]), end(component[rootY]));
+            component[rootX].sort(rbegin(component[rootX]), rend(component[rootX]), greater<int>());
+            
+            // Remove duplicates and limit the size to 10
+            component[rootX].erase(unique(rbegin(component[rootX]), rend(component[rootX])), rend(component[rootX]));
+            if (component[rootX].size() > 10) component[rootX].erase(rbegin(component[rootX]) + 10, rend(component[rootX]));
+        }
+    }
+
+    void add(int x) {
+        int root = find_set(x);
+        component[root].push_back(x);
+        component[root].sort(rbegin(component[root]), rend(component[root]), greater<int>());
+        component[root].erase(unique(rbegin(component[root]), rend(component[root])), rend(component[root]));
+        if (component[root].size() > 10) component[root].erase(rbegin(component[root]) + 10, rend(component[root]));
+    }
+
+    vector<int> get_component(int x) {
+        return component[find_set(x)];
+    }
+};
+
+int main() {
+    int n, q;
+    cin >> n >> q;
+    Union_Find uf(n);
+    vector<int> results;
+
+    for (int i = 0; i < n; i++) {
+        uf.add(i + 1); // Start indexing vertices from 1
+    }
+
+    for (int i = 0; i < q; i++) {
+        int t, x, y;
+        cin >> t >> x >> y;
+        if (t == 1) {
+            uf.union_set(x, y);
+        } else if (t == 2) {
+            vector<int> component = uf.get_component(x);
+            if (y > component.size()) {
+                results.push_back(-1);
+            } else {
+                results.push_back(component[y - 1]);
+            }
+        }
+    }
+
+    for (auto res : results) {
+        cout << res << endl;
+    }
+
+    return 0;
+}
+```
+
+### Explanation:
+- **Union-Find Class**: Maintains a parent array for each component and a size array to keep track of the size of each component. The `component` vector stores the vertices in descending order of their values.
+- **Union and Add Operations**: These functions are used to merge components and add new vertices, respectively. They ensure that the list of vertices in a component is always sorted in descending order and prunes the list to keep it at most 10 elements long.
+- **Query Operation**: Retrieves the k-th largest vertex in the component of a given vertex, handling the case where k is larger than the number of neighbors by returning -1.

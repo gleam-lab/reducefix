@@ -1,0 +1,41 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define rep(i,n) for(int i=0;i<n;i++)
+using ll = long long;
+using Graph = vector<vector<int>>;
+
+ll f(vector<int>& a, vector<int>& b, vector<int>& p, vector<int>& q, ll x){
+  int n = a.size();
+  vector<vector<ll>> dp(n+1, vector<ll>(x+1, 1e15));
+  dp[0][0] = 0;
+  
+  for(int i=1; i<=n; i++){
+    for(int j=0; j<=x; j++){
+      if(j >= a[i-1]) dp[i][j] = min(dp[i][j], dp[i-1][j-a[i-1]] + p[i-1]);
+      if(j >= b[i-1]) dp[i][j] = min(dp[i][j], dp[i-1][j-b[i-1]] + q[i-1]);
+      dp[i][j] = min(dp[i][j], dp[i-1][j]); // not using item i
+    }
+  }
+  
+  return *min_element(dp[n].begin(), dp[n].end());
+}
+
+int main() {
+  int n, x;
+  cin >> n >> x;
+  vector<int> a(n), b(n), p(n), q(n);
+  rep(i,n)cin >> a[i] >> p[i] >> b[i] >> q[i];
+  ll now; // wの候補
+  ll l = 0, r = 10000000000;
+  while(r - l > 1){
+    now = (r + l)/2;
+    ll tmp = 0;
+    rep(i,n){
+      tmp += f(a, b, p, q, now);
+    }
+    if(tmp <= x)l = now;
+    else r = now;
+  }
+  cout << l;
+	return 0;
+}

@@ -1,0 +1,66 @@
+#include <bits/stdc++.h>
+using namespace std;
+using i64 = int64_t;
+using pii = pair<int, int>;
+using piii = tuple<int, int, int>;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int H, W, Y;
+    cin >> H >> W >> Y;
+    vector<vector<int>> A(H, vector<int>(W));
+    for (int i = 0; i < H; ++i) {
+        for (int j = 0; j < W; ++j) {
+            cin >> A[i][j];
+        }
+    }
+
+    // Mark visited cells
+    vector<vector<bool>> visited(H, vector<bool>(W, false));
+    priority_queue<tuple<int, int, int>, vector<tuple<int, int, int>>, greater<tuple<int, int, int>>> pq;
+
+    // Initialize the queue with border cells
+    for (int i = 0; i < H; ++i) {
+        for (int j = 0; j < W; ++j) {
+            if (i == 0 || i == H - 1 || j == 0 || j == W - 1) {
+                pq.emplace(A[i][j], i, j);
+                visited[i][j] = true;
+            }
+        }
+    }
+
+    int remaining = H * W;
+    vector<int> result(Y + 2); // Store results for each year
+
+    for (int year = 1; year <= Y; ++year) {
+        while (!pq.empty() && get<0>(pq.top()) <= year) {
+            auto [elevation, x, y] = pq.top();
+            pq.pop();
+
+            if (!visited[x][y]) continue;
+            remaining--;
+            visited[x][y] = false; // mark as sunk
+
+            int dx[] = {-1, 0, 1, 0};
+            int dy[] = {0, 1, 0, -1};
+
+            for (int d = 0; d < 4; ++d) {
+                int nx = x + dx[d];
+                int ny = y + dy[d];
+
+                if (nx >= 0 && nx < H && ny >= 0 && ny < W && visited[nx][ny]) {
+                    pq.emplace(A[nx][ny], nx, ny);
+                }
+            }
+        }
+        result[year] = remaining;
+    }
+
+    for (int i = 1; i <= Y; ++i) {
+        cout << result[i] << '\n';
+    }
+
+    return 0;
+}

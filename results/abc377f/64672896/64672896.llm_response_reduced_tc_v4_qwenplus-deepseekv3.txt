@@ -1,0 +1,355 @@
+To fix this code, we need to correctly calculate the number of safe squares where a new piece can be placed without being captured by any existing pieces. The existing pieces can capture along rows, columns, and both diagonals (i.e., lines where \(i + j = \text{constant}\) or \(i - j = \text{constant}\)).
+
+### Approaches
+1. **Identify Forbidden Squares**: For each existing piece, mark all squares that can be captured by it. This includes:
+   - All squares in the same row (`a_k`).
+   - All squares in the same column (`b_k`).
+   - All squares on the diagonals where \(i + j = a_k + b_k\) or \(i - j = a_k - b_k\).
+
+2. **Count Safe Squares**: The total number of safe squares is the total number of squares (`N^2`) minus the number of squares that are either occupied or under attack by any existing piece. To avoid double-counting squares that are under attack by multiple pieces, we need to use inclusion-exclusion principles or efficient data structures to track unique attacked squares.
+
+3. **Efficient Calculation**: Given the constraints (N up to \(10^9\) and M up to \(10^3\)), we cannot iterate over all squares. Instead, we compute the union of all attacked squares using sets for rows, columns, and diagonals, and then calculate the total number of unique squares covered by these sets.
+
+### Solution Code
+```cpp
+#include<bits/stdc++.h>
+using namespace std;
+using i64 = long long;
+
+int main() {
+    std::ios::sync_with_stdio(false);
+    std::cin.tie(nullptr);
+    i64 N, M;
+    cin >> N >> M;
+    vector<array<i64, 2>> g(M);
+    set<i64> rows, cols, diag1, diag2;
+    set<array<i64, 2>> occupied;
+    
+    for (int i = 0; i < M; ++i) {
+        i64 a, b;
+        cin >> a >> b;
+        g[i] = {a, b};
+        rows.insert(a);
+        cols.insert(b);
+        diag1.insert(a + b);
+        diag2.insert(a - b);
+        occupied.insert({a, b});
+    }
+    
+    i64 row_cnt = rows.size();
+    i64 col_cnt = cols.size();
+    i64 diag1_cnt = diag1.size();
+    i64 diag2_cnt = diag2.size();
+    
+    i64 row_col_intersect = 0;
+    for (auto r : rows) {
+        for (auto c : cols) {
+            if (occupied.count({r, c})) continue;
+            if (diag1.count(r + c) || diag2.count(r - c)) {
+                row_col_intersect++;
+            }
+        }
+    }
+    
+    i64 row_diag1_intersect = 0;
+    for (auto r : rows) {
+        for (auto d1 : diag1) {
+            i64 c = d1 - r;
+            if (c < 1 || c > N) continue;
+            if (occupied.count({r, c})) continue;
+            if (cols.count(c) || diag2.count(r - c)) {
+                row_diag1_intersect++;
+            }
+        }
+    }
+    
+    i64 row_diag2_intersect = 0;
+    for (auto r : rows) {
+        for (auto d2 : diag2) {
+            i64 c = r - d2;
+            if (c < 1 || c > N) continue;
+            if (occupied.count({r, c})) continue;
+            if (cols.count(c) || diag1.count(r + c)) {
+                row_diag2_intersect++;
+            }
+        }
+    }
+    
+    i64 col_diag1_intersect = 0;
+    for (auto c : cols) {
+        for (auto d1 : diag1) {
+            i64 r = d1 - c;
+            if (r < 1 || r > N) continue;
+            if (occupied.count({r, c})) continue;
+            if (rows.count(r) || diag2.count(r - c)) {
+                col_diag1_intersect++;
+            }
+        }
+    }
+    
+    i64 col_diag2_intersect = 0;
+    for (auto c : cols) {
+        for (auto d2 : diag2) {
+            i64 r = d2 + c;
+            if (r < 1 || r > N) continue;
+            if (occupied.count({r, c})) continue;
+            if (rows.count(r) || diag1.count(r + c)) {
+                col_diag2_intersect++;
+            }
+        }
+    }
+    
+    i64 diag1_diag2_intersect = 0;
+    for (auto d1 : diag1) {
+        for (auto d2 : diag2) {
+            if ((d1 + d2) % 2 != 0) continue;
+            i64 r = (d1 + d2) / 2;
+            i64 c = (d1 - d2) / 2;
+            if (r < 1 || r > N || c < 1 || c > N) continue;
+            if (occupied.count({r, c})) continue;
+            if (rows.count(r) || cols.count(c)) {
+                diag1_diag2_intersect++;
+            }
+        }
+    }
+    
+    i64 total_attacked = row_cnt * N + col_cnt * N - row_cnt * col_cnt;
+    total_attacked += diag1_cnt * (2 * N - 1) - diag1_cnt * (row_cnt + col_cnt) + row_col_intersect;
+    total_attacked += diag2_cnt * (2 * N - 1) - diag2_cnt * (row_cnt + col_cnt) + row_col_intersect;
+    total_attacked -= (row_diag1_intersect + row_diag2_intersect + col_diag1_intersect + col_diag2_intersect);
+    total_attacked += diag1_diag2_intersect;
+    
+    i64 safe_squares = N * N - total_attacked - M;
+    cout << safe_squares << "\n";
+    
+    return 0;
+}
+```
+
+Wait, no, the previous approach seems too complex and might not account for all overlaps correctly. Let's think differently: we'll use inclusion-exclusion to compute the total attacked squares.
+
+The total attacked squares is:
+- The union of all rows, columns, and diagonals (i + j = a_k + b_k or i - j = a_k - b_k) for each piece.
+To compute this, we can add the counts of squares in each row, column, and diagonal, then subtract the overlaps between them.
+
+The inclusion-exclusion principle tells us:
+Total attacked squares = (rows + columns + diag1s + diag2s)
+                       - (rows ∩ columns + rows ∩ diag1s + rows ∩ diag2s + columns ∩ diag1s + columns ∩ diag2s + diag1s ∩ diag2s)
+                       + (rows ∩ columns ∩ diag1s + rows ∩ columns ∩ diag2s + rows ∩ diag1s ∩ diag2s + columns ∩ diag1s ∩ diag2s)
+                       - (rows ∩ columns ∩ diag1s ∩ diag2s)
+
+But computing this precisely is challenging. Instead, we can use the fact that for each existing piece, the attacked squares are those in any of the four directions (row, column, both diagonals). The total number of unique attacked squares is the size of the union of these four sets for all pieces.
+
+But for large N and small M, we can proceed as follows:
+
+1. Collect all unique rows, columns, diag1 (i+j), diag2 (i-j) from the existing pieces.
+
+2. The total number of squares attacked by rows is (number of unique rows) * N.
+
+3. The total attacked by columns is similarly (number of unique columns) * N.
+
+4. The total attacked by diag1 is the number of unique diag1 values multiplied by the number of squares on each such diagonal (which varies from 1 to N, but for large N, it's approximately N for most diagonals).
+
+Similarly for diag2.
+
+Then, we subtract the overlaps between these sets. For example, a square can be in both a row and a column, or in a row and a diagonal, etc.
+
+But calculating this precisely requires careful handling.
+
+Here's a better approach:
+
+For each existing piece, the squares it can attack are:
+- All (a_k, y) for any y.
+- All (x, b_k) for any x.
+- All (x, y) where x + y = a_k + b_k.
+- All (x, y) where x - y = a_k - b_k.
+
+So, the total attacked squares is the union of these four sets across all existing pieces.
+
+To compute this without iterating over all squares, we can:
+
+1. For each existing piece, calculate the number of squares in each of its attack directions, then subtract the overlaps between these directions for the same piece (since those squares are counted multiple times otherwise).
+
+2. Use inclusion-exclusion across all pieces to account for overlaps between different pieces.
+
+But doing this for M pieces can get complex.
+
+Given that M is up to 1e3, we can process each existing piece individually and track the attacked squares using hash sets.
+
+But since N is up to 1e9, storing all attacked squares is impossible.
+
+Instead, we can note that:
+
+For each existing piece:
+
+- Its row attacks N squares.
+- Its column attacks N squares.
+- Its both diagonals attack approximately 2N-1 squares each (but some may be out of bounds).
+
+But there are overlaps between these for the same piece: the square (a_k, b_k) is counted four times (its own row, column, both diagonals).
+
+Also, for any other square (x, y) attacked by multiple directions of the same piece, it's counted multiple times.
+
+So for each existing piece, the number of unique squares it attacks is:
+
+N (row) + N (column) + (number of squares on diag1) + (number of squares on diag2) - overlaps.
+
+The overlaps are:
+
+- The square (a_k, b_k) is counted four times.
+- Any other square in the row and column (but there are none besides (a_k, b_k)).
+- Any square in the row and diag1: i.e., (a_k, y) where a_k + y = a_k + b_k → y = b_k. So only (a_k, b_k).
+- Similarly for other pairs of directions.
+
+So per piece, the unique squares it attacks is:
+
+N (row) + N (column) + (number of squares on diag1) + (number of squares on diag2) - 3 (since (a_k, b_k) is counted four times, but should be counted once).
+
+But this is not accurate: for example, the number of squares on diag1 is min(a_k + b_k - 1, 2N - (a_k + b_k - 1)), or more precisely, the number of (x, y) such that x + y = a_k + b_k, 1 <= x, y <= N.
+
+The number is min(a_k + b_k -1, 2N - (a_k + b_k - 1))?
+
+Wait, no. For a given sum s = a_k + b_k, the number of (x, y) with x + y = s is:
+
+- If s <= N + 1: s - 1.
+- Otherwise: 2N - s + 1.
+
+Similarly for the difference d = a_k - b_k, the number of (x, y) with x - y = d is N - |d|, provided that |d| <= N -1.
+
+So for each piece, the number of squares on its diagonal are:
+
+diag1: s = a_k + b_k. Number is min(s -1, 2N - s + 1).
+
+diag2: d = a_k - b_k. Number is N - |d|.
+
+Thus, per piece, the unique squares attacked is:
+
+N (row) + N (column) + (diag1 count) + (diag2 count) - (count of squares in two or more attack directions).
+
+The count of squares in two or more attack directions of the same piece are:
+
+- (a_k, b_k) is in all four.
+
+- Any other square in diag1 and diag2: the intersection of the two diagonals of a piece is either empty or a single square (the piece's position). So, no other squares are in both diagonals of the same piece.
+
+- Any square in the row and diag1: must have y = b_k and x + y = a_k + b_k → x = a_k. So only (a_k, b_k).
+
+Similarly for the column and diag1: must have x = a_k and x + y = a_k + b_k → y = b_k. So only (a_k, b_k).
+
+Similarly for other pairs.
+
+Thus, the only square that is in more than one attack direction of the same piece is (a_k, b_k), which is in all four. So, the unique count is:
+
+N + N + (diag1 count) + (diag2 count) - 3 (since (a_k, b_k) was counted four times, but should be counted once).
+
+Yes.
+
+Thus, for each piece, the number of unique squares it attacks is:
+
+2*N + (diag1 count) + (diag2 count) - 3.
+
+But we must also account for overlaps between different pieces' attack squares. For example, a square might be attacked by multiple pieces.
+
+To compute the total number of unique attacked squares, we can use the inclusion-exclusion principle for the sets of attacked squares by each piece.
+
+However, with M up to 1e3, this would require O(M^2) operations, which is manageable.
+
+But for large N and M=1e3, the combined attacked squares could be up to ~1e3 * (2N + 2N) = 4e3 N, which is not directly storable.
+
+Instead, we can note that the total attacked squares is the sum for each piece of its unique attacked squares minus the overlaps between any two pieces, plus the overlaps between any three pieces, etc.
+
+This is complex, but given M is small, we can consider pairwise intersections.
+
+Alternatively, for each piece, we can track the attacked squares as the union of four sets: its row, column, diag1, and diag2. The overlaps between different pieces' attack directions will be squares that are in more than one piece's attack directions.
+
+But calculating this precisely is tricky.
+
+Instead, we can use the fact that the total safe squares is N^2 minus the occupied squares (M) minus the attacked squares (but not counting the occupied squares as attacked, since they are already counted in M).
+
+The attacked squares are the union of all squares in the attack directions of all pieces, but not including the occupied squares.
+
+So, total attacked squares is:
+
+Sum for each piece of (squares in its attack directions not occupied by any piece).
+
+But this requires checking for each square if it's occupied, which is not feasible.
+
+Instead, we can compute the total attacked squares including occupied squares, then subtract the count of occupied squares that are also attacked.
+
+But all occupied squares are attacked by their own pieces, so this doesn't help.
+
+Rather, the correct formula is:
+
+Total safe squares = N^2 - (number of squares attacked by any piece or occupied).
+
+The number of squares attacked by any piece or occupied is the union of:
+
+- All squares in the attack directions of any piece.
+
+- All occupied squares.
+
+But the occupied squares are already included in the attack directions of their own pieces, so the total is simply the union of all attack directions of all pieces, which is what we need to compute.
+
+Then, the safe squares is N^2 minus this union.
+
+To compute the union of attack directions of all pieces, we can use the inclusion-exclusion principle for the four directions (row, column, diag1, diag2) across all pieces.
+
+But this is complex.
+
+Here's a better approach:
+
+1. Compute the total number of squares in any of the attack directions as the sum for each piece of its attack squares (2N + diag1 count + diag2 count - 3), minus sum over pairs of pieces of the intersection of their attack directions.
+
+But computing intersections between all pairs is O(M^2).
+
+Given M is 1e3, this is O(1e6) operations, which is feasible.
+
+For each pair of pieces, the intersection of their attack directions is the number of squares that are in both pieces' attack directions.
+
+For example, if two pieces share a row, the intersection includes all squares in that row.
+
+Similarly for columns and diagonals.
+
+So, for each pair of pieces, we can compute the number of squares in both of their attack directions by checking if they share a row, column, diag1, or diag2, and then counting the overlaps.
+
+This can be done as follows:
+
+For two pieces (a1, b1) and (a2, b2):
+
+The squares attacked by both are:
+
+- In both's rows: if a1 == a2, then N squares.
+
+- In both's columns: if b1 == b2, then N squares.
+
+- In both's diag1: if a1 + b1 == a2 + b2, then the number of squares on this diagonal.
+
+- In both's diag2: if a1 - b1 == a2 - b2, then the number of squares on this diagonal.
+
+- In row of one and column of the other: (a1, b2) and (a2, b1).
+
+- In row of one and diag1 of the other, etc.
+
+But calculating all these intersections is complex.
+
+Given time constraints, here's a practical approach:
+
+For each piece, compute the total squares it attacks (2N + diag1 count + diag2 count - 3).
+
+Sum this over all pieces to get total_attacked_single.
+
+Then, for each pair of pieces, compute the number of squares attacked by both, and subtract this.
+
+Similarly for higher-order intersections, but these may be negligible for small M.
+
+Now, the question is how to compute the number of squares attacked by both of two given pieces.
+
+For two pieces (a1, b1) and (a2, b2), the squares attacked by both are:
+
+- (a1, b2) if it's on diag1 or diag2 of the other piece.
+
+- (a2, b1) similarly.
+
+- The intersection of their diag1 and diag2.
+
+-

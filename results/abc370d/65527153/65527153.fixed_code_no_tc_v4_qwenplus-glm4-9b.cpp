@@ -1,0 +1,72 @@
+#include <iostream>
+#include <vector>
+#include <set>
+#include <map>
+
+using namespace std;
+using ll = long long;
+
+int main() {
+    int H, W, Q;
+    cin >> H >> W >> Q;
+
+    // Initialize a 2D map to keep track of walls starting at each position
+    map<pair<int, int>, int> wall_map;
+
+    // Insert initial walls
+    for (int i = 1; i <= H; ++i) {
+        for (int j = 1; j <= W; ++j) {
+            wall_map[{i, j}] = 1; // 1 indicates a wall is initially present
+        }
+    }
+
+    while (Q--) {
+        int R, C;
+        cin >> R >> C;
+
+        // Check if there is a wall at the given position
+        if (wall_map.count({R, C})) {
+            wall_map.erase({R, C}); // Remove the wall
+        } else {
+            // Remove walls in all four directions until a wall is found or no more walls are available
+            int top = R, bottom = R, left = C, right = C;
+            
+            // Remove walls up
+            while (top > 1 && !wall_map.count({top, C})) {
+                top--;
+            }
+            
+            // Remove walls down
+            while (bottom < H && !wall_map.count({bottom, C})) {
+                bottom++;
+            }
+            
+            // Remove walls left
+            while (left > 1 && !wall_map.count({R, left})) {
+                left--;
+            }
+            
+            // Remove walls right
+            while (right < W && !wall_map.count({R, right})) {
+                right++;
+            }
+            
+            // Remove the walls from the map
+            for (int i = top; i <= bottom; ++i) {
+                wall_map.erase({i, C});
+            }
+            for (int j = left; j <= right; ++j) {
+                wall_map.erase({R, j});
+            }
+        }
+    }
+
+    // Calculate the number of remaining walls
+    ll remaining_walls = 0;
+    for (auto& p : wall_map) {
+        remaining_walls += p.second;
+    }
+
+    cout << remaining_walls << endl;
+    return 0;
+}

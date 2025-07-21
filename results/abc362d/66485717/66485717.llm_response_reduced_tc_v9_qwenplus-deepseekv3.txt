@@ -1,0 +1,85 @@
+To fix this code, we need to address several issues, particularly regarding the handling of large values and the correct initialization of the distance array. The main problem in the initial code was that the `inf` value was set too low (1e10), which is insufficient for the constraints where vertex weights can be up to 1e9 and edge weights can also be up to 1e9. For a path with N=2e5 vertices, the total weight could be up to 2e5 * 1e9 = 2e14, so the `inf` value should be larger than this potential maximum.
+
+Additionally, the initial code did not correctly handle the case where there are no edges (M=0), leading to incorrect output values. The expected output for the case with no edges between vertices should reflect the impossibility of reaching vertex 2 from vertex 1, hence the distance should be infinity (or a very large number representing infinity).
+
+Here is the corrected code with these issues addressed:
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+#define i64 long long
+#define INT signed
+#define pbk push_back
+template <class T>
+using V = vector<T>;
+template <class T>
+using VV = vector<vector<T>>;
+template <class T>
+using VVV = vector<vector<vector<T>>>;
+
+struct Node {
+    int x;
+    i64 w;
+    bool operator < (const Node& u) const {
+        return w > u.w;
+    }
+};
+
+constexpr i64 inf = 1e18;
+priority_queue<Node> pq;
+vector<pair<int, int>> g[200005];
+
+void solve() {
+    int n, m;
+    cin >> n >> m;
+    V<int> a(n + 1, 0);
+    V<i64> d(n + 1, inf);
+    vector<bool> vis(n + 1, false);
+
+    for (int i = 1; i <= n; ++i) {
+        cin >> a[i];
+    }
+
+    for (int i = 1; i <= m; ++i) {
+        int x, y, c;
+        cin >> x >> y >> c;
+        g[x].emplace_back(y, c);
+        g[y].emplace_back(x, c);
+    }
+
+    pq.emplace(Node{1, d[1] = a[1]});
+    while (!pq.empty()) {
+        auto [x, w] = pq.top();
+        pq.pop();
+        if (vis[x]) continue;
+        vis[x] = true;
+        for (const auto& [y, dw] : g[x]) {
+            if (d[x] + dw + a[y] < d[y]) {
+                d[y] = d[x] + dw + a[y];
+                pq.emplace(Node{y, d[y]});
+            }
+        }
+    }
+
+    for (int i = 2; i <= n; ++i) {
+        cout << (d[i] == inf ? -1 : d[i]) << " \n"[i == n];
+    }
+}
+
+INT main() {
+    cin.tie(nullptr)->sync_with_stdio(false);
+    int t = 1;
+    while (t--) {
+        solve();
+    }
+    return 0;
+}
+```
+
+### Key Changes Made:
+1. **Increased `inf` value**: Changed `inf` from 1e10 to 1e18 to handle the maximum possible path weights.
+2. **Corrected Node structure**: Ensured the `Node` structure uses `i64` for the weight to avoid overflow.
+3. **Handled no edge case**: The code now correctly outputs `-1` or the correct distance based on whether the vertex is reachable, which aligns with the problem's expectations.
+4. **Optimized priority queue usage**: Ensured the priority queue correctly processes nodes in order of increasing distance.
+
+This code should now handle all test cases correctly, including edge cases where there are no edges between vertices.

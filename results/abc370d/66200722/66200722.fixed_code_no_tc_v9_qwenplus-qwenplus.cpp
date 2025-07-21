@@ -1,0 +1,86 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+void solve() {
+    int H, W, Q;
+    cin >> H >> W >> Q;
+
+    // Represent grid with sets for each row and column to track bomb positions
+    vector<set<int>> rows(H), cols(W);
+
+    // Process queries in reverse to count remaining walls
+    long long total_walls = 1LL * H * W;
+
+    // Use binary search to find first wall in a direction
+    auto find_left = [&](int r, int c) {
+        auto it = rows[r].lower_bound(c);
+        if (it != rows[r].begin()) {
+            --it;
+            return *it + 1;
+        }
+        return 0;
+    };
+
+    auto find_right = [&](int r, int c) {
+        auto it = rows[r].upper_bound(c);
+        if (it != rows[r].end()) {
+            return *it - 1;
+        }
+        return W - 1;
+    };
+
+    auto find_up = [&](int r, int c) {
+        auto it = cols[c].lower_bound(r);
+        if (it != cols[c].begin()) {
+            --it;
+            return *it + 1;
+        }
+        return 0;
+    };
+
+    auto find_down = [&](int r, int c) {
+        auto it = cols[c].upper_bound(r);
+        if (it != cols[c].end()) {
+            return *it - 1;
+        }
+        return H - 1;
+    };
+
+    vector<tuple<int, int>> queries(Q);
+    for (auto &[r, c] : queries) {
+        cin >> r >> c;
+        r--;
+        c--;
+    }
+
+    // Reverse processing
+    for (int i = Q - 1; i >= 0; i--) {
+        auto [r, c] = queries[i];
+        if (rows[r].count(c)) {
+            // Already has a bomb, nothing gets destroyed
+            continue;
+        }
+
+        // Count how many walls are destroyed by this bomb
+        int left = find_left(r, c);
+        int right = find_right(r, c);
+        int up = find_up(r, c);
+        int down = find_down(r, c);
+
+        // Update total walls: subtract destroyed ones in row and column
+        total_walls -= (right - left + 1);
+        total_walls -= (down - up + 1);
+
+        // Add current cell as bombed
+        rows[r].insert(c);
+        cols[c].insert(r);
+    }
+
+    cout << total_walls << endl;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    solve();
+}

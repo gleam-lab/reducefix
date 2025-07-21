@@ -1,0 +1,90 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+
+#define int long long
+#define ld long double
+
+int n, x;
+vector<int> a, b, q, p;
+
+bool canMake(int mid) {
+    ld total_cost = 0;
+    for (int i = 0; i < n; i++) {
+        // Calculate how much we need of this item
+        int needed = mid;
+
+        // Calculate cost per unit and price per unit for both suppliers
+        ld cost_per_unit_a = p[i] / (ld)a[i];
+        ld cost_per_unit_b = q[i] / (ld)b[i];
+
+        // We want to use the cheaper option first
+        if (cost_per_unit_a <= cost_per_unit_b) {
+            // Use as much as possible from supplier A
+            int full_sets_a = needed / a[i];
+            total_cost += full_sets_a * p[i];
+            needed -= full_sets_a * a[i];
+
+            // Use B for the remainder
+            int full_sets_b = needed / b[i];
+            total_cost += full_sets_b * q[i];
+            needed -= full_sets_b * b[i];
+            
+            // Add cost for any leftover needed (less than one set from either)
+            if (needed > 0) {
+                total_cost += min(
+                    needed * cost_per_unit_a,
+                    needed * cost_per_unit_b
+                );
+            }
+        } else {
+            // Use as much as possible from supplier B
+            int full_sets_b = needed / b[i];
+            total_cost += full_sets_b * q[i];
+            needed -= full_sets_b * b[i];
+
+            // Use A for the remainder
+            int full_sets_a = needed / a[i];
+            total_cost += full_sets_a * p[i];
+            needed -= full_sets_a * a[i];
+            
+            // Add cost for any leftover needed
+            if (needed > 0) {
+                total_cost += min(
+                    needed * cost_per_unit_a,
+                    needed * cost_per_unit_b
+                );
+            }
+        }
+    }
+
+    return (int)(ceil(total_cost)) <= x;
+}
+
+signed main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    cin >> n >> x;
+    a.resize(n); 
+    p.resize(n); 
+    b.resize(n); 
+    q.resize(n);
+    
+    for (int i = 0; i < n; i++) 
+        cin >> a[i] >> p[i] >> b[i] >> q[i];
+
+    int left = 0, right = 1e10;
+    while (left < right) {
+        int mid = (left + right + 1) >> 1;
+
+        if (canMake(mid)) 
+            left = mid;
+        else 
+            right = mid - 1;
+    }
+
+    cout << left << "\n";
+
+    return 0;
+}

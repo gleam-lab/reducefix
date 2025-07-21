@@ -1,0 +1,90 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+#define rep(i,n) for(int i = 0; i < (int)(n); ++i)
+#define rep1(i,n) for(int i = 1; i <= (int)(n); ++i)
+
+using vi = vector<int>;
+using vvi = vector<vi>;
+using vb = vector<bool>;
+using vvb = vector<vb>;
+using pii = pair<int, int>;
+using vpii = vector<pii>;
+
+template<typename T>
+using vec = vector<T>;
+
+template<typename T>
+using vvec = vector<vector<T>>;
+
+template<typename T>
+using sset = set<T>;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int H, W, Q;
+    cin >> H >> W >> Q;
+
+    const int MAX = max(H, W) + 2;
+
+    // Store whether a wall exists at each cell
+    vvb has_wall(H + 2, vb(W + 2, true));
+
+    // For each row, keep track of walls in ordered sets
+    vector<sset<int>> rows(H + 2);
+    // For each column, keep track of walls in ordered sets
+    vector<sset<int>> cols(W + 2);
+
+    // Initialize all positions
+    rep1(i, H) rep1(j, W) {
+        rows[i].insert(j);
+        cols[j].insert(i);
+    }
+
+    auto destroy = [&](int r, int c) {
+        if (!has_wall[r][c]) return;
+        // Remove from row and column sets
+        rows[r].erase(c);
+        cols[c].erase(r);
+        has_wall[r][c] = false;
+    };
+
+    while (Q--) {
+        int r, c;
+        cin >> r >> c;
+
+        if (has_wall[r][c]) {
+            // Just destroy the bomb's cell
+            destroy(r, c);
+        } else {
+            // Up
+            if (!cols[c].empty()) {
+                auto it = cols[c].lower_bound(r);
+                if (it != cols[c].end()) destroy(*it, c); // Down
+                if (it != cols[c].begin()) { // Up
+                    --it;
+                    destroy(*it, c);
+                }
+            }
+
+            // Left
+            if (!rows[r].empty()) {
+                auto it = rows[r].lower_bound(c);
+                if (it != rows[r].end()) destroy(r, *it); // Right
+                if (it != rows[r].begin()) { // Left
+                    --it;
+                    destroy(r, *it);
+                }
+            }
+        }
+    }
+
+    // Count remaining walls
+    int ans = 0;
+    rep1(i, H) rep1(j, W) ans += has_wall[i][j];
+
+    cout << ans << "\n";
+    return 0;
+}

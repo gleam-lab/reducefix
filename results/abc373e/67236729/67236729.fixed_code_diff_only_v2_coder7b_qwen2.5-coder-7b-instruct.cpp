@@ -1,0 +1,45 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+long long calc(long long a, long long b, long long c, long long d) {
+    if (b + d < a)
+        return 0;
+    long long ret = 0;
+    long long t = a - b;
+    if (t > d)
+        ret += t;
+    t = b + d - a;
+    if (t > c)
+        ret += t;
+    return ret;
+}
+
+int main() {
+    long long n, m, k;
+    cin >> n >> m >> k;
+    vector<long long> a(n);
+    for (int i = 0; i < n; i++)
+        cin >> a[i];
+
+    sort(a.begin(), a.end());
+
+    vector<long long> sum(n + 1);
+    for (int i = 0; i < n; i++)
+        sum[i + 1] = sum[i] + a[i];
+
+    vector<long long> ans(n);
+    for (int i = 0; i < n; i++) {
+        long long need = 0;
+        for (int j = 0; j < n; j++) {
+            if (j == i)
+                continue;
+            need = max(need, calc(a[j], a[i], k - sum[n] + sum[j + 1], a[j]));
+        }
+        ans[i] = need;
+    }
+
+    for (int i = 0; i < n; i++)
+        cout << ans[i] << " ";
+
+    return 0;
+}

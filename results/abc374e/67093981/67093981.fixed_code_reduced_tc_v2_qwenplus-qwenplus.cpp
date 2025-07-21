@@ -1,0 +1,59 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <climits>
+using namespace std;
+
+typedef struct {
+    int a, p, b, q;
+} Pattern;
+
+int main() {
+    int N, X;
+    cin >> N >> X;
+
+    vector<Pattern> patterns(N);
+    vector<vector<long long>> dp(N);
+
+    for (int i = 0; i < N; ++i) {
+        int a, p, b, q;
+        cin >> a >> p >> b >> q;
+        
+        // Ensure we use the more cost-effective pattern first
+        if (a * q < b * p) {
+            swap(a, b);
+            swap(p, q);
+        }
+        
+        patterns[i] = {a, p, b, q};
+        dp[i].assign(a * b + 1, LLONG_MAX / 2);
+        dp[i][0] = 0;
+        
+        for (int j = 1; j <= a * b; ++j) {
+            dp[i][j] = min(dp[i][max(0, j - a)] + p, dp[i][max(0, j - b)] + q);
+        }
+    }
+
+    auto cost = [&](long long n) -> long long {
+        long long total = 0;
+        for (int i = 0; i < N; ++i) {
+            long long d = n / (patterns[i].a * patterns[i].b);
+            long long rem = n % (patterns[i].a * patterns[i].b);
+            total += dp[i][rem] + d * patterns[i].p * patterns[i].b;
+            if (total > X) return (long long)1e18; // Early exit if over budget
+        }
+        return total;
+    };
+
+    long long low = 0, high = (long long)1e18;
+    while (low <= high) {
+        long long mid = low + (high - low) / 2;
+        if (cost(mid) <= X) {
+            low = mid + 1;
+        } else {
+            high = mid - 1;
+        }
+    }
+
+    cout << high << endl;
+}

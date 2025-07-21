@@ -1,0 +1,40 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios_base::sync_with_stdio(false); cin.tie(0); cout.tie(0);
+    
+    int n, m;
+    cin >> n >> m;
+    vector<long long> a(n + 1);
+    for (int i = 1; i <= n; ++i) cin >> a[i];
+
+    vector<vector<pair<int, int>>> adj(n + 1);
+    for (int j = 0; j < m; ++j) {
+        int u, v, w;
+        cin >> u >> v >> w;
+        adj[u].emplace_back(v, w);
+        adj[v].emplace_back(u, w);
+    }
+
+    vector<long long> dist(n + 1, LLONG_MAX);
+    priority_queue<pair<long long, int>, vector<pair<long long, int>>, greater<pair<long long, int>>> pq;
+    pq.emplace(a[1], 1);
+
+    while (!pq.empty()) {
+        auto [d, u] = pq.top(); pq.pop();
+        if (d > dist[u]) continue;
+        for (auto [v, w] : adj[u]) {
+            long long new_d = d + w + a[v];
+            if (new_d < dist[v]) {
+                dist[v] = new_d;
+                pq.emplace(new_d, v);
+            }
+        }
+    }
+
+    for (int i = 2; i <= n; ++i) {
+        cout << dist[i] << " ";
+    }
+    return 0;
+}

@@ -1,0 +1,43 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+bool check(vector<int>& va, vector<int>& vb, int x) {
+    vector<int> boxes(vb.size() + 1, x);
+    sort(boxes.begin(), boxes.end());
+    sort(va.begin(), va.end());
+    
+    int j = 0;
+    for (int i = 0; i < va.size(); ++i) {
+        while (j < boxes.size() && boxes[j] < va[i]) ++j;
+        if (j == boxes.size()) return false;
+        ++j;
+    }
+    return true;
+}
+
+int main() {
+    int n;
+    cin >> n;
+    vector<int> va(n), vb(n-1);
+    for (int i = 0; i < n; ++i)
+        cin >> va[i];
+    for (int i = 0; i < n-1; ++i)
+        cin >> vb[i];
+    
+    sort(va.begin(), va.end());
+    sort(vb.begin(), vb.end());
+    
+    int low = 0, high = 1e9, ans = -1;
+    while (low <= high) {
+        int mid = low + (high - low) / 2;
+        if (check(va, vb, mid)) {
+            ans = mid;
+            high = mid - 1;
+        } else {
+            low = mid + 1;
+        }
+    }
+    
+    cout << ans << endl;
+    return 0;
+}

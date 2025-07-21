@@ -1,0 +1,69 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    int N;
+    cin >> N;
+    string S;
+    cin >> S;
+
+    // Define the choices and their corresponding wins
+    vector<char> hand = {'R', 'P', 'S'};
+    vector<int> winMap = {1, 2, 0}; // R beats S, P beats R, S beats P
+
+    // Initialize scores
+    int total = 0;
+    int total2 = 0;
+
+    // Calculate the first scenario where we play optimally based on previous moves
+    for (int i = 0; i < N; ++i) {
+        int bestScore = 0;
+        char bestChoice = S[i];
+        for (char choice : hand) {
+            int score = 0;
+            if (winMap[choice - 'R'] == S[i] - 'R') {
+                score = 1;
+            }
+            if (score > bestScore) {
+                bestScore = score;
+                bestChoice = choice;
+            }
+        }
+        total += bestScore;
+        for (char choice : hand) {
+            if (choice != bestChoice) {
+                hand.erase(find(hand.begin(), hand.end(), choice));
+                break;
+            }
+        }
+    }
+
+    // Reset hand for the second scenario
+    hand = {'R', 'P', 'S'};
+
+    // Calculate the second scenario where we play optimally based on initial move
+    for (int i = 1; i < N; ++i) {
+        int bestScore = 0;
+        char bestChoice = S[i];
+        for (char choice : hand) {
+            int score = 0;
+            if (winMap[choice - 'R'] == S[i] - 'R') {
+                score = 1;
+            }
+            if (score > bestScore) {
+                bestScore = score;
+                bestChoice = choice;
+            }
+        }
+        total2 += bestScore;
+        for (char choice : hand) {
+            if (choice != bestChoice) {
+                hand.erase(find(hand.begin(), hand.end(), choice));
+                break;
+            }
+        }
+    }
+
+    // Output the maximum of the two scenarios
+    cout << max(total, total2);
+}

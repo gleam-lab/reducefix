@@ -1,0 +1,47 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+#define endl "\n"
+#define int long long
+
+typedef long long ll;
+typedef pair<int, int> pii;
+
+void solve() {
+    int n, k;
+    cin >> n >> k;
+    vector<int> A(n);
+    for (int i = 0; i < n; ++i) {
+        cin >> A[i];
+    }
+
+    // We need to choose N - K elements such that:
+    // - They are in original order
+    // - The difference between max and min of this subsequence is minimized
+
+    // Since we can't try all possible subsequences due to time constraints,
+    // here's the key observation:
+    //
+    // The minimum possible value of (max - min) occurs when the selected elements
+    // are a consecutive segment of size (N - K) from the sorted array.
+
+    // So we sort the array first
+    sort(A.begin(), A.end());
+
+    // Try every consecutive subsequence of length (N - K)
+    // and find the one with minimal (max - min)
+    int minDiff = numeric_limits<int>::max();
+    for (int i = 0; i + (n - k) <= n; ++i) {
+        int currentDiff = A[i + (n - k)] - A[i];
+        minDiff = min(minDiff, currentDiff);
+    }
+
+    cout << minDiff << endl;
+}
+
+signed main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(NULL);
+    solve();
+    return 0;
+}

@@ -1,0 +1,64 @@
+#include <bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int n, m;
+    ll k;
+    cin >> n >> m >> k;
+    vector<ll> a(n);
+    for (int i = 0; i < n; ++i) {
+        cin >> a[i];
+        k -= a[i];
+    }
+
+    vector<int> ord(n);
+    iota(begin(ord), end(ord), 0);
+    sort(begin(ord), end(ord), [&](int i, int j) { return a[i] < a[j]; });
+
+    vector<ll> pref(n + 1);
+    for (int i = 0; i < n; ++i) {
+        pref[i + 1] = a[ord[i]] + pref[i];
+    }
+
+    vector<ll> ans(n, -1);
+    for (int i = 0; i < n; ++i) {
+        int lid = n - m - (i >= n - m ? 1 : 0);
+        ll cnt = 0;
+        if (lid < 0) lid = 0;
+        if (lid <= i && i < n) cnt++;
+        if (cnt > k) continue;
+
+        ll target = a[ord[i]];
+        if (k >= target) {
+            ans[ord[i]] = 0;
+            continue;
+        }
+
+        ll l = 0, r = k + 1;
+        while (l < r) {
+            ll mid = (l + r) / 2;
+            int rid = upper_bound(begin(pref) + lid + 1, end(pref), pref[lid + 1] + mid * (n - lid - 1)) - begin(pref);
+            if (rid > lid) cnt += (rid - lid) * (a[ord[i]] + mid + 1) - (pref[rid] - pref[lid]);
+            if (rid > i && i < lid) cnt--;
+            else cnt += mid;
+
+            if (cnt > k) {
+                r = mid;
+            } else {
+                l = mid + 1;
+            }
+        }
+
+        if (l == k + 1) ans[ord[i]] = -1;
+        else ans[ord[i]] = l;
+    }
+
+    for (auto x : ans) cout << x << " ";
+    cout << endl;
+
+    return 0;
+}

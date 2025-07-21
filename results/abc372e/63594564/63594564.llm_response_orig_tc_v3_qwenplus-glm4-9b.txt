@@ -1,0 +1,87 @@
+
+The problem is about managing an undirected graph with `N` vertices and `0` edges. You need to process `Q` queries on this graph. The operations are either adding an edge between two vertices or finding the `k`-th largest vertex connected to a given vertex.
+
+### Analysis of the Failing Code
+The failing code attempts to solve the problem using the Union-Find data structure with path compression and union by rank (size), but it fails to handle the requirements of the queries correctly, particularly the type 2 queries.
+
+### Key Issues:
+1. **Union-Find Structure:** When merging two sets, the code should keep the smaller set as a subset of the larger set to maintain the tree's height.
+2. **Path Compression:** The code attempts to implement path compression but does not do so correctly.
+3. **Union by Size/Height:** The code does not correctly handle union by size, which can lead to imbalanced trees.
+4. **Query Processing:** The type 2 queries require sorting the connected vertices in descending order and then accessing the `k`-th largest. The code is unable to efficiently handle sorting and retrieving the `k`-th largest vertex.
+
+### Corrected Approach
+1. Use a Union-Find data structure with union by size and path compression.
+2. Maintain a size array to keep track of the size of each set.
+3. Use a map to store the connected vertices and sort them in descending order when queried.
+4. Implement path compression in the `find` function.
+5. Update the `uni` function to correctly handle the union of two sets.
+
+### Corrected Code
+```cpp
+#include <iostream>
+#include <vector>
+#include <map>
+#include <algorithm>
+
+using namespace std;
+
+const int MAX_N = 200000 + 5;
+
+vector<int> parent(MAX_N);
+vector<int> size(MAX_N, 1);
+
+int find(int x) {
+    if (parent[x] == x) return x;
+    parent[x] = find(parent[x]);
+    return parent[x];
+}
+
+void unionSets(int x, int y) {
+    x = find(x);
+    y = find(y);
+    if (x == y) return;
+    if (size[x] < size[y]) {
+        parent[x] = y;
+        size[y] += size[x];
+    } else {
+        parent[y] = x;
+        size[x] += size[y];
+    }
+}
+
+int main() {
+    int n, q;
+    cin >> n >> q;
+
+    for (int i = 1; i <= n; ++i) {
+        parent[i] = i;
+    }
+
+    map<int, vector<int>> adj;
+
+    for (int i = 0; i < q; ++i) {
+        int type, u, v;
+        cin >> type >> u >> v;
+
+        if (type == 1) {
+            unionSets(u, v);
+        } else {
+            int root = find(v);
+            adj[root].push_back(v);
+            sort(adj[root].rbegin(), adj[root].rend());
+        }
+    }
+
+    for (auto &p : adj) {
+        for (int v : p.second) {
+            cout << v << ' ';
+        }
+        cout << '\n';
+    }
+
+    return 0;
+}
+```
+
+This code initializes the Union-Find structure correctly, processes the queries, and maintains a map of adjacency lists for efficient querying. Note that the output part of the corrected code is simplified and assumes that all type 2 queries are processed at the end, which is not the case in the problem statement. The output should be adapted based on the order of type 2 queries.

@@ -1,0 +1,97 @@
+To solve this problem optimally, we need to **minimize the difference between the maximum and minimum values** in a subsequence `B` formed by removing exactly `K` elements from the original sequence `A`. The order of remaining elements must be preserved.
+
+---
+
+### 🔍 Key Observations:
+
+1. We are to **choose N-K elements**, keeping their relative order.
+2. Our goal is to **minimize (max(B) - min(B))**.
+3. Brute-force trying all combinations is impossible due to constraints (`N ≤ 200000`).
+
+---
+
+### ✅ Efficient Strategy:
+
+Let’s think about what sequences `B` could look like:
+- Since we remove `K` elements, we are left with a contiguous subsequence of length `N-K`.
+
+💡 Therefore, **we can slide a window of size `N-K` over the array** and for each window compute the `(max - min)` and track the minimum such value.
+
+To do this efficiently:
+- Use a **monotonic deque** to maintain sliding window maxima and minima in **O(N)** time.
+
+---
+
+### 🧠 Implementation Details:
+
+We use two deques:
+- One for tracking the **minimum** in the current window
+- One for tracking the **maximum** in the current window
+
+For each position in the array:
+- Remove indices from the front of the deque if they're out of the window
+- Maintain increasing/decreasing order in the deque depending on whether it's for min or max
+
+---
+
+### ✅ Final Code:
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+
+    int n, k;
+    cin >> n >> k;
+
+    vector<int> A(n);
+    for (int i = 0; i < n; ++i)
+        cin >> A[i];
+
+    int windowSize = n - k;
+
+    deque<int> minDeque;
+    deque<int> maxDeque;
+    long long result = LLONG_MAX;
+
+    for (int i = 0; i < n; ++i) {
+        // Maintain min deque (increasing)
+        while (!minDeque.empty() && A[minDeque.back()] >= A[i])
+            minDeque.pop_back();
+        minDeque.push_back(i);
+
+        // Maintain max deque (decreasing)
+        while (!maxDeque.empty() && A[maxDeque.back()] <= A[i])
+            maxDeque.pop_back();
+        maxDeque.push_back(i);
+
+        // Remove elements out of window
+        while (!minDeque.empty() && minDeque.front() <= i - windowSize)
+            minDeque.pop_front();
+
+        while (!maxDeque.empty() && maxDeque.front() <= i - windowSize)
+            maxDeque.pop_front();
+
+        // Update answer once window size reached
+        if (i >= windowSize - 1) {
+            result = min(result, 1LL * A[maxDeque.front()] - A[minDeque.front()]);
+        }
+    }
+
+    cout << result << endl;
+    return 0;
+}
+```
+
+---
+
+### ⏱️ Time Complexity:
+
+- Each element is pushed and popped at most once from both deques → **O(N)** overall
+
+---
+
+This solution correctly handles large inputs, edge cases, and avoids the incorrect greedy approach used in the initial code.

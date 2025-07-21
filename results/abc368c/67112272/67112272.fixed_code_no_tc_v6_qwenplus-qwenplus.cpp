@@ -1,0 +1,32 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+using ll = long long;
+
+int main() {
+    int n;
+    cin >> n;
+    vector<ll> H(n);
+    for (int i = 0; i < n; ++i) cin >> H[i];
+
+    ll T = 0;
+    for (int i = 0; i < n; ++i) {
+        // Determine how many attacks are needed to reduce H[i] to zero or less
+        ll h = H[i];
+        // Each cycle of 3 seconds: 1+1+3 = 5 damage
+        ll cycles = h / 5;
+        ll rem = h % 5;
+
+        T += cycles * 3;
+        if (rem > 0) {
+            if (rem <= 2) {
+                T += 1;
+            } else {
+                T += 2;
+            }
+        }
+    }
+
+    cout << T << endl;
+    return 0;
+}

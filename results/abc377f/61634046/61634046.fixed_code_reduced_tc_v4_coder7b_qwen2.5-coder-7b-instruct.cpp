@@ -1,0 +1,42 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+
+using namespace std;
+
+int main() {
+    int n, m;
+    cin >> n >> m;
+
+    vector<int> rows(n+1), cols(n+1), ups[n+1], downs[n+1];
+    for(int i=0; i<n+1; ++i){
+        ups[i].resize(n+1);
+        downs[i].resize(n+1);
+    }
+
+    for(int i=1; i<=m; ++i){
+        int x, y;
+        cin >> x >> y;
+        rows[y]++;
+        cols[x]++;
+        ups[x+y][x]++;
+        downs[x-y+n][x]++;
+    }
+
+    sort(rows.begin()+1, rows.end());
+    sort(cols.begin()+1, cols.end());
+
+    long long result = (long long)n*n - m;
+
+    for(int i=1; i<=n; ++i){
+        result -= rows[i] + cols[i];
+        for(int j=1; j<=n; ++j){
+            if(i==j) continue;
+            result -= ups[i+j][min(i,j)] + downs[i-j+n][max(i,j)];
+        }
+    }
+
+    cout << result << endl;
+
+    return 0;
+}

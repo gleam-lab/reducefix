@@ -1,0 +1,66 @@
+#include <iostream>
+#include <vector>
+#include <queue>
+#include <algorithm>
+using namespace std;
+#define int long long
+
+signed main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int T;
+    cin >> T;
+
+    while (T--) {
+        int N, K;
+        cin >> N >> K;
+
+        vector<pair<int, int>> A(N);
+        for (int i = 0; i < N; ++i) {
+            cin >> A[i].first;
+        }
+
+        vector<int> B(N);
+        for (int i = 0; i < N; ++i) {
+            cin >> B[i];
+            A[i].second = i;
+        }
+
+        // Sort items by A[i]
+        sort(A.begin(), A.end());
+
+        // Maintain a min-heap of B values
+        priority_queue<int, vector<int>, greater<int>> pq;
+        int sum_b = 0;
+        int result = 1e18;
+
+        // Process the first K elements
+        for (int i = 0; i < K; ++i) {
+            pq.push(B[A[i].second]);
+            sum_b += B[A[i].second];
+        }
+        result = A[K - 1].first * sum_b;
+
+        // Sliding window over the rest
+        for (int i = K; i < N; ++i) {
+            int current_a = A[i].first;
+            int current_b = B[A[i].second];
+
+            // Always include current element
+            pq.push(current_b);
+            sum_b += current_b;
+
+            // Remove the smallest B value to keep size K
+            sum_b -= pq.top();
+            pq.pop();
+
+            // The maximum A in current subset is current_a
+            result = min(result, current_a * sum_b);
+        }
+
+        cout << result << '\n';
+    }
+
+    return 0;
+}

@@ -1,0 +1,82 @@
+I analyzed the incorrect code and found several issues that need to be fixed:
+
+1. The code incorrectly checks `ni>=0&&ni<H&&ni>=0&&ni<W` which is redundant and misses checking `nj`.
+2. The queue capacity (202020) is arbitrarily large and unnecessary.
+3. The initial sinking of border sections doesn't properly account for their elevation relative to year 0.
+4. The algorithm doesn't efficiently handle the large Y constraint (up to 10^5).
+
+Here's the corrected version:
+
+```cpp
+#include<bits/stdc++.h>
+using namespace std;
+using ll = int64_t;
+
+int main(){
+    cin.tie(0)->sync_with_stdio(0);
+    
+    int H, W, Y;
+    cin >> H >> W >> Y;
+    vector<vector<int>> A(H, vector<int>(W));
+    for(int i = 0; i < H; i++) {
+        for(int j = 0; j < W; j++) {
+            cin >> A[i][j];
+        }
+    }
+    
+    int ans = H * W;
+    vector<vector<bool>> sunk(H, vector<bool>(W, false));
+    vector<queue<pair<int,int>>> queues(100002); // Max elevation is 1e5
+    
+    // Initialize border cells
+    for(int i = 0; i < H; i++) {
+        for(int j = 0; j < W; j++) {
+            if(i == 0 || i == H-1 || j == 0 || j == W-1) {
+                if(!sunk[i][j]) {
+                    sunk[i][j] = true;
+                    queues[A[i][j]].push({i, j});
+                }
+            }
+        }
+    }
+    
+    const int dx[] = {1, 0, -1, 0};
+    const int dy[] = {0, 1, 0, -1};
+    
+    for(int y = 1; y <= Y; y++) {
+        // Process all queues <= y
+        for(int level = 1; level <= y; level++) {
+            while(!queues[level].empty()) {
+                auto [i, j] = queues[level].front();
+                queues[level].pop();
+                if(A[i][j] > y) continue; // Shouldn't sink yet
+                ans--;
+                
+                for(int k = 0; k < 4; k++) {
+                    int ni = i + dx[k];
+                    int nj = j + dy[k];
+                    if(ni >= 0 && ni < H && nj >= 0 && nj < W) {
+                        if(!sunk[ni][nj] && A[ni][nj] <= y) {
+                            sunk[ni][nj] = true;
+                            queues[A[ni][nj]].push({ni, nj});
+                        }
+                    }
+                }
+            }
+        }
+        cout << ans << '\n';
+    }
+}
+```
+
+Key improvements made:
+
+1. Fixed the boundary checking condition to properly check both ni and nj.
+2. Reduced the queue size to match the maximum possible elevation (100000).
+3. Properly initialized the border cells to sink at their respective elevations.
+4. For each year y, we process all queues with levels ≤ y to ensure all eligible cells are sunk.
+5. Added a check to skip processing if the cell's elevation is greater than current year.
+6. Used more descriptive variable names (sunk instead of F).
+7. Simplified the direction vectors to only consider 4-way connectivity (the problem specifies vertical/horizontal adjacency).
+
+The fixed algorithm now correctly handles the sinking process year by year while efficiently managing the large Y constraint.

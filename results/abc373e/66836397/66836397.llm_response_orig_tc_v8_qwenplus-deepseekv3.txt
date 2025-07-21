@@ -1,0 +1,92 @@
+To fix this code, we need to ensure that the solution correctly determines the minimum number of additional votes each candidate needs to guarantee their victory, or identifies if they cannot secure a victory. The key insight is to check if the candidate can be among the top M candidates after receiving additional votes, considering the worst-case scenario where other candidates receive all remaining votes.
+
+### Approaches
+1. **Sorting and Binary Search**: For each candidate, we will determine the minimum number of votes they need to ensure they are among the top M candidates. This involves:
+   - Sorting the votes to efficiently find the threshold of votes needed.
+   - Using binary search to find the minimum votes required for each candidate to be in the top M.
+   
+2. **Check Feasibility**: For each candidate, we check if it's possible to allocate votes such that they are in the top M candidates, considering the remaining votes and the worst-case distribution of votes to other candidates.
+
+### Solution Code
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    ll N, M, K;
+    cin >> N >> M >> K;
+    vector<ll> A(N);
+    for (ll &a : A) cin >> a;
+    
+    ll total_votes = accumulate(A.begin(), A.end(), 0LL);
+    ll remaining_votes = K - total_votes;
+
+    vector<ll> sorted_A = A;
+    sort(sorted_A.begin(), sorted_A.end());
+
+    vector<ll> prefix(N + 1, 0);
+    for (int i = 0; i < N; ++i) {
+        prefix[i + 1] = prefix[i] + sorted_A[i];
+    }
+
+    for (int i = 0; i < N; ++i) {
+        ll current = A[i];
+        ll left = 0, right = remaining_votes;
+        ll answer = -1;
+
+        while (left <= right) {
+            ll mid = left + (right - left) / 2;
+            ll new_votes = current + mid;
+            
+            // Find the position in the sorted array where new_votes would fit
+            auto it = upper_bound(sorted_A.begin(), sorted_A.end(), new_votes);
+            ll pos = it - sorted_A.begin();
+            ll rank = N - pos; // number of candidates strictly greater than new_votes
+
+            if (rank < M) {
+                // The candidate is in the top M
+                // Now check if it's possible to distribute the remaining votes (remaining_votes - mid)
+                // such that the candidate remains in the top M
+                // The worst case is to give as many votes as possible to candidates just below new_votes
+                ll required = 0;
+                if (rank < M - 1) {
+                    // We need to ensure there are at least M - 1 - rank candidates with votes >= new_votes
+                    // So, need to lift some candidates to new_votes
+                    ll needed = (M - 1) - rank;
+                    if (pos - needed >= 0) {
+                        ll sum_lifted = prefix[pos] - prefix[pos - needed];
+                        required = needed * new_votes - sum_lifted;
+                    } else {
+                        required = LLONG_MAX;
+                    }
+                }
+                if (required <= remaining_votes - mid) {
+                    answer = mid;
+                    right = mid - 1;
+                } else {
+                    left = mid + 1;
+                }
+            } else {
+                left = mid + 1;
+            }
+        }
+
+        cout << answer << " \n"[i == N - 1];
+    }
+
+    return 0;
+}
+```
+
+### Explanation
+1. **Input Handling**: The code reads the number of candidates `N`, the threshold `M`, and the total votes `K`, followed by the current votes for each candidate.
+2. **Sorting and Prefix Sum**: The votes are sorted to facilitate binary search and prefix sums are computed for efficient range sum queries.
+3. **Binary Search for Each Candidate**: For each candidate, we perform a binary search to determine the minimum additional votes needed to ensure they are in the top `M` candidates. The binary search checks if the candidate's new vote count (after adding `mid` votes) positions them within the top `M`.
+4. **Feasibility Check**: For each candidate, we check if the remaining votes can be distributed to other candidates such that the candidate remains in the top `M`. This involves calculating the required votes to ensure sufficient candidates are below or equal to the candidate's new vote count.
+5. **Output**: The results for each candidate are printed, indicating the minimum votes needed or `-1` if it's not possible.
+
+This approach ensures that we efficiently and correctly determine the solution for each candidate while adhering to the problem constraints.

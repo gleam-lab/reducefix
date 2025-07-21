@@ -1,0 +1,32 @@
+#include <iostream>
+#include <vector>
+#include <cmath>
+
+using namespace std;
+
+int main() {
+    int N;
+    cin >> N;
+    vector<pair<long long, long long>> points(N + 1);
+    
+    // Read points, with an extra point at the origin (0, 0) for easier calculations
+    points[0] = {0, 0};
+    for (int i = 1; i <= N; ++i) {
+        cin >> points[i].first >> points[i].second;
+    }
+    
+    // Calculate the total cost
+    double total_distance = 0;
+    for (int i = 1; i <= N; ++i) {
+        // Calculate the Euclidean distance between consecutive points
+        double distance = sqrt(pow(points[i].first - points[i - 1].first, 2) +
+                               pow(points[i].second - points[i - 1].second, 2));
+        // Accumulate the total distance
+        total_distance += distance;
+    }
+    
+    // Output the total distance
+    cout << fixed << setprecision(12) << total_distance << endl;
+    
+    return 0;
+}

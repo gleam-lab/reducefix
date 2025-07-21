@@ -1,0 +1,58 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define rep(i, n) for (int i = 0; i < (n); i++)
+using ll = long long;
+
+int main(void) {
+    int h, w, q;
+    cin >> h >> w >> q;
+    vector<set<int>> walls_in_col(h), walls_in_row(w);
+    rep(i, h) rep(j, w) {
+        walls_in_col[i].insert(j);
+        walls_in_row[j].insert(i);
+    }
+    rep(q) {
+        int r, c;
+        cin >> r >> c;
+        r--; c--;
+        if (walls_in_col[c].count(r)) {
+            walls_in_col[c].erase(r);
+            walls_in_row[r].erase(c);
+        } else {
+            // Erase upper wall
+            auto upper_end = walls_in_col[c].insert(r);
+            while (upper_end != walls_in_col[c].begin()) {
+                --upper_end;
+                walls_in_row[*upper_end].erase(c);
+            }
+
+            // Erase lower wall
+            auto lower_end = upper_end;
+            ++lower_end;
+            while (lower_end != walls_in_col[c].end()) {
+                walls_in_row[*lower_end].erase(c);
+                ++lower_end;
+            }
+
+            // Erase left wall
+            auto left_end = walls_in_row[r].insert(c);
+            while (left_end != walls_in_row[r].begin()) {
+                --left_end;
+                walls_in_col[*left_end].erase(r);
+            }
+
+            // Erase right wall
+            auto right_end = left_end;
+            ++right_end;
+            while (right_end != walls_in_row[r].end()) {
+                walls_in_col[*right_end].erase(r);
+                ++right_end;
+            }
+        }
+    }
+    int ans = 0;
+    rep(i, h) ans += walls_in_col[i].size();
+    rep(j, w) ans += walls_in_row[j].size();
+    cout << ans << endl;
+    return 0;
+}

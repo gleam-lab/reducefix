@@ -1,0 +1,113 @@
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int N, M;
+    ll K;
+    cin >> N >> M >> K;
+
+    vector<pair<ll, int>> A(N);
+    for (int i = 0; i < N; ++i) {
+        cin >> A[i].first;
+    }
+
+    // Store original indices to reconstruct the order
+    vector<int> result(N);
+    for (int i = 0; i < N; ++i) {
+        A[i].second = i;
+    }
+
+    // Sort candidates by votes
+    sort(A.begin(), A.end());
+
+    // Compute prefix sums
+    vector<ll> prefix(N + 1);
+    for (int i = 1; i <= N; ++i) {
+        prefix[i] = prefix[i - 1] + A[i - 1].first;
+    }
+
+    ll total_votes = prefix[N];
+    ll remaining = K - total_votes;
+
+    auto solve_for_candidate = [&](int idx) -> ll {
+        ll val = A[idx].first;
+        int pos = idx;
+
+        // Binary search on minimal additional votes needed
+        ll low = 0, high = remaining;
+        ll answer = -1;
+
+        while (low <= high) {
+            ll mid = (low + high) / 2;
+            ll current_total = val + mid;
+
+            // We need to find how many candidates can have more than current_total
+            // Use binary search to find first candidate with vote count > current_total
+            int l = 0, r = N;
+            while (l < r) {
+                int m = (l + r) / 2;
+                if (A[m].first > current_total)
+                    r = m;
+                else
+                    l = m + 1;
+            }
+            int better_count = N - l;
+
+            // If there are already >= M candidates with more votes than us, we cannot win
+            if (better_count >= M) {
+                low = mid + 1;
+                continue;
+            }
+
+            // Now we can try to boost ourselves further to push enough others below
+            ll need = 0;
+            int available = M - better_count - 1;
+            if (available == 0) {
+                answer = mid;
+                high = mid - 1;
+                continue;
+            }
+
+            // Try to take over the next "available" candidates
+            int left = 0, right = pos;
+            while (left < right) {
+                int m = (left + right) / 2;
+                ll sum = prefix[pos] - prefix[m]; // Sum of those above m
+                ll required = (pos - m) * current_total + mid - sum;
+                if (required <= remaining)
+                    right = m;
+                else
+                    left = m + 1;
+            }
+
+            ll best = left;
+            ll extra_needed = (pos - best) * current_total + mid - (prefix[pos] - prefix[best]);
+
+            if (extra_needed <= remaining) {
+                answer = mid;
+                high = mid - 1;
+            } else {
+                low = mid + 1;
+            }
+        }
+
+        return answer == -1 ? -1 : answer;
+    };
+
+    // Solve for each candidate
+    vector<ll> answers(N);
+    for (int i = 0; i < N; ++i) {
+        answers[A[i].second] = solve_for_candidate(i);
+    }
+
+    // Output results
+    for (auto &x : answers) {
+        cout << (x < 0 ? -1 : x) << ' ';
+    }
+
+    return 0;
+}

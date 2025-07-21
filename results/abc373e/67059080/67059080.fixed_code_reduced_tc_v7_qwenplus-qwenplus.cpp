@@ -1,0 +1,93 @@
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+
+int main() {
+  std::cin.tie(nullptr)->sync_with_stdio(false);
+  int N, M;
+  ll K;
+  cin >> N >> M >> K;
+
+  vector<pair<ll, int>> A(N);
+  for (int i = 0; i < N; ++i) {
+    cin >> A[i].first;
+    A[i].second = i;
+  }
+
+  vector<ll> ans(N);
+
+  // We need to process each candidate independently
+
+  for (int target = 0; target < N; ++target) {
+    ll a_i = A[target].first;
+    vector<ll> others;
+    for (int j = 0; j < N; ++j) {
+      if (j != target) {
+        others.push_back(A[j].first);
+      }
+    }
+    sort(others.begin(), others.end());
+
+    ll remaining = K;
+    // Binary search on the minimum number of votes needed
+    ll low = 0, high = remaining;
+    ll res = -1;
+
+    while (low <= high) {
+      ll mid = (low + high) / 2;
+      ll total = a_i + mid;
+
+      // We want to ensure that at most M-1 candidates can have >= total votes
+      // So we check how many candidates can be made to have > total by allocating remaining votes
+      // Start from largest and allocate just enough to make them > total
+
+      int cnt = 0;
+      ll used = 0;
+
+      // Try to increase as many candidates as possible to be > total using remaining votes
+      // Start from largest to smallest
+      for (int i = N - 2; i >= 0 && cnt < M; --i) {
+        ll extra = max(0LL, others[i] - total + 1); // To make others[i] >= total
+        if (others[i] + extra <= total) { // sanity check
+          continue;
+        }
+        if (used + extra <= remaining - mid) {
+          used += extra;
+          ++cnt;
+        } else {
+          break;
+        }
+      }
+
+      if (cnt < M) {
+        // Not enough candidates can be made better than us => we win
+        res = mid;
+        high = mid - 1;
+      } else {
+        low = mid + 1;
+      }
+    }
+
+    if (res == 0) {
+      // Already winning
+      ans[target] = 0;
+    } else if (res == -1 || res > K) {
+      ans[target] = -1;
+    } else {
+      ans[target] = res;
+    }
+  }
+
+  // Reorder answers back to original order
+  vector<ll> final_ans(N);
+  for (int i = 0; i < N; ++i) {
+    final_ans[A[i].second] = ans[i];
+  }
+
+  for (ll x : final_ans) {
+    cout << x << " ";
+  }
+  cout << "\n";
+
+  return 0;
+}

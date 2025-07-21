@@ -1,0 +1,143 @@
+To fix this code, we need to ensure that the algorithm correctly calculates the number of safe squares where a new piece can be placed without being captured by any existing queen pieces. The original code had several issues, including incorrect calculations for the intersections of rows, columns, and diagonals, leading to negative results in some cases.
+
+### Approaches
+1. **Identify Forbidden Squares**: 
+   - **Rows and Columns**: Any square in the same row or column as an existing queen is forbidden.
+   - **Diagonals**: Any square on the same diagonal (both main and anti-diagonals) as an existing queen is forbidden.
+   
+2. **Calculate Total Forbidden Squares**: 
+   - Use inclusion-exclusion principle to avoid double-counting squares that are forbidden by multiple conditions (rows, columns, diagonals).
+   - Specifically, subtract the squares forbidden by rows, columns, and diagonals, then add back the squares that were counted multiple times due to intersections.
+
+3. **Handle Large Constraints**: 
+   - Given that N can be as large as 10^9 and M up to 10^3, the solution must efficiently handle these constraints without excessive computation.
+   
+4. **Final Count**: 
+   - Subtract the total forbidden squares from the total number of squares (N²) to get the number of safe squares. Ensure that the result is non-negative and correctly accounts for all overlaps.
+
+### Solution Code
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+typedef long long ll;
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(NULL);
+    
+    ll N, M;
+    cin >> N >> M;
+    
+    set<ll> rows, cols, diag1, diag2;
+    for (int i = 0; i < M; ++i) {
+        ll a, b;
+        cin >> a >> b;
+        rows.insert(a);
+        cols.insert(b);
+        diag1.insert(a - b);
+        diag2.insert(a + b);
+    }
+    
+    ll total = N * N;
+    ll forbidden = 0;
+    
+    // Squares forbidden by rows and columns
+    ll row_count = rows.size();
+    ll col_count = cols.size();
+    forbidden += row_count * N;
+    forbidden += col_count * N;
+    forbidden -= row_count * col_count;
+    
+    // Squares forbidden by diagonals (d1: a - b = constant)
+    for (auto d : diag1) {
+        ll cnt;
+        if (d >= 0) {
+            cnt = N - d;
+        } else {
+            cnt = N + d;
+        }
+        forbidden += cnt;
+        
+        // Subtract intersections with rows and columns
+        for (auto r : rows) {
+            ll c = r - d;
+            if (c >= 1 && c <= N) {
+                forbidden--;
+            }
+        }
+        for (auto c : cols) {
+            ll r = c + d;
+            if (r >= 1 && r <= N) {
+                forbidden--;
+            }
+        }
+        
+        // Add back intersections between rows and columns on this diagonal
+        for (auto r : rows) {
+            ll c = r - d;
+            if (c >= 1 && c <= N && cols.count(c)) {
+                forbidden++;
+            }
+        }
+    }
+    
+    // Squares forbidden by diagonals (d2: a + b = constant)
+    for (auto d : diag2) {
+        ll cnt;
+        if (d <= N + 1) {
+            cnt = d - 1;
+        } else {
+            cnt = 2 * N - d + 1;
+        }
+        forbidden += cnt;
+        
+        // Subtract intersections with rows and columns
+        for (auto r : rows) {
+            ll c = d - r;
+            if (c >= 1 && c <= N) {
+                forbidden--;
+            }
+        }
+        for (auto c : cols) {
+            ll r = d - c;
+            if (r >= 1 && r <= N) {
+                forbidden--;
+            }
+        }
+        
+        // Add back intersections between rows and columns on this diagonal
+        for (auto r : rows) {
+            ll c = d - r;
+            if (c >= 1 && c <= N && cols.count(c)) {
+                forbidden++;
+            }
+        }
+    }
+    
+    // Subtract intersections between d1 and d2 diagonals
+    for (auto d1 : diag1) {
+        for (auto d2 : diag2) {
+            ll a = (d1 + d2) / 2;
+            ll b = (d2 - d1) / 2;
+            if ((d1 + d2) % 2 == 0 && (d2 - d1) % 2 == 0 && a >= 1 && a <= N && b >= 1 && b <= N) {
+                forbidden--;
+            }
+        }
+    }
+    
+    // Ensure the result is non-negative
+    ll safe = total - forbidden;
+    if (safe < 0) safe = 0;
+    cout << safe << endl;
+    
+    return 0;
+}
+```
+
+### Explanation
+1. **Input Handling**: The code reads the grid size \( N \) and the number of queens \( M \), followed by their positions.
+2. **Tracking Forbidden Areas**: It uses sets to keep track of occupied rows, columns, and diagonals (both main and anti-diagonals) to efficiently compute forbidden squares.
+3. **Inclusion-Exclusion Principle**: The solution calculates forbidden squares by rows and columns, then adjusts for overlaps. Similarly, it calculates forbidden squares by diagonals, carefully adjusting for overlaps with rows and columns and between diagonals.
+4. **Non-Negative Result**: Ensures the final count of safe squares is non-negative by clamping it to zero if necessary.
+5. **Efficiency**: The use of sets ensures operations are logarithmic in the number of elements, making the solution efficient even for large \( N \) and \( M \).

@@ -1,0 +1,42 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+typedef long long ll;
+
+const int MOD = 1e9 + 7;
+const int N = 2 * (1e6) + 5;
+
+int n, m;
+ll a[N], prefix[N];
+map<ll, ll> cnt;
+
+int main() {
+    ios::sync_with_stdio(0);
+    cin.tie(0);
+    cout.tie(0);
+
+    cin >> n >> m;
+    for (int i = 0; i < n; ++i) {
+        cin >> a[i];
+        a[i + n] = a[i]; // duplicate the array for circular handling
+    }
+
+    ll res = 0;
+    cnt[0] = 1; // initial count of prefix sum mod m == 0
+
+    for (int i = 0; i < 2 * n; ++i) {
+        prefix[i] = (i == 0 ? 0 : prefix[i - 1]) + a[i];
+        prefix[i] %= m;
+
+        // Count how many times this mod has been seen before
+        res += cnt[prefix[i]]++;
+        
+        // After processing n elements, start removing the first one's effect
+        if (i >= n) {
+            cnt[prefix[i - n]]--;
+        }
+    }
+
+    cout << res << endl;
+    return 0;
+}

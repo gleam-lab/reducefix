@@ -1,0 +1,77 @@
+To fix this code, we need to address several issues in the original implementation. The main goal is to efficiently handle the union of sets and keep track of the top k largest vertices in each connected component. The original code had problems with merging the top k elements and correctly maintaining the parent pointers.
+
+### Approaches
+1. **Union-Find Data Structure**: This helps efficiently manage the connected components while supporting union operations.
+2. **Tracking Top k Elements**: For each component, maintain a sorted list of the largest k elements (here, k is up to 10 as per the problem constraints). When two components are merged, combine their top elements and keep only the top 10 largest ones.
+3. **Handling Queries**: For type 2 queries, directly access the k-th largest element from the maintained list if it exists; otherwise, return -1.
+
+### Solution Code
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+const int MAXN = 200005;
+
+vector<int> top[MAXN];
+int parent[MAXN];
+
+int find(int x) {
+    if (parent[x] != x) {
+        parent[x] = find(parent[x]);
+    }
+    return parent[x];
+}
+
+void unite(int u, int v) {
+    u = find(u);
+    v = find(v);
+    if (u == v) return;
+    if (top[u].size() < top[v].size()) {
+        swap(u, v);
+    }
+    vector<int> merged;
+    merge(top[u].begin(), top[u].end(), top[v].begin(), top[v].end(), back_inserter(merged), greater<int>());
+    if (merged.size() > 10) {
+        merged.resize(10);
+    }
+    top[u] = merged;
+    parent[v] = u;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int N, Q;
+    cin >> N >> Q;
+    
+    for (int i = 1; i <= N; ++i) {
+        parent[i] = i;
+        top[i] = {i};
+    }
+    
+    while (Q--) {
+        int op, u, v;
+        cin >> op >> u >> v;
+        if (op == 1) {
+            unite(u, v);
+        } else {
+            int root = find(u);
+            if (v > (int)top[root].size()) {
+                cout << -1 << '\n';
+            } else {
+                cout << top[root][v - 1] << '\n';
+            }
+        }
+    }
+    
+    return 0;
+}
+```
+
+### Explanation
+1. **Union-Find Initialization**: Each vertex starts as its own parent, and each vertex's top list contains only itself.
+2. **Unite Operation**: When merging two components, the top elements of both components are combined into a single sorted list (in descending order). The combined list is truncated to keep only the top 10 elements. The parent of the smaller component is updated to point to the larger component's parent (path compression is handled by the `find` function).
+3. **Query Handling**: For a type 2 query, the root of the queried vertex is found. If the root's top list has at least `k` elements, the k-th largest (0-indexed as k-1) is returned; otherwise, -1 is printed.
+
+This approach ensures efficient handling of both union and query operations, with each operation being nearly constant time due to path compression and the small fixed size of the top lists (10 elements). The overall complexity is O(Q α(N)), where α is the inverse Ackermann function, making it suitable for large input sizes.

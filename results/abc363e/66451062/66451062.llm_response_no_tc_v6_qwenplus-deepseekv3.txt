@@ -1,0 +1,101 @@
+To fix this code, we need to address several issues:
+
+1. **Initialization of Priority Queue**: The priority queue should be initialized with all border cells and set their `vis` status to true immediately.
+2. **Handling Sea Level Increments**: For each sea level from 1 to Y, we need to process all cells that can be submerged at that level, including those adjacent to already submerged cells.
+3. **Efficiency**: Given the constraints (H and W up to 1000 and Y up to 1e5), we need an efficient way to track which cells get submerged at each sea level without reprocessing the entire grid each time.
+
+### Approaches
+1. **Priority Queue for Border Cells**: Start by adding all border cells to a priority queue (min-heap) based on their elevation. This helps in efficiently processing cells in increasing order of their elevation.
+2. **BFS for Adjacent Cells**: For each sea level, process all cells in the priority queue with elevation less than or equal to the current level. For each such cell, mark it as submerged and check its adjacent cells. If any adjacent cell has an elevation less than or equal to the current level and hasn't been submerged yet, add it to the queue.
+3. **Tracking Remaining Area**: Maintain a count of the remaining unsubmerged cells. For each sea level, output this count after processing all relevant cells.
+
+### Solution Code
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+#define int long long
+#define close ios::sync_with_stdio(false); cin.tie(0); cout.tie(0);
+#define MAXN 1000
+#define inf 0x3f3f3f3f3f3f
+#define endl '\n'
+const double eps = 1e-7;
+int dx[] = {0, 0, 1, -1};
+int dy[] = {1, -1, 0, 0};
+
+struct Node {
+    int x, y, val;
+    bool operator<(const Node &a) const {
+        return val > a.val;
+    }
+};
+
+signed main() {
+    close;
+    int h, w, Y;
+    cin >> h >> w >> Y;
+    vector<vector<int>> grid(h, vector<int>(w));
+    for (int i = 0; i < h; i++) {
+        for (int j = 0; j < w; j++) {
+            cin >> grid[i][j];
+        }
+    }
+
+    vector<vector<bool>> vis(h, vector<bool>(w, false));
+    priority_queue<Node> q;
+
+    // Add border cells to the priority queue
+    for (int i = 0; i < h; i++) {
+        if (!vis[i][0]) {
+            vis[i][0] = true;
+            q.push({i, 0, grid[i][0]});
+        }
+        if (!vis[i][w - 1]) {
+            vis[i][w - 1] = true;
+            q.push({i, w - 1, grid[i][w - 1]});
+        }
+    }
+    for (int j = 1; j < w - 1; j++) {
+        if (!vis[0][j]) {
+            vis[0][j] = true;
+            q.push({0, j, grid[0][j]});
+        }
+        if (!vis[h - 1][j]) {
+            vis[h - 1][j] = true;
+            q.push({h - 1, j, grid[h - 1][j]});
+        }
+    }
+
+    int res = h * w;
+    vector<int> ans(Y + 1);
+
+    for (int level = 1; level <= Y; level++) {
+        while (!q.empty() && q.top().val <= level) {
+            Node cur = q.top();
+            q.pop();
+            res--;
+            for (int i = 0; i < 4; i++) {
+                int nx = cur.x + dx[i];
+                int ny = cur.y + dy[i];
+                if (nx >= 0 && nx < h && ny >= 0 && ny < w && !vis[nx][ny]) {
+                    vis[nx][ny] = true;
+                    q.push({nx, ny, grid[nx][ny]});
+                }
+            }
+        }
+        ans[level] = res;
+    }
+
+    for (int i = 1; i <= Y; i++) {
+        cout << ans[i] << endl;
+    }
+
+    return 0;
+}
+```
+
+### Explanation
+1. **Initialization**: The grid is read, and a priority queue is initialized with all border cells. These cells are marked as visited to avoid reprocessing.
+2. **Processing Sea Levels**: For each sea level from 1 to Y, the code processes cells from the priority queue that have elevations less than or equal to the current level. Each processed cell is marked as submerged, and its adjacent cells are checked. If an adjacent cell meets the criteria (elevation <= current level and not visited), it is added to the queue.
+3. **Output**: The remaining unsubmerged area is recorded for each sea level and printed sequentially.
+
+This approach efficiently handles the constraints by using a priority queue to process cells in order of their elevation and a BFS to propagate submergence to adjacent cells, ensuring optimal performance.

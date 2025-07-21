@@ -1,0 +1,72 @@
+To fix this code, we need to ensure that the algorithm correctly computes the minimum possible value of the expression \((\max_{i \in S} A_i) \times (\sum_{i \in S} B_i)\) for a subset \(S\) of size \(K\). The original code attempts to sort the array \(A\) and then uses a priority queue to keep track of the top \(K-1\) elements of \(B\) to compute the sum, but it has some logical flaws and incorrect handling of the priority queue.
+
+### Approaches
+1. **Sorting**: First, we sort the arrays \(A\) and \(B\) together based on the values of \(A\). This allows us to consider each element \(A_i\) as the potential maximum in the subset \(S\).
+2. **Prefix Sum and Priority Queue**: For each element \(A_i\) (starting from the \(K\)-th element), we consider it as the maximum in the subset. The subset \(S\) would then include the \(K-1\) smallest \(B\) values from the first \(i-1\) elements. We maintain a max-heap (priority queue) to efficiently keep track of the largest \(B\) values that should be excluded to minimize the sum.
+3. **Efficiency**: The algorithm runs in \(O(N \log K)\) time per test case, which is efficient given the constraints.
+
+### Solution Code
+```cpp
+#include <iostream>
+#include <vector>
+#include <queue>
+#include <algorithm>
+using namespace std;
+#define int long long
+const int inf = 1e18;
+
+signed main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int T;
+    cin >> T;
+    while (T--) {
+        int N, K;
+        cin >> N >> K;
+        vector<pair<int, int>> pairs(N);
+        for (int i = 0; i < N; ++i) {
+            cin >> pairs[i].first;
+        }
+        for (int i = 0; i < N; ++i) {
+            cin >> pairs[i].second;
+        }
+        
+        sort(pairs.begin(), pairs.end());
+        
+        priority_queue<int> max_heap;
+        int sum = 0;
+        vector<int> prefix_sum(N);
+        
+        for (int i = 0; i < N; ++i) {
+            if (max_heap.size() < K - 1) {
+                max_heap.push(pairs[i].second);
+                sum += pairs[i].second;
+            } else if (!max_heap.empty() && pairs[i].second < max_heap.top()) {
+                sum -= max_heap.top();
+                max_heap.pop();
+                max_heap.push(pairs[i].second);
+                sum += pairs[i].second;
+            }
+            prefix_sum[i] = sum;
+        }
+        
+        int min_val = inf;
+        for (int i = K - 1; i < N; ++i) {
+            int current_sum = prefix_sum[i - 1] + pairs[i].second;
+            min_val = min(min_val, pairs[i].first * current_sum);
+        }
+        
+        cout << min_val << '\n';
+    }
+    return 0;
+}
+```
+
+### Explanation
+- **Sorting**: The pairs of \(A_i\) and \(B_i\) are sorted based on \(A_i\) to process them in increasing order.
+- **Priority Queue Handling**: A max-heap is used to maintain the \(K-1\) smallest \(B_i\) values up to the current index. This allows efficient updates to the sum of these values.
+- **Prefix Sum Array**: The `prefix_sum` array stores the sum of the \(K-1\) smallest \(B_i\) values up to each index, which helps in quickly accessing the required sum when considering each \(A_i\) as the maximum in the subset.
+- **Computing Minimum Value**: For each \(A_i\) (starting from the \(K\)-th element), the potential value of the expression is computed by multiplying \(A_i\) with the sum of the \(K-1\) smallest \(B_i\) values before it plus its own \(B_i\) value. The minimum of these values across all valid \(i\) is the answer.
+
+This approach ensures that we efficiently compute the minimum possible value of the given expression while adhering to the constraints.

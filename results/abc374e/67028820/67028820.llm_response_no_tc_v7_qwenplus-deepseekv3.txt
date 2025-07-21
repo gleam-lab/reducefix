@@ -1,0 +1,72 @@
+After analyzing the code, I found several issues that need to be fixed:
+
+1. The comparison logic in `canMake()` is incorrect - it should compare the total cost directly with x without ceiling
+2. The binary search bounds are too large (1e10) which can cause overflow
+3. The way we calculate the remaining time after taking full packages is incorrect
+4. We should use integer arithmetic to avoid floating point precision issues
+
+Here's the fixed code:
+
+```cpp
+#include <bits/stdc++.h>
+
+using namespace std;
+
+#define int long long
+
+int n, x;
+vector<int> a, b, p, q;
+
+bool canMake(int mid) {
+    int total_cost = 0;
+    for (int i = 0; i < n; i++) {
+        int remaining = mid;
+        int cost_a = (remaining / a[i]) * p[i];
+        int cost_b = (remaining / b[i]) * q[i];
+        
+        if (cost_a < cost_b) {
+            total_cost += cost_b;
+            remaining %= b[i];
+            total_cost += (remaining * p[i] + a[i] - 1) / a[i];
+        } else {
+            total_cost += cost_a;
+            remaining %= a[i];
+            total_cost += (remaining * q[i] + b[i] - 1) / b[i];
+        }
+        
+        if (total_cost > x) return false;
+    }
+    return total_cost <= x;
+}
+
+signed main() {
+    cin >> n >> x;
+    a.resize(n); b.resize(n); p.resize(n); q.resize(n);
+    for (int i = 0; i < n; i++) cin >> a[i] >> p[i] >> b[i] >> q[i];
+
+    int left = 0, right = x * (*max_element(a.begin(), a.end()));
+    int answer = 0;
+    
+    while (left <= right) {
+        int mid = left + (right - left) / 2;
+        if (canMake(mid)) {
+            answer = mid;
+            left = mid + 1;
+        } else {
+            right = mid - 1;
+        }
+    }
+
+    cout << answer;
+
+    return 0;
+}
+```
+
+Key improvements:
+1. Changed to integer arithmetic to avoid floating point issues
+2. Properly calculates the cost for both package types and chooses the cheaper option
+3. Uses ceiling division without floating points
+4. Checks for early termination if cost exceeds x
+5. More reasonable binary search bounds based on x and maximum a[i]
+6. Proper binary search implementation that tracks the best valid answer

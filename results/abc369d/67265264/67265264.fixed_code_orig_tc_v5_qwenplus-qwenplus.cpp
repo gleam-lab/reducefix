@@ -1,0 +1,44 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define Youssef ios_base::sync_with_stdio(0);cin.tie(0);cout.tie(0);
+#define asc(v) v.begin(), v.end()
+#define desc(v) v.rbegin(), v.rend()
+const int mod = 1e9 + 7;
+const int N = 200005; // Slightly more than 2e5 for safety
+
+int n;
+vector<long long> v;
+long long dp[N][2]; // DP table
+
+// Recursive function with memoization
+long long solve(int i, bool parity) {
+    if (i == n)
+        return 0;
+
+    if (dp[i][parity] != -1)
+        return dp[i][parity];
+
+    // Option 1: Take current element
+    long long take = solve(i + 1, !parity) + (parity ? v[i] : 2 * v[i]);
+    
+    // Option 2: Leave current element
+    long long leave = solve(i + 1, parity);
+
+    return dp[i][parity] = max(take, leave);
+}
+
+int main() {
+    Youssef
+    cin >> n;
+    v.resize(n);
+    for (int i = 0; i < n; ++i)
+        cin >> v[i];
+
+    // Initialize DP table with -1
+    memset(dp, -1, sizeof dp);
+
+    // Start from index 0 with even parity (0 is even)
+    cout << solve(0, true) << endl;
+
+    return 0;
+}

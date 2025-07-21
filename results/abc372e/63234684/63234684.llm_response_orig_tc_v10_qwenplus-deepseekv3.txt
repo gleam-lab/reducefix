@@ -1,0 +1,80 @@
+To fix this code, we need to address the issue where the k-th largest vertex number among the connected vertices is not correctly identified. The main problem lies in how the connected vertices are being managed and sorted in the Union-Find data structure. 
+
+### Approaches
+1. **Union-Find with Path Compression**: Use the Union-Find data structure to efficiently manage and merge connected components.
+2. **Tracking Connected Vertices**: For each component, maintain a sorted list of the top 10 largest vertices. This ensures that when merging two components, we can quickly access the top k largest vertices.
+3. **Efficient Merging**: When merging two components, combine their sorted lists and keep only the top 10 elements to maintain efficiency, especially given the constraints where k is at most 10.
+
+### Solution Code
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+#define rep(i, n) for (int i = 0; i < n; i++)
+using P = pair<int, int>;
+using T = tuple<int, int, int>;
+
+struct Union_Find {
+    vector<int> par;
+    vector<vector<int>> top;
+
+    Union_Find(int n) {
+        par.resize(n, -1);
+        top.resize(n);
+        rep(i, n) top[i].push_back(i + 1); // Vertices are 1-based
+    }
+
+    int root(int v) {
+        if (par[v] == -1) return v;
+        return par[v] = root(par[v]);
+    }
+
+    bool issame(int x, int y) {
+        return root(x) == root(y);
+    }
+
+    void merge(int x, int y) {
+        x = root(x);
+        y = root(y);
+        if (x == y) return;
+        if (top[x].size() < top[y].size()) swap(x, y);
+        par[y] = x;
+        top[x].insert(top[x].end(), top[y].begin(), top[y].end());
+        sort(top[x].rbegin(), top[x].rend());
+        if (top[x].size() > 10) top[x].resize(10);
+    }
+};
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int n, q;
+    cin >> n >> q;
+    Union_Find uf(n);
+    while (q--) {
+        int ty, u, v;
+        cin >> ty >> u >> v;
+        if (ty == 1) {
+            u--; v--;
+            uf.merge(u, v);
+        } else {
+            u--; int k = v;
+            int r = uf.root(u);
+            if (uf.top[r].size() < k) {
+                cout << -1 << '\n';
+            } else {
+                cout << uf.top[r][k - 1] << '\n';
+            }
+        }
+    }
+    return 0;
+}
+```
+
+### Explanation
+1. **Union-Find Structure**: The `Union_Find` class maintains a parent array `par` to track the root of each vertex and a `top` array to store the top 10 largest vertices in each component.
+2. **Path Compression**: The `root` method uses path compression to ensure efficient lookup of the root of a vertex.
+3. **Merging Components**: The `merge` method combines two components by size (smaller into larger) and merges their `top` lists, keeping only the top 10 elements to maintain efficiency.
+4. **Query Handling**: For type 2 queries, the code checks if the connected component has at least `k` vertices. If not, it outputs `-1`; otherwise, it outputs the k-th largest vertex from the sorted list.
+
+This approach ensures efficient handling of up to the maximum constraints, leveraging Union-Find with path compression and maintaining sorted lists of top vertices for quick access during queries.

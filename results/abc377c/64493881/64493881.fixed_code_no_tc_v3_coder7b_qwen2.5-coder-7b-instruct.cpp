@@ -1,0 +1,56 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+#define ll long long
+
+class Solution {
+public:
+    int countSafeSquares(int N, vector<pair<int, int>>& pieces) {
+        unordered_set<ll> occupied;
+        for (auto &piece : pieces) {
+            occupied.insert((ll)piece.first * N + piece.second);
+        }
+
+        int safeCount = 0;
+        for (int i = 1; i <= N; ++i) {
+            for (int j = 1; j <= N; ++j) {
+                bool safe = true;
+                for (int di = -2; di <= 2; ++di) {
+                    for (int dj = -2; dj <= 2; ++dj) {
+                        if (abs(di) == abs(dj)) continue;
+                        int ni = i + di, nj = j + dj;
+                        if (ni >= 1 && ni <= N && nj >= 1 && nj <= N) {
+                            if (occupied.count((ll)ni * N + nj)) {
+                                safe = false;
+                                break;
+                            }
+                        }
+                    }
+                    if (!safe) break;
+                }
+                if (safe) ++safeCount;
+            }
+        }
+
+        return safeCount;
+    }
+
+    void solve() {
+        int N, M;
+        cin >> N >> M;
+        vector<pair<int, int>> pieces(M);
+        for (int i = 0; i < M; ++i) {
+            cin >> pieces[i].first >> pieces[i].second;
+        }
+
+        cout << countSafeSquares(N, pieces) << endl;
+    }
+};
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(0);
+    Solution sol;
+    sol.solve();
+    return 0;
+}

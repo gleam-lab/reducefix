@@ -1,0 +1,61 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define ll long long
+#define rep(i,n) for(ll i=0;i<(ll)n;i++)
+#define vi vector<int>
+#define vl vector<ll>
+#define vd vector<double>
+#define vb vector<bool>
+#define vs vector<string>
+#define vc vector<char>
+#define ull unsigned long long
+#define chmax(a,b) a = max(a,b)
+#define chmin(a,b) a = min(a,b)
+
+ll dx[4] = {0, 1, 0, -1};
+ll dy[4] = {1, 0, -1, 0};
+
+int main() {
+    ll h, w, y;
+    cin >> h >> w >> y;
+    vl heights;
+    vector<vl> A(h, vl(w));
+    rep(i, h) rep(j, w) {
+        cin >> A[i][j];
+        heights.push_back(A[i][j]);
+    }
+    
+    // Sort unique heights that are <= Y
+    sort(heights.begin(), heights.end());
+    heights.erase(unique(heights.begin(), heights.end()), heights.end());
+
+    // Binary search setup
+    auto is_valid = [&](ll sea_level) {
+        ll total = 0;
+        vb visited(h * w);
+        function<void(ll,ll)> dfs = [&](ll x, ll y) {
+            if (x < 0 || x >= h || y < 0 || y >= w || visited[x * w + y] || A[x][y] <= sea_level)
+                return;
+            visited[x * w + y] = true;
+            total++;
+            rep(k, 4) dfs(x + dx[k], y + dy[k]);
+        };
+
+        // Only start DFS from border cells
+        rep(i, h) rep(j, w) {
+            if ((i == 0 || j == 0 || i == h-1 || j == w-1) && !visited[i * w + j] && A[i][j] > sea_level) {
+                dfs(i, j);
+            }
+        }
+
+        return total;
+    };
+
+    // For each year, compute the remaining area
+    rep(year, y) {
+        ll sea_level = year + 1;
+        cout << is_valid(sea_level) << "\n";
+    }
+
+    return 0;
+}

@@ -1,0 +1,104 @@
+To solve this problem efficiently, we need to manage dynamic connectivity in an undirected graph and support queries for the k-th largest node in a connected component.
+
+### Key Observations:
+
+1. **Union-Find (Disjoint Set Union - DSU)** is ideal for tracking connected components.
+2. Each time we add an edge, we merge two sets using union-find.
+3. For each query of type 2, we must return the k-th largest vertex in the connected component of a given node `v`.
+4. To do this efficiently, **each root in the DSU should maintain a sorted list of the top 10 largest nodes** in its component.
+
+---
+
+### Strategy:
+
+- Use path compression and union by rank or size in DSU for performance.
+- Maintain a priority queue or sorted structure per component to store the top 10 largest values.
+- When merging components, merge their top lists while maintaining only the top 10 values.
+- This ensures Type 2 queries can be answered in O(1) after preprocessing.
+
+---
+
+### Implementation Details:
+
+- `fa[]`: parent array for DSU.
+- `tops[]`: vector storing up to 10 largest nodes in the component rooted at that index.
+- On union: merge the smaller list into the larger one to keep complexity low.
+- Merge logic ensures we always keep the top 10 largest values.
+
+---
+
+### Final Working Code:
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+const int MAXN = 2e5 + 5;
+
+int N, Q;
+vector<int> tops[MAXN];
+int fa[MAXN];
+
+// Find with path compression
+int find(int x) {
+    if (fa[x] != x)
+        fa[x] = find(fa[x]);
+    return fa[x];
+}
+
+// Merge two sets, keeping only top 10 elements
+void unite(int u, int v) {
+    int fu = find(u);
+    int fv = find(v);
+    if (fu == fv) return;
+
+    // Always merge smaller into larger for efficiency
+    if (tops[fu].size() < tops[fv].size())
+        swap(fu, fv);
+
+    // Merge the tops
+    for (int val : tops[fv])
+        tops[fu].push_back(val);
+
+    // Sort descending and keep top 10
+    sort(tops[fu].rbegin(), tops[fu].rend());
+    if (tops[fu].size() > 10)
+        tops[fu].resize(10);
+
+    // Union
+    fa[fv] = fu;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    cout.tie(nullptr);
+
+    cin >> N >> Q;
+
+    // Initialize DSU and tops
+    for (int i = 1; i <= N; ++i) {
+        fa[i] = i;
+        tops[i].push_back(i);
+    }
+
+    while (Q--) {
+        int op;
+        cin >> op;
+        if (op == 1) {
+            int u, v;
+            cin >> u >> v;
+            unite(u, v);
+        } else {
+            int v, k;
+            cin >> v >> k;
+            int root = find(v);
+            if ((int)tops[root].size() < k)
+                cout << -1 << '\n';
+            else
+                cout << tops[root][k - 1] << '\n';
+        }
+    }
+
+    return 0;
+}
+```

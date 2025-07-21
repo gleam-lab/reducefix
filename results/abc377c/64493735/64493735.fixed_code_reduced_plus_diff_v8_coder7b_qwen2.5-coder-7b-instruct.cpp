@@ -1,0 +1,87 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+typedef long long ll;
+typedef pair<ll, ll> pll;
+typedef vector<ll> vl;
+typedef vector<pll> vpl;
+
+const ll MOD = 1e9 + 7;
+
+inline ll mod(ll x) {
+    return (x % MOD + MOD) % MOD;
+}
+
+inline ll mul(ll a, ll b) {
+    return mod((ll)a * b);
+}
+
+inline ll add(ll a, ll b) {
+    return mod(mod(a) + mod(b));
+}
+
+inline ll sub(ll a, ll b) {
+    return mod(mod(a) - mod(b));
+}
+
+inline ll pow(ll base, ll exp) {
+    ll result = 1;
+    while (exp > 0) {
+        if (exp & 1) result = mul(result, base);
+        base = mul(base, base);
+        exp >>= 1;
+    }
+    return result;
+}
+
+inline ll inv(ll x) {
+    return pow(x, MOD - 2);
+}
+
+vl prefix_sum(vl &arr) {
+    vl ps(arr.size() + 1);
+    for (size_t i = 1; i <= arr.size(); ++i) {
+        ps[i] = add(ps[i - 1], arr[i - 1]);
+    }
+    return ps;
+}
+
+ll query(vl &ps, ll l, ll r) {
+    return sub(ps[r], ps[l - 1]);
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    ll n, m;
+    cin >> n >> m;
+
+    v(pll) pieces(m);
+    unordered_map<ll, unordered_set<ll>> board(n + 1, unordered_set<ll>(n + 1));
+
+    for (ll i = 0; i < m; ++i) {
+        ll x, y;
+        cin >> x >> y;
+        pieces[i] = {x, y};
+        board[x].insert(y);
+    }
+
+    vl dx = {-2, -2, -1, -1, 1, 1, 2, 2};
+    vl dy = {1, -1, 2, -2, 2, -2, 1, -1};
+
+    vl count(n + 1, 0);
+    for (const auto &[x, y] : pieces) {
+        for (size_t d = 0; d < 8; ++d) {
+            ll nx = x + dx[d];
+            ll ny = y + dy[d];
+            if (nx >= 1 && nx <= n && ny >= 1 && ny <= n && !board[nx].count(ny)) {
+                count[query(prefix_sum(count), 1, nx)]++;
+            }
+        }
+    }
+
+    cout << n * n - accumulate(begin(count), end(count), 0LL) << '\n';
+
+    return 0;
+}

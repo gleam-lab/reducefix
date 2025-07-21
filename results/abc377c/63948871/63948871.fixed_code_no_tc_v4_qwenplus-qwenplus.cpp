@@ -1,0 +1,60 @@
+// C - Avoid Knight Attack
+
+#include <iostream>
+#include <vector>
+#include <set>
+#include <unordered_set>
+#include <utility>
+#include <cmath>
+
+using namespace std;
+
+using i32 = int;
+using i64 = long long;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    i64 N;
+    i32 M;
+    cin >> N >> M;
+
+    set<pair<i64, i64>> attacked_positions;
+    vector<pair<i64, i64>> pieces;
+
+    // Read all piece positions
+    for (i32 i = 0; i < M; ++i) {
+        i64 a, b;
+        cin >> a >> b;
+        pieces.emplace_back(a, b);
+    }
+
+    // Define the 8 possible L-shaped moves
+    const vector<pair<i64, i64>> directions = {
+        {2, 1}, {1, 2}, {-1, 2}, {-2, 1},
+        {-2, -1}, {-1, -2}, {1, -2}, {2, -1}
+    };
+
+    // For each piece, mark all positions it can attack
+    for (const auto& [x, y] : pieces) {
+        for (const auto& [dx, dy] : directions) {
+            i64 nx = x + dx;
+            i64 ny = y + dy;
+            if (nx >= 1 && nx <= N && ny >= 1 && ny <= N) {
+                attacked_positions.emplace(nx, ny);
+            }
+        }
+    }
+
+    // Total squares: N * N
+    // Subtract:
+    // 1. Squares occupied by pieces (M)
+    // 2. Squares that are attacked (attacked_positions.size())
+    i64 total_squares = N * N;
+    i64 occupied_or_attacked = M + attacked_positions.size();
+
+    cout << (total_squares - occupied_or_attacked) << "\n";
+
+    return 0;
+}

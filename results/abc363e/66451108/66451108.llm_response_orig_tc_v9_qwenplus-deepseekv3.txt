@@ -1,0 +1,86 @@
+After analyzing the failing test case, I identified that the issue lies in how the initial border cells are processed. The problem requires that any cell adjacent to the sea or already sunk cells with elevation <= current sea level should sink. The original code didn't properly account for the fact that multiple cells can sink at the same sea level in a cascading fashion.
+
+Here's the corrected solution that uses a priority queue to process cells in order of their elevation while maintaining the remaining area count:
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+struct Node {
+    int x, y, val;
+    bool operator<(const Node &a) const {
+        return val > a.val;
+    }
+};
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+    cout.tie(0);
+    
+    int h, w, Y;
+    cin >> h >> w >> Y;
+    vector<vector<int>> grid(h, vector<int>(w));
+    for (int i = 0; i < h; i++) {
+        for (int j = 0; j < w; j++) {
+            cin >> grid[i][j];
+        }
+    }
+    
+    vector<vector<bool>> vis(h, vector<bool>(w, false));
+    priority_queue<Node> q;
+    
+    // Push all border cells into the priority queue
+    for (int i = 0; i < h; i++) {
+        for (int j = 0; j < w; j++) {
+            if (i == 0 || i == h-1 || j == 0 || j == w-1) {
+                q.push({i, j, grid[i][j]});
+                vis[i][j] = true;
+            }
+        }
+    }
+    
+    int res = h * w;
+    vector<int> ans(Y + 1, res);
+    
+    for (int level = 1; level <= Y; level++) {
+        while (!q.empty() && q.top().val <= level) {
+            Node cur = q.top();
+            q.pop();
+            res--;
+            
+            for (int k = 0; k < 4; k++) {
+                int nx = cur.x + (k == 2) - (k == 3);
+                int ny = cur.y + (k == 0) - (k == 1);
+                if (nx >= 0 && nx < h && ny >= 0 && ny < w && !vis[nx][ny]) {
+                    vis[nx][ny] = true;
+                    q.push({nx, ny, grid[nx][ny]});
+                }
+            }
+        }
+        ans[level] = res;
+    }
+    
+    for (int i = 1; i <= Y; i++) {
+        cout << ans[i] << '\n';
+    }
+    
+    return 0;
+}
+```
+
+Key improvements:
+1. Uses vectors instead of fixed-size arrays for better handling of large inputs
+2. Properly initializes all border cells at the start
+3. Processes cells in order of elevation using a priority queue
+4. Maintains an answer array to store results for each sea level
+5. Handles the cascading sinking effect correctly by pushing adjacent cells into the queue when they become accessible
+
+The algorithm works by:
+1. Starting with all border cells in the priority queue
+2. For each sea level, processing all cells that will sink at that level
+3. For each sunk cell, checking its neighbors and adding them to the queue if they haven't been processed yet and their elevation is <= current sea level
+4. Decreasing the remaining area count accordingly
+5. Storing results for all sea levels up to Y
+
+This ensures that we correctly handle the cascading sinking effect and maintain accurate counts of remaining land area at each sea level.

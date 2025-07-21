@@ -1,0 +1,54 @@
+#include <bits/stdc++.h>
+#define ll long long
+using namespace std;
+
+void solve() {
+    ll N;
+    cin >> N;
+    vector<ll> A(N), B(N - 1);
+
+    for (ll i = 0; i < N; ++i) cin >> A[i];
+    for (ll i = 0; i < N - 1; ++i) cin >> B[i];
+
+    // Sort toys and boxes in descending order
+    sort(A.begin(), A.end(), greater<ll>());
+    sort(B.begin(), B.end(), greater<ll>());
+
+    // We need to find the smallest x such that we can assign all toys to boxes,
+    // using one toy in the new box of size x.
+
+    // Try to match largest toys with largest available boxes
+    ll missing_toy = -1;
+    ll b_idx = 0;
+
+    for (ll a_idx = 0; a_idx < N; ++a_idx) {
+        if (b_idx < N - 1 && A[a_idx] <= B[b_idx]) {
+            b_idx++;
+        } else {
+            // This toy must go into the extra box
+            if (missing_toy == -1) {
+                missing_toy = A[a_idx];
+            } else {
+                // We already assigned one toy to the extra box, can't do it again
+                cout << -1 << endl;
+                return;
+            }
+        }
+    }
+
+    if (missing_toy == -1) {
+        // All toys could be packed without needing an extra box
+        // But we *must* buy one, so choose smallest possible box that could help
+        // In this case, any value works but we want minimum, so use smallest unmatched toy
+        cout << A.back() << endl;
+    } else {
+        cout << missing_toy << endl;
+    }
+}
+
+int main() {
+    ios::sync_with_stdio(0);
+    cin.tie(0);
+    solve();
+    return 0;
+}

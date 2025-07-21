@@ -1,0 +1,96 @@
+
+The problem requires finding the minimum possible value of the expression \((\max_{i \in S} A_i) \times (\sum_{i \in S} B_i)\) for a subset \(S\) of \(\{1, 2, \dots, N\}\) of size \(K\). The solution needs to be efficient due to the constraints, especially the large number of test cases and the size of the sequences \(A\) and \(B\).
+
+### Analysis of the Incorrect Code
+
+The incorrect code attempts to solve the problem by:
+1. Sorting the pairs \((A_i, B_i)\) based on \(A_i\) and then reconstructing the sorted arrays \(A\) and \(B\).
+2. Initializing the answer with the maximum possible value and then iterating to find a better solution.
+
+However, the code has several flaws:
+- The initial answer is set to \(LINF\) which is too high.
+- The logic to update the answer and the subset \(S\) is incorrect.
+- The code does not correctly handle the subset \(S\) and its impact on both the maximum value of \(A_i\) and the sum of \(B_i\).
+
+### Corrected Solution Approach
+
+1. **Initial Setup**: Read the number of test cases. For each test case, read \(N\), \(K\), and the sequences \(A\) and \(B\).
+
+2. **Sorting**: Sort the array \(B\) to facilitate efficient range sum calculations. Keep the original indices of \(A\) to retrace the order after sorting \(B\).
+
+3. **Direct Calculation for Small \(K\)**:
+   - If \(K = 1\), the answer is simply \(A[0] \times B[0]\).
+   - If \(K = N\), the answer is \(A[n-1] \times \sum_{i=0}^{n-1} B[i]\).
+
+4. **Using Binary Search for Larger \(K\)**:
+   - For larger \(K\), use binary search on the sum of \(B\) values to find the minimum possible value of the expression.
+   - Maintain a prefix sum array for \(B\) to calculate the sum in constant time.
+   - For each midpoint in the binary search, calculate the maximum \(A_i\) for the subset that has a sum of \(B\) values less than or equal to the midpoint.
+
+5. **Output the Result**: After computing the minimum value for each test case, print the result.
+
+### Implementation
+
+```cpp
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <iomanip>
+using namespace std;
+
+int main() {
+    int t;
+    cin >> t;
+    while (t--) {
+        int N, K;
+        cin >> N >> K;
+        vector<int> A(N), B(N);
+        vector<pair<int, int>> indices(N);
+        for (int i = 0; i < N; ++i) {
+            cin >> A[i];
+            indices[i] = {A[i], B[i]};
+        }
+        sort(indices.begin(), indices.end(), [](const pair<int, int>& a, const pair<int, int>& b) {
+            return a.first < b.first;
+        });
+
+        long long minans = LLONG_MAX;
+        if (K == 1) {
+            minans = indices[0].first * indices[0].second;
+        } else if (K == N) {
+            long long sumB = 0;
+            for (int i = 0; i < N; ++i) {
+                minans = min(minans, indices[i].first * (sumB += indices[i].second));
+            }
+        } else {
+            vector<long long> prefixB(N, 0);
+            prefixB[0] = indices[0].second;
+            for (int i = 1; i < N; ++i) {
+                prefixB[i] = prefixB[i - 1] + indices[i].second;
+            }
+
+            long long low = 0, high = prefixB.back();
+            while (low <= high) {
+                long long mid = (low + high) / 2;
+                long long maxA = 0;
+                int count = 0;
+                for (int i = 0; i < N && count < K; ++i) {
+                    if (prefixB[i] <= mid) {
+                        maxA = max(maxA, indices[i].first);
+                        count++;
+                    }
+                }
+                if (count == K) {
+                    minans = min(minans, maxA * mid);
+                    high = mid - 1;
+                } else {
+                    low = mid + 1;
+                }
+            }
+        }
+        cout << minans << '\n';
+    }
+}
+```
+
+This solution uses sorting, binary search, and prefix sums to efficiently find the minimum value of the expression for each test case.

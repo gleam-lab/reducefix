@@ -1,0 +1,78 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+
+constexpr int d[4][2] = {{0, 1}, {0, -1}, {1, 0}, {-1, 0}};
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int H, W, Y;
+    cin >> H >> W >> Y;
+
+    vector<vector<int>> A(H, vector<int>(W));
+    for (int i = 0; i < H; ++i) {
+        for (int j = 0; j < W; ++j) {
+            cin >> A[i][j];
+        }
+    }
+
+    // Priority queue to process cells in increasing order of elevation
+    priority_queue<tuple<int, int, int>, vector<tuple<int, int, int>>, greater<>> pq;
+    vector<vector<bool>> visited(H, vector<bool>(W, false));
+
+    // Initialize the border cells
+    for (int i = 0; i < H; ++i) {
+        for (int j = 0; j < W; ++j) {
+            if (i == 0 || i == H - 1 || j == 0 || j == W - 1) {
+                pq.emplace(A[i][j], i, j);
+                visited[i][j] = true;
+            }
+        }
+    }
+
+    // Array to store the number of remaining land cells at each year
+    vector<int> remaining(Y + 2, H * W); // +2 to safely handle up to Y+1
+
+    int remaining_cells = H * W;
+    int last_year = 0;
+
+    while (!pq.empty()) {
+        auto [height, x, y] = pq.get<>();
+        pq.pop();
+
+        // If this height is higher than previous ones, update the area for all years in between
+        if (height > last_year) {
+            for (int y_ = last_year + 1; y_ <= last_year + (height - last_year); ++y_) {
+                if (y_ <= Y) {
+                    remaining[y_] = remaining_cells;
+                }
+            }
+            last_year = height;
+        }
+
+        --remaining_cells;
+
+        for (int k = 0; k < 4; ++k) {
+            int nx = x + d[k][0];
+            int ny = y + d[k][1];
+            if (nx >= 0 && nx < H && ny >= 0 && ny < W && !visited[nx][ny]) {
+                visited[nx][ny] = true;
+                pq.emplace(A[nx][ny], nx, ny);
+            }
+        }
+    }
+
+    // Fill any remaining years not updated by the loop
+    for (int y = last_year + 1; y <= Y; ++y) {
+        remaining[y] = remaining_cells;
+    }
+
+    // Output the results
+    for (int y = 1; y <= Y; ++y) {
+        cout << remaining[y] << "\n";
+    }
+
+    return 0;
+}

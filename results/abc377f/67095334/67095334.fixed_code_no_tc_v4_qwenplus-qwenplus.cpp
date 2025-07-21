@@ -1,0 +1,93 @@
+#include <bits/stdc++.h>
+#define int long long
+
+using namespace std;
+
+void solve() {
+    int n, m;
+    cin >> n >> m;
+
+    set<int> rows, cols;
+    set<int> diag1, diag2; // diag1: i+j, diag2: i-j
+
+    for (int i = 0; i < m; ++i) {
+        int x, y;
+        cin >> x >> y;
+        rows.insert(x);
+        cols.insert(y);
+        diag1.insert(x + y);
+        diag2.insert(x - y);
+    }
+
+    // Total safe cells = total cells - attacked cells
+    // First calculate the number of cells NOT attacked by any row or column
+    int totalSafe = (n - rows.size()) * (n - cols.size());
+
+    // Now subtract the cells that are on the dangerous diagonals
+    // For each diagonal from diag1 (i+j=d)
+    for (int d : diag1) {
+        int diagLength = 0;
+        // Compute length of diagonal i+j=d
+        if (d <= n + 1) {
+            diagLength = d - 1;
+        } else {
+            diagLength = 2 * n - d + 1;
+        }
+
+        // Count how many of these cells are already excluded due to bad rows or columns
+        int alreadyExcluded = 0;
+        for (int r : rows) {
+            int c = d - r;
+            if (c >= 1 && c <= n) {
+                ++alreadyExcluded;
+            }
+        }
+        for (int c : cols) {
+            int r = d - c;
+            if (r >= 1 && r <= n) {
+                ++alreadyExcluded;
+            }
+        }
+
+        // Adjust totalSafe by removing the additional safe cells we included earlier
+        totalSafe -= (diagLength - alreadyExcluded);
+    }
+
+    // For each diagonal from diag2 (i-j=d)
+    for (int d : diag2) {
+        int diagLength = 0;
+        // Compute length of diagonal i-j=d
+        if (d >= -n + 1 && d <= n - 1) {
+            diagLength = n - abs(d);
+        }
+
+        // Count how many of these cells are already excluded due to bad rows or columns
+        int alreadyExcluded = 0;
+        for (int r : rows) {
+            int c = r - d;
+            if (c >= 1 && c <= n) {
+                ++alreadyExcluded;
+            }
+        }
+        for (int c : cols) {
+            int r = d + c;
+            if (r >= 1 && r <= n) {
+                ++alreadyExcluded;
+            }
+        }
+
+        // Adjust totalSafe by removing the additional safe cells we included earlier
+        totalSafe -= (diagLength - alreadyExcluded);
+    }
+
+    cout << totalSafe << endl;
+}
+
+signed main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    solve();
+
+    return 0;
+}

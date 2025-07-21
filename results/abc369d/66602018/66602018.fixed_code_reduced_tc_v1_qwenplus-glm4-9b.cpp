@@ -1,0 +1,21 @@
+#include <iostream>
+using namespace std;
+
+int main() {
+    int n;
+    long long dp0, dp1;
+    dp0 = 0;
+    dp1 = -1e18; // Set to a very large number
+    cin >> n;
+
+    for (int i = 0; i < n; i++) {
+        long long x;
+        cin >> x;
+        long long next_dp0 = max(dp1 + (2 * x), dp0);
+        dp0 = dp1;
+        dp1 = next_dp0;
+    }
+
+    cout << max(dp0, dp1) << endl;
+    return 0;
+}

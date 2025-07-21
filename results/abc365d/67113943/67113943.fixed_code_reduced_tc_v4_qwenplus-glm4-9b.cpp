@@ -1,0 +1,32 @@
+#include <iostream>
+#include <string>
+using namespace std;
+
+int main() {
+    int N;
+    string S;
+    cin >> N;
+    cin >> S;
+    
+    int wins = 0;
+    char winmove = 'a', prev = 'a';
+    for (int i = 0; i < N; ++i) {
+        char c = S[i];
+        if (c == 'R') {
+            winmove = 'P';
+        } else if (c == 'P') {
+            winmove = 'S';
+        } else if (c == 'S') {
+            winmove = 'R';
+        }
+        if (winmove != prev) {
+            wins++;
+            prev = winmove;
+        } else {
+            prev = c;
+        }
+    }   
+    cout << wins;
+
+    return 0;
+}

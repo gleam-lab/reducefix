@@ -1,0 +1,62 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    int n, k;
+    cin >> n >> k;
+    int m = n - k;
+    vector<int> a(n);
+    
+    for (int i = 0; i < n; ++i) {
+        cin >> a[i];
+    }
+
+    // We need to find the minimum possible value of max(B) - min(B)
+    // where B is any subsequence of length N-K formed by deleting K elements
+    // and maintaining original order.
+
+    // Since we can't sort the array (that changes the order), we must consider sliding window
+
+    // Create prefix min and max arrays
+    vector<int> minLeft(n), maxLeft(n);
+
+    minLeft[0] = a[0];
+    maxLeft[0] = a[0];
+    for (int i = 1; i < n; ++i) {
+        minLeft[i] = min(minLeft[i-1], a[i]);
+        maxLeft[i] = max(maxLeft[i-1], a[i]);
+    }
+
+    // Sliding window from right
+    vector<int> minRight(m), maxRight(m);
+    minRight[m-1] = a[n-1];
+    maxRight[m-1] = a[n-1];
+
+    for (int i = n-2, j = m-2; i >= 0 && j >= 0; --i, --j) {
+        minRight[j] = min(minRight[j+1], a[i]);
+        maxRight[j] = max(maxRight[j+1], a[i]);
+    }
+
+    long long result = numeric_limits<long long>::max();
+
+    // Now try all valid windows of size m
+    for (int i = 0; i <= n - m; ++i) {
+        int currentMin, currentMax;
+        
+        if (i == 0) {
+            currentMin = minRight[0];
+            currentMax = maxRight[0];
+        } else if (i + m == n) {
+            currentMin = minLeft[n-1];
+            currentMax = maxLeft[n-1];
+        } else {
+            currentMin = min(minLeft[i-1], minRight[i]);
+            currentMax = max(maxLeft[i-1], maxRight[i]);
+        }
+        
+        result = min(result, (long long)(currentMax - currentMin));
+    }
+
+    cout << result << endl;
+    return 0;
+}

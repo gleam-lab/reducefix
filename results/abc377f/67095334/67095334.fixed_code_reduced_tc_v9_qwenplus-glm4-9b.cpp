@@ -1,0 +1,60 @@
+#include<bits/stdc++.h>
+#define int long long
+#define PII pair<int, int>
+
+using namespace std;
+
+int qpow(int a, int b) {
+    int r = 1;
+    while (b) {
+        if (b & 1) r *= a;
+        a *= a;
+        b >>= 1;
+    }
+    return r;
+}
+
+int solve() {
+    int n, m;
+    cin >> n >> m;
+    vector<PII> pieces(m);
+    
+    for (int i = 0; i < m; ++i) {
+        cin >> pieces[i].first >> pieces[i].second;
+    }
+    
+    // To track the number of points on each line i+j=x and i-j=x
+    vector<int> line_sum_x_plus_y(n + 1, 0), line_sum_x_minus_y(n + 1, 0);
+    
+    for (const auto& p : pieces) {
+        ++line_sum_x_plus_y[p.first + p.second];
+        ++line_sum_x_minus_y[p.first - p.second];
+    }
+
+    // Calculate the number of safe squares
+    int safe_squares = n * n;
+    
+    // Subtract squares captured by each line i+j=x
+    for (int x = 0; x <= n + 1; ++x) {
+        if (x > 0 && x <= n && line_sum_x_plus_y[x] > 0) {
+            int y_start = max(1, x - n), y_end = min(n, x - 1);
+            safe_squares -= (y_end - y_start + 1);
+        }
+    }
+    
+    // Subtract squares captured by each line i-j=x
+    for (int x = 0; x <= 2 * n + 1; ++x) {
+        if (x > 0 && x <= 2 * n && line_sum_x_minus_y[x] > 0) {
+            int y_start = max(1, abs(x - 2 * n)), y_end = min(n, abs(x - 1));
+            safe_squares -= (y_end - y_start + 1);
+        }
+    }
+    
+    return safe_squares;
+}
+
+int main() {
+    int t = solve();
+    cout << t << endl;
+    return 0;
+}

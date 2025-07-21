@@ -1,0 +1,50 @@
+#include <iostream>
+#include <unordered_set>
+#include <vector>
+
+using namespace std;
+
+// Custom hash for pairs (used in unordered_set)
+struct pair_hash {
+    inline size_t operator()(const pair<int, int>& p) const {
+        return (size_t)p.first * 1000000000 + p.second;
+    }
+};
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    long long N;
+    int M;
+    cin >> N >> M;
+
+    unordered_set<pair<int, int>, pair_hash> attacked;
+
+    vector<pair<int, int>> directions = {
+        {2, 1}, {1, 2}, {-1, 2}, {-2, 1},
+        {-2, -1}, {-1, -2}, {1, -2}, {2, -1}
+    };
+
+    for (int i = 0; i < M; ++i) {
+        int a, b;
+        cin >> a >> b;
+
+        // Insert the piece itself to avoid placing on it
+        attacked.insert({a, b});
+
+        // For each of the 8 knight-style positions, mark those that can be attacked by this piece
+        for (auto& dir : directions) {
+            int x = a + dir.first;
+            int y = b + dir.second;
+            if (x >= 1 && x <= N && y >= 1 && y <= N) {
+                attacked.insert({x, y});
+            }
+        }
+    }
+
+    // Total squares = N^2, subtract number of attacked or occupied squares
+    cout << (N * N - (long long)attacked.size()) << endl;
+
+    return 0;
+}

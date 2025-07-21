@@ -1,0 +1,64 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+typedef long long ll;
+
+const int MAX_OFFSET = 200000000; // To handle -1e8 to 1e8 range with offset
+const int TOTAL_RANGE = 400000005; // 2*MAX_OFFSET + 1
+
+int freq[TOTAL_RANGE]; // frequency array for counting sort-like behavior
+int prefix_sum[TOTAL_RANGE]; // prefix sum for binary search
+
+// Function to find k-th smallest distance from point b
+ll find_kth_distance(ll b, int k, const vector<int>& sorted_a) {
+    int left = 0;
+    int right = (int)sorted_a.size() - 1;
+    
+    // Binary search on the absolute difference (distance)
+    ll low = 0;
+    ll high = MAX_OFFSET * 2;
+    ll answer = MAX_OFFSET * 2;
+    
+    while (low <= high) {
+        ll mid = (low + high) / 2;
+        
+        // Count how many points in [b - mid, b + mid]
+        int left_pos = lower_bound(sorted_a.begin(), sorted_a.end(), b - mid) - sorted_a.begin();
+        int right_pos = upper_bound(sorted_a.begin(), sorted_a.end(), b + mid) - sorted_a.begin();
+        
+        if (right_pos - left_pos >= k) {
+            answer = mid;
+            high = mid - 1;
+        } else {
+            low = mid + 1;
+        }
+    }
+    
+    return answer;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int N, Q;
+    cin >> N >> Q;
+    
+    vector<int> a(N);
+    for (int i = 0; i < N; ++i) {
+        cin >> a[i];
+    }
+    
+    sort(a.begin(), a.end());
+    
+    for (int q = 0; q < Q; ++q) {
+        ll b;
+        int k;
+        cin >> b >> k;
+        
+        ll result = find_kth_distance(b, k, a);
+        cout << result << '\n';
+    }
+    
+    return 0;
+}

@@ -1,0 +1,51 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+using namespace std;
+typedef long long ll;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int N, M, K;
+    cin >> N >> M >> K;
+    vector<ll> A(N);
+    for (ll &a : A) cin >> a;
+    
+    // Sort candidates by their current votes (ascending)
+    vector<pair<ll, int>> sorted_A(A.begin(), A.end());
+    sort(sorted_A.begin(), sorted_A.end());
+    
+    vector<ll> prefix_sum(N + 1, 0);
+    for (int i = 1; i <= N; ++i) {
+        prefix_sum[i] = prefix_sum[i - 1] + sorted_A[i - 1].first;
+    }
+    
+    vector<ll> additional_votes(N, -1);
+    vector<ll> current_votes(A);
+    
+    // Iterate in reverse order to consider the worst-case scenario for each candidate
+    for (int i = N - 1; i >= N - M; --i) {
+        auto [votes, idx] = sorted_A[i];
+        
+        // Calculate the maximum votes a candidate can get to still win
+        ll max_votes_to_win = prefix_sum[N] - prefix_sum[i] - (N - M - i) * votes;
+        
+        // If this candidate has already more than max_votes_to_win votes, they are guaranteed to win
+        if (votes > max_votes_to_win) {
+            additional_votes[idx] = 0;
+        } else {
+            // The additional votes needed to guarantee a win is the difference between max_votes_to_win and votes
+            additional_votes[idx] = max_votes_to_win - votes;
+        }
+    }
+    
+    // Output the result
+    for (ll additional_votes : additional_votes) {
+        cout << additional_votes << ' ';
+    }
+    cout << '\n';
+    
+    return 0;
+}

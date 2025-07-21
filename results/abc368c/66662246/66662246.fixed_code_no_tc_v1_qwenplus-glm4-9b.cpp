@@ -1,0 +1,43 @@
+#include <iostream>
+using namespace std;
+#define rep(i, n) for (int i = 0; i < (n); ++i)
+
+int main() {
+    int n;
+    cin >> n;
+    vector<int> health(n);
+    for (int i = 0; i < n; ++i) {
+        cin >> health[i];
+    }
+    
+    long long totalTurns = 0;
+    int currentTurns = 0;
+    while (!health.empty()) {
+        // Calculate how many full attacks we can perform on the frontmost enemy
+        int i = 0;
+        while (i < health.size() && health[i] <= currentTurns) {
+            currentTurns += health[i];
+            health.erase(health.begin() + i);
+        }
+        
+        // If we have more points than the health of the next enemy, just increase the current turns
+        if (!health.empty() && currentTurns < health[0]) {
+            totalTurns += currentTurns;
+            currentTurns = 0;
+        }
+        
+        // Perform the attack based on the currentTurns
+        if (!health.empty()) {
+            if (currentTurns % 3 == 0) {
+                totalTurns += 3;
+            } else {
+                totalTurns += 1;
+            }
+            health[0] -= (currentTurns % 3 == 0) ? 3 : 1;
+            currentTurns = 0;
+        }
+    }
+    
+    cout << totalTurns << endl;
+    return 0;
+}

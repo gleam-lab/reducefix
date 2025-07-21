@@ -1,0 +1,88 @@
+To solve this problem correctly, we need to determine the **minimum size of an additional box** that allows us to pack each toy into a separate box (including the new one), where each toy must be placed in a box with size **not less than its own size**.
+
+### Key Observations:
+
+- We are allowed to use N-1 existing boxes and 1 extra one.
+- There are exactly N toys and N available boxes — so each toy must go into one unique box.
+- The condition is that every toy can fit into some box. So we need to assign the largest toy to the largest available box (either from B or the new x).
+- Hence, the idea is:
+  - Sort both toys (`A`) and existing boxes (`B`) in descending order.
+  - Try to match the i-th largest toy to the i-th largest box (from `B`), except for one position — which will be replaced by our custom box of size `x`.
+  - Find the smallest `x` such that all toys can be assigned to boxes (each toy ≤ corresponding box).
+
+### Strategy:
+1. Sort `A` and `B` in descending order.
+2. Use binary search to find the **largest index `i`** where `A[i] > B[i]`, because at this point we need to replace a box in `B` with our new box of size `x`.
+3. The required `x` must be at least `A[i]`, and also needs to not cause any other mismatch when inserted in place of `B[i]`.
+
+If no such mismatch exists, then output `-1` (no additional box is needed).
+
+---
+
+Here's the **corrected and efficient implementation**:
+
+```cpp
+#include <bits/stdc++.h>
+#define ll long long
+using namespace std;
+
+void solve() {
+    ll N;
+    cin >> N;
+    vector<ll> A(N), B(N - 1);
+    for (ll i = 0; i < N; ++i) cin >> A[i];
+    for (ll i = 0; i < N - 1; ++i) cin >> B[i];
+
+    sort(A.begin(), A.end(), greater<ll>());
+    sort(B.begin(), B.end(), greater<ll>());
+
+    // Create a new vector of size N to simulate inserting a new box
+    vector<ll> C(N);
+    for (ll i = 0; i < N - 1; ++i) C[i] = B[i];
+    // Initially assume we add the largest possible value (as placeholder)
+    C[N - 1] = LLONG_MAX;
+
+    // Try to match A to C
+    bool ok = true;
+    for (ll i = 0; i < N; ++i) {
+        if (A[i] > C[i]) {
+            ok = false;
+            break;
+        }
+    }
+
+    if (ok) {
+        // Binary search the minimum x
+        ll low = 1, high = 1e18, ans = -1;
+        while (low <= high) {
+            ll mid = (low + high) / 2;
+            // Insert mid as the new box
+            C[N - 1] = mid;
+            sort(C.begin(), C.end(), greater<ll>());
+            bool valid = true;
+            for (ll i = 0; i < N; ++i) {
+                if (A[i] > C[i]) {
+                    valid = false;
+                    break;
+                }
+            }
+            if (valid) {
+                ans = mid;
+                high = mid - 1;
+            } else {
+                low = mid + 1;
+            }
+        }
+        cout << ans << endl;
+    } else {
+        cout << -1 << endl;
+    }
+}
+
+int main() {
+    ios::sync_with_stdio(0);
+    cin.tie(0);
+    solve();
+    return 0;
+}
+```

@@ -1,0 +1,50 @@
+#include <bits/stdc++.h>
+using namespace std;
+using LL = long long;  // Use long long instead of __int128 since input values fit in 64-bit
+
+typedef long long ll;
+
+const int N = 2e5 + 7;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int n;
+    cin >> n;
+
+    vector<LL> a(n + 1), b(n + 1), prefix_sum(n + 1, 0);
+    
+    for (int i = 1; i <= n; ++i) {
+        cin >> a[i];
+    }
+
+    for (int i = 1; i <= n; ++i) {
+        cin >> b[i];
+        prefix_sum[i] = prefix_sum[i - 1] + b[i];  // Compute prefix sum of b
+    }
+
+    int m;
+    cin >> m;
+
+    while (m--) {
+        LL l, r;
+        cin >> l >> r;
+
+        // Find first index where a[i] >= l using lower_bound
+        auto left = lower_bound(a.begin() + 1, a.end(), l);
+        int left_idx = distance(a.begin(), left);
+
+        // Find first index where a[i] > r using upper_bound
+        auto right = upper_bound(a.begin() + 1, a.end(), r);
+        int right_idx = distance(a.begin(), right) - 1;
+
+        if (right_idx >= left_idx) {
+            cout << prefix_sum[right_idx] - prefix_sum[left_idx - 1] << "\n";
+        } else {
+            cout << "0\n";  // No elements in range [l, r]
+        }
+    }
+
+    return 0;
+}

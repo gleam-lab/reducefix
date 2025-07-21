@@ -1,0 +1,116 @@
+To solve this problem efficiently, we must account for the large grid size (`N` up to 10⁹) and relatively small number of pieces (`M` up to 10³). This suggests that instead of iterating through the entire grid, we should track only affected rows, columns, and diagonals.
+
+---
+
+### Key Observations:
+
+- A placed piece at `(a, b)` affects:
+  - All squares in row `a`
+  - All squares in column `b`
+  - Diagonal 1: all `(i, j)` such that `i + j == a + b`
+  - Diagonal 2: all `(i, j)` such that `i - j == a - b`
+
+So we can precompute:
+- The number of **safe rows** = `N - number of unique rows used`
+- The number of **safe columns** = `N - number of unique columns used`
+
+Then the initial number of safe positions is:
+```cpp
+safe_rows * safe_cols
+```
+
+However, some of these safe positions may lie on **diagonals** already occupied by existing pieces. So we need to subtract those positions which fall both on safe rows/columns AND on diagonals affected by any existing piece.
+
+---
+
+### Efficient Approach:
+
+We use sets to store:
+- Rows with pieces
+- Columns with pieces
+- Diagonal sums (i+j)
+- Diagonal differences (i-j)
+
+Then for each diagonal sum or difference:
+- Count how many of its positions intersect with the safe rows/columns.
+- Subtract those intersections from the total.
+
+This ensures an efficient solution with time complexity around O(M log M), suitable for large N and small M.
+
+---
+
+### Fixed C++ Code:
+
+```cpp
+#include <bits/stdc++.h>
+#define int long long
+
+using namespace std;
+
+void solve() {
+    int n, m;
+    cin >> n >> m;
+
+    set<int> rows, cols;
+    set<int> diag1, diag2;
+
+    for (int i = 0; i < m; ++i) {
+        int a, b;
+        cin >> a >> b;
+        rows.insert(a);
+        cols.insert(b);
+        diag1.insert(a + b);
+        diag2.insert(a - b);
+    }
+
+    int safe_rows = n - rows.size();
+    int safe_cols = n - cols.size();
+    int total_safe = safe_rows * safe_cols;
+
+    // For each diagonal of type i+j = d
+    for (int d : diag1) {
+        int count = 0;
+
+        // Compute range of valid i values for this diagonal
+        int min_i = max(1LL, d - n);
+        int max_i = min(n, d - 1);
+
+        for (int i = min_i; i <= max_i; ++i) {
+            if (rows.find(i) == rows.end() && cols.find(d - i) == cols.end()) {
+                count++;
+            }
+        }
+
+        total_safe -= count;
+    }
+
+    // For each diagonal of type i-j = d
+    for (int d : diag2) {
+        int count = 0;
+
+        // Compute range of valid i values for this diagonal
+        int min_i = max(1LL, d + 1);
+        int max_i = min(n, n + d);
+
+        for (int i = min_i; i <= max_i; ++i) {
+            int j = i - d;
+            if (j >= 1 && j <= n && rows.find(i) == rows.end() && cols.find(j) == cols.end()) {
+                count++;
+            }
+        }
+
+        total_safe -= count;
+    }
+
+    cout << total_safe << endl;
+}
+
+signed main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    solve();
+
+    return 0;
+}
+```

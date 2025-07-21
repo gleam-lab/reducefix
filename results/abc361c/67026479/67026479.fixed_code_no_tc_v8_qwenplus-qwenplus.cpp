@@ -1,0 +1,22 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    int n, k;
+    cin >> n >> k;
+    int m = n - k;
+    vector<int> a(n);
+    
+    for (int i = 0; i < n; ++i) {
+        cin >> a[i];
+    }
+
+    // Sliding window over the sorted array to find minimum (max - min) in any subarray of length m
+    sort(a.begin(), a.end());
+    int min_diff = a[m - 1] - a[0];
+    for (int i = 1; i + m - 1 < n; ++i) {
+        min_diff = min(min_diff, a[i + m - 1] - a[i]);
+    }
+
+    cout << min_diff << endl;
+}

@@ -1,0 +1,84 @@
+To resolve the discrepancy in the output, we need to carefully inspect the logic that computes how many items can be built under a given time limit during the binary search (`check` function).
+
+### Problem Analysis:
+The `check` function estimates how many units of work can be completed within a certain number of time units (`v`). It does this by iterating over each item and calculating how much of it can be built using a combination of two types of resources.
+
+There are two key parts:
+1. **vm**: This is an estimate for the number of full LCM cycles.
+2. **ms**: A brute-force loop to compute the remaining amount after those LCM cycles.
+
+The error appears to stem from an off-by-one or rounding issue in how the contribution from `vm` is computed, particularly with respect to the product of counts and their respective cost per unit.
+
+### Fixes Applied:
+1. Fixed integer overflow issues: Changed some intermediate calculations to use `__int128` where needed (to safely perform large multiplications).
+2. Ensured proper rounding when computing the number of units possible from a given time budget.
+3. Made sure `val`, which is the time consumed by LCM cycles, doesn't overshoot the available time `v`.
+4. Adjusted the way `vm` and `ms` are calculated to ensure they correctly sum up to total units without missing one due to truncation or incorrect estimation.
+
+Here's the corrected code:
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+#define dout if(0)cerr
+
+int n;
+long long a[110], b[110], p[110], q[110], x;
+
+inline bool check(long long v) {
+    long long cnt = 0;
+    for (int i = 1; i <= n; i++) {
+        long long g = __gcd(a[i], b[i]);
+        __int128 _lcm = (__int128)a[i] / g * b[i];
+        
+        // Full LCM blocks
+        long long num_blocks = max(0LL, (long long)(_lcm ? v / _lcm : 0) - 1);
+        if (num_blocks > 0) {
+            __int128 cost_per_block_a = p[i] * (_lcm / a[i]);
+            __int128 cost_per_block_b = q[i] * (_lcm / b[i]);
+            __int128 total_cost_per_block = min(cost_per_block_a, cost_per_block_b);
+            cnt += (__int128)num_blocks * total_cost_per_block;
+            if (cnt > x) return false;
+        }
+
+        // Remaining part after full blocks
+        long long val = num_blocks * _lcm;
+        long long rem = v - val;
+        if (rem < 0) rem = 0;
+
+        long long best = LLONG_MAX;
+        for (long long j = 0; j * a[i] <= rem || (j == 0); j++) {
+            long long remaining_after_a = rem - j * a[i];
+            if (remaining_after_a < 0) break;
+
+            long long k = max(0LL, (remaining_after_a / b[i]) + !!(remaining_after_a % b[i]));
+            long long total_cost = j * p[i] + k * q[i];
+            best = min(best, total_cost);
+            if (best == 0) break;
+        }
+        cnt += best;
+        if (cnt > x) return false;
+    }
+    return true;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    cout.tie(nullptr);
+
+    cin >> n >> x;
+    for (int i = 1; i <= n; ++i)
+        cin >> a[i] >> p[i] >> b[i] >> q[i];
+
+    long long l = 0, r = 2e18;
+    while (l + 1 < r) {
+        long long mid = (l + r) >> 1;
+        if (check(mid))
+            l = mid;
+        else
+            r = mid;
+    }
+    cout << l << '\n';
+}
+```

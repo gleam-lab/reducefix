@@ -1,0 +1,111 @@
+After analyzing the incorrect code and the failing test cases, I identified several issues in the original implementation:
+
+1. The code incorrectly merges adjacency lists when adding edges
+2. It doesn't properly maintain sorted order of connected vertices
+3. The k-th largest element retrieval has flaws
+4. Initialization and edge case handling are problematic
+
+Here's the corrected code that addresses these issues:
+
+```cpp
+#include<bits/stdc++.h>
+using namespace std;
+
+const int MAXN = 200005;
+const int MAXK = 10;
+
+vector<int> adj[MAXN];
+int parent[MAXN];
+int rank_[MAXN];
+
+int find(int u) {
+    if (parent[u] != u) {
+        parent[u] = find(parent[u]);
+    }
+    return parent[u];
+}
+
+void union_set(int u, int v) {
+    u = find(u);
+    v = find(v);
+    if (u == v) return;
+    
+    if (rank_[u] > rank_[v]) {
+        parent[v] = u;
+    } else if (rank_[u] < rank_[v]) {
+        parent[u] = v;
+    } else {
+        parent[v] = u;
+        rank_[u]++;
+    }
+}
+
+void merge_adj_lists(int u, int v) {
+    u = find(u);
+    v = find(v);
+    if (u == v) return;
+    
+    vector<int> merged;
+    merge(adj[u].begin(), adj[u].end(), 
+          adj[v].begin(), adj[v].end(), 
+          back_inserter(merged), greater<int>());
+    
+    adj[u].clear();
+    adj[u] = merged;
+    if (adj[u].size() > MAXK) {
+        adj[u].resize(MAXK);
+    }
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int N, Q;
+    cin >> N >> Q;
+    
+    for (int i = 1; i <= N; ++i) {
+        parent[i] = i;
+        rank_[i] = 0;
+        adj[i].push_back(i);
+    }
+    
+    while (Q--) {
+        int op, u, v;
+        cin >> op >> u >> v;
+        
+        if (op == 1) {
+            if (find(u) != find(v)) {
+                merge_adj_lists(u, v);
+                union_set(u, v);
+            }
+        } else {
+            int root = find(u);
+            if (v > adj[root].size()) {
+                cout << "-1\n";
+            } else {
+                cout << adj[root][v-1] << "\n";
+            }
+        }
+    }
+    
+    return 0;
+}
+```
+
+Key improvements made:
+
+1. Used proper Union-Find (Disjoint Set Union) with path compression and union by rank
+2. Maintain adjacency lists for each component that are always sorted in descending order
+3. Limited the adjacency lists to size MAXK (10) to optimize performance
+4. Fixed the k-th largest element retrieval by checking the size properly
+5. Added proper input/output optimization for large input sizes
+6. Simplified the data structures and algorithms to be more efficient
+
+The solution now correctly handles:
+- Adding edges between vertices
+- Maintaining connected components efficiently
+- Quickly retrieving the k-th largest vertex in a component
+- Edge cases with small components and large queries
+
+The time complexity is O(Q * α(N)) for the Union-Find operations and O(Q * K log K) for the merging operations, where K is the maximum size we maintain (10 in this case). This should handle the constraints efficiently.

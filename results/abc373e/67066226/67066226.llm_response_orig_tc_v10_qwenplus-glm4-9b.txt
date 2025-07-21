@@ -1,0 +1,90 @@
+
+The problem statement is about an election where there are N candidates, K remaining votes, and a victory condition for a candidate: they need fewer than M candidates with more votes than them. We need to determine the minimum additional votes each candidate needs to guarantee their victory.
+
+### Analysis of the Incorrect Code
+
+1. **Incorrect Logic**: The original code tries to find the minimum number of additional votes required to guarantee victory using a binary search approach. However, the logic within the binary search loop is flawed. Specifically, it calculates the number of votes required in an incorrect manner.
+
+2. **Efficiency Concerns**: Sorting the entire list of votes (both original and sorted in descending order) is unnecessary and inefficient for large values of N. The complexity of this operation is O(N log N), which is not feasible given the constraints.
+
+### Corrected Approach
+
+1. **Sorting**: First, sort the candidates based on the number of votes they have, in descending order to get the votes for the top candidates.
+
+2. **Binary Search**: For each candidate, use binary search to determine the minimum number of additional votes required to guarantee their victory. The condition to check is if adding votes to the current candidate and subtracting wins from the top M candidates still leaves enough votes for the current candidate to win.
+
+3. **Edge Cases**: Handle cases where the candidate already has more than M wins, or it's not possible for them to ever win.
+
+### Implementation
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+
+int main() {
+    int n, m, k;
+    cin >> n >> m >> k;
+    vector<ll> a(n);
+    for (int i = 0; i < n; i++) {
+        cin >> a[i];
+        k -= a[i];
+    }
+    sort(a.begin(), a.end(), greater<ll>()); // Sort votes in descending order
+
+    vector<ll> b(a); // Copy votes for further calculations
+    vector<ll> pref(n + 1, 0); // Prefix sum array
+
+    // Compute prefix sums of b for quick range sum calculations
+    for (int i = 0; i < n; i++) {
+        pref[i + 1] = pref[i] + b[i];
+    }
+
+    vector<ll> ans(n, -1); // Result for each candidate
+    vector<int> ord(n); // Original indices to restore order
+
+    // Restore original indices
+    for (int i = 0; i < n; i++) {
+        ord[i] = i;
+    }
+
+    // Sort candidates by number of votes they have
+    sort(ord.begin(), ord.end(), [&](int i, int j) {
+        return a[i] > a[j];
+    });
+
+    // Evaluate each candidate
+    for (int i = 0; i < n; i++) {
+        int pos = ord[i]; // Current candidate position
+        ll votes_needed = 0; // Additional votes needed
+        ll votes_without_current = pref[i] - b[i]; // Total votes excluding current candidate
+
+        // Check if the current candidate can still win
+        if (a[i] + votes_needed < m * (b[i] - votes_needed)) {
+            votes_needed = (m * b[i] - a[i]) / (m + 1);
+        }
+
+        // Check if the additional votes exceed the remaining votes
+        if ( votes_needed + votes_without_current >= k) {
+            votes_needed = max(0LL, k - votes_without_current);
+        }
+
+        // Update the answer for the current candidate
+        if (a[i] + votes_needed < m * (b[i] - votes_needed)) {
+            ans[pos] = votes_needed;
+        } else {
+            ans[pos] = -1;
+        }
+    }
+
+    // Output the results
+    for (ll v : ans) {
+        cout << v << ' ';
+    }
+    cout << '\n';
+
+    return 0;
+}
+```
+
+This corrected approach efficiently calculates the minimum additional votes needed for each candidate using sorting and binary search techniques, ensuring that the solution works within the given constraints.

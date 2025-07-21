@@ -1,0 +1,71 @@
+To fix this code, we need to ensure that the algorithm correctly computes the minimum weight path from vertex 1 to all other vertices in the graph. The original code uses a queue-based approach similar to BFS, but it doesn't correctly implement Dijkstra's algorithm, which is necessary for handling weighted graphs efficiently, especially with large constraints (N and M up to 2×10^5).
+
+### Analysis of Issues
+1. **Algorithm Choice**: The problem requires finding the shortest path in a weighted graph, which is best solved using Dijkstra's algorithm due to its efficiency with non-negative weights. The original code uses a queue, which is more suited for BFS and doesn't handle the priority-based selection required for Dijkstra's.
+2. **Priority Handling**: The queue doesn't prioritize nodes with the smallest current distance, leading to incorrect shortest path calculations.
+3. **Visited Array**: The current implementation marks nodes as visited but doesn't prevent revisiting them with larger distances, which is inefficient and can lead to incorrect results.
+4. **Initialization**: The distance array is initialized with a large value, and the starting node's distance is set to `a[1]`, but the edge weights and vertex weights are not correctly combined in the relaxation step.
+
+### Solution
+We need to modify the code to use a priority queue (min-heap) to implement Dijkstra's algorithm correctly. The weight of a path includes the sum of the vertex weights and edge weights. Here's the corrected approach:
+1. **Priority Queue**: Use a priority queue to always expand the node with the current minimum distance.
+2. **Relaxation**: For each neighbor, the new distance is the current distance plus the neighbor's vertex weight and the edge weight.
+3. **Visited Handling**: Ensure nodes are processed only once by marking them as visited when they are extracted from the priority queue.
+
+### Fixed Code
+```cpp
+#include<bits/stdc++.h>
+using namespace std;
+#define int long long 
+vector<pair<int,int>>G[200005];
+int dis[200005], a[200005], n, m;
+bool vis[200005];
+
+void dij(int u) {
+    priority_queue<pair<int,int>, vector<pair<int,int>>, greater<pair<int,int>>> pq;
+    dis[u] = a[u];
+    pq.push({dis[u], u});
+    while (!pq.empty()) {
+        int current = pq.top().second;
+        int current_dis = pq.top().first;
+        pq.pop();
+        if (vis[current]) continue;
+        vis[current] = true;
+        for (auto [v, w] : G[current]) {
+            if (dis[v] > current_dis + a[v] + w) {
+                dis[v] = current_dis + a[v] + w;
+                pq.push({dis[v], v});
+            }
+        }
+    }
+}
+
+signed main() {
+    scanf("%lld%lld", &n, &m);
+    for (int i = 1; i <= n; i++) {
+        scanf("%lld", &a[i]);
+    }
+    for (int i = 1; i <= m; i++) {
+        int u, v, w;
+        scanf("%lld%lld%lld", &u, &v, &w);
+        G[u].push_back({v, w});
+        G[v].push_back({u, w});
+    }
+    memset(dis, 0x3f, sizeof dis);
+    memset(vis, false, sizeof vis);
+    dij(1);
+    for (int i = 2; i <= n; i++) {
+        printf("%lld ", dis[i]);
+    }
+    printf("\n");
+    return 0;
+}
+```
+
+### Explanation
+1. **Priority Queue**: The priority queue is used to select the node with the smallest current distance next, ensuring that once a node is processed, its distance is finalized.
+2. **Relaxation**: For each neighbor of the current node, the algorithm checks if the path through the current node offers a smaller distance. If so, it updates the neighbor's distance and adds it to the priority queue.
+3. **Visited Handling**: Nodes are marked as visited when they are processed to avoid reprocessing, which optimizes the algorithm and ensures correctness.
+4. **Initialization**: The distance array is initialized to a large value, and the starting node's distance is set to its vertex weight. The algorithm then proceeds to explore all nodes in order of increasing distance from the start.
+
+This approach efficiently computes the shortest paths in O((N + M) log N) time, suitable for large graphs as specified in the problem constraints.

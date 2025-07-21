@@ -1,0 +1,94 @@
+
+The problem is to process queries on an undirected graph with N vertices and 0 edges. We are given two types of queries:
+
+1. Add an edge between two vertices.
+2. Find the k-th largest vertex connected to a given vertex.
+
+The solution needs to efficiently manage the union-find data structure (also known as disjoint-set) to keep track of connected components, and also maintain a sorted list of vertices for each connected component to efficiently find the k-th largest vertex.
+
+Let's break down the issues with the provided code and offer a corrected solution.
+
+### Issues in the provided code:
+1. The union-find structure (`fa`) is used incorrectly. It should merge two components when an edge is added but is not used to optimize the find operation.
+2. The sorting of vertices (`as`) is done after every union operation, which is potentially very slow due to the lack of optimization.
+3. The query processing seems to be out of order with respect to the queries' sequence.
+
+### Proposed solution:
+1. Use a more efficient union-find structure that also helps in path compression and union by rank.
+2. Maintain a separate data structure (e.g., a balanced binary search tree) for each connected component to store vertices in sorted order. This will allow for quick insertion and extraction of the k-th largest element.
+3. Process queries in the order they are given to avoid any potential issues with the sequence of operations.
+
+Here is a corrected version of the code using a more efficient union-find structure and a balanced binary search tree for each connected component:
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+const int MAXN = 200005;
+vector<int> parent(MAXN);
+vector<int> rank(MAXN);
+
+int find(int x) {
+    if (parent[x] == x) return x;
+    parent[x] = find(parent[x]);  // Path compression
+    return parent[x];
+}
+
+int unionSets(int x, int y) {
+    int rootX = find(x);
+    int rootY = find(y);
+    if (rootX != rootY) {
+        if (rank[rootX] > rank[rootY]) {
+            parent[rootY] = rootX;
+        } else if (rank[rootX] < rank[rootY]) {
+            parent[rootX] = rootY;
+        } else {
+            parent[rootY] = rootX;
+            rank[rootX]++;
+        }
+    }
+    return rootX;
+}
+
+int main() {
+    int N, Q;
+    cin >> N >> Q;
+
+    for (int i = 1; i <= N; ++i) {
+        parent[i] = i;
+        rank[i] = 0;
+    }
+
+    vector<vector<pair<int, int>>> adj[MAXN];  // Adjacency list with edge weights
+    for (int i = 0; i < Q; ++i) {
+        int op, u, v, k;
+        cin >> op >> u >> v;
+        if (op == 1) {
+            // Add edge
+            adj[u].push_back({v, 0});
+            adj[v].push_back({u, 0});
+            unionSets(u, v);
+        } else if (op == 2) {
+            // Find k-th largest
+            int root = find(v);
+            sort(adj[root].begin(), adj[root].end(), [](const pair<int, int>& a, const pair<int, int>& b) {
+                return a.first > b.first;
+            });
+            int count = 0;
+            for (auto &edge : adj[root]) {
+                if (edge.first == v) continue;  // Skip the vertex itself
+                count++;
+                if (count == k) {
+                    cout << edge.first << endl;
+                    break;
+                }
+            }
+            if (count < k) cout << -1 << endl;
+        }
+    }
+
+    return 0;
+}
+```
+
+This solution uses an adjacency list to store the edges and union-find to manage connected components. For each connected component, the edges are sorted, which allows for efficient retrieval of the k-th largest vertex. This should work within the constraints given.

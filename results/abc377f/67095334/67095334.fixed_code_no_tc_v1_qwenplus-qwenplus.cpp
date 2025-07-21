@@ -1,0 +1,97 @@
+#include <bits/stdc++.h>
+#define int long long
+
+using namespace std;
+
+void solve() {
+    int n, m;
+    cin >> n >> m;
+
+    set<int> rows, cols;
+    set<int> diag1, diag2; // diag1: i+j, diag2: i-j
+
+    for (int i = 0; i < m; ++i) {
+        int x, y;
+        cin >> x >> y;
+        rows.insert(x);
+        cols.insert(y);
+        diag1.insert(x + y);
+        diag2.insert(x - y);
+    }
+
+    // Total empty squares not in any attacked row or column
+    int ans = (n - rows.size()) * (n - cols.size());
+
+    // Subtract squares that are on attacked diagonals but not in attacked rows or cols
+
+    // For each diagonal of the form i+j=d
+    for (int d : diag1) {
+        // Calculate number of points on this diagonal that are not in attacked rows or columns
+        int low = max(1LL, d - n);
+        int high = min(n, d - 1);
+        if (low > high) continue;
+
+        int count = high - low + 1;
+        int removed = 0;
+
+        // Check how many of these points intersect with attacked rows or columns
+        for (int r : rows) {
+            int c = d - r;
+            if (c >= 1 && c <= n) ++removed;
+        }
+        for (int c : cols) {
+            int r = d - c;
+            if (r >= 1 && r <= n) ++removed;
+        }
+
+        // But we've double-counted intersections between rows and cols on this diagonal
+        for (int r : rows) {
+            int c = d - r;
+            if (c >= 1 && c <= n && cols.count(c)) --removed;
+        }
+
+        ans -= (count - removed);
+    }
+
+    // For each diagonal of the form i-j=d
+    for (int d : diag2) {
+        // Calculate number of points on this diagonal that are not in attacked rows or columns
+        int start = 1, end = n;
+        if (d > 0) {
+            start = d + 1;
+        } else if (d < 0) {
+            end = n + d;
+        }
+
+        if (start > end) continue;
+
+        int count = end - start + 1;
+        int removed = 0;
+
+        // Check how many of these points intersect with attacked rows or columns
+        for (int r : rows) {
+            int c = r - d;
+            if (c >= 1 && c <= n) ++removed;
+        }
+        for (int c : cols) {
+            int r = d + c;
+            if (r >= 1 && r <= n) ++removed;
+        }
+
+        // But we've double-counted intersections between rows and cols on this diagonal
+        for (int r : rows) {
+            int c = r - d;
+            if (c >= 1 && c <= n && cols.count(c)) --removed;
+        }
+
+        ans -= (count - removed);
+    }
+
+    cout << ans << "\n";
+}
+
+signed main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    solve();
+}

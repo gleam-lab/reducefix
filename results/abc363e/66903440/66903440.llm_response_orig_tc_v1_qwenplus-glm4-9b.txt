@@ -1,0 +1,90 @@
+
+The problem involves simulating the submergence of an island as sea levels rise each year. The challenge is to determine the area of the island that remains above sea level after a given number of years, considering that the process is propagate through adjacent cells.
+
+Given the constraints and the nature of the problem, an efficient approach is necessary to handle large inputs and many years of simulation.
+
+Let's analyze the failing case #1 and see if we can spot the issue. We need to ensure that when a cell sinks, we correctly handle the adjacent cells.
+
+### Steps to Solve the Problem:
+
+1. Parse the input to get the dimensions of the island (`H`, `W`) and the number of years (`Y`), as well as the elevation matrix `A`.
+2. Initialize a vector `F` of the same dimensions as `A` to keep track of flooded cells.
+3. For each year, simulate the process of sinking cells and propagate it to adjacent cells.
+4. Keep track of the non-flooded area of the island after each year and output the result.
+
+### Analysis of the Failing Case:
+
+From the given input and the output, we can see that the simulation is not working correctly as the area of the non-flooded island is larger than expected after the sea level has risen.
+
+### Potential Issues:
+
+1. The propagation of the flooding process may not be implemented correctly.
+2. The initial state (when the sea level is at 0) may not be set up to represent the entire island initially above the sea level.
+
+Let's correct these issues in the code.
+
+### Corrected Code:
+
+```cpp
+#include<bits/stdc++.h>
+using namespace std;
+using ll = long long;
+
+void simulateFlood(int H, int W, vector<vector<int>>& A, vector<vector<bool>>& F, vector<queue<pair<int, int>>>& Q) {
+    // Perform the flood simulation
+    for (int y = 1; y <= A[0][0]; y++) {
+        while (!Q[y].empty()) {
+            auto [i, j] = Q[y].front();
+            Q[y].pop();
+            if (F[i][j]) {
+                F[i][j] = false;
+                for (int k = 0; k < 4; k++) {
+                    int ni = i + dx[k];
+                    int nj = j + dy[k];
+                    if (ni >= 0 && ni < H && nj >= 0 && nj < W && A[ni][nj] > y && F[ni][nj]) {
+                        F[ni][nj] = false;
+                        Q[max(A[ni][nj], y)].push({ni, nj});
+                    }
+                }
+            }
+        }
+    }
+}
+
+int main() {
+    int H, W, Y;
+    cin >> H >> W >> Y;
+    vector<vector<int>> A(H, vector<int>(W));
+    vector<vector<bool>> F(H, vector<bool>(W, true));
+    vector<queue<pair<int, int>>> Q(202020);
+    int dx[] = {-1, 0, 1, 0, -1, -1, 1, 1};
+    int dy[] = {0, -1, 0, 1, -1, 1, -1, 1};
+
+    for (int i = 0; i < H; i++) {
+        for (int j = 0; j < W; j++) {
+            cin >> A[i][j];
+            if (A[i][j] <= 0) {
+                F[i][j] = false; // Water cells are initially flooded
+                Q[A[i][j]].push({i, j}); // Push to appropriate queue
+            }
+        }
+    }
+
+    simulateFlood(H, W, A, F, Q);
+    ll remainingArea = 0;
+    for (int i = 0; i < H; i++) {
+        for (int j = 0; j < W; j++) {
+            if (F[i][j]) remainingArea++;
+        }
+    }
+
+    for (int year = 1; year <= Y; year++) {
+        simulateFlood(H, W, A, F, Q);
+        cout << remainingArea << endl;
+    }
+
+    return 0;
+}
+```
+
+This corrected version initializes the flooded cells based on the elevation matrix `A`, ensuring that water cells are marked as flooded from the start. The simulation `simulateFlood` is also corrected to propagate the flooding process only to cells that are not yet flooded and whose elevation is above the current year's sea level.

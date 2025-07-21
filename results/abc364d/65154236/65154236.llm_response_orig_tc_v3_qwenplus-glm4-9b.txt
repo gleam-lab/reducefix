@@ -1,0 +1,79 @@
+
+The problem is about finding the distance between a specific closest point \( A_i \) and a given point \( B_j \) on a number line. For each \( B_j \), we need to find the \( k_j \)-th closest point \( A_i \) and calculate the distance between them.
+
+Let's analyze the provided code and the problem statement to fix the issues:
+
+### Analysis of the Code
+- The code has a segment tree or binary indexed tree setup that is not used.
+- It tries to use a frequency array `a` to count the number of points \( A_i \) within a specific range but doesn't use it correctly.
+- The `check` function seems to be trying to find a specific `mid` value but is applied incorrectly.
+- The binary search is implemented but not correctly for the given problem.
+
+### Improvements
+1. **Data Structure**: We will use a frequency array for cumulative counting of points \( A_i \) to quickly determine the number of points \( A_i \) within any range.
+2. **Binary Search**: We need to adjust the binary search to find the correct `k_j`-th closest point for each \( B_j \).
+
+### Corrected Code
+```cpp
+#include <iostream>
+#include <vector>
+#include <algorithm>
+
+using namespace std;
+
+const int MAX_N = 200010; // We use a larger size for simplicity
+int a[MAX_N], cnt[MAX_N]; // cnt will store the cumulative number of points in the range
+
+void update(int pos) {
+    for (int i = pos; i < MAX_N; i += i & -i) {
+        cnt[i]++;
+    }
+}
+
+int query(int pos) {
+    int sum = 0;
+    for (int i = pos; i; i -= i & -i) {
+        sum += cnt[i];
+    }
+    return sum;
+}
+
+int main() {
+    int n, q;
+    cin >> n >> q;
+    vector<int> b(n);
+    for (int i = 0; i < n; ++i) {
+        cin >> b[i];
+        update(b[i]);
+    }
+    
+    for (int i = 0; i < q; ++i) {
+        int x, k;
+        cin >> x >> k;
+        // The distance for the k-th closest point
+        // We need to find the smallest distance to the k-th closest point
+        // Since k starts from 1, we need to find the (k-1)-th element in the sorted distances
+        int low = -1e9, high = 1e9;
+        while (high - low > 1) {
+            int mid = (low + high) / 2;
+            // Calculate how many points A_i are within distance mid from B_j
+            int count = query(max(1, x - mid)) - query(max(1, x + 1 - mid));
+            if (count >= k) {
+                high = mid;
+            } else {
+                low = mid;
+            }
+        }
+        // low should now be the answer
+        cout << low << endl;
+    }
+    
+    return 0;
+}
+```
+
+### Explanation
+- We use two arrays `a` and `cnt`. The array `a` stores the points on the number line, and `cnt` is used as a prefix sum array to keep track of the cumulative count of points up to any position.
+- The `update` function updates the prefix sum array after adding a new point.
+- The `query` function performs a range query to find the number of points within a certain distance from a given point.
+- For each query, we use binary search to find the smallest distance that has at least \( k \) points within that distance from \( B_j \).

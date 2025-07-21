@@ -1,0 +1,32 @@
+#include <iostream>
+#include <string>
+#include <map>
+
+using namespace std;
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(0);
+
+    map<char, char> beats = {{'R', 'P'}, {'P', 'S'}, {'S', 'R'}};
+    int n;
+    cin >> n;
+    string s;
+    cin >> s;
+
+    int total = 0;
+    char last_move = 'N'; // 'N' for no move seen yet
+    char current_move = 'N';
+
+    for (int i = 0; i < n; i++) {
+        current_move = beats[s[i]];
+        if (current_move != last_move) {
+            total++;
+            last_move = current_move;
+        }
+    }
+
+    cout << total << endl;
+
+    return 0;
+}

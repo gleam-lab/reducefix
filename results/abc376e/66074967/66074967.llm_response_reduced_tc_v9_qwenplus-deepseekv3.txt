@@ -1,0 +1,74 @@
+To fix this code, we need to correctly handle the selection of the subset S of size K such that the expression (max_{i in S} A_i) * (sum_{i in S} B_i) is minimized. The original code attempts to sort the elements by A_i and then tries to maintain a priority queue of the smallest B_i values, but it fails to correctly track the minimal value of the expression, especially when K=1.
+
+### Approaches
+1. **Sort by A_i**: First, we sort the elements based on their A_i values in ascending order. This allows us to easily consider the maximum A_i in any subset S by simply picking the largest A_i in the subset.
+2. **Track Sum of B_i**: For each element in the sorted list, we consider it as the maximum A_i in the subset S. Then, we need to find the smallest K-1 B_i values from the elements before it (since A_i is sorted, all previous elements have A_i <= current A_i). This ensures that the sum of B_i values in S is minimized.
+3. **Priority Queue**: To efficiently track the smallest K-1 B_i values, we use a max-heap (priority queue). As we iterate through the sorted list, we maintain the heap to keep the smallest K-1 B_i values encountered so far. The sum of these values, plus the B_i of the current element (which is the maximum A_i in S), gives us the candidate value for the expression.
+
+### Solution Code
+```cpp
+#include <iostream>
+#include <vector>
+#include <queue>
+#include <algorithm>
+using namespace std;
+#define int long long
+
+const int inf = 1e18;
+
+signed main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int T;
+    cin >> T;
+    while (T--) {
+        int N, K;
+        cin >> N >> K;
+        vector<pair<int, int>> AB(N);
+        for (int i = 0; i < N; ++i) {
+            cin >> AB[i].first;
+        }
+        for (int i = 0; i < N; ++i) {
+            cin >> AB[i].second;
+        }
+        
+        sort(AB.begin(), AB.end());
+        
+        priority_queue<int> max_heap;
+        int sum_B = 0;
+        int min_product = inf;
+        
+        for (int i = 0; i < N; ++i) {
+            int current_A = AB[i].first;
+            int current_B = AB[i].second;
+            int current_sum = sum_B + current_B;
+            int current_product = current_A * current_sum;
+            
+            if (max_heap.size() == K - 1) {
+                min_product = min(min_product, current_product);
+            }
+            
+            max_heap.push(current_B);
+            sum_B += current_B;
+            
+            if (max_heap.size() > K - 1) {
+                sum_B -= max_heap.top();
+                max_heap.pop();
+            }
+        }
+        
+        cout << min_product << '\n';
+    }
+    
+    return 0;
+}
+```
+
+### Explanation
+1. **Sorting**: The elements are sorted based on their A_i values. This allows us to consider each element in turn as the maximum A_i in the subset S.
+2. **Priority Queue**: A max-heap is used to keep track of the smallest K-1 B_i values encountered so far. This is because we want to minimize the sum of B_i values in the subset S when combined with the current element's B_i.
+3. **Sum Calculation**: For each element, after adding its B_i to the heap and sum, if the heap size exceeds K-1, the largest B_i is removed to maintain only the smallest K-1 values. The sum is adjusted accordingly.
+4. **Product Calculation**: For each element, the product of its A_i (the max in the subset S) and the sum of B_i values (current element plus the smallest K-1 B_i values before it) is computed. The minimum of these products across all elements is the answer.
+
+This approach efficiently finds the minimal value of the given expression for each test case, handling all edge cases and constraints correctly.

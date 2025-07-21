@@ -1,0 +1,72 @@
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+
+const ll INF = 1e18;
+
+int n;
+ll a[110], b[110], p[110], q[110], x;
+
+inline ll lcm(ll a, ll b) {
+    return a / gcd(a, b) * b;
+}
+
+bool check(ll v) {
+    ll cnt = 0;
+    for (int i = 1; i <= n; ++i) {
+        ll l = lcm(a[i], b[i]);
+        ll full_cycles = max(0LL, (v - 1) / l); // exclude time=0
+        ll base_cost = full_cycles * min(p[i] * (l / a[i]), q[i] * (l / b[i]));
+        
+        if (cnt > x - base_cost) return false;
+        cnt += base_cost;
+        
+        ll remaining_time = v - full_cycles * l;
+        
+        ll min_single = INF;
+        for (ll j = 0; j * a[i] <= remaining_time; ++j) {
+            ll rem = remaining_time - j * a[i];
+            ll k = (rem >= 0) ? rem / b[i] + (rem % b[i] != 0 ? 1 : 0) : 0;
+            if (k < 0) k = 0;
+            min_single = min(min_single, j * p[i] + k * q[i]);
+            
+            // Optimization: early exit if we already have a good solution
+            if (k == 0) break;
+        }
+        
+        if (cnt > x - min_single) return false;
+        cnt += min_single;
+        
+        if (cnt > x) return false;
+    }
+    return true;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    cout.tie(nullptr);
+    
+    cin >> n >> x;
+    for (int i = 1; i <= n; ++i) {
+        cin >> a[i] >> p[i] >> b[i] >> q[i];
+    }
+    
+    ll l = 0, r = (ll)2e14; // Conservative upper bound
+    while (l < r) {
+        ll mid = (l + r) / 2;
+        if (check(mid)) {
+            l = mid + 1;
+        } else {
+            r = mid;
+        }
+    }
+    
+    // Need to find the last value where check returns true
+    if (!check(l)) {
+        while (l > 0 && !check(l)) --l;
+    }
+    
+    cout << l << '\n';
+    return 0;
+}

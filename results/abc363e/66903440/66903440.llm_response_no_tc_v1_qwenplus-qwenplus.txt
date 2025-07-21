@@ -1,0 +1,103 @@
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+#define rep(i, n) for (int i = 0; i < (int)n; ++i)
+#define H first
+#define W second
+
+using pii = pair<int, int>;
+const int INF = 1e9;
+
+int main() {
+    cin.tie(0)->sync_with_stdio(0);
+
+    int H, W, Y;
+    cin >> H >> W >> Y;
+    vector<vector<int>> A(H, vector<int>(W));
+    rep(i, H) rep(j, W) cin >> A[i][j];
+
+    // Initialize a visited matrix to track if a cell is submerged
+    vector<vector<bool>> submerged(H, vector<bool>(W, false));
+
+    // Prepare a map of elevation -> list of cells at that elevation
+    vector<vector<pii>> elevCells(Y + 2);  // Elevation up to Y+1
+    rep(i, H) rep(j, W) {
+        if (A[i][j] <= Y) {
+            elevCells[A[i][j]].push_back({i, j});
+        }
+    }
+
+    // Directions for BFS (4-connected)
+    vector<pii> dirs = {{-1, 0}, {1, 0}, {0, -1}, {0, 1}};
+
+    // Total remaining area
+    int remaining = H * W;
+
+    // We will use BFS from the borders (sea level rising inward)
+    queue<pii> q;
+
+    // Mark border cells as submerged initially
+    rep(i, H) {
+        for (int j : {0, W - 1}) {
+            if (!submerged[i][j]) {
+                submerged[i][j] = true;
+                remaining--;
+                q.push({i, j});
+            }
+        }
+    }
+    rep(j, W) {
+        for (int i : {0, H - 1}) {
+            if (!submerged[i][j]) {
+                submerged[i][j] = true;
+                remaining--;
+                q.push({i, j});
+            }
+        }
+    }
+
+    // For each year, process all cells that become submerged due to sea level rise
+    // and flood fill from newly submerged areas
+    vector<int> result(Y + 1);
+    int currentYear = 0;
+
+    while (currentYear <= Y) {
+        // Add all cells at this elevation to be considered
+        for (auto &cell : elevCells[currentYear]) {
+            int i = cell.first, j = cell.second;
+            if (!submerged[i][j]) {
+                submerged[i][j] = true;
+                remaining++;
+                q.push(cell);
+            }
+        }
+
+        // Flood fill from submerged cells
+        while (!q.empty()) {
+            auto [i, j] = q.front();
+            q.pop();
+
+            for (auto [di, dj] : dirs) {
+                int ni = i + di, nj = j + dj;
+                if (ni >= 0 && ni < H && nj >= 0 && nj < W && !submerged[ni][nj] &&
+                    A[ni][nj] <= currentYear) {
+                    submerged[ni][nj] = true;
+                    remaining--;
+                    q.push({ni, nj});
+                }
+            }
+        }
+
+        result[currentYear] = remaining;
+        currentYear++;
+    }
+
+    // Output results for years 1..Y
+    for (int i = 1; i <= Y; ++i) {
+        cout << result[i] << "\n";
+    }
+
+    return 0;
+}
+```

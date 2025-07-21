@@ -1,0 +1,71 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+using i64 = long long;
+using pii = pair<int, int>;
+
+struct Node {
+    int node;
+    i64 dist;
+    bool operator<(const Node& other) const {
+        return dist > other.dist;
+    }
+};
+
+constexpr int MAXN = 2 * 1e5 + 5;
+constexpr i64 INF = 1e18;
+
+void solve() {
+    int n, m;
+    cin >> n >> m;
+    
+    vector<i64> A(n + 1);
+    for (int i = 1; i <= n; ++i) {
+        cin >> A[i];
+    }
+    
+    vector<vector<pair<int, int>>> graph(n + 1);
+    
+    for (int i = 0; i < m; ++i) {
+        int u, v, b;
+        cin >> u >> v >> b;
+        graph[u].push_back({v, b});
+        graph[v].push_back({u, b});
+    }
+    
+    vector<i64> min_dist(n + 1, INF);
+    priority_queue<Node> pq;
+    
+    min_dist[1] = A[1];  // Include A[1] as we start from vertex 1
+    pq.push({1, min_dist[1]});
+    
+    while (!pq.empty()) {
+        auto current = pq.top();
+        pq.pop();
+        
+        int u = current.node;
+        i64 dist_u = current.dist;
+        
+        if (dist_u > min_dist[u]) continue;
+        
+        for (auto [v, b] : graph[u]) {
+            i64 new_dist = dist_u + b + A[v];
+            if (new_dist < min_dist[v]) {
+                min_dist[v] = new_dist;
+                pq.push({v, new_dist});
+            }
+        }
+    }
+    
+    for (int i = 2; i <= n; ++i) {
+        cout << min_dist[i] << " ";
+    }
+    cout << endl;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    solve();
+    return 0;
+}

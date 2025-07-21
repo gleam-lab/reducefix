@@ -1,0 +1,30 @@
+#include <iostream>
+#include <string>
+#include <vector>
+#include <algorithm>
+
+using namespace std;
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(NULL);
+
+    int N;
+    string S;
+    cin >> N;
+    cin >> S;
+
+    vector<int> moves(3); // R, P, S
+    for (char c : S) {
+        switch(c) {
+            case 'R': moves[0]++; break;
+            case 'P': moves[1]++; break;
+            case 'S': moves[2]++; break;
+        }
+    }
+
+    int max_moves = *max_element(moves.begin(), moves.end());
+    cout << max_moves << endl;
+
+    return 0;
+}

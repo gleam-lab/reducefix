@@ -1,0 +1,75 @@
+To solve this problem, we need to determine the **minimum size** of an additional box that allows us to fit all `N` toys into `N` distinct boxes (including the new one), where each toy must be placed in a box whose size is at least as large as the toy's own size.
+
+### Key Observations:
+1. Each toy must go into a unique box.
+2. We already have `N-1` boxes; hence, we need to choose one toy to put into our newly purchased box.
+3. The goal is to find the **smallest possible value** for the new box that still allows a valid assignment.
+
+### Strategy:
+1. Sort both the toys (`A`) and existing boxes (`B`) in ascending order.
+2. Try to match the smallest toy with the smallest box, second smallest toy with next box, and so on — this greedy matching will help us identify which toy would require the most oversized box if excluded.
+3. For each index `i`, check whether the first `i` toys can be placed in the first `i` boxes (`B[0]` to `B[i-1]`). If not, then this toy needs to be placed in the extra box.
+4. Track the **maximum toy size** among those that could not be matched directly.
+5. The minimum required size of the extra box is this maximum unmatched toy size.
+6. If at any point a toy is larger than the largest available box, it's impossible to place all toys even with an optimal box, and we return `-1`.
+
+Here is the corrected and optimized implementation:
+
+```cpp
+#include <bits/stdc++.h>
+#define ll long long
+using namespace std;
+
+void solve() {
+    ll N;
+    cin >> N;
+    
+    vector<ll> A(N);
+    vector<ll> B(N - 1);
+    
+    for (ll i = 0; i < N; ++i) cin >> A[i];
+    for (ll i = 0; i < N - 1; ++i) cin >> B[i];
+
+    sort(A.begin(), A.end());
+    sort(B.begin(), B.end());
+
+    // Use a multiset to efficiently remove matched boxes
+    multiset<ll> boxSizes;
+    for (ll b : B) boxSizes.insert(b);
+
+    ll maxUnmatchedToy = -1;
+
+    ll j = 0; // pointer for B
+    for (ll i = 0; i < N; ++i) {
+        // Try to place A[i] into the smallest available box >= A[i]
+        auto it = boxSizes.lower_bound(A[i]);
+        if (it != boxSizes.end()) {
+            boxSizes.erase(it); // use this box
+        } else {
+            // Cannot place in existing boxes: this toy must go into the new box
+            maxUnmatchedToy = max(maxUnmatchedToy, A[i]);
+        }
+    }
+
+    if (maxUnmatchedToy == -1) {
+        cout << -1 << endl;
+    } else {
+        cout << maxUnmatchedToy << endl;
+    }
+}
+
+int main() {
+    ios::sync_with_stdio(0);
+    cin.tie(0);
+    solve();
+    return 0;
+}
+```
+
+### Why This Works:
+- Sorting ensures that we try to assign the smallest toys to the smallest suitable boxes.
+- Using a `multiset` allows efficient removal of used boxes while preserving ordering.
+- The unmatched toy requiring the largest size dictates the minimal needed extra box size.
+- This algorithm runs in **O(N log N)** time due to sorting and multiset operations.
+
+This solution correctly handles all edge cases, including when no toy can be omitted without making placement impossible (in which case output is `-1`).

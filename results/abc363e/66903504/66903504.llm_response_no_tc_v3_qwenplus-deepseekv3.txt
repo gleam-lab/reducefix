@@ -1,0 +1,97 @@
+To fix this code, we need to address several issues:
+
+1. **Initialization of the Queue**: The code initializes a queue for each possible sea level up to 202020, which is inefficient and unnecessary. Instead, we should use a priority queue or a more efficient data structure to handle the sections in order of their elevation.
+
+2. **Boundary Check**: The code incorrectly checks `ni>=0&&ni<H&&ni>=0&&ni<W`, which has a redundant condition `ni>=0` twice and misses the check for `nj`. This should be corrected to `ni>=0&&ni<H&&nj>=0&&nj<W`.
+
+3. **Handling of Sinking Sections**: The code pushes sections into the queue with `max(A[ni][nj], y)`, which might not be the correct way to handle the sinking process. Instead, sections should be processed as soon as the sea level reaches their elevation.
+
+4. **Efficiency**: The original approach might not be efficient enough for large inputs (H, W up to 1000 and Y up to 100000). We need a more efficient way to track which sections sink at each sea level.
+
+Here's the corrected and optimized code:
+
+```cpp
+#include<bits/stdc++.h>
+using namespace std;
+
+int dx[] = {1, 0, -1, 0};
+int dy[] = {0, 1, 0, -1};
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int H, W, Y;
+    cin >> H >> W >> Y;
+    vector<vector<int>> A(H, vector<int>(W));
+    for (int i = 0; i < H; ++i) {
+        for (int j = 0; j < W; ++j) {
+            cin >> A[i][j];
+        }
+    }
+
+    vector<vector<bool>> sunk(H, vector<bool>(W, false));
+    priority_queue<pair<int, pair<int, int>>, vector<pair<int, pair<int, int>>>, greater<pair<int, pair<int, int>>>> pq;
+
+    // Initialize the priority queue with boundary cells
+    for (int i = 0; i < H; ++i) {
+        for (int j = 0; j < W; ++j) {
+            if (i == 0 || i == H - 1 || j == 0 || j == W - 1) {
+                pq.push({A[i][j], {i, j}});
+                sunk[i][j] = true;
+            }
+        }
+    }
+
+    int ans = H * W;
+    vector<int> result(Y + 1, ans); // result[y] is the answer for sea level y
+
+    int current_sea_level = 0;
+    while (!pq.empty()) {
+        auto top = pq.top();
+        int elevation = top.first;
+        int i = top.second.first;
+        int j = top.second.second;
+        pq.pop();
+
+        if (elevation > current_sea_level) {
+            for (int y = current_sea_level + 1; y <= min(elevation, Y); ++y) {
+                result[y] = ans;
+            }
+            current_sea_level = min(elevation, Y);
+        }
+
+        if (current_sea_level >= elevation) {
+            ans--;
+            for (int k = 0; k < 4; ++k) {
+                int ni = i + dx[k];
+                int nj = j + dy[k];
+                if (ni >= 0 && ni < H && nj >= 0 && nj < W && !sunk[ni][nj]) {
+                    sunk[ni][nj] = true;
+                    pq.push({A[ni][nj], {ni, nj}});
+                }
+            }
+        }
+    }
+
+    // Fill remaining sea levels if any
+    for (int y = current_sea_level + 1; y <= Y; ++y) {
+        result[y] = ans;
+    }
+
+    for (int y = 1; y <= Y; ++y) {
+        cout << result[y] << '\n';
+    }
+
+    return 0;
+}
+```
+
+### Explanation:
+1. **Initialization**: We use a priority queue to process sections in order of their elevation. This ensures that sections are processed as soon as the sea level reaches their elevation.
+2. **Boundary Handling**: The boundary sections are initially added to the priority queue since they are adjacent to the sea.
+3. **Sinking Process**: For each sea level, we process all sections with elevation less than or equal to the current sea level. The sections are marked as sunk, and their adjacent sections are added to the queue if they haven't been sunk yet.
+4. **Efficiency**: The priority queue ensures that each section is processed only once, and the result for each sea level is computed in an efficient manner.
+5. **Output**: The results for each sea level are stored in a vector and printed at the end.
+
+This approach ensures correctness and efficiency, handling the constraints effectively.

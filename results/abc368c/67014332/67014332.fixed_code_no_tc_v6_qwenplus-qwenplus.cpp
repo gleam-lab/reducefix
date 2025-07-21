@@ -1,0 +1,40 @@
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    ll n;
+    cin >> n;
+    vector<ll> H(n);
+    for (ll i = 0; i < n; ++i) {
+        cin >> H[i];
+    }
+
+    ll time = 0;
+    ll tri_count = 0; // Tracks how many normal attacks have been made since last triple attack
+
+    for (ll i = 0; i < n; ++i) {
+        ll h = H[i];
+
+        while (h > 0) {
+            time++;
+            tri_count++;
+
+            if (tri_count == 3) {
+                h -= 3;
+                tri_count = 0;
+            } else {
+                h -= 1;
+            }
+        }
+
+        // Reset the tri_count after finishing each enemy
+        tri_count = 0;
+    }
+
+    cout << time << endl;
+    return 0;
+}

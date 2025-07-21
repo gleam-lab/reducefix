@@ -1,0 +1,59 @@
+#include<bits/stdc++.h>
+using namespace std;
+
+using ll = long long;
+const int INF = 1e9 + 10;
+const ll inf = 1LL<<60;
+
+void solve() {
+  int n, k; cin >> n >> k;
+  vector<pair<ll, ll>> ab(n);
+  for (int i=0; i<n; i++) cin >> ab[i].first;
+  for (int i=0; i<n; i++) cin >> ab[i].second;
+  // Sort by A first, then by B if A's are equal
+  sort(ab.begin(), ab.end(), [](const pair<ll, ll>& a, const pair<ll, ll>& b) {
+    if (a.first != b.first) return a.first > b.first;
+    return a.second < b.second;
+  });
+
+  if (k == 1) {
+    // Directly take the product of the first K elements
+    ll ans = inf;
+    for (int i = 0; i < n; i++) {
+      if (i >= k) break;
+      ans = min(ans, ab[i].first * ab[i].second);
+    }
+    cout << ans << '\n';
+    return;
+  }
+
+  // Use a priority queue to keep track of the K largest B's
+  priority_queue<ll, vector<ll>, greater<ll>> q;
+  ll sum = 0;
+  // Initialize the queue with the first K-1 B's
+  for (int i = 0; i < k - 1; i++) {
+    q.push(ab[i].second);
+    sum += ab[i].second;
+  }
+  ll ans = inf;
+  // Iterate over the rest of the elements
+  for (int i = k - 1; i < n; i++) {
+    ll current_product = (sum + ab[i].second) * ab[i].first;
+    ans = min(ans, current_product);
+    
+    // Update the product by potentially replacing the smallest B in the queue
+    if (!q.empty() && ab[i].second > q.top()) {
+      sum = sum - q.top() + ab[i].second;
+      q.pop();
+      q.push(ab[i].second);
+    }
+  }
+  cout << ans << '\n';
+}
+
+int main() {
+  ios::sync_with_stdio(false);
+  std::cin.tie(nullptr);
+  int t = 1;  cin >> t;
+  while (t--) solve();
+}

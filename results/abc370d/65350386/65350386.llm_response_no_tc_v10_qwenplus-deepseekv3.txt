@@ -1,0 +1,93 @@
+To fix this code, we need to address the issues related to handling the destruction of walls in the grid. The main problem lies in how the code checks for the first walls in the four directions (up, down, left, right) when there's no wall at the bomb's location. The incorrect code fails to correctly identify the nearest walls in each direction when the bomb is placed in an already destroyed cell.
+
+### Approaches
+1. **Initialization**: We need to maintain sets for each row and column to track the walls. For each row, the set will store the columns that still have walls, and for each column, the set will store the rows that still have walls.
+2. **Processing Queries**: For each query:
+   - If the cell has a wall, simply remove it from the respective row and column sets.
+   - If the cell doesn't have a wall, we need to find the nearest walls in the four directions (up, down, left, right) and remove them. This involves:
+     - **Up**: Find the largest row less than the current row in the column's set.
+     - **Down**: Find the smallest row greater than the current row in the column's set.
+     - **Left**: Find the largest column less than the current column in the row's set.
+     - **Right**: Find the smallest column greater than the current column in the row's set.
+3. **Efficiency**: Using sets allows efficient insertion and deletion operations (O(log n)), and the `lower_bound` and `upper_bound` operations to find the nearest walls efficiently.
+
+### Solution Code
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+#define rep(i,n) for(int i = 0; i < (n); i++)
+using ll = long long;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int h, w, q;
+    cin >> h >> w >> q;
+    vector<set<int>> row_walls(h), col_walls(w);
+
+    rep(i, h) rep(j, w) {
+        row_walls[i].insert(j);
+        col_walls[j].insert(i);
+    }
+
+    ll ans = (ll)h * w;
+
+    rep(qi, q) {
+        int r, c;
+        cin >> r >> c;
+        r--; c--;
+
+        if (row_walls[r].count(c)) {
+            row_walls[r].erase(c);
+            col_walls[c].erase(r);
+            ans--;
+        } else {
+            // Up
+            auto it_up = col_walls[c].lower_bound(r);
+            if (it_up != col_walls[c].begin()) {
+                int target = *prev(it_up);
+                row_walls[target].erase(c);
+                col_walls[c].erase(target);
+                ans--;
+            }
+            // Down
+            auto it_down = col_walls[c].upper_bound(r);
+            if (it_down != col_walls[c].end()) {
+                int target = *it_down;
+                row_walls[target].erase(c);
+                col_walls[c].erase(target);
+                ans--;
+            }
+            // Left
+            auto it_left = row_walls[r].lower_bound(c);
+            if (it_left != row_walls[r].begin()) {
+                int target = *prev(it_left);
+                col_walls[target].erase(r);
+                row_walls[r].erase(target);
+                ans--;
+            }
+            // Right
+            auto it_right = row_walls[r].upper_bound(c);
+            if (it_right != row_walls[r].end()) {
+                int target = *it_right;
+                col_walls[target].erase(r);
+                row_walls[r].erase(target);
+                ans--;
+            }
+        }
+    }
+
+    cout << ans << "\n";
+    return 0;
+}
+```
+
+### Explanation
+1. **Initialization**: The sets `row_walls` and `col_walls` are initialized to keep track of the walls in each row and column, respectively. Initially, all cells have walls, so each row and column set contains all their respective indices.
+2. **Query Processing**: For each query:
+   - If the cell at `(r, c)` has a wall, it is removed from both sets, and the total count of walls `ans` is decremented.
+   - If there is no wall at `(r, c)`, the code searches for the nearest walls in all four directions using `lower_bound` and `upper_bound` operations. The nearest walls are removed from the sets, and `ans` is decremented accordingly.
+3. **Output**: After processing all queries, the total remaining walls `ans` is printed.
+
+This approach efficiently handles the dynamic removal of walls and ensures correctness by systematically checking and updating the nearest walls in each direction when necessary. The use of sets ensures that all operations are performed in logarithmic time, making the solution scalable for large grid sizes.

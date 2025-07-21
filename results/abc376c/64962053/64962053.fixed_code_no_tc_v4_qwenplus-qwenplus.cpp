@@ -1,0 +1,89 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    int N;
+    cin >> N;
+    vector<long long> A(N);
+    vector<long long> B(N - 1);
+
+    for (int i = 0; i < N; ++i) cin >> A[i];
+    for (int i = 0; i < N - 1; ++i) cin >> B[i];
+
+    sort(A.begin(), A.end());
+    sort(B.begin(), B.end());
+
+    // We need to assign each toy to a box such that box size >= toy size
+    // One extra box is available, so we can allow one toy to be placed in the new box
+
+    int j = 0; // pointer for boxes
+    multiset<long long> unused_boxes;
+    int extra_box_needed_for_index = -1;
+
+    for (int i = 0; i < N; ++i) {
+        // Try to fit toy A[i] into smallest possible box >= A[i]
+        auto it = unused_boxes.lower_bound(A[i]);
+        if (it != unused_boxes.end()) {
+            unused_boxes.erase(it); // use this box
+        } else {
+            // No suitable box found yet, might need extra box
+            if (j < N - 1) {
+                if (B[j] >= A[i]) {
+                    // This box can be used for this toy
+                    j++;
+                } else {
+                    // Box too small, need extra box for this toy
+                    extra_box_needed_for_index = i;
+                    break;
+                }
+            } else {
+                // No more boxes left, must use extra box
+                extra_box_needed_for_index = i;
+                break;
+            }
+        }
+    }
+
+    if (extra_box_needed_for_index == -1) {
+        // All toys were assigned without needing an extra box
+        // Still, we need to find minimal x that doesn't interfere with current assignment
+        cout << 1 << endl;
+        return 0;
+    }
+
+    // The toy A[extra_box_needed_for_index] needs the extra box
+    // So we place it in the extra box, and try to assign rest using existing boxes
+
+    // Count how many toys are left after the one going into extra box
+    int remaining_toys = N - extra_box_needed_for_index - 1;
+    int remaining_boxes = (N - 1) - (N - 1 - remaining_toys); // same count
+
+    if (remaining_toys > remaining_boxes) {
+        cout << -1 << endl;
+        return 0;
+    }
+
+    // Place all toys from extra_box_needed_for_index + 1 onward using the largest unused boxes
+    vector<long long> sorted_B = B;
+    sort(sorted_B.begin(), sorted_B.end());
+
+    int idxA = extra_box_needed_for_index + 1;
+    int idxB = N - 2; // last index of B
+
+    while (idxA < N && idxB >= remaining_boxes) {
+        if (sorted_B[idxB] >= A[idxA]) {
+            idxA++;
+        }
+        idxB--;
+    }
+
+    if (idxA < N) {
+        cout << -1 << endl;
+        return 0;
+    }
+
+    // Minimal x should be at least A[extra_box_needed_for_index]
+    // And also, shouldn't interfere with other assignments
+    cout << A[extra_box_needed_for_index] << endl;
+    return 0;
+}

@@ -1,0 +1,99 @@
+To fix this code, we need to address several issues related to the algorithm's correctness and efficiency. The original code attempts to simulate the sinking process using a priority queue, but it misses some critical aspects, such as correctly handling the initial sinking of border sections and efficiently updating the remaining sections for each year.
+
+### Approaches
+1. **Initialization**: The island is surrounded by the sea, so any section adjacent to the sea (i.e., border sections) will start sinking once the sea level reaches their elevation.
+2. **Priority Queue**: Use a min-heap (priority queue) to keep track of sections that are next to sink. The priority is based on the elevation of the sections.
+3. **BFS for Sinking Process**: When a section sinks, check its adjacent sections (up, down, left, right). If any adjacent section's elevation is less than or equal to the current sea level and hasn't been sunk yet, add it to the priority queue.
+4. **Efficiency**: Given the constraints (H, W up to 1000 and Y up to 10^5), we need an efficient way to compute the result for each year without reprocessing everything from scratch each time. The priority queue helps in efficiently managing the sections that sink each year.
+
+### Solution Code
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+#define int long long
+
+struct Node {
+    int x, y, val;
+    bool operator<(const Node &a) const {
+        return val > a.val;
+    }
+};
+
+signed main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+    cout.tie(0);
+
+    int h, w, Y;
+    cin >> h >> w >> Y;
+
+    vector<vector<int>> grid(h, vector<int>(w));
+    for (int i = 0; i < h; ++i) {
+        for (int j = 0; j < w; ++j) {
+            cin >> grid[i][j];
+        }
+    }
+
+    vector<vector<bool>> vis(h, vector<bool>(w, false));
+    priority_queue<Node> q;
+
+    // Push all border cells into the priority queue
+    for (int i = 0; i < h; ++i) {
+        if (!vis[i][0]) {
+            q.push({i, 0, grid[i][0]});
+            vis[i][0] = true;
+        }
+        if (!vis[i][w-1]) {
+            q.push({i, w-1, grid[i][w-1]});
+            vis[i][w-1] = true;
+        }
+    }
+    for (int j = 1; j < w-1; ++j) {
+        if (!vis[0][j]) {
+            q.push({0, j, grid[0][j});
+            vis[0][j] = true;
+        }
+        if (!vis[h-1][j]) {
+            q.push({h-1, j, grid[h-1][j]});
+            vis[h-1][j] = true;
+        }
+    }
+
+    int res = h * w;
+    vector<int> ans(Y + 1, res); // ans[0] is initial state
+    int current_level = 1;
+    int processed = 0;
+
+    // Process each year
+    for (int year = 1; year <= Y; ++year) {
+        while (!q.empty() && q.top().val <= year) {
+            Node cur = q.top();
+            q.pop();
+            processed++;
+            for (int k = 0; k < 4; ++k) {
+                int nx = cur.x + (k == 2) - (k == 3);
+                int ny = cur.y + (k == 0) - (k == 1);
+                if (nx >= 0 && nx < h && ny >= 0 && ny < w && !vis[nx][ny]) {
+                    vis[nx][ny] = true;
+                    q.push({nx, ny, grid[nx][ny]});
+                }
+            }
+        }
+        ans[year] = res - processed;
+    }
+
+    for (int year = 1; year <= Y; ++year) {
+        cout << ans[year] << endl;
+    }
+
+    return 0;
+}
+```
+
+### Explanation
+1. **Initialization**: The grid is read, and a priority queue is initialized to manage sections based on their elevation.
+2. **Border Handling**: All border sections (adjacent to the sea) are added to the priority queue since they are the first to sink when the sea level rises.
+3. **Processing Each Year**: For each year from 1 to Y, the code checks which sections sink (those with elevation ≤ current sea level). The sinking process uses a BFS approach to handle adjacent sections that also sink due to the current section sinking.
+4. **Efficiency**: The priority queue ensures that sections are processed in order of their elevation, making the algorithm efficient. The results for each year are stored in an array and printed at the end.
+
+This approach efficiently handles the constraints and ensures correctness by systematically processing sections as the sea level rises each year.

@@ -1,0 +1,37 @@
+#include<bits/stdc++.h>
+#include<vector>
+using namespace std;
+
+vector<int> dists;
+int n, q;
+
+bool check(int mid, int k) {
+    auto it = upper_bound(dists.begin(), dists.end(), mid);
+    return it - dists.begin() >= k;
+}
+
+void solve(void) {
+    cin >> n >> q;
+    vector<int> A(n), B(q);
+    for(int i = 0; i < n; ++i) cin >> A[i];
+    for(int i = 0; i < q; ++i) {
+        cin >> B[i];
+        dists.clear();
+        for(int j = 0; j < n; ++j) dists.push_back(abs(A[j] - B[i]));
+        sort(dists.begin(), dists.end());
+        int ans = -1;
+        for(int k = 1; k <= n; ++k) {
+            if(check(dists[k - 1], k)) {
+                ans = dists[k - 1];
+                break;
+            }
+        }
+        cout << ans << endl;
+    }
+}
+
+int main() {
+    ios_base::sync_with_stdio(false); cin.tie(NULL); cout.tie(NULL);
+    solve();
+    return 0;
+}

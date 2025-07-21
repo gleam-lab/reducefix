@@ -1,0 +1,68 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+struct Edge {
+    int to, cost;
+};
+
+vector<int> dijkstra(int n, vector<vector<Edge>>& graph, int start) {
+    vector<long long> dist(n, LLONG_MAX);
+    vector<bool> visited(n, false);
+    dist[start] = 0;
+
+    set<pair<long long, int>> pq;
+    pq.emplace(dist[start], start);
+
+    while (!pq.empty()) {
+        int u = pq.begin()->second;
+        pq.erase(pq.begin());
+
+        if (visited[u])
+            continue;
+        visited[u] = true;
+
+        for (const auto& edge : graph[u]) {
+            int v = edge.to;
+            long long cost = edge.cost;
+
+            if (dist[v] > dist[u] + cost) {
+                dist[v] = dist[u] + cost;
+                pq.emplace(dist[v], v);
+            }
+        }
+    }
+
+    return dist;
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(NULL);
+
+    int n, m;
+    cin >> n >> m;
+
+    vector<long long> a(n);
+    for (int i = 0; i < n; ++i)
+        cin >> a[i];
+
+    vector<vector<Edge>> graph(n);
+    for (int i = 0; i < m; ++i) {
+        int u, v, b;
+        cin >> u >> v >> b;
+        --u, --v;
+        graph[u].emplace_back(v, b);
+        graph[v].emplace_back(u, b);
+    }
+
+    vector<long long> result;
+    for (int i = 1; i < n; ++i) {
+        vector<long long> dist = dijkstra(n, graph, 0);
+        result.emplace_back(dist[i] + a[i]);
+    }
+
+    for (const auto& r : result)
+        cout << r << " ";
+
+    return 0;
+}

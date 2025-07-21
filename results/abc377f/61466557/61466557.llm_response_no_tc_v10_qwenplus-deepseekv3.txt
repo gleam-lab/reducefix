@@ -1,0 +1,154 @@
+To fix this code, we need to accurately calculate the number of safe squares where a new piece can be placed without being captured by any existing pieces. The original code attempts to use inclusion-exclusion principles but has some logical errors, especially in handling the diagonals and their intersections with rows and columns.
+
+### Approaches
+
+1. **Problem Analysis**: The problem involves determining safe squares on an N x N grid where existing M queens (or pieces) are placed. A queen can capture any piece in the same row, column, or diagonals (both i + j = a + b and i - j = a - b). The goal is to count the number of empty squares that are not under attack by any queen.
+
+2. **Key Insight**: The total number of safe squares is calculated by subtracting the squares attacked by any queen from the total squares (N^2). The attacked squares include:
+   - All squares in the same row as any queen.
+   - All squares in the same column as any queen.
+   - All squares on the same diagonal (i + j) as any queen.
+   - All squares on the same anti-diagonal (i - j) as any queen.
+
+3. **Inclusion-Exclusion Principle**: To avoid double-counting squares that lie in the intersection of multiple attack patterns (e.g., a square in both a row and a column of different queens), we use inclusion-exclusion to correctly account for overlaps.
+
+4. **Efficient Calculation**: For large N (up to 10^9), we need to handle the calculations efficiently without iterating through each square. We use sets to track unique rows, columns, and diagonals, and compute intersections where necessary.
+
+### Solution Code
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+typedef long long ll;
+typedef pair<ll, ll> pll;
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(NULL);
+
+    ll N, M;
+    cin >> N >> M;
+    vector<pll> queens(M);
+    for (int i = 0; i < M; ++i) {
+        cin >> queens[i].first >> queens[i].second;
+    }
+
+    set<ll> rows, cols, diag1, diag2;
+    for (auto &queen : queens) {
+        ll i = queen.first;
+        ll j = queen.second;
+        rows.insert(i);
+        cols.insert(j);
+        diag1.insert(i - j);
+        diag2.insert(i + j);
+    }
+
+    ll total = N * N;
+    ll attacked = 0;
+
+    // Rows and columns
+    attacked += rows.size() * N;
+    attacked += cols.size() * N;
+    // Subtract intersections of rows and columns
+    attacked -= rows.size() * cols.size();
+
+    // Diagonals (i - j)
+    for (auto &d : diag1) {
+        ll count;
+        if (d >= 0) {
+            count = N - d;
+        } else {
+            count = N + d;
+        }
+        attacked += count;
+    }
+
+    // Anti-diagonals (i + j)
+    for (auto &d : diag2) {
+        ll count;
+        if (d <= N + 1) {
+            count = d - 1;
+        } else {
+            count = 2 * N - d + 1;
+        }
+        attacked += count;
+    }
+
+    // Subtract intersections of diagonals and anti-diagonals
+    set<pll> intersections;
+    for (auto &d1 : diag1) {
+        for (auto &d2 : diag2) {
+            ll i = (d1 + d2) / 2;
+            ll j = (d2 - d1) / 2;
+            if ((d1 + d2) % 2 == 0 && i >= 1 && i <= N && j >= 1 && j <= N) {
+                intersections.insert({i, j});
+            }
+        }
+    }
+    attacked -= intersections.size();
+
+    // Add back intersections of rows/columns with diagonals/anti-diagonals
+    set<pll> row_col_diag;
+    for (auto &i : rows) {
+        for (auto &d : diag1) {
+            ll j = i - d;
+            if (j >= 1 && j <= N) {
+                row_col_diag.insert({i, j});
+            }
+        }
+        for (auto &d : diag2) {
+            ll j = d - i;
+            if (j >= 1 && j <= N) {
+                row_col_diag.insert({i, j});
+            }
+        }
+    }
+    for (auto &j : cols) {
+        for (auto &d : diag1) {
+            ll i = j + d;
+            if (i >= 1 && i <= N) {
+                row_col_diag.insert({i, j});
+            }
+        }
+        for (auto &d : diag2) {
+            ll i = d - j;
+            if (i >= 1 && i <= N) {
+                row_col_diag.insert({i, j});
+            }
+        }
+    }
+    attacked -= row_col_diag.size();
+
+    // Add back intersections counted in row_col_diag and intersections
+    set<pll> triple_intersections;
+    for (auto &p : row_col_diag) {
+        if (intersections.find(p) != intersections.end()) {
+            triple_intersections.insert(p);
+        }
+    }
+    attacked += triple_intersections.size();
+
+    // Subtract the squares occupied by queens
+    attacked -= M;
+
+    ll safe = total - attacked;
+    cout << safe << endl;
+
+    return 0;
+}
+```
+
+### Explanation
+
+1. **Input Handling and Initialization**: The code reads the grid size N and the number of queens M, followed by their positions. Sets are initialized to store unique rows, columns, and diagonals (both types) covered by the queens.
+
+2. **Total and Attacked Squares Calculation**: The total squares is N^2. Initially, squares attacked by rows and columns are calculated, adjusting for overlaps using inclusion-exclusion.
+
+3. **Diagonal Attacks**: For each unique diagonal (i - j) and anti-diagonal (i + j), the number of squares they cover is computed and added to the attacked count. The intersections between diagonals and anti-diagonals are subtracted to avoid double-counting.
+
+4. **Row/Column and Diagonal Intersections**: Squares that lie at the intersection of a row or column with a diagonal or anti-diagonal are identified and subtracted from the attacked count to correct for overlaps. Further adjustments are made for triple intersections (row, column, and diagonal/anti-diagonal).
+
+5. **Final Safe Squares**: The total safe squares is the total squares minus the attacked squares, with occupied squares subtracted. The result is printed.
+
+This approach ensures that all overlaps are handled correctly and efficiently, even for very large grid sizes.

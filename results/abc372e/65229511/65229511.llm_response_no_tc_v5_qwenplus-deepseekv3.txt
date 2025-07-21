@@ -1,0 +1,89 @@
+The original code uses a Union-Find (Disjoint Set Union, DSU) data structure to manage the connected components and a set to keep track of the vertices in each component. However, there are a few issues that need to be addressed:
+
+1. **Union Operation**: The code incorrectly merges the sets by only merging `cnt[rv]` into `cnt[rnew]` when it should merge both sets. Additionally, the merging logic can be simplified.
+2. **Finding the k-th Largest Element**: The code iterates through the set in reverse to find the k-th largest element, which is correct but can be made more efficient by directly accessing the k-th element from the end.
+3. **Initialization**: The initial setup of the sets is correct, but the code could be optimized further.
+
+Here’s the fixed code that addresses these issues:
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+#define rep(i, n) for(int i=0;i<(n);i++)
+#define all(a) a.begin(), a.end()
+#define rall(a) a.rbegin(), a.rend()
+using ll = long long;
+using pi = pair<int, int>;
+const int di[]={1,-1,0,0};
+const int dj[]={0,0,1,-1};
+const int INF=1e9;
+struct UnionFind {
+    vector<int> parent, rank;
+    UnionFind(int n) : parent(n), rank(n, 0) {
+        for (int i = 0; i < n; i++) 
+            parent[i] = i;
+    }
+    int findRoot(int x) {
+        if (parent[x] != x) 
+            parent[x] = findRoot(parent[x]);
+        return parent[x];
+    }
+    bool unite(int x, int y) {
+        int rx = findRoot(x), ry = findRoot(y);
+        if (rx == ry) return false;
+        if (rank[rx] < rank[ry]) {
+            parent[rx] = ry;
+        } else {
+            parent[ry] = rx;
+            if (rank[rx] == rank[ry])
+                rank[rx]++;
+        }
+        return true;
+    }
+};
+int main(){
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int n, q;
+    cin >> n >> q;
+    UnionFind uf(n);
+    vector<set<int>> cnt(n);
+    rep(i, n) cnt[i].insert(i+1);  // Store 1-based indices
+    vector<int> ans;
+    rep(qi, q) {
+        int com;
+        cin >> com;
+        if(com==1) {
+            int u, v;
+            cin >> u >> v;
+            int ru = uf.findRoot(u-1);
+            int rv = uf.findRoot(v-1);
+            if(ru != rv) {
+                if(cnt[ru].size() < cnt[rv].size()) swap(ru, rv);
+                uf.unite(u-1, v-1);
+                for (int x : cnt[rv]) cnt[ru].insert(x);
+                cnt[rv].clear();
+            }
+        }
+        if(com==2) {
+            int v, k;
+            cin >> v >> k;
+            int root = uf.findRoot(v-1);
+            if(cnt[root].size() < k) ans.push_back(-1);
+            else {
+                auto it = cnt[root].end();
+                advance(it, -k);
+                ans.push_back(*it);
+            }
+        }
+    }
+    for(auto x : ans) cout << x << endl;
+    return 0;
+}
+```
+
+### Key Changes:
+1. **Union Operation**: The sets are merged correctly by always merging the smaller set into the larger one, and the smaller set is cleared after merging.
+2. **Finding k-th Largest Element**: The code now directly accesses the k-th element from the end of the set, which is more efficient.
+3. **1-based Indices**: The vertices are stored as 1-based in the sets to match the problem's output requirements.
+4. **Efficiency**: The operations are optimized to handle the constraints efficiently, with each union operation being O(α(n)) and each set operation being O(log n). The k-th largest element query is O(k) but since k is at most 10, it's efficient enough.

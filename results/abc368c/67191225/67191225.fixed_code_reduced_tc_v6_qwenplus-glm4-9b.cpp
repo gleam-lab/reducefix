@@ -1,0 +1,29 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+
+using namespace std;
+using ll = long long;
+
+int main() {
+    int N;
+    cin >> N;
+    vector<ll> H(N);
+    ll T = 0;
+    
+    for (int i = 0; i < N; ++i) {
+        cin >> H[i];
+        // Calculate the minimum number of attacks to reduce the health to zero or less
+        T += (H[i] + 2) / 3; // Increase T by the largest multiple of 3 possible
+        // If there's a remainder, handle it based on the current value of T modulo 3
+        if ((H[i] + 2) % 3 == 2) {
+            if (T % 3 == 0) {
+                T++; // If T is divisible by 3, an extra attack will still be multiple of 3
+            } else {
+                T += 2; // Otherwise, we need two more attacks to handle the remainder
+            }
+        }
+    }
+    cout << T << endl;
+    return 0;
+}

@@ -1,0 +1,46 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define rep(i,n) for(int i=0;i<n;i++)
+using ll = long long;
+using Graph = vector<vector<int>>;
+
+ll f(vector<int>& a, vector<int>& b, vector<int>& p, vector<int>& q, ll x){
+  int n = a.size();
+  vector<ll> dp(x+1, LLONG_MAX);
+  dp[0] = 0;
+  
+  for(int i = 0; i < n; ++i){
+    for(int j = x; j >= 0; --j){
+      if(j >= a[i]) dp[j] = min(dp[j], dp[j-a[i]] + p[i]);
+      if(j >= b[i]) dp[j] = min(dp[j], dp[j-b[i]] + q[i]);
+    }
+  }
+
+  ll ans = 0;
+  for(int i = 0; i <= x; ++i){
+    if(dp[i] != LLONG_MAX){
+      ans = max(ans, i);
+    }
+  }
+  return ans;
+}
+
+int main() {
+  int n, x;
+  cin >> n >> x;
+  vector<int> a(n), b(n), p(n), q(n);
+  rep(i,n)cin >> a[i] >> p[i] >> b[i] >> q[i];
+  ll now; // wの候補
+  ll l = 0, r = 10000000000;
+  while(r - l > 1){
+    now = (r + l)/2;
+    ll tmp = 0;
+    rep(i,n){
+      tmp += f(a, b, p, q, now);
+    }
+    if(tmp <= x)l = now;
+    else r = now;
+  }
+  cout << l << endl;
+	return 0;
+}

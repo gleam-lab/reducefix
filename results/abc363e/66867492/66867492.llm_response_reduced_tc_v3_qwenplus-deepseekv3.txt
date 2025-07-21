@@ -1,0 +1,80 @@
+To fix this code, we need to address the issue where the program fails to correctly simulate the sinking of sections of the island as the sea level rises. The original code attempts to use a priority queue to process sections in order of their elevation, but there's a bug in how it initializes the queue and processes the sections. Specifically, the code incorrectly adds sections to the queue, especially for the bottom row of the island.
+
+### Approaches
+1. **Initialization of Priority Queue**: The priority queue should be initialized with all the boundary sections of the island (top, bottom, left, and right edges). These are the sections that will first be submerged as the sea level rises.
+2. **Processing Sinking Sections**: For each year, as the sea level rises, we need to process sections from the priority queue whose elevation is less than or equal to the current sea level. Each time a section is submerged, its adjacent sections (vertical and horizontal) are checked, and if their elevation is also less than or equal to the current sea level, they are added to the queue and marked as submerged.
+
+### Solution Code
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int H, W, Y;
+    cin >> H >> W >> Y;
+    vector<vector<int>> A(H, vector<int>(W));
+    vector<vector<bool>> submerged(H, vector<bool>(W, false));
+    priority_queue<tuple<int, int, int>, vector<tuple<int, int, int>>, greater<tuple<int, int, int>>> pq;
+
+    for (int i = 0; i < H; ++i) {
+        for (int j = 0; j < W; ++j) {
+            cin >> A[i][j];
+        }
+    }
+
+    for (int i = 0; i < H; ++i) {
+        pq.emplace(A[i][0], i, 0);
+        submerged[i][0] = true;
+        if (W > 1) {
+            pq.emplace(A[i][W - 1], i, W - 1);
+            submerged[i][W - 1] = true;
+        }
+    }
+    for (int j = 1; j < W - 1; ++j) {
+        pq.emplace(A[0][j], 0, j);
+        submerged[0][j] = true;
+        if (H > 1) {
+            pq.emplace(A[H - 1][j], H - 1, j);
+            submerged[H - 1][j] = true;
+        }
+    }
+
+    int remaining = H * W;
+    vector<int> result(Y);
+    const int dx[] = {1, 0, -1, 0};
+    const int dy[] = {0, 1, 0, -1};
+
+    for (int year = 1; year <= Y; ++year) {
+        while (!pq.empty() && get<0>(pq.top()) <= year) {
+            auto [elev, i, j] = pq.top();
+            pq.pop();
+            remaining--;
+            for (int d = 0; d < 4; ++d) {
+                int ni = i + dy[d];
+                int nj = j + dx[d];
+                if (ni >= 0 && ni < H && nj >= 0 && nj < W && !submerged[ni][nj]) {
+                    submerged[ni][nj] = true;
+                    pq.emplace(A[ni][nj], ni, nj);
+                }
+            }
+        }
+        result[year - 1] = remaining;
+    }
+
+    for (int y = 0; y < Y; ++y) {
+        cout << result[y] << '\n';
+    }
+
+    return 0;
+}
+```
+
+### Explanation
+1. **Initialization**: The priority queue is initialized with all boundary sections of the island. These sections are the first to be submerged as the sea level rises. Each boundary section is added to the queue and marked as submerged.
+2. **Processing**: For each year from 1 to Y, the algorithm processes all sections in the priority queue whose elevation is less than or equal to the current sea level. For each submerged section, its adjacent sections are checked. If an adjacent section hasn't been submerged yet and its elevation is also less than or equal to the current sea level, it is added to the queue and marked as submerged.
+3. **Output**: After processing each year, the remaining sections of the island that are still above the sea level are stored in a result vector. Finally, the results for all years are printed.
+
+This approach ensures that the algorithm efficiently processes the sinking sections in the correct order, leveraging a priority queue to handle sections in ascending order of their elevation. The complexity is kept manageable by processing each section only once and marking it as submerged to avoid reprocessing.

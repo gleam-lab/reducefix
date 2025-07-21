@@ -1,0 +1,98 @@
+To fix this code, we need to address the algorithmic approach used to find the k-th closest point to each query point B_j. The original code attempts to use binary search to determine the distance within which at least k points lie, but it has several issues:
+
+1. **Binary Search Logic**: The `check` function counts the number of points within a certain range around B_j, but this doesn't directly give the k-th smallest distance. It might include points that are not the closest k points.
+2. **Edge Cases**: The binary search range is set from 0 to 1e8, which might not cover all possible distances, especially when points are very far apart.
+3. **Efficiency**: The original approach might not be efficient enough for large inputs (up to 10^5 points and queries) because it performs a binary search for each query, and each binary search iteration involves a lower and upper bound operation.
+
+### Approaches
+To efficiently solve this problem, we can:
+1. **Sort the Array A**: Sorting helps in quickly accessing the closest points via binary search.
+2. **Binary Search for the k-th Closest Distance**: For each query point B_j, we can:
+   - Use binary search to find the smallest distance `d` such that there are at least `k` points in A within distance `d` from B_j.
+   - The actual k-th closest distance can be found by considering the distances of the points around the position of B_j in the sorted array A.
+
+### Solution Code
+```cpp
+#include <iostream>
+#include <algorithm>
+#include <vector>
+#include <climits>
+using namespace std;
+#define int long long
+
+int n, q;
+vector<int> a;
+
+int find_kth_distance(int b, int k) {
+    int low = 0, high = 2e14;
+    int answer = high;
+    
+    while (low <= high) {
+        int mid = (low + high) / 2;
+        int left_pos = lower_bound(a.begin(), a.end(), b - mid) - a.begin();
+        int right_pos = upper_bound(a.begin(), a.end(), b + mid) - a.begin();
+        int count = right_pos - left_pos;
+        
+        if (count >= k) {
+            answer = mid;
+            high = mid - 1;
+        } else {
+            low = mid + 1;
+        }
+    }
+    
+    return answer;
+}
+
+signed main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    cin >> n >> q;
+    a.resize(n);
+    for (int i = 0; i < n; ++i) {
+        cin >> a[i];
+    }
+    sort(a.begin(), a.end());
+    
+    while (q--) {
+        int b, k;
+        cin >> b >> k;
+        int low = 0, high = 2e14;
+        int answer = high;
+        
+        while (low <= high) {
+            int mid = (low + high) / 2;
+            int left_pos = lower_bound(a.begin(), a.end(), b - mid) - a.begin();
+            int right_pos = upper_bound(a.begin(), a.end(), b + mid) - a.begin();
+            int count = right_pos - left_pos;
+            
+            if (count >= k) {
+                answer = mid;
+                high = mid - 1;
+            } else {
+                low = mid + 1;
+            }
+        }
+        
+        vector<int> distances;
+        int left_pos = lower_bound(a.begin(), a.end(), b - answer) - a.begin();
+        int right_pos = upper_bound(a.begin(), a.end(), b + answer) - a.begin();
+        for (int i = left_pos; i < right_pos; ++i) {
+            distances.push_back(abs(a[i] - b));
+        }
+        sort(distances.begin(), distances.end());
+        
+        cout << distances[k - 1] << '\n';
+    }
+    
+    return 0;
+}
+```
+
+### Explanation
+1. **Sorting**: The array `A` is sorted to facilitate binary search operations.
+2. **Binary Search for Distance**: For each query point `B_j`, we perform a binary search to find the smallest distance `d` such that there are at least `k` points in `A` within `d` units of `B_j`. This is done by checking the count of points in the range `[B_j - d, B_j + d]`.
+3. **Collecting Distances**: Once the appropriate distance `d` is found, we collect all points within this range, compute their distances to `B_j`, sort these distances, and then pick the k-th smallest distance.
+
+This approach ensures that we efficiently and correctly find the k-th closest point for each query, handling large input sizes within feasible time complexity.

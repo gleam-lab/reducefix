@@ -1,0 +1,34 @@
+#include<bits/stdc++.h>
+using namespace std;
+
+vector<int> adj[200005];
+priority_queue<int> pq[200005];
+
+int main() {
+    int n, q;
+    cin >> n >> q;
+    while (q--) {
+        int type;
+        cin >> type;
+        if (type == 1) {
+            int u, v;
+            cin >> u >> v;
+            adj[u].push_back(v);
+            adj[v].push_back(u);
+            pq[u].push(-v);
+            pq[v].push(-u);
+        } else {
+            int v, k;
+            cin >> v >> k;
+            if (pq[v].size() >= k) {
+                for (int i = 0; i < k - 1; ++i) {
+                    pq[v].pop();
+                }
+                cout << -pq[v].top() << endl;
+            } else {
+                cout << -1 << endl;
+            }
+        }
+    }
+    return 0;
+}

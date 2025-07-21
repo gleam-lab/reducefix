@@ -1,0 +1,56 @@
+#include<bits/stdc++.h>
+using namespace std;
+using ll = long long;
+
+map<ll, vector<ll>> graph;
+map<ll, bool> visited;
+
+const ll inf = 1LL << 60;
+ll ans = inf;
+
+void dfs(ll node, ll depth) {
+    if (depth >= ans) {
+        return; // Prune the search if we already found a shorter path
+    }
+
+    visited[node] = true;
+
+    for (auto neighbor : graph[node]) {
+        if (neighbor == 1) {
+            ans = min(ans, depth + 1);
+            continue;
+        }
+
+        if (!visited[neighbor]) {
+            dfs(neighbor, depth + 1);
+        }
+    }
+
+    visited[node] = false; // Backtrack
+}
+
+int main() {
+    ll n, m;
+    cin >> n >> m;
+
+    for (int i = 0; i < m; i++) {
+        ll a, b;
+        cin >> a >> b;
+        graph[a].push_back(b);
+        if (!visited.count(a)) visited[a] = false;
+        if (!visited.count(b)) visited[b] = false;
+    }
+
+    visited[1] = true; // Start node marked as visited
+
+    for (auto neighbor : graph[1]) {
+        dfs(neighbor, 1);
+    }
+
+    if (ans != inf)
+        cout << ans << endl;
+    else
+        cout << -1 << endl;
+
+    return 0;
+}

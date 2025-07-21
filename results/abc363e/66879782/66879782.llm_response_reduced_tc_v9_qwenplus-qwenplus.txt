@@ -1,0 +1,81 @@
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+
+int main() {
+    ios_base::sync_with_stdio(0);
+    cin.tie(0);
+
+    int H, W, Y;
+    cin >> H >> W >> Y;
+
+    vector<vector<int>> A(H, vector<int>(W));
+    vector<vector<int>> B(H, vector<int>(W));  // copy of A for processing
+
+    priority_queue<tuple<int, int, int>, vector<tuple<int, int, int>>, greater<>> pq;
+
+    // Read input and initialize boundary cells as "sinking risks"
+    for (int i = 0; i < H; ++i) {
+        for (int j = 0; j < W; ++j) {
+            cin >> A[i][j];
+            B[i][j] = A[i][j];
+
+            // Boundary cells are at risk of sinking immediately
+            if (i == 0 || i == H - 1 || j == 0 || j == W - 1) {
+                pq.emplace(A[i][j], i, j);
+            }
+        }
+    }
+
+    // Direction vectors for adjacent checks
+    int dx[4] = {-1, 1, 0, 0};
+    int dy[4] = {0, 0, -1, 1};
+
+    // Visited matrix to mark cells that have already sunk
+    vector<vector<bool>> visited(H, vector<bool>(W, false));
+
+    // Process the sinking process using a min-heap
+    while (!pq.empty()) {
+        auto [elevation, x, y] = pq.top();
+        pq.pop();
+
+        if (visited[x][y]) continue;
+
+        visited[x][y] = true;
+
+        for (int d = 0; d < 4; ++d) {
+            int nx = x + dx[d];
+            int ny = y + dy[d];
+
+            if (nx >= 0 && nx < H && ny >= 0 && ny < W && !visited[nx][ny] && A[nx][ny] <= elevation) {
+                pq.emplace(elevation, nx, ny);
+            }
+        }
+    }
+
+    // Precompute how many cells sink by year i
+    vector<int> sink_count(Y + 2, 0);  // Use Y+2 to avoid overflow
+
+    for (int i = 0; i < H; ++i) {
+        for (int j = 0; j < W; ++j) {
+            if (!visited[i][j]) {
+                sink_count[A[i][j]]++;
+            }
+        }
+    }
+
+    // Build prefix sum: total number of cells sunk by year i
+    for (int i = 1; i <= Y; ++i) {
+        sink_count[i] += sink_count[i - 1];
+    }
+
+    // Output remaining area each year
+    int total_area = H * W;
+    for (int i = 1; i <= Y; ++i) {
+        cout << total_area - sink_count[i] << "\n";
+    }
+
+    return 0;
+}
+```

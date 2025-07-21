@@ -1,0 +1,45 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+
+using namespace std;
+
+int main() {
+    int n;
+    cin >> n;
+    vector<int> a(n), b(n - 1);
+    for (int &i : a) cin >> i;
+    for (int &i : b) cin >> i;
+    
+    sort(a.begin(), a.end());
+    sort(b.begin(), b.end());
+    
+    // We need to check if all toys can fit in one of the existing boxes
+    // or if we need to buy a new box.
+    bool possible = true;
+    int min_new_box_size = 0;
+    
+    for (int i = 0; i < n; ++i) {
+        if (i > 0 && a[i] > b[i - 1]) {
+            possible = false;
+            break;
+        }
+        // If the toy doesn't fit in the current box, check if it fits in the previous one.
+        if (i > 0 && a[i] < b[i - 1]) {
+            min_new_box_size = max(min_new_box_size, a[i]);
+        }
+        // If it fits in the current box, check if it fits in all the remaining boxes.
+        if (i < n - 1 && a[i] > b[i]) {
+            possible = false;
+            break;
+        }
+    }
+    
+    if (possible) {
+        cout << -1 << endl;
+    } else {
+        cout << min_new_box_size << endl;
+    }
+    
+    return 0;
+}

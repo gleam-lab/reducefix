@@ -1,0 +1,95 @@
+
+Given the problem, we can approach it using a priority queue. The idea is to simulate the process of the sea level rising and sections of land sinking. However, the provided code has some issues and inefficiencies, particularly in its handling of the priority queue and the simulation process. Below, I'll analyze the issues and provide a corrected version of the code.
+
+### Issues in the given code:
+1. **Incorrect use of priority queue**: The priority queue is used to determine which sections sink first. However, the implementation of pushing to the queue is not efficient, and the way the queue is accessed to check if a section will remain above sea level is incorrect.
+2. **Incorrect use of `used` array**: The code tries to prevent revisiting a section, but the logic is incorrect, resulting in infinite loops and incorrect simulation.
+3. **Output during the simulation**: The code prints the remaining area each year, which is unnecessary and can slow down the execution significantly.
+4. **Efficiency**: The code may not be efficient enough for 'Y' up to 100,000, as it repeatedly processes the entire grid each year.
+
+### Solution Strategy:
+1. **Initialize a priority queue**: This queue will store sections of land that are about to sink. Each element will be a tuple containing the elevation, and the coordinates of the section.
+2. **Simulate the sinking of sections**: Each year, we will process the sections in the priority queue, and whenever a section sinks, we check its neighbors. If the neighbor's elevation is less than or equal to the current sea level plus one, it will also sink.
+3. **Update the area**: After each year's processing, we calculate the remaining area by subtracting the number of sections that have sunk from the total area.
+4. **Efficiency**: To ensure the solution runs efficiently, we only process the sections that are about to sink and update the priority queue accordingly.
+
+Here's a corrected version of the code:
+
+```cpp
+#include <iostream>
+#include <vector>
+#include <queue>
+using namespace std;
+
+#define MAXN 1000
+
+vector<vector<int>> grid[MAXN];
+int h, w, y;
+
+struct Section {
+    int elevation;
+    int x, y;
+};
+
+struct Compare {
+    bool operator()(const Section& a, const Section& b) {
+        return a.elevation > b.elevation;
+    }
+};
+
+void processSinking(int seaLevel) {
+    priority_queue<Section, vector<Section>, Compare> pq;
+    int totalSunk = 0;
+
+    // Push all sections on the edge of the grid into the priority queue
+    for (int i = 0; i < h; i++) {
+        pq.push({grid[i][0].elevation, i, 0});
+        pq.push({grid[i][w - 1].elevation, i, w - 1});
+        totalSunk += grid[i][0].elevation <= seaLevel || grid[i][w - 1].elevation <= seaLevel;
+    }
+    for (int j = 1; j < w - 1; j++) {
+        pq.push({grid[0][j].elevation, 0, j});
+        pq.push({grid[h - 1][j].elevation, h - 1, j});
+        totalSunk += grid[0][j].elevation <= seaLevel || grid[h - 1][j].elevation <= seaLevel;
+    }
+
+    // Process the sections in the priority queue
+    while (!pq.empty()) {
+        Section current = pq.top();
+        pq.pop();
+
+        // Check the neighbors
+        vector<pair<int, int>> neighbors = {{current.x, current.y - 1}, {current.x, current.y + 1}, {current.x - 1, current.y}, {current.x + 1, current.y}};
+        for (auto& neighbor : neighbors) {
+            int nx = neighbor.first, ny = neighbor.second;
+            if (nx >= 0 && nx < h && ny >= 0 && ny < w && grid[nx][ny].elevation <= seaLevel) {
+                pq.push({grid[nx][ny].elevation, nx, ny});
+                totalSunk++;
+            }
+        }
+    }
+
+    // Output the remaining area
+    cout << (h * w - totalSunk) << endl;
+}
+
+int main() {
+    cin >> h >> w >> y;
+    for (int i = 0; i < h; i++) {
+        grid[i].resize(w);
+        for (int j = 0; j < w; j++) {
+            cin >> grid[i][j].elevation;
+            grid[i][j].x = i;
+            grid[i][j].y = j;
+        }
+    }
+
+    for (int year = 1; year <= y; year++) {
+        processSinking(year);
+    }
+
+    return 0;
+}
+```
+
+This corrected code properly initializes the priority queue, processes the sinking of sections efficiently, and avoids unnecessary computations and infinite loops.

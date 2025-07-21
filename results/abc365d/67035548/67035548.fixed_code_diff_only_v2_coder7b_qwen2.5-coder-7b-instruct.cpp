@@ -1,0 +1,54 @@
+#include <iostream>
+#include <string>
+#include <algorithm>
+
+using namespace std;
+
+int cmp(char x, char y) {
+    if (x == 'P') {
+        if (y == 'P') return 0;
+        if (y == 'R') return 1;
+        if (y == 'S') return -1;
+    }
+    if (x == 'R') {
+        if (y == 'P') return -1;
+        if (y == 'R') return 0;
+        if (y == 'S') return 1;
+    }
+    if (x == 'S') {
+        if (y == 'P') return 1;
+        if (y == 'R') return -1;
+        if (y == 'S') return 0;
+    }
+    return -100; // For invalid characters
+}
+
+char win(char x) {
+    if (x == 'R') return 'P';
+    if (x == 'S') return 'R';
+    if (x == 'P') return 'S';
+    return 'X'; // For invalid characters
+}
+
+int main() {
+    int n;
+    string s;
+    cin >> n >> s;
+    
+    int ans = 0;
+    for (int i = 0; i < n; ++i) {
+        if (i > 0 && cmp(s[i], s[i - 1]) != 1) {
+            ++ans;
+        }
+    }
+
+    int sub = 0;
+    for (int i = n - 1; i >= 0; --i) {
+        if (i < n - 1 && cmp(s[i], s[i + 1]) != -1) {
+            ++sub;
+        }
+    }
+
+    cout << max(ans, sub);
+    return 0;
+}

@@ -1,0 +1,67 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+#define int long long
+
+const int INF = 1e18 + 7;
+
+int n, k;
+vector<pair<int, int>> A, B;
+
+struct cmp {
+    bool operator()(const pair<int, int>& a, const pair<int, int>& b) {
+        return a.first > b.first;
+    }
+};
+
+void solve() {
+    cin >> n >> k;
+    vector<pair<int, int>> items(n);
+    for (int i = 0; i < n; ++i) {
+        cin >> items[i].first;
+    }
+    for (int i = 0; i < n; ++i) {
+        cin >> items[i].second;
+    }
+
+    // Sort by A_i in increasing order
+    sort(items.begin(), items.end());
+    
+    // Max-heap to keep the smallest K elements of B_i
+    priority_queue<int> pq;
+    int sum_b = 0;
+    int res = INF;
+
+    // Process the items in increasing order of A_i
+    for (int i = 0; i < n; ++i) {
+        int curr_a = items[i].first;
+        int curr_b = items[i].second;
+
+        pq.push(curr_b);
+        sum_b += curr_b;
+
+        if (pq.size() > k) {
+            sum_b -= pq.top();
+            pq.pop();
+        }
+
+        if (pq.size() == k) {
+            res = min(res, sum_b * curr_a);
+        }
+    }
+
+    cout << res << "\n";
+}
+
+signed main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int T;
+    cin >> T;
+    while (T--) {
+        solve();
+    }
+
+    return 0;
+}

@@ -1,0 +1,29 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define endl "\n"
+#define MOD 1000000007
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(0);
+
+    map<char, char> beats = {{'R', 'P'}, {'P', 'S'}, {'S', 'R'}};
+    int n;
+    cin >> n;
+    string s;
+    cin >> s;
+
+    vector<char> moves;
+    moves.push_back(beats[s[0]]);
+
+    for (int i = 1; i < n; ++i) {
+        char curr_move = beats[s[i]];
+        if (moves.empty() || curr_move != moves.back()) {
+            moves.push_back(curr_move);
+        }
+    }
+
+    cout << moves.size() << endl;
+
+    return 0;
+}

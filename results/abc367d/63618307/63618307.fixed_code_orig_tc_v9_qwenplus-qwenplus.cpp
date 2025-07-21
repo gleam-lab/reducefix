@@ -1,0 +1,47 @@
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+typedef pair<int, int> PII;
+
+const int N = 2e5 + 10;
+const int mod = 1e9 + 7;
+
+void solve() {
+    int n;
+    ll M;
+    cin >> n >> M;
+    vector<ll> a(n);
+    for (int i = 0; i < n; ++i) {
+        cin >> a[i];
+    }
+
+    vector<ll> prefix_sum(n + 1, 0);
+    for (int i = 0; i < n; ++i) {
+        prefix_sum[i + 1] = (prefix_sum[i] + a[i]) % M;
+    }
+
+    map<ll, ll> count_map;
+    ll ans = 0;
+
+    // We need to count the number of pairs (i,j) such that (prefix_sum[j] - prefix_sum[i]) % M == 0
+    // which means prefix_sum[j] % M == prefix_sum[i] % M
+    for (int i = 0; i <= n; ++i) {
+        ll curr = prefix_sum[i];
+        ans += count_map[curr];
+        count_map[curr]++;
+    }
+
+    cout << ans << endl;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t = 1;
+    while (t--) {
+        solve();
+    }
+
+    return 0;
+}

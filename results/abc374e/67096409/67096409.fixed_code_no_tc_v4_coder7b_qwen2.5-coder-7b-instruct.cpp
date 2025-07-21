@@ -1,0 +1,65 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+struct Machine {
+    int a, p, b, q; // a: products per day per unit, p: cost per unit
+};
+
+// Function to calculate the minimum cost to produce 'n' units using machine i
+long long minCost(const Machine& m, int n) {
+    long long d = n / (m.a * m.b); // Number of full sets of machines needed
+    long long rem = n % (m.a * m.b); // Remaining units after full sets
+    return d * static_cast<long long>(m.p) * m.b + dp[m.a][m.b][rem]; // Cost calculation
+}
+
+// Binary search function to find the maximum production capacity within the budget
+int maxCapacity(vector<Machine>& machines, long long budget) {
+    int left = 0, right = 1e9;
+    while (left < right) {
+        int mid = (left + right + 1) / 2;
+        bool feasible = true;
+        for (const auto& m : machines) {
+            if (minCost(m, mid) > budget) {
+                feasible = false;
+                break;
+            }
+        }
+        if (feasible) {
+            left = mid;
+        } else {
+            right = mid - 1;
+        }
+    }
+    return left;
+}
+
+int main() {
+    int N;
+    long long X;
+    cin >> N >> X;
+
+    vector<Machine> machines(N);
+    for (int i = 0; i < N; ++i) {
+        cin >> machines[i].a >> machines[i].p >> machines[i].b >> machines[i].q;
+        // Ensure machine with lower cost per unit is used first
+        if (machines[i].q * machines[i].a < machines[i].p * machines[i].b) {
+            swap(machines[i].a, machines[i].b);
+            swap(machines[i].p, machines[i].q);
+        }
+    }
+
+    // Precompute DP table for cost calculation
+    vector<vector<vector<long long>>> dp(101, vector<vector<long long>>(101, vector<long long>(10001, INT_MAX)));
+    for (int i = 1; i <= 100; ++i) {
+        for (int j = 1; j <= 100; ++j) {
+            for (int k = 0; k <= i * j; ++k) {
+                dp[i][j][k] = min(k == 0 ? 0 : dp[i][j][k - 1], dp[i - 1][j][k] + i * machines[j - 1].p, dp[i][j - 1][k] + j * machines[j - 1].q);
+            }
+        }
+    }
+
+    cout << maxCapacity(machines, X) << endl;
+    return 0;
+}

@@ -1,0 +1,74 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+using ll = long long;
+template<typename T> using minpq = priority_queue<T, vector<T>, greater<T>>;
+
+#define rep(i, x, limit) for (int i = (x); i < (limit); i++)
+#define all(x) x.begin(), x.end()
+#define rall(x) x.rbegin(), x.rend()
+
+const ll INF = 1LL << 60;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int N, M;
+    ll K;
+    cin >> N >> M >> K;
+    vector<ll> A(N);
+    ll total = 0;
+    for (int i = 0; i < N; ++i) {
+        cin >> A[i];
+        total += A[i];
+    }
+    ll rem = K - total;
+
+    vector<pair<ll, int>> sorted_A(N);
+    for (int i = 0; i < N; ++i) {
+        sorted_A[i] = {A[i], i};
+    }
+    sort(sorted_A.begin(), sorted_A.end());
+
+    vector<ll> sorted_vals(N), prefix_sum(N + 1);
+    for (int i = 0; i < N; ++i) {
+        sorted_vals[i] = sorted_A[i].first;
+        prefix_sum[i + 1] = prefix_sum[i] + sorted_vals[i];
+    }
+
+    vector<ll> result(N);
+
+    for (int idx = 0; i < N; ++idx) {
+        ll base = A[idx];
+        // Binary search on required additional votes
+        ll low = 0, high = rem + 1;
+        while (low < high) {
+            ll mid = (low + high) / 2;
+            ll current = base + mid;
+            // Find number of candidates with votes > current
+            auto it = upper_bound(sorted_vals.begin(), sorted_vals.end(), current);
+            int cnt = N - (it - sorted_vals.begin());
+
+            if (cnt < M) {
+                high = mid;
+            } else {
+                low = mid + 1;
+            }
+        }
+
+        // Check if the found value is valid
+        if (low <= rem) {
+            result[idx] = low;
+        } else {
+            result[idx] = -1;
+        }
+    }
+
+    for (int i = 0; i < N; ++i) {
+        cout << result[i] << " ";
+    }
+    cout << "\n";
+
+    return 0;
+}

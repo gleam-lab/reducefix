@@ -1,0 +1,31 @@
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int N;
+    cin >> N;
+    vector<ll> X(N), P(N + 1);
+    rep(i, N) cin >> X[i];
+    rep(i, N) {
+        ll p;
+        cin >> p;
+        P[i + 1] = P[i] + p;
+    }
+
+    int Q;
+    cin >> Q;
+    while (Q--) {
+        int L, R;
+        cin >> L >> R;
+        auto it_l = lower_bound(all(X), L);
+        auto it_r = upper_bound(all(X), R);
+        int l = distance(begin(X), it_l);
+        int r = distance(begin(X), it_r);
+        cout << P[r] - P[l] << '\n';
+    }
+    return 0;
+}

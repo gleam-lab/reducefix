@@ -1,0 +1,83 @@
+To fix this code, we need to address several issues related to the logic for determining the minimum additional votes required for each candidate to guarantee their victory. The main problems in the original code include incorrect calculation of the required votes and inefficient handling of the binary search and prefix sums.
+
+### Approaches
+1. **Sorting and Binary Search**: For each candidate, we need to find the minimum number of additional votes such that, after adding those votes, the candidate will have enough votes to be in the top M candidates. This involves:
+   - Sorting the candidates' current votes to easily find the top M candidates.
+   - Using binary search to determine the minimal votes needed for each candidate.
+2. **Prefix Sums**: Calculate prefix sums to efficiently compute the total votes required to ensure a candidate's position in the top M.
+3. **Edge Cases**: Handle cases where a candidate might already be in the top M or where it's impossible to secure their position regardless of the additional votes.
+
+### Solution Code
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+#define all(x) (x).begin(), (x).end()
+
+int main() {
+    ios_base::sync_with_stdio(0);
+    cin.tie(0);
+    int n, m;
+    ll k;
+    cin >> n >> m >> k;
+    vector<ll> a(n);
+    ll sum_a = 0;
+    for (int i = 0; i < n; i++) {
+        cin >> a[i];
+        sum_a += a[i];
+    }
+    ll remaining = k - sum_a;
+    vector<int> ord(n);
+    iota(all(ord), 0);
+    sort(all(ord), [&](int i, int j) { return a[i] < a[j]; });
+    auto b = a;
+    sort(all(b));
+    vector<ll> pref(n + 1);
+    for (int i = 0; i < n; i++) {
+        pref[i + 1] = b[i] + pref[i];
+    }
+    vector<ll> ans(n, -1);
+    for (int idx = 0; idx < n; idx++) {
+        int i = ord[idx];
+        ll low = 0, high = remaining;
+        ll best = -1;
+        while (low <= high) {
+            ll mid = (low + high) / 2;
+            ll new_votes = a[i] + mid;
+            int pos = upper_bound(all(b), new_votes) - b.begin();
+            int needed = n - m;
+            if (pos > needed) {
+                best = mid;
+                high = mid - 1;
+                continue;
+            }
+            ll total = 0;
+            if (needed > 0) {
+                if (pos <= needed) {
+                    total = (needed - pos) * new_votes - (pref[needed] - pref[pos]);
+                }
+            }
+            if (total + mid <= remaining) {
+                best = mid;
+                high = mid - 1;
+            } else {
+                low = mid + 1;
+            }
+        }
+        ans[i] = best;
+    }
+    for (int i = 0; i < n; i++) {
+        cout << ans[i] << ' ';
+    }
+    cout << '\n';
+    return 0;
+}
+```
+
+### Explanation
+1. **Sorting and Binary Search**: The candidates are sorted based on their current votes. For each candidate, we perform a binary search to find the minimum additional votes (`mid`) such that when added to their current votes (`a[i] + mid`), they will be in the top M candidates.
+2. **Prefix Sums**: The prefix sums array (`pref`) helps in efficiently calculating the sum of votes up to any position in the sorted list, which is crucial for determining if the additional votes can be allocated within the remaining votes (`remaining = k - sum_a`).
+3. **Binary Search Condition**: For each candidate, we check if adding `mid` votes places them in a position where fewer than M candidates have more votes. If it does, we adjust the binary search range to find the minimal such `mid`.
+4. **Edge Handling**: If a candidate is already in the top M, the binary search will return 0. If it's impossible to secure their position, it returns -1.
+
+This approach ensures that we efficiently and correctly determine the minimal additional votes for each candidate while adhering to the problem constraints.

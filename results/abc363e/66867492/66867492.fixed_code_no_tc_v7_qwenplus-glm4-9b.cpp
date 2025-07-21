@@ -1,0 +1,65 @@
+#include <iostream>
+#include <vector>
+#include <queue>
+#include <algorithm>
+
+using namespace std;
+
+int main() {
+    int H, W, Y;
+    cin >> H >> W >> Y;
+    
+    vector<vector<int>> A(H, vector<int>(W));
+    vector<vector<bool>> used(H, vector<bool>(W, false));
+    
+    // Read the elevation data
+    for (int i = 0; i < H; ++i) {
+        for (int j = 0; j < W; ++j) {
+            cin >> A[i][j];
+        }
+    }
+    
+    // Priority queue to store pairs of (elevation, row, column)
+    priority_queue<vector<int>, vector<vector<int>>, greater<vector<int>>> pq;
+    int ans = H * W; // Total area of the island initially
+    
+    // Initialize the priority queue with the edges of the island
+    for (int i = 0; i < H; ++i) {
+        pq.push({A[i][0], i, 0});
+        pq.push({A[i][W - 1], i, W - 1});
+        used[i][0] = true;
+        used[i][W - 1] = true;
+    }
+    
+    for (int j = 0; j < W; ++j) {
+        pq.push({A[0][j], 0, j});
+        pq.push({A[H - 1][j], H - 1, j});
+        used[0][j] = true;
+        used[H - 1][j] = true;
+    }
+    
+    // Process the years
+    for (int year = 1; year <= Y; ++year) {
+        while (!pq.empty() && pq.top()[0] <= year) {
+            auto top = pq.top();
+            pq.pop();
+            int r = top[1], c = top[2];
+            ans--; // This elevation has sunk
+            
+            // Check all 4 adjacent cells
+            for (int d = 0; d < 4; ++d) {
+                int nr = r + dy[d], nc = c + dx[d];
+                if (nr < 0 || nr >= H || nc < 0 || nc >= W || used[nr][nc]) continue;
+                
+                // If adjacent cell has equal or lower elevation, it will also sink
+                if (A[nr][nc] <= year) {
+                    used[nr][nc] = true;
+                    pq.push({A[nr][nc], nr, nc});
+                }
+            }
+        }
+        cout << ans << '\n'; // Output the remaining area of the island
+    }
+    
+    return 0;
+}

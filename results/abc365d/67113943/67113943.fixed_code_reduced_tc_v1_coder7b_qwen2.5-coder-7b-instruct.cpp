@@ -1,0 +1,24 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main(){
+    ios_base::sync_with_stdio(false);
+    cin.tie(NULL);
+
+    int N;
+    string S;
+    cin >> N;
+    cin >> S;
+    int wins = 0;
+    char prev = 'a'; // Initialize previous move to a non-valid character
+    for (int i = 0; i < N; ++i){
+        char c = S[i];
+        if (prev == 'a' || (c == 'R' && prev == 'S') || (c == 'P' && prev == 'R') || (c == 'S' && prev == 'P')){
+            // If it's the first move or Takahashi can win against Aoki's previous move
+            wins++;
+        }
+        prev = c; // Update the previous move to the current one
+    }   
+    cout << wins;
+
+}

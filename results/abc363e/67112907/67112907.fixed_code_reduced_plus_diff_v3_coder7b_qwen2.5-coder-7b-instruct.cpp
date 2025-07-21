@@ -1,0 +1,68 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+
+struct Cell {
+    int height, x, y;
+    bool operator<(const Cell &other) const {
+        return height > other.height;
+    }
+};
+
+int main() {
+    ios_base::sync_with_stdio(false); cin.tie(0); cout.tie(0);
+
+    int H, W, Y;
+    cin >> H >> W >> Y;
+
+    vector<vector<int>> A(H, vector<int>(W));
+    for (int i = 0; i < H; ++i) {
+        for (int j = 0; j < W; ++j) {
+            cin >> A[i][j];
+        }
+    }
+
+    vector<vector<bool>> visited(H, vector<bool>(W, false));
+    priority_queue<Cell> pq;
+
+    // Initialize the priority queue with all cells
+    for (int i = 0; i < H; ++i) {
+        for (int j = 0; j < W; ++j) {
+            pq.push({A[i][j], i, j});
+        }
+    }
+
+    vector<int> result(Y);
+    while (!pq.empty()) {
+        auto [height, x, y] = pq.top(); pq.pop();
+        if (visited[x][y]) continue;
+        visited[x][y] = true;
+
+        // Count connected components
+        int count = 1;
+        static constexpr int dx[] = {0, 0, 1, -1};
+        static constexpr int dy[] = {1, -1, 0, 0};
+        for (int k = 0; k < 4; ++k) {
+            int nx = x + dx[k], ny = y + dy[k];
+            if (nx >= 0 && nx < H && ny >= 0 && ny < W && !visited[nx][ny] && A[nx][ny] <= height) {
+                ++count;
+                pq.push({A[nx][ny], nx, ny});
+            }
+        }
+
+        // Update the result for all previous heights
+        for (int h = height; h >= 0; --h) {
+            if (h == 0) {
+                result[Y - 1] += count;
+            } else {
+                result[h - 1] += result[h];
+            }
+        }
+    }
+
+    for (int i = 0; i < Y; ++i) {
+        cout << result[i] << '\n';
+    }
+
+    return 0;
+}

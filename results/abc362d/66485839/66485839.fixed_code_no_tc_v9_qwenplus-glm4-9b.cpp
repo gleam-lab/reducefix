@@ -1,0 +1,64 @@
+#include <iostream>
+#include <vector>
+#include <queue>
+#include <limits>
+
+using namespace std;
+
+#define MAX_N 200010
+
+int n, m;
+vector<pair<int, int>> graph[MAX_N]; // Adjacency list for the graph
+int weights[MAX_N]; // Vertex weights
+
+// Function to perform Dijkstra's algorithm from the source vertex
+void dijkstra(int source, vector<long long>& dist) {
+    priority_queue<pair<long long, int>, vector<pair<long long, int>>, greater<pair<long long, int>>> pq;
+    pq.push({weights[source], source});
+    dist[source] = 0;
+
+    while (!pq.empty()) {
+        int current = pq.top().second;
+        long long currentDist = pq.top().first;
+        pq.pop();
+
+        if (currentDist > dist[current]) {
+            continue;
+        }
+
+        for (const auto& edge : graph[current]) {
+            int next = edge.first;
+            long long weight = edge.second + weights[next]; // Sum of edge weight and vertex weight
+
+            if (dist[next] > weight) {
+                dist[next] = weight;
+                pq.push({dist[next], next});
+            }
+        }
+    }
+}
+
+int main() {
+    cin >> n >> m;
+    cin.ignore(); // Ignore the newline after reading M
+
+    for (int i = 1; i <= n; ++i) {
+        cin >> weights[i];
+    }
+
+    for (int i = 0; i < m; ++i) {
+        int u, v, w;
+        cin >> u >> v >> w;
+        graph[u].emplace_back(v, w);
+        graph[v].emplace_back(u, w);
+    }
+
+    vector<long long> minDist(n + 1, numeric_limits<long long>::max());
+    dijkstra(1, minDist);
+
+    for (int i = 2; i <= n; ++i) {
+        cout << minDist[i] << (i < n ? " " : "\n");
+    }
+
+    return 0;
+}

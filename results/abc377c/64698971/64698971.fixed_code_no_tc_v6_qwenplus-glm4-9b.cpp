@@ -1,0 +1,52 @@
+#include <iostream>
+#include <vector>
+#include <cmath>
+
+using namespace std;
+
+int N, M;
+vector<pair<int, int>> occupied;
+
+bool is_occupied(int x, int y) {
+    for (auto& p : occupied) {
+        if (p.first == x && p.second == y) {
+            return true;
+        }
+    }
+    return false;
+}
+
+void mark_occupied(int x, int y) {
+    occupied.push_back({x, y});
+    if (x + 2 <= N) occupied.push_back({x + 2, y + 1});
+    if (x + 1 <= N) occupied.push_back({x + 1, y + 2});
+    if (x - 1 <= N) occupied.push_back({x - 1, y + 2});
+    if (x - 2 <= N) occupied.push_back({x - 2, y + 1});
+    if (x - 2 <= N) occupied.push_back({x - 2, y - 1});
+    if (x - 1 <= N) occupied.push_back({x - 1, y - 2});
+    if (x + 1 <= N) occupied.push_back({x + 1, y - 2});
+    if (x + 2 <= N) occupied.push_back({x + 2, y - 1});
+}
+
+int main() {
+    cin >> N >> M;
+
+    for (int i = 0; i < M; i++) {
+        int a, b;
+        cin >> a >> b;
+        a--; b--;
+        mark_occupied(a, b);
+    }
+
+    long long total = N * N;
+    long long free = total;
+    for (int i = 0; i < N; i++) {
+        for (int j = 0; j < N; j++) {
+            if (is_occupied(i, j)) {
+                free--;
+            }
+        }
+    }
+    
+    cout << free << endl;
+}

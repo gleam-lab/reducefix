@@ -1,0 +1,121 @@
+To fix this code, we need to ensure that all the squares that are not under attack by any existing pieces are correctly counted. The original code attempted to calculate the safe squares by subtracting the squares under attack from the total squares, but it had some issues in correctly accounting for overlaps between different attack patterns (rows, columns, diagonals). 
+
+### Approaches
+1. **Total Squares**: The total number of squares is \(N^2\).
+2. **Attacked Squares**: The squares under attack are those in any occupied row, any occupied column, any diagonal (i+j = constant), or any anti-diagonal (i-j = constant).
+3. **Inclusion-Exclusion Principle**: To avoid double-counting squares that are under attack by multiple conditions, we use the inclusion-exclusion principle:
+   - Calculate the union of all attacked rows, columns, diagonals, and anti-diagonals.
+   - Subtract the overlaps between these sets to get the total number of unique attacked squares.
+4. **Safe Squares**: The safe squares are the total squares minus the attacked squares.
+
+### Solution Code
+```cpp
+#include<bits/stdc++.h>
+#define int long long
+#define PII pair<int,int>
+#define inf 1e9+7
+
+using namespace std;
+
+void solve() {
+    int N, M;
+    cin >> N >> M;
+    set<int> rows, cols, diag1, diag2;
+
+    for (int i = 0; i < M; ++i) {
+        int a, b;
+        cin >> a >> b;
+        rows.insert(a);
+        cols.insert(b);
+        diag1.insert(a + b);
+        diag2.insert(a - b);
+    }
+
+    int total = N * N;
+    int attacked = 0;
+
+    // Add rows and columns
+    attacked += rows.size() * N;
+    attacked += cols.size() * (N - rows.size());
+
+    // Add diagonals (i+j = d)
+    for (auto d : diag1) {
+        int min_i = max(1LL, d - N);
+        int max_i = min(N, d - 1);
+        if (min_i > max_i) continue;
+        int cnt = max_i - min_i + 1;
+
+        // Subtract squares already counted in rows or columns
+        for (auto r : rows) {
+            if (d - r >= 1 && d - r <= N) {
+                cnt--;
+            }
+        }
+        for (auto c : cols) {
+            if (d - c >= 1 && d - c <= N) {
+                cnt--;
+            }
+        }
+        attacked += cnt;
+    }
+
+    // Add anti-diagonals (i-j = d)
+    for (auto d : diag2) {
+        int min_i = max(1LL, 1 + d);
+        int max_i = min(N, N + d);
+        if (min_i > max_i) continue;
+        int cnt = max_i - min_i + 1;
+
+        // Subtract squares already counted in rows or columns
+        for (auto r : rows) {
+            if (r - d >= 1 && r - d <= N) {
+                cnt--;
+            }
+        }
+        for (auto c : cols) {
+            if (c + d >= 1 && c + d <= N) {
+                cnt--;
+            }
+        }
+        attacked += cnt;
+    }
+
+    // Subtract overlaps between diag1 and diag2
+    for (auto d1 : diag1) {
+        for (auto d2 : diag2) {
+            if ((d1 + d2) % 2 != 0) continue;
+            int i = (d1 + d2) / 2;
+            int j = (d1 - d2) / 2;
+            if (i >= 1 && i <= N && j >= 1 && j <= N) {
+                if (rows.count(i) || cols.count(j)) continue;
+                attacked--;
+            }
+        }
+    }
+
+    int safe = total - attacked;
+    cout << safe << endl;
+}
+
+signed main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int _ = 1;
+    while (_--) {
+        solve();
+    }
+
+    return 0;
+}
+```
+
+### Explanation
+1. **Initialization**: We read the grid size \(N\) and the number of existing pieces \(M\).
+2. **Tracking Attacks**: We use sets to keep track of occupied rows, columns, diagonals (i+j), and anti-diagonals (i-j).
+3. **Calculating Attacked Squares**: 
+   - **Rows and Columns**: The number of rows and columns under attack is straightforward, each row or column contributes \(N\) squares.
+   - **Diagonals and Anti-diagonals**: For each diagonal, we calculate the valid squares and adjust for overlaps with already counted rows and columns.
+   - **Overlap Adjustment**: We ensure that squares counted in both diagonals and anti-diagonals are not double-counted by checking intersections.
+4. **Safe Squares Calculation**: The total safe squares are the difference between the total squares and the attacked squares.
+5. **Efficiency**: The solution efficiently calculates the result using set operations and ensures correctness by systematically handling all possible overlaps.

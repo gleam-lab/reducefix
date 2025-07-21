@@ -1,0 +1,19 @@
+#include<bits/stdc++.h>
+using namespace std;
+
+#define rep(i, n) for (ll i = 0; i < (n); i++)
+using ll = long long;
+
+int main() {
+    int n; cin >> n;
+    ll ans = 0;
+    vector<ll> h(n);
+    rep(i, n) {
+        cin >> h[i];
+        // Calculate the number of full 3-damage attacks and the remainder
+        ans += (h[i] + 2) / 3 * 3;
+        // Calculate the number of 1-damage attacks needed for the remainder
+        ans += h[i] % 3;
+    }
+    cout << ans << endl;
+}

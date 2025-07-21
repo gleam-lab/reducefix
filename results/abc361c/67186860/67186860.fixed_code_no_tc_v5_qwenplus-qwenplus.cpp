@@ -1,0 +1,30 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+  int n, k;
+  cin >> n >> k;
+  vector<int> A(n);
+  for (int i = 0; i < n; ++i) {
+    cin >> A[i];
+  }
+
+  // We need to remove exactly K elements from A to minimize the difference
+  // between the max and min of the remaining N-K elements.
+  // The optimal way is to choose a subarray of length (N-K) with minimal (max - min).
+  // Since the order must be preserved and only concatenation of remaining is allowed,
+  // we cannot rearrange or skip non-consecutive elements arbitrarily.
+
+  int len = n - k;
+  int result = numeric_limits<int>::max();
+
+  // Try all possible contiguous subarrays of length (N-K)
+  for (int i = 0; i + len <= n; ++i) {
+    int min_val = *min_element(A.begin() + i, A.begin() + i + len);
+    int max_val = *max_element(A.begin() + i, A.begin() + i + len);
+    result = min(result, max_val - min_val);
+  }
+
+  cout << result << endl;
+  return 0;
+}

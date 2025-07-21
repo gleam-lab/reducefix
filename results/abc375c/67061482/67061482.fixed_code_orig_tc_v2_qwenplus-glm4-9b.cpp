@@ -1,0 +1,1 @@
+cou += sqrt((a-c)*(a-c) + (b-d)*(b-d));

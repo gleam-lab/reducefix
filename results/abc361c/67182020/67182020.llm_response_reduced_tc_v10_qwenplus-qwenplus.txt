@@ -1,0 +1,118 @@
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    int N, K;
+    cin >> N >> K;
+    vector<int> A(N);
+    for (int i = 0; i < N; ++i) {
+        cin >> A[i];
+    }
+
+    // We will consider all possible windows of size (N - K)
+    // That is, the number of elements we must *keep*
+    int windowSize = N - K;
+
+    // We want to find the minimum value of (max(B) - min(B))
+    // where B is a subsequence of length (N - K), with relative order preserved
+
+    // One efficient way is to use sliding window technique on sorted data
+    // Create pairs of (value, index)
+    vector<pair<int, int>> valIndex(N);
+    for (int i = 0; i < N; ++i) {
+        valIndex[i] = {A[i], i};
+    }
+
+    // Sort by value
+    sort(valIndex.begin(), valIndex.end());
+
+    // Now try to find a window of consecutive (in original array) elements in valIndex
+    // that minimizes max - min
+
+    // To do this efficiently, we can use disjoint sets (Union-Find)
+    // Each element starts as its own set
+    vector<int> parent(N);
+    iota(parent.begin(), parent.end(), 0);
+
+    // Find function with path compression
+    function<int(int)> find = [&](int x) {
+        return parent[x] == x ? x : parent[x] = find(parent[x]);
+    };
+
+    // Keep track of how many elements are selected
+    vector<int> count(N, 0);  // Count of elements in each component
+    int components = 0;
+
+    long long ans = numeric_limits<long long>::max();
+
+    for (int i = 0; i < N; ++i) {
+        int val = valIndex[i].first;
+        int idx = valIndex[i].second;
+
+        // Try to merge with neighbors
+        if (idx > 0 && count[idx-1] > 0) {
+            parent[find(idx-1)] = find(idx);
+        }
+        if (idx < N-1 && count[idx+1] > 0) {
+            parent[find(idx+1)] = find(idx);
+        }
+
+        count[idx] = 1;
+
+        // After merging, check if we've formed a full window
+        int root = find(idx);
+        int leftmost = idx;
+        int rightmost = idx;
+
+        // To track actual range, we'd need more information
+        // So instead of tracking here, we'll use a sliding window approach below
+
+        // Sliding window approach
+        deque<int> dqMin, dqMax;
+        vector<bool> selected(N, false);
+        int selectedCount = 0;
+
+        // Try all starting points from 0 to K
+        for (int start = 0; start <= K; ++start) {
+            dqMin.clear();
+            dqMax.clear();
+            selectedCount = 0;
+
+            for (int j = 0; j < N; ++j) {
+                if (j >= start && (j - start) % windowSize == 0) {
+                    // Reset for new window
+                    dqMin.clear();
+                    dqMax.clear();
+                    selectedCount = 0;
+                }
+
+                if ((j - start) >= windowSize) {
+                    // Move window
+                    int oldIdx = j - windowSize;
+                    if (!dqMin.empty() && dqMin[0] == oldIdx) dqMin.pop_front();
+                    if (!dqMax.empty() && dqMax[0] == oldIdx) dqMax.pop_front();
+                    selectedCount--;
+                }
+
+                // Add current element
+                while (!dqMin.empty() && A[j] <= A[dqMin.back()]) dqMin.pop_back();
+                while (!dqMax.empty() && A[j] >= A[dqMax.back()]) dqMax.pop_back();
+                dqMin.push_back(j);
+                dqMax.push_back(j);
+                selectedCount++;
+
+                // Check if window is complete
+                if ((j - start + 1) == windowSize && selectedCount == windowSize) {
+                    ans = min(ans, (long long)(A[dqMax[0]] - A[dqMin[0]]));
+                }
+            }
+        }
+
+        // We could also keep track of the global minimum found
+    }
+
+    cout << ans << endl;
+    return 0;
+}
+```

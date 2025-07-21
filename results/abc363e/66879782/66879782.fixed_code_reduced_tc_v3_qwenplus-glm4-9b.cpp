@@ -1,0 +1,67 @@
+#include <iostream>
+#include <vector>
+#include <set>
+#include <queue>
+using namespace std;
+
+int H, W, Y;
+vector<vector<int>> grid;
+
+vector<pair<int, int>> directions = {{-1, 0}, {1, 0}, {0, -1}, {0, 1}};
+
+void sink(int r, int c) {
+    queue<pair<int, int>> q;
+    q.push({r, c});
+    set<pair<int, int>> visited;
+    visited.insert({r, c});
+    vector<vector<int>> new_grid(H, vector<int>(W, grid[r][c] - 1));
+
+    while (!q.empty()) {
+        auto [x, y] = q.front();
+        q.pop();
+
+        for (auto [dx, dy] : directions) {
+            int nx = x + dx, ny = y + dy;
+            if (nx < 0 || nx >= H || ny < 0 || ny >= W || visited.count({nx, ny}) || new_grid[nx][ny] <= grid[r][c] - 1) {
+                continue;
+            }
+            visited.insert({nx, ny});
+            q.push({nx, ny});
+            new_grid[nx][ny] = grid[nx][ny] - 1;
+        }
+    }
+
+    grid = new_grid;
+}
+
+int main() {
+    cin >> H >> W >> Y;
+    grid = vector<vector<int>>(H, vector<int>(W));
+    
+    for (int i = 0; i < H; ++i) {
+        for (int j = 0; j < W; ++j) {
+            cin >> grid[i][j];
+        }
+    }
+
+    for (int year = 0; year < Y; ++year) {
+        for (int i = 0; i < H; ++i) {
+            for (int j = 0; j < W; ++j) {
+                if (grid[i][j] <= year) {
+                    sink(i, j);
+                }
+            }
+        }
+    }
+
+    int remaining_area = 0;
+    for (auto& row : grid) {
+        for (int val : row) {
+            remaining_area += val;
+        }
+    }
+
+    cout << remaining_area << '\n';
+
+    return 0;
+}

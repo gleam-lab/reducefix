@@ -1,0 +1,31 @@
+#include<bits/stdc++.h>
+using namespace std;
+
+#define vi vector<int>
+
+void solve() {
+    int n, k;
+    cin >> n >> k;
+    vi a(n);
+    for(int i = 0; i < n; ++i) {
+        cin >> a[i];
+    }
+
+    // Sort the array to facilitate finding the minimum difference
+    sort(a.begin(), a.end());
+
+    // Calculate the potential minimum differences after removing k elements
+    int min_diff = INT_MAX;
+    for(int i = 0; i <= n - k; ++i) {
+        min_diff = min(min_diff, a[i + k - 1] - a[i]);
+    }
+
+    cout << min_diff << '\n';
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+    solve();
+    return 0;
+}

@@ -1,0 +1,100 @@
+To fix this code, we need to ensure that it correctly computes the minimum number of additional votes each candidate needs to guarantee their victory. The key observation is that if the number of candidates is equal to the number of winners (M = N), then all candidates will always be winners regardless of the votes, so the answer for each candidate should be 0. 
+
+The original code attempts to perform a binary search for each candidate to determine the minimum number of additional votes needed, but it fails to handle the case where M = N correctly. Additionally, the logic for determining if a candidate can be a winner is incorrect in the original code.
+
+### Approaches
+
+1. **Special Case Handling**: If M equals N, all candidates are winners regardless of the votes, so the answer for each candidate is 0.
+2. **Binary Search**: For other cases, for each candidate, perform a binary search to find the minimum number of additional votes they need to ensure they are among the top M candidates.
+3. **Prefix Sums**: Use prefix sums to efficiently calculate the number of votes other candidates can receive without exceeding the remaining votes.
+
+### Solution Code
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+#define all(x) (x).begin(), (x).end()
+
+int main() {
+    ios_base::sync_with_stdio(0);
+    cin.tie(0);
+    int n, m;
+    ll k;
+    cin >> n >> m >> k;
+    vector<ll> a(n);
+    ll total = 0;
+    for (int i = 0; i < n; i++) {
+        cin >> a[i];
+        total += a[i];
+    }
+    ll remaining = k - total;
+
+    if (m == n) {
+        for (int i = 0; i < n; i++) {
+            cout << "0 ";
+        }
+        cout << endl;
+        return 0;
+    }
+
+    vector<int> ord(n);
+    iota(all(ord), 0);
+    sort(all(ord), [&](int i, int j) { return a[i] > a[j]; });
+    vector<ll> sorted_a(n);
+    for (int i = 0; i < n; i++) {
+        sorted_a[i] = a[ord[i]];
+    }
+    vector<ll> pref(n + 1);
+    for (int i = 0; i < n; i++) {
+        pref[i + 1] = pref[i] + sorted_a[i];
+    }
+
+    vector<ll> ans(n, -1);
+    for (int i = 0; i < n; i++) {
+        int original_pos = ord[i];
+        ll current_votes = sorted_a[i];
+        ll low = 0;
+        ll high = remaining;
+        ll best = -1;
+        while (low <= high) {
+            ll mid = (low + high) / 2;
+            ll new_votes = current_votes + mid;
+            int pos = upper_bound(all(sorted_a), new_votes, greater<ll>()) - sorted_a.begin();
+            if (i < pos) pos--;
+            if (pos < m) {
+                best = mid;
+                high = mid - 1;
+            } else {
+                ll needed = 0;
+                if (m > 0) {
+                    needed = max(0LL, new_votes * m - pref[m]);
+                    if (i < m) {
+                        needed -= new_votes - current_votes;
+                    }
+                }
+                if (needed <= remaining) {
+                    best = mid;
+                    high = mid - 1;
+                } else {
+                    low = mid + 1;
+                }
+            }
+        }
+        ans[original_pos] = best;
+    }
+
+    for (int i = 0; i < n; i++) {
+        cout << ans[i] << ' ';
+    }
+    cout << endl;
+    return 0;
+}
+```
+
+### Explanation
+1. **Special Case Handling**: The code first checks if `M` equals `N`. If so, it immediately outputs 0 for all candidates since all will always be winners.
+2. **Binary Search**: For each candidate, it performs a binary search to determine the minimum additional votes required. The binary search checks if the candidate can be within the top `M` positions after receiving `mid` additional votes.
+3. **Prefix Sums**: The prefix sum array helps in efficiently calculating the total votes needed for other candidates to not exceed the candidate's votes after adding `mid` votes. This ensures the solution is efficient and handles large constraints.
+4. **Output**: The results for each candidate are stored in the `ans` array and printed at the end.
+
+This approach ensures that the solution is both efficient and correct, handling all edge cases and large input sizes appropriately.

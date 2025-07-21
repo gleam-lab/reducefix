@@ -1,0 +1,61 @@
+#include <iostream>
+#include <vector>
+#include <queue>
+#include <algorithm>
+using namespace std;
+#define int long long
+
+signed main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int T;
+    cin >> T;
+    
+    while (T--) {
+        int N, K;
+        cin >> N >> K;
+        
+        vector<pair<int, int>> A(N);
+        for (int i = 0; i < N; ++i) {
+            cin >> A[i].first;
+        }
+        for (int i = 0; i < N; ++i) {
+            cin >> A[i].second;
+        }
+        
+        // Sort by A_i ascending
+        sort(A.begin(), A.end());
+        
+        int sum_B = 0;
+        priority_queue<int> max_heap;
+        
+        // Initialize with first K-1 elements' B values
+        for (int i = 0; i < K - 1; ++i) {
+            sum_B += A[i].second;
+            max_heap.push(A[i].second);
+        }
+        
+        int min_result = numeric_limits<int>::max();
+        
+        // Try each possible maximum A_i from K-1 to N-1
+        for (int i = K - 1; i < N; ++i) {
+            // Add current B value
+            sum_B += A[i].second;
+            max_heap.push(A[i].second);
+            
+            // Maintain only K largest B values
+            if (max_heap.size() > K) {
+                sum_B -= max_heap.top();
+                max_heap.pop();
+            }
+            
+            // Calculate the cost for this subset
+            min_result = min(min_result, A[i].first * sum_B);
+        }
+        
+        cout << min_result << endl;
+    }
+    
+    return 0;
+}

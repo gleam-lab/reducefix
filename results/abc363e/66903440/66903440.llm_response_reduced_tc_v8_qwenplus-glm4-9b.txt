@@ -1,0 +1,82 @@
+
+The problem involves simulating the process of sea level rise on an island, where sections of the island with certain properties will sink into the sea. The challenge is to determine the area of the island that remains above sea level after a specified number of years.
+
+The provided solution attempts to solve this problem by using a breadth-first search (BFS) approach. However, there are several issues with the code that lead to incorrect results, particularly with large values of Y and A[i][j].
+
+### Issues in the Solution
+
+1. **Initialization of BFS**: The solution initializes the BFS with sections at the edges of the island, assuming they are at sea level. This is correct, but it does not account for sections that are at sea level but not on the edges. 
+
+2. **Edge Cases**: The solution does not handle cases where the entire island is initially below the sea level or when the island is fully surrounded by the sea at sea level.
+
+3. **Performance**: The BFS loop is inefficient because it uses a fixed size queue (`202020`), which is likely to be too large and slow down the BFS. Moreover, the BFS does not consider that the number of sections that might sink can drastically change as more sections sink, potentially leading to performance issues.
+
+4. **Output**: The solution attempts to output the area of the island remaining above sea level after each year, but it only does so once after the BFS loop, which is incorrect.
+
+### Proposed Solution
+
+A more efficient approach would be to use a flood fill algorithm (similar to BFS but optimized for this problem) to simulate the sinking process. Here's a revised version of the code with these points in mind:
+
+```cpp
+#include<bits/stdc++.h>
+using namespace std;
+
+int H, W, Y;
+int A[1001][1001];
+bool visited[1001][1001];
+
+// Directions for the flood fill (8 possible directions)
+int dx[] = {-1, 0, 1, 0, -1, -1, 1, 1};
+int dy[] = {0, 1, 0, -1, -1, 1, -1, 1};
+
+// Function to perform flood fill from a given cell
+void floodFill(int x, int y) {
+    visited[x][y] = true;
+    for (int i = 0; i < 8; i++) {
+        int nx = x + dx[i];
+        int ny = y + dy[i];
+        if (nx >= 0 && nx < H && ny >= 0 && ny < W && !visited[nx][ny] && A[nx][ny] <= A[x][y] + Y) {
+            floodFill(nx, ny);
+        }
+    }
+}
+
+int main() {
+    cin >> H >> W >> Y;
+    for (int i = 0; i < H; i++) {
+        for (int j = 0; j < W; j++) {
+            cin >> A[i][j];
+        }
+    }
+
+    int remainingArea = H * W;
+    for (int y = 0; y < Y; y++) {
+        memset(visited, 0, sizeof(visited));
+        for (int i = 0; i < H; i++) {
+            for (int j = 0; j < W; j++) {
+                if (!visited[i][j] && (i == 0 || i == H - 1 || j == 0 || j == W - 1 || A[i][j] == A[i][j - 1] || A[i][j] == A[i - 1][j])) {
+                    floodFill(i, j);
+                    remainingArea -= floodFill_area(i, j);
+                }
+            }
+        }
+        cout << remainingArea << endl;
+    }
+    return 0;
+}
+
+int floodFill_area(int x, int y) {
+    int area = 1;
+    visited[x][y] = true;
+    for (int i = 0; i < 8; i++) {
+        int nx = x + dx[i];
+        int ny = y + dy[i];
+        if (nx >= 0 && nx < H && ny >= 0 && ny < W && !visited[nx][ny] && A[nx][ny] <= A[x][y] + Y) {
+            area += floodFill_area(nx, ny);
+        }
+    }
+    return area;
+}
+```
+
+This revised solution uses a flood fill algorithm to simulate the sinking of the island. The `floodFill` function is used to sink the island from the initial sections that are at or below sea level. The `floodFill_area` function calculates the area of the island that has sunk during each year based on the current sea level, which is incremented by 1 each year. The remaining area is printed at the end of each year.

@@ -1,0 +1,76 @@
+#include <iostream>
+#include <vector>
+#include <set>
+#include <limits>
+using namespace std;
+
+long long solve() {
+    int N, M;
+    cin >> N >> M;
+    vector<pair<int, int>> pieces(M);
+    for (int i = 0; i < M; ++i) {
+        cin >> pieces[i].first >> pieces[i].second;
+    }
+
+    // Helper function to count the number of elements in a set
+    auto count = [](const set<int>& s) {
+        return s.size();
+    };
+
+    // Collect all occupied positions
+    set<pair<int, int>> occupied;
+    for (const auto& p : pieces) {
+        occupied.insert(p);
+    }
+
+    // Calculate the number of free positions
+    long long free_positions = N * N;
+
+    // Subtract occupied rows and columns
+    set<int> rows, cols;
+    for (const auto& p : occupied) {
+        rows.insert(p.first);
+        cols.insert(p.second);
+    }
+
+    // Add back the intersections of occupied rows and columns
+    free_positions -= count(rows) * N;
+    free_positions -= count(cols) * N;
+    free_positions += count(rows) & count(cols);
+
+    // Subtract the diagonals
+    set<pair<int, int>> diag1, diag2, anti_diag1, anti_diag2;
+    for (const auto& p : occupied) {
+        diag1.insert(p.first - p.second + 1);
+        diag2.insert(p.first + p.second);
+        anti_diag1.insert(p.first + p.second - N + 1);
+        anti_diag2.insert(p.first - p.second + 1);
+    }
+
+    // Subtract occupied diagonals
+    free_positions -= count(diag1);
+    free_positions -= count(diag2);
+    free_positions -= count(anti_diag1);
+    free_positions -= count(anti_diag2);
+
+    // Subtract the extended diagonals
+    for (int i = 2; i <= N; ++i) {
+        diag1.insert(i);
+        diag2.insert(i * 2 + 1);
+        anti_diag1.insert(i * 2 + 1);
+        anti_diag2.insert(i);
+    }
+
+    // Subtract occupied extended diagonals
+    free_positions -= count(diag1) - count(occupied);
+    free_positions -= count(diag2) - count(occupied);
+    free_positions -= count(anti_diag1) - count(occupied);
+    free_positions -= count(anti_diag2) - count(occupied);
+
+    return free_positions;
+}
+
+int main() {
+    cout << solve() << endl;
+    return 0;
+}

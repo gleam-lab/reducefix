@@ -1,0 +1,38 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+#define ll long long
+#define mod 1000000007
+
+int main() {
+    ios_base::sync_with_stdio(0); cin.tie(0); cout.tie(0);
+
+    ll n, m; cin >> n >> m;
+    set<pair<ll,ll>> st;
+    
+    for(ll i=0; i<m; i++) {
+        ll x, y; cin >> x >> y;
+        st.insert({x, y});
+        
+        // Check all possible knight moves
+        if(x+2<=n) {
+            if(y+1<=n) st.insert({x+2, y+1});
+            if(y-1>=1) st.insert({x+2, y-1});
+        }
+        if(x-2>=1) {
+            if(y+1<=n) st.insert({x-2, y+1});
+            if(y-1>=1) st.insert({x-2, y-1});
+        }
+        if(x+1<=n) {
+            if(y+2<=n) st.insert({x+1, y+2});
+            if(y-2>=1) st.insert({x+1, y-2});
+        }
+        if(x-1>=1) {
+            if(y+2<=n) st.insert({x-1, y+2});
+            if(y-2>=1) st.insert({x-1, y-2});
+        }
+    }
+
+    cout << ((n*n) - st.size()) << endl;
+    return 0;
+}

@@ -1,0 +1,108 @@
+To fix this code, we need to address the following issues:
+
+1. **Initialization of the Queue**: The current code initializes the queue for each possible sea level (up to 1e5 + 5), which is inefficient and unnecessary. Instead, we should use a priority queue or process sections in order of their elevation.
+
+2. **BFS Process**: The BFS should start from the border sections and propagate to adjacent sections based on the current sea level. The current code attempts to do this but doesn't correctly handle the propagation for all sea levels incrementally.
+
+3. **Efficiency**: Given the constraints (H and W up to 1000 and Y up to 1e5), we need an efficient solution that processes each section only once, ideally in O(HW log(HW)) time for sorting and O(HW) for BFS.
+
+### Approaches
+1. **Sort Sections by Elevation**: We first collect all border sections (i.e., sections on the perimeter of the island) and sort them by their elevation. This helps in processing them in the order they will be submerged as the sea level rises.
+
+2. **Priority Queue for BFS**: Use a priority queue (min-heap) to process sections in increasing order of their elevation. This allows us to efficiently determine which sections are submerged at each sea level.
+
+3. **Track Submerged Sections**: Maintain a visited matrix to track which sections have been submerged to avoid reprocessing.
+
+4. **Calculate Remaining Area**: For each year (sea level), subtract the number of sections submerged at that level from the total area.
+
+### Solution Code
+```cpp
+#include <bits/stdc++.h>
+
+using namespace std;
+
+constexpr int dx[] = {-1, 1, 0, 0};
+constexpr int dy[] = {0, 0, -1, 1};
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int H, W, Y;
+    cin >> H >> W >> Y;
+
+    vector<vector<int>> A(H, vector<int>(W));
+    for (int i = 0; i < H; i++) {
+        for (int j = 0; j < W; j++) {
+            cin >> A[i][j];
+        }
+    }
+
+    vector<vector<bool>> submerged(H, vector<bool>(W, false));
+    priority_queue<pair<int, pair<int, int>>, vector<pair<int, pair<int, int>>>, greater<pair<int, pair<int, int>>>> pq;
+
+    // Initialize with border cells
+    for (int i = 0; i < H; i++) {
+        for (int j = 0; j < W; j++) {
+            if (i == 0 || i == H - 1 || j == 0 || j == W - 1) {
+                pq.push({A[i][j], {i, j}});
+                submerged[i][j] = true;
+            }
+        }
+    }
+
+    int ans = H * W;
+    vector<int> res(Y + 1, 0);
+    int current_level = 1;
+
+    while (!pq.empty() && current_level <= Y) {
+        auto top = pq.top();
+        int level = top.first;
+        int x = top.second.first;
+        int y = top.second.second;
+
+        if (level > current_level) {
+            res[current_level] = ans;
+            current_level++;
+            if (current_level > Y) break;
+            continue;
+        }
+
+        pq.pop();
+        ans--;
+
+        for (int d = 0; d < 4; d++) {
+            int nx = x + dx[d];
+            int ny = y + dy[d];
+
+            if (nx >= 0 && nx < H && ny >= 0 && ny < W && !submerged[nx][ny]) {
+                submerged[nx][ny] = true;
+                pq.push({A[nx][ny], {nx, ny}});
+            }
+        }
+    }
+
+    // Fill remaining levels if sea level exceeds max elevation
+    while (current_level <= Y) {
+        res[current_level] = ans;
+        current_level++;
+    }
+
+    for (int i = 1; i <= Y; i++) {
+        cout << res[i] << '\n';
+    }
+
+    return 0;
+}
+```
+
+### Explanation
+1. **Initialization**: The border sections are added to a priority queue (min-heap) sorted by their elevation. This helps in processing sections in the order they will be submerged as the sea level rises.
+
+2. **BFS with Priority Queue**: The BFS starts from the border sections. For each section processed, its adjacent sections are checked. If they haven't been submerged yet, they are added to the priority queue with their respective elevations.
+
+3. **Tracking Submerged Sections**: The `submerged` matrix keeps track of which sections have already been processed to avoid duplicates and ensure efficiency.
+
+4. **Result Calculation**: For each sea level from 1 to Y, the result is computed by decrementing the remaining area count whenever sections are submerged at or below the current sea level. The results are stored in an array and printed for each year.
+
+This approach ensures that each section is processed only once, making the solution efficient and scalable for large input sizes.

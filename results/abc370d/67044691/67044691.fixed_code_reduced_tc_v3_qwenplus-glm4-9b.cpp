@@ -1,0 +1,54 @@
+#include <iostream>
+#include <vector>
+#include <set>
+using namespace std;
+
+int main() {
+    int h, w, q;
+    cin >> h >> w >> q;
+    
+    set<pair<int, int>> row Walls; // Pair of (row, column) to track wall positions in rows
+    set<pair<int, int>> col Walls; // Pair of (row, column) to track wall positions in columns
+    
+    // Initialize walls at (i, j) for all i, j
+    for (int i = 0; i < h; ++i) {
+        for (int j = 0; j < w; ++j) {
+            Walls.emplace(i, j);
+        }
+    }
+    
+    vector<pair<int, int>> queries(q);
+    for (int i = 0; i < q; ++i) {
+        cin >> queries[i].first >> queries[i].second;
+        queries[i].first--; // Convert to 0-based index
+        queries[i].second--; // Convert to 0-based index
+    }
+    
+    for (const auto& query : queries) {
+        int r = query.first;
+        int c = query.second;
+        
+        // Check if there's a wall at (r, c)
+        if (Walls.find({r, c}) != Walls.end()) {
+            Walls.erase({r, c}); // Remove the wall
+        } else {
+            // No wall at (r, c), remove walls to the left, right, top, and bottom
+            auto remove_left = Walls.lower_bound({r, c - 1});
+            auto remove_right = next(remove_left, w - c - 1);
+            auto remove_top = Walls.lower_bound({r - 1, c});
+            auto remove_bottom = next(remove_top, h - r - 1);
+            
+            // Remove all walls in the range
+            Walls.erase(remove_left, remove_right);
+            Walls.erase(remove_top, remove_bottom);
+        }
+    }
+    
+    // Count the remaining walls
+    int remaining_walls = 0;
+    for (const auto& wall : Walls) {
+        remaining_walls++;
+    }
+    
+    cout << remaining_walls << endl;
+}

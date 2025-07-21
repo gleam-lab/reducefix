@@ -1,0 +1,35 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(0);
+
+    long long n, m;
+    cin >> n >> m;
+    
+    set<long long> rows, cols, diags1, diags2;
+    
+    while(m--) {
+        long long r, c;
+        cin >> r >> c;
+        rows.insert(r);
+        cols.insert(c);
+        diags1.insert(r + c);
+        diags2.insert(r - c);
+    }
+    
+    long long ans = (n - rows.size()) * (n - cols.size());
+    
+    for(long long d1 : diags1) {
+        ans -= min(n, abs(d1)) - (rows.count(-d1) + rows.count(d1));
+    }
+    
+    for(long long d2 : diags2) {
+        ans -= min(n, abs(d2)) - (cols.count(d2) + cols.count(-d2));
+    }
+    
+    cout << ans << '\n';
+    
+    return 0;
+}

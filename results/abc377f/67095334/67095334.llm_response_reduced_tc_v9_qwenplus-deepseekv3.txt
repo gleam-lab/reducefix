@@ -1,0 +1,124 @@
+To fix this code, we need to ensure that the calculation correctly accounts for all the squares that are under attack by any of the existing pieces. The initial approach was to subtract the squares covered by rows, columns, and diagonals from the total squares, but it missed some overlaps and intersections, leading to incorrect counts.
+
+### Approaches
+1. **Identify Forbidden Squares**: Calculate the squares that are under attack by any existing piece. This includes squares in the same row, same column, and both diagonals (i + j = a + b and i - j = a - b).
+2. **Use Inclusion-Exclusion Principle**: To avoid double-counting squares that fall into multiple forbidden categories, we need to use inclusion-exclusion to accurately compute the total number of forbidden squares.
+3. **Calculate Safe Squares**: Subtract the total number of forbidden squares from the total number of squares (N²) to get the number of safe squares. However, we must account for the fact that some squares may be occupied by existing pieces, which are already forbidden.
+
+### Solution Code
+```cpp
+#include<bits/stdc++.h>
+#define int long long
+#define PII pair<int,int>
+#define inf 1e9+7
+
+using namespace std;
+
+void solve() {
+    int N, M;
+    cin >> N >> M;
+    set<int> rows, cols, diag1, diag2;
+    for (int i = 0; i < M; ++i) {
+        int a, b;
+        cin >> a >> b;
+        rows.insert(a);
+        cols.insert(b);
+        diag1.insert(a + b);
+        diag2.insert(a - b);
+    }
+
+    int total_forbidden = 0;
+
+    // Rows and columns
+    total_forbidden += rows.size() * N;
+    total_forbidden += cols.size() * N;
+    total_forbidden -= rows.size() * cols.size();
+
+    // Diagonals type 1 (i + j = d)
+    for (auto d : diag1) {
+        int min_i = max(1LL, d - N);
+        int max_i = min(N, d - 1);
+        if (min_i > max_i) continue;
+        int cnt = max_i - min_i + 1;
+        total_forbidden += cnt;
+    }
+
+    // Diagonals type 2 (i - j = d)
+    for (auto d : diag2) {
+        int min_i = max(1LL, 1 + d);
+        int max_i = min(N, N + d);
+        if (min_i > max_i) continue;
+        int cnt = max_i - min_i + 1;
+        total_forbidden += cnt;
+    }
+
+    // Intersections between rows/cols and diag1/diag2
+    for (auto r : rows) {
+        for (auto d : diag1) {
+            int c = d - r;
+            if (1 <= c && c <= N) {
+                total_forbidden--;
+            }
+        }
+        for (auto d : diag2) {
+            int c = r - d;
+            if (1 <= c && c <= N) {
+                total_forbidden--;
+            }
+        }
+    }
+
+    for (auto c : cols) {
+        for (auto d : diag1) {
+            int r = d - c;
+            if (1 <= r && r <= N) {
+                total_forbidden--;
+            }
+        }
+        for (auto d : diag2) {
+            int r = c + d;
+            if (1 <= r && r <= N) {
+                total_forbidden--;
+            }
+        }
+    }
+
+    // Intersections between diag1 and diag2
+    for (auto d1 : diag1) {
+        for (auto d2 : diag2) {
+            if ((d1 + d2) % 2 != 0) continue;
+            int r = (d1 + d2) / 2;
+            int c = (d1 - d2) / 2;
+            if (1 <= r && r <= N && 1 <= c && c <= N) {
+                total_forbidden--;
+            }
+        }
+    }
+
+    // Subtract the occupied squares (since they are already counted in rows, cols, diags)
+    total_forbidden += M;
+
+    int total_safe = N * N - total_forbidden;
+    cout << total_safe << endl;
+}
+
+signed main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int _ = 1;
+    while (_--) {
+        solve();
+    }
+    return 0;
+}
+```
+
+### Explanation
+1. **Initialization**: Sets are used to store the rows, columns, and both types of diagonals (i + j = d and i - j = d) for all the existing pieces.
+2. **Row and Column Forbidden Squares**: The total number of squares under attack by rows and columns is calculated, then adjusted for overlaps using the inclusion-exclusion principle.
+3. **Diagonal Forbidden Squares**: For each diagonal, the number of squares is calculated by determining the valid range of indices (i, j) that lie within the grid.
+4. **Intersection Adjustments**: Adjustments are made for squares that are counted multiple times (e.g., intersections between rows/columns and diagonals, and between the two types of diagonals).
+5. **Occupied Squares**: The squares occupied by existing pieces are subtracted from the total forbidden count since they are already included in the initial calculations.
+6. **Final Calculation**: The total safe squares are computed by subtracting the total forbidden squares from the total grid squares (N²).
+
+This approach ensures all overlaps and intersections are correctly accounted for, providing the accurate number of safe squares for placement.

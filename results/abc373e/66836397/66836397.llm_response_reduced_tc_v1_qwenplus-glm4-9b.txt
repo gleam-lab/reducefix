@@ -1,0 +1,94 @@
+
+```cpp
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <set>
+
+using namespace std;
+
+long long min_votes_needed(long long current_votes, vector<long long> &votes, vector<long long> &A, int n, int m, long long remaining_votes) {
+    sort(votes.begin(), votes.end());
+    long long max_votes = votes[n - 1];
+    long long M = m;
+    long long needed_votes = 0;
+
+    for (int i = n - 1; i >= 0 && needed_votes < current_votes; --i) {
+        if (current_votes < current_votes + needed_votes + votes[i]) {
+            needed_votes += votes[i] - current_votes;
+        }
+        current_votes += votes[i];
+        if (current_votes >= max_votes + M && needed_votes == 0) {
+            break;
+        }
+        M--;
+    }
+
+    if (needed_votes > remaining_votes) {
+        needed_votes = -1;
+    }
+
+    return needed_votes;
+}
+
+int main() {
+    int n, m, k;
+    cin >> n >> m >> k;
+    vector<long long> votes(n, 0);
+    for (long long &vote : votes) {
+        cin >> vote;
+    }
+
+    vector<long long> sorted_votes(votes);
+    sort(sorted_votes.begin(), sorted_votes.end());
+    vector<long long> prefix_sum(n + 1, 0);
+    for (int i = 1; i <= n; ++i) {
+        prefix_sum[i] = prefix_sum[i - 1] + sorted_votes[i - 1];
+    }
+
+    vector<long long> result(n, 0);
+    long long remaining_votes = k - prefix_sum[n];
+    long long max_votes = sorted_votes[n - 1];
+
+    for (int i = 0; i < n; ++i) {
+        int M = m - 1;
+        if (M > 0 && sorted_votes[n - 1] - votes[i] <= M) {
+            result[i] = max_votes - votes[i];
+        } else {
+            set<long long> possible_votes;
+            for (int j = 0; j <= remaining_votes; ++j) {
+                if (j > 0) {
+                    long long count = j;
+                    long long sum = 0;
+                    while (count > 0 && M > 0) {
+                        int sum_votes = prefix_sum[n] - prefix_sum[n - count];
+                        int max_index = upper_bound(sorted_votes.begin(), sorted_votes.end(), sum_votes + votes[i] + j) - sorted_votes.begin();
+                        if (max_index <= n - count) {
+                            sum += sorted_votes[max_index - count];
+                            count--;
+                        } else {
+                            break;
+                        }
+                    }
+                    if (sum >= votes[i] + j) {
+                        possible_votes.insert(j);
+                    }
+                }
+            }
+
+            if (!possible_votes.empty()) {
+                result[i] = *possible_votes.rbegin();
+            } else {
+                result[i] = -1;
+            }
+        }
+    }
+
+    for (long long &vote : result) {
+        cout << vote << " ";
+    }
+    cout << endl;
+
+    return 0;
+}
+```

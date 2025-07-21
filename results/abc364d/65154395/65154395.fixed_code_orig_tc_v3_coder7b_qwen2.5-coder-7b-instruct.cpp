@@ -1,0 +1,23 @@
+#include<bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+
+int main() {
+    ios_base::sync_with_stdio(false); cin.tie(0); cout.tie(0);
+    int n, q; cin >> n >> q;
+    vector<int> a(n);
+    for(int i = 0; i < n; i++) cin >> a[i];
+    sort(a.begin(), a.end());
+    for(int i = 0; i < q; i++) {
+        int b, k; cin >> b >> k;
+        auto it = lower_bound(a.begin(), a.end(), b);
+        int index = it - a.begin();
+        if(index == k - 1) cout << abs(b - a[index]) << '\n';
+        else if(index < k - 1 && index > 0) cout << min(abs(b - a[index]), abs(b - a[index - 1])) << '\n';
+        else if(index == k - 1 && index == 0) cout << abs(b - a[index]) << '\n';
+        else if(index == k - 1 && index == n - 1) cout << abs(b - a[index]) << '\n';
+        else if(index == 0) cout << abs(b - a[index]) << '\n';
+        else cout << abs(b - a[index]) << '\n';
+    }
+    return 0;
+}

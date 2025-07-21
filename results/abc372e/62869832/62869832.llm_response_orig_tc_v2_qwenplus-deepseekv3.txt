@@ -1,0 +1,79 @@
+To fix this code, we need to ensure that the algorithm correctly maintains and queries the k-th largest vertex in the connected component of a given vertex. The issue with the original code is that it attempts to maintain a sorted list of vertices in each component, but the merging process is incomplete and doesn't correctly handle all cases, especially when components are merged.
+
+Approach:
+1. **Union-Find Data Structure**: This will help efficiently manage the connected components of the graph.
+2. **Balanced Binary Search Trees (BSTs)**: For each component, maintain a BST (like `std::set`) to keep track of the vertices in sorted order. This allows efficient insertion, deletion, and k-th largest queries.
+3. **Handling Queries**:
+   - For type 1 queries (adding an edge), merge the BSTs of the two components being connected.
+   - For type 2 queries (querying the k-th largest vertex), directly query the BST of the component containing the given vertex.
+
+Solution Code:
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+const int MAXN = 2e5 + 5;
+
+int parent[MAXN];
+set<int> components[MAXN];
+
+int find(int u) {
+    if (parent[u] != u) {
+        parent[u] = find(parent[u]);
+    }
+    return parent[u];
+}
+
+void unite(int u, int v) {
+    u = find(u);
+    v = find(v);
+    if (u == v) return;
+    if (components[u].size() < components[v].size()) {
+        swap(u, v);
+    }
+    parent[v] = u;
+    for (int x : components[v]) {
+        components[u].insert(x);
+    }
+    components[v].clear();
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int N, Q;
+    cin >> N >> Q;
+
+    for (int i = 1; i <= N; ++i) {
+        parent[i] = i;
+        components[i].insert(i);
+    }
+
+    while (Q--) {
+        int op, u, v;
+        cin >> op >> u >> v;
+        if (op == 1) {
+            unite(u, v);
+        } else {
+            int root = find(v);
+            if (components[root].size() < (size_t)v) {
+                cout << "-1\n";
+            } else {
+                auto it = components[root].end();
+                advance(it, -v);
+                cout << *it << "\n";
+            }
+        }
+    }
+
+    return 0;
+}
+```
+
+Explanation:
+1. **Initialization**: We initialize the parent array for the Union-Find structure, and each vertex starts as its own component with a BST containing only itself.
+2. **Union Operation**: The `unite` function merges two components. To maintain efficiency, the smaller BST is merged into the larger one. This ensures each vertex is moved at most O(log N) times.
+3. **Query Operation**: For a query, we find the root of the component containing vertex `v`. If the component size is less than `k`, we output `-1`. Otherwise, we use the BST's properties to find the k-th largest element efficiently by leveraging reverse iterators.
+
+This approach ensures that each operation is handled efficiently, with union operations being nearly O(1) amortized (due to path compression) and O(log N) for merging BSTs, and queries being O(log N) due to BST operations. This should handle the constraints effectively.

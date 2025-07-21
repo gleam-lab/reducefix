@@ -1,0 +1,51 @@
+#include <iostream>
+#include <algorithm>
+using namespace std;
+
+typedef struct {
+    int a, p, b, q;
+} Process;
+
+Process processes[100];
+long long dp[100][1000001];
+
+int N, X;
+
+long long calculateCost(int processIndex, int remainingProducts) {
+    int maxUnits = min(remainingProducts / processes[processIndex].a, remainingProducts / processes[processIndex].b);
+    return dp[processIndex][remainingProducts] + maxUnits * min(processes[processIndex].p, processes[processIndex].q);
+}
+
+bool checkFeasibility(long long productionCapacity) {
+    long long totalCost = 0;
+    for (int i = 0; i < N; ++i) {
+        totalCost += calculateCost(i, productionCapacity * min(processes[i].a, processes[i].b));
+        if (totalCost > X) return false;
+    }
+    return true;
+}
+
+int main() {
+    cin >> N >> X;
+
+    for (int i = 0; i < N; ++i) {
+        cin >> processes[i].a >> processes[i].p >> processes[i].b >> processes[i].q;
+        if (processes[i].a * processes[i].q < processes[i].b * processes[i].p) swap(processes[i].a, processes[i].b), swap(processes[i].p, processes[i].q);
+        dp[i][0] = 0;
+        for (int j = 1; j <= processes[i].a * processes[i].b; ++j) {
+            dp[i][j] = min(dp[i][max(0, j - processes[i].a)] + processes[i].p, dp[i][max(0, j - processes[i].b)] + processes[i].q);
+        }
+    }
+
+    int low = 0, high = 1e9;
+    while (high - low > 1) {
+        int mid = (low + high) / 2;
+        if (checkFeasibility(mid)) low = mid;
+        else high = mid - 1;
+    }
+
+    if (low != high && checkFeasibility(high)) low = high;
+    cout << low << endl;
+
+    return 0;
+}

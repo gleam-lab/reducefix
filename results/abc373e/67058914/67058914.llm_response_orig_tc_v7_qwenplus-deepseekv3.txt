@@ -1,0 +1,91 @@
+To fix this code, we need to ensure that the algorithm correctly calculates the minimum number of additional votes each candidate needs to guarantee their victory, regardless of how other candidates receive the remaining votes. The original code had several issues, including incorrect sorting and binary search logic, which led to all outputs being zero.
+
+### Approaches
+1. **Sort the Candidates**: First, we sort the candidates based on their current votes in descending order. This helps in efficiently determining the number of candidates that can potentially surpass a given candidate when additional votes are allocated.
+2. **Prefix Sum Calculation**: We compute prefix sums of the sorted votes to quickly calculate the total votes needed to elevate other candidates to a certain vote count.
+3. **Binary Search for Minimum Votes**: For each candidate, we perform a binary search to find the minimum number of additional votes they need to ensure that no more than `M-1` candidates can surpass them. This involves:
+   - Determining the threshold vote count that ensures the candidate is among the top `M`.
+   - Calculating the votes required to ensure other candidates do not exceed this threshold.
+
+### Solution Code
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int N, M;
+    ll K;
+    cin >> N >> M >> K;
+
+    vector<ll> A(N);
+    for (int i = 0; i < N; ++i) {
+        cin >> A[i];
+    }
+
+    vector<int> idx(N);
+    iota(idx.begin(), idx.end(), 0);
+    sort(idx.begin(), idx.end(), [&](int i, int j) {
+        return A[i] > A[j];
+    });
+
+    vector<ll> sorted_A(N);
+    for (int i = 0; i < N; ++i) {
+        sorted_A[i] = A[idx[i]];
+    }
+
+    vector<ll> prefix(N + 1, 0);
+    for (int i = 0; i < N; ++i) {
+        prefix[i + 1] = prefix[i] + sorted_A[i];
+    }
+
+    vector<ll> res(N, -1);
+    ll remaining = K - prefix[N];
+
+    for (int i = 0; i < N; ++i) {
+        ll low = 0, high = remaining;
+        ll best = -1;
+        while (low <= high) {
+            ll mid = (low + high) / 2;
+            ll new_vote = sorted_A[i] + mid;
+            auto it = upper_bound(sorted_A.begin(), sorted_A.end(), new_vote, greater<ll>());
+            int pos = it - sorted_A.begin();
+            
+            if (pos < M) {
+                best = mid;
+                high = mid - 1;
+            } else {
+                ll needed = 0;
+                if (pos > M) {
+                    needed = new_vote * (pos - M) - (prefix[pos] - prefix[M]);
+                }
+                if (needed <= remaining - mid) {
+                    best = mid;
+                    high = mid - 1;
+                } else {
+                    low = mid + 1;
+                }
+            }
+        }
+        res[idx[i]] = best;
+    }
+
+    for (int i = 0; i < N; ++i) {
+        cout << res[i] << ' ';
+    }
+    cout << '\n';
+
+    return 0;
+}
+```
+
+### Explanation
+1. **Sorting**: The candidates are sorted in descending order of their current votes to facilitate the binary search and prefix sum calculations.
+2. **Prefix Sum**: The prefix sum array is used to quickly compute the sum of votes of any subset of candidates, which is essential for determining the votes needed to keep other candidates below a certain threshold.
+3. **Binary Search**: For each candidate, we perform a binary search to determine the minimum additional votes required to ensure they are in the top `M` candidates. The binary search checks if the candidate's new vote count (after adding `mid` votes) ensures no more than `M-1` candidates can surpass them by redistributing the remaining votes.
+4. **Result Assignment**: The results are stored in the original order of the candidates using the indices from the initial sort, ensuring the output matches the input order.
+
+This approach efficiently calculates the required votes for each candidate while handling large input sizes within feasible time complexity.

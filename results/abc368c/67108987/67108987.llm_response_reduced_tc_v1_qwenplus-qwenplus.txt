@@ -1,0 +1,71 @@
+```cpp
+#include <bits/stdc++.h>
+
+using namespace std;
+
+int main() {
+    int N;
+    cin >> N;
+    vector<long long> H(N);
+    for (int i = 0; i < N; i++) cin >> H[i];
+
+    long long T = 0;
+
+    // Priority queue to process enemies in order of their calculated required time
+    // We will use a max-heap based on the computed "damage time"
+    auto compare = [&](int i, int j) {
+        // Calculate how much damage would be done at time T to each enemy
+        // We want to prioritize enemies that need to be attacked sooner
+        // Binary search to find the minimum T needed to finish both enemies
+        // Then decide which one should be attacked first
+
+        // Find minimal T such that enemy i is defeated
+        auto getTime = [](long long h) {
+            long long low = 0, high = 3 * h;
+            while (low < high) {
+                long long mid = (low + high) / 2;
+                long long attackCount = mid - mid / 3; // total attacks on this enemy by time T
+                long long tripleAttacks = mid / 3;     // number of triple damage attacks
+                long long totalDamage = attackCount + 2 * tripleAttacks;
+                if (totalDamage >= h)
+                    high = mid;
+                else
+                    low = mid + 1;
+            }
+            return low;
+        };
+
+        long long t_i = getTime(H[i]);
+        long long t_j = getTime(H[j]);
+
+        // Prioritize the enemy with smaller time-to-defeat
+        return t_i > t_j;
+    };
+
+    priority_queue<int, vector<int>, decltype(compare)> pq(compare);
+
+    // Initialize queue with all enemies
+    for (int i = 0; i < N; i++)
+        if (H[i] > 0) pq.push(i);
+
+    while (!pq.empty()) {
+        int i = pq.top();
+        pq.pop();
+
+        T++;
+
+        // Apply damage
+        if (T % 3 == 0)
+            H[i] -= 3;
+        else
+            H[i] -= 1;
+
+        // If enemy still has health, push it back for further attacks
+        if (H[i] > 0)
+            pq.push(i);
+    }
+
+    cout << T << endl;
+    return 0;
+}
+```

@@ -1,0 +1,105 @@
+To fix the discrepancy in the result, we need to address a subtle issue in how the candidate values for `x` are being generated and evaluated in the function `cost_for_W`.
+
+### Root Cause:
+The main issue lies in the calculation of candidate x-values (`xs`) for each machine. Specifically, when computing `x_star`, we should also consider its corresponding `y` value (i.e., how many of the other machines are needed), and ensure that the combination `(x, y)` satisfies the total capacity constraint.
+
+Additionally, one term was missing from the candidate list: `x = (W + B[i] - 1) / B[i]`, which corresponds to using only the second machine type (T). But this is used incorrectly in the current code as just another candidate `x`. It should be considered separately or handled correctly as part of the y-component.
+
+We must ensure that all critical x-values near the continuous relaxation (`x_star`) are checked **and** that valid combinations of `(x, y)` are tested thoroughly.
+
+### Fix Summary:
+- Add bounds checking on `xf` and `xc` before pushing them into `xs`.
+- Include the ceiling of `x_star` safely.
+- Make sure we don't miss any candidate x-values that could lead to better cost.
+- Also include the case where we use only T machines (i.e., `y = W/B[i]`, `x = 0`).
+
+Here is the corrected full code:
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+
+// Returns the minimum cost to achieve total capacity W
+// Returns X+1 if it's not possible within budget X
+ll cost_for_W(int N, ll W, ll X,
+              const vector<ll>& A, const vector<ll>& P,
+              const vector<ll>& B, const vector<ll>& Q)
+{
+    ll total = 0;
+    for (int i = 0; i < N; ++i) {
+        ll best = X + 1;
+
+        // Candidate x values to try
+        vector<ll> xs = {0};
+
+        // Continuous relaxation optimal x*
+        long double x_star = (long double)W * Q[i] / (A[i] * Q[i] + B[i] * P[i]);
+        ll xf = floor(x_star);
+        ll xc = ceil(x_star);
+
+        // Safely add nearby integer candidates around x_star
+        if (xf - 1 >= 0) xs.push_back(xf - 1);
+        xs.push_back(xf);
+        xs.push_back(xc);
+        if (xc + 1 >= 0) xs.push_back(xc + 1);
+
+        // Also consider using only T machines (x = 0), and only S machines (y = 0)
+        xs.push_back((W + A[i] - 1) / A[i]);  // Max x for S-only
+
+        // Remove duplicates
+        sort(xs.begin(), xs.end());
+        xs.erase(unique(xs.begin(), xs.end()), xs.end());
+
+        ll max_x = (W + A[i] - 1) / A[i];
+        for (ll x : xs) {
+            if (x < 0 || x > max_x) continue;
+
+            ll rem = W - A[i] * x;
+            ll y = rem <= 0 ? 0 : (rem + B[i] - 1) / B[i];
+
+            ll c = P[i] * x + Q[i] * y;
+            if (c < best) best = c;
+        }
+
+        total += best;
+        if (total > X) return X + 1;
+    }
+    return total;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int N;
+    ll X;
+    cin >> N >> X;
+    vector<ll> A(N), P(N), B(N), Q(N);
+    for (int i = 0; i < N; ++i) {
+        cin >> A[i] >> P[i] >> B[i] >> Q[i];
+    }
+
+    // Estimate upper bound for binary search
+    long double best_ratio = 0;
+    for (int i = 0; i < N; ++i) {
+        best_ratio = max(best_ratio, (long double)A[i] / P[i]);
+        best_ratio = max(best_ratio, (long double)B[i] / Q[i]);
+    }
+    ll lo = 0, hi = (ll)(X * best_ratio) + 2;
+
+    // Binary search on maximum achievable W
+    while (lo + 1 < hi) {
+        ll mid = lo + (hi - lo) / 2;
+        if (cost_for_W(N, mid, X, A, P, B, Q) <= X)
+            lo = mid;
+        else
+            hi = mid;
+    }
+
+    cout << lo << "\n";
+    return 0;
+}
+```
+
+This version ensures all key candidate points are properly evaluated, fixes off-by-one issues in the candidate generation, and improves robustness of the optimization logic.

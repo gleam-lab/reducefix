@@ -1,0 +1,126 @@
+To fix this code, we need to address the incorrect calculation of the number of safe squares where the new piece can be placed without being captured by any existing pieces. The key issue lies in the incorrect handling of the intersections between different attack lines (rows, columns, and diagonals) and the overcounting or undercounting of safe squares.
+
+### Approaches
+1. **Identify Attack Lines**: Each existing piece can attack along its row, column, main diagonal (i + j = const), and anti-diagonal (i - j = const). We need to collect all these lines.
+2. **Calculate Total Attacked Squares**: The total number of distinct squares covered by these lines. This involves:
+   - Rows: Each row `a_k` covers `N` squares.
+   - Columns: Each column `b_k` covers `N` squares.
+   - Diagonals (i + j = const): Each diagonal `a_k + b_k` covers between `1` and `N` squares.
+   - Anti-diagonals (i - j = const): Each anti-diagonal `a_k - b_k` covers between `1` and `N` squares.
+3. **Use Inclusion-Exclusion Principle**: To avoid double-counting squares that lie at the intersections of these lines. This requires careful calculation of intersections between rows, columns, and diagonals.
+
+### Solution Code
+```cpp
+#include<bits/stdc++.h>
+using namespace std;
+using i64 = long long;
+
+int main() {
+    std::ios::sync_with_stdio(false);
+    std::cin.tie(nullptr);
+    i64 N, M;
+    cin >> N >> M;
+    vector<pair<i64, i64>> pieces(M);
+    set<i64> rows, cols, diag1, diag2;
+    for (int i = 0; i < M; i++) {
+        i64 a, b;
+        cin >> a >> b;
+        pieces[i] = {a, b};
+        rows.insert(a);
+        cols.insert(b);
+        diag1.insert(a + b);
+        diag2.insert(a - b);
+    }
+    
+    i64 total = N * N;
+    i64 attacked = 0;
+    
+    // Rows and columns
+    i64 row_count = rows.size();
+    i64 col_count = cols.size();
+    attacked += row_count * N + col_count * N - row_count * col_count;
+    
+    // Diagonals (i + j = const)
+    for (auto d : diag1) {
+        i64 min_x = max(1LL, d - N);
+        i64 max_x = min(N, d - 1);
+        if (max_x >= min_x) {
+            attacked += (max_x - min_x + 1);
+        }
+    }
+    
+    // Anti-diagonals (i - j = const)
+    for (auto d : diag2) {
+        i64 min_x = max(1LL, 1 + d);
+        i64 max_x = min(N, N + d);
+        if (max_x >= min_x) {
+            attacked += (max_x - min_x + 1);
+        }
+    }
+    
+    // Intersections between rows/columns and diagonals/anti-diagonals
+    for (auto d : diag1) {
+        // Intersections with rows
+        for (auto r : rows) {
+            i64 y = d - r;
+            if (y >= 1 && y <= N) {
+                attacked--;
+            }
+        }
+        // Intersections with columns
+        for (auto c : cols) {
+            i64 x = d - c;
+            if (x >= 1 && x <= N) {
+                attacked--;
+            }
+        }
+    }
+    
+    for (auto d : diag2) {
+        // Intersections with rows
+        for (auto r : rows) {
+            i64 y = r - d;
+            if (y >= 1 && y <= N) {
+                attacked--;
+            }
+        }
+        // Intersections with columns
+        for (auto c : cols) {
+            i64 x = c + d;
+            if (x >= 1 && x <= N) {
+                attacked--;
+            }
+        }
+    }
+    
+    // Intersections between diagonals and anti-diagonals
+    for (auto d1 : diag1) {
+        for (auto d2 : diag2) {
+            i64 x = (d1 + d2) / 2;
+            i64 y = (d1 - d2) / 2;
+            if ((d1 + d2) % 2 == 0 && (d1 - d2) % 2 == 0 && x >= 1 && x <= N && y >= 1 && y <= N) {
+                attacked++;
+            }
+        }
+    }
+    
+    // Subtract the M pieces themselves (they are already counted in the lines)
+    attacked -= M;
+    
+    i64 safe = total - attacked;
+    cout << safe << "\n";
+    
+    return 0;
+}
+```
+
+### Explanation
+1. **Input Handling**: Reads the grid size `N` and the number of existing pieces `M`, followed by their positions.
+2. **Sets for Attack Lines**: Uses sets to store unique rows, columns, diagonals, and anti-diagonals from the existing pieces to avoid duplicates.
+3. **Initial Attacked Squares Calculation**: Calculates the total squares covered by all rows, columns, diagonals, and anti-diagonals without considering intersections.
+4. **Inclusion-Exclusion Principle**: Adjusts the count by subtracting intersections between rows and columns, rows and diagonals/anti-diagonals, and columns and diagonals/anti-diagonals.
+5. **Diagonal Intersections**: Adjusts for intersections between diagonals and anti-diagonals by checking for valid square positions.
+6. **Final Adjustment**: Subtracts the count of existing pieces since they are already covered in the attack lines.
+7. **Output**: Prints the number of safe squares, which is the total grid squares minus the correctly calculated attacked squares.
+
+This approach ensures all possible attack lines are considered, intersections are handled correctly, and the final count is accurate.

@@ -1,0 +1,50 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+const int MOD = 1e9 + 7;
+
+vector<vector<int>> dirs = {{2, 1}, {1, 2}, {-1, 2}, {-2, 1}, {-2, -1}, {-1, -2}, {1, -2}, {2, -1}};
+
+bool isValid(int x, int y, int n) {
+    return x >= 0 && x < n && y >= 0 && y < n;
+}
+
+int countValidCells(int n, vector<vector<bool>>& board) {
+    int count = 0;
+    for (int i = 0; i < n; ++i) {
+        for (int j = 0; j < n; ++j) {
+            bool valid = true;
+            for (auto& dir : dirs) {
+                int ni = i + dir[0];
+                int nj = j + dir[1];
+                if (isValid(ni, nj, n) && board[ni][nj]) {
+                    valid = false;
+                    break;
+                }
+            }
+            if (valid) {
+                count++;
+            }
+        }
+    }
+    return count;
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(0);
+
+    long long n, m;
+    cin >> n >> m;
+
+    vector<vector<bool>> board(n, vector<bool>(n, false));
+    for (int i = 0; i < m; ++i) {
+        int a, b;
+        cin >> a >> b;
+        board[a - 1][b - 1] = true;
+    }
+
+    cout << countValidCells(n, board) << endl;
+
+    return 0;
+}

@@ -1,0 +1,121 @@
+To fix this code, we need to address several issues. The primary problem lies in the incorrect handling of the diagonals and the inefficient counting mechanisms. The original code attempts to use inclusion-exclusion principle but fails to correctly calculate the overlaps between different types of constraints (rows, columns, diagonals). 
+
+### Approaches
+1. **Identify Constraints**: The existing pieces can capture squares in the same row, same column, or along the two diagonals (i+j = a+b or i-j = a-b). 
+2. **Inclusion-Exclusion Principle**: To count the number of safe squares, we need to subtract the squares that are under attack from any existing piece. This involves:
+   - Subtracting squares covered by rows and columns of existing pieces.
+   - Subtracting squares covered by the two types of diagonals.
+   - Adding back the overlaps that were subtracted multiple times (e.g., a square covered by both a row and a column).
+3. **Efficient Calculation**: Given the constraints (N can be up to 10^9 and M up to 10^3), we need an O(M^2) solution to pair-wise check intersections between constraints.
+
+### Solution Code
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+typedef long long ll;
+
+int main() {
+    ll N, M;
+    cin >> N >> M;
+    vector<ll> a(M), b(M);
+    unordered_set<ll> rows, cols, diag1, diag2;
+    for (int i = 0; i < M; ++i) {
+        cin >> a[i] >> b[i];
+        rows.insert(a[i]);
+        cols.insert(b[i]);
+        diag1.insert(a[i] + b[i]);
+        diag2.insert(a[i] - b[i]);
+    }
+
+    ll total_safe = N * N;
+    ll attacked = 0;
+
+    // Subtract squares attacked by rows
+    attacked += rows.size() * N;
+    // Subtract squares attacked by columns
+    attacked += cols.size() * N;
+    // Subtract squares attacked by diag1 (i + j = k)
+    for (ll k : diag1) {
+        ll lower_i = max(1LL, k - N);
+        ll upper_i = min(N, k - 1);
+        if (upper_i >= lower_i) {
+            attacked += (upper_i - lower_i + 1);
+        }
+    }
+    // Subtract squares attacked by diag2 (i - j = k)
+    for (ll k : diag2) {
+        ll lower_i = max(1LL, 1 + k);
+        ll upper_i = min(N, N + k);
+        if (upper_i >= lower_i) {
+            attacked += (upper_i - lower_i + 1);
+        }
+    }
+
+    // Add back overlaps between rows and columns
+    attacked -= rows.size() * cols.size();
+    // Add back overlaps between rows and diag1
+    for (ll k : diag1) {
+        for (ll i : rows) {
+            ll j = k - i;
+            if (j >= 1 && j <= N && cols.count(j) == 0) {
+                attacked -= 1;
+            }
+        }
+    }
+    // Add back overlaps between rows and diag2
+    for (ll k : diag2) {
+        for (ll i : rows) {
+            ll j = i - k;
+            if (j >= 1 && j <= N && cols.count(j) == 0) {
+                attacked -= 1;
+            }
+        }
+    }
+    // Add back overlaps between columns and diag1
+    for (ll k : diag1) {
+        for (ll j : cols) {
+            ll i = k - j;
+            if (i >= 1 && i <= N && rows.count(i) == 0) {
+                attacked -= 1;
+            }
+        }
+    }
+    // Add back overlaps between columns and diag2
+    for (ll k : diag2) {
+        for (ll j : cols) {
+            ll i = k + j;
+            if (i >= 1 && i <= N && rows.count(i) == 0) {
+                attacked -= 1;
+            }
+        }
+    }
+    // Add back overlaps between diag1 and diag2
+    for (ll k1 : diag1) {
+        for (ll k2 : diag2) {
+            ll i = (k1 + k2) / 2;
+            ll j = (k1 - k2) / 2;
+            if ((k1 + k2) % 2 == 0 && (k1 - k2) % 2 == 0 && i >= 1 && i <= N && j >= 1 && j <= N) {
+                if (rows.count(i) == 0 && cols.count(j) == 0) {
+                    attacked -= 1;
+                }
+            }
+        }
+    }
+
+    // Finally, subtract the M pieces themselves (if they were subtracted)
+    total_safe = N * N - attacked - M;
+    cout << total_safe << endl;
+    return 0;
+}
+```
+
+### Explanation
+1. **Initialization**: Read the grid size `N` and the number of pieces `M`. Store the positions of these pieces.
+2. **Sets for Constraints**: Use sets to keep track of rows, columns, and diagonals that are under attack by existing pieces.
+3. **Total Safe Squares**: Calculate the total squares initially as `N * N`.
+4. **Attacked Squares**: Subtract squares attacked by rows, columns, and diagonals. Use inclusion-exclusion to correct overlaps.
+5. **Overlap Handling**: Correctly add back squares that were subtracted multiple times due to overlapping constraints (e.g., a square in both a row and a column).
+6. **Final Count**: Subtract the `M` pieces themselves (since they occupy squares) to get the total safe squares. Output the result.
+
+This approach ensures that we efficiently and correctly count the number of safe squares using the inclusion-exclusion principle while handling large constraints effectively.

@@ -1,0 +1,51 @@
+#include <bits/stdc++.h>
+#define rep(i, n) for (int i = 0; i < (int)(n); i++)
+using namespace std;
+
+typedef long long ll;
+
+// Custom hash for pair<int, int>
+struct pair_hash {
+    size_t operator()(const pair<int, int>& p) const {
+        return (size_t)p.first * 1000000007 + p.second;
+    }
+};
+
+int main() {
+    ll N;
+    int M;
+    cin >> N >> M;
+
+    unordered_set<pair<int, int>, pair_hash> attacked;
+    
+    // All 8 possible move patterns that can attack
+    vector<pair<int, int>> attack_offsets = {
+        {2, 1}, {1, 2}, {-1, 2}, {-2, 1},
+        {-2, -1}, {-1, -2}, {1, -2}, {2, -1}
+    };
+
+    for (int i = 0; i < M; ++i) {
+        int a, b;
+        cin >> a >> b;
+        // Convert to 0-based index
+        a--; b--;
+
+        // Add the position of the current piece
+        attacked.insert({a, b});
+
+        // For all attack patterns from this piece, mark the target as attacked
+        for (auto [dx, dy] : attack_offsets) {
+            int x = a + dx;
+            int y = b + dy;
+            if (x >= 0 && x < N && y >= 0 && y < N) {
+                attacked.insert({x, y});
+            }
+        }
+    }
+
+    // Total number of squares: N*N
+    // Subtract the number of squares that are either occupied or attacked
+    cout << N * N - (ll)attacked.size() << endl;
+
+    return 0;
+}

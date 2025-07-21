@@ -1,0 +1,85 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+#define int long long
+#define close ios::sync_with_stdio(false); cin.tie(0); cout.tie(0);
+const int MAXN = 1005;
+const int dx[] = {0, 0, 1, -1};
+const int dy[] = {1, -1, 0, 0};
+
+struct Cell {
+    int h, x, y;
+    bool operator<(const Cell& other) const {
+        return h < other.h;
+    }
+};
+
+int H, W, Y;
+bool vis[MAXN][MAXN];
+int grid[MAXN][MAXN];
+
+signed main() {
+    close;
+    cin >> H >> W >> Y;
+    for (int i = 0; i < H; ++i) {
+        for (int j = 0; j < W; ++j) {
+            cin >> grid[i][j];
+        }
+    }
+
+    // Mark all border cells as connected to sea
+    priority_queue<Cell, vector<Cell>, greater<Cell>> pq;
+    for (int i = 0; i < H; ++i) {
+        for (int j = 0; j < W; ++j) {
+            if (i == 0 || i == H-1 || j == 0 || j == W-1) {
+                vis[i][j] = true;
+                pq.push({grid[i][j], i, j});
+            }
+        }
+    }
+
+    vector<int> level(Y + 2, H * W);
+    int cnt = H * W;
+    vector<int> res(Y + 2);
+
+    while (!pq.empty()) {
+        auto cur = pq.top();
+        pq.pop();
+        int h = cur.h;
+        int x = cur.x;
+        int y = cur.y;
+
+        if (h > Y) continue;
+
+        cnt--;
+        for (int d = 0; d < 4; ++d) {
+            int nx = x + dx[d];
+            int ny = y + dy[d];
+            if (nx >= 0 && nx < H && ny >= 0 && ny < W && !vis[nx][ny]) {
+                vis[nx][ny] = true;
+                pq.push({grid[nx][ny], nx, ny});
+            }
+        }
+
+        if (level[h] == H * W) {
+            level[h] = cnt;
+        } else {
+            level[h] = min(level[h], cnt);
+        }
+    }
+
+    // Propagate the minimum remaining area for all years
+    for (int i = Y; i >= 1; --i) {
+        if (level[i] == H * W) {
+            level[i] = level[i + 1];
+        } else {
+            level[i] = min(level[i], level[i + 1]);
+        }
+    }
+
+    for (int i = 1; i <= Y; ++i) {
+        cout << level[i] << "\n";
+    }
+
+    return 0;
+}

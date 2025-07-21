@@ -1,0 +1,83 @@
+To fix this code, we need to address the issue of correctly simulating the sinking of sections as the sea level rises each year. The original code had a few critical issues:
+
+1. **Initialization of Priority Queue**: The code only initializes the priority queue with the border sections, which is correct, but it mistakenly decrements the elevation values by 1 (`--A[i][j]`), which is unnecessary and could lead to incorrect comparisons.
+
+2. **Handling of Visited Sections**: The `vis` matrix is marked when sections are added to the priority queue, but the sea level comparison should be done without decrementing the elevation.
+
+3. **Output Logic**: The code outputs the remaining area for each year, but the area calculation might not correctly account for all sections that sink as the sea level rises.
+
+4. **Edge Cases**: The code should correctly handle cases where the entire island sinks immediately or remains above sea level for all years.
+
+### Fixed Code
+```cpp
+#include <bits/stdc++.h>
+
+using namespace std;
+
+constexpr int d[4][2] = {{0, 1}, {0, -1}, {1, 0}, {-1, 0}};
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int H, W, Y;
+    cin >> H >> W >> Y;
+
+    vector<vector<int>> A(H, vector<int>(W));
+    for (int i = 0; i < H; ++i) {
+        for (int j = 0; j < W; ++j) {
+            cin >> A[i][j];
+        }
+    }
+
+    priority_queue<tuple<int, int, int>, vector<tuple<int, int, int>>, greater<tuple<int, int, int>>> pq;
+    vector<vector<bool>> vis(H, vector<bool>(W, false));
+
+    // Initialize the priority queue with the border sections
+    for (int j = 0; j < W; ++j) {
+        pq.emplace(A[0][j], 0, j);
+        vis[0][j] = true;
+    }
+    for (int i = 1; i < H; ++i) {
+        pq.emplace(A[i][0], i, 0);
+        vis[i][0] = true;
+    }
+    for (int i = 1; i < H; ++i) {
+        pq.emplace(A[i][W - 1], i, W - 1);
+        vis[i][W - 1] = true;
+    }
+    for (int j = 1; j < W - 1; ++j) {
+        pq.emplace(A[H - 1][j], H - 1, j);
+        vis[H - 1][j] = true;
+    }
+
+    int ans = H * W;
+    for (int year = 1; year <= Y; ++year) {
+        while (!pq.empty()) {
+            auto [h, x, y] = pq.top();
+            if (h > year) break;
+            pq.pop();
+            --ans;
+            for (int k = 0; k < 4; ++k) {
+                int nx = x + d[k][0];
+                int ny = y + d[k][1];
+                if (nx < 0 || nx >= H || ny < 0 || ny >= W || vis[nx][ny]) continue;
+                vis[nx][ny] = true;
+                pq.emplace(A[nx][ny], nx, ny);
+            }
+        }
+        cout << ans << '\n';
+    }
+
+    return 0;
+}
+```
+
+### Key Fixes:
+1. **Removed Decrement of Elevation**: The elevations are now read as-is without decrementing, ensuring correct comparisons with the sea level.
+2. **Correct Initialization of Priority Queue**: The priority queue is initialized with all border sections, ensuring no section is missed.
+3. **Proper Visited Tracking**: The `vis` matrix is correctly updated to mark sections as visited when they are added to the priority queue, preventing reprocessing.
+4. **Efficient Processing**: The priority queue processes sections in order of their elevation, ensuring that sections sink as soon as the sea level reaches their elevation.
+5. **Output Handling**: The remaining area is correctly calculated and printed for each year from 1 to Y.
+
+This fixed code ensures that the simulation of the sinking island is both accurate and efficient, handling all edge cases and large input sizes within the given constraints.

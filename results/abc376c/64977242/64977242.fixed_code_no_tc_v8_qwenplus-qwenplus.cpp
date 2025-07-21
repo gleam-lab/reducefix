@@ -1,0 +1,52 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+
+using namespace std;
+
+int main() {
+    int N;
+    cin >> N;
+    vector<long long> A(N);
+    vector<long long> B(N - 1);
+
+    for (int i = 0; i < N; ++i) cin >> A[i];
+    for (int i = 0; i < N - 1; ++i) cin >> B[i];
+
+    // Sort toys and boxes in ascending order
+    sort(A.begin(), A.end());
+    sort(B.begin(), B.end());
+
+    // Check if we can fit the smallest N-1 toys into the N-1 boxes
+    bool possible = true;
+    for (int i = 0; i < N - 1; ++i) {
+        if (A[i] > B[i]) {
+            possible = false;
+            break;
+        }
+    }
+
+    if (!possible) {
+        cout << -1 << endl;
+        return 0;
+    }
+
+    // The required size of the extra box is at least A[N-1]
+    // We also need to ensure it doesn't conflict with current assignments
+    long long min_required_size = A.back();
+
+    // Find the largest toy that could potentially be placed in a box B[j] where j < N-1
+    // So we find the minimum B[j] that hasn't been "used" by smaller toys
+    for (int i = 0; i < N - 1; ++i) {
+        if (B[i] >= A[N - 1]) {
+            min_required_size = B[i];
+            break;
+        }
+    }
+
+    // The purchased box must be at least as big as the largest toy,
+    // but not smaller than the smallest available unused box capacity that can fit the largest toy
+    cout << min_required_size << endl;
+
+    return 0;
+}

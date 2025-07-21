@@ -1,0 +1,25 @@
+#include <iostream>
+#include <string>
+
+int main() {
+    int N;
+    std::string S;
+    std::cin >> N;
+    std::cin >> S;
+    int wins = 0;
+    char winmove, prev = 'a';
+    for (char c : S) {
+        switch (c) {
+            case 'R': winmove = 'P'; break;
+            case 'P': winmove = 'S'; break;
+            case 'S': winmove = 'R'; break;
+        }
+        if (winmove != prev) {
+            wins++;
+            prev = winmove;
+        } else {
+            prev = c;
+        }
+    }
+    std::cout << wins;
+}

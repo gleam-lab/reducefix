@@ -1,0 +1,96 @@
+To fix this code, we need to ensure that for each candidate, we correctly determine the minimum number of additional votes required to guarantee their election. The previous solution had several issues, including incorrect binary search implementations and improper handling of the remaining votes.
+
+### Approaches
+1. **Sort the Candidates**: First, we sort the candidates based on their current votes to easily identify how many candidates have more votes than a given candidate.
+2. **Binary Search for Minimum Votes**: For each candidate, perform a binary search to find the minimum number of additional votes they need such that no more than `M-1` candidates can surpass them even if all remaining votes are distributed to other candidates.
+3. **Check Feasibility**: For each candidate, check if it's possible to get the required votes within the remaining votes (K minus the sum of all current votes).
+
+### Solution Code
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int N, M;
+    ll K;
+    cin >> N >> M >> K;
+
+    vector<ll> A(N);
+    for (int i = 0; i < N; ++i) {
+        cin >> A[i];
+    }
+
+    vector<ll> sorted_A = A;
+    sort(sorted_A.begin(), sorted_A.end(), greater<ll>());
+
+    vector<ll> prefix_sum(N + 1);
+    for (int i = 0; i < N; ++i) {
+        prefix_sum[i + 1] = prefix_sum[i] + sorted_A[i];
+    }
+
+    ll total_votes = accumulate(A.begin(), A.end(), 0LL);
+    ll remaining_votes = K - total_votes;
+
+    vector<ll> res(N, -1);
+
+    for (int i = 0; i < N; ++i) {
+        ll current_votes = A[i];
+        ll low = 0;
+        ll high = remaining_votes;
+        ll answer = -1;
+
+        while (low <= high) {
+            ll mid = (low + high) / 2;
+            ll new_votes = current_votes + mid;
+            int pos = upper_bound(sorted_A.begin(), sorted_A.end(), new_votes, greater<ll>()) - sorted_A.begin();
+
+            if (pos < M) {
+                answer = mid;
+                high = mid - 1;
+            } else {
+                ll sum_needed = 0;
+                int cnt = pos - (sorted_A[pos - 1] == new_votes ? 1 : 0);
+                if (cnt >= M) {
+                    low = mid + 1;
+                    continue;
+                }
+                int start = M - 1;
+                if (start >= N) {
+                    start = N - 1;
+                }
+                sum_needed = new_votes * (start + 1 - cnt) - (prefix_sum[start + 1] - prefix_sum[cnt]);
+                if (sum_needed <= remaining_votes - mid) {
+                    answer = mid;
+                    high = mid - 1;
+                } else {
+                    low = mid + 1;
+                }
+            }
+        }
+
+        if (answer != -1 && answer <= remaining_votes) {
+            res[i] = answer;
+        } else {
+            res[i] = -1;
+        }
+    }
+
+    for (int i = 0; i < N; ++i) {
+        cout << res[i] << ' ';
+    }
+
+    return 0;
+}
+```
+
+### Explanation
+1. **Sorting and Prefix Sum**: The candidates' votes are sorted in descending order to facilitate finding the position of each candidate's votes after adding possible additional votes. A prefix sum array is created to quickly calculate the sum of votes of the top candidates.
+2. **Binary Search**: For each candidate, we perform a binary search to find the minimum additional votes (`mid`) such that the candidate's new votes (`current_votes + mid`) ensure that no more than `M-1` candidates surpass them. This involves checking the position of the new votes in the sorted list and ensuring the remaining votes can cover the required adjustments for other candidates.
+3. **Feasibility Check**: For each candidate, if the binary search finds a feasible number of votes that can be allocated without exceeding the remaining votes, this number is stored in the result. Otherwise, `-1` is stored indicating it's impossible to guarantee the candidate's election.
+
+This approach ensures that we efficiently and correctly determine the minimum additional votes for each candidate while adhering to the constraints and requirements.

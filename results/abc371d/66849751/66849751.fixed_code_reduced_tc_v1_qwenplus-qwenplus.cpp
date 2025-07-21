@@ -1,0 +1,60 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+using ll = long long;
+using Graph = vector<vector<int>>;
+
+#define rep(i,n) for (int i=0; i<(n); ++i)
+#define reps(i,n) for (int i=0; i<=(n); ++i)
+#define all(x) (x).begin(), (x).end()
+#define rall(x) rbegin(x), rend(x)
+#define pb(a) push_back(a)
+#define Yes(b) cout << ((b)?"Yes":"No") << endl
+#define YES(b) cout << ((b)?"YES":"NO") << endl
+
+int dx[4] = {1, 0, -1, 0};
+int dy[4] = {0, 1, 0, -1};
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+    
+    int N;
+    cin >> N;
+    vector<int> P(N + 1);
+    vector<ll> X(N);
+    
+    rep(i, N) cin >> X[i];
+    rep(i, N) {
+        int p;
+        cin >> p;
+        P[i + 1] = P[i] + p;
+    }
+    
+    // Create a sorted list of pairs (X[i], prefix sum at i+1)
+    vector<pair<ll, int>> sorted_X_P;
+    rep(i, N) {
+        sorted_X_P.emplace_back(X[i], P[i + 1]);
+    }
+    sort(all(sorted_X_P));
+
+    int Q;
+    cin >> Q;
+    rep(q, Q) {
+        ll L, R;
+        cin >> L >> R;
+        
+        // Find first index where X >= L
+        auto left = lower_bound(all(sorted_X_P), make_pair(L, 0));
+        int total_left = (left == sorted_X_P.begin()) ? 0 : prev(left)->second;
+        
+        // Find first index where X > R
+        auto right = lower_bound(all(sorted_X_P), make_pair(R + 1, 0));
+        int total_right = (right == sorted_X_P.begin()) ? 0 : prev(right)->second;
+        
+        ll ans = (ll)total_right - (ll)total_left;
+        cout << ans << endl;
+    }
+
+    return 0;
+}

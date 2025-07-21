@@ -1,0 +1,80 @@
+#include <iostream>
+#include <vector>
+#include <set>
+#include <algorithm>
+using namespace std;
+
+int main() {
+    int H, W, Q;
+    cin >> H >> W >> Q;
+    
+    vector<set<int>> X(H, set<int>(W)); // Use a 2D set to ensure uniqueness
+    vector<set<int>> Y(W, set<int>(H)); // Use a 2D set to ensure uniqueness
+    
+    // Initialize the grid with walls
+    for (int i = 0; i < H; i++) {
+        for (int j = 0; j < W; j++) {
+            X[i].insert(j);
+            Y[j].insert(i);
+        }
+    }
+    
+    long long ans = 0;
+    
+    for (int i = 0; i < H; i++) {
+        ans += X[i].size(); // Count walls in each row
+        for (int j = 0; j < W; j++) {
+            ans += Y[j].size(); // Count walls in each column
+        }
+    }
+    
+    int cnt = 0;
+    for (int q = 0; q < Q; q++) {
+        int R, C;
+        cin >> R >> C;
+        
+        // Use sets to efficiently erase walls
+        set<int>& x = X[R-1];
+        set<int>& y = Y[C-1];
+        
+        // Wall at the given position
+        if (x.erase(C-1) > 0 && y.erase(R-1) > 0) {
+            cnt++;
+        } else {
+            // No wall at (R-1, C-1), destroy walls around it
+            auto it = y.lower_bound(R-1);
+            if (it != y.begin()) {
+                it--;
+                if (X[(*it)][C-1]) {
+                    x.erase(C-1);
+                    cnt++;
+                }
+            }
+            it = y.lower_bound(R-1);
+            if (it != y.end()) {
+                if (X[(*it)][C-1]) {
+                    x.erase(C-1);
+                    cnt++;
+                }
+            }
+            it = x.lower_bound(C-1);
+            if (it != x.begin()) {
+                it--;
+                if (Y[(*it)][R-1]) {
+                    y.erase(R-1);
+                    cnt++;
+                }
+            }
+            it = x.lower_bound(C-1);
+            if (it != x.end()) {
+                if (Y[(*it)][R-1]) {
+                    y.erase(R-1);
+                    cnt++;
+                }
+            }
+        }
+    }
+    
+    cout << ans - cnt << endl;
+    return 0;
+}

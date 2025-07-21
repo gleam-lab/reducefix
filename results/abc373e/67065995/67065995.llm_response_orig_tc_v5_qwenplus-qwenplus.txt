@@ -1,0 +1,84 @@
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+#define all(x) (x).begin(), (x).end()
+
+int main() {
+    ios_base::sync_with_stdio(0);
+    cin.tie(0);
+    int N, M;
+    ll K;
+    cin >> N >> M >> K;
+    vector<ll> A(N);
+    for (int i = 0; i < N; ++i) cin >> A[i];
+
+    // Sort candidates by current votes
+    vector<int> idx(N);
+    iota(all(idx), 0);
+    sort(all(idx), [&](int a, int b) { return A[a] < A[b]; });
+    vector<ll> sortedA = A;
+    sort(all(sortedA));
+
+    vector<ll> ans(N, -1);
+
+    for (int i = 0; i < N; ++i) {
+        ll myVotes = A[i];
+        ll need = 0;
+        int cnt = 0;
+
+        // Try to find the minimal X such that after adding X, at most M-1 candidates can have more than A[i]+X
+        // Binary search on X
+        ll low = 0, high = K + 1;
+        while (low < high) {
+            ll mid = (low + high) / 2;
+            ll target = myVotes + mid;
+
+            // Count how many other candidates could have > target votes
+            int pos = lower_bound(all(sortedA), target + 1) - sortedA.begin();
+            int better = N - pos;
+
+            // If already enough candidates are worse or equal, no need to add more
+            if (better < M) {
+                high = mid;
+                continue;
+            }
+
+            // Need to increase those candidates to target+1
+            ll required = 0;
+            for (int j = pos; j < N && cnt < better - (M - 1); ++j, ++cnt) {
+                if (idx[j] == i) continue;
+                required += max(0LL, (target + 1 - A[idx[j]]));
+            }
+
+            if (required <= K - mid) {
+                high = mid;
+            } else {
+                low = mid + 1;
+            }
+        }
+
+        // After binary search, check if low is valid
+        if (low <= K) {
+            ll target = myVotes + low;
+            int pos = lower_bound(all(sortedA), target + 1) - sortedA.begin();
+            int better = N - pos;
+            if (better < M) {
+                ans[i] = low;
+            } else {
+                cnt = 0;
+                ll required = 0;
+                for (int j = pos; j < N && cnt < better - (M - 1); ++j, ++cnt) {
+                    if (idx[j] == i) continue;
+                    required += max(0LL, (target + 1 - A[idx[j]]));
+                }
+                if (required <= K - low) ans[i] = low;
+            }
+        } else {
+            ans[i] = -1;
+        }
+    }
+
+    for (auto x : ans) cout << x << ' ';
+}
+```

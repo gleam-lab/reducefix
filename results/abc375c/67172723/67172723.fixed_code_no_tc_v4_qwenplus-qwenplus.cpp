@@ -1,0 +1,31 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int n;
+    cin >> n;
+
+    long long px = 0, py = 0;
+    double total = 0.0;
+
+    // Read all points and compute distances
+    for (int i = 0; i < n; ++i) {
+        long long x, y;
+        cin >> x >> y;
+        total += hypot(x - px, y - py);
+        px = x;
+        py = y;
+    }
+
+    // Return to origin
+    total += hypot(-px, -py);
+
+    // Print result with sufficient precision
+    cout.precision(15);
+    cout << fixed << total << '\n';
+
+    return 0;
+}

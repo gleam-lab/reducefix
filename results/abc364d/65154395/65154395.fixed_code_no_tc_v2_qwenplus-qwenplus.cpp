@@ -1,0 +1,51 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+typedef long long ll;
+
+void solve() {
+    int N, Q;
+    cin >> N >> Q;
+
+    vector<int> a(N);
+    for (int i = 0; i < N; ++i) {
+        cin >> a[i];
+    }
+    sort(a.begin(), a.end());
+
+    for (int q = 0; q < Q; ++q) {
+        int b, k;
+        cin >> b >> k;
+
+        // Binary search on distance
+        int left = 0;
+        int right = 2e8; // Maximum possible distance is 2*1e8
+        int answer = -1;
+
+        while (left <= right) {
+            int mid = (left + right) / 2;
+            // Count how many elements in a are within [b-mid, b+mid]
+            int left_idx = lower_bound(a.begin(), a.end(), b - mid) - a.begin();
+            int right_idx = upper_bound(a.begin(), a.end(), b + mid) - a.begin();
+            int count = right_idx - left_idx;
+
+            if (count >= k) {
+                answer = mid;
+                right = mid - 1;
+            } else {
+                left = mid + 1;
+            }
+        }
+
+        cout << answer << "\n";
+    }
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    cout.tie(nullptr);
+
+    solve();
+    return 0;
+}

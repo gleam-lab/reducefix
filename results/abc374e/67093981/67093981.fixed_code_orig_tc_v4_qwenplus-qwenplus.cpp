@@ -1,0 +1,69 @@
+#include <iostream>
+#include <algorithm>
+using namespace std;
+
+typedef struct { int a, p, b, q; } Item;
+Item A[100];
+long long dp[100][10000];
+
+int N, X;
+
+// Calculate minimum cost to buy at least n items from the i-th item
+long long cost(int i, int n) {
+    int period = A[i].a * A[i].b;
+    long long full_cycles = n / period;
+    int remainder = n % period;
+    return full_cycles * A[i].p * A[i].b + dp[i][remainder];
+}
+
+// Check if we can buy at least 'n' total items within budget X
+bool is_possible(int n) {
+    long long total_cost = 0;
+    for (int i = 0; i < N; ++i) {
+        total_cost += cost(i, n);
+        if (total_cost > X)
+            return false;
+    }
+    return true;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    cin >> N >> X;
+
+    // Initialize each item and precompute dp for small quantities
+    for (int i = 0; i < N; ++i) {
+        int a, p, b, q;
+        cin >> a >> p >> b >> q;
+        
+        // Ensure A[i].a*p <= A[i].b*q
+        if (a * q < b * p) {
+            swap(a, b);
+            swap(p, q);
+        }
+
+        A[i] = {a, p, b, q};
+
+        // Precompute minimal cost for 0 to a*b items from this item
+        dp[i][0] = 0;
+        for (int j = 1; j <= a * b; ++j) {
+            dp[i][j] = p;  // Buy one type A
+            if (j - a >= 0) dp[i][j] = min(dp[i][j], dp[i][j - a] + p);
+            if (j - b >= 0) dp[i][j] = min(dp[i][j], dp[i][j - b] + q);
+        }
+    }
+
+    // Binary search for maximum number of items that can be bought
+    int low = 0, high = 1e9;
+    while (low <= high) {
+        int mid = low + ((high - low) >> 1);
+        if (is_possible(mid))
+            low = mid + 1;
+        else
+            high = mid - 1;
+    }
+
+    cout << high << endl;
+}

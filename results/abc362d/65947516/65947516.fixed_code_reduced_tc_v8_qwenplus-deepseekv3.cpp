@@ -1,0 +1,61 @@
+#include <queue>
+#include <vector>
+#include <cstdio>
+#include <climits>
+#include <algorithm>
+using namespace std;
+typedef long long ll;
+typedef pair<ll, int> pli;
+const int N = 2e5 + 5;
+const ll INF = LLONG_MAX;
+
+int n, m;
+ll a[N];
+ll dis[N];
+vector<pli> g[N];
+
+void dijkstra() {
+    for (int i = 1; i <= n; ++i) {
+        dis[i] = INF;
+    }
+    dis[1] = 0;
+    priority_queue<pli, vector<pli>, greater<pli>> pq;
+    pq.push({0, 1});
+    while (!pq.empty()) {
+        ll current_dist = pq.top().first;
+        int u = pq.top().second;
+        pq.pop();
+        if (current_dist > dis[u]) continue;
+        for (pli edge : g[u]) {
+            int v = edge.second;
+            ll w = edge.first;
+            if (dis[v] > dis[u] + w + a[u]) {
+                dis[v] = dis[u] + w + a[u];
+                pq.push({dis[v], v});
+            }
+        }
+    }
+}
+
+int main() {
+    scanf("%d%d", &n, &m);
+    for (int i = 1; i <= n; ++i) {
+        scanf("%lld", &a[i]);
+    }
+    for (int i = 1; i <= m; ++i) {
+        int u, v;
+        ll w;
+        scanf("%d%d%lld", &u, &v, &w);
+        g[u].push_back({w, v});
+        g[v].push_back({w, u});
+    }
+    dijkstra();
+    for (int i = 2; i <= n; ++i) {
+        if (dis[i] == INF) {
+            printf("9223372036854775807 ");
+        } else {
+            printf("%lld ", dis[i] + a[i]);
+        }
+    }
+    return 0;
+}

@@ -1,0 +1,74 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define rep(i, n) for (int i = 0; i < (n); i++)
+using ll = long long;
+const int INF = 1e9;
+
+struct UnionFind {
+    vector<int> parent, rank, size;
+    UnionFind(int n) : parent(n), rank(n, 0), size(n, 1) {
+        for (int i = 0; i < n; i++) parent[i] = i;
+    }
+    int findRoot(int x) {
+        if (parent[x] != x) {
+            int root = findRoot(parent[x]);
+            parent[x] = root; // Path compression
+            return root;
+        }
+        return x;
+    }
+    bool unite(int x, int y) {
+        int rootX = findRoot(x), rootY = findRoot(y);
+        if (rootX == rootY) return false;
+        // Union by rank
+        if (rank[rootX] < rank[rootY]) {
+            parent[rootX] = rootY;
+            size[rootY] += size[rootX];
+        } else if (rank[rootX] > rank[rootY]) {
+            parent[rootY] = rootX;
+            size[rootX] += size[rootY];
+        } else {
+            parent[rootY] = rootX;
+            size[rootX] += size[rootY];
+            rank[rootX] += 1;
+        }
+        return true;
+    }
+    int getSize(int x) {
+        return size[findRoot(x)];
+    }
+};
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int n, q;
+    cin >> n >> q;
+    UnionFind uf(n);
+    vector<vector<int>> adj(n);
+    for (int i = 0; i < n; i++) {
+        adj[i].push_back(i);
+    }
+
+    while (q--) {
+        int com;
+        cin >> com;
+        if (com == 1) {
+            int u, v;
+            cin >> u >> v;
+            uf.unite(u - 1, v - 1);
+        } else if (com == 2) {
+            int v, k;
+            cin >> v >> k;
+            int root = uf.findRoot(v - 1);
+            if (k > uf.getSize(root)) {
+                cout << -1 << endl;
+            } else {
+                cout << adj[root].back() + 1 << endl;
+                adj[root].pop_back(); // Remove the last element which is the largest
+            }
+        }
+    }
+
+    return 0;
+}

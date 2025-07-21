@@ -1,0 +1,62 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int solve(string& S, vector<char>& hand, char first_move) {
+    vector<char> next;
+    for (auto c : hand) {
+        if (c != first_move) next.push_back(c);
+    }
+    
+    int total = 0;
+    char use = first_move;
+    
+    for (size_t i = 1; i < S.size(); ++i) {
+        bool won = false;
+        for (auto c : next) {
+            if ((c == 'R' && S[i] == 'S') || 
+                (c == 'P' && S[i] == 'R') || 
+                (c == 'S' && S[i] == 'P')) {
+                total++;
+                use = c;
+                won = true;
+                break;
+            }
+        }
+        
+        next.clear();
+        for (auto c : hand) {
+            if (c != use) next.push_back(c);
+        }
+    }
+    
+    return total;
+}
+
+int main() {
+    int N;
+    cin >> N;
+    string S;
+    cin >> S;
+    
+    vector<char> hand = {'R', 'P', 'S'};
+    
+    // Try each possible first move and find the best outcome
+    int max_score = 0;
+    for (auto first_move : hand) {
+        int score = 0;
+        
+        // First move
+        if ((first_move == 'R' && S[0] == 'S') ||
+            (first_move == 'P' && S[0] == 'R') ||
+            (first_move == 'S' && S[0] == 'P')) {
+            score = 1 + solve(S, hand, first_move);
+        } else {
+            score = solve(S, hand, first_move);
+        }
+        
+        max_score = max(max_score, score);
+    }
+    
+    cout << max_score << endl;
+    return 0;
+}

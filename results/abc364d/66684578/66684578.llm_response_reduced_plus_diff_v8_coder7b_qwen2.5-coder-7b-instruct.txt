@@ -1,0 +1,92 @@
+To solve this problem efficiently, we need to find the k-th closest point for each query. The brute-force approach of sorting distances for every query would result in \(O(Q \cdot N \log N)\), which is too slow for large inputs. Instead, we can use a more efficient approach involving binary search and prefix sums.
+
+Here's the step-by-step plan:
+
+1. **Sort Points**: First, sort all points \(A_i\) and \(B_j\) separately.
+2. **Prefix Sum Array**: For each point \(B_j\), create a prefix sum array that stores the cumulative count of points \(A_i\) that are closer than or equal to each distance from \(B_j\).
+3. **Binary Search**: For each query, use binary search to find the k-th closest point using the prefix sum array.
+
+Let's implement this approach:
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+#define ll long long
+#define rep(i,n) for(int i=0;i<(int)n;i++)
+#define vi vector<int>
+#define vl vector<ll>
+#define vd vector<double>
+#define vb vector<bool>
+#define vs vector<string>
+#define vc vector<char>
+#define ull unsigned long long
+
+int main() {
+    ios::sync_with_stdio(false); cin.tie(0); cout.tie(0);
+
+    int n, q;
+    cin >> n >> q;
+    
+    vi a(n);
+    rep(i, n) cin >> a[i];
+    
+    vi b(q);
+    vi k(q);
+    rep(i, q) cin >> b[i] >> k[i];
+
+    // Sort points A and B
+    sort(a.begin(), a.end());
+    sort(b.begin(), b.end());
+
+    // Create prefix sum arrays
+    vl prefix_a(n + 1, 0);
+    rep(i, n) prefix_a[i + 1] = prefix_a[i] + (a[i] <= b[0]);
+
+    for (int j = 1; j < q; ++j) {
+        prefix_a[j] += prefix_a[j - 1];
+    }
+
+    // Answer each query
+    for (int j = 0; j < q; ++j) {
+        int target_k = k[j] - 1; // Convert to zero-based index
+        auto it = upper_bound(b.begin(), b.end(), b[j]);
+        int pos = it - b.begin();
+        
+        if (pos == 0) {
+            cout << prefix_a[n - 1] << endl;
+        } else {
+            int lower_count = prefix_a[pos - 1];
+            int remaining = target_k - lower_count;
+            
+            if (remaining >= n - pos) {
+                cout << prefix_a[n - 1] - prefix_a[pos - 1] << endl;
+            } else {
+                int idx = lower_bound(a.begin(), a.end(), b[j]) - a.begin();
+                int rank = idx + remaining;
+                
+                if (rank < n && abs(a[rank] - b[j]) < abs(a[idx] - b[j])) {
+                    cout << prefix_a[n - 1] - prefix_a[pos - 1] << endl;
+                } else {
+                    cout << prefix_a[pos] - prefix_a[pos - 1] << endl;
+                }
+            }
+        }
+    }
+
+    return 0;
+}
+```
+
+### Explanation:
+
+1. **Sorting**: We sort both lists \(A\) and \(B\) to facilitate finding the k-th closest point.
+2. **Prefix Sum Array**: We compute a prefix sum array `prefix_a` where `prefix_a[i]` represents the number of points \(A_i\) that are less than or equal to the smallest element in \(B\). This helps quickly determine how many points are within a certain range.
+3. **Query Processing**:
+   - For each query, we determine the position of \(B_j\) in the sorted list.
+   - Using binary search (`upper_bound`), we find the number of points \(A_i\) that are less than or equal to \(B_j\).
+   - If \(B_j\) is the first element, we directly use the prefix sum array.
+   - Otherwise, we adjust for the lower bound and calculate the remaining points needed to reach the k-th closest point.
+   - Finally, we output the correct distance based on the calculated rank.
+
+This approach ensures that each query is processed in \(O(\log N)\) time, making the solution efficient even for large inputs.

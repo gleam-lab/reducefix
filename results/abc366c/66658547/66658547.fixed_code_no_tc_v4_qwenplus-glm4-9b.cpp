@@ -1,0 +1,27 @@
+#include <iostream>
+#include <unordered_set>
+using namespace std;
+
+int main() {
+    int q;
+    cin >> q;
+    unordered_set<int> balls;
+    
+    while (q--) {
+        int op;
+        cin >> op;
+        if (op == 1) {
+            int x;
+            cin >> x;
+            balls.insert(x);
+        } else if (op == 2) {
+            int x;
+            cin >> x;
+            balls.erase(x);
+        } else if (op == 3) {
+            cout << balls.size() << '\n';
+        }
+    }
+    
+    return 0;
+}

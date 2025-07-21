@@ -1,0 +1,71 @@
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+#define all(x) (x).begin(), (x).end()
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int N, M;
+    ll K;
+    cin >> N >> M >> K;
+    vector<ll> A(N);
+    for (int i = 0; i < N; ++i) {
+        cin >> A[i];
+    }
+
+    // Sort the candidates by their current votes
+    vector<int> idx(N);
+    iota(idx.begin(), idx.end(), 0);
+    sort(idx.begin(), idx.end(), [&](int i, int j) { return A[i] < A[j]; });
+    vector<ll> sorted_A = A;
+    sort(sorted_A.begin(), sorted_A.end());
+
+    // Prefix sums for the sorted votes
+    vector<ll> prefix_sum(N + 1);
+    for (int i = 0; i < N; ++i) {
+        prefix_sum[i + 1] = prefix_sum[i] + sorted_A[i];
+    }
+
+    vector<ll> result(N);
+    
+    auto compute_min_votes = [&](ll my_vote, int pos) {
+        // We need to ensure that fewer than M other candidates have strictly more than my_vote
+        // So at most (M - 1) candidates can have more than my_vote after redistribution
+
+        ll left = 0, right = K + 1;
+        while (left < right) {
+            ll mid = (left + right) / 2;
+            ll target = my_vote + mid;
+
+            // Binary search: find number of candidates with votes > target
+            // Use binary search on sorted_A to find first candidate with votes > target
+            int count = N - (upper_bound(sorted_A.begin(), sorted_A.end(), target) - sorted_A.begin());
+
+            if (count <= M - 1) {
+                right = mid;
+            } else {
+                left = mid + 1;
+            }
+        }
+
+        // Check if it's possible to win even with max remaining votes
+        ll needed = left;
+        if (needed > K) {
+            return -1LL;
+        }
+        return needed;
+    };
+
+    for (int i = 0; i < N; ++i) {
+        ll needed = compute_min_votes(A[i], i);
+        result[i] = needed;
+    }
+
+    for (auto x : result) {
+        cout << x << ' ';
+    }
+}
+```

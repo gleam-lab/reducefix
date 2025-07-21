@@ -1,0 +1,36 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(NULL);
+
+    int N;
+    string S;
+    cin >> N >> S;
+
+    int wins = 0;
+    char prev_move = 'a'; // Track the previous move made by us
+
+    for (char c : S) {
+        char win_move;
+        if (c == 'R') {
+            win_move = 'P';
+        } else if (c == 'P') {
+            win_move = 'S';
+        } else { // c == 'S'
+            win_move = 'R';
+        }
+
+        // If our winning move is different from previous move, we can play it
+        if (win_move != prev_move) {
+            wins++;
+            prev_move = win_move;
+        } else {
+            // We cannot play same move again, so we have to use opponent's move as ours (no win)
+            prev_move = c;
+        }
+    }
+
+    cout << wins << endl;
+}

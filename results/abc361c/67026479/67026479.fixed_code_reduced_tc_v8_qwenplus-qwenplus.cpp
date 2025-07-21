@@ -1,0 +1,37 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    int n, k;
+    cin >> n >> k;
+    vector<int> a(n);
+    for (int i = 0; i < n; ++i) {
+        cin >> a[i];
+    }
+
+    // Number of elements to keep in B
+    int m = n - k;
+
+    // Sliding window approach
+    multiset<int> window;
+    for (int i = 0; i < m; ++i) {
+        window.insert(a[i]);
+    }
+
+    int min_diff = *window.rbegin() - *window.begin();
+
+    for (int i = m; i < n; ++i) {
+        // Remove the element going out of the window
+        auto it = window.find(a[i - m]);
+        if (it != window.end()) {
+            window.erase(it);
+        }
+        // Add the new element coming into the window
+        window.insert(a[i]);
+        // Update minimum difference
+        min_diff = min(min_diff, *window.rbegin() - *window.begin());
+    }
+
+    cout << min_diff << endl;
+    return 0;
+}

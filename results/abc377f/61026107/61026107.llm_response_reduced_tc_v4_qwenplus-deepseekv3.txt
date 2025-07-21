@@ -1,0 +1,169 @@
+To fix this code, we need to ensure that we correctly calculate the number of squares where a new piece can be placed without being captured by any existing pieces. The initial approach had some logical errors in how it handled overlaps between different conditions (row, column, diagonal, and anti-diagonal constraints). 
+
+### Approaches
+1. **Identify Forbidden Squares**: 
+   - **Rows and Columns**: Any square in the same row or column as an existing piece is forbidden.
+   - **Diagonals**: Any square on the same diagonal (i - j = constant) or anti-diagonal (i + j = constant) as an existing piece is forbidden.
+   
+2. **Calculate the Number of Forbidden Squares**:
+   - Use sets to track unique rows, columns, diagonals, and anti-diagonals that are occupied by existing pieces.
+   - Compute the total number of squares forbidden by rows, columns, diagonals, and anti-diagonals.
+   
+3. **Apply Inclusion-Exclusion Principle**:
+   - Overlapping forbidden squares (e.g., a square forbidden by both a row and a diagonal) should be counted only once.
+   - Calculate intersections between rows and columns, rows and diagonals, columns and diagonals, etc., and adjust the total count accordingly.
+
+4. **Final Calculation**:
+   - Subtract the total number of forbidden squares from the total number of squares (N²) to get the number of safe squares.
+   - Ensure that the calculation correctly handles cases where there are no existing pieces (M = 0), which should return all squares as safe (N²).
+
+### Solution Code
+```cpp
+#include <bits/stdc++.h>
+
+using namespace std;
+using ll = long long;
+
+int main() {
+    ios_base::sync_with_stdio(false), cin.tie(nullptr);
+    cout.precision(12);
+
+    ll N, M;
+    cin >> N >> M;
+
+    if (M == 0) {
+        cout << N * N << "\n";
+        return 0;
+    }
+
+    set<ll> rows, cols, diag1, diag2;
+    vector<pair<ll, ll>> pieces(M);
+
+    for (int i = 0; i < M; ++i) {
+        ll a, b;
+        cin >> a >> b;
+        pieces[i] = {a, b};
+        rows.insert(a);
+        cols.insert(b);
+        diag1.insert(a - b);
+        diag2.insert(a + b);
+    }
+
+    ll forbidden = 0;
+
+    // Squares forbidden by rows
+    forbidden += rows.size() * N;
+
+    // Squares forbidden by columns
+    forbidden += cols.size() * N;
+
+    // Squares forbidden by diagonals (a - b = constant)
+    for (auto d : diag1) {
+        ll x_min = max(1LL, 1 + d);
+        ll x_max = min(N, N + d);
+        ll count = x_max - x_min + 1;
+        forbidden += count;
+    }
+
+    // Squares forbidden by anti-diagonals (a + b = constant)
+    for (auto d : diag2) {
+        ll x_min = max(1LL, d - N);
+        ll x_max = min(N, d - 1);
+        ll count = x_max - x_min + 1;
+        forbidden += count;
+    }
+
+    // Now, subtract overlaps counted multiple times.
+    // Intersections between rows and columns
+    for (auto r : rows) {
+        for (auto c : cols) {
+            if (diag1.count(r - c) && diag2.count(r + c)) {
+                forbidden -= 3;
+            } else if (diag1.count(r - c) || diag2.count(r + c)) {
+                forbidden -= 2;
+            } else {
+                forbidden -= 1;
+            }
+        }
+    }
+
+    // Intersections between rows and diagonals (a - b)
+    for (auto r : rows) {
+        for (auto d : diag1) {
+            ll b = r - d;
+            if (b >= 1 && b <= N) {
+                forbidden -= 1;
+                if (cols.count(b) && diag2.count(r + b)) {
+                    forbidden += 1;
+                }
+            }
+        }
+    }
+
+    // Intersections between rows and anti-diagonals (a + b)
+    for (auto r : rows) {
+        for (auto d : diag2) {
+            ll b = d - r;
+            if (b >= 1 && b <= N) {
+                forbidden -= 1;
+                if (cols.count(b) && diag1.count(r - b)) {
+                    forbidden += 1;
+                }
+            }
+        }
+    }
+
+    // Intersections between columns and diagonals (a - b)
+    for (auto c : cols) {
+        for (auto d : diag1) {
+            ll a = c + d;
+            if (a >= 1 && a <= N) {
+                forbidden -= 1;
+                if (rows.count(a) && diag2.count(a + c)) {
+                    forbidden += 1;
+                }
+            }
+        }
+    }
+
+    // Intersections between columns and anti-diagonals (a + b)
+    for (auto c : cols) {
+        for (auto d : diag2) {
+            ll a = d - c;
+            if (a >= 1 && a <= N) {
+                forbidden -= 1;
+                if (rows.count(a) && diag1.count(a - c)) {
+                    forbidden += 1;
+                }
+            }
+        }
+    }
+
+    // Intersections between diagonals and anti-diagonals
+    for (auto d1 : diag1) {
+        for (auto d2 : diag2) {
+            if ((d1 + d2) % 2 != 0) continue;
+            ll a = (d1 + d2) / 2;
+            ll b = (d2 - d1) / 2;
+            if (a >= 1 && a <= N && b >= 1 && b <= N) {
+                forbidden -= 1;
+                if (rows.count(a) && cols.count(b)) {
+                    forbidden += 1;
+                }
+            }
+        }
+    }
+
+    ll safe = N * N - forbidden;
+    cout << safe << "\n";
+
+    return 0;
+}
+```
+
+### Explanation
+1. **Initial Conditions**: If there are no existing pieces (M = 0), all squares are safe, so the answer is N².
+2. **Tracking Forbidden Squares**: We use sets to keep track of rows, columns, diagonals, and anti-diagonals that are occupied by existing pieces.
+3. **Counting Forbidden Squares**: We calculate the total number of squares forbidden by rows, columns, diagonals, and anti-diagonals separately.
+4. **Adjusting for Overlaps**: Using the inclusion-exclusion principle, we adjust the count to avoid double-counting squares that are forbidden by multiple conditions (e.g., a square in both a forbidden row and column).
+5. **Final Result**: The number of safe squares is the total squares minus the adjusted count of forbidden squares. The solution handles all edge cases, including large values of N and M, efficiently.

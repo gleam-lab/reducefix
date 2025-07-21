@@ -1,0 +1,45 @@
+#include <iostream>
+#include <vector>
+#include <set>
+#include <utility>
+
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int64_t N;
+    int M;
+    cin >> N >> M;
+
+    set<pair<int64_t, int64_t>> attacked_or_occupied;
+
+    // Define all 8 possible attack directions
+    const vector<pair<int64_t, int64_t>> directions = {
+        {2, 1}, {1, 2}, {-1, 2}, {-2, 1},
+        {-2, -1}, {-1, -2}, {1, -2}, {2, -1}
+    };
+
+    for (int i = 0; i < M; ++i) {
+        int64_t a, b;
+        cin >> a >> b;
+
+        // Add the piece itself
+        attacked_or_occupied.insert({a, b});
+
+        // Add all squares this piece can attack
+        for (const auto& [dx, dy] : directions) {
+            int64_t na = a + dx;
+            int64_t nb = b + dy;
+            if (1 <= na && na <= N && 1 <= nb && nb <= N) {
+                attacked_or_occupied.insert({na, nb});
+            }
+        }
+    }
+
+    // Total squares minus the number of attacked or occupied squares
+    cout << (int64_t(N) * int64_t(N) - attacked_or_occupied.size()) << "\n";
+
+    return 0;
+}

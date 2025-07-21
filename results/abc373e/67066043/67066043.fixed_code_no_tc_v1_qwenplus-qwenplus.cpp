@@ -1,0 +1,67 @@
+#include <bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+#define all(x) (x).begin(), (x).end()
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int N, M;
+    ll K;
+    cin >> N >> M >> K;
+    vector<ll> A(N);
+    for (ll &a : A) {
+        cin >> a;
+        K -= a;
+    }
+
+    // ord[i] = original index of sorted A[i]
+    vector<int> ord(N);
+    iota(all(ord), 0);
+    sort(ord.begin(), ord.end(), [&](int i, int j) { return A[i] < A[j]; });
+
+    vector<ll> sorted_A = A;
+    sort(all(sorted_A));
+
+    vector<ll> prefix(N + 1);
+    for (int i = 0; i < N; ++i) {
+        prefix[i + 1] = prefix[i] + sorted_A[i];
+    }
+
+    vector<ll> result(N, -1);
+
+    for (int idx = 0; idx < N; ++idx) {
+        int i = ord[idx]; // Original index
+        ll low = 0, high = K + 1;
+
+        while (low < high) {
+            ll mid = (low + high) / 2;
+            ll total_votes_i = A[i] + mid;
+
+            // Binary search to find how many candidates can have > total_votes_i
+            int right = lower_bound(sorted_A.begin(), sorted_A.end(), total_votes_i + 1) - sorted_A.begin();
+
+            // We want at most M-1 candidates with more votes
+            // So we allow up to (M-1) candidates > total_votes_i
+            if (N - right <= M - 1) {
+                high = mid;
+            } else {
+                low = mid + 1;
+            }
+        }
+
+        // Check if it's possible
+        ll final_votes_i = A[i] + low;
+        int right = lower_bound(sorted_A.begin(), sorted_A.end(), final_votes_i + 1) - sorted_A.begin();
+        if (N - right <= M - 1 && low <= K) {
+            result[i] = low;
+        } else {
+            result[i] = -1;
+        }
+    }
+
+    for (ll val : result) {
+        cout << val << ' ';
+    }
+    cout << '\n';
+}

@@ -1,0 +1,50 @@
+#include<bits/stdc++.h>
+#define ll long long
+#define yes cout<<"YES\n"
+#define no cout<<"NO\n"
+#define sp ' '
+using namespace std;
+
+void solve(){
+    ll N;
+    cin >> N;
+    vector<ll> a(N), b(N-1);
+    for(ll i = 0; i < N; i++) cin >> a[i];
+    for(ll i = 0; i < N-1; i++) cin >> b[i];
+
+    sort(a.begin(), a.end());
+    sort(b.begin(), b.end());
+
+    ll minBoxSize = INT_MAX;
+    bool found = false;
+
+    for(ll i = 0; i < N-1 && !found; i++){
+        if(a.back() <= b[i]) {
+            minBoxSize = max(minBoxSize, b[i]);
+            found = true;
+        } else if(a[i] <= b[i] && a[i+1] > b[i]) {
+            minBoxSize = max(minBoxSize, b[i]);
+            found = true;
+        }
+    }
+
+    if(!found) {
+        if(a.back() > b[N-2]) {
+            cout << -1 << endl;
+            return;
+        }
+        minBoxSize = a.back();
+    }
+
+    cout << minBoxSize << endl;
+}
+
+int main(){
+    ios_base::sync_with_stdio(0);
+    cin.tie(0);
+    cout.tie(0);
+
+    solve();
+
+    return 0;
+}

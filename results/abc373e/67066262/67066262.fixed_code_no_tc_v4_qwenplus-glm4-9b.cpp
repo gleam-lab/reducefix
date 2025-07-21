@@ -1,0 +1,69 @@
+#include <bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+#define all(x) (x).begin(), (x).end()
+
+int main() {
+    ios_base::sync_with_stdio(0);
+    cin.tie(0);
+    int n, m;
+    ll k;
+    cin >> n >> m >> k;
+    vector<ll> a(n);
+    for (int i = 0; i < n; i++) {
+        cin >> a[i];
+    }
+    vector<ll> sorted_a(a);
+    sort(all(sorted_a));
+    vector<ll> pref(n+1);
+    ll sum = 0;
+    for (int i = 0; i < n; i++) {
+        sum += a[i];
+        pref[i+1] = sum;
+    }
+    
+    vector<ll> ans(n, -1);
+    vector<bool> can_win(n, true); // Initially assume all can win
+
+    // Determine who can't win by checking if they are not in the top m
+    for (int i = 0; i < n && can_win[i]; i++) {
+        if (pref[i+1] - pref[n-m] < sorted_a[i]) {
+            can_win[i] = false;
+        }
+    }
+    
+    // Now, for those who can win, calculate the minimum votes they need
+    for (int i = 0; i < n; i++) {
+        if (!can_win[i]) {
+            continue;
+        }
+        // Find the closest one below who can win
+        int low = 0, high = i - 1;
+        while (high - low > 1) {
+            int mid = low + (high - low) / 2;
+            if (pref[i] - pref[mid] > sorted_a[mid]) {
+                high = mid;
+            } else {
+                low = mid;
+            }
+        }
+        ll votes_needed = sorted_a[low] + 1 - (pref[i] - pref[low]);
+        if (votes_needed > k - sum) {
+            can_win[i] = false;
+            ans[i] = -1;
+        } else {
+            ans[i] = votes_needed;
+        }
+    }
+    
+    for (int i = 0; i < n; i++) {
+        if (can_win[i]) {
+            cout << ans[i] << ' ';
+        } else {
+            cout << -1 << ' ';
+        }
+    }
+    cout << '\n';
+
+    return 0;
+}

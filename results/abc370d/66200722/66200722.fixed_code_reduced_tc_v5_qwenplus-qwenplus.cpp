@@ -1,0 +1,105 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+void solve();
+
+int main() {
+    std::cin.tie(nullptr);
+    std::ios::sync_with_stdio(false);
+    solve();
+}
+
+struct UnionFind {
+    vector<int> parent;
+    vector<int> size;
+    
+    UnionFind(int n) {
+        parent.resize(n);
+        size.resize(n, 1);
+        for (int i = 0; i < n; ++i) parent[i] = i;
+    }
+    
+    int find(int x) {
+        if (parent[x] != x) parent[x] = find(parent[x]);
+        return parent[x];
+    }
+    
+    void unite(int x, int y) {
+        int xr = find(x);
+        int yr = find(y);
+        if (xr == yr) return;
+        if (size[xr] < size[yr]) swap(xr, yr);
+        parent[yr] = xr;
+        size[xr] += size[yr];
+    }
+};
+
+void solve() {
+    int H, W, Q;
+    cin >> H >> W >> Q;
+    
+    // Use sets to track walls in each row and column
+    vector<set<int>> row(W), col(H);
+    
+    // Initialize all cells as having walls
+    long long totalWalls = 1LL * H * W;
+    
+    while (Q--) {
+        int r, c;
+        cin >> r >> c;
+        --r; --c;
+        
+        if (row[c].find(r) == row[c].end()) {
+            // Cell has a wall
+            
+            // Remove the wall
+            row[c].insert(r);
+            col[r].insert(c);
+            
+            totalWalls--;
+        } else {
+            // Cell doesn't have a wall, look in four directions
+            
+            // Up
+            auto it = col[r].lower_bound(c);
+            if (it != col[r].begin()) {
+                --it;
+                int x = *it;
+                // Remove this wall
+                col[r].erase(it);
+                row[x].erase(row[x].find(r));
+                totalWalls--;
+            }
+            
+            // Down
+            it = col[r].upper_bound(c);
+            if (it != col[r].end()) {
+                int x = *it;
+                col[r].erase(it);
+                row[x].erase(row[x].find(r));
+                totalWalls--;
+            }
+            
+            // Left
+            auto it2 = row[c].lower_bound(r);
+            if (it2 != row[c].begin()) {
+                --it2;
+                int y = *it2;
+                row[c].erase(it2);
+                col[y].erase(col[y].find(c));
+                totalWalls--;
+            }
+            
+            // Right
+            it2 = row[c].upper_bound(r);
+            if (it2 != row[c].end()) {
+                int y = *it2;
+                row[c].erase(it2);
+                col[y].erase(col[y].find(c));
+                totalWalls--;
+            }
+        }
+    }
+    
+    cout << totalWalls << endl;
+}

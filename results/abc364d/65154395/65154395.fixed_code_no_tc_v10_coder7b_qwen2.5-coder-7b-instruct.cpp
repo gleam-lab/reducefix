@@ -1,0 +1,41 @@
+#include<bits/stdc++.h>
+#define endl "\n"
+using namespace std;
+typedef long long ll;
+
+const int INF = 0x3f3f3f3f;
+const int N = 1e5 + 5;
+vector<int> a[N], b[N];
+
+void solve(void) {
+    int n, q; cin >> n >> q;
+    for(int i = 0; i < n; i++) {
+        int x; cin >> x;
+        a[x].push_back(i);
+    }
+    for(int i = 0; i < q; i++) {
+        int x, k; cin >> x >> k;
+        b[x].push_back(k);
+    }
+
+    for(int i = 0; i < N; i++) {
+        sort(a[i].begin(), a[i].end());
+    }
+
+    for(int i = 0; i < N; i++) {
+        for(auto& k : b[i]) {
+            if(k == 0 || a[i].size() < k) {
+                cout << 0 << endl;
+                continue;
+            }
+            cout << abs(i - a[i][k - 1]) << endl;
+        }
+    }
+}
+
+int main(){
+    ios::sync_with_stdio(0), cin.tie(0), cout.tie(0);
+    int t = 1; //cin >> t;
+    while (t--) solve();
+    return 0;
+}

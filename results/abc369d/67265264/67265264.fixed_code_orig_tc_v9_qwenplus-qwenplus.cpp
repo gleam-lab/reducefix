@@ -1,0 +1,45 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define Youssef ios_base::sync_with_stdio(0);cin.tie(0);cout.tie(0);
+#define asc(v) v.begin(), v.end()
+#define desc(v) v.rbegin(), v.rend()
+#define ll long long
+#define mod 1000000007
+const int N = 200005; // Slightly more than 2e5 to be safe
+int n;
+vector<ll> v;
+ll dp[N][2];
+
+// Memoization-based DP function
+ll solve(int i, bool parity) {
+    if (i == n)
+        return 0;
+
+    if (dp[i][parity] != -1)
+        return dp[i][parity];
+
+    // At each step, we can either take the element with appropriate multiplier or skip it
+    ll take = solve(i + 1, !parity) + (parity ? v[i] : 2 * v[i]);
+    ll skip = solve(i + 1, parity);
+
+    return dp[i][parity] = max(take, skip);
+}
+
+void run() {
+    cin >> n;
+    v.resize(n);
+    for (int i = 0; i < n; ++i)
+        cin >> v[i];
+
+    memset(dp, -1, sizeof dp);
+    cout << solve(0, 1); // Start with parity 1 (odd index means multiply by 1)
+}
+
+int main() {
+    Youssef
+    int q = 1;
+    //cin >> q;
+    while (q--)
+        run();
+    return 0;
+}

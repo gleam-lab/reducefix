@@ -1,0 +1,46 @@
+#include<bits/stdc++.h>
+
+using namespace std;
+using ll = long long;
+
+#define MOD 998244353
+
+ll n, m;
+ll a[1005], b[1005];
+
+ll solve() {
+    ll r1 = 0, r2 = 0, r4 = 0;
+
+    for (int i = 0; i < m; i++) {
+        if (a[i] == b[i]) r4++;
+        if (a[i] == 1) r1++;
+        if (b[i] == 1) r2++;
+    }
+
+    ll ans = (n - r1) * (n - r2);
+
+    // All numbers where a[i] + b[i] = n + 1 (or n - 1 for upper triangle)
+    if (r4 % 2 == 1) ans -= n;
+    ans = (ans + MOD) % MOD;
+
+    // Adjust for over-subtraction
+    for (int i = 0; i < m; i++) {
+        if (a[i] == 1 && b[i] == 1) ans = (ans - 1 + MOD) % MOD;
+        if (a[i] == n && b[i] == n) ans = (ans - 1 + MOD) % MOD;
+        if (a[i] == 1 && b[i] == n) ans = (ans + 1) % MOD;
+        if (a[i] == n && b[i] == 1) ans = (ans + 1) % MOD;
+    }
+
+    return ans;
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(NULL);
+    cin >> n >> m;
+    for (int i = 0; i < m; i++) {
+        cin >> a[i] >> b[i] - 1;  // Subtract 1 to convert 1-based to 0-based
+    }
+    cout << solve() << '\n';
+    return 0;
+}

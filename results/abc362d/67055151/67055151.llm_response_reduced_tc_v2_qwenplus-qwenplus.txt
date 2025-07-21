@@ -1,0 +1,115 @@
+To solve this problem efficiently, we need to compute the **minimum path weight** from vertex `1` (0-based index) to every other vertex in a weighted undirected graph. The path weight includes both the **vertex weights** and the **edge weights** along the path.
+
+---
+
+### Key Observations:
+
+- Since each edge connects two vertices bidirectionally, and the graph is connected, we can use **Dijkstra's algorithm**, which is ideal for graphs with non-negative weights.
+- The total cost of a path should include:
+  - Vertex weights of all nodes on the path
+  - Edge weights between those nodes
+- However, instead of computing it separately, we can model this as a modified graph where the **cost of moving to a neighbor** includes:
+  - The edge weight
+  - The weight of the destination vertex
+
+---
+
+### Why Dijkstra’s Algorithm?
+
+- We are looking for the shortest (minimum-weight) path from one source (`vertex 1`) to all other nodes.
+- Since all weights (vertex and edge) are non-negative, **Dijkstra's algorithm** is appropriate and efficient when implemented using a priority queue (`std::priority_queue`).
+- Time complexity: **O((N + M) log N)** — acceptable given constraints.
+
+---
+
+### Fixes in Your Code:
+
+The issue lies in how you're handling the costs and pushing into the priority queue. Specifically:
+
+- You're including the destination node's vertex weight twice.
+- You're not initializing distances properly.
+- You're using a custom comparator incorrectly and inefficiently.
+
+We'll rewrite the core logic to implement standard Dijkstra’s algorithm with the correct cost computation.
+
+---
+
+### ✅ Corrected and Optimized C++ Code:
+
+```cpp
+#include <bits/stdc++.h>
+
+using namespace std;
+
+using ll = long long;
+constexpr ll INF = 5LL << 60;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    ll N, M;
+    cin >> N >> M;
+
+    vector<ll> A(N);
+    for (ll i = 0; i < N; ++i) {
+        cin >> A[i];
+    }
+
+    vector<vector<pair<ll, ll>>> graph(N);
+    for (ll i = 0; i < M; ++i) {
+        ll u, v, b;
+        cin >> u >> v >> b;
+        u--, v--;
+        graph[u].emplace_back(v, b);
+        graph[v].emplace_back(u, b);
+    }
+
+    // dist[i] = minimum path weight from node 0 to node i
+    vector<ll> dist(N, INF);
+    dist[0] = A[0]; // Include starting node's vertex weight
+
+    // Priority Queue: (current distance, node)
+    priority_queue<pair<ll, ll>, vector<pair<ll, ll>>, greater<>> pq;
+    pq.emplace(dist[0], 0);
+
+    while (!pq.empty()) {
+        auto [d, u] = pq.top();
+        pq.pop();
+
+        if (d > dist[u]) continue;
+
+        for (auto [v, b] : graph[u]) {
+            ll new_cost = dist[u] + b + A[v]; // path so far + edge + destination vertex
+            if (new_cost < dist[v]) {
+                dist[v] = new_cost;
+                pq.emplace(dist[v], v);
+            }
+        }
+    }
+
+    // Output result for nodes 2 to N (i.e., indices 1 to N-1)
+    for (ll i = 1; i < N; ++i) {
+        cout << dist[i] << " ";
+    }
+    cout << '\n';
+
+    return 0;
+}
+```
+
+---
+
+### ✅ Explanation of Key Fix:
+
+- `dist[0] = A[0];` → Start by including the vertex weight of node 1 (index 0).
+- When moving to a new node `v`, the cost becomes:
+  ```cpp
+  dist[u] + b + A[v]
+  ```
+  This ensures that:
+  - We carry over the accumulated path cost up to `u`
+  - Add the edge weight `b`
+  - Add the vertex weight of `v` only once
+
+This approach guarantees correctness and efficiency.

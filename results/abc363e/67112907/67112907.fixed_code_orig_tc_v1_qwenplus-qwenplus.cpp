@@ -1,0 +1,70 @@
+// Copyright (C) 2025 hanziwei
+// All rights reserved
+
+#include <bits/stdc++.h>
+
+using u32 = unsigned;
+using i64 = long long;
+using u64 = unsigned long long;
+
+constexpr int d[4][2] = {{0, 1}, {0, -1}, {1, 0}, {-1, 0}};
+
+int32_t main() {
+	std::ios::sync_with_stdio(false);
+	std::cin.tie(nullptr);
+
+	int H, W, Y;
+	std::cin >> H >> W >> Y;
+
+	std::vector<std::vector<int>> A(H, std::vector<int>(W));
+	for (int i = 0; i < H; ++i) {
+		for (int j = 0; j < W; ++j) {
+			std::cin >> A[i][j];
+		}
+	}
+
+	// Add all border cells to the priority queue
+	std::priority_queue<std::array<int, 3>, std::vector<std::array<int, 3>>, std::greater<>> pq;
+	std::vector<std::vector<char>> vis(H, std::vector<char>(W, 0));
+
+	// Mark and add all boundary cells
+	for (int i = 0; i < H; ++i) {
+		for (int j = 0; j < W; ++j) {
+			if (i == 0 || i == H - 1 || j == 0 || j == W - 1) {
+				pq.push({A[i][j], i, j});
+				vis[i][j] = 1;
+			}
+		}
+	}
+
+	int ans = H * W;
+	std::vector<int> result(Y); // Store results for each year
+
+	for (int year = 0; year < Y; ++year) {
+		// Process all cells in the priority queue whose height is <= current sea level (year)
+		while (!pq.empty()) {
+			auto [h, x, y] = pq.top();
+			if (h > year) break;
+			pq.pop();
+			if (!vis[x][y]) continue;
+			ans--; // This cell sinks
+
+			// Explore neighbors
+			for (int dir = 0; dir < 4; ++dir) {
+				int dx = x + d[dir][0];
+				int dy = y + d[dir][1];
+				if (dx >= 0 && dx < H && dy >= 0 && dy < W && !vis[dx][dy]) {
+					vis[dx][dy] = 1;
+					pq.push({A[dx][dy], dx, dy});
+				}
+			}
+		}
+		result[year] = ans;
+	}
+
+	for (int i = 0; i < Y; ++i) {
+		std::cout << result[i] << "\n";
+	}
+
+	return 0;
+}

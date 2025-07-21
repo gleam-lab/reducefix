@@ -1,0 +1,74 @@
+The issue with the original code is that it incorrectly calculates the path weight by including the vertex weights multiple times. Specifically, when moving from vertex u to vertex v, it adds the weight of v (A[v-1]) to the total distance, even though v's weight should only be counted once when visiting it for the first time.
+
+To fix this, we need to modify the Dijkstra's algorithm implementation to properly account for vertex weights. The correct approach is:
+1. The initial distance to vertex 1 is just A[0] (its own weight)
+2. For each edge (u,v) with weight B, the distance to v is distance[u] + B + A[v-1]
+3. Similarly, the distance to u is distance[v] + B + A[u-1]
+
+Here's the corrected code:
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int N, M;
+    cin >> N >> M;
+    vector<ll> A(N);
+    for (int i = 0; i < N; ++i) cin >> A[i];
+    
+    vector<vector<pair<int, ll>>> adj(N+1);
+    for (int j = 0; j < M; ++j) {
+        int u, v;
+        ll b;
+        cin >> u >> v >> b;
+        adj[u].emplace_back(v, b);
+        adj[v].emplace_back(u, b);
+    }
+    
+    vector<ll> dist(N+1, LLONG_MAX);
+    dist[1] = A[0];
+    priority_queue<pair<ll, int>, vector<pair<ll, int>>, greater<pair<ll, int>>> pq;
+    pq.emplace(dist[1], 1);
+    
+    while (!pq.empty()) {
+        auto [d_u, u] = pq.top();
+        pq.pop();
+        
+        if (d_u > dist[u]) continue;
+        
+        for (auto [v, b] : adj[u]) {
+            ll new_dist = d_u + b + A[v-1];
+            if (new_dist < dist[v]) {
+                dist[v] = new_dist;
+                pq.emplace(new_dist, v);
+            }
+        }
+    }
+    
+    for (int i = 2; i <= N; ++i) {
+        cout << dist[i] << " \n"[i == N];
+    }
+    
+    return 0;
+}
+```
+
+Key changes made:
+1. Used `long long` instead of `int` to prevent overflow
+2. Initialized distances with `LLONG_MAX` instead of a fixed large value
+3. Properly accounted for vertex weights in the distance calculation
+4. Added priority queue optimization to skip outdated entries
+5. Used more efficient input/output handling with `ios_base::sync_with_stdio(false)`
+6. Fixed the edge weight addition logic to correctly include vertex weights only once per vertex
+
+This implementation properly handles the path weight calculation by:
+- Starting with vertex 1's weight
+- For each edge traversal, only adding the edge weight and the destination vertex's weight
+- Ensuring each vertex's weight is only counted once in the path (when first visited)
+
+The algorithm maintains O((N+M) log N) time complexity which is suitable for the problem constraints.

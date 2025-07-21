@@ -1,0 +1,52 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+const int N = 2e5 + 10, INF = 1e9 + 7;
+
+vector<vector<int>> graph(N);
+vector<bool> visited(N);
+int min_cycle_length = INF;
+
+// DFS function with path tracking to detect cycles and compute length
+void dfs(int u, int depth, vector<int>& path, vector<bool>& in_stack) {
+    visited[u] = true;
+    path.push_back(u);
+    in_stack[u] = true;
+
+    for (int v : graph[u]) {
+        if (!visited[v]) {
+            dfs(v, depth + 1, path, in_stack);
+            if (min_cycle_length != INF) return; // Early exit if cycle already found
+        } else if (in_stack[v]) {
+            // Found a back edge forming a cycle
+            int cycle_len = depth - distance(path.begin(), find(path.begin(), path.end(), v)) + 1;
+            min_cycle_length = min(min_cycle_length, cycle_len);
+        }
+    }
+
+    path.pop_back();
+    in_stack[u] = false;
+}
+
+void solve() {
+    int n, m;
+    cin >> n >> m;
+    for (int i = 0; i < m; ++i) {
+        int u, v;
+        cin >> u >> v;
+        graph[u].push_back(v);
+    }
+
+    vector<int> path;
+    vector<bool> in_stack(N);
+    dfs(1, 0, path, in_stack);
+
+    cout << (min_cycle_length == INF ? -1 : min_cycle_length) << endl;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    solve();
+    return 0;
+}

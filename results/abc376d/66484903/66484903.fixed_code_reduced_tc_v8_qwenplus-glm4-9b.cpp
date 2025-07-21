@@ -1,0 +1,52 @@
+#include<bits/stdc++.h>
+#define INF 0x3f3f3f3f3f3f3f3f
+using namespace std;
+typedef long long ll;
+const int MAXN=2e5+10;
+vector<ll> vec[MAXN];
+queue<ll> q;
+ll step[MAXN];
+bool vis[MAXN];
+
+int main(){
+    ll n,m,u,v;
+    scanf("%lld %lld",&n,&m);
+    if (n == 1) {
+        printf("0");
+        return 0;
+    }
+    
+    for(ll i=1;i<=m;i++){
+        scanf("%lld %lld",&u,&v);
+        vec[u].push_back(v);
+    }
+    
+    // Start BFS from node 1
+    q.push(1);
+    vis[1] = true;
+    step[1] = 0;
+    
+    while(!q.empty()){
+        ll top = q.front();
+        q.pop();
+        
+        for(ll i=0;i<vec[top].size();i++){
+            ll to = vec[top][i];
+            if(!vis[to]){
+                vis[to] = true;
+                step[to] = step[top] + 1;
+                q.push(to);
+                
+                // If we reach node 1 in another path, print the shortest step count
+                if(to == 1){
+                    printf("%lld",step[to]);
+                    return 0;
+                }
+            }
+        }
+    }
+    
+    // If we cannot reach node 1 from node 1, print -1
+    printf("-1");
+    return 0;
+}

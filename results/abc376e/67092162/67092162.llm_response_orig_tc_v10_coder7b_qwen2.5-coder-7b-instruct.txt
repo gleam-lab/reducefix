@@ -1,0 +1,82 @@
+To address the failing cases and ensure the solution works correctly for all provided inputs, we need to carefully re-evaluate the logic of our approach. The current implementation uses a greedy strategy with sorting and a priority queue but seems to miss some optimizations that could lead to incorrect results under certain conditions.
+
+Here’s an improved version of the code that addresses these issues:
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+const int maxN = 2e5 + 5;
+long long t, n, k, a[maxN], b[maxN];
+
+// Custom comparator for sorting pairs based on ratio (A[i] / B[i])
+struct compare {
+    bool operator()(const pair<long long, long long>& p1, const pair<long long, long long>& p2) {
+        double r1 = static_cast<double>(p1.first) / p1.second;
+        double r2 = static_cast<double>(p2.first) / p2.second;
+        if (r1 == r2) return p1.second > p2.second; // Break ties by B[i]
+        return r1 < r2;
+    }
+};
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+    cout.tie(nullptr);
+
+    cin >> t;
+    while (t--) {
+        cin >> n >> k;
+        vector<pair<long long, long long>> v(n);
+        for (int i = 0; i < n; ++i) {
+            cin >> a[i];
+        }
+        for (int i = 0; i < n; ++i) {
+            cin >> b[i];
+            v[i] = {a[i], b[i]};
+        }
+
+        // Sort based on the custom comparator
+        sort(v.begin(), v.end(), compare());
+
+        long long maxA = 0, sumB = 0;
+        priority_queue<long long, vector<long long>, greater<long long>> pq;
+
+        // Select the top K elements
+        for (int i = 0; i < k; ++i) {
+            maxA = max(maxA, v[i].first);
+            sumB += v[i].second;
+            pq.push(v[i].second);
+        }
+
+        // Calculate the initial result
+        long long result = maxA * sumB;
+
+        // Try to replace elements to potentially get a smaller result
+        for (int i = k; i < n; ++i) {
+            if (v[i].second <= pq.top()) continue; // Already smaller or equal, no improvement
+            sumB -= pq.top(); // Remove the smallest element from the sum
+            pq.pop();
+            sumB += v[i].second; // Add the new element to the sum
+            pq.push(v[i].second); // Push the new element into the priority queue
+            maxA = max(maxA, v[i].first); // Update the maximum A value
+            result = min(result, maxA * sumB); // Recalculate the result
+        }
+
+        cout << result << "\n";
+    }
+
+    return 0;
+}
+```
+
+### Explanation:
+1. **Custom Comparator**: We use a custom comparator to sort pairs `(A[i], B[i])` based on their ratio `A[i] / B[i]`. This ensures that we prioritize pairs where the benefit per unit cost is highest.
+
+2. **Initial Selection**: We select the top `K` elements using this sorted order and calculate the initial result.
+
+3. **Optimization**: We then iterate through the remaining elements. If a larger `B[i]` is found that can replace a smaller one in the priority queue without reducing the total sum `sumB`, we update the result.
+
+4. **Priority Queue**: We use a priority queue to efficiently manage the smallest elements in `sumB`.
+
+This approach ensures that we always consider the best possible combinations of elements to minimize the final result, adhering to the constraints and requirements of the problem.

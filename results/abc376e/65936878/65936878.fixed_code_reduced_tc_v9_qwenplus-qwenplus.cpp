@@ -1,0 +1,57 @@
+#include <bits/stdc++.h>
+#define int long long
+#define f first
+#define s second
+using namespace std;
+
+signed main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t; cin >> t;
+    while (t--) {
+        int n, k; cin >> n >> k;
+        vector<pair<int, int>> items(n);
+        for (int i = 0; i < n; ++i) cin >> items[i].f;
+        for (int i = 0; i < n; ++i) cin >> items[i].s;
+        
+        // Sort items by A_i in ascending order
+        sort(items.begin(), items.end());
+        
+        // Max-heap to maintain the K smallest B_i values among the first i+1 items
+        priority_queue<int> max_heap;
+        int sum_b = 0;
+        
+        // Initialize with first K-1 items
+        for (int i = 0; i < k - 1; ++i) {
+            sum_b += items[i].s;
+            max_heap.push(items[i].s);
+        }
+        
+        int ans = LLONG_MAX;
+        
+        // Try selecting the i-th item as the maximum A_i in the subset
+        for (int i = k - 1; i < n; ++i) {
+            // Current candidate for max A_i is items[i].f
+            // We need to choose K items where this is the max A
+            // So we take any K-1 from the previous ones + this one
+            
+            // Add current B_i to make total K items temporarily
+            sum_b += items[i].s;
+            max_heap.push(items[i].s);
+            
+            // If we have more than K items in our selection, remove the largest B (to keep K smallest)
+            if (max_heap.size() > k) {
+                sum_b -= max_heap.top();
+                max_heap.pop();
+            }
+            
+            // Calculate score for this configuration
+            ans = min(ans, items[i].f * sum_b);
+        }
+        
+        cout << ans << '\n';
+    }
+
+    return 0;
+}

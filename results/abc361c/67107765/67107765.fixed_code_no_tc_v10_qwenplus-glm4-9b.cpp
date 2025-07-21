@@ -1,0 +1,53 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+
+using namespace std;
+
+int main() {
+    int n, k;
+    cin >> n >> k;
+    vector<int> a(n);
+    for (int i = 0; i < n; ++i) {
+        cin >> a[i];
+    }
+
+    // Sort the array to easily find the minimum and maximum values
+    sort(a.begin(), a.end());
+
+    // We need to remove k elements to get the minimum possible range
+    // We can remove k elements from either end of the array
+    // or from the middle if k is odd
+
+    if (k <= n) {
+        // Calculate the range by removing k elements
+        int max_val = a[n - k] - a[k];
+        int min_val = max_val;
+        int mid = (n - k) / 2;
+
+        // We consider two cases:
+        // 1. Removing k elements from the ends
+        // 2. Removing k elements from the middle if k is odd
+
+        // Case 1: Removing from the ends
+        for (int i = 0; i < k; ++i) {
+            max_val = max(max_val, a[n - k + i] - a[i]);
+        }
+
+        // Case 2: Removing from the middle if k is odd
+        if (k % 2 != 0) {
+            for (int i = 0; i < k; ++i) {
+                min_val = min(min_val, a[mid + i] - a[mid - i]);
+            }
+        }
+
+        // The result is the maximum of the two cases
+        cout << max(max_val, min_val) << endl;
+    } else {
+        // If k is larger than n, it's not possible to remove k elements
+        // from the array, as there aren't enough elements
+        cout << 0 << endl;
+    }
+
+    return 0;
+}

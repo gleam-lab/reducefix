@@ -1,0 +1,49 @@
+#include <iostream>
+#include <algorithm>
+#include <vector>
+#include <set>
+
+using namespace std;
+
+typedef long long ll;
+
+const int MAXN = 1e3 + 5;
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(0);
+
+    int n, m;
+    cin >> n >> m;
+
+    vector<int> rows(MAXN), cols(MAXN), ups[2], downs[2];
+    set<int> unique_rows, unique_cols, unique_ups[2], unique_downs[2];
+
+    for(int i = 0; i < m; ++i) {
+        int x, y;
+        cin >> x >> y;
+        --x, --y; // Convert to 0-based indexing
+        rows[y] = x;
+        cols[x] = y;
+        ups[(x + y) & 1].push_back(y - x);
+        downs[(x + y) & 1].push_back(x + y);
+        unique_rows.insert(x);
+        unique_cols.insert(y);
+        unique_ups[(x + y) & 1].insert(y - x);
+        unique_downs[(x + y) & 1].insert(x + y);
+    }
+
+    ll total_empty_squares = 1LL * n * n - m;
+
+    for(auto& u : unique_ups[0]) total_empty_squares -= unique_ups[0].size() - unique_ups[0].order_of_key(u);
+    for(auto& u : unique_ups[1]) total_empty_squares -= unique_ups[1].size() - unique_ups[1].order_of_key(u);
+    for(auto& d : unique_downs[0]) total_empty_squares -= unique_downs[0].size() - unique_downs[0].order_of_key(d);
+    for(auto& d : unique_downs[1]) total_empty_squares -= unique_downs[1].size() - unique_downs[1].order_of_key(d);
+
+    for(auto& r : unique_rows) total_empty_squares -= unique_rows.size() - unique_rows.order_of_key(r);
+    for(auto& c : unique_cols) total_empty_squares -= unique_cols.size() - unique_cols.order_of_key(c);
+
+    cout << total_empty_squares << endl;
+
+    return 0;
+}

@@ -1,0 +1,84 @@
+To fix this code, we need to address several issues:
+
+1. **Edge Weight Calculation**: The current code incorrectly adds the vertex weight `val[a]` or `val[b]` to the edge weight `w` when constructing the adjacency list. However, the problem defines the path weight as the sum of the weights of vertices and edges on the path. This means the vertex weights should be included exactly once for each vertex visited, including the starting and ending vertices.
+
+2. **Priority Queue Type**: The priority queue is declared with `greater<pair<int, int>>`, but it should be `greater<pair<ll, int>>` to correctly handle long long values.
+
+3. **Vertex Weight Inclusion**: The final output adds `val[i]` to `dist[i]`, which might incorrectly double-count the vertex weight for the destination vertex. The vertex weight should be included in the path weight calculation but not added separately at the end.
+
+4. **Initialization**: The initial distance for vertex 0 (1 in 1-based) should be `val[0]` since the path starts at vertex 1 and includes its weight.
+
+Here's the corrected code:
+
+```cpp
+#include <iostream>
+#include <vector>
+#include <queue>
+#include <algorithm>
+#include <climits>
+using namespace std;
+typedef long long ll;
+
+const ll INF = LLONG_MAX;
+
+void solve() {
+    int n, m;
+    cin >> n >> m;
+
+    vector<ll> val(n);
+    for (ll& i : val) cin >> i;
+
+    vector<vector<pair<int, ll>>> adj(n);
+
+    for (int i = 0; i < m; i++) {
+        int a, b;
+        ll w;
+        cin >> a >> b >> w;
+        a--, b--;
+        adj[a].push_back({b, w});
+        adj[b].push_back({a, w});
+    }
+
+    vector<ll> dist(n, INF);
+    dist[0] = val[0];
+    priority_queue<pair<ll, int>, vector<pair<ll, int>>, greater<pair<ll, int>>> pq;
+    pq.push({dist[0], 0});
+
+    while (!pq.empty()) {
+        auto [current_dist, u] = pq.top();
+        pq.pop();
+        if (current_dist > dist[u]) continue;
+
+        for (auto [v, w] : adj[u]) {
+            ll new_dist = current_dist + w + val[v];
+            if (new_dist < dist[v]) {
+                dist[v] = new_dist;
+                pq.push({dist[v], v});
+            }
+        }
+    }
+
+    for (int i = 1; i < n; i++) {
+        cout << dist[i] << " ";
+    }
+    cout << endl;
+}
+
+int main() {
+    ios::sync_with_stdio(0);
+    cin.tie(0); cout.tie(0);
+
+    int t = 1;
+    while (t--) {
+        solve();
+    }
+
+    return 0;
+}
+```
+
+### Explanation:
+1. **Edge Weight Calculation**: The adjacency list now only stores the edge weights `w` without adding vertex weights. Vertex weights are included during the distance calculation in the Dijkstra's algorithm.
+2. **Priority Queue**: The priority queue correctly uses `ll` for the distance values to prevent overflow and ensure correct comparisons.
+3. **Vertex Weight Inclusion**: The initial distance for vertex 0 (1 in 1-based) is set to `val[0]` because the path starts at vertex 1, and its weight is included. For each adjacent vertex `v`, the new distance is calculated as `current_dist + w + val[v]`, ensuring vertex weights are included exactly once for each vertex in the path.
+4. **Output**: The distances printed are the correct minimum path weights from vertex 1 to each vertex `i`, including all vertex and edge weights along the path.

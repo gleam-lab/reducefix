@@ -1,0 +1,29 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    int n;
+    cin >> n;
+
+    // Using a vector to store points for later processing
+    vector<pair<int, int>> points(n);
+    for (int i = 0; i < n; i++) {
+        cin >> points[i].first >> points[i].second;
+    }
+
+    // Initialize the total distance with the distance from origin to the first point
+    double total_distance = hypot(points[0].first, points[0].second);
+    
+    // Calculate the distance between subsequent points
+    for (int i = 1; i < n; ++i) {
+        total_distance += hypot(points[i].first - points[i-1].first, points[i].second - points[i-1].second);
+    }
+
+    // Add the distance from the last point back to the origin
+    total_distance += hypot(points[n-1].first, points[n-1].second);
+
+    // Print the total distance with a precision of 10 decimal places
+    printf("%.10f\n", total_distance);
+
+    return 0;
+}

@@ -1,0 +1,110 @@
+To solve this problem correctly and efficiently, we need to compute the **minimum path weight** from vertex `1` (0-based index) to every other vertex in a weighted undirected graph. The path weight includes:
+
+- The **vertex weights** (`A[i]`)
+- The **edge weights** (`B[j]`)
+
+This is essentially a variation of Dijkstra's algorithm, where instead of summing only edge weights, we also include the **vertex weights** along the path.
+
+### Key Observations:
+- We are given both **vertex** and **edge** weights.
+- Each time you move from one vertex to another, you pay:
+  - The vertex weight of the destination.
+  - The edge weight between them.
+
+Thus, when moving from node `u` to node `v` with edge weight `b`, the total cost to reach `v` is:
+```
+cost_to_v = cost_to_u + b + A[v]
+```
+
+We initialize the starting node (node 0) with its own vertex weight `A[0]`.
+
+We'll use a **priority queue** (min-heap) to implement Dijkstra’s algorithm, ensuring we always expand the minimum-cost path first.
+
+---
+
+### Critical Fix in Your Code:
+Your code uses an incorrect priority queue comparison and an unnecessarily complex structure that causes incorrect ordering and wrong results. Specifically:
+- You're pushing `(current_node, current_edge_weight, current_cost)` into the heap but computing the cost incorrectly.
+- You're adding `a[node]` again in the next step, which leads to double-counting.
+
+---
+
+### Corrected and Optimized C++ Code:
+```cpp
+#include <bits/stdc++.h>
+
+using namespace std;
+
+using ll = long long;
+using pll = pair<ll, ll>;
+constexpr ll INF = 5e18;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    ll N, M;
+    cin >> N >> M;
+
+    vector<ll> A(N);
+    for (ll i = 0; i < N; ++i) {
+        cin >> A[i];
+    }
+
+    // Build graph: adjacency list of (neighbor, edge weight)
+    vector<vector<pll>> graph(N);
+    for (ll i = 0; i < M; ++i) {
+        ll u, v, b;
+        cin >> u >> v >> b;
+        u--; v--;
+        graph[u].push_back({v, b});
+        graph[v].push_back({u, b});
+    }
+
+    // Dijkstra's algorithm
+    vector<ll> dist(N, INF);
+    priority_queue<pll, vector<pll>, greater<pll>> pq;
+
+    dist[0] = A[0]; // Starting point includes vertex weight
+    pq.push({dist[0], 0});
+
+    while (!pq.empty()) {
+        auto [d, u] = pq.top(); pq.pop();
+        if (d > dist[u]) continue;
+
+        for (auto [v, b] : graph[u]) {
+            ll new_dist = d + b + A[v]; // Add edge weight and vertex weight of v
+            if (new_dist < dist[v]) {
+                dist[v] = new_dist;
+                pq.push({dist[v], v});
+            }
+        }
+    }
+
+    // Output result for nodes 2 to N (1-based -> 1 to N-1 in 0-based)
+    for (ll i = 1; i < N; ++i) {
+        cout << dist[i] << " ";
+    }
+    cout << '\n';
+
+    return 0;
+}
+```
+
+---
+
+### Explanation:
+- We use a standard Dijkstra’s algorithm with a priority queue.
+- Distance array `dist[i]` stores the minimum path weight from node 0 to node `i`.
+- Each edge update considers:
+  - Current known shortest distance to current node `u`: `dist[u]`
+  - Edge weight `b`
+  - Vertex weight of target node `A[v]`
+- Final output excludes `dist[0]` since we're asked to print results from node 2 onwards.
+
+---
+
+### Time Complexity:
+- **O(M log N)** due to each edge potentially being relaxed once and each relaxation involves a log(N) heap operation.
+
+This approach handles large inputs up to constraints efficiently and avoids any incorrect path cost calculations.

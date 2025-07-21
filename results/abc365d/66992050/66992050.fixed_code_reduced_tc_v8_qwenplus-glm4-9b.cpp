@@ -1,0 +1,20 @@
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+int main(){
+  int N;
+  string S;
+  cin >> N >> S;
+  char past = 'N';
+  int ans = 0;
+  for(char c : S){
+    if(c == 'R' || c == 'S' || c == 'P' && past != c){
+      ans++;
+      past = c;
+    } else {
+      past = c;
+    }
+  }
+  cout << ans;
+  return 0;
+}

@@ -1,0 +1,40 @@
+#include<bits/stdc++.h>
+using namespace std;
+
+const int MAXN = 2 * 1e5 + 5;
+vector<int> adj[MAXN];
+set<int> s[MAXN];
+
+void addEdge(int u, int v) {
+    adj[u].push_back(v);
+    adj[v].push_back(u);
+    s[u].insert(v);
+    s[v].insert(u);
+}
+
+int kthLargest(int u, int k) {
+    if(s[u].size() < k) return -1;
+    auto it = s[u].rbegin();
+    advance(it, k - 1);
+    return *it;
+}
+
+int main() {
+    ios_base::sync_with_stdio(false); cin.tie(NULL); cout.tie(NULL);
+
+    int n, q; cin >> n >> q;
+    for(int i = 1; i <= n; i++) {
+        addEdge(i, i);
+    }
+
+    while(q--) {
+        int op, u, v; cin >> op >> u >> v;
+        if(op == 1) {
+            addEdge(u, v);
+        } else {
+            cout << kthLargest(u, v) << "\n";
+        }
+    }
+
+    return 0;
+}

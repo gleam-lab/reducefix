@@ -1,0 +1,242 @@
+To fix this code, we need to correctly calculate the number of safe squares where placing a piece won't be captured by any existing pieces. The existing approach was incorrect in handling the intersections of different attack lines (rows, columns, diagonals, and anti-diagonals) and didn't properly account for overlaps.
+
+### Approaches
+1. **Identify Attack Lines**: For each existing piece, identify the four types of lines it can attack:
+   - **Row**: All squares in the same row.
+   - **Column**: All squares in the same column.
+   - **Diagonal (i + j = constant)**: All squares where the sum of row and column indices is the same.
+   - **Anti-Diagonal (i - j = constant)**: All squares where the difference between row and column indices is the same.
+
+2. **Count Unique Lines**: Collect all unique lines of each type (rows, columns, diagonals, anti-diagonals) from the existing pieces.
+
+3. **Calculate Total Attacked Squares**: Use inclusion-exclusion principles to count the total number of squares attacked by at least one existing piece. This involves:
+   - Summing the squares covered by rows, columns, diagonals, and anti-diagonals.
+   - Subtracting overlaps where squares are counted multiple times (e.g., squares covered by both a row and a column).
+   - Adding back intersections that were subtracted too many times (e.g., squares covered by a row, column, and diagonal).
+
+4. **Determine Safe Squares**: The total number of safe squares is the total grid squares (N²) minus the total attacked squares, plus the squares already occupied by existing pieces (since they can't be reoccupied).
+
+### Solution Code
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+using i64 = long long;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    i64 N, M;
+    cin >> N >> M;
+    vector<pair<i64, i64>> pieces(M);
+    set<i64> rows, cols, diag1, diag2;
+    set<pair<i64, i64>> occupied;
+
+    for (int i = 0; i < M; ++i) {
+        i64 a, b;
+        cin >> a >> b;
+        pieces[i] = {a, b};
+        rows.insert(a);
+        cols.insert(b);
+        diag1.insert(a + b);
+        diag2.insert(a - b);
+        occupied.insert({a, b});
+    }
+
+    i64 total = N * N;
+    i64 attacked = 0;
+
+    // Rows
+    attacked += rows.size() * N;
+    // Columns
+    attacked += cols.size() * N;
+    // Diagonals (i+j = k)
+    for (auto k : diag1) {
+        i64 x_min = max(1LL, k - N);
+        i64 x_max = min(N, k - 1);
+        if (x_max < x_min) continue;
+        attacked += (x_max - x_min + 1);
+    }
+    // Anti-diagonals (i-j = k)
+    for (auto k : diag2) {
+        i64 x_min = max(1LL, 1 + k);
+        i64 x_max = min(N, N + k);
+        if (x_max < x_min) continue;
+        attacked += (x_max - x_min + 1);
+    }
+
+    // Subtract intersections counted twice
+    // Row and Column
+    i64 row_col_intersect = 0;
+    for (auto r : rows) {
+        for (auto c : cols) {
+            if (diag1.count(r + c) || diag2.count(r - c)) {
+                continue;
+            }
+            row_col_intersect++;
+        }
+    }
+    attacked -= row_col_intersect;
+
+    // Row and Diag1
+    i64 row_diag1_intersect = 0;
+    for (auto r : rows) {
+        for (auto k : diag1) {
+            i64 c = k - r;
+            if (c >= 1 && c <= N) {
+                if (cols.count(c) || diag2.count(r - c)) {
+                    continue;
+                }
+                row_diag1_intersect++;
+            }
+        }
+    }
+    attacked -= row_diag1_intersect;
+
+    // Row and Diag2
+    i64 row_diag2_intersect = 0;
+    for (auto r : rows) {
+        for (auto k : diag2) {
+            i64 c = r - k;
+            if (c >= 1 && c <= N) {
+                if (cols.count(c) || diag1.count(r + c)) {
+                    continue;
+                }
+                row_diag2_intersect++;
+            }
+        }
+    }
+    attacked -= row_diag2_intersect;
+
+    // Column and Diag1
+    i64 col_diag1_intersect = 0;
+    for (auto c : cols) {
+        for (auto k : diag1) {
+            i64 r = k - c;
+            if (r >= 1 && r <= N) {
+                if (rows.count(r) || diag2.count(r - c)) {
+                    continue;
+                }
+                col_diag1_intersect++;
+            }
+        }
+    }
+    attacked -= col_diag1_intersect;
+
+    // Column and Diag2
+    i64 col_diag2_intersect = 0;
+    for (auto c : cols) {
+        for (auto k : diag2) {
+            i64 r = k + c;
+            if (r >= 1 && r <= N) {
+                if (rows.count(r) || diag1.count(r + c)) {
+                    continue;
+                }
+                col_diag2_intersect++;
+            }
+        }
+    }
+    attacked -= col_diag2_intersect;
+
+    // Diag1 and Diag2
+    i64 diag1_diag2_intersect = 0;
+    for (auto k1 : diag1) {
+        for (auto k2 : diag2) {
+            if ((k1 + k2) % 2 != 0) continue;
+            i64 r = (k1 + k2) / 2;
+            i64 c = (k1 - k2) / 2;
+            if (r >= 1 && r <= N && c >= 1 && c <= N) {
+                if (rows.count(r) || cols.count(c)) {
+                    continue;
+                }
+                diag1_diag2_intersect++;
+            }
+        }
+    }
+    attacked -= diag1_diag2_intersect;
+
+    // Add back triple intersections subtracted too many times
+    // Row, Column, and Diag1
+    i64 row_col_diag1_intersect = 0;
+    for (auto r : rows) {
+        for (auto c : cols) {
+            if (diag1.count(r + c)) {
+                if (diag2.count(r - c)) {
+                    continue;
+                }
+                row_col_diag1_intersect++;
+            }
+        }
+    }
+    attacked += row_col_diag1_intersect;
+
+    // Row, Column, and Diag2
+    i64 row_col_diag2_intersect = 0;
+    for (auto r : rows) {
+        for (auto c : cols) {
+            if (diag2.count(r - c)) {
+                if (diag1.count(r + c)) {
+                    continue;
+                }
+                row_col_diag2_intersect++;
+            }
+        }
+    }
+    attacked += row_col_diag2_intersect;
+
+    // Row, Diag1, and Diag2
+    i64 row_diag1_diag2_intersect = 0;
+    for (auto r : rows) {
+        for (auto k1 : diag1) {
+            i64 c = k1 - r;
+            if (c >= 1 && c <= N) {
+                if (cols.count(c) || !diag2.count(r - c)) {
+                    continue;
+                }
+                row_diag1_diag2_intersect++;
+            }
+        }
+    }
+    attacked += row_diag1_diag2_intersect;
+
+    // Column, Diag1, and Diag2
+    i64 col_diag1_diag2_intersect = 0;
+    for (auto c : cols) {
+        for (auto k1 : diag1) {
+            i64 r = k1 - c;
+            if (r >= 1 && r <= N) {
+                if (rows.count(r) || !diag2.count(r - c)) {
+                    continue;
+                }
+                col_diag1_diag2_intersect++;
+            }
+        }
+    }
+    attacked += col_diag1_diag2_intersect;
+
+    // Subtract quadruple intersections added too many times
+    i64 row_col_diag1_diag2_intersect = 0;
+    for (auto r : rows) {
+        for (auto c : cols) {
+            if (diag1.count(r + c) && diag2.count(r - c)) {
+                row_col_diag1_diag2_intersect++;
+            }
+        }
+    }
+    attacked -= row_col_diag1_diag2_intersect;
+
+    // The safe squares are total squares minus attacked squares plus occupied squares (since they were subtracted but are already occupied)
+    i64 safe = total - attacked + occupied.size();
+    cout << safe << "\n";
+
+    return 0;
+}
+```
+
+### Explanation
+1. **Initial Setup**: We read the grid size `N` and the number of existing pieces `M`. We then store each piece's position and track the unique rows, columns, diagonals, and anti-diagonals they occupy.
+2. **Total Attacked Squares Calculation**: We start by counting all squares attacked by rows, columns, diagonals, and anti-diagonals separately.
+3. **Inclusion-Exclusion Principle**: To avoid double-counting squares covered by multiple attack lines, we subtract intersections of two lines, add back intersections of three lines, and subtract intersections of four lines.
+4. **Final Safe Squares Calculation**: The safe squares are computed by subtracting the total attacked squares from the grid's total squares and adjusting for the squares already occupied by existing pieces.
+
+This approach ensures we accurately count the safe squares while efficiently handling the constraints and overlaps using set operations and inclusion-exclusion principles.

@@ -1,0 +1,96 @@
+#include <vector>
+#include <queue>
+#include <iostream>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int H, W, Q;
+    cin >> H >> W >> Q;
+
+    vector<vector<bool>> has_wall(H, vector<bool>(W, true));
+
+    // For each cell and direction, keep track of the next wall in that direction
+    vector<vector<int>> left(H, vector<int>(W, -1));
+    vector<vector<int>> right(H, vector<int>(W, -1));
+    vector<vector<int>> up(H, vector<int>(W, -1));
+    vector<vector<int>> down(H, vector<int>(W, -1));
+
+    // Initialize direction pointers
+    for (int i = 0; i < H; ++i) {
+        for (int j = 0; j < W; ++j) {
+            left[i][j] = j - 1;
+            right[i][j] = j + 1;
+        }
+    }
+
+    for (int j = 0; j < W; ++j) {
+        for (int i = 0; i < H; ++i) {
+            up[i][j] = i - 1;
+            down[i][j] = i + 1;
+        }
+    }
+
+    auto get_next = [&](int r, int c, int dir) -> int {
+        switch(dir) {
+            case 0: return left[r][c];   // Left
+            case 1: return right[r][c];  // Right
+            case 2: return up[r][c];     // Up
+            case 3: return down[r][c];   // Down
+        }
+        return -1;
+    };
+
+    auto set_next = [&](int r, int c, int dir, int val) {
+        switch(dir) {
+            case 0: left[r][c] = val; break;
+            case 1: right[r][c] = val; break;
+            case 2: up[r][c] = val; break;
+            case 3: down[r][c] = val; break;
+        }
+    };
+
+    for (int q = 0; q < Q; ++q) {
+        int R, C;
+        cin >> R >> C;
+        --R; --C;
+
+        if (has_wall[R][C]) {
+            has_wall[R][C] = false;
+            continue;
+        }
+
+        // Directions: 0=left, 1=right, 2=up, 3=down
+        for (int d = 0; d < 4; ++d) {
+            int curr = get_next(R, C, d);
+            while (curr != -1) {
+                int x = (d < 2) ? R : (d == 2 ? curr : curr);
+                int y = (d >= 2) ? C : (d == 0 ? curr : curr);
+
+                if (has_wall[x][y]) {
+                    has_wall[x][y] = false;
+                    // Propagate change in all directions for this destroyed cell
+                    for (int k = 0; k < 4; ++k) {
+                        int nx = (k == 2) ? x - 1 : (k == 3) ? x + 1 : x;
+                        int ny = (k == 0) ? y - 1 : (k == 1) ? y + 1 : y;
+                        if (nx >= 0 && nx < H && ny >= 0 && ny < W) {
+                            set_next(nx, ny, k ^ 1, get_next(x, y, k));
+                        }
+                    }
+                    break;
+                }
+                curr = get_next(x, y, d);
+            }
+        }
+    }
+
+    int remaining = 0;
+    for (int i = 0; i < H; ++i)
+        for (int j = 0; j < W; ++j)
+            remaining += has_wall[i][j];
+
+    cout << remaining << endl;
+    return 0;
+}

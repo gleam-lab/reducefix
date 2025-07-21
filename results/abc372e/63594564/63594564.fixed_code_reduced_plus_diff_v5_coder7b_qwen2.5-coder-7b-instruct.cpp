@@ -1,0 +1,73 @@
+#include "bits/stdc++.h"
+
+using namespace std;
+
+#define ff first
+#define ss second
+#define ll long long
+#define SZ(s) (int)s.size()
+
+int const N = 2e5 + 5;
+
+vector<vector<int>> g(N);
+priority_queue<pair<int, int>, vector<pair<int, int>>, greater<>> pq[N];
+
+void addEdge(int u, int v) {
+    g[u].push_back(v);
+    g[v].push_back(u);
+    pq[u].push(1);
+    pq[v].push(1);
+}
+
+void removeEdge(int u, int v) {
+    auto it = find(g[u].begin(), g[u].end(), v);
+    if(it != g[u].end()) {
+        g[u].erase(it);
+    }
+    it = find(g[v].begin(), g[v].end(), u);
+    if(it != g[v].end()) {
+        g[v].erase(it);
+    }
+    while(!pq[u].empty() && pq[u].top() != v) {
+        pq[u].pop();
+    }
+    if(!pq[u].empty() && pq[u].top() == v) {
+        pq[u].pop();
+    }
+    while(!pq[v].empty() && pq[v].top() != u) {
+        pq[v].pop();
+    }
+    if(!pq[v].empty() && pq[v].top() == u) {
+        pq[v].pop();
+    }
+}
+
+ll kthLargest(vector<int>& pq, int k) {
+    if(k > pq.size()) {
+        return -1;
+    }
+    return pq[k-1];
+}
+
+int main() {
+    ios_base::sync_with_stdio(false); cin.tie(nullptr);
+
+    int n, m;
+    cin >> n >> m;
+    for(int i = 1; i <= m; ++i) {
+        int type;
+        cin >> type;
+        if(type == 1) {
+            int u, v;
+            cin >> u >> v;
+            addEdge(u, v);
+        } else {
+            int v, k;
+            cin >> v >> k;
+            ll ans = kthLargest(pq[v], k);
+            cout << ans << '\n';
+        }
+    }
+
+    return 0;
+}

@@ -1,0 +1,60 @@
+
+The provided code calculates prefix sums of a sequence to answer range sum queries efficiently. The code has several issues that are causing it to not work correctly for the failing case. Here are the problems and the solutions:
+
+1. **Negative Seeding in `x_to_ptr`**: The map `x_to_ptr` is constructed to map each value of `X` to its index in the array. However, negative values can also be present in the input, and the current map will not handle negative values correctly. We need to ensure that all possible values from the array are accounted for in the map.
+
+2. **Incorrect Range Map Usage**: The way the range is mapped using `lower_bound` and `upper_bound` can lead to incorrect indices when the range spans multiple distinct values of `X`. This is because `lower_bound` and `upper_bound` might not always return iterators pointing to the correct elements when the range spans multiple distinct values.
+
+3. **Indexing Issue**: When calculating indices `l` and `r`, the code might skip over certain values of `X` due to the way it uses `lower_bound` and `upper_bound`.
+
+Let's correct the code to handle these issues:
+
+```cpp
+#include <iostream>
+#include <vector>
+#include <map>
+#include <algorithm>
+using namespace std;
+
+using ll = long long;
+using Graph = vector<vector<int>>;
+using IndexMap = map<ll, int>;
+
+int main() {
+    int N;
+    cin >> N;
+    vector<ll> P(N+1, 0), X(N);
+    rep(i, N) cin >> X[i];
+    rep(i, N) cin >> P[i+1];
+
+    IndexMap x_to_ptr;
+    ll current_sum = 0;
+    for (int i = 0; i < N; ++i) {
+        x_to_ptr.emplace(X[i], i);
+        current_sum += X[i];
+        P[i+1] = current_sum;
+    }
+
+    int Q;
+    cin >> Q;
+    rep(q, Q) {
+        ll L, R;
+        cin >> L >> R;
+        auto X_l = x_to_ptr.lower_bound(L);
+        auto X_r = x_to_ptr.upper_bound(R);
+
+        int l = X_l == x_to_ptr.begin() ? 0 : X_l->second;
+        int r = X_r == x_to_ptr.end() ? N : X_r->second - 1;
+
+        ll ans = P[r] - P[l];
+        cout << ans << endl;
+    }
+
+    return 0;
+}
+```
+
+### Key Changes:
+1. **Negative Values Handling**: We no longer need to worry about negative values since we are calculating prefix sums and the index map will correctly map each value to its corresponding index.
+2. **Range Indexing**: We are now careful to handle the boundaries correctly using the iterators returned by `lower_bound` and `upper_bound`.
+3. **Prefix Sums Calculation**: We calculate the prefix sum only once for each unique value of `X` to avoid unnecessary complexity.

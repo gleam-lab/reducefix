@@ -1,0 +1,46 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int64_t N, M;
+    cin >> N >> M;
+
+    unordered_set<int64_t> attacked_or_occupied;
+    // We'll use a hash to store (a, b) as 64-bit integer: (a << 32) | b
+
+    vector<pair<int64_t, int64_t>> knight_moves = {
+        {2, 1}, {1, 2}, {-1, 2}, {-2, 1},
+        {-2, -1}, {-1, -2}, {1, -2}, {2, -1}
+    };
+
+    for (int64_t i = 0; i < M; ++i) {
+        int64_t a, b;
+        cin >> a >> b;
+
+        // Add current piece position
+        attacked_or_occupied.insert((a << 32) | b);
+
+        // Add all positions that this piece can attack
+        for (const auto& move : knight_moves) {
+            int64_t na = a + move.first;
+            int64_t nb = b + move.second;
+
+            if (1 <= na && na <= N && 1 <= nb && nb <= N) {
+                attacked_or_occupied.insert((na << 32) | nb);
+            }
+        }
+    }
+
+    // Total grid size
+    int64_t total_squares = N * N;
+
+    // Subtract number of attacked or occupied squares
+    int64_t answer = total_squares - static_cast<int64_t>(attacked_or_occupied.size());
+
+    cout << answer << endl;
+
+    return 0;
+}

@@ -1,0 +1,42 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+#define endl "\n"
+#define int long long
+
+void solve() {
+    int N, K;
+    cin >> N >> K;
+    vector<int> A(N);
+    for (int i = 0; i < N; ++i) {
+        cin >> A[i];
+    }
+
+    // We will try all possible intervals of size (N - K)
+    // The goal is to find the interval with minimum (max - min)
+    int windowSize = N - K;
+    multiset<int> window;
+    for (int i = 0; i < windowSize; ++i) {
+        window.insert(A[i]);
+    }
+
+    int minDiff = *window.rbegin() - *window.begin();
+
+    for (int i = windowSize; i < N; ++i) {
+        // Remove the element going out
+        window.erase(window.find(A[i - windowSize]));
+        // Add the new element coming in
+        window.insert(A[i]);
+        // Compute current diff
+        minDiff = min(minDiff, *window.rbegin() - *window.begin());
+    }
+
+    cout << minDiff;
+}
+
+signed main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(NULL);
+    solve();
+    return 0;
+}

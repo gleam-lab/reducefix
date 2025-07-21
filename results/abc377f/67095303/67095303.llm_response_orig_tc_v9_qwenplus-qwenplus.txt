@@ -1,0 +1,108 @@
+To solve this problem efficiently given the constraints, we must avoid iterating over all $ N^2 $ grid squares (which is infeasible for large $ N $ up to $ 10^9 $). Instead, we use mathematical reasoning and sets to track the affected rows, columns, and diagonals.
+
+### Key Observations:
+
+- A piece at square $(i,j)$ affects:
+  - All squares in row `i`
+  - All squares in column `j`
+  - All squares on diagonal `i + j = constant` (anti-diagonal)
+  - All squares on diagonal `i - j = constant` (main diagonal)
+
+We can compute:
+1. Total number of empty squares: $ N^2 - M $
+2. Subtract the number of squares that are safe **not** under threat from any existing pieces
+
+Instead of checking every square, we compute:
+- The total number of squares not threatened by any row or column
+- Then subtract those which are threatened due to overlapping with any diagonal lines from placed pieces
+
+We represent:
+- Rows with a set `rows`
+- Columns with a set `cols`
+- Anti-diagonals (i+j) with a set `d1`
+- Main diagonals (i-j) with a set `d2`
+
+Then we:
+- Compute how many unoccupied positions are unaffected by rows and columns: `(N - |rows|) * (N - |cols|)`
+- For each diagonal, calculate how many points it intersects with the grid but exclude overlaps already counted via rows/cols.
+
+### Corrected & Optimized Code:
+```cpp
+#include <bits/stdc++.h>
+
+using namespace std;
+
+void solve() {
+    long long N, M;
+    cin >> N >> M;
+
+    set<long long> rows, cols, diag1, diag2;
+
+    for (int i = 0; i < M; ++i) {
+        long long a, b;
+        cin >> a >> b;
+        rows.insert(a);
+        cols.insert(b);
+        diag1.insert(a + b);
+        diag2.insert(a - b);
+    }
+
+    // Total safe positions excluding rows and columns
+    long long ans = (N - rows.size()) * (N - cols.size());
+
+    // Subtract the number of points threatened only by diagonals (excluding rows and columns overlap)
+
+    // Process anti-diagonals: i + j = d
+    for (long long d : diag1) {
+        long long low = max(1LL, d - N);
+        long long high = min(N, d - 1);
+
+        if (low > high) continue;
+
+        long long count = high - low + 1;
+        // Now remove those already excluded by rows or cols
+        long long effective = 0;
+        for (long long x : rows) {
+            long long y = d - x;
+            if (y >= 1 && y <= N && cols.find(y) == cols.end()) {
+                effective++;
+            }
+        }
+        ans -= (count - effective);
+    }
+
+    // Process main diagonals: i - j = d
+    for (long long d : diag2) {
+        long long low_x = max(1LL, 1 + d);
+        long long high_x = min(N, N + d);
+        if (low_x > high_x) continue;
+
+        long long count = high_x - low_x + 1;
+        long long effective = 0;
+        for (long long x : rows) {
+            long long y = x - d;
+            if (y >= 1 && y <= N && cols.find(y) == cols.end()) {
+                effective++;
+            }
+        }
+        ans -= (count - effective);
+    }
+
+    cout << ans << endl;
+}
+
+signed main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+    solve();
+    return 0;
+}
+```
+
+### Explanation:
+- We first calculate how many positions are unaffected by rows/columns.
+- Then for each diagonal, we determine its valid intersection with the grid.
+- From these, we subtract only those that were already removed due to rows or columns — avoiding double-counting.
+- This ensures precision even when multiple pieces align on same diagonals.
+
+This code is efficient with time complexity around $ O(M^2) $ in worst case (but acceptable since $ M \leq 1000 $), and handles large values of $ N $ without issue using integers and sets.

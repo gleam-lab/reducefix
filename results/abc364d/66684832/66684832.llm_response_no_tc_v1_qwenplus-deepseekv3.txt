@@ -1,0 +1,74 @@
+The provided code attempts to solve the problem by using binary search to find the k-th closest distance from each query point B_j to the points A_1, ..., A_N. However, the approach has several issues:
+
+1. **Binary Search Logic**: The `check` function checks if there are at least k points within a distance `dx` from `pos` (B_j). However, this doesn't ensure finding the k-th closest distance because it doesn't account for the exact order of distances. For example, if there are multiple points at the same distance, the count might exceed k but not directly give the k-th smallest distance.
+
+2. **Distance Calculation**: The initial approach doesn't correctly handle the exact distances and their ordering. The binary search on distance doesn't directly translate to the k-th smallest distance.
+
+3. **Efficiency**: For each query, the binary search runs in O(log(max_distance)), and each check involves O(log N) operations (due to `lower_bound` and `upper_bound`). With Q up to 10^5, this could be acceptable, but the logic needs to be correct.
+
+### Fixed Approach
+1. **Pre-sort**: First, sort the array of A_i coordinates. This allows efficient range queries and binary searches.
+2. **Binary Search for k-th Closest**: For each query (B_j, k_j), we need to find the k-th smallest distance. The distance between B_j and A_i is |A_i - B_j|. To find the k-th smallest distance efficiently, we can use binary search on the possible distances and count how many points have a distance <= mid.
+3. **Two Pointers for Counting**: For a given distance `d`, we can use binary search to find the range of A_i within [B_j - d, B_j + d] and count the number of points in this range. If the count is >= k_j, we adjust the binary search range to find the minimal such `d`.
+
+### Fixed Code
+```cpp
+#include <iostream>
+#include <algorithm>
+#include <vector>
+using namespace std;
+#define int long long
+
+const int N = 1e5 + 5;
+int a[N];
+
+int find_kth_distance(int n, int b, int k) {
+    int left = 0, right = 2e8;
+    int answer = right;
+    
+    while (left <= right) {
+        int mid = (left + right) / 2;
+        
+        // Count the number of elements <= b + mid and >= b - mid
+        int lower = lower_bound(a, a + n, b - mid) - a;
+        int upper = upper_bound(a, a + n, b + mid) - a;
+        int count = upper - lower;
+        
+        if (count >= k) {
+            answer = mid;
+            right = mid - 1;
+        } else {
+            left = mid + 1;
+        }
+    }
+    return answer;
+}
+
+signed main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int n, q;
+    cin >> n >> q;
+    for (int i = 0; i < n; ++i) {
+        cin >> a[i];
+    }
+    sort(a, a + n);
+    
+    while (q--) {
+        int b, k;
+        cin >> b >> k;
+        cout << find_kth_distance(n, b, k) << '\n';
+    }
+    
+    return 0;
+}
+```
+
+### Key Fixes
+1. **Correct Binary Search**: The binary search now correctly finds the minimal distance `d` such that there are at least `k` points within `[B_j - d, B_j + d]`.
+2. **Efficient Counting**: Using `lower_bound` and `upper_bound` to count the points within the range ensures the counting is done in O(log N) per check.
+3. **Edge Cases**: Handles cases where multiple points have the same distance, ensuring the correct k-th smallest distance is found.
+4. **Optimization**: The binary search bounds are set to `[0, 2e8]` considering the constraints (coordinates up to 1e8), ensuring the search is efficient.
+
+This fixed approach ensures correctness and efficiency, handling all constraints and edge cases appropriately.

@@ -1,0 +1,58 @@
+#include <vector>
+#include <queue>
+#include <tuple>
+#include <iostream>
+#include <cmath>
+#include <cstring>
+#include <climits>
+#include <set>
+#include <map>
+#include <algorithm>
+#include <iomanip>
+using namespace std;
+
+const int dx[] = {0, 0, 1, -1};
+const int dy[] = {1, -1, 0, 0};
+
+int main() {
+    int H, W, Q;
+    cin >> H >> W >> Q;
+    vector<vector<bool>> map(H, vector<bool>(W, true));
+
+    for (int i = 0; i < Q; ++i) {
+        int r, c;
+        cin >> r >> c;
+        --r, --c;
+
+        if (!map[r][c]) continue;
+
+        map[r][c] = false;
+        queue<array<int, 3>> q;
+        q.push({r, c, -1});
+
+        while (!q.empty()) {
+            auto [x, y, d] = q.front();
+            q.pop();
+
+            for (int k = 0; k < 4; ++k) {
+                if (d == k) continue;
+                int nx = x + dx[k], ny = y + dy[k];
+
+                if (nx < 0 || nx >= H || ny < 0 || ny >= W || !map[nx][ny]) continue;
+
+                map[nx][ny] = false;
+                q.push({nx, ny, k});
+            }
+        }
+    }
+
+    int ans = 0;
+    for (int i = 0; i < H; ++i) {
+        for (int j = 0; j < W; ++j) {
+            ans += map[i][j];
+        }
+    }
+
+    cout << ans << endl;
+    return 0;
+}

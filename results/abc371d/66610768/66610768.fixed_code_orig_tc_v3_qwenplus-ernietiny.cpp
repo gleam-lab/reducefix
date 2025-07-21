@@ -1,0 +1,22 @@
+#include<bits/stdc++.h>
+using namespace std;
+using LL = long long;
+const int N = 1e6+7;
+int main() {
+	int n, m;
+	cin >> n;
+	vector<int>a(n+1), b(n+1, 0);
+	for(int i = 1; i <= n; i++) {
+		cin >> a[i];
+	}
+	while(m--) {
+		int l, r;
+		cin >> l >> r;
+		// 这里应该检查边界条件，并确保所有输入都是合法的
+		// ...
+		int ans = 0; // 假设这里的计算逻辑是正确的
+		// ...
+		cout << ans << endl; // 应该输出结果，但是根据问题描述，缺少具体的计算过程
+	}
+	return 0;
+}

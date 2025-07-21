@@ -1,0 +1,58 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+#define endl "\n"
+#define int long long
+
+void solve() {
+    int n, k;
+    cin >> n >> k;
+    vector<int> A(n);
+    for (int i = 0; i < n; ++i) {
+        cin >> A[i];
+    }
+
+    // We need to remove K elements such that the remaining sequence has minimum
+    // possible value of (max - min)
+    // Since we must keep N-K elements, and they must be in original order,
+    // the idea is to slide a window of size (N-K) over A and compute max-min in window.
+
+    deque<int> maxdq;  // stores indices of elements in current window in decreasing order
+    deque<int> mindq;  // stores indices of elements in current window in increasing order
+    int res = LLONG_MAX;
+
+    for (int i = 0; i < n; ++i) {
+        // Remove elements out of window
+        while (!maxdq.empty() && maxdq.front() <= i - (n - k)) {
+            maxdq.pop_front();
+        }
+        while (!mindq.empty() && mindq.front() <= i - (n - k)) {
+            mindq.pop_front();
+        }
+
+        // Add current element to deques
+        while (!maxdq.empty() && A[maxdq.back()] <= A[i]) {
+            maxdq.pop_back();
+        }
+        maxdq.push_back(i);
+
+        while (!mindq.empty() && A[mindq.back()] >= A[i]) {
+            mindq.pop_back();
+        }
+        mindq.push_back(i);
+
+        // Once window size reaches (n-k), calculate difference
+        if (i >= (n - k - 1)) {
+            res = min(res, A[maxdq.front()] - A[mindq.front()]);
+        }
+    }
+
+    cout << res << endl;
+}
+
+signed main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(NULL);
+    solve();
+    return 0;
+}

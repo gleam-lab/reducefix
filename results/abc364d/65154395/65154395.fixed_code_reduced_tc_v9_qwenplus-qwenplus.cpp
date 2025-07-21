@@ -1,0 +1,63 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+typedef long long ll;
+
+const int MAXN = 1e5 + 5;
+
+ll a[MAXN];
+
+// Binary search helper to find the k-th smallest distance from b
+ll query(ll b, ll k, int n) {
+    // We need to find the k-th smallest |a[i] - b|
+    ll left = 0, right = 2e8;  // Max possible distance is 2*1e8
+    ll answer = -1;
+
+    while (left <= right) {
+        ll mid = (left + right) / 2;
+        ll count = 0;
+        // Find lower and upper bounds of values in a that are in [b - mid, b + mid]
+        ll low = b - mid;
+        ll high = b + mid;
+
+        // Using lower_bound and upper_bound on sorted array
+        auto l = lower_bound(a, a + n, low);
+        auto r = upper_bound(a, a + n, high);
+        count = r - l;
+
+        if (count >= k) {
+            answer = mid;
+            right = mid - 1;
+        } else {
+            left = mid + 1;
+        }
+    }
+
+    return answer;
+}
+
+void solve() {
+    int n, q;
+    cin >> n >> q;
+    
+    for (int i = 0; i < n; ++i) {
+        cin >> a[i];
+    }
+    
+    sort(a, a + n);  // Sort A once
+
+    for (int j = 0; j < q; ++j) {
+        ll b;
+        ll k;
+        cin >> b >> k;
+        cout << query(b, k, n) << endl;
+    }
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    cout.tie(nullptr);
+    solve();
+    return 0;
+}

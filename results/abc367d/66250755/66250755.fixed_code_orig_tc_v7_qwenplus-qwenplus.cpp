@@ -1,0 +1,90 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+#define MAXN 200005
+
+int n, m;
+long long a[MAXN * 2], prefix_sum[MAXN * 2];
+long long ans = 0;
+
+// Coordinate compression support
+vector<long long> sorted_mod_prefix;
+
+long long get_compressed_index(long long val) {
+    return lower_bound(sorted_mod_prefix.begin(), sorted_mod_prefix.end(), val) - sorted_mod_prefix.begin();
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+
+    cin >> n >> m;
+    for (int i = 0; i < n; ++i) {
+        cin >> a[i];
+        a[i] %= m;
+        a[i + n] = a[i]; // Duplicate the array for circular handling
+    }
+
+    // Compute prefix sums modulo m
+    prefix_sum[0] = a[0] % m;
+    for (int i = 1; i < 2 * n; ++i) {
+        prefix_sum[i] = (prefix_sum[i - 1] + a[i]) % m;
+    }
+
+    // Prepare data for coordinate compression
+    vector<long long> raw_prefix;
+    for (int i = 0; i < 2 * n; ++i) {
+        raw_prefix.push_back(prefix_sum[i]);
+    }
+    sorted_mod_prefix = raw_prefix;
+    sort(sorted_mod_prefix.begin(), sorted_mod_prefix.end());
+    sorted_mod_prefix.erase(unique(sorted_mod_prefix.begin(), sorted_mod_prefix.end()), sorted_mod_prefix.end());
+
+    int size = sorted_mod_prefix.size();
+
+    // Fenwick Tree for counting occurrences of prefix sums
+    vector<int> fenwick(size + 2, 0);
+
+    auto update = [&](int idx, int delta) {
+        while (idx <= size) {
+            fenwick[idx] += delta;
+            idx += idx & -idx;
+        }
+    };
+
+    auto query = [&](int idx) {
+        int res = 0;
+        while (idx > 0) {
+            res += fenwick[idx];
+            idx -= idx & -idx;
+        }
+        return res;
+    };
+
+    // We want to count pairs (i, j) such that:
+    // (prefix[j] - prefix[i]) % m == max value possible
+    // which is equivalent to counting prefix[j] >= prefix[i] -> this would give (prefix[j] - prefix[i]) mod m = prefix[j] - prefix[i]
+
+    // We'll maintain a sliding window over the circular array of size n
+    // For each position j, we consider valid i in [j-n, j-1] if within circular bounds
+
+    for (int i = 0; i < n; ++i) {
+        update(get_compressed_index(prefix_sum[i]) + 1, 1);
+    }
+
+    for (int i = n; i < 2 * n; ++i) {
+        // Remove prefix_sum[i - n] from the structure as it's now out of the window
+        update(get_compressed_index(prefix_sum[i - n]) + 1, -1);
+
+        // Add current prefix_sum[i] to the structure
+        update(get_compressed_index(prefix_sum[i]) + 1, 1);
+
+        // Count number of prefix_sum values less than or equal to prefix_sum[i]
+        // Those will contribute to maximum subarray ending at i
+        int count = query(get_compressed_index(prefix_sum[i]) + 1);
+        ans += count;
+    }
+
+    cout << ans << endl;
+    return 0;
+}

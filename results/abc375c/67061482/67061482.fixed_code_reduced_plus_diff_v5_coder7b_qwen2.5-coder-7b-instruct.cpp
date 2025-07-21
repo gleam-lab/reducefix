@@ -1,0 +1,34 @@
+#include <bits/stdc++.h>
+
+double distance(double x1, double y1, double x2, double y2) {
+    return sqrt((x2 - x1) * (x2 - x1) + (y2 - y1) * (y2 - y1));
+}
+
+int main() {
+    int N;
+    std::cin >> N;
+    
+    if (N == 0) {
+        std::cout << 0.0 << std::endl;
+        return 0;
+    }
+
+    std::vector<std::pair<double, double>> points(N);
+    for (int i = 0; i < N; ++i) {
+        std::cin >> points[i].first >> points[i].second;
+    }
+
+    double total_distance = 0.0;
+
+    // Calculate distance between consecutive points
+    for (size_t i = 1; i < N; ++i) {
+        total_distance += distance(points[i - 1].first, points[i - 1].second, points[i].first, points[i].second);
+    }
+
+    // Add the distance from the last point back to the origin
+    total_distance += distance(points[N - 1].first, points[N - 1].second, 0.0, 0.0);
+
+    std::cout << total_distance << std::endl;
+
+    return 0;
+}

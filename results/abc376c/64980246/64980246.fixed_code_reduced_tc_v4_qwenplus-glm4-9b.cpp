@@ -1,0 +1,54 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+#define ll long long
+
+void solve() {
+    int n;
+    cin >> n;
+    vector<ll> a(n), b(n - 1);
+    for (ll &tt : a)
+        cin >> tt;
+    for (ll &tt : b)
+        cin >> tt;
+    sort(a.begin(), a.end());
+    sort(b.begin(), b.end());
+
+    ll min_x = LLONG_MAX;
+    bool possible = true;
+    int j = 0; // Pointer for box sizes
+
+    for (int i = 0; i < n; ++i) {
+        // Find the smallest box that can fit the current toy
+        while (j < n - 1 && a[i] > b[j]) {
+            ++j;
+        }
+        // If no box can fit the current toy, it's impossible to store all toys
+        if (j >= n - 1) {
+            possible = false;
+            break;
+        }
+        // Calculate the minimum size of box needed
+        min_x = min(min_x, max(a[i], max(b[j], min_x)));
+        ++j; // Move to the next box for the next toy
+    }
+
+    if (!possible || min_x == LLONG_MAX) {
+        cout << -1 << endl;
+    } else {
+        cout << min_x << endl;
+    }
+}
+
+int main() {
+    std::ios::sync_with_stdio(false);
+    std::cin.tie(nullptr);
+    int t = 1;
+    // cin >> t;
+    while (t--) {
+        solve();
+    }
+    return 0;
+}

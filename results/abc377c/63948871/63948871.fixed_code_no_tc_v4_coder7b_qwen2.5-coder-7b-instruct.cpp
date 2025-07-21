@@ -1,0 +1,43 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+typedef long long ll;
+
+const int MAXN = 1000000000 + 5;
+
+bool board[MAXN][MAXN];
+
+int main() {
+    ios_base::sync_with_stdio(0);cin.tie(0);cout.tie(0);
+    
+    int n, m;
+    cin >> n >> m;
+    
+    memset(board, false, sizeof(board));
+    
+    for(int i = 0; i < m; ++i){
+        int x, y;
+        cin >> x >> y;
+        board[x][y] = true;
+        
+        if(x + 2 <= n && y + 1 <= n) board[x + 2][y + 1] = true;
+        if(x + 1 <= n && y + 2 <= n) board[x + 1][y + 2] = true;
+        if(x - 1 >= 1 && y + 2 <= n) board[x - 1][y + 2] = true;
+        if(x - 2 >= 1 && y + 1 <= n) board[x - 2][y + 1] = true;
+        if(x - 2 >= 1 && y - 1 >= 1) board[x - 2][y - 1] = true;
+        if(x - 1 >= 1 && y - 2 >= 1) board[x - 1][y - 2] = true;
+        if(x + 1 <= n && y - 2 >= 1) board[x + 1][y - 2] = true;
+        if(x + 2 <= n && y - 1 >= 1) board[x + 2][y - 1] = true;
+    }
+    
+    ll ans = 0;
+    for(int i = 1; i <= n; ++i){
+        for(int j = 1; j <= n; ++j){
+            if(!board[i][j]) ans++;
+        }
+    }
+    
+    cout << ans << endl;
+    
+    return 0;
+}

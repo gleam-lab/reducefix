@@ -1,0 +1,89 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+#define LL long long
+#define INF 1e18
+#define vi vector<int>
+#define vvi vector<vi>
+#define pii pair<int, int>
+
+struct DSU {
+    vi parent, rank;
+    DSU(int n) : parent(n+1), rank(n+1, 1) {
+        for(int i = 0; i <= n; ++i)
+            parent[i] = i;
+    }
+    int find(int u) {
+        if(parent[u] != u)
+            parent[u] = find(parent[u]);
+        return parent[u];
+    }
+    void merge(int u, int v) {
+        int pu = find(u), pv = find(v);
+        if(pu == pv) return;
+        if(rank[pu] > rank[pv])
+            parent[pv] = pu;
+        else if(rank[pu] < rank[pv])
+            parent[pu] = pv;
+        else {
+            parent[pu] = pv;
+            rank[pv]++;
+        }
+    }
+};
+
+struct Edge {
+    int u, v, w;
+    bool operator<(const Edge &other) const { return w < other.w; }
+};
+
+void dijkstra(int src, int n, vvi &adj, vi &dist) {
+    priority_queue<pair<int, int>, vector<pair<int, int>>, greater<pair<int, int>>> pq;
+    dist[src] = 0;
+    pq.push({0, src});
+    
+    while (!pq.empty()) {
+        int u = pq.top().second;
+        int dis = pq.top().first;
+        pq.pop();
+        
+        if(dis > dist[u]) continue;
+        
+        for (auto &[v, wt] : adj[u]) {
+            if (dis + wt < dist[v]) {
+                dist[v] = dis + wt;
+                pq.push({dist[v], v});
+            }
+        }
+    }
+}
+
+int main() {
+    ios_base::sync_with_stdio(false); cin.tie(NULL);
+    int n, m;
+    cin >> n >> m;
+    vi a(n+1), res(n);
+    vvi adj(n+1);
+    
+    for(int i = 1; i <= n; ++i)
+        cin >> a[i];
+    
+    for(int i = 0; i < m; ++i) {
+        int u, v, w;
+        cin >> u >> v >> w;
+        adj[u].push_back({v, w});
+        adj[v].push_back({u, w});
+    }
+    
+    vvi dist(n+1, vi(n+1, INF));
+    for(int i = 1; i <= n; ++i)
+        dijkstra(i, n, adj, dist[i]);
+    
+    for(int i = 2; i <= n; ++i)
+        res[i-1] = dist[1][i] + a[i];
+    
+    for(int i = 0; i < n-1; ++i)
+        cout << res[i] << " ";
+    
+    return 0;
+}

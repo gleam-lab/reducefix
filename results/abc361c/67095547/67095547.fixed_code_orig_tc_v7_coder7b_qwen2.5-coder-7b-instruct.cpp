@@ -1,0 +1,27 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+#define endl "\n"
+
+void solve(){
+    int n, k;
+    cin >> n >> k;
+    vector<long long> a(n);
+    for(int i = 0; i < n; ++i) cin >> a[i];
+
+    // Sort the array to easily find min and max after removal
+    sort(a.begin(), a.end());
+
+    // Calculate the difference between max and min after removing k elements
+    long long ans = a[n-k-1] - a[k];
+
+    cout << ans << endl;
+}
+
+signed main()
+{
+    ios_base::sync_with_stdio(false);
+    cin.tie(NULL);
+    solve();
+    return 0;
+}

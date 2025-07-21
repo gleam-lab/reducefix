@@ -1,0 +1,107 @@
+
+To solve this problem, we need to find out how many empty squares can be occupied by a new piece without it being captured by any existing pieces. Given the constraints, an O(N^2) solution would not be efficient because it would require scanning up to \(N^4\) squares (since each piece can potentially check \(O(N^2)\) squares). Instead, we need a strategy that works in O(N log N) or better.
+
+The idea is to use a segment tree or a binary indexed tree to efficiently query and update the set of reachable areas for each piece. However, since N can be as large as \(10^9\), we cannot use a straightforward grid representation. Instead, we will need to use a divide and conquer approach to handle the large size of N effectively.
+
+Here's a high-level overview of the approach:
+
+1. Divide the grid into smaller blocks of manageable size (e.g., a block of size \(2^k \times 2^k\)).
+2. For each block, calculate which pieces can potentially capture squares within that block.
+3. Use a data structure like a segment tree to keep track of the areas that are captured by pieces within a block.
+4. Merge the results from each block to construct a global view of captured areas.
+5. For each empty square, check if it is reachable without being captured by using the segment tree.
+6. Count the number of reachable squares.
+
+Let's now implement the solution:
+
+```cpp
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <string>
+using namespace std;
+
+const int MAXN = 1000; // Maximum size of the grid after division
+const int MAX_L = 20; // Maximum level for the tree
+
+vector<vector<int>> grid(MAXN, vector<int>(MAXN));
+vector<vector<int>> tree(4 * MAXN, vector<int>(MAXN, 0));
+int n, m;
+
+// Function to update the segment tree with the ID of a captured square
+void update(int x, int y, int val) {
+    x += MAXN;
+    y += MAXN;
+    for (int i = y; i >= 0; i -= -(i & -i)) {
+        for (int j = x; j >= 0; j -= -(j & -j)) {
+            tree[j][i] = val;
+        }
+    }
+}
+
+// Function to query the segment tree to check if a square is captured
+bool query(int x, int y) {
+    x += MAXN;
+    y += MAXN;
+    int captured = 0;
+    for (int i = x; i < 2 * MAXN; i += -(i & -i)) {
+        for (int j = y; j < 2 * MAXN; j += -(j & -j)) {
+            captured |= tree[i][j];
+        }
+    }
+    return captured;
+}
+
+// Function to process each block and update the global captured areas
+void processBlock(int x, int y) {
+    for (int i = 0; i < m; i++) {
+        int ax = a[i] / n;
+        int ay = b[i] / n;
+        if (ax >= x && ax < x + 2 && ay >= y && ay < y + 2) {
+            for (int dx = -2; dx <= 2; dx++) {
+                for (int dy = -2; dy <= 2; dy++) {
+                    int nx = ax + dx;
+                    int ny = ay + dy;
+                    if (nx >= 0 && nx < n && ny >= 0 && ny < n) {
+                        update(nx * n + ny, ny, 1);
+                    }
+                }
+            }
+        }
+    }
+}
+
+int main() {
+    cin >> n >> m;
+    n = pow(2, round(log2(n))); // Optimize grid size
+    for (int i = 0; i < m; i++) {
+        int a, b;
+        cin >> a >> b;
+        a--;
+        b--;
+        grid[a / n][b / n] = 1;
+    }
+
+    for (int i = 0; i < n; i++) {
+        for (int j = 0; j < n; j++) {
+            if (grid[i][j] == 1) {
+                processBlock(i, j);
+            }
+        }
+    }
+
+    int reachable = 0;
+    for (int i = 0; i < n; i++) {
+        for (int j = 0; j < n; j++) {
+            if (query(i * n + j, j * n + i) == 0) {
+                reachable++;
+            }
+        }
+    }
+
+    cout << reachable;
+    return 0;
+}
+```
+
+Please note that the above code is a conceptual implementation and may require further optimization to handle the large input size efficiently. It assumes that the size of the grid is manageable after division by \(2^k\). Depending on the specific constraints of the problem, further optimizations using advanced data structures may be necessary.

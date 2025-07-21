@@ -1,0 +1,72 @@
+#include <iostream>
+#include <algorithm>
+#include <climits>
+using namespace std;
+
+typedef struct { int a, p, b, q; } p;
+p A[100];
+long long dp[100][10000];
+
+int N, X;
+
+// Calculate minimum cost to achieve 'n' units for machine i
+long long cost(int i, int n) {
+    int lcm = A[i].a * A[i].b;
+    long long full_blocks = n / lcm;
+    int remainder = n % lcm;
+    return full_blocks * (long long)A[i].p * A[i].b + dp[i][remainder];
+}
+
+// Check if we can produce 'n' units within budget X
+bool is_possible(int n) {
+    long long total_cost = 0;
+    for (int i = 0; i < N; i++) {
+        total_cost += cost(i, n);
+        if (total_cost > X)
+            return false;
+    }
+    return true;
+}
+
+int main() {
+    scanf("%d %d", &N, &X);
+
+    for (int i = 0; i < N; i++) {
+        int a, p, b, q;
+        scanf("%d %d %d %d", &a, &p, &b, &q);
+        
+        // Ensure a*q >= b*p to maintain consistent ordering
+        if (a * q < b * p) {
+            swap(a, b);
+            swap(p, q);
+        }
+        A[i] = {a, p, b, q};
+        
+        // Precompute DP for this machine
+        dp[i][0] = 0;
+        for (int j = 1; j <= a * b; j++) {
+            dp[i][j] = LLONG_MAX;
+            if (j >= a)
+                dp[i][j] = min(dp[i][j], dp[i][j - a] + p);
+            if (j >= b)
+                dp[i][j] = min(dp[i][j], dp[i][j - b] + q);
+        }
+    }
+
+    // Binary search for maximum possible number of units
+    int low = 0, high = 1e9;
+    int answer = 0;
+    
+    while (low <= high) {
+        int mid = (low + high) / 2;
+        if (is_possible(mid)) {
+            answer = mid;
+            low = mid + 1;
+        } else {
+            high = mid - 1;
+        }
+    }
+
+    printf("%d\n", answer);
+    return 0;
+}

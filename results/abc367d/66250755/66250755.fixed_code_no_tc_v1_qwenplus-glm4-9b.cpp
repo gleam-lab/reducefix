@@ -1,0 +1,35 @@
+#include<bits/stdc++.h>
+using namespace std;
+int n, m, a[400005], t[1000005], an;
+int main() {
+    cin >> n >> m;
+    for (int i = 1; i <= n; i++) {
+        cin >> a[i];
+        a[i] %= m;
+    }
+    // Extend the array to include the shifted elements
+    for (int i = 1; i <= 2 * n; i++) {
+        if (i <= n) {
+            a[i + n] = a[i];
+        }
+    }
+    // Initialize the frequency array and the prefix sum array
+    int w[2 * n + 1] = {0};
+    int sum = 0;
+    // Begin the sliding window analysis
+    for (int i = 1; i <= 2 * n; i++) {
+        w[i] = (w[i - 1] + a[i]) % m;
+        // Calculate the number of times the current value of w has appeared
+        sum += w[i];
+        // Subtract the contribution of the elements that are out of the window
+        if (i > m) {
+            sum -= w[i - m];
+        }
+        // The answer is the total sum minus the sum of all m's multiples
+        if (i % m == 0) {
+            an = sum - w[i];
+        }
+    }
+    cout << an;
+    return 0;
+}

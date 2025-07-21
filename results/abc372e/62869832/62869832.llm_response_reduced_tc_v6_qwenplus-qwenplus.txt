@@ -1,0 +1,99 @@
+To solve this problem efficiently, we need to handle dynamic connectivity and frequent queries about the k-th largest node in a connected component.
+
+### Key Concepts:
+
+1. **Union-Find (Disjoint Set Union - DSU)**:
+   - Efficient data structure to maintain disjoint sets.
+   - Supports union and find operations with path compression and union by rank for near-constant time complexity per operation.
+
+2. **Maintaining Top-k Elements**:
+   - For each root of the DSU, store a list of top 10 largest nodes in its connected component.
+   - When two components are merged, merge their top-10 lists and keep only the top 10 values.
+
+3. **Efficient Merging**:
+   - Since `k` is small (up to 10), we can afford to merge and sort the top 10 elements from both sets when performing a union.
+
+Here's the fixed and optimized solution:
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+const int K = 10;
+const int MAXN = 2 * 1e5 + 5;
+
+int parent[MAXN];
+vector<int> top_vals[MAXN];
+
+int find(int u) {
+    if (parent[u] != u)
+        parent[u] = find(parent[u]);
+    return parent[u];
+}
+
+void unite(int u, int v) {
+    int pu = find(u);
+    int pv = find(v);
+    if (pu == pv) return;
+
+    // Always attach smaller tree to bigger one
+    parent[pv] = pu;
+
+    // Merge the top K values
+    vector<int> merged;
+    merged.insert(merged.end(), top_vals[pu].begin(), top_vals[pu].end());
+    merged.insert(merged.end(), top_vals[pv].begin(), top_vals[pv].end());
+
+    // Sort descending and take top K
+    sort(merged.begin(), merged.end(), greater<int>());
+    if (merged.size() > K)
+        merged.resize(K);
+
+    top_vals[pu] = merged;
+}
+
+int query(int v, int k) {
+    int root = find(v);
+    if (top_vals[root].size() < k)
+        return -1;
+    return top_vals[root][k - 1];
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int N, Q;
+    cin >> N >> Q;
+
+    // Initialize DSU
+    for (int i = 1; i <= N; ++i) {
+        parent[i] = i;
+        top_vals[i].push_back(i);
+    }
+
+    while (Q--) {
+        int type;
+        cin >> type;
+        if (type == 1) {
+            int u, v;
+            cin >> u >> v;
+            unite(u, v);
+        } else {
+            int v, k;
+            cin >> v >> k;
+            cout << query(v, k) << '\n';
+        }
+    }
+
+    return 0;
+}
+```
+
+### Explanation:
+
+- We use standard DSU with path compression to ensure efficient union and find operations.
+- Each set maintains a sorted list (`top_vals`) of up to 10 largest node values.
+- On union, we merge these two lists and keep only the top 10 values.
+- Type 2 queries simply access the k-th value in the current root’s list or returns `-1` if there aren't enough elements.
+
+This ensures that even under maximum constraints, performance remains acceptable due to the small constant size of maintained top-k lists.

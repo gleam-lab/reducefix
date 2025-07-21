@@ -1,0 +1,81 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define rep(i,n) for(int i = 0; i < (n); i++)
+using ll = long long;
+
+int main() {
+    int H, W, Q;
+    cin >> H >> W >> Q;
+
+    // For each column, keep a set of rows that have walls
+    vector<set<int>> colWalls(W);
+    // For each row, keep a set of columns that have walls
+    vector<set<int>> rowWalls(H);
+
+    // Initialize all walls
+    for (int i = 0; i < H; ++i) {
+        for (int j = 0; j < W; ++j) {
+            colWalls[j].insert(i);
+            rowWalls[i].insert(j);
+        }
+    }
+
+    while (Q--) {
+        int R, C;
+        cin >> R >> C;
+        R--; C--;
+
+        // Check if there's a wall at the bomb position
+        auto it = rowWalls[R].find(C);
+        if (it != rowWalls[R].end()) {
+            // Wall exists, just remove it
+            rowWalls[R].erase(C);
+            colWalls[C].erase(R);
+        } else {
+            // No wall at position, destroy first wall in each direction
+
+            // Up
+            auto up = colWalls[C].lower_bound(R);
+            if (up != colWalls[C].begin()) {
+                --up;
+                int r = *up;
+                rowWalls[r].erase(C);
+                colWalls[C].erase(up);
+            }
+
+            // Down
+            auto down = colWalls[C].lower_bound(R);
+            if (down != colWalls[C].end()) {
+                int r = *down;
+                rowWalls[r].erase(C);
+                colWalls[C].erase(down);
+            }
+
+            // Left
+            auto left = rowWalls[R].lower_bound(C);
+            if (left != rowWalls[R].begin()) {
+                --left;
+                int c = *left;
+                colWalls[c].erase(R);
+                rowWalls[R].erase(left);
+            }
+
+            // Right
+            auto right = rowWalls[R].lower_bound(C);
+            if (right != rowWalls[R].end()) {
+                int c = *right;
+                colWalls[c].erase(R);
+                rowWalls[R].erase(right);
+            }
+        }
+    }
+
+    // Count remaining walls
+    long long result = 0;
+    for (int i = 0; i < W; ++i) {
+        result += colWalls[i].size();
+    }
+    cout << result << endl;
+
+    return 0;
+}

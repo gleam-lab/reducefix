@@ -1,0 +1,42 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    long long N, M;
+    cin >> N >> M;
+
+    unordered_set<long long> attacked;
+    auto hash = [&](int x, int y) {
+        return (x - 1LL) * N + (y - 1LL);
+    };
+
+    // Knight move patterns: (dx, dy)
+    vector<pair<int, int>> moves = {
+        {2, 1}, {1, 2}, {-1, 2}, {-2, 1},
+        {-2, -1}, {-1, -2}, {1, -2}, {2, -1}
+    };
+
+    for (int k = 0; k < M; ++k) {
+        int a, b;
+        cin >> a >> b;
+        // Add the piece itself to the set
+        attacked.insert(hash(a, b));
+
+        // For each possible capture position from this piece
+        for (auto [dx, dy] : moves) {
+            int nx = a + dx;
+            int ny = b + dy;
+            if (1 <= nx && nx <= N && 1 <= ny && ny <= N) {
+                attacked.insert(hash(nx, ny));
+            }
+        }
+    }
+
+    // Total squares - attacked squares
+    cout << (N * N - static_cast<long long>(attacked.size())) << '\n';
+
+    return 0;
+}

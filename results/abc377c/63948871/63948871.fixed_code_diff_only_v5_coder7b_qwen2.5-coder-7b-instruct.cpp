@@ -1,0 +1,42 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <set>
+
+using namespace std;
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(0);
+
+    int N, M;
+    cin >> N >> M;
+
+    set<pair<int, int>> forbidden_positions;
+    
+    for(int i = 0; i < M; ++i) {
+        int x, y;
+        cin >> x >> y;
+        
+        forbidden_positions.insert({x, y});
+        
+        // Check all possible knight moves
+        vector<pair<int, int>> moves = {{2, 1}, {1, 2}, {-1, 2}, {-2, 1}, {-2, -1}, {-1, -2}, {1, -2}, {2, -1}};
+        
+        for(auto& move : moves) {
+            int nx = x + move.first, ny = y + move.second;
+            if(nx >= 1 && nx <= N && ny >= 1 && ny <= N) {
+                forbidden_positions.insert({nx, ny});
+            }
+        }
+    }
+    
+    // Calculate the number of valid positions
+    long long total_positions = 1LL * N * N;
+    long long invalid_positions = forbidden_positions.size();
+    long long valid_positions = total_positions - invalid_positions;
+
+    cout << valid_positions << endl;
+
+    return 0;
+}

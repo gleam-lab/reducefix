@@ -1,0 +1,31 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <cmath>
+
+using namespace std;
+
+int main() {
+    int n, q;
+    cin >> n >> q;
+    vector<int> a(n);
+    vector<int> b(q), k(q);
+    
+    for (int i = 0; i < n; ++i) {
+        cin >> a[i];
+    }
+    for (int j = 0; j < q; ++j) {
+        cin >> b[j] >> k[j];
+    }
+    
+    sort(a.begin(), a.end());
+    sort(b.begin(), b.end());
+    
+    for (int j = 0; j < q; ++j) {
+        int bi = lower_bound(b.begin(), b.end(), a[k[j] - 1]) - b.begin();
+        double distance = abs(a[k[j] - 1] - b[j]);
+        cout << static_cast<long long>(distance * distance) << endl;
+    }
+    
+    return 0;
+}

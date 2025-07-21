@@ -1,0 +1,51 @@
+#include<bits/stdc++.h>
+
+using namespace std;
+using ll = long long;
+
+int main() {
+    ll n, m;
+    cin >> n >> m;
+    set<pair<ll, ll>> positions;
+    for (ll i = 0; i < m; ++i) {
+        ll x, y;
+        cin >> x >> y;
+        positions.insert({x, y});
+    }
+
+    // Calculate the number of cells that cannot be captured
+    ll cannot_be_captured = 0;
+
+    // Subtract cells in the first row and column
+    cannot_be_captured += (n - 1) * 2;
+
+    // Subtract the top-left corner cell (only if it's not already considered)
+    if (positions.find({1, 1}) == positions.end()) {
+        cannot_be_captured++;
+    }
+
+    // Subtract cells that are on the same diagonal lines
+    for (ll x = 1; x <= n; ++x) {
+        ll y = x;
+        while (y <= n) {
+            if (positions.find({x, y}) != positions.end()) {
+                if (x + y <= n && positions.find({x + y, y - x}) != positions.end()) {
+                    cannot_be_captured++;
+                }
+                if (x - y >= 1 && positions.find({x - y, y + x}) != positions.end()) {
+                    cannot_be_captured++;
+                }
+            }
+            y++;
+        }
+    }
+
+    // Calculate the total number of cells minus the number of cells that cannot be captured
+    ll total_cells = n * n;
+    ll can_be_captured = total_cells - cannot_be_captured;
+
+    // Output the number of cells that can be captured
+    cout << can_be_captured << endl;
+
+    return 0;
+}

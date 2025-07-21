@@ -1,0 +1,59 @@
+#include <bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int n, m;
+    ll k;
+    cin >> n >> m >> k;
+    vector<ll> a(n);
+    for (int i = 0; i < n; ++i) {
+        cin >> a[i];
+        k -= a[i];
+    }
+
+    // Calculate the prefix sum of sorted votes
+    vector<ll> b(a);
+    sort(b.begin(), b.end());
+    vector<ll> pref(n + 1);
+    for (int i = 0; i < n; ++i) {
+        pref[i + 1] = b[i] + pref[i];
+    }
+
+    vector<ll> ans(n, -1);
+    for (int i = 0; i < n; ++i) {
+        ll need = 0;
+        for (int j = 0; j < n; ++j) {
+            if (j != i) {
+                need += max(0LL, b[j] - a[i] + 1);
+            }
+        }
+        if (need <= k) {
+            ans[i] = need;
+        } else {
+            // Binary search for the minimum additional votes needed
+            ll l = 0, r = k;
+            while (l < r) {
+                ll mid = (l + r) / 2;
+                ll total_votes = 0;
+                for (int j = 0; j < n; ++j) {
+                    if (j != i) {
+                        total_votes += max(0LL, b[j] - a[i] + mid + 1);
+                    }
+                }
+                if (total_votes <= k) {
+                    r = mid;
+                } else {
+                    l = mid + 1;
+                }
+            }
+            ans[i] = l;
+        }
+    }
+
+    for (ll x : ans) cout << x << " ";
+    return 0;
+}

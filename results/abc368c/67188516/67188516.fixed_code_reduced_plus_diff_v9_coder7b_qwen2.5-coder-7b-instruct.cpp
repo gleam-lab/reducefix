@@ -1,0 +1,34 @@
+#include <iostream>
+#include <vector>
+
+using namespace std;
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(NULL);
+
+    int N;
+    cin >> N;
+
+    vector<long long> A(N);
+    for(int i = 0; i < N; i++) cin >> A[i];
+
+    long long time = 0;
+    while(true) {
+        bool changed = false;
+        for(int i = 0; i < N; i++) {
+            if(A[i] > 0) {
+                if((time + 1) % 3 == 0) A[i] -= 3;
+                else A[i]--;
+                changed = true;
+                if(A[i] <= 0) A[i] = 0;
+            }
+        }
+
+        if(!changed) break;
+        time++;
+    }
+
+    cout << time << endl;
+    return 0;
+}

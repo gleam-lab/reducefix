@@ -1,0 +1,85 @@
+#include "bits/stdc++.h"
+
+using namespace std;
+
+#define ff first
+#define ss second
+#define ll long long
+#define SZ(s) (int)s.size()
+
+int const N = 2e5 + 5;
+
+// We will use a multiset to maintain the top 10 largest elements in sorted order
+vector<set<int, greater<int>>> components;
+vector<int> parent;
+
+int find(int x) {
+    if (parent[x] != x)
+        parent[x] = find(parent[x]);
+    return parent[x];
+}
+
+void unite(int a, int b) {
+    int rootA = find(a);
+    int rootB = find(b);
+    
+    // If already in same set, nothing to do
+    if (rootA == rootB)
+        return;
+        
+    // Always merge smaller component into larger one for efficiency
+    if (components[rootA].size() < components[rootB].size())
+        swap(rootA, rootB);
+
+    // Merge components[rootB] into components[rootA]
+    for (auto val : components[rootB]) {
+        components[rootA].insert(val);
+        // Keep only top 10 largest values
+        if (components[rootA].size() > 10)
+            components[rootA].erase(--components[rootA].end());
+    }
+    
+    // Update parent
+    parent[rootB] = rootA;
+}
+
+signed main() {
+    ios_base::sync_with_stdio(false); cin.tie(nullptr);
+
+    int n, q;
+    cin >> n >> q;
+    
+    components.resize(n + 1);
+    parent.resize(n + 1);
+    
+    for (int i = 1; i <= n; ++i) {
+        parent[i] = i;
+        components[i].insert(i);
+    }
+
+    while (q--) {
+        int type;
+        cin >> type;
+        
+        if (type == 1) {
+            int u, v;
+            cin >> u >> v;
+            unite(u, v);
+        } 
+        else {
+            int v, k;
+            cin >> v >> k;
+            int root = find(v);
+            
+            if (components[root].size() < k)
+                cout << -1 << '\n';
+            else {
+                auto it = components[root].begin();
+                advance(it, k - 1);
+                cout << *it << '\n';
+            }
+        }
+    }
+
+    return 0;
+}

@@ -1,0 +1,101 @@
+To fix this code, we need to correctly determine the minimum number of additional votes each candidate needs to secure their election. The key insight is to ensure that after adding X votes, the candidate is among the top M candidates in the worst-case scenario where other candidates receive as many votes as possible.
+
+### Approaches
+1. **Sort the Candidates**: First, sort the candidates based on their current votes to facilitate easier processing.
+2. **Binary Search for Each Candidate**: For each candidate, perform a binary search to find the minimum X such that, when X votes are added, the candidate is guaranteed to be in the top M candidates.
+3. **Check Feasibility**: For each candidate, check if the required X can be derived under the constraints of the remaining votes.
+
+### Solution Code
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+#define all(x) (x).begin(), (x).end()
+
+int main() {
+    ios_base::sync_with_stdio(0);
+    cin.tie(0);
+    int n, m;
+    ll k;
+    cin >> n >> m >> k;
+    vector<ll> a(n);
+    ll total = 0;
+    for (int i = 0; i < n; ++i) {
+        cin >> a[i];
+        total += a[i];
+    }
+    ll remaining = k - total;
+    
+    vector<int> ord(n);
+    iota(all(ord), 0);
+    sort(all(ord), [&](int i, int j) { return a[i] < a[j]; });
+    vector<ll> b(n);
+    for (int i = 0; i < n; ++i) {
+        b[i] = a[ord[i]];
+    }
+    vector<ll> pref(n + 1);
+    for (int i = 0; i < n; ++i) {
+        pref[i + 1] = b[i] + pref[i];
+    }
+    
+    vector<ll> ans(n, -1);
+    for (int i = 0; i < n; ++i) {
+        int pos = i;
+        ll low = 0, high = remaining;
+        ll best = -1;
+        while (low <= high) {
+            ll mid = (low + high) / 2;
+            ll new_val = b[pos] + mid;
+            int new_pos = upper_bound(all(b), new_val) - b.begin();
+            if (new_pos > n - m) {
+                best = mid;
+                high = mid - 1;
+            } else {
+                ll needed = (n - m - new_pos + 1) * new_val - (pref[n - m + 1] - pref[new_pos]);
+                if (needed <= remaining - mid) {
+                    best = mid;
+                    high = mid - 1;
+                } else {
+                    low = mid + 1;
+                }
+            }
+        }
+        ans[ord[pos]] = best;
+    }
+    
+    for (int i = 0; i < n; ++i) {
+        if (ans[i] != -1) {
+            ll required = ans[i];
+            if (required == 0) {
+                // Check if already secured
+                int count = 0;
+                for (int j = 0; j < n; ++j) {
+                    if (a[j] > a[i]) {
+                        count++;
+                    }
+                }
+                if (count < m) {
+                    ans[i] = 0;
+                } else {
+                    ans[i] = -1;
+                }
+            }
+        }
+    }
+    
+    for (auto x : ans) {
+        cout << x << ' ';
+    }
+    cout << '\n';
+    
+    return 0;
+}
+```
+
+### Explanation
+1. **Sorting and Initial Setup**: The candidates are sorted based on their current votes to process them in ascending order. This helps in determining the positions and votes required more efficiently.
+2. **Binary Search**: For each candidate, a binary search is performed to find the minimum X (additional votes) that ensures the candidate remains in the top M candidates even if other candidates receive the maximum possible votes from the remaining pool.
+3. **Feasibility Check**: For each candidate, the algorithm checks if the computed X can be accommodated within the remaining votes. If yes, it updates the answer for that candidate; otherwise, it marks the candidate as unable to secure the election (-1).
+4. **Final Adjustment**: After initial computation, the algorithm checks if candidates already have enough votes to secure their position without any additional votes and updates the answer accordingly.
+
+This approach ensures that the solution is both efficient and correct, handling all edge cases and constraints effectively.

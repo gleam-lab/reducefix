@@ -1,0 +1,38 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+#define ll long long
+#define rep(i,n) for(int i=0;i<(int)n;i++)
+#define vi vector<int>
+#define vl vector<ll>
+#define vb vector<bool>
+
+int main() {
+    ios::sync_with_stdio(false); cin.tie(0); cout.tie(0);
+    
+    int n, q; cin >> n >> q;
+    vi a(n), b(q);
+    vi k(q);
+    
+    rep(i, n) cin >> a[i];
+    rep(j, q) cin >> b[j] >> k[j];
+    
+    sort(a.begin(), a.end());
+    
+    rep(j, q) {
+        auto it = lower_bound(a.begin(), a.end(), b[j]);
+        int idx = it - a.begin();
+        if (idx == n || abs(a[idx] - b[j]) > abs(a[idx - 1] - b[j])) {
+            --idx;
+        }
+        
+        int dist = abs(a[idx] - b[j]);
+        if (k[j] > idx + 1) {
+            dist += (k[j] - idx - 1) * 2;
+        }
+        
+        cout << dist << '\n';
+    }
+    
+    return 0;
+}

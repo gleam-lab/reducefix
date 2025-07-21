@@ -1,0 +1,65 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <cassert>
+using namespace std;
+using ll = long long;
+
+const int inf = 1 << 30;
+const ll INF = 1LL << 62;
+
+int N;
+ll X;
+vector<ll> A, P, B, Q;
+
+// Function to check if processing capacity x is achievable with budget X
+bool is_achievable(ll x) {
+    ll total_cost = 0;
+    for (int i = 0; i < N; ++i) {
+        ll min_cost = INF;
+
+        // Try all possible numbers of machine A (up to what's needed)
+        for (ll s = 0; s * A[i] < x && s <= B[i]; ++s) {
+            ll remaining = max(0LL, x - A[i] * s);
+            ll t = (remaining + B[i] - 1) / B[i];
+            if (t > Q[i]) continue; // Skip if not affordable
+            min_cost = min(min_cost, s * P[i] + t * Q[i]);
+        }
+
+        // Try all possible numbers of machine B (up to what's needed)
+        for (ll t = 0; t * B[i] < x && t <= A[i]; ++t) {
+            ll remaining = max(0LL, x - B[i] * t);
+            ll s = (remaining + A[i] - 1) / A[i];
+            if (s > P[i]) continue; // Skip if not affordable
+            min_cost = min(min_cost, t * Q[i] + s * P[i]);
+        }
+
+        if (min_cost == INF || total_cost + min_cost > X) {
+            return false;
+        }
+        total_cost += min_cost;
+    }
+    return true;
+}
+
+int main() {
+    cin >> N >> X;
+    A.resize(N), P.resize(N), B.resize(N), Q.resize(N);
+    for (int i = 0; i < N; ++i) {
+        cin >> A[i] >> P[i] >> B[i] >> Q[i];
+    }
+
+    // Binary search for the maximum achievable processing capacity
+    ll low = 0, high = 1LL << 60;
+    while (low < high) {
+        ll mid = (low + high + 1) / 2;
+        if (is_achievable(mid)) {
+            low = mid;
+        } else {
+            high = mid - 1;
+        }
+    }
+
+    cout << low << endl;
+    return 0;
+}

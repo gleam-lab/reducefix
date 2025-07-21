@@ -1,0 +1,108 @@
+To fix this code, we need to address several issues related to how the code handles the destruction of walls when a bomb is placed at a cell that doesn't have a wall. The original code attempts to use a caching mechanism to store the distance to the nearest wall in each direction, but this approach is flawed because it doesn't correctly handle the dynamic nature of wall destruction during the queries.
+
+### Approaches
+1. **Initialization**: We start by initializing a grid with all cells having walls (represented as `true`).
+2. **Handling Queries**: For each query:
+   - If the cell has a wall, it is destroyed.
+   - If the cell doesn't have a wall, we look in the four directions (up, down, left, right) to find the first wall and destroy it.
+3. **Efficient Search**: To efficiently find the first wall in each direction, we can use sets to keep track of walls in each row and column. This allows us to quickly find the nearest wall using binary search.
+
+### Solution Code
+```cpp
+#include <vector>
+#include <iostream>
+#include <set>
+#include <algorithm>
+using namespace std;
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int H, W, Q;
+    cin >> H >> W >> Q;
+    vector<vector<bool>> map(H, vector<bool>(W, true));
+    
+    vector<set<int>> row_walls(H);
+    vector<set<int>> col_walls(W);
+    for (int i = 0; i < H; ++i) {
+        for (int j = 0; j < W; ++j) {
+            row_walls[i].insert(j);
+            col_walls[j].insert(i);
+        }
+    }
+
+    int broken = 0;
+    for (int q = 0; q < Q; ++q) {
+        int r, c;
+        cin >> r >> c;
+        --r; --c;
+        
+        if (map[r][c]) {
+            ++broken;
+            map[r][c] = false;
+            row_walls[r].erase(c);
+            col_walls[c].erase(r);
+        } else {
+            // Check left
+            auto it = row_walls[r].lower_bound(c);
+            if (it != row_walls[r].begin()) {
+                --it;
+                int j = *it;
+                if (map[r][j]) {
+                    ++broken;
+                    map[r][j] = false;
+                    row_walls[r].erase(j);
+                    col_walls[j].erase(r);
+                }
+            }
+            // Check right
+            it = row_walls[r].upper_bound(c);
+            if (it != row_walls[r].end()) {
+                int j = *it;
+                if (map[r][j]) {
+                    ++broken;
+                    map[r][j] = false;
+                    row_walls[r].erase(j);
+                    col_walls[j].erase(r);
+                }
+            }
+            // Check up
+            it = col_walls[c].lower_bound(r);
+            if (it != col_walls[c].begin()) {
+                --it;
+                int i = *it;
+                if (map[i][c]) {
+                    ++broken;
+                    map[i][c] = false;
+                    row_walls[i].erase(c);
+                    col_walls[c].erase(i);
+                }
+            }
+            // Check down
+            it = col_walls[c].upper_bound(r);
+            if (it != col_walls[c].end()) {
+                int i = *it;
+                if (map[i][c]) {
+                    ++broken;
+                    map[i][c] = false;
+                    row_walls[i].erase(c);
+                    col_walls[c].erase(i);
+                }
+            }
+        }
+    }
+    cout << H * W - broken << endl;
+
+    return 0;
+}
+```
+
+### Explanation
+1. **Initialization**: The grid is initialized with all walls present. We use sets to keep track of walls in each row and column for efficient access.
+2. **Query Processing**:
+   - **Wall Present**: If the cell has a wall, it is destroyed, and the corresponding entries in the row and column sets are updated.
+   - **No Wall Present**: For each direction (left, right, up, down), we use binary search to find the nearest wall. If found, it is destroyed, and the sets are updated.
+3. **Efficiency**: Using sets allows for efficient insertion, deletion, and search operations (logarithmic time complexity per operation), making the solution suitable for large input sizes as specified in the constraints.
+
+This approach ensures that we efficiently handle each query while maintaining the correct state of the grid, ultimately providing the correct count of remaining walls after all queries.

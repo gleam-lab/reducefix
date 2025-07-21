@@ -1,0 +1,49 @@
+#include <iostream>
+#include <vector>
+#include <set>
+using namespace std;
+
+int main() {
+    long long N, M;
+    cin >> N >> M;
+    
+    vector<pair<int, int>> pieces(M);
+    for (int i = 0; i < M; ++i) {
+        cin >> pieces[i].first >> pieces[i].second;
+    }
+    
+    set<pair<int, int>> row_columns;
+    set<pair<int, int>> diagonal1, diagonal2;
+    
+    for (auto& p : pieces) {
+        row_columns.insert({p.first, p.second});
+        diagonal1.insert({p.first + p.second, 0});
+        diagonal2.insert({p.first - p.second, 0});
+    }
+    
+    long long ans = N * N;
+    
+    // Subtract rows and columns that are completely covered
+    for (auto& rc : row_columns) {
+        ans -= (N - rc.first) * (N - rc.second);
+    }
+    
+    // Subtract diagonals that are completely covered
+    for (auto& d : diagonal1) {
+        int line = d.first;
+        int min_pos = min(line - N, 1);
+        int max_pos = max(line, N) - min_pos;
+        ans -= max_pos - min_pos;
+    }
+    
+    for (auto& d : diagonal2) {
+        int line = d.first;
+        int min_pos = min(abs(line) - N, 1);
+        int max_pos = max(abs(line), N) - min_pos;
+        ans -= max_pos - min_pos;
+    }
+    
+    cout << ans << endl;
+    
+    return 0;
+}

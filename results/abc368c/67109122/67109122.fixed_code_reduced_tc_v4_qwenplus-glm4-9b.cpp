@@ -1,0 +1,27 @@
+#include <iostream>
+#include <vector>
+#include <cmath>
+
+using namespace std;
+
+int main() {
+    int N;
+    cin >> N;
+    vector<long long> H(N);
+    for (int i = 0; i < N; ++i) {
+        cin >> H[i];
+    }
+
+    long long T = 0;
+    // Using a single loop to calculate the result with the correct decrement pattern
+    for (int i = 0; i < N; ++i) {
+        long long health = H[i];
+        long long decrement = health % 3; // Calculate the remainder when divided by 3
+        health /= 3; // Divide by 3 to determine how many full sets of 3 we can deal with
+        T += health; // Add the number of full attacks to T
+        T += decrement; // Add any additional attacks needed to deal with remainders
+    }
+
+    cout << T << endl;
+    return 0;
+}

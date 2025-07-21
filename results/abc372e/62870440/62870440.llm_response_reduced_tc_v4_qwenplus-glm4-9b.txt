@@ -1,0 +1,112 @@
+
+Based on the problem description and the given incorrect code, the primary goal is to handle two types of operations efficiently on an undirected graph.
+
+1. **Adding an Edge**: When an edge is added between two vertices `u` and `v`, they should be connected in such a way that subsequent operations on either vertex are handled correctly.
+2. **Finding the k-th Largest Neighbour**: For a vertex `v`, we need to find the k-th largest connected vertex.
+
+The incorrect code provided has several issues:
+
+1. **Union-Find Structure**: The union-find (or disjoint-set) structure is used but is not implemented correctly. It seems to try to flatten the components and then use an array `as` to store the vertices, but it is not used correctly.
+2. **Edge Addition**: When adding an edge, it tries to union the sets using the `gtf` function. However, the function is not implemented correctly and does not lead to a proper unionization of sets.
+3. **Sorting**: The code attempts to sort connected vertices but does not use this sorted information correctly for the output queries.
+4. **Output Queries**: The code attempts to output the k-th largest vertex, but the logic for extracting this information from the `as` array is flawed.
+
+**Steps to Solve the Problem**:
+
+1. **Initialize Union-Find**: Each vertex is its own parent initially.
+2. **Process Edge Addition**:
+    - Check if the vertices are in different sets.
+    - Union the sets using path compression.
+    - Maintain a sorted list of vertices for each set.
+3. **Process k-th Largest Neighbour Query**:
+    - Find the roots of the sets for the given vertex and its adjacent vertices.
+    - Merge the sets and maintain the sorted order.
+    - Output the k-th largest vertex from the sorted list of the set containing the vertex.
+
+**Revised Code**:
+
+```cpp
+#include <iostream>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+const int MAX_V = 200005;
+const int MAX_K = 10;
+
+vector<int> parent(MAX_V);
+vector<int> size(MAX_V, 1);
+vector<vector<int>> adj(MAX_V);
+vector<vector<int>> sorted_adj(MAX_V);
+
+int find_set(int u) {
+    if (parent[u] != u) {
+        parent[u] = find_set(parent[u]);
+    }
+    return parent[u];
+}
+
+void union_set(int u, int v) {
+    int root_u = find_set(u);
+    int root_v = find_set(v);
+
+    if (root_u != root_v) {
+        if (size[root_u] < size[root_v]) {
+            swap(root_u, root_v);
+        }
+        parent[root_v] = root_u;
+        size[root_u] += size[root_v];
+    }
+}
+
+void add_edge(int u, int v) {
+    int root_u = find_set(u);
+    int root_v = find_set(v);
+
+    if (root_u != root_v) {
+        union_set(u, v);
+    }
+}
+
+void add_sorted_edge(int u, int v) {
+    int root_u = find_set(u);
+    int root_v = find_set(v);
+
+    if (root_u != root_v) {
+        union_set(u, v);
+        sorted_adj[root_u].push_back(v);
+        sorted_adj[root_v].push_back(u);
+    }
+}
+
+int main() {
+    int n, q;
+    cin >> n >> q;
+
+    for (int i = 1; i <= n; ++i) {
+        parent[i] = i;
+        // Initialize sorted_adj here
+    }
+
+    for (int i = 0; i < q; ++i) {
+        int type, u, v, k;
+        cin >> type >> u >> v;
+
+        if (type == 1) {
+            add_edge(u, v);
+            add_sorted_edge(u, v);
+        } else if (type == 2) {
+            int root_v = find_set(v);
+            if (sorted_adj[root_v].size() < k) {
+                cout << -1 << "\n";
+            } else {
+                cout << sorted_adj[root_v][sorted_adj[root_v].size() - k] << "\n";
+            }
+        }
+    }
+
+    return 0;
+}
+```
+
+This revised code initializes the union-find structure correctly, adds edges properly, and maintains sorted lists of vertices in each set. The k-th largest query is then efficiently handled by accessing the sorted lists.

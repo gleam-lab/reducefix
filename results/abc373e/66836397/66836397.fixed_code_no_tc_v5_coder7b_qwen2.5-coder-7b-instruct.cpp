@@ -1,0 +1,50 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+
+using namespace std;
+
+typedef long long ll;
+
+ll binary_search(ll left, ll right, const vector<ll>& a, const vector<ll>& A, int n, int m, ll K) {
+    while (left < right) {
+        ll mid = (left + right) / 2;
+        ll na = a[mid] + mid;
+        ll r = upper_bound(A.begin(), A.end(), na) - A.begin();
+        ll uppercnt = n - r;
+        ll rem = K - mid;
+        ll M = m - uppercnt;
+        if (M <= 0) right = mid;
+        else left = mid + 1;
+    }
+    return left;
+}
+
+int main() {
+    ll n, m, K;
+    cin >> n >> m >> K;
+    vector<ll> a(n);
+    vector<ll> A(n);
+    for (ll i = 0; i < n; i++) {
+        cin >> a[i];
+        K -= a[i];
+        A[i] = a[i];
+    }
+    sort(A.begin(), A.end());
+
+    for (ll i = 0; i < n; i++) {
+        if (a[i] >= K) {
+            cout << 0 << " ";
+        } else {
+            ll need = binary_search(a[i], K, a, A, n, m, K);
+            if (need > K) {
+                cout << -1 << " ";
+            } else {
+                cout << need - a[i] << " ";
+            }
+        }
+    }
+    cout << endl;
+
+    return 0;
+}

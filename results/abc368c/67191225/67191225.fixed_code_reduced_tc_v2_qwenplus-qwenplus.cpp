@@ -1,0 +1,46 @@
+#include <iostream>
+#include <vector>
+#include <numeric>
+using namespace std;
+using ll = long long;
+
+int main() {
+    int N;
+    cin >> N;
+    vector<ll> H(N);
+    for (int i = 0; i < N; ++i) {
+        cin >> H[i];
+    }
+
+    ll T = 0;
+    for (int i = 0; i < N; ++i) {
+        // Number of full cycles of 3 attacks: each cycle does 5 damage (1+1+3)
+        ll full_cycles = H[i] / 5;
+        T += full_cycles * 3;
+        ll remaining = H[i] % 5;
+
+        if (remaining > 0) {
+            // Need to do additional attacks based on remainder
+            // If current T mod 3 is:
+            // - 0: next attack is triple damage (3), then back to 1,1,3,...
+            // - 1 or 2: can do small damage first before reaching a triple
+
+            ll t_mod = T % 3;
+            if (t_mod == 0) {
+                // Next attack is triple
+                T += (remaining + 2) / 3; // ceil division
+            } else {
+                // We can wait until the triple attack
+                ll wait = (3 - t_mod); // steps to reach next triple attack
+                remaining -= wait;
+                if (remaining <= 0) {
+                    T += 1; // use at least one attack
+                } else {
+                    T += wait + (remaining + 2) / 3; // wait + ceil division
+                }
+            }
+        }
+    }
+
+    cout << T << endl;
+}

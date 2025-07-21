@@ -1,0 +1,71 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define rep(i,n) for(int i = 0; i < (n); i++)
+using ll = long long;
+
+int main() {
+    int h, w, q;
+    cin >> h >> w >> q;
+    vector<set<int>> tate(w), yoko(h);
+    
+    // Initialize each cell with a wall
+    for (int i = 0; i < h; ++i) {
+        for (int j = 0; j < w; ++j) {
+            tate[j].insert(i);
+            yoko[i].insert(j);
+        }
+    }
+
+    while (q--) {
+        int r, c;
+        cin >> r >> c;
+        r--; c--;
+
+        if (tate[c].count(r)) {
+            // Wall exists at the position, destroy it
+            tate[c].erase(r);
+            yoko[r].erase(c);
+        } else {
+            // Look up direction (first wall above)
+            auto it_up = tate[c].lower_bound(r);
+            if (it_up != tate[c].begin()) {
+                --it_up;
+                int pos = *it_up;
+                tate[c].erase(pos);
+                yoko[pos].erase(c);
+            }
+
+            // Look down direction (first wall below)
+            auto it_down = tate[c].lower_bound(r);
+            if (it_down != tate[c].end()) {
+                int pos = *it_down;
+                tate[c].erase(pos);
+                yoko[pos].erase(c);
+            }
+
+            // Look left direction (first wall to the left)
+            auto it_left = yoko[r].lower_bound(c);
+            if (it_left != yoko[r].begin()) {
+                --it_left;
+                int pos = *it_left;
+                yoko[r].erase(pos);
+                tate[pos].erase(r);
+            }
+
+            // Look right direction (first wall to the right)
+            auto it_right = yoko[r].lower_bound(c);
+            if (it_right != yoko[r].end()) {
+                int pos = *it_right;
+                yoko[r].erase(pos);
+                tate[pos].erase(r);
+            }
+        }
+    }
+
+    int ans = 0;
+    for (int i = 0; i < w; ++i) {
+        ans += tate[i].size();
+    }
+    cout << ans << "\n";
+    return 0;
+}

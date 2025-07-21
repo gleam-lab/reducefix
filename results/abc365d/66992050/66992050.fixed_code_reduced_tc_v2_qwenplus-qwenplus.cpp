@@ -1,0 +1,37 @@
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+
+int main(){
+  int N;
+  string S;
+  cin >> N >> S;
+  
+  // Initialize past as 'N' (no previous move)
+  char past = 'N';
+  int ans = 0;
+  
+  for(char c : S){
+    if(c == 'P'){
+      if(past != 'S'){
+        ans++;  // Need to switch to P
+        past = 'P';
+      }
+    }
+    else if(c == 'R'){
+      if(past != 'P'){
+        ans++;  // Need to switch to R
+        past = 'R';
+      }
+    }
+    else if(c == 'S'){
+      if(past != 'R'){
+        ans++;  // Need to switch to S
+        past = 'S';
+      }
+    }
+  }
+  
+  cout << ans;
+  return 0;
+}

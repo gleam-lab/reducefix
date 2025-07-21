@@ -1,0 +1,80 @@
+To solve this problem correctly, we need to **minimize the difference between the maximum and minimum values** in a subsequence `B` of length `N - K`, formed by removing exactly `K` elements from the original array `A`, while **preserving the relative order** of the remaining elements.
+
+### Key Insight:
+The greedy approach used in your code (which sorts the array and removes either the smallest or largest element at each step) does **not** preserve the original order and is thus incorrect for this problem. The actual sequence must be maintained.
+
+---
+
+### Correct Strategy:
+
+We need to find the **minimum possible value of (max - min)** over all **contiguous subsequences of length N-K**, because only contiguous segments can maintain the original order after removing up to K elements.
+
+#### Steps:
+1. Iterate through all sliding windows of size `(N - K)` in the array.
+2. For each window, compute the max and min efficiently.
+3. Track the minimal difference (`max - min`) across all such windows.
+
+To make this efficient:
+- Use a **monotonic deque** for maintaining min and max in O(1) per operation in a sliding window.
+
+---
+
+### Final Code (Efficient and Correct):
+
+```cpp
+#include <iostream>
+#include <vector>
+#include <deque>
+#include <algorithm>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int n, k;
+    cin >> n >> k;
+    vector<int> A(n);
+    for (int i = 0; i < n; ++i)
+        cin >> A[i];
+
+    int window_size = n - k;
+
+    deque<int> min_deque, max_deque;
+    int result = INT_MAX;
+
+    for (int i = 0; i < n; ++i) {
+        // Remove indices out of current window
+        if (!min_deque.empty() && min_deque.front() <= i - window_size)
+            min_deque.pop_front();
+        if (!max_deque.empty() && max_deque.front() <= i - window_size)
+            max_deque.pop_front();
+
+        // Maintain min deque: increasing order
+        while (!min_deque.empty() && A[min_deque.back()] >= A[i])
+            min_deque.pop_back();
+        min_deque.push_back(i);
+
+        // Maintain max deque: decreasing order
+        while (!max_deque.empty() && A[max_deque.back()] <= A[i])
+            max_deque.pop_back();
+        max_deque.push_back(i);
+
+        // Start calculating when window is complete
+        if (i >= window_size - 1) {
+            int current_diff = A[max_deque.front()] - A[min_deque.front()];
+            result = min(result, current_diff);
+        }
+    }
+
+    cout << result << endl;
+}
+```
+
+---
+
+### Complexity:
+- Time: **O(N)** — Each index is pushed/popped at most once in both deques.
+- Space: **O(N)** for deques in worst case.
+
+This solution guarantees correctness by considering all valid sequences that maintain original order and ensures optimal performance even for large constraints (`N ≤ 2 * 10^5`).

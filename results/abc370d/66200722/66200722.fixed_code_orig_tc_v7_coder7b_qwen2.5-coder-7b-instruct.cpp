@@ -1,0 +1,50 @@
+#include<bits/stdc++.h>
+using namespace std;
+
+#define pb push_back
+#define mp make_pair
+#define sz(x) ((int)(x).size())
+
+typedef long long ll;
+typedef pair<int, int> pi;
+typedef pair<ll, ll> pl;
+
+const int INF = 1e9+7;
+
+int n, m, q, vis[100005][100005], dir[4][2] = {{1,0},{-1,0},{0,1},{0,-1}};
+
+void dfs(int x, int y){
+    if(x < 0 || y < 0 || x >= n || y >= m || vis[x][y]) return;
+    vis[x][y] = 1;
+    for(int i=0;i<4;i++){
+        int nx = x + dir[i][0];
+        int ny = y + dir[i][1];
+        dfs(nx,ny);
+    }
+}
+
+int main(){
+    ios_base::sync_with_stdio(false);
+    cin.tie(NULL);
+    
+    cin >> n >> m >> q;
+    memset(vis,0,sizeof(vis));
+    while(q--){
+        int x,y;
+        cin >> x >> y;
+        x--, y--;
+        if(!vis[x][y]){
+            dfs(x,y);
+        }
+    }
+    
+    int ans = 0;
+    for(int i=0;i<n;i++){
+        for(int j=0;j<m;j++){
+            if(!vis[i][j]) ans++;
+        }
+    }
+    
+    cout << ans << endl;
+    return 0;
+}

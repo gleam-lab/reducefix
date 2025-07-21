@@ -1,0 +1,41 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int N;
+    cin >> N;
+    string S;
+    cin >> S;
+
+    // hand: all possible moves
+    vector<char> hand = {'R', 'P', 'S'};
+    
+    // DP[i][c]: max wins up to i-th round ending with move c
+    unordered_map<char, int> dp;
+
+    for (int i = 0; i < N; ++i) {
+        unordered_map<char, int> new_dp;
+        for (char c : hand) {
+            int best = 0;
+            for (char prev : hand) {
+                if (prev == c) continue;
+                
+                // win condition
+                if ((c == 'R' && S[i] == 'S') ||
+                    (c == 'P' && S[i] == 'R') ||
+                    (c == 'S' && S[i] == 'P')) {
+                    best = max(best, dp[prev] + 1);
+                } else {
+                    best = max(best, dp[prev]);
+                }
+            }
+            new_dp[c] = best;
+        }
+        dp = new_dp;
+    }
+
+    cout << max({dp['R'], dp['P'], dp['S']}) << endl;
+}

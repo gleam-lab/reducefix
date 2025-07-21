@@ -1,0 +1,64 @@
+#include <iostream>
+#include <algorithm>
+#include <vector>
+using namespace std;
+
+#define int long long
+const int N = 1e5 + 5;
+
+int n, q;
+int a[N];
+
+signed main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    cin >> n >> q;
+    for (int i = 0; i < n; ++i) {
+        cin >> a[i];
+    }
+    sort(a, a + n);
+
+    while (q--) {
+        int b, k;
+        cin >> b >> k;
+
+        // Binary search bounds
+        int left = 0, right = n - 1;
+        while (left < right) {
+            int mid = (left + right) >> 1;
+            if (a[mid] < b) left = mid + 1;
+            else right = mid;
+        }
+
+        // Two pointers to find k-th closest
+        int l = left - 1, r = left;
+        vector<int> distances;
+
+        while (l >= 0 && r < n && (int)distances.size() < k) {
+            int dl = abs(a[l] - b);
+            int dr = abs(a[r] - b);
+            if (dl <= dr) {
+                distances.push_back(dl);
+                l--;
+            } else {
+                distances.push_back(dr);
+                r++;
+            }
+        }
+
+        while (l >= 0 && (int)distances.size() < k) {
+            distances.push_back(abs(a[l--] - b));
+        }
+
+        while (r < n && (int)distances.size() < k) {
+            distances.push_back(abs(a[r++] - b));
+        }
+
+        // Sort and get k-th smallest distance
+        sort(distances.begin(), distances.end());
+        cout << distances[k-1] << '\n';
+    }
+
+    return 0;
+}

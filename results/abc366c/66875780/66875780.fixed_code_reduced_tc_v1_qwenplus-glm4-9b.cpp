@@ -1,0 +1,37 @@
+#include <iostream>
+#include <set>
+#include <vector>
+
+using namespace std;
+
+void solve() {
+    int Q;
+    cin >> Q;
+    set<int> bag;
+    vector<int> ans;
+
+    while (Q--) {
+        int type;
+        cin >> type;
+        if (type == 1) {
+            int x;
+            cin >> x;
+            bag.insert(x);
+        } else if (type == 2) {
+            int x;
+            cin >> x;
+            bag.erase(x);
+        } else {
+            ans.push_back(bag.size());
+        }
+    }
+
+    for (int size : ans) {
+        cout << size << "\n";
+    }
+}
+
+int main() {
+    solve();
+    return 0;
+}

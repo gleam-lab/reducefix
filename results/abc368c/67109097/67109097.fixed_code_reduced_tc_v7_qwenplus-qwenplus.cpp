@@ -1,0 +1,56 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+
+int main() {
+    int N;
+    cin >> N;
+    vector<long long> H(N);
+    for (int i = 0; i < N; ++i) {
+        cin >> H[i];
+    }
+
+    long long T = 0;
+
+    for (int i = 0; i < N; ++i) {
+        // For each enemy, determine how many attacks it receives
+        // We simulate the attack pattern to ensure correctness
+
+        long long h = H[i];
+        long long t = 0;
+
+        // We want to determine how many attacks are needed for this enemy
+        // Each 3 attacks: 1 strong attack (3 damage), 2 weak attacks (1 damage each)
+        // That makes 5 damage every 3 time units
+
+        // Full groups of 5 damage
+        long long fullGroups = h / 5;
+        t += fullGroups * 3;
+        h -= fullGroups * 5;
+
+        // Remaining damage
+        if (h > 0) {
+            // After full groups, we may need:
+            // - 1 strong attack (if h >= 3)
+            // - or 1-2 weak attacks
+            if (h >= 3) {
+                t += 1;
+                h -= 3;
+            }
+            while (h > 0) {
+                t++;
+                if (t % 3 == 0) {
+                    h -= 3;
+                } else {
+                    h -= 1;
+                }
+            }
+        }
+
+        T += t;
+    }
+
+    cout << T << endl;
+
+    return 0;
+}

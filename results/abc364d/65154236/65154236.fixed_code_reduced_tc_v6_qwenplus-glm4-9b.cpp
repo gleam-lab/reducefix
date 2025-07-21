@@ -1,0 +1,38 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+const int MAX_N = 200000;
+
+int main() {
+    int N, Q;
+    cin >> N >> Q;
+    
+    vector<long long> A(N + 1);
+    vector<pair<long long, int>> queries(Q);
+    
+    // Read the coordinates of points A
+    for (int i = 1; i <= N; ++i) {
+        cin >> A[i];
+    }
+    
+    // Read the queries
+    for (int i = 0; i < Q; ++i) {
+        int b, kj;
+        cin >> b >> kj;
+        queries[i] = {A[kj] - b, kj}; // Store b - A[kj] because we need the smallest distance
+    }
+    
+    // Sort queries by the distance A[kj] - b
+    sort(queries.begin(), queries.end());
+    
+    // Answer each query
+    for (int i = 0; i < Q; ++i) {
+        // queries[i].second is kj, the index of the point A[kj] in the original input
+        long long result = queries[i].first;
+        cout << result << endl;
+    }
+    
+    return 0;
+}

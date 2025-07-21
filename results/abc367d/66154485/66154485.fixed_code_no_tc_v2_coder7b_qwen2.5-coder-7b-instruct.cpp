@@ -1,0 +1,26 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    int n, m, ans = 0;
+    cin >> n >> m;
+    vector<int> arr(n);
+    for (int i = 0; i < n; i++) {
+        cin >> arr[i];
+    }
+    
+    // Iterate through all possible starting points
+    for (int start = 0; start < n; ++start) {
+        int currentSum = 0;
+        // Iterate through all possible lengths of subarrays starting from 'start'
+        for (int length = 1; length <= n; ++length) {
+            currentSum += arr[(start + length - 1) % n]; // Use modulo to handle circular array
+            if (currentSum % m == 0) {
+                ++ans;
+            }
+        }
+    }
+    
+    cout << ans;
+    return 0;
+}

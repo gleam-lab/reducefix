@@ -1,0 +1,101 @@
+
+The given problem is about managing an undirected graph using a union-find data structure, with two types of operations: adding edges and querying for the k-th largest vertex connected to a given vertex. The main issues in your code are related to the union-find structure and the way you process the queries.
+
+Here's a breakdown of the problems and how to address them:
+
+1. **Union-Find Structure:**
+   - The union-find structure seems to be implemented correctly for unit testing but fails for the given failing case. The problem might arise from the `unite` function where you are swapping `ru` and `rv` if `cnt[ru].size() < cnt[rv].size()`, which is not necessary and could be causing issues.
+   - Additionally, merging sets can be optimized. Instead of merging the sets `cnt[rv]` into `cnt[rnew]`, you could directly insert the elements from `cnt[rv]` into `cnt[rnew]` after finding the new root `rnew`, and then clear `cnt[rv]`.
+
+2. **Processing Queries:**
+   - The logic for querying the k-th largest vertex connected to a vertex `v` is flawed. You're using `cnt[uf.findRoot(v)].rbegin()` and then advancing it `k-1` but not properly updating the union-find structure to reflect that the elements have been moved.
+   - You also need to ensure that the union-find structure maintains the size of each component correctly after each query.
+
+3. **Output:**
+   - You're storing all the answers in a vector `ans` and then printing them at the end. This is not efficient and can lead to memory issues for large inputs. You should print the answers as they are computed.
+
+Here's a revised version of the code with some corrections:
+
+```cpp
+#include <iostream>
+#include <vector>
+#include <set>
+using namespace std;
+
+struct UnionFind {
+    vector<int> parent;
+    vector<int> size;
+    UnionFind(int n) : parent(n), size(n, 1) {
+        for (int i = 0; i < n; i++) {
+            parent[i] = i;
+        }
+    }
+    
+    int findRoot(int x) {
+        if (parent[x] != x) {
+            parent[x] = findRoot(parent[x]);
+        }
+        return parent[x];
+    }
+    
+    int getSize(int x) {
+        x = findRoot(x);
+        return size[x];
+    }
+    
+    bool unite(int x, int y) {
+        int rootX = findRoot(x);
+        int rootY = findRoot(y);
+        if (rootX != rootY) {
+            if (size[rootX] < size[rootY]) {
+                swap(rootX, rootY);
+            }
+            parent[rootY] = rootX;
+            size[rootX] += size[rootY];
+            return true;
+        }
+        return false;
+    }
+};
+
+int main() {
+    int n, q;
+    cin >> n >> q;
+    UnionFind uf(n);
+    
+    while (q--) {
+        int type;
+        cin >> type;
+        if (type == 1) {
+            int u, v;
+            cin >> u >> v;
+            uf.unite(u - 1, v - 1);
+        } else if (type == 2) {
+            int v, k;
+            cin >> v >> k;
+            v--;
+            int root = uf.findRoot(v);
+            int componentsSize = uf.getSize(root);
+            if (k > componentsSize) {
+                cout << "-1\n";
+            } else {
+                set<int> connectedVertices;
+                for (int i = 0; i < n; i++) {
+                    if (uf.findRoot(i) == root) {
+                        connectedVertices.insert(i);
+                    }
+                }
+                // The set is sorted in ascending order
+                for (int i = 0; i < k - 1; i++) {
+                    connectedVertices.erase(connectedVertices.begin());
+                }
+                cout << *connectedVertices.rbegin() + 1 << "\n";
+            }
+        }
+    }
+    
+    return 0;
+}
+```
+
+This revised code addresses the union-find structure by maintaining the size of each component and uses sets to handle the k-th largest element queries. It avoids merging sets unnecessarily and prints outputs as they are computed, which should be efficient enough for the given constraints.

@@ -1,0 +1,105 @@
+To fix this code, we need to correctly calculate the number of safe squares where a new piece can be placed without being captured by any existing pieces. The existing pieces can attack along rows, columns, or diagonals (both types). The problem requires us to compute the total number of safe squares by subtracting the unsafe squares from the total grid squares.
+
+### Approaches
+1. **Identify Unsafe Squares**: The unsafe squares are those that are either occupied or lie in the same row, column, or either diagonal as any existing piece.
+2. **Use Mathematical Inclusion-Exclusion Principle**: To avoid double-counting squares that are unsafe due to multiple conditions, we use the inclusion-exclusion principle. This helps in accurately calculating the total number of unique unsafe squares.
+3. **Efficient Calculation**: Given the constraints (N can be as large as 10^9 and M up to 10^3), we need an efficient method to compute the unsafe squares without iterating over each square individually. We can leverage set operations to track unique rows, columns, and diagonals affected by the existing pieces.
+
+### Solution Code
+```cpp
+#include<bits/stdc++.h>
+using namespace std;
+using i64 = long long;
+
+int main() {
+    std::ios::sync_with_stdio(false);
+    std::cin.tie(nullptr);
+    i64 N, M;
+    cin >> N >> M;
+    vector<array<i64, 2>> pieces(M);
+    unordered_set<i64> rows, cols, diag1, diag2;
+    for (int i = 0; i < M; ++i) {
+        i64 a, b;
+        cin >> a >> b;
+        pieces[i] = {a, b};
+        rows.insert(a);
+        cols.insert(b);
+        diag1.insert(a + b);
+        diag2.insert(a - b);
+    }
+
+    i64 unsafe = 0;
+    unsafe += rows.size() * N;
+    unsafe += cols.size() * N;
+    
+    for (i64 d : diag1) {
+        i64 start = max(1LL, d - N);
+        i64 end = min(N, d - 1);
+        if (start <= end) {
+            unsafe += end - start + 1;
+        }
+    }
+    
+    for (i64 d : diag2) {
+        i64 start = max(1LL, 1 - d);
+        i64 end = min(N, N - d);
+        if (start <= end) {
+            unsafe += end - start + 1;
+        }
+    }
+    
+    i64 intersections = 0;
+    for (i64 r : rows) {
+        for (i64 c : cols) {
+            if (diag1.count(r + c) && diag2.count(r - c)) {
+                intersections++;
+            }
+        }
+    }
+    
+    for (i64 d1 : diag1) {
+        for (i64 d2 : diag2) {
+            if ((d1 + d2) % 2 == 0) {
+                i64 x = (d1 + d2) / 2;
+                i64 y = (d1 - d2) / 2;
+                if (x >= 1 && x <= N && y >= 1 && y <= N) {
+                    intersections++;
+                }
+            }
+        }
+    }
+    
+    for (i64 r : rows) {
+        for (i64 d2 : diag2) {
+            i64 y = r - d2;
+            if (y >= 1 && y <= N && diag1.count(r + y) && cols.count(y)) {
+                intersections++;
+            }
+        }
+    }
+    
+    for (i64 c : cols) {
+        for (i64 d1 : diag1) {
+            i64 x = d1 - c;
+            if (x >= 1 && x <= N && diag2.count(x - c) && rows.count(x)) {
+                intersections++;
+            }
+        }
+    }
+    
+    unsafe -= intersections;
+    i64 total = N * N - unsafe;
+    cout << total << "\n";
+    return 0;
+}
+```
+
+### Explanation
+1. **Initialization**: We read the grid size `N` and the number of existing pieces `M`. We store each piece's coordinates and track the unique rows, columns, and diagonals they affect.
+2. **Unsafe Squares Calculation**: 
+   - **Rows and Columns**: Each existing piece makes its entire row and column unsafe. The total unsafe squares from rows and columns are `rows.size() * N` and `cols.size() * N`, respectively.
+   - **Diagonals**: For each diagonal (both types), we calculate the range of squares that fall within the grid boundaries and add them to the unsafe count.
+3. **Inclusion-Exclusion Principle**: To avoid double-counting squares that are unsafe due to multiple conditions (e.g., same row and column), we compute the intersections of these conditions and subtract them from the total unsafe count.
+4. **Result Calculation**: The total safe squares are computed by subtracting the total unsafe squares from the total grid squares (`N * N`).
+
+This approach efficiently handles the large constraints by leveraging set operations and mathematical calculations to avoid brute-force checks.

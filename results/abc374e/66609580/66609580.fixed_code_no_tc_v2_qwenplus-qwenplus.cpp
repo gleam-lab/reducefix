@@ -1,0 +1,62 @@
+#include <bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+
+const ll INF = 1e18;
+
+int n;
+ll a[110], b[110], p[110], q[110], x;
+
+inline ll lcm(ll x, ll y) {
+    return x / __gcd(x, y) * y;
+}
+
+inline bool check(ll v) {
+    ll cnt = 0;
+    for (int i = 1; i <= n; ++i) {
+        ll l = lcm(a[i], b[i]);
+        ll full_cycles = v / l;
+        ll cost_per_cycle = min(p[i] * (l / a[i]), q[i] * (l / b[i]));
+        ll total_full_cost = full_cycles * cost_per_cycle;
+        
+        // Add the full cycles contribution
+        cnt += total_full_cost;
+        if (cnt > x) return false;
+        
+        // Handle remaining part after full cycles
+        ll rem = v % l;
+        ll min_cost = INF;
+        
+        // Try all possible numbers of A operations in [0, rem/a[i]]
+        for (ll j = 0; j * a[i] <= rem; ++j) {
+            ll remaining = rem - j * a[i];
+            ll k = remaining / b[i];
+            if (remaining % b[i] != 0) k++;
+            
+            if (k >= 0) {
+                min_cost = min(min_cost, j * p[i] + k * q[i]);
+            }
+        }
+        
+        cnt += min_cost;
+        if (cnt > x) return false;
+    }
+    return true;
+}
+
+int main() {
+    ios::sync_with_stdio(0);
+    cin.tie(0), cout.tie(0);
+    cin >> n >> x;
+    for (int i = 1; i <= n; ++i) {
+        cin >> a[i] >> p[i] >> b[i] >> q[i];
+    }
+
+    ll l = 0, r = 2e14;
+    while (l + 1 < r) {
+        ll mid = (l + r) / 2;
+        if (check(mid)) l = mid;
+        else r = mid;
+    }
+    cout << l;
+}

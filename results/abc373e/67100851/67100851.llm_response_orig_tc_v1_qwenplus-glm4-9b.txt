@@ -1,0 +1,90 @@
+
+### Solution Analysis
+
+The problem involves determining the minimum number of additional votes each candidate needs to ensure victory in an election. The victory condition for a candidate is that they must have more votes than at least one other candidate. The challenge is to compute this for each candidate given the current votes, the total votes, and the number of candidates who can vote for them.
+
+#### Key Steps in the Solution:
+
+1. **Sorting Candidates by Votes:** Start by sorting the candidates based on their current votes. This helps in efficiently determining the next candidate who will receive more votes as additional votes are distributed.
+
+2. **Cumulative Sum Array:** Construct a cumulative sum array of the votes to quickly compute the sum of votes up to any candidate.
+
+3. **Binary Search for Minimum Votes:** For each candidate, use binary search to find the minimum number of additional votes they need. This involves checking if adding a certain number of votes guarantees that the candidate will have more votes than M-1 other candidates (since one of them could potentially be themselves).
+
+4. **Adjusting for Boundaries and Edge Cases:** Handle cases where a candidate needs 0 additional votes or cannot secure victory under any circumstances.
+
+#### Detailed Code Explanation:
+
+```cpp
+#include <iostream>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+const int MAX_N = 200000;
+long long A[MAX_N];
+long long psum[MAX_N + 1];
+
+// binary search to find the minimum votes needed
+long long getmin(int idx) {
+    long long x = A[idx];
+    long long l = -1, r = A[idx] - M + 1;
+    while (l < r) {
+        long long mid = (l + r + 1) / 2;
+        long long s = 0;
+        for (int i = idx; i >= 0 && A[i] + mid >= A[idx]; i--) {
+            s += A[i];
+        }
+        s = psum[idx + 1] - s + A[idx] + mid;
+        for (int i = idx + 1; i < idx + M && A[i] > A[idx] + mid; i++) {
+            s += psum[i + 1] - psum[i];
+        }
+        if (K - s >= mid) {
+            r = mid - 1;
+        } else {
+            l = mid;
+        }
+    }
+    return l;
+}
+
+int main() {
+    int N, M, K;
+    cin >> N >> M >> K;
+    for (int i = 0; i < N; i++) {
+        cin >> A[i];
+    }
+    sort(A, A + N, greater<long long>());
+    psum[0] = 0;
+    for (int i = 0; i < N; i++) {
+        psum[i + 1] = psum[i] + A[i];
+    }
+
+    vector<long long> ans(N, 0);
+    for (int i = 0; i < N; i++) {
+        ans[i] = getmin(i);
+        if (ans[i] == -1) {
+            ans[i] = 0;
+        }
+    }
+
+    for (int i = 0; i < N; i++) {
+        if (A[i] + ans[i] > A[i + 1] + ans[i + 1]) {
+            ans[i] = max(ans[i], A[i + 1] + ans[i + 1] - A[i] - ans[i]);
+        }
+    }
+
+    for (int i = 0; i < N; i++) {
+        if (ans[i] == -1) {
+            cout << -1 << " ";
+        } else {
+            cout << ans[i] << " ";
+        }
+    }
+    cout << endl;
+
+    return 0;
+}
+```
+
+This refined solution introduces a binary search approach to find the minimum votes needed for each candidate to secure a victory. The code is organized to clearly separate the steps of sorting, cumulative sum calculation, and the binary search logic. The main function computes the required votes and ensures all edge cases are handled correctly.

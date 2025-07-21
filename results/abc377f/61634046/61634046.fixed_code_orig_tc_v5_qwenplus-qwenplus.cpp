@@ -1,0 +1,108 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+
+using ll = long long;
+using pii = pair<int, int>;
+
+const int MAX_M = 1005;
+
+int N, M;
+set<int> rows, cols;
+set<int> diag1, diag2; // i+j and i-j
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    cin >> N >> M;
+
+    for (int i = 0; i < M; ++i) {
+        int a, b;
+        cin >> a >> b;
+        rows.insert(a);
+        cols.insert(b);
+        diag1.insert(a + b);
+        diag2.insert(a - b);
+    }
+
+    ll total = (ll)N * N - M;
+
+    // Subtract squares attacked by existing pieces
+    total -= (ll)(rows.size() * N);
+    total -= (ll)(cols.size() * N);
+    total += (ll)(rows.size() * cols.size()); // Overlap: row & col
+
+    // Diagonal 1: i + j = k
+    for (int d : diag1) {
+        // i + j = d => j = d - i
+        // i must be in [max(1, d - N), min(N, d - 1)]
+        int low = max(1, d - N);
+        int high = min(N, d - 1);
+        if (low <= high)
+            total -= (high - low + 1);
+    }
+
+    // Diagonal 2: i - j = d => j = i - d
+    for (int d : diag2) {
+        // i - j = d => j = i - d
+        // i must be in [max(1, 1 + d), min(N, N + d)]
+        int low = max(1, 1 + d);
+        int high = min(N, N + d);
+        if (low <= high)
+            total -= (high - low + 1);
+    }
+
+    // Add back overlaps between diagonals
+    for (int r : rows) {
+        for (int d : diag1) {
+            int j = d - r;
+            if (1 <= j && j <= N)
+                total += 1;
+        }
+        for (int d : diag2) {
+            int j = r - d;
+            if (1 <= j && j <= N)
+                total += 1;
+        }
+    }
+
+    for (int c : cols) {
+        for (int d : diag1) {
+            int i = d - c;
+            if (1 <= i && i <= N)
+                total += 1;
+        }
+        for (int d : diag2) {
+            int i = c + d;
+            if (1 <= i && i <= N)
+                total += 1;
+        }
+    }
+
+    // Subtract overlaps between all three
+    for (int r : rows) {
+        for (int c : cols) {
+            int d1 = r + c;
+            int d2 = r - c;
+            if (diag1.count(d1))
+                total += 1;
+            if (diag2.count(d2))
+                total += 1;
+        }
+    }
+
+    // Subtract overlaps between all four directions
+    for (int r : rows) {
+        for (int c : cols) {
+            int d1 = r + c;
+            int d2 = r - c;
+            if (diag1.count(d1) && diag2.count(d2))
+                total -= 1;
+        }
+    }
+
+    cout << total << endl;
+
+    return 0;
+}

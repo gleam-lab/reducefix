@@ -1,0 +1,28 @@
+#include<bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+const int MAXN = 4e5 + 10;
+
+ll a[MAXN], sum[MAXN], cnt[MAXN];
+
+int main() {
+    ll n, m, ans = 0;
+    scanf("%lld %lld", &n, &m);
+    for (ll i = 1; i <= n; i++) {
+        scanf("%lld", &a[i]);
+        a[i + n] = a[i];
+    }
+    for (ll i = 1; i <= 2 * n; i++) {
+        sum[i] = (sum[i - 1] + a[i]) % m;
+    }
+    unordered_map<ll, ll> freq;
+    for (ll i = 0; i < n; i++) {
+        freq[sum[i]]++;
+    }
+    for (ll i = n; i <= 2 * n; i++) {
+        ans += freq[sum[i] - sum[i - n]];
+        freq[sum[i]]++;
+    }
+    printf("%lld\n", ans);
+    return 0;
+}

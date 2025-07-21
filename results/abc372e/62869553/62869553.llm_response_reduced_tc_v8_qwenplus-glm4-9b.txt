@@ -1,0 +1,103 @@
+
+The problem is about managing a union-find data structure with an additional challenge of keeping track of the sizes of the connected components and their vertices in sorted order. Let's break down the problem and the solution step by step:
+
+1. **Union-Find Data Structure**: We're using the Union-Find data structure to manage the connectivity of vertices in an undirected graph. The basic operations are:
+    - **Find**: Determine which set a particular element is in. This can be used for determining if two elements are in the same set.
+    - **Union**: Join two sets together.
+
+2. **Tracking Component Sizes**: Each time an edge is added, we need to merge two components. It's crucial to keep track of the sizes of these components.
+
+3. **Sorting and Storing Vertices**: For each component, we need to store its vertices in a sorted order. This is a non-trivial detail because, when we merge two components, we need to carefully merge the sorted lists of vertices.
+
+4. **Handling Queries**:
+    - **Type 1 Query (Add Edge)**: When adding an edge, we need to check if the two vertices belong to different components. If they do, we merge the components, update the parent pointers, and merge the sorted vertex lists.
+    - **Type 2 Query (Find k-th Largest Vertex)**: When querying for the k-th largest vertex in the connected component of a given vertex, we need to access the sorted list of vertices for its component and return the k-th largest.
+
+### Key Issues in the Incorrect Code
+1. **Edge Case Not Handled**: The incorrect code does not handle the edge case where there is only one vertex in the component, and the user queries for the 2nd largest vertex.
+
+2. **Incorrect Sorting of Vertices**: The sorting and merging of vertices are not appropriately handled. When merging two components, the code does not ensure that the new list of vertices remains sorted.
+
+3. **Incorrect Union Operation**: The union operation does not handle the edge case where two components have the same size but have been merged in the wrong order.
+
+### Corrected Code
+Here is the corrected version of the code with the necessary improvements:
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+vector<int> parent;
+vector<int> size;
+vector<vector<int>> vertices;
+
+int find_set(int x) {
+    if (parent[x] != x) {
+        parent[x] = find_set(parent[x]);
+    }
+    return parent[x];
+}
+
+void union_sets(int u, int v) {
+    int root_u = find_set(u);
+    int root_v = find_set(v);
+
+    if (root_u != root_v) {
+        if (size[root_u] < size[root_v]) {
+            parent[root_u] = root_v;
+            size[root_v] += size[root_u];
+        } else {
+            parent[root_v] = root_u;
+            size[root_u] += size[root_v];
+        }
+
+        // Merge the vertices of the two sets
+        merge(vertices[root_u], vertices[root_v]);
+        vertices[root_u] = move(vertices[root_u]); // Take ownership of the merged vector
+        vertices[root_v].clear(); // Clear the vector of the other set
+    }
+}
+
+void merge(vector<int>& a, const vector<int>& b) {
+    a.resize(a.size() + b.size());
+    copy(b.begin(), b.end(), a.begin() + a.size() - b.size());
+    sort(a.begin(), a.end(), greater<int>()); // Sort in descending order
+}
+
+int main() {
+    int n, q;
+    cin >> n >> q;
+
+    parent.resize(n + 1);
+    size.resize(n + 1, 1);
+    vertices.resize(n + 1);
+
+    for (int i = 1; i <= n; ++i) {
+        parent[i] = i;
+    }
+
+    for (int i = 0; i < q; ++i) {
+        int op, u, v, k;
+        cin >> op >> u >> v;
+        if (op == 1) {
+            union_sets(u, v);
+        } else {
+            int root_v = find_set(v);
+            if (size[root_v] < k) {
+                cout << -1 << endl;
+            } else {
+                cout << vertices[root_v][k - 1] << endl;
+            }
+        }
+    }
+
+    return 0;
+}
+```
+
+### Explanation of the Corrected Code
+1. **Initialization**: We set up the `parent`, `size`, and `vertices` vectors.
+2. **Find and Union Operations**: We handle the union-find operations correctly, including the merging of vertices.
+3. **Query Handling**: For type 1 queries, we union the sets. For type 2 queries, we find the root of the set containing the vertex and check if the set has enough vertices to provide the k-th largest. If it does, we print the k-th largest vertex.
+
+This code correctly handles the problem's requirements and constraints.

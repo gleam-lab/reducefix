@@ -1,0 +1,64 @@
+#include<bits/stdc++.h>
+using namespace std;
+using ll = long long;
+
+int H, W, Y;
+vector<vector<int>> A;
+vector<vector<bool>> visited;
+vector<vector<bool>> willSink;
+vector<vector<queue<pair<int, int>>>> Q; // queue for each possible elevation level
+
+void process(int year) {
+    vector<pair<int, int>> toRemove;
+    for (int i = 0; i < H; ++i) {
+        for (int j = 0; j < W; ++j) {
+            if (willSink[i][j]) {
+                visited[i][j] = true;
+                for (int k = 0; k < 4; ++k) {
+                    int ni = i + dx[k];
+                    int nj = j + dy[k];
+                    if (ni >= 0 && ni < H && nj >= 0 && nj < W && !visited[ni][nj] && A[ni][nj] <= year) {
+                        willSink[ni][nj] = true;
+                        Q[A[ni][nj]].push({ni, nj});
+                    }
+                }
+            }
+        }
+    }
+}
+
+int main() {
+    cin >> H >> W >> Y;
+    A.resize(H, vector<int>(W));
+    visited.resize(H, vector<bool>(W, false));
+    willSink.resize(H, vector<bool>(W, false));
+    Q.resize(202020); // Assuming the maximum elevation is 100000, we need up to 100001 levels
+    for (int i = 0; i < H; ++i) {
+        for (int j = 0; j < W; ++j) {
+            cin >> A[i][j];
+            willSink[i][j] = A[i][j] == 0;
+            if (willSink[i][j]) {
+                Q[A[i][j]].push({i, j});
+            }
+        }
+    }
+
+    ll ans = H * W;
+    for (int y = 1; y <= Y; ++y) {
+        process(y);
+        for (int i = 0; i < H; ++i) {
+            for (int j = 0; j < W; ++j) {
+                if (!visited[i][j]) {
+                    ans--;
+                }
+            }
+        }
+        cout << ans << endl;
+        visited = willSink;
+    }
+
+    return 0;
+}
+
+int dx[] = {1, 0, -1, 0, 1, 1, -1, -1};
+int dy[] = {0, 1, 0, -1, 1, -1, 1, -1};

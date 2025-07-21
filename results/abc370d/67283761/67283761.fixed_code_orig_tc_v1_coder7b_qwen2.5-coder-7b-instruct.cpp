@@ -1,0 +1,81 @@
+#include <vector>
+#include <queue>
+#include <utility>
+
+using namespace std;
+
+const int INF = 1e9;
+
+struct Cell {
+    int x, y, dist;
+};
+
+int dx[] = {0, 0, -1, 1};
+int dy[] = {-1, 1, 0, 0};
+
+bool isValid(int x, int y, int n, int m) {
+    return x >= 0 && x < n && y >= 0 && y < m;
+}
+
+void bfs(vector<vector<bool>>& grid, int n, int m, int x, int y, vector<vector<int>>& dist) {
+    queue<Cell> q;
+    q.push({x, y, 0});
+    dist[x][y] = 0;
+    while (!q.empty()) {
+        Cell u = q.front();
+        q.pop();
+        for (int i = 0; i < 4; ++i) {
+            int xx = u.x + dx[i];
+            int yy = u.y + dy[i];
+            if (isValid(xx, yy, n, m) && !grid[xx][yy]) {
+                if (dist[u.x][u.y] + 1 < dist[xx][yy]) {
+                    dist[xx][yy] = dist[u.x][u.y] + 1;
+                    q.push({xx, yy, dist[xx][yy]});
+                }
+            } else {
+                dist[xx][yy] = min(dist[xx][yy], dist[u.x][u.y]);
+            }
+        }
+    }
+}
+
+int main() {
+    int n, m, q;
+    cin >> n >> m >> q;
+    vector<vector<bool>> grid(n, vector<bool>(m, true));
+    vector<vector<int>> dist(n, vector<int>(m, INF));
+    
+    for (int i = 0; i < q; ++i) {
+        int x, y;
+        cin >> x >> y;
+        --x, --y;
+        
+        if (grid[x][y]) {
+            grid[x][y] = false;
+            dist.assign(n, vector<int>(m, INF));
+            for (int i = 0; i < n; ++i) {
+                for (int j = 0; j < m; ++j) {
+                    if (!grid[i][j]) {
+                        bfs(grid, n, m, i, j, dist);
+                    }
+                }
+            }
+        } else {
+            cout << "Invalid query" << endl;
+            return 0;
+        }
+    }
+    
+    int ans = 0;
+    for (int i = 0; i < n; ++i) {
+        for (int j = 0; j < m; ++j) {
+            if (grid[i][j]) {
+                ans++;
+            }
+        }
+    }
+    
+    cout << ans << endl;
+    
+    return 0;
+}

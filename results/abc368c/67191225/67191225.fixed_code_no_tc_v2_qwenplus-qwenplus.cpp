@@ -1,0 +1,48 @@
+#include <iostream>
+#include <vector>
+using namespace std;
+using ll = long long;
+
+int main() {
+    int N;
+    cin >> N;
+    vector<ll> H(N);
+    for (int i = 0; i < N; ++i) {
+        cin >> H[i];
+    }
+
+    ll T = 0;
+
+    for (int i = 0; i < N; ++i) {
+        // Determine how many attacks are needed to defeat this enemy
+        ll h = H[i];
+        
+        // We simulate the attack pattern: two 1-damage attacks and one 3-damage attack
+        // This cycle of 3 seconds deals a total of 5 damage (1 + 1 + 3)
+        ll full_cycles = h / 5;
+        T += full_cycles * 3;
+        ll remaining_damage = h % 5;
+
+        if (remaining_damage > 0) {
+            T++;
+            if (T % 3 == 0) {
+                // If T is multiple of 3, it's a strong attack (3 damage), done above already
+                // So we only need 1 more attack for remaining damage <= 2
+                if (remaining_damage > 3) {
+                    T++;
+                }
+            } else {
+                // First or second attack in the cycle (1 damage each)
+                // Need additional attacks if remaining damage > 1
+                if (remaining_damage >= 2 && T % 3 != 2) {
+                    T++;
+                }
+                if (remaining_damage == 3) {
+                    T++; // One more to get to a 3-damage attack
+                }
+            }
+        }
+    }
+
+    cout << T << endl;
+}

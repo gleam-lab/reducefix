@@ -1,0 +1,48 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+
+int main() {
+    int N;
+    cin >> N;
+    vector<long long> H(N);
+    for (int i = 0; i < N; ++i) {
+        cin >> H[i];
+    }
+
+    long long T = 0;
+
+    // We will process enemies from left to right
+    for (int i = 0; i < N; ++i) {
+        // How many full attack cycles of 3 ticks can we do?
+        // Each cycle does 5 damage (1+1+3)
+        long long full_cycles = H[i] / 5;
+        long long remaining_health = H[i] % 5;
+        
+        T += full_cycles * 3;
+        
+        if (remaining_health > 0) {
+            T += 1; // First attack in new cycle
+            remaining_health -= 1;
+            
+            if (remaining_health > 0) {
+                // If this enemy still has health, we need to continue
+                // But we must consider if we can combine with next attacks
+                // that might be at the start of a new cycle
+                
+                // Second attack in cycle - only matters if enemy is still alive
+                T += 1;
+                remaining_health -= 1;
+                
+                if (remaining_health > 0) {
+                    // Third attack in cycle
+                    T += 1;
+                    remaining_health -= 3;
+                }
+            }
+        }
+    }
+
+    cout << T << endl;
+    return 0;
+}

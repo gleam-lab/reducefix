@@ -1,0 +1,47 @@
+#include <bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+#define all(x) (x).begin(), (x).end()
+
+int main()
+{
+    ios_base::sync_with_stdio(0);
+    cin.tie(0);
+    int n, m;
+    ll k;
+    cin >> n >> m >> k;
+    vector<ll> a(n);
+    for(int i = 0; i < n; i++) {
+        cin >> a[i];
+    }
+    // Sort candidates by votes in descending order
+    sort(a.begin(), a.end(), greater<ll>());
+    // Subtract already counted votes from the total votes
+    k -= accumulate(a.begin(), a.end(), 0LL);
+    // If all votes have been counted and the leader can't secure victory, return -1
+    if (k == 0) {
+        for (int i = 0; i < n; i++) {
+            if (n - m <= i) {
+                cout << -1 << " ";
+            } else {
+                cout << 0 << " ";
+            }
+        }
+        return 0;
+    }
+    // Calculate the minimum additional votes needed
+    for (int i = 0; i < n; i++) {
+        if (n - m <= i) { // If candidate i cannot be elected
+            cout << -1 << " ";
+        } else {
+            ll votes_needed = k - (a[i] - a[n - m]);
+            // If the remaining votes are less than needed to secure victory, return -1
+            if (votes_needed < 0) {
+                cout << -1 << " ";
+            } else {
+                cout << votes_needed << " ";
+            }
+        }
+    }
+    return 0;
+}

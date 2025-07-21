@@ -1,0 +1,52 @@
+#include <iostream>
+#include <vector>
+#include <set>
+using namespace std;
+
+struct Position {
+    int x, y;
+};
+
+int main() {
+    int n, m;
+    cin >> n >> m;
+    vector<Position> positions(m);
+    for (int i = 0; i < m; ++i) {
+        cin >> positions[i].x >> positions[i].y;
+    }
+
+    // Using a set to store all occupied positions
+    set<pair<int, int>> occupied;
+    for (const auto& pos : positions) {
+        occupied.emplace(pos.x, pos.y);
+    }
+
+    // Helper function to check if a position is safe from all other pieces
+    auto is_safe = [&](const Position& pos) {
+        vector<pair<int, int>> directions = {
+            {1, 2}, {2, 1}, {2, -1}, {1, -2},
+            {-1, -2}, {-2, -1}, {-2, 1}, {-1, 2}
+        };
+        for (const auto& dir : directions) {
+            int nx = pos.x + dir.first;
+            int ny = pos.y + dir.second;
+            if (nx > 0 && nx <= n && ny > 0 && ny <= n && occupied.count({nx, ny})) {
+                return false;
+            }
+        }
+        return true;
+    };
+
+    // Count safe positions
+    long long safe_count = 0;
+    for (int i = 1; i <= n; ++i) {
+        for (int j = 1; j <= n; ++j) {
+            if (!occupied.count({i, j}) && is_safe({i, j})) {
+                safe_count++;
+            }
+        }
+    }
+
+    cout << safe_count << endl;
+    return 0;
+}

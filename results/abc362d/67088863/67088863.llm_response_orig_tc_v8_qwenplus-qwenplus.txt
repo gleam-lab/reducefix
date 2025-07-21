@@ -1,0 +1,86 @@
+The issue in your code lies in how you're computing the path cost and handling vertex weights. The problem defines the **path weight** as the sum of **both vertex and edge weights** along the chosen path.
+
+However, your current implementation incorrectly treats the vertex weight as part of every outgoing edge, which is not correct — the vertex weight should only be added once per visit to a node on the path.
+
+### Key Fixes:
+1. When defining the graph, store only the edge weight in the adjacency list.
+2. During Dijkstra's traversal, when moving from node `v` to neighbor `u`, the total cost becomes:  
+   ```
+   dist[u] = min(dist[u], dist[v] + edge_weight + A[u])
+   ```
+   This correctly accumulates:
+   - The previous path cost to `v`: `dist[v]`
+   - The edge weight: `edge_weight`
+   - The destination vertex weight: `A[u]`
+
+3. Initialize `dist[0]` (start node) with `A[0]`, since that vertex's weight must also be included in any path starting at it.
+
+---
+
+Here's the corrected and full working C++ code:
+
+```cpp
+#include <iostream>
+#include <vector>
+#include <queue>
+#include <set>
+using namespace std;
+#define ll long long
+
+const ll INF = 1e18;
+
+void solve() {
+    int n, m;
+    cin >> n >> m;
+
+    vector<ll> A(n);
+    for (int i = 0; i < n; ++i) {
+        cin >> A[i];
+    }
+
+    vector<vector<pair<int, ll>>> adj(n);
+    for (int i = 0; i < m; ++i) {
+        int u, v;
+        ll w;
+        cin >> u >> v >> w;
+        u--; v--;
+        adj[u].push_back({v, w});
+        adj[v].push_back({u, w});
+    }
+
+    vector<ll> dist(n, INF);
+    dist[0] = A[0]; // Start node's value counts once
+
+    priority_queue<pair<ll, int>, vector<pair<ll, int>>, greater<>> pq;
+    pq.push({dist[0], 0});
+
+    while (!pq.empty()) {
+        auto [cost, u] = pq.top();
+        pq.pop();
+
+        if (cost > dist[u]) continue;
+
+        for (auto& [v, edge_cost] : adj[u]) {
+            ll new_cost = cost + edge_cost + A[v]; // Include edge and target vertex weight
+            if (new_cost < dist[v]) {
+                dist[v] = new_cost;
+                pq.push({dist[v], v});
+            }
+        }
+    }
+
+    for (int i = 1; i < n; ++i) {
+        cout << dist[i] << " ";
+    }
+    cout << endl;
+}
+
+int main() {
+    ios::sync_with_stdio(0);
+    cin.tie(0); cout.tie(0);
+
+    solve();
+
+    return 0;
+}
+```

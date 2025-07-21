@@ -1,0 +1,40 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    int N;
+    cin >> N;
+    vector<long long> H(N);
+    for (int i = 0; i < N; ++i) cin >> H[i];
+
+    long long T = 0;
+
+    // We simulate the process using a queue to track when each enemy needs to be attacked
+    queue<pair<int, long long>> q;  // {enemy index, remaining health}
+
+    for (int i = 0; i < N; ++i) {
+        if (H[i] > 0) {
+            q.push({i, H[i]});
+        }
+    }
+
+    while (!q.empty()) {
+        T++;
+        int cycle = T % 3;
+        auto [idx, hp] = q.front();
+        q.pop();
+
+        if (cycle == 0) {
+            hp -= 3;
+        } else {
+            hp -= 1;
+        }
+
+        if (hp > 0) {
+            q.push({idx, hp});
+        }
+    }
+
+    cout << T << endl;
+    return 0;
+}

@@ -1,0 +1,83 @@
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+#define fi first
+#define se second
+#define pb push_back
+#define chmin(x, y) x = min(x, y)
+using ll = long long;
+using P = pair<int, int>;
+
+const int INF = 1001001001;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int n, k;
+    cin >> n >> k;
+    vector<int> A(n);
+    for (int i = 0; i < n; ++i) {
+        cin >> A[i];
+    }
+
+    // We need to remove K elements to minimize the difference between max and min in the remaining N-K elements.
+    // So we want to find a window of size L = N - K with minimum (max - min)
+
+    int L = n - k;
+    if (L == 0) {
+        cout << 0 << endl;
+        return 0;
+    }
+
+    // Use sliding window with a multiset (or two heaps) to track min and max in window
+    // We'll use two multisets to maintain min and max in current window
+
+    multiset<int> low, high;
+
+    auto rebalance = [&]() {
+        while (low.size() > high.size() + 1) {
+            auto it = prev(low.end());
+            high.insert(*it);
+            low.erase(it);
+        }
+        while (!high.empty() && (!low.empty() && *low.rbegin() > *high.begin())) {
+            high.insert(*low.rbegin());
+            low.erase(prev(low.end()));
+            low.insert(*high.begin());
+            high.erase(high.begin());
+        }
+    };
+
+    // Initialize window
+    for (int i = 0; i < L; ++i) {
+        low.insert(A[i]);
+    }
+    for (int i = 0; i < L / 2; ++i) {
+        high.insert(*low.rbegin());
+        low.erase(prev(low.end()));
+    }
+
+    int ans = INF;
+    for (int i = 0; i <= k; ++i) {
+        chmin(ans, *low.rbegin() - *low.begin());
+        if (i + L < n) {
+            // Remove A[i]
+            if (low.find(A[i]) != low.end()) {
+                low.erase(low.find(A[i]));
+            } else {
+                high.erase(high.find(A[i]));
+            }
+            // Add A[i + L]
+            if (high.empty() || A[i + L] <= *high.begin()) {
+                low.insert(A[i + L]);
+            } else {
+                high.insert(A[i + L]);
+            }
+            rebalance();
+        }
+    }
+
+    cout << ans << endl;
+}
+```

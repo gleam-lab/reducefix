@@ -1,0 +1,86 @@
+
+The given code attempts to solve the problem by using sets to keep track of walls that are left in each row and column. However, there are several logical errors and inefficiencies in the code that lead to incorrect results.
+
+### Issues in the Incorrect Code
+
+1. **Incorrect Set Usage**: The code incorrectly updates the sets for the row and column after a wall is destroyed. The `erase` function is being used on the wrong iterator.
+  
+2. **Inefficient Wall Removal**: After placing a bomb, the code correctly identifies walls that need to be destroyed. However, it is not efficiently removing all the walls in the neighboring rows and columns. There is a potential for missing walls because of incorrect iterator usage.
+
+3. **Assumptions and Edge Cases**: The code assumes that there is always a wall to remove when no wall is found at the specified cell, but this might not always be the case.
+
+### Corrected Approach
+
+Instead of using sets, we can use bitmasks to represent the walls in each row and column. This will allow us to efficiently update and query the wall information.
+
+1. **Initialize Row and Column Wall Information**: Start by initializing arrays to represent the presence of walls in each row and column. Use bit manipulation to represent walls â for instance, a bit set to `1` means a wall is present at that position.
+
+2. **Process Queries**: For each query, update the row and column wall information based on the position of the bomb. If there is no wall at the specified cell, determine which walls to destroy in the row and column using the bitmasks.
+
+3. **Count Remaining Walls**: After processing all queries, count the number of remaining walls by summing up the bits set in the row and column bitmasks.
+
+### Example Implementation
+
+```cpp
+#include <iostream>
+#include <vector>
+#include <cstring>
+
+using namespace std;
+
+const int MAX_H = 50000;
+const int MAX_W = 50000;
+const int WALL = 1;
+
+int main() {
+    int H, W, Q;
+    cin >> H >> W >> Q;
+    
+    vector<int> row_walls(MAX_H, (1 << MAX_W) - 1); // bitmask for each row
+    vector<int> col_walls(MAX_W, (1 << MAX_H) - 1); // bitmask for each column
+    
+    for (int q = 0; q < Q; ++q) {
+        int R, C;
+        cin >> R >> C;
+        --R; --C; // Convert to 0-based index
+        
+        int& r_walls = row_walls[R];
+        int& c_walls = col_walls[C];
+        
+        if ((r_walls & (1 << C)) == 0) { // No wall at (R, C)
+            // Destroy walls in the column
+            for (int i = 0; i < H; ++i) {
+                if ((r_walls & (1 << i)) == 0) { // No wall at (i, C)
+                    c_walls &= ~(1 << i); // Remove wall at (i, C)
+                }
+            }
+            
+            // Destroy walls in the row
+            for (int j = 0; j < W; ++j) {
+                if ((c_walls & (1 << j)) == 0) { // No wall at (R, j)
+                    r_walls &= ~(1 << j); // Remove wall at (R, j)
+                }
+            }
+        } else {
+            // Remove the wall at (R, C)
+            r_walls &= ~(1 << C);
+            c_walls &= ~(1 << C);
+        }
+    }
+    
+    int remaining_walls = 0;
+    for (int i = 0; i < H; ++i) {
+        for (int j = 0; j < W; ++j) {
+            if ((row_walls[i] & (1 << j)) == 0 && (col_walls[j] & (1 << i)) == 0) {
+                remaining_walls++;
+            }
+        }
+    }
+    
+    cout << remaining_walls << endl;
+    
+    return 0;
+}
+```
+
+This approach efficiently handles the wall destruction after each query and correctly counts the remaining walls after all queries are processed.

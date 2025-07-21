@@ -1,0 +1,92 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+#define rep(i,n) for(int i = 0; i < (int)(n); ++i)
+#define rrep(i,n) for(int i = (int)(n)-1; i >= 0; --i)
+
+using ll = long long;
+using pii = pair<int, int>;
+
+const int INF = 1 << 30;
+
+int H, W, Q;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+
+    cin >> H >> W >> Q;
+
+    vector<set<int>> rows(H + 2), cols(W + 2);
+    vector<vector<bool>> grid(H + 2, vector<bool>(W + 2, true));
+
+    // Initialize sets with column indices for each row and vice versa
+    for (int i = 0; i <= H + 1; ++i) {
+        for (int j = 0; j <= W + 1; ++j) {
+            if (i == 0 || i == H + 1 || j == 0 || j == W + 1) {
+                grid[i][j] = false;  // Mark boundaries as already "destroyed"
+            } else {
+                rows[i].insert(j);
+                cols[j].insert(i);
+            }
+        }
+    }
+
+    auto destroy = [&](int r, int c) {
+        if (!grid[r][c]) return;
+        grid[r][c] = false;
+        rows[r].erase(c);
+        cols[c].erase(r);
+    };
+
+    while (Q--) {
+        int r, c;
+        cin >> r >> c;
+
+        if (grid[r][c]) {
+            destroy(r, c);
+        } else {
+            // Up
+            {
+                auto it = cols[c].lower_bound(r);
+                if (it != cols[c].begin()) {
+                    --it;
+                    destroy(*it, c);
+                }
+            }
+
+            // Down
+            {
+                auto it = cols[c].upper_bound(r);
+                if (it != cols[c].end()) {
+                    destroy(*it, c);
+                }
+            }
+
+            // Left
+            {
+                auto it = rows[r].lower_bound(c);
+                if (it != rows[r].begin()) {
+                    --it;
+                    destroy(r, *it);
+                }
+            }
+
+            // Right
+            {
+                auto it = rows[r].upper_bound(c);
+                if (it != rows[r].end()) {
+                    destroy(r, *it);
+                }
+            }
+        }
+    }
+
+    int ans = 0;
+    for (int i = 1; i <= H; ++i)
+        for (int j = 1; j <= W; ++j)
+            ans += grid[i][j];
+
+    cout << ans << "\n";
+    return 0;
+}

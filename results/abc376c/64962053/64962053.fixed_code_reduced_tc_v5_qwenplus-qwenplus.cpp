@@ -1,0 +1,44 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int N;
+    cin >> N;
+
+    vector<long long> A(N), B(N - 1);
+    for (int i = 0; i < N; ++i) cin >> A[i];
+    for (int i = 0; i < N - 1; ++i) cin >> B[i];
+
+    sort(A.begin(), A.end());
+    sort(B.begin(), B.end());
+
+    // We need to check if we can assign each toy to a box such that:
+    // - Each toy fits in its box (box size >= toy size)
+    // - All boxes used are distinct (each box used exactly once)
+
+    // Try greedy matching: match smallest toy to smallest possible usable box
+
+    multiset<long long> boxes;
+    for (long long b : B) boxes.insert(b);
+
+    int matched = 0;
+    for (int i = 0; i < N; ++i) {
+        auto it = boxes.lower_bound(A[i]);
+        if (it != boxes.end()) {
+            boxes.erase(it);
+            matched++;
+        }
+    }
+
+    if (matched == N - 1) {
+        // The one un-matched toy will go into the new box, so x needs to be at least that toy's size
+        cout << A[N - 1] << "\n";
+    } else {
+        cout << -1 << "\n";
+    }
+
+    return 0;
+}

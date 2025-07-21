@@ -1,0 +1,134 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+constexpr int dx[] = {0, 1, 0, -1};
+constexpr int dy[] = {1, 0, -1, 0};
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int H, W, Y;
+    cin >> H >> W >> Y;
+
+    vector<vector<int>> A(H, vector<int>(W));
+    for (int i = 0; i < H; ++i) {
+        for (int j = 0; j < W; ++j) {
+            cin >> A[i][j];
+        }
+    }
+
+    // Binary search setup
+    vector<vector<int>> threshold(H, vector<int>(W));
+    for (int i = 0; i < H; ++i) {
+        for (int j = 0; j < W; ++j) {
+            int min_boundary_height = 1e9;
+            for (int k = 0; k < 4; ++k) {
+                int ni = i + dx[k], nj = j + dy[k];
+                if (ni < 0 || ni >= H || nj < 0 || nj >= W) continue;
+                min_boundary_height = min(min_boundary_height, A[ni][nj]);
+            }
+            threshold[i][j] = min(A[i][j], min_boundary_height);
+        }
+    }
+
+    // Flatten the grid and sort positions by their threshold value
+    vector<pair<int, int>> flat;
+    for (int i = 0; i < H; ++i) {
+        for (int j = 0; j < W; ++j) {
+            flat.emplace_back(threshold[i][j], i * W + j);
+        }
+    }
+    sort(flat.begin(), flat.end());
+
+    // Union-Find data structure
+    vector<int> parent(H * W), rank(H * W, 1);
+    function<int(int)> find = [&](int x) {
+        return parent[x] == x ? x : parent[x] = find(parent[x]);
+    };
+    auto unite = [&](int x, int y) {
+        x = find(x), y = find(y);
+        if (x == y) return;
+        if (rank[x] < rank[y]) swap(x, y);
+        parent[y] = x;
+        rank[x] += rank[y];
+    };
+
+    // Initialize Union-Find with boundaries connected to sea
+    for (int i = 0; i < H * W; ++i) parent[i] = i;
+    vector<bool> is_sea(H * W, false);
+
+    // Initially mark boundary cells as connected to sea
+    for (int i = 0; i < H; ++i) {
+        for (int j = 0; j < W; ++j) {
+            if (i == 0 || i == H - 1 || j == 0 || j == W - 1) {
+                is_sea[i * W + j] = true;
+            }
+        }
+    }
+
+    // Process in order of increasing threshold
+    int curr = 0;
+    vector<int> ans(Y + 2, H * W);  // Default all land remains
+
+    // Sort queries
+    vector<int> query(Y);
+    for (int i = 0; i < Y; ++i) cin >> query[i];
+
+    // Create list of events: year -> list of positions
+    vector<vector<int>> events(Y + 2);
+    for (auto& [height, pos] : flat) {
+        if (height <= Y) {
+            events[height].push_back(pos);
+        }
+    }
+
+    // Reset Union-Find and sea status
+    for (int i = 0; i < H * W; ++i) {
+        parent[i] = i;
+        is_sea[i] = (i / W == 0 || i / W == H - 1 || i % W == 0 || i % W == W - 1);
+    }
+
+    // Process each year from 1 to max height
+    for (int year = 1; year <= Y; ++year) {
+        for (int pos : events[year]) {
+            int x = pos / W, y = pos % W;
+            for (int k = 0; k < 4; ++k) {
+                int nx = x + dx[k], ny = y + dy[k];
+                if (nx < 0 || nx >= H || ny < 0 || ny >= W) continue;
+                int neighbor_pos = nx * W + ny;
+                if (is_sea[neighbor_pos] || threshold[nx][ny] <= year) {
+                    unite(pos, neighbor_pos);
+                }
+            }
+            if (is_sea[find(pos)]) continue;  // Already connected
+            if (threshold[x][y] > year) continue;
+            // Check if now connected to sea
+            bool connects_to_sea = false;
+            for (int k = 0; k < 4; ++k) {
+                int nx = x + dx[k], ny = y + dy[k];
+                if (nx < 0 || nx >= H || ny < 0 || ny >= W) continue;
+                int neighbor_pos = nx * W + ny;
+                if (is_sea[find(neighbor_pos)]) {
+                    connects_to_sea = true;
+                    break;
+                }
+            }
+            if (connects_to_sea) {
+                int root = find(pos);
+                is_sea[root] = true;
+            }
+        }
+
+        // Count land still above water
+        unordered_set<int> roots;
+        for (int i = 0; i < H * W; ++i) {
+            if (!is_sea[find(i)]) {
+                roots.insert(find(i));
+            }
+        }
+        cout << roots.size() << "\n";
+    }
+
+    return 0;
+}

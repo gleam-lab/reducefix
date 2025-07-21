@@ -1,0 +1,47 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    long long N;
+    int M;
+    cin >> N >> M;
+
+    // Set to store positions of all pieces and threatened squares
+    unordered_set<string> blocked;
+
+    // Directions for L-shaped moves (knight-like)
+    vector<pair<long long, long long>> directions = {
+        {2, 1}, {1, 2}, {-1, 2}, {-2, 1},
+        {-2, -1}, {-1, -2}, {1, -2}, {2, -1}
+    };
+
+    auto get_key = [](long long x, long long y) {
+        return to_string(x) + "," + to_string(y);
+    };
+
+    for (int i = 0; i < M; ++i) {
+        long long a, b;
+        cin >> a >> b;
+
+        // Add current piece position
+        blocked.insert(get_key(a, b));
+
+        // Add all potentially threatened squares
+        for (const auto& [dx, dy] : directions) {
+            long long nx = a + dx;
+            long long ny = b + dy;
+            if (nx >= 1 && nx <= N && ny >= 1 && ny <= N) {
+                blocked.insert(get_key(nx, ny));
+            }
+        }
+    }
+
+    // Total number of cells is N^2
+    // Subtract the number of blocked cells
+    cout << (N * N - static_cast<long long>(blocked.size())) << endl;
+
+    return 0;
+}

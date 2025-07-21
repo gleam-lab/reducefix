@@ -1,0 +1,96 @@
+To fix this code, we need to accurately calculate the number of safe squares where a new piece can be placed without being captured by any existing pieces. The initial approach had some logical flaws in how it handled the intersections of rows, columns, and diagonals. Here’s the corrected version:
+
+### Approaches
+1. **Initial Safe Squares Calculation**: First, calculate the number of squares not in any existing row or column. This is done by subtracting the number of unique rows and columns from the total grid size, adjusting for overlaps.
+2. **Diagonal Intersections**: For each diagonal (both types: i + j = d and i - j = d), calculate the number of squares that are not already covered by rows or columns. This requires careful consideration of the intersections between diagonals and the already considered rows and columns.
+3. **Adjustments for Overlaps**: Ensure that squares covered by both types of diagonals, or by both a diagonal and a row/column, are not double-counted in the subtraction.
+
+### Solution Code
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+
+int main() {
+    ll N, M;
+    cin >> N >> M;
+    unordered_set<ll> rows, cols, diag1, diag2;
+    for (ll i = 0; i < M; ++i) {
+        ll a, b;
+        cin >> a >> b;
+        rows.insert(a);
+        cols.insert(b);
+        diag1.insert(a + b);
+        diag2.insert(a - b);
+    }
+
+    ll safe_rows = N - rows.size();
+    ll safe_cols = N - cols.size();
+    ll initial_safe = safe_rows * safe_cols;
+
+    ll subtract = 0;
+
+    // For diag1 (i + j = d)
+    for (ll d : diag1) {
+        ll i_min = max(1LL, d - N);
+        ll i_max = min(N, d - 1);
+        if (i_min > i_max) continue;
+        ll diag_length = i_max - i_min + 1;
+
+        ll count = diag_length;
+        for (ll i = i_min; i <= i_max; ++i) {
+            ll j = d - i;
+            if (rows.count(i) || cols.count(j)) {
+                --count;
+            }
+        }
+        subtract += count;
+    }
+
+    // For diag2 (i - j = d)
+    for (ll d : diag2) {
+        ll i_min = max(1LL, 1 + d);
+        ll i_max = min(N, N + d);
+        if (i_min > i_max) continue;
+        ll diag_length = i_max - i_min + 1;
+
+        ll count = diag_length;
+        for (ll i = i_min; i <= i_max; ++i) {
+            ll j = i - d;
+            if (rows.count(i) || cols.count(j)) {
+                --count;
+            }
+        }
+        subtract += count;
+    }
+
+    // Remove squares counted in both diag1 and diag2
+    ll overlap = 0;
+    for (ll d1 : diag1) {
+        for (ll d2 : diag2) {
+            if ((d1 + d2) % 2 != 0) continue;
+            ll i = (d1 + d2) / 2;
+            ll j = (d1 - d2) / 2;
+            if (i >= 1 && i <= N && j >= 1 && j <= N) {
+                if (!rows.count(i) && !cols.count(j)) {
+                    ++overlap;
+                }
+            }
+        }
+    }
+    subtract -= overlap;
+
+    ll total_safe = initial_safe - subtract;
+    cout << total_safe << endl;
+
+    return 0;
+}
+```
+
+### Explanation
+1. **Initial Safe Squares Calculation**: The initial safe squares are those not in any existing row or column. This is calculated as `(N - rows.size()) * (N - cols.size())`.
+2. **Diagonal Intersections**: For each diagonal (i + j = d and i - j = d), we count the squares that are not already covered by rows or columns. This ensures we only subtract squares that are truly unsafe.
+3. **Overlap Adjustment**: Squares that lie on both types of diagonals (i + j = d1 and i - j = d2) are subtracted twice in the initial diagonal counts. We adjust by adding back these overlaps if they weren't already covered by rows or columns.
+4. **Final Count**: The total safe squares is the initial safe squares minus the unsafe squares from diagonals, adjusted for overlaps.
+
+This approach ensures accurate counting by systematically addressing each potential source of unsafe squares and adjusting for overlaps to avoid double-counting.

@@ -1,0 +1,74 @@
+#include "bits/stdc++.h"
+
+using namespace std;
+
+#define ff first
+#define ss second
+#define ll long long
+#define SZ(s) (int)s.size()
+
+int const N = 2e5 + 5;
+
+vector<set<int>> components;
+vector<int> parent;
+
+int find(int x) {
+    if (parent[x] != x)
+        parent[x] = find(parent[x]);
+    return parent[x];
+}
+
+void unite(int a, int b) {
+    a = find(a);
+    b = find(b);
+    if (a == b)
+        return;
+
+    // Merge smaller set into the larger one for efficiency
+    if (components[a].size() < components[b].size())
+        swap(a, b);
+
+    // Move elements from b to a
+    for (int node : components[b]) {
+        components[a].insert(node);
+        parent[node] = a;
+    }
+    components[b].clear(); // Clear the merged set
+}
+
+signed main() {
+    ios_base::sync_with_stdio(false); cin.tie(nullptr);
+
+    int n, q;
+    cin >> n >> q;
+
+    parent.resize(n + 1);
+    components.resize(n + 1);
+
+    // Initialize each node as its own component
+    for (int i = 1; i <= n; ++i) {
+        parent[i] = i;
+        components[i].insert(i);
+    }
+
+    while (q--) {
+        int type, u, v;
+        cin >> type >> u >> v;
+
+        if (type == 1) {
+            unite(u, v);
+        } else {
+            int root = find(u);
+            if (components[root].size() < v) {
+                cout << -1 << '\n';
+            } else {
+                // Get the k-th largest using reverse iterator
+                auto it = components[root].rbegin();
+                advance(it, v - 1);
+                cout << *it << '\n';
+            }
+        }
+    }
+
+    return 0;
+}

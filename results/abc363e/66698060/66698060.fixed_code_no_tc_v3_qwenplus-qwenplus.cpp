@@ -1,0 +1,86 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define ll long long
+#define rep(i,n) for(ll i=0;i<(ll)n;i++)
+#define vi vector<int>
+#define vl vector<ll>
+#define vb vector<bool>
+#define vvb vector<vector<bool>>
+#define vvl vector<vector<ll>>
+#define pll pair<ll, ll>
+#define qll queue<ll>
+#define pq_pair priority_queue<pair<ll, pair<ll, ll>>, vector<pair<ll, pair<ll, ll>>>, greater<pair<ll, pair<ll, ll>>>>
+#define INF (1LL << 60)
+
+ll dx[4] = {0, 1, 0, -1};
+ll dy[4] = {1, 0, -1, 0};
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+    
+    ll h, w, y;
+    cin >> h >> w >> y;
+    
+    vvl A(h, vl(w));
+    rep(i, h) rep(j, w) cin >> A[i][j];
+    
+    // To store when each cell gets submerged
+    vvl submergeYear(h, vl(w, INF));
+    
+    // Min-heap to process boundary cells
+    pq_pair pq;
+    
+    // Mark boundary cells and add to heap
+    vvb isBoundary(h, vb(w, false));
+    for (ll i = 0; i < h; ++i) {
+        for (ll j = 0; j < w; ++j) {
+            if (i == 0 || i == h - 1 || j == 0 || j == w - 1) {
+                submergeYear[i][j] = A[i][j];
+                pq.push({A[i][j], {i, j}});
+                isBoundary[i][j] = true;
+            }
+        }
+    }
+
+    // BFS with priority queue (Dijkstra-like)
+    while (!pq.empty()) {
+        auto current = pq.top();
+        ll height = current.first;
+        ll x = current.second.first;
+        ll y_coord = current.second.second;
+        pq.pop();
+
+        for (ll dir = 0; dir < 4; ++dir) {
+            ll nx = x + dx[dir];
+            ll ny = y_coord + dy[dir];
+
+            if (nx >= 0 && nx < h && ny >= 0 && ny < w && !isBoundary[nx][ny]) {
+                ll newSubmergeYear = max(height, A[nx][ny]);
+                if (newSubmergeYear < submergeYear[nx][ny]) {
+                    submergeYear[nx][ny] = newSubmergeYear;
+                    pq.push({newSubmergeYear, {nx, ny}});
+                }
+                isBoundary[nx][ny] = true;
+            }
+        }
+    }
+
+    // Count how many cells remain above water after each year
+    vl count(y + 2, h * w);  // Start with all cells above water
+    for (ll i = 0; i < h; ++i) {
+        for (ll j = 0; j < w; ++j) {
+            if (submergeYear[i][j] <= y) {
+                count[submergeYear[i][j]]--;
+            }
+        }
+    }
+
+    // Accumulate the counts
+    for (ll i = 1; i <= y; ++i) {
+        count[i] = count[i - 1] - (count[i] < count[i - 1] ? (count[i - 1] - count[i]) : 0);
+        cout << count[i] << "\n";
+    }
+
+    return 0;
+}

@@ -1,0 +1,91 @@
+To solve this problem efficiently, we need to compute the minimum possible value of the expression:
+
+$$
+\left(\max_{i \in S} A_i\right) \times \left(\sum_{i \in S} B_i\right)
+$$
+
+Where $S$ is a subset of size $K$ chosen from indices $\{1, 2, ..., N\}$.
+
+### Key Observations:
+1. We can fix the maximum $A_i$ in the subset and try to choose $K-1$ elements with smaller $A_i$ values that have the largest $B_i$ values to minimize the total product.
+2. Sorting by $A_i$ helps us iterate over all potential maximum values systematically.
+3. As we increase the current max $A_i$, we maintain a min-heap of size $K-1$ for the top $K-1$ values of $B_i$ so far (excluding the current one). This allows efficient updates and computation of the sum of $B_i$'s.
+
+### Efficient Strategy:
+1. Sort the pairs $(A_i, B_i)$ by increasing order of $A_i$.
+2. Use a min-heap to track the top $K-1$ values of $B_i$ seen so far.
+3. Iterate through the sorted list:
+   - For each element, assume it's the maximum $A_i$ in the subset.
+   - Add its corresponding $B_i$ to the current $B$ sum.
+   - If we've selected more than $K$ elements, remove the smallest $B_i$ using the heap.
+   - Once we have at least $K$ elements, compute the product and update the minimum result.
+
+This approach ensures an overall time complexity of $O(N \log K)$ per test case due to heap operations, which is efficient given the constraints.
+
+Here is the corrected and optimized C++ code:
+
+```cpp
+#include <iostream>
+#include <vector>
+#include <queue>
+#include <algorithm>
+using namespace std;
+
+#define int long long
+
+void solve() {
+    int n, k;
+    cin >> n >> k;
+    vector<pair<int, int>> a(n);
+    for (int i = 0; i < n; ++i) {
+        cin >> a[i].first; // A_i
+    }
+    for (int i = 0; i < n; ++i) {
+        cin >> a[i].second; // B_i
+    }
+
+    // Sort by A_i ascending
+    sort(a.begin(), a.end());
+
+    int sum_b = 0;
+    priority_queue<int> pq; // max heap (we'll invert sign to simulate min-heap)
+    int res = 1e18; // Large initial value
+
+    for (int i = 0; i < n; ++i) {
+        // Always include the current B_i as we're considering it as part of subset
+        sum_b += a[i].second;
+        pq.push(-a[i].second); // Min-heap simulation with negative
+
+        // If more than K elements, remove the smallest B_i
+        if (pq.size() > k) {
+            sum_b += pq.top(); // Since stored as negative
+            pq.pop();
+        }
+
+        // When we have exactly K elements, calculate the product
+        if (pq.size() == k) {
+            res = min(res, a[i].first * sum_b);
+        }
+    }
+
+    cout << res << '\n';
+}
+
+signed main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t;
+    cin >> t;
+    while (t--) {
+        solve();
+    }
+}
+```
+
+### Explanation:
+- **Sorting** ensures we process items in increasing order of `A[i]`, making it easier to control the maximum value.
+- **Min-heap (`priority_queue`)** maintains the smallest `B[i]` among the top `K` candidates, helping in efficient removal when we exceed `K`.
+- The final result is updated only when we have a valid subset of size `K`.
+
+This solution correctly handles edge cases and large inputs within the problem constraints.

@@ -1,0 +1,35 @@
+#include<iostream>
+#include<vector>
+#include<string>
+#include<set>
+#include<algorithm>
+#include<map>
+#include<cmath>
+#include<math.h>
+#include<queue>
+#include <iomanip> //setprecisionを使うため
+using namespace std;
+using ll = long long;
+using ull = unsigned long long;
+
+int main(){
+    set<int> s; // 使用集合来存储不同整数的球
+    int q;
+    cin >> q;
+
+    for(int i=0;i<q;i++){
+        int n,x;
+        cin >> n;
+
+        if(n==1){
+            cin >> x;
+            s.insert(x); // 将新球插入集合中，自动去重
+        }else if(n==2){
+            cin >> x;
+            s.erase(x); // 从集合中移除指定球
+        }else{
+            cout << s.size() << endl; // 输出集合大小，即不同整数的个数
+        }
+    }
+    return 0;
+}

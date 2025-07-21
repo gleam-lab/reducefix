@@ -1,0 +1,75 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+const long long INF = numeric_limits<long long>::max();
+
+struct Edge {
+    int to;
+    long long weight;
+    Edge(int to, long long weight) : to(to), weight(weight) {}
+};
+
+vector<vector<Edge>> adjList;
+vector<long long> dist;
+vector<bool> visited;
+
+void dijkstra(int start) {
+    fill(dist.begin(), dist.end(), INF);
+    fill(visited.begin(), visited.end(), false);
+    
+    dist[start] = 0;
+    priority_queue<pair<long long, int>, vector<pair<long long, int>>, greater<pair<long long, int>>> pq;
+    pq.push({0, start});
+
+    while (!pq.empty()) {
+        int u = pq.top().second;
+        long long d = pq.top().first;
+        pq.pop();
+
+        if (visited[u]) continue;
+        visited[u] = true;
+
+        for (const Edge& edge : adjList[u]) {
+            int v = edge.to;
+            long long weight = edge.weight;
+
+            if (dist[u] + weight < dist[v]) {
+                dist[v] = dist[u] + weight;
+                pq.push({dist[v], v});
+            }
+        }
+    }
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int n, m;
+    cin >> n >> m;
+    adjList.resize(n);
+    dist.resize(n, INF);
+    visited.resize(n, false);
+
+    vector<long long> a(n);
+    for (int i = 0; i < n; ++i) {
+        cin >> a[i];
+    }
+
+    for (int i = 0; i < m; ++i) {
+        int u, v, b;
+        cin >> u >> v >> b;
+        --u; --v; // Convert to 0-based index
+        adjList[u].emplace_back(v, b);
+        adjList[v].emplace_back(u, b);
+    }
+
+    dijkstra(0);
+
+    for (int i = 1; i < n; ++i) {
+        cout << dist[i] + a[i] << ' ';
+    }
+    cout << endl;
+
+    return 0;
+}

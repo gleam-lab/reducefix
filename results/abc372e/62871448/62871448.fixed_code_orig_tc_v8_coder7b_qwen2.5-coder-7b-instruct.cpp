@@ -1,0 +1,58 @@
+#include<bits/stdc++.h>
+using namespace std;
+
+vector<int> adj[200005];
+priority_queue<int,vector<int>,greater<int>> pq[200005];
+
+void addEdge(int u,int v){
+    adj[u].push_back(v);
+    adj[v].push_back(u);
+}
+
+void dfs(int src,int par){
+    pq[src].push(src);
+    for(auto it:adj[src]){
+        if(it!=par){
+            dfs(it,src);
+            while(!pq[it].empty()){
+                int t=pq[it].top();
+                pq[it].pop();
+                if(pq[src].size()<10)
+                    pq[src].push(t);
+                else if(pq[src].top()<t){
+                    pq[src].pop();
+                    pq[src].push(t);
+                }
+            }
+        }
+    }
+}
+
+int main(){
+    ios_base::sync_with_stdio(false);cin.tie(NULL);cout.tie(NULL);
+
+    int n,q;
+    cin>>n>>q;
+    for(int i=1;i<=n-1;i++){
+        int u,v;
+        cin>>u>>v;
+        addEdge(u,v);
+    }
+
+    dfs(1,-1);
+
+    while(q--){
+        int type,u,k;
+        cin>>type>>u>>k;
+        if(type==1){
+            //No need to do anything here since we're only interested in the kth largest element
+        }else{
+            if(pq[u].size()>=k){
+                cout<<pq[u].nth_element(k-1)<<endl;
+            }else{
+                cout<<"-1"<<endl;
+            }
+        }
+    }
+    return 0;
+}

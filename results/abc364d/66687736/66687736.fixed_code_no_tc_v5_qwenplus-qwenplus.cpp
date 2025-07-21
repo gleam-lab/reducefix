@@ -1,0 +1,44 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int N, Q;
+    cin >> N >> Q;
+
+    vector<int> A(N);
+    for (int i = 0; i < N; ++i) {
+        cin >> A[i];
+    }
+
+    // Sort A for binary search operations
+    sort(A.begin(), A.end());
+
+    for (int q = 0; q < Q; ++q) {
+        int b, k;
+        cin >> b >> k;
+
+        // Binary search to find the k-th smallest distance
+        int left = 0;
+        int right = 1e9;  // Max possible distance is less than 2*1e8
+        while (left < right) {
+            int mid = (left + right) / 2;
+
+            // Find range of elements within distance mid from b
+            int l = lower_bound(A.begin(), A.end(), b - mid) - A.begin();
+            int r = upper_bound(A.begin(), A.end(), b + mid) - A.begin();
+
+            if (r - l >= k) {
+                right = mid;
+            } else {
+                left = mid + 1;
+            }
+        }
+
+        cout << left << "\n";
+    }
+
+    return 0;
+}

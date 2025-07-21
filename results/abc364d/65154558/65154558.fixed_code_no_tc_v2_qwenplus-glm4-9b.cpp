@@ -1,0 +1,42 @@
+#include <bits/stdc++.h>
+#define endl '\n'
+using namespace std;
+
+const int N = 200010;
+
+int a[N], b[N];
+
+// Binary search to find the k-th closest point
+int binary_search(int point, int k) {
+    int low = -100000000, high = 100000000;
+    while (high - low > 1) {
+        int mid = (low + high) / 2;
+        int count = a[mid - point] - (a[mid - point - 1] < 0 ? 0 : a[mid - point - 1]);
+        if (count >= k) {
+            high = mid;
+        } else {
+            low = mid;
+        }
+    }
+    return high;
+}
+
+void solve() {
+    int n, q;
+    cin >> n >> q;
+    for (int i = 0; i < n; ++i) {
+        cin >> a[i + 1];
+    }
+    for (int i = 0; i < q; ++i) {
+        cin >> b[i * 2 + 1] >> b[i * 2 + 2]; // b_j and k_j
+        // Adjust k_j to be zero-indexed
+        int k_j = b[i * 2 + 2] - 1;
+        int dist = abs(b[i * 2 + 1] - a[binary_search(b[i * 2 + 1], k_j + 1)]);
+        cout << dist << endl;
+    }
+}
+
+int main() {
+    solve();
+    return 0;
+}

@@ -1,0 +1,33 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+#define ll long long
+
+ll n, m;
+
+bool row[N+1], col[N+1], diag1[N*2+1], diag2[N*2+1];
+
+void mark(int x, int y) {
+    row[x] = true;
+    col[y] = true;
+    diag1[x+y] = true;
+    diag2[x-y+N] = true;
+}
+
+bool check(int x, int y) {
+    return !row[x] && !col[y] && !diag1[x+y] && !diag2[x-y+N];
+}
+
+int main() {
+    cin >> n >> m;
+    vector<pair<int,int>> pieces(m);
+    for(auto& [x,y]: pieces) cin >> x >> y, mark(x, y);
+
+    ll res = 0;
+    for(int i=1; i<=n; ++i) 
+        for(int j=1; j<=n; ++j)
+            if(check(i, j)) ++res;
+
+    cout << res << endl;
+    return 0;
+}

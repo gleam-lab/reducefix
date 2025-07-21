@@ -1,0 +1,150 @@
+To fix this code, we need to accurately calculate the number of safe squares where the new piece can be placed without being captured by any existing pieces. The key issue in the initial approach was incorrectly handling the intersections between different sets (rows, columns, diagonals) leading to incorrect counts.
+
+### Approaches
+1. **Identify Dangerous Squares**:
+   - Any square in the same row, column, or along the same diagonal (both types: i ± j = constant) as any existing piece is unsafe.
+   - We need to compute the union of all these unsafe squares and then subtract their count from the total squares (N²) to find the safe squares.
+
+2. **Inclusion-Exclusion Principle**:
+   - Use inclusion-exclusion to avoid double-counting squares that fall into multiple unsafe categories (e.g., same row and column as different pieces).
+   - Specifically:
+     - Total unsafe squares = (number of unsafe rows × N) + (number of unsafe columns × N) + (number of unsafe diagonals of type 1 × their lengths) + (number of unsafe diagonals of type 2 × their lengths) - intersections.
+
+3. **Calculate Diagonal Lengths**:
+   - For diagonals of type i + j = constant (d2), the length is min(d - 1, 2N - d + 1).
+   - For diagonals of type i - j = constant (d1), the length is N - abs(d).
+
+4. **Intersection Handling**:
+   - Calculate intersections between rows, columns, and diagonals to ensure no double-counting. The intersections are squares that are covered by multiple conditions.
+
+### Solution Code
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+typedef long long ll;
+typedef pair<ll, ll> pll;
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(NULL);
+    
+    ll n, m;
+    cin >> n >> m;
+    vector<pll> queens(m);
+    set<ll> rows, cols, d1, d2;
+    for (int i = 0; i < m; ++i) {
+        cin >> queens[i].first >> queens[i].second;
+        rows.insert(queens[i].first);
+        cols.insert(queens[i].second);
+        d1.insert(queens[i].first - queens[i].second);
+        d2.insert(queens[i].first + queens[i].second);
+    }
+    
+    ll unsafe = 0;
+    
+    // Add rows and columns
+    unsafe += rows.size() * n;
+    unsafe += cols.size() * n;
+    unsafe -= rows.size() * cols.size();
+    
+    // Add diagonals of type i - j = d (d1)
+    for (auto d : d1) {
+        ll length = n - abs(d);
+        unsafe += length;
+    }
+    
+    // Add diagonals of type i + j = d (d2)
+    for (auto d : d2) {
+        ll length;
+        if (d <= n + 1) {
+            length = d - 1;
+        } else {
+            length = 2 * n - d + 1;
+        }
+        unsafe += length;
+    }
+    
+    // Subtract intersections between rows and d1 diagonals
+    for (auto d : d1) {
+        for (auto r : rows) {
+            ll c = r - d;
+            if (c >= 1 && c <= n) {
+                unsafe--;
+            }
+        }
+    }
+    
+    // Subtract intersections between columns and d1 diagonals
+    for (auto d : d1) {
+        for (auto c : cols) {
+            ll r = c + d;
+            if (r >= 1 && r <= n) {
+                unsafe--;
+            }
+        }
+    }
+    
+    // Subtract intersections between rows and d2 diagonals
+    for (auto d : d2) {
+        for (auto r : rows) {
+            ll c = d - r;
+            if (c >= 1 && c <= n) {
+                unsafe--;
+            }
+        }
+    }
+    
+    // Subtract intersections between columns and d2 diagonals
+    for (auto d : d2) {
+        for (auto c : cols) {
+            ll r = d - c;
+            if (r >= 1 && r <= n) {
+                unsafe--;
+            }
+        }
+    }
+    
+    // Subtract intersections between d1 and d2 diagonals
+    for (auto d1_val : d1) {
+        for (auto d2_val : d2) {
+            if ((d2_val + d1_val) % 2 != 0) continue;
+            ll r = (d2_val + d1_val) / 2;
+            ll c = (d2_val - d1_val) / 2;
+            if (r >= 1 && r <= n && c >= 1 && c <= n) {
+                unsafe--;
+            }
+        }
+    }
+    
+    // Add triple intersections (rows, columns, and diagonals)
+    // which were subtracted multiple times
+    set<pll> queen_set(queens.begin(), queens.end());
+    for (auto queen : queens) {
+        ll r = queen.first;
+        ll c = queen.second;
+        if (rows.count(r) && cols.count(c) && d1.count(r - c) && d2.count(r + c)) {
+            unsafe += 3;
+        }
+    }
+    
+    // Total safe squares
+    ll total = n * n;
+    ll safe = total - unsafe;
+    
+    // Subtract the squares already occupied by queens
+    safe -= m;
+    safe += queen_set.size();
+    
+    cout << safe << endl;
+    
+    return 0;
+}
+```
+
+### Explanation
+- **Initial Setup**: We read the input values and store the positions of the queens. We also maintain sets for rows, columns, and both types of diagonals that the queens occupy.
+- **Unsafe Squares Calculation**: We calculate the total unsafe squares by considering rows, columns, and both diagonal types. We use the inclusion-exclusion principle to avoid double-counting squares that fall into multiple categories.
+- **Intersection Handling**: We subtract intersections between rows and diagonals, columns and diagonals, and between the two types of diagonals to ensure accurate counts.
+- **Triple Intersections**: We adjust for squares that fall into the intersection of rows, columns, and both diagonals (queen positions) to correct over-subtractions.
+- **Final Count**: The total safe squares are computed by subtracting the unsafe squares and occupied squares from the total grid squares, then adjusting for any overlaps. The result is printed.

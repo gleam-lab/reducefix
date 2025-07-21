@@ -1,0 +1,50 @@
+#include <iostream>
+#include <vector>
+#include <set>
+
+using namespace std;
+
+long long n, m;
+set<pair<int, int>> block_rows, block_cols, block_diag1, block_diag2;
+vector<pair<int, int>> positions;
+
+bool is_safe(int r, int c) {
+    return !block_rows.count({r, 0}) && !block_cols.count({c, 0}) &&
+           !block_diag1.count({r - c, 0}) && !block_diag2.count({r + c, 0});
+}
+
+int main() {
+    cin >> n >> m;
+    for (int i = 0; i < m; ++i) {
+        int a, b;
+        cin >> a >> b;
+        positions.push_back({a, b});
+        block_rows.insert({a, 0});
+        block_cols.insert({b, 0});
+        block_diag1.insert({a - b, 0});
+        block_diag2.insert({a + b, 0});
+    }
+
+    long long free_squares = n * n;
+    for (int r = 1; r <= n; ++r) {
+        for (int c = 1; c <= n; ++c) {
+            if (is_safe(r, c)) {
+                bool can_capture = false;
+                for (const auto& pos : positions) {
+                    int dr = abs(r - pos.first);
+                    int dc = abs(c - pos.second);
+                    if (dr == 0 || dc == 0 || dr == dc || dr == n - dc) {
+                        can_capture = true;
+                        break;
+                    }
+                }
+                if (!can_capture) {
+                    free_squares--;
+                }
+            }
+        }
+    }
+
+    cout << free_squares << endl;
+    return 0;
+}

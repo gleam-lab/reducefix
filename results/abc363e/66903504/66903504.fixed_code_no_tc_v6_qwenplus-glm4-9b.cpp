@@ -1,0 +1,76 @@
+#include<bits/stdc++.h>
+using namespace std;
+using ll = long long;
+int dx[] = {0, 1, 0, -1};
+int dy[] = {1, 0, -1, 0};
+
+int H, W, Y;
+vector<vector<int>> A;
+vector<vector<bool>> visited;
+
+bool can_sink(int i, int j) {
+    for (int k = 0; k < 4; ++k) {
+        int ni = i + dx[k], nj = j + dy[k];
+        if (ni >= 0 && ni < H && nj >= 0 && nj < W) {
+            if (!visited[ni][nj] && A[ni][nj] <= A[i][j] + 1) {
+                return false;
+            }
+        }
+    }
+    return true;
+}
+
+int main() {
+    cin >> H >> W >> Y;
+    A.resize(H, vector<int>(W));
+    visited.resize(H, vector<bool>(W, false));
+
+    for (int i = 0; i < H; ++i) {
+        for (int j = 0; j < W; ++j) {
+            cin >> A[i][j];
+            if (i == 0 || i == H - 1 || j == 0 || j == W - 1) {
+                visited[i][j] = true;
+            }
+        }
+    }
+
+    for (int year = 0; year < Y; ++year) {
+        vector<vector<bool>> new_visited(H, vector<bool>(W, false));
+        for (int i = 0; i < H; ++i) {
+            for (int j = 0; j < W; ++j) {
+                if (!visited[i][j] && can_sink(i, j)) {
+                    new_visited[i][j] = true;
+                }
+            }
+        }
+
+        for (int i = 0; i < H; ++i) {
+            for (int j = 0; j < W; ++j) {
+                if (visited[i][j] && !new_visited[i][j]) {
+                    for (int k = 0; k < 4; ++k) {
+                        int ni = i + dx[k], nj = j + dy[k];
+                        if (ni >= 0 && ni < H && nj >= 0 && nj < W) {
+                            if (!visited[ni][nj] && can_sink(ni, nj)) {
+                                visited[ni][nj] = true;
+                                new_visited[ni][nj] = true;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        visited = new_visited;
+
+        int remaining_area = 0;
+        for (int i = 0; i < H; ++i) {
+            for (int j = 0; j < W; ++j) {
+                if (!visited[i][j]) {
+                    remaining_area += 1;
+                }
+            }
+        }
+        cout << remaining_area << endl;
+    }
+
+    return 0;
+}

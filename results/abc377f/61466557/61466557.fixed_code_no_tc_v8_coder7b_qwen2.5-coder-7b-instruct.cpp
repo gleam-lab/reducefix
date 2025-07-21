@@ -1,0 +1,51 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+typedef long long ll;
+
+bool inBounds(const ll &i, const ll &j, const ll &n) {
+    return 1 <= i && i <= n && 1 <= j && j <= n;
+}
+
+void solve() {
+    ll n, m; re(n, m);
+    unordered_set<ll> rows, cols, diag1, diag2;
+    for(ll i = 0; i < m; ++i) {
+        ll a, b; re(a, b);
+        rows.insert(a);
+        cols.insert(b);
+        diag1.insert(a - b);
+        diag2.insert(a + b);
+    }
+    
+    ll total_squares = n * n;
+    ll occupied_by_rows = rows.size() * n;
+    ll occupied_by_cols = cols.size() * n;
+    ll occupied_by_diag1 = diag1.size() * n;
+    ll occupied_by_diag2 = diag2.size() * n;
+    
+    ll overlap_row_col = rows.size() * cols.size();
+    ll overlap_diag1_col = diag1.size() * cols.size();
+    ll overlap_diag2_col = diag2.size() * cols.size();
+    ll overlap_row_diag1 = rows.size() * diag1.size();
+    ll overlap_row_diag2 = rows.size() * diag2.size();
+    ll overlap_diag1_diag2 = diag1.size() * diag2.size();
+    
+    ll overlap_all_three = min(min(rows.size(), cols.size()), min(diag1.size(), diag2.size()));
+    
+    ll result = total_squares 
+                - (occupied_by_rows + occupied_by_cols + occupied_by_diag1 + occupied_by_diag2) 
+                + (overlap_row_col + overlap_diag1_col + overlap_diag2_col + overlap_row_diag1 + overlap_row_diag2 + overlap_diag1_diag2) 
+                - (2 * overlap_all_three);
+    
+    cout << result << '\n';
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(NULL);
+    
+    int t = 1;
+    while(t--) solve();
+    return 0;
+}

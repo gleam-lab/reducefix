@@ -1,0 +1,83 @@
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+#define rep(i, n) for (int i = 0; i < (n); i++)
+using P = pair<int, int>;
+using T = tuple<int, int, int>;
+
+struct UnionFind {
+    vector<int> parent, size;
+    vector<vector<int>> components;
+
+    UnionFind(int n) {
+        parent.resize(n);
+        size.resize(n, 1);
+        components.resize(n);
+        for (int i = 0; i < n; ++i) {
+            parent[i] = i;
+            components[i].push_back(i);
+        }
+    }
+
+    int find(int x) {
+        if (parent[x] != x)
+            parent[x] = find(parent[x]);
+        return parent[x];
+    }
+
+    void unite(int x, int y) {
+        int rootX = find(x);
+        int rootY = find(y);
+
+        if (rootX == rootY) return;
+
+        // Always merge smaller component into larger one
+        if (components[rootX].size() < components[rootY].size()) {
+            swap(rootX, rootY);
+        }
+
+        // Merge the two components
+        components[rootX].insert(components[rootX].end(), 
+                                 components[rootY].begin(), 
+                                 components[rootY].end());
+
+        // Sort in descending order and keep top 10 elements
+        sort(components[rootX].rbegin(), components[rootX].rend());
+        if (components[rootX].size() > 10) {
+            components[rootX].resize(10);
+        }
+
+        parent[rootY] = rootX;
+    }
+};
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+    int N, Q;
+    cin >> N >> Q;
+
+    UnionFind uf(N);
+
+    while (Q--) {
+        int type, v, k;
+        cin >> type >> v >> k;
+        v--;  // Convert to 0-based index
+
+        if (type == 1) {
+            int u = k;
+            u--;
+            uf.unite(v, u);
+        } else {
+            int root = uf.find(v);
+            const auto& comp = uf.components[root];
+            if (k <= comp.size()) {
+                cout << comp[k - 1] + 1 << '\n';  // Convert back to 1-based numbering
+            } else {
+                cout << -1 << '\n';
+            }
+        }
+    }
+
+    return 0;
+}

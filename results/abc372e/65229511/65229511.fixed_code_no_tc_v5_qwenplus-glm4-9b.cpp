@@ -1,0 +1,74 @@
+#include <iostream>
+#include <vector>
+#include <set>
+#include <algorithm>
+using namespace std;
+
+const int MAXN = 200000;
+
+int parent[MAXN];
+int rank[MAXN];
+
+void initializeUnionFind(int n) {
+    for (int i = 0; i < n; i++) {
+        parent[i] = i;
+        rank[i] = 0;
+    }
+}
+
+int findRoot(int x) {
+    if (x != parent[x]) {
+        parent[x] = findRoot(parent[x]);
+    }
+    return parent[x];
+}
+
+void unite(int x, int y) {
+    int rootX = findRoot(x);
+    int rootY = findRoot(y);
+    if (rootX != rootY) {
+        if (rank[rootX] < rank[rootY]) {
+            parent[rootX] = rootY;
+        } else if (rank[rootX] > rank[rootY]) {
+            parent[rootY] = rootX;
+        } else {
+            parent[rootY] = rootX;
+            rank[rootX]++;
+        }
+    }
+}
+
+int main() {
+    int n, q;
+    cin >> n >> q;
+
+    initializeUnionFind(n);
+
+    vector<vector<int>> graph(n);
+    set<int> components[MAXN];
+
+    for (int i = 0; i < q; i++) {
+        int type, u, v, k;
+        cin >> type;
+
+        if (type == 1) {
+            cin >> u >> v;
+            --u; --v;
+            unite(u, v);
+        } else if (type == 2) {
+            cin >> v >> k;
+            --v;
+            int root = findRoot(v);
+            components[root].insert(v);
+            sort(components[root].rbegin(), components[root].rend());
+
+            if (components[root].size() < k) {
+                cout << -1 << endl;
+            } else {
+                cout << components[root][k - 1] + 1 << endl;
+            }
+        }
+    }
+
+    return 0;
+}

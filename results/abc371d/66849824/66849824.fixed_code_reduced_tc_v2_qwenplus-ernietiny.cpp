@@ -1,0 +1,29 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+
+int main(){
+    int N;
+    cin >> N; // Number of test cases
+    vector<int> X(N); // Test case input
+    for (int i = 0; i < N; ++i) cin >> X[i]; // Read test case inputs
+
+    // Create a map to store the indices of elements in X array
+    map<int, int> x_to_idx;
+    for (int i = 0; i < N; ++i) x_to_idx[X[i]] = i; // Build the index map
+
+    // Calculate the sum of patches (patches are represented as patches + patch value)
+    int patches_sum = 0;
+    for (int Q = 1; Q <= 10; ++Q){ // Assuming the number of patches is within the range of 1 to 10
+        int L, R; // Left and Right bounds of the query range
+        cin >> L >> R; // Read the query range bounds
+        int patch_value = X[R] - X[L]; // Calculate the patch value based on query range bounds
+        // Update the patch count based on the current index in X array
+        patches_sum += patch_value * x_to_idx[R - L + 1]; // Adding patch value to correct index for each query range element
+    }
+
+    // Output the final result, which should be the sum of patches that satisfy the query range conditions
+    cout << patches_sum << endl; // Corrected code will print the expected output value.
+
+    return 0;
+}

@@ -1,0 +1,91 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+
+using namespace std;
+
+typedef long long ll;
+
+struct Candidate {
+    ll votes;
+    int idx;
+};
+
+bool compare(const Candidate &a, const Candidate &b) {
+    return a.votes < b.votes;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+    int N, M;
+    ll K;
+    cin >> N >> M >> K;
+    vector<Candidate> A(N);
+    for (int i = 0; i < N; ++i) {
+        cin >> A[i].votes;
+        A[i].idx = i;
+    }
+
+    // Sort candidates by current votes
+    sort(A.begin(), A.end(), compare);
+
+    // Prefix sum of current votes
+    vector<ll> prefix(N + 1, 0);
+    for (int i = 0; i < N; ++i) {
+        prefix[i + 1] = prefix[i] + A[i].votes;
+    }
+
+    ll total_remaining = K - prefix[N];
+
+    vector<ll> result(N);
+
+    for (int i = 0; i < N; ++i) {
+        int rank = lower_bound(A.begin(), A.end(), Candidate{A[i].votes, -1}, compare) - A.begin();
+        
+        // Number of candidates that must NOT have strictly more votes than i
+        // To guarantee election, fewer than M candidates must have more votes
+        // So at most M-1 candidates can have more votes => we need to be in top M
+        // So we find smallest X such that after adding X votes to A[i], it's in top M
+
+        // We want to ensure that at least (N-M) candidates have less than or equal to A[i]+X
+        // Find the number of candidates with votes > A[i]+X and ensure that number < M
+
+        // Binary search on minimum X to guarantee win
+        ll low = 0, high = total_remaining + 1;
+        while (low < high) {
+            ll mid = (low + high) / 2;
+
+            // How many candidates would have strictly more votes than i if i gets mid votes?
+            ll target = A[i].votes + mid;
+
+            // Binary search to find first candidate with votes > target
+            int pos = upper_bound(A.begin(), A.end(), Candidate{target, -1}, compare) - A.begin();
+
+            // pos is number of candidates with <= target
+            // N - pos is number of candidates with > target
+            if (N - pos < M) {
+                // Too few candidates have more votes, try smaller X
+                high = mid;
+            } else {
+                // Not enough candidates have fewer votes, need larger X
+                low = mid + 1;
+            }
+        }
+
+        // After loop, low is minimal X to guarantee win
+        if (low <= total_remaining) {
+            result[A[i].idx] = low;
+        } else {
+            // Cannot guarantee win
+            result[A[i].idx] = -1;
+        }
+    }
+
+    for (int i = 0; i < N; ++i) {
+        cout << result[i] << " ";
+    }
+    cout << endl;
+
+    return 0;
+}

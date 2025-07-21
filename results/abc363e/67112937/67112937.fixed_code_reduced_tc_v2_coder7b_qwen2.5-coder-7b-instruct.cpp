@@ -1,0 +1,68 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+
+const int MAXN = 1005;
+int H, W, Y;
+int A[MAXN][MAXN];
+bool vis[MAXN][MAXN];
+
+struct Node {
+    int h, x, y;
+    bool operator<(const Node& other) const {
+        return h > other.h;
+    }
+};
+
+void bfs(int targetHeight) {
+    priority_queue<Node> pq;
+    memset(vis, false, sizeof(vis));
+
+    for (int i = 0; i < H; ++i) {
+        if (A[i][0] <= targetHeight) pq.emplace(A[i][0], i, 0);
+        if (A[i][W-1] <= targetHeight) pq.emplace(A[i][W-1], i, W-1);
+    }
+    for (int j = 0; j < W; ++j) {
+        if (A[0][j] <= targetHeight) pq.emplace(A[0][j], 0, j);
+        if (A[H-1][j] <= targetHeight) pq.emplace(A[H-1][j], H-1, j);
+    }
+
+    while (!pq.empty()) {
+        auto [h, x, y] = pq.top(); pq.pop();
+        if (vis[x][y]) continue;
+        vis[x][y] = true;
+        for (int k = 0; k < 4; ++k) {
+            int nx = x + d[k][0], ny = y + d[k][1];
+            if (nx < 0 || nx >= H || ny < 0 || ny >= W) continue;
+            if (vis[nx][ny] || A[nx][ny] > targetHeight) continue;
+            pq.emplace(A[nx][ny], nx, ny);
+        }
+    }
+}
+
+int main() {
+    cin >> H >> W >> Y;
+    for (int i = 0; i < H; ++i) {
+        for (int j = 0; j < W; ++j) {
+            cin >> A[i][j];
+        }
+    }
+
+    vector<int> results(Y);
+    for (int i = 0; i < Y; ++i) {
+        bfs(i);
+        int count = 0;
+        for (int j = 0; j < H; ++j) {
+            for (int k = 0; k < W; ++k) {
+                if (!vis[j][k]) ++count;
+            }
+        }
+        results[i] = count;
+    }
+
+    for (int i = 0; i < Y; ++i) {
+        cout << results[i] << endl;
+    }
+
+    return 0;
+}

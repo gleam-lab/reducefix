@@ -1,0 +1,43 @@
+#include <iostream>
+#include <vector>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int N;
+    cin >> N;
+    vector<long long> H(N);
+    for (int i = 0; i < N; ++i) {
+        cin >> H[i];
+    }
+
+    long long T = 0;
+    // We track how many attacks each enemy receives and simulate the process efficiently
+
+    // We'll use a queue to track when triple damage attacks (T % 3 == 0) will affect enemies
+    // delay[i] is the number of attacks we can skip before attacking enemy i
+    vector<long long> delay(N, 0);
+
+    for (int i = 0; i < N && H[i] > 0; ++i) {
+        long long h = H[i];
+        long long t1 = (h + 1) / 2;  // Number of single-damage attacks needed if every third is upgraded
+        long long t3 = (h + 2) / 3;  // Number of triple-damage attacks needed
+
+        // Total attacks needed at minimum
+        long long total_attacks_needed = max(t1, t3);
+
+        // But we need to consider previous delays from earlier enemies
+        T = max(T - delay[i], (long long)0) + total_attacks_needed;
+
+        // The next 2 enemies get delayed by this enemy's triple attack timing
+        for (int j = i + 1; j < min(i + 3, N); ++j) {
+            delay[j] += 1;
+        }
+    }
+
+    cout << T << endl;
+
+    return 0;
+}

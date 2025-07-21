@@ -1,0 +1,55 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+struct Item {
+    int a, p, b, q;
+};
+
+long long dp[105][10001];
+
+int N, X;
+
+long long cost(const vector<Item>& items, int i, int n) {
+    long long d = n / (items[i].a * items[i].b), rem = n % (items[i].a * items[i].b);
+    return dp[i][rem] + d * items[i].p * items[i].b;
+}
+
+bool feasible(const vector<Item>& items, int n) {
+    long long totalCost = 0;
+    for (int i = 0; i < N; ++i) {
+        totalCost += cost(items, i, n);
+        if (totalCost > X) return false;
+    }
+    return true;
+}
+
+int main() {
+    cin >> N >> X;
+
+    vector<Item> items(N);
+    for (int i = 0; i < N; ++i) {
+        cin >> items[i].a >> items[i].p >> items[i].b >> items[i].q;
+        if (items[i].a * items[i].q < items[i].b * items[i].p) swap(items[i].a, items[i].b), swap(items[i].p, items[i].q);
+        dp[i][0] = 0;
+        for (int j = 1; j <= items[i].a * items[i].b; ++j) {
+            dp[i][j] = min(j >= items[i].a ? dp[i][j - items[i].a] + items[i].p : LLONG_MAX,
+                           j >= items[i].b ? dp[i][j - items[i].b] + items[i].q : LLONG_MAX);
+        }
+    }
+
+    int left = 0, right = 1e9;
+    while (left < right) {
+        int mid = (left + right) / 2;
+        if (feasible(items, mid)) {
+            left = mid + 1;
+        } else {
+            right = mid;
+        }
+    }
+
+    cout << left - (feasible(items, left) ? 1 : 0) << endl;
+
+    return 0;
+}

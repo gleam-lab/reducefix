@@ -1,0 +1,44 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    long long n, m, a, b;
+    cin >> n >> m;
+    set<pair<long long, long long>> c;
+    vector<vector<bool>> board(n, vector<bool>(n, false));
+
+    // Place the initial pieces on the board
+    rep(i, m) {
+        cin >> a >> b;
+        a--, b--;
+        c.emplace(a, b);
+        board[a][b] = true;
+    }
+
+    // Directions for capturing moves
+    int dx[] = {-2, -2, -1, -1, 1, 1, 2, 2};
+    int dy[] = {1, -1, 2, -2, 2, -2, 1, -1};
+
+    // Check each square to see if it's safe to place a piece
+    rep(i, n) {
+        rep(j, n) {
+            bool canPlace = true;
+            rep(k, 8) {
+                int x = i + dx[k];
+                int y = j + dy[k];
+                if (x >= 0 && x < n && y >= 0 && y < n && board[x][y]) {
+                    canPlace = false;
+                    break;
+                }
+            }
+            if (canPlace) {
+                cout << "1 ";
+            } else {
+                cout << "0 ";
+            }
+        }
+        cout << endl;
+    }
+
+    return 0;
+}

@@ -1,0 +1,60 @@
+#include<bits/stdc++.h>
+using namespace std;
+using ll = long long;
+using VI = vector<int>;
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int T;
+    cin >> T;
+    
+    while (T--) {
+        int N, K;
+        cin >> N >> K;
+        
+        vector<ll> A(N), B(N);
+        ll sum_B = 0;
+        
+        for (int i = 0; i < N; ++i) {
+            cin >> A[i];
+            cin >> B[i];
+            sum_B += B[i];
+        }
+        
+        // We need to find the minimum value of (max_A_i) * (sum_B_S)
+        // where S is any subset of size K.
+        
+        // Strategy:
+        // Sort B in descending order. Each time we add an element to our subset,
+        // we should consider removing the smallest one (if it's not needed).
+        // This ensures that the sum of B in our subset is minimized for a fixed maximum A.
+        
+        vector<pair<ll, ll>> B_sorted(N); // Pair of B[i] and A[i]
+        for (int i = 0; i < N; ++i) {
+            B_sorted[i] = {B[i], A[i]};
+        }
+        
+        // Sort B_sorted by B[i] descending
+        sort(B_sorted.rbegin(), B_sorted.rend(), [](const pair<ll, ll>& a, const pair<ll, ll>& b) {
+            return a.first > b.first;
+        });
+        
+        vector<ll> max_A_in_subsets(K);
+        ll current_sum_B = sum_B;
+        for (int i = 0; i < K; ++i) {
+            max_A_in_subsets[i] = B_sorted[i].second;
+            current_sum_B -= B_sorted[i].first;
+        }
+        
+        ll min_value = LLONG_MAX;
+        for (int i = 0; i < K; ++i) {
+            min_value = min(min_value, max_A_in_subsets[i] * current_sum_B);
+        }
+        
+        cout << min_value << '\n';
+    }
+    
+    return 0;
+}

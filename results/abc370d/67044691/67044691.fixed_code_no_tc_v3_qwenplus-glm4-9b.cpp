@@ -1,0 +1,74 @@
+#include <iostream>
+#include <vector>
+#include <set>
+#include <algorithm>
+
+using namespace std;
+
+int main() {
+    int h, w, q;
+    cin >> h >> w >> q;
+
+    vector<set<int>> row_walls(h + 1, set<int>(w + 1));
+    vector<set<int>> col_walls(w + 1, set<int>(h + 1));
+
+    // Pre-fill the grid with walls
+    for (int i = 1; i <= h; ++i) {
+        for (int j = 1; j <= w; ++j) {
+            row_walls[i][j] = j;
+            col_walls[j][i] = i;
+        }
+    }
+
+    for (int i = 0; i < q; ++i) {
+        int r, c;
+        cin >> r >> c;
+
+        if (row_walls[r][c]) {
+            // Wall exists at (r, c), destroy the wall
+            row_walls[r][c] = 0;
+            col_walls[c][r] = 0;
+        } else {
+            // No wall at (r, c), destroy the first wall in each direction
+            // Destroy upward
+            int upper = *upper_bound(row_walls[r].begin(), row_walls[r].end(), c);
+            if (upper != c) {
+                row_walls[r][upper] = 0;
+                col_walls[upper][r] = 0;
+            }
+
+            // Destroy downward
+            int lower = *lower_bound(row_walls[r].begin(), row_walls[r].end(), c);
+            if (lower != c) {
+                row_walls[r][lower] = 0;
+                col_walls[lower][r] = 0;
+            }
+
+            // Destroy left
+            int left = *upper_bound(col_walls[c].begin(), col_walls[c].end(), r);
+            if (left != r) {
+                row_walls[left][c] = 0;
+                col_walls[c][left] = 0;
+            }
+
+            // Destroy right
+            int right = *lower_bound(col_walls[c].begin(), col_walls[c].end(), r);
+            if (right != r) {
+                row_walls[right][c] = 0;
+                col_walls[c][right] = 0;
+            }
+        }
+    }
+
+    // Calculate the number of remaining walls
+    int remaining_walls = 0;
+    for (int i = 1; i <= h; ++i) {
+        for (int j = 1; j <= w; ++j) {
+            remaining_walls += row_walls[i][j];
+        }
+    }
+
+    cout << remaining_walls << endl;
+
+    return 0;
+}

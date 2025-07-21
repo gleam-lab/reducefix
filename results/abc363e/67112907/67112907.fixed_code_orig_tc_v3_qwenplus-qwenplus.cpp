@@ -1,0 +1,70 @@
+#include <bits/stdc++.h>
+
+using u32 = unsigned;
+using i64 = long long;
+
+constexpr int d[4][2] = {{0, 1}, {0, -1}, {1, 0}, {-1, 0}};
+
+int32_t main() {
+    std::ios::sync_with_stdio(false);
+    std::cin.tie(nullptr);
+
+    int H, W, Y;
+    std::cin >> H >> W >> Y;
+
+    std::vector<std::vector<int>> A(H, std::vector<int>(W));
+    for (int i = 0; i < H; ++i) {
+        for (int j = 0; j < W; ++j) {
+            std::cin >> A[i][j];
+        }
+    }
+
+    // Create a visited matrix to track which cells are submerged
+    std::vector<std::vector<bool>> vis(H, std::vector<bool>(W, false));
+
+    // Min-heap priority queue storing {elevation, x, y}
+    std::priority_queue<std::tuple<int, int, int>, std::vector<std::tuple<int, int, int>>, std::greater<>> pq;
+
+    // Initialize the queue with border cells
+    for (int i = 0; i < H; ++i) {
+        for (int j = 0; j < W; ++j) {
+            if (i == 0 || i == H - 1 || j == 0 || j == W - 1) {
+                pq.emplace(A[i][j], i, j);
+                vis[i][j] = true;
+            }
+        }
+    }
+
+    int remaining = H * W;
+    std::vector<int> result(Y);
+
+    // Process each year
+    for (int year = 0; year < Y; ++year) {
+        while (!pq.empty() && std::get<0>(pq.top()) <= year) {
+            auto [h, x, y] = pq.top();
+            pq.pop();
+
+            if (!vis[x][y]) {
+                --remaining;
+                vis[x][y] = true;
+            }
+
+            for (int dir = 0; dir < 4; ++dir) {
+                int nx = x + d[dir][0];
+                int ny = y + d[dir][1];
+                if (nx >= 0 && nx < H && ny >= 0 && ny < W && !vis[nx][ny]) {
+                    pq.emplace(A[nx][ny], nx, ny);
+                    vis[nx][ny] = true; // Mark as visited early to avoid duplicates
+                }
+            }
+        }
+        result[year] = remaining;
+    }
+
+    // Output results
+    for (int ans : result) {
+        std::cout << ans << '\n';
+    }
+
+    return 0;
+}

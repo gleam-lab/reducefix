@@ -1,0 +1,110 @@
+To solve this problem efficiently given the constraints (up to `10^9` for grid size and only up to `10^3` pieces), we avoid iterating over the entire grid. Instead, we compute how many rows, columns, and diagonals are "dangerous" due to existing pieces.
+
+We use sets to track:
+- Rows (`h`) with at least one piece
+- Columns (`v`) with at least one piece
+- Diagonals of the form `i + j = d` (`d1`)
+- Diagonals of the form `i - j = d` (`d2`)
+
+The total number of safe positions is computed as:
+
+```
+Total Safe Squares = Total Empty Squares - Squares that intersect dangerous lines
+```
+
+Here's the **corrected and efficient solution** in C++:
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    long long N;
+    int M;
+    cin >> N >> M;
+
+    set<long long> h, v, d1, d2;
+
+    for (int i = 0; i < M; ++i) {
+        long long a, b;
+        cin >> a >> b;
+        h.insert(a);
+        v.insert(b);
+        d1.insert(a + b);
+        d2.insert(a - b);
+    }
+
+    // Step 1: Count safe squares not in any dangerous row or column
+    long long ans = (N - h.size()) * (N - v.size());
+
+    // Step 2: Subtract intersections with d1 (i + j = k)
+    for (long long diag : d1) {
+        long long len;
+        if (diag <= N + 1) {
+            len = diag - 1;
+        } else {
+            len = 2 * N + 1 - diag;
+        }
+        set<long long> covered_rows;
+
+        for (long long x : h) {
+            long long y = diag - x;
+            if (1 <= y && y <= N) {
+                covered_rows.insert(x);
+            }
+        }
+
+        for (long long y : v) {
+            long long x = diag - y;
+            if (1 <= x && x <= N) {
+                covered_rows.insert(x);
+            }
+        }
+
+        ans -= (len - covered_rows.size());
+    }
+
+    // Step 3: Subtract intersections with d2 (i - j = k)
+    for (long long diag : d2) {
+        long long len;
+        if (diag >= 0) {
+            len = N - diag;
+        } else {
+            len = N + diag;
+        }
+
+        set<long long> covered_rows;
+
+        for (long long x : h) {
+            long long y = x - diag;
+            if (1 <= y && y <= N) {
+                covered_rows.insert(x);
+            }
+        }
+
+        for (long long y : v) {
+            long long x = y + diag;
+            if (1 <= x && x <= N) {
+                covered_rows.insert(x);
+            }
+        }
+
+        ans -= (len - covered_rows.size());
+    }
+
+    cout << ans << endl;
+
+    return 0;
+}
+```
+
+### Key Points:
+- We calculate the base number of safe cells that are neither in any occupied row nor column.
+- Then subtract unsafe positions on diagonals already counted but which would be captured.
+- Efficient use of sets ensures no duplicates and allows fast lookup.
+- The logic for diagonal length avoids iterating over large ranges.
+
+This approach runs in `O(M)` time per diagonal check, where `M ≤ 1000`, making it feasible even for large `N`.

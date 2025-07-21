@@ -1,0 +1,86 @@
+The original code attempts to solve a problem where we need to maximize the processing capacity given a budget `X` and `N` processes, each with two options (A and B) to achieve some processing capacity. The code uses binary search to find the maximum achievable processing capacity, but there are some issues in the way it calculates the minimum cost for each process to achieve a certain capacity.
+
+### Issues in the Original Code:
+1. **Incorrect Cost Calculation**: The loops for `s` and `t` are not correctly handling the cases where the required capacity can be achieved by either A or B alone or in combination.
+2. **Inefficient Loops**: The loops run up to `B[i]` or `A[i]`, which can be very large (up to 1e18) and make the solution too slow.
+3. **Early Termination**: The code does not handle cases where it is impossible to achieve the required capacity for a given process within the budget.
+
+### Fixed Code:
+```cpp
+#include<iostream>
+#include<vector>
+#include<algorithm>
+using namespace std;
+using ll = long long;
+const ll INF = 1LL << 62;
+
+int main() {
+    int N;
+    ll X;
+    cin >> N >> X;
+    vector<ll> A(N), P(N), B(N), Q(N);
+    
+    for (int i = 0; i < N; i++) {
+        cin >> A[i] >> P[i] >> B[i] >> Q[i];
+    }
+
+    auto f = [&](ll x) {
+        ll total_cost = 0;
+        for (int i = 0; i < N; i++) {
+            ll min_cost = INF;
+            // Case 1: Use only A[i] machines
+            ll s = (x + A[i] - 1) / A[i];
+            if (s >= 0) {
+                min_cost = min(min_cost, s * P[i]);
+            }
+            // Case 2: Use only B[i] machines
+            ll t = (x + B[i] - 1) / B[i];
+            if (t >= 0) {
+                min_cost = min(min_cost, t * Q[i]);
+            }
+            // Case 3: Use some combination of A[i] and B[i] machines
+            // Find s such that A[i]*s + B[i]*t >= x, where t = max(0, (x - A[i]*s + B[i] - 1) / B[i])
+            // We need to find s that minimizes s*P[i] + t*Q[i]
+            // Since t = max(0, ceil((x - A[i]*s)/B[i]))
+            // The optimal s is around x / (A[i] + B[i])
+            // So we can check s around this value to find the minimum cost
+            ll optimal_s = x / (A[i] + B[i]);
+            for (ll s = max(0LL, optimal_s - 2); s <= optimal_s + 2; s++) {
+                if (s < 0) continue;
+                ll remaining = max(0LL, x - A[i] * s);
+                ll t = (remaining + B[i] - 1) / B[i];
+                min_cost = min(min_cost, s * P[i] + t * Q[i]);
+            }
+            if (min_cost == INF) {
+                return false;
+            }
+            total_cost += min_cost;
+            if (total_cost > X) {
+                return false;
+            }
+        }
+        return total_cost <= X;
+    };
+
+    ll lb = 0, ub = INF;
+    while (ub - lb > 1) {
+        ll mid = (lb + ub) / 2;
+        if (f(mid)) {
+            lb = mid;
+        } else {
+            ub = mid;
+        }
+    }
+    cout << lb << endl;
+}
+```
+
+### Fixes Made:
+1. **Correct Cost Calculation**: The fixed code considers three cases for each process:
+   - Using only A[i] machines.
+   - Using only B[i] machines.
+   - Using a combination of A[i] and B[i] machines, where the optimal number of A[i] machines is estimated around `x / (A[i] + B[i])` and checked in a small range around this value to find the minimum cost.
+2. **Efficiency**: The loops now run in constant time (checking a small range around the optimal value) instead of potentially very large ranges.
+3. **Early Termination**: The code checks if the total cost exceeds `X` early and returns false immediately to avoid unnecessary calculations.
+
+This approach ensures correctness while maintaining efficiency.

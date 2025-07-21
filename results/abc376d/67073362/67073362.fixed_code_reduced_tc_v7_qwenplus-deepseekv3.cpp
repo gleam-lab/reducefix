@@ -1,0 +1,62 @@
+#include<iostream>
+#include<vector>
+#include<queue>
+#include<climits>
+using namespace std;
+
+const int N = 2e5 + 10;
+const int INF = INT_MAX;
+
+vector<int> adj[N];
+int dist[N];
+
+void solve() {
+    int n, m;
+    cin >> n >> m;
+    
+    for (int i = 0; i < m; i++) {
+        int u, v;
+        cin >> u >> v;
+        adj[u].push_back(v);
+    }
+    
+    fill(dist, dist + n + 1, INF);
+    queue<int> q;
+    q.push(1);
+    dist[1] = 0;
+    
+    int min_cycle = INF;
+    
+    while (!q.empty()) {
+        int u = q.front();
+        q.pop();
+        
+        for (int v : adj[u]) {
+            if (v == 1) {
+                min_cycle = min(min_cycle, dist[u] + 1);
+            }
+            if (dist[v] > dist[u] + 1) {
+                dist[v] = dist[u] + 1;
+                q.push(v);
+            }
+        }
+    }
+    
+    if (min_cycle != INF) {
+        cout << min_cycle << endl;
+    } else {
+        cout << -1 << endl;
+    }
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int T = 1;
+    // cin >> T;
+    while (T--) {
+        solve();
+    }
+    return 0;
+}

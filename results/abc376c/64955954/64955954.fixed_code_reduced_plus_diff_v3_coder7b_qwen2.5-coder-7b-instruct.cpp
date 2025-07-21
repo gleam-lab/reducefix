@@ -1,0 +1,46 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+bool canPlaceAllToys(vector<int>& toys, vector<int>& boxes, int minBoxSize) {
+    sort(toys.begin(), toys.end());
+    sort(boxes.begin(), boxes.end());
+
+    int j = 0;
+    for(int i = 0; i < toys.size(); ++i) {
+        while(j < boxes.size() && toys[i] > boxes[j]) {
+            ++j;
+        }
+        if(j == boxes.size()) return false;
+        ++j;
+    }
+
+    return true;
+}
+
+int main() {
+    int n;
+    cin >> n;
+    vector<int> toys(n), boxes(n-1);
+
+    for(int i = 0; i < n; ++i) {
+        cin >> toys[i];
+    }
+    for(int i = 0; i < n-1; ++i) {
+        cin >> boxes[i];
+    }
+
+    long long low = 0, high = 1e9 + 10, ans = -1;
+
+    while(low <= high) {
+        long long mid = (low + high) / 2;
+        if(canPlaceAllToys(toys, boxes, mid)) {
+            ans = mid;
+            high = mid - 1;
+        } else {
+            low = mid + 1;
+        }
+    }
+
+    cout << ans << '\n';
+    return 0;
+}

@@ -1,0 +1,49 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+typedef long long ll;
+typedef pair<int, int> pii;
+
+#define rep(i, n) for(int i = 0; i < (n); ++i)
+#define rep1(i, n) for(int i = 1; i <= (n); ++i)
+#define rrep(i, n) for(int i = (n)-1; i >= 0; --i)
+#define rrep1(i, n) for(int i = (n); i > 0; --i)
+#define all(v) v.begin(), v.end()
+#define rall(v) v.rbegin(), v.rend()
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, k;
+        cin >> n >> k;
+        vector<pii> ab(n);
+        rep(i, n) {
+            cin >> ab[i].first >> ab[i].second;
+        }
+
+        sort(all(ab));
+
+        priority_queue<int> pq;
+        ll sum_b = 0;
+        rep(i, k) {
+            pq.push(ab[i].second);
+            sum_b += ab[i].second;
+        }
+
+        ll res = sum_b * ab[k - 1].first;
+        for (int i = k; i < n; ++i) {
+            sum_b += ab[i].second - pq.top();
+            pq.pop();
+            pq.push(ab[i].second);
+            res = min(res, sum_b * ab[i].first);
+        }
+
+        cout << res << "\n";
+    }
+
+    return 0;
+}

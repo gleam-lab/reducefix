@@ -1,0 +1,37 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    int N;
+    cin >> N;
+    vector<long long> A(N), B(N - 1);
+
+    for (int i = 0; i < N; ++i) cin >> A[i];
+    for (int i = 0; i < N - 1; ++i) cin >> B[i];
+
+    sort(A.begin(), A.end());
+    sort(B.begin(), B.end());
+
+    // Use multiset to efficiently find and remove matching boxes
+    multiset<long long> box_sizes;
+    for (long long b : B) {
+        box_sizes.insert(b);
+    }
+
+    // Try to assign toys greedily to smallest possible boxes
+    for (long long a : A) {
+        auto it = box_sizes.lower_bound(a);
+        if (it != box_sizes.end()) {
+            // Found a suitable box, remove it
+            box_sizes.erase(it);
+        } else {
+            // No box can fit this toy, we need an additional box of size >= a
+            cout << a << endl;
+            return 0;
+        }
+    }
+
+    // All toys could be placed in existing boxes, so no need to buy a new one
+    cout << -1 << endl;
+    return 0;
+}

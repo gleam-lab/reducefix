@@ -1,0 +1,74 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+const int MAXN = 4e5 + 5;
+vector<vector<int>> adj[MAXN];
+
+void add_edge(int u, int v) {
+    adj[u].push_back(v);
+    adj[v].push_back(u);
+}
+
+int dfs(int node, int par) {
+    int ret = 1;
+    for(auto child : adj[node]) {
+        if(child == par) continue;
+        ret += dfs(child, node);
+    }
+    return ret;
+}
+
+int main() {
+    ios::sync_with_stdio(0);
+    cin.tie(0);
+
+    int n, m, q;
+    cin >> n >> m >> q;
+
+    for(int i = 1; i <= n; ++i) {
+        add_edge(0, i);
+        add_edge(0, i + m);
+    }
+
+    for(int i = 1; i <= m; ++i) {
+        add_edge(0, i);
+        add_edge(0, i + n);
+    }
+
+    for(int i = 1; i <= n; ++i) {
+        for(int j = 1; j <= m; ++j) {
+            add_edge(i, i + m);
+            add_edge(j, j + n);
+        }
+    }
+
+    vector<int> dp(n + m + 2, 0);
+    dp[0] = n + m + 2;
+
+    for(int i = 1; i <= n + m; ++i) {
+        dp[i] = dfs(i, 0);
+    }
+
+    while(q--) {
+        int u, v;
+        cin >> u >> v;
+        --u, --v;
+        if(u >= 1 && u <= n) {
+            dp[u + m] -= dp[v];
+        } else if(v >= 1 && v <= m) {
+            dp[v + n] -= dp[u];
+        } else {
+            dp[u] -= dp[v];
+            dp[v] -= dp[u];
+        }
+    }
+
+    int ans = 0;
+    for(int i = 1; i <= n + m + 2; ++i) {
+        ans += dp[i];
+    }
+
+    cout << ans << '\n';
+
+    return 0;
+}

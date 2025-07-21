@@ -1,0 +1,44 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    long long n, m;
+    cin >> n >> m;
+    long long ans = n * n;
+    vector<pair<long long, long long>> cells;
+    
+    for (long long i = 0; i < m; ++i) {
+        long long a, b;
+        cin >> a >> b;
+        cells.emplace_back(a, b);
+    }
+    
+    // Define the capture zones for each cell
+    vector<vector<pair<long long, long long>>> capture_zones(n * n, vector<pair<long long, long long>>(8));
+    for (long long i = 0; i < n * n; ++i) {
+        long long x = i / n + 1, y = i % n + 1;
+        int idx = 0;
+        capture_zones[i][idx++] = {x + 2, y + 1};
+        capture_zones[i][idx++] = {x + 1, y + 2};
+        capture_zones[i][idx++] = {x - 1, y + 2};
+        capture_zones[i][idx++] = {x - 2, y + 1};
+        capture_zones[i][idx++] = {x - 2, y - 1};
+        capture_zones[i][idx++] = {x - 1, y - 2};
+        capture_zones[i][idx++] = {x + 1, y - 2};
+        capture_zones[i][idx++] = {x + 2, y - 1};
+    }
+    
+    // Check capture zones and adjust the answer
+    for (const auto& cell : cells) {
+        for (int i = 0; i < 8; ++i) {
+            long long x = cell.first, y = cell.second;
+            long long nx = cell.first + capture_zones[cell.second - 1][i].first - 1, ny = cell.second + capture_zones[cell.second - 1][i].second - 1;
+            if (nx >= 1 && nx <= n && ny >= 1 && ny <= n) {
+                ans--;
+            }
+        }
+    }
+    
+    cout << ans << endl;
+    return 0;
+}

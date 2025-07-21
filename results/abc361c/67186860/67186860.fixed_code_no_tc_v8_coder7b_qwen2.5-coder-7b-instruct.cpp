@@ -1,0 +1,21 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+  int n, k;
+  cin >> n >> k;
+  vector<int> vec(n);
+  for (int i = 0; i < n; i++) {
+    cin >> vec[i];
+  }
+  sort(vec.begin(), vec.end());
+  
+  int ans = INT_MAX;
+  for (int i = 0; i <= n - k; i++) {
+    int max_val = vec[i + k - 1];
+    int min_val = vec[i];
+    ans = min(ans, max_val - min_val);
+  }
+  cout << ans << endl;
+  return 0;
+}

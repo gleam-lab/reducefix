@@ -1,0 +1,82 @@
+To fix this code, we need to address the algorithmic errors and ensure it correctly computes the area of the island remaining above sea level for each year from 1 to Y. The main issues in the original code are related to the incorrect computation of the sink times for each cell and the subsequent calculation of the remaining area.
+
+### Approaches
+1. **Priority Queue for Sink Times**: We use a priority queue (min-heap) to process cells in increasing order of their sink times. The sink time of a cell is the earliest sea level at which it will sink, determined by its elevation and its adjacency to already sunk cells or the sea.
+2. **BFS-like Propagation**: For each cell processed from the priority queue, we propagate its sink time to adjacent cells if their elevation is less than or equal to the current sink time. This ensures that cells are processed in the correct order and their sink times are accurately recorded.
+3. **Prefix Sum for Efficient Area Calculation**: After determining the sink times for all cells, we use a prefix sum array to efficiently compute the cumulative number of cells that have sunk by each year. The remaining area for each year is then calculated by subtracting the cumulative sunk area from the total area of the island.
+
+### Solution Code
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+#define all(x) (x).begin(), (x).end()
+
+int main() {
+    ios_base::sync_with_stdio(0);
+    cin.tie(0);
+    int h, w, y;
+    cin >> h >> w >> y;
+    vector<vector<int>> height(h, vector<int>(w));
+    vector<vector<int>> sink(h, vector<int>(w, INT_MAX));
+    priority_queue<pair<int, pair<int, int>>, vector<pair<int, pair<int, int>>>, greater<pair<int, pair<int, int>>>> pq;
+    int di[4][2] = {{-1, 0}, {1, 0}, {0, -1}, {0, 1}};
+    
+    for (int i = 0; i < h; i++) {
+        for (int j = 0; j < w; j++) {
+            cin >> height[i][j];
+            if (i == 0 || i == h - 1 || j == 0 || j == w - 1) {
+                sink[i][j] = height[i][j];
+                pq.push({height[i][j], {i, j}});
+            }
+        }
+    }
+    
+    while (!pq.empty()) {
+        auto [H, p] = pq.top();
+        auto [r, c] = p;
+        pq.pop();
+        for (int i = 0; i < 4; i++) {
+            int nr = r + di[i][0];
+            int nc = c + di[i][1];
+            if (nr < 0 || nr >= h || nc < 0 || nc >= w) continue;
+            if (sink[nr][nc] > max(H, height[nr][nc])) {
+                sink[nr][nc] = max(H, height[nr][nc]);
+                pq.push({sink[nr][nc], {nr, nc}});
+            }
+        }
+    }
+    
+    vector<int> cnt(y + 2, 0);
+    for (int i = 0; i < h; i++) {
+        for (int j = 0; j < w; j++) {
+            if (sink[i][j] <= y) {
+                cnt[sink[i][j]]++;
+            } else {
+                cnt[y + 1]++;
+            }
+        }
+    }
+    
+    vector<int> pref(y + 1, 0);
+    pref[0] = cnt[0];
+    for (int i = 1; i <= y; i++) {
+        pref[i] = pref[i - 1] + cnt[i];
+    }
+    
+    for (int i = 1; i <= y; i++) {
+        cout << h * w - pref[i] << '\n';
+    }
+    
+    return 0;
+}
+```
+
+### Explanation
+1. **Initialization**: The code reads the island dimensions (H, W) and the number of years (Y). It initializes the height matrix and a sink matrix to store the sink time for each cell.
+2. **Priority Queue Setup**: Border cells (adjacent to the sea) are initialized with their sink times equal to their elevations and pushed into the priority queue.
+3. **Processing Sink Times**: The priority queue processes cells in order of increasing sink times. For each cell, adjacent cells are checked, and their sink times are updated if the adjacent cell's elevation is less than or equal to the current sink time, ensuring accurate propagation of sink times.
+4. **Counting Sunk Cells**: A count array tracks the number of cells sinking each year. Cells sinking after Y years are counted in the Y+1th position.
+5. **Prefix Sum Calculation**: The prefix sum array is used to compute the cumulative number of cells sunk by each year, allowing efficient calculation of the remaining area for each year by subtracting from the total island area.
+
+This approach ensures the solution is both correct and efficient, handling the constraints effectively.

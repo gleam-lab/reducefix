@@ -1,0 +1,43 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    long long N, M;
+    cin >> N >> M;
+
+    // Set to store all positions that are either occupied or threatened
+    unordered_set<string> blocked;
+
+    // Function to hash a coordinate pair to a unique string
+    auto hash_coord = [](long long x, long long y) {
+        return to_string(x) + "," + to_string(y);
+    };
+
+    vector<pair<long long, long long>> directions = {
+        {2, 1}, {1, 2}, {-1, 2}, {-2, 1},
+        {-2, -1}, {-1, -2}, {1, -2}, {2, -1}
+    };
+
+    for (long long i = 0; i < M; ++i) {
+        long long a, b;
+        cin >> a >> b;
+
+        // Block the current position
+        blocked.insert(hash_coord(a, b));
+
+        // Block all threatened positions around this piece
+        for (auto [dx, dy] : directions) {
+            long long nx = a + dx;
+            long long ny = b + dy;
+            if (1 <= nx && nx <= N && 1 <= ny && ny <= N) {
+                blocked.insert(hash_coord(nx, ny));
+            }
+        }
+    }
+
+    // Total number of cells: N * N
+    // Subtract number of blocked cells to get valid empty cells
+    cout << (N * N - (long long)blocked.size()) << endl;
+
+    return 0;
+}

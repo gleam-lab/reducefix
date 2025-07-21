@@ -1,0 +1,61 @@
+#include <iostream>
+#include <vector>
+#include <cstring>
+#include <queue>
+
+using namespace std;
+
+const int N = 2e5 + 10;
+vector<int> adj[N];
+int mi = INF, g[N];
+
+void bfs(int start) {
+    queue<int> q;
+    g[start] = 1;
+    q.push(start);
+    while (!q.empty()) {
+        int u = q.front();
+        q.pop();
+        for (int v : adj[u]) {
+            if (!g[v]) {
+                g[v] = 1;
+                q.push(v);
+            }
+        }
+    }
+}
+
+void solve() {
+    int n, m;
+    cin >> n >> m;
+    for (int i = 0; i < m; ++i) {
+        int u, v;
+        cin >> u >> v;
+        adj[u].push_back(v);
+        adj[v].push_back(u); // Assuming undirected graph
+    }
+
+    bfs(1); // Start BFS from node 1
+
+    for (int i = 1; i <= n; ++i) {
+        if (g[i] == 0) { // If there are unvisited nodes
+            mi = min(mi, INF); // Reset minimum to INF
+            bfs(i); // Perform BFS from the unvisited node
+        }
+    }
+
+    if (mi == INF) {
+        cout << -1;
+    } else {
+        cout << mi;
+    }
+}
+
+int main() {
+    int T = 1;
+    //cin >> T;
+    while (T--) {
+        solve();
+    }
+    return 0;
+}

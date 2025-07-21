@@ -1,0 +1,76 @@
+To fix this code, we need to address several issues, particularly regarding the handling of the minimum path weight calculation and the initialization of the distance array. The main problem lies in the incorrect initialization of the distance array and the handling of cases where there are no edges (like in the failing test case).
+
+### Approaches
+1. **Initialization**: The distance array `d` should be initialized to a very large number (infinity) to represent initially unreachable nodes. The choice of infinity should be large enough to not interfere with the actual calculations, but not so large that it causes overflow or other issues. In this case, `9223372036854775807` (the maximum value of a 64-bit signed integer) is appropriate.
+2. **Priority Queue**: Use a min-heap (priority queue) to implement Dijkstra's algorithm efficiently. The priority queue should store nodes with their current distance, allowing us to always process the node with the smallest current distance next.
+3. **Edge Cases**: Handle cases where there are no edges (like the failing test case) by ensuring the distance from vertex 1 to itself is set to its weight, and other vertices remain at infinity if unreachable.
+
+### Solution Code
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+using i64 = long long;
+
+constexpr i64 INF = 9223372036854775807LL;
+
+struct Node {
+    int x;
+    i64 w;
+    bool operator < (const Node& u) const {
+        return w > u.w;
+    }
+};
+
+void solve() {
+    int n, m;
+    cin >> n >> m;
+    vector<i64> a(n + 1);
+    for (int i = 1; i <= n; ++i) {
+        cin >> a[i];
+    }
+    vector<vector<pair<int, i64>>> g(n + 1);
+    for (int i = 0; i < m; ++i) {
+        int u, v;
+        i64 b;
+        cin >> u >> v >> b;
+        g[u].emplace_back(v, b);
+        g[v].emplace_back(u, b);
+    }
+    vector<i64> d(n + 1, INF);
+    vector<bool> vis(n + 1, false);
+    priority_queue<Node> pq;
+    d[1] = a[1];
+    pq.push({1, d[1]});
+    while (!pq.empty()) {
+        auto node = pq.top();
+        pq.pop();
+        int x = node.x;
+        if (vis[x]) continue;
+        vis[x] = true;
+        for (const auto& [y, b] : g[x]) {
+            if (d[x] + b + a[y] < d[y]) {
+                d[y] = d[x] + b + a[y];
+                pq.push({y, d[y]});
+            }
+        }
+    }
+    for (int i = 2; i <= n; ++i) {
+        cout << d[i] << " \n"[i == n];
+    }
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    solve();
+    return 0;
+}
+```
+
+### Explanation
+1. **Initialization**: The distance array `d` is initialized to `INF` (9223372036854775807), which represents an initially unreachable state for all nodes except node 1, which is set to its weight `a[1]`.
+2. **Graph Construction**: The graph is built using adjacency lists where each edge is stored with its corresponding weight.
+3. **Dijkstra's Algorithm**: Using a min-heap, the algorithm processes each node, updating the distances to neighboring nodes if a shorter path is found. The weight of a path is defined as the sum of the vertex weights and edge weights along the path.
+4. **Output**: For each node from 2 to N, the computed minimum path weight from node 1 is printed. If a node is unreachable, it remains `INF`, which correctly indicates no path exists (though the graph is connected per the problem statement, ensuring all nodes are reachable).
+
+This approach ensures that the solution is efficient and correct, handling all specified constraints and edge cases appropriately.

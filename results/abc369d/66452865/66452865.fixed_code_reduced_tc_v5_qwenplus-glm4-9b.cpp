@@ -1,0 +1,31 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+
+using namespace std;
+
+int main() {
+    int N;
+    cin >> N;
+    vector<long long> A(N);
+    for (int i = 0; i < N; i++) cin >> A[i];
+    vector<long long> dp(2);
+    dp[0] = 0;
+    dp[1] = 0;
+    for (int i = 0; i < N; i++) {
+        vector<long long> p(2);
+        swap(dp, p);
+        for (int j = 0; j < 2; j++) {
+            // Not doing anything
+            p[j] = max(p[j], dp[j]);
+            // Flip when the previous state was doing nothing
+            if (j == 0) p[j ^ 1] = max(p[j ^ 1], dp[j] + A[i]);
+            // Flip when the previous state was doing the flip
+            if (j == 1) p[j ^ 1] = max(p[j ^ 1], dp[j] + 2 * A[i]);
+        }
+        dp = p;
+    }
+    // The maximum of the two states
+    cout << max(dp[0], dp[1]) << endl;
+    return 0;
+}

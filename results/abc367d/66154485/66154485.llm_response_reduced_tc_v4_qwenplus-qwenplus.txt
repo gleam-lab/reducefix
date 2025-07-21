@@ -1,0 +1,85 @@
+To solve this problem efficiently, we need to compute the number of subarrays (considering circular wrap-around) whose sum is divisible by a given integer `m`.
+
+The naive approach implemented in your code has **O(N²)** time complexity, which is inefficient for large input sizes (`n` can be up to 200,000). To pass all test cases efficiently, we must optimize this.
+
+---
+
+### ✅ Key Observations:
+
+1. Since the array is **circular**, every subarray starting at index `i` and wrapping around to `i-1` should be considered.
+2. The sum modulo `m` is what matters — so we can use prefix sums and modular arithmetic.
+3. We maintain a running prefix sum modulo `m`, and count how many times each remainder appears using a frequency map.
+4. At each index, we consider all subarrays ending at that index using prefix sum differences.
+
+---
+
+### 🧠 Optimization Strategy:
+
+- Use a **prefix sum modulo `m`** technique.
+- Maintain a map `freq` where `freq[r]` counts how many times a particular remainder `r` has occurred in the prefix sums.
+- For each prefix sum `sum_mod`, the number of valid subarrays ending at current index is equal to the number of previous occurrences of `sum_mod`. This is because:
+  
+  ```
+ (prefix[j] - prefix[i]) % m == 0
+  => prefix[j] % m == prefix[i] % m
+  ```
+
+- Since the array is circular, we simulate the wrap-around by duplicating the array (processing `arr * 2`) to cover all possible starting points in O(N) time.
+
+---
+
+### ⏱ Time Complexity:
+- **O(n)** time and space, since we process each element once and keep a frequency map.
+
+---
+
+### ✅ Final Code:
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int n, m;
+    cin >> n >> m;
+
+    vector<int> arr(2 * n);
+    for (int i = 0; i < n; ++i) {
+        cin >> arr[i];
+        arr[i + n] = arr[i]; // duplicate for circular wrap-around
+    }
+
+    long long ans = 0;
+    vector<long long> freq(m, 0);
+    long long prefix_sum = 0;
+
+    for (int i = 0; i < 2 * n; ++i) {
+        prefix_sum = (prefix_sum + arr[i]) % m;
+        if (i >= n) {
+            // Remove contribution of the element that falls out of the sliding window of size n
+            int old_rem = (prefix_sum - arr[i - n] + m) % m;
+            freq[old_rem]--;
+        }
+        ans += freq[prefix_sum]++;
+    }
+
+    cout << ans << "\n";
+    return 0;
+}
+```
+
+---
+
+### 🔍 Explanation:
+
+- `prefix_sum`: Running cumulative sum modulo `m`.
+- `freq`: Keeps count of how many times each mod value has occurred.
+- When processing beyond the first `n` elements, we ensure we remove the prefix sum contributions from positions outside the current circular window of size `n`.
+- This ensures we only count subarrays of length ≤ `n` (as required by the circular nature).
+
+---
+
+This solution handles all edge cases (like `m=1`, all elements zero, etc.) and works within constraints.

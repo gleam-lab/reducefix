@@ -1,0 +1,79 @@
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+using PII = pair<int, int>;
+#define x first
+#define y second
+#define all(x) x.begin(),x.end()
+const int N = 400010;
+
+int n, m;
+
+void solve()
+{
+    int q;
+    cin >> n >> m >> q;
+    
+    vector<set<int>> row(n + 1), col(m + 1);
+    for (int i = 1; i <= n; i++) {
+        for (int j = 1; j <= m; j++) {
+            row[i].insert(j);
+            col[j].insert(i);
+        }
+    }
+
+    auto erase = [&](int r, int c) -> void {
+        row[r].erase(c);
+        col[c].erase(r);
+    };
+    
+    while (q--) {
+        int r, c; 
+        cin >> r >> c;
+        
+        if (row[r].count(c)) {
+            // Cell has a wall, destroy it
+            erase(r, c);
+            continue;
+        }
+
+        // Look right in the same row
+        auto itR = row[r].lower_bound(c);
+        if (itR != row[r].end()) {
+            erase(r, *itR);
+        }
+
+        // Look left in the same row
+        auto itL = row[r].lower_bound(c);
+        if (itL != row[r].begin()) {
+            --itL;
+            erase(r, *itL);
+        }
+
+        // Look down in the same column
+        auto itD = col[c].lower_bound(r);
+        if (itD != col[c].end()) {
+            erase(*itD, c);
+        }
+
+        // Look up in the same column
+        auto itU = col[c].lower_bound(r);
+        if (itU != col[c].begin()) {
+            --itU;
+            erase(*itU, c);
+        }
+    }
+
+    ll ans = 0;
+    for (int i = 1; i <= n; i++) ans += row[i].size();
+    cout << ans << "\n";
+}
+
+signed main()
+{
+    ios::sync_with_stdio(0); 
+    cin.tie(0); 
+    cout.tie(0);
+    solve();
+    return 0;
+}

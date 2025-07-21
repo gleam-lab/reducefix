@@ -1,0 +1,72 @@
+#include <iostream>
+#include <vector>
+#include <queue>
+using namespace std;
+
+int main() {
+    int H, W, Y;
+    cin >> H >> W >> Y;
+
+    vector<vector<int>> island(H, vector<int>(W));
+    for (int i = 0; i < H; ++i) {
+        for (int j = 0; j < W; ++j) {
+            cin >> island[i][j];
+        }
+    }
+
+    // Use a priority queue to store islands based on their elevation
+    priority_queue<pair<int, pair<int, int>>, vector<pair<int, pair<int, int>>>, greater<pair<int, pair<int, int>>>> pq;
+    vector<vector<bool>> visited(H, vector<bool>(W, false));
+
+    // Initialize the priority queue with the borders of the island
+    for (int i = 0; i < H; ++i) {
+        pq.push({island[i][0], {i, 0}});
+        visited[i][0] = true;
+        pq.push({island[i][W - 1], {i, W - 1}});
+        visited[i][W - 1] = true;
+    }
+    for (int j = 0; j < W; ++j) {
+        pq.push({island[0][j], {0, j}});
+        visited[0][j] = true;
+        pq.push({island[H - 1][j], {H - 1, j}});
+        visited[H - 1][j] = true;
+    }
+
+    // Calculate the initial area of the island
+    int current_area = H * W;
+
+    // Simulate the rising sea level
+    for (int year = 1; year <= Y; ++year) {
+        int new_area = 0;
+        while (!pq.empty()) {
+            auto [height, pos] = pq.top();
+            pq.pop();
+            int x = pos.first;
+            int y = pos.second;
+            if (height <= year) {
+                // If the island's height is less than or equal to the sea level,
+                // it sinks and we need to remove it from the area
+                current_area--;
+                for (int dx = -1; dx <= 1; ++dx) {
+                    for (int dy = -1; dy <= 1; ++dy) {
+                        int nx = x + dx;
+                        int ny = y + dy;
+                        if (nx >= 0 && nx < H && ny >= 0 && ny < W && !visited[nx][ny] && island[nx][ny] > year) {
+                            // If the neighboring cell has not been visited and its height is above the new sea level,
+                            // add it to the priority queue
+                            pq.push({island[nx][ny], {nx, ny}});
+                            visited[nx][ny] = true;
+                        }
+                    }
+                }
+            } else {
+                // If the island's height is above the sea level, it stays above water
+                new_area++;
+            }
+        }
+        current_area = new_area;
+        cout << current_area << '\n';
+    }
+
+    return 0;
+}

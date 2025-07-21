@@ -1,0 +1,46 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define rep(i, n) for (int i = 0; i < (n); ++i)
+using ll = long long;
+
+int main()
+{
+    int n;
+    cin >> n;
+    vector<int> h(n);
+    ll ans = 0;
+    rep(i, n)
+    {
+        cin >> h[i];
+    }
+
+    for (int i = 0; i < n; )
+    {
+        ll t = 0;
+        // Process the current enemy and all subsequent enemies with the same health
+        while (i < n && h[i] == h[i + 1])
+        {
+            t += h[i];
+            i++;
+        }
+        t += h[i];
+
+        // Calculate the number of attacks needed
+        ll attacks = (t + 2) / 3; // Round up division
+        ans += attacks;
+        h[i] -= attacks; // Decrease the health of the current enemy by the number of attacks
+
+        // Move to the next enemy if all enemies with the same health are processed
+        if (h[i] <= 0)
+        {
+            i++;
+        }
+        else
+        {
+            // If the health of the current enemy is not zero, merge its health with the next one
+            h[i + 1] += h[i];
+        }
+    }
+
+    cout << ans << endl;
+}

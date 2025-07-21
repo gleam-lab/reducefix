@@ -1,0 +1,42 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+
+// Utility function to convert the integer index to a range (low, high)
+auto index_to_range(int index) -> pair<int, int> {
+    return make_pair(low(all(x_to_ptr.upper_bound(index))), high(all(x_to_ptr.lower_bound(index))));
+}
+
+int main() {
+    int N;
+    cin >> N; // Number of elements in the array P
+    vector<int> P(N); // Array P with initial values
+    cin >> P[0]; // Initial value of element 0
+
+    // Populate the array P with the given values
+    rep(i, N) cin >> P[i];
+
+    // Build the graph using the indices and values of elements
+    vector<vector<int>> graph(N); // Graph representation
+    rep(i, N) {
+        auto [l, r] = index_to_range(i); // Convert index to range for easier manipulation
+        graph[l].push_back(r); // Add edges from l to r
+        graph[r].push_back(l); // Add edges to r from l
+    }
+
+    int Q; // Number of queries
+    cin >> Q; // Number of queries to process
+
+    // Process each query separately
+    while (Q--) {
+        int L, R; // Query indices for X_l and X_r
+        cin >> L >> R; // Read query indices L and R
+        auto [low, high] = index_to_range(L); // Convert range to low and high indices
+        auto X_l = x_to_ptr.lower_bound(low); // Find the element in the sorted array that is at the query index L
+        auto X_r = x_to_ptr.upper_bound(high); // Find the element in the sorted array that is at the query index R
+        int ans = P[X_r] - P[X_l]; // Calculate the answer for the query range
+        cout << ans << endl; // Output the answer as requested
+    }
+
+    return 0; // Return 0 to indicate successful completion of the program
+}

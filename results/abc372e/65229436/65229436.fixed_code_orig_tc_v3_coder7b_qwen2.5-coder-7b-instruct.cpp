@@ -1,0 +1,73 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define rep(i, n) for(int i=0;i<(n);i++)
+#define all(a) a.begin(), a.end()
+#define rall(a) a.rbegin(), a.rend()
+using ll = long long;
+using pi = pair<int, int>;
+const int di[] = {1, -1, 0, 0};
+const int dj[] = {0, 0, 1, -1};
+const int INF = 1e9;
+
+struct UnionFind {
+    vector<int> parent, rank, size;
+    UnionFind(int n) : parent(n), rank(n, 0), size(n, 1) {
+        iota(all(parent), 0);
+    }
+    int findRoot(int x) {
+        if (parent[x] != x) 
+            parent[x] = findRoot(parent[x]);
+        return parent[x];
+    }
+    bool unite(int x, int y) {
+        int rx = findRoot(x), ry = findRoot(y);
+        if (rx == ry) return false;
+        if (rank[rx] < rank[ry]) {
+            parent[rx] = ry;
+            size[ry] += size[rx];
+        } else {
+            parent[ry] = rx;
+            size[rx] += size[ry];
+            if (rank[rx] == rank[ry]) 
+                rank[rx]++;
+        }
+        return true;
+    }
+};
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int n, q;
+    cin >> n >> q;
+    UnionFind uf(n);
+    vector<priority_queue<int>> pq(n);
+    
+    while (q--) {
+        int com;
+        cin >> com;
+        if (com == 1) {
+            int u, v;
+            cin >> u >> v;
+            u--; v--;
+            int ru = uf.findRoot(u);
+            int rv = uf.findRoot(v);
+            if (ru != rv) {
+                uf.unite(ru, rv);
+                pq[uf.findRoot(u)].push(uf.size(uf.findRoot(u)));
+            }
+        } else {
+            int v, k;
+            cin >> v >> k;
+            v--;
+            int root = uf.findRoot(v);
+            if (pq[root].size() < k) 
+                cout << -1 << endl;
+            else 
+                cout << pq[root].nth_element(k - 1) << endl;
+        }
+    }
+    
+    return 0;
+}

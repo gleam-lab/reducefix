@@ -1,0 +1,103 @@
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+#define all(x) (x).begin(), (x).end()
+
+int main() {
+    ios_base::sync_with_stdio(0);
+    cin.tie(0);
+
+    int h, w, y;
+    cin >> h >> w >> y;
+
+    vector<vector<int>> height(h, vector<int>(w));
+    vector<vector<bool>> visited(h, vector<bool>(w, false));
+
+    // Read the grid
+    for (int i = 0; i < h; ++i) {
+        for (int j = 0; j < w; ++j) {
+            cin >> height[i][j];
+        }
+    }
+
+    // Direction vectors for BFS (up, down, left, right)
+    int di[4][2] = {{-1, 0}, {1, 0}, {0, -1}, {0, 1}};
+
+    // Priority queue to process cells in increasing order of sink level
+    priority_queue<pair<int, pair<int, int>>, vector<pair<int, pair<int, int>>>, greater<>> pq;
+
+    // Initialize boundary cells
+    for (int i = 0; i < h; ++i) {
+        for (int j = 0; j < w; ++j) {
+            if (i == 0 || i == h - 1 || j == 0 || j == w - 1) {
+                pq.push({height[i][j], {i, j}});
+                visited[i][j] = true;
+            }
+        }
+    }
+
+    // Array to store when a cell sinks
+    vector<vector<int>> sink_year(h, vector<int>(w, INT_MAX));
+
+    // BFS flood fill with priority on elevation
+    while (!pq.empty()) {
+        auto [H, pos] = pq.top();
+        auto [r, c] = pos;
+        pq.pop();
+
+        // If already processed, skip
+        if (sink_year[r][c] != INT_MAX)
+            continue;
+
+        // Mark the sink year as H (elevation determines when it gets submerged)
+        sink_year[r][c] = H;
+
+        // Explore neighbors
+        for (int d = 0; d < 4; ++d) {
+            int nr = r + di[d][0];
+            int nc = c + di[d][1];
+
+            if (nr >= 0 && nr < h && nc >= 0 && nc < w && !visited[nr][nc]) {
+                // If neighbor's elevation <= current, it may also be added to queue
+                if (height[nr][nc] <= H) {
+                    visited[nr][nc] = true;
+                    pq.push({height[nr][nc], {nr, nc}});
+                } else {
+                    // Only enqueue once when adjacent to already sinking region
+                    pq.push({height[nr][nc], {nr, nc}});
+                    visited[nr][nc] = true;
+                }
+            }
+        }
+    }
+
+    // Count how many cells sink at each year
+    vector<int> sink_count(y + 2, 0); // index up to y+1 to avoid overflow
+
+    for (int i = 0; i < h; ++i) {
+        for (int j = 0; j < w; ++j) {
+            int s = sink_year[i][j];
+            if (s <= y) {
+                sink_count[s]++;
+            }
+        }
+    }
+
+    // Compute prefix sum so we can answer queries in O(1)
+    vector<int> area_remaining(y + 2, 0);
+    int total_area = h * w;
+
+    for (int year = 1; year <= y; ++year) {
+        sink_count[year] += sink_count[year - 1];
+        area_remaining[year] = total_area - sink_count[year];
+    }
+
+    // Output results
+    for (int year = 1; year <= y; ++year) {
+        cout << area_remaining[year] << "\n";
+    }
+
+    return 0;
+}
+```

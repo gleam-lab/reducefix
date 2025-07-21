@@ -1,0 +1,78 @@
+After analyzing the failing test case and the incorrect code, I identified the main issue - the code doesn't properly handle the sinking of interior sections when their elevation is less than or equal to the current sea level. The original code only processes border sections initially and doesn't account for interior sections becoming adjacent to sunk sections later.
+
+Here's the fixed code that properly handles all cases:
+
+```cpp
+#include <bits/stdc++.h>
+
+using namespace std;
+
+constexpr int dx[] = {-1, 1, 0, 0};
+constexpr int dy[] = {0, 0, -1, 1};
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int H, W, Y;
+    cin >> H >> W >> Y;
+
+    vector<vector<int>> A(H, vector<int>(W));
+    for (int i = 0; i < H; i++) {
+        for (int j = 0; j < W; j++) {
+            cin >> A[i][j];
+        }
+    }
+
+    vector<vector<bool>> sunk(H, vector<bool>(W, false));
+    priority_queue<pair<int, pair<int, int>>, vector<pair<int, pair<int, int>>>, greater<>> pq;
+
+    // Push border cells into the priority queue
+    for (int i = 0; i < H; i++) {
+        for (int j = 0; j < W; j++) {
+            if (i == 0 || i == H - 1 || j == 0 || j == W - 1) {
+                pq.push({A[i][j], {i, j}});
+                sunk[i][j] = true;
+            }
+        }
+    }
+
+    int ans = H * W;
+    vector<int> res(Y + 1, ans); // Store results for each year
+
+    for (int y = 1; y <= Y; y++) {
+        while (!pq.empty() && pq.top().first <= y) {
+            auto [elev, pos] = pq.top();
+            auto [x, y_pos] = pos;
+            pq.pop();
+            ans--;
+
+            for (int d = 0; d < 4; d++) {
+                int nx = x + dx[d];
+                int ny = y_pos + dy[d];
+
+                if (nx >= 0 && nx < H && ny >= 0 && ny < W && !sunk[nx][ny]) {
+                    sunk[nx][ny] = true;
+                    pq.push({A[nx][ny], {nx, ny}});
+                }
+            }
+        }
+        res[y] = ans;
+    }
+
+    for (int y = 1; y <= Y; y++) {
+        cout << res[y] << '\n';
+    }
+
+    return 0;
+}
+```
+
+Key improvements:
+1. Used a priority queue to process sections in order of their elevation from lowest to highest
+2. Properly handles the propagation of sinking from border to interior sections
+3. Maintains a `sunk` matrix to track which sections have already been processed
+4. Stores results for all years in a vector before outputting to handle cases where multiple years might have the same sea level
+5. Fixed the logic to properly decrement the remaining area count when sections sink
+
+This solution efficiently processes the sections in elevation order, ensuring that sections are sunk at the correct time and their adjacent sections are properly considered for sinking in subsequent steps. The complexity is O(HW log(HW)) for the initial sorting of border sections plus O(Y) for processing each year, which is efficient enough for the given constraints.

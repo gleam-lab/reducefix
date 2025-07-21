@@ -1,0 +1,109 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+
+typedef long long ll;
+
+int main() {
+    ll N, M;
+    cin >> N >> M;
+
+    set<ll> rows, cols;
+    set<ll> diag1, diag2; // diag1: i-j, diag2: i+j
+
+    for (ll i = 0; i < M; ++i) {
+        ll a, b;
+        cin >> a >> b;
+        rows.insert(a);
+        cols.insert(b);
+        diag1.insert(a - b);
+        diag2.insert(a + b);
+    }
+
+    // Total safe cells = total cells not in any attacked line
+    ll total_safe = N * N;
+    
+    // Subtract cells attacked by existing pieces
+    total_safe -= rows.size() * N; // Rows
+    total_safe -= cols.size() * N; // Columns
+
+    // Subtract diagonal cells
+    for (ll d : diag1) {
+        ll count;
+        if (d >= -(N-1) && d <= N-1) {
+            if (N - abs(d) > 0)
+                total_safe -= (N - abs(d));
+        }
+    }
+
+    for (ll d : diag2) {
+        ll count;
+        if (d >= 2 && d <= 2*N) {
+            ll low = max(1LL, d - N);
+            ll high = min(N, d - 1LL);
+            if (high >= low)
+                total_safe -= (high - low + 1);
+        }
+    }
+
+    // Add back over-subtracted cells (inclusion-exclusion principle)
+    for (ll r : rows) {
+        for (ll c : cols) {
+            // (r, c) was subtracted twice, so add it back once
+            total_safe += 1;
+        }
+        for (ll d : diag1) {
+            ll c = r - d;
+            if (1 <= c && c <= N) {
+                total_safe += 1;
+            }
+        }
+        for (ll d : diag2) {
+            ll c = d - r;
+            if (1 <= c && c <= N) {
+                total_safe += 1;
+            }
+        }
+    }
+
+    for (ll c : cols) {
+        for (ll d : diag1) {
+            ll r = d + c;
+            if (1 <= r && r <= N) {
+                total_safe += 1;
+            }
+        }
+        for (ll d : diag2) {
+            ll r = d - c;
+            if (1 <= r && r <= N) {
+                total_safe += 1;
+            }
+        }
+    }
+
+    for (ll d1 : diag1) {
+        for (ll d2 : diag2) {
+            // Solve:
+            // r - c = d1
+            // r + c = d2
+            // => 2r = d1 + d2 => r = (d1 + d2)/2
+            // => 2c = d2 - d1 => c = (d2 - d1)/2
+            ll r = d1 + d2;
+            ll c = d2 - d1;
+            if (r % 2 == 0 && c % 2 == 0) {
+                r /= 2;
+                c /= 2;
+                if (1 <= r && r <= N && 1 <= c && c <= N) {
+                    total_safe += 1;
+                }
+            }
+        }
+    }
+
+    // Subtract the M occupied cells that were counted as "safe" but are not available
+    total_safe -= M;
+
+    cout << total_safe << endl;
+
+    return 0;
+}

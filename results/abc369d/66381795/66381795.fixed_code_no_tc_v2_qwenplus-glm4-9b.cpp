@@ -1,0 +1,30 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define rep(i, n) for (int i = 0; i < (int)(n); i++)
+using ll = long long;
+
+int n, a;
+int main() {
+    cin >> n;
+    vector<int> data(n);
+    rep(i, n) {
+        cin >> data[i];
+    }
+    ll sum = 0;
+    int cnt = 0;
+    for (int i = 0; i < n; ++i) {
+        cnt++;
+        if (i < n - 1) { // Ensure we do not go out of bounds
+            if (cnt % 2 == 0) { // If cnt is even, double the next element
+                sum += data[i + 1] * 2;
+                i++; // Skip the next element as it's already processed
+            } else { // If cnt is odd, process the current element
+                sum += data[i];
+            }
+        } else { // If it's the last element
+            sum += data[i];
+        }
+    }
+    cout << sum << endl;
+    return 0;
+}

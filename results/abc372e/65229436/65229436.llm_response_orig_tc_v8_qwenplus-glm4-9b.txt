@@ -1,0 +1,88 @@
+
+The problem described is about managing a dynamic set of connected components in an undirected graph using the Union-Find data structure and responding to queries about the size of these components or the k-th largest vertex within them. Let's analyze the failing case and identify the issues in the given code.
+
+### Failing Case Analysis
+The failing case involves a series of operations on the graph where edges are added and queries are made about the size of the connected component containing a certain vertex. The problem with the provided code is that it does not handle the merging of sets correctly when a union operation is performed on the Union-Find structure.
+
+### Root Finding Issue
+The root finding operation is implemented correctly using path compression, which ensures that the tree representing each component is kept flat. However, the merging of sets (or the maintaining of a list of vertices in each component) is not being updated correctly when union operations are performed.
+
+### Merging Sets Issue
+When two components are merged, the code attempts to merge the sets of vertices in the smaller component into the larger component. However, the way it is implemented does not ensure that the correct smaller and larger components are always identified, and it does not correctly handle the case where the components have the same size.
+
+### Proposed Solution
+To fix the issue, we need to ensure that:
+
+1. When merging two components, we always merge the smaller component into the larger component based on the size of the sets (or lists of vertices).
+2. After merging, we update the list of vertices for the new larger component.
+
+Here is a revised version of the code addressing the merging sets issue:
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+#define rep(i, n) for(int i=0;i<(n);i++)
+#define all(a) a.begin(), a.end()
+#define rall(a) a.rbegin(), a.rend()
+using ll = long long;
+using pi = pair<int, int>;
+const int INF=1e9;
+struct UnionFind {
+    vector<int> parent, rank, size;
+    UnionFind(int n) : parent(n), rank(n, 0), size(n, 1) {
+        for (int i = 0; i < n; i++) 
+            parent[i] = i;
+    }
+    int findRoot(int x) {
+        if (parent[x] != x) 
+            parent[x] = findRoot(parent[x]);
+        return parent[x];
+    }
+    bool unite(int x, int y) {
+        int rx = findRoot(x), ry = findRoot(y);
+        if (rx == ry) return false;
+        if (size[rx] < size[ry]) swap(rx, ry);
+        parent[rx] = ry;
+        size[ry] += size[rx];
+        return true;
+    }
+    int getSize(int x) {
+        return size[findRoot(x)];
+    }
+};
+int main(){
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int n, q;
+    cin >> n >> q;
+    UnionFind uf(n);
+    vector<vector<int>> component(n);
+    rep(i, n) component[i].push_back(i);
+    for(int i = 0; i < q; i++) {
+        int com;
+        cin >> com;
+        if(com == 1) {
+            int u, v;
+            cin >> u >> v;
+            uf.unite(u, v);
+            int root_u = uf.findRoot(u);
+            int root_v = uf.findRoot(v);
+            if(root_u != root_v) {
+                vector<int>& smaller_component = component[root_u].size() < component[root_v].size() ? component[root_u] : component[root_v];
+                vector<int>& larger_component = component[root_u].size() < component[root_v].size() ? component[root_v] : component[root_u];
+                smaller_component.insert(smaller_component.end(), larger_component.begin(), larger_component.end());
+                larger_component.clear();
+            }
+        } else if(com == 2) {
+            int v, k;
+            cin >> v >> k;
+            int root_v = uf.findRoot(v);
+            if(k > component[root_v].size()) cout << -1 << endl;
+            else cout << component[root_v][component[root_v].size() - k] + 1 << endl;
+        }
+    }
+    return 0;
+}
+```
+
+This revised code addresses the merging sets issue by ensuring that the correct components are merged based on their size. It also maintains a list of vertices for each component and updates it accordingly after a union operation. The queries are then answered using these lists.

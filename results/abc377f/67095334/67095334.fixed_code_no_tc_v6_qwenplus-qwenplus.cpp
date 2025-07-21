@@ -1,0 +1,91 @@
+#include <bits/stdc++.h>
+#define int long long
+
+using namespace std;
+
+void solve() {
+    int n, m;
+    cin >> n >> m;
+    
+    set<int> rows, cols;
+    set<int> diag1, diag2;  // diag1: i+j, diag2: i-j
+    
+    for (int i = 0; i < m; ++i) {
+        int x, y;
+        cin >> x >> y;
+        rows.insert(x);
+        cols.insert(y);
+        diag1.insert(x + y);
+        diag2.insert(x - y);
+    }
+    
+    // Total safe squares without considering diagonal overlaps
+    int ans = (n - rows.size()) * (n - cols.size());
+    
+    // Subtract squares that are on the attacked diagonals but not already removed by row/col checks
+    
+    // For diag1: i+j = d
+    for (int d : diag1) {
+        // Calculate valid range of i such that 1 <= i <= N and 1 <= d-i <= N
+        // => max(1, d-N) <= i <= min(N, d-1)
+        int i_min = max(1LL, d - n);
+        int i_max = min(n, d - 1);
+        
+        if (i_min > i_max) continue;
+        
+        // Count how many of these rows are already excluded
+        int excluded = 0;
+        for (int r : rows) {
+            if (r >= i_min && r <= i_max) excluded++;
+        }
+        
+        // Count how many of these columns are already excluded
+        for (int c : cols) {
+            int i = d - c;
+            if (1 <= i && i <= n && i_min <= i && i <= i_max) excluded++;
+        }
+        
+        ans -= (i_max - i_min + 1 - excluded);
+    }
+    
+    // For diag2: i-j = d
+    for (int d : diag2) {
+        // i-j = d => i = j+d
+        // 1 <= j <= N => 1 <= i = j+d <= N => max(1, 1-d) <= j <= min(N, N-d)
+        // => 1 <= j <= min(N, N-d) AND j >= max(1, 1-d)
+        int j_min = max(1LL, 1 - d);
+        int j_max = min(n, n - d);
+        
+        if (j_min > j_max) continue;
+        
+        // i = j + d where j in [j_min, j_max]
+        int i_min = j_min + d;
+        int i_max = j_max + d;
+        
+        // Valid range of i is [i_min, i_max]
+        if (i_min < 1 || i_max > n) continue;
+        
+        // Count how many of these rows are already excluded
+        int excluded = 0;
+        for (int r : rows) {
+            if (r >= i_min && r <= i_max) excluded++;
+        }
+        
+        // Count how many of these columns are already excluded
+        for (int c : cols) {
+            int i = c + d;
+            if (1 <= i && i <= n && i_min <= i && i <= i_max) excluded++;
+        }
+        
+        ans -= (i_max - i_min + 1 - excluded);
+    }
+    
+    cout << ans << endl;
+}
+
+signed main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    solve();
+}

@@ -1,0 +1,88 @@
+To fix this code, we need to address the issue where the initial perimeter cells are not being processed correctly, leading to incorrect counts of remaining land sections after each sea level rise. The main problem is that the priority queue doesn't efficiently handle the propagation of sinking lands as the sea level increases.
+
+### Approaches
+1. **Initial Setup**: We start by reading the grid dimensions, the number of years, and the elevation data.
+2. **Priority Queue Initialization**: We initialize a priority queue (min-heap) starting with the perimeter cells of the grid. These cells are the first to potentially sink as the sea level rises.
+3. **Process Rising Sea Levels**: For each year, we process cells in the priority queue whose elevation is less than or equal to the current sea level. For each cell processed, we check its adjacent cells (up, down, left, right). If an adjacent cell hasn't been processed and its elevation is less than or equal to the current sea level, we add it to the priority queue and mark it as processed.
+4. **Output the Remaining Land Area**: For each year, we output the total number of cells minus the number of processed (sunk) cells up to that sea level.
+
+### Solution Code
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+#define int long long
+#define close ios::sync_with_stdio(false); cin.tie(0); cout.tie(0);
+#define MAXN 1000
+#define LIMIT 22
+#define inf 0x3f3f3f3f3f3f
+#define endl '\n'
+const double eps = 1e-7;
+int dx[] = {0, 0, 1, -1};
+int dy[] = {1, -1, 0, 0};
+const int MOD = 1e9 + 7;
+
+struct Node {
+    int x, y, val;
+    bool operator<(const Node &a) const {
+        return val > a.val;
+    }
+};
+
+signed main() {
+    close;
+    int h, w; cin >> h >> w;
+    int Y; cin >> Y;
+    vector<vector<int>> grid(h, vector<int>(w));
+    for (int i = 0; i < h; i++) {
+        for (int j = 0; j < w; j++) {
+            cin >> grid[i][j];
+        }
+    }
+    vector<vector<bool>> vis(h, vector<bool>(w, false));
+    priority_queue<Node> q;
+
+    for (int i = 0; i < h; i++) {
+        q.push({i, 0, grid[i][0]});
+        q.push({i, w - 1, grid[i][w - 1]});
+        vis[i][0] = vis[i][w - 1] = true;
+    }
+    for (int j = 1; j < w - 1; j++) {
+        q.push({0, j, grid[0][j]});
+        q.push({h - 1, j, grid[h - 1][j]});
+        vis[0][j] = vis[h - 1][j] = true;
+    }
+
+    int res = h * w;
+    vector<int> ans(Y + 1, h * w);
+    ans[0] = res;
+
+    for (int level = 1; level <= Y; level++) {
+        while (!q.empty() && q.top().val <= level) {
+            Node cur = q.top();
+            q.pop();
+            res--;
+            for (int i = 0; i < 4; i++) {
+                int nx = cur.x + dx[i];
+                int ny = cur.y + dy[i];
+                if (nx >= 0 && nx < h && ny >= 0 && ny < w && !vis[nx][ny]) {
+                    vis[nx][ny] = true;
+                    q.push({nx, ny, grid[nx][ny]});
+                }
+            }
+        }
+        ans[level] = res;
+    }
+
+    for (int i = 1; i <= Y; i++) {
+        cout << ans[i] << endl;
+    }
+
+    return 0;
+}
+```
+
+### Explanation
+- **Initial Setup**: The grid dimensions and elevation data are read, and a 2D vector `vis` is used to keep track of which cells have been processed.
+- **Priority Queue Initialization**: The perimeter cells are added to the priority queue right away because they are adjacent to the sea and will be the first to sink as the sea level rises.
+- **Processing Sea Levels**: For each year (sea level), we process cells from the priority queue if their elevation is less than or equal to the current sea level. Each processed cell's adjacent cells are checked and added to the queue if they meet the criteria (not processed and elevation ≤ current sea level).
+- **Output**: The remaining land area for each year is stored in an array `ans` and printed sequentially. This approach ensures that we efficiently track the sinking of land sections using a priority queue to process cells in order of their elevation, leading to optimal performance.

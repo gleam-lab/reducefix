@@ -1,0 +1,58 @@
+#include <iostream>
+#include <vector>
+#include <set>
+#include <algorithm>
+
+using namespace std;
+
+const int MAXN = 2 * 100005;
+
+vector<vector<int>> adj(MAXN);
+vector<int> degree(MAXN);
+vector<set<int>> neighbors(MAXN);
+
+void addEdge(int u, int v) {
+    adj[u].push_back(v);
+    adj[v].push_back(u);
+    degree[u]++;
+    degree[v]++;
+}
+
+void processQueries(int n, int q) {
+    for (int i = 0; i < q; ++i) {
+        int type;
+        cin >> type;
+        if (type == 1) {
+            int u, v;
+            cin >> u >> v;
+            addEdge(u, v);
+        } else {
+            int v, k;
+            cin >> v >> k;
+            v--;
+            if (degree[v] < k) {
+                cout << -1 << endl;
+            } else {
+                auto it = neighbors[v].begin();
+                advance(it, k - 1);
+                cout << *it << endl;
+            }
+        }
+    }
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int n, q;
+    cin >> n >> q;
+
+    for (int i = 0; i < n; ++i) {
+        neighbors[i].insert(i + 1);
+    }
+
+    processQueries(n, q);
+
+    return 0;
+}

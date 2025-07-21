@@ -1,0 +1,32 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define rep(i, n) for (int i = 0; i < (int)(n); i++)
+
+double Euclid(int x1, int y1, int x2, int y2){
+  return sqrt((x1 - x2) * (x1 - x2) + (y1 - y2) * (y1 - y2));
+}
+
+int main() {
+  int n; cin >> n;
+  double ans = 0;
+  
+  vector<pair<int, int>> points(n);
+  rep(i, n) {
+    int x, y;
+    cin >> x >> y;
+    points[i] = {x, y};
+  }
+  
+  // Add the origin to the end of the points vector
+  points.push_back({0, 0});
+  
+  // Calculate the total distance by summing up the distances between consecutive points
+  for (int i = 0; i < n; ++i) {
+    ans += Euclid(points[i].first, points[i].second, points[i + 1].first, points[i + 1].second);
+  }
+  
+  // Output the total distance
+  cout << fixed << setprecision(12) << ans << endl;
+  
+  return 0;
+}

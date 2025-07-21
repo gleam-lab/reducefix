@@ -1,0 +1,38 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+int main() {
+    int T;
+    cin >> T;
+    while (T--) {
+        int N, K;
+        cin >> N >> K;
+        vector<int> A(N), B(N);
+        vector<pair<int, int>> AB(N); // Pair of (B[i], A[i])
+        
+        for (int i = 0; i < N; ++i) {
+            cin >> A[i] >> B[i];
+            AB[i] = make_pair(B[i], A[i]);
+        }
+        
+        // Sort by B[i] descending, then by A[i] descending
+        sort(AB.begin(), AB.end(), [](const pair<int, int> &a, const pair<int, int> &b) {
+            if (a.first != b.first) return a.first > b.first;
+            return a.second > b.second;
+        });
+        
+        // K-th largest B element in the sorted array
+        int sumB = 0;
+        for (int i = K - 1; i < N; ++i) {
+            sumB += AB[i].first;
+        }
+        
+        // The maximum A element among the first K elements in the sorted array
+        int maxA = AB[K - 1].second;
+        
+        cout << maxA * sumB << '\n';
+    }
+    return 0;
+}

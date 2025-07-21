@@ -1,0 +1,97 @@
+After analyzing the failing case and the incorrect output, I identified the main issue in the original code. The problem lies in how the k-th largest element is being managed in the Union-Find data structure. The original code only keeps the top 9 elements in each component's list, which might not be sufficient when k=10 is queried. Additionally, the merging process was not correctly maintaining the sorted order of the largest elements.
+
+Here's the fixed code that properly maintains the top 10 largest elements in each component and ensures correct merging:
+
+```cpp
+#include<bits/stdc++.h>
+using namespace std;
+using ll = long long;
+#define rep(i,n) for(int i = 0;i<n;i++)
+using P = pair<int,int>;
+using T = tuple<int,int,int>;
+
+struct Union_Find{
+  
+  vector<int> sz,par;
+  vector<vector<int>> uni;
+  
+  Union_Find(int n){
+    sz.resize(n,1);
+    par.resize(n,-1);
+    uni.resize(n);
+    rep(i,n) uni[i].emplace_back(i);
+  }
+  
+  int root(int v){
+    if(par[v] == -1) return v;
+    else return par[v] = root(par[v]);
+  }
+  
+  bool issame(int x,int y){
+    return root(x) == root(y);
+  }
+  
+  void merge(int x,int y){
+    x = root(x),y = root(y);
+    if(x == y) return;
+    if(sz[x] < sz[y]) swap(x,y);
+    
+    sz[x] += sz[y];
+    par[y] = x;
+    
+    vector<int> merged;
+    int i = 0, j = 0;
+    int n = uni[x].size(), m = uni[y].size();
+    
+    while(i < n && j < m && merged.size() < 10){
+      if(uni[x][i] > uni[y][j]){
+        merged.push_back(uni[x][i++]);
+      }else{
+        merged.push_back(uni[y][j++]);
+      }
+    }
+    
+    while(i < n && merged.size() < 10) merged.push_back(uni[x][i++]);
+    while(j < m && merged.size() < 10) merged.push_back(uni[y][j++]);
+    
+    uni[x] = merged;
+  }
+  
+};
+
+int main(){
+  ios::sync_with_stdio(false);
+  cin.tie(nullptr);
+  
+  int n,q;
+  cin >> n >> q;
+  Union_Find uf(n);
+  
+  rep(i,q){
+    int ty,a,b;
+    cin >> ty >> a >> b;
+    a--,b--;
+    if(ty == 1){
+      uf.merge(a,b);
+    }
+    else{
+      b = b; // convert to 0-based k
+      if(uf.uni[uf.root(a)].size() <= b){
+        cout << -1 << endl;
+      }
+      else{
+        cout << uf.uni[uf.root(a)][b] + 1 << endl;
+      }
+    }
+  }
+}
+```
+
+Key improvements made:
+1. The merge operation now properly merges the two sorted lists of largest elements while maintaining the top 10 elements in sorted order.
+2. Used a merge technique similar to the merge step in merge sort to efficiently combine the two sorted lists.
+3. Ensured we always keep exactly the top 10 largest elements (or fewer if the component is smaller than 10).
+4. Improved the root finding with path compression for better performance.
+5. Added input/output optimizations with ios::sync_with_stdio(false) and cin.tie(nullptr) for handling large inputs efficiently.
+
+This solution should now correctly handle all test cases, including the one that was failing before, by properly maintaining the k-th largest elements in each component during union operations.

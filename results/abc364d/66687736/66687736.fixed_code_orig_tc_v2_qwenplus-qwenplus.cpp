@@ -1,0 +1,69 @@
+#include <bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int N, Q;
+    cin >> N >> Q;
+
+    vector<ll> A(N);
+    for (int i = 0; i < N; ++i) {
+        cin >> A[i];
+    }
+
+    // Sort the list of points A
+    sort(A.begin(), A.end());
+
+    for (int q = 0; q < Q; ++q) {
+        ll b;
+        int k;
+        cin >> b >> k;
+
+        // Binary search to find the position in A closest to b
+        auto it = lower_bound(A.begin(), A.end(), b);
+        int pos = it - A.begin();
+
+        // Use two pointers to expand around the closest point
+        int left = pos - 1;
+        int right = pos;
+
+        // Count how many elements we've considered
+        int count = 0;
+        ll result = 0;
+
+        while (count < k) {
+            if (left < 0) {
+                // Only take from the right
+                right++;
+            } else if (right >= N) {
+                // Only take from the left
+                left--;
+            } else {
+                // Choose the closer one
+                if (abs(A[left] - b) <= abs(A[right] - b)) {
+                    left--;
+                } else {
+                    right++;
+                }
+            }
+            count++;
+            if (count == k) {
+                // The last one we took is the k-th closest
+                if (right - left - 1 == k) {
+                    result = min(abs(A[left + 1] - b), abs(A[right - 1] - b));
+                } else if (left < 0) {
+                    result = abs(A[right - 1] - b);
+                } else if (right >= N) {
+                    result = abs(A[left + 1] - b);
+                }
+            }
+        }
+
+        cout << result << endl;
+    }
+
+    return 0;
+}

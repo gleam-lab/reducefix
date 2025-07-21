@@ -1,0 +1,109 @@
+To solve this problem efficiently, we need to support two types of queries on an initially disconnected graph:
+
+1. **Union operation** between two nodes (adding edges).
+2. **Query the k-th largest node** in the connected component that includes a specific node.
+
+The key challenge is to support both operations efficiently given the constraints:
+- Up to 200,000 nodes and queries.
+- For each type 2 query, we must return the k-th largest node among the connected component of node `v`. If fewer than `k` nodes are connected, return `-1`.
+
+---
+
+### Efficient Approach
+
+We use the **Disjoint Set Union (DSU)** with path compression and union by size/rank for fast union-find operations.
+
+To handle the "k-th largest" query efficiently:
+- Maintain a sorted list (in descending order) of up to **10 largest values** in each set. This allows us to answer any Type 2 query in O(1) time.
+- When merging two sets, merge their top 10 lists and keep only the top 10 elements.
+
+This ensures efficient updates and lookups while keeping the overhead minimal.
+
+---
+
+### Final Code
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+const int K = 10;
+const int MAXN = 2e5 + 5;
+
+int parent[MAXN];
+vector<int> top_vals[MAXN];
+
+int find(int x) {
+    if (parent[x] != x)
+        parent[x] = find(parent[x]);
+    return parent[x];
+}
+
+void unite(int u, int v) {
+    int pu = find(u), pv = find(v);
+    if (pu == pv) return;
+
+    // Always merge smaller into larger
+    if (top_vals[pu].size() < top_vals[pv].size())
+        swap(pu, pv);
+
+    // Merge the top values
+    vector<int> merged;
+    merged.reserve(top_vals[pu].size() + top_vals[pv].size());
+    merged.insert(merged.end(), top_vals[pu].begin(), top_vals[pu].end());
+    merged.insert(merged.end(), top_vals[pv].begin(), top_vals[pv].end());
+
+    // Sort and keep top K elements
+    sort(merged.begin(), merged.end(), greater<int>());
+    if (merged.size() > K)
+        merged.resize(K);
+
+    // Update the representative
+    parent[pv] = pu;
+    top_vals[pu] = merged;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int N, Q;
+    cin >> N >> Q;
+
+    // Initialize DSU
+    for (int i = 1; i <= N; ++i) {
+        parent[i] = i;
+        top_vals[i] = {i};
+    }
+
+    while (Q--) {
+        int op;
+        cin >> op;
+        if (op == 1) {
+            int u, v;
+            cin >> u >> v;
+            unite(u, v);
+        } else {
+            int v, k;
+            cin >> v >> k;
+            int root = find(v);
+            if (top_vals[root].size() < k)
+                cout << -1 << '\n';
+            else
+                cout << top_vals[root][k - 1] << '\n';
+        }
+    }
+
+    return 0;
+}
+```
+
+---
+
+### Explanation
+
+- We maintain a DSU structure where each set has a list of up to 10 largest values.
+- On a union, we merge these small sorted arrays and keep the top 10.
+- On a query, we simply check if the requested `k` is within bounds and return the appropriate value.
+
+This solution is optimal and handles all edge cases, including large input sizes, due to its near-constant time complexity for union and find operations and fixed-size sorting for the top-k tracking.

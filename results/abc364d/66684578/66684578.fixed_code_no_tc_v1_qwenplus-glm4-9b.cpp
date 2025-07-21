@@ -1,0 +1,63 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define ll long long
+#define rep(i, n) for (ll i = 0; i < n; i++)
+#define vi vector<int>
+#define vl vector<ll>
+#define vb vector<bool>
+#define pi pair<ll, ll>
+#define MIN(a, b) ((a) < (b) ? (a) : (b))
+
+ll N, Q;
+vl A, B;
+
+ll lower_bound(vl &vec, ll x) {
+    ll l = 0, r = vec.size();
+    while (l < r) {
+        ll m = (l + r) / 2;
+        if (vec[m] >= x)
+            r = m;
+        else
+            l = m + 1;
+    }
+    return l;
+}
+
+ll get_distance(ll b, ll k) {
+    ll left = lower_bound(A, b - k);
+    ll right = lower_bound(A, b + k + 1);
+    return b - A[left];
+}
+
+int main() {
+    cin >> N >> Q;
+    A.assign(N, 0);
+    B.assign(Q, 0);
+    
+    for (ll i = 0; i < N; i++) {
+        cin >> A[i];
+    }
+    
+    for (ll i = 0; i < Q; i++) {
+        cin >> B[i];
+        B[i].first -= A[0];
+        B[i].second--;
+    }
+    
+    sort(B.begin(), B.end());
+    
+    vl result(Q);
+    
+    for (ll i = 0; i < Q; i++) {
+        ll b = B[i].first;
+        ll k = B[i].second;
+        ll distance = get_distance(b, k);
+        result[i] = distance;
+    }
+    
+    for (ll i = 0; i < Q; i++) {
+        cout << result[i] << endl;
+    }
+    
+    return 0;
+}

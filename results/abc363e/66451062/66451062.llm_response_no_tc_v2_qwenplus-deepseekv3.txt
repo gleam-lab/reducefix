@@ -1,0 +1,88 @@
+To fix this code, we need to address several issues related to efficiency and correctness. The original code uses a priority queue to process sections of the island that sink as the sea level rises. However, it has some problems:
+
+1. **Initialization of Visited Array**: The visited array is initialized inside the main loop, which is inefficient and unnecessary. It should be initialized once before processing.
+2. **Priority Queue for Sinking Sections**: The priority queue is used to process sections in order of their elevation. However, the approach is not optimal for large inputs (H and W up to 1000, Y up to 10^5). Instead, we can precompute the sinking events and answer queries in constant time.
+3. **Resetting Variables**: The variables `res` and `level` are not correctly managed, leading to incorrect results over multiple years.
+
+Here’s the corrected version of the code, which addresses these issues:
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+#define int long long
+#define close ios::sync_with_stdio(false); cin.tie(0); cout.tie(0);
+#define MAXN 1010
+#define LIMIT 22
+#define inf 0x3f3f3f3f3f3f
+#define endl '\n'
+const double eps = 1e-7;
+int dx[] = {0, 0, 1, -1};
+int dy[] = {1, -1, 0, 0};
+const int MOD = 1e9 + 7;
+
+struct Node {
+    int x, y, val;
+    bool operator<(const Node &a) const {
+        return val > a.val;
+    }
+};
+
+signed main() {
+    close;
+    int h, w; cin >> h >> w;
+    int Y; cin >> Y;
+    vector<vector<int>> grid(h, vector<int>(w));
+    for(int i = 0; i < h; i++) {
+        for(int j = 0; j < w; j++) {
+            cin >> grid[i][j];
+        }
+    }
+
+    vector<vector<bool>> vis(h, vector<bool>(w, false));
+    priority_queue<Node> q;
+
+    // Initialize the queue with border cells
+    for(int i = 0; i < h; i++) {
+        q.push({i, 0, grid[i][0]});
+        q.push({i, w-1, grid[i][w-1]});
+        vis[i][0] = vis[i][w-1] = true;
+    }
+    for(int j = 1; j < w-1; j++) {
+        q.push({0, j, grid[0][j]});
+        q.push({h-1, j, grid[h-1][j]});
+        vis[0][j] = vis[h-1][j] = true;
+    }
+
+    int res = h * w;
+    vector<int> ans(Y + 1, res); // ans[i] is the answer for year i
+
+    for(int level = 1; level <= Y; level++) {
+        while(!q.empty() && q.top().val <= level) {
+            Node cur = q.top(); q.pop();
+            res--;
+            for(int i = 0; i < 4; i++) {
+                int nx = cur.x + dx[i];
+                int ny = cur.y + dy[i];
+                if(nx >= 0 && nx < h && ny >= 0 && ny < w && !vis[nx][ny]) {
+                    vis[nx][ny] = true;
+                    q.push({nx, ny, grid[nx][ny]});
+                }
+            }
+        }
+        ans[level] = res;
+    }
+
+    for(int i = 1; i <= Y; i++) {
+        cout << ans[i] << endl;
+    }
+
+    return 0;
+}
+```
+
+### Explanation:
+1. **Initialization**: The grid is read and the priority queue is initialized with the border cells, which are the first to be checked for sinking.
+2. **Processing Sinking Sections**: For each year from 1 to Y, the code processes all sections that sink at or below the current sea level. These sections are removed from the island count, and their adjacent sections are checked for potential sinking in subsequent iterations.
+3. **Efficiency**: By using a priority queue, the sections are processed in order of their elevation, ensuring that we efficiently track the sinking sections as the sea level rises. The results for each year are stored in an array `ans` and printed at the end.
+
+This approach ensures that the solution is both correct and efficient, handling the constraints effectively.

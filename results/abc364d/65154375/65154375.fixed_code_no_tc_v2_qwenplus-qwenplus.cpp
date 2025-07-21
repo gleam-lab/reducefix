@@ -1,0 +1,60 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+typedef long long ll;
+
+const int MAXN = 1e5 + 5;
+
+vector<ll> A;
+
+// Binary search to find the k-th smallest distance from b
+ll query(ll b, int k) {
+    // We want to find the smallest d such that there are at least k points within distance d of b
+    ll low = 0, high = 2e8 + 5;
+    ll result = -1;
+
+    while (low <= high) {
+        ll mid = (low + high) / 2;
+        // Find first index where a[i] >= b - mid
+        ll left = lower_bound(A.begin(), A.end(), b - mid) - A.begin();
+        // Find last index where a[i] <= b + mid
+        ll right = upper_bound(A.begin(), A.end(), b + mid) - A.begin();
+
+        if (right - left >= k) {
+            result = mid;
+            high = mid - 1;
+        } else {
+            low = mid + 1;
+        }
+    }
+
+    return result;
+}
+
+void solve() {
+    int N, Q;
+    cin >> N >> Q;
+
+    A.resize(N);
+    for (int i = 0; i < N; ++i)
+        cin >> A[i];
+
+    sort(A.begin(), A.end());
+
+    for (int i = 0; i < Q; ++i) {
+        ll b;
+        int k;
+        cin >> b >> k;
+        cout << query(b, k) << endl;
+    }
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    cout.tie(nullptr);
+
+    solve();
+
+    return 0;
+}

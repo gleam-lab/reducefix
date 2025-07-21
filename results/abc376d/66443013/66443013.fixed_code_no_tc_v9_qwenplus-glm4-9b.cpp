@@ -1,0 +1,36 @@
+#include<bits/stdc++.h>
+using namespace std;
+using ll=long long;
+map<ll,vector<ll>>graph;
+map<ll,bool>seen;
+const ll inf=1LL<<60;
+ll ans=inf;
+
+void dfs(ll n, ll hen, bool parent = false) {
+    seen[n] = true;
+    // Avoid revisiting the same node unless it's the root node with hen = 1
+    if (n == 1 && hen != 1) {
+        ans = min(ans, hen + 1);
+    }
+    for (auto x : graph[n]) {
+        if (x == 1 && hen != 1) continue; // Skip if x is 1 and hen is not 1
+        if (seen[x]) continue; // Skip if x has been visited
+        dfs(x, hen + 1, true); // Pass true when not visiting node 1 directly
+    }
+    seen[n] = false; // Unmark node as visited for future traversals
+}
+
+int main() {
+    ll n, m;
+    cin >> n >> m;
+    for (int i = 0; i < m; i++) {
+        ll a, b;
+        cin >> a >> b;
+        graph[a].push_back(b);
+        graph[b].push_back(a); // Ensure graph is undirected
+    }
+    dfs(1, 0);
+    if (ans == inf) cout << "-1" << endl;
+    else cout << ans << endl;
+    return 0;
+}

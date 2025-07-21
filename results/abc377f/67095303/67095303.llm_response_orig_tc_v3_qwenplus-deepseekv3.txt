@@ -1,0 +1,131 @@
+To fix this code, we need to ensure that the calculation correctly accounts for all squares that are under attack by existing pieces. The main issue in the original code was likely due to incorrect handling of the intersections between different types of attack lines (rows, columns, and diagonals). 
+
+### Approaches
+1. **Identify Under Attack Squares**: For each existing piece, mark all squares it can attack (same row, same column, same diagonal sums, and same diagonal differences).
+2. **Calculate Safe Squares**: The total number of safe squares is the total number of squares minus the squares under attack. However, we must avoid double-counting squares that are under attack by multiple pieces or multiple attack types.
+3. **Inclusion-Exclusion Principle**: Use this principle to correctly account for the intersections between different attack types (rows, columns, diagonal sums, and diagonal differences).
+
+### Solution Code
+```cpp
+#include<bits/stdc++.h>
+#define int long long
+#define PII pair<int,int>
+using namespace std;
+
+void solve() {
+    int N, M;
+    cin >> N >> M;
+    set<int> rows, cols, diag1, diag2; // diag1: i+j, diag2: i-j
+    
+    for (int i = 0; i < M; ++i) {
+        int a, b;
+        cin >> a >> b;
+        rows.insert(a);
+        cols.insert(b);
+        diag1.insert(a + b);
+        diag2.insert(a - b);
+    }
+    
+    int total = N * N;
+    int attacked = 0;
+    
+    // Rows and columns
+    attacked += rows.size() * N;
+    attacked += cols.size() * N;
+    attacked -= rows.size() * cols.size();
+    
+    // Diagonals (i+j)
+    for (auto d : diag1) {
+        int cnt = 0;
+        if (d <= N + 1) {
+            cnt = d - 1;
+        } else {
+            cnt = 2 * N - d + 1;
+        }
+        attacked += cnt;
+    }
+    
+    // Diagonals (i-j)
+    for (auto d : diag2) {
+        int cnt = 0;
+        if (d >= 0) {
+            cnt = N - d;
+        } else {
+            cnt = N + d;
+        }
+        attacked += cnt;
+    }
+    
+    // Subtract intersections between rows/columns and diagonals
+    for (auto d : diag1) {
+        for (auto r : rows) {
+            int c = d - r;
+            if (c >= 1 && c <= N) {
+                attacked--;
+            }
+        }
+        for (auto c : cols) {
+            int r = d - c;
+            if (r >= 1 && r <= N) {
+                attacked--;
+            }
+        }
+    }
+    
+    for (auto d : diag2) {
+        for (auto r : rows) {
+            int c = r - d;
+            if (c >= 1 && c <= N) {
+                attacked--;
+            }
+        }
+        for (auto c : cols) {
+            int r = c + d;
+            if (r >= 1 && r <= N) {
+                attacked--;
+            }
+        }
+    }
+    
+    // Add back intersections between diagonals that were subtracted twice
+    for (auto d1 : diag1) {
+        for (auto d2 : diag2) {
+            if ((d1 + d2) % 2 == 0 && (d1 - d2) % 2 == 0) {
+                int i = (d1 + d2) / 2;
+                int j = (d1 - d2) / 2;
+                if (i >= 1 && i <= N && j >= 1 && j <= N) {
+                    attacked++;
+                }
+            }
+        }
+    }
+    
+    int safe = total - attacked;
+    cout << safe << endl;
+}
+
+signed main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int _ = 1;
+    // cin >> _;
+    while (_--) {
+        solve();
+    }
+    
+    return 0;
+}
+```
+
+### Explanation
+1. **Initialization**: We read the grid size `N` and the number of pieces `M`. We use sets to store the rows, columns, and two types of diagonals (`i+j` and `i-j`) that the existing pieces attack.
+2. **Calculate Attacked Squares**: 
+   - **Rows and Columns**: The total squares attacked by rows and columns are calculated, subtracting overlaps where a square is in both an attacked row and column.
+   - **Diagonals (i+j)**: For each diagonal defined by `i+j = d`, we calculate the number of squares on this diagonal and add them to the attacked count.
+   - **Diagonals (i-j)**: Similarly, for diagonals defined by `i-j = d`, we calculate the number of squares and add them to the attacked count.
+3. **Subtract Overlaps**: We subtract squares that are counted multiple times (e.g., squares in both a row and a diagonal).
+4. **Add Back Double Subtractions**: We correct for squares that were subtracted twice by adding back the intersections between different diagonals.
+5. **Output**: The result is the total number of squares minus the total attacked squares, giving the number of safe squares.
+
+This approach ensures that all overlaps and intersections are correctly accounted for, providing an accurate count of safe squares.

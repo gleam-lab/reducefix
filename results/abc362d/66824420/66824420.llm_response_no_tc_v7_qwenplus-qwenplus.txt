@@ -1,0 +1,102 @@
+To solve this problem correctly and efficiently, we need to compute the **minimum weight of a path from vertex 1 to every other vertex** in a graph where:
+
+- Each **vertex has a weight**.
+- Each **edge has a weight**.
+- The total **path cost** is defined as the **sum of all vertex weights and edge weights along the path**.
+
+---
+
+### Key Observations
+
+- When moving from node `u` to node `v`, the cost includes:
+  - The **weight of the vertex `v`** (because we visit it).
+  - The **weight of the edge between `u` and `v`**.
+- The **starting node's weight (A[0])** should be included in the initial distance.
+
+---
+
+### Dijkstra's Algorithm with Modified Weights
+
+We can use **Dijkstra's algorithm** since all weights are non-negative. The main adjustment is that when traversing an edge `(u -> v)` with edge weight `B`, we add:
+- `B` (the edge weight)
+- `A[v]` (the weight of destination vertex)
+
+But note: We **should not double count** the vertex weight of node `u` because that is already included in the current distance to `u`.
+
+---
+
+### Fixing the Bug
+
+In your code, you added both:
+```cpp
+val + it.second + a[it.first-1]
+```
+Which means:
+- `val`: Already includes `a[u]`
+- `it.second`: Edge weight
+- `a[it.first-1]`: Vertex weight of `v`
+
+That is correct for the first move, but **you must not include `a[u]` again** when computing the next step.
+
+So the fix is just ensuring that each vertex weight is only added once — at the point it is visited.
+
+---
+
+### Final Correct Code
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+typedef long long ll;
+typedef pair<ll, ll> pll;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+
+    int n, m;
+    cin >> n >> m;
+
+    vector<ll> A(n + 1); // 1-indexed
+    for (int i = 1; i <= n; ++i) {
+        cin >> A[i];
+    }
+
+    vector<vector<pair<int, ll>>> adj(n + 1);
+    for (int i = 0; i < m; ++i) {
+        int u, v, b;
+        cin >> u >> v >> b;
+        adj[u].push_back({v, b});
+        adj[v].push_back({u, b});
+    }
+
+    vector<ll> dist(n + 1, 1e18);
+    dist[1] = A[1]; // Start from vertex 1 including its weight
+
+    priority_queue<pll, vector<pll>, greater<pll>> pq;
+    pq.push({dist[1], 1});
+
+    while (!pq.empty()) {
+        auto [d, u] = pq.top();
+        pq.pop();
+
+        if (d > dist[u]) continue;
+
+        for (auto [v, b] : adj[u]) {
+            ll new_cost = d + b + A[v]; // Add edge weight and vertex weight of v
+            if (new_cost < dist[v]) {
+                dist[v] = new_cost;
+                pq.push({new_cost, v});
+            }
+        }
+    }
+
+    for (int i = 2; i <= n; ++i) {
+        cout << dist[i] << " ";
+    }
+    cout << "\n";
+
+    return 0;
+}
+```

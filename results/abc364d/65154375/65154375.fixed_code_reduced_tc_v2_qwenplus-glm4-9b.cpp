@@ -1,0 +1,44 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+
+using namespace std;
+
+const int INF = 1e9 + 7;
+
+int main() {
+    int N, Q;
+    cin >> N >> Q;
+    
+    vector<int> A(N);
+    for (int i = 0; i < N; ++i) {
+        cin >> A[i];
+    }
+    
+    vector<pair<int, int>> queries(Q);
+    for (int i = 0; i < Q; ++i) {
+        int b, k;
+        cin >> b >> k;
+        queries[i] = {b, k};
+    }
+    
+    sort(queries.begin(), queries.end());
+    
+    for (auto& [b, k] : queries) {
+        int left = upper_bound(A.begin(), A.end(), b) - A.begin() - k;
+        if (left < 0) {
+            left = 0;
+        }
+        int right = lower_bound(A.begin(), A.end(), b) - A.begin() - 1;
+        if (right < 0) {
+            right = 0;
+        }
+        if (left > right) {
+            cout << INF << endl;
+        } else {
+            cout << abs(A[left] - b) << endl;
+        }
+    }
+    
+    return 0;
+}

@@ -1,0 +1,45 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <set>
+
+using namespace std;
+
+int main() {
+    long long N, M;
+    cin >> N >> M;
+
+    vector<pair<long long, long long>> pieces(M);
+    for (long long i = 0; i < M; i++) {
+        long long a, b;
+        cin >> a >> b;
+        pieces[i] = {a, b};
+    }
+
+    // Use sets to store unique values of rows, columns, diagonals, and anti-diagonals
+    set<long long> rows, cols, diag, anti_diag;
+
+    for (const auto &p : pieces) {
+        rows.insert(p.first);
+        cols.insert(p.second);
+        diag.insert(p.first + p.second);
+        anti_diag.insert(p.first - p.second);
+    }
+
+    long long total_empty_squares = N * N;
+
+    // Subtract squares that are in the rows, columns, diagonals, or anti-diagonals of existing pieces
+    for (long long r : rows) total_empty_squares--;
+    for (long long c : cols) total_empty_squares--;
+    for (long long d : diag) {
+        if (d <= N) total_empty_squares--;
+    }
+    for (long long ad : anti_diag) {
+        if (ad <= N) total_empty_squares--;
+    }
+
+    // Output the number of empty squares where you can safely place a piece
+    cout << total_empty_squares << endl;
+
+    return 0;
+}

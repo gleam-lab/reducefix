@@ -1,0 +1,42 @@
+#include<bits/stdc++.h>
+#define ll long long
+#define yes cout<<"YES\n"
+#define no cout<<"NO\n"
+#define sp ' '
+using namespace std;
+
+void solve(){
+    ll N;
+    cin >> N;
+    vector<ll> a(N), b(N - 1);
+    for(int i = 0; i < N; ++i){
+        cin >> a[i];
+    }
+    for(int i = 0; i < N - 1; ++i){
+        cin >> b[i];
+    }
+    
+    sort(a.begin(), a.end());
+    sort(b.begin(), b.end());
+
+    // Find the maximum toy size that fits in the largest available box
+    ll max_fit = -1;
+    for(ll i = 0; i < N - 1 && a[i] <= b.back(); ++i){
+        max_fit = max(max_fit, a[i]);
+    }
+
+    // Check if the largest toy size that fits is greater than the second largest box size
+    if(max_fit > b.back()){
+        cout << -1 << endl;
+    } else {
+        cout << max_fit + 1 << endl; // Purchase a box just slightly larger than the largest fitting toy
+    }
+}
+
+int main(){
+    ios::sync_with_stdio(0);
+    cin.tie(0);
+
+    solve();
+    return 0;
+}

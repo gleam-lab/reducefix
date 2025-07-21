@@ -1,0 +1,134 @@
+To fix this code, we need to address several issues related to the approach used to calculate the number of safe squares where a new piece can be placed without being captured by any existing pieces. The original code attempts to account for rows, columns, and both diagonals (sum and difference diagonals) but fails to correctly handle overlaps and efficiently compute the result for large grids (up to \(10^9 \times 10^9\)).
+
+### Approaches
+1. **Identify Forbidden Areas**: The existing pieces can attack any square in their row, column, sum diagonal (i + j = constant), and difference diagonal (i - j = constant). The safe squares are those not covered by any of these attack lines.
+2. **Inclusion-Exclusion Principle**: The total number of safe squares can be computed using the inclusion-exclusion principle to avoid double-counting squares that are forbidden by multiple attack lines.
+3. **Efficient Calculation**: For each piece, we track the unique rows, columns, sum diagonals, and difference diagonals that are forbidden. The total forbidden squares is the sum of the sizes of these sets minus the overlaps that are counted multiple times.
+
+### Solution Code
+```cpp
+#include<bits/stdc++.h>
+
+using namespace std;
+
+typedef long long ll;
+
+int main() {
+    ll N, M;
+    cin >> N >> M;
+
+    set<ll> rows, cols, diag1, diag2;
+    for (int i = 0; i < M; ++i) {
+        ll a, b;
+        cin >> a >> b;
+        rows.insert(a);
+        cols.insert(b);
+        diag1.insert(a - b);
+        diag2.insert(a + b);
+    }
+
+    ll total_rows = rows.size();
+    ll total_cols = cols.size();
+    ll total_diag1 = diag1.size();
+    ll total_diag2 = diag2.size();
+
+    // Calculate the total forbidden squares due to rows and columns
+    ll forbidden_rows_cols = total_rows * N + total_cols * N - total_rows * total_cols;
+
+    // Calculate the total forbidden squares due to diagonals
+    ll forbidden_diag1 = 0;
+    for (auto d : diag1) {
+        ll cnt;
+        if (d > 0) {
+            cnt = N - d;
+        } else {
+            cnt = N + d;
+        }
+        forbidden_diag1 += cnt;
+    }
+
+    ll forbidden_diag2 = 0;
+    for (auto d : diag2) {
+        ll cnt;
+        if (d <= N + 1) {
+            cnt = d - 1;
+        } else {
+            cnt = 2 * N - d + 1;
+        }
+        forbidden_diag2 += cnt;
+    }
+
+    // Calculate overlaps between diagonals and rows/columns
+    ll overlap_rows_diag1 = 0;
+    for (auto r : rows) {
+        for (auto d : diag1) {
+            ll c = r - d;
+            if (c >= 1 && c <= N) {
+                overlap_rows_diag1++;
+            }
+        }
+    }
+
+    ll overlap_cols_diag1 = 0;
+    for (auto c : cols) {
+        for (auto d : diag1) {
+            ll r = d + c;
+            if (r >= 1 && r <= N) {
+                overlap_cols_diag1++;
+            }
+        }
+    }
+
+    ll overlap_rows_diag2 = 0;
+    for (auto r : rows) {
+        for (auto d : diag2) {
+            ll c = d - r;
+            if (c >= 1 && c <= N) {
+                overlap_rows_diag2++;
+            }
+        }
+    }
+
+    ll overlap_cols_diag2 = 0;
+    for (auto c : cols) {
+        for (auto d : diag2) {
+            ll r = d - c;
+            if (r >= 1 && r <= N) {
+                overlap_cols_diag2++;
+            }
+        }
+    }
+
+    ll overlap_diag1_diag2 = 0;
+    for (auto d1 : diag1) {
+        for (auto d2 : diag2) {
+            if ((d1 + d2) % 2 != 0) continue;
+            ll r = (d1 + d2) / 2;
+            ll c = (d2 - d1) / 2;
+            if (r >= 1 && r <= N && c >= 1 && c <= N) {
+                overlap_diag1_diag2++;
+            }
+        }
+    }
+
+    // Apply inclusion-exclusion principle to calculate total forbidden squares
+    ll total_forbidden = forbidden_rows_cols + forbidden_diag1 + forbidden_diag2
+                        - overlap_rows_diag1 - overlap_cols_diag1
+                        - overlap_rows_diag2 - overlap_cols_diag2
+                        + overlap_diag1_diag2;
+
+    // Total safe squares is total empty squares minus total forbidden squares (excluding existing pieces)
+    ll total_empty = N * N - M;
+    ll safe_squares = total_empty - (total_forbidden - M);
+
+    cout << safe_squares << endl;
+
+    return 0;
+}
+```
+
+### Explanation
+1. **Forbidden Areas Calculation**: The code first identifies all rows, columns, and diagonals (sum and difference) that are under attack by existing pieces.
+2. **Inclusion-Exclusion Principle**: The total number of forbidden squares is computed by summing the squares under attack from rows, columns, and diagonals, then subtracting overlaps where squares are counted multiple times.
+3. **Safe Squares Calculation**: The total safe squares are derived by subtracting the forbidden squares from the total empty squares, adjusting for overlaps and existing pieces.
+4. **Efficiency**: The approach efficiently handles large grids by using set operations to track unique attack lines and applying mathematical calculations to avoid brute-force checks, ensuring it runs within feasible time limits for large inputs.

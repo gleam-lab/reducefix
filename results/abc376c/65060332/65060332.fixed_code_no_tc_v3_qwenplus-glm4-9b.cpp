@@ -1,0 +1,42 @@
+#include<bits/stdc++.h>
+#define ll long long
+using namespace std;
+const ll N=2e5+5;
+ll a[N], b[N], max(box_sizes);
+vector<ll> possible_sizes;
+
+int main() {
+    ll n;
+    cin >> n;
+    for (ll i = 1; i <= n; i++) {
+        cin >> a[i];
+    }
+    for (ll i = 1; i < n; i++) {
+        cin >> b[i];
+        possible_sizes.push_back(b[i]);
+    }
+    
+    sort(a + 1, a + n + 1); // Sort the toy sizes
+    sort(possible_sizes.begin(), possible_sizes.end()); // Sort the possible box sizes
+    
+    // Start with the largest box size that can fit the largest toy
+    ll size = a[n];
+    
+    // If the largest toy can fit into a pre-existing box, that's our answer
+    if (lower_bound(possible_sizes.begin(), possible_sizes.end(), size) != possible_sizes.end()) {
+        cout << size;
+        return 0;
+    }
+    
+    // Otherwise, we need to find the smallest box that can fit the largest toy
+    for (ll i = 0; i < possible_sizes.size(); i++) {
+        if (possible_sizes[i] >= size) {
+            cout << size;
+            return 0;
+        }
+    }
+    
+    // If no box can fit the largest toy, it's impossible
+    cout << -1;
+    return 0;
+}

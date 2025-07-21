@@ -1,0 +1,47 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(NULL);
+
+    int N;
+    string S;
+    cin >> N >> S;
+    
+    // Initialize variables
+    int wins = 0;
+    char prev = ' ';
+    bool canWin = true;
+
+    // Iterate through each character in the string
+    for (char c : S) {
+        if (prev == ' ') {
+            prev = c;
+            continue;
+        }
+
+        // Determine the winning move based on the previous move
+        char winmove;
+        if (prev == 'R') winmove = 'P';
+        else if (prev == 'P') winmove = 'S';
+        else winmove = 'R';
+
+        // Check if the current move can be a winning move
+        if (c == winmove) {
+            wins++;
+            prev = winmove;
+        } else {
+            prev = c;
+            canWin = false;
+        }
+    }
+
+    // If no valid moves were found, the maximum number of wins is half of the length of the string
+    if (!canWin) wins = N / 2;
+
+    // Output the result
+    cout << wins << endl;
+
+    return 0;
+}

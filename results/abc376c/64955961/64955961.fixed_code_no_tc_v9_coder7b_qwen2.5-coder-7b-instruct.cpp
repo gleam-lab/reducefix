@@ -1,0 +1,57 @@
+//<<In the name of Allah, The Most Gracious and The Most Merciful>>
+#include<bits/stdc++.h>
+using namespace std;
+#define ll long long
+
+void solve()
+{
+    ll n;
+    cin >> n;
+    vector<ll> a(n), b(n - 1);
+    for (ll i = 0; i < n; ++i)
+    {
+        cin >> a[i];
+    }
+    for (ll i = 0; i < n - 1; ++i)
+    {
+        cin >> b[i];
+    }
+    
+    // Sort both arrays to facilitate finding the minimum size of box needed
+    sort(a.begin(), a.end());
+    sort(b.begin(), b.end());
+
+    // Initialize variables to track the number of boxes needed and the maximum toy size
+    ll num_boxes = 1, max_toy_size = a[0];
+
+    // Iterate through sorted toy sizes
+    for (ll i = 1; i < n; ++i)
+    {
+        // If the current toy cannot fit in the last used box, increment the box count
+        if (a[i] > b[num_boxes - 1])
+        {
+            num_boxes++;
+            max_toy_size = a[i];
+        }
+        // Update the maximum toy size found so far
+        else if (a[i] > max_toy_size)
+        {
+            max_toy_size = a[i];
+        }
+    }
+
+    // Check if we have enough boxes to place all toys without exceeding any box capacity
+    if (num_boxes <= n - 1)
+    {
+        cout << max_toy_size << endl;
+    }
+    else
+    {
+        cout << -1 << endl;
+    }
+}
+
+int main()
+{
+    solve();
+}

@@ -1,0 +1,77 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define rep(i,n) for(int i = 0; i < (n); i++)
+using ll = long long;
+
+int main() {
+    int h, w, q;
+    cin >> h >> w >> q;
+    
+    // Each row and column's wall positions are maintained in ordered sets
+    vector<set<int>> rows(h), cols(w);
+    for (int i = 0; i < h; ++i) {
+        for (int j = 0; j < w; ++j) {
+            rows[i].insert(j);
+            cols[j].insert(i);
+        }
+    }
+
+    while (q--) {
+        int r, c;
+        cin >> r >> c;
+        r--; c--;
+
+        // Check if there's a wall at (r,c)
+        auto it_row = rows[r].find(c);
+        if (it_row != rows[r].end()) {
+            // Wall exists, destroy it and update both row and col sets
+            rows[r].erase(it_row);
+            cols[c].erase(r);
+        } else {
+            // Wall doesn't exist, check adjacent walls in all four directions
+
+            // Up
+            auto up = cols[c].lower_bound(r);
+            if (up != cols[c].begin()) {
+                --up;
+                int ur = *up;
+                rows[ur].erase(c);
+                cols[c].erase(up);
+            }
+
+            // Down
+            auto down = cols[c].upper_bound(r);
+            if (down != cols[c].end()) {
+                int dr = *down;
+                rows[dr].erase(dr);
+                cols[c].erase(down);
+            }
+
+            // Left
+            auto left = rows[r].lower_bound(c);
+            if (left != rows[r].begin()) {
+                --left;
+                int lc = *left;
+                rows[r].erase(left);
+                cols[lc].erase(r);
+            }
+
+            // Right
+            auto right = rows[r].upper_bound(c);
+            if (right != rows[r].end()) {
+                int rc = *right;
+                rows[r].erase(right);
+                cols[rc].erase(r);
+            }
+        }
+    }
+
+    // Count remaining walls
+    int ans = 0;
+    for (int i = 0; i < h; ++i) {
+        ans += rows[i].size();
+    }
+    cout << ans << "\n";
+
+    return 0;
+}

@@ -1,0 +1,24 @@
+#include<bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+const int MAXN=4e5+10;
+ll a[MAXN],sum[MAXN],cnt[MAXN];
+int main(){
+    ll n,m,ans=0;
+    scanf("%lld %lld",&n,&m);
+    for(ll i=1;i<=n;i++){
+        scanf("%lld",&a[i]);
+        a[i+n]=a[i];
+    }
+    for(ll i=1;i<=2*n;i++){
+        sum[i]=(sum[i-1]+a[i])%m; // Corrected indexing error
+        if(i>n) cnt[sum[i]]++; // Increment count after calculating current prefix sum
+    }
+    for(ll i=n+1;i<=2*n;i++){
+        cnt[sum[i-n]]--; // Decrement count of previous prefix sum
+        ans+=cnt[sum[i]]; // Add number of times current prefix sum has occurred before
+        cnt[sum[i]]++; // Increment count of current prefix sum
+    }
+    printf("%lld\n",ans); // Added newline for correct output format
+    return 0;
+}

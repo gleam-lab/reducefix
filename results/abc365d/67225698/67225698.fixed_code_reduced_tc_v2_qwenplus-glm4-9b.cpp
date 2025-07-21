@@ -1,0 +1,49 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+#define fast_io()                     \
+    ios_base::sync_with_stdio(false); \
+    cin.tie(NULL);                    \
+    cout.tie(NULL)
+
+#define ll long long
+
+void solve() {
+    ll n, ans = 0, cnt = 0;
+    string s;
+    cin >> n >> s;
+    vector<ll> v;
+    for (int i = 0; i < n; i++) {
+        if (s[i] == s[i - 1]) {
+            cnt++;
+        } else {
+            ans += (cnt + 1) / 2;
+            v.push_back(cnt);
+            cnt = 1;
+        }
+    }
+    ans += (cnt + 1) / 2;
+    v.push_back(cnt);
+
+    if (v.size() > 1) {
+        for (int i = 1; i < v.size() - 1; i++) {
+            if (v[i] > 1 && v[i - 1] > 1) {
+                ans--;
+            }
+        }
+    }
+
+    cout << ans << "\n";
+}
+
+int main() {
+    fast_io();
+    int t;
+    cin >> t;
+    while (t--) {
+        solve();
+    }
+    return 0;
+}

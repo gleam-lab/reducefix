@@ -1,0 +1,69 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+typedef long long ll;
+
+const int MAXN = 1e5 + 5;
+
+vector<ll> A;
+
+// Binary search to find the k-th smallest distance from b_j
+ll get_kth_distance(ll b_j, int k) {
+    // We want to find the k-th smallest |a_i - b_j|
+    // Since A is sorted, we can use binary search and two pointers technique
+
+    int n = A.size();
+    int pos = lower_bound(A.begin(), A.end(), b_j) - A.begin();
+
+    int left = pos - 1;
+    int right = pos;
+
+    // Merge two sorted sequences virtually:
+    // Left part: distances from elements <= b_j (in reverse order)
+    // Right part: distances from elements > b_j
+
+    ll result = 0;
+    for (int i = 0; i < k; ++i) {
+        if (left < 0) {
+            result = A[right++] - b_j;
+        } else if (right >= n) {
+            result = b_j - A[left--];
+        } else {
+            ll d1 = b_j - A[left];
+            ll d2 = A[right] - b_j;
+            if (d1 <= d2) {
+                result = d1;
+                left--;
+            } else {
+                result = d2;
+                right++;
+            }
+        }
+    }
+    return result;
+}
+
+void solve() {
+    int N, Q;
+    cin >> N >> Q;
+
+    A.resize(N);
+    for (int i = 0; i < N; ++i) {
+        cin >> A[i];
+    }
+    sort(A.begin(), A.end());
+
+    for (int q = 0; q < Q; ++q) {
+        ll b_j;
+        int k_j;
+        cin >> b_j >> k_j;
+        cout << get_kth_distance(b_j, k_j) << endl;
+    }
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    solve();
+    return 0;
+}

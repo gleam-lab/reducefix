@@ -1,0 +1,89 @@
+To fix this code, we need to address the core issue of correctly simulating the sinking process of the island sections as the sea level rises each year. The original approach tried to use a priority queue to propagate the sinking condition, but it missed some critical aspects of the flooding dynamics, especially how newly sunk sections can affect adjacent sections in subsequent years.
+
+### Approaches
+1. **Priority Queue for Minimum Sink Times**: We can use a priority queue (min-heap) to keep track of the earliest time each section will sink. This helps in efficiently processing the sections in the order they will be submerged.
+2. **BFS-like Propagation**: For each section that sinks at a particular sea level, we check its adjacent sections. If an adjacent section's elevation is less than or equal to the current sea level, it will also sink at the same time, and we propagate this condition to its neighbors.
+3. **Track Sink Times**: We maintain a 2D array to record the earliest sea level at which each section sinks. This helps in efficiently computing the total remaining area for each year.
+
+### Solution Code
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int h, w, y;
+    cin >> h >> w >> y;
+    vector<vector<int>> height(h, vector<int>(w));
+    vector<vector<int>> sink_time(h, vector<int>(w, INT_MAX));
+    priority_queue<pair<int, pair<int, int>>, 
+                   vector<pair<int, pair<int, int>>>, 
+                   greater<pair<int, pair<int, int>>>> pq;
+    
+    int di[4] = {-1, 1, 0, 0};
+    int dj[4] = {0, 0, -1, 1};
+    
+    for (int i = 0; i < h; ++i) {
+        for (int j = 0; j < w; ++j) {
+            cin >> height[i][j];
+            if (i == 0 || i == h - 1 || j == 0 || j == w - 1) {
+                sink_time[i][j] = height[i][j];
+                pq.push({sink_time[i][j], {i, j}});
+            }
+        }
+    }
+    
+    while (!pq.empty()) {
+        auto current = pq.top();
+        pq.pop();
+        int current_time = current.first;
+        int i = current.second.first;
+        int j = current.second.second;
+        
+        if (current_time > sink_time[i][j]) {
+            continue;
+        }
+        
+        for (int d = 0; d < 4; ++d) {
+            int ni = i + di[d];
+            int nj = j + dj[d];
+            if (ni >= 0 && ni < h && nj >= 0 && nj < w) {
+                int new_time = max(current_time, height[ni][nj]);
+                if (new_time < sink_time[ni][nj]) {
+                    sink_time[ni][nj] = new_time;
+                    pq.push({new_time, {ni, nj}});
+                }
+            }
+        }
+    }
+    
+    vector<int> prefix(y + 2, 0);
+    for (int i = 0; i < h; ++i) {
+        for (int j = 0; j < w; ++j) {
+            if (sink_time[i][j] <= y) {
+                prefix[sink_time[i][j]]++;
+            }
+        }
+    }
+    
+    for (int i = 1; i <= y; ++i) {
+        prefix[i] += prefix[i - 1];
+    }
+    
+    for (int i = 1; i <= y; ++i) {
+        cout << h * w - prefix[i] << '\n';
+    }
+    
+    return 0;
+}
+```
+
+### Explanation
+1. **Initialization**: We initialize the grid with the given heights and a `sink_time` matrix to keep track of when each grid cell will sink. The priority queue is initialized with the boundary cells, as they are adjacent to the sea and will sink first if their elevation is below the rising sea level.
+2. **Processing Sink Times**: Using a priority queue, we process each cell in order of their sinking time. For each cell, we check its neighbors. If a neighbor's elevation is less than or equal to the current sinking time, it will sink at the same time or later, and we update its sinking time accordingly.
+3. **Prefix Sum Calculation**: We use a prefix sum array to efficiently compute the cumulative number of cells that have sunk by each year. This allows us to quickly determine the remaining area above sea level for each year by subtracting the sunk cells from the total area.
+4. **Output**: For each year from 1 to Y, we output the remaining area by subtracting the prefix sum up to that year from the total area of the island.
+
+This approach ensures that we efficiently and correctly simulate the sinking process, handling all edge cases and constraints appropriately. The use of a priority queue and prefix sums ensures optimal performance even for large input sizes.

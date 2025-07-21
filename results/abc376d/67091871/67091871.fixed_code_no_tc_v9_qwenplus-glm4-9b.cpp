@@ -1,0 +1,40 @@
+#include<bits/stdc++.h>
+#define ll long long
+using namespace std;
+ll n, m, mn = 200005, depth[200005];
+vector<int> adj[200005];
+
+void dfs(int node, int d) {
+    depth[node] = d;
+    ll current_depth = d + 1;
+    for (int neighbor : adj[node]) {
+        if (depth[neighbor] == -1) { // Check if not visited
+            dfs(neighbor, current_depth);
+        }
+    }
+}
+
+int main() {
+    cin >> n >> m;
+    for (int i = 1; i <= m; i++) {
+        int u, v;
+        cin >> u >> v;
+        adj[u].push_back(v);
+        adj[v].push_back(u); // Assuming undirected graph
+    }
+
+    // Initialize depth array to -1 (unvisited state)
+    fill(depth, depth + 200005, -1);
+
+    // Start DFS from node 1 with initial depth 0
+    dfs(1, 0);
+
+    // Find the minimum depth in the depth array
+    mn = *min_element(depth + 1, depth + n + 1);
+    if (mn == 200005) {
+        cout << -1;
+    } else {
+        cout << mn;
+    }
+    return 0;
+}

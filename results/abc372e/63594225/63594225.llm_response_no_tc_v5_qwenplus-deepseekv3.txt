@@ -1,0 +1,99 @@
+### Analysis of the Original Code
+The original code attempts to solve the problem by maintaining each connected component as a sorted list (in descending order) of vertex numbers. When merging two components, it merges their lists while keeping them sorted, and then truncates the list to at most 100 elements. However, there are several issues with this approach:
+
+1. **Efficiency**: The merging process is not efficient. For each union operation, it performs a full merge of two lists, which can be O(N) in the worst case. Given that N and Q can be up to 2×10^5, this leads to an O(QN) time complexity, which is too slow.
+
+2. **Correctness**: The truncation to 100 elements might not always be sufficient. The problem allows k up to 10, but the connected component can have more than 100 vertices, and the top 100 might not include all necessary information for queries with k ≤ 10.
+
+3. **Data Structure**: The approach doesn't leverage efficient data structures for dynamic connectivity and k-th largest queries. A better approach would use Union-Find (Disjoint Set Union, DSU) with each component maintaining a set or a priority queue of the largest vertices.
+
+### Fixed Approach
+To efficiently handle the queries, we can use the Union-Find data structure with each root maintaining a set (or a priority queue) of the top 10 largest vertices in its component. When merging two components, we merge their sets and keep only the top 10 elements. This ensures that each union operation is O(10 log 10) = O(1) per element, and queries can be answered in O(1) time by accessing the k-th element in the set.
+
+### Fixed Code
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+const int N = 2e5 + 5;
+
+vector<int> parent;
+vector<priority_queue<int, vector<int>, greater<int>>> topk; // Min-heap to keep top 10 largest
+
+int find(int x) {
+    if (parent[x] != x) {
+        parent[x] = find(parent[x]);
+    }
+    return parent[x];
+}
+
+void unite(int a, int b) {
+    a = find(a);
+    b = find(b);
+    if (a == b) return;
+    if (topk[a].size() < topk[b].size()) {
+        swap(a, b);
+    }
+    parent[b] = a;
+    priority_queue<int> temp;
+    while (!topk[b].empty()) {
+        temp.push(topk[b].top());
+        topk[b].pop();
+    }
+    while (!temp.empty()) {
+        topk[a].push(temp.top());
+        temp.pop();
+        if (topk[a].size() > 10) {
+            topk[a].pop();
+        }
+    }
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int n, q;
+    cin >> n >> q;
+    parent.resize(n + 1);
+    topk.resize(n + 1);
+    for (int i = 1; i <= n; ++i) {
+        parent[i] = i;
+        topk[i].push(i);
+    }
+
+    while (q--) {
+        int t, u, v;
+        cin >> t >> u >> v;
+        if (t == 1) {
+            unite(u, v);
+        } else {
+            int root = find(u);
+            if (topk[root].size() < v) {
+                cout << -1 << '\n';
+            } else {
+                vector<int> temp;
+                while (topk[root].size() > v) {
+                    temp.push_back(topk[root].top());
+                    topk[root].pop();
+                }
+                cout << topk[root].top() << '\n';
+                for (int x : temp) {
+                    topk[root].push(x);
+                }
+                while (topk[root].size() > 10) {
+                    topk[root].pop();
+                }
+            }
+        }
+    }
+
+    return 0;
+}
+```
+
+### Explanation
+1. **Union-Find with Top-K Tracking**: Each component's root maintains a min-heap (priority queue) of the top 10 largest vertices. This allows efficient merging and querying.
+2. **Union Operation**: When merging two components, the smaller heap is merged into the larger one, ensuring the combined heap doesn't exceed 10 elements.
+3. **Query Operation**: For a query, if the component has at least `k` vertices, the k-th largest is found by temporarily reducing the heap size to `k` elements. The answer is the top of the heap, and the temporarily removed elements are restored.
+4. **Efficiency**: Each union and query operation is O(10 log 10) = O(1) per element, making the overall complexity O(Q log N) with path compression in Union-Find, which is efficient for the given constraints.

@@ -1,0 +1,95 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+typedef long long ll;
+typedef pair<ll,ll> pi;
+const ll INF = LLONG_MAX / 2;
+const ll MOD = 1e9 + 7;
+
+struct BIT {
+    vector<ll> bit;
+    ll n;
+    BIT(ll n) {
+        this->n = n;
+        bit.resize(n+1, 0);
+    }
+
+    void update(ll idx, ll val) {
+        while(idx <= n) {
+            bit[idx] += val;
+            idx += idx & (-idx);
+        }
+    }
+
+    ll sum(ll idx) {
+        ll res = 0;
+        while(idx > 0) {
+            res += bit[idx];
+            idx -= idx & (-idx);
+        }
+        return res;
+    }
+};
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    ll h, w, q;
+    cin >> h >> w >> q;
+    vector<vector<bool>> grid(h, vector<bool>(w, true));
+    vector<BIT> row_sums(h, BIT(w)), col_sums(w, BIT(h));
+
+    for(ll qi=0; qi<q; ++qi) {
+        ll r, c;
+        cin >> r >> c;
+        --r, --c;
+
+        if(grid[r][c]) {
+            grid[r][c] = false;
+            row_sums[r].update(c, -1);
+            col_sums[c].update(r, -1);
+        } else {
+            bool found_row = false, found_col = false;
+            for(ll i=r-1; i>=0 && !found_row; --i) {
+                if(!grid[i][c]) continue;
+                found_row = true;
+                grid[i][c] = false;
+                row_sums[i].update(c, -1);
+                col_sums[c].update(i, -1);
+            }
+            for(ll i=r+1; i<h && !found_row; ++i) {
+                if(!grid[i][c]) continue;
+                found_row = true;
+                grid[i][c] = false;
+                row_sums[i].update(c, -1);
+                col_sums[c].update(i, -1);
+            }
+            for(ll j=c-1; j>=0 && !found_col; --j) {
+                if(!grid[r][j]) continue;
+                found_col = true;
+                grid[r][j] = false;
+                row_sums[r].update(j, -1);
+                col_sums[j].update(r, -1);
+            }
+            for(ll j=c+1; j<w && !found_col; ++j) {
+                if(!grid[r][j]) continue;
+                found_col = true;
+                grid[r][j] = false;
+                row_sums[r].update(j, -1);
+                col_sums[j].update(r, -1);
+            }
+        }
+    }
+
+    ll ans = 0;
+    for(ll i=0; i<h; ++i) {
+        ans += w - row_sums[i].sum(w);
+    }
+    for(ll j=0; j<w; ++j) {
+        ans += h - col_sums[j].sum(h);
+    }
+
+    cout << ans << '\n';
+    return 0;
+}

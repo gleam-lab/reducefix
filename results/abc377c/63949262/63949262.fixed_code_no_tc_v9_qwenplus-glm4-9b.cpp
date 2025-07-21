@@ -1,0 +1,43 @@
+#include <iostream>
+#include <vector>
+using namespace std;
+
+int main() {
+    long long N;
+    cin >> N;
+    long long M;
+    cin >> M;
+
+    vector<pair<int, int>> pieces(M);
+    vector<vector<int>> reachable(N + 1, vector<int>(N + 1, 0));
+
+    for (long long i = 0; i < M; ++i) {
+        cin >> pieces[i].first >> pieces[i].second;
+        // Increase the reachable area for each piece
+        for (int dx = -2; dx <= 2; ++dx) {
+            for (int dy = -2; dy <= 2; ++dy) {
+                if (dx != 0 || dy != 0) {
+                    int nx = pieces[i].first + dx;
+                    int ny = pieces[i].second + dy;
+                    if (nx >= 1 && nx <= N && ny >= 1 && ny <= N) {
+                        reachable[nx][ny]++;
+                    }
+                }
+            }
+        }
+    }
+
+    long long count = 0;
+    for (long long i = 1; i <= N; ++i) {
+        for (long long j = 1; j <= N; ++j) {
+            // Check if the cell is empty and not reachable by any piece
+            if (reachable[i][j] == 0) {
+                count++;
+            }
+        }
+    }
+
+    cout << count << endl;
+
+    return 0;
+}

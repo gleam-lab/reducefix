@@ -1,0 +1,66 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define int long long
+const int N = 105;
+int n, x;
+int a[N], p[N], b[N], q[N];
+
+int compute_min_cost(int item_idx, int required) {
+    int min_cost = numeric_limits<int>::max();
+    int max_buy_a = min(b[item_idx], required / a[item_idx] + 1);
+    
+    // Try all possible number of type A items bought (0 to max_buy_a)
+    for (int buy_a = 0; buy_a <= max_buy_a; buy_a++) {
+        int remaining = max(0LL, required - buy_a * a[item_idx]);
+        int buy_b = (remaining + b[item_idx] - 1) / b[item_idx];
+        min_cost = min(min_cost, buy_a * p[item_idx] + buy_b * q[item_idx]);
+
+        // Also try the reverse: buying more B and fewer A
+        int max_buy_b = min(p[item_idx], buy_b + 1); // Small optimization
+        for (int alt_buy_b = 0; alt_buy_b <= max_buy_b; alt_buy_b++) {
+            remaining = max(0LL, required - alt_buy_b * b[item_idx]);
+            int alt_buy_a = (remaining + a[item_idx] - 1) / a[item_idx];
+            min_cost = min(min_cost, alt_buy_a * p[item_idx] + alt_buy_b * q[item_idx]);
+        }
+    }
+
+    return min_cost;
+}
+
+bool is_possible(int days) {
+    int total_cost = 0;
+    for (int i = 1; i <= n; ++i) {
+        int required = days;
+        int item_cost = compute_min_cost(i, required);
+        total_cost += item_cost;
+        if (total_cost > x) return false;
+    }
+    return true;
+}
+
+signed main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    cout.tie(nullptr);
+
+    cin >> n >> x;
+    for (int i = 1; i <= n; ++i) {
+        cin >> a[i] >> p[i] >> b[i] >> q[i];
+    }
+
+    int left = 1, right = 1e18;
+    int answer = 0;
+
+    while (left <= right) {
+        int mid = (left + right) / 2;
+        if (is_possible(mid)) {
+            answer = mid;
+            left = mid + 1;
+        } else {
+            right = mid - 1;
+        }
+    }
+
+    cout << answer << '\n';
+    return 0;
+}

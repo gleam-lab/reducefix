@@ -1,0 +1,38 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int n, m;
+    cin >> n >> m;
+
+    vector<int> arr(n);
+    for (int i = 0; i < n; ++i) {
+        cin >> arr[i];
+    }
+
+    // Prefix sums modulo m
+    vector<int> prefix_mod(n + 1, 0);
+    for (int i = 0; i < n; ++i) {
+        prefix_mod[i + 1] = (prefix_mod[i] + arr[i]) % m;
+    }
+
+    // Count frequencies of each mod value
+    map<int, int> freq;
+    for (int val : prefix_mod) {
+        freq[val]++;
+    }
+
+    // For each value x in the map, find pairs with same mod value: C(count, 2)
+    long long ans = 0;
+    for (auto& [mod_val, count] : freq) {
+        if (count >= 2) {
+            ans += 1LL * count * (count - 1) / 2;
+        }
+    }
+
+    cout << ans << endl;
+    return 0;
+}

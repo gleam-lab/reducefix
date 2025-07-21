@@ -1,0 +1,160 @@
+#include <bits/stdc++.h>
+using namespace std;
+using i64 = long long;
+
+int main() {
+    std::ios::sync_with_stdio(false);
+    std::cin.tie(nullptr);
+
+    i64 N, M;
+    cin >> N >> M;
+
+    set<i64> rows, cols, diag1, diag2;
+    set<pair<i64, i64>> pieces;
+
+    for (i64 i = 0; i < M; ++i) {
+        i64 a, b;
+        cin >> a >> b;
+        pieces.insert({a, b});
+        rows.insert(a);
+        cols.insert(b);
+        diag1.insert(a + b);
+        diag2.insert(a - b);
+    }
+
+    // Total number of squares threatened by any piece
+    i64 total_threatened = 0;
+
+    // Rows and columns covered
+    total_threatened += N * rows.size();
+    total_threatened += N * cols.size();
+
+    // Diagonals \ (a + b)
+    for (auto d : diag1) {
+        // Number of cells on diagonal d: x + y = d
+        i64 low = max(1LL, d - N);
+        i64 high = min(N, d - 1);
+        total_threatened += (high - low + 1);
+    }
+
+    // Diagonals / (a - b)
+    for (auto d : diag2) {
+        // Number of cells on diagonal d: x - y = d
+        i64 x_min = max(1LL, d + 1);
+        i64 x_max = min(N, N + d);
+        total_threatened += (x_max - x_min + 1);
+    }
+
+    // Subtract overlaps between row/col
+    for (auto r : rows) {
+        for (auto c : cols) {
+            total_threatened--;
+        }
+    }
+
+    // Subtract overlaps between row/diag1
+    for (auto r : rows) {
+        for (auto d : diag1) {
+            i64 y = d - r;
+            if (y >= 1 && y <= N) {
+                total_threatened--;
+            }
+        }
+    }
+
+    // Subtract overlaps between row/diag2
+    for (auto r : rows) {
+        for (auto d : diag2) {
+            i64 y = r - d;
+            if (y >= 1 && y <= N) {
+                total_threatened--;
+            }
+        }
+    }
+
+    // Subtract overlaps between col/diag1
+    for (auto c : cols) {
+        for (auto d : diag1) {
+            i64 x = d - c;
+            if (x >= 1 && x <= N) {
+                total_threatened--;
+            }
+        }
+    }
+
+    // Subtract overlaps between col/diag2
+    for (auto c : cols) {
+        for (auto d : diag2) {
+            i64 x = d + c;
+            if (x >= 1 && x <= N) {
+                total_threatened--;
+            }
+        }
+    }
+
+    // Subtract overlaps between diag1/diag2
+    for (auto d1 : diag1) {
+        for (auto d2 : diag2) {
+            // Solve:
+            // x + y = d1
+            // x - y = d2
+            // => x = (d1 + d2)/2, y = (d1 - d2)/2
+            if ((d1 + d2) % 2 == 0 && (d1 - d2) % 2 == 0) {
+                i64 x = (d1 + d2) / 2;
+                i64 y = (d1 - d2) / 2;
+                if (x >= 1 && x <= N && y >= 1 && y <= N) {
+                    total_threatened--;
+                }
+            }
+        }
+    }
+
+    // Add back over-subtracted overlaps among three sets
+    // row/col/diag1
+    for (auto r : rows) {
+        for (auto c : cols) {
+            for (auto d1 : diag1) {
+                if (r + c == d1) total_threatened++;
+            }
+        }
+    }
+
+    // row/col/diag2
+    for (auto r : rows) {
+        for (auto c : cols) {
+            for (auto d2 : diag2) {
+                if (r - c == d2) total_threatened++;
+            }
+        }
+    }
+
+    // row/diag1/diag2
+    for (auto r : rows) {
+        for (auto d1 : diag1) {
+            for (auto d2 : diag2) {
+                i64 y = d1 - r;
+                i64 x = r;
+                if (x - y == d2 && y >= 1 && y <= N) total_threatened++;
+            }
+        }
+    }
+
+    // col/diag1/diag2
+    for (auto c : cols) {
+        for (auto d1 : diag1) {
+            for (auto d2 : diag2) {
+                i64 x = d1 - c;
+                i64 y = c;
+                if (x - y == d2 && x >= 1 && x <= N) total_threatened++;
+            }
+        }
+    }
+
+    // Finally subtract the exact positions of the pieces since they were counted in all threat areas but cannot be used
+    i64 empty_squares = N * N - M;
+    i64 ans = empty_squares - total_threatened;
+
+    cout << max(ans, 0LL) << "\n";
+
+    return 0;
+}

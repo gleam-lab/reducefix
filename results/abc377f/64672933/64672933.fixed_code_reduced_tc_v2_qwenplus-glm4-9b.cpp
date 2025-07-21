@@ -1,0 +1,61 @@
+#include<bits/stdc++.h>
+using namespace std;
+using i64 = long long;
+
+int main() {
+    std::ios::sync_with_stdio(false);
+    std::cin.tie(nullptr);
+    i64 N, M;
+    cin >> N >> M;
+    vector<array<i64, 2>> g(M);
+    vector<i64> rows(M), cols(M);
+    for (i64 i = 0; i < M; i++) {
+        i64 a, b;
+        cin >> a >> b;
+        g[i] = {a, b};
+        rows[i] = a;
+        cols[i] = b;
+    }
+
+    sort(rows.begin(), rows.end());
+    sort(cols.begin(), cols.end());
+
+    // Calculate the number of squares that can be placed in each row, column, and diagonal
+    i64 rows_covered = 1, cols_covered = 1, diag1_covered = 1, diag2_covered = 1;
+    for (i64 i = 1; i < M; i++) {
+        rows_covered = max(rows_covered, rows[i] - rows[i - 1]);
+        cols_covered = max(cols_covered, cols[i] - cols[i - 1]);
+        diag1_covered = max(diag1_covered, rows[i] + cols[i] - (rows[i - 1] + cols[i - 1]));
+        diag2_covered = max(diag2_covered, rows[i] - cols[i] - (rows[i - 1] - cols[i - 1]));
+    }
+
+    // Calculate the number of squares that can be placed in the entire grid
+    i64 possible_squares = N * N;
+
+    // Subtract the squares that are covered by existing pieces
+    i64 covered_squares = (rows_covered - 1) * N + (cols_covered - 1) * N + (diag1_covered - 1) * N + (diag2_covered - 1) * N;
+
+    // Subtract the overlap of covered squares
+    // Overlap in rows and cols
+    for (i64 i = 1; i < M; i++) {
+        i64 row_diff = rows[i] - rows[i - 1];
+        i64 col_diff = cols[i] - cols[i - 1];
+        covered_squares -= max(0LL, row_diff - 1) * N;
+        covered_squares -= max(0LL, col_diff - 1) * N;
+    }
+
+    // Overlap in diagonals
+    for (i64 i = 1; i < M; i++) {
+        i64 diag1_diff = rows[i] + cols[i] - (rows[i - 1] + cols[i - 1]);
+        i64 diag2_diff = rows[i] - cols[i] - (rows[i - 1] - cols[i - 1]);
+        covered_squares -= max(0LL, diag1_diff - 1) * N;
+        covered_squares -= max(0LL, diag2_diff - 1) * N;
+    }
+
+    // The number of empty squares where you can place your piece
+    i64 ans = possible_squares - covered_squares;
+
+    cout << ans << "\n";
+
+    return 0;
+}

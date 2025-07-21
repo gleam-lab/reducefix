@@ -1,0 +1,87 @@
+#include <bits/stdc++.h>
+using namespace std;
+using i64 = int64_t;
+using vi = vector<int>;
+using vvi = vector<vi>;
+using Pi = pair<int, int>;
+using pq_min = priority_queue<Pi, vector<Pi>, greater<Pi>>;
+
+struct Init {
+    Init() {
+        ios::sync_with_stdio(false);
+        cin.tie(nullptr);
+        cout.precision(12);
+    }
+} init;
+
+int main() {
+    int H, W, Y;
+    cin >> H >> W >> Y;
+    vvi A(H, vi(W));
+    for (auto &row : A) {
+        for (auto &x : row) {
+            cin >> x;
+        }
+    }
+
+    // Visited matrix to mark cells already processed
+    vvi visited(H, vi(W, 0));
+
+    // Priority queue to simulate the erosion process
+    pq_min pq;
+
+    // Initialize the queue with the island border since they connect directly to the sea
+    for (int i = 0; i < H; ++i) {
+        for (int j = 0; j < W; ++j) {
+            if (i == 0 || i == H - 1 || j == 0 || j == W - 1) {
+                visited[i][j] = 1;
+                pq.emplace(A[i][j], i * W + j); // Store elevation and encoded position
+            }
+        }
+    }
+
+    // Total land area
+    int remaining = H * W;
+
+    // Directions for BFS (up, right, down, left)
+    vi dx = {-1, 0, 1, 0};
+    vi dy = {0, 1, 0, -1};
+
+    // Array to store results for each year
+    vi result(Y + 1);
+
+    // Copy of the priority queue to allow dynamic updates
+    while (!pq.empty()) {
+        auto [elev, pos] = pq.top();
+        pq.pop();
+
+        int y = pos / W;
+        int x = pos % W;
+
+        // If this cell's elevation is <= current year, it will sink
+        if (elev <= Y) {
+            result[elev]++;
+        }
+
+        // Propagate to neighbors
+        for (int d = 0; d < 4; ++d) {
+            int ny = y + dx[d];
+            int nx = x + dy[d];
+
+            if (ny >= 0 && ny < H && nx >= 0 && nx < W && !visited[ny][nx]) {
+                visited[ny][nx] = 1;
+                pq.emplace(max(elev, A[ny][nx]), ny * W + nx);
+            }
+        }
+    }
+
+    // Build output
+    vi ans(Y);
+    ans[0] = remaining;
+    for (int i = 1; i <= Y; ++i) {
+        ans[i] = ans[i - 1] - result[i];
+        cout << ans[i] << '\n';
+    }
+
+    return 0;
+}

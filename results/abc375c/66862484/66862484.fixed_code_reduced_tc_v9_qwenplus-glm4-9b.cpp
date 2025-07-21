@@ -1,0 +1,31 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int N;
+    cin >> N;
+
+    long long curX = 0, curY = 0;   // ç¾å¨ä½ç½®ï¼åç¹ï¼
+    double total = 0.0;             // ç·ã³ã¹ã
+
+    for (int i = 0; i < N; ++i) {
+        long long x, y;
+        cin >> x >> y;
+
+        long long dx = curX - x;
+        long long dy = curY - y;
+        total += sqrt((double)(dx * dx + dy * dy));  // ããã§ sqrt() ãå¼ã³åºã
+
+        curX = x; curY = y;
+    }
+
+    // æå¾ã®ç¹ããåç¹ã¸æ»ã
+    total += sqrt((double)(curX * curX + curY * curY));
+
+    cout.precision(15);
+    cout << fixed << total << '\n';
+    return 0;
+}

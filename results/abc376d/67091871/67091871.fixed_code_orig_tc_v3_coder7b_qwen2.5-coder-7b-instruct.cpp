@@ -1,0 +1,34 @@
+#include<bits/stdc++.h>
+#define ll long long
+using namespace std;
+
+const int MAXN = 2e5 + 10;
+vector<int> adj[MAXN];
+bool vis[MAXN];
+
+void dfs(int node, int &min_steps) {
+    if (vis[node]) return;
+    vis[node] = true;
+    for (auto child : adj[node]) {
+        dfs(child, min_steps);
+    }
+    if (adj[node].size() == 1 && node != 1) {
+        min_steps++;
+    }
+}
+
+int main() {
+    ios_base::sync_with_stdio(false); cin.tie(NULL);
+    int n, m;
+    cin >> n >> m;
+    for (int i = 1; i <= m; i++) {
+        int u, v;
+        cin >> u >> v;
+        adj[u].push_back(v);
+        adj[v].push_back(u);
+    }
+    int min_steps = 0;
+    dfs(1, min_steps);
+    cout << min_steps / 2 << endl;
+    return 0;
+}

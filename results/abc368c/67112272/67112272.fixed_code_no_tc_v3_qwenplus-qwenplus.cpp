@@ -1,0 +1,41 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+using ll = long_t;
+
+int main() {
+    int n;
+    cin >> n;
+    vector<ll> h(n);
+    for (int i = 0; i < n; ++i) {
+        cin >> h[i];
+    }
+
+    ll time = 0;
+    priority_queue<pair<ll, int>> pq; // max-heap of {health, index}
+
+    for (int i = 0; i < n; ++i) {
+        if (h[i] > 0) {
+            pq.emplace(h[i], i);
+        }
+    }
+
+    while (!pq.empty()) {
+        auto [health, idx] = pq.top();
+        pq.pop();
+
+        ++time;
+        if (time % 3 == 0) {
+            health -= 3;
+        } else {
+            health -= 1;
+        }
+
+        if (health > 0) {
+            pq.emplace(health, idx);
+        }
+    }
+
+    cout << time << endl;
+    return 0;
+}

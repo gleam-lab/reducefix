@@ -1,0 +1,28 @@
+#include<bits/stdc++.h>
+using namespace std;
+int n, q, x[200005], p[200005];
+int sum[2000005];
+
+int main() {
+    cin >> n;
+    for (int i = 0; i < n; i++) {
+        cin >> x[i];
+    }
+    for (int i = 0; i < n; i++) {
+        cin >> p[i];
+        sum[i + 1] = sum[i] + p[i]; // Adjust index for 1-based array access
+    }
+    cin >> q;
+    while (q--) {
+        int L, R;
+        cin >> L >> R;
+        int l = lower_bound(x, x + n, L) - x; // lower_bound directly on x
+        int r = upper_bound(x, x + n, R) - x; // upper_bound directly on x
+        if (l >= r) {
+            cout << 0 << endl; // If there's no valid range, the sum is 0
+        } else {
+            cout << sum[r - 1] - sum[l - 1] << endl;
+        }
+    }
+    return 0;
+}

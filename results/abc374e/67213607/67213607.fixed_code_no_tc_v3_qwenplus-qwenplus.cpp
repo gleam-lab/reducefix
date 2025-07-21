@@ -1,0 +1,56 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    long long n, x;
+    cin >> n >> x;
+    long long a[105], p[105], b[105], q[105];
+    
+    for (int i = 1; i <= n; ++i) {
+        cin >> a[i] >> p[i] >> b[i] >> q[i];
+    }
+
+    long long l = 0, r = 2000000000; // More reasonable upper bound
+    long long ans = 0;
+
+    while (l <= r) {
+        long long mid = (l + r) / 2;
+        long long total_cost = 0;
+
+        for (int i = 1; i <= n; ++i) {
+            long long min_cost = 1e18; // Initialize to large value
+
+            // Try all possible number of type A pills
+            for (long long j = 0; j <= b[i]; ++j) {
+                long long remaining = max(0LL, mid - j * a[i]);
+                long long k = remaining / b[i];
+                if (k * b[i] < remaining) k++;
+                if (k > b[i]) continue; // Skip invalid combinations
+                long long cost = j * p[i] + k * q[i];
+                min_cost = min(min_cost, cost);
+            }
+
+            // Try all possible number of type B pills
+            for (long long j = 0; j <= a[i]; ++j) {
+                long long remaining = max(0LL, mid - j * b[i]);
+                long long k = remaining / a[i];
+                if (k * a[i] < remaining) k++;
+                if (k > a[i]) continue; // Skip invalid combinations
+                long long cost = j * q[i] + k * p[i];
+                min_cost = min(min_cost, cost);
+            }
+
+            total_cost += min_cost;
+            if (total_cost > x) break; // Early exit if already too expensive
+        }
+
+        if (total_cost <= x) {
+            ans = mid;
+            l = mid + 1;
+        } else {
+            r = mid - 1;
+        }
+    }
+
+    cout << ans << endl;
+}

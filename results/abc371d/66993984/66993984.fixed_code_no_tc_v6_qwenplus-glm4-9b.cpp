@@ -1,0 +1,29 @@
+#include<bits/stdc++.h>
+using namespace std;
+int n, q, x[200005], p[200005];
+long long sum[200005]; // Using long long to avoid overflow
+
+int main() {
+    cin >> n;
+    for (int i = 0; i < n; i++) {
+        cin >> x[i];
+    }
+    sum[0] = 0; // Initialize sum[0] to 0
+    for (int i = 1; i <= n; i++) {
+        cin >> p[i];
+        sum[i] = sum[i - 1] + p[i] * x[i]; // Calculate prefix sum multiplied by x[i]
+    }
+    cin >> q;
+    while (q--) {
+        int L, R;
+        cin >> L >> R;
+        int c = lower_bound(x + 1, x + n + 1, L) - x; // lower_bound gives the first element >= L
+        int d = upper_bound(x + 1, x + n + 1, R) - x; // upper_bound gives the first element > R
+        if (c == d) {
+            cout << "0\n"; // If L and R are the same, the range is empty
+        } else {
+            cout << sum[d - 1] - sum[c - 1] << "\n"; // Output the difference in prefix sums
+        }
+    }
+    return 0;
+}

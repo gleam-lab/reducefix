@@ -1,0 +1,59 @@
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+
+ll min_cost(ll W, ll a, ll p, ll b, ll q) {
+    // Determine which type of item is more cost-effective
+    if (p * b < q * a) {
+        // S items are cheaper per unit weight, so use them as much as possible
+        ll x0 = W / a;  // Maximum number of S items that can be bought
+        for (ll dx = 0; dx <= b && x0 >= dx; ++dx) {
+            ll x = x0 - dx;  // Number of S items actually bought
+            ll rem = W - a * x;  // Remaining weight capacity after buying x S items
+            ll y = (rem <= 0) ? 0 : (rem + b - 1) / b;  // Number of T items needed to fill the remaining space
+            best = min(best, p * x + q * y);  // Update the minimum cost
+        }
+    } else {
+        // T items are cheaper per unit weight, so use them as much as possible
+        ll y0 = W / b;  // Maximum number of T items that can be bought
+        for (ll dy = 0; dy <= a && y0 >= dy; ++dy) {
+            ll y = y0 - dy;  // Number of T items actually bought
+            ll rem = W - b * y;  // Remaining weight capacity after buying y T items
+            ll x = (rem <= 0) ? 0 : (rem + a - 1) / a;  // Number of S items needed to fill the remaining space
+            best = min(best, p * x + q * y);  // Update the minimum cost
+        }
+    }
+    return best;
+}
+
+bool can(ll W, int N, ll X, const vector<ll>& A, const vector<ll>& P, const vector<ll>& B, const vector<ll>& Q) {
+    ll sum = 0;
+    for (int i = 0; i < N; ++i) {
+        ll c = min_cost(W, A[i], P[i], B[i], Q[i]);  // Calculate the minimum cost for each item type
+        sum += c;  // Add the cost to the total sum
+        if (sum > X) return false;  // If the total exceeds X, return false
+    }
+    return sum <= X;  // Return true if the total does not exceed X
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int N;
+    ll X;
+    cin >> N >> X;
+    vector<ll> A(N), P(N), B(N), Q(N);
+    for (int i = 0; i < N; ++i) {
+        cin >> A[i] >> P[i] >> B[i] >> Q[i];  // Read input for each item type
+    }
+
+    ll lo = 0, hi = 1000000000000LL;  // Initialize binary search range
+    while (hi - lo > 1) {
+        ll mid = (lo + hi) / 2;
+        if (can(mid, N, X, A, P, B, Q)) lo = mid;  // If it's possible to buy within budget, increase lower bound
+        else hi = mid;  // Otherwise, decrease upper bound
+    }
+    cout << lo << "\n";  // Output the result
+    return 0;
+}

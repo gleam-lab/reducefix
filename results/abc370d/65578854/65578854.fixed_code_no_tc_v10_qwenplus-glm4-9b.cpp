@@ -1,0 +1,81 @@
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+#define rep(i, n) for (ll i = 0; i < (ll)(n); i++)
+#define rep2(i, s, n) for (ll i = (s); i < (ll)(n); i++)
+#define all(x) x.begin(), x.end()
+template<typename T> inline bool chmax(T &a, T b) { return ((a < b) ? (a = b, true) : (false)); }
+template<typename T> inline bool chmin(T &a, T b) { return ((a > b) ? (a = b, true) : (false)); }
+
+int main() {
+    int H, W, Q;
+    cin >> H >> W >> Q;
+    vector<vector<bool>> grid(H, vector<bool>(W, true)); // Wall present initially
+    ll ans = H * W; // Initially, all walls are present
+
+    rep(itr, Q) {
+        int R, C;
+        cin >> R >> C;
+        R--; C--; // Convert to 0-based index
+
+        // If bomb is placed on a cell with a wall, destroy that wall
+        if (grid[R][C]) {
+            grid[R][C] = false; // Remove the wall
+            ans--; // Decrease the count of walls
+        } else {
+            // Search for the first wall to the left and right
+            bool wall_left = false, wall_right = false;
+            for (int j = C - 1; j >= 0 && !wall_left; j--) {
+                if (grid[R][j]) {
+                    wall_left = true;
+                }
+            }
+            for (int j = C + 1; j < W && !wall_right; j++) {
+                if (grid[R][j]) {
+                    wall_right = true;
+                }
+            }
+
+            // Search for the first wall above and below
+            bool wall_above = false, wall_below = false;
+            for (int i = R - 1; i >= 0 && !wall_above; i--) {
+                if (grid[i][C]) {
+                    wall_above = true;
+                }
+            }
+            for (int i = R + 1; i < H && !wall_below; i++) {
+                if (grid[i][C]) {
+                    wall_below = true;
+                }
+            }
+
+            // Remove all walls in the specified directions
+            if (!wall_left) {
+                for (int i = 0; i <= R; i++) {
+                    grid[i][C] = false;
+                    ans--;
+                }
+            }
+            if (!wall_right) {
+                for (int i = R; i < H; i++) {
+                    grid[i][C] = false;
+                    ans--;
+                }
+            }
+            if (!wall_above) {
+                for (int j = 0; j <= C; j++) {
+                    grid[R][j] = false;
+                    ans--;
+                }
+            }
+            if (!wall_below) {
+                for (int j = C; j < W; j++) {
+                    grid[R][j] = false;
+                    ans--;
+                }
+            }
+        }
+    }
+    cout << ans << endl;
+    return 0;
+}

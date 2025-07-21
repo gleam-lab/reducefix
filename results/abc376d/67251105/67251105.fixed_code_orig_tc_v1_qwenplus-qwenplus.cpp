@@ -1,0 +1,51 @@
+#include <bits/stdc++.h>
+using namespace std;
+const long long INF = 1LL << 60;
+const long long MOD = 998244353LL;
+
+int main() {
+    int N, M;
+    cin >> N >> M;
+    vector<vector<int>> G(N);
+    for (int i = 0; i < M; i++) {
+        int u, v;
+        cin >> u >> v;
+        u--, v--;
+        G[u].push_back(v);
+    }
+
+    // BFS to compute shortest distances from node 0
+    vector<int> dist(N, -1);
+    queue<int> que;
+    que.push(0);
+    dist[0] = 0;
+
+    while (!que.empty()) {
+        int pos = que.front();
+        que.pop();
+        for (int nex : G[pos]) {
+            if (dist[nex] == -1) {
+                dist[nex] = dist[pos] + 1;
+                que.push(nex);
+            }
+        }
+    }
+
+    // Check if there is a cycle back to node 0 from any other node
+    int min_cycle_length = INF;
+    for (int i = 1; i < N; i++) {
+        for (int neighbor : G[i]) {
+            if (neighbor == 0 && dist[i] != -1) {
+                min_cycle_length = min(min_cycle_length, dist[i] + 1);
+                break;
+            }
+        }
+    }
+
+    if (min_cycle_length == INF)
+        cout << -1 << endl;
+    else
+        cout << min_cycle_length << endl;
+
+    return 0;
+}

@@ -1,0 +1,87 @@
+
+The problem requires finding the minimum possible value of a specific expression involving a subset of indices in two sequences. The expression is:
+
+\[
+\left(\max_{i \in S} A_i\right) \times \left(\sum_{i \in S} B_i\right)
+\]
+
+where \(S\) is a subset of \(\{1, 2, \ldots, N\}\) of size \(K\).
+
+### Key Observations:
+1. **Subset Size**: We need to consider subsets of size \(K\).
+2. **Max and Sum**: The expression depends on the maximum element in the subset and the sum of the elements in the subset.
+3. **Sorting**: Sorting the sequences can help in efficiently finding combinations that yield small values of the expression.
+
+### Approach:
+1. **Sort the Pairs**: Create pairs of \((A_i, B_i)\) and sort them based on \(A_i\) in descending order. This allows us to consider larger values of \(A_i\) first, which is crucial for minimizing the overall product.
+2. **Initial Subset**: Start by taking the first \(K\) elements from the sorted list (after sorting by \(A_i\)).
+3. **Iterate Over Remaining Elements**: For each remaining element, decide whether to include it in the subset or not. The decision is based on whether it improves the value of the expression:
+   - If the new element increases the sum significantly (more than \(B_i\) of the current max element), then include it.
+   - If not, exclude it and keep the previous subset.
+4. **Calculate the Expression**: For each scenario (including or excluding each element), calculate the expression and keep track of the minimum value.
+
+### Optimizations:
+1. **Efficient Subset Management**: Use a priority queue or similar data structure to efficiently manage the sum of the subset and its elements.
+2. **Early Termination**: If at any point, including an element does not improve the expression value, stop considering further elements.
+
+### Implementation:
+```cpp
+#include <iostream>
+#include <vector>
+#include <queue>
+#include <algorithm>
+
+using namespace std;
+
+int main() {
+    int T;
+    cin >> T;
+    while (T--) {
+        int N, K;
+        cin >> N >> K;
+        vector<pair<int, int>> A(N);
+        for (int i = 0; i < N; ++i) {
+            cin >> A[i].first;
+        }
+        for (int i = 0; i < N; ++i) {
+            cin >> A[i].second;
+        }
+        sort(A.rbegin(), A.rend()); // Sort descending by A_i
+
+        long long min_value = LLONG_MAX;
+        priority_queue<long long, vector<long long>, greater<long long>> pq;
+        long long sum = 0;
+
+        // Initial sum and max A_i from the first K elements
+        for (int i = 0; i < K; ++i) {
+            sum += A[i].second;
+            pq.push(A[i].second);
+        }
+        
+        long long max_A = A[0].first;
+        min_value = max_A * sum;
+
+        // Try to include each remaining element
+        for (int i = K; i < N; ++i) {
+            sum += A[i].second;
+            pq.push(A[i].second);
+            
+            // Check if current sum is better
+            long long new_sum = sum;
+            long long new_max_A = max_A;
+            while (!pq.empty() && pq.top() > max_A * K / sum) {
+                new_sum -= pq.top();
+                pq.pop();
+            }
+            new_max_A = max(max_A, new_sum / K);
+
+            min_value = min(min_value, new_max_A * new_sum);
+        }
+
+        cout << min_value << '\n';
+    }
+    return 0;
+}
+```
+
+This implementation first sorts the pairs by the values of \(A\) in descending order and then tries to include each remaining element, recalculating the sum and the potential new maximum for each scenario. The priority queue helps in efficiently managing the sum when considering adding new elements to the subset.

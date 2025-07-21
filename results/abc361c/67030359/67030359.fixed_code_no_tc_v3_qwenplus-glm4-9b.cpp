@@ -1,0 +1,35 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+
+using namespace std;
+
+int main() {
+    int N, K;
+    cin >> N >> K;
+    vector<int> A(N);
+    for (int i = 0; i < N; ++i) {
+        cin >> A[i];
+    }
+
+    // We use a min-heap to always pop the smallest elements when we need to remove them
+    vector<int> minHeap;
+    for (int i = 0; i < N; ++i) {
+        if (i < N - K) { // We only push elements that won't be removed
+            minHeap.push_back(A[i]);
+        }
+    }
+
+    // Sort the remaining elements in the array since we only care about the range after removing K elements
+    sort(A.begin() + N - K, A.end());
+
+    // The minimum value of B after removing K elements is the smallest element not removed
+    int minB = minHeap.begin() -> value;
+
+    // The maximum value of B after removing K elements is the largest element in the range [N-K, N-1]
+    int maxB = A[N - K - 1];
+
+    // Output the result
+    cout << maxB - minB << endl;
+    return 0;
+}

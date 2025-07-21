@@ -1,0 +1,108 @@
+To solve this problem efficiently given the constraints (up to $10^9$ for grid size but only up to 1000 pieces), we must avoid iterating over the full grid. Instead, we use sets to track affected rows, columns, and diagonals.
+
+### Key Observations:
+
+- Each piece affects:
+  - Its entire row.
+  - Its entire column.
+  - Its diagonal where `i + j = d` (top-left to bottom-right).
+  - Its diagonal where `i - j = d` (top-right to bottom-left).
+
+We calculate the number of safe positions by:
+1. Subtracting all squares in affected rows and columns from the total.
+2. Adjusting for over-subtraction on intersecting diagonals.
+
+We compute:
+```cpp
+total_squares = N * N
+safe_squares = total_squares - (rows_affected * N) - (cols_affected * N) + (rows_affected * cols_affected)
+```
+This is because `(rows_affected * cols_affected)` squares were subtracted twice.
+
+Then we adjust for diagonals carefully, ensuring we don't double-count or miss intersections.
+
+---
+
+### Corrected Code
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+void solve() {
+    long long N;
+    int M;
+    cin >> N >> M;
+
+    set<long long> rows, cols, diag1, diag2;
+
+    for (int i = 0; i < M; ++i) {
+        long long a, b;
+        cin >> a >> b;
+        rows.insert(a);
+        cols.insert(b);
+        diag1.insert(a + b);
+        diag2.insert(a - b);
+    }
+
+    // Total number of cells
+    long long total = N * N;
+
+    // Subtract all cells in any occupied row or column
+    long long bad_rows = rows.size();
+    long long bad_cols = cols.size();
+    total -= bad_rows * N;
+    total -= bad_cols * N;
+    total += bad_rows * bad_cols; // Add back the over-subtracted part
+
+    // Now subtract the overcounted points on diagonals
+    for (long long d : diag1) {
+        long long min_i = max(1LL, d - N);
+        long long max_i = min(N, d - 1);
+        long long count = max(0LL, max_i - min_i + 1);
+
+        // Count how many of these are already covered by bad rows or cols
+        long long overlap = 0;
+        for (auto r : rows) {
+            long long j = d - r;
+            if (j >= 1 && j <= N) overlap++;
+        }
+        for (auto c : cols) {
+            long long i = d - c;
+            if (i >= 1 && i <= N) overlap++;
+        }
+
+        // Remove overcounted overlaps
+        total -= (count - overlap);
+    }
+
+    for (long long d : diag2) {
+        long long min_j = max(1LL, 1 - d);
+        long long max_j = min(N, N - d);
+        long long count = max(0LL, max_j - min_j + 1);
+
+        // Count how many of these are already covered by bad rows or cols
+        long long overlap = 0;
+        for (auto r : rows) {
+            long long j = r - d;
+            if (j >= 1 && j <= N) overlap++;
+        }
+        for (auto c : cols) {
+            long long i = d + c;
+            if (i >= 1 && i <= N) overlap++;
+        }
+
+        // Remove overcounted overlaps
+        total -= (count - overlap);
+    }
+
+    cout << total << endl;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    solve();
+    return 0;
+}
+```

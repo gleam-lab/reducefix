@@ -1,0 +1,79 @@
+#include <iostream> // cout, endl, cin
+#include <string> // string, to_string, stoi
+#include <vector> // vector
+#include <algorithm> // min, max, swap, sort, reverse, lower_bound, upper_bound
+#include <utility> // pair, make_pair
+#include <tuple> // tuple, make_tuple
+#include <cstdint> // int64_t, int*_t
+#include <cstdio> // printf
+#include <map> // map
+#include <queue> // queue, priority_queue
+#include <set> // set
+#include <stack> // stack
+#include <deque> // deque
+#include <unordered_map> // unordered_map
+#include <unordered_set> // unordered_set
+#include <bitset> // bitset
+#include <cctype> // isupper, islower, isdigit, toupper, tolower
+#include<cmath>
+#include<iomanip>
+using namespace std;
+
+int cmp(char x, char y) {
+    if (x == 'P') {
+        if (y == 'P') return 0;
+        if (y == 'R') return 1;
+        if (y == 'S') return -1;
+    }
+    if (x == 'R') {
+        if (y == 'P') return -1;
+        if (y == 'R') return 0;
+        if (y == 'S') return 1;
+    }
+    if (x == 'S') {
+        if (y == 'P') return 1;
+        if (y == 'R') return -1;
+        if (y == 'S') return 0;
+    }
+    return -100; // Invalid state
+}
+
+char win(char x) {
+    if (x == 'R') return 'P';
+    if (x == 'S') return 'R';
+    if (x == 'P') return 'S';
+    return 'X'; // Invalid state
+}
+
+int main() {
+    int n;
+    string s;
+    cin >> n >> s;
+    int ans = 0;
+    char prev = 'X'; // Initialize previous move as invalid
+
+    // Count wins starting from each position
+    for (int i = 0; i < n; ++i) {
+        if (prev != win(s[i])) {
+            ++ans;
+            prev = win(s[i]);
+        } else {
+            prev = s[i];
+        }
+    }
+
+    // Reset previous move and count wins going backwards
+    prev = 'X';
+    int sub = 0;
+    for (int i = n - 1; i >= 0; --i) {
+        if (prev != win(s[i])) {
+            ++sub;
+            prev = win(s[i]);
+        } else {
+            prev = s[i];
+        }
+    }
+
+    cout << max(ans, sub);
+    return 0;
+}

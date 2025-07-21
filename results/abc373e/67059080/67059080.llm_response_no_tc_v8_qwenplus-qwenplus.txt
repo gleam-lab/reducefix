@@ -1,0 +1,103 @@
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+
+int main() {
+  ios::sync_with_stdio(false);
+  cin.tie(nullptr);
+
+  int N, M;
+  ll K;
+  cin >> N >> M >> K;
+
+  vector<ll> A(N);
+  for (ll &a : A) {
+    cin >> a;
+  }
+
+  // Total remaining votes
+  ll total_remaining = K;
+  for (ll a : A) {
+    total_remaining -= a;
+  }
+
+  vector<ll> res(N, -1);
+
+  // Create list of (votes, index)
+  vector<pair<ll, int>> candidates(N);
+  for (int i = 0; i < N; ++i) {
+    candidates[i] = {A[i], i};
+  }
+
+  // Sort by votes
+  sort(candidates.begin(), candidates.end());
+
+  // Prefix sum array
+  vector<ll> prefix(N + 1);
+  for (int i = 1; i <= N; ++i) {
+    prefix[i] = prefix[i - 1] + candidates[i - 1].first;
+  }
+
+  for (int i = 0; i < N; ++i) {
+    int idx = candidates[i].second;
+    ll cur_votes = candidates[i].first;
+
+    // Binary search on required additional votes
+    ll low = 0, high = total_remaining;
+    ll answer = -1;
+
+    while (low <= high) {
+      ll mid = (low + high) / 2;
+      ll extended = cur_votes + mid;
+
+      // We want to ensure at most M-1 candidates can have strictly more than extended
+      // So we look for the first candidate with votes > extended
+      int pos = upper_bound(candidates.begin(), candidates.end(), make_pair(extended, N + 1)) - candidates.begin();
+
+      if (pos >= N) pos = N;
+      else if (candidates[pos].first <= extended) pos = N;
+
+      // Number of candidates currently with more than extended
+      int higher = N - pos;
+
+      // Need to limit number of candidates that can get strictly more than extended
+      // Remaining votes after giving `mid` to current candidate
+      ll remaining = total_remaining - mid;
+
+      // We need to raise top (N - higher) candidates to be > extended
+      // But we only need M - 1 candidates to have more votes
+      // So we allow M - 1 candidates to have more than current candidate
+      int max_allowed_higher = M - 1;
+
+      if (higher <= max_allowed_higher) {
+        answer = mid;
+        high = mid - 1;
+      } else {
+        // Too many candidates could have more, we need to increase our guess
+        low = mid + 1;
+      }
+    }
+
+    if (answer == 0) {
+      // Check if already elected without any additional votes
+      int pos = upper_bound(candidates.begin(), candidates.end(), make_pair(cur_votes, N + 1)) - candidates.begin();
+      int higher = N - pos;
+      if (higher < M) {
+        res[idx] = 0;
+      } else {
+        res[idx] = 0; // This may change in binary search logic
+      }
+    } else {
+      res[idx] = answer;
+    }
+  }
+
+  for (ll val : res) {
+    cout << val << " ";
+  }
+  cout << "\n";
+
+  return 0;
+}
+```

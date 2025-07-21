@@ -1,0 +1,127 @@
+To fix this code, we need to ensure that the calculation correctly accounts for all the squares that are under attack by any of the existing pieces. The incorrect code was overcounting or undercounting certain overlaps, leading to the wrong answer in some cases. 
+
+### Approaches
+1. **Identify Attacked Squares**: For each existing piece, determine all squares it can attack (same row, same column, same diagonal i + j = a + b, or same anti-diagonal i - j = a - b).
+2. **Union of Attacked Squares**: Combine all attacked squares from all pieces to find the total number of squares under attack.
+3. **Calculate Safe Squares**: Subtract the number of attacked squares from the total number of squares (N^2) to find the number of safe squares. Adjust for overlaps where squares might be counted multiple times.
+
+### Solution Code
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    long long N, M;
+    cin >> N >> M;
+    set<long long> rows, cols, diag1, diag2;
+    for (int i = 0; i < M; ++i) {
+        long long a, b;
+        cin >> a >> b;
+        rows.insert(a);
+        cols.insert(b);
+        diag1.insert(a + b);
+        diag2.insert(a - b);
+    }
+    
+    long long attacked = 0;
+    attacked += rows.size() * N;
+    attacked += cols.size() * N;
+    
+    for (long long d : diag1) {
+        long long i_min = max(1LL, d - N);
+        long long i_max = min(N, d - 1);
+        attacked += i_max - i_min + 1;
+    }
+    
+    for (long long d : diag2) {
+        long long i_min = max(1LL, 1 - d);
+        long long i_max = min(N, N - d);
+        attacked += i_max - i_min + 1;
+    }
+    
+    // Subtract overlaps: rows and cols
+    long long row_col = rows.size() * cols.size();
+    
+    // Subtract overlaps: rows and diag1
+    long long row_diag1 = 0;
+    for (long long r : rows) {
+        for (long long d : diag1) {
+            long long c = d - r;
+            if (1 <= c && c <= N) {
+                row_diag1++;
+            }
+        }
+    }
+    
+    // Subtract overlaps: rows and diag2
+    long long row_diag2 = 0;
+    for (long long r : rows) {
+        for (long long d : diag2) {
+            long long c = r - d;
+            if (1 <= c && c <= N) {
+                row_diag2++;
+            }
+        }
+    }
+    
+    // Subtract overlaps: cols and diag1
+    long long col_diag1 = 0;
+    for (long long c : cols) {
+        for (long long d : diag1) {
+            long long r = d - c;
+            if (1 <= r && r <= N) {
+                col_diag1++;
+            }
+        }
+    }
+    
+    // Subtract overlaps: cols and diag2
+    long long col_diag2 = 0;
+    for (long long c : cols) {
+        for (long long d : diag2) {
+            long long r = d + c;
+            if (1 <= r && r <= N) {
+                col_diag2++;
+            }
+        }
+    }
+    
+    // Subtract overlaps: diag1 and diag2
+    long long diag1_diag2 = 0;
+    for (long long d1 : diag1) {
+        for (long long d2 : diag2) {
+            if ((d1 - d2) % 2 == 0) {
+                long long r = (d1 + d2) / 2;
+                long long c = (d1 - d2) / 2;
+                if (1 <= r && r <= N && 1 <= c && c <= N) {
+                    diag1_diag2++;
+                }
+            }
+        }
+    }
+    
+    // Add back triple overlaps
+    long long triple = 0;
+    for (long long r : rows) {
+        for (long long c : cols) {
+            if (diag1.count(r + c) && diag2.count(r - c)) {
+                triple++;
+            }
+        }
+    }
+    
+    long long overlaps = row_col + row_diag1 + row_diag2 + col_diag1 + col_diag2 + diag1_diag2 - triple;
+    
+    long long safe = N * N - attacked + overlaps;
+    cout << safe << endl;
+    
+    return 0;
+}
+```
+
+### Explanation
+1. **Input Reading**: The code reads the grid size `N` and the number of existing pieces `M`.
+2. **Tracking Attacked Squares**: Uses sets to keep track of all rows, columns, diagonals (i + j), and anti-diagonals (i - j) that are under attack by the existing pieces.
+3. **Calculating Attacked Squares**: Computes the total number of squares attacked by rows, columns, diagonals, and anti-diagonals.
+4. **Adjusting for Overlaps**: Accounts for overlaps where a square might be counted multiple times (e.g., a square attacked by both a row and a column). This is done by subtracting these overlaps and adding back triple overlaps to avoid overcounting.
+5. **Output Safe Squares**: The final count of safe squares is computed as the total squares minus the attacked squares plus the adjusted overlaps, ensuring correctness across all test cases.

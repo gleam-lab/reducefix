@@ -1,0 +1,32 @@
+#include <iostream>
+#include <vector>
+#include <cmath>
+#include <iomanip>
+
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int n;
+    cin >> n;
+
+    vector<pair<int, int>> points;
+    int x, y;
+    for (int i = 0; i < n; ++i) {
+        cin >> x >> y;
+        points.emplace_back(x, y);
+    }
+
+    double total_cost = 0.0;
+    for (int i = 0; i < n; ++i) {
+        int a = points[i].first, b = points[i].second;
+        int c = (i + 1 < n) ? points[i + 1].first : points[0].first;
+        int d = (i + 1 < n) ? points[i + 1].second : points[0].second;
+        total_cost += hypot(a - c, b - d);
+    }
+
+    cout << fixed << setprecision(15) << total_cost << endl;
+    return 0;
+}

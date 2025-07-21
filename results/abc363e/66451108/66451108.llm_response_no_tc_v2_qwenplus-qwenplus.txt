@@ -1,0 +1,109 @@
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+#define int long long
+#define pii pair<int, int>
+#define fi first
+#define se second
+#define all(x) (x).begin(), (x).end()
+#define pb push_back
+#define close ios::sync_with_stdio(false); cin.tie(0); cout.tie(0);
+
+const int MAXY = 1e5 + 5;
+const int dx[] = {0, 0, 1, -1};
+const int dy[] = {1, -1, 0, 0};
+
+int H, W, Y;
+vector<vector<int>> A;
+int result[MAXY];
+bool sinked[1005][1005];
+
+// Union-Find data structure
+struct DSU {
+    vector<int> parent, size;
+    DSU(int n) {
+        parent.resize(n);
+        size.resize(n, 1);
+        iota(all(parent), 0);
+    }
+    int find(int x) {
+        return parent[x] == x ? x : parent[x] = find(parent[x]);
+    }
+    void unite(int x, int y) {
+        int rx = find(x), ry = find(y);
+        if (rx == ry) return;
+        if (size[rx] > size[ry]) swap(rx, ry);
+        parent[rx] = ry;
+        size[ry] += size[rx];
+    }
+    int get_size(int x) {
+        return size[find(x)];
+    }
+};
+
+signed main() {
+    close;
+    cin >> H >> W >> Y;
+    
+    A.resize(H, vector<int>(W));
+    for (int i = 0; i < H; ++i)
+        for (int j = 0; j < W; ++j)
+            cin >> A[i][j];
+
+    // Flatten the grid to linear indices
+    int total = H * W;
+    DSU dsu(total + 2);  // total+1 is the sea node
+
+    // Map height to list of cells with that height
+    map<int, vector<pii>> heightMap;
+    for (int i = 0; i < H; ++i)
+        for (int j = 0; j < W; ++j)
+            heightMap[A[i][j]].pb({i, j});
+
+    // Process from lowest to highest elevation
+    set<pii> processed;
+    for (auto [h, cells] : heightMap) {
+        // Connect cells to neighbors if they are already processed
+        for (auto [i, j] : cells) {
+            for (int d = 0; d < 4; ++d) {
+                int ni = i + dx[d], nj = j + dy[d];
+                if (ni >= 0 && ni < H && nj >= 0 && nj < W && 
+                    processed.count({ni, nj})) {
+                    dsu.unite(i * W + j, ni * W + nj);
+                }
+            }
+        }
+
+        // Connect boundary cells to sea
+        for (auto [i, j] : cells) {
+            if (i == 0 || i == H-1 || j == 0 || j == W-1)
+                dsu.unite(i * W + j, total);  // connect to sea node
+        }
+
+        // Mark these as processed
+        for (auto [i, j] : cells) {
+            processed.insert({i, j});
+        }
+    }
+
+    // Total area of the island
+    int totalArea = H * W;
+    
+    // For each year, calculate how much area is above water
+    int connected = 0;
+    for (int y = 1; y <= Y; ++y) {
+        // Count cells with height <= y that haven't been processed yet
+        for (auto [i, j] : heightMap[y]) {
+            if (!sinked[i][j]) {
+                sinked[i][j] = true;
+                connected++;
+            }
+        }
+        int remaining = totalArea - connected;
+        cout << remaining << endl;
+    }
+
+    return 0;
+}
+```

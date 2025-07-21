@@ -1,0 +1,56 @@
+#include <iostream>
+#include <vector>
+#include <unordered_set>
+#include <cmath>
+
+using namespace std;
+
+long long mod = 1000000000000000007;
+
+void add(long long& a, long long b) {
+    a = (a + b) % mod;
+}
+
+void sub(long long& a, long long b) {
+    a = (a - b + mod) % mod;
+}
+
+void mul(long long& a, long long b) {
+    a = (a * b) % mod;
+}
+
+long long power(long long base, long long exp) {
+    if (exp == 0) return 1;
+    long long half = power(base, exp / 2);
+    mul(half, half);
+    if (exp % 2) mul(half, base);
+    return half;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+
+    long long n, m;
+    cin >> n >> m;
+
+    unordered_set<long long> pieces;
+    for (long long i = 0; i < m; ++i) {
+        long long a, b;
+        cin >> a >> b;
+        pieces.insert(((a - 1) * n + b) * 4);
+        add(pieces, ((a - 1) * n + b + 2) * 4);
+        add(pieces, ((a - 1) * n + b + 1) * 4);
+        add(pieces, ((a - 1) * n + b - 1) * 4);
+        add(pieces, ((a - 1) * n + b - 2) * 4);
+    }
+
+    long long total = n * n;
+    for (long long piece : pieces) {
+        sub(total, 1);
+    }
+
+    cout << total << endl;
+
+    return 0;
+}

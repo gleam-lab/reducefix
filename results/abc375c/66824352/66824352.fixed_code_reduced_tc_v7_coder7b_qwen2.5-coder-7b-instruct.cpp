@@ -1,0 +1,33 @@
+#include <iostream>
+#include <vector>
+#include <cmath>
+using namespace std;
+
+int main() {
+    int n;
+    long long x = 0, y = 0;
+    double cost = 0;
+    
+    cin >> n;
+    vector<pair<long long, long long>> points(n);
+    
+    // Read all points
+    for(int i = 0; i < n; ++i) {
+        cin >> points[i].first >> points[i].second;
+    }
+    
+    // Calculate cost of moving from origin to each point
+    for(const auto& point : points) {
+        cost += sqrt(pow(point.first - x, 2) + pow(point.second - y, 2));
+        x = point.first;
+        y = point.second;
+    }
+    
+    // Add cost of returning to origin
+    cost += sqrt(pow(x, 2) + pow(y, 2));
+    
+    // Output result with high precision
+    printf("%.10f\n", cost);
+    
+    return 0;
+}

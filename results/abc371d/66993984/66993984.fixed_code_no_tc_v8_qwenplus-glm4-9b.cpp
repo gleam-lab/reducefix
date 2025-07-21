@@ -1,0 +1,32 @@
+#include<bits/stdc++.h>
+using namespace std;
+int n, q, x[200005], p[200005];
+map<int, int> sum;
+
+int main() {
+    cin >> n;
+    for (int i = 1; i <= n; i++) {
+        cin >> x[i];
+    }
+    sum[x[1]] = p[1];  // Initialize sum with first element
+    for (int i = 2; i <= n; i++) {
+        sum[x[i]] = sum[x[i - 1]] + p[i];
+    }
+    cin >> q;
+    while (q--) {
+        int L, R;
+        cin >> L >> R;
+        int c = lower_bound(x + 1, x + n + 1, L) - x;
+        int d = upper_bound(x + 1, x + n + 1, R) - x;
+        // Check if the range overlaps with the first element
+        if (L > x[1]) {
+            c--;
+        }
+        // Check if the range overlaps with the last element
+        if (R < x[n]) {
+            d--;
+        }
+        cout << sum[d] - sum[c] << endl;
+    }
+    return 0;
+}

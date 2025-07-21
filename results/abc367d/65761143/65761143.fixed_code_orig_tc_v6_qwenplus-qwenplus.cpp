@@ -1,0 +1,52 @@
+#include <bits/stdc++.h>
+using namespace std;
+using LL = long long;
+
+void solve() {
+    int n, m; cin >> n >> m;
+    vector<int> a(n);
+    for (int &x : a) {
+        cin >> x;
+        x %= m;
+    }
+
+    // Prefix sum modulo m
+    vector<int> prefix_mod(n + 1, 0);
+    for (int i = 0; i < n; ++i) {
+        prefix_mod[i + 1] = (prefix_mod[i] + a[i]) % m;
+    }
+
+    // Count frequencies of each mod value in prefix sums
+    map<int, LL> freq;
+    LL res = 0;
+
+    for (int i = 0; i <= n; ++i) {
+        int curr = prefix_mod[i];
+        // For the number of previous prefixes with same mod, they form subarrays divisible by m
+        if (freq.count(curr)) {
+            res += freq[curr];
+        }
+        freq[curr]++;
+    }
+
+    cout << res << '\n';
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr); cout.tie(nullptr);
+
+#ifndef ONLINE_JUDGE
+    static ifstream in("in.txt");
+    static ofstream out("out.txt");
+    cin.rdbuf(in.rdbuf());
+    cout.rdbuf(out.rdbuf());
+#endif
+
+    int T = 1;
+    // Uncomment next line to enable multiple test cases
+    // cin >> T;
+    while (T--) solve();
+
+    return 0;
+}

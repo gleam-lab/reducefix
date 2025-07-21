@@ -1,0 +1,32 @@
+#include <iostream>
+using namespace std;
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(NULL);
+
+    int N;
+    string S;
+    cin >> N;
+    cin >> S;
+    int wins = 0;
+    char winmove;
+
+    for (int i = 0; i < N; ++i) {
+        switch (S[i]) {
+            case 'R':
+                winmove = 'P';
+                break;
+            case 'P':
+                winmove = 'S';
+                break;
+            case 'S':
+                winmove = 'R';
+                break;
+        }
+        if (i > 0 && winmove != S[i-1]) {
+            wins++;
+        }
+    }   
+    cout << wins;
+}

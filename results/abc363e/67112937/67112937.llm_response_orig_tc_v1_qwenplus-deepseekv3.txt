@@ -1,0 +1,78 @@
+I analyzed the issue with your code. The main problem is that the initial approach misses some sections that should be considered as boundary sections when the sea level rises. The code incorrectly only considers the outer perimeter sections as initial boundary, but in reality, any section adjacent to the sea (including newly submerged sections) should be considered as potential boundary sections for further submerging.
+
+Here's the corrected code that properly handles the boundary propagation:
+
+```cpp
+#include <bits/stdc++.h>
+
+using namespace std;
+
+constexpr int dx[] = {0, 1, 0, -1};
+constexpr int dy[] = {1, 0, -1, 0};
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int H, W, Y;
+    cin >> H >> W >> Y;
+
+    vector<vector<int>> A(H, vector<int>(W));
+    for (int i = 0; i < H; ++i) {
+        for (int j = 0; j < W; ++j) {
+            cin >> A[i][j];
+        }
+    }
+
+    priority_queue<tuple<int, int, int>, vector<tuple<int, int, int>>, greater<tuple<int, int, int>>> pq;
+    vector<vector<bool>> visited(H, vector<bool>(W, false));
+
+    // Initialize with all border cells
+    for (int i = 0; i < H; ++i) {
+        for (int j = 0; j < W; ++j) {
+            if (i == 0 || i == H - 1 || j == 0 || j == W - 1) {
+                pq.emplace(A[i][j], i, j);
+                visited[i][j] = true;
+            }
+        }
+    }
+
+    int ans = H * W;
+    vector<int> res(Y);
+    
+    for (int year = 1; year <= Y; ++year) {
+        while (!pq.empty() && get<0>(pq.top()) <= year) {
+            auto [h, x, y] = pq.top();
+            pq.pop();
+            --ans;
+            
+            for (int d = 0; d < 4; ++d) {
+                int nx = x + dx[d];
+                int ny = y + dy[d];
+                if (nx < 0 || nx >= H || ny < 0 || ny >= W || visited[nx][ny]) {
+                    continue;
+                }
+                visited[nx][ny] = true;
+                pq.emplace(A[nx][ny], nx, ny);
+            }
+        }
+        res[year - 1] = ans;
+    }
+
+    for (int y = 0; y < Y; ++y) {
+        cout << res[y] << '\n';
+    }
+
+    return 0;
+}
+```
+
+Key improvements:
+1. Changed the boundary initialization to include all perimeter cells (not just most of them)
+2. Used a proper priority queue that sorts by elevation
+3. Fixed the year iteration to properly track the current year
+4. Precomputed all results before output to match the expected format
+5. Used proper data structures (vectors instead of arrays) for better memory management
+6. Fixed the edge case handling for the boundary cells
+
+This solution should now correctly handle all test cases, including the failing one, by properly tracking which sections become submerged at each year and propagating the submerging effect correctly.

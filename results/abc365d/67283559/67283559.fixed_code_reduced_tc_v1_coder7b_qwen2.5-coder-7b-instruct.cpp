@@ -1,0 +1,31 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    int N;
+    cin >> N;
+    string S;
+    cin >> S;
+
+    vector<char> hand = {'R', 'P', 'S'};
+    int total = 0;
+
+    for (int i = 0; i < N; ++i) {
+        int score = 0;
+        char use = S[i];
+        for (char n : hand) {
+            if ((n == 'R' && S[i] == 'S') || 
+                (n == 'P' && S[i] == 'R') || 
+                (n == 'S' && S[i] == 'P')) {
+                score++;
+                use = n;
+                break;
+            }
+        }
+        total += score;
+        hand.erase(remove(hand.begin(), hand.end(), use), hand.end());
+    }
+
+    cout << total;
+    return 0;
+}

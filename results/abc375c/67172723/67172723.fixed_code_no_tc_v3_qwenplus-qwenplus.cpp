@@ -1,0 +1,38 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int n;
+    cin >> n;
+
+    long long px = 0, py = 0;
+    double total_cost = 0.0;
+
+    vector<pair<long long, long long>> points(n);
+    for (int i = 0; i < n; ++i) {
+        cin >> points[i].first >> points[i].second;
+    }
+
+    // From origin to first point
+    total_cost += hypot(points[0].first - 0.0, points[0].second - 0.0);
+
+    // Between consecutive points
+    for (int i = 1; i < n; ++i) {
+        total_cost += hypot(
+            static_cast<double>(points[i].first - points[i-1].first),
+            static_cast<double>(points[i].second - points[i-1].second)
+        );
+    }
+
+    // From last point back to origin
+    total_cost += hypot(static_cast<double>(points.back().first), static_cast<double>(points.back().second));
+
+    // Output with sufficient precision
+    cout.precision(15);
+    cout << fixed << total_cost << endl;
+
+    return 0;
+}

@@ -1,0 +1,71 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define rep(i,n) for(int i = 0; i < (n); i++)
+using ll = long long;
+
+int main() {
+    int h, w, q;
+    cin >> h >> q >> w; // Fixed input order: H, W, Q
+    vector<set<int>> row(w), col(h);
+    
+    // Initialize sets with all positions
+    for (int i = 0; i < h; ++i) {
+        for (int j = 0; j < w; ++j) {
+            row[j].insert(i);
+            col[i].insert(j);
+        }
+    }
+
+    while (q--) {
+        int r, c;
+        cin >> r >> c;
+        r--; c--;
+
+        auto& rc = row[c];
+        auto& co = col[r];
+
+        if (co.count(c)) {  // If there's a wall at the position
+            co.erase(c);
+            rc.erase(r);
+        } else {
+            // Look up
+            auto it = rc.lower_bound(r);
+            if (it != rc.begin()) {
+                int u = *prev(it);
+                co.erase(u);
+                row[c].erase(u);
+            }
+
+            // Look down
+            it = rc.lower_bound(r);
+            if (it != rc.end()) {
+                int d = *it;
+                co.erase(d);
+                row[c].erase(d);
+            }
+
+            // Look left
+            auto jt = co.lower_bound(c);
+            if (jt != co.begin()) {
+                int l = *prev(jt);
+                rc.erase(l);
+                col[l].erase(c);
+            }
+
+            // Look right
+            jt = co.lower_bound(c);
+            if (jt != co.end()) {
+                int ri = *jt;
+                rc.erase(ri);
+                col[ri].erase(c);
+            }
+        }
+    }
+
+    int ans = 0;
+    for (int i = 0; i < w; ++i) {
+        ans += row[i].size();
+    }
+    cout << ans << "\n";
+    return 0;
+}

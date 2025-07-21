@@ -1,0 +1,34 @@
+#include<bits/stdc++.h>
+using namespace std;
+using ll=long long;
+
+map<ll,vector<ll>>graph;
+map<ll,ll>seen; // Use seen to store depths
+const ll inf=1LL<<60;
+ll ans=inf;
+
+void dfs(ll n, ll hen){
+    seen[n] = hen; // Store the depth of each node
+    for(auto x:graph[n]){
+        if(x==1 && hen != 1){
+            ans = min(ans, hen + 1);
+        }
+        if(seen.count(x) == 0 || seen[x] > hen + 1){
+            dfs(x, hen + 1);
+        }
+    }
+}
+
+int main(){
+    ll n,m;
+    cin>>n>>m;
+    for(int i=0;i<m;i++){
+        ll a,b;
+        cin>>a>>b;
+        graph[a].push_back(b);
+        graph[b].push_back(a); // Assuming undirected graph
+    }
+    dfs(1, 0); // Start DFS from node 1 with depth 0
+    if(ans!=inf)cout<<ans<<endl;
+    else cout<<-1<<endl;
+}

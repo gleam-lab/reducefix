@@ -1,0 +1,85 @@
+To fix this code, we need to address several issues related to handling the union-find data structure and maintaining the k-th largest vertex in each connected component efficiently. The original code attempts to store and merge sorted arrays of vertices, but it has flaws in how it handles the merging and sorting operations, especially with large constraints.
+
+### Approaches
+1. **Union-Find with Path Compression**: This helps in efficiently managing the connected components and merging them.
+2. **Maintaining Sorted Lists**: For each connected component's root, maintain a sorted list (in descending order) of the vertices in that component. This list is kept up to date during each union operation.
+3. **Efficient Merging**: When merging two components, combine their sorted lists and keep only the top 10 elements (since k is at most 10) to optimize performance and memory usage.
+
+### Solution Code
+```cpp
+#include<bits/stdc++.h>
+using namespace std;
+
+vector<vector<int>> as; // as[i] will store the top 10 largest elements in the component of i's root
+vector<int> fa; // parent array for Union-Find
+
+int find(int x) {
+    if (fa[x] != x) {
+        fa[x] = find(fa[x]);
+    }
+    return fa[x];
+}
+
+void merge(int u, int v) {
+    int rootU = find(u);
+    int rootV = find(v);
+    if (rootU == rootV) return;
+
+    if (as[rootU].size() < as[rootV].size()) {
+        swap(rootU, rootV);
+    }
+
+    vector<int> merged;
+    merge(as[rootU].begin(), as[rootU].end(),
+          as[rootV].begin(), as[rootV].end(),
+          back_inserter(merged), greater<int>());
+
+    if (merged.size() > 10) {
+        merged.resize(10);
+    }
+
+    as[rootU] = merged;
+    fa[rootV] = rootU;
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int N, Q;
+    cin >> N >> Q;
+
+    fa.resize(N + 1);
+    as.resize(N + 1);
+
+    for (int i = 1; i <= N; ++i) {
+        fa[i] = i;
+        as[i] = {i};
+    }
+
+    while (Q--) {
+        int op, u, v;
+        cin >> op >> u >> v;
+        if (op == 1) {
+            merge(u, v);
+        } else {
+            int root = find(u);
+            if (v > as[root].size()) {
+                cout << -1 << '\n';
+            } else {
+                cout << as[root][v - 1] << '\n';
+            }
+        }
+    }
+
+    return 0;
+}
+```
+
+### Explanation
+1. **Union-Find with Path Compression**: The `find` function uses path compression to optimize future queries. This ensures that each subsequent call to `find` for the same element is faster.
+2. **Merging Sorted Lists**: The `merge` function combines the sorted lists of two components into a single list, sorted in descending order. It then truncates the merged list to keep only the top 10 elements, which is sufficient for answering any Type 2 query since k is at most 10.
+3. **Efficiency**: By maintaining only the top 10 elements in each component's list, the solution ensures that each merge operation is efficient (O(10 log 10) due to merging two small sorted lists), making the overall complexity manageable even for large inputs (up to 200,000 queries).
+4. **Handling Queries**: For Type 1 queries, the code merges the components of the specified vertices. For Type 2 queries, it checks the size of the component's list to determine if the k-th largest element exists and outputs it or -1 if not.
+
+This approach efficiently handles the constraints and ensures that each query is processed in logarithmic time relative to the number of elements, making it suitable for large-scale inputs.

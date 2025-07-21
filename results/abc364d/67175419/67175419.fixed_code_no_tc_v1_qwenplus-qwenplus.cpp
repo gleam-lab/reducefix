@@ -1,0 +1,56 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+const int N = 1e5 + 5;
+
+int n, q;
+vector<long long> a;
+
+// Binary search to find k-th smallest distance
+long long query(long long b, int k) {
+    int left = 0, right = n - 1;
+    
+    // Find the insertion point using binary search
+    int pos = lower_bound(a.begin(), a.end(), b) - a.begin();
+    
+    // Use two pointers to find the k closest elements
+    int l = pos - 1, r = pos;
+    multiset<long long> distances;
+    
+    // Add initial candidates
+    for (int i = 0; i < k && (l >= 0 || r < n); ++i) {
+        if (r < n && (l < 0 || abs(a[r] - b) <= abs(a[l] - b))) {
+            distances.insert(abs(a[r] - b));
+            ++r;
+        } else {
+            distances.insert(abs(a[l] - b));
+            --l;
+        }
+    }
+    
+    return *distances.rbegin(); // Return k-th smallest distance
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+    cout.tie(0);
+    
+    cin >> n >> q;
+    a.resize(n);
+    for (int i = 0; i < n; ++i) {
+        cin >> a[i];
+    }
+    sort(a.begin(), a.end());
+    
+    vector<pair<long long, int>> queries(q);
+    for (int i = 0; i < q; ++i) {
+        cin >> queries[i].first >> queries[i].second;
+    }
+    
+    for (auto &[b, k] : queries) {
+        cout << query(b, k) << "\n";
+    }
+    
+    return 0;
+}

@@ -1,0 +1,87 @@
+To fix this code, we need to address the issue where the path weight calculation incorrectly includes the vertex weight of the destination vertex in the edge weight. The original problem defines the path weight as the sum of the weights of the vertices and edges that appear on the path. However, the current implementation adds the vertex weight of the destination vertex to the edge weight, which is incorrect because the destination vertex's weight should only be included once when it is reached.
+
+### Approaches
+1. **Problem Analysis**: The graph is connected and undirected, and each vertex and edge has a weight. The path weight is the sum of the weights of the vertices and edges along the path.
+2. **Key Insight**: The correct path weight should include:
+   - The weight of the starting vertex (vertex 1).
+   - The weights of all intermediate vertices and edges.
+   - The weight of the destination vertex only once when it is reached.
+3. **Algorithm Selection**: Dijkstra's algorithm is suitable here because it efficiently finds the shortest path in a graph with non-negative edge weights.
+4. **Implementation Details**: 
+   - Initialize the distance from vertex 1 to itself as `A_1` (since vertex 1 is part of the path).
+   - For each edge between vertices `u` and `v`, the edge weight should be `B_j + A_u + A_v` because moving from `u` to `v` includes both vertices' weights and the edge weight.
+   - Use a priority queue to implement Dijkstra's algorithm, ensuring that we always process the vertex with the current minimum distance.
+
+### Solution Code
+```cpp
+#include <iostream>
+#include <vector>
+#include <queue>
+#include <algorithm>
+#include <climits>
+using namespace std;
+typedef long long ll;
+
+const ll INF = LLONG_MAX;
+
+void solve() {
+    int n, m;
+    cin >> n >> m;
+
+    vector<ll> A(n);
+    for (ll &i : A) cin >> i;
+
+    vector<vector<pair<int, ll>>> adj(n);
+
+    for (int i = 0; i < m; i++) {
+        int u, v;
+        ll b;
+        cin >> u >> v >> b;
+        u--, v--;
+        adj[u].push_back({v, b + A[u] + A[v]});
+        adj[v].push_back({u, b + A[u] + A[v]});
+    }
+
+    vector<ll> dist(n, INF);
+    dist[0] = 0;  // The path starts at vertex 1, which has weight A[0]
+
+    priority_queue<pair<ll, int>, vector<pair<ll, int>>, greater<pair<ll, int>>> pq;
+    pq.push({0, 0});
+
+    while (!pq.empty()) {
+        auto [current_dist, u] = pq.top();
+        pq.pop();
+
+        if (current_dist > dist[u]) continue;
+
+        for (auto [v, weight] : adj[u]) {
+            if (dist[v] > dist[u] + weight) {
+                dist[v] = dist[u] + weight;
+                pq.push({dist[v], v});
+            }
+        }
+    }
+
+    for (int i = 1; i < n; i++) {
+        cout << dist[i] << (i == n - 1 ? "\n" : " ");
+    }
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    solve();
+
+    return 0;
+}
+```
+
+### Explanation
+1. **Initialization**: The distance array `dist` is initialized to `INF`, except for the starting vertex (vertex 1), which is set to `0` because the path starts here.
+2. **Priority Queue**: The priority queue is used to process vertices in order of increasing distance from the starting vertex.
+3. **Edge Processing**: For each edge between vertices `u` and `v`, the weight is set to `B_j + A_u + A_v`, which includes the edge weight and the weights of both vertices.
+4. **Relaxation**: For each vertex processed, the algorithm checks all adjacent vertices to see if the path through the current vertex offers a shorter distance. If so, the distance is updated, and the vertex is added to the priority queue.
+5. **Output**: The distances from vertex 1 to all other vertices are printed for `i=2,3,…,N`.
+
+This approach ensures that the path weight is correctly calculated by including the weights of all vertices and edges along the path exactly once, providing the correct minimum path weights for all vertices from vertex 1.

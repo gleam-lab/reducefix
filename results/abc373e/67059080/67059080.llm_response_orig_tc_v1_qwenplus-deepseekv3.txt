@@ -1,0 +1,294 @@
+To fix this code, we need to ensure that the algorithm correctly calculates the minimum number of additional votes each candidate needs to guarantee their victory, considering all possible scenarios of vote distribution among the remaining candidates. The original code had several issues, including incorrect binary search implementation and improper handling of vote distribution.
+
+### Approaches
+1. **Sort Candidates**: First, sort the candidates based on their current votes. This helps in efficiently determining the number of candidates that could potentially have more votes than the current candidate after additional votes are allocated.
+2. **Binary Search for Minimum Votes**: For each candidate, perform a binary search to determine the minimum number of additional votes they need such that no more than `M-1` candidates can surpass their total votes, even if all remaining votes are optimally distributed to those candidates.
+3. **Check Feasibility**: For each candidate, after allocating `X` additional votes, check if the remaining votes can be distributed in a way that allows no more than `M-1` candidates to surpass the candidate's total votes. This involves calculating the required votes for other candidates and ensuring the sum does not exceed the remaining votes.
+
+### Solution Code
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+
+int main() {
+    std::ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int N, M;
+    ll K;
+    cin >> N >> M >> K;
+
+    vector<ll> A(N);
+    for (int i = 0; i < N; ++i) {
+        cin >> A[i];
+    }
+
+    vector<ll> sortedA = A;
+    sort(sortedA.begin(), sortedA.end());
+
+    vector<ll> prefix(N + 1, 0);
+    for (int i = 0; i < N; ++i) {
+        prefix[i + 1] = prefix[i] + sortedA[i];
+    }
+
+    ll remaining = K - prefix[N];
+    vector<ll> res(N);
+
+    for (int i = 0; i < N; ++i) {
+        ll low = 0, high = remaining;
+        ll ans = -1;
+        while (low <= high) {
+            ll mid = low + (high - low) / 2;
+            ll total = A[i] + mid;
+            int idx = upper_bound(sortedA.begin(), sortedA.end(), total) - sortedA.begin();
+            int cnt = N - idx;
+            if (cnt < M) {
+                ans = mid;
+                high = mid - 1;
+            } else {
+                low = mid + 1;
+            }
+        }
+        if (ans != -1) {
+            ll total = A[i] + ans;
+            int idx = upper_bound(sortedA.begin(), sortedA.end(), total) - sortedA.begin();
+            vector<ll> temp = sortedA;
+            temp.push_back(total);
+            sort(temp.begin(), temp.end());
+            int pos = lower_bound(temp.begin(), temp.end(), total) - temp.begin();
+            ll sum_lower = 0;
+            for (int j = 0; j < pos; ++j) {
+                sum_lower += temp[j];
+            }
+            ll needed = total * (N - pos) - (prefix[N] - prefix[pos] + (temp[pos] == total ? 0 : sortedA[pos]));
+            if (needed <= remaining - ans) {
+                res[i] = ans;
+            } else {
+                res[i] = -1;
+            }
+        } else {
+            res[i] = -1;
+        }
+    }
+
+    for (int i = 0; i < N; ++i) {
+        cout << res[i] << " ";
+    }
+
+    return 0;
+}
+```
+
+Wait, the above might still have some issues, especially with the calculation of `needed`. Let's refine it further:
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+
+int main() {
+    std::ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int N, M;
+    ll K;
+    cin >> N >> M >> K;
+
+    vector<ll> A(N);
+    for (int i = 0; i < N; ++i) {
+        cin >> A[i];
+    }
+
+    vector<ll> sortedA = A;
+    sort(sortedA.begin(), sortedA.end());
+
+    vector<ll> prefix(N + 1, 0);
+    for (int i = 0; i < N; ++i) {
+        prefix[i + 1] = prefix[i] + sortedA[i];
+    }
+
+    ll remaining = K - prefix[N];
+    vector<ll> res(N, -1);
+
+    for (int i = 0; i < N; ++i) {
+        ll low = 0, high = remaining;
+        ll ans = -1;
+        while (low <= high) {
+            ll mid = low + (high - low) / 2;
+            ll total_i = A[i] + mid;
+            int idx = upper_bound(sortedA.begin(), sortedA.end(), total_i) - sortedA.begin();
+            int cnt = N - idx;
+            if (cnt < M) {
+                // Check if the remaining votes can be distributed to ensure at most M-1 candidates exceed total_i
+                ll required = 0;
+                int start = idx;
+                int end = N - 1;
+                int possible = M - 1;
+                int left = N - start;
+                if (left <= possible) {
+                    ans = mid;
+                    high = mid - 1;
+                } else {
+                    // The remaining (left - possible) candidates need to be kept at or below total_i
+                    // We need to assign votes to these candidates so that their votes become total_i
+                    int num_additional = left - possible;
+                    ll sum_extra = total_i * num_additional - (prefix[N] - prefix[N - num_additional]);
+                    if (sum_extra <= remaining - mid) {
+                        ans = mid;
+                        high = mid - 1;
+                    } else {
+                        low = mid + 1;
+                    }
+                }
+            } else {
+                low = mid + 1;
+            }
+        }
+        res[i] = ans;
+    }
+
+    for (int i = 0; i < N; ++i) {
+        cout << res[i] << " ";
+    }
+
+    return 0;
+}
+```
+
+Wait, this might still not handle some cases correctly. Let's try another approach where we calculate for each candidate the minimal votes needed to ensure that no more than M-1 candidates can surpass them, even if all remaining votes are given to those candidates.
+
+Here's the correct approach:
+
+1. Sort the array of votes.
+2. For each candidate, determine the minimal `X` such that if they receive `X` additional votes, at most `M-1` candidates can have more votes even if the remaining votes are used to maximize those candidates' votes.
+3. This involves finding the `X` where the candidate's new vote count `A[i] + X` is at least the `(N - M + 1)`-th smallest possible vote after redistribution.
+
+The final code:
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+
+int main() {
+    std::ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int N, M;
+    ll K;
+    cin >> N >> M >> K;
+
+    vector<ll> A(N);
+    for (int i = 0; i < N; ++i) {
+        cin >> A[i];
+    }
+
+    vector<ll> sortedA = A;
+    sort(sortedA.begin(), sortedA.end());
+
+    vector<ll> prefix(N + 1, 0);
+    for (int i = 0; i < N; ++i) {
+        prefix[i + 1] = prefix[i] + sortedA[i];
+    }
+
+    ll remaining = K - prefix[N];
+    vector<ll> res(N, -1);
+
+    for (int i = 0; i < N; ++i) {
+        ll low = 0, high = remaining;
+        ll ans = -1;
+        while (low <= high) {
+            ll mid = low + (high - low) / 2;
+            ll total_i = A[i] + mid;
+            // Find how many original elements are > total_i - (potential votes added to them)
+            // The worst case is when all remaining votes (except mid) are used to make as many as possible > total_i
+            // So, the votes added to others is (remaining - mid)
+            // To maximize the number of elements > total_i, we should give as much as possible to the largest elements first.
+            
+            // The idea is to find the largest M-1 elements and see if they can be made > total_i with (remaining - mid) votes.
+
+            // The minimal number of candidates that can be made > total_i is the number of candidates that can be lifted to > total_i with (remaining - mid) votes.
+            // We need this number to be <= M-1.
+
+            // The approach:
+            // The candidates that can potentially be > total_i are those with original A[j] > total_i - x, where x is the votes they receive.
+            // But to maximize the number, we should give the minimal votes to as many candidates as possible to lift them just above total_i.
+            // So, the number is the maximum k such that the sum of (total_i + 1 - A[j]) for the top k candidates (A[j] < total_i + 1) is <= (remaining - mid).
+
+            // So, we can binary search for k:
+            // For a given k, we want to choose the k candidates with the largest A[j] < total_i + 1, and the sum of (total_i + 1 - A[j]) for them <= (remaining - mid).
+
+            // But calculating this is expensive. Instead, we can calculate the minimal X such that after giving X to candidate i, the votes left can't make M candidates exceed total_i.
+
+            // Alternative approach:
+            // The candidate's new vote is total_i = A[i] + mid.
+            // The worst case is when the remaining (remaining - mid) votes are used to make (M-1) candidates exceed total_i.
+            // Thus, we need to check if it's possible for M candidates (including some others) to exceed total_i if we distribute (remaining - mid) votes.
+
+            // So, the number of candidates that can be made > total_i is the number of candidates with A[j] > total_i - x, where x is the votes they receive. To maximize this number, distribute votes to candidates with original A[j] as large as possible, and give each just enough to exceed total_i.
+
+            // So, it's equivalent to: the maximum number of candidates that can be made > total_i is the number of candidates where A[j] + x_j > total_i, with sum x_j <= (remaining - mid).
+
+            // The maximum number is the number of candidates where A[j] + (total_i + 1 - A[j]) <= total_i + (remaining - mid) / k, etc.
+
+            // Or, more precisely, the maximum k is such that sum_{j=1 to k} (total_i + 1 - A[j]) <= (remaining - mid), where A[j] are the k largest candidates currently <= total_i.
+
+            // So, we can binary search for k: the largest k such that sum_{j=1 to k} (total_i + 1 - A_j') <= (remaining - mid), where A_j' are the k largest original votes <= total_i.
+
+            // But computing this for each mid is expensive. Instead, we can precompute the sorted array and use prefix sums.
+
+            // So, the approach is to find the minimal X such that when candidate i has A[i] + X, then the remaining votes (K - original_sum - X) can't be used to make M candidates exceed A[i] + X.
+
+            // To implement this, we can binary search X for each i:
+            // For a given X, check if the remaining votes (remaining - X) can be used to make M candidates exceed A[i] + X.
+
+            // If not, then X is a candidate answer, and we try smaller X.
+            // Otherwise, try larger X.
+
+            // To check if the remaining votes can make M candidates exceed A[i] + X:
+            // The worst case is to pick the M largest original candidates (excluding i) and give them votes to make them exceed A[i] + X.
+            // So, the sum of (A[i] + X + 1 - A[j]) for these M candidates must be <= remaining - X. If true, then it's possible to have M candidates exceed A[i] + X.
+
+            // So, the check is: sum_{j=0}^{M-1} max(0, total_i + 1 - B[j]) <= remaining - mid, where B are the M largest candidates not including i (or including i, but i's new vote is total_i).
+
+            // So:
+            // Create a list B of all candidates except i, then take the M largest, and compute the sum of max(0, total_i + 1 - B[j]) for these M candidates. If this sum <= remaining - mid, then it's possible to have M candidates exceed total_i.
+
+            // So, for each i, we need to:
+            // 1. Create a list of all other candidates.
+            // 2. Sort them in descending order.
+            // 3. Take the first M candidates and compute the sum of max(0, total_i + 1 - B[j}).
+
+            vector<ll> others;
+            for (int j = 0; j < N; ++j) {
+                if (j != i) {
+                    others.push_back(A[j]);
+                }
+            }
+            sort(others.rbegin(), others.rend());
+            ll sum_needed = 0;
+            for (int j = 0; j < M && j < others.size(); ++j) {
+                if (others[j] < total_i + 1) {
+                    sum_needed += (total_i + 1 - others[j]);
+                }
+            }
+            if (sum_needed <= remaining - mid) {
+                low = mid + 1;
+            } else {
+                ans = mid;
+                high = mid - 1;
+            }
+        }
+        res[i] = ans;
+    }
+
+    for (int i = 0; i < N; ++i) {
+        cout << res[i] << " ";
+    }
+
+    return 0;
+}
+```
+
+This code should now correctly compute the minimal number of additional votes each candidate needs to guarantee their victory under the given constraints. The key improvements include properly handling the redistribution of remaining votes to other candidates and ensuring that the binary search correctly identifies the minimal required votes for each candidate.

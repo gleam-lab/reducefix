@@ -1,0 +1,89 @@
+#include <bits/stdc++.h>
+#define int long long
+
+using namespace std;
+
+void solve() {
+    int n, m;
+    cin >> n >> m;
+
+    set<int> rows, cols;
+    set<int> diag1, diag2; // diag1: i+j, diag2: i-j
+
+    for (int i = 0; i < m; ++i) {
+        int r, c;
+        cin >> r >> c;
+        rows.insert(r);
+        cols.insert(c);
+        diag1.insert(r + c);
+        diag2.insert(r - c);
+    }
+
+    // First subtract all squares attacked by row and column
+    int ans = (n - rows.size()) * (n - cols.size());
+
+    // Subtract overcounted cells on diagonal1 (i+j=d)
+    for (int d : diag1) {
+        int min_ij = max(1LL, d - n);
+        int max_ij = min(n, d - 1);
+        int diag_len = max(0LL, max_ij - min_ij + 1);
+
+        // Count how many of these are already excluded due to occupied rows or columns
+        int overlap_count = 0;
+        for (int r : rows) {
+            int c = d - r;
+            if (c >= 1 && c <= n) {
+                ++overlap_count;
+            }
+        }
+
+        for (int c : cols) {
+            int r = d - c;
+            if (r >= 1 && r <= n && !rows.count(r)) {
+                ++overlap_count;
+            }
+        }
+
+        ans -= (diag_len - overlap_count);
+    }
+
+    // Subtract overcounted cells on diagonal2 (i-j=d)
+    for (int d : diag2) {
+        int min_ij = max(1LL, 1 + d);
+        int max_ij = min(n, n + d);
+        int diag_len = max(0LL, max_ij - min_ij + 1);
+
+        // Count how many of these are already excluded due to occupied rows or columns
+        int overlap_count = 0;
+        for (int r : rows) {
+            int c = r - d;
+            if (c >= 1 && c <= n) {
+                ++overlap_count;
+            }
+        }
+
+        for (int c : cols) {
+            int r = d + c;
+            if (r >= 1 && r <= n && !rows.count(r)) {
+                ++overlap_count;
+            }
+        }
+
+        ans -= (diag_len - overlap_count);
+    }
+
+    cout << ans << '\n';
+}
+
+signed main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t = 1;
+    // cin >> t;
+    while (t--) {
+        solve();
+    }
+
+    return 0;
+}

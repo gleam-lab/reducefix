@@ -1,0 +1,41 @@
+#include<bits/stdc++.h>
+using namespace std;
+
+int main() {
+    int n;
+    cin >> n;
+    cin >> (s + 1);  // Read string starting from index 1 to avoid null terminator issues
+
+    // First pass: Convert all 'P' to 'S' and 'R' to 'P', and count consecutive same characters
+    for (int i = 1; i <= n; i++) {
+        c[i] = (s[i] == 'P') ? 'S' : ((s[i] == 'R') ? 'P' : 'R');
+    }
+    
+    int ans = 0, sum = n;  // sum keeps track of the number of characters that are still 'R'
+    for (int i = 2; i <= n; i++) {
+        if (c[i] == c[i - 1]) {
+            c[i] = s[i];  // Restore the original character
+            sum--;
+        }
+    }
+    ans = max(ans, sum);
+
+    // Second pass: Convert all 'P' to 'S' and 'R' to 'P' again (for the case when s[1] != s[2])
+    for (int i = 1; i <= n; i++) {
+        c[i] = (s[i] == 'P') ? 'S' : ((s[i] == 'R') ? 'P' : 'R');
+    }
+    
+    if (s[1] != s[2]) {
+        sum = n;  // Reset sum for the second pass
+        for (int i = 1; i <= n; i++) {
+            if (c[i] == c[i - 1]) {
+                c[i] = s[i];  // Restore the original character
+                sum--;
+            }
+        }
+    }
+    ans = max(ans, sum);
+
+    cout << ans << endl;
+    return 0;
+}

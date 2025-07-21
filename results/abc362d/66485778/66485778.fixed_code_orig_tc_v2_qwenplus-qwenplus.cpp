@@ -1,0 +1,57 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+using i64 = long long;
+using pii = pair<int, int>;
+using pci = pair<long long, int>;
+
+constexpr int N = 2 * 1e5 + 10;
+vector<vector<pci>> g(N);
+const long long INF = 1e18;
+
+void solve() {
+    int n, m;
+    cin >> n >> m;
+    vector<long long> A(n + 1);
+    for (int i = 1; i <= n; ++i) {
+        cin >> A[i];
+    }
+
+    for (int i = 0; i < m; ++i) {
+        int u, v;
+        long long w;
+        cin >> u >> v >> w;
+        g[u].push_back({v, w});
+        g[v].push_back({u, w});
+    }
+
+    priority_queue<pci, vector<pci>, greater<pci>> pq;
+    vector<long long> dist(n + 1, INF);
+
+    dist[1] = A[1];
+    pq.push({dist[1], 1});
+
+    while (!pq.empty()) {
+        auto [d, u] = pq.top();
+        pq.pop();
+        if (d > dist[u]) continue;
+        for (auto &[v, cost] : g[u]) {
+            if (dist[v] > d + cost + A[v]) {
+                dist[v] = d + cost + A[v];
+                pq.push({dist[v], v});
+            }
+        }
+    }
+
+    for (int i = 2; i <= n; ++i) {
+        cout << dist[i] << " ";
+    }
+    cout << endl;
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+    solve();
+    return 0;
+}

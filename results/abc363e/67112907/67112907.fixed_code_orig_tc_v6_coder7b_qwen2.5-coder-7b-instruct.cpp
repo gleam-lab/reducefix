@@ -1,0 +1,44 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios_base::sync_with_stdio(false); cin.tie(0);
+
+    int h, w, y; cin >> h >> w >> y;
+    vector<vector<int>> a(h, vector<int>(w));
+    for(int i = 0; i < h; ++i) for(int j = 0; j < w; ++j) cin >> a[i][j];
+
+    vector<pair<int, pair<int, int>>> v;
+    for(int i = 0; i < h; ++i) for(int j = 0; j < w; ++j) v.emplace_back(a[i][j], make_pair(i, j));
+
+    sort(v.begin(), v.end());
+    auto it = v.begin();
+
+    while(y--) {
+        int mh = it->first;
+        vector<vector<bool>> seen(h, vector<bool>(w));
+        queue<pair<int, int>> q;
+        for(; it != v.end() && it->first <= mh; ++it) {
+            int i = it->second.first, j = it->second.second;
+            if(seen[i][j]) continue;
+            seen[i][j] = true;
+            q.push(make_pair(i, j));
+        }
+        while(!q.empty()) {
+            int i = q.front().first, j = q.front().second;
+            q.pop();
+            for(int k = 0; k < 4; ++k) {
+                int ii = i + d[k][0], jj = j + d[k][1];
+                if(ii < 0 || ii >= h || jj < 0 || jj >= w) continue;
+                if(seen[ii][jj]) continue;
+                seen[ii][jj] = true;
+                q.push(make_pair(ii, jj));
+            }
+        }
+        int res = 0;
+        for(int i = 0; i < h; ++i) for(int j = 0; j < w; ++j) if(!seen[i][j]) ++res;
+        cout << res << '\n';
+    }
+
+    return 0;
+}

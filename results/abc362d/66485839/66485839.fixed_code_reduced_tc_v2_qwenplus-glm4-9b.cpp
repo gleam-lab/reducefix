@@ -1,0 +1,94 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+#define int long long
+using vi = vector<int>;
+
+struct DSU {
+    vector<int> parent, rank, size;
+
+    DSU(int n) : parent(n), rank(n, 0), size(n, 1) {
+        iota(parent.begin(), parent.end(), 0);
+    }
+
+    int find(int x) {
+        if (parent[x] != x) {
+            parent[x] = find(parent[x]);
+        }
+        return parent[x];
+    }
+
+    void unite(int x, int y) {
+        int rootX = find(x);
+        int rootY = find(y);
+        if (rootX != rootY) {
+            if (rank[rootX] > rank[rootY]) {
+                parent[rootY] = rootX;
+                size[rootX] += size[rootY];
+            } else if (rank[rootX] < rank[rootY]) {
+                parent[rootX] = rootY;
+                size[rootY] += size[rootX];
+            } else {
+                parent[rootY] = rootX;
+                size[rootX] += size[rootY];
+                rank[rootX]++;
+            }
+        }
+    }
+
+    long long getSize(int x) {
+        return size[find(x)];
+    }
+};
+
+int N, M;
+vi A;
+vector<pair<vi, vi>> edges;
+
+int main() {
+    cin >> N >> M;
+    A.resize(N + 1);
+    for (int i = 1; i <= N; ++i) {
+        cin >> A[i];
+    }
+
+    for (int i = 0; i < M; ++i) {
+        vi u, v, b;
+        cin >> u >> v >> b;
+        edges.emplace_back({u, v}, {b});
+    }
+
+    sort(edges.begin(), edges.end(), [&](const pair<vi, vi>& a, const pair<vi, vi>& b) {
+        if (a.second[0] == b.second[0]) {
+            return a.first[0] < b.first[0];
+        }
+        return a.second[0] < b.second[0];
+    });
+
+    DSU dsu(N + 1);
+    vector<long long> dist(N + 1, LLONG_MAX);
+    dist[1] = A[1];
+
+    for (const auto& edge : edges) {
+        vi u = edge.first[0], v = edge.first[1];
+        long long b = edge.second[0];
+
+        for (int i = 0; i < 2; ++i) {
+            int node = u[i];
+            if (!dsu.same(node, v[i])) {
+                dsu.unite(node, v[i]);
+                long long new_dist = dist[node] + b + A[v[i]];
+                if (new_dist < dist[v[i]]) {
+                    dist[v[i]] = new_dist;
+                }
+            }
+        }
+    }
+
+    for (int i = 2; i <= N; ++i) {
+        cout << dist[i] << " ";
+    }
+    cout << endl;
+
+    return 0;
+}

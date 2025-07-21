@@ -1,0 +1,62 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+#define int long long
+
+const int INF = 1e18;
+vector<pair<int, int>> G[200005]; // Adjacency list: {neighbor, edge weight}
+int A[200005]; // Vertex weights
+int dis[200005]; // Shortest path distances
+bool vis[200005]; // Visited array
+
+void dijkstra(int start, int N) {
+    priority_queue<pair<int, int>, vector<pair<int, int>>, greater<pair<int, int>>> pq;
+    dis[start] = A[start]; // Starting node's cost is its own vertex weight
+    pq.push({dis[start], start});
+
+    while (!pq.empty()) {
+        int u = pq.top().second;
+        pq.pop();
+
+        if (vis[u]) continue;
+        vis[u] = true;
+
+        for (auto& [v, w] : G[u]) {
+            // Cost to reach v through u is current path to u + edge weight + destination vertex weight
+            int new_cost = dis[u] + w + A[v];
+            if (new_cost < dis[v]) {
+                dis[v] = new_cost;
+                pq.push({dis[v], v});
+            }
+        }
+    }
+}
+
+signed main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+
+    int N, M;
+    cin >> N >> M;
+
+    for (int i = 1; i <= N; ++i) {
+        cin >> A[i];
+        dis[i] = INF;
+    }
+
+    for (int i = 1; i <= M; ++i) {
+        int u, v, w;
+        cin >> u >> v >> w;
+        G[u].push_back({v, w});
+        G[v].push_back({u, w});
+    }
+
+    dijkstra(1, N);
+
+    for (int i = 2; i <= N; ++i) {
+        cout << dis[i] << " ";
+    }
+    cout << endl;
+
+    return 0;
+}

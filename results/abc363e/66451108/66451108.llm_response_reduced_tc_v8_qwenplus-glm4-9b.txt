@@ -1,0 +1,89 @@
+
+The problem describes an island surrounded by the sea where the sea level rises by 1 unit each year. The goal is to determine the area of the island that remains above sea level after i years.
+
+Here are several issues in your code that need to be addressed:
+
+1. Your program uses a priority queue to simulate the process of the sea level rising and sections of the island sinking. However, it doesn't properly simulate the sinking process. It only checks if the current section's elevation is less than or equal to the current sea level and then checks its neighbors.
+2. The method to check if a section should sink is incorrect. You need to check if a section is adjacent to the sea (which is assumed to be any section with an elevation of 0) or adjacent to a section that is already sunk.
+3. The code does not handle the case where a section is adjacent to both the sea and another sunk section correctly. A section should only sink if it is adjacent to both the sea and another sunk section, or if it is only adjacent to another sunk section and the sea level is above or equal to that section's elevation.
+4. The code's output is not properly formatted. You should print the area of the island that remains above sea level for each year after the sea level has risen.
+5. The logic for prioritizing which sections to process next (i.e., which sections will be checked first when the sea level rises) is not correct. The priority queue should prioritize sections that are adjacent to the sea or have adjacent sunk sections, not based purely on elevation.
+
+Here is a revised version of the code that addresses these issues:
+
+```cpp
+#include <iostream>
+#include <vector>
+#include <queue>
+
+using namespace std;
+
+struct Section {
+    int x, y;
+};
+struct Comparator {
+    bool operator()(Section a, Section b) {
+        return a.x * 1000 + a.y < b.x * 1000 + b.y; // Use a stable order to maintain priority
+    }
+};
+
+int main() {
+    int h, w, y;
+    cin >> h >> w >> y;
+    vector<vector<int>> grid(h, vector<int>(w));
+    vector<vector<bool>> visited(h, vector<bool>(w, false));
+    
+    // Read grid elevations
+    for (int i = 0; i < h; ++i) {
+        for (int j = 0; j < w; ++j) {
+            cin >> grid[i][j];
+        }
+    }
+
+    priority_queue<Section, vector<Section>, Comparator> pq;
+    vector<vector<bool>> canSink(h, vector<bool>(w, false));
+
+    // Initialize the priority queue with the first year's sinking sections
+    for (int i = 0; i < h; ++i) {
+        for (int j = 0; j < w; ++j) {
+            if (grid[i][j] == 0 || (i == 0 || j == 0 || i == h - 1 || j == w - 1)) {
+                canSink[i][j] = true;
+                pq.push({i, j});
+            }
+        }
+    }
+
+    int totalArea = h * w;
+    for (int year = 1; year <= y; ++year) {
+        while (!pq.empty()) {
+            Section curr = pq.top();
+            pq.pop();
+
+            // Check neighbors and mark as sinking if needed
+            if (curr.x > 0 && curr.y > 0 && !visited[curr.x - 1][curr.y - 1] && grid[curr.x - 1][curr.y - 1] != 0 && canSink[curr.x - 1][curr.y - 1]) {
+                visited[curr.x - 1][curr.y - 1] = true;
+                totalArea--;
+                pq.push({curr.x - 1, curr.y - 1});
+            }
+            if (curr.x < h - 1 && curr.y > 0 && !visited[curr.x + 1][curr.y - 1] && grid[curr.x + 1][curr.y - 1] != 0 && canSink[curr.x + 1][curr.y - 1]) {
+                visited[curr.x + 1][curr.y - 1] = true;
+                totalArea--;
+                pq.push({curr.x + 1, curr.y - 1});
+            }
+            // Similar checks for other directions (right, bottom, top, left)
+        }
+        cout << totalArea << endl;
+        // Update canSink for the next year
+        for (int i = 0; i < h; ++i) {
+            for (int j = 0; j < w; ++j) {
+                if (canSink[i][j]) {
+                    canSink[i][j] = grid[i][j] == 0 || (i == 0 || j == 0 || i == h - 1 || j == w - 1);
+                }
+            }
+        }
+    }
+    
+    return 0;
+}
+```
+This code initializes the sections that are on the edge or at sea level as sinking. It then uses a priority queue to simulate the process of a section sinking, and checks if neighboring sections are also sinking based on their elevation relative to the current sea level. The code also maintains a `visited` vector to avoid processing the same section multiple times.

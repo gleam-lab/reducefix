@@ -1,0 +1,50 @@
+#include <iostream>
+#include <vector>
+#include <set>
+#include <tuple>
+#include <cmath>
+
+using namespace std;
+
+using i32 = int;
+using i64 = long long;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    i64 N;
+    i32 M;
+    cin >> N >> M;
+
+    vector<pair<i64, i64>> pieces(M);
+    set<pair<i64, i64>> attacked;
+
+    for (i32 i = 0; i < M; ++i) {
+        cin >> pieces[i].first >> pieces[i].second;
+    }
+
+    // Define the 8 possible attack positions relative to a piece
+    const vector<pair<i64, i64>> directions{
+        {2, 1}, {1, 2}, {-1, 2}, {-2, 1},
+        {-2, -1}, {-1, -2}, {1, -2}, {2, -1}
+    };
+
+    for (const auto& [x, y] : pieces) {
+        for (const auto& [dx, dy] : directions) {
+            i64 nx = x + dx;
+            i64 ny = y + dy;
+            if (1 <= nx && nx <= N && 1 <= ny && ny <= N) {
+                attacked.emplace(nx, ny);
+            }
+        }
+    }
+
+    // Subtract both the existing pieces and the attacked squares
+    i64 total_squares = N * N;
+    i64 taken = static_cast<i64>(attacked.size()) + M;
+
+    cout << (total_squares - taken) << '\n';
+
+    return 0;
+}

@@ -1,0 +1,37 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    int n, q;
+    cin >> n; // Number of patches
+    
+    // Patch data: x[i] represents patch i's value and p[i] represents patch i's patch number
+    for (int i = 1; i <= n; ++i) {
+        cin >> x[i]; // Patch value for patch i
+    }
+    
+    // Initialize the sum array with previous sum
+    for (int i = 0; i < n; ++i) {
+        sum[i] = sum[i - 1]; // Assuming the sum array is stored in an array or vector with proper bounds
+    }
+    
+    // Read the query size q and subsequent queries
+    cin >> q; // Number of queries
+    
+    // Process each query separately
+    while (q--) {
+        int l, r; // Patch indices for querying range
+        cin >> l >> r; // Querying range for patch indices
+        
+        // Calculate the difference between the patches in the query range
+        int diff = r - l + 1; // Assuming the patches are sorted in ascending order
+        
+        // Calculate the sum of patches in the range excluding the first patch (since it is not included in the query)
+        int sum_range = sum[diff - 1]; // Use proper bounds for sum array to avoid overflow or underflow
+        
+        // Output the result of the query, which is the difference between the sum of patches in the range and the previous sum
+        cout << sum_range - sum[l - 1] << endl; // Adjust the index accordingly if necessary
+    }
+    
+    return 0; // Return 0 to indicate successful completion of the program
+}

@@ -1,0 +1,58 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int n, k;
+    cin >> n >> k;
+    vector<int> a(n);
+    for (int i = 0; i < n; ++i) {
+        cin >> a[i];
+    }
+
+    int m = n - k; // length of the resulting array
+
+    // If we need to keep only one element, the diff is 0
+    if (m == 1) {
+        cout << 0 << '\n';
+        return 0;
+    }
+
+    vector<int> sorted_window;
+    for (int i = 0; i < m; ++i) {
+        sorted_window.push_back(a[i]);
+    }
+    sort(sorted_window.begin(), sorted_window.end());
+    long long min_diff = 1LL * sorted_window.back() - sorted_window.front();
+
+    // Slide the window over the array
+    for (int i = m; i < n; ++i) {
+        // Remove the element going out of the window
+        // Since we don't have the exact position, we use binary search
+        auto it = lower_bound(sorted_window.begin(), sorted_window.end(), a[i - m]);
+        if (it != sorted_window.end() && *it == a[i - m]) {
+            sorted_window.erase(it);
+        } else {
+            // This should never happen with correct logic
+            // Just in case, handle safely
+            for (auto jt = sorted_window.begin(); jt != sorted_window.end(); ++jt) {
+                if (*jt == a[i - m]) {
+                    sorted_window.erase(jt);
+                    break;
+                }
+            }
+        }
+
+        // Add the new element
+        it = lower_bound(sorted_window.begin(), sorted_window.end(), a[i]);
+        sorted_window.insert(it, a[i]);
+
+        // Update the minimum difference
+        min_diff = min(min_diff, 1LL * sorted_window.back() - sorted_window[0]);
+    }
+
+    cout << min_diff << '\n';
+    return 0;
+}

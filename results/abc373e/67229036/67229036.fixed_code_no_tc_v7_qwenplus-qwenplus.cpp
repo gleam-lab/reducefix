@@ -1,0 +1,73 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define int long long
+
+const int N = 2 * 100000 + 5;
+
+int n, m, k, a[N], sorted_a[N];
+
+// This function checks if candidate i can guarantee election with x additional votes
+bool is_possible(int i, int x) {
+    int remaining = k;
+    int my_votes = a[i] + x;
+
+    // We'll simulate assigning maximum possible votes to top (m-1) candidates
+    // and see if we can still beat the rest.
+
+    vector<int> others;
+    for (int j = 0; j < n; ++j) {
+        if (j == i) continue;
+        others.push_back(a[j]);
+    }
+    
+    sort(others.rbegin(), others.rend()); // descending order
+
+    // First M-1 candidates can have any number of votes, they're not competition
+    // For the next (n-m) candidates, we need to ensure our score is strictly greater
+    
+    int needed = 0;
+    for (int j = 0; j < n - m; ++j) {
+        if (my_votes > others[j]) continue;
+        needed += (others[j] - my_votes + 1);
+    }
+
+    return needed <= remaining;
+}
+
+signed main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    cin >> n >> m >> k;
+    for (int i = 0; i < n; ++i) {
+        cin >> a[i];
+    }
+
+    // Calculate total votes already assigned
+    int total_assigned = 0;
+    for (int i = 0; i < n; ++i) {
+        total_assigned += a[i];
+    }
+    k -= total_assigned;
+
+    // For each candidate, perform binary search on minimum required votes
+    for (int i = 0; i < n; ++i) {
+        int left = 0, right = k + 1;
+        while (left < right) {
+            int mid = (left + right) / 2;
+            if (is_possible(i, mid)) {
+                right = mid;
+            } else {
+                left = mid + 1;
+            }
+        }
+
+        if (left <= k) {
+            cout << left << " ";
+        } else {
+            cout << "-1 ";
+        }
+    }
+    
+    return 0;
+}

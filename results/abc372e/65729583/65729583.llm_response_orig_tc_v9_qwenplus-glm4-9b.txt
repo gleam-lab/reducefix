@@ -1,0 +1,80 @@
+
+The provided code seems to attempt to solve the problem using the Union-Find data structure with some additional features for managing the vertices connected by an edge. However, there are several issues and missing parts in the code that could explain why it's failing:
+
+1. **Union-Find Initialization**: The `U` array is initialized to store the parent of each node, but it's not used correctly in the `Find` and `Union` functions. The `U[u] = Find(U[u])` line is redundant since `Find` should return the root parent without modifying `U[u]`.
+
+2. **Edge Insertion**: The `Union` function tries to insert vertices from `V[v]` into `V[u]` if the size of `V[u]` is smaller, but it only inserts a limited number of vertices. This could cause a problem for queries that require accessing all connected vertices.
+
+3. **Connected Vertices Storage**: The `V` array is an attempt to store connected vertices, but it's using an `ordered_set` which might not be efficient for certain operations required by the problem, especially when managing large sets of vertices.
+
+4. **Query Handling**: The code does not handle type 2 queries correctly. It attempts to find the `k`-th largest vertex by using `find_by_order(k - 1)`, but it does not properly handle cases where the set size is smaller than `k`.
+
+5. **Missing Code**: The provided code has some debug messages and placeholders that are not implemented. These could be relevant for understanding the intended logic but are not used in the final solution.
+
+To address these issues, here is a more accurate implementation:
+
+```cpp
+#include <iostream>
+#include <vector>
+#include <set>
+
+using namespace std;
+
+const int N = 200000 + 1;
+
+vector<int> parents(N);
+vector<vector<int>> children(N);
+
+void findParent(int u) {
+    if (parents[u] == u)
+        return;
+    findParent(parents[u]);
+    parents[u] = parents[parents[u]];
+}
+
+void addEdge(int u, int v) {
+    findParent(u);
+    findParent(v);
+    if (u != v) {
+        children[parents[u]].push_back(v);
+        children[parents[v]].push_back(u);
+    }
+}
+
+vector<int> getConnectedVertices(int v) {
+    vector<int> result;
+    findParent(v);
+    for (int child : children[parents[v]])
+        result.push_back(child);
+    return result;
+}
+
+int main() {
+    int n, q;
+    cin >> n >> q;
+    for (int i = 1; i <= n; ++i)
+        parents[i] = i;
+
+    for (int i = 0; i < q; ++i) {
+        int type;
+        cin >> type;
+        if (type == 1) {
+            int u, v;
+            cin >> u >> v;
+            addEdge(u, v);
+        } else if (type == 2) {
+            int v, k;
+            cin >> v >> k;
+            vector<int> connected = getConnectedVertices(v);
+            if (k > connected.size()) {
+                cout << -1 << endl;
+            } else {
+                cout << connected[connected.size() - k] << endl;
+            }
+        }
+    }
+    return 0;
+}
+```
+
+This code uses a simpler approach with the Union-Find data structure and a vector to store the children of each node. The `getConnectedVertices` function retrieves all connected vertices for a given node and handles queries accordingly.

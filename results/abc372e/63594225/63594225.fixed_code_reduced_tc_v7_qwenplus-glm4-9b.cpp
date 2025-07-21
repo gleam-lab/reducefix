@@ -1,0 +1,65 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+
+using namespace std;
+
+#define MAX_N 200005
+
+vector<int> parent(MAX_N);
+vector<int> size(MAX_N);
+vector<vector<int>> adjList(MAX_N);
+
+void init(int n) {
+    fill(parent.begin(), parent.end(), -1);
+    fill(size.begin(), size.end(), 0);
+}
+
+void unionSets(int u, int v) {
+    int rootU = find(u);
+    int rootV = find(v);
+
+    if (rootU != rootV) {
+        if (size[rootU] > size[rootV]) {
+            parent[rootV] = rootU;
+            size[rootU] += size[rootV];
+        } else {
+            parent[rootU] = rootV;
+            size[rootV] += size[rootU];
+        }
+        adjList[rootU].insert(adjList[rootV].end(), adjList[rootV].begin(), adjList[rootV].end());
+    }
+}
+
+int find(int u) {
+    if (parent[u] == -1) return u;
+    parent[u] = find(parent[u]);
+    return parent[u];
+}
+
+int main() {
+    int n, q;
+    cin >> n >> q;
+
+    init(n);
+
+    while (q--) {
+        int type, u, v;
+        cin >> type >> u >> v;
+
+        if (type == 1) {
+            unionSets(u, v);
+        } else {
+            int rootV = find(v);
+            int k;
+            cin >> k;
+            sort(adjList[rootV].begin(), adjList[rootV].end());
+            if (k > size[rootV])
+                cout << -1 << '\n';
+            else
+                cout << adjList[rootV][k - 1] << '\n';
+        }
+    }
+
+    return 0;
+}

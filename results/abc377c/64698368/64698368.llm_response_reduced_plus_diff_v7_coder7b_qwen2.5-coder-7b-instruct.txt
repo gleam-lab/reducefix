@@ -1,0 +1,88 @@
+To fix the issue, we need to ensure that our solution correctly handles large inputs within the given constraints. The problem involves determining which positions on an \(N \times N\) grid are safe to place a piece, avoiding positions that can be captured by already placed pieces.
+
+The key insight is to use a bitmask to represent the state of each cell's neighbors and check whether placing a piece there would result in capturing any existing pieces. This approach ensures that we efficiently handle the constraints and avoid hard-coding specific values.
+
+Here's the corrected C++ code:
+
+```cpp
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <bitset>
+
+using namespace std;
+
+const int MAX_N = 1000000000;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    long long N, M;
+    cin >> N >> M;
+
+    // Directions for capturing pieces
+    vector<pair<int, int>> directions = {
+        {2, 1}, {1, 2}, {-1, 2}, {-2, 1}, {-2, -1}, {-1, -2}, {1, -2}, {2, -1}
+    };
+
+    vector<vector<bool>> board(N, vector<bool>(N));
+    for (long long i = 0; i < M; ++i) {
+        long long x, y;
+        cin >> x >> y;
+        --x, --y; // Convert to zero-based index
+        board[x][y] = true;
+    }
+
+    vector<long long> dp(1LL << 8, 0);
+    dp[0] = 1;
+
+    for (int dir = 0; dir < 8; ++dir) {
+        vector<long long> ndp(1LL << 8, 0);
+        for (int state = 0; state < (1LL << 8); ++state) {
+            if (dp[state] == 0) continue;
+            bool valid = true;
+            for (int d = 0; d < 8; ++d) {
+                int next_state = state;
+                for (int step = 1; ; ++step) {
+                    int nx = step * directions[d].first + directions[dir].first;
+                    int ny = step * directions[d].second + directions[dir].second;
+                    if (nx < 0 || nx >= 8 || ny < 0 || ny >= 8) break;
+                    next_state |= (1LL << (nx * 8 + ny));
+                    if (next_state != state) break;
+                }
+                if ((next_state & state) != 0) {
+                    valid = false;
+                    break;
+                }
+            }
+            if (valid) {
+                ndp[state] += dp[state];
+            }
+        }
+        swap(dp, ndp);
+    }
+
+    long long total_safe_positions = 0;
+    for (int i = 0; i < N; ++i) {
+        for (int j = 0; j < N; ++j) {
+            if (!board[i][j]) {
+                total_safe_positions += dp[0];
+            } else {
+                for (int dir = 0; dir < 8; ++dir) {
+                    int nx = i + directions[dir].first;
+                    int ny = j + directions[dir].second;
+                    if (nx < 0 || nx >= N || ny < 0 || ny >= N || !board[nx][ny]) {
+                        total_safe_positions += dp[(1LL << (nx * 8 + ny))];
+                    }
+                }
+            }
+        }
+    }
+
+    cout << total_safe_positions << endl;
+    return 0;
+}
+```
+
+This code uses dynamic programming with bitmasks to efficiently determine the number of safe positions. It iterates over all possible states of neighboring cells and updates the DP table accordingly. Finally, it calculates the total number of safe positions based on the initial board configuration.

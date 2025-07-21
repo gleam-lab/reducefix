@@ -1,0 +1,36 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define endl "\n"
+#define MOD 1000000007
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(0);
+
+    map<char, char> beats = {{'R', 'P'}, {'P', 'S'}, {'S', 'R'}};
+    int n;
+    cin >> n;
+    string s;
+    cin >> s;
+
+    int total = 1; // At least one move is needed
+    char last_move = beats[s[0]]; // First move is the winning move against opponent's first
+
+    for (int i = 1; i < n; ++i) {
+        char current_opponent_move = s[i];
+        char desired_move = beats[current_opponent_move];
+
+        // If the desired move is the same as previous move, we can continue without incrementing
+        if (desired_move == last_move) {
+            continue;
+        }
+
+        // Need to change move, so increment count and update last move
+        total++;
+        last_move = desired_move;
+    }
+
+    cout << total << endl;
+
+    return 0;
+}

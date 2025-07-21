@@ -1,0 +1,62 @@
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+#define rep(i, n) for (ll i = 0; i < (ll)(n); i++)
+#define rep2(i, s, n) for (ll i = (s); i < (ll)(n); i++)
+#define all(x) x.begin(), x.end()
+
+struct SegmentTree {
+    vector<ll> tree;
+    SegmentTree(int n) {
+        tree.assign(4 * n, 0);
+    }
+
+    void update(int i, int l, int r, ll value) {
+        if (r == l) {
+            tree[i] = value;
+            return;
+        }
+        int mid = (l + r) / 2;
+        update(2 * i + 1, l, mid, value);
+        update(2 * i + 2, mid + 1, r, value);
+        tree[i] = tree[i * 2 + 1] + tree[i * 2 + 2];
+    }
+
+    ll query(int i, int l, int r, int L, int R) {
+        if (R < l || r < L) {
+            return 0;
+        }
+        if (L <= l && r <= R) {
+            return tree[i];
+        }
+        int mid = (l + r) / 2;
+        return query(2 * i + 1, l, mid, L, R) + query(2 * i + 2, mid + 1, r, L, R);
+    }
+};
+
+int main() {
+    int H, W, Q;
+    cin >> H >> W >> Q;
+    SegmentTree X(H), Y(W);
+    for (int i = 0; i < H; i++) {
+        for (int j = 0; j < W; j++) {
+            X.update(i, 0, H - 1, 1);
+            Y.update(j, 0, W - 1, 1);
+        }
+    }
+    ll ans = H * W;
+    while (Q--) {
+        int R, C;
+        cin >> R >> C;
+        R--; C--;
+        ll xWalls = X.query(0, 0, H - 1, R, R);
+        ll yWalls = Y.query(0, 0, W - 1, C, C);
+        if (xWalls > 0 || yWalls > 0) {
+            X.update(R, 0, H - 1, xWalls);
+            Y.update(C, 0, W - 1, yWalls);
+            ans -= max(xWalls, yWalls);
+        }
+    }
+    cout << ans << endl;
+    return 0;
+}

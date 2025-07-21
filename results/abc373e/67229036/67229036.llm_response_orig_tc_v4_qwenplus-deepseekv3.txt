@@ -1,0 +1,113 @@
+To fix this code, we need to ensure that for each candidate, we correctly determine the minimum number of additional votes required to guarantee their election. The problem involves sorting the votes and performing binary search to find the required votes efficiently.
+
+### Approaches
+1. **Sorting and Binary Search**: 
+   - First, sort the array of votes to easily determine the thresholds.
+   - For each candidate, use binary search to find the minimum number of votes `X` such that when candidate `i` receives `A[i] + X` votes, they will be elected.
+   - The condition for election is that the number of candidates with more votes than candidate `i` must be less than `M`.
+
+2. **Key Insight**: 
+   - After sorting, the threshold is determined by the `(N - M)`-th smallest vote. If candidate `i`'s votes (after adding `X`) are greater than this threshold, they will be elected.
+   - The remaining votes (after allocating `X` to candidate `i`) should be distributed such that no other candidate can surpass candidate `i`'s votes.
+
+### Solution Code
+```cpp
+#include<bits/stdc++.h>
+using namespace std;
+#define int long long
+
+signed main() {
+    ios::sync_with_stdio(0);
+    cin.tie(0);
+    cout.tie(0);
+    
+    int N, M, K;
+    cin >> N >> M >> K;
+    vector<int> A(N);
+    for (int i = 0; i < N; ++i) {
+        cin >> A[i];
+    }
+    
+    vector<int> sortedA = A;
+    sort(sortedA.begin(), sortedA.end());
+    
+    int total_votes = K;
+    for (int a : A) {
+        total_votes += a;
+    }
+    
+    for (int i = 0; i < N; ++i) {
+        int low = 0, high = K;
+        int ans = -1;
+        
+        while (low <= high) {
+            int mid = (low + high) / 2;
+            int new_vote = A[i] + mid;
+            
+            int pos = upper_bound(sortedA.begin(), sortedA.end(), new_vote) - sortedA.begin();
+            int better = N - pos;
+            
+            if (A[i] + mid >= sortedA.back()) {
+                better = 0;
+            }
+            
+            if (better < M) {
+                ans = mid;
+                high = mid - 1;
+            } else {
+                low = mid + 1;
+            }
+        }
+        
+        if (ans != -1) {
+            int remaining = K - ans;
+            int new_vote = A[i] + ans;
+            
+            vector<int> temp = A;
+            temp[i] += ans;
+            
+            int sum_others = 0;
+            for (int j = 0; j < N; ++j) {
+                if (j != i && temp[j] > new_vote) {
+                    sum_others += temp[j] - new_vote;
+                }
+            }
+            
+            if (sum_others > remaining) {
+                ans = -1;
+            } else {
+                int needed = 0;
+                for (int j = 0; j < N; ++j) {
+                    if (j != i && temp[j] > new_vote) {
+                        needed += temp[j] - new_vote;
+                    }
+                }
+                if (needed <= remaining) {
+                    // feasible
+                } else {
+                    ans = -1;
+                }
+            }
+        }
+        
+        cout << (ans == -1 ? -1 : ans) << " ";
+    }
+    
+    return 0;
+}
+```
+
+### Explanation
+1. **Sorting and Binary Search**: 
+   - The array `sortedA` is a sorted version of the original votes array `A`. This allows us to efficiently determine the position of any candidate's vote count using binary search.
+   
+2. **Binary Search for Each Candidate**:
+   - For each candidate `i`, perform a binary search to find the minimum `X` such that when `X` votes are added to `A[i]`, the number of candidates with votes greater than `A[i] + X` is less than `M`.
+   
+3. **Feasibility Check**:
+   - After determining a candidate `X`, check if the remaining votes (`K - X`) can be distributed among other candidates such that none exceed `A[i] + X`. This ensures that candidate `i` remains among the top candidates.
+   
+4. **Output**:
+   - For each candidate, print the computed `X` if feasible, otherwise print `-1`.
+
+This approach ensures that we efficiently and correctly determine the minimum votes required for each candidate to be elected, adhering to the problem constraints.

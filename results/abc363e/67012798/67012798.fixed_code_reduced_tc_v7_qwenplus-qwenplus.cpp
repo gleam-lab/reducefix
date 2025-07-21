@@ -1,0 +1,85 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+
+constexpr int dx[] = {-1, 1, 0, 0};
+constexpr int dy[] = {0, 0, -1, 1};
+
+int main()
+{
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int H, W, Y;
+    cin >> H >> W >> Y;
+
+    vector<vector<int>> A(H, vector<int>(W));
+    for (int i = 0; i < H; i++)
+    {
+        for (int j = 0; j < W; j++)
+        {
+            cin >> A[i][j];
+        }
+    }
+
+    vector<vector<bool>> island(H, vector<bool>(W, true));
+    vector<queue<pair<int, int>>> q(Y + 2); // Only up to Y+1 needed
+
+    for (int i = 0; i < H; i++)
+    {
+        for (int j = 0; j < W; j++)
+        {
+            if ((i == 0) || (i == H - 1) || (j == 0) || (j == W - 1))
+            {
+                int level = A[i][j];
+                if (level <= Y)
+                    q[level].push({i, j});
+                island[i][j] = false;
+            }
+        }
+    }
+
+    int ans = H * W;
+
+    queue<pair<int, int>> bfsQueue;
+
+    for (int year = 1; year <= Y; year++)
+    {
+        // Add all cells sinking this year to the BFS queue
+        while (!q[year].empty())
+        {
+            bfsQueue.push(q[year].front());
+            q[year].pop();
+        }
+
+        // Perform BFS for all cells that have sunk so far this year
+        while (!bfsQueue.empty())
+        {
+            auto [x, y] = bfsQueue.front();
+            bfsQueue.pop();
+            ans--;
+
+            for (int d = 0; d < 4; d++)
+            {
+                int nx = x + dx[d];
+                int ny = y + dy[d];
+
+                if (nx < 0 || ny < 0 || nx >= H || ny >= W)
+                    continue;
+
+                if (island[nx][ny] && A[nx][ny] <= Y)
+                {
+                    island[nx][ny] = false;
+                    if (A[nx][ny] <= year)
+                        bfsQueue.push({nx, ny});
+                    else
+                        q[A[nx][ny]].push({nx, ny});
+                }
+            }
+        }
+
+        cout << ans << endl;
+    }
+
+    return 0;
+}

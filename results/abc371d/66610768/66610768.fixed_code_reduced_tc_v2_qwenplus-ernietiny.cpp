@@ -1,0 +1,27 @@
+#include<bits/stdc++.h>
+using namespace std;
+
+int main() {
+    int n;
+    cin >> n; // Number of elements in the array a
+    vector<int> a(n+1); // Create an array of size n+1 to store the elements
+    for (int i = 1; i <= n; ++i) {
+        cin >> a[i]; // Read the elements from the array
+    }
+    
+    // Function to find the maximum element in the array
+    auto findMax = [](const vector<int>& arr) {
+        auto it = max_element(arr.begin(), arr.end()); // Use max_element to find the maximum element
+        return *it; // Return the maximum element
+    };
+    
+    // Main logic to calculate the difference between two consecutive elements in the array
+    int diff = findMax(a); // Start with the maximum element
+    for (int i = 2; i <= n; ++i) { // Iterate from index 2 to the end of the array
+        int l_i = a.begin() + i - 1; // Find the index of the leftmost element to compare with the current element
+        int r_j = findMax(a).second + 1; // Find the index of the rightmost element after considering the current element
+        int diff_value = diff - c[n] + c[i - 1]; // Calculate the difference between current element and the previous consecutive element
+        cout << diff_value << endl; // Output the calculated difference
+    }
+    return 0;
+}

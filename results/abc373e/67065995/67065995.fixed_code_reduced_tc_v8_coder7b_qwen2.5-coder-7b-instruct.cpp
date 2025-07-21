@@ -1,0 +1,57 @@
+#include <bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int n, m;
+    ll k;
+    cin >> n >> m >> k;
+
+    vector<ll> a(n);
+    for(int i = 0; i < n; ++i) {
+        cin >> a[i];
+        k -= a[i];
+    }
+
+    // Calculate the maximum number of votes any candidate can get without winning
+    ll max_votes_without_winning = 0;
+    for(int i = 0; i < n; ++i) {
+        max_votes_without_winning = max(max_votes_without_winning, a[i] + k / (n - 1));
+    }
+
+    // For each candidate, calculate the minimum additional votes needed to win
+    vector<ll> result(n);
+    for(int i = 0; i < n; ++i) {
+        if(a[i] > max_votes_without_winning) {
+            result[i] = 0;
+        } else {
+            result[i] = max_votes_without_winning - a[i];
+        }
+    }
+
+    // Ensure that even after receiving these additional votes, the candidate still wins
+    for(int i = 0; i < n; ++i) {
+        if(result[i] != 0) {
+            bool can_win = true;
+            for(int j = 0; j < n; ++j) {
+                if(i == j) continue;
+                if(a[j] + result[j] > a[i] + result[i]) {
+                    can_win = false;
+                    break;
+                }
+            }
+            if(!can_win) result[i] = -1;
+        }
+    }
+
+    // Output the results
+    for(int i = 0; i < n; ++i) {
+        cout << result[i] << " ";
+    }
+    cout << endl;
+
+    return 0;
+}

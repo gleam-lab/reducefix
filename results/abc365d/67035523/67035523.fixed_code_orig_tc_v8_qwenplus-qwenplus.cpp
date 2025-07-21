@@ -1,0 +1,53 @@
+#include <iostream>
+#include <string>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+// Determine the outcome of a match between two moves
+// Returns:
+// -1 if x loses to y
+//  0 if it's a tie
+//  1 if x wins against y
+int cmp(char x, char y) {
+    if (x == y) return 0;
+    if ((x == 'R' && y == 'S') || (x == 'S' && y == 'P') || (x == 'P' && y == 'R'))
+        return 1;
+    return -1;
+}
+
+// Return the winning move against the given move
+char win(char x) {
+    if (x == 'R') return 'P';
+    if (x == 'S') return 'R';
+    return 'S';
+}
+
+int main() {
+    int n;
+    string s;
+    cin >> n >> s;
+
+    // DP[i] = maximum number of wins we can achieve up to position i
+    vector<int> dp(n + 1, 0);
+    
+    // last_move[i] = the last move used at position i (to avoid consecutive same moves)
+    char last_move = 'X';  // 'X' means no move yet
+
+    for (int i = 0; i < n; ++i) {
+        char opponent_move = s[i];
+        
+        // If we can continue with the same move as previous (no penalty), do so
+        // Otherwise, change the move to beat the opponent's move
+        if (last_move != win(opponent_move)) {
+            dp[i + 1] = dp[i] + 1;
+            last_move = win(opponent_move);
+        } else {
+            dp[i + 1] = dp[i];
+            // Keep the same move
+        }
+    }
+
+    cout << dp[n] << endl;
+    return 0;
+}

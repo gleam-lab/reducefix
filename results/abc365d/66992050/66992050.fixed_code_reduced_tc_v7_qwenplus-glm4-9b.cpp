@@ -1,0 +1,33 @@
+#include <iostream>
+#include <string>
+using namespace std;
+
+int main() {
+    int N;
+    string S;
+    cin >> N >> S;
+    int ans = 0;
+    
+    // Process the string to find the number of changes needed to make the sequences happy
+    for (int i = 0; i < N; ++i) {
+        if (S[i] == 'P') {
+            // If we are at the first character or the previous one is 'R' and the current one is 'P', we need to flip
+            if ((i == 0 || S[i - 1] == 'R') && S[i] == 'P') {
+                ans++;
+            }
+        } else if (S[i] == 'R') {
+            // If we are at the first character or the previous one is 'S' and the current one is 'R', we need to flip
+            if ((i == 0 || S[i - 1] == 'S') && S[i] == 'R') {
+                ans++;
+            }
+        } else if (S[i] == 'S') {
+            // If we are at the first character or the previous one is 'P' and the current one is 'S', we need to flip
+            if ((i == 0 || S[i - 1] == 'P') && S[i] == 'S') {
+                ans++;
+            }
+        }
+    }
+    
+    cout << ans;
+    return 0;
+}

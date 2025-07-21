@@ -1,0 +1,77 @@
+To fix this code, we need to address several issues related to how the connected components and their top k largest vertices are maintained. The original code attempts to merge sorted lists of vertices when connecting components, but it has flaws in how it handles these merges and updates.
+
+### Approaches
+1. **Union-Find Data Structure**: This helps efficiently manage and query connected components.
+2. **Maintaining Top k Elements**: For each connected component, we maintain a sorted list of the top 10 largest vertices. This allows quick access to the k-th largest vertex in the component.
+3. **Efficient Merging**: When two components are merged, their respective top k lists are combined and sorted to maintain the top 10 elements.
+
+### Solution Code
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+const int MAXN = 2e5 + 5;
+int parent[MAXN];
+vector<int> topk[MAXN];
+
+int find(int u) {
+    if (parent[u] != u) {
+        parent[u] = find(parent[u]);
+    }
+    return parent[u];
+}
+
+void merge(int u, int v) {
+    u = find(u);
+    v = find(v);
+    if (u == v) return;
+    if (topk[u].size() < topk[v].size()) {
+        swap(u, v);
+    }
+    parent[v] = u;
+    vector<int> merged;
+    merged.reserve(topk[u].size() + topk[v].size());
+    merge(topk[u].begin(), topk[u].end(), topk[v].begin(), topk[v].end(), back_inserter(merged), greater<int>());
+    if (merged.size() > 10) {
+        merged.resize(10);
+    }
+    topk[u] = merged;
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int N, Q;
+    cin >> N >> Q;
+    
+    for (int i = 1; i <= N; ++i) {
+        parent[i] = i;
+        topk[i] = {i};
+    }
+    
+    while (Q--) {
+        int op, u, v;
+        cin >> op >> u >> v;
+        if (op == 1) {
+            merge(u, v);
+        } else {
+            int root = find(u);
+            if (v > topk[root].size()) {
+                cout << -1 << '\n';
+            } else {
+                cout << topk[root][v-1] << '\n';
+            }
+        }
+    }
+    
+    return 0;
+}
+```
+
+### Explanation
+1. **Initialization**: We initialize the Union-Find data structure where each node is its own parent and has its own list containing only itself as the top element.
+2. **Union Operation (Merge):** When merging two components, we find their roots. If they are already in the same component, we do nothing. Otherwise, we merge the smaller component's top k list into the larger one's, combining and sorting the lists, then truncating to the top 10 elements if necessary.
+3. **Query Operation:** For a query asking for the k-th largest element in a component, we find the root of the component and check if the component has at least k elements. If not, we return -1; otherwise, we return the k-th largest element from the sorted list maintained for that component.
+
+This approach ensures efficient handling of both union and query operations, leveraging the Union-Find structure for connectivity and maintaining sorted lists for quick access to the largest elements. The complexity is kept manageable by limiting the size of the sorted lists to 10 elements, ensuring operations remain O(1) or O(log n) in practice.

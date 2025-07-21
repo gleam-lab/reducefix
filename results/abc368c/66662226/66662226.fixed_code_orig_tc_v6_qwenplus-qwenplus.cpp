@@ -1,0 +1,80 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define rep(i, n) for (int i = 0; i < (n); ++i)
+using ll = long long;
+
+// Function to compute the minimum number of attacks needed for one enemy
+ll compute_attacks(ll h) {
+    // Each attack sequence is: 1,1,3 repeating -> total damage per cycle = 5
+    // Find how many full cycles we can do
+    ll full_cycles = h / 5;
+    ll remaining_health = h % 5;
+    
+    // Each full cycle takes 3 seconds
+    ll time = full_cycles * 3;
+    
+    // Handle remaining health
+    if (remaining_health > 0) {
+        time += 1; // Always at least one more attack
+        if (remaining_health >= 3) {
+            time += 1; // One more attack for 3 damage
+        }
+    }
+    
+    return time;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+    
+    int n;
+    cin >> n;
+    vector<ll> H(n);
+    for (int i = 0; i < n; ++i) {
+        cin >> H[i];
+    }
+
+    // We'll use a greedy approach with binary search to find the minimum T
+    ll left = 0;
+    ll right = 3LL * 1e18; // Generous upper bound
+
+    while (left < right) {
+        ll mid = (left + right) / 2;
+        
+        // Check if all enemies can be defeated within 'mid' time
+        bool possible = true;
+        ll extra_attacks = 0;
+        
+        for (int i = n - 1; i >= 0; --i) {
+            ll attacks_needed = (H[i] + 4) / 5; // Ceiling division
+            
+            // Total attacks available for this enemy: full_cycles + up to 2 extra attacks
+            ll full_cycles = mid / 3;
+            ll extra = mid % 3;
+            
+            // If there are enough full cycles to handle this enemy
+            if (full_cycles >= attacks_needed) {
+                // Accumulate extra attacks that could be used on later enemies
+                extra_attacks += extra;
+            } else {
+                // Not enough full cycles, need to use previous extra attacks
+                ll remaining_attacks = attacks_needed - full_cycles;
+                if (extra_attacks >= remaining_attacks) {
+                    extra_attacks -= remaining_attacks;
+                } else {
+                    possible = false;
+                    break;
+                }
+            }
+        }
+        
+        if (possible) {
+            right = mid;
+        } else {
+            left = mid + 1;
+        }
+    }
+    
+    cout << left << endl;
+}

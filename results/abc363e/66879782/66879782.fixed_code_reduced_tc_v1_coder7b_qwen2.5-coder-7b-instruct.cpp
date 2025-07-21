@@ -1,0 +1,48 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int h, w, y;
+    cin >> h >> w >> y;
+
+    vector<vector<int>> heights(h, vector<int>(w));
+    for (int i = 0; i < h; ++i) {
+        for (int j = 0; j < w; ++j) {
+            cin >> heights[i][j];
+        }
+    }
+
+    vector<vector<bool>> visited(h, vector<bool>(w, false));
+    vector<int> areas(y + 1, 0);
+
+    auto dfs = [&](auto&& dfs, int x, int y, int level) -> void {
+        if (x < 0 || x >= h || y < 0 || y >= w || visited[x][y] || heights[x][y] > level) return;
+        visited[x][y] = true;
+        areas[level]++;
+        dfs(dfs, x + 1, y, level);
+        dfs(dfs, x - 1, y, level);
+        dfs(dfs, x, y + 1, level);
+        dfs(dfs, x, y - 1, level);
+    };
+
+    for (int i = 0; i < h; ++i) {
+        for (int j = 0; j < w; ++j) {
+            if (!visited[i][j]) {
+                dfs(dfs, i, j, heights[i][j]);
+            }
+        }
+    }
+
+    for (int level = 1; level <= y; ++level) {
+        areas[level] += areas[level - 1];
+    }
+
+    for (int level = 1; level <= y; ++level) {
+        cout << h * w - areas[level] << "\n";
+    }
+
+    return 0;
+}

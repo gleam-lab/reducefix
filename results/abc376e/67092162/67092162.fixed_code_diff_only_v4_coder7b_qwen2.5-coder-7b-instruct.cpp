@@ -1,0 +1,65 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+#define ll long long
+
+const int maxN = 2e5 + 5;
+int t, n, k;
+ll a[maxN], b[maxN];
+
+// Comparator function to sort pairs based on the first element in descending order and second element in ascending order
+bool cmp(const pair<ll, ll>& p1, const pair<ll, ll>& p2) {
+    if (p1.first != p2.first) return p1.first > p2.first;
+    return p1.second < p2.second;
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(NULL);
+    cout.tie(NULL);
+
+    cin >> t;
+    while (t--) {
+        cin >> n >> k;
+        vector<pair<ll, ll>> v(n);
+        priority_queue<ll> pq;
+        ll sum = 0, ans = LLONG_MAX;
+
+        // Read input arrays into a vector of pairs
+        for (int i = 0; i < n; ++i) {
+            cin >> a[i];
+            cin >> b[i];
+            v[i] = {a[i], b[i]};
+        }
+
+        // Sort the vector based on the comparator function
+        sort(v.begin(), v.end(), cmp);
+
+        // Initialize the sum and push the first k elements' second values into the priority queue
+        for (int i = 0; i < k; ++i) {
+            sum += v[i].second;
+            pq.push(-v[i].second); // Using negative to simulate min-heap with max-heap properties
+        }
+
+        // Calculate the initial answer
+        ans = v[k - 1].first * sum;
+
+        // Iterate through the remaining elements to find the minimum possible value
+        for (int i = k; i < n; ++i) {
+            // If the current element's second value is smaller than the largest value in the heap
+            if (-pq.top() > v[i].second) {
+                sum += v[i].second;
+                sum -= -pq.top(); // Remove the largest value and add the new one
+                pq.pop();
+                pq.push(-v[i].second);
+            }
+            // Update the answer with the minimum value found so far
+            ans = min(ans, v[i].first * sum);
+        }
+
+        // Output the result for the current test case
+        cout << ans << "\n";
+    }
+
+    return 0;
+}

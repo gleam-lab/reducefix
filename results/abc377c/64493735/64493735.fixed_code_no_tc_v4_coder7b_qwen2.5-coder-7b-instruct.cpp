@@ -1,0 +1,58 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+class Solution {
+public:
+    long long solve(long long N, long long M, vector<long long> &a, vector<long long> &b) {
+        // Directions for capturing pieces
+        vector<vector<long long>> directions = {
+            {2, 1}, {1, 2}, {-1, 2}, {-2, 1}, {-2, -1}, {-1, -2}, {1, -2}, {2, -1}
+        };
+
+        unordered_set<long long> pieces;
+        for (long long i = 0; i < M; ++i) {
+            pieces.insert((a[i] - 1) * N + b[i]);
+        }
+
+        long long count = 0;
+        for (long long i = 1; i <= N; ++i) {
+            for (long long j = 1; j <= N; ++j) {
+                long long pos = (i - 1) * N + j;
+                if (!pieces.count(pos)) {
+                    bool canCapture = false;
+                    for (const auto &dir : directions) {
+                        long long ni = i + dir[0], nj = j + dir[1];
+                        if (ni >= 1 && ni <= N && nj >= 1 && nj <= N) {
+                            long long npos = (ni - 1) * N + nj;
+                            if (pieces.count(npos)) {
+                                canCapture = true;
+                                break;
+                            }
+                        }
+                    }
+                    if (!canCapture) {
+                        ++count;
+                    }
+                }
+            }
+        }
+        return count;
+    }
+};
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+
+    long long N, M;
+    cin >> N >> M;
+    vector<long long> a(M), b(M);
+    for (long long i = 0; i < M; ++i) {
+        cin >> a[i] >> b[i];
+    }
+
+    Solution solution;
+    cout << solution.solve(N, M, a, b) << endl;
+
+    return 0;
+}

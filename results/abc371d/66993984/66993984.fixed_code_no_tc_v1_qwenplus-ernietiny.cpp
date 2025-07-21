@@ -1,0 +1,30 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    int n, q;
+    cin >> n; // 输入数据点个数
+    
+    // 初始化数据
+    vector<int> x(n), p(n); // 假设输入数据已按顺序排列
+    map<int, int> sum; // 用于存储当前和的映射
+    
+    // 处理输入数据
+    for (int i = 0; i < n; ++i) {
+        cin >> x[i] >> p[i]; // 读入每个数据点的值
+        sum[p[i]]++; // 根据值更新和映射
+    }
+    
+    // 处理查询操作
+    while (q--) {
+        int L, R; // 查询区间左端点和右端点
+        cin >> L >> R; // 读入查询区间左端点和右端点
+        int lowerBound = lower_bound(x.begin(), x.end(), L) - x.begin(); // 获取左端点的索引对应的值在数组中的位置
+        int upperBound = upper_bound(x.begin(), x.end(), R) - x.begin(); // 获取右端点的索引对应的值在数组中的位置
+        // 由于数组索引是从1开始的，这里减去1是因为题目中给的是下标而不是实际值
+        // 因此需要减去这个索引差异来获取正确的区间和差值
+        cout << sum[upperBound - 1] - sum[lowerBound] << endl; // 输出区间和差值
+    }
+    
+    return 0; // 结束程序
+}

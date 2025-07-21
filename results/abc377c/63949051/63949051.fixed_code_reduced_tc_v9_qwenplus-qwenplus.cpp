@@ -1,0 +1,65 @@
+#include <iostream>
+#include <vector>
+#include <set>
+#include <tuple>
+#include <cmath>
+
+using namespace std;
+
+using i32 = int;
+using i64 = long long;
+using u64 = unsigned long long;
+
+#define FOR(r, b, e) for (i64 r = (b); r < (e); ++r)
+
+struct Point {
+    i32 x, y;
+    bool operator<(const Point& o) const {
+        return tie(x, y) < tie(o.x, o.y);
+    }
+};
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    i32 N;
+    i32 M;
+    cin >> N >> M;
+
+    set<Point> attacked;
+    set<Point> pieces;
+
+    vector<pair<i32, i32>> directions = {
+        {2, 1}, {1, 2}, {-1, 2}, {-2, 1},
+        {-2, -1}, {-1, -2}, {1, -2}, {2, -1}
+    };
+
+    FOR(i, 0, M) {
+        i32 a, b;
+        cin >> a >> b;
+        pieces.insert({a, b});
+        
+        // For each knight move, mark the target square as attacked
+        for (auto [dx, dy] : directions) {
+            i32 nx = a + dx;
+            i32 ny = b + dy;
+            if (nx >= 1 && nx <= N && ny >= 1 && ny <= N) {
+                attacked.insert({nx, ny});
+            }
+        }
+    }
+
+    // Remove positions that are already occupied by our own pieces
+    for (auto [x, y] : pieces) {
+        attacked.erase({x, y});
+    }
+
+    // Total squares - occupied squares - attacked squares
+    i64 total = (i64)N * N;
+    i64 used = pieces.size() + attacked.size();
+
+    cout << total - used << endl;
+
+    return 0;
+}

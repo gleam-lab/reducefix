@@ -1,0 +1,40 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+const int MAXN = 4e5 + 5;
+int n, m, q, bomb[MAXN];
+vector<vector<int>> adjX[MAXN], adjY[MAXN];
+
+void solve() {
+    cin >> n >> m >> q;
+    for (int i = 1; i <= n; ++i)
+        for (int j = 1; j <= m; ++j)
+            adjX[i].push_back(j), adjY[j].push_back(i);
+
+    while (q--) {
+        int x, y;
+        cin >> x >> y;
+        --x, --y;
+
+        auto itX = lower_bound(adjX[x].begin(), adjX[x].end(), y + 1);
+        if (itX != adjX[x].end()) adjX[x].erase(itX);
+        auto itY = lower_bound(adjY[y].begin(), adjY[y].end(), x + 1);
+        if (itY != adjY[y].end()) adjY[y].erase(itY);
+    }
+
+    int cnt = 0;
+    for (int i = 1; i <= n; ++i)
+        cnt += adjX[i].size();
+
+    cout << cnt << '\n';
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+    cout.tie(nullptr);
+
+    solve();
+
+    return 0;
+}

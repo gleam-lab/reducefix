@@ -1,0 +1,104 @@
+To fix this code, we need to address several issues related to the handling of the bomb placement and wall destruction logic. The original code attempts to use a cache to remember the distances to the nearest walls in each direction, but it doesn't correctly handle the dynamic updates required when walls are destroyed. 
+
+### Approaches
+The correct approach involves using separate data structures to efficiently track and update the nearest walls in each direction (left, right, up, down) for each cell. Specifically, we can use:
+1. **Row-wise and Column-wise Binary Search Trees**: To efficiently find the nearest walls in the four directions (left, right, up, down) for any given cell. 
+2. **Hash Maps or Sets**: To maintain the walls present in each row and column. This allows for quick insertion, deletion, and nearest neighbor searches.
+
+We can use `set` data structures for each row and column to keep track of the walls. For each query:
+- If the cell has a wall, we remove it.
+- If the cell doesn't have a wall, we search in the four directions for the nearest walls in the row and column sets and remove them if found.
+
+### Solution Code
+```cpp
+#include <iostream>
+#include <vector>
+#include <set>
+#include <algorithm>
+
+using namespace std;
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int H, W, Q;
+    cin >> H >> W >> Q;
+
+    vector<set<int>> row_walls(H + 2);
+    vector<set<int>> col_walls(W + 2);
+
+    for (int i = 1; i <= H; ++i) {
+        row_walls[i].insert(0);
+        row_walls[i].insert(W + 1);
+    }
+    for (int j = 1; j <= W; ++j) {
+        col_walls[j].insert(0);
+        col_walls[j].insert(H + 1);
+    }
+
+    int broken = 0;
+
+    while (Q--) {
+        int r, c;
+        cin >> r >> c;
+
+        if (row_walls[r].count(c)) {
+            broken++;
+            row_walls[r].erase(c);
+            col_walls[c].erase(r);
+        } else {
+            // Left
+            auto it_left = row_walls[r].lower_bound(c);
+            it_left--;
+            int left_wall = *it_left;
+            if (left_wall != 0) {
+                broken++;
+                row_walls[r].erase(left_wall);
+                col_walls[left_wall].erase(r);
+            }
+
+            // Right
+            auto it_right = row_walls[r].upper_bound(c);
+            int right_wall = *it_right;
+            if (right_wall != W + 1) {
+                broken++;
+                row_walls[r].erase(right_wall);
+                col_walls[right_wall].erase(r);
+            }
+
+            // Up
+            auto it_up = col_walls[c].lower_bound(r);
+            it_up--;
+            int up_wall = *it_up;
+            if (up_wall != 0) {
+                broken++;
+                col_walls[c].erase(up_wall);
+                row_walls[up_wall].erase(c);
+            }
+
+            // Down
+            auto it_down = col_walls[c].upper_bound(r);
+            int down_wall = *it_down;
+            if (down_wall != H + 1) {
+                broken++;
+                col_walls[c].erase(down_wall);
+                row_walls[down_wall].erase(c);
+            }
+        }
+    }
+
+    cout << H * W - broken << '\n';
+
+    return 0;
+}
+```
+
+### Explanation
+1. **Initialization**: We initialize sets for each row and column to keep track of the walls. These sets include sentinel values (0 and W+1 for rows, 0 and H+1 for columns) to simplify boundary checks.
+2. **Processing Queries**: For each query:
+   - **Wall Present**: If the specified cell has a wall, it is removed from the respective row and column sets, and the broken count is incremented.
+   - **No Wall Present**: If the cell doesn't have a wall, we search for the nearest walls in all four directions (left, right, up, down) using `lower_bound` and `upper_bound` operations on the sets. The nearest walls found are removed, and the broken count is updated accordingly.
+3. **Output**: The total remaining walls is calculated by subtracting the broken walls from the total cells (H * W).
+
+This approach efficiently handles the dynamic updates and searches required by the problem, leveraging the ordered nature of sets to perform nearest neighbor searches in logarithmic time.

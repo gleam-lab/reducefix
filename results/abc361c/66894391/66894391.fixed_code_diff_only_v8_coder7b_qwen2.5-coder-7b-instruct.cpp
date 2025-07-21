@@ -1,0 +1,36 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int nums[200000];
+
+int main(void){
+    int n, k;
+    cin >> n >> k;
+
+    for (int i = 0; i < n; i++){
+        cin >> nums[i];
+    }
+
+    sort(nums, nums + n);
+
+    // We need to find the minimum possible difference between max and min values of the resulting sequence B
+    // After removing K elements, we want to maximize the smallest element in B and minimize the largest element in B
+    // Therefore, we should remove the K/2 smallest elements and the K/2 largest elements if K is even
+    // If K is odd, we should remove (K-1)/2 smallest elements and (K+1)/2 largest elements plus one more element
+
+    int left = 0;
+    int right = n - 1;
+
+    // Adjust pointers based on whether K is even or odd
+    if (k % 2 == 0) {
+        left += k / 2;
+        right -= k / 2;
+    } else {
+        left += (k - 1) / 2;
+        right -= (k + 1) / 2;
+    }
+
+    cout << nums[right] - nums[left] << endl;
+
+    return 0;
+}

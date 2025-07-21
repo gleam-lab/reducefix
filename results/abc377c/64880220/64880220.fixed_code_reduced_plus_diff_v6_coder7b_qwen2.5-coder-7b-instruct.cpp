@@ -1,0 +1,40 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false); cin.tie(nullptr); cout.tie(nullptr);
+
+    long long n, m;
+    cin >> n >> m;
+
+    // Create a set to store the positions of the pieces
+    set<pair<long long, long long>> pieces;
+    for(long long i = 0; i < m; ++i) {
+        long long a, b;
+        cin >> a >> b;
+        pieces.insert({a, b});
+    }
+
+    // Directions for capturing pieces
+    vector<pair<long long, long long>> directions = {
+        {2, 1}, {1, 2}, {-1, 2}, {-2, 1}, 
+        {-2, -1}, {-1, -2}, {1, -2}, {2, -1}
+    };
+
+    // Set to store positions that can be attacked
+    set<pair<long long, long long>> attackable;
+    for(auto& [x, y] : pieces) {
+        for(auto& [dx, dy] : directions) {
+            long long nx = x + dx, ny = y + dy;
+            if(nx > 0 && nx <= n && ny > 0 && ny <= n) {
+                attackable.insert({nx, ny});
+            }
+        }
+    }
+
+    // Total empty squares minus the squares that can be attacked
+    long long total_empty = n * n - attackable.size();
+
+    cout << total_empty << endl;
+    return 0;
+}

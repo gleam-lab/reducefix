@@ -1,0 +1,40 @@
+#include <iostream>
+#include <vector>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int N;
+    cin >> N;
+    vector<long long> H(N);
+    for (int i = 0; i < N; ++i) {
+        cin >> H[i];
+    }
+
+    long long T = 0;
+    long long bonus3 = 0, bonus1 = 0;
+
+    for (long long h : H) {
+        // Calculate how many attacks of each type are needed
+        long long attack3 = (h + 2) / 3;  // ceil(h / 3)
+        long long attack1 = h;
+
+        // The actual number of attacks we can use is the maximum of:
+        // - Number of times we can shoot (each 3rd shot is a triple damage)
+        // - Total damage needed (each shot does at least 1 damage)
+        long long total_attacks = max(attack3, attack1);
+
+        // Update time
+        T += total_attacks;
+
+        // Track how many triple-damage shots were actually used
+        // Every 3rd attack is a triple, so total triple attacks = floor(T / 3)
+        // But we need to track this across enemies
+        bonus3 = T / 3 - bonus3;
+    }
+
+    cout << T << endl;
+    return 0;
+}

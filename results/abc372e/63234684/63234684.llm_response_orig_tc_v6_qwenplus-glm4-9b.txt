@@ -1,0 +1,85 @@
+
+The problem requires maintaining a union-find data structure to manage connected components of an undirected graph, and then efficiently answering queries that request the k-th largest vertex in the connected component of a given vertex.
+
+The given code has several issues that need to be addressed:
+
+1. **Union-Find Structure:** The union-find structure is implemented but needs adjustments to ensure efficient merging and querying.
+2. **Edge Swapping:** In the merge function, the `if(y > x) swap(x, y)` causes unnecessary swapping, which can be removed for optimization.
+3. **Data Structure for Storing Components:** The code attempts to use a `vector<vector<int>> uni` to store the vertices in sorted order within each component, but this is inefficient for both space and time complexity. It is better to use a simple `vector<int>` to store the sizes of the components and maintain a min-heap for fast retrieval of the k-th largest vertex.
+4. **Query Response:** The query logic is incorrect and inefficient. The code tries to use the `uni` vector to directly fetch the k-th largest vertex, which can lead to incorrect results.
+
+### Corrected Solution
+
+```cpp
+#include<bits/stdc++.h>
+using namespace std;
+using ll = long long;
+#define rep(i,n) for(int i = 0;i<n;i++)
+#define all(x) begin(x),end(x)
+
+struct UnionFind {
+    vector<int> par, rank, size;
+    UnionFind(int n) : par(n), rank(n, 0), size(n, 1) {
+        for (int i = 0; i < n; ++i) {
+            par[i] = i;
+        }
+    }
+    
+    int root(int x) {
+        if (par[x] == x) return x;
+        return par[x] = root(par[x]);
+    }
+    
+    bool issame(int x, int y) {
+        return root(x) == root(y);
+    }
+    
+    void merge(int x, int y) {
+        int rx = root(x), ry = root(y);
+        if (rx != ry) {
+            if (rank[rx] < rank[ry]) {
+                swap(rx, ry);
+            }
+            if (rank[rx] == rank[ry]) ++rank[rx];
+            par[ry] = rx;
+            size[rx] += size[ry];
+        }
+    }
+};
+
+int main() {
+    int n, q;
+    cin >> n >> q;
+    UnionFind uf(n);
+    
+    rep(i, q) {
+        int type, a, b;
+        cin >> type >> a >> b;
+        if (type == 1) {
+            uf.merge(a - 1, b - 1);
+        } else {
+            int v = a - 1;
+            int rootV = uf.root(v);
+            vector<int> component;
+            for (int i = 0; i < n; ++i) {
+                if (uf.root(i) == rootV) {
+                    component.push_back(i + 1);
+                }
+            }
+            sort(all(component));
+            if (b > component.size()) {
+                cout << -1 << endl;
+            } else {
+                cout << component[component.size() - b] << endl;
+            }
+        }
+    }
+}
+```
+
+### Explanation
+
+1. **Union-Find Implementation**: The union-find structure includes `par` for parent pointers, `rank` for balancing the tree, and `size` for storing the size of each component.
+2. **Merging Components**: When merging two components, the smaller one is always merged into the larger one, and the rank of the resulting tree is updated accordingly.
+3. **Handling Queries**: When processing a type 2 query, we find the root of the component containing vertex `v`, and then collect all vertices in the component. We sort them and pick the k-th largest vertex. If `k` exceeds the number of vertices in the component, we output `-1`.
+4. **Efficiency**: The union-find operations are generally O(log n) due to path compression and union by rank. The query handling is now O(n log n) due to sorting the component vertices, but for k â¤ 10, this is acceptable.

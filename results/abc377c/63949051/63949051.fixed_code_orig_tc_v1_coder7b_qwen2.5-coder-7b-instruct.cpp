@@ -1,0 +1,42 @@
+#include <iostream>
+#include <vector>
+#include <unordered_set>
+#include <utility>
+
+using namespace std;
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(0);
+
+    long long N, M;
+    cin >> N >> M;
+
+    unordered_set<long long> occupied;
+    for(long long i=0; i<M; ++i){
+        long long x, y;
+        cin >> x >> y;
+        --x, --y; // Convert to zero-based index
+
+        // Add the position of the knight itself
+        occupied.insert((x * N) + y);
+
+        // Add all positions the knight can attack
+        if(x + 2 < N && y + 1 < N) occupied.insert(((x + 2) * N) + (y + 1));
+        if(x + 1 < N && y + 2 < N) occupied.insert(((x + 1) * N) + (y + 2));
+        if(x - 1 >= 0 && y + 2 < N) occupied.insert(((x - 1) * N) + (y + 2));
+        if(x - 2 >= 0 && y + 1 < N) occupied.insert(((x - 2) * N) + (y + 1));
+        if(x - 2 >= 0 && y - 1 >= 0) occupied.insert(((x - 2) * N) + (y - 1));
+        if(x - 1 >= 0 && y - 2 >= 0) occupied.insert(((x - 1) * N) + (y - 2));
+        if(x + 1 < N && y - 2 >= 0) occupied.insert(((x + 1) * N) + (y - 2));
+        if(x + 2 < N && y - 1 >= 0) occupied.insert(((x + 2) * N) + (y - 1));
+    }
+
+    // Calculate the number of available positions
+    long long total_positions = N * N;
+    long long available_positions = total_positions - occupied.size();
+
+    cout << available_positions << endl;
+
+    return 0;
+}

@@ -1,0 +1,124 @@
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+const int MOD = 1e9 + 7;
+const int MAX_H = 1005;
+const int MAX_W = 1005;
+
+int H, W, Y;
+int grid[MAX_H][MAX_W];
+bool vis[MAX_H][MAX_W];
+int result[100005];
+
+// Direction vectors for BFS (up, down, left, right)
+int dx[4] = {-1, 1, 0, 0};
+int dy[4] = {0, 0, -1, 1};
+
+struct Cell {
+    int x, y, val;
+    bool operator<(const Cell &other) const {
+        return val > other.val;
+    }
+};
+
+signed main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+    cout.tie(0);
+
+    cin >> H >> W >> Y;
+    for (int i = 0; i < H; ++i) {
+        for (int j = 0; j < W; ++j) {
+            cin >> grid[i][j];
+        }
+    }
+
+    priority_queue<Cell> pq;
+    
+    // Mark and add boundary cells to the priority queue
+    for (int i = 0; i < H; ++i) {
+        for (int j = 0; j < W; ++j) {
+            if (i == 0 || i == H - 1 || j == 0 || j == W - 1) {
+                vis[i][j] = true;
+                pq.push({i, j, grid[i][j]});
+            }
+        }
+    }
+
+    int remaining = H * W;
+    int curr_level = 0;
+    priority_queue<Cell> q;
+
+    // Prepare a list of all sea level increases
+    vector<vector<int>> at_level(Y + 2); // at_level[x] contains cells that have elevation x
+
+    int max_elevation = 0;
+    for (int i = 0; i < H; ++i) {
+        for (int j = 0; j < W; ++j) {
+            max_elevation = max(max_elevation, (int)grid[i][j]);
+            if (grid[i][j] <= Y)
+                at_level[grid[i][j]].push_back({i, j});
+        }
+    }
+
+    // We'll use a BFS approach with layers per year
+    vector<bool> processed(H * W, false);
+    queue<pair<int, int>> bfs_q;
+
+    // Initially mark all edge cells as submerged
+    for (int i = 0; i < H; ++i) {
+        for (int j = 0; j < W; ++j) {
+            if (i == 0 || i == H - 1 || j == 0 || j == W - 1) {
+                if (!processed[i * W + j]) {
+                    processed[i * W + j] = true;
+                    bfs_q.push({i, j});
+                }
+            }
+        }
+    }
+
+    int answer = H * W;
+    int current_year = 1;
+
+    while (current_year <= Y) {
+        // Add new cells that become vulnerable this year
+        for (auto &cell : at_level[current_year]) {
+            int x = cell[0], y = cell[1];
+            if (!processed[x * W + y]) {
+                processed[x * W + y] = true;
+                bfs_q.push({x, y});
+            }
+        }
+
+        // Propagate BFS only on cells with elevation <= current_year
+        while (!bfs_q.empty()) {
+            int x = bfs_q.front().first;
+            int y = bfs_q.front().second;
+            bfs_q.pop();
+
+            // If this cell is already counted as submerged, skip
+            if (grid[x][y] > current_year) continue;
+
+            answer--;
+            for (int d = 0; d < 4; ++d) {
+                int nx = x + dx[d];
+                int ny = y + dy[d];
+                if (nx >= 0 && nx < H && ny >= 0 && ny < W && !processed[nx * W + ny]) {
+                    processed[nx * W + ny] = true;
+                    bfs_q.push({nx, ny});
+                }
+            }
+        }
+
+        result[current_year] = answer;
+        current_year++;
+    }
+
+    for (int i = 1; i <= Y; ++i) {
+        cout << result[i] << "\n";
+    }
+
+    return 0;
+}
+```

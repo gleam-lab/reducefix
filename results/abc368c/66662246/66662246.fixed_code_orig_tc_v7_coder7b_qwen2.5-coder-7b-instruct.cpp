@@ -1,0 +1,37 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define rep(i, n) for (int i = 0; i < (n); ++i)
+using ll = long long;
+
+int main()
+{
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int n;
+    cin >> n;
+    vector<ll> a(n);
+    rep(i, n) cin >> a[i];
+
+    ll ans = 0;
+    rep(i, n)
+    {
+        ll x = a[i] / 3;
+        ans += x * 3;
+        a[i] -= x * 3;
+        while (a[i] > 0)
+        {
+            ans++;
+            if (a[i] % 3 == 0)
+            {
+                a[i] -= 3;
+            }
+            else
+            {
+                a[i]--;
+            }
+        }
+    }
+
+    cout << ans << endl;
+}

@@ -1,0 +1,50 @@
+#include<bits/stdc++.h>
+using namespace std;
+
+const int MAXN = 2e5 + 5;
+vector<int> adj[MAXN];
+
+void addEdge(int u, int v){
+    adj[u].push_back(v);
+    adj[v].push_back(u);
+}
+
+int main(){
+    ios_base::sync_with_stdio(false);
+    cin.tie(NULL);
+
+    int n, q;
+    cin >> n >> q;
+    
+    while(q--){
+        int type;
+        cin >> type;
+        
+        if(type == 1){
+            int u, v;
+            cin >> u >> v;
+            addEdge(u, v);
+        }
+        else {
+            int v, k;
+            cin >> v >> k;
+            
+            vector<int> connectedVertices;
+            for(auto &child : adj[v]){
+                connectedVertices.push_back(child);
+            }
+
+            sort(connectedVertices.begin(), connectedVertices.end());
+            reverse(connectedVertices.begin(), connectedVertices.end());
+
+            if(k > connectedVertices.size()){
+                cout << "-1" << endl;
+            }
+            else {
+                cout << connectedVertices[k - 1] << endl;
+            }
+        }
+    }
+    
+    return 0;
+}

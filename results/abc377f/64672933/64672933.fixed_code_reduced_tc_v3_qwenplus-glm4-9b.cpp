@@ -1,0 +1,95 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <set>
+using namespace std;
+
+using i64 = long long;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int N, M;
+    cin >> N >> M;
+    vector<pair<int, int>> pieces(M);
+    
+    for (int i = 0; i < M; ++i) {
+        int x, y;
+        cin >> x >> y;
+        pieces[i] = {x, y};
+    }
+    
+    // Directions for capturing: row, column, diagonal 1, diagonal 2
+    vector<pair<int, int>> directions = {
+        {1, 0}, {0, 1}, {1, 1}, {1, -1}
+    };
+    
+    // Sets to store unique lines that are captured
+    set<int> captured_rows, captured_cols, captured_diag1, captured_diag2;
+    
+    // Insert all captured lines by existing pieces
+    for (const auto& p : pieces) {
+        captured_rows.insert(p.first);
+        captured_cols.insert(p.second);
+        captured_diag1.insert(p.first + p.second);
+        captured_diag2.insert(p.first - p.second);
+    }
+    
+    // Function to count free squares in a line
+    auto count_free_squares = [&](const set<int>& captured) {
+        if (captured.empty()) return N; // No pieces capturing this line
+        int first = *captured.begin();
+        int last = *captured.rbegin();
+        int count = 0;
+        for (int i = 1; i <= N; ++i) {
+            if (captured.count(i)) break;
+            count++;
+        }
+        return count;
+    };
+    
+    // Calculate number of free squares
+    int free_squares = 0;
+    
+    // Free squares in rows, columns, and diagonals
+    free_squares += count_free_squares(captured_rows);
+    free_squares += count_free_squares(captured_cols);
+    free_squares += count_free_squares(captured_diag1);
+    free_squares += count_free_squares(captured_diag2);
+    
+    // Subtract the intersections of 2 lines that are captured
+    for (const auto& d1 : directions) {
+        for (const auto& d2 : directions) {
+            set<int> combined;
+            for (int i = 1; i <= N; ++i) {
+                int x = i * d1.first + i * d2.first;
+                int y = i * d1.second + i * d2.second;
+                if (x <= N && y <= N) {
+                    combined.insert(x);
+                    if (d1.first - d2.first == 0 || d1.second - d2.second == 0) {
+                        combined.insert(y);
+                    }
+                }
+            }
+            if (!combined.empty()) {
+                int first = *combined.begin();
+                int last = *combined.rbegin();
+                int count = 0;
+                for (int i = 1; i <= N; ++i) {
+                    if (combined.count(i)) break;
+                    count++;
+                }
+                free_squares -= count;
+            }
+        }
+    }
+    
+    // Calculate total free squares
+    int total_squares = N * N;
+    free_squares = total_squares - free_squares;
+    
+    cout << free_squares << endl;
+    
+    return 0;
+}

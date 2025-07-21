@@ -1,0 +1,47 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define rep(i, n) for (int i = 0; i < (n); ++i)
+using ll = long long;
+
+int main()
+{
+    int n;
+    cin >> n;
+    vector<ll> H(n);
+    rep(i, n) cin >> H[i];
+
+    ll T = 0;
+
+    // We will process each enemy from front to back
+    rep(i, n) {
+        ll h = H[i];
+
+        // While this enemy still has health left
+        while (h > 0) {
+            T++;
+
+            // If it's a multiple of 3, we can deal 3 damage
+            if (T % 3 == 0) {
+                h -= 3;
+            } else {
+                // Otherwise, we deal 1 damage
+                h--;
+            }
+
+            // If we're not at the last enemy, break early when we've finished this one
+            // So we don't continue attacking it unnecessarily
+            if (i < n - 1 && T % 3 == 0 && h >= 3) break;
+        }
+
+        // If we have extra time after finishing this enemy, carry over the remaining attacks
+        // to the next enemies
+        while (T % 3 != 0 && h <= 0 && i < n - 1) {
+            T++;
+            H[i + 1]--;
+            h = H[i + 1]; // move to next enemy
+            i++;
+        }
+    }
+
+    cout << T << endl;
+}

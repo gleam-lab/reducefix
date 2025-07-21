@@ -1,0 +1,93 @@
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+using ll = long long;
+
+#define rep(i, x, limit) for (int i = (x); i < (limit); i++)
+#define all(x) x.begin(), x.end()
+
+void solve() {
+    ll N, M, K;
+    cin >> N >> M >> K;
+    vector<ll> A(N);
+    ll total = 0;
+    for (ll i = 0; i < N; ++i) {
+        cin >> A[i];
+        total += A[i];
+    }
+    ll rem = K - total;
+
+    vector<ll> sorted_A = A;
+    sort(sorted_A.begin(), sorted_A.end());
+    vector<ll> prefix_sum(N + 1, 0);
+    for (ll i = 0; i < N; ++i) {
+        prefix_sum[i + 1] = prefix_sum[i] + sorted_A[i];
+    }
+
+    vector<ll> result(N);
+
+    rep(i, 0, N) {
+        ll low = 0, high = rem + 1;
+        while (low < high) {
+            ll mid = (low + high) / 2;
+
+            // Try to determine if giving `mid` votes to candidate i guarantees victory
+            ll new_score = A[i] + mid;
+            // Find how many candidates are strictly greater than new_score in sorted_A
+            ll r = upper_bound(sorted_A.begin(), sorted_A.end(), new_score) - sorted_A.begin();
+            ll strictly_greater = N - r;
+
+            if (strictly_greater >= M) {
+                // Not enough even with this many votes
+                low = mid + 1;
+                continue;
+            }
+
+            // Need to make sure that the top M-1 candidates after i have scores < new_score
+            // So we want at most M-1 candidates > A[i]+mid
+            ll needed_to_block = M - 1 - strictly_greater;
+            if (needed_to_block <= 0) {
+                // Already less than M candidates are above us. We win.
+                high = mid;
+                continue;
+            }
+
+            // We need to reduce scores of the top 'needed_to_block' candidates below ours
+            ll l = max(0LL, N - needed_to_block - r);
+            ll total_available = rem - mid;
+            bool can_do = true;
+            ll cost = 0;
+
+            // We want to reduce the top 'needed_to_block' candidates so they are <= new_score
+            for (ll j = N - needed_to_block; j < N; ++j) {
+                ll idx = N - 1 - (N - 1 - j); // just j
+                if (sorted_A[j] <= new_score) break;
+                cost += (sorted_A[j] - new_score);
+            }
+
+            if (cost <= total_available) {
+                low = mid;
+            } else {
+                high = mid + 1;
+            }
+        }
+
+        if (low > rem)
+            result[i] = -1;
+        else
+            result[i] = low;
+    }
+
+    for (ll i = 0; i < N; ++i) {
+        cout << result[i] << " ";
+    }
+    cout << endl;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    solve();
+}
+```

@@ -1,0 +1,120 @@
+To fix the code and ensure it passes all test cases, we need to carefully analyze the logic and make sure that it correctly counts the number of valid positions where a new piece can be placed without being captured. Let's break down the problem and correct the code step-by-step.
+
+### Corrected Algorithm
+1. **Count Pieces in Rows, Columns, Diagonals**: We will count the number of pieces in each row, column, and both diagonals.
+2. **Calculate Total Positions**: Calculate the total number of positions on the board.
+3. **Subtract Capturable Positions**: Subtract the positions that are capturable due to pieces already on the board.
+4. **Adjust for Overcounting**: Adjust for positions that were overcounted due to overlapping captures.
+
+Here is the corrected C++ code:
+
+```cpp
+#include <iostream>
+#include <set>
+#include <vector>
+
+using namespace std;
+
+typedef long long ll;
+typedef pair<ll, ll> pll;
+
+const ll INF = 1e18;
+
+bool inBounds(const pll &a, const ll n) {
+    return 1 <= a.first && a.first <= n && 1 <= a.second && a.second <= n;
+}
+
+// Function to calculate the number of valid positions
+ll calculateValidPositions(ll n, ll m, vector<pll> &pieces) {
+    set<ll> row, col, d1, d2;
+    
+    // Count pieces in rows, columns, and diagonals
+    for (auto &[i, j] : pieces) {
+        row.insert(i);
+        col.insert(j);
+        d1.insert(i - j);
+        d2.insert(i + j);
+    }
+    
+    ll total_positions = n * n;
+    ll occupied_by_rows = row.size() * n;
+    ll occupied_by_cols = col.size() * n;
+    ll occupied_by_d1 = d1.size() * n;
+    ll occupied_by_d2 = d2.size() * n;
+    
+    // Subtract positions captured by rows and columns
+    total_positions -= occupied_by_rows;
+    total_positions -= occupied_by_cols;
+    
+    // Add back positions captured by both rows and columns
+    total_positions += row.size() * col.size();
+    
+    // Subtract positions captured by diagonals
+    for (auto &d : d1) {
+        ll cnt = n - abs(d);
+        total_positions -= cnt;
+    }
+    for (auto &d : d2) {
+        ll cnt = d < n ? (d - 1) : (2 * n - d + 1);
+        total_positions -= cnt;
+    }
+    
+    // Adjust for overcounting positions captured by both rows and columns and diagonals
+    for (auto &d : d1) {
+        set<pll> com;
+        for (auto &r : row) {
+            pll ints = {r, r - d};
+            if (inBounds(ints, n)) com.insert(ints);
+        }
+        for (auto &c : col) {
+            pll ints = {c + d, c};
+            if (inBounds(ints, n)) com.insert(ints);
+        }
+        ll cnt = n - abs(d);
+        total_positions += com.size();
+    }
+    for (auto &d : d2) {
+        set<pll> com;
+        for (auto &r : row) {
+            pll ints = {r, d - r};
+            if (inBounds(ints, n)) com.insert(ints);
+        }
+        for (auto &c : col) {
+            pll ints = {d - c, c};
+            if (inBounds(ints, n)) com.insert(ints);
+        }
+        for (auto &od : d1) {
+            if ((d + od) % 2 == 1) continue;
+            pll ints = {(d + od) / 2, (d - od) / 2};
+            if (inBounds(ints, n)) com.insert(ints);
+        }
+        ll cnt = d < n ? (d - 1) : (2 * n - d + 1);
+        total_positions += com.size();
+    }
+    
+    return total_positions;
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(NULL);
+    
+    ll n, m;
+    cin >> n >> m;
+    vector<pll> pieces(m);
+    for (ll i = 0; i < m; ++i) {
+        cin >> pieces[i].first >> pieces[i].second;
+    }
+    
+    cout << calculateValidPositions(n, m, pieces) << endl;
+    
+    return 0;
+}
+```
+
+### Explanation of Changes
+1. **Function Encapsulation**: Created a function `calculateValidPositions` to encapsulate the logic for calculating valid positions.
+2. **Set Operations**: Used sets to efficiently count unique positions in rows, columns, and diagonals.
+3. **Overcounting Adjustment**: Added adjustments to handle overcounting of positions captured by multiple pieces.
+
+This should ensure that the code correctly calculates the number of valid positions for placing a new piece without being captured.

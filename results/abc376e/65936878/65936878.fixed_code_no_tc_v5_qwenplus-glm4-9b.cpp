@@ -1,0 +1,43 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+
+using namespace std;
+
+int main() {
+    int t; cin >> t;
+    while (t--) {
+        int n, k; cin >> n >> k;
+        vector<int> a(n), b(n);
+        for (int i = 0; i < n; ++i) cin >> a[i];
+        for (int i = 0; i < n; ++i) cin >> b[i];
+
+        // Pair elements and sort by A element descending
+        vector<pair<int, int>> ab(a.size());
+        for (int i = 0; i < a.size(); ++i) {
+            ab[i] = {a[i], b[i]};
+        }
+        sort(ab.begin(), ab.end(), [](const pair<int, int>& a, const pair<int, int>& b) {
+            return a.first > b.first;
+        });
+
+        // Calculate the sum of B elements for the first k elements in sorted order
+        long long sum_b_k = 0;
+        for (int i = 0; i < k; ++i) {
+            sum_b_k += ab[i].second;
+        }
+
+        // The problem is to minimize (max(a_i) * sum_b) where sum_b is the sum of the first k elements of B
+        // or (max(a_i) + max(a_{i+1})) * sum_b for the first i+1 elements of B, because max(a_i) can be replaced by max(a_{i+1})
+        // We iterate over the remaining elements to find the minimum value of the expression
+        long long min_value = LLONG_MAX;
+        long long sum_b = sum_b_k;
+        for (int i = k; i < n; ++i) {
+            sum_b += ab[i].second;
+            min_value = min(min_value, (ab[i].first + ab[i-1].first) * sum_b);
+        }
+
+        cout << min_value << '\n';
+    }
+    return 0;
+}

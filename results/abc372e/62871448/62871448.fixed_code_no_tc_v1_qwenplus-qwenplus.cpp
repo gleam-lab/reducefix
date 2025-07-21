@@ -1,0 +1,88 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+const int MAXN = 200005;
+const int K_MAX = 10;
+
+int parent[MAXN];
+set<int, greater<int>> *connected_components[MAXN]; // Stores top 10 largest nodes in each component
+
+// Find the root of the set that contains x with path compression
+int find(int x) {
+    if (parent[x] != x) {
+        parent[x] = find(parent[x]);
+    }
+    return parent[x];
+}
+
+// Union by size or rank
+void unite(int x, int y) {
+    int rootX = find(x);
+    int rootY = find(y);
+    
+    if (rootX == rootY) return;
+
+    // Always merge smaller set into larger one
+    if (connected_components[rootX]->size() < connected_components[rootY]->size()) {
+        swap(rootX, rootY);
+    }
+
+    // Merge the elements from rootY to rootX
+    for (int val : *connected_components[rootY]) {
+        if (connected_components[rootX]->size() >= K_MAX) break;
+        connected_components[rootX]->insert(val);
+    }
+
+    // Update parent pointer
+    parent[rootY] = rootX;
+
+    // Delete the old component
+    delete connected_components[rootY];
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int N, Q;
+    cin >> N >> Q;
+
+    // Initialize DSU
+    for (int i = 1; i <= N; ++i) {
+        parent[i] = i;
+        connected_components[i] = new set<int, greater<int>>();
+        connected_components[i]->insert(i);
+    }
+
+    while (Q--) {
+        int op;
+        cin >> op;
+
+        if (op == 1) {
+            int u, v;
+            cin >> u >> v;
+            unite(u, v);
+        } else if (op == 2) {
+            int v, k;
+            cin >> v >> k;
+
+            int root = find(v);
+            auto& comp = *connected_components[root];
+
+            if (comp.size() < k) {
+                cout << -1 << '\n';
+            } else {
+                auto it = comp.begin();
+                advance(it, k - 1);
+                cout << *it << '\n';
+            }
+        }
+    }
+
+    // Cleanup memory
+    for (int i = 1; i <= N; ++i) {
+        delete connected_components[i];
+    }
+
+    return 0;
+}

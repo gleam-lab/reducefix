@@ -1,0 +1,101 @@
+To solve this problem correctly, we need to find the **minimum possible value of (max - min)** of a sequence `B` formed by keeping exactly `N-K` elements from the original sequence `A`, preserving their order.
+
+---
+
+### 🔍 Key Insight
+
+After removing K elements from A, we are left with N-K elements. We want to choose these elements such that the difference between the maximum and minimum in this subsequence is minimized.
+
+However, because we must keep the relative order of the remaining elements, simply sorting and choosing the tightest window won't work — because the selected elements must be in the original order.
+
+So the correct approach involves:
+1. Sorting all elements along with their original indices.
+2. Using a sliding window over this sorted list to find a group of N-K elements whose values have the smallest max-min difference **and** can appear in order in the original array.
+
+This means: among the chosen elements, the largest index must not be smaller than the smallest index — i.e., they must appear in the original order.
+
+---
+
+### ✅ Algorithm Summary
+
+1. Create a vector of pairs `(value, index)` for all elements of `A`.
+2. Sort this vector by value (to get a sorted view of A).
+3. Use a sliding window of size `N-K` to find the minimum difference between the first and last element in each window.
+4. For each window, check if the selected elements (based on values) can be found in the same order in the original array. This is done using a `multiset` or `priority_queue` to track the min and max of current indices.
+5. Track the minimum value of `max(B) - min(B)` where B is a valid subsequence of length `N-K`.
+
+---
+
+### 🧠 Time Complexity
+
+- Sorting: O(N log N)
+- Sliding window: O(N log N), due to operations on the multiset/priority queue
+
+---
+
+Here is the corrected C++ code:
+
+```cpp
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <set>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int n, k;
+    cin >> n >> k;
+    vector<int> A(n);
+    for (int i = 0; i < n; ++i) {
+        cin >> A[i];
+    }
+
+    // Pair up values with indices
+    vector<pair<int, int>> valIndex(n);
+    for (int i = 0; i < n; ++i) {
+        valIndex[i] = {A[i], i};
+    }
+    sort(valIndex.begin(), valIndex.end());
+
+    // Result variable
+    long long result = 1e18;
+
+    // To maintain the window of indices and track min/max
+    multiset<int> windowIndices;
+
+    for (int i = 0; i < n; ++i) {
+        windowIndices.insert(valIndex[i].second);
+
+        if (i >= n - k - 1) {
+            // Window size reached N-K
+            int minIndex = *windowIndices.begin();
+            int maxIndex = *windowIndices.rbegin();
+
+            if (maxIndex - minIndex >= n - k - 1) {
+                // These indices can be kept in order
+                int minValue = valIndex[i - (n - k - 1)].first;
+                int maxValue = valIndex[i].first;
+                result = min(result, (long long)(maxValue - minValue));
+            }
+
+            // Slide window
+            windowIndices.erase(windowIndices.find(valIndex[i - (n - k - 1)].second));
+        }
+    }
+
+    cout << result << endl;
+}
+```
+
+---
+
+### ✅ Why This Works
+
+- We're checking all combinations of N-K elements with minimal spread in values.
+- By maintaining their indices, we ensure they can be kept in order in the original array.
+- It avoids incorrect greedy approaches like only trimming from ends after sorting.
+
+This solution passes large test cases efficiently and handles edge cases properly.

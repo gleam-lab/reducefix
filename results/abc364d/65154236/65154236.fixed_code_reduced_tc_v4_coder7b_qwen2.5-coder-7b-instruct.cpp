@@ -1,0 +1,25 @@
+#include<bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+
+vector<ll> a;
+
+int main() {
+    ios::sync_with_stdio(false); cin.tie(nullptr); cout.tie(nullptr);
+    
+    int n, q; cin >> n >> q;
+    a.resize(n);
+    for(int i = 0; i < n; ++i) cin >> a[i];
+    
+    for(int i = 1; i < n; ++i) a[i] += a[i - 1];
+    
+    while(q--) {
+        ll b, k; cin >> b >> k;
+        auto it = upper_bound(a.begin(), a.end(), b);
+        int idx = it - a.begin();
+        if(idx == 0) cout << b << '\n';
+        else cout << abs(b - a[idx - 1]) << '\n';
+    }
+    
+    return 0;
+}

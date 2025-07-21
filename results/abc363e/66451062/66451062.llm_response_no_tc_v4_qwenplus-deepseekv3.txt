@@ -1,0 +1,110 @@
+To fix this code, we need to address several issues related to both correctness and efficiency:
+
+1. **Initialization and Priority Queue Handling**: The original code initializes the priority queue with the border sections, but it may miss some cases where adjacent sections also need to be processed. The priority queue should correctly handle the sinking of sections in order of their elevation relative to the sea level.
+
+2. **Efficiency**: Given the constraints (H and W up to 1000 and Y up to 100,000), the original approach may not be efficient enough. We need a more efficient way to process the sinking sections without recalculating everything from scratch for each sea level.
+
+3. **Edge Cases**: The code must handle cases where the entire island sinks or where large sections sink at once.
+
+### Approaches
+1. **Priority Queue for Processing**: Use a priority queue to process sections in order of increasing elevation. This ensures that when the sea level rises, we only process sections that can sink at the current level.
+2. **Breadth-First Search (BFS)**: For each section that sinks, use BFS to check adjacent sections and sink them if they meet the conditions (elevation not greater than the current sea level and not already sunk).
+3. **Efficiency Improvements**: To avoid recalculating for each sea level, precompute the order in which sections sink and then for each sea level, keep track of the sections that sink at that level.
+
+### Solution Code
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+#define int long long
+#define close ios::sync_with_stdio(false); cin.tie(0); cout.tie(0);
+#define MAXN 1005
+#define LIMIT 22
+#define inf 0x3f3f3f3f3f3f
+#define endl '\n'
+const double eps = 1e-7;
+int dx[] = {0, 0, 1, -1};
+int dy[] = {1, -1, 0, 0};
+const int MOD = 1e9 + 7;
+
+struct Node {
+    int x, y, val;
+    bool operator<(const Node &a) const {
+        return val > a.val;
+    }
+};
+
+signed main() {
+    close;
+    int h, w, Y;
+    cin >> h >> w >> Y;
+    int grid[MAXN][MAXN];
+    for (int i = 0; i < h; i++) {
+        for (int j = 0; j < w; j++) {
+            cin >> grid[i][j];
+        }
+    }
+    
+    bool vis[MAXN][MAXN] = {false};
+    priority_queue<Node> q;
+    
+    for (int i = 0; i < h; i++) {
+        if (!vis[i][0]) {
+            q.push({i, 0, grid[i][0]});
+            vis[i][0] = true;
+        }
+        if (!vis[i][w - 1]) {
+            q.push({i, w - 1, grid[i][w - 1]});
+            vis[i][w - 1] = true;
+        }
+    }
+    for (int j = 1; j < w - 1; j++) {
+        if (!vis[0][j]) {
+            q.push({0, j, grid[0][j]});
+            vis[0][j] = true;
+        }
+        if (!vis[h - 1][j]) {
+            q.push({h - 1, j, grid[h - 1][j]});
+            vis[h - 1][j] = true;
+        }
+    }
+    
+    int res = h * w;
+    vector<int> ans(Y + 1, 0);
+    int current_level = 1;
+    int current_res = res;
+    
+    while (current_level <= Y && !q.empty()) {
+        while (!q.empty() && q.top().val <= current_level) {
+            Node cur = q.top();
+            q.pop();
+            current_res--;
+            for (int i = 0; i < 4; i++) {
+                int nx = cur.x + dx[i];
+                int ny = cur.y + dy[i];
+                if (nx >= 0 && nx < h && ny >= 0 && ny < w && !vis[nx][ny]) {
+                    vis[nx][ny] = true;
+                    q.push({nx, ny, grid[nx][ny]});
+                }
+            }
+        }
+        ans[current_level] = current_res;
+        current_level++;
+    }
+    
+    for (int i = 1; i <= Y; i++) {
+        if (i < current_level) {
+            cout << ans[i] << endl;
+        } else {
+            cout << ans[current_level - 1] << endl;
+        }
+    }
+    
+    return 0;
+}
+```
+
+### Explanation
+1. **Initialization**: We start by reading the grid dimensions and elevations. We initialize a priority queue to process sections starting from the borders of the island.
+2. **Processing Sinking Sections**: For each sea level from 1 to Y, we process sections in the priority queue that have elevations less than or equal to the current sea level. Using BFS, we check adjacent sections and sink them if they meet the conditions.
+3. **Efficiency**: The priority queue ensures we process sections in the correct order, and the BFS efficiently handles the propagation of sinking sections. This approach avoids recalculating for each sea level and ensures optimal performance.
+4. **Output**: For each sea level, the remaining area is printed, ensuring results are computed efficiently without redundant calculations.

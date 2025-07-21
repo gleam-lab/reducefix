@@ -1,0 +1,68 @@
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+
+const ll INF = 1LL << 60;
+
+int n;
+ll a[110], b[110], p[110], q[110], x;
+
+inline ll lcm(ll a, ll b) {
+    return a / gcd(a, b) * b;
+}
+
+bool check(ll v) {
+    ll cnt = 0;
+    for (int i = 1; i <= n; ++i) {
+        ll g = gcd(a[i], b[i]);
+        ll l = lcm(a[i], b[i]);
+
+        // Full cycles
+        ll full_cycles = v / l;
+        ll cost_full = full_cycles * min(p[i] * (l / a[i]), q[i] * (l / b[i]));
+        cnt += cost_full;
+
+        if (cnt > x) return false;
+
+        // Remaining time: v - full_cycles * l
+        ll rem = v - full_cycles * l;
+
+        // Try all possible A usages in remaining time
+        ll min_cost = INF;
+        for (ll j = 0;; ++j) {
+            ll time_a = j * a[i];
+            if (time_a > rem) break;
+            ll rem_b = rem - time_a;
+            ll k = rem_b / b[i] + (rem_b % b[i] != 0);
+            if (k < 0) k = 0;
+            ll cost = j * p[i] + k * q[i];
+            min_cost = min(min_cost, cost);
+            
+            // Optimization: if we can try more As beyond the remainder,
+            // as sometimes using fewer A and more B might be cheaper
+            if (j == 0 && k == 0) break;
+        }
+
+        cnt += min_cost;
+        if (cnt > x) return false;
+    }
+    return true;
+}
+
+int main() {
+    ios::sync_with_stdio(0);
+    cin.tie(0), cout.tie(0);
+    cin >> n >> x;
+    for (int i = 1; i <= n; ++i)
+        cin >> a[i] >> p[i] >> b[i] >> q[i];
+    
+    ll l = 0, r = 2e18;
+    while (l < r) {
+        ll mid = (l + r) / 2;
+        if (check(mid))
+            l = mid + 1;
+        else
+            r = mid;
+    }
+    cout << l - 1;
+}

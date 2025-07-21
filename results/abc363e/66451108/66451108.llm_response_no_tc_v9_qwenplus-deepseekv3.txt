@@ -1,0 +1,92 @@
+To fix this code, we need to address several issues to ensure correctness and efficiency. The main goal is to simulate the rising sea level and determine the remaining land area each year, considering that sections adjacent to the sea or already sunk sections will sink if their elevation is not greater than the current sea level.
+
+### Issues in the Original Code
+1. **Priority Queue Initialization**: The initial code only pushes the border cells into the priority queue, but it should also consider any cell that becomes adjacent to sunk cells over time.
+2. **Visited Array Handling**: The `vis` array is used to mark cells that have been processed, but the initial marking might not cover all necessary cases, especially as the sea level rises.
+3. **Efficiency**: With constraints up to \(10^5\) years, the algorithm needs to be efficient, ideally O(Y log N) where N is the number of cells.
+
+### Approaches
+1. **Multi-level BFS**: We can use a priority queue (min-heap) to process cells in order of their elevation. This allows us to efficiently handle cells as the sea level rises.
+2. **Visited Tracking**: Ensure that each cell is processed only once, marking it as visited when it is added to the queue to avoid reprocessing.
+3. **BFS for Adjacent Cells**: For each cell that sinks, check its adjacent cells to see if they should also sink at the current sea level.
+
+### Solution Code
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+#define int long long
+#define close ios::sync_with_stdio(false); cin.tie(0); cout.tie(0);
+#define MAXN 1005
+#define inf 0x3f3f3f3f3f3f
+#define endl '\n'
+const double eps = 1e-7;
+int dx[] = {0, 0, 1, -1};
+int dy[] = {1, -1, 0, 0};
+
+struct Node {
+    int x, y, val;
+    bool operator<(const Node &a) const {
+        return val > a.val; // Min-heap based on val
+    }
+};
+
+signed main() {
+    close;
+    int h, w, y;
+    cin >> h >> w >> y;
+    vector<vector<int>> grid(h, vector<int>(w));
+    for (int i = 0; i < h; ++i) {
+        for (int j = 0; j < w; ++j) {
+            cin >> grid[i][j];
+        }
+    }
+
+    vector<vector<bool>> vis(h, vector<bool>(w, false));
+    priority_queue<Node> q;
+    
+    // Push border cells into the priority queue
+    for (int i = 0; i < h; ++i) {
+        q.push({i, 0, grid[i][0]});
+        q.push({i, w - 1, grid[i][w - 1]});
+        vis[i][0] = true;
+        vis[i][w - 1] = true;
+    }
+    for (int j = 1; j < w - 1; ++j) {
+        q.push({0, j, grid[0][j]});
+        q.push({h - 1, j, grid[h - 1][j]});
+        vis[0][j] = true;
+        vis[h - 1][j] = true;
+    }
+
+    int res = h * w;
+    int current_level = 1;
+    int sunk = 0;
+
+    while (current_level <= y) {
+        while (!q.empty() && q.top().val <= current_level) {
+            Node cur = q.top();
+            q.pop();
+            sunk++;
+            for (int i = 0; i < 4; ++i) {
+                int nx = cur.x + dx[i];
+                int ny = cur.y + dy[i];
+                if (nx >= 0 && nx < h && ny >= 0 && ny < w && !vis[nx][ny]) {
+                    vis[nx][ny] = true;
+                    q.push({nx, ny, grid[nx][ny]});
+                }
+            }
+        }
+        cout << res - sunk << endl;
+        current_level++;
+    }
+    
+    return 0;
+}
+```
+
+### Explanation
+1. **Initialization**: The grid is read, and a priority queue (min-heap) is initialized with the border cells. These cells are marked as visited to avoid reprocessing.
+2. **Processing**: For each year (sea level), the code checks cells in the priority queue whose elevation is less than or equal to the current sea level. These cells are removed from the land area (res), and their adjacent cells are checked and added to the queue if they haven't been processed yet.
+3. **Output**: For each year, the remaining land area (initial area minus sunk cells) is printed.
+
+This approach efficiently processes cells in order of their elevation, ensuring that each cell is processed only once, leading to optimal performance for large inputs.

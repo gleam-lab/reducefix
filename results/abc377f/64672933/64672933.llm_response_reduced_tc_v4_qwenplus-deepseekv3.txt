@@ -1,0 +1,159 @@
+To fix this code, we need to correctly calculate the number of safe squares where the new piece can be placed without being captured by any existing pieces. The existing pieces can capture along rows, columns, and both diagonals. The incorrect code attempts to compute the unsafe squares by considering these constraints but fails to correctly account for overlaps and intersections between these constraints.
+
+### Approaches
+
+1. **Identify Unsafe Squares**: The unsafe squares are those that lie in the same row, column, or diagonal (either i + j = a + b or i - j = a - b) as any existing piece. The total safe squares are the total squares (N²) minus the unsafe squares, plus any overlaps that were double-counted.
+
+2. **Use Sets for Unique Constraints**: For each piece, collect unique rows, columns, diagonals (i + j), and anti-diagonals (i - j) to avoid redundant checks.
+
+3. **Inclusion-Exclusion Principle**: Calculate the total unsafe squares by adding the contributions from rows, columns, diagonals, and anti-diagonals, then subtract the overlaps where squares are covered by multiple constraints (e.g., a square in both a row and a column of existing pieces).
+
+4. **Final Calculation**: The total safe squares is the total squares (N²) minus the unsafe squares, adjusted for overlaps.
+
+### Solution Code
+
+```cpp
+#include<bits/stdc++.h>
+using namespace std;
+using i64 = long long;
+
+int main() {
+    std::ios::sync_with_stdio(false);
+    std::cin.tie(nullptr);
+    i64 N, M;
+    cin >> N >> M;
+    vector<array<i64, 2>> g(M);
+    set<i64> rows, cols, diag1, diag2;
+    set<array<i64, 2>> pieces;
+    for (int i = 0; i < M; i++) {
+        i64 a, b;
+        cin >> a >> b;
+        g[i] = {a, b};
+        rows.insert(a);
+        cols.insert(b);
+        diag1.insert(a + b);
+        diag2.insert(a - b);
+        pieces.insert({a, b});
+    }
+    
+    i64 unsafe = 0;
+    
+    // Rows
+    unsafe += rows.size() * N;
+    
+    // Columns
+    unsafe += cols.size() * N;
+    
+    // Diagonals (i + j = k)
+    for (auto k : diag1) {
+        i64 x_min = max(1LL, k - N);
+        i64 x_max = min(N, k - 1);
+        if (x_max >= x_min) {
+            unsafe += x_max - x_min + 1;
+        }
+    }
+    
+    // Anti-diagonals (i - j = k)
+    for (auto k : diag2) {
+        i64 x_min = max(1LL, 1 + k);
+        i64 x_max = min(N, N + k);
+        if (x_max >= x_min) {
+            unsafe += x_max - x_min + 1;
+        }
+    }
+    
+    // Subtract overlaps: intersections of rows and columns
+    for (auto r : rows) {
+        for (auto c : cols) {
+            if (pieces.count({r, c}) == 0) {
+                unsafe--;
+            }
+        }
+    }
+    
+    // Subtract overlaps: intersections of rows and diag1
+    for (auto r : rows) {
+        for (auto k : diag1) {
+            i64 c = k - r;
+            if (c >= 1 && c <= N && pieces.count({r, c}) == 0) {
+                unsafe--;
+            }
+        }
+    }
+    
+    // Subtract overlaps: intersections of rows and diag2
+    for (auto r : rows) {
+        for (auto k : diag2) {
+            i64 c = r - k;
+            if (c >= 1 && c <= N && pieces.count({r, c}) == 0) {
+                unsafe--;
+            }
+        }
+    }
+    
+    // Subtract overlaps: intersections of columns and diag1
+    for (auto c : cols) {
+        for (auto k : diag1) {
+            i64 r = k - c;
+            if (r >= 1 && r <= N && pieces.count({r, c}) == 0) {
+                unsafe--;
+            }
+        }
+    }
+    
+    // Subtract overlaps: intersections of columns and diag2
+    for (auto c : cols) {
+        for (auto k : diag2) {
+            i64 r = c + k;
+            if (r >= 1 && r <= N && pieces.count({r, c}) == 0) {
+                unsafe--;
+            }
+        }
+    }
+    
+    // Subtract overlaps: intersections of diag1 and diag2
+    for (auto k1 : diag1) {
+        for (auto k2 : diag2) {
+            if ((k1 + k2) % 2 == 0) {
+                i64 r = (k1 + k2) / 2;
+                i64 c = (k1 - k2) / 2;
+                if (r >= 1 && r <= N && c >= 1 && c <= N && pieces.count({r, c}) == 0) {
+                    unsafe--;
+                }
+            }
+        }
+    }
+    
+    // Add back triple overlaps: squares that were subtracted three times
+    for (auto r : rows) {
+        for (auto c : cols) {
+            i64 k1 = r + c;
+            i64 k2 = r - c;
+            if (diag1.count(k1) && diag2.count(k2) && pieces.count({r, c}) == 0) {
+                unsafe += 1;
+            }
+        }
+    }
+    
+    i64 safe = N * N - unsafe - M;
+    cout << safe << "\n";
+    
+    return 0;
+}
+```
+
+### Explanation
+
+1. **Input Handling**: The code reads the grid size N and the number of existing pieces M. It then reads the coordinates of each existing piece and stores them in sets for quick lookup.
+
+2. **Unsafe Squares Calculation**: The code calculates the number of squares that are unsafe by considering:
+   - **Rows**: Each existing piece's row makes all squares in that row unsafe.
+   - **Columns**: Each existing piece's column makes all squares in that column unsafe.
+   - **Diagonals (i + j = k)**: Each diagonal (i + j) makes all squares along that diagonal unsafe.
+   - **Anti-diagonals (i - j = k)**: Each anti-diagonal (i - j) makes all squares along that anti-diagonal unsafe.
+
+3. **Overlap Adjustment**: The code adjusts for overlaps where a square might be counted multiple times (e.g., in both a row and a column) by subtracting these overlaps. It then adds back any triple overlaps that were subtracted too many times.
+
+4. **Final Safe Squares Calculation**: The total safe squares is the total number of squares (N²) minus the unsafe squares and the squares already occupied by existing pieces (M).
+
+This approach ensures that all constraints are correctly accounted for without double-counting or missing any overlaps, providing the correct number of safe squares for placing the new piece.

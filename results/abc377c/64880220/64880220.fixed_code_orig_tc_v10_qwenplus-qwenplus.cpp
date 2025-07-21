@@ -1,0 +1,51 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    long long N;
+    int M;
+    cin >> N >> M;
+
+    set<pair<long long, long long>> occupied;
+    set<pair<long long, long long>> attacked;
+
+    vector<pair<long long, long long>> deltas = {
+        {2, 1}, {1, 2}, {-1, 2}, {-2, 1},
+        {-2, -1}, {-1, -2}, {1, -2}, {2, -1}
+    };
+
+    for (int i = 0; i < M; ++i) {
+        long long a, b;
+        cin >> a >> b;
+        occupied.emplace(a, b);
+
+        // Add all positions that this piece can attack
+        for (auto [dx, dy] : deltas) {
+            long long x = a + dx;
+            long long y = b + dy;
+            if (x >= 1 && x <= N && y >= 1 && y <= N) {
+                attacked.emplace(x, y);
+            }
+        }
+    }
+
+    // Remove positions already occupied by existing pieces from attacked set
+    for (auto pos : occupied) {
+        attacked.erase(pos);
+    }
+
+    // Total squares = N*N
+    // Occupied squares = M
+    // Attacked but not occupied squares = attacked.size()
+    // So available squares = total - occupied - attacked
+
+    long long total = N * N;
+    long long unavailable = M + attacked.size();
+
+    cout << (total - unavailable) << endl;
+
+    return 0;
+}

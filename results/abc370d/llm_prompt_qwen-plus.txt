@@ -1,0 +1,334 @@
+SYSTEM:
+You are an expert Python programmer creating test case reducers for AtCoder problems.
+Generate a complete `reducer.py` script for the target problem based on the provided example and target problem details.
+The script will be placed in a directory named like `abc370d/reducer.py` and called by an orchestrator (`reduce.py`) in the parent directory.
+The orchestrator compiles `./ac` and `./wa`, then changes the working directory before calling your `reduce_input` function.
+
+**Generated `reducer.py` MUST:**
+1. Define `reduce_input(input_file: str, output_file: str)`: Reads `input_file`, parses according to the **target problem**, implements reduction, writes minimized input to `output_file`.
+2. Include `test_interesting(...)`: Takes reduced data representation, creates input bytes, runs `./ac` and `./wa` (assume they exist in CWD), returns `True` if outputs differ.
+3. Include necessary helpers (`run_program`, parsing utils - adapt from example).
+4. Contain only valid Python code with imports. No `if __name__ == '__main__':` block.
+
+**Output Format:** Respond ONLY with the complete Python code for the `reducer.py` file, enclosed in a single ```python ... ``` block. No explanations outside the code block.
+
+
+USER:
+First, here is a complete working example for problem abc330d:
+
+# Example Problem Information (abc330d)
+
+## Title: D - Counting LsEditorial
+
+## Problem Description (Markdown)
+Score : 400 points
+
+### Problem Statement
+
+You are given an N \times N grid. Let (i,j) denote the cell in the i-th row from the top and the j-th column from the left.  
+The states of the cells are given by N strings of length N, S\_1, S\_2, \dots, S\_N, in the following format:
+
+* If the j-th character of S\_i is `o`, there is an `o` written in cell (i,j).
+* If the j-th character of S\_i is `x`, there is an `x` written in cell (i,j).
+
+Find the number of triples of cells that satisfy all of the following conditions:
+
+* The three cells in the triple are distinct.
+* All three cells have an `o` written in them.
+* Exactly two of the cells are in the same row.
+* Exactly two of the cells are in the same column.
+
+Here, two triples are considered different if and only if some cell is contained in exactly one of the triples.
+
+### Constraints
+
+* N is an integer between 2 and 2000, inclusive.
+* S\_i is a string of length N consisting of `o` and `x`.
+
+---
+
+### Input
+
+The input is given from Standard Input in the following format:
+
+```
+N
+S_1
+S_2
+\vdots
+S_N
+
+```
+
+### Output
+
+Print the answer as an integer.
+
+---
+
+## Example `reducer.py` for abc330d
+```python
+# START --- Example abc330d/reducer.py --- START
+import os
+import subprocess
+from typing import List, Optional
+import sys 
+def run_program(program_path: str, input_data: bytes) -> bytes:
+    result = subprocess.run(
+        [program_path], 
+        input=input_data,
+        capture_output=True,
+        check=True,  
+        timeout=10   
+    )
+    return result.stdout
+def get_subgrid(original_grid: List[str], kept_indices: List[int]) -> List[str]:
+    subgrid = []
+    for i in kept_indices:
+        if i - 1 >= len(original_grid):
+             print(f"[Warning] Index {i} is out of bounds for original grid row access (size {len(original_grid)}). Skipping row.")
+             continue
+        row_str = original_grid[i - 1]  
+        new_row_chars = []
+        for j in kept_indices:
+            if j - 1 >= len(row_str):
+                print(f"[Warning] Index {j} is out of bounds for row string column access (len {len(row_str)}). Skipping char.")
+                continue
+            new_row_chars.append(row_str[j - 1])
+        subgrid.append("".join(new_row_chars))
+    return subgrid
+def create_input_bytes(subgrid: List[str]) -> bytes:
+    if not subgrid: 
+        return b"0\n"
+    M = len(subgrid)
+    lines = [f"{M}\n"] + [row + "\n" for row in subgrid]
+    return "".join(lines).encode("utf-8")
+def test_interesting(subgrid: List[str]) -> bool:
+    if not subgrid:
+        return False
+    input_data = create_input_bytes(subgrid)
+    wa_output = run_program("./wa", input_data)
+    ac_output = run_program("./ac", input_data)
+    return (wa_output.strip() != ac_output.strip())
+def reduce_grid_ddmin(original_n: int, original_grid: List[str]) -> List[str]:
+    if not test_interesting(original_grid):
+        print("[Error] 初始输入并未造成 WA 与 AC 不一致，无法缩减。")
+        return original_grid
+    print(f"[Info] 初始网格 N={original_n} 已确认导致输出差异，开始 ddmin 缩减...\n")
+    current_indices = list(range(1, original_n + 1))
+    granularity = 2  
+    while len(current_indices) >= 1:
+        print(f"[Reduce] 当前下标集大小={len(current_indices)}: {current_indices}")
+        print(f"         尝试粒度: {granularity}")
+        num_indices = len(current_indices)
+        subset_size = max(1, num_indices // granularity)
+        start_idx = 0
+        made_progress = False
+        def check_candidate(candidate_indices: List[int]) -> bool:
+            if not candidate_indices:
+                return False
+            subgrid = get_subgrid(original_grid, candidate_indices)
+            return test_interesting(subgrid)
+        print(f"         1) 尝试『移除』大小约={subset_size} 的分块...")
+        while start_idx < num_indices:
+            block = current_indices[start_idx:start_idx + subset_size]
+            candidate_indices = [x for x in current_indices if x not in block]
+            print(f"            - 移除 {block} ... ", end="")
+            if check_candidate(candidate_indices):
+                print(f"成功! 新下标集大小={len(candidate_indices)}")
+                current_indices = candidate_indices
+                granularity = 2  
+                made_progress = True
+                break  
+            else:
+                print("失败")
+                start_idx += subset_size
+        if made_progress:
+            continue
+        print(f"         2) 尝试『只保留』大小约={subset_size} 的分块...")
+        start_idx = 0
+        while start_idx < num_indices:
+            block = current_indices[start_idx:start_idx + subset_size]
+            candidate_indices = block
+            if len(candidate_indices) == 0 or len(candidate_indices) == num_indices:
+                start_idx += subset_size
+                continue
+            print(f"            - 只保留 {block} ... ", end="")
+            if check_candidate(candidate_indices):
+                print(f"成功! 新下标集大小={len(candidate_indices)}")
+                current_indices = candidate_indices
+                granularity = 2  
+                made_progress = True
+                break
+            else:
+                print("失败")
+            start_idx += subset_size
+        if made_progress:
+            continue
+        if granularity < num_indices:
+            new_gran = min(granularity * 2, num_indices)
+            print(f"         -> 无进展，增大粒度至 {new_gran}\n")
+            granularity = new_gran
+        else:
+            print("\n[Reduce] 已无法进一步缩减 —— 到达 1-minimal。")
+            break
+    final_subgrid = get_subgrid(original_grid, current_indices)
+    print(f"\n[Result] 缩减后网格大小 M={len(final_subgrid)}，保留下标: {current_indices}")
+    return final_subgrid
+def reduce_input(input_file: str, output_file: str):
+    if not os.path.exists(input_file):
+        print(f"[Error] 输入文件不存在: {input_file}", file=sys.stderr)
+        return 
+    lines = []
+    with open(input_file, "r", encoding="utf-8") as f:
+        lines = [line.rstrip("\n") for line in f]
+    if not lines:
+        raise ValueError("输入文件为空")
+    n_str = lines[0].strip()
+    if not n_str.isdigit():
+        raise ValueError(f"第一行为非数字: {n_str}")
+    N = int(n_str)
+    if len(lines) < N + 1:
+        raise ValueError(f"输入行数不足: 期望至少 {N+1} 行, 实际 {len(lines)} 行.")
+    grid = lines[1:1+N]  
+    if any(len(row) != N for row in grid):
+        raise ValueError("网格中的行长度与 N 不一致。")
+    reduced_subgrid = reduce_grid_ddmin(N, grid)
+    output_bytes = create_input_bytes(reduced_subgrid)
+    with open(output_file, "wb") as f:
+        f.write(output_bytes)
+    print(f"[Info] 缩减过程完成，结果已写入: {output_file}") 
+
+# END --- Example abc330d/reducer.py --- END
+```
+
+--- 
+
+Now, using the example above as a reference for structure and helper functions (like `run_program`, `test_interesting`), please generate the `reducer.py` script for the following **target problem**: 
+
+# Target Problem Information (abc370d)
+
+## Title: D - Cross ExplosionEditorial
+
+## Problem Description (Markdown)
+Score : 400 points
+
+### Problem Statement
+
+There is a grid with H rows and W columns. Let (i, j) denote the cell at the i-th row from the top and j-th column from the left.  
+Initially, there is one wall in each cell.  
+After processing Q queries explained below in the order they are given, find the number of remaining walls.
+
+In the q-th query, you are given two integers R\_q and C\_q.  
+You place a bomb at (R\_q, C\_q) to destroy walls. As a result, the following process occurs.
+
+* If there is a wall at (R\_q, C\_q), destroy that wall and end the process.
+* If there is no wall at (R\_q, C\_q), destroy the first walls that appear when looking up, down, left, and right from (R\_q, C\_q). More precisely, the following four processes occur simultaneously:
+  + If there exists an i \lt R\_q such that a wall exists at (i, C\_q) and no wall exists at (k, C\_q) for all i \lt k \lt R\_q, destroy the wall at (i, C\_q).
+  + If there exists an i \gt R\_q such that a wall exists at (i, C\_q) and no wall exists at (k, C\_q) for all R\_q \lt k \lt i, destroy the wall at (i, C\_q).
+  + If there exists a j \lt C\_q such that a wall exists at (R\_q, j) and no wall exists at (R\_q, k) for all j \lt k \lt C\_q, destroy the wall at (R\_q, j).
+  + If there exists a j \gt C\_q such that a wall exists at (R\_q, j) and no wall exists at (R\_q, k) for all C\_q \lt k \lt j, destroy the wall at (R\_q, j).
+
+### Constraints
+
+* 1 \leq H, W
+* H \times W \leq 4 \times 10^5
+* 1 \leq Q \leq 2 \times 10^5
+* 1 \leq R\_q \leq H
+* 1 \leq C\_q \leq W
+* All input values are integers.
+
+---
+
+### Input
+
+The input is given from Standard Input in the following format:
+
+```
+H W Q
+R_1 C_1
+R_2 C_2
+\vdots
+R_Q C_Q
+
+```
+
+### Output
+
+Print the number of remaining walls after processing all queries.
+
+---
+
+### Sample Input 1
+
+```
+2 4 3
+1 2
+1 2
+1 3
+
+```
+
+### Sample Output 1
+
+```
+2
+
+```
+
+The process of handling the queries can be explained as follows:
+
+* In the 1st query, (R\_1, C\_1) = (1, 2). There is a wall at (1, 2), so the wall at (1, 2) is destroyed.
+* In the 2nd query, (R\_2, C\_2) = (1, 2). There is no wall at (1, 2), so the walls at (2,2),(1,1),(1,3), which are the first walls that appear when looking up, down, left, and right from (1, 2), are destroyed.
+* In the 3rd query, (R\_3, C\_3) = (1, 3). There is no wall at (1, 3), so the walls at (2,3),(1,4), which are the first walls that appear when looking up, down, left, and right from (1, 3), are destroyed.
+
+After processing all queries, there are two remaining walls, at (2, 1) and (2, 4).
+
+---
+
+### Sample Input 2
+
+```
+5 5 5
+3 3
+3 3
+3 2
+2 2
+1 2
+
+```
+
+### Sample Output 2
+
+```
+10
+
+```
+
+---
+
+### Sample Input 3
+
+```
+4 3 10
+2 2
+4 1
+1 1
+4 2
+2 1
+3 1
+1 3
+1 2
+4 3
+4 2
+
+```
+
+### Sample Output 3
+
+```
+2
+
+```
+
+Generate the complete `reducer.py` code for problem **abc370d**. Remember to output only the Python code block.

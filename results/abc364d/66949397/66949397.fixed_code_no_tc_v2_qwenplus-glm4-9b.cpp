@@ -1,0 +1,35 @@
+#include <vector>
+#include <iostream>
+#include <algorithm>
+#include <climits>
+
+using m_int = long long;
+using std::cin;
+using std::cout;
+using std::vector;
+
+int main() {
+    m_int n, q; cin >> n >> q;
+    vector<m_int> a(n);
+    
+    for(m_int i = 0; i < n; ++i) {
+        cin >> a[i];
+    }
+    std::sort(a.begin(), a.end());
+
+    while(q--) {
+        m_int b, k; cin >> b >> k;
+
+        // Calculate distances from point B_j to all points A_i
+        vector<m_int> distances(n);
+        for(m_int i = 0; i < n; ++i) {
+            distances[i] = std::abs(a[i] - b);
+        }
+
+        // Sort distances to find the k-th closest point
+        std::sort(distances.begin(), distances.end());
+
+        // Output the k-th closest distance
+        cout << distances[k - 1] << "\n";
+    }
+}

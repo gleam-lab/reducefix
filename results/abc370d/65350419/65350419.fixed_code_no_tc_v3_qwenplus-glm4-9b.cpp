@@ -1,0 +1,62 @@
+#include <iostream>
+#include <vector>
+#include <set>
+using namespace std;
+
+int main() {
+    int H, W, Q;
+    cin >> H >> W >> Q;
+
+    // Using sets to keep track of the walls in each row and column
+    vector<set<int>> tate(W), yoko(H);
+    
+    // Initialize each cell with walls
+    for (int i = 0; i < H; i++) {
+        for (int j = 0; j < W; j++) {
+            tate[j].insert(i);
+            yoko[i].insert(j);
+        }
+    }
+
+    // Process each query
+    for (int q = 0; q < Q; q++) {
+        int r, c;
+        cin >> r >> c;
+        r--; c--; // Convert to 0-indexed
+        
+        // Check if there's a wall at the given cell
+        if (tate[c].find(r) != tate[c].end()) {
+            // Remove the wall from both the row and column
+            tate[c].erase(r);
+            yoko[r].erase(c);
+        } else {
+            // No wall at the given cell, remove the first wall in the row and column
+            // Check and remove the first wall in the row
+            for (auto it = tate[c].begin(); it != tate[c].end(); ) {
+                if (*it > r) break;
+                int row = *it;
+                tate[c].erase(it++);
+                yoko[row].erase(c);
+            }
+            
+            // Check and remove the first wall in the column
+            for (auto it = yoko[r].begin(); it != yoko[r].end(); ) {
+                if (*it > c) break;
+                int col = *it;
+                yoko[r].erase(it++);
+                tate[col].erase(r);
+            }
+        }
+    }
+
+    // Calculate the remaining number of walls
+    int remainingWalls = 0;
+    for (int j = 0; j < W; j++) {
+        remainingWalls += tate[j].size();
+    }
+
+    // Output the result
+    cout << remainingWalls << endl;
+
+    return 0;
+}

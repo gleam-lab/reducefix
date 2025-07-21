@@ -1,0 +1,54 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define ll long long
+
+struct FastIO {
+    FastIO() {
+        std::ios::sync_with_stdio(false);
+        std::cin.tie(nullptr);
+    }
+} fio;
+
+ll n, m, k;
+ll A[200001];
+
+ll solve() {
+    ll remV = k;
+    ll sum = 0;
+    priority_queue<pair<ll, ll>> pq; // (-votes, index)
+    
+    for (ll i = 0; i < n; ++i) {
+        sum += A[i];
+        pq.push({-A[i], i});
+    }
+    vector<ll> answer(n, -1);
+
+    while (true) {
+        ll mxV = -pq.top().first;
+        ll mxI = pq.top().second;
+        pq.pop();
+        if (m == 1 && answer[mxI] == -1) return -1; // No one can win if there's only one candidate allowed to win
+
+        if (answer[mxI] == -1) {
+            // Calculate how many more votes are needed to ensure victory
+            ll remM = m - 1;
+            ll needed = mxV + remM * (n - remM) / 2 - sum + remV;
+            if (needed > remV) return -1; // Impossible to guarantee victory
+            answer[mxI] = needed;
+            remV -= needed;
+        }
+
+        if (remV == 0) break;
+        
+        sum += mxV;
+    }
+    
+    return 0;
+}
+
+int main() {
+    cin >> n >> m >> k;
+    for (ll i = 0; i < n; ++i) cin >> A[i];
+    fio << solve() << '\n';
+    return 0;
+}

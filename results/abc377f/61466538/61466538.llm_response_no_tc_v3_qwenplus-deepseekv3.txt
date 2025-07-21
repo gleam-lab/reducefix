@@ -1,0 +1,128 @@
+To fix this code, we need to correctly calculate the number of safe squares where a new piece can be placed without being captured by any existing queens. The initial approach had some logical errors and inefficiencies, especially in handling the intersections of different attack lines (rows, columns, and diagonals). The revised approach will:
+
+1. Calculate the total number of squares that are under attack by any queen.
+2. Use inclusion-exclusion principles to avoid double-counting squares that are attacked by multiple queens or multiple attack lines.
+3. Efficiently compute the intersections of attack lines to ensure accurate counting.
+
+### Fixed Code
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+typedef long long ll;
+typedef pair<ll, ll> pll;
+
+int main() {
+    ll N, M;
+    cin >> N >> M;
+    vector<pll> queens(M);
+    unordered_set<ll> rows, cols, diag1, diag2;
+    for (ll i = 0; i < M; ++i) {
+        cin >> queens[i].first >> queens[i].second;
+        rows.insert(queens[i].first);
+        cols.insert(queens[i].second);
+        diag1.insert(queens[i].first - queens[i].second);
+        diag2.insert(queens[i].first + queens[i].second);
+    }
+
+    ll total_attacked = 0;
+
+    // Rows and columns
+    total_attacked += rows.size() * N;
+    total_attacked += cols.size() * N;
+    total_attacked -= rows.size() * cols.size();
+
+    // Diagonals (i - j = d1)
+    for (ll d : diag1) {
+        ll cnt;
+        if (d >= 0) {
+            cnt = N - d;
+        } else {
+            cnt = N + d;
+        }
+        total_attacked += cnt;
+    }
+
+    // Diagonals (i + j = d2)
+    for (ll d : diag2) {
+        ll cnt;
+        if (d <= N + 1) {
+            cnt = d - 1;
+        } else {
+            cnt = 2 * N - d + 1;
+        }
+        total_attacked += cnt;
+    }
+
+    // Subtract intersections between rows/columns and diagonals
+    for (ll d : diag1) {
+        unordered_set<pll> intersections;
+        // Intersection with rows
+        for (ll r : rows) {
+            ll c = r - d;
+            if (c >= 1 && c <= N) {
+                intersections.insert({r, c});
+            }
+        }
+        // Intersection with columns
+        for (ll c : cols) {
+            ll r = c + d;
+            if (r >= 1 && r <= N) {
+                intersections.insert({r, c});
+            }
+        }
+        total_attacked -= intersections.size();
+    }
+
+    for (ll d : diag2) {
+        unordered_set<pll> intersections;
+        // Intersection with rows
+        for (ll r : rows) {
+            ll c = d - r;
+            if (c >= 1 && c <= N) {
+                intersections.insert({r, c});
+            }
+        }
+        // Intersection with columns
+        for (ll c : cols) {
+            ll r = d - c;
+            if (r >= 1 && r <= N) {
+                intersections.insert({r, c});
+            }
+        }
+        total_attacked -= intersections.size();
+    }
+
+    // Add back intersections between both diagonals (squares attacked by both diagonals)
+    unordered_set<pll> diag_intersections;
+    for (ll d1 : diag1) {
+        for (ll d2 : diag2) {
+            ll x = (d1 + d2) / 2;
+            ll y = (d2 - d1) / 2;
+            if ((d1 + d2) % 2 == 0 && (d2 - d1) % 2 == 0) {
+                if (x >= 1 && x <= N && y >= 1 && y <= N) {
+                    diag_intersections.insert({x, y});
+                }
+            }
+        }
+    }
+    total_attacked += diag_intersections.size();
+
+    // Subtract the squares where queens are already placed (since they are not empty)
+    total_attacked -= M;
+
+    ll total_safe = N * N - total_attacked;
+    cout << total_safe << endl;
+
+    return 0;
+}
+```
+
+### Explanation
+1. **Initial Setup**: The code reads the grid size `N` and the number of queens `M`, then stores their positions.
+2. **Attack Lines**: It identifies all rows, columns, and diagonals that are under attack by the queens.
+3. **Total Attacked Squares**: It calculates the total number of squares attacked by any queen, considering rows, columns, and diagonals separately.
+4. **Inclusion-Exclusion Principle**: The code adjusts for over-counting by subtracting intersections between rows and columns, rows and diagonals, and columns and diagonals. It then adds back intersections between both diagonals to ensure accurate counting.
+5. **Final Calculation**: The total safe squares are computed by subtracting the total attacked squares (minus the squares already occupied by queens) from the total grid squares (`N * N`).
+
+This approach ensures correctness and efficiency, handling large values of `N` (up to \(10^9\)) and `M` (up to \(10^3\)) effectively.

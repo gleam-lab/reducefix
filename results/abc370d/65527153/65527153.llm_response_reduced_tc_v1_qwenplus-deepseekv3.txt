@@ -1,0 +1,100 @@
+To fix this code, we need to correctly handle the bomb placement and wall destruction logic. The initial approach had some issues, particularly in how it handled the cases where the bomb was placed on a cell with no wall. The incorrect code would always try to erase walls in all four directions, even if there were no walls to erase, which led to incorrect results.
+
+### Approaches
+1. **Data Structures**: Use sets to keep track of the walls in each row and column. This allows efficient lookup and deletion operations.
+2. **Bomb Placement Logic**: 
+   - If the bomb is placed on a cell with a wall, destroy that wall.
+   - If there is no wall at the bomb's location, look for the first walls in the four directions (up, down, left, right) and destroy them if they exist.
+3. **Efficiency**: Using sets ensures that each operation (insertion, deletion, and search) is O(log n), which is efficient given the constraints.
+
+### Solution Code
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+using PII = pair<int, int>;
+#define x first
+#define y second
+#define all(x) x.begin(), x.end()
+const int N = 200020, INF = 0x3f3f3f3f;
+
+void solve() {
+    int H, W, Q;
+    cin >> H >> W >> Q;
+    vector<set<int>> row_walls(H + 1), col_walls(W + 1);
+    
+    for (int i = 1; i <= H; ++i) {
+        for (int j = 1; j <= W; ++j) {
+            row_walls[i].insert(j);
+            col_walls[j].insert(i);
+        }
+    }
+
+    auto erase_wall = [&](int r, int c) {
+        row_walls[r].erase(c);
+        col_walls[c].erase(r);
+    };
+
+    while (Q--) {
+        int r, c;
+        cin >> r >> c;
+        
+        if (row_walls[r].count(c)) {
+            erase_wall(r, c);
+            continue;
+        }
+
+        // Check up
+        auto it_up = col_walls[c].lower_bound(r);
+        if (it_up != col_walls[c].begin()) {
+            --it_up;
+            erase_wall(*it_up, c);
+        }
+
+        // Check down
+        auto it_down = col_walls[c].lower_bound(r);
+        if (it_down != col_walls[c].end()) {
+            erase_wall(*it_down, c);
+        }
+
+        // Check left
+        auto it_left = row_walls[r].lower_bound(c);
+        if (it_left != row_walls[r].begin()) {
+            --it_left;
+            erase_wall(r, *it_left);
+        }
+
+        // Check right
+        auto it_right = row_walls[r].lower_bound(c);
+        if (it_right != row_walls[r].end()) {
+            erase_wall(r, *it_right);
+        }
+    }
+
+    ll remaining_walls = 0;
+    for (int i = 1; i <= H; ++i) {
+        remaining_walls += row_walls[i].size();
+    }
+    cout << remaining_walls << "\n";
+}
+
+int main() {
+    ios::sync_with_stdio(0);
+    cin.tie(0);
+    cout.tie(0);
+    int T = 1;
+    while (T--) {
+        solve();
+    }
+    return 0;
+}
+```
+
+### Explanation
+1. **Initial Setup**: The code initializes sets for each row and column to keep track of walls. All cells are initially marked as having walls.
+2. **Bomb Handling**: When a bomb is placed:
+   - If the cell has a wall, it is destroyed.
+   - If the cell has no wall, the code checks the first walls in the four directions (up, down, left, right) using `lower_bound` to efficiently find the nearest walls. These walls are then destroyed if they exist.
+3. **Result Calculation**: After processing all queries, the total remaining walls are counted by summing the sizes of the sets for each row, which gives the correct result efficiently.
+
+This approach ensures correctness and efficiency, handling all edge cases as specified in the problem constraints.

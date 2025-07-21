@@ -1,0 +1,73 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+#define rep(i, n) for (int i = 0; i < (n); ++i)
+#define all(v) v.begin(), v.end()
+#define pb push_back
+
+using i64 = long long;
+using Pii = pair<int, int>;
+
+const int dx[4] = {1, 0, -1, 0};
+const int dy[4] = {0, 1, 0, -1};
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+    
+    int H, W, Y;
+    cin >> H >> W >> Y;
+    vector<vector<int>> A(H, vector<int>(W));
+    rep(i, H) rep(j, W) cin >> A[i][j];
+
+    // Initialize used as false and process borders
+    vector<vector<bool>> used(H, vector<bool>(W, false));
+    priority_queue<tuple<int, int, int>, vector<tuple<int, int, int>>, greater<tuple<int, int, int>>> pq;
+
+    rep(i, H) {
+        pq.emplace(A[i][0], i, 0);
+        pq.emplace(A[i][W-1], i, W-1);
+        used[i][0] = true;
+        used[i][W-1] = true;
+    }
+
+    rep(j, W) {
+        if (!used[0][j]) {
+            pq.emplace(A[0][j], 0, j);
+            used[0][j] = true;
+        }
+        if (!used[H-1][j]) {
+            pq.emplace(A[H-1][j], H-1, j);
+            used[H-1][j] = true;
+        }
+    }
+
+    int total = H * W;
+    vector<int> ans(Y + 2, total);
+
+    while (!pq.empty()) {
+        auto [val, x, y] = pq.top();
+        pq.pop();
+
+        int year = val;
+        if (year > Y) continue;
+
+        ans[year]--;
+        for (int d = 0; d < 4; d++) {
+            int nx = x + dx[d];
+            int ny = y + dy[d];
+            if (nx >= 0 && nx < H && ny >= 0 && ny < W && !used[nx][ny]) {
+                used[nx][ny] = true;
+                pq.emplace(A[nx][ny], nx, ny);
+            }
+        }
+    }
+
+    // Apply cumulative sinking
+    rep3(i, 1, Y+1) {
+        ans[i] = min(ans[i], ans[i - 1]);
+        cout << ans[i] << '\n';
+    }
+
+    return 0;
+}

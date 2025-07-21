@@ -1,0 +1,124 @@
+To fix this code, we need to accurately calculate the number of safe positions where a new piece can be placed without being captured by any existing queens on the N x N chessboard. The existing queens can attack along rows, columns, and both diagonals. The initial approach was to compute the union of all squares under attack and subtract this from the total squares, but it missed some intersections and overlaps correctly.
+
+### Approaches
+1. **Rows and Columns**: Each queen attacks all squares in its row and column. The total squares attacked by rows and columns can be computed as `(number of unique rows * N) + (number of unique columns * N) - (number of unique rows * number of unique columns)` to avoid double-counting squares where both row and column are under attack.
+2. **Diagonals**: Each queen attacks squares along two diagonals (i + j = constant and i - j = constant). The number of unique diagonals is tracked, and for each diagonal, the number of squares it covers is calculated. However, intersections between these diagonals and between diagonals and rows/columns must be correctly accounted for to avoid over-subtraction.
+3. **Inclusion-Exclusion Principle**: To ensure squares are not subtracted multiple times, intersections between rows, columns, and diagonals are added back to the total.
+
+### Solution Code
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+typedef long long ll;
+typedef pair<ll, ll> pll;
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(NULL);
+
+    ll N, M;
+    cin >> N >> M;
+    vector<pll> queens(M);
+    set<ll> rows, cols, diag1, diag2;
+    for (int i = 0; i < M; ++i) {
+        cin >> queens[i].first >> queens[i].second;
+        rows.insert(queens[i].first);
+        cols.insert(queens[i].second);
+        diag1.insert(queens[i].first - queens[i].second);
+        diag2.insert(queens[i].first + queens[i].second);
+    }
+
+    ll total = N * N;
+    ll row_attacks = rows.size() * N;
+    ll col_attacks = cols.size() * N;
+    ll row_col_intersect = rows.size() * cols.size();
+
+    ll diag1_attacks = 0;
+    for (auto d : diag1) {
+        ll cnt;
+        if (d >= 0) {
+            cnt = N - d;
+        } else {
+            cnt = N + d;
+        }
+        diag1_attacks += cnt;
+    }
+
+    ll diag2_attacks = 0;
+    for (auto d : diag2) {
+        ll cnt;
+        if (d <= N + 1) {
+            cnt = d - 1;
+        } else {
+            cnt = 2 * N - d + 1;
+        }
+        diag2_attacks += cnt;
+    }
+
+    total -= row_attacks;
+    total -= col_attacks;
+    total += row_col_intersect;
+
+    set<pll> attacked_by_diag1;
+    for (auto d : diag1) {
+        for (auto r : rows) {
+            ll c = r - d;
+            if (1 <= c && c <= N) {
+                attacked_by_diag1.insert({r, c});
+            }
+        }
+        for (auto c : cols) {
+            ll r = c + d;
+            if (1 <= r && r <= N) {
+                attacked_by_diag1.insert({r, c});
+            }
+        }
+    }
+
+    total -= diag1_attacks;
+    total += attacked_by_diag1.size();
+
+    set<pll> attacked_by_diag2;
+    for (auto d : diag2) {
+        for (auto r : rows) {
+            ll c = d - r;
+            if (1 <= c && c <= N) {
+                attacked_by_diag2.insert({r, c});
+            }
+        }
+        for (auto c : cols) {
+            ll r = d - c;
+            if (1 <= r && r <= N) {
+                attacked_by_diag2.insert({r, c});
+            }
+        }
+        for (auto d1 : diag1) {
+            ll r = (d + d1) / 2;
+            ll c = (d - d1) / 2;
+            if ((d + d1) % 2 == 0 && (d - d1) % 2 == 0 && 1 <= r && r <= N && 1 <= c && c <= N) {
+                attacked_by_diag2.insert({r, c});
+            }
+        }
+    }
+
+    total -= diag2_attacks;
+    total += attacked_by_diag2.size();
+
+    set<pll> all_queens(queens.begin(), queens.end());
+    total += all_queens.size();
+
+    cout << total << endl;
+
+    return 0;
+}
+```
+
+### Explanation
+1. **Input Handling**: Reads the size of the chessboard `N` and the number of queens `M`, followed by their positions.
+2. **Tracking Attacks**: Uses sets to track unique rows, columns, and diagonals (i - j and i + j) under attack by the queens.
+3. **Initial Total**: Computes the total number of squares on the board, `N * N`.
+4. **Row and Column Attacks**: Calculates the squares under attack by rows and columns, adjusting for overlaps to avoid double-counting.
+5. **Diagonal Attacks**: For each diagonal, calculates the number of squares it covers and adjusts for overlaps with rows and columns.
+6. **Final Adjustment**: Uses inclusion-exclusion to ensure overlaps between diagonals and rows/columns are correctly accounted for, then adds back any squares that might have been subtracted multiple times.
+7. **Output**: Prints the number of safe squares where a new piece can be placed without being captured.

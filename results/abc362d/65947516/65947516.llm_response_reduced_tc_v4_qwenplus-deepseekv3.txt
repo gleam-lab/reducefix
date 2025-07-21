@@ -1,0 +1,68 @@
+To fix this code, we need to address the issue in the Dijkstra's algorithm implementation. The problem arises when there are no edges (M=0) and the graph is disconnected (though the constraints say it's connected, so the sample input violates constraints). However, the main issue is the incorrect handling of the vertex weights in the path calculation.
+
+Specifically, the weight of a path is defined as the sum of the weights of the vertices and edges that appear on the path. The current code adds the weight of the current vertex (`a[now.id]`) to the edge weight when updating the distance, which is incorrect. Instead, the weight of the destination vertex should be added only once when the path is completed.
+
+Here’s the corrected approach:
+1. Initialize the distance from vertex 1 to itself as `a[1]` (since you start at vertex 1 and its weight is included).
+2. For each edge from vertex `u` to `v`, the total cost to reach `v` via `u` is `dis[u] + B_j + A_v`. This ensures that the vertex weights are correctly summed along the path.
+
+The corrected code uses a priority queue to always expand the least costly path first, updating distances as it goes.
+
+### Final Corrected Code
+```cpp
+#include<queue>
+#include<vector>
+#include<cstdio>
+#include<cstring>
+#include<climits> 
+#include<algorithm>
+using namespace std;
+typedef long long ll;
+typedef pair<ll,int> pli;
+const int N=2e5+5;
+int n,m;
+ll a[N];
+ll dis[N];
+vector<pli>g[N];
+
+void dijkstra() {
+    priority_queue<pli, vector<pli>, greater<pli>> pq;
+    for(int i=1;i<=n;i++) dis[i]=LLONG_MAX;
+    dis[1]=a[1];
+    pq.push({dis[1],1});
+    while(!pq.empty()) {
+        ll d=pq.top().first;
+        int u=pq.top().second;
+        pq.pop();
+        if(d>dis[u]) continue;
+        for(auto &[v,w]:g[u]) {
+            if(dis[v]>dis[u]+w+a[v]) {
+                dis[v]=dis[u]+w+a[v];
+                pq.push({dis[v],v});
+            }
+        }
+    }
+}
+
+int main() {
+    scanf("%d%d",&n,&m);
+    for(int i=1;i<=n;i++) scanf("%lld",&a[i]);
+    for(int i=1;i<=m;i++) {
+        int u,v,w;
+        scanf("%d%d%d",&u,&v,&w);
+        g[u].emplace_back(v,w);
+        g[v].emplace_back(u,w);
+    }
+    dijkstra();
+    for(int i=2;i<=n;i++) printf("%lld ",dis[i]);
+    return 0;
+}
+```
+
+### Explanation
+1. **Initialization**: The distance array `dis` is initialized to infinity (`LLONG_MAX`), except for the starting vertex (vertex 1), which is initialized to its own weight `a[1]`.
+2. **Priority Queue**: A min-heap is used to process vertices in order of increasing distance from the start vertex.
+3. **Relaxation**: For each vertex `u` extracted from the heap, the algorithm checks all adjacent vertices `v`. If the path to `v` through `u` is shorter (considering the edge weight `w` and the vertex weight `a[v]`), the distance to `v` is updated and `v` is added to the heap.
+4. **Output**: After processing all vertices, the distances from vertex 1 to all other vertices are printed, which now correctly include the sum of vertex and edge weights along the shortest paths.
+
+This approach ensures that the shortest path is correctly calculated with the given weight definitions, handling all edge cases and constraints efficiently.

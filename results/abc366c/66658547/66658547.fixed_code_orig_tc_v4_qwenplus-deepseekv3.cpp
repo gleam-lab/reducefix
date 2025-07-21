@@ -1,0 +1,37 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(NULL);
+    
+    unordered_map<int, int> count;
+    int unique_count = 0;
+    int q;
+    cin >> q;
+    
+    while (q--) {
+        int type;
+        cin >> type;
+        
+        if (type == 1) {
+            int x;
+            cin >> x;
+            if (count[x] == 0) {
+                unique_count++;
+            }
+            count[x]++;
+        } else if (type == 2) {
+            int x;
+            cin >> x;
+            count[x]--;
+            if (count[x] == 0) {
+                unique_count--;
+            }
+        } else if (type == 3) {
+            cout << unique_count << "\n";
+        }
+    }
+    
+    return 0;
+}

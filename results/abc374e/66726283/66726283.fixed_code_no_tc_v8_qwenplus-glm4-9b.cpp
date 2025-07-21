@@ -1,0 +1,47 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define int long long
+const int N = 105;
+int n, x;
+int a[N], b[N], p[N], q[N];
+
+int c[N];
+bool check(int mid) {
+    for (int i = 1; i <= n; i++) {
+        c[i] = LLONG_MAX;
+        // First edge case handling: a[i] == b[i]
+        if (a[i] == b[i]) {
+            c[i] = min(c[i], min(p[i] * (mid + 1 - a[i]), q[i] * (mid + 1 - a[i])));
+        } else {
+            // Calculate the minimum cost for both cases
+            c[i] = min(c[i], p[i] * (mid - a[i]) + q[i] * (b[i] - 1 + (mid - a[i]) * (b[i] / a[i])));
+            c[i] = min(c[i], q[i] * (mid - b[i]) + p[i] * (a[i] - 1 + (mid - b[i]) * (a[i] / b[i])));
+        }
+    }
+    int ans = 0;
+    for (int i = 1; i <= n; i++) {
+        ans += c[i];
+    }
+    return ans <= x;
+}
+
+signed main() {
+    ios::sync_with_stdio(0);
+    cin.tie(0);
+    cout.tie(0);
+    cin >> n;
+    for (int i = 1; i <= n; i++) {
+        cin >> a[i] >> p[i] >> b[i] >> q[i];
+    }
+    int l = 1, r = n;
+    while (l <= r) {
+        int mid = (l + r) / 2;
+        if (check(mid)) {
+            l = mid + 1;
+        } else {
+            r = mid - 1;
+        }
+    }
+    cout << l << endl;
+    return 0;
+}

@@ -1,0 +1,27 @@
+#include<bits/stdc++.h>
+using namespace std;
+
+vector<int> A, B;
+
+void solve() {
+    int n, q; cin >> n >> q;
+    A.resize(n); B.resize(q);
+    for(int i = 0; i < n; ++i) cin >> A[i];
+    for(int i = 0; i < q; ++i) cin >> B[i].first >> B[i].second;
+
+    sort(A.begin(), A.end());
+    
+    for(auto& [b, k] : B) {
+        int pos = lower_bound(A.begin(), A.end(), b) - A.begin();
+        int left = pos, right = min(pos + k - 1, n - 1);
+        int ans = abs(A[right] - b);
+        if(left > 0) ans = min(ans, abs(A[left - 1] - b));
+        cout << ans << '\n';
+    }
+}
+
+int main() {
+    ios_base::sync_with_stdio(false); cin.tie(nullptr);
+    solve();
+    return 0;
+}

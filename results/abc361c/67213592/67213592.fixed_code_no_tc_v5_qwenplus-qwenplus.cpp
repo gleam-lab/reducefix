@@ -1,0 +1,36 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int n, k;
+    cin >> n >> k;
+    vector<int> A(n);
+    for (int i = 0; i < n; ++i) {
+        cin >> A[i];
+    }
+
+    // We will consider all windows of size (n - K) in the original array
+    // and find the window where (max - min) is minimized.
+
+    multiset<int> window;
+    for (int i = 0; i < n - k; ++i) {
+        window.insert(A[i]);
+    }
+
+    int min_diff = *window.rbegin() - *window.begin();
+
+    for (int i = n - k; i < n; ++i) {
+        window.insert(A[i]);
+        window.erase(window.lower_bound(A[i - (n - k)]));  // Remove the element sliding out of the window
+
+        int current_diff = *window.rbegin() - *window.begin();
+        min_diff = min(min_diff, current_diff);
+    }
+
+    cout << min_diff << endl;
+}

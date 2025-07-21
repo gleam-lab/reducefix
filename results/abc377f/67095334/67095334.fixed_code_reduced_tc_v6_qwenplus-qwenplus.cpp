@@ -1,0 +1,84 @@
+#include <bits/stdc++.h>
+#define int long long
+#define PII pair<int, int>
+
+using namespace std;
+
+void solve() {
+    int n, m;
+    cin >> n >> m;
+
+    set<int> rows, cols, diag1, diag2;
+    for (int i = 0; i < m; ++i) {
+        int x, y;
+        cin >> x >> y;
+        rows.insert(x);
+        cols.insert(y);
+        diag1.insert(x + y);
+        diag2.insert(x - y);
+    }
+
+    // Total safe cells = total not in any row/col of existing pieces
+    int ans = (n - rows.size()) * (n - cols.size());
+
+    // Now subtract the unsafe cells on diagonals that are NOT already subtracted due to shared row or col
+
+    // For each diagonal of type x+y=d
+    for (int d : diag1) {
+        // Compute how many squares are on this diagonal: depends on the value of d
+        int len;
+        if (d <= n + 1)
+            len = d - 1;
+        else
+            len = 2 * n - d + 1;
+
+        // Count how many rows or columns intersect this diagonal and are already occupied
+        set<int> blocked;
+        for (int r : rows) {
+            int c = d - r;
+            if (c >= 1 && c <= n)
+                blocked.insert(r);
+        }
+        for (int c : cols) {
+            int r = d - c;
+            if (r >= 1 && r <= n)
+                blocked.insert(r);
+        }
+
+        ans -= (len - blocked.size());
+    }
+
+    // For each diagonal of type x-y=d
+    for (int d : diag2) {
+        // Compute how many squares are on this diagonal
+        int len;
+        if (d >= 0)
+            len = n - d;
+        else
+            len = n + d;
+
+        // Count how many rows or columns intersect this diagonal and are already occupied
+        set<int> blocked;
+        for (int r : rows) {
+            int c = r - d;
+            if (c >= 1 && c <= n)
+                blocked.insert(r);
+        }
+        for (int c : cols) {
+            int r = d + c;
+            if (r >= 1 && r <= n)
+                blocked.insert(r);
+        }
+
+        ans -= (len - blocked.size());
+    }
+
+    cout << ans << endl;
+}
+
+signed main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    solve();
+}

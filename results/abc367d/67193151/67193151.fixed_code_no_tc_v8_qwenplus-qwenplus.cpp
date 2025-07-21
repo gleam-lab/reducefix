@@ -1,0 +1,50 @@
+#include<bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+const int N=1e6+5;
+
+int main()
+{
+    ios::sync_with_stdio(0);
+    cin.tie(0);
+    cout.tie(0); 
+    
+    int n, m;
+    cin >> n >> m;
+    
+    ll a[N*2];
+    for(int i = 1; i <= n; ++i) {
+        cin >> a[i];
+        a[i + n] = a[i];
+    }
+    
+    ll prefixSum = 0;
+    map<int, int> freq;
+    freq[0] = 1;  // Handle subarrays starting from index 0
+    
+    ll result = 0;
+    
+    for(int i = 1; i < 2 * n; ++i) {
+        prefixSum += a[i];
+        int rem = prefixSum % m;
+        
+        // For correct circular behavior, adjust negative remainders
+        if (rem < 0) rem += m;
+        
+        // Count subarrays ending at i that have sum divisible by m
+        result += freq[rem];
+        
+        // Only update frequency for first n elements (to avoid overcounting)
+        if(i <= n) {
+            freq[rem]++;
+        } else {
+            // Remove the contribution of the element exiting the window
+            int outRem = (prefixSum - a[i]) % m;
+            if (outRem < 0) outRem += m;
+            freq[outRem]--;
+        }
+    }
+    
+    cout << result;
+    return 0;
+}

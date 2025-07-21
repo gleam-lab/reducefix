@@ -1,0 +1,95 @@
+To fix this code, we need to address several issues related to handling the k-th largest vertex in the connected component. The initial approach uses a Union-Find data structure with each component maintaining a list of its vertices sorted in descending order. However, the implementation has some flaws in how it merges the lists and maintains the top 10 elements.
+
+### Issues in the Original Code:
+1. **Merging Lists**: The code merges the entire list from one component into another and then sorts it, which is inefficient and unnecessary. We only need to keep the top 10 elements, so merging should be done in a way that maintains the top 10 elements without full sorting each time.
+2. **Indexing for k-th Largest**: The code incorrectly checks `uf.uni[uf.root(a)].size() <= b` where `b` is the 0-based index. However, `b` in the query is 1-based, and the condition should check `uf.uni[uf.root(a)].size() < k` where `k` is the 1-based index.
+3. **Handling of Vertex Indices**: The code decrements vertex indices (`a--, b--`) which is correct, but the output should increment the index back to 1-based when printing.
+4. **Efficiency**: The original approach may not be efficient enough for large inputs due to the sorting step in each merge operation. Instead, we should merge the top 10 elements from both components directly.
+
+### Fixed Approach:
+1. **Union-Find with Top 10 Elements**: Maintain for each component a sorted list (in descending order) of up to 10 largest vertices. When merging two components, merge their top 10 lists and keep only the top 10 elements.
+2. **Efficient Merging**: Use a priority queue or a simple merge of two sorted lists to efficiently combine the top 10 elements from both components.
+3. **Correct Indexing**: Ensure that when querying for the k-th largest element, we correctly handle 1-based indexing and check if the component has at least `k` elements.
+
+### Fixed Code:
+```cpp
+#include<bits/stdc++.h>
+using namespace std;
+using ll = long long;
+#define rep(i,n) for(int i = 0;i<n;i++)
+using P = pair<int,int>;
+using T = tuple<int,int,int>;
+
+struct Union_Find {
+    vector<int> par;
+    vector<vector<int>> top;
+
+    Union_Find(int n) {
+        par.resize(n, -1);
+        top.resize(n);
+        rep(i, n) top[i].push_back(i);
+    }
+
+    int root(int v) {
+        if (par[v] == -1) return v;
+        else return par[v] = root(par[v]);
+    }
+
+    bool issame(int x, int y) {
+        return root(x) == root(y);
+    }
+
+    void merge(int x, int y) {
+        x = root(x), y = root(y);
+        if (x == y) return;
+        if (top[x].size() < top[y].size()) swap(x, y);
+        
+        vector<int> merged;
+        int i = 0, j = 0;
+        while ((i < top[x].size() || j < top[y].size()) && merged.size() < 10) {
+            if (i < top[x].size() && (j >= top[y].size() || top[x][i] >= top[y][j])) {
+                merged.push_back(top[x][i]);
+                i++;
+            } else {
+                merged.push_back(top[y][j]);
+                j++;
+            }
+        }
+        top[x] = merged;
+        par[y] = x;
+    }
+};
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int n, q;
+    cin >> n >> q;
+    Union_Find uf(n);
+    
+    rep(i, q) {
+        int ty, a, b;
+        cin >> ty >> a >> b;
+        a--, b--;
+        if (ty == 1) {
+            uf.merge(a, b);
+        } else {
+            int root = uf.root(a);
+            if (uf.top[root].size() < b + 1) {
+                cout << -1 << '\n';
+            } else {
+                cout << uf.top[root][b] + 1 << '\n';
+            }
+        }
+    }
+}
+```
+
+### Explanation:
+1. **Union-Find Structure**: The `Union_Find` structure now maintains a `top` vector for each component, storing up to 10 largest vertices in descending order.
+2. **Merge Operation**: The merge operation combines the top 10 elements from both components by merging the two sorted lists and keeping the largest 10 elements, ensuring efficiency.
+3. **Query Handling**: For type 2 queries, the code checks if the component has at least `k` elements (1-based) and outputs the corresponding vertex number or `-1` if there are fewer than `k` elements.
+4. **Efficiency**: The merge operation is optimized to handle large inputs efficiently by avoiding full sorting and instead merging the top elements directly.
+
+This fixed approach ensures that the solution is both correct and efficient, handling the constraints effectively.

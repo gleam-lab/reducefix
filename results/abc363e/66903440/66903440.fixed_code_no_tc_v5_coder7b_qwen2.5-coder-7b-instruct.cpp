@@ -1,0 +1,54 @@
+#include<bits/stdc++.h>
+using namespace std;
+#include<atcoder/all>
+using namespace atcoder;
+using ll=int64_t;
+using ld=long double;
+int inf=1000000001;
+ll INF=1e18;
+#define rep(i,n) for(int i=0;i<n;i++)
+#define all(x) x.begin(),x.end()
+#define pb push_back
+#define sz(x) (ll)x.size()
+template<typename T>bool chmin(T& a,T b){if(a>b){a=b;return true;}return false;}
+template<typename T>bool chmax(T& a,T b){if(a<b){a=b;return true;}return false;}
+
+int dx[]={1,0,-1,0,1,1,-1,-1};
+int dy[]={0,1,0,-1,1,-1,1,-1};
+int main(){
+    cin.tie(0)->sync_with_stdio(0);
+    cin.tie(nullptr);
+
+    int H,W,Y;
+    cin>>H>>W>>Y;
+    vector<vector<int>>A(H,vector<int>(W));
+    rep(i,H)rep(j,W)cin>>A[i][j];
+    int ans=H*W;
+    vector<vector<bool>>F(H,vector<bool>(W,true));
+    vector<queue<pair<int,int>>>Q(Y+1);
+    rep(i,H)rep(j,W){
+        if(i==0||i==H-1||j==0||j==W-1){
+            F[i][j]=false;
+            Q[A[i][j]].push({i,j});
+        }
+    }
+    for(int y=1;y<=Y;y++){
+        while(Q[y].size()){
+            auto [i,j]=Q[y].front();
+            Q[y].pop();
+            ans--;
+            rep(k,4){
+                int ni=i+dx[k];
+                int nj=j+dy[k];
+                if(ni>=0&&ni<H&&nj>=0&&nj<W){
+                    if(F[ni][nj]){
+                        F[ni][nj]=false;
+                        Q[max(y,A[ni][nj])].push({ni,nj});
+                    }
+                }
+            }
+        }
+        cout<<ans<<endl;
+    }
+
+}

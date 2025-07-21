@@ -1,0 +1,98 @@
+
+The problem statement is about finding the number of empty squares on a grid where you can place a new piece without being captured by existing pieces. The capture rules are such that a piece can capture other pieces in a particular pattern based on its position.
+
+The incorrect code you've provided has a few issues:
+
+1. It does not account for the fact that the grid is very large (up to \(N = 10^9\)), and it tries to populate a `std::set` with positions of pieces that can be captured. This is computationally infeasible for large values of \(N\).
+
+2. The `set_insert` function only inserts a position if it is within the grid boundaries, which is not enough because a piece can capture pieces even if they are outside the grid.
+
+3. The approach of using a set to keep track of all the possible positions that can be captured by existing pieces is highly inefficient for large grids.
+
+Here is a more efficient approach:
+
+1. For each piece, calculate the set of all positions it can capture based on the given rules. This needs to be done without using a large data structure to store all positions, as the grid is too large.
+
+2. For each empty position on the grid, check if it can be captured by any of the existing pieces by using the calculated sets from step 1. If not, count this position.
+
+Since the grid is very large, directly iterating over all positions is not feasible. Instead, we can use a divide-and-conquer approach:
+
+- Divide the grid into blocks that are manageable in size (e.g., \(N = 10^6\) for a single block).
+- For each block, use the existing pieces to calculate the set of all positions that can be captured within that block.
+- Count all empty positions within that block that are not in the set of captured positions.
+- Sum the counts for all blocks to get the total count of safe positions.
+
+This approach significantly reduces the number of positions we need to check, as we only need to focus on blocks that contain pieces.
+
+Here is a rough outline of how the code might look:
+
+```cpp
+#include <iostream>
+#include <vector>
+#include <unordered_set>
+
+// Function to check if a position is within grid boundaries
+bool is_within_bounds(int r, int c, int N) {
+    return 1 <= r && r <= N && 1 <= c && c <= N;
+}
+
+// Function to find all possible captures from a given position
+std::unordered_set<std::pair<int, int>> find_captures(int r, int c, int N) {
+    std::unordered_set<std::pair<int, int>> captures;
+    // Define capture positions based on the problem description
+    // ...
+    return captures;
+}
+
+int main() {
+    int N, M;
+    std::cin >> N >> M;
+
+    std::vector<std::pair<int, int>> pieces(M);
+    for (int i = 0; i < M; ++i) {
+        std::cin >> pieces[i].first >> pieces[i].second;
+    }
+
+    // Define the size of each block, for example, make it manageable
+    const int BLOCK_SIZE = 10; // This might need to be adjusted based on N
+
+    // Initialize total count of safe positions
+    long long safe_positions = 0;
+
+    // Check each block
+    for (int block_r = 1; block_r <= N; block_r += BLOCK_SIZE) {
+        for (int block_c = 1; block_c <= N; block_c += BLOCK_SIZE) {
+            // Calculate the maximum grid to consider for the current block
+            int max_r = min(block_r + BLOCK_SIZE - 1, N);
+            int max_c = min(block_c + BLOCK_SIZE - 1, N);
+
+            // For each position in the block
+            for (int r = block_r; r <= max_r; ++r) {
+                for (int c = block_c; c <= max_c; ++c) {
+                    bool is_safe = true;
+
+                    // Check if this position can be captured by any existing piece
+                    for (const auto& piece : pieces) {
+                        auto captures = find_captures(piece.first, piece.second, N);
+                        if (captures.count({r, c})) {
+                            is_safe = false;
+                            break;
+                        }
+                    }
+
+                    // If it's safe, increment the safe position count
+                    if (is_safe) {
+                        ++safe_positions;
+                    }
+                }
+            }
+        }
+    }
+
+    std::cout << safe_positions << std::endl;
+
+    return 0;
+}
+```
+
+Please note that this is a high-level approach and may not be fully optimized. The actual implementation of `find_captures` needs to consider the specific capture rules mentioned in the problem. Additionally, the block size (`BLOCK_SIZE`) should be chosen based on the computational resources available.

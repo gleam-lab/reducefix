@@ -1,0 +1,44 @@
+#include <iostream>
+#include <algorithm>
+#include <vector>
+using namespace std;
+
+struct Machine {
+    int a, b, p, q;
+};
+
+int main() {
+    int N, X;
+    cin >> N >> X;
+    vector<Machine> machines(N);
+    
+    for (int i = 0; i < N; ++i) {
+        cin >> machines[i].a >> machines[i].p >> machines[i].b >> machines[i].q;
+        // Always choose the more efficient machine based on cost-effectiveness
+        if (machines[i].a * machines[i].q > machines[i].b * machines[i].p) {
+            swap(machines[i].a, machines[i].b);
+            swap(machines[i].p, machines[i].q);
+        }
+    }
+
+    // Sort machines by their efficiency ratio (products per dollar)
+    sort(begin(machines), end(machines), [](const Machine& m1, const Machine& m2) {
+        return static_cast<double>(m1.a + m1.b) / (m1.p + m1.q) < 
+               static_cast<double>(m2.a + m2.b) / (m2.p + m2.q);
+    });
+
+    int capacity = 0;
+    for (const auto& machine : machines) {
+        // Calculate the maximum number of units we can buy within the budget
+        int units = X / (machine.p + machine.q);
+        // Add the products this machine can produce
+        capacity += units * (machine.a + machine.b);
+        // Decrease the budget by the cost of these units
+        X -= units * (machine.p + machine.q);
+        // If the budget is exhausted, break out of the loop
+        if (X == 0) break;
+    }
+
+    cout << capacity << endl;
+    return 0;
+}

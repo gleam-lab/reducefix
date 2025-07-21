@@ -1,0 +1,99 @@
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+using ll = long long;
+const ll INF = 1e18;
+
+void solve() {
+    int n, k; cin >> n >> k;
+    vector<pair<ll, ll>> ab(n);
+    for (int i = 0; i < n; i++) cin >> ab[i].first;
+    for (int i = 0; i < n; i++) cin >> ab[i].second;
+    
+    sort(ab.begin(), ab.end());
+    
+    if (k == 1) {
+        ll ans = INF;
+        for (int i = 0; i < n; i++) {
+            ans = min(ans, ab[i].first * ab[i].second);
+        }
+        cout << ans << '\n';
+        return;
+    }
+
+    priority_queue<ll> max_heap;
+    ll sum = 0;
+    // To keep track of the smallest K-1 B_i with largest A_i
+    multiset<ll> rest;
+
+    for (int i = 0; i < n; i++) rest.insert(ab[i].second);
+
+    ll ans = INF;
+
+    // First take K-1 elements with largest B_i among first N-1
+    vector<ll> b_values;
+    for (int i = 0; i < n - 1; i++) {
+        b_values.push_back(ab[i].second);
+    }
+    sort(b_values.rbegin(), b_values.rend());
+
+    sum = 0;
+    while (!max_heap.empty()) max_heap.pop();
+    for (int i = 0; i < k - 1; i++) {
+        sum += b_values[i];
+        max_heap.push(b_values[i]);
+    }
+
+    for (int i = max(k - 1, 1); i < n; i++) {
+        auto [a, b] = ab[i];
+        // We're considering ab[i] as the one with max A_i in the subset
+        // So we need to make sure that we have exactly K-1 elements with smaller A_i
+        // and choose those with maximum B_i sum
+
+        // Remove current b from rest
+        auto it = rest.find(ab[i].second);
+        rest.erase(it);
+
+        // Try all previous elements (sorted by A)
+        // For each i >= k-1, we can consider adding ab[i] to the set and removing one
+        // element from the previous K-1 chosen ones
+        // But since we want the best K elements, we use a greedy approach:
+        // Keep top K-1 elements in max heap based on B_i
+
+        // If we haven't initialized yet, build the heap
+        // Else adjust by possibly replacing the smallest B_i in the heap
+        if (i == k - 1) {
+            // Already built the heap
+        } else {
+            // Try to insert new element into heap if better than worst
+            ll min_in_heap = max_heap.top();
+            if (ab[i - 1].second < min_in_heap) {
+                // Not part of the best K-1 so far
+            } else {
+                if (max_heap.size() == k - 1) {
+                    sum -= max_heap.top();
+                    max_heap.pop();
+                }
+                sum += ab[i - 1].second;
+                max_heap.push(ab[i - 1].second);
+            }
+        }
+
+        // Now compute the value
+        ans = min(ans, (sum + b) * a);
+
+        // Insert this b back to pool
+        rest.insert(ab[i].second);
+    }
+
+    cout << ans << '\n';
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int t; cin >> t;
+    while (t--) solve();
+}
+```

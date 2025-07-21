@@ -1,0 +1,48 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+const int N = 400005;
+
+int h, w, q;
+bool grid[N][N];
+int cache[4][N][N];
+
+void destroyWall(int x, int y) {
+    if (!grid[x][y]) return;
+    grid[x][y] = false;
+    int dx[] = {0, 0, -1, 1};
+    int dy[] = {-1, 1, 0, 0};
+
+    for (int i = 0; i < 4; ++i) {
+        int nx = x + dx[i], ny = y + dy[i];
+        while (nx >= 0 && nx < h && ny >= 0 && ny < w) {
+            if (!grid[nx][ny]) break;
+            grid[nx][ny] = false;
+            nx += dx[i];
+            ny += dy[i];
+        }
+    }
+}
+
+int main() {
+    cin >> h >> w >> q;
+    memset(grid, true, sizeof(grid));
+    memset(cache, 0, sizeof(cache));
+
+    while (q--) {
+        int x, y;
+        cin >> x >> y;
+        --x, --y;
+        destroyWall(x, y);
+    }
+
+    int ans = 0;
+    for (int i = 0; i < h; ++i) {
+        for (int j = 0; j < w; ++j) {
+            if (grid[i][j]) ++ans;
+        }
+    }
+
+    cout << ans << endl;
+    return 0;
+}

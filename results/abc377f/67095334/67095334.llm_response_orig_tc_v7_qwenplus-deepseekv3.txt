@@ -1,0 +1,138 @@
+To fix this code, we need to correctly calculate the number of safe squares where a new piece can be placed without being captured by any existing pieces. The initial approach had flaws in how it accounted for overlaps between different types of attack lines (rows, columns, and diagonals). 
+
+### Approaches
+1. **Identify Attack Zones**: For each existing piece, mark all squares that it can attack. This includes:
+   - All squares in the same row.
+   - All squares in the same column.
+   - All squares on the same diagonal where \(i + j = \text{constant}\) (sum diagonal).
+   - All squares on the same diagonal where \(i - j = \text{constant}\) (difference diagonal).
+
+2. **Count Safe Squares**: The total number of safe squares is the total number of squares minus the number of squares under attack by any existing piece. However, squares that are under attack by multiple pieces should not be counted multiple times.
+
+3. **Inclusion-Exclusion Principle**: Use the inclusion-exclusion principle to correctly account for overlaps between different attack zones. This involves calculating the union of all attack zones without double-counting squares that fall into multiple zones.
+
+### Solution Code
+```cpp
+#include <bits/stdc++.h>
+#define int long long
+
+using namespace std;
+
+void solve() {
+    int N, M;
+    cin >> N >> M;
+    set<int> rows, cols, diag1, diag2;
+    for (int i = 0; i < M; ++i) {
+        int a, b;
+        cin >> a >> b;
+        rows.insert(a);
+        cols.insert(b);
+        diag1.insert(a + b);
+        diag2.insert(a - b);
+    }
+
+    int total_attacked = 0;
+
+    // Rows and columns: each row or column contributes N squares, but intersections are already counted
+    total_attacked += rows.size() * N;
+    total_attacked += cols.size() * N;
+    total_attacked -= rows.size() * cols.size(); // subtract intersections counted twice
+
+    // Diagonals (i+j = d)
+    for (int d : diag1) {
+        int len;
+        if (d <= N + 1) {
+            len = d - 1;
+        } else {
+            len = 2 * N - d + 1;
+        }
+        total_attacked += len;
+    }
+
+    // Diagonals (i-j = d)
+    for (int d : diag2) {
+        int len;
+        if (d >= 0) {
+            len = N - d;
+        } else {
+            len = N + d;
+        }
+        total_attacked += len;
+    }
+
+    // Subtract intersections between rows and diag1
+    for (int d : diag1) {
+        for (int r : rows) {
+            int c = d - r;
+            if (1 <= c && c <= N) {
+                total_attacked--;
+            }
+        }
+    }
+
+    // Subtract intersections between columns and diag1
+    for (int d : diag1) {
+        for (int c : cols) {
+            int r = d - c;
+            if (1 <= r && r <= N) {
+                total_attacked--;
+            }
+        }
+    }
+
+    // Subtract intersections between rows and diag2
+    for (int d : diag2) {
+        for (int r : rows) {
+            int c = r - d;
+            if (1 <= c && c <= N) {
+                total_attacked--;
+            }
+        }
+    }
+
+    // Subtract intersections between columns and diag2
+    for (int d : diag2) {
+        for (int c : cols) {
+            int r = d + c;
+            if (1 <= r && r <= N) {
+                total_attacked--;
+            }
+        }
+    }
+
+    // Add back intersections between diag1 and diag2 (i+j=d1, i-j=d2)
+    for (int d1 : diag1) {
+        for (int d2 : diag2) {
+            if ((d1 + d2) % 2 == 0) {
+                int i = (d1 + d2) / 2;
+                int j = (d1 - d2) / 2;
+                if (1 <= i && i <= N && 1 <= j && j <= N) {
+                    total_attacked++;
+                }
+            }
+        }
+    }
+
+    int total_squares = N * N;
+    int safe_squares = total_squares - total_attacked;
+    cout << safe_squares << endl;
+}
+
+signed main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+    solve();
+    return 0;
+}
+```
+
+### Explanation
+1. **Input Reading**: The code reads the grid size \(N\) and the number of existing pieces \(M\), followed by their positions.
+2. **Sets Initialization**: Sets are used to store unique rows, columns, sum diagonals (\(i + j\)), and difference diagonals (\(i - j\)) that are under attack.
+3. **Total Attacked Squares Calculation**: 
+   - **Rows and Columns**: The total attacked squares from rows and columns are calculated, adjusting for overlaps.
+   - **Diagonals**: For each diagonal, the number of squares is calculated based on whether the diagonal is in the upper or lower half of the grid.
+   - **Overlap Adjustments**: The code adjusts for overlaps between rows and diagonals, columns and diagonals, and between the two types of diagonals using the inclusion-exclusion principle.
+4. **Safe Squares Calculation**: The total safe squares are computed by subtracting the total attacked squares from the total grid squares \(N^2\).
+ 
+This approach ensures that all overlaps are correctly accounted for, providing the precise number of safe squares for placing the new piece.

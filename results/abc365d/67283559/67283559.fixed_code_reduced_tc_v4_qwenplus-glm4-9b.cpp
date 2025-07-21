@@ -1,0 +1,49 @@
+#include <iostream>
+#include <vector>
+#include <string>
+
+using namespace std;
+
+int main() {
+    int N;
+    cin >> N;
+    string S;
+    cin >> S;
+
+    vector<char> next = {'R', 'P', 'S'};
+    int total = 0;
+
+    for (int i = 0; i < N; ++i) {
+        int score = 0;
+        char use = next[0]; // Start with the first element of the available moves
+
+        // Find the optimal response for the current move
+        for (char n : next) {
+            if ((n == 'R' && S[i] == 'S') || (n == 'P' && S[i] == 'R') || (n == 'S' && S[i] == 'P')) {
+                score++;
+                use = n;
+                break;
+            }
+        }
+
+        // If no optimal response was found, use the current move
+        if (score == 0) {
+            use = S[i];
+        }
+
+        // Update the available moves for the next round
+        next.clear();
+        next.push_back(use);
+        for (int j = 0; j < 3; ++j) {
+            if (next[j] != use) {
+                next.push_back(next[j]);
+            }
+        }
+
+        // Calculate the score and add to total
+        total += score;
+    }
+
+    cout << total << endl;
+    return 0;
+}

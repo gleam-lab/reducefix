@@ -1,0 +1,20 @@
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+
+int main() {
+    set<int> st;
+    int q; cin >> q;
+    while(q--) {
+        int op, x;
+        cin >> op >> x;
+        if(op == 1) {
+            st.insert(x);
+        } else if(op == 2) {
+            st.erase(st.find(x));
+        } else if(op == 3) {
+            cout << st.size() << "\n";
+        }
+    }
+    return 0;
+}

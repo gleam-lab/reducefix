@@ -1,0 +1,136 @@
+#include <bits/stdc++.h>
+using namespace std;
+using i64 = long long;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    i64 N;
+    int M;
+    cin >> N >> M;
+
+    set<i64> rows, cols, diag1, diag2;
+    vector<array<i64, 2>> pieces(M);
+
+    for (int i = 0; i < M; ++i) {
+        i64 a, b;
+        cin >> a >> b;
+        pieces[i] = {a, b};
+        rows.insert(a);
+        cols.insert(b);
+        diag1.insert(a + b);
+        diag2.insert(a - b);
+    }
+
+    // Total squares attacked by existing pieces
+    i64 total_attacked = 0;
+
+    // Count attacked cells via rows and columns
+    total_attacked += (i64)rows.size() * N; // each row has N cells
+    total_attacked += (i64)cols.size() * N; // each column has N cells
+
+    // Subtract overlaps: cells that are counted both in rows and cols
+    for (auto r : rows) {
+        for (auto c : cols) {
+            ++total_attacked; // will subtract these later
+        }
+    }
+
+    // Count attacked cells via diagonals
+    for (auto d : diag1) {
+        i64 start_x = max(1LL, d - N);
+        i64 end_x = min(N, d - 1);
+        i64 count = end_x - start_x + 1;
+        total_attacked += count;
+    }
+
+    for (auto d : diag2) {
+        i64 start_x = max(1LL, (d + 1));
+        i64 end_x = min(N, N + d);
+        i64 count = end_x - start_x + 1;
+        total_attacked += count;
+    }
+
+    // Subtract overlaps between diag1 and diag2
+    for (auto d1 : diag1) {
+        for (auto d2 : diag2) {
+            i64 x = (d1 + d2) / 2;
+            i64 y = (d1 - d2) / 2;
+            if ((d1 + d2) % 2 == 0 && (d1 - d2) % 2 == 0 && x >= 1 && x <= N && y >= 1 && y <= N) {
+                ++total_attacked; // will subtract these later
+            }
+        }
+    }
+
+    // Subtract overlaps between rows/cols and diagonals
+    for (auto [x, y] : pieces) {
+        // already counted as overlap
+        --total_attacked;
+    }
+
+    // Now subtract overlaps counted twice
+    for (auto r : rows) {
+        for (auto c : cols) {
+            --total_attacked; // one overlap per piece
+        }
+    }
+
+    for (auto d1 : diag1) {
+        for (auto d2 : diag2) {
+            i64 x = (d1 + d2) / 2;
+            i64 y = (d1 - d2) / 2;
+            if ((d1 + d2) % 2 == 0 && (d1 - d2) % 2 == 0 && x >= 1 && x <= N && y >= 1 && y <= N) {
+                --total_attacked; // remove duplicate count
+            }
+        }
+    }
+
+    // Finally, subtract overlaps between rows and diag1
+    for (auto r : rows) {
+        for (auto d : diag1) {
+            i64 y = d - r;
+            if (y >= 1 && y <= N) {
+                --total_attacked;
+            }
+        }
+    }
+
+    // Rows and diag2
+    for (auto r : rows) {
+        for (auto d : diag2) {
+            i64 y = r - d;
+            if (y >= 1 && y <= N) {
+                --total_attacked;
+            }
+        }
+    }
+
+    // Cols and diag1
+    for (auto c : cols) {
+        for (auto d : diag1) {
+            i64 x = d - c;
+            if (x >= 1 && x <= N) {
+                --total_attacked;
+            }
+        }
+    }
+
+    // Cols and diag2
+    for (auto c : cols) {
+        for (auto d : diag2) {
+            i64 x = d + c;
+            if (x >= 1 && x <= N) {
+                --total_attacked;
+            }
+        }
+    }
+
+    // Total safe squares = total squares - attacked squares
+    i64 total_squares = N * N;
+    i64 safe_squares = total_squares - total_attacked;
+
+    cout << safe_squares << "\n";
+
+    return 0;
+}

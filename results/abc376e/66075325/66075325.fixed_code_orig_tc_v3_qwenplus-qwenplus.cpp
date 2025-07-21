@@ -1,0 +1,107 @@
+#include <iostream>
+#include <vector>
+#include <queue>
+#include <algorithm>
+using namespace std;
+
+typedef long long ll;
+
+struct Element {
+    int a, b;
+    bool operator<(const Element& other) const {
+        return a < other.a;
+    }
+};
+
+void solve() {
+    int N, K;
+    cin >> N >> K;
+    vector<Element> elements(N);
+    for (int i = 0; i < N; ++i)
+        cin >> elements[i].a;
+    for (int i = 0; i < N; ++i)
+        cin >> elements[i].b;
+
+    sort(elements.begin(), elements.end());
+
+    priority_queue<int> max_heap;
+    ll sum_b = 0;
+    ll min_result = 1e18;
+
+    // We will use a max-heap by inserting negative values
+    priority_queue<ll> top_k_heap;
+
+    // Sum of the smallest N-K+1 B values and keep the rest in heap
+    priority_queue<ll, vector<ll>, greater<ll>> min_heap;
+    ll sum_min_heap = 0;
+
+    // First, add all B values to the max_heap
+    for (int i = 0; i < N; ++i) {
+        max_heap.push(elements[i].b);
+    }
+
+    // Move the smallest (N-K) elements to min_heap
+    while (min_heap.size() < N - K && !max_heap.empty()) {
+        ll val = max_heap.top(); max_heap.pop();
+        sum_min_heap += val;
+        min_heap.push(val);
+    }
+
+    // Remaining K elements are in max_heap (largest B's)
+    ll sum_max_heap = 0;
+    vector<ll> remaining;
+    while (!max_heap.empty()) {
+        remaining.push_back(max_heap.top());
+        sum_max_heap += max_heap.top();
+        max_heap.pop();
+    }
+    // Rebuild max_heap with the K largest B values
+    for (ll val : remaining)
+        max_heap.push(val);
+
+    // Now iterate through sorted A values from right to left
+    // At each step, we remove one element from max_heap and add to min_heap
+    // This maintains K elements in max_heap
+    for (int i = N - 1; i >= 0; --i) {
+        if (i + 1 >= K) {
+            // Compute cost: current A * sum of K largest B's
+            min_result = min(min_result, elements[i].a * sum_max_heap);
+        }
+
+        // Remove current B from max_heap or min_heap
+        ll current_b = elements[i].b;
+
+        if (max_heap.size() > 0 && max_heap.top() == current_b) {
+            sum_max_heap -= current_b;
+            max_heap.pop();
+        } else {
+            sum_min_heap -= current_b;
+            min_heap.pop();
+        }
+
+        // Add current_b back to min_heap
+        min_heap.push(current_b);
+        sum_min_heap += current_b;
+
+        // If min_heap has more than (N-K), move the smallest to max_heap
+        if (min_heap.size() > N - K) {
+            ll val = min_heap.top(); min_heap.pop();
+            sum_min_heap -= val;
+            max_heap.push(val);
+            sum_max_heap += val;
+        }
+    }
+
+    cout << min_result << "\n";
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int T;
+    cin >> T;
+    while (T--) {
+        solve();
+    }
+    return 0;
+}

@@ -1,0 +1,100 @@
+To solve this problem efficiently, we need to:
+
+1. **Maintain dynamic connectivity** among nodes — which suggests using the **Disjoint Set Union (DSU)** data structure.
+2. **Quickly retrieve the k-th largest node** in a connected component — for this, we can augment each DSU set to maintain a sorted list (or multiset) of its elements, allowing efficient access to the top-k values.
+
+---
+
+### Key Observations:
+- For **Type 1 queries**, we simply merge two sets using DSU.
+- For **Type 2 queries**, we need to find the `k`-th largest node in the component that includes node `v`. Since `k <= 10`, we only need to keep track of the **top 10 largest nodes** in each set.
+
+---
+
+### Efficient Strategy:
+- Use **Union-Find with path compression and union by size/rank** to ensure fast operations.
+- Maintain for each root in DSU a **sorted vector of up to 10 largest vertices** in that component.
+- When merging two components, merge their top-10 lists, sort them in descending order, and truncate to keep only the top 10.
+
+---
+
+### Time Complexity:
+- Each DSU operation is nearly O(1), and merging two top-10 lists is O(1) since they are at most size 10.
+- Querying the k-th largest is O(1).
+
+---
+
+Here's the complete corrected and optimized solution:
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+const int MAXN = 2e5 + 5;
+
+int parent[MAXN];
+vector<int> top_nodes[MAXN];
+
+int find(int x) {
+    if (parent[x] != x)
+        parent[x] = find(parent[x]);
+    return parent[x];
+}
+
+void unite(int x, int y) {
+    int root_x = find(x);
+    int root_y = find(y);
+    if (root_x == root_y)
+        return;
+
+    // Always merge smaller into larger
+    if (top_nodes[root_x].size() < top_nodes[root_y].size())
+        swap(root_x, root_y);
+
+    // Merge top nodes
+    for (int node : top_nodes[root_y])
+        top_nodes[root_x].push_back(node);
+
+    // Sort and keep top 10
+    sort(top_nodes[root_x].rbegin(), top_nodes[root_x].rend());
+    if (top_nodes[root_x].size() > 10)
+        top_nodes[root_x].resize(10);
+
+    parent[root_y] = root_x;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int N, Q;
+    cin >> N >> Q;
+
+    // Initialize DSU and top nodes
+    for (int i = 1; i <= N; ++i) {
+        parent[i] = i;
+        top_nodes[i].push_back(i);
+    }
+
+    while (Q--) {
+        int type;
+        cin >> type;
+
+        if (type == 1) {
+            int u, v;
+            cin >> u >> v;
+            unite(u, v);
+        } else {
+            int v, k;
+            cin >> v >> k;
+            int root = find(v);
+            if ((int)top_nodes[root].size() < k)
+                cout << -1 << '\n';
+            else
+                cout << top_nodes[root][k - 1] << '\n';
+        }
+    }
+
+    return 0;
+}
+```

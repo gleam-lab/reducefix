@@ -1,0 +1,46 @@
+#include <iostream>
+#include <vector>
+#include <set>
+using namespace std;
+
+const int MOD = 1000000007;
+
+int main() {
+    long long n, m;
+    cin >> n >> m;
+
+    vector<pair<int, int>> pieces(m);
+    for (int i = 0; i < m; ++i) {
+        cin >> pieces[i].first >> pieces[i].second;
+    }
+
+    set<int> rows, cols, diag1, diag2;
+    for (const auto& p : pieces) {
+        rows.insert(p.first);
+        cols.insert(p.second);
+        diag1.insert(p.first + p.second);
+        diag2.insert(p.first - p.second);
+    }
+
+    long long empty_rows = n - rows.size();
+    long long empty_cols = n - cols.size();
+    long long empty_diag1 = n - diag1.size();
+    long long empty_diag2 = n - diag2.size();
+
+    // Calculate the number of safe squares for each combination of row and column
+    long long safe_squares = 0;
+    for (int x : rows) {
+        for (int y : cols) {
+            if (diag1.find(x + y) == diag1.end() && diag2.find(x - y) == diag2.end()) {
+                safe_squares++;
+                if (safe_squares >= MOD) safe_squares -= MOD;
+            }
+        }
+    }
+
+    // Calculate the final answer
+    long long answer = (empty_rows * empty_cols - safe_squares + MOD) % MOD;
+    cout << answer << endl;
+
+    return 0;
+}

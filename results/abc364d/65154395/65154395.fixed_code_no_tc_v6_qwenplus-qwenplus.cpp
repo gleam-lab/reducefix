@@ -1,0 +1,64 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+typedef long long ll;
+
+void solve() {
+    int N, Q;
+    cin >> N >> Q;
+    
+    vector<ll> A(N);
+    for (int i = 0; i < N; ++i) {
+        cin >> A[i];
+    }
+    sort(A.begin(), A.end());
+    
+    for (int q = 0; q < Q; ++q) {
+        ll b;
+        int k;
+        cin >> b >> k;
+        
+        // Binary search on the k-th smallest distance
+        auto cmp = [&](ll x, ll y) {
+            return abs(x - b) < abs(y - b);
+        };
+        
+        // Use binary search to find the k-th smallest distance
+        int left = 0, right = N - 1;
+        while (left < right) {
+            int mid = (left + right) / 2;
+            if (A[mid] <= b) {
+                left = mid + 1;
+            } else {
+                right = mid;
+            }
+        }
+        
+        // left is now the first index where A[left] >= b
+        // We use a pointer approach to simulate finding k-th smallest distance
+        int i = left - 1, j = left;
+        for (int cnt = 0; cnt < k - 1; ++cnt) {
+            if (i < 0 || (j < N && abs(A[j] - b) <= abs(A[i] - b))) {
+                ++j;
+            } else {
+                --i;
+            }
+        }
+        
+        if (i < 0) {
+            cout << abs(A[j] - b) << "\n";
+        } else if (j >= N) {
+            cout << abs(A[i] - b) << "\n";
+        } else {
+            cout << min(abs(A[i] - b), abs(A[j] - b)) << "\n";
+        }
+    }
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    cout.tie(nullptr);
+    solve();
+    return 0;
+}

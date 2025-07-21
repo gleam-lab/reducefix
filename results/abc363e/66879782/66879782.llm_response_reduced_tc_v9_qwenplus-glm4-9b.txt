@@ -1,0 +1,93 @@
+
+The problem involves simulating the rising sea levels on an island and determining the area of the island that remains above sea level over a number of years. There are several issues in your code that need to be addressed:
+
+1. **Updates to the Sink Heights**: Your code assumes that once a cell sinks, its height becomes the sea level (1 year). However, it does not account for adjacent cells that may already have a lower height than the current sea level. You should update adjacent cells that have an elevation not greater than the current sea level and make them sink as well.
+
+2. **Priority Queue Usage**: The priority queue is not used effectively in the current code. It is supposed to store cells based on their height in descending order so that we can process the lowest cells that are adjacent to the sea first. This priority queue logic is not being used in your code, and the sinking process is being handled with a regular loop.
+
+3. **Edge Cases**: There are edge cases in which the island is already entirely surrounded by sea level or a similar situation. The current code does not handle these cases properly.
+
+4. **Efficiency**: The nested loops for processing cells are not efficient for large inputs and could lead to timeouts.
+
+Here's a corrected approach:
+
+### Corrected Code
+
+```cpp
+#include <iostream>
+#include <vector>
+#include <queue>
+#include <algorithm>
+
+using namespace std;
+
+const int dx[4] = {-1, 1, 0, 0};
+const int dy[4] = {0, 0, -1, 1};
+
+void solve(int H, int W, int Y, const vector<vector<int>>& A) {
+    // Initialize the island grid with the same height
+    vector<vector<int>> island(H, vector<int>(W, 0));
+    priority_queue<pair<int, pair<int, int>>, vector<pair<int, pair<int, int>>>, greater<pair<int, pair<int, int>>>> pq;
+
+    // Initialize the sink heights
+    vector<vector<int>> sink(H, vector<int>(W, 0));
+
+    // Initialize the queue with the edge cells that are directly at sea level
+    for (int i = 0; i < H; ++i) {
+        for (int j = 0; j < W; ++j) {
+            if (i == 0 || i == H - 1 || j == 0 || j == W - 1) {
+                island[i][j] = A[i][j];
+                sink[i][j] = 1;
+                pq.push({A[i][j], {i, j}});
+            }
+        }
+    }
+
+    // Process the cells according to the sinking rules
+    while (!pq.empty()) {
+        auto [h, p] = pq.top();
+        auto [r, c] = p;
+        pq.pop();
+
+        for (int k = 0; k < 4; ++k) {
+            int nr = r + dx[k];
+            int nc = c + dy[k];
+            if (nr >= 0 && nr < H && nc >= 0 && nc < W) {
+                if (island[nr][nc] > h) {
+                    island[nr][nc] = h; // Sink to the same level as the neighbor
+                    sink[nr][nc] = min(sink[r][c] + 1, Y); // Increase the sinking year if necessary
+                    pq.push({island[nr][nc], {nr, nc}});
+                }
+            }
+        }
+    }
+
+    // Calculate the area above the sea level for each year
+    for (int year = 1; year <= Y; ++year) {
+        int remaining_area = 0;
+        for (int i = 0; i < H; ++i) {
+            for (int j = 0; j < W; ++j) {
+                if (sink[i][j] > year) {
+                    remaining_area++;
+                }
+            }
+        }
+        cout << remaining_area << '\n';
+    }
+}
+
+int main() {
+    int H, W, Y;
+    cin >> H >> W >> Y;
+    vector<vector<int>> A(H, vector<int>(W));
+    for (int i = 0; i < H; ++i) {
+        for (int j = 0; j < W; ++j) {
+            cin >> A[i][j];
+        }
+    }
+    solve(H, W, Y, A);
+    return 0;
+}
+```
+
+This corrected code addresses the issues with the priority queue and the sinking logic, and it processes the cells in a more efficient manner. The area remaining above the sea level for each year is calculated by counting cells that have not sunk by that year.

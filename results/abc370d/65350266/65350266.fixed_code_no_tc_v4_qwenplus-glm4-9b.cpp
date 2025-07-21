@@ -1,0 +1,63 @@
+#include <iostream>
+#include <vector>
+#include <set>
+
+using namespace std;
+
+int main() {
+    int h, w, q;
+    cin >> h >> w >> q;
+    
+    // Initialize walls count
+    int totalWalls = h * w;
+    
+    // Process each query
+    while (q--) {
+        int r, c;
+        cin >> r >> c;
+        r--; c--; // Convert to 0-indexed
+
+        // Check if there's already a wall at the given position
+        if (r < 0 || c < 0 || r >= h || c >= w) continue;
+        
+        auto& rows = vector<vector<int>>(w);
+        auto& cols = vector<vector<int>>(h);
+        for (int i = 0; i < h; i++) rows[c].push_back(i);
+        for (int i = 0; i < w; i++) cols[r].push_back(i);
+        
+        // Find and remove walls in all four directions
+        // Top
+        for (int i = max(r - 1, 0); i >= 0; i--) {
+            if (find(cols[i].begin(), cols[i].end(), c) != cols[i].end()) {
+                cols[i].erase(find(cols[i].begin(), cols[i].end(), c));
+                break;
+            }
+        }
+        // Bottom
+        for (int i = min(r + 1, h - 1); i < h; i++) {
+            if (find(cols[i].begin(), cols[i].end(), c) != cols[i].end()) {
+                cols[i].erase(find(cols[i].begin(), cols[i].end(), c));
+                break;
+            }
+        }
+        // Left
+        for (int i = max(c - 1, 0); i >= 0; i--) {
+            if (find(rows[i].begin(), rows[i].end(), r) != rows[i].end()) {
+                rows[i].erase(find(rows[i].begin(), rows[i].end(), r));
+                break;
+            }
+        }
+        // Right
+        for (int i = min(c + 1, w - 1); i < w; i++) {
+            if (find(rows[i].begin(), rows[i].end(), r) != rows[i].end()) {
+                rows[i].erase(find(rows[i].begin(), rows[i].end(), r));
+                break;
+            }
+        }
+        
+        totalWalls -= 4;
+    }
+    
+    cout << totalWalls << endl;
+    return 0;
+}

@@ -1,0 +1,50 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+#define dout if (false) cerr
+
+bool check(const vector<vector<long long>>& data, long long x) {
+    int n = data.size();
+    for (const auto& row : data) {
+        long long a = row[0], b = row[1], p = row[2], q = row[3];
+        long long lcm_ab = (a / gcd(a, b)) * b;
+        long long vm = max(0LL, (x / lcm_ab - 1) * min(p * (lcm_ab / a), q * (lcm_ab / b)));
+        dout << vm;
+        x -= vm;
+        long long val = max(0LL, x / lcm_ab) * lcm_ab;
+        long long ms = LLONG_MAX >> 1;
+        for (long long j = 0; j * a <= x - val; ++j) {
+            ms = min(ms, j * p + max(0LL, ((x - val - j * a) / b + !!((x - val - j * a) % b)) * q));
+        }
+        dout << '\n' << x << ',' << val << ':' << vm << ' ' << ms << ' ' << vm + ms << '\n';
+        x -= ms;
+        if (x < 0) return false;
+    }
+    return true;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int n;
+    long long x;
+    cin >> n >> x;
+
+    vector<vector<long long>> data(n);
+    for (int i = 0; i < n; ++i) {
+        data[i].resize(4);
+        cin >> data[i][0] >> data[i][2] >> data[i][1] >> data[i][3];
+    }
+
+    long long l = 0, r = INT_MAX;
+    while (l + 1 < r) {
+        long long mid = (l + r) >> 1;
+        if (check(data, mid)) l = mid;
+        else r = mid;
+    }
+
+    cout << l << '\n';
+
+    return 0;
+}

@@ -1,0 +1,93 @@
+To solve this problem efficiently, we need to handle **dynamic connectivity** and answer queries about the **top-k largest nodes in a connected component**.
+
+We'll use a **Disjoint Set Union (DSU)** structure with path compression for efficient union and find operations. In addition, for each set (connected component), we will maintain a sorted list of the top 10 node values (since `k` is at most 10 in Type 2 queries). This allows us to quickly answer Type 2 queries without scanning the entire component every time.
+
+### Key Ideas:
+- Each node starts as its own parent.
+- For each union operation, we merge the smaller component into the larger one to ensure better performance.
+- Maintain a sorted list (descending) of the top 10 elements per component using a fixed-size array or vector.
+- When merging two components, combine their top lists and sort them again, then keep only the top 10.
+- For Type 2 queries, simply return the k-th element from the sorted list of the component containing the queried node (or -1 if not enough elements).
+
+Here's the corrected and efficient implementation:
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+const int MAXN = 2 * 1e5 + 5;
+const int TOP_K = 10;
+
+int parent[MAXN];
+vector<int> top_nodes[MAXN];
+
+int find(int x) {
+    if (parent[x] != x)
+        parent[x] = find(parent[x]);
+    return parent[x];
+}
+
+void unite(int x, int y) {
+    int px = find(x), py = find(y);
+    if (px == py) return;
+
+    // Merge smaller component into larger one
+    if (top_nodes[px].size() < top_nodes[py].size()) swap(px, py);
+
+    // Merge the top-k lists
+    for (int val : top_nodes[py]) {
+        top_nodes[px].push_back(val);
+    }
+
+    // Sort and keep top 10 largest values
+    sort(top_nodes[px].begin(), top_nodes[px].end(), greater<int>());
+    if (top_nodes[px].size() > TOP_K) {
+        top_nodes[px].resize(TOP_K);
+    }
+
+    // Update DSU parent
+    parent[py] = px;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int N, Q;
+    cin >> N >> Q;
+
+    // Initialize DSU and top nodes
+    for (int i = 1; i <= N; ++i) {
+        parent[i] = i;
+        top_nodes[i].push_back(i);
+    }
+
+    while (Q--) {
+        int type;
+        cin >> type;
+        if (type == 1) {
+            int u, v;
+            cin >> u >> v;
+            unite(u, v);
+        } else {
+            int v, k;
+            cin >> v >> k;
+            int pv = find(v);
+            if (top_nodes[pv].size() < k) {
+                cout << -1 << '\n';
+            } else {
+                cout << top_nodes[pv][k - 1] << '\n';
+            }
+        }
+    }
+
+    return 0;
+}
+```
+
+### Why This Works:
+- We avoid recomputing top-k values repeatedly by maintaining them incrementally.
+- The DSU ensures efficient merging and querying of connected components.
+- Sorting and trimming are limited to a maximum of 20 elements per merge (`TOP_K * 2`), so overhead is minimal.
+
+This approach guarantees an amortized complexity close to **O(α(N))** for DSU operations and **O(log K)** for sorting small lists, making it suitable for large constraints up to `2 * 10^5`.

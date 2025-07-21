@@ -1,0 +1,46 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+const int N = 1e5 + 5;
+
+int n, q;
+int a[N];
+
+// Binary search to find the smallest distance such that at least k points are within that distance from b_j
+int query(int b, int k) {
+    int l = 0;
+    int r = 2e8; // Maximum possible distance is 2e8 (due to -1e8 to 1e8)
+    while (l <= r) {
+        int mid = (l + (long long)r) / 2;
+        // Find range of elements in [b-mid, b+mid]
+        int left = lower_bound(a, a + n, b - mid) - a;
+        int right = upper_bound(a, a + n, b + mid) - a;
+        int count = right - left;
+        if (count >= k) {
+            r = mid - 1;
+        } else {
+            l = mid + 1;
+        }
+    }
+    return l;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    cout.tie(nullptr);
+
+    cin >> n >> q;
+    for (int i = 0; i < n; ++i) {
+        cin >> a[i];
+    }
+    sort(a, a + n);
+
+    for (int i = 0; i < q; ++i) {
+        int b, k;
+        cin >> b >> k;
+        cout << query(b, k) << "\n";
+    }
+
+    return 0;
+}

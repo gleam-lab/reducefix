@@ -1,0 +1,106 @@
+To fix this code, we need to address the issue where the incorrect output is being produced for certain test cases. The main problem lies in how the k-th largest vertex is being queried and how the union-find data structure is managing the connected components.
+
+### Approaches
+1. **Union-Find Data Structure**: The union-find (disjoint set) data structure is used to efficiently manage the connected components of the graph. Each component will maintain a sorted list of vertex numbers to quickly answer k-th largest queries.
+2. **Tracking Top k Elements**: Instead of storing all vertices in each component, we maintain only the top 10 largest vertices in each component to optimize memory usage and query speed. This is because the queries only ask for k up to 10.
+3. **Merging Components**: When merging two components, we merge their lists of top vertices, sort the combined list in descending order, and keep only the top 10 elements.
+
+### Solution Code
+```cpp
+#include<bits/stdc++.h>
+using namespace std;
+using ll = long long;
+#define rep(i,n) for(int i = 0;i<n;i++)
+#define all(v) v.begin(), v.end()
+
+struct Union_Find {
+    vector<int> par, sz;
+    vector<priority_queue<int, vector<int>, greater<int>>> top_k;
+
+    Union_Find(int n) {
+        par.resize(n);
+        sz.resize(n, 1);
+        top_k.resize(n);
+        rep(i, n) {
+            par[i] = i;
+            top_k[i].push(i + 1); // vertices are 1-based
+            if (top_k[i].size() > 10) top_k[i].pop();
+        }
+    }
+
+    int root(int v) {
+        if (par[v] == v) return v;
+        return par[v] = root(par[v]);
+    }
+
+    void merge(int u, int v) {
+        u = root(u);
+        v = root(v);
+        if (u == v) return;
+        if (sz[u] < sz[v]) swap(u, v);
+        par[v] = u;
+        sz[u] += sz[v];
+        
+        priority_queue<int> merged;
+        while (!top_k[u].empty()) {
+            merged.push(top_k[u].top());
+            top_k[u].pop();
+        }
+        while (!top_k[v].empty()) {
+            merged.push(top_k[v].top());
+            top_k[v].pop();
+        }
+        while (!merged.empty() && top_k[u].size() < 10) {
+            top_k[u].push(merged.top());
+            merged.pop();
+        }
+    }
+
+    int query(int v, int k) {
+        v = root(v);
+        if (top_k[v].size() < k) return -1;
+        vector<int> temp;
+        while (!top_k[v].empty()) {
+            temp.push_back(top_k[v].top());
+            top_k[v].pop();
+        }
+        int result = temp[temp.size() - k];
+        for (int num : temp) {
+            top_k[v].push(num);
+        }
+        return result;
+    }
+};
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int n, q;
+    cin >> n >> q;
+    Union_Find uf(n);
+
+    rep(i, q) {
+        int ty, u, v;
+        cin >> ty >> u >> v;
+        if (ty == 1) {
+            u--; v--;
+            uf.merge(u, v);
+        } else {
+            u--;
+            int res = uf.query(u, v);
+            cout << res << '\n';
+        }
+    }
+
+    return 0;
+}
+```
+
+### Explanation
+1. **Union-Find Initialization**: The `Union_Find` class initializes each vertex as its own parent and sets up a priority queue to keep track of the top 10 largest vertices in each component.
+2. **Root Finding**: The `root` method uses path compression to efficiently find the root of a vertex, ensuring near-constant time complexity for each query.
+3. **Component Merging**: The `merge` method combines two components by size, merging their priority queues. It ensures that only the top 10 largest vertices are retained in the merged component.
+4. **Query Handling**: The `query` method checks if the component has at least `k` vertices. If it does, it retrieves the k-th largest vertex by accessing the appropriate position in a sorted list derived from the priority queue. The elements are then restored to the priority queue for future queries.
+
+This approach ensures efficient handling of both union and query operations, adhering to the constraints and providing correct results for all test cases.

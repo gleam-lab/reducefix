@@ -1,0 +1,41 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+#define rep(i, n) for (int i = 0; i < (int)(n); i++)
+
+double euclid(double x1, double y1, double x2, double y2) {
+    double dx = x1 - x2;
+    double dy = y1 - y2;
+    return sqrt(dx * dx + dy * dy);
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int n;
+    cin >> n;
+
+    vector<pair<long long, long long>> points(n);
+    for (int i = 0; i < n; ++i) {
+        cin >> points[i].first >> points[i].second;
+    }
+
+    double total = 0.0;
+
+    // From origin to first point
+    total += euclid(0, 0, points[0].first, points[0].second);
+
+    // Between all consecutive points
+    for (int i = 1; i < n; ++i) {
+        total += euclid(points[i - 1].first, points[i - 1].second, points[i].first, points[i].second);
+    }
+
+    // From last point back to origin
+    total += euclid(points[n - 1].first, points[n - 1].second, 0, 0);
+
+    cout.precision(15);
+    cout << fixed << total << endl;
+
+    return 0;
+}

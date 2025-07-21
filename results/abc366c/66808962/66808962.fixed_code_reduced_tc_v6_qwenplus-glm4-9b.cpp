@@ -1,0 +1,42 @@
+#include <iostream>
+#include <map>
+
+using namespace std;
+
+int main() {
+    int q;
+    cin >> q;
+    
+    map<int, int> ball_count;
+    int current_different_count = 0;
+    
+    while (q--) {
+        int type;
+        cin >> type;
+        
+        if (type == 1) {
+            int x;
+            cin >> x;
+            // Increment the count of the ball with integer x on it
+            ball_count[x]++;
+            // If it's the first occurrence, increment the count of different integers
+            if (ball_count[x] == 1) {
+                current_different_count++;
+            }
+        } else if (type == 2) {
+            int x;
+            cin >> x;
+            // Decrement the count of the ball with integer x on it
+            ball_count[x]--;
+            // If it's the last occurrence, decrement the count of different integers
+            if (ball_count[x] == 0) {
+                current_different_count--;
+            }
+        } else if (type == 3) {
+            // Output the current count of different integers
+            cout << current_different_count << endl;
+        }
+    }
+    
+    return 0;
+}

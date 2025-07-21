@@ -1,0 +1,70 @@
+#include <iostream>
+#include <vector>
+#include <map>
+#include <algorithm>
+
+using namespace std;
+
+int main() {
+    int n, q;
+    cin >> n >> q;
+    
+    vector<int> a(n);
+    for (int i = 0; i < n; ++i) {
+        cin >> a[i];
+    }
+    
+    vector<pair<int, int>> queries;
+    for (int i = 0; i < q; ++i) {
+        int b, k;
+        cin >> b >> k;
+        queries.emplace_back(b, k);
+    }
+    
+    // Sort queries by b to group them in the correct order
+    sort(queries.begin(), queries.end());
+    
+    // Sort the points A
+    sort(a.begin(), a.end());
+    
+    // To handle the distance calculations efficiently, we use a map to keep track of the distances
+    map<int, int> position_count;
+    int pos = 1;
+    for (int i = 0; i < n; ++i) {
+        if (position_count.find(a[i]) == position_count.end()) {
+            position_count[a[i]] = pos;
+        }
+        ++pos;
+    }
+    
+    // For each b in the queries, find the k-th closest A
+    for (const auto& query : queries) {
+        int b = query.first;
+        int k = query.second;
+        
+        // The k-th closest A to b is the k-th smallest distance from A to b
+        // We need to find the k-th smallest distance, which is the k-th smallest value in the range [b-a[i], b+a[i]]
+        // We can use binary search on the distances to find the k-th smallest one
+        
+        int left = -10e8, right = 10e8;
+        while (left < right) {
+            int mid = (left + right) / 2;
+            int count = 0;
+            for (int i = 0; i < n; ++i) {
+                int distance = abs(a[i] - b);
+                if (distance <= mid) {
+                    count++;
+                }
+            }
+            if (count >= k) {
+                right = mid;
+            } else {
+                left = mid + 1;
+            }
+        }
+        
+        cout << abs(left - b) << endl;
+    }
+    
+    return 0;
+}

@@ -1,0 +1,85 @@
+To fix this code, we need to correctly simulate the process of sections sinking into the sea as the sea level rises each year. The initial approach was to use a priority queue to process sections adjacent to the sea, but there was an issue in how the sections were being marked as visited and processed. The key insight is to ensure that we correctly track which sections are adjacent to the sea or already sunk sections and process them in order of their elevation.
+
+### Approaches
+1. **Initialization**: Start by marking all border sections as candidates for sinking since they are adjacent to the sea. These sections are added to a priority queue (min-heap) based on their elevation.
+2. **Processing**: For each year, process all sections in the priority queue that have an elevation less than or equal to the current sea level. For each such section, mark it as sunk and decrease the remaining area. Then, check its adjacent sections; if they haven't been processed yet and are now adjacent to a sunk section or the sea, add them to the priority queue.
+3. **Output**: After processing each year's sea level, output the remaining area.
+
+### Solution Code
+```cpp
+#include <bits/stdc++.h>
+
+using namespace std;
+
+constexpr int d[4][2] = {{0, 1}, {0, -1}, {1, 0}, {-1, 0}};
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int H, W, Y;
+    cin >> H >> W >> Y;
+
+    vector<vector<int>> A(H, vector<int>(W));
+    for (int i = 0; i < H; ++i) {
+        for (int j = 0; j < W; ++j) {
+            cin >> A[i][j];
+        }
+    }
+
+    priority_queue<array<int, 3>, vector<array<int, 3>>, greater<array<int, 3>>> pq;
+    vector<vector<bool>> vis(H, vector<bool>(W, false));
+
+    // Initialize the priority queue with border cells
+    for (int i = 0; i < H; ++i) {
+        if (!vis[i][0]) {
+            pq.push({A[i][0], i, 0});
+            vis[i][0] = true;
+        }
+        if (W > 1 && !vis[i][W - 1]) {
+            pq.push({A[i][W - 1], i, W - 1});
+            vis[i][W - 1] = true;
+        }
+    }
+    for (int j = 1; j < W - 1; ++j) {
+        if (!vis[0][j]) {
+            pq.push({A[0][j], 0, j});
+            vis[0][j] = true;
+        }
+        if (H > 1 && !vis[H - 1][j]) {
+            pq.push({A[H - 1][j], H - 1, j});
+            vis[H - 1][j] = true;
+        }
+    }
+
+    int ans = H * W;
+    for (int year = 1; year <= Y; ++year) {
+        while (!pq.empty()) {
+            auto [h, x, y] = pq.top();
+            if (h > year) break;
+            pq.pop();
+            --ans;
+            for (int k = 0; k < 4; ++k) {
+                int nx = x + d[k][0];
+                int ny = y + d[k][1];
+                if (nx < 0 || nx >= H || ny < 0 || ny >= W) continue;
+                if (!vis[nx][ny]) {
+                    vis[nx][ny] = true;
+                    pq.push({A[nx][ny], nx, ny});
+                }
+            }
+        }
+        cout << ans << '\n';
+    }
+
+    return 0;
+}
+```
+
+### Explanation
+1. **Initialization**: The code starts by reading the dimensions of the island (H, W) and the number of years (Y). The elevation data for each section is stored in a 2D vector `A`.
+2. **Priority Queue Setup**: Border sections of the island are added to a priority queue (min-heap) because they are adjacent to the sea. These sections are marked as visited to avoid reprocessing.
+3. **Yearly Processing**: For each year, the code processes sections in the priority queue that have an elevation less than or equal to the current sea level (year). For each processed section, the remaining area (`ans`) is decremented, and adjacent sections are checked. If an adjacent section hasn't been visited, it is added to the queue.
+4. **Output**: After processing each year, the remaining area is printed. This continues until all Y years are processed.
+
+This approach ensures that sections are processed in the correct order (lowest elevation first) and efficiently tracks the remaining island area as the sea level rises each year. The complexity is optimized using a priority queue and careful management of visited sections.

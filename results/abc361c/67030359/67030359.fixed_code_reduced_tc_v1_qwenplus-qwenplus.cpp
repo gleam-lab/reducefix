@@ -1,0 +1,56 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+
+#define all(x) x.begin(), x.end()
+#define eb emplace_back
+#define chmin(a, b) (a = min(a, b))
+#define chmax(a, b) (a = max(a, b))
+
+using ll = long long;
+using vi = vector<int>;
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int N, K;
+    cin >> N >> K;
+    vi A(N);
+    for (int i = 0; i < N; ++i) {
+        cin >> A[i];
+    }
+
+    // We will use a sliding window of size (N - K)
+    int window_size = N - K;
+    int min_diff = numeric_limits<int>::max();
+
+    // We maintain two monotonic deques to track min and max in the current window
+    deque<int> min_deq, max_deq;
+
+    auto add = [&](int i) {
+        while (!min_deq.empty() && A[min_deq.back()] >= A[i]) min_deq.pop_back();
+        min_deq.push_back(i);
+        while (!max_deq.empty() && A[max_deq.back()] <= A[i]) max_deq.pop_back();
+        max_deq.push_back(i);
+    };
+
+    auto remove = [&](int i) {
+        if (!min_deq.empty() && min_deq.front() == i) min_deq.pop_front();
+        if (!max_deq.empty() && max_deq.front() == i) max_deq.pop_front();
+    };
+
+    auto get_min = [&]() { return A[min_deq.front()]; };
+    auto get_max = [&]() { return A[max_deq.front()]; };
+
+    for (int i = 0; i < N; ++i) {
+        add(i);
+        if (i >= window_size - 1) {
+            min_diff = min(min_diff, get_max() - get_min());
+            remove(i - window_size + 1);
+        }
+    }
+
+    cout << min_diff << endl;
+    return 0;
+}

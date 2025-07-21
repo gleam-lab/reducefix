@@ -1,0 +1,195 @@
+To solve this problem efficiently given the constraints (with `N` up to 10^9 and `M` up to 1000), we need to avoid iterating over the entire grid. Instead, we focus on tracking which rows, columns, and diagonals are under attack using sets.
+
+We'll:
+
+1. Track all attacked rows (`rows`).
+2. Track all attacked columns (`cols`).
+3. Track all attacked diagonals of the form `x - y` (difference diagonals).
+4. Track all attacked diagonals of the form `x + y` (sum diagonals).
+
+Each piece attacks its row, column, and both diagonal types it lies on. The total number of squares that can be attacked is calculated based on these sets.
+
+To compute the number of unattacked empty squares:
+- Start with total squares: `n * n`
+- Subtract attacked rows, columns, difference diagonals, and sum diagonals.
+- Add back overlaps between each pair of attack sets to avoid double-counting.
+- Subtract overlaps among triples.
+- Add back overlap among all four sets.
+
+This inclusion-exclusion principle lets us calculate the number of attacked cells efficiently without iterating through the whole grid.
+
+Here's the corrected and efficient C++ code:
+
+```cpp
+#include <bits/stdc++.h>
+
+using namespace std;
+using ll = long long;
+
+void solve() {
+    ll N, M;
+    cin >> N >> M;
+
+    set<ll> rows, cols, diag1, diag2;
+
+    for (ll i = 0; i < M; ++i) {
+        ll x, y;
+        cin >> x >> y;
+        rows.insert(x);
+        cols.insert(y);
+        diag1.insert(x - y);
+        diag2.insert(x + y);
+    }
+
+    ll attacked = 0;
+
+    // Count row attacks
+    attacked += rows.size() * N;
+
+    // Count column attacks
+    attacked += cols.size() * N;
+
+    // Count diagonal 1 attacks (x - y)
+    for (auto d : diag1) {
+        ll count = N - abs(d);
+        if (count > 0) attacked += count;
+    }
+
+    // Count diagonal 2 attacks (x + y)
+    for (auto d : diag2) {
+        ll count = N - abs(N - d);
+        if (count > 0) attacked += count;
+    }
+
+    // Inclusion-Exclusion Principle
+
+    // Subtract intersections of row & col
+    for (auto r : rows) {
+        for (auto c : cols) {
+            if ((r >= 1 && r <= N) && (c >= 1 && c <= N)) {
+                if (diag1.count(r - c) || diag2.count(r + c)) {
+                    attacked--;
+                }
+            }
+        }
+    }
+
+    // Subtract intersections of row & diag1
+    for (auto r : rows) {
+        for (auto d : diag1) {
+            ll c = r - d;
+            if (c >= 1 && c <= N) {
+                attacked--;
+            }
+        }
+    }
+
+    // Subtract intersections of row & diag2
+    for (auto r : rows) {
+        for (auto d : diag2) {
+            ll c = d - r;
+            if (c >= 1 && c <= N) {
+                attacked--;
+            }
+        }
+    }
+
+    // Subtract intersections of col & diag1
+    for (auto c : cols) {
+        for (auto d : diag1) {
+            ll r = d + c;
+            if (r >= 1 && r <= N) {
+                attacked--;
+            }
+        }
+    }
+
+    // Subtract intersections of col & diag2
+    for (auto c : cols) {
+        for (auto d : diag2) {
+            ll r = d - c;
+            if (r >= 1 && r <= N) {
+                attacked--;
+            }
+        }
+    }
+
+    // Subtract intersections of diag1 & diag2
+    for (auto d1 : diag1) {
+        for (auto d2 : diag2) {
+            if ((d1 + d2) % 2 != 0) continue;
+            ll r = (d1 + d2) / 2;
+            ll c = d2 - r;
+            if (r >= 1 && r <= N && c >= 1 && c <= N) {
+                attacked--;
+            }
+        }
+    }
+
+    // Add back intersections of row & col & diag1
+    for (auto r : rows) {
+        for (auto c : cols) {
+            ll d1 = r - c;
+            if (diag1.count(d1)) {
+                attacked++;
+            }
+        }
+    }
+
+    // Add back intersections of row & col & diag2
+    for (auto r : rows) {
+        for (auto c : cols) {
+            ll d2 = r + c;
+            if (diag2.count(d2)) {
+                attacked++;
+            }
+        }
+    }
+
+    // Add back intersections of row & diag1 & diag2
+    for (auto r : rows) {
+        for (auto d1 : diag1) {
+            for (auto d2 : diag2) {
+                ll c1 = r - d1;
+                if (c1 >= 1 && c1 <= N && d2 == r + c1) {
+                    attacked++;
+                }
+            }
+        }
+    }
+
+    // Add back intersections of col & diag1 & diag2
+    for (auto c : cols) {
+        for (auto d1 : diag1) {
+            for (auto d2 : diag2) {
+                ll r1 = d1 + c;
+                if (r1 >= 1 && r1 <= N && d2 == r1 + c) {
+                    attacked++;
+                }
+            }
+        }
+    }
+
+    // Subtract intersections of row & col & diag1 & diag2
+    for (auto r : rows) {
+        for (auto c : cols) {
+            ll d1 = r - c;
+            ll d2 = r + c;
+            if (diag1.count(d1) && diag2.count(d2)) {
+                attacked--;
+            }
+        }
+    }
+
+    ll totalEmpty = N * N - attacked;
+    cout << totalEmpty << "\n";
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    solve();
+    return 0;
+}
+```

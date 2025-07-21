@@ -1,0 +1,39 @@
+#include<bits/stdc++.h>
+#define INF 0x3f3f3f3f3f3f3f3f
+using namespace std;
+typedef long long ll;
+const int MAXN = 2e5 + 10;
+vector<int> adj[MAXN];
+queue<int> q;
+int step[MAXN];
+bool vis[MAXN];
+
+int main() {
+    int n, m, u, v;
+    scanf("%d %d", &n, &m);
+    for (int i = 0; i < m; i++) {
+        scanf("%d %d", &u, &v);
+        adj[u].push_back(v);
+    }
+    q.push(1);
+    step[1] = 0;
+    vis[1] = true;
+    while (!q.empty()) {
+        int top = q.front();
+        q.pop();
+        for (int i = 0; i < adj[top].size(); i++) {
+            int to = adj[top][i];
+            if (!vis[to]) {
+                step[to] = step[top] + 1;
+                vis[to] = true;
+                q.push(to);
+                if (to == 1) {
+                    printf("%d\n", step[to]);
+                    return 0;
+                }
+            }
+        }
+    }
+    printf("-1\n");
+    return 0;
+}

@@ -1,0 +1,108 @@
+To solve this problem efficiently, we need to:
+
+- Manage **dynamic connectivity** of nodes in a graph.
+- Support two operations:
+  - `Add edge between u and v`
+  - `Query the k-th largest node connected to node v`
+
+This is a classic use case for the **Disjoint Set Union (DSU)** data structure (also known as Union-Find). However, since we also need to maintain a sorted list of connected nodes per component, we'll enhance DSU by maintaining a **sorted list of all nodes in each component**, stored only at the root.
+
+### Key Concepts Used
+
+1. **Union-Find (Path Compression + Union by Size/Rank):**
+   - Efficiently finds the representative (root) of a set.
+   - Merges two sets in near-constant time.
+
+2. **Maintaining Top 10 Largest Nodes Per Component:**
+   - Each component root maintains a sorted list (descending) of up to 10 largest nodes.
+   - When merging components, we merge their top lists and keep only the top 10.
+
+3. **Efficient Querying:**
+   - For query type 2 (`k-th largest`), simply return the `k-1` index from the list if it exists.
+
+Here's the full working code that implements this logic correctly and efficiently:
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+const int MAXN = 2e5 + 5;
+
+int parent[MAXN];
+vector<int> top_nodes[MAXN];
+
+int find(int x) {
+    if (parent[x] != x)
+        parent[x] = find(parent[x]);
+    return parent[x];
+}
+
+void unite(int x, int y) {
+    int fx = find(x);
+    int fy = find(y);
+    if (fx == fy) return;
+
+    // Always merge smaller into larger
+    if (top_nodes[fx].size() < top_nodes[fy].size())
+        swap(fx, fy);
+
+    // Merge top nodes
+    for (int node : top_nodes[fy]) {
+        top_nodes[fx].push_back(node);
+    }
+
+    // Sort and keep top 10 largest
+    sort(top_nodes[fx].begin(), top_nodes[fx].end(), greater<int>());
+    if (top_nodes[fx].size() > 10)
+        top_nodes[fx].resize(10);
+
+    parent[fy] = fx;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int N, Q;
+    cin >> N >> Q;
+
+    for (int i = 1; i <= N; ++i) {
+        parent[i] = i;
+        top_nodes[i] = {i};
+    }
+
+    while (Q--) {
+        int op;
+        cin >> op;
+        if (op == 1) {
+            int u, v;
+            cin >> u >> v;
+            unite(u, v);
+        } else {
+            int v, k;
+            cin >> v >> k;
+            int root = find(v);
+            if (k <= (int)top_nodes[root].size())
+                cout << top_nodes[root][k - 1] << '\n';
+            else
+                cout << "-1\n";
+        }
+    }
+
+    return 0;
+}
+```
+
+### Why This Works Correctly
+
+- **Unite operation:** Merges two sets' top node lists and keeps only the top 10 values.
+- **Find operation:** Ensures path compression so union-find stays efficient.
+- **Query operation:** Directly accesses precomputed top-k values in O(1).
+
+### Time Complexity
+
+- Union: Amortized **O(α(N))**, where α is the inverse Ackermann function.
+- Maintain list of up to 10 elements per component → negligible cost.
+- Query: **O(1)** due to precomputed list.
+
+This approach ensures correctness and performance even with maximum constraints.

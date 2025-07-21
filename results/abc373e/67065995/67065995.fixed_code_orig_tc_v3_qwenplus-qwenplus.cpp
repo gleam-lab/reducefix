@@ -1,0 +1,70 @@
+#include <bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+#define all(x) (x).begin(), (x).end()
+
+int main() {
+    ios_base::sync_with_stdio(0);
+    cin.tie(0);
+    int N, M;
+    ll K;
+    cin >> N >> M >> K;
+    vector<ll> A(N);
+    for (int i = 0; i < N; ++i) {
+        cin >> A[i];
+    }
+
+    vector<ll> res(N, -1);
+    vector<pair<ll, int>> candidates(N);
+    for (int i = 0; i < N; ++i) {
+        candidates[i] = {A[i], i};
+    }
+
+    // Sort by current votes descending
+    sort(candidates.rbegin(), candidates.rend());
+
+    // Prefix sum of sorted votes
+    vector<ll> prefix(N + 1);
+    for (int i = 0; i < N; ++i) {
+        prefix[i + 1] = prefix[i] + candidates[i].first;
+    }
+
+    // For each candidate, compute how many additional votes they need
+    for (int idx = 0; idx < N; ++idx) {
+        ll a_i = candidates[idx].first;
+        int pos = idx;
+
+        ll low = 0, high = K + 1;
+        ll answer = -1;
+
+        while (low <= high) {
+            ll mid = (low + high) / 2;
+            ll total_needed = 0;
+
+            // We want to ensure that fewer than M candidates can have more votes than a_i + mid
+            // So we cap the top M-1 candidates' votes to a_i + mid
+            int cap_pos = min(N, M);
+
+            ll extra = mid;
+            ll sum_cap = 0;
+            for (int j = 0; j < cap_pos; ++j) {
+                if (j == idx) continue;
+                if (candidates[j].first > a_i + mid) {
+                    sum_cap += candidates[j].first - (a_i + mid + 1);
+                }
+            }
+
+            if (sum_cap <= K) {
+                answer = mid;
+                high = mid - 1;
+            } else {
+                low = mid + 1;
+            }
+        }
+
+        res[candidates[idx].second] = answer;
+    }
+
+    for (auto x : res) cout << x << ' ';
+    return 0;
+}

@@ -1,0 +1,94 @@
+
+This problem is about simulating the process where the sea level rises and parts of an island sink under the water. We need to calculate the area of the island that remains above the sea level after a certain number of years.
+
+### Issues in the Incorrect Code
+
+The code provided uses a breadth-first search (BFS) approach, but it has several issues that need to be addressed:
+
+1. **Queue Initialization**: The queue for each year is initialized with the current sea level, but it does not handle the case where the sea level is higher than the elevation of some parts of the island, which would cause them to sink immediately.
+2. **Yearly Queue Update**: The code only checks for new sinks at the current sea level and does not update the queue for the next year.
+3. **Area Calculation**: The code subtracts the number of cells in the queue from the total area, but does not keep track of the area that has already sunk.
+
+### Corrected Code
+
+To address these issues, we need to do the following:
+
+1. **Initial Sinking**: At the beginning, we need to identify which sections will immediately sink when the sea level is raised to 1. These are the cells that are on the border or have a lower elevation than their neighbors.
+2. **Queue Processing**: We need to maintain a queue for each year and process the sinking at the current sea level.
+3. **Area Calculation**: We need to update the remaining area of the island after each year.
+
+Here's a corrected version of the code:
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+
+int main() {
+    int H, W, Y;
+    cin >> H >> W >> Y;
+    vector<vector<int>> A(H, vector<int>(W));
+    for (int i = 0; i < H; ++i) {
+        for (int j = 0; j < W; ++j) {
+            cin >> A[i][j];
+        }
+    }
+
+    vector<vector<bool>> visited(H, vector<bool>(W, false));
+    vector<queue<pair<int, int>>> Q(Y + 1);
+    int remaining_area = 0;
+
+    // Initial sinking
+    for (int i = 0; i < H; ++i) {
+        for (int j = 0; j < W; ++j) {
+            int count = 0;
+            if (i > 0 && A[i][j] > A[i - 1][j]) count++;
+            if (i < H - 1 && A[i][j] > A[i + 1][j]) count++;
+            if (j > 0 && A[i][j] > A[i][j - 1]) count++;
+            if (j < W - 1 && A[i][j] > A[i][j + 1]) count++;
+            if (count == 4) {
+                remaining_area++;
+                visited[i][j] = true;
+                Q[1].push({i, j});
+            }
+        }
+    }
+
+    // Process sinking each year
+    for (int y = 1; y <= Y; ++y) {
+        queue<pair<int, int>> temp;
+        while (!Q[y].empty()) {
+            auto [x, y] = Q[y].front();
+            Q[y].pop();
+            remaining_area--;
+
+            if (x > 0 && !visited[x - 1][y] && A[x - 1][y] <= A[x][y]) {
+                visited[x - 1][y] = true;
+                temp.push({x - 1, y});
+                remaining_area++;
+            }
+            if (x < H - 1 && !visited[x + 1][y] && A[x + 1][y] <= A[x][y]) {
+                visited[x + 1][y] = true;
+                temp.push({x + 1, y});
+                remaining_area++;
+            }
+            if (y > 0 && !visited[x][y - 1] && A[x][y - 1] <= A[x][y]) {
+                visited[x][y - 1] = true;
+                temp.push({x, y - 1});
+                remaining_area++;
+            }
+            if (y < W - 1 && !visited[x][y + 1] && A[x][y + 1] <= A[x][y]) {
+                visited[x][y + 1] = true;
+                temp.push({x, y + 1});
+                remaining_area++;
+            }
+        }
+        Q[y + 1] = temp;
+        cout << remaining_area << endl;
+    }
+
+    return 0;
+}
+```
+
+This code initializes the queue with all the cells that will immediately sink and then processes each year's sinking in a nested loop. It keeps track of the remaining area of the island and prints it for each year.

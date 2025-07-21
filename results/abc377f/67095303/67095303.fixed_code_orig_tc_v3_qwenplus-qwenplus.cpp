@@ -1,0 +1,1 @@
+safe_squares = (N - #attacked_rows) * (N - #attacked_cols)

@@ -1,0 +1,359 @@
+To fix this code, we need to ensure that for each candidate, we correctly determine the minimum number of additional votes they need to guarantee their election, considering the remaining votes and the worst-case scenario where other candidates receive as many votes as possible to prevent the candidate from being elected.
+
+### Approaches
+1. **Sorting and Binary Search**: 
+   - First, sort the candidates based on their current votes to easily analyze their positions and the votes distribution.
+   - For each candidate, use binary search to find the minimum number of additional votes (`X`) they need such that even if all other candidates receive the maximum possible votes, the number of candidates with more votes than them is less than `M`.
+
+2. **Prefix Sum for Efficient Calculation**: 
+   - Use a prefix sum array to quickly calculate the sum of votes up to any point in the sorted list, which helps in determining the total votes required for other candidates to surpass the candidate in question.
+
+3. **Binary Search Conditions**: 
+   - For each candidate, during binary search, check if the candidate's votes plus `X` can position them such that no more than `M-1` candidates have more votes than them. This involves adjusting the votes of other candidates in the worst-case scenario.
+
+### Solution Code
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+#define all(x) (x).begin(), (x).end()
+
+int main() {
+    ios_base::sync_with_stdio(0);
+    cin.tie(0);
+    int n, m;
+    ll k;
+    cin >> n >> m >> k;
+    vector<ll> a(n);
+    ll total = 0;
+    for (int i = 0; i < n; i++) {
+        cin >> a[i];
+        total += a[i];
+    }
+    vector<int> ord(n);
+    iota(all(ord), 0);
+    sort(all(ord), [&](int i, int j) { return a[i] < a[j]; });
+    auto b = a;
+    sort(all(b));
+    vector<ll> pref(n + 1);
+    for (int i = 0; i < n; i++) {
+        pref[i + 1] = b[i] + pref[i];
+    }
+    vector<ll> ans(n, -1);
+    ll rem = k - total;
+    for (int i = 0; i < n; i++) {
+        ll low = 0, high = rem + 1;
+        ll best = -1;
+        while (low <= high) {
+            ll mid = (low + high) / 2;
+            ll new_vote = b[i] + mid;
+            ll pos = upper_bound(all(b), new_vote) - b.begin();
+            pos = n - pos;
+            if (pos < m) {
+                best = mid;
+                high = mid - 1;
+            } else {
+                low = mid + 1;
+            }
+        }
+        if (best != -1) {
+            ll new_vote = b[i] + best;
+            ll sum_extra = 0;
+            ll cnt = 0;
+            ll pos = upper_bound(all(b), new_vote) - b.begin();
+            for (int j = pos; j < n; j++) {
+                if (b[j] >= new_vote) {
+                    sum_extra += (b[j] - new_vote + 1);
+                    cnt++;
+                }
+            }
+            if (sum_extra <= rem - best) {
+                ans[ord[i]] = best;
+            } else {
+                ll needed = sum_extra - (rem - best);
+                if (best + needed <= rem) {
+                    ans[ord[i]] = best + needed;
+                } else {
+                    ans[ord[i]] = -1;
+                }
+            }
+        } else {
+            ans[ord[i]] = -1;
+        }
+    }
+    for (auto i : ans) {
+        cout << i << ' ';
+    }
+    cout << endl;
+}
+```
+
+Wait, actually, the previous code is still not correct. Let me think again. The correct approach is to find for each candidate i the minimal X such that after adding X to A_i, the number of candidates with more votes than A_i + X is less than M, even if all other remaining votes (K - total) - X are used to boost other candidates as much as possible to surpass A_i + X.
+
+Alright, to find X for candidate i:
+
+1. Sort the array A (excluding A_i) in non-decreasing order. But since we are processing all candidates, we can sort the original array and use binary search to find the minimal X for each candidate.
+
+2. For each candidate i, after adding X to A_i, the worst case is when other candidates receive as many votes as possible to surpass A_i + X. We need to ensure that no more than M-1 candidates can have votes greater than A_i + X after distributing the remaining votes.
+
+3. The problem reduces to finding the minimal X such that the sum of votes required to have M candidates with votes > A_i + X is more than the remaining votes (K - total).
+
+To compute this efficiently:
+
+- Sort the array A in non-decreasing order.
+- For each candidate i, perform a binary search on X to find the minimal X such that in the sorted array, the M-th largest value (after any possible distribution) is <= A_i + X. This involves checking how many candidates can potentially surpass A_i + X with the remaining votes.
+
+The correct approach is to:
+
+For candidate i, after adding X votes, their count becomes `A_i + X`. The number of candidates with votes > `A_i + X` should be < M. The worst case is when as many as possible of the remaining `K - total - X` votes are used to increase other candidates' votes to just exceed `A_i + X`.
+
+To find the minimal X:
+
+- The number of candidates that can be made to have votes > `A_i + X` is equal to the number of candidates j where `A_j + delta_j > A_i + X`, where `delta_j` is the additional votes given to j. The sum of `delta_j` for these candidates is minimized when we take the candidates with the smallest `A_j` first, because increasing them requires less delta_j to surpass `A_i + X`.
+
+So, the steps per candidate are:
+
+1. Binary search for X in [0, remaining votes].
+2. For a given X, calculate how many candidates can be made to have votes > `A_i + X` with the remaining votes `K - total - X`.
+   - Sort all candidates except i by their current votes.
+   - The candidates that can surpass `A_i + X` with the least additional votes are those with `A_j` <= `A_i + X`. We need to give them `(A_i + X + 1) - A_j` votes each.
+   - The total votes required to make the top `M` candidates surpass `A_i + X` is the sum of `(A_i + X + 1 - A_j)` for the `M` candidates with the highest `A_j` (or the earliest in the sorted list в данном контексте, candidates with the smallest `A_j` who can be increased with less votes to surpass `A_i + X`).
+
+But this is complex to compute for each candidate. Instead, for each candidate i, after adding X, the worst case is when other candidates receive as many votes as possible to surpass `A_i + X`. The minimal X should ensure that even if `K - total - X` votes are used to make other candidates' votes as large as possible, no more than M-1 candidates have votes > `A_i + X`.
+
+So, the minimal X is the smallest X such that the number of candidates with `A_j > A_i + X` plus the number of candidates that can be made to have `A_j + delta_j > A_i + X` with the remaining votes is less than M.
+
+This can be rephrased как follows: For candidate i, after adding X votes, the maximal number of candidates that can have votes > `A_i + X` is the number of candidates j with `A_j > A_i + X` plus the number of candidates j with `A_j <= A_i + X` that can be boosted to > `A_i + X` with the remaining `K - total - X` votes.
+
+To find the minimal X such that this number is < M.
+
+This can be computed with binary search for X.
+
+For a given X, the number of candidates already > `A_i + X` is `count = number of candidates j where A_j > A_i + X`.
+
+The remaining candidates can potentially be increased to surpass `A_i + X` by assigning each of them `(A_i + X + 1 - A_j)` votes. The total number of such candidates that can be boosted is the maximum number such that the sum of `(A_i + X + 1 - A_j)` for the first k candidates (sorted in increasing order of A_j) is <= `remaining_votes = K - total - X`.
+
+So, the total number of candidates that can have votes > `A_i + X` is `count + k`, where k is the maximal integer such that the sum of `(A_i + X + 1 - A_j)` for the first k candidates with `A_j <= A_i + X` is <= remaining_votes.
+
+We need this `count + k < M`.
+
+So, during the binary search for X, for each midpoint X, we calculate `count` and `k`, and check if `count + k < M`.
+
+If yes, then this X is sufficient, and we can try a smaller X. Otherwise, we need a larger X.
+
+To compute `count` and `k` efficiently:
+
+- `count` is the number of elements in the sorted array `b` (sorted A) that are > `A_i + X`. This can be found with upper_bound.
+
+- `k` is the largest number such that the sum of `(A_i + X + 1 - b[j])` for the first `k` elements in `b` that are <= `A_i + X` is <= `remaining_votes`.
+
+To compute this sum efficiently, we can use the prefix sum array.
+
+So, the correct approach involves:
+
+1. Sorting the array `b` (sorted A).
+
+2. For each candidate i, we perform binary search on X to find the minimal X such that `count + k < M`.
+
+Where:
+
+- `count` is `n - (upper_bound(b.begin(), b.end(), A_i + X) - b.begin())`.
+
+- `k` is the largest integer such that the sum of `(A_i + X + 1 - b[j])` for j in the first `s` elements (where `b[j] <= A_i + X`) is <= `remaining_votes = K - total - X`.
+
+This sum can be computed as:
+
+sum_{j=0 to s-1} (A_i + X + 1 - b[j]) = s*(A_i + X + 1) - sum_{j=0 to s-1} b[j].
+
+We can find the largest s such that this sum <= remaining_votes, and s <= the number of elements <= `A_i + X` (which is `upper_bound(b.begin(), b.end(), A_i + X) - b.begin()`).
+
+So, the steps to compute k:
+
+- total_possible = upper_bound(b.begin(), b.end(), A_i + X) - b.begin().
+
+- We need to find the largest s <= total_possible such that s*(A_i + X + 1) - prefix_sum[s] <= remaining_votes.
+
+This is a standard binary search problem on s.
+
+Once we have s, then `count + s` is the number of candidates that can have votes > `A_i + X`.
+
+We need `count + s < M`.
+
+So, the binary search for X should check whether such an s exists.
+
+Putting this together, the code should:
+
+- Sort the array b.
+
+- For each candidate i, perform binary search on X.
+
+  - For each X, compute count (number of candidates > A_i + X).
+
+  - Compute the maximal s such that s*(A_i + X + 1) - prefix_sum[s] <= K - total - X.
+
+  - Check if count + s < M.
+
+Wait, but in the sorted array b, the first 'total_possible' elements are <= A_i + X. So, s can be at most total_possible.
+
+But we have to be careful that when we binary search for s, we're considering the first s elements in the entire array, which are the s smallest elements. But the candidates that are <= A_i + X are exactly the first 'total_possible' elements. So, s should be <= total_possible.
+
+Thus, the sum is s*(A_i + X + 1) - prefix_sum[s], for s <= total_possible.
+
+We need to find the largest s <= total_possible such that this sum <= remaining_votes.
+
+If such an s is found, then `count + s` is the number of candidates that can have votes > A_i + X.
+
+We need `count + s < M`.
+
+This is the condition to check during the binary search.
+
+So, the binary search for X should find the minimal X such that this condition is true.
+
+Now, we can proceed to implement this.
+
+Here's the corrected code:
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+#define all(x) (x).begin(), (x).end()
+
+int main() {
+    ios_base::sync_with_stdio(0);
+    cin.tie(0);
+    int n, m;
+    ll k;
+    cin >> n >> m >> k;
+    vector<ll> a(n);
+    ll total = 0;
+    for (int i = 0; i < n; i++) {
+        cin >> a[i];
+        total += a[i];
+    }
+    ll remaining = k - total;
+    vector<ll> b = a;
+    sort(all(b));
+    vector<ll> prefix(n + 1);
+    for (int i = 0; i < n; i++) {
+        prefix[i + 1] = prefix[i] + b[i];
+    }
+    vector<ll> ans(n, -1);
+    for (int i = 0; i < n; i++) {
+        ll current = a[i];
+        ll low = 0, high = remaining;
+        ll best_x = -1;
+        while (low <= high) {
+            ll mid = (low + high) / 2;
+            ll new_vote = current + mid;
+            auto it = upper_bound(all(b), new_vote);
+            ll count = b.end() - it;  // candidates with b[j] > new_vote
+            ll total_possible = it - b.begin();  // candidates with b[j] <= new_vote
+            ll left = 0, right = total_possible;
+            ll best_s = 0;
+            while (left <= right) {
+                ll s = (left + right) / 2;
+                ll sum_needed = s * new_vote + s - prefix[s];
+                if (sum_needed <= remaining - mid) {
+                    best_s = s;
+                    left = s + 1;
+                } else {
+                    right = s - 1;
+                }
+            }
+            if (count + best_s < m) {
+                best_x = mid;
+                high = mid - 1;
+            } else {
+                low = mid + 1;
+            }
+        }
+        ans[i] = best_x;
+    }
+    for (auto x : ans) {
+        cout << x << ' ';
+    }
+    cout << endl;
+    return 0;
+}
+```
+
+Wait, there's a bug in the sum_needed calculation. It should be `s * (new_vote + 1) - prefix[s]`, not `s * new_vote + s - prefix[s]`. Because the sum is (new_vote + 1 - b[j]) for j from 0 to s-1, which can be written as s*(new_vote + 1) - sum_{j=0}^{s-1} b[j] = s*(new_vote + 1) - prefix[s].
+
+So, line 38 should be:
+
+```cpp
+ll sum_needed = s * (new_vote + 1) - prefix[s];
+```
+
+Correcting that, the code should now work.
+
+### Final Corrected Code
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+#define all(x) (x).begin(), (x).end()
+
+int main() {
+    ios_base::sync_with_stdio(0);
+    cin.tie(0);
+    int n, m;
+    ll k;
+    cin >> n >> m >> k;
+    vector<ll> a(n);
+    ll total = 0;
+    for (int i = 0; i < n; i++) {
+        cin >> a[i];
+        total += a[i];
+    }
+    ll remaining = k - total;
+    vector<ll> b = a;
+    sort(all(b));
+    vector<ll> prefix(n + 1);
+    for (int i = 0; i < n; i++) {
+        prefix[i + 1] = prefix[i] + b[i];
+    }
+    vector<ll> ans(n, -1);
+    for (int i = 0; i < n; i++) {
+        ll current = a[i];
+        ll low = 0, high = remaining;
+        ll best_x = -1;
+        while (low <= high) {
+            ll mid = (low + high) / 2;
+            ll new_vote = current + mid;
+            auto it = upper_bound(all(b), new_vote);
+            ll count = b.end() - it;  // candidates with b[j] > new_vote
+            ll total_possible = it - b.begin();  // candidates with b[j] <= new_vote
+            ll left = 0, right = total_possible;
+            ll best_s = 0;
+            while (left <= right) {
+                ll s = (left + right) / 2;
+                ll sum_needed = s * (new_vote + 1) - prefix[s];
+                if (sum_needed <= remaining - mid) {
+                    best_s = s;
+                    left = s + 1;
+                } else {
+                    right = s - 1;
+                }
+            }
+            if (count + best_s < m) {
+                best_x = mid;
+                high = mid - 1;
+            } else {
+                low = mid + 1;
+            }
+        }
+        ans[i] = best_x;
+    }
+    for (auto x : ans) {
+        cout << x << ' ';
+    }
+    cout << endl;
+    return 0;
+}
+```
+
+This code should now correctly compute the minimal number of additional votes each candidate needs to guarantee their election.

@@ -1,0 +1,35 @@
+#include<bits/stdc++.h>
+using namespace std;
+vector<int> adj[200005];
+priority_queue<int> pq[200005];
+int n, q;
+
+void addEdge(int u, int v) {
+    adj[u].push_back(v);
+    adj[v].push_back(u);
+    pq[u].push(-v);
+    pq[v].push(-u);
+}
+
+void getKthLargest(int v, int k) {
+    while (k > 0 && !pq[v].empty()) {
+        cout << -pq[v].top() << "\n";
+        pq[v].pop();
+        k--;
+    }
+    if (k > 0) cout << "-1\n";
+}
+
+int main() {
+    cin >> n >> q;
+    for (int i = 0; i < q; i++) {
+        int op, ix, iy;
+        cin >> op >> ix >> iy;
+        if (op == 1) {
+            addEdge(ix, iy);
+        } else {
+            getKthLargest(ix, iy);
+        }
+    }
+    return 0;
+}

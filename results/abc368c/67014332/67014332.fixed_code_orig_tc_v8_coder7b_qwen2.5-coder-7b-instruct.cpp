@@ -1,0 +1,35 @@
+#include<bits/stdc++.h>
+using namespace std;
+using ll = long long;
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(0);
+    cout.tie(0);
+
+    ll n, ans = 0, tri = 1;
+    cin >> n;
+    vector<ll> health(n);
+    for(ll &h : health) cin >> h;
+
+    while(true){
+        bool flag = false;
+        for(auto &h : health){
+            if(h > 0){
+                flag = true;
+                if(tri % 3 == 0){
+                    h -= 3;
+                    ans++;
+                } else {
+                    h -= 1;
+                    ans++;
+                }
+            }
+        }
+
+        if(!flag) break;
+        tri++;
+    }
+
+    cout << ans;
+    return 0;
+}

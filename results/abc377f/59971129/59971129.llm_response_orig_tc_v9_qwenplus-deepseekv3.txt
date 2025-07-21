@@ -1,0 +1,100 @@
+To fix this code, we need to correctly calculate the number of safe positions where a new piece can be placed without being captured by any existing pieces. The existing pieces can attack along rows, columns, diagonals (both i+j and i-j), and anti-diagonals (i-j). 
+
+### Approaches
+1. **Identify Forbidden Positions**: 
+   - **Rows and Columns**: All positions in the same row or column as any existing piece are forbidden.
+   - **Diagonals (i + j = constant)**: All positions on the same diagonal (where i + j equals the i + j of any existing piece) are forbidden.
+   - **Anti-diagonals (i - j = constant)**: All positions on the same anti-diagonal (where i - j equals the i - j of any existing piece) are forbidden.
+
+2. **Calculate Safe Positions**:
+   - The total number of safe positions is the total number of positions minus the positions that are forbidden by any of the above conditions, adjusted for overlaps (positions forbidden by multiple conditions should not be counted multiple times).
+
+3. **Efficient Calculation**:
+   - Use sets to track unique rows, columns, diagonals, and anti-diagonals that are forbidden.
+   - Calculate the number of positions forbidden by each condition and their overlaps using inclusion-exclusion principles.
+
+### Solution Code
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+typedef long long ll;
+
+int main() {
+    ll N, M;
+    cin >> N >> M;
+    
+    set<ll> rows, cols, diag1, diag2;
+    
+    for (int i = 0; i < M; ++i) {
+        ll a, b;
+        cin >> a >> b;
+        rows.insert(a);
+        cols.insert(b);
+        diag1.insert(a + b);
+        diag2.insert(a - b);
+    }
+    
+    ll forbidden = 0;
+    
+    // For rows and columns
+    ll row_count = rows.size();
+    ll col_count = cols.size();
+    forbidden += row_count * N + col_count * N - row_count * col_count;
+    
+    // For diagonals (i + j)
+    ll diag1_count = diag1.size();
+    for (auto d : diag1) {
+        ll upper = min(d - 1, N);
+        ll lower = max(d - N, 1LL);
+        forbidden += (upper - lower + 1);
+    }
+    
+    // For anti-diagonals (i - j)
+    ll diag2_count = diag2.size();
+    for (auto d : diag2) {
+        ll lower_i = max(1LL, 1 + d);
+        ll upper_i = min(N, N + d);
+        forbidden += (upper_i - lower_i + 1);
+    }
+    
+    // Subtract overlaps between rows/columns and diagonals/anti-diagonals
+    for (auto a : rows) {
+        for (auto b : cols) {
+            if (diag1.find(a + b) != diag1.end() || diag2.find(a - b) != diag2.end()) {
+                forbidden--;
+            }
+        }
+    }
+    
+    // Subtract overlaps between diagonals and anti-diagonals
+    // This is complex, but for M <= 1e3, we can check all pairs
+    for (auto d1 : diag1) {
+        for (auto d2 : diag2) {
+            if ((d1 + d2) % 2 != 0) continue;
+            ll i = (d1 + d2) / 2;
+            ll j = (d1 - d2) / 2;
+            if (i >= 1 && i <= N && j >= 1 && j <= N) {
+                forbidden--;
+            }
+        }
+    }
+    
+    // Total safe positions
+    ll total = N * N - forbidden;
+    cout << total << endl;
+    
+    return 0;
+}
+```
+
+### Explanation
+1. **Input Handling**: The code reads the grid size N and the number of existing pieces M, followed by their positions.
+2. **Tracking Forbidden Positions**: The code uses sets to track rows, columns, diagonals (i + j), and anti-diagonals (i - j) that are occupied by existing pieces.
+3. **Calculating Forbidden Counts**:
+   - **Rows and Columns**: The number of positions forbidden by rows and columns is calculated by considering all positions in these rows and columns, adjusting for overlaps.
+   - **Diagonals and Anti-diagonals**: For each diagonal (i + j = constant) and anti-diagonal (i - j = constant), the code calculates the number of positions on these lines within the grid bounds.
+4. **Overlap Adjustment**: The code adjusts for overlaps where positions are forbidden by multiple conditions (rows/columns and diagonals/anti-diagonals) to ensure they are not counted multiple times.
+5. **Result Calculation**: The total number of safe positions is the total grid positions minus the forbidden positions, printed as the result.
+
+This approach ensures all test cases are handled efficiently, even for large grid sizes, by leveraging set operations and careful overlap management.

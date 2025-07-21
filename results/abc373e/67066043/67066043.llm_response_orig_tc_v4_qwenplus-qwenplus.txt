@@ -1,0 +1,113 @@
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+#define all(x) (x).begin(), (x).end()
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int N, M;
+    ll K;
+    cin >> N >> M >> K;
+    vector<ll> A(N);
+    for (int i = 0; i < N; ++i) {
+        cin >> A[i];
+    }
+
+    vector<int> idx(N);
+    iota(idx.begin(), idx.end(), 0);
+
+    // Sort candidates by current votes
+    sort(idx.begin(), idx.end(), [&](int a, int b) { return A[a] < A[b]; });
+
+    // Precompute prefix sums of sorted A
+    vector<ll> prefix(N + 1);
+    for (int i = 0; i < N; ++i) {
+        prefix[i + 1] = prefix[i] + A[idx[i]];
+    }
+
+    vector<ll> result(N, -1);
+
+    for (int i = 0; i < N; ++i) {
+        int pos = i; // position in the sorted list
+        ll lo = 0, hi = K;
+        ll answer = -1;
+
+        while (lo <= hi) {
+            ll mid = (lo + hi) / 2;
+            ll required = 0;
+
+            // Candidate's new vote count after getting 'mid' additional votes
+            ll my_vote = A[idx[pos]] + mid;
+
+            // Binary search to find how many candidates have higher votes than me
+            int left = 0, right = N;
+            while (left < right) {
+                int m = (left + right) / 2;
+                if (A[idx[m]] > my_vote)
+                    left = m + 1;
+                else
+                    right = m;
+            }
+            int cnt_higher = N - left;
+
+            // If I already have more than or equal to M candidates above me, skip
+            if (cnt_higher >= M) {
+                lo = mid + 1;
+                continue;
+            }
+
+            // Need to ensure that at most M-1 candidates have strictly more votes than me
+            // So we cap the number of allowed stronger candidates to M-1
+            int cap_pos = N - M;
+
+            // Check if candidate is already strong enough
+            if (pos > cap_pos) {
+                result[idx[i]] = 0;
+                answer = 0;
+                break;
+            }
+
+            // Try to make top M candidates not include me
+            // We need to raise my votes so that less than M candidates are ahead
+
+            // Determine how many candidates are currently above me
+            int j = lower_bound(A.begin(), A.end(), my_vote + 1) - A.begin();
+
+            // Count how many people between [cap_pos, j)
+            if (j > cap_pos) {
+                required = (j - cap_pos) * (my_vote + 1);
+                for (int k = cap_pos; k < j; ++k) {
+                    if (idx[k] == idx[i]) continue;
+                    required -= A[idx[k]];
+                }
+                if (required <= K && required >= 0) {
+                    answer = mid;
+                    hi = mid - 1;
+                } else {
+                    lo = mid + 1;
+                }
+            } else {
+                result[idx[i]] = 0;
+                answer = 0;
+                break;
+            }
+        }
+
+        if (answer != -1) {
+            result[idx[i]] = answer;
+        } else {
+            result[idx[i]] = -1;
+        }
+    }
+
+    for (int i = 0; i < N; ++i) {
+        cout << result[i] << " ";
+    }
+    cout << "\n";
+
+    return 0;
+}
+```

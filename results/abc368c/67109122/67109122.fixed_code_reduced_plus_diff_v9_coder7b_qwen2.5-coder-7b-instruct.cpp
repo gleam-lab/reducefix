@@ -1,0 +1,45 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+long long solve(vector<long long>& H) {
+    int n = H.size();
+    vector<long long> q(n+1, 0); // Array to store the number of attacks at each index
+    for(int i=0; i<n; ++i){
+        if(H[i]>0){
+            q[i] = (H[i]+2)/3; // Calculate minimum number of attacks required
+        }
+    }
+
+    // Prefix sum array to calculate total attacks made till index i
+    partial_sum(q.begin(), q.end(), q.begin());
+
+    long long ans = 0;
+    for(int i=0; i<n; ++i){
+        long long attacks = q[i]; // Total attacks till current index
+        if(H[i]%3==0){ 
+            // If initial health is divisible by 3, no extra attack needed
+            ans += attacks;
+        } else {
+            // For health not divisible by 3, we need one additional attack
+            ans += attacks + 1;
+        }
+    }
+
+    return ans;
+}
+
+int main(){
+    ios_base::sync_with_stdio(false);
+    cin.tie(NULL);
+
+    int n;
+    cin >> n;
+    vector<long long> H(n);
+    for(int i=0; i<n; ++i){
+        cin >> H[i];
+    }
+
+    cout << solve(H) << '\n';
+
+    return 0;
+}

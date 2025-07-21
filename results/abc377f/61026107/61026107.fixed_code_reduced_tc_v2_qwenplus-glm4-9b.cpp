@@ -1,0 +1,48 @@
+#include<bits/stdc++.h>
+
+using namespace std;
+using ll = long long;
+
+int main() {
+    ll n, m; cin >> n >> m;
+    
+    // Initial count of empty squares
+    ll emptySquares = n * n;
+    
+    // To handle capture by diagonals
+    vector<pair<ll, ll>> diagonalPairs;
+    for (ll i = 1; i <= n; ++i) {
+        for (ll j = 1; j <= n; ++j) {
+            diagonalPairs.emplace_back(i + j, i - j);
+        }
+    }
+    
+    // Reading the positions of existing pieces
+    for (ll i = 0; i < m; ++i) {
+        ll x, y; cin >> x >> y;
+        emptySquares--; // Remove the square occupied by the piece
+        
+        // Check capture by row and column
+        for (ll j = 1; j <= n; ++j) {
+            if (j == x) continue; // Skip the row of the current piece
+            emptySquares--; // Piece captures all squares in its row except its own
+        }
+        for (ll j = 1; j <= n; ++j) {
+            if (j == y) continue; // Skip the column of the current piece
+            emptySquares--; // Piece captures all squares in its column except its own
+        }
+        
+        // Check capture by diagonals
+        for (auto& diag : diagonalPairs) {
+            ll a = diag.first;
+            ll b = diag.second;
+            if (a == x + y || b == x - y || a == x - y || b == x + y) {
+                // The piece captures the line formed by the diagonal
+                emptySquares--;
+            }
+        }
+    }
+    
+    cout << emptySquares << endl;
+    return 0;
+}

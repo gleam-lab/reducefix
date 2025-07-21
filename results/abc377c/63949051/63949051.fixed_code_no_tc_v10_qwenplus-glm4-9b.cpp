@@ -1,0 +1,63 @@
+#include <iostream>
+#include <vector>
+#include <set>
+#include <cmath>
+
+using namespace std;
+
+#define INF 1000000000
+
+#define fi first
+#define se second
+
+#define i32 int
+#define i64 long long
+
+#define all(x) x.begin(), x.end() // ãã®åã®æåããæå¾
+#define len(x) x.size()           // ãã®åã®è¦ç´ æ°
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int N, M;
+    cin >> N >> M;
+
+    vector<pair<int, int>> pieces(M);
+    for (int i = 0; i < M; ++i) {
+        cin >> pieces[i].fi >> pieces[i].se;
+    }
+
+    // ãããã®ã»ããã«ãã¼ã¿ãããã¨ããã®ãã¹ãåããããã¹ã¨ãã®ç¯å²ã®ãã¹ãã
+    set<pair<i64, i64>> attackable;
+
+    for (int i = 0; i < M; ++i) {
+        int x = pieces[i].fi;
+        int y = pieces[i].se;
+
+        // ãããã®ãã¹ãåãããå¯è½æ§ããã
+        attackable.insert({static_cast<i64>(x), static_cast<i64>(y)});
+        attackable.insert({static_cast<i64>(x + 2), static_cast<i64>(y + 1)});
+        attackable.insert({static_cast<i64>(x + 1), static_cast<i64>(y + 2)});
+        attackable.insert({static_cast<i64>(x - 1), static_cast<i64>(y + 2)});
+        attackable.insert({static_cast<i64>(x - 2), static_cast<i64>(y + 1)});
+        attackable.insert({static_cast<i64>(x - 2), static_cast<i64>(y - 1)});
+        attackable.insert({static_cast<i64>(x - 1), static_cast<i64>(y - 2)});
+        attackable.insert({static_cast<i64>(x + 1), static_cast<i64>(y - 2)});
+        attackable.insert({static_cast<i64>(x + 2), static_cast<i64>(y - 1)});
+    }
+
+    //ãã¹ããåããããã¹ãå·®ãå¼ã
+    long long count = 0;
+    for (long long x = 1; x <= N; ++x) {
+        for (long long y = 1; y <= N; ++y) {
+            if (attackable.find({x, y}) == attackable.end()) {
+                ++count;
+            }
+        }
+    }
+
+    cout << count << endl;
+
+    return 0;
+}

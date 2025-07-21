@@ -1,0 +1,55 @@
+#include<bits/stdc++.h>
+using namespace std;
+
+typedef long long ll;
+const int INF = 1e9+7;
+
+struct node{
+    int val,idx;
+};
+
+bool comp(node &a,node &b){
+    if(a.val==b.val)return a.idx<b.idx;
+    return a.val>b.val;
+}
+
+ll solve(int n,int k,vector<int>&A,vector<int>&B){
+    vector<node>arr(n);
+    for(int i=0;i<n;i++){
+        arr[i]={A[i],i};
+    }
+    sort(arr.begin(),arr.end(),comp);
+    
+    multiset<ll>st;
+    ll sum=0,ans=INF;
+    for(int i=0;i<k-1;i++){
+        st.insert(B[arr[i].idx]);
+        sum+=B[arr[i].idx];
+    }
+    for(int i=k-1;i<n;i++){
+        st.insert(B[arr[i].idx]);
+        sum+=B[arr[i].idx];
+        ans=min(ans,(ll)arr[i].val*(sum+B[arr[i].idx]));
+        sum-=(*st.begin());
+        st.erase(st.begin());
+    }
+    return ans;
+}
+
+int main(){
+    ios_base::sync_with_stdio(0);cin.tie(0);cout.tie(0);
+    int t,n,k;
+    cin>>t;
+    while(t--){
+        cin>>n>>k;
+        vector<int>A(n),B(n);
+        for(int i=0;i<n;i++){
+            cin>>A[i];
+        }
+        for(int i=0;i<n;i++){
+            cin>>B[i];
+        }
+        cout<<solve(n,k,A,B)<<'\n';
+    }
+    return 0;
+}

@@ -1,0 +1,117 @@
+To fix this code, we need to address the issue causing the incorrect output for the given test case. The problem involves counting the number of safe squares on an N x N grid where a new piece can be placed without being captured by any existing pieces. The existing pieces can attack along rows, columns, and both diagonals (sum and difference diagonals).
+
+### Approaches
+1. **Identify Forbidden Squares**: Calculate the number of squares that are under attack by any of the existing pieces. These include:
+   - Squares in the same row as any existing piece.
+   - Squares in the same column as any existing piece.
+   - Squares on the same sum diagonal (i + j = constant) as any existing piece.
+   - Squares on the same difference diagonal (i - j = constant) as any existing piece.
+
+2. **Inclusion-Exclusion Principle**: To avoid double-counting squares that are under attack in multiple directions, use the inclusion-exclusion principle. This involves:
+   - Subtracting squares attacked in rows, columns, sum diagonals, and difference diagonals.
+   - Adding back squares that are counted multiple times (e.g., attacked in both a row and a column).
+   - Subtracting squares that are counted in three or more categories, and so on.
+
+3. **Efficient Calculation**: Given the constraints (N up to 10^9 and M up to 10^3), we need to handle large numbers efficiently without iterating through each square. This involves:
+   - Using sets or sorted lists to track unique rows, columns, sum diagonals, and difference diagonals.
+   - Calculating intersections of these sets to apply the inclusion-exclusion principle correctly.
+
+### Solution Code
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    long long N, M;
+    cin >> N >> M;
+    set<long long> rows, cols, sums, diffs;
+    for (int i = 0; i < M; ++i) {
+        long long a, b;
+        cin >> a >> b;
+        rows.insert(a);
+        cols.insert(b);
+        sums.insert(a + b);
+        diffs.insert(a - b);
+    }
+
+    long long total = N * N;
+    long long row_count = rows.size();
+    long long col_count = cols.size();
+    long long sum_count = sums.size();
+    long long diff_count = diffs.size();
+
+    total -= row_count * N;
+    total -= col_count * N;
+    total += row_count * col_count;
+
+    for (long long s : sums) {
+        long long min_i = max(1LL, s - N);
+        long long max_i = min(N, s - 1);
+        long long count = max_i - min_i + 1;
+        total -= count;
+    }
+
+    for (long long d : diffs) {
+        long long min_i = max(1LL, 1 - d);
+        long long max_i = min(N, N - d);
+        long long count = max_i - min_i + 1;
+        total -= count;
+    }
+
+    for (long long a : rows) {
+        for (long long s : sums) {
+            long long b = s - a;
+            if (cols.count(b)) {
+                total++;
+            }
+        }
+        for (long long d : diffs) {
+            long long b = a - d;
+            if (cols.count(b)) {
+                total++;
+            }
+        }
+    }
+
+    for (long long b : cols) {
+        for (long long s : sums) {
+            long long a = s - b;
+            if (rows.count(a)) {
+                total++;
+            }
+        }
+        for (long long d : diffs) {
+            long long a = d + b;
+            if (rows.count(a)) {
+                total++;
+            }
+        }
+    }
+
+    for (long long s : sums) {
+        for (long long d : diffs) {
+            if ((s - d) % 2 == 0) {
+                long long a = (s + d) / 2;
+                long long b = (s - d) / 2;
+                if (a >= 1 && a <= N && b >= 1 && b <= N && rows.count(a) && cols.count(b)) {
+                    total--;
+                }
+            }
+        }
+    }
+
+    cout << total << endl;
+    return 0;
+}
+```
+
+### Explanation
+1. **Initialization**: The code reads the grid size N and the number of existing pieces M. It initializes sets to keep track of rows, columns, sum diagonals, and difference diagonals that are under attack.
+2. **Input Handling**: For each existing piece, it records the attacked rows, columns, sum diagonals (i + j), and difference diagonals (i - j).
+3. **Total Safe Squares Calculation**: The total number of squares is initially N². The code subtracts squares under attack in rows and columns, then adds back squares that were double-counted (attacked in both a row and a column).
+4. **Diagonal Attacks**: For each sum and difference diagonal, it calculates the number of squares on that diagonal and subtracts them from the total.
+5. **Inclusion-Exclusion Principle**: The code adjusts for overlaps between rows, columns, and diagonals by adding back squares that were subtracted multiple times.
+6. **Final Adjustment**: It checks for squares that are under attack in all four directions (row, column, sum diagonal, difference diagonal) and adjusts the count accordingly.
+7. **Output**: The final count of safe squares is printed.
+
+This approach efficiently handles the large constraints by leveraging set operations and mathematical calculations to avoid brute-force checking of each square.

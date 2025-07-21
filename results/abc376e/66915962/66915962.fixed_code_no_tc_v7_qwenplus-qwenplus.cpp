@@ -1,0 +1,65 @@
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+using P = pair<int, int>;
+
+constexpr ll LINF = 1001001001001001001ll;
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int T;
+    cin >> T;
+
+    while (T--) {
+        int N, K;
+        cin >> N >> K;
+        vector<P> pairs(N);
+        for (int i = 0; i < N; ++i) {
+            cin >> pairs[i].first;
+        }
+        for (int i = 0; i < N; ++i) {
+            cin >> pairs[i].second;
+        }
+
+        // Sort by A_i in increasing order
+        sort(pairs.begin(), pairs.end());
+
+        // Use a max-heap to keep track of the largest K B_i values
+        priority_queue<int> max_heap; // This will store the B values we are currently considering
+        ll sumB = 0;
+
+        // Initialize with first K elements
+        for (int i = 0; i < K; ++i) {
+            sumB += pairs[i].second;
+            max_heap.push(pairs[i].second);
+        }
+
+        ll ans = LINF;
+
+        // For each position i >= K-1, calculate the cost
+        for (int i = K - 1; i < N; ++i) {
+            // Current A_i is the maximum among selected so far
+            ans = min(ans, 1LL * pairs[i].first * sumB);
+
+            // If we can replace a larger B value with smaller one from next index
+            if (i < N - 1) {
+                // Next element to consider adding
+                int new_b = pairs[i + 1].second;
+
+                // Check if this new B is smaller than the largest in current selection
+                if (!max_heap.empty() && new_b < max_heap.top()) {
+                    sumB -= max_heap.top();
+                    max_heap.pop();
+                    sumB += new_b;
+                    max_heap.push(new_b);
+                }
+            }
+        }
+
+        cout << ans << '\n';
+    }
+
+    return 0;
+}

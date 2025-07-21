@@ -1,0 +1,46 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+
+typedef long long ll;
+
+const int MX = 1e9 + 5;
+
+int n, m, cnt;
+vector<int> v[MX << 1];
+
+void solve() {
+    cin >> n >> m;
+    for(int i = 1; i <= m; ++i) {
+        int x, y; cin >> x >> y;
+        v[y].push_back(x);
+        v[n + x].push_back(n - y + n);
+        v[n + y].push_back(n - x + n);
+        v[2 * n + x + y].push_back(n + y);
+        v[2 * n + x - y].push_back(n + x);
+    }
+    for(int i = 1; i <= 4 * n; ++i) sort(v[i].begin(), v[i].end());
+    for(int i = 1; i <= 4 * n; ++i) v[i].erase(unique(v[i].begin(), v[i].end()), v[i].end());
+
+    vector<int> dp(4 * n + 1);
+    for(int i = 1; i <= 4 * n; ++i) {
+        for(auto x : v[i]) dp[x]++;
+    }
+
+    ll ans = (ll)n * n;
+    for(int i = 1; i <= 4 * n; ++i) {
+        ans -= dp[i];
+    }
+    cout << ans << endl;
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(NULL);
+    cout.tie(NULL);
+
+    int t = 1;
+    while(t--) solve();
+
+    return 0;
+}

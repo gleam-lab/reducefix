@@ -1,0 +1,46 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+using namespace std;
+#define int long long
+const int N = 105;
+int n, x;
+vector<pair<int, int>> a, b, p, q;
+
+int c[N];
+bool check(int mid) {
+    for (int i = 0; i < n; i++) {
+        c[i] = INT_MAX;
+        for (int j = 0; j <= b[i].second; j++) {
+            c[i] = min(c[i], j * p[i].second + q[i].second * (mid - j * a[i].second + b[i].second - 1) / b[i].second);
+        }
+        for (int j = 0; j <= a[i].second; j++) {
+            c[i] = min(c[i], j * q[i].second + p[i].second * (mid - j * b[i].second + a[i].second - 1) / a[i].second);
+        }
+    }
+    int ans = 0;
+    for (int i = 0; i < n; i++) {
+        ans += c[i];
+    }
+    return ans <= x;
+}
+
+int32_t main() {
+    ios::sync_with_stdio(0);
+    cin.tie(0);
+    cout.tie(0);
+    cin >> n;
+    a.resize(n);
+    b.resize(n);
+    p.resize(n);
+    q.resize(n);
+    for (int i = 0; i < n; i++) {
+        cin >> a[i].second >> p[i].second >> b[i].second >> q[i].second;
+        a[i].first = a[i].second;
+        b[i].first = b[i].second;
+        p[i].first = p[i].second;
+        q[i].first = q[i].second;
+    }
+    cout << lower_bound(&a[0], &a[n], x) - &a[0] << '\n';
+    return 0;
+}

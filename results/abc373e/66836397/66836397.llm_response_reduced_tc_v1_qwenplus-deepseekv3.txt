@@ -1,0 +1,83 @@
+To fix this code, we need to ensure that it correctly calculates the minimum number of additional votes each candidate needs to guarantee their victory. The original code had some logical flaws in determining whether a candidate could be elected and calculating the required votes.
+
+### Approaches
+1. **Sorting and Binary Search**: For each candidate, we need to determine the minimum number of additional votes such that the number of candidates with more votes than them (after adding these votes) is less than M. This involves:
+    - Sorting the list of current votes.
+    - Using binary search to find the minimal additional votes for each candidate.
+    - Checking if the remaining votes can be distributed in a way that ensures the candidate's victory.
+
+2. **Efficient Calculation**: For each candidate, we need to:
+    - Determine their position in the sorted list after adding X votes.
+    - Calculate the number of candidates that would have more votes than them.
+    - Ensure that the remaining votes cannot be used by other candidates to surpass them.
+
+### Solution Code
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+using ll = long long;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    ll N, M, K;
+    cin >> N >> M >> K;
+    vector<ll> A(N);
+    for (ll &a : A) cin >> a;
+    ll rem = K - accumulate(A.begin(), A.end(), 0LL);
+
+    vector<ll> sorted_A = A;
+    sort(sorted_A.begin(), sorted_A.end());
+    vector<ll> prefix_sum(N + 1, 0);
+    for (int i = 0; i < N; ++i) {
+        prefix_sum[i + 1] = prefix_sum[i] + sorted_A[i];
+    }
+
+    auto can_win = [&](ll candidate, ll X) {
+        ll total = A[candidate] + X;
+        ll pos = upper_bound(sorted_A.begin(), sorted_A.end(), total) - sorted_A.begin();
+        ll upper_cnt = N - pos;
+        if (upper_cnt >= M) return false;
+
+        ll needed = M - 1 - upper_cnt;
+        if (needed < 0) needed = 0;
+        ll start = pos - needed - 1;
+        start = max(start, 0LL);
+        ll sum = 0;
+        if (start < pos) {
+            sum = (total + 1) * (pos - start) - (prefix_sum[pos] - prefix_sum[start]);
+        }
+        return sum <= rem - X;
+    };
+
+    for (int i = 0; i < N; ++i) {
+        ll low = 0, high = rem;
+        ll ans = -1;
+        while (low <= high) {
+            ll mid = (low + high) / 2;
+            if (can_win(i, mid)) {
+                ans = mid;
+                high = mid - 1;
+            } else {
+                low = mid + 1;
+            }
+        }
+        cout << (ans != -1 ? ans : -1) << " \n"[i == N - 1];
+    }
+
+    return 0;
+}
+```
+
+### Explanation
+1. **Initial Setup**: The code reads the input values for the number of candidates (N), the threshold (M), and the total votes (K). It also reads the initial votes for each candidate (A).
+2. **Sorting and Prefix Sum**: The initial votes are sorted to facilitate binary search and prefix sums are computed for efficient range sum queries.
+3. **Binary Search for Each Candidate**: For each candidate, the code uses binary search to determine the minimal additional votes (X) needed. The `can_win` function checks if adding X votes to the candidate ensures their victory by:
+    - Calculating the candidate's new position in the sorted list.
+    - Ensuring the number of candidates with more votes is less than M.
+    - Verifying that the remaining votes cannot be distributed to other candidates in a way that would defeat the current candidate.
+4. **Output**: The results for each candidate are printed, indicating the minimum additional votes needed or -1 if it's impossible.
+
+This approach efficiently handles the constraints and ensures correctness through careful use of sorting, binary search, and prefix sums.

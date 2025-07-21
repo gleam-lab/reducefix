@@ -1,0 +1,52 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+const int maxN = 2 * 100005;
+long long t, n, k, a[maxN], b[maxN];
+
+// Function to calculate the minimum value for a given subset size K
+void solve() {
+    cin >> n >> k;
+    vector<pair<long long, long long>> v(n);
+    for(long long i = 0; i < n; ++i) {
+        cin >> a[i] >> b[i];
+        v[i] = {a[i], b[i]};
+    }
+
+    // Sort pairs first by a in descending order, then by b in ascending order
+    sort(v.begin(), v.end(), [&](auto &x, auto &y){return x.first != y.first ? x.first > y.first : x.second < y.second;});
+    
+    long long minVal = LLONG_MAX;
+    priority_queue<long long, vector<long long>, greater<long long>> pq; // Min-heap for top-k sums
+    
+    long long currentSum = 0;
+    for(long long i = 0; i < k; ++i) {
+        currentSum += v[i].second;
+        pq.push(-v[i].second); // Store negative to simulate max-heap behavior with priority queue
+    }
+    minVal = v[k - 1].first * currentSum;
+    
+    for(long long i = k; i < n; ++i) {
+        // If the smallest element in our current set is smaller than the new element we're considering,
+        // replace it with the new element and update the sum and heap accordingly.
+        if(-pq.top() < v[i].second) {
+            currentSum += v[i].second + pq.top();
+            pq.pop();
+            pq.push(-v[i].second);
+        }
+        
+        minVal = min(minVal, v[i].first * currentSum);
+    }
+    
+    cout << minVal << '\n';
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr), cout.tie(nullptr);
+
+    cin >> t;
+    while(t--) solve();
+
+    return 0;
+}

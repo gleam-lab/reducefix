@@ -1,0 +1,79 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define ll long long
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+
+    ll h, w, q;
+    cin >> h >> w >> q;
+
+    vector<set<ll>> rows(h), cols(w);
+
+    // Initially all cells have walls
+    for (ll i = 0; i < h; ++i) {
+        for (ll j = 0; j < w; ++j) {
+            rows[i].insert(j);
+            cols[j].insert(i);
+        }
+    }
+
+    while (q--) {
+        ll r, c;
+        cin >> r >> c;
+        r--; c--;
+
+        // If wall exists at (r, c)
+        if (rows[r].count(c)) {
+            rows[r].erase(c);
+            cols[c].erase(r);
+        } else {
+            // Look in four directions and destroy the first wall found
+            vector<pair<ll, ll>> to_remove;
+
+            // Right (increasing column)
+            auto it_right = rows[r].upper_bound(c);
+            if (it_right != rows[r].end()) {
+                to_remove.emplace_back(r, *it_right);
+            }
+
+            // Left (decreasing column)
+            if (it_right != rows[r].begin()) {
+                auto it_left = prev(it_right);
+                if (*it_left < c) {
+                    to_remove.emplace_back(r, *it_left);
+                }
+            }
+
+            // Down (increasing row)
+            auto it_down = cols[c].upper_bound(r);
+            if (it_down != cols[c].end()) {
+                to_remove.emplace_back(*it_down, c);
+            }
+
+            // Up (decreasing row)
+            if (it_down != cols[c].begin()) {
+                auto it_up = prev(it_down);
+                if (*it_up < r) {
+                    to_remove.emplace_back(*it_up, c);
+                }
+            }
+
+            // Remove the found walls
+            for (auto [x, y] : to_remove) {
+                rows[x].erase(y);
+                cols[y].erase(x);
+            }
+        }
+    }
+
+    // Count remaining walls
+    ll ans = 0;
+    for (ll i = 0; i < h; ++i) {
+        ans += rows[i].size();
+    }
+    cout << ans << '\n';
+
+    return 0;
+}

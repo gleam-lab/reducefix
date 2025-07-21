@@ -1,0 +1,52 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <numeric>
+#include <climits>
+
+using namespace std;
+
+struct Process {
+    int a, b, p, q;
+};
+
+bool check(const vector<Process>& processes, long long budget, long long& max_capacity) {
+    for (const auto& proc : processes) {
+        long long lcm = lcm(proc.a, proc.b);
+        long long units = budget / proc.p;
+        long long capacity = units * (proc.a + proc.b) / lcm;
+        if (capacity < max_capacity) {
+            return false;
+        }
+        max_capacity = capacity;
+    }
+    return true;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int n;
+    long long budget;
+    cin >> n >> budget;
+
+    vector<Process> processes(n);
+    for (auto& proc : processes) {
+        cin >> proc.a >> proc.p >> proc.b >> proc.q;
+    }
+
+    long long low = 0, high = LONG_LONG_MAX;
+    while (low < high) {
+        long long mid = (low + high + 1) / 2;
+        if (check(processes, budget, mid)) {
+            low = mid;
+        } else {
+            high = mid - 1;
+        }
+    }
+
+    cout << low << endl;
+
+    return 0;
+}

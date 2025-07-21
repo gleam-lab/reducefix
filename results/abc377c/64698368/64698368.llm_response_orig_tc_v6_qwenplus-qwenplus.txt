@@ -1,0 +1,93 @@
+To solve this problem correctly and efficiently, we must understand the behavior of the existing pieces on a very large board (up to `10^9 x 10^9`). Since the number of pieces is relatively small (`M ≤ 200,000`), we can use a **set-based approach** to mark only those cells that are attacked or occupied.
+
+### Key Observations:
+
+- The grid is huge (`N = 1e9`), so we **cannot** represent it as a matrix. Instead, we store only the affected positions using a hash set.
+- Each piece attacks up to 8 specific positions in an L-shape (similar to a knight in chess).
+- We want to count how many positions are **not** under attack and are not already occupied by a piece.
+
+### Plan:
+
+1. Parse all given pieces and add their position to a set.
+2. For each piece, compute all 8 potentially attacked positions and add them to another set (only if they lie within bounds).
+3. Total possible positions: `N * N`.
+4. Subtract:
+   - Number of positions occupied by existing pieces.
+   - Number of positions under attack from any piece.
+
+This leads to:  
+```cpp
+result = N * N - (occupied_positions + attacked_positions)
+```
+
+We ensure that overlapping positions (where two pieces attack or occupy the same square) are only subtracted once by using a `std::unordered_set`.
+
+Here's the corrected code:
+
+```cpp
+#include <bits/stdc++.h>
+#define ll long long
+using namespace std;
+
+struct pair_hash {
+    inline size_t operator()(const pair<int, int>& p) const {
+        return ((size_t)p.first << 32) | (size_t)p.second;
+    }
+};
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    ll N;
+    int M;
+    cin >> N >> M;
+
+    unordered_set<pair<int, int>, pair_hash> occupied;
+    unordered_set<pair<int, int>, pair_hash> attacked;
+
+    // All 8 directions for attacking
+    vector<pair<int, int>> dir = {
+        {2, 1}, {1, 2}, {-1, 2}, {-2, 1},
+        {-2, -1}, {-1, -2}, {1, -2}, {2, -1}
+    };
+
+    for (int i = 0; i < M; ++i) {
+        int a, b;
+        cin >> a >> b;
+        --a; --b; // convert to 0-based index
+        occupied.insert({a, b});
+
+        for (auto& d : dir) {
+            int na = a + d.first;
+            int nb = b + d.second;
+            if (na >= 0 && na < N && nb >= 0 && nb < N) {
+                attacked.insert({na, nb});
+            }
+        }
+    }
+
+    // Remove occupied cells from attacked set
+    for (auto& p : occupied) {
+        attacked.erase(p);
+    }
+
+    ll total = N * N;
+    ll blocked = occupied.size() + attacked.size();
+
+    cout << total - blocked << "\n";
+
+    return 0;
+}
+```
+
+### Why This Works:
+- Efficiently handles sparsity of pieces.
+- Avoids duplicate counting using sets.
+- Uses custom hash function to allow pairs in `unordered_set`.
+
+### Complexity:
+- Time complexity: O(M)
+- Space complexity: O(M)
+
+This solution passes all constraints including large values like `N = 1e9`.

@@ -1,0 +1,107 @@
+To fix the problem, we need to address an issue in handling Type 2 queries correctly. The original implementation uses a `set<int>` per component to maintain sorted vertices and allows efficient retrieval of the k-th largest vertex via reverse iterators. However, it incorrectly represents components after unions, especially when larger sets are merged into smaller ones or during path compression in Union-Find.
+
+---
+
+### Key Fixes:
+1. **Correctly track root components** during union operations.
+2. **Avoid incorrect assumptions** about which root owns which set, especially when merging.
+3. Use a `map<int, set<int>>` structure where keys are representative roots, and values are the connected components' vertices sorted in increasing order.
+4. For each query of type 2, retrieve the k-th largest using `rbegin()` safely with bounds checking.
+
+---
+
+### Optimizations:
+- Path compression and union by size/rank are essential for efficient Union-Find.
+- Maintain only one copy of the set per component to avoid redundant storage.
+- Merge smaller sets into larger ones to keep time complexity near O(log N) per operation.
+
+Here is the corrected full code:
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+#define rep(i, n) for(int i=0;i<(n);i++)
+using ll = long long;
+using pii = pair<int, int>;
+
+struct UnionFind {
+    vector<int> parent, size;
+    UnionFind(int n) : parent(n), size(n, 1) {
+        for (int i = 0; i < n; i++) parent[i] = i;
+    }
+    int find(int x) {
+        return parent[x] == x ? x : parent[x] = find(parent[x]);
+    }
+    bool unite(int x, int y) {
+        int rx = find(x), ry = find(y);
+        if (rx == ry) return false;
+        if (size[rx] < size[ry]) swap(rx, ry);
+        parent[ry] = rx;
+        size[rx] += size[ry];
+        return true;
+    }
+};
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int N, Q;
+    cin >> N >> Q;
+
+    UnionFind uf(N);
+    vector<set<int>> components(N);
+    rep(i, N) components[i].insert(i);
+
+    vector<int> ans;
+
+    rep(_, Q) {
+        int t;
+        cin >> t;
+        if (t == 1) {
+            int u, v;
+            cin >> u >> v;
+            u--; v--;
+            int ru = uf.find(u), rv = uf.find(v);
+            if (ru != rv) {
+                if (components[ru].size() < components[rv].size()) {
+                    swap(ru, rv);
+                }
+                // merge rv into ru
+                for (int x : components[rv]) {
+                    components[ru].insert(x);
+                }
+                components[rv].clear();
+                uf.unite(ru, rv);
+            }
+        } else {
+            int v, k;
+            cin >> v >> k;
+            v--;
+            int root = uf.find(v);
+            if (components[root].size() < k) {
+                ans.push_back(-1);
+            } else {
+                auto it = components[root].rbegin();
+                advance(it, k - 1);
+                ans.push_back(*it + 1);
+            }
+        }
+    }
+
+    for (int x : ans) cout << x << "\n";
+
+    return 0;
+}
+```
+
+---
+
+### Explanation:
+- **UnionFind** keeps track of connected components efficiently.
+- Each component's vertices are stored in a `set<int>` for ordered access.
+- On Type 1 query: components are merged while maintaining sorted order.
+- On Type 2 query: we get the k-th largest using `rbegin()` and ensure bounds safety.
+
+This approach ensures correctness and efficiency, working within the problem constraints.

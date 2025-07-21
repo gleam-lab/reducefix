@@ -1,0 +1,56 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    int n, m;
+    cin >> n >> m;
+    vector<long long> a(n + 1);
+    for (int i = 1; i <= n; ++i) {
+        cin >> a[i];
+    }
+
+    vector<vector<pair<int, long long>>> adj(n + 1);
+    for (int i = 0; i < m; ++i) {
+        int u, v, w;
+        cin >> u >> v >> w;
+        adj[u].push_back({v, w});
+        adj[v].push_back({u, w});
+    }
+
+    // Initialize distances with a large number
+    vector<long long> dist(n + 1, 1e10 + 7);
+    dist[1] = a[1]; // Start from vertex 1, not 0 as index starts from 1 and 1 is the first vertex
+
+    // Priority queue to process vertices in order of increasing distance
+    priority_queue<pair<long long, int>, vector<pair<long long, int>>, greater<pair<long long, int>>> pq;
+    pq.push({dist[1], 1});
+
+    // Process the vertices in the priority queue
+    while (!pq.empty()) {
+        auto [curr_dist, u] = pq.top();
+        pq.pop();
+
+        // Check if the popped vertex is not processed yet with a better distance
+        if (curr_dist > dist[u]) continue;
+
+        // Process all adjacent vertices
+        for (const auto& [v, weight] : adj[u]) {
+            long long edge_cost = weight;
+            long long new_dist = curr_dist + edge_cost + a[v];
+
+            // If the new distance is smaller, update and add to the priority queue
+            if (new_dist < dist[v]) {
+                dist[v] = new_dist;
+                pq.push({dist[v], v});
+            }
+        }
+    }
+
+    // Output the minimum distances for all vertices from 2 to N
+    for (int i = 2; i <= n; ++i) {
+        cout << dist[i] << " ";
+    }
+    cout << endl;
+
+    return 0;
+}

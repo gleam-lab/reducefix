@@ -1,0 +1,26 @@
+#include <iostream>
+#include <vector>
+#include <string>
+#include <algorithm>
+
+using namespace std;
+
+int main() {
+    ios_base::sync_with_stdio(false); cin.tie(0); cout.tie(0);
+
+    int N;
+    cin >> N;
+    string S;
+    cin >> S;
+
+    vector<int> scores = {0, 0};
+    for (char c : S) {
+        if (c == 'R') scores[0]++;
+        else if (c == 'P') scores[1]++;
+    }
+
+    int result = max(scores[0], scores[1]);
+    
+    cout << result << endl;
+    return 0;
+}

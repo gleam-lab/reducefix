@@ -1,0 +1,54 @@
+#include <iostream>
+#include <algorithm>
+#include <vector>
+using namespace std;
+
+typedef struct { int a, p, b, q; } Product;
+Product products[100];
+long long dp[100][10001];
+
+int N, X;
+
+long long calculateCost(int productIndex, int n) {
+    int d = n / (products[productIndex].a * products[productIndex].b);
+    int rem = n % (products[productIndex].a * products[productIndex].b);
+    return dp[productIndex][rem] + d * products[productIndex].p * products[productIndex].b;
+}
+
+bool canAchieveTarget(int target) {
+    long long totalCost = 0;
+    for (int i = 0; i < N; ++i) {
+        totalCost += calculateCost(i, target);
+        if (totalCost > X) return false;
+    }
+    return true;
+}
+
+int binarySearch(int low, int high) {
+    while (low <= high) {
+        int mid = low + (high - low) / 2;
+        if (canAchieveTarget(mid)) {
+            low = mid + 1;
+        } else {
+            high = mid - 1;
+        }
+    }
+    return high;
+}
+
+int main() {
+    cin >> N >> X;
+    for (int i = 0; i < N; ++i) {
+        cin >> products[i].a >> products[i].p >> products[i].b >> products[i].q;
+        if (products[i].a * products[i].q < products[i].b * products[i].p) {
+            swap(products[i].a, products[i].b);
+            swap(products[i].p, products[i].q);
+        }
+        dp[i][0] = 0;
+        for (int j = 1; j <= products[i].a * products[i].b; ++j) {
+            dp[i][j] = min(dp[i][max(0, j - products[i].a)] + products[i].p, dp[i][max(0, j - products[i].b)] + products[i].q);
+        }
+    }
+    cout << binarySearch(0, 10000) << endl;
+    return 0;
+}

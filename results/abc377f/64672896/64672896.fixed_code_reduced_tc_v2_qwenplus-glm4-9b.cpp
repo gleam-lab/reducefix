@@ -1,0 +1,60 @@
+#include<bits/stdc++.h>
+using namespace std;
+using i64 = long long;
+
+int main() {
+    std::ios::sync_with_stdio(false);
+    std::cin.tie(nullptr);
+    i64 N, M;
+    cin >> N >> M;
+    vector<array<i64,2>> grid(N+1, {0, 0}); // grid[i] = {vertical captures, horizontal captures}
+    vector<array<i64,2>> diag_main(N+1, {0, 0}); // diag_main[i] = {main diagonal captures, anti-diagonal captures}
+    vector<array<i64,2>> diag_anti(N+1, {0, 0}); // diag_anti[i] = {main diagonal captures, anti-diagonal captures}
+    
+    for (i64 i = 0; i < M; ++i) {
+        i64 x, y;
+        cin >> x >> y;
+        grid[x][0]++; // Vertical capture count
+        grid[y][1]++; // Horizontal capture count
+        diag_main[x+y][0]++; // Main diagonal capture count
+        diag_anti[x-y][1]++; // Anti-diagonal capture count
+    }
+    
+    // Calculate the number of squares that can be attacked in each direction
+    vector<i64> vertical(N+1, 0);
+    vector<i64> horizontal(N+1, 0);
+    vector<i64> main_diag(N*2+1, 0);
+    vector<i64> anti_diag(N*2+1, 0);
+    
+    // Vertical and horizontal attacks
+    for (i64 i = 1; i <= N; ++i) {
+        vertical[i] = grid[i][0];
+        horizontal[i] = grid[i][1];
+    }
+    
+    // Main diagonal attacks
+    for (i64 i = 1; i <= N*2; ++i) {
+        main_diag[i] = diag_main[i][0];
+        anti_diag[i] = diag_anti[i][1];
+    }
+    
+    // Calculate the number of safe squares
+    i64 safe_squares = 0;
+    for (i64 i = 1; i <= N; ++i) {
+        for (i64 j = 1; j <= N; ++j) {
+            // Check if the square (i, j) is safe
+            i64 v_attacks = vertical[i] + vertical[j];
+            i64 h_attacks = horizontal[i] + horizontal[j];
+            i64 m_attacks = main_diag[i+j] + main_diag[i-j];
+            i64 a_attacks = anti_diag[i+j] + anti_diag[i-j];
+            
+            // If the number of attacks is less than 2 (since we place our piece), it's safe
+            if (v_attacks < 2 && h_attacks < 2 && m_attacks < 2 && a_attacks < 2) {
+                safe_squares++;
+            }
+        }
+    }
+    
+    cout << safe_squares << endl;
+    return 0;
+}

@@ -1,0 +1,163 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+typedef long long ll;
+
+int main() {
+    ll N, M;
+    cin >> N >> M;
+    
+    unordered_set<ll> rows, cols, diag1, diag2;
+    
+    for (int i = 0; i < M; ++i) {
+        ll a, b;
+        cin >> a >> b;
+        rows.insert(a);
+        cols.insert(b);
+        diag1.insert(a + b);
+        diag2.insert(a - b);
+    }
+    
+    ll total = N * N;
+    
+    // Subtract rows, columns, diag1, diag2
+    total -= rows.size() * N;
+    total -= cols.size() * N;
+    
+    for (const ll& d : diag1) {
+        ll cnt = 0;
+        if (d <= N + 1) {
+            cnt = d - 1;
+        } else {
+            cnt = 2 * N - d + 1;
+        }
+        total -= cnt;
+    }
+    
+    for (const ll& d : diag2) {
+        ll cnt = 0;
+        if (d >= 0) {
+            cnt = N - d;
+        } else {
+            cnt = N + d;
+        }
+        total -= cnt;
+    }
+    
+    // Add back intersections
+    // Rows and columns
+    total += rows.size() * cols.size();
+    
+    // Rows and diag1
+    for (const ll& r : rows) {
+        for (const ll& d : diag1) {
+            ll c = d - r;
+            if (1 <= c && c <= N) {
+                total += 1;
+            }
+        }
+    }
+    
+    // Rows and diag2
+    for (const ll& r : rows) {
+        for (const ll& d : diag2) {
+            ll c = r - d;
+            if (1 <= c && c <= N) {
+                total += 1;
+            }
+        }
+    }
+    
+    // Columns and diag1
+    for (const ll& c : cols) {
+        for (const ll& d : diag1) {
+            ll r = d - c;
+            if (1 <= r && r <= N) {
+                total += 1;
+            }
+        }
+    }
+    
+    // Columns and diag2
+    for (const ll& c : cols) {
+        for (const ll& d : diag2) {
+            ll r = c + d;
+            if (1 <= r && r <= N) {
+                total += 1;
+            }
+        }
+    }
+    
+    // Diag1 and diag2 intersections
+    for (const ll& d1 : diag1) {
+        for (const ll& d2 : diag2) {
+            if ((d1 + d2) % 2 == 0) {
+                ll r = (d1 + d2) / 2;
+                ll c = (d1 - d2) / 2;
+                if (1 <= r && r <= N && 1 <= c && c <= N) {
+                    total += 1;
+                }
+            }
+        }
+    }
+    
+    // Subtract triple intersections
+    // Rows, columns, and diag1 or diag2
+    for (const ll& r : rows) {
+        for (const ll& c : cols) {
+            if (diag1.count(r + c)) {
+                total -= 1;
+            }
+            if (diag2.count(r - c)) {
+                total -= 1;
+            }
+        }
+    }
+    
+    // Rows, diag1, diag2
+    for (const ll& r : rows) {
+        for (const ll& d1 : diag1) {
+            for (const ll& d2 : diag2) {
+                if ((d1 + d2) % 2 == 0) {
+                    ll rr = (d1 + d2) / 2;
+                    ll cc = (d1 - d2) / 2;
+                    if (rr == r && 1 <= cc && cc <= N) {
+                        if (cols.count(cc)) {
+                            total -= 1;
+                        }
+                    }
+                }
+            }
+        }
+    }
+    
+    // Columns, diag1, diag2
+    for (const ll& c : cols) {
+        for (const ll& d1 : diag1) {
+            for (const ll& d2 : diag2) {
+                if ((d1 + d2) % 2 == 0) {
+                    ll rr = (d1 + d2) / 2;
+                    ll cc = (d1 - d2) / 2;
+                    if (cc == c && 1 <= rr && rr <= N) {
+                        if (rows.count(rr)) {
+                            total -= 1;
+                        }
+                    }
+                }
+            }
+        }
+    }
+    
+    // Add quadruple intersections
+    for (const ll& r : rows) {
+        for (const ll& c : cols) {
+            if (diag1.count(r + c) && diag2.count(r - c)) {
+                total += 1;
+            }
+        }
+    }
+    
+    cout << total << endl;
+    
+    return 0;
+}

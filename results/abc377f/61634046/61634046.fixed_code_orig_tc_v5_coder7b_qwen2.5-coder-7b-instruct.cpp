@@ -1,0 +1,44 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+typedef long long ll;
+
+const int MAXN = 1e9;
+
+struct Point {
+    int x, y;
+    bool operator<(const Point& other) const {
+        return x == other.x ? y < other.y : x < other.x;
+    }
+};
+
+int main() {
+    ios_base::sync_with_stdio(false); cin.tie(0); cout.tie(0);
+
+    int n, m;
+    cin >> m >> n;
+    
+    vector<Point> points(m);
+    for(int i = 0; i < m; ++i) {
+        cin >> points[i].x >> points[i].y;
+    }
+
+    sort(points.begin(), points.end());
+
+    ll res = 0;
+    for(int i = 0; i < m; ++i) {
+        int x = points[i].x, y = points[i].y;
+        int cnt_row = upper_bound(points.begin(), points.end(), Point{x, MAXN}) - lower_bound(points.begin(), points.end(), Point{x, 1});
+        int cnt_col = upper_bound(points.begin(), points.end(), Point{MAXN, y}) - lower_bound(points.begin(), points.end(), Point{1, y});
+        int cnt_diag1 = upper_bound(points.begin(), points.end(), Point{x+y, MAXN}) - lower_bound(points.begin(), points.end(), Point{x+y, 1});
+        int cnt_diag2 = upper_bound(points.begin(), points.end(), Point{x-y+1, MAXN}) - lower_bound(points.begin(), points.end(), Point{x-y+1, 1});
+
+        res += n*n - cnt_row - cnt_col - cnt_diag1 - cnt_diag2 + 3;
+    }
+
+    cout << res << '\n';
+
+    return 0;
+}

@@ -1,0 +1,39 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+int main() {
+    int n, k;
+    cin >> n >> k;
+
+    vector<int> nums(n);
+    for (int i = 0; i < n; i++) {
+        cin >> nums[i];
+    }
+
+    // Sort the array
+    sort(nums.begin(), nums.end());
+
+    // The maximum difference between min and max values in the original array after removing k elements
+    int max_diff = nums[n - 1] - nums[0];
+
+    // If we remove the k smallest elements, the new min value will be the (n-k)th smallest element
+    int new_min = nums[k];
+    int new_max = nums[n - 1];
+
+    // Calculate the new max-min difference after removing k smallest elements
+    int diff_with_k_smallest_removed = new_max - new_min;
+
+    // If we remove the k largest elements, the new max value will be the (n-k)th largest element (from the end)
+    new_max = nums[n - k - 1];
+    new_min = nums[0];
+
+    // Calculate the new max-min difference after removing k largest elements
+    int diff_with_k_largest_removed = new_max - new_min;
+
+    // The answer is the minimum of the three calculated differences
+    cout << min(max_diff, diff_with_k_smallest_removed, diff_with_k_largest_removed) << endl;
+
+    return 0;
+}

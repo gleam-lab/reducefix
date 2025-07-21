@@ -1,0 +1,50 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+
+    int n;
+    string s;
+    
+    cin >> n >> s;
+
+    // Mapping of what each move beats
+    char beats[128]; // e.g., beats['R'] = 'S' since Rock beats Scissors
+    beats['R'] = 'S';
+    beats['S'] = 'P';
+    beats['P'] = 'R';
+
+    // Count maximum number of non-consecutive same moves in c
+    auto countValidMoves = [&](const string& c) {
+        int cnt = 1;
+        for (int i = 1; i < n; ++i)
+            if (c[i] != c[i - 1])
+                cnt++;
+        return cnt;
+    };
+
+    string best_c = s; // Initialize with s, will be overwritten
+    int max_valid = 0;
+
+    // Try all possible 3 rotations of replacement rules to maximize valid moves
+    for (int shift = 0; shift < 3; ++shift) {
+        string c(n, ' ');
+        for (int i = 0; i < n; ++i) {
+            char orig = s[i];
+            // Rotate the mapping: changes which move is used as replacement
+            if (orig == 'R') c[i] = "SPR"[(shift + 0) % 3];
+            else if (orig == 'P') c[i] = "SPR"[(shift + 1) % 3];
+            else /* S */ c[i] = "SPR"[(shift + 2) % 3];
+        }
+
+        int current_valid = countValidMoves(c);
+        if (current_valid > max_valid) {
+            max_valid = current_valid;
+            best_c = c;
+        }
+    }
+
+    cout << max_valid << endl;
+}

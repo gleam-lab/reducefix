@@ -1,0 +1,49 @@
+#include <bits/stdc++.h>
+#define int long long
+#define f first
+#define s second
+using namespace std;
+
+signed main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t; cin >> t;
+    while (t--) {
+        int n, k; cin >> n >> k;
+        vector<pair<int, int>> items(n);
+        for (int i = 0; i < n; ++i) cin >> items[i].f;
+        for (int i = 0; i < n; ++i) cin >> items[i].s;
+
+        // Sort by A_i in ascending order
+        sort(items.begin(), items.end());
+
+        // Min-heap to maintain top K smallest B values so far
+        priority_queue<int, vector<int>, greater<int>> pq;
+        int sum_b = 0;
+        for (int i = 0; i < k - 1; ++i) {
+            sum_b += items[i].s;
+            pq.push(items[i].s);
+        }
+
+        int ans = LLONG_MAX;
+
+        for (int i = k - 1; i < n; ++i) {
+            ans = min(ans, (sum_b + items[i].s) * items[i].f);
+
+            if (i < n - 1) {
+                pq.push(items[i].s);
+                sum_b += items[i].s;
+
+                if (pq.size() > k - 1) {
+                    sum_b -= pq.top();
+                    pq.pop();
+                }
+            }
+        }
+
+        cout << ans << '\n';
+    }
+
+    return 0;
+}

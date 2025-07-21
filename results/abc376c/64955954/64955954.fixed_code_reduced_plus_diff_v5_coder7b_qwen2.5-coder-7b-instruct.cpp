@@ -1,0 +1,32 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false); cin.tie(0); cout.tie(0);
+
+    int n;
+    cin >> n;
+    vector<int> va(n), vb(n-1);
+
+    for(int i = 0; i < n; ++i)
+        cin >> va[i];
+    
+    for(int i = 0; i < n-1; ++i)
+        cin >> vb[i];
+
+    sort(va.begin(), va.end());
+    sort(vb.begin(), vb.end());
+
+    int x = -1;
+    for(int i = 0; i < n; ++i) {
+        auto it = lower_bound(vb.begin(), vb.end(), va[i]);
+        if(it == vb.end())
+            break;
+        if(x == -1 || *it < x)
+            x = *it;
+    }
+
+    cout << (x == -1 ? -1 : x) << '\n';
+
+    return 0;
+}

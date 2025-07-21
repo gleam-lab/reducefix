@@ -1,0 +1,32 @@
+#include<bits/stdc++.h>
+using namespace std;
+
+int n, q, x[200005], p[200005];
+int sum[200005];
+
+int main() {
+    cin >> n;
+    for (int i = 1; i <= n; i++) {
+        cin >> x[i];
+    }
+    for (int i = 1; i <= n; i++) {
+        cin >> p[i];
+        sum[i] = sum[i - 1] + p[i];
+    }
+
+    sort(x + 1, x + n + 1); // Sort x array to use binary search effectively
+
+    cin >> q;
+    while (q--) {
+        int l, r;
+        cin >> l >> r;
+        l = lower_bound(x + 1, x + n + 1, l) - x; // Find first position not less than l
+        r = upper_bound(x + 1, x + n + 1, r) - x; // Find first position greater than r
+        if (l <= r && l <= n && r <= n) { // Check if indices are within bounds
+            cout << sum[r] - sum[l - 1] << endl; // Correctly calculate the range sum
+        } else {
+            cout << "Invalid query" << endl; // Handle out-of-bound queries
+        }
+    }
+    return 0;
+}

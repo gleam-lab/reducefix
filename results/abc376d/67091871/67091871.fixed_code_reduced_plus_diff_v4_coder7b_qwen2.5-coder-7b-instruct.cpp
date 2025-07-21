@@ -1,0 +1,41 @@
+#include<bits/stdc++.h>
+#define ll long long
+using namespace std;
+
+bool vis[200005];
+vector<int> adj[200005];
+
+void dfs(int node, int parent, int &minCycleLen) {
+    vis[node] = true;
+    for(auto child : adj[node]) {
+        if(child == parent) continue; // Skip the parent node
+        if(!vis[child]) {
+            dfs(child, node, minCycleLen);
+        } else {
+            minCycleLen = min(minCycleLen, abs(node - child));
+        }
+    }
+}
+
+int main() {
+    ios_base::sync_with_stdio(false); cin.tie(NULL);
+    int n, m;
+    cin >> n >> m;
+    for(int i = 0; i < m; i++) {
+        int u, v;
+        cin >> u >> v;
+        adj[u].push_back(v);
+        adj[v].push_back(u);
+    }
+
+    int minCycleLen = INT_MAX;
+    memset(vis, false, sizeof(vis));
+    for(int i = 1; i <= n; i++) {
+        if(!vis[i]) {
+            dfs(i, -1, minCycleLen);
+        }
+    }
+
+    cout << (minCycleLen == INT_MAX ? -1 : minCycleLen) << '\n';
+    return 0;
+}

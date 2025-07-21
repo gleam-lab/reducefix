@@ -1,0 +1,51 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+struct Item {
+    int a, p, b, q;
+};
+
+int main() {
+    int N, X;
+    cin >> N >> X;
+
+    vector<Item> items(N);
+    for (int i = 0; i < N; ++i) {
+        cin >> items[i].a >> items[i].p >> items[i].b >> items[i].q;
+        if (items[i].a * items[i].q < items[i].b * items[i].p)
+            swap(items[i].a, items[i].b), swap(items[i].p, items[i].q);
+    }
+
+    vector<vector<long long>> dp(N, vector<long long>(items[0].a * items[0].b + 1, LLONG_MAX));
+    for (int i = 0; i < N; ++i) {
+        dp[i][0] = 0;
+        for (int j = 1; j <= items[i].a * items[i].b; ++j) {
+            dp[i][j] = min(j >= items[i].a ? dp[i][j - items[i].a] + items[i].p : LLONG_MAX,
+                           j >= items[i].b ? dp[i][j - items[i].b] + items[i].q : LLONG_MAX);
+        }
+    }
+
+    int left = 0, right = 1e9;
+    while (left < right) {
+        int mid = left + (right - left) / 2;
+        bool valid = true;
+        long long current_cost = 0;
+        for (const auto& item : items) {
+            long long d = mid / (item.a * item.b), rem = mid % (item.a * item.b);
+            current_cost += dp[item.a - 1][rem] + d * item.p * item.b;
+            if (current_cost > X) {
+                valid = false;
+                break;
+            }
+        }
+        if (valid)
+            left = mid + 1;
+        else
+            right = mid;
+    }
+
+    cout << left - 1 << endl;
+    return 0;
+}

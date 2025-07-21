@@ -1,0 +1,45 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+
+using namespace std;
+
+int main() {
+    int N;
+    cin >> N;
+
+    vector<int> A(N), B(N - 1);
+    for (int i = 0; i < N; ++i) {
+        cin >> A[i];
+    }
+    for (int i = 0; i < N - 1; ++i) {
+        cin >> B[i];
+    }
+
+    // Sort the toy sizes in descending order
+    sort(A.begin(), A.end(), greater<int>());
+    // Sort the box sizes in descending order
+    sort(B.begin(), B.end(), greater<int>());
+
+    // We use a two-pointer technique to find the minimum box size x
+    int i = 0, j = 0;
+    while (i < N && j < N - 1) {
+        // If the current toy (A[i]) can be placed in the current box (B[j])
+        if (A[i] <= B[j]) {
+            // Move to the next toy
+            ++i;
+        }
+        // Always try to place the next box (since we want the smallest possible box size)
+        ++j;
+    }
+
+    // If all toys have been placed in boxes (i == N), we found the minimum box size
+    if (i == N) {
+        cout << A[i - 1] << endl;
+    } else {
+        // Otherwise, it's not possible to place all toys in boxes
+        cout << -1 << endl;
+    }
+
+    return 0;
+}

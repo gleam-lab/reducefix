@@ -1,0 +1,38 @@
+#include<bits/stdc++.h>
+using namespace std;
+
+const int MAXN = 400005;
+long long t[MAXN * 2];
+
+int main() {
+    ios_base::sync_with_stdio(0);
+    cin.tie(0);
+    
+    int n, m;
+    cin >> n >> m;
+    
+    vector<int> a(n);
+    for(int i = 0; i < n; ++i) {
+        cin >> a[i];
+        a[i] %= m;
+    }
+    
+    for(int i = 0; i < n; ++i) {
+        a.push_back(a[i]);
+    }
+    
+    long long ans = 0;
+    for(int i = 0; i < n; ++i) {
+        t[a[i]]++;
+    }
+    
+    for(int i = n; i < 2 * n; ++i) {
+        t[a[i]]++;
+        if(t[a[i - n]] == 1) ans += i - n + 1;
+        else ans += i - n + 1 - t[a[i - n]];
+    }
+    
+    cout << ans << '\n';
+    
+    return 0;
+}

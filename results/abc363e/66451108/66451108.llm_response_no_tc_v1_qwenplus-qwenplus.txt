@@ -1,0 +1,109 @@
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+#define int long long
+#define pii pair<int, int>
+#define fi first
+#define se second
+#define pb push_back
+#define close ios::sync_with_stdio(false); cin.tie(0); cout.tie(0);
+const int MOD = 1e9 + 7;
+const int MAXN = 1e3 + 5;
+
+int H, W, Y;
+int grid[MAXN][MAXN];
+bool submerged[MAXN][MAXN];
+
+// Directions: up, down, left, right
+int dx[] = {-1, 1, 0, 0};
+int dy[] = {0, 0, -1, 1};
+
+// Event-based processing with priority queue
+struct Cell {
+    int x, y, h;
+    bool operator<(const Cell &o) const {
+        return h > o.h; // Min-heap by height
+    }
+};
+
+priority_queue<Cell> pq;
+
+signed main() {
+    close;
+    cin >> H >> W >> Y;
+    
+    for (int i = 0; i < H; ++i) {
+        for (int j = 0; j < W; ++j) {
+            cin >> grid[i][j];
+            submerged[i][j] = false;
+        }
+    }
+
+    // Initialize border cells in the priority queue
+    for (int i = 0; i < H; ++i) {
+        for (int j = 0; j < W; ++j) {
+            if (i == 0 || i == H - 1 || j == 0 || j == W - 1) {
+                pq.push({i, j, grid[i][j]});
+                submerged[i][j] = true;
+            }
+        }
+    }
+
+    vector<pair<int, int>> year_changes(Y + 2, {0, 0}); // {year, count}
+    int total_submerged = 0;
+
+    while (!pq.empty()) {
+        Cell cur = pq.top(); pq.pop();
+        int curr_h = cur.h;
+
+        // If this height is beyond our max year, break
+        if (curr_h > Y) continue;
+
+        // Count how many new cells are submerged at this level
+        queue<pii> q;
+        q.push({cur.x, cur.y});
+        int cnt = 0;
+
+        while (!q.empty()) {
+            int x = q.front().fi;
+            int y = q.front().se;
+            q.pop();
+
+            if (submerged[x][y]) continue;
+
+            submerged[x][y] = true;
+            cnt++;
+            total_submerged++;
+
+            for (int d = 0; d < 4; ++d) {
+                int nx = x + dx[d];
+                int ny = y + dy[d];
+                if (nx >= 0 && nx < H && ny >= 0 && ny < W && !submerged[nx][ny]) {
+                    if (grid[nx][ny] <= curr_h) {
+                        q.push({nx, ny});
+                    } else {
+                        pq.push({nx, ny, grid[nx][ny]});
+                    }
+                }
+            }
+        }
+
+        if (cnt > 0) {
+            year_changes[curr_h].fi += cnt;
+        }
+    }
+
+    // Accumulate results to get area above sea for each year
+    vector<int> remaining(Y + 2);
+    int total_area = H * W;
+    remaining[0] = total_area;
+
+    for (int i = 1; i <= Y; ++i) {
+        remaining[i] = remaining[i - 1] - year_changes[i].fi;
+        cout << remaining[i] << endl;
+    }
+
+    return 0;
+}
+```

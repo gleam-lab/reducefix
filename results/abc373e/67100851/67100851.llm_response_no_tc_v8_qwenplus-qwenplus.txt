@@ -1,0 +1,112 @@
+```cpp
+#include <iostream>
+#include <vector>
+#include <algorithm>
+
+using namespace std;
+
+typedef long long ll;
+
+struct Candidate {
+    ll votes;
+    int idx;
+};
+
+bool compare(const Candidate &a, const Candidate &b) {
+    return a.votes < b.votes;
+}
+
+// Check if candidate i can guarantee victory with x additional votes
+bool isWinning(ll x, int i, vector<Candidate> &sorted, ll remaining, int N, int M) {
+    ll target = sorted[i].votes + x;
+
+    // Binary search to find how many candidates have votes > target after allocation
+    int left = 0, right = N;
+    while (left < right) {
+        int mid = (left + right) / 2;
+        ll val = (mid <= i) ? sorted[mid].votes : sorted[mid].votes;
+        if (val >= target) right = mid;
+        else left = mid + 1;
+    }
+
+    int better = N - left;
+
+    // Already have enough candidates with more votes
+    if (better < M) return true;
+
+    // Need to make sure at most M-1 candidates can have more votes than this one
+
+    // Now compute minimum required to reduce number of candidates > target to < M
+    int needToControl = better - (M - 1);
+    vector<ll> topCandidates;
+    for (int j = N - 1; j >= left; --j--) {
+        if (sorted[j].idx == i) continue;
+        topCandidates.push_back(sorted[j].votes);
+        if ((int)topCandidates.size() == needToControl) break;
+    }
+
+    ll total = 0;
+    for (ll v : topCandidates) {
+        total += (v - target + 1);
+    }
+
+    return total <= remaining - x;
+}
+
+void solve() {
+    int N, M;
+    ll K;
+    cin >> N >> M >> K;
+    vector<Candidate> A(N);
+    ll sumA = 0;
+    for (int i = 0; i < N; ++i) {
+        cin >> A[i].votes;
+        A[i].idx = i;
+        sumA += A[i].votes;
+    }
+    K -= sumA;
+    if (K < 0) {
+        for (int i = 0; i < N; ++i) cout << "-1 ";
+        cout << endl;
+        return;
+    }
+
+    vector<Candidate> sorted = A;
+    sort(sorted.begin(), sorted.end(), compare);
+    vector<ll> prefix(N + 1);
+    for (int i = 0; i < N; ++i) {
+        prefix[i + 1] = prefix[i] + sorted[i].votes;
+    }
+
+    vector<ll> result(N);
+
+    for (int i = 0; i < N; ++i) {
+        int pos = i;
+        // Binary search on X: minimal additional votes needed
+        ll low = 0, high = K;
+        if (!isWinning(high, i, sorted, K, N, M)) {
+            result[sorted[i].idx] = -1;
+            continue;
+        }
+        while (low < high) {
+            ll mid = (low + high) / 2;
+            if (isWinning(mid, i, sorted, K, N, M)) {
+                high = mid;
+            } else {
+                low = mid + 1;
+            }
+        }
+        result[sorted[i].idx] = low;
+    }
+
+    for (int i = 0; i < N; ++i) {
+        cout << max(0LL, result[i]) << " ";
+    }
+    cout << endl;
+}
+
+int main() {
+    solve();
+    return 0;
+}
+```

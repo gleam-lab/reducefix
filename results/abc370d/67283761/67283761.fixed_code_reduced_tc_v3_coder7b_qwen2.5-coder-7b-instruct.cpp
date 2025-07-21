@@ -1,0 +1,73 @@
+#include <vector>
+#include <stack>
+#include <queue>
+#include <tuple>
+#include <filesystem>
+#include <iostream>
+#include <fstream>
+#include <cmath>
+#include <cstring>
+#include <climits>
+#include <set>
+#include <map>
+#include <algorithm>
+#include <iomanip>
+#include <numeric>
+using namespace std;
+#pragma warning(disable: 4189)
+#pragma warning(disable: 4267)
+
+int main()
+{
+    ios_base::sync_with_stdio(false); cin.tie(NULL);
+
+    int H, W, Q;
+    cin >> H >> W >> Q;
+    vector<vector<bool>> map(H, vector<bool>(W, true));
+
+    for(int i = 0; i < Q; ++i)
+    {
+        int r, c;
+        cin >> r >> c;
+        --r, --c;
+        if (map[r][c])
+        {
+            map[r][c] = false;
+        }
+        else
+        {
+            for (int dr = -1; dr <= 1; dr += 2)
+            {
+                for (int dc = -1; dc <= 1; dc += 2)
+                {
+                    int x = r + dr, y = c + dc;
+                    while (x >= 0 && x < H && y >= 0 && y < W)
+                    {
+                        if(map[x][y])
+                        {
+                            map[x][y] = false;
+                            break;
+                        }
+                        x += dr;
+                        y += dc;
+                    }
+                }
+            }
+        }
+    }
+    int remaining_walls = 0;
+    for(int i = 0; i < H; ++i)
+    {
+        for(int j = 0; j < W; ++j)
+        {
+            if(map[i][j])
+            {
+                ++remaining_walls;
+            }
+        }
+    }
+
+    cout << remaining_walls << endl;
+
+    return 0;
+}

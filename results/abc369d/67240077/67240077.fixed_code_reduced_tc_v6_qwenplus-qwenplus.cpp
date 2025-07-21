@@ -1,0 +1,52 @@
+#include<bits/stdc++.h>
+#define INF 0x3f3f3f3f3f3f3f3f
+using namespace std;
+typedef long long ll;
+const int MAXN=2e5+10;
+ll a[MAXN],f[MAXN][2];
+ll cnt_even[MAXN], cnt_odd[MAXN];
+
+int main(){
+    ll n;
+    scanf("%lld",&n);
+    for(ll i=1;i<=n;i++){
+        scanf("%lld",&a[i]);
+    }
+    
+    // Initialize
+    f[0][0] = 0;  // Even count, max value
+    f[0][1] = 0;  // Odd count, max value
+    cnt_even[0] = 0;  // Number of elements taken when even count
+    cnt_odd[0] = 0;   // Number of elements taken when odd count
+
+    for(ll i=1;i<=n;i++){
+        // Not taking current element
+        if(f[i-1][0] > f[i-1][1]){
+            f[i][0] = f[i-1][0];
+            cnt_even[i] = cnt_even[i-1];
+        } else {
+            f[i][0] = f[i-1][1];
+            cnt_even[i] = cnt_odd[i-1];
+        }
+
+        // Taking current element
+        // Case 1: previous count was even
+        ll take_from_even = f[i-1][0] + a[i];
+        ll new_cnt_even = cnt_even[i-1] + 1;
+
+        // Case 2: previous count was odd
+        ll take_from_odd = f[i-1][1] + 2 * a[i];
+        ll new_cnt_odd = cnt_odd[i-1] + 1;
+
+        if(take_from_even > take_from_odd){
+            f[i][1] = take_from_even;
+            cnt_odd[i] = new_cnt_even;
+        } else {
+            f[i][1] = take_from_odd;
+            cnt_odd[i] = new_cnt_odd;
+        }
+    }
+
+    printf("%lld",max(f[n][0],f[n][1]));
+    return 0;
+}

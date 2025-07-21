@@ -1,0 +1,92 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+
+using namespace std;
+
+const int MAXN = 400010;
+int parent[MAXN];
+
+int find(int u) {
+    if(parent[u] < 0) return u;
+    return parent[u] = find(parent[u]);
+}
+
+void unite(int u, int v) {
+    u = find(u);
+    v = find(v);
+    if(u == v) return;
+    if(parent[u] > parent[v]) swap(u, v);
+    parent[u] += parent[v];
+    parent[v] = u;
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(NULL);
+
+    int H, W, Q;
+    cin >> H >> W >> Q;
+
+    vector<vector<bool>> grid(H, vector<bool>(W, true));
+    for(int i = 0; i < H; ++i) parent[i] = -1;
+    for(int i = 0; i < W; ++i) parent[H + i] = -1;
+
+    while(Q--) {
+        int R, C;
+        cin >> R >> C;
+        --R, --C;
+
+        if(grid[R][C]) {
+            grid[R][C] = false;
+            int id = R * W + C;
+            if(R > 0 && grid[R - 1][C]) {
+                unite(id, id - W);
+            }
+            if(R < H - 1 && grid[R + 1][C]) {
+                unite(id, id + W);
+            }
+            if(C > 0 && grid[R][C - 1]) {
+                unite(id, id - 1);
+            }
+            if(C < W - 1 && grid[R][C + 1]) {
+                unite(id, id + 1);
+            }
+        } else {
+            int id = R * W + C;
+            int leader = find(id);
+            int count = -parent[leader];
+            for(int i = 0; i < H; ++i) {
+                if(find(i * W + C) == leader) --count;
+            }
+            for(int j = 0; j < W; ++j) {
+                if(find(R * W + j) == leader) --count;
+            }
+            grid[R][C] = true;
+            for(int i = 0; i < H; ++i) {
+                if(i != R && find(i * W + C) == leader) {
+                    unite(id, i * W + C);
+                }
+            }
+            for(int j = 0; j < W; ++j) {
+                if(j != C && find(R * W + j) == leader) {
+                    unite(id, R * W + j);
+                }
+            }
+        }
+    }
+
+    int ans = 0;
+    for(int i = 0; i < H; ++i) {
+        for(int j = 0; j < W; ++j) {
+            if(grid[i][j]) {
+                int id = i * W + j;
+                if(find(id) == id) ++ans;
+            }
+        }
+    }
+
+    cout << ans << endl;
+
+    return 0;
+}

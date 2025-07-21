@@ -1,0 +1,19 @@
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+
+int main(){
+    unordered_set<int> st;
+    int q; cin >> q;
+    while(q--){
+        int type, x;
+        cin >> type >> x;
+        if(type == 1){
+            st.insert(x);
+        } else if(type == 2){
+            st.erase(x);
+        } else if(type == 3){
+            cout << st.size() << "\n";
+        }
+    }
+}

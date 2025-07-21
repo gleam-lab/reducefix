@@ -1,0 +1,42 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int N;
+    cin >> N;
+    string S;
+    cin >> S;
+
+    vector<char> hand = {'R', 'P', 'S'};
+    int total = 0;
+
+    function<int(char)> getScore = [&](char use) -> int {
+        int score = 0;
+        for (char n : hand) {
+            if ((n == 'R' && use == 'S') || (n == 'P' && use == 'R') || (n == 'S' && use == 'P')) {
+                score++;
+            }
+        }
+        return score;
+    };
+
+    for (int i = 0; i < N; ++i) {
+        int score = 0;
+        char use = S[i];
+        for (char n : hand) {
+            if ((n == 'R' && S[i] == 'S') || (n == 'P' && S[i] == 'R') || (n == 'S' && S[i] == 'P')) {
+                score++;
+                use = n;
+                break;
+            }
+        }
+        total += score;
+    }
+
+    cout << total << endl;
+
+    return 0;
+}

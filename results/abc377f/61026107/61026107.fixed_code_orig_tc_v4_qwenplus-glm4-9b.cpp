@@ -1,0 +1,47 @@
+#include <iostream>
+#include <vector>
+#include <unordered_map>
+#include <set>
+
+using namespace std;
+
+using ll = long long;
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(NULL);
+
+    ll N, M;
+    cin >> N >> M;
+
+    unordered_map<ll, set<ll>> capturing_sets[4];
+
+    // Read the positions of the pieces and determine the capturing sets
+    for (ll i = 0; i < M; ++i) {
+        ll x, y;
+        cin >> x >> y;
+
+        capturing_sets[0][x].insert(y);        // Row
+        capturing_sets[1][y].insert(x);        // Column
+        capturing_sets[2][x + y].insert(x);    // Diagonal i+j
+        capturing_sets[3][x - y].insert(x);    // Diagonal i-j
+    }
+
+    // Calculate the number of safe squares
+    ll safe_squares = N * N;
+
+    // Reduce the number of safe squares by subtracting the number of squares
+    // that are in the capturing set of each piece
+    for (ll i = 0; i < 4; ++i) {
+        for (const auto& [pos, captures] : capturing_sets[i]) {
+            for (ll capture : captures) {
+                safe_squares--;
+            }
+        }
+    }
+
+    // Output the final number of safe squares
+    cout << safe_squares << '\n';
+
+    return 0;
+}

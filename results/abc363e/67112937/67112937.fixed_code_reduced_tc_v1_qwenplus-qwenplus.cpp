@@ -1,0 +1,73 @@
+#include <bits/stdc++.h>
+
+using i64 = long long;
+
+constexpr int dx[4] = {0, 0, 1, -1};
+constexpr int dy[4] = {1, -1, 0, 0};
+
+int main() {
+    std::ios::sync_with_stdio(false);
+    std::cin.tie(nullptr);
+
+    int H, W, Y;
+    std::cin >> H >> W >> Y;
+
+    std::vector<std::vector<int>> A(H, std::vector<int>(W));
+    for (int i = 0; i < H; ++i) {
+        for (int j = 0; j < W; ++j) {
+            std::cin >> A[i][j];
+        }
+    }
+
+    // We'll store the number of cells submerged at each year
+    std::vector<int> submerged(Y + 2, 0);
+
+    // For multi-source BFS from all boundary cells
+    std::queue<std::pair<int, int>> q;
+    std::vector<std::vector<bool>> visited(H, std::vector<bool>(W, false));
+
+    // Priority queue to process lowest elevation first
+    std::priority_queue<std::tuple<int, int, int>, std::vector<std::tuple<int, int, int>>, std::greater<>> pq;
+
+    for (int i = 0; i < H; ++i) {
+        for (int j = 0; j < W; ++j) {
+            if (i == 0 || i == H - 1 || j == 0 || j == W - 1) {
+                pq.emplace(A[i][j], i, j);
+                visited[i][j] = true;
+            }
+        }
+    }
+
+    int totalRemaining = H * W;
+    std::vector<int> ans(Y + 1);
+
+    // Process the cells in increasing order of elevation
+    for (int year = 1; year <= Y; ++year) {
+        // Process all cells with elevation <= current year
+        while (!pq.empty() && std::get<0>(pq.top()) <= year) {
+            auto [h, x, y] = pq.top();
+            pq.pop();
+
+            if (!visited[x][y]) {
+                visited[x][y] = true;
+                totalRemaining--;
+            }
+
+            for (int d = 0; d < 4; ++d) {
+                int nx = x + dx[d];
+                int ny = y + dy[d];
+                if (nx >= 0 && nx < H && ny >= 0 && ny < W && !visited[nx][ny]) {
+                    pq.emplace(A[nx][ny], nx, ny);
+                }
+            }
+        }
+
+        ans[year] = totalRemaining;
+    }
+
+    for (int year = 1; year <= Y; ++year) {
+        std::cout << ans[year] << "\n";
+    }
+
+    return 0;
+}

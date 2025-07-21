@@ -1,0 +1,46 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+
+#define LL long long
+#define ULL unsigned long long
+#define LD long double
+#define PII pair<int,int>
+#define PLL pair<LL,LL>
+#define VI vector<int>
+#define VVI vector<VI>
+#define VII vector<PII>
+#define VS vector<string>
+#define VVLL vector<vector<LL>>
+#define VPLL vector<pair<LL,LL>>
+
+const int MOD = 1e9 + 7;
+const LL INF = 1e18;
+
+void solve() {
+    int n, k;
+    cin >> n >> k;
+    VI a(n);
+    for(int i = 0; i < n; ++i) {
+        cin >> a[i];
+    }
+
+    sort(a.begin(), a.end());
+
+    LL ans = INF;
+    for(int i = 0; i <= n-k; ++i) {
+        ans = min(ans, (LL)a[i+k-1] - a[i]);
+    }
+
+    cout << ans << '\n';
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+    cout.tie(nullptr);
+
+    solve();
+
+    return 0;
+}

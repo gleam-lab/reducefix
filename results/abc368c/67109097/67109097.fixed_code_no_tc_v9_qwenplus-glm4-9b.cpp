@@ -1,0 +1,37 @@
+#include<bits/stdc++.h>
+
+using namespace std;
+
+int main() {
+    int N;
+    cin >> N;
+    vector<int> H(N);
+    for (int i = 0; i < N; i++) cin >> H[i];
+    long long T = 0;
+    
+    // Iterate through the healths of the enemies
+    for (int i = 0; i < N; i++) {
+        // If health is divisible by 3, we can attack 3 times in one go
+        if (H[i] % 3 == 0) {
+            T += H[i] / 3;
+            H[i] = 0;
+        } else if (H[i] % 3 == 1) {
+            // If health is 1 mod 3, we need two attacks to bring it down to 0
+            // First attack reduces it by 1, so it becomes 0 mod 3, then we can perform full 3 attacks
+            if (i > 0) { // If not the first enemy, we can deal with 1 separately and then use 3 attacks
+                T += 2; // First attack to reduce it to 0 mod 3
+                T += 3; // Next three attacks
+                H[i] = 0;
+            } else { // If it's the first enemy, we can only do 2 attacks (1 to reduce mod and one more)
+                T += 2; // Two attacks (one to reduce mod and one to finish enemy)
+            }
+        } else { // If health is 2 mod 3, we can do one attack to reduce it to 1 mod 3
+            // Then we need another to bring it down to 0
+            T += 2; // One attack to reduce it to 1 mod 3
+            T += 1; // Next attack to bring it to 0
+            H[i] = 0;
+        }
+    }
+    cout << T << endl;
+    return 0;
+}

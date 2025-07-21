@@ -1,0 +1,63 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+
+#define all(x) x.begin(), x.end()
+#define eb emplace_back
+#define mp make_pair
+#define fi first
+#define se second
+
+typedef long long ll;
+typedef pair<int, int> pi;
+
+int main() {
+    ios_base::sync_with_stdio(0);
+    cin.tie(0);
+    cout.tie(0);
+
+    int N, K;
+    cin >> N >> K;
+    vector<int> A(N);
+    for (int i = 0; i < N; ++i) {
+        cin >> A[i];
+    }
+
+    // We will use a sliding window of size (N - K)
+    int window_size = N - K;
+    int min_diff = numeric_limits<int>::max();
+
+    // To efficiently find min and max in sliding window we use two deques
+    deque<int> max_deque;
+    deque<int> min_deque;
+
+    for (int i = 0; i < N; ++i) {
+        // Maintain max_deque: elements are in decreasing order
+        while (!max_deque.empty() && A[max_deque.back()] <= A[i]) {
+            max_deque.pop_back();
+        }
+        max_deque.push_back(i);
+
+        // Maintain min_deque: elements are in increasing order
+        while (!min_deque.empty() && A[min_deque.back()] >= A[i]) {
+            min_deque.pop_back();
+        }
+        min_deque.push_back(i);
+
+        // Remove out-of-window elements
+        if (max_deque.front() <= i - window_size) {
+            max_deque.pop_front();
+        }
+        if (min_deque.front() <= i - window_size) {
+            min_deque.pop_front();
+        }
+
+        // Once window is valid, update answer
+        if (i >= window_size - 1) {
+            min_diff = min(min_diff, A[max_deque.front()] - A[min_deque.front()]);
+        }
+    }
+
+    cout << min_diff << endl;
+    return 0;
+}

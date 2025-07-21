@@ -1,0 +1,65 @@
+#include<bits/stdc++.h>
+#define endl "\n"
+#define lowbit(x) (x & (-x))
+using namespace std;
+typedef long long ll;
+typedef unsigned long long ull;
+typedef double db;
+
+const int INF = 0x3f3f3f3f;
+const db eps = 1e-9;
+const ll mod = 1e9 + 7;
+const int N = 2e5 + 5;
+int ls(int x) { return x << 1; }
+int rs(int x) { return x << 1 | 1; }
+
+vector<int> a;
+
+void update(int p, int v, vector<int>& tree, int tl, int tr) {
+    if (tl == tr) {
+        tree[p] += v;
+        return;
+    }
+    int tm = (tl + tr) / 2;
+    if (p <= tm)
+        update(ls(p), v, tree, tl, tm);
+    else
+        update(rs(p), v, tree, tm + 1, tr);
+    tree[p] = min(tree[ls(p)], tree[rs(p)]);
+}
+
+int query(int ql, int qr, int p, int tl, int tr, vector<int>& tree) {
+    if (ql <= tl && tr <= qr)
+        return tree[p];
+    int tm = (tl + tr) / 2, ans = INF;
+    if (ql <= tm)
+        ans = min(ans, query(ql, qr, ls(p), tl, tm, tree));
+    if (qr > tm)
+        ans = min(ans, query(ql, qr, rs(p), tm + 1, tr, tree));
+    return ans;
+}
+
+void solve(void) {
+    int n, q; cin >> n >> q;
+    for(int i = 1; i <= n; i++) {
+        int x; cin >> x;
+        update(x + (N - 5) / 2, 1, a, 0, 2 * N - 5, a);
+    }
+    for(int i = 1; i <= q; i++) {
+        int x, y; cin >> x >> y;
+        int l = 0, r = 2e8;
+        while(l < r) {
+            int mid = (l + r) >> 1;
+            if(query(x + (N - 5) / 2 - mid, x + (N - 5) / 2 + mid, 1, 0, 2 * N - 5, a) >= y) r = mid;
+            else l = mid + 1;
+        }
+        cout << l << endl;
+    }
+}
+
+int main(){
+    ios::sync_with_stdio(0), cin.tie(0), cout.tie(0);
+    int t = 1; //cin >> t;
+    while (t--) solve();
+    return 0;
+}

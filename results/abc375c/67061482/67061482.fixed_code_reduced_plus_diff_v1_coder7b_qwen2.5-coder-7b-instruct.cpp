@@ -1,0 +1,28 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    long long n;
+    cin >> n;
+
+    vector<pair<long long, long long>> points(n);
+    for(long long i = 0; i < n; ++i){
+        cin >> points[i].first >> points[i].second;
+    }
+
+    // Calculate the total distance
+    double total_distance = 0;
+    for(long long i = 0; i < n - 1; ++i){
+        total_distance += hypot(points[i].first - points[i + 1].first, points[i].second - points[i + 1].second);
+    }
+    // Add the distance from the last point back to the first
+    total_distance += hypot(points[n - 1].first, points[n - 1].second);
+
+    cout.precision(15); // Set precision high enough to handle floating-point arithmetic errors
+    cout << total_distance << "\n";
+
+    return 0;
+}

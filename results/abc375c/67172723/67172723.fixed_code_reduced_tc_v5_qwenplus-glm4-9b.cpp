@@ -1,0 +1,22 @@
+#include <iostream>
+#include <cmath>
+using namespace std;
+
+int main() {
+    int n;
+    cin >> n;
+    int x, y;
+    long long sum = 0;
+    double sumSquares = 0.0;
+
+    for (int i = 0; i < n; i++) {
+        cin >> x >> y;
+        sum += (long long)x;
+        sumSquares += x * x + y * y;
+    }
+
+    double originDistance = hypot((double)sum, 0);
+    double totalDistance = originDistance + sqrt(sumSquares - originDistance * originDistance);
+    printf("%.10f\n", totalDistance);
+    return 0;
+}

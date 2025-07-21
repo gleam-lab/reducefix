@@ -1,0 +1,52 @@
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+
+int N, M;
+ll K;
+
+struct Node {
+  ll val;
+  int idx;
+} ;
+
+int main() {
+  ios_base::sync_with_stdio(false); cin.tie(NULL);
+  cin >> N >> M >> K;
+
+  vector<ll> a(N + 5);
+
+  for (int i = 1; i <= N; ++i) {
+    cin >> a[i];
+  }
+
+  sort(a.rbegin(), a.rend());
+
+  vector<ll> pre(N + 5);
+  pre[0] = 0LL;
+  for (int i = 1; i <= N; ++i) {
+    pre[i] = pre[i - 1] + a[i];
+  }
+
+  K -= pre[N];
+
+  vector<ll> ans(N + 5);
+
+  for (int i = 1; i <= N; ++i) {
+    ll cur = a[i];
+    int idx = lower_bound(a.begin() + i + 1, a.begin() + N + 1, cur + 1) - a.begin();
+    int cnt = (N - idx + 1);
+    if (cnt >= M) {
+      ans[i] = -1;
+      continue;
+    }
+    ll add = (M - cnt) * (a[i] + 1) - pre[idx - 1];
+    ans[i] = max(0LL, add - K);
+  }
+
+  for (int i = 1; i <= N; ++i) {
+    cout << ans[i] << ' ';
+  }
+
+  return 0;
+}

@@ -1,0 +1,66 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+
+using namespace std;
+
+int main() {
+    long long n, q;
+    cin >> n >> q;
+    vector<long long> a(n + 1);
+    vector<long long> b(q), k(q);
+
+    for (long long i = 0; i < n; ++i) {
+        cin >> a[i + 1];
+    }
+
+    for (long long j = 0; j < q; ++j) {
+        cin >> b[j] >> k[j];
+    }
+
+    // Pair each point A_i with its index and sort them based on the coordinate
+    vector<pair<long long, long long>> indexes(n + 1);
+    for (long long i = 1; i <= n; ++i) {
+        indexes[i - 1] = {a[i], i};
+    }
+    sort(indexes.begin(), indexes.end());
+
+    // Prepare a vector of results to store distances for each query
+    vector<long long> results(q);
+
+    // Process each query
+    for (long long j = 0; j < q; ++j) {
+        long long b_j = b[j];
+        long long k_j = k[j];
+
+        // Set the initial answer to a very large value
+        long long answer = 1e18;
+
+        // Iterate over all points A_i in descending order
+        for (int i = n - 1; i >= 0; --i) {
+            // Calculate the distance between A_i and B_j
+            long long distance = abs(indexes[i].first - b_j);
+
+            // If this distance is within the top k_j closest, update the answer
+            if (distance <= answer) {
+                if (k_j == 1) {
+                    answer = distance;
+                    break;
+                }
+                --k_j;
+            } else {
+                break;
+            }
+        }
+
+        // Store the result for this query
+        results[j] = answer;
+    }
+
+    // Output all results
+    for (long long result : results) {
+        cout << result << endl;
+    }
+
+    return 0;
+}

@@ -1,0 +1,39 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+int main() {
+    int n, k;
+    cin >> n >> k;
+    vector<int> v(n);
+    for (int i = 0; i < n; ++i) {
+        cin >> v[i];
+    }
+
+    // If k is 0 or n, we can't remove any elements or remove all elements, respectively.
+    if (k == 0 || k == n) {
+        cout << 0 << endl;
+        return 0;
+    }
+
+    // If we remove all elements except one, the answer is always 0.
+    if (k == n - 1) {
+        cout << 0 << endl;
+        return 0;
+    }
+
+    // Sort the vector to facilitate finding the minimum and maximum values easily.
+    sort(v.begin(), v.end());
+
+    // The maximum possible value of B is achieved by removing the K smallest elements.
+    int maxB = v[k-1];
+
+    // The minimum possible value of B is achieved by removing the K largest elements.
+    int minB = v[n-k];
+
+    // The result is the difference between the maximum and minimum values of B.
+    cout << maxB - minB << endl;
+
+    return 0;
+}

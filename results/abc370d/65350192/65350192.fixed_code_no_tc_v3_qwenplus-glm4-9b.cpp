@@ -1,0 +1,43 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define rep(i, n) for (int i = 0; i < (n); i++)
+using ll = long long;
+
+int main(void) {
+    int h, w, q;
+    cin >> h >> w >> q;
+    vector<set<int>> up(h), down(h), left(w), right(w);
+
+    rep(i, h) {
+        rep(j, w) {
+            up[i].insert(j);
+            down[i].insert(j);
+            left[j].insert(i);
+            right[j].insert(i);
+        }
+    }
+
+    rep(q) {
+        int r, c;
+        cin >> r >> c;
+        r--; c--;
+
+        // Mark the current wall as destroyed
+        if (up[r].count(c) || down[r].count(c) || left[c].count(r) || right[c].count(r)) {
+            up[r].erase(c);
+            down[r].erase(c);
+            left[c].erase(r);
+            right[c].erase(r);
+        }
+    }
+
+    int remaining_walls = 0;
+    rep(i, h) {
+        rep(j, w) {
+            remaining_walls += (up[i].count(j) + down[i].count(j) + left[j].count(i) + right[j].count(i));
+        }
+    }
+
+    cout << remaining_walls << '\n';
+    return 0;
+}

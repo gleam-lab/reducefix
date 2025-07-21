@@ -1,0 +1,37 @@
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+#define rep(i, n) for (ll(i) = 0; (i) < (n); ++(i))
+#define drep(i, n) for (ll(i) = (n) - 1; (i) >= 0; --(i))
+
+int main() {
+    int n;
+    cin >> n;
+    vector<ll> a(n);
+    rep(i, n) cin >> a[i];
+
+    if (n == 1) {
+        cout << a[0] << endl;
+        return 0;
+    }
+
+    // dp_odd[i]: i体目まで倒して、奇数匹倒したときの最大経験値
+    // dp_even[i]: i体目まで倒して、偶数匹倒したときの最大経験値
+    vector<ll> dp_odd(n, 0), dp_even(n, 0);
+    
+    // 初期化
+    dp_odd[0] = a[0];      // 最初のポケモンを倒す（奇数匹）
+    dp_even[0] = 0;        // 最初のポケモンを倒さない（偶数匹）
+
+    for (int i = 1; i < n; ++i) {
+        // i番目のポケモンを倒す場合：前の状態が偶数匹なら+2*a[i]、奇数匹なら+a[i]
+        dp_odd[i] = max(dp_even[i-1] + 2 * a[i], dp_odd[i-1] + a[i]);
+        
+        // i番目のポケモンを倒さない場合：前の状態が奇数匹なら+0、偶数匹なら+a[i]
+        dp_even[i] = max(dp_odd[i-1], dp_even[i-1] + a[i]);
+    }
+    
+    cout << max(dp_odd[n-1], dp_even[n-1]) << endl;
+
+    return 0;
+}

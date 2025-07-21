@@ -1,0 +1,33 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+const int MAXN = 1e3 + 5;
+
+int n, m;
+int a[MAXN], b[MAXN];
+bool rowUsed[MAXN], colUsed[MAXN], diag1Used[2 * MAXN], diag2Used[2 * MAXN];
+
+int main() {
+    cin >> n >> m;
+    for(int i = 0; i < m; i++) {
+        cin >> a[i] >> b[i];
+        rowUsed[a[i]] = true;
+        colUsed[b[i]] = true;
+        diag1Used[a[i] + b[i]] = true;
+        diag2Used[a[i] - b[i] + n] = true;
+    }
+
+    int ans = 0;
+    for(int i = 1; i <= n; i++) {
+        if(!rowUsed[i]) {
+            for(int j = 1; j <= n; j++) {
+                if(!colUsed[j] && !diag1Used[i + j] && !diag2Used[i - j + n]) {
+                    ans++;
+                }
+            }
+        }
+    }
+
+    cout << ans << endl;
+    return 0;
+}

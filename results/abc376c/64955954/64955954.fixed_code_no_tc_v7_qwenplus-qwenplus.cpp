@@ -1,0 +1,64 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int N;
+    cin >> N;
+
+    vector<long long> A(N);
+    for (int i = 0; i < N; ++i) cin >> A[i];
+
+    vector<long long> B(N - 1);
+    for (int i = 0; i < N - 1; ++i) cin >> B[i];
+
+    sort(A.begin(), A.end());
+    sort(B.begin(), B.end());
+
+    // We need to assign N toys to N boxes: N-1 existing + 1 new box
+    // Each toy must go into a box of size >= its size
+    // Each box can hold at most one toy
+
+    // To minimize x, the idea is:
+    // Try to match largest toys with largest available boxes,
+    // and see which toy will be left unmatched — that toy's size is the minimum x required.
+
+    // Use binary search to find the minimal x such that we can fit all toys using one extra box of size x.
+
+    // Binary search on x
+    long long low = 1, high = 1e18;
+    long long answer = -1;
+
+    while (low <= high) {
+        long long mid = (low + high) / 2;
+
+        // Create a copy of B and add the new box of size mid
+        vector<long long> boxes = B;
+        boxes.push_back(mid);
+        sort(boxes.begin(), boxes.end());
+
+        // Try greedy matching from smallest to largest
+        int ptr = 0; // pointer to current box
+        int matched = 0;
+
+        for (int i = 0; i < N; ++i) {
+            if (ptr < boxes.size() && boxes[ptr] >= A[i]) {
+                ++matched;
+                ++ptr;
+            }
+        }
+
+        if (matched == N) {
+            answer = mid;
+            high = mid - 1;
+        } else {
+            low = mid + 1;
+        }
+    }
+
+    cout << answer << endl;
+
+    return 0;
+}

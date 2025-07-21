@@ -1,0 +1,88 @@
+To fix this code, we need to address the issue where the initial implementation fails to handle certain edge cases correctly, such as when there are no edges between vertices. The problem requires finding the minimum weight path from vertex 1 to all other vertices in a connected undirected graph, where the path weight includes the sum of vertex and edge weights. 
+
+The initial code uses Dijkstra's algorithm with a priority queue, which is appropriate given the non-negative weights. However, the incorrect output for the case with no edges suggests that the initial distance setup or the handling of vertex weights might be flawed. 
+
+### Approaches
+1. **Initialization**: The distance from vertex 1 to itself should be the weight of vertex 1 (`A_1`). For other vertices, the initial distance should be set to a very large value (infinity) to represent that they are initially unreachable.
+2. **Priority Queue**: Use a priority queue to process vertices in order of increasing current known distance. This ensures that once a vertex is processed, its distance is the shortest possible.
+3. **Edge Relaxation**: For each edge from a vertex `u` to `v`, check if the path through `u` improves the known distance to `v`. The total weight of the path through `u` is `d[u] + B_j + A_v`, where `B_j` is the edge weight and `A_v` is the vertex weight at `v`.
+4. **Output**: After processing all vertices, print the distances from vertex 1 to all other vertices, ensuring the output format matches the expected results.
+
+### Solution Code
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+#define int long long
+#define INT signed
+#define pbk push_back
+template <class T>
+using V = vector<T>;
+template <class T>
+using VV = vector<vector<T>>;
+template <class T>
+using VVV = vector<vector<vector<T>>>;
+
+struct Node {
+    int x;
+    int64_t w;
+    bool operator < (const Node& u) const {
+        return w > u.w; // Min-heap based on weight
+    }
+};
+
+constexpr int N = 2e5 + 10;
+constexpr int64_t inf = 1e18;
+priority_queue<Node> pq;
+vector<pair<int, int>> g[N];
+
+void solve() {
+    int n, m;
+    cin >> n >> m;
+    V<int> a(n + 1, 0);
+    V<int64_t> d(n + 1, inf);
+    vector<bool> vis(n + 1, false);
+    for (int i = 1; i <= n; ++i) {
+        cin >> a[i];
+    }
+    for (int i = 1; i <= m; ++i) {
+        int x, y, c;
+        cin >> x >> y >> c;
+        g[x].emplace_back(y, c);
+        g[y].emplace_back(x, c);
+    }
+    pq.push({1, d[1] = a[1]});
+    while (!pq.empty()) {
+        auto [x, w] = pq.top();
+        pq.pop();
+        if (vis[x]) continue;
+        vis[x] = true;
+        for (const auto& [y, dw] : g[x]) {
+            if (d[x] + dw + a[y] < d[y]) {
+                d[y] = d[x] + dw + a[y];
+                pq.push({y, d[y]});
+            }
+        }
+    }
+    for (int i = 2; i <= n; ++i) {
+        cout << (d[i] == inf ? -1 : d[i]) << " \n"[i == n];
+    }
+}
+
+INT main() {
+    cin.tie(nullptr)->sync_with_stdio(false);
+    int t = 1;
+    // cin >> t;
+    while (t--) {
+        solve();
+    }
+    return 0;
+}
+```
+
+### Explanation
+1. **Initialization**: We start by reading the number of vertices `n` and edges `m`, followed by the vertex weights `a` and the edges with their weights. The distance array `d` is initialized to a large value (`inf = 1e18`), except for the starting vertex (vertex 1), which is set to its own vertex weight `a[1]`.
+2. **Priority Queue Processing**: The priority queue is initialized with the starting vertex. For each vertex processed, we check all its neighbors. If a shorter path is found through the current vertex, we update the neighbor's distance and push it into the queue.
+3. **Edge Relaxation**: For each edge from vertex `x` to `y`, the potential new distance to `y` is `d[x] + edge_weight + a[y]`. If this new distance is shorter than the currently known distance to `y`, we update `d[y]` and push `y` into the priority queue.
+4. **Output**: After processing all vertices, we print the distances from vertex 1 to all other vertices. If a vertex remains unreachable (distance still `inf`), we print `-1` (though the problem guarantees connectivity, this is a safeguard).
+
+This approach ensures that we efficiently compute the shortest paths using Dijkstra's algorithm, which is optimal for graphs with non-negative edge weights. The use of a priority queue allows us to process vertices in the order of their current shortest path estimates, ensuring correctness and efficiency.

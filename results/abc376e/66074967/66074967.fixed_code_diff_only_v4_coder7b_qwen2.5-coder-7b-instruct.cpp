@@ -1,0 +1,45 @@
+#include<iostream>
+#include<algorithm>
+using namespace std;
+
+typedef pair<long long, long long> pli;
+
+struct cmp{
+    bool operator()(pli &a, pli &b){
+        return a.first > b.first;
+    }
+};
+
+int main(){
+    ios_base::sync_with_stdio(false);cin.tie(NULL);cout.tie(NULL);
+
+    int t,n,k;
+    cin>>t;
+    while(t--){
+        cin>>n>>k;
+        vector<pli> a(n), b(n);
+        for(int i=0;i<n;i++)
+            cin>>a[i].first, a[i].second=i+1;
+        for(int i=0;i<n;i++)
+            cin>>b[i].first, b[i].second=i+1;
+        
+        sort(a.begin(), a.end());
+        sort(b.begin(), b.end());
+
+        priority_queue<int, vector<int>, greater<int>> pq;
+        long long ans=LLONG_MAX, sum=0;
+        for(int i=0;i<k-1;i++){
+            pq.push(b[i].first);
+            sum+=b[i].first;
+        }
+        for(int i=k-1;i<n;i++){
+            pq.push(b[i].first);
+            sum+=b[i].first;
+            ans=min(ans, (long long)a[i].first*(sum));
+            sum-=pq.top();
+            pq.pop();
+        }
+        cout<<ans<<"\n";
+    }
+    return 0;
+}

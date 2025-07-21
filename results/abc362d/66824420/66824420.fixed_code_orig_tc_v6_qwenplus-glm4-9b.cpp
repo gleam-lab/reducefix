@@ -1,0 +1,1 @@
+long long total_dist=val+it.second+a[it.first-1];

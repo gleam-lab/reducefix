@@ -1,0 +1,102 @@
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+
+int main() {
+    cin.tie(0)->sync_with_stdio(0);
+    int H, W, Y;
+    cin >> H >> W >> Y;
+    vector<vector<int>> A(H, vector<int>(W));
+    for (int i = 0; i < H; ++i) {
+        for (int j = 0; j < W; ++j) {
+            cin >> A[i][j];
+        }
+    }
+
+    // Add a border of -infinity to simulate the sea surrounding the island
+    H += 2;
+    W += 2;
+    vector<vector<int>> B(H, vector<int>(W, -1e9));
+    for (int i = 1; i < H - 1; ++i) {
+        for (int j = 1; j < W - 1; ++j) {
+            B[i][j] = A[i - 1][j - 1];
+        }
+    }
+
+    vector<vector<int>> years(Y + 2);  // years[v] stores cells with elevation v
+
+    for (int i = 1; i < H - 1; ++i) {
+        for (int j = 1; j < W - 1; ++j) {
+            years[B[i][j]].push_back(i * W + j);
+        }
+    }
+
+    // Union-Find to manage connected components
+    vector<int> parent(H * W);
+    vector<int> size(H * W, 1);
+    iota(parent.begin(), parent.end(), 0);
+
+    function<int(int)> find = [&](int x) {
+        return parent[x] == x ? parent[x] : parent[x] = find(parent[x]);
+    };
+
+    auto unite = [&](int a, int b) {
+        int ra = find(a), rb = find(b);
+        if (ra == rb) return;
+        if (size[ra] < size[rb]) swap(ra, rb);
+        parent[rb] = ra;
+        size[ra] += size[rb];
+    };
+
+    // Directions: up, down, left, right
+    vector<int> dx{-1, 1, 0, 0};
+    vector<int> dy{0, 0, -1, 1};
+
+    int totalCells = (H - 2) * (W - 2);
+    vector<bool> submerged(H * W, false);
+
+    // The root representing the outer sea (border)
+    int seaRoot = find(0);  // (0, 0) is outside the island
+
+    for (int year = 1; year <= Y; ++year) {
+        // Process all cells with elevation == year
+        for (int pos : years[year]) {
+            int i = pos / W;
+            int j = pos % W;
+            int idx = i * W + j;
+            submerged[idx] = true;
+
+            // Try to connect with neighbors that are already submerged
+            for (int d = 0; d < 4; ++d) {
+                int ni = i + dx[d];
+                int nj = j + dy[d];
+                int nidx = ni * W + nj;
+                if (submerged[nidx]) {
+                    unite(idx, nidx);
+                }
+            }
+
+            // If this cell touches border, connect to sea
+            if (i == 0 || i == H - 1 || j == 0 || j == W - 1) {
+                unite(idx, seaRoot);
+            }
+        }
+
+        // Count land not connected to the sea
+        int landCount = 0;
+        for (int pos : years[0]) landCount += !submerged[pos];
+        for (int i = 1; i < H - 1; ++i) {
+            for (int j = 1; j < W - 1; ++j) {
+                int idx = i * W + j;
+                if (!submerged[idx] && find(idx) != find(seaRoot)) {
+                    landCount++;
+                }
+            }
+        }
+        cout << landCount << '\n';
+    }
+
+    return 0;
+}
+```

@@ -1,0 +1,34 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define ll long long
+#define rep(i,n) for(int i=0;i<(int)n;i++)
+#define vi vector<int>
+#define vl vector<ll>
+#define vb vector<bool>
+
+int main(){
+    ios::sync_with_stdio(false); cin.tie(0); cout.tie(0);
+    int n,q;cin >> n >> q;
+    vi a(n), b(q);
+    vl dists(n*q);
+    
+    rep(i,n){cin >> a[i];}
+    rep(j,q){
+        cin >> b[j] >> k[j];
+    }
+
+    // Calculate all distances
+    rep(i,n){
+        rep(j,q){
+            dists[i+j*n] = abs(a[i] - b[j]);
+        }
+    }
+
+    // Sort distances
+    sort(dists.begin(), dists.end());
+
+    // Query processing
+    rep(j,q){
+        cout << dists[(k[j]-1)*n + j-1] << '\n';
+    }
+}

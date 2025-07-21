@@ -1,0 +1,49 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+const int N = 2e6 + 5;
+int n, m;
+long long a[N];
+map<long long, long long> prefixCount;
+
+int main() {
+    ios::sync_with_stdio(0);
+    cin.tie(0);
+    cout.tie(0);
+
+    cin >> n >> m;
+    for (int i = 0; i < n; ++i) {
+        cin >> a[i];
+        a[i + n] = a[i]; // Duplicate array for circular handling
+    }
+
+    long long total = 0;
+    long long prefixSum = 0;
+
+    // Initialize with 0 mod m since empty prefix is valid
+    prefixCount[0] = 1;
+
+    for (int i = 0; i < 2 * n; ++i) {
+        prefixSum += a[i];
+
+        long long modVal = prefixSum % m;
+
+        // Add count of current mod value to total
+        total += prefixCount[modVal];
+
+        // Increment the count only if we're in the first n elements
+        if (i < n) {
+            prefixCount[modVal]++;
+        } else {
+            // Remove contribution from prefix sums no longer in window
+            long long removeMod = (prefixSum - a[i - n]) % m;
+            prefixCount[removeMod]--;
+            if (prefixCount[removeMod] == 0) {
+                prefixCount.erase(removeMod);
+            }
+        }
+    }
+
+    cout << total << endl;
+    return 0;
+}

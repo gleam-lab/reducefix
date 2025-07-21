@@ -1,0 +1,44 @@
+#include<bits/stdc++.h>
+using namespace std;
+#define int long long 
+vector<pair<int,pair<int,int>>>G[200005]; // Use a vector of pairs to store edge weight and vertices
+int dist[200005], dist2[200005], a[200005], n, m;
+void dijkstra(int src){
+    priority_queue<pair<int, int>, vector<pair<int, int>>, greater<pair<int, int>>> pq; // Min-heap
+    pq.push({0, src});
+    while(!pq.empty()){
+        int d = pq.top().first;
+        int u = pq.top().second;
+        pq.pop();
+        if(d > dist[u]) continue;
+        for(auto edge : G[u]){
+            int v = edge.first;
+            int weight = edge.second;
+            if(dist[v] > d + weight + a[v]){
+                dist[v] = d + weight + a[v];
+                pq.push({dist[v], v});
+            }
+        }
+    }
+}
+
+signed main() {
+    scanf("%lld%lld", &n, &m);
+    for(int i = 1; i <= n; i++){
+        scanf("%lld", &a[i]);
+    }
+    for(int i = 1; i <= m; i++){
+        int u, v, w;
+        scanf("%lld%lld%lld", &u, &v, &w);
+        G[u].push_back({v, w}); // Store edges with their weights
+        G[v].push_back({u, w}); // Since the graph is undirected
+    }
+    memset(dist, 0x3f, sizeof(dist)); // Initialize distances to a large value
+    dist[1] = a[1]; // Start from vertex 1, whose weight is a[1]
+    dijkstra(1); // Run Dijkstra's algorithm starting from vertex 1
+    for(int i = 2; i <= n; i++){
+        cout << dist[i] << ' ';
+    }
+    cout << '\n';
+    return 0;
+}

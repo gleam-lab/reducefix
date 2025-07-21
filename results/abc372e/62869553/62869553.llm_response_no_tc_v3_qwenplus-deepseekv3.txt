@@ -1,0 +1,82 @@
+To fix this code, we need to address several issues:
+
+1. **Input Reading**: The original code incorrectly reads `q` before `n`, which should be `n` before `q`.
+2. **Union-Find Structure**: The union-find operations are correctly implemented, but the merging of the top 10 largest vertices is flawed. The code attempts to merge the top 10 vertices by appending the top 10 of one set to another and then sorting. This approach is inefficient and incorrect because it doesn't maintain the top 10 largest vertices in each set.
+3. **Handling Type 2 Queries**: The code directly accesses the top 10 vertices without ensuring that the `k`-th largest exists, leading to incorrect outputs or out-of-bound accesses.
+
+### Approaches
+1. **Union-Find with Rank**: Utilize the union-find data structure to manage connected components efficiently.
+2. **Maintaining Top 10 Vertices per Component**: For each component, maintain a sorted list of the top 10 largest vertices. When merging two components, merge their top 10 lists and keep only the top 10 elements.
+3. **Efficient Merging**: When merging two components, combine their top 10 lists, sort them in descending order, and keep the top 10 elements to ensure the result is always the top 10 largest vertices in the merged component.
+
+### Solution Code
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+const int MAXN = 200005;
+
+vector<int> as[MAXN];
+int fa[MAXN];
+
+int find(int x) {
+    if (fa[x] != x) {
+        fa[x] = find(fa[x]);
+    }
+    return fa[x];
+}
+
+void merge(int x, int y) {
+    x = find(x);
+    y = find(y);
+    if (x == y) return;
+    if (as[x].size() < as[y].size()) {
+        swap(x, y);
+    }
+    vector<int> merged;
+    merged.reserve(as[x].size() + as[y].size());
+    merge(as[x].begin(), as[x].end(), as[y].begin(), as[y].end(), back_inserter(merged), greater<int>());
+    if (merged.size() > 10) {
+        merged.resize(10);
+    }
+    as[x] = merged;
+    fa[y] = x;
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int N, Q;
+    cin >> N >> Q;
+    
+    for (int i = 1; i <= N; ++i) {
+        fa[i] = i;
+        as[i] = {i};
+    }
+    
+    while (Q--) {
+        int op, u, v;
+        cin >> op >> u >> v;
+        if (op == 1) {
+            merge(u, v);
+        } else {
+            int root = find(u);
+            if (v > as[root].size()) {
+                cout << -1 << '\n';
+            } else {
+                cout << as[root][v - 1] << '\n';
+            }
+        }
+    }
+    
+    return 0;
+}
+```
+
+### Explanation
+1. **Union-Find Structure**: The `find` function uses path compression to optimize future queries. The `merge` function combines two sets by size, ensuring smaller trees are merged into larger ones to keep the structure balanced.
+2. **Top 10 Maintenance**: Each component's top 10 vertices are stored in a sorted list (descending order). When merging, the lists of both components are combined and sorted. Only the top 10 elements are retained to maintain efficiency.
+3. **Query Handling**: For Type 2 queries, the code checks if the requested `k`-th largest vertex exists within the top 10 of the component. If not, it outputs `-1`; otherwise, it retrieves the vertex from the sorted list.
+
+This approach ensures efficient handling of up to 200,000 vertices and queries, maintaining optimal performance with logarithmic time complexity for union and find operations, and linear time for merging top 10 lists.

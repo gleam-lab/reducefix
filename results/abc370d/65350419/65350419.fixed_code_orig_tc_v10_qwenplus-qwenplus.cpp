@@ -1,0 +1,77 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define rep(i,n) for(int i = 0; i < (n); i++)
+using ll = long long;
+
+int main() {
+    int h, w, q;
+    cin >> h >> w >> q;
+    
+    // Maintain sets of existing walls in each row and column
+    vector<set<int>> row(h), col(w);
+    
+    // Initialize all cells with walls
+    for (int i = 0; i < h; ++i) {
+        for (int j = 0; j < w; ++j) {
+            row[i].insert(j);
+            col[j].insert(i);
+        }
+    }
+
+    for (int qi = 0; qi < q; ++qi) {
+        int r, c;
+        cin >> r >> c;
+        r--; c--;
+
+        // If there's a wall at (r,c), destroy it
+        if (row[r].count(c)) {
+            row[r].erase(c);
+            col[c].erase(r);
+        } else {
+            // Otherwise, find the nearest walls in four directions
+
+            // Up
+            auto it_up = col[c].lower_bound(r);
+            if (it_up != col[c].begin()) {
+                --it_up;
+                int u = *it_up;
+                col[c].erase(u);
+                row[u].erase(c);
+            }
+
+            // Down
+            auto it_down = col[c].upper_bound(r);
+            if (it_down != col[c].end()) {
+                int d = *it_down;
+                col[c].erase(d);
+                row[d].erase(c);
+            }
+
+            // Left
+            auto it_left = row[r].lower_bound(c);
+            if (it_left != row[r].begin()) {
+                --it_left;
+                int l = *it_left;
+                row[r].erase(l);
+                col[l].erase(r);
+            }
+
+            // Right
+            auto it_right = row[r].upper_bound(c);
+            if (it_right != row[r].end()) {
+                int ri = *it_right;
+                row[r].erase(ri);
+                col[ri].erase(r);
+            }
+        }
+    }
+
+    // Count remaining walls
+    int ans = 0;
+    for (int i = 0; i < w; ++i) {
+        ans += col[i].size();
+    }
+    cout << ans << endl;
+
+    return 0;
+}

@@ -1,0 +1,93 @@
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+#define all(x) (x).begin(), (x).end()
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int N, M;
+    ll K;
+    cin >> N >> M >> K;
+    vector<ll> A(N);
+    for (int i = 0; i < N; ++i) {
+        cin >> A[i];
+    }
+
+    vector<ll> sortedA = A;
+    sort(sortedA.begin(), sortedA.end());
+
+    // Precompute prefix sums of the sorted votes
+    vector<ll> prefix(N + 1, 0);
+    for (int i = 0; i < N; ++i) {
+        prefix[i + 1] = prefix[i] + sortedA[i];
+    }
+
+    vector<ll> C(N, -1);
+
+    for (int i = 0; i < N; ++i) {
+        ll low = 0;
+        ll high = K + 1;
+        ll best = -1;
+
+        while (low <= high) {
+            ll mid = (low + high) / 2;
+            ll target = A[i] + mid;
+
+            // Binary search to find how many candidates have more than target votes
+            int idx = lower_bound(sortedA.begin(), sortedA.end(), target) - sortedA.begin();
+            int stronger = N - idx;
+
+            // We need to make sure that fewer than M candidates can have more votes than this candidate
+            if (stronger < M) {
+                best = mid;
+                high = mid - 1;
+            } else {
+                // Need to calculate if it's possible to limit others' votes
+                int pos = lower_bound(sortedA.begin(), sortedA.end(), target, greater<ll>()) - sortedA.begin();
+
+                // Find how many candidates could potentially have more than this one
+                int upper = N - pos;
+                if (upper >= M) {
+                    // Too many candidates could be above us, not enough
+                    low = mid + 1;
+                    continue;
+                }
+
+                // Try to cap those who are above `target` by reducing their votes to at most `target`
+                int j = N - M;
+                if (j < 0) j = 0;
+
+                ll required = 0;
+                for (int k = j; k < N; ++k) {
+                    if (sortedA[k] >= target && k != i) {
+                        required += (sortedA[k] - target + 1);
+                    }
+                }
+
+                if (required <= K) {
+                    best = mid;
+                    high = mid - 1;
+                } else {
+                    low = mid + 1;
+                }
+            }
+        }
+
+        if (best == -1) {
+            C[i] = -1;
+        } else {
+            C[i] = best;
+        }
+    }
+
+    for (auto x : C) {
+        cout << x << " ";
+    }
+    cout << endl;
+
+    return 0;
+}
+```

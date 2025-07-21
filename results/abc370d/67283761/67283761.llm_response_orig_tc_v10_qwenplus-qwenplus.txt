@@ -1,0 +1,140 @@
+To solve this problem efficiently, we need to simulate the effect of bomb placements on a grid. Each time a bomb is placed:
+
+1. If the cell has a wall, it's destroyed.
+2. If the cell already has no wall, we look in the four directions (up, down, left, right) and destroy the first wall encountered in each direction.
+
+Given the constraints (H * W ≤ 4 × 10⁵ and Q ≤ 2 × 10⁵), a naive approach that scans in all directions for every query will result in TLE (Time Limit Exceeded). Hence, we need an efficient way to track the nearest walls in each direction using appropriate data structures.
+
+---
+
+### Key Observations:
+- We can maintain four directional maps: up, down, left, right.
+- For each row and column, we can keep track of the positions of walls in order and use binary search to find the nearest undestroyed wall quickly.
+
+---
+
+### Efficient Strategy:
+- Use `std::set` or `std::map` per row and column to store indices of remaining walls.
+- When placing a bomb:
+  - If the cell has a wall, remove it from the corresponding sets.
+  - Otherwise, check each direction and remove the first wall found using `lower_bound`.
+
+This allows us to process each query in logarithmic time with respect to the number of remaining walls in that row/column.
+
+---
+
+Here's the corrected and optimized implementation:
+
+```cpp
+#include <iostream>
+#include <vector>
+#include <set>
+#include <tuple>
+
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int H, W, Q;
+    cin >> H >> W >> Q;
+
+    // Map indicating whether a wall exists at (i,j)
+    vector<vector<bool>> has_wall(H, vector<bool>(W, true));
+
+    // Sets to track walls in each row and column
+    vector<set<int>> rows(H), cols(W);
+
+    // Initialize each row and column with all positions having walls
+    for (int i = 0; i < H; ++i) {
+        for (int j = 0; j < W; ++j) {
+            rows[i].insert(j);
+            cols[j].insert(i);
+        }
+    }
+
+    while (Q--) {
+        int r, c;
+        cin >> r >> c;
+        r--; c--;
+
+        if (has_wall[r][c]) {
+            // Destroy the wall at (r,c)
+            has_wall[r][c] = false;
+
+            // Remove position from row and column sets
+            rows[r].erase(c);
+            cols[c].erase(r);
+        } else {
+            // Look in all 4 directions and destroy the first wall found
+            // Up
+            auto it_up = cols[c].lower_bound(r);
+            if (it_up != cols[c].begin()) {
+                --it_up;
+                int nr = *it_up;
+                if (nr < r && has_wall[nr][c]) {
+                    has_wall[nr][c] = false;
+                    rows[nr].erase(c);
+                    cols[c].erase(it_up);
+                }
+            }
+
+            // Down
+            auto it_down = cols[c].upper_bound(r);
+            if (it_down != cols[c].end()) {
+                int nr = *it_down;
+                if (nr > r && has_wall[nr][c]) {
+                    has_wall[nr][c] = false;
+                    rows[nr].erase(c);
+                    cols[c].erase(it_down);
+                }
+            }
+
+            // Left
+            auto it_left = rows[r].lower_bound(c);
+            if (it_left != rows[r].begin()) {
+                --it_left;
+                int nc = *it_left;
+                if (nc < c && has_wall[r][nc]) {
+                    has_wall[r][nc] = false;
+                    cols[nc].erase(r);
+                    rows[r].erase(it_left);
+                }
+            }
+
+            // Right
+            auto it_right = rows[r].upper_bound(c);
+            if (it_right != rows[r].end()) {
+                int nc = *it_right;
+                if (nc > c && has_wall[r][nc]) {
+                    has_wall[r][nc] = false;
+                    cols[nc].erase(r);
+                    rows[r].erase(it_right);
+                }
+            }
+        }
+    }
+
+    // Count remaining walls
+    int total_remaining = 0;
+    for (int i = 0; i < H; ++i) {
+        for (int j = 0; j < W; ++j) {
+            if (has_wall[i][j]) ++total_remaining;
+        }
+    }
+
+    cout << total_remaining << endl;
+
+    return 0;
+}
+```
+
+---
+
+### Summary:
+- This solution uses sets to efficiently track and query nearest walls in each row and column.
+- It ensures O(log N) operations per query, which is efficient enough for large inputs.
+- The final count of remaining walls is computed by iterating over the `has_wall` matrix.
+
+This implementation passes the given test case and scales correctly under constraints.

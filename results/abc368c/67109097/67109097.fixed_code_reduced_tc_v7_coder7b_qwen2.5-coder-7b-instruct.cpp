@@ -1,0 +1,30 @@
+#include<bits/stdc++.h>
+using namespace std;
+
+int main() {
+    int n;
+    cin >> n;
+    vector<long long> h(n);
+    for(int i=0;i<n;i++)
+        cin>>h[i];
+
+    long long t=0;
+    while(true){
+        bool flag=false;
+        for(int i=0;i<n;i++){
+            if(h[i]>0){
+                flag=true;
+                t++;
+                if(t%3==0)
+                    h[i]-=3;
+                else
+                    h[i]--;
+            }
+        }
+        if(!flag)
+            break;
+    }
+
+    cout<<t<<endl;
+    return 0;
+}

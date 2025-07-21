@@ -1,0 +1,35 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int N;
+    cin >> N;
+
+    vector<long long> A(N), B(N - 1);
+    for (int i = 0; i < N; ++i) cin >> A[i];
+    for (int i = 0; i < N - 1; ++i) cin >> B[i];
+
+    sort(A.begin(), A.end());
+    sort(B.begin(), B.end());
+
+    multiset<long long> b_set(B.begin(), B.end());
+
+    // Try to match each toy with a suitable box
+    for (int i = 0; i < N; ++i) {
+        auto it = b_set.lower_bound(A[i]);
+        if (it != b_set.end()) {
+            b_set.erase(it); // Use this box
+        } else {
+            // Cannot find a suitable box in existing boxes, we need to buy one
+            cout << A[i] << endl;
+            return 0;
+        }
+    }
+
+    // If all toys are matched without needing an extra box, output -1
+    cout << -1 << endl;
+    return 0;
+}

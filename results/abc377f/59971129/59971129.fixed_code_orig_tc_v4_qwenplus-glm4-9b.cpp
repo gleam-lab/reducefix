@@ -1,0 +1,67 @@
+#include <iostream>
+#include <set>
+#include <map>
+#include <vector>
+
+using namespace std;
+
+typedef long long ll;
+
+int main() {
+    ll n, m;
+    cin >> n >> m;
+    vector<pair<ll, ll>> pieces(m);
+
+    for (ll i = 0; i < m; ++i) {
+        ll a, b;
+        cin >> a >> b;
+        pieces[i] = {a, b};
+    }
+
+    set<ll> rows, cols, diag1, diag2;
+    set<pair<ll, ll>> corners, edges;
+
+    for (ll i = 0; i < m; ++i) {
+        ll a = pieces[i].first;
+        ll b = pieces[i].second;
+        rows.insert(a);
+        cols.insert(b);
+        diag1.insert(a + b);
+        diag2.insert(a - b);
+        corners.insert({min(a, b), max(a, b)});
+        edges.insert({a, b});
+    }
+
+    ll totalEmptySquares = n * n;
+    ll capturedByRows = rows.size();
+    ll capturedByCols = cols.size();
+    ll capturedByDiag1 = diag1.size();
+    ll capturedByDiag2 = diag2.size();
+
+    // Remove corners and edges from the total count
+    for (auto &c : corners) {
+        totalEmptySquares--;
+    }
+    for (auto &e : edges) {
+        if (rows.count(e.first) || cols.count(e.first)) {
+            totalEmptySquares--;
+        }
+    }
+
+    // Subtract captured squares
+    for (ll r : rows) {
+        totalEmptySquares -= max(0LL, n - r);
+    }
+    for (ll c : cols) {
+        totalEmptySquares -= max(0LL, n - c);
+    }
+    for (ll d : diag1) {
+        totalEmptySquares -= max(0LL, n - d);
+    }
+    for (ll d : diag2) {
+        totalEmptySquares -= max(0LL, n - d);
+    }
+
+    cout << totalEmptySquares << endl;
+    return 0;
+}

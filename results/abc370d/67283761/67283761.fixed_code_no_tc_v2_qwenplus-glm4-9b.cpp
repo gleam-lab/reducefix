@@ -1,0 +1,45 @@
+#include <iostream>
+#include <vector>
+using namespace std;
+
+int main() {
+    int H, W, Q;
+    cin >> H >> W >> Q;
+    vector<vector<bool>> grid(H, vector<bool>(W, true)); // Initialize all cells with walls
+
+    for (int q = 0; q < Q; q++) {
+        int r, c;
+        cin >> r >> c;
+        --r; --c; // Convert to zero-indexed
+
+        // Check if the wall is destroyed by bomb placement
+        if (grid[r][c]) {
+            grid[r][c] = false; // Remove the wall
+        } else {
+            // Find the nearest wall in each direction
+            int u = -1, d = H, l = W, r = -1;
+            for (int i = r - 1; i >= 0; --i) if (grid[i][c]) u = i;
+            for (int i = r + 1; i < H; ++i) if (grid[i][c]) d = i;
+            for (int j = c - 1; j >= 0; --j) if (grid[r][j]) l = j;
+            for (int j = c + 1; j < W; ++j) if (grid[r][j]) r = j;
+
+            // Remove walls in all four directions
+            if (u != -1) for (int i = r - 1; i > u; --i) grid[i][c] = false;
+            if (d != H) for (int i = r + 1; i < d; ++i) grid[i][c] = false;
+            if (l != W) for (int j = c - 1; j > l; --j) grid[r][j] = false;
+            if (r != -1) for (int j = c + 1; j < r; ++j) grid[r][j] = false;
+        }
+    }
+
+    // Calculate remaining walls
+    int remainingWalls = 0;
+    for (int i = 0; i < H; ++i) {
+        for (int j = 0; j < W; ++j) {
+            remainingWalls += grid[i][j];
+        }
+    }
+
+    cout << remainingWalls << endl;
+
+    return 0;
+}

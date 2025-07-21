@@ -1,0 +1,46 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int64_t N, M;
+    cin >> N >> M;
+
+    unordered_set<int64_t> attacked_or_occupied;
+    // Use a hash to represent (a, b) as a single integer: a * N + b
+    // This avoids using pair in the hash table which can be slow for large M
+
+    for (int64_t i = 0; i < M; ++i) {
+        int64_t a, b;
+        cin >> a >> b;
+
+        // Mark current piece position
+        attacked_or_occupied.insert(a * N + b);
+
+        // Possible directions the knight can attack
+        vector<pair<int64_t, int64_t>> directions = {
+            {2, 1}, {1, 2}, {-1, 2}, {-2, 1},
+            {-2, -1}, {-1, -2}, {1, -2}, {2, -1}
+        };
+
+        for (const auto& [dx, dy] : directions) {
+            int64_t na = a + dx;
+            int64_t nb = b + dy;
+            if (1 <= na && na <= N && 1 <= nb && nb <= N) {
+                attacked_or_occupied.insert(na * N + nb);
+            }
+        }
+    }
+
+    // Total number of cells is N*N
+    // Subtract the number of attacked or occupied cells
+    int64_t total_cells = N * N;
+    int64_t forbidden_cells = attacked_or_occupied.size();
+    int64_t result = total_cells - forbidden_cells;
+
+    cout << result << endl;
+
+    return 0;
+}

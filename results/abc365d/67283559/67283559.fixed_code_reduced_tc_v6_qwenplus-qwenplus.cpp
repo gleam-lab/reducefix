@@ -1,0 +1,78 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int playGame(const string& S, const vector<char>& hand, char first_move) {
+    vector<char> next = hand;
+    int total = 0;
+    
+    // Set the initial move
+    char use = first_move;
+    // Remove the used move from available options
+    vector<char> new_next;
+    for (auto c : hand) {
+        if (c != use) new_next.push_back(c);
+    }
+    next = new_next;
+    
+    for (size_t i = 1; i < S.size(); i++) {
+        int score = 0;
+        char best_move = ' ';
+        
+        // Try each possible move to find the optimal one
+        for (char move : next) {
+            if ((move == 'R' && S[i] == 'S') || 
+                (move == 'P' && S[i] == 'R') || 
+                (move == 'S' && S[i] == 'P')) {
+                best_move = move;
+                score = 1;
+                break;
+            }
+        }
+        
+        total += score;
+        
+        // Update available moves for next round
+        new_next.clear();
+        for (auto c : hand) {
+            if (c != best_move) new_next.push_back(c);
+        }
+        next = new_next;
+    }
+    
+    return total;
+}
+
+int main() {
+    int N;
+    cin >> N;
+    string S;
+    cin >> S;
+    
+    vector<char> hand = {'R', 'P', 'S'};
+    
+    // Try both strategies and take the maximum score
+    int max_score = 0;
+    
+    // First strategy: choose optimally for first move
+    for (char first_move : hand) {
+        if ((first_move == 'R' && S[0] == 'S') || 
+            (first_move == 'P' && S[0] == 'R') || 
+            (first_move == 'S' && S[0] == 'P')) {
+            // We win the first round
+            max_score = max(max_score, 1 + playGame(S, hand, first_move));
+            break;
+        }
+    }
+    
+    // Second strategy: start with a random move (handles case where we lose/draw first round)
+    for (char first_move : hand) {
+        bool is_first_win = ((first_move == 'R' && S[0] == 'S') || 
+                             (first_move == 'P' && S[0] == 'R') || 
+                             (first_move == 'S' && S[0] == 'P'));
+        int initial_score = is_first_win ? 1 : 0;
+        max_score = max(max_score, initial_score + playGame(S, hand, first_move));
+    }
+    
+    cout << max_score;
+    return 0;
+}

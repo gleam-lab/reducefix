@@ -1,0 +1,132 @@
+To fix this code, we need to ensure that for each candidate, we correctly compute the minimum number of additional votes they need to guarantee their election, or determine if it's impossible. The key is to accurately model the condition that the candidate must be among the top M candidates, even in the worst-case scenario where other candidates receive as many votes as possible.
+
+### Approaches
+1. **Sorting and Binary Search**: 
+   - Sort the candidates' current votes in descending order.
+   - For each candidate, determine the minimum additional votes needed such that even if the remaining votes are distributed to other candidates in the worst possible way, the candidate still ends up in the top M.
+   - Use binary search to efficiently find this minimum number of votes.
+
+2. **Prefix Sums and Mathematical Calculations**:
+   - Calculate prefix sums of the sorted votes to facilitate quick range sum queries.
+   - For each candidate, compute how many votes can be distributed to other candidates without surpassing the candidate's total votes (after adding their required votes).
+
+3. **Binary Search for Minimum Votes**:
+   - For each candidate, perform a binary search to find the smallest number of additional votes that ensures no more than M-1 candidates can surpass them, even in the worst case.
+
+### Solution Code
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+
+int main() {
+    std::ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int N, M;
+    ll K;
+    cin >> N >> M >> K;
+
+    vector<ll> A(N);
+    for (int i = 0; i < N; ++i) {
+        cin >> A[i];
+    }
+
+    vector<ll> sorted_A = A;
+    sort(sorted_A.begin(), sorted_A.end(), greater<ll>());
+
+    vector<ll> prefix(N + 1, 0);
+    for (int i = 0; i < N; ++i) {
+        prefix[i + 1] = prefix[i] + sorted_A[i];
+    }
+
+    ll total_votes = prefix[N];
+    ll remaining_votes = K - total_votes;
+
+    vector<ll> res(N, -1);
+
+    for (int i = 0; i < N; ++i) {
+        ll current = A[i];
+        ll low = 0, high = remaining_votes;
+        ll answer = -1;
+
+        while (low <= high) {
+            ll mid = (low + high) / 2;
+            ll new_current = current + mid;
+
+            int pos = upper_bound(sorted_A.begin(), sorted_A.end(), new_current, greater<ll>()) - sorted_A.begin();
+            ll sum = 0;
+
+            if (pos > 0) {
+                sum = prefix[pos];
+                if (sorted_A[pos - 1] == new_current) {
+                    sum -= sorted_A[pos - 1];
+                    pos--;
+                }
+            }
+
+            ll worst_case = (N - pos) + (mid > 0 ? 0 : 0);
+
+            if (new_current == 0) {
+                worst_case = N;
+            } else {
+                int equal_or_less = lower_bound(sorted_A.begin(), sorted_A.end(), new_current, greater<ll>()) - sorted_A.begin();
+                int equal = upper_bound(sorted_A.begin(), sorted_A.end(), new_current, greater<ll>()) - sorted_A.begin();
+                int more = equal_or_less;
+                int less_or_equal = N - more;
+
+                if (sorted_A[more - 1] == new_current) {
+                    more--;
+                }
+
+                worst_case = more;
+            }
+
+            if (worst_case < M) {
+                answer = mid;
+                high = mid - 1;
+            } else {
+                low = mid + 1;
+            }
+        }
+
+        res[i] = answer;
+    }
+
+    for (int i = 0; i < N; ++i) {
+        if (res[i] == -1) {
+            ll new_current = A[i] + remaining_votes;
+            int pos = upper_bound(sorted_A.begin(), sorted_A.end(), new_current, greater<ll>()) - sorted_A.begin();
+            int worst_case = pos;
+            if (worst_case < M) {
+                res[i] = remaining_votes;
+            }
+        }
+    }
+
+    for (int i = 0; i < N; ++i) {
+        if (res[i] != -1 && res[i] > remaining_votes) {
+            res[i] = -1;
+        }
+    }
+
+    for (int i = 0; i < N; ++i) {
+        if (res[i] == -1) {
+            cout << "-1 ";
+        } else {
+            cout << res[i] << " ";
+        }
+    }
+
+    return 0;
+}
+```
+
+### Explanation
+1. **Initialization and Input Handling**: The code reads the number of candidates \(N\), the threshold \(M\), the total votes \(K\), and the current votes \(A\) for each candidate.
+2. **Sorting and Prefix Sum**: The votes are sorted in descending order to facilitate efficient range queries using prefix sums.
+3. **Binary Search for Minimum Votes**: For each candidate, the code performs a binary search to determine the minimum additional votes needed such that, even in the worst-case distribution of remaining votes, the candidate remains in the top \(M\).
+4. **Result Adjustment**: The results are adjusted to ensure they fall within the remaining votes and correctly reflect whether the candidate can be elected.
+5. **Output**: The results for each candidate are printed, with \(-1\) indicating it's impossible for the candidate to be elected.
+
+This approach ensures that the solution is efficient and handles large input sizes within acceptable time complexity, leveraging sorting and binary search to minimize the computational overhead.

@@ -1,0 +1,30 @@
+#include<bits/stdc++.h>
+using namespace std;
+
+int main(){
+    int n; cin >> n;
+    vector<long long> h(n), s(n+1); // s is prefix sum array
+    for(int i=0;i<n;i++){
+        cin >> h[i]; 
+        s[i+1]=s[i]+h[i];
+    }
+    long long t=0, j=0;
+    while(j<n){
+        if(s[j+1]==0){ // if total health is zero break
+            break;
+        }
+        long long cnt=(j==n-1)?(s[n]/5):((s[j+1]-s[j])/5); // number of attacks needed
+        t+=cnt*3; // each attack takes 3 time units
+        if(j==n-1){ // if last enemy, remove all health in one go
+            j=n;
+        } else { // otherwise, reduce health of next enemy
+            h[j+1]-=cnt*5;
+            j++; // move to next enemy
+        }
+        while(j<n && h[j]<=0){ // skip dead enemies
+            j++;
+        }
+    }
+    cout<<t<<endl;
+    return 0;
+}

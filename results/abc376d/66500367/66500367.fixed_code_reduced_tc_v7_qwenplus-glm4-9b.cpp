@@ -1,0 +1,49 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+using ll = long long;
+using pii = pair <int, int>;
+
+const int N = 2e5 + 5;
+vector <int> g[N];
+int n, m, dep[N];
+
+bool bfs () {
+    queue <int> q;
+    q.push (1);
+    dep[1] = 1;
+    bool found = false;
+    while (!q.empty () && !found) {
+        int u = q.front ();
+        q.pop ();
+        for (auto v : g[u]) {
+            if (v != dep[u]) {
+                dep[v] = dep[u] + 1;
+                q.push (v);
+            }
+        }
+        found = (dep[u] == n); // Check if we have visited all nodes
+    }
+    return found;
+}
+
+int main () {
+    ios :: sync_with_stdio (false);
+    cin.tie (nullptr);
+    cout.tie (nullptr);
+    
+    cin >> n >> m;
+    for (int i = 1; i <= m; i++) {
+        int u, v;
+        cin >> u >> v;
+        g[u].push_back (v);
+    }
+
+    if (bfs()) {
+        cout << -1 << '\n';
+    } else {
+        cout << "The tree is not connected." << '\n';
+    }
+
+    return 0;
+}

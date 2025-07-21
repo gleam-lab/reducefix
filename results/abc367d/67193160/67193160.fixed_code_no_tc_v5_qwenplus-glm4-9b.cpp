@@ -1,0 +1,44 @@
+#include<bits/stdc++.h>
+using namespace std;
+const int N=1e6+5;
+int n,m,k,sum,cnt,a[N],b[N],d[N];
+
+int main() {
+    ios::sync_with_stdio(0),cin.tie(0),cout.tie(0);
+    cin >> n >> m;
+    // Extend array a to handle wrap-around using modulo operation directly
+    for (int i = 1; i <= n; i++) {
+        cin >> a[i];
+        a[i+n] = (a[i] % m);  // Use modulo operation with m to handle wrap-around
+    }
+    
+    // Initialize the frequency array for the modulo m values
+    for (int i = 0; i < m; i++) {
+        b[i] = 0;
+    }
+    
+    // Initialize the sum of the first n elements
+    for (int i = 1; i <= n; i++) {
+        d[i] = a[i];
+        k = i % m;
+        b[k]++;
+        sum += b[k];
+    }
+    
+    // Process the rest of the elements up to 2n-1
+    for (int i = n+1; i <= n*2-1; i++) {
+        // Adjust the sum for the element that is being removed from the frequency array
+        k = (i - n - 1) % m;
+        b[k]--;
+        sum -= b[k];
+        
+        // Add the new element value
+        d[i] = (d[i-1] + a[i]) % m;
+        k = d[i];
+        b[k]++;
+        sum += b[k];
+    }
+    
+    cout << sum;
+    return 0;
+}

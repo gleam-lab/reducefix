@@ -1,0 +1,88 @@
+To solve this problem efficiently, we need to maintain the state of the grid while handling each query. Given the constraints, a straightforward approach would be too slow due to the potentially large number of queries. Therefore, we need an efficient way to manage the placement of bombs and the destruction of walls.
+
+One effective strategy is to use a combination of sets and binary search to keep track of the positions of walls and efficiently determine which walls should be destroyed. Here's the corrected C++ code that addresses the issues:
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+#define rep(i, n) for (int i = 0; i < (n); ++i)
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int h, w, q;
+    cin >> h >> w >> q;
+
+    vector<set<int>> cols(h), rows(w);
+
+    rep(i, h) rep(j, w) {
+        cols[i].insert(j);
+        rows[j].insert(i);
+    }
+
+    rep(qi, q) {
+        int r, c;
+        cin >> r >> c;
+        --r; --c;
+
+        if (!cols[r].empty() && *cols[r].begin() == c) {
+            cols[r].erase(cols[r].begin());
+            rows[c].erase(rows[c].begin());
+        } else {
+            // Find the nearest wall above the current position
+            auto it_up = cols[r].upper_bound(c);
+            if (it_up != cols[r].begin()) {
+                --it_up;
+                if (*it_up == c) continue;
+                cols[r].erase(it_up);
+                rows[*it_up].erase(r);
+            }
+
+            // Find the nearest wall below the current position
+            it_up = cols[r].upper_bound(c);
+            if (it_up != cols[r].end()) {
+                cols[r].erase(it_up);
+                rows[*it_up].erase(r);
+            }
+
+            // Find the nearest wall to the left of the current position
+            it_up = rows[c].upper_bound(r);
+            if (it_up != rows[c].begin()) {
+                --it_up;
+                if (*it_up == r) continue;
+                rows[c].erase(it_up);
+                cols[*it_up].erase(c);
+            }
+
+            // Find the nearest wall to the right of the current position
+            it_up = rows[c].upper_bound(r);
+            if (it_up != rows[c].end()) {
+                rows[c].erase(it_up);
+                cols[*it_up].erase(c);
+            }
+        }
+    }
+
+    int ans = 0;
+    rep(i, w) {
+        ans += cols[i].size();
+    }
+
+    cout << ans << '\n';
+    return 0;
+}
+```
+
+### Explanation:
+1. **Initialization**: We initialize two vectors of sets, `cols` and `rows`, where `cols[i]` contains the set of column indices where there is a wall in row `i`, and similarly for `rows`.
+
+2. **Processing Queries**:
+   - For each query, we decrement the row and column indices since the input is 1-based.
+   - If there is a wall at `(r, c)`, we remove it from both the corresponding row and column sets.
+   - If there is no wall at `(r, c)`, we look for the nearest walls in all four directions (above, below, left, right) and remove them from their respective sets.
+
+3. **Counting Remaining Walls**: Finally, we count the total number of remaining walls by summing the sizes of the `cols` sets.
+
+This approach ensures that each operation is efficient and handles all the constraints effectively.

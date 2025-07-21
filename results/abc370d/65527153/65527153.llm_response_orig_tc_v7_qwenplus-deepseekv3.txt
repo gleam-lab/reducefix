@@ -1,0 +1,102 @@
+To fix this code, we need to correctly handle the bomb placement and wall destruction process as described in the problem statement. The initial solution had some logical flaws in how it identified and removed walls in the four directions (up, down, left, right) when a bomb was placed on an empty cell. 
+
+Here’s the corrected approach:
+1. Use separate sets for each row and column to track the remaining walls.
+2. For each query, if the cell (R_q, C_q) has a wall, remove it.
+3. If the cell is empty, find the nearest walls in all four directions and remove them. This involves:
+   - For the "up" direction: Find the largest row less than R_q with a wall in column C_q.
+   - For the "down" direction: Find the smallest row greater than R_q with a wall in column C_q.
+   - For the "left" direction: Find the largest column less than C_q with a wall in row R_q.
+   - For the "right" direction: Find the smallest column greater than C_q with a wall in row R_q.
+
+The corrected code efficiently handles these operations using sets for each row and column, ensuring O(log n) time per operation, which is optimal for the problem constraints.
+
+### Fixed Code
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int H, W, Q;
+    cin >> H >> W >> Q;
+
+    vector<set<int>> row_walls(H + 1);
+    vector<set<int>> col_walls(W + 1);
+
+    for (int i = 1; i <= H; ++i) {
+        for (int j = 1; j <= W; ++j) {
+            row_walls[i].insert(j);
+            col_walls[j].insert(i);
+        }
+    }
+
+    while (Q--) {
+        int R, C;
+        cin >> R >> C;
+
+        if (row_walls[R].count(C)) {
+            row_walls[R].erase(C);
+            col_walls[C].erase(R);
+            continue;
+        }
+
+        // Up
+        auto it_up = col_walls[C].lower_bound(R);
+        if (it_up != col_walls[C].begin()) {
+            --it_up;
+            int r = *it_up;
+            row_walls[r].erase(C);
+            col_walls[C].erase(r);
+        }
+
+        // Down
+        auto it_down = col_walls[C].lower_bound(R);
+        if (it_down != col_walls[C].end()) {
+            int r = *it_down;
+            row_walls[r].erase(C);
+            col_walls[C].erase(r);
+        }
+
+        // Left
+        auto it_left = row_walls[R].lower_bound(C);
+        if (it_left != row_walls[R].begin()) {
+            --it_left;
+            int c = *it_left;
+            row_walls[R].erase(c);
+            col_walls[c].erase(R);
+        }
+
+        // Right
+        auto it_right = row_walls[R].lower_bound(C);
+        if (it_right != row_walls[R].end()) {
+            int c = *it_right;
+            row_walls[R].erase(c);
+            col_walls[c].erase(R);
+        }
+    }
+
+    long long ans = 0;
+    for (int i = 1; i <= H; ++i) {
+        ans += row_walls[i].size();
+    }
+    cout << ans << "\n";
+
+    return 0;
+}
+```
+
+### Explanation
+1. **Initialization**: We initialize sets for each row and column to keep track of walls. Each cell (i, j) is added to both `row_walls[i]` and `col_walls[j]`.
+2. **Processing Queries**: For each query:
+   - If the cell has a wall, it is removed from both sets.
+   - If the cell is empty, we find the nearest walls in all four directions and remove them:
+     - **Up**: The largest row less than `R` in column `C`.
+     - **Down**: The smallest row greater than `R` in column `C`.
+     - **Left**: The largest column less than `C` in row `R`.
+     - **Right**: The smallest column greater than `C` in row `R`.
+3. **Counting Remaining Walls**: After processing all queries, we count the remaining walls by summing the sizes of all `row_walls` sets (or `col_walls` sets, as they should be consistent).
+
+This approach ensures that we efficiently handle each query in logarithmic time, making the solution scalable for large inputs.

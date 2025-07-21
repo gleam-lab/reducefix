@@ -1,0 +1,52 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    int N, K;
+    cin >> N >> K;
+    vector<int> A(N);
+    for (int i = 0; i < N; ++i) {
+        cin >> A[i];
+    }
+
+    // We need to choose N-K elements such that the max - min is minimized
+    int window_size = N - K;
+    
+    // Maintain two heaps or use two deques to track min and max in sliding window
+    deque<int> maxdq;  // stores indices, decreasing order of values
+    deque<int> mindq;  // stores indices, increasing order of values
+
+    int result = numeric_limits<int>::max();
+
+    for (int i = 0; i < N; ++i) {
+        // Maintain maxdq: remove smaller elements from the end
+        while (!maxdq.empty() && A[i] >= A[maxdq.back()]) {
+            maxdq.pop_back();
+        }
+        maxdq.push_back(i);
+
+        // Maintain mindq: remove larger elements from the end
+        while (!mindq.empty() && A[i] <= A[mindq.back()]) {
+            mindq.pop_back();
+        }
+        mindq.push_back(i);
+
+        // Remove elements out of the current window
+        if (i >= window_size) {
+            if (!maxdq.empty() && maxdq.front() <= i - window_size) {
+                maxdq.pop_front();
+            }
+            if (!mindq.empty() && mindq.front() <= i - window_size) {
+                mindq.pop_front();
+            }
+        }
+
+        // Once window is valid, update result
+        if (i >= window_size - 1) {
+            result = min(result, A[maxdq.front()] - A[mindq.front()]);
+        }
+    }
+
+    cout << result << endl;
+    return 0;
+}

@@ -1,0 +1,70 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define rep(i,n) for(long long i=0;i<n;i++)
+using ll = long long;
+
+ll computeMinCost(ll a, ll b, ll p, ll q, ll required) {
+    // メモ化用配列（最小コスト）
+    vector<ll> dp(2 * max(a, b), 1e18);
+    dp[0] = 0;
+
+    // DPで初期部分の最小コストを計算
+    for (int i = 0; i < 2 * max(a, b); ++i) {
+        if (i + a < 2 * max(a, b)) dp[i + a] = min(dp[i + a], dp[i] + p);
+        if (i + b < 2 * max(a, b)) dp[i + b] = min(dp[i + b], dp[i] + q);
+    }
+
+    // 最小コストから線形性を利用する
+    ll cycle_len = a * b; // LCM of a and b, サイクル長
+    vector<ll> full_dp(cycle_len + 1, 1e18);
+    full_dp[0] = 0;
+
+    for (int i = 0; i < cycle_len; ++i) {
+        if (i + a < cycle_len) full_dp[i + a] = min(full_dp[i + a], full_dp[i] + p);
+        if (i + b < cycle_len) full_dp[i + b] = min(full_dp[i + b], full_dp[i] + q);
+    }
+
+    // 前処理: 各余りに対する最小コスト
+    vector<ll> min_remainder(cycle_len, 1e18);
+    for (int i = 0; i < cycle_len; ++i) {
+        min_remainder[i % cycle_len] = min(min_remainder[i % cycle_len], full_dp[i]);
+    }
+
+    // 必要個数に応じたコスト計算
+    ll full_cycles = required / cycle_len;
+    ll remainder = required % cycle_len;
+
+    return full_cycles * min_remainder[cycle_len - 1] + full_dp[remainder];
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+
+    int n;
+    ll x;
+    cin >> n >> x;
+
+    vector<ll> a(n), b(n), p(n), q(n);
+    for (int i = 0; i < n; ++i) {
+        cin >> a[i] >> p[i] >> b[i] >> q[i];
+    }
+
+    // 二分探索
+    ll left = 0, right = 1e18;
+    while (left < right) {
+        ll mid = (left + right + 1) / 2;
+        ll total_cost = 0;
+
+        for (int i = 0; i < n; ++i) {
+            total_cost += computeMinCost(a[i], b[i], p[i], q[i], mid);
+            if (total_cost > x) break;
+        }
+
+        if (total_cost <= x) left = mid;
+        else right = mid - 1;
+    }
+
+    cout << left << endl;
+    return 0;
+}

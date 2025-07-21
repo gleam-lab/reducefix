@@ -1,0 +1,45 @@
+#include<bits/stdc++.h>
+using namespace std;
+
+const int MAXN = 2e5 + 5;
+vector<int> adj[MAXN];
+priority_queue<int, vector<int>, greater<int>> pq[MAXN];
+
+void addEdge(int u, int v) {
+    adj[u].push_back(v);
+    adj[v].push_back(u);
+}
+
+void updatePQ(int v) {
+    pq[v].reset();
+    for(auto &u : adj[v]) {
+        if(pq[u].size() > 10) continue;
+        pq[v].push(u);
+    }
+}
+
+int main() {
+    ios_base::sync_with_stdio(false); cin.tie(NULL);
+    
+    int n, q; cin >> n >> q;
+    for(int i = 1; i <= n; ++i) {
+        addEdge(i, i);
+    }
+    
+    while(q--) {
+        int type, u, v, k;
+        cin >> type;
+        if(type == 1) {
+            cin >> u >> v;
+            addEdge(u, v);
+            updatePQ(u);
+            updatePQ(v);
+        } else {
+            cin >> u >> k;
+            if(k > pq[u].size()) cout << "-1" << '\n';
+            else cout << pq[u].top() << '\n';
+        }
+    }
+
+    return 0;
+}

@@ -1,0 +1,31 @@
+#include <iostream>
+#include <string>
+#include <unordered_map>
+
+using namespace std;
+
+int main() {
+    unordered_map<char, char> beats = {{'R', 'P'}, {'P', 'S'}, {'S', 'R'}};
+    int n;
+    cin >> n;
+    string s;
+    cin >> s;
+
+    int total_1 = 0, total_2 = 0;
+
+    // Iterate over the string to find all occurrences of 'R' and 'P'
+    for (int i = 0; i < n; ++i) {
+        if (beats.find(s[i]) != beats.end()) {
+            if (beats[s[i]] == 'R' || beats[s[i]] == 'P') {
+                total_1++;
+            }
+            if (beats[s[i]] == 'P' || beats[s[i]] == 'S') {
+                total_2++;
+            }
+        }
+    }
+
+    cout << max(total_1, total_2) << endl;
+
+    return 0;
+}

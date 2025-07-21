@@ -1,0 +1,40 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define rep(i,n) for(long long i=0;i<n;i++)
+using ll = long long;
+using Graph = vector<vector<int>>;
+
+ll f(vector<ll>& a, vector<ll>& b, vector<ll>& p, vector<ll>& q, ll x){
+  ll ans = 0;
+  ll pp = *min_element(begin(p), end(p));
+  ll qq = *min_element(begin(q), end(q));
+  ll mn_cost = pp + qq;
+  
+  while(x >= mn_cost){
+    for(int i = 0; i < a.size(); ++i){
+      if(x >= a[i]) {
+        x -= a[i];
+        ans += p[i];
+      } else if(x >= b[i]){
+        x -= b[i];
+        ans += q[i];
+      }
+    }
+  }
+  return ans;
+}
+
+int main() {
+  int n, x;
+  cin >> n >> x;
+  vector<ll> a(n), b(n), p(n), q(n);
+  rep(i,n)cin >> a[i] >> p[i] >> b[i] >> q[i];
+  ll l = 0, r = 10000000000LL;
+  while(r - l > 1){
+    ll m = (l + r) / 2;
+    if(f(a, b, p, q, m) <= x) l = m;
+    else r = m;
+  }
+  cout << l;
+  return 0;
+}

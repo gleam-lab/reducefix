@@ -1,0 +1,54 @@
+#include <iostream>
+#include <vector>
+#include <queue>
+#include <algorithm>
+#include <tuple>
+#include <cstring>
+#include <iomanip>
+#include <cmath>
+using namespace std;
+
+template <typename T>
+using Heap = priority_queue<T, vector<T>, less<T>>;
+
+const int N = 2e5 + 10, M = 2e6 + 10, INF = 1e9 + 7, MOD = 998244353;
+
+vector<int> graph[N];
+int mi = INF, g[N], depth[N];
+
+void dfs(int u, int d) {
+    g[u]++;
+    depth[u] = d;
+    for (int v : graph[u]) {
+        if (!g[v])
+            dfs(v, d + 1);
+        else if (v == 1) // This condition checks if we are visiting the root node
+            mi = min(mi, d + 1);
+    }
+}
+
+void solve() {
+    int n, m;
+    cin >> n >> m;
+    for (int i = 0; i < m; i++) {
+        int u, v;
+        cin >> u >> v;
+        graph[u].push_back(v);
+        graph[v].push_back(u); // Since the graph is undirected
+    }
+    dfs(1, 0); // Start DFS from node 1
+    if (mi == INF)
+        cout << -1;
+    else
+        cout << mi << endl;
+}
+
+int main() {
+    ios::sync_with_stdio(0); cin.tie(0); cout.tie(0);
+    int T = 1;
+    // cin >> T;
+    while (T--) {
+        solve();
+    }
+    return 0;
+}

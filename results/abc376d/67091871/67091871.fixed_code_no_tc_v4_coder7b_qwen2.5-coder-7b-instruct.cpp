@@ -1,0 +1,46 @@
+#include<bits/stdc++.h>
+#define ll long long
+using namespace std;
+
+const int MAXN = 2 * 100005;
+int n, m, vis[MAXN], parent[MAXN], min_edges = INT_MAX;
+
+vector<int> adj[MAXN];
+
+bool dfs(int node, int par) {
+    vis[node] = 1;
+    parent[node] = par;
+    
+    for (int neighbor : adj[node]) {
+        if (!vis[neighbor]) {
+            if (dfs(neighbor, node)) return true;
+        } else if (neighbor != par) {
+            int cycle_length = 1;
+            for (int v = node; v != neighbor; v = parent[v]) cycle_length++;
+            cycle_length++; // include both start and end nodes
+            min_edges = min(min_edges, cycle_length);
+            return true;
+        }
+    }
+    return false;
+}
+
+int main() {
+    cin >> n >> m;
+    for (int i = 0; i < m; ++i) {
+        int u, v;
+        cin >> u >> v;
+        adj[u].push_back(v);
+    }
+
+    for (int i = 1; i <= n; ++i) {
+        if (!vis[i]) {
+            if (dfs(i, -1)) break;
+        }
+    }
+
+    if (min_edges == INT_MAX) cout << -1 << endl;
+    else cout << min_edges << endl;
+
+    return 0;
+}

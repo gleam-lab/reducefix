@@ -1,0 +1,55 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+#define ll long long
+
+const ll INF = LLONG_MAX;
+
+void dijkstra(int src, vector<pair<ll, int>> adj[], vector<ll>& dist) {
+    priority_queue<pair<ll, int>, vector<pair<ll, int>>, greater<pair<ll, int>>> pq;
+    dist[src] = 0;
+    pq.push({0, src});
+    
+    while (!pq.empty()) {
+        auto [u_dist, u] = pq.top();
+        pq.pop();
+        
+        if (u_dist > dist[u])
+            continue;
+        
+        for (auto [v, v_dist] : adj[u]) {
+            if (dist[v] > dist[u] + v_dist) {
+                dist[v] = dist[u] + v_dist;
+                pq.push({dist[v], v});
+            }
+        }
+    }
+}
+
+int main() {
+    ios_base::sync_with_stdio(false); cin.tie(NULL); cout.tie(NULL);
+
+    int n, m;
+    cin >> n >> m;
+    
+    vector<ll> a(n+1);
+    for (int i = 1; i <= n; ++i) cin >> a[i];
+    
+    vector<pair<ll, int>> adj[n+1];
+    for (int i = 0; i < m; ++i) {
+        int u, v, b;
+        cin >> u >> v >> b;
+        adj[u].push_back({b, v});
+        adj[v].push_back({b, u});
+    }
+    
+    vector<ll> dist(n+1, INF);
+    dijkstra(1, adj, dist);
+    
+    for (int i = 2; i <= n; ++i) {
+        cout << min(dist[i], a[i]) << " ";
+    }
+    cout << "\n";
+
+    return 0;
+}

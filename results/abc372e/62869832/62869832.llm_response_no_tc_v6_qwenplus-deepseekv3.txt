@@ -1,0 +1,85 @@
+To fix this code, we need to address several issues:
+
+1. **Input Reading**: The original code incorrectly reads `n` and `q` in reverse order, which can lead to incorrect processing of queries.
+2. **Union-Find Data Structure**: The union-find (disjoint set) structure is used to manage connected components, but the merging of the top-k lists is not handled correctly.
+3. **Top-k Maintenance**: The code attempts to maintain the top 10 largest vertices in each connected component, but the merging logic is flawed. It incorrectly copies the top 10 of one component into the slots 10-19 of another and then sorts the combined list, which doesn't correctly merge the top 10 from both components.
+4. **Edge Cases**: The code doesn't handle cases where the connected component has fewer than `k` vertices, which should return `-1` as specified.
+
+### Approaches
+1. **Correct Input Handling**: Ensure `N` and `Q` are read in the correct order.
+2. **Union-Find with Path Compression**: Use the union-find data structure to efficiently manage and merge connected components.
+3. **Merge Top-k Lists**: For each connected component, maintain a sorted list of the top 10 largest vertices. When merging two components, combine their top 10 lists, sort them in descending order, and keep only the top 10 elements.
+4. **Query Processing**: For type 2 queries, check if the connected component has at least `k` vertices. If not, return `-1`. Otherwise, return the k-th largest vertex from the maintained list.
+
+### Solution Code
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+const int MAX_N = 200005;
+
+vector<int> as[MAX_N];
+int fa[MAX_N];
+
+int find_fa(int x) {
+    if (fa[x] != x) {
+        fa[x] = find_fa(fa[x]);
+    }
+    return fa[x];
+}
+
+void merge(int u, int v) {
+    u = find_fa(u);
+    v = find_fa(v);
+    if (u == v) return;
+    if (as[u].size() < as[v].size()) {
+        swap(u, v);
+    }
+    vector<int> merged;
+    merged.reserve(as[u].size() + as[v].size());
+    merge(as[u].begin(), as[u].end(), as[v].begin(), as[v].end(), back_inserter(merged), greater<int>());
+    if (merged.size() > 10) {
+        merged.resize(10);
+    }
+    as[u] = merged;
+    fa[v] = u;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int N, Q;
+    cin >> N >> Q;
+
+    for (int i = 1; i <= N; ++i) {
+        fa[i] = i;
+        as[i] = {i};
+    }
+
+    while (Q--) {
+        int op, u, v;
+        cin >> op >> u >> v;
+        if (op == 1) {
+            merge(u, v);
+        } else {
+            int root = find_fa(u);
+            if (as[root].size() < v) {
+                cout << -1 << '\n';
+            } else {
+                cout << as[root][v - 1] << '\n';
+            }
+        }
+    }
+
+    return 0;
+}
+```
+
+### Explanation
+1. **Input Handling**: The code reads `N` (number of vertices) and `Q` (number of queries) correctly.
+2. **Union-Find Initialization**: Each vertex is initialized as its own parent in the union-find structure, and each vertex's list of top vertices initially contains only itself.
+3. **Merging Components**: The `merge` function combines two components by merging their top 10 lists. The merged list is sorted in descending order and truncated to keep only the top 10 elements.
+4. **Query Processing**: For type 2 queries, the code checks the size of the connected component's top list. If the size is less than `k`, it outputs `-1`. Otherwise, it outputs the k-th largest vertex from the list.
+
+This approach ensures efficient handling of up to 200,000 vertices and queries, maintaining the top 10 largest vertices in each connected component for quick access during queries.

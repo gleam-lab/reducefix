@@ -1,0 +1,29 @@
+#include <iostream>
+#include <vector>
+#include <cmath>
+
+int main() {
+    int n;
+    std::cin >> n;
+    
+    std::vector<std::pair<long long, long long>> points(n);
+    for (int i = 0; i < n; ++i) {
+        std::cin >> points[i].first >> points[i].second;
+    }
+
+    // Calculate the total distance
+    double total_cost = 0;
+    for (int i = 0; i < n - 1; ++i) {
+        double dx = points[i + 1].first - points[i].first;
+        double dy = points[i + 1].second - points[i].second;
+        total_cost += std::sqrt(dx * dx + dy * dy);
+    }
+
+    // Return to the origin
+    double dx = points[0].first;
+    double dy = points[0].second;
+    total_cost += std::sqrt(dx * dx + dy * dy);
+
+    std::cout << total_cost << std::endl;
+    return 0;
+}

@@ -1,0 +1,102 @@
+To solve this problem correctly and efficiently, we need to compute the **minimum path weight** from vertex 1 to every other vertex in a graph. The path weight is defined as the sum of:
+
+- Vertex weights along the path
+- Edge weights along the path
+
+This is essentially a variant of the **shortest path problem**, where instead of just edge weights, we include vertex weights too.
+
+---
+
+### Key Observations:
+- Since all weights are non-negative (from constraints), we can use **Dijkstra's algorithm** with a minor modification to account for vertex weights.
+- The cost to move from node `u` to node `v` should be:  
+  `current_total_cost + B_uv + A_v`
+- We must initialize the starting point with `A_1`, since that vertex weight counts towards the total.
+
+---
+
+### Fixing Your Code:
+The error in your code was primarily due to:
+- Incorrect priority queue comparison function (`cmp`) involving incorrect tuple handling.
+- Using a `set` for unvisited nodes which is not efficient or necessary.
+- Improper initialization and update logic in Dijkstra’s traversal.
+
+---
+
+### Optimized and Corrected Code:
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+
+const ll INF = 5LL << 60;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    ll n, m;
+    cin >> n >> m;
+
+    vector<ll> A(n);
+    for (ll i = 0; i < n; ++i) {
+        cin >> A[i];
+    }
+
+    vector<vector<pair<ll, ll>>> adj(n);
+    for (ll i = 0; i < m; ++i) {
+        ll u, v, b;
+        cin >> u >> v >> b;
+        --u; --v;
+        adj[u].emplace_back(v, b);
+        adj[v].emplace_back(u, b);
+    }
+
+    // Dijkstra's algorithm using min-heap (priority_queue)
+    vector<ll> dist(n, INF);
+    dist[0] = A[0];  // Starting node includes its own vertex weight
+
+    using State = pair<ll, ll>;  // (current_cost, node)
+    priority_queue<State, vector<State>, greater<>> pq;
+    pq.emplace(dist[0], 0);
+
+    while (!pq.empty()) {
+        auto [d, u] = pq.top(); pq.pop();
+        if (d > dist[u]) continue;
+
+        for (auto [v, b] : adj[u]) {
+            ll new_cost = d + b + A[v];  // current cost + edge weight + destination vertex weight
+            if (new_cost < dist[v]) {
+                dist[v] = new_cost;
+                pq.emplace(new_cost, v);
+            }
+        }
+    }
+
+    // Output results for nodes 2 to N
+    for (ll i = 1; i < n; ++i) {
+        cout << dist[i] << " ";
+    }
+    cout << "\n";
+
+    return 0;
+}
+```
+
+---
+
+### Explanation:
+- We maintain a `dist[]` array where `dist[i]` is the minimum path weight from vertex 1 to vertex `i`.
+- Use a **min-heap** to always expand the node with the lowest current cost.
+- Each time we visit an edge, we compute the new possible cost to reach the next node and update accordingly.
+- The final output excludes `dist[0]` (vertex 1 itself), printing only `dist[1]` through `dist[n-1]`.
+
+---
+
+### Time Complexity:
+- **O(M log N)** — Optimal for graphs up to `2e5` edges.
+
+---
+
+This solution is correct, efficient, and handles all constraints properly.

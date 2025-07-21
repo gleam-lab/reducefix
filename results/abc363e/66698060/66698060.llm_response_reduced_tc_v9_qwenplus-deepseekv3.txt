@@ -1,0 +1,84 @@
+After analyzing the failing test case and the code, the issue appears to be that the code doesn't properly handle the case where the island is completely submerged at some sea level. The current code continues to output 1 even after the island should be completely submerged.
+
+The key problem is that the code doesn't check if the island is fully submerged before continuing to output results. When the island is a single cell (1×1), it should only remain above water until the sea level reaches its elevation. After that, it should output 0 for all subsequent sea levels.
+
+Here's the corrected code:
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+#define ll long long
+
+ll dx[4] = {0, 1, 0, -1}, dy[4] = {1, 0, -1, 0};
+
+int main() {
+    ll h, w, y;
+    cin >> h >> w >> y;
+    ll ans = h * w;
+    vector<vector<ll>> room(h, vector<ll>(w));
+    for (ll i = 0; i < h; i++) {
+        for (ll j = 0; j < w; j++) {
+            cin >> room[i][j];
+        }
+    }
+    
+    priority_queue<vector<ll>, vector<vector<ll>>, greater<vector<ll>>> pq;
+    vector<vector<bool>> used(h, vector<bool>(w, false));
+    
+    // Push all border cells into the priority queue
+    for (ll i = 0; i < h; i++) {
+        pq.push({room[i][0], i, 0});
+        used[i][0] = true;
+        if (w > 1) {
+            pq.push({room[i][w-1], i, w-1});
+            used[i][w-1] = true;
+        }
+    }
+    for (ll j = 1; j < w-1; j++) {
+        pq.push({room[0][j], 0, j});
+        used[0][j] = true;
+        if (h > 1) {
+            pq.push({room[h-1][j], h-1, j});
+            used[h-1][j] = true;
+        }
+    }
+    
+    for (ll current_level = 1; current_level <= y; current_level++) {
+        while (!pq.empty() && pq.top()[0] <= current_level) {
+            ll ni = pq.top()[1], nj = pq.top()[2];
+            pq.pop();
+            ans--;
+            
+            for (ll k = 0; k < 4; k++) {
+                ll nexi = ni + dx[k], nexj = nj + dy[k];
+                if (0 <= nexi && nexi < h && 0 <= nexj && nexj < w && !used[nexi][nexj]) {
+                    pq.push({room[nexi][nexj], nexi, nexj});
+                    used[nexi][nexj] = true;
+                }
+            }
+        }
+        cout << ans << '\n';
+        if (ans == 0) {
+            // If the island is completely submerged, the rest will also be 0
+            for (current_level++; current_level <= y; current_level++) {
+                cout << 0 << '\n';
+            }
+            return 0;
+        }
+    }
+    return 0;
+}
+```
+
+Key improvements:
+1. Added a check to stop early once the island is completely submerged (ans == 0)
+2. Fixed the output format to use '\n' instead of endl for better performance
+3. Added proper handling for single-row or single-column cases
+4. The code now properly terminates once the island is fully submerged, avoiding unnecessary computations
+
+The algorithm remains efficient with:
+- O(HW log HW) time for processing the grid (each cell is processed at most once)
+- O(Y) time for output (with early termination when island is submerged)
+- O(HW) space for storing the grid and visited status
+
+This should now handle all test cases correctly, including the single-cell case and cases where the island becomes fully submerged before reaching Y.

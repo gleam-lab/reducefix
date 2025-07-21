@@ -1,0 +1,153 @@
+To fix this code, we need to correctly calculate the number of safe squares where a new piece can be placed without being captured by any existing pieces. The existing pieces can attack along rows, columns, and both diagonals (i.e., squares where the sum or difference of row and column indices matches those of the existing pieces).
+
+### Approaches
+1. **Identify Attacked Squares**: 
+   - **Row and Column Attacks**: Any square in the same row or column as an existing piece is under attack.
+   - **Diagonal Attacks**: Any square where the sum of row and column indices (i + j) matches that of an existing piece, or the difference (i - j) matches that of an existing piece, is under attack.
+
+2. **Union of Attacked Squares**: 
+   - We need to find the union of all squares attacked by any existing piece, considering all four attack directions (row, column, diagonal sum, diagonal difference).
+
+3. **Calculate Safe Squares**: 
+   - The total safe squares are the total squares in the grid (N²) minus the number of squares under attack, plus the number of squares that are under attack by multiple attack directions (to avoid double-counting).
+
+### Solution Code
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+using i64 = long long;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    i64 N, M;
+    cin >> N >> M;
+    vector<pair<i64, i64>> pieces(M);
+    set<i64> rows, cols, diag1, diag2;
+    for (int i = 0; i < M; ++i) {
+        i64 a, b;
+        cin >> a >> b;
+        pieces[i] = {a, b};
+        rows.insert(a);
+        cols.insert(b);
+        diag1.insert(a + b);
+        diag2.insert(a - b);
+    }
+    
+    i64 attacked = 0;
+    
+    // Rows and columns
+    i64 row_attacks = rows.size() * N;
+    i64 col_attacks = cols.size() * N;
+    i64 row_col_intersection = rows.size() * cols.size();
+    
+    // Diagonals (i + j = c)
+    i64 diag1_attacks = 0;
+    for (i64 c : diag1) {
+        i64 min_x_plus_y = 1 + 1;
+        i64 max_x_plus_y = N + N;
+        i64 lower = max(c - N, 1LL);
+        i64 upper = min(c - 1, N);
+        if (lower > upper) continue;
+        diag1_attacks += upper - lower + 1;
+    }
+    
+    // Diagonals (i - j = c)
+    i64 diag2_attacks = 0;
+    for (i64 c : diag2) {
+        i64 min_x_minus_y = 1 - N;
+        i64 max_x_minus_y = N - 1;
+        i64 lower = max(1LL, 1 + c);
+        i64 upper = min(N, N + c);
+        if (lower > upper) continue;
+        diag2_attacks += upper - lower + 1;
+    }
+    
+    // Intersections between rows and diag1
+    i64 row_diag1_intersection = 0;
+    for (i64 r : rows) {
+        for (i64 c : diag1) {
+            i64 y = c - r;
+            if (y >= 1 && y <= N) {
+                if (cols.count(y)) continue; // Avoid double-counting
+                row_diag1_intersection++;
+            }
+        }
+    }
+    
+    // Intersections between rows and diag2
+    i64 row_diag2_intersection = 0;
+    for (i64 r : rows) {
+        for (i64 c : diag2) {
+            i64 y = r - c;
+            if (y >= 1 && y <= N) {
+                if (cols.count(y)) continue; // Avoid double-counting
+                row_diag2_intersection++;
+            }
+        }
+    }
+    
+    // Intersections between cols and diag1
+    i64 col_diag1_intersection = 0;
+    for (i64 c : cols) {
+        for (i64 d : diag1) {
+            i64 x = d - c;
+            if (x >= 1 && x <= N) {
+                if (rows.count(x)) continue; // Avoid double-counting
+                col_diag1_intersection++;
+            }
+        }
+    }
+    
+    // Intersections between cols and diag2
+    i64 col_diag2_intersection = 0;
+    for (i64 c : cols) {
+        for (i64 d : diag2) {
+            i64 x = c + d;
+            if (x >= 1 && x <= N) {
+                if (rows.count(x)) continue; // Avoid double-counting
+                col_diag2_intersection++;
+            }
+        }
+    }
+    
+    // Intersections between diag1 and diag2
+    i64 diag1_diag2_intersection = 0;
+    for (i64 c1 : diag1) {
+        for (i64 c2 : diag2) {
+            if ((c1 + c2) % 2 != 0) continue;
+            i64 x = (c1 + c2) / 2;
+            i64 y = (c1 - c2) / 2;
+            if (x >= 1 && x <= N && y >= 1 && y <= N) {
+                if (rows.count(x) || cols.count(y)) continue;
+                diag1_diag2_intersection++;
+            }
+        }
+    }
+    
+    // Total attacked squares
+    attacked = row_attacks + col_attacks + diag1_attacks + diag2_attacks
+               - row_col_intersection
+               - row_diag1_intersection - row_diag2_intersection
+               - col_diag1_intersection - col_diag2_intersection
+               - diag1_diag2_intersection;
+    
+    // Subtract the original M pieces since they were counted multiple times
+    attacked -= M;
+    
+    i64 safe = N * N - attacked;
+    cout << safe << "\n";
+    return 0;
+}
+```
+
+### Explanation
+1. **Input Reading**: The code reads the grid size `N` and the number of pieces `M`, followed by their positions.
+2. **Sets Initialization**: Four sets are used to store unique row indices, column indices, diagonal sums (i + j), and diagonal differences (i - j) of the existing pieces.
+3. **Attacked Squares Calculation**: 
+   - **Row and Column Attacks**: Each unique row and column contributes `N` attacked squares. The intersection of rows and columns (squares attacked on both row and column) is subtracted to avoid double-counting.
+   - **Diagonal Attacks**: For each unique diagonal sum and difference, the number of squares along that diagonal within grid bounds is calculated.
+4. **Intersection Handling**: The intersections between different attack directions (row-diagonal, column-diagonal, diagonal-diagonal) are computed and adjusted to avoid over-counting.
+5. **Final Calculation**: The total attacked squares are adjusted by subtracting over-counted intersections and the original piece positions. The safe squares are then calculated as the total grid squares minus the attacked squares.
+
+This approach ensures that all attack directions are considered, and intersections are accurately handled to provide the correct count of safe squares.

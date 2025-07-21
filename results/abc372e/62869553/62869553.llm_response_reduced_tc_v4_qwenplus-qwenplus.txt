@@ -1,0 +1,115 @@
+To solve this problem efficiently, we need to handle **dynamic connectivity** and answer queries about the **k-th largest vertex** in a connected component.
+
+### Key Observations:
+
+1. **Union-Find (Disjoint Set Union - DSU)** is ideal for maintaining connected components.
+2. Each time two components are merged, we need to keep track of all vertices in each component so that we can quickly retrieve the k-th largest.
+3. To support efficient retrieval of the top-k elements, we can maintain a **sorted list (in descending order)** of nodes within each connected component.
+4. Since `k ≤ 10` in Type 2 queries, we only need to keep track of the **top 10 largest values** per component.
+
+---
+
+### Efficient Strategy:
+
+- Use **path compression** and **union by size/rank** in DSU to ensure near-constant time complexity for union and find operations.
+- Maintain an array `top[x]` for each root node `x`, which stores the **top 10 largest vertex numbers** in its component.
+- When merging two sets:
+  - Merge their `top` lists.
+  - Sort and keep only the top 10 largest vertices.
+
+This ensures that Type 2 queries can be answered in O(1) time after finding the root of the component.
+
+---
+
+Here is the corrected and optimized C++ implementation:
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+const int MAXN = 200005;
+
+int parent[MAXN];
+vector<int> top_vals[MAXN];
+
+// Find with path compression
+int find(int x) {
+    if (parent[x] != x)
+        parent[x] = find(parent[x]);
+    return parent[x];
+}
+
+// Merge two sets and keep top 10 largest vertices
+void unite(int x, int y) {
+    x = find(x);
+    y = find(y);
+    if (x == y) return;
+
+    // Always merge smaller into larger
+    if (top_vals[x].size() < top_vals[y].size())
+        swap(x, y);
+
+    // Merge the top lists
+    for (int v : top_vals[y])
+        top_vals[x].push_back(v);
+
+    // Sort and keep top 10
+    sort(top_vals[x].rbegin(), top_vals[x].rend());
+    if (top_vals[x].size() > 10)
+        top_vals[x].resize(10);
+
+    parent[y] = x;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int N, Q;
+    cin >> N >> Q;
+
+    // Initialize DSU
+    for (int i = 1; i <= N; ++i) {
+        parent[i] = i;
+        top_vals[i] = {i};
+    }
+
+    while (Q--) {
+        int type;
+        cin >> type;
+        if (type == 1) {
+            int u, v;
+            cin >> u >> v;
+            unite(u, v);
+        } else if (type == 2) {
+            int v, k;
+            cin >> v >> k;
+            int root = find(v);
+            if (k <= (int)top_vals[root].size())
+                cout << top_vals[root][k - 1] << '\n';
+            else
+                cout << "-1\n";
+        }
+    }
+
+    return 0;
+}
+```
+
+---
+
+### Why This Works:
+
+- The use of DSU ensures efficient management of connected components.
+- By maintaining only the top 10 vertices in each set, we optimize space and query time.
+- Sorting is minimized and done only when necessary during merges.
+- Querying the k-th largest is reduced to a simple array access.
+
+---
+
+### Time Complexity:
+- Union: Amortized O(α(N)) ≈ O(1)
+- Merging and sorting top 10 elements: O(1) since max 20 elements involved.
+- Query: O(1)
+
+This solution handles all edge cases and scales well up to the input limits.

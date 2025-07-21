@@ -1,0 +1,171 @@
+To fix this code, we need to correctly calculate the number of safe squares where a new piece can be placed without being captured by any existing pieces. The initial approach used inclusion-exclusion principle but had some issues, particularly in handling the overlaps between different conditions (rows, columns, diagonals). 
+
+### Approaches
+1. **Identify Invalid Squares**: The invalid squares are those that lie in the same row, column, or diagonal (either sum diagonal i+j or difference diagonal i-j) as any existing piece.
+2. **Calculate Total Valid Squares**: Subtract the invalid squares from the total number of squares (N^2).
+3. **Avoid Double Counting**: Ensure that squares covered by multiple conditions (e.g., same row and same column) are not subtracted multiple times.
+4. **Efficient Calculation**: Given the constraints (N can be up to 10^9), we need an efficient way to compute the number of unique squares covered by the conditions without iterating through each square.
+
+### Solution Code
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    long long N, M;
+    cin >> N >> M;
+    
+    unordered_set<long long> rows, cols, diag1, diag2;
+    
+    for (int i = 0; i < M; ++i) {
+        long long a, b;
+        cin >> a >> b;
+        rows.insert(a);
+        cols.insert(b);
+        diag1.insert(a + b);
+        diag2.insert(a - b);
+    }
+    
+    long long total = N * N;
+    long long invalid_rows = rows.size() * N;
+    long long invalid_cols = cols.size() * N;
+    long long invalid_diag1 = 0;
+    long long invalid_diag2 = 0;
+    
+    for (long long d : diag1) {
+        if (d <= N + 1) {
+            invalid_diag1 += d - 1;
+        } else {
+            invalid_diag1 += 2 * N - d + 1;
+        }
+    }
+    
+    for (long long d : diag2) {
+        if (d >= 0) {
+            invalid_diag2 += N - d;
+        } else {
+            invalid_diag2 += N + d;
+        }
+    }
+    
+    long double invalid_all = invalid_rows + invalid_cols + invalid_diag1 + invalid_diag2;
+    
+    long double invalid_row_col = rows.size() * cols.size();
+    
+    long double invalid_row_diag1 = 0;
+    for (long long a : rows) {
+        for (long long d : diag1) {
+            long long b = d - a;
+            if (b >= 1 && b <= N) {
+                invalid_row_diag1++;
+            }
+        }
+    }
+    
+    long double invalid_row_diag2 = 0;
+    for (long long a : rows) {
+        for (long long d : diag2) {
+            long long b = a - d;
+            if (b >= 1 && b <= N) {
+                invalid_row_diag2++;
+            }
+        }
+    }
+    
+    long double invalid_col_diag1 = 0;
+    for (long long b : cols) {
+        for (long long d : diag1) {
+            long long a = d - b;
+            if (a >= 1 && a <= N) {
+                invalid_col_diag1++;
+            }
+        }
+    }
+    
+    long double invalid_col_diag2 = 0;
+    for (long long b : cols) {
+        for (long long d : diag2) {
+            long long a = d + b;
+            if (a >= 1 && a <= N) {
+                invalid_col_diag2++;
+            }
+        }
+    }
+    
+    long double invalid_diag1_diag2 = 0;
+    for (long long d1 : diag1) {
+        for (long long d2 : diag2) {
+            long long a = (d1 + d2) / 2;
+            long long b = (d1 - d2) / 2;
+            if ((d1 + d2) % 2 == 0 && (d1 - d2) % 2 == 0 && a >= 1 && a <= N && b >= 1 && b <= N) {
+                invalid_diag1_diag2++;
+            }
+        }
+    }
+    
+    long double invalid_row_col_diag1 = 0;
+    for (long long a : rows) {
+        for (long long b : cols) {
+            if (diag1.find(a + b) != diag1.end()) {
+                invalid_row_col_diag1++;
+            }
+        }
+    }
+    
+    long double invalid_row_col_diag2 = 0;
+    for (long long a : rows) {
+        for (long long b : cols) {
+            if (diag2.find(a - b) != diag2.end()) {
+                invalid_row_col_diag2++;
+            }
+        }
+    }
+    
+    long double invalid_row_diag1_diag2 = 0;
+    for (long long a : rows) {
+        for (long long d1 : diag1) {
+            long long b = d1 - a;
+            if (b >= 1 && b <= N && diag2.find(a - b) != diag2.end()) {
+                invalid_row_diag1_diag2++;
+            }
+        }
+    }
+    
+    long double invalid_col_diag1_diag2 = 0;
+    for (long long b : cols) {
+        for (long long d1 : diag1) {
+            long long a = d1 - b;
+            if (a >= 1 && a <= N && diag2.find(a - b) != diag2.end()) {
+                invalid_col_diag1_diag2++;
+            }
+        }
+    }
+    
+    long double invalid_row_col_diag1_diag2 = 0;
+    for (long long a : rows) {
+        for (long long b : cols) {
+            if (diag1.find(a + b) != diag1.end() && diag2.find(a - b) != diag2.end()) {
+                invalid_row_col_diag1_diag2++;
+            }
+        }
+    }
+    
+    long double invalid = invalid_all - invalid_row_col - invalid_row_diag1 - invalid_row_diag2 - invalid_col_diag1 - invalid_col_diag2 - invalid_diag1_diag2
+                        + invalid_row_col_diag1 + invalid_row_col_diag2 + invalid_row_diag1_diag2 + invalid_col_diag1_diag2
+                        - invalid_row_col_diag1_diag2;
+    
+    long double answer = total - invalid;
+    cout << (long long)(answer + 1e-9) << endl;
+    
+    return 0;
+}
+```
+
+### Explanation
+1. **Input Handling**: Reads the grid size `N` and the number of pieces `M`, then the positions of these pieces.
+2. **Tracking Conditions**: Uses unordered sets to track rows, columns, and diagonals (sum and difference) that are occupied by existing pieces to avoid duplicates.
+3. **Invalid Squares Calculation**: Computes the number of invalid squares due to rows, columns, and diagonals separately.
+4. **Inclusion-Exclusion Principle**: Adjusts for overlaps between different conditions (e.g., a square in the same row and column of different pieces) to avoid double counting.
+5. **Final Count**: Subtracts the total invalid squares from the total squares (N^2) to get the number of safe squares, ensuring precision by rounding to the nearest integer.
+
+This approach ensures efficient computation without iterating through each square, making it suitable for large values of N up to 10^9.

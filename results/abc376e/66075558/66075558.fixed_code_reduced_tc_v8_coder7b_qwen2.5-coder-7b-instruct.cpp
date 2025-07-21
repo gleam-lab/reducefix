@@ -1,0 +1,43 @@
+#include<iostream>
+#include<vector>
+#include<algorithm>
+using namespace std;
+
+const int N = 2e5 + 9, inf = 0x3f3f3f3f;
+int n, m, t, ans, k;
+int s, q;
+pair<int, int> a[N], b[N];
+
+bool cmp(const pair<int, int>& pa, const pair<int, int>& pb) {
+    return pa.first == pb.first ? b[pa.second] < b[pb.second] : pa.first < pb.first;
+}
+
+signed main() {
+    ios::sync_with_stdio(false); cin.tie(0); cout.tie(0);
+    cin >> t;
+    while (t--) {
+        cin >> n >> k;
+        for (int i = 1; i <= n; i++) {
+            cin >> a[i].first;
+            a[i].second = i;
+        }
+        for (int i = 1; i <= n; i++) {
+            cin >> b[i].first;
+            b[i].second = i;
+        }
+        sort(a + 1, a + n + 1, cmp);
+        sort(b + 1, b + n + 1);
+        
+        vector<long long> prefix_sum(n + 1, 0);
+        for(int i = 1; i <= n; ++i){
+            prefix_sum[i] = prefix_sum[i-1] + b[i].first;
+        }
+        
+        long long res = LLONG_MAX;
+        for(int i = k; i <= n; ++i){
+            res = min(res, static_cast<long long>(a[i].first) * (prefix_sum[i] - prefix_sum[i-k]));
+        }
+        cout << res << '\n';
+    }
+    return 0;
+}

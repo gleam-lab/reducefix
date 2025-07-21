@@ -1,0 +1,65 @@
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+
+const ll INF = 1LL << 60;
+
+int n;
+ll a[110], b[110], p[110], q[110], x;
+
+inline ll lcm(ll x, ll y) {
+    return x / gcd(x, y) * y;
+}
+
+bool check(ll v) {
+    ll cnt = 0;
+    for (int i = 1; i <= n; ++i) {
+        ll l = lcm(a[i], b[i]);
+        ll full_cycles = v / l;
+        ll cost_per_cycle = min(p[i] * (l / a[i]), q[i] * (l / b[i]));
+        ll total_full_cost = full_cycles * cost_per_cycle;
+        
+        // Check if adding one more cycle would exceed budget
+        if (total_full_cost > x) return false;
+        
+        cnt += total_full_cost;
+        
+        // Remaining time after full cycles
+        ll rem_time = v % l;
+        
+        // Try all possible a[i] usages in the remaining time
+        ll min_rem_cost = INF;
+        for (ll j = 0; j * a[i] <= rem_time; ++j) {
+            ll time_left = rem_time - j * a[i];
+            ll b_used = (time_left + b[i] - 1) / b[i]; // ceil division
+            ll cost = j * p[i] + max(0LL, b_used) * q[i];
+            min_rem_cost = min(min_rem_cost, cost);
+        }
+        
+        cnt += min_rem_cost;
+        
+        if (cnt > x) return false;
+    }
+    return true;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    cout.tie(nullptr);
+    
+    cin >> n >> x;
+    for (int i = 1; i <= n; ++i) {
+        cin >> a[i] >> p[i] >> b[i] >> q[i];
+    }
+    
+    ll l = 0, r = 2e18;
+    while (l < r) {
+        ll mid = (l + r) / 2;
+        if (check(mid)) l = mid + 1;
+        else r = mid;
+    }
+    
+    cout << l - 1;
+    return 0;
+}

@@ -1,0 +1,55 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+const int MOD = 1e9 + 7;
+
+long long modPow(long long base, long long exp, long long mod) {
+    long long result = 1;
+    while (exp > 0) {
+        if (exp % 2 == 1) {
+            result = (result * base) % mod;
+        }
+        base = (base * base) % mod;
+        exp /= 2;
+    }
+    return result;
+}
+
+int main() {
+    ios_base::sync_with_stdio(false); cin.tie(NULL);
+
+    long long n, m;
+    cin >> n >> m;
+
+    // Calculate total number of squares
+    long long total_squares = n * n;
+
+    // Calculate number of squares occupied by pieces
+    unordered_set<long long> occupied;
+    for (int i = 0; i < m; ++i) {
+        long long a, b;
+        cin >> a >> b;
+        occupied.insert((a - 1) * n + b);
+    }
+
+    // Calculate number of squares that can be attacked
+    set<long long> attacked;
+    vector<vector<int>> dx = {{2, 1}, {1, 2}, {-1, 2}, {-2, 1}, {-2, -1}, {-1, -2}, {1, -2}, {2, -1}};
+    for (auto& pos : occupied) {
+        long long x = pos / n + 1, y = pos % n + 1;
+        for (auto& d : dx) {
+            long long nx = x + d[0], ny = y + d[1];
+            if (nx >= 1 && nx <= n && ny >= 1 && ny <= n) {
+                attacked.insert((nx - 1) * n + ny);
+            }
+        }
+    }
+
+    // Calculate number of safe squares
+    long long safe_squares = total_squares - occupied.size();
+    safe_squares = (safe_squares + MOD - attacked.size()) % MOD;
+
+    cout << safe_squares << endl;
+
+    return 0;
+}

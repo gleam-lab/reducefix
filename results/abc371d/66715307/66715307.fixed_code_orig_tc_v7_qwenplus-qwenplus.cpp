@@ -1,0 +1,66 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+const int MAXN = 200050;
+
+int n;
+long long x[MAXN], p[MAXN], a[MAXN];
+vector<pair<long long, int>> sortedX;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    cin >> n;
+    for (int i = 1; i <= n; ++i) {
+        cin >> x[i];
+    }
+    for (int i = 1; i <= n; ++i) {
+        cin >> p[i];
+        a[i] = a[i - 1] + p[i];
+    }
+
+    // Prepare sorted list of (x[i], index)
+    vector<pair<long long, int>> indexedX(n);
+    for (int i = 1; i <= n; ++i) {
+        indexedX[i - 1] = {x[i], i};
+    }
+    sort(indexedX.begin(), indexedX.end());
+
+    int q;
+    cin >> q;
+    while (q--) {
+        long long l, r;
+        cin >> l >> r;
+
+        // Binary search to find the leftmost index where x >= l
+        int left = 0, right = n - 1;
+        while (left < right) {
+            int mid = (left + right) / 2;
+            if (indexedX[mid].first >= l)
+                right = mid;
+            else
+                left = mid + 1;
+        }
+        int leftIdx = indexedX[left].first >= l ? indexedX[left].second : -1;
+
+        // Binary search to find the rightmost index where x <= r
+        left = 0, right = n - 1;
+        while (left < right) {
+            int mid = (left + right + 1) / 2;
+            if (indexedX[mid].first <= r)
+                left = mid;
+            else
+                right = mid - 1;
+        }
+        int rightIdx = indexedX[left].first <= r ? indexedX[left].second : -1;
+
+        if (leftIdx == -1 || rightIdx == -1 || leftIdx > rightIdx) {
+            cout << 0 << "\n";
+        } else {
+            cout << a[rightIdx] - a[leftIdx - 1] << "\n";
+        }
+    }
+
+    return 0;
+}

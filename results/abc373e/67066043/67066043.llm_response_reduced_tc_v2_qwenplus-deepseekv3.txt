@@ -1,0 +1,91 @@
+To fix this code, we need to ensure that for each candidate, we correctly determine the minimum number of additional votes they need to secure their victory. The key insight is that a candidate will be elected if the number of candidates with more votes than them is less than M. The problem requires us to compute this for each candidate by considering how the remaining votes can be distributed among the other candidates.
+
+### Approaches
+1. **Sorting and Binary Search**: 
+   - Sort the candidates based on their current votes to easily determine the threshold needed for a candidate to be in the top M candidates.
+   - For each candidate, use binary search to find the minimum additional votes (X) such that after adding X votes to the candidate, the number of candidates with more votes than them is less than M. This involves:
+     - Calculating how many votes other candidates can receive and ensuring that even if they receive the maximum possible votes, the candidate in question still meets the condition.
+     - Ensuring the total votes used (including X) do not exceed the remaining votes (K - sum of initial votes).
+
+2. **Prefix Sums**: 
+   - Use prefix sums to efficiently compute the total votes needed for other candidates to surpass the candidate's new vote count (after adding X).
+
+### Solution Code
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+#define all(x) (x).begin(), (x).end()
+
+int main() {
+    ios_base::sync_with_stdio(0);
+    cin.tie(0);
+    int N, M;
+    ll K;
+    cin >> N >> M >> K;
+    vector<ll> A(N);
+    ll sum = 0;
+    for (int i = 0; i < N; ++i) {
+        cin >> A[i];
+        sum += A[i];
+    }
+    ll remaining = K - sum;
+
+    vector<int> ord(N);
+    iota(all(ord), 0);
+    sort(all(ord), [&](int i, int j) { return A[i] < A[j]; });
+    vector<ll> sorted_A = A;
+    sort(all(sorted_A));
+
+    vector<ll> prefix(N + 1);
+    for (int i = 0; i < N; ++i) {
+        prefix[i + 1] = sorted_A[i] + prefix[i];
+    }
+
+    vector<ll> ans(N, -1);
+    for (int idx = 0; idx < N; ++idx) {
+        int i = ord[idx];
+        ll current = A[i];
+        ll low = 0, high = remaining;
+        ll best = -1;
+        while (low <= high) {
+            ll mid = (low + high) / 2;
+            ll new_votes = current + mid;
+            int pos = upper_bound(all(sorted_A), new_votes) - sorted_A.begin();
+            int needed_pos = N - M;
+            if (pos > needed_pos) {
+                best = mid;
+                high = mid - 1;
+            } else {
+                ll required = 0;
+                int start = needed_pos;
+                if (start < N) {
+                    required = (new_votes + 1) * (N - start) - (prefix[N] - prefix[start]);
+                }
+                if (required <= remaining - mid) {
+                    best = mid;
+                    high = mid - 1;
+                } else {
+                    low = mid + 1;
+                }
+            }
+        }
+        ans[i] = best;
+    }
+
+    for (int i = 0; i < N; ++i) {
+        cout << ans[i] << " ";
+    }
+    cout << endl;
+
+    return 0;
+}
+```
+
+### Explanation
+1. **Initial Setup**: The code reads the number of candidates (N), the threshold (M), and the total votes (K). It also reads the initial votes for each candidate (A[i]).
+2. **Sorting and Prefix Sums**: The candidates are sorted by their initial votes to facilitate binary search operations. Prefix sums of the sorted votes are computed to efficiently calculate sums over ranges.
+3. **Binary Search for Each Candidate**: For each candidate, the code performs a binary search to determine the minimum additional votes (X) needed. The binary search checks if the candidate can secure a position where fewer than M candidates have more votes, considering the worst-case distribution of remaining votes to other candidates.
+4. **Output**: The results for each candidate are printed, indicating the minimum additional votes needed (or -1 if it's impossible).
+
+This approach ensures that each candidate's solution is computed efficiently with a time complexity of O(N log N), making it suitable for large inputs as specified in the problem constraints.

@@ -1,0 +1,56 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+const int N = 2e5 + 10, INF = 1e9 + 7;
+
+vector<vector<int>> graph(N);
+bool visited[N];
+int min_cycle_length = INF;
+
+// DFS function with path tracking to detect cycles involving node 1
+void dfs(int u, int depth, unordered_map<int, int>& path) {
+    visited[u] = true;
+    path[u] = depth;
+
+    for (int v : graph[u]) {
+        if (!visited[v]) {
+            dfs(v, depth + 1, path);
+        } else if (path.count(v)) {
+            // If v is in current path, we found a cycle
+            int cycle_length = depth - path[v] + 1;
+            if (v == 1) {  // Ensure the cycle starts from node 1
+                min_cycle_length = min(min_cycle_length, cycle_length);
+            }
+        }
+    }
+
+    path.erase(u); // Remove from path after processing
+}
+
+void solve() {
+    int n, m;
+    cin >> n >> m;
+    
+    for (int i = 0; i < m; ++i) {
+        int u, v;
+        cin >> u >> v;
+        graph[u].push_back(v);
+    }
+
+    unordered_map<int, int> path;
+    dfs(1, 0, path);
+
+    if (min_cycle_length == INF)
+        cout << -1;
+    else
+        cout << min_cycle_length;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    cout.tie(nullptr);
+
+    solve();
+    return 0;
+}

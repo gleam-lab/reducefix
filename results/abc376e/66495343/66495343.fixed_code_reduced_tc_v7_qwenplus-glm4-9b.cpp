@@ -1,0 +1,63 @@
+#include<bits/stdc++.h>
+using namespace std;
+#define int long long
+#define fi first
+#define se second
+
+const int N = 200010;
+int n, k;
+int a[N], b[N];
+
+struct Pair {
+    int a, b;
+    Pair() {}
+    Pair(int first, int second) : a(first), b(second) {}
+    bool operator<(const Pair& ob) const {
+        return a < ob.a;
+    }
+};
+
+signed main() {
+    ios::sync_with_stdio(0); cin.tie(0), cout.tie(0);
+    int t;
+    cin >> t;
+
+    while(t--) {
+        cin >> n >> k;
+        for(int i = 1; i <= n; i++) cin >> a[i];
+        for(int i = 1; i <= n; i++) cin >> b[i];
+
+        vector<Pair> pairs(n + 1);
+        for(int i = 1; i <= n; i++) {
+            pairs[i] = Pair(a[i], b[i]);
+        }
+
+        sort(pairs.begin() + 1, pairs.begin() + n + 1);
+
+        long long res = 1e18;
+        long long sum = 0;
+        priority_queue<int> q;
+        for(int i = 1; i <= n; i++) {
+            if(i <= k - 1) {
+                sum += pairs[i].se;
+                q.push(pairs[i].se);
+                continue;
+            }
+
+            long long na = pairs[i].a;
+            sum += pairs[i].se;
+            
+            if(q.size() > k - 1) {
+                sum -= q.top();
+                q.pop();
+            }
+            
+            q.push(pairs[i].se);
+            res = min(res, na * sum);
+        }
+
+        cout << res << '\n';
+    }
+
+    return 0;
+}

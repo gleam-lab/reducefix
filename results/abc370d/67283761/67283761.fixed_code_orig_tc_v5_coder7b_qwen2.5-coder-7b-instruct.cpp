@@ -1,0 +1,106 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+const int INF = 1e9;
+typedef long long ll;
+
+struct Bomb {
+    int x, y, d;
+};
+
+struct Cell {
+    bool hasWall;
+    int dist[4]; // distances to nearest empty cells in up, down, left, right directions
+};
+
+void solve() {
+    int H, W, Q;
+    cin >> H >> W >> Q;
+    
+    vector<Cell> cells(H * W);
+    for(int i = 0; i < H * W; ++i) {
+        cells[i].hasWall = true;
+        memset(cells[i].dist, -1, sizeof(cells[i].dist));
+    }
+
+    vector<Bomb> bombs(Q);
+    for(int i = 0; i < Q; ++i) {
+        cin >> bombs[i].x >> bombs[i].y;
+        bombs[i].d = -1;
+        --bombs[i].x, --bombs[i].y;
+    }
+    
+    auto isValid = [&](int x, int y) { return x >= 0 && x < H && y >= 0 && y < W; };
+    
+    function<void()> updateDistances = [&]() {
+        queue<pair<int, int>> q;
+        vector<vector<bool>> visited(H, vector<bool>(W, false));
+        
+        for(auto &bomb : bombs) {
+            if(bomb.d != -1) continue;
+            q.push({bomb.x, bomb.y});
+            visited[bomb.x][bomb.y] = true;
+            cells[bomb.x * W + bomb.y].dist[0] = cells[bomb.x * W + bomb.y].dist[1] = 
+            cells[bomb.x * W + bomb bomb.y].dist[2] = cells[bomb.x * W + bomb.y].dist[3] = 0;
+        }
+        
+        while(!q.empty()) {
+            auto [x, y] = q.front();
+            q.pop();
+            
+            for(int dx = -1; dx <= 1; ++dx) {
+                for(int dy = -1; dy <= 1; ++dy) {
+                    if(dx == 0 && dy == 0) continue;
+                    if(dx * dy != 0) continue;
+                    
+                    int nx = x + dx, ny = y + dy;
+                    if(isValid(nx, ny) && !visited[nx][ny] && !cells[nx * W + ny].hasWall) {
+                        visited[nx][ny] = true;
+                        q.push({nx, ny});
+                        
+                        int d = abs(x - nx) + abs(y - ny);
+                        cells[nx * W + ny].dist[0] = min(cells[nx * W + ny].dist[0], d);
+                        cells[nx * W + ny].dist[1] = min(cells[nx * W + ny].dist[1], d);
+                        cells[nx * W + ny].dist[2] = min(cells[nx * W + ny].dist[2], d);
+                        cells[nx * W + ny].dist[3] = min(cells[nx * W + ny].dist[3], d);
+                    }
+                }
+            }
+        }
+        
+        for(auto &bomb : bombs) {
+            if(bomb.d != -1) continue;
+            int bestD = INF;
+            for(int i = 0; i < 4; ++i) {
+                bestD = min(bestD, cells[bomb.x * W + bomb.y].dist[i]);
+            }
+            bomb.d = bestD;
+        }
+    };
+
+    for(auto &bomb : bombs) {
+        if(bomb.d != -1) continue;
+        updateDistances();
+        for(int i = 0; i < 4; ++i) {
+            int nx = bomb.x + i, ny = bomb.y + i;
+            if(isValid(nx, ny) && !cells[nx * W + ny].hasWall) {
+                cells[nx * W + ny].hasWall = true;
+                cells[nx * W + ny].dist[i] = INF;
+            }
+        }
+    }
+    
+    int ans = 0;
+    for(auto &cell : cells) {
+        if(cell.hasWall) ++ans;
+    }
+    cout << ans << '\n';
+}
+
+int main() {
+    ios_base::sync_with_stdio(false); cin.tie(NULL);
+    int T;
+    cin >> T;
+    while(T--) solve();
+    return 0;
+}

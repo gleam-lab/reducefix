@@ -1,0 +1,71 @@
+#include <bits/stdc++.h>
+#include <ext/pb_ds/assoc_container.hpp>
+#include <ext/pb_ds/tree_policy.hpp>
+using namespace std;
+using namespace __gnu_pbds;
+
+typedef tree<long long, null_type, less_equal<long long>, rb_tree_tag, tree_order_statistics_node_update> pbds;
+
+#define fast_io()                     \
+    ios_base::sync_with_stdio(false); \
+    cin.tie(NULL);                    \
+    cout.tie(NULL)
+
+#define ll long long
+#define vll vector<ll>
+#define all(v) (v).begin(), (v).end()
+
+void solve();
+int main()
+{
+    fast_io();
+#ifndef ONLINE_JUDGE
+    freopen("input.txt", "r", stdin);
+    freopen("output.txt", "w", stdout);
+#endif
+    int t = 1;
+    // cin >> t;
+    while (t--)
+        solve();
+    return 0;
+}
+
+void solve()
+{
+    ll n;
+    cin >> n;
+    string s;
+    cin >> s;
+
+    vll groups;
+    ll cnt = 1;
+    ll total = 0;
+
+    // Group consecutive characters and compute initial pairs
+    for (ll i = 1; i < n; ++i)
+    {
+        if (s[i] == s[i - 1])
+        {
+            cnt++;
+        }
+        else
+        {
+            groups.push_back(cnt);
+            total += (cnt + 1) / 2;
+            cnt = 1;
+        }
+    }
+    groups.push_back(cnt);
+    total += (cnt + 1) / 2;
+
+    // Apply special condition to reduce count where applicable
+    for (ll i = 1; i < groups.size() - 1; ++i)
+    {
+        if (groups[i] == 1 && groups[i - 1] > 1 && groups[i + 1] > 1)
+        {
+            total -= 1;
+        }
+    }
+
+    cout << total << "\n";
+}

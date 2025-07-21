@@ -1,0 +1,114 @@
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+using ll = long long;
+using pii = pair<int, int>;
+using vi = vector<int>;
+using vvi = vector<vector<int>>;
+
+#define rep(i, a, b) for(int i = (a); i < (b); ++i)
+#define all(v) begin(v), end(v)
+
+struct UnionFind {
+    vector<int> parent;
+    vector<int> rank;
+    vector<int> size;
+    
+    UnionFind(int n) : parent(n), rank(n, 0), size(n, 1) {
+        iota(all(parent), 0);
+    }
+    
+    int find(int x) {
+        if(parent[x] != x) {
+            parent[x] = find(parent[x]);
+        }
+        return parent[x];
+    }
+    
+    void unite(int x, int y) {
+        x = find(x);
+        y = find(y);
+        if(x == y) return;
+        
+        if(rank[x] < rank[y]) {
+            parent[x] = y;
+            size[y] += size[x];
+        } else {
+            parent[y] = x;
+            size[x] += size[y];
+            if(rank[x] == rank[y]) rank[x]++;
+        }
+    }
+    
+    bool same(int x, int y) {
+        return find(x) == find(y);
+    }
+};
+
+void solve() {
+    int H, W, Q;
+    cin >> H >> W >> Q;
+    
+    const int MAX = H * W + 10;
+    UnionFind uf(MAX * 2 * 2);
+    
+    map<pii, int> bomb;
+    auto id = [&](int r, int c, int dir) {
+        return (r * W + c) * 4 + dir;
+    };
+    
+    const int dx[] = {-1, 1, 0, 0};
+    const int dy[] = {0, 0, -1, 1};
+    
+    int total_walls = H * W;
+    
+    while(Q--) {
+        int r, c;
+        cin >> r >> c;
+        r--; c--;
+        
+        if(bomb.count({r, c})) {
+            // Already exploded, check in four directions
+            for(int d = 0; d < 4; d++) {
+                int nr = r + dx[d];
+                int nc = c + dy[d];
+                if(nr >= 0 && nr < H && nc >= 0 && nc < W) {
+                    if(!bomb.count({nr, nc}) && !uf.same(id(r, c, d), id(nr, nc, d ^ 1))) {
+                        total_walls--;
+                        uf.unite(id(r, c, d), id(nr, nc, d ^ 1));
+                        bomb[{nr, nc}] = true;
+                    }
+                }
+            }
+        } else {
+            // Place bomb here
+            bomb[{r, c}] = true;
+            total_walls--;
+            
+            // Check four directions
+            for(int d = 0; d < 4; d++) {
+                int nr = r + dx[d];
+                int nc = c + dy[d];
+                if(nr >= 0 && nr < H && nc >= 0 && nc < W) {
+                    if(bomb.count({nr, nc})) continue;
+                    
+                    if(!uf.same(id(r, c, d), id(nr, nc, d ^ 1))) {
+                        total_walls--;
+                        uf.unite(id(r, c, d), id(nr, nc, d ^ 1));
+                        bomb[{nr, nc}] = true;
+                    }
+                }
+            }
+        }
+    }
+    
+    cout << total_walls << endl;
+}
+
+int main() {
+    cin.tie(nullptr);
+    ios::sync_with_stdio(false);
+    solve();
+}
+```

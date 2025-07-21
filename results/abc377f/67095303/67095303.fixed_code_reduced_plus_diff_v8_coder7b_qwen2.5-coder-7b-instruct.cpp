@@ -1,0 +1,71 @@
+#include<bits/stdc++.h>
+#define int long long
+#define PII pair<int,int>
+
+using namespace std;
+
+const int mod = 1e9 + 7;
+
+int qpow(int a, int b) {
+    int r = 1;
+    while (b) {
+        if (b & 1) r = r * a % mod;
+        a = a * a % mod;
+        b >>= 1;
+    }
+    return r;
+}
+
+int inv(int x) {
+    return qpow(x, mod - 2);
+}
+
+int calc(vector<PII>& pieces, vector<vector<int>>& dp, int n) {
+    memset(dp, 0, sizeof(dp));
+    for (auto& [x, y] : pieces) {
+        dp[x][y] = 1;
+    }
+
+    for (int i = 1; i <= n; ++i) {
+        for (int j = 1; j <= n; ++j) {
+            dp[i][j] = (dp[i][j] + dp[i - 1][j] + dp[i][j - 1] - dp[i - 1][j - 1] + mod) % mod;
+        }
+    }
+
+    return (n * n - dp[n][n] + mod) % mod;
+}
+
+int main() {
+    ios_base::sync_with_stdio(0), cin.tie(0);
+
+    int n, m;
+    cin >> n >> m;
+    vector<PII> pieces(m);
+    for (int i = 0; i < m; ++i) {
+        cin >> pieces[i].first >> pieces[i].second;
+    }
+
+    sort(pieces.begin(), pieces.end());
+    pieces.erase(unique(pieces.begin(), pieces.end()), pieces.end());
+
+    int ans = 0;
+    vector<vector<int>> dp(n + 1, vector<int>(n + 1));
+
+    for (int i = 0; i < pieces.size(); ++i) {
+        int x = pieces[i].first, y = pieces[i].second;
+        int pre = ans;
+        ans = (ans + (n - x + 1) * (n - y + 1)) % mod;
+        if (i > 0) {
+            int nx = pieces[i - 1].first, ny = pieces[i - 1].second;
+            if (nx < x || (nx == x && ny < y)) {
+                ans = (ans - (calc(pieces, dp, nx) - calc(pieces, dp, x - 1)) % mod + mod) % mod;
+            } else {
+                ans = (ans - (calc(pieces, dp, ny) - calc(pieces, dp, y - 1)) % mod + mod) % mod;
+            }
+        }
+    }
+
+    cout << ans << '\n';
+
+    return 0;
+}

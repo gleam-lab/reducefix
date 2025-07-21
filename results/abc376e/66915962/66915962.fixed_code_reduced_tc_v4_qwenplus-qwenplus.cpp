@@ -1,0 +1,56 @@
+#include<bits/stdc++.h>
+using namespace std;
+using ll = long long;
+using VI = vector<int>;
+using P = pair<int, int>;
+constexpr int INF = 1001001001;
+constexpr ll LINF = 1001001001001001001ll;
+#define rep(i, n) for (ll i = 0; i < (ll)(n); i++)
+#define rep2(i, k, n) for (ll i = k; i < (ll)(n); i++)
+#define OUT(x) cout << #x << ":" << x << endl
+
+int main(){
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+    
+    int t;
+    cin >> t;
+    
+    rep(qi, t){
+        int n, k;
+        cin >> n >> k;
+        vector<pair<ll, ll>> items(n);
+        
+        rep(i, n) cin >> items[i].first;  // A values
+        rep(i, n) cin >> items[i].second; // B values
+        
+        // Sort by A value ascending
+        sort(items.begin(), items.end());
+        
+        // Min-heap to maintain the K smallest B values
+        priority_queue<ll, vector<ll>, greater<ll>> pq;
+        ll sumB = 0;
+        
+        // Initialize with first K elements
+        rep(i, k) {
+            sumB += items[i].second;
+            pq.push(items[i].second);
+        }
+        
+        ll ans = items[k-1].first * sumB;
+        
+        rep2(i, k, n) {
+            // Current element's B is better than max in heap (min B not in set)
+            if (items[i].second > pq.top()) {
+                sumB -= pq.top();
+                pq.pop();
+                sumB += items[i].second;
+                pq.push(items[i].second);
+            }
+            
+            ans = min(ans, items[i].first * sumB);
+        }
+        
+        cout << ans << '\n';
+    }
+}

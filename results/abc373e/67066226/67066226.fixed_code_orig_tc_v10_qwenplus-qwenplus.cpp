@@ -1,0 +1,70 @@
+#include <bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+#define all(x) (x).begin(), (x).end()
+
+int main() {
+    ios_base::sync_with_stdio(0);
+    cin.tie(0);
+    int n, m;
+    ll k;
+    cin >> n >> m >> k;
+    vector<ll> a(n);
+    for (int i = 0; i < n; ++i) {
+        cin >> a[i];
+    }
+
+    vector<ll> res(n, -1);
+
+    // If M >= N, everyone can win
+    if (m >= n) {
+        cout << string(n * 2 - 1, '0') << endl;
+        return 0;
+    }
+
+    // Create sorted list of votes
+    vector<ll> sorted_a = a;
+    sort(sorted_a.begin(), sorted_a.end());
+
+    for (int i = 0; i < n; ++i) {
+        ll need_votes = 0;
+        ll my_votes = a[i];
+
+        // Binary search on the minimum number of additional votes needed
+        ll low = 0, high = k + 1;
+        while (low < high) {
+            ll mid = (low + high) / 2;
+            ll total = my_votes + mid;
+
+            // We want to check if candidate i can be among top M candidates with total votes
+
+            // Count how many candidates have strictly more votes than total
+            ll cnt = 0;
+            for (int j = 0; j < n; ++j) {
+                if (a[j] > total)
+                    ++cnt;
+            }
+
+            if (cnt < m) {
+                // Enough votes to be in top M
+                high = mid;
+            } else {
+                // Need more votes
+                low = mid + 1;
+            }
+        }
+
+        // After binary search, low is the minimal X such that candidate i can win
+        if (low > k) {
+            res[i] = -1;
+        } else {
+            res[i] = low;
+        }
+    }
+
+    for (auto x : res) {
+        cout << x << " ";
+    }
+
+    return 0;
+}

@@ -1,0 +1,51 @@
+#include <iostream>
+#include <vector>
+#include <set>
+using namespace std;
+
+int main() {
+    int H, W, Q;
+    cin >> H >> W >> Q;
+
+    vector<vector<int>> rowWalls(H + 1, set<int>());
+    vector<vector<int>> colWalls(W + 1, set<int>());
+    vector<pair<int, int>> queries(Q);
+
+    for (int i = 0; i < Q; i++) {
+        int r, c;
+        cin >> r >> c;
+        queries[i] = {r, c};
+    }
+
+    // Process each query
+    for (auto [r, c] : queries) {
+        if (!rowWalls[r].count(c) || !colWalls[c].count(r)) {
+            // No wall at the exact location, so destroy all walls in the row and column
+            for (int i : rowWalls[r]) {
+                colWalls[i].erase(r);
+            }
+            for (int i : colWalls[c]) {
+                rowWalls[i].erase(c);
+            }
+            rowWalls[r].clear();
+            colWalls[c].clear();
+        } else {
+            // Wall exists at the exact location, just destroy it
+            rowWalls[r].erase(c);
+            colWalls[c].erase(r);
+        }
+    }
+
+    // Calculate the number of remaining walls
+    int remainingWalls = 0;
+    for (int i = 1; i <= H; i++) {
+        remainingWalls += rowWalls[i].size();
+    }
+    for (int j = 1; j <= W; j++) {
+        remainingWalls += colWalls[j].size();
+    }
+
+    cout << remainingWalls << endl;
+
+    return 0;
+}

@@ -1,0 +1,57 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+#define endl "\n"
+#define int long long
+
+void solve() {
+    int N, K;
+    cin >> N >> K;
+    vector<int> A(N);
+    for (int i = 0; i < N; ++i) {
+        cin >> A[i];
+    }
+
+    // We need to choose N-K elements in order such that max(B) - min(B) is minimized.
+    // So we look for a window of size (N-K) in the array where the difference between
+    // the maximum and minimum is minimized.
+
+    // Maintain a sliding window of size (N-K)
+    deque<int> minDeque, maxDeque;
+    int res = LLONG_MAX;
+
+    for (int i = 0; i < N; ++i) {
+        // Remove elements outside the window
+        while (!minDeque.empty() && minDeque.front() <= i - (N - K)) {
+            minDeque.pop_front();
+        }
+        while (!maxDeque.empty() && maxDeque.front() <= i - (N - K)) {
+            maxDeque.pop_front();
+        }
+
+        // Add current element to deques
+        while (!minDeque.empty() && A[minDeque.back()] >= A[i]) {
+            minDeque.pop_back();
+        }
+        while (!maxDeque.empty() && A[maxDeque.back()] <= A[i]) {
+            maxDeque.pop_back();
+        }
+
+        minDeque.push_back(i);
+        maxDeque.push_back(i);
+
+        // When window is full, calculate difference
+        if (i >= (N - K) - 1) {
+            res = min(res, A[maxDeque.front()] - A[minDeque.front()]);
+        }
+    }
+
+    cout << res << endl;
+}
+
+signed main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(NULL);
+    solve();
+    return 0;
+}

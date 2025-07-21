@@ -1,0 +1,29 @@
+#include<bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+
+const int INF = 0x3f3f3f3f;
+const int MAXN = 1e5 + 5;
+vector<int> a[MAXN];
+
+void solve(void) {
+    int n, q; cin >> n >> q;
+    for(int i = 1; i <= n; i++){
+        int x; cin >> x;
+        a[x].push_back(i);
+    }
+    for(int i = 1; i <= 1000000000; i++){
+        sort(a[i].begin(), a[i].end());
+    }
+    for(int i = 1; i <= q; i++){
+        int x, y; cin >> x >> y;
+        cout << a[x][y - 1] << endl;
+    }
+}
+
+int main(){
+    ios::sync_with_stdio(0), cin.tie(0), cout.tie(0);
+    int t = 1; //cin >> t;
+    while (t--) solve();
+    return 0;
+}

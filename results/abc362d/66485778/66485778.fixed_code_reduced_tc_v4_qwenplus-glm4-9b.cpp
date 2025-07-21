@@ -1,0 +1,104 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define int long long
+#define pb push_back
+
+struct DSU {
+private:
+    vector<int> fa, sz;
+public:
+    DSU(int n) : fa(n + 1), sz(n + 1, 1) {
+        iota(fa.begin(), fa.end(), 0);
+    }
+    int find(int x) {
+        int root = x;
+        while (root != fa[root]) {
+            root = fa[root];
+        }
+        while (x != root) {
+            int nex = fa[x];
+            fa[x] = fa[fa[x]];
+            x = nex;
+        }
+        return root;
+    }
+    bool same(int x, int y) {
+        return find(x) == find(y);
+    }
+
+    bool merge(int x, int y) {
+        x = find(x), y = find(y);
+        if (x == y) return false;
+        if (sz[x] < sz[y]) swap(x, y);
+        fa[y] = x;
+        sz[x] += sz[y];
+        return true;
+    }
+    int size(int x) {
+        return sz[find(x)];
+    }
+};
+
+struct Edge {
+    int x, y, c;
+    bool operator < (const Edge& other) const {
+        return c < other.c;
+    }
+};
+
+struct Node {
+    int u, v, cost;
+    bool operator < (const Node& other) const {
+        return cost < other.cost;
+    }
+};
+
+void solve() {
+    int n, m;
+    cin >> n >> m;
+    vector<int> a(n + 1, 0);
+    vector<pair<int, int>> adj[n + 1];
+    for (int i = 1; i <= n; ++i) {
+        cin >> a[i];
+    }
+    for (int i = 0; i < m; ++i) {
+        int u, v, c;
+        cin >> u >> v >> c;
+        adj[u].emplace_back(v, c);
+        adj[v].emplace_back(u, c);
+    }
+
+    using priority_queue = pair<int, int>; // We need to store both vertex and cost in the min-heap
+    priority_queue pq;
+    pq.emplace(0, 1); // (cost to reach 1, vertex 1)
+    vector<int> dist(n + 1, LLONG_MAX);
+
+    while (!pq.empty()) {
+        int cost = -pq.top().first;
+        int vertex = pq.top().second;
+        pq.pop();
+
+        if (cost > dist[vertex]) continue;
+
+        for (auto &edge : adj[vertex]) {
+            int adjVertex = edge.first;
+            int edgeCost = edge.second;
+            int newCost = cost + edgeCost + a[adjVertex];
+            if (newCost < dist[adjVertex]) {
+                dist[adjVertex] = newCost;
+                pq.emplace(-newCost, adjVertex);
+            }
+        }
+    }
+
+    for (int i = 2; i <= n; ++i) {
+        cout << dist[i] << (i == n ? "" : " ");
+    }
+    cout << endl;
+}
+
+int main() {
+    cin.tie(nullptr)->sync_with_stdio(false);
+    solve();
+    return 0;
+}

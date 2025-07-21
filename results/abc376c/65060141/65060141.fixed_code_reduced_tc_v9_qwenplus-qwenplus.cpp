@@ -1,0 +1,61 @@
+#include <bits/stdc++.h>
+#define ll long long
+using namespace std;
+
+const int N = 2e5 + 5;
+
+ll a[N], b[N];
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int n;
+    cin >> n;
+    
+    for (int i = 1; i <= n; ++i) {
+        cin >> a[i];
+    }
+    
+    for (int i = 1; i < n; ++i) {
+        cin >> b[i];
+    }
+
+    sort(a + 1, a + n + 1);
+    sort(b + 1, b + n);
+
+    int l = n, r = n - 1;
+    ll required_size = 0;
+
+    // Try to fit the largest toys into the largest boxes
+    while (l >= 1 && r >= 1) {
+        if (b[r] >= a[l]) {
+            --l;
+            --r;
+        } else {
+            // This toy must go into our new box
+            required_size = max(required_size, a[l]);
+            --l;
+        }
+    }
+
+    // After trying to fit all boxes:
+    // If we have run out of boxes but still have toys left, they must go to our new box
+    // But at most one toy can be left (otherwise we need multiple extra boxes)
+    if (l >= 1) {
+        // We need to put remaining toys in our purchased box
+        // If there's more than one toy left, it's impossible
+        if (l > 1) {
+            cout << -1;
+        } else {
+            // One toy left, our box must fit it
+            required_size = max(required_size, a[l]);
+            cout << required_size;
+        }
+    } else {
+        // All toys were matched to existing boxes
+        cout << required_size;
+    }
+
+    return 0;
+}

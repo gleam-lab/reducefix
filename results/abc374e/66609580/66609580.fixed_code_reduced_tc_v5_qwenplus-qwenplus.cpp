@@ -1,0 +1,73 @@
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+
+const ll INF = 1e18;
+
+int n;
+ll a[110], b[110], p[110], q[110], x;
+
+inline ll gcd(ll a, ll b) {
+    return b ? gcd(b, a % b) : a;
+}
+
+inline ll lcm(ll a, ll b) {
+    return a / gcd(a, b) * b;
+}
+
+bool check(ll v) {
+    ll cnt = 0;
+    for (int i = 1; i <= n; ++i) {
+        ll g = gcd(a[i], b[i]);
+        ll l = lcm(a[i], b[i]);
+        
+        // Full complete cycles
+        ll full_cycles = max(0LL, (v / l) - 1);
+        if (full_cycles > 0) {
+            ll cost_per_cycle = min(p[i] * (l / a[i]), q[i] * (l / b[i]));
+            cnt += full_cycles * cost_per_cycle;
+        }
+        
+        if (cnt >= x) return false;
+        
+        // Partial cycle
+        ll remaining = v - full_cycles * l;
+        ll min_cost = INF;
+        for (ll j = 0; j * a[i] <= remaining; ++j) {
+            ll rem = remaining - j * a[i];
+            ll k = (rem + b[i] - 1) / b[i]; // ceil division
+            if (k < 0) k = 0;
+            ll cost = j * p[i] + k * q[i];
+            min_cost = min(min_cost, cost);
+        }
+        
+        cnt += min_cost;
+        if (cnt >= x) return false;
+    }
+    return true;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    cout.tie(nullptr);
+    
+    cin >> n >> x;
+    
+    for (int i = 1; i <= n; ++i) {
+        cin >> a[i] >> p[i] >> b[i] >> q[i];
+    }
+    
+    ll low = 0, high = 2e14;
+    while (low + 1 < high) {
+        ll mid = (low + high) / 2;
+        if (check(mid)) {
+            low = mid;
+        } else {
+            high = mid;
+        }
+    }
+    
+    cout << low << "\n";
+    return 0;
+}

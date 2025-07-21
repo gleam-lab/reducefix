@@ -1,0 +1,74 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+
+int main() {
+    int N;
+    cin >> N;
+    vector<long long> H(N);
+    for (int i = 0; i < N; ++i) {
+        cin >> H[i];
+    }
+
+    long long T = 0;
+
+    // Priority queue to process enemies in order of how much they need triple attacks
+    // We'll use a max heap based on the number of times a "triple damage at T%3==0" is needed
+    priority_queue<pair<long long, int>> pq;
+
+    // First populate the queue with initial estimates
+    for (int i = 0; i < N; ++i) {
+        long long h = H[i];
+        // Each 3 attacks can do either 1+1+3 = 5 damage or 3+1+1 = 5 or 1+3+1 = 5
+        // So every 3 turns = 5 damage
+        long long full_cycles = h / 5;
+        long long rem = h % 5;
+        T += full_cycles * 3;
+
+        // Adjust remaining health after full cycles
+        H[i] = rem;
+
+        // Compute how many additional attacks are needed
+        if (H[i] > 0) {
+            long long extra_attacks = 0;
+            if (H[i] >= 3) extra_attacks = 1;
+            else if (H[i] >= 2) extra_attacks = 2;
+            else if (H[i] >= 1) extra_attacks = 1;
+            pq.emplace(-extra_attacks, i);
+        }
+    }
+
+    vector<int> next_attack_time(N, 0); // When this enemy will be attacked again
+
+    while (!pq.empty()) {
+        auto [neg_extra, i] = pq.top();
+        pq.pop();
+        int extra_attacks = -neg_extra;
+
+        // Simulate the attack round
+        T++;
+        // Check if it's time to attack this enemy
+        bool can_attack = false;
+        for (int j = 0; j < N; ++j) {
+            if (H[j] == 0) continue;
+            if (T == next_attack_time[j]) {
+                if (T % 3 == 0) H[j] -= 3;
+                else H[j] -= 1;
+                if (H[j] <= 0) {
+                    H[j] = 0;
+                } else {
+                    next_attack_time[j] = T + (3 - T % 3); // schedule next attack when triple damage possible
+                }
+                can_attack = true;
+                break;
+            }
+        }
+        if (!can_attack) {
+            // No valid enemy found to attack, just skip this step
+            T--;
+        }
+    }
+
+    cout << T << endl;
+    return 0;
+}

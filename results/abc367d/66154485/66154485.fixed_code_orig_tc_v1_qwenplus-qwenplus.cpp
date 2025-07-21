@@ -1,0 +1,62 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int n, m;
+    cin >> n >> m;
+    vector<int> arr(n);
+    for (int i = 0; i < n; ++i) {
+        cin >> arr[i];
+    }
+
+    // Prefix sums mod m
+    vector<int> prefix_mod(n + 1, 0);
+    for (int i = 0; i < n; ++i) {
+        prefix_mod[i + 1] = (prefix_mod[i] + arr[i]) % m;
+    }
+
+    long long ans = 0;
+    map<int, int> freq;
+
+    // We use a Fenwick Tree to maintain frequency of prefix mods in circular fashion
+    vector<int> BIT(m + 1, 0);
+
+    auto update = [&](int idx, int delta) {
+        while (idx <= m) {
+            BIT[idx] += delta;
+            idx += idx & -idx;
+        }
+    };
+
+    auto query = [&](int idx) {
+        int res = 0;
+        while (idx > 0) {
+            res += BIT[idx];
+            idx -= idx & -idx;
+        }
+        return res;
+    };
+
+    // Initialize BIT with prefix_mod[0..n-1]
+    for (int i = 0; i < n; ++i) {
+        update(prefix_mod[i] + 1, 1);  // +1 for 1-based indexing
+    }
+
+    for (int i = 0; i < n; ++i) {
+        // Remove current prefix_mod[i] from BIT before querying
+        update(prefix_mod[i] + 1, -1);
+
+        // Number of elements with same mod value gives number of subarrays ending at this index divisible by m
+        int count = query(prefix_mod[i] + 1) - query(prefix_mod[i]);
+        ans += count;
+
+        // Put prefix_mod[i] back at the end (circular nature)
+        update(prefix_mod[i] + 1, 1);
+    }
+
+    cout << ans << "\n";
+    return 0;
+}

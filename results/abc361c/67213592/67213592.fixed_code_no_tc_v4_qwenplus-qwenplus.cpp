@@ -1,0 +1,57 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int n, k;
+    cin >> n >> k;
+    vector<int> A(n);
+    for (int i = 0; i < n; ++i) {
+        cin >> A[i];
+    }
+
+    // We need to remove exactly K elements to minimize max(B) - min(B)
+    // where B is the sequence of N-K elements left in original order
+
+    // To solve this correctly:
+    // We can choose a window of size (N-K) from the array and compute
+    // max(A[i..i+N-K-1]) - min(A[i..i+N-K-1])
+    // We want to find the minimum such difference over all windows
+
+    // Use sliding window with a multiset or two deques to maintain min and max efficiently
+
+    deque<int> maxDq;  // stores indices of elements in decreasing order
+    deque<int> minDq;  // stores indices of elements in increasing order
+    int result = 1e9;
+
+    for (int i = 0; i < n; ++i) {
+        // Maintain maxDq
+        while (!maxDq.empty() && A[maxDq.back()] <= A[i]) {
+            maxDq.pop_back();
+        }
+        maxDq.push_back(i);
+
+        // Maintain minDq
+        while (!minDq.empty() && A[minDq.back()] >= A[i]) {
+            minDq.pop_back();
+        }
+        minDq.push_back(i);
+
+        // Remove out of window indices
+        if (i >= n - k - 1) {
+            while (maxDq.front() < i - (n - k - 1)) {
+                maxDq.pop_front();
+            }
+            while (minDq.front() < i - (n - k - 1)) {
+                minDq.pop_front();
+            }
+            result = min(result, A[maxDq.front()] - A[minDq.front()]);
+        }
+    }
+
+    cout << result << endl;
+}

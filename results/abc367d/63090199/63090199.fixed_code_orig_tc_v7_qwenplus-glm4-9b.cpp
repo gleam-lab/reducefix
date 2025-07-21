@@ -1,0 +1,25 @@
+#include<bits/stdc++.h>
+using namespace std;
+int n, m;
+int main(){
+    cin >> n >> m;
+    vector<int> nums(n);
+    for(int i = 0; i < n; i++){
+        cin >> nums[i];
+    }
+    vector<int> prefixSum(n + 1, 0);
+    for(int i = 0; i < n; i++){
+        prefixSum[i + 1] = prefixSum[i] + nums[i];
+    }
+    int count = 0;
+    // Instead of nested loops, find all pairs (s, t) where s < t
+    for(int s = 1; s < n; s++){
+        for(int t = s + 1; t <= n; t++){
+            if((prefixSum[t] - prefixSum[s]) % m == 0){
+                count++;
+            }
+        }
+    }
+    cout << count << endl;
+    return 0;
+}

@@ -1,0 +1,28 @@
+#include<bits/stdc++.h>
+using namespace std;
+
+int main() {
+    int n, m;
+    cin >> n >> m;
+    vector<int> a(2 * n);
+    vector<int> prefix_sum(m + 1, 0);
+    int answer = 0;
+
+    for (int i = 0; i < n; ++i) {
+        cin >> a[i];
+        a[i] %= m;
+        a[n + i] = a[i];
+    }
+
+    for (int i = 1; i <= 2 * n; ++i) {
+        prefix_sum[a[i]]++;
+        if (i > n) {
+            answer += prefix_sum[a[i - n]] - 1;
+        } else {
+            answer += prefix_sum[a[i - n]];
+        }
+    }
+
+    cout << answer << endl;
+    return 0;
+}

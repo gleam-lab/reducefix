@@ -1,0 +1,73 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+typedef long long ll;
+const ll INF = 1e18;
+
+struct Edge {
+    ll to, cost;
+    Edge(ll to, ll cost) : to(to), cost(cost) {}
+};
+
+vector<ll> dijkstra(int start, vector<vector<Edge>>& graph, vector<ll>& weight) {
+    int n = graph.size();
+    vector<ll> dist(n, INF);
+    dist[start] = weight[start];
+    
+    using P = pair<ll, ll>; // first is distance, second is node index
+    priority_queue<P, vector<P>, greater<P>> pq;
+    pq.emplace(dist[start], start);
+    
+    while (!pq.empty()) {
+        auto [d, u] = pq.top();
+        pq.pop();
+        
+        if (d > dist[u]) continue;
+        
+        for (auto& e : graph[u]) {
+            ll v = e.to;
+            ll cost = e.cost + weight[v];
+            
+            if (dist[u] + cost < dist[v]) {
+                dist[v] = dist[u] + cost;
+                pq.emplace(dist[v], v);
+            }
+        }
+    }
+    
+    return dist;
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(NULL);
+    
+    int n, m;
+    cin >> n >> m;
+    
+    vector<ll> weight(n);
+    for (int i = 0; i < n; ++i) {
+        cin >> weight[i];
+    }
+    
+    vector<vector<Edge>> graph(n);
+    for (int i = 0; i < m; ++i) {
+        int u, v, cost;
+        cin >> u >> v >> cost;
+        --u; --v; // Convert to zero-indexed
+        graph[u].emplace_back(v, cost);
+        graph[v].emplace_back(u, cost);
+    }
+    
+    vector<ll> result(n-1, INF);
+    for (int i = 1; i < n; ++i) {
+        result[i-1] = dijkstra(0, graph, weight)[i];
+    }
+    
+    for (int i = 0; i < n-1; ++i) {
+        cout << result[i] << " ";
+    }
+    cout << endl;
+    
+    return 0;
+}

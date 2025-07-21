@@ -1,0 +1,88 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+
+constexpr int dx[] = {-1, 1, 0, 0};
+constexpr int dy[] = {0, 0, -1, 1};
+
+int main()
+{
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int H, W, Y;
+    cin >> H >> W >> Y;
+
+    vector<vector<int>> A(H, vector<int>(W));
+    for (int i = 0; i < H; ++i)
+    {
+        for (int j = 0; j < W; ++j)
+        {
+            cin >> A[i][j];
+        }
+    }
+
+    // Build a map from elevation to list of cells at that elevation
+    vector<vector<pair<int, int>>> elevToCells(Y + 2);  // up to Y+1 to avoid overflow
+
+    vector<vector<bool>> island(H, vector<bool>(W, true));
+
+    for (int i = 0; i < H; ++i)
+    {
+        for (int j = 0; j < W; ++j)
+        {
+            if ((i == 0 || i == H - 1 || j == 0 || j == W - 1))
+            {
+                // We'll process this like a BFS later, grouped by elevation
+                elevToCells[A[i][j]].emplace_back(i, j);
+                island[i][j] = false;
+            }
+        }
+    }
+
+    int remaining = H * W;
+
+    // Process the outer edges first and expand inward using BFS
+    queue<pair<int, int>> q;
+
+    for (int year = 1; year <= Y; ++year)
+    {
+        // Add all cells with elevation == year to the queue
+        for (auto &cell : elevToCells[year])
+        {
+            int x = cell.first;
+            int y = cell.second;
+            if (island[x][y])
+            {
+                island[x][y] = false;
+                q.push(cell);
+                --remaining;
+            }
+        }
+
+        while (!q.empty())
+        {
+            auto [x, y] = q.front();
+            q.pop();
+
+            for (int d = 0; d < 4; ++d)
+            {
+                int nx = x + dx[d];
+                int ny = y + dy[d];
+
+                if (nx < 0 || ny < 0 || nx >= H || ny >= W) continue;
+
+                if (island[nx][ny] && A[nx][ny] <= year)
+                {
+                    island[nx][ny] = false;
+                    --remaining;
+                    q.push({nx, ny});
+                }
+            }
+        }
+
+        cout << remaining << "\n";
+    }
+
+    return 0;
+}

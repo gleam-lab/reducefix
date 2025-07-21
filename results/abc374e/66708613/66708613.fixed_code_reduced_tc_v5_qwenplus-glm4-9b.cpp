@@ -1,0 +1,90 @@
+#include<iostream>
+#include<string>
+#include<queue>
+#include<vector>
+#include<cassert>
+#include<random>
+#include<set>
+#include<map>
+#include<cassert>
+#include<unordered_map>
+#include<bitset>
+#include<numeric>
+#include<algorithm>
+#include<cmath>
+using namespace std;
+using ll = long long;
+const int inf=1<<30;
+const ll INF=1LL<<62;
+using P = pair<ll,int>;
+using PP = pair<int,P>; 
+const ll MOD=998244353;
+const int dy[]={-1,0,1,0};
+const int dx[]={0,1,0,-1};
+
+int main(){
+    int N;
+    ll X;
+    cin>>N>>X;
+    vector<ll> A(N),P(N),B(N),Q(N);
+    
+    for(int i=0;i<N;i++){
+        cin>>A[i]>> P[i]>> B[i] >> Q[i];
+    }
+
+    ll ub=INF, lb=-INF;
+    
+    for(int i=0;i<N;i++){
+        ll a = A[i];
+        ll p = P[i];
+        ll b = B[i];
+        ll q = Q[i];
+
+        // Calculate the maximum number of machines that can be bought for both types
+        ll max_a = (X - a) / p;
+        ll max_b = (X - b) / q;
+
+        // Update the bounds for the binary search
+        ub = min(ub, max_a * b + max_b * a);
+        lb = max(lb, max_a * a + max_b * b);
+    }
+
+    // Perform binary search to find the minimum processing capability that can be achieved within budget X
+    while (ub - lb > 1) {
+        ll mid = (ub + lb) / 2;
+        ll machines_a = (mid - b * A[0]) / P[0] + 1;
+        ll machines_b = (mid - a * A[0]) / Q[0] + 1;
+
+        bool can_buy = true;
+        for (int i = 1; i < N; i++) {
+            ll machines_a_i = (mid - b * A[i]) / P[i] + 1;
+            ll machines_b_i = (mid - a * A[i]) / Q[i] + 1;
+
+            ll max_machines_a = min(machines_a, machines_a_i);
+            ll max_machines_b = min(machines_b, machines_b_i);
+
+            ll cost_a = max_machines_a * P[i] + (mid - max_machines_a * b) * Q[i];
+            ll cost_b = max_machines_b * Q[i] + (mid - max_machines_b * a) * P[i];
+
+            if (cost_a > X || cost_b > X) {
+                can_buy = false;
+                break;
+            }
+
+            machines_a = max_machines_a;
+            machines_b = max_machines_b;
+        }
+
+        if (can_buy) {
+            ub = mid;
+        } else {
+            lb = mid;
+        }
+    }
+
+    if (ub == INF) {
+        cout << 0 << endl;
+    } else {
+        cout << ub << endl;
+    }
+}

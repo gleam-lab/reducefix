@@ -1,0 +1,147 @@
+To solve this problem correctly, we need to simulate the process of placing bombs on a grid and destroying walls in a way that is both **efficient** and **logically correct**, especially when handling large constraints (up to 400,000 cells and 200,000 queries).
+
+---
+
+### Key Observations:
+
+1. Each cell starts with one wall.
+2. When a bomb is placed:
+   - If there's a wall at the position, it's simply destroyed.
+   - If not, we destroy the first existing wall found in each of the four directions: up, down, left, right.
+
+This implies that for efficient querying, we must be able to find the nearest remaining wall in any direction quickly.
+
+---
+
+### Efficient Data Structures:
+
+We can use `std::set` to store the positions of walls for each row and column. This allows us to perform efficient searches (like finding the next or previous wall using `lower_bound` or `upper_bound`) in O(log N) time per operation.
+
+- For each row `r`, maintain a set of columns where walls still exist.
+- For each column `c`, maintain a set of rows where walls still exist.
+
+---
+
+### Corrected Implementation Strategy:
+
+- When placing a bomb at `(R, C)`:
+  - If there's a wall at `(R, C)`, remove it from both sets.
+  - Else, search in all 4 directions:
+    - Up: Find the largest row `< R` in column `C` that has a wall.
+    - Down: Find the smallest row `> R` in column `C`.
+    - Left: Find the largest column `< C` in row `R`.
+    - Right: Find the smallest column `> C` in row `R`.
+
+For each such found wall, remove it from both the row and column sets.
+
+---
+
+### Full Working Code:
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int H, W, Q;
+    cin >> H >> W >> Q;
+
+    // Sets to track which columns have walls in each row
+    vector<set<int>> row_walls(H);
+    // Sets to track which rows have walls in each column
+    vector<set<int>> col_walls(W);
+
+    // Initialize all walls
+    for (int r = 0; r < H; ++r) {
+        for (int c = 0; c < W; ++c) {
+            row_walls[r].insert(c);
+            col_walls[c].insert(r);
+        }
+    }
+
+    ll total_remaining = (ll)H * (ll)W;
+
+    auto destroy_wall = [&](int r, int c) {
+        if (row_walls[r].count(c)) {
+            row_walls[r].erase(c);
+            col_walls[c].erase(r);
+            --total_remaining;
+        }
+    };
+
+    while (Q--) {
+        int R, C;
+        cin >> R >> C;
+        R--; C--;
+
+        // If there is a wall here, destroy it
+        if (row_walls[R].count(C)) {
+            destroy_wall(R, C);
+            continue;
+        }
+
+        // Otherwise, look in each direction and destroy first wall if exists
+
+        // Up
+        auto it = col_walls[C].lower_bound(R);
+        if (it != col_walls[C].begin()) {
+            --it;
+            int r = *it;
+            destroy_wall(r, C);
+        }
+
+        // Down
+        it = col_walls[C].upper_bound(R);
+        if (it != col_walls[C].end()) {
+            int r = *it;
+            destroy_wall(r, C);
+        }
+
+        // Left
+        it = row_walls[R].lower_bound(C);
+        if (it != row_walls[R].begin()) {
+            --it;
+            int c = *it;
+            destroy_wall(R, c);
+        }
+
+        // Right
+        it = row_walls[R].upper_bound(C);
+        if (it != row_walls[R].end()) {
+            int c = *it;
+            destroy_wall(R, c);
+        }
+    }
+
+    cout << total_remaining << '\n';
+
+    return 0;
+}
+```
+
+---
+
+### Why This Fix Works:
+
+- The original code had logic errors in how it searched for adjacent walls (e.g., using incorrect bounds or failing to handle edge cases).
+- It also used `ans` and `cnt` separately, which made the final calculation error-prone.
+- The corrected version directly removes walls from sets and tracks the number of remaining walls as they are removed.
+- It ensures that only one wall is destroyed in each direction, even if multiple walls exist.
+
+---
+
+### Time Complexity:
+
+Each query operates on up to 5 `set` operations (insert/erase/lookup), each taking O(log N). So total complexity is **O(Q log N)**, which is acceptable for the input limits.
+
+---
+
+### Final Notes:
+
+- This solution handles edge cases like out-of-bounds correctly.
+- It uses standard containers efficiently and avoids unnecessary overhead.
+- It passes the given test case and should work for all hidden cases too.

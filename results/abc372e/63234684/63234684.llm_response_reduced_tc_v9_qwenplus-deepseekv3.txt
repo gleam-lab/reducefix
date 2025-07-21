@@ -1,0 +1,84 @@
+After analyzing the incorrect code and the failing test case, I identified the issue is in how the k-th largest element is being queried. The problem requires finding the k-th largest vertex in the connected component, but the current implementation has several flaws:
+
+1. The code only keeps up to 9 largest elements in each component's list, which is insufficient when k can be up to 10.
+2. The sorting and trimming of the list happens during merge operations, which may not maintain the correct order when multiple merges occur.
+3. The indexing when querying is incorrect - it should be k-1 since vectors are 0-indexed.
+
+Here's the fixed code that addresses these issues:
+
+```cpp
+#include<bits/stdc++.h>
+using namespace std;
+using ll = long long;
+#define rep(i,n) for(int i = 0;i<n;i++)
+#define all(v) v.begin(),v.end()
+using P = pair<int,int>;
+using T = tuple<int,int,int>;
+
+struct Union_Find {
+    vector<int> par;
+    vector<vector<int>> uni;
+    
+    Union_Find(int n) {
+        par.resize(n, -1);
+        uni.resize(n);
+        rep(i,n) uni[i].push_back(i);
+    }
+    
+    int root(int v) {
+        if(par[v] == -1) return v;
+        return par[v] = root(par[v]);
+    }
+    
+    bool issame(int x, int y) {
+        return root(x) == root(y);
+    }
+    
+    void merge(int x, int y) {
+        x = root(x), y = root(y);
+        if(x == y) return;
+        if(uni[x].size() < uni[y].size()) swap(x, y);
+        par[y] = x;
+        uni[x].insert(uni[x].end(), all(uni[y]));
+        uni[y].clear();
+        sort(all(uni[x]), greater<int>());
+        if(uni[x].size() > 10) uni[x].resize(10);
+    }
+};
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int n, q;
+    cin >> n >> q;
+    Union_Find uf(n);
+    
+    rep(i,q) {
+        int ty, a, b;
+        cin >> ty >> a >> b;
+        a--, b--;
+        if(ty == 1) {
+            uf.merge(a, b);
+        } else {
+            int r = uf.root(a);
+            if(uf.uni[r].size() < b) {
+                cout << -1 << "\n";
+            } else {
+                cout << uf.uni[r][b-1] + 1 << "\n";
+            }
+        }
+    }
+}
+```
+
+Key improvements made:
+
+1. Changed the maximum stored elements from 9 to 10 to handle k values up to 10.
+2. Simplified the merge operation to properly maintain sorted order of the largest elements.
+3. Fixed the query indexing by using b-1 to account for 0-based indexing.
+4. Added faster IO operations with ios_base::sync_with_stdio(false) and cin.tie(nullptr).
+5. Removed unnecessary member variables and simplified the data structure.
+6. Ensured proper sorting in descending order for easy access to k-th largest elements.
+
+This solution should now correctly handle all test cases, including the one where it previously failed by returning -1 when it should have returned 612. The algorithm maintains O(α(N)) amortized time per operation (where α is the inverse Ackermann function) for the Union-Find operations, and O(1) time for queries after maintaining the sorted lists.

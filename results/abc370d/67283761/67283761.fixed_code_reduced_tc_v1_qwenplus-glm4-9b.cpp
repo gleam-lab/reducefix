@@ -1,0 +1,100 @@
+#include <vector>
+#include <iostream>
+#include <algorithm>
+using namespace std;
+
+int main() {
+    int H, W, Q;
+    cin >> H >> W >> Q;
+    
+    vector<vector<int>> grid(H, vector<int>(W));
+    vector<vector<int>> up(H, vector<int>(W, -1));
+    vector<vector<int>> down(H-1, vector<int>(W, -1));
+    vector<vector<int>> left(W-1, vector<int>(H, -1));
+    vector<vector<int>> right(W, vector<int>(H, -1));
+    
+    // Initialize the grid with walls and the direction vectors
+    for (int i = 0; i < H; i++) {
+        for (int j = 0; j < W; j++) {
+            grid[i][j] = 1;
+        }
+    }
+    
+    int remainingWalls = H * W;
+    
+    for (int i = 0; i < Q; i++) {
+        int r, c;
+        cin >> r >> c;
+        
+        // Convert to 0-based index
+        r--;
+        c--;
+        
+        if (grid[r][c] == 1) {
+            // There's a wall, destroy it
+            grid[r][c] = 0;
+            remainingWalls--;
+        } else {
+            // There's no wall, destroy the walls in all four directions
+            int maxUp = -1, maxDown = -1, maxLeft = -1, maxRight = -1;
+            
+            // Check the walls above and update the maximum index to remove
+            for (int j = r - 1; j >= 0; j--) {
+                if (grid[j][c] == 1) {
+                    maxUp = j;
+                    break;
+                }
+            }
+            up[r][c] = maxUp;
+            
+            // Check the walls below and update the maximum index to remove
+            for (int j = r + 1; j < H; j++) {
+                if (grid[j][c] == 1) {
+                    maxDown = j;
+                    break;
+                }
+            }
+            down[r][c] = maxDown;
+            
+            // Check the walls to the left and update the maximum index to remove
+            for (int j = c - 1; j >= 0; j--) {
+                if (grid[r][j] == 1) {
+                    maxLeft = j;
+                    break;
+                }
+            }
+            left[r][c] = maxLeft;
+            
+            // Check the walls to the right and update the maximum index to remove
+            for (int j = c + 1; j < W; j++) {
+                if (grid[r][j] == 1) {
+                    maxRight = j;
+                    break;
+                }
+            }
+            right[r][c] = maxRight;
+            
+            // Remove the walls in all four directions
+            for (int j = r - 1; j >= maxUp; j--) {
+                grid[j][c] = 0;
+                remainingWalls--;
+            }
+            for (int j = r + 1; j <= maxDown; j++) {
+                grid[j][c] = 0;
+                remainingWalls--;
+            }
+            for (int j = c - 1; j >= maxLeft; j--) {
+                grid[r][j] = 0;
+                remainingWalls--;
+            }
+            for (int j = c + 1; j <= maxRight; j++) {
+                grid[r][j] = 0;
+                remainingWalls--;
+            }
+        }
+    }
+    
+    cout << remainingWalls << endl;
+    
+    return 0;
+}

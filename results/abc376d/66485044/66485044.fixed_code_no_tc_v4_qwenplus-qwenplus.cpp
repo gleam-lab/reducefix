@@ -1,0 +1,50 @@
+#include <bits/stdc++.h>
+#define INF 0x3f3f3f3f3f3f3f3f
+using namespace std;
+typedef long long ll;
+const int MAXN = 2e5 + 10;
+
+vector<ll> vec[MAXN];
+ll step[MAXN];
+bool vis[MAXN];
+
+int main() {
+    ll n, m, u, v;
+    scanf("%lld %lld", &n, &m);
+    
+    for (ll i = 1; i <= m; i++) {
+        scanf("%lld %lld", &u, &v);
+        vec[u].push_back(v);
+    }
+
+    deque<ll> q;
+    q.push_back(1);
+    vis[1] = true;
+    step[1] = 0;
+
+    while (!q.empty()) {
+        ll top = q.front();
+        q.pop_front();
+
+        for (ll to : vec[top]) {
+            if (!vis[to]) {
+                vis[to] = true;
+                step[to] = step[top] + 1;
+                q.push_back(to);
+            } else if (to == 1 && top != 1) {
+                // Found a cycle back to node 1 after starting from it
+                printf("%lld", step[top] + 1);
+                return 0;
+            }
+        }
+    }
+
+    if (step[1] == 0) {
+        // Only the starting node is visited, no cycle
+        printf("0");
+    } else {
+        printf("-1");
+    }
+
+    return 0;
+}

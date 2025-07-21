@@ -1,0 +1,85 @@
+#include <bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+#define all(x) (x).begin(), (x).end()
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int N, M;
+    ll K;
+    cin >> N >> M >> K;
+    vector<ll> A(N);
+    for (ll &a : A) {
+        cin >> a;
+        K -= a;
+    }
+
+    // ord[i] = original index of the candidate with i-th smallest current votes
+    vector<int> ord(N);
+    iota(all(ord), 0);
+    sort(all(ord), [&](int i, int j) { return A[i] < A[j]; });
+
+    // sortedA[i] = number of votes of the i-th candidate in sorted order
+    vector<ll> sortedA = A;
+    sort(all(sortedA));
+
+    // prefix sum of sortedA
+    vector<ll> pref(N + 1);
+    for (int i = 0; i < N; ++i)
+        pref[i + 1] = pref[i] + sortedA[i];
+
+    vector<ll> res(N, -1);
+
+    for (int idx = 0; idx < N; ++idx) {
+        ll low = 0;
+        ll high = K + 1;
+
+        while (low < high) {
+            ll mid = (low + high) / 2;
+
+            // Candidate's total votes if they get 'mid' more votes
+            ll target = A[ord[idx]] + mid;
+
+            // We need to assume the worst-case scenario where other candidates get as many votes as possible
+            // We want to ensure that at most M-1 candidates can have more than target
+
+            // Binary search to find how many candidates have votes > target
+            int pos = lower_bound(all(sortedA), target + 1) - sortedA.begin();
+
+            // Number of candidates who can potentially have more than target
+            int cnt = N - pos;
+
+            // If current candidate is among those counted in `cnt`, subtract one
+            if (A[ord[idx]] >= target) cnt--;
+
+            // How many extra votes are needed to raise the candidates below position pos so that they exceed target
+            ll need = 0;
+            if (pos > 0) {
+                ll total = (ll)pos * (target + 1);
+                ll available = pref[pos];
+                need = total - available;
+            }
+
+            if (cnt < M && need <= K - mid) {
+                // Enough votes to block all but M-1 candidates -> win
+                high = mid;
+            } else {
+                low = mid + 1;
+            }
+        }
+
+        // Check if a valid solution exists
+        if (low > K)
+            res[ord[idx]] = -1;
+        else
+            res[ord[idx]] = low;
+    }
+
+    for (ll val : res)
+        cout << val << " ";
+    cout << "\n";
+
+    return 0;
+}

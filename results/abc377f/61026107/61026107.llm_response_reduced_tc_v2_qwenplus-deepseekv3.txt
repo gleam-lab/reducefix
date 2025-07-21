@@ -1,0 +1,163 @@
+To fix this code, we need to ensure that we correctly calculate the number of safe squares where a new piece can be placed without being captured by any existing pieces. The initial approach tried to subtract the areas covered by rows, columns, and diagonals but had issues with counting overlaps and missing some intersections.
+
+### Approaches
+1. **Total Squares**: Start by calculating the total number of squares in the grid, which is \( N^2 \).
+2. **Forbidden Squares**: Subtract the squares that are under attack by existing pieces. These include:
+   - All squares in the same row as any existing piece.
+   - All squares in the same column as any existing piece.
+   - All squares on the same diagonal (both \( x + y \) and \( x - y \) diagonals) as any existing piece.
+3. **Overlap Handling**: Some squares are counted multiple times (e.g., a square might be in the same row and column of different pieces or in intersections of diagonals). Use inclusion-exclusion principles to account for these overlaps:
+   - Subtract intersections of rows and columns.
+   - Subtract intersections of rows and diagonals.
+   - Subtract intersections of columns and diagonals.
+   - Add back intersections that were subtracted multiple times (e.g., squares at the intersection of all four conditions).
+4. **Empty Squares**: Ensure that the squares already occupied by existing pieces are not considered in the final count.
+
+### Solution Code
+```cpp
+#include<bits/stdc++.h>
+
+using namespace std;
+using ll = long long;
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    ll N, M;
+    cin >> N >> M;
+    
+    set<ll> rows, cols, diag1, diag2;
+    set<pair<ll, ll>> occupied;
+    
+    for (ll i = 0; i < M; ++i) {
+        ll a, b;
+        cin >> a >> b;
+        rows.insert(a);
+        cols.insert(b);
+        diag1.insert(a - b);
+        diag2.insert(a + b);
+        occupied.insert({a, b});
+    }
+    
+    ll total = N * N;
+    ll forbidden = 0;
+    
+    // Subtract rows, columns, diagonals
+    forbidden += N * rows.size();
+    forbidden += N * cols.size();
+    
+    for (auto d : diag1) {
+        ll min_x = max(1LL, 1 + d);
+        ll max_x = min(N, N + d);
+        ll count = max_x - min_x + 1;
+        forbidden += count;
+    }
+    
+    for (auto d : diag2) {
+        ll min_x = max(1LL, d - N);
+        ll max_x = min(N, d - 1);
+        ll count = max_x - min_x + 1;
+        forbidden += count;
+    }
+    
+    // Add back intersections
+    // Rows and columns
+    for (auto r : rows) {
+        for (auto c : cols) {
+            if (diag1.count(r - c) || diag2.count(r + c)) {
+                forbidden--;
+            }
+        }
+    }
+    
+    // Rows and diag1
+    for (auto r : rows) {
+        for (auto d : diag1) {
+            ll c = r - d;
+            if (c >= 1 && c <= N) {
+                if (cols.count(c) || diag2.count(r + c)) {
+                    forbidden--;
+                }
+            }
+        }
+    }
+    
+    // Rows and diag2
+    for (auto r : rows) {
+        for (auto d : diag2) {
+            ll c = d - r;
+            if (c >= 1 && c <= N) {
+                if (cols.count(c) || diag1.count(r - c)) {
+                    forbidden--;
+                }
+            }
+        }
+    }
+    
+    // Columns and diag1
+    for (auto c : cols) {
+        for (auto d : diag1) {
+            ll r = d + c;
+            if (r >= 1 && r <= N) {
+                if (rows.count(r) || diag2.count(r + c)) {
+                    forbidden--;
+                }
+            }
+        }
+    }
+    
+    // Columns and diag2
+    for (auto c : cols) {
+        for (auto d : diag2) {
+            ll r = d - c;
+            if (r >= 1 && r <= N) {
+                if (rows.count(r) || diag1.count(r - c)) {
+                    forbidden--;
+                }
+            }
+        }
+    }
+    
+    // Diag1 and diag2
+    for (auto d1 : diag1) {
+        for (auto d2 : diag2) {
+            if ((d1 + d2) % 2 != 0) continue;
+            ll r = (d1 + d2) / 2;
+            ll c = (d2 - d1) / 2;
+            if (r >= 1 && r <= N && c >= 1 && c <= N) {
+                if (rows.count(r) || cols.count(c)) {
+                    forbidden--;
+                }
+            }
+        }
+    }
+    
+    // Add back triple overlaps
+    // Rows, columns, and diag1
+    for (auto r : rows) {
+        for (auto c : cols) {
+            if (diag1.count(r - c)) {
+                if (diag2.count(r + c)) {
+                    forbidden++;
+                }
+            }
+        }
+    }
+    
+    // Subtract occupied squares
+    ll safe = total - forbidden + occupied.size();
+    cout << safe << endl;
+    
+    return 0;
+}
+```
+
+### Explanation
+1. **Initialization**: We start by reading the grid size \( N \) and the number of pieces \( M \). We use sets to keep track of occupied rows, columns, and diagonals.
+2. **Forbidden Squares Calculation**: We compute the total number of squares under attack by existing pieces by considering rows, columns, and both types of diagonals.
+3. **Overlap Handling**: Using inclusion-exclusion principles, we adjust the count to avoid multiple subtractions of the same square. This involves checking intersections between rows, columns, and diagonals.
+4. **Occupied Squares Adjustment**: Finally, we ensure that squares already occupied by existing pieces are not counted as forbidden, as they are already non-empty and thus not available for new placement.
+5. **Output**: The result is printed, representing the number of safe squares where a new piece can be placed without being captured.
+
+This approach ensures accurate counting of safe squares by systematically covering all possible attack vectors and their intersections.

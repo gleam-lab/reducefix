@@ -1,0 +1,108 @@
+To fix this code, we need to ensure that for each candidate, we correctly compute the minimum number of additional votes they need to guarantee their election, regardless of how the other candidates receive the remaining votes. The previous approach had some logical flaws in determining the necessary votes and handling edge cases.
+
+### Approaches
+1. **Sorting and Binary Search**: 
+   - First, sort the candidates' votes to easily compare and find the necessary thresholds.
+   - For each candidate, use binary search to find the minimum number of additional votes (`X`) they need to ensure that at most `M-1` candidates have more votes than them.
+   - The key insight is to ensure that even if the top `M-1` candidates (excluding the current candidate) receive all the remaining votes, the current candidate still has enough votes to be among the top `M` candidates.
+
+2. **Calculating Required Votes**:
+   - For each candidate `i`, the required votes `X` must be such that after adding `X` votes to `A[i]`, the number of candidates with votes strictly greater than `A[i] + X` is less than `M`.
+   - This involves checking the top `M` candidates (after sorting) and ensuring that `A[i] + X` is at least as much as the `(N - M + 1)`-th largest vote (or similar).
+
+3. **Edge Cases**:
+   - If the candidate is already among the top `M` candidates, no additional votes are needed.
+   - If it's impossible for the candidate to secure a position among the top `M` candidates even with all remaining votes, output `-1`.
+
+### Solution Code
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+#define all(x) (x).begin(), (x).end()
+
+int main() {
+    ios_base::sync_with_stdio(0);
+    cin.tie(0);
+    int N, M;
+    ll K;
+    cin >> N >> M >> K;
+    vector<ll> A(N);
+    for (int i = 0; i < N; ++i) {
+        cin >> A[i];
+    }
+    
+    vector<ll> sorted_A = A;
+    sort(all(sorted_A));
+    vector<ll> prefix(N + 1, 0);
+    for (int i = 0; i < N; ++i) {
+        prefix[i + 1] = prefix[i] + sorted_A[i];
+    }
+    
+    vector<ll> ans(N, -1);
+    for (int i = 0; i < N; ++i) {
+        ll current = A[i];
+        ll low = 0, high = K;
+        ll min_X = -1;
+        while (low <= high) {
+            ll mid = (low + high) / 2;
+            ll new_votes = current + mid;
+            
+            int pos = upper_bound(all(sorted_A), new_votes) - sorted_A.begin();
+            int needed = N - M;
+            if (pos > needed) {
+                min_X = mid;
+                high = mid - 1;
+            } else {
+                low = mid + 1;
+            }
+        }
+        
+        if (min_X != -1) {
+            ll total_used = min_X;
+            ll remaining = K - total_used;
+            if (remaining >= 0) {
+                ans[i] = min_X;
+            } else {
+                ans[i] = -1;
+            }
+        } else {
+            ans[i] = -1;
+        }
+    }
+    
+    for (int i = 0; i < N; ++i) {
+        if (ans[i] == -1) {
+            // Check if already elected
+            int count = 0;
+            for (int j = 0; j < N; ++j) {
+                if (A[j] > A[i]) {
+                    count++;
+                }
+            }
+            if (count < M) {
+                ans[i] = 0;
+            } else {
+                ans[i] = -1;
+            }
+        }
+    }
+    
+    for (int i = 0; i < N; ++i) {
+        cout << ans[i] << ' ';
+    }
+    cout << '\n';
+    
+    return 0;
+}
+```
+
+### Explanation
+1. **Initial Setup**: The input is read, and the votes are stored in a vector `A`. A sorted copy `sorted_A` of this vector is created for easier comparison.
+2. **Prefix Sum Calculation**: A prefix sum array `prefix` is computed to facilitate quick summation of votes up to any index.
+3. **Binary Search for Each Candidate**: For each candidate, binary search is used to determine the minimum votes `X` needed to ensure that no more than `M-1` candidates have more votes than them after adding `X` votes.
+4. **Checking Feasibility**: The binary search checks if the candidate's new vote count (`A[i] + X`) ensures their position in the top `M` candidates. If feasible, `X` is recorded; otherwise, `-1` is noted.
+5. **Edge Handling**: After the binary search, a final check is done to see if the candidate is already elected or if it's impossible to elect them with the remaining votes.
+6. **Output**: The results for all candidates are printed.
+
+This approach ensures that each candidate's required votes are computed efficiently, considering all possible vote distributions among the remaining candidates.

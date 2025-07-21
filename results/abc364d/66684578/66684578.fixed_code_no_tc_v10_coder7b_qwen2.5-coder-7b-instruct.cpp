@@ -1,0 +1,52 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false); cin.tie(0); cout.tie(0);
+    
+    int n, q;
+    cin >> n >> q;
+    
+    vector<int> a(n), b(q);
+    vector<int> k(q);
+    
+    for (int i = 0; i < n; ++i) {
+        cin >> a[i];
+    }
+    
+    for (int i = 0; i < q; ++i) {
+        cin >> b[i] >> k[i];
+    }
+    
+    sort(a.begin(), a.end());
+    
+    for (int i = 0; i < q; ++i) {
+        auto it = lower_bound(a.begin(), a.end(), b[i]);
+        
+        if (it != a.end() && *it == b[i]) {
+            if (k[i] <= it - a.begin() + 1) {
+                cout << 0 << '\n';
+                continue;
+            } else {
+                k[i] -= it - a.begin() + 1;
+            }
+        }
+        
+        if (it == a.begin()) {
+            cout << b[i] - a.back() << '\n';
+        } else if (it == a.end()) {
+            cout << a.front() - b[i] << '\n';
+        } else {
+            int leftDist = b[i] - *(it - 1);
+            int rightDist = *it - b[i];
+            
+            if (k[i] <= leftDist) {
+                cout << leftDist << '\n';
+            } else {
+                cout << rightDist << '\n';
+            }
+        }
+    }
+    
+    return 0;
+}

@@ -1,0 +1,95 @@
+To solve this problem efficiently, we need to simulate the attacks on enemies in a way that minimizes the total number of steps (`T`) required to reduce all their health values to zero or less.
+
+### Key Observations:
+1. The attack pattern is such that every 3rd attack deals 3 damage, and other attacks deal 1 damage.
+2. We always attack the frontmost enemy still alive (i.e., with health > 0).
+3. The challenge lies in determining how many attacks are needed for each enemy, taking into account that some of those attacks might be "strong" (i.e., T divisible by 3).
+
+---
+
+### Strategy:
+
+Instead of simulating step-by-step (which would be too slow), we can **binary search** for the minimum value of `T` that allows all enemies to be reduced to ≤ 0.
+
+At any given candidate time `T`, we calculate how many strong attacks (at t = 3, 6, ...) and weak attacks (t ≠ multiple of 3) occur up to that point.
+
+We distribute these attacks from left to right, prioritizing the strongest remaining enemy (since we always attack the frontmost alive enemy). We simulate how much damage gets applied and whether it's sufficient to bring all enemies' health down to 0 or less.
+
+This greedy approach works because we always attack the first living enemy, so we can process enemies left-to-right.
+
+---
+
+### Efficient Implementation:
+
+- Use **binary search** over possible values of `T`.
+- For each `T`, compute the number of strong attacks: `k = T / 3`.
+- Total attacks = `T = k + (T - k)` → `k` strong attacks (×3 damage), and `(T - k)` weak attacks (×1 damage)
+- Simulate distributing these attacks greedily across enemies to check if all can be defeated within `T` steps.
+
+---
+
+### Final Code:
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+#define ll long long
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int n;
+    cin >> n;
+    vector<ll> h(n);
+    for (int i = 0; i < n; ++i) {
+        cin >> h[i];
+    }
+
+    // Binary search on answer T
+    ll low = 0, high = 1e18, ans = 0;
+    while (low <= high) {
+        ll mid = (low + high) / 2;
+        ll strong = mid / 3;
+        ll weak = mid - strong;
+        vector<ll> temp = h;
+
+        // Try to apply attacks greedily
+        bool ok = true;
+        for (int i = 0; i < n && (strong > 0 || weak > 0); ++i) {
+            ll use_strong = min(strong, temp[i] / 3 + (temp[i] % 3 != 0 ? 1 : 0));
+            temp[i] -= use_strong * 3;
+            strong -= use_strong;
+
+            if (temp[i] > 0) {
+                ll rem = temp[i];
+                if (rem > weak) {
+                    ok = false;
+                    break;
+                }
+                weak -= rem;
+                temp[i] = 0;
+            }
+        }
+
+        if (ok) {
+            ans = mid;
+            high = mid - 1;
+        } else {
+            low = mid + 1;
+        }
+    }
+
+    cout << ans << endl;
+}
+```
+
+---
+
+### Why This Works:
+- It avoids full simulation of every step.
+- It uses binary search to find the minimal `T` efficiently.
+- Greedy allocation ensures correct distribution of attack power.
+
+This code handles large inputs (up to 2×10⁵ enemies with health up to 10⁹) efficiently.

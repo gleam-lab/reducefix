@@ -1,0 +1,92 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+constexpr int dx[] = {0, 1, 0, -1};
+constexpr int dy[] = {1, 0, -1, 0};
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int H, W, Y;
+    cin >> H >> W >> Y;
+
+    vector<vector<int>> A(H, vector<int>(W));
+    for (int i = 0; i < H; ++i) {
+        for (int j = 0; j < W; ++j) {
+            cin >> A[i][j];
+        }
+    }
+
+    // Add border to avoid checking bounds
+    H += 2;
+    W += 2;
+    vector<vector<int>> grid(H, vector<int>(W, 0));
+    for (int i = 1; i <= H - 2; ++i) {
+        for (int j = 1; j <= W - 2; ++j) {
+            grid[i][j] = A[i - 1][j - 1];
+        }
+    }
+
+    // Initialize all as not visited
+    vector<vector<bool>> visited(H, vector<bool>(W, false));
+
+    // Priority queue for elevation-based processing
+    priority_queue<tuple<int, int, int>, vector<tuple<int, int, int>>, greater<>> pq;
+
+    // Initialize the border with sea level 0
+    for (int i = 0; i < H; ++i) {
+        pq.emplace(grid[i][0], i, 0);
+        pq.emplace(grid[i][W - 1], i, W - 1);
+        visited[i][0] = true;
+        visited[i][W - 1] = true;
+    }
+
+    for (int j = 0; j < W; ++j) {
+        pq.emplace(grid[0][j], 0, j);
+        pq.emplace(grid[H - 1][j], H - 1, j);
+        visited[0][j] = true;
+        visited[H - 1][j] = true;
+    }
+
+    int remaining = (H - 2) * (W - 2);
+
+    vector<int> result(Y + 2); // Store results for each year
+
+    // Process in increasing order of elevation
+    while (!pq.empty()) {
+        auto [height, x, y] = pq.top();
+        pq.pop();
+
+        if (height > Y) continue;
+
+        if (!visited[x][y]) {
+            --remaining;
+            visited[x][y] = true;
+        }
+
+        for (int d = 0; d < 4; ++d) {
+            int nx = x + dx[d];
+            int ny = y + dy[d];
+            if (nx >= 0 && nx < H && ny >= 0 && ny < W && !visited[nx][ny]) {
+                if (grid[nx][ny] <= height) {
+                    pq.emplace(height, nx, ny);
+                    visited[nx][ny] = true;
+                    --remaining;
+                } else {
+                    pq.emplace(grid[nx][ny], nx, ny);
+                    visited[nx][ny] = true;
+                }
+            }
+        }
+
+        result[height] = remaining;
+    }
+
+    // Output the results
+    for (int i = 1; i <= Y; ++i) {
+        cout << result[i] << '\n';
+    }
+
+    return 0;
+}

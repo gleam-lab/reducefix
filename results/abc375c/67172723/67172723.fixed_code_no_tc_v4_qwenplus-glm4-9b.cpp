@@ -1,0 +1,35 @@
+#include <iostream>
+#include <cmath>
+using namespace std;
+
+int main() {
+    int N;
+    cin >> N;
+    
+    // Initialize starting point at origin
+    long long ox = 0, oy = 0;
+    double total_cost = 0.0;
+    
+    // Read first point to calculate the initial cost to the first point
+    int x, y;
+    cin >> x >> y;
+    total_cost += hypotl(x - ox, y - oy); // Use hypotl for long long integers
+    ox = x;
+    oy = y;
+    
+    // Process the remaining points
+    for (int i = 1; i < N; ++i) {
+        cin >> x >> y;
+        total_cost += hypotl(x - ox, y - oy);
+        ox = x;
+        oy = y;
+    }
+    
+    // Add the cost to return to the origin
+    total_cost += hypotl(ox, oy);
+    
+    // Print the total cost
+    printf("%.10f\n", total_cost);
+    
+    return 0;
+}

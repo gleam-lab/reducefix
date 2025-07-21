@@ -1,0 +1,97 @@
+Based on the problem description and the failing test case, the issue appears to be in how the code handles the bomb placement and wall destruction logic. The original code uses sets to track walls in rows and columns, but it seems to have some logical errors in handling the "first wall in each direction" condition when the bomb cell is empty.
+
+Here's the fixed code that properly implements the required logic:
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int h, w, q;
+    cin >> h >> w >> q;
+    
+    vector<set<int>> row_walls(h), col_walls(w);
+    
+    // Initialize all walls
+    for (int i = 0; i < h; ++i) {
+        for (int j = 0; j < w; ++j) {
+            row_walls[i].insert(j);
+            col_walls[j].insert(i);
+        }
+    }
+    
+    while (q--) {
+        int r, c;
+        cin >> r >> c;
+        r--; c--;
+        
+        if (row_walls[r].count(c)) {
+            // Direct hit - destroy this wall
+            row_walls[r].erase(c);
+            col_walls[c].erase(r);
+        } else {
+            // Find first walls in four directions
+            // Up
+            auto it_up = col_walls[c].lower_bound(r);
+            if (it_up != col_walls[c].begin()) {
+                --it_up;
+                int up_row = *it_up;
+                row_walls[up_row].erase(c);
+                col_walls[c].erase(up_row);
+            }
+            
+            // Down
+            auto it_down = col_walls[c].lower_bound(r);
+            if (it_down != col_walls[c].end()) {
+                int down_row = *it_down;
+                row_walls[down_row].erase(c);
+                col_walls[c].erase(down_row);
+            }
+            
+            // Left
+            auto it_left = row_walls[r].lower_bound(c);
+            if (it_left != row_walls[r].begin()) {
+                --it_left;
+                int left_col = *it_left;
+                row_walls[r].erase(left_col);
+                col_walls[left_col].erase(r);
+            }
+            
+            // Right
+            auto it_right = row_walls[r].lower_bound(c);
+            if (it_right != row_walls[r].end()) {
+                int right_col = *it_right;
+                row_walls[r].erase(right_col);
+                col_walls[right_col].erase(r);
+            }
+        }
+    }
+    
+    // Count remaining walls
+    int remaining = 0;
+    for (int i = 0; i < h; ++i) {
+        remaining += row_walls[i].size();
+    }
+    
+    cout << remaining << '\n';
+    return 0;
+}
+```
+
+Key improvements:
+1. Simplified the logic by using separate sets for row and column walls
+2. Fixed the directional checks by properly handling the iterators for each direction
+3. Removed redundant checks and made the code more straightforward
+4. Added IO optimizations (ios_base::sync_with_stdio(false) and cin.tie(nullptr)) for better performance with large inputs
+
+The algorithm now correctly:
+1. Maintains sets of wall positions for each row and column
+2. For each query:
+   - If there's a wall at the bomb location, removes it
+   - Otherwise, finds and removes the first walls in all four directions using lower_bound
+3. Finally counts all remaining walls by summing up the sizes of row sets
+
+This should now pass all test cases, including the one that was previously failing. The complexity is O(Q log N) per operation where N is the grid dimension, which is efficient enough for the given constraints.

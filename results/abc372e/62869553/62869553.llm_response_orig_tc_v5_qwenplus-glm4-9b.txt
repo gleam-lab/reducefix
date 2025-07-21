@@ -1,0 +1,91 @@
+
+The given problem is about managing an undirected graph with dynamic connectivity queries and finding the k-th largest neighbor of a given vertex. The initial graph has no edges and only vertices. The solution needs to handle two types of operations:
+
+1. Adding an edge between two vertices.
+2. Finding the k-th largest vertex connected to a given vertex.
+
+The provided code seems to use the Union-Find data structure for managing the connectivity of the graph. However, there are several issues with the code:
+
+1. The Union-Find structure isn't used correctly for merging sets.
+2. The data structure for storing neighbors and maintaining order is not implemented correctly.
+3. The code structure is not optimal for handling multiple queries efficiently.
+
+To solve the problem, we need to make several corrections and optimizations:
+
+1. **Correct the Union-Find Structure**: When merging two sets, we need to unite the roots and ensure that the smaller tree is attached under the root of the larger tree to keep the tree flat.
+2. **Efficiently Store and Retrieve Neighbors**: Use a priority queue (min-heap) or a sorted array to keep track of the neighbors of each vertex. This will allow efficient retrieval of the k-th largest neighbor.
+3. **Optimize for Multiple Queries**: Preprocess the graph to avoid repeated calculations for each query.
+
+Here is a revised version of the code that addresses these issues:
+
+```cpp
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <set>
+
+using namespace std;
+
+vector<vector<int>> graph;
+vector<int> parent;
+vector<int> rank;
+
+int find_set(int v) {
+    if (v == parent[v]) return v;
+    parent[v] = find_set(parent[v]); // path compression
+    return parent[v];
+}
+
+void union_sets(int u, int v) {
+    u = find_set(u);
+    v = find_set(v);
+    if (u != v) {
+        if (rank[u] < rank[v]) swap(u, v);
+        parent[v] = u;
+        if (rank[u] == rank[v]) rank[u]++;
+    }
+}
+
+int main() {
+    int N, Q;
+    cin >> N >> Q;
+
+    parent.resize(N + 1);
+    rank.resize(N + 1, 0);
+    for (int i = 1; i <= N; i++) {
+        parent[i] = i;
+    }
+
+    graph.resize(N + 1);
+    for (int i = 1; i <= N; i++) {
+        graph[i].push_back(i);
+    }
+
+    for (int i = 0; i < Q; i++) {
+        int op, u, v, k;
+        cin >> op >> u >> v;
+
+        if (op == 1) {
+            // Add edge
+            union_sets(u, v);
+        } else if (op == 2) {
+            // Find k-th largest neighbor
+            set<int> neighbors;
+            for (int neighbor : graph[v]) {
+                if (find_set(neighbor) == find_set(v)) {
+                    neighbors.insert(neighbor);
+                }
+            }
+            if (k > neighbors.size()) {
+                cout << "-1\n";
+            } else {
+                cout << *next_permutation(neighbors.begin(), neighbors.end()) << "\n";
+            }
+        }
+    }
+
+    return 0;
+}
+```
+
+This code uses the Union-Find data structure to manage the connectivity of the graph and uses a set to store the neighbors of each vertex. For each query, the code updates the graph or retrieves the k-th largest neighbor efficiently. Note that the use of `next_permutation` may not be optimal if the number of neighbors is very large, in which case a priority queue or a sorted array with binary search might be more efficient.

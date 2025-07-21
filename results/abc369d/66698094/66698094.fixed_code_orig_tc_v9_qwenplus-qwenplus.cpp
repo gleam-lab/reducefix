@@ -1,0 +1,52 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+using ll = long long;
+using vi = vector<int>;
+#define all(v) v.begin(), v.end()
+#define rall(v) v.rbegin(), v.rend()
+#define fast ios_base::sync_with_stdio(0), cin.tie(0), cout.tie(0);
+
+const int MOD = 1e9 + 7, N = 2e5 + 5;
+
+void solve()
+{
+    int n;
+    cin >> n;
+    vector<ll> v(n);
+    for (ll &x : v)
+        cin >> x;
+
+    // dp[i][0] = max score considering first i elements ending with even number of elements taken
+    // dp[i][1] = max score considering first i elements ending with odd number of elements taken
+    vector<vector<ll>> dp(n + 1, vector<ll>(2, -1));
+    dp[0][0] = 0;
+    dp[0][1] = 0;
+
+    if (n > 0) {
+        dp[1][0] = 0; // not taking the first element
+        dp[1][1] = v[0]; // taking the first element
+    }
+
+    for (int i = 2; i <= n; ++i)
+    {
+        // If we don't take v[i-1], then carry over the best from previous state
+        dp[i][0] = max(dp[i-1][0], dp[i-1][1]);
+
+        // If we take v[i-1], must flip parity: from even to odd
+        dp[i][1] = dp[i-1][0] + v[i-1];
+    }
+
+    // Final result is the maximum of dp[n][0] and dp[n][1]
+    cout << max(dp[n][0], dp[n][1]) << '\n';
+}
+
+int main()
+{
+    fast;
+    int t = 1;
+    // cin >> t;
+    while (t--)
+        solve();
+    return 0;
+}

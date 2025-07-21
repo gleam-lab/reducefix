@@ -1,0 +1,55 @@
+#include<bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false); cin.tie(NULL);
+
+    int H, W, Y;
+    cin >> H >> W >> Y;
+    vector<vector<int>> A(H, vector<int>(W));
+    for(int i = 0; i < H; ++i) {
+        for(int j = 0; j < W; ++j) {
+            cin >> A[i][j];
+        }
+    }
+
+    vector<vector<int>> sea_level_area(Y + 1, vector<int>(H * W + 1, 0));
+    vector<vector<bool>> visited(H, vector<bool>(W, false));
+
+    // Initialize the queue and mark the boundary cells as visited
+    queue<pair<int, int>> q;
+    for(int i = 0; i < H; ++i) {
+        for(int j = 0; j < W; ++j) {
+            if(i == 0 || i == H - 1 || j == 0 || j == W - 1) {
+                visited[i][j] = true;
+                q.push({i, j});
+            }
+        }
+    }
+
+    int area = H * W;
+    int day = 1;
+    while(!q.empty()) {
+        int q_size = q.size();
+        while(q_size--) {
+            auto [x, y] = q.front(); q.pop();
+            --area;
+            for(int k = 0; k < 4; ++k) {
+                int nx = x + dx[k], ny = y + dy[k];
+                if(nx >= 0 && nx < H && ny >= 0 && ny < W && !visited[nx][ny]) {
+                    visited[nx][ny] = true;
+                    if(A[nx][ny] <= day) {
+                        q.push({nx, ny});
+                    }
+                }
+            }
+        }
+        sea_level_area[day++] = area;
+    }
+
+    for(int d = 1; d <= Y; ++d) {
+        cout << sea_level_area[d] << '\n';
+    }
+
+    return 0;
+}

@@ -1,0 +1,64 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define ll long long
+#define rep(i,n) for(int i=0;i<(int)n;i++)
+#define vi vector<int>
+#define vl vector<ll>
+#define vd vector<double>
+#define vb vector<bool>
+#define vs vector<string>
+#define vc vector<char>
+#define ull unsigned long long
+#define chmax(a,b) a=max(a,b)
+#define chmin(a,b) a=min(a,b)
+
+int main(){
+    ll h,w,q;cin >> h >> w >> q;
+    vector<vector<bool>> grid(h,vector<bool>(w,true));
+    
+    while(q--){
+        ll r,c;cin >> r >> c;
+        --r;--c;
+        if(grid[r][c]){
+            grid[r][c] = false;
+            continue;
+        }
+        
+        for(int i=r-1; i>=0; --i){
+            if(grid[i][c]){
+                grid[i][c] = false;
+                break;
+            }
+        }
+        
+        for(int i=r+1; i<h; ++i){
+            if(grid[i][c]){
+                grid[i][c] = false;
+                break;
+            }
+        }
+        
+        for(int j=c-1; j>=0; --j){
+            if(grid[r][j]){
+                grid[r][j] = false;
+                break;
+            }
+        }
+        
+        for(int j=c+1; j<w; ++j){
+            if(grid[r][j]){
+                grid[r][j] = false;
+                break;
+            }
+        }
+    }
+    
+    ll count = 0;
+    for(int i=0; i<h; ++i){
+        for(int j=0; j<w; ++j){
+            if(grid[i][j]) ++count;
+        }
+    }
+    
+    cout << count << endl;
+}

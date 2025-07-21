@@ -1,0 +1,102 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+
+int main() {
+    long long N, M;
+    cin >> N >> M;
+
+    set<long long> rows, cols;
+    set<long long> diag1, diag2; // diag1: i-j, diag2: i+j
+
+    for (int i = 0; i < M; ++i) {
+        long long a, b;
+        cin >> a >> b;
+        rows.insert(a);
+        cols.insert(b);
+        diag1.insert(a - b);
+        diag2.insert(a + b);
+    }
+
+    // Total squares attacked = number of rows attacked * N + number of cols attacked * N 
+    //                         + number of diag1 * N + number of diag2 * N
+    //                        - overlaps (because of intersections)
+
+    long long attacked = 0;
+    attacked += (long long)rows.size() * N;
+    attacked += (long long)cols.size() * N;
+    
+    // Diagonals can have up to 2N-1 diagonals, but we only count those that actually exist
+    attacked += (long long)diag1.size() * N;
+    attacked += (long long)diag2.size() * N;
+
+    // Now subtract overlaps:
+    // Each intersection of row & col counts as 1 square, and has been counted twice
+    attacked -= (long long)M;
+
+    // Intersections of row & diag1
+    for (auto r : rows) {
+        for (auto d : diag1) {
+            long long c = r - d;
+            if (1 <= c && c <= N) {
+                if (cols.find(c) != cols.end()) continue; // already counted in full overlap
+                attacked--;
+            }
+        }
+    }
+
+    // Intersections of row & diag2
+    for (auto r : rows) {
+        for (auto d : diag2) {
+            long long c = d - r;
+            if (1 <= c && c <= N) {
+                if (cols.find(c) != cols.end()) continue; // already counted in full overlap
+                attacked--;
+            }
+        }
+    }
+
+    // Intersections of col & diag1
+    for (auto c : cols) {
+        for (auto d : diag1) {
+            long long r = d + c;
+            if (1 <= r && r <= N) {
+                if (rows.find(r) != rows.end()) continue; // already counted in full overlap
+                attacked--;
+            }
+        }
+    }
+
+    // Intersections of col & diag2
+    for (auto c : cols) {
+        for (auto d : diag2) {
+            long long r = d - c;
+            if (1 <= r && r <= N) {
+                if (rows.find(r) != rows.end()) continue; // already counted in full overlap
+                attacked--;
+            }
+        }
+    }
+
+    // Intersections of diag1 & diag2
+    for (auto d1 : diag1) {
+        for (auto d2 : diag2) {
+            if ((d1 + d2) % 2 == 0) {
+                long long r = (d2 + d1) / 2;
+                long long c = (d2 - d1) / 2;
+                if (1 <= r && r <= N && 1 <= c && c <= N) {
+                    if (rows.find(r) != rows.end() || cols.find(c) != cols.end()) continue;
+                    attacked--;
+                }
+            }
+        }
+    }
+
+    long long totalSquares = N * N;
+    long long occupied = rows.size() * N + cols.size() * N - rows.size() * cols.size();
+    long long answer = totalSquares - attacked;
+
+    cout << answer << endl;
+
+    return 0;
+}

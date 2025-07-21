@@ -1,0 +1,54 @@
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(NULL);
+    cout.tie(NULL);
+
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, k;
+        cin >> n >> k;
+        vector<ll> a(n), b(n);
+        for (int i = 0; i < n; ++i) {
+            cin >> a[i];
+        }
+        for (int i = 0; i < n; ++i) {
+            cin >> b[i];
+        }
+
+        // We will use a priority queue to keep track of the largest K elements of B
+        priority_queue<ll> pq;
+        for (int i = 0; i < n; ++i) {
+            pq.push(b[i]);
+        }
+
+        ll sumB = 0;
+        ll maxA = 0;
+        // We collect the sum of B's for the smallest K elements of B and track the max A
+        for (int i = 0; i < k; ++i) {
+            sumB += pq.top();
+            maxA = max(maxA, a[i]);
+            pq.pop();
+        }
+
+        ll ans = maxA * sumB;
+
+        // We now need to check if excluding any of the first K elements could lead to a smaller result
+        // We will do this by considering each element from index k-1 to n-1 in A
+        for (int i = k-1; i < n; ++i) {
+            sumB -= pq.top();
+            pq.pop();
+            pq.push(b[i]);
+            sumB += b[i];
+            ans = min(ans, a[i] * sumB);
+        }
+
+        cout << ans << '\n';
+    }
+
+    return 0;
+}

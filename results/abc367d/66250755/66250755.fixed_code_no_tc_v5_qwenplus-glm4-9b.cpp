@@ -1,0 +1,30 @@
+#include<bits/stdc++.h>
+using namespace std;
+
+int n, m, a[400005], w[400005], t[1000005], an;
+
+int main() {
+    cin >> n >> m;
+    for (int i = 1; i <= n; ++i) {
+        cin >> a[i];
+        a[i] %= m;
+        a[i + n] = a[i];  // Extend array to handle wrap-around consideration
+    }
+    
+    for (int i = 1; i <= 2 * n; ++i) {
+        w[i] = (w[i - 1] + a[i % n]) % m;  // Initialize the prefix sums
+
+        // Adjust the count of previous values in t and update an
+        if (i > n) {
+            an -= t[w[i - n]];  // Decrease the count of the previous value
+        }
+        if (i >= n) {
+            an += t[w[i]];  // Increase the count of the current value
+        }
+
+        t[w[i]]++;  // Increment the count of the current value in t
+    }
+
+    cout << an << endl;
+    return 0;
+}

@@ -1,0 +1,36 @@
+#include<bits/stdc++.h>
+using namespace std;
+
+const int MAXN = 200005;
+int n, q, x[MAXN], p[MAXN];
+int sum[MAXN];
+
+int main() {
+    cin >> n;
+    for (int i = 1; i <= n; ++i) {
+        cin >> x[i];
+    }
+    for (int i = 1; i <= n; ++i) {
+        cin >> p[i];
+        sum[i] = sum[i - 1] + p[i];
+    }
+    
+    cin >> q;
+    while (q--) {
+        int L, R;
+        cin >> L >> R;
+        
+        // Adjust indices to be zero-based as lower_bound and upper_bound expect
+        int l = lower_bound(x + 1, x + n + 1, L) - x;
+        int r = upper_bound(x + 1, x + n + 1, R) - x;
+        
+        // Ensure that the range [l, r) is valid
+        if (l > r) {
+            cout << 0 << endl;
+        } else {
+            cout << sum[r - 1] - sum[l - 1] << endl;
+        }
+    }
+    
+    return 0;
+}

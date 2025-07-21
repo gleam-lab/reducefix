@@ -1,0 +1,30 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+double euclideanDistance(int x1, int y1, int x2, int y2) {
+    return sqrt(pow(x1 - x2, 2) + pow(y1 - y2, 2));
+}
+
+int main() {
+    int n; cin >> n;
+    long long totalCost = 0; // Use long long to handle large sums
+    
+    vector<pair<int, int>> points(n);
+    rep(i, n) {
+        cin >> points[i].first >> points[i].second;
+    }
+
+    // Calculate the cost of moving from the origin to the first point
+    totalCost += euclideanDistance(0, 0, points[0].first, points[0].second);
+
+    // Calculate the cost of moving between each pair of consecutive points
+    for (int i = 0; i < n - 1; ++i) {
+        totalCost += euclideanDistance(points[i].first, points[i].second, points[i + 1].first, points[i + 1].second);
+    }
+
+    // Calculate the cost of moving from the last point back to the origin
+    totalCost += euclideanDistance(points[n - 1].first, points[n - 1].second, 0, 0);
+
+    cout << fixed << setprecision(12) << totalCost << endl;
+    return 0;
+}

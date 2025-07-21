@@ -1,0 +1,86 @@
+To fix this code, we need to ensure that for each candidate, we correctly determine the minimum number of additional votes they need to secure their victory, considering the constraints and the remaining votes. The previous approach had some logical errors in the binary search and condition checks.
+
+### Approaches
+1. **Sort the Candidates' Votes**: First, we sort the list of candidates' votes to easily find the top candidates.
+2. **Binary Search for Each Candidate**: For each candidate, we perform a binary search to find the minimum number of additional votes they need. The condition we check is whether, after adding these votes, the candidate can be among the top M candidates even if the remaining votes are distributed optimally among the other candidates.
+3. **Check Feasibility**: For each candidate, we check if adding `X` votes makes them secure their position. This involves comparing their new vote count with the top M-1 candidates and ensuring that the remaining votes cannot push more than M-1 candidates above them.
+
+### Solution Code
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+using i64 = long long;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    i64 N, M, K;
+    cin >> N >> M >> K;
+
+    vector<i64> A(N);
+    for (i64 &a : A) {
+        cin >> a;
+    }
+
+    vector<i64> sorted_A = A;
+    sort(sorted_A.begin(), sorted_A.end());
+
+    vector<i64> prefix_sum(N + 1);
+    for (int i = 0; i < N; ++i) {
+        prefix_sum[i + 1] = prefix_sum[i] + sorted_A[i];
+    }
+
+    for (int i = 0; i < N; ++i) {
+        i64 a = A[i];
+        i64 low = 0, high = K, ans = -1;
+
+        while (low <= high) {
+            i64 mid = (low + high) / 2;
+            i64 new_a = a + mid;
+
+            // Find the number of candidates with votes > new_a
+            auto it = upper_bound(sorted_A.begin(), sorted_A.end(), new_a);
+            int gt = sorted_A.end() - it;
+
+            if (gt < M) {
+                // Check if the remaining votes can be distributed such that at most M-1 candidates exceed new_a
+                i64 remaining_votes = K - mid;
+
+                // The candidates with votes > new_a will have at least new_a + 1 votes
+                // The sum of their votes after distribution must be at least sum_{votes > new_a} (votes) + (M - gt) * (new_a + 1)
+                // The remaining votes must be >= sum_{votes > new_a} (new_a + 1 - votes) + sum_{votes <= new_a} (max(0, new_a - votes))
+                i64 sum_gt = prefix_sum[N] - prefix_sum[N - gt];
+                i64 required = (new_a + 1) * (M - gt) - sum_gt;
+
+                if (required <= remaining_votes) {
+                    ans = mid;
+                    high = mid - 1;
+                } else {
+                    low = mid + 1;
+                }
+            } else {
+                low = mid + 1;
+            }
+        }
+
+        cout << ans << " ";
+    }
+
+    cout << endl;
+
+    return 0;
+}
+```
+
+### Explanation
+1. **Input Handling**: The code reads the number of candidates `N`, the threshold `M`, and the total remaining votes `K`, followed by the current votes for each candidate.
+2. **Sorting and Prefix Sum**: The candidates' votes are sorted to facilitate binary search operations. A prefix sum array is constructed to quickly compute the sum of the top `k` votes.
+3. **Binary Search for Each Candidate**: For each candidate, the code performs a binary search to determine the minimum votes `X` needed to ensure they are among the top `M` candidates. The binary search checks if, after adding `X` votes, the candidate's new vote count can maintain their position within the top `M` even if the remaining votes are optimally used by other candidates.
+4. **Feasibility Check**: The feasibility check involves:
+   - Determining how many candidates currently have more votes than the candidate's new vote count.
+   - Calculating the required votes to ensure no more than `M-1` candidates can surpass the candidate's new vote count.
+   - Comparing the required votes with the remaining votes to decide if the current `X` is feasible.
+5. **Output**: The results for each candidate are printed, indicating the minimum votes needed or `-1` if it's impossible.
+
+This approach ensures that each candidate's result is computed efficiently with a time complexity of O(N log N), suitable for large input sizes.

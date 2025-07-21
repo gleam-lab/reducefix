@@ -1,0 +1,59 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+const int MAXN = 200050;
+
+int n;
+long long x[MAXN], p[MAXN], a[MAXN];
+int q;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    cin >> n;
+    for (int i = 1; i <= n; ++i) {
+        cin >> x[i];
+    }
+    for (int i = 1; i <= n; ++i) {
+        cin >> p[i];
+        a[i] = a[i - 1] + p[i];
+    }
+    cin >> q;
+    while (q--) {
+        long long l, r;
+        cin >> l >> r;
+
+        // Binary search to find the first index where x[i] >= l
+        int left1 = 1, right1 = n;
+        while (left1 < right1) {
+            int mid = (left1 + right1) / 2;
+            if (x[mid] < l) {
+                left1 = mid + 1;
+            } else {
+                right1 = mid;
+            }
+        }
+        int start = left1;
+
+        // Binary search to find the last index where x[i] <= r
+        int left2 = 1, right2 = n;
+        while (left2 < right2) {
+            int mid = (left2 + right2 + 1) / 2;
+            if (x[mid] <= r) {
+                left2 = mid;
+            } else {
+                right2 = mid - 1;
+            }
+        }
+        int end = left2;
+
+        if (start > end) {
+            cout << 0 << "\n";
+        } else {
+            cout << a[end] - a[start - 1] << "\n";
+        }
+    }
+
+    return 0;
+}

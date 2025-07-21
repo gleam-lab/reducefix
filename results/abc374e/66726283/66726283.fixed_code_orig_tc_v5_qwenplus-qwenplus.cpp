@@ -1,0 +1,71 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define int long long
+const int N = 105;
+int n;
+int x;
+int a[N], b[N], p[N], q[N];
+
+int c[N];
+bool check(int mid)
+{
+    int ans = 0;
+    for (int i = 1; i <= n; ++i)
+    {
+        int min_cost = LLONG_MAX;
+        // Try all possible number of type A attacks, rest are type B
+        for (int j = 0; j <= b[i]; ++j)
+        {
+            // Number of B attacks needed if we use j A attacks
+            int needed_b = max(0LL, (mid - j * a[i] + b[i] - 1) / b[i]);
+            int total_cost = j * p[i] + needed_b * q[i];
+            min_cost = min(min_cost, total_cost);
+        }
+        for (int j = 0; j <= a[i]; ++j)
+        {
+            // Number of A attacks needed if we use j B attacks
+            int needed_a = max(0LL, (mid - j * b[i] + a[i] - 1) / a[i]);
+            int total_cost = j * q[i] + needed_a * p[i];
+            min_cost = min(min_cost, total_cost);
+        }
+        ans += min_cost;
+        if (ans > x)
+        {
+            return false;
+        }
+    }
+    return true;
+}
+
+signed main()
+{
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    cout.tie(nullptr);
+
+    cin >> n >> x;
+
+    for (int i = 1; i <= n; ++i)
+    {
+        cin >> a[i] >> p[i] >> b[i] >> q[i];
+    }
+
+    int l = 1, r = 1e18;
+    int answer = 0;
+    while (l <= r)
+    {
+        int mid = (l + r) / 2;
+        if (check(mid))
+        {
+            answer = mid;
+            l = mid + 1;
+        }
+        else
+        {
+            r = mid - 1;
+        }
+    }
+
+    cout << answer;
+    return 0;
+}

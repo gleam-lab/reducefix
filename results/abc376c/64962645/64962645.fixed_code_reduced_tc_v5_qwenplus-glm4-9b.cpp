@@ -1,0 +1,38 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+int main() {
+    int n;
+    cin >> n;
+    vector<int> va(n), vb(n - 1);
+    for (int i = 0; i < n; i++) cin >> va[i];
+    for (int i = 0; i < n - 1; i++) cin >> vb[i];
+
+    // Sort toy sizes in descending order and box sizes in descending order
+    sort(va.rbegin(), va.rend());
+    sort(vb.rbegin(), vb.rend());
+
+    // Initialize the minimum box size to -1 as a default case
+    int minBoxSize = -1;
+
+    // Iterate through each box size and check if there's a toy that can be placed in it
+    for (int i = 0; i < n - 1; i++) {
+        // Find the largest toy that can fit into the current box size
+        int j = upper_bound(va.begin(), va.end(), vb[i]) - va.begin();
+        // If there's at least one toy that can fit into the box, it's possible to store all toys
+        if (j > 0) {
+            minBoxSize = max(minBoxSize, va[j - 1]);
+        }
+    }
+
+    // If it's possible to store all toys, print the minimum box size, otherwise print -1
+    if (minBoxSize != -1) {
+        cout << minBoxSize << endl;
+    } else {
+        cout << -1 << endl;
+    }
+
+    return 0;
+}

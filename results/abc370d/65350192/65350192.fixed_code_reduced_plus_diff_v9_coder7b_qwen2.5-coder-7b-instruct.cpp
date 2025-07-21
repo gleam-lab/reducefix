@@ -1,0 +1,59 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define rep(i,n) for(int i = 0; i < (n); i++)
+using ll = long long;
+
+int main(void) {
+    int h, w, q;
+    cin >> h >> w >> q;
+    vector<unordered_set<int>> tate(w), yoko(h);
+    rep(i,h) rep(j,w) {
+        tate[j].insert(i);
+        yoko[i].insert(j);
+    }
+
+    rep(qi,q) {
+        int r, c;
+        cin >> r >> c;
+        r--; c--;
+
+        if (!tate[c].empty() && tate[c].find(r) != tate[c].end()) {
+            tate[c].erase(r);
+            yoko[r].erase(c);
+        } else {
+            auto it = tate[c].upper_bound(r);
+            if (it != tate[c].begin()) {
+                it--;
+                int tmp = *it;
+                tate[c].erase(it);
+                yoko[tmp].erase(c);
+            }
+
+            it = yoko[r].upper_bound(c);
+            if (it != yoko[r].begin()) {
+                it--;
+                int tmp = *it;
+                yoko[r].erase(it);
+                tate[tmp].erase(r);
+            }
+
+            if (r > 0 && !yoko[r-1].empty()) {
+                yoko[r-1].erase(yoko[r-1].lower_bound(c));
+                tate[c].erase(tate[c].lower_bound(r-1));
+            }
+
+            if (c > 0 && !tate[c-1].empty()) {
+                tate[c-1].erase(tate[c-1].lower_bound(r));
+                yoko[r].erase(yoko[r].lower_bound(c-1));
+            }
+        }
+    }
+
+    int ans = 0;
+    rep(i,w) {
+        ans += tate[i].size();
+    }
+    cout << ans << "\n";
+
+    return 0;
+}

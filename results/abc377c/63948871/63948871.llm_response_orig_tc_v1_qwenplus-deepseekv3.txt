@@ -1,0 +1,89 @@
+To fix this code, we need to properly handle the calculation of the number of safe squares where a new piece can be placed without being captured by any existing pieces. The original code incorrectly calculates the total number of unsafe squares by considering duplicates in the set of positions that are under attack. The main issue is that the set `anti_dup` should only count each unsafe position once, even if multiple pieces can attack the same square.
+
+### Approaches
+1. **Input Handling**: Read the grid size `N` and the number of existing pieces `M`.
+2. **Tracking Attacked Squares**: For each existing piece, calculate all possible squares it can attack (considering the knight's movement pattern) and store these squares in a set to avoid duplicates.
+3. **Counting Safe Squares**: Subtract the number of attacked squares and the number of existing pieces from the total number of squares (`N * N`) to get the number of safe squares.
+4. **Edge Cases**: Ensure the solution handles very large values of `N` (up to 10^9) and `M` (up to 2 * 10^5) efficiently.
+
+### Solution Code
+```cpp
+#include <iostream>
+#include <vector>
+#include <set>
+#include <utility>
+
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    long long N, M;
+    cin >> N >> M;
+
+    set<pair<long long, long long>> existing_pieces;
+    set<pair<long long, long long>> attacked_squares;
+
+    for (long long i = 0; i < M; ++i) {
+        long long a, b;
+        cin >> a >> b;
+        existing_pieces.insert({a, b});
+
+        // Calculate all 8 possible attack positions
+        vector<pair<long long, long long>> moves = {
+            {a + 2, b + 1}, {a + 1, b + 2},
+            {a - 1, b + 2}, {a - 2, b + 1},
+            {a - 2, b - 1}, {a - 1, b - 2},
+            {a + 1, b - 2}, {a + 2, b - 1}
+        };
+
+        for (const auto& move : moves) {
+            long long x = move.first;
+            long long y = move.second;
+            if (x >= 1 && x <= N && y >= 1 && y <= N) {
+                attacked_squares.insert({x, y});
+            }
+        }
+    }
+
+    // Total squares is N*N
+    // Safe squares are total squares minus squares under attack minus existing pieces
+    // But existing pieces are already included in the attacked squares if they are under attack by others
+    // So safe squares = N*N - (attacked_squares.size() + existing_pieces.size() - count of existing pieces that are in attacked_squares)
+    // Wait, no. The existing pieces are placed squares, and they are not empty. So they cannot be used for placing new pieces.
+    // The attacked squares include squares that are empty and can be attacked by existing pieces.
+    // So the safe squares are N*N - (number of existing pieces) - (number of attacked squares that are not existing pieces)
+
+    // So:
+    long long total_squares = N * N;
+    long long existing_count = existing_pieces.size();
+    long long attacked_count = 0;
+
+    // To avoid counting existing pieces in attacked_squares, we need to subtract them if they are in attacked_squares
+    // So the actual unsafe squares are (attacked_squares.size() + existing_count) minus the intersection.
+    // The intersection is the number of existing pieces that are in attacked_squares.
+
+    long long intersection = 0;
+    for (const auto& piece : existing_pieces) {
+        if (attacked_squares.find(piece) != attacked_squares.end()) {
+            intersection++;
+        }
+    }
+
+    long long unsafe_squares = attacked_squares.size() + existing_count - intersection;
+    long long safe_squares = total_squares - unsafe_squares;
+
+    cout << safe_squares << endl;
+
+    return 0;
+}
+```
+
+### Explanation
+1. **Input Handling**: The code reads the grid size `N` and the number of pieces `M`.
+2. **Tracking Attacked Squares**: For each piece, it calculates all 8 possible squares that the piece can attack (knight's moves). These squares are added to a set to ensure each is counted only once.
+3. **Counting Safe Squares**: The total number of safe squares is computed by subtracting the number of existing pieces and the number of uniquely attacked squares from the total grid squares (`N * N`). The intersection between existing pieces and attacked squares is subtracted to avoid double-counting.
+4. **Output**: The result is printed, which is the count of safe squares where a new piece can be placed without being captured by any existing piece.
+
+This approach ensures that all edge cases and large inputs are handled efficiently, leveraging set operations to manage uniqueness and intersections.

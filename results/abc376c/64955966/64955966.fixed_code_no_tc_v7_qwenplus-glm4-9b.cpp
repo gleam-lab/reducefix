@@ -1,0 +1,46 @@
+#include<bits/stdc++.h>
+#define ll long long
+using namespace std;
+
+void solve() {
+    ll N;
+    cin >> N;
+    vector<ll> A(N), B(N - 1);
+    for (ll i = 0; i < N; i++) {
+        cin >> A[i];
+    }
+    for (ll i = 0; i < N - 1; i++) {
+        cin >> B[i];
+    }
+
+    // Sort A and B to make comparison easier
+    sort(A.begin(), A.end());
+    sort(B.begin(), B.end());
+
+    // Find the minimum x such that all toys can fit in the boxes
+    ll x = 0;
+    for (ll i = 0; i < N; i++) {
+        // Check if the current toy can fit in the current box
+        if (i < N - 1 && A[i] <= B[i]) {
+            x = max(x, B[i]);
+        } else {
+            // If the toy cannot fit in any of the existing boxes, we need a new box
+            x = A[i];
+            break;
+        }
+    }
+
+    // Output the result
+    if (x > 0) {
+        cout << x << endl;
+    } else {
+        cout << -1 << endl;
+    }
+}
+
+int main() {
+    ios::sync_with_stdio(0);
+    cin.tie(0);
+    solve();
+    return 0;
+}

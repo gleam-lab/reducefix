@@ -1,0 +1,66 @@
+// C - Avoid Knight Attack
+
+#include <iostream>
+#include <unordered_set>
+#include <tuple>
+#include <vector>
+#include <set>
+
+using namespace std;
+
+// Hash function for pairs (used in unordered_set)
+struct pair_hash {
+    template <class T1, class T2>
+    size_t operator()(const pair<T1, T2>& p) const {
+        auto h1 = hash<T1>{}(p.first);
+        auto h2 = hash<T2>{}(p.second);
+        return h1 ^ (h2 << 16);
+    }
+};
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    long long N;
+    int M;
+    cin >> N >> M;
+
+    unordered_set<pair<long long, long long>, pair_hash> attacked_positions;
+    vector<pair<long long, long long>> occupied(M);
+
+    // Read all occupied positions
+    for (int i = 0; i < M; ++i) {
+        cin >> occupied[i].first >> occupied[i].second;
+    }
+
+    // Directions where a piece can attack
+    const vector<pair<long long, long long>> directions = {
+        {2, 1}, {1, 2}, {-1, 2}, {-2, 1},
+        {-2, -1}, {-1, -2}, {1, -2}, {2, -1}
+    };
+
+    // For each piece, mark the positions it can attack and itself
+    for (const auto& pos : occupied) {
+        long long x = pos.first, y = pos.second;
+
+        // Mark the current position as occupied
+        attacked_positions.insert({x, y});
+
+        // Check all possible attacking positions
+        for (const auto& d : directions) {
+            long long nx = x + d.first;
+            long long ny = y + d.second;
+
+            if (nx >= 1 && nx <= N && ny >= 1 && ny <= N) {
+                attacked_positions.insert({nx, ny});
+            }
+        }
+    }
+
+    // Total cells: N * N
+    // Subtract the number of attacked or already occupied cells
+    cout << (N * 1LL * N) - static_cast<long long>(attacked_positions.size()) << endl;
+
+    return 0;
+}

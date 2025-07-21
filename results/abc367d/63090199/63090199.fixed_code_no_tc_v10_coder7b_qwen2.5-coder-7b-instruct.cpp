@@ -1,0 +1,37 @@
+#include<bits/stdc++.h>
+using namespace std;
+
+int n, m;
+
+int main() {
+    cin >> n >> m;
+    vector<int> nums(n);
+    for (int i = 0; i < n; i++) {
+        cin >> nums[i];
+    }
+
+    vector<int> prefixSum(n + 1, 0);
+    for (int i = 0; i < n; i++) { // 计算前缀和
+        prefixSum[i + 1] = prefixSum[i] + nums[i];
+    }
+
+    int count = 0;
+    // 寻找所有可能的(s, t)对
+    for (int s = 0; s < n; s++) {
+        for (int t = 0; t < n; t++) {
+            if (s == t) continue;
+            int step = 0;
+            if (s < t) {
+                step = prefixSum[t + 1] - prefixSum[s];
+            } else {
+                step = prefixSum[n] - prefixSum[s] + prefixSum[t + 1];
+            }
+            if (step % m == 0) {
+                count++;
+            }
+        }
+    }
+
+    cout << count << endl;
+    return 0;
+}

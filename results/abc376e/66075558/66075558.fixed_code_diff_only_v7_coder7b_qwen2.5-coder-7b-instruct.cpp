@@ -1,0 +1,43 @@
+#include<iostream>
+#include<vector>
+#include<algorithm>
+using namespace std;
+
+#define int long long
+
+const int N = 2e5 + 9, inf = 0x3f3f3f3f3f3f3f3f;
+int n, m, t, ans, k;
+int s, q;
+pair<int, int>a[N], b[N];
+
+bool cmp(const pair<int, int>&a, const pair<int, int>&b) {
+    return a.first > b.first;
+}
+
+signed main() {
+    cin >> t;
+    while (t--) {
+        cin >> n >> k;
+        for (int i = 1; i <= n; i++) {
+            cin >> a[i].first;
+            a[i].second = i;
+        }
+        for (int i = 1; i <= n; i++) {
+            cin >> b[i].first;
+        }
+        sort(a + 1, a + n + 1, cmp);
+        sort(b + 1, b + n + 1, cmp);
+
+        ans = inf; s = 0;
+        for (int i = 0; i < k; i++) {
+            s += b[i + 1].first;
+        }
+        for (int i = 0; i <= n - k; i++) {
+            ans = min(ans, (s + b[i + k].first) * a[i + 1].first);
+            s -= b[i + 1].first;
+            s += b[i + k + 1].first;
+        }
+        cout << ans << endl;
+    }
+    return 0;
+}

@@ -1,0 +1,39 @@
+#include <iostream>
+#include <vector>
+#include <unordered_set>
+#include <utility>
+
+using namespace std;
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(NULL);
+
+    long long n, m;
+    cin >> n >> m;
+
+    unordered_set<long long> forbidden;
+    for(long long i=0; i<m; ++i){
+        long long a, b;
+        cin >> a >> b;
+        --a, --b; // Convert to zero-based index
+        forbidden.insert(a*n + b); // Store position as linear index
+        
+        // Add positions that this knight can attack
+        for(int dx=-2; dx<=2; dx+=2){
+            for(int dy=-1; dy<=1; dy++){
+                if(abs(dx) == abs(dy)) continue; // Skip diagonals
+                long long nx = a + dx, ny = b + dy;
+                if(nx>=0 && nx<n && ny>=0 && ny<n){
+                    forbidden.insert(nx*n + ny);
+                }
+            }
+        }
+    }
+
+    // Total number of valid positions
+    long long result = n * n - forbidden.size();
+    cout << result << endl;
+
+    return 0;
+}

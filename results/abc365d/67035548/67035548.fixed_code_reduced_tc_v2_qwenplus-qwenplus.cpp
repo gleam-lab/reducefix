@@ -1,0 +1,68 @@
+#include <iostream>
+#include <string>
+#include <vector>
+#include <algorithm>
+#include <cmath>
+
+using namespace std;
+
+// Determine the winner between two moves
+int cmp(char x, char y) {
+    if (x == 'P') {
+        if (y == 'P') return 0;
+        if (y == 'R') return 1;
+        if (y == 'S') return -1;
+    }
+    if (x == 'R') {
+        if (y == 'P') return -1;
+        if (y == 'R') return 0;
+        if (y == 'S') return 1;
+    }
+    if (x == 'S') {
+        if (y == 'P') return 1;
+        if (y == 'R') return -1;
+        if (y == 'S') return 0;
+    }
+    return -100; // Should not reach here
+}
+
+// Return the winning move against a given move
+char win(char x) {
+    if (x == 'R') return 'P';
+    if (x == 'S') return 'R';
+    if (x == 'P') return 'S';
+    return 'X'; // Invalid move
+}
+
+int main() {
+    int n;
+    string s;
+    cin >> n >> s;
+
+    // Forward pass: greedy strategy
+    int ans_forward = 0;
+    char last_move = 'X'; // No move yet
+    for (int i = 0; i < n; ++i) {
+        char opponent_move = s[i];
+        char my_move = win(opponent_move);
+        if (my_move != last_move) {
+            ans_forward++;
+            last_move = my_move;
+        }
+    }
+
+    // Backward pass: greedy strategy from reverse
+    int ans_backward = 0;
+    last_move = 'X'; // Reset
+    for (int i = n - 1; i >= 0; --i) {
+        char opponent_move = s[i];
+        char my_move = win(opponent_move);
+        if (my_move != last_move) {
+            ans_backward++;
+            last_move = my_move;
+        }
+    }
+
+    cout << max(ans_forward, ans_backward) << endl;
+    return 0;
+}

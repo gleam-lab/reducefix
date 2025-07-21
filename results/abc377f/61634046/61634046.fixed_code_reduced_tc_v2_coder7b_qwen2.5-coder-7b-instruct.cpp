@@ -1,0 +1,51 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+
+typedef long long ll;
+
+const int MAXN = 1e9;
+
+ll n, m;
+vector<pair<ll, ll>> pieces;
+
+int main() {
+    cin >> n >> m;
+    pieces.resize(m);
+    for (int i = 0; i < m; ++i) {
+        cin >> pieces[i].first >> pieces[i].second;
+    }
+
+    set<ll> rows, cols, diags1, diags2;
+    for (auto& p : pieces) {
+        rows.insert(p.first);
+        cols.insert(p.second);
+        diags1.insert(p.first + p.second);
+        diags2.insert(p.first - p.second);
+    }
+
+    ll total_squares = n * n;
+    ll occupied_squares = m;
+    ll occupied_rows = rows.size();
+    ll occupied_cols = cols.size();
+    ll occupied_diags1 = diags1.size();
+    ll occupied_diags2 = diags2.size();
+
+    ll empty_squares = total_squares - occupied_squares;
+    ll invalid_squares = 0;
+
+    invalid_squares += occupied_rows * (n - occupied_rows);
+    invalid_squares += occupied_cols * (n - occupied_cols);
+
+    for (auto& p : pieces) {
+        ll r = p.first, c = p.second;
+        invalid_squares -= (n - occupied_rows) + (n - occupied_cols);
+        invalid_squares += (occupied_rows - (rows.count(r) == 1)) * (n - occupied_rows);
+        invalid_squares += (occupied_cols - (cols.count(c) == 1)) * (n - occupied_cols);
+        invalid_squares += (occupied_diags1 - (diags1.count(r + c) == 1)) * (n - occupied_diags1);
+        invalid_squares += (occupied_diags2 - (diags2.count(r - c) == 1)) * (n - occupied_diags2);
+    }
+
+    cout << empty_squares - invalid_squares / 2 << endl;
+    return 0;
+}

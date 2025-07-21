@@ -1,0 +1,78 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define int long long
+#define close ios::sync_with_stdio(false); cin.tie(0); cout.tie(0);
+#define MAXN 110
+#define LIMIT 22
+#define inf 0x3f3f3f3f3f3f
+#define endl '\n'
+const double eps = 1e-7;
+int dx[] = {0, 0, 1, -1}, dy[] = {1, -1, 0, 0};
+const int MOD = 1e9 + 7;
+
+vector<vector<int>> graph;
+vector<vector<bool>> visited;
+
+int getArea(int level) {
+    int h = graph.size(), w = graph[0].size();
+    queue<pair<int, int>> q;
+    vector<pair<int, int>> seeds;
+
+    // Initialize the queue with the edges of the grid
+    for (int i = 0; i < h; ++i) {
+        seeds.emplace_back(i, 0);
+        seeds.emplace_back(i, w - 1);
+    }
+    for (int i = 1; i < w - 1; ++i) {
+        seeds.emplace_back(0, i);
+        seeds.emplace_back(h - 1, i);
+    }
+
+    // Mark sea level cells and propagate the sea level
+    for (auto seed : seeds) {
+        int x = seed.first, y = seed.second;
+        visited[x][y] = true;
+        q.emplace(x, y);
+        while (!q.empty()) {
+            int x = q.front().first, y = q.front().second;
+            q.pop();
+
+            for (int i = 0; i < 4; ++i) {
+                int nx = x + dx[i], ny = y + dy[i];
+                if (nx >= 0 && nx < h && ny >= 0 && ny < w && !visited[nx][ny] && graph[nx][ny] <= level) {
+                    visited[nx][ny] = true;
+                    q.emplace(nx, ny);
+                }
+            }
+        }
+    }
+
+    // Count the remaining dry land cells
+    int res = 0;
+    for (int i = 0; i < h; ++i) {
+        for (int j = 0; j < w; ++j) {
+            if (!visited[i][j]) ++res;
+        }
+    }
+    return res;
+}
+
+int main() {
+    close;
+    int h, w, y;
+    cin >> h >> w >> y;
+    graph.resize(h, vector<int>(w));
+    visited.resize(h, vector<bool>(w, false));
+
+    for (int i = 0; i < h; ++i) {
+        for (int j = 0; j < w; ++j) {
+            cin >> graph[i][j];
+        }
+    }
+
+    for (int i = 1; i <= y; ++i) {
+        cout << getArea(i) << endl;
+    }
+
+    return 0;
+}

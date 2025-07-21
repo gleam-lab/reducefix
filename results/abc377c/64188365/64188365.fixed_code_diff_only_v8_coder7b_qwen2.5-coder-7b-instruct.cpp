@@ -1,0 +1,28 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define rep(i,n) for(int i = 0; i < (n); ++i)
+using ll = long long;
+
+int main() {
+    long long n, m, a, b;
+    cin >> n >> m;
+    set<pair<ll, ll>> c;
+    rep(i, m) {
+        cin >> a >> b;
+        --a, --b; // Convert to 0-based index
+        c.emplace(a, b);
+
+        vector<pair<int, int>> moves = {
+            {2, 1}, {1, 2}, {-1, 2}, {-2, 1}, {-2, -1}, {-1, -2}, {1, -2}, {2, -1}
+        };
+
+        for (auto &move : moves) {
+            int x = a + move.first, y = b + move.second;
+            if (x >= 0 && x < n && y >= 0 && y < n) {
+                c.emplace(x, y);
+            }
+        }
+    }
+
+    cout << n * n - c.size() << endl;
+}

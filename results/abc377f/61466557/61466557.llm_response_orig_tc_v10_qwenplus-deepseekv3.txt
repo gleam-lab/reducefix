@@ -1,0 +1,171 @@
+To fix this code, we need to ensure that the algorithm correctly calculates the number of safe squares where a new piece can be placed without being captured by any existing pieces. The initial approach had some logical flaws, especially in handling the intersections of different attack lines (rows, columns, and diagonals). 
+
+### Approaches
+
+1. **Problem Analysis**:
+   - The grid has N^2 squares, with M pieces placed on it.
+   - A new piece cannot be placed in any square that is in the same row, column, or diagonal (both i+j and i-j diagonals) as any existing piece.
+   - The challenge is to compute the number of safe squares efficiently, especially considering the constraints where N can be as large as 10^9 and M up to 10^3.
+
+2. **Intuition**:
+   - The total number of squares is N^2.
+   - Subtract the squares attacked by existing pieces. Each existing piece attacks squares in its row, column, and both diagonals.
+   - However, some squares might be counted multiple times if they are attacked by multiple pieces in overlapping lines. We need to account for these overlaps using inclusion-exclusion principles.
+
+3. **Algorithm**:
+   - **Rows and Columns**: For each existing piece, mark its row and column. The total attacked squares are rows_union * N + columns_union * N - rows_union * columns_union (to avoid double counting the intersections).
+   - **Diagonals (i+j and i-j)**:
+     - For each diagonal (i+j = d1 or i-j = d2), calculate the number of squares on these diagonals and subtract them.
+     - Ensure intersections of these diagonals with rows and columns are not double-counted.
+   - **Final Calculation**: Use inclusion-exclusion to subtract the attacked squares while adding back the intersections that were subtracted multiple times.
+
+### Solution Code
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+typedef long long ll;
+
+int main() {
+    ll N, M;
+    cin >> N >> M;
+    vector<pair<ll, ll>> pieces(M);
+    unordered_set<ll> rows, cols, diag1, diag2;
+    for (int i = 0; i < M; ++i) {
+        cin >> pieces[i].first >> pieces[i].second;
+        rows.insert(pieces[i].first);
+        cols.insert(pieces[i].second);
+        diag1.insert(pieces[i].first - pieces[i].second);
+        diag2.insert(pieces[i].first + pieces[i].second);
+    }
+
+    ll total = N * N;
+    
+    // Subtract rows and columns
+    ll row_count = rows.size();
+    ll col_count = cols.size();
+    total -= row_count * N;
+    total -= col_count * N;
+    total += row_count * col_count;
+
+    // Subtract diagonals i-j (d1)
+    for (ll d : diag1) {
+        // Number of squares on diagonal i - j = d
+        ll cnt;
+        if (d >= 0) {
+            cnt = N - d;
+        } else {
+            cnt = N + d;
+        }
+        total -= cnt;
+
+        // Add back intersections with rows and columns
+        for (ll r : rows) {
+            ll c = r - d;
+            if (1 <= c && c <= N) {
+                total++;
+            }
+        }
+        for (ll c : cols) {
+            ll r = c + d;
+            if (1 <= r && r <= N) {
+                total++;
+            }
+        }
+
+        // Subtract the intersections added twice (if any)
+        for (ll r : rows) {
+            ll c = r - d;
+            if (1 <= c && c <= N && cols.count(c)) {
+                total--;
+            }
+        }
+    }
+
+    // Subtract diagonals i+j (d2)
+    for (ll d : diag2) {
+        // Number of squares on diagonal i + j = d
+        ll cnt;
+        if (d <= N + 1) {
+            cnt = d - 1;
+        } else {
+            cnt = 2 * N - d + 1;
+        }
+        total -= cnt;
+
+        // Add back intersections with rows and columns
+        for (ll r : rows) {
+            ll c = d - r;
+            if (1 <= c && c <= N) {
+                total++;
+            }
+        }
+        for (ll c : cols) {
+            ll r = d - c;
+            if (1 <= r && r <= N) {
+                total++;
+            }
+        }
+
+        // Subtract the intersections added twice (if any)
+        for (ll r : rows) {
+            ll c = d - r;
+            if (1 <= c && c <= N && cols.count(c)) {
+                total--;
+            }
+        }
+    }
+
+    // Add intersections between d1 and d2 diagonals that were subtracted twice
+    for (ll d1 : diag1) {
+        for (ll d2 : diag2) {
+            if ((d2 + d1) % 2 != 0) continue;
+            ll r = (d2 + d1) / 2;
+            ll c = (d2 - d1) / 2;
+            if (1 <= r && r <= N && 1 <= c && c <= N) {
+                total++;
+            }
+        }
+    }
+
+    // Subtract the squares occupied by existing pieces if they were not already subtracted
+    total -= M;
+
+    cout << total << endl;
+
+    return 0;
+}
+```
+
+### Explanation
+
+1. **Initialization**:
+   - Read input values for grid size `N` and number of pieces `M`.
+   - Store each piece's coordinates and track unique rows, columns, and both types of diagonals (i-j and i+j) they occupy.
+
+2. **Total Squares Calculation**:
+   - Initialize `total` as the total number of squares in the grid, `N^2`.
+
+3. **Row and Column Attacks**:
+   - Subtract the squares attacked in each unique row and column.
+   - Adjust for overlapping squares that lie in both a unique row and column to avoid double subtraction.
+
+4. **Diagonal Attacks (i-j)**:
+   - For each unique diagonal (i-j = d), calculate the number of squares on this diagonal and subtract them.
+   - Add back squares that are also in a unique row or column to correct for overlaps.
+   - Adjust for squares that are in intersections of rows, columns, and diagonals.
+
+5. **Diagonal Attacks (i+j)**:
+   - Similarly, handle the other type of diagonal (i+j = d) with the same logic as above.
+
+6. **Intersection of Diagonals**:
+   - Add back squares that lie at the intersection of both types of diagonals, which might have been subtracted twice.
+
+7. **Existing Pieces Adjustment**:
+   - Subtract the squares occupied by existing pieces if they were not already accounted for in previous steps.
+
+8. **Output**:
+   - Print the total number of safe squares after all adjustments.
+
+This approach ensures that all attacked squares are correctly accounted for, and intersections are handled properly using inclusion-exclusion principles, providing an efficient and accurate solution.

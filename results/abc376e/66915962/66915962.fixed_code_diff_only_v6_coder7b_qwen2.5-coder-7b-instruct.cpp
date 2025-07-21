@@ -1,0 +1,37 @@
+#include<bits/stdc++.h>
+using namespace std;
+using ll = long long;
+using VI = vector<int>;
+using P = pair<int, int>;
+constexpr int INF = 1001001001;
+constexpr ll LINF = 1001001001001001001ll;
+#define rep(i, n) for (ll i = 0; i < (ll)(n); i++)
+#define rep2(i, k, n) for (ll i = k; i < (ll)(n); i++)
+#define OUT(x) cout << #x << ":" << x << endl
+
+int main(){
+    int t;
+    cin >> t;
+    while(t--){
+        int n, k;
+        cin >> n >> k;
+        vector<ll> a(n), b(n);
+        rep(i, n) cin >> a[i];
+        rep(i, n) cin >> b[i];
+
+        sort(a.rbegin(), a.rend()); // Sort in descending order to get max(A_i)
+        sort(b.begin(), b.end());   // Sort in ascending order to get min(B_i)
+
+        ll ans = LINF;
+        ll sumB = accumulate(b.begin(), b.begin()+k, 0LL); // Sum of first K elements in B
+        ans = min(ans, a[0]*sumB); // Initial answer with the largest A_i and smallest K B_i
+
+        rep2(i, 1, k){
+            sumB -= b[i-1]; // Remove the smallest element added previously
+            sumB += b[n-i]; // Add the next largest element from B
+            ans = min(ans, a[i]*sumB); // Update the answer if current combination gives smaller result
+        }
+
+        cout << ans << '\n';
+    }
+}

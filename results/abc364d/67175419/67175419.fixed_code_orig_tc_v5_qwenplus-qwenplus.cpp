@@ -1,0 +1,66 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+const int MAXN = 2e5 + 5;
+
+int N, Q;
+vector<long long> A;
+
+// Binary search to find the k-th smallest distance
+long long solve(long long b, int k) {
+    // Create a copy of A for distances
+    vector<long long> dists(N);
+    for (int i = 0; i < N; ++i) {
+        dists[i] = abs(A[i] - b);
+    }
+
+    nth_element(dists.begin(), dists.begin() + k - 1, dists.end());
+    return dists[k - 1];
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    cin >> N >> Q;
+
+    A.resize(N);
+    for (int i = 0; i < N; ++i) {
+        cin >> A[i];
+    }
+
+    sort(A.begin(), A.end());
+
+    // Precompute prefix sums for efficient range sum queries
+    vector<long long> prefix_sum(N + 1, 0);
+    for (int i = 0; i < N; ++i) {
+        prefix_sum[i + 1] = prefix_sum[i] + A[i];
+    }
+
+    while (Q--) {
+        long long b;
+        int k;
+        cin >> b >> k;
+
+        // Find the position in sorted A where elements are <= b
+        int pos = upper_bound(A.begin(), A.end(), b) - A.begin();
+
+        // Use binary search on answer to find the k-th smallest distance
+        long long l = 0, r = 2e8;
+        while (l < r) {
+            long long mid = (l + r) / 2;
+            // Count how many elements have distance <= mid from b
+            int left = lower_bound(A.begin(), A.end(), b - mid) - A.begin();
+            int right = upper_bound(A.begin(), A.end(), b + mid) - A.begin();
+            if ((right - left) >= k) {
+                r = mid;
+            } else {
+                l = mid + 1;
+            }
+        }
+
+        cout << l << "\n";
+    }
+
+    return 0;
+}

@@ -1,0 +1,66 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+#define IOS ios::sync_with_stdio(0); cin.tie(0); cout.tie(0);
+#define endl "\n"
+#define int long long
+
+const int N = 2e5 + 10, INF = 1e9 + 7;
+
+vector<vector<int>> adj;
+vector<bool> visited;
+int min_cycle_length = INF;
+
+void dfs(int u, int depth, vector<int>& stack, vector<bool>& in_stack) {
+    visited[u] = true;
+    in_stack[u] = true;
+    stack.push_back(u);
+
+    for (int v : adj[u]) {
+        if (!visited[v]) {
+            dfs(v, depth + 1, stack, in_stack);
+        } else if (in_stack[v]) {
+            // Found a cycle
+            int cycle_len = depth - distance(stack.begin(), find(stack.begin(), stack.end(), v)) + 1;
+            min_cycle_length = min(min_cycle_length, cycle_len);
+        }
+    }
+
+    stack.pop_back();
+    in_stack[u] = false;
+}
+
+void solve() {
+    int n, m;
+    cin >> n >> m;
+    
+    adj.assign(n + 1, vector<int>());
+    visited.assign(n + 1, false);
+    vector<bool> in_stack(n + 1, false);
+    vector<int> stack;
+    
+    for (int i = 0; i < m; ++i) {
+        int u, v;
+        cin >> u >> v;
+        adj[u].push_back(v);
+    }
+
+    for (int i = 1; i <= n; ++i) {
+        if (!visited[i]) {
+            dfs(i, 0, stack, in_stack);
+        }
+    }
+
+    if (min_cycle_length == INF)
+        cout << -1;
+    else
+        cout << min_cycle_length;
+}
+
+signed main() {
+    IOS;
+    int T = 1;
+    while (T--)
+        solve();
+    return 0;
+}

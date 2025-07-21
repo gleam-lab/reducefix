@@ -1,0 +1,37 @@
+#include<bits/stdc++.h>
+using namespace std;
+
+void solve(){
+    long long N;
+    cin >> N;
+    vector<long long> A(N), B(N-1);
+    for(long long &a : A) cin >> a;
+    for(long long &b : B) cin >> b;
+    
+    sort(A.begin(), A.end(), greater<long long>());
+    sort(B.begin(), B.end(), greater<long long>());
+    
+    long long x = 0, max_box_size = 0;
+    for(long long i = 0; i < N-1; ++i){
+        if(A[i] <= B[x]){
+            x++;
+        } else {
+            max_box_size = max(max_box_size, A[i]);
+        }
+    }
+    
+    if(x == N-1){
+        cout << -1 << endl;
+        return;
+    }
+    
+    max_box_size = max(max_box_size, A[N-1]);
+    cout << max_box_size << endl;
+}
+
+int main(){
+    ios::sync_with_stdio(0);
+    cin.tie(0);
+    solve();
+    return 0;
+}

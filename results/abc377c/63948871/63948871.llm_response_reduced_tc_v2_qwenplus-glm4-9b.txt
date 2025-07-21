@@ -1,0 +1,69 @@
+
+To fix the issue, we need to address two main problems in the given code:
+
+1. The code is calculating the number of cells that cannot be occupied by the existing pieces incorrectly. It should not add the cells that are threatened by multiple pieces multiple times.
+2. We need to ensure that the code adheres to the constraints and handles large inputs efficiently.
+
+The steps to fix the code are:
+
+1. Instead of inserting the threatened cells directly into the `anti_dup` set, we need to check if the cell is already in the set before adding it. This prevents counting the same cell multiple times.
+2. Since the grid size `N` is very large, we cannot generate the entire grid. Instead, we only need to consider the cells that are directly threatened by the existing pieces and the cells that are in their attack range.
+3. The function `distance` calculates the Manhattan distance between two cells, which is useful to determine the cells that can be threatened by a piece.
+
+Here is the corrected code:
+
+```cpp
+#include <iostream>
+#include <vector>
+#include <set>
+#include <cmath>
+
+using namespace std;
+
+#define INF 1000000000
+
+vector<pair<int, int>> threatened_cells(int x, int y) {
+    vector<pair<int, int>> threats = {
+        {x + 2, y + 1}, {x + 1, y + 2}, {x - 1, y + 2}, {x - 2, y + 1},
+        {x - 2, y - 1}, {x - 1, y - 2}, {x + 1, y - 2}, {x + 2, y - 1}
+    };
+    return threats;
+}
+
+int main() {
+    int N, M;
+    cin >> N >> M;
+    set<pair<int, int>, greater<pair<int, int>>> occupied; // Use a multiset with custom comparator for decreasing order
+    vector<pair<int, int>> occupied_cells;
+
+    for (int i = 0; i < M; ++i) {
+        int x, y;
+        cin >> x >> y;
+        occupied.insert({x, y});
+        occupied_cells.push_back({x, y});
+    }
+
+    set<pair<int, int>, greater<pair<int, int>>> occupied_cells_unique(occupied.begin(), occupied.end());
+    set<pair<int, int>, greater<pair<int, int>>> threatened_cells_set;
+
+    for (const auto& cell : occupied_cells_unique) {
+        for (const auto& threat : threatened_cells(cell.first, cell.second)) {
+            if (occupied.find(threat) == occupied.end()) {
+                threatened_cells_set.insert(threat);
+            }
+        }
+    }
+
+    int total_cells = N * N;
+    int unoccupied_cells = total_cells;
+    for (const auto& cell : threatened_cells_set) {
+        --unoccupied_cells;
+    }
+
+    cout << unoccupied_cells << endl;
+
+    return 0;
+}
+```
+
+This code uses a multiset to store occupied cells in decreasing order to avoid double counting when checking threatened cells. It also avoids directly modifying the `occupied` set while iterating over it. The `threatened_cells` function generates the cells that can be threatened by a piece given its position. The main loop calculates the number of unoccupied cells that cannot be threatened by any piece.

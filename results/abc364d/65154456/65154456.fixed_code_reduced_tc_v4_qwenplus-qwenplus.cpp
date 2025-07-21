@@ -1,0 +1,50 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+typedef long long ll;
+
+void solve() {
+    int N, Q;
+    cin >> N >> Q;
+
+    vector<ll> A(N);
+    for (int i = 0; i < N; ++i) {
+        cin >> A[i];
+    }
+    sort(A.begin(), A.end());
+
+    for (int q = 0; q < Q; ++q) {
+        ll b;
+        int k;
+        cin >> b >> k;
+
+        // Binary search on the answer (distance)
+        ll left = 0, right = 2e14; // Enough for max possible distance
+        while (left < right) {
+            ll mid = (left + right) / 2;
+
+            // Count how many points have distance <= mid from b
+            int count = 0;
+            auto low = lower_bound(A.begin(), A.end(), b - mid);
+            auto high = upper_bound(A.begin(), A.end(), b + mid);
+            count = high - low;
+
+            if (count >= k) {
+                right = mid;
+            } else {
+                left = mid + 1;
+            }
+        }
+
+        cout << left << "\n";
+    }
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    cout.tie(nullptr);
+
+    solve();
+    return 0;
+}

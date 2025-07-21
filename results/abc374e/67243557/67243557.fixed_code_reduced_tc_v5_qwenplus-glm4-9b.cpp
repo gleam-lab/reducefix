@@ -1,0 +1,41 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define rep(i, n) for (long long i = 0; i < n; ++i)
+using ll = long long;
+
+ll f(ll a, ll b, ll p, ll q, ll x) {
+  ll dp[10010] = {1e10};
+  dp[0] = 0;
+  for (int i = 1; i < 10010; ++i) {
+    if (i - a >= 0) dp[i] = min(dp[i], dp[i - a] + p);
+    if (i - b >= 0) dp[i] = min(dp[i], dp[i - b] + q);
+  }
+  
+  ll ans = 1e10;
+  for (int i = max(2 * a, 2 * b); i <= x; ++i) {
+    ans = min(ans, dp[i]);
+  }
+  return ans;
+}
+
+int main() {
+  int n, x;
+  cin >> n >> x;
+  vector<int> a(n), b(n), p(n), q(n);
+  rep(i, n) {
+    cin >> a[i] >> p[i] >> b[i] >> q[i];
+  }
+  ll now; // wã®åè£
+  ll l = 0, r = 10000000000;
+  while (r - l > 1) {
+    now = (r + l) / 2;
+    ll tmp = 0;
+    rep(i, n) {
+      tmp += f(a[i], b[i], p[i], q[i], now);
+    }
+    if (tmp <= x) l = now;
+    else r = now;
+  }
+  cout << l;
+  return 0;
+}

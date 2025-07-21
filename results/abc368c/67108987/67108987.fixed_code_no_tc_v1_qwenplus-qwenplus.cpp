@@ -1,0 +1,38 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+
+int main() {
+    int N;
+    cin >> N;
+    vector<long long> H(N);
+    for (int i = 0; i < N; ++i) {
+        cin >> H[i];
+    }
+
+    long long T = 0;
+
+    for (int i = 0; i < N; ++i) {
+        // Determine how many full attack cycles are needed
+        // Each cycle: 1-1-3 => total damage = 5 over 3 steps
+        long long full_cycles = H[i] / 5;
+        long long remainder = H[i] % 5;
+
+        T += full_cycles * 3;
+
+        if (remainder > 0) {
+            T += 1; // First attack: damage 1
+            remainder -= 1;
+        }
+        if (remainder > 0) {
+            T += 1; // Second attack: damage 1
+            remainder -= 1;
+        }
+        if (remainder > 0) {
+            T += 1; // Third attack: damage 3
+        }
+    }
+
+    cout << T << endl;
+    return 0;
+}

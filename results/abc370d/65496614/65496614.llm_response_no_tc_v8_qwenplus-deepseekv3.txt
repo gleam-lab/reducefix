@@ -1,0 +1,95 @@
+The provided code attempts to solve the problem by using sets to track the walls in each row and column, but it has several issues. The main problems are:
+
+1. **Initialization**: The sets `R` and `C` are initialized incorrectly. They should represent the columns and rows that have walls, but they are initialized to include all possible indices, which doesn't correctly model the grid.
+
+2. **Erase Logic**: The `erase` function and `bin` function don't correctly handle the destruction of walls. The logic for finding the nearest walls in the four directions is flawed. The `bin` function incorrectly tries to erase two walls in each direction, which doesn't match the problem's requirements.
+
+3. **Efficiency**: The current approach may not be efficient enough for the given constraints, especially since `H * W` can be up to 400,000 and `Q` up to 200,000.
+
+To fix these issues, we need to:
+- Use separate sets for each row and column to efficiently track the remaining walls.
+- For each query, first check if the current cell has a wall. If it does, remove it. If not, find the nearest walls in the four directions and remove them.
+
+Here's the corrected code:
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int h, w, q;
+    cin >> h >> w >> q;
+    
+    vector<set<int>> row(h + 2); // rows are 1..h, columns are 1..w
+    vector<set<int>> col(w + 2);
+    
+    // Initialize all walls
+    for (int i = 1; i <= h; ++i) {
+        for (int j = 1; j <= w; ++j) {
+            row[i].insert(j);
+            col[j].insert(i);
+        }
+    }
+    
+    while (q--) {
+        int r, c;
+        cin >> r >> c;
+        
+        if (row[r].count(c)) {
+            // Wall exists at (r, c), destroy it
+            row[r].erase(c);
+            col[c].erase(r);
+        } else {
+            // No wall at (r, c), destroy nearest walls in four directions
+            // Up
+            auto it_up = col[c].lower_bound(r);
+            if (it_up != col[c].begin()) {
+                --it_up;
+                row[*it_up].erase(c);
+                col[c].erase(it_up);
+            }
+            // Down
+            it_up = col[c].lower_bound(r);
+            if (it_up != col[c].end()) {
+                row[*it_up].erase(c);
+                col[c].erase(it_up);
+            }
+            // Left
+            auto it_left = row[r].lower_bound(c);
+            if (it_left != row[r].begin()) {
+                --it_left;
+                col[*it_left].erase(r);
+                row[r].erase(it_left);
+            }
+            // Right
+            it_left = row[r].lower_bound(c);
+            if (it_left != row[r].end()) {
+                col[*it_left].erase(r);
+                row[r].erase(it_left);
+            }
+        }
+    }
+    
+    int ans = 0;
+    for (int i = 1; i <= h; ++i) {
+        ans += row[i].size();
+    }
+    
+    cout << ans << '\n';
+    return 0;
+}
+```
+
+### Explanation:
+1. **Initialization**: We initialize sets `row` and `col` to keep track of the walls in each row and column. Each cell (i, j) is initially a wall, so we insert `j` into `row[i]` and `i` into `col[j]`.
+
+2. **Processing Queries**:
+   - If the cell (r, c) has a wall, we simply remove it from the sets.
+   - If there's no wall, we search for the nearest walls in the four directions (up, down, left, right) using `lower_bound` to efficiently find the nearest elements in the sets. We then remove these walls from the sets.
+
+3. **Counting Remaining Walls**: After processing all queries, we count the remaining walls by summing the sizes of the sets in each row.
+
+This approach ensures efficient handling of up to the maximum constraints by leveraging set operations which are logarithmic in complexity.

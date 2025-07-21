@@ -1,0 +1,56 @@
+#include <iostream>
+#include <vector>
+using namespace std;
+using ll = long long;
+
+int main() {
+    int N;
+    cin >> N;
+    vector<ll> H(N);
+    for (int i = 0; i < N; ++i) {
+        cin >> H[i];
+    }
+
+    ll T = 0;
+
+    for (int i = 0; i < N; ++i) {
+        // Determine how many attacks are needed for this enemy
+        ll h = H[i];
+
+        // We simulate the attack pattern to determine when this enemy will be defeated
+        // We need to find minimum T' such that:
+        // - Every time T increases by 1, we attack the frontmost enemy with health > 0
+        // - On T divisible by 3, deal 3 damage
+        // - Else, deal 1 damage
+
+        // To optimize, precompute how many steps it takes to reduce health to 0 from here
+        // Let's simulate in groups of 3 attacks: two 1-damage and one 3-damage = total 5 damage per 3 steps
+        ll full_cycles = h / 5;
+        ll remaining_health = h % 5;
+        T += full_cycles * 3;
+
+        // After full cycles, handle remaining health
+        if (remaining_health > 0) {
+            // Check current T modulo 3 to know which kind of attack comes next
+            ll mod = T % 3;
+
+            if (mod == 0) {
+                // Next attack is a 3-damage hit
+                T++;
+            } else {
+                // First attack is 1-damage
+                T++;
+                remaining_health--;
+                if (remaining_health > 0 && T % 3 == 0) {
+                    T++;
+                    remaining_health -= 3;
+                }
+                if (remaining_health > 0) {
+                    T++;
+                }
+            }
+        }
+    }
+
+    cout << T << endl;
+}

@@ -1,0 +1,67 @@
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+using pll = pair<ll, ll>;
+
+#define rep(i, a, b) for(ll i = (a); i < (b); ++i)
+#define rrep(i, a, b) for(ll i = (b)-1; i >= (a); --i)
+#define all(x) begin(x), end(x)
+
+// Function to read input quickly
+template<typename T>
+void read_input(T& x) { cin >> x; }
+template<typename T, typename... Args>
+void read_input(T& first, Args&... rest) {
+    cin >> first;
+    read_input(rest...);
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    ll T;
+    cin >> T;
+
+    while (T--) {
+        ll N, K;
+        cin >> N >> K;
+
+        vector<pll> pairs(N);
+        for (auto& p : pairs) cin >> p.first;
+        for (auto& p : pairs) cin >> p.second;
+
+        // Sort by A_i ascending
+        sort(pairs.begin(), pairs.end());
+
+        // Use a multiset to maintain the K smallest B_i values
+        multiset<ll> selected_B;
+        ll sum_B = 0;
+
+        // Initialize with first K elements
+        for (ll i = 0; i < K; ++i) {
+            selected_B.insert(pairs[i].second);
+            sum_B += pairs[i].second;
+        }
+
+        ll ans = sum_B * pairs[K - 1].first;
+
+        // Sliding window: add next element and remove max from B set
+        for (ll i = K; i < N; ++i) {
+            // Add current B to consideration
+            selected_B.insert(pairs[i].second);
+            sum_B += pairs[i].second;
+
+            // Remove the largest B in the set (since we want to keep K smallest)
+            sum_B -= *prev(selected_B.end());
+            selected_B.erase(prev(selected_B.end()));
+
+            // Update answer with current max A_i (which is pairs[i].first)
+            ans = min(ans, sum_B * pairs[i].first);
+        }
+
+        cout << ans << '\n';
+    }
+
+    return 0;
+}

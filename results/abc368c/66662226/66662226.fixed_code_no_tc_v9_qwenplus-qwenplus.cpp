@@ -1,0 +1,74 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define rep(i, n) for (int i = 0; i < (n); ++i)
+using ll = long long;
+
+// Function to compute ceiling of division
+ll ceil_div(ll a, ll b) {
+    return (a + b - 1) / b;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int n;
+    cin >> n;
+    vector<ll> H(n);
+    rep(i, n) cin >> H[i];
+
+    // Binary search on the answer T
+    ll left = 0, right = 3e18; // Generous upper bound
+
+    while (left < right) {
+        ll mid = (left + right) / 2;
+        vector<ll> h = H;
+        ll attacks_at_t_mod_3_eq_0 = mid / 3;
+        ll attacks_at_t_mod_other = mid % 3;
+
+        // For each enemy, simulate how much damage they receive in reverse
+        // We go from back to front to handle carryover attacks correctly
+        for (int i = n - 1; i >= 0; --i) {
+            // Number of special attacks (damage 3) available at this position
+            ll special_attacks = attacks_at_t_mod_3_eq_0;
+            // Number of normal attacks (damage 1) available at this position
+            ll normal_attacks = attacks_at_t_mod_other;
+
+            // First use special attacks
+            ll use_special = min(special_attacks, h[i] / 3 + (h[i] % 3 != 0));
+            attacks_at_t_mod_3_eq_0 -= use_special;
+            h[i] -= use_special * 3;
+
+            if (h[i] <= 0) continue;
+
+            // Then use normal attacks
+            ll use_normal = min(normal_attacks, h[i]);
+            attacks_at_t_mod_other -= use_normal;
+            h[i] -= use_normal;
+
+            if (h[i] <= 0) continue;
+
+            // If we still have health left, we need to "carry over" attacks to this enemy
+            // That is, we need to delay attacks on previous enemies
+            ll remaining = h[i];
+            attacks_at_t_mod_other += remaining;
+            h[i] = 0;
+        }
+
+        bool all_dead = true;
+        for (ll hi : h) {
+            if (hi > 0) {
+                all_dead = false;
+                break;
+            }
+        }
+
+        if (all_dead) {
+            right = mid;
+        } else {
+            left = mid + 1;
+        }
+    }
+
+    cout << left << endl;
+}

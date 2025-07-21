@@ -1,0 +1,109 @@
+#include <iostream>
+#include <vector>
+#include <queue>
+#include <climits>
+#include <algorithm>
+#include <cstring>
+#include <tuple>
+#include <functional>
+
+using namespace std;
+
+typedef long long ll;
+const ll INF = LLONG_MAX / 2;
+
+struct Edge {
+    ll to, cost;
+};
+
+class Graph {
+public:
+    vector<vector<Edge>> adjList;
+    
+    Graph(int n) : adjList(n) {}
+    
+    void addEdge(int u, int v, int w) {
+        adjList[u].emplace_back(v, w);
+        adjList[v].emplace_back(u, w);
+    }
+};
+
+struct State {
+    int node, dist;
+    bool operator<(const State& other) const {
+        return dist > other.dist;
+    }
+};
+
+vector<int> dijkstra(Graph& graph, int start) {
+    int n = graph.adjList.size();
+    vector<int> dist(n, INF);
+    dist[start] = 0;
+    priority_queue<State> pq;
+    pq.emplace(start, 0);
+    
+    while (!pq.empty()) {
+        auto [u, d] = pq.top();
+        pq.pop();
+        
+        if (d > dist[u]) continue;
+        
+        for (auto [v, w] : graph.adjList[u]) {
+            int new_dist = d + w;
+            if (new_dist < dist[v]) {
+                dist[v] = new_dist;
+                pq.emplace(v, new_dist);
+            }
+        }
+    }
+    
+    return dist;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int n, m;
+    cin >> n >> m;
+    
+    vector<ll> a(n);
+    for (int i = 0; i < n; ++i) {
+        cin >> a[i];
+    }
+    
+    Graph graph(n);
+    for (int i = 0; i < m; ++i) {
+        int u, v, w;
+        cin >> u >> v >> w;
+        --u; --v;
+        graph.addEdge(u, v, w);
+    }
+    
+    vector<int> result(n - 1, INF);
+    priority_queue<tuple<int, int, int>, vector<tuple<int, int, int>>, greater<>> pq;
+    pq.emplace(a[0], 0, 0);
+    
+    while (!pq.empty()) {
+        auto [cost, node, parent] = pq.top();
+        pq.pop();
+        
+        if (cost > result[parent]) continue;
+        
+        if (parent != 0) {
+            result[parent - 1] = cost;
+        }
+        
+        for (auto [neighbor, weight] : graph.adjList[node]) {
+            int new_cost = cost + weight + a[neighbor];
+            pq.emplace(new_cost, neighbor, node);
+        }
+    }
+    
+    for (int i = 0; i < n - 1; ++i) {
+        cout << result[i] << " ";
+    }
+    cout << endl;
+    
+    return 0;
+}

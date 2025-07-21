@@ -1,0 +1,113 @@
+//#define _GLIBCXX_DEBUG
+#include <bits/stdc++.h>
+using namespace std;
+struct Init { Init() { ios::sync_with_stdio(false); cin.tie(nullptr); cout << fixed << setprecision(12); } }init;
+
+/*--------------------------------------------------*/
+using i64 = int64_t;
+using ld = long double;
+template<typename T> using vc = vector<T>;
+template<typename T> using vv = vc<vc<T>>;
+template<typename T> using vvv = vc<vv<T>>;
+template<typename T> using vvvv = vc<vvv<T>>;
+template<typename T> using P = pair<T,T>;
+using vi = vc<int>; using vvi = vc<vi>;
+using Pi = pair<int, int>;
+template<typename T> struct cmp { bool operator()(T l, T r){ return l[0] > r[0]; }};
+/*--------------------------------------------------*/
+#define pb push_back
+#define em emplace
+#define eb emplace_back
+#define pob pop_back
+#define el '\n'
+#define YES cout<<"Yes"<<el
+#define NO cout<<"No"<<el
+#define NG cout<<-1<<el
+#define ansNG(ans,ng) if(ans==ng){ NG; }else{ cout<<ans<<el; }
+#define all(a)  a.begin(),a.end()
+#define rall(a) a.rbegin(),a.rend()
+#define rep(i,n)     for(int i = 0; i < (n); ++i)
+#define rep3(i,l,r)  for(int i = (l); i < (r); ++i)
+#define rrep(i,n)    for(int i = (n)-1; i >= 0; --i)
+#define rrep3(i,l,r) for(int i = (r)-1; i >= (l); --i)
+#define next_p(x) next_permutation( x )
+/*--------------------------------------------------*/
+template<typename T> inline bool chmin(T &a, T b){if(a > b){a = b; return true;}return false;}
+template<typename T> inline bool chmax(T &a, T b){if(a < b){a = b; return true;}return false;}
+template<typename T> istream& operator>>(istream& i, vc<T>& v) { rep(j, size(v))i >> v[j]; return i; }
+#define debug(x) cerr << #x << "= " << x << el
+#define cout_bit(a,b) cout<< bitset<b>(a) <<el;
+#define cout_vc(v,e)  for(auto a1:v){ if(a1==e){ cout<<"- "; }else{ cout<<a1<<" "; } }cout<<el;
+#define cout_vv(v,e)  for(auto a2:v){ cout_vc(a2,e) };
+#define cout_vvv(v,e) for(auto a3:v){ cout_vv(a3,e); cout<<el; };
+/*--------------------------------------------------*/
+int INF    = 1e9+10;
+int INF2   = 2e9+10;
+i64 INFi64 = (i64)2e18+10;
+int m=998244353; //m=1e9+7;
+/*--------------------------------------------------*/
+
+int main(){
+    int H, W, Y; cin >> H >> W >> Y;
+    vvi A(H, vi(W)), visited(H, vi(W));
+    rep(i, H) rep(j, W) A[i][j]--; // Adjust to match sea level rising by 1 each year
+
+    priority_queue<vi, vector<vi>, cmp<vi>> pq;
+
+    // Initialize border cells
+    rep(i, H) {
+        if (!visited[i][0]) {
+            visited[i][0] = 1;
+            pq.push({A[i][0], i, 0});
+        }
+        if (!visited[i][W-1]) {
+            visited[i][W-1] = 1;
+            pq.push({A[i][W-1], i, W-1});
+        }
+    }
+    rep(j, W) {
+        if (!visited[0][j]) {
+            visited[0][j] = 1;
+            pq.push({A[0][j], 0, j});
+        }
+        if (!visited[H-1][j]) {
+            visited[H-1][j] = 1;
+            pq.push({A[H-1][j], H-1, j});
+        }
+    }
+
+    int remaining = H * W;
+    vi result(Y + 1);
+    vi dx = {-1, 0, 1, 0};
+    vi dy = {0, 1, 0, -1};
+
+    for (int t = 0; !pq.empty();) {
+        vi curr = pq.top(); pq.pop();
+        int h = curr[1], w = curr[2];
+        
+        while (t < curr[0] && t < Y) {
+            result[++t] = remaining;
+        }
+
+        remaining--;
+
+        rep(d, 4) {
+            int nh = h + dx[d];
+            int nw = w + dy[d];
+            if (nh >= 0 && nh < H && nw >= 0 && nw < W && !visited[nh][nw]) {
+                visited[nh][nw] = 1;
+                pq.push({A[nh][nw], nh, nw});
+            }
+        }
+    }
+
+    // Fill in any missing results at the end
+    while (++t <= Y) {
+        result[t] = remaining;
+    }
+
+    // Output results
+    for (int i = 1; i <= Y; ++i) {
+        cout << result[i] << '\n';
+    }
+}

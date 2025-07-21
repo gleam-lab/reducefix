@@ -1,0 +1,135 @@
+To fix this code, we need to ensure that we correctly calculate the number of safe squares where a new piece can be placed without being captured by any existing pieces. The original code attempted to use inclusion-exclusion principles but had several logical flaws and incorrect calculations, leading to negative results or incorrect counts.
+
+### Approaches
+1. **Identify Forbidden Squares**: The squares that are either occupied or can be captured by existing pieces are:
+   - All squares in the same row as any existing piece.
+   - All squares in the same column as any existing piece.
+   - All squares on the same diagonal (i.e., where \(i + j = a_k + b_k\) or \(i - j = a_k - b_k\)) for any existing piece \((a_k, b_k)\).
+
+2. **Count Unique Forbidden Squares**: To avoid double-counting squares that fall into multiple forbidden categories, we need to use the inclusion-exclusion principle. This involves:
+   - Counting the total squares covered by rows, columns, and both diagonals.
+   - Subtracting overlaps where squares are counted multiple times (e.g., squares that are in both a forbidden row and a forbidden column).
+
+3. **Efficient Calculation**: Given the constraints (N up to \(10^9\) and M up to \(10^3\)), we need an efficient way to compute these counts without iterating through each square individually. This involves:
+   - Using sets or hash maps to track unique rows, columns, and diagonals.
+   - Calculating intersections between these sets to apply the inclusion-exclusion principle correctly.
+
+### Solution Code
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+using i64 = long long;
+
+int main() {
+    std::ios::sync_with_stdio(false);
+    std::cin.tie(nullptr);
+    i64 N, M;
+    cin >> N >> M;
+    vector<pair<i64, i64>> pieces(M);
+    set<i64> rows, cols, diag1, diag2;
+    set<pair<i64, i64>> occupied;
+
+    for (int i = 0; i < M; ++i) {
+        i64 a, b;
+        cin >> a >> b;
+        pieces[i] = {a, b};
+        rows.insert(a);
+        cols.insert(b);
+        diag1.insert(a + b);
+        diag2.insert(a - b);
+        occupied.insert({a, b});
+    }
+
+    i64 row_count = rows.size();
+    i64 col_count = cols.size();
+    i64 diag1_count = diag1.size();
+    i64 diag2_count = diag2.size();
+
+    // Calculate total squares covered by rows, cols, diag1, diag2
+    i64 total_forbidden = row_count * N + col_count * N - row_count * col_count;
+
+    // Add squares covered by diag1
+    i64 diag1_squares = 0;
+    for (i64 s : diag1) {
+        i64 min_xy = max(1LL, s - N);
+        i64 max_xy = min(N, s - 1);
+        if (min_xy > max_xy) continue;
+        diag1_squares += (max_xy - min_xy + 1);
+    }
+    total_forbidden += diag1_squares;
+
+    // Add squares covered by diag2
+    i64 diag2_squares = 0;
+    for (i64 d : diag2) {
+        i64 min_x = max(1LL, 1 + d);
+        i64 max_x = min(N, N + d);
+        if (min_x > max_x) continue;
+        diag2_squares += (max_x - min_x + 1);
+    }
+    total_forbidden += diag2_squares;
+
+    // Subtract squares counted in both diag1 and rows/cols
+    for (i64 s : diag1) {
+        for (i64 r : rows) {
+            i64 c = s - r;
+            if (c >= 1 && c <= N) {
+                total_forbidden--;
+            }
+        }
+        for (i64 c : cols) {
+            i64 r = s - c;
+            if (r >= 1 && r <= N) {
+                total_forbidden--;
+            }
+        }
+    }
+
+    // Subtract squares counted in both diag2 and rows/cols
+    for (i64 d : diag2) {
+        for (i64 r : rows) {
+            i64 c = r - d;
+            if (c >= 1 && c <= N) {
+                total_forbidden--;
+            }
+        }
+        for (i64 c : cols) {
+            i64 r = c + d;
+            if (r >= 1 && r <= N) {
+                total_forbidden--;
+            }
+        }
+    }
+
+    // Subtract squares counted in both diag1 and diag2
+    for (i64 s : diag1) {
+        for (i64 d : diag2) {
+            if ((s + d) % 2 != 0) continue;
+            i64 x = (s + d) / 2;
+            i64 y = (s - d) / 2;
+            if (x >= 1 && x <= N && y >= 1 && y <= N) {
+                total_forbidden--;
+            }
+        }
+    }
+
+    // Add back the occupied squares which were subtracted multiple times
+    total_forbidden += M;
+
+    // The answer is N*N - total_forbidden, but we need to ensure we don't count occupied squares as safe
+    i64 answer = N * N - total_forbidden;
+    cout << answer << "\n";
+
+    return 0;
+}
+```
+
+### Explanation
+1. **Input Handling**: The code reads the grid size \(N\) and the number of existing pieces \(M\). It stores each piece's coordinates and tracks unique rows, columns, and diagonals (both \(i+j\) and \(i-j\)) that these pieces occupy.
+2. **Forbidden Squares Calculation**: The total number of squares that are in the same row, column, or diagonal as any existing piece is calculated. This involves:
+   - Adding all squares in the same rows and columns, adjusted for overlaps.
+   - Adding all squares in the same diagonals (both types).
+   - Adjusting for overlaps between rows/columns and diagonals using inclusion-exclusion to avoid double-counting.
+3. **Occupied Squares Adjustment**: The existing pieces are subtracted from the forbidden count if they were subtracted multiple times during overlaps.
+4. **Result Calculation**: The safe squares are computed as the total grid squares minus the forbidden squares, ensuring occupied squares are excluded.
+
+This approach efficiently calculates the safe squares using set operations and mathematical adjustments, ensuring correctness within the constraints.

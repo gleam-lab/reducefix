@@ -1,0 +1,66 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+const int MAXN = 1005;
+const int MAXY = 100005;
+
+int H, W, Y;
+vector<vector<int>> A(MAXN, vector<int>(MAXN));
+vector<vector<bool>> visited(MAXN, vector<bool>(MAXN, false));
+
+// Function to perform BFS and sink the land
+void bfs(vector<vector<int>>& A, vector<vector<bool>>& visited, int y) {
+    queue<pair<int, int>> q;
+    for (int i = 0; i < H; ++i) {
+        for (int j = 0; j < W; ++j) {
+            if (!visited[i][j] && A[i][j] <= y) {
+                q.push({i, j});
+                visited[i][j] = true;
+            }
+        }
+    }
+
+    while (!q.empty()) {
+        int x = q.front().first, y = q.front().second;
+        q.pop();
+        static const int dx[] = {0, 0, -1, 1};
+        static const int dy[] = {-1, 1, 0, 0};
+
+        for (int k = 0; k < 4; ++k) {
+            int nx = x + dx[k], ny = y + dy[k];
+            if (nx >= 0 && nx < H && ny >= 0 && ny < W && !visited[nx][ny] && A[nx][ny] <= y) {
+                visited[nx][ny] = true;
+                q.push({nx, ny});
+            }
+        }
+    }
+}
+
+int main() {
+    cin >> H >> W >> Y;
+    for (int i = 0; i < H; ++i) {
+        for (int j = 0; j < W; ++j) {
+            cin >> A[i][j];
+        }
+    }
+
+    vector<int> heights(Y);
+    iota(heights.begin(), heights.end(), 1);
+
+    sort(heights.begin(), heights.end());
+
+    for (int h : heights) {
+        bfs(A, visited, h);
+        int count = 0;
+        for (int i = 0; i < H; ++i) {
+            for (int j = 0; j < W; ++j) {
+                if (!visited[i][j]) {
+                    count++;
+                }
+            }
+        }
+        cout << count << endl;
+    }
+
+    return 0;
+}

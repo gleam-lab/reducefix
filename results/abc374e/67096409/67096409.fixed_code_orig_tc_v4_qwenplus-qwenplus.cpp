@@ -1,0 +1,61 @@
+#include <iostream>
+#include <algorithm>
+using namespace std;
+
+typedef struct { int a, p, b, q; } p_t;
+p_t A[100];
+long long dp[100][10000];
+
+int N, X;
+
+long long cost(int i, int n) {
+    int ab = A[i].a * A[i].b;
+    long long d = n / ab;
+    int rem = n % ab;
+    return dp[i][rem] + d * (long long)A[i].p * A[i].b + d * (long long)A[i].q * A[i].a;
+}
+
+bool f(int n) {
+    long long ct = 0;
+    for (int i = 0; i < N; i++) {
+        ct += cost(i, n);
+        if (ct > X)
+            return false;
+    }
+    return true;
+}
+
+int main() {
+    scanf("%d %d", &N, &X);
+
+    for (int i = 0; i < N; i++) {
+        int a, p, b, q;
+        scanf("%d %d %d %d", &a, &p, &b, &q);
+        // Ensure that the cost per unit is better for the first option
+        if ((long long)a * q < (long long)b * p) {
+            swap(a, b);
+            swap(p, q);
+        }
+        A[i] = {a, p, b, q};
+        
+        // Initialize dp for this currency pair
+        dp[i][0] = 0;
+        for (int j = 1; j < a * b; j++) {
+            long long val1 = (j >= a) ? dp[i][j - a] + p : 1e18;
+            long long val2 = (j >= b) ? dp[i][j - b] + q : 1e18;
+            dp[i][j] = min(val1, val2);
+        }
+    }
+
+    int lo = 0, hi = 1e9;
+    while (hi - lo > 1) {
+        int mid = (hi + lo) >> 1;
+        if (f(mid)) lo = mid;
+        else hi = mid - 1;
+    }
+
+    if (lo != hi && f(lo + 1)) lo++;
+    printf("%d\n", lo);
+
+    return 0;
+}

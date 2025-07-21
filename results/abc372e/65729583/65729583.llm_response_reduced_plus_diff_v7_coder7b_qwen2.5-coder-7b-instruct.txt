@@ -1,0 +1,112 @@
+To solve this problem, we need to handle both adding edges and querying the k-th largest element efficiently. We'll use a combination of union-find (disjoint-set union) and a priority queue (max-heap) to achieve this. Here's how we can implement it:
+
+1. **Union-Find Data Structure**: This will help us manage the connected components efficiently.
+2. **Priority Queue**: For each component, we'll maintain a max-heap that stores the degrees of the nodes. This allows us to quickly find the k-th largest degree.
+
+Here's the corrected and optimized code:
+
+```cpp
+#include <iostream>
+#include <vector>
+#include <queue>
+#include <unordered_map>
+#include <unordered_set>
+
+using namespace std;
+
+typedef long long ll;
+
+const int MAXN = 2 * 100000 + 5;
+
+struct Node {
+    unordered_set<int> neighbors;
+    priority_queue<int> pq;
+};
+
+Node nodes[MAXN];
+int parent[MAXN], rank[MAXN];
+
+int find(int u) {
+    if (parent[u] == u) return u;
+    return parent[u] = find(parent[u]);
+}
+
+void merge(int u, int v) {
+    u = find(u), v = find(v);
+    if (u == v) return;
+    if (rank[u] > rank[v]) {
+        parent[v] = u;
+        for (int neighbor : nodes[v].neighbors) {
+            nodes[u].pq.push(nodes[v].pq.top());
+            nodes[v].pq.pop();
+        }
+    } else {
+        parent[u] = v;
+        rank[v]++;
+        for (int neighbor : nodes[u].neighbors) {
+            nodes[v].pq.push(nodes[u].pq.top());
+            nodes[u].pq.pop();
+        }
+    }
+}
+
+void addEdge(int u, int v) {
+    nodes[u].neighbors.insert(v);
+    nodes[v].neighbors.insert(u);
+    merge(u, v);
+}
+
+int kthLargestDegree(int u, int k) {
+    u = find(u);
+    if (nodes[u].pq.size() < k) return -1;
+    auto it = nodes[u].pq;
+    while (--k) it++;
+    return it.top();
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int n, q;
+    cin >> n >> q;
+
+    for (int i = 1; i <= n; ++i) {
+        parent[i] = i;
+        rank[i] = 1;
+    }
+
+    while (q--) {
+        int type, u, v, k;
+        cin >> type;
+        if (type == 1) {
+            cin >> u >> v;
+            addEdge(u, v);
+        } else {
+            cin >> u >> k;
+            cout << kthLargestDegree(u, k) << "\n";
+        }
+    }
+
+    return 0;
+}
+```
+
+### Explanation:
+1. **Union-Find Initialization**:
+   - `parent` array keeps track of the root of each component.
+   - `rank` array helps optimize the union operation by keeping the tree flat.
+
+2. **Union Operation (`merge`)**:
+   - Finds the roots of `u` and `v`.
+   - If they are already in the same component, do nothing.
+   - Otherwise, merges the smaller tree under the larger tree and updates the priority queues accordingly.
+
+3. **Add Edge Operation (`addEdge`)**:
+   - Adds an edge between `u` and `v` by updating their neighbors and merging their components.
+
+4. **K-th Largest Degree Query (`kthLargestDegree`)**:
+   - Finds the root of the component containing `u`.
+   - Returns the k-th largest degree if it exists, otherwise returns -1.
+
+This implementation ensures efficient handling of both operations with nearly linear time complexity per operation due to the use of union-find and priority queues.

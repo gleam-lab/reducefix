@@ -1,0 +1,59 @@
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+using vl = vector<ll>;
+using P = pair<ll, ll>; // (distance, node)
+
+const ll INF = 1e18;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+
+    ll N, M;
+    cin >> N >> M;
+
+    vector<ll> A(N);
+    for (ll i = 0; i < N; ++i) {
+        cin >> A[i];
+    }
+
+    vector<vector<P>> graph(N); // graph[node] = list of (neighbor, edge_weight)
+    for (ll i = 0; i < M; ++i) {
+        ll u, v, b;
+        cin >> u >> v >> b;
+        --u;
+        --v;
+        graph[u].push_back({v, b});
+        graph[v].push_back({u, b});
+    }
+
+    priority_queue<P, vector<P>, greater<P>> pq; // min-heap (dist, node)
+    vector<ll> dist(N, INF);
+    
+    // Start from node 0 (vertex 1), path weight includes A[0] initially
+    pq.push({A[0], 0});
+    dist[0] = A[0];
+
+    while (!pq.empty()) {
+        auto [current_dist, u] = pq.top();
+        pq.pop();
+
+        if (current_dist > dist[u]) continue;
+
+        for (auto [v, b] : graph[u]) {
+            ll new_dist = current_dist + b + A[v]; // path sum: vertex + edge + next vertex
+            if (new_dist < dist[v]) {
+                dist[v] = new_dist;
+                pq.push({new_dist, v});
+            }
+        }
+    }
+
+    for (ll i = 1; i < N; ++i) {
+        cout << dist[i] << " ";
+    }
+    cout << endl;
+
+    return 0;
+}

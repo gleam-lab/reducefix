@@ -1,0 +1,43 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+using ll = long long;
+using pii = pair <int, int>;
+
+const int N = 2e5 + 5;
+vector <int> g[N];
+int n, m, dep[N];
+
+int bfs() {
+    queue<int> q;
+    q.push(1);
+    dep[1] = 1;
+    while (!q.empty()) {
+        int u = q.front();
+        q.pop();
+        for (int v : g[u]) {
+            if (dep[v] != 0) { // Check for visited nodes
+                return dep[u];
+            }
+            dep[v] = dep[u] + 1;
+            q.push(v);
+        }
+    }
+    return -1;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    cout.tie(nullptr);
+    
+    cin >> n >> m;
+    for (int i = 0; i < m; i++) {
+        int u, v;
+        cin >> u >> v;
+        g[u].push_back(v);
+    }
+
+    cout << bfs() << '\n';
+    return 0;
+}

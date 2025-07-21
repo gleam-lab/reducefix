@@ -1,0 +1,58 @@
+#include<bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int n, m;
+    cin >> n >> m;
+    
+    vector<long long> a(2 * n + 1), prefix_sum(2 * n + 1);
+    vector<int> count(m, 0);
+    
+    for (int i = 1; i <= n; ++i) {
+        cin >> a[i];
+        a[i] %= m;
+        a[i + n] = a[i]; // Duplicate array for circular property
+    }
+
+    long long ans = 0;
+
+    // We want to find subarrays of length <= n with maximum possible sum modulo m
+    // Using prefix sum and modular arithmetic properties
+    prefix_sum[0] = 0;
+    count[prefix_sum[0]] = 1;
+
+    for (int i = 1; i <= 2 * n; ++i) {
+        prefix_sum[i] = (prefix_sum[i - 1] + a[i]) % m;
+
+        // For each prefix sum, we want to count how many previous prefix sums are less than current
+        // This is equivalent to finding j < i such that prefix_sum[j] > prefix_sum[i]
+        // Because: (prefix_sum[i] - prefix_sum[j]) % m = (prefix_sum[i] - prefix_sum[j] + m) % m
+        // Which will be maximized when prefix_sum[j] > prefix_sum[i]
+
+        // Count number of prefix sums > current prefix_sum
+        // Since we're working mod m, we can precompute this using counts
+        long long greater_count = 0;
+        for (int r = prefix_sum[i] + 1; r < m; ++r) {
+            greater_count += count[r];
+        }
+
+        ans += greater_count;
+
+        // Update count only if i < 2n and i >= n (we're past the first cycle)
+        if (i <= n) {
+            count[prefix_sum[i]]++;
+        } else {
+            // Remove the prefix_sum that goes out of window of size n
+            count[prefix_sum[i - n]]--;
+            if (i < 2 * n) {
+                count[prefix_sum[i]]++;
+            }
+        }
+    }
+
+    cout << ans << '\n';
+    return 0;
+}

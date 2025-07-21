@@ -1,0 +1,65 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+typedef long long ll;
+
+const int OFFSET = 100000000; // To handle negative indices
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+    
+    int N, Q;
+    cin >> N >> Q;
+    
+    vector<int> count(200000001, 0); // Count of points at each position
+    
+    for (int i = 0; i < N; ++i) {
+        int a;
+        cin >> a;
+        count[a + OFFSET]++;
+    }
+    
+    // Build prefix sum
+    vector<ll> prefix(200000002, 0);
+    for (int i = 1; i <= 200000000; ++i) {
+        prefix[i] = prefix[i - 1] + count[i];
+    }
+    
+    auto kth_closest_distance = [&](int b, int k) {
+        int pos_b = b + OFFSET;
+        
+        // Binary search bounds
+        int low = 0, high = 200000000;
+        int answer = 0;
+        
+        while (low <= high) {
+            int mid = (ll(low) + high) / 2;
+            
+            // Find the range [left, right] around b
+            int left = max(0, pos_b - mid);
+            int right = min(200000000, pos_b + mid);
+            
+            // Total number of points in this range
+            ll total = prefix[right] - prefix[left - 1];
+            
+            if (total >= k) {
+                answer = mid;
+                high = mid - 1;
+            } else {
+                low = mid + 1;
+            }
+        }
+        
+        return answer;
+    };
+    
+    for (int i = 0; i < Q; ++i) {
+        int b;
+        int k;
+        cin >> b >> k;
+        cout << kth_closest_distance(b, k) << '\n';
+    }
+    
+    return 0;
+}

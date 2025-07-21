@@ -1,0 +1,69 @@
+#include <bits/stdc++.h>
+using namespace std;
+using i64 = long long;
+
+constexpr int N = 200005;
+
+i64 A[N], sorted[N];
+
+bool can_win(i64 x, i64 target, i64 M, i64 K, i64 total_remaining) {
+    // Binary search for the number of candidates strictly greater than target + x
+    i64 lo = 0, hi = M - 1;
+    i64 need_more = M - 1;
+    while (lo < hi) {
+        i64 mid = (lo + hi + 1) / 2;
+        if (sorted[mid] > target + x)
+            lo = mid;
+        else
+            hi = mid - 1;
+    }
+    if (lo < M - 1) return true; // We can make sure less than M candidates are strictly above
+
+    // Now we have exactly M-1 candidates >= target + x
+    // Need to calculate how many votes needed to ensure at least one of them is <= target + x
+    i64 sum_needed = 0;
+    for (i64 i = 0; i < M; ++i) {
+        if (i == 0) sum_needed += max<i64>(0, sorted[i] - (target + x));
+        else sum_needed += max<i64>(0, sorted[i] - (target + x));
+    }
+
+    return sum_needed <= total_remaining;
+}
+
+void solve() {
+    i64 N, M, K;
+    cin >> N >> M >> K;
+    vector<i64> A(N);
+    i64 total = 0;
+    for (i64 i = 0; i < N; ++i) {
+        cin >> A[i];
+        total += A[i];
+    }
+    i64 remaining = K - total;
+
+    vector<pair<i64, i64>> res;
+    vector<i64> sorted_A = A;
+    sort(sorted_A.begin(), sorted_A.end(), greater<>());
+
+    for (i64 i = 0; i < N; ++i) {
+        i64 l = 0, r = remaining;
+        i64 ans = -1;
+        while (l <= r) {
+            i64 m = (l + r) / 2;
+            if (can_win(m, A[i], M, K, remaining)) {
+                ans = m;
+                r = m - 1;
+            } else {
+                l = m + 1;
+            }
+        }
+        cout << (ans == -1 ? -1 : ans) << " ";
+    }
+    cout << "\n";
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    solve();
+}

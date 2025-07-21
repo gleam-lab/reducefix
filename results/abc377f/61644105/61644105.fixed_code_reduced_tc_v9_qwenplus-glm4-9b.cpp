@@ -1,0 +1,60 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+
+using namespace std;
+
+typedef long long ll;
+
+int main() {
+    ll N, M;
+    cin >> N >> M;
+
+    vector<pair<ll, ll>> pieces(M);
+    vector<ll> rows(N), cols(N), diag1(2 * N), diag2(2 * N);
+
+    ll ans = N * N - M; // Start with the total number of squares minus the number of pieces
+
+    for (ll i = 0; i < M; ++i) {
+        ll a, b;
+        cin >> a >> b;
+        --a; --b; // Convert to 0-based index
+
+        // Check capture conditions and update the answer
+        if (rows[a] == 0) { // Check row
+            ans--;
+            rows[a] = 1;
+        }
+        if (cols[b] == 0) { // Check column
+            ans--;
+            cols[b] = 1;
+        }
+        if (diag1[a + b] == 0) { // Check main diagonal
+            ans--;
+            diag1[a + b] = 1;
+        }
+        if (diag2[a - b + N - 1] == 0) { // Check anti-diagonal
+            ans--;
+            diag2[a - b + N - 1] = 1;
+        }
+
+        // Update pieces
+        pieces[i] = {a, b};
+    }
+
+    // Check for additional capture conditions between existing pieces
+    for (ll i = 0; i < M; ++i) {
+        ll x = pieces[i].first;
+        ll y = pieces[i].second;
+        for (ll j = i + 1; j < M; ++j) {
+            ll u = pieces[j].first;
+            ll v = pieces[j].second;
+            if (x == u || y == v || x + y == u + v || x - y == u - v) {
+                ans--;
+            }
+        }
+    }
+
+    cout << ans << endl;
+    return 0;
+}

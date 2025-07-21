@@ -1,0 +1,95 @@
+To fix this code, we need to ensure that the logic correctly determines the minimum additional votes each candidate needs to guarantee their victory. The key observation is that if M equals N, then all candidates will be elected regardless of the votes, so the answer for each candidate should be 0. 
+
+### Approaches
+1. **Special Case Handling**: If M equals N, all candidates are already guaranteed victory, so the output should be all zeros.
+2. **General Case**: For each candidate, we need to determine the minimum number of additional votes they need such that no more than M-1 candidates can have more votes than them after allocating the remaining votes. 
+3. **Binary Search**: For each candidate, we perform a binary search to find the minimum X such that, when the candidate receives X additional votes, the number of candidates with more votes than them is less than M. This involves checking the votes required to ensure that at most M-1 candidates can surpass the candidate's vote count after distributing the remaining votes.
+
+### Solution Code
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+#define all(x) (x).begin(), (x).end()
+
+int main() {
+    ios_base::sync_with_stdio(0);
+    cin.tie(0);
+    int N, M;
+    ll K;
+    cin >> N >> M >> K;
+    vector<ll> A(N);
+    for (int i = 0; i < N; ++i) {
+        cin >> A[i];
+    }
+    ll total = accumulate(all(A), 0LL);
+    ll remaining = K - total;
+
+    if (M == N) {
+        for (int i = 0; i < N; ++i) {
+            cout << 0 << ' ';
+        }
+        cout << '\n';
+        return 0;
+    }
+
+    vector<int> ord(N);
+    iota(all(ord), 0);
+    sort(all(ord), [&](int i, int j) { return A[i] < A[j]; });
+    vector<ll> B(N);
+    for (int i = 0; i < N; ++i) {
+        B[i] = A[ord[i]];
+    }
+
+    vector<ll> pref(N + 1);
+    for (int i = 0; i < N; ++i) {
+        pref[i + 1] = B[i] + pref[i];
+    }
+
+    vector<ll> ans(N, -1);
+    for (int i = 0; i < N; ++i) {
+        ll low = 0, high = remaining;
+        ll best = -1;
+        while (low <= high) {
+            ll mid = (low + high) / 2;
+            ll new_votes = B[i] + mid;
+            int pos = upper_bound(all(B), new_votes) - B.begin();
+            int needed = max(0, (N - M) - (N - pos));
+            if (needed <= 0) {
+                best = mid;
+                high = mid - 1;
+                continue;
+            }
+            ll sum = 0;
+            int start = pos - needed;
+            if (start < 0) {
+                low = mid + 1;
+                continue;
+            }
+            sum = needed * new_votes - (pref[pos] - pref[start]);
+            if (sum <= remaining - mid) {
+                best = mid;
+                high = mid - 1;
+            } else {
+                low = mid + 1;
+            }
+        }
+        ans[ord[i]] = best;
+    }
+
+    for (int i = 0; i < N; ++i) {
+        cout << (ans[i] == -1 ? -1 : max(0LL, ans[i])) << ' ';
+    }
+    cout << '\n';
+    return 0;
+}
+```
+
+### Explanation
+1. **Special Case Handling**: If M equals N, all candidates will be elected regardless of their votes, so the output is all zeros.
+2. **Binary Search for Minimum Votes**: For each candidate, we perform a binary search to find the smallest number of additional votes (X) such that after giving X votes to the candidate, no more than M-1 candidates can have more votes. This involves:
+   - **Binary Search**: We check if a candidate can be in the top M candidates by ensuring that the remaining votes can be distributed such that at most M-1 candidates have more votes than the candidate after adding X votes.
+   - **Prefix Sum Calculation**: The prefix sum array helps in efficiently calculating the sum of votes required to ensure that the top candidates do not surpass the current candidate's vote count after adding X votes.
+3. **Output**: For each candidate, output the computed minimum votes (X) or -1 if it's impossible for the candidate to be in the top M candidates after distributing all remaining votes.
+
+This approach ensures that we efficiently and correctly solve the problem for all test cases, including edge cases.

@@ -1,0 +1,77 @@
+#include <bits/stdc++.h>
+
+using i64 = long long;
+
+constexpr int dx[] = {0, 1, 0, -1};
+constexpr int dy[] = {1, 0, -1, 0};
+
+int main() {
+    std::ios::sync_with_stdio(false);
+    std::cin.tie(nullptr);
+
+    int H, W, Y;
+    std::cin >> H >> W >> Y;
+
+    std::vector<std::vector<int>> A(H, std::vector<int>(W));
+    for (int i = 0; i < H; ++i) {
+        for (int j = 0; j < W; ++j) {
+            std::cin >> A[i][j];
+        }
+    }
+
+    // Initialize remaining area
+    int remaining = H * W;
+
+    // Visited array
+    std::vector<std::vector<bool>> vis(H, std::vector<bool>(W, false));
+
+    // Priority queue to process cells by elevation
+    std::priority_queue<std::tuple<int, int, int>, std::vector<std::tuple<int, int, int>>, std::greater<>> pq;
+
+    // Mark and enqueue boundary cells
+    for (int i = 0; i < H; ++i) {
+        for (int j = 0; j < W; ++j) {
+            if (i == 0 || i == H - 1 || j == 0 || j == W - 1) {
+                vis[i][j] = true;
+                pq.emplace(A[i][j], i, j);
+            }
+        }
+    }
+
+    std::vector<int> ans(Y);
+
+    // Process the priority queue
+    for (int year = 1; year <= Y; ++year) {
+        while (!pq.empty() && std::get<0>(pq.top()) <= year) {
+            auto [h, x, y] = pq.top();
+            pq.pop();
+
+            if (!vis[x][y]) {
+                --remaining;
+                vis[x][y] = true;
+            }
+
+            for (int d = 0; d < 4; ++d) {
+                int nx = x + dx[d];
+                int ny = y + dy[d];
+                if (nx >= 0 && nx < H && ny >= 0 && ny < W && !vis[nx][ny]) {
+                    if (A[nx][ny] <= year) {
+                        vis[nx][ny] = true;
+                        --remaining;
+                        pq.emplace(A[nx][ny], nx, ny);
+                    } else {
+                        pq.emplace(A[nx][ny], nx, ny);
+                        vis[nx][ny] = true; // Mark as visited to avoid duplicate insertions
+                    }
+                }
+            }
+        }
+        ans[year - 1] = remaining;
+    }
+
+    for (int i = 0; i < Y; ++i) {
+        std::cout << ans[i] << "\n";
+    }
+
+    return 0;
+}

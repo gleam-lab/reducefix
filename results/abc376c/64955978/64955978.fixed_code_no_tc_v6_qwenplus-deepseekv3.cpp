@@ -1,0 +1,146 @@
+#include<bits/stdc++.h>
+#define ll long long
+using namespace std;
+
+void solve(){
+    ll N;
+    cin >> N;
+    vector<ll> a(N), b(N-1);
+    for(int i = 0; i < N; i++){
+        cin >> a[i];
+    }
+    for(int i = 0; i < N-1; i++){
+        cin >> b[i];
+    }
+    
+    sort(a.begin(), a.end(), greater<ll>());
+    sort(b.begin(), b.end(), greater<ll>());
+    
+    multiset<ll> boxes(b.begin(), b.end());
+    ll required_x = 0;
+    
+    for(int i = 0; i < N; i++){
+        auto it = boxes.lower_bound(a[i]);
+        if(it != boxes.end()){
+            boxes.erase(it);
+        } else {
+            if(required_x == 0){
+                required_x = a[i];
+            } else {
+                cout << -1 << endl;
+                return;
+            }
+        }
+    }
+    
+    if(required_x == 0){
+        // All toys fit into existing boxes, but we still need to buy one box.
+        // The minimal x is the smallest toy size or 1, but since all toys are placed,
+        // x can be any value >= smallest toy not placed (but all are placed, so minimal x is 1 or smallest toy)
+        // But since all toys are placed, the new box can be unused, but the problem requires placing each toy in a box.
+        // So perhaps the initial approach is flawed. Re-evaluate.
+        // Alternatively, the problem might require that N boxes are used (including the new one).
+        // So if N-1 boxes are existing, and N toys, one more box is needed.
+        // So if all toys fit into existing boxes, then the new box can be unused, but the problem says "place each toy into one of the boxes".
+        // Thus, if all N toys fit into N-1 boxes, then it's impossible because each box can hold only one toy.
+        // Hence, the initial condition is incorrect. We need exactly N boxes for N toys.
+        // So the existing boxes are N-1, and we must buy one more, making N boxes.
+        // So the correct approach is to match N-1 toys to the existing boxes, and the remaining toy goes to the new box.
+        // Thus, the minimal x is the size of the largest toy not placed in existing boxes.
+        // So the correct approach is to find if N-1 toys can be placed in N-1 boxes, and the remaining toy's size is x.
+        // So we need to find the maximum possible N-1 toys that can be matched to boxes, and the remaining toy's size is x.
+        // So the correct approach is to find the minimal x such that when we exclude one toy, the remaining N-1 toys can be matched to the N-1 boxes.
+        // So we need to find the smallest a_i such when excluded, the other N-1 toys can be matched to the N-1 boxes.
+        // So the minimal x is the smallest a_i among all possible a_i that can be excluded such that the rest can be matched.
+        // So for each a_i, check if the other N-1 toys can be matched to the N-1 boxes. The minimal a_i for which this is possible is the answer.
+        // But this is O(N^2), which is too slow for N=2e5.
+        // So we need a better approach.
+        // Alternative approach: sort toys and boxes in descending order.
+        // For each box, try to match the largest unmatched toy <= box size.
+        // The leftover toy is the one that must go into the new box.
+        // So the minimal x is the size of the leftover toy.
+        // So the algorithm is:
+        // Sort toys and boxes in descending order.
+        // Initialize two pointers, one for toys (i) and one for boxes (j), both at 0.
+        // For each box, if it can hold the current toy, match them and move both pointers.
+        // Else, move the toy pointer to the next toy.
+        // After processing all boxes, the remaining toy(s) must go into the new box.
+        // The new box size must be at least the size of the largest remaining toy.
+        // But since we have N toys and N-1 boxes, there will be exactly one leftover toy.
+        // So the new box size is exactly the size of that leftover toy.
+        // So the minimal x is that toy's size.
+        // But we need to ensure that all boxes are used exactly once.
+        // So the correct approach is to match the largest N-1 toys to boxes if possible, and the smallest toy is left for the new box.
+        // Or perhaps the largest toy is left for the new box if it can't be placed in any box.
+        // But the goal is to minimize x, so we want x to be as small as possible.
+        // So the optimal x is the smallest toy that is not placed in any box.
+        // So we should try to place the largest toys first in the largest boxes to minimize the size of the leftover toy.
+        // So the algorithm is:
+        // Sort toys and boxes in descending order.
+        // Match the largest N-1 toys to the largest boxes possible.
+        // The leftover toy is the smallest one, which goes into the new box.
+        // So the minimal x is the size of the smallest toy.
+        // But this might not always work, because the smallest box might not be able to fit the smallest toy.
+        // So the correct approach is:
+        // Sort both toys and boxes in descending order.
+        // Try to match the first N-1 toys to the boxes. The leftover toy is the Nth one.
+        // The new box must be at least the size of the leftover toy.
+        // If during the matching you find that a toy cannot be placed in any box, then the solution is impossible.
+        // So the fixed code is:
+        // Sort a and b in descending order.
+        // Initialize i (for toys) and j (for boxes) to 0.
+        // While both i < N and j < N-1:
+        //   If a[i] <= b[j], then this toy can be placed in this box. Increment both i and j.
+        //   Else, this toy cannot be placed in any box (since boxes are sorted in decreasing order), so it must go into the new box. Record a[i] as a candidate for x, and increment i.
+        // After the loop, if j < N-1, it means some boxes are unused, but we have placed all toys except possibly one, which is the leftover.
+        // If i < N, the remaining toys (from i to N-1) must all go into the new box, but since there's only one box, there can be only one toy left. So x must be >= a[i].
+        // So the minimal x is a[i] if i == N-1, otherwise -1 (but i can't be more than N because of loop conditions).
+        // So the code is:
+        sort(a.begin(), a.end(), greater<ll>());
+        sort(b.begin(), b.end(), greater<ll>());
+        ll i = 0, j = 0;
+        ll leftover = -1;
+        while (i < N && j < N-1) {
+            if (a[i] <= b[j]) {
+                i++;
+                j++;
+            } else {
+                if (leftover == -1) {
+                    leftover = a[i];
+                } else {
+                    // More than one toy cannot be placed in boxes, impossible.
+                    cout << -1 << endl;
+                    return;
+                }
+                i++;
+            }
+        }
+        if (i < N) {
+            if (leftover == -1) {
+                leftover = a[i];
+            } else {
+                // More than one toy cannot be placed in boxes, impossible.
+                cout << -1 << endl;
+                return;
+            }
+        }
+        if (leftover == -1) {
+            // All toys are placed in boxes, but we still need to buy one box. The problem requires that each toy is placed in a box, but all boxes are used (N-1 boxes for N toys is impossible), so this scenario is impossible.
+            // So output -1.
+            cout << -1 << endl;
+            return;
+        }
+        cout << leftover << endl;
+    } else {
+        cout << required_x << endl;
+    }
+}
+
+int main(){
+    ios::sync_with_stdio(0);
+    cin.tie(0);
+
+    solve();
+
+    return 0;
+}

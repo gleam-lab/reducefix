@@ -1,0 +1,155 @@
+To fix this code, we need to ensure that the calculation of the safe squares is accurate, especially considering the large constraints (up to 10^9 for N). The original code tried to use inclusion-exclusion principles but had some issues, particularly in handling the intersections of different conditions (rows, columns, diagonals, and anti-diagonals).
+
+### Approaches
+1. **Problem Analysis**: The problem involves counting the number of empty squares on an N x N grid where a new piece cannot be captured by any existing M pieces. The capture conditions are:
+   - Same row or column.
+   - Same diagonal (i + j = a + b) or anti-diagonal (i - j = a - b).
+
+2. **Key Insight**: The solution requires calculating the total number of squares and subtracting those that are under attack by any existing piece. The challenge lies in efficiently handling overlaps (squares attacked by multiple pieces) without double-counting.
+
+3. **Algorithm Selection**: 
+   - **Total Squares**: The total number of squares is \( N^2 \).
+   - **Attacked Squares**: For each existing piece, the squares it attacks include all squares in its row, column, diagonal, and anti-diagonal. However, since squares can be attacked by multiple pieces, we need to use inclusion-exclusion to avoid overcounting.
+   - **Efficiency**: Given \( M \leq 10^3 \), a pairwise check between pieces is feasible (\( O(M^2) \)), but handling the grid size \( N \) up to \( 10^9 \) requires mathematical formulations rather than brute force.
+
+4. **Mathematical Formulation**:
+   - **Rows and Columns**: Each piece attacks \( 2N - 1 \) squares (row and column, minus the intersection).
+   - **Diagonals and Anti-diagonals**: Each piece attacks \( 2N - 1 - \text{overlaps} \) squares.
+   - **Overlaps**: Subtract squares counted multiple times (e.g., intersections of rows and columns, diagonals and anti-diagonals).
+
+5. **Inclusion-Exclusion Principle**: 
+   - Compute the union of all attacked squares by considering intersections between different attack conditions.
+   - Subtract the intersections to correct for overcounting.
+
+### Solution Code
+```cpp
+#include <bits/stdc++.h>
+
+using namespace std;
+
+typedef long long ll;
+
+int main() {
+    ll N, M;
+    cin >> N >> M;
+    
+    set<ll> rows, cols;
+    set<ll> diag1, diag2; // diag1: i-j, diag2: i+j
+    
+    for (int k = 0; k < M; ++k) {
+        ll a, b;
+        cin >> a >> b;
+        rows.insert(a);
+        cols.insert(b);
+        diag1.insert(a - b);
+        diag2.insert(a + b);
+    }
+    
+    ll total = N * N;
+    
+    ll attacked = 0;
+    
+    // Squares attacked by rows or columns or diagonals or anti-diagonals
+    attacked += rows.size() * N;
+    attacked += cols.size() * N;
+    attacked += diag1.size() * N;
+    attacked += diag2.size() * N;
+    
+    // Subtract overlaps: row and column (intersection is a single square)
+    attacked -= rows.size() * cols.size();
+    
+    // Subtract overlaps: row and diag1 (intersection is at most one square per row)
+    for (ll a : rows) {
+        for (ll d : diag1) {
+            ll b = a - d;
+            if (b >= 1 && b <= N) {
+                attacked--;
+            }
+        }
+    }
+    
+    // Subtract overlaps: row and diag2 (intersection is at most one square per row)
+    for (ll a : rows) {
+        for (ll s : diag2) {
+            ll b = s - a;
+            if (b >= 1 && b <= N) {
+                attacked--;
+            }
+        }
+    }
+    
+    // Subtract overlaps: column and diag1 (intersection is at most one square per column)
+    for (ll b : cols) {
+        for (ll d : diag1) {
+            ll a = b + d;
+            if (a >= 1 && a <= N) {
+                attacked--;
+            }
+        }
+    }
+    
+    // Subtract overlaps: column and diag2 (intersection is at most one square per column)
+    for (ll b : cols) {
+        for (ll s : diag2) {
+            ll a = s - b;
+            if (a >= 1 && a <= N) {
+                attacked--;
+            }
+        }
+    }
+    
+    // Subtract overlaps: diag1 and diag2 (intersection is at most one square per pair)
+    for (ll d : diag1) {
+        for (ll s : diag2) {
+            if ((s - d) % 2 == 0) {
+                ll a = (s + d) / 2;
+                ll b = (s - d) / 2;
+                if (a >= 1 && a <= N && b >= 1 && b <= N) {
+                    attacked--;
+                }
+            }
+        }
+    }
+    
+    // Add back the triple intersections (row, column, diag1 or diag2)
+    for (ll a : rows) {
+        for (ll b : cols) {
+            if (diag1.count(a - b)) {
+                attacked++;
+            }
+            if (diag2.count(a + b)) {
+                attacked++;
+            }
+        }
+    }
+    
+    // Subtract the quadruple intersection (row, column, diag1, diag2)
+    for (ll a : rows) {
+        for (ll b : cols) {
+            if (diag1.count(a - b) && diag2.count(a + b)) {
+                attacked--;
+            }
+        }
+    }
+    
+    ll safe = total - attacked;
+    cout << safe << endl;
+    
+    return 0;
+}
+```
+
+### Explanation
+- **Initialization**: We read the grid size \( N \) and the number of pieces \( M \).
+- **Sets for Tracking**: We use sets to store unique rows, columns, diagonals (\( i - j \)), and anti-diagonals (\( i + j \)) that are occupied by existing pieces.
+- **Total Squares**: The total squares on the grid is \( N^2 \).
+- **Attacked Squares Calculation**: We calculate the squares attacked by rows, columns, diagonals, and anti-diagonals. We then adjust for overlaps using the inclusion-exclusion principle to avoid double-counting.
+- **Overlaps Handling**: 
+  - **Rows and Columns**: Subtract the intersection (each piece's position).
+  - **Rows and Diagonals/Anti-diagonals**: Subtract intersections where a piece's row intersects with a diagonal or anti-diagonal.
+  - **Columns and Diagonals/Anti-diagonals**: Similarly, subtract intersections involving columns.
+  - **Diagonals and Anti-diagonals**: Subtract their intersections.
+- **Triple and Quadruple Intersections**: Add back triple intersections and subtract quadruple intersections to correct the count.
+- **Safe Squares**: The result is \( N^2 \) minus the correctly counted attacked squares, printed as the answer.
+
+This approach ensures accurate counting by systematically handling all possible overlaps and intersections, providing the correct number of safe squares for placing the new piece.

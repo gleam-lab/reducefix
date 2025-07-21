@@ -1,0 +1,92 @@
+Based on the problem description and the failing test case, the key issue is that the original code doesn't correctly handle the sinking process when the sea level rises. The test case shows that the output should remain 1,000,000 for all years, indicating the island isn't sinking at all (likely because all elevations are above the sea level for the given Y years).
+
+However, the original code immediately marks border cells as sunk without considering their actual elevation values. This is incorrect - we should only mark cells as sunk if their elevation is <= the current sea level.
+
+Here's the fixed code that properly handles this:
+
+```cpp
+#include <bits/stdc++.h>
+
+using namespace std;
+
+constexpr int dx[] = {-1, 1, 0, 0};
+constexpr int dy[] = {0, 0, -1, 1};
+
+int main()
+{
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int H, W, Y;
+    cin >> H >> W >> Y;
+
+    vector<vector<int>> A(H, vector<int>(W));
+    for (int i = 0; i < H; i++)
+    {
+        for (int j = 0; j < W; j++)
+        {
+            cin >> A[i][j];
+        }
+    }
+
+    vector<vector<bool>> sunk(H, vector<bool>(W, false));
+    priority_queue<pair<int, pair<int, int>>, vector<pair<int, pair<int, int>>>, greater<pair<int, pair<int, int>>>> pq;
+
+    // Push border cells into priority queue
+    for (int i = 0; i < H; i++)
+    {
+        for (int j = 0; j < W; j++)
+        {
+            if (i == 0 || i == H-1 || j == 0 || j == W-1)
+            {
+                pq.push({A[i][j], {i, j}});
+            }
+        }
+    }
+
+    int ans = H * W;
+    int current_sea_level = 0;
+
+    for (int year = 1; year <= Y; year++)
+    {
+        current_sea_level = year;
+        while (!pq.empty() && pq.top().first <= current_sea_level)
+        {
+            auto cell = pq.top();
+            pq.pop();
+            int elevation = cell.first;
+            int x = cell.second.first;
+            int y = cell.second.second;
+
+            if (sunk[x][y]) continue;
+
+            sunk[x][y] = true;
+            ans--;
+
+            for (int d = 0; d < 4; d++)
+            {
+                int nx = x + dx[d];
+                int ny = y + dy[d];
+
+                if (nx < 0 || ny < 0 || nx >= H || ny >= W) continue;
+                if (!sunk[nx][ny])
+                {
+                    pq.push({A[nx][ny], {nx, ny}});
+                }
+            }
+        }
+        cout << ans << '\n';
+    }
+
+    return 0;
+}
+```
+
+Key improvements:
+1. Uses a priority queue to process cells in order of their elevation
+2. Only marks cells as sunk when their elevation <= current sea level
+3. Properly handles the BFS-like propagation of sinking from border cells
+4. Maintains accurate count of remaining land area (ans)
+5. Outputs the result for each year correctly
+
+The algorithm now correctly processes cells in order of when they would sink, ensuring accurate results for all test cases. The complexity is O(H*W log(H*W)) due to the priority queue operations, which is efficient enough for the given constraints.

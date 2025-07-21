@@ -1,0 +1,42 @@
+#include <iostream>
+#include <vector>
+#include <set>
+#include <limits>
+
+using namespace std;
+
+int main() {
+    long long N, M;
+    cin >> N >> M;
+    
+    set<pair<int, int>> occupied;
+    for (long long i = 0; i < M; ++i) {
+        int a, b;
+        cin >> a >> b;
+        occupied.emplace(a, b);
+    }
+    
+    long long captures = 0;
+    
+    // For each occupied piece, count the number of captures it can make
+    for (auto &p : occupied) {
+        int r = p.first;
+        int c = p.second;
+        captures += min(max(r + 2, 1LL), N + 1) * min(max(c + 1, 1LL), N + 1);
+        captures += min(max(r + 1, 1LL), N + 1) * min(max(c + 2, 1LL), N + 1);
+        captures += min(max(r - 1, 1LL), N + 1) * min(max(c + 2, 1LL), N + 1);
+        captures += min(max(r - 2, 1LL), N + 1) * min(max(c + 1, 1LL), N + 1);
+        captures += min(max(r - 2, 1LL), N + 1) * min(max(c - 1, 1LL), N + 1);
+        captures += min(max(r - 1, 1LL), N + 1) * min(max(c - 2, 1LL), N + 1);
+        captures += min(max(r + 1, 1LL), N + 1) * min(max(c - 2, 1LL), N + 1);
+        captures += min(max(r + 2, 1LL), N + 1) * min(max(c - 1, 1LL), N + 1);
+    }
+    
+    // Calculate the number of valid positions to place a new piece
+    long long result = N * N - captures;
+    
+    // Output the result
+    cout << result << endl;
+    
+    return 0;
+}

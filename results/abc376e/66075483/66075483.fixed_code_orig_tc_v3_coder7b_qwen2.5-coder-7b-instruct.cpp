@@ -1,0 +1,47 @@
+#include<iostream>
+#include<vector>
+#include<algorithm>
+#include<queue>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+    cout.tie(0);
+
+    int t;
+    cin >> t;
+    while(t--){
+        int n, k;
+        cin >> n >> k;
+        vector<pair<int,int>>a(n),b(n);
+        for(int i = 0; i < n; ++i){
+            cin >> a[i].first;
+            a[i].second = i;
+        }
+        for(int i = 0; i < n; ++i){
+            cin >> b[i].first;
+            b[i].second = i;
+        }
+
+        sort(a.begin(), a.end());
+        sort(b.begin(), b.end());
+
+        priority_queue<int> pq;
+        int sum = 0, ans = 1e18;
+        for(int i = 0; i < n; ++i){
+            pq.push(b[i].first);
+            sum += b[i].first;
+            if(pq.size() > k){
+                sum -= pq.top();
+                pq.pop();
+            }
+            if(pq.size() == k)
+                ans = min(ans, (long long)a[i+1].first * sum);
+        }
+
+        cout << ans << '\n';
+    }
+
+    return 0;
+}

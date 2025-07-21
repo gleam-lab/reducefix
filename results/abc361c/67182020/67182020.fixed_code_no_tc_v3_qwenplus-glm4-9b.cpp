@@ -1,0 +1,36 @@
+#include <algorithm>
+#include <iostream>
+#include <vector>
+using namespace std;
+
+int main() {
+    int N, K;
+    cin >> N >> K;
+    vector<int> A(N);
+    
+    // Input the array elements
+    for (int i = 0; i < N; ++i) {
+        cin >> A[i];
+    }
+    
+    // Sort the array to get the smallest and largest elements easily
+    sort(A.begin(), A.end());
+    
+    // Calculate the minimum possible value of the maximum value of B minus the minimum value of B
+    // by removing exactly K elements
+    int minDiff = A[N-1] - A[0]; // Initial difference without removing any elements
+    
+    // Remove elements in pairs from both ends of the sorted array
+    // This ensures that we remove the largest and smallest elements alternately
+    for (int i = 0; i < K; i += 2) {
+        if (N - i - 1 >= 0) { // Check to avoid going out of bounds
+            int diff = A[N-1-i] - A[i];
+            minDiff = min(minDiff, diff);
+        }
+    }
+    
+    // Output the result
+    cout << minDiff << endl;
+    
+    return 0;
+}

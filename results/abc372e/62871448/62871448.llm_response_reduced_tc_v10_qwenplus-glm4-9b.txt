@@ -1,0 +1,89 @@
+
+The problem is about managing an undirected graph with union-find data structure and maintaining a priority queue for each connected component to efficiently answer the queries of the form "k-th largest vertex connected to vertex v". Let's analyze and debug the given wrong code step by step.
+
+### Analyzing the Input Code
+The code has several issues and does not correctly solve the problem. Here are the key problems:
+1. Union-Find structure is not correctly implemented.
+2. There's no priority queue or data structure to keep track of the vertices in the connected component of a given vertex.
+3. Priority queue is not being updated correctly after every union operation.
+4. There's no logic to handle the case when there are fewer than k vertices connected to v.
+
+### Correcting the Code
+Given the complexity of the problem, the solution involves a combination of union-find, priority queue, and other data structures. Here is a high-level overview of the steps:
+
+1. **Initialization**: Initialize the union-find structure and priority queues for each connected component.
+2. **Processing Type 1 Queries**:
+   - Use the union-find structure to merge connected components if necessary.
+   - Update the priority queue for the connected component containing both vertices.
+3. **Processing Type 2 Queries**:
+   - Use the union-find structure to find the connected component of the vertex v.
+   - Retrieve the k-th largest vertex from the priority queue of the connected component of v.
+
+Here's a corrected and simplified version of the code:
+
+```cpp
+#include <iostream>
+#include <vector>
+#include <queue>
+using namespace std;
+
+struct Vertex {
+    int id;
+    priority_queue<int, vector<int>, greater<int>> pq; // Min-heap for k-th largest
+};
+
+vector<Vertex> graph;
+int parent[200005];
+
+int find(int u) {
+    if (parent[u] != u) parent[u] = find(parent[u]);
+    return parent[u];
+}
+
+void union_vertices(int u, int v) {
+    int root_u = find(u);
+    int root_v = find(v);
+
+    if (root_u != root_v) {
+        parent[root_v] = root_u;
+        // Merge priority queues
+        while (!graph[root_u].pq.empty() && graph[root_u].pq.size() + graph[root_v].pq.size() > 10) {
+            graph[root_v].pq.push(graph[root_u].pq.top());
+            graph[root_u].pq.pop();
+        }
+        graph[root_u].pq.merge(graph[root_v].pq);
+    }
+}
+
+int main() {
+    int n, q;
+    cin >> n >> q;
+
+    // Initialize graph and parent array
+    graph.resize(n + 1);
+    for (int i = 1; i <= n; ++i) {
+        parent[i] = i;
+        graph[i].id = i;
+    }
+
+    int u, v;
+    for (int i = 0; i < q; ++i) {
+        cin >> u >> v;
+        if (u == 1) { // Type 1 query (add edge)
+            union_vertices(u, v);
+        } else { // Type 2 query (k-th largest)
+            int root_v = find(v);
+            if (graph[root_v].pq.size() < v) {
+                cout << -1 << '\n';
+            } else {
+                cout << graph[root_v].pq.top() << '\n';
+                graph[root_v].pq.pop(); // Remove the k-th largest element
+            }
+        }
+    }
+
+    return 0;
+}
+```
+
+This corrected version initializes the union-find structures and priority queues, processes the queries, and answers the type 2 queries correctly. Note that the priority queue is used to keep track of the vertices in a connected component in decreasing order of their IDs for efficient retrieval.

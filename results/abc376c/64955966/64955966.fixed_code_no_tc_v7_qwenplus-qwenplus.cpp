@@ -1,0 +1,40 @@
+#include <bits/stdc++.h>
+#define ll long long
+using namespace std;
+
+void solve() {
+    ll N;
+    cin >> N;
+    
+    vector<ll> A(N), B(N - 1);
+    for (ll i = 0; i < N; ++i) cin >> A[i];
+    for (ll i = 0; i < N - 1; ++i) cin >> B[i];
+
+    sort(A.begin(), A.end());
+    sort(B.begin(), B.end());
+
+    // Check if all but one toy can fit into the available boxes
+    ll matched = 0;
+    ll b_ptr = 0;
+
+    for (ll i = 0; i < N && b_ptr < N - 1; ++i) {
+        if (A[i] <= B[b_ptr]) {
+            matched++;
+            b_ptr++;
+        }
+    }
+
+    if (matched == N - 1) {
+        // The largest unmatched toy needs to be placed in the new box
+        cout << A[N - 1] << endl;
+    } else {
+        cout << -1 << endl;
+    }
+}
+
+int main() {
+    ios::sync_with_stdio(0);
+    cin.tie(0);
+    solve();
+    return 0;
+}

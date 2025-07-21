@@ -1,0 +1,82 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+typedef long long ll;
+
+struct Edge {
+    ll u, v, cost;
+    Edge(ll u, ll v, ll cost) : u(u), v(v), cost(cost) {}
+    bool operator<(const Edge& other) const {
+        return cost < other.cost;
+    }
+};
+
+struct DSU {
+    vector<ll> parent, rank;
+    DSU(int n) : parent(n), rank(n, 1) {
+        iota(parent.begin(), parent.end(), 0);
+    }
+    ll find(ll u) {
+        if (parent[u] != u) parent[u] = find(parent[u]);
+        return parent[u];
+    }
+    void merge(ll u, ll v) {
+        u = find(u), v = find(v);
+        if (u == v) return;
+        if (rank[u] < rank[v]) swap(u, v);
+        parent[v] = u;
+        rank[u] += rank[v];
+    }
+};
+
+vector<ll> dijkstra(int n, vector<vector<Edge>>& adj, int start) {
+    vector<ll> dist(n, LLONG_MAX);
+    dist[start] = 0;
+    priority_queue<pair<ll, ll>, vector<pair<ll, ll>>, greater<pair<ll, ll>>> pq;
+    pq.push({0, start});
+
+    while (!pq.empty()) {
+        auto [d, u] = pq.top(); pq.pop();
+        if (d > dist[u]) continue;
+        for (auto& [v, cost] : adj[u]) {
+            if (dist[u] + cost < dist[v]) {
+                dist[v] = dist[u] + cost;
+                pq.push({dist[v], v});
+            }
+        }
+    }
+
+    return dist;
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int n, m;
+    cin >> n >> m;
+    vector<ll> a(n);
+    for (int i = 0; i < n; ++i) cin >> a[i];
+
+    vector<vector<Edge>> adj(n);
+    for (int i = 0; i < m; ++i) {
+        int u, v, b;
+        cin >> u >> v >> b;
+        --u, --v;
+        adj[u].emplace_back(u, v, b);
+        adj[v].emplace_back(v, u, b);
+    }
+
+    vector<ll> ans(n - 1);
+    for (int i = 0; i < n; ++i) {
+        vector<ll> dist = dijkstra(n, adj, i);
+        for (int j = 1; j < n; ++j) {
+            ans[j - 1] = max(ans[j - 1], dist[j] + a[j]);
+        }
+    }
+
+    for (int i = 0; i < n - 1; ++i) cout << ans[i] << ' ';
+    cout << endl;
+
+    return 0;
+}

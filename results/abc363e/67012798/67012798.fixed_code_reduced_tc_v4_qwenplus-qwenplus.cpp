@@ -1,0 +1,85 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+
+constexpr int dx[] = {-1, 1, 0, 0};
+constexpr int dy[] = {0, 0, -1, 1};
+
+int main()
+{
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int H, W, Y;
+    cin >> H >> W >> Y;
+
+    vector<vector<int>> A(H, vector<int>(W));
+    for (int i = 0; i < H; i++)
+    {
+        for (int j = 0; j < W; j++)
+        {
+            cin >> A[i][j];
+        }
+    }
+
+    vector<vector<bool>> island(H, vector<bool>(W, true));
+    vector<queue<pair<int, int>>> q(Y + 2);  // Make sure queue array is large enough
+
+    // Initialize the border cells
+    for (int i = 0; i < H; i++)
+    {
+        for (int j = 0; j < W; j++)
+        {
+            if ((i == 0) || (i == H - 1) || (j == 0) || (j == W - 1))
+            {
+                int level = A[i][j];
+                if (level <= Y)
+                    q[level].push({i, j});
+                island[i][j] = false;
+            }
+        }
+    }
+
+    int ans = H * W;
+
+    // Prepare visited matrix to avoid re-processing same cell
+    for (int t = 1; t <= Y; t++)
+    {
+        queue<pair<int, int>> tempQ;
+        while (!q[t].empty())
+        {
+            tempQ.push(q[t].front());
+            q[t].pop();
+        }
+
+        while (!tempQ.empty())
+        {
+            ans--;
+
+            auto [x, y] = tempQ.front();
+            tempQ.pop();
+
+            for (int d = 0; d < 4; d++)
+            {
+                int nx = x + dx[d];
+                int ny = y + dy[d];
+
+                if (nx < 0 || ny < 0 || nx >= H || ny >= W || !island[nx][ny])
+                    continue;
+
+                int level = A[nx][ny];
+                if (level <= t)
+                {
+                    island[nx][ny] = false;
+                    if (level <= Y)
+                        q[level].push({nx, ny});
+                    tempQ.push({nx, ny});
+                }
+            }
+        }
+
+        cout << ans << endl;
+    }
+
+    return 0;
+}

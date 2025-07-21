@@ -1,0 +1,61 @@
+#include <algorithm>
+#include <iostream>
+#include <cstdio>
+#include <queue>
+#include <vector>
+using namespace std;
+
+struct Edge {
+    int to;
+};
+
+vector<vector<Edge>> graph;
+const int INF = 100000000;
+int n, m;
+vector<int> dist;
+
+void bfs() {
+    queue<int> q;
+    q.push(1);
+    dist[1] = 0;
+    
+    while (!q.empty()) {
+        int u = q.front();
+        q.pop();
+        
+        for (const auto& e : graph[u]) {
+            int v = e.to;
+            if (dist[v] > dist[u] + 1) {
+                dist[v] = dist[u] + 1;
+                q.push(v);
+            }
+        }
+    }
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    n = 0, m = 0;
+    scanf("%d %d", &n, &m);
+    
+    graph.assign(n + 1, vector<Edge>());
+    dist.assign(n + 1, INF);
+    
+    for (int i = 0; i < m; ++i) {
+        int u = 0, v = 0;
+        scanf("%d %d", &u, &v);
+        graph[u].push_back({v});
+    }
+    
+    bfs();
+    
+    if (dist[n] == INF) {
+        printf("-1\n");
+    } else {
+        printf("%d\n", dist[n]);
+    }
+    
+    return 0;
+}

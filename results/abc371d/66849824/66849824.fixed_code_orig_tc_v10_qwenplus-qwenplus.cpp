@@ -1,0 +1,110 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+using ll = long long;
+using Graph = vector<vector<int>>;
+
+#define rep(i,n) for (int i=0; i<(n); ++i)
+#define reps(i,n) for (int i=0; i<=(n); ++i)
+#define all(x) (x).begin(), (x).end()
+#define rall(x) (x).rbegin(), (x).rend()
+#define pb(a) push_back(a)
+#define Yes(b) cout << ((b)?"Yes":"No") << endl
+#define YES(b) cout << ((b)?"YES":"NO") << endl
+
+int dx[4]={1,0,-1,0};
+int dy[4]={0,1,0,-1};
+
+int main(){
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int N;
+    cin >> N;
+    vector<ll> P(N+1), X(N);
+    P[0] = 0;
+    rep(i, N) cin >> X[i];
+    rep(i, N){
+        ll p;
+        cin >> p;
+        P[i+1] = P[i] + p;
+    }
+
+    // Build prefix sum of X and sort accordingly
+    vector<pair<ll, int>> sorted_X(N);
+    rep(i, N) {
+        sorted_X[i] = {X[i], i};
+    }
+    sort(all(sorted_X));
+
+    vector<ll> prefix_sum(N);
+    vector<int> indices(N);
+    rep(i, N) {
+        prefix_sum[i] = P[i+1];
+        indices[i] = i;
+    }
+
+    // Offline queries
+    int Q;
+    cin >> Q;
+    vector<tuple<ll, ll, int>> queries(Q);
+    vector<ll> results(Q);
+    rep(q, Q) {
+        ll L, R;
+        cin >> L >> R;
+        queries[q] = {L, R, q};
+    }
+
+    // Mo's algorithm-like approach to process queries efficiently
+    // Sort queries by block size
+    int block_size = sqrt(N);
+    sort(queries.begin(), queries.end(), [&](const tuple<ll, ll, int>& a, const tuple<ll, ll, int>& b) {
+        ll La = get<0>(a), Lb = get<0>(b);
+        if (La / block_size != Lb / block_size)
+            return La < Lb;
+        return get<1>(a) < get<1>(b);
+    });
+
+    auto find_left = [&](ll target) -> int {
+        int l = -1, r = N;
+        while (r - l > 1) {
+            int m = (l + r) / 2;
+            if (sorted_X[m].first >= target) r = m;
+            else l = m;
+        }
+        return r;
+    };
+
+    auto find_right = [&](ll target) -> int {
+        int l = -1, r = N;
+        while (r - l > 1) {
+            int m = (l + r) / 2;
+            if (sorted_X[m].first <= target) l = m;
+            else r = m;
+        }
+        return l + 1;
+    };
+
+    // Process queries in batch
+    for (const auto& query : queries) {
+        ll L = get<0>(query);
+        ll R = get<1>(query);
+        int idx = get<2>(query);
+
+        int left = find_left(L);
+        int right = find_right(R);
+
+        if (left >= right) {
+            results[idx] = 0;
+        } else {
+            results[idx] = P[right] - P[left];
+        }
+    }
+
+    // Output results in original order
+    for (ll res : results) {
+        cout << res << "\n";
+    }
+
+    return 0;
+}

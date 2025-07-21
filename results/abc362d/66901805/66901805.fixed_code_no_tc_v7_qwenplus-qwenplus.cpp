@@ -1,0 +1,68 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+#define int long long
+
+const int INF = 1e18;
+const int MAXN = 200005;
+
+vector<pair<int, int>> G[MAXN]; // adjacency list: {neighbor, edge_weight}
+int A[MAXN];                    // vertex weights
+int dist[MAXN];                 // shortest path distances
+bool visited[MAXN];             // for Dijkstra's optimization
+
+void dijkstra(int start) {
+    priority_queue<pair<int, int>, vector<pair<int, int>>, greater<pair<int, int>>> pq;
+    
+    dist[start] = A[start]; // Starting point includes its own vertex weight
+    pq.push({dist[start], start});
+    
+    while (!pq.empty()) {
+        int u = pq.top().second;
+        int current_dist = pq.top().first;
+        pq.pop();
+        
+        if (visited[u]) continue;
+        visited[u] = true;
+        
+        for (auto [v, edge_w] : G[u]) {
+            // Path cost to v = current path cost to u + edge weight + vertex weight of v
+            int new_dist = current_dist + edge_w + A[v];
+            
+            if (new_dist < dist[v]) {
+                dist[v] = new_dist;
+                pq.push({dist[v], v});
+            }
+        }
+    }
+}
+
+signed main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+    cout.tie(0);
+    
+    int N, M;
+    cin >> N >> M;
+    
+    for (int i = 1; i <= N; ++i) {
+        cin >> A[i];
+        dist[i] = INF;
+    }
+    
+    for (int i = 0; i < M; ++i) {
+        int u, v, w;
+        cin >> u >> v >> w;
+        G[u].push_back({v, w});
+        G[v].push_back({u, w});
+    }
+    
+    dijkstra(1);
+    
+    for (int i = 2; i <= N; ++i) {
+        cout << dist[i] << " ";
+    }
+    cout << "\n";
+    
+    return 0;
+}

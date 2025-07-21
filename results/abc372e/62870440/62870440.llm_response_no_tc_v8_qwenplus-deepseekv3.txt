@@ -1,0 +1,80 @@
+To fix this code, we need to address several issues:
+
+1. **Input Reading**: The code incorrectly reads `q` before `n`, which should be `n` before `q` based on the problem statement.
+2. **Union-Find Data Structure**: The current implementation attempts to maintain a sorted list of connected vertices in an array, but this approach is inefficient and incorrect for handling large graphs (up to 200,000 vertices and queries). Instead, we should use a more efficient data structure like a set or a priority queue to keep track of the largest elements in each connected component.
+3. **Handling Queries**: For type 2 queries, the code incorrectly assumes that the connected component's vertices are stored in the array `as`, but the merging and sorting logic is flawed. We need a better way to maintain the top k largest elements in each connected component.
+
+Here’s the corrected code that addresses these issues:
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+const int MAXN = 200005;
+
+int parent[MAXN];
+vector<int> top_k[MAXN]; // Each component keeps track of top 10 largest elements
+
+int find(int x) {
+    if (parent[x] != x) {
+        parent[x] = find(parent[x]);
+    }
+    return parent[x];
+}
+
+void merge(int x, int y) {
+    x = find(x);
+    y = find(y);
+    if (x == y) return;
+    if (top_k[x].size() < top_k[y].size()) {
+        swap(x, y);
+    }
+    // Merge top_k[y] into top_k[x]
+    for (int num : top_k[y]) {
+        top_k[x].push_back(num);
+    }
+    // Sort in descending order and keep only top 10
+    sort(top_k[x].rbegin(), top_k[x].rend());
+    if (top_k[x].size() > 10) {
+        top_k[x].resize(10);
+    }
+    parent[y] = x;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int n, q;
+    cin >> n >> q;
+
+    for (int i = 1; i <= n; ++i) {
+        parent[i] = i;
+        top_k[i] = {i};
+    }
+
+    while (q--) {
+        int op, u, v;
+        cin >> op >> u >> v;
+        if (op == 1) {
+            merge(u, v);
+        } else {
+            int root = find(u);
+            if (top_k[root].size() < v) {
+                cout << -1 << '\n';
+            } else {
+                cout << top_k[root][v - 1] << '\n';
+            }
+        }
+    }
+
+    return 0;
+}
+```
+
+### Explanation:
+1. **Union-Find Data Structure**: The `parent` array keeps track of the root parent of each vertex. The `find` function uses path compression to efficiently find the root.
+2. **Top K Elements**: Each connected component maintains a list of its top 10 largest vertices. This is stored in `top_k` arrays. When merging two components, the top 10 elements from both are combined, sorted in descending order, and truncated to keep only the top 10.
+3. **Query Handling**: For type 2 queries, the code checks if the connected component has at least `k` vertices. If not, it outputs `-1`. Otherwise, it outputs the `k-th` largest vertex from the sorted list.
+
+This approach ensures efficient handling of up to 200,000 vertices and queries by maintaining only the necessary top elements and using path compression in the union-find structure.

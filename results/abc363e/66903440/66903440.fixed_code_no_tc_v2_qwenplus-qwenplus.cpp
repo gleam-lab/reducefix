@@ -1,0 +1,99 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+using ll = int64_t;
+using pii = pair<int, int>;
+
+#define rep(i, n) for (int i = 0; i < (n); ++i)
+#define all(x) (x).begin(), (x).end()
+
+int dx[4] = {1, 0, -1, 0};
+int dy[4] = {0, 1, 0, -1};
+
+int main() {
+    cin.tie(0)->sync_with_stdio(0);
+
+    int H, W, Y;
+    cin >> H >> W >> Y;
+    vector<vector<int>> A(H, vector<int>(W));
+    rep(i, H) rep(j, W) cin >> A[i][j];
+
+    // Initialize visited matrix
+    vector<vector<bool>> visited(H, vector<bool>(W, false));
+
+    // Prepare a map from elevation to list of cells at that elevation
+    map<int, vector<pii>> elevMap;
+    rep(i, H) rep(j, W) {
+        elevMap[A[i][j]].push_back({i, j});
+    }
+
+    // Queue for BFS
+    queue<pii> q;
+
+    // Mark border cells as visited and add them to queue if elevation <= current year
+    for (int i = 0; i < H; ++i) {
+        for (int j = 0; j < W; ++j) {
+            if (i == 0 || i == H - 1 || j == 0 || j == W - 1) {
+                if (A[i][j] <= 0) {
+                    visited[i][j] = true;
+                    q.push({i, j});
+                }
+            }
+        }
+    }
+
+    int remaining = H * W;
+    vector<int> result(Y + 2);
+
+    // Process years in increasing order
+    int currYear = 0;
+    queue<pii> newSinkQueue;
+
+    // We'll process elevations in increasing order
+    for (auto& [elevation, cells] : elevMap) {
+        while (currYear < elevation) {
+            // Process up to this elevation
+            currYear++;
+            // Store the current remaining area for this year
+            result[currYear] = remaining;
+        }
+
+        for (auto [i, j] : cells) {
+            if (visited[i][j]) continue;
+            bool isBorder = (i == 0 || i == H - 1 || j == 0 || j == W - 1);
+            if (isBorder || elevation <= currYear) {
+                visited[i][j] = true;
+                remaining--;
+                q.push({i, j});
+            }
+        }
+
+        // Perform BFS to flood connected areas
+        while (!q.empty()) {
+            auto [x, y] = q.front(); q.pop();
+            for (int d = 0; d < 4; ++d) {
+                int nx = x + dx[d];
+                int ny = y + dy[d];
+                if (nx >= 0 && nx < H && ny >= 0 && ny < W && !visited[nx][ny]) {
+                    if (A[nx][ny] <= currYear) {
+                        visited[nx][ny] = true;
+                        remaining--;
+                        q.push({nx, ny});
+                    }
+                }
+            }
+        }
+    }
+
+    // Fill in remaining years
+    while (currYear < Y) {
+        currYear++;
+        result[currYear] = remaining;
+    }
+
+    for (int i = 1; i <= Y; ++i) {
+        cout << result[i] << "\n";
+    }
+
+    return 0;
+}

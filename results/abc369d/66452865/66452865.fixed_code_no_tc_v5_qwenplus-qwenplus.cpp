@@ -1,0 +1,40 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+  int N;
+  cin >> N;
+  vector<long long> A(N);
+  for (int i = 0; i < N; i++) cin >> A[i];
+  
+  // dp[j] = max score considering up to current monster, ending with state j
+  // j = 0: even number of monsters defeated before current index
+  // j = 1: odd number of monsters defeated before current index
+  vector<long long> dp(2);
+  dp[0] = 0;
+  
+  for (int i = 0; i < N; i++) {
+    vector<long long> next(2);
+    swap(dp, next);
+    
+    for (int j = 0; j < 2; j++) {
+      // Skip current monster
+      dp[j] = max(dp[j], next[j]);
+      
+      // Defeat current monster
+      if (j == 0) {
+        // If we had defeated even number before, defeating this makes it odd
+        dp[1] = max(dp[1], next[j] + A[i]);
+      } else {
+        // If we had defeated odd number before, defeating this makes it even
+        // In this case, we get double reward
+        dp[0] = max(dp[0], next[j] + 2 * A[i]);
+      }
+    }
+  }
+  
+  long long ans = max(dp[0], dp[1]);
+  cout << ans << endl;
+  
+  return 0;
+}

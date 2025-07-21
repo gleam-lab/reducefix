@@ -1,0 +1,88 @@
+#include "bits/stdc++.h"
+
+using namespace std;
+
+#define ff first
+#define ss second
+#define ll long long
+#define SZ(s) (int)s.size()
+
+int const N = 2e5 + 5;
+
+// We'll use a Disjoint Set Union (DSU/Union-Find) structure with ordered maps
+// to keep track of the top 10 largest elements in each component.
+struct DSU {
+    vector<int> parent;
+    vector<map<int, int, greater<>>> component; // Each set maintains a map of vertex -> count
+
+    DSU(int n) {
+        parent.resize(n+1);
+        component.resize(n+1);
+        for (int i = 1; i <= n; ++i) {
+            parent[i] = i;
+            component[i][i] = 1; // Initially each node is its own component
+        }
+    }
+
+    int find(int x) {
+        if (parent[x] != x)
+            parent[x] = find(parent[x]);
+        return parent[x];
+    }
+
+    void unite(int u, int v) {
+        int pu = find(u), pv = find(v);
+        if (pu == pv) return;
+
+        // Always merge smaller into larger
+        if (component[pu].size() < component[pv].size())
+            swap(pu, pv);
+
+        // Merge component[pv] into component[pu]
+        for (auto &[val, cnt] : component[pv]) {
+            component[pu][val] += cnt;
+        }
+
+        // Update parent
+        parent[pv] = pu;
+    }
+
+    vector<int> getTopK(int v, int k) {
+        int root = find(v);
+        vector<int> result;
+        for (auto [val, _] : component[root]) {
+            result.push_back(val);
+            if (--k == 0) break;
+        }
+        return result;
+    }
+};
+
+signed main() {
+    ios_base::sync_with_stdio(false); cin.tie(nullptr);
+
+    int n, q;
+    cin >> n >> q;
+
+    DSU dsu(n);
+
+    while (q--) {
+        int t;
+        cin >> t;
+        if (t == 1) {
+            int u, v;
+            cin >> u >> v;
+            dsu.unite(u, v);
+        } else {
+            int v, k;
+            cin >> v >> k;
+            auto res = dsu.getTopK(v, k);
+            if (res.size() < k)
+                cout << -1 << '\n';
+            else
+                cout << res[k-1] << '\n';
+        }
+    }
+
+    return 0;
+}

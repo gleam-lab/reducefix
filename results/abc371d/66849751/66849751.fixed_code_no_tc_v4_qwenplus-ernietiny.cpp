@@ -1,0 +1,30 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+
+int main(){
+    int N;
+    cin >> N; // Assuming N is the number of queries
+    vector<int> P(N+1), X(N); // Assuming X[i] are the values for X_i
+    P[0] = 0; // Initial value for X_i should be 0 initially
+
+    // Read the X values for each query
+    rep(i, N) cin >> X[i];
+
+    // Initialize the graph with the given X values
+    vector<vector<int>> graph(N); // Assuming graph[i] is a vector of adjacency lists
+    rep(i, N) graph[X[i]].push_back(i); // Each query should be represented by an adjacency list
+
+    // Process each query separately
+    for (int Q = 1; Q <= Q; ++Q){ // Assuming Q is the number of queries in a given query set
+        int L, R; // L and R are the indices of the left and right bounds respectively
+        cin >> L >> R; // Read the left and right bounds for each query
+        // Check if the query falls within the range of valid indices for the graph
+        if (L < 0 || R >= N || P[R] <= 0) { // Handle edge cases and constraints appropriately
+            cout << -1 << endl; // Invalid index, no answer
+        } else { // If the query is valid, calculate the answer accordingly
+            int ans = P[R] - P[L]; // Calculate the answer based on the graph representation
+            cout << ans << endl; // Output the answer for the given query
+        }
+    }
+}

@@ -1,0 +1,32 @@
+#include <vector>
+#include <iostream>
+#include <algorithm>
+#include <cmath>
+#include <string>
+#include <numeric>
+
+using namespace std;
+
+#define INF (long long)1e18  // Fixed: was too small, causing overflow issues
+
+int main(){
+    int n;
+    long long dp0 = 0;               // max profit with no stock at start
+    long long dp1 = -INF;            // max profit holding stock initially
+    long long x;
+    
+    cin >> n;
+    vector<long long> prices(n);
+    for(int i = 0; i < n; ++i)
+        cin >> prices[i];
+    
+    for (int i = 0; i < n; ++i) {
+        x = prices[i];
+        long long prev_dp0 = dp0;
+        dp0 = max(dp0, dp1 + 2 * x); // Sell second time or do nothing
+        dp1 = max(dp1, prev_dp0 - x); // Buy first time
+    }
+
+    cout << dp0 << endl;  // Final answer is dp0, which means no stock held
+    return 0;
+}

@@ -1,0 +1,102 @@
+To solve this problem correctly, we need to compute the **minimum path weight** from vertex 1 to every other vertex in a graph. The path weight is defined as the **sum of vertex and edge weights along the path**.
+
+The error in your code comes from an incorrect model of how vertex weights are applied. Specifically:
+
+- In your code, you added the vertex weight (`val[v]`) to each outgoing edge weight when creating the adjacency list.
+- But this results in **double-counting** the vertex weight at the start of the path: vertex 1's weight was not included in any edge, but all others were added twice — once when entering and once when leaving.
+
+### Correct Approach
+
+We should treat the **vertex weight as part of the node**, and only add it **once per node** during traversal.
+
+#### Graph Model:
+- Each node has a weight `A[i]`.
+- Each edge between nodes has weight `B[j]`.
+
+So the cost to move from node `u` to node `v` over edge with weight `B` is:
+```
+path_cost = current_dist_to_u + B + A[v]
+```
+
+Thus, the correct way is:
+- Initialize distance to node 1 as `A[0]`, since we must pay the starting node’s weight.
+- For every move from `u -> v`, update distance as `dist[u] + edge_weight + A[v]`
+- Avoid double-counting by never adding A[u] again after initialization
+
+---
+
+### Fix Summary
+1. Initialize `dist[0] = A[0]` (since we always start at node 1).
+2. In the adjacency list, store only the **edge weight**, not the vertex weight.
+3. When relaxing edges, compute new cost as `dist[u] + edge_weight + A[v]`.
+
+---
+
+Here's the corrected C++ code:
+
+```cpp
+#include <iostream>
+#include <vector>
+#include <queue>
+#include <set>
+#include <map>
+#include <cmath>
+using namespace std;
+typedef long long ll;
+
+const ll INF = 1e18;
+
+void solve() {
+    int n, m;
+    cin >> n >> m;
+
+    vector<ll> A(n);
+    for (int i = 0; i < n; ++i) {
+        cin >> A[i];
+    }
+
+    vector<vector<pair<int, ll>>> adj(n);
+    for (int i = 0; i < m; ++i) {
+        int u, v;
+        ll w;
+        cin >> u >> v >> w;
+        u--, v--;
+        adj[u].push_back({v, w});
+        adj[v].push_back({u, w});
+    }
+
+    vector<ll> dist(n, INF);
+    priority_queue<pair<ll, int>, vector<pair<ll, int>>, greater<pair<ll, int>>> pq;
+
+    dist[0] = A[0]; // Starting node includes its own weight
+    pq.push({dist[0], 0});
+
+    while (!pq.empty()) {
+        auto [d, u] = pq.top();
+        pq.pop();
+
+        if (d > dist[u]) continue;
+
+        for (auto [v, w] : adj[u]) {
+            if (dist[v] > dist[u] + w + A[v]) {
+                dist[v] = dist[u] + w + A[v];
+                pq.push({dist[v], v});
+            }
+        }
+    }
+
+    for (int i = 1; i < n; ++i) {
+        cout << dist[i] << " ";
+    }
+    cout << "\n";
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr); cout.tie(nullptr);
+
+    solve();
+
+    return 0;
+}
+```

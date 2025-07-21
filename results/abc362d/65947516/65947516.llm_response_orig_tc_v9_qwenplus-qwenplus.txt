@@ -1,0 +1,104 @@
+The issue in your code stems from an incorrect definition of the path cost and how you're computing the final result.
+
+---
+
+### Key Issues:
+1. **Incorrect Path Cost Definition**:
+   - In your Dijkstra's implementation, you are adding `a[now.id]` (vertex weight) to each edge weight when considering neighbors. However, this leads to double-counting the vertex weights because:
+     - When entering a node, its weight should be added once.
+     - Each time you pass through a node in a path, you must count its weight only once — not every time it's used as part of an edge traversal.
+
+2. **Final Output Computation**:
+   - You're doing `dis[i] + a[i]`, which is correct if `dis[i]` already includes the vertex weight of 1 (the starting node), but incorrect if it doesn't.
+   - The correct total path cost should include:
+     - All vertex weights along the path (once per vertex).
+     - All edge weights along the path.
+
+3. **Initialization**:
+   - The start node's distance should be initialized with its own vertex weight (`a[1]`) since it is part of the path.
+
+---
+
+### Fix Summary:
+- Initialize `dis[1] = a[1];`
+- For each move from node `u` to node `v` via edge weight `w`, update the distance to:  
+  `dis[u] + w + a[v]`
+- Do **not** add `a[u]` again during relaxation since it was already included in `dis[u]`.
+
+Here's the corrected full code:
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+typedef pair<ll, int> pli;
+
+const ll INF = 1e18;
+
+int main() {
+    int N, M;
+    cin >> N >> M;
+
+    vector<ll> A(N + 1);
+    for (int i = 1; i <= N; ++i)
+        cin >> A[i];
+
+    vector<vector<pli>> G(N + 1);
+    for (int i = 0; i < M; ++i) {
+        int u, v;
+        ll b;
+        cin >> u >> v >> b;
+        G[u].push_back({b, v});
+        G[v].push_back({b, u});
+    }
+
+    vector<ll> dist(N + 1, INF);
+    priority_queue<pli, vector<pli>, greater<pli>> pq;
+
+    dist[1] = A[1];
+    pq.push({dist[1], 1});
+
+    while (!pq.empty()) {
+        auto [d, u] = pq.top();
+        pq.pop();
+
+        if (d > dist[u]) continue;
+
+        for (auto [b, v] : G[u]) {
+            if (dist[v] > dist[u] + b + A[v]) {
+                dist[v] = dist[u] + b + A[v];
+                pq.push({dist[v], v});
+            }
+        }
+    }
+
+    for (int i = 2; i <= N; ++i)
+        cout << dist[i] << " ";
+    cout << endl;
+
+    return 0;
+}
+```
+
+---
+
+### Why This Works:
+- We ensure that each vertex's weight is counted exactly once when we reach it.
+- Initialization starts at `A[1]` because the path starts at vertex 1.
+- When traversing an edge from `u` to `v`, we add:
+  - `dist[u]`: total cost to reach `u`
+  - `b`: edge weight between `u` and `v`
+  - `A[v]`: vertex weight of destination
+
+This correctly models the path cost as:
+```
+sum(vertex weights on path) + sum(edge weights on path)
+```
+
+---
+
+### Complexity:
+- Time: `O(M log N)` — standard Dijkstra’s with a priority queue.
+- Space: `O(N + M)` — adjacency list and distance arrays.
+
+This will work efficiently even under tight constraints like `N, M ~ 2 * 10^5`.

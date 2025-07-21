@@ -1,0 +1,87 @@
+The issue in the original code lies in how it handles the cases where the bomb is placed on a cell that has no wall. Specifically, when checking for the first walls in the four directions, the code incorrectly assumes that the lower_bound and begin operations will always find valid walls, which can lead to incorrect deletions or runtime errors.
+
+To fix this, we need to ensure that:
+1. For each direction, we correctly check if there are any walls in that direction before attempting to delete them.
+2. We properly handle the cases where no walls exist in a particular direction.
+3. We maintain the correct state of the sets representing the walls in both row and column directions.
+
+Here is the corrected code:
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+#define rep(i,n) for(int i = 0; i < (n); i++)
+using ll = long long;
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int h, w, q;
+    cin >> h >> w >> q;
+    vector<set<int>> row_walls(h), col_walls(w);
+    rep(i, h) rep(j, w) {
+        row_walls[i].insert(j);
+        col_walls[j].insert(i);
+    }
+    
+    rep(qi, q) {
+        int r, c;
+        cin >> r >> c;
+        r--; c--;
+        
+        if (row_walls[r].count(c)) {
+            row_walls[r].erase(c);
+            col_walls[c].erase(r);
+        } else {
+            // Up
+            auto it_up = col_walls[c].lower_bound(r);
+            if (it_up != col_walls[c].begin()) {
+                --it_up;
+                int i = *it_up;
+                row_walls[i].erase(c);
+                col_walls[c].erase(i);
+            }
+            
+            // Down
+            auto it_down = col_walls[c].lower_bound(r);
+            if (it_down != col_walls[c].end()) {
+                int i = *it_down;
+                row_walls[i].erase(c);
+                col_walls[c].erase(i);
+            }
+            
+            // Left
+            auto it_left = row_walls[r].lower_bound(c);
+            if (it_left != row_walls[r].begin()) {
+                --it_left;
+                int j = *it_left;
+                row_walls[r].erase(j);
+                col_walls[j].erase(r);
+            }
+            
+            // Right
+            auto it_right = row_walls[r].lower_bound(c);
+            if (it_right != row_walls[r].end()) {
+                int j = *it_right;
+                row_walls[r].erase(j);
+                col_walls[j].erase(r);
+            }
+        }
+    }
+    
+    ll ans = 0;
+    rep(i, h) ans += row_walls[i].size();
+    cout << ans << '\n';
+    
+    return 0;
+}
+```
+
+Key improvements:
+1. **Initialization**: The sets `row_walls` and `col_walls` are initialized to keep track of walls in each row and column, respectively.
+2. **Query Processing**: For each query, we first check if the cell has a wall. If it does, we remove it. If not, we look for the first walls in the four directions (up, down, left, right) and remove them if they exist.
+3. **Correctness**: The checks for walls in each direction are now properly guarded to prevent invalid operations, ensuring no walls are incorrectly removed or missed.
+4. **Efficiency**: The use of sets allows for efficient insertion and deletion operations, maintaining the overall complexity within acceptable limits.
+
+This corrected code should handle all test cases correctly, including edge cases and large inputs, while maintaining the required performance constraints.

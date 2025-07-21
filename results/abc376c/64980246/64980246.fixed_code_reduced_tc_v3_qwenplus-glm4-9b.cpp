@@ -1,0 +1,39 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+
+using namespace std;
+
+int main() {
+    int n;
+    cin >> n;
+    vector<int> a(n), b(n - 1);
+    for (int i = 0; i < n; ++i)
+        cin >> a[i];
+    for (int i = 0; i < n - 1; ++i)
+        cin >> b[i];
+
+    // Sort the toy sizes and box sizes in descending order
+    sort(a.begin(), a.end(), greater<int>());
+    sort(b.begin(), b.end(), greater<int>());
+
+    // Initialize the minimum size of box x that can be used
+    int min_x = INT_MAX;
+
+    // Iterate through the toys and find the minimum box size needed
+    for (int i = 0; i < n; ++i) {
+        // Check if the current toy can fit into the current box
+        if (a[i] > b[i]) {
+            // If the toy cannot fit, update the minimum box size needed
+            min_x = min(min_x, a[i]);
+        }
+    }
+
+    // If min_x is still INT_MAX, no box size is sufficient, otherwise print the minimum box size
+    if (min_x == INT_MAX)
+        cout << -1 << endl;
+    else
+        cout << min_x << endl;
+
+    return 0;
+}

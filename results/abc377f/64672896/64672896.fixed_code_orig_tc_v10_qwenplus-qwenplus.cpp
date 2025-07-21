@@ -1,0 +1,135 @@
+#include <bits/stdc++.h>
+using namespace std;
+using i64 = long long;
+
+int main() {
+    std::ios::sync_with_stdio(false);
+    std::cin.tie(nullptr);
+    i64 N, M;
+    cin >> N >> M;
+
+    set<i64> rowSet, colSet, diag1Set, diag2Set;
+    for (int i = 0; i < M; ++i) {
+        i64 a, b;
+        cin >> a >> b;
+        rowSet.insert(a);
+        colSet.insert(b);
+        diag1Set.insert(a + b);
+        diag2Set.insert(a - b);
+    }
+
+    // Total squares under attack in rows, columns, and diagonals
+    i64 attackedSquares = 0;
+
+    // Rows
+    attackedSquares += rowSet.size() * N;
+
+    // Columns
+    attackedSquares += colSet.size() * N;
+
+    // Diagonals (a + b)
+    for (auto d : diag1Set) {
+        // x + y = d => y = d - x
+        // x ∈ [max(1, d - N), min(N, d - 1)]
+        i64 low = max(1LL, d - N);
+        i64 high = min(N, d - 1);
+        if (low <= high) {
+            attackedSquares += (high - low + 1);
+        }
+    }
+
+    // Anti-diagonals (a - b)
+    for (auto d : diag2Set) {
+        // x - y = d => y = x - d
+        // y ∈ [1, N] => x ∈ [d + 1, d + N]
+        i64 low = max(1LL, 1 + d);
+        i64 high = min(N, N + d);
+        if (low <= high) {
+            attackedSquares += (high - low + 1);
+        }
+    }
+
+    // Subtract overlaps
+
+    // Row-Column intersections
+    for (auto r : rowSet) {
+        for (auto c : colSet) {
+            attackedSquares--;
+        }
+    }
+
+    // Row-Diag1 intersections
+    for (auto r : rowSet) {
+        for (auto d : diag1Set) {
+            // x = r, x + y = d => y = d - r
+            i64 y = d - r;
+            if (y >= 1 && y <= N) {
+                attackedSquares--;
+            }
+        }
+    }
+
+    // Row-Diag2 intersections
+    for (auto r : rowSet) {
+        for (auto d : diag2Set) {
+            // x = r, y = x - d => y = r - d
+            i64 y = r - d;
+            if (y >= 1 && y <= N) {
+                attackedSquares--;
+            }
+        }
+    }
+
+    // Col-Diag1 intersections
+    for (auto c : colSet) {
+        for (auto d : diag1Set) {
+            // y = c, x + y = d => x = d - c
+            i64 x = d - c;
+            if (x >= 1 && x <= N) {
+                attackedSquares--;
+            }
+        }
+    }
+
+    // Col-Diag2 intersections
+    for (auto c : colSet) {
+        for (auto d : diag2Set) {
+            // y = c, x - y = d => x = d + c
+            i64 x = d + c;
+            if (x >= 1 && x <= N) {
+                attackedSquares--;
+            }
+        }
+    }
+
+    // Diag1-Diag2 intersections
+    for (auto d1 : diag1Set) {
+        for (auto d2 : diag2Set) {
+            // x + y = d1
+            // x - y = d2
+            // Solve: x = (d1 + d2)/2, y = (d1 - d2)/2
+            if ((d1 + d2) % 2 == 0 && (d1 - d2) % 2 == 0) {
+                i64 x = (d1 + d2) / 2;
+                i64 y = (d1 - d2) / 2;
+                if (x >= 1 && x <= N && y >= 1 && y <= N) {
+                    attackedSquares--;
+                }
+            }
+        }
+    }
+
+    // Row-Col-Diag1-Diag2 intersections (only those covered by all four sets)
+    for (auto r : rowSet) {
+        for (auto c : colSet) {
+            if (diag1Set.count(r + c) && diag2Set.count(r - c)) {
+                attackedSquares++;
+            }
+        }
+    }
+
+    i64 totalEmpty = N * N - M;
+    i64 safePositions = totalEmpty - attackedSquares;
+
+    cout << safePositions << "\n";
+    return 0;
+}

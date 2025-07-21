@@ -1,0 +1,38 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+#define endl "\n"
+#define int long long
+
+void solve() {
+    int N, K;
+    cin >> N >> K;
+    vector<int> A(N);
+    for (int i = 0; i < N; ++i) {
+        cin >> A[i];
+    }
+
+    // We need to remove exactly K elements to minimize (max(B) - min(B))
+    // where B is the resulting sequence after removing K elements.
+    // Since we want to minimize max difference between max and min,
+    // we can try selecting N-K elements such that max(A[i]) - min(A[i]) is minimized.
+
+    // Sliding window on sorted array:
+    // Sort the array first.
+    sort(A.begin(), A.end());
+
+    // Try all possible windows of size (N-K), since we want to keep (N-K) elements.
+    int res = numeric_limits<int>::max();
+    for (int i = 0; i + (N - K) <= N; ++i) {
+        res = min(res, A[i + (N - K)] - A[i]);
+    }
+
+    cout << res << endl;
+}
+
+signed main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(NULL);
+    solve();
+    return 0;
+}

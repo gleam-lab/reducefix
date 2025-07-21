@@ -1,0 +1,103 @@
+To fix this code, we need to ensure that we correctly determine the minimum number of additional votes each candidate needs to guarantee their victory. The key issue in the original code was the incorrect handling of the binary search and the logic for determining the number of candidates that would have more votes than the current candidate after additional votes.
+
+### Approaches
+
+1. **Sorting and Prefix Sum**: First, we sort the candidates based on their current votes. This allows us to easily determine how many candidates have more votes than a given candidate after adding a certain number of votes.
+  
+2. **Binary Search for Minimum Votes**: For each candidate, we perform a binary search to find the minimum number of additional votes (X) such that the number of candidates with more votes than the candidate (after adding X votes) is less than M. This involves:
+   - Calculating the required votes to ensure that at least M candidates are not strictly better (have more votes).
+   - Ensuring that the remaining votes are sufficient to distribute to other candidates in a way that does not allow more than M-1 candidates to surpass the current candidate.
+
+3. **Edge Cases Handling**: We handle cases where a candidate might already have secured a position (no additional votes needed) or where it's impossible to secure a position (output -1).
+
+### Solution Code
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+
+int N, M;
+ll K;
+
+int main() {
+    std::cin.tie(nullptr)->sync_with_stdio(false);
+    cin >> N >> M >> K;
+
+    vector<ll> A(N);
+    for (int i = 0; i < N; ++i) {
+        cin >> A[i];
+    }
+
+    vector<int> indices(N);
+    iota(indices.begin(), indices.end(), 0);
+    sort(indices.begin(), indices.end(), [&](int i, int j) {
+        return A[i] > A[j];
+    });
+
+    vector<ll> sorted_A(N);
+    for (int i = 0; i < N; ++i) {
+        sorted_A[i] = A[indices[i]];
+    }
+
+    vector<ll> prefix(N + 1, 0);
+    for (int i = 0; i < N; ++i) {
+        prefix[i + 1] = prefix[i] + sorted_A[i];
+    }
+
+    ll remaining = K - prefix[N];
+    vector<ll> res(N);
+
+    for (int i = 0; i < N; ++i) {
+        ll original_pos = i;
+        ll original_votes = sorted_A[i];
+        ll low = 0;
+        ll high = remaining;
+        ll ans = -1;
+
+        while (low <= high) {
+            ll mid = (low + high) / 2;
+            ll new_votes = original_votes + mid;
+            ll position = original_pos;
+
+            // Find the first candidate in sorted_A that has <= new_votes
+            int left = 0, right = N;
+            while (left < right) {
+                int m = (left + right) / 2;
+                if (sorted_A[m] > new_votes) {
+                    left = m + 1;
+                } else {
+                    right = m;
+                }
+            }
+            int new_pos = left;
+
+            if (new_pos < M) {
+                ans = mid;
+                high = mid - 1;
+            } else {
+                low = mid + 1;
+            }
+        }
+
+        res[indices[i]] = ans;
+    }
+
+    for (int i = 0; i < N; ++i) {
+        cout << res[i] << ' ';
+    }
+    cout << endl;
+
+    return 0;
+}
+```
+
+### Explanation
+
+1. **Sorting and Prefix Sum**: The candidates are sorted in descending order of their current votes to facilitate the binary search process. The prefix sum array helps in quickly calculating the sum of votes up to any candidate.
+
+2. **Binary Search**: For each candidate, we perform a binary search to determine the minimum number of additional votes (X) needed. The search checks if the candidate’s position in the sorted list (after adding X votes) ensures that fewer than M candidates have more votes than them.
+
+3. **Edge Cases Handling**: The code checks if a candidate can never secure a position (output -1) or if they already have enough votes (output 0). The results are then mapped back to the original candidate indices for the final output.
+
+This approach efficiently handles the constraints and ensures correct results by leveraging sorting and binary search to minimize the additional votes required for each candidate.

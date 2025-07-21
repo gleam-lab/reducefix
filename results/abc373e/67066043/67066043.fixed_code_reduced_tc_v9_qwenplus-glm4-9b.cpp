@@ -1,0 +1,52 @@
+#include <bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+#define all(x) (x).begin(), (x).end()
+
+int main() {
+    ios_base::sync_with_stdio(0);
+    cin.tie(0);
+    int n, m;
+    ll k;
+    cin >> n >> m >> k;
+    vector<ll> a(n);
+    for(int i = 0; i < n; ++i) {
+        cin >> a[i];
+        k -= a[i];
+    }
+
+    // If the number of candidates who can potentially surpass the current candidate is less than M, they are already elected.
+    for(int i = 0; i < n; ++i) {
+        ll candidates_beating = upper_bound(all(a), a[i]) - a.begin() - 1;
+        if (candidates_beating < m) {
+            k += m - candidates_beating;
+            a[i] = k;
+            for(int j = i + 1; j < n; ++j) {
+                a[j] = 0; // Other candidates cannot win anymore as they are guaranteed to have less than m candidates beating them.
+            }
+            break;
+        }
+    }
+
+    // Sort candidates by votes in descending order, to determine the ceiling of votes they need.
+    sort(all(a), greater<ll>());
+
+    vector<ll> votes_needed(n, 0);
+    for(int i = 0; i < n; ++i) {
+        // Find the minimum votes the current candidate needs to guarantee victory.
+        int remaining_candidates = max(0, n - i - 1); // Remaining candidates who could potentially win.
+        auto it = upper_bound(all(a), a[i] + remaining_candidates) - a.begin();
+        if (it == n || a[i] + remaining_candidates > a[*it]) {
+            // The candidate can win as the next candidate in the list cannot surpass the required votes.
+            votes_needed[i] = 0;
+        } else {
+            // The candidate needs (k + m - remaining_candidates + 1) votes.
+            // This ensures that if the candidate gets these votes, they will have more than m - 1 candidates with fewer votes.
+            votes_needed[i] = k + m - remaining_candidates + 1 - (a[i] + remaining_candidates - a[*it]);
+        }
+    }
+
+    for(ll need : votes_needed) {
+        cout << need << ' ';
+    }
+}

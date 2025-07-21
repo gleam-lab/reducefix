@@ -1,0 +1,73 @@
+#include<bits/stdc++.h>
+using namespace std;
+
+const int MAXN = 200010;
+char s[MAXN], c[MAXN];
+
+int solve(int n) {
+    // Apply greedy strategy: always choose the best move at current position
+    int score = 0;
+    for (int i = 1; i <= n; i++) {
+        if (s[i] == 'P') c[i] = 'S';
+        else if (s[i] == 'R') c[i] = 'P';
+        else c[i] = 'R';
+    }
+    
+    for (int i = 2; i <= n; i++) {
+        if (c[i] == c[i-1]) {
+            // We can change this one to avoid conflict
+            c[i] = s[i];  // revert to original to break the tie
+        }
+    }
+    
+    // Count unique consecutive moves
+    int unique = 1;
+    for (int i = 2; i <= n; i++) {
+        if (c[i] != c[i-1]) {
+            unique++;
+        }
+    }
+    
+    return unique;
+}
+
+int main() {
+    int n;
+    scanf("%d", &n);
+    scanf("%s", s + 1);  // 1-based index
+
+    // Try different starting configurations to maximize result
+    int result = 0;
+    
+    // There are only 3 possible choices for first character,
+    // we try all possibilities and pick maximum
+    char orig_first = s[1];
+    for (char choice : {'P', 'R', 'S'}) {
+        if (orig_first == choice) continue;  // skip invalid transformation
+        
+        // Build transformed string with first character mapped to `choice`
+        c[1] = choice;
+        
+        // Greedily transform rest of the string
+        for (int i = 2; i <= n; i++) {
+            if (s[i] == 'P') c[i] = 'S';
+            else if (s[i] == 'R') c[i] = 'P';
+            else c[i] = 'R';
+            
+            // Avoid duplicate with previous
+            if (c[i] == c[i-1]) {
+                c[i] = s[i];  // fallback to original to break tie
+            }
+        }
+        
+        // Count unique consecutive characters
+        int count = 1;
+        for (int i = 2; i <= n; i++) {
+            if (c[i] != c[i-1]) count++;
+        }
+        
+        result = max(result, count);
+    }
+
+    printf("%d\n", result);
+}

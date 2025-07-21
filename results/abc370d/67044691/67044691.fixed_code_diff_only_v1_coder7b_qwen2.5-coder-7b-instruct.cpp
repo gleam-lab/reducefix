@@ -1,0 +1,65 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define ll long long
+#define rep(i,n) for(int i=0;i<(int)n;i++)
+#define vi vector<int>
+#define vl vector<ll>
+#define vd vector<double>
+#define vb vector<bool>
+#define vs vector<string>
+#define vc vector<char>
+#define ull unsigned long long
+#define chmax(a,b) a=max(a,b)
+#define chmin(a,b) a=min(a,b)
+
+int main(){
+    ll h,w,q;cin >> h >> w >> q;
+    vector<vl> grid(h, vl(w, 1));
+    while(q--){
+        ll r,c; cin >> r >> c; r--, c--;
+        if(grid[r][c] == 1){
+            grid[r][c] = 0;
+        }else{
+            bool destroyed = false;
+            // Check up
+            for(ll i=r-1; i>=0; --i){
+                if(grid[i][c]){
+                    grid[i][c] = 0;
+                    destroyed = true;
+                    break;
+                }
+            }
+            // Check down
+            for(ll i=r+1; i<h; ++i){
+                if(grid[i][c]){
+                    grid[i][c] = 0;
+                    destroyed = true;
+                    break;
+                }
+            }
+            // Check left
+            for(ll j=c-1; j>=0; --j){
+                if(grid[r][j]){
+                    grid[r][j] = 0;
+                    destroyed = true;
+                    break;
+                }
+            }
+            // Check right
+            for(ll j=c+1; j<w; ++j){
+                if(grid[r][j]){
+                    grid[r][j] = 0;
+                    destroyed = true;
+                    break;
+                }
+            }
+        }
+    }
+    ll ans = 0;
+    rep(i, h){
+        rep(j, w){
+            ans += grid[i][j];
+        }
+    }
+    cout << ans << endl;
+}

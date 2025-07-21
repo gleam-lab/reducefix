@@ -1,0 +1,33 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+  int n;
+  cin >> n; // Read number of elements in x vector
+  vector<int> x(n); // Create x vector with elements from input
+  for (int i = 0; i < n; i++) cin >> x[i]; // Read elements from x vector
+  
+  // Fix the algorithm to correctly calculate the sum of differences between upper_bound and lower_bound
+  // Using binary search to find the rightmost element in the sorted range
+  int ans = 0; // Initialize the answer variable
+  int left = 0, right = n - 1; // Initialize binary search range
+  while (left <= right) {
+    int mid = left + (right - left) / 2; // Find the middle index of the sorted range
+    if (x[mid] >= r) { // If the rightmost element is greater than or equal to r
+      ans += mid - left; // Calculate the sum of differences between upper_bound and lower_bound
+      right = mid - 1; // Move to the right half of the range
+    } else { // If the rightmost element is less than r, move to the left half of the range
+      left = mid + 1; // Calculate the sum of differences by considering the difference between upper_bound and mid
+    }
+  }
+  
+  // Now, calculate the desired sum by considering the difference between upper_bound and lower_bound for each query range
+  for (int i = 0; i < q; i++) { // Read queries and calculate the sum for each query range
+    int l, r; // Read query ranges for each query
+    cin >> l >> r; // Read query ranges for each query
+    int rt = upper_bound(x.begin(), x.end(), r) - x.begin(); // Calculate the index of upper_bound for the query range
+    int lt = lower_bound(x.begin(), x.end(), l) - x.begin(); // Calculate the difference between upper_bound and lower_bound for the query range
+    cout << ans << endl; // Output the calculated sum for each query range
+  }
+  return 0;
+}

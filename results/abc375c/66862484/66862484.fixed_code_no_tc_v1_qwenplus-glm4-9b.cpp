@@ -1,0 +1,42 @@
+#include <iostream>
+#include <vector>
+#include <cmath>
+
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int N;
+    cin >> N;
+
+    long long curX = 0, curY = 0;   // Current position (origin)
+    double total = 0.0;             // Total cost
+
+    vector<pair<long long, long long>> points(N + 1); // Store points including the origin
+
+    // Read points and include the origin (0, 0) as the starting point
+    for (int i = 0; i < N; ++i) {
+        long long x, y;
+        cin >> x >> y;
+        points[i + 1].first = x;
+        points[i + 1].second = y;
+    }
+
+    // Calculate total cost
+    for (int i = 1; i <= N; ++i) {
+        long long dx = curX - points[i].first;
+        long long dy = curY - points[i].second;
+        total += sqrt(dx * dx + dy * dy);  // Calculate the distance using sqrt
+
+        curX = points[i].first;
+        curY = points[i].second;
+    }
+
+    // Output the total cost
+    cout.precision(6);
+    cout << fixed << total << endl;
+
+    return 0;
+}

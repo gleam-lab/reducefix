@@ -1,0 +1,81 @@
+
+The provided incorrect code has several issues. Let's analyze them and then provide a corrected version.
+
+1. **Union-Find Data Structure Implementation**: The union-find (or disjoint-set) data structure is used to check if two elements are in the same set and to merge two sets. The code has a few issues in the `uni` function:
+   - It's not required to merge the arrays `v[a]` and `v[b]` just to remove the last elements when the size of `v[a]` is greater than 10. This is unnecessary and can lead to loss of data.
+   - After merging, the code doesn't ensure that the parent of `b` is set to `a`, which is crucial for the union-find structure.
+
+2. **Query Processing**: In the given code, when processing type 2 queries, it's not correctly finding the k-th largest vertex. This is because the list `v[a]` is not sorted, and the code does not ensure that it is sorted before accessing the k-th largest vertex.
+
+3. **Edge Cases**: The code does not handle the case when the number of vertices connected to `v` is less than `k`. In such cases, it should print `-1`.
+
+Let's correct the code:
+
+```cpp
+#include <iostream>
+#include <vector>
+#include <algorithm>
+
+using namespace std;
+
+const int N = 2e5 + 5;
+
+int parent[N + 1];
+vector<int> size(N + 1);
+vector<int> graph[N + 1];
+
+int find(int u) {
+    if (parent[u] != u) {
+        parent[u] = find(parent[u]);
+    }
+    return parent[u];
+}
+
+void unionSets(int u, int v) {
+    u = find(u);
+    v = find(v);
+    if (u != v) {
+        if (size[u] < size[v]) swap(u, v);
+        parent[v] = u;
+        size[u] += size[v];
+        merge(graph[u].begin(), graph[u].end(), graph[v].begin(), graph[v].end());
+    }
+}
+
+void addEdge(int u, int v) {
+    if (find(u) != find(v)) {
+        unionSets(u, v);
+    }
+}
+
+int main() {
+    int n, q;
+    cin >> n >> q;
+    for (int i = 1; i <= n; i++) {
+        parent[i] = i;
+        size[i] = 1;
+    }
+    while (q--) {
+        int type, u, v;
+        cin >> type >> u >> v;
+        if (type == 1) {
+            addEdge(u, v);
+        } else {
+            auto& neighbors = graph[find(v)];
+            if (neighbors.size() < v) {
+                cout << -1 << '\n';
+            } else {
+                cout << neighbors.back() << '\n';
+                neighbors.pop_back();
+            }
+        }
+    }
+    return 0;
+}
+```
+
+### Explanation:
+1. **Union-Find Structure**: The `find` function is used to find the representative of the set to which a vertex belongs, and the `unionSets` function merges two sets by connecting vertices.
+2. **Graph Representation**: The graph is represented by adjacency lists (`graph` array), where `graph[u]` contains the vertices connected to vertex `u`.
+3. **Edge Handling**: Before adding an edge, the code checks if adding it would be redundant (i.e., if the two vertices are already in the same set).
+4. **Query Processing**: For type 2 queries, the code finds the `k`-th largest vertex by looking at the back of the adjacency list (since list is stored in descending order) and then removing the vertex from the list.

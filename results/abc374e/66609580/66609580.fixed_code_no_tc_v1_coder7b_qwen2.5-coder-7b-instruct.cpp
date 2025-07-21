@@ -1,0 +1,59 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+
+using namespace std;
+
+struct Machine {
+    int type; // 0 for S, 1 for T
+    int rate;
+    int cost;
+};
+
+bool compareMachines(const Machine& m1, const Machine& m2) {
+    return (double)m1.rate / m1.cost > (double)m2.rate / m2.cost;
+}
+
+int main() {
+    int n, x;
+    cin >> n >> x;
+    
+    vector<Machine> machines;
+    for(int i = 0; i < n; ++i) {
+        int a, p, b, q;
+        cin >> a >> p >> b >> q;
+        machines.push_back({0, a, p});
+        machines.push_back({1, b, q});
+    }
+    
+    sort(machines.begin(), machines.end(), compareMachines);
+    
+    long long left = 0, right = 1e9;
+    while(left < right) {
+        long long mid = left + (right - left + 1) / 2;
+        long long totalCost = 0;
+        long long currentRate = 0;
+        
+        for(auto& machine : machines) {
+            if(currentRate >= mid)
+                break;
+            
+            long long units = (mid - currentRate + machine.rate - 1) / machine.rate;
+            long long cost = units * machine.cost;
+            
+            if(totalCost + cost > x)
+                break;
+            
+            totalCost += cost;
+            currentRate += units * machine.rate;
+        }
+        
+        if(currentRate >= mid)
+            left = mid;
+        else
+            right = mid - 1;
+    }
+    
+    cout << left << endl;
+    return 0;
+}

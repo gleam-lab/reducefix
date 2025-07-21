@@ -1,0 +1,64 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define rep(i,n) for(int i = 0; i < (n); i++)
+using ll = long long;
+
+int main(void) {
+    ios::sync_with_stdio(0); cin.tie(0);
+
+    int h, w, q;
+    cin >> h >> w >> q;
+    vector<set<int>> vertical(w), horizontal(h);
+    rep(i,h) rep(j,w) {
+        vertical[j].insert(i);
+        horizontal[i].insert(j);
+    }
+    
+    while (q--) {
+        int r, c;
+        cin >> r >> c;
+        r--, c--;
+
+        if (vertical[c].find(r) != vertical[c].end()) {
+            vertical[c].erase(vertical[c].find(r));
+            horizontal[r].erase(horizontal[r].find(c));
+        } else {
+            auto it_up = vertical[c].upper_bound(r);
+            if (it_up != vertical[c].begin()) {
+                --it_up;
+                int x = *it_up;
+                vertical[c].erase(it_up);
+                horizontal[x].erase(c);
+            }
+            
+            auto it_down = vertical[c].lower_bound(r);
+            if (it_down != vertical[c].end()) {
+                int x = *it_down;
+                vertical[c].erase(it_down);
+                horizontal[x].erase(c);
+            }
+            
+            auto it_left = horizontal[r].upper_bound(c);
+            if (it_left != horizontal[r].begin()) {
+                --it_left;
+                int x = *it_left;
+                horizontal[r].erase(it_left);
+                vertical[x].erase(r);
+            }
+            
+            auto it_right = horizontal[r].lower_bound(c);
+            if (it_right != horizontal[r].end()) {
+                int x = *it_right;
+                horizontal[r].erase(it_right);
+                vertical[x].erase(r);
+            }
+        }
+    }
+
+    int ans = 0;
+    for(auto &s : vertical) ans += s.size();
+    for(auto &s : horizontal) ans += s.size();
+
+    cout << ans / 2 << '\n';
+    return 0;
+}

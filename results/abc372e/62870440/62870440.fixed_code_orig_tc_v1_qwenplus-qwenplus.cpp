@@ -1,0 +1,72 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+const int MAXN = 2e5 + 5;
+const int K_MAX = 10;
+
+int parent[MAXN];
+vector<int> components[MAXN];
+
+int find(int x) {
+    if (parent[x] != x)
+        parent[x] = find(parent[x]);
+    return parent[x];
+}
+
+void unite(int a, int b) {
+    int rootA = find(a);
+    int rootB = find(b);
+    if (rootA == rootB)
+        return;
+
+    // Merge smaller into larger for better performance
+    if (components[rootA].size() < components[rootB].size()) {
+        swap(rootA, rootB);
+    }
+
+    for (int node : components[rootB]) {
+        components[rootA].push_back(node);
+    }
+    components[rootB].clear();
+    parent[rootB] = rootA;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+
+    int N, Q;
+    cin >> N >> Q;
+
+    // Initialize DSU
+    for (int i = 1; i <= N; ++i) {
+        parent[i] = i;
+        components[i].push_back(i);
+    }
+
+    while (Q--) {
+        int type;
+        cin >> type;
+        if (type == 1) {
+            int u, v;
+            cin >> u >> v;
+            unite(u, v);
+        } else if (type == 2) {
+            int v, k;
+            cin >> v >> k;
+            int root = find(v);
+            vector<int>& comp = components[root];
+
+            // Sort in descending order
+            sort(comp.rbegin(), comp.rend());
+
+            if (k <= comp.size()) {
+                cout << comp[k - 1] << '\n';
+            } else {
+                cout << "-1\n";
+            }
+        }
+    }
+
+    return 0;
+}

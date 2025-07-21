@@ -1,0 +1,46 @@
+#include<bits/stdc++.h>
+
+using namespace std;
+using ll = long long;
+typedef pair<int, int> PII;
+
+const int N = 2e5 + 10;
+const int mod = 1e9 + 7;
+
+void solve()
+{
+    int n, M;
+    cin >> n >> M;
+    vector<ll> a(n + 10);  // Use ll to prevent overflow
+    for(int i = 1; i <= n; i++){
+        cin >> a[i];
+    }
+    vector<ll> s(n + 10);  // Prefix sums also need to be ll
+    for(int i = 1; i <= n; i++){
+        s[i] = s[i-1] + a[i];
+    }
+    
+    map<ll, ll> mp;  // Use ll for map keys to avoid unexpected behavior
+    ll ans = 0;
+    ll L = s[n];  // Total sum
+    
+    for(int i = 1; i <= n; i++){
+        ll rem = (s[i] - (L % M) + M) % M;  // Adjusted prefix modulo
+        ans += mp[rem];
+        rem = s[i] % M;
+        mp[rem]++;
+    }
+    
+    cout << ans << endl;
+}
+
+int main()
+{
+    cin.tie(0);
+    ios::sync_with_stdio(0);
+    ll t = 1;
+    while(t--){
+        solve();
+    }
+    return 0;
+}

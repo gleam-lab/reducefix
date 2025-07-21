@@ -1,0 +1,43 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int64_t N;
+    int M;
+    cin >> N >> M;
+
+    unordered_set<int64_t> attacked;
+    auto hash = [&](int64_t x, int64_t y) {
+        return (x - 1) * N + (y - 1);
+    };
+
+    vector<pair<int64_t, int64_t>> knight_moves = {
+        {2, 1}, {1, 2}, {-1, 2}, {-2, 1},
+        {-2, -1}, {-1, -2}, {1, -2}, {2, -1}
+    };
+
+    for (int i = 0; i < M; ++i) {
+        int64_t a, b;
+        cin >> a >> b;
+        
+        // Add current piece position to attacked set
+        attacked.insert(hash(a, b));
+        
+        // Calculate all possible attack positions from this piece
+        for (auto [dx, dy] : knight_moves) {
+            int64_t na = a + dx;
+            int64_t nb = b + dy;
+            if (1 <= na && na <= N && 1 <= nb && nb <= N) {
+                attacked.insert(hash(na, nb));
+            }
+        }
+    }
+
+    // Total squares - number of attacked squares
+    cout << (static_cast<int64_t>(N) * N - attacked.size()) << endl;
+
+    return 0;
+}

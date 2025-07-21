@@ -1,0 +1,1 @@
+new_cost = current_path_cost + edge_weight + vertex_B_weight

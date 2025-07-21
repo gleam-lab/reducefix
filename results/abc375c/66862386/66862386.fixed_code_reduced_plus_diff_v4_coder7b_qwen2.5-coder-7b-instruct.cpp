@@ -1,0 +1,29 @@
+#include <iostream>
+#include <cmath>
+using namespace std;
+
+int main() {
+    int n;
+    cin >> n;
+    long double x = 0, y = 0, total_cost = 0;
+    
+    for(int i = 0; i < n; ++i) {
+        long double nx, ny;
+        cin >> nx >> ny;
+        
+        // Calculate Euclidean distance
+        total_cost += sqrtl(powl(x - nx, 2) + powl(y - ny, 2));
+        
+        // Update current position
+        x = nx;
+        y = ny;
+    }
+    
+    // Return to origin
+    total_cost += sqrtl(x*x + y*y);
+    
+    cout.precision(15); // Set precision to match expected output format
+    cout << total_cost << endl;
+    
+    return 0;
+}

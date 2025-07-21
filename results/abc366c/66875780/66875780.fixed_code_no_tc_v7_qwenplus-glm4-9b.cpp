@@ -1,0 +1,35 @@
+#include <iostream>
+#include <unordered_set>
+using namespace std;
+
+// Fast IO
+void fastIO() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    cout.tie(nullptr);
+}
+
+int main() {
+    fastIO();
+    int Q;
+    cin >> Q;
+
+    unordered_set<int> balls;
+    while (Q--) {
+        int query_type;
+        cin >> query_type;
+        if (query_type == 1) {
+            int x;
+            cin >> x;
+            balls.insert(x);
+        } else if (query_type == 2) {
+            int x;
+            cin >> x;
+            balls.erase(x);
+        } else if (query_type == 3) {
+            cout << balls.size() << "\n";
+        }
+    }
+
+    return 0;
+}

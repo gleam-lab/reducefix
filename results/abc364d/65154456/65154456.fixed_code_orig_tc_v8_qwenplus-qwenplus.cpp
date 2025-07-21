@@ -1,0 +1,76 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+typedef long long ll;
+
+const int MAX_OFFSET = 200000000;
+const int MAX_COORD = 400000001; // from -1e8 to 1e8 (mapped to 0 to 4e8)
+
+int freq[MAX_COORD]; // frequency array for counting sort
+
+// Binary search to find the k-th smallest distance
+ll findKthDistance(int b, int k, const vector<int>& sortedA) {
+    int left = 0;
+    int right = MAX_COORD - 1;
+    int answer = MAX_COORD;
+
+    while (left <= right) {
+        int mid = (left + right) / 2;
+        // Count how many elements are in [b - mid, b + mid]
+        int low = max(0, b - mid + MAX_OFFSET);
+        int high = min(MAX_COORD - 1, b + mid + MAX_OFFSET);
+        int count = freq[high] - (low > 0 ? freq[low - 1] : 0);
+
+        if (count >= k) {
+            answer = mid;
+            right = mid - 1;
+        } else {
+            left = mid + 1;
+        }
+    }
+
+    return answer;
+}
+
+void solve() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int N, Q;
+    cin >> N >> Q;
+
+    vector<int> A(N);
+    for (int i = 0; i < N; ++i) {
+        cin >> A[i];
+    }
+
+    // Coordinate compression: shift values to make them non-negative
+    for (int i = 0; i < N; ++i) {
+        A[i] += MAX_OFFSET;
+    }
+
+    // Build prefix sum of frequencies
+    memset(freq, 0, sizeof(freq));
+    for (int x : A) {
+        freq[x]++;
+    }
+
+    for (int i = 1; i < MAX_COORD; ++i) {
+        freq[i] += freq[i - 1];
+    }
+
+    // Process queries
+    for (int q = 0; q < Q; ++q) {
+        int b, k;
+        cin >> b >> k;
+        b += MAX_OFFSET; // Shift coordinate
+
+        ll result = findKthDistance(b, k, A);
+        cout << result << "\n";
+    }
+}
+
+int main() {
+    solve();
+    return 0;
+}

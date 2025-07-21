@@ -1,0 +1,87 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define int long long
+
+const int N = 2 * 100000 + 5;
+
+int n, m, k, a[N], b[N], prefix[N];
+
+// This function checks if candidate with current votes x and getting X additional votes
+// can guarantee election regardless of how remaining votes are distributed.
+// y is the current number of votes for this candidate
+// Returns true if this X guarantees victory
+bool is_possible(int x, int X, int idx) {
+    int rem = k - X;
+    if (rem < 0) return false;
+    
+    // We need to assume other candidates get as many votes as possible to beat us
+    // So we sort all other candidates' current votes
+    // Then give them as many as possible from the remaining votes
+    
+    vector<int> others;
+    for (int i = 0; i < n; ++i) {
+        if (i == idx) continue;
+        others.push_back(a[i]);
+    }
+    sort(others.begin(), others.end());
+    
+    // Binary search to find how many candidates can be kept below our new total
+    int our_total = x + X;
+    int max_allowed_better = m - 1; // We need to be in top M
+    
+    // We may need to strengthen weaker candidates to make them better than us
+    // to see if it's still possible to have enough positions left
+    int l = 0, r = others.size();
+    while (l < r) {
+        int mid = (l + r) / 2;
+        // How many votes needed to bring candidates[others.size() - mid] up to our_total
+        int need = 0;
+        for (int i = others.size() - mid; i < others.size(); ++i) {
+            if (others[i] < our_total) {
+                need += our_total - others[i];
+                if (need > rem) break;
+            }
+        }
+        if (need <= rem && mid < max_allowed_better) {
+            // We can make mid+1 candidates better than us, try higher
+            l = mid + 1;
+        } else {
+            r = mid;
+        }
+    }
+    
+    // If at most (m-1) candidates can be made stronger than us using remaining votes
+    return l <= max_allowed_better;
+}
+
+signed main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+    cout.tie(0);
+    
+    cin >> n >> m >> k;
+    for (int i = 0; i < n; ++i) {
+        cin >> a[i];
+    }
+    
+    // For each candidate, binary search on minimum X
+    for (int i = 0; i < n; ++i) {
+        int lo = 0, hi = k + 1;
+        while (lo < hi) {
+            int mid = (lo + hi) / 2;
+            if (is_possible(a[i], mid, i)) {
+                hi = mid;
+            } else {
+                lo = mid + 1;
+            }
+        }
+        
+        if (lo > k) {
+            cout << -1 << " ";
+        } else {
+            cout << lo << " ";
+        }
+    }
+    
+    return 0;
+}

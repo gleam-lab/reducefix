@@ -1,0 +1,33 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+  int n, k;
+  cin >> n >> k;
+  vector<int> A(n);
+  for (int i = 0; i < n; i++) {
+    cin >> A[i];
+  }
+
+  // Use a multiset to keep track of the minimum K elements for easy removal
+  multiset<int> S(A.begin(), A.end());
+  
+  // We are asked to remove K elements, so after removing K elements,
+  // the remaining elements should form the new sequence B.
+  // If we remove the smallest K elements, then the max and min of B will be
+  // the K-th smallest and the K+1-th smallest elements respectively.
+  
+  // Remove the smallest K elements
+  auto lit = S.lower_bound(A[k-1]); // K-th smallest element
+  S.erase(lit, S.end()); // Remove all elements from K-th smallest to the end
+  
+  // At this point, S contains at least K+1 elements (min elements).
+  // We need to find the min possible value of the max of B - min of B.
+  // This is simply the difference between the K-th smallest and the (K+1)-th smallest elements.
+  
+  // If there are not enough elements left to have both the K-th and K+1-th smallest,
+  // then we use the last two elements if K is even, or the last element and the second last element if K is odd.
+  int ans = *prev(S.end()) - *prev(prev(S.end()));
+  cout << ans << endl;
+  return 0;
+}

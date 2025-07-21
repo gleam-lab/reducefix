@@ -1,0 +1,58 @@
+#include <iostream>
+#include <vector>
+#include <map>
+#include <cmath>
+
+using namespace std;
+using ll = long long;
+
+int main() {
+    int n, q;
+    cin >> n >> q;
+
+    vector<ll> a(n);
+    for (ll &x : a) cin >> x;
+
+    vector<pair<ll, ll>> queries(q);
+    for (int i = 0; i < q; ++i) {
+        ll b, k;
+        cin >> b >> k;
+        queries[i] = {b, k};
+    }
+
+    // Sort points A to process them in order
+    sort(a.begin(), a.end());
+
+    // Create a map to count occurrences of each distance
+    map<ll, ll> distanceCount;
+    for (ll b : queries) {
+        for (ll a : a) {
+            distanceCount[abs(a - b)]++;
+        }
+    }
+
+    // Sort the keys of distanceCount to process them in ascending order
+    vector<ll> sortedDistances;
+    for (auto &p : distanceCount) {
+        sortedDistances.push_back(p.first);
+    }
+    sort(sortedDistances.begin(), sortedDistances.end());
+
+    // Answer each query
+    for (auto &query : queries) {
+        ll b = query.first;
+        ll k = query.second;
+        ll distance = 0;
+
+        // Find the k-th smallest distance
+        for (ll d : sortedDistances) {
+            distance += distanceCount[d];
+            if (distance >= k) {
+                cout << d * 2 << endl; // d is the one-side distance, we need to multiply by 2
+                break;
+            }
+        }
+    }
+
+    return 0;
+}

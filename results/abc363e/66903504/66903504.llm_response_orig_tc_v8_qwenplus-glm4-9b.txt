@@ -1,0 +1,104 @@
+
+The given problem is about simulating the process of the sea level rising and the land sinking over multiple years on an island. The island has an elevation map, and the process of sinking begins from the edges of the island. For each year, we need to compute the area of the island that remains above sea level. 
+
+Here are a few observations that can help us understand the problem better:
+
+1. **Edge Parts Sinking First**: The vertices at the edges (1st and last row, 1st and last column of the grid) will start sinking at the first year, as they are adjacent to the sea initially.
+2. **Domino Effect**: When a part of the island sinks, it can potentially cause its neighbors (vertically or horizontally) with equal or lower elevation to also sink. This can create a chain reaction that we need to simulate.
+3. **Efficiency Considerations**: Given the constraints, the problem can be quite large (up to 1,000,000,000 operations), so we need an efficient approach to handle the problem.
+
+From the code you provided, there are several issues that need to be addressed:
+
+- **Indexing**: `Q[y].push({i,j})` will always push into `Q[1]` because `y` (years) is not incremented inside the loop.
+- **Edge Cases**: The code doesn't handle the case where an already sunken section has an adjacent section that is only just now sinking because its neighbor sank.
+  
+To improve the code:
+
+1. **Use Proper Data Structures**: Instead of a 2D vector `F`, use a priority queue to manage sections that just sank, and only process new sections in `Q[y]` that are above or equal to the current sea level (`y`).
+2. **Efficiently Check Neighbors**: For each newly sunken section, we just need to check its four neighbors. If they are within the grid and haven't sunk yet, we need to determine if they will sink next based on their relative elevation.
+3. **Avoid Redundant Checks**: Keep track of sections that have been marked as sinking in the past to avoid redundant checks.
+
+Here's a basic outline of how you could approach the problem:
+
+```cpp
+#include <iostream>
+#include <vector>
+#include <queue>
+#include <algorithm>
+
+using namespace std;
+
+const int MAX_H = 1000;
+const int MAX_W = 1000;
+const int MAX_Y = 100000;
+const int MAX_A = 100000;
+
+int H, W, Y;
+vector<vector<int>> elevation(MAX_H, vector<int>(MAX_W));
+vector<vector<bool>> sunk(MAX_H, vector<bool>(MAX_W, false));
+
+struct Point {
+    int x, y;
+};
+
+void simulateSinking() {
+    queue<Point> q;
+    
+    // Start by flooding the edges
+    for (int i = 0; i < H; ++i) {
+        for (int j = 0; j < W; ++j) {
+            if (i == 0 || i == H - 1 || j == 0 || j == W - 1) {
+                q.push({i, j});
+                sunk[i][j] = true;
+            }
+        }
+    }
+
+    while (!q.empty()) {
+        Point current = q.front();
+        q.pop();
+        int currY = elevation[current.x][current.y];
+        
+        // Check neighbors
+        for (int dx = -1; dx <= 1; ++dx) {
+            for (int dy = -1; dy <= 1; ++dy) {
+                int nx = current.x + dx;
+                int ny = current.y + dy;
+                
+                if (nx >= 0 && nx < H && ny >= 0 && ny < W && !sunk[nx][ny] && elevation[nx][ny] <= currY + 1) {
+                    sunk[nx][ny] = true;
+                    q.push({nx, ny});
+                }
+            }
+        }
+    }
+}
+
+int main() {
+    cin >> H >> W >> Y;
+    
+    for (int i = 0; i < H; ++i) {
+        for (int j = 0; j < W; ++j) {
+            cin >> elevation[i][j];
+        }
+    }
+    
+    simulateSinking();
+    
+    for (int y = 1; y <= Y; ++y) {
+        int remainingArea = 0;
+        for (int i = 0; i < H; ++i) {
+            for (int j = 0; j < W; ++j) {
+                if (!sunk[i][j]) {
+                    remainingArea++;
+                }
+            }
+        }
+        cout << remainingArea << endl;
+    }
+    
+    return 0;
+}
+```
+
+This code is a starting point and might require further optimization depending on the specific requirements and constraints. The complexity of this approach is O(H * W * Y), which should be suitable for the given constraints, but the actual implementation may need to handle special cases and optimize certain operations.

@@ -1,0 +1,121 @@
+To fix this code, we need to ensure that all the squares that are under attack by any of the existing pieces are correctly identified and excluded from the count of safe squares. The original approach attempted to compute the number of unsafe squares by considering rows, columns, and diagonals separately, but it had issues in correctly accounting for overlaps and the intersections of these attack lines. 
+
+### Approaches
+1. **Rows and Columns**: First, we count the number of distinct rows and columns that are already occupied by existing pieces. Each occupied row and column contributes to the unsafe squares.
+2. **Diagonals**: We then consider the two types of diagonals:
+   - **Diagonal 1 (i - j = constant)**: This represents the diagonals where the difference between the row and column indices is constant.
+   - **Diagonal 2 (i + j = constant)**: This represents the diagonals where the sum of the row and column indices is constant.
+3. **Overlaps**: We need to account for squares that are counted multiple times (e.g., squares that lie at the intersection of an occupied row and column should not be double-counted).
+4. **Total Safe Squares**: The total safe squares are calculated by subtracting the unsafe squares from the total number of squares (N^2), while adjusting for overlaps.
+
+### Solution Code
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+
+int main() {
+    ll N, M;
+    cin >> N >> M;
+    vector<pair<ll, ll>> queens(M);
+    set<ll> rows, cols, diag1, diag2;
+    for (int i = 0; i < M; ++i) {
+        ll a, b;
+        cin >> a >> b;
+        queens[i] = {a, b};
+        rows.insert(a);
+        cols.insert(b);
+        diag1.insert(a - b);
+        diag2.insert(a + b);
+    }
+
+    ll unsafe = 0;
+
+    // Rows and columns
+    unsafe += rows.size() * N;
+    unsafe += cols.size() * N;
+    unsafe -= rows.size() * cols.size();
+
+    // Diagonals (i - j)
+    for (auto d : diag1) {
+        ll cnt;
+        if (d >= 0) {
+            cnt = N - d;
+        } else {
+            cnt = N + d;
+        }
+        unsafe += cnt;
+    }
+
+    // Diagonals (i + j)
+    for (auto s : diag2) {
+        ll cnt;
+        if (s <= N + 1) {
+            cnt = s - 1;
+        } else {
+            cnt = 2 * N - s + 1;
+        }
+        unsafe += cnt;
+    }
+
+    // Remove overlaps between rows/columns and diagonals
+    set<pair<ll, ll>> intersections;
+    for (auto q : queens) {
+        intersections.insert(q);
+    }
+    for (auto d : diag1) {
+        for (auto r : rows) {
+            ll c = r - d;
+            if (c >= 1 && c <= N) {
+                intersections.insert({r, c});
+            }
+        }
+        for (auto c : cols) {
+            ll r = c + d;
+            if (r >= 1 && r <= N) {
+                intersections.insert({r, c});
+            }
+        }
+    }
+    for (auto s : diag2) {
+        for (auto r : rows) {
+            ll c = s - r;
+            if (c >= 1 && c <= N) {
+                intersections.insert({r, c});
+            }
+        }
+        for (auto c : cols) {
+            ll r = s - c;
+            if (r >= 1 && r <= N) {
+                intersections.insert({r, c});
+            }
+        }
+        for (auto d : diag1) {
+            ll r = (s + d) / 2;
+            ll c = (s - d) / 2;
+            if ((s + d) % 2 == 0 && (s - d) % 2 == 0 && r >= 1 && r <= N && c >= 1 && c <= N) {
+                intersections.insert({r, c});
+            }
+        }
+    }
+    unsafe -= intersections.size();
+
+    ll total = N * N;
+    ll safe = total - unsafe;
+
+    cout << safe << endl;
+
+    return 0;
+}
+```
+
+### Explanation
+1. **Initialization**: We read the grid size `N` and the number of queens `M`. We store the positions of the queens and populate sets for occupied rows, columns, and the two types of diagonals.
+2. **Unsafe Squares Calculation**: 
+   - **Rows and Columns**: We add the total squares in occupied rows and columns, then subtract the overlaps where a square is in both an occupied row and column.
+   - **Diagonals (i - j)**: For each diagonal, we calculate the number of squares it covers based on whether the diagonal difference is positive or negative.
+   - **Diagonals (i + j)**: Similarly, for each diagonal sum, we calculate the number of squares it covers based on whether the sum is within the grid bounds.
+3. **Overlap Adjustment**: We account for squares that are counted multiple times by checking intersections between rows, columns, and diagonals, ensuring each unsafe square is only counted once.
+4. **Safe Squares Calculation**: Finally, we subtract the total unsafe squares from the total grid squares (N^2) to get the number of safe squares. The result is printed. 
+
+This approach efficiently handles the problem constraints and ensures correct results by carefully managing overlaps and intersections.

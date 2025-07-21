@@ -1,0 +1,82 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define int long long
+
+const int N = 2 * 100000 + 5;
+
+int n, m, k;
+int a[N], sorted_votes[N];
+int prefix_sum[N];
+
+// Check if giving 'x' additional votes to candidate i guarantees victory
+bool is_possible(int base, int add) {
+    int remaining = k - add;
+    if (remaining < 0) return false;
+
+    // We need to determine how many candidates can potentially get more votes than (base + add)
+    // Use binary search on the sorted list of current votes to find how many > base+add
+    int idx = lower_bound(sorted_votes + 1, sorted_votes + n + 1, base + add) - sorted_votes;
+
+    // Number of candidates who could potentially have more votes than (base + add)
+    int potential_better = n - idx + 1; // include current candidate itself
+
+    // To win, number of better candidates must be < M
+    // So we can allow at most (M - 1) candidates to beat us
+    if (potential_better <= m) return true;
+
+    // We need to raise the lowest (potential_better - (M - 1)) candidates to at least (base + add + 1)
+    int need_raise = potential_better - m + 1;
+    int l = n - need_raise + 1;
+    int r = n;
+
+    // Total cost to make these candidates at least (base + add + 1)
+    int total_cost = (base + add + 1) * need_raise - (prefix_sum[r] - prefix_sum[l - 1]);
+
+    return total_cost <= remaining;
+}
+
+signed main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    cout.tie(nullptr);
+
+    cin >> n >> m >> k;
+    for (int i = 1; i <= n; ++i) {
+        cin >> a[i];
+    }
+
+    // Copy and sort votes
+    for (int i = 1; i <= n; ++i) {
+        sorted_votes[i] = a[i];
+    }
+    sort(sorted_votes + 1, sorted_votes + n + 1);
+
+    // Precompute prefix sums
+    for (int i = 1; i <= n; ++i) {
+        prefix_sum[i] = prefix_sum[i - 1] + sorted_votes[i];
+    }
+
+    for (int i = 1; i <= n; ++i) {
+        int left = 0;
+        int right = k + 1;
+        int ans = -1;
+
+        while (left <= right) {
+            int mid = (left + right) / 2;
+            if (is_possible(a[i], mid)) {
+                ans = mid;
+                right = mid - 1;
+            } else {
+                left = mid + 1;
+            }
+        }
+
+        if (ans == -1) {
+            cout << "-1 ";
+        } else {
+            cout << ans << " ";
+        }
+    }
+
+    return 0;
+}

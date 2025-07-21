@@ -1,0 +1,45 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+using ll = long long;
+using Graph = vector<vector<int>>;
+
+// It's generally not recommended to use the '#define' for loop macros like 'rep' or 'reps'. 
+// These are already common C++ idioms, and defining them might lead to conflicts with other libraries.
+// Here we will just use regular for loops for simplicity.
+
+// int dx[4]={1,0,-1,0}; and int dy[4]={0,1,0,-1}; are not used in this code, so they can be removed.
+
+int main() {
+    int N; // Number of elements in the array X
+    cin >> N;
+    vector<ll> P(N + 1, 0); // Initialize P with 0's to avoid undefined behavior when adding prefix sums
+    vector<ll> X(N); // Array X to store the values
+    for (int i = 0; i < N; ++i) {
+        cin >> X[i]; // Read values into the array X
+        // Accumulate prefix sum for P. This is more efficient than using a separate loop.
+        if (i > 0) P[i + 1] = P[i] + X[i]; // Update P[i+1] with the prefix sum of X up to i
+    }
+    // Now P contains the prefix sums of X. We can use a map to quickly find the indices for a given value in X.
+    map<int, int> x_to_ptr; // Map to store the indices of elements in X as keys and their corresponding values as mapped objects
+    for (int i = 0; i < N; ++i) {
+        x_to_ptr[X[i]] = i; // Store the index in the map with the corresponding value in X
+    }
+    
+    // Now we can handle queries efficiently using the map.
+    int Q; // Number of queries
+    cin >> Q;
+    for (int q = 0; q < Q; ++q) { // Use regular for loop for clarity and simplicity.
+        int L, R; // Left and right bounds for the query range
+        cin >> L >> R; // Read the query bounds from input
+        // Use lower_bound and upper_bound to find indices for L and R in the map.
+        auto X_l_it = x_to_ptr.lower_bound(L); // Start of the range for L (or where it should be if not found)
+        auto X_r_it = x_to_ptr.upper_bound(R); // End of the range for R (or one before it if R is not found)
+        int l = (X_l_it != x_to_ptr.begin()) ? prev(X_l_it)->second : N; // If L is not found, l is set to N. Otherwise get previous element's index from the map.
+        int r = (X_r_it != x_to_ptr.end()) ? X_r_it->second : N - 1; // If R is at the end of the map, r is set to N-1 as it's the last element's index in the original array X. Otherwise get current element's index from the map.
+        // Now we can calculate and output the answer for this query.
+        ll ans = P[r + 1] - P[l]; // Use P[r+1] instead of P[r] to get the correct prefix sum range for query [L, R]. The "+1" is because we've initialized P with prefix sums ending at N+1 (due to 0-based indexing).
+        cout << ans << endl; // Output the answer for this query.
+    }
+    return 0; // Standard main function return value for successful completion. Not strictly necessary here as this is not a system call, but it's good practice.
+}

@@ -1,0 +1,34 @@
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+#define rep(i, n) for (ll i = 0; (i) < (n); ++(i))
+
+int main() {
+    int n;
+    cin >> n;
+    vector<ll> a(n);
+    rep(i, n) cin >> a[i];
+
+    if (n == 1) {
+        cout << a[0] << endl;
+        return 0;
+    }
+
+    // dp_odd[i]: max exp up to i-th mon, ending with odd number of defeats
+    // dp_even[i]: max exp up to i-th mon, ending with even number of defeats
+    vector<ll> dp_odd(n), dp_even(n);
+
+    dp_odd[0] = a[0];
+    dp_even[0] = 0;
+
+    dp_odd[1] = a[1];              // defeat second mon (odd count)
+    dp_even[1] = a[0] + 2 * a[1];  // use first and defeat second (even count)
+
+    for (int i = 2; i < n; ++i) {
+        dp_odd[i] = max(dp_even[i - 1] + a[i], dp_odd[i - 2] + 2 * a[i]);
+        dp_even[i] = max(dp_odd[i - 1] + 2 * a[i], dp_even[i - 2] + a[i]);
+    }
+
+    cout << max(dp_odd[n - 1], dp_even[n - 1]) << endl;
+    return 0;
+}

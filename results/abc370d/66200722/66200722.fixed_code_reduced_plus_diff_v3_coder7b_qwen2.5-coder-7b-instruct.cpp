@@ -1,0 +1,79 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+typedef long long ll;
+typedef pair<int, int> pii;
+typedef vector<int> vi;
+typedef vector<pii> vpii;
+typedef vector<vi> vvi;
+
+const int MAXN = 4e5 + 10;
+
+vector<int> par(MAXN);
+
+inline int find(int u) {
+    return par[u] == u ? u : par[u] = find(par[u]);
+}
+
+inline void unite(int u, int v) {
+    u = find(u), v = find(v);
+    if(u == v) return;
+    if(rand() & 1) swap(u, v);
+    par[v] = u;
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(NULL);
+    
+    int h, w, q;
+    cin >> h >> w >> q;
+    vector<vpii> adj(h);
+    
+    for(int i = 1; i <= h; i++) {
+        par[i] = i;
+        for(int j = 1; j <= w; j++) {
+            par[w * (i - 1) + j] = w * (i - 1) + j;
+            adj[i].emplace_back(j, w * (i - 1) + j);
+        }
+    }
+    
+    for(int i = 1; i <= h; i++) {
+        for(int j = 1; j <= w; j++) {
+            if(j > 1) unite(adj[i][j - 1].second, adj[i][j].second);
+            if(i > 1) unite(adj[i - 1][j].second, adj[i][j].second);
+        }
+    }
+    
+    while(q--) {
+        int x, y;
+        cin >> x >> y;
+        x--, y--;
+        
+        if(find(adj[x + 1][y + 1].second) == find(adj[x][y].second)) {
+            continue;
+        }
+        
+        if(find(adj[x + 1][y + 1].second) == find(adj[x + 1][y].second)) {
+            unite(adj[x + 1][y + 1].second, adj[x][y].second);
+        } else if(find(adj[x + 1][y + 1].second) == find(adj[x][y + 1].second)) {
+            unite(adj[x + 1][y + 1].second, adj[x][y].second);
+        } else {
+            int u = find(adj[x + 1][y + 1].second), v = find(adj[x][y].second);
+            if(u == v) continue;
+            if(rand() & 1) swap(u, v);
+            par[v] = u;
+        }
+    }
+    
+    set<int> s;
+    for(int i = 1; i <= h; i++) {
+        for(int j = 1; j <= w; j++) {
+            s.insert(find(adj[i][j].second));
+        }
+    }
+    
+    cout << s.size() << endl;
+    
+    return 0;
+}

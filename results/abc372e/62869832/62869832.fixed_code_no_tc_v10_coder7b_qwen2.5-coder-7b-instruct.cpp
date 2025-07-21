@@ -1,0 +1,86 @@
+#include<bits/stdc++.h>
+using namespace std;
+
+const int MAXN = 2e5 + 5;
+const int LOGN = 20;
+
+vector<int> adj[MAXN];
+int sz[MAXN], depth[MAXN];
+int up[MAXN][LOGN];
+
+void dfs(int node, int parent, int d) {
+    depth[node] = d;
+    up[node][0] = parent;
+    for (int i = 1; i < LOGN; ++i) {
+        if (up[node][i - 1] != -1) {
+            up[node][i] = up[up[node][i - 1]][i - 1];
+        } else {
+            up[node][i] = -1;
+        }
+    }
+    for (auto child : adj[node]) {
+        if (child == parent) continue;
+        dfs(child, node, d + 1);
+        sz[node] += sz[child];
+    }
+}
+
+int getLCA(int u, int v) {
+    if (depth[u] > depth[v]) swap(u, v);
+    int diff = depth[v] - depth[u];
+    for (int i = 0; i < LOGN; ++i) {
+        if ((diff >> i) & 1) {
+            v = up[v][i];
+        }
+    }
+    if (u == v) return u;
+    for (int i = LOGN - 1; i >= 0; --i) {
+        if (up[u][i] != up[v][i]) {
+            u = up[u][i];
+            v = up[v][i];
+        }
+    }
+    return up[u][0];
+}
+
+int queryKthParent(int node, int k) {
+    for (int i = 0; i < LOGN; ++i) {
+        if ((k >> i) & 1) {
+            node = up[node][i];
+        }
+    }
+    return node;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int n, q;
+    cin >> n >> q;
+    for (int i = 1; i <= n; ++i) sz[i] = 1;
+
+    for (int i = 0; i < n - 1; ++i) {
+        int u, v;
+        cin >> u >> v;
+        adj[u].push_back(v);
+        adj[v].push_back(u);
+    }
+
+    dfs(1, -1, 0);
+
+    while (q--) {
+        int type, u, k;
+        cin >> type >> u >> k;
+        if (type == 1) {
+            // No need to do anything as we already build the tree in DFS
+        } else {
+            int lca = getLCA(u, 1); // Assuming 1 is the root
+            int dist_u_lca = depth[u] - depth[lca];
+            int target_node = queryKthParent(lca, dist_u_lca + k - 1);
+            cout << target_node << "\n";
+        }
+    }
+
+    return 0;
+}

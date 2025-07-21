@@ -1,0 +1,64 @@
+#include <algorithm>
+#include <iostream>
+#include <cstdio>
+#include <vector>
+using namespace std;
+
+struct Edge {
+    int to;
+};
+
+vector<Edge> graph[200001];
+int n, m, ans[200001];
+vector<int> edges;
+
+inline int read() {
+    int res = 0;
+    char c = getchar();
+    while (c < '0' || c > '9') {
+        c = getchar();
+    }
+    while (c >= '0' && c <= '9') {
+        res = (res * 10) + (c - '0');
+        c = getchar();
+    }
+    return res;
+}
+
+void addEdge(int u, int v) {
+    graph[u].push_back({v});
+    graph[v].push_back({u});
+}
+
+void dfs(int node, int depth) {
+    ans[node] = min(ans[node], depth);
+    for (const auto& edge : graph[node]) {
+        int to = edge.to;
+        if (ans[to] > depth + 1) {
+            dfs(to, depth + 1);
+            ans[node] = min(ans[node], ans[to]);
+        }
+    }
+}
+
+int main() {
+    n = read();
+    m = read();
+    for (int i = 1; i <= n; ++i) ans[i] = 100000000;
+    for (int i = 1, u, v; i <= m; ++i) {
+        u = read();
+        v = read();
+        addEdge(u, v);
+        edges.push_back(u);
+        edges.push_back(v);
+    }
+
+    // To find the start node, we can check for the node with the most connections
+    int startNode = *max_element(edges.begin(), edges.end());
+
+    dfs(startNode, 0);
+
+    if (ans[1] == 100000000) printf("-1");
+    else printf("%d", ans[1]);
+    return 0;
+}

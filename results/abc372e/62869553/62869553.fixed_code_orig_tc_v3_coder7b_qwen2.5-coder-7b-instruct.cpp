@@ -1,0 +1,53 @@
+#include<bits/stdc++.h>
+using namespace std;
+
+const int MAXN = 2 * 1e5 + 5;
+vector<int> adj[MAXN];
+priority_queue<int, vector<int>, greater<int>> pq[MAXN];
+
+void addEdge(int u, int v){
+    adj[u].push_back(v);
+    adj[v].push_back(u);
+}
+
+void dfs(int node, int parent){
+    for(auto child : adj[node]){
+        if(child == parent) continue;
+        dfs(child, node);
+        while(!pq[child].empty() && pq[child].size() > 10){
+            pq[node].push(pq[child].top());
+            pq[child].pop();
+        }
+        while(!pq[node].empty()){
+            pq[child].push(pq[node].top());
+            pq[node].pop();
+        }
+    }
+}
+
+int main(){
+    ios_base::sync_with_stdio(false); cin.tie(NULL);
+    int n, q;
+    cin >> n >> q;
+    for(int i = 1; i <= n-1; i++){
+        int u, v;
+        cin >> u >> v;
+        addEdge(u, v);
+    }
+    dfs(1, 0);
+    for(int i = 0; i < q; i++){
+        int type, v, k;
+        cin >> type >> v >> k;
+        if(type == 1){
+            cout << -1 << '\n';
+        } else {
+            if(k > pq[v].size()) cout << -1 << '\n';
+            else{
+                auto t = pq[v];
+                while(--k) t.pop();
+                cout << t.top() << '\n';
+            }
+        }
+    }
+    return 0;
+}

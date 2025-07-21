@@ -1,0 +1,40 @@
+#include<bits/stdc++.h>
+using namespace std;
+
+typedef long long ll;
+const int N = 1e6 + 5;
+
+int n, m;
+ll sum;
+int a[2*N], d[2*N], cnt[N];
+
+int main() {
+    ios::sync_with_stdio(0);
+    cin.tie(0); cout.tie(0);
+
+    cin >> n >> m;
+    for(int i = 0; i < n; i++) {
+        cin >> a[i];
+        a[i + n] = a[i]; // Duplicate array for circular handling
+    }
+
+    // Prefix sum modulo m count
+    cnt[0] = 1; // Initial prefix mod 0
+
+    for(int i = 0; i < 2*n; i++) {
+        d[i] = (i == 0) ? a[i] : d[i-1] + a[i];
+        int mod = ((d[i] % m) + m) % m; // Handle negative mods
+        if(i < n)
+            sum += cnt[mod]; // Count valid subarrays ending at i
+        if(i < n)
+            cnt[mod]++;
+        else {
+            // Remove the count from the beginning after window slides past n
+            int rem_mod = ((d[i-n] % m) + m) % m;
+            cnt[rem_mod]--;
+        }
+    }
+
+    cout << sum << endl;
+    return 0;
+}

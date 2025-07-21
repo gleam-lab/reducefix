@@ -1,0 +1,104 @@
+
+### Problem Analysis
+
+The problem involves simulating the gradual flooding of an island represented as a grid, where each cell has a specific elevation. The sea level rises by one unit each year, and cells that are adjacent to the sea or that sink (because their elevation is less than or equal to the sea level) will flood. The task is to determine the area of the island that remains above the sea level for each year over a given number of years.
+
+### Solution Strategy
+
+The solution involves simulating the flooding process year by year. However, a direct simulation for each year up to the maximum given (100,000 years) would be computationally expensive. Instead, we can use a more efficient approach:
+
+1. **Initial Setup**: Start by reading the grid dimensions, the number of years, and the elevation data.
+2. **Priority Queue**: Use a priority queue to manage cells that are at risk of flooding. This queue will store cells based on their elevation.
+3. **Simulation Loop**:
+   - Each year, determine the new sea level.
+   - Use the priority queue to flood cells starting from the lowest elevation.
+   - Adjust the priority queue to reflect the flooded cells and update our tracking of the flooded area.
+   - Calculate the remaining dry land area by subtracting the flooded area from the total area.
+
+### Implementation Steps
+
+1. Parse the input to get the dimensions of the island and the elevation data.
+2. Initialize the priority queue and add all boundary cells (those adjacent to the edges of the grid) to the queue.
+3. Initialize a visited matrix to keep track of which cells have been flooded.
+4. For each year up to the specified years:
+   - Determine the new sea level.
+   - Flood cells starting from the lowest elevation in the priority queue.
+   - Update the priority queue to reflect the new state of the island.
+   - Calculate the remaining dry land area and store or print it.
+
+### Code Implementation
+
+```cpp
+#include <iostream>
+#include <vector>
+#include <queue>
+#include <algorithm>
+
+using namespace std;
+
+struct Cell {
+    int h, x, y;
+    bool operator<(const Cell& c) const {
+        return h < c.h;
+    }
+};
+
+int main() {
+    int H, W, Y;
+    cin >> H >> W >> Y;
+    
+    vector<vector<int>> grid(H, vector<int>(W));
+    for (int i = 0; i < H; ++i) {
+        for (int j = 0; j < W; ++j) {
+            cin >> grid[i][j];
+        }
+    }
+    
+    priority_queue<Cell, vector<Cell>, greater<Cell>> pq;
+    vector<vector<int>> visited(H, vector<int>(W, 0));
+
+    // Initialize the priority queue with boundary cells
+    for (int i = 0; i < W; ++i) {
+        if (visited[0][i]) continue;
+        pq.push({grid[0][i], 0, i});
+        visited[0][i] = 1;
+
+        if (visited[H-1][i]) continue;
+        pq.push({grid[H-1][i], H-1, i});
+        visited[H-1][i] = 1;
+    }
+    
+    for (int i = 1; i < H-1; ++i) {
+        if (visited[i][0]) continue;
+        pq.push({grid[i][0], i, 0});
+        visited[i][0] = 1;
+
+        if (visited[i][W-1]) continue;
+        pq.push({grid[i][W-1], i, W-1});
+        visited[i][W-1] = 1;
+    }
+
+    int remainingArea = H * W;
+    while (!pq.empty()) {
+        Cell c = pq.top(); pq.pop();
+        if (c.h < Y) {
+            remainingArea--;
+            int x = c.x, y = c.y;
+            for (int dx = -1; dx <= 1; ++dx) {
+                for (int dy = -1; dy <= 1; ++dy) {
+                    int nx = x + dx, ny = y + dy;
+                    if (nx >= 0 && nx < H && ny >= 0 && ny < W && !visited[nx][ny] && grid[nx][ny] <= Y) {
+                        pq.push({grid[nx][ny], nx, ny});
+                        visited[nx][ny] = 1;
+                    }
+                }
+            }
+        }
+    }
+
+    cout << remainingArea << '\n';
+    return 0;
+}
+```
+
+This code initializes the simulation by adding all boundary cells to the priority queue, then iteratively floods the island each year according to the new sea level. The area of the remaining dry land is calculated and printed for each year up to the specified number of years.

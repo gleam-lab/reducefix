@@ -1,0 +1,83 @@
+To fix this code, we need to address a few key issues:
+1. **Initialization of the Queue**: The original code only initializes the queue for border cells (edges of the grid) but doesn't properly handle the sinking of inner cells. This leads to incorrect sinking propagation.
+2. **Handling of Multiple Sea Levels**: The original code uses a separate queue for each sea level, which is inefficient and doesn't correctly propagate the sinking process for cells that should sink at different sea levels.
+3. **Efficiency**: The original approach may not efficiently handle the large constraints, especially with Y up to 10^5.
+
+### Approaches
+1. **Priority Queue for Sinking Order**: We can use a priority queue (min-heap) to process cells in order of their elevation. This ensures that when the sea level reaches a certain height, all cells at or below that height are processed.
+2. **BFS for Sinking Propagation**: For each cell processed, we check its neighbors. If a neighbor's elevation is not greater than the current sea level, it also sinks, and we propagate this sinking to its neighbors.
+3. **Tracking Sunk Cells**: We maintain a visited matrix to keep track of cells that have already sunk, preventing reprocessing and ensuring efficiency.
+
+### Solution Code
+```cpp
+#include <bits/stdc++.h>
+
+using namespace std;
+
+constexpr int dx[] = {-1, 1, 0, 0};
+constexpr int dy[] = {0, 0, -1, 1};
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int H, W, Y;
+    cin >> H >> W >> Y;
+
+    vector<vector<int>> A(H, vector<int>(W));
+    for (int i = 0; i < H; i++) {
+        for (int j = 0; j < W; j++) {
+            cin >> A[i][j];
+        }
+    }
+
+    priority_queue<pair<int, pair<int, int>>, vector<pair<int, pair<int, int>>>, greater<pair<int, pair<int, int>>>> pq;
+    vector<vector<bool>> sunk(H, vector<bool>(W, false));
+    int ans = H * W;
+
+    for (int i = 0; i < H; i++) {
+        for (int j = 0; j < W; j++) {
+            if (i == 0 || i == H - 1 || j == 0 || j == W - 1) {
+                pq.push({A[i][j], {i, j}});
+                sunk[i][j] = true;
+            }
+        }
+    }
+
+    for (int year = 1; year <= Y; year++) {
+        while (!pq.empty() && pq.top().first <= year) {
+            auto current = pq.top();
+            pq.pop();
+            ans--;
+
+            int x = current.second.first;
+            int y = current.second.second;
+
+            for (int d = 0; d < 4; d++) {
+                int nx = x + dx[d];
+                int ny = y + dy[d];
+
+                if (nx < 0 || nx >= H || ny < 0 || ny >= W) {
+                    continue;
+                }
+
+                if (!sunk[nx][ny]) {
+                    sunk[nx][ny] = true;
+                    pq.push({A[nx][ny], {nx, ny}});
+                }
+            }
+        }
+        cout << ans << '\n';
+    }
+
+    return 0;
+}
+```
+
+### Explanation
+1. **Initialization**: We start by reading the grid dimensions, the number of years, and the elevation data.
+2. **Priority Queue Setup**: We initialize a priority queue (min-heap) to process cells in order of their elevation. Border cells (edges of the grid) are initially added to the queue and marked as sunk.
+3. **Processing Sinking**: For each year, we process all cells in the priority queue that have elevations not greater than the current sea level. For each processed cell, we decrement the remaining island area and propagate the sinking to its neighbors if they meet the elevation condition.
+4. **Output**: After processing each year, the remaining island area is printed.
+
+This approach ensures that cells are processed in the correct order (by elevation) and that sinking propagates efficiently through the grid, providing the correct remaining island area for each year.

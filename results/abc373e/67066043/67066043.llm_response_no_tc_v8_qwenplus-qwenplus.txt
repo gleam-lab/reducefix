@@ -1,0 +1,82 @@
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+#define all(x) (x).begin(), (x).end()
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int N, M;
+    ll K;
+    cin >> N >> M >> K;
+    vector<ll> A(N);
+    for (int i = 0; i < N; ++i) {
+        cin >> A[i];
+        K -= A[i];
+    }
+
+    // ord[i] gives the original index of the candidate with i-th smallest votes
+    vector<int> ord(N);
+    iota(all(ord), 0);
+    sort(all(ord), [&](int x, int y) { return A[x] < A[y]; });
+
+    vector<ll> sorted_A = A;
+    sort(all(sorted_A));
+
+    vector<ll> prefix_sum(N + 1, 0);
+    for (int i = 0; i < N; ++i) {
+        prefix_sum[i + 1] = prefix_sum[i] + sorted_A[i];
+    }
+
+    vector<ll> result(N, -1);
+
+    for (int idx = 0; idx < N; ++idx) {
+        ll low = 0;
+        ll high = K;
+        ll answer = -1;
+
+        while (low <= high) {
+            ll mid = (low + high) / 2;
+            ll new_vote_count = sorted_A[idx] + mid;
+
+            // Binary search to find how many candidates can have >= new_vote_count
+            int right = lower_bound(sorted_A.begin(), sorted_A.end(), new_vote_count) - sorted_A.begin();
+            int left = max(0, N - M);
+
+            // Check if current candidate is in this range
+            bool is_in_top_m = (ord[idx] >= N - M);
+
+            ll required = 0;
+            if (right <= idx && idx < left) {
+                // This means even after adding `mid` votes, not enough to be in top M
+                required = mid + 1; // Need more than mid
+            } else {
+                // Calculate how many votes needed to raise all from [left, right) to new_vote_count
+                required = (new_vote_count * (left - right)) - (prefix_sum[left] - prefix_sum[right]);
+                // If current candidate is already in the group and we added `mid` votes, don't double count
+                if (!(right <= idx && idx < left)) {
+                    required += mid;
+                }
+            }
+
+            if (required <= K) {
+                answer = mid;
+                high = mid - 1;
+            } else {
+                low = mid + 1;
+            }
+        }
+
+        result[ord[idx]] = (answer == -1 ? -1 : answer);
+    }
+
+    for (int i = 0; i < N; ++i) {
+        if (result[i] == -1) cout << -1 << " ";
+        else cout << max(0LL, result[i]) << " ";
+    }
+    cout << endl;
+
+    return 0;
+}
+```

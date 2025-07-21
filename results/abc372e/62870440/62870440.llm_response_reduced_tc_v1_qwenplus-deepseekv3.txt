@@ -1,0 +1,81 @@
+To fix this code, we need to address the incorrect handling of the union-find data structure and the maintenance of the k-th largest elements in each connected component. The original code attempts to keep the top k elements in an array, but it fails to correctly merge and sort these arrays during union operations.
+
+### Approaches
+1. **Union-Find Data Structure**: We'll use the union-find (disjoint set) data structure to efficiently manage the connected components of the graph. Each component will be represented by its root, and we'll use path compression and union by size to optimize operations.
+
+2. **Maintaining Sorted Lists**: For each component, we'll maintain a sorted list (in descending order) of the vertex numbers. Since k is at most 10, we only need to keep the top 10 elements for each component. When two components are merged, we'll merge their sorted lists and keep only the top 10 elements.
+
+3. **Handling Queries**: For type 2 queries, we'll check if the component of the given vertex has at least k elements. If it does, we'll return the k-th largest element (1-based index); otherwise, we'll return -1.
+
+### Solution Code
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+const int MAXN = 2e5 + 5;
+const int MAXK = 10;
+
+int parent[MAXN];
+int size[MAXN];
+vector<int> top[MAXN];
+
+int find(int u) {
+    if (parent[u] != u) {
+        parent[u] = find(parent[u]);
+    }
+    return parent[u];
+}
+
+void unite(int u, int v) {
+    u = find(u);
+    v = find(v);
+    if (u == v) return;
+    if (size[u] < size[v]) swap(u, v);
+    parent[v] = u;
+    size[u] += size[v];
+    vector<int> merged;
+    merge(top[u].begin(), top[u].end(), top[v].begin(), top[v].end(), back_inserter(merged), greater<int>());
+    if (merged.size() > MAXK) merged.resize(MAXK);
+    top[u] = merged;
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int N, Q;
+    cin >> N >> Q;
+    
+    for (int i = 1; i <= N; ++i) {
+        parent[i] = i;
+        size[i] = 1;
+        top[i] = {i};
+    }
+    
+    while (Q--) {
+        int op, u, v;
+        cin >> op >> u >> v;
+        if (op == 1) {
+            unite(u, v);
+        } else {
+            int root = find(u);
+            if (top[root].size() < v) {
+                cout << "-1\n";
+            } else {
+                cout << top[root][v - 1] << "\n";
+            }
+        }
+    }
+    
+    return 0;
+}
+```
+
+### Explanation
+1. **Initialization**: We initialize the parent array for the union-find structure, the size array to keep track of component sizes, and the top array to store the top 10 elements for each component. Each component initially contains only its own vertex.
+
+2. **Union Operation**: The `unite` function merges two components. It finds the roots of the components, merges the smaller component into the larger one (union by size), and combines their top lists. The merged list is sorted in descending order and truncated to keep only the top 10 elements.
+
+3. **Query Handling**: For a type 2 query, we find the root of the component containing the vertex. If the component's top list has at least `k` elements, we output the k-th largest element (adjusted for 0-based indexing); otherwise, we output -1.
+
+This approach ensures efficient handling of both union and query operations, with each union operation taking O(MAXK log MAXK) time due to merging and sorting the top lists, and each query operation taking O(1) time after the root is found. The overall complexity is O(Q α(N)) for the union-find operations, where α is the inverse Ackermann function, making it nearly constant time per operation.

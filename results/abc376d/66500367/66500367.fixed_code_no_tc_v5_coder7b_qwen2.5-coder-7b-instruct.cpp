@@ -1,0 +1,59 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+using ll = long long;
+using pii = pair <int, int>;
+
+const int N = 2e5 + 5;
+vector <int> g[N];
+int n, m, dep[N], parent[N];
+
+bool dfs(int u, int p) {
+    parent[u] = p;
+    dep[u] = dep[p] + 1;
+    for (auto v : g[u]) {
+        if (v == p) continue; // Skip the parent node
+        if (dep[v]) { // If already visited, check if it's in the current path
+            return true;
+        }
+        if (dfs(v, u)) return true;
+    }
+    return false;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    cout.tie(nullptr);
+
+    cin >> n >> m;
+    for (int i = 1; i <= m; i++) {
+        int u, v;
+        cin >> u >> v;
+        g[u].push_back(v);
+    }
+
+    bool found_cycle = false;
+    for (int i = 1; i <= n; i++) {
+        if (!dep[i] && dfs(i, -1)) {
+            found_cycle = true;
+            break;
+        }
+    }
+
+    if (!found_cycle) {
+        cout << "-1\n";
+        return 0;
+    }
+
+    int min_edges = INT_MAX;
+    for (int i = 1; i <= n; i++) {
+        if (dep[i] > 0) {
+            int cycle_length = dep[i] + 1;
+            min_edges = min(min_edges, cycle_length);
+        }
+    }
+
+    cout << min_edges << '\n';
+    return 0;
+}

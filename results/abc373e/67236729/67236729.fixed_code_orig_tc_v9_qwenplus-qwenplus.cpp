@@ -1,0 +1,64 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+using i64 = long long;
+const int INF = 1e9 + 5;
+
+void solve() {
+    int N, M;
+    i64 K;
+    cin >> N >> M >> K;
+    vector<i64> A(N);
+    for (auto &x : A) cin >> x;
+
+    // If there are M or more candidates with strictly higher votes than current candidate, current candidate loses
+    // For each candidate, we want to find the minimum X such that even if remaining votes are distributed to maximize others,
+    // this candidate still has fewer than M candidates above them
+
+    // To compute this efficiently:
+    // For candidate i:
+    // - We add X votes to A[i]
+    // - We can allow up to M-1 other candidates to have >= A[i]+X+1 votes
+    // - So we need to ensure that at least (N-M) candidates have <= A[i]+X votes
+    // Strategy: binary search on X
+
+    auto B = A; // Copy for sorting
+    sort(B.begin(), B.end());
+
+    for (int i = 0; i < N; ++i) {
+        i64 ai = A[i];
+        int idx = distance(B.begin(), upper_bound(B.begin(), B.end(), ai));
+        // How many candidates currently have > ai votes
+        int cnt = N - idx;
+        if (cnt < M) {
+            cout << "0 ";
+            continue;
+        }
+
+        // Binary search for minimal X that makes candidate i win
+        i64 lo = 0, hi = K + 1;
+        while (lo < hi) {
+            i64 mid = (lo + hi) / 2;
+            i64 target = ai + mid;
+            // Find how many candidates could have > target votes
+            int can_exceed = N - (upper_bound(B.begin(), B.end(), target) - B.begin());
+            if (can_exceed < M) {
+                hi = mid;
+            } else {
+                lo = mid + 1;
+            }
+        }
+
+        if (lo > K) {
+            cout << "-1 ";
+        } else {
+            cout << lo << " ";
+        }
+    }
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    solve();
+}

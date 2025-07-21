@@ -1,0 +1,52 @@
+#include<bits/stdc++.h>
+
+using namespace std;
+
+int main() {
+    int N;
+    cin >> N;
+    vector<long long> H(N);
+    for (int i = 0; i < N; i++) {
+        cin >> H[i];
+    }
+
+    long long T = 0;
+    for (int i = 0; i < N; i++) {
+        // Calculate how many full attack cycles we can apply: each cycle is 3 attacks -> 5 damage
+        long long full_cycles = H[i] / 5;
+        long long remaining_health = H[i] % 5;
+
+        T += full_cycles * 3;
+
+        if (remaining_health > 0) {
+            // We need to perform additional attacks after full cycles
+            if (T % 3 == 0) {
+                // If T is multiple of 3, next attack does 3 damage
+                if (remaining_health <= 3) {
+                    T++;
+                } else {
+                    // Need two attacks: 3 + 1 or 1 + 3 depending on timing
+                    T += 2;
+                }
+            } else {
+                // T not a multiple of 3, first extra attack does 1 damage
+                long long needed_attacks = 0;
+                long long time = T;
+                long long health = remaining_health;
+                while (health > 0) {
+                    if (time % 3 == 0) {
+                        health -= 3;
+                    } else {
+                        health -= 1;
+                    }
+                    time++;
+                    needed_attacks++;
+                }
+                T += needed_attacks;
+            }
+        }
+    }
+
+    cout << T << endl;
+    return 0;
+}

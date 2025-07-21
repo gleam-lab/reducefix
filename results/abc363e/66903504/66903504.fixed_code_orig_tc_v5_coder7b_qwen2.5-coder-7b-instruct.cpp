@@ -1,0 +1,49 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+const int MAXN = 1010;
+int h, w, y;
+vector<vector<int>> A(MAXN, vector<int>(MAXN)), vis(MAXN, vector<int>(MAXN));
+
+int dx[] = {0, 0, 1, -1}, dy[] = {1, -1, 0, 0};
+
+void bfs(int s) {
+    queue<pair<int, int>> q;
+    for (int i = 0; i < h; ++i) 
+        for (int j = 0; j < w; ++j) 
+            if (A[i][j] <= s && !vis[i][j]) {
+                q.push({i, j});
+                vis[i][j] = 1;
+            }
+    while (!q.empty()) {
+        int x = q.front().first, y = q.front().second;
+        q.pop();
+        for (int k = 0; k < 4; ++k) {
+            int nx = x + dx[k], ny = y + dy[k];
+            if (nx >= 0 && nx < h && ny >= 0 && ny < w && !vis[nx][ny] && A[nx][ny] <= s) {
+                vis[nx][ny] = 1;
+                q.push({nx, ny});
+            }
+        }
+    }
+}
+
+int main() {
+    ios_base::sync_with_stdio(false); cin.tie(0);
+    cin >> h >> w >> y;
+    for (int i = 0; i < h; ++i) 
+        for (int j = 0; j < w; ++j) 
+            cin >> A[i][j];
+
+    for (int s = 1; s <= y; ++s) {
+        memset(vis, 0, sizeof(vis));
+        bfs(s);
+        int cnt = 0;
+        for (int i = 0; i < h; ++i) 
+            for (int j = 0; j < w; ++j) 
+                if (!vis[i][j])
+                    ++cnt;
+        cout << cnt << '\n';
+    }
+    return 0;
+}

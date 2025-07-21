@@ -1,0 +1,80 @@
+I analyzed the failing case and identified the issue. The problem is with how the lower and upper bounds are being used to determine the range of indices to sum. The current implementation incorrectly handles the case where the lower bound doesn't exist (L is larger than all X values) or when the upper bound returns the first element greater than R, which might not be what we want.
+
+Here's the corrected code that properly handles all cases:
+
+```cpp
+#include <bits/stdc++.h>
+
+using namespace std;
+using ll=long long;
+using Graph = vector<vector<int>>;
+
+#define rep(i,n) for (int i=0; i<(n); ++i)
+#define reps(i,n) for (int i=0; i<=(n); ++i)
+#define all(x) (x).begin(), (x).end()
+#define rall(x) (x).rbegin(), (x).rend()
+#define pb(a) push_back(a)
+#define Yes(b) cout << ((b)?"Yes":"No") << endl
+#define YES(b) cout << ((b)?"YES":"NO") << endl
+
+int dx[4]={1,0,-1,0};
+int dy[4]={0,1,0,-1};
+
+int main(){
+    int N;
+    cin >> N;
+    vector<ll> P(N+1), X(N);
+    P[0] = 0;
+    rep(i, N) cin >> X[i];
+    rep(i, N){
+        int p;
+        cin >> p;
+        P[i+1] = P[i] + p;
+    }
+    map<int, int> x_to_ptr;
+    rep(i, N){
+        x_to_ptr.emplace(X[i], i);
+    }
+
+    int Q;
+    cin >> Q;
+    rep(q, Q){
+        int L, R;
+        cin >> L >> R;
+        auto X_l = x_to_ptr.lower_bound(L);
+        auto X_r = x_to_ptr.upper_bound(R);
+        
+        int l, r;
+        if (X_l == x_to_ptr.begin() && X_l == x_to_ptr.end()){
+            // All X[i] are outside the range
+            l = N;
+            r = 0;
+        } else if (X_l == x_to_ptr.end()){
+            // All X[i] are < L
+            l = N;
+            r = N;
+        } else {
+            l = (*X_l).second;
+            if (X_r == x_to_ptr.begin()){
+                // All X[i] are > R
+                r = 0;
+            } else if (X_r == x_to_ptr.end()){
+                // All X[i] are <= R
+                r = N;
+            } else {
+                r = (*X_r).second;
+            }
+        }
+        ll ans = P[r] - P[l];
+        cout << ans << endl;
+    }
+}
+```
+
+Key changes made:
+1. Properly handled cases where all X values are outside the query range (either all < L or all > R)
+2. Correctly determined the boundaries for summation using lower_bound and upper_bound
+3. Fixed the logic for determining 'r' to properly handle cases where X_r is at the beginning or end of the map
+4. Used proper integer types to avoid overflow (though in this specific case, the issue was with the range calculation rather than overflow)
+
+The solution now correctly computes the sum of probabilities for the given range queries, handling all edge cases properly. The complexity remains O(N log N) for preprocessing and O(log N) per query, which is efficient enough for typical problem constraints.

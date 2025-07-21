@@ -1,0 +1,83 @@
+The original code attempts to solve the problem by using a binary search approach on a frequency array to find the k-th closest point. However, it has several issues:
+
+1. **Memory Usage:** The array `a[N]` is declared with size `2e8 + 5`, which is unnecessarily large and will cause memory issues (around 800MB for `int` type).
+
+2. **Algorithmic Approach:** The method of counting frequencies and using prefix sums is not suitable for this problem. The problem requires finding the k-th smallest distance from a query point to all points in A, which involves sorting distances for each query, making the approach inefficient for large N and Q.
+
+3. **Binary Search Logic:** The `check` function and binary search logic are incorrectly implemented for the problem's requirements.
+
+### Correct Approach
+To efficiently solve this problem, we should:
+1. Sort the array `A` to allow binary search operations.
+2. For each query point `B_j`, use binary search to find the range of points in `A` that are closest to `B_j`.
+3. Use a two-pointer technique or another binary search to find the k-th closest point.
+
+### Fixed Code
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+typedef long long ll;
+
+int main() {
+    ios::sync_with_stdio(0), cin.tie(0), cout.tie(0);
+    int N, Q;
+    cin >> N >> Q;
+    vector<ll> A(N);
+    for (int i = 0; i < N; ++i) {
+        cin >> A[i];
+    }
+    sort(A.begin(), A.end());
+    
+    while (Q--) {
+        ll b;
+        int k;
+        cin >> b >> k;
+        
+        int left = 0, right = N - 1;
+        int res = 0;
+        
+        // Binary search to find the k-th closest point
+        // We can find the smallest distance such that there are at least k points <= b + distance
+        // and at least (N - k + 1) points >= b - distance
+        
+        ll low = 0, high = 2e14;
+        ll answer = 0;
+        while (low <= high) {
+            ll mid = (low + high) / 2;
+            
+            // Count number of points in [b - mid, b + mid]
+            auto it_low = lower_bound(A.begin(), A.end(), b - mid);
+            auto it_high = upper_bound(A.begin(), A.end(), b + mid);
+            int count = it_high - it_low;
+            
+            if (count >= k) {
+                answer = mid;
+                high = mid - 1;
+            } else {
+                low = mid + 1;
+            }
+        }
+        
+        // Now, find the k-th smallest distance
+        vector<ll> distances;
+        auto it_low = lower_bound(A.begin(), A.end(), b - answer);
+        auto it_high = upper_bound(A.begin(), A.end(), b + answer);
+        for (auto it = it_low; it != it_high; ++it) {
+            distances.push_back(abs(b - *it));
+        }
+        sort(distances.begin(), distances.end());
+        
+        cout << distances[k - 1] << "\n";
+    }
+    
+    return 0;
+}
+```
+
+### Explanation
+1. **Sorting:** The array `A` is sorted to facilitate binary search operations.
+2. **Binary Search for Range:** For each query point `b`, we perform a binary search to find the minimal distance `mid` such that there are at least `k` points within the range `[b - mid, b + mid]`.
+3. **Distance Calculation:** Once the range is identified, we collect all points within this range, compute their distances to `b`, sort these distances, and pick the k-th smallest one.
+
+This approach ensures that we efficiently handle each query in logarithmic time relative to the range of possible distances, making it suitable for large input sizes.

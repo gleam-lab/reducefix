@@ -1,0 +1,69 @@
+To solve this problem correctly, we need to find the **minimum possible value of (max - min)** of a subsequence `B` formed by removing exactly `K` elements from an array `A` of length `N`.
+
+### Key Observations:
+
+- We are allowed to remove any `K` elements, so our goal is to **choose which K elements to remove** such that the resulting sequence has the **smallest difference between its maximum and minimum values**.
+- Since the order of remaining elements must be preserved, we can't sort the entire array and just pick a window — we must maintain original order.
+
+### Efficient Strategy:
+1. We want to consider all windows of size `N-K` in the array while preserving order.
+2. For each such window, compute the max and min, and track the minimal `(max - min)`.
+3. The naive approach would be O(N^2), which is too slow for large inputs (`N <= 2e5`).
+4. Instead, use a **sliding window with two heaps** or a **monotonic deque approach** to keep track of min and max in O(1) per step.
+
+We'll implement a **sliding window using two deques** to efficiently maintain the min and max over each window of size `N-K`.
+
+Here's the correct implementation:
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    int n, k;
+    cin >> n >> k;
+    vector<int> A(n);
+    for (int i = 0; i < n; ++i) {
+        cin >> A[i];
+    }
+
+    int windowSize = n - k;
+    deque<int> minDeque, maxDeque;
+    int result = INT_MAX;
+
+    // Initialize first window
+    for (int i = 0; i < windowSize; ++i) {
+        while (!minDeque.empty() && A[i] <= A[minDeque.back()])
+            minDeque.pop_back();
+        while (!maxDeque.empty() && A[i] >= A[maxDeque.back()])
+            maxDeque.pop_back();
+        minDeque.push_back(i);
+        maxDeque.push_back(i);
+    }
+
+    result = A[maxDeque.front()] - A[minDeque.front()];
+
+    // Slide the window
+    for (int i = windowSize; i < n; ++i) {
+        // Remove elements outside the window
+        while (!minDeque.empty() && minDeque.front() <= i - windowSize)
+            minDeque.pop_front();
+        while (!maxDeque.empty() && maxDeque.front() <= i - windowSize)
+            maxDeque.pop_front();
+
+        // Add current element to deques
+        while (!minDeque.empty() && A[i] <= A[minDeque.back()])
+            minDeque.pop_back();
+        while (!maxDeque.empty() && A[i] >= A[maxDeque.back()])
+            maxDeque.pop_back();
+        
+        minDeque.push_back(i);
+        maxDeque.push_back(i);
+
+        result = min(result, A[maxDeque.front()] - A[minDeque.front()]);
+    }
+
+    cout << result << endl;
+    return 0;
+}
+```

@@ -1,0 +1,56 @@
+#include<bits/stdc++.h>
+#define INF 0x3f3f3f3f3f3f3f3f
+using namespace std;
+typedef long long ll;
+const int MAXN=2e5+10;
+
+ll a[MAXN], f[MAXN][2];
+ll cnt[MAXN][2];
+
+int main(){
+    ll n;
+    scanf("%lld",&n);
+    for(ll i=1;i<=n;i++){
+        scanf("%lld",&a[i]);
+    }
+
+    // Initialize base case
+    f[0][0] = 0;       // No elements selected
+    f[0][1] = a[1];    // First element selected
+    cnt[0][0] = 0;     // Count of elements in no-selection state
+    cnt[0][1] = 1;     // Count of elements in selection state
+
+    for(ll i=1;i<=n;i++){
+        // State transition for not selecting the ith element
+        if(f[i-1][0] > f[i-1][1]){
+            f[i][0] = f[i-1][0];
+            cnt[i][0] = cnt[i-1][0];
+        } else {
+            f[i][0] = f[i-1][1];
+            cnt[i][0] = cnt[i-1][1];
+        }
+
+        // Calculate values for selecting the ith element
+        ll num1, num2;
+        ll count1 = cnt[i-1][0] + 1;
+        ll count2 = cnt[i-1][1] + 1;
+
+        if(count1 % 2 == 0) num1 = a[i] * 2;
+        else num1 = a[i];
+
+        if(count2 % 2 == 0) num2 = a[i] * 2;
+        else num2 = a[i];
+
+        // Transition for selecting ith element
+        if(f[i-1][0] + num1 > f[i-1][1] + num2){
+            f[i][1] = f[i-1][0] + num1;
+            cnt[i][1] = count1;
+        } else {
+            f[i][1] = f[i-1][1] + num2;
+            cnt[i][1] = count2;
+        }
+    }
+
+    printf("%lld\n", max(f[n][0], f[n][1]));
+    return 0;
+}

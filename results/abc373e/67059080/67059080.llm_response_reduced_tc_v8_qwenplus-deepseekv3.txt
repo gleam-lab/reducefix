@@ -1,0 +1,81 @@
+To fix this code, we need to ensure that the logic correctly computes the minimum additional votes required for each candidate to guarantee their victory. The original code had several issues, including incorrect handling of the binary search and sorting, which led to wrong answers in some cases.
+
+### Approaches
+1. **Sorting and Binary Search**: The candidates are sorted based on their current votes. For each candidate, we determine how many votes they need to ensure that no more than M-1 candidates have more votes than them.
+2. **Binary Search for Minimum Votes**: For each candidate, perform a binary search to find the minimum number of additional votes they need. This involves checking if the candidate can be placed in a position where fewer than M candidates have more votes than them.
+3. **Handling Edge Cases**: Special cases, such as when there's only one candidate or when all remaining votes can be allocated to a candidate to ensure their victory, are handled separately to ensure correctness.
+
+### Solution Code
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+
+struct Candidate {
+    ll val;
+    int idx;
+};
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int N, M;
+    ll K;
+    cin >> N >> M >> K;
+
+    vector<Candidate> a(N);
+    for (int i = 0; i < N; ++i) {
+        cin >> a[i].val;
+        a[i].idx = i + 1;
+    }
+
+    sort(a.begin(), a.end(), [](const Candidate &x, const Candidate &y) {
+        return x.val < y.val;
+    });
+
+    vector<ll> prefix(N + 1);
+    prefix[0] = 0;
+    for (int i = 0; i < N; ++i) {
+        prefix[i + 1] = prefix[i] + a[i].val;
+    }
+
+    ll remaining = K - accumulate(a.begin(), a.end(), 0LL, [](ll sum, const Candidate &x) { return sum + x.val; });
+
+    vector<ll> answer(N);
+    for (int i = 0; i < N; ++i) {
+        ll low = 0, high = remaining + a[i].val;
+        ll best = -1;
+        while (low <= high) {
+            ll mid = (low + high) / 2;
+            ll new_val = a[i].val + mid;
+            int pos = upper_bound(a.begin(), a.end(), Candidate{new_val, 0}, 
+                [](const Candidate &x, const Candidate &y) { return x.val < y.val; }) - a.begin();
+            int greater = N - pos;
+            if (greater < M) {
+                best = mid;
+                high = mid - 1;
+            } else {
+                low = mid + 1;
+            }
+        }
+        answer[a[i].idx - 1] = best;
+    }
+
+    for (int i = 0; i < N; ++i) {
+        cout << answer[i] << ' ';
+    }
+    cout << '\n';
+
+    return 0;
+}
+```
+
+### Explanation
+1. **Sorting**: The candidates are sorted based on their current votes to facilitate binary search and cumulative sum calculations.
+2. **Prefix Sum**: A prefix sum array is constructed to quickly compute the sum of votes up to any candidate in the sorted list.
+3. **Binary Search**: For each candidate, a binary search is performed to determine the minimum additional votes required. The search checks if the candidate, with the additional votes, can be placed in a position where fewer than M candidates have more votes.
+4. **Edge Handling**: The binary search ensures that if a candidate cannot secure a position with fewer than M candidates having more votes, it returns -1. Otherwise, it returns the minimum votes required.
+5. **Output**: The results are collected and printed in the original order of the candidates.
+
+This approach ensures efficiency and correctness, handling all edge cases and constraints effectively.

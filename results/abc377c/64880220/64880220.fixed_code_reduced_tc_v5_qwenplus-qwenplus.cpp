@@ -1,0 +1,46 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    long long N, M;
+    cin >> N >> M;
+
+    // Directions from which a piece can be captured
+    vector<pair<long long, long long>> directions = {
+        {2, 1}, {1, 2}, {-1, 2}, {-2, 1},
+        {-2, -1}, {-1, -2}, {1, -2}, {2, -1}
+    };
+
+    unordered_set<uint64_t> attacked_or_occupied;
+    auto hash = [](long long x, long long y) -> uint64_t {
+        return (uint64_t(x) << 32) | uint64_t(y);
+    };
+
+    for (long long i = 0; i < M; ++i) {
+        long long a, b;
+        cin >> a >> b;
+
+        // Mark the square with a piece
+        uint64_t key = hash(a, b);
+        attacked_or_occupied.insert(key);
+
+        // Mark all squares that can capture this piece
+        for (auto [dx, dy] : directions) {
+            long long x = a + dx;
+            long long y = b + dy;
+
+            if (x >= 1 && x <= N && y >= 1 && y <= N) {
+                uint64_t key_attack = hash(x, y);
+                attacked_or_occupied.insert(key_attack);
+            }
+        }
+    }
+
+    // Result is total number of squares minus those that are occupied or attacked
+    cout << (N * N - (long long)attacked_or_occupied.size()) << endl;
+
+    return 0;
+}

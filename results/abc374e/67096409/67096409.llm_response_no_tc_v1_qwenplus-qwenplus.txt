@@ -1,0 +1,73 @@
+```cpp
+#include <iostream>
+#include <algorithm>
+#include <climits>
+using namespace std;
+
+typedef struct {
+    int a, p, b, q;
+} Pattern;
+
+Pattern A[100];
+long long dp[100][10000];  // dp[i][j] = min cost to paint j bricks using pattern i
+
+int N, X;
+
+// Calculate cost for pattern i to paint n bricks
+long long cost(int i, int n) {
+    int period = A[i].a * A[i].b;
+    long long full_cycles = n / period;
+    int remainder = n % period;
+    return full_cycles * (A[i].p * A[i].b + A[i].q * A[i].a) + dp[i][remainder];
+}
+
+// Check if we can paint 'n' bricks within budget X
+bool is_possible(int n) {
+    long long total_cost = 0;
+    for (int i = 0; i < N; i++) {
+        total_cost += cost(i, n);
+        if (total_cost > X)
+            return false;
+    }
+    return true;
+}
+
+int main() {
+    scanf("%d %d", &N, &X);
+
+    for (int i = 0; i < N; i++) {
+        int a, p, b, q;
+        scanf("%d %d %d %d", &a, &p, &b, &q);
+        
+        // Ensure the pattern with lower cost per brick is used first
+        if (a*q < b*p) {
+            swap(a, b);
+            swap(p, q);
+        }
+        
+        A[i] = {a, p, b, q};
+        
+        // Initialize dp for this pattern
+        dp[i][0] = 0;
+        for (int j = 1; j < a*b; j++) {
+            dp[i][j] = LLONG_MAX;
+            if (j >= a)
+                dp[i][j] = min(dp[i][j], dp[i][j - a] + p);
+            if (j >= b)
+                dp[i][j] = min(dp[i][j], dp[i][j - b] + q);
+        }
+    }
+
+    // Binary search for maximum number of bricks
+    int lo = 0, hi = 1e9;
+    while (lo < hi) {
+        int mid = (lo + hi + 1) >> 1;
+        if (is_possible(mid))
+            lo = mid;
+        else
+            hi = mid - 1;
+    }
+
+    printf("%d\n", lo);
+}
+```

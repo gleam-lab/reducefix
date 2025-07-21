@@ -1,0 +1,41 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+int main() {
+    int n, k;
+    cin >> n >> k;
+    vector<int> num(n);
+    for (int i = 0; i < n; i++) {
+        cin >> num[i];
+    }
+    
+    sort(num.begin(), num.end()); // Sort the array to easily find the minimum and maximum values
+    
+    // We need to find the minimum possible value of the max of the remaining elements minus the min of the remaining elements
+    // We can achieve this by removing 'k' elements optimally
+    int max_diff = 0;
+    
+    // We can remove K elements in at most 3 steps:
+    // 1. Remove the 'k-1' smallest elements (which will give us the smallest maximum value)
+    // 2. Remove one of the two largest elements to get the smallest possible maximum value after removal
+    // 3. If necessary, remove one more element from the remaining largest elements to get the smallest possible difference
+    
+    // Step 1: Remove 'k-1' smallest elements
+    int remove_elements = k - 1;
+    int left = remove_elements / 2; // Remove elements from the left
+    int right = remove_elements - left; // Remove elements from the right
+    
+    // Step 2: Calculate the difference by removing one of the elements from the smallest or largest part
+    max_diff = max(max_diff, num[left + remove_elements] - num[left]);
+    max_diff = max(max_diff, num[n - 1 - right] - num[n - 1 - right - 1]);
+    
+    // Step 3: If k is odd, we need to remove one more element from the remaining largest part
+    if (k % 2 == 1) {
+        max_diff = min(max_diff, num[n - 1 - right - 1] - num[left]);
+    }
+    
+    cout << max_diff << endl;
+    return 0;
+}

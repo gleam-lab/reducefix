@@ -1,0 +1,84 @@
+To solve this problem efficiently, we need to handle both adding edges and querying the k-th largest connected vertex number. Here's a step-by-step approach to fix the code:
+
+1. **Union-Find Data Structure**: This will help manage the connected components of the graph. We'll use path compression and union by rank to keep the operations efficient.
+
+2. **Priority Queue per Component**: For each component, maintain a priority queue that stores the connected vertices. This allows us to quickly find the k-th largest element.
+
+3. **Efficient Querying**: When querying, retrieve the required element from the priority queue of the respective component.
+
+Here is the corrected C++ code implementing the above approach:
+
+```cpp
+#include<bits/stdc++.h>
+using namespace std;
+
+const int MAXN = 2 * 100005;
+vector<int> parent(MAXN), size(MAXN), pq[MAXN];
+
+int getRoot(int u) {
+    if (parent[u] == u) return u;
+    return parent[u] = getRoot(parent[u]);
+}
+
+void unite(int u, int v) {
+    u = getRoot(u), v = getRoot(v);
+    if (u != v) {
+        if (size[u] > size[v]) swap(u, v);
+        parent[u] = v;
+        size[v] += size[u];
+        pq[v].insert(pq[v].end(), pq[u].begin(), pq[u].end());
+        pq[u].clear();
+        make_heap(begin(pq[v]), end(pq[v]), greater<int>());
+    }
+}
+
+int kthLargest(int u, int k) {
+    u = getRoot(u);
+    if (pq[u].size() < k) return -1;
+    auto it = pq[u].begin();
+    advance(it, pq[u].size() - k);
+    return *it;
+}
+
+int main() {
+    ios_base::sync_with_stdio(false); cin.tie(NULL);
+
+    int n, q;
+    cin >> n >> q;
+
+    iota(parent.begin(), parent.end(), 0);
+    fill(size.begin(), size.end(), 1);
+
+    for (int i = 0; i < q; ++i) {
+        int type, u, v, k;
+        cin >> type;
+        if (type == 1) {
+            cin >> u >> v;
+            --u, --v;
+            unite(u, v);
+        } else {
+            cin >> u >> k;
+            --u;
+            cout << kthLargest(u, k) << '\n';
+        }
+    }
+
+    return 0;
+}
+```
+
+### Explanation:
+
+1. **Union-Find Operations**:
+   - `getRoot`: Finds the root of the set containing `u` with path compression.
+   - `unite`: Unites the sets containing `u` and `v`, merging their priority queues.
+
+2. **Priority Queue Management**:
+   - Each component maintains a min-heap of its connected vertices (`pq`).
+   - When merging components, the larger heap is appended to the smaller heap, ensuring the merged heap remains a min-heap.
+
+3. **Query Handling**:
+   - `kthLargest`: Retrieves the k-th largest element from the priority queue of the component containing `u`.
+   - Uses `advance` to directly access the k-th largest element without sorting the entire list.
+
+This approach ensures that both the union and query operations are efficient, meeting the constraints of the problem.

@@ -1,0 +1,19 @@
+#include <iostream>
+#include <iomanip>
+#include <cmath>
+
+int main() {
+    int n;
+    double x = 0, y = 0, total_cost = 0;
+    std::cin >> n;
+    while (n--) {
+        double a, b;
+        std::cin >> a >> b;
+        total_cost += std::sqrt((x - a) * (x - a) + (y - b) * (y - b));
+        x = a;
+        y = b;
+    }
+    total_cost += std::sqrt(x * x + y * y);
+    std::cout << std::fixed << std::setprecision(20) << total_cost << std::endl;
+    return 0;
+}

@@ -1,0 +1,71 @@
+To fix this code, we need to ensure that for each candidate, we correctly determine the minimum number of additional votes they need to be guaranteed a win, regardless of how the other candidates receive the remaining votes. The previous approach had some logical flaws in the `check` function and the binary search implementation.
+
+### Approaches
+1. **Sort and Precompute**: First, sort the current votes of the candidates. This helps in efficiently finding the threshold votes needed for a candidate to be in the top M candidates.
+2. **Binary Search for Minimum Votes**: For each candidate, use binary search to find the minimum additional votes `X` such that, even if all other candidates receive as many votes as possible (but not exceeding the remaining votes), the candidate still remains in the top M.
+3. **Check Function**: The `check` function should verify if the candidate can secure a position in the top M after receiving `X` additional votes. This involves ensuring that the votes of the candidate (after adding `X`) are at least as much as the (N - M)th candidate's votes after possible redistribution, and that the remaining votes can't push too many candidates above the candidate in question.
+
+### Solution Code
+```cpp
+#include<bits/stdc++.h>
+using namespace std;
+#define int long long
+const int N=2e5+5;
+int n, m, k, a[N], b[N], prefix[N];
+
+bool is_possible(int candidate_index, int x) {
+    int current_votes = a[candidate_index] + x;
+    int pos = upper_bound(b + 1, b + n + 1, current_votes) - b - 1;
+    int rank = n - pos;
+    if (rank < m) {
+        return true;
+    }
+    return false;
+}
+
+signed main() {
+    ios::sync_with_stdio(0);
+    cin.tie(0);
+    cout.tie(0);
+    cin >> n >> m >> k;
+    int total_votes = 0;
+    for (int i = 1; i <= n; i++) {
+        cin >> a[i];
+        total_votes += a[i];
+        b[i] = a[i];
+    }
+    int remaining_votes = k - total_votes;
+    sort(b + 1, b + n + 1);
+    for (int i = 1; i <= n; i++) {
+        prefix[i] = prefix[i - 1] + b[i];
+    }
+    for (int i = 1; i <= n; i++) {
+        int low = 0;
+        int high = remaining_votes;
+        int answer = -1;
+        while (low <= high) {
+            int mid = (low + high) / 2;
+            if (is_possible(i, mid)) {
+                answer = mid;
+                high = mid - 1;
+            } else {
+                low = mid + 1;
+            }
+        }
+        if (answer != -1) {
+            cout << answer << " ";
+        } else {
+            cout << -1 << " ";
+        }
+    }
+    return 0;
+}
+```
+
+### Explanation
+1. **Initial Setup**: The code reads the number of candidates `N`, the number of top candidates `M`, and the total votes `K`. It also reads the current votes `A_i` for each candidate.
+2. **Sorting and Prefix Sum**: The current votes are sorted to facilitate binary search operations. A prefix sum array is computed to quickly calculate the sum of the top `k` votes.
+3. **Binary Search for Each Candidate**: For each candidate, the code performs a binary search to find the minimum additional votes `X` such that, after adding `X` votes, the candidate is guaranteed to be in the top `M` candidates. The `is_possible` function checks if the candidate's votes (after adding `X`) are sufficient to place them in the top `M` by comparing with the sorted votes.
+4. **Output**: For each candidate, the minimum `X` is printed if it exists; otherwise, `-1` is printed indicating that the candidate cannot be guaranteed a win with the remaining votes.
+
+This approach efficiently determines the solution by leveraging sorting and binary search, ensuring optimal performance even for large input sizes.

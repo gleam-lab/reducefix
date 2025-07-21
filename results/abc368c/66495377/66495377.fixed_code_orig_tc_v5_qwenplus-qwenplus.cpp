@@ -1,0 +1,51 @@
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+
+// This function calculates the minimum number of attacks needed to reduce the health 'h'
+// given that current time is 't' and attacks follow the rules:
+// - attack every T (starting from t+1)
+// - if T is multiple of 3, do 3 damage, else 1 damage
+// It uses binary search to find the minimal number of attacks needed
+ll num_attack(ll t, ll h) {
+    // low and high bounds for binary search
+    ll low = 0, high = 2 * h; 
+
+    while (low < high) {
+        ll mid = (low + high) / 2;
+        ll damage = 0;
+        
+        // Simulate attacks in the time window [t+1, t+mid]
+        for (ll i = t + 1; i <= t + mid; ++i) {
+            if (i % 3 == 0) damage += 3;
+            else             damage += 1;
+        }
+
+        if (damage >= h) high = mid;
+        else              low = mid + 1;
+    }
+
+    return low;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int n;
+    cin >> n;
+    ll t = 0;
+
+    vector<ll> H(n);
+    for (int i = 0; i < n; ++i) {
+        cin >> H[i];
+    }
+
+    for (int i = 0; i < n; ++i) {
+        ll h = H[i];
+        ll attacks = num_attack(t, h);
+        t += attacks;
+    }
+
+    cout << t << endl;
+}

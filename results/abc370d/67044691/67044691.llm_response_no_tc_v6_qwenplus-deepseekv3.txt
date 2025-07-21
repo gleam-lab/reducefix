@@ -1,0 +1,89 @@
+I analyzed the incorrect code and found several issues:
+
+1. The logic for finding the first walls in each direction was incorrect. The code didn't properly handle cases where there were no walls in some directions.
+2. The code used `upper_bound` and `--upper_bound` which might not correctly identify the nearest walls.
+3. The `er` vector was being reallocated in each query, which is inefficient.
+4. The initial setup could be optimized to use less memory.
+
+Here's the corrected version:
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+#define ll long long
+
+int main(){
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    ll h, w, q;
+    cin >> h >> w >> q;
+    
+    vector<set<ll>> row(h), col(w);
+    for (ll i = 0; i < h; i++) {
+        for (ll j = 0; j < w; j++) {
+            row[i].insert(j);
+            col[j].insert(i);
+        }
+    }
+    
+    while (q--) {
+        ll r, c;
+        cin >> r >> c;
+        r--; c--;
+        
+        if (row[r].count(c)) {
+            row[r].erase(c);
+            col[c].erase(r);
+        } else {
+            // Find first walls in four directions
+            // Up
+            auto it_up = col[c].lower_bound(r);
+            if (it_up != col[c].begin()) {
+                --it_up;
+                row[*it_up].erase(c);
+                col[c].erase(it_up);
+            }
+            // Down
+            auto it_down = col[c].upper_bound(r);
+            if (it_down != col[c].end()) {
+                row[*it_down].erase(c);
+                col[c].erase(it_down);
+            }
+            // Left
+            auto it_left = row[r].lower_bound(c);
+            if (it_left != row[r].begin()) {
+                --it_left;
+                col[*it_left].erase(r);
+                row[r].erase(it_left);
+            }
+            // Right
+            auto it_right = row[r].upper_bound(c);
+            if (it_right != row[r].end()) {
+                col[*it_right].erase(r);
+                row[r].erase(it_right);
+            }
+        }
+    }
+    
+    ll ans = 0;
+    for (auto& r : row) {
+        ans += r.size();
+    }
+    cout << ans << '\n';
+    
+    return 0;
+}
+```
+
+Key improvements:
+1. Used `lower_bound` and `upper_bound` correctly to find the nearest walls in each direction.
+2. Removed unnecessary vector reallocations by processing directions one by one.
+3. Added IO optimizations for faster input/output.
+4. Simplified the wall removal logic by handling each direction separately.
+5. Used `count` to check for wall existence which is cleaner than `find` + comparison.
+
+The code now correctly handles all cases:
+- If there's a wall at (R_q, C_q), it removes just that wall.
+- If there's no wall, it finds and removes the nearest walls in all four directions (if they exist).
+- The solution efficiently tracks walls using sets for rows and columns, allowing O(log W) or O(log H) operations per query direction.

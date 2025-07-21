@@ -1,0 +1,47 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+
+using namespace std;
+
+int main() {
+    long long n;
+    cin >> n;
+    vector<long long> A(n), B(n - 1);
+    for (long long i = 0; i < n; i++) {
+        cin >> A[i];
+    }
+    for (long long i = 0; i < n - 1; i++) {
+        cin >> B[i];
+    }
+
+    // Find the maximum size from box sizes B
+    long long max_box_size = *max_element(B.begin(), B.end());
+
+    // Use two pointers to find the minimum x
+    long long left = 1, right = max_box_size;
+    while (left < right) {
+        long long mid = left + (right - left + 1) / 2;
+        long long count = 0;
+        for (long long b : B) {
+            if (b >= mid) {
+                count++;
+            }
+        }
+        count = max(count, 1); // At least one box can be used
+
+        // Check if the number of boxes and toys can be matched
+        if (count < n) {
+            left = mid; // Increase the size of the box
+        } else if (count > n) {
+            right = mid - 1; // Decrease the size of the box
+        } else {
+            cout << mid << endl;
+            return 0;
+        }
+    }
+
+    // If no valid x was found, return -1
+    cout << -1 << endl;
+    return 0;
+}

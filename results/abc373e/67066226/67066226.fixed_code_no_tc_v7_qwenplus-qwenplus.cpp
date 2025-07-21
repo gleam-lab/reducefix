@@ -1,0 +1,67 @@
+#include <bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+#define all(x) (x).begin(), (x).end()
+
+int main() {
+    ios_base::sync_with_stdio(0);
+    cin.tie(0);
+    int n, m;
+    ll k;
+    cin >> n >> m >> k;
+    vector<ll> a(n);
+    for (int i = 0; i < n; ++i) {
+        cin >> a[i];
+    }
+
+    // We need to process candidates in the order of their current vote counts
+    vector<int> ord(n);
+    iota(all(ord), 0);
+    sort(all(ord), [&](int i, int j) { return a[i] < a[j]; });
+    vector<ll> sorted_a = a;
+    sort(all(sorted_a));
+
+    vector<ll> prefix_sum(n + 1);
+    for (int i = 0; i < n; ++i) {
+        prefix_sum[i + 1] = prefix_sum[i] + sorted_a[i];
+    }
+
+    vector<ll> res(n, -1);
+
+    for (int idx = 0; idx < n; ++idx) {
+        int i = ord[idx]; // original index of candidate with rank idx
+        ll low = 0, high = k + 1;
+        ll ans = -1;
+
+        while (low <= high) {
+            ll mid = (low + high) / 2;
+
+            // Current candidate's votes after adding mid
+            ll curr_votes = a[i] + mid;
+
+            // We want to ensure that at most M-1 candidates can have more than curr_votes
+            // So we find how many candidates currently can get more than curr_votes
+            // Find first candidate in sorted list who has strictly more than curr_votes
+            int pos = upper_bound(sorted_a.begin(), sorted_a.end(), curr_votes) - sorted_a.begin();
+
+            // Number of candidates who can potentially have more than curr_votes
+            int cnt = n - pos;
+
+            if (cnt >= m) {
+                // Too many candidates still can have more than us, even after adding mid
+                low = mid + 1;
+            } else {
+                // Try with less additional votes
+                ans = mid;
+                high = mid - 1;
+            }
+        }
+
+        res[i] = (ans == -1 || ans > k ? -1 : ans);
+    }
+
+    for (auto x : res) cout << x << ' ';
+    cout << '\n';
+
+    return 0;
+}

@@ -1,0 +1,86 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+  int N;
+  cin >> N;
+  string S;
+  cin >> S;
+  
+  // Define possible moves
+  vector<char> hand = {'R', 'P', 'S'};
+  vector<char> next;
+  
+  // Initialize next with all possible moves
+  for (auto d : hand) {
+    next.push_back(d);
+  }
+  
+  int total = 0;
+  
+  // Iterate over each character in the string
+  for (int i = 0; i < N; ++i) {
+    int score = 0;
+    char use;
+    
+    // Check if any move beats the current character
+    for (char n : next) {
+      if ((n == 'R' && S[i] == 'S') || (n == 'P' && S[i] == 'R') || (n == 'S' && S[i] == 'P')) {
+        score++;
+        use = n;
+        break;
+      }
+    }
+    
+    // If no move beats the current character, use the current character itself
+    if (score == 0) {
+      use = S[i];
+    }
+    
+    // Update the next list to exclude the used move
+    next.erase(remove(next.begin(), next.end(), use), next.end());
+    
+    // Add the score to the total
+    total += score;
+    
+    // Reset next list for the next iteration
+    next.assign(hand.begin(), hand.end());
+  }
+  
+  // Clear next list for the second part of the calculation
+  next.clear();
+  
+  // Initialize next with all possible moves except the first character of S
+  for (char d : hand) {
+    if (d != S[0]) {
+      next.push_back(d);
+    }
+  }
+  
+  int total2 = 0;
+  
+  // Perform the same logic as above but starting from the second character
+  for (int i = 1; i < N; ++i) {
+    int score = 0;
+    char use;
+    
+    for (char n : next) {
+      if ((n == 'R' && S[i] == 'S') || (n == 'P' && S[i] == 'R') || (n == 'S' && S[i] == 'P')) {
+        score++;
+        use = n;
+        break;
+      }
+    }
+    
+    if (score == 0) {
+      use = S[i];
+    }
+    
+    next.erase(remove(next.begin(), next.end(), use), next.end());
+    total2 += score;
+    next.assign(hand.begin(), hand.end());
+  }
+  
+  // Output the maximum of the two totals
+  cout << max(total, total2);
+}

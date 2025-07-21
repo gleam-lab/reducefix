@@ -1,0 +1,118 @@
+To solve this problem efficiently, we must select a subset `S` of size `K` from the given sequences `A` and `B` such that the value:
+
+$$
+\left(\max_{i \in S} A_i\right) \times \left(\sum_{i \in S} B_i\right)
+$$
+
+is minimized.
+
+---
+
+### Key Observations:
+
+1. **Objective**: We want to minimize the product of the maximum `A_i` in the subset and the sum of corresponding `B_i`.
+2. **Strategy**:
+   - Fix the maximum `A` value (say, `A[i]`) as part of the subset.
+   - Choose `K-1` other elements where all `A[j] <= A[i]`, so that the max remains `A[i]`.
+   - Among these, pick the `K-1` elements with the largest `B[j]` values to maximize the sum of `B`, but within constraint of `A[j] <= A[i]`.
+
+This leads to an efficient approach using sorting and a max heap (priority queue):
+
+---
+
+### Algorithm Steps:
+
+1. **Sort Elements by A**: Sort all `(A[i], B[i])` pairs by `A[i]` in increasing order.
+2. **Track Top K B Values**:
+   - Use a min-heap (priority queue) to keep track of the top `K-1` largest `B[i]` values with `A[i] <= current A`.
+3. **Iterate through Sorted List**:
+   - For each element at index `i`, assume it is the max `A` in the subset.
+   - Keep adding `B[i]` to the heap while maintaining its size `K-1`.
+   - When the heap has exactly `K-1` elements, compute the total sum and update the minimum result.
+
+---
+
+### Time Complexity:
+- Sorting: O(N log N)
+- Heap operations per test case: O(N log K)
+- Total over all test cases: O(∑N log N + ∑N log K), which fits within time constraints.
+
+Here's the corrected and optimized code:
+
+```cpp
+#include <iostream>
+#include <vector>
+#include <queue>
+#include <algorithm>
+using namespace std;
+
+#define int long long
+
+void solve() {
+    int n, k;
+    cin >> n >> k;
+    vector<pair<int, int>> ab(n);
+    
+    for (int i = 0; i < n; ++i) {
+        cin >> ab[i].first;
+    }
+    for (int i = 0; i < n; ++i) {
+        cin >> ab[i].second;
+    }
+
+    // Sort by A[i]
+    sort(ab.begin(), ab.end());
+
+    priority_queue<int> min_heap;
+    int sum_b = 0;
+    int res = 1e18;
+
+    for (int i = 0; i < n; ++i) {
+        int a_val = ab[i].first;
+        int b_val = ab[i].second;
+
+        // Add current B value
+        if (min_heap.size() < k - 1) {
+            sum_b += b_val;
+            min_heap.push(-b_val); // Min-heap via negation
+        } else {
+            // Maintain only top (k-1) B values
+            if (!min_heap.empty() && b_val > -min_heap.top()) {
+                sum_b += b_val + min_heap.top();
+                min_heap.pop();
+                min_heap.push(-b_val);
+            }
+        }
+
+        // Once we have at least (k-1) elements, we can consider current A as max
+        if (min_heap.size() == k - 1) {
+            res = min(res, (sum_b + b_val) * a_val);
+        }
+    }
+
+    cout << res << "\n";
+}
+
+int32_t main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t;
+    cin >> t;
+    while (t--) {
+        solve();
+    }
+
+    return 0;
+}
+```
+
+---
+
+### Explanation:
+- We sort all `(A[i], B[i])` pairs by `A[i]`.
+- As we iterate, we maintain a min-heap of up to `K-1` largest `B[i]` values seen so far (excluding the current one).
+- The idea is that for any current index `i`, we can potentially include it as the maximum `A`, and then pick the best `K-1` `B` values from earlier indices.
+- We calculate the product and update the global minimum accordingly.
+
+This solution ensures correctness and efficiency even under tight constraints.

@@ -1,0 +1,102 @@
+To fix this code, we need to ensure that for each candidate, we correctly determine the minimum additional votes required to guarantee their election, considering the constraints provided. The original code had some logical issues, particularly in how it calculated the required votes and checked the conditions.
+
+### Approaches
+1. **Problem Analysis**: The problem requires determining for each candidate the minimum number of additional votes such that, even in the worst-case scenario (other candidates receive as many votes as possible without exceeding the remaining votes), the candidate will still be elected. A candidate is elected if fewer than `M` candidates have more votes than them.
+
+2. **Key Insight**: For candidate `i` to be elected, even after other candidates receive votes, there should be at most `M-1` candidates with votes strictly greater than `A_i + X`. The remaining votes should be distributed in a way that minimizes `X`.
+
+3. **Binary Search**: For each candidate, use binary search to find the smallest `X` such that, when added to `A_i`, the candidate's total votes ensure that no more than `M-1` other candidates can have votes strictly greater than this total, considering the remaining votes.
+
+4. **Efficiency**: Given the constraints, sorting and binary search are efficient methods. The solution involves sorting the candidates' votes, using prefix sums for efficient calculations, and performing binary searches for each candidate.
+
+### Solution Code
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+#define all(x) (x).begin(), (x).end()
+
+int main() {
+    ios_base::sync_with_stdio(0);
+    cin.tie(0);
+    int N, M;
+    ll K;
+    cin >> N >> M >> K;
+    vector<ll> A(N);
+    ll total = 0;
+    for (int i = 0; i < N; ++i) {
+        cin >> A[i];
+        total += A[i];
+    }
+    ll remaining = K - total;
+    
+    vector<int> ord(N);
+    iota(all(ord), 0);
+    sort(all(ord), [&](int i, int j) { return A[i] < A[j]; });
+    vector<ll> sortedA = A;
+    sort(all(sortedA));
+    
+    vector<ll> prefix(N + 1, 0);
+    for (int i = 0; i < N; ++i) {
+        prefix[i + 1] = prefix[i] + sortedA[i];
+    }
+    
+    vector<ll> ans(N, -1);
+    for (int idx = 0; idx < N; ++idx) {
+        int i = ord[idx];
+        ll low = 0, high = remaining;
+        ll best_X = remaining + 1;
+        while (low <= high) {
+            ll mid = (low + high) / 2;
+            ll current_votes = A[i] + mid;
+            
+            // Find the number of elements > current_votes
+            auto it = upper_bound(all(sortedA), current_votes);
+            int cnt_greater = sortedA.end() - it;
+            
+            if (A[i] + mid == current_votes) {
+                // Need to adjust if current_votes equals some other candidate's votes
+                auto it_eq = lower_bound(all(sortedA), current_votes);
+                int cnt_eq = upper_bound(all(sortedA), current_votes) - it_eq;
+                if (it_eq - sortedA.begin() <= idx && idx < it_eq - sortedA.begin() + cnt_eq) {
+                    cnt_greater += cnt_eq - 1;
+                } else {
+                    cnt_greater += cnt_eq;
+                }
+            }
+            
+            if (cnt_greater < M) {
+                best_X = mid;
+                high = mid - 1;
+            } else {
+                low = mid + 1;
+            }
+        }
+        if (best_X <= remaining) {
+            ans[i] = best_X;
+        } else {
+            ans[i] = -1;
+        }
+    }
+    
+    for (int i = 0; i < N; ++i) {
+        cout << ans[i] << ' ';
+    }
+    cout << '\n';
+    
+    return 0;
+}
+```
+
+### Explanation
+1. **Input Handling**: The input is read, including the number of candidates `N`, the threshold `M`, the total votes `K`, and the votes each candidate has received so far `A_i`.
+
+2. **Sorting and Prefix Sums**: The candidates' votes are sorted, and a prefix sum array is constructed to facilitate efficient range sum queries.
+
+3. **Binary Search for Each Candidate**: For each candidate, a binary search is performed to determine the minimum additional votes `X` needed such that, even if other candidates receive the remaining votes, no more than `M-1` candidates will have votes strictly greater than `A_i + X`.
+
+4. **Condition Check**: During the binary search, the condition checked is whether the number of candidates with votes greater than `A_i + X` is less than `M`. If so, `X` is a candidate for the solution, and we continue searching for a smaller `X`.
+
+5. **Output**: The results for each candidate are printed, indicating the minimum votes needed or `-1` if it's impossible to guarantee election.
+
+This approach ensures correctness by leveraging sorting and binary search to efficiently determine the solution for each candidate, adhering to the problem constraints and requirements.

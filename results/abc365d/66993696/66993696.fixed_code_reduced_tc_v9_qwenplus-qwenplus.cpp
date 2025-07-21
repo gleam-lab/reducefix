@@ -1,0 +1,57 @@
+#include<bits/stdc++.h>
+using namespace std;
+
+const int MAXN = 200010;
+char s[MAXN], c1[MAXN], c2[MAXN];
+
+int compute_max_warriors(char *s, char *c, int n) {
+    // First transformation: classic counter
+    for (int i = 0; i < n; ++i) {
+        if (s[i] == 'P') c[i] = 'S';
+        else if (s[i] == 'R') c[i] = 'P';
+        else c[i] = 'R';
+    }
+    
+    // Eliminate consecutive duplicates
+    int count = n;
+    for (int i = 1; i < n; ++i) {
+        if (c[i] == c[i-1]) {
+            c[i] = s[i];  // Revert to original if duplicate
+            count--;
+        }
+    }
+    return count;
+}
+
+int main() {
+    int n;
+    scanf("%d", &n);
+    scanf("%s", s);
+    
+    // Try two strategies:
+    // 1. Standard transformation
+    // 2. Manually set first character and continue
+    
+    // Strategy 1 - Full transformation
+    int ans = compute_max_warriors(s, c1, n);
+    
+    // Strategy 2 - Fix first character as original
+    if (n >= 2) {
+        memcpy(c2, c1, sizeof(c1)); // Start from previous transformation
+        
+        // Force the first character back to original
+        c2[0] = s[0];
+        int count = n - 1;  // Since we kept one
+        
+        for (int i = 1; i < n; ++i) {
+            if (c2[i] == c2[i-1]) {
+                c2[i] = s[i];
+                count--;
+            }
+        }
+        ans = max(ans, count);
+    }
+    
+    printf("%d\n", ans);
+    return 0;
+}

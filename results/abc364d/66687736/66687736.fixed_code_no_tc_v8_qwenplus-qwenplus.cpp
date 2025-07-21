@@ -1,0 +1,51 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+#define ll long long
+#define vi vector<int>
+#define vll vector<ll>
+#define pii pair<int, int>
+#define pll pair<ll, ll>
+#define rep(i, n) for (int i = 0; i < (int)n; ++i)
+#define all(x) x.begin(), x.end()
+
+// Function to find the k-th smallest distance from B_j to A_i
+ll query_kth_distance(const vi& a_sorted, int b_j, int k_j) {
+    int n = a_sorted.size();
+    // Binary search bounds for the answer
+    ll low = 0, high = 2e8 + 10;
+    ll ans = high;
+
+    while (low <= high) {
+        ll mid = (low + high) / 2;
+        // Find range in sorted array that are within [b_j - mid, b_j + mid]
+        int left = lower_bound(all(a_sorted), b_j - mid) - a_sorted.begin();
+        int right = upper_bound(all(a_sorted), b_j + mid) - a_sorted.begin();
+        if (right - left >= k_j) {
+            ans = mid;
+            high = mid - 1;
+        } else {
+            low = mid + 1;
+        }
+    }
+
+    return ans;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+    
+    int N, Q;
+    cin >> N >> Q;
+
+    vi A(N);
+    rep(i, N) cin >> A[i];
+    sort(all(A));
+
+    rep(q, Q) {
+        int b, k;
+        cin >> b >> k;
+        cout << query_kth_distance(A, b, k) << "\n";
+    }
+}

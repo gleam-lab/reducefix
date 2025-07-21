@@ -1,0 +1,33 @@
+#include <iostream>
+#include <vector>
+using namespace std;
+
+int main() {
+    int n;
+    cin >> n;
+    vector<int> health(n);
+    long long total_attacks = 0;
+
+    for (int i = 0; i < n; ++i) {
+        cin >> health[i];
+    }
+
+    // Process each enemy in the line
+    for (int i = 0; i < n; ) {
+        int enemy = health[i];
+        // Calculate the number of full 3-attack cycles needed
+        int full_cycles = enemy / 3;
+        total_attacks += full_cycles * 3;
+        // Remaining health after full cycles
+        health[i] -= full_cycles * 3;
+        // If there's still health left after full cycles, attack 1 by 1
+        if (health[i] > 0) {
+            total_attacks += health[i];
+            health[i] = 0;
+        }
+        // Move to the next enemy only if there are no more enemies to process
+        if (++i == n) break;
+    }
+
+    cout << total_attacks << endl;
+}

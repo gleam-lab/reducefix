@@ -1,0 +1,74 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+
+using namespace std;
+
+long long minimum_votes_needed(int n, int m, long long k, const vector<long long>& a) {
+    vector<pair<long long, int>> votes(n);
+    for (int i = 0; i < n; ++i) {
+        votes[i] = {a[i], i};
+    }
+    sort(votes.rbegin(), votes.rend());
+
+    long long total_votes_given = 0;
+    vector<long long> remaining_votes(n, 0);
+
+    // Calculate remaining votes for each candidate
+    for (int i = 0; i < n; ++i) {
+        total_votes_given += votes[i].first;
+        remaining_votes[i] = k - total_votes_given;
+    }
+
+    // Calculate minimum additional votes needed for each candidate
+    vector<long long> additional_votes(n);
+
+    for (int i = 0; i < n; ++i) {
+        long long current_votes = votes[i].first;
+        int idx = votes[i].second;
+
+        // Calculate the number of candidates with more votes
+        long long more_votes = 0;
+        for (int j = 0; j < i; ++j) {
+            if (a[votes[j].second] > current_votes) {
+                more_votes++;
+            }
+        }
+
+        // Calculate additional votes needed
+        additional_votes[idx] = max(0LL, (more_votes + m - 1) - more_votes * 2 + remaining_votes[idx]);
+
+        // If the candidate is already guaranteed to win, set additional votes to 0
+        if (additional_votes[idx] == 0) {
+            for (int j = i + 1; j < n; ++j) {
+                if (a[votes[j].second] < current_votes) {
+                    additional_votes[idx] = 0;
+                    break;
+                }
+            }
+        }
+    }
+
+    return *max_element(additional_votes.begin(), additional_votes.end());
+}
+
+int main() {
+    int n, m, k;
+    cin >> n >> m >> k;
+    vector<long long> a(n);
+    for (int i = 0; i < n; ++i) {
+        cin >> a[i];
+    }
+
+    long long result = minimum_votes_needed(n, m, k, a);
+    for (int i = 0; i < n; ++i) {
+        if (result == 0 && a[i] + result >= n - m + 1) {
+            cout << result << " ";
+        } else {
+            cout << -1 << " ";
+        }
+    }
+    cout << endl;
+
+    return 0;
+}

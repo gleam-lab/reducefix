@@ -1,0 +1,87 @@
+
+The provided code has a logical error in its approach for simulating the process of the island sinking. The task is to simulate the process of sea level rise over `Y` years and compute the area of the island that remains above sea level for each year.
+
+Here's a breakdown of the problems and errors in the code:
+
+1. **Initialization of the Binary Indexed Tree (BIT/BFS)**:
+    - The code initializes a Binary Indexed Tree (BIT) with the elevation values of the island cells. It then pushes all cells that are on the border (or at the first or last row/column) into the queue and marks them as having sunk (sets `island[i][j]` to false).
+    - However, there's an issue with the initialization of BIT. The code should push the border cells into the queue right after setting their elevation to `A[i][j]`, `A[i][j] - 1`, and not immediately after the loop.
+
+2. **Processing Each Year**:
+    - The loop for processing each year iterates `Y` times and attempts to simulate the sinking of the island each year.
+    - For each year, while the queue isn't empty, it processes the next border cell that will sink. However, the problem is that in the process, it's removing the sinking cells from the island and marking them as false, which is causing the area to be subtracted twice in the next iterations.
+    - The subtraction of the remaining area after processing should not be done inside the loop, but rather after pushing all new cells that have to sink to the queue during that iteration.
+
+3. **Final Area Calculation**:
+    - The final area calculation is not accurate as it's being reduced within the sinking process and then again after pushing new cells to the queue. The correct way to process the sinking should be to update the queue and the BIT after processing all the cells that sink from a particular sea level.
+
+Here's a refactored version of the code that addresses the issues mentioned:
+
+```cpp
+#include <iostream>
+#include <vector>
+#include <queue>
+
+using namespace std;
+
+const int dx[] = {-1, 1, 0, 0};
+const int dy[] = {0, 0, -1, 1};
+
+int main() {
+    int H, W, Y;
+    cin >> H >> W >> Y;
+
+    vector<vector<int>> A(H, vector<int>(W));
+    vector<vector<bool>> island(H, vector<bool>(W, true));
+    for (int i = 0; i < H; i++) {
+        for (int j = 0; j < W; j++) {
+            cin >> A[i][j];
+        }
+    }
+
+    // Initialize the queue with border cells and push their elevation to the queue
+    queue<pair<int, int>> q;
+    for (int i = 0; i < H; i++) {
+        for (int j = 0; j < W; j++) {
+            if ((i == 0 || i == H - 1 || j == 0 || j == W - 1)) {
+                q.push({A[i][j], i * W + j});
+                island[i][j] = false;
+            }
+        }
+    }
+
+    // BFS to spread the sinking process
+    while (!q.empty()) {
+        int currentElevation = q.front().first;
+        q.pop();
+        int index = q.front().second;
+        q.pop();
+
+        for (int d = 0; d < 4; d++) {
+            int nx = index / W + dx[d];
+            int ny = index % W + dy[d];
+            if (nx >= 0 && nx < H * W && ny >= 0 && ny < W && island[nx / W][ny] && A[nx / W][ny] <= currentElevation + 1) {
+                q.push({A[nx / W][ny], nx});
+                island[nx / W][ny] = false;
+            }
+        }
+    }
+
+    // Output the area of the island after each year
+    for (int i = 1; i <= Y; i++) {
+        int remainingArea = 0;
+        for (int j = 0; j < H; j++) {
+            for (int k = 0; k < W; k++) {
+                if (island[j][k]) {
+                    remainingArea++;
+                }
+            }
+        }
+        cout << remainingArea << endl;
+    }
+
+    return 0;
+}
+```
+
+This refactored code initializes the queue with the border cells and processes the cells that will sink. It uses a BFS approach to simulate the process of sinking and updates the `island` matrix accordingly. After the BFS, it iterates over the matrix to count the cells that remain above sea level and prints the result for each year.

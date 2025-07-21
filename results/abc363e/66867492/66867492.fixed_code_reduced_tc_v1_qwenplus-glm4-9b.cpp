@@ -1,0 +1,69 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define _GLIBCXX_DEBUG
+typedef long long ll;
+
+void input() {
+    ll H, W, Y;
+    cin >> H >> W >> Y;
+    vector<vector<ll>> A(H, vector<ll>(W));
+    for (ll i = 0; i < H; i++) {
+        for (ll j = 0; j < W; j++) {
+            cin >> A[i][j];
+        }
+    }
+    for (ll i = 0; i < Y; i++) {
+        cout << solve(H, W, A) << '\n';
+    }
+}
+
+ll solve(ll H, ll W, vector<vector<ll>>& A) {
+    ll remaining_area = H * W;
+    for (ll year = 1; year <= 100000; year++) {
+        vector<vector<bool>> flooded(H, vector<bool>(W, false));
+        queue<pair<ll, ll>> q;
+
+        // Initialize the queue with the edges of the current sea level
+        for (ll i = 0; i < H; i++) {
+            if (A[i][0] <= year) {
+                flooded[i][0] = true;
+                q.push({i, 0});
+            }
+            if (A[i][W - 1] <= year) {
+                flooded[i][W - 1] = true;
+                q.push({i, W - 1});
+            }
+        }
+        for (ll j = 1; j < W - 1; j++) {
+            if (A[0][j] <= year) {
+                flooded[0][j] = true;
+                q.push({0, j});
+            }
+            if (A[H - 1][j] <= year) {
+                flooded[H - 1][j] = true;
+                q.push({H - 1, j});
+            }
+        }
+
+        // Perform the sinking process
+        while (!q.empty()) {
+            auto [i, j] = q.front();
+            q.pop();
+            for (ll d = 0; d < 4; d++) {
+                ll ni = i + dy[d], nj = j + dx[d];
+                if (ni < 0 || ni >= H || nj < 0 || nj >= W || flooded[ni][nj]) continue;
+                if (A[ni][nj] <= year) {
+                    flooded[ni][nj] = true;
+                    q.push({ni, nj});
+                    remaining_area--;
+                }
+            }
+        }
+    }
+    return remaining_area;
+}
+
+int main() {
+    input();
+    return 0;
+}

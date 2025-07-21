@@ -1,0 +1,64 @@
+#include<bits/stdc++.h>
+using namespace std;
+
+using ll = long long;
+const ll INF = 1LL << 60;
+
+void solve() {
+    int n, k; cin >> n >> k;
+    vector<pair<ll, ll>> ab(n);
+    for (int i = 0; i < n; i++) cin >> ab[i].first;
+    for (int i = 0; i < n; i++) cin >> ab[i].second;
+    
+    // Sort based on A values (first element of pair)
+    sort(ab.begin(), ab.end());
+    
+    if (k == 1) {
+        ll ans = INF;
+        for (int i = 0; i < n; i++) {
+            ans = min(ans, ab[i].first * ab[i].second);
+        }
+        cout << ans << '\n';
+        return;
+    }
+
+    // Max heap for B values
+    priority_queue<ll> max_heap;
+    ll sum = 0;
+
+    // Initialize with the first k-1 elements' B values
+    for (int i = 0; i < k - 1; ++i) {
+        max_heap.push(ab[i].second);
+        sum += ab[i].second;
+    }
+
+    ll ans = INF;
+
+    // Process remaining elements
+    for (int i = k - 1; i < n; ++i) {
+        auto [a, b] = ab[i];
+        // Current A value * (sum of k-1 B values + current B)
+        ans = min(ans, a * (sum + b));
+        
+        // Maintain the smallest k-1 values in the heap
+        if (max_heap.empty() || max_heap.top() > b) {
+            max_heap.push(b);
+            sum += b;
+            
+            // If heap size exceeds k-1, remove the largest element
+            if (max_heap.size() > k - 1) {
+                sum -= max_heap.top();
+                max_heap.pop();
+            }
+        }
+    }
+
+    cout << ans << '\n';
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int t; cin >> t;
+    while (t--) solve();
+}

@@ -1,0 +1,91 @@
+To solve this problem correctly and efficiently, we need to compute the shortest path from vertex 1 to every other vertex in a graph where both nodes and edges have weights. The total path cost is defined as the sum of vertex and edge weights along the path.
+
+### Key Issues with the Original Code:
+1. **Incorrect Algorithm**: It used a simple queue-based BFS approach which doesn't guarantee minimal paths in weighted graphs.
+2. **Missing Dijkstra's Logic**: Since edge and vertex weights are non-negative, **Dijkstra’s algorithm** should be used for shortest paths.
+3. **Vertex Weight Handling**: Vertex weight should be included only once at the destination node when arriving there via an edge.
+
+---
+
+### Correct Strategy:
+- Use **Dijkstra’s algorithm** with a priority queue (`priority_queue`) to always expand the minimum-cost path.
+- Each state in the priority queue will contain:
+  - Total accumulated cost so far
+  - Current node index
+- Build the graph using adjacency lists.
+- Initialize the distance to node `0` (vertex 1) as `A[0]`, since that's the starting point and we must include its vertex weight.
+- For each move to a neighbor, add:
+  - Edge weight `B_j`
+  - Destination vertex weight `A[neighbor]`
+
+This ensures correct computation of path cost.
+
+---
+
+### Final Working Code:
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+using P = pair<ll, int>; // (distance, node)
+
+const ll INF = 1e18;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+
+    int N, M;
+    cin >> N >> M;
+
+    vector<ll> A(N);
+    for (int i = 0; i < N; ++i) {
+        cin >> A[i];
+    }
+
+    vector<vector<P>> G(N); // Adjacency list: G[u] contains pairs (v, B_uv)
+    for (int i = 0; i < M; ++i) {
+        int u, v;
+        ll b;
+        cin >> u >> v >> b;
+        u--; v--;
+        G[u].push_back({v, b});
+        G[v].push_back({u, b});
+    }
+
+    vector<ll> dist(N, INF);
+    dist[0] = A[0]; // Start at node 1 (index 0), include its own weight
+
+    priority_queue<P, vector<P>, greater<P>> pq;
+    pq.push({dist[0], 0});
+
+    while (!pq.empty()) {
+        auto [d, u] = pq.top();
+        pq.pop();
+
+        if (d > dist[u]) continue;
+
+        for (auto [v, b] : G[u]) {
+            ll new_cost = d + b + A[v]; // Path cost: current + edge + next vertex
+            if (new_cost < dist[v]) {
+                dist[v] = new_cost;
+                pq.push({new_cost, v});
+            }
+        }
+    }
+
+    for (int i = 1; i < N; ++i) {
+        cout << dist[i] << " ";
+    }
+    cout << '\n';
+
+    return 0;
+}
+```
+
+---
+
+### Time Complexity:
+- **O(M log N)** due to Dijkstra’s algorithm with a binary heap.
+- Efficient and scalable for input limits up to $2 \times 10^5$.

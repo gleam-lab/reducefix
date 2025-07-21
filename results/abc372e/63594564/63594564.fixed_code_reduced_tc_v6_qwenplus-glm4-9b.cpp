@@ -1,0 +1,70 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+
+using namespace std;
+
+const int N = 2e5 + 5;
+
+struct UnionFind {
+    vector<int> parent;
+    vector<int> size;
+
+    UnionFind(int n) : parent(n + 1), size(n + 1, 1) {
+        for (int i = 0; i <= n; ++i) {
+            parent[i] = i;
+        }
+    }
+
+    int find(int u) {
+        if (u == parent[u]) return u;
+        return parent[u] = find(parent[u]);
+    }
+
+    void unite(int u, int v) {
+        int rootU = find(u);
+        int rootV = find(v);
+        if (rootU != rootV) {
+            if (size[rootU] < size[rootV]) {
+                swap(rootU, rootV);
+            }
+            parent[rootV] = rootU;
+            size[rootU] += size[rootV];
+        }
+    }
+
+    int getSize(int u) {
+        return size[find(u)];
+    }
+};
+
+int main() {
+    int n, q;
+    cin >> n >> q;
+    UnionFind uf(n);
+
+    while (q--) {
+        int t, a, b;
+        cin >> t >> a >> b;
+        if (t == 1) {
+            uf.unite(a, b);
+        } else {
+            int root = uf.find(b);
+            int connectedVertexCount = uf.getSize(root);
+            if (connectedVertexCount < b) {
+                cout << -1 << endl;
+            } else {
+                vector<int> sortedVertices;
+                for (int i = 1; i <= n; ++i) {
+                    if (uf.find(i) == root) {
+                        sortedVertices.push_back(i);
+                    }
+                }
+                sort(sortedVertices.rbegin(), sortedVertices.rend()); // Sort in descending order
+                cout << sortedVertices[b - 1] << endl; // b-1 because input is 1-based
+            }
+        }
+    }
+
+    return 0;
+}

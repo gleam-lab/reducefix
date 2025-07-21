@@ -1,0 +1,54 @@
+#include<bits/stdc++.h>
+using namespace std;
+
+const int INF = 1e18;
+
+struct Edge{
+    int v, w;
+};
+
+vector<Edge> G[200005];
+long long dist[200005];
+
+void dijkstra(int s){
+    priority_queue<pair<long long, int>, vector<pair<long long, int>>, greater<pair<long long, int>>> pq;
+    pq.push({0, s});
+    dist[s] = 0;
+    
+    while (!pq.empty()) {
+        auto [d, u] = pq.top(); pq.pop();
+        if (d > dist[u]) continue;
+        
+        for (auto &e : G[u]) {
+            int v = e.v, w = e.w;
+            if (dist[u] + w < dist[v]) {
+                dist[v] = dist[u] + w;
+                pq.push({dist[v], v});
+            }
+        }
+    }
+}
+
+int main(){
+    ios_base::sync_with_stdio(false); cin.tie(NULL); cout.tie(NULL);
+
+    int n, m;
+    cin >> n >> m;
+    vector<int> a(n+1);
+    for(int i=1; i<=n; ++i) cin >> a[i];
+    
+    for(int i=1; i<=m; ++i){
+        int u, v, w;
+        cin >> u >> v >> w;
+        G[u].emplace_back(v, w);
+        G[v].emplace_back(u, w);
+    }
+
+    memset(dist, 0x3f, sizeof dist);
+    dijkstra(1);
+
+    for(int i=2; i<=n; ++i){
+        cout << min((long long)a[i], dist[i]) << " ";
+    }
+    return 0;
+}

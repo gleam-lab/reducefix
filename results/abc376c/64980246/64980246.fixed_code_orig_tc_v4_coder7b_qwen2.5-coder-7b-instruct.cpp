@@ -1,0 +1,52 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+#define ll long long
+
+void solve() {
+    int n;
+    cin >> n;
+    vector<ll> a(n), b(n - 1);
+    for (auto &tt : a)
+        cin >> tt;
+    for (auto &tt : b)
+        cin >> tt;
+    
+    // Sort both arrays in ascending order
+    sort(a.begin(), a.end());
+    sort(b.begin(), b.end());
+
+    // Initialize variables
+    ll ans = -1;
+    int i = 0, j = 0;
+
+    // Iterate through both arrays
+    while (i < n && j < n - 1) {
+        if (a[i] <= b[j]) {
+            // If current toy fits in the current box, move to the next toy
+            i++;
+        } else {
+            // If current toy does not fit, update the answer and try the next box
+            ans = b[j++];
+        }
+    }
+
+    // Check if we have found a valid box size
+    if (ans != -1) {
+        cout << ans << endl;
+    } else {
+        cout << -1 << endl;
+    }
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t = 1;
+    // cin >> t;
+    while (t--) {
+        solve();
+    }
+    return 0;
+}

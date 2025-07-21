@@ -1,0 +1,42 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int n, k;
+    cin >> n >> k;
+    vector<int> A(n);
+    for (int i = 0; i < n; ++i) {
+        cin >> A[i];
+    }
+
+    // We will consider all possible windows of size (n - K)
+    int window_size = n - k;
+    multiset<int> window;
+
+    // Initialize the first window
+    for (int i = 0; i < window_size; ++i) {
+        window.insert(A[i]);
+    }
+
+    int min_diff = *window.rbegin() - *window.begin();
+
+    // Slide the window across the array
+    for (int i = window_size; i < n; ++i) {
+        // Remove the element exiting the window
+        window.erase(window.find(A[i - window_size]));
+
+        // Add the new element entering the window
+        window.insert(A[i]);
+
+        // Update the minimum difference
+        int current_diff = *window.rbegin() - *window.begin();
+        min_diff = min(min_diff, current_diff);
+    }
+
+    cout << min_diff << endl;
+
+    return 0;
+}

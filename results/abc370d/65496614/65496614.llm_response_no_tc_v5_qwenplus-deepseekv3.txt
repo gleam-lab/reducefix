@@ -1,0 +1,97 @@
+To fix this code, we need to address several issues:
+
+1. **Initialization of Sets**: The initial sets `R` and `C` are not correctly populated to represent all possible columns and rows respectively. This leads to incorrect handling of the grid boundaries.
+
+2. **Bomb Placement Logic**: The logic for handling the bomb placement and subsequent wall destruction is flawed. When a bomb is placed on an empty cell, the code incorrectly attempts to destroy walls in all four directions without properly checking the nearest wall in each direction.
+
+3. **Efficiency**: The original approach uses sets for each row and column, which can be inefficient for large grids (up to 4x10^5 cells). We need a more efficient data structure to handle the operations within the constraints.
+
+4. **Edge Cases**: The code does not handle edge cases where the bomb is placed at the grid boundaries correctly, leading to potential out-of-bound errors or incorrect wall destruction.
+
+Here’s the corrected code that addresses these issues:
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int H, W, Q;
+    cin >> H >> W >> Q;
+
+    vector<set<int>> row(H + 2);  // For each row, stores columns with walls
+    vector<set<int>> col(W + 2);  // For each column, stores rows with walls
+
+    // Initialize with all walls
+    for (int i = 1; i <= H; ++i) {
+        for (int j = 1; j <= W; ++j) {
+            row[i].insert(j);
+            col[j].insert(i);
+        }
+    }
+
+    int remaining = H * W;
+
+    while (Q--) {
+        int R, C;
+        cin >> R >> C;
+
+        if (row[R].count(C)) {
+            // Cell has a wall, destroy it
+            row[R].erase(C);
+            col[C].erase(R);
+            remaining--;
+        } else {
+            // Cell is empty, destroy first walls in four directions
+            // Up
+            auto it = col[C].lower_bound(R);
+            if (it != col[C].begin()) {
+                --it;
+                row[*it].erase(C);
+                col[C].erase(it);
+                remaining--;
+            }
+            // Down
+            it = col[C].upper_bound(R);
+            if (it != col[C].end()) {
+                row[*it].erase(C);
+                col[C].erase(it);
+                remaining--;
+            }
+            // Left
+            it = row[R].lower_bound(C);
+            if (it != row[R].begin()) {
+                --it;
+                col[*it].erase(R);
+                row[R].erase(it);
+                remaining--;
+            }
+            // Right
+            it = row[R].upper_bound(C);
+            if (it != row[R].end()) {
+                col[*it].erase(R);
+                row[R].erase(it);
+                remaining--;
+            }
+        }
+    }
+
+    cout << remaining << endl;
+    return 0;
+}
+```
+
+### Explanation:
+1. **Initialization**: The `row` and `col` vectors are initialized to keep track of walls in each row and column. Initially, all cells have walls, so we populate these sets accordingly.
+
+2. **Bomb Placement Logic**: 
+   - If the cell `(R, C)` has a wall, it is simply removed from the sets, and the remaining wall count is decremented.
+   - If the cell is empty, we look for the nearest walls in all four directions (up, down, left, right) using `lower_bound` and `upper_bound` operations on the sets. The found walls are then removed.
+
+3. **Efficiency**: Using sets allows for efficient insertion, deletion, and search operations (O(log n) per operation), which is crucial given the constraints.
+
+4. **Edge Cases**: The grid boundaries are handled naturally by the set operations, as `lower_bound` and `upper_bound` correctly manage the search ranges without going out of bounds.
+
+This solution ensures correctness and efficiency within the problem constraints.

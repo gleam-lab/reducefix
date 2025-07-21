@@ -1,0 +1,33 @@
+#include<bits/stdc++.h>
+using namespace std;
+
+int n, m;
+
+int main() {
+    cin >> n >> m;
+    vector<int> nums(n);
+    for (int i = 0; i < n; i++) {
+        cin >> nums[i];
+    }
+
+    // Compute prefix sums modulo m
+    vector<int> prefixSum(n + 1, 0);
+    for (int i = 0; i < n; i++) {
+        prefixSum[i + 1] = (prefixSum[i] + nums[i]) % m;
+    }
+
+    // Use a map to count occurrences of each remainder
+    unordered_map<int, int> remainderCount;
+    long long count = 0;
+
+    for (int i = 0; i <= n; i++) {
+        // For circular subarrays, we consider prefixSum[i] as both start and end
+        // Count how many times this remainder has appeared before
+        count += remainderCount[prefixSum[i]];
+        // Increment the current remainder count for future comparisons
+        remainderCount[prefixSum[i]]++;
+    }
+
+    cout << count << endl;
+    return 0;
+}

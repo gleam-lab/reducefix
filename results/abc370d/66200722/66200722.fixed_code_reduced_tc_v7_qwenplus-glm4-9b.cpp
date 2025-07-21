@@ -1,0 +1,94 @@
+#include <iostream>
+#include <vector>
+#include <map>
+#include <algorithm>
+#include <limits>
+
+using namespace std;
+
+struct UnionFind {
+    vector<int> parent;
+    vector<int> rank;
+
+    UnionFind(int size) : parent(size), rank(size, 0) {
+        for (int i = 0; i < size; ++i) {
+            parent[i] = i;
+        }
+    }
+
+    int find(int x) {
+        if (parent[x] != x) {
+            parent[x] = find(parent[x]);
+        }
+        return parent[x];
+    }
+
+    void unite(int x, int y) {
+        int rootX = find(x);
+        int rootY = find(y);
+        if (rootX != rootY) {
+            if (rank[rootX] > rank[rootY]) {
+                parent[rootY] = rootX;
+            } else if (rank[rootX] < rank[rootY]) {
+                parent[rootX] = rootY;
+            } else {
+                parent[rootY] = rootX;
+                rank[rootX]++;
+            }
+        }
+    }
+};
+
+int main() {
+    int h, w, q;
+    cin >> h >> w >> q;
+
+    vector<vector<int>> grid(h, vector<int>(w, 1)); // All cells have 1 wall initially
+
+    UnionFind uf(h * w + 1); // Union-Find for walls
+
+    for (int i = 0; i < q; ++i) {
+        int r, c;
+        cin >> r >> c;
+        --r; --c; // Convert to 0-based index
+
+        // Find the first wall in the row and column
+        int firstWallRow = r;
+        int firstWallCol = c;
+
+        while (firstWallRow >= 0 && grid[firstWallRow][c] == 1) {
+            firstWallRow--;
+        }
+
+        firstWallRow++; // firstWallRow is now one row below the first wall
+
+        while (firstWallCol >= 0 && grid[r][firstWallCol] == 1) {
+            firstWallCol--;
+        }
+
+        firstWallCol++; // firstWallCol is now one column to the left of the first wall
+
+        // Remove walls from the first wall to the target
+        for (int col = max(firstWallCol, 0); col <= c; ++col) {
+            uf.unite(r, col);
+            grid[r][col] = 0;
+        }
+
+        for (int row = max(firstWallRow, 0); row <= r; ++row) {
+            uf.unite(row, c);
+            grid[row][c] = 0;
+        }
+    }
+
+    // Count remaining walls
+    int remainingWalls = 0;
+    for (int i = 0; i < h; ++i) {
+        for (int j = 0; j < w; ++j) {
+            remainingWalls += grid[i][j];
+        }
+    }
+
+    cout << remainingWalls << endl;
+
+    return 0;
+}

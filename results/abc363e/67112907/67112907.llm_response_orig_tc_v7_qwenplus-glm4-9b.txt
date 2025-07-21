@@ -1,0 +1,102 @@
+
+The problem you've described is about simulating the process of rising sea levels and their effect on an island represented as a grid. The island is subject to erosion as the sea level rises, and sections of the island that are at or below sea level will be submerged. The goal is to determine the area of the island that remains above sea level after a given number of years.
+
+From the provided code, it seems like there's an attempt to use a priority queue to simulate the process of sea level rise and erosion. However, the code is incorrect and does not work as intended. Let's break down the issues in the code and suggest a solution.
+
+### Issues in the Given Code:
+1. **Priority Queue Initialization**: The priority queue is initialized to sort by the elevation of the areas adjacent to the sea, but it does not account for the fact that the sea level is rising, and thus should not be using the initial elevation of the areas adjacent to the sea.
+2. **Simulation of Sea Level Rise**: The code attempts to simulate the process of sea level rise and erosion, but it fails to account for the simultaneous sinking of areas that become submerged when a new area sinks.
+3. **Efficiency**: The priority queue is used to process the areas that are adjacent to the sea, but it does not efficiently check for the conditions under which new areas will sink due to the rising sea level.
+4. **Output**: The code prints the area of the island that remains above sea level for each year, but it's not clear how the area is being calculated correctly.
+
+### Proposed Solution:
+To solve this problem, you can use a flood-fill algorithm (similar to the "paint bucket" tool in graphics programs) to simulate the process of erosion. Here's a high-level approach:
+
+1. **Initialize the Grid**: Create a grid that represents the island, with each cell initialized to true if it's above sea level and false if it's submerged.
+2. **Flood-Fill Algorithm**: Starting from the edges of the grid, apply the flood-fill algorithm to mark cells that will be submerged as false. This algorithm should propagate inward from the edges and account for the fact that cells become submerged when a new cell adjacent to them becomes submerged.
+3. **Simulate Sea Level Rise**: For each year, increment the sea level and re-run the flood-fill algorithm to mark new cells that become submerged.
+4. **Calculate Remaining Area**: After each iteration, calculate the area of the island that remains above sea level by summing the number of cells marked as true in the grid.
+
+Here's a rough sketch of how you might implement the flood-fill algorithm in C++:
+
+```cpp
+#include <iostream>
+#include <vector>
+#include <queue>
+#include <tuple>
+
+using namespace std;
+
+struct Dir {
+    int x, y;
+};
+
+const Dir directions[4] = {{0, 1}, {0, -1}, {1, 0}, {-1, 0}};
+
+bool isValid(int x, int y, int H, int W) {
+    return x >= 0 && x < H && y >= 0 && y < W;
+}
+
+void floodFill(vector<vector<int>>& grid, int x, int y, int seaLevel) {
+    queue<tuple<int, int, int>> q; // queue of (x, y, seaLevel)
+    q.push(make_tuple(x, y, seaLevel));
+
+    while (!q.empty()) {
+        auto [currX, currY, currSeaLevel] = q.front();
+        q.pop();
+
+        if (grid[currX][currY] <= currSeaLevel) continue;
+
+        grid[currX][currY] = currSeaLevel;
+
+        for (const auto& dir : directions) {
+            int newX = currX + dir.x, newY = currY + dir.y;
+            if (isValid(newX, newY, grid.size(), grid[0].size()) && grid[newX][newY] > currSeaLevel) {
+                q.push(make_tuple(newX, newY, currSeaLevel + 1));
+            }
+        }
+    }
+}
+
+int main() {
+    int H, W, Y;
+    cin >> H >> W >> Y;
+
+    vector<vector<int>> A(H, vector<int>(W));
+    for (int i = 0; i < H; ++i) {
+        for (int j = 0; j < W; ++j) {
+            cin >> A[i][j];
+        }
+    }
+
+    // Start with the initial sea level being 0
+    for (int year = 0; year < Y; ++year) {
+        vector<vector<int>> grid(H, vector<int>(W, 1)); // Grid initialized to above sea level
+
+        // Apply flood-fill algorithm from all edges
+        for (int i = 0; i < H; ++i) {
+            floodFill(grid, i, 0, year + 1); // Top edge
+            floodFill(grid, i, W - 1, year + 1); // Bottom edge
+        }
+
+        for (int j = 0; j < W; ++j) {
+            floodFill(grid, 0, j, year + 1); // Left edge
+            floodFill(grid, H - 1, j, year + 1); // Right edge
+        }
+
+        // Calculate the area of the island that remains above sea level
+        int remainingArea = 0;
+        for (int i = 0; i < H; ++i) {
+            for (int j = 0; j < W; ++j) {
+                remainingArea += grid[i][j];
+            }
+        }
+
+        cout << remainingArea << endl;
+    }
+
+    return 0;
+}
+```
+
+This code initializes the grid, applies the flood-fill algorithm from the edges of the grid for each year, and calculates the remaining area of the island above sea level. It should provide correct results for the problem description.

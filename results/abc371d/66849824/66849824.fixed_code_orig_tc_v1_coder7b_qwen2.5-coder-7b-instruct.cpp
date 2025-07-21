@@ -1,0 +1,71 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+using ll = long long;
+using Graph = vector<vector<int>>;
+
+#define rep(i, n) for (int i = 0; i < (n); ++i)
+#define reps(i, n) for (int i = 0; i <= (n); ++i)
+#define all(x) (x).begin(), (x).end()
+#define rall(x) (x).rbegin(), (x).rend()
+#define pb(a) push_back(a)
+#define Yes(b) cout << ((b) ? "Yes" : "No") << endl
+#define YES(b) cout << ((b) ? "YES" : "NO") << endl
+
+int dx[4] = {1, 0, -1, 0};
+int dy[4] = {0, 1, 0, -1};
+
+int main() {
+    int N;
+    cin >> N;
+    vector<ll> P(N + 1), X(N);
+    P[0] = 0;
+    rep(i, N) cin >> X[i];
+    rep(i, N) {
+        int p;
+        cin >> p;
+        P[i + 1] = P[i] + p;
+    }
+    
+    map<int, int> x_to_ptr;
+    rep(i, N) {
+        x_to_ptr[X[i]] = i;
+    }
+
+    int Q;
+    cin >> Q;
+    while (Q--) {
+        int L, R;
+        cin >> L >> R;
+        
+        // Find the first position where X >= L
+        auto it_L = lower_bound(all(X), L);
+        if (it_L == end(X)) {
+            cout << P[N] - P[x_to_ptr[R]] << endl;
+        } else if (*it_L < L) {
+            cout << P[N] - P[x_to_ptr[*next(it_L)]] << endl;
+        } else {
+            cout << P[N] - P[x_to_ptr[L]] << endl;
+        }
+        
+        // Find the last position where X <= R
+        auto it_R = upper_bound(all(X), R);
+        if (it_R == begin(X)) {
+            cout << P[x_to_ptr[L]] << endl;
+        } else if (*(prev(it_R)) > R) {
+            cout << P[x_to_ptr[*prev(it_R)]] << endl;
+        } else {
+            cout << P[x_to_ptr[R]] << endl;
+        }
+        
+        // Calculate the answer
+        int l = min((*it_L == L ? x_to_ptr[L] : x_to_ptr[*next(it_L)]),
+                    (*it_R == R ? x_to_ptr[R] : x_to_ptr[*prev(it_R)]));
+        int r = max((*it_L == L ? x_to_ptr[L] : x_to_ptr[*next(it_L)]),
+                    (*it_R == R ? x_to_ptr[R] : x_to_ptr[*prev(it_R)]));
+        
+        int ans = P[r] - P[l];
+        cout << ans << endl;
+    }
+    return 0;
+}

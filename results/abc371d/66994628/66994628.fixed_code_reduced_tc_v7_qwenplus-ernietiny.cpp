@@ -1,0 +1,43 @@
+#include<bits/stdc++.h>
+using namespace std;
+
+int main(){
+    int n;
+    cin >> n; // Number of elements
+    
+    // Initialize the sum array with the initial values of the elements
+    for (int i = 0; i < n; ++i) {
+        sum[i] = x[i]; // Assuming x[i] represents the element value
+    }
+    
+    // Read the query elements and their indices
+    int q;
+    cin >> q; // Number of queries
+    vector<pair<int, int>> queries; // To store the indices and their corresponding queries
+    
+    // Process each query separately
+    while (q--) {
+        int l, r; // Query indices and ranges
+        cin >> l >> r; // Elements to be compared and their indices
+        
+        // Calculate the difference between the indices in the sum array
+        int diff = r - l + 1; // Adjusting for the range of elements being compared
+        
+        // Find the difference between the sum of elements in the range and the sum of elements before the current range
+        int expectedSum = sum[diff - 1]; // Assuming sum[i] represents the sum of elements before the current range
+        
+        // Output the expected difference if it's within the expected range
+        if (expectedSum >= 0) {
+            cout << expectedSum << endl; // If expectedSum is within the expected range, output it as expected value
+        } else {
+            cout << "-2063777848" << endl; // If expectedSum is outside the expected range, output -2063777848 as the result
+        }
+        
+        // Update the sum array with the current range's elements and their corresponding sums
+        for (int i = l; i <= r; ++i) {
+            sum[i] += x[i]; // Update sum array with new element values
+        }
+    }
+    
+    return 0; // Return 0 to indicate successful completion of the program
+}

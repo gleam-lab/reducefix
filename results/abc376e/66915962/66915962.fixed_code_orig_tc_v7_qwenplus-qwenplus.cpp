@@ -1,0 +1,57 @@
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+using VI = vector<int>;
+using P = pair<int, int>;
+constexpr int INF = 1001001001;
+constexpr ll LINF = 1001001001001001001ll;
+#define rep(i, n) for (ll i = 0; i < (ll)(n); i++)
+#define rep2(i, k, n) for (ll i = k; i < (ll)(n); i++)
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+    
+    int t;
+    cin >> t;
+
+    rep(qi, t) {
+        int n, k;
+        cin >> n >> k;
+        vector<pair<ll, ll>> p(n);
+        rep(i, n) cin >> p[i].first;
+        rep(i, n) cin >> p[i].second;
+
+        // Sort by A_i in ascending order
+        sort(p.begin(), p.end());
+
+        multiset<ll> top_k_b;
+        ll sumB = 0;
+        ll ans = LINF;
+
+        // First select the first K elements
+        for (int i = 0; i < k; ++i) {
+            sumB += p[i].second;
+            top_k_b.insert(p[i].second);
+        }
+        ans = min(ans, p[k - 1].first * sumB);
+
+        // Sliding window approach
+        for (int i = k; i < n; ++i) {
+            // Remove the largest B value from the current set
+            sumB -= *top_k_b.rbegin();
+            top_k_b.erase(prev(top_k_b.end()));
+
+            // Insert new B value
+            sumB += p[i].second;
+            top_k_b.insert(p[i].second);
+
+            // Update answer
+            ans = min(ans, p[i].first * sumB);
+        }
+
+        cout << ans << '\n';
+    }
+
+    return 0;
+}

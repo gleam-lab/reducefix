@@ -1,0 +1,43 @@
+#include<bits/stdc++.h>
+
+using namespace std;
+
+typedef long long ll;
+
+#define N 1005
+
+ll n, m, a[N], b[N], ans;
+
+set<ll> rows, cols, diag1, diag2;
+
+int main() {
+    scanf("%lld%lld", &n, &m);
+    for (int i = 1; i <= m; ++i) {
+        scanf("%lld%lld", &a[i], &b[i]);
+        rows.insert(a[i]);
+        cols.insert(b[i]);
+        diag1.insert(a[i] + b[i]);
+        diag2.insert(a[i] - b[i]);
+    }
+    
+    ans = n * n - rows.size() * n - cols.size() * n + rows.size() * cols.size() +
+          diag1.size() * n - rows.size() * diag1.size() +
+          diag2.size() * n - rows.size() * diag2.size();
+
+    // Subtract the intersections of diagonals with rows or columns
+    for (auto x : diag1) {
+        if (x < 1 || x > n * 2) continue;
+        int r1 = max(x - n + 1, 1LL);
+        int r2 = min(x, n);
+        ans -= (r2 - r1 + 1) * rows.size();
+    }
+    for (auto x : diag2) {
+        if (x < -n + 1 || x > n + n - 1) continue;
+        int r1 = max(-x + 1, 1LL);
+        int r2 = min(x, n);
+        ans -= (r2 - r1 + 1) * rows.size();
+    }
+
+    printf("%lld", ans);
+    return 0;
+}

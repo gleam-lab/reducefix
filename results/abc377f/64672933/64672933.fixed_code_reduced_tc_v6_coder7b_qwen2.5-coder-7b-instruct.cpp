@@ -1,0 +1,40 @@
+#include<bits/stdc++.h>
+using namespace std;
+using i64 = long long;
+
+int main() {
+    std::ios::sync_with_stdio(false);
+    std::cin.tie(nullptr);
+    i64 N, M;
+    cin >> N >> M;
+    vector<array<i64,2>> g(M);
+    set<pair<int,int>> occupied;
+    for (int i = 0; i < M; i ++) {
+        i64 a, b;
+        cin >> a >> b;
+        g[i] = {a, b};
+        occupied.insert({a, b});
+    }
+    
+    i64 ans = 0;
+    for (i64 i = 1; i <= N; ++i) {
+        for (i64 j = 1; j <= N; ++j) {
+            if (!occupied.count({i, j})) {
+                bool valid = true;
+                for (const auto& [x, y] : g) {
+                    if (i == x || j == y || i + j == x + y || i - j == x - y) {
+                        valid = false;
+                        break;
+                    }
+                }
+                if (valid) {
+                    ++ans;
+                }
+            }
+        }
+    }
+
+    cout << ans << "\n";
+
+    return 0;
+}

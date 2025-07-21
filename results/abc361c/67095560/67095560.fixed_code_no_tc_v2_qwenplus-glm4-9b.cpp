@@ -1,0 +1,61 @@
+/* Pushan Paul
+   KUET CSE '18 */
+
+#include <bits/stdc++.h>
+using namespace std;
+
+#define endl "\n"
+#define pb push_back
+#define mp make_pair
+#define all(v) v.begin(), v.end()
+#define distmax(a) distance(a.begin(), max_element(all(a)))
+#define distmin(a) distance(a.begin(), min_element(all(a)))
+#define rep(i, x) for (int i = 0; i < (int)(x); i++)
+#define repn(i, x) for (int i = 1; i <= (int)(x); i++)
+#define repo(i, x) for (int i = x - 1; i >= 0; i--)
+
+int main() {
+    int n, k;
+    cin >> n >> k;
+    vector<int> A(n);
+    rep(i, n) cin >> A[i];
+
+    // Sort the array to easily find the maximum and minimum
+    sort(all(A));
+
+    // If k is 1, the best we can do is remove the minimum or maximum element
+    if (k == 1) {
+        cout << max({A[0], A[n - 1] - A[0], A[n - 1] - A[n - 2]}) << endl;
+        return 0;
+    }
+
+    // Initialize the answer with a large number
+    long long ans = LLONG_MAX;
+
+    // We need to consider removing every possible pair of elements
+    rep(i, n - 1) {
+        // Check the pairs (A[i], A[i+1])
+        long long maxB = max(A[i], static_cast<int>(A[n - 2] - A[i]));
+        long long minB = min(A[i], static_cast<int>(A[n - 2] - A[i]));
+        ans = min(ans, maxB - minB);
+
+        if (k == 2) {
+            cout << ans << endl;
+            return 0;
+        }
+    }
+
+    // If we are here, it means k > 2 and we need to consider removing all pairs
+    // Calculate the answer for removing all elements except the first and last
+    long long maxB = max(A[0], A[n - 2] - A[0]);
+    long long minB = min(A[0], A[n - 2] - A[0]);
+    ans = min(ans, maxB - minB);
+
+    // Calculate the answer for removing all elements except the second and second last
+    maxB = max(A[1], A[n - 2] - A[1]);
+    minB = min(A[1], A[n - 2] - A[1]);
+    ans = min(ans, maxB - minB);
+
+    cout << ans << endl;
+    return 0;
+}

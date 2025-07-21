@@ -1,0 +1,100 @@
+
+### Problem Analysis
+
+The problem involves simulating the process of the sea level rising on an island divided into a grid. Each cell in the grid represents a section of the island with a specific elevation. The sea level starts at the elevation of the lowest section of the island and rises by one unit each year. Sections of land that are adjacent to the sea or are submerged (elevation <= sea level) sink. The task is to compute the area of the island that remains above sea level after a specified number of years.
+
+### Solution Strategy
+
+The solution can be approached using a priority queue to simulate the process of flooding and sinking:
+
+1. **Initialization**: Read the dimensions of the island and the elevation of each cell. Initialize a priority queue with all the cells that are either on the edge of the island or have an elevation equal to the initial sea level.
+
+2. **Simulation of Rising Sea Levels**: For each year up to Y:
+   - Remove the cell with the lowest elevation from the priority queue (this represents the first cell that sinks due to the rising sea level).
+   - Determine which neighboring cells will sink based on their elevation and adjacency to the recently sunk cell.
+   - Add these neighboring cells to the priority queue if they haven't been added before.
+
+3. **Output**: After processing for Y years, compute the total area of the island that has not sunk and output this area for each year.
+
+### Corrected Solution
+
+```cpp
+#include <iostream>
+#include <vector>
+#include <queue>
+#include <climits>
+
+using namespace std;
+
+struct Cell {
+    int r, c, height;
+};
+
+bool operator<(const Cell& a, const Cell& b) {
+    return a.height > b.height;
+}
+
+int main() {
+    int h, w, y;
+    cin >> h >> w >> y;
+
+    vector<vector<int>> elevation(h, vector<int>(w));
+    vector<vector<int>> sink(h, vector<int>(w, INT_MAX));
+    priority_queue<Cell, vector<Cell>, greater<Cell>> pq;
+
+    for (int i = 0; i < h; ++i) {
+        for (int j = 0; j < w; ++j) {
+            cin >> elevation[i][j];
+        }
+    }
+
+    // Initialize the priority queue with cells on the border or at sea level
+    for (int i = 0; i < h; ++i) {
+        for (int j = 0; j < w; ++j) {
+            if (i == 0 || i == h - 1 || j == 0 || j == w - 1) {
+                sink[i][j] = elevation[i][j];
+                pq.push({i, j, elevation[i][j]});
+            }
+        }
+    }
+
+    vector<int> lastSunk(y + 1, 0);
+    vector<vector<bool>> visited(h, vector<bool>(w, false));
+
+    while (!pq.empty()) {
+        Cell current = pq.top();
+        pq.pop();
+
+        if (visited[current.r][current.c]) continue;
+        visited[current.r][current.c] = true;
+
+        for (int i = 0; i < 4; ++i) {
+            int nr = current.r + ((i + 1) % 4) - 1;
+            int nc = current.c + (i % 4);
+
+            if (nr < 0 || nr >= h || nc < 0 || nc >= w) continue;
+
+            if (elevation[nr][nc] <= current.height) {
+                sink[nr][nc] = min(sink[nr][nc], current.height);
+                pq.push({nr, nc, sink[nr][nc]});
+            }
+        }
+    }
+
+    for (int i = 0; i < h; ++i) {
+        for (int j = 0; j < w; ++j) {
+            if (sink[i][j] <= y) {
+                lastSunk[sink[i][j]]++;
+            }
+        }
+    }
+
+    for (int i = 1; i <= y; ++i) {
+        cout << (h * w - lastSunk[i]) << '\n';
+    }
+
+    return 0;
+}
+```
+
+This solution uses a priority queue to efficiently manage which cells will sink first and tracks the last time a cell sunk using a `lastSunk` array. It avoids unnecessary recomputation by using the `visited` array to prevent revisiting cells. The output is the area of the island not submerged for each year up to Y.

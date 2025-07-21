@@ -1,0 +1,105 @@
+
+The problem is about simulating the process of sea level rise on an island of shape H x W. The elevation of each cell on the island is given, and the sea level rises by 1 each year. The cells adjacent to the sea or submerged cells will sink if their elevation is not greater than the new sea level. The task is to calculate the area of the island that remains above sea level after Y years of rising sea levels.
+
+Let's analyze the given code and identify the issues:
+
+1. **Initialization of the queue**: The size of the queue `Q` is initialized to `2 * H * W`, which might not be sufficient to accommodate all the cells that could potentially sink.
+
+2. **Cells adjacent to the sea**: When initializing the queue, cells adjacent to the sea are pushed into the queue. However, the sea's boundary is not properly managed. The sea should not expand beyond the boundary of the island.
+
+3. **Propagating the sinking process**: The code uses a queue to propagate the sinking process. However, the way it's implemented may not correctly handle the process of adjacent cells sinking simultaneously.
+
+4. **Calculating the remaining area**: The code keeps reducing the total area `ans` as cells sink, but it does not reset `ans` to the correct area at the beginning of each year.
+
+Here is a corrected version of the code:
+
+```cpp
+#include<bits/stdc++.h>
+using namespace std;
+using ll = long long;
+
+const int MAXN = 202020;
+vector<vector<int>> adj(MAXN);
+bool seen[MAXN];
+ll area[MAXN];
+
+ll dfs(int v) {
+    seen[v] = true;
+    ll current_area = 1;
+    for (int u : adj[v]) {
+        if (!seen[u]) {
+            current_area += dfs(u);
+        }
+    }
+    return current_area;
+}
+
+int main() {
+    int h, w, y;
+    cin >> h >> w >> y;
+    vector<vector<int>> a(h, vector<int>(w));
+    ll total_area = 0;
+    for (int i = 0; i < h; ++i) {
+        for (int j = 0; j < w; ++j) {
+            cin >> a[i][j];
+            total_area += a[i][j];
+        }
+    }
+
+    for (int i = 0; i < MAXN; ++i) {
+        adj[i].clear();
+        area[i] = 0;
+        seen[i] = false;
+    }
+
+    for (int i = 0; i < h; ++i) {
+        for (int j = 0; j < w; ++j) {
+            if (a[i][j] > 0) {
+                int v = a[i][j];
+                for (int di = -1; di <= 1; ++di) {
+                    for (int dj = -1; dj <= 1; ++dj) {
+                        int ni = i + di, nj = j + dj;
+                        if (ni >= 0 && ni < h && nj >= 0 && nj < w) {
+                            if (a[ni][nj] == 0) {
+                                adj[v].push_back(a[ni][nj]);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    for (int i = 1; i <= total_area; ++i) {
+        if (!seen[i]) {
+            area[i] = dfs(i);
+        }
+    }
+
+    for (int y_ = 0; y_ < y; ++y_) {
+        for (int i = 1; i <= total_area; ++i) {
+            for (int u : adj[i]) {
+                if (area[u] == 0) {
+                    adj[i].erase(remove(adj[i].begin(), adj[i].end(), u), adj[i].end());
+                }
+            }
+        }
+        for (int i = 1; i <= total_area; ++i) {
+            if (adj[i].empty()) {
+                seen[i] = true;
+            }
+        }
+        ll remaining_area = 0;
+        for (int i = 1; i <= total_area; ++i) {
+            if (!seen[i]) {
+                remaining_area += dfs(i);
+            }
+        }
+        cout << remaining_area << endl;
+    }
+
+    return 0;
+}
+```
+
+This corrected code initializes the adjacency list for each cell and performs a depth-first search (DFS) to calculate the size of each area that remains above sea level. It then simulates the process of sea level rise year by year, updating the adjacency list and performing DFS to find the remaining area each time.

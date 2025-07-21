@@ -1,0 +1,45 @@
+#include<bits/stdc++.h>
+using namespace std;
+#define ll long long
+
+void solve() {
+    ll n;
+    cin >> n;
+    vector<ll> a(n), b(n);
+    for (ll i = 0; i < n; ++i) {
+        cin >> a[i];
+    }
+    for (ll i = 0; i < n - 1; ++i) {
+        cin >> b[i];
+    }
+
+    // Sort the toy sizes and box sizes
+    sort(a.begin(), a.end());
+    sort(b.begin(), b.end());
+
+    // Initialize the answer to the maximum possible size for a toy
+    ll min_size = *max_element(a.begin(), a.end());
+    bool possible = false;
+
+    // Check if we can place all toys in the existing boxes
+    for (ll i = 0; i < n - 1; ++i) {
+        if (a[i] <= b[i]) {
+            // If the current toy can be placed in the current box, continue
+            continue;
+        } else {
+            // If not, we need to consider buying a new box
+            min_size = min(min_size, b[i]);
+        }
+    }
+
+    // After checking all toys, we need to ensure that the smallest box can fit the largest toy
+    if (min_size >= *max_element(a.begin(), a.end())) {
+        cout << min_size << endl;
+    } else {
+        cout << -1 << endl;
+    }
+}
+
+int main() {
+    solve();
+}

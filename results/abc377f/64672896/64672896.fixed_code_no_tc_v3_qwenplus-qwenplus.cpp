@@ -1,0 +1,144 @@
+#include <bits/stdc++.h>
+using namespace std;
+using i64 = long long;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    i64 N, M;
+    cin >> N >> M;
+
+    set<i64> rows, cols, diag1, diag2;
+
+    vector<pair<i64, i64>> pieces(M);
+    for (i64 i = 0; i < M; ++i) {
+        i64 a, b;
+        cin >> a >> b;
+        pieces[i] = {a, b};
+        rows.insert(a);
+        cols.insert(b);
+        diag1.insert(a + b);
+        diag2.insert(a - b);
+    }
+
+    // Convert to vectors for easy iteration
+    vector<i64> R(rows.begin(), rows.end());
+    vector<i64> C(cols.begin(), cols.end());
+    vector<i64> D1(diag1.begin(), diag1.end());
+    vector<i64> D2(diag2.begin(), diag2.end());
+
+    // Total threatened cells
+    i64 total_threatened = 0;
+
+    // Row and column contributions
+    total_threatened += (i64)R.size() * N;
+    total_threatened += (i64)C.size() * N;
+
+    // Diagonal 1: x + y = s
+    for (i64 s : D1) {
+        i64 low = max(1LL, s - N);
+        i64 high = min(N, s - 1);
+        if (low <= high)
+            total_threatened += high - low + 1;
+    }
+
+    // Diagonal 2: x - y = d
+    for (i64 d : D2) {
+        i64 low = max(1LL, d + 1);
+        i64 high = min(N, N + d);
+        if (low <= high)
+            total_threatened += high - low + 1;
+    }
+
+    // Inclusion-exclusion: subtract overlaps
+
+    // Rows & Columns
+    for (i64 r : R) {
+        for (i64 c : C) {
+            total_threatened--; // cell (r,c) was counted twice
+        }
+    }
+
+    // Row & Diag1
+    for (i64 r : R) {
+        for (i64 s : D1) {
+            i64 c = s - r;
+            if (c >= 1 && c <= N)
+                total_threatened--;
+        }
+    }
+
+    // Row & Diag2
+    for (i64 r : R) {
+        for (i64 d : D2) {
+            i64 c = r - d;
+            if (c >= 1 && c <= N)
+                total_threatened--;
+        }
+    }
+
+    // Col & Diag1
+    for (i64 c : C) {
+        for (i64 s : D1) {
+            i64 r = s - c;
+            if (r >= 1 && r <= N)
+                total_threatened--;
+        }
+    }
+
+    // Col & Diag2
+    for (i64 c : C) {
+        for (i64 d : D2) {
+            i64 r = d + c;
+            if (r >= 1 && r <= N)
+                total_threatened--;
+        }
+    }
+
+    // Diag1 & Diag2 intersections
+    for (i64 s : D1) {
+        for (i64 d : D2) {
+            i64 x = (s + d);
+            if (x % 2 != 0) continue;
+            i64 y = s - x / 2;
+            x /= 2;
+            if (x >= 1 && x <= N && y >= 1 && y <= N)
+                total_threatened--;
+        }
+    }
+
+    // Subtract overlaps of all four types together
+    set<pair<i64, i64>> occupied;
+    for (auto [a, b] : pieces) {
+        occupied.insert({a, b});
+    }
+
+    for (i64 r : R) {
+        for (i64 c : C) {
+            if (occupied.count({r, c})) {
+                total_threatened++; // already counted as threat, but it's occupied
+            }
+        }
+    }
+
+    for (i64 s : D1) {
+        for (i64 d : D2) {
+            i64 x = (s + d);
+            if (x % 2 != 0) continue;
+            i64 y = s - x / 2;
+            x /= 2;
+            if (x >= 1 && x <= N && y >= 1 && y <= N) {
+                if (occupied.count({x, y})) {
+                    total_threatened++;
+                }
+            }
+        }
+    }
+
+    // Final answer: all cells - threatened cells
+    i64 ans = N * N - total_threatened;
+    cout << ans << "\n";
+
+    return 0;
+}

@@ -1,0 +1,83 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+#define rep(i, n) for (int i = 0; i < (n); i++)
+using ll = long long;
+using pii = pair<int, int>;
+
+const int INF = 1e9;
+
+int main() {
+    int h, w, q;
+    cin >> h >> w >> q;
+
+    vector<set<int>> rows(h), cols(w);
+    vector<map<int, int>> row_map(h), col_map(w);
+
+    // Initialize all walls present
+    for (int i = 0; i < h; ++i) {
+        for (int j = 0; j < w; ++j) {
+            rows[i].insert(j);
+            cols[j].insert(i);
+        }
+    }
+
+    while (q--) {
+        int r, c;
+        cin >> r >> c;
+        r--; c--;
+
+        bool destroyed = false;
+
+        // Check if there is a wall at (r,c)
+        auto it_row = rows[r].find(c);
+        if (it_row != rows[r].end()) {
+            // Destroy that wall
+            rows[r].erase(it_row);
+            cols[c].erase(r);
+            continue;
+        }
+
+        // Up
+        auto up = cols[c].lower_bound(r);
+        if (up != cols[c].begin()) {
+            --up;
+            int y = *up;
+            rows[y].erase(c);
+            cols[c].erase(up);
+        }
+
+        // Down
+        auto down = cols[c].upper_bound(r);
+        if (down != cols[c].end()) {
+            int y = *down;
+            rows[y].erase(c);
+            cols[c].erase(down);
+        }
+
+        // Left
+        auto left = rows[r].lower_bound(c);
+        if (left != rows[r].begin()) {
+            --left;
+            int x = *left;
+            cols[x].erase(r);
+            rows[r].erase(left);
+        }
+
+        // Right
+        auto right = rows[r].upper_bound(c);
+        if (right != rows[r].end()) {
+            int x = *right;
+            cols[x].erase(r);
+            rows[r].erase(right);
+        }
+    }
+
+    int ans = 0;
+    for (int i = 0; i < h; ++i) {
+        ans += rows[i].size();
+    }
+    cout << ans << '\n';
+
+    return 0;
+}

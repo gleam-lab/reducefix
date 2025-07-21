@@ -1,0 +1,58 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define INT long long 
+#define INF LLONG_MAX
+using Node = pair<INT, INT>; // Pair of distance and vertex
+using PQ = priority_queue<Node, vector<Node>, greater<Node>>;
+
+int N, M;
+vector<pair<int, pair<int, int>>> adj; // Adjacency list storing edges with weights
+
+void solve() {
+    INT src = 1, dst;
+    vector<int> dist(N + 1, INF); // Distance from source
+    dist[src] = 0;
+    PQ pq;
+    pq.push({0, src});
+
+    while (!pq.empty()) {
+        auto [d, u] = pq.top();
+        pq.pop();
+        if (dist[u] < d) continue;
+        for (auto &edge : adj[u]) {
+            int v = edge.first;
+            int weight = edge.second;
+            if (dist[u] + weight < dist[v]) {
+                dist[v] = dist[u] + weight;
+                pq.push({dist[v], v});
+            }
+        }
+    }
+
+    for (dst = 2; dst <= N; ++dst) {
+        if (dist[dst] == INF) {
+            cout << "INF ";
+        } else {
+            cout << dist[dst] << " ";
+        }
+    }
+}
+
+int main() {
+    cin >> N >> M;
+    INT a[N + 1];
+    for (int i = 1; i <= N; ++i) {
+        cin >> a[i];
+    }
+
+    adj.resize(N + 1);
+    for (int i = 0; i < M; ++i) {
+        int u, v, w;
+        cin >> u >> v >> w;
+        adj[u].push_back({v, w});
+        adj[v].push_back({u, w});
+    }
+
+    solve();
+    return 0;
+}

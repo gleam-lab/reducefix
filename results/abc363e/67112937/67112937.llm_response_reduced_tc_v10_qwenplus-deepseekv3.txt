@@ -1,0 +1,77 @@
+After analyzing the failing test case and the incorrect code, I identified the issue. The problem requires calculating the remaining island area after each year's sea level rise, where sections sink if they're adjacent to the sea and at or below the current sea level. The original code incorrectly initializes the priority queue by not including all border cells in some cases (like when H=1 or W=1), and also improperly decrements the elevation values.
+
+Here's the corrected C++ code that handles all cases properly:
+
+```cpp
+#include <bits/stdc++.h>
+
+using namespace std;
+
+constexpr int dx[] = {0, 1, 0, -1};
+constexpr int dy[] = {1, 0, -1, 0};
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int H, W, Y;
+    cin >> H >> W >> Y;
+
+    vector<vector<int>> A(H, vector<int>(W));
+    for (int i = 0; i < H; ++i) {
+        for (int j = 0; j < W; ++j) {
+            cin >> A[i][j];
+        }
+    }
+
+    priority_queue<tuple<int, int, int>, vector<tuple<int, int, int>>, greater<tuple<int, int, int>>> pq;
+    vector<vector<bool>> visited(H, vector<bool>(W, false));
+
+    // Add all border cells
+    for (int i = 0; i < H; ++i) {
+        for (int j = 0; j < W; ++j) {
+            if (i == 0 || i == H-1 || j == 0 || j == W-1) {
+                pq.emplace(A[i][j], i, j);
+                visited[i][j] = true;
+            }
+        }
+    }
+
+    int remaining = H * W;
+    vector<int> ans(Y);
+
+    for (int y =1; y <= Y; ++y) {
+        while (!pq.empty() && get<0>(pq.top()) <= y) {
+            auto [h, i, j] = pq.top();
+            pq.pop();
+            remaining--;
+
+            for (int d = 0; d < 4; ++d) {
+                int ni = i + dx[d];
+                int nj = j + dy[d];
+                if (ni >= 0 && ni < H && nj >= 0 && nj < W && !visited[ni][nj]) {
+                    visited[ni][nj] = true;
+                    pq.emplace(A[ni][nj], ni, nj);
+                }
+            }
+        }
+        ans[y-1] = remaining;
+    }
+
+    for (int y = 0; y < Y; ++y) {
+        cout << ans[y] << '\n';
+    }
+
+    return 0;
+}
+```
+
+Key fixes:
+1. Properly initialized the priority queue with all border cells (including when H=1 or W=1)
+2. Used correct elevation values without decrementing them
+3. Maintained a visited array to avoid processing cells multiple times
+4. Stored results for all years first, then output them (more efficient than outputting each year)
+5. Used a proper tuple for the priority queue elements instead of an array
+6. Fixed the boundary checks in the BFS-like expansion
+
+The algorithm now correctly simulates the sinking process year by year, properly handling all edge cases including single-cell islands and large inputs. The complexity is O(HW log(HW)) for the priority queue operations, which is efficient enough for the given constraints.

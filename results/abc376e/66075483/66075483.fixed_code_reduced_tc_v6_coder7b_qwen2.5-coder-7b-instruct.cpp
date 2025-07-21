@@ -1,0 +1,53 @@
+#include<iostream>
+#include<vector>
+#include<algorithm>
+using namespace std;
+
+const int INF = 1e18;
+
+int solve(int n, int k, vector<int>& A, vector<int>& B) {
+    vector<pair<int, int>> AB(n);
+    for (int i = 0; i < n; ++i) {
+        AB[i] = {A[i], B[i]};
+    }
+    sort(AB.begin(), AB.end());
+    
+    priority_queue<int, vector<int>, greater<int>> pq;
+    long long sum = 0;
+    for (int i = 0; i < n; ++i) {
+        pq.push(AB[i].second);
+        sum += AB[i].second;
+        if (pq.size() > k) {
+            sum -= pq.top();
+            pq.pop();
+        }
+        if (pq.size() == k) {
+            return AB[i].first * sum;
+        }
+    }
+    return INF; // This line should never be reached for valid inputs
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, k;
+        cin >> n >> k;
+        vector<int> A(n), B(n);
+        for (int i = 0; i < n; ++i) {
+            cin >> A[i];
+        }
+        for (int i = 0; i < n; ++i) {
+            cin >> B[i];
+        }
+        
+        int result = solve(n, k, A, B);
+        cout << result << '\n';
+    }
+
+    return 0;
+}

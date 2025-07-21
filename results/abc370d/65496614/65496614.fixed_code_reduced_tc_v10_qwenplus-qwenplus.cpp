@@ -1,0 +1,106 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+#define rep(i,n) for(int i = 0; i < (int)(n); ++i)
+#define rep1(i,n) for(int i = 1; i < (int)(n); ++i)
+
+using vi = vector<int>;
+using vvi = vector<vi>;
+using vb = vector<bool>;
+using vvb = vector<vb>;
+using pii = pair<int, int>;
+
+template<typename T>
+using vec = vector<T>;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int H, W, Q;
+    cin >> H >> W >> Q;
+
+    // We'll use coordinate compression with ordered sets
+    const int MAXN = max(H, W) + 5;
+    
+    // For each row and column, we maintain a set of columns/rows that still have walls
+    vec<set<int>> rows(H + 2), cols(W + 2);
+    
+    for (int i = 1; i <= H; ++i) {
+        for (int j = 1; j <= W; ++j) {
+            rows[i].insert(j);
+            cols[j].insert(i);
+        }
+    }
+
+    // To check if a cell has a wall
+    vvb hasWall(H + 2, vb(W + 2, true));
+
+    while (Q--) {
+        int r, c;
+        cin >> r >> c;
+
+        if (hasWall[r][c]) {
+            // Case: there's a wall at the position - destroy it
+            hasWall[r][c] = false;
+            rows[r].erase(c);
+            cols[c].erase(r);
+        } else {
+            // Case: no wall at the position - destroy first walls in four directions
+            
+            // Up
+            if (!cols[c].empty() && *cols[c].begin() < r) {
+                auto it = cols[c].lower_bound(r);
+                if (it != cols[c].begin()) {
+                    --it;
+                    int ur = *it;
+                    hasWall[ur][c] = false;
+                    rows[ur].erase(c);
+                    cols[c].erase(ur);
+                }
+            }
+
+            // Down
+            if (!cols[c].empty() && *cols[c].rbegin() > r) {
+                auto it = cols[c].upper_bound(r);
+                if (it != cols[c].end()) {
+                    int dr = *it;
+                    hasWall[dr][c] = false;
+                    rows[dr].erase(c);
+                    cols[c].erase(dr);
+                }
+            }
+
+            // Left
+            if (!rows[r].empty() && *rows[r].begin() < c) {
+                auto it = rows[r].begin();
+                while (it != rows[r].end() && *it < c) ++it;
+                if (it != rows[r].begin()) {
+                    --it;
+                    int lc = *it;
+                    hasWall[r][lc] = false;
+                    rows[r].erase(lc);
+                    cols[lc].erase(r);
+                }
+            }
+
+            // Right
+            if (!rows[r].empty() && *rows[r].rbegin() > c) {
+                auto it = rows[r].upper_bound(c);
+                if (it != rows[r].end()) {
+                    int rc = *it;
+                    hasWall[r][rc] = false;
+                    rows[r].erase(rc);
+                    cols[rc].erase(r);
+                }
+            }
+        }
+    }
+
+    // Count remaining walls
+    int ans = 0;
+    rep1(i, H + 1) rep1(j, W + 1) ans += hasWall[i][j];
+    
+    cout << ans << '\n';
+    return 0;
+}

@@ -1,0 +1,37 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+const int MOD = 1e9 + 7;
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int n, m;
+    cin >> n >> m;
+
+    unordered_set<int> rows, cols, diagonals1, diagonals2;
+
+    for (int i = 0; i < m; ++i) {
+        int x, y;
+        cin >> x >> y;
+        rows.insert(x);
+        cols.insert(y);
+        diagonals1.insert(x - y);
+        diagonals2.insert(x + y);
+    }
+
+    int total_squares = n * n;
+    int blocked_by_rows = rows.size() * n;
+    int blocked_by_cols = cols.size() * n;
+    int blocked_by_diagonals1 = diagonals1.size() * n;
+    int blocked_by_diagonals2 = diagonals2.size() * n;
+
+    int counted_twice = rows.size() * cols.size();
+
+    int result = total_squares - blocked_by_rows - blocked_by_cols - blocked_by_diagonals1 - blocked_by_diagonals2 + counted_twice;
+
+    cout << result << '\n';
+
+    return 0;
+}

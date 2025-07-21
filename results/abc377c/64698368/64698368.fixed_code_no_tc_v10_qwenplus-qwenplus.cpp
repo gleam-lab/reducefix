@@ -1,0 +1,53 @@
+#include <bits/stdc++.h>
+#define rep(i, n) for (int i = 0; i < (int)(n); i++)
+#define repi(i, a, b) for (int i = (int)(a); i < (int)(b); i++)
+#define rrep(i, n) for (int i = n-1; i >= (int)(0); i--)
+#define rrepi(i, a, b) for (int i = (int)(a); i > (int)(b); i--)
+#define ALL(a) (a).begin(),(a).end()
+#define ALL_(a) (a),(a)+size(a)
+#define IF_T if(Is_test)
+
+#define ll long long
+using namespace std;
+
+struct phash {
+    inline size_t operator()(const pair<int,int> &p) const {
+        const auto h1 = hash<int>()(p.first);
+        const auto h2 = hash<int>()(p.second);
+        return h1 ^ (h2 << 1);
+    }
+};
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    ll N;
+    int M;
+    cin >> N >> M;
+
+    unordered_set<pair<ll, ll>, phash> attacked;
+    vector<pair<ll, ll>> attack_offsets = {
+        {2, 1}, {1, 2}, {-1, 2}, {-2, 1},
+        {-2, -1}, {-1, -2}, {1, -2}, {2, -1}
+    };
+
+    for (int i = 0; i < M; ++i) {
+        ll a, b;
+        cin >> a >> b;
+        // Add the piece itself to the set (to check if target is empty)
+        attacked.insert({a, b});
+        // Mark all squares this piece can attack
+        for (auto [dx, dy] : attack_offsets) {
+            ll na = a + dx;
+            ll nb = b + dy;
+            if (na >= 1 && na <= N && nb >= 1 && nb <= N) {
+                attacked.insert({na, nb});
+            }
+        }
+    }
+
+    // Total number of empty squares not under attack
+    ll total = N * N;
+    cout << (total - (ll)attacked.size()) << "\n";
+}

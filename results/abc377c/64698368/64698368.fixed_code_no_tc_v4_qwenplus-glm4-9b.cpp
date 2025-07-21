@@ -1,0 +1,52 @@
+#include <iostream>
+#include <vector>
+#include <set>
+#include <cmath>
+
+using namespace std;
+
+#define MAX_N 1000000000
+#define MAX_M 200000
+
+int N, M;
+set<pair<int, int>> st;
+
+void set_insert(int a, int b) {
+    st.insert({a, b});
+}
+
+bool can_place(int a, int b) {
+    vector<pair<int, int>> moves = {{-1, -2}, {-1, 2}, {1, -2}, {1, 2}, {2, -1}, {2, 1}};
+    for (auto move : moves) {
+        int dx = a + move.first, dy = b + move.second;
+        if (dx >= 0 && dx < N && dy >= 0 && dy < N) {
+            if (st.count({dx, dy})) {
+                return false;
+            }
+        }
+    }
+    return true;
+}
+
+int main() {
+    cin >> N >> M;
+    vector<pair<int, int>> pieces(M);
+
+    for (int i = 0; i < M; ++i) {
+        cin >> pieces[i].first >> pieces[i].second;
+        set_insert(pieces[i].first - 1, pieces[i].second - 1);
+    }
+
+    long long count = 0;
+    for (int i = 0; i < N; ++i) {
+        for (int j = 0; j < N; ++j) {
+            if (can_place(i, j)) {
+                count++;
+            }
+        }
+    }
+
+    cout << count << endl;
+
+    return 0;
+}

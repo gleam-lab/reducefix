@@ -1,0 +1,41 @@
+#include<bits/stdc++.h>
+#define INF 0x3f3f3f3f3f3f3f3f
+using namespace std;
+typedef long long ll;
+const int MAXN = 2e5 + 10;
+vector<int> vec[MAXN]; // Change vector type from ll to int as it's more appropriate for graph vertices
+queue<int> q; // Change queue type from ll to int
+int step[MAXN], vis[MAXN];
+
+int main() {
+    int n, m, u, v;
+    cin >> n >> m; // Use cin for input for better performance with large inputs
+    for (int i = 1; i <= m; i++) {
+        cin >> u >> v;
+        vec[u].push_back(v);
+    }
+    q.push(1);
+    vis[1] = true; // Mark starting node as visited
+    step[1] = 0; // Starting node has no steps needed to reach itself
+    while (!q.empty()) {
+        int top = q.front();
+        q.pop();
+        for (int i = 0; i < vec[top].size(); i++) {
+            int to = vec[top][i];
+            if (to == 1 && top != 1) { // Check if we're back at the start node without revisiting it directly
+                cout << step[top] << endl; // Print steps taken to reach the start node again
+                return 0;
+            } else if (to == 1) { // If we encounter the start node directly
+                cout << "0" << endl; // No additional steps needed
+                return 0;
+            }
+            if (!vis[to]) {
+                step[to] = step[top] + 1; // Update steps to reach this node
+                vis[to] = true; // Mark node as visited
+                q.push(to); // Add node to queue for further exploration
+            }
+        }
+    }
+    cout << "-1" << endl; // If no cycle is found
+    return 0;
+}

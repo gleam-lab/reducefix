@@ -1,0 +1,85 @@
+The issue in the original code appears to be that it doesn't properly handle the case where the island is completely submerged. The code needs to account for the fact that when the sea level reaches the elevation of a section, that section should sink, and the process should continue for all adjacent sections that meet the criteria.
+
+Here's the fixed code that correctly handles all cases, including the single-section island case from the failing test case:
+
+```cpp
+#include <bits/stdc++.h>
+
+using u32 = unsigned;
+using i64 = long long;
+using u64 = unsigned long long;
+
+using i128 = __int128;
+using u128 = unsigned __int128;
+
+constexpr int d[4][2] = {{0, 1}, {0, -1}, {1, 0}, {-1, 0}};
+
+int32_t main() {
+    std::ios::sync_with_stdio(false);
+    std::cin.tie(nullptr);
+
+    int H, W, Y;
+    std::cin >> H >> W >> Y;
+
+    std::vector A(H, std::vector<int>(W));
+    for (int i = 0; i < H; i++) {
+        for (int j = 0; j < W; j++) {
+            std::cin >> A[i][j];
+        }
+    }
+
+    std::priority_queue<std::array<int, 3>, std::vector<std::array<int, 3>>, std::greater<std::array<int, 3>>> pq;
+    std::vector vis(H, std::vector<char>(W));
+
+    // Push all border cells into the priority queue
+    for (int i = 0; i < H; i++) {
+        for (int j = 0; j < W; j++) {
+            if (i == 0 || i == H-1 || j == 0 || j == W-1) {
+                pq.push({A[i][j], i, j});
+                vis[i][j] = 1;
+            }
+        }
+    }
+
+    int ans = H * W;
+    std::vector<int> res(Y);
+    
+    for (int i = 1; i <= Y; i++) {
+        while (!pq.empty() && pq.top()[0] <= i) {
+            auto [h, x, y] = pq.top();
+            pq.pop();
+            ans--;
+            
+            for (int j = 0; j < 4; j++) {
+                int dx = x + d[j][0], dy = y + d[j][1];
+                if (dx < 0 || dx >= H || dy < 0 || dy >= W) continue;
+                if (vis[dx][dy]) continue;
+                vis[dx][dy] = 1;
+                pq.push({A[dx][dy], dx, dy});
+            }
+        }
+        res[i-1] = ans;
+    }
+
+    for (int i = 0; i < Y; i++) {
+        std::cout << res[i] << "\n";
+    }
+
+    return 0;
+}
+```
+
+Key changes made:
+1. Removed the `--A[i][j]` operation which was incorrectly modifying the input elevations
+2. Fixed the border cell initialization by pushing all border cells into the priority queue
+3. Changed the output to store results in a vector first and then print them all at once
+4. Adjusted the loop to run from 1 to Y inclusive (sea level increases by 1 each year)
+5. Simplified the priority queue processing to handle all cells that should sink at each sea level
+
+The algorithm now correctly simulates the sinking process by:
+1. Starting with all border cells marked as potential sinking points
+2. For each year, processing all cells that are at or below the current sea level
+3. Propagating the sinking to adjacent cells that meet the criteria
+4. Tracking the remaining island area correctly for each year
+
+This approach ensures correct handling of all cases, including single-cell islands and large inputs.

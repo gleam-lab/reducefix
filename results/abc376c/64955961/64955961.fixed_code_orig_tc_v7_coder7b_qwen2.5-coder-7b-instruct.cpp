@@ -1,0 +1,48 @@
+#include<bits/stdc++.h>
+using namespace std;
+
+typedef long long int ll;
+
+bool check(vector<ll> &a, vector<ll> &b, ll x){
+    multiset<ll> s;
+    for(auto &it:b)s.insert(it);
+
+    for(int i = 0; i < a.size(); ++i){
+        auto it = s.lower_bound(a[i]);
+        if(it == end(s))return false;
+        s.erase(it);
+    }
+
+    return true;
+}
+
+int main(){
+    ios_base::sync_with_stdio(false);
+    cin.tie(0);
+
+    ll n;
+    cin >> n;
+    
+    vector<ll> a(n), b(n - 1);
+    for(int i = 0; i < n; ++i)cin >> a[i];
+    for(int i = 0; i < n - 1; ++i)cin >> b[i];
+
+    sort(begin(a), end(a));
+    sort(begin(b), end(b));
+
+    if(check(a, b, b.back())){cout << b.back() << '\n';return 0;}
+
+    ll l = 1, r = 1e9 + 10;
+    while(l <= r){
+        ll mid = l + ((r - l) >> 1);
+        if(check(a, b, mid)){
+            r = mid - 1;
+        }else{
+            l = mid + 1;
+        }
+    }
+
+    cout << l << '\n';
+
+    return 0;
+}

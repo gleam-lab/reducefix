@@ -1,0 +1,87 @@
+
+The provided code is an attempt to implement an union-find data structure with path compression and union by size to manage connected components in an undirected graph while handling two types of queries. However, there are several issues with the code that need to be corrected.
+
+Here's an analysis of the problems in the code, along with a corrected version:
+
+### Problems in the Original Code:
+1. **Union Function:**
+   - The union function (`uni`) fails to merge the vertices correctly. It only merges the adjacency lists of the two vertices but does not perform an actual union operation on the sets (i.e., it doesn't link the representative or root of the sets).
+   
+2. **Path Compression:**
+   - While the `par` function (for finding the representative of a set) uses path compression, the union function does not update the parent pointers correctly when the root of a set changes.
+
+3. **Incorrect Handling of Queries:**
+   - The union function does not modify the parent pointers in the parent array `p` correctly.
+   - The code does not handle the case where the number of neighbors is less than `k` for a Type 2 query.
+
+### Corrected Code:
+```cpp
+#include <iostream>
+#include <vector>
+#include <algorithm>
+
+using namespace std;
+
+#define MAX_N 200005
+
+vector<int> parent(MAX_N + 1);
+vector<vector<int>> adj(MAX_N + 1);
+vector<vector<int>> mergedAdj;
+
+int find(int u) {
+    if (parent[u] == u) return u;
+    parent[u] = find(parent[u]);
+    return parent[u];
+}
+
+void unionSets(int u, int v) {
+    u = find(u);
+    v = find(v);
+    if (u == v) return;
+
+    parent[v] = u;
+
+    // Merge adjacency lists
+    mergedAdj[u].insert(mergedAdj[u].end(), mergedAdj[v].begin(), mergedAdj[v].end());
+    sort(mergedAdj[u].rbegin(), mergedAdj[u].rend());
+
+    // Remove duplicates
+    mergedAdj[u].erase(unique(mergedAdj[u].begin(), mergedAdj[u].end()), mergedAdj[u].end());
+}
+
+int solveQuery2(int v, int k) {
+    int root = find(v);
+    if (k > mergedAdj[root].size()) return -1;
+    return mergedAdj[root][k - 1];
+}
+
+int main() {
+    int n, q;
+    cin >> n >> q;
+
+    for (int i = 1; i <= n; i++) {
+        parent[i] = i;
+        mergedAdj.push_back({i});
+    }
+
+    for (int i = 0; i < q; i++) {
+        int type, u, v;
+        cin >> type >> u >> v;
+
+        if (type == 1) {
+            unionSets(u, v);
+        } else if (type == 2) {
+            cout << solveQuery2(v, v) << '\n';
+        }
+    }
+
+    return 0;
+}
+```
+
+This corrected version of the code includes:
+- An adjusted union operation that correctly links the representative of each set.
+- Path compression in the `find` function.
+- A merge operation that combines the adjacency lists when a union is performed.
+- A solver function for Type 2 queries that returns the k-th largest vertex connected to `v`.
+- Note: The above solution assumes that the adjacency list has been merged and deduplicated before querying. Adjustments might be needed based on the exact problem requirements and constraints.

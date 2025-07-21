@@ -1,0 +1,47 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+using namespace std;
+using ll = long long;
+
+int main() {
+    int n;
+    cin >> n;
+    vector<int> x(n);
+    for (int i = 0; i < n; i++) {
+        cin >> x[i];
+    }
+    vector<ll> p(n), s(n + 1, 0);
+    for (int i = 0; i < n; i++) {
+        cin >> p[i];
+        s[i + 1] = s[i] + p[i];
+    }
+    
+    int q;
+    cin >> q;
+    for (int i = 0; i < q; i++) {
+        int l, r;
+        cin >> l >> r;
+        // Since we need to find the prefix sums for the range defined by the indices in x,
+        // we should use binary search to find the correct indices in x corresponding to l and r.
+        // Note: This assumes that the values in x are distinct or the problem needs redefining.
+        auto it_l = lower_bound(x.begin(), x.end(), l);
+        auto it_r = upper_bound(x.begin(), x.end(), r);
+        
+        // Convert iterators to indices.
+        int idx_l = it_l - x.begin();
+        int idx_r = it_r - x.begin();
+        
+        // Since upper_bound gives the position just after the last element equal to r,
+        // we need to decrement idx_r if it_r is not equal to x.end() to get the correct range end.
+        if (it_r != x.end()) {
+            idx_r--;
+        }
+        
+        // Since s[0] is 0, s[idx_l] will give the sum from the start till the element just before l (if l exists),
+        // and s[idx_r + 1] will give the sum till the end of the range defined by r (exclusive).
+        ll ans = s[idx_r + 1] - s[idx_l];
+        cout << ans << endl;
+    }
+    return 0;
+}

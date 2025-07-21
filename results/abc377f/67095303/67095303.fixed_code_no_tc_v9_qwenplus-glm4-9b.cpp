@@ -1,0 +1,61 @@
+#include<bits/stdc++.h>
+#define int long long
+using namespace std;
+
+void solve() {
+    int n, m;
+    cin >> n >> m;
+    vector<pair<int, int>> pieces(m);
+    for (int i = 0; i < m; ++i) {
+        cin >> pieces[i].first >> pieces[i].second;
+    }
+
+    // Sets to track unique rows, columns, and diagonals
+    set<int> rows, cols, diag1, diag2;
+
+    // Populate the sets with existing pieces
+    for (auto &p : pieces) {
+        rows.insert(p.first);
+        cols.insert(p.second);
+        diag1.insert(p.first + p.second);
+        diag2.insert(p.first - p.second);
+    }
+
+    // Calculate the number of empty squares initially
+    int empty_squares = n * n - m;
+
+    // Calculate the number of squares captured by each row or column
+    for (auto r : rows) {
+        empty_squares -= (n - (cols.size() - abs(r - 1))));
+    }
+    for (auto c : cols) {
+        empty_squares -= (n - (rows.size() - abs(c - 1))));
+    }
+
+    // Calculate the number of squares captured by diagonals
+    for (auto d : diag1) {
+        empty_squares -= (n - (cols.size() - (n + 1 - d) / 2));
+    }
+    for (auto d : diag2) {
+        empty_squares -= (n - (rows.size() - (n + 1 - d) / 2));
+    }
+
+    // Calculate the number of squares captured by anti-diagonals
+    for (auto d : diag1) {
+        empty_squares -= (n - (rows.size() - (n + 1 - d) / 2));
+    }
+    for (auto d : diag2) {
+        empty_squares -= (n - (cols.size() - (n + 1 - d) / 2));
+    }
+
+    cout << empty_squares << endl;
+}
+
+int main() {
+    int t;
+    cin >> t;
+    while (t--) {
+        solve();
+    }
+    return 0;
+}

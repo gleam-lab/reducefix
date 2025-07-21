@@ -1,0 +1,24 @@
+#include <iostream>
+#include <cmath>
+#include <vector>
+using namespace std;
+
+int main() {
+    int n;
+    cin >> n;
+    vector<pair<long long, long long>> points(n);
+    
+    for(int i = 0; i < n; ++i) {
+        cin >> points[i].first >> points[i].second;
+    }
+
+    // Calculate the distance of each segment and sum them up
+    long double total_distance = 0;
+    for(int i = 0; i < n; ++i) {
+        total_distance += sqrtl(pow(points[(i + 1) % n].first - points[i].first, 2) +
+                               pow(points[(i + 1) % n].second - points[i].second, 2));
+    }
+
+    cout << fixed << setprecision(15) << total_distance << endl;
+    return 0;
+}

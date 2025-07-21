@@ -1,0 +1,62 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+#define endl "\n"
+#define int long long
+
+void solve() {
+    int N, K;
+    cin >> N >> K;
+    vector<int> A(N);
+    for (int i = 0; i < N; ++i) {
+        cin >> A[i];
+    }
+
+    // We need to remove K elements such that the remaining sequence has minimum (max - min)
+    // Since we can only remove elements (not reorder), the optimal way is to keep a window of size N-K
+    // and find the minimum difference between max and min in any such contiguous window.
+
+    // However, since the elements must remain in order and we must choose exactly N-K elements,
+    // the correct approach is to slide a window of size (N-K) over the array and compute
+    // the min difference between max and min in each window.
+
+    int windowSize = N - K;
+    deque<int> maxDQ, minDQ;
+    int result = LLONG_MAX;
+
+    for (int i = 0; i < N; ++i) {
+        // Remove indices outside the window
+        while (!maxDQ.empty() && maxDQ.front() <= i - windowSize) {
+            maxDQ.pop_front();
+        }
+        while (!minDQ.empty() && minDQ.front() <= i - windowSize) {
+            minDQ.pop_front();
+        }
+
+        // Maintain max deque (descending)
+        while (!maxDQ.empty() && A[maxDQ.back()] <= A[i]) {
+            maxDQ.pop_back();
+        }
+        maxDQ.push_back(i);
+
+        // Maintain min deque (ascending)
+        while (!minDQ.empty() && A[minDQ.back()] >= A[i]) {
+            minDQ.pop_back();
+        }
+        minDQ.push_back(i);
+
+        // Once window is valid
+        if (i >= windowSize - 1) {
+            result = min(result, A[maxDQ.front()] - A[minDQ.front()]);
+        }
+    }
+
+    cout << result << endl;
+}
+
+signed main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(NULL);
+    solve();
+    return 0;
+}

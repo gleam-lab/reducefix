@@ -1,0 +1,107 @@
+To fix this code, we need to ensure that we correctly calculate the number of safe squares where the new piece cannot be captured by any existing pieces. The existing pieces can attack along rows, columns, and both diagonals. The previous approach attempted to use inclusion-exclusion principles but incorrectly handled the intersections of these attack lines, especially with the diagonals.
+
+### Approaches
+1. **Identify Attacked Squares**: Determine all squares that are attacked by any existing piece. This includes:
+   - All squares in the same row as any piece.
+   - All squares in the same column as any piece.
+   - All squares on the same diagonal (i + j = constant).
+   - All squares on the same anti-diagonal (i - j = constant).
+
+2. **Use Inclusion-Exclusion Principle**: Calculate the total attacked squares by considering overlaps between rows, columns, and diagonals to avoid double-counting:
+   - Total attacked squares = (rows) + (columns) + (diagonals) + (anti-diagonals) - (intersections of rows and columns) - (intersections of rows and diagonals) - (intersections of rows and anti-diagonals) - (intersections of columns and diagonals) - (intersections of columns and anti-diagonals) - (intersections of diagonals and anti-diagonals) + (intersections of all three).
+
+3. **Efficient Calculation**: Given the constraints (N up to 10^9 and M up to 10^3), we need an efficient way to compute the intersections without iterating through all possible squares.
+
+### Solution Code
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+typedef long long ll;
+typedef pair<ll, ll> pll;
+
+bool inBounds(pll a, ll n) {
+    return 1 <= a.first && a.first <= n && 1 <= a.second && a.second <= n;
+}
+
+int main() {
+    ll n, m;
+    cin >> n >> m;
+    vector<pll> q(m);
+    set<ll> rows, cols, diag1, diag2;
+    for (auto &[a, b] : q) {
+        cin >> a >> b;
+        rows.insert(a);
+        cols.insert(b);
+        diag1.insert(a - b);
+        diag2.insert(a + b);
+    }
+
+    ll total = n * n;
+    ll rows_cnt = rows.size();
+    ll cols_cnt = cols.size();
+    ll diag1_cnt = diag1.size();
+    ll diag2_cnt = diag2.size();
+
+    total -= rows_cnt * n;
+    total -= cols_cnt * n;
+    total += rows_cnt * cols_cnt;
+
+    for (auto d : diag1) {
+        ll min_ij = max(1LL, 1 + d);
+        ll max_ij = min(n, n + d);
+        if (min_ij > max_ij) continue;
+        ll cnt = max_ij - min_ij + 1;
+        total -= cnt;
+
+        set<pll> intersections;
+        for (auto r : rows) {
+            pll p = {r, r - d};
+            if (inBounds(p, n)) intersections.insert(p);
+        }
+        for (auto c : cols) {
+            pll p = {c + d, c};
+            if (inBounds(p, n)) intersections.insert(p);
+        }
+        total += intersections.size();
+    }
+
+    for (auto d : diag2) {
+        ll min_sum = max(2LL, d - n + 1);
+        ll max_sum = min(2 * n, d + n - 1);
+        if (min_sum > max_sum) continue;
+        ll cnt = (max_sum - min_sum) / 2 + 1;
+        total -= cnt;
+
+        set<pll> intersections;
+        for (auto r : rows) {
+            pll p = {r, d - r};
+            if (inBounds(p, n)) intersections.insert(p);
+        }
+        for (auto c : cols) {
+            pll p = {d - c, c};
+            if (inBounds(p, n)) intersections.insert(p);
+        }
+        for (auto d1 : diag1) {
+            ll i = (d + d1) / 2;
+            ll j = (d - d1) / 2;
+            if ((d + d1) % 2 != 0 || (d - d1) % 2 != 0) continue;
+            pll p = {i, j};
+            if (inBounds(p, n)) intersections.insert(p);
+        }
+        total += intersections.size();
+    }
+
+    cout << total << endl;
+    return 0;
+}
+```
+
+### Explanation
+1. **Identify Attacked Squares**: The code reads the positions of existing pieces and collects all unique rows, columns, diagonals (i - j), and anti-diagonals (i + j) that are under attack.
+2. **Initial Calculation**: It calculates the total safe squares by subtracting all squares in attacked rows and columns and then adding back the intersections (squares attacked by both rows and columns).
+3. **Diagonal Handling**: For each unique diagonal (i - j) and anti-diagonal (i + j), it calculates the number of squares on these diagonals and subtracts them from the total. It then adds back the intersections of these diagonals with rows and columns to correct over-subtraction.
+4. **Anti-diagonal Intersections**: Special handling for anti-diagonals includes intersections with rows, columns, and other diagonals to ensure all overlaps are accounted for correctly.
+5. **Output**: The final result is the count of squares not under any attack, printed as the answer.
+
+This approach efficiently handles the large grid size (up to 10^9) and the number of pieces (up to 10^3) by focusing on set operations and mathematical calculations rather than brute-force checks.

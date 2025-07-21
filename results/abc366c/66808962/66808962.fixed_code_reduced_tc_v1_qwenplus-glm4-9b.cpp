@@ -1,0 +1,39 @@
+#include <iostream>
+#include <map>
+using namespace std;
+
+int main() {
+    int q;
+    cin >> q;
+    
+    map<int, int> balls;
+    int unique_count = 0;
+
+    for (int i = 0; i < q; i++) {
+        int type;
+        cin >> type;
+
+        if (type == 1) {
+            int x;
+            cin >> x;
+            if (balls.find(x) == balls.end()) {
+                balls[x] = 1;
+                unique_count++;
+            } else {
+                balls[x]++;
+            }
+        } else if (type == 2) {
+            int x;
+            cin >> x;
+            balls[x]--;
+            if (balls[x] == 0) {
+                balls.erase(x);
+                unique_count--;
+            }
+        } else if (type == 3) {
+            cout << unique_count << endl;
+        }
+    }
+    
+    return 0;
+}

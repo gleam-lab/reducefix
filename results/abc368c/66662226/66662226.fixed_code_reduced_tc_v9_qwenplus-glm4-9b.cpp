@@ -1,0 +1,28 @@
+#include <iostream>
+#include <vector>
+using namespace std;
+
+int main() {
+    int n;
+    cin >> n;
+    vector<int> healths(n);
+    for (int i = 0; i < n; ++i) {
+        cin >> healths[i];
+    }
+    long long total_attacks = 0;
+
+    for (int health : healths) {
+        if (health > 0) {
+            while (health > 0) {
+                if (total_attacks % 3 == 0 && health >= 3) {
+                    health -= 3;
+                } else {
+                    health -= 1;
+                }
+                total_attacks++;
+            }
+        }
+    }
+
+    cout << total_attacks << endl;
+}

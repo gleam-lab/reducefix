@@ -1,0 +1,100 @@
+
+The problem involves manipulating an undirected graph using two types of operations:
+
+1. Adding an edge between two vertices.
+2. Querying the k-th largest vertex connected to a given vertex.
+
+The provided code has several issues which result in incorrect outputs. I will address these issues step by step.
+
+### Issues in the provided code:
+
+1. **Union-Find Representation**: The union-find data structure is implemented in a way that does not maintain the size of the union for each component properly.
+2. **Union-Find Operations**: The union operation merges the smaller tree into the larger one, which is correct, but it does not maintain the size of the union for each component.
+3. **Output of Queries**: The code does not output the correct results for the queries. For type 2 queries, it does not properly retrieve the k-th largest vertex.
+
+### Solution:
+
+I will provide a corrected version of the code that solves the problem correctly.
+
+```cpp
+#include <iostream>
+#include <vector>
+#include <set>
+#include <functional>
+
+using namespace std;
+
+struct UnionFind {
+    vector<int> parent;
+    vector<int> size;
+    vector<set<int>> components;
+
+    UnionFind(int n) : parent(n), size(n, 1), components(n) {
+        for (int i = 0; i < n; ++i) {
+            parent[i] = i;
+            components[i] = {i};
+        }
+    }
+
+    int find(int x) {
+        if (parent[x] != x) {
+            parent[x] = find(parent[x]);
+        }
+        return parent[x];
+    }
+
+    void unite(int x, int y) {
+        int rootX = find(x);
+        int rootY = find(y);
+        if (rootX != rootY) {
+            if (size[rootX] < size[rootY]) {
+                parent[rootX] = rootY;
+                size[rootY] += size[rootX];
+                components[rootY].insert(components[rootX].begin(), components[rootX].end());
+                components[rootX].clear();
+            } else {
+                parent[rootY] = rootX;
+                size[rootX] += size[rootY];
+                components[rootX].insert(components[rootY].begin(), components[rootY].end());
+                components[rootY].clear();
+            }
+        }
+    }
+
+    set<int> getComponent(int x) {
+        return components[find(x)];
+    }
+};
+
+int main() {
+    int n, q;
+    cin >> n >> q;
+
+    UnionFind uf(n);
+
+    while (q--) {
+        int type, u, v, k;
+        cin >> type >> u >> v;
+        if (type == 1) {
+            uf.unite(u, v);
+        } else if (type == 2) {
+            set<int> component = uf.getComponent(v);
+            if (component.size() < k) {
+                cout << -1 << endl;
+            } else {
+                cout << *next(component.lower_bound(u - 1)) << endl;
+            }
+        }
+    }
+
+    return 0;
+}
+```
+
+### Explanation:
+
+1. **Union-Find Representation**: We use a `vector` of `set<int>` to maintain the components of each node in the graph. This helps in efficiently retrieving the connected components and querying the k-th largest vertex.
+2. **Union-Find Operations**: The `unite` function merges the components of two nodes if they belong to different components.
+3. **Output of Queries**: For type 2 queries, we retrieve the connected component of the given vertex and use the `lower_bound` function to find the k-th largest element. If the size of the component is less than k, we output `-1`.
+
+This solution should correctly handle the problem constraints and provide the correct output for all queries.

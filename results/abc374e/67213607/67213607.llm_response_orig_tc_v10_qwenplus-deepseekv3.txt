@@ -1,0 +1,82 @@
+To fix this code, we need to address the issue in the binary search logic and the calculation of the minimum cost for each mid value in the binary search. The original code attempts to find the maximum number of days (`mid`) such that the total cost (`sum`) is less than or equal to the budget (`x`). However, the way the minimum cost is calculated for each day seems flawed, especially in handling cases where the day count is exactly divisible by the activity periods.
+
+### Approaches
+1. **Binary Search Setup**: We use binary search to find the maximum number of days (`mid`) where the total cost is within the budget. The initial search range is from 0 to a sufficiently high value (1e18 in the fixed code to handle large inputs).
+2. **Cost Calculation**: For each day count (`mid`), compute the minimum cost for each activity by considering all possible combinations of performing activities A and B. The cost for each day is derived by solving for the number of times each activity is performed, ensuring the total days covered is at least `mid`.
+3. **Check Feasibility**: The total cost for all activities is summed up. If this sum is within the budget, we adjust the binary search to try a higher day count; otherwise, we try a lower day count.
+
+### Solution Code
+```cpp
+#include<bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+
+ll n, x;
+ll a[105], p[105], b[105], q[105];
+
+ll compute_min_cost(ll days, ll ai, ll pi, ll bi, ll qi) {
+    ll min_cost = LLONG_MAX;
+    ll max_k = days / ai + 2;
+    for (ll k = 0; k <= max_k; ++k) {
+        ll remaining_days = days - k * ai;
+        if (remaining_days <= 0) {
+            min_cost = min(min_cost, k * pi);
+            continue;
+        }
+        ll l = (remaining_days + bi - 1) / bi;
+        min_cost = min(min_cost, k * pi + l * qi);
+    }
+    max_k = days / bi + 2;
+    for (ll k = 0; k <= max_k; ++k) {
+        ll remaining_days = days - k * bi;
+        if (remaining_days <= 0) {
+            min_cost = min(min_cost, k * qi);
+            continue;
+        }
+        ll l = (remaining_days + ai - 1) / ai;
+        min_cost = min(min_cost, k * qi + l * pi);
+    }
+    return min_cost;
+}
+
+int main() {
+    cin >> n >> x;
+    for (int i = 0; i < n; ++i) {
+        cin >> a[i] >> p[i] >> b[i] >> q[i];
+    }
+    ll left = 0, right = 1e18, ans = 0;
+    while (left <= right) {
+        ll mid = left + (right - left) / 2;
+        ll total_cost = 0;
+        bool feasible = true;
+        for (int i = 0; i < n; ++i) {
+            ll cost = compute_min_cost(mid, a[i], p[i], b[i], q[i]);
+            if (cost > x) {
+                feasible = false;
+                break;
+            }
+            total_cost += cost;
+            if (total_cost > x) {
+                feasible = false;
+                break;
+            }
+        }
+        if (feasible && total_cost <= x) {
+            ans = mid;
+            left = mid + 1;
+        } else {
+            right = mid - 1;
+        }
+    }
+    cout << ans << endl;
+    return 0;
+}
+```
+
+### Explanation
+1. **Binary Search Initialization**: The binary search is initialized with `left` set to 0 and `right` set to a very large number (1e18) to cover all possible day counts.
+2. **Cost Calculation**: The function `compute_min_cost` calculates the minimum cost for performing activities A and B over `days` days. It iterates over possible counts of activity A (and then activity B) and computes the required counts of the other activity to cover the remaining days, adjusting for ceiling division to ensure full coverage.
+3. **Feasibility Check**: For each mid value in the binary search, the total cost is computed by summing the minimum costs of all activities. If the total cost is within the budget, the search continues for a higher day count; otherwise, it searches lower.
+4. **Output**: The maximum feasible day count found through binary search is printed as the result.
+
+This approach efficiently checks the feasibility of each day count using binary search and ensures that the solution is both optimal and correct for all test cases.

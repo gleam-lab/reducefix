@@ -1,0 +1,63 @@
+#include <iostream>
+#include <vector>
+#include <queue>
+#include <algorithm>
+using namespace std;
+
+#define int long long
+
+signed main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    cout.tie(nullptr);
+
+    int T;
+    cin >> T;
+
+    while (T--) {
+        int N, K;
+        cin >> N >> K;
+
+        vector<int> A(N), B(N);
+        for (int i = 0; i < N; ++i) cin >> A[i];
+        for (int i = 0; i < N; ++i) cin >> B[i];
+
+        // Pair A[i] with B[i]
+        vector<pair<int, int>> items;
+        for (int i = 0; i < N; ++i) {
+            items.emplace_back(A[i], B[i]);
+        }
+
+        // Sort items by A value (ascending)
+        sort(items.begin(), items.end());
+
+        // Min-heap to keep track of the K largest B values
+        priority_queue<int, vector<int>, greater<>> pq;
+        int sumB = 0;
+        int result = 1e18;  // Large enough initial value
+
+        for (int i = 0; i < N; ++i) {
+            int a = items[i].first;
+            int b = items[i].second;
+
+            // Always add current B to heap
+            pq.push(b);
+            sumB += b;
+
+            // If more than K elements, remove smallest B
+            if (pq.size() > K) {
+                sumB -= pq.top();
+                pq.pop();
+            }
+
+            // Once we've added at least K elements, compute score
+            if (pq.size() == K) {
+                result = min(result, a * sumB);
+            }
+        }
+
+        cout << result << '\n';
+    }
+
+    return 0;
+}

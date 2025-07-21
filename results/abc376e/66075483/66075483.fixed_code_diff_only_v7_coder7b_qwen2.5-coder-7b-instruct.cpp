@@ -1,0 +1,39 @@
+#include<iostream>
+#include<algorithm>
+using namespace std;
+
+#define int long long
+
+signed main() {
+    int t;
+    cin >> t;
+    while(t--){
+        int n, k;
+        cin >> n >> k;
+        vector<pair<int, int>> a(n), b(n);
+        for(int i = 0; i < n; ++i){
+            cin >> a[i].first;
+            a[i].second = i;
+        }
+        for(int i = 0; i < n; ++i){
+            cin >> b[i].first;
+            b[i].second = i;
+        }
+        
+        sort(a.begin(), a.end());
+        sort(b.begin(), b.end());
+        
+        int ans = LLONG_MAX, s = 0;
+        for(int i = 0; i < k; ++i){
+            s += b[i].first;
+        }
+        
+        for(int i = 0; i <= n - k; ++i){
+            ans = min(ans, (s + b[i+k].first) * a[i+k].first);
+            s += b[i+k].first - b[i].first;
+        }
+        
+        cout << ans << '\n';
+    }
+    return 0;
+}

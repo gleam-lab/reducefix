@@ -1,0 +1,47 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+int main() {
+    int n, k;
+    cin >> n >> k;
+    vector<int> a(n);
+    for (int i = 0; i < n; ++i) {
+        cin >> a[i];
+    }
+    
+    // Sort the array to easily find the smallest and largest elements
+    sort(a.begin(), a.end());
+    
+    // If removing all elements but one, the result is simply zero
+    if (k == n - 1) {
+        cout << 0 << endl;
+        return 0;
+    }
+    
+    // To minimize the difference, we should remove the largest k elements
+    // or the smallest k elements. We will consider both cases and take the minimum.
+    int min_difference = INT_MAX;
+    
+    // Remove the largest k elements
+    int min_value = INT_MAX;
+    int max_value = INT_MIN;
+    for (int i = 0; i < n - k; ++i) {
+        min_value = min(min_value, a[i]);
+        max_value = max(max_value, a[i + k]);
+    }
+    min_difference = min(min_difference, max_value - min_value);
+    
+    // Remove the smallest k elements
+    min_value = INT_MAX;
+    max_value = INT_MIN;
+    for (int i = k; i < n; ++i) {
+        min_value = min(min_value, a[i]);
+        max_value = max(max_value, a[i - k]);
+    }
+    min_difference = min(min_difference, max_value - min_value);
+    
+    cout << min_difference << endl;
+    return 0;
+}

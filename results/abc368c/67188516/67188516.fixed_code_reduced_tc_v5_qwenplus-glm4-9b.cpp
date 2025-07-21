@@ -1,0 +1,24 @@
+#include <iostream>
+#include <vector>
+using namespace std;
+
+int main() {
+    long long N;
+    cin >> N;
+    vector<long long> H(N);
+    for (long long &h : H) cin >> h;
+
+    long long T = 0;
+    for (long long health : H) {
+        if (health % 3 == 0) {
+            T += health / 3;
+        } else if (health % 3 == 1) {
+            T += health / 3 + 1;
+        } else {
+            T += (health / 3) * 3 + 2;
+        }
+    }
+
+    cout << T << endl;
+    return 0;
+}

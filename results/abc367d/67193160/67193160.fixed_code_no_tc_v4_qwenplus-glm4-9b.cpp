@@ -1,0 +1,29 @@
+#include<bits/stdc++.h>
+using namespace std;
+const int N=1e6+5;
+int n, m, k, sum, cnt, a[N], b[N], d[N];
+int main()
+{
+    ios::sync_with_stdio(0), cin.tie(0), cout.tie(0); 
+    cin >> n >> m;
+    for (int i = 1; i <= n; i++)
+        cin >> a[i];
+    
+    // Initialize the frequency array b
+    b[0] = 1;
+    
+    // Calculate prefix sums
+    for (int i = 1; i < n; i++)
+        b[i] = b[i-1] + a[i] % m;
+    
+    // Calculate the sum of valid groups
+    sum = 0;
+    for (int i = 0; i < n; i++)
+    {
+        sum += b[i]; // +1 because b[i] is the count of numbers that can form a valid group with a[i]
+        sum -= b[0]; // -1 because b[0] is the count of numbers that cannot form a valid group with any number
+    }
+    
+    cout << sum;
+    return 0;
+}

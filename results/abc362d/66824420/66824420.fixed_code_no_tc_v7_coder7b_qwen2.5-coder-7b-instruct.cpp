@@ -1,0 +1,46 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    int n,m;
+    cin >> n >> m;
+    vector<int> a(n);
+    for(int i = 0; i < n; i++) cin >> a[i];
+    
+    // Adjusting indices to be 0-based for easier manipulation
+    vector<vector<pair<int,int>>> adj(n);
+    for(int j = 0; j < m; j++){
+        int x, y, w;
+        cin >> x >> y >> w;
+        x--; y--; // Convert to 0-based index
+        adj[x].push_back({y, w});
+        adj[y].push_back({x, w});
+    }
+    
+    vector<long long> dist(n, 1e18); // Initialize distances to infinity
+    dist[0] = a[0]; // Starting node's distance
+    
+    priority_queue<pair<long long, int>, vector<pair<long long, int>>, greater<pair<long long, int>>> pq;
+    pq.push({a[0], 0}); // Push starting node with its value
+    
+    while(!pq.empty()) {
+        auto [current_value, current_node] = pq.top();
+        pq.pop();
+        
+        if(current_value > dist[current_node]) continue; // Skip outdated paths
+        
+        for(auto [neighbor, weight]: adj[current_node]) {
+            long long new_distance = current_value + weight + a[neighbor]; // Calculate new distance
+            
+            if(new_distance < dist[neighbor]) {
+                dist[neighbor] = new_distance; // Update distance if smaller
+                pq.push({new_distance, neighbor}); // Push updated node into priority queue
+            }
+        }
+    }
+    
+    for(int i = 1; i < n; i++) { // Output results for i = 2 to n
+        cout << dist[i] << " ";
+    }
+    return 0;
+}

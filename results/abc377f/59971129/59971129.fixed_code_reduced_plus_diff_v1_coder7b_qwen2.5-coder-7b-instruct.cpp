@@ -1,0 +1,48 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+typedef long long ll;
+
+const int MAX_N = 1000000000;
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(0);
+
+    ll n, m;
+    cin >> n >> m;
+
+    set<ll> rows, cols, diag1, diag2;
+    
+    for (int i = 0; i < m; ++i) {
+        ll a, b;
+        cin >> a >> b;
+        rows.insert(a);
+        cols.insert(b);
+        diag1.insert(a + b);
+        diag2.insert(a - b);
+    }
+
+    ll total_squares = n * n;
+    ll occupied_squares = rows.size() + cols.size() + diag1.size() + diag2.size();
+
+    // Subtract intersections
+    for (auto r : rows) {
+        if (diag1.count(r)) --occupied_squares;
+        if (diag2.count(n - r + 1)) --occupied_squares;
+    }
+    for (auto c : cols) {
+        if (diag1.count(c)) --occupied_squares;
+        if (diag2.count(r - c)) --occupied_squares;
+    }
+    for (auto d1 : diag1) {
+        if (diag2.count(d1 - 2 * n)) --occupied_squares;
+    }
+    for (auto d2 : diag2) {
+        if (diag1.count(d2 + 2 * n)) --occupied_squares;
+    }
+
+    cout << total_squares - occupied_squares << endl;
+
+    return 0;
+}

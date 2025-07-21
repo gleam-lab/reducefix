@@ -1,0 +1,49 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define ll long long
+#define rep(i,n) for(int i=0; i<(int)n; i++)
+
+int main() {
+    int n, q;
+    cin >> n >> q;
+    vector<ll> a(n);
+    vector<pair<ll, ll>> queries(q); // To store (b, k) pairs
+
+    // Read all A coordinates
+    for (int i = 0; i < n; i++) {
+        cin >> a[i];
+    }
+
+    // Read all (b, k) queries
+    for (int i = 0; i < q; i++) {
+        ll b, k;
+        cin >> b >> k;
+        queries[i] = make_pair(b, k);
+    }
+
+    // Sort A coordinates to process them in increasing order
+    sort(a.begin(), a.end());
+
+    // Process each query
+    for (auto& p : queries) {
+        ll b = p.first;
+        ll k = p.second;
+
+        // Binary search for the k-th closest point
+        ll low = 0, high = n - 1;
+        while (high - low > 1) {
+            ll mid = low + (high - low) / 2;
+            ll distance = abs(a[mid] - b);
+            if ((mid > 0 && abs(a[mid - 1] - b) <= distance) || (mid == 0)) {
+                high = mid;
+            } else {
+                low = mid;
+            }
+        }
+
+        // Output the distance of the k-th closest point
+        cout << abs(a[low] - b) << endl;
+    }
+
+    return 0;
+}

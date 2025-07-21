@@ -1,0 +1,54 @@
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+#define rep(i, n) for (ll i = 0; i < (ll)(n); i++)
+#define rep2(i, s, n) for (ll i = (s); i < (ll)(n); i++)
+#define all(x) x.begin(), x.end()
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+
+    int H, W, Q;
+    cin >> H >> W >> Q;
+
+    vector<vector<int>> grid(H, vector<int>(W, 1));
+
+    while (Q--) {
+        int R, C;
+        cin >> R >> C;
+        R--; C--;
+
+        if (grid[R][C] == 1) {
+            grid[R][C] = 0;
+        } else {
+            for (int i = R-1; i >= 0; --i) {
+                if (grid[i][C] == 0) break;
+                grid[i][C] = 0;
+            }
+            for (int i = R+1; i < H; ++i) {
+                if (grid[i][C] == 0) break;
+                grid[i][C] = 0;
+            }
+            for (int j = C-1; j >= 0; --j) {
+                if (grid[R][j] == 0) break;
+                grid[R][j] = 0;
+            }
+            for (int j = C+1; j < W; ++j) {
+                if (grid[R][j] == 0) break;
+                grid[R][j] = 0;
+            }
+        }
+    }
+
+    int ans = 0;
+    for (int i = 0; i < H; ++i) {
+        for (int j = 0; j < W; ++j) {
+            ans += grid[i][j];
+        }
+    }
+
+    cout << ans << endl;
+
+    return 0;
+}

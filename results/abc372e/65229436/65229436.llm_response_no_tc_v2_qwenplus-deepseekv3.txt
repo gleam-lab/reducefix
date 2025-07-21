@@ -1,0 +1,89 @@
+To fix this code, we need to address several issues:
+
+1. **Union-Find Structure**: The current implementation correctly handles the union and find operations, but the way it merges sets is inefficient when dealing with large sets. Merging sets by inserting elements one by one can lead to O(N) time complexity per operation in the worst case, which is not feasible for N up to 2×10^5.
+
+2. **Handling k-th Largest Element**: The code attempts to find the k-th largest element by iterating through a set in reverse, which is correct but can be optimized. The main issue here is the incorrect output when fewer than k elements are connected; it adds -2 to the answer instead of -1, and then incorrectly increments it by 1 when printing.
+
+3. **Output Handling**: When printing answers, the code adds 1 to all answers, including -2 (which becomes -1), but this is a roundabout way to handle the -1 case. It's clearer to directly output -1 when needed.
+
+Here’s the corrected code:
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+#define rep(i, n) for(int i = 0; i < (n); i++)
+#define all(a) a.begin(), a.end()
+#define rall(a) a.rbegin(), a.rend()
+using ll = long long;
+using pi = pair<int, int>;
+const int INF = 1e9;
+
+struct UnionFind {
+    vector<int> parent, rank;
+    vector<set<int>> sets;
+
+    UnionFind(int n) : parent(n), rank(n, 0), sets(n) {
+        for (int i = 0; i < n; i++) {
+            parent[i] = i;
+            sets[i].insert(i);
+        }
+    }
+
+    int findRoot(int x) {
+        if (parent[x] != x) 
+            parent[x] = findRoot(parent[x]);
+        return parent[x];
+    }
+
+    bool unite(int x, int y) {
+        int rx = findRoot(x), ry = findRoot(y);
+        if (rx == ry) return false;
+        if (sets[rx].size() < sets[ry].size()) swap(rx, ry);
+        parent[ry] = rx;
+        sets[rx].insert(all(sets[ry]));
+        sets[ry].clear();
+        return true;
+    }
+};
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int n, q;
+    cin >> n >> q;
+    UnionFind uf(n);
+    vector<int> ans;
+    rep(qi, q) {
+        int com;
+        cin >> com;
+        if (com == 1) {
+            int u, v;
+            cin >> u >> v;
+            u--; v--;
+            uf.unite(u, v);
+        } else if (com == 2) {
+            int v, k;
+            cin >> v >> k;
+            v--;
+            int root = uf.findRoot(v);
+            if ((int)uf.sets[root].size() < k) {
+                ans.push_back(-1);
+            } else {
+                auto it = prev(uf.sets[root].end(), k);
+                ans.push_back(*it + 1);
+            }
+        }
+    }
+    for (auto x : ans) cout << x << '\n';
+    return 0;
+}
+```
+
+### Key Fixes:
+1. **Efficient Union Operation**: The `unite` method now directly merges the smaller set into the larger one, leveraging the `insert` method with iterators to merge sets in O(m log m) time, where m is the size of the smaller set. This is more efficient than inserting elements one by one.
+
+2. **Correct Output for k-th Largest**: The code now correctly checks if the connected component has at least `k` elements. If not, it directly outputs `-1`. Otherwise, it uses `prev` to efficiently find the k-th largest element and outputs it with the correct 1-based indexing.
+
+3. **Clear Output Handling**: The answers are stored as they should be printed, with `-1` directly included for invalid queries, avoiding any post-processing adjustments.
+
+This solution efficiently handles the constraints and ensures correct results for all query types.

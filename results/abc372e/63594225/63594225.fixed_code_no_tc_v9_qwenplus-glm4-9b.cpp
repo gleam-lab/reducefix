@@ -1,0 +1,56 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+
+using namespace std;
+
+const int N = 200005;
+
+vector<int> graph[N];
+int par[N];
+int size[N];
+
+void find(int v) {
+    if (par[v] == v) return;
+    find(par[v]);
+}
+
+void union_set(int u, int v) {
+    u = find(u);
+    v = find(v);
+    if (u == v) return;
+    if (size[u] < size[v]) swap(u, v);
+    graph[u].insert(graph[u].end(), graph[v].begin(), graph[v].end());
+    sort(graph[u].rbegin(), graph[u].rend());
+    par[v] = u;
+    size[u] += size[v];
+}
+
+int query(int v, int k) {
+    find(v);
+    if (k > size[par[v]]) return -1;
+    return graph[par[v]][k - 1];
+}
+
+int main() {
+    int n, q;
+    cin >> n >> q;
+
+    for (int i = 1; i <= n; ++i) {
+        par[i] = i;
+        size[i] = 1;
+    }
+
+    for (int i = 0; i < q; ++i) {
+        int t, a, b;
+        cin >> t >> a >> b;
+
+        if (t == 1) {
+            union_set(a, b);
+        } else {
+            cout << query(b, b) << '\n';
+        }
+    }
+
+    return 0;
+}

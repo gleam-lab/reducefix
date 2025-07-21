@@ -1,0 +1,117 @@
+To solve this problem efficiently, we need to handle dynamic connectivity and answer queries about the k-th largest node in a connected component. This is a classic use case for the **Disjoint Set Union (DSU)** data structure with path compression and union by size/rank.
+
+### Key Observations:
+
+1. **Union-Find with Path Compression** ensures fast operations for connecting nodes.
+2. For each set (component), we maintain a sorted list of the top 10 largest vertex numbers.
+3. When two sets are merged, we merge their lists in descending order and keep only the top 10 values.
+4. Type 2 queries simply require accessing the precomputed list.
+
+This approach ensures:
+- Each union operation runs in `O(10)` time since we only maintain up to 10 elements.
+- Each query is answered in `O(1)` time using direct indexing.
+
+Here's the corrected and optimized C++ implementation:
+
+```cpp
+#include <bits/stdc++.h>
+
+using namespace std;
+
+#define SZ(s) ((int)s.size())
+
+const int MAXN = 2e5 + 5;
+const int K_MAX = 10;
+
+vector<int> parent(MAXN);
+vector<vector<int>> top_values(MAXN);
+
+int find(int x) {
+    if (parent[x] != x)
+        parent[x] = find(parent[x]);
+    return parent[x];
+}
+
+void unite(int u, int v) {
+    int root_u = find(u);
+    int root_v = find(v);
+    if (root_u == root_v)
+        return;
+
+    // Always attach smaller tree to bigger one
+    if (top_values[root_u].size() < top_values[root_v].size())
+        swap(root_u, root_v);
+
+    // Merge the top values
+    vector<int> merged;
+    int i = 0, j = 0;
+    while (i < SZ(top_values[root_u]) && j < SZ(top_values[root_v])) {
+        if (top_values[root_u][i] > top_values[root_v][j])
+            merged.push_back(top_values[root_u][i++]);
+        else
+            merged.push_back(top_values[root_v][j++]);
+        if (SZ(merged) == K_MAX)
+            break;
+    }
+
+    while (i < SZ(top_values[root_u]) && SZ(merged) < K_MAX)
+        merged.push_back(top_values[root_u][i++]);
+
+    while (j < SZ(top_values[root_v]) && SZ(merged) < K_MAX)
+        merged.push_back(top_values[root_v][j++]);
+
+    // Update parent and top_values
+    parent[root_v] = root_u;
+    top_values[root_u] = merged;
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int N, Q;
+    cin >> N >> Q;
+
+    // Initialize DSU
+    for (int i = 1; i <= N; ++i) {
+        parent[i] = i;
+        top_values[i] = {i};
+    }
+
+    while (Q--) {
+        int type;
+        cin >> type;
+
+        if (type == 1) {
+            int u, v;
+            cin >> u >> v;
+            unite(u, v);
+        } else {
+            int v, k;
+            cin >> v >> k;
+            int root_v = find(v);
+            if (SZ(top_values[root_v]) < k)
+                cout << -1 << '\n';
+            else
+                cout << top_values[root_v][k - 1] << '\n';
+        }
+    }
+
+    return 0;
+}
+```
+
+### Explanation:
+
+- We use a standard DSU (`find` and `unite`) with optimizations.
+- Each node maintains a list of up to 10 largest vertices in its connected component.
+- Merging is done efficiently using a **two-pointer merge** from merge sort logic.
+- Queries are handled in constant time via precomputed values.
+
+### Time Complexity:
+
+- Each `find` and `union` operation: amortized O(α(N)) where α is inverse Ackermann function.
+- Each merge of top-k lists: O(10) = O(1)
+- Each query: O(1)
+
+This guarantees performance within constraints even for 2×10⁵ queries.

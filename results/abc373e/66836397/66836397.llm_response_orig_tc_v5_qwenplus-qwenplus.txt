@@ -1,0 +1,161 @@
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+using ll = long long;
+using ull = unsigned long long;
+using pii = pair<int, int>;
+using pll = pair<ll, ll>;
+template<typename T> using minpq = priority_queue<T, vector<T>, greater<T>>;
+
+#define rep(i, x, limit) for (int i = (x); i < (limit); i++)
+#define all(x) x.begin(), x.end()
+#define rall(x) x.rbegin(), x.rend()
+#define el '\n'
+#define spa ' '
+#define Yes cout << "Yes" << el
+#define No cout << "No" << el
+#define YES cout << "YES" << el
+#define NO cout << "NO" << el
+#define eps (1e-10)
+#define Equals(a,b) (fabs((a) - (b)) < eps )
+#define debug(x) cerr << #x << " = " << x << el
+
+const double pi = 3.141592653589793238;
+const int inf = 1073741823;
+const ll infl = 1LL << 60;
+const string ABC = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+const string abc = "abcdefghijklmnopqrstuvwxyz";
+
+template<typename T1, typename T2>
+std::ostream &operator<< (std::ostream &os, std::pair<T1,T2> p){
+    os << "{" << p.first << "," << p.second << "}";
+    return os;
+}
+
+inline ll midpoint(ll a, ll b) {
+    return a + (b - a) / 2;
+}
+
+int main() {
+    ll N, M, K;
+    cin >> N >> M >> K;
+    vector<ll> A(N);
+    ll total = 0;
+    for (ll i = 0; i < N; ++i) {
+        cin >> A[i];
+        total += A[i];
+    }
+    ll rem = K - total;
+    
+    vector<pll> indexedA(N);
+    for (ll i = 0; i < N; ++i) {
+        indexedA[i] = {A[i], i};
+    }
+    sort(rall(indexedA)); // Sort descending to help determine thresholds
+    
+    vector<ll> res(N);
+    
+    for (ll i = 0; i < N; ++i) {
+        ll origVote = A[i];
+        ll needed = 0;
+        
+        // If M == 0, candidate is always elected regardless of votes
+        if (M == 0) {
+            res[i] = 0;
+            continue;
+        }
+
+        // Binary search on minimum additional votes needed
+        ll low = 0;
+        ll high = rem + 1;
+        while (low < high) {
+            ll mid = (low + high) / 2;
+            ll newVote = origVote + mid;
+            
+            // Count how many candidates have votes > newVote
+            ll count = 0;
+            for (ll j = 0; j < N; ++j) {
+                if (A[j] > newVote && j != i) {
+                    count++;
+                }
+            }
+            
+            // Early exit: already enough votes to be in top M
+            if (count < M) {
+                high = mid;
+                continue;
+            }
+            
+            // Need to see if we can make those with votes <= newVote stay below or equal
+            // Try to raise the strongest competitors that could still beat us
+            vector<ll> sortedOthers;
+            for (ll j = 0; j < N; ++j) {
+                if (j != i) {
+                    sortedOthers.push_back(A[j]);
+                }
+            }
+            sort(rall(sortedOthers));
+            
+            ll remainingRem = rem - mid;
+            bool possible = true;
+            
+            // We need at least `count` candidates ahead of us
+            // To guarantee victory, we must ensure after distribution, less than M candidates are above
+            // So cap the number of candidates allowed to exceed newVote to M-1
+            ll cap = M - 1;
+            if (count <= cap) {
+                res[i] = max(0LL, needed);
+                low = mid;
+                break;
+            }
+            
+            // Otherwise, find how much more we need to reduce those who beat us
+            ll deficit = count - cap;
+            ll added = 0;
+            for (ll j = 0; j < N && deficit > 0; ++j) {
+                if (indexedA[j].second == i) continue;
+                
+                ll candVote = indexedA[j].first;
+                if (candVote <= newVote) break;
+                
+                ll needToReduce = candVote - newVote + 1;
+                ll take = min(needToReduce, remainingRem);
+                remainingRem -= take;
+                added += take;
+                if (added > rem) {
+                    possible = false;
+                    break;
+                }
+                if (take < needToReduce) break;
+                deficit--;
+            }
+            
+            if (possible && deficit <= 0 && remainingRem >= 0) {
+                high = mid;
+            } else {
+                low = mid + 1;
+            }
+        }
+        
+        // After binary search, check feasibility
+        ll newVote = A[i] + low;
+        ll countHigher = 0;
+        for (ll j = 0; j < N; ++j) {
+            if (A[j] > newVote || (A[j] == newVote && j != i && countHigher < M)) {
+                countHigher++;
+            }
+        }
+        if (countHigher < M) {
+            res[i] = low;
+        } else {
+            res[i] = -1;
+        }
+    }
+
+    for (ll i = 0; i < N; ++i) {
+        cout << res[i] << " ";
+    }
+    cout << el;
+}
+```

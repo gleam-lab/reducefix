@@ -1,0 +1,45 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+typedef long long ll;
+
+const int MAXN = 2e5 + 10;
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(NULL);
+
+    int N, M;
+    ll K;
+    cin >> N >> M >> K;
+
+    vector<ll> A(N + 1);
+    for (int i = 1; i <= N; ++i) {
+        cin >> A[i];
+        K -= A[i];
+    }
+
+    sort(A.begin() + 1, A.end());
+
+    vector<ll> prefix_sum(N + 1);
+    for (int i = 1; i <= N; ++i) {
+        prefix_sum[i] = prefix_sum[i - 1] + A[i];
+    }
+
+    vector<ll> results(N + 1, -1);
+    for (int i = 1; i <= N; ++i) {
+        if (prefix_sum[N] - prefix_sum[i] < (M - 1) * A[i]) {
+            results[i] = 0;
+        } else {
+            ll needed = ceil((K + prefix_sum[N] - prefix_sum[i]) / (double)(M - 1)) - A[i];
+            results[i] = max(needed, 0LL);
+        }
+    }
+
+    for (int i = 1; i <= N; ++i) {
+        cout << results[i] << " ";
+    }
+    cout << endl;
+
+    return 0;
+}

@@ -1,0 +1,70 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define ll long long
+
+int main() {
+    ll n, q;
+    cin >> n >> q;
+    vector<ll> a(n);
+    for (ll i = 0; i < n; ++i) {
+        cin >> a[i];
+    }
+
+    vector<pair<ll, ll>> queries(q);
+    for (ll i = 0; i < q; ++i) {
+        cin >> queries[i].first >> queries[i].second;
+        queries[i].second--; // Adjust k to be zero-indexed
+    }
+
+    // Sort points A and queries by the points B to ensure that we process queries in the correct order
+    sort(queries.begin(), queries.end(), [&](const pair<ll, ll>& a, const pair<ll, ll>& b) {
+        return a.first < b.first;
+    });
+    sort(a.begin(), a.end());
+
+    // Prepare a data structure for fast rank retrieval (using Fenwick Tree)
+    vector<ll> fenwickTree(max(n, 400001)); // Using 400001 to handle negative indices
+
+    // Helper functions for Fenwick Tree
+    autoç°è±¡add = [&](ll idx, ll value) {
+        while (idx <= fenwickTree.size()) {
+            fenwickTree[idx] += value;
+            idx += idx & (-idx);
+        }
+    };
+    auto query = [&](ll idx) {
+        ll sum = 0;
+        while (idx > 0) {
+            sum += fenwickTree[idx];
+            idx -= idx & (-idx);
+        }
+        return sum;
+    };
+
+    // Process queries
+    for (const auto& query : queries) {
+        ll b = query.first;
+        ll k = query.second;
+        ll l = -1, r = n;
+
+        // Binary search for the k-th closest index
+        while (r - l > 1) {
+            ll m = (l + r) / 2;
+            ll count = query(a[m]) - query(a[m - 1]);
+            if (count < k) {
+                r = m;
+            } else {
+                l = m;
+            }
+        }
+
+        // Output the distance
+        if (l == -1) {
+            cout << 1e18 << '\n';
+        } else {
+            cout << abs(a[l] - b) << '\n';
+        }
+    }
+
+    return 0;
+}

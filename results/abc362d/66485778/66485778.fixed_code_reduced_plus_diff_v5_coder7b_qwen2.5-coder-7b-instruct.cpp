@@ -1,0 +1,72 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+#define ll long long
+#define INF LLONG_MAX
+
+struct Edge {
+    int u, v, w;
+    bool operator<(const Edge &other) const { return w < other.w; }
+};
+
+struct DSU {
+    vector<int> parent, rank;
+    DSU(int n) : parent(n+1), rank(n+1, 1) {
+        iota(parent.begin(), parent.end(), 0);
+    }
+    
+    int find(int x) {
+        if (parent[x] != x) parent[x] = find(parent[x]);
+        return parent[x];
+    }
+    
+    void unite(int x, int y) {
+        x = find(x), y = find(y);
+        if (rank[x] < rank[y]) swap(x, y);
+        parent[y] = x;
+        if (rank[x] == rank[y]) rank[x]++;
+    }
+};
+
+void dijkstra(vector<pair<int, int>> adj[], vector<ll> &dist, int src) {
+    dist[src] = 0;
+    priority_queue<pair<ll, int>, vector<pair<ll, int>>, greater<pair<ll, int>>> pq;
+    pq.push({0, src});
+    while (!pq.empty()) {
+        int u = pq.top().second;
+        pq.pop();
+        for (auto &[v, w] : adj[u]) {
+            if (dist[v] > dist[u] + w) {
+                dist[v] = dist[u] + w;
+                pq.push({dist[v], v});
+            }
+        }
+    }
+}
+
+int main() {
+    ios_base::sync_with_stdio(0); cin.tie(0); cout.tie(0);
+
+    int n, m;
+    cin >> n >> m;
+    vector<int> a(n + 1);
+    vector<vector<pair<int, int>>> adj(n + 1);
+    for (int i = 1; i <= n; ++i) cin >> a[i];
+
+    for (int i = 0; i < m; ++i) {
+        int u, v, w;
+        cin >> u >> v >> w;
+        adj[u].push_back({v, w});
+        adj[v].push_back({u, w});
+    }
+
+    vector<ll> dist(n + 1, INF);
+    dijkstra(adj, dist, 1);
+
+    for (int i = 2; i <= n; ++i) {
+        cout << dist[i] + a[i] << " ";
+    }
+    cout << '\n';
+
+    return 0;
+}

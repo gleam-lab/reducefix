@@ -1,0 +1,41 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+#define endl "\n"
+#define int long long
+
+void solve() {
+    int N, K;
+    cin >> N >> K;
+    vector<int> A(N);
+    for (int i = 0; i < N; ++i) {
+        cin >> A[i];
+    }
+
+    // We need to minimize (max - min) of the remaining N-K elements
+    // Since we can remove any K elements, try different windows of size N-K
+
+    int windowSize = N - K;
+    int res = LLONG_MAX;
+
+    // Try all sliding windows of size windowSize
+    multiset<int> s;
+    for (int i = 0; i < N; ++i) {
+        s.insert(A[i]);
+        if (i >= windowSize) {
+            s.erase(s.find(A[i - windowSize]));
+        }
+        if (i >= windowSize - 1) {
+            res = min(res, *(--s.end()) - *s.begin());
+        }
+    }
+
+    cout << res << endl;
+}
+
+signed main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(NULL);
+    solve();
+    return 0;
+}

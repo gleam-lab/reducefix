@@ -1,0 +1,59 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+constexpr int N = 3e5 + 10;
+constexpr long long INF = 1e18;
+
+vector<pair<int, int>> g[N];
+long long dist[N];
+
+void dijkstra(int src, int n) {
+    priority_queue<pair<long long, int>, vector<pair<long long, int>>, greater<>> pq;
+    pq.push({src, 0});
+    dist[src] = 0;
+
+    while (!pq.empty()) {
+        auto [u, cost] = pq.top();
+        pq.pop();
+
+        if (cost > dist[u]) continue;
+
+        for (auto [v, weight] : g[u]) {
+            long long new_cost = cost + weight + dist[u];
+            if (new_cost < dist[v]) {
+                dist[v] = new_cost;
+                pq.push({dist[v], v});
+            }
+        }
+    }
+}
+
+int main() {
+    ios_base::sync_with_stdio(false); cin.tie(NULL);
+
+    int n, m;
+    cin >> n >> m;
+
+    vector<int> a(n + 1);
+    for (int i = 1; i <= n; ++i) {
+        cin >> a[i];
+    }
+
+    for (int i = 0; i < m; ++i) {
+        int u, v, b;
+        cin >> u >> v >> b;
+        g[u].push_back({v, b});
+        g[v].push_back({u, b});
+    }
+
+    for (int i = 1; i <= n; ++i) dist[i] = INF;
+
+    dijkstra(1, n);
+
+    for (int i = 2; i <= n; ++i) {
+        cout << dist[i] << " ";
+    }
+    cout << "\n";
+
+    return 0;
+}

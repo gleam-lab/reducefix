@@ -1,0 +1,74 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+
+using namespace std;
+
+struct Candidate {
+    long long votes;
+    int index;
+};
+
+bool canWin(const vector<Candidate>& candidates, int i, long long additionalVotes, int M, long long totalRemainingVotes) {
+    // Calculate the maximum votes other candidates could get
+    long long maxOtherVotes = 0;
+    for (const auto& c : candidates) {
+        if (c.index != i) {
+            maxOtherVotes += c.votes + min(additionalVotes, totalRemainingVotes);
+            totalRemainingVotes -= min(additionalVotes, totalRemainingVotes);
+        }
+    }
+    
+    // Check if the current candidate can still win
+    int count = 0;
+    for (const auto& c : candidates) {
+        if (c.index != i && c.votes + additionalVotes > c.votes) {
+            count++;
+        }
+    }
+    return count < M;
+}
+
+int main() {
+    int N, M;
+    long long K;
+    cin >> N >> M >> K;
+    
+    vector<Candidate> candidates(N);
+    for (int i = 0; i < N; ++i) {
+        cin >> candidates[i].votes;
+        candidates[i].index = i;
+    }
+    
+    sort(candidates.begin(), candidates.end(), [](const Candidate& a, const Candidate& b) {
+        return a.votes < b.votes;
+    });
+    
+    vector<long long> results(N, 0);
+    for (int i = 0; i < N; ++i) {
+        long long additionalVotes = 0;
+        long long totalRemainingVotes = K - accumulate(candidates.begin(), candidates.end(), 0LL, [](long long sum, const Candidate& c) {
+            return sum + c.votes;
+        });
+        
+        // Binary search for the minimum additional votes needed
+        long long low = 0, high = totalRemainingVotes;
+        while (low <= high) {
+            long long mid = (low + high) / 2;
+            if (canWin(candidates, i, mid, M, totalRemainingVotes)) {
+                high = mid - 1;
+            } else {
+                low = mid + 1;
+            }
+        }
+        
+        results[i] = low == totalRemainingVotes ? -1 : low;
+    }
+    
+    for (int i = 0; i < N; ++i) {
+        cout << results[i] << " ";
+    }
+    cout << endl;
+    
+    return 0;
+}

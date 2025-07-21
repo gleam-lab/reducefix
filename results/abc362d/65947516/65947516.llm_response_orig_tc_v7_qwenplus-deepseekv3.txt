@@ -1,0 +1,89 @@
+After analyzing the incorrect code and the failing test case, I identified the issue in the path weight calculation. The current implementation incorrectly adds the vertex weight at the wrong time - it adds the source vertex weight when traversing an edge, but the correct approach should account for vertex weights differently.
+
+The path weight should be:
+- Sum of all vertex weights along the path (each vertex visited contributes its weight once)
+- Sum of all edge weights along the path
+
+The key insight is that when moving from vertex u to v, we need to include:
+- Edge weight B_j
+- Vertex weight A_v (but not A_u since it was already counted when we entered u)
+
+Here's the corrected code:
+
+```cpp
+#include<queue>
+#include<vector>
+#include<cstdio>
+#include<cstring>
+#include<climits> 
+#include<algorithm>
+using namespace std;
+typedef long long ll;
+typedef pair<ll,int> pli;
+const int N=2e5+5;
+
+int n,m;
+ll a[N];
+ll dis[N];
+vector<pli> g[N];
+
+void dijkstra() {
+    priority_queue<pli, vector<pli>, greater<pli>> pq;
+    for(int i=1;i<=n;i++) dis[i]=LLONG_MAX;
+    dis[1]=a[1];
+    pq.push({dis[1],1});
+    
+    while(!pq.empty()) {
+        ll d=pq.top().first;
+        int u=pq.top().second;
+        pq.pop();
+        
+        if(d>dis[u]) continue;
+        
+        for(auto &edge:g[u]) {
+            int v=edge.second;
+            ll w=edge.first;
+            if(dis[v]>dis[u]+w+a[v]) {
+                dis[v]=dis[u]+w+a[v];
+                pq.push({dis[v],v});
+            }
+        }
+    }
+}
+
+int main() {
+    scanf("%d%d",&n,&m);
+    for(int i=1;i<=n;i++) scanf("%lld",&a[i]);
+    for(int i=1;i<=m;i++) {
+        int u,v;
+        ll w;
+        scanf("%d%d%lld",&u,&v,&w);
+        g[u].push_back({w,v});
+        g[v].push_back({w,u});
+    }
+    
+    dijkstra();
+    
+    for(int i=2;i<=n;i++) {
+        printf("%lld ",dis[i]);
+    }
+    return 0;
+}
+```
+
+Key changes made:
+1. Changed the priority queue implementation to use `greater<pli>` for min-heap behavior
+2. Modified the edge weight storage to store as `(weight, vertex)` pairs
+3. Initialize the distance to vertex 1 with its own weight `a[1]`
+4. When updating distances, the new distance is `dis[u] + edge_weight + a[v]`
+5. Removed the unnecessary `vis` array since the priority queue handles duplicates
+6. Simplified the data structures and used more standard naming conventions
+7. Fixed the output to just print `dis[i]` without adding `a[i]` (since it's already included)
+
+This approach correctly calculates the path weight by:
+- Including the starting vertex's weight in the initial distance
+- Adding each edge's weight when traversing
+- Including the destination vertex's weight when arriving at it
+- Ensuring each vertex's weight is only counted once per path
+
+The time complexity remains O((N+M) log N) due to the priority queue operations, which is suitable for the given constraints.

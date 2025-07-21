@@ -1,0 +1,42 @@
+#include<bits/stdc++.h>
+
+using namespace std;
+
+int main() {
+    int N;
+    cin >> N;
+    vector<long long> H(N);
+    for (int i = 0; i < N; i++) {
+        cin >> H[i];
+    }
+
+    long long T = 0;
+    
+    // We'll use a queue to track which enemies are still active
+    queue<int> q;
+    for (int i = 0; i < N; i++) {
+        if (H[i] > 0) {
+            q.push(i);
+        }
+    }
+
+    while (!q.empty()) {
+        T++;
+        // Determine damage based on T
+        long long damage = (T % 3 == 0) ? 3 : 1;
+
+        int idx = q.front();
+        H[idx] -= damage;
+
+        // If this enemy still has health left, move it to the end
+        // Otherwise, remove it from the queue
+        if (H[idx] > 0) {
+            q.push(idx);
+        } else {
+            q.pop();
+        }
+    }
+
+    cout << T << endl;
+    return 0;
+}

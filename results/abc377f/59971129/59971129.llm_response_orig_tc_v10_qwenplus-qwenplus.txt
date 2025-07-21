@@ -1,0 +1,89 @@
+To solve this problem efficiently given the constraints (with `N` as large as 10⁹), we need to avoid iterating over all grid cells. Instead, we track only what is affected by the existing pieces and subtract these from the total number of safe placements.
+
+### Key Observations:
+
+- Each piece attacks along:
+  - its **row**
+  - its **column**
+  - its **diagonal** (`i - j = constant`)
+  - its **anti-diagonal** (`i + j = constant`)
+
+We can represent all attacked rows, columns, diagonals, and anti-diagonals using sets.
+
+The total number of safe positions initially is `N * N`.
+
+From that, we subtract:
+- All cells in any attacked row or column: `(number of attacked rows) * N + (number of attacked cols) * N - (overlap count)` where overlap is counted for `(row, col)` pairs already considered.
+- Then subtract those on attacked diagonals and anti-diagonals while ensuring no double counting.
+
+However, since each piece affects a line of potentially infinite size, but only M pieces exist, we can calculate the number of unique attacked squares efficiently using sets.
+
+---
+
+Here's the corrected and optimized solution:
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+typedef long long ll;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+
+    ll N, M;
+    cin >> N >> M;
+
+    set<ll> rows, cols, diag1, diag2; // diag1: i-j, diag2: i+j
+
+    for (ll i = 0; i < M; ++i) {
+        ll r, c;
+        cin >> r >> c;
+        rows.insert(r);
+        cols.insert(c);
+        diag1.insert(r - c);
+        diag2.insert(r + c);
+    }
+
+    ll ans = N * N;
+    ans -= (ll)rows.size() * N;
+    ans -= (ll)cols.size() * N;
+    ans += (ll)rows.size() * (ll)cols.size(); // subtract overlap
+
+    // For each diagonal line (r - c = d)
+    for (ll d : diag1) {
+        ll len = N - abs(d);
+        if (len <= 0) continue;
+        ans -= len;
+        // subtract overlaps with rows and cols
+        for (ll r : rows) {
+            ll c = r - d;
+            if (c >= 1 && c <= N) ans += 1;
+        }
+    }
+
+    // For each anti-diagonal line (r + c = d)
+    for (ll d : diag2) {
+        ll len = N - abs(d - (N + 1));
+        if (len <= 0) continue;
+        ans -= len;
+        // subtract overlaps with rows and cols
+        for (ll r : rows) {
+            ll c = d - r;
+            if (c >= 1 && c <= N) ans += 1;
+        }
+    }
+
+    cout << max(0LL, ans) << endl;
+}
+```
+
+### Explanation:
+- We use sets to store unique rows, columns, diagonals, and anti-diagonals affected by existing pieces.
+- Start with total cells `N * N`.
+- Subtract all cells in attacked rows and columns, adjusting for overlap between rows and columns.
+- For each diagonal and anti-diagonal, compute how many cells it touches, subtract them, then adjust again for overlaps with rows/columns.
+- Finally, ensure answer is non-negative.
+
+This approach runs in O(M log M) time due to the operations on sets, which is efficient even for maximum input sizes.

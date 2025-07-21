@@ -1,0 +1,69 @@
+#include <iostream>
+#include <algorithm>
+#include <vector>
+using namespace std;
+
+typedef long long ll;
+typedef pair<int, int> pii;
+
+ll N, M, K;
+ll A[200001];
+ll psum[200001];
+vector<pii> candidates;
+
+ll calculate_minimum_votes(int i, int x) {
+    ll current_votes = A[i] + x;
+    ll remaining_votes = K - psum[N];
+    ll votes_needed = 0;
+    
+    // Calculate how many candidates have more votes than current_votes
+    int high_votes = lower_bound(candidates.begin(), candidates.end(), make_pair(current_votes + 1, 0)) - candidates.begin();
+    votes_needed = max((int)(M - high_votes + 1), 0LL);
+    
+    // Calculate the total votes that need to be allocated to the remaining candidates
+    ll total_votes_needed = votes_needed * (current_votes + 1);
+    
+    // Subtract the votes from the current candidate from the total votes needed
+    total_votes_needed -= x;
+    
+    // Calculate the votes needed for the current candidate
+    if (total_votes_needed <= remaining_votes) {
+        return 0;
+    }
+    return max(total_votes_needed - remaining_votes, 0LL);
+}
+
+int main() {
+    cin >> N >> M >> K;
+    for (int i = 0; i < N; i++) {
+        cin >> A[i];
+        candidates.push_back({A[i], i});
+    }
+
+    // Sort candidates to facilitate the calculation
+    sort(candidates.begin(), candidates.end());
+
+    // Calculate prefix sums
+    psum[0] = 0;
+    for (int i = 0; i < N; i++) {
+        psum[i + 1] = psum[i] + candidates[i].first;
+    }
+
+    // Calculate minimum votes needed for each candidate
+    vector<ll> result(N, -1);
+    for (int i = 0; i < N; i++) {
+        ll votes_needed = calculate_minimum_votes(i, 0);
+        if (votes_needed == -1) {
+            votes_needed = calculate_minimum_votes(i, K - psum[N]);
+        }
+        result[candidates[i].second] = votes_needed;
+    }
+
+    // Output the results
+    for (ll votes : result) {
+        cout << votes << " ";
+    }
+    cout << endl;
+
+    return 0;
+}

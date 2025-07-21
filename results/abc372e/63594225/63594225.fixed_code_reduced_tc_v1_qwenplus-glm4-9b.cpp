@@ -1,0 +1,62 @@
+#include <iostream>
+#include <vector>
+
+using namespace std;
+
+#define MAXN 200005
+
+struct DisjointSet {
+    vector<int> parent, size;
+    DisjointSet(int n) : parent(n + 1), size(n + 1, 1) {
+        for (int i = 0; i <= n; ++i) {
+            parent[i] = i;
+        }
+    }
+
+    int find(int a) {
+        if (parent[a] != a) {
+            parent[a] = find(parent[a]);
+        }
+        return parent[a];
+    }
+
+    void unionSets(int a, int b) {
+        int rootA = find(a), rootB = find(b);
+        if (rootA != rootB) {
+            if (size[rootA] < size[rootB]) {
+                swap(rootA, rootB);
+            }
+            parent[rootB] = rootA;
+            size[rootA] += size[rootB];
+        }
+    }
+};
+
+int main() {
+    int n, q;
+    cin >> n >> q;
+
+    DisjointSet ds(n);
+    vector<int> vertices[MAXN];
+    for (int i = 1; i <= n; ++i) {
+        vertices[i].push_back(i);
+    }
+
+    for (int q_i = 0; q_i < q; ++q_i) {
+        int type, x, y, k;
+        cin >> type >> x >> y;
+        if (type == 1) { // Union
+            ds.unionSets(x, y);
+        } else if (type == 2) { // Find the k-th largest
+            int root = ds.find(x);
+            sort(vertices[root].begin(), vertices[root].end(), greater<int>());
+            if (k > vertices[root].size()) {
+                cout << -1 << '\n';
+            } else {
+                cout << vertices[root][k - 1] << '\n';
+            }
+        }
+    }
+
+    return 0;
+}

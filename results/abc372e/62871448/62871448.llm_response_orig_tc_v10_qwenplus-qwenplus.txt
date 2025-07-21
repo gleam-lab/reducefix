@@ -1,0 +1,103 @@
+To solve this problem efficiently, we need to manage dynamic connectivity in an undirected graph and answer queries about the top-k largest vertex numbers connected to a given vertex.
+
+We will use the **Disjoint Set Union (DSU)** data structure with path compression for efficient union-find operations. Additionally, since each query of Type 2 only asks for up to the 10th largest vertex, we can maintain a sorted list of the **top 10 largest vertices** in each disjoint set.
+
+### Key Concepts:
+1. **Union-Find (DSU)**: Efficiently manage connected components.
+2. **Merge Strategy**: When merging two sets, keep track of the top 10 largest nodes by merging their pre-sorted lists.
+3. **Efficiency**: Each operation (union and find) is nearly O(α(N)), where α is the inverse Ackermann function (very slow-growing), and maintaining top 10 ensures constant-time merge and query.
+
+Here's the complete and correct implementation:
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+const int MAXN = 2e5 + 5;
+const int K_LIMIT = 10;
+
+int parent[MAXN];
+vector<int> topVertices[MAXN]; // Stores up to 10 largest vertices in descending order
+
+// Find with path compression
+int find(int x) {
+    if (parent[x] != x)
+        parent[x] = find(parent[x]);
+    return parent[x];
+}
+
+// Union of two sets
+void unite(int x, int y) {
+    int rootX = find(x);
+    int rootY = find(y);
+    if (rootX == rootY) return;
+
+    // Always merge smaller into larger for efficiency
+    if (topVertices[rootX].size() < topVertices[rootY].size())
+        swap(rootX, rootY);
+
+    // Merge top vertices
+    vector<int> merged;
+    int i = 0, j = 0;
+    while (merged.size() < K_LIMIT && (i < topVertices[rootX].size() || j < topVertices[rootY].size())) {
+        if (j >= topVertices[rootY].size() || (i < topVertices[rootX].size() && topVertices[rootX][i] > topVertices[rootY][j]))
+            merged.push_back(topVertices[rootX][i++]);
+        else
+            merged.push_back(topVertices[rootY][j++]);
+    }
+
+    // Remove duplicates
+    vector<int> uniqueMerged;
+    for (int v : merged) {
+        if (uniqueMerged.empty() || v != uniqueMerged.back())
+            uniqueMerged.push_back(v);
+    }
+
+    // Update the larger root
+    topVertices[rootX] = uniqueMerged;
+    parent[rootY] = rootX;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int N, Q;
+    cin >> N >> Q;
+
+    // Initialize DSU and topVertices
+    for (int i = 1; i <= N; ++i) {
+        parent[i] = i;
+        topVertices[i].push_back(i);
+    }
+
+    for (int q = 0; q < Q; ++q) {
+        int op;
+        cin >> op;
+        if (op == 1) {
+            int u, v;
+            cin >> u >> v;
+            unite(u, v);
+        } else {
+            int v, k;
+            cin >> v >> k;
+            int root = find(v);
+            if (k <= topVertices[root].size())
+                cout << topVertices[root][k - 1] << '\n';
+            else
+                cout << "-1\n";
+        }
+    }
+
+    return 0;
+}
+```
+
+### Explanation:
+- `find`: Standard path-compressed find.
+- `unite`: Merges two sets by combining their top-k vertex lists.
+- `topVertices`: For each root, stores at most 10 largest vertex values in descending order.
+- Efficient merge maintains a sorted list of up to 10 elements.
+- Queries are answered in O(1) time using precomputed lists.
+
+This solution ensures optimal performance under tight constraints and handles all edge cases correctly.

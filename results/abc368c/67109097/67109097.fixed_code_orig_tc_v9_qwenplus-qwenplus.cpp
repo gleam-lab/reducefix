@@ -1,0 +1,58 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int N;
+    cin >> N;
+    vector<long long> H(N);
+    for (int i = 0; i < N; ++i) {
+        cin >> H[i];
+    }
+
+    // We'll use a priority queue to always attack the enemies that require the most time first
+    // Since we want max-heap, we'll store negative values
+    priority_queue<pair<long long, int>> pq;
+
+    for (int i = 0; i < N; ++i) {
+        if (H[i] > 0) {
+            // Estimate number of attacks needed: ceil(H[i] / 3)
+            long long est_attacks = (H[i] + 2) / 3;
+            // Use negative value for max-heap behavior
+            pq.emplace(-est_attacks, i);
+        }
+    }
+
+    long long T = 0;
+    while (!pq.empty()) {
+        auto [neg_attacks, idx] = pq.top();
+        pq.pop();
+        long long attacks = -neg_attacks;
+
+        // Every 3rd attack deals 3 damage, others deal 1 damage
+        // So in 'attacks' steps, we deal: floor(attacks / 3) * 3 + (attacks % 3) = attacks + floor(attacks / 3) * 2 damage
+        long long damage = attacks + (attacks / 3) * 2;
+
+        if (damage >= H[idx]) {
+            // This enemy is defeated
+            T += attacks;
+            continue;
+        }
+
+        // Not enough damage, need one more attack
+        T += attacks + 1;
+        H[idx] -= damage + 1; // +1 because last attack was a normal attack
+
+        if (H[idx] > 0) {
+            // Recalculate estimated attacks and push back to queue
+            long long remaining_attacks = (H[idx] + 2) / 3;
+            pq.emplace(-(attacks + 1 + remaining_attacks), idx);
+        }
+    }
+
+    cout << T << endl;
+    return 0;
+}

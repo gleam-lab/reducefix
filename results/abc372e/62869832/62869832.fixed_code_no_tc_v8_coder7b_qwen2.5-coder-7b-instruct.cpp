@@ -1,0 +1,41 @@
+#include<bits/stdc++.h>
+using namespace std;
+
+vector<int> adj[200005];
+int rank[200005];
+
+void merge(int u, int v) {
+    if (rank[u] > rank[v]) swap(u, v);
+    for (auto it = adj[v].begin(); it != adj[v].end(); ++it) {
+        auto pos = lower_bound(adj[u].begin(), adj[u].end(), *it);
+        adj[u].insert(pos, *it);
+    }
+    adj[u].resize(unique(adj[u].begin(), adj[u].end()) - adj[u].begin());
+    rank[u] += rank[v];
+    adj[v].clear();
+}
+
+int getKthLargest(int v, int k) {
+    if (adj[v].size() < k) return -1;
+    return adj[v][k - 1];
+}
+
+int main() {
+    ios_base::sync_with_stdio(false); cin.tie(NULL);
+
+    int n, q; cin >> n >> q;
+    iota(rank + 1, rank + n + 1, 1);
+
+    while (q--) {
+        int type; cin >> type;
+        if (type == 1) {
+            int u, v; cin >> u >> v;
+            merge(u, v);
+        } else {
+            int v, k; cin >> v >> k;
+            cout << getKthLargest(v, k) << '\n';
+        }
+    }
+
+    return 0;
+}

@@ -1,0 +1,79 @@
+#include<bits/stdc++.h>
+using namespace std;
+
+typedef long long ll;
+
+struct Candidate {
+    ll votes, needed_votes;
+};
+
+bool can_win(vector<Candidate>& candidates, int idx, ll remaining_votes) {
+    // Check if candidate at index `idx` can win with the remaining votes
+    for (int i = 0; i < candidates.size(); ++i) {
+        if (i != idx && candidates[i].votes + remaining_votes > candidates[idx].votes) {
+            return false;
+        }
+    }
+    return true;
+}
+
+vector<ll> min_additional_votes(int n, int m, ll k, vector<int>& a) {
+    vector<Candidate> candidates(n);
+    for (int i = 0; i < n; ++i) {
+        candidates[i] = {a[i], 0};
+    }
+
+    sort(candidates.begin(), candidates.end(), [](const Candidate& c1, const Candidate& c2) {
+        return c1.votes < c2.votes || (c1.votes == c2.votes && &c1 < &c2); // Sort based on votes and lexicographically
+    });
+
+    vector<ll> result(n, 0);
+    for (int i = 0; i < n; ++i) {
+        if (candidates[i].votes >= k) {
+            result[i] = 0; // Already won
+            continue;
+        }
+
+        ll remaining_votes = k - candidates[i].votes;
+        if (can_win(candidates, i, remaining_votes)) {
+            result[i] = 0; // Can win with current remaining votes
+            continue;
+        }
+
+        ll left = 0, right = remaining_votes;
+        while (left < right) {
+            ll mid = left + (right - left) / 2;
+            if (can_win(candidates, i, mid)) {
+                right = mid;
+            } else {
+                left = mid + 1;
+            }
+        }
+        result[i] = left;
+    }
+
+    return result;
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(NULL);
+
+    int n, m;
+    ll k;
+    cin >> n >> m >> k;
+
+    vector<int> a(n);
+    for (int i = 0; i < n; ++i) {
+        cin >> a[i];
+    }
+
+    vector<ll> result = min_additional_votes(n, m, k, a);
+
+    for (ll x : result) {
+        cout << x << " ";
+    }
+    cout << endl;
+
+    return 0;
+}

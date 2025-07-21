@@ -1,0 +1,48 @@
+#include<bits/stdc++.h>
+#define ll long long
+using namespace std;
+
+const int MAXN = 200005;
+vector<int> adj[MAXN];
+bool visited[MAXN];
+
+// Depth-first search to find the minimum cycle length
+void dfs(int node, int parent, int depth) {
+    visited[node] = true;
+    for (int neighbor : adj[node]) {
+        if (!visited[neighbor]) {
+            dfs(neighbor, node, depth + 1);
+        } else if (neighbor != parent) { // Check for back-edge which forms a cycle
+            mn = min(mn, depth - visited[neighbor] + 2); // Update minimum cycle length
+        }
+    }
+}
+
+int main() {
+    int n, m;
+    cin >> n >> m;
+    for (int i = 0; i < m; ++i) {
+        int u, v;
+        cin >> u >> v;
+        adj[u].push_back(v);
+        adj[v].push_back(u); // Assuming undirected graph
+    }
+
+    int mn = INT_MAX; // Initialize with a large value
+    memset(visited, false, sizeof(visited));
+
+    // Iterate over each node as a starting point of DFS
+    for (int i = 1; i <= n; ++i) {
+        if (!visited[i]) {
+            dfs(i, -1, 0);
+        }
+    }
+
+    if (mn == INT_MAX) {
+        cout << -1 << endl; // No cycle found
+    } else {
+        cout << mn << endl; // Output the minimum cycle length
+    }
+
+    return 0;
+}

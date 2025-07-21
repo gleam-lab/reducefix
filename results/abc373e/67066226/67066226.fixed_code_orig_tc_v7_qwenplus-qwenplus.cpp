@@ -1,0 +1,89 @@
+#include <bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+#define all(x) (x).begin(), (x).end()
+
+int main() {
+    ios_base::sync_with_stdio(0);
+    cin.tie(0);
+    
+    int n, m;
+    ll k;
+    cin >> n >> m >> k;
+    vector<ll> a(n);
+    for (int i = 0; i < n; ++i) {
+        cin >> a[i];
+    }
+    
+    // Total remaining votes
+    ll total_remaining = k;
+    for (ll ai : a) {
+        total_remaining -= ai;
+    }
+
+    vector<int> ord(n);
+    iota(all(ord), 0);
+    
+    // Sort candidates by current votes
+    vector<ll> sorted_a = a;
+    sort(all(sorted_a));
+
+    // Prefix sums of sorted votes
+    vector<ll> prefix(n + 1);
+    for (int i = 0; i < n; ++i) {
+        prefix[i + 1] = prefix[i] + sorted_a[i];
+    }
+
+    vector<ll> res(n, -1);
+
+    for (int idx = 0; idx < n; ++idx) {
+        int orig_idx = ord[idx];
+
+        ll lo = 0, hi = total_remaining;
+        while (lo <= hi) {
+            ll mid = (lo + hi) / 2;
+            ll target = a[orig_idx] + mid;
+
+            // Binary search to find how many candidates have strictly more than target
+            ll cnt = 0;
+            int l = 0, r = n;
+            while (l < r) {
+                int c = (l + r) / 2;
+                if (sorted_a[c] > target)
+                    r = c;
+                else
+                    l = c + 1;
+            }
+
+            int num_strictly_greater = n - l;
+
+            // Need at most M-1 candidates with strictly greater votes
+            if (num_strictly_greater < m) {
+                res[orig_idx] = mid;
+                hi = mid - 1;
+            } else {
+                lo = mid + 1;
+            }
+        }
+
+        // If no valid X found
+        if (res[orig_idx] == -1 || res[orig_idx] > total_remaining) {
+            res[orig_idx] = -1;
+        } else {
+            // Ensure that we can actually assign the votes without exceeding total_remaining
+            ll need = max(0LL, res[orig_idx]);
+            if (need <= total_remaining) {
+                res[orig_idx] = need;
+            } else {
+                res[orig_idx] = -1;
+            }
+        }
+    }
+
+    for (int i = 0; i < n; ++i) {
+        if (res[i] == -1) cout << -1 << " ";
+        else cout << res[i] << " ";
+    }
+
+    return 0;
+}

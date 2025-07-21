@@ -1,0 +1,81 @@
+#include <iostream>
+#include <vector>
+#include <queue>
+#include <algorithm>
+
+using namespace std;
+
+const int MAXN = 1010;
+int H, W, Y;
+int A[MAXN][MAXN];
+bool vis[MAXN][MAXN];
+
+struct Cell {
+    int h, x, y;
+    bool operator<(const Cell &other) const {
+        return h > other.h;
+    }
+};
+
+void bfs(int level) {
+    queue<pair<int, int>> q;
+    vector<vector<bool>> visited(H, vector<bool>(W, false));
+
+    // Start BFS from all boundary cells that are above the current sea level
+    for (int i = 0; i < H; ++i) {
+        if (A[i][0] <= level && !visited[i][0]) {
+            q.push({i, 0});
+            visited[i][0] = true;
+        }
+        if (A[i][W-1] <= level && !visited[i][W-1]) {
+            q.push({i, W-1});
+            visited[i][W-1] = true;
+        }
+    }
+    for (int j = 1; j < W-1; ++j) {
+        if (A[0][j] <= level && !visited[0][j]) {
+            q.push({0, j});
+            visited[0][j] = true;
+        }
+        if (A[H-1][j] <= level && !visited[H-1][j]) {
+            q.push({H-1, j});
+            visited[H-1][j] = true;
+        }
+    }
+
+    while (!q.empty()) {
+        auto [x, y] = q.front();
+        q.pop();
+
+        for (int k = 0; k < 4; ++k) {
+            int nx = x + d[k][0], ny = y + d[k][1];
+            if (nx < 0 || nx >= H || ny < 0 || ny >= W || visited[nx][ny] || A[nx][ny] > level) continue;
+            visited[nx][ny] = true;
+            q.push({nx, ny});
+        }
+    }
+
+    // Count the remaining land area after the BFS
+    int count = 0;
+    for (int i = 0; i < H; ++i) {
+        for (int j = 0; j < W; ++j) {
+            if (!visited[i][j]) ++count;
+        }
+    }
+
+    cout << count << '\n';
+}
+
+int main() {
+    ios_base::sync_with_stdio(0); cin.tie(0); cout.tie(0);
+
+    cin >> H >> W >> Y;
+    for (int i = 0; i < H; ++i)
+        for (int j = 0; j < W; ++j)
+            cin >> A[i][j];
+
+    for (int i = 1; i <= Y; ++i)
+        bfs(i);
+
+    return 0;
+}

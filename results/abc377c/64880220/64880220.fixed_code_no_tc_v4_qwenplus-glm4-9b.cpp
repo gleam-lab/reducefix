@@ -1,0 +1,39 @@
+#include <iostream>
+#include <vector>
+#include <set>
+using namespace std;
+
+int main() {
+    long long n, m;
+    cin >> n >> m;
+    vector<pair<long long, long long>> pieces(m);
+    vector<pair<long long, long long>> occupied_positions;
+    vector<vector<bool>> can_capture(n+2, vector<bool>(n+2, false));
+
+    // Read the occupied positions and mark the ones that can capture
+    for (long long i = 0; i < m; ++i) {
+        long long a, b;
+        cin >> a >> b;
+        pieces[i] = {a, b};
+        for (int j = 0; j < 8; ++j) {
+            long long x = a + (j % 2 == 0 ? 2 : 1) * (j < 4 ? 1 : -1);
+            long long y = b + (j < 4 ? 2 : 1) * (j % 2 == 0 ? -1 : 1);
+            if (x >= 1 && x <= n && y >= 1 && y <= n) {
+                can_capture[x][y] = true;
+            }
+        }
+    }
+
+    // Calculate the number of positions that cannot be captured
+    long long count = 0;
+    for (long long i = 1; i <= n; ++i) {
+        for (long long j = 1; j <= n; ++j) {
+            if (!can_capture[i][j]) {
+                count++;
+            }
+        }
+    }
+
+    cout << count << endl;
+    return 0;
+}

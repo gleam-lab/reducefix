@@ -1,0 +1,125 @@
+```cpp
+#include <bits/stdc++.h>
+
+using namespace std;
+
+int main() {
+    long long N;
+    int M;
+    cin >> N >> M;
+
+    set<long long> rows, cols;
+    set<long long> diag1, diag2; // i - j and i + j
+
+    for (int i = 0; i < M; ++i) {
+        long long a, b;
+        cin >> a >> b;
+        rows.insert(a);
+        cols.insert(b);
+        diag1.insert(a - b);
+        diag2.insert(a + b);
+    }
+
+    // Total squares under attack
+    long long attacked = 0;
+
+    // Rows and columns contribute directly
+    attacked += rows.size() * N;
+    attacked += cols.size() * N;
+
+    // Diagonals: diag1 has ~2N-1 possible values, but we just use the count
+    for (auto d : diag1) {
+        // For diagonal i-j=d, number of cells is N - abs(d)
+        long long count = N - abs(d);
+        if (count > 0) attacked += count;
+    }
+
+    for (auto d : diag2) {
+        // For diagonal i+j=d, number of cells is:
+        // d-1 if d <= N+1
+        // 2*N +1 -d otherwise
+        long long count;
+        if (d <= N + 1) {
+            count = d - 1;
+        } else {
+            count = 2 * N + 1 - d;
+        }
+        if (count > 0) attacked += count;
+    }
+
+    // Inclusion-Exclusion Principle to subtract overlaps
+
+    // Row & Column intersections
+    attacked -= 1LL * rows.size() * cols.size();
+
+    // Row & Diag1 intersections
+    for (auto r : rows) {
+        for (auto d : diag1) {
+            long long c = r - d;
+            if (c >= 1 && c <= N) attacked--;
+        }
+    }
+
+    // Row & Diag2 intersections
+    for (auto r : rows) {
+        for (auto d : diag2) {
+            long long c = d - r;
+            if (c >= 1 && c <= N) attacked--;
+        }
+    }
+
+    // Col & Diag1 intersections
+    for (auto c : cols) {
+        for (auto d : diag1) {
+            long long r = d + c;
+            if (r >= 1 && r <= N) attacked--;
+        }
+    }
+
+    // Col & Diag2 intersections
+    for (auto c : cols) {
+        for (auto d : diag2) {
+            long long r = d - c;
+            if (r >= 1 && r <= N) attacked--;
+        }
+    }
+
+    // Diag1 & Diag2 intersections
+    for (auto d1 : diag1) {
+        for (auto d2 : diag2) {
+            long long r = (d2 + d1) / 2;
+            long long c = (d2 - d1) / 2;
+            if (r >= 1 && r <= N && c >= 1 && c <= N) attacked--;
+        }
+    }
+
+    // Triple overlaps: add them back
+
+    // Row, Col, Diag1 and Row, Col, Diag2
+    for (auto r : rows) {
+        for (auto c : cols) {
+            long long d1 = r - c;
+            long long d2 = r + c;
+            if (diag1.count(d1)) attacked++;
+            if (diag2.count(d2)) attacked++;
+        }
+    }
+
+    // Quadruple overlap: subtract again
+    for (auto r : rows) {
+        for (auto c : cols) {
+            long long d1 = r - c;
+            long long d2 = r + c;
+            if (diag1.count(d1) && diag2.count(d2)) attacked--;
+        }
+    }
+
+    // Total empty squares where piece can be placed
+    long long totalEmpty = N * N - M;
+    long long safeSquares = totalEmpty - attacked;
+
+    cout << safeSquares << endl;
+
+    return 0;
+}
+```

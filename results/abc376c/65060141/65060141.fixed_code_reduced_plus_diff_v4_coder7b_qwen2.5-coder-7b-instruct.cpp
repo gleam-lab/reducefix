@@ -1,0 +1,40 @@
+#include<bits/stdc++.h>
+#define ll long long
+using namespace std;
+const ll N=2e5+5;
+ll a[N],b[N];
+bool check(vector<ll>& v,ll mid){
+    multiset<ll> s(v.begin(),v.end());
+    while(!s.empty()){
+        auto it=s.upper_bound(mid);
+        if(it==s.begin()) return false;
+        --it;
+        s.erase(it);
+        s.erase(s.find(mid));
+    }
+    return true;
+}
+int main(){
+    ll n,cnt=0,ans=0,mx=0;
+    cin>>n;
+    for(ll i=1;i<=n;i++){
+        cin>>a[i];
+    }
+    sort(a+1,a+n+1);
+    vector<ll> v(n-1);
+    for(ll i=1;i<n;i++){
+        cin>>v[i-1];
+    }
+    sort(v.begin(),v.end());
+    ll l=1,r=a[n];
+    while(l<=r){
+        ll mid=(l+r)/2;
+        if(check(v,mid)){
+            ans=mid;
+            r=mid-1;
+        }
+        else l=mid+1;
+    }
+    cout<<(ans?ans:-1)<<endl;
+    return 0;
+}

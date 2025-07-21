@@ -1,0 +1,25 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <map>
+#include <set>
+#include <unordered_map>
+#include <unordered_set>
+#include <queue>
+#include <stack>
+#include <string>
+#include <limits>
+#include <climits>
+
+using namespace std;
+
+// Typedefs for convenience
+typedef long long ll;
+typedef pair<int, int> pii;
+typedef vector<int> vi;
+typedef vector<ll> vll;
+
+// Constants
+const int INF = 1e9 + 7;
+const ll LINF = 1e18;
+const int MOD = 1

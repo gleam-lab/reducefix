@@ -1,0 +1,25 @@
+#include<bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+const int MAXN = 4e5 + 10;
+ll a[MAXN], sum[MAXN], cnt[MAXN];
+int main() {
+    ll n, m;
+    scanf("%lld %lld", &n, &m);
+    for(ll i = 1; i <= n; i++) {
+        scanf("%lld", &a[i]);
+        a[i + n] = a[i];
+    }
+    for(ll i = 1; i <= 2 * n; i++) {
+        sum[i + 1] = (sum[i] + a[i]) % m;
+    }
+    for(ll i = 1; i <= 2 * n; i++) {
+        cnt[sum[i]]++;
+    }
+    ll ans = 0;
+    for(ll i = 1; i <= m; i++) {
+        ans += cnt[i] * (cnt[i] - 1) / 2;
+    }
+    printf("%lld", ans);
+    return 0;
+}

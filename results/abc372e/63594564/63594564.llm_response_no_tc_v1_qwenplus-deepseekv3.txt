@@ -1,0 +1,97 @@
+To fix this code, we need to address several issues primarily related to the handling of the connected components and maintaining the top k largest vertices efficiently. The original code attempts to maintain sorted lists of vertices for each component but fails to correctly merge these lists and handle the constraints properly.
+
+### Analysis of Issues
+1. **Merging Sorted Lists**: The code attempts to merge two sorted lists by comparing elements and merging them in descending order. However, it doesn't handle the case where one list is exhausted before the other correctly, leading to incorrect merged lists.
+2. **Maintaining Top 10 Elements**: The code only keeps the top 10 elements after merging, but the merging process itself is flawed, which can lead to incorrect top elements being retained.
+3. **Efficiency**: The merging process is O(n) per union operation, which can be too slow for large N and Q (up to 2×10^5 each), leading to a potential O(N^2) time complexity in the worst case.
+
+### Solution Approach
+1. **Efficient Union-Find with Path Compression**: Use the standard union-find data structure with path compression to efficiently manage connected components.
+2. **Maintaining Sorted Lists**: For each component, maintain a sorted list (in descending order) of the vertices. When merging two components, merge their sorted lists and keep only the top 10 elements to ensure queries can be answered quickly.
+3. **Handling Queries**: For each type 2 query, check if the component has at least k elements. If so, return the k-th largest element; otherwise, return -1.
+
+### Fixed Code
+```cpp
+#include <bits/stdc++.h>
+
+using namespace std;
+
+vector<int> parent;
+vector<vector<int>> components;
+
+int find(int x) {
+    if (parent[x] != x) {
+        parent[x] = find(parent[x]);
+    }
+    return parent[x];
+}
+
+void unite(int a, int b) {
+    a = find(a);
+    b = find(b);
+    if (a == b) return;
+    if (components[a].size() < components[b].size()) {
+        swap(a, b);
+    }
+    // Merge the smaller component into the larger one
+    vector<int> merged;
+    int i = 0, j = 0;
+    while (i < components[a].size() && j < components[b].size() && merged.size() < 10) {
+        if (components[a][i] > components[b][j]) {
+            merged.push_back(components[a][i]);
+            i++;
+        } else {
+            merged.push_back(components[b][j]);
+            j++;
+        }
+    }
+    while (i < components[a].size() && merged.size() < 10) {
+        merged.push_back(components[a][i]);
+        i++;
+    }
+    while (j < components[b].size() && merged.size() < 10) {
+        merged.push_back(components[b][j]);
+        j++;
+    }
+    components[a] = merged;
+    parent[b] = a;
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int n, q;
+    cin >> n >> q;
+    parent.resize(n + 1);
+    components.resize(n + 1);
+    for (int i = 1; i <= n; ++i) {
+        parent[i] = i;
+        components[i] = {i};
+    }
+
+    while (q--) {
+        int t, a, b;
+        cin >> t >> a >> b;
+        if (t == 1) {
+            unite(a, b);
+        } else {
+            int root = find(a);
+            if (components[root].size() < b) {
+                cout << -1 << '\n';
+            } else {
+                cout << components[root][b - 1] << '\n';
+            }
+        }
+    }
+
+    return 0;
+}
+```
+
+### Explanation
+1. **Union-Find Data Structure**: The `find` function uses path compression to efficiently locate the root of a vertex, ensuring near-constant time complexity for each find operation.
+2. **Merging Components**: The `unite` function merges two components by merging their sorted lists while maintaining only the top 10 elements. This ensures that each merge operation is O(10) time, which is efficient.
+3. **Query Handling**: For type 2 queries, the code checks the size of the component and either returns the k-th largest element or -1 if there are fewer than k elements. This operation is O(1) due to the maintained top 10 elements.
+
+This approach ensures the solution is efficient and handles the constraints effectively, providing correct results for all queries.

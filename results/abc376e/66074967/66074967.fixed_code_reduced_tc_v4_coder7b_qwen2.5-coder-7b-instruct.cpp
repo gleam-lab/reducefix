@@ -1,0 +1,49 @@
+#include<iostream>
+#include<vector>
+#include<algorithm>
+using namespace std;
+
+#define ll long long
+
+const int N = 2e5 + 9, inf = 1000000009;
+
+void solve() {
+    int n, k;
+    cin >> n >> k;
+    vector<pair<ll, ll>> a(n), b(n);
+
+    for(int i = 0; i < n; ++i) {
+        cin >> a[i].first;
+        a[i].second = i;
+    }
+
+    for(int i = 0; i < n; ++i) {
+        cin >> b[i].first;
+        b[i].second = i;
+    }
+
+    sort(a.begin(), a.end());
+    sort(b.begin(), b.end());
+
+    vector<ll> prefix_sum(n + 1);
+    for(int i = 0; i < n; ++i) {
+        prefix_sum[i + 1] = prefix_sum[i] + b[i].first;
+    }
+
+    ll ans = inf;
+    for(int i = k - 1; i < n; ++i) {
+        ans = min(ans, (prefix_sum[i + 1] - prefix_sum[i - k + 1]) * a[i].first);
+    }
+
+    cout << ans << "\n";
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);cin.tie(NULL);cout.tie(NULL);
+    int t;
+    cin >> t;
+    while(t--) {
+        solve();
+    }
+    return 0;
+}

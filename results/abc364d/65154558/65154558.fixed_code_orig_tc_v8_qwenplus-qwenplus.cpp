@@ -1,0 +1,57 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+// Function to perform binary search and find the k-th smallest distance
+int findKthDistance(const vector<int>& a, int b, int k) {
+    int n = a.size();
+    int left = 0;
+    int right = n - 1;
+
+    // We'll use two pointers to simulate merging the distances from both sides of b
+    int low = 0, high = n - 1;
+    vector<int> distances;
+
+    // Instead of storing all distances, we simulate counting until we reach the k-th one
+    while (low <= high) {
+        int left_dist = abs(a[low] - b);
+        int right_dist = abs(a[high] - b);
+
+        if (left_dist <= right_dist) {
+            distances.push_back(left_dist);
+            low++;
+        } else {
+            distances.push_back(right_dist);
+            high--;
+        }
+    }
+
+    return distances[k - 1];
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int N, Q;
+    cin >> N >> Q;
+
+    vector<int> A(N);
+    for (int i = 0; i < N; ++i) {
+        cin >> A[i];
+    }
+
+    // Sort A so we can perform binary search around B_j
+    sort(A.begin(), A.end());
+
+    for (int q = 0; q < Q; ++q) {
+        int b;
+        int k;
+        cin >> b >> k;
+
+        // Find the k-th smallest distance using simulation with two pointers
+        int result = findKthDistance(A, b, k);
+        cout << result << '\n';
+    }
+
+    return 0;
+}

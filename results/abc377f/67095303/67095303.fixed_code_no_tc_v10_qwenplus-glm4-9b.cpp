@@ -1,0 +1,48 @@
+#include<bits/stdc++.h>
+#define int long long
+using namespace std;
+
+int main() {
+    int n, m;
+    cin >> n >> m;
+
+    vector<int> r(m), c(m);
+    for (int i = 0; i < m; ++i) {
+        cin >> r[i] >> c[i];
+    }
+
+    // Total number of cells is n^2
+    int total_cells = n * n;
+
+    // Count cells in each row and column
+    vector<int> count_rows(n + 1), count_cols(n + 1);
+    for (int i = 0; i < m; ++i) {
+        count_rows[r[i]]++;
+        count_cols[c[i]]++;
+    }
+
+    // Count cells in each diagonal (i + j)
+    vector<int> count_dia1(2 * n + 1), count_dia2(2 * n + 1);
+    for (int i = 0; i < m; ++i) {
+        count_dia1[r[i] + c[i]]++;
+        count_dia2[r[i] - c[i]]++;
+    }
+
+    // Calculate the number of cells that cannot be placed a piece
+    int captured_cells = 0;
+    // Captured by rows and columns
+    for (int i = 1; i <= n; ++i) {
+        captured_cells += max(count_rows[i], count_cols[i]);
+    }
+    // Captured by diagonals
+    for (int i = 1; i <= 2 * n + 1; ++i) {
+        captured_cells += count_dia1[i] + count_dia2[i];
+    }
+
+    // The number of cells where new piece can be placed without capturing any other pieces
+    int free_cells = total_cells - captured_cells;
+
+    cout << free_cells << endl;
+
+    return 0;
+}

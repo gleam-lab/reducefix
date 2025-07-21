@@ -1,0 +1,80 @@
+Based on the problem description and the failing test case, I've identified several issues in the original code. The main problem is that the approach to calculate when each cell sinks is incorrect. Here's the fixed solution using a priority queue (min-heap) to efficiently track when cells adjacent to the sea will sink:
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+#define all(x) (x).begin(), (x).end()
+
+int main() {
+    ios_base::sync_with_stdio(0);
+    cin.tie(0);
+    int h, w, y;
+    cin >> h >> w >> y;
+    vector<vector<int>> height(h, vector<int>(w));
+    vector<vector<int>> sink(h, vector<int>(w, INT_MAX));
+    priority_queue<pair<int, pair<int,int>>, vector<pair<int, pair<int,int>>>, greater<pair<int, pair<int,int>>>> pq;
+    
+    int di[4][2] = {{-1,0},{1,0},{0,-1},{0,1}};
+    
+    for(int i=0; i<h; i++) {
+        for(int j=0; j<w; j++) {
+            cin >> height[i][j];
+            if(i==0 || i==h-1 || j==0 || j==w-1) {
+                sink[i][j] = height[i][j];
+                pq.push({sink[i][j], {i,j}});
+            }
+        }
+    }
+    
+    while(!pq.empty()) {
+        auto [H, p] = pq.top();
+        auto [r, c] = p;
+        pq.pop();
+        
+        for(int i=0; i<4; i++) {
+            int nr = r + di[i][0];
+            int nc = c + di[i][1];
+            if(nr < 0 || nr >= h || nc < 0 || nc >= w) continue;
+            if(max(H, height[nr][nc]) < sink[nr][nc]) {
+                sink[nr][nc] = max(H, height[nr][nc]);
+                pq.push({sink[nr][nc], {nr, nc}});
+            }
+        }
+    }
+    
+    vector<int> cnt(y+2, 0);
+    for(int i=0; i<h; i++) {
+        for(int j=0; j<w; j++) {
+            if(sink[i][j] <= y) {
+                cnt[sink[i][j]]++;
+            }
+        }
+    }
+    
+    vector<int> res(y+1, 0);
+    res[0] = h*w;
+    for(int i=1; i<=y; i++) {
+        res[i] = res[i-1] - cnt[i-1];
+    }
+    
+    for(int i=1; i<=y; i++) {
+        cout << res[i] << '\n';
+    }
+}
+```
+
+Key fixes:
+1. Changed the sink calculation to use `max(H, height[nr][nc])` instead of just `H` to properly track when a cell will be submerged
+2. Used a more efficient counting approach with prefix sums to calculate the remaining area
+3. Fixed the initialization to properly handle the first year (year 0)
+4. Used vectors instead of raw arrays for better bounds checking and memory management
+5. Simplified the logic by removing unnecessary visited checks since the priority queue ensures we get the minimum value first
+
+The algorithm works as follows:
+1. Initialize all border cells with their height as their sink time
+2. Use Dijkstra-like approach to propagate the sink time to inner cells, taking the maximum between the current cell's height and its neighbor's sink time
+3. Count how many cells sink at each year
+4. Compute prefix sums to efficiently calculate the remaining area for each year
+
+This solution has a time complexity of O(HW log HW) for the priority queue operations and O(Y) for the output, which should be efficient enough for the given constraints.

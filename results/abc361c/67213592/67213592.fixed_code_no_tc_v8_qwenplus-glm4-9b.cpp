@@ -1,0 +1,44 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+int main() {
+    int n, k;
+    cin >> n >> k;
+    vector<int> A(n);
+    
+    // Read the sequence and sort it
+    for (int i = 0; i < n; ++i) {
+        cin >> A[i];
+    }
+    sort(A.begin(), A.end());
+
+    // Initial window for max and min values
+    int left = 0, right = 0;
+    // Initialize max and min of the remaining sequence
+    int max_val = A[n - k], min_val = A[k - 1];
+
+    // Iterate over the sorted array to find the minimum difference
+    // between the max and min values of the remaining elements
+    for (int i = 0; i < n; ++i) {
+        // Calculate the current max and min of the remaining elements
+        max_val = max(max_val, A[i + k - 1]);
+        min_val = min(min_val, A[i]);
+        
+        // If we have considered at least k elements
+        if (i >= k - 1) {
+            // Calculate the difference
+            int diff = max_val - min_val;
+            // Update the result if the current difference is smaller
+            if (diff < max_val - min_val) {
+                max_val = max_val;
+                min_val = min_val;
+            }
+        }
+    }
+
+    // Output the result
+    cout << max_val - min_val << endl;
+    return 0;
+}

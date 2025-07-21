@@ -1,0 +1,65 @@
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+using pll = pair<ll, ll>;
+
+#define rep(i, a, b) for(ll i = (a); i < (b); ++i)
+#define rrep(i, a, b) for(ll i = (a); i >= (b); --i)
+
+void solve() {
+    ll N, K;
+    cin >> N >> K;
+    vector<pll> items(N);
+    for (ll i = 0; i < N; ++i) cin >> items[i].first;
+    for (ll i = 0; i < N; ++i) cin >> items[i].second;
+
+    // Sort by A_i in ascending order
+    sort(items.begin(), items.end());
+
+    // Use min-heap to maintain top K B_i values
+    multiset<ll> top_k_b;
+    ll sum_b = 0;
+
+    // Initialize with first K elements
+    for (ll i = 0; i < K; ++i) {
+        top_k_b.insert(items[i].second);
+        sum_b += items[i].second;
+    }
+
+    ll ans = sum_b * items[K - 1].first;
+
+    // Try all possible ending positions
+    for (ll i = K; i < N; ++i) {
+        // Current item must be included
+        ll current_a = items[i].first;
+        ll current_b = items[i].second;
+
+        // If current B is larger than smallest in set, replace it
+        if (top_k_b.empty() || current_b > *top_k_b.begin()) {
+            sum_b -= *top_k_b.begin();
+            top_k_b.erase(top_k_b.begin());
+            top_k_b.insert(current_b);
+            sum_b += current_b;
+        }
+
+        // Update answer if we have exactly K elements
+        if (top_k_b.size() == K) {
+            ans = min(ans, sum_b * current_a);
+        }
+    }
+
+    cout << ans << '\n';
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    ll T;
+    cin >> T;
+    while (T--) {
+        solve();
+    }
+
+    return 0;
+}

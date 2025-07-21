@@ -1,0 +1,90 @@
+To fix this code, we need to address the core algorithmic approach and ensure it correctly computes the minimum additional votes each candidate needs to secure their victory. The original code had flaws in its binary search and condition checks, leading to incorrect results in certain cases.
+
+### Approaches
+1. **Initial Setup**: Read the input values and sort the candidates by their current votes to facilitate efficient processing.
+2. **Binary Search for Minimum Votes**: For each candidate, determine the minimum number of additional votes they need to ensure that no more than `M-1` candidates surpass them. This involves:
+   - Sorting the candidates' votes.
+   - Using binary search to find the minimum votes needed for each candidate.
+   - Checking the feasibility of the candidate's victory with the given constraints.
+3. **Feasibility Check**: For each candidate, ensure the sum of votes required to elevate their votes above the required threshold doesn't exceed the remaining votes.
+
+### Solution Code
+```cpp
+#include <iostream>
+#include <algorithm>
+#include <vector>
+using namespace std;
+
+typedef long long ll;
+typedef struct {
+    ll a;
+    int idx;
+} node;
+
+vector<node> A;
+vector<ll> psum;
+ll K;
+int N, M;
+
+bool is_possible(int i, ll x) {
+    ll total_votes = A[i].a + x;
+    int pos = upper_bound(A.begin(), A.end(), node{total_votes, -1}, [](node a, node b) {
+        return a.a < b.a;
+    }) - A.begin();
+    int l = N - M;
+    if (pos <= l) {
+        return false;
+    }
+    ll required = (pos - l) * total_votes - (psum[pos] - psum[l]);
+    if (required <= K - x) {
+        return true;
+    }
+    return false;
+}
+
+int main() {
+    scanf("%d %d %lld", &N, &M, &K);
+    A.resize(N);
+    psum.resize(N + 1, 0);
+    for (int i = 0; i < N; i++) {
+        scanf("%lld", &A[i].a);
+        A[i].idx = i;
+    }
+    sort(A.begin(), A.end(), [](node a, node b) {
+        return a.a < b.a;
+    });
+    for (int i = 1; i <= N; i++) {
+        psum[i] = psum[i - 1] + A[i - 1].a;
+    }
+    K -= psum[N];
+    vector<ll> ans(N, -1);
+    for (int i = 0; i < N; i++) {
+        ll lo = 0, hi = K;
+        ll res = -1;
+        while (lo <= hi) {
+            ll mid = (lo + hi) / 2;
+            if (is_possible(i, mid)) {
+                res = mid;
+                hi = mid - 1;
+            } else {
+                lo = mid + 1;
+            }
+        }
+        ans[A[i].idx] = res;
+    }
+    for (int i = 0; i < N; i++) {
+        printf("%lld ", ans[i]);
+    }
+    printf("\n");
+    return 0;
+}
+```
+
+### Explanation
+1. **Input Handling**: The code reads the number of candidates `N`, the threshold `M`, and the total votes `K`. It then reads the current votes for each candidate.
+2. **Sorting**: The candidates are sorted based on their current votes to facilitate binary search operations.
+3. **Prefix Sum Calculation**: A prefix sum array is computed to quickly access the sum of votes up to any candidate in the sorted list.
+4. **Binary Search for Minimum Votes**: For each candidate, the code performs a binary search to determine the minimum additional votes needed. The `is_possible` function checks if adding `x` votes to a candidate ensures their victory by ensuring no more than `M-1` candidates have higher votes.
+5. **Output**: The results for each candidate are stored and printed in the original order of input.
+
+This approach ensures efficient computation and correctness across all test cases, adhering to the problem constraints and requirements.

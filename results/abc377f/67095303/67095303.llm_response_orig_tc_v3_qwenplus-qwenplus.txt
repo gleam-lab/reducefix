@@ -1,0 +1,108 @@
+To solve this problem efficiently given the constraints (with `N` up to 10⁹), we must avoid iterating over the entire grid. Instead, we track the rows, columns, and diagonals that are "attacked" by existing pieces and use set operations to determine which positions remain safe.
+
+The key observations:
+
+- A square is **unsafe** if it lies in any of:
+  - The same row as an existing piece.
+  - The same column as an existing piece.
+  - The same diagonal where `i + j = constant` (top-left to bottom-right).
+  - The same diagonal where `i - j = constant` (top-right to bottom-left).
+
+We can calculate the total number of squares not attacked by rows or columns directly using:
+```cpp
+safe_squares = (N - #attacked_rows) * (N - #attacked_cols)
+```
+
+Then, subtract all the attacked squares on diagonals that were not already counted due to overlapping with rows/columns.
+
+To do this, for each diagonal, we compute how many points lie on it (`length`) and then subtract the number of those points that have already been excluded via attacked rows or columns.
+
+Here's the corrected and efficient C++ implementation:
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+using ll = long long;
+
+void solve() {
+    ll N, M;
+    cin >> N >> M;
+
+    set<ll> rows, cols, diag1, diag2;
+
+    for (ll i = 0; i < M; ++i) {
+        ll x, y;
+        cin >> x >> y;
+        rows.insert(x);
+        cols.insert(y);
+        diag1.insert(x + y);
+        diag2.insert(x - y);
+    }
+
+    // Total safe squares without considering overlaps
+    ll ans = (N - (ll)rows.size()) * (N - (ll)cols.size());
+
+    // Process diag1: i + j = d
+    for (ll d : diag1) {
+        ll lo = max(1LL, d - N);
+        ll hi = min(N, d - 1);
+        ll count = hi - lo + 1;
+
+        set<ll> covered;
+        for (ll r : rows) {
+            ll c = d - r;
+            if (c >= 1 && c <= N) covered.insert(r);
+        }
+        for (ll c : cols) {
+            ll r = d - c;
+            if (r >= 1 && r <= N) covered.insert(r);
+        }
+
+        ans -= (count - (ll)covered.size());
+    }
+
+    // Process diag2: i - j = d
+    for (ll d : diag2) {
+        ll lo, hi;
+        if (d >= 0) {
+            lo = 1 + d;
+            hi = N;
+        } else {
+            lo = 1;
+            hi = N + d;
+        }
+
+        ll count = hi - lo + 1;
+
+        set<ll> covered;
+        for (ll r : rows) {
+            ll c = r - d;
+            if (c >= 1 && c <= N) covered.insert(r);
+        }
+        for (ll c : cols) {
+            ll r = c + d;
+            if (r >= 1 && r <= N) covered.insert(r);
+        }
+
+        ans -= (count - (ll)covered.size());
+    }
+
+    cout << ans << '\n';
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    solve();
+}
+```
+
+### Key Improvements:
+- Removed incorrect logic for diagonal intersections.
+- Used only necessary sets and avoided redundant calculations.
+- Properly calculated diagonal lengths using bounds based on `d`.
+- Subtracted only the unique squares that haven't already been removed by row/column exclusions.
+
+This solution runs in O(M²) time at worst due to nested loops over rows/columns per diagonal, which is acceptable since M ≤ 1000.

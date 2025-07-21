@@ -1,0 +1,35 @@
+#include <bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int n, m;
+    ll k;
+    cin >> n >> m >> k;
+    vector<ll> a(n);
+    for (int i = 0; i < n; ++i) {
+        cin >> a[i];
+        k -= a[i];
+    }
+
+    vector<int> ord(n);
+    iota(ord.begin(), ord.end(), 0);
+    sort(ord.begin(), ord.end(), [&](int i, int j) { return a[i] < a[j]; });
+
+    vector<ll> ans(n, -1);
+    for (int i = 0; i < n; ++i) {
+        int id = ord[i];
+        ll target_votes = a[id] + 1 + (n - m - (i >= n - m ? 1 : 0));
+        ll needed_votes = max(target_votes - a[id], 0LL);
+        if (needed_votes <= k) {
+            ans[id] = needed_votes;
+        }
+    }
+
+    for (auto x : ans) cout << x << " ";
+
+    return 0;
+}

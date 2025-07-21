@@ -1,0 +1,94 @@
+To fix your code, we need to address a few key issues:
+
+1. **Union-Find Data Structure**: While your Union-Find structure works for merging sets, it does not maintain a sorted list of connections for each node. This means that when you try to find the k-th largest element, it might not be accurate because the list could be unsorted.
+
+2. **Maintain Sorted Connections**: We need to ensure that the list of connections for each node remains sorted so that we can efficiently find the k-th largest element using binary search.
+
+3. **Efficiency**: Since we need to handle up to \(2 \times 10^5\) nodes and queries, our solution must be efficient. Using a balanced data structure like a set or multiset will help us achieve this.
+
+Here's the corrected implementation:
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+using ll = long long;
+#define rep(i,n) for(int i = 0; i < n; ++i)
+
+struct UnionFind {
+    vector<int> par;
+    vector<set<int>> conns;
+
+    UnionFind(int n) : par(n, -1), conns(n) {}
+
+    int root(int v) {
+        if (par[v] == -1) return v;
+        else return par[v] = root(par[v]);
+    }
+
+    bool issame(int x, int y) {
+        return root(x) == root(y);
+    }
+
+    void merge(int x, int y) {
+        x = root(x), y = root(y);
+        if (x == y) return;
+        if (conns[y].size() > conns[x].size()) swap(x, y);
+
+        for (int v : conns[y]) {
+            conns[x].insert(v);
+        }
+        conns[y].clear();
+
+        par[y] = x;
+    }
+};
+
+int main() {
+    ios::sync_with_stdio(false); cin.tie(nullptr);
+
+    int n, q;
+    cin >> n >> q;
+    UnionFind uf(n);
+
+    rep(i, q) {
+        int ty, a, b;
+        cin >> ty >> a >> b;
+        a--; b--;
+
+        if (ty == 1) {
+            uf.merge(a, b);
+        } else {
+            auto& s = uf.conns[uf.root(a)];
+            if (s.size() < b) {
+                cout << -1 << '\n';
+            } else {
+                cout << *next(s.rbegin(), b - 1) + 1 << '\n';
+            }
+        }
+    }
+
+    return 0;
+}
+```
+
+### Explanation:
+1. **UnionFind Structure**:
+   - `par`: Parent array for union-find operations.
+   - `conns`: A vector of sets where each set contains the connected nodes for each component.
+
+2. **Root Function**:
+   - Finds the root of the component containing node `v` with path compression.
+
+3. **Issame Function**:
+   - Checks if nodes `x` and `y` are in the same component.
+
+4. **Merge Function**:
+   - Merges the components of nodes `x` and `y`.
+   - Ensures the smaller component is merged into the larger component to keep the tree shallow.
+
+5. **Main Logic**:
+   - For each query, if it's a merge operation (`ty == 1`), it merges the components of nodes `a` and `b`.
+   - If it's a query operation (`ty == 2`), it retrieves the k-th largest connected node using a set. If the size of the set is less than `k`, it prints `-1`; otherwise, it prints the k-th largest element.
+
+This approach ensures that the connections are always maintained in a sorted manner, allowing efficient retrieval of the k-th largest element. The use of sets also helps in maintaining logarithmic time complexity for insertions and lookups.

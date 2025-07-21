@@ -1,0 +1,54 @@
+#include <iostream>
+#include <vector>
+#include <set>
+using namespace std;
+
+#define MOD 1000000007
+
+int main() {
+    long long N, M;
+    cin >> N >> M;
+
+    vector<pair<int, int>> pieces(N, {1, 1});  // Initialize all pieces to be at position (1,1)
+    set<pair<int, int>> restricted;
+
+    // Read the positions of the existing pieces and update the restricted set
+    for (int i = 0; i < M; i++) {
+        int a, b;
+        cin >> a >> b;
+        pieces[a - 1] = {b, a};  // Update the piece position
+        restricted.insert({a - 1, b - 1});  // Add the center of the piece to the restricted set
+
+        // Add positions that can be captured by the piece
+        restricted.insert({a - 1 + (b - 1) / 2, b - 1});
+        restricted.insert({a - 1, b - 1 + (a - 1) / 2});
+        restricted.insert({a - 1 - (b - 1) / 2, b - 1});
+        restricted.insert({a - 1, b - 1 - (a - 1) / 2});
+        restricted.insert({a - 1 + 1, b - 1 + 1});
+        restricted.insert({a - 1 + 1, b - 1 - 1});
+        restricted.insert({a - 1 - 1, b - 1 + 1});
+        restricted.insert({a - 1 - 1, b - 1 - 1});
+    }
+
+    // Calculate the number of valid positions
+    long long valid_positions = N * N;
+    for (auto& r : restricted) {
+        // Check if the position is on the edge of the grid
+        if (r.first < 0 || r.first >= N || r.second < 0 || r.second >= N) continue;
+
+        // Count the number of adjacent restricted positions
+        int captures = 0;
+        if (r.first + 1 < N && r.second + 1 < N) captures++;
+        if (r.first + 1 < N && r.second - 1 >= 0) captures++;
+        if (r.first - 1 >= 0 && r.second + 1 < N) captures++;
+        if (r.first - 1 >= 0 && r.second - 1 >= 0) captures++;
+
+        // Subtract the number of valid positions for each capture
+        valid_positions -= min(2, captures);
+    }
+
+    // Output the result
+    cout << valid_positions % MOD << endl;
+
+    return 0;
+}

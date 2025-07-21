@@ -1,0 +1,45 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <climits>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int n, k;
+    cin >> n >> k;
+    vector<int> A(n);
+    for (int i = 0; i < n; ++i) {
+        cin >> A[i];
+    }
+
+    // We need to choose N-K elements in a window to keep such that
+    // the difference between max and min in that window is minimized
+
+    const int window_size = n - k;
+    
+    // To efficiently track min and max in sliding window of fixed size
+    multiset<int> window;
+
+    // Initialize the first window
+    for (int i = 0; i < window_size; ++i) {
+        window.insert(A[i]);
+    }
+
+    int min_diff = INT_MAX;
+    for (int i = window_size; i <= n; ++i) {
+        // Compute current window's difference
+        min_diff = min(min_diff, *window.rbegin() - *window.begin());
+
+        if (i < n) {
+            // Slide the window
+            window.erase(window.find(A[i - window_size]));
+            window.insert(A[i]);
+        }
+    }
+
+    cout << min_diff << endl;
+    return 0;
+}

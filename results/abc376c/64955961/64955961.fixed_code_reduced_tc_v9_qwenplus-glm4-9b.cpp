@@ -1,0 +1,48 @@
+#include<bits/stdc++.h>
+using namespace std;
+#define ll long long
+
+void solve() {
+    ll n;
+    cin >> n;
+    vector<ll> a(n), b(n);
+    for (ll i = 0; i < n; i++) {
+        cin >> a[i];
+    }
+    for (ll i = 0; i < n - 1; i++) {
+        cin >> b[i];
+    }
+    
+    // Sort the toy sizes and box sizes
+    sort(a.begin(), a.end());
+    sort(b.begin(), b.end());
+    
+    // Create a new array that includes the sizes of the existing boxes and the largest toy size
+    vector<ll> sizes(n);
+    for (ll i = 0; i < n - 1; i++) {
+        sizes[i] = b[i];
+    }
+    sizes[n - 1] = a[n - 1]; // Include the largest toy size
+    
+    // Sort the combined sizes array
+    sort(sizes.begin(), sizes.end());
+    
+    // The minimum size of the new box should be greater than the largest toy size and less than or equal to the second largest toy size
+    ll min_size = -1;
+    for (ll i = 0; i < n; i++) {
+        if (sizes[i] > a[n - 1]) {
+            min_size = sizes[i];
+            break;
+        }
+    }
+    
+    if (min_size == -1 || min_size == a[n - 1]) {
+        cout << -1 << endl;
+    } else {
+        cout << min_size << endl;
+    }
+}
+
+int main() {
+    solve();
+}

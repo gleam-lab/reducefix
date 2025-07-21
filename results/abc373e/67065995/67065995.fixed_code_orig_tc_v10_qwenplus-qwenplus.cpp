@@ -1,0 +1,91 @@
+#include <bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+#define all(x) (x).begin(), (x).end()
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int N, M;
+    ll K;
+    cin >> N >> M >> K;
+    vector<ll> A(N);
+    for (int i = 0; i < N; ++i) {
+        cin >> A[i];
+        K -= A[i];
+    }
+
+    vector<int> ids(N);
+    iota(ids.begin(), ids.end(), 0);
+
+    // Sort candidates by current votes
+    sort(ids.begin(), ids.end(), [&](int i, int j) { return A[i] < A[j]; });
+    vector<ll> sortedA = A;
+    sort(sortedA.begin(), sortedA.end());
+
+    vector<ll> prefixSum(N + 1);
+    for (int i = 0; i < N; ++i) {
+        prefixSum[i + 1] = prefixSum[i] + sortedA[i];
+    }
+
+    vector<ll> res(N, -1);
+
+    for (int idx = 0; idx < N; ++idx) {
+        int i = ids[idx];
+        ll a_i = A[i];
+
+        // Binary search on required additional votes
+        ll low = 0, high = K;
+        ll answer = -1;
+
+        while (low <= high) {
+            ll mid = (low + high) / 2;
+            ll totalRequired = 0;
+            ll threshold = a_i + mid;
+
+            // Find how many candidates have more than threshold
+            int pos = upper_bound(sortedA.begin(), sortedA.end(), threshold) - sortedA.begin();
+            int needToBeat = N - M;
+
+            if (pos >= needToBeat) {
+                // Already in top M, no need to add more
+                answer = mid;
+                high = mid - 1;
+            } else {
+                // Need to beat (M) candidates with higher votes
+                int cnt = N - M;
+                ll neededVotes = 0;
+
+                // Calculate how much we need to raise the i-th candidate to beat others
+                for (int j = cnt; j < N; ++j) {
+                    if (sortedA[j] > threshold) continue;
+                    neededVotes += (threshold - sortedA[j] + 1);
+                }
+
+                if (neededVotes <= K - mid) {
+                    answer = mid;
+                    high = mid - 1;
+                } else {
+                    low = mid + 1;
+                }
+            }
+        }
+
+        if (answer != -1) {
+            res[i] = answer;
+        } else {
+            // Check if already elected
+            int rank = N - (upper_bound(sortedA.begin(), sortedA.end(), a_i) - sortedA.begin());
+            if (rank < M) {
+                res[i] = 0;
+            } else {
+                res[i] = -1;
+            }
+        }
+    }
+
+    for (auto x : res) {
+        cout << x << ' ';
+    }
+}

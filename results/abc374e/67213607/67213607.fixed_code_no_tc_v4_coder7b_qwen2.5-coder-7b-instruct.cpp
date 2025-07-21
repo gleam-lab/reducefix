@@ -1,0 +1,48 @@
+#include<bits/stdc++.h>
+using namespace std;
+
+struct Machine {
+    int a, p; // processing rate and cost per unit for type S
+    int b, q; // processing rate and cost per unit for type T
+};
+
+bool canAchieveCapacity(vector<Machine>& machines, int x, int target) {
+    vector<int> dp(target + 1, INT_MAX);
+    dp[0] = 0;
+    
+    for (auto& m : machines) {
+        for (int cap = target; cap >= 0; --cap) {
+            if (dp[cap] != INT_MAX) {
+                int usingS = max(0, cap - m.b * ceil((double)(cap - m.a * (cap / m.b)) / m.b));
+                int usingT = max(0, cap - m.a * ceil((double)(cap - m.b * (cap / m.a)) / m.a));
+                dp[cap] = min(dp[cap], dp[cap - usingS * m.a - usingT * m.b] + usingS * m.p + usingT * m.q);
+            }
+        }
+    }
+    
+    return dp[target] <= x;
+}
+
+int binarySearchMaxCapacity(vector<Machine>& machines, int x, int lo, int hi) {
+    while (lo < hi) {
+        int mid = lo + (hi - lo + 1) / 2;
+        if (canAchieveCapacity(machines, x, mid)) {
+            lo = mid;
+        } else {
+            hi = mid - 1;
+        }
+    }
+    return lo;
+}
+
+int main() {
+    int n, x;
+    cin >> n >> x;
+    vector<Machine> machines(n);
+    for (int i = 0; i < n; ++i) {
+        cin >> machines[i].a >> machines[i].p >> machines[i].b >> machines[i].q;
+    }
+
+    cout << binarySearchMaxCapacity(machines, x, 0, x) << endl;
+    return 0;
+}

@@ -1,0 +1,44 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    int N;
+    cin >> N;
+    vector<int> A(N);
+    vector<int> B(N - 1);
+
+    for (int i = 0; i < N; ++i) cin >> A[i];
+    for (int i = 0; i < N - 1; ++i) cin >> B[i];
+
+    // Sort toys and boxes in descending order to apply greedy matching
+    sort(A.begin(), A.end(), greater<int>());
+    sort(B.begin(), B.end(), greater<int>());
+
+    // Try to fit the largest toy in the largest available box
+    int extra_toy = -1;
+    int b_idx = 0;
+
+    for (int i = 0; i < N; ++i) {
+        if (b_idx < N - 1 && A[i] <= B[b_idx]) {
+            b_idx++;
+        } else {
+            // This toy needs the extra box
+            extra_toy = A[i];
+            // Only one extra box is allowed, so if another comes up, it's impossible
+            if (extra_toy != A[i]) {
+                cout << -1 << endl;
+                return 0;
+            }
+        }
+    }
+
+    if (extra_toy == -1) {
+        // All toys could be placed without needing an extra box
+        // We still need to buy a box of size at least smallest toy
+        cout << A[N - 1] << endl;
+    } else {
+        cout << extra_toy << endl;
+    }
+
+    return 0;
+}

@@ -1,0 +1,29 @@
+#include <vector>
+#include <iostream>
+#include <algorithm>
+#include <cmath>
+#include <string>
+#include <numeric>
+
+using namespace std;
+
+#define INF (long long)1e18  // Fix: Was too small, incorrect for large values
+
+int main(){
+    int n;
+    long long dp0 = 0;          // dp0: max profit with no stock at day i
+    long long dp1 = -1e18;      // dp1: max profit with holding stock at day i
+    long long x;
+
+    cin >> n;
+
+    for (int i = 0; i < n; ++i) {
+        cin >> x;
+        long long prev_dp0 = dp0;
+        dp0 = max(dp0, dp1 + x);   // Either do nothing or sell stock
+        dp1 = max(dp1, prev_dp0 - x); // Either keep holding or buy stock
+    }
+
+    cout << max(dp0, dp1) << endl;
+    return 0;
+}

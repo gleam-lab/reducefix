@@ -1,0 +1,87 @@
+The original code attempts to solve the problem using Dijkstra's algorithm, which is suitable for finding the shortest path in a graph with non-negative edge weights. However, there are a few issues that need to be addressed:
+
+1. **Vertex Weights Inclusion**: The problem defines the weight of a path as the sum of the weights of the vertices and edges on the path. The original code includes the vertex weight of the starting vertex (1) but does not correctly account for the vertex weights of the intermediate vertices in the path.
+
+2. **Handling Vertex Weights**: The vertex weight should be added only once for each vertex in the path. The current implementation adds the vertex weight of the destination vertex when moving to it, which is correct, but it should not add the starting vertex's weight again in the path calculation.
+
+3. **Data Type for Large Values**: The constraints allow for large values (up to 10^9), and the sums can be very large. The original code uses `i128` (128-bit integer), which is unnecessary and can be replaced with `long long` (64-bit integer) for simplicity and efficiency.
+
+4. **Edge Case Handling**: The code should ensure that the priority queue correctly processes nodes in order of their current shortest distance and that nodes are not revisited once their shortest distance is finalized.
+
+Here's the corrected version of the code:
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+using ll = long long;
+const ll INF = 1e18;
+
+struct Node {
+    int x;
+    ll w;
+    bool operator < (const Node& other) const {
+        return w > other.w;
+    }
+};
+
+void solve() {
+    int N, M;
+    cin >> N >> M;
+    vector<ll> A(N + 1);
+    for (int i = 1; i <= N; ++i) {
+        cin >> A[i];
+    }
+    
+    vector<vector<pair<int, ll>>> g(N + 1);
+    for (int i = 0; i < M; ++i) {
+        int u, v;
+        ll b;
+        cin >> u >> v >> b;
+        g[u].emplace_back(v, b);
+        g[v].emplace_back(u, b);
+    }
+    
+    vector<ll> dist(N + 1, INF);
+    vector<bool> visited(N + 1, false);
+    priority_queue<Node> pq;
+    
+    dist[1] = A[1];
+    pq.push({1, dist[1]});
+    
+    while (!pq.empty()) {
+        Node node = pq.top();
+        pq.pop();
+        int u = node.x;
+        if (visited[u]) continue;
+        visited[u] = true;
+        
+        for (auto [v, b] : g[u]) {
+            if (dist[v] > dist[u] + b + A[v]) {
+                dist[v] = dist[u] + b + A[v];
+                pq.push({v, dist[v]});
+            }
+        }
+    }
+    
+    for (int i = 2; i <= N; ++i) {
+        cout << dist[i] << (i == N ? "\n" : " ");
+    }
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    solve();
+    return 0;
+}
+```
+
+### Key Fixes:
+1. **Vertex Weights Handling**: The vertex weight `A[1]` is included in the initial distance to vertex 1. For each neighbor `v` of `u`, the distance to `v` is updated by adding the edge weight `b` and the vertex weight `A[v]` to the distance of `u`.
+
+2. **Efficiency**: The code uses a priority queue to implement Dijkstra's algorithm efficiently, ensuring that nodes are processed in order of their current shortest distance.
+
+3. **Data Types**: The use of `long long` ensures that large sums are handled correctly without overflow, and the infinity value `INF` is set to a sufficiently large number (`1e18`).
+
+4. **Edge Cases**: The code correctly handles all edge cases, including the smallest and largest possible inputs within the given constraints.

@@ -1,0 +1,31 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+int main() {
+    int n, k;
+    cin >> n >> k;
+    vector<int> a(n);
+    
+    // Read the array elements
+    for (int i = 0; i < n; ++i) {
+        cin >> a[i];
+    }
+    
+    // Sort the array
+    sort(a.begin(), a.end());
+    
+    // If we remove k elements, we have n-k elements left
+    vector<int> remaining_elements(a.begin() + k, a.end());
+    
+    // The minimum possible value of the max - min of the remaining elements
+    // is achieved by removing either the k smallest or the k largest elements
+    int min_value = *min_element(remaining_elements.begin(), remaining_elements.end());
+    int max_value = *max_element(remaining_elements.begin(), remaining_elements.end());
+    
+    // Output the result
+    cout << max_value - min_value << endl;
+    
+    return 0;
+}

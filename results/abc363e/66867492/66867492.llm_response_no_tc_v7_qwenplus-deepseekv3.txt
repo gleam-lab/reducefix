@@ -1,0 +1,93 @@
+To fix this code, we need to address several issues:
+
+1. **Initialization of the Priority Queue**: The current implementation incorrectly initializes the priority queue with the edges of the grid, but misses some edge cases where the grid might be of size 1x1 or 1xW or Hx1.
+
+2. **Handling of Multiple Years**: The current code attempts to process each year sequentially, but it might not correctly handle the propagation of sinking sections across multiple years, especially when new sections become adjacent to the sea in subsequent years.
+
+3. **Efficiency**: The constraints allow for up to Y=1e5 years, and H and W up to 1000, which means the solution must be efficient enough to handle these large inputs within reasonable time.
+
+4. **Correctness of the Sinking Logic**: The logic for sinking sections must ensure that all sections adjacent to the sea or previously sunk sections, with elevation not greater than the current sea level, are correctly marked as sunk and their neighbors processed.
+
+### Fixed Code
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int H, W, Y;
+    cin >> H >> W >> Y;
+    vector<vector<int>> A(H, vector<int>(W));
+    for (int i = 0; i < H; ++i) {
+        for (int j = 0; j < W; ++j) {
+            cin >> A[i][j];
+        }
+    }
+
+    vector<vector<bool>> sunk(H, vector<bool>(W, false));
+    priority_queue<pair<int, pair<int, int>>, vector<pair<int, pair<int, int>>>, greater<pair<int, pair<int, int>>>> pq;
+    
+    // Initialize the priority queue with all border cells
+    for (int i = 0; i < H; ++i) {
+        if (!sunk[i][0]) {
+            pq.push({A[i][0], {i, 0}});
+            sunk[i][0] = true;
+        }
+        if (W > 1 && !sunk[i][W-1]) {
+            pq.push({A[i][W-1], {i, W-1}});
+            sunk[i][W-1] = true;
+        }
+    }
+    for (int j = 1; j < W-1; ++j) {
+        if (!sunk[0][j]) {
+            pq.push({A[0][j], {0, j}});
+            sunk[0][j] = true;
+        }
+        if (H > 1 && !sunk[H-1][j]) {
+            pq.push({A[H-1][j], {H-1, j}});
+            sunk[H-1][j] = true;
+        }
+    }
+
+    int ans = H * W;
+    vector<int> res(Y);
+    const int dx[] = {1, 0, -1, 0};
+    const int dy[] = {0, 1, 0, -1};
+
+    for (int year = 1; year <= Y; ++year) {
+        while (!pq.empty() && pq.top().first <= year) {
+            auto current = pq.top();
+            pq.pop();
+            int x = current.second.first;
+            int y = current.second.second;
+            --ans;
+            for (int d = 0; d < 4; ++d) {
+                int nx = x + dx[d];
+                int ny = y + dy[d];
+                if (nx >= 0 && nx < H && ny >= 0 && ny < W && !sunk[nx][ny]) {
+                    sunk[nx][ny] = true;
+                    pq.push({A[nx][ny], {nx, ny}});
+                }
+            }
+        }
+        res[year-1] = ans;
+    }
+
+    for (int year = 1; year <= Y; ++year) {
+        cout << res[year-1] << '\n';
+    }
+
+    return 0;
+}
+```
+
+### Explanation
+1. **Initialization**: The priority queue is initialized with all the border cells of the grid. This ensures that any cell adjacent to the sea is processed first as the sea level rises.
+
+2. **Processing Each Year**: For each year from 1 to Y, the code processes all cells in the priority queue whose elevation is less than or equal to the current year's sea level. These cells are marked as sunk, and their neighbors are added to the queue if they haven't been sunk already.
+
+3. **Efficiency**: By using a priority queue (min-heap), the code efficiently processes cells in order of their elevation, ensuring that each cell is processed exactly once. This approach runs in O(HW log(HW)) time, which is feasible given the constraints.
+
+4. **Correctness**: The sinking logic correctly propagates to all adjacent cells that meet the elevation condition, ensuring that the solution accurately reflects the island's remaining area each year. The results for each year are stored in an array and printed at the end.

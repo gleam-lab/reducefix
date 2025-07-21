@@ -1,0 +1,62 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <climits>
+
+using namespace std;
+
+struct Item {
+    int a, p, b, q;
+};
+
+vector<Item> items;
+vector<vector<long long>> dp;
+
+long long cost(int i, int n) {
+    long long d = n / (items[i].a * items[i].b);
+    long long rem = n % (items[i].a * items[i].b);
+    return dp[i][rem] + d * items[i].p * items[i].b;
+}
+
+bool feasible(long long n) {
+    long long totalCost = 0;
+    for (int i = 0; i < items.size(); ++i) {
+        totalCost += cost(i, n);
+        if (totalCost > INT_MAX) return false;
+        if (totalCost > X) return false;
+    }
+    return true;
+}
+
+int main() {
+    int N, X;
+    cin >> N >> X;
+
+    items.resize(N);
+    for (int i = 0; i < N; ++i) {
+        cin >> items[i].a >> items[i].p >> items[i].b >> items[i].q;
+        if (items[i].a * items[i].q < items[i].b * items[i].p)
+            swap(items[i].a, items[i].b), swap(items[i].p, items[i].q);
+    }
+
+    dp.resize(N, vector<long long>(items[0].a * items[0].b + 1));
+    for (int i = 0; i < N; ++i) {
+        dp[i][0] = 0;
+        for (int j = 1; j <= items[i].a * items[i].b; ++j) {
+            dp[i][j] = min(dp[i][max(0, j - items[i].a)] + items[i].p,
+                           dp[i][max(0, j - items[i].b)] + items[i].q);
+        }
+    }
+
+    long long lo = 0, hi = INT_MAX;
+    while (lo < hi) {
+        long long mid = lo + (hi - lo) / 2;
+        if (feasible(mid))
+            lo = mid + 1;
+        else
+            hi = mid;
+    }
+
+    cout << lo - 1 << endl;
+    return 0;
+}

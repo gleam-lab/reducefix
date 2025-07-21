@@ -1,0 +1,59 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+#define ll long long
+
+void solve()
+{
+    int n;
+    cin >> n;
+    vector<int> a(n), b(n - 1);
+    for (auto &tt : a)
+        cin >> tt;
+    for (auto &tt : b)
+        cin >> tt;
+
+    sort(a.begin(), a.end());
+    sort(b.begin(), b.end());
+
+    multiset<int> ms;
+    for (int x : b)
+        ms.insert(x);
+
+    int required = -1;
+    for (int i = 0; i < n; ++i)
+    {
+        auto it = ms.lower_bound(a[i]);
+        if (it != ms.end())
+        {
+            ms.erase(it);
+        }
+        else
+        {
+            // This toy cannot fit in any remaining box, so we need to use the new box
+            if (required == -1)
+                required = a[i];
+            else
+            {
+                cout << -1 << endl;
+                return;
+            }
+        }
+    }
+
+    cout << required << endl;
+}
+
+int main()
+{
+    std::ios::sync_with_stdio(false);
+    std::cin.tie(nullptr);
+
+    int t = 1;
+    // cin >> t;
+    while (t--)
+    {
+        solve();
+    }
+    return 0;
+}

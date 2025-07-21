@@ -1,0 +1,58 @@
+#include<iostream>
+#include<string>
+#include<queue>
+#include<vector>
+#include<cassert>
+#include<random>
+#include<set>
+#include<map>
+#include<unordered_map>
+#include<bitset>
+#include<numeric>
+#include<algorithm>
+using namespace std;
+using ll = long long;
+const int inf=1<<30;
+const ll INF=1LL<<62;
+using P = pair<ll,int>;
+using PP = pair<int,P>; 
+const ll MOD=998244353;
+const int dy[]={-1,0,1,0};
+const int dx[]={0,1,0,-1};
+
+ll binary_search(ll lb, ll ub, function<bool(ll)> can_buy) {
+    while (ub - lb > 1) {
+        ll mid = (ub + lb) / 2;
+        if (can_buy(mid)) {
+            lb = mid;
+        } else {
+            ub = mid;
+        }
+    }
+    return lb;
+}
+
+int main() {
+    int N;
+    ll X;
+    cin >> N >> X;
+    vector<ll> A(N), P(N), B(N), Q(N);
+    
+    for (int i = 0; i < N; i++) {
+        cin >> A[i] >> P[i] >> B[i] >> Q[i];
+    }
+
+    auto can_buy = [&](ll x) {
+        for (int i = 0; i < N; i++) {
+            ll max_s = (x - A[i] * x + B[i] - 1) / B[i];
+            ll max_t = (x - B[i] * x + A[i] - 1) / A[i];
+            if (max_s > B[i] || max_t > A[i] || max_s * P[i] + max_t * Q[i] > x) {
+                return false;
+            }
+        }
+        return true;
+    };
+
+    ll min_capacity = binary_search(0, X, can_buy);
+    cout << min_capacity << endl;
+}

@@ -1,0 +1,52 @@
+#include <iostream>
+#include <algorithm>
+#include <vector>
+using namespace std;
+
+const int N = 2e5 + 9;
+int n, q;
+vector<int> a(N), b(N), k(N), d(N);
+vector<pair<int, int>> distances(N);
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(NULL);
+
+    cin >> n >> q;
+    for (int i = 0; i < n; ++i) cin >> a[i];
+    for (int i = 0; i < q; ++i) {
+        cin >> b[i] >> k[i];
+        b[i] = abs(b[i]);
+        k[i]--;
+        distances[i] = {b[i], k[i]};
+    }
+
+    // Sort points A according to their values
+    sort(a.begin(), a.end());
+    // Sort distances based on the absolute position of B and secondary on the index of B
+    sort(distances.begin(), distances.end());
+
+    for (int i = 0; i < q; ++i) {
+        int x = distances[i].first;
+        int k = distances[i].second;
+        // Binary search to find the k-th closest point A to point B
+        int left = 0, right = n - 1;
+        while (left <= right) {
+            int mid = left + (right - left) / 2;
+            if (x - a[mid] > x - a[mid + 1]) {
+                right = mid - 1;
+            } else {
+                left = mid + 1;
+            }
+        }
+        // Adjust index for 0-based index
+        int dist_index = left - 1;
+        d[i] = abs(a[dist_index] - b[i]);
+    }
+
+    for (int i = 0; i < q; ++i) {
+        cout << d[i] << endl;
+    }
+
+    return 0;
+}

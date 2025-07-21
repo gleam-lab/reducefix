@@ -1,0 +1,73 @@
+#include<bits/stdc++.h>
+using namespace std;
+
+int main() {
+    int n, x;
+    cin >> n >> x;
+    
+    // Initialize arrays to store values for each item
+    vector<int> a(n + 1), p(n + 1), b(n + 1), q(n + 1);
+    
+    // Read input values for each item
+    for (int i = 1; i <= n; ++i) {
+        cin >> a[i] >> p[i] >> b[i] >> q[i];
+    }
+    
+    // Binary search range initialization
+    int l = 0, r = 1e9 + 5, ans = 0;
+    
+    // Binary search loop
+    while (l <= r) {
+        int mid = l + (r - l) / 2;
+        int sum = 0;
+        
+        // Calculate the minimum cost for each item at the current price 'mid'
+        for (int i = 1; i <= n; ++i) {
+            int minn = INT_MAX;
+            
+            // Check for cases where the number of items bought is limited by 'b[i]'
+            for (int j = 0; j <= b[i]; ++j) {
+                int cost = j * p[i];
+                if ((mid - j * a[i]) >= 0) {
+                    int remaining = (mid - j * a[i]) % b[i];
+                    if (remaining == 0) {
+                        cost += (mid - j * a[i]) / b[i] * q[i];
+                    } else {
+                        cost += (mid - j * a[i]) / b[i] * q[i] + q[i];
+                    }
+                }
+                minn = min(minn, cost);
+            }
+            
+            // Similarly check for cases where the number of items bought is limited by 'a[i]'
+            for (int j = 0; j <= a[i]; ++j) {
+                int cost = j * q[i];
+                if ((mid - j * b[i]) >= 0) {
+                    int remaining = (mid - j * b[i]) % a[i];
+                    if (remaining == 0) {
+                        cost += (mid - j * b[i]) / a[i] * p[i];
+                    } else {
+                        cost += (mid - j * b[i]) / a[i] * p[i] + p[i];
+                    }
+                }
+                minn = min(minn, cost);
+            }
+            
+            // Add the minimum cost for this item to the total sum
+            sum += minn;
+        }
+        
+        // If the total cost is within budget, update answer and try higher prices
+        if (sum <= x) {
+            ans = max(ans, mid);
+            l = mid + 1;
+        } else {
+            // Otherwise, try lower prices
+            r = mid - 1;
+        }
+    }
+    
+    // Output the maximum achievable price
+    cout << ans;
+    return 0;
+}

@@ -1,0 +1,73 @@
+To solve this problem correctly, we need to **minimize the difference between the maximum and minimum values** in a subsequence of length `N-K` chosen from array `A`, while maintaining the original order of elements.
+
+The incorrect approach sorted the array and attempted to remove `K` elements symmetrically from both ends. However, this doesn't account for all possible valid subsequences of length `N-K`. The actual goal is to choose any contiguous window (preserving original order) of size `N-K` such that the difference between the max and min in that window is minimized.
+
+### Correct Strategy:
+1. Since the order must be preserved, we consider sliding windows of size `N-K`.
+2. For each window of size `N-K`, compute the maximum and minimum efficiently.
+3. Use two deques (double-ended queues) to track current window's max and min in O(1) per step.
+4. Slide the window from left to right and keep track of the minimal `(max - min)`.
+
+This leads to an efficient O(N) solution using sliding window with deque optimizations.
+
+Here's the fixed code:
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int N, K;
+    cin >> N >> K;
+    vector<int> A(N);
+    for (int i = 0; i < N; ++i) {
+        cin >> A[i];
+    }
+
+    int windowSize = N - K;
+    deque<int> minDeque, maxDeque;
+    int result = numeric_limits<int>::max();
+
+    for (int i = 0; i < N; ++i) {
+        // Maintain min deque: elements are in increasing order
+        while (!minDeque.empty() && A[i] < A[minDeque.back()]) {
+            minDeque.pop_back();
+        }
+        minDeque.push_back(i);
+
+        // Maintain max deque: elements are in decreasing order
+        while (!maxDeque.empty() && A[i] > A[maxDeque.back()]) {
+            maxDeque.pop_back();
+        }
+        maxDeque.push_back(i);
+
+        // Remove out-of-window elements
+        if (i >= windowSize) {
+            if (minDeque.front() <= i - windowSize) {
+                minDeque.pop_front();
+            }
+            if (maxDeque.front() <= i - windowSize) {
+                maxDeque.pop_front();
+            }
+        }
+
+        // Update result once window is valid
+        if (i >= windowSize - 1) {
+            result = min(result, A[maxDeque.front()] - A[minDeque.front()]);
+        }
+    }
+
+    cout << result << endl;
+    return 0;
+}
+```
+
+### Why This Works:
+- We use **two deques** to track the indices of minimum and maximum values within the current window.
+- As the window slides, we maintain only those indices that could possibly be the min or max in the current window.
+- This allows us to get min/max in O(1) at each step, and overall complexity remains O(N).
+
+This method guarantees correctness and efficiency even for the largest input constraints.

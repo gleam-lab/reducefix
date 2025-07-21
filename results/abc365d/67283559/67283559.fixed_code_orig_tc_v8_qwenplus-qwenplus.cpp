@@ -1,0 +1,51 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int N;
+    string S;
+    cin >> N >> S;
+
+    // hand: possible moves we can play
+    vector<char> hand = {'R', 'P', 'S'};
+    // dp[i] = max number of wins if we start with move i on first turn
+    vector<int> dp(3, 0);
+
+    for (int k = 0; k < 3; ++k) {
+        char prev = hand[k];
+        int total = 0;
+
+        // Skip the first character since it's used as initial move
+        for (int i = 1; i < N; ++i) {
+            char opponent = S[i];
+
+            // Find winning move not equal to previous move
+            for (char c : hand) {
+                if (c == prev) continue;
+                if ((c == 'R' && opponent == 'S') ||
+                    (c == 'P' && opponent == 'R') ||
+                    (c == 'S' && opponent == 'P')) {
+                    total++;
+                    prev = c;
+                    break;
+                }
+            }
+
+            // If no winning move is available, pick any non-repeating move
+            bool found = false;
+            for (char c : hand) {
+                if (c != prev && !found) {
+                    prev = c;
+                    found = true;
+                }
+            }
+        }
+
+        dp[k] = total;
+    }
+
+    cout << *max_element(dp.begin(), dp.end()) << endl;
+}

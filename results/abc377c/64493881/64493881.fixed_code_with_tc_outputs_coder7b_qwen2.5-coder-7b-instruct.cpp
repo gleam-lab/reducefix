@@ -1,0 +1,67 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define v(type) vector<type>
+#define p(ate,bte) pair<ate,bte>
+#define m(ate,bte) map<ate,bte>
+#define s(type) set<type>
+class Sub {
+public:
+    long long solve() {
+        long long N, M;
+        scanf("%lld %lld", &N, &M);
+
+        s(p(long long, long long)) ans;
+        for (int i = 0; i < M; i++) {
+            long long a, b;
+            scanf("%lld %lld", &a, &b);
+
+            // Calculate all possible capturing positions
+            long long a1 = a + 1;
+            long long a2 = a + 2;
+            long long as1 = a - 1;
+            long long as2 = a - 2;
+            long long b1 = b + 1;
+            long long b2 = b + 2;
+
+            // Check all 8 directions
+            if (1 <= a2 && a2 <= N && 1 <= b1 && b1 <= N) {
+                ans.emplace(a2, b1);
+            }
+            if (1 <= a1 && a1 <= N && 1 <= b2 && b2 <= N) {
+                ans.emplace(a1, b2);
+            }
+            if (1 <= as1 && as1 <= N && 1 <= b2 && b2 <= N) {
+                ans.emplace(as1, b2);
+            }
+            if (1 <= as2 && as2 <= N && 1 <= b1 && b1 <= N) {
+                ans.emplace(as2, b1);
+            }
+            if (1 <= as2 && as2 <= N && 1 <= b - 2 && b - 2 >= 1) {
+                ans.emplace(as2, b - 2);
+            }
+            if (1 <= as1 && as1 <= N && 1 <= b - 2 && b - 2 >= 1) {
+                ans.emplace(as1, b - 2);
+            }
+            if (1 <= a1 && a1 <= N && 1 <= b - 2 && b - 2 >= 1) {
+                ans.emplace(a1, b - 2);
+            }
+            if (1 <= a2 && a2 <= N && 1 <= b - 2 && b - 2 >= 1) {
+                ans.emplace(a2, b - 2);
+            }
+        }
+
+        // Subtract the number of capturing positions from total squares
+        printf("%lld\n", N * N - (long long)ans.size());
+
+        return 0;
+    }
+};
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+    Sub *sub = new Sub();
+    sub->solve();
+    delete sub;
+    return 0;
+}

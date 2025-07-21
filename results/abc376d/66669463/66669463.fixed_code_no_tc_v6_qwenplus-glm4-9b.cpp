@@ -1,0 +1,48 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+const int MAXN = 200001;
+
+vector<int> adj[MAXN];
+int n, m;
+int head[MAXN], cnt, ans[MAXN];
+bool visited[MAXN];
+
+inline void addEdge(int u, int v) {
+    adj[u].push_back(v);
+}
+
+void dfs(int u, int dep) {
+    visited[u] = true;
+    if (u == 1 && dep) {
+        ans[1] = min(ans[1], dep);
+    }
+    for (int v : adj[u]) {
+        if (!visited[v] && dep + 1 < ans[v]) {
+            ans[v] = dep + 1;
+            dfs(v, dep + 1);
+        }
+    }
+}
+
+int main() {
+    cin >> n >> m;
+    for (int i = 1; i <= n; ++i) {
+        ans[i] = 100000000;
+    }
+    for (int i = 0; i < m; ++i) {
+        int u, v;
+        cin >> u >> v;
+        addEdge(u, v);
+        addEdge(v, u); // Assuming undirected graph
+    }
+    dfs(1, 0);
+    if (ans[1] == 100000000) {
+        cout << "-1" << endl;
+    } else {
+        cout << ans[1] << endl;
+    }
+    return 0;
+}

@@ -1,0 +1,104 @@
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+constexpr int MAX_HEIGHT = 100005;
+constexpr int DIRS[4][2] = {{-1, 0}, {1, 0}, {0, -1}, {0, 1}};
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int H, W, Y;
+    cin >> H >> W >> Y;
+
+    vector<vector<int>> A(H, vector<int>(W));
+    for (int i = 0; i < H; ++i) {
+        for (int j = 0; j < W; ++j) {
+            cin >> A[i][j];
+        }
+    }
+
+    // Prepare a list of all cells grouped by their elevation
+    vector<vector<pair<int, int>>> height_cells(MAX_HEIGHT + 2); // +2 to avoid overflow
+    for (int i = 0; i < H; ++i) {
+        for (int j = 0; j < W; ++j) {
+            height_cells[A[i][j]].emplace_back(i, j);
+        }
+    }
+
+    // Visited matrix and union-find data structures
+    vector<vector<bool>> visited(H, vector<bool>(W, false));
+    vector<vector<int>> parent(H, vector<int>(W, -1));
+    vector<vector<int>> size(H, vector<int>(W, 1));
+
+    function<int(int, int)> find = [&](int x, int y) {
+        if (parent[x][y] == -1) return make_pair(x, y);
+        auto [px, py] = parent[x][y];
+        auto [gx, gy] = find(px, py);
+        parent[x][y] = {gx, gy};
+        return make_pair(gx, gy);
+    };
+
+    function<void(int, int, int, int)> unite = [&](int x1, int y1, int x2, int y2) {
+        auto [g1x, g1y] = find(x1, y1);
+        auto [g2x, g2y] = find(x2, y2);
+        if ((g1x == g2x) && (g1y == g2y)) return;
+        if (size[g1x][g1y] < size[g2x][g2y]) swap(g1x, g2x), swap(g1y, g2y);
+        parent[g2x][g2y] = {g1x, g1y};
+        size[g1x][g1y] += size[g2x][g2y];
+    };
+
+    // Keep track of how many land cells are still above water
+    int total_land = H * W;
+
+    // For each year, store the number of land cells remaining
+    vector<int> result(Y + 1, 0);
+
+    // Maintain the count of land connected to the sea
+    int connected_to_sea_count = 0;
+    vector<vector<bool>> connected(H, vector<bool>(W, false));
+
+    // Process increasing heights
+    for (int h = 1; h <= Y; ++h) {
+        for (auto [i, j] : height_cells[h]) {
+            visited[i][j] = true;
+            int cur_size = 1;
+            bool has_sea_neighbor = false;
+
+            for (auto [dx, dy] : DIRS) {
+                int ni = i + dx;
+                int nj = j + dy;
+                if (ni >= 0 && ni < H && nj >= 0 && nj < W && visited[ni][nj]) {
+                    // Merge with adjacent cell
+                    unite(i, j, ni, nj);
+                    if (connected[ni][nj]) {
+                        has_sea_neighbor = true;
+                    }
+                }
+            }
+
+            auto [root_i, root_j] = find(i, j);
+            if (!connected[root_i][root_j] && has_sea_neighbor) {
+                connected[root_i][root_j] = true;
+                connected_to_sea_count += size[root_i][root_j];
+            }
+
+            // If this cell itself is now connected to sea
+            if (!connected[i][j] && has_sea_neighbor) {
+                connected[i][j] = true;
+                connected_to_sea_count += 1;
+            }
+        }
+
+        result[h] = total_land - connected_to_sea_count;
+    }
+
+    // Output results
+    for (int i = 1; i <= Y; ++i) {
+        cout << result[i] << "\n";
+    }
+
+    return 0;
+}
+```

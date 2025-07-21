@@ -1,0 +1,82 @@
+To fix this code, we need to address a few key issues related to the algorithm's correctness and efficiency. The main goal is to determine the area of the island that remains above sea level each year as the sea level rises. The original code attempts to use a priority queue to propagate the sinking effect from the borders inward, but it has some flaws in how it updates the sinking levels and computes the remaining area.
+
+### Analysis of Issues
+1. **Priority Queue Handling**: The priority queue is used to process cells in order of their elevation, but the way it updates neighboring cells might not correctly propagate the minimum sinking level.
+2. **Visited Array**: The visited array is used to prevent reprocessing, but the logic might skip necessary updates to neighboring cells.
+3. **Prefix Sum Calculation**: The prefix sum calculation for the remaining area might not correctly account for all cells that have sunk by each year.
+
+### Solution Approach
+1. **Multi-source BFS with Priority Queue**: We use a priority queue to process cells starting from the borders and propagate the sinking effect to adjacent cells. Each cell's sinking level is the maximum of its own elevation and the minimum sinking level of its neighbors.
+2. **Correct Sinking Level Propagation**: Ensure that each cell's sinking level is correctly updated to reflect the earliest time it will sink, considering its elevation and adjacent cells.
+3. **Prefix Sum Array**: Construct a prefix sum array where each entry at index `i` represents the number of cells that have sunk by year `i`. This allows efficient calculation of the remaining area for each year.
+
+### Fixed Code
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+#define all(x) (x).begin(), (x).end()
+
+int main() {
+    ios_base::sync_with_stdio(0);
+    cin.tie(0);
+    int h, w, y;
+    cin >> h >> w >> y;
+    vector<vector<int>> height(h, vector<int>(w));
+    vector<vector<int>> sink(h, vector<int>(w, INT_MAX));
+    priority_queue<pair<int, pair<int, int>>, vector<pair<int, pair<int, int>>>, greater<pair<int, pair<int, int>>>> pq;
+    int di[4][2] = {{-1, 0}, {1, 0}, {0, -1}, {0, 1}};
+    
+    for (int i = 0; i < h; i++) {
+        for (int j = 0; j < w; j++) {
+            cin >> height[i][j];
+            if (i == 0 || i == h - 1 || j == 0 || j == w - 1) {
+                sink[i][j] = height[i][j];
+                pq.push({sink[i][j], {i, j}});
+            }
+        }
+    }
+    
+    while (!pq.empty()) {
+        auto [H, p] = pq.top();
+        auto [r, c] = p;
+        pq.pop();
+        for (int i = 0; i < 4; i++) {
+            int nr = r + di[i][0];
+            int nc = c + di[i][1];
+            if (nr < 0 || nr >= h || nc < 0 || nc >= w) continue;
+            int new_sink = max(height[nr][nc], H);
+            if (new_sink < sink[nr][nc]) {
+                sink[nr][nc] = new_sink;
+                pq.push({sink[nr][nc], {nr, nc}});
+            }
+        }
+    }
+    
+    vector<int> cnt(y + 2, 0);
+    for (int i = 0; i < h; i++) {
+        for (int j = 0; j < w; j++) {
+            if (sink[i][j] <= y) {
+                cnt[sink[i][j]]++;
+            }
+        }
+    }
+    
+    vector<int> pref(y + 1, 0);
+    int total = 0;
+    for (int i = 0; i <= y; i++) {
+        total += cnt[i];
+        cout << h * w - total << '\n';
+    }
+    
+    return 0;
+}
+```
+
+### Explanation
+1. **Initialization**: The code reads the island dimensions and elevation data. It initializes a priority queue with the border cells, setting their sinking levels to their own elevations.
+2. **Priority Queue Processing**: The priority queue processes cells in order of their elevation. For each cell, it checks its neighbors and updates their sinking levels if a lower sinking level is found (based on the maximum of the neighbor's elevation and the current cell's sinking level).
+3. **Counting Sunk Cells**: After processing all cells, the code counts how many cells sink each year by incrementally updating a prefix sum array.
+4. **Output**: For each year, the remaining area is calculated by subtracting the cumulative number of sunk cells from the total area of the island.
+
+This approach ensures that the sinking process is simulated correctly and efficiently, providing accurate results for each year's remaining area.

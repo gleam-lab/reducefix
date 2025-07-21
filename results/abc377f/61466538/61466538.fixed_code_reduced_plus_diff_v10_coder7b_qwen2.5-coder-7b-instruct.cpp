@@ -1,0 +1,94 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+typedef long long ll;
+typedef pair<int, int> pii;
+
+#define all(x) (x).begin(), (x).end()
+#define FOR(i, a, b) for (int i = (a); i < (b); ++i)
+
+// Function to check if a position is within bounds
+bool inBounds(const pii &pos, const ll n) {
+    return 1 <= pos.first && pos.first <= n && 1 <= pos.second && pos.second <= n;
+}
+
+// Main function to solve the problem
+void solve() {
+    ll n, m; 
+    re(n, m);
+    vector<pii> q(m); 
+    FOR(i, 0, m) { 
+        re(q[i].first, q[i].second); 
+    }
+    
+    // Sets to store positions occupied in each row, column, and diagonals
+    set<ll> row, col, d1, d2;
+    for(auto &[i, j] : q) {
+        row.insert(i); 
+        col.insert(j); 
+        d1.insert(i - j); 
+        d2.insert(i + j);
+    }
+    
+    // Calculate the total number of squares
+    ll total_squares = n * n;
+    
+    // Subtract the number of squares in rows and columns
+    total_squares -= (ll)row.size() * n;
+    total_squares -= (ll)col.size() * n;
+    
+    // Add back the intersections (over-subtracted areas)
+    total_squares += (ll)row.size() * (ll)col.size();
+    
+    // Set to store positions to avoid counting them twice
+    set<pii> visited;
+    
+    // Process each diagonal
+    for(auto &d : d1) {
+        for(auto &r : row) {
+            pii pos = {r, r - d};
+            if(inBounds(pos, n) && !visited.count(pos)) {
+                visited.insert(pos);
+                total_squares--;
+            }
+        }
+        for(auto &c : col) {
+            pii pos = {c + d, c};
+            if(inBounds(pos, n) && !visited.count(pos)) {
+                visited.insert(pos);
+                total_squares--;
+            }
+        }
+    }
+    
+    // Process each anti-diagonal
+    for(auto &d : d2) {
+        for(auto &r : row) {
+            pii pos = {r, d - r};
+            if(inBounds(pos, n) && !visited.count(pos)) {
+                visited.insert(pos);
+                total_squares--;
+            }
+        }
+        for(auto &c : col) {
+            pii pos = {d - c, c};
+            if(inBounds(pos, n) && !visited.count(pos)) {
+                visited.insert(pos);
+                total_squares--;
+            }
+        }
+    }
+    
+    // Output the result
+    cout << total_squares << '\n';
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(NULL);
+    
+    int t = 1;
+    //cin >> t;
+    while(t--) solve();
+    return 0;
+}

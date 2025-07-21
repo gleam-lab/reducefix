@@ -1,0 +1,33 @@
+#include<bits/stdc++.h>
+using namespace std;
+const int N=2e5+5;
+int n, q;
+int a[N];
+int b[N], k[N];
+
+int main() {
+    ios::sync_with_stdio(0), cin.tie(0), cout.tie(0);
+    cin >> n >> q;
+    for (int i = 1; i <= n; i++) {
+        cin >> a[i];
+    }
+    for (int i = 0; i < q; i++) {
+        cin >> b[i] >> k[i];
+    }
+    
+    sort(a + 1, a + n + 1); // Sort the coordinates of points A
+    
+    for (int i = 0; i < q; i++) {
+        // Calculate the distance between B_j and each A_i
+        vector<int> distances;
+        for (int j = 1; j <= n; j++) {
+            distances.push_back(abs(a[j] - b[i]));
+        }
+        
+        // Find the k_i-th smallest distance
+        int distance = distances[k[i] - 1]; // k[i] is 1-based index, so we subtract 1
+        cout << distance << "\n";
+    }
+    
+    return 0;
+}

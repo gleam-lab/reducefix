@@ -1,0 +1,52 @@
+#include<bits/stdc++.h>
+using namespace std;
+#define int long long
+const int N=2e5+5;
+int n,m,k,sum,cnt,a[N],b[N],c[N];
+
+// Function to check if candidate i can win with at least x additional votes
+bool check(int i, int x) {
+    // Calculate the number of candidates that could potentially beat candidate i
+    int beats = upper_bound(a + 1, a + 1 + n, a[i] + x + 1) - (a + 1);
+    // Check if the number of candidates that could beat candidate i is less than m
+    return beats < m;
+}
+
+signed main() {
+    ios::sync_with_stdio(0), cin.tie(0), cout.tie(0);
+    int i, j, x, y, z, t;
+    cin >> n >> m >> k;
+    for (i = 1; i <= n; i++) {
+        cin >> a[i];
+        k -= a[i];
+        b[i] = a[i];
+    }
+    sort(b + 1, b + n + 1);
+    for (i = 1; i <= n; i++) {
+        c[i] = c[i - 1] + b[i];
+    }
+    
+    for (i = 1; i <= n; i++) {
+        // If candidate i has already won or cannot win, set C_i accordingly
+        if (a[i] >= *(b + n - m)) {
+            cout << "0 ";
+            continue;
+        }
+        
+        int l = 0, r = k + 1;
+        while (l < r) {
+            int mid = (l + r) / 2;
+            if (check(i, mid)) {
+                r = mid;
+            } else {
+                l = mid + 1;
+            }
+        }
+        if (l <= k && check(i, l)) {
+            cout << l << " ";
+        } else {
+            cout << "-1 ";
+        }
+    }
+    return 0;
+}

@@ -1,0 +1,46 @@
+#include <iostream>
+#include <vector>
+#include <set>
+using namespace std;
+
+const int dir[8][2] = {
+    {2, 1}, {1, 2}, {-1, 2}, {-2, 1},
+    {-2, -1}, {-1, -2}, {1, -2}, {2, -1}
+};
+
+int main() {
+    long long n, m;
+    cin >> n >> m;
+    
+    vector<pair<int, int>> pieces(m);
+    for (int i = 0; i < m; ++i) {
+        int a, b;
+        cin >> a >> b;
+        pieces[i] = {a - 1, b - 1};
+    }
+
+    set<pair<int, int>> occupied;
+    for (int i = 0; i < m; ++i) {
+        occupied.insert(pieces[i]);
+        for (int d = 0; d < 8; ++d) {
+            int x = pieces[i].first + dir[d][0];
+            int y = pieces[i].second + dir[d][1];
+            if (x >= 0 && x < n && y >= 0 && y < n) {
+                occupied.insert({x, y});
+            }
+        }
+    }
+
+    long long count = 0;
+    for (long long i = 0; i < n; ++i) {
+        for (long long j = 0; j < n; ++j) {
+            if (occupied.find({i, j}) == occupied.end()) {
+                count++;
+            }
+        }
+    }
+
+    cout << count << endl;
+
+    return 0;
+}

@@ -1,0 +1,41 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+typedef long long ll;
+const int MAXN = 2e5 + 5;
+
+vector<ll> pref(MAXN);
+
+int main() {
+    ios_base::sync_with_input(false); cin.tie(NULL); cout.tie(NULL);
+    
+    int n, m; ll k;
+    cin >> n >> m >> k;
+    vector<ll> a(n), b(n);
+    for (int i = 0; i < n; ++i) {
+        cin >> a[i];
+        k -= a[i];
+    }
+
+    // Sort the vote counts in descending order
+    for (int i = 0; i < n; ++i) b[i] = a[i];
+    sort(b.begin(), b.end(), greater<ll>());
+
+    // Calculate prefix sums
+    pref[0] = b[0];
+    for (int i = 1; i < n; ++i) pref[i] = pref[i - 1] + b[i];
+
+    vector<ll> ans(n);
+    for (int i = 0; i < n; ++i) {
+        // Calculate the minimum votes needed to guarantee victory
+        ll need = max(0LL, b[i] + (m - i - 1) * b[i] - pref[min(i + m - 1, n - 1)]);
+        if (need > k) ans[i] = -1;
+        else ans[i] = need;
+    }
+
+    // Output the results
+    for (int i = 0; i < n; ++i) cout << ans[i] << " ";
+    cout << endl;
+
+    return 0;
+}

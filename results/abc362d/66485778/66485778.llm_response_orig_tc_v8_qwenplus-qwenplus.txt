@@ -1,0 +1,269 @@
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+using i64 = long long;
+using pii = pair<int, int>;
+using Edge = tuple<int, int, i64>;
+
+const int MAXN = 2e5 + 10;
+vector<pii> adj[MAXN]; // Adjacency list: {neighbor, edge index}
+i64 A[MAXN];
+i64 dist[MAXN];
+bool vis[MAXN];
+
+struct Node {
+    int u;
+    i64 d;
+    bool operator<(const Node& other) const {
+        return d > other.d;
+    }
+};
+
+void solve() {
+    int N, M;
+    cin >> N >> M;
+    
+    for (int i = 1; i <= N; ++i) {
+        cin >> A[i];
+        dist[i] = numeric_limits<i64>::max();
+    }
+    
+    for (int i = 0; i < M; ++i) {
+        int u, v;
+        i64 b;
+        cin >> u >> v >> b;
+        adj[u].push_back({v, i});
+        adj[v].push_back({u, i});
+    }
+    
+    priority_queue<Node> pq;
+    dist[1] = A[1];
+    pq.push({1, dist[1]});
+    
+    while (!pq.empty()) {
+        auto [u, d] = pq.top(); pq.pop();
+        if (vis[u]) continue;
+        vis[u] = true;
+        
+        for (auto [v, eid] : adj[u]) {
+            if (vis[v]) continue;
+            i64 new_d = d + /* edge weight */ B[eid] + A[v];
+            if (new_d < dist[v]) {
+                dist[v] = new_d;
+                pq.push({v, dist[v]});
+            }
+        }
+    }
+    
+    for (int i = 2; i <= N; ++i)
+        cout << dist[i] << " ";
+    cout << "\n";
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    solve();
+    return 0;
+}
+```
+
+Wait, there's an issue with the code above - we're not storing the edge weights properly. Let me fix that:
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+using i64 = long long;
+using pii = pair<int, int>;
+
+const int MAXN = 2e5 + 10;
+vector<pair<int, i64>> adj[MAXN]; // Adjacency list: {neighbor, edge weight}
+i64 A[MAXN];
+i64 dist[MAXN];
+bool vis[MAXN];
+
+struct Node {
+    int u;
+    i64 d;
+    bool operator<(const Node& other) const {
+        return d > other.d;
+    }
+};
+
+void solve() {
+    int N, M;
+    cin >> N >> M;
+    
+    for (int i = 1; i <= N; ++i) {
+        cin >> A[i];
+        dist[i] = numeric_limits<i64>::max();
+    }
+    
+    for (int i = 0; i < M; ++i) {
+        int u, v;
+        i64 b;
+        cin >> u >> v >> b;
+        adj[u].push_back({v, b});
+        adj[v].push_back({u, b});
+    }
+    
+    priority_queue<Node> pq;
+    dist[1] = A[1];
+    pq.push({1, dist[1]});
+    
+    while (!pq.empty()) {
+        auto [u, d] = pq.top(); pq.pop();
+        if (vis[u]) continue;
+        vis[u] = true;
+        
+        for (auto [v, b] : adj[u]) {
+            if (vis[v]) continue;
+            i64 new_d = d + b + A[v];
+            if (new_d < dist[v]) {
+                dist[v] = new_d;
+                pq.push({v, dist[v]});
+            }
+        }
+    }
+    
+    for (int i = 2; i <= N; ++i)
+        cout << dist[i] << " ";
+    cout << "\n";
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    solve();
+    return 0;
+}
+```
+
+Let me double-check the algorithm and data types...
+
+Actually, let's rewrite it cleanly to ensure correctness:
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+using i64 = long long;
+using vi64 = vector<i64>;
+using vvi64 = vector<vector<i64>>;
+using ii = pair<int, int>;
+using vii = vector<ii>;
+
+constexpr i64 INF = 1e18;
+
+void solve() {
+    int N, M;
+    cin >> N >> M;
+    
+    vector<i64> A(N+1);
+    for (int i = 1; i <= N; ++i)
+        cin >> A[i];
+    
+    vector<vector<pair<int, i64>>> graph(N+1); // graph[u] contains {v, B_uv}
+    for (int i = 0; i < M; ++i) {
+        int u, v;
+        i64 b;
+        cin >> u >> v >> b;
+        graph[u].push_back({v, b});
+        graph[v].push_back({u, b});
+    }
+    
+    priority_queue<pair<i64, int>> pq;
+    vector<i64> min_dist(N+1, INF);
+    vector<bool> visited(N+1, false);
+    
+    min_dist[1] = A[1];
+    pq.push({-min_dist[1], 1}); // negate distance to simulate min heap
+    
+    while (!pq.empty()) {
+        auto [d, u] = pq.top(); pq.pop();
+        d = -d;
+        if (visited[u]) continue;
+        visited[u] = true;
+        
+        for (auto [v, b] : graph[u]) {
+            if (!visited[v] && min_dist[u] + b + A[v] < min_dist[v]) {
+                min_dist[v] = min_dist[u] + b + A[v];
+                pq.push({-min_dist[v], v});
+            }
+        }
+    }
+    
+    for (int i = 2; i <= N; ++i)
+        cout << min_dist[i] << " ";
+    cout << "\n";
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    solve();
+    return 0;
+}
+```
+
+This should be correct. The final version below will be clean and efficient.
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+using i64 = long long;
+using pii = pair<int, int>;
+
+void solve() {
+    int N, M;
+    cin >> N >> M;
+    
+    vector<i64> A(N+1);
+    for (int i = 1; i <= N; ++i)
+        cin >> A[i];
+    
+    vector<vector<pair<int, i64>>> graph(N+1);
+    for (int i = 0; i < M; ++i) {
+        int u, v;
+        i64 w;
+        cin >> u >> v >> w;
+        graph[u].push_back({v, w});
+        graph[v].push_back({u, w});
+    }
+    
+    const i64 INF = numeric_limits<i64>::max();
+    vector<i64> dist(N+1, INF);
+    vector<bool> vis(N+1, false);
+    priority_queue<pair<i64, int>, vector<pair<i64, int>>, greater<>> pq;
+    
+    dist[1] = A[1];
+    pq.push({dist[1], 1});
+    
+    while (!pq.empty()) {
+        auto [d, u] = pq.top(); pq.pop();
+        if (vis[u]) continue;
+        vis[u] = true;
+        
+        for (auto [v, w] : graph[u]) {
+            if (!vis[v] && dist[u] + w + A[v] < dist[v]) {
+                dist[v] = dist[u] + w + A[v];
+                pq.push({dist[v], v});
+            }
+        }
+    }
+    
+    for (int i = 2; i <= N; ++i)
+        cout << dist[i] << " ";
+    cout << "\n";
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    solve();
+    return 0;
+}
+```

@@ -1,0 +1,54 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int64_t N;
+    int M;
+    cin >> N >> M;
+
+    unordered_set<int64_t> attacked;
+    unordered_set<int64_t> pieces;
+
+    // Direction offsets for attacked positions
+    const array<array<int, 2>, 8> dirs = {{
+        {2, 1}, {1, 2}, {-1, 2}, {-2, 1},
+        {-2, -1}, {-1, -2}, {1, -2}, {2, -1}
+    }};
+
+    for (int i = 0; i < M; ++i) {
+        int a, b;
+        cin >> a >> b;
+
+        // Store current piece position as a unique key
+        int64_t pos = (static_cast<int64_t>(a) << 32) | b;
+        pieces.insert(pos);
+
+        // Check each of the 8 possible attack directions
+        for (const auto& dir : dirs) {
+            int na = a + dir[0];
+            int nb = b + dir[1];
+
+            if (1 <= na && na <= N && 1 <= nb && nb <= N) {
+                int64_t attack_pos = (static_cast<int64_t>(na) << 32) | nb;
+                attacked.insert(attack_pos);
+            }
+        }
+    }
+
+    // Remove any positions that are already occupied by existing pieces
+    for (const auto& pos : pieces) {
+        attacked.erase(pos);
+    }
+
+    // Total number of squares: N * N
+    // Subtract number of attacked positions and pieces
+    int64_t total = N * N;
+    int64_t used = attacked.size() + pieces.size();
+
+    cout << (total - used) << endl;
+
+    return 0;
+}

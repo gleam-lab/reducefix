@@ -1,0 +1,125 @@
+
+It appears that there are some issues in your code that are causing it to fail on certain test cases. Here's a breakdown of potential issues and how to fix them:
+
+1. **Incorrect Disjoint Set Representation**: Your code uses a disjoint set to solve the problem, but the implementation and usage of `dis2` array are not correct. The `dis2` array should be used to group vertices by their depth and update the minimum path weight accordingly.
+
+2. **Edge Weights and Vertex Weights**: Your code does not correctly account for the vertex weights when calculating the path weight. The weight of a path should be the sum of the weights of the vertices and the edges on that path.
+
+3. **Initialization of Distance and Set Arrays**: The initial distance `dis` should be initialized to a high value (like `1e18`) or negative infinity except for the starting vertex (in your case, vertex 1).
+
+4. **Output**: Your code is not outputting anything for the second vertex (vertex 2) as per the problem statement's requirement.
+
+Here's a corrected version of your code:
+
+```cpp
+#include<bits/stdc++.h>
+using namespace std;
+#define int long long
+const int INF = 1e18;
+vector<pair<int, int>> adj[200005];
+
+int n, m, a[200005], ans[200005], depth[200005];
+int parent[200005], rank[200005];
+
+// Find function for universe
+int find(int u) {
+    if (parent[u] != u) parent[u] = find(parent[u]);
+    return parent[u];
+}
+
+// Union function for universe
+void union_set(int u, int v) {
+    int pu = find(u);
+    int pv = find(v);
+    if (pu != pv) {
+        if (rank[pu] > rank[pv]) {
+            parent[pv] = pu;
+        } else if (rank[pu] < rank[pv]) {
+            parent[pu] = pv;
+        } else {
+            parent[pv] = pu;
+            rank[pu]++;
+        }
+    }
+}
+
+int main() {
+    scanf("%lld %lld", &n, &m);
+    for (int i = 1; i <= n; ++i) {
+        scanf("%lld", &a[i]);
+    }
+    for (int i = 1; i <= m; ++i) {
+        int u, v, b;
+        scanf("%lld %lld %lld", &u, &v, &b);
+        adj[u].push_back({v, b});
+        adj[v].push_back({u, b});
+    }
+
+    // Initialize
+    for (int i = 0; i <= n; ++i) {
+        parent[i] = i;
+        rank[i] = 0;
+    }
+
+    // Diagonal edges for each vertex
+    for (int i = 1; i <= n; ++i) {
+        adj[i].push_back({i, a[i]});
+    }
+
+    // Start from the first vertex
+    parent[1] = 1;
+    ans[1] = a[1];
+
+    for (int i = 2; i <= n; ++i) {
+        ans[i] = INF;
+        parent[i] = 1;
+    }
+
+    // Set for tracking visited nodes
+    set<int> visited;
+
+    for (int i = 1; i <= n; ++i) {
+        if (visited.count(find(i))) continue;
+        visited.insert(find(i));
+        queue<int> q;
+        q.push(i);
+        depth[i] = -a[i]; // Use negative values for vertex weights
+        while (!q.empty()) {
+            int u = q.front();
+            q.pop();
+            for (auto e : adj[u]) {
+                int v = e.first;
+                int b = e.second;
+                int pu = find(u);
+                int pv = find(v);
+                if (pu != pv) {
+                    union_set(u, v);
+                    int dp = depth[u] + depth[v] + b;
+                    if (dp < ans[v]) {
+                        ans[v] = dp;
+                    }
+                    q.push(v);
+                    depth[v] = dp - b;
+                }
+            }
+        }
+    }
+
+    // Output answers for vertices 2 to N
+    for (int i = 2; i <= n; ++i) {
+        cout << ans[i] << " ";
+    }
+    cout << endl;
+
+    return 0;
+}
+```
+
+This code uses the Kruskal's algorithm with a union-find data structure to find the minimum weight path from vertex 1 to every other vertex by considering each vertex as the root of a new component and merging it with its neighbors. The `depth` array stores the depth of a node in the union-find structure and when the root of a node is visited for the first time, it assigns a depth of `-a[i]` (negatively accounting for the vertex weight) to its neighbors.
+
+The main idea is to maintain the minimum distance to each vertex and update it when we find a cheaper way to reach it by considering both the edge weight and the vertex weight. The final answer for each vertex is stored in the `ans` array.
+
+Remember to compile the code with the correct command that includes all necessary libraries, such as:
+```bash
+g++ -std=c++14 -O2 -o program program.cpp
+```

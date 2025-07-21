@@ -1,0 +1,34 @@
+#include<bits/stdc++.h>
+using namespace std;
+
+#define rep(i,n) for (ll i=0; i < (n); i++)
+using ll = long long;
+
+int main()
+{
+    int n; cin >> n;
+    ll ans=0;
+    vector<ll> h(n);
+    rep(i,n)
+    {
+        cin >> h[i];
+        // When health is a multiple of 3, it takes exactly h[i]/3 strikes to bring it down to 0.
+        // For health not a multiple of 3, we need to calculate the number of strikes as follows:
+        // - We can take off 3 health with each strike of T being a multiple of 3.
+        // - After that, if the remaining health is less than 3, we can take off 1 health with each strike.
+        // - If the remaining health is 3 or more, we can take off 2 healths with the next strike.
+        while (h[i] > 0) {
+            if (h[i] % 3 == 0) {
+                h[i] -= 3;
+                ans += 3;
+            } else if (h[i] == 2) {
+                ans += 3;
+                h[i] = 0; // This is a special case where the next strike of T being a multiple of 3 will finish the enemy
+            } else {
+                ans += 2;
+                h[i] -= 2;
+            }
+        }
+    }
+    cout << ans << endl;
+}

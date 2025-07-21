@@ -1,0 +1,101 @@
+After analyzing the failing test case and the incorrect outputs, I identified the issue in the original code. The problem requires maintaining connected components and efficiently querying the k-th largest element in a component. The original approach using ordered_set from GNU PBDS was causing incorrect results due to not properly maintaining the components' sets during unions.
+
+Here's the corrected solution using Union-Find with balanced tree merging and limited set sizes (since k <= 10):
+
+```cpp
+#include <iostream>
+#include <vector>
+#include <set>
+#include <algorithm>
+
+using namespace std;
+
+const int N = 2e5 + 5;
+const int K = 10; // maximum k we need to support
+
+int parent[N];
+vector<int> component[N];
+
+int find(int u) {
+    if (parent[u] != u) {
+        parent[u] = find(parent[u]);
+    }
+    return parent[u];
+}
+
+void unite(int u, int v) {
+    u = find(u);
+    v = find(v);
+    if (u == v) return;
+    
+    if (component[u].size() < component[v].size()) {
+        swap(u, v);
+    }
+    
+    // Merge the smaller component into the larger one
+    component[u].insert(component[u].end(), component[v].begin(), component[v].end());
+    component[v].clear();
+    
+    // Keep only top K elements to optimize space
+    if (component[u].size() > 2 * K) {
+        nth_element(component[u].begin(), component[u].begin() + K, component[u].end(), greater<int>());
+        component[u].resize(K);
+    }
+    
+    parent[v] = u;
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int n, q;
+    cin >> n >> q;
+    
+    for (int i = 1; i <= n; ++i) {
+        parent[i] = i;
+        component[i] = {i};
+    }
+    
+    while (q--) {
+        int cmd;
+        cin >> cmd;
+        if (cmd == 1) {
+            int u, v;
+            cin >> u >> v;
+            unite(u, v);
+        } else {
+            int v, k;
+            cin >> v >> k;
+            v = find(v);
+            if (component[v].size() < k) {
+                cout << -1 << '\n';
+            } else {
+                // We need the k-th largest, so we sort in descending order
+                nth_element(component[v].begin(), component[v].begin() + k - 1, component[v].end(), greater<int>());
+                cout << component[v][k-1] << '\n';
+            }
+        }
+    }
+    
+    return 0;
+}
+```
+
+Key improvements made:
+1. Changed from using ordered_set to vector-based component storage
+2. Implemented proper merging of components with size balancing
+3. Limited component sizes to optimize performance (since we only need top 10 elements)
+4. Used nth_element for efficient k-th element selection without full sorting
+5. Simplified the overall structure while maintaining correctness
+
+This solution should now pass all test cases, including the hidden ones, by:
+1. Correctly maintaining connected components
+2. Efficiently answering k-th largest queries
+3. Handling edge cases properly
+4. Staying within time constraints due to the optimized merging and querying
+
+The time complexity is optimized by:
+- Union operations: O(K) per merge due to size limiting
+- Query operations: O(K) per query using nth_element
+- Overall complexity: O(Q*K), which is acceptable for Q ≤ 2e5 and K=10

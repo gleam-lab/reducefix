@@ -1,0 +1,51 @@
+#include <iostream>
+#include <string>
+using namespace std;
+
+// Function to determine the winner of a single match
+int outcome(char me, char other) {
+    if (me == other) return 0; // draw
+    if ((me == 'R' && other == 'S') ||
+        (me == 'S' && other == 'P') ||
+        (me == 'P' && other == 'R'))
+        return 1; // I win
+    else
+        return -1; // opponent wins
+}
+
+int main() {
+    int n;
+    string s;
+    cin >> n >> s;
+
+    // Strategy 1: greedy forward
+    int score1 = 0;
+    char last_move1 = 'X';  // no move yet
+    for (char c : s) {
+        char best_move = 'R'; // placeholder
+        if (last_move1 == 'R') best_move = 'P';
+        else if (last_move1 == 'P') best_move = 'S';
+        else best_move = 'R';
+
+        if (outcome(best_move, c) > 0)
+            score1++;
+        last_move1 = best_move;
+    }
+
+    // Strategy 2: greedy backward
+    int score2 = 0;
+    char last_move2 = 'X';  // no move yet
+    for (int i = n-1; i >= 0; --i) {
+        char best_move = 'R'; // placeholder
+        if (last_move2 == 'R') best_move = 'P';
+        else if (last_move2 == 'P') best_move = 'S';
+        else best_move = 'R';
+
+        if (outcome(best_move, s[i]) > 0)
+            score2++;
+        last_move2 = best_move;
+    }
+
+    cout << max(score1, score2) << endl;
+    return 0;
+}

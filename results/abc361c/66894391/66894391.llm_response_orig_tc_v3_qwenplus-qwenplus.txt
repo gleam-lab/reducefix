@@ -1,0 +1,94 @@
+To solve this problem, we need to **minimize the difference between the maximum and minimum values** in a sequence formed by keeping `N-K` elements from the original array while preserving their relative order.
+
+### Key Observations:
+
+1. We are allowed to remove exactly `K` elements.
+2. The resulting array must maintain the original order of the remaining elements.
+3. Our goal is to minimize the value:  
+   `max(B) - min(B)` where B is the resulting array after removing K elements.
+
+---
+
+### Efficient Strategy:
+
+- Since the final array must consist of `N-K` elements **in the same order**, one way to think about this is to find the **best window of size (N-K)** such that the range (max - min) is minimized.
+- This leads us to use a **sliding window** approach with data structures that allow us to efficiently compute max and min over ranges:
+  - Use two **monotonic deques** (double-ended queues):
+    - One for tracking the maximum (`maxDeque`)
+    - One for tracking the minimum (`minDeque`)
+- As we slide a window of size `N-K`, we keep track of the current max and min using the deques.
+- For each valid window, compute `max - min` and keep track of the minimum such value.
+
+This solution runs in **O(N)** time due to amortized constant-time deque operations.
+
+---
+
+### Corrected C++ Code:
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int N, K;
+    cin >> N >> K;
+
+    vector<int> A(N);
+    for (int i = 0; i < N; ++i) {
+        cin >> A[i];
+    }
+
+    // Sliding window size
+    int windowSize = N - K;
+
+    deque<int> maxDeque;
+    deque<int> minDeque;
+    int result = INT_MAX;
+
+    for (int i = 0; i < N; ++i) {
+        // Maintain maxDeque: elements are in decreasing order
+        while (!maxDeque.empty() && A[maxDeque.back()] <= A[i]) {
+            maxDeque.pop_back();
+        }
+        maxDeque.push_back(i);
+
+        // Maintain minDeque: elements are in increasing order
+        while (!minDeque.empty() && A[minDeque.back()] >= A[i]) {
+            minDeque.pop_back();
+        }
+        minDeque.push_back(i);
+
+        // Remove out-of-bound indices (when window has started moving)
+        while (maxDeque.front() <= i - windowSize) {
+            maxDeque.pop_front();
+        }
+        while (minDeque.front() <= i - windowSize) {
+            minDeque.pop_front();
+        }
+
+        // Once the first window is complete, start computing results
+        if (i >= windowSize - 1) {
+            result = min(result, A[maxDeque.front()] - A[minDeque.front()]);
+        }
+    }
+
+    cout << result << endl;
+
+    return 0;
+}
+```
+
+---
+
+### Why Your Original Code Was Incorrect:
+
+- You sorted the array, which violates the requirement to preserve the **original order**.
+- The greedy strategy you used to remove elements based on median distances doesn't guarantee optimal range minimization.
+- The correct approach requires maintaining a **sliding window** of fixed size while tracking dynamic max/min values — best handled with deques.
+
+---
+
+This revised implementation adheres strictly to the constraints and guarantees an optimal and correct answer in O(N) time.

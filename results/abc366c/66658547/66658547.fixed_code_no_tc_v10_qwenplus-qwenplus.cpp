@@ -1,0 +1,27 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    unordered_map<int, int> countMap; // Tracks count of each number in the bag
+    int q;
+    cin >> q;
+    while (q--) {
+        int type;
+        cin >> type;
+        if (type == 1) {
+            int x;
+            cin >> x;
+            countMap[x]++;
+        } else if (type == 2) {
+            int x;
+            cin >> x;
+            countMap[x]--;
+            if (countMap[x] == 0) {
+                countMap.erase(x);
+            }
+        } else if (type == 3) {
+            cout << countMap.size() << "\n";
+        }
+    }
+    return 0;
+}

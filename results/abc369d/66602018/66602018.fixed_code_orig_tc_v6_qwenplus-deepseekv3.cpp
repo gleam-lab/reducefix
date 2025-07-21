@@ -1,0 +1,20 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+#define INF (long long)1e18
+
+int main() {
+    int n;
+    cin >> n;
+    long long dp0 = 0, dp1 = -INF, x, temp;
+    
+    for (int i = 0; i < n; i++) {
+        cin >> x;
+        temp = dp0;
+        dp0 = max(dp0, dp1 + x);
+        dp1 = max(dp1, temp - x);
+    }
+
+    cout << max(dp0, dp1) << endl;
+    return 0;
+}

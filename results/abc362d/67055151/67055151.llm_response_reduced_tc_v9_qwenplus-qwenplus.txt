@@ -1,0 +1,119 @@
+To solve this problem correctly and efficiently, we need to compute the **minimum path weight** from vertex `1` (which is index 0 in zero-based indexing) to all other vertices in a weighted undirected graph. Each path's weight includes:
+
+- The weights of the **vertices** on the path
+- The weights of the **edges** on the path
+
+This is essentially a variation of the **shortest path problem**, where the cost of a path isn't just edge weights but also includes node weights.
+
+---
+
+### Key Observations:
+- Since both edges and nodes contribute to the total path weight, we can model this using Dijkstra’s algorithm.
+- We treat the cost to move through a node as part of the transition cost.
+- Specifically, when moving from node `u` to node `v`, the full cost is:  
+  `current_total_cost + edge_weight + A[v]`
+
+We initialize the starting node (node 1 = index 0) with its own weight `A[0]`.
+
+---
+
+### Why the Original Code Was Incorrect:
+
+The original code had multiple issues:
+1. It used a priority queue incorrectly — mixing up costs and not modeling the actual path weight properly.
+2. It used a `set` (`rest_nodes`) to track unvisited nodes, which is unnecessary and inefficient for Dijkstra's.
+3. The logic for accumulating the cost was flawed — it added the vertex weight every time the node was visited, leading to double counting.
+
+---
+
+### Fix Summary:
+- Use Dijkstra's algorithm with a priority queue.
+- Maintain a `dist[]` array to store the minimum path weight to each node.
+- Start from node `0` with initial cost `A[0]`.
+- For each neighbor, calculate the new path cost: `dist[u] + edge_weight + A[v]`.
+- Only update if this gives a smaller value than current known distance.
+
+---
+
+### Final Corrected C++ Code:
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+#define ll long long
+const ll INF = 5LL << 60;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    ll n, m;
+    cin >> n >> m;
+
+    vector<ll> A(n);
+    for (ll i = 0; i < n; ++i) {
+        cin >> A[i];
+    }
+
+    vector<vector<pair<ll, ll>>> graph(n);
+    for (ll i = 0; i < m; ++i) {
+        ll u, v, b;
+        cin >> u >> v >> b;
+        u--; v--;
+        graph[u].push_back({v, b});
+        graph[v].push_back({u, b});
+    }
+
+    vector<ll> dist(n, INF);
+    dist[0] = A[0]; // Starting at node 0 with its own weight
+
+    using pii = pair<ll, ll>; // (total cost, node)
+    priority_queue<pii, vector<pii>, greater<pii>> pq;
+    pq.push({dist[0], 0});
+
+    while (!pq.empty()) {
+        auto [cost, u] = pq.top(); pq.pop();
+        if (cost > dist[u]) continue;
+
+        for (auto [v, b] : graph[u]) {
+            ll new_cost = cost + b + A[v]; // Cost to reach v via u
+            if (new_cost < dist[v]) {
+                dist[v] = new_cost;
+                pq.push({new_cost, v});
+            }
+        }
+    }
+
+    // Output results for nodes 2 to N
+    for (ll i = 1; i < n; ++i) {
+        cout << dist[i] << " ";
+    }
+    cout << '\n';
+
+    return 0;
+}
+```
+
+---
+
+### Time Complexity:
+- **Dijkstra's Algorithm** with a binary heap: `O((N + M) log N)`
+- This is efficient enough for constraints up to `2 * 10^5`.
+
+---
+
+### Example Input:
+```
+3 3
+537817643 569588316 775419741
+1 3 166194513
+2 3 413773392
+1 2 966571747
+```
+
+### Expected Output:
+```
+2073977706 1479431897
+```
+
+Which is now handled correctly.

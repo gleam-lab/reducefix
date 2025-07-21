@@ -1,0 +1,60 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+const int maxN = 2e5 + 5;
+int t, n, k, a[maxN], b[maxN];
+priority_queue<pair<int, int>, vector<pair<int, int>>, greater<pair<int, int>>> pq;
+
+bool cmp(const pair<int, int>& p1, const pair<int, int>& p2) {
+    if (p1.first != p2.first) return p1.first > p2.first;
+    return p1.second < p2.second;
+}
+
+int main() {
+    ios_base::sync_with_stdio(0);
+    cin.tie(0);
+    cout.tie(0);
+
+    cin >> t;
+    while (t--) {
+        cin >> n >> k;
+        pq = priority_queue<pair<int, int>, vector<pair<int, int>>, greater<pair<int, int>>>();
+        long long sum = 0, ans = LLONG_MAX;
+
+        for (int i = 1; i <= n; ++i) {
+            cin >> a[i];
+        }
+
+        for (int i = 1; i <= n; ++i) {
+            cin >> b[i];
+        }
+
+        vector<pair<int, int>> pairs(n);
+        for (int i = 1; i <= n; ++i) {
+            pairs[i - 1] = {a[i], b[i]};
+        }
+
+        sort(pairs.begin(), pairs.end(), cmp);
+
+        for (int i = 0; i < k; ++i) {
+            sum += pairs[i].second;
+            pq.push({pairs[i].second, i});
+        }
+
+        ans = min(ans, static_cast<long long>(pairs[k - 1].first * sum));
+
+        for (int i = k; i < n; ++i) {
+            if (pairs[i].second < pq.top().first) {
+                sum -= pq.top().first;
+                sum += pairs[i].second;
+                pq.pop();
+                pq.push({pairs[i].second, i});
+            }
+            ans = min(ans, static_cast<long long>(pairs[i].first * sum));
+        }
+
+        cout << ans << "\n";
+    }
+
+    return 0;
+}

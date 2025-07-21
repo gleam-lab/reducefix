@@ -1,0 +1,88 @@
+#include <iostream>
+#include <vector>
+#include <queue>
+#include <algorithm>
+using namespace std;
+
+#define int long long
+
+const int INF = 1e18;
+
+int T, N, K;
+vector<int> A, B;
+
+int solve() {
+    vector<pair<int, int>> items(N);
+    for (int i = 0; i < N; ++i) {
+        items[i] = {A[i], B[i]};
+    }
+    
+    // Sort by A value
+    sort(items.begin(), items.end());
+    
+    // Min-heap to keep track of the top K smallest B values
+    priority_queue<int, vector<int>, greater<int>> pq;
+    int sum_b = 0;
+    int res = INF;
+
+    // We process pairs in increasing order of A
+    for (int i = 0; i < N; ++i) {
+        pq.push(items[i].second);
+        sum_b += items[i].second;
+
+        if (pq.size() > K) {
+            sum_b -= pq.top();
+            pq.pop();
+        }
+
+        if (pq.size() == K) {
+            res = min(res, items[i].first * sum_b);
+        }
+    }
+
+    return res;
+}
+
+signed main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    cin >> T;
+    while (T--) {
+        cin >> N >> K;
+        A.resize(N);
+        B.resize(N);
+        for (int i = 0; i < N; ++i) cin >> A[i];
+        for (int i = 0; i < N; ++i) cin >> B[i];
+        
+        vector<pair<int, int>> items(N);
+        for (int i = 0; i < N; ++i) {
+            items[i] = {A[i], B[i]};
+        }
+        
+        // Sort based on A values
+        sort(items.begin(), items.end());
+        
+        priority_queue<int, vector<int>, greater<int>> pq;
+        int sum_b = 0;
+        int result = INF;
+
+        for (int i = 0; i < N; ++i) {
+            pq.push(items[i].second);
+            sum_b += items[i].second;
+
+            if (pq.size() > K) {
+                sum_b -= pq.top();
+                pq.pop();
+            }
+
+            if (pq.size() == K) {
+                result = min(result, items[i].first * sum_b);
+            }
+        }
+
+        cout << result << "\n";
+    }
+
+    return 0;
+}

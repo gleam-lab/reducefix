@@ -1,0 +1,120 @@
+To fix this code, we need to ensure that we correctly count the squares that are not under attack from any existing pieces on an N x N grid. The existing pieces can attack along rows, columns, and diagonals (both main and anti-diagonals). The solution must efficiently compute the number of safe squares even for very large grids (N up to 10^9) with a small number of pieces (M up to 10^3).
+
+### Approaches
+1. **Identify Attacked Squares**: For each existing piece, mark all squares it can attack (same row, same column, same diagonal (i + j = a + b), and same anti-diagonal (i - j = a - b)).
+2. **Count Safe Squares**: Subtract the number of squares under attack from the total number of squares (N^2). However, since some squares might be attacked by multiple pieces, we must avoid double-counting overlapping attacks.
+3. **Inclusion-Exclusion Principle**: Use the inclusion-exclusion principle to accurately count the total attacked squares by considering overlaps between different attack patterns (rows, columns, main diagonals, and anti-diagonals).
+
+### Solution Code
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+#define ll long long
+
+int main() {
+    ll N, M;
+    cin >> N >> M;
+    
+    set<ll> rows, cols, diag1, diag2;
+    
+    for (int i = 0; i < M; ++i) {
+        ll a, b;
+        cin >> a >> b;
+        rows.insert(a);
+        cols.insert(b);
+        diag1.insert(a + b);
+        diag2.insert(a - b);
+    }
+    
+    ll total = N * N;
+    ll attacked = 0;
+    
+    attacked += N * rows.size();
+    attacked += N * cols.size();
+    attacked -= rows.size() * cols.size();
+    
+    for (auto d : diag1) {
+        ll lower = max(1LL, d - N);
+        ll upper = min(N, d - 1);
+        if (lower <= upper) {
+            attacked += (upper - lower + 1);
+        }
+    }
+    
+    for (auto d : diag2) {
+        ll lower_row = max(1LL, 1 + d);
+        ll upper_row = min(N, N + d);
+        if (lower_row <= upper_row) {
+            attacked += (upper_row - lower_row + 1);
+        }
+    }
+    
+    for (auto r : rows) {
+        for (auto d : diag1) {
+            ll b = d - r;
+            if (b >= 1 && b <= N) {
+                if (cols.count(b)) {
+                    attacked--;
+                }
+            }
+        }
+        for (auto d : diag2) {
+            ll b = r - d;
+            if (b >= 1 && b <= N) {
+                if (cols.count(b)) {
+                    attacked--;
+                }
+            }
+        }
+    }
+    
+    for (auto c : cols) {
+        for (auto d : diag1) {
+            ll a = d - c;
+            if (a >= 1 && a <= N) {
+                if (rows.count(a)) {
+                    attacked--;
+                }
+            }
+        }
+        for (auto d : diag2) {
+            ll a = c + d;
+            if (a >= 1 && a <= N) {
+                if (rows.count(a)) {
+                    attacked--;
+                }
+            }
+        }
+    }
+    
+    for (auto d1 : diag1) {
+        for (auto d2 : diag2) {
+            ll a = (d1 + d2) / 2;
+            ll b = (d1 - d2) / 2;
+            if ((d1 + d2) % 2 == 0 && (d1 - d2) % 2 == 0) {
+                if (a >= 1 && a <= N && b >= 1 && b <= N) {
+                    if (rows.count(a) && cols.count(b)) {
+                        attacked++;
+                    }
+                }
+            }
+        }
+    }
+    
+    ll safe = total - attacked;
+    cout << safe << endl;
+    
+    return 0;
+}
+```
+
+### Explanation
+1. **Input Handling**: Reads the grid size (N) and the number of pieces (M), followed by their positions.
+2. **Sets for Attack Patterns**: Uses sets to store unique rows, columns, main diagonals (i + j), and anti-diagonals (i - j) that are under attack.
+3. **Initial Attacked Squares Calculation**: Computes the total attacked squares by considering rows and columns separately, then adjusts for overlaps using the inclusion-exclusion principle.
+4. **Diagonal Attacks**: For each main diagonal (i + j = d), calculates the number of valid squares within the grid bounds and adds these to the attacked count. Repeats similarly for anti-diagonals (i - j = d).
+5. **Overlap Adjustments**: Adjusts for overlaps between rows, columns, and diagonals to avoid double-counting squares attacked by multiple patterns.
+6. **Final Safe Squares Calculation**: Subtracts the total attacked squares from the total grid squares (N^2) to get the number of safe squares, which is then printed.
+
+This approach ensures that all attack patterns are considered efficiently, even for large grids, by leveraging set operations and mathematical bounds to minimize computational overhead.

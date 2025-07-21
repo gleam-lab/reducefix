@@ -1,0 +1,80 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+#define rep(i, n) for (int i = 0; i < (int)n; ++i)
+#define H first
+#define W second
+
+using ll = long long;
+using pii = pair<int, int>;
+
+int main() {
+    cin.tie(0)->sync_with_stdio(0);
+
+    int H, W, Y;
+    cin >> H >> W >> Y;
+    vector<vector<int>> A(H, vector<int>(W));
+    rep(i, H) rep(j, W) cin >> A[i][j];
+
+    int total = H * W;
+    vector<vector<bool>> alive(H, vector<bool>(W, true));
+    vector<vector<bool>> processed(H, vector<bool>(W, false));
+
+    // For each cell, store the sea level at which it gets submerged
+    vector<vector<int>> submerge_year(H, vector<int>(W, 0));
+
+    // Prepare a priority queue of cells that are on the border
+    // We use min heap based on elevation
+    priority_queue<pair<int, pii>, vector<pair<int, pii>>, greater<pair<int, pii>>> pq;
+
+    // Initialize border cells
+    rep(i, H) rep(j, W) {
+        if (i == 0 || i == H - 1 || j == 0 || j == W - 1) {
+            pq.push({A[i][j], {i, j}});
+            submerge_year[i][j] = A[i][j];
+        }
+    }
+
+    // Directions for BFS flooding
+    int dx[] = {1, 0, -1, 0};
+    int dy[] = {0, 1, 0, -1};
+
+    // Process the priority queue to determine when each cell gets submerged
+    while (!pq.empty()) {
+        auto [height, pos] = pq.top();
+        pq.pop();
+        int x = pos.first;
+        int y = pos.second;
+
+        if (processed[x][y]) continue;
+        processed[x][y] = true;
+
+        for (int k = 0; k < 4; ++k) {
+            int nx = x + dx[k];
+            int ny = y + dy[k];
+            if (nx >= 0 && nx < H && ny >= 0 && ny < W && !processed[nx][ny]) {
+                submerge_year[nx][ny] = max(submerge_year[nx][ny], min(height, A[nx][ny]));
+                pq.push({submerge_year[nx][ny], {nx, ny}});
+            }
+        }
+    }
+
+    // Count how many cells survive after each year
+    vector<int> remaining(Y + 2, total);
+    map<int, int> removed;
+
+    rep(i, H) rep(j, W) {
+        int year = submerge_year[i][j];
+        if (year <= Y) {
+            removed[year]++;
+        }
+    }
+
+    // Accumulate the removals
+    for (int y = 1; y <= Y; ++y) {
+        remaining[y] = remaining[y - 1] - removed[y];
+        cout << remaining[y] << "\n";
+    }
+
+    return 0;
+}

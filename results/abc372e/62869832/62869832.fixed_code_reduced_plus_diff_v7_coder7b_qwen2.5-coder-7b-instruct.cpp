@@ -1,0 +1,55 @@
+#include<bits/stdc++.h>
+using namespace std;
+
+const int MAXN = 2e5 + 10;
+vector<int> adj[MAXN];
+int degree[MAXN];
+
+void dfs(int node, int parent) {
+    if(parent != -1) degree[node]++;
+    for(auto child : adj[node]) {
+        if(child == parent) continue;
+        dfs(child, node);
+        degree[node] += degree[child];
+    }
+}
+
+int findKthLargest(vector<int>& arr, int k) {
+    sort(arr.begin(), arr.end());
+    return arr[arr.size() - k];
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(NULL);
+
+    int n, q;
+    cin >> n >> q;
+
+    for(int i = 1; i <= n; i++) {
+        adj[i].clear();
+        degree[i] = 0;
+    }
+
+    while(q--) {
+        int type;
+        cin >> type;
+        if(type == 1) {
+            int u, v;
+            cin >> u >> v;
+            adj[u].push_back(v);
+            adj[v].push_back(u);
+        } else {
+            int v, k;
+            cin >> v >> k;
+            vector<int> neighbors;
+            for(auto neighbor : adj[v]) {
+                if(neighbor != v) neighbors.push_back(neighbor);
+            }
+            if(k > neighbors.size()) cout << "-1" << endl;
+            else cout << findKthLargest(neighbors, k) << endl;
+        }
+    }
+
+    return 0;
+}

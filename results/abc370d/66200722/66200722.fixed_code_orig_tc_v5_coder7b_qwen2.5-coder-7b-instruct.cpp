@@ -1,0 +1,110 @@
+#include<bits/stdc++.h>
+using namespace std;
+
+const int MAXN = 400010;
+vector<int> g[MAXN], gr[MAXN];
+int vis[MAXN], color[MAXN];
+
+void dfs(int u){
+    vis[u] = 1;
+    for(int v : g[u]){
+        if(!vis[v]) dfs(v);
+    }
+}
+
+int find_set(int u){
+    if(color[u] == u) return u;
+    return color[u] = find_set(color[u]);
+}
+
+void union_sets(int u, int v){
+    u = find_set(u), v = find_set(v);
+    if(u != v){
+        color[u] = v;
+    }
+}
+
+int main(){
+    ios_base::sync_with_stdio(false); cin.tie(NULL);
+    
+    int h, w, q;
+    cin >> h >> w >> q;
+    vector<pair<int, int>> events;
+    for(int i = 0; i < q; i++){
+        int r, c;
+        cin >> r >> c;
+        r--, c--;
+        events.push_back({r, c});
+    }
+    
+    for(int i = 0; i < h; i++){
+        for(int j = 0; j < w; j++){
+            if(j < w - 1) g[i * w + j].push_back(i * w + j + 1);
+            if(i < h - 1) gr[j * h + i].push_back((j + 1) * h + i);
+        }
+    }
+    
+    int ans = h * w;
+    stack<pair<int, int>> todo;
+    for(int i = q - 1; i >= 0; i--){
+        int r = events[i].first, c = events[i].second;
+        int id = r * w + c;
+        
+        int l = c - 1, r_ = c + 1, u = r - 1, d = r + 1;
+        
+        if(l >= 0 && !vis[id - 1]){
+            dfs(id - 1);
+            ans++;
+        }
+        if(r_ < w && !vis[id + 1]){
+            dfs(id + 1);
+            ans++;
+        }
+        if(u >= 0 && !vis[id - w]){
+            dfs(id - w);
+            ans++;
+        }
+        if(d < h && !vis[id + w]){
+            dfs(id + w);
+            ans++;
+        }
+        
+        if(todo.empty()){
+            todo.push({id, -1});
+        } else{
+            while(!todo.empty() && todo.top().first != -1){
+                auto [prev_id, prev_dir] = todo.top();
+                todo.pop();
+                
+                int prev_l = prev_id % w - 1, prev_r = prev_id % w + 1, prev_u = prev_id / w - 1, prev_d = prev_id / w + 1;
+                
+                if(prev_l >= 0 && prev_l != l && !vis[prev_id - 1]){
+                    dfs(prev_id - 1);
+                    ans++;
+                }
+                if(prev_r < w && prev_r != r_ && !vis[prev_id + 1]){
+                    dfs(prev_id + 1);
+                    ans++;
+                }
+                if(prev_u >= 0 && prev_u != u && !vis[prev_id - w]){
+                    dfs(prev_id - w);
+                    ans++;
+                }
+                if(prev_d < h && prev_d != d && !vis[prev_id + w]){
+                    dfs(prev_id + w);
+                    ans++;
+                }
+                
+                if(prev_dir != -1){
+                    todo.push({prev_id, prev_dir});
+                }
+            }
+            
+            todo.push({id, -1});
+        }
+    }
+    
+    cout << ans << "\n";
+    
+    return 0;
+}

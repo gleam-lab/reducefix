@@ -1,0 +1,77 @@
+To solve this problem correctly and efficiently, we need to:
+
+1. Understand that the board size `N` can be up to `10^9`, so we **cannot** represent the entire board in memory.
+2. Note that each existing piece can threaten at most **8** positions (the knight-like move patterns), and since `M ≤ 2 × 10^5`, the total number of threatened positions is at most `M × 8 = 1.6 × 10^6`.
+3. Use a hash-based container (like `unordered_set`) to store all threatened or occupied positions.
+4. The final answer is:
+   ```
+   Total Squares - (Number of Threatened or Occupied Squares)
+   ```
+
+### Key Fixes from Your Code:
+- You used a `set<pair<int,int>>`. This is fine but `pair<int, int>` in sets uses lexicographic ordering, not hashing. It's slower than needed for large data.
+- We should use an `unordered_set` with a custom hash function for better performance.
+- The logic of marking threatened squares was correct, but it must ensure boundaries are checked: `(1 ≤ i,j ≤ N)` → after adjusting to zero-based indices, check `(0 ≤ i < N, 0 ≤ j < N)`.
+- Ensure **no duplicates** when adding positions to the set.
+
+Here’s the fixed C++ code:
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+// Custom hash struct for pair<int, int>
+struct PairHash {
+    size_t operator()(const pair<int, int>& p) const {
+        return hash<long long>()((static_cast<long long>(p.first) << 32) | p.second);
+    }
+};
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    long long N;
+    int M;
+    cin >> N >> M;
+
+    unordered_set<pair<int, int>, PairHash> attacked_or_occupied;
+
+    // Knight-style attack moves
+    vector<pair<int, int>> directions{
+        {2, 1}, {1, 2}, {-1, 2}, {-2, 1},
+        {-2, -1}, {-1, -2}, {1, -2}, {2, -1}
+    };
+
+    for (int i = 0; i < M; ++i) {
+        int a, b;
+        cin >> a >> b;
+        int x = a - 1;  // Convert to 0-based index
+        int y = b - 1;
+
+        // Add the occupied square itself
+        attacked_or_occupied.emplace(x, y);
+
+        // Mark all 8 possible attack positions if within bounds
+        for (const auto& [dx, dy] : directions) {
+            int nx = x + dx;
+            int ny = y + dy;
+            if (0 <= nx && nx < N && 0 <= ny && ny < N) {
+                attacked_or_occupied.emplace(nx, ny);
+            }
+        }
+    }
+
+    // Total number of squares on the board is N*N
+    // Subtract the count of attacked/occupied cells
+    cout << N * N - static_cast<long long>(attacked_or_occupied.size()) << "\n";
+}
+```
+
+### Why This Works:
+- Efficiently marks only the affected cells using `unordered_set`.
+- Avoids unnecessary memory usage by never creating the full grid.
+- Handles very large `N` values safely.
+- Ensures correctness even when there are duplicate threats due to hash uniqueness.
+
+This solution has time complexity `O(M)` and space complexity `O(M)`, which is optimal for given constraints.

@@ -1,0 +1,74 @@
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+
+#define rep(i, n) for (ll i = 0; i < (ll)(n); i++)
+
+int main() {
+    int H, W, Q;
+    cin >> H >> W >> Q;
+
+    // For each row, we maintain a sorted set of columns that still have walls
+    vector<set<int>> row(H);
+    // For each column, we maintain a sorted set of rows that still have walls
+    vector<set<int>> col(W);
+
+    // Initialize all cells to have walls
+    for (int i = 0; i < H; ++i) {
+        for (int j = 0; j < W; ++j) {
+            row[i].insert(j);
+            col[j].insert(i);
+        }
+    }
+
+    ll remaining = (ll)H * W;
+
+    auto destroy = [&](int r, int c) {
+        row[r].erase(c);
+        col[c].erase(r);
+        remaining--;
+    };
+
+    rep(q, Q) {
+        int R, C;
+        cin >> R >> C;
+        R--; C--;
+
+        // If there's a wall at (R, C), destroy it
+        if (row[R].count(C)) {
+            destroy(R, C);
+            continue;
+        }
+
+        // Up and Down in column C
+        auto it = col[C].lower_bound(R);
+        if (it != col[C].begin()) {
+            // Up
+            --it;
+            destroy(*it, C);
+        }
+
+        it = col[C].lower_bound(R);
+        if (it != col[C].end() && *it != R) {
+            // Down
+            destroy(*it, C);
+        }
+
+        // Left and Right in row R
+        auto jt = row[R].lower_bound(C);
+        if (jt != row[R].begin()) {
+            // Left
+            --jt;
+            destroy(R, *jt);
+        }
+
+        jt = row[R].lower_bound(C);
+        if (jt != row[R].end() && *jt != C) {
+            // Right
+            destroy(R, *jt);
+        }
+    }
+
+    cout << remaining << endl;
+    return 0;
+}

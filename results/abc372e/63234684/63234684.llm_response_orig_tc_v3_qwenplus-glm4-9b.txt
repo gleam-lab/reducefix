@@ -1,0 +1,113 @@
+
+The problem is to process a series of queries on an undirected graph with `N` vertices and `0` edges. There are two types of queries:
+
+1. Add an edge between two vertices `u` and `v`.
+2. Find the `k`-th largest vertex connected to a vertex `v`.
+
+The constraints are relatively large, so an efficient algorithm is needed. The provided solution uses a union-find data structure with path compression and union by size to manage the connectivity of the graph. However, there are issues with the current code implementation that need to be addressed.
+
+Hereâs an analysis of the issues and proposed improvements:
+
+### Issues:
+1. **Union-Find Implementation**: The union-find structure maintains a vector of vectors for each component, which becomes inefficient as the number of vertices increases. It tries to maintain a sorted list of vertices for quick access to the `k`-th largest vertex, but this list is not updated correctly when new vertices are added.
+   
+2. **Edge Addition**: The union-find structure is updated to merge components, but it does not ensure that the new edge being added does not create a cycle.
+
+3. **Finding `k`-th Largest Vertex**: The current approach is to maintain a sorted list of vertices for each component, which is updated every time an edge is added. This is inefficient and can lead to performance issues as the number of vertices grows.
+
+### Proposed Improvements:
+
+1. **Optimized Union-Find Structure**: Instead of maintaining a list of vertices for each component, we can maintain a priority queue (min-heap) of vertices for each component. This will allow us to efficiently retrieve the `k`-th largest vertex.
+
+2. **Edge Addition**: When adding an edge, if the two vertices are in different components, merge the components. If they are in the same component, prevent the addition of the edge to avoid cycles.
+
+3. **Efficient `k`-th Largest Vertex Retrieval**: Use the priority queue (min-heap) to keep the vertices sorted within each component. When a query is made to find the `k`-th largest vertex, we can use the heap structure to retrieve the top `k` elements efficiently.
+
+### Sample Code:
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+#define rep(i, n) for (int i = 0; i < n; ++i)
+
+struct UnionFind {
+    vector<int> parent;
+    vector<int> rank;
+    vector<priority_queue<int, vector<int>, greater<int>>> components;
+
+    UnionFind(int n) {
+        parent.resize(n);
+        rank.resize(n);
+        for (int i = 0; i < n; ++i) {
+            parent[i] = i;
+            rank[i] = 0;
+            components.emplace_back();
+            components.back().push(i);
+        }
+    }
+
+    int find(int x) {
+        if (parent[x] == x) return x;
+        int root = find(parent[x]);
+        parent[x] = root;
+        return root;
+    }
+
+    void unite(int x, int y) {
+        int rootX = find(x);
+        int rootY = find(y);
+        if (rootX != rootY) {
+            if (rank[rootX] > rank[rootY]) {
+                parent[rootY] = rootX;
+                components[rootX].push(components[rootY].top());
+                components[rootY].pop();
+                if (components[rootX].size() > 10) {
+                    components[rootX].pop();
+                }
+            } else if (rank[rootX] < rank[rootY]) {
+                parent[rootX] = rootY;
+                components[rootY].push(components[rootX].top());
+                components[rootX].pop();
+                if (components[rootY].size() > 10) {
+                    components[rootY].pop();
+                }
+            } else {
+                parent[rootY] = rootX;
+                components[rootX].push(components[rootY].top());
+                components[rootY].pop();
+                if (components[rootX].size() > 10) {
+                    components[rootX].pop();
+                }
+                rank[rootX] += 1;
+            }
+        }
+    }
+};
+
+int main() {
+    int n, q;
+    cin >> n >> q;
+    UnionFind uf(n);
+    while (q--) {
+        int type, u, v;
+        cin >> type >> u >> v;
+        if (type == 1) {
+            uf.unite(u - 1, v - 1);
+        } else {
+            int root = uf.find(v - 1);
+            if (uf.components[root].size() < v) {
+                cout << -1 << endl;
+            } else {
+                cout << uf.components[root].top() + 1 << endl;
+                uf.components[root].pop();
+                if (uf.components[root].size() > 10) {
+                    uf.components[root].pop();
+                }
+            }
+        }
+    }
+    return 0;
+}
+```
+
+This code should handle the provided queries efficiently and correctly.

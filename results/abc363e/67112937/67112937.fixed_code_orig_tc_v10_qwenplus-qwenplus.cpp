@@ -1,0 +1,70 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+constexpr int d[4][2] = {{0, 1}, {0, -1}, {1, 0}, {-1, 0}};
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int H, W, Y;
+    cin >> H >> W >> Y;
+
+    vector<vector<int>> A(H, vector<int>(W));
+    for (int i = 0; i < H; ++i) {
+        for (int j = 0; j < W; ++j) {
+            cin >> A[i][j];
+        }
+    }
+
+    using T = tuple<int, int, int>;
+    priority_queue<T, vector<T>, greater<>> pq;
+    vector<vector<bool>> vis(H, vector<bool>(W, false));
+
+    // Initialize the border cells
+    for (int i = 0; i < H; ++i) {
+        for (int j = 0; j < W; ++j) {
+            if (i == 0 || i == H - 1 || j == 0 || j == W - 1) {
+                pq.emplace(A[i][j], i, j);
+                vis[i][j] = true;
+            }
+        }
+    }
+
+    int total = H * W;
+
+    vector<int> ans(Y + 2); // Store answers for all years
+
+    // We'll process year by year
+    int year = 0;
+    while (!pq.empty()) {
+        auto [h, x, y] = pq.top();
+        pq.pop();
+
+        // While current cell's height is less than or equal to future sea level
+        while (year <= h && year <= Y) {
+            ans[year++] = total;
+        }
+
+        --total;
+        for (int k = 0; k < 4; ++k) {
+            int nx = x + d[k][0];
+            int ny = y + d[k][1];
+            if (nx >= 0 && nx < H && ny >= 0 && ny < W && !vis[nx][ny]) {
+                vis[nx][ny] = true;
+                pq.emplace(A[nx][ny], nx, ny);
+            }
+        }
+    }
+
+    // Fill remaining years with the last computed value
+    while (year <= Y) {
+        ans[year++] = total;
+    }
+
+    for (int i = 1; i <= Y; ++i) {
+        cout << ans[i] << '\n';
+    }
+
+    return 0;
+}

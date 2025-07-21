@@ -1,0 +1,34 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+  int N;
+  cin >> N;
+  vector<long long> A(N);
+  for (int i = 0; i < N; i++) cin >> A[i];
+
+  // dp[0] = even number of monsters defeated (including 0)
+  // dp[1] = odd number of monsters defeated
+  vector<long long> dp(2);
+  dp[0] = 0;
+
+  for (int i = 0; i < N; i++) {
+    vector<long long> p = dp;  // copy previous state
+    for (int j = 0; j < 2; j++) {
+      // Option 1: Skip current monster
+      dp[j] = max(dp[j], p[j]);
+      
+      // Option 2: Defeat current monster
+      dp[j ^ 1] = max(dp[j ^ 1], p[j] + A[i]);
+      
+      // Special case: if this is the second consecutive monster being defeated
+      if (i > 0 && j == 1) {
+        dp[j ^ 1] = max(dp[j ^ 1], p[j] + A[i]);  // avoid double bonus
+      }
+    }
+  }
+
+  long long ans = max(dp[0], dp[1]);
+  cout << ans << endl;
+  return 0;
+}

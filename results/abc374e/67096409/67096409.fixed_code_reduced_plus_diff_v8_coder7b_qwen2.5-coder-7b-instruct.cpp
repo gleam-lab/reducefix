@@ -1,0 +1,72 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <climits>
+
+using namespace std;
+
+struct Item {
+    int a, p, b, q;
+};
+
+int main() {
+    int N, X;
+    cin >> N >> X;
+
+    vector<Item> items(N);
+    for (int i = 0; i < N; ++i) {
+        cin >> items[i].a >> items[i].p >> items[i].b >> items[i].q;
+        if (items[i].a * items[i].q < items[i].b * items[i].p) {
+            swap(items[i].a, items[i].b);
+            swap(items[i].p, items[i].q);
+        }
+    }
+
+    vector<vector<long long>> dp(N, vector<long long>(items[0].a * items[0].b + 1, LLONG_MAX));
+    for (int i = 0; i <= items[0].a * items[0].b; ++i) {
+        dp[0][i] = min((long long)i / (items[0].a * items[0].b) * items[0].p * items[0].b,
+                      dp[0][max(0, i - items[0].a)] + items[0].p +
+                      dp[0][max(0, i - items[0].b)] + items[0].q);
+    }
+
+    for (int i = 1; i < N; ++i) {
+        for (int j = 0; j <= items[i].a * items[i].b; ++j) {
+            dp[i][j] = min(dp[i - 1][j], dp[i][j]);
+            if (j >= items[i].a) {
+                dp[i][j] = min(dp[i][j], dp[i][j - items[i].a] + items[i].p);
+            }
+            if (j >= items[i].b) {
+                dp[i][j] = min(dp[i][j], dp[i][j - items[i].b] + items[i].q);
+            }
+        }
+    }
+
+    int low = 0, high = INT_MAX;
+    while (low < high) {
+        int mid = low + (high - low) / 2;
+        bool possible = true;
+        for (int i = 0; i < N; ++i) {
+            long long cost = 0;
+            int remaining = mid;
+            for (int j = 0; j < i; ++j) {
+                int d = remaining / (items[j].a * items[j].b);
+                remaining %= (items[j].a * items[j].b);
+                cost += dp[j][remaining] + d * items[j].p * items[j].b;
+            }
+            cost += dp[i][remaining];
+            if (cost > X) {
+                possible = false;
+                break;
+            }
+        }
+        if (possible) {
+            high = mid;
+        } else {
+            low = mid + 1;
+        }
+    }
+
+    cout << low << endl;
+
+    return 0;
+}

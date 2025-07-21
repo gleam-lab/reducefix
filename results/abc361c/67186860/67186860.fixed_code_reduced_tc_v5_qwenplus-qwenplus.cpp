@@ -1,0 +1,31 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    int n, k;
+    cin >> n >> k;
+    vector<int> A(n);
+    for (int i = 0; i < n; ++i) {
+        cin >> A[i];
+    }
+
+    // We need to remove exactly K elements to minimize (max(B) - min(B))
+    // B is formed by removing K elements from A and keeping the order.
+    // So we must keep (n - K) elements in order.
+
+    // To minimize max(B) - min(B), we want a window of (n - K) consecutive elements
+    // in the sorted array that has the smallest difference between max and min
+
+    // Sort A
+    vector<int> sorted_A = A;
+    sort(sorted_A.begin(), sorted_A.end());
+
+    // Try all windows of size (n - K)
+    int result = INT_MAX;
+    for (int i = 0; i + (n - K) <= n; ++i) {
+        result = min(result, sorted_A[i + (n - K)] - sorted_A[i]);
+    }
+
+    cout << result << endl;
+    return 0;
+}

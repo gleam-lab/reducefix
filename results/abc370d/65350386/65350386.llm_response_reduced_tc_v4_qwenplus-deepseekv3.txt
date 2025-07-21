@@ -1,0 +1,96 @@
+To fix this code, we need to accurately simulate the process of placing bombs in the grid and destroying walls according to the specified rules. The key insight is to efficiently track the walls in each row and column, and to quickly find the nearest walls in the four directions when a bomb is placed in an empty cell.
+
+### Approaches
+1. **Data Structures**: Use `set` for each row and column to keep track of the remaining walls. This allows efficient insertion, deletion, and searching (logarithmic time complexity).
+2. **Process Queries**: For each query:
+   - If the cell has a wall, remove it from both the row and column sets.
+   - If the cell is empty, find the first walls in the four directions (up, down, left, right) using binary search (via `lower_bound` and `upper_bound`), and remove them.
+3. **Efficiency**: The operations on sets (insertion, deletion, and searching) are all O(log N), where N is the number of elements in the set. Given the constraints, this approach should be efficient enough.
+
+### Solution Code
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+#define rep(i, n) for(int i = 0; i < (n); i++)
+using ll = long long;
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int h, w, q;
+    cin >> h >> w >> q;
+    vector<set<int>> rows(h), cols(w);
+    rep(i, h) {
+        rep(j, w) {
+            rows[i].insert(j);
+            cols[j].insert(i);
+        }
+    }
+
+    rep(qi, q) {
+        int r, c;
+        cin >> r >> c;
+        r--; c--;
+
+        if (rows[r].count(c)) {
+            rows[r].erase(c);
+            cols[c].erase(r);
+        } else {
+            // Up
+            auto it_up = cols[c].lower_bound(r);
+            if (it_up != cols[c].begin()) {
+                it_up--;
+                int i = *it_up;
+                rows[i].erase(c);
+                cols[c].erase(it_up);
+            }
+
+            // Down
+            auto it_down = cols[c].lower_bound(r);
+            if (it_down != cols[c].end()) {
+                int i = *it_down;
+                rows[i].erase(c);
+                cols[c].erase(it_down);
+            }
+
+            // Left
+            auto it_left = rows[r].lower_bound(c);
+            if (it_left != rows[r].begin()) {
+                it_left--;
+                int j = *it_left;
+                rows[r].erase(j);
+                cols[j].erase(r);
+            }
+
+            // Right
+            auto it_right = rows[r].lower_bound(c);
+            if (it_right != rows[r].end()) {
+                int j = *it_right;
+                rows[r].erase(j);
+                cols[j].erase(r);
+            }
+        }
+    }
+
+    int ans = 0;
+    rep(i, h) ans += rows[i].size();
+    cout << ans << "\n";
+
+    return 0;
+}
+```
+
+### Explanation
+1. **Initialization**: We start by initializing sets for each row and column to keep track of walls. Each cell (i, j) is added to both the row `i` and column `j` sets.
+2. **Processing Queries**: For each query:
+   - If the cell (r, c) has a wall, it is removed from both the row and column sets.
+   - If the cell is empty, we search for the nearest walls in all four directions:
+     - **Up**: Using `lower_bound` in the column set to find the first wall above (r, c), then moving back one position if possible.
+     - **Down**: Using `lower_bound` directly to find the first wall below (r, c).
+     - **Left**: Using `lower_bound` in the row set to find the first wall to the left of (r, c), then moving back one position if possible.
+     - **Right**: Using `lower_bound` directly to find the first wall to the right of (r, c).
+   - These walls are then removed from their respective row and column sets.
+3. **Counting Remaining Walls**: After processing all queries, we sum the sizes of all row sets (or column sets) to get the total number of remaining walls.
+
+This approach efficiently handles each query in logarithmic time relative to the grid dimensions, making it suitable for large input sizes.

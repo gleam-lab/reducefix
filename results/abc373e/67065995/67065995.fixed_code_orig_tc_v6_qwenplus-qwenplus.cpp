@@ -1,0 +1,92 @@
+#include <bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+#define all(x) (x).begin(), (x).end()
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int n, m;
+    ll k;
+    cin >> n >> m >> k;
+    vector<ll> a(n);
+    for (int i = 0; i < n; ++i) {
+        cin >> a[i];
+    }
+
+    // If M >= N, everyone can be elected
+    if (m >= n) {
+        cout << string(n, '0');
+        return 0;
+    }
+
+    vector<int> idx(n);
+    iota(idx.begin(), idx.end(), 0);
+
+    // Sort candidates by current votes
+    sort(idx.begin(), idx.end(), [&](int i, int j) { return a[i] < a[j]; });
+
+    // Build prefix sums of sorted votes
+    vector<ll> prefix(n + 1);
+    for (int i = 0; i < n; ++i) {
+        prefix[i + 1] = prefix[i] + a[idx[i]];
+    }
+
+    vector<ll> res(n, -1);
+
+    for (int i = 0; i < n; ++i) {
+        int pos = i; // position in sorted list
+        ll lo = 0, hi = k + 1;
+
+        while (lo < hi) {
+            ll mid = (lo + hi) / 2;
+            ll target = a[idx[pos]] + mid;
+
+            // Find how many candidates have strictly more than target votes
+            int l = pos + 1, r = n;
+            while (l < r) {
+                int m = (l + r) / 2;
+                if (a[idx[m]] > target)
+                    l = m;
+                else
+                    r = m - 1;
+            }
+
+            // The number of candidates with votes > target is n - l
+            int cnt = n - l;
+
+            // We need to ensure that less than M candidates have more than this one's final total
+            if (cnt < m) {
+                hi = mid;
+            } else {
+                // We need to raise this candidate enough so that at least (cnt - m + 1) candidates are below
+                ll need = 0;
+                int left = m - (n - cnt);
+                if (left > 0) {
+                    int start = max(pos + 1, n - left);
+                    for (int j = start; j < n && left > 0; ++j, --left) {
+                        need += (target - a[idx[j]] + 1);
+                    }
+                }
+                if (need <= k) {
+                    hi = mid;
+                } else {
+                    lo = mid + 1;
+                }
+            }
+        }
+
+        if (lo <= k) {
+            res[idx[i]] = lo;
+        } else {
+            res[idx[i]] = -1;
+        }
+    }
+
+    for (ll x : res) {
+        cout << x << " ";
+    }
+
+    return 0;
+}

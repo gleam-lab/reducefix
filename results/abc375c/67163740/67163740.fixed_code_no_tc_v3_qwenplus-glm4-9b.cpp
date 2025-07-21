@@ -1,0 +1,25 @@
+#include <iostream>
+#include <cmath>
+using namespace std;
+using ll = long long;
+
+int main() {
+    ll n;
+    cin >> n;
+    double x = 0, y = 0, total_cost = 0;
+
+    for (ll i = 0; i < n; i++) {
+        double a, b;
+        cin >> a >> b;
+        total_cost += sqrt((x - a) * (x - a) + (y - b) * (y - b));
+        x = a;
+        y = b;
+    }
+
+    // Since we have already added the distance from the last point to (x, y), we need to subtract
+    // the distance from (x, y) to the origin to get the correct total distance.
+    total_cost += sqrt(x * x + y * y);
+    cout << fixed << setprecision(10) << total_cost << endl;
+
+    return 0;
+}

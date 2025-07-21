@@ -1,0 +1,43 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define rep(i, n) for (int i = 0; i < (n); i++)
+using ll = long long;
+
+int main(void) {
+    int h, w, q;
+    cin >> h >> w >> q;
+    vector<set<pair<int, int>>> grid(h);
+    rep(i, h) rep(j, w) {
+        grid[i].insert({j, i});
+    }
+    vector<int> remaining_walls(h, w);
+
+    while (q--) {
+        int r, c;
+        cin >> r >> c;
+        r--; c--;
+        auto& row = grid[r];
+        auto it = row.lower_bound({c, INT_MAX});
+        if (it == row.begin()) {
+            remaining_walls[r]--;
+        } else {
+            it--;
+            remaining_walls[r] -= 2;
+            row.erase(it);
+        }
+        it = row.lower_bound({c, INT_MIN});
+        it = (it == row.end()) ? row.begin() : it;
+        if (it != row.end()) {
+            remaining_walls[r]--;
+            row.erase(it);
+        }
+        grid[r].erase({c, r});
+    }
+
+    ll ans = 0;
+    rep(i, h) {
+        ans += remaining_walls[i];
+    }
+    cout << ans << "\n";
+    return 0;
+}

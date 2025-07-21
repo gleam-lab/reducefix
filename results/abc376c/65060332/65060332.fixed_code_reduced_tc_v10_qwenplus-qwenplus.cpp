@@ -1,0 +1,50 @@
+#include <bits/stdc++.h>
+#define ll long long
+using namespace std;
+
+const int N = 2e5 + 5;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    ll n;
+    cin >> n;
+    vector<ll> a(n), b(n - 1);
+
+    for (ll i = 0; i < n; ++i) {
+        cin >> a[i];
+    }
+    for (ll i = 0; i < n - 1; ++i) {
+        cin >> b[i];
+    }
+
+    sort(a.begin(), a.end());
+    sort(b.begin(), b.end());
+
+    // Try to fit the smallest N-1 toys into the available boxes
+    ll extra_toy = -1;
+    ll j = 0;
+    for (ll i = 0; i < n - 1; ++i) {
+        if (j < n - 1 && b[j] >= a[i]) {
+            j++;
+        } else {
+            if (extra_toy == -1) {
+                extra_toy = a[i];
+            } else {
+                cout << -1 << "\n";
+                return 0;
+            }
+        }
+    }
+
+    // If one toy is left, we need a box of its size
+    if (extra_toy != -1) {
+        cout << extra_toy << "\n";
+    } else {
+        // All N-1 smallest toys fit in the boxes, we can use the biggest toy as the extra
+        cout << a.back() << "\n";
+    }
+
+    return 0;
+}

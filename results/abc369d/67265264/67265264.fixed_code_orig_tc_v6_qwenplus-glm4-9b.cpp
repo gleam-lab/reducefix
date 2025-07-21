@@ -1,0 +1,1 @@
+cout << exp(); // This is incorrect and will compile but waste the result.

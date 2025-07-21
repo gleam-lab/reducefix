@@ -1,0 +1,108 @@
+To solve this problem efficiently, we need to handle both adding edges and querying the k-th largest connected vertex in a dynamic manner. Here's a revised approach using a union-find structure combined with a priority queue to manage the connected components:
+
+1. **Union-Find Data Structure**: This will help us manage connected components dynamically as edges are added.
+2. **Priority Queue**: For each component, maintain a max heap (priority queue) to store the degrees of vertices within that component. This allows efficient access to the k-th largest degree.
+
+### Steps to Fix the Code
+
+1. **Union-Find Initialization**: Initialize the parent array and rank array.
+2. **Union Operation**: When adding an edge, merge the two components and update the degree information.
+3. **Query Operation**: Retrieve the k-th largest degree from the priority queue associated with the queried vertex's component.
+
+Here is the corrected code:
+
+```cpp
+#include <iostream>
+#include <vector>
+#include <queue>
+#include <unordered_map>
+
+using namespace std;
+
+const int MAXN = 2 * 100005;
+
+class UnionFind {
+public:
+    vector<int> parent, rank, degree;
+
+    UnionFind(int n) : parent(n), rank(n, 1), degree(n, 0) {
+        for (int i = 0; i < n; ++i) {
+            parent[i] = i;
+        }
+    }
+
+    int find(int x) {
+        if (parent[x] != x) {
+            parent[x] = find(parent[x]);
+        }
+        return parent[x];
+    }
+
+    void unite(int x, int y) {
+        x = find(x);
+        y = find(y);
+        if (x != y) {
+            if (rank[x] > rank[y]) {
+                swap(x, y);
+            }
+            parent[x] = y;
+            if (rank[x] == rank[y]) {
+                rank[y]++;
+            }
+            degree[y] += degree[x] + 1;
+            pq[y].insert(degree[y]);
+            pq[x].erase(degree[x]);
+        }
+    }
+
+    int getKthLargest(int x, int k) {
+        x = find(x);
+        if (pq[x].size() < k) {
+            return -1;
+        } else {
+            auto it = pq[x].rbegin();
+            advance(it, k - 1);
+            return *it;
+        }
+    }
+
+private:
+    unordered_map<int, multiset<int>> pq;
+};
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int n, q;
+    cin >> n >> q;
+    UnionFind uf(n);
+
+    while (q--) {
+        int t, a, b;
+        cin >> t >> a >> b;
+        if (t == 1) {
+            uf.unite(a - 1, b - 1);
+        } else {
+            int result = uf.getKthLargest(a - 1, b);
+            cout << result << '\n';
+        }
+    }
+
+    return 0;
+}
+```
+
+### Explanation:
+
+1. **Union-Find Class**:
+   - `find`: Path compression to keep the tree flat.
+   - `unite`: Union operation with rank-based merging.
+   - `degree`: Keeps track of the number of vertices in each component.
+   - `pq`: A map storing the degrees of vertices in each component using a multiset for efficient insertion and deletion.
+
+2. **Main Function**:
+   - Read input and initialize Union-Find structure.
+   - Process each query: if type 1, add an edge; if type 2, query the k-th largest degree.
+
+This solution ensures efficient handling of dynamic updates and queries, leveraging the properties of union-find and priority queues.

@@ -1,0 +1,59 @@
+#include<iostream>
+#include<vector>
+#include<algorithm>
+using namespace std;
+
+const int INF = 0x3f3f3f3f3f3f3f3f;
+const int MAXN = 2e5 + 9;
+
+int n, k, t;
+vector<pair<int, int>> A, B;
+
+void solve() {
+    cin >> n >> k;
+    A.clear(), B.clear();
+    A.resize(n), B.resize(n);
+    
+    // Read A and B arrays
+    for(int i = 0; i < n; ++i) cin >> A[i].first, A[i].second = i;
+    for(int i = 0; i < n; ++i) cin >> B[i].first, B[i].second = i;
+    
+    // Sort based on A's first element
+    sort(A.begin(), A.end());
+    
+    // Create sorted array of B values using indices from A
+    vector<int> B_values(n);
+    for(int i = 0; i < n; ++i) B_values[A[i].second] = B[i].first;
+    
+    // Initialize variables to track the minimum cost and current sum
+    int ans = INF, current_sum = 0;
+    multiset<int> pq;
+    
+    // Iterate through the elements
+    for(int i = 0; i < n; ++i) {
+        pq.insert(B_values[i]);
+        current_sum += B_values[i];
+        
+        // If we have more than k elements, remove the largest one
+        if(pq.size() > k) {
+            auto it = pq.rbegin();
+            current_sum -= *it;
+            pq.erase(prev(it.base()));
+        }
+        
+        // If we have exactly k elements, calculate the cost
+        if(pq.size() == k) {
+            ans = min(ans, (current_sum + B_values[i]) * A[i].first);
+        }
+    }
+    
+    // Print the result for this test case
+    cout << ans << '\n';
+}
+
+int main() {
+    ios_base::sync_with_stdio(false); cin.tie(0);
+    cin >> t;
+    while(t--) solve();
+    return 0;
+}

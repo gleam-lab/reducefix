@@ -1,0 +1,32 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+
+int main() {
+    int n, q;
+    std::cin >> n;
+    std::vector<int> x(n);
+    std::vector<long long> prefix_sum(n + 1, 0);
+
+    // Read input values
+    for (int i = 0; i < n; ++i) {
+        std::cin >> x[i];
+    }
+
+    // Calculate prefix sums
+    for (int i = 0; i < n; ++i) {
+        prefix_sum[i + 1] = prefix_sum[i] + x[i];
+    }
+
+    std::cin >> q;
+
+    while (q--) {
+        int l, r;
+        std::cin >> l >> r;
+        --l; // Convert to zero-based index
+        --r; // Convert to zero-based index
+        std::cout << prefix_sum[r + 1] - prefix_sum[l] << std::endl;
+    }
+
+    return 0;
+}

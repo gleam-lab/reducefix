@@ -1,0 +1,43 @@
+#include <bits/stdc++.h>
+using namespace std;
+const int maxN = 2e5 + 5;
+int t, n, k, a[maxN], b[maxN];
+pair<int, int> p[maxN];
+bool cmp(pair<int, int> p1, pair<int, int> p2) {
+  if (p1.first != p2.first) return p1.first < p2.first;
+  return p1.second < p2.second;
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(NULL);
+    cout.tie(NULL);
+    
+    cin >> t;
+    while (t--) {
+        cin >> n >> k;
+        priority_queue<int> pq;
+        int sum = 0, ans = INT_MAX;
+        for (int i = 0; i < n; i++) {
+            cin >> a[i] >> b[i];
+            p[i] = {a[i], b[i]};
+        }
+        sort(p, p + n, cmp);
+        for (int i = 0; i < k; i++) {
+            sum += p[i].second;
+            pq.push(p[i].second);
+        }
+        ans = min(ans, (long long)pq.top() * sum);
+        for (int i = k; i < n; i++) {
+            if (p[i].second < pq.top()) {
+                sum -= pq.top();
+                pq.pop();
+                pq.push(p[i].second);
+                sum += p[i].second;
+            }
+            ans = min(ans, (long long)pq.top() * sum);
+        }
+        cout << ans << "\n";
+    }
+    return 0;
+}

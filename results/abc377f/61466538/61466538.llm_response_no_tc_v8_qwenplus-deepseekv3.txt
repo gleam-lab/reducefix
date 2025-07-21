@@ -1,0 +1,137 @@
+### Analysis of the Incorrect Code
+
+The original code attempts to solve the problem by counting the number of safe squares where a new piece can be placed without being captured by any existing pieces. The approach involves tracking the rows, columns, and diagonals (both types) that are already under attack by existing pieces. However, the code has several issues:
+
+1. **Double Counting**: The original code subtracts the number of squares under attack from rows, columns, and diagonals separately, which leads to double counting of squares that are under attack by multiple conditions (e.g., a square that is in both an attacked row and an attacked column).
+
+2. **Diagonal Calculation**: The method for calculating the number of squares under attack by diagonals is incorrect. Specifically, the way intersections between diagonals and rows/columns are handled doesn't correctly account for overlaps.
+
+3. **Efficiency**: The original code uses sets and loops that may not be efficient enough for large inputs, especially considering the constraints where \( N \) can be as large as \( 10^9 \) and \( M \) up to \( 10^3 \).
+
+### Fixed Approach
+
+To correctly solve the problem, we need to:
+
+1. **Track Attacked Rows and Columns**: Use sets to keep track of all rows and columns that are under attack by existing pieces.
+
+2. **Track Attacked Diagonals**: Use sets to track the two types of diagonals (i+j and i-j) that are under attack.
+
+3. **Calculate Safe Squares**: The total number of safe squares is calculated by subtracting the squares under attack from the total squares. The key is to correctly account for overlaps between different attack conditions to avoid double counting.
+
+4. **Inclusion-Exclusion Principle**: Apply the inclusion-exclusion principle to correctly calculate the number of squares under attack by any of the conditions (rows, columns, or diagonals).
+
+### Fixed Code
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+typedef long long ll;
+typedef pair<ll, ll> pll;
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(NULL);
+    
+    ll N, M;
+    cin >> N >> M;
+    vector<pll> queens(M);
+    set<ll> rows, cols, diag1, diag2;
+    
+    for (int i = 0; i < M; ++i) {
+        ll a, b;
+        cin >> a >> b;
+        queens[i] = {a, b};
+        rows.insert(a);
+        cols.insert(b);
+        diag1.insert(a - b);
+        diag2.insert(a + b);
+    }
+    
+    ll total = N * N;
+    ll attacked = 0;
+    
+    // Squares attacked by rows or columns
+    ll row_attacks = rows.size() * N;
+    ll col_attacks = cols.size() * N;
+    ll row_col_intersect = rows.size() * cols.size();
+    attacked += row_attacks + col_attacks - row_col_intersect;
+    
+    // Squares attacked by diagonals (i-j)
+    for (ll d : diag1) {
+        ll cnt;
+        if (d >= 0) {
+            cnt = N - d;
+        } else {
+            cnt = N + d;
+        }
+        attacked += cnt;
+    }
+    
+    // Squares attacked by diagonals (i+j)
+    for (ll d : diag2) {
+        ll cnt;
+        if (d <= N + 1) {
+            cnt = d - 1;
+        } else {
+            cnt = 2 * N - d + 1;
+        }
+        attacked += cnt;
+    }
+    
+    // Subtract squares double-counted between diagonals and rows/columns
+    set<pll> intersections;
+    for (ll d : diag1) {
+        for (ll r : rows) {
+            ll c = r - d;
+            if (1 <= c && c <= N) {
+                intersections.insert({r, c});
+            }
+        }
+        for (ll c : cols) {
+            ll r = c + d;
+            if (1 <= r && r <= N) {
+                intersections.insert({r, c});
+            }
+        }
+    }
+    for (ll d : diag2) {
+        for (ll r : rows) {
+            ll c = d - r;
+            if (1 <= c && c <= N) {
+                intersections.insert({r, c});
+            }
+        }
+        for (ll c : cols) {
+            ll r = d - c;
+            if (1 <= r && r <= N) {
+                intersections.insert({r, c});
+            }
+        }
+    }
+    attacked -= intersections.size();
+    
+    // Subtract squares that are occupied by existing queens
+    ll safe = total - attacked - M;
+    
+    cout << safe << "\n";
+    
+    return 0;
+}
+```
+
+### Explanation
+
+1. **Input Handling**: The code reads the grid size \( N \) and the number of queens \( M \), followed by their positions.
+
+2. **Tracking Attacks**: Sets are used to store rows, columns, and diagonals under attack by the queens. This helps in efficiently determining which squares are under attack.
+
+3. **Calculating Attacked Squares**: 
+   - **Rows and Columns**: The number of squares under attack by rows and columns is calculated, with adjustments for overlaps using the inclusion-exclusion principle.
+   - **Diagonals**: The number of squares under attack by each type of diagonal is calculated separately, considering the different cases based on the diagonal's position relative to the grid.
+
+4. **Adjusting for Overlaps**: The intersections between diagonals and rows/columns are calculated to avoid double counting squares that are under attack by multiple conditions.
+
+5. **Final Calculation**: The total number of safe squares is obtained by subtracting the attacked squares and the squares occupied by existing queens from the total grid squares.
+
+This approach ensures correctness and efficiency, even for large values of \( N \) and \( M \).

@@ -1,0 +1,56 @@
+#include<bits/stdc++.h>
+using namespace std;
+using LL = __int128;
+typedef long long ll;
+const int N = 1e6+7;
+
+struct FenwickTree {
+    vector<int> tree;
+    int n;
+
+    FenwickTree(int size) : n(size), tree(size + 1, 0) {}
+
+    void update(int idx, int delta) {
+        while (idx <= n) {
+            tree[idx] += delta;
+            idx += idx & -idx;
+        }
+    }
+
+    LL query(int idx) {
+        LL sum = 0;
+        while (idx > 0) {
+            sum += tree[idx];
+            idx -= idx & -idx;
+        }
+        return sum;
+    }
+};
+
+int main() {
+    int n, m;
+    cin >> n;
+    vector<int> a(n+1, 0), b(n+1, 0), c(n+1, 0);
+    for(int i = 1; i <= n; ++i) {
+        cin >> a[i];
+    }
+    for(int i = 1; i <= n; ++i) {
+        cin >> b[i];
+        c[i] = b[i] + (i > 1 ? c[i-1] : 0);
+    }
+    cin >> m;
+    while(m--) {
+        int l, r;
+        cin >> l >> r;
+        auto l_i = lower_bound(a.begin(), a.end(), l);
+        auto r_j = upper_bound(a.begin(), a.end(), r);
+        int i = l_i - a.begin();
+        int j = r_j - a.begin();
+        if (r >= a[n]) {
+            cout << c[n] << endl;
+        } else {
+            cout << c[j-1] - c[i-1] << endl;
+        }
+    }
+    return 0;
+}

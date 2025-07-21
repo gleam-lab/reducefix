@@ -1,0 +1,106 @@
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+#define int long long
+#define close ios::sync_with_stdio(false); cin.tie(0); cout.tie(0);
+const int MAXH = 1005;
+const int MAXW = 1005;
+const int MAXA = 1e5 + 5;
+
+int H, W, Y;
+int grid[MAXH][MAXW];
+bool vis[MAXH][MAXW];
+
+struct Cell {
+    int r, c, h;
+    bool operator<(const Cell& o) const {
+        return h > o.h; // Min-heap based on height
+    }
+};
+
+priority_queue<Cell> pq;
+int remaining = 0;
+
+void bfs(int sea_level) {
+    while (!pq.empty() && pq.top().h <= sea_level) {
+        Cell cur = pq.top(); pq.pop();
+        if (vis[cur.r][cur.c]) continue;
+        vis[cur.r][cur.c] = true;
+        remaining--;
+
+        for (int i = 0; i < 4; ++i) {
+            int nr = cur.r + "0121"[i] - '1';
+            int nc = cur.c + "1210"[i] - '1'; // Clockwise: right, down, left, up
+            if (nr >= 1 && nr <= H && nc >= 1 && nc <= W && !vis[nr][nc]) {
+                pq.push({nr, nc, grid[nr][nc]});
+                vis[nr][nc] = true; // Mark as in queue to avoid duplicates
+            }
+        }
+    }
+}
+
+signed main() {
+    close;
+    cin >> H >> W >> Y;
+    for (int i = 1; i <= H; ++i)
+        for (int j = 1; j <= W; ++j)
+            cin >> grid[i][j];
+
+    // Initialize the border cells into the priority queue
+    memset(vis, false, sizeof(vis));
+    for (int i = 1; i <= H; ++i) {
+        if (!vis[i][1]) {
+            vis[i][1] = true;
+            pq.push({i, 1, grid[i][1]});
+        }
+        if (!vis[i][W]) {
+            vis[i][W] = true;
+            pq.push({i, W, grid[i][W]});
+        }
+    }
+
+    for (int j = 2; j <= W - 1; ++j) {
+        if (!vis[1][j]) {
+            vis[1][j] = true;
+            pq.push({1, j, grid[1][j]});
+        }
+        if (!vis[H][j]) {
+            vis[H][j] = true;
+            pq.push({H, j, grid[H][j]});
+        }
+    }
+
+    remaining = H * W;
+
+    // We'll store results and print at end to handle increasing sea levels correctly
+    vector<int> ans(Y + 2);
+
+    // Current sea level
+    int current_level = 1;
+
+    // For each year, process all cells that get submerged at this level
+    for (int year = 1; year <= Y; ++year) {
+        while (!pq.empty() && pq.top().h <= year) {
+            Cell cur = pq.top(); pq.pop();
+            if (vis[cur.r][cur.c]) continue;
+            vis[cur.r][cur.c] = true;
+            remaining--;
+
+            for (int i = 0; i < 4; ++i) {
+                int nr = cur.r + "0121"[i] - '1';
+                int nc = cur.c + "1210"[i] - '1';
+                if (nr >= 1 && nr <= H && nc >= 1 && nc <= W && !vis[nr][nc]) {
+                    vis[nr][nc] = true; // Mark as enqueued
+                    pq.push({nr, nc, grid[nr][nc]});
+                }
+            }
+        }
+        ans[year] = remaining;
+    }
+
+    for (int i = 1; i <= Y; ++i)
+        cout << ans[i] << '\n';
+
+    return 0;
+}
+```

@@ -1,0 +1,80 @@
+To fix this code, we need to address the issue that caused the incorrect output in the failing case. The problem involves calculating the number of safe squares where we can place a new piece without it being captured by any existing pieces. The existing pieces can capture pieces placed in specific relative positions (like a knight's moves in chess).
+
+### Analysis of the Original Code
+The original code attempts to:
+1. Read the grid size \( N \) and the number of existing pieces \( M \).
+2. For each existing piece, mark all positions that it can capture (8 possible positions) as unsafe.
+3. Calculate the total number of safe squares as \( N^2 - \text{number of unsafe squares} \).
+
+The issue arises because the original code uses a set to store unsafe positions, which leads to incorrect results due to integer overflow when \( N \) is very large (up to \( 10^9 \)), and because it doesn't efficiently handle the large range of possible values.
+
+### Solution Approach
+1. **Efficient Storage**: Instead of storing all unsafe positions directly, we recognize that each existing piece affects a fixed number of positions (8) around it. We need to count all unique positions that are either existing pieces or positions that existing pieces can capture.
+2. **Handling Large \( N \)**: Since \( N \) can be as large as \( 10^9 \), we must avoid storing all positions explicitly. Instead, we use a set to keep track of unique positions that are either existing pieces or their attackable squares.
+3. **Correct Calculation**: After collecting all unique unsafe positions, the answer is \( N^2 - \text{size of the unsafe set} \). However, we must ensure that the calculation is done using 64-bit integers to avoid overflow.
+
+### Fixed Code
+```cpp
+#include <iostream>
+#include <vector>
+#include <set>
+#include <utility>
+
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    long long N, M;
+    cin >> N >> M;
+
+    set<pair<long long, long long>> unsafe;
+    
+    for (long long i = 0; i < M; ++i) {
+        long long a, b;
+        cin >> a >> b;
+        unsafe.insert({a, b});
+
+        if (a + 2 <= N && b + 1 <= N) {
+            unsafe.insert({a + 2, b + 1});
+        }
+        if (a + 1 <= N && b + 2 <= N) {
+            unsafe.insert({a + 1, b + 2});
+        }
+        if (a - 1 >= 1 && b + 2 <= N) {
+            unsafe.insert({a - 1, b + 2});
+        }
+        if (a - 2 >= 1 && b + 1 <= N) {
+            unsafe.insert({a - 2, b + 1});
+        }
+        if (a - 2 >= 1 && b - 1 >= 1) {
+            unsafe.insert({a - 2, b - 1});
+        }
+        if (a - 1 >= 1 && b - 2 >= 1) {
+            unsafe.insert({a - 1, b - 2});
+        }
+        if (a + 1 <= N && b - 2 >= 1) {
+            unsafe.insert({a + 1, b - 2});
+        }
+        if (a + 2 <= N && b - 1 >= 1) {
+            unsafe.insert({a + 2, b - 1});
+        }
+    }
+
+    long long total = N * N;
+    long long unsafe_count = unsafe.size();
+    long long safe = total - unsafe_count;
+
+    cout << safe << '\n';
+
+    return 0;
+}
+```
+
+### Explanation
+1. **Input Handling**: The code reads the grid size \( N \) and the number of existing pieces \( M \).
+2. **Unsafe Positions Tracking**: For each existing piece at position \( (a, b) \), the code checks all 8 possible positions that a knight can move to from \( (a, b) \). Each valid position (within the grid bounds) is added to a set to ensure uniqueness.
+3. **Result Calculation**: The total number of safe squares is computed by subtracting the number of unsafe positions (stored in the set) from the total number of squares \( N^2 \). The result is printed as the output.
+
+This approach efficiently handles large values of \( N \) by using a set to avoid duplicates and ensures correct calculations with 64-bit integers, preventing overflow issues. The complexity is \( O(M \log M) \) due to the set operations, which is feasible given \( M \) is up to \( 2 \times 10^5 \).

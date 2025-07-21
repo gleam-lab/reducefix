@@ -1,0 +1,46 @@
+#include <iostream>
+#include <string>
+#include <vector>
+#include <algorithm>
+
+using namespace std;
+
+int N;
+vector<long long> A, B;
+
+int main() {
+    cin >> N;
+    A.resize(N);
+    B.resize(N-1);
+    for (int i = 0; i < N; i++) cin >> A[i];
+    for (int i = 0; i < N - 1; i++) cin >> B[i];
+
+    // Sort both arrays in ascending order
+    sort(A.begin(), A.end());
+    sort(B.begin(), B.end());
+
+    // Check if there is any toy that cannot fit in any existing box
+    bool canStore = true;
+    for (int i = 0; i < N - 1; i++) {
+        if (A[i] > B[i]) {
+            canStore = false;
+            break;
+        }
+    }
+
+    // If no toy can fit in any existing box, output -1
+    if (!canStore) {
+        cout << -1 << endl;
+        return 0;
+    }
+
+    // Find the maximum size among the toys that can fit in the existing boxes
+    long long maxFitSize = *max_element(A.begin(), A.end());
+
+    // The minimum size of the new box should be at least one more than the largest toy size
+    long long minBoxSize = maxFitSize + 1;
+
+    cout << minBoxSize << endl;
+
+    return 0;
+}

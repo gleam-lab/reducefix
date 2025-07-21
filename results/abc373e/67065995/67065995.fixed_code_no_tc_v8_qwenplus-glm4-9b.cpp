@@ -1,0 +1,81 @@
+#include <bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+#define all(x) (x).begin(), (x).end()
+
+int main() {
+    ios_base::sync_with_stdio(0);
+    cin.tie(0);
+    int n, m;
+    ll k;
+    cin >> n >> m >> k;
+    vector<ll> a(n);
+    ll total_votes = 0;
+    for (ll &ai : a) {
+        cin >> ai;
+        total_votes += ai;
+    }
+    k -= total_votes;
+
+    vector<pair<ll, int>> candidates;
+    for (int i = 0; i < n; i++) {
+        candidates.emplace_back(a[i], i);
+    }
+    sort(candidates.begin(), candidates.end());
+
+    vector<ll> ans(n, -1);
+    // Vector to store the minimum votes needed to surpass each candidate
+    vector<ll> needed_votes(n);
+    
+    // Calculate the minimum votes needed to surpass each candidate
+    for (int i = 0; i < m; ++i) {
+        needed_votes[i] = candidates[i].first + (m - 1 - i);
+    }
+    
+    // Calculate the additional votes needed for the first non-m candidates
+    for (int i = m; i < n; ++i) {
+        needed_votes[i] = candidates[i].first + (m - 1);
+    }
+    
+    // Calculate the minimum votes needed for the first m-1 candidates
+    for (int i = 0; i < m - 1; ++i) {
+        needed_votes[i] = max(needed_votes[i], candidates[i].first + (m - 1 - i));
+    }
+    
+    // Binary search to find the minimum additional votes needed to guarantee the victory
+    for (int i = 0; i < n; ++i) {
+        ll low = 0, high = k + 1;
+        bool found = false;
+        while (low <= high) {
+            ll mid = (low + high) / 2;
+            ll votes_needed = needed_votes[i] + mid;
+            ll votes_excess = 0;
+
+            // Calculate the excess votes after giving the minimum needed to the current candidate
+            for (int j = 0; j < n; ++j) {
+                if (candidates[j].first + mid < needed_votes[j]) {
+                    votes_excess += votes_needed - (candidates[j].first + mid);
+                }
+            }
+
+            // Check if the current candidate can secure victory after adding mid votes
+            if (votes_excess >= 0) {
+                found = true;
+                high = mid - 1;
+            } else {
+                low = mid + 1;
+            }
+        }
+
+        if (found && low <= k) {
+            ans[candidates[i].second] = low;
+        } else {
+            ans[candidates[i].second] = -1;
+        }
+    }
+
+    for (ll vote : ans) {
+        cout << vote << ' ';
+    }
+    cout << '\n';
+}

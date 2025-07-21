@@ -1,0 +1,132 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+typedef long long ll;
+typedef pair<ll, ll> pll;
+typedef pair<int, int> pii;
+
+#define all(x) (x).begin(), (x).end()
+#define FOR(i, a, b) for (int i = (a); i < (b); ++i)
+#define pb push_back
+
+void solve() {
+    ll N, M;
+    cin >> N >> M;
+    set<ll> rows, cols, diag1, diag2;
+    map<ll, ll> diag1cnt, diag2cnt;
+    
+    vector<pll> pieces(M);
+    for (ll i = 0; i < M; ++i) {
+        ll a, b;
+        cin >> a >> b;
+        pieces[i] = {a, b};
+        rows.insert(a);
+        cols.insert(b);
+        diag1.insert(a - b);
+        diag2.insert(a + b);
+        diag1cnt[a - b]++;
+        diag2cnt[a + b]++;
+    }
+
+    ll total = N * N;
+    
+    // Subtract rows and columns
+    total -= (ll)rows.size() * N;
+    total -= (ll)cols.size() * N;
+    
+    // Add back intersections of rows and columns
+    ll overlap_row_col = 0;
+    for (auto p : pieces) {
+        if (rows.count(p.first) && cols.count(p.second)) {
+            overlap_row_col++;
+        }
+    }
+    total += overlap_row_col;
+
+    // Subtract diagonals of type i - j = c
+    for (auto d : diag1) {
+        ll count;
+        if (d >= 0) {
+            count = N - d;
+        } else {
+            count = N + d;
+        }
+        total -= count;
+    }
+
+    // Add back overlaps between diag1 and rows/cols
+    map<pll, bool> visited;
+    for (auto r : rows) {
+        for (auto d : diag1) {
+            ll c = r - d;
+            if (c >= 1 && c <= N) {
+                visited[{r, c}] = true;
+            }
+        }
+    }
+    for (auto c : cols) {
+        for (auto d : diag1) {
+            ll r = c + d;
+            if (r >= 1 && r <= N) {
+                visited[{r, c}] = true;
+            }
+        }
+    }
+    total += visited.size();
+
+    // Subtract diagonals of type i + j = c
+    for (auto d : diag2) {
+        ll count;
+        if (d <= N + 1) {
+            count = d - 1;
+        } else {
+            count = 2 * N + 1 - d;
+        }
+        total -= count;
+    }
+
+    // Add back overlaps between diag2 and rows/cols/diag1
+    visited.clear();
+    for (auto r : rows) {
+        for (auto d : diag2) {
+            ll c = d - r;
+            if (c >= 1 && c <= N) {
+                visited[{r, c}] = true;
+            }
+        }
+    }
+    for (auto c : cols) {
+        for (auto d : diag2) {
+            ll r = d - c;
+            if (r >= 1 && r <= N) {
+                visited[{r, c}] = true;
+            }
+        }
+    }
+    for (auto d1 : diag1) {
+        for (auto d2 : diag2) {
+            // Solve:
+            // i - j = d1
+            // i + j = d2
+            // => 2i = d1 + d2 => i = (d1 + d2)/2
+            // => 2j = d2 - d1 => j = (d2 - d1)/2
+            if ((d1 + d2) % 2 == 0) {
+                ll i = (d1 + d2) / 2;
+                ll j = (d2 - d1) / 2;
+                if (i >= 1 && i <= N && j >= 1 && j <= N) {
+                    visited[{i, j}] = true;
+                }
+            }
+        }
+    }
+    total += visited.size();
+
+    cout << total << endl;
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+    solve();
+    return 0;
+}

@@ -1,0 +1,54 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int N;
+    cin >> N;
+
+    vector<long long> A(N), B(N - 1);
+    for (int i = 0; i < N; ++i) cin >> A[i];
+    for (int i = 0; i < N - 1; ++i) cin >> B[i];
+
+    sort(A.begin(), A.end());
+    sort(B.begin(), B.end());
+
+    // We need to assign each toy to a box such that:
+    // - Each toy goes into a box with size >= its size
+    // - One of the boxes is newly added (with size x)
+    // - All other boxes are from B
+    // - Each box contains at most one toy
+
+    // The idea is to find the minimum x such that we can assign all toys.
+    // To do this, we try to match largest toys with largest available boxes.
+
+    // We will use greedy approach:
+    // 1. Sort A descending
+    // 2. Sort B descending
+    // 3. Try to fit A[i] into B[i-1] or better, and see which A[i] cannot be matched
+    // 4. If only one toy cannot be matched, then x should be A[i]
+
+    sort(A.rbegin(), A.rend());
+    sort(B.rbegin(), B.rend());
+
+    vector<long long> unmatched;
+    int b_idx = 0;
+
+    for (int i = 0; i < N; ++i) {
+        if (b_idx < N - 1 && B[b_idx] >= A[i]) {
+            b_idx++;
+        } else {
+            unmatched.push_back(A[i]);
+        }
+    }
+
+    if (unmatched.size() > 1) {
+        cout << -1 << endl;
+    } else {
+        cout << (unmatched.empty() ? A[0] : unmatched[0]) << endl;
+    }
+
+    return 0;
+}

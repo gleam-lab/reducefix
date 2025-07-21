@@ -1,0 +1,42 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    int n;
+    cin >> n;
+    vector<int> va(n), vb(n);
+    for(int i = 0; i < n; ++i)
+        cin >> va[i];
+    for(int i = 0; i < n - 1; ++i)
+        cin >> vb[i];
+
+    // Sort both arrays
+    sort(va.begin(), va.end());
+    sort(vb.begin(), vb.end());
+
+    // Initialize the answer with the maximum possible value
+    long long ans = LLONG_MAX;
+
+    // Iterate through the sorted boxes and toys
+    for(int i = 0; i < n - 1; ++i) {
+        // Find the smallest box that can fit the current toy
+        auto it = lower_bound(vb.begin(), vb.end(), va[i]);
+        if(it != vb.end()) {
+            // Update the answer with the size of this box
+            ans = min(ans, static_cast<long long>(*it));
+        } else {
+            // If no suitable box is found, return -1
+            ans = -1;
+            break;
+        }
+    }
+
+    // Handle the last toy separately
+    if(ans != -1 && va[n - 1] > ans)
+        ans = -1;
+
+    // Print the result
+    cout << ans << endl;
+
+    return 0;
+}

@@ -1,0 +1,60 @@
+#include <bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+#define all(x) (x).begin(), (x).end()
+
+int main() {
+    ios_base::sync_with_stdio(0);
+    cin.tie(0);
+    int n, m;
+    ll k;
+    cin >> n >> m >> k;
+    vector<ll> a(n);
+    ll total_votes = 0;
+    for(int i = 0; i < n; ++i) {
+        cin >> a[i];
+        total_votes += a[i];
+    }
+    k -= total_votes;
+
+    vector<ll> sorted_a(a);
+    sort(sorted_a.begin(), sorted_a.end(), greater<ll>());
+
+    vector<ll> prefix(N + 1, 0);
+    for (int i = 0; i < N; ++i) {
+        prefix[i + 1] = prefix[i] + sorted_a[i];
+    }
+
+    vector<ll> votes_needed(n, -1);
+    vector<pair<ll, int>> candidates(N);
+
+    for (int i = 0; i < N; ++i) {
+        ll required_votes = prefix[m] - sorted_a[i];
+        if (required_votes < 0) {
+            required_votes = prefix[m - 1] - sorted_a[i];
+        }
+        votes_needed[i] = required_votes;
+        candidates[i] = {required_votes, i};
+    }
+
+    sort(candidates.begin(), candidates.end());
+
+    ll max_votes_needed = *max_element(votes_needed.begin(), votes_needed.end());
+    for (int i = 0; i < N; ++i) {
+        if (candidates[i].first == max_votes_needed) {
+            if (candidates[i].first <= k) {
+                votes_needed[candidates[i].second] = k - candidates[i].first;
+            } else {
+                votes_needed[candidates[i].second] = -1;
+            }
+            break;
+        }
+    }
+
+    for (int i = 0; i < N; ++i) {
+        cout << votes_needed[i] << ' ';
+    }
+    cout << '\n';
+
+    return 0;
+}

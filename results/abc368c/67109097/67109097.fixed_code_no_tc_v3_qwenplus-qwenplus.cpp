@@ -1,0 +1,38 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+
+int main() {
+    int N;
+    cin >> N;
+    vector<long long> H(N);
+    for (int i = 0; i < N; ++i) {
+        cin >> H[i];
+    }
+
+    long long T = 0;
+
+    for (int i = 0; i < N; ++i) {
+        // Determine how many attacks are needed to reduce this enemy to 0 or less
+        // Each attack at T % 3 == 0 does 3 damage, otherwise 1
+        // We simulate the attacks required starting from current T
+
+        // Number of full 3-attacks possible: each 3-attack takes 3 turns and does 5 damage total (3 + 1 + 1)
+        long long fullCycles = H[i] / 5;
+        long long remaining = H[i] % 5;
+
+        T += fullCycles * 3;
+
+        while (remaining > 0) {
+            T++;
+            if (T % 3 == 0) {
+                remaining -= 3;
+            } else {
+                remaining -= 1;
+            }
+        }
+    }
+
+    cout << T << endl;
+    return 0;
+}

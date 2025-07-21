@@ -1,0 +1,111 @@
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+#define rep(i,n) for(long long i=0;i<(n);i++)
+using ll = long long;
+
+ll compute_min_cost(ll a, ll b, ll p, ll q, ll required) {
+    // We want to buy at least 'required' number of items with minimum cost
+    // Using dynamic programming up to a reasonable limit
+
+    const ll MAX = 2000; // Enough since LCM(a,b) <= a*b and we use cycle detection
+    vector<ll> dp(MAX + 1, 1e18);
+    dp[0] = 0;
+
+    // Build DP table
+    for (ll i = 1; i <= MAX; ++i) {
+        if (i >= a) dp[i] = min(dp[i], dp[i - a] + p);
+        if (i >= b) dp[i] = min(dp[i], dp[i - b] + q);
+    }
+
+    // Find cycle properties
+    ll period = 0;
+    for (ll i = MAX; i > 0; --i) {
+        ll diff = dp[i] - dp[i-1];
+        bool is_cycle = true;
+        for (ll j = i-1; j > i-50 && j > 0; --j) {
+            if (dp[j] - dp[j-1] != diff) {
+                is_cycle = false;
+                break;
+            }
+        }
+        if (is_cycle) {
+            period = i;
+            break;
+        }
+    }
+
+    if (period == 0) return dp[required];
+
+    // Calculate prefix sums of differences
+    vector<ll> diff(period);
+    for (ll i = 1; i < period; ++i) {
+        diff[i] = dp[i] - dp[i-1];
+    }
+
+    // Find the minimum cost per unit in the cycle
+    ll min_per_item = 1e18;
+    for (ll i = 1; i < period; ++i) {
+        ll total = 0, count = 0;
+        for (ll j = 0; j < period; ++j) {
+            total += diff[(i+j)%period];
+            count++;
+        }
+        min_per_item = min(min_per_item, total / count);
+    }
+
+    // Compute final cost: pre-cycle + linear growth
+    ll full_cycles = required / period;
+    ll remainder = required % period;
+    return dp[remainder] + full_cycles * dp[period] + full_cycles * remainder * min_per_item;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+    
+    int n;
+    ll x;
+    cin >> n >> x;
+    
+    vector<ll> a(n), b(n), p(n), q(n);
+    for (int i = 0; i < n; ++i) {
+        cin >> a[i] >> p[i] >> b[i] >> q[i];
+    }
+    
+    // Binary search on answer
+    ll low = 0, high = 1;
+    // First find an upper bound that's not feasible
+    while (true) {
+        ll total_cost = 0;
+        for (int i = 0; i < n && total_cost <= x; ++i) {
+            total_cost += compute_min_cost(a[i], b[i], p[i], q[i], high);
+        }
+        if (total_cost > x) break;
+        high *= 2;
+        if (high > 1e18) {
+            high = 1e18;
+            break;
+        }
+    }
+    
+    // Now binary search between low and high
+    while (low < high) {
+        ll mid = (low + high + 1) / 2;
+        ll total_cost = 0;
+        
+        for (int i = 0; i < n && total_cost <= x; ++i) {
+            total_cost += compute_min_cost(a[i], b[i], p[i], q[i], mid);
+        }
+        
+        if (total_cost <= x) {
+            low = mid;
+        } else {
+            high = mid - 1;
+        }
+    }
+    
+    cout << low << endl;
+    return 0;
+}
+```

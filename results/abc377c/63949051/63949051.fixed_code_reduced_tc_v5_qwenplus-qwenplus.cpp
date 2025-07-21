@@ -1,0 +1,57 @@
+#include <iostream>
+#include <vector>
+#include <set>
+#include <tuple>
+#include <unordered_set>
+
+using namespace std;
+
+using i64 = long long;
+using pii = pair<i64, i64>;
+
+// Custom hash for pair<i64, i64>
+struct PairHash {
+    size_t operator()(const pii& p) const {
+        return hash<i64>{}(p.first) ^ (hash<i64>{}(p.second) << 16);
+    }
+};
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    i64 N, M;
+    cin >> N >> M;
+
+    // Use unordered_set for faster lookups
+    unordered_set<pii, PairHash> attacked_positions;
+
+    // Define the 8 possible attack positions relative to a piece's position
+    const vector<pii> attack_offsets = {
+        {2, 1}, {1, 2}, {-1, 2}, {-2, 1},
+        {-2, -1}, {-1, -2}, {1, -2}, {2, -1}
+    };
+
+    // Read each piece and mark all positions it attacks
+    for (i64 i = 0; i < M; ++i) {
+        i64 x, y;
+        cin >> x >> y;
+
+        // Insert current piece itself (so we don't count it as empty)
+        attacked_positions.insert({x, y});
+
+        // Mark all valid attack positions from this piece
+        for (auto [dx, dy] : attack_offsets) {
+            i64 nx = x + dx;
+            i64 ny = y + dy;
+            if (1 <= nx && nx <= N && 1 <= ny && ny <= N) {
+                attacked_positions.insert({nx, ny});
+            }
+        }
+    }
+
+    // Total positions is N*N, subtract number of attacked positions
+    cout << (i64)(N)*N - (i64)attacked_positions.size() << '\n';
+
+    return 0;
+}

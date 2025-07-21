@@ -1,0 +1,68 @@
+#include <bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+
+int main() {
+    ios_base::sync_with_stdio(0);
+    cin.tie(0);
+    
+    int n, m;
+    ll k;
+    cin >> n >> m >> k;
+    vector<ll> a(n);
+    for(int i = 0; i < n; i++) {
+        cin >> a[i];
+        k -= a[i];
+    }
+    
+    // Sort indices based on the number of votes in ascending order
+    vector<int> idx(n);
+    iota(idx.begin(), idx.end(), 0);
+    sort(idx.begin(), idx.end(), [&](int i, int j) { return a[i] < a[j]; });
+    
+    // Calculate prefix sums of sorted vote counts
+    vector<ll> pref(n + 1);
+    for(int i = 0; i < n; i++) {
+        pref[i + 1] = a[idx[i]] + pref[i];
+    }
+    
+    // Initialize result array with -1
+    vector<ll> res(n, -1);
+    
+    for(int i = 0; i < n; i++) {
+        ll target = k + 1;
+        int left = 0, right = k + 1;
+        
+        // Binary search for the minimum additional votes needed
+        while(left < right) {
+            ll mid = (left + right) / 2;
+            int rid = upper_bound(a.begin(), a.end(), a[idx[i]] + mid + 1) - a.begin();
+            int lid = n - m - (i >= n - m ? 1 : 0);
+            
+            ll count = 0;
+            if(rid > lid) {
+                count += (rid - lid) * (a[idx[i]] + mid + 1) - (pref[rid] - pref[lid]);
+            }
+            if(lid <= i && i < rid) count--;
+            else count += mid;
+            
+            if(count > k) {
+                right = mid;
+            } else {
+                left = mid + 1;
+            }
+        }
+        
+        if(left != k + 1) {
+            res[idx[i]] = left;
+        }
+    }
+    
+    // Print results
+    for(ll x : res) {
+        cout << x << " ";
+    }
+    cout << endl;
+    
+    return 0;
+}

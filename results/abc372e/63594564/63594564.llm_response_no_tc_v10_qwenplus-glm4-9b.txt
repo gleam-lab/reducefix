@@ -1,0 +1,108 @@
+
+```cpp
+#include <iostream>
+#include <vector>
+#include <algorithm>
+
+using namespace std;
+
+#define ll long long
+
+const int MAXN = 2e5 + 5;
+
+vector<int> parent(MAXN);
+vector<vector<int>> adj(MAXN);
+vector<vector<int>> subtree(MAXN, vector<int>(10, 0));
+
+void findSubtreeSize(int node, int parent) {
+    for (int child : adj[node]) {
+        if (child != parent) {
+            findSubtreeSize(child, node);
+            subtree[node][0]++;
+            for (int i = 1; i < 10; ++i) {
+                subtree[node][i] += subtree[child][i];
+            }
+        }
+    }
+}
+
+void updateSubtree(int node, int parent) {
+    vector<int> values(10);
+    for (int child : adj[node]) {
+        if (child != parent) {
+            for (int i = 0; i < 10; ++i) {
+                values[i] = subtree[child][i];
+            }
+            updateSubtree(child, node);
+        }
+    }
+    sort(values.begin(), values.end(), greater<int>());
+    for (int i = 0; i < 10; ++i) {
+        subtree[node][i] = values[i];
+    }
+}
+
+int findKthLargest(int node, int parent, int k) {
+    int totalSubtreeSize = subtree[node][0];
+    for (int i = 9; i >= 0; --i) {
+        if (subtree[node][i] < k) {
+            k -= subtree[node][i];
+        } else {
+            for (int child : adj[node]) {
+                if (child != parent) {
+                    if (findKthLargest(child, node, k) == -1) return -1;
+                    return node;
+                }
+            }
+        }
+    }
+    return -1;
+}
+
+int main() {
+    int n, q;
+    cin >> n >> q;
+    for (int i = 1; i <= n; ++i) {
+        parent[i] = i;
+    }
+    findSubtreeSize(1, 0);
+    updateSubtree(1, 0);
+    while (q--) {
+        int t, a, b;
+        cin >> t >> a >> b;
+        if (t == 1) {
+            // Union operation (adding an edge)
+            if (find(parent[a]) != find(parent[b])) {
+                int rootA = find(parent[a]);
+                int rootB = find(parent[b]);
+                if (rootA < rootB) {
+                    parent[rootB] = rootA;
+                    adj[rootA].push_back(rootB);
+                } else {
+                    parent[rootA] = rootB;
+                    adj[rootB].push_back(rootA);
+                }
+                findSubtreeSize(rootA, 0);
+                updateSubtree(rootA, 0);
+            }
+        } else {
+            // Query operation (finding the k-th largest connected node)
+            int rootV = find(parent[a]);
+            int result = findKthLargest(rootV, 0, b);
+            if (result == -1) {
+                cout << "-1\n";
+            } else {
+                cout << result << "\n";
+            }
+        }
+    }
+    return 0;
+}
+
+// To find the root of the node
+int find(int node) {
+    if (parent[node] == node) return node;
+    parent[node] = find(parent[node]);
+    return parent[node];
+}
+```

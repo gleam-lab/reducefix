@@ -1,0 +1,24 @@
+#include <iostream>
+#include <string>
+#include <vector>
+#include <algorithm>
+
+using namespace std;
+
+int main() {
+    int n;
+    string s;
+    cin >> n >> s;
+
+    // Map each character to its corresponding winning character
+    vector<char> winChar = {'R', 'S', 'P'};
+
+    // Calculate the number of positions where the character in s appears more than once
+    int ans = 0;
+    for (char c : s) {
+        ans += count(s.begin(), s.end(), c) - 1;
+    }
+
+    cout << ans;
+    return 0;
+}

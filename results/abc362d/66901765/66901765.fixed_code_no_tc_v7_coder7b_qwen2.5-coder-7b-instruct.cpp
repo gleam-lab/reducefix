@@ -1,0 +1,54 @@
+#include<bits/stdc++.h>
+using namespace std;
+#define int long long 
+vector<pair<int,int>>G[200005];
+int dis[200005],a[200005],n,m;
+bool vis[200005];
+
+// Function to perform Dijkstra's algorithm
+void dij(int start) {
+    priority_queue<pair<long long, int>, vector<pair<long long, int>>, greater<pair<long long, int>>> pq;
+    pq.push({0, start});
+    dis[start] = 0;
+
+    while (!pq.empty()) {
+        auto [dist, node] = pq.top(); pq.pop();
+        
+        // If already visited or a better distance is found, skip further processing
+        if (vis[node] || dist > dis[node]) continue;
+        vis[node] = true;
+
+        for (auto [neighbor, weight] : G[node]) {
+            if (dis[neighbor] > dis[node] + a[neighbor] + weight) {
+                dis[neighbor] = dis[node] + a[neighbor] + weight;
+                pq.push({dis[neighbor], neighbor});
+            }
+        }
+    }
+}
+
+signed main() {
+    scanf("%lld%lld", &n, &m);
+    for (int i = 1; i <= n; i++) {
+        cin >> a[i];
+    }
+
+    for (int i = 1; i <= m; i++) {
+        int u, v, w;
+        scanf("%lld%lld%lld", &u, &v, &w);
+        G[u].push_back({v, w});
+        G[v].push_back({u, w});
+    }
+
+    memset(dis, 0x3f, sizeof dis); // Initialize distances to infinity
+    dis[1] = a[1]; // Distance from source to itself is its value
+
+    dij(1); // Perform Dijkstra's algorithm starting from vertex 1
+
+    for (int i = 2; i <= n; i++) {
+        cout << dis[i] << ' '; // Print the shortest path distance to each vertex
+    }
+    cout << "\n";
+
+    return 0;
+}

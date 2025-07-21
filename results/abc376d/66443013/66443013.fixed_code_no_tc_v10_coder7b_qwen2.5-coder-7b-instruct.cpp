@@ -1,0 +1,34 @@
+#include<bits/stdc++.h>
+using namespace std;
+using ll=long long;
+map<ll,vector<ll>>graph;
+map<ll,bool>seen;
+const ll inf=1LL<<60;
+ll ans=inf;
+
+// Function to perform DFS and find the minimum path length to reach node 1 from any other node
+void dfs(ll n,ll hen){
+  seen[n]=true;
+  for(auto x:graph[n]){
+    if(seen[x]||x==n)continue; // Skip visited nodes or self-loops
+    if(x==1){
+      ans=min(ans,hen+1); // Update answer if we reach node 1
+      continue;
+    }
+    dfs(x,hen+1); // Recur for adjacent nodes
+  }
+}
+
+int main(){
+  ll n,m;
+  cin>>n>>m;
+  for(int i=0;i<m;i++){
+    ll a,b;
+    cin>>a>>b;
+    graph[a].push_back(b);
+    graph[b].push_back(a); // Ensure undirected graph by adding both edges
+  }
+  dfs(1,0); // Start DFS from node 1 with initial path length 0
+  if(ans!=inf)cout<<ans<<endl;
+  else cout<<"-1"<<endl;
+}

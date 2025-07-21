@@ -1,0 +1,31 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int Q;
+    cin >> Q;
+
+    unordered_map<int, int> countMap;
+    int queryType, x;
+
+    while (Q--) {
+        cin >> queryType;
+        if (queryType == 1) {
+            cin >> x;
+            countMap[x]++;
+        } else if (queryType == 2) {
+            cin >> x;
+            countMap[x]--;
+            if (countMap[x] == 0) {
+                countMap.erase(x);
+            }
+        } else {
+            cout << countMap.size() << '\n';
+        }
+    }
+
+    return 0;
+}

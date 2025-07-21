@@ -1,0 +1,70 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int h, w, q;
+    cin >> h >> w >> q;
+
+    // Initialize grid
+    vector<vector<bool>> grid(h, vector<bool>(w, true));
+
+    while (q--) {
+        int r, c;
+        cin >> r >> c;
+
+        if (!grid[r-1][c-1]) {
+            continue;
+        }
+
+        grid[r-1][c-1] = false;
+
+        // Check up
+        for (int i = r-2; i >= 0; --i) {
+            if (grid[i][c-1]) {
+                grid[i][c-1] = false;
+                break;
+            }
+        }
+
+        // Check down
+        for (int i = r; i < h; ++i) {
+            if (grid[i][c-1]) {
+                grid[i][c-1] = false;
+                break;
+            }
+        }
+
+        // Check left
+        for (int j = c-2; j >= 0; --j) {
+            if (grid[r-1][j]) {
+                grid[r-1][j] = false;
+                break;
+            }
+        }
+
+        // Check right
+        for (int j = c; j < w; ++j) {
+            if (grid[r-1][j]) {
+                grid[r-1][j] = false;
+                break;
+            }
+        }
+    }
+
+    // Count remaining walls
+    int count = 0;
+    for (int i = 0; i < h; ++i) {
+        for (int j = 0; j < w; ++j) {
+            if (grid[i][j]) {
+                ++count;
+            }
+        }
+    }
+
+    cout << count << '\n';
+
+    return 0;
+}

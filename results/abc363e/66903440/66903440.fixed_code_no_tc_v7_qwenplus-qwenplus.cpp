@@ -1,0 +1,76 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+using ll = int64_t;
+const int INF = 1000000001;
+
+#define rep(i, n) for (int i = 0; i < (n); ++i)
+#define all(x) (x).begin(), (x).end()
+
+int dx[4] = {1, 0, -1, 0};
+int dy[4] = {0, 1, 0, -1};
+
+int main() {
+    cin.tie(0)->sync_with_stdio(0);
+
+    int H, W, Y;
+    cin >> H >> W >> Y;
+    vector<vector<int>> A(H, vector<int>(W));
+    rep(i, H) rep(j, W) cin >> A[i][j];
+
+    int total = H * W;
+    vector<vector<bool>> is_land(H, vector<bool>(W, true));
+    vector<queue<pair<int, int>>> events(Y + 2);
+
+    // Mark border cells as potentially submerged and add them to the event queue
+    rep(i, H) rep(j, W) {
+        if (i == 0 || i == H - 1 || j == 0 || j == W - 1) {
+            is_land[i][j] = false;
+            if (A[i][j] <= Y) {
+                events[A[i][j]].push({i, j});
+            }
+        }
+    }
+
+    // BFS to simulate submerging process
+    vector<int> result(Y + 1);
+    function<void(int, int, int)> bfs = [&](int sea_level, int qi, int qj) {
+        queue<pair<int, int>> q;
+        q.push({qi, qj});
+        is_land[qi][qj] = false;
+        total--;
+
+        while (!q.empty()) {
+            auto [i, j] = q.front();
+            q.pop();
+
+            rep(k, 4) {
+                int ni = i + dx[k];
+                int nj = j + dy[k];
+                if (ni >= 0 && ni < H && nj >= 0 && nj < W && is_land[ni][nj] && A[ni][nj] <= sea_level) {
+                    is_land[ni][nj] = false;
+                    total--;
+                    q.push({ni, nj});
+                }
+            }
+        }
+    };
+
+    // Process each year
+    for (int year = 1; year <= Y; ++year) {
+        result[year] = total;
+        while (!events[year].empty()) {
+            auto [i, j] = events[year].front();
+            events[year].pop();
+            if (is_land[i][j]) {
+                bfs(year, i, j);
+            }
+        }
+    }
+
+    for (int year = 1; year <= Y; ++year) {
+        cout << result[year] << "\n";
+    }
+
+    return 0;
+}

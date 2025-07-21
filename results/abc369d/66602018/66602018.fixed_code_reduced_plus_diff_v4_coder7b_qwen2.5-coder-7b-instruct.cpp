@@ -1,0 +1,34 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+#define LL long long
+
+int main() {
+    ios::sync_with_stdio(false); cin.tie(nullptr);
+
+    int n;
+    cin >> n;
+    if(n == 0) {
+        cout << "0" << endl;
+        return 0;
+    }
+    
+    vector<LL> arr(n);
+    for(int i = 0; i < n; ++i) {
+        cin >> arr[i];
+    }
+
+    LL dp[n][2];
+    memset(dp, 0, sizeof(dp));
+    dp[0][0] = 0;
+    dp[0][1] = arr[0];
+
+    for(int i = 1; i < n; ++i) {
+        dp[i][0] = max(dp[i-1][0], dp[i-1][1]);
+        dp[i][1] = max(dp[i-1][0] + arr[i], dp[i-1][1] + arr[i]*2);
+    }
+
+    cout << max(dp[n-1][0], dp[n-1][1]) << endl;
+
+    return 0;
+}

@@ -1,0 +1,34 @@
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+#define rep(i, n) for (int(i) = 0; (i) < (n); ++(i))
+
+int main() {
+    int n;
+    cin >> n;
+    vector<ll> a(n);
+    rep(i, n) cin >> a[i];
+
+    // Early return for small cases
+    if (n == 1) {
+        cout << a[0] << endl;
+        return 0;
+    } else if (n == 2) {
+        cout << a[0] + 2 * a[1] << endl;
+        return 0;
+    }
+
+    // Dynamic programming array
+    vector<ll> dp(n);
+
+    dp[0] = a[0];
+    dp[1] = max(dp[0] + 2 * a[1], a[0] + a[1]); // Fix: Consider both options for 2 monsters
+
+    for (int i = 2; i < n; ++i) {
+        // For each monster, decide whether to skip previous or not
+        dp[i] = max(dp[i - 2] + 2 * a[i], dp[i - 1] + a[i]);
+    }
+
+    cout << dp[n - 1] << endl;
+    return 0;
+}

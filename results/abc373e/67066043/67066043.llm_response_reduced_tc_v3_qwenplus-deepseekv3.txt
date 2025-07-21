@@ -1,0 +1,101 @@
+To fix this code, we need to ensure that for each candidate, we correctly determine the minimum number of additional votes they need to guarantee their election. The key insight is to understand that a candidate will be elected if no more than M-1 candidates have strictly more votes than them. 
+
+### Approaches
+1. **Sorting and Binary Search**: 
+   - Sort the candidates' current votes to determine the relative positions easily.
+   - For each candidate, use binary search to find the minimum additional votes (X) such that after adding X votes to the candidate, no more than M-1 candidates can have strictly more votes than them, regardless of how the remaining votes are distributed.
+
+2. **Prefix Sum Calculation**:
+   - Compute prefix sums of the sorted votes to efficiently calculate the total votes needed for certain ranges of candidates.
+   - During binary search, for each candidate, determine how many candidates could potentially overtake them if they receive X additional votes, and ensure that the number of such candidates is less than M.
+
+### Solution Code
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+#define all(x) (x).begin(), (x).end()
+
+int main() {
+    ios_base::sync_with_stdio(0);
+    cin.tie(0);
+    int N, M;
+    ll K;
+    cin >> N >> M >> K;
+    vector<ll> A(N);
+    ll sum_A = 0;
+    for (int i = 0; i < N; ++i) {
+        cin >> A[i];
+        sum_A += A[i];
+    }
+    ll remaining = K - sum_A;
+    vector<int> ord(N);
+    iota(all(ord), 0);
+    sort(all(ord), [&](int i, int j) { return A[i] < A[j]; });
+    vector<ll> sorted_A(N);
+    for (int i = 0; i < N; ++i) {
+        sorted_A[i] = A[ord[i]];
+    }
+    vector<ll> prefix(N + 1);
+    for (int i = 0; i < N; ++i) {
+        prefix[i + 1] = prefix[i] + sorted_A[i];
+    }
+    vector<ll> ans(N, -1);
+    for (int idx = 0; idx < N; ++idx) {
+        int i = ord[idx];
+        ll low = 0, high = remaining;
+        ll best_X = -1;
+        while (low <= high) {
+            ll mid = (low + high) / 2;
+            ll new_vote = A[i] + mid;
+            auto it = upper_bound(all(sorted_A), new_vote);
+            int count_less_equal = it - sorted_A.begin();
+            int count_more = N - count_less_equal;
+            if (count_more < M) {
+                best_X = mid;
+                high = mid - 1;
+            } else {
+                ll needed = 0;
+                int pos = N - M;
+                ll threshold = sorted_A[pos];
+                if (new_vote >= threshold) {
+                    needed = 0;
+                } else {
+                    needed = (threshold - new_vote) * (M - (N - pos)) + max(0LL, (prefix[pos] - prefix[count_less_equal] - new_vote * (pos - count_less_equal)));
+                }
+                if (needed <= remaining - mid) {
+                    best_X = mid;
+                    high = mid - 1;
+                } else {
+                    low = mid + 1;
+                }
+            }
+        }
+        ans[i] = best_X;
+    }
+    for (int i = 0; i < N; ++i) {
+        cout << ans[i] << ' ';
+    }
+    cout << '\n';
+    return 0;
+}
+```
+
+### Explanation
+1. **Initial Setup**: 
+   - Read the input values for the number of candidates (N), the threshold (M), total votes (K), and the current votes each candidate has (A).
+   - Calculate the remaining votes after summing up all current votes.
+
+2. **Sorting and Prefix Sum**:
+   - Sort the candidates based on their current votes to easily determine their relative positions.
+   - Compute prefix sums of the sorted votes to facilitate range sum queries.
+
+3. **Binary Search for Each Candidate**:
+   - For each candidate, perform a binary search to determine the minimum additional votes (X) needed to ensure their election.
+   - In each binary search step, check if adding mid votes to the candidate ensures that no more than M-1 candidates can have strictly more votes.
+   - Adjust the binary search range based on whether the current mid value meets the condition.
+
+4. **Output the Results**:
+   - For each candidate, output the minimum additional votes needed (X) or -1 if it's not possible to guarantee their election.
+
+This approach efficiently determines the solution by leveraging sorting, prefix sums, and binary search, ensuring optimal performance even for large input sizes.

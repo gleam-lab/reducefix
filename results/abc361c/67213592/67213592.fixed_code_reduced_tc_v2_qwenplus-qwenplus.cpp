@@ -1,0 +1,32 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <climits>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int n, k;
+    cin >> n >> k;
+    vector<int> A(n);
+    for (int i = 0; i < n; ++i) {
+        cin >> A[i];
+    }
+
+    // We will consider all possible windows of size (n - K)
+    int window_size = n - k;
+    int min_diff = INT_MAX;
+
+    // Try every consecutive subarray of size window_size
+    for (int i = 0; i + window_size <= n; ++i) {
+        vector<int> temp(A.begin() + i, A.begin() + i + window_size);
+        int current_min = *min_element(temp.begin(), temp.end());
+        int current_max = *max_element(temp.begin(), temp.end());
+        min_diff = min(min_diff, current_max - current_min);
+    }
+
+    cout << min_diff << endl;
+    return 0;
+}

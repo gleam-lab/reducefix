@@ -1,0 +1,100 @@
+To fix this code, we need to address several issues:
+
+1. **Union-Find Data Structure**: The current implementation correctly uses path compression and union by rank, but there's a problem in how the sets of vertices are maintained during the union operation. Specifically, when merging two sets, the code incorrectly assumes that the root after union will be `ru` or `rv`, but due to path compression, it might not be the case. We should ensure that the root after union is correctly identified and that the sets are merged accordingly.
+
+2. **Handling Sets**: The code uses a vector of sets to keep track of the vertices in each component. However, the merging of sets is not correctly handled when the union operation is performed. The code should merge the smaller set into the larger one to maintain efficiency, and it should update the root correctly after the union.
+
+3. **Output Handling**: The code incorrectly adds `-2` to the answer vector when the size of the connected component is less than `k`, and it later adds 1 to all answers, which is incorrect. The correct output for such cases should be `-1`, and the answers should be the actual vertex numbers without any offset.
+
+4. **Edge Cases**: The code should handle cases where the vertex itself is the only one in its component, and when `k` is larger than the component size.
+
+Here's the corrected code:
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+#define rep(i, n) for(int i=0;i<(n);i++)
+#define all(a) a.begin(), a.end()
+#define rall(a) a.rbegin(), a.rend()
+using ll = long long;
+using pi = pair<int, int>;
+const int di[]={1,-1,0,0};
+const int dj[]={0,0,1,-1};
+const int INF=1e9;
+struct UnionFind {
+    vector<int> parent, rank;
+    UnionFind(int n) : parent(n), rank(n, 0) {
+        for (int i = 0; i < n; i++) 
+            parent[i] = i;
+    }
+    int findRoot(int x) {
+        if (parent[x] != x) 
+            parent[x] = findRoot(parent[x]);
+        return parent[x];
+    }
+    bool unite(int x, int y) {
+        int rx = findRoot(x), ry = findRoot(y);
+        if (rx == ry) return false;
+        if (rank[rx] < rank[ry]) {
+            parent[rx] = ry;
+        } else {
+            parent[ry] = rx;
+            if (rank[rx] == rank[ry])
+                rank[rx]++;
+        }
+        return true;
+    }
+};
+int main(){
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int n, q;
+    cin >> n >> q;
+    UnionFind uf(n);
+    vector<set<int>> cnt(n);
+    rep(i, n) cnt[i].insert(i+1); // Store vertex numbers as 1-based
+    vector<int> ans;
+    rep(qi, q) {
+        int com;
+        cin >> com;
+        if(com==1) {
+            int u, v;
+            cin >> u >> v;
+            int ru = uf.findRoot(u-1); // Convert to 0-based
+            int rv = uf.findRoot(v-1);
+            if(ru != rv) {
+                if(cnt[ru].size() < cnt[rv].size()) swap(ru, rv);
+                uf.unite(ru, rv);
+                int newRoot = uf.findRoot(ru);
+                if (newRoot != ru) {
+                    // If the new root is not ru, swap the sets
+                    swap(cnt[ru], cnt[newRoot]);
+                }
+                // Merge the smaller set into the larger one
+                for (int x : cnt[rv]) cnt[newRoot].insert(x);
+                cnt[rv].clear();
+            }
+        }
+        if(com==2) {
+            int v, k;
+            cin >> v >> k;
+            int root = uf.findRoot(v-1);
+            if((int)cnt[root].size() < k) ans.push_back(-1);
+            else {
+                auto it = cnt[root].rbegin();
+                advance(it, k-1);
+                ans.push_back(*it);
+            }
+        }
+    }
+    for(auto x : ans) cout << x << endl;
+
+    return 0;
+}
+```
+
+### Key Fixes:
+1. **Vertex Numbering**: The sets now store 1-based vertex numbers directly, avoiding the need for offset adjustments in the output.
+2. **Union Operation**: After merging two sets, the code correctly identifies the new root and merges the sets accordingly, ensuring the larger set is always the one to merge into.
+3. **Output Handling**: The code directly outputs `-1` when the component size is less than `k`, and otherwise outputs the correct vertex number from the set.
+4. **Efficiency**: The merging of sets is done in O(min(size1, size2)) time, leveraging the union by size heuristic to keep operations efficient.

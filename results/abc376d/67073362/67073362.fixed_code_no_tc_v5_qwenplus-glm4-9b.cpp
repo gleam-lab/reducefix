@@ -1,0 +1,52 @@
+#include <iostream>
+#include <vector>
+#include <cstring>
+#include <limits>
+using namespace std;
+
+#define N 200010
+vector<int> adj[N];
+bool visited[N];
+int depth[N];
+
+void dfs(int node, int dep) {
+    visited[node] = true;
+    depth[node] = dep;
+    for (int neighbor : adj[node]) {
+        if (!visited[neighbor]) {
+            dfs(neighbor, dep + 1);
+        }
+    }
+}
+
+int main() {
+    int n, m;
+    cin >> n >> m;
+    for (int i = 0; i < m; i++) {
+        int u, v;
+        cin >> u >> v;
+        adj[u].push_back(v);
+        adj[v].push_back(u); // Assuming the graph is undirected
+    }
+
+    dfs(1, 0); // Starting DFS from node 1
+
+    int max_depth = 0;
+    bool has_cycle = false;
+    for (int i = 1; i <= n; i++) {
+        if (depth[i] > max_depth) {
+            max_depth = depth[i];
+        }
+        if (depth[i] == 0 && !has_cycle) {
+            has_cycle = true; // Indicates that there's a cycle in the tree
+        }
+    }
+
+    if (has_cycle) {
+        cout << -1;
+    } else {
+        cout << max_depth;
+    }
+
+    return 0;
+}

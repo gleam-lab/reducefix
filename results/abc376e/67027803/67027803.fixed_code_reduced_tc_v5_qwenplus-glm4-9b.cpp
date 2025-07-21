@@ -1,0 +1,38 @@
+#include<bits/stdc++.h>
+using namespace std;
+
+using ll = long long;
+const int INF = 1e9 + 10;
+const ll inf = 1LL<<60;
+
+void solve() {
+  int n, k; cin >> n >> k;
+  vector<pair<ll, ll>> ab(n);
+  ll sum_b = 0;
+  for (int i=0; i<n; i++) {
+    cin >> ab[i].first >> ab[i].second;
+    sum_b += ab[i].second;
+  }
+  sort(ab.begin(), ab.end());
+
+  if (k == 1) {
+    ll ans = inf;
+    for (int i=0; i<n; i++) {
+      ans = min(ans, ab[i].first * ab[i].second);
+    }
+    cout << ans << '\n';
+    return;
+  }
+
+  ll max_a = ab[n-1].first;
+  ll ans = min(max_a * (sum_b - k + 1), max_a * ab[n-k-1].first);
+
+  cout << ans << '\n';
+}
+
+int main() {
+  ios::sync_with_stdio(false);
+  cin.tie(nullptr);
+  int t = 1; cin >> t;
+  while (t--) solve();
+}

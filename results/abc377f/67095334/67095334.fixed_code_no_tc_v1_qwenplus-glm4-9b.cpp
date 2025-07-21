@@ -1,0 +1,49 @@
+#include<bits/stdc++.h>
+#define ll long long
+
+using namespace std;
+
+int main() {
+    ll n, m;
+    cin >> n >> m;
+    set<ll> row, col, diag1, diag2;
+
+    for (ll i = 1; i <= m; i++) {
+        ll a, b;
+        cin >> a >> b;
+        row.insert(a);
+        col.insert(b);
+        diag1.insert(a + b);
+        diag2.insert(a - b);
+    }
+
+    ll total_empty = n * n - m;
+    ll invalid_rows = row.size();
+    ll invalid_cols = col.size();
+    ll invalid_diag1 = diag1.size();
+    ll invalid_diag2 = diag2.size();
+
+    // Each element in row/colum diagonals can invalidate multiple squares
+    // Calculate overlaps for diagonals
+    set<pair<ll, ll>> valid_positions;
+    for (auto x : diag1) {
+        for (auto y : diag2) {
+            if ((x + y) % 2 == 0 && (x - y) % 2 == 0) {
+                ll r = (x + y) / 2;
+                ll c = (x - y) / 2;
+                if (1 <= r && r <= n && 1 <= c && c <= n) {
+                    valid_positions.insert({r, c});
+                }
+            }
+        }
+    }
+
+    // Subtract invalid positions from total
+    total_empty -= invalid_rows;
+    total_empty -= invalid_cols;
+    total_empty -= invalid_diag1 + invalid_diag2 - valid_positions.size();
+
+    cout << total_empty << endl;
+
+    return 0;
+}

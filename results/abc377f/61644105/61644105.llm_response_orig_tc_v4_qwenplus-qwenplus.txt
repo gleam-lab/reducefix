@@ -1,0 +1,88 @@
+```cpp
+#include <bits/stdc++.h>
+
+using namespace std;
+
+using ll = long long;
+
+int main() {
+    ll N, M;
+    cin >> N >> M;
+
+    set<ll> rows, cols, diag1, diag2;
+    for (ll i = 0; i < M; ++i) {
+        ll a, b;
+        cin >> a >> b;
+        rows.insert(a);
+        cols.insert(b);
+        diag1.insert(a + b);
+        diag2.insert(a - b);
+    }
+
+    // Total number of squares that are either in attacked rows or columns
+    ll attacked_by_row_or_col = N * (rows.size() + cols.size()) - (ll)rows.size() * (ll)cols.size();
+
+    // Count attacked squares from diagonal types
+    ll attacked_by_diag1 = 0;
+    for (auto d : diag1) {
+        ll cnt = min(d - 1, N) - max(d - N, 1LL) + 1;
+        attacked_by_diag1 += cnt;
+    }
+
+    ll attacked_by_diag2 = 0;
+    for (auto d : diag2) {
+        ll cnt = min(N, N + d) - max(1LL, 1LL + d) + 1;
+        if (d >= 0)
+            cnt = min(N, N - d + N) - max(1LL, 1LL - d + 1) + 1;
+        else
+            cnt = min(N, N - d) - max(1LL, 1LL - d) + 1;
+        attacked_by_diag2 += cnt;
+    }
+
+    // Inclusion-exclusion to subtract overlaps
+    ll total_attacked = 0;
+    total_attacked += N * N;
+    total_attacked -= (N - rows.size()) * (N - cols.size());
+    
+    // Subtract squares attacked by diagonals but not covered yet
+    auto attacked_by_diag1_not_rc = [&](ll d) {
+        ll cnt = 0;
+        for (ll i = max(1LL, d - N); i <= min(N, d - 1); ++i) {
+            ll j = d - i;
+            if (!rows.count(i) && !cols.count(j)) cnt++;
+        }
+        return cnt;
+    };
+
+    auto attacked_by_diag2_not_rc = [&](ll d) {
+        ll cnt = 0;
+        for (ll i = 1; i <= N; ++i) {
+            ll j = i + d;
+            if (j >= 1 && j <= N && !rows.count(i) && !cols.count(j)) cnt++;
+        }
+        return cnt;
+    };
+
+    ll overlap_d1_d2 = 0;
+    for (auto d1 : diag1) {
+        for (auto d2 : diag2) {
+            ll x = (d1 + d2) / 2;
+            ll y = (d1 - d2) / 2;
+            if (x >= 1 && x <= N && y >= 1 && y <= N && !rows.count(x) && !cols.count(y)) {
+                overlap_d1_d2++;
+            }
+        }
+    }
+
+    ll diag1_only = 0;
+    for (auto d : diag1) diag1_only += attacked_by_diag1_not_rc(d);
+
+    ll diag2_only = 0;
+    for (auto d : diag2) diag2_only += attacked_by_diag2_not_rc(d);
+
+    total_attacked -= diag1_only + diag2_only;
+    total_attacked += overlap_d1_d2;
+
+    cout << total_attacked << endl;
+}
+```

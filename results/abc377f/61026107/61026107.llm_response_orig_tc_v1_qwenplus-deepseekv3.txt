@@ -1,0 +1,124 @@
+To fix this code, we need to correctly calculate the number of safe squares where a new piece can be placed without being captured by any existing pieces. The existing pieces can attack along rows, columns, and both diagonals. The initial approach was incorrect in handling overlaps between these attack paths, leading to wrong counts.
+
+### Approaches
+1. **Identify All Attacked Squares**: For each existing piece, mark all squares it can attack (rows, columns, and diagonals). 
+2. **Count Distinct Attacked Squares**: Use sets to store the attacked rows, columns, and diagonals to avoid duplicates.
+3. **Calculate Safe Squares**: Subtract the total attacked squares from the total possible squares (N^2). The safe squares are those not attacked by any piece.
+4. **Adjust for Overlaps**: Ensure that squares covered by multiple attack paths are counted only once.
+
+### Solution Code
+```cpp
+#include<bits/stdc++.h>
+using namespace std;
+using ll = long long;
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    ll N, M;
+    cin >> N >> M;
+    
+    set<ll> rows, cols, diag1, diag2;
+    
+    for (int i = 0; i < M; ++i) {
+        ll a, b;
+        cin >> a >> b;
+        rows.insert(a);
+        cols.insert(b);
+        diag1.insert(a - b);
+        diag2.insert(a + b);
+    }
+    
+    ll unsafe_rows = rows.size();
+    ll unsafe_cols = cols.size();
+    ll unsafe_diag1 = 0;
+    for (auto d : diag1) {
+        // The number of squares on the diagonal a - b = d
+        ll start_row = max(1LL, 1LL + d);
+        ll end_row = min(N, N + d);
+        if (start_row > end_row) continue;
+        unsafe_diag1 += (end_row - start_row + 1);
+    }
+    ll unsafe_diag2 = 0;
+    for (auto d : diag2) {
+        // The number of squares on the diagonal a + b = d
+        ll start_row = max(1LL, d - N);
+        ll end_row = min(N, d - 1);
+        if (start_row > end_row) continue;
+        unsafe_diag2 += (end_row - start_row + 1);
+    }
+    
+    ll total_unsafe = unsafe_rows * N + unsafe_cols * N - unsafe_rows * unsafe_cols;
+    total_unsafe += unsafe_diag1 + unsafe_diag2;
+    
+    // Now subtract overlaps between rows/cols and diag1/diag2
+    // Also subtract overlaps between diag1 and diag2
+    for (auto a : rows) {
+        for (auto b : cols) {
+            if (diag1.count(a - b) || diag2.count(a + b)) {
+                total_unsafe--;
+            }
+        }
+    }
+    
+    for (auto d1 : diag1) {
+        for (auto d2 : diag2) {
+            if ((d1 + d2) % 2 != 0) continue;
+            ll a = (d1 + d2) / 2;
+            ll b = (d2 - d1) / 2;
+            if (a >= 1 && a <= N && b >= 1 && b <= N) {
+                total_unsafe--;
+            }
+        }
+    }
+    
+    // Also subtract overlaps between rows and diag1/diag2, cols and diag1/diag2
+    for (auto a : rows) {
+        for (auto d : diag1) {
+            ll b = a - d;
+            if (b >= 1 && b <= N && cols.count(b)) {
+                total_unsafe--;
+            }
+        }
+        for (auto d : diag2) {
+            ll b = d - a;
+            if (b >= 1 && b <= N && cols.count(b)) {
+                total_unsafe--;
+            }
+        }
+    }
+    
+    for (auto b : cols) {
+        for (auto d : diag1) {
+            ll a = b + d;
+            if (a >= 1 && a <= N && rows.count(a)) {
+                total_unsafe--;
+            }
+        }
+        for (auto d : diag2) {
+            ll a = d - b;
+            if (a >= 1 && a <= N && rows.count(a)) {
+                total_unsafe--;
+            }
+        }
+    }
+    
+    ll total_safe = N * N - total_unsafe;
+    
+    cout << total_safe << "\n";
+    
+    return 0;
+}
+```
+
+### Explanation
+1. **Input Handling**: The code reads the grid size `N` and the number of pieces `M`.
+2. **Sets for Attacked Paths**: It uses sets to store rows, columns, and diagonals attacked by existing pieces to avoid duplicates.
+3. **Counting Unsafe Squares**: 
+   - **Rows and Columns**: The total unsafe rows and columns are multiplied by `N` (since each row or column affects `N` squares).
+   - **Diagonals**: For diagonals of the form `a - b = d` and `a + b = d`, it calculates the number of squares on each diagonal and sums them up.
+4. **Overlap Adjustment**: The code adjusts for overlaps between rows, columns, and diagonals to avoid double-counting squares under multiple attack paths.
+5. **Final Calculation**: The total safe squares are computed by subtracting the total unsafe squares from the total grid squares `N^2`.
+
+This approach ensures that all attack paths are considered and overlaps are correctly handled, providing the accurate count of safe squares.

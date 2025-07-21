@@ -1,0 +1,73 @@
+#include <iostream>
+#include <algorithm>
+#include <vector>
+using namespace std;
+const int N = 2e5 + 9;
+int n, q;
+vector<int> a(N);
+vector<pair<int, int>> queries;
+
+int findAnswer(int x, int k) {
+    int l = 0, r = n - 1;
+    while (l < r) {
+        int mid = (l + r + 1) / 2;
+        // Use the middle point to check which side to continue binary search
+        int distance = abs(a[mid] - x);
+        if (distance >= k) {
+            l = mid;
+        } else {
+            r = mid - 1;
+        }
+    }
+    // Calculate the distance from the last point checked and the k-th closest point
+    return abs(a[l] - x);
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(NULL);
+
+    cin >> n >> q;
+    for (int i = 0; i < n; i++) {
+        cin >> a[i];
+    }
+
+    // Read all queries
+    for (int i = 0; i < q; i++) {
+        int b, k;
+        cin >> b >> k;
+        queries.emplace_back(b, k);
+    }
+
+    // Sort queries by b to answer them in order
+    sort(queries.begin(), queries.end());
+
+    // Use a set to find the k-th closest point efficiently
+    set<int> s;
+    for (auto [b, k] : queries) {
+        int dist = findAnswer(b, k);
+        cout << dist << '\n';
+
+        // Add new points to the set
+        for (int i = 0; i < n; i++) {
+            if (abs(a[i] - b) < dist) {
+                s.insert(a[i]);
+            }
+        }
+
+        // Remove the k-th closest point from the set
+        s.erase(lower_bound(s.begin(), s.end(), b) + k - 1);
+
+        // Remove points further away from b than the k-th closest point
+        auto it = s.lower_bound(b + dist);
+        while (it != s.end()) {
+            if (abs(a[*it] - b) > dist) {
+                it = s.erase(it);
+            } else {
+                ++it;
+            }
+        }
+    }
+
+    return 0;
+}

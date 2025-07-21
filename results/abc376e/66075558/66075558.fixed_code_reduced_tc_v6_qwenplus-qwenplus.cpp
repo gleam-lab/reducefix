@@ -1,0 +1,72 @@
+#include <iostream>
+#include <vector>
+#include <queue>
+#include <algorithm>
+using namespace std;
+#define int long long
+
+// Structure to hold A_i and B_i pairs
+struct Item {
+    int a, b;
+};
+
+signed main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    cout.tie(nullptr);
+
+    int T;
+    cin >> T;
+    while (T--) {
+        int N, K;
+        cin >> N >> K;
+
+        vector<Item> items(N);
+        for (int i = 0; i < N; ++i) {
+            cin >> items[i].a;
+        }
+        for (int i = 0; i < N; ++i) {
+            cin >> items[i].b;
+        }
+
+        // Sort items by A_i ascending
+        sort(items.begin(), items.end(), [](const Item& x, const Item& y) {
+            return x.a < y.a;
+        });
+
+        // Max-heap to keep track of K smallest B_i values
+        priority_queue<int> max_heap;
+        int sum_b = 0;
+
+        // Initialize with first K-1 elements
+        for (int i = 0; i < K - 1; ++i) {
+            sum_b += items[i].b;
+            max_heap.push(items[i].b);
+        }
+
+        int min_value = numeric_limits<int>::max();
+
+        // Try each item from K-1 to N-1 as the max A_i in subset
+        for (int i = K - 1; i < N; ++i) {
+            // Current item's A_i * (sum of B's + current B_i)
+            int current_value = items[i].a * (sum_b + items[i].b);
+            min_value = min(min_value, current_value);
+
+            if (i < N - 1) {
+                // Add next item's B value to heap
+                max_heap.push(items[i].b);
+                sum_b += items[i].b;
+
+                // If heap size exceeds K-1, remove the largest
+                if (max_heap.size() > K - 1) {
+                    sum_b -= max_heap.top();
+                    max_heap.pop();
+                }
+            }
+        }
+
+        cout << min_value << '\n';
+    }
+
+    return 0;
+}

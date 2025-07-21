@@ -1,0 +1,121 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+typedef long long ll;
+
+const int MAXN = 1e5 + 5;
+
+ll a[MAXN];
+
+// Binary search to find the k-th smallest distance from b
+ll query_kth_distance(ll b, int k, int n) {
+    // We will use two pointers to maintain a sliding window of size k
+    int left = 0;
+    int right = 0;
+    multiset<ll> low, high;
+    ll sum_low = 0, sum_high = 0;
+
+    // Initialize with first k elements
+    for (int i = 0; i < k; ++i) {
+        low.insert(a[i]);
+        sum_low += a[i];
+    }
+
+    // Convert half of them to high set to balance
+    for (int i = 0; i < k / 2; ++i) {
+        ll x = *low.rbegin();
+        sum_low -= x;
+        sum_high += x;
+        high.insert(x);
+        low.erase(low.find(x));
+    }
+
+    ll best = max(b - *low.rbegin(), *high.begin() - b);
+
+    for (int i = k; i < n; ++i) {
+        // Remove a[left]
+        if (low.find(a[left]) != low.end()) {
+            sum_low -= a[left];
+            low.erase(low.find(a[left]));
+        } else {
+            sum_high -= a[left];
+            high.erase(high.find(a[left]));
+        }
+        left++;
+
+        // Add a[right] = a[i]
+        if (!high.empty() && a[i] < *high.begin()) {
+            low.insert(a[i]);
+            sum_low += a[i];
+        } else {
+            high.insert(a[i]);
+            sum_high += a[i];
+        }
+
+        // Rebalance sets
+        while ((int)low.size() > (k + 1) / 2) {
+            ll x = *low.rbegin();
+            sum_low -= x;
+            sum_high += x;
+            high.insert(x);
+            low.erase(low.find(x));
+        }
+        while ((int)high.size() > k / 2) {
+            ll x = *high.begin();
+            sum_high -= x;
+            sum_low += x;
+            low.insert(x);
+            high.erase(high.find(x));
+        }
+
+        ll curr = max(b - *low.rbegin(), *high.begin() - b);
+        best = min(best, curr);
+    }
+
+    return best;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+    cout.tie(0);
+
+    int N, Q;
+    cin >> N >> Q;
+
+    for (int i = 0; i < N; ++i) {
+        cin >> a[i];
+    }
+
+    sort(a, a + N);
+
+    for (int i = 0; i < Q; ++i) {
+        ll b;
+        int k;
+        cin >> b >> k;
+
+        // Binary search on answer
+        int left = 0, right = 1e18;
+        ll ans = 0;
+
+        while (left <= right) {
+            ll mid = (ll(left) + ll(right)) >> 1;
+
+            // Count how many a[i] are within [b - mid, b + mid]
+            int l = lower_bound(a, a + N, b - mid) - a;
+            int r = upper_bound(a, a + N, b + mid) - a;
+            int cnt = r - l;
+
+            if (cnt >= k) {
+                ans = mid;
+                right = mid - 1;
+            } else {
+                left = mid + 1;
+            }
+        }
+
+        cout << ans << "\n";
+    }
+
+    return 0;
+}

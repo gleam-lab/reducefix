@@ -1,0 +1,76 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+#define ll long long
+
+const int N = 2e5 + 5;
+
+vector<int> adj[N]; // Adjacency list for the graph
+vector<int> sizes;  // Size of the subtree rooted at each node
+
+ll findKthLargest(int node, int k) {
+    node = find(node); // Find the root of the connected component containing 'node'
+    if (sizes[node] < k) return -1; // If there are fewer than k nodes, return -1
+    // Binary search to find the k-th largest element in the adjacency list
+    int lo = 0, hi = sizes[node];
+    while (lo < hi) {
+        int mid = (lo + hi + 1) / 2;
+        if (find(adj[node][mid]) != node) hi = mid - 1;
+        else lo = mid;
+    }
+    return adj[node][lo]; // Return the k-th largest element
+}
+
+int find(int node) {
+    if (node == adj[node][0]) return node; // If node is its own parent, it's the root
+    int root = find(adj[node][0]);
+    // Path compression
+    for (int i = 0; i <= N; ++i) {
+        if (adj[node][i] != adj[node][0] && adj[node][i] != root)
+            adj[node][i] = root;
+    }
+    return root;
+}
+
+void unionSets(int node1, int node2) {
+    // Union by size
+    int root1 = find(node1);
+    int root2 = find(node2);
+    if (root1 != root2) {
+        if (sizes[root1] < sizes[root2]) {
+            swap(root1, root2);
+        }
+        for (int i = 1; i <= sizes[root2]; ++i) {
+            adj[root1].push_back(adj[root2][i]);
+        }
+        sizes[root1] += sizes[root2];
+        // Reset the adjacency list of the smaller component
+        sizes[root2] = 1;
+        adj[root2][0] = root1;
+    }
+}
+
+int main() {
+    ios_base::sync_with_stdio(false); cin.tie(nullptr);
+
+    int n, q;
+    cin >> n >> q;
+    sizes.assign(n + 1, 1); // Initialize sizes for each node
+    for (int i = 1; i <= n; ++i) {
+        adj[i].push_back(i); // Each node is its own parent initially
+    }
+
+    while (q--) {
+        int t, v, k;
+        cin >> t >> v >> k;
+        if (t == 1) {
+            int u;
+            cin >> u;
+            unionSets(u, v);
+        } else {
+            cout << findKthLargest(v, k) << '\n';
+        }
+    }
+
+    return 0;
+}

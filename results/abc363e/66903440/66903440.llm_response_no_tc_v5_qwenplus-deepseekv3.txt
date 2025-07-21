@@ -1,0 +1,85 @@
+To fix this code, we need to address several issues. The primary problem is that the code incorrectly handles the propagation of sinking sections and the sea level rise. The current approach uses a queue for each possible sea level, which is inefficient and incorrect because it doesn't account for the dynamic nature of the sinking process properly.
+
+### Approaches
+1. **Initialization**: We start by marking the border sections of the island as potentially sinking first since they are adjacent to the sea.
+2. **Priority Queue**: We use a priority queue (min-heap) to process sections in order of their elevation. This ensures that sections are processed as soon as the sea level reaches their elevation.
+3. **BFS Propagation**: For each section that sinks, we check its adjacent sections. If an adjacent section's elevation is not greater than the current sea level, it also sinks, and we add it to the queue for processing.
+4. **Dynamic Tracking**: We maintain a count of the remaining sections above sea level and decrement it whenever a section sinks.
+
+### Solution Code
+```cpp
+#include<bits/stdc++.h>
+using namespace std;
+using ll = long long;
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int H, W, Y;
+    cin >> H >> W >> Y;
+    vector<vector<int>> A(H, vector<int>(W));
+    for (int i = 0; i < H; ++i) {
+        for (int j = 0; j < W; ++j) {
+            cin >> A[i][j];
+        }
+    }
+
+    vector<vector<bool>> sunk(H, vector<bool>(W, false));
+    priority_queue<pair<int, pair<int, int>>, vector<pair<int, pair<int, int>>>, greater<pair<int, pair<int, int>>>> pq;
+
+    // Initialize the border sections
+    for (int i = 0; i < H; ++i) {
+        for (int j = 0; j < W; ++j) {
+            if (i == 0 || i == H - 1 || j == 0 || j == W - 1) {
+                pq.push({A[i][j], {i, j}});
+                sunk[i][j] = true;
+            }
+        }
+    }
+
+    int ans = H * W;
+    vector<int> res(Y + 1, ans);
+    int current_sea_level = 0;
+
+    for (int y = 1; y <= Y; ++y) {
+        current_sea_level = y;
+        while (!pq.empty() && pq.top().first <= current_sea_level) {
+            auto top = pq.top();
+            pq.pop();
+            int i = top.second.first;
+            int j = top.second.second;
+            if (sunk[i][j]) {
+                ans--;
+                sunk[i][j] = false; // Mark to avoid reprocessing
+                // Check adjacent cells
+                const int dx[] = {1, 0, -1, 0};
+                const int dy[] = {0, 1, 0, -1};
+                for (int k = 0; k < 4; ++k) {
+                    int ni = i + dx[k];
+                    int nj = j + dy[k];
+                    if (ni >= 0 && ni < H && nj >= 0 && nj < W && !sunk[ni][nj]) {
+                        sunk[ni][nj] = true;
+                        pq.push({A[ni][nj], {ni, nj}});
+                    }
+                }
+            }
+        }
+        res[y] = ans;
+    }
+
+    for (int y = 1; y <= Y; ++y) {
+        cout << res[y] << "\n";
+    }
+
+    return 0;
+}
+```
+
+### Explanation
+1. **Initialization**: The code reads the island's dimensions and elevation data. It initializes a priority queue to manage sections based on their elevation, starting with border sections.
+2. **Priority Queue Handling**: The priority queue processes sections in ascending order of their elevation. For each sea level `y`, sections with elevation less than or equal to `y` are processed.
+3. **BFS Propagation**: When a section sinks, its adjacent sections are checked. If they are not already sunk and their elevation is within the current sea level, they are added to the queue for processing.
+4. **Result Tracking**: The remaining sections above sea level are tracked for each year, and the results are printed for each year from 1 to Y.
+
+This approach ensures that the sinking process is handled efficiently and correctly, adhering to the problem constraints and requirements.

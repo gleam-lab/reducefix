@@ -1,0 +1,88 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+const int MAX = 400005;
+
+int H, W, Q;
+bool wall[2][MAX]; // row-major and column-major representation of walls
+int row_base, col_base;
+
+// Union-Find (Disjoint Set Union) with path compression
+int parent[2][MAX];
+
+int find(int type, int x) {
+    if (parent[type][x] != x)
+        parent[type][x] = find(type, parent[type][x]);
+    return parent[type][x];
+}
+
+void unite(int type, int x, int y) {
+    parent[type][find(type, x)] = find(type, y);
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+
+    cin >> H >> W >> Q;
+    row_base = 0;
+    col_base = H * W;
+
+    // Initialize walls as true
+    for (int i = 0; i < 2 * MAX; ++i) {
+        wall[0][i] = wall[1][i] = true;
+    }
+
+    // Initialize DSU
+    for (int i = 0; i < 2 * MAX; ++i) {
+        parent[0][i] = i;
+        parent[1][i] = i;
+    }
+
+    int total_walls = H * W;
+
+    while (Q--) {
+        int R, C;
+        cin >> R >> C;
+        --R; --C;
+        int pos = R * W + C;
+
+        // Check if there's a bomb at current cell
+        if (!wall[0][pos]) {
+            continue;
+        }
+
+        // If the cell has a wall, destroy it
+        wall[0][pos] = wall[1][pos] = false;
+        total_walls--;
+
+        // Directions: up, down, left, right
+        int dr[] = {-1, 1, 0, 0};
+        int dc[] = {0, 0, -1, 1};
+
+        for (int d = 0; d < 4; ++d) {
+            int r = R + dr[d], c = C + dc[d];
+            while (r >= 0 && r < H && c >= 0 && c < W) {
+                int npos = r * W + c;
+                if (!wall[0][npos]) {
+                    r += dr[d];
+                    c += dc[d];
+                    continue;
+                }
+
+                // Found a wall in direction
+                // Destroy this wall
+                wall[0][npos] = wall[1][npos] = false;
+                total_walls--;
+
+                // Unite in both directions
+                unite(0, npos, pos);
+                unite(1, npos, pos);
+
+                break;
+            }
+        }
+    }
+
+    cout << total_walls << endl;
+}

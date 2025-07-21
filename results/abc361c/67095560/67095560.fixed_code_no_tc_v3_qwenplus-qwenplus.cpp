@@ -1,0 +1,41 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+#define endl "\n"
+#define int long long
+
+void solve() {
+    int n, k;
+    cin >> n >> k;
+    vector<int> A(n);
+    for (int i = 0; i < n; ++i) {
+        cin >> A[i];
+    }
+
+    // We need to find the minimum possible value of (max(B) - min(B)) where B is formed by removing exactly K elements,
+    // keeping the order of remaining elements.
+
+    // Since we want the minimal difference between max and min in a subsequence of size N-K,
+    // it's optimal to consider windows of size (N-K) in the sorted array.
+
+    // Create a copy and sort it
+    vector<int> sortedA = A;
+    sort(sortedA.begin(), sortedA.end());
+
+    // Consider all contiguous windows of size (N-K) in the sorted array
+    // The smallest difference will be among these
+    int min_diff = numeric_limits<int>::max();
+    int window_size = n - k;
+    for (int i = 0; i + window_size <= n; ++i) {
+        min_diff = min(min_diff, sortedA[i + window_size - 1] - sortedA[i]);
+    }
+
+    cout << min_diff;
+}
+
+signed main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(NULL);
+    solve();
+    return 0;
+}

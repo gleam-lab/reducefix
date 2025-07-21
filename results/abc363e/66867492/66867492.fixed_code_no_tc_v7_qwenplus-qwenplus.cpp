@@ -1,0 +1,77 @@
+#include <bits/stdc++.h>
+using namespace std;
+using i64 = int64_t;
+using vi = vector<int>;
+using vvi = vector<vi>;
+using Pi = pair<int, int>;
+using pq_c = priority_queue<Pi, vector<Pi>, greater<Pi>>;
+
+int main() {
+    int H, W, Y;
+    cin >> H >> W >> Y;
+    vvi A(H, vi(W));
+    for (auto &row : A) for (auto &x : row) cin >> x;
+
+    const int INF = 1e9 + 7;
+    vvi height(H, vi(W, INF)); // The year when each cell gets submerged
+    priority_queue<pair<int, Pi>, vector<pair<int, Pi>>, greater<>> pq;
+
+    // Initialize border cells
+    for (int i = 0; i < H; ++i) {
+        for (int j : {0, W-1}) {
+            height[i][j] = min(height[i][j], A[i][j]);
+            pq.emplace(A[i][j], make_pair(i, j));
+        }
+    }
+    for (int j = 1; j < W - 1; ++j) {
+        for (int i : {0, H-1}) {
+            height[i][j] = min(height[i][j], A[i][j]);
+            pq.emplace(A[i][j], make_pair(i, j));
+        }
+    }
+
+    // Directions: up, right, down, left
+    vector<Pi> dirs = {{-1,0}, {0,1}, {1,0}, {0,-1}};
+
+    // Process using Dijkstra-like approach
+    while (!pq.empty()) {
+        auto [elev, pos] = pq.top();
+        auto [r, c] = pos;
+        pq.pop();
+
+        for (auto [dr, dc] : dirs) {
+            int nr = r + dr, nc = c + dc;
+            if (nr < 0 || nr >= H || nc < 0 || nc >= W) continue;
+
+            int new_height = min(elev, A[nr][nc]);
+            if (new_height > height[nr][nc]) continue;
+
+            if (height[nr][nc] > new_height) {
+                height[nr][nc] = new_height;
+                pq.emplace(A[nr][nc], make_pair(nr, nc));
+            }
+        }
+    }
+
+    // Count how many cells remain after each year
+    vi result(Y+2, H * W); // result[i] is the area at year i
+    for (int i = 0; i < H; ++i) {
+        for (int j = 0; j < W; ++j) {
+            if (height[i][j] <= Y) {
+                result[height[i][j]]--;
+            }
+        }
+    }
+
+    // Prepare prefix min (since once a cell is removed, it stays removed)
+    for (int i = 1; i <= Y; ++i) {
+        result[i] = min(result[i], result[i-1]);
+    }
+
+    // Output results
+    for (int i = 1; i <= Y; ++i) {
+        cout << result[i] << '\n';
+    }
+
+    return 0;
+}

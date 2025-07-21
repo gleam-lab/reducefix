@@ -1,0 +1,30 @@
+#include <bits/stdc++.h>
+#include <cmath>
+#include <algorithm>
+#include <vector>
+#include <iostream>
+using namespace std;
+using ll = long long;
+
+int main() {
+    int N, K;
+    cin >> N >> K;
+    vector<int> A(N);
+    for (int i = 0; i < N; ++i) {
+        cin >> A[i];
+    }
+    
+    sort(A.begin(), A.end());
+    
+    // If K is even, remove the middle two elements, else remove the middle element
+    if (K % 2 == 0) {
+        ll result = (A[N - 1 - K / 2] - A[K / 2]) - (A[K / 2 + 1] - A[N - 1 - K / 2]);
+        cout << result << endl;
+    } else {
+        ll result = max((A[N - 1 - K / 2] - A[K / 2]) - (A[N - 2 - K / 2] - A[K / 2]),
+                        (A[N - 2 - K / 2] - A[K / 2]) - (A[N - 1 - K / 2] - A[K / 2]));
+        cout << result << endl;
+    }
+    
+    return 0;
+}

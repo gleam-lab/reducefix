@@ -1,0 +1,24 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(0);
+    
+    int n;
+    cin >> n;
+    vector<long long> a(n), b(n);
+    for(int i = 0; i < n; ++i) cin >> a[i];
+    for(int i = 0; i < n - 1; ++i) cin >> b[i];
+    
+    sort(a.begin(), a.end());
+    sort(b.begin(), b.end());
+    
+    int idx = n - 1;
+    while(idx >= 0 && b[idx] < a[idx]) --idx;
+    
+    if(idx == -1) cout << -1 << '\n';
+    else cout << a[idx] << '\n';
+    
+    return 0;
+}

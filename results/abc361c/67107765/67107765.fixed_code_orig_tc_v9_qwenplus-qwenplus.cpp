@@ -1,0 +1,42 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+#define fi first
+#define se second
+#define pb push_back
+#define chmax(x, y) x = max(x, y)
+#define chmin(x, y) x = min(x, y)
+
+using ll = long long;
+using P = pair<int, int>;
+
+const int INF = 1001001001;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int n, k;
+    cin >> n >> k;
+    vector<int> A(n);
+    for (int i = 0; i < n; ++i) {
+        cin >> A[i];
+    }
+
+    // We need to remove K elements such that the remaining sequence has minimum (max - min)
+    // The key idea is that after sorting the array, we can try all possible windows of size (n - K)
+    // and compute min and max in those windows
+
+    sort(A.begin(), A.end());
+
+    int window_size = n - k;
+    int ans = INF;
+
+    for (int i = 0; i + window_size <= n; ++i) {
+        int current_min = A[i];
+        int current_max = A[i + window_size - 1];
+        ans = min(ans, current_max - current_min);
+    }
+
+    cout << ans << endl;
+}

@@ -1,0 +1,25 @@
+#include<bits/stdc++.h>
+using namespace std;
+int n, q, x[200005], p[200005];
+int sum[200005];
+
+int main() {
+    cin >> n;
+    for (int i = 1; i <= n; i++) {
+        cin >> x[i];
+    }
+    for (int i = 1; i <= n; i++) {
+        cin >> p[i];
+        sum[i] = sum[i - 1] + p[i];
+    }
+    cin >> q;
+    while (q--) {
+        int L, R;
+        cin >> L >> R;
+        auto lb = lower_bound(x + 1, x + n + 1, L);
+        auto ub = upper_bound(x + 1, x + n + 1, R);
+        int l = distance(x + 1, lb);
+        int r = distance(x + 1, ub);
+        cout << sum[r - 1] - sum[l - 1] << endl;
+    }
+}

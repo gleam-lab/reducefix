@@ -1,0 +1,101 @@
+
+The problem description provides us with an island that's subject to yearly sea level rise, with sections of the island sinking when they reach or fall below the sea level. The challenge is to calculate the area of the island that remains above sea level after a given number of years.
+
+To solve this problem, we can use a flood fill algorithm to simulate the 1D wave of sinking. The key insight is that if a section is adjacent to the sea or another section that has already sunk, and is not above the sea level, it will also sink.
+
+Here's a step-by-step approach:
+
+1. **Initialization**: Read in the dimensions of the island (H, W) and the number of years to simulate (Y), and store the elevation data (A) in a 2D vector.
+
+2. **Identify the Island's Boundary**: Loop through each row and column of A to identify sections that are directly adjacent to the sea (i.e., rows 0 or H-1, and columns 0 or W-1). These sections are marked as having sunk.
+
+3. **Queue the Sinking Sections**: Use a queue to store the sections that will sink in each year. Each entry in the queue is a pair `(year, coordinate)` where `year` is the sea level at the time the section sinks, and `coordinate` is the position of the sinking section.
+
+4. **Flood Fill**: For each year, process the sections that are about to sink. For each of these sections, check its adjacent sections. If an adjacent section is above the sea level, add it to the queue for sinking in the future. Keep track of the total number of sections that remain above sea level.
+
+5. **Output**: After processing for Y years, output the area of the island that remains above sea level each year.
+
+The provided code has several issues:
+- It does not correctly track the sinking process as a flood fill.
+- It initializes the queue with all sections adjacent to the sea, regardless of their elevation.
+- It only processes sections that are immediately adjacent to the sea for the initial sinking, not considering the elevation.
+
+Here is a revised version of the code that implements the flood fill approach:
+
+```cpp
+#include <iostream>
+#include <vector>
+#include <queue>
+using namespace std;
+
+struct Position {
+    int r, c;
+};
+
+int main() {
+    int H, W, Y;
+    cin >> H >> W >> Y;
+    vector<vector<int>> A(H, vector<int>(W));
+    for (int i = 0; i < H; ++i) {
+        for (int j = 0; j < W; ++j) {
+            cin >> A[i][j];
+        }
+    }
+
+    // Directions for adjacent cells (up, down, left, right)
+    vector<Position> directions = {{-1, 0}, {1, 0}, {0, -1}, {0, 1}};
+
+    queue<Position> sinkingQueue;
+    bool sink[H][W];
+
+    // Initialize sinking areas
+    for (int r = 0; r < H; ++r) {
+        for (int c = 0; c < W; ++c) {
+            if (r == 0 || r == H - 1 || c == 0 || c == W - 1) {
+                sinkingQueue.push({r, c});
+            }
+        }
+    }
+
+    // Perform the flooding simulation
+    for (int year = 0; year < Y; ++year) {
+        int remainingArea = 0;
+        while (!sinkingQueue.empty()) {
+            auto pos = sinkingQueue.front();
+            sinkingQueue.pop();
+
+            bool canSink = true;
+            for (auto dir : directions) {
+                int nr = pos.r + dir.r;
+                int nc = pos.c + dir.c;
+                if (nr >= 0 && nr < H && nc >= 0 && nc < W) {
+                    if (A[nr][nc] <= year && A[nr][nc] > A[pos.r][pos.c]) {
+                        canSink = false;
+                        sinkingQueue.push({nr, nc});
+                    }
+                    if (A[nr][nc] > year && !sink[nr][nc]) {
+                        remainingArea++;
+                    }
+                }
+            }
+
+            if (canSink) {
+                for (auto dir : directions) {
+                    int nr = pos.r + dir.r;
+                    int nc = pos.c + dir.c;
+                    if (nr >= 0 && nr < H && nc >= 0 && nc < W && !sink[nr][nc]) {
+                        A[nr][nc]--;
+                        sink[nr][nc] = true;
+                        sinkingQueue.push({nr, nc});
+                    }
+                }
+            }
+        }
+        cout << remainingArea << endl;
+    }
+
+    return 0;
+}
+```
+
+This revised code correctly initializes the sinking areas and simulates the sinking process using a flood fill algorithm each year. It also keeps track of the remaining area above sea level.

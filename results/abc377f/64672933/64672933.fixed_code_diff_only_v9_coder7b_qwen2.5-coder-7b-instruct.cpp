@@ -1,0 +1,24 @@
+#include<bits/stdc++.h>
+using namespace std;
+using ll = long long;
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+    ll n, m;
+    cin >> n >> m;
+    vector<ll> r(m), c(m);
+    for(ll i = 0; i < m; ++i){
+        cin >> r[i] >> c[i];
+    }
+    set<pair<ll,ll>> st;
+    for(ll i = 0; i < m; ++i){
+        st.insert({r[i], c[i]});
+        st.insert({r[i], n+1-c[i]});
+        st.insert({n+1-r[i], c[i]});
+        st.insert({n+1-r[i], n+1-c[i]});
+    }
+    ll ans = n*n-st.size();
+    cout << ans << '\n';
+    return 0;
+}

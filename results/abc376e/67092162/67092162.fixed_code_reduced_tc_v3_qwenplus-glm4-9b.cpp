@@ -1,0 +1,42 @@
+#include <bits/stdc++.h>
+using namespace std;
+const int maxN = 2e5 + 5;
+int t, n, k, a[maxN], b[maxN];
+pair<int, int> p[maxN];
+bool cmp(pair<int, int> p1, pair<int, int> p2) {
+  if (p1.first != p2.first) return p1.first < p2.first;
+  return p1.second > p2.second; // Maximize B_i by choosing the second largest A_i when A_i are the same
+}
+
+int main() {
+    ios_base::sync_with_stdio(0);
+    cin.tie(0);
+    cout.tie(0);
+    
+    cin >> t;
+    while (t--) {
+        cin >> n >> k;
+        long long sum = 0, ans = 0;
+        for (int i = 0; i < n; i++) cin >> a[i];
+        for (int i = 0; i < n; i++) cin >> b[i];
+        for (int i = 0; i < n; i++) {
+            p[i].first = a[i];
+            p[i].second = b[i];
+        }
+        sort(p, p + n, cmp);
+        
+        // Calculate the sum of B[i] for the first k elements
+        for (int i = 0; i < k; i++) {
+            sum += p[i].second;
+        }
+        
+        // Calculate the minimum possible value
+        for (int i = 0; i < n; i++) {
+            long long current_sum = sum - p[i].second + p[i].second; // Replace sum with the current sum
+            ans = min(ans, p[i].first * current_sum);
+        }
+        
+        cout << ans << "\n";
+    }
+    return 0;
+}

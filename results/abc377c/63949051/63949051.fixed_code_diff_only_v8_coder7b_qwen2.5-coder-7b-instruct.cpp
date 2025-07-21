@@ -1,0 +1,42 @@
+#include <iostream>
+#include <vector>
+#include <unordered_set>
+#include <cmath>
+
+using namespace std;
+
+#define ll long long
+
+ll n, m;
+vector<pair<ll, ll>> pieces;
+
+int main() {
+    ios_base::sync_with_stdio(0); cin.tie(0); cout.tie(0);
+
+    cin >> n >> m;
+
+    unordered_set<ll> attacked;
+
+    for(int i=0; i<m; i++) {
+        ll x, y;
+        cin >> x >> y;
+        pieces.push_back({x, y});
+
+        // Add the position itself
+        attacked.insert((x-1)*n + y);
+
+        // Check all possible positions the knight can attack
+        if(x+2 <= n && y+1 <= n) attacked.insert(((x+2)-1)*n + (y+1));
+        if(x+1 <= n && y+2 <= n) attacked.insert(((x+1)-1)*n + (y+2));
+        if(x-1 >= 1 && y+2 <= n) attacked.insert(((x-1)-1)*n + (y+2));
+        if(x-2 >= 1 && y+1 <= n) attacked.insert(((x-2)-1)*n + (y+1));
+        if(x-2 >= 1 && y-1 >= 1) attacked.insert(((x-2)-1)*n + (y-1));
+        if(x-1 >= 1 && y-2 >= 1) attacked.insert(((x-1)-1)*n + (y-2));
+        if(x+1 <= n && y-2 >= 1) attacked.insert(((x+1)-1)*n + (y-2));
+        if(x+2 <= n && y-1 >= 1) attacked.insert(((x+2)-1)*n + (y-1));
+    }
+
+    cout << n*n - attacked.size();
+
+    return 0;
+}

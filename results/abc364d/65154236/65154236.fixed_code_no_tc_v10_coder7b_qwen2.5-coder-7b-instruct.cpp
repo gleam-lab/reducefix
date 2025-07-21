@@ -1,0 +1,29 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+const int MAXN = 100005;
+vector<int> a[MAXN], b[MAXN];
+long long dis[MAXN];
+
+int main() {
+    int n, q;
+    cin >> n >> q;
+    
+    // Read coordinates of points A_i
+    for(int i = 1; i <= n; ++i) {
+        int ai; cin >> ai;
+        a[ai].push_back(i);
+    }
+
+    // Calculate distances for each point B_j
+    for(int j = 1; j <= q; ++j) {
+        int bj, kj; cin >> bj >> kj;
+        b[bj].push_back(kj);
+        dis[j] = abs(bj - a[bj][kj - 1]);
+    }
+
+    // Print results
+    for(long long d : dis) cout << d << '\n';
+
+    return 0;
+}

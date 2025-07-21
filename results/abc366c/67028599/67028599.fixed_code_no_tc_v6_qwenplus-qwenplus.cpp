@@ -1,0 +1,39 @@
+#include<bits/stdc++.h>
+
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int q;
+    cin >> q;
+
+    map<int, int> counts;  // Tracks number of balls for each integer
+    int distinct_count = 0;
+
+    while (q--) {
+        int type;
+        cin >> type;
+
+        if (type == 1) {
+            int x;
+            cin >> x;
+            if (counts[x] == 0) {
+                distinct_count++;
+            }
+            counts[x]++;
+        } else if (type == 2) {
+            int x;
+            cin >> x;
+            counts[x]--;
+            if (counts[x] == 0) {
+                distinct_count--;
+            }
+        } else {
+            cout << distinct_count << endl;
+        }
+    }
+
+    return 0;
+}

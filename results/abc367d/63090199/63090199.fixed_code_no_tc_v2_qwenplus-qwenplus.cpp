@@ -1,0 +1,34 @@
+#include<bits/stdc++.h>
+using namespace std;
+
+int main(){
+    int n, m;
+    cin >> n >> m;
+    vector<int> nums(n);
+    for(int i = 0; i < n; i++){
+        cin >> nums[i];
+    }
+
+    // Compute prefix sums modulo m
+    vector<int> prefix_mod(n + 1, 0);
+    for(int i = 1; i <= n; i++){
+        prefix_mod[i] = (prefix_mod[i - 1] + nums[i - 1]) % m;
+    }
+
+    // Count occurrences of each remainder
+    unordered_map<int, int> mod_count;
+    for(int i = 0; i <= n; i++){
+        mod_count[prefix_mod[i]]++;
+    }
+
+    // For each remainder, count pairs to form valid subarrays
+    long long count = 0;
+    for(auto& [mod, cnt] : mod_count){
+        if(cnt > 1){
+            count += 1LL * cnt * (cnt - 1); // Use long long to avoid overflow
+        }
+    }
+
+    cout << count << endl;
+    return 0;
+}

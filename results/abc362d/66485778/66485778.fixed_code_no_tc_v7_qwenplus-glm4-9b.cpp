@@ -1,0 +1,76 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define INT long long 
+template <class T>
+using V = vector<T>;
+using VI = vector<int>;
+using VVI = vector<vector<int>>;
+using VV = vector<vector<pair<int, int>>>;
+using VS = vector<string>;
+using VB = vector<bool>;
+using VD = vector<double>;
+using VP = vector<pair<int, int>>;
+using VLL = vector<ll>;
+using VS = vector<string>;
+using VU = vector unordered_set<int>;
+using VU2 = vector unordered_set pair<int, int>;
+using VU3 = vector unordered_set pair<int, pair<int, int>>;
+using VU4 = vector unordered_set pair<int, pair<int, pair<int, int>>>;
+using VV2 = vector vector pair<int, int>;
+using VV3 = vector vector pair<int, vector<int>>;
+using VQ = vector queue<int>;
+using VQ2 = queue pair<int, int>;
+struct DSU {
+private:
+    vector<int> fa, sz;
+public:
+    DSU(int n) : fa(n + 1), sz(n + 1, 1) {
+        iota(fa.begin(), fa.end(), 0);
+    }
+    int find(int x) {
+        if (fa[x] != x) fa[x] = find(fa[x]);
+        return fa[x];
+    }
+    bool merge(int x, int y) {
+        x = find(x), y = find(y);
+        if (x == y) return false;
+        fa[x] = y;
+        sz[y] += sz[x];
+        return true;
+    }
+    int size(int x) {
+        return sz[find(x)];
+    }
+};
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+    int N, M;
+    cin >> N >> M;
+    V<int> A(N + 1), D(N + 1, 1e18);
+    VV2 edges(N + 1);
+    for (int i = 1; i <= N; ++i) cin >> A[i];
+    D[1] = A[1];
+    for (int i = 0; i < M; ++i) {
+        int u, v, w;
+        cin >> u >> v >> w;
+        edges[u].emplace_back(v, w);
+        edges[v].emplace_back(u, w);
+    }
+    priority_queue<pair<int, int>, V<pair<int, int>>, greater<pair<int, int>>> pq;
+    pq.push({A[1], 1});
+    while (!pq.empty()) {
+        auto [d, u] = pq.top();
+        pq.pop();
+        if (d > D[u]) continue;
+        for (auto [v, w] : edges[u]) {
+            if (D[v] > d + w + A[v]) {
+                D[v] = d + w + A[v];
+                pq.push({D[v], v});
+            }
+        }
+    }
+    for (int i = 2; i <= N; ++i) cout << D[i] << (i < N ? " " : "");
+    return 0;
+}

@@ -1,0 +1,39 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+
+using namespace std;
+
+const int MAX_N = 1000000000;
+
+int main() {
+    long long n, m;
+    cin >> n >> m;
+    
+    vector<pair<long long, long long>> pieces(m);
+    for(long long i = 0; i < m; ++i){
+        cin >> pieces[i].first >> pieces[i].second;
+    }
+    
+    sort(pieces.begin(), pieces.end());
+    
+    vector<long long> row(n+1), col(n+1), diag1(n+1), diag2(n+1);
+    
+    for(auto& p : pieces){
+        row[p.first]++;
+        col[p.second]++;
+        diag1[p.first+p.second]++;
+        diag2[p.first-p.second+1]++;
+    }
+    
+    long long result = n*n;
+    
+    for(auto& p : pieces){
+        result -= row[p.first] + col[p.second] + diag1[p.first+p.second] + diag2[p.first-p.second+1];
+        result++;
+    }
+    
+    cout << result / 2 << endl;
+    
+    return 0;
+}

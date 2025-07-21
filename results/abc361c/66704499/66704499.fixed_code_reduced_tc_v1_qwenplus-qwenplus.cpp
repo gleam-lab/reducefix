@@ -1,0 +1,32 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int n, k;
+    cin >> n >> k;
+    vector<int> A(n);
+    for (int i = 0; i < n; ++i) {
+        cin >> A[i];
+    }
+
+    // We will use a sliding window approach to find the minimum possible range
+    // after removing exactly K elements from the array.
+    sort(A.begin(), A.end());
+
+    int result = numeric_limits<int>::max();
+
+    // Consider removing i elements from the left and (k - i) from the right
+    for (int i = 0; i <= k; ++i) {
+        int left = i;
+        int right = n - 1 - (k - i);
+        if (right - left + 1 > 0) {
+            result = min(result, A[right] - A[left]);
+        }
+    }
+
+    cout << result << endl;
+    return 0;
+}

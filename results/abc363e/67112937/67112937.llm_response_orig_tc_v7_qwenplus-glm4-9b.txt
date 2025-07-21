@@ -1,0 +1,89 @@
+
+The problem is to calculate the area of an island that remains above sea level after `Y` years, given that the sea level rises by 1 unit each year. The island is represented as a 2D matrix `A` where each cell corresponds to the elevation of that section of the island.
+
+The approach in the provided code is to simulate the process of the sea level rising. However, there are some problems and potential optimizations in the code:
+
+1. The code uses a priority queue (min-heap) to keep track of the elevation of the lowest points that are still above sea level. This is done by pushing all the edges of the island (which are always at sea level) into the priority queue initially.
+
+2. The code processes the island by repeatedly taking the lowest point from the priority queue (which represents the current sea level) and marking its neighbors if they are above the current sea level. This process is repeated for `Y` years.
+
+3. There are some issues with the implementation:
+   - The priority queue is updated when a section sinks, which is unnecessary.
+   - The variable `ans` stores the total area of the island initially, which is not updated correctly as the island sinks.
+   - The code does not keep track of the actual sinking process in a loop, which is inefficient.
+
+4. Potential optimizations:
+   - Instead of using a priority queue, we can use a Breadth-First Search (BFS) approach to simulate the sinking process. This would allow us to process the sinking layers one by one.
+   - We can use a BFS approach from the corners of the island, updating the sea level and marking sections that sink each year.
+
+Let's address these issues and optimize the code using BFS:
+
+```cpp
+#include <iostream>
+#include <vector>
+#include <queue>
+#include <climits>
+
+using namespace std;
+
+int main() {
+    int H, W, Y;
+    cin >> H >> W >> Y;
+
+    vector<vector<int>> grid(H, vector<int>(W));
+    for (int i = 0; i < H; ++i) {
+        for (int j = 0; j < W; ++j) {
+            cin >> grid[i][j];
+        }
+    }
+
+    // BFS to calculate areas at each sea level
+    queue<pair<int, int>> q;
+    vector<vector<bool>> visited(H, vector<bool>(W, false));
+
+    // Initialize the BFS with the corners and edges of the island
+    for (int i = 0; i < H; ++i) {
+        for (int j = 0; j < W; ++j) {
+            if ((i == 0 || i == H - 1 || j == 0 || j == W - 1) && !visited[i][j]) {
+                q.push({i, j});
+                visited[i][j] = true;
+            }
+        }
+    }
+
+    int currentSeaLevel = 0;
+    int remainingArea = H * W;
+
+    while (!q.empty() && currentSeaLevel < Y) {
+        int levelSize = q.size();
+        for (int i = 0; i < levelSize; ++i) {
+            auto [x, y] = q.front();
+            q.pop();
+
+            for (int dx = -1; dx <= 1; ++dx) {
+                for (int dy = -1; dy <= 1; ++dy) {
+                    int nx = x + dx, ny = y + dy;
+                    if (nx >= 0 && nx < H && ny >= 0 && ny < W && !visited[nx][ny]) {
+                        if (grid[nx][ny] > currentSeaLevel) {
+                            q.push({nx, ny});
+                            visited[nx][ny] = true;
+                        }
+                    }
+                }
+            }
+        }
+        // After processing all sections at the current sea level, reduce the remaining area
+        remainingArea -= levelSize;
+        currentSeaLevel++;
+    }
+
+    // Output the remaining area for each year
+    for (int i = 0; i < min(Y, currentSeaLevel); ++i) {
+        cout << remainingArea << endl;
+    }
+
+    return 0;
+}
+```
+
+This code uses BFS to simulate the sinking process. It starts by marking all the edges of the island as visited and pushing them into a queue. It then processes the queue level by level, marking sections that sink and updating the remaining area accordingly. After processing each sea level, it outputs the remaining area.

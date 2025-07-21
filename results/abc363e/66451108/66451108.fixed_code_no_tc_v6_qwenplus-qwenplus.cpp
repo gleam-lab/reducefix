@@ -1,0 +1,80 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+#define int long long
+#define pii pair<int, int>
+#define endl '\n'
+const int MOD = 1e9 + 7;
+const int MAXY = 1e5 + 5;
+
+int dx[] = {0, 0, 1, -1};
+int dy[] = {1, -1, 0, 0};
+
+signed main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+    cout.tie(0);
+
+    int H, W, Y;
+    cin >> H >> W >> Y;
+
+    vector<vector<int>> grid(H, vector<int>(W));
+    for (int i = 0; i < H; ++i)
+        for (int j = 0; j < W; ++j)
+            cin >> grid[i][j];
+
+    // Visited array to mark cells already processed
+    vector<vector<bool>> vis(H, vector<bool>(W, false));
+
+    // Priority queue to process lowest elevation first
+    priority_queue<pair<int, pii>, vector<pair<int, pii>>, greater<>> pq;
+
+    // Push all boundary cells into the priority queue
+    for (int i = 0; i < H; ++i) {
+        for (int j = 0; j < W; ++j) {
+            if (i == 0 || i == H - 1 || j == 0 || j == W - 1) {
+                pq.push({grid[i][j], {i, j}});
+                vis[i][j] = true;
+            }
+        }
+    }
+
+    // Array to store remaining area at each year
+    vector<int> remaining(Y + 2, H * W); // Initially whole island remains
+
+    // Process cells in increasing order of their elevation
+    while (!pq.empty()) {
+        auto [height, pos] = pq.top();
+        pq.pop();
+        int x = pos.first, y = pos.second;
+
+        // The year when this cell gets submerged
+        int year = height;
+
+        if (year > Y)
+            continue;
+
+        remaining[year]--; // Reduce area for that year
+
+        for (int d = 0; d < 4; ++d) {
+            int nx = x + dx[d];
+            int ny = y + dy[d];
+            if (nx >= 0 && nx < H && ny >= 0 && ny < W && !vis[nx][ny]) {
+                vis[nx][ny] = true;
+                pq.push({grid[nx][ny], {nx, ny}});
+            }
+        }
+    }
+
+    // Accumulate results: for each year, keep the minimum area so far
+    for (int i = 1; i <= Y; ++i) {
+        remaining[i] = min(remaining[i], remaining[i - 1]);
+    }
+
+    // Output result for each year
+    for (int i = 1; i <= Y; ++i) {
+        cout << remaining[i] << endl;
+    }
+
+    return 0;
+}

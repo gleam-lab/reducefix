@@ -1,0 +1,97 @@
+To fix this code, we need to properly calculate the minimum number of additional votes each candidate needs to guarantee their victory. The previous approach had several flaws, including incorrect handling of the binary search and the calculation of the required votes. Here's the corrected version:
+
+### Approaches
+
+1. **Problem Analysis**: The problem requires determining for each candidate the minimum additional votes they need from the remaining ballots to ensure they are elected. A candidate is elected if the number of candidates with more votes is less than M. The remaining votes must be distributed in a way that ensures this condition holds.
+
+2. **Insight**: For each candidate, we need to ensure that after adding X votes, the number of candidates with votes strictly greater than the candidate's votes (after addition) is less than M. This involves sorting the votes to efficiently determine the threshold and using binary search to find the minimal X.
+
+3. **Algorithm Selection**: 
+   - **Sorting**: Sort the candidates' initial votes to facilitate binary search and prefix sum calculations.
+   - **Binary Search**: For each candidate, perform a binary search to find the minimal X such that even in the worst-case distribution of remaining votes, the candidate's condition is met.
+   - **Prefix Sums**: Use prefix sums to quickly calculate the sum of votes up to certain ranks, aiding in determining the required votes.
+
+4. **Complexity**: The approach involves sorting (O(N log N)) and for each candidate, a binary search (O(log K)), leading to an overall complexity of O(N log N + N log K), which is efficient given the constraints.
+
+### Solution Code
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int N, M;
+    ll K;
+    cin >> N >> M >> K;
+
+    vector<ll> A(N);
+    for (int i = 0; i < N; ++i) {
+        cin >> A[i];
+    }
+
+    vector<pair<ll, int>> sorted_A(N);
+    for (int i = 0; i < N; ++i) {
+        sorted_A[i] = {A[i], i};
+    }
+    sort(sorted_A.begin(), sorted_A.end());
+
+    vector<ll> pre_sum(N + 1);
+    for (int i = 0; i < N; ++i) {
+        pre_sum[i + 1] = pre_sum[i] + sorted_A[i].first;
+    }
+
+    ll total_remaining = K - pre_sum[N];
+    vector<ll> res(N, -1);
+
+    for (int pos = 0; pos < N; ++pos) {
+        ll original_votes = sorted_A[pos].first;
+        int original_idx = sorted_A[pos].second;
+
+        ll low = 0, high = total_remaining;
+        ll answer = -1;
+
+        while (low <= high) {
+            ll mid = (low + high) / 2;
+            ll new_votes = original_votes + mid;
+
+            auto it = upper_bound(sorted_A.begin(), sorted_A.end(), make_pair(new_votes, N));
+            int greater = sorted_A.end() - it;
+
+            if (greater < M) {
+                answer = mid;
+                high = mid - 1;
+            } else {
+                low = mid + 1;
+            }
+        }
+
+        if (answer != -1) {
+            res[original_idx] = answer;
+        } else {
+            res[original_idx] = -1;
+        }
+    }
+
+    for (int i = 0; i < N; ++i) {
+        cout << res[i] << " ";
+    }
+
+    return 0;
+}
+```
+
+### Explanation
+
+1. **Input Handling**: The code reads the number of candidates (N), the threshold (M), and the total votes (K). It then reads the initial votes for each candidate.
+
+2. **Sorting and Prefix Sums**: The candidates' votes are sorted to facilitate binary search operations. Prefix sums of the sorted votes are computed to efficiently calculate sums of votes up to any given rank.
+
+3. **Binary Search for Each Candidate**: For each candidate, a binary search is performed to determine the minimal additional votes (X) needed. The binary search checks if, after adding X votes, the number of candidates with more votes is less than M.
+
+4. **Output**: The results for each candidate are stored in an array and printed in the original order, ensuring the correct output format.
+
+This approach ensures that each candidate's minimal required additional votes are calculated efficiently, adhering to the problem constraints and requirements.

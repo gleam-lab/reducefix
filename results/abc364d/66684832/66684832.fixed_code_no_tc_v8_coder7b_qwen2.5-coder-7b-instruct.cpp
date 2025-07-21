@@ -1,0 +1,42 @@
+#include <iostream>
+#include<algorithm>
+#include<queue>
+#include<map>
+#include<vector>
+#include<cstring>
+using namespace std;
+#define int long long
+#define endl '\n'
+const int N = 2e5 + 9, inf = 0x3f3f3f3f3f3f3f3f;
+int n, q;
+vector<int> a;
+
+int findans(int pos, int k) {
+    int l = 0, r = 1e8;
+    while (l < r) {
+        int mid = (l + r) >> 1;
+        auto it1 = lower_bound(a.begin(), a.end(), pos - mid);
+        auto it2 = upper_bound(a.begin(), a.end(), pos + mid);
+        if (it2 - it1 >= k)r = mid;
+        else l = mid + 1;
+    }
+    return l;
+}
+
+signed main()
+{
+    ios::sync_with_stdio(false);
+    cin.tie(0); cout.tie(0);
+
+    cin >> n >> q;
+    a.resize(n + 1);
+    for (int i = 1; i <= n; i++)cin >> a[i];
+    sort(a.begin() + 1, a.end());
+    while (q--) {
+        int x, k;
+        cin >> x >> k;
+        cout << findans(x, k) << endl;
+    }
+
+    return 0;
+}

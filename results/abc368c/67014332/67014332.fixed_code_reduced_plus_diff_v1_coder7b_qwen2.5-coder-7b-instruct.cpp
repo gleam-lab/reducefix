@@ -1,0 +1,47 @@
+#include<bits/stdc++.h>
+using namespace std;
+using ll = long long;
+
+ll calculateTime(vector<ll>& healths) {
+    ll time = 0;
+    int n = healths.size();
+    priority_queue<pair<ll, int>, vector<pair<ll, int>>, greater<>> pq;
+    
+    // Initialize the priority queue with negative healths and their indices
+    for (int i = 0; i < n; ++i) {
+        pq.push({-healths[i], i});
+    }
+
+    while (!pq.empty()) {
+        auto [h, idx] = pq.top(); 
+        pq.pop();
+
+        // Skip if already dead
+        if (h >= 0) break;
+
+        // Calculate the number of attacks needed to kill this enemy
+        ll attacks = abs(h) / 3 + (abs(h) % 3 != 0);
+        time += attacks;
+
+        // Update the remaining health and push back to the queue if not yet dead
+        healths[idx] -= attacks * 3;
+        if (healths[idx] > 0) {
+            pq.push({-healths[idx], idx});
+        }
+    }
+
+    return time;
+}
+
+int main() {
+    ios_base::sync_with_stdio(false); cin.tie(NULL);
+    ll n;
+    cin >> n;
+    vector<ll> healths(n);
+    for (auto &h : healths) cin >> h;
+
+    ll result = calculateTime(healths);
+    cout << result << endl;
+
+    return 0;
+}

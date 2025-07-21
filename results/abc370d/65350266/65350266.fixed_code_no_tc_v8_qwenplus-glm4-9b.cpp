@@ -1,0 +1,71 @@
+#include <iostream>
+#include <vector>
+#include <set>
+
+using namespace std;
+
+int main() {
+    int H, W, Q;
+    cin >> H >> W >> Q;
+    
+    // Using bitset to efficiently keep track of walls
+    bitset<4 * 10^5> tate, yoko;
+    
+    for (int i = 0; i < H; ++i) {
+        for (int j = 0; j < W; ++j) {
+            tate.set(i * W + j);
+            yoko.set(i * W + j);
+        }
+    }
+    
+    for (int q = 0; q < Q; ++q) {
+        int r, c;
+        cin >> r >> c;
+        r--; c--;
+        
+        if (tate.test(r * W + c)) {
+            tate.reset(r * W + c);
+            yoko.reset(r * W + c);
+        } else {
+            // Set walls above and below the given cell
+            for (int i = r - 1; i >= 0; --i) {
+                if (tate.test(i * W + c)) {
+                    tate.reset(i * W + c);
+                    break;
+                }
+            }
+            for (int i = r + 1; i < H; ++i) {
+                if (tate.test(i * W + c)) {
+                    tate.reset(i * W + c);
+                    break;
+                }
+            }
+            
+            // Set walls to the left and right of the given cell
+            for (int j = c - 1; j >= 0; --j) {
+                if (yoko.test(r * W + j)) {
+                    yoko.reset(r * W + j);
+                    break;
+                }
+            }
+            for (int j = c + 1; j < W; ++j) {
+                if (yoko.test(r * W + j)) {
+                    yoko.reset(r * W + j);
+                    break;
+                }
+            }
+        }
+    }
+    
+    // Count the remaining walls
+    long long remainingWalls = 0;
+    for (int i = 0; i < H * W; ++i) {
+        if (tate.test(i) || yoko.test(i)) {
+            remainingWalls++;
+        }
+    }
+    
+    cout << remainingWalls << endl;
+    
+    return 0;
+}

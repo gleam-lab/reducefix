@@ -1,0 +1,57 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+#define ll long long
+#define mod 1000000007
+#define INF 1e18
+
+vector<pair<ll, ll>> adj[200001];
+ll dist[200001];
+
+void dijkstra(int src, int n){
+    priority_queue<pair<ll, ll>, vector<pair<ll, ll>>, greater<pair<ll, ll>>> pq;
+    memset(dist, INF, sizeof(dist));
+    dist[src] = 0;
+    pq.push({0, src});
+    while(!pq.empty()){
+        int u = pq.top().second;
+        pq.pop();
+        for(auto v : adj[u]){
+            if(dist[v.first] > dist[u] + v.second){
+                dist[v.first] = dist[u] + v.second;
+                pq.push({dist[v.first], v.first});
+            }
+        }
+    }
+}
+
+void solve(){
+    int n, m;
+    cin >> n >> m;
+    vector<ll> wt(n+1);
+    for(int i=1;i<=n;i++){
+        cin >> wt[i];
+    }
+    for(int i=1;i<=m;i++){
+        int u, v, w;
+        cin >> u >> v >> w;
+        adj[u].push_back({v, w});
+        adj[v].push_back({u, w});
+    }
+    dijkstra(1, n);
+    for(int i=2;i<=n;i++){
+        cout << dist[i] + wt[i] << " ";
+    }
+    cout << "\n";
+}
+
+int main(){
+    ios_base::sync_with_stdio(false);
+    cin.tie(NULL);
+    int tc;
+    cin >> tc;
+    while(tc--){
+        solve();
+    }
+    return 0;
+}

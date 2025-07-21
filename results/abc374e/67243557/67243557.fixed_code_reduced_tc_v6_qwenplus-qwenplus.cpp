@@ -1,0 +1,73 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define rep(i,n) for(long long i=0;i<n;i++)
+using ll = long long;
+
+ll calc_min_cost(ll a, ll b, ll p, ll q, ll target) {
+    // メモ: 最大でa*bのサイズでループする必要がある
+    ll limit = min(2 * a * b + target % (a * b), 2 * a * b);
+    
+    vector<ll> dp(limit + 1, 1e18);
+    dp[0] = 0;
+    
+    for (int i = 0; i <= limit; ++i) {
+        if (i + a <= limit) dp[i + a] = min(dp[i + a], dp[i] + p);
+        if (i + b <= limit) dp[i + b] = min(dp[i + b], dp[i] + q);
+    }
+
+    return dp[target];
+}
+
+ll f(ll a, ll b, ll p, ll q, ll x) {
+    ll ans = 0;
+    ll lcm_ab = a * b; // LCM(a,b)
+    
+    // 周期的な部分をまとめて計算
+    ll full_cycles = x / lcm_ab;
+    ans += full_cycles * calc_min_cost(a, b, p, q, lcm_ab);
+    
+    // 残りの部分
+    ans += calc_min_cost(a, b, p, q, x % lcm_ab);
+    
+    return ans;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+    
+    int n;
+    ll x;
+    cin >> n >> x;
+    
+    vector<ll> a(n), b(n), p(n), q(n);
+    for (int i = 0; i < n; ++i) {
+        cin >> a[i] >> p[i] >> b[i] >> q[i];
+    }
+    
+    // 二分探索で最大のwを求める
+    ll low = 0, high = 1;
+    // 高コストなケースでも対応できるように上界を大きく取る
+    while (f(a[0], b[0], p[0], q[0], high) <= x) {
+        high *= 2;
+        if (high > 1e18) break;
+    }
+    
+    while (low < high) {
+        ll mid = (low + high + 1) / 2;
+        ll total_cost = 0;
+        
+        for (int i = 0; i < n && total_cost <= x; ++i) {
+            total_cost += f(a[i], b[i], p[i], q[i], mid);
+        }
+        
+        if (total_cost <= x) {
+            low = mid;
+        } else {
+            high = mid - 1;
+        }
+    }
+    
+    cout << low << "\n";
+    return 0;
+}

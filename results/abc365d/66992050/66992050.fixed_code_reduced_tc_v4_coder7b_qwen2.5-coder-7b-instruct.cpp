@@ -1,0 +1,37 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    int N;
+    string S;
+    cin >> N >> S;
+    
+    // Initialize variables
+    int wins = 0;
+    char lastMove = 'N'; // Last move made by Takahashi
+    
+    for (int i = 0; i < N; ++i) {
+        char aokiMove = S[i];
+        
+        // Determine Takahashi's move based on Aoki's move
+        if (aokiMove == 'R') {
+            lastMove = 'P'; // Paper beats Rock
+        } else if (aokiMove == 'P') {
+            lastMove = 'S'; // Scissors beat Paper
+        } else { // aokiMove == 'S'
+            lastMove = 'R'; // Rock beats Scissors
+        }
+        
+        // Increment wins if Takahashi's move beats Aoki's move
+        if ((lastMove == 'P' && aokiMove == 'R') ||
+            (lastMove == 'S' && aokiMove == 'P') ||
+            (lastMove == 'R' && aokiMove == 'S')) {
+            wins++;
+        }
+    }
+    
+    // Output the result
+    cout << wins << endl;
+    
+    return 0;
+}

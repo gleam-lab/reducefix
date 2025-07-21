@@ -1,0 +1,54 @@
+#include <iostream>
+#include <string>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+// Returns the winning move against c
+char win(char c) {
+    if (c == 'R') return 'P';
+    if (c == 'P') return 'S';
+    if (c == 'S') return 'R';
+    return c; // shouldn't happen
+}
+
+int solve(const string& s) {
+    int n = s.size();
+    vector<char> move(n);
+    
+    // Forward pass
+    int forward_count = 0;
+    char last_move = 'X';  // no move initially
+    for (int i = 0; i < n; ++i) {
+        char best_response = win(s[i]);
+        if (best_response != last_move) {
+            ++forward_count;
+            last_move = best_response;
+        } else {
+            last_move = s[i];  // opponent's move becomes our current move
+        }
+    }
+    
+    // Backward pass
+    int backward_count = 0;
+    last_move = 'X';  // no move initially
+    for (int i = n - 1; i >= 0; --i) {
+        char best_response = win(s[i]);
+        if (best_response != last_move) {
+            ++backward_count;
+            last_move = best_response;
+        } else {
+            last_move = s[i];  // opponent's move becomes our current move
+        }
+    }
+    
+    return max(forward_count, backward_count);
+}
+
+int main() {
+    int n;
+    string s;
+    cin >> n >> s;
+    cout << solve(s) << endl;
+    return 0;
+}

@@ -1,0 +1,49 @@
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+
+int main() {
+  ios::sync_with_stdio(false);
+  cin.tie(nullptr);
+
+  int N;
+  string S;
+  cin >> N >> S;
+
+  // Strategy mapping:
+  // R -> P -> S -> R
+  // We'll track the last move we played to ensure no consecutive same moves
+  char last_move = 'N'; // Initially no move played
+  int ans = 0;
+
+  for (char c : S) {
+    if (c == 'R') {
+      // Win by playing P after R
+      if (last_move != 'P') {
+        ans++;
+        last_move = 'P';
+      } else {
+        last_move = 'R';
+      }
+    } else if (c == 'P') {
+      // Win by playing S after P
+      if (last_move != 'S') {
+        ans++;
+        last_move = 'S';
+      } else {
+        last_move = 'P';
+      }
+    } else if (c == 'S') {
+      // Win by playing R after S
+      if (last_move != 'R') {
+        ans++;
+        last_move = 'R';
+      } else {
+        last_move = 'S';
+      }
+    }
+  }
+
+  cout << ans << endl;
+  return 0;
+}

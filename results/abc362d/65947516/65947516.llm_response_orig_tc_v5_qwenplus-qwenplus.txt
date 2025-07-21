@@ -1,0 +1,98 @@
+The issue in the code lies in how the **path cost** is calculated. In this problem, the path cost includes:
+
+- The sum of **vertex weights** of all vertices on the path
+- The sum of **edge weights** of all edges on the path
+
+However, in a typical Dijkstra’s algorithm implementation, each edge connects two nodes, and if we naively add `A[u]` (the vertex weight) every time we move to a node, we will double-count the source node's weight when arriving at the destination via different paths.
+
+### Problem:
+In your current code:
+```cpp
+if(dis[i.first] > dis[now.id] + i.second + a[now.id])
+```
+You are adding `a[now.id]` (i.e., the weight of the *source* node of the edge) every time you take an edge from `now.id` to `i.first`. But that means you're including `A[1]` multiple times along the same path, which is incorrect.
+
+Each node's own weight should be included **once**, when we arrive at it. So, for any edge `u -> v`, the total cost to reach `v` from `u` should be:
+```
+cost_to_v = cost_to_u + B_uv + A[v]
+```
+
+But since `A[v]` is only added when reaching `v`, we must not include it when processing the edge from `u` to `v`. That means the correct update rule should be:
+```
+dis[v] = min(dis[v], dis[u] + B_uv)
+```
+And then finally, the answer for node `i` would be:
+```
+dis[i] + A[i]
+```
+Because we only add the target node's weight once at the end.
+
+---
+
+### Fix Summary:
+- Initialize `dis[1] = 0` (do not include `A[1]`)
+- In Dijkstra, only accumulate edge weights: `dis[v] = dis[u] + B_uv`
+- At the end, for each node `i >= 2`, output `dis[i] + A[i]` to include its own vertex weight
+
+---
+
+### Corrected Code:
+```cpp
+#include <queue>
+#include <vector>
+#include <cstdio>
+#include <climits>
+#include <climits>
+#include <algorithm>
+using namespace std;
+typedef long long ll;
+typedef pair<ll, int> pli;
+
+const int N = 2e5 + 5;
+int n, m;
+ll A[N];
+vector<pli> g[N]; // g[u] stores {v, B_uv}
+ll dis[N];
+
+void dijkstra() {
+    fill(dis, dis + n + 1, LLONG_MAX);
+    dis[1] = 0;
+    priority_queue<pli, vector<pli>, greater<pli>> pq;
+    pq.push({0, 1});
+
+    while (!pq.empty()) {
+        auto [d, u] = pq.top();
+        pq.pop();
+        if (d > dis[u]) continue;
+        for (auto& edge : g[u]) {
+            auto [v, b] = edge;
+            if (dis[v] > dis[u] + b) {
+                dis[v] = dis[u] + b;
+                pq.push({dis[v], v});
+            }
+        }
+    }
+}
+
+int main() {
+    scanf("%d%d", &n, &m);
+    for (int i = 1; i <= n; ++i) {
+        scanf("%lld", &A[i]);
+    }
+    for (int i = 1; i <= m; ++i) {
+        int u, v;
+        ll b;
+        scanf("%d%d%lld", &u, &v, &b);
+        g[u].push_back({v, b});
+        g[v].push_back({u, b});
+    }
+
+    dijkstra();
+
+    for (int i = 2; i <= n; ++i) {
+        printf("%lld ", dis[i] + A[i]);
+    }
+
+    return 0;
+}
+```

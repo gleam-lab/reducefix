@@ -1,0 +1,91 @@
+To solve this problem efficiently, we need to simulate placing bombs on a grid and destroying walls in specific directions according to the rules.
+
+### Key Observations:
+1. **Grid with Walls:** Initially, every cell has a wall.
+2. **Bomb Placement Logic:**
+   - If there's a wall at the bomb location, destroy only that wall.
+   - Otherwise, destroy the first visible wall in each of the four directions (up, down, left, right) if any exist.
+3. **Efficiency Constraints:**
+   - Maximum `H * W <= 4e5` and `Q <= 2e5`, so an O(1) or O(log N) per operation is required for updates and queries.
+
+### Efficient Data Structures:
+- Use `std::set` per row and column to store the positions where walls still exist.
+- This allows efficient nearest neighbor lookups using `lower_bound()` and iterator decrement/increment for directional checks.
+
+### Fixing the Code:
+The original code incorrectly tried to erase from both sets without checking if the elements existed after moving the iterators. Also, it didn't properly handle cases when the set was empty or the lower bound pointed to end().
+
+Here’s the corrected version:
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int H, W, Q;
+    cin >> H >> W >> Q;
+
+    vector<set<int>> row(W + 1), col(H + 1);
+
+    for (int i = 1; i <= H; ++i) {
+        for (int j = 1; j <= W; ++j) {
+            row[i].insert(j);
+            col[j].insert(i);
+        }
+    }
+
+    auto destroy = [&](int r, int c) {
+        row[r].erase(c);
+        col[c].erase(r);
+    };
+
+    while (Q--) {
+        int r, c;
+        cin >> r >> c;
+
+        if (row[r].find(c) == row[r].end()) {
+            // No wall at the current position
+            // Look in all 4 directions
+
+            // Left
+            auto it = row[r].lower_bound(c);
+            if (it != row[r].begin()) {
+                --it;
+                destroy(r, *it);
+            }
+
+            // Right
+            it = row[r].lower_bound(c);
+            if (it != row[r].end() && *it != c)
+                destroy(r, *it);
+
+            // Up
+            auto jt = col[c].lower_bound(r);
+            if (jt != col[c].begin()) {
+                --jt;
+                destroy(*jt, c);
+            }
+
+            // Down
+            jt = col[c].lower_bound(r);
+            if (jt != col[c].end() && *jt != r)
+                destroy(*jt, c);
+        } else {
+            // Wall exists, destroy just that one
+            destroy(r, c);
+        }
+    }
+
+    ll remaining = 0;
+    for (int i = 1; i <= H; ++i)
+        remaining += row[i].size();
+
+    cout << remaining << '\n';
+
+    return 0;
+}
+```

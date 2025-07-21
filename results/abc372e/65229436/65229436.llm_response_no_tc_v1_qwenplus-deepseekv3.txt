@@ -1,0 +1,92 @@
+The provided code attempts to solve the problem using a Union-Find (Disjoint Set Union, DSU) data structure combined with sets to maintain the vertices in each connected component. However, there are a few issues in the code that need to be addressed:
+
+1. **Initialization of Sets**: Each vertex initially has a set containing only itself, which is correct.
+2. **Union Operation**: When merging two sets, the code correctly checks if the roots are different and merges the smaller set into the larger one for efficiency. However, the root after union might not be correctly updated in the `cnt` structure.
+3. **Handling Type 2 Queries**: The code checks if the size of the set is less than `k` and pushes `-2` to the answer vector, which should be `-1` (as per the problem statement). Also, when accessing the k-th largest element, it uses `rbegin()` and advances it, which is correct, but the output should be adjusted to 1-based indexing by adding 1 to the element (since the vertices are initially 1-based but stored as 0-based in the code).
+
+Here's the fixed code addressing these issues:
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+#define rep(i, n) for(int i=0;i<(n);i++)
+#define all(a) a.begin(), a.end()
+#define rall(a) a.rbegin(), a.rend()
+using ll = long long;
+using pi = pair<int, int>;
+const int di[]={1,-1,0,0};
+const int dj[]={0,0,1,-1};
+const int INF=1e9;
+struct UnionFind {
+    vector<int> parent, rank;
+    UnionFind(int n) : parent(n), rank(n, 0) {
+        for (int i = 0; i < n; i++) 
+            parent[i] = i;
+    }
+    int findRoot(int x) {
+        if (parent[x] != x) 
+            parent[x] = findRoot(parent[x]);
+        return parent[x];
+    }
+    bool unite(int x, int y) {
+        int rx = findRoot(x), ry = findRoot(y);
+        if (rx == ry) return false;
+        if (rank[rx] < rank[ry]) {
+            parent[rx] = ry;
+        } else {
+            parent[ry] = rx;
+            if (rank[rx] == rank[ry])
+            rank[rx]++;
+        }
+        return true;
+    }
+};
+int main(){
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int n, q;
+    cin >> n >> q;
+    UnionFind uf(n);
+    vector<set<int>> cnt(n);
+    rep(i, n) cnt[i].insert(i+1); // Store 1-based vertex numbers
+    vector<int> ans;
+    rep(qi, q) {
+        int com;
+        cin >> com;
+        if(com==1) {
+            int u, v;
+            cin >> u >> v; // u and v are 1-based
+            int ru = uf.findRoot(u-1); // Convert to 0-based for DSU
+            int rv = uf.findRoot(v-1);
+            if(ru!=rv) {
+                if(cnt[ru].size()<cnt[rv].size()) swap(ru, rv);
+                uf.unite(u-1, v-1);
+                int rnew = uf.findRoot(u-1);
+                for (int x : cnt[rv]) cnt[rnew].insert(x);
+                cnt[rv].clear();
+            }
+        }
+        if(com==2) {
+            int v, k;
+            cin >> v >> k; // v is 1-based
+            int root = uf.findRoot(v-1); // Convert to 0-based for DSU
+            if(cnt[root].size()<k) ans.push_back(-1);
+            else {
+                auto it = cnt[root].rbegin();
+                advance(it, k-1);
+                ans.push_back(*it);
+            }
+        }
+    }
+    for(auto x:ans) cout << x << endl;
+
+    return 0;
+}
+```
+
+Key Changes:
+1. **Vertex Representation**: Changed the sets to store 1-based vertex numbers directly, avoiding the need to adjust the output by adding 1.
+2. **Union Operation**: Ensured that after union, the correct root is used to merge the sets.
+3. **Type 2 Query Handling**: Correctly outputs `-1` when there are fewer than `k` connected vertices and directly outputs the 1-based vertex number from the set.
+
+This fixed code should now handle all cases correctly and efficiently within the given constraints.

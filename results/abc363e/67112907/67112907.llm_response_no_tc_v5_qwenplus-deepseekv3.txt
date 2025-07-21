@@ -1,0 +1,86 @@
+To fix this code, we need to address the key issues in the algorithm used to simulate the sinking of island sections as the sea level rises. The original code attempts to use a priority queue to determine which sections sink each year, but it has several flaws:
+
+1. **Initialization of Sinking Sections**: The code incorrectly initializes the priority queue by only considering the perimeter sections of the island. However, sections adjacent to the sea can be any section that is on the border or adjacent to a sinking section, not just the perimeter sections.
+
+2. **Handling of Visited Sections**: The code marks sections as visited as soon as they are added to the priority queue, which can lead to incorrect counts because sections might be added to the queue multiple times if they are adjacent to multiple sinking sections.
+
+3. **Efficiency**: The original approach might not efficiently handle large inputs due to the constraints (H and W up to 1000 and Y up to 100,000). Each year, it processes the priority queue up to the current sea level, which could be too slow for large Y.
+
+### Fixed Approach
+1. **Priority Queue for Sinking Sections**: Use a priority queue to process sections in order of their elevation. This ensures that sections sink as soon as the sea level reaches their elevation.
+
+2. **BFS for Adjacent Sections**: For each section that sinks, use a BFS approach to immediately check and sink all adjacent sections that are at or below the current sea level. This ensures that all connected sections sink simultaneously.
+
+3. **Efficient Counting**: Maintain a count of the remaining sections and update it as sections sink. This count is printed for each year from 1 to Y.
+
+### Solution Code
+```cpp
+#include <bits/stdc++.h>
+
+using namespace std;
+
+constexpr int d[4][2] = {{0, 1}, {0, -1}, {1, 0}, {-1, 0}};
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int H, W, Y;
+    cin >> H >> W >> Y;
+
+    vector<vector<int>> A(H, vector<int>(W));
+    for (int i = 0; i < H; ++i) {
+        for (int j = 0; j < W; ++j) {
+            cin >> A[i][j];
+        }
+    }
+
+    priority_queue<tuple<int, int, int>, vector<tuple<int, int, int>>, greater<tuple<int, int, int>>> pq;
+    vector<vector<bool>> visited(H, vector<bool>(W, false));
+
+    // Initialize the priority queue with border sections
+    for (int i = 0; i < H; ++i) {
+        for (int j = 0; j < W; ++j) {
+            if (i == 0 || i == H - 1 || j == 0 || j == W - 1) {
+                pq.emplace(A[i][j], i, j);
+                visited[i][j] = true;
+            }
+        }
+    }
+
+    int remaining = H * W;
+    vector<int> res(Y + 1, remaining); // res[0] is initial state (all sections remain)
+
+    for (int year = 1; year <= Y; ++year) {
+        while (!pq.empty()) {
+            auto [h, x, y] = pq.top();
+            if (h > year) break;
+            pq.pop();
+            --remaining;
+
+            for (int k = 0; k < 4; ++k) {
+                int nx = x + d[k][0];
+                int ny = y + d[k][1];
+                if (nx < 0 || nx >= H || ny < 0 || ny >= W) continue;
+                if (visited[nx][ny]) continue;
+                visited[nx][ny] = true;
+                pq.emplace(A[nx][ny], nx, ny);
+            }
+        }
+        res[year] = remaining;
+    }
+
+    for (int year = 1; year <= Y; ++year) {
+        cout << res[year] << "\n";
+    }
+
+    return 0;
+}
+```
+
+### Explanation
+1. **Initialization**: The priority queue is initialized with all border sections of the island, as these are adjacent to the sea and will sink first if their elevation is at or below the sea level.
+
+2. **Processing Each Year**: For each year from 1 to Y, the code processes sections from the priority queue whose elevation is less than or equal to the current year's sea level. Each sinking section is removed from the remaining count, and its adjacent sections are checked and added to the queue if they haven't been visited yet.
+
+3. **Output**: The remaining sections count is stored for each year and printed after processing all years. This ensures the solution is efficient and handles the constraints effectively.

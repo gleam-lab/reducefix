@@ -1,0 +1,37 @@
+#include<bits/stdc++.h>
+using namespace std;
+
+const int N = 1e6 + 5;
+int n, m;
+long long sum;
+int a[2*N], d[2*N], cnt_map[m];
+
+int main() {
+    ios::sync_with_stdio(0);
+    cin.tie(0);
+    cout.tie(0);
+
+    cin >> n >> m;
+    for(int i = 0; i < n; ++i) {
+        cin >> a[i];
+        a[i + n] = a[i];  // Duplicate array to simulate circular behavior
+    }
+
+    // Initialize prefix sum count for modulo 0 (empty subarray)
+    cnt_map[0] = 1;
+
+    for(int i = 1; i < 2*n; ++i) {
+        d[i] = (d[i-1] + a[i-1]) % m;  // Maintain modulo to avoid overflow
+    }
+
+    // Traverse all prefix sums and count valid subarrays
+    for(int i = 1; i < 2*n; ++i) {
+        sum += cnt_map[d[i]];  // All previous indices with same mod -> valid subarray
+        if(i < n) {
+            cnt_map[d[i]]++;  // Only add prefix counts within original array length
+        }
+    }
+
+    cout << sum;
+    return 0;
+}

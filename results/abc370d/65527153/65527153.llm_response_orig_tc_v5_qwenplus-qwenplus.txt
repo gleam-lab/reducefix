@@ -1,0 +1,106 @@
+To solve this problem efficiently, we need to simulate placing bombs on a grid and destroying walls accordingly. The challenge is to process up to 200,000 queries over a grid of up to 400,000 cells efficiently.
+
+### Key Observations:
+
+1. **Each cell initially contains one wall.**
+2. **When a bomb is placed on a cell:**
+   - If there's a wall at that location, it gets destroyed.
+   - If not (i.e., the cell is already empty), then destroy the first wall in each of the four directions (up, down, left, right) from that cell.
+3. We must track which cells still have walls remaining after all operations.
+
+---
+
+### Efficient Data Structure:
+We use `std::set` for rows and columns to maintain the positions of remaining walls. This allows us to perform nearest wall lookups and deletions in logarithmic time.
+
+- `row_walls[r]`: set of columns where walls exist in row `r`
+- `col_walls[c]`: set of rows where walls exist in column `c`
+
+When a bomb is placed:
+- If there's a wall at that position, remove it directly.
+- Otherwise, search in all four directions using `lower_bound` and `upper_bound` on sets to find the nearest walls and remove them.
+
+---
+
+### Fixed Code Below:
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+
+const int INF = 0x3f3f3f3f;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int H, W, Q;
+    cin >> H >> W >> Q;
+
+    vector<set<int>> row_walls(H + 1), col_walls(W + 1);
+    for (int i = 1; i <= H; ++i) {
+        for (int j = 1; j <= W; ++j) {
+            row_walls[i].insert(j);
+            col_walls[j].insert(i);
+        }
+    }
+
+    while (Q--) {
+        int r, c;
+        cin >> r >> c;
+
+        if (row_walls[r].count(c)) {
+            // Wall exists at (r,c)
+            row_walls[r].erase(c);
+            col_walls[c].erase(r);
+        } else {
+            // Try to destroy the nearest walls in four directions
+            auto it = row_walls[r].lower_bound(c);
+            if (it != row_walls[r].end()) { // Right
+                int y = *it;
+                row_walls[r].erase(y);
+                col_walls[y].erase(r);
+            }
+
+            if (it != row_walls[r].begin()) { // Left
+                --it;
+                int y = *it;
+                row_walls[r].erase(y);
+                col_walls[y].erase(r);
+            }
+
+            auto jt = col_walls[c].lower_bound(r);
+            if (jt != col_walls[c].end()) { // Down
+                int x = *jt;
+                col_walls[c].erase(x);
+                row_walls[x].erase(c);
+            }
+
+            if (jt != col_walls[c].begin()) { // Up
+                --jt;
+                int x = *jt;
+                col_walls[c].erase(x);
+                row_walls[x].erase(c);
+            }
+        }
+    }
+
+    ll ans = 0;
+    for (int i = 1; i <= H; ++i) {
+        ans += row_walls[i].size();
+    }
+    cout << ans << '\n';
+
+    return 0;
+}
+```
+
+---
+
+### Why This Works:
+- Each operation (insertion, deletion, lookup) in `std::set` takes O(log N) time.
+- Total complexity is around O(Q log(H + W)), which is efficient enough given constraints.
+- Handles all edge cases correctly including repeated queries on the same cell.
+
+This solution ensures correctness and efficiency without relying on hacks or optimizations beyond standard algorithmic techniques.

@@ -1,0 +1,47 @@
+#include <bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(NULL);
+    
+    int n, m;
+    ll k;
+    cin >> n >> m >> k;
+    
+    vector<ll> a(n);
+    for(int i = 0; i < n; i++) {
+        cin >> a[i];
+        k -= a[i];
+    }
+    
+    vector<int> indices(n);
+    iota(indices.begin(), indices.end(), 0);
+    sort(indices.begin(), indices.end(), [&](int i, int j) { return a[i] > a[j]; });
+    
+    vector<ll> pref(n + 1);
+    for(int i = 0; i < n; i++) {
+        pref[i + 1] = pref[i] + a[i];
+    }
+    
+    vector<ll> ans(n, -1);
+    
+    for(int i = 0; i < n; i++) {
+        int idx = indices[i];
+        if(a[idx] + k >= pref[m]) {
+            ans[idx] = 0;
+        } else {
+            ll target = pref[m] - (a[idx] + k);
+            if(target % (m - 1) == 0) {
+                ans[idx] = target / (m - 1);
+            } else {
+                ans[idx] = target / (m - 1) + 1;
+            }
+        }
+    }
+    
+    for(ll x : ans) cout << x << " ";
+    
+    return 0;
+}

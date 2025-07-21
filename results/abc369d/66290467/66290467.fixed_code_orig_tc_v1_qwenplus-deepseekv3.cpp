@@ -1,0 +1,1 @@
+dp[i] = max(dp[i-2] + 2 * a[i], dp[i-1] + a[i]);

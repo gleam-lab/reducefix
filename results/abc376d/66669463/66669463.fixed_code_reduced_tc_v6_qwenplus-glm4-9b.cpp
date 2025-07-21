@@ -1,0 +1,47 @@
+#include <iostream>
+#include <vector>
+#include <stack>
+using namespace std;
+
+vector<int> adj[200001];
+int n, m, dist[200001], visited[200001];
+
+void bfs(int start) {
+    queue<int> q;
+    q.push(start);
+    visited[start] = 1;
+    dist[start] = 0;
+
+    while (!q.empty()) {
+        int u = q.front();
+        q.pop();
+
+        for (int v : adj[u]) {
+            if (!visited[v]) {
+                visited[v] = 1;
+                dist[v] = dist[u] + 1;
+                q.push(v);
+            }
+        }
+    }
+}
+
+int main() {
+    cin >> n >> m;
+    for (int i = 1; i <= m; ++i) {
+        int u, v;
+        cin >> u >> v;
+        adj[u].push_back(v);
+        if (u != v) adj[v].push_back(u);
+    }
+
+    bfs(1); // Start BFS from node 1
+
+    int maxDistance = 0;
+    for (int i = 1; i <= n; ++i) {
+        maxDistance = max(maxDistance, dist[i]);
+    }
+
+    cout << maxDistance << endl;
+    return 0;
+}

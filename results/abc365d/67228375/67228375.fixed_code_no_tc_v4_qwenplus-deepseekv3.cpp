@@ -1,0 +1,42 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define endl "\n"
+#define MOD 1000000007
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(0);
+
+    map<char, char> beats = {{'R', 'P'}, {'P', 'S'}, {'S', 'R'}};
+    int n;
+    cin >> n;
+    string s;
+    cin >> s;
+
+    if (n == 0) {
+        cout << 0 << endl;
+        return 0;
+    }
+
+    int total_1 = 1;  // First approach: start by beating the first move
+    char last_move = beats[s[0]];
+    for (int i = 1; i < n; i++) {
+        if (s[i] != last_move) {
+            total_1++;
+            last_move = beats[s[i]];
+        }
+    }
+
+    int total_2 = 1;  // Second approach: start by matching the first move
+    last_move = s[0];
+    for (int i = 1; i < n; i++) {
+        if (s[i] != last_move) {
+            total_2++;
+            last_move = beats[s[i]];
+        }
+    }
+
+    cout << max(total_1, total_2) << endl;
+
+    return 0;
+}

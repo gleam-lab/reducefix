@@ -1,0 +1,85 @@
+#include <iostream>
+#include <vector>
+#include <queue>
+#include <algorithm>
+
+using namespace std;
+
+struct Cell {
+    int height, x, y;
+    Cell(int h, int x, int y) : height(h), x(x), y(y) {}
+};
+
+struct Compare {
+    bool operator()(const Cell& a, const Cell& b) {
+        return a.height > b.height;
+    }
+};
+
+int main() {
+    int H, W, Y;
+    cin >> H >> W >> Y;
+    
+    vector<vector<int>> A(H, vector<int>(W));
+    for (int i = 0; i < H; ++i) {
+        for (int j = 0; j < W; ++j) {
+            cin >> A[i][j];
+        }
+    }
+
+    vector<vector<bool>> visited(H, vector<bool>(W, false));
+    priority_queue<Cell, vector<Cell>, Compare> pq;
+    
+    // Initialize the queue with boundary cells
+    for (int i = 0; i < H; ++i) {
+        pq.emplace(A[i][0], i, 0);
+        pq.emplace(A[i][W-1], i, W-1);
+        visited[i][0] = true;
+        visited[i][W-1] = true;
+    }
+    for (int j = 1; j < W-1; ++j) {
+        pq.emplace(A[0][j], 0, j);
+        pq.emplace(A[H-1][j], H-1, j);
+        visited[0][j] = true;
+        visited[H-1][j] = true;
+    }
+
+    vector<int> result(Y + 1, H * W);
+
+    while (!pq.empty()) {
+        int current_height = pq.top().height;
+        int size = pq.size();
+        
+        for (int k = 0; k < size; ++k) {
+            Cell cell = pq.top(); pq.pop();
+            
+            for (int dx = -1; dx <= 1; ++dx) {
+                for (int dy = -1; dy <= 1; ++dy) {
+                    if (dx == 0 && dy == 0) continue;
+                    int new_x = cell.x + dx, new_y = cell.y + dy;
+                    
+                    if (new_x >= 0 && new_x < H && new_y >= 0 && new_y < W && !visited[new_x][new_y]) {
+                        if (A[new_x][new_y] <= current_height) {
+                            visited[new_x][new_y] = true;
+                            pq.emplace(A[new_x][new_y], new_x, new_y);
+                        } else {
+                            visited[new_x][new_y] = true;
+                        }
+                    }
+                }
+            }
+        }
+        
+        for (int i = 1; i <= Y; ++i) {
+            if (current_height <= i) {
+                result[i]--;
+            }
+        }
+    }
+
+    for (int i = 1; i <= Y; ++i) {
+        cout << result[i] << endl;
+    }
+
+    return 0;
+}

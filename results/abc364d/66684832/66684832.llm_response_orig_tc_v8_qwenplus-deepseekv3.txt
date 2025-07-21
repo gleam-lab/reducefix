@@ -1,0 +1,68 @@
+To fix this code, we need to address the issue where the binary search is not correctly finding the k-th closest distance for some queries. The original code uses a binary search approach with a fixed upper bound of 1e8, which may not be sufficient for large inputs where the distances could exceed this value. Additionally, the check function is not correctly counting the number of points within the current distance range.
+
+### Approaches
+1. **Binary Search on Distance**: We'll perform a binary search on the distance `d` such that exactly `k` points are within `d` distance from the query point `B_j`.
+2. **Check Function**: For each potential distance `d` during the binary search, we'll count the number of points `A_i` that lie within the range `[B_j - d, B_j + d]` using binary search (lower_bound and upper_bound).
+3. **Adjust Upper Bound**: The initial upper bound for the binary search should be large enough to cover the maximum possible distance in the input, which can be up to `2e8` (since coordinates range from `-1e8` to `1e8`).
+
+### Solution Code
+```cpp
+#include <iostream>
+#include <algorithm>
+#include <vector>
+using namespace std;
+#define int long long
+
+const int N = 1e5 + 9;
+
+int n, q;
+int a[N];
+
+int count_within(int x, int d) {
+    int left = lower_bound(a, a + n, x - d) - a;
+    int right = upper_bound(a, a + n, x + d) - a;
+    return right - left;
+}
+
+int find_kth_distance(int x, int k) {
+    int left = 0;
+    int right = 2e8 + 9;
+    int ans = right;
+    while (left <= right) {
+        int mid = (left + right) / 2;
+        int cnt = count_within(x, mid);
+        if (cnt >= k) {
+            ans = mid;
+            right = mid - 1;
+        } else {
+            left = mid + 1;
+        }
+    }
+    return ans;
+}
+
+signed main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    cin >> n >> q;
+    for (int i = 0; i < n; ++i) {
+        cin >> a[i];
+    }
+    sort(a, a + n);
+
+    while (q--) {
+        int x, k;
+        cin >> x >> k;
+        cout << find_kth_distance(x, k) << '\n';
+    }
+
+    return 0;
+}
+```
+
+### Explanation
+1. **Binary Search**: The binary search is performed on the possible distance values. The initial range is set from `0` to `2e8 + 9` to cover all possible distances between any two points in the input.
+2. **Check Function (`count_within`)**: This function uses `lower_bound` and `upper_bound` to count the number of points in the sorted array `a` that lie within the range `[x - d, x + d]`, where `x` is the query point and `d` is the current distance being checked.
+3. **Binary Search Adjustment**: For each midpoint distance `mid`, the function checks if the count of points within `mid` distance is at least `k`. If it is, it means the k-th closest point is within `mid` distance, so we adjust the upper bound to `mid - 1` to search for a smaller distance. Otherwise, we adjust the lower bound to `mid + 1` to search for a larger distance.
+4. **Efficiency**: The binary search runs in `O(log (2e8))` per query, and each check involves two binary searches on the sorted array, which is `O(log N)`. Thus, the overall complexity per query is `O(log N + log (2e8))`, which is efficient for the given constraints.

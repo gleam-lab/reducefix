@@ -1,0 +1,50 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+#define ll long long
+#define vi vector<int>
+#define vll vector<ll>
+#define pb push_back
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+    
+    int N, Q;
+    cin >> N >> Q;
+    
+    vll a(N);
+    for (int i = 0; i < N; ++i) {
+        cin >> a[i];
+    }
+    
+    // Sort the A array for binary search purposes
+    sort(a.begin(), a.end());
+    
+    for (int q = 0; q < Q; ++q) {
+        ll b;
+        int k;
+        cin >> b >> k;
+        
+        // Binary search to find the k-th smallest distance
+        int left = 0;
+        int right = 1e18; // Large enough upper bound for distance
+        while (left < right) {
+            ll mid = (left + right) / 2;
+            
+            // Find how many points are within distance <= mid from b
+            ll count = upper_bound(a.begin(), a.end(), b + mid) - 
+                       lower_bound(a.begin(), a.end(), b - mid);
+            
+            if (count >= k) {
+                right = mid;
+            } else {
+                left = mid + 1;
+            }
+        }
+        
+        cout << left << "\n";
+    }
+    
+    return 0;
+}

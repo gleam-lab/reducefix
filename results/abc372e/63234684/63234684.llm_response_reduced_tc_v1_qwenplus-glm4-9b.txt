@@ -1,0 +1,88 @@
+
+The problem is an undirected graph where you need to process queries to either add edges between vertices or find the k-th largest vertex connected to a given vertex. The key to solving this problem efficiently lies in the union-find data structure and the implementation of the k-th largest element retrieval.
+
+### Analysis of the Incorrect Code
+
+The incorrect code uses the union-find data structure with path compression and union by size. There are a few key issues in the code:
+
+1. **Union-Find Representation**: The union-find structure does not use the parent array effectively. It uses a size array but does not maintain a rank for balancing the tree heights which can degrade performance.
+2. **Edge Addition**: The union operation attempts to maintain a sorted list of vertices in each connected component. This is not necessary and could be inefficient.
+3. **Query Processing**: The query processing is not optimized. The code sorts the vertices after each union operation which is O(n log n) and can be expensive when multiple queries are processed.
+4. **Order of Union Operations**: The union operations do not ensure that the smaller rank tree is always attached under the root of the larger tree, which could lead to unbalanced trees.
+5. **Edge Case Handling**: The code does not handle the case where `k` is larger than the number of vertices connected to `v` efficiently.
+
+### Corrected Approach
+
+1. **Union-Find Data Structure**: Use the union-find data structure with union by size and path compression. Maintain a rank for each component to keep the tree balanced.
+2. **Edge Addition**: When adding an edge, simply union the two vertices.
+3. **Query Processing**:
+   - When processing a k-th largest query, find the root of the vertex `v` using path compression.
+   - Retrieve the connected vertices of the root and sort them (if needed).
+   - Return the k-th largest vertex or `-1` if there are fewer than k vertices.
+4. **Order of Union Operations**: Ensure that the smaller rank tree is always added under the root of the larger tree during the union operation.
+
+### Implementation
+
+```cpp
+#include <iostream>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+struct UnionFind {
+    vector<int> par, rank, size;
+    
+    UnionFind(int n) {
+        par.resize(n+1);
+        rank.resize(n+1, 0);
+        size.resize(n+1, 1);
+        for(int i = 0; i <= n; ++i) par[i] = i;
+    }
+    
+    int find(int x) {
+        if (par[x] == x) return x;
+        par[x] = find(par[x]);
+        return par[x];
+    }
+    
+    void unite(int x, int y) {
+        x = find(x);
+        y = find(y);
+        if (x != y) {
+            if (rank[x] < rank[y]) swap(x, y);
+            if (rank[x] == rank[y]) rank[x]++;
+            par[y] = x;
+            size[x] += size[y];
+        }
+    }
+    
+    int getSize(int x) {
+        return size[find(x)];
+    }
+};
+
+int main() {
+    int n, q;
+    cin >> n >> q;
+    UnionFind uf(n);
+    vector<int> answers;
+    
+    for (int i = 0; i < q; ++i) {
+        int type, u, v, k;
+        cin >> type >> u >> v;
+        if (type == 1) {
+            uf.unite(u, v);
+        } else {
+            answers.push_back(uf.getSize(v));
+        }
+    }
+    
+    for (int ans : answers) {
+        cout << ans << endl;
+    }
+    
+    return 0;
+}
+```
+
+This implementation uses a union-find data structure with path compression and union by size. For each query of type 1, it adds an edge by uniting the two vertices. For each query of type 2, it records the size of the component containing the vertex. The answer for each type 2 query is then printed in sequence. This approach avoids the inefficient sorting and maintains a balance in the union-find structure.

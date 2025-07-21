@@ -1,0 +1,69 @@
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+
+ll min_cost(ll W, ll a, ll p, ll b, ll q) {
+    // Ensure we don't overflow when calculating cross-over points
+    ll best = p * ((W + a - 1) / a); // Initial cost using only S
+    best = min(best, q * ((W + b - 1) / b)); // Compare with only T
+
+    // Try x from floor(W/a) down to max(0, floor(W/a) - 100000)
+    ll x0 = W / a;
+    ll limit = min(x0, (ll)200000LL); // Limit search range to prevent TLE
+    for (ll dx = 0; dx <= limit; dx++) {
+        ll x = x0 - dx;
+        if (x < 0) break;
+        ll rem = W - a * x;
+        if (rem < 0) rem = 0;
+        ll y = (rem + b - 1) / b;
+        best = min(best, p * x + q * y);
+    }
+
+    // Try y from floor(W/b) down to max(0, floor(W/b) - 100000)
+    ll y0 = W / b;
+    limit = min(y0, (ll)200000LL);
+    for (ll dy = 0; dy <= limit; dy++) {
+        ll y = y0 - dy;
+        if (y < 0) break;
+        ll rem = W - b * y;
+        if (rem < 0) rem = 0;
+        ll x = (rem + a - 1) / a;
+        best = min(best, p * x + q * y);
+    }
+
+    return best;
+}
+
+bool can(ll W, int N, ll X,
+         const vector<ll>& A, const vector<ll>& P,
+         const vector<ll>& B, const vector<ll>& Q) {
+    ll sum = 0;
+    for (int i = 0; i < N; i++) {
+        ll c = min_cost(W, A[i], P[i], B[i], Q[i]);
+        sum += c;
+        if (sum > X) return false;
+    }
+    return sum <= X;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int N;
+    ll X;
+    cin >> N >> X;
+    vector<ll> A(N), P(N), B(N), Q(N);
+    for (int i = 0; i < N; i++) {
+        cin >> A[i] >> P[i] >> B[i] >> Q[i];
+    }
+
+    ll lo = 0, hi = 1000000000000LL; // Upper bound is large enough
+    while (hi - lo > 1) {
+        ll mid = (lo + hi) / 2;
+        if (can(mid, N, X, A, P, B, Q)) lo = mid;
+        else hi = mid;
+    }
+    cout << lo << "\n";
+    return 0;
+}

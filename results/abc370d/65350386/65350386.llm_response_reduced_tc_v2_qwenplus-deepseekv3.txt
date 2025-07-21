@@ -1,0 +1,91 @@
+Based on the problem description and the failing test case, the issue appears to be with how the code handles the destruction of walls when a bomb is placed on an empty cell. The current implementation doesn't correctly identify and destroy the first walls in all four directions when the bomb cell is already empty.
+
+Here's the corrected code:
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+#define rep(i,n) for(int i = 0; i < (n); i++)
+using ll = long long;
+
+int main() {
+    int h, w, q;
+    cin >> h >> w >> q;
+    vector<set<int>> row_walls(h), col_walls(w);
+    
+    // Initialize all walls as present
+    rep(i, h) rep(j, w) {
+        row_walls[i].insert(j);
+        col_walls[j].insert(i);
+    }
+
+    int remaining_walls = h * w;
+    
+    rep(qi, q) {
+        int r, c;
+        cin >> r >> c;
+        r--; c--;
+        
+        if (row_walls[r].count(c)) {
+            // Wall exists at (r,c) - destroy it
+            row_walls[r].erase(c);
+            col_walls[c].erase(r);
+            remaining_walls--;
+        } else {
+            // No wall at (r,c) - destroy first walls in each direction
+            
+            // Up
+            auto it_up = col_walls[c].lower_bound(r);
+            if (it_up != col_walls[c].begin()) {
+                it_up--;
+                int destroyed_row = *it_up;
+                row_walls[destroyed_row].erase(c);
+                col_walls[c].erase(destroyed_row);
+                remaining_walls--;
+            }
+            
+            // Down
+            auto it_down = col_walls[c].lower_bound(r);
+            if (it_down != col_walls[c].end()) {
+                int destroyed_row = *it_down;
+                row_walls[destroyed_row].erase(c);
+                col_walls[c].erase(destroyed_row);
+                remaining_walls--;
+            }
+            
+            // Left
+            auto it_left = row_walls[r].lower_bound(c);
+            if (it_left != row_walls[r].begin()) {
+                it_left--;
+                int destroyed_col = *it_left;
+                row_walls[r].erase(destroyed_col);
+                col_walls[destroyed_col].erase(r);
+                remaining_walls--;
+            }
+            
+            // Right
+            auto it_right = row_walls[r].lower_bound(c);
+            if (it_right != row_walls[r].end()) {
+                int destroyed_col = *it_right;
+                row_walls[r].erase(destroyed_col);
+                col_walls[destroyed_col].erase(r);
+                remaining_walls--;
+            }
+        }
+    }
+    
+    cout << remaining_walls << "\n";
+    return 0;
+}
+```
+
+Key changes made:
+1. Simplified the data structure names to be more descriptive (tate -> col_walls, yoko -> row_walls)
+2. Maintained a counter for remaining walls instead of counting at the end
+3. Fixed the logic for destroying walls in all four directions when the bomb cell is empty:
+   - For up direction: find first wall above by checking lower_bound and moving back if not at begin
+   - For down direction: find first wall below using lower_bound
+   - Similar logic for left and right directions in the row
+4. Each time a wall is destroyed, decrement the remaining_walls counter
+
+This approach ensures that we correctly handle all cases while maintaining efficient O(log N) operations for each query using sets. The total complexity is O(Q log N) where N is max(H,W), which should handle the constraints efficiently.

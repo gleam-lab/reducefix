@@ -1,0 +1,28 @@
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+
+int main() {
+    int N;
+    string S;
+    cin >> N >> S;
+    int last = -1; // use an integer to represent the last seen character
+    int ans = 0;
+    
+    for (int i = 0; i < N; ++i) {
+        char c = S[i];
+        int current = c - 'S'; // convert character to index (0, 1, or 2)
+        
+        if (last == -1) {
+            last = current; // initialize last seen character
+        } else {
+            if (last != current) { // only increment count when characters change
+                ans++;
+                last = current;
+            }
+        }
+    }
+    
+    cout << ans;
+    return 0;
+}

@@ -1,0 +1,55 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+const int maxN = 2e5 + 5;
+long long t, n, k, a[maxN], b[maxN];
+
+struct Pair {
+    long long first, second;
+};
+
+bool cmp(const Pair& p1, const Pair& p2) {
+    if (p1.first != p2.first)
+        return p1.first > p2.first; // Change to descending order for maximum element
+    return p1.second < p2.second;
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+    cout.tie(nullptr);
+
+    cin >> t;
+    while (t--) {
+        cin >> n >> k;
+        vector<Pair> pairs(n);
+        for (int i = 0; i < n; ++i) {
+            cin >> a[i];
+            pairs[i].first = a[i];
+        }
+        for (int i = 0; i < n; ++i) {
+            cin >> b[i];
+            pairs[i].second = b[i];
+        }
+
+        sort(pairs.begin(), pairs.end(), cmp);
+
+        long long sum = 0, ans = LLONG_MAX;
+        for (int i = 0; i < k; ++i) {
+            sum += pairs[i].second;
+        }
+        ans = min(ans, pairs[k - 1].first * sum);
+
+        for (int i = k; i < n; ++i) {
+            if (pairs[i].second < pairs[k - 1].second) {
+                sum -= pairs[i - k].second;
+                sum += pairs[i].second;
+                ans = min(ans, pairs[i].first * sum);
+            }
+        }
+
+        cout << ans << "\n";
+    }
+
+    return 0;
+}

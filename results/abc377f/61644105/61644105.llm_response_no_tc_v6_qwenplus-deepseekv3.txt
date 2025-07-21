@@ -1,0 +1,117 @@
+To fix this code, we need to correctly calculate the number of safe squares where a new piece can be placed without being captured by any existing pieces. The original code attempts to use inclusion-exclusion principle but has several issues, including incorrect handling of the diagonals and summation logic.
+
+### Approaches
+1. **Identify Threatened Squares**: For each existing piece, calculate all squares it threatens (same row, same column, same diagonal sum, same diagonal difference).
+2. **Union of Threatened Squares**: Collect all unique threatened squares across all existing pieces.
+3. **Calculate Safe Squares**: Subtract the number of threatened squares from the total number of squares (N²), but account for intersections (overlapping threats from multiple pieces).
+
+Given the constraints (N up to 10^9 and M up to 10^3), we need an efficient way to compute the union of all threatened squares without explicitly enumerating each square, which would be computationally expensive.
+
+### Solution Code
+```cpp
+#include <bits/stdc++.h>
+
+using namespace std;
+
+typedef long long ll;
+
+int main() {
+    ll N, M;
+    cin >> N >> M;
+
+    unordered_set<ll> rows, cols, diag1, diag2;
+
+    for (int k = 0; k < M; ++k) {
+        ll a, b;
+        cin >> a >> b;
+        rows.insert(a);
+        cols.insert(b);
+        diag1.insert(a + b);
+        diag2.insert(a - b);
+    }
+
+    ll unsafe = 0;
+
+    unsafe += rows.size() * N;
+    unsafe += cols.size() * N;
+    unsafe -= rows.size() * cols.size();
+
+    for (ll d : diag1) {
+        ll min_x = max(1LL, d - N);
+        ll max_x = min(N, d - 1);
+        unsafe += max_x - min_x + 1;
+    }
+
+    for (ll d : diag2) {
+        ll min_x = max(1LL, 1 - d);
+        ll max_x = min(N, N - d);
+        unsafe += max_x - min_x + 1;
+    }
+
+    for (ll a : rows) {
+        for (ll d : diag1) {
+            ll b = d - a;
+            if (b >= 1 && b <= N) {
+                unsafe--;
+            }
+        }
+        for (ll d : diag2) {
+            ll b = a - d;
+            if (b >= 1 && b <= N) {
+                unsafe--;
+            }
+        }
+    }
+
+    for (ll b : cols) {
+        for (ll d : diag1) {
+            ll a = d - b;
+            if (a >= 1 && a <= N) {
+                unsafe--;
+            }
+        }
+        for (ll d : diag2) {
+            ll a = b + d;
+            if (a >= 1 && a <= N) {
+                unsafe--;
+            }
+        }
+    }
+
+    for (ll d1 : diag1) {
+        for (ll d2 : diag2) {
+            ll a = (d1 + d2) / 2;
+            ll b = (d1 - d2) / 2;
+            if ((d1 + d2) % 2 == 0 && (d1 - d2) % 2 == 0 && a >= 1 && a <= N && b >= 1 && b <= N) {
+                unsafe++;
+            }
+        }
+    }
+
+    for (ll a : rows) {
+        for (ll b : cols) {
+            if (diag1.count(a + b) && diag2.count(a - b)) {
+                unsafe--;
+            }
+        }
+    }
+
+    ll total = N * N - M;
+    ll safe = total - unsafe;
+
+    cout << safe << endl;
+
+    return 0;
+}
+```
+
+### Explanation
+1. **Initialization**: We read the grid size `N` and the number of pieces `M`.
+2. **Tracking Threatened Areas**: Using unordered sets, we track all rows, columns, and diagonals (sum and difference) that are threatened by existing pieces.
+3. **Calculating Unsafe Squares**: 
+   - **Row and Column Threats**: Each row and column threatens `N` squares. Overlaps (squares in both a threatened row and column) are subtracted to avoid double-counting.
+   - **Diagonal Threats**: For each diagonal (sum or difference), calculate the range of valid squares and count them.
+4. **Adjustments for Overlaps**: Subtract overlaps between rows/diagonals and columns/diagonals, then add back overlaps between diagonals (since they were subtracted twice).
+5. **Final Calculation**: Subtract the total unsafe squares from the total available squares (N² minus existing pieces) to get the number of safe squares.
+
+This approach efficiently handles the large constraints using set operations and mathematical calculations to avoid brute-force methods.

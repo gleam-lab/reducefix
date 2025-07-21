@@ -1,0 +1,69 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+#define ll long long
+
+const int MAXN = 1e3 + 5;
+
+ll n, m;
+set<ll> rows, cols, ups, downs;
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(NULL);
+
+    cin >> n >> m;
+    for (int i = 0; i < m; ++i) {
+        ll x, y;
+        cin >> x >> y;
+        rows.insert(y);
+        cols.insert(x);
+        ups.insert(y - x);
+        downs.insert(x + y);
+    }
+
+    ll total_squares = n * n;
+    ll occupied_squares = rows.size() + cols.size() + ups.size() + downs.size();
+    ll intersections = 0;
+
+    for (auto& r : rows) {
+        auto it = cols.lower_bound(r);
+        if (it != cols.end()) intersections++;
+        if (it != cols.begin()) {
+            --it;
+            if (*it == r) intersections--;
+        }
+    }
+
+    for (auto& c : cols) {
+        auto it = rows.lower_bound(c);
+        if (it != rows.end()) intersections++;
+        if (it != rows.begin()) {
+            --it;
+            if (*it == c) intersections--;
+        }
+    }
+
+    for (auto& u : ups) {
+        auto it = downs.lower_bound(u);
+        if (it != downs.end()) intersections++;
+        if (it != downs.begin()) {
+            --it;
+            if (*it == u) intersections--;
+        }
+    }
+
+    for (auto& d : downs) {
+        auto it = ups.lower_bound(d);
+        if (it != ups.end()) intersections++;
+        if (it != ups.begin()) {
+            --it;
+            if (*it == d) intersections--;
+        }
+    }
+
+    ll valid_squares = total_squares - occupied_squares + intersections / 2;
+    cout << valid_squares << '\n';
+
+    return 0;
+}

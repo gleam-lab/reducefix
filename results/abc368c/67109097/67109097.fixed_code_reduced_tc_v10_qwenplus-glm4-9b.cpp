@@ -1,0 +1,27 @@
+#include<bits/stdc++.h>
+
+using namespace std;
+
+int main() {
+    int N;
+    cin >> N;
+    vector<int> H(N + 9);
+    for (int i = 1; i <= N; i++) cin >> H[i];
+    long long T = 0;
+    for (int i = 1; i <= N; i++) {
+        long long health = H[i];
+        long long attacks = health / 3; // Full 3 attacks
+        T += 3 * attacks;
+        health %= 3;
+        if (health > 0) {
+            // If there is a remainder that isn't a multiple of 3
+            if (health == 1) {
+                T += 1; // Single attack to reduce health to 0
+            } else { // health == 2
+                T += 2; // Two single attacks to reduce health to 0
+            }
+        }
+    }
+    cout << T << endl;
+    return 0;
+}

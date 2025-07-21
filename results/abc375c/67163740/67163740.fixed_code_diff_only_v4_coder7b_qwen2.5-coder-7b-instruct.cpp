@@ -1,0 +1,26 @@
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long double; // Change float to long double for higher precision
+
+void solve() {
+    int n;
+    ld x = 0, y = 0, t = 0; // Initialize variables as long double for high precision
+    cin >> n;
+    while (n--) {
+        ld a, b;
+        cin >> a >> b;
+        t += sqrtl((x - a) * (x - a) + (y - b) * (y - b)); // Use sqrtl for long double
+        x = a;
+        y = b;
+    }
+    t += sqrtl(x * x + y * y); // Calculate distance back to origin using sqrtl
+    cout << fixed << setprecision(10) << t << endl; // Set precision to 10 decimal places
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+    solve();
+    cout << endl;
+    return 0;
+}

@@ -1,0 +1,51 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+
+using namespace std;
+
+int n, q;
+vector<int> a;
+vector<long long> prefix_sum;
+
+void compute_prefix_sum() {
+    prefix_sum.resize(a.size() + 1, 0);
+    for (size_t i = 0; i < a.size(); ++i) {
+        prefix_sum[i + 1] = prefix_sum[i] + a[i];
+    }
+}
+
+long long query(int b, int kj) {
+    // Binary search for the k-th smallest element in a that is closest to b
+    int left = 0, right = a.size() - 1;
+    while (left < right) {
+        int mid = left + (right - left) / 2;
+        if (a[mid] * kj >= b) {
+            right = mid;
+        } else {
+            left = mid + 1;
+        }
+    }
+    int x = left;
+    long long d = abs((long long)a[x] - b);
+    return d;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    cin >> n >> q;
+    a.resize(n);
+    for (int i = 0; i < n; ++i) {
+        cin >> a[i];
+    }
+
+    for (int j = 0; j < q; ++j) {
+        int b, k;
+        cin >> b >> k;
+        cout << query(b, k) << endl;
+    }
+
+    return 0;
+}

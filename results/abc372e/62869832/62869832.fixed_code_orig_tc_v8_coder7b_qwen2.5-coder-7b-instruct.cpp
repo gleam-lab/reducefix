@@ -1,0 +1,45 @@
+#include<bits/stdc++.h>
+using namespace std;
+
+vector<int> adj[200005];
+set<int> st[200005];
+
+void addEdge(int u, int v){
+    adj[u].push_back(v);
+    adj[v].push_back(u);
+    st[u].insert(v);
+    st[v].insert(u);
+}
+
+void removeEdge(int u, int v){
+    adj[u].erase(find(adj[u].begin(), adj[u].end(), v));
+    adj[v].erase(find(adj[v].begin(), adj[v].end(), u));
+    st[u].erase(st[u].find(v));
+    st[v].erase(st[v].find(u));
+}
+
+int kthLargest(int v, int k){
+    if(k > st[v].size()) return -1;
+    auto it = st[v].rbegin();
+    advance(it, k-1);
+    return *it;
+}
+
+int main(){
+    ios_base::sync_with_stdio(false); cin.tie(NULL); cout.tie(NULL);
+
+    int n, q; cin >> n >> q;
+    while(q--){
+        int type; cin >> type;
+        if(type == 1){
+            int u, v; cin >> u >> v;
+            addEdge(u, v);
+        }
+        else{
+            int v, k; cin >> v >> k;
+            cout << kthLargest(v, k) << "\n";
+        }
+    }
+
+    return 0;
+}

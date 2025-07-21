@@ -1,0 +1,36 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define rep(i, n) for (int i = 0; i < n; i++)
+using ll = long long;
+
+ll min_cost(vector<int> &a, vector<int> &p, vector<int> &b, vector<int> &q, ll x) {
+    vector<ll> dp(x + 1, LLONG_MAX);
+    dp[0] = 0;
+    for (int i = 0; i < a.size(); i++) {
+        for (int j = x; j >= a[i]; j--) {
+            dp[j] = min(dp[j], dp[j - a[i]] + p[i]);
+        }
+        for (int j = x; j >= b[i]; j--) {
+            dp[j] = min(dp[j], dp[j - b[i]] + q[i]);
+        }
+    }
+    return dp[x];
+}
+
+int main() {
+    int n, x;
+    cin >> n >> x;
+    vector<int> a(n), b(n), p(n), q(n);
+    rep(i, n) cin >> a[i] >> p[i] >> b[i] >> q[i];
+    ll left = 0, right = 1e9;
+    while (left < right) {
+        ll mid = (left + right + 1) / 2;
+        if (min_cost(a, p, b, q, mid) <= x) {
+            left = mid;
+        } else {
+            right = mid - 1;
+        }
+    }
+    cout << left;
+    return 0;
+}

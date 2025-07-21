@@ -1,0 +1,48 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define rep(i,n) for(int i = 0; i < (n); i++)
+using ll = long long;
+
+int main(void) {
+    int h, w, q;
+    cin >> h >> w >> q;
+    vector<vector<bool>> grid(h, vector<bool>(w, true));
+    rep(qi,q) {
+        int r, c;
+        cin >> r >> c;
+        r--; c--;
+        if (grid[r][c]) {
+            grid[r][c] = false;
+        } else {
+            bool found = false;
+            // Check upwards
+            for (int i = r-1; i >= 0 && !found; i--) {
+                if (!grid[i][c]) continue;
+                grid[i][c] = false;
+                found = true;
+            }
+            // Check downwards
+            for (int i = r+1; i < h && !found; i++) {
+                if (!grid[i][c]) continue;
+                grid[i][c] = false;
+                found = true;
+            }
+            // Check leftwards
+            for (int j = c-1; j >= 0 && !found; j--) {
+                if (!grid[r][j]) continue;
+                grid[r][j] = false;
+                found = true;
+            }
+            // Check rightwards
+            for (int j = c+1; j < w && !found; j++) {
+                if (!grid[r][j]) continue;
+                grid[r][j] = false;
+                found = true;
+            }
+        }
+    }
+    int ans = 0;
+    rep(i,h) rep(j,w) if(grid[i][j]) ans++;
+    cout << ans << "\n";
+    return 0;
+}

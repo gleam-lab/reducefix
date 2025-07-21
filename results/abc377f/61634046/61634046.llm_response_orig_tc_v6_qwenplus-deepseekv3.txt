@@ -1,0 +1,154 @@
+To fix this code, we need to correctly calculate the number of safe squares where a new piece can be placed without being captured by any existing pieces. The initial code had several issues, including incorrect subtraction and addition of overlapping conditions, leading to incorrect results. The correct approach involves using inclusion-exclusion principle to accurately count the safe squares.
+
+### Approaches
+1. **Identify Forbidden Squares**: Squares that are either in the same row, column, or diagonal (both main and anti-diagonals) as any existing piece are forbidden.
+2. **Inclusion-Exclusion Principle**: To avoid double-counting squares that are forbidden by multiple conditions, we use the inclusion-exclusion principle:
+   - Subtract squares forbidden by rows and columns.
+   - Add back squares forbidden by both rows and columns.
+   - Subtract squares forbidden by diagonals (sum and difference diagonals).
+   - Add back squares forbidden by both diagonals.
+   - Subtract squares forbidden by any combination of rows, columns, and diagonals that were previously double-counted.
+
+### Solution Code
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+#define ll long long
+
+int main() {
+    ll N, M;
+    cin >> N >> M;
+    
+    unordered_set<ll> rows, cols;
+    unordered_set<ll> diag_sum, diag_diff;
+    
+    for (int i = 0; i < M; ++i) {
+        ll a, b;
+        cin >> a >> b;
+        rows.insert(a);
+        cols.insert(b);
+        diag_sum.insert(a + b);
+        diag_diff.insert(a - b);
+    }
+    
+    ll total = N * N;
+    
+    // Subtract squares attacked by rows or columns
+    ll row_attacks = rows.size() * N;
+    ll col_attacks = cols.size() * N;
+    total -= row_attacks + col_attacks;
+    
+    // Add back squares attacked by both row and column (intersection)
+    total += rows.size() * cols.size();
+    
+    // Subtract squares attacked by diagonals
+    for (ll s : diag_sum) {
+        ll min_x = max(1LL, s - N);
+        ll max_x = min(N, s - 1);
+        if (max_x >= min_x) {
+            total -= (max_x - min_x + 1);
+        }
+    }
+    for (ll d : diag_diff) {
+        ll min_x = max(1LL, 1 - d);
+        ll max_x = min(N, N - d);
+        if (max_x >= min_x) {
+            total -= (max_x - min_x + 1);
+        }
+    }
+    
+    // Add back squares attacked by both diagonals (intersection)
+    // For two diagonals (s1, d1) and (s2, d2), the intersection is (x, y) where:
+    // x + y = s1, x - y = d2 => x = (s1 + d2)/2, y = (s1 - d2)/2
+    // Must be integers and within [1, N]
+    for (ll s : diag_sum) {
+        for (ll d : diag_diff) {
+            if ((s + d) % 2 != 0) continue;
+            ll x = (s + d) / 2;
+            ll y = (s - d) / 2;
+            if (x >= 1 && x <= N && y >= 1 && y <= N) {
+                total++;
+            }
+        }
+    }
+    
+    // Subtract squares attacked by row and diagonal or column and diagonal
+    // For each piece (a, b), the intersection of row a and diagonal s = a + b is (a, s - a)
+    // Similarly for column b and diagonal s = a + b is (s - b, b)
+    // And for diagonal d = a - b, (a, a - d) and (b + d, b)
+    // But to avoid double counting, we need to consider these intersections precisely.
+    // We'll use the counts of such intersections.
+    ll row_diag_sum = 0, row_diag_diff = 0;
+    ll col_diag_sum = 0, col_diag_diff = 0;
+    for (ll a : rows) {
+        for (ll s : diag_sum) {
+            ll y = s - a;
+            if (y >= 1 && y <= N) {
+                row_diag_sum++;
+            }
+        }
+        for (ll d : diag_diff) {
+            ll y = a - d;
+            if (y >= 1 && y <= N) {
+                row_diag_diff++;
+            }
+        }
+    }
+    for (ll b : cols) {
+        for (ll s : diag_sum) {
+            ll x = s - b;
+            if (x >= 1 && x <= N) {
+                col_diag_sum++;
+            }
+        }
+        for (ll d : diag_diff) {
+            ll x = b + d;
+            if (x >= 1 && x <= N) {
+                col_diag_diff++;
+            }
+        }
+    }
+    total += row_diag_sum + row_diag_diff + col_diag_sum + col_diag_diff;
+    
+    // Subtract squares attacked by row, column, and diagonals (triple intersections)
+    // These were added back multiple times and need to be subtracted again.
+    for (ll a : rows) {
+        for (ll b : cols) {
+            ll s = a + b;
+            ll d = a - b;
+            if (diag_sum.find(s) != diag_sum.end() || diag_diff.find(d) != diag_diff.end()) {
+                total--;
+            }
+        }
+    }
+    
+    // Add squares attacked by all four conditions (quadruple intersections)
+    // These were subtracted too many times and need to be added back once.
+    for (ll a : rows) {
+        for (ll b : cols) {
+            ll s = a + b;
+            ll d = a - b;
+            if (diag_sum.find(s) != diag_sum.end() && diag_diff.find(d) != diag_diff.end()) {
+                total++;
+            }
+        }
+    }
+    
+    cout << total << endl;
+    
+    return 0;
+}
+```
+
+### Explanation
+1. **Initialization**: We read the grid size `N` and the number of existing pieces `M`.
+2. **Tracking Forbidden Squares**: We use sets to keep track of rows, columns, sum diagonals (i + j), and difference diagonals (i - j) that are occupied by existing pieces.
+3. **Total Safe Squares Calculation**: The total safe squares initially is `N * N`.
+4. **Subtracting Forbidden Squares**: We subtract squares attacked by rows and columns, then add back squares that were double-counted (intersection of rows and columns).
+5. **Diagonals Handling**: We subtract squares attacked by any diagonal, then add back squares attacked by both diagonals (intersection).
+6. **Row and Diagonal Intersections**: We account for squares attacked by both a row and a diagonal or a column and a diagonal.
+7. **Triple and Quadruple Intersections**: We adjust for squares that are attacked by combinations of rows, columns, and diagonals to ensure accurate counting using inclusion-exclusion principle.
+8. **Output**: The final count of safe squares is printed.
+
+This approach ensures that all overlapping conditions are correctly handled, providing the accurate number of safe squares for placing a new piece without being captured.

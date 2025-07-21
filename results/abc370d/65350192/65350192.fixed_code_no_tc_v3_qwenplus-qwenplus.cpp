@@ -1,0 +1,78 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define rep(i,n) for(int i = 0; i < (n); i++)
+using ll = long long;
+
+int main() {
+    int h, w, q;
+    cin >> h >> w >> q;
+    
+    // For each column, keep track of remaining wall positions in a set
+    vector<set<int>> colWalls(w);
+    // For each row, keep track of remaining wall positions in a set
+    vector<set<int>> rowWalls(h);
+    
+    // Initialize all walls present
+    for (int i = 0; i < h; ++i) {
+        for (int j = 0; j < w; ++j) {
+            colWalls[j].insert(i);
+            rowWalls[i].insert(j);
+        }
+    }
+
+    while (q--) {
+        int r, c;
+        cin >> r >> c;
+        r--; c--;
+
+        // Check if there's a wall at the bomb position
+        if (rowWalls[r].count(c)) {
+            // Destroy wall at bomb position
+            rowWalls[r].erase(c);
+            colWalls[c].erase(r);
+        } else {
+            // Look up (above current cell in column)
+            auto it = colWalls[c].lower_bound(r);
+            if (it != colWalls[c].begin()) {
+                it--;
+                int u = *it;
+                rowWalls[u].erase(c);
+                colWalls[c].erase(it);
+            }
+
+            // Look down (below current cell in column)
+            it = colWalls[c].lower_bound(r);
+            if (it != colWalls[c].end()) {
+                int d = *it;
+                rowWalls[d].erase(c);
+                colWalls[c].erase(it);
+            }
+
+            // Look left (left in row)
+            it = rowWalls[r].lower_bound(c);
+            if (it != rowWalls[r].begin()) {
+                it--;
+                int l = *it;
+                colWalls[l].erase(r);
+                rowWalls[r].erase(it);
+            }
+
+            // Look right (right in row)
+            it = rowWalls[r].lower_bound(c);
+            if (it != rowWalls[r].end()) {
+                int ri = *it;
+                colWalls[ri].erase(r);
+                rowWalls[r].erase(it);
+            }
+        }
+    }
+
+    // Count remaining walls
+    int ans = 0;
+    for (int i = 0; i < h; ++i) {
+        ans += rowWalls[i].size();
+    }
+    cout << ans << endl;
+
+    return 0;
+}

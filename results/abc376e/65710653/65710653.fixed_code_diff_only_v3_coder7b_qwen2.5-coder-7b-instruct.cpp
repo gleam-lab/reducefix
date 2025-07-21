@@ -1,0 +1,54 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+const int MAXN = 2e5 + 5;
+const int MOD = 1e9 + 7;
+
+typedef long long ll;
+
+int n, k;
+vector<pair<ll, ll>> a;
+multiset<ll> s;
+ll sum;
+
+void init() {
+    a.clear();
+    s.clear();
+    sum = 0;
+}
+
+void read_input() {
+    scanf("%d %d", &n, &k);
+    a.resize(n);
+    for(int i = 0; i < n; ++i) {
+        scanf("%lld %lld", &a[i].first, &a[i].second);
+    }
+}
+
+void process() {
+    sort(a.begin(), a.end());
+    for(int i = 0; i < k; ++i) {
+        s.insert(a[i].second);
+        sum += a[i].second;
+    }
+    ll ans = sum * a[k - 1].first;
+    for(int i = k; i < n; ++i) {
+        sum -= *s.rbegin();
+        s.erase(s.find(a[i - k].second));
+        s.insert(a[i].second);
+        sum += a[i].second;
+        ans = min(ans, sum * a[i].first);
+    }
+    printf("%lld\n", ans);
+}
+
+int main() {
+    int t;
+    scanf("%d", &t);
+    while(t--) {
+        init();
+        read_input();
+        process();
+    }
+    return 0;
+}

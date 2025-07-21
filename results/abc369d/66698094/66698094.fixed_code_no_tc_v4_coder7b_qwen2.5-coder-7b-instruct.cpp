@@ -1,0 +1,25 @@
+#include <bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(NULL);
+
+    int n;
+    cin >> n;
+    vector<ll> a(n);
+    for(int i=0; i<n; i++) cin >> a[i];
+
+    vector<ll> dp(n+1, 0);
+    for(int i=0; i<n; i++){
+        if(i%2==0){
+            dp[i+1] = max(dp[i], dp[i-1]+a[i]);
+        } else {
+            dp[i+1] = max(dp[i], dp[i-1]+2*a[i]);
+        }
+    }
+
+    cout << dp[n] << endl;
+    return 0;
+}

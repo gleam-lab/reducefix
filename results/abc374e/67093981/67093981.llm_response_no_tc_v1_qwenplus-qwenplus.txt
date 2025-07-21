@@ -1,0 +1,68 @@
+```cpp
+#include <iostream>
+#include <algorithm>
+using namespace std;
+
+typedef struct { int a, p, b, q; } Machine;
+Machine machines[100];
+long long dp[100][10000]; // dp[i][j] = min cost to get j units of item from machine i
+
+int N, X;
+
+// Calculate the minimum cost to produce 'n' units for a specific machine
+long long cost(int i, int n) {
+    long long d = n / (machines[i].a * machines[i].b);
+    long long rem = n % (machines[i].a * machines[i].b);
+    return dp[i][rem] + d * machines[i].p * machines[i].b;
+}
+
+// Check if it's possible to produce 'n' units within budget X
+bool isPossible(int n) {
+    long long totalCost = 0;
+    for (int i = 0; i < N; ++i) {
+        totalCost += cost(i, n);
+        if (totalCost > X) return false;
+    }
+    return true;
+}
+
+int main() {
+    cin >> N >> X;
+
+    for (int i = 0; i < N; ++i) {
+        int a, p, b, q;
+        cin >> a >> p >> b >> q;
+
+        // Ensure a*q >= b*p (preferable exchange rate)
+        if (a * q < b * p) {
+            swap(a, b);
+            swap(p, q);
+        }
+
+        machines[i] = {a, p, b, q};
+
+        // Initialize DP for this machine
+        dp[i][0] = 0;
+        for (int j = 1; j <= a * b; ++j) {
+            int prev1 = max(0, j - a);
+            int prev2 = max(0, j - b);
+            dp[i][j] = min(dp[i][prev1] + p, dp[i][prev2] + q);
+        }
+    }
+
+    // Binary search on maximum number of items we can produce
+    int low = 0, high = 1e9;
+    while (low <= high) {
+        int mid = (long long)low + (long long)high;
+        mid >>= 1;
+        
+        if (isPossible(mid)) {
+            low = mid + 1;
+        } else {
+            high = mid - 1;
+        }
+    }
+
+    cout << high << endl;
+}
+```

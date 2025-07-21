@@ -1,0 +1,124 @@
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+
+struct Point {
+    ll x, y;
+    bool operator<(const Point& rhs) const {
+        if (x == rhs.x) {
+            return y < rhs.y;
+        }
+        return x < rhs.x;
+    }
+};
+
+void solve() {
+    ll n, m;
+    cin >> n >> m;
+
+    set<ll> rows, cols;
+    set<ll> diag1, diag2; // x - y, x + y
+
+    for (ll i = 0; i < m; ++i) {
+        ll x, y;
+        cin >> x >> y;
+        rows.insert(x);
+        cols.insert(y);
+        diag1.insert(x - y);
+        diag2.insert(x + y);
+    }
+
+    ll total = n * n;
+
+    // Subtract all squares attacked by existing pieces
+    total -= rows.size() * n;
+    total -= cols.size() * n;
+    total -= diag1.size() * n;
+    total -= diag2.size() * n;
+
+    // Add back over-subtracted intersections of row & column
+    for (auto r : rows) {
+        for (auto c : cols) {
+            total += 1; // add back intersection of row and col
+        }
+    }
+
+    // Add back over-subtracted intersections of row & diagonal1
+    for (auto r : rows) {
+        for (auto d : diag1) {
+            ll c = r - d;
+            if (c >= 1 && c <= n) {
+                total += 1;
+            }
+        }
+    }
+
+    // Add back over-subtracted intersections of row & diagonal2
+    for (auto r : rows) {
+        for (auto d : diag2) {
+            ll c = d - r;
+            if (c >= 1 && c <= n) {
+                total += 1;
+            }
+        }
+    }
+
+    // Add back over-subtracted intersections of col & diagonal1
+    for (auto c : cols) {
+        for (auto d : diag1) {
+            ll r = d + c;
+            if (r >= 1 && r <= n) {
+                total += 1;
+            }
+        }
+    }
+
+    // Add back over-subtracted intersections of col & diagonal2
+    for (auto c : cols) {
+        for (auto d : diag2) {
+            ll r = d - c;
+            if (r >= 1 && r <= n) {
+                total += 1;
+            }
+        }
+    }
+
+    // Add back over-subtracted intersections of diagonal1 & diagonal2
+    for (auto d1 : diag1) {
+        for (auto d2 : diag2) {
+            if ((d1 + d2) % 2 != 0) continue;
+            ll r = (d2 + d1) / 2;
+            ll c = (d2 - d1) / 2;
+            if (r >= 1 && r <= n && c >= 1 && c <= n) {
+                total += 1;
+            }
+        }
+    }
+
+    // Subtract over-added intersections of row, col, and diagonal
+    for (auto r : rows) {
+        for (auto c : cols) {
+            ll d1 = r - c;
+            ll d2 = r + c;
+            if (diag1.count(d1) || diag2.count(d2)) {
+                total -= 1;
+            }
+        }
+    }
+
+    // Remove squares already occupied by pieces
+    total -= m;
+
+    cout << total << "\n";
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+    cout << fixed;
+
+    int NT = 1;
+    // cin >> NT;
+    while (NT--) solve();
+    return 0;
+}

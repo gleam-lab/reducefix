@@ -1,0 +1,27 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(0);
+    
+    int n, k;
+    cin >> n >> k;
+    
+    vector<int> nums(n);
+    for(int i = 0; i < n; i++) {
+        cin >> nums[i];
+    }
+    
+    sort(nums.begin(), nums.end());
+    
+    long long ans = LLONG_MAX;
+    
+    for(int i = 0; i <= k; i++) {
+        ans = min(ans, (long long)nums[n-1-i] - nums[i]);
+    }
+    
+    cout << ans << '\n';
+    
+    return 0;
+}

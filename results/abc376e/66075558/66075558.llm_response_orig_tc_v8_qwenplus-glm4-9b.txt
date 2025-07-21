@@ -1,0 +1,95 @@
+
+The problem can be solved using a combination of sorting, prefix sums, and a priority queue (min-heap). The goal is to find the minimum value of the expression:
+
+\[
+\left(\max_{i \in S} A_i\right) \times \left(\sum_{i \in S} B_i\right)
+\]
+
+where \(S\) is a subset of \(\{1, 2, \dots, N\}\) of size \(K\).
+
+### Key Steps
+
+1. **Sorting**: Sort the array \(A\) in descending order while keeping track of the original indices to sort the array \(B\) accordingly.
+2. **Prefix Sum**: Compute the prefix sum of array \(B\) to quickly calculate the sum of any subarray.
+3. **Priority Queue**: Use a priority queue to maintain the smallest \(K-1\) sums of \(B\) while iterating through the sorted \(B\) array.
+
+### Detailed Solution
+
+1. **Sorting**: 
+   - Pair each element of \(A\) with its index and sort these pairs in descending order based on \(A\).
+   - Sort the array \(B\) using the sorted indices of \(A\).
+
+2. **Prefix Sum**:
+   - Compute the prefix sum of array \(B\). This helps in quickly calculating the sum of any subarray in constant time.
+
+3. **Priority Queue**:
+   - Initialize a priority queue.
+   - Add the first \(K-1\) elements of the sorted \(B\) array to the priority queue.
+   - Iterate through the remaining elements of the sorted \(B\) array:
+     - Add the current element to the priority queue.
+     - Remove the smallest element from the priority queue.
+     - Calculate the current value of the expression using the maximum value in the priority queue and the prefix sum.
+     - Update the minimum value of the expression if necessary.
+
+4. **Output**:
+   - For each test case, output the minimum value found.
+
+### Python Code
+
+```python
+import heapq
+import sys
+input = sys.stdin.read
+
+def solve():
+    data = input().split()
+    index = 0
+    T = int(data[index])
+    index += 1
+    results = []
+    
+    for _ in range(T):
+        N = int(data[index])
+        K = int(data[index + 1])
+        index += 2
+        A = list(map(int, data[index:index + N]))
+        index += N
+        B = list(map(int, data[index:index + N]))
+        index += N
+        
+        # Pair A with indices and sort by A in descending order
+        indexed_A = sorted((A[i], i + 1) for i in range(N))
+        indexed_A.reverse()
+        
+        # Sort B according to the sorted indices of A
+        sorted_B = [0] * N
+        for i, (a_val, idx) in enumerate(indexed_A):
+            sorted_B[i] = B[idx - 1]
+        
+        # Compute prefix sums of B
+        prefix_sums = [0] * (N + 1)
+        for i in range(1, N + 1):
+            prefix_sums[i] = prefix_sums[i - 1] + sorted_B[i - 1]
+        
+        # Use a min-heap to track the smallest K-1 sums of B
+        min_heap = []
+        current_sum = 0
+        for i in range(K - 1):
+            heapq.heappush(min_heap, sorted_B[i])
+            current_sum += sorted_B[i]
+        
+        # Iterate over the remaining elements
+        min_value = float('inf')
+        for i in range(K - 1, N):
+            heapq.heappush(min_heap, sorted_B[i])
+            current_sum += sorted_B[i]
+            heapq.heappop(min_heap)
+            current_sum -= heapq.heappop(min_heap)
+            min_value = min(min_value, max(indexed_A[i][0], current_sum) * indexed_A[i][0])
+        
+        results.append(min_value)
+    
+    # Output all results
+    sys.stdout.write('\n'.join(map(str, results)) + '\n')
+
+```

@@ -1,0 +1,57 @@
+#include <iostream>
+#include <vector>
+#include <set>
+using namespace std;
+
+long long count_empty_squares(int N, int M, vector<pair<int, int>>& pieces) {
+    // Sets to track captured positions
+    set<int> rows, cols, diag1, diag2;
+    set<pair<int, int>, greater<pair<int, int>>> diag3, diag4;
+
+    // Populate the sets with the positions of the existing pieces
+    for (auto& p : pieces) {
+        rows.insert(p.first);
+        cols.insert(p.second);
+        diag1.insert(p.first - p.second);
+        diag2.insert(p.first + p.second);
+        diag3.insert({p.first + p.second, p.first});
+        diag4.insert({p.first - p.second, p.first});
+    }
+
+    // Initialize the answer with the total number of squares
+    long long ans = N * N;
+
+    // Subtract captured rows, columns, and main diagonals
+    ans -= rows.size() * N;
+    ans -= cols.size() * N;
+
+    // Subtract captured squares in anti-diagonals
+    for (int d = min(N, N - 1); d >= 1; d--) {
+        // Check main anti-diagonals
+        if (diag3.count({d, d})) {
+            ans -= 2 * d;
+        } else if (diag4.count({d, d})) {
+            ans -= 2 * d;
+        }
+
+        // Check secondary anti-diagonals
+        if (diag3.count({N - d, d})) {
+            ans -= 2 * (N - d);
+        } else if (diag4.count({d, N - d})) {
+            ans -= 2 * (N - d);
+        }
+    }
+
+    return ans;
+}
+
+int main() {
+    int N, M;
+    cin >> N >> M;
+    vector<pair<int, int>> pieces(M);
+    for (int i = 0; i < M; i++) {
+        cin >> pieces[i].first >> pieces[i].second;
+    }
+    cout << count_empty_squares(N, M, pieces) << endl;
+    return 0;
+}

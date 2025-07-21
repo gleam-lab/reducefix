@@ -1,0 +1,61 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define rep(i, n) for (int i = 0; i < (n); ++i)
+using ll = long long;
+
+// Function to simulate attacks on a single enemy and return the number of T steps needed
+ll simulate(int h) {
+    ll t = 0;
+    while (h > 0) {
+        ++t;
+        if (t % 3 == 0) {
+            h -= 3;
+        } else {
+            --h;
+        }
+    }
+    return t;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+
+    int n;
+    cin >> n;
+    vector<int> H(n);
+    for (int i = 0; i < n; ++i) {
+        cin >> H[i];
+    }
+
+    // We can model this as a priority queue problem where we always attack the frontmost enemy with health > 0
+    // Since enemies are in fixed order and only frontmost is attacked each time, we don't need a heap
+    // Instead, we process enemies sequentially and track T
+
+    ll T = 0;
+    for (int i = 0; i < n; ++i) {
+        int h = H[i];
+        if (h <= 0) continue;
+
+        // For each attack round (T increases by 1), attack this enemy until its health drops to 0 or less
+        // Each attack depends on whether T+1 is divisible by 3
+        // Instead of simulating step-by-step, calculate directly:
+
+        // Let x be the number of full 3-attack cycles (each cycle takes 3 turns, does 5 damage: 1+1+3)
+        ll x = h / 5;
+        T += x * 3;
+        h -= x * 5;
+
+        // Handle remaining damage
+        while (h > 0) {
+            ++T;
+            if (T % 3 == 0) {
+                h -= 3;
+            } else {
+                --h;
+            }
+        }
+    }
+
+    cout << T << endl;
+}

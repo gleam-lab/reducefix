@@ -1,0 +1,36 @@
+#include<bits/stdc++.h>
+using namespace std;
+using ll = long long;
+
+int main() {
+    ll n, ans=0;
+    cin >> n;
+    vector<ll> h(n);
+    for(ll i = 0; i < n; i++) {
+        cin >> h[i];
+    }
+
+    // Initialize the current attack power
+    ll attack = 1;
+
+    // Iterate over each enemy
+    for(ll i = 0; i < n; i++) {
+        // While the current enemy's health is greater than 0
+        while(h[i] > 0) {
+            if (attack % 3 == 0) {
+                // If the attack power is a multiple of 3, subtract 3 health per attack
+                h[i] -= 3;
+            } else {
+                // Otherwise, subtract 1 health per attack
+                h[i]--;
+            }
+            // Increment the total number of attacks
+            ans++;
+            // If the enemy's health is still greater than 0, increment the attack power (either 2 or 3)
+            attack++;
+        }
+    }
+
+    // Output the total number of attacks required
+    cout << ans << endl;
+}

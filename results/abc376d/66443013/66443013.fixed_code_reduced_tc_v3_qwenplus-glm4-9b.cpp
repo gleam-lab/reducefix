@@ -1,0 +1,45 @@
+#include<bits/stdc++.h>
+using namespace std;
+using ll=long long;
+map<ll,vector<ll>>graph;
+ll dist[100001];
+
+void bfs(ll start) {
+    queue<ll> q;
+    q.push(start);
+    dist[start] = 0;
+    while(!q.empty()) {
+        ll node = q.front();
+        q.pop();
+        for(ll neighbor : graph[node]) {
+            if(dist[neighbor] == -1) { // unvisited
+                dist[neighbor] = dist[node] + 1;
+                q.push(neighbor);
+            }
+        }
+    }
+}
+
+int main() {
+    ll n, m;
+    cin >> n >> m;
+    for(int i = 0; i < m; i++) {
+        ll a, b;
+        cin >> a >> b;
+        graph[a].push_back(b);
+        graph[b].push_back(a); // Assuming undirected graph
+    }
+    
+    for(ll i = 1; i <= n; i++) {
+        dist[i] = -1; // Initialize distances to -1 (visited)
+    }
+    
+    bfs(1); // Start BFS from node 1
+    
+    ll maxDist = 0;
+    for(ll i = 1; i <= n; i++) {
+        maxDist = max(maxDist, dist[i]);
+    }
+    
+    cout << maxDist << endl;
+}

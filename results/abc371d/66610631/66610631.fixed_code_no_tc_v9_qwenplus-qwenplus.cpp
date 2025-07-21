@@ -1,0 +1,47 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+typedef long long ll;
+const int N = 1e6 + 7;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int n;
+    cin >> n;
+    vector<int> a(n + 1), b(n + 1);
+    vector<ll> c(n + 1, 0); // Use long long for prefix sums to avoid overflow
+
+    for (int i = 1; i <= n; ++i) {
+        cin >> a[i];
+    }
+
+    for (int i = 1; i <= n; ++i) {
+        cin >> b[i];
+        c[i] = c[i - 1] + b[i];
+    }
+
+    int m;
+    cin >> m;
+    while (m--) {
+        int l, r;
+        cin >> l >> r;
+
+        // Find the first index in a where a[i] >= l
+        auto leftIt = lower_bound(a.begin() + 1, a.end(), l);
+        int leftIdx = (leftIt == a.end()) ? n + 1 : (leftIt - a.begin());
+
+        // Find the last index in a where a[i] <= r
+        auto rightIt = upper_bound(a.begin() + 1, a.end(), r);
+        int rightIdx = (rightIt == a.begin()) ? 0 : (rightIt - a.begin() - 1);
+
+        if (leftIdx > rightIdx) {
+            cout << 0 << '\n';
+        } else {
+            cout << c[rightIdx] - c[leftIdx - 1] << '\n';
+        }
+    }
+
+    return 0;
+}

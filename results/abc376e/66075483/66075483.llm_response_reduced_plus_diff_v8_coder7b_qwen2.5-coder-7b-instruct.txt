@@ -1,0 +1,94 @@
+To fix the given C++ code and ensure it passes all test cases, we need to address several issues:
+
+1. **Sorting and Priority Queue Management**: The current approach uses a priority queue to manage the sums but lacks an efficient way to update the maximum element in `A` when removing elements from the queue.
+2. **Efficient Calculation of Minimum Value**: We need to efficiently calculate the minimum value of the expression `(max(A_i) * sum(B_i))` for every possible subset of size `K`.
+
+Here's a revised version of the code that addresses these issues using a sliding window approach with a multiset to maintain the elements efficiently:
+
+```cpp
+#include <iostream>
+#include <vector>
+#include <queue>
+#include <set>
+#include <algorithm>
+
+using namespace std;
+
+typedef pair<int, int> pii;
+
+int main() {
+    ios::sync_with_stdio(false); cin.tie(0); cout.tie(0);
+
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, k;
+        cin >> n >> k;
+        
+        vector<pii> A(n), B(n);
+        for (int i = 0; i < n; ++i) {
+            cin >> A[i].first;
+            A[i].second = i;
+        }
+        for (int i = 0; i < n; ++i) {
+            cin >> B[i].first;
+            B[i].second = i;
+        }
+
+        // Sort by A_i in descending order and by B_i in ascending order
+        sort(A.begin(), A.end(), greater<pii>());
+        sort(B.begin(), B.end());
+
+        // Multiset to keep track of B values in the current window
+        multiset<int> bs;
+        long long sum = 0, result = LLONG_MAX;
+
+        // Initialize the first window
+        for (int i = 0; i < k; ++i) {
+            bs.insert(B[A[i].second].first);
+            sum += B[A[i].second].first;
+        }
+
+        // Calculate the initial result
+        result = A[k-1].first * sum;
+
+        // Slide the window across the array
+        for (int i = k; i < n; ++i) {
+            int old_index = A[i-k].second;
+            int new_index = A[i].second;
+
+            // Remove the old element from the set
+            auto it = bs.find(B[old_index].first);
+            bs.erase(it);
+            sum -= B[old_index].first;
+
+            // Add the new element to the set
+            bs.insert(B[new_index].first);
+            sum += B[new_index].first;
+
+            // Update the result
+            result = min(result, A[i].first * sum);
+        }
+
+        cout << result << '\n';
+    }
+
+    return 0;
+}
+```
+
+### Explanation:
+
+1. **Sorting**:
+   - `A` is sorted in descending order based on `A_i`.
+   - `B` is sorted in ascending order based on `B_i`.
+
+2. **Sliding Window**:
+   - We use a multiset to keep track of the selected `B_i` values within the current window of size `K`.
+   - For each position of the window, we calculate the product of the maximum `A_i` in the window and the sum of the corresponding `B_i` values.
+
+3. **Efficiency**:
+   - Inserting and deleting elements from a multiset takes logarithmic time (`O(log K)`).
+   - Overall, the solution runs in `O(N log K)` time, which is efficient enough given the constraints.
+
+This approach ensures that we efficiently find the minimum value of the required expression for each test case.

@@ -1,0 +1,55 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define INT long long 
+template <class T>
+using V = vector<T>;
+template <class T>
+using VV = vector<V<T>>;
+
+int N, M;
+V<int> A(200001);
+V<V<pair<int, int>>> G(200001);
+
+void solve() {
+    priority_queue<pair<int, int>, V<pair<int, int>>, greater<pair<int, int>>> pq;
+    V<int> min_cost(N + 1, LONG_LONG_MAX);
+    min_cost[1] = A[1]; // Start with the cost of the first node including its own weight
+    pq.push({A[1], 1}); // Push the cost and node into the priority queue (min-heap)
+
+    while (!pq.empty()) {
+        auto [cost, node] = pq.top();
+        pq.pop();
+        if (cost > min_cost[node]) continue; // Skip if we already have a smaller cost
+
+        for (auto &edge : G[node]) {
+            int next_node = edge.first;
+            int edge_cost = edge.second;
+            int new_cost = cost + edge_cost + A[next_node]; // Calculate new cost including the next node's weight
+            if (new_cost < min_cost[next_node]) {
+                min_cost[next_node] = new_cost;
+                pq.push({new_cost, next_node}); // Push the new cost and node into the priority queue
+            }
+        }
+    }
+
+    for (int i = 2; i <= N; ++i) {
+        cout << min_cost[i] << (i < N ? " " : "");
+    }
+    cout << endl;
+}
+
+INT main() {
+    cin >> N >> M;
+    A[1] = 0; // Set the weight of the first node to zero for simplicity
+    for (int i = 1; i <= N; ++i) {
+        cin >> A[i];
+    }
+    for (int i = 0; i < M; ++i) {
+        int u, v, b;
+        cin >> u >> v >> b;
+        G[u].push_back({v, b});
+        G[v].push_back({u, b});
+    }
+    solve();
+    return 0;
+}

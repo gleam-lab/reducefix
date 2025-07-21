@@ -1,0 +1,87 @@
+
+The problem is asking to simulate the process of sea level rising and the flooding of the island. For each year, we need to compute the area of the island that remains above sea level.
+
+From the provided code, it seems like you are trying to use a Breadth-First Search (BFS) approach to simulate the flooding. However, the code has several issues:
+
+1. The BFS queue size is set to 100,005, which may not be large enough to handle all possible elements that could be pushed into the queue.
+2. The code doesn't handle the case when the sea level is equal to or exceeds the elevation of an area, but the area isn't directly adjacent to the sea. It only checks four directions.
+3. After each year, the code prints the remaining area, which is not efficient for large values of Y.
+4. The code uses a 2D vector `island` to track which areas are still above the sea level, but it does not correctly update this information during the BFS.
+
+Here is a step-by-step analysis of the failing case and the code:
+- Given the input `1 1 100000 100000`, the whole island starts at sea level.
+- The code initializes `island` to all `true` (above sea level), but then it checks for the four adjacent cases (up, down, left, and right). Since there are no adjacent cells, it does not remove from the queue or update `island`.
+- For each year, the code checks the queue and decreases the `ans` by 1. Since the queue is empty, `ans` is never decremented.
+
+Here's a revised version of the code to address these issues:
+
+```cpp
+#include <bits/stdc++.h>
+
+using namespace std;
+
+constexpr int dx[] = {-1, 1, 0, 0};
+constexpr int dy[] = {0, 0, -1, 1};
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int H, W, Y;
+    cin >> H >> W >> Y;
+
+    vector<vector<int>> A(H, vector<int>(W));
+    for (int i = 0; i < H; i++) {
+        for (int j = 0; j < W; j++) {
+            cin >> A[i][j];
+        }
+    }
+
+    vector<vector<bool>> island(H, vector<bool>(W, true));
+    auto possible_sink = [&](int r, int c) {
+        if (r < 0 || r >= H || c < 0 || c >= W) return false;
+        return !island[r][c] || (A[r][c] <= A[r][c - 1] && A[r][c - 1] <= A[r][c + 1] &&
+                                 A[r][c] <= A[r - 1][c] && A[r - 1][c] <= A[r + 1][c] &&
+                                 A[r][c - 1] <= A[r - 1][c - 1] && A[r + 1][c - 1] <= A[r - 1][c + 1] &&
+                                 A[r][c + 1] <= A[r + 1][c - 1] && A[r + 1][c + 1] <= A[r - 1][c + 1]);
+    };
+
+    int ans = H * W;
+
+    for (int i = 1; i <= Y; i++) {
+        queue<pair<int, int>> q;
+        for (int r = 0; r < H; r++) {
+            for (int c = 0; c < W; c++) {
+                if (A[r][c] < i && possible_sink(r, c)) {
+                    island[r][c] = false;
+                    q.push({r, c});
+                }
+            }
+        }
+        while (!q.empty()) {
+            int r = q.front().first;
+            int c = q.front().second;
+            q.pop();
+            for (int d = 0; d < 4; d++) {
+                int nr = r + dx[d];
+                int nc = c + dy[d];
+                if (possible_sink(nr, nc)) {
+                    island[nr][nc] = false;
+                    q.push({nr, nc});
+                }
+            }
+        }
+        cout << ans - count(island.begin(), island.end(), false) << endl;
+    }
+
+    return 0;
+}
+```
+
+Please note the following changes and considerations:
+
+1. We define a lambda function `possible_sink` to check if an area can sink based on its elevation and the elevations of its adjacent areas.
+2. We iterate over the entire island to find areas that could potentially sink and add them to the queue.
+3. We then perform a BFS to mark all sinking areas.
+4. After each BFS, we calculate the remaining area that hasn't sunk.
+5. We use the `count` function from the `<algorithm>` library to count the number of true values in the `island` vector after the BFS.

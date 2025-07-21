@@ -1,0 +1,57 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+int main() {
+    int n;
+    cin >> n;
+    vector<int> x(n), p(n), a(n + 1);
+    
+    // Read the array x
+    for (int i = 0; i < n; i++) {
+        cin >> x[i];
+    }
+    
+    // Compute the prefix sums array a
+    a[0] = 0;
+    for (int i = 0; i < n; i++) {
+        cin >> p[i];
+        a[i + 1] = a[i] + p[i];
+    }
+    
+    int q;
+    cin >> q;
+    
+    while (q--) {
+        int l, r;
+        cin >> l >> r;
+        
+        // Binary search for the smallest index with value >= l
+        int l1 = 0, r1 = n - 1;
+        while (l1 < r1) {
+            int mid = (l1 + r1 + 1) / 2;
+            if (x[mid] >= l) {
+                r1 = mid;
+            } else {
+                l1 = mid;
+            }
+        }
+        
+        // Binary search for the largest index with value <= r
+        int l2 = 0, r2 = n - 1;
+        while (l2 < r2) {
+            int mid = (l2 + r2 + 1) / 2;
+            if (x[mid] <= r) {
+                l2 = mid;
+            } else {
+                r2 = mid - 1;
+            }
+        }
+        
+        // Output the sum of elements from l1 to r1 in array p
+        cout << a[r] - a[l1] << endl;
+    }
+    
+    return 0;
+}

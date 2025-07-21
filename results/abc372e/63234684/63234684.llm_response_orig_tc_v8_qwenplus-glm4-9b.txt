@@ -1,0 +1,76 @@
+
+The problem is an undirected graph with `N` vertices and no edges initially. You are then given `Q` queries to process. Each query can either add an edge or ask for the k-th largest vertex connected to a given vertex.
+
+The main issue in your code is that the union-find structure is not implemented correctly. You are trying to maintain a list of vertices for each root, but this is not efficient for the operations you need.
+
+Let's break down the problem and correct the code step by step:
+
+1. **Union-Find Structure**: Instead of maintaining a list of vertices for each root, you can maintain a size for each component. When merging, you can add the size of the smaller component to the larger one. This way, you can find the component quickly using the parent pointers.
+
+2. **Adding Edges**: When adding an edge, if the vertices are in different components, merge the two components.
+
+3. **Querying for k-th Largest**: Find the root of the vertex and traverse the list of vertices in that component. Keep track of the size of the component and the index of the vertex in the traversal. If you reach the k-th vertex, return its number. If the size of the component is less than k, return -1.
+
+4. **Efficiency**: You should make sure the operations are efficient. For the union-find, path compression and union by size are commonly used techniques to make the operations nearly constant time.
+
+Here's the corrected code:
+
+```cpp
+#include<bits/stdc++.h>
+using namespace std;
+using ll = long long;
+#define rep(i,n) for(int i = 0;i<n;i++)
+
+struct UnionFind {
+    vector<int> par, rank, size;
+    UnionFind(int n) {
+        par.resize(n);
+        rank.resize(n, 0);
+        size.resize(n, 1);
+        for (int i = 0; i < n; i++) {
+            par[i] = i;
+        }
+    }
+    int find(int u) {
+        if (par[u] != u) par[u] = find(par[u]);
+        return par[u];
+    }
+    void merge(int u, int v) {
+        u = find(u);
+        v = find(v);
+        if (u == v) return;
+        if (rank[u] < rank[v]) swap(u, v);
+        size[u] += size[v];
+        par[v] = u;
+        if (rank[u] == rank[v]) rank[u]++;
+    }
+};
+
+int main() {
+    int n, q;
+    cin >> n >> q;
+    UnionFind uf(n);
+    while (q--) {
+        int type, u, v, k;
+        cin >> type >> u >> v;
+        if (type == 1) {
+            uf.merge(u, v);
+        } else if (type == 2) {
+            v--;
+            int root = uf.find(v);
+            vector<int> component;
+            for (int i = 0; i < n; i++) {
+                if (uf.find(i) == root) component.push_back(i);
+            }
+            if (k > component.size()) {
+                cout << -1 << endl;
+            } else {
+                cout << component[k - 1] + 1 << endl;
+            }
+        }
+    }
+    return 0;
+}
+```
+
+This code still has a complexity of O(N^2) for the queries in the worst case, but it should work correctly for smaller inputs. If you need to handle the larger inputs efficiently, you will need to implement a more advanced data structure, like a segment tree or a sparse table, to maintain sorted lists of vertices for each component.

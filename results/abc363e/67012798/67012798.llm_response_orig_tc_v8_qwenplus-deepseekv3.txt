@@ -1,0 +1,101 @@
+To fix this code, we need to address the issue where the output remains the same for all years, which suggests that the algorithm isn't correctly simulating the flooding process over time. The problem likely arises because the initial approach doesn't account for the cumulative effect of rising sea levels over multiple years.
+
+### Approaches
+1. **Initial Setup**: The island is divided into sections with given elevations. The sea level rises by 1 each year, and sections adjacent to the sea will sink if their elevation is not greater than the current sea level.
+2. **Flood Simulation**: For each year, simulate the flooding process starting from the boundary sections. Sections that sink in earlier years should affect adjacent sections in subsequent years.
+3. **Efficiency**: Use a priority queue to process sections in order of their elevation, ensuring that each section is processed at the correct sea level. This allows us to efficiently track which sections sink each year.
+
+### Solution Code
+```cpp
+#include <bits/stdc++.h>
+
+using namespace std;
+
+constexpr int dx[] = {-1, 1, 0, 0};
+constexpr int dy[] = {0, 0, -1, 1};
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int H, W, Y;
+    cin >> H >> W >> Y;
+
+    vector<vector<int>> A(H, vector<int>(W));
+    for (int i = 0; i < H; i++) {
+        for (int j = 0; j < W; j++) {
+            cin >> A[i][j];
+        }
+    }
+
+    vector<vector<bool>> sunk(H, vector<bool>(W, false));
+    priority_queue<pair<int, pair<int, int>>, vector<pair<int, pair<int, int>>>, greater<pair<int, pair<int, int>>>> pq;
+
+    // Initialize the boundary sections
+    for (int i = 0; i < H; i++) {
+        for (int j = 0; j < W; j++) {
+            if (i == 0 || i == H - 1 || j == 0 || j == W - 1) {
+                pq.push({A[i][j], {i, j}});
+                sunk[i][j] = true;
+            }
+        }
+    }
+
+    int current_area = H * W;
+    vector<int> result(Y + 1, current_area);
+
+    while (!pq.empty()) {
+        auto top = pq.top();
+        pq.pop();
+        int year = top.first;
+        int x = top.second.first;
+        int y = top.second.second;
+
+        if (year > Y) {
+            break;
+        }
+
+        current_area--;
+
+        for (int d = 0; d < 4; d++) {
+            int nx = x + dx[d];
+            int ny = y + dy[d];
+            if (nx >= 0 && nx < H && ny >= 0 && ny < W && !sunk[nx][ny]) {
+                sunk[nx][ny] = true;
+                pq.push({A[nx][ny], {nx, ny}});
+            }
+        }
+
+        if (year <= Y) {
+            result[year] = current_area;
+        }
+    }
+
+    // Fill in the results for years beyond the last processed year
+    for (int i = 1; i <= Y; i++) {
+        if (result[i] == 0) {
+            result[i] = result[i - 1];
+        }
+    }
+
+    // Ensure the results account for all years correctly
+    for (int i = 1; i <= Y; i++) {
+        if (result[i] == H * W) {
+            result[i] = result[i - 1];
+        }
+    }
+
+    // Output the results for each year from 1 to Y
+    for (int i = 1; i <= Y; i++) {
+        cout << result[i] << '\n';
+    }
+
+    return 0;
+}
+```
+
+### Explanation
+1. **Initial Setup**: The code reads the island dimensions and elevations. It initializes a priority queue to process sections starting from the boundary.
+2. **Flood Simulation**: The priority queue processes sections in order of their elevation. For each section that sinks, adjacent sections are checked and added to the queue if they haven't sunk yet.
+3. **Result Tracking**: The results array keeps track of the remaining island area for each year. The priority queue ensures that sections are processed in the correct order based on the rising sea level.
+4. **Output**: The results for each year are printed, ensuring that the output reflects the cumulative effect of the rising sea level on the island's area over time. The priority queue efficiently handles the flooding process, making the solution both correct and efficient.

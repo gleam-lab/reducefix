@@ -1,0 +1,167 @@
+# START --- abc375b/reducer.py --- START
+import os
+import subprocess
+from typing import List, Tuple, Optional
+import sys
+import math
+
+def run_program(program_path: str, input_data: bytes) -> bytes:
+    result = subprocess.run(
+        [program_path], 
+        input=input_data,
+        capture_output=True,
+        check=True,  
+        timeout=10   
+    )
+    return result.stdout
+
+def create_input_bytes(points: List[Tuple[int, int]]) -> bytes:
+    if not points:
+        return b"0\n"
+    N = len(points)
+    lines = [f"{N}\n"]
+    for x, y in points:
+        lines.append(f"{x} {y}\n")
+    return "".join(lines).encode("utf-8")
+
+def test_interesting(points: List[Tuple[int, int]]) -> bool:
+    if not points:
+        return False
+    input_data = create_input_bytes(points)
+    try:
+        wa_output = run_program("./wa", input_data)
+        ac_output = run_program("./ac", input_data)
+        return (wa_output.strip() != ac_output.strip())
+    except subprocess.CalledProcessError:
+        return False
+
+def calculate_distance(p1: Tuple[int, int], p2: Tuple[int, int]) -> float:
+    x1, y1 = p1
+    x2, y2 = p2
+    return math.sqrt((x1 - x2)**2 + (y1 - y2)**2)
+
+def get_subpoints(original_points: List[Tuple[int, int]], kept_indices: List[int]) -> List[Tuple[int, int]]:
+    subpoints = []
+    for i in kept_indices:
+        if 0 <= i < len(original_points):
+            subpoints.append(original_points[i])
+    return subpoints
+
+def reduce_points_ddmin(original_points: List[Tuple[int, int]]) -> List[Tuple[int, int]]:
+    if not test_interesting(original_points):
+        print("[Error] 初始输入并未造成 WA 与 AC 不一致，无法缩减。")
+        return original_points
+    
+    print(f"[Info] 初始点数={len(original_points)} 已确认导致输出差异，开始 ddmin 缩减...\n")
+    current_indices = list(range(len(original_points)))
+    granularity = 2
+    
+    while len(current_indices) >= 1:
+        print(f"[Reduce] 当前下标集大小={len(current_indices)}: {current_indices}")
+        print(f"         尝试粒度: {granularity}")
+        num_indices = len(current_indices)
+        subset_size = max(1, num_indices // granularity)
+        start_idx = 0
+        made_progress = False
+        
+        def check_candidate(candidate_indices: List[int]) -> bool:
+            if not candidate_indices:
+                return False
+            candidate_points = get_subpoints(original_points, candidate_indices)
+            return test_interesting(candidate_points)
+        
+        print(f"         1) 尝试『移除』大小约={subset_size} 的分块...")
+        while start_idx < num_indices:
+            block = current_indices[start_idx:start_idx + subset_size]
+            candidate_indices = [x for x in current_indices if x not in block]
+            print(f"            - 移除 {block} ... ", end="")
+            if check_candidate(candidate_indices):
+                print(f"成功! 新下标集大小={len(candidate_indices)}")
+                current_indices = candidate_indices
+                granularity = 2  
+                made_progress = True
+                break  
+            else:
+                print("失败")
+                start_idx += subset_size
+        
+        if made_progress:
+            continue
+        
+        print(f"         2) 尝试『只保留』大小约={subset_size} 的分块...")
+        start_idx = 0
+        while start_idx < num_indices:
+            block = current_indices[start_idx:start_idx + subset_size]
+            candidate_indices = block
+            if len(candidate_indices) == 0 or len(candidate_indices) == num_indices:
+                start_idx += subset_size
+                continue
+            print(f"            - 只保留 {block} ... ", end="")
+            if check_candidate(candidate_indices):
+                print(f"成功! 新下标集大小={len(candidate_indices)}")
+                current_indices = candidate_indices
+                granularity = 2  
+                made_progress = True
+                break
+            else:
+                print("失败")
+            start_idx += subset_size
+        
+        if made_progress:
+            continue
+        
+        if granularity < num_indices:
+            new_gran = min(granularity * 2, num_indices)
+            print(f"         -> 无进展，增大粒度至 {new_gran}\n")
+            granularity = new_gran
+        else:
+            print("\n[Reduce] 已无法进一步缩减 —— 到达 1-minimal。")
+            break
+    
+    final_points = get_subpoints(original_points, current_indices)
+    print(f"\n[Result] 缩减后点数 M={len(final_points)}，保留下标: {current_indices}")
+    return final_points
+
+def reduce_input(input_file: str, output_file: str):
+    if not os.path.exists(input_file):
+        print(f"[Error] 输入文件不存在: {input_file}", file=sys.stderr)
+        return 
+    
+    lines = []
+    with open(input_file, "r", encoding="utf-8") as f:
+        lines = [line.rstrip("\n") for line in f]
+    
+    if not lines:
+        raise ValueError("输入文件为空")
+    
+    n_str = lines[0].strip()
+    if not n_str.isdigit():
+        raise ValueError(f"第一行为非数字: {n_str}")
+    
+    N = int(n_str)
+    
+    if len(lines) < N + 1:
+        raise ValueError(f"输入行数不足: 期望至少 {N+1} 行, 实际 {len(lines)} 行.")
+    
+    points = []
+    for i in range(1, N + 1):
+        if i >= len(lines):
+            raise ValueError(f"第 {i} 行缺失")
+        parts = lines[i].split()
+        if len(parts) != 2:
+            raise ValueError(f"第 {i} 行格式错误: {lines[i]}")
+        try:
+            x = int(parts[0])
+            y = int(parts[1])
+            points.append((x, y))
+        except ValueError:
+            raise ValueError(f"第 {i} 行包含非整数值: {lines[i]}")
+    
+    reduced_points = reduce_points_ddmin(points)
+    output_bytes = create_input_bytes(reduced_points)
+    
+    with open(output_file, "wb") as f:
+        f.write(output_bytes)
+    
+    print(f"[Info] 缩减过程完成，结果已写入: {output_file}")
+# END --- abc375b/reducer.py --- END

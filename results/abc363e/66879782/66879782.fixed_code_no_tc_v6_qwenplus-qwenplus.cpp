@@ -1,0 +1,81 @@
+#include <bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+#define all(x) (x).begin(), (x).end()
+
+int main() {
+    ios_base::sync_with_stdio(0);
+    cin.tie(0);
+    int h, w, y;
+    cin >> h >> w >> y;
+    vector<vector<int>> height(h, vector<int>(w));
+    vector<vector<int>> sink_year(h, vector<int>(w, INT_MAX));
+    priority_queue<pair<int, pair<int, int>>, 
+                   vector<pair<int, pair<int, int>>>, 
+                   greater<pair<int, pair<int, int>>>> pq;
+
+    // Read input and initialize border cells
+    for (int i = 0; i < h; ++i) {
+        for (int j = 0; j < w; ++j) {
+            cin >> height[i][j];
+            if (i == 0 || i == h-1 || j == 0 || j == w-1) {
+                sink_year[i][j] = height[i][j];
+                pq.push({height[i][j], {i, j}});
+            }
+        }
+    }
+
+    // Direction vectors for BFS (up, down, left, right)
+    vector<pair<int, int>> dirs = {{-1, 0}, {1, 0}, {0, -1}, {0, 1}};
+    vector<vector<bool>> visited(h, vector<bool>(w, false));
+
+    // Multi-source BFS to compute when each cell sinks
+    while (!pq.empty()) {
+        auto [curr_height, pos] = pq.top();
+        auto [r, c] = pos;
+        pq.pop();
+
+        if (visited[r][c]) continue;
+        visited[r][c] = true;
+
+        for (auto [dr, dc] : dirs) {
+            int nr = r + dr;
+            int nc = c + dc;
+            if (nr >= 0 && nr < h && nc >= 0 && nc < w && !visited[nr][nc]) {
+                // The year this cell will sink is max of current boundary height and its own height
+                int new_sink_year = max(curr_height, height[nr][nc]);
+                if (new_sink_year < sink_year[nr][nc]) {
+                    sink_year[nr][nc] = new_sink_year;
+                    pq.push({new_sink_year, {nr, nc}});
+                }
+            }
+        }
+    }
+
+    // Count how many cells remain after each year
+    vector<int> remaining(y + 2);  // We use y+2 to safely handle y+1 indexing
+    for (int i = 1; i <= y; ++i) {
+        remaining[i] = h * w;  // Start with full area
+    }
+
+    for (int i = 0; i < h; ++i) {
+        for (int j = 0; j < w; ++j) {
+            if (sink_year[i][j] <= y) {
+                // This cell disappears at sink_year[i][j]
+                remaining[sink_year[i][j]]--;
+            }
+        }
+    }
+
+    // Compute prefix min (cumulative disappearance)
+    for (int i = 2; i <= y; ++i) {
+        remaining[i] = min(remaining[i], remaining[i-1]);
+    }
+
+    // Output the results
+    for (int i = 1; i <= y; ++i) {
+        cout << remaining[i] << '\n';
+    }
+
+    return 0;
+}

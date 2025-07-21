@@ -1,0 +1,105 @@
+
+The problem involves simulating the process of the sea level rising and parts of the island sinking into the sea. Given the constraints, the problem can be solved using a priority queue to simulate the process of sinking. However, the provided code has several issues that lead to incorrect results. Let's analyze the problems and provide a correct approach.
+
+### Issues with the Incorrect Code
+1. **Initialization**: The code initializes the `vis` boolean array with `false` but tries to use it to check if the position has been visited or not. Since `false` is not a proper boolean value for visited (as it could be a location that hasn't been processed yet), this is problematic.
+2. **Priority Queue Usage**: The priority queue is used to process nodes based on their elevation, but it does not guarantee the correct order of processing when multiple nodes have the same elevation. This could lead to incorrect results when simulating the sinking process.
+3. **Boundary Conditions**: The code does not check for boundary conditions when pushing new nodes into the queue from the priority queue.
+4. **Incorrect Calculation of Remaining Area**: The code uses a simple decrement of `res` every time a node is added to the priority queue, which is incorrect. Instead, it should only decrement `res` when a node at the current sea level is processed.
+
+### Corrected Approach
+1. **Correct Initialization for Visited Nodes**: Instead of using a boolean array, we can use a `vector<vector<int>>` to store the minimum height that can be achieved at each cell by the rising sea level.
+2. **Queue for Processing**: Use a queue to process nodes as they sink, and update the sea level and the remaining area accordingly.
+3. **Boundary Conditions**: Ensure that when pushing new nodes into the queue, you only consider valid cells within the island boundaries.
+4. **Correct Remaining Area Calculation**: Only decrement `res` when processing cells that are exactly at the current sea level and have adjacent cells that can also sink.
+
+### Code Implementation
+Here's a corrected version of the code based on the above approach:
+
+```cpp
+#include <iostream>
+#include <vector>
+#include <queue>
+
+using namespace std;
+
+int main() {
+    int h, w, y;
+    cin >> h >> w >> y;
+    
+    vector<vector<int>> grid(h, vector<int>(w));
+    for (int i = 0; i < h; i++) {
+        for (int j = 0; j < w; j++) {
+            cin >> grid[i][j];
+        }
+    }
+    
+    vector<vector<int>> sea(h, vector<int>(w, 1));
+    
+    // Initialize the minimum sea level that can be reached at each cell
+    for (int i = 0; i < h; i++) {
+        for (int j = 0; j < w; j++) {
+            if (i == 0 || i == h - 1 || j == 0 || j == w - 1) {
+                sea[i][j] = grid[i][j];
+            } else if (grid[i][j] < sea[i-1][j] && grid[i][j] < sea[i+1][j] &&
+                       grid[i][j] < sea[i][j-1] && grid[i][j] < sea[i][j+1]) {
+                sea[i][j] = grid[i][j];
+            } else {
+                sea[i][j] = min({sea[i-1][j], sea[i+1][j], sea[i][j-1], sea[i][j+1]} - 1);
+            }
+        }
+    }
+    
+    priority_queue<pair<int, int>> pq; // Store (elevation, position)
+    int remaining_area = 0;
+    
+    // Initialize the priority queue with edges
+    for (int i = 0; i < h; i++) {
+        pq.push({grid[i][0], i * w});
+        pq.push({grid[i][w - 1], i * w + w - 1});
+        remaining_area += grid[i][0] > sea[i][0] ? 1 : 0;
+        remaining_area += grid[i][w - 1] > sea[i][w - 1] ? 1 : 0;
+    }
+    
+    for (int j = 1; j < w - 1; j++) {
+        pq.push({grid[0][j], j});
+        pq.push({grid[h - 1][j], (h - 1) * w + j});
+        remaining_area += grid[0][j] > sea[0][j] ? 1 : 0;
+        remaining_area += grid[h - 1][j] > sea[h - 1][j] ? 1 : 0;
+    }
+    
+    // Process the queue
+    while (!pq.empty()) {
+        int el, pos;
+        tie(el, pos) = pq.top();
+        pq.pop();
+        
+        int x = pos / w;
+        int y = pos % w;
+        
+        if (el > sea[x][y]) {
+            remaining_area -= 1;
+            sea[x][y] = el;
+            
+            if (x > 0) {
+                pq.push({grid[x-1][y], (x-1) * w + y});
+            }
+            if (x < h - 1) {
+                pq.push({grid[x+1][y], (x+1) * w + y});
+            }
+            if (y > 0) {
+                pq.push({grid[x][y-1], x * w + y - 1});
+            }
+            if (y < w - 1) {
+                pq.push({grid[x][y+1], x * w + y + 1});
+            }
+        }
+    }
+    
+    cout << remaining_area << endl;
+    
+    return 0;
+}
+```
+
+This code initializes the minimum sea level that can be reached at each cell, processes the edges of the grid first, and then processes the internal cells based on the priority queue. The output is the remaining area of the island after the given years of rising sea levels.

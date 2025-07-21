@@ -1,0 +1,100 @@
+To solve this problem efficiently, we need to simulate the gradual submersion of the island over `Y` years due to rising sea levels.
+
+### Key Observations:
+- Each year, any land that is connected (horizontally or vertically) to the sea and has an elevation less than or equal to the current sea level will be submerged.
+- This implies a **flood-fill** type of process where new submerged cells can cause cascading submersion of adjacent cells.
+- The challenge is to do this efficiently for up to 100,000 years and grids as large as 1000x1000.
+
+### Efficient Strategy:
+Use a **priority queue (min-heap)** to simulate the earliest time each cell gets submerged. We start from the coastlines (which are directly exposed to the sea) and simulate the spread using Dijkstra-like logic:
+- Push all coastal cells into a priority queue with their elevation as the "time" they get submerged.
+- For each year, pop all cells whose submersion time is less than or equal to that year and count how many are still above water.
+- Mark them as visited and continue expanding to adjacent unvisited cells.
+
+This ensures we only process necessary changes per year, giving us acceptable performance.
+
+---
+
+Here's the corrected C++ code:
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+#define ll long long
+
+ll dx[] = {-1, 0, 1, 0};
+ll dy[] = {0, -1, 0, 1};
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    ll H, W, Y;
+    cin >> H >> W >> Y;
+
+    vector<vector<ll>> A(H, vector<ll>(W));
+    for (ll i = 0; i < H; ++i)
+        for (ll j = 0; j < W; ++j)
+            cin >> A[i][j];
+
+    // Priority Queue stores {elevation, row, col}
+    priority_queue<vector<ll>, vector<vector<ll>>, greater<vector<ll>>> pq;
+    vector<vector<bool>> vis(H, vector<bool>(W, false));
+
+    // Initialize the border cells
+    for (ll i = 0; i < H; ++i) {
+        if (!vis[i][0]) {
+            pq.push({A[i][0], i, 0});
+            vis[i][0] = true;
+        }
+        if (!vis[i][W - 1]) {
+            pq.push({A[i][W - 1], i, W - 1});
+            vis[i][W - 1] = true;
+        }
+    }
+
+    for (ll j = 1; j < W - 1; ++j) {
+        if (!vis[0][j]) {
+            pq.push({A[0][j], 0, j});
+            vis[0][j] = true;
+        }
+        if (!vis[H - 1][j]) {
+            pq.push({A[H - 1][j], H - 1, j});
+            vis[H - 1][j] = true;
+        }
+    }
+
+    ll remaining = H * W;
+    ll year = 1;
+
+    while (year <= Y && !pq.empty()) {
+        while (!pq.empty() && pq.top()[0] <= year) {
+            auto top = pq.top(); pq.pop();
+            remaining--;
+
+            ll x = top[1];
+            ll y = top[2];
+
+            for (ll d = 0; d < 4; ++d) {
+                ll nx = x + dx[d];
+                ll ny = y + dy[d];
+                if (nx >= 0 && nx < H && ny >= 0 && ny < W && !vis[nx][ny]) {
+                    vis[nx][ny] = true;
+                    pq.push({A[nx][ny], nx, ny});
+                }
+            }
+        }
+        cout << remaining << "\n";
+        year++;
+    }
+
+    // If we finish processing before Y years, fill the rest with the same value
+    while (year <= Y) {
+        cout << remaining << "\n";
+        year++;
+    }
+
+    return 0;
+}
+```

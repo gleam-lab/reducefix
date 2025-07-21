@@ -1,0 +1,49 @@
+#include<bits/stdc++.h>
+#define ll long long
+using namespace std;
+
+const ll N = 2e5+5;
+ll a[N], b[N];
+
+int main() {
+    ll n;
+    cin >> n;
+    for (ll i = 0; i < n; ++i) {
+        cin >> a[i];
+    }
+    for (ll i = 0; i < n-1; ++i) {
+        cin >> b[i];
+    }
+
+    // Sort both arrays in non-decreasing order
+    sort(a, a + n);
+    sort(b, b + n - 1);
+
+    // Use two pointers to find the smallest x
+    ll i = 0, j = 0;
+    while (i < n && j < n - 1) {
+        if (b[j] >= a[i]) {
+            // If the current box can fit the toy, move to the next toy
+            i++;
+        } else {
+            // If the current box is too small, move to the next box
+            j++;
+            if (j == n - 1) {
+                // If all boxes are exhausted and still not all toys are placed
+                if (i < n) {
+                    // The next box must be at least as big as the current toy
+                    cout << a[i] << endl;
+                    return 0;
+                } else {
+                    // All toys can fit in existing boxes
+                    cout << -1 << endl;
+                    return 0;
+                }
+            }
+        }
+    }
+
+    // If we successfully placed all toys in the smallest possible boxes
+    cout << a[i] << endl;
+    return 0;
+}

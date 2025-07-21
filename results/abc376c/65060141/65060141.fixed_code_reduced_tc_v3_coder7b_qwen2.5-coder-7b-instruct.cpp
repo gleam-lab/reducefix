@@ -1,0 +1,34 @@
+#include<bits/stdc++.h>
+#define ll long long
+using namespace std;
+
+int main(){
+    ll n;
+    cin >> n;
+    vector<ll> a(n), b(n-1);
+    
+    for(ll i = 0; i < n; ++i){
+        cin >> a[i];
+    }
+    
+    for(ll i = 0; i < n-1; ++i){
+        cin >> b[i];
+    }
+
+    sort(a.begin(), a.end());
+    sort(b.begin(), b.end());
+
+    ll ans = 0;
+    for(ll i = 0; i < n-1; ++i){
+        if(b[i] >= a[n-i-1]){
+            continue;
+        } else {
+            ans = max(ans, a[n-i-1]);
+        }
+    }
+    
+    if(ans == 0) cout << -1 << endl;
+    else cout << ans << endl;
+    
+    return 0;
+}

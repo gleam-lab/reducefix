@@ -1,0 +1,32 @@
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+
+int main() {
+  int n;
+  cin >> n;
+  vector<int> x(n);
+  for (int i = 0; i < n; i++) cin >> x[i];
+  vector<ll> p(n), prefix(n + 1, 0);
+  for (int i = 0; i < n; i++) {
+    cin >> p[i];
+    prefix[i + 1] = prefix[i] + p[i];
+  }
+  
+  int q;
+  cin >> q;
+  while (q--) {
+    int l, r;
+    cin >> l >> r;
+    
+    // Find first index where x[i] >= l
+    int left = lower_bound(x.begin(), x.end(), l) - x.begin();
+    // Find first index where x[i] > r
+    int right = upper_bound(x.begin(), x.end(), r) - x.begin();
+    
+    ll ans = prefix[right] - prefix[left];
+    cout << ans << endl;
+  }
+
+  return 0;
+}

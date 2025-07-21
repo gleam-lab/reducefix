@@ -1,0 +1,26 @@
+#include<bits/stdc++.h>
+using namespace std;
+
+#define ll long long
+
+void solve() {
+    int n, k;
+    cin >> n >> k;
+    vector<ll> a(n);
+    for(int i = 0; i < n; i++) cin >> a[i];
+
+    sort(a.begin(), a.end());
+
+    // The optimal strategy is to remove the smallest k/2 elements and the largest k/2 elements
+    // This way, we minimize the difference between the maximum and minimum values of the resulting array
+    ll min_val = a[k / 2] - a[n - k / 2 - 1];
+    
+    cout << min_val << endl;
+}
+
+signed main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(NULL);
+    solve();
+    return 0;
+}

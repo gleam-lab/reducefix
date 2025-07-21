@@ -1,0 +1,93 @@
+#include <iostream>
+#include <vector>
+#include <string>
+#include <map>
+#include <unordered_map>
+#include <set>
+#include <algorithm>
+#include <cmath>
+
+using namespace std;
+
+#define INF 1000000000
+#define LINF 1000000000000000000
+
+#define fi first
+#define se second
+
+#define i32 int
+#define i64 long long
+
+#define u32 unsigned int
+#define u64 unsigned long long
+
+#define f32 float
+#define f64 double
+
+#define str string
+#define vec vector
+#define cc const char *
+
+#define all(x) x.begin(), x.end() // ãã®åã®æåããæå¾
+#define len(x) x.size()           // ãã®åã®è¦ç´ æ°
+#define elif else if              // è¦ã¦ã®éã
+
+#define FOR_U(r, b, e, s) for (i64 r = (i64)b; r < (i64)e; r += (i64)s) // æ°å­å¢å ã®for
+#define FOR_L(r, b, e, s) for (i64 r = (i64)b; r > (i64)e; r -= (i64)s) // æ°å­æ¸å°ã®for
+#define FOR_R(r, b) for (auto r : b)                                        // ç¯å²ãã¼ã¹for
+#define loop while (true)                                                   // ç¡éã«ã¼ã
+
+namespace mine
+{
+    // Input/Output Functions (same as provided in the original code)
+}
+
+using namespace mine;
+
+// Function to check if a cell (i, j) can be captured by a piece on cell (x, y)
+bool canCapture(i64 x, i64 y, i64 i, i64 j) {
+    if (i + 2 == x && j + 1 == y) return true;
+    if (i + 1 == x && j + 2 == y) return true;
+    if (i - 1 == x && j + 2 == y) return true;
+    if (i - 2 == x && j + 1 == y) return true;
+    if (i - 2 == x && j - 1 == y) return true;
+    if (i - 1 == x && j - 2 == y) return true;
+    if (i + 1 == x && j - 2 == y) return true;
+    if (i + 2 == x && j - 1 == y) return true;
+    return false;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    i64 N;
+    i64 M;
+    cin >> N >> M;
+
+    vector<pair<i64, i64>> pieces(M);
+    for (i64 j = 0; j < M; ++j) {
+        cin >> pieces[j].fi >> pieces[j].se;
+    }
+
+    set<pair<i64, i64>> safe_cells;
+    for (i64 i = 1; i <= N; ++i) {
+        for (i64 j = 1; j <= N; ++j) {
+            safe_cells.insert({i, j});
+        }
+    }
+
+    for (const auto& p : pieces) {
+        for (i64 i = max(1LL, p.fi - 2); i <= min(N, p.fi + 2); ++i) {
+            for (i64 j = max(1LL, p.se - 1); j <= min(N, p.se + 1); ++j) {
+                if (canCapture(p.fi, p.se, i, j)) {
+                    safe_cells.erase({i, j});
+                }
+            }
+        }
+    }
+
+    cout << len(safe_cells) << endl;
+
+    return 0;
+}

@@ -1,0 +1,69 @@
+The provided code has several issues that need to be addressed to solve the problem correctly:
+
+1. **Incorrect Offset Vectors**: The vector `vc` includes `(0,0)` which incorrectly marks the piece's own position as unsafe, which is not needed since the piece's own position is already occupied.
+
+2. **Duplicate Checks**: Using a `set` to track unsafe positions is correct, but the implementation doesn't efficiently handle large ranges due to the constraints (N can be up to 1e9). However, since M is up to 2e5, storing the unsafe positions individually is manageable.
+
+3. **Counting Valid Positions**: The total valid positions should be `N*N - M - unsafe_positions.size()`. The current code only subtracts the size of the set from `N*N`, which doesn't account for the initially placed pieces.
+
+Here's the corrected and optimized version of the code:
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+#define ll long long
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int N, M;
+    cin >> N >> M;
+
+    vector<pair<int, int>> directions = {{2, 1}, {1, 2}, {-1, 2}, {-2, 1}, {-2, -1}, {-1, -2}, {1, -2}, {2, -1}};
+    set<pair<int, int>> unsafe;
+    set<pair<int, int>> pieces;
+
+    for (int i = 0; i < M; ++i) {
+        int a, b;
+        cin >> a >> b;
+        a--; b--;
+        pieces.insert({a, b});
+        for (auto [dx, dy] : directions) {
+            int nx = a + dx;
+            int ny = b + dy;
+            if (0 <= nx && nx < N && 0 <= ny && ny < N) {
+                unsafe.insert({nx, ny});
+            }
+        }
+    }
+
+    ll total = (ll)N * N;
+    ll unsafe_count = unsafe.size();
+    ll occupied = M;
+    ll answer = total - occupied - unsafe_count;
+
+    // Now, we need to subtract any positions that are both in pieces and unsafe
+    // But since pieces are already not in the unsafe set (unless they can be captured by another piece)
+    // So we need to count the number of pieces that are in unsafe positions
+    ll overlap = 0;
+    for (auto [a, b] : pieces) {
+        if (unsafe.count({a, b})) {
+            overlap++;
+        }
+    }
+
+    answer += overlap; // Because these were subtracted twice (once in occupied, once in unsafe)
+
+    cout << answer << endl;
+
+    return 0;
+}
+```
+
+### Key Fixes:
+1. **Removed `(0,0)` from Directions**: This ensures that the piece's own position isn't marked as unsafe.
+2. **Separate Sets for Pieces and Unsafe Positions**: This helps in accurately calculating overlaps where a piece is both placed and can be captured by another piece.
+3. **Correct Overlap Handling**: The overlap between pieces and unsafe positions is accounted for to avoid double-counting in the total calculation.
+4. **Efficiency**: The use of sets ensures that each position is only checked once, and the operations remain within feasible time limits given the constraints.

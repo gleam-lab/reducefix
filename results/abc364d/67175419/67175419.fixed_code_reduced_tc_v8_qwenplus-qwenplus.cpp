@@ -1,0 +1,33 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+const int N = 100005;
+
+int n, q;
+vector<long long> a;
+long long b, k;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    cout.tie(nullptr);
+
+    cin >> n >> q;
+    a.resize(n);
+    for (int i = 0; i < n; ++i) {
+        cin >> a[i];
+    }
+    sort(a.begin(), a.end());
+
+    while (q--) {
+        cin >> b >> k;
+        vector<long long> diffs(n);
+        for (int i = 0; i < n; ++i) {
+            diffs[i] = abs(a[i] - b);
+        }
+        nth_element(diffs.begin(), diffs.begin() + k - 1, diffs.end());
+        cout << diffs[k - 1] << '\n';
+    }
+
+    return 0;
+}

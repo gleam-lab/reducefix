@@ -1,0 +1,104 @@
+To fix this code, we need to ensure that the logic correctly determines the minimum number of additional votes each candidate needs to secure their victory. The problem involves sorting the candidates' votes, calculating the required votes for each candidate to ensure they are among the top M candidates after all remaining votes are distributed.
+
+### Approaches
+
+1. **Sorting and Prefix Sums**: 
+   - Sort the candidates' votes in non-decreasing order to facilitate efficient calculation.
+   - Compute the prefix sums of the sorted votes to quickly calculate sums of ranges of votes.
+
+2. **Binary Search for Each Candidate**:
+   - For each candidate, determine the minimum number of additional votes needed such that, even if the remaining votes are optimally distributed to other candidates, the candidate remains in the top M positions.
+   - Use binary search to efficiently find this minimum number of votes.
+
+3. **Condition Check**:
+   - For a candidate to be in the top M, the number of candidates with votes strictly greater than theirs after adding the additional votes must be less than M. This involves checking the position of the candidate in the sorted list and ensuring that the required votes do not exceed the remaining votes.
+
+### Solution Code
+
+```cpp
+#include <iostream>
+#include <algorithm>
+#include <vector>
+using namespace std;
+
+typedef long long ll;
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int N, M;
+    ll K;
+    cin >> N >> M >> K;
+    
+    vector<ll> A(N);
+    for (int i = 0; i < N; ++i) {
+        cin >> A[i];
+    }
+    
+    vector<ll> sortedA = A;
+    sort(sortedA.begin(), sortedA.end());
+    
+    vector<ll> prefix(N + 1, 0);
+    for (int i = 0; i < N; ++i) {
+        prefix[i + 1] = prefix[i] + sortedA[i];
+    }
+    
+    vector<ll> res(N);
+    ll remaining = K;
+    
+    for (int i = 0; i < N; ++i) {
+        ll a = A[i];
+        int pos = upper_bound(sortedA.begin(), sortedA.end(), a) - sortedA.begin();
+        if (pos > N - M) {
+            res[i] = 0;
+            continue;
+        }
+        
+        ll low = 0, high = remaining;
+        ll minX = -1;
+        
+        while (low <= high) {
+            ll mid = (low + high) / 2;
+            ll new_a = a + mid;
+            
+            int new_pos = upper_bound(sortedA.begin(), sortedA.end(), new_a) - sortedA.begin();
+            if (new_pos > N - M) {
+                ll required = (new_pos - (N - M)) * new_a - (prefix[new_pos] - prefix[N - M]);
+                if (i >= N - M) {
+                    required -= (new_a - sortedA[i]);
+                }
+                if (required <= remaining - mid) {
+                    minX = mid;
+                    high = mid - 1;
+                } else {
+                    low = mid + 1;
+                }
+            } else {
+                low = mid + 1;
+            }
+        }
+        
+        res[i] = minX;
+    }
+    
+    for (int i = 0; i < N; ++i) {
+        cout << res[i] << " ";
+    }
+    cout << "\n";
+    
+    return 0;
+}
+```
+
+### Explanation
+
+1. **Input Handling**: The code reads the number of candidates `N`, the number of elected candidates `M`, and the total votes `K`. It then reads the votes for each candidate into the array `A`.
+
+2. **Sorting and Prefix Sum**: The votes are sorted to facilitate binary search operations. A prefix sum array is constructed to quickly compute the sum of votes in any subrange.
+
+3. **Binary Search for Each Candidate**: For each candidate, the code checks if they are already in the top `M` positions. If not, it performs a binary search to find the minimum additional votes (`minX`) required to place them in the top `M` positions. The binary search checks if the candidate's new vote count (after adding `mid` votes) ensures their position is within the top `M`, considering the worst-case distribution of remaining votes to other candidates.
+
+4. **Output**: The results for each candidate are printed, indicating the minimum additional votes needed (or `-1` if it's impossible to secure their victory).
+
+This approach ensures that the solution is efficient and handles all edge cases correctly, with a time complexity of O(N log N) due to the sorting and binary search operations.

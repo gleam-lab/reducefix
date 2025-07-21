@@ -1,0 +1,101 @@
+The issue in the original code was related to incorrect handling of the union operation when merging sets. Specifically, the code wasn't properly updating the root references when merging smaller sets into larger ones. Here's the fixed version that properly handles the union operations and maintains the sorted sets for efficient k-th largest queries:
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+#define rep(i, n) for(int i=0;i<(n);i++)
+#define all(a) a.begin(), a.end()
+#define rall(a) a.rbegin(), a.rend()
+using ll = long long;
+using pi = pair<int, int>;
+const int di[]={1,-1,0,0};
+const int dj[]={0,0,1,-1};
+const int INF=1e9;
+
+struct UnionFind {
+    vector<int> parent, rank;
+    UnionFind(int n) : parent(n), rank(n, 0) {
+        for (int i = 0; i < n; i++) 
+            parent[i] = i;
+    }
+    int findRoot(int x) {
+        if (parent[x] != x) 
+            parent[x] = findRoot(parent[x]);
+        return parent[x];
+    }
+    bool unite(int x, int y) {
+        int rx = findRoot(x), ry = findRoot(y);
+        if (rx == ry) return false;
+        if (rank[rx] < rank[ry]) {
+            parent[rx] = ry;
+        } else {
+            parent[ry] = rx;
+            if (rank[rx] == rank[ry])
+                rank[rx]++;
+        }
+        return true;
+    }
+};
+
+int main(){
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int n, q;
+    cin >> n >> q;
+    UnionFind uf(n);
+    vector<set<int>> cnt(n);
+    rep(i, n) cnt[i].insert(i+1);
+    vector<int> ans;
+    rep(qi, q) {
+        int com;
+        cin >> com;
+        if(com==1) {
+            int u, v;
+            cin >> u >> v;
+            u--; v--;
+            int ru = uf.findRoot(u);
+            int rv = uf.findRoot(v);
+            if(ru != rv) {
+                if(cnt[ru].size() < cnt[rv].size()) swap(ru, rv);
+                uf.unite(ru, rv);
+                int root = uf.findRoot(ru);
+                if (root == ru) {
+                    cnt[ru].insert(all(cnt[rv]));
+                    cnt[rv].clear();
+                } else {
+                    cnt[rv].insert(all(cnt[ru]));
+                    cnt[ru].clear();
+                }
+            }
+        }
+        if(com==2) {
+            int v, k;
+            cin >> v >> k;
+            v--;
+            int root = uf.findRoot(v);
+            if((int)cnt[root].size() < k) {
+                ans.push_back(-1);
+            } else {
+                auto it = cnt[root].rbegin();
+                advance(it, k-1);
+                ans.push_back(*it);
+            }
+        }
+    }
+    for(auto x:ans) cout << x << endl;
+    return 0;
+}
+```
+
+Key changes made:
+1. Fixed the union operation by properly determining which set to merge into which, based on the root after union
+2. Changed the sets to store 1-based indices directly (instead of 0-based) to avoid the +1 conversion in output
+3. Simplified the set merging logic to always merge into the current root
+4. Properly cleared the merged sets to ensure no duplicate elements
+
+This solution maintains an efficient time complexity:
+- Union operations are O(α(N)) amortized due to path compression and union by rank
+- Each element is inserted into a set at most O(log N) times (due to merging)
+- K-th largest queries are O(k) using reverse iterators on the sets
+
+The fixed version should now pass all test cases, including those where the original code failed.

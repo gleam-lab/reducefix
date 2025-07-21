@@ -1,0 +1,24 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(NULL);
+
+    int N, K;
+    cin >> N >> K;
+    vector<long long> A(N);
+    for (int i = 0; i < N; ++i) cin >> A[i];
+
+    sort(A.begin(), A.end());
+
+    long long ans = LLONG_MAX;
+    for (int i = 0; i <= K; ++i) {
+        long long min_val = A[i];
+        long long max_val = A[N - K + i - 1];
+        ans = min(ans, max_val - min_val);
+    }
+
+    cout << ans << endl;
+    return 0;
+}

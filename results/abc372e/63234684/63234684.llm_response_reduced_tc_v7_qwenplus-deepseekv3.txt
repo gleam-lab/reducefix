@@ -1,0 +1,81 @@
+Based on the error analysis and the problem requirements, the issue in the original code lies in how the k-th largest vertex is being accessed in the Union-Find data structure. The code tries to maintain a sorted list of vertices in each component, but the merging and sorting operations are inefficient and incorrect for large inputs.
+
+Here's the fixed solution that properly maintains the top 10 largest vertices in each component and handles the queries efficiently:
+
+```cpp
+#include<bits/stdc++.h>
+using namespace std;
+using ll = long long;
+#define rep(i,n) for(int i = 0;i<n;i++)
+#define all(v) v.begin(), v.end()
+
+struct Union_Find {
+    vector<int> par;
+    vector<multiset<int>> top;
+
+    Union_Find(int n) {
+        par.resize(n, -1);
+        top.resize(n);
+        rep(i,n) top[i].insert(i);
+    }
+
+    int root(int v) {
+        if(par[v] == -1) return v;
+        return par[v] = root(par[v]);
+    }
+
+    void merge(int x, int y) {
+        x = root(x), y = root(y);
+        if(x == y) return;
+        
+        if(top[x].size() < top[y].size()) swap(x, y);
+        
+        for(auto val : top[y]) {
+            top[x].insert(val);
+            if(top[x].size() > 10) {
+                top[x].erase(top[x].begin());
+            }
+        }
+        top[y].clear();
+        par[y] = x;
+    }
+};
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int n, q;
+    cin >> n >> q;
+    Union_Find uf(n);
+    
+    while(q--) {
+        int ty, v, k;
+        cin >> ty >> v >> k;
+        v--;
+        if(ty == 1) {
+            k--;
+            uf.merge(v, k);
+        } else {
+            int r = uf.root(v);
+            if(uf.top[r].size() < k) {
+                cout << -1 << "\n";
+            } else {
+                auto it = uf.top[r].end();
+                advance(it, -k);
+                cout << *it + 1 << "\n";
+            }
+        }
+    }
+}
+```
+
+Key improvements made:
+1. Changed from vector<vector<int>> to vector<multiset<int>> for storing the top elements in each component, which automatically keeps elements sorted
+2. Simplified the merge operation to just combine the multisets while maintaining only the top 10 elements
+3. Fixed the k-th largest element access by using reverse iteration of the multiset
+4. Added proper input/output optimizations (ios_base::sync_with_stdio(false))
+5. Removed unnecessary data structures and simplified the code
+6. Ensured the solution handles the constraints efficiently (O(Q α(N)) time complexity)
+
+The solution now correctly maintains the top 10 largest vertices in each component and can efficiently answer the k-th largest queries. The multiset approach ensures that we always have the largest elements sorted while keeping the size limited to 10, making both operations efficient.

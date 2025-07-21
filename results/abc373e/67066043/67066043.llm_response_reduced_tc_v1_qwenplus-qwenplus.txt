@@ -1,0 +1,83 @@
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+#define all(x) (x).begin(), (x).end()
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int N, M;
+    ll K;
+    cin >> N >> M >> K;
+    vector<ll> A(N);
+    for (ll &a : A) {
+        cin >> a;
+        K -= a;
+    }
+
+    // Create sorted version of A and index mapping
+    vector<int> ord(N);
+    iota(all(ord), 0);
+    sort(all(ord), [&](int i, int j) { return A[i] < A[j]; });
+    vector<ll> sorted_A = A;
+    sort(all(sorted_A));
+
+    // Compute prefix sums of sorted_A
+    vector<ll> prefix(N + 1);
+    for (int i = 0; i < N; ++i) {
+        prefix[i + 1] = prefix[i] + sorted_A[i];
+    }
+
+    vector<ll> result(N, -1);
+
+    for (int idx = 0; idx < N; ++idx) {
+        int i = ord[idx]; // current candidate in original array
+        ll low = 0, high = K + 1;
+        ll target_votes = A[i];
+
+        // Binary search for minimal X
+        while (low <= high) {
+            ll mid = (low + high) / 2;
+            ll new_vote_count = A[i] + mid;
+
+            // Find how many candidates have votes > new_vote_count
+            // using binary search on the sorted array
+            int pos = upper_bound(all(sorted_A), new_vote_count) - sorted_A.begin();
+
+            // Need to ensure that at most M-1 candidates have more votes
+            // so we allow up to (N - M) candidates with >= new_vote_count including this one
+            int max_allowed = N - M;
+            if (max_allowed < 0) {
+                high = mid - 1;
+                continue;
+            }
+
+            // How many candidates are above threshold?
+            int cnt_above = N - pos;
+
+            if (cnt_above < M) {
+                // Already good, can try smaller X
+                high = mid - 1;
+            } else {
+                // Need to raise this candidate's votes higher
+                low = mid + 1;
+            }
+        }
+
+        if (low > K) {
+            result[i] = -1; // Not possible
+        } else {
+            result[i] = low;
+        }
+    }
+
+    for (ll val : result) {
+        cout << val << " ";
+    }
+    cout << "\n";
+
+    return 0;
+}
+```

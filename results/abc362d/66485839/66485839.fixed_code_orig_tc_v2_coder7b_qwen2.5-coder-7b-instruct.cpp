@@ -1,0 +1,104 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+#define LL long long
+
+struct Edge {
+    int from, to, cost;
+    bool operator<(const Edge &other) const {
+        return cost < other.cost;
+    }
+};
+
+struct DSU {
+    vector<int> parent, rank;
+
+    DSU(int n) : parent(n), rank(n, 1) {
+        for (int i = 0; i < n; ++i) {
+            parent[i] = i;
+        }
+    }
+
+    int find(int x) {
+        if (parent[x] != x) {
+            parent[x] = find(parent[x]);
+        }
+        return parent[x];
+    }
+
+    void unite(int x, int y) {
+        int px = find(x), py = find(y);
+        if (px == py) return;
+        if (rank[px] < rank[py]) {
+            swap(px, py);
+        }
+        parent[py] = px;
+        rank[px] += rank[py];
+    }
+};
+
+struct Graph {
+    int n;
+    vector<vector<pair<int, int>>> adjList;
+
+    Graph(int _n) : n(_n), adjList(n) {}
+
+    void addEdge(int u, int v, int w) {
+        adjList[u].emplace_back(v, w);
+        adjList[v].emplace_back(u, w);
+    }
+
+    vector<LL> dijkstra(int start) {
+        vector<LL> dist(n, LLONG_MAX);
+        dist[start] = 0;
+        priority_queue<pair<LL, int>, vector<pair<LL, int>>, greater<>> pq;
+        pq.push({dist[start], start});
+        
+        while (!pq.empty()) {
+            int u = pq.top().second;
+            LL d = pq.top().first;
+            pq.pop();
+            
+            if (d != dist[u]) continue;
+            
+            for (auto &[v, w] : adjList[u]) {
+                if (dist[u] + w < dist[v]) {
+                    dist[v] = dist[u] + w;
+                    pq.push({dist[v], v});
+                }
+            }
+        }
+        
+        return dist;
+    }
+};
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int n, m;
+    cin >> n >> m;
+    
+    vector<int> weights(n);
+    for (int i = 0; i < n; ++i) {
+        cin >> weights[i];
+    }
+
+    Graph g(n);
+    for (int i = 0; i < m; ++i) {
+        int u, v, w;
+        cin >> u >> v >> w;
+        --u, --v;
+        g.addEdge(u, v, w);
+    }
+
+    vector<LL> dist = g.dijkstra(0);
+    
+    for (int i = 1; i < n; ++i) {
+        cout << dist[i] + weights[i] << " ";
+    }
+    cout << endl;
+
+    return 0;
+}

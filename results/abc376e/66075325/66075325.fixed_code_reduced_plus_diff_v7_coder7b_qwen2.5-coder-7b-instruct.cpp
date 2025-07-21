@@ -1,0 +1,37 @@
+#include<iostream>
+#include<vector>
+#include<algorithm>
+using namespace std;
+
+typedef pair<int, int> pi;
+
+int main(){
+    ios_base::sync_with_stdio(0);cin.tie(0);cout.tie(0);
+
+    int T; cin>>T;
+    while(T--){
+        int n, k; cin>>n>>k;
+        vector<pi> a(n), b(n);
+        
+        for(int i=0;i<n;i++){
+            cin>>a[i].first;
+            a[i].second=i+1;
+        }
+        for(int i=0;i<n;i++)
+            cin>>b[i].first;
+
+        sort(a.begin(), a.end());
+        sort(b.begin(), b.end());
+
+        long long res = LLONG_MAX;
+        for(int i=k-1;i<n;i++){
+            long long ma = a[i].first;
+            long long sum = 0;
+            for(int j=0;j<k;j++)
+                sum+=b[(a[i].second+j)%n].first;
+            res = min(res, ma*sum);
+        }
+        cout<<res<<"\n";
+    }
+    return 0;
+}

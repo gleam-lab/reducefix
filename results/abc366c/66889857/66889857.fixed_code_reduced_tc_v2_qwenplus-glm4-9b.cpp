@@ -1,0 +1,34 @@
+#include <iostream>
+#include <set>
+#include <vector>
+
+using namespace std;
+
+int main() {
+    int q;
+    cin >> q;
+    set<int> a;
+    vector<int> results;
+
+    for (int i = 0; i < q; i++) {
+        int type;
+        cin >> type;
+        if (type == 1) {
+            int x;
+            cin >> x;
+            a.insert(x);
+        } else if (type == 2) {
+            int x;
+            cin >> x;
+            a.erase(x);
+        } else if (type == 3) {
+            results.push_back(a.size());
+        }
+    }
+
+    for (int result : results) {
+        cout << result << endl;
+    }
+
+    return 0;
+}

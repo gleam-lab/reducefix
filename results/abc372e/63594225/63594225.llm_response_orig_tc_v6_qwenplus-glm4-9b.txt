@@ -1,0 +1,86 @@
+
+The problem is asking to handle two types of operations on an undirected graph with N vertices initially connected to themselves. The operations are:
+
+1. Adding an edge between two vertices.
+2. Retrieving the k-th largest vertex connected to a given vertex.
+
+The provided code does not handle the second operation correctly. Here's what needs to be fixed:
+
+1. The union-find data structure is being extended to union by size instead of union by rank. This is fine for union by size, but it doesn't help with the k-th largest vertex retrieval.
+
+2. After each addition of an edge, the vertices need to be sorted or maintained in a sorted manner in the `v[a]` array for quick access to the k-th largest element.
+
+Here is a revised version of the code with the necessary corrections for the second operation using a balanced binary search tree (BST). The C++ Standard Library provides a tree structure, `std::set`, which can be used as a BST. Here's the corrected code:
+
+```cpp
+#include <iostream>
+#include <vector>
+#include <set>
+#include <algorithm>
+
+using namespace std;
+
+int const N = 200000 + 5;
+
+vector<int> parent;
+vector<set<int>> edges;
+
+int find(int v) {
+    if (parent[v] == v) return v;
+    parent[v] = find(parent[v]);
+    return parent[v];
+}
+
+void unionSets(int u, int v) {
+    u = find(u);
+    v = find(v);
+    if (u != v) {
+        // Union by smaller set size
+        if (edges[v].size() < edges[u].size()) {
+            swap(v, u);
+        }
+        for (int elem : edges[v]) {
+            parent[elem] = u;
+            edges[u].insert(elem);
+        }
+        edges[v].clear();
+    }
+}
+
+int kThLargest(int v, int k) {
+    v = find(v);
+    if (k > edges[v].size()) return -1;
+    set<int>::reverse_iterator rit = edges[v].rbegin();
+    advance(rit, k - 1);
+    return *rit;
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int n, q;
+    cin >> n >> q;
+    parent.resize(n + 1);
+    edges.resize(n + 1);
+
+    for (int i = 1; i <= n; ++i) {
+        parent[i] = i;
+    }
+
+    while (q--) {
+        int t, u, v, k;
+        cin >> t >> u >> v;
+        if (t == 1) {
+            unionSets(u, v);
+        } else {
+            cin >> k;
+            cout << kThLargest(v, k) << '\n';
+        }
+    }
+
+    return 0;
+}
+```
+
+This code uses a union-find data structure with path compression and union by size to efficiently merge sets. It also utilizes the `std::set` to maintain the edges in sorted order, making it possible to retrieve the k-th largest element efficiently by using `std::set::rbegin()` and `std::set::rend()` to get the smallest and largest elements, respectively.

@@ -1,0 +1,100 @@
+To fix the problem and ensure correctness, here's what needed to be corrected:
+
+### Issues in the Original Code:
+1. **Initialization Error**:
+   - The graph has no edges (as per input), but you still need to account for the path from vertex `1` to itself, then include the vertex weight of `1` when computing the final path to other nodes.
+   - The original code initializes `dis[1] = 0`, but then adds `a[1]` again when calculating the cost to neighbors — this is correct.
+
+2. **Final Output Error**:
+   - When printing the result for node `i`, it does `dis[i] + a[i]`. However, `dis[i]` already includes the weight of all vertices *along the path*, including vertex `1`.
+   - But vertex `i`'s own weight should also be included because the definition says the path includes both endpoints (vertex 1 and vertex i).
+   - So the final answer is simply `dis[i]` — because `dis[i]` already includes the sum of vertex weights along the path, starting with `a[1]`.
+
+3. **Data Type Usage**:
+   - Use `long long` consistently and initialize distances with `LLONG_MAX` instead of `LONG_LONG_MAX` (which is not guaranteed to be available).
+
+4. **Priority Queue Comparison**:
+   - Using `operator<` for `node` struct must return true if `now.dis` is greater than `x.dis`, so we compare using `dis`, not `id`.
+
+---
+
+### Corrected Code:
+```cpp
+#include <queue>
+#include <vector>
+#include <cstdio>
+#include <cstring>
+#include <climits>
+#include <algorithm>
+#include <limits.h>
+using namespace std;
+typedef long long ll;
+typedef pair<ll, int> pil; // {distance, node}
+
+const int N = 2e5 + 5;
+
+int n, m;
+ll a[N];
+ll dis[N];
+bool vis[N];
+vector<pil> g[N]; // {weight, node}
+
+void dijkstra() {
+    fill(dis, dis + n + 1, LLONG_MAX);
+    memset(vis, 0, sizeof(vis));
+    
+    dis[1] = a[1]; // start includes vertex 1's weight
+    priority_queue<pil, vector<pil>, greater<pil>> q;
+    q.push({dis[1], 1});
+
+    while (!q.empty()) {
+        auto [d, u] = q.top();
+        q.pop();
+        if (vis[u]) continue;
+        vis[u] = true;
+
+        for (auto &[v, b] : g[u]) {
+            if (!vis[v] && dis[v] > dis[u] + b + a[v] - a[u]) {
+                // Explanation: 
+                // - dis[u] includes a[u]
+                // - Adding edge b
+                // - Add a[v] (next vertex)
+                // So subtract a[u] to avoid double-counting
+                dis[v] = dis[u] + b + a[v] - a[u];
+                q.push({dis[v], v});
+            }
+        }
+    }
+}
+
+int main() {
+    scanf("%d%d", &n, &m);
+    for (int i = 1; i <= n; ++i) {
+        scanf("%lld", &a[i]);
+    }
+
+    for (int i = 0; i < m; ++i) {
+        int u, v;
+        ll b;
+        scanf("%d%d%lld", &u, &v, &b);
+        g[u].push_back({b, v});
+        g[v].push_back({b, u});
+    }
+
+    dijkstra();
+
+    for (int i = 2; i <= n; ++i) {
+        printf("%lld ", dis[i]);
+    }
+
+    return 0;
+}
+```
+
+---
+
+### Summary:
+- This version uses Dijkstra’s algorithm correctly with a min-priority queue.
+- Vertex weights are incorporated properly into the path cost.
+- We avoid double-counting by adjusting the transition logic accordingly.
+- The output correctly prints `dis[i]` for each `i=2,...,N`.

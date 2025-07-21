@@ -1,0 +1,105 @@
+To solve this problem efficiently, we need to manage dynamic connectivity in an undirected graph and answer queries about the k-th largest vertex number in a connected component.
+
+We'll use **Disjoint Set Union (DSU)** with path compression for efficient union and find operations. However, since we also need to retrieve the top-k largest vertices in a connected component, we must maintain sorted information within each set.
+
+### Key Concepts Used:
+1. **Union-Find with Path Compression**: To ensure fast union and find operations.
+2. **Sorted Lists per Component**: Each root of a DSU set maintains a list of the 100 largest nodes in its component, sorted in descending order (to allow O(1) access to the k-th largest node).
+3. **Merge Strategy**: When two components are merged, their top-100 lists are merged using a merge sort-like approach to keep them sorted and size-limited.
+
+### Why This Works Efficiently:
+- Since `k ≤ 10`, we only need to store the top 100 nodes per component (safe buffer beyond required 10).
+- Merging two sorted lists can be done in O(100) time = O(1), which is acceptable.
+- Union-Find ensures almost constant-time complexity per operation with path compression.
+
+Here's the corrected and complete C++ code:
+
+```cpp
+#include <bits/stdc++.h>
+
+using namespace std;
+
+#define ff first
+#define ss second
+#define ll long long
+#define SZ(s) (int)s.size()
+
+int const N = 2e5 + 5;
+
+vector<vector<int>> components;
+vector<int> parent;
+
+int find(int x) {
+    if (parent[x] != x)
+        parent[x] = find(parent[x]);
+    return parent[x];
+}
+
+void unite(int a, int b) {
+    a = find(a);
+    b = find(b);
+    if (a == b) return;
+
+    // Always merge smaller into larger to reduce overhead
+    if (components[a].size() < components[b].size()) swap(a, b);
+
+    // Merge components[b] into components[a]
+    vector<int> merged;
+    int i = 0, j = 0;
+    while (i < components[a].size() && j < components[b].size()) {
+        if (components[a][i] > components[b][j]) {
+            merged.push_back(components[a][i]);
+            ++i;
+        } else {
+            merged.push_back(components[b][j]);
+            ++j;
+        }
+        if (merged.size() == 100) break;
+    }
+
+    while (i < components[a].size() && merged.size() < 100) {
+        merged.push_back(components[a][i++]);
+    }
+    while (j < components[b].size() && merged.size() < 100) {
+        merged.push_back(components[b][j++]);
+    }
+
+    components[a] = merged;
+    parent[b] = a;
+}
+
+int main() {
+    ios_base::sync_with_stdio(false); cin.tie(nullptr);
+
+    int n, q;
+    cin >> n >> q;
+
+    parent.resize(n + 1);
+    components.resize(n + 1);
+
+    for (int i = 1; i <= n; ++i) {
+        parent[i] = i;
+        components[i].push_back(i);
+    }
+
+    while (q--) {
+        int t;
+        cin >> t;
+        if (t == 1) {
+            int u, v;
+            cin >> u >> v;
+            unite(u, v);
+        } else {
+            int v, k;
+            cin >> v >> k;
+            int root = find(v);
+            if (components[root].size() < k)
+                cout << -1 << '\n';
+            else
+                cout << components[root][k - 1] << '\n';
+        }
+    }
+
+    return 0;
+}
+```

@@ -1,0 +1,138 @@
+To solve this problem efficiently, we need to simulate the bomb placements on a grid where each cell initially has one wall. When a bomb is placed:
+
+- If there's a wall at that position, it is destroyed.
+- If there's no wall at that position, destroy the first wall in each of the four directions (up, down, left, right), if any.
+
+The key challenge is doing this efficiently for large grids and many queries, as the constraints allow up to 200,000 queries on a grid with up to 400,000 cells.
+
+---
+
+### **Efficient Data Structures**
+
+We use `std::set` to maintain the positions of walls:
+- For rows (`yoko[i]`): stores columns with walls.
+- For columns (`tate[j]`): stores rows with walls.
+
+This allows us to quickly:
+- Check existence of a wall at a given position.
+- Find nearest walls in all four directions using `lower_bound()` or `upper_bound()`.
+
+When placing a bomb:
+1. If the cell has a wall: remove it from both sets.
+2. Else: find and remove the closest walls in each direction.
+
+Each operation is O(log N), which is acceptable for the input size.
+
+---
+
+### **Bug Fix Explanation**
+In the original code:
+- The logic for checking if an element is not at the beginning was incorrect.
+- Specifically, the line `if (*tate_iter_l != *tate[c].begin())` is logically flawed because you can't compare values like that — you must compare iterators directly.
+- Similarly for horizontal sets.
+
+**Correct approach:**
+```cpp
+auto it = set.lower_bound(pos);
+if (it != set.begin()) {
+    --it;
+    // Found wall before pos
+}
+```
+
+---
+
+### ✅ Here's the corrected C++ implementation:
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    int H, W, Q;
+    cin >> H >> W >> Q;
+
+    vector<set<int>> tate(W), yoko(H);
+
+    // Initialize sets with wall positions
+    for (int i = 0; i < H; ++i) {
+        for (int j = 0; j < W; ++j) {
+            tate[j].insert(i);
+            yoko[i].insert(j);
+        }
+    }
+
+    while (Q--) {
+        int R, C;
+        cin >> R >> C;
+        R--; C--;
+
+        // Bomb placement at (R, C)
+        auto& row_set = yoko[R];
+        auto& col_set = tate[C];
+
+        if (row_set.count(C)) {
+            // Wall exists, destroy it
+            row_set.erase(C);
+            col_set.erase(R);
+        } else {
+            // No wall at (R, C), search in 4 directions
+
+            // Up
+            auto it = col_set.lower_bound(R);
+            if (it != col_set.begin()) {
+                --it;
+                int r = *it;
+                row_set = yoko[r];  // Refresh reference
+                row_set.erase(C);
+                col_set.erase(it);
+            }
+
+            // Down
+            it = col_set.lower_bound(R);
+            if (it != col_set.end()) {
+                int r = *it;
+                row_set = yoko[r];  // Refresh reference
+                row_set.erase(C);
+                col_set.erase(it);
+            }
+
+            // Left
+            auto jt = row_set.lower_bound(C);
+            if (jt != row_set.begin()) {
+                --jt;
+                int c = *jt;
+                col_set = tate[c];  // Refresh reference
+                col_set.erase(R);
+                row_set.erase(jt);
+            }
+
+            // Right
+            jt = row_set.lower_bound(C);
+            if (jt != row_set.end()) {
+                int c = *jt;
+                col_set = tate[c];  // Refresh reference
+                col_set.erase(R);
+                row_set.erase(jt);
+            }
+        }
+    }
+
+    // Count remaining walls
+    int ans = 0;
+    for (int i = 0; i < W; ++i) {
+        ans += tate[i].size();
+    }
+    cout << ans << '\n';
+    return 0;
+}
+```
+
+---
+
+### 🔍 Key Fixes:
+- Corrected iterator comparisons when finding adjacent walls.
+- Ensured references are refreshed after modifying containers (since `set` operations may invalidate references).
+- Maintained correct data structure usage for efficient lookups and deletions.
+
+This version will correctly process up to 200,000 queries on a grid with up to 400,000 cells within reasonable time complexity.

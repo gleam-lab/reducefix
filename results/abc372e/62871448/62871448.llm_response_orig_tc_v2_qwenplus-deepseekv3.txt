@@ -1,0 +1,91 @@
+To fix this code, we need to address the incorrect handling of the k-th largest vertex in connected components. The original implementation attempts to maintain a sorted list of the top 10 largest vertices in each component, but it fails to correctly merge these lists when components are unioned. 
+
+Here’s the corrected approach:
+1. **Union-Find Data Structure**: Use Union-Find with path compression and union by rank to efficiently manage the connected components.
+2. **Sorted Sets**: For each component, maintain a sorted set (or a priority queue) of the vertices to efficiently access the k-th largest vertex.
+3. **Efficient Merging**: When two components are merged, combine their sorted sets and keep only the top 10 elements to ensure the operations remain efficient.
+
+### Fixed Code
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+const int MAX_N = 2e5 + 5;
+int parent[MAX_N];
+int rank_[MAX_N];
+vector<int> component[MAX_N];
+
+int find(int u) {
+    if (parent[u] != u) {
+        parent[u] = find(parent[u]);
+    }
+    return parent[u];
+}
+
+void unite(int u, int v) {
+    u = find(u);
+    v = find(v);
+    if (u == v) return;
+
+    if (rank_[u] > rank_[v]) {
+        parent[v] = u;
+        component[u].insert(component[u].end(), component[v].begin(), component[v].end());
+        sort(component[u].rbegin(), component[u].rend());
+        if (component[u].size() > 10) {
+            component[u].resize(10);
+        }
+    } else {
+        parent[u] = v;
+        component[v].insert(component[v].end(), component[u].begin(), component[u].end());
+        sort(component[v].rbegin(), component[v].rend());
+        if (component[v].size() > 10) {
+            component[v].resize(10);
+        }
+        if (rank_[u] == rank_[v]) {
+            rank_[v]++;
+        }
+    }
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int N, Q;
+    cin >> N >> Q;
+
+    for (int i = 1; i <= N; ++i) {
+        parent[i] = i;
+        rank_[i] = 0;
+        component[i].push_back(i);
+    }
+
+    while (Q--) {
+        int type, u, v;
+        cin >> type >> u;
+        if (type == 1) {
+            cin >> v;
+            unite(u, v);
+        } else {
+            int k;
+            cin >> k;
+            int root = find(u);
+            if (component[root].size() < k) {
+                cout << "-1\n";
+            } else {
+                cout << component[root][k - 1] << "\n";
+            }
+        }
+    }
+
+    return 0;
+}
+```
+
+### Explanation
+1. **Union-Find Data Structure**: The `find` function uses path compression to flatten the structure, ensuring efficient lookups. The `unite` function uses union by rank to keep the tree shallow.
+2. **Component Management**: Each component maintains a vector of its vertices, which is kept sorted in descending order. This allows quick access to the k-th largest vertex.
+3. **Efficient Merging**: When merging two components, their vertex lists are combined, sorted, and trimmed to keep only the top 10 elements. This ensures that operations remain efficient even for large components.
+4. **Query Handling**: For type 2 queries, the code checks if the component has at least `k` vertices. If so, it returns the k-th largest; otherwise, it returns `-1`.
+
+This approach ensures that the solution is both efficient and correct, handling all edge cases and large inputs within acceptable time limits.

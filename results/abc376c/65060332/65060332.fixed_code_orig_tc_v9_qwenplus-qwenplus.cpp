@@ -1,0 +1,52 @@
+#include <bits/stdc++.h>
+#define ll long long
+using namespace std;
+
+const int N = 2e5 + 5;
+
+ll a[N], b[N];
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+
+    int n;
+    cin >> n;
+    for (int i = 0; i < n; ++i) {
+        cin >> a[i];
+    }
+    for (int i = 0; i < n - 1; ++i) {
+        cin >> b[i];
+    }
+
+    sort(a, a + n);
+    sort(b, b + n - 1);
+
+    // We need to place all toys in boxes. One toy per box.
+    // We will try to match largest toys with largest boxes.
+    // If at most one toy cannot be placed with existing boxes, we can add a new box.
+
+    int i = n - 1, j = n - 2;
+    while (i >= 0 && j >= 0) {
+        if (b[j] >= a[i]) {
+            --j;
+            --i;
+        } else {
+            // This toy must go into the extra box
+            --i;
+        }
+    }
+
+    if (n - 1 - j == n - i) {
+        // All toys matched with boxes
+        cout << 0 << endl;
+    } else if (n - 1 - j == n - i - 1) {
+        // One toy remains that must go into the extra box
+        cout << a[i + 1] << endl;
+    } else {
+        // More than one toy cannot be placed, impossible
+        cout << -1 << endl;
+    }
+
+    return 0;
+}

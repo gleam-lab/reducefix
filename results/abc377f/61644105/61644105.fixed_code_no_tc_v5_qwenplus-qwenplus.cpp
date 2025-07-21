@@ -1,0 +1,175 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+
+int main() {
+    long long N, M;
+    cin >> N >> M;
+
+    set<long long> rows, cols;
+    set<long long> diag1, diag2; // i + j and i - j
+
+    for (int i = 0; i < M; ++i) {
+        long long a, b;
+        cin >> a >> b;
+        rows.insert(a);
+        cols.insert(b);
+        diag1.insert(a + b);
+        diag2.insert(a - b);
+    }
+
+    // Total number of squares attacked = 
+    // # in rows + # in columns + # in diag1 + # in diag2 
+    // - overlaps between rows/cols, rows/diag1, rows/diag2, cols/diag1, cols/diag2, diag1/diag2
+    // + overlaps between triples
+    // - overlaps between all four
+
+    // We'll calculate total attacked squares using inclusion-exclusion
+
+    // First, count how many squares are attacked by at least one piece
+    long long attacked = 0;
+
+    // Add all squares in attacked rows
+    attacked += rows.size() * N;
+
+    // Add all squares in attacked columns
+    attacked += cols.size() * N;
+
+    // Add all squares in attacked diagonals (both types)
+    for (auto d : diag1) {
+        // Number of squares on diagonal d of type i+j=d
+        int cnt = min(d-1, N) - max(d-N, 1LL) + 1;
+        attacked += cnt;
+    }
+
+    for (auto d : diag2) {
+        // Number of squares on diagonal d of type i-j=d
+        if (d <= 0) {
+            int cnt = N + d - 1;
+            if (cnt > 0) attacked += cnt;
+        } else {
+            int cnt = N - d;
+            if (cnt > 0) attacked += cnt;
+        }
+    }
+
+    // Subtract overlaps: row ∩ column
+    attacked -= 1LL * rows.size() * cols.size();
+
+    // Subtract overlaps: row ∩ diag1
+    for (auto r : rows) {
+        for (auto d : diag1) {
+            int c = d - r;
+            if (c >= 1 && c <= N)
+                attacked--;
+        }
+    }
+
+    // Subtract overlaps: row ∩ diag2
+    for (auto r : rows) {
+        for (auto d : diag2) {
+            int c = r - d;
+            if (c >= 1 && c <= N)
+                attacked--;
+        }
+    }
+
+    // Subtract overlaps: column ∩ diag1
+    for (auto c : cols) {
+        for (auto d : diag1) {
+            int r = d - c;
+            if (r >= 1 && r <= N)
+                attacked--;
+        }
+    }
+
+    // Subtract overlaps: column ∩ diag2
+    for (auto c : cols) {
+        for (auto d : diag2) {
+            int r = d + c;
+            if (r >= 1 && r <= N)
+                attacked--;
+        }
+    }
+
+    // Subtract overlaps: diag1 ∩ diag2 (which is the exact position of existing pieces)
+    for (int k = 0; k < M; ++k) {
+        auto ra = rows.begin();
+        auto ca = cols.begin();
+        auto d1a = diag1.begin();
+        auto d2a = diag2.begin();
+        advance(ra, k);
+        advance(ca, k);
+        advance(d1a, k);
+        advance(d2a, k);
+        
+        long long r = *ra, c = *ca, d1 = *d1a, d2 = *d2a;
+        attacked--;
+    }
+
+    // Add back overlaps: row ∩ column ∩ diag1
+    for (auto r : rows) {
+        for (auto c : cols) {
+            long long d1 = r + c;
+            if (diag1.find(d1) != diag1.end())
+                attacked++;
+        }
+    }
+
+    // Add back overlaps: row ∩ column ∩ diag2
+    for (auto r : rows) {
+        for (auto c : cols) {
+            long long d2 = r - c;
+            if (diag2.find(d2) != diag2.end())
+                attacked++;
+        }
+    }
+
+    // Add back overlaps: row ∩ diag1 ∩ diag2
+    for (auto r : rows) {
+        for (auto d1 : diag1) {
+            for (auto d2 : diag2) {
+                long long c1 = d1 - r;
+                long long c2 = r - d2;
+                if (c1 == c2 && c1 >= 1 && c1 <= N)
+                    attacked++;
+            }
+        }
+    }
+
+    // Add back overlaps: column ∩ diag1 ∩ diag2
+    for (auto c : cols) {
+        for (auto d1 : diag1) {
+            for (auto d2 : diag2) {
+                long long r1 = d1 - c;
+                long long r2 = d2 + c;
+                if (r1 == r2 && r1 >= 1 && r1 <= N)
+                    attacked++;
+            }
+        }
+    }
+
+    // Subtract overlaps: row ∩ column ∩ diag1 ∩ diag2
+    for (int k = 0; k < M; ++k) {
+        auto ra = rows.begin();
+        auto ca = cols.begin();
+        auto d1a = diag1.begin();
+        auto d2a = diag2.begin();
+        advance(ra, k);
+        advance(ca, k);
+        advance(d1a, k);
+        advance(d2a, k);
+        
+        long long r = *ra, c = *ca, d1 = *d1a, d2 = *d2a;
+        if (r + c == d1 && r - c == d2)
+            attacked--;
+    }
+
+    // Total empty squares
+    long long totalEmpty = N * N - M;
+
+    // Answer = empty squares that are not attacked
+    cout << totalEmpty - attacked << endl;
+
+    return 0;
+}

@@ -1,0 +1,73 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define rep(i,n) for(long long i=0;i<n;i++)
+using ll = long long;
+using Graph = vector<vector<int>>;
+
+ll compute_min_cost(ll a, ll b, ll p, ll q, ll x) {
+    // This function computes the minimum cost to produce x widgets using one factory
+    // with options a (cost p) and b (cost q)
+    vector<ll> dp(x + 1, LLONG_MAX);
+    dp[0] = 0;
+    
+    for (ll i = 1; i <= x; ++i) {
+        if (i >= a) {
+            if (dp[i - a] != LLONG_MAX) {
+                dp[i] = min(dp[i], dp[i - a] + p);
+            }
+        }
+        if (i >= b) {
+            if (dp[i - b] != LLONG_MAX) {
+                dp[i] = min(dp[i], dp[i - b] + q);
+            }
+        }
+    }
+    
+    // For numbers larger than x, we can compute using the pattern after a*b
+    if (x > a * b) {
+        ll pattern_size = a * b;
+        ll pattern_cost = dp[pattern_size];
+        ll full_patterns = x / pattern_size;
+        ll remainder = x % pattern_size;
+        return full_patterns * pattern_cost + dp[remainder];
+    }
+    
+    return dp[x];
+}
+
+int main() {
+    int n, x;
+    cin >> n >> x;
+    vector<int> a(n), b(n), p(n), q(n);
+    rep(i,n) cin >> a[i] >> p[i] >> b[i] >> q[i];
+    
+    ll left = 0, right = 1e18;
+    ll answer = 0;
+    
+    while (left <= right) {
+        ll mid = left + (right - left) / 2;
+        ll total_cost = 0;
+        
+        for (int i = 0; i < n; ++i) {
+            ll cost = compute_min_cost(a[i], b[i], p[i], q[i], mid);
+            if (cost == LLONG_MAX) {
+                total_cost = LLONG_MAX;
+                break;
+            }
+            total_cost += cost;
+            if (total_cost > x) {
+                break;
+            }
+        }
+        
+        if (total_cost <= x) {
+            answer = mid;
+            left = mid + 1;
+        } else {
+            right = mid - 1;
+        }
+    }
+    
+    cout << answer << endl;
+    return 0;
+}

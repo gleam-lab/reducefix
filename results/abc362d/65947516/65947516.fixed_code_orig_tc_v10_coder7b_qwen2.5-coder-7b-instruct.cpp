@@ -1,0 +1,58 @@
+#include<bits/stdc++.h>
+using namespace std;
+
+#define pb push_back
+#define mp make_pair
+#define ff first
+#define ss second
+#define vi vector<int>
+#define vvi vector<vi>
+#define pii pair<int,int>
+#define all(x) x.begin(),x.end()
+
+typedef long long ll;
+
+const int MAXN = 2e5 + 5;
+
+vvi adj(MAXN);
+vi dist(MAXN), visited(MAXN);
+
+void dijkstra(int src){
+    priority_queue<pair<ll,int>, vector<pair<ll,int>>, greater<pair<ll,int>>> pq;
+    pq.push(mp(0,src));
+    dist[src] = 0;
+    while(!pq.empty()){
+        int u = pq.top().ss;
+        ll d = pq.top().ff;
+        pq.pop();
+        if(visited[u]) continue;
+        visited[u] = true;
+        for(auto [v, w]: adj[u]){
+            if(dist[u] + w < dist[v]){
+                dist[v] = dist[u] + w;
+                pq.push(mp(dist[v], v));
+            }
+        }
+    }
+}
+
+int main(){
+    ios_base::sync_with_stdio(false); cin.tie(NULL);
+    
+    int n, m; cin >> n >> m;
+    for(int i=1; i<=n; i++) cin >> dist[i];
+    
+    for(int i=0; i<m; i++){
+        int u, v, w; cin >> u >> v >> w;
+        adj[u].pb(mp(v, w));
+        adj[v].pb(mp(u, w));
+    }
+
+    dijkstra(1);
+
+    for(int i=2; i<=n; i++){
+        cout << dist[i] + dist[i] << " ";
+    }
+
+    return 0;
+}

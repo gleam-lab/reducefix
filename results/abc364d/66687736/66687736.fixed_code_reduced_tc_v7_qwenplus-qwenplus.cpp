@@ -1,0 +1,48 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define ll long long
+#define rep(i,n) for(int i=0;i<(int)n;i++)
+#define vi vector<int>
+#define vl vector<ll>
+#define pb push_back
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+    
+    int N, Q;
+    cin >> N >> Q;
+    
+    vi a(N);
+    for (int i = 0; i < N; i++) {
+        cin >> a[i];
+    }
+    
+    // Sort the A array for binary search operations
+    sort(a.begin(), a.end());
+    
+    // For each query, process using binary search to find k-th smallest distance
+    for (int q = 0; q < Q; q++) {
+        int b_j, k_j;
+        cin >> b_j >> k_j;
+        
+        // Binary search on distance
+        ll low = 0, high = 2e8 + 10; // Max possible distance is 2*1e8
+        
+        while (low < high) {
+            ll mid = (low + high) / 2;
+            
+            // Find range in sorted a[] that are within distance mid from b_j
+            int left = lower_bound(a.begin(), a.end(), b_j - mid) - a.begin();
+            int right = upper_bound(a.begin(), a.end(), b_j + mid) - a.begin();
+            
+            if (right - left < k_j) {
+                low = mid + 1;
+            } else {
+                high = mid;
+            }
+        }
+        
+        cout << low << "\n";
+    }
+}

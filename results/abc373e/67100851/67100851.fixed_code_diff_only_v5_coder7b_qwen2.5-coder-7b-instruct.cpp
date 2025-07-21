@@ -1,0 +1,63 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+// Function to determine if candidate i can secure victory with x additional votes
+bool canSecureVictory(vector<long long>& votes, vector<int>& sortedIndices, int M, long long K, int i, long long x) {
+    int n = votes.size();
+    long long totalVotes = 0;
+    
+    // Calculate the number of votes needed to ensure candidate i wins
+    for (int j = 0; j < i; ++j) {
+        if (sortedIndices[j] != i) {
+            totalVotes += max(0LL, votes[sortedIndices[j]] + x + 1 - votes[i]);
+        }
+    }
+    
+    // Check if the total votes needed are within the remaining votes
+    return totalVotes <= K;
+}
+
+int main() {
+    int N, M;
+    long long K;
+    cin >> N >> M >> K;
+    
+    vector<long long> votes(N);
+    vector<int> indices(N);
+    
+    for (int i = 0; i < N; ++i) {
+        cin >> votes[i];
+        indices[i] = i;
+    }
+    
+    // Sort indices based on the number of votes in ascending order
+    sort(indices.begin(), indices.end(), [&](int a, int b) { return votes[a] < votes[b]; });
+    
+    vector<long long> results(N, -1); // Initialize results with -1
+    
+    for (int i = 0; i < N; ++i) {
+        if (i >= N - M) continue; // Candidate i has already won or cannot win
+        
+        long long left = 0, right = K - accumulate(votes.begin(), votes.end(), 0LL);
+        
+        while (left <= right) {
+            long long mid = left + (right - left) / 2;
+            if (canSecureVictory(votes, indices, M, K, i, mid)) {
+                results[i] = mid;
+                right = mid - 1;
+            } else {
+                left = mid + 1;
+            }
+        }
+    }
+    
+    // Output the results
+    for (int i = 0; i < N; ++i) {
+        cout << results[i] << " ";
+    }
+    cout << endl;
+    
+    return 0;
+}

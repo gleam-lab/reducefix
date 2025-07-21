@@ -1,0 +1,56 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+
+const int MAXN = 4e5 + 5;
+
+struct Point {
+    int x, y;
+};
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int h, w, q;
+    cin >> h >> w >> q;
+
+    vector<vector<bool>> grid(h, vector<bool>(w, true));
+    vector<vector<Point>> bombs(q);
+    vector<vector<int>> directions{{-1, 0}, {1, 0}, {0, -1}, {0, 1}};
+
+    for(int i = 0; i < q; ++i) {
+        int r, c;
+        cin >> r >> c;
+        --r, --c;
+        bombs[i] = {r, c};
+        if(grid[r][c]) {
+            grid[r][c] = false;
+        }
+    }
+
+    for(auto &bomb : bombs) {
+        int r = bomb.x, c = bomb.y;
+        if(!grid[r][c]) continue;
+
+        for(const auto &dir : directions) {
+            int dr = dir.first, dc = dir.second;
+            for(int d = 1;; ++d) {
+                int nr = r + dr * d, nc = c + dc * d;
+                if(nr < 0 || nr >= h || nc < 0 || nc >= w || !grid[nr][nc]) break;
+                grid[nr][nc] = false;
+            }
+        }
+    }
+
+    int ans = 0;
+    for(int i = 0; i < h; ++i) {
+        for(int j = 0; j < w; ++j) {
+            if(grid[i][j]) ++ans;
+        }
+    }
+
+    cout << ans << '\n';
+
+    return 0;
+}

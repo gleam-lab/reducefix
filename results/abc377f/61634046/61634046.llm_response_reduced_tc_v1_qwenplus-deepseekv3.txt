@@ -1,0 +1,133 @@
+To fix this code, we need to address the issue that caused the incorrect output for the given test case. The primary problem lies in how the code calculates the number of safe squares after considering all constraints imposed by the existing pieces. The original code attempts to use inclusion-exclusion principles but may have miscounted some overlaps, especially in the higher-order terms (three and four overlaps).
+
+### Approaches
+
+1. **Identify Forbidden Squares**: For each existing piece on the grid, mark the squares it can attack. These include:
+   - All squares in the same row.
+   - All squares in the same column.
+   - All squares on the same diagonal (both `i + j = constant` and `i - j = constant`).
+
+2. **Count Total Safe Squares**: The total number of safe squares is the total grid squares (`N^2`) minus the squares attacked by existing pieces. However, we must ensure that overlapping attacks (squares attacked by multiple pieces) are not double-counted.
+
+3. **Use Inclusion-Exclusion Principle**: To accurately count the attacked squares, we use the inclusion-exclusion principle to calculate the union of all attacked squares by existing pieces. This involves:
+   - Summing the squares attacked by each piece individually.
+   - Subtracting the squares attacked by pairs of pieces.
+   - Adding back squares attacked by triplets, and so on.
+
+4. **Efficient Calculation**: Given constraints (N can be up to 10^9 and M up to 10^3), we need an efficient way to compute these without iterating through every square. We leverage the fact that the attacks form lines (rows, columns, and diagonals) and calculate intersections of these lines.
+
+### Solution Code
+
+```cpp
+#include <bits/stdc++.h>
+
+using namespace std;
+
+typedef long long ll;
+
+int main() {
+    ll N, M;
+    cin >> N >> M;
+    
+    set<ll> rows, cols;
+    set<ll> diag1, diag2; // diag1: i + j, diag2: i - j
+    
+    for (int i = 0; i < M; ++i) {
+        ll a, b;
+        cin >> a >> b;
+        rows.insert(a);
+        cols.insert(b);
+        diag1.insert(a + b);
+        diag2.insert(a - b);
+    }
+    
+    ll total = N * N;
+    ll forbidden = 0;
+    
+    // Rows and columns
+    forbidden += rows.size() * N;
+    forbidden += cols.size() * N;
+    forbidden -= rows.size() * cols.size();
+    
+    // Diagonals (i + j = k)
+    for (ll d : diag1) {
+        ll cnt = 0;
+        // i ranges from max(1, d - N) to min(N, d - 1)
+        ll i_min = max(1LL, d - N);
+        ll i_max = min(N, d - 1);
+        if (i_min <= i_max) {
+            cnt = i_max - i_min + 1;
+        }
+        forbidden += cnt;
+    }
+    
+    // Diagonals (i - j = k)
+    for (ll d : diag2) {
+        ll cnt = 0;
+        // i ranges from max(1, 1 + d) to min(N, N + d)
+        ll i_min = max(1LL, 1 + d);
+        ll i_max = min(N, N + d);
+        if (i_min <= i_max) {
+            cnt = i_max - i_min + 1;
+        }
+        forbidden += cnt;
+    }
+    
+    // Subtract overlaps between rows/columns and diagonals
+    for (ll r : rows) {
+        for (ll d : diag1) {
+            ll j = d - r;
+            if (j >= 1 && j <= N && cols.count(j)) {
+                forbidden--;
+            }
+        }
+        for (ll d : diag2) {
+            ll j = r - d;
+            if (j >= 1 && j <= N && cols.count(j)) {
+                forbidden--;
+            }
+        }
+    }
+    
+    // Subtract overlaps between diagonals
+    for (ll d1 : diag1) {
+        for (ll d2 : diag2) {
+            // Solve i + j = d1, i - j = d2
+            ll i = (d1 + d2) / 2;
+            ll j = (d1 - d2) / 2;
+            if ((d1 + d2) % 2 == 0 && (d1 - d2) % 2 == 0 && i >= 1 && i <= N && j >= 1 && j <= N) {
+                if (rows.count(i) || cols.count(j)) {
+                    forbidden--;
+                }
+            }
+        }
+    }
+    
+    // Add back overlaps between rows, columns, and diagonals if they were subtracted twice
+    for (ll r : rows) {
+        for (ll c : cols) {
+            if (diag1.count(r + c) && diag2.count(r - c)) {
+                forbidden++;
+            }
+        }
+    }
+    
+    ll safe = total - forbidden;
+    cout << safe << endl;
+    
+    return 0;
+}
+```
+
+### Explanation
+
+1. **Initialization**: We start by reading the grid size `N` and the number of pieces `M`. We use sets to store the rows, columns, and diagonals (both types) that are occupied by existing pieces to avoid duplicates.
+
+2. **Forbidden Squares Calculation**:
+   - **Rows and Columns**: The total squares attacked by rows and columns are calculated by multiplying the number of unique rows and columns by `N`. Overlapping squares (attacked by both a row and a column) are subtracted.
+   - **Diagonals**: For each diagonal (both `i + j` and `i - j` types), we calculate the number of squares they cover within the grid bounds.
+   - **Overlaps**: We adjust the count by subtracting overlaps between rows/columns and diagonals, and between different diagonals, then add back any overlaps that were subtracted twice.
+
+3. **Result Calculation**: The safe squares are the total grid squares minus the forbidden squares. The result is printed.
+
+This approach ensures efficient calculation by leveraging set operations and mathematical bounds to avoid unnecessary iterations, making it suitable for large grid sizes.

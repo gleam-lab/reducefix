@@ -1,0 +1,100 @@
+To fix this code, we need to analyze why the initial approach fails and then correct it. The problem involves maintaining a dynamic graph with connectivity queries and finding the k-th largest vertex in the connected component of a given vertex. The initial approach uses a Union-Find data structure with each root maintaining a sorted list of its component's vertices, but the merging process is inefficient and incorrect, leading to wrong answers.
+
+### Analysis
+1. **Union-Find with Component Tracking**: The initial code attempts to keep a sorted list of vertices for each component, merging these lists during union operations. However, the merging logic is flawed because it doesn't correctly maintain the top 10 largest vertices, and the merging process itself is not optimized for large inputs.
+2. **Efficiency**: The merging of two sorted lists in each union operation can be too slow for the constraints (up to 200,000 operations), leading to potential timeouts or incorrect results due to incomplete processing.
+3. **Correctness**: The test case shows that the output is incorrect, indicating that the merging logic or the way the k-th largest vertex is being retrieved is flawed.
+
+### Solution
+To efficiently handle the operations, we should:
+- **Track Top Elements**: Maintain for each component a set or a priority queue of the top 10 largest vertices. This allows quick access to the k-th largest element.
+- **Efficient Merging**: When merging two components, combine their top elements and keep only the top 10, ensuring the operation remains O(1) for each element processed.
+- **Union-Find Optimization**: Use path compression and union by size or rank to keep the Union-Find operations nearly constant time.
+
+### Corrected Code
+```cpp
+#include <bits/stdc++.h>
+
+using namespace std;
+
+vector<int> parent;
+vector<priority_queue<int, vector<int>, greater<int>>> top_k;
+
+int find(int x) {
+    if (parent[x] != x) {
+        parent[x] = find(parent[x]);
+    }
+    return parent[x];
+}
+
+void unite(int a, int b) {
+    a = find(a);
+    b = find(b);
+    if (a == b) return;
+    if (top_k[a].size() < top_k[b].size()) {
+        swap(a, b);
+    }
+    parent[b] = a;
+    priority_queue<int> temp;
+    while (!top_k[b].empty()) {
+        temp.push(top_k[b].top());
+        top_k[b].pop();
+    }
+    while (!temp.empty()) {
+        top_k[a].push(temp.top());
+        temp.pop();
+        if (top_k[a].size() > 10) {
+            top_k[a].pop();
+        }
+    }
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int N, Q;
+    cin >> N >> Q;
+    parent.resize(N + 1);
+    top_k.resize(N + 1);
+    for (int i = 1; i <= N; ++i) {
+        parent[i] = i;
+        top_k[i].push(i);
+    }
+
+    while (Q--) {
+        int t, u, v;
+        cin >> t >> u >> v;
+        if (t == 1) {
+            unite(u, v);
+        } else {
+            int root = find(u);
+            if (top_k[root].size() < v) {
+                cout << -1 << '\n';
+            } else {
+                priority_queue<int> temp;
+                while (top_k[root].size() > v) {
+                    temp.push(top_k[root].top());
+                    top_k[root].pop();
+                }
+                int ans = top_k[root].top();
+                cout << ans << '\n';
+                while (!temp.empty()) {
+                    top_k[root].push(temp.top());
+                    temp.pop();
+                }
+            }
+        }
+    }
+
+    return 0;
+}
+```
+
+### Explanation
+1. **Union-Find Setup**: The `parent` array tracks the root of each vertex, initialized to itself. Each vertex starts with its own component.
+2. **Top Elements Tracking**: Each component's root maintains a min-heap (`priority_queue`) of the top 10 largest vertices in the component. This allows efficient access and merging.
+3. **Unite Operation**: When merging two components, the smaller heap is merged into the larger one, ensuring only the top 10 elements are kept. This ensures the operation remains efficient.
+4. **Query Handling**: For a query of type 2, the root of the vertex is found, and the k-th largest element is retrieved from the heap. If there are fewer than k elements, `-1` is returned.
+
+This approach ensures efficient handling of dynamic connectivity and k-th largest element queries within the given constraints.

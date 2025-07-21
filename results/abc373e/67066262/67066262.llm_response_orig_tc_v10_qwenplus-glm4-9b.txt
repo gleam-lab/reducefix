@@ -1,0 +1,84 @@
+
+To solve the problem, we need to consider several steps. The main goal is to determine the minimum number of additional votes each candidate needs to guarantee their victory. Let's break down the problem into smaller steps:
+
+1. **Sorting Candidates**: We start by sorting the candidates in descending order of their current votes (A_i). This helps us to prioritize candidates who are currently leading.
+2. **Prefix Sum Calculation**: We compute the prefix sum of the sorted votes to quickly determine the total votes of the top M candidates.
+3. **Binary Search for Minimum Votes Required**: For each candidate, we calculate the minimum additional votes required for them to secure their victory by checking how many votes they need to surpass the sum of votes of the top M candidates excluding themselves. We use binary search to find the minimum votes required in an efficient way.
+4. **Edge Cases**: We need to handle the cases where a candidate is already guaranteed to win or cannot win under any circumstances.
+
+Here is a correct approach to the problem:
+
+```cpp
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <limits>
+
+using namespace std;
+
+int main() {
+    int n, m, k;
+    vector<long long> votes;
+    long long a;
+    
+    // Input reading
+    cin >> n >> m >> k;
+    for (int i = 0; i < n; i++) {
+        cin >> a;
+        votes.push_back(a);
+    }
+    
+    // Sort votes in descending order
+    sort(votes.begin(), votes.end(), greater<long long>());
+    
+    // Calculate prefix sums of sorted votes
+    vector<long long> prefixSum(n);
+    prefixSum[0] = votes[0];
+    for (int i = 1; i < n; ++i) {
+        prefixSum[i] = prefixSum[i - 1] + votes[i];
+    }
+    
+    // Find the minimum votes required for each candidate
+    vector<long long> additionalVotes(n);
+    for (int i = 0; i < n; ++i) {
+        if (m > votes[i]) {
+            // Candidate already guaranteed to win
+            additionalVotes[i] = 0;
+        } else if (m <= n - votes[i]) {
+            // Candidate can win if the remaining votes are distributed such that they are the top m candidates
+            long long remainingVotes = k - prefixSum[n - m - 1];
+            long long targetVotes = prefixSum[n - m - 1] + votes[i];
+            if (targetVotes <= remainingVotes) {
+                additionalVotes[i] = 0;
+            } else {
+                // Binary search to find the minimum votes required
+                long long left = 0, right = remainingVotes;
+                while (left < right) {
+                    long long mid = (left + right) / 2;
+                    int pos = lower_bound(votes.begin() + n - m, votes.begin() + n, votes[i] + mid) - votes.begin();
+                    long long actualVotes = prefixSum[n - m - 1] + votes[i] + mid - (pos > n - m ? mid : votes[i] + mid - prefixSum[pos]);
+                    if (actualVotes > remainingVotes) {
+                        right = mid;
+                    } else {
+                        left = mid + 1;
+                    }
+                }
+                additionalVotes[i] = left;
+            }
+        } else {
+            // Candidate cannot win
+            additionalVotes[i] = -1;
+        }
+    }
+    
+    // Output the result
+    for (int i = 0; i < n; ++i) {
+        cout << additionalVotes[i] << ' ';
+    }
+    cout << endl;
+    
+    return 0;
+}
+```
+
+This approach should solve the problem correctly based on the problem description. It efficiently calculates the minimum additional votes required for each candidate using sorting, prefix sums, and binary search.

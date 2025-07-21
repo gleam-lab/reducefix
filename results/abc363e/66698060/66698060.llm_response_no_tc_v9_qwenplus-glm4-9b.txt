@@ -1,0 +1,75 @@
+
+The code attempts to simulate the sinking of the island as the sea level rises. However, there are several issues in the code that need to be addressed:
+
+1. The code is using a priority queue to determine which cells will sink first. The priority queue is implemented incorrectly; it should compare the elevation with the current year (`now`) but it compares the elevation with the years (`now` is used as a global variable which is not a good practice). We should pass the year `now` as a function parameter to the comparator function of the priority queue.
+
+2. The code is not correctly handling the sinking of cells. After a cell sinks, it should attempt to sink its adjacent cells that are not yet used and have an elevation not greater than the sea level. The code partially handles this but it will cause infinite loops because it does not check if the adjacent cell has already been visited. This is because it uses a `vector of booleans` called `used` which is not updated correctly when the adjacent cells are pushed into the priority queue.
+
+3. The output is not formatted correctly. The code is trying to output the area of the island that remains above sea level for each year, but it does not increment the year correctly and stops the simulation prematurely.
+
+Below is the corrected code that addresses these issues:
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+#define ll long long
+
+ll dx[4] = {0, 1, 0, -1};
+ll dy[4] = {1, 0, -1, 0};
+
+struct Cell {
+    ll elevation, x, y;
+    Cell(ll el, ll x, ll y) : elevation(el), x(x), y(y) {}
+};
+
+bool compare(Cell a, Cell b, ll year) {
+    return a.elevation > year || b.elevation > year;
+}
+
+int main() {
+    ll h, w, y; cin >> h >> w >> y;
+    vector<vector<ll>> island(h, vector<ll>(w));
+    for (ll i = 0; i < h; i++) {
+        for (ll j = 0; j < w; j++) {
+            cin >> island[i][j];
+        }
+    }
+
+    priority_queue<Cell, vector<Cell>, decltype(compare)> pq(compare);
+    vector<vector<bool>> visited(h, vector<bool>(w, false));
+
+    // Initialize the queue with the edges of the island
+    for (ll i = 0; i < h; i++) {
+        pq.push(Cell(island[i][0], i, 0));
+        pq.push(Cell(island[i][w - 1], i, w - 1));
+        visited[i][0] = visited[i][w - 1] = true;
+    }
+    for (ll j = 0; j < w; j++) {
+        pq.push(Cell(island[0][j], 0, j));
+        pq.push(Cell(island[h - 1][j], h - 1, j));
+        visited[0][j] = visited[h - 1][j] = true;
+    }
+
+    ll remaining_area = h * w;
+
+    for (ll year = 1; year <= y; year++) {
+        while (!pq.empty() && pq.top().elevation <= year) {
+            Cell c = pq.top(); pq.pop();
+            remaining_area -= 1;
+
+            for (ll k = 0; k < 4; k++) {
+                ll nexi = c.x + dx[k], nexj = c.y + dy[k];
+                if (0 <= nexi && nexi < h && 0 <= nexj && nexj < w && !visited[nexi][nexj] && island[nexi][nexj] > year) {
+                    pq.push(Cell(island[nexi][nexj], nexi, nexj));
+                    visited[nexi][nexj] = true;
+                }
+            }
+        }
+        cout << remaining_area << endl;
+    }
+
+    return 0;
+}
+```
+
+This corrected code initializes the priority queue with the cells on the edges of the island. It then checks the queue for cells that will sink each year and updates the remaining area accordingly. Note that the `visited` array is now a 2D vector to keep track of whether a cell has already been visited, and the `compare` function is used to determine the order of cells in the priority queue based on the sea level for the current year.

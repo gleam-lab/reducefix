@@ -1,0 +1,86 @@
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+using pii = pair<int, int>;
+#define x first
+#define y second
+#define all(x) x.begin(), x.end()
+const int INF = 0x3f3f3f3f;
+
+void solve() {
+    int H, W, Q;
+    cin >> H >> W >> Q;
+
+    // For each row, keep a set of columns that have intact walls
+    vector<set<int>> row_sets(H + 1);
+    // For each column, keep a set of rows that have intact walls
+    vector<set<int>> col_sets(W + 1);
+
+    // Initialize all walls to be present
+    for (int i = 1; i <= H; ++i) {
+        for (int j = 1; j <= W; ++j) {
+            row_sets[i].insert(j);
+            col_sets[j].insert(i);
+        }
+    }
+
+    while (Q--) {
+        int r, c;
+        cin >> r >> c;
+
+        // If the cell has a wall, destroy it
+        if (row_sets[r].count(c)) {
+            row_sets[r].erase(c);
+            col_sets[c].erase(r);
+        } else {
+            // Otherwise, destroy the nearest walls in all 4 directions
+
+            // Right in row
+            auto it = row_sets[r].lower_bound(c);
+            if (it != row_sets[r].end()) {
+                int col = *it;
+                row_sets[r].erase(col);
+                col_sets[col].erase(r);
+            }
+
+            // Left in row
+            it = row_sets[r].lower_bound(c);
+            if (it != row_sets[r].begin()) {
+                --it;
+                int col = *it;
+                row_sets[r].erase(col);
+                col_sets[col].erase(r);
+            }
+
+            // Down in column
+            auto jt = col_sets[c].lower_bound(r);
+            if (jt != col_sets[c].end()) {
+                int row = *jt;
+                col_sets[c].erase(row);
+                row_sets[row].erase(c);
+            }
+
+            // Up in column
+            jt = col_sets[c].lower_bound(r);
+            if (jt != col_sets[c].begin()) {
+                --jt;
+                int row = *jt;
+                col_sets[c].erase(row);
+                row_sets[row].erase(c);
+            }
+        }
+    }
+
+    // Count remaining walls
+    ll ans = 0;
+    for (int i = 1; i <= H; ++i) {
+        ans += row_sets[i].size();
+    }
+    cout << ans << '\n';
+}
+
+int main() {
+    ios::sync_with_stdio(false); cin.tie(nullptr); cout.tie(nullptr);
+    solve();
+    return 0;
+}

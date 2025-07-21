@@ -1,0 +1,53 @@
+#include <bits/stdc++.h>
+#define rep(i, n) for (int i = 0; i < (int)(n); i++)
+#define repi(i, a, b) for (int i = (int)(a); i < (int)(b); i++)
+#define rrep(i, n) for (int i = n-1; i >= (int)(0); i--)
+#define rrepi(i, a, b) for (int i = (int)(a); i > (int)(b); i--)
+#define ALL(a) (a).begin(),(a).end()
+using namespace std;
+
+typedef long long ll;
+typedef pair<int, int> P;
+
+const vector<pair<int, int>> moves = {
+    {2, 1}, {1, 2}, {-1, 2}, {-2, 1},
+    {-2, -1}, {-1, -2}, {1, -2}, {2, -1}
+};
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    ll N;
+    int M;
+    cin >> N >> M;
+
+    unordered_set<string> attacked;
+    unordered_set<string> pieces;
+
+    auto to_key = [](ll x, ll y) {
+        return to_string(x) + "," + to_string(y);
+    };
+
+    for (int i = 0; i < M; ++i) {
+        ll a, b;
+        cin >> a >> b;
+        pieces.insert(to_key(a, b));
+        
+        for (auto [dx, dy] : moves) {
+            ll nx = a + dx;
+            ll ny = b + dy;
+            if (nx >= 1 && nx <= N && ny >= 1 && ny <= N) {
+                attacked.insert(to_key(nx, ny));
+            }
+        }
+    }
+
+    // Remove positions that are already occupied by pieces
+    for (const auto& pos : pieces) {
+        attacked.erase(pos);
+    }
+
+    ll totalEmpty = N * N - (ll)pieces.size();
+    cout << totalEmpty - (ll)attacked.size() << endl;
+}

@@ -1,0 +1,91 @@
+To fix this code, we need to correctly determine the minimum number of additional votes each candidate needs to guarantee their election, regardless of how other votes are distributed. The key insight is to ensure that for each candidate, after receiving X additional votes, there are fewer than M candidates with more votes than them, even in the worst-case scenario where other candidates receive as many votes as possible.
+
+### Approaches
+1. **Sort the Candidates**: First, we sort the candidates based on their current votes to facilitate binary search and efficient computation.
+2. **Binary Search for Minimum Votes (X)**:
+   - For each candidate, perform a binary search to find the minimum X such that when the candidate receives X additional votes, at most M-1 candidates can have more votes than them.
+   - The binary search should check whether the remaining votes (K - sum of current votes) can be distributed in a way that ensures the candidate's position.
+3. **Check Feasibility**: For each candidate, if the remaining votes (after assigning X votes to them) can be distributed such that at most M-1 candidates have more votes than them, then X is feasible. Otherwise, it is not.
+
+### Solution Code
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+#define all(x) (x).begin(), (x).end()
+
+int main() {
+    ios_base::sync_with_stdio(0);
+    cin.tie(0);
+    int N, M;
+    ll K;
+    cin >> N >> M >> K;
+    vector<ll> A(N);
+    for (int i = 0; i < N; ++i) {
+        cin >> A[i];
+    }
+    
+    vector<int> ord(N);
+    iota(all(ord), 0);
+    sort(all(ord), [&](int i, int j) { return A[i] < A[j]; });
+    vector<ll> sorted_A = A;
+    sort(all(sorted_A));
+    
+    vector<ll> prefix(N + 1);
+    for (int i = 0; i < N; ++i) {
+        prefix[i + 1] = prefix[i] + sorted_A[i];
+    }
+    
+    vector<ll> ans(N);
+    for (int idx = 0; idx < N; ++idx) {
+        int i = ord[idx];
+        ll low = 0, high = K - (prefix[N] - prefix[0]) + A[i];
+        ll best = -1;
+        while (low <= high) {
+            ll mid = (low + high) / 2;
+            ll total = A[i] + mid;
+            
+            int pos = upper_bound(all(sorted_A), total) - sorted_A.begin();
+            if (pos == N) {
+                best = mid;
+                high = mid - 1;
+                continue;
+            }
+            
+            int needed = N - pos;
+            if (needed < M) {
+                best = mid;
+                high = mid - 1;
+            } else {
+                low = mid + 1;
+            }
+        }
+        
+        if (best != -1) {
+            ll remaining_votes = K - (prefix[N] - prefix[0]);
+            if (best <= remaining_votes) {
+                ans[i] = best;
+            } else {
+                ans[i] = -1;
+            }
+        } else {
+            ans[i] = -1;
+        }
+    }
+    
+    for (int i = 0; i < N; ++i) {
+        cout << ans[i] << ' ';
+    }
+    cout << '\n';
+    
+    return 0;
+}
+```
+
+### Explanation
+1. **Sorting and Initialization**: The candidates are sorted based on their current votes to facilitate binary search operations. A prefix sum array is constructed to quickly compute sums of ranges of votes.
+2. **Binary Search for Each Candidate**: For each candidate, a binary search is performed to find the minimum additional votes (X) needed. The binary search checks if the candidate can be in the top M candidates after receiving X votes.
+3. **Feasibility Check**: The remaining votes (after assigning X to the candidate) are checked to ensure they can be distributed such that no more than M-1 candidates have more votes than the current candidate. If feasible, X is recorded; otherwise, -1 is recorded for that candidate.
+4. **Output**: The results for all candidates are printed in the order of the original input.
+
+This approach ensures that the solution is efficient and correct, handling all edge cases and constraints appropriately. The binary search ensures logarithmic time complexity for each candidate, making the overall complexity O(N log N).

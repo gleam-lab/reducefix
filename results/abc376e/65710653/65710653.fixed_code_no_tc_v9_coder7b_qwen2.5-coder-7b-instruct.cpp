@@ -1,0 +1,59 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+#define rep(i,n) for(int i=0;i<(n);i++)
+#define rep2(i,s,n) for(int i=(s);i<(n);i++)
+#define rrep(i,n) for(int i=(n)-1;i>=0;i--)
+#define rrep2(i,n,e) for(int i=(n)-1;i>=(e);i--)
+#define fore(i,x) for(auto &i:(x))
+
+typedef long long ll;
+const ll mod = 1000000007;
+const int INF = 1e9;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t;
+    cin >> t;
+
+    while (t--) {
+        int n, k;
+        cin >> n >> k;
+        vector<pair<int, int>> a(n);
+        vector<int> b(n);
+
+        rep(i, n) {
+            cin >> a[i].first;
+        }
+
+        rep(i, n) {
+            cin >> b[i];
+        }
+
+        sort(a.begin(), a.end());
+
+        multiset<int> s;
+        long long sum = 0;
+
+        rep2(i, 0, k) {
+            s.insert(b[i]);
+            sum += b[i];
+        }
+
+        long long ans = sum * a[k - 1].first;
+
+        rep2(i, k, n) {
+            sum -= *s.rbegin();
+            s.erase(s.find(b[i - k]));
+            s.insert(b[i]);
+            sum += b[i];
+            ans = min(ans, sum * a[i].first);
+        }
+
+        cout << ans << "\n";
+    }
+
+    return 0;
+}

@@ -1,0 +1,102 @@
+To fix this code, we need to address several issues related to correctness and efficiency. The main problem is to simulate the sinking of island sections as the sea level rises each year, and report the remaining area above sea level for each year up to Y.
+
+### Issues with the Original Code
+1. **Initialization**: The original code initializes the priority queue with the border cells and marks them as visited. However, it incorrectly assumes all border cells will sink immediately if their elevation is <= the current level, which might not be the case for higher levels.
+2. **Priority Queue Management**: The priority queue is used to process cells in order of increasing elevation, but the logic for processing cells and updating the remaining area is flawed. The while loop inside the yearly loop can prematurely exit if the top of the queue has a value greater than the current level, leading to incorrect area calculations.
+3. **Efficiency**: The constraints are large (H, W up to 1000 and Y up to 100,000), so the algorithm must be efficient. The original approach may not handle the large Y efficiently due to nested loops.
+
+### Approach
+1. **Priority Queue for Sinking Process**: Use a min-heap to process cells in order of their elevation. This ensures that we process cells in the order they will sink as the sea level rises.
+2. **BFS for Adjacent Cells**: When a cell sinks, check its adjacent cells. If those cells have elevation <= current sea level and haven't been processed, add them to the heap and mark them as sunk.
+3. **Yearly Updates**: For each year from 1 to Y, process all cells that sink at that sea level and decrement the remaining area accordingly. Output the remaining area after each year.
+
+### Solution Code
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+struct Node {
+    int x, y, val;
+    bool operator<(const Node& other) const {
+        return val > other.val; // Min-heap based on val
+    }
+};
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int H, W, Y;
+    cin >> H >> W >> Y;
+    vector<vector<int>> grid(H, vector<int>(W));
+    for (int i = 0; i < H; ++i) {
+        for (int j = 0; j < W; ++j) {
+            cin >> grid[i][j];
+        }
+    }
+    
+    vector<vector<bool>> sunk(H, vector<bool>(W, false));
+    priority_queue<Node> pq;
+    
+    // Push border cells into the priority queue
+    for (int i = 0; i < H; ++i) {
+        if (!sunk[i][0]) {
+            pq.push({i, 0, grid[i][0]});
+            sunk[i][0] = true;
+        }
+        if (!sunk[i][W-1]) {
+            pq.push({i, W-1, grid[i][W-1]});
+            sunk[i][W-1] = true;
+        }
+    }
+    for (int j = 1; j < W-1; ++j) {
+        if (!sunk[0][j]) {
+            pq.push({0, j, grid[0][j]});
+            sunk[0][j] = true;
+        }
+        if (!sunk[H-1][j]) {
+            pq.push({H-1, j, grid[H-1][j]});
+            sunk[H-1][j] = true;
+        }
+    }
+    
+    int remaining = H * W;
+    vector<int> result(Y + 1, 0); // result[i] is the area at sea level i
+    int current_level = 1;
+    
+    while (current_level <= Y) {
+        while (!pq.empty() && pq.top().val <= current_level) {
+            Node node = pq.top();
+            pq.pop();
+            remaining--;
+            
+            // Check adjacent cells
+            int dx[] = {0, 0, 1, -1};
+            int dy[] = {1, -1, 0, 0};
+            for (int k = 0; k < 4; ++k) {
+                int nx = node.x + dx[k];
+                int ny = node.y + dy[k];
+                if (nx >= 0 && nx < H && ny >= 0 && ny < W && !sunk[nx][ny]) {
+                    sunk[nx][ny] = true;
+                    pq.push({nx, ny, grid[nx][ny]});
+                }
+            }
+        }
+        result[current_level] = remaining;
+        current_level++;
+    }
+    
+    for (int i = 1; i <= Y; ++i) {
+        cout << result[i] << '\n';
+    }
+    
+    return 0;
+}
+```
+
+### Explanation
+1. **Initialization**: The grid is read, and border cells are added to a priority queue (min-heap) based on their elevation. These cells are marked as sunk to avoid reprocessing.
+2. **Processing Sinking Cells**: For each year, the sea level rises to `current_level`. Cells with elevation <= `current_level` are processed. Each time a cell is processed (sinks), its adjacent cells are checked. If they meet the sinking criteria, they are added to the queue.
+3. **Tracking Remaining Area**: The remaining area is decremented each time a cell sinks. The result for each year is stored in an array and printed after processing all years.
+
+This approach efficiently handles the large constraints by processing cells in elevation order and ensuring each cell is processed only once. The use of a priority queue ensures optimal processing of cells as the sea level rises.

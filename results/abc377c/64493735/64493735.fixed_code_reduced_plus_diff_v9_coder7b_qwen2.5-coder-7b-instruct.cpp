@@ -1,0 +1,59 @@
+#include <iostream>
+#include <vector>
+#include <set>
+#include <cmath>
+#include <algorithm>
+
+using namespace std;
+
+class Solution {
+public:
+    long long countValidCells(long long n, long long m, const vector<pair<long long, long long>>& positions) {
+        // Create a set to store all occupied cells
+        set<pair<long long, long long>> occupied_cells(positions.begin(), positions.end());
+
+        // Directions in which a knight can move
+        vector<pair<long long, long long>> directions = {
+            {2, 1}, {1, 2}, {-1, 2}, {-2, 1},
+            {-2, -1}, {-1, -2}, {1, -2}, {2, -1}
+        };
+
+        // Count valid cells
+        long long valid_cells = 0;
+        for (long long i = 1; i <= n; ++i) {
+            for (long long j = 1; j <= n; ++j) {
+                bool isValid = true;
+                for (const auto& dir : directions) {
+                    long long x = i + dir.first;
+                    long long y = j + dir.second;
+                    if (x >= 1 && x <= n && y >= 1 && y <= n && occupied_cells.count({x, y})) {
+                        isValid = false;
+                        break;
+                    }
+                }
+                if (isValid) {
+                    ++valid_cells;
+                }
+            }
+        }
+
+        return valid_cells;
+    }
+};
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    Solution sol;
+    long long n, m;
+    cin >> n >> m;
+    vector<pair<long long, long long>> positions(m);
+    for (auto& pos : positions) {
+        cin >> pos.first >> pos.second;
+    }
+
+    cout << sol.countValidCells(n, m, positions) << endl;
+
+    return 0;
+}

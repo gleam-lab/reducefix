@@ -1,0 +1,116 @@
+
+The problem is about processing queries on a union-find data structure (also known as disjoint-set). Initially, we have a graph with n vertices and no edges. We need to handle two types of queries:
+
+1. Add an edge between two vertices.
+2. For a given vertex, output the k-th largest connected vertex.
+
+The provided code is incorrect and contains several issues. Here's a breakdown of the problems and how to fix them:
+
+### Incorrect Code Analysis
+
+1. **Union-Find Structure**: The code attempts to use a union-find structure, but it lacks the necessary operations to keep track of the size and parent of each component, which are crucial for efficiently answering the second type of query.
+
+2. **Path Compression and Union by Rank**: The union-find structure in the provided code does not implement path compression or union by rank, which can lead to inefficiencies and incorrect results.
+
+3. **Tracking Connected Vertices**: The code attempts to store the k-th largest vertex in an array, but it does not correctly update this array when new edges are added.
+
+### Corrected Approach
+
+1. **Union-Find with Path Compression and Union by Rank**: Implement a union-find structure that supports path compression and union by rank to ensure efficient query processing.
+
+2. **Tracking Connected Vertices**: Use an auxiliary data structure (e.g., a sorted list) to keep track of the vertices connected to each vertex. This allows efficient retrieval of the k-th largest vertex.
+
+3. **Handling Queries**:
+   - For type 1 queries (adding an edge), perform a union operation on the two vertices.
+   - For type 2 queries, retrieve the connected vertices of the specified vertex and output the k-th largest vertex from this list.
+
+### Example Code
+
+Here's a simplified version of how you might implement this in C++:
+
+```cpp
+#include <iostream>
+#include <vector>
+#include <algorithm>
+
+using namespace std;
+
+struct UnionFind {
+    vector<int> parent;
+    vector<int> size;
+
+    UnionFind(int n) : parent(n), size(n, 1) {
+        for (int i = 0; i < n; ++i) {
+            parent[i] = i;
+        }
+    }
+
+    int find(int x) {
+        if (parent[x] != x) {
+            parent[x] = find(parent[x]);
+        }
+        return parent[x];
+    }
+
+    void unite(int x, int y) {
+        int rootX = find(x);
+        int rootY = find(y);
+
+        if (rootX != rootY) {
+            if (size[rootX] < size[rootY]) {
+                parent[rootX] = rootY;
+                size[rootY] += size[rootX];
+            } else {
+                parent[rootY] = rootX;
+                size[rootX] += size[rootY];
+            }
+        }
+    }
+};
+
+int main() {
+    int n, q;
+    cin >> n >> q;
+
+    UnionFind uf(n);
+    vector<vector<int>> connected(n + 1);
+
+    while (q--) {
+        int type;
+        cin >> type;
+
+        if (type == 1) {
+            int u, v;
+            cin >> u >> v;
+            uf.unite(u, v);
+        } else if (type == 2) {
+            int v, k;
+            cin >> v >> k;
+
+            int rootV = uf.find(v);
+            vector<int> &vertices = connected[rootV];
+
+            // Initialize the connected vertices list
+            vertices.clear();
+            for (int i = 1; i <= n; ++i) {
+                if (uf.find(i) == rootV) {
+                    vertices.push_back(i);
+                }
+            }
+
+            // Sort the list in descending order
+            sort(vertices.begin(), vertices.end(), greater<int>());
+
+            if (k <= vertices.size()) {
+                cout << vertices[k - 1] << endl;
+            } else {
+                cout << "-1" << endl;
+            }
+        }
+    }
+
+    return 0;
+}
+```
+
+This code uses a union-find data structure with path compression and union by rank to efficiently process the queries. It also maintains a list of connected vertices for each root and sorts it to answer the k-th largest query.

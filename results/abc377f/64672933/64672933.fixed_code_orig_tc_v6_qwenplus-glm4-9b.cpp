@@ -1,0 +1,77 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+
+using namespace std;
+
+struct Point {
+    int x, y;
+};
+
+int main() {
+    long long N, M;
+    cin >> N >> M;
+    vector<Point> points(M);
+    vector<pair<long long, long long>> rows(N + 1), cols(N + 1), diags1(N + N + 1), diags2(N + N + 1);
+    
+    for (long long i = 0; i < M; ++i) {
+        cin >> points[i].x >> points[i].y;
+        points[i].x--; points[i].y--;
+        rows[points[i].x].push_back(points[i].y + 1);
+        cols[points[i].y].push_back(points[i].x + 1);
+        diags1[points[i].x + points[i].y].push_back(points[i].x + 1);
+        diags2[points[i].x - points[i].y + N].push_back(points[i].x + 1);
+    }
+    
+    for (long long i = 0; i <= N; ++i) {
+        sort(rows[i].begin(), rows[i].end());
+        sort(cols[i].begin(), cols[i].end());
+        sort(diags1[i].begin(), diags1[i].end());
+        sort(diags2[i].begin(), diags2[i].end());
+    }
+    
+    for (long long i = 0; i <= N + N; ++i) {
+        sort(diags1[i].begin(), diags1[i].end());
+        sort(diags2[i].begin(), diags2[i].end());
+    }
+    
+    long long total_empty = N * N;
+    long long captured = 0;
+    
+    for (long long i = 0; i <= N; ++i) {
+        // Rows
+        for (auto y : rows[i]) {
+            long long count = upper_bound(cols.begin(), cols.end(), y) - cols.begin();
+            captured += count;
+        }
+        
+        // Columns
+        for (auto x : cols[i]) {
+            long long count = upper_bound(rows.begin(), rows.end(), x) - rows.begin();
+            captured += count;
+        }
+        
+        // Main diagonal (x + y = constant)
+        for (auto p : diags1[i]) {
+            long long x = p - 1;
+            long long y = i - x;
+            if (y > 0 && x > 0 && y <= N && x <= N) {
+                captured += (upper_bound(rows[x].begin(), rows[x].end(), y) - rows[x].begin()) *
+                            (upper_bound(cols[y].begin(), cols[y].end(), x) - cols[y].begin());
+            }
+        }
+        
+        // Secondary diagonal (x - y = constant)
+        for (auto p : diags2[i]) {
+            long long x = p - N - 1;
+            long long y = i - x;
+            if (y > 0 && x > 0 && y <= N && x <= N) {
+                captured += (upper_bound(rows[x].begin(), rows[x].end(), y) - rows[x].begin()) *
+                            (upper_bound(cols[y].begin(), cols[y].end(), x) - cols[y].begin());
+            }
+        }
+    }
+    
+    cout << total_empty - captured << endl;
+    return 0;
+}

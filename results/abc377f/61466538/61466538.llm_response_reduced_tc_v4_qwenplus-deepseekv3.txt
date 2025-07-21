@@ -1,0 +1,118 @@
+To fix this code, we need to ensure that all the squares that are being attacked by the existing pieces are correctly identified and excluded from the count of safe squares. The problem involves calculating the number of empty squares not under attack by any existing pieces, considering attacks along rows, columns, and both diagonals.
+
+### Approaches
+1. **Rows and Columns**: For each existing piece, all squares in its row and column are under attack. We can use sets to track unique rows and columns to avoid double-counting.
+2. **Diagonals**: For each existing piece, all squares on the two diagonals (i + j = constant and i - j = constant) are under attack. These diagonals can be represented by their respective constants (i + j and i - j). We again use sets to track unique diagonal constants.
+3. **Intersections**: Some squares might be counted multiple times (e.g., a square in both a row and a column). Using inclusion-exclusion principles, we adjust the total count by adding back the intersections that were subtracted multiple times.
+4. **Final Calculation**: The total number of safe squares is the total grid squares minus the squares under attack (rows, columns, diagonals) plus the overlaps (intersections of rows, columns, diagonals).
+
+### Solution Code
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+typedef long long ll;
+typedef pair<int, int> pii;
+
+int main() {
+    ll N, M;
+    cin >> N >> M;
+    vector<pii> queens(M);
+    set<ll> rows, cols, diag1, diag2;
+    for (int i = 0; i < M; ++i) {
+        int a, b;
+        cin >> a >> b;
+        queens[i] = {a, b};
+        rows.insert(a);
+        cols.insert(b);
+        diag1.insert(a - b);
+        diag2.insert(a + b);
+    }
+
+    ll total = N * N;
+    ll attacked = 0;
+
+    // Rows and columns
+    attacked += rows.size() * N;
+    attacked += cols.size() * N;
+    attacked -= rows.size() * cols.size();
+
+    // Diagonals type 1 (i - j = constant)
+    for (auto d : diag1) {
+        ll lower = max(1 - d, 1LL);
+        ll upper = min(N - d, N);
+        ll cnt = upper - lower + 1;
+        attacked += cnt;
+    }
+
+    // Diagonals type 2 (i + j = constant)
+    for (auto d : diag2) {
+        ll lower = max(d - N, 1LL);
+        ll upper = min(d - 1, N);
+        ll cnt = upper - lower + 1;
+        attacked += cnt;
+    }
+
+    // Intersections between rows/columns and diagonals
+    set<pii> intersections;
+    for (auto r : rows) {
+        for (auto d : diag1) {
+            int c = r - d;
+            if (1 <= c && c <= N) {
+                intersections.insert({r, c});
+            }
+        }
+        for (auto d : diag2) {
+            int c = d - r;
+            if (1 <= c && c <= N) {
+                intersections.insert({r, c});
+            }
+        }
+    }
+    for (auto c : cols) {
+        for (auto d : diag1) {
+            int r = c + d;
+            if (1 <= r && r <= N) {
+                intersections.insert({r, c});
+            }
+        }
+        for (auto d : diag2) {
+            int r = d - c;
+            if (1 <= r && r <= N) {
+                intersections.insert({r, c});
+            }
+        }
+    }
+    // Intersections between diagonals
+    for (auto d1 : diag1) {
+        for (auto d2 : diag2) {
+            if ((d1 + d2) % 2 != 0) continue;
+            int r = (d1 + d2) / 2;
+            int c = (d2 - d1) / 2;
+            if (1 <= r && r <= N && 1 <= c && c <= N) {
+                intersections.insert({r, c});
+            }
+        }
+    }
+    attacked -= intersections.size();
+
+    // Subtract the original queens positions as they are not empty
+    total -= M;
+
+    // Safe squares are total squares minus attacked squares plus intersections
+    ll safe = total - (attacked - M);
+    cout << safe << endl;
+
+    return 0;
+}
+```
+
+### Explanation
+1. **Input Handling**: The code reads the grid size \(N\) and the number of existing pieces \(M\).
+2. **Tracking Attacks**: Sets are used to track unique rows, columns, and diagonals (type 1: \(i - j = \text{constant}\), type 2: \(i + j = \text{constant}\)) that are under attack.
+3. **Initial Attack Count**: The total squares under attack by rows and columns are calculated, adjusting for overlaps where a square might be in both a row and a column.
+4. **Diagonal Attacks**: For each diagonal type, the code calculates the number of squares under attack along that diagonal.
+5. **Intersections**: The code accounts for squares that are under attack by multiple conditions (e.g., a square in a row and a diagonal) to avoid double-counting.
+6. **Final Calculation**: The total safe squares are computed by subtracting the attacked squares (adjusted for overlaps) from the total grid squares, minus the existing pieces.
+
+This approach ensures that all possible attacks are considered and accurately counted, providing the correct number of safe squares for placement.

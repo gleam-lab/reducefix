@@ -1,0 +1,76 @@
+The problem requires finding the minimum weight of a path from vertex 1 to each other vertex, where the path weight is the sum of the weights of the vertices and edges along the path. The initial code uses Dijkstra's algorithm but incorrectly handles the vertex weights by adding the vertex weight of the current node to each outgoing edge, which doesn't correctly account for the vertex weights in the path.
+
+### Analysis
+1. **Vertex Weight Handling**: The path weight should include the weights of all vertices along the path, not just the current vertex. The initial code adds `a[now.id]` to each outgoing edge, which incorrectly accounts for the vertex weight only once per edge, rather than for each vertex in the path.
+2. **Edge Cases**: The graph can be large (up to 200,000 vertices and edges), so the algorithm must be efficient, typically O((N + M) log N) with Dijkstra's using a priority queue.
+3. **Correct Approach**: The vertex weight of each vertex in the path (except possibly the start and end) should be counted once. The start vertex's weight should be included once, and each subsequent vertex's weight should be included once when it is first visited. However, the initial code counts the current vertex's weight for each outgoing edge, leading to incorrect path weights.
+
+### Solution Code
+```cpp
+#include <queue>
+#include <vector>
+#include <cstdio>
+#include <climits>
+#include <algorithm>
+using namespace std;
+typedef long long ll;
+typedef pair<ll, int> pli;
+const int N = 2e5 + 5;
+const ll INF = LLONG_MAX;
+
+ll a[N];
+ll dis[N];
+vector<pair<int, ll>> g[N];
+
+void dijkstra() {
+    priority_queue<pli, vector<pli>, greater<pli>> pq;
+    fill(dis, dis + N, INF);
+    dis[1] = a[1];
+    pq.push({dis[1], 1});
+
+    while (!pq.empty()) {
+        ll d = pq.top().first;
+        int u = pq.top().second;
+        pq.pop();
+
+        if (d > dis[u]) continue;
+
+        for (auto &edge : g[u]) {
+            int v = edge.first;
+            ll w = edge.second;
+            if (dis[v] > dis[u] + w + a[v]) {
+                dis[v] = dis[u] + w + a[v];
+                pq.push({dis[v], v});
+            }
+        }
+    }
+}
+
+int main() {
+    int n, m;
+    scanf("%d%d", &n, &m);
+    for (int i = 1; i <= n; ++i) {
+        scanf("%lld", &a[i]);
+    }
+    for (int i = 0; i < m; ++i) {
+        int u, v;
+        ll w;
+        scanf("%d%d%lld", &u, &v, &w);
+        g[u].emplace_back(v, w);
+        g[v].emplace_back(u, w);
+    }
+
+    dijkstra();
+
+    for (int i = 2; i <= n; ++i) {
+        printf("%lld ", dis[i]);
+    }
+    return 0;
+}
+```
+
+### Explanation
+1. **Vertex Weight Inclusion**: The vertex weight of the starting vertex (vertex 1) is included in the initial distance (`dis[1] = a[1]`). For each subsequent vertex `v` reached from vertex `u`, the path weight is updated to include the edge weight `w` and the vertex weight `a[v]`. This ensures that each vertex's weight is included exactly once in the path weight when it is first visited.
+2. **Priority Queue**: The priority queue is used to efficiently retrieve the next vertex with the smallest tentative distance. The queue stores pairs of distance and vertex, ordered by distance.
+3. **Efficiency**: The algorithm efficiently processes each vertex and edge once, leveraging the priority queue to ensure the shortest path is found in O((N + M) log N) time, suitable for large graphs as specified in the constraints.
+4. **Correctness**: The vertex weights are correctly accounted for in the path weight by including them once per vertex, ensuring the minimum path weight is accurately computed for each vertex from the starting vertex.

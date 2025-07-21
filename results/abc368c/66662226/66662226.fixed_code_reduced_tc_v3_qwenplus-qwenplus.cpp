@@ -1,0 +1,42 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define rep(i, n) for (int i = 0; i < (n); ++i)
+using ll = long long;
+
+int main()
+{
+    int n;
+    cin >> n;
+    vector<ll> H(n);
+    rep(i, n) cin >> H[i];
+
+    ll T = 0;
+    priority_queue<pair<ll, int>, vector<pair<ll, int>>, greater<>> pq;
+
+    // Initialize the priority queue with current attack time for each enemy
+    rep(i, n) {
+        if (H[i] > 0) {
+            // Estimate how many attacks are needed: ceil(H[i] / 1) since we can only attack once per T
+            // But we refine this below
+            pq.emplace(0, i);
+        }
+    }
+
+    while (!pq.empty()) {
+        auto [time, idx] = pq.top();
+        pq.pop();
+
+        T = max(T, time + 1);
+
+        ll damage = 1;
+        if (T % 3 == 0) damage = 3;
+
+        H[idx] -= damage;
+
+        if (H[idx] > 0) {
+            pq.emplace(T, idx);
+        }
+    }
+
+    cout << T << endl;
+}

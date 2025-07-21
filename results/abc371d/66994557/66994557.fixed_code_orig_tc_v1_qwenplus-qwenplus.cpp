@@ -1,0 +1,44 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int n, q;
+    cin >> n;
+
+    vector<long long> x(n + 2);  // Positions (1-based)
+    vector<long long> p(n + 2);  // Weights (1-based)
+    vector<long long> prefix_sum(n + 2);  // Prefix sums of weights
+
+    for (int i = 1; i <= n; ++i) {
+        cin >> x[i];
+    }
+
+    for (int i = 1; i <= n; ++i) {
+        cin >> p[i];
+        prefix_sum[i] = prefix_sum[i - 1] + p[i];
+    }
+
+    cin >> q;
+
+    while (q--) {
+        long long L, R;
+        cin >> L >> R;
+
+        // Find the first index where x[i] >= L
+        int left = lower_bound(x.begin() + 1, x.begin() + n + 1, L) - x.begin();
+
+        // Find the first index where x[i] > R
+        int right = upper_bound(x.begin() + 1, x.begin() + n + 1, R) - x.begin() - 1;
+
+        if (left > right) {
+            cout << 0 << "\n";
+        } else {
+            cout << (prefix_sum[right] - prefix_sum[left - 1]) << "\n";
+        }
+    }
+
+    return 0;
+}

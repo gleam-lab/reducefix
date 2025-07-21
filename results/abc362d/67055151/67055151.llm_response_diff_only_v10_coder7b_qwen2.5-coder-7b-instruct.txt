@@ -1,0 +1,75 @@
+```cpp
+#include <iostream>
+#include <vector>
+#include <queue>
+#include <limits>
+#include <unordered_set>
+
+using namespace std;
+
+typedef pair<int, int> pii;
+typedef pair<int, pii> pipii;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int n, m;
+    cin >> n >> m;
+
+    vector<int> a(n);
+    for (int i = 0; i < n; ++i) {
+        cin >> a[i];
+    }
+
+    vector<vector<pipii>> graph(n);
+    for (int i = 0; i < m; ++i) {
+        int u, v, b;
+        cin >> u >> v >> b;
+        --u; --v; // Convert to 0-based index
+        graph[u].emplace_back(b, make_pair(u, v));
+        graph[v].emplace_back(b, make_pair(v, u));
+    }
+
+    vector<long long> costs(n - 1, numeric_limits<long long>::max());
+    unordered_set<int> rest_nodes;
+    for (int i = 0; i < n; ++i) {
+        rest_nodes.insert(i);
+    }
+
+    auto cmp = [](const pipii& x, const pipii& y) {
+        return a[x.second.first] + x.first + a[y.second.first] + y.first > a[x.second.second] + x.first + a[y.second.second] + y.first;
+    };
+
+    priority_queue<pipii, vector<pipii>, decltype(cmp)> heap(cmp);
+    heap.emplace(a[0], make_pair(0, 0));
+
+    while (!rest_nodes.empty()) {
+        auto [current_edge, current_pair] = heap.top();
+        heap.pop();
+
+        int current_node = current_pair.second;
+        if (!rest_nodes.count(current_node)) continue;
+        rest_nodes.erase(current_node);
+        if (current_node != 0) {
+            costs[current_node - 1] = current_edge + a[current_node];
+        }
+
+        for (auto [edge, neighbor_pair] : graph[current_node]) {
+            int neighbor = neighbor_pair.second;
+            if (rest_nodes.count(neighbor)) {
+                heap.emplace(edge + a[current_node] + a[neighbor], make_pair(neighbor, neighbor_pair));
+            }
+        }
+    }
+
+    for (int i = 0; i < n - 1; ++i) {
+        cout << costs[i] << ' ';
+    }
+    cout << endl;
+
+    return 0;
+}
+```
+
+This solution uses Dijkstra's algorithm to find the shortest paths from vertex 1 to all other vertices in the graph. It maintains a priority queue to always expand the least costly unvisited vertex first. The `cmp` lambda function ensures that the priority queue orders the edges based on their total cost, which includes the weights of the vertices and edges. The result is printed in the required format.

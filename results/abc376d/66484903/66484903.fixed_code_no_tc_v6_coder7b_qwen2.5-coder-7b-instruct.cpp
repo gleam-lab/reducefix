@@ -1,0 +1,41 @@
+#include<bits/stdc++.h>
+#define INF 0x3f3f3f3f3f3f3f3f
+using namespace std;
+typedef long long ll;
+const int MAXN = 2e5 + 10;
+vector<int> adj[MAXN];
+queue<int> q;
+int dist[MAXN];
+
+void bfs(int start) {
+    memset(dist, -1, sizeof(dist));
+    dist[start] = 0;
+    q.push(start);
+    while (!q.empty()) {
+        int u = q.front();
+        q.pop();
+        for (int v : adj[u]) {
+            if (dist[v] == -1) {
+                dist[v] = dist[u] + 1;
+                q.push(v);
+            }
+        }
+    }
+}
+
+int main() {
+    int n, m, u, v;
+    scanf("%d %d", &n, &m);
+    for (int i = 0; i < m; i++) {
+        scanf("%d %d", &u, &v);
+        adj[u].push_back(v);
+        adj[v].push_back(u); // Assuming undirected graph
+    }
+    bfs(1);
+    if (dist[1] != -1) {
+        printf("%d\n", dist[1]);
+    } else {
+        printf("-1\n");
+    }
+    return 0;
+}

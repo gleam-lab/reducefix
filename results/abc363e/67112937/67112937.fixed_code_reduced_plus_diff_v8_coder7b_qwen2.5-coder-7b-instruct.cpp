@@ -1,0 +1,65 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+const int MAXN = 1010;
+int h[MAXN], w[MAXN], y;
+bool vis[MAXN][MAXN];
+
+struct Cell {
+    int x, y, h;
+    bool operator<(const Cell& other) const { return h > other.h; }
+};
+
+int dir[4][2] = {{0, 1}, {0, -1}, {1, 0}, {-1, 0}};
+void bfs(int sx, int sy, int sh) {
+    priority_queue<Cell> pq;
+    pq.emplace(sx, sy, sh);
+    while (!pq.empty()) {
+        auto [x, y, h] = pq.top(); pq.pop();
+        if (x < 0 || x >= h || y < 0 || y >= w[x] || vis[x][y] || A[x][y] > h) continue;
+        vis[x][y] = true;
+        for (auto& [dx, dy] : dir) {
+            pq.emplace(x + dx, y + dy, h);
+        }
+    }
+}
+
+int main() {
+    cin >> h >> w >> y;
+    vector<vector<int>> A(h, vector<int>(w));
+    for (int i = 0; i < h; ++i) {
+        for (int j = 0; j < w; ++j) {
+            cin >> A[i][j];
+        }
+    }
+
+    vector<vector<bool>> sea(h, vector<bool>(w, false));
+    for (int i = 0; i < h; ++i) {
+        for (int j = 0; j < w; ++j) {
+            sea[i][j] = A[i][j] <= 0;
+        }
+    }
+
+    for (int t = 1; t <= y; ++t) {
+        memset(vis, false, sizeof(vis));
+        for (int i = 0; i < h; ++i) {
+            for (int j = 0; j < w; ++j) {
+                if (!sea[i][j] && A[i][j] <= t) {
+                    bfs(i, j, t);
+                }
+            }
+        }
+        int cnt = 0;
+        for (int i = 0; i < h; ++i) {
+            for (int j = 0; j < w; ++j) {
+                if (!sea[i][j] && !vis[i][j]) {
+                    ++cnt;
+                    bfs(i, j, t);
+                }
+            }
+        }
+        cout << cnt << '\n';
+    }
+
+    return 0;
+}

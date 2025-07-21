@@ -1,0 +1,42 @@
+#include <bits/stdc++.h>
+#define INF 0x3f3f3f3f3f3f3f3f
+using namespace std;
+typedef long long ll;
+const int MAXN = 2e5 + 10;
+
+ll a[MAXN], f[2], cnt[2];
+
+int main() {
+    ll n;
+    scanf("%lld", &n);
+    for (ll i = 1; i <= n; ++i) {
+        scanf("%lld", &a[i]);
+    }
+
+    f[0] = 0;
+    f[1] = 0;
+    cnt[0] = 0;
+    cnt[1] = 0;
+
+    for (ll i = 1; i <= n; ++i) {
+        ll new_f0 = max(f[0], f[1]);
+        ll new_cnt0 = (f[0] > f[1]) ? cnt[0] : cnt[1];
+
+        ll cnt1 = cnt[0] + 1;
+        ll cnt2 = cnt[1] + 1;
+
+        ll num1 = (cnt1 % 2 == 0) ? a[i] * 2 : a[i];
+        ll num2 = (cnt2 % 2 == 0) ? a[i] * 2 : a[i];
+
+        ll new_f1 = max(f[0] + num1, f[1] + num2);
+        ll new_cnt1 = (f[0] + num1 > f[1] + num2) ? cnt1 : cnt2;
+
+        f[0] = new_f0;
+        cnt[0] = new_cnt0;
+        f[1] = new_f1;
+        cnt[1] = new_cnt1;
+    }
+
+    printf("%lld\n", max(f[0], f[1]));
+    return 0;
+}

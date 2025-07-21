@@ -1,0 +1,58 @@
+#include<iostream>
+#include<queue>
+#include<cstring>
+#include<tuple>
+#include<unordered_map>
+#include<vector>
+#include<set>
+#include<stack>
+#include<algorithm>
+#include<functional>
+using namespace std;
+
+const int N = 3e5 + 10, M = 3e5 + 10, INF = 1e9 + 7, P = 998244353;
+vector<int> a[N];
+int mi = INF, g[N];
+
+int bfs(int start) {
+    queue<int> q;
+    q.push(start);
+    g[start] = 1;
+    int depth = 0;
+    while (!q.empty()) {
+        int u = q.front();
+        q.pop();
+        depth++;
+        for (int v : a[u]) {
+            if (!g[v]) {
+                g[v] = 1;
+                q.push(v);
+            }
+        }
+    }
+    return depth;
+}
+
+void solve() {
+    int n, m;
+    cin >> n >> m;
+    for (int i = 0; i < m; i++) {
+        int u, v;
+        cin >> u >> v;
+        a[u].push_back(v);
+        a[v].push_back(u);
+    }
+    int start = 1;
+    int depth = bfs(start);
+    cout << depth << endl;
+}
+
+int main() {
+    cin.tie(0); cout.tie(0);
+    int T = 1;
+    cin >> T;
+    while (T--) {
+        solve();
+    }
+    return 0;
+}

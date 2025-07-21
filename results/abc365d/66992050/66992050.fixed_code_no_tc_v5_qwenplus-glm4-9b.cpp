@@ -1,0 +1,25 @@
+#include <iostream>
+#include <string>
+using namespace std;
+
+int main(){
+    int N;
+    string S;
+    cin >> N >> S; // We should handle the case when N is not equal to the length of S
+    char past = 'N';
+    int ans = 0;
+    
+    for(char c : S){
+        if (c == 'P' || c == 'R' || c == 'S') {
+            if (past == 'N') { // Only increment ans if past was not previously any of 'P', 'R', or 'S'
+                ans++;
+                past = c; // Set past to current character
+            } else if (past != c) { // Only update past if it is different from current character
+                past = c;
+            }
+        }
+    }
+    
+    cout << ans;
+    return 0;
+}

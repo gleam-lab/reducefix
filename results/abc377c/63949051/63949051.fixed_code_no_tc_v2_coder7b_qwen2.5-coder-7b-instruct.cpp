@@ -1,0 +1,41 @@
+#include <iostream>
+#include <vector>
+#include <set>
+
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+
+    int N, M;
+    cin >> N >> M;
+
+    set<pair<int, int>> pieces;
+    for (int i = 0; i < M; ++i) {
+        int x, y;
+        cin >> x >> y;
+        pieces.insert({x, y});
+    }
+
+    long long empty_squares = N * N - pieces.size();
+
+    for (const auto& [x, y] : pieces) {
+        int dx[] = {-2, -2, -1, -1, 1, 1, 2, 2};
+        int dy[] = {-1, 1, -2, 2, -2, 2, -1, 1};
+
+        for (int d = 0; d < 8; ++d) {
+            int nx = x + dx[d];
+            int ny = y + dy[d];
+
+            if (nx >= 1 && nx <= N && ny >= 1 && ny <= N) {
+                pieces.insert({nx, ny});
+            }
+        }
+    }
+
+    empty_squares -= pieces.size();
+    cout << empty_squares << endl;
+
+    return 0;
+}

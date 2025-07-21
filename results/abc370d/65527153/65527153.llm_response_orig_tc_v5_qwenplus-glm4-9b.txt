@@ -1,0 +1,111 @@
+
+The problem involves a grid with walls and a series of queries that destroy walls based on specific rules. We need to compute the number of remaining walls after processing all queries.
+
+The provided code attempts to solve the problem but contains errors and inefficiencies. Let's analyze the code and identify issues:
+
+1. **Data Structures**:
+   - The code uses two sets (`st1` and `st2`) to keep track of the walls in each row and column, respectively. However, the code doesn't handle the deletion of walls efficiently, especially when multiple walls are destroyed simultaneously in a query.
+   - The code also uses a lambda function `erase` to delete walls, but it doesn't handle the case where multiple walls are destroyed simultaneously correctly.
+
+2. **Query Handling**:
+   - The code attempts to handle the deletion of walls when a bomb explodes, but it does so inefficiently. For example, it may iterate over the set multiple times unnecessarily when searching for walls to destroy.
+   - The code doesn't handle the deletion of walls in all four directions correctly. It only checks for the existence of walls in the set, but it doesn't ensure that the wall is the first one encountered when looking in any direction.
+
+3. **Final Calculation**:
+   - After processing all queries, the code attempts to compute the total number of remaining walls by summing up the sizes of the sets. However, this approach is inefficient as it iterates over all cells, which can be very large.
+
+### Proposed Solution:
+
+1. **Data Structure**:
+   - We can use a 2D vector `grid` to represent the grid, where each cell contains a set of wall indices. This way, we can easily access and modify the walls in a specific cell and its neighboring cells.
+   - We can also use a 2D vector `destroyed` to keep track of the cells where walls have been destroyed to avoid duplicate deletions.
+
+2. **Query Handling**:
+   - For each query, we check if there's a wall at the given cell. If so, we remove it.
+   - If there's no wall, we follow the rules to destroy the first walls encountered in all four directions. We do this by iterating over the neighboring cells and removing the walls that meet the criteria.
+   - We update the `destroyed` vector to ensure that we don't delete walls multiple times.
+
+3. **Final Calculation**:
+   - After processing all queries, we iterate over the `grid` and count the number of walls remaining in each cell.
+
+Let's now implement the proposed solution:
+```cpp
+#include <iostream>
+#include <vector>
+#include <set>
+
+using namespace std;
+
+struct Wall {
+    int row, col;
+};
+
+struct Query {
+    int r, c;
+};
+
+int main() {
+    int H, W, Q;
+    cin >> H >> W >> Q;
+
+    vector<vector<set<Wall>>> grid(H, vector<set<Wall>>(W));
+    vector<vector<bool>> destroyed(H, vector<bool>(W, false));
+
+    // Initialize walls
+    for (int i = 0; i < H; ++i) {
+        for (int j = 0; j < W; ++j) {
+            grid[i][j].insert({i, j});
+        }
+    }
+
+    vector<Query> queries(Q);
+    for (int i = 0; i < Q; ++i) {
+        cin >> queries[i].r >> queries[i].c;
+    }
+
+    // Process queries
+    for (const auto& query : queries) {
+        int r = query.r - 1; // convert to 0-based index
+        int c = query.c - 1; // convert to 0-based index
+
+        // Check if there's a wall at the given cell
+        if (grid[r][c].size() == 0) {
+            continue; // no wall, nothing to destroy
+        }
+
+        // Mark the cell as destroyed
+        destroyed[r][c] = true;
+
+        // Search the cells in all four directions
+        vector<pair<int, int>> directions = {{-1, 0}, {1, 0}, {0, -1}, {0, 1}};
+        for (const auto& dir : directions) {
+            int nr = r + dir.first;
+            int nc = c + dir.second;
+            if (nr < 0 || nr >= H || nc < 0 || nc >= W || destroyed[nr][nc]) {
+                continue; // out of bounds or already destroyed
+            }
+
+            // Find and destroy the first wall
+            auto it = grid[nr][nc].lower_bound({nr, nc});
+            if (it != grid[nr][nc].end() && !destroyed[it->row][it->col]) {
+                destroyed[it->row][it->col] = true;
+                grid[nr][nc].erase(it);
+            }
+        }
+    }
+
+    // Calculate the remaining number of walls
+    long long remainingWalls = 0;
+    for (int i = 0; i < H; ++i) {
+        for (int j = 0; j < W; ++j) {
+            remainingWalls += grid[i][j].size();
+        }
+    }
+
+    cout << remainingWalls << endl;
+
+    return 0;
+}
+```
+
+This new code initializes the grid with walls and processes each query by checking the existence of a wall at the specified cell. If it finds a wall, it destroys it and checks its neighboring cells for walls to destroy. After processing all queries, it calculates and prints the number of remaining walls. This approach should be more efficient and correct.

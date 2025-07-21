@@ -1,0 +1,65 @@
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+#define rep(i, n) for (int i = 0; i < n; ++i)
+
+int H, W, Y;
+const int MAX_H = 1005;
+const int MAX_W = 1005;
+
+int dx[] = {0, 1, 0, -1};
+int dy[] = {1, 0, -1, 0};
+
+int main() {
+    cin.tie(0)->sync_with_stdio(0);
+    cin >> H >> W >> Y;
+    vector<vector<int>> A(H, vector<int>(W));
+    rep(i, H) rep(j, W) cin >> A[i][j];
+
+    // Initialize a grid to track whether a cell is still above sea level
+    vector<vector<bool>> alive(H, vector<bool>(W, true));
+
+    // Queue for BFS processing at each year
+    vector<vector<pair<int, int>>> yearly_queue(Y + 2);  // up to Y+1
+
+    // Collect initial border cells (sea)
+    rep(i, H) {
+        rep(j, W) {
+            if (i == 0 || i == H - 1 || j == 0 || j == W - 1) {
+                alive[i][j] = false;
+                yearly_queue[A[i][j]].push_back({i, j});
+            }
+        }
+    }
+
+    // BFS to simulate sinking process over years
+    queue<pair<int, int>> Q;
+    for (int y = 1; y <= Y; ++y) {
+        for (auto p : yearly_queue[y]) {
+            Q.push(p);
+        }
+
+        int remaining = H * W - (int)Q.size();
+
+        while (!Q.empty()) {
+            auto [x, y_coord] = Q.front();
+            Q.pop();
+            remaining--;
+
+            for (int dir = 0; dir < 4; ++dir) {
+                int nx = x + dx[dir];
+                int ny = y_coord + dy[dir];
+
+                if (nx >= 0 && nx < H && ny >= 0 && ny < W && alive[nx][ny]) {
+                    alive[nx][ny] = false;
+                    int new_y = max(y, A[nx][ny]);
+                    if (new_y <= Y) {
+                        yearly_queue[new_y].push_back({nx, ny});
+                    }
+                }
+            }
+        }
+
+        cout << remaining << "\n";
+    }
+}

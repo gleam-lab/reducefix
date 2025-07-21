@@ -1,0 +1,84 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+using ll = long long;
+
+int main() {
+    ll N, M, K;
+    cin >> N >> M >> K;
+    vector<ll> A(N);
+    ll total = 0;
+    for (ll i = 0; i < N; ++i) {
+        cin >> A[i];
+        total += A[i];
+    }
+    ll rem = K - total;
+
+    // If there are no remaining votes, all candidates already have their final vote count
+    if (rem == 0) {
+        for (ll i = 0; i < N; ++i) {
+            cout << 0 << " ";
+        }
+        cout << endl;
+        return 0;
+    }
+
+    // Sort the votes to allow binary search operations
+    vector<ll> sortedA = A;
+    sort(sortedA.begin(), sortedA.end());
+
+    // Prefix sum of sorted votes
+    vector<ll> prefix(N + 1, 0);
+    for (ll i = 0; i < N; ++i) {
+        prefix[i + 1] = prefix[i] + sortedA[i];
+    }
+
+    // For each candidate, calculate minimum additional votes needed
+    for (ll i = 0; i < N; ++i) {
+        ll ai = A[i];
+        // Binary search on X: number of additional votes for candidate i
+        ll low = 0, high = rem;
+        bool possible = false;
+
+        while (low <= high) {
+            ll mid = (low + high) / 2;
+            ll newAi = ai + mid;
+
+            // Find how many candidates have votes strictly greater than newAi
+            ll cntGreater = sortedA.end() - upper_bound(sortedA.begin(), sortedA.end(), newAi);
+
+            // If candidate i is among those with votes equal to newAi, they can't beat themselves
+            // So we subtract 1 if ai <= newAi and it's the current candidate
+            ll maxAllowedDeficit = M - cntGreater;
+            if (maxAllowedDeficit > 0) {
+                // Need to ensure that at most (M-1-cntGreater) candidates have more votes than newAi
+                ll needMoreThan = maxAllowedDeficit - 1;
+
+                // Total number of votes available to other candidates after giving `mid` to i
+                ll remainingVotes = rem - mid;
+
+                // Try to give enough votes to others so that at most `needMoreThan` candidates have > newAi
+                ll idx = upper_bound(sortedA.begin(), sortedA.end(), newAi) - sortedA.begin();
+                ll extraNeed = (newAi + 1) * (N - idx) - (prefix[N] - prefix[idx]);
+
+                if (extraNeed <= remainingVotes) {
+                    possible = true;
+                    high = mid - 1;
+                } else {
+                    low = mid + 1;
+                }
+            } else {
+                low = mid + 1;
+            }
+        }
+
+        if (possible) {
+            cout << low << " ";
+        } else {
+            cout << -1 << " ";
+        }
+    }
+
+    cout << endl;
+    return 0;
+}

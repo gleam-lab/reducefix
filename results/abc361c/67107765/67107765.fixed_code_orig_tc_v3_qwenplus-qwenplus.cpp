@@ -1,0 +1,50 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+#define fi first
+#define se second
+#define pb push_back
+#define chmin(x, y) x = min(x, y)
+const int INF = 1001001001;
+typedef long long ll;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int n, k;
+    cin >> n >> k;
+    vector<int> A(n);
+    for (int i = 0; i < n; ++i) {
+        cin >> A[i];
+    }
+
+    // We need to choose N-K elements in order to minimize (max - min)
+    // Try all possible windows of size L = N-K in the original array
+    // and find the one with minimal (max - min)
+
+    int L = n - k;
+    deque<int> maxdq, mindq;
+    ll ans = LLONG_MAX;
+
+    for (int i = 0; i < n; ++i) {
+        // Maintain deque for maximum
+        while (!maxdq.empty() && A[maxdq.back()] <= A[i]) maxdq.pop_back();
+        maxdq.push_back(i);
+
+        // Maintain deque for minimum
+        while (!mindq.empty() && A[mindq.back()] >= A[i]) mindq.pop_back();
+        mindq.push_back(i);
+
+        // Remove out of window indices
+        if (maxdq.front() <= i - L) maxdq.pop_front();
+        if (mindq.front() <= i - L) mindq.pop_front();
+
+        // When we have a full window
+        if (i >= L - 1) {
+            chmin(ans, 1LL * A[maxdq.front()] - A[mindq.front()]);
+        }
+    }
+
+    cout << ans << endl;
+}

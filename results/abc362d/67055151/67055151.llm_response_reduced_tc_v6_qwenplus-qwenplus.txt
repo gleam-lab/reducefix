@@ -1,0 +1,97 @@
+To solve this problem efficiently, we need to compute the **minimum path weight** from vertex `1` (0-based index) to every other vertex in a weighted undirected graph.
+
+### Key Observations:
+- The path weight includes both **vertex weights** and **edge weights**.
+- We can model this as a variation of the **shortest path problem**, where the cost is defined as:
+  ```
+  path_cost = sum(vertex_weights along path) + sum(edge_weights along path)
+  ```
+- This can be solved using **Dijkstra's algorithm**, which works well for non-negative edge weights. Here, all weights are non-negative.
+
+### Approach:
+1. Use Dijkstra’s algorithm with a priority queue (`min-heap`) to track the minimum path cost to each node.
+2. For each node in the graph, store its adjacent nodes and the corresponding edge weight.
+3. Initialize the path cost to vertex `0` (node 1 in 1-based indexing) as `A[0]` (only the vertex weight), and use Dijkstra's to propagate costs to other nodes.
+4. Maintain a distance array `dist[]` where `dist[i]` holds the minimum path cost from vertex `0` to vertex `i`.
+
+---
+
+### Bug in Your Code:
+Your incorrect code was pushing tuples like `(node, edge_weight, cumulative_cost)` into the priority queue, but you were adding `a[node]` again every time you visited it — leading to overcounting the vertex weights.
+
+Instead, we should **add the vertex weight only once when entering that node**.
+
+---
+
+### Corrected C++ Implementation:
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+#define ll long long
+
+const ll INF = 5LL << 60;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    ll n, m;
+    cin >> n >> m;
+
+    vector<ll> A(n);
+    for (ll i = 0; i < n; ++i) cin >> A[i];
+
+    vector<vector<pair<ll, ll>>> graph(n);
+    for (ll i = 0; i < m; ++i) {
+        ll u, v, b;
+        cin >> u >> v >> b;
+        u--; v--;
+        graph[u].emplace_back(v, b);
+        graph[v].emplace_back(u, b);
+    }
+
+    // dist[i] = min cost to reach node i from node 0
+    vector<ll> dist(n, INF);
+    dist[0] = A[0];  // Only starting vertex adds its own vertex weight initially
+
+    // Priority queue: pair<current_min_path_cost, current_node>
+    priority_queue<pair<ll, ll>, vector<pair<ll, ll>>, greater<pair<ll, ll>>> pq;
+    pq.emplace(dist[0], 0);
+
+    while (!pq.empty()) {
+        auto [curr_cost, u] = pq.top();
+        pq.pop();
+
+        if (curr_cost > dist[u]) continue;
+
+        for (auto [v, b] : graph[u]) {
+            ll new_cost = curr_cost + b + A[v];  // Add edge weight and vertex weight of v
+
+            if (new_cost < dist[v]) {
+                dist[v] = new_cost;
+                pq.emplace(dist[v], v);
+            }
+        }
+    }
+
+    // Output result for nodes 2 to N (1-based index)
+    for (ll i = 1; i < n; ++i) {
+        cout << dist[i] << " ";
+    }
+    cout << "\n";
+
+    return 0;
+}
+```
+
+---
+
+### Time Complexity:
+- **Graph Traversal**: Each edge is processed once.
+- **Dijkstra’s Algorithm** with a binary heap gives us a complexity of **O(M log N)**, which is efficient enough given the constraints:
+  - $ N \leq 2 \times 10^5 $
+  - $ M \leq 2 \times 10^5 $
+
+This approach ensures correctness and efficiency for large inputs.

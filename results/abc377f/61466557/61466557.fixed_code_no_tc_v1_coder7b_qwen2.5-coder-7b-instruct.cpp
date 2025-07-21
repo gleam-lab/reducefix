@@ -1,0 +1,86 @@
+#include <iostream>
+#include <vector>
+#include <set>
+#include <algorithm>
+
+using namespace std;
+
+// Function to check if a position is within the bounds of the grid
+bool inBounds(int x, int y, int n) {
+    return 1 <= x && x <= n && 1 <= y && y <= n;
+}
+
+// Function to count the number of valid positions where no piece can be captured
+long long countValidPositions(int n, int m, vector<pair<int, int>>& pieces) {
+    set<int> rows, cols, diag1, diag2;
+
+    // Insert all occupied positions into sets
+    for (const auto& piece : pieces) {
+        rows.insert(piece.first);
+        cols.insert(piece.second);
+        diag1.insert(piece.first - piece.second);
+        diag2.insert(piece.first + piece.second);
+    }
+
+    // Calculate total number of positions minus those occupied
+    long long totalPositions = n * n;
+    long long invalidPositions = rows.size() * n + cols.size() * n - rows.size() * cols.size();
+
+    // Adjust for diagonal captures
+    for (int d : diag1) {
+        int count = n - abs(d);
+        invalidPositions += count;
+        set<pair<int, int>> occupiedOnDiag;
+        for (int i : rows) {
+            if (inBounds(i, i - d, n)) {
+                occupiedOnDiag.insert({i, i - d});
+            }
+        }
+        for (int j : cols) {
+            if (inBounds(j, j + d, n)) {
+                occupiedOnDiag.insert({j + d, j});
+            }
+        }
+        invalidPositions -= occupiedOnDiag.size();
+    }
+
+    for (int d : diag2) {
+        int count = d < n ? (d - 1) : (2 * n - d + 1);
+        invalidPositions += count;
+        set<pair<int, int>> occupiedOnDiag;
+        for (int i : rows) {
+            if (inBounds(i, d - i, n)) {
+                occupiedOnDiag.insert({i, d - i});
+            }
+        }
+        for (int j : cols) {
+            if (inBounds(j, d + j, n)) {
+                occupiedOnDiag.insert({d + j, j});
+            }
+        }
+        for (int d1 : diag1) {
+            if ((d + d1) % 2 != 0) continue;
+            int i = (d + d1) / 2, j = (d - d1) / 2;
+            if (inBounds(i, j, n)) {
+                occupiedOnDiag.insert({i, j});
+            }
+        }
+        invalidPositions -= occupiedOnDiag.size();
+    }
+
+    return totalPositions - invalidPositions;
+}
+
+int main() {
+    int n, m;
+    cin >> n >> m;
+    vector<pair<int, int>> pieces(m);
+    for (int i = 0; i < m; ++i) {
+        cin >> pieces[i].first >> pieces[i].second;
+    }
+
+    long long result = countValidPositions(n, m, pieces);
+    cout << result << endl;
+
+    return 0;
+}

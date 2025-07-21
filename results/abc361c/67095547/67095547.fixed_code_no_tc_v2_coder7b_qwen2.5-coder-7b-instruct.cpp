@@ -1,0 +1,43 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+#define endl "\n"
+#define pb push_back
+#define mp make_pair
+#define eb emplace_back
+#define ff first
+#define ss second
+#define mod 1e9+7
+#define inf INT_MAX
+#define all(v) v.begin(), v.end()
+
+void solve() {
+    int n, k;
+    cin >> n >> k;
+    vector<int> a(n);
+    for(int i = 0; i < n; ++i) cin >> a[i];
+
+    // Sort the array to easily find min/max values after removing k elements
+    sort(all(a));
+
+    // The optimal strategy is to remove the smallest k/2 elements and the largest k/2 elements
+    // This way, we minimize the difference between the max and min values of the resulting array
+    int min_val = a[k/2] - a[n-k/2-1];
+    
+    // If k is odd, one more element needs to be removed from either end
+    if(k % 2 != 0) {
+        // Removing one more from the smaller side
+        min_val = min(min_val, a[(k+1)/2] - a[n-(k+1)/2-1]);
+        // Removing one more from the larger side
+        min_val = min(min_val, a[k/2] - a[n-k/2-2]);
+    }
+
+    cout << min_val << endl;
+}
+
+signed main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(NULL);
+    solve();
+    return 0;
+}

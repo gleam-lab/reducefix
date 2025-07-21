@@ -1,0 +1,41 @@
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+
+int main() {
+    cin.tie(nullptr)->sync_with_stdio(false);
+    int N, M;
+    ll K;
+    cin >> N >> M >> K;
+
+    vector<pair<ll, int>> A(N);
+    for (int i = 0; i < N; ++i) {
+        cin >> A[i].first;
+    }
+
+    vector<ll> result(N);
+
+    // Sort candidates by current votes
+    vector<int> indices(N);
+    iota(indices.begin(), indices.end(), 0);
+    sort(indices.begin(), indices.end(), [&](int a, int b) { return A[a].first > A[b].first; });
+
+    // For each candidate, determine minimum needed additional votes to ensure at least (N - M + 1)th place
+    for (int i = 0; i < N; ++i) {
+        int idx = indices[i];
+        ll need = max(0LL, A[indices[N - M]].first - A[idx].first + 1);
+        if (K >= A[idx].first * N - K) {
+            // This candidate can be beaten by others even with all remaining votes
+            result[idx] = -1;
+        } else {
+            result[idx] = need;
+        }
+    }
+
+    for (int i = 0; i < N; ++i) {
+        cout << result[i] << " ";
+    }
+    cout << "\n";
+
+    return 0;
+}

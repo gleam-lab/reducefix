@@ -1,0 +1,78 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define rep(i, n) for(int i=0;i<(n);i++)
+#define all(a) a.begin(), a.end()
+#define rall(a) a.rbegin(), a.rend()
+using ll = long long;
+using pi = pair<int, int>;
+const int di[]={1,-1,0,0};
+const int dj[]={0,0,1,-1};
+const int INF=1e9;
+struct UnionFind {
+    vector<int> parent, rank;
+    UnionFind(int n) : parent(n), rank(n, 0) {
+        for (int i = 0; i < n; i++) 
+            parent[i] = i;
+    }
+    int findRoot(int x) {
+        if (parent[x] != x) 
+            parent[x] = findRoot(parent[x]);
+        return parent[x];
+    }
+    bool unite(int x, int y) {
+        int rx = findRoot(x), ry = findRoot(y);
+        if (rx == ry) return false;
+        if (rank[rx] < rank[ry]) {
+            parent[rx] = ry;
+        } else {
+            parent[ry] = rx;
+            if (rank[rx] == rank[ry])
+            rank[rx]++;
+        }
+        return true;
+    }
+};
+int main(){
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int n, q;
+    cin >> n >> q;
+    UnionFind uf(n);
+    vector<priority_queue<int,vector<int>,greater<int>>> pq(n);
+    vector<int> sz(n,1);
+    vector<int> ans;
+    rep(qi, q) {
+        int com;
+        cin >> com;
+        if(com==1) {
+            int u, v;
+            cin >> u >> v;
+            u--; v--;
+            int ru = uf.findRoot(u);
+            int rv = uf.findRoot(v);
+            if(ru!=rv) {
+                if(sz[ru]<sz[rv]) swap(ru, rv);
+                uf.unite(ru, rv);
+                int rnew=uf.findRoot(ru);
+                int rold=(rnew==ru ? rv:ru);
+                pq[rnew].merge(pq[rold]);
+                pq[rold]={};
+                sz[rnew]+=sz[rold];
+            }
+        }
+        if(com==2) {
+            int v, k;
+            cin >> v >> k;
+            v--;
+            if(k>sz[uf.findRoot(v)]) ans.push_back(-1);
+            else {
+                auto &p = pq[uf.findRoot(v)];
+                while(k--) p.pop();
+                ans.push_back(p.top());
+            }
+        }
+    }
+    for(auto x:ans) cout << x << endl;
+
+    return 0;
+}

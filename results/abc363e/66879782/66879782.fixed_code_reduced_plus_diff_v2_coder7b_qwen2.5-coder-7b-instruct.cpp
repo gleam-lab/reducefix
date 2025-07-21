@@ -1,0 +1,69 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(NULL);
+
+    int h, w, y;
+    cin >> h >> w >> y;
+
+    vector<vector<int>> heights(h, vector<int>(w));
+    for (int i = 0; i < h; ++i) {
+        for (int j = 0; j < w; ++j) {
+            cin >> heights[i][j];
+        }
+    }
+
+    vector<vector<bool>> seen(h, vector<bool>(w, false));
+
+    auto bfs = [&](int sea_level) {
+        queue<pair<int, int>> q;
+        for (int i = 0; i < h; ++i) {
+            for (int j = 0; j < w; ++j) {
+                if (!seen[i][j] && heights[i][j] > sea_level) {
+                    q.push({i, j});
+                    seen[i][j] = true;
+                }
+            }
+        }
+
+        vector<vector<bool>> reachable(h, vector<bool>(w, false));
+        vector<pair<int, int>> directions = {{0, 1}, {1, 0}, {-1, 0}, {0, -1}};
+
+        while (!q.empty()) {
+            auto [x, y] = q.front();
+            q.pop();
+
+            reachable[x][y] = true;
+
+            for (auto &d : directions) {
+                int nx = x + d.first, ny = y + d.second;
+                if (nx >= 0 && nx < h && ny >= 0 && ny < w && !seen[nx][ny] && heights[nx][ny] > sea_level) {
+                    q.push({nx, ny});
+                    seen[nx][ny] = true;
+                }
+            }
+        }
+
+        return reachable;
+    };
+
+    vector<int> results(y + 1, 0);
+    for (int i = 1; i <= y; ++i) {
+        auto reachable = bfs(i);
+        for (int j = 0; j < h; ++j) {
+            for (int k = 0; k < w; ++k) {
+                if (reachable[j][k]) {
+                    results[i]++;
+                }
+            }
+        }
+    }
+
+    for (int i = 1; i <= y; ++i) {
+        cout << h * w - results[i] << '\n';
+    }
+
+    return 0;
+}

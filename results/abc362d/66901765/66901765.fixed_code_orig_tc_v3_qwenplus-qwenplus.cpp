@@ -1,0 +1,61 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define int long long
+
+const int INF = 1e18;
+
+vector<vector<pair<int, int>>> graph(200005);
+int dist[200005];
+int A[200005];
+
+void dijkstra(int n) {
+    priority_queue<pair<int, int>, vector<pair<int, int>>, greater<>> pq;
+    for (int i = 1; i <= n; ++i) {
+        dist[i] = INF;
+    }
+    dist[1] = A[1];
+    pq.push({dist[1], 1});
+
+    while (!pq.empty()) {
+        int u = pq.top().second;
+        int d = pq.top().first;
+        pq.pop();
+        if (d > dist[u]) continue;
+
+        for (auto &[v, w] : graph[u]) {
+            int new_cost = d + A[v] + w;
+            if (new_cost < dist[v]) {
+                dist[v] = new_cost;
+                pq.push({dist[v], v});
+            }
+        }
+    }
+}
+
+signed main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int N, M;
+    cin >> N >> M;
+
+    for (int i = 1; i <= N; ++i) {
+        cin >> A[i];
+    }
+
+    for (int i = 0; i < M; ++i) {
+        int u, v, b;
+        cin >> u >> v >> b;
+        graph[u].push_back({v, b});
+        graph[v].push_back({u, b});
+    }
+
+    dijkstra(N);
+
+    for (int i = 2; i <= N; ++i) {
+        cout << dist[i] << " ";
+    }
+    cout << "\n";
+
+    return 0;
+}

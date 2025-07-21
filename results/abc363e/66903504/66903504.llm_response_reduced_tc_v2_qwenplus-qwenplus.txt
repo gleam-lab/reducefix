@@ -1,0 +1,93 @@
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+
+int main() {
+    cin.tie(0)->sync_with_stdio(0);
+
+    int H, W, Y;
+    cin >> H >> W >> Y;
+    vector<vector<int>> A(H, vector<int>(W));
+    for (int i = 0; i < H; ++i) {
+        for (int j = 0; j < W; ++j) {
+            cin >> A[i][j];
+        }
+    }
+
+    // Add a border of -infinity to simulate sea around the grid
+    H += 2;
+    W += 2;
+    vector<vector<int>> B(H, vector<int>(W, -1e9));
+    for (int i = 1; i <= H - 2; ++i) {
+        for (int j = 1; j <= W - 2; ++j) {
+            B[i][j] = A[i - 1][j - 1];
+        }
+    }
+
+    // We will use BFS from the borders inward
+    vector<vector<bool>> submerged(H, vector<bool>(W, false));
+    queue<pair<int, int>> q;
+
+    // Initialize all border cells as submerged
+    for (int i = 0; i < H; ++i) {
+        submerged[i][0] = true;
+        submerged[i][W - 1] = true;
+        q.emplace(i, 0);
+        q.emplace(i, W - 1);
+    }
+    for (int j = 0; j < W; ++j) {
+        submerged[0][j] = true;
+        submerged[H - 1][j] = true;
+        q.emplace(0, j);
+        q.emplace(H - 1, j);
+    }
+
+    // Directions for BFS propagation
+    int dx[] = { -1, 1, 0, 0 };
+    int dy[] = { 0, 0, -1, 1 };
+
+    // Events: year -> list of positions that might get submerged at that year
+    vector<vector<pair<int, int>>> events(Y + 2);
+
+    // Preprocess each cell into its corresponding year event
+    for (int i = 1; i <= H - 2; ++i) {
+        for (int j = 1; j <= W - 2; ++j) {
+            int year = B[i][j];
+            if (year > Y) continue; // Won't be submerged within output range
+            events[year].emplace_back(i, j);
+        }
+    }
+
+    // Process year by year
+    int remaining = (H - 2) * (W - 2);
+    for (int year = 1; year <= Y; ++year) {
+        // First, add cells whose elevation == year
+        for (auto [x, y] : events[year]) {
+            if (!submerged[x][y] && B[x][y] <= year) {
+                submerged[x][y] = true;
+                q.emplace(x, y);
+            }
+        }
+
+        // Propagate the submerged area using BFS
+        while (!q.empty()) {
+            auto [x, y] = q.front();
+            q.pop();
+
+            for (int k = 0; k < 4; ++k) {
+                int nx = x + dx[k];
+                int ny = y + dy[k];
+                if (nx >= 0 && nx < H && ny >= 0 && ny < W && !submerged[nx][ny] && B[nx][ny] <= year) {
+                    submerged[nx][ny] = true;
+                    q.emplace(nx, ny);
+                }
+            }
+        }
+
+        cout << remaining << '\n';
+    }
+
+    return 0;
+}
+```

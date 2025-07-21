@@ -1,0 +1,71 @@
+#include<bits/stdc++.h>
+using namespace std;
+
+using i64 = long long;
+
+int main() {
+    i64 N, M;
+    cin >> N >> M;
+    vector<array<i64, 2>> pieces(M);
+    vector<i64> rows, cols, diag1, diag2, anti_diag1, anti_diag2;
+
+    for (i64 i = 0; i < M; ++i) {
+        i64 a, b;
+        cin >> a >> b;
+        pieces[i] = {a, b};
+        rows.push_back(a);
+        cols.push_back(b);
+        diag1.push_back(a + b);
+        diag2.push_back(a - b);
+        anti_diag1.push_back(a - b + 1);
+        anti_diag2.push_back(a + b - N);
+    }
+
+    sort(rows.begin(), rows.end());
+    sort(cols.begin(), cols.end());
+    sort(diag1.begin(), diag1.end());
+    sort(diag2.begin(), diag2.end());
+    sort(anti_diag1.begin(), anti_diag1.end());
+    sort(anti_diag2.begin(), anti_diag2.end());
+
+    i64 safe_rows = rows.back() - rows.front() + 1;
+    i64 safe_cols = cols.back() - cols.front() + 1;
+    i64 safe_diag1 = diag1.back() - diag1.front() + 1;
+    i64 safe_diag2 = diag2.back() - diag2.front() + 1;
+    i64 safe_anti_diag1 = anti_diag1.back() - anti_diag1.front() + 1;
+    i64 safe_anti_diag2 = anti_diag2.back() - anti_diag2.front() + 1;
+
+    // Subtract captured squares
+    for (i64 i = 0; i < M; ++i) {
+        i64 r = pieces[i][0];
+        i64 c = pieces[i][1];
+
+        // Check if the row or column is captured
+        if (r >= rows.front() && r <= rows.back()) safe_rows--;
+        if (c >= cols.front() && c <= cols.back()) safe_cols--;
+
+        // Check if the diagonals or anti-diagonals are captured
+        i64 d1 = r + c;
+        i64 d2 = r - c;
+        i64 ad1 = r - c + 1;
+        i64 ad2 = r + c - N;
+
+        if (d1 >= diag1.front() && d1 <= diag1.back()) safe_diag1--;
+        if (d2 >= diag2.front() && d2 <= diag2.back()) safe_diag2--;
+        if (ad1 >= anti_diag1.front() && ad1 <= anti_diag1.back()) safe_anti_diag1--;
+        if (ad2 >= anti_diag2.front() && ad2 <= anti_diag2.back()) safe_anti_diag2--;
+    }
+
+    // The number of safe squares
+    i64 ans = N * N;
+    ans -= safe_rows * N;
+    ans -= safe_cols * N;
+    ans -= safe_diag1;
+    ans -= safe_diag2;
+    ans -= safe_anti_diag1;
+    ans -= safe_anti_diag2;
+
+    cout << ans << endl;
+
+    return 0;
+}

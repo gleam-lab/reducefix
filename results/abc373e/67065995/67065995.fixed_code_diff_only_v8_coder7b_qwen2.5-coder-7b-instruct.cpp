@@ -1,0 +1,51 @@
+#include <bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int n, m;
+    ll k;
+    cin >> n >> m >> k;
+    vector<ll> a(n);
+    for(int i = 0; i < n; ++i) {
+        cin >> a[i];
+        k -= a[i];
+    }
+
+    // Calculate the prefix sum array
+    vector<ll> pref(n + 1);
+    for(int i = 0; i < n; ++i) {
+        pref[i + 1] = pref[i] + a[i];
+    }
+
+    // Sort indices based on the number of votes in ascending order
+    vector<int> ord(n);
+    iota(ord.begin(), ord.end(), 0);
+    sort(ord.begin(), ord.end(), [&](int i, int j) { return a[i] < a[j]; });
+
+    // Initialize answer array with -1
+    vector<ll> ans(n, -1);
+
+    // Iterate over sorted indices
+    for(int i = 0; i < n; ++i) {
+        int idx = ord[i];
+        // Calculate the minimum number of votes needed to guarantee victory
+        ll min_votes_needed = (m - 1) * (a[idx] + 1) - pref[min(i + m, n)] + pref[i];
+        if(min_votes_needed <= k) {
+            ans[idx] = min_votes_needed;
+        } else {
+            ans[idx] = -1;
+        }
+    }
+
+    // Output the results
+    for(int i = 0; i < n; ++i) {
+        cout << ans[i] << " ";
+    }
+    cout << endl;
+
+    return 0;
+}

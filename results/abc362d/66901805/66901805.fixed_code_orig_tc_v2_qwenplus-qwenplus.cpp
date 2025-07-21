@@ -1,0 +1,66 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define int long long
+
+// Custom comparator for the priority queue to act as a min-heap
+struct Compare {
+    bool operator()(const pair<int, int>& a, const pair<int, int>& b) {
+        return a.first > b.first;
+    }
+};
+
+vector<vector<pair<int, int>>> G(200005);  // Adjacency list: {neighbor, edge_weight}
+int dis[200005];                         // Distance array
+int a[200005];                           // Vertex weights
+bool vis[200005];                        // Visited array
+
+void dijkstra(int start, int n) {
+    priority_queue<pair<int, int>, vector<pair<int, int>>, Compare> pq;
+
+    dis[start] = a[start];  // Start includes A_1
+    pq.push({dis[start], start});
+
+    while (!pq.empty()) {
+        auto [cost, u] = pq.top();
+        pq.pop();
+
+        if (vis[u]) continue;  // Already processed
+        vis[u] = true;
+
+        for (auto [v, w] : G[v]) {
+            if (dis[v] > cost + a[v] + w) {
+                dis[v] = cost + a[v] + w;
+                pq.push({dis[v], v});
+            }
+        }
+    }
+}
+
+signed main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int N, M;
+    cin >> N >> M;
+
+    for (int i = 1; i <= N; ++i) {
+        cin >> a[i];
+        dis[i] = numeric_limits<int>::max();  // Initialize distances
+    }
+
+    for (int i = 1; i <= M; ++i) {
+        int u, v, w;
+        cin >> u >> v >> w;
+        G[u].push_back({v, w});
+        G[v].push_back({u, w});  // Undirected graph
+    }
+
+    dijkstra(1, N);
+
+    for (int i = 2; i <= N; ++i) {
+        cout << dis[i] << " ";
+    }
+    cout << "\n";
+
+    return 0;
+}

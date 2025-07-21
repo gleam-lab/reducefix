@@ -1,0 +1,65 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+const int N = 2e5 + 10, INF = 1e9 + 7;
+
+vector<int> adj[N];
+int dist[N];  // Distance from node 1
+bool visited[N];
+
+// BFS to find shortest cycle starting from node 1
+int findShortestCycle(int n) {
+    queue<int> q;
+    memset(dist, -1, sizeof(dist));
+    memset(visited, false, sizeof(visited));
+    
+    dist[1] = 0;
+    q.push(1);
+    
+    int minCycleLength = INF;
+    
+    while (!q.empty()) {
+        int u = q.front();
+        q.pop();
+        
+        for (int v : adj[u]) {
+            if (dist[v] == -1) {  // Not visited
+                dist[v] = dist[u] + 1;
+                q.push(v);
+            } else if (!visited[v]) {  // Already visited but not processed
+                // Potential cycle found
+                minCycleLength = min(minCycleLength, dist[u] + dist[v] + 1);
+            }
+        }
+        visited[u] = true;
+    }
+    
+    return (minCycleLength == INF) ? -1 : minCycleLength;
+}
+
+void solve() {
+    int n, m;
+    cin >> n >> m;
+    
+    for (int i = 0; i < m; ++i) {
+        int u, v;
+        cin >> u >> v;
+        adj[u].push_back(v);
+    }
+    
+    cout << findShortestCycle(n) << endl;
+}
+
+signed main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    cout.tie(nullptr);
+    
+    int T = 1;
+    // cin >> T;
+    while (T--) {
+        solve();
+    }
+    
+    return 0;
+}

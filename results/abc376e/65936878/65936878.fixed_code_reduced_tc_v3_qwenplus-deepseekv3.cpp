@@ -1,0 +1,43 @@
+#include <bits/stdc++.h>
+#define int long long
+#define f first
+#define s second
+using namespace std;
+
+signed main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t; cin >> t;
+    while(t--) {
+        int n, k; cin >> n >> k;
+        vector<pair<int, int>> v(n);
+        for(int i = 0; i < n; i++) cin >> v[i].f;
+        for(int i = 0; i < n; i++) cin >> v[i].s;
+        
+        sort(v.begin(), v.end());
+        
+        priority_queue<int> pq;
+        int sum = 0;
+        vector<int> sum_min(n);
+        
+        for(int i = 0; i < n; i++) {
+            sum += v[i].s;
+            pq.push(v[i].s);
+            if(pq.size() > k) {
+                sum -= pq.top();
+                pq.pop();
+            }
+            sum_min[i] = sum;
+        }
+        
+        int ans = LLONG_MAX;
+        for(int i = k - 1; i < n; i++) {
+            ans = min(ans, v[i].f * sum_min[i]);
+        }
+        
+        cout << ans << '\n';
+    }
+    
+    return 0;
+}

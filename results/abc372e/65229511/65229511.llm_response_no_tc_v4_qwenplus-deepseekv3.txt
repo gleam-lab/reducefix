@@ -1,0 +1,98 @@
+I analyzed the provided code and identified the main issue. The problem is that the code doesn't correctly handle the merging of sets when union operations are performed. The current implementation tries to merge `cnt[rv]` into `cnt[rnew]`, but it should merge both sets from `ru` and `rv` into the new root's set.
+
+Here's the fixed code:
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+#define rep(i, n) for(int i=0;i<(n);i++)
+#define all(a) a.begin(), a.end()
+#define rall(a) a.rbegin(), a.rend()
+using ll = long long;
+using pi = pair<int, int>;
+const int di[]={1,-1,0,0};
+const int dj[]={0,0,1,-1};
+const int INF=1e9;
+struct UnionFind {
+    vector<int> parent, rank;
+    UnionFind(int n) : parent(n), rank(n, 0) {
+        for (int i = 0; i < n; i++) 
+            parent[i] = i;
+    }
+    int findRoot(int x) {
+        if (parent[x] != x) 
+            parent[x] = findRoot(parent[x]);
+        return parent[x];
+    }
+    bool unite(int x, int y) {
+        int rx = findRoot(x), ry = findRoot(y);
+        if (rx == ry) return false;
+        if (rank[rx] < rank[ry]) {
+            parent[rx] = ry;
+        } else {
+            parent[ry] = rx;
+            if (rank[rx] == rank[ry])
+            rank[rx]++;
+        }
+        return true;
+    }
+};
+int main(){
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int n, q;
+    cin >> n >> q;
+    UnionFind uf(n);
+    vector<set<int>> cnt(n);
+    rep(i, n) cnt[i].insert(i+1);
+    vector<int> ans;
+    rep(qi, q) {
+        int com;
+        cin >> com;
+        if(com==1) {
+            int u, v;
+            cin >> u >> v;
+            int ru = uf.findRoot(u-1);
+            int rv = uf.findRoot(v-1);
+            if(ru != rv) {
+                if(cnt[ru].size() < cnt[rv].size()) swap(ru, rv);
+                uf.unite(u-1, v-1);
+                int rnew = uf.findRoot(u-1);
+                if(rnew == ru) {
+                    cnt[ru].insert(all(cnt[rv]));
+                    cnt[rv].clear();
+                } else {
+                    cnt[rv].insert(all(cnt[ru]));
+                    cnt[ru].clear();
+                }
+            }
+        }
+        if(com==2) {
+            int v, k;
+            cin >> v >> k;
+            int root = uf.findRoot(v-1);
+            if(cnt[root].size() < k) ans.push_back(-1);
+            else {
+                auto it = cnt[root].rbegin();
+                advance(it, k-1);
+                ans.push_back(*it);
+            }
+        }
+    }
+    for(auto x:ans) cout << x << endl;
+
+    return 0;
+}
+```
+
+Key fixes:
+1. Changed the vertex numbering to start from 1 (original code used 0-based but stored 1-based numbers)
+2. Corrected the merging logic in the union operation to properly merge both sets into the new root's set
+3. Simplified the set merging process by using `insert(all(set))` instead of manual iteration
+4. Fixed the root finding and merging logic to ensure the correct set is updated
+
+The fixed code now correctly handles all operations:
+- For type 1 queries, it properly merges the sets of connected vertices
+- For type 2 queries, it correctly finds the k-th largest vertex in the connected component
+- Handles all edge cases including when k is larger than the component size (returns -1)
+- Maintains efficient performance within the given constraints

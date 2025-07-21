@@ -1,0 +1,81 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+const int MAXN = 4e5 + 10;
+
+vector<vector<int>> grid(MAXN, vector<int>(MAXN, 1));
+set<pair<int, int>> rows[MAXN], cols[MAXN];
+
+void removeWall(int r, int c) {
+    if (!grid[r][c]) return;
+    grid[r][c] = 0;
+    rows[r].erase({c, r});
+    cols[c].erase({r, c});
+}
+
+void addWall(int r, int c) {
+    if (grid[r][c]) return;
+    grid[r][c] = 1;
+    rows[r].insert({c, r});
+    cols[c].insert({r, c});
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int h, w, q;
+    cin >> h >> w >> q;
+
+    for (int i = 1; i <= h; ++i) {
+        for (int j = 1; j <= w; ++j) {
+            rows[i].insert({j, i});
+            cols[j].insert({i, j});
+        }
+    }
+
+    while (q--) {
+        int r, c;
+        cin >> r >> c;
+        --r, --c;
+
+        if (grid[r][c]) {
+            removeWall(r, c);
+        } else {
+            set<pair<int, int>>::iterator it_r = rows[r].lower_bound({c, -1}), it_c = cols[c].lower_bound({r, -1});
+
+            if (it_r != rows[r].end()) {
+                int next_c = (*it_r).first;
+                removeWall(r, next_c);
+            }
+
+            if (it_c != cols[c].end()) {
+                int next_r = (*it_c).first;
+                removeWall(next_r, c);
+            }
+
+            if (it_r != rows[r].begin()) {
+                --it_r;
+                int prev_c = (*it_r).first;
+                removeWall(r, prev_c);
+            }
+
+            if (it_c != cols[c].begin()) {
+                --it_c;
+                int prev_r = (*it_c).first;
+                removeWall(prev_r, c);
+            }
+
+            addWall(r, c);
+        }
+    }
+
+    int ans = 0;
+    for (int i = 1; i <= h; ++i) {
+        ans += rows[i].size();
+    }
+
+    cout << ans << '\n';
+
+    return 0;
+}

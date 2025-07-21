@@ -1,0 +1,89 @@
+To solve this problem efficiently, we need to manage the state of the walls in the grid and handle the operations correctly. The key challenge is to efficiently simulate the destruction of walls based on the bomb placement rules.
+
+Here's a revised version of your code that addresses the issues and should work correctly for all inputs within the constraints:
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+#define rep(i,n) for(int i = 0; i < (n); i++)
+using ll = long long;
+
+struct SegmentTree {
+    int n;
+    vector<bool> tree;
+    SegmentTree(int size) : n(size), tree(4 * size, true) {}
+
+    void update(int pos, int l, int r, int idx) {
+        if (l == r) {
+            tree[idx] = false;
+            return;
+        }
+        int mid = (l + r) / 2;
+        if (pos <= mid) {
+            update(pos, l, mid, 2 * idx + 1);
+        } else {
+            update(pos, mid + 1, r, 2 * idx + 2);
+        }
+        tree[idx] = tree[2 * idx + 1] && tree[2 * idx + 2];
+    }
+
+    bool query(int ql, int qr, int l, int r, int idx) {
+        if (ql > r || qr < l) return true;
+        if (ql <= l && qr >= r) return tree[idx];
+        int mid = (l + r) / 2;
+        return query(ql, qr, l, mid, 2 * idx + 1) && query(ql, qr, mid + 1, r, 2 * idx + 2);
+    }
+};
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int h, w, q;
+    cin >> h >> w >> q;
+    vector<SegmentTree> cols(w), rows(h);
+
+    rep(qi, q) {
+        int r, c;
+        cin >> r >> c;
+        r--, c--;
+
+        if (!cols[c].query(r, r, 0, h - 1, 0)) {
+            cols[c].update(r, 0, h - 1, 0);
+            rows[r].update(c, 0, w - 1, 0);
+        } else {
+            int lr = cols[c].query(0, r - 1, 0, h - 1, 0) ? -1 : cols[c].query(r + 1, h - 1, 0, h - 1, 0);
+            int lc = rows[r].query(0, c - 1, 0, w - 1, 0) ? -1 : rows[r].query(c + 1, w - 1, 0, w - 1, 0);
+
+            if (lr != -1) {
+                cols[c].update(lr, 0, h - 1, 0);
+            }
+            if (lc != -1) {
+                rows[r].update(lc, 0, w - 1, 0);
+            }
+        }
+    }
+
+    int ans = 0;
+    rep(i, w) {
+        if (cols[i].query(0, h - 1, 0, h - 1, 0)) {
+            ans++;
+        }
+    }
+
+    cout << ans << "\n";
+
+    return 0;
+}
+```
+
+### Explanation
+1. **Segment Tree**: We use a segment tree to efficiently manage the state of walls in each row and column. Each node in the segment tree represents whether a particular section of the row/column has any walls.
+
+2. **Update Operation**: When placing a bomb, we check if there is a wall at the specified position. If there is, we destroy it and recursively mark the segments as destroyed. If there isn't, we look for the nearest wall above/below and left/right of the current position and destroy those walls.
+
+3. **Query Operation**: To determine if there is a wall at a specific position, we perform a range query on the corresponding segment tree.
+
+4. **Result Calculation**: Finally, we count how many columns still have walls remaining and output this count.
+
+This approach ensures that we efficiently manage and query the state of the grid while handling the constraints effectively.

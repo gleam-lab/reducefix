@@ -1,0 +1,24 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int n, x[200050], p[200050], q, a[200050];
+
+int main() {
+    cin >> n;
+    for (int i = 1; i <= n; ++i) cin >> x[i];
+    sort(x + 1, x + n + 1); // Sort the array to facilitate binary search
+    for (int i = 1; i <= n; ++i) {
+        cin >> p[i];
+        a[i] = a[i - 1] + p[i];
+    }
+    cin >> q;
+    while (q--) {
+        int l, r; cin >> l >> r;
+        auto it_l = lower_bound(x + 1, x + n + 1, l);
+        auto it_r = upper_bound(x + 1, x + n + 1, r);
+        if (it_l == x + n + 1 || *it_l > r) --it_l; // Adjust iterator if out of bounds or too large
+        if (it_r == x + 1 || *it_r < l) ++it_r;   // Adjust iterator if out of bounds or too small
+        cout << a[it_r - x - 1] - a[it_l - x] << endl;
+    }
+    return 0;
+}

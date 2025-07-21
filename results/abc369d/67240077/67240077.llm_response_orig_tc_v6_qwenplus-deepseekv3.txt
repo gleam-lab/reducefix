@@ -1,0 +1,75 @@
+To fix this code, we need to understand the problem and why the initial solution failed. The problem involves selecting elements from an array such that every alternate selected element is doubled. The goal is to maximize the sum of the selected elements under this constraint.
+
+### Analysis of the Initial Solution
+The initial code uses dynamic programming with states `f[i][0]` and `f[i][1]`, representing the maximum sum up to the i-th element when the i-th element is not selected or selected, respectively. The count `cnt[i][0]` and `cnt[i][1]` keeps track of the number of selected elements up to the i-th element for each state.
+
+However, the issue arises in how the counts are managed when the i-th element is selected. The initial code incorrectly calculates `num1` and `num2` based on whether the count is even or odd, which doesn't accurately reflect the alternation requirement. Specifically, it should alternate between doubling and not doubling the elements based on their selection order, not just the count parity.
+
+### Correct Approach
+To correctly alternate between doubling and not doubling the selected elements, we need to track the parity of the number of selected elements (even or odd) and adjust the value of the current element accordingly. The dynamic programming states should consider whether the previous selection ended with an even or odd count to decide whether to double the current element or not.
+
+### Solution Code
+```cpp
+#include<bits/stdc++.h>
+#define INF 0x3f3f3f3f3f3f3f3f
+using namespace std;
+typedef long long ll;
+const int MAXN=2e5+10;
+ll a[MAXN],f[MAXN][2],last_parity[MAXN][2];
+
+int main(){
+    ll n;
+    scanf("%lld",&n);
+    for(ll i=1;i<=n;i++){
+        scanf("%lld",&a[i]);
+    }
+    f[0][0] = 0; // not selected
+    last_parity[0][0] = 0; // parity of count (even)
+    f[0][1] = -INF; // selected (invalid for 0th element)
+    last_parity[0][1] = 1; // parity (odd, but not used)
+
+    for(ll i=1;i<=n;i++){
+        // Option 1: do not select a[i]
+        f[i][0] = max(f[i-1][0], f[i-1][1]);
+        if (f[i-1][0] > f[i-1][1]) {
+            last_parity[i][0] = last_parity[i-1][0];
+        } else {
+            last_parity[i][0] = last_parity[i-1][1];
+        }
+
+        // Option 2: select a[i]
+        ll select_not_double = f[i-1][0] + a[i];
+        ll select_double = f[i-1][1] + a[i] * 2;
+        if (last_parity[i-1][0] % 2 == 0) {
+            select_not_double = f[i-1][0] + a[i];
+        } else {
+            select_not_double = f[i-1][0] + a[i] * 2;
+        }
+        if (last_parity[i-1][1] % 2 == 0) {
+            select_double = f[i-1][1] + a[i];
+        } else {
+            select_double = f[i-1][1] + a[i] * 2;
+        }
+
+        if (select_not_double > select_double) {
+            f[i][1] = select_not_double;
+            last_parity[i][1] = last_parity[i-1][0] + 1;
+        } else {
+            f[i][1] = select_double;
+            last_parity[i][1] = last_parity[i-1][1] + 1;
+        }
+    }
+    printf("%lld",max(f[n][0], f[n][1]));
+    return 0;
+}
+```
+
+### Explanation
+1. **Initialization**: The initial states `f[0][0]` and `f[0][1]` are set up, where `f[0][0]` represents not selecting the 0th element (sum 0) and `f[0][1]` is invalid (set to negative infinity).
+2. **Dynamic Programming Transition**:
+   - **Not Selecting the Current Element (`f[i][0]`)**: The maximum sum is derived from the previous states `f[i-1][0]` and `f[i-1][1]`.
+   - **Selecting the Current Element (`f[i][1]`)**: The sum is calculated based on the parity of the count of selected elements from the previous states. If the previous count was even, the current element is added as-is; if odd, it is doubled.
+3. **Tracking Parity**: The `last_parity` array keeps track of whether the count of selected elements is even or odd, ensuring the correct alternation between doubling and not doubling the elements.
+4. **Output**: The result is the maximum value between the two states after processing all elements.
+
+This approach ensures that the alternation between doubling and not doubling is correctly handled, leading to the correct maximum sum.

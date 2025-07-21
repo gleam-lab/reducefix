@@ -1,0 +1,34 @@
+#include <iostream>
+#include <cmath>
+using namespace std;
+
+int main() {
+    int N;
+    cin >> N;
+    long double ans = 0;
+    
+    // Starting point
+    long double nowX = 0, nowY = 0;
+    
+    // Process each point
+    for (int i = 0; i < N; ++i) {
+        long double nextX, nextY;
+        cin >> nextX >> nextY;
+        
+        // Calculate the Euclidean distance to the next point
+        long double cost = sqrt(pow(nextX - nowX, 2) + pow(nextY - nowY, 2));
+        ans += cost;
+        
+        // Update current position
+        nowX = nextX;
+        nowY = nextY;
+    }
+    
+    // Return to the origin
+    long double finalCost = sqrt(nowX * nowX + nowY * nowY);
+    ans += finalCost;
+    
+    cout << ans << endl;
+    
+    return 0;
+}

@@ -1,0 +1,34 @@
+#include <iostream>
+#include <cmath>
+#include <vector>
+#include <iomanip>
+#include <limits>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int N;
+    cin >> N;
+
+    vector<pair<long long, long long>> points(N + 1);
+    points[0] = {0, 0}; // Start at the origin
+
+    for (int i = 1; i <= N; i++) {
+        long long x, y;
+        cin >> x >> y;
+        points[i] = {x, y};
+    }
+
+    double total_cost = 0.0;
+    for (int i = 1; i <= N; i++) {
+        long long dx = points[i].first - points[i - 1].first;
+        long long dy = points[i].second - points[i - 1].second;
+        total_cost += sqrt(dx * dx + dy * dy);
+    }
+
+    // Set precision for output
+    cout << fixed << setprecision(15);
+    cout << total_cost << endl;
+}

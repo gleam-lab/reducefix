@@ -1,0 +1,87 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+
+const int dx[] = {-1, 1, 0, 0};
+const int dy[] = {0, 0, -1, 1};
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int H, W, Y;
+    cin >> H >> W >> Y;
+
+    vector<vector<int>> A(H, vector<int>(W));
+    for (int i = 0; i < H; i++) {
+        for (int j = 0; j < W; j++) {
+            cin >> A[i][j];
+        }
+    }
+
+    vector<vector<bool>> visited(H, vector<bool>(W, false));
+    vector<queue<pair<int, int>>> q(Y + 1);
+    vector<int> area(H * W);
+
+    // Find the initial sections that are adjacent to the sea or will sink
+    for (int i = 0; i < H; i++) {
+        for (int j = 0; j < W; j++) {
+            if ((i == 0 || i == H - 1 || j == 0 || j == W - 1) || A[i][j] == 0) {
+                area[i * W + j] = 1;
+                q[0].push({i, j});
+                visited[i][j] = true;
+            }
+        }
+    }
+
+    // Calculate the initial area of the island
+    int remaining_area = 0;
+    for (int i = 0; i < H; i++) {
+        for (int j = 0; j < W; j++) {
+            if (!visited[i][j]) {
+                remaining_area++;
+            }
+        }
+    }
+
+    // Process each year
+    for (int year = 1; year <= Y; year++) {
+        // Update the queue with the current year
+        queue<pair<int, int>> current_q = q[year - 1];
+
+        while (!current_q.empty()) {
+            int x = current_q.front().first;
+            int y = current_q.front().second;
+            current_q.pop();
+
+            for (int d = 0; d < 4; d++) {
+                int nx = x + dx[d];
+                int ny = y + dy[d];
+
+                if (nx < 0 || nx >= H || ny < 0 || ny >= W || visited[nx][ny] || A[nx][ny] > year) {
+                    continue;
+                }
+
+                visited[nx][ny] = true;
+                q[year].push({nx, ny});
+                area[nx * W + ny] = 1;
+            }
+        }
+
+        // Subtract the area that will sink this year
+        int area_sunk = 0;
+        for (int i = 0; i < H; i++) {
+            for (int j = 0; j < W; j++) {
+                if (visited[i][j] && A[i][j] == year) {
+                    area_sunk++;
+                }
+            }
+        }
+        remaining_area -= area_sunk;
+
+        // Output the remaining area
+        cout << remaining_area << endl;
+    }
+
+    return 0;
+}

@@ -1,0 +1,64 @@
+#include <iostream> // cout, endl, cin
+#include <string> // string, to_string, stoi
+#include <vector> // vector
+#include <algorithm> // min, max, swap, sort, reverse, lower_bound, upper_bound
+#include <utility> // pair, make_pair
+#include <tuple> // tuple, make_tuple
+#include <cstdint> // int64_t, int*_t
+#include <cstdio> // printf
+#include <map> // map
+#include <queue> // queue, priority_queue
+#include <set> // set
+#include <stack> // stack
+#include <deque> // deque
+#include <unordered_map> // unordered_map
+#include <unordered_set> // unordered_set
+#include <bitset> // bitset
+#include <cctype> // isupper, islower, isdigit, toupper, tolower
+#include <cmath>
+#include <iomanip>
+using namespace std;
+
+int cmp(char x, char y) {
+    if (x == 'P') return y == 'R' ? -1 : 1;
+    if (x == 'R') return y == 'S' ? -1 : 1;
+    if (x == 'S') return y == 'P' ? -1 : 1;
+    return -100; // Non-participating character 'X' is considered lower than all participating characters
+}
+
+char win(char x) {
+    if (x == 'R') return 'P';
+    if (x == 'S') return 'R';
+    if (x == 'P') return 'S';
+    return ' '; // Non-participating character 'X' does not win
+}
+
+int main() {
+    int n;
+    string s;
+    cin >> n >> s;
+    vector<int> siz(n);
+    vector<char> rsp(n);
+    int pos = 0;
+    int c = 1;
+    siz[n-1] = -1; // Initialize the size array with -1 for easier management
+    char prev = s[0];
+    int ans = 1; // Start with 1 to count the first segment
+
+    for (int i = 1; i < n; ++i) {
+        if (comp(s[i], prev) != comp(comp(prev, s[i]), s[i])) {
+            ans++;
+            prev = s[i];
+        }
+        siz[pos] = i - pos; // Store the size of the segment
+        pos = i;
+    }
+
+    cout << ans << endl;
+    return 0;
+}
+
+int comp(char x, char y) {
+    if (x == 'X' || y == 'X') return x == 'X' ? -1 : 1; // 'X' is considered lower than any other character
+    return x == y ? 0 : (x < y ? -1 : 1);
+}

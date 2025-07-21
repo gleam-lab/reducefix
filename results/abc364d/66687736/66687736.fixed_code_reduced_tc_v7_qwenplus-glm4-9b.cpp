@@ -1,0 +1,46 @@
+#include <iostream>
+#include <vector>
+#include <map>
+#include <algorithm>
+#include <cmath>
+
+using namespace std;
+
+typedef long long ll;
+
+map<pair<ll, ll>, int> cnt;
+
+int search(const vector<ll>& A, ll b, int k) {
+    int L = 0, R = A.size() - 1;
+    while (L < R) {
+        int M = L + (R - L + 1) / 2;
+        // Count how many distances are less than the distance between A[M] and b
+        int count = 0;
+        for (int j = 0; j < A.size(); ++j) {
+            if (abs(A[j] - b) < abs(A[M] - b)) {
+                count++;
+            }
+        }
+        if (count < k) {
+            L = M;
+        } else {
+            R = M - 1;
+        }
+    }
+    return abs(A[L] - b);
+}
+
+int main() {
+    ll N, Q, b, k;
+    cin >> N >> Q;
+    vector<ll> A(N);
+    for (ll i = 0; i < N; ++i) {
+        cin >> A[i];
+    }
+    
+    for (int i = 0; i < Q; ++i) {
+        cin >> b >> k;
+        cout << search(A, b, k) << '\n';
+    }
+    return 0;
+}

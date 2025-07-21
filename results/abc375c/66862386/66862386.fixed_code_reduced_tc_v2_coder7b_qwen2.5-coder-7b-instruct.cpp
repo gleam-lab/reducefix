@@ -1,0 +1,37 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(0); cout.tie(0);
+
+    long double cost = 0;
+    long double ans = 0;
+    int N;
+    int nowX = 0, nowY = 0;
+    int nextX, nextY;
+
+    cin >> N;
+
+    for(int i = 0; i < N; i++) {
+        cin >> nextX >> nextY;
+
+        // Calculate Euclidean distance squared to avoid precision issues
+        cost = (powl((nowX - nextX), 2.0) + powl((nowY - nextY), 2.0));
+
+        // Add the distance to the total cost
+        ans += sqrtl(cost);
+
+        // Update current position
+        nowX = nextX;
+        nowY = nextY;
+    }
+
+    // Return to origin
+    cost = (powl((nowX - 0), 2.0) + powl((nowY - 0), 2.0));
+    ans += sqrtl(cost);
+
+    cout << setprecision(15) << ans << endl;
+
+    return 0;
+}

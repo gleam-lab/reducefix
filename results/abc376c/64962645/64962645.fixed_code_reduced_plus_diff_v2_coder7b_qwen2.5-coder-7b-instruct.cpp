@@ -1,0 +1,54 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+bool canStoreToys(vector<int>& va, vector<int>& vb, int x) {
+    int n = va.size();
+    vector<bool> used(n, false);
+    priority_queue<pair<int, int>, vector<pair<int, int>>, greater<>> pq;
+    for (int i = 0; i < n; ++i) {
+        pq.push({va[i], i});
+    }
+
+    while (!pq.empty()) {
+        auto [size, index] = pq.top(); pq.pop();
+        if (used[index]) continue;
+        used[index] = true;
+        for (int j = index + 1; j < n; ++j) {
+            if (!used[j] && va[j] <= size && size >= vb[j]) {
+                used[j] = true;
+                break;
+            }
+        }
+    }
+
+    for (bool b : used) {
+        if (!b) return false;
+    }
+    return true;
+}
+
+int main() {
+    int n;
+    cin >> n;
+    vector<int> va(n), vb(n);
+    for (int i = 0; i < n; ++i)
+        cin >> va[i];
+    for (int i = 1; i < n; ++i)
+        cin >> vb[i];
+
+    sort(begin(va), end(va));
+    sort(begin(vb), end(vb));
+
+    int l = 1, r = 1e9;
+    while (l < r) {
+        int m = (l + r) / 2;
+        if (canStoreToys(va, vb, m)) {
+            r = m;
+        } else {
+            l = m + 1;
+        }
+    }
+
+    cout << (l == 1e9 ? -1 : l) << endl;
+    return 0;
+}

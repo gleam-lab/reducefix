@@ -1,0 +1,35 @@
+#include<bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(0);
+
+    int n, q;
+    cin >> n;
+    vector<long long> x(n + 1), p(n + 1);
+    map<int, int> sum;
+
+    for (int i = 1; i <= n; ++i) {
+        cin >> x[i];
+    }
+    for (int i = 1; i <= n; ++i) {
+        cin >> p[i];
+        sum[i] = sum[i - 1] + p[i];
+    }
+
+    cin >> q;
+    while (q--) {
+        int L, R;
+        cin >> L >> R;
+        auto it1 = lower_bound(x.begin(), x.end(), L);
+        auto it2 = upper_bound(x.begin(), x.end(), R);
+        int idx1 = distance(x.begin(), it1) + 1;
+        int idx2 = distance(x.begin(), it2);
+
+        if (idx1 > n || idx2 == 0) continue;
+        cout << sum[idx2 - 1] - sum[idx1 - 1] << '\n';
+    }
+
+    return 0;
+}

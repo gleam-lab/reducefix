@@ -1,0 +1,121 @@
+#include <bits/stdc++.h>
+
+using i64 = long long;
+
+constexpr int dx[] = {0, 1, 0, -1};
+constexpr int dy[] = {1, 0, -1, 0};
+
+int main() {
+    std::ios::sync_with_stdio(false);
+    std::cin.tie(nullptr);
+
+    int H, W, Y;
+    std::cin >> H >> W >> Y;
+
+    std::vector<std::vector<int>> A(H, std::vector<int>(W));
+    for (int i = 0; i < H; ++i) {
+        for (int j = 0; j < W; ++j) {
+            std::cin >> A[i][j];
+        }
+    }
+
+    // Store all cells with their heights along with whether they're on the border
+    std::vector<std::tuple<int, int, int>> cells;
+    for (int i = 0; i < H; ++i) {
+        for (int j = 0; j < W; ++j) {
+            bool isBorder = (i == 0 || i == H - 1 || j == 0 || j == W - 1);
+            cells.emplace_back(A[i][j], i, j);
+        }
+    }
+
+    // Sort by height so we can process in increasing order
+    std::sort(cells.begin(), cells.end());
+
+    std::vector<std::vector<bool>> visited(H, std::vector<bool>(W, false));
+    std::vector<std::vector<bool>> connectedToEdge(H, std::vector<bool>(W, false));
+
+    // Union-Find data structure
+    class UnionFind {
+    public:
+        explicit UnionFind(int size) : parent(size), rank(size, 0) {
+            std::iota(parent.begin(), parent.end(), 0);
+        }
+
+        int find(int x) {
+            if (parent[x] != x) parent[x] = find(parent[x]);
+            return parent[x];
+        }
+
+        void unite(int x, int y) {
+            x = find(x);
+            y = find(y);
+            if (x == y) return;
+            if (rank[x] < rank[y]) std::swap(x, y);
+            parent[y] = x;
+            if (rank[x] == rank[y]) ++rank[x];
+        }
+
+    private:
+        std::vector<int> parent, rank;
+    };
+
+    // Map cell coordinates to a unique index
+    auto index = [&](int x, int y) { return x * W + y; };
+
+    UnionFind uf(H * W);
+
+    // We'll keep track of which components are connected to the sea
+    std::unordered_set<int> connectedToSea;
+
+    // Initialize edge cells as connected to sea
+    for (int i = 0; i < H; ++i) {
+        for (int j = 0; j < W; ++j) {
+            if (i == 0 || i == H - 1 || j == 0 || j == W - 1) {
+                connectedToSea.insert(uf.find(index(i, j)));
+            }
+        }
+    }
+
+    // Process cells in increasing order of height
+    for (auto [height, x, y] : cells) {
+        std::vector<int> neighbors;
+
+        for (int d = 0; d < 4; ++d) {
+            int nx = x + dx[d];
+            int ny = y + dy[d];
+
+            if (nx >= 0 && nx < H && ny >= 0 && ny < W && A[nx][ny] <= A[x][y]) {
+                uf.unite(index(x, y), uf.find(index(nx, ny)));
+            }
+        }
+
+        // Check if this cell's component is now connected to sea
+        if (connectedToSea.count(uf.find(index(x, y)))) {
+            connectedToEdge[x][y] = true;
+        }
+
+        // Update connectedToEdge for all cells in the same component
+        for (int i = 0; i < H; ++i) {
+            for (int j = 0; j < W; ++j) {
+                if (uf.find(index(i, j)) == uf.find(index(x, y))) {
+                    connectedToEdge[i][j] = connectedToEdge[i][j] || connectedToEdge[x][y];
+                }
+            }
+        }
+    }
+
+    // For each year, count how many cells are still above water or connected to sea
+    int remaining = H * W;
+    for (int year = 1; year <= Y; ++year) {
+        for (auto [height, x, y] : cells) {
+            if (height == year) {
+                if (!connectedToEdge[x][y]) {
+                    --remaining;
+                }
+            }
+        }
+        std::cout << remaining << "\n";
+    }
+
+    return 0;
+}

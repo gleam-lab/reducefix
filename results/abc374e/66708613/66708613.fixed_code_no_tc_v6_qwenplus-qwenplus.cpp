@@ -1,0 +1,77 @@
+#include<iostream>
+#include<vector>
+#include<climits>
+#include<cmath>
+#include<algorithm>
+using namespace std;
+using ll = long long;
+
+const ll INF = 1e18;
+
+int N;
+ll X;
+
+vector<ll> A, P, B, Q;
+
+// Check if we can achieve processing capacity `x` within budget X
+bool can_achieve(ll x) {
+    ll total_cost = 0;
+    for (int i = 0; i < N; ++i) {
+        ll min_cost = INF;
+
+        // Try all possible number of type A machines from 0 to min(B[i], x / A[i]) + 1
+        // We try up to min(B[i], x / A[i]) + 1 to ensure coverage
+        ll max_a = min(B[i], (x + A[i] - 1) / A[i]);
+        for (ll a = 0; a <= max_a; ++a) {
+            ll remaining = max(0LL, x - A[i] * a);
+            ll b_needed = (remaining + B[i] - 1) / B[i];
+            if (b_needed <= B[i]) {
+                min_cost = min(min_cost, a * P[i] + b_needed * Q[i]);
+            }
+        }
+
+        // Try all possible number of type B machines
+        ll max_b = min(A[i], (x + B[i] - 1) / B[i]);
+        for (ll b = 0; b <= max_b; ++b) {
+            ll remaining = max(0LL, x - B[i] * b);
+            ll a_needed = (remaining + A[i] - 1) / A[i];
+            if (a_needed <= A[i]) {
+                min_cost = min(min_cost, b * Q[i] + a_needed * P[i]);
+            }
+        }
+
+        if (min_cost > X || min_cost == INF) {
+            return false;
+        }
+        X -= min_cost;  // Deduct the cost used for this stage
+    }
+    return true;
+}
+
+int main() {
+    cin >> N >> X;
+    A.resize(N), P.resize(N), B.resize(N), Q.resize(N);
+    for (int i = 0; i < N; ++i) {
+        cin >> A[i] >> P[i] >> B[i] >> Q[i];
+    }
+
+    // Binary search for maximum achievable minimum processing capacity
+    ll low = 0, high = 2e14;
+    ll ans = 0;
+    while (low <= high) {
+        ll mid = (low + high) / 2;
+        // We make a copy of X because we need to reuse it in each check
+        ll temp_X = X;
+        swap(X, temp_X);
+        if (can_achieve(mid)) {
+            ans = mid;
+            low = mid + 1;
+        } else {
+            high = mid - 1;
+        }
+        swap(X, temp_X);  // Restore original X
+    }
+
+    cout << ans << endl;
+    return 0;
+}

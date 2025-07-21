@@ -1,0 +1,84 @@
+To fix this code, we need to address several issues related to the algorithm's correctness and efficiency, especially given the constraints. The original code attempts to use a priority queue to process sections of the island in order of their elevation, simulating the sinking process as the sea level rises each year. However, there are some critical flaws in the approach:
+
+1. **Initialization of Priority Queue**: The initial code adds all border sections to the priority queue, marking them as used. This is correct, but the handling of the priority queue during the simulation needs to be optimized.
+
+2. **Handling of Sea Level Increments**: The original code increments `now` and checks if the top element of the priority queue is less than or equal to `now`, which is correct, but the loop structure can be simplified and made more efficient.
+
+3. **Output Timing**: The original code outputs the remaining area for each year inside the loop, which is correct, but the loop condition and the way `now` is incremented can be streamlined.
+
+4. **Edge Cases**: The original code may not handle cases where the entire island sinks immediately or where the sea level exceeds all elevations correctly.
+
+5. **Efficiency**: Given the constraints (H, W up to 1000 and Y up to 1e5), the algorithm needs to be efficient. The original approach is generally O(Y log(HW)) which is acceptable, but we need to ensure no unnecessary operations are performed.
+
+### Fixed Code
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+#define ll long long
+
+ll dx[4] = {0, 1, 0, -1}, dy[4] = {1, 0, -1, 0};
+
+int main() {
+    ll h, w, y; cin >> h >> w >> y;
+    ll ans = h * w;
+    vector<vector<ll>> room(h, vector<ll>(w));
+    for (ll i = 0; i < h; i++) {
+        for (ll j = 0; j < w; j++) {
+            cin >> room[i][j];
+        }
+    }
+
+    priority_queue<pair<ll, pair<ll, ll>>, vector<pair<ll, pair<ll, ll>>>, greater<pair<ll, pair<ll, ll>>>> pq;
+    vector<vector<bool>> used(h, vector<bool>(w, false));
+
+    // Add border sections to the priority queue
+    for (ll i = 0; i < h; i++) {
+        if (!used[i][0]) {
+            pq.push({room[i][0], {i, 0}});
+            used[i][0] = true;
+        }
+        if (!used[i][w-1]) {
+            pq.push({room[i][w-1], {i, w-1}});
+            used[i][w-1] = true;
+        }
+    }
+    for (ll j = 1; j < w-1; j++) {
+        if (!used[0][j]) {
+            pq.push({room[0][j], {0, j}});
+            used[0][j] = true;
+        }
+        if (!used[h-1][j]) {
+            pq.push({room[h-1][j], {h-1, j}});
+            used[h-1][j] = true;
+        }
+    }
+
+    for (ll current_year = 1; current_year <= y; current_year++) {
+        while (!pq.empty() && pq.top().first <= current_year) {
+            auto top = pq.top();
+            pq.pop();
+            ll ni = top.second.first, nj = top.second.second;
+            ans--;
+
+            for (ll k = 0; k < 4; k++) {
+                ll nexi = ni + dx[k], nexj = nj + dy[k];
+                if (0 <= nexi && nexi < h && 0 <= nexj && nexj < w && !used[nexi][nexj]) {
+                    pq.push({room[nexi][nexj], {nexi, nexj}});
+                    used[nexi][nexj] = true;
+                }
+            }
+        }
+        cout << ans << endl;
+    }
+    return 0;
+}
+```
+
+### Explanation
+1. **Initialization**: The border sections of the island are added to the priority queue, which is a min-heap based on the elevation of the sections. This ensures that we process sections in order of increasing elevation.
+
+2. **Simulation Loop**: For each year from 1 to Y, we process all sections in the priority queue that have an elevation less than or equal to the current sea level. Each time a section is processed (sinks), its adjacent sections are checked and added to the queue if they haven't been processed yet.
+
+3. **Output**: After processing each year, the remaining area of the island is printed. The area starts at H * W and decreases as sections sink into the sea.
+
+4. **Efficiency**: The use of a priority queue ensures that each section is processed exactly once, and the adjacency checks are done in constant time. The algorithm efficiently handles the constraints by leveraging the priority queue to manage the order of processing.

@@ -1,0 +1,89 @@
+To fix this code, we need to address several issues in the original implementation. The main problem is in how the code handles the four directions (up, down, left, right) when a bomb is placed in an empty cell. The original code incorrectly processes these directions by not correctly identifying the first walls in each direction and sometimes accessing invalid iterators.
+
+### Approaches
+1. **Initialization**: We need to maintain sets for each row and column to track the walls. Each wall is represented by its row and column indices in these sets.
+2. **Query Processing**:
+   - If the bomb is placed on a cell with a wall, remove that wall.
+   - If the bomb is placed on an empty cell, find the first walls in each of the four directions (up, down, left, right) and remove them.
+   - For each direction, use the `lower_bound` method from the set to efficiently find the nearest walls.
+3. **Edge Cases**: Handle cases where there are no walls in a particular direction by checking if the iterator is valid before proceeding.
+
+### Solution Code
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+#define rep(i,n) for(int i = 0; i < (n); i++)
+using ll = long long;
+
+int main() {
+    int h, w, q;
+    cin >> h >> w >> q;
+    vector<set<int>> row_walls(h), col_walls(w);
+    rep(i, h) rep(j, w) {
+        row_walls[i].insert(j);
+        col_walls[j].insert(i);
+    }
+    ll total_walls = (ll)h * w;
+    rep(qi, q) {
+        int r, c;
+        cin >> r >> c;
+        r--; c--;
+        if (row_walls[r].count(c)) {
+            row_walls[r].erase(c);
+            col_walls[c].erase(r);
+            total_walls--;
+        } else {
+            // Up
+            auto it_up = col_walls[c].lower_bound(r);
+            if (it_up != col_walls[c].begin()) {
+                it_up--;
+                int wall_r = *it_up;
+                row_walls[wall_r].erase(c);
+                col_walls[c].erase(wall_r);
+                total_walls--;
+            }
+            // Down
+            auto it_down = col_walls[c].lower_bound(r);
+            if (it_down != col_walls[c].end()) {
+                int wall_r = *it_down;
+                row_walls[wall_r].erase(c);
+                col_walls[c].erase(wall_r);
+                total_walls--;
+            }
+            // Left
+            auto it_left = row_walls[r].lower_bound(c);
+            if (it_left != row_walls[r].begin()) {
+                it_left--;
+                int wall_c = *it_left;
+                row_walls[r].erase(wall_c);
+                col_walls[wall_c].erase(r);
+                total_walls--;
+            }
+            // Right
+            auto it_right = row_walls[r].lower_bound(c);
+            if (it_right != row_walls[r].end()) {
+                int wall_c = *it_right;
+                row_walls[r].erase(wall_c);
+                col_walls[wall_c].erase(r);
+                total_walls--;
+            }
+        }
+    }
+    cout << total_walls << "\n";
+    return 0;
+}
+```
+
+### Explanation
+1. **Initialization**: We initialize sets `row_walls` and `col_walls` to keep track of walls in each row and column. Initially, all cells have walls, so we populate these sets.
+2. **Query Processing**:
+   - **Wall Exists**: If the bomb is placed on a cell with a wall, we remove the wall from both the row and column sets and decrement the total wall count.
+   - **Empty Cell**: If the bomb is placed on an empty cell, we search for the nearest walls in all four directions:
+     - **Up**: Use `lower_bound` on the column set to find the first wall above the bomb's position.
+     - **Down**: Use `lower_bound` to find the first wall below the bomb's position.
+     - **Left**: Use `lower_bound` on the row set to find the first wall to the left.
+     - **Right**: Use `lower_bound` to find the first wall to the right.
+   - For each found wall, we remove it from both sets and decrement the total wall count.
+3. **Output**: After processing all queries, the remaining wall count is printed.
+
+This approach ensures that we efficiently handle each query in logarithmic time due to the use of sets, making the solution scalable for large grid sizes.

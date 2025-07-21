@@ -1,0 +1,122 @@
+To fix this code, we need to correctly calculate the number of safe squares where a new piece can be placed without being captured by any existing pieces. The existing pieces can capture along rows, columns, and both diagonals (i+j and i-j). The initial approach had some logical errors in how it accounted for overlaps between these different attack lines.
+
+### Approaches
+1. **Track Attack Lines**: For each existing piece, we need to track the rows, columns, diagonal sums (i+j), and diagonal differences (i-j) that are under attack.
+2. **Calculate Safe Squares**: The total safe squares are calculated by subtracting the squares under attack from the total squares (N²). However, we must account for overlaps where squares are under attack by more than one line (e.g., a square under attack by both a row and a column).
+3. **Inclusion-Exclusion Principle**: To avoid double-counting squares that are under attack by multiple lines, we use the inclusion-exclusion principle to correctly adjust the counts.
+
+### Solution Code
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+typedef long long ll;
+
+int main() {
+    ll N, M;
+    cin >> N >> M;
+    set<ll> rows, cols, diag1, diag2;
+    set<pair<ll, ll>> pieces;
+
+    for (int i = 0; i < M; ++i) {
+        ll a, b;
+        cin >> a >> b;
+        rows.insert(a);
+        cols.insert(b);
+        diag1.insert(a - b);
+        diag2.insert(a + b);
+        pieces.insert({a, b});
+    }
+
+    ll unsafe_rows = rows.size();
+    ll unsafe_cols = cols.size();
+    ll unsafe_diag1 = diag1.size();
+    ll unsafe_diag2 = diag2.size();
+
+    // Total squares under attack by rows or columns
+    ll total_unsafe = unsafe_rows * N + unsafe_cols * N - unsafe_rows * unsafe_cols;
+
+    // Subtract squares under attack by diagonals, then add back overlaps
+    for (auto d : diag1) {
+        // Number of squares on the diagonal i-j = d
+        ll cnt;
+        if (d >= 0) {
+            cnt = N - d;
+        } else {
+            cnt = N + d;
+        }
+        total_unsafe += cnt;
+    }
+
+    for (auto d : diag2) {
+        // Number of squares on the diagonal i+j = d
+        ll cnt;
+        if (d <= N + 1) {
+            cnt = d - 1;
+        } else {
+            cnt = 2 * N - d + 1;
+        }
+        total_unsafe += cnt;
+    }
+
+    // Subtract overlaps between rows and diagonals, and columns and diagonals
+    for (auto r : rows) {
+        for (auto d : diag1) {
+            ll j = r - d;
+            if (j >= 1 && j <= N) {
+                total_unsafe--;
+            }
+        }
+        for (auto d : diag2) {
+            ll j = d - r;
+            if (j >= 1 && j <= N) {
+                total_unsafe--;
+            }
+        }
+    }
+
+    for (auto c : cols) {
+        for (auto d : diag1) {
+            ll i = c + d;
+            if (i >= 1 && i <= N) {
+                total_unsafe--;
+            }
+        }
+        for (auto d : diag2) {
+            ll i = d - c;
+            if (i >= 1 && i <= N) {
+                total_unsafe--;
+            }
+        }
+    }
+
+    // Add back squares under attack by both diagonals
+    for (auto d1 : diag1) {
+        for (auto d2 : diag2) {
+            ll i = (d1 + d2) / 2;
+            ll j = (d2 - d1) / 2;
+            if ((d1 + d2) % 2 == 0 && (d2 - d1) % 2 == 0) {
+                if (i >= 1 && i <= N && j >= 1 && j <= N) {
+                    total_unsafe++;
+                }
+            }
+        }
+    }
+
+    // Subtract existing pieces, as they are already occupied and not under attack
+    total_unsafe -= M;
+
+    ll total_safe = N * N - total_unsafe;
+    cout << total_safe << endl;
+
+    return 0;
+}
+```
+
+### Explanation
+1. **Tracking Attack Lines**: The code first reads the positions of existing pieces and records the rows, columns, and diagonals (i-j and i+j) that are under attack.
+2. **Initial Unsafe Count**: It calculates the initial unsafe squares by considering rows and columns, adjusting for overlaps where a square is under attack by both a row and a column.
+3. **Diagonal Attacks**: It then adds squares under attack by each diagonal, adjusting for overlaps between rows and diagonals, and columns and diagonals.
+4. **Inclusion-Exclusion**: The code uses the inclusion-exclusion principle to correctly count overlaps between diagonals (i-j and i+j) where both conditions are met.
+5. **Adjust for Occupied Squares**: Finally, it subtracts the squares occupied by existing pieces, as they are already taken and not under attack.
+6. **Result**: The total safe squares is the total number of squares (N²) minus the total unsafe squares calculated, printed as the result.

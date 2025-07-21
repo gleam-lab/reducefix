@@ -1,0 +1,61 @@
+#include <iostream>
+#include <vector>
+#include <set>
+#include <algorithm>
+
+using namespace std;
+
+int main() {
+    int H, W, Q;
+    cin >> H >> W >> Q;
+
+    vector<vector<set<int>>> grid(H, vector<set<int>>(W));
+    
+    // Initialize the grid with walls
+    for (int i = 0; i < H; i++) {
+        for (int j = 0; j < W; j++) {
+            grid[i][j].insert(j + 1);  // +1 to convert to 1-based index
+            grid[i][j].insert(j + 2);  // +2 to simulate a wall on the right
+        }
+    }
+
+    for (int q = 0; q < Q; q++) {
+        int R, C;
+        cin >> R >> C;
+        R--; C--;  // Convert to 0-based index
+
+        // Check if there is a wall at the given position
+        if (grid[R][C].size() == 2) {  // There is one wall
+            grid[R][C].erase(grid[R][C].end() - 1);  // Destroy the wall
+        } else {  // There are two walls
+            // Remove the wall and destroy the other wall in the row and column
+            auto it = grid[R][C].upper_bound(C);
+            if (it != grid[R][C].end()) {
+                grid[R][C].erase(it);
+            }
+            
+            it = grid[R].end();
+            --it;
+            grid[R][C].erase(it);
+            
+            it = grid[R].end();
+            --it;
+            grid[*it][C].erase(it);
+            
+            it = grid[*it][C].end();
+            --it;
+            grid[*it][*it].erase(it);
+        }
+    }
+
+    int remaining_walls = 0;
+    for (int i = 0; i < H; i++) {
+        for (int j = 0; j < W; j++) {
+            remaining_walls += grid[i][j].size();
+        }
+    }
+
+    cout << remaining_walls << endl;
+
+    return 0;
+}

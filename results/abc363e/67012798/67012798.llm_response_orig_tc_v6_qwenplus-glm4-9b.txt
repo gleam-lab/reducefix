@@ -1,0 +1,88 @@
+
+After reviewing the provided code and understanding the problem, there are several issues that need to be addressed:
+
+1. The initial code does not handle the sinking of the island correctly. The sinking should be triggered when a section reaches the sea level, not just when it's on the border.
+2. The current solution uses a queue to manage the sinking process, but it only adds sections to the queue if their elevation is equal to the current year. This means that sections that are not on the border and that are below sea level will never be processed.
+3. The code does not check if the neighboring sections of a sinking section are already marked as sunken, which would lead to double-counting.
+4. The code does not consider that sections can sink simultaneously, which would need to be handled in a different manner.
+
+To solve the problem, I'll rewrite the code to address these issues:
+
+1. Use a flood fill algorithm to propagate the sinking process from the boundary of the island inward. This will ensure that the sinking is spread correctly through adjacent sections.
+2. Only add sections to the queue if they have not been processed before.
+3. Use a set to keep track of already sunken sections to avoid double-counting.
+4. Ensure that the sections sink at the same time each year.
+
+Here is the corrected code:
+
+```cpp
+#include <iostream>
+#include <vector>
+#include <set>
+#include <queue>
+
+using namespace std;
+
+void processYear(int year, vector<vector<int>>& A, vector<vector<bool>>& visited, int& remainingArea) {
+    set<pair<int, int>> sinking;
+    queue<pair<int, int>> q;
+
+    // Find all sections that will sink this year
+    for (int i = 0; i < A.size(); ++i) {
+        for (int j = 0; j < A[0].size(); ++j) {
+            if (!visited[i][j] && A[i][j] + year <= 0) {
+                visited[i][j] = true;
+                q.push({i, j});
+                sinking.insert({i, j});
+            }
+        }
+    }
+
+    // Perform the flood fill to propagate the sinking
+    while (!q.empty()) {
+        auto [x, y] = q.front();
+        q.pop();
+
+        for (int dx = -1; dx <= 1; ++dx) {
+            for (int dy = -1; dy <= 1; ++dy) {
+                int nx = x + dx;
+                int ny = y + dy;
+
+                if (nx < 0 || nx >= A.size() || ny < 0 || ny >= A[0].size()) continue;
+                if (visited[nx][ny] || A[nx][ny] + year > 0) continue;
+
+                visited[nx][ny] = true;
+                q.push({nx, ny});
+                sinking.insert({nx, ny});
+            }
+        }
+    }
+
+    // Update the remaining area
+    remainingArea -= sinking.size();
+}
+
+int main() {
+    int H, W, Y;
+    cin >> H >> W >> Y;
+
+    vector<vector<int>> A(H, vector<int>(W));
+    vector<vector<bool>> visited(H, vector<bool>(W, false));
+    int remainingArea = H * W;
+
+    for (int i = 0; i < H; ++i) {
+        for (int j = 0; j < W; ++j) {
+            cin >> A[i][j];
+        }
+    }
+
+    for (int year = 0; year < Y; ++year) {
+        processYear(year, A, visited, remainingArea);
+        cout << remainingArea << endl;
+    }
+
+    return 0;
+}
+```
+
+This code should correctly simulate the sinking of the island year by year and output the remaining area above the sea level for each year.

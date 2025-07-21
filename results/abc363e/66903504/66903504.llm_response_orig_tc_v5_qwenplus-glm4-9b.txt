@@ -1,0 +1,91 @@
+
+The problem is about simulating the process of the sea level rise on an island. The goal is to determine the area of the island that remains above sea level after Y years.
+
+### Analysis
+The main idea is to simulate the process of the sea level rising and determining which parts of the island sink. We can do this using a flood fill algorithm, which will allow us to propagate the sinking of the island cells to their neighbors when they become below sea level. 
+
+To make the simulation efficient for large values of Y, we can use a difference array to quickly update the sinking of cells when they become submerged. The difference array will help us apply the effect of sinking to a range of cells without having to iterate over each cell individually.
+
+### Steps in the Algorithm
+1. **Initialization**: 
+   - Read the input values.
+   - Create a grid for the island's elevation and a boolean grid to keep track of which cells are currently submerged.
+   - Initialize the difference array.
+   - Initialize a queue or priority queue to perform the flood fill from the edges (cells adjacent to the sea or cells that have already sunk due to previous years).
+
+2. **Flood Fill**:
+   - Start the flood fill by adding all cells adjacent to the sea or cells that have already sunk to the queue with their elevation.
+   - For each cell processed, update the difference array to mark the cells that will sink next year.
+   - Update the submerged status of the cells in the boolean grid.
+   - Update the count of remaining area by subtracting the area of the cells that have sunk.
+
+3. **Output**:
+   - After performing the flood fill for each year, output the remaining area of the island.
+
+### Corrected Code
+```cpp
+#include <iostream>
+#include <vector>
+#include <queue>
+using namespace std;
+
+int main() {
+    int H, W, Y;
+    cin >> H >> W >> Y;
+
+    vector<vector<int>> A(H, vector<int>(W));
+    vector<vector<bool>> F(H, vector<bool>(W, false));  // F[i][j] = false means submerged
+    for (int i = 0; i < H; ++i) {
+        for (int j = 0; j < W; ++j) {
+            cin >> A[i][j];
+        }
+    }
+
+    // Priority queue to process cells in decreasing order of elevation
+    priority_queue<pair<int, int>> pq;
+    for (int i = 0; i < H; ++i) {
+        for (int j = 0; j < W; ++j) {
+            if (i == 0 || i == H - 1 || j == 0 || j == W - 1 || A[i][j] < Y) {
+                F[i][j] = true;  // This cell will be submerged at sea level Y
+                pq.push({A[i][j], i * W + j});
+            }
+        }
+    }
+
+    int remaining_area = H * W;
+    int current_year = 0;
+    while (current_year < Y && !pq.empty()) {
+        while (current_year <= pq.top().first && !pq.empty()) {
+            int elevation = pq.top().first;
+            int index = pq.top().second;
+            pq.pop();
+            remaining_area--;
+            int i = index / W;
+            int j = index % W;
+
+            // Check neighbors and add to queue if they will sink this year
+            for (int di = -1; di <= 1; ++di) {
+                int ni = i + di;
+                for (int dj = -1; dj <= 1; ++dj) {
+                    int nj = j + dj;
+                    if (ni >= 0 && ni < H && nj >= 0 && nj < W) {
+                        if (A[ni][nj] <= elevation + 1 && !F[ni][nj]) {
+                            F[ni][nj] = true;
+                            pq.push({elevation + 1, ni * W + nj});
+                        }
+                    }
+                }
+            }
+        }
+        current_year++;
+    }
+
+    for (int year = 1; year <= Y; ++year) {
+        cout << remaining_area - (H * W - H - W) << endl;  // Subtracting the area of the border
+    }
+
+    return 0;
+}
+```
+
+This corrected code uses a priority queue to ensure that the highest elevation cells are processed first, and it uses a vector of vectors to represent the island and keep track of submerged cells. The difference array approach is not used here because the problem's constraints allow us to directly simulate the process for Y years.

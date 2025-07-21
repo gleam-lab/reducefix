@@ -1,0 +1,92 @@
+To fix this code, we need to address the issue where the code incorrectly handles the case when the bomb is placed on an already empty cell. The original code fails to correctly identify and destroy the first walls in the four directions when the cell is empty, leading to incorrect counts of remaining walls.
+
+### Approaches
+1. **Initial Setup**: Initialize sets for each row and column to keep track of walls that are still present.
+2. **Processing Queries**:
+   - **Case 1**: If the bomb is placed on a cell with a wall, remove that wall.
+   - **Case 2**: If the bomb is placed on an empty cell, find the nearest walls in the four directions (up, down, left, right) and remove them if they exist.
+3. **Efficiency**: Use binary search (via `lower_bound` and `upper_bound`) to efficiently find the nearest walls in the four directions to ensure the solution handles large inputs within acceptable time limits.
+
+### Solution Code
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+#define rep(i,n) for(int i = 0; i < (n); i++)
+using ll = long long;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int h, w, q;
+    cin >> h >> w >> q;
+    vector<set<int>> row_walls(h), col_walls(w);
+
+    rep(i, h) rep(j, w) {
+        row_walls[i].insert(j);
+        col_walls[j].insert(i);
+    }
+
+    rep(qi, q) {
+        int r, c;
+        cin >> r >> c;
+        r--; c--;
+
+        if (row_walls[r].count(c)) {
+            row_walls[r].erase(c);
+            col_walls[c].erase(r);
+        } else {
+            // Up direction
+            auto it_up = col_walls[c].lower_bound(r);
+            if (it_up != col_walls[c].begin()) {
+                --it_up;
+                int i = *it_up;
+                row_walls[i].erase(c);
+                col_walls[c].erase(i);
+            }
+
+            // Down direction
+            auto it_down = col_walls[c].upper_bound(r);
+            if (it_down != col_walls[c].end()) {
+                int i = *it_down;
+                row_walls[i].erase(c);
+                col_walls[c].erase(i);
+            }
+
+            // Left direction
+            auto it_left = row_walls[r].lower_bound(c);
+            if (it_left != row_walls[r].begin()) {
+                --it_left;
+                int j = *it_left;
+                row_walls[r].erase(j);
+                col_walls[j].erase(r);
+            }
+
+            // Right direction
+            auto it_right = row_walls[r].upper_bound(c);
+            if (it_right != row_walls[r].end()) {
+                int j = *it_right;
+                row_walls[r].erase(j);
+                col_walls[j].erase(r);
+            }
+        }
+    }
+
+    int ans = 0;
+    for (const auto& row : row_walls) {
+        ans += row.size();
+    }
+    cout << ans << "\n";
+
+    return 0;
+}
+```
+
+### Explanation
+1. **Initialization**: We initialize two sets, `row_walls` and `col_walls`, to keep track of the walls in each row and column, respectively. Initially, all cells contain walls, so we populate these sets accordingly.
+2. **Query Processing**:
+   - **Direct Hit**: If the bomb is placed on a cell with a wall, we simply remove that wall from both sets.
+   - **Indirect Hit**: If the cell is empty, we search for the nearest walls in the four directions (up, down, left, right) using binary search operations (`lower_bound` and `upper_bound`). The found walls are then removed from the sets.
+3. **Result Calculation**: After processing all queries, we count the remaining walls by summing the sizes of all sets in `row_walls` (or equivalently `col_walls`).
+
+This approach ensures that we efficiently handle the destruction of walls in both direct and indirect cases, providing the correct count of remaining walls after all queries.

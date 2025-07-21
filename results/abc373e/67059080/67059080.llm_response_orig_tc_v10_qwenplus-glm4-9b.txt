@@ -1,0 +1,98 @@
+
+The provided code has several issues that need to be addressed to solve the problem correctly. Here is an analysis of the issues and a revised version of the code.
+
+### Issues in the Provided Code
+
+1. **Sorting Issue**: The code sorts the candidates based on the number of votes they have received, but it should sort based on the remaining votes they need to guarantee their victory.
+2. **Binary Search Error**: The binary search is used to determine the minimum number of additional votes required. The implementation of the binary search is incorrect and could result in incorrect answers.
+3. **Edge Cases**: The code does not handle the case where a candidate has already received the maximum number of votes and can be guaranteed a win right away.
+
+### Revised Code
+
+Here is a revised version of the code that addresses the above issues:
+
+```cpp
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <climits>
+
+using namespace std;
+
+struct Candidate {
+    long long votes;
+    long long remaining_votes;
+    int index;
+};
+
+bool compare(const Candidate &a, const Candidate &b) {
+    return a.remaining_votes < b.remaining_votes;
+}
+
+int main() {
+    int N, M, K;
+    cin >> N >> M >> K;
+    vector<long long> A(N);
+    vector<Candidate> candidates(N);
+
+    for (int i = 0; i < N; ++i) {
+        cin >> A[i];
+        candidates[i].votes = A[i];
+        candidates[i].remaining_votes = M - 1;  // M-1 is the minimum votes needed to guarantee victory
+        candidates[i].index = i;
+    }
+
+    sort(candidates.begin(), candidates.end(), compare);
+
+    long long total_votes_given = 0;
+    for (const auto &candidate : candidates) {
+        total_votes_given += candidate.votes;
+    }
+
+    long long votes_needed = K - total_votes_given;
+    vector<long long> votes_remaining(N);
+    fill(votes_remaining.begin(), votes_remaining.end(), votes_needed);
+
+    for (int i = 0; i < N; ++i) {
+        if (votes_remaining[i] + candidates[i].votes >= candidates[i].remaining_votes) {
+            // This candidate will definitely win or has already won
+            continue;
+        } else {
+            // Binary search to find the minimum votes needed for this candidate
+            long long low = 0, high = votes_needed;
+            while (low < high) {
+                long long mid = (low + high + 1) / 2;
+                long long current_votes = candidates[i].votes + mid;
+                long long num_candidates_beaten = 0;
+
+                for (int j = i + 1; j < N; ++j) {
+                    if (current_votes >= candidates[j].votes) {
+                        num_candidates_beaten++;
+                    }
+                }
+
+                if (num_candidates_beaten < candidates[i].remaining_votes) {
+                    high = mid - 1;
+                } else {
+                    low = mid;
+                }
+            }
+            votes_remaining[i] = low;
+        }
+    }
+
+    for (const auto &candidate : candidates) {
+        cout << votes_remaining[candidate.index] << " ";
+    }
+    cout << endl;
+
+    return 0;
+}
+```
+
+### Explanation of the Revised Code
+
+1. **Candidate struct**: A struct is used to store the number of votes a candidate has, the remaining votes needed to guarantee victory, and the index of the candidate.
+2. **Sorting**: The candidates are sorted based on the remaining votes needed.
+3. **Binary search**: For each candidate, a binary search is performed on the votes remaining to find the minimum number of additional votes needed for that candidate to guarantee victory.
+4. **Output**: The minimum votes remaining for each candidate are printed, which represents the minimum number of additional votes they need to secure a win.

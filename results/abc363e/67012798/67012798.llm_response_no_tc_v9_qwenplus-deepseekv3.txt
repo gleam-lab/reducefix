@@ -1,0 +1,98 @@
+To fix this code, we need to address the main issue which lies in how the sinking of sections is handled. The original code attempts to process sections in a way that might not account for all sections that should sink at each sea level, especially those that are not on the border initially but become adjacent to the sea as sections sink over time.
+
+### Approaches
+1. **Initial Border Check**: The initial approach checks the borders of the island to see which sections will sink first. This is correct, but it needs to be extended to handle all sections as the sea level rises.
+2. **BFS for Adjacent Sections**: For each sea level, we need to perform a BFS or similar traversal to identify all sections that will sink due to adjacency to already sunk sections. This ensures that all sections that should sink at this level are processed.
+3. **Efficient Processing**: To efficiently handle the large constraints (Y up to 100,000), we need to pre-process the sections by their elevation and use a priority queue or a similar structure to process sections in order of increasing sea levels.
+
+### Solution Code
+```cpp
+#include <bits/stdc++.h>
+
+using namespace std;
+
+constexpr int dx[] = {-1, 1, 0, 0};
+constexpr int dy[] = {0, 0, -1, 1};
+
+int main()
+{
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int H, W, Y;
+    cin >> H >> W >> Y;
+
+    vector<vector<int>> A(H, vector<int>(W));
+    for (int i = 0; i < H; i++)
+    {
+        for (int j = 0; j < W; j++)
+        {
+            cin >> A[i][j];
+        }
+    }
+
+    vector<vector<bool>> sunk(H, vector<bool>(W, false));
+    priority_queue<pair<int, pair<int, int>>, vector<pair<int, pair<int, int>>>, greater<pair<int, pair<int, int>>>> pq;
+
+    // Initialize the priority queue with the border sections
+    for (int i = 0; i < H; i++)
+    {
+        for (int j = 0; j < W; j++)
+        {
+            if (i == 0 || i == H - 1 || j == 0 || j == W - 1)
+            {
+                pq.push({A[i][j], {i, j}});
+                sunk[i][j] = true;
+            }
+        }
+    }
+
+    int remaining = H * W;
+    vector<int> result(Y + 1, remaining);
+
+    // Process each sea level from 1 to Y
+    for (int year = 1; year <= Y; year++)
+    {
+        while (!pq.empty() && pq.top().first <= year)
+        {
+            auto current = pq.top();
+            pq.pop();
+            int x = current.second.first;
+            int y = current.second.second;
+
+            remaining--;
+
+            for (int d = 0; d < 4; d++)
+            {
+                int nx = x + dx[d];
+                int ny = y + dy[d];
+
+                if (nx >= 0 && nx < H && ny >= 0 && ny < W && !sunk[nx][ny])
+                {
+                    sunk[nx][ny] = true;
+                    pq.push({A[nx][ny], {nx, ny}});
+                }
+            }
+        }
+        result[year] = remaining;
+    }
+
+    for (int year = 1; year <= Y; year++)
+    {
+        cout << result[year] << endl;
+    }
+
+    return 0;
+}
+```
+
+### Explanation
+1. **Initialization**: The input is read, including the island's elevation matrix and the number of years Y.
+2. **Priority Queue Setup**: A priority queue is initialized with the border sections of the island, which are the first sections to potentially sink as the sea level rises.
+3. **Processing Each Year**: For each year from 1 to Y:
+   - The priority queue processes sections in order of their elevation. If a section's elevation is less than or equal to the current sea level (year), it sinks.
+   - The BFS ensures that all adjacent sections that meet the sinking criteria are also processed and marked as sunk.
+   - The remaining area of the island is updated and stored for the current year.
+4. **Output**: The results for each year are printed, showing the remaining island area above sea level for each year from 1 to Y.
+
+This approach efficiently handles the sinking process by using a priority queue to process sections in the correct order and ensures that the solution is both correct and optimal for large inputs.

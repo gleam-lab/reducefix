@@ -1,0 +1,87 @@
+To fix this code, we need to ensure that the Union-Find data structure correctly maintains the top 10 largest vertices in each connected component and efficiently answers the k-th largest queries. The previous implementation had issues with properly merging and maintaining the sorted order of vertices in each component.
+
+### Approaches
+1. **Union-Find Data Structure**: We'll use the Union-Find (Disjoint Set Union, DSU) data structure to manage the connected components. Each component will keep track of its vertices in a sorted manner to efficiently answer the k-th largest queries.
+2. **Path Compression and Union by Size**: These optimizations ensure that the operations remain nearly constant time.
+3. **Maintaining Top 10 Largest Vertices**: For each component, we maintain a list of the top 10 largest vertices. When merging two components, we merge their lists and keep only the top 10 elements to ensure efficiency.
+4. **Handling Queries**: For each query of type 2, we check if the component of the given vertex has at least k elements. If it does, we return the k-th largest element; otherwise, we return -1.
+
+### Solution Code
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+#define rep(i, n) for (int i = 0; i < n; i++)
+using P = pair<int, int>;
+using T = tuple<int, int, int>;
+
+struct Union_Find {
+    vector<int> par;
+    vector<int> sz;
+    vector<vector<int>> top;
+
+    Union_Find(int n) {
+        par.resize(n);
+        sz.resize(n, 1);
+        top.resize(n);
+        rep(i, n) {
+            par[i] = i;
+            top[i].push_back(i);
+        }
+    }
+
+    int root(int x) {
+        if (par[x] == x) return x;
+        return par[x] = root(par[x]);
+    }
+
+    void merge(int x, int y) {
+        x = root(x);
+        y = root(y);
+        if (x == y) return;
+        if (sz[x] < sz[y]) swap(x, y);
+        par[y] = x;
+        sz[x] += sz[y];
+        top[x].insert(top[x].end(), top[y].begin(), top[y].end());
+        sort(top[x].rbegin(), top[x].rend());
+        if (top[x].size() > 10) top[x].resize(10);
+    }
+
+    vector<int> get_top(int x) {
+        x = root(x);
+        return top[x];
+    }
+};
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int n, q;
+    cin >> n >> q;
+    Union_Find uf(n);
+    rep(i, q) {
+        int ty, a, b;
+        cin >> ty >> a >> b;
+        a--, b--;
+        if (ty == 1) {
+            uf.merge(a, b);
+        } else {
+            vector<int> top = uf.get_top(a);
+            if (top.size() < b + 1) {
+                cout << -1 << '\n';
+            } else {
+                cout << top[b] + 1 << '\n';
+            }
+        }
+    }
+    return 0;
+}
+```
+
+### Explanation
+1. **Union-Find Initialization**: The `Union_Find` structure is initialized with each vertex as its own parent, a size of 1, and its own value as the initial top element.
+2. **Root Finding**: The `root` method uses path compression to efficiently find the root of a vertex, flattening the structure for future queries.
+3. **Merging Components**: The `merge` method combines two components. It ensures the larger component absorbs the smaller one (union by size) and merges their top 10 lists, sorting and truncating to maintain only the top 10 elements.
+4. **Query Handling**: For type 2 queries, the method retrieves the top elements of the component containing vertex `a`. If there are at least `b` elements, it returns the `b`-th largest (0-based index); otherwise, it returns -1.
+
+This approach ensures that each merge operation is efficient (O(log N) with path compression and union by size) and each query is handled in O(1) time after merging, making the solution scalable for large inputs.

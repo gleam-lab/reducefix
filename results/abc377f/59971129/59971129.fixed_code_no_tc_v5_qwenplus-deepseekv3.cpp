@@ -1,0 +1,110 @@
+#include<bits/stdc++.h>
+
+using namespace std;
+
+typedef long long ll;
+
+int main() {
+    ll N, M;
+    cin >> N >> M;
+    
+    set<ll> rows, cols;
+    set<ll> diag1, diag2; // diag1: i-j, diag2: i+j
+    
+    for (int i = 0; i < M; ++i) {
+        ll a, b;
+        cin >> a >> b;
+        rows.insert(a);
+        cols.insert(b);
+        diag1.insert(a - b);
+        diag2.insert(a + b);
+    }
+    
+    ll unsafe = 0;
+    
+    // Squares attacked by rows or columns
+    unsafe += rows.size() * N + cols.size() * N - rows.size() * cols.size();
+    
+    // Squares attacked by diagonals i-j = d
+    for (auto d : diag1) {
+        // The line i-j = d can be written as i = j + d
+        // The range of j is such that i is between 1 and N
+        // So j + d >= 1 and j + d <= N => j >= 1 - d and j <= N - d
+        // j must also be >=1 and <=N
+        ll j_min = max(1LL, 1 - d);
+        ll j_max = min(N, N - d);
+        if (j_min > j_max) continue;
+        ll cnt = j_max - j_min + 1;
+        unsafe += cnt;
+    }
+    
+    // Squares attacked by diagonals i+j = s
+    for (auto s : diag2) {
+        // The line i+j = s can be written as i = s - j
+        // j must be such that i is between 1 and N => s - j >=1 and s - j <= N
+        // So j >= s - N and j <= s - 1
+        // j must also be >=1 and <=N
+        ll j_min = max(1LL, s - N);
+        ll j_max = min(N, s - 1);
+        if (j_min > j_max) continue;
+        ll cnt = j_max - j_min + 1;
+        unsafe += cnt;
+    }
+    
+    // Now, subtract the overlaps between rows/cols and diagonals
+    // Also, subtract the overlaps between diag1 and diag2
+    
+    // Overlaps between rows and diag1/diag2
+    for (auto r : rows) {
+        for (auto d : diag1) {
+            ll j = r - d;
+            if (j >= 1 && j <= N) {
+                unsafe--;
+            }
+        }
+        for (auto s : diag2) {
+            ll j = s - r;
+            if (j >= 1 && j <= N) {
+                unsafe--;
+            }
+        }
+    }
+    
+    // Overlaps between cols and diag1/diag2
+    for (auto c : cols) {
+        for (auto d : diag1) {
+            ll i = c + d;
+            if (i >= 1 && i <= N) {
+                unsafe--;
+            }
+        }
+        for (auto s : diag2) {
+            ll i = s - c;
+            if (i >= 1 && i <= N) {
+                unsafe--;
+            }
+        }
+    }
+    
+    // Overlaps between diag1 and diag2
+    for (auto d : diag1) {
+        for (auto s : diag2) {
+            if ((s + d) % 2 != 0) continue;
+            ll i = (s + d) / 2;
+            ll j = (s - d) / 2;
+            if (i >= 1 && i <= N && j >= 1 && j <= N) {
+                unsafe--;
+            }
+        }
+    }
+    
+    // The total safe squares is N^2 - M (occupied) - unsafe
+    // But unsafe includes the occupied squares, so the formula is N^2 - M - unsafe + M (since occupied squares are counted in unsafe)
+    // So the correct formula is N^2 - unsafe
+    // But we need to ensure that the occupied squares are not counted in the answer
+    ll total_safe = N * N - unsafe - M;
+    
+    cout << total_safe << endl;
+    
+    return 0;
+}

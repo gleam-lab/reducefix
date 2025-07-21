@@ -1,0 +1,54 @@
+#include<bits/stdc++.h>
+using namespace std;
+
+struct Node {
+    int val, idx;
+    Node(int _val, int _idx): val(_val), idx(_idx) {}
+    bool operator<(const Node& other) const { 
+        if(val == other.val) return idx < other.idx;
+        return val < other.val;
+    }
+};
+
+int main(){
+    ios_base::sync_with_stdio(false);cin.tie(NULL);
+    int h, w, q;
+    cin >> h >> w >> q;
+    vector<Node> v;
+    for(int i=1;i<=h;++i){
+        for(int j=1;j<=w;++j){
+            v.emplace_back(1, i*w+j);
+        }
+    }
+    sort(v.begin(), v.end());
+    unordered_map<int, int> mp;
+    for(auto [_, idx]: v) mp[idx] = i++;
+    priority_queue<pair<int, int>, vector<pair<int, int>>, greater<pair<int, int>>> pq;
+    for(int i=1;i<=h;++i){
+        pq.push({mp[i], i});
+        pq.push({mp[w*i], i});
+    }
+    for(int i=1;i<=w;++i){
+        pq.push({mp[i], i});
+        pq.push({mp[h*w-i+1], i});
+    }
+    int ans = h*w;
+    while(q--){
+        int x, y;
+        cin >> x >> y;
+        int id = x*w+y;
+        int idx = mp[id];
+        if(pq.top().second == idx){
+            pq.pop();
+            ++ans;
+        } else {
+            int u = pq.top().first;
+            pq.pop();
+            --ans;
+            int d = min(u+1, h*w-id+1);
+            pq.push({u+d, idx});
+        }
+    }
+    cout << ans << '\n';
+    return 0;
+}

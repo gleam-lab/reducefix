@@ -1,0 +1,37 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+bool canPlaceToys(vector<int>& sizes, int x) {
+    vector<bool> used(sizes.size() + 1, false);
+    for (int size : sizes) {
+        if (size > x || used[size]) return false;
+        used[size] = true;
+    }
+    return true;
+}
+
+int main() {
+    int n;
+    cin >> n;
+    vector<int> va(n), vb(n - 1);
+    for (int i = 0; i < n; ++i) cin >> va[i];
+    for (int i = 0; i < n - 1; ++i) cin >> vb[i];
+
+    sort(va.begin(), va.end(), greater<int>());
+    sort(vb.begin(), vb.end());
+
+    int left = 0, right = 1e9, mid;
+    while (left <= right) {
+        mid = (left + right) / 2;
+        if (canPlaceToys(vb, mid)) {
+            right = mid - 1;
+        } else {
+            left = mid + 1;
+        }
+    }
+
+    if (left >= 1e9) cout << -1 << endl;
+    else cout << left << endl;
+
+    return 0;
+}

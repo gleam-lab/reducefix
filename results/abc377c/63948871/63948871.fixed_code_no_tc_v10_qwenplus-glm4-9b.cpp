@@ -1,0 +1,68 @@
+#include <iostream>
+#include <vector>
+#include <set>
+
+using namespace std;
+
+#define INF 1000000000
+#define LINF 1000000000000000000
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int N, M;
+    cin >> N >> M;
+
+    vector<pair<int, int>> pieces(M);
+    for (int i = 0; i < M; i++) {
+        cin >> pieces[i].first >> pieces[i].second;
+    }
+
+    set<pair<int, int>> attackable;
+    for (const auto& piece : pieces) {
+        int i = piece.first;
+        int j = piece.second;
+        if (i + 2 <= N && j + 1 <= N) {
+            attackable.insert({i + 2, j + 1});
+        }
+        if (i + 1 <= N && j + 2 <= N) {
+            attackable.insert({i + 1, j + 2});
+        }
+        if (i - 1 >= 1 && j + 2 <= N) {
+            attackable.insert({i - 1, j + 2});
+        }
+        if (i - 2 >= 1 && j + 1 <= N) {
+            attackable.insert({i - 2, j + 1});
+        }
+        if (i - 2 >= 1 && j - 1 >= 1) {
+            attackable.insert({i - 2, j - 1});
+        }
+        if (i - 1 >= 1 && j - 2 >= 1) {
+            attackable.insert({i - 1, j - 2});
+        }
+        if (i + 1 <= N && j - 2 >= 1) {
+            attackable.insert({i + 1, j - 2});
+        }
+        if (i + 2 <= N && j - 1 >= 1) {
+            attackable.insert({i + 2, j - 1});
+        }
+    }
+
+    // Calculate the number of attackable cells
+    long long attackable_cells = 0;
+    for (int i = 1; i <= N; i++) {
+        for (int j = 1; j <= N; j++) {
+            if (attackable.count({i, j}) > 0) {
+                attackable_cells++;
+            }
+        }
+    }
+
+    // Calculate the number of cells that are not attackable
+    long long non_attackable_cells = N * N - attackable_cells;
+
+    cout << non_attackable_cells << endl;
+
+    return 0;
+}

@@ -1,0 +1,91 @@
+Based on the problem description and the failing test case, the issue in the original code seems to be related to how the code handles the destruction of walls in the four directions when there's no wall at the bomb location. The original code doesn't correctly find the first walls in each direction when there's no wall at the bomb location.
+
+Here's the corrected solution:
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+#define rep(i,n) for(int i = 0; i < (n); i++)
+using ll = long long;
+
+int main() {
+    int h, w, q;
+    cin >> h >> w >> q;
+    vector<set<int>> rows(h), cols(w);
+    
+    // Initialize all walls as present
+    rep(i, h) rep(j, w) {
+        rows[i].insert(j);
+        cols[j].insert(i);
+    }
+    
+    ll remaining = (ll)h * w; // Track remaining walls
+    
+    rep(qi, q) {
+        int r, c;
+        cin >> r >> c;
+        r--; c--;
+        
+        if (rows[r].count(c)) {
+            // Wall exists at (r,c) - destroy it
+            rows[r].erase(c);
+            cols[c].erase(r);
+            remaining--;
+        } else {
+            // No wall at (r,c) - destroy first walls in all four directions
+            // Up
+            auto it_up = cols[c].lower_bound(r);
+            if (it_up != cols[c].begin()) {
+                --it_up;
+                int i = *it_up;
+                rows[i].erase(c);
+                cols[c].erase(i);
+                remaining--;
+            }
+            
+            // Down
+            auto it_down = cols[c].lower_bound(r);
+            if (it_down != cols[c].end()) {
+                int i = *it_down;
+                rows[i].erase(c);
+                cols[c].erase(i);
+                remaining--;
+            }
+            
+            // Left
+            auto it_left = rows[r].lower_bound(c);
+            if (it_left != rows[r].begin()) {
+                --it_left;
+                int j = *it_left;
+                rows[r].erase(j);
+                cols[j].erase(r);
+                remaining--;
+            }
+            
+            // Right
+            auto it_right = rows[r].lower_bound(c);
+            if (it_right != rows[r].end()) {
+                int j = *it_right;
+                rows[r].erase(j);
+                cols[j].erase(r);
+                remaining--;
+            }
+        }
+    }
+    
+    cout << remaining << "\n";
+    return 0;
+}
+```
+
+Key improvements made:
+1. Changed the data structure names to be more clear (tate→cols, yoko→rows)
+2. Added a `remaining` counter to directly track the number of walls instead of summing at the end
+3. Fixed the logic for finding the first walls in each direction when there's no wall at the bomb location:
+   - For up direction: use lower_bound and then decrement to find the first wall above
+   - For down direction: use lower_bound to find the first wall below
+   - For left direction: use lower_bound and then decrement to find the first wall to the left
+   - For right direction: use lower_bound to find the first wall to the right
+4. Each time a wall is destroyed, we decrement the `remaining` counter
+
+This solution maintains O(log n) time per operation for the set operations, making it efficient enough for the given constraints. The use of sets allows us to quickly find and remove walls in the required positions.

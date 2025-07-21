@@ -1,0 +1,48 @@
+#include<iostream>
+#include<algorithm>
+#include<vector>
+using namespace std;
+
+typedef long long ll;
+
+struct Node{
+    ll a, b;
+};
+
+bool comp(Node &a, Node &b){
+    return a.a > b.a;
+}
+
+ll solve(int n, int k, vector<Node> &v){
+    sort(v.begin(), v.end(), comp);
+    priority_queue<ll> pq;
+    ll sum = 0, res = LLONG_MAX;
+    for(int i = 0; i < n; ++i){
+        pq.push(v[i].b);
+        sum += v[i].b;
+        if(pq.size() > k){
+            sum -= pq.top();
+            pq.pop();
+        }
+        if(pq.size() == k){
+            res = min(res, sum * v[i].a);
+        }
+    }
+    return res;
+}
+
+int main(){
+    ios_base::sync_with_stdio(false);cin.tie(0);cout.tie(0);
+    int t;
+    cin >> t;
+    while(t--){
+        int n, k;
+        cin >> n >> k;
+        vector<Node> v(n);
+        for(int i = 0; i < n; ++i){
+            cin >> v[i].a >> v[i].b;
+        }
+        cout << solve(n, k, v) << '\n';
+    }
+    return 0;
+}

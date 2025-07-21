@@ -1,0 +1,111 @@
+To solve this problem efficiently, we need to simulate the process of the sea level rising and determine which sections of the island remain above water. Given the constraints, a naive approach would be too slow, so we need a more efficient method. 
+
+One effective way is to use Union-Find (Disjoint Set Union) data structure to manage connected components of land as the sea level rises. Here's how we can implement it:
+
+1. Initialize the Union-Find structure.
+2. For each elevation level from 1 to `Y`, union all neighboring cells that are above the current sea level.
+3. Calculate the number of connected components (land areas) after each sea level rise.
+
+Let's fix the provided code based on these steps:
+
+```cpp
+#include <bits/stdc++.h>
+
+using namespace std;
+
+constexpr int dx[] = {-1, 1, 0, 0};
+constexpr int dy[] = {0, 0, -1, 1};
+
+struct UnionFind {
+    vector<int> parent, rank;
+
+    UnionFind(int n) : parent(n), rank(n, 1) {
+        iota(parent.begin(), parent.end(), 0);
+    }
+
+    int find(int u) {
+        return parent[u] == u ? u : parent[u] = find(parent[u]);
+    }
+
+    void unite(int u, int v) {
+        int pu = find(u), pv = find(v);
+        if (pu != pv) {
+            if (rank[pu] > rank[pv]) {
+                parent[pv] = pu;
+            } else if (rank[pu] < rank[pv]) {
+                parent[pu] = pv;
+            } else {
+                parent[pu] = pv;
+                rank[pv]++;
+            }
+        }
+    }
+};
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int H, W, Y;
+    cin >> H >> W >> Y;
+
+    vector<vector<int>> A(H, vector<int>(W));
+    for (int i = 0; i < H; i++) {
+        for (int j = 0; j < W; j++) {
+            cin >> A[i][j];
+        }
+    }
+
+    UnionFind uf(H * W);
+    vector<int> componentCount(H * W, 1);
+    vector<int> area(H * W, 1);
+
+    function<void(int)> updateArea = [&](int idx) {
+        int r = idx / W, c = idx % W;
+        for (int d = 0; d < 4; d++) {
+            int nr = r + dx[d], nc = c + dy[d];
+            if (nr >= 0 && nr < H && nc >= 0 && nc < W && A[r][c] <= A[nr][nc]) {
+                int neighborIdx = nr * W + nc;
+                if (uf.find(idx) != uf.find(neighborIdx)) {
+                    uf.unite(idx, neighborIdx);
+                    componentCount[uf.find(idx)] += componentCount[neighborIdx];
+                    area[uf.find(idx)] += area[neighborIdx];
+                    componentCount[neighborIdx] = 0;
+                    area[neighborIdx] = 0;
+                }
+            }
+        }
+    };
+
+    vector<int> result(Y + 1);
+    for (int i = 1; i <= Y; i++) {
+        for (int r = 0; r < H; r++) {
+            for (int c = 0; c < W; c++) {
+                if (A[r][c] <= i) {
+                    int idx = r * W + c;
+                    if (componentCount[idx] == 1) {
+                        result[i] += area[idx];
+                    }
+                    updateArea(idx);
+                }
+            }
+        }
+        result[i] -= result[i - 1];
+    }
+
+    for (int i = 1; i <= Y; i++) {
+        cout << result[i] << endl;
+    }
+
+    return 0;
+}
+```
+
+### Explanation:
+1. **Union-Find Data Structure**: We use a Union-Find structure to keep track of connected components of land. This helps efficiently manage and merge groups of connected land squares.
+2. **Initialization**: The Union-Find structure is initialized with each cell being its own parent initially.
+3. **Update Area Function**: This function updates the connected component information for each cell when the sea level rises.
+4. **Main Loop**: For each sea level from 1 to `Y`, we check each cell to see if it should be part of the current sea level. If it is, we update the connected component information using the `updateArea` function.
+5. **Result Calculation**: After processing each sea level, we calculate the difference in area between the current and previous state to get the area remaining above water.
+
+This approach ensures that the solution is efficient even for large inputs, leveraging the Union-Find data structure to handle dynamic connectivity queries and merges.

@@ -1,0 +1,47 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+
+using namespace std;
+
+int main() {
+    int N, K;
+    cin >> N >> K;
+
+    vector<int> A(N);
+    for (int i = 0; i < N; ++i) {
+        cin >> A[i];
+    }
+
+    sort(A.begin(), A.end());
+
+    // After sorting, the minimum element is A[0] and the maximum is A[N-1]
+    // We want to maximize the difference between the maximum and minimum of the remaining elements
+    // If K is less than half the size of A, removing the middle elements will maximize the difference
+    // This is because removing the middle elements will leave either the smallest or largest elements in A
+    // Depending on the parity of N, we may need to adjust the indices for the remaining elements
+    int left_index = N - K - 1; // The last index of the remaining elements after removal
+    int right_index = left_index + 1;
+
+    // Adjust the indices to handle the case when K is not perfectly half
+    if (K & 1) { // If K is odd
+        if (N & 1) { // If N is also odd
+            // In this case, we remove the middle element of A, thus left_index and right_index are correct
+        } else { // If N is even
+            // In this case, we need to move the indices one position to the right to skip the middle element
+            right_index++;
+        }
+    } else { // If K is even
+        if (N & 1) { // If N is odd
+            // In this case, we need to move the indices one position to the right to skip the middle element
+            right_index++;
+        } else { // If N is even
+            // In this case, left_index and right_index are already correct
+        }
+    }
+
+    // The answer is the difference between the maximum and minimum of the remaining elements
+    cout << A[right_index] - A[left_index] << endl;
+
+    return 0;
+}

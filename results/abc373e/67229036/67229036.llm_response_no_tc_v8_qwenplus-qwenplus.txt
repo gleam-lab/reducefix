@@ -1,0 +1,132 @@
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+#define int long long
+
+const int N = 2e5 + 5;
+
+int n, m, k;
+int a[N];
+int sorted_votes[N];
+int prefix_sum[N];
+
+// Check if candidate with current votes 'x' and getting 'add' more votes can guarantee win
+// given that other candidates can get up to remaining 'k' votes distributed optimally against us
+bool is_possible(int x, int add) {
+    int total_remaining = k;
+    int my_total = x + add;
+    
+    // We need to assume the worst case: M-1 candidates get as many votes as possible > my_total
+    // The rest (n - m) candidates can be <= my_total
+    
+    // Try to compute how many votes are needed to ensure at most (m-1) candidates > my_total
+    // We'll try to cap top (m) candidates to <= my_total, which guarantees election
+    
+    // Binary search on number of candidates that can have votes > my_total
+    // We want to find maximum number of candidates (up to m-1) that could still have <= my_total
+    // after we take add votes
+    
+    // Remaining votes to distribute: total_remaining
+    // We assume best strategy for preventing our win: assign as many votes as possible to top (m-1) candidates
+    
+    // Find how many candidates in the sorted list are > my_total
+    int idx = upper_bound(sorted_votes + 1, sorted_votes + n + 1, my_total, greater<int>());
+    int cnt_above = idx - (sorted_votes + 1);
+    
+    // If less than m-1 candidates already above us, we're good
+    if (cnt_above < m) return true;
+    
+    // Else, we need to reduce those above us to at most m-1
+    // Let's greedily give just enough votes to top (m-1) candidates to keep them > my_total
+    // and make sure the rest cannot exceed my_total even with all remaining votes
+    
+    // Total extra votes needed to keep (m-1) candidates > my_total
+    int extra_needed = 0;
+    
+    // First, calculate how much it would take to bring the first (n - m + 1) lowest candidates up to my_total
+    // Because we want to push at most (m-1) candidates above my_total
+    
+    // We sort the candidates in descending order and pick top (m-1)
+    // So we find how much it takes to raise the top (m-1) candidates to > my_total
+    
+    int l = 1, r = n;
+    int pos = n - m + 1;
+    int total_available = total_remaining;
+    
+    // Calculate how much it would cost to make the top (m-1) candidates exceed my_total
+    // and the rest (n-m+1) stay below or equal
+    
+    // We don't actually need to simulate it fully
+    // Just check if there's enough votes left to allow that scenario
+    
+    int low = n - m + 1; // Index of the weakest candidate we might have to protect
+    int strong = n;      // Index of strongest candidate
+    
+    // We want to make sure that at least (n - m + 1) candidates cannot exceed my_total
+    // So we consider top m-1 candidates and try to see how many of them can be pushed above my_total
+    
+    // How many candidates currently above my_total
+    int total_above = 0;
+    for (int i = 1; i <= n; ++i) {
+        if (a[i] > my_total) total_above++;
+    }
+    
+    if (total_above < m) return true;
+    
+    // Now simulate giving votes to top (m-1) candidates to keep them above my_total
+    // Sort all A[i] in descending order
+    vector<int> sorted_desc = vector<int>(a + 1, a + n + 1);
+    sort(sorted_desc.rbegin(), sorted_desc.rend());
+    
+    int need = 0;
+    for (int i = 0; i < m - 1; ++i) {
+        int target = max(my_total + 1, sorted_desc[i]);
+        need += max(0LL, target - sorted_desc[i]);
+    }
+    
+    return need <= total_available;
+}
+
+void solve() {
+    cin >> n >> m >> k;
+    for (int i = 1; i <= n; ++i) {
+        cin >> a[i];
+    }
+    
+    // Copy and sort for binary search purposes
+    for (int i = 1; i <= n; ++i) {
+        sorted_votes[i] = a[i];
+    }
+    sort(sorted_votes + 1, sorted_votes + n + 1, greater<int>());
+    
+    for (int i = 1; i <= n; ++i) {
+        prefix_sum[i] = prefix_sum[i - 1] + sorted_votes[i];
+    }
+    
+    for (int i = 1; i <= n; ++i) {
+        int l = 0, r = k + 1;
+        while (l < r) {
+            int mid = (l + r) / 2;
+            if (is_possible(a[i], mid)) {
+                r = mid;
+            } else {
+                l = mid + 1;
+            }
+        }
+        
+        if (l <= k) {
+            cout << l << " ";
+        } else {
+            cout << -1 << " ";
+        }
+    }
+    cout << endl;
+}
+
+signed main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    cout.tie(nullptr);
+    solve();
+}
+```

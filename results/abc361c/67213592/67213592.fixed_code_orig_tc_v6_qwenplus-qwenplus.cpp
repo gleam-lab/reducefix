@@ -1,0 +1,33 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <climits>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int n, k;
+    cin >> n >> k;
+    vector<int> A(n);
+    for (int i = 0; i < n; ++i) {
+        cin >> A[i];
+    }
+
+    // We need to remove K elements such that the remaining array has minimum (max - min)
+    // Since we must keep N-K elements, we try all possible windows of size (N-K) in the sorted array
+    // and find the one with smallest difference between max and min
+
+    vector<int> sorted_A = A;
+    sort(sorted_A.begin(), sorted_A.end());
+
+    long long min_diff = LLONG_MAX;
+    int window_size = n - k;
+
+    for (int i = 0; i + window_size <= n; ++i) {
+        min_diff = min(min_diff, (long long)(sorted_A[i + window_size - 1] - sorted_A[i]));
+    }
+
+    cout << min_diff << endl;
+}

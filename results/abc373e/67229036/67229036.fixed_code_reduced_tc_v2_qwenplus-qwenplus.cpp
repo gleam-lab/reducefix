@@ -1,0 +1,71 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define int long long
+
+const int N = 2 * 100000 + 5;
+
+int n, m, k;
+int a[N];
+int sorted_votes[N];
+int prefix_sum[N];
+
+// This function checks if candidate i with x additional votes can guarantee victory
+// assuming they have a[i] votes already.
+bool is_possible(int base, int extra) {
+    int total = base + extra;
+
+    // We want to find the number of candidates strictly stronger than this one
+    // Find first index where vote count > total
+    int* ptr = upper_bound(sorted_votes + 1, sorted_votes + n + 1, total);
+    int idx = ptr - sorted_votes;
+
+    // Number of candidates with votes > total = n - idx + 1
+    int strong_candidates = n - idx + 1;
+
+    // To be elected, number of candidates who have more votes must be < M
+    // So we need at most M-1 candidates with more votes
+    // That means: strong_candidates <= M-1
+    return strong_candidates <= m - 1;
+}
+
+signed main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    cout.tie(nullptr);
+
+    cin >> n >> m >> k;
+    for (int i = 1; i <= n; ++i) {
+        cin >> a[i];
+    }
+
+    // Sort the array to get vote counts in increasing order
+    copy(a + 1, a + n + 1, sorted_votes + 1);
+    sort(sorted_votes + 1, sorted_votes + n + 1);
+
+    // Precompute prefix sums
+    for (int i = 1; i <= n; ++i) {
+        prefix_sum[i] = prefix_sum[i - 1] + sorted_votes[i];
+    }
+
+    // For each candidate, perform binary search on required additional votes
+    for (int i = 1; i <= n; ++i) {
+        int left = 0;
+        int right = k + 1;  // Upper bound for binary search
+
+        while (left < right) {
+            int mid = (left + right) / 2;
+            if (is_possible(a[i], mid)) {
+                right = mid;
+            } else {
+                left = mid + 1;
+            }
+        }
+
+        if (left <= k)
+            cout << left << " ";
+        else
+            cout << "-1 ";
+    }
+
+    return 0;
+}

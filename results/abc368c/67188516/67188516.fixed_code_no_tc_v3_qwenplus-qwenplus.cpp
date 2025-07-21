@@ -1,0 +1,52 @@
+#include <iostream>
+#include <vector>
+using namespace std;
+
+int main() {
+    int N;
+    cin >> N;
+    vector<long long> H(N);
+    for (int i = 0; i < N; ++i) cin >> H[i];
+
+    long long T = 0;
+    // We track how many attacks each enemy receives and simulate the attack pattern
+
+    // For each enemy in order
+    for (int i = 0; i < N; ++i) {
+        long long h = H[i];
+        if (h <= 0) continue;
+
+        // Determine number of attacks needed on this enemy
+        // Each 3 attacks: two 1-damage and one 3-damage => total 5 damage
+        // So we can calculate full cycles of 3 attacks, and remaining damage
+
+        long long full_cycles = h / 5;
+        long long rem_damage = h % 5;
+
+        T += full_cycles * 3;
+
+        // Simulate the remaining attacks needed to finish off the enemy
+        // The attack pattern is:
+        // Turn % 3 == 0 -> 3 damage
+        // Else -> 1 damage
+        // So depending on current T % 3, we need different number of attacks
+
+        if (rem_damage > 0) {
+            // Depending on current T mod 3, determine how many more attacks are needed
+            int mod = T % 3;
+            if (mod == 0) {
+                // Need a 3-damage attack
+                T += 1;
+            } else if (mod == 1) {
+                // Need 2 turns: 1-damage now, then 3-damage
+                T += 2;
+            } else { // mod == 2
+                // Need 1 turn with 1-damage, then next enemy will handle rest
+                T += 1;
+            }
+        }
+    }
+
+    cout << T << endl;
+    return 0;
+}

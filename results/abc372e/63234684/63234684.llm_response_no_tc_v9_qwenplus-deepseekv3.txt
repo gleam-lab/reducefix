@@ -1,0 +1,86 @@
+The original code has several issues that need to be addressed to solve the problem correctly:
+
+1. **Indexing Errors**: The code uses 0-based indexing for vertices, but the problem uses 1-based indexing. This mismatch causes incorrect answers when printing vertex numbers.
+
+2. **Handling of k-th Largest**: The code attempts to keep only the top 9 elements in the `uni` vector, but it doesn't correctly handle cases where `k` is larger than the current size of the connected component. Specifically, when checking the size, it should compare with `k-1` (since indexing starts from 0), but the code compares with `b` (which is already 0-based due to the `a--,b--` line).
+
+3. **Sorting and Trimming**: The code sorts the `uni` vector in descending order and trims it to keep only the top 9 elements. However, it should keep the top 10 elements (since `k` can be up to 10) and should ensure that the vector is always sorted in descending order before trimming.
+
+4. **Efficiency**: The merging operation involves sorting and trimming the `uni` vector each time, which can be inefficient for large N and Q. However, given the constraints (k ≤ 10), it's manageable.
+
+Here's the fixed code that addresses these issues:
+
+```cpp
+#include<bits/stdc++.h>
+using namespace std;
+using ll = long long;
+#define rep(i,n) for(int i = 0;i<n;i++)
+using P = pair<int,int>;
+using T = tuple<int,int,int>;
+
+struct Union_Find{
+  
+  vector<int> sz,par;
+  vector<vector<int>> uni;
+  
+  Union_Find(int n){
+    sz.resize(n,1);
+    par.resize(n,-1);
+    uni.resize(n);
+    rep(i,n) uni[i].emplace_back(i);
+  }
+  
+  int root(int v){
+    if(par[v] == -1) return v;
+    else return par[v] = root(par[v]);
+  }
+  
+  bool issame(int x,int y){
+    return root(x) == root(y);
+  }
+  
+  void merge(int x,int y){
+    x = root(x),y = root(y);
+    if(x == y) return;
+    if(uni[x].size() < uni[y].size()) swap(x,y);
+    par[y] = x; 
+    for(auto v : uni[y]){
+      uni[x].emplace_back(v);
+    }
+    sort(uni[x].rbegin(),uni[x].rend());
+    if(uni[x].size() > 10) uni[x].resize(10);
+  }
+  
+};
+
+int main(){
+  int n,q;
+  cin >> n >> q;
+  Union_Find uf(n);
+  
+  rep(i,q){
+    int ty,a,b;
+    cin >> ty >> a >> b;
+    if(ty == 1){
+      a--,b--;
+      uf.merge(a,b);
+    }
+    else{
+      a--, b--;
+      int root = uf.root(a);
+      if(uf.uni[root].size() <= b){
+        cout << -1 << endl;
+      }
+      else{
+        cout << uf.uni[root][b] + 1 << endl;
+      }
+    }
+  }
+}
+```
+
+### Key Fixes:
+1. **Indexing**: The vertices are correctly handled by converting to 0-based indexing for internal operations and back to 1-based for output.
+2. **k-th Largest**: The `uni` vector is maintained in descending order, and its size is checked against `b` (0-based) to determine if the k-th largest exists.
+3. **Efficiency**: The `merge` operation now ensures the `uni` vector is sorted and trimmed to at most 10 elements, which is efficient enough for the constraints.
+4. **Edge Cases**: Proper handling of cases where the connected component has fewer than `k` vertices by checking the size before accessing the `b`-th element.

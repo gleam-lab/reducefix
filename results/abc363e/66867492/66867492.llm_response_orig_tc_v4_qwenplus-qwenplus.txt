@@ -1,0 +1,126 @@
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+struct Init {
+    Init() {
+        ios::sync_with_stdio(false);
+        cin.tie(nullptr);
+        cout.precision(12);
+    }
+} init;
+
+using i64 = int64_t;
+using vi = vector<int>;
+using vvi = vector<vi>;
+using Pi = pair<int, int>;
+using pq_cP = priority_queue<Pi, vector<Pi>, greater<Pi>>;
+
+int main() {
+    int H, W, Y;
+    cin >> H >> W >> Y;
+    vvi A(H, vi(W));
+    for (auto &row : A) {
+        for (int &x : row) cin >> x;
+    }
+
+    const int dx[4] = {1, 0, -1, 0};
+    const int dy[4] = {0, 1, 0, -1};
+
+    // Mark cells that are on the border
+    vector<vector<bool>> is_border(H, vector<bool>(W, false));
+    pq_cP pq;
+    for (int i = 0; i < H; ++i) {
+        for (int j = 0; j < W; ++j) {
+            if (i == 0 || i == H - 1 || j == 0 || j == W - 1) {
+                pq.emplace(A[i][j], i * W + j);
+                is_border[i][j] = true;
+            }
+        }
+    }
+
+    // Union-Find data structure
+    vi parent(H * W), size(H * W);
+    for (int i = 0; i < H * W; ++i) {
+        parent[i] = i;
+        size[i] = 1;
+    }
+
+    function<int(int)> find = [&](int x) {
+        return parent[x] == x ? x : parent[x] = find(parent[x]);
+    };
+
+    auto unite = [&](int x, int y) {
+        x = find(x);
+        y = find(y);
+        if (x != y) {
+            parent[y] = x;
+            size[x] += size[y];
+        }
+    };
+
+    // Process from lowest to highest elevation
+    vector<Pi> elevations(H * W);
+    for (int i = 0; i < H; ++i) {
+        for (int j = 0; j < W; ++j) {
+            elevations[i * W + j] = {A[i][j], i * W + j};
+        }
+    }
+    sort(elevations.begin(), elevations.end());
+
+    int total_area = H * W;
+    vi result(Y + 2); // result[year] = area above sea level at year
+
+    // Initially all land is above water
+    for (int i = 1; i <= Y; ++i) result[i] = H * W;
+
+    // For each cell in increasing order of elevation
+    for (const auto &[elevation, idx] : elevations) {
+        int y = idx / W, x = idx % W;
+        bool connects_to_sea = false;
+
+        // Check neighbors
+        for (int d = 0; d < 4; ++d) {
+            int ny = y + dy[d], nx = x + dx[d];
+            if (ny >= 0 && ny < H && nx >= 0 && nx < W) {
+                int neighbor_idx = ny * W + nx;
+                if (find(neighbor_idx) == find(H * W)) {
+                    connects_to_sea = true;
+                } else if (A[ny][nx] <= elevation) {
+                    unite(idx, neighbor_idx);
+                }
+            }
+        }
+
+        // If it connects to sea or is on border, merge with sea node
+        if (connects_to_sea || is_border[y][x]) {
+            int root = find(idx);
+            if (root != find(H * W)) {
+                parent[root] = H * W;
+                size[H * W] += size[root];
+            }
+        }
+
+        // Update area remaining
+        while (!pq.empty() && pq.top().first <= elevation) {
+            int sea_elevation = pq.top().first;
+            if (sea_elevation > Y) break;
+            result[sea_elevation] = total_area - size[H * W];
+            pq.pop();
+        }
+
+        // Add this elevation to queue if not already present
+        if (elevation <= Y && (find(H * W) != find(idx))) {
+            pq.emplace(elevation, idx);
+        }
+    }
+
+    // Fill any missing values and print results
+    for (int i = 1; i <= Y; ++i) {
+        if (result[i] == H * W) result[i] = total_area - size[H * W];
+        cout << result[i] << '\n';
+    }
+
+    return 0;
+}
+```

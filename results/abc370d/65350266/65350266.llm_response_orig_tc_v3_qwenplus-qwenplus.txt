@@ -1,0 +1,92 @@
+To solve this problem efficiently, we need to simulate placing bombs on a grid and destroying walls according to specific rules. The main challenge lies in efficiently finding and removing the nearest walls in each of the four directions (up, down, left, right) for repeated queries.
+
+We can use `std::set` to maintain the positions of walls row-wise and column-wise. This allows us to perform efficient lookups and deletions using binary search (`lower_bound`, etc.) to find the nearest wall in each direction.
+
+### Key Observations:
+- Each cell initially has one wall.
+- When a bomb is placed on a cell with a wall, that wall is destroyed.
+- If a bomb is placed where no wall exists, we destroy the first wall found in each of the 4 directions.
+
+Using sets to track available walls per row and column enables logarithmic time operations.
+
+Here's the corrected and optimized C++ code:
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+
+    int H, W, Q;
+    cin >> H >> W >> Q;
+
+    // tate[j] stores the rows that have walls at column j
+    vector<set<int>> tate(W);
+    // yoko[i] stores the columns that have walls at row i
+    vector<set<int>> yoko(H);
+
+    // Initialize all walls
+    for (int i = 0; i < H; ++i) {
+        for (int j = 0; j < W; ++j) {
+            tate[j].insert(i);
+            yoko[i].insert(j);
+        }
+    }
+
+    for (int _ = 0; _ < Q; ++_) {
+        int r, c;
+        cin >> r >> c;
+        r--; c--;
+
+        if (tate[c].count(r)) {
+            // There's a wall here: remove it
+            tate[c].erase(r);
+            yoko[r].erase(c);
+        } else {
+            // Look up
+            auto it_up = tate[c].lower_bound(r);
+            if (it_up != tate[c].begin()) {
+                --it_up;
+                int row = *it_up;
+                tate[c].erase(it_up);
+                yoko[row].erase(c);
+            }
+
+            // Look down
+            auto it_down = tate[c].upper_bound(r);
+            if (it_down != tate[c].end()) {
+                int row = *it_down;
+                tate[c].erase(it_down);
+                yoko[row].erase(c);
+            }
+
+            // Look left
+            auto it_left = yoko[r].lower_bound(c);
+            if (it_left != yoko[r].begin()) {
+                --it_left;
+                int col = *it_left;
+                yoko[r].erase(it_left);
+                tate[col].erase(r);
+            }
+
+            // Look right
+            auto it_right = yoko[r].upper_bound(c);
+            if (it_right != yoko[r].end()) {
+                int col = *it_right;
+                yoko[r].erase(it_right);
+                tate[col].erase(r);
+            }
+        }
+    }
+
+    long long ans = 0;
+    for (int j = 0; j < W; ++j) {
+        ans += tate[j].size();
+    }
+    cout << ans << endl;
+
+    return 0;
+}
+```

@@ -1,0 +1,79 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+
+using namespace std;
+
+int main() {
+    int N;
+    cin >> N;
+    vector<long long> A(N), B(N - 1);
+    for (int i = 0; i < N; ++i) cin >> A[i];
+    for (int i = 0; i < N - 1; ++i) cin >> B[i];
+
+    // Sort toys and boxes in ascending order
+    sort(A.begin(), A.end());
+    sort(B.begin(), B.end());
+
+    // Check if we can fit the smallest N-1 toys into the N-1 boxes
+    bool possible = true;
+    for (int i = 0; i < N - 1; ++i) {
+        if (A[i] > B[i]) {
+            possible = false;
+            break;
+        }
+    }
+
+    if (!possible) {
+        cout << -1 << endl;
+        return 0;
+    }
+
+    // The required size of the extra box is at least as large as its toy
+    // It also must not be smaller than the largest toy left after fitting in N-1 boxes
+    // That means: find the minimum x such that A[N-1] <= x and x not used by other boxes
+
+    // We now try to assign the biggest toy to the new box
+    // So we need to find the smallest number >= A[N-1] that is not among B's values
+    // But we also need to account for overlaps: what if B already uses all small values?
+
+    // We check the maximum of A[N-1] and the first B[i] that is less than A[i+1]
+    long long min_required = A[N - 1];
+
+    // Try to find a value x such that we can match the rest
+    // We use binary search on sorted B to find how many are less than or equal to A[i]
+
+    sort(B.begin(), B.end());
+
+    // Find how many boxes are smaller than each toy (except one)
+    int j = 0;
+    for (int i = 0; i < N; ++i) {
+        while (j < N - 1 && B[j] < A[i]) ++j;
+        int toys_left = N - i - 1;
+        int boxes_left = N - 1 - j;
+        if (toys_left <= boxes_left) continue;
+        else {
+            // Not enough boxes big enough to fit remaining toys
+            cout << -1 << endl;
+            return 0;
+        }
+    }
+
+    // Now, we just need to find the smallest value x >= A[N-1] that is not in B
+    // To do this efficiently, we binary search over B
+    int pos = upper_bound(B.begin(), B.end(), A[N-1]) - B.begin();
+    if (pos == N - 1) {
+        // All elements in B <= A[N-1], so we can use A[N-1]
+        cout << A[N-1] << endl;
+    } else {
+        // B[pos] is the first larger than A[N-1], so we must pick x > B[pos]
+        // but we want the minimal x >= A[N-1] not in B
+        long long candidate = A[N-1];
+        while (binary_search(B.begin(), B.end(), candidate)) {
+            ++candidate;
+        }
+        cout << candidate << endl;
+    }
+
+    return 0;
+}

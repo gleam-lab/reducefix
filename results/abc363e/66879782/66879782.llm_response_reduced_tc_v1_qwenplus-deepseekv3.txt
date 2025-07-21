@@ -1,0 +1,87 @@
+To fix this code, we need to address the issue of efficiently calculating the area of the island that remains above sea level as the sea level rises each year. The original approach uses a priority queue to determine when each section sinks, but it may not handle all cases correctly, especially with large input sizes.
+
+### Approaches
+
+1. **Priority Queue (Min-Heap) for Tracking Sinking Times**: We use a priority queue to process sections in order of their elevation. This helps in determining when each section will sink as the sea level rises.
+2. **Breadth-First Search (BFS) for Flood Fill**: For each section processed from the priority queue, we check its adjacent sections. If an adjacent section's elevation is not greater than the current sea level, it is added to the queue to be processed next.
+3. **Prefix Sum Array for Efficient Querying**: We maintain a prefix sum array to keep track of the cumulative area that sinks at each sea level. This allows us to answer each year's query in constant time after preprocessing.
+
+### Solution Code
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+#define all(x) (x).begin(), (x).end()
+
+int main() {
+    ios_base::sync_with_stdio(0);
+    cin.tie(0);
+    int h, w, y;
+    cin >> h >> w >> y;
+    vector<vector<int>> height(h, vector<int>(w));
+    vector<vector<int>> sink(h, vector<int>(w, INT_MAX));
+    priority_queue<pair<int, pair<int, int>>, vector<pair<int, pair<int, int>>>, greater<pair<int, pair<int, int>>>> pq;
+    int di[4][2] = {{-1, 0}, {1, 0}, {0, -1}, {0, 1}};
+    
+    for (int i = 0; i < h; ++i) {
+        for (int j = 0; j < w; ++j) {
+            cin >> height[i][j];
+            if (i == 0 || i == h - 1 || j == 0 || j == w - 1) {
+                sink[i][j] = height[i][j];
+                pq.push({height[i][j], {i, j}});
+            }
+        }
+    }
+    
+    while (!pq.empty()) {
+        auto current = pq.top();
+        pq.pop();
+        int H = current.first;
+        int r = current.second.first;
+        int c = current.second.second;
+        
+        for (int k = 0; k < 4; ++k) {
+            int nr = r + di[k][0];
+            int nc = c + di[k][1];
+            if (nr < 0 || nr >= h || nc < 0 || nc >= w) continue;
+            if (sink[nr][nc] > H) {
+                sink[nr][nc] = max(height[nr][nc], H);
+                pq.push({sink[nr][nc], {nr, nc}});
+            }
+        }
+    }
+    
+    vector<int> cnt(y + 2, 0);
+    for (int i = 0; i < h; ++i) {
+        for (int j = 0; j < w; ++j) {
+            if (sink[i][j] <= y) {
+                cnt[sink[i][j]]++;
+            }
+        }
+    }
+    
+    vector<int> prefix(y + 1, 0);
+    prefix[0] = cnt[0];
+    for (int i = 1; i <= y; ++i) {
+        prefix[i] = prefix[i - 1] + cnt[i];
+    }
+    
+    for (int i = 1; i <= y; ++i) {
+        cout << h * w - prefix[i] << '\n';
+    }
+    
+    return 0;
+}
+```
+
+### Explanation
+
+1. **Initialization**: We read the dimensions of the island (h, w) and the number of years (y). We then read the elevation data for each section of the island.
+2. **Priority Queue Setup**: We initialize a priority queue (min-heap) to process sections starting from the borders. The border sections are added to the queue with their elevation as the initial sinking time.
+3. **Processing Sections**: Using BFS, we process each section from the priority queue. For each section, we check its adjacent sections. If an adjacent section's elevation is not greater than the current sea level, we update its sinking time and add it to the queue.
+4. **Counting Sinking Sections**: We maintain an array `cnt` where `cnt[i]` counts the number of sections that sink at sea level `i`.
+5. **Prefix Sum Calculation**: We compute the prefix sum array `prefix` to keep track of the cumulative number of sections that have sunk by each sea level.
+6. **Output Results**: For each year from 1 to y, we output the remaining area of the island by subtracting the cumulative sunk sections from the total area.
+
+This approach ensures that we efficiently determine the sinking times of each section using a priority queue and BFS, and we use a prefix sum array to quickly answer each year's query. The complexity is dominated by the priority queue operations, making it efficient for large inputs.

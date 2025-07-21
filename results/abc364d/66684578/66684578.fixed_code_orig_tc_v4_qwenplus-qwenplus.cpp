@@ -1,0 +1,36 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define ll long long
+#define rep(i,n) for(int i=0;i<(int)n;i++)
+#define vi vector<int>
+#define vll vector<ll>
+#define pb push_back
+#define ALL(a) (a).begin(),(a).end()
+
+int main(){
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int n, q;
+    cin >> n >> q;
+    vi a(n);
+    for(int i = 0; i < n; ++i){
+        cin >> a[i];
+    }
+    sort(ALL(a));
+    
+    while(q--){
+        int b, k;
+        cin >> b >> k;
+        // Binary search the answer d such that there are >=k points in a with distance <=d from b
+        int l = -1, r = 200000000;
+        while(r - l > 1){
+            int m = (r + l) / 2;
+            // Find number of elements in a that are in [b - m, b + m]
+            int left = lower_bound(a.begin(), a.end(), b - m) - a.begin();
+            int right = upper_bound(a.begin(), a.end(), b + m) - a.begin();
+            if(right - left < k) l = m;
+            else r = m;
+        }
+        cout << r << "\n";
+    }
+}

@@ -1,0 +1,118 @@
+To fix this code, we need to correctly calculate the number of safe squares where a new piece can be placed without being captured by any existing pieces. The original approach had several issues, particularly in how it handled the intersections of different attack lines (rows, columns, diagonals, and anti-diagonals). 
+
+### Approaches
+1. **Identify Attack Lines**: For each existing piece, determine all the lines (rows, columns, diagonals, and anti-diagonals) it can attack.
+2. **Track Unique Lines**: Use sets to store these lines to avoid counting duplicates.
+3. **Calculate Total Attacked Squares**: Compute the total number of squares under attack by considering all unique lines. This involves:
+   - **Rows and Columns**: Each unique row or column contributes `N` squares.
+   - **Diagonals (i + j = constant)**: The number of squares in a diagonal depends on the constant value, ranging from 2 to 2N.
+   - **Anti-diagonals (i - j = constant)**: The number of squares in an anti-diagonal depends on the constant value, ranging from -(N-1) to N-1.
+4. **Adjust Overlaps**: Subtract the intersections where multiple lines (e.g., a row and a diagonal) might overlap to avoid double-counting.
+5. **Compute Safe Squares**: The total safe squares are `N^2` minus the total attacked squares plus the overlaps (since they were subtracted multiple times).
+
+### Solution Code
+```cpp
+#include<bits/stdc++.h>
+using namespace std;
+using i64 = long long;
+
+int main() {
+    std::ios::sync_with_stdio(false);
+    std::cin.tie(nullptr);
+    i64 N, M;
+    cin >> N >> M;
+    vector<pair<i64, i64>> pieces(M);
+    set<i64> rows, cols, diag1, diag2;
+    for (int i = 0; i < M; ++i) {
+        i64 a, b;
+        cin >> a >> b;
+        pieces[i] = {a, b};
+        rows.insert(a);
+        cols.insert(b);
+        diag1.insert(a + b);
+        diag2.insert(a - b);
+    }
+    
+    i64 total = 0;
+    
+    // Rows and columns
+    total += rows.size() * N;
+    total += cols.size() * N;
+    
+    // Diagonals (i + j = k)
+    for (i64 k : diag1) {
+        i64 lower = max(1LL, k - N);
+        i64 upper = min(N, k - 1);
+        if (lower <= upper) {
+            total += upper - lower + 1;
+        }
+    }
+    
+    // Anti-diagonals (i - j = k)
+    for (i64 k : diag2) {
+        i64 lower = max(1LL, 1 + k);
+        i64 upper = min(N, N + k);
+        if (lower <= upper) {
+            total += upper - lower + 1;
+        }
+    }
+    
+    // Intersections: row or column with a diagonal or anti-diagonal
+    set<pair<i64, i64>> intersections;
+    for (i64 a : rows) {
+        for (i64 k : diag1) {
+            i64 b = k - a;
+            if (b >= 1 && b <= N) {
+                intersections.insert({a, b});
+            }
+        }
+        for (i64 k : diag2) {
+            i64 b = a - k;
+            if (b >= 1 && b <= N) {
+                intersections.insert({a, b});
+            }
+        }
+    }
+    for (i64 b : cols) {
+        for (i64 k : diag1) {
+            i64 a = k - b;
+            if (a >= 1 && a <= N) {
+                intersections.insert({a, b});
+            }
+        }
+        for (i64 k : diag2) {
+            i64 a = b + k;
+            if (a >= 1 && a <= N) {
+                intersections.insert({a, b});
+            }
+        }
+    }
+    
+    // Subtract the intersections
+    total -= intersections.size();
+    
+    // Add back the pieces themselves (since they were subtracted multiple times)
+    set<pair<i64, i64>> existing_pieces(pieces.begin(), pieces.end());
+    total += existing_pieces.size();
+    
+    // The answer is N^2 - total_attacked_squares + existing_pieces (since existing pieces are not empty)
+    i64 answer = N * N - total + existing_pieces.size();
+    
+    // However, existing pieces are already counted in total_attacked_squares, so no need to add them again.
+    // Correct formula: answer = N^2 - (total - existing_pieces.size())
+    answer = N * N - (total - existing_pieces.size());
+    
+    cout << answer << "\n";
+    
+    return 0;
+}
+```
+
+### Explanation
+1. **Initialization**: The code reads the grid size `N` and the number of pieces `M`, then stores each piece's coordinates.
+2. **Tracking Attack Lines**: The code uses sets to store all unique rows, columns, diagonals (`i + j`), and anti-diagonals (`i - j`) that are under attack by the existing pieces.
+3. **Calculating Total Attacked Squares**:
+   - **Rows and Columns**: Each unique row or column contributes `N` squares to the total.
+   - **Diagonals and Anti-diagonals**: For each diagonal or anti-diagonal, the number of squares is determined by the valid range of `i` and `j` that stay within the grid boundaries.
+4. **Adjusting for Overlaps**: The intersections where multiple attack lines meet (e.g., a row and a diagonal) are identified and subtracted to avoid double-counting.
+5. **Final Calculation**: The total safe squares are computed as the total grid squares minus the attacked squares, adjusted for overlaps and existing pieces. This ensures the count is accurate and efficient, even for large grid sizes.

@@ -1,0 +1,52 @@
+#include <vector>
+#include <iostream>
+#include <algorithm>
+
+using m_int = long long;
+using std::cin;
+using std::cout;
+using std::vector;
+
+int main() {
+    std::ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    m_int N, Q;
+    cin >> N >> Q;
+    vector<m_int> A(N);
+
+    for (m_int i = 0; i < N; ++i) {
+        cin >> A[i];
+    }
+    std::sort(A.begin(), A.end());
+
+    while (Q--) {
+        m_int b, k;
+        cin >> b >> k;
+
+        // Binary search on the answer (distance)
+        m_int left = 0;
+        m_int right = 2e8 + 1; // Maximum possible distance + 1
+
+        auto count_points_within_distance = [&](m_int x) {
+            // Find first A[i] >= b - x
+            auto low = std::lower_bound(A.begin(), A.end(), b - x);
+            // Find first A[i] > b + x
+            auto high = std::upper_bound(A.begin(), A.end(), b + x);
+            return static_cast<m_int>(high - low);
+        };
+
+        while (left < right) {
+            m_int mid = (left + right) / 2;
+            if (count_points_within_distance(mid) >= k) {
+                right = mid;
+            } else {
+                left = mid + 1;
+            }
+        }
+
+        cout << left << "\n";
+    }
+
+    return 0;
+}

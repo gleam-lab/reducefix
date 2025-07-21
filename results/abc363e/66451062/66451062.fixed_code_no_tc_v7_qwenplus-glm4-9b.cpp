@@ -1,0 +1,61 @@
+#include <iostream>
+#include <vector>
+#include <queue>
+#include <algorithm>
+
+using namespace std;
+
+struct Point {
+    int x, y;
+};
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+    cout.tie(0);
+
+    int h, w, y;
+    cin >> h >> w >> y;
+
+    vector<vector<int>> grid(h, vector<int>(w));
+    for (int i = 0; i < h; ++i) {
+        for (int j = 0; j < w; ++j) {
+            cin >> grid[i][j];
+        }
+    }
+
+    // Initialize the queue and visited array
+    queue<Point> q;
+    vector<vector<bool>> visited(h, vector<bool>(w, false));
+
+    // Enqueue all edges of the grid
+    for (int i = 0; i < h; ++i) {
+        q.push({i, 0}); visited[i][0] = true;
+        q.push({i, w - 1}); visited[i][w - 1] = true;
+    }
+    for (int j = 0; j < w; ++j) {
+        q.push({0, j}); visited[0][j] = true;
+        q.push({h - 1, j}); visited[h - 1][j] = true;
+    }
+
+    // Process the queue
+    int remaining_area = h * w; // Start with the total area
+    while (!q.empty()) {
+        Point p = q.front(); q.pop();
+        for (int d = 0; d < 4; ++d) {
+            int nx = p.x + dx[d], ny = p.y + dy[d];
+            if (nx >= 0 && nx < h && ny >= 0 && ny < w && !visited[nx][ny] && grid[nx][ny] > height) {
+                visited[nx][ny] = true;
+                q.push({nx, ny});
+                remaining_area--; // This cell will sink
+            }
+        }
+    }
+
+    // Output the remaining area for each year
+    for (int year = 1; year <= y; ++year) {
+        cout << remaining_area << endl;
+    }
+
+    return 0;
+}

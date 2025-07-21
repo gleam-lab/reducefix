@@ -1,0 +1,50 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int N;
+    cin >> N;
+
+    vector<long long> A(N), B(N - 1);
+    for (int i = 0; i < N; ++i) cin >> A[i];
+    for (int i = 0; i < N - 1; ++i) cin >> B[i];
+
+    sort(A.begin(), A.end());
+    sort(B.begin(), B.end());
+
+    // We need to find the minimal x such that we can assign all toys to boxes
+    // where each toy fits in its box, and one box is newly purchased.
+
+    // Idea: For each toy i, it must be matched with a box >= A[i]
+    // There are N-1 existing boxes. Assign largest toys to largest available boxes.
+    // If some toy cannot be assigned to an existing box, we need to use the new box.
+
+    // So we try to match largest toys with largest available boxes.
+    // The first toy (in sorted order) which cannot fit into any remaining box
+    // must be placed in the new box of size x.
+
+    // So we simulate greedy matching from largest toy down:
+    int j = N - 2; // pointer to B (boxes), sorted descending
+    for (int i = N - 1; i >= 0; --i) {
+        if (j >= 0 && B[j] >= A[i]) {
+            j--;
+        }
+    }
+
+    // After this, the number of unmatched toys is (i + 1)
+    // j points to the last box not used
+    // If all toys matched, then j == -1
+    if (j == -1) {
+        cout << -1 << '\n';
+        return 0;
+    }
+
+    // Else, the smallest toy that couldn't be matched needs to go into the new box
+    // That toy is A[j], since we matched N - 1 - j toys from the top
+    cout << A[j] << '\n';
+
+    return 0;
+}

@@ -1,0 +1,108 @@
+To fix this code, we need to correctly determine the minimum number of additional votes each candidate needs to guarantee their victory, regardless of how the remaining votes are distributed among other candidates. The issue with the original code is that it incorrectly calculates the required votes for each candidate.
+
+### Approaches
+
+1. **Understanding the Problem**: For each candidate, we need to ensure that if they receive `X` additional votes, the number of candidates with more votes than them is less than `M`. This means at most `M-1` candidates can have more votes than them after redistribution.
+
+2. **Key Insight**: For candidate `i`, after adding `X` votes, their total votes become `A[i] + X`. The remaining votes `K - X` can be distributed to other candidates in the worst case such that as many candidates as possible exceed `A[i] + X`.
+
+3. **Algorithm**:
+   - Sort the array of votes to easily find the top candidates.
+   - For each candidate, calculate the minimum `X` such that even if the remaining `K - X` votes are used to boost other candidates, no more than `M-1` candidates have votes exceeding `A[i] + X`.
+   - This involves checking if the sum of votes needed to boost `M` candidates to `A[i] + X + 1` (or higher) exceeds the remaining votes `K - X`.
+
+4. **Binary Search**: For each candidate, use binary search to find the minimum `X` that satisfies the condition. The binary search should check if distributing the remaining votes can prevent more than `M-1` candidates from surpassing `A[i] + X`.
+
+### Solution Code
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+
+int main() {
+    ios_base::sync_with_stdio(0);
+    cin.tie(0);
+    int N, M;
+    ll K;
+    cin >> N >> M >> K;
+    vector<ll> A(N);
+    for (int i = 0; i < N; ++i) {
+        cin >> A[i];
+    }
+
+    vector<ll> sorted_A = A;
+    sort(sorted_A.begin(), sorted_A.end(), greater<ll>());
+    vector<ll> prefix(N + 1, 0);
+    for (int i = 0; i < N; ++i) {
+        prefix[i + 1] = prefix[i] + sorted_A[i];
+    }
+
+    vector<ll> ans(N, -1);
+    for (int i = 0; i < N; ++i) {
+        ll current = A[i];
+        ll low = 0, high = K;
+        ll best_X = -1;
+        while (low <= high) {
+            ll mid = (low + high) / 2;
+            ll new_votes = current + mid;
+            // Find the number of elements > new_votes in the original array (excluding A[i])
+            // We need at most M-1 elements > new_votes
+            int cnt = upper_bound(sorted_A.begin(), sorted_A.end(), new_votes, greater<ll>()) - sorted_A.begin();
+            if (sorted_A[cnt - 1] == new_votes) {
+                // Adjust to count only elements strictly greater
+                cnt = lower_bound(sorted_A.begin(), sorted_A.end(), new_votes, greater<ll>()) - sorted_A.begin();
+            }
+            if (cnt >= M) {
+                low = mid + 1;
+                continue;
+            }
+            // The top 'cnt' elements are > new_votes. We need to ensure no more than M-1.
+            // So the (M-1)th element should be <= new_votes.
+            // The sum of votes needed to make M elements > new_votes is:
+            // sum_{j=0}^{M-1} max(0, (new_votes + 1 - sorted_A[j]))
+            // But since sorted_A is in descending order, the first M elements are the largest.
+            ll total = 0;
+            if (M >= 1) {
+                ll limit = min(M, N);
+                for (int j = 0; j < limit; ++j) {
+                    if (sorted_A[j] > new_votes) {
+                        total += (sorted_A[j] - new_votes);
+                    } else {
+                        break;
+                    }
+                }
+            }
+            if (total <= K - mid) {
+                high = mid - 1;
+                best_X = mid;
+            } else {
+                low = mid + 1;
+            }
+        }
+        ans[i] = best_X;
+    }
+
+    for (int i = 0; i < N; ++i) {
+        if (ans[i] == -1) {
+            cout << -1 << " ";
+        } else {
+            cout << ans[i] << " ";
+        }
+    }
+    cout << endl;
+    return 0;
+}
+```
+
+### Explanation
+
+1. **Sorting and Prefix Sum**: The votes are sorted in descending order to easily access the top candidates. A prefix sum array helps in calculating cumulative votes efficiently.
+
+2. **Binary Search for Each Candidate**: For each candidate, we perform a binary search to find the minimum `X` (additional votes) such that after adding `X` to the candidate's votes, no more than `M-1` other candidates can surpass this new vote count with the remaining `K - X` votes.
+
+3. **Validation in Binary Search**: For a candidate with `current + mid` votes, we check if the sum of votes required to boost the top `M-1` candidates beyond this value is less than or equal to `K - mid`. If true, `mid` is a potential candidate for `X`, and we continue the search for a smaller `X`.
+
+4. **Output**: The results for all candidates are printed, with `-1` indicating it's impossible for the candidate to meet the condition.
+
+This approach ensures correctness by systematically checking each candidate's required votes against the worst-case redistribution of remaining votes, leveraging binary search for efficiency.

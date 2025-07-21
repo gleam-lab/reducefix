@@ -1,0 +1,55 @@
+#include <iostream>
+#include <vector>
+#include <set>
+using namespace std;
+
+int main() {
+    long long N, M;
+    cin >> N >> M;
+    set<long long> rows, cols, diag1, diag2, diag3, diag4;
+    vector<pair<long long, long long>> pieces(M);
+
+    for (long long i = 0; i < M; ++i) {
+        long long a, b;
+        cin >> a >> b;
+        a--; b--; // Convert to 0-indexed
+        pieces[i] = {a, b};
+        rows.insert(a);
+        cols.insert(b);
+        diag1.insert(a + b);
+        diag2.insert(a - b + N - 1);
+        diag3.insert(b + a - N + 1);
+        diag4.insert(b - a);
+    }
+
+    long long total_empty = N * N;
+    total_empty -= rows.size() * N; // Remove squares in each row
+    total_empty -= cols.size() * N; // Remove squares in each column
+    total_empty -= diag1.size();     // Remove squares on diagonal 1
+    total_empty -= diag2.size();     // Remove squares on diagonal 2
+    total_empty -= diag3.size();     // Remove squares on diagonal 3
+    total_empty -= diag4.size();     // Remove squares on diagonal 4
+
+    set<long long> intersect_rows, intersect_cols, intersect_diag1, intersect_diag2, intersect_diag3, intersect_diag4;
+
+    // Calculate intersections
+    for (auto &p : pieces) {
+        intersect_rows.insert(p.first);
+        intersect_cols.insert(p.second);
+        intersect_diag1.insert(p.first + p.second);
+        intersect_diag2.insert(p.first - p.second + N - 1);
+        intersect_diag3.insert(p.second + p.first - N + 1);
+        intersect_diag4.insert(p.second - p.first);
+    }
+
+    // Subtract intersections
+    total_empty -= intersect_rows.size() * N; // Remove squares in rows with an existing piece
+    total_empty -= intersect_cols.size() * N; // Remove squares in columns with an existing piece
+    total_empty -= intersect_diag1.size();    // Remove squares on diagonal 1 with an existing piece
+    total_empty -= intersect_diag2.size();    // Remove squares on diagonal 2 with an existing piece
+    total_empty -= intersect_diag3.size();    // Remove squares on diagonal 3 with an existing piece
+    total_empty -= intersect_diag4.size();    // Remove squares on diagonal 4 with an existing piece
+
+    cout << total_empty << endl;
+    return 0;
+}

@@ -1,0 +1,79 @@
+After analyzing the failing test case and the code, I noticed that the issue isn't immediately obvious since the output appears identical. However, the problem likely lies in how the code handles the sinking of sections with elevation exactly equal to the current sea level. The original code marks border sections as sunk immediately and processes them at their elevation time, but might miss some propagation cases.
+
+Here's the fixed code that properly handles all cases:
+
+```cpp
+#include <bits/stdc++.h>
+
+using namespace std;
+
+constexpr int dx[] = {-1, 1, 0, 0};
+constexpr int dy[] = {0, 0, -1, 1};
+
+int main()
+{
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int H, W, Y;
+    cin >> H >> W >> Y;
+
+    vector<vector<int>> A(H, vector<int>(W));
+    vector<vector<bool>> sunk(H, vector<bool>(W, false));
+    priority_queue<tuple<int, int, int>, vector<tuple<int, int, int>>, greater<tuple<int, int, int>>> pq;
+
+    for (int i = 0; i < H; i++)
+    {
+        for (int j = 0; j < W; j++)
+        {
+            cin >> A[i][j];
+            if (i == 0 || i == H - 1 || j == 0 || j == W - 1)
+            {
+                pq.emplace(A[i][j], i, j);
+                sunk[i][j] = true;
+            }
+        }
+    }
+
+    int remaining = H * W;
+    vector<int> ans(Y + 1, remaining);
+
+    for (int y = 1; y <= Y; y++)
+    {
+        while (!pq.empty() && get<0>(pq.top()) <= y)
+        {
+            auto [a, i, j] = pq.top();
+            pq.pop();
+            remaining--;
+
+            for (int d = 0; d < 4; d++)
+            {
+                int ni = i + dx[d];
+                int nj = j + dy[d];
+                if (ni >= 0 && ni < H && nj >= 0 && nj < W && !sunk[ni][nj])
+                {
+                    sunk[ni][nj] = true;
+                    pq.emplace(A[ni][nj], ni, nj);
+                }
+            }
+        }
+        ans[y] = remaining;
+    }
+
+    for (int y = 1; y <= Y; y++)
+    {
+        cout << ans[y] << '\n';
+    }
+
+    return 0;
+}
+```
+
+Key improvements:
+1. Changed from a vector of queues to a priority queue (min-heap) to efficiently process sections in order of increasing elevation
+2. Track sunk status separately to avoid duplicate processing
+3. Calculate answers for all years first, then output them in the required order
+4. Properly handle the case where multiple sections might sink at the same sea level
+5. More efficient propagation of sinking using the priority queue
+
+This solution should handle all test cases correctly, including the edge cases where sections have the same elevation or when the sea level rises very slowly/quickly. The complexity is O(HW + Y log(HW)) which is efficient enough for the given constraints.

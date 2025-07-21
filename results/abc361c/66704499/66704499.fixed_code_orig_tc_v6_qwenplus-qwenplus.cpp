@@ -1,0 +1,32 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    int N, K;
+    cin >> N >> K;
+    vector<int> A(N);
+    for (int i = 0; i < N; ++i) {
+        cin >> A[i];
+    }
+
+    // We will use a sliding window approach to find the minimum range after removing K elements
+
+    int min_diff = numeric_limits<int>::max();
+
+    // Try all possible ways to keep (N-K) consecutive elements
+    for (int i = 0; i + (N - K) <= N; ++i) {
+        int j = i + (N - K) - 1;
+        int min_val = A[i], max_val = A[i];
+
+        for (int k = i; k <= j; ++k) {
+            min_val = min(min_val, A[k]);
+            max_val = max(max_val, A[k]);
+        }
+
+        min_diff = min(min_diff, max_val - min_val);
+    }
+
+    cout << min_diff << endl;
+
+    return 0;
+}

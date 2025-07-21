@@ -1,0 +1,115 @@
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+#define int long long
+#define pii pair<int, int>
+#define vi vector<int>
+#define vii vector<pii>
+#define vvi vector<vector<int>>
+#define vvii vector<vector<pii>>
+#define pb push_back
+#define all(x) (x).begin(), (x).end()
+#define sz(x) ((int)(x).size())
+#define endl '\n'
+#define IOS ios::sync_with_stdio(false); cin.tie(0); cout.tie(0);
+
+const int MOD = 1e9 + 7;
+const int INF = 1e18;
+
+int dx[] = {0, 0, 1, -1};
+int dy[] = {1, -1, 0, 0};
+
+signed main() {
+    IOS;
+    int H, W, Y;
+    cin >> H >> W >> Y;
+    vector<vector<int>> grid(H, vector<int>(W));
+    for (int i = 0; i < H; ++i)
+        for (int j = 0; j < W; ++j)
+            cin >> grid[i][j];
+
+    // Visited array to mark cells already submerged
+    vector<vector<bool>> vis(H, vector<bool>(W, false));
+
+    // Priority queue to process cells in increasing order of elevation
+    priority_queue<pair<int, pair<int, int>>, vector<pair<int, pair<int, int>>>, greater<>> pq;
+
+    // Initialize the border cells (edges of the grid)
+    for (int i = 0; i < H; ++i) {
+        for (int j = 0; j < W; ++j) {
+            if (i == 0 || i == H - 1 || j == 0 || j == W - 1) {
+                pq.push({grid[i][j], {i, j}});
+                vis[i][j] = true;
+            }
+        }
+    }
+
+    int remaining = H * W;
+    vector<int> ans(Y + 2); // To store answer for each year
+
+    // Process using BFS with priority queue (like multi-source BFS with elevation trigger)
+    while (!pq.empty()) {
+        auto [elev, pos] = pq.top();
+        auto [x, y] = pos;
+        pq.pop();
+
+        // If this elevation is higher than current year, it will not sink yet
+        // So we break and fill answers up to that year
+        if (elev > Y) continue;
+
+        // Flood fill from this cell
+        queue<pair<int, int>> q;
+        q.push({x, y});
+        vis[x][y] = true;
+        int cnt = 1;
+
+        // BFS to flood all connected land with elevation <= current sea level
+        while (!q.empty()) {
+            int cx = q.front().first;
+            int cy = q.front().second;
+            q.pop();
+
+            for (int d = 0; d < 4; ++d) {
+                int nx = cx + dx[d];
+                int ny = cy + dy[d];
+                if (nx >= 0 && nx < H && ny >= 0 && ny < W && !vis[nx][ny]) {
+                    vis[nx][ny] = true;
+                    if (grid[nx][ny] <= elev) {
+                        q.push({nx, ny});
+                        cnt++;
+                    } else {
+                        pq.push({grid[nx][ny], {nx, ny}});
+                    }
+                }
+            }
+        }
+
+        // Subtract the number of cells sunk at this elevation
+        remaining -= cnt;
+
+        // Fill in all years up to this elevation
+        for (int y = elev; y <= Y; ++y) {
+            if (ans[y] == 0) {
+                ans[y] = remaining;
+            } else {
+                break;
+            }
+        }
+    }
+
+    // For any year not filled (higher than max elevation), fill with last known value
+    for (int i = 1; i <= Y; ++i) {
+        if (ans[i] == 0) {
+            ans[i] = ans[i - 1];
+        }
+    }
+
+    // Output results
+    for (int i = 1; i <= Y; ++i) {
+        cout << ans[i] << endl;
+    }
+
+    return 0;
+}
+```

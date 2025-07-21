@@ -1,0 +1,66 @@
+#include <bits/stdc++.h>
+#define int long long
+#define f first
+#define s second
+using namespace std;
+
+// Custom comparator for sorting pairs in ascending order of A_i
+bool compare(const pair<int, int>& a, const pair<int, int>& b) {
+    return a.f < b.f;
+}
+
+signed main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t; 
+    cin >> t;
+    
+    while (t--) {
+        int n, k;
+        cin >> n >> k;
+        vector<pair<int, int>> v(n);
+        
+        // Read A values
+        for (int i = 0; i < n; ++i)
+            cin >> v[i].f;
+        
+        // Read B values
+        for (int i = 0; i < n; ++i)
+            cin >> v[i].s;
+        
+        // Sort the pairs based on A_i
+        sort(v.begin(), v.end(), compare);
+
+        // Min-heap to keep track of the K largest B values among the selected A's
+        priority_queue<int, vector<int>, greater<>> pq;
+        int sumB = 0;
+        int ans = LLONG_MAX;
+
+        // First select the smallest K elements by A_i
+        for (int i = 0; i < k - 1; ++i) {
+            sumB += v[i].s;
+            pq.push(v[i].s);
+        }
+
+        // Try all possible candidates for max A_i (from index k-1 to n-1)
+        for (int i = k - 1; i < n; ++i) {
+            // Add current B_i to heap and update sumB
+            pq.push(v[i].s);
+            sumB += v[i].s;
+
+            // Maintain only top K B values
+            if (pq.size() > k) {
+                sumB -= pq.top();
+                pq.pop();
+            }
+
+            // Calculate the product and update minimum
+            ans = min(ans, v[i].f * sumB);
+        }
+
+        cout << ans << '\n';
+    }
+
+    return 0;
+}

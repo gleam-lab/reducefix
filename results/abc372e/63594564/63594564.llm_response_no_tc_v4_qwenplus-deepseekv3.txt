@@ -1,0 +1,88 @@
+The original code attempts to solve the problem by maintaining each connected component's vertices in a sorted list (in descending order) and merging them during union operations, keeping only the top 10 elements to answer the k-th largest queries efficiently. However, there are several issues:
+
+1. **Merging Logic**: The merging of two sorted lists is incorrect. The loop conditions and the merging process do not correctly handle all cases, especially when one list is exhausted before the other.
+2. **Size Maintenance**: The code tries to maintain only the top 10 elements, but the merging process might not preserve the order correctly, leading to incorrect answers.
+3. **Efficiency**: The merging process is not efficient enough for the given constraints (N and Q up to 2×10^5), as it involves O(n) operations per merge in the worst case.
+
+### Approaches
+To fix these issues, we can use a more efficient data structure to manage the connected components and their top elements:
+
+1. **Union-Find (Disjoint Set Union - DSU)** with Path Compression and Union by Size/Rank to efficiently manage the connected components.
+2. **Priority Queues (Max Heaps)** for each component to keep track of the largest elements. However, since we need to merge heaps efficiently, we can use a `std::set` or `std::multiset` which allows logarithmic time insertions and deletions.
+3. **Handling Queries**: For each type 2 query, we can directly access the k-th largest element from the set of the component's vertices.
+
+### Solution Code
+```cpp
+#include "bits/stdc++.h"
+
+using namespace std;
+
+#define ff first
+#define ss second
+#define ll long long
+#define SZ(s) (int)s.size()
+
+int const N = 2e5 + 5;
+
+vector<int> p;
+vector<multiset<int, greater<int>>> v;
+
+int par(int x) {
+    if (p[x] == x) return x;
+    return p[x] = par(p[x]);
+}
+
+void uni(int a, int b) {
+    a = par(a), b = par(b);
+    if (a == b) return;
+    if (v[a].size() < v[b].size()) swap(a, b);
+    for (int num : v[b]) {
+        v[a].insert(num);
+    }
+    v[b].clear();
+    p[b] = a;
+    while (v[a].size() > 10) {
+        auto it = prev(v[a].end());
+        v[a].erase(it);
+    }
+}
+
+signed main() {
+    ios_base::sync_with_stdio(false); cin.tie(nullptr);
+
+    int n, q;
+    cin >> n >> q;
+    p.resize(n + 1);
+    v.resize(n + 1);
+    for (int i = 1; i <= n; i++) {
+        p[i] = i;
+        v[i].insert(i);
+    }
+    while (q--) {
+        int t, a, b;
+        cin >> t >> a >> b;
+        if (t == 1) {
+            uni(a, b);
+        } else {
+            a = par(a);
+            if (v[a].size() < b) {
+                cout << -1 << '\n';
+            } else {
+                auto it = v[a].begin();
+                advance(it, b - 1);
+                cout << *it << '\n';
+            }
+        }
+    }
+
+    return 0;
+}
+```
+
+### Explanation
+1. **Union-Find Data Structure**: The `par` function uses path compression to efficiently find the root of a vertex. The `uni` function merges two sets by size, ensuring the smaller set is merged into the larger one.
+2. **Multiset for Top Elements**: Each component's vertices are stored in a multiset sorted in descending order. This allows efficient insertion and deletion operations.
+3. **Merging Sets**: During a union operation, the elements of the smaller set are inserted into the larger set. The size of the resulting set is capped at 10 to ensure quick access to the top elements.
+4. **Query Handling**: For a type 2 query, the k-th largest element is accessed directly from the multiset. If the set size is smaller than k, `-1` is returned.
+
+This approach ensures that each operation is handled efficiently within the problem constraints, providing optimal performance for large input sizes.

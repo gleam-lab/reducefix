@@ -1,0 +1,53 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+typedef long long ll;
+#define rep(i, n) for (int i = 0; i < (int)n; ++i)
+#define pb push_back
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+    
+    int N, Q;
+    cin >> N >> Q;
+    
+    vector<long long> A(N);
+    for (int i = 0; i < N; ++i) {
+        cin >> A[i];
+    }
+    
+    // Sort the A array to enable binary search
+    sort(A.begin(), A.end());
+    
+    // Precompute prefix sums for distances in both directions
+    vector<ll> prefix_sum(N + 1), suffix_sum(N + 1);
+    for (int i = 0; i < N; ++i) {
+        prefix_sum[i + 1] = prefix_sum[i] + A[i];
+        suffix_sum[i] = suffix_sum[i] + A[N - 1 - i];
+    }
+
+    for (int q = 0; q < Q; ++q) {
+        ll b;
+        int k;
+        cin >> b >> k;
+        
+        // Binary search on the k-th smallest distance
+        int left = 0, right = 2e8 + 10;
+        while (left < right) {
+            int mid = (left + right) / 2;
+            
+            // Find range of elements within distance `mid` from b
+            int lo = lower_bound(A.begin(), A.end(), b - mid) - A.begin();
+            int hi = upper_bound(A.begin(), A.end(), b + mid) - A.begin();
+            
+            if (hi - lo >= k) {
+                right = mid;
+            } else {
+                left = mid + 1;
+            }
+        }
+        
+        cout << left << "\n";
+    }
+}

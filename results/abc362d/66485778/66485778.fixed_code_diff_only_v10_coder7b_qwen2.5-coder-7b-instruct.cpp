@@ -1,0 +1,90 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+#define ll long long
+
+struct DSU {
+    vector<ll> parent, rank;
+    DSU(ll n) {
+        parent.resize(n+1);
+        rank.resize(n+1, 0);
+        for(ll i=1;i<=n;i++) parent[i]=i;
+    }
+    
+    ll find(ll node) {
+        if(parent[node]==node) return node;
+        return parent[node] = find(parent[node]);
+    }
+    
+    void unionSets(ll a, ll b) {
+        a = find(a);
+        b = find(b);
+        if(a!=b) {
+            if(rank[a]<rank[b]) swap(a, b);
+            parent[b] = a;
+            if(rank[a]==rank[b]) rank[a]++;
+        }
+    }
+};
+
+struct Edge {
+    ll u, v, w;
+    bool operator<(const Edge &other) const {
+        return w<other.w;
+    }
+};
+
+ll dijkstra(vector<vector<pair<ll,ll>>> &graph, ll src, ll n) {
+    vector<ll> dist(n+1, LLONG_MAX);
+    dist[src] = 0;
+    priority_queue<pair<ll,ll>, vector<pair<ll,ll>>, greater<pair<ll,ll>>> pq;
+    pq.push({0, src});
+    
+    while(!pq.empty()) {
+        auto top = pq.top();
+        pq.pop();
+        
+        ll node = top.second;
+        ll dis = top.first;
+        
+        if(dis > dist[node]) continue;
+        
+        for(auto neighbor : graph[node]) {
+            ll child = neighbor.first;
+            ll wt = neighbor.second;
+            
+            if(dist[node]+wt < dist[child]) {
+                dist[child] = dist[node] + wt;
+                pq.push({dist[child], child});
+            }
+        }
+    }
+    
+    return dist[n];
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(NULL);
+    
+    ll n, m;
+    cin >> n >> m;
+    
+    vector<ll> a(n+1);
+    for(ll i=1;i<=n;i++) cin >> a[i];
+    
+    vector<vector<pair<ll,ll>>> graph(n+1);
+    
+    for(ll i=0;i<m;i++) {
+        ll u, v, w;
+        cin >> u >> v >> w;
+        graph[u].push_back({v, w});
+        graph[v].push_back({u, w});
+    }
+    
+    for(ll i=2;i<=n;i++) {
+        cout << dijkstra(graph, 1, i) + a[i] << " ";
+    }
+    
+    return 0;
+}

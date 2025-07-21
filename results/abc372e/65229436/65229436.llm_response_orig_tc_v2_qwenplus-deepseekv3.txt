@@ -1,0 +1,90 @@
+To fix this code, we need to ensure that the Union-Find data structure correctly maintains and updates the sets of connected vertices, and that the k-th largest vertex query is handled efficiently. The main issue in the original code was that the Union-Find implementation did not correctly merge the sets of vertices when unions were performed, leading to incorrect answers for some queries.
+
+### Approaches
+1. **Union-Find Data Structure**: This will help efficiently manage the connected components of the graph. Each component will be represented by its root, and we will use path compression and union by size to optimize operations.
+2. **Maintaining Sorted Lists**: For each component, maintain a set or a sorted list of vertices to efficiently answer k-th largest queries. When two components are merged, the smaller set is merged into the larger one to maintain efficiency.
+3. **Handling Queries**: For each type 2 query, check if the component size is at least k. If it is, retrieve the k-th largest element from the sorted list of the component; otherwise, return -1.
+
+### Solution Code
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+#define rep(i, n) for(int i = 0; i < (n); i++)
+#define all(a) a.begin(), a.end()
+#define rall(a) a.rbegin(), a.rend()
+using ll = long long;
+using pi = pair<int, int>;
+const int INF = 1e9;
+
+struct UnionFind {
+    vector<int> parent, rank;
+    vector<set<int>> components;
+    UnionFind(int n) : parent(n), rank(n, 0), components(n) {
+        for (int i = 0; i < n; i++) {
+            parent[i] = i;
+            components[i].insert(i);
+        }
+    }
+    int findRoot(int x) {
+        if (parent[x] != x) 
+            parent[x] = findRoot(parent[x]);
+        return parent[x];
+    }
+    void unite(int x, int y) {
+        int rx = findRoot(x), ry = findRoot(y);
+        if (rx == ry) return;
+        if (rank[rx] < rank[ry]) {
+            parent[rx] = ry;
+            for (int elem : components[rx]) 
+                components[ry].insert(elem);
+            components[rx].clear();
+        } else {
+            parent[ry] = rx;
+            for (int elem : components[ry]) 
+                components[rx].insert(elem);
+            components[ry].clear();
+            if (rank[rx] == rank[ry])
+                rank[rx]++;
+        }
+    }
+};
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int n, q;
+    cin >> n >> q;
+    UnionFind uf(n);
+    vector<int> ans;
+    rep(qi, q) {
+        int com;
+        cin >> com;
+        if (com == 1) {
+            int u, v;
+            cin >> u >> v;
+            u--; v--;
+            uf.unite(u, v);
+        } else if (com == 2) {
+            int v, k;
+            cin >> v >> k;
+            v--;
+            int root = uf.findRoot(v);
+            if ((int)uf.components[root].size() < k) {
+                ans.push_back(-1);
+            } else {
+                auto it = uf.components[root].rbegin();
+                advance(it, k - 1);
+                ans.push_back(*it + 1);
+            }
+        }
+    }
+    for (int x : ans) cout << x << '\n';
+    return 0;
+}
+```
+
+### Explanation
+1. **Union-Find Data Structure**: The `UnionFind` class includes `parent` and `rank` arrays for standard Union-Find operations, and a `components` vector of sets to keep track of vertices in each component.
+2. **Union Operation**: The `unite` method merges two sets by size. The smaller set is merged into the larger one to maintain efficiency, and path compression is used to keep the tree flat.
+3. **Query Handling**: For each type 2 query, the root of the vertex is found. If the size of the component is at least k, the k-th largest vertex is retrieved from the set of vertices in the component, which is maintained in sorted order. If the size is less than k, -1 is returned.
+4. **Efficiency**: The use of sets ensures that insertion and retrieval operations are efficient, and the union by size and path compression optimizations keep the complexity manageable for large inputs. The overall approach ensures that the solution is both correct and efficient within the given constraints.

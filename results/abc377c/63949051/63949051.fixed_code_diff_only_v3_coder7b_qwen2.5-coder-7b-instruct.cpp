@@ -1,0 +1,43 @@
+#include <iostream>
+#include <vector>
+#include <set>
+
+using namespace std;
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(0);
+    cout.tie(0);
+
+    long long N, M;
+    cin >> N >> M;
+
+    set<pair<long long, long long>> pieces;
+
+    for(long long i = 0; i < M; ++i) {
+        long long x, y;
+        cin >> x >> y;
+        pieces.insert({x, y});
+
+        // Check all possible knight moves
+        vector<pair<long long, long long>> moves = {
+            {2, 1}, {1, 2}, {-1, 2}, {-2, 1},
+            {-2, -1}, {-1, -2}, {1, -2}, {2, -1}
+        };
+
+        for(auto move : moves) {
+            long long nx = x + move.first, ny = y + move.second;
+            if(nx >= 1 && nx <= N && ny >= 1 && ny <= N) {
+                pieces.insert({nx, ny});
+            }
+        }
+    }
+
+    long long total_squares = N * N;
+    long long occupied_squares = pieces.size();
+    long long available_squares = total_squares - occupied_squares;
+
+    cout << available_squares << endl;
+
+    return 0;
+}

@@ -1,0 +1,84 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define ll long long
+#define rep(i,n) for(ll i=0;i<(ll)n;i++)
+#define vi vector<int>
+#define vl vector<ll>
+#define vb vector<bool>
+#define vc vector<char>
+#define vvb vector<vector<bool>>
+#define vvl vector<vector<ll>>
+#define vvi vector<vector<int>>
+#define pii pair<int, int>
+#define fi first
+#define se second
+#define pb push_back
+#define all(a) a.begin(),a.end()
+#define endl '\n'
+
+const ll dx[4] = {0, 1, 0, -1};
+const ll dy[4] = {1, 0, -1, 0};
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+    
+    ll h, w, y;
+    cin >> h >> w >> y;
+    
+    vvl grid(h, vl(w));
+    rep(i, h) rep(j, w) cin >> grid[i][j];
+
+    ll total = h * w;
+
+    // Create a priority queue to simulate the boundary expanding inward
+    priority_queue<vl, vector<vl>, greater<vl>> pq;
+    vvb visited(h, vb(w, false));
+
+    // Push all the border cells into the priority queue
+    for (ll i = 0; i < h; ++i) {
+        for (ll j = 0; j < w; ++j) {
+            if (i == 0 || i == h - 1 || j == 0 || j == w - 1) {
+                pq.push({grid[i][j], i, j});
+                visited[i][j] = true;
+            }
+        }
+    }
+
+    // To store how many cells sink each year
+    vl sunk(y + 2, 0);
+
+    while (!pq.empty()) {
+        vl curr = pq.top(); pq.pop();
+        ll val = curr[0], x = curr[1], y_coord = curr[2];
+        
+        // Year in which this cell gets submerged
+        ll year = val;
+        if (year > y) year = y + 1;
+
+        sunk[year]++;
+
+        for (ll d = 0; d < 4; ++d) {
+            ll nx = x + dx[d];
+            ll ny = y_coord + dy[d];
+            if (nx >= 0 && nx < h && ny >= 0 && ny < w && !visited[nx][ny]) {
+                visited[nx][ny] = true;
+                // The effective height is max(val, grid[nx][ny])
+                pq.push({max(val, grid[nx][ny]), nx, ny});
+            }
+        }
+    }
+
+    // Accumulate the number of cells that have sunk by each year
+    vl prefix(y + 2, 0);
+    for (ll i = 1; i <= y; ++i) {
+        prefix[i] = prefix[i - 1] + sunk[i];
+    }
+
+    // Output the remaining area
+    for (ll i = 1; i <= y; ++i) {
+        cout << total - prefix[i] << endl;
+    }
+
+    return 0;
+}

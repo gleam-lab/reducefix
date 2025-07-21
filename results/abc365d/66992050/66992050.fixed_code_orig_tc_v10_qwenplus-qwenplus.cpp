@@ -1,0 +1,48 @@
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+
+int main() {
+  int N;
+  string S;
+  cin >> N >> S;
+
+  // This problem can be modeled as finding the minimum number of segments 
+  // where each segment must be one of the RPS sequences that follow the rules:
+  // Each move beats the previous one (R < P < S < R...)
+
+  // We can use a greedy approach to find the longest valid sequence starting from each position.
+  // But we need to optimize it for O(N) time.
+
+  // The valid transitions are:
+  // After R, next should be P
+  // After P, next should be S
+  // After S, next should be R
+
+  // We'll simulate the optimal choices and count how many times we have to change the sequence.
+
+  char current = 'N'; // None/start
+  int ans = 0;
+
+  for (char c : S) {
+    if (c == 'R') {
+      if (current != 'P') {
+        ans++;
+        current = 'R';
+      }
+    } else if (c == 'P') {
+      if (current != 'S') {
+        ans++;
+        current = 'P';
+      }
+    } else if (c == 'S') {
+      if (current != 'R') {
+        ans++;
+        current = 'S';
+      }
+    }
+  }
+
+  cout << ans << endl;
+  return 0;
+}

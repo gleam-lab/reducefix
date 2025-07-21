@@ -1,0 +1,28 @@
+#include<bits/stdc++.h>
+using namespace std;
+int n, q, x[200005], p[200005];
+map<int, int> sum;
+
+int main() {
+    cin >> n;
+    for (int i = 1; i <= n; i++) {
+        cin >> x[i];
+    }
+    for (int i = 1; i <= n; i++) {
+        cin >> p[i];
+        sum[i + 1] = sum[i] + p[i]; // Correcting the index to use the next element
+    }
+    cin >> q;
+    while (q--) {
+        int L, R;
+        cin >> L >> R;
+        // Using binary search to find the smallest index greater than or equal to L
+        auto itL = upper_bound(x + 1, x + n + 1, L);
+        auto itR = upper_bound(x + 1, x + n + 1, R);
+        // Since the sum is 0-indexed, we need to subtract 1 from the results
+        int c = itL - x - 1;
+        int d = itR - x - 1;
+        // Output the difference between the sum at R and the sum at L-1
+        cout << sum[d] - sum[c] << endl;
+    }
+}

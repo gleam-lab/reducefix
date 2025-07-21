@@ -1,0 +1,113 @@
+To solve this problem efficiently, we need to simulate bomb placements on a grid and determine how the walls are destroyed in response. The key challenge lies in simulating the destruction of the nearest visible wall in each direction (up, down, left, right) if the bomb is placed on an empty cell.
+
+We use efficient data structures (`std::set`) for rows and columns to maintain the positions of remaining walls. This allows us to quickly find and remove the closest wall in any direction using binary search operations provided by `std::set`.
+
+### Key Observations:
+1. Each row and column can be represented as a set of indices where walls still exist.
+2. When placing a bomb:
+   - If there's a wall at that position, it's simply removed.
+   - Otherwise, we look in all four directions:
+     - Up: Find the first wall above using `rbegin()` or `lower_bound()`.
+     - Down: Use `upper_bound()` to find the first wall below.
+     - Left: Similar logic in the row set.
+     - Right: Similar logic in the row set.
+
+### Data Structures:
+- `tate[j]` holds the column `j`'s occupied row indices.
+- `yoko[i]` holds the row `i`'s occupied column indices.
+
+Each query involves at most 5 set operations (insertions/removals), which are logarithmic in time complexity due to `std::set`.
+
+---
+
+Here's the corrected and optimized C++ code:
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    int h, w, q;
+    cin >> h >> w >> q;
+
+    // Each row and column stores the current wall positions as sets
+    vector<set<int>> tate(w);
+    vector<set<int>> yoko(h);
+
+    // Initialize all cells with walls
+    for (int i = 0; i < h; ++i) {
+        for (int j = 0; j < w; ++j) {
+            tate[j].insert(i);
+            yoko[i].insert(j);
+        }
+    }
+
+    for (int qi = 0; qi < q; ++qi) {
+        int r, c;
+        cin >> r >> c;
+        r--; c--;
+
+        // Check if there's a wall at (r, c)
+        auto col_it = yoko[r].find(c);
+        if (col_it != yoko[r].end()) {
+            // Destroy the wall at (r, c)
+            yoko[r].erase(col_it);
+            tate[c].erase(r);
+        } else {
+            // Try to destroy walls in four directions
+
+            // Up
+            auto up = tate[c].lower_bound(r);
+            if (up != tate[c].begin()) {
+                --up;
+                int tmp = *up;
+                tate[c].erase(up);
+                yoko[tmp].erase(c);
+            }
+
+            // Down
+            auto down = tate[c].lower_bound(r);
+            if (down != tate[c].end()) {
+                int tmp = *down;
+                tate[c].erase(down);
+                yoko[tmp].erase(c);
+            }
+
+            // Left
+            auto left = yoko[r].lower_bound(c);
+            if (left != yoko[r].begin()) {
+                --left;
+                int tmp = *left;
+                yoko[r].erase(left);
+                tate[tmp].erase(r);
+            }
+
+            // Right
+            auto right = yoko[r].lower_bound(c);
+            if (right != yoko[r].end()) {
+                int tmp = *right;
+                yoko[r].erase(right);
+                tate[tmp].erase(r);
+            }
+        }
+    }
+
+    // Count remaining walls
+    int ans = 0;
+    for (int i = 0; i < w; ++i) {
+        ans += tate[i].size();
+    }
+    cout << ans << '\n';
+
+    return 0;
+}
+```
+
+---
+
+### Why this works:
+- **Efficient lookup and deletion** using `std::set`.
+- **Directional logic** correctly finds nearest walls using `lower_bound` and iterator movement.
+- Handles **all edge cases**, including when no wall exists at the bomb location and when no adjacent walls exist in some directions.
+
+This solution has overall time complexity `O(Q log H + Q log W)` per query, which fits comfortably within the constraints of `H*W ≤ 4e5` and `Q ≤ 2e5`.

@@ -1,0 +1,53 @@
+#include <algorithm>
+#include <iostream>
+#include <cstdio>
+#include <bitset>
+using namespace std;
+
+const int MAXN = 200001;
+
+struct edge {
+    int next, to;
+} a[MAXN * 2];
+
+int n, m, head[MAXN], cnt, ans[MAXN];
+bitset<MAXN> visited;
+
+int read() {
+    int res = 0;
+    char c = getchar();
+    while (c < '0' || c > '9') c = getchar();
+    while (c >= '0' && c <= '9') res = (res << 1) + (res << 3) + (c ^ 48), c = getchar();
+    return res;
+}
+
+void add(const int u, const int v) {
+    a[++cnt].next = head[u];
+    a[cnt].to = v;
+    head[u] = cnt;
+}
+
+void dfs(const int u, const int dep) {
+    if (u == 1 && dep) {
+        ans[1] = min(ans[1], dep);
+        return;
+    }
+    visited[u] = true;
+    for (int i = head[u]; i; i = a[i].next) {
+        int v = a[i].to;
+        if (!visited[v] || v == 1) {
+            if (dep + 1 < ans[v]) ans[v] = dep + 1, dfs(v, dep + 1);
+        }
+    }
+    return;
+}
+
+int main() {
+    n = read(), m = read();
+    for (int i = 1; i <= n; ++i) ans[i] = 1e9;
+    for (int i = 1, u, v; i <= m; ++i) u = read(), v = read(), add(u, v), add(v, u); // Add both directions since it's an undirected graph
+    dfs(1, 0);
+    if (ans[1] == 1e9) printf("-1\n");
+    else printf("%d\n", ans[1]);
+    return 0;
+}

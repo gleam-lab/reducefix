@@ -1,0 +1,79 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+#define rep(i, n) for (int i = 0; i < (n); ++i)
+using ll = long long;
+using P = pair<int, int>;
+
+int H, W, Q;
+
+int main() {
+    cin >> H >> W >> Q;
+    vector<set<int>> row(W), col(H);
+    
+    // Initialize all positions as walls
+    for (int i = 0; i < H; ++i) {
+        for (int j = 0; j < W; ++j) {
+            row[j].insert(i);
+            col[i].insert(j);
+        }
+    }
+
+    while (Q--) {
+        int r, c;
+        cin >> r >> c;
+        r--; c--;
+
+        // Check if there is a wall at the current position
+        auto it_r = row[c].find(r);
+        auto it_c = col[r].find(c);
+
+        if (it_r != row[c].end()) {
+            // Destroy the wall at (r,c)
+            row[c].erase(it_r);
+            col[r].erase(it_c);
+        } else {
+            // Up direction
+            auto it_up = row[c].lower_bound(r);
+            if (it_up != row[c].begin()) {
+                it_up--;
+                int destroy_r = *it_up;
+                col[destroy_r].erase(c);
+                row[c].erase(it_up);
+            }
+
+            // Down direction
+            auto it_down = row[c].lower_bound(r);
+            if (it_down != row[c].end()) {
+                int destroy_r = *it_down;
+                col[destroy_r].erase(c);
+                row[c].erase(it_down);
+            }
+
+            // Left direction
+            auto it_left = col[r].lower_bound(c);
+            if (it_left != col[r].begin()) {
+                it_left--;
+                int destroy_c = *it_left;
+                row[destroy_c].erase(r);
+                col[r].erase(it_left);
+            }
+
+            // Right direction
+            auto it_right = col[r].lower_bound(c);
+            if (it_right != col[r].end()) {
+                int destroy_c = *it_right;
+                row[destroy_c].erase(r);
+                col[r].erase(it_right);
+            }
+        }
+    }
+
+    // Count remaining walls
+    int ans = 0;
+    for (int i = 0; i < W; ++i) {
+        ans += row[i].size();
+    }
+    cout << ans << '\n';
+    return 0;
+}

@@ -1,0 +1,26 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+int main() {
+  int n;
+  cin >> n; // Number of elements in the vector x
+  vector<int> x(n); // Vector of integers
+  for (int i = 0; i < n; i++) {
+    cin >> x[i]; // Read elements from the input
+  }
+  vector<ll> p(n), s(n+1); // Vector of long long numbers for comparison
+  // Compute differences and summation of p and s
+  ll totalDiff = accumulate(p.begin(), p.end(), 0LL); // Sum of differences in vector s
+  // Initialize variables for finding the maximum value in vector x
+  int maxIdx = 0;
+  // Iterate over elements of x and calculate the difference with the maximum value
+  for (int i = 0; i < n; i++) {
+    int diff = upper_bound(x.begin(), x.end(), x[i]) - x[i]; // Calculate difference with maximum value found in vector x
+    s[maxIdx + 1] -= diff; // Subtract the difference from the current summation
+    maxIdx = upper_bound(s.begin(), s.end(), diff); // Update maxIdx to find the maximum value in vector s
+    cout << s[maxIdx] << endl; // Output the maximum value found in vector s
+  }
+  return 0;
+}

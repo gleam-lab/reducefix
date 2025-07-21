@@ -1,0 +1,56 @@
+#include <iostream>
+#include <algorithm>
+#include <vector>
+using namespace std;
+
+int N, Q;
+vector<int> A;
+
+// Function to calculate the distance between points X and B_j
+int distance(int X, int B_j) {
+    return abs(X - B_j);
+}
+
+// Binary search to find the k-th closest point to B_j
+int findKthClosest(int B_j, int k) {
+    int left = INT_MAX, right = INT_MIN;
+    for (int num : A) {
+        left = min(left, num);
+        right = max(right, num);
+    }
+    
+    while (left + 1 < right) {
+        int mid = (left + right) / 2;
+        int count = 0;
+        for (int num : A) {
+            if (distance(num, B_j) <= mid) {
+                count++;
+                if (count == k) return mid;
+            }
+        }
+        if (count < k) {
+            left = mid;  // k-th closest must be greater
+        } else if (count > k) {
+            right = mid; // k-th closest must be smaller or equal
+        }
+    }
+    
+    // When left + 1 == right, there is only one possible value satisfying the condition
+    return left;
+}
+
+int main() {
+    cin >> N >> Q;
+    A.resize(N);
+    for (int i = 0; i < N; ++i) {
+        cin >> A[i];
+    }
+    
+    for (int i = 0; i < Q; ++i) {
+        int B_j, k;
+        cin >> B_j >> k;
+        cout << findKthClosest(B_j, k) << endl;
+    }
+    
+    return 0;
+}

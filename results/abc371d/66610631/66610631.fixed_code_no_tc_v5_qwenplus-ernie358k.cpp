@@ -1,0 +1,43 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+typedef long long ll;
+const int N = 1e6 + 7;
+
+int main() {
+    int n, m;
+    cin >> n;
+    vector<int> a(n + 1, 0), b(n + 1, 0), c(n + 1, 0);
+    for (int i = 1; i <= n; i++) {
+        cin >> a[i];
+    }
+    for (int i = 1; i <= n; i++) {
+        cin >> b[i];
+        c[i] = c[i - 1] + b[i];
+    }
+    cin >> m;
+    while (m--) {
+        int l, r;
+        cin >> l >> r;
+        auto l_i = lower_bound(a.begin() + 1, a.end(), l) - a.begin();
+        auto r_i = upper_bound(a.begin() + 1, a.end(), r) - a.begin();
+        
+        // Adjust for 1-based indexing in the output
+        if (r_i == n + 1 && l_i == 1) {
+            // Special case when the entire range is covered
+            cout << c[n] << endl;
+        } else if (r_i == n + 1) {
+            // When the upper bound is out of range, include all from l_i to n
+            cout << c[n] - c[l_i - 1] << endl;
+        } else if (l_i == 1) {
+            // When the lower bound is at the start, include all from start to r_i-1
+            cout << c[r_i - 1] << endl;
+        } else {
+            // General case, subtract the prefix sum from l_i-1 to r_i-1
+            cout << c[r_i - 1] - c[l_i - 1] << endl;
+        }
+    }
+    return 0;
+}

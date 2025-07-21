@@ -1,0 +1,28 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+
+using namespace std;
+
+int main() {
+    int n, q;
+    cin >> n;
+    vector<int> x(n + 1), p(n + 1);
+    for (int i = 1; i <= n; ++i) cin >> x[i];
+    for (int i = 1; i <= n; ++i) {
+        cin >> p[i];
+        p[i] += p[i - 1];
+    }
+    
+    cin >> q;
+    while (q--) {
+        int l, r;
+        cin >> l >> r;
+        if (l > r) swap(l, r);
+        auto it1 = lower_bound(x.begin(), x.end(), l);
+        auto it2 = upper_bound(x.begin(), x.end(), r);
+        int sum = p[it2 - x.begin()] - p[it1 - x.begin()];
+        cout << sum << endl;
+    }
+    return 0;
+}

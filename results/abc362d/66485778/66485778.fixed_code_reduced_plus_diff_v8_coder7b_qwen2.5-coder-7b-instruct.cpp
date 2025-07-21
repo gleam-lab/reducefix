@@ -1,0 +1,59 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+constexpr int N = 3e5 + 10;
+constexpr i128 inf = 1e18;
+priority_queue<Node> pq;
+vector<pair<int, int>> g[N];
+
+void dijkstra(int source) {
+    vector<i128> dist(N, inf);
+    dist[source] = 0;
+    pq.push({source, 0});
+    
+    while (!pq.empty()) {
+        auto [u, d] = pq.top();
+        pq.pop();
+        
+        if (d > dist[u]) continue;
+        
+        for (auto [v, w] : g[u]) {
+            if (dist[u] + w + dist[v] < dist[v]) {
+                dist[v] = dist[u] + w + dist[v];
+                pq.push({v, dist[v]});
+            }
+        }
+    }
+    
+    for (int i = 1; i <= N; ++i) {
+        cout << dist[i] << " \n"[i == N];
+    }
+}
+
+void solve() {
+    int n, m;
+    cin >> n >> m;
+    vector<int> a(n + 1, 0);
+    for (int i = 1; i <= n; ++i) {
+        cin >> a[i];
+    }
+    
+    for (int i = 1; i <= m; ++i) {
+        int x, y, c;
+        cin >> x >> y >> c;
+        g[x].emplace_back(y, c);
+        g[y].emplace_back(x, c);
+    }
+    
+    for (int i = 1; i <= n; ++i) {
+        dijkstra(i);
+    }
+}
+
+int main() {
+    ios_base::sync_with_stdio(false); cin.tie(nullptr);
+    int t = 1;
+    cin >> t;
+    while (t--) solve();
+    return 0;
+}

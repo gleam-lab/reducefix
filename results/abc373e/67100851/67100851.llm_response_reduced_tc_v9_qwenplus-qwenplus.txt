@@ -1,0 +1,111 @@
+```cpp
+#include <iostream>
+#include <vector>
+#include <algorithm>
+
+using namespace std;
+
+typedef long long ll;
+
+struct Candidate {
+    ll votes;
+    int idx;
+};
+
+bool compareByVotes(const Candidate &a, const Candidate &b) {
+    return a.votes < b.votes;
+}
+
+bool canGuaranteeWin(ll additionalVotes, int i, vector<Candidate> &sortedCandidates, ll remainingVotes, ll M, ll N) {
+    // Current total votes of candidate i after adding X votes
+    ll current = sortedCandidates[i].votes + additionalVotes;
+
+    // Find how many candidates have strictly more votes than current
+    // We need to ensure that at most M-1 candidates have more votes than this candidate
+    int left = 0, right = N;
+    while (left < right) {
+        int mid = (left + right) / 2;
+        if (sortedCandidates[mid].votes >= current)
+            right = mid;
+        else
+            left = mid + 1;
+    }
+
+    int countGreater = N - left;
+    if (countGreater < M) return true;
+
+    // Now we assume the worst-case scenario: other candidates get as many votes as possible
+    // The candidate needs to be in top M by votes even in worst case
+    // So we try to raise top M-1 candidates above current
+
+    int l = max(0LL, N - M);
+    if (i >= l) l--;  // exclude self if it's among top M-1
+
+    ll needed = 0;
+    for (int j = left; j < min(N, l + M); ++j) {
+        needed += max(0LL, sortedCandidates[j].votes - current + 1);
+        if (needed > remainingVotes - additionalVotes)
+            return false;
+    }
+    return true;
+}
+
+int main() {
+    ll N, M, K;
+    cin >> N >> M >> K;
+
+    vector<Candidate> candidates(N);
+    ll totalA = 0;
+
+    for (ll i = 0; i < N; ++i) {
+        cin >> candidates[i].votes;
+        candidates[i].idx = i;
+        totalA += candidates[i].votes;
+    }
+
+    ll remainingVotes = K - totalA;
+    vector<Candidate> sortedCandidates = candidates;
+    sort(sortedCandidates.begin(), sortedCandidates.end(), compareByVotes);
+
+    vector<ll> result(N);
+
+    for (ll i = 0; i < N; ++i) {
+        ll lo = 0, hi = remainingVotes;
+        bool possible = false;
+
+        // Check if already winning with zero additional votes
+        if (canGuaranteeWin(0, i, sortedCandidates, remainingVotes, M, N)) {
+            result[sortedCandidates[i].idx] = 0;
+            continue;
+        }
+
+        // Binary search on minimum additional votes needed
+        while (lo <= hi) {
+            ll mid = (lo + hi) / 2;
+            if (mid > remainingVotes) {
+                lo = mid + 1;
+                continue;
+            }
+            if (canGuaranteeWin(mid, i, sortedCandidates, remainingVotes, M, N)) {
+                possible = true;
+                hi = mid - 1;
+            } else {
+                lo = mid + 1;
+            }
+        }
+
+        if (possible) {
+            result[sortedCandidates[i].idx] = hi + 1;
+        } else {
+            result[sortedCandidates[i].idx] = -1;
+        }
+    }
+
+    for (ll i = 0; i < N; ++i) {
+        cout << result[i] << " ";
+    }
+    cout << endl;
+
+    return 0;
+}
+```

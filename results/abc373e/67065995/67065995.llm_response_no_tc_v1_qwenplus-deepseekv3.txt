@@ -1,0 +1,81 @@
+To fix this code, we need to ensure that for each candidate, we correctly determine the minimum number of additional votes they need to guarantee their election, regardless of how the other candidates receive votes. The key insight is to understand that a candidate i will be elected if at most M-1 candidates have more votes than them after all votes are distributed. 
+
+### Analysis of the Original Code
+1. **Sorting and Initial Setup**: The code sorts the candidates by their current votes and calculates a prefix sum of these votes.
+2. **Binary Search**: For each candidate, it performs a binary search to find the minimum additional votes (X) needed such that after adding X votes to candidate i, at most M-1 candidates can have more votes than candidate i.
+3. **Condition Check**: The condition involves checking if the total votes required to ensure that M-1 candidates do not exceed candidate i's votes is within the remaining votes (K).
+
+### Issues in the Original Code
+1. **Binary Search Logic**: The binary search logic is incorrect in handling the conditions for determining the minimum X. The calculation of `cnt` and the conditions for updating `l` and `r` are flawed.
+2. **Handling of Edge Cases**: The code does not correctly handle cases where a candidate already has enough votes or where it's impossible for them to be elected.
+3. **Efficiency**: The original approach may not efficiently handle the constraints, especially with large N and K.
+
+### Corrected Approach
+1. **Sorting**: Sort the candidates by their current votes to easily identify the top candidates.
+2. **Binary Search for Minimum X**: For each candidate, perform a binary search to find the smallest X such that after adding X votes to candidate i, the number of candidates with more votes than candidate i is less than M.
+3. **Check Feasibility**: Ensure that the total votes required (including X) do not exceed the remaining votes (K).
+
+### Solution Code
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+#define all(x) (x).begin(), (x).end()
+
+int main() {
+    ios_base::sync_with_stdio(0);
+    cin.tie(0);
+    int N, M;
+    ll K;
+    cin >> N >> M >> K;
+    vector<ll> A(N);
+    ll total = 0;
+    for (int i = 0; i < N; ++i) {
+        cin >> A[i];
+        total += A[i];
+    }
+    ll remaining = K - total;
+    vector<int> ord(N);
+    iota(all(ord), 0);
+    sort(all(ord), [&](int i, int j) { return A[i] < A[j]; });
+    vector<ll> sortedA = A;
+    sort(all(sortedA));
+    vector<ll> prefix(N + 1);
+    for (int i = 0; i < N; ++i) {
+        prefix[i + 1] = sortedA[i] + prefix[i];
+    }
+    vector<ll> ans(N, -1);
+    for (int idx = 0; idx < N; ++idx) {
+        int i = ord[idx];
+        ll low = 0, high = remaining, best = -1;
+        while (low <= high) {
+            ll mid = (low + high) / 2;
+            ll newVotes = A[i] + mid;
+            int pos = upper_bound(all(sortedA), newVotes) - sortedA.begin();
+            int needed = N - pos;
+            if (needed < M) {
+                best = mid;
+                high = mid - 1;
+            } else {
+                low = mid + 1;
+            }
+        }
+        if (best != -1) {
+            ans[i] = best;
+        }
+    }
+    for (int i = 0; i < N; ++i) {
+        cout << ans[i] << " ";
+    }
+    cout << endl;
+    return 0;
+}
+```
+
+### Explanation
+1. **Sorting and Prefix Sum**: The candidates are sorted by their current votes, and a prefix sum array is constructed to facilitate quick sum calculations.
+2. **Binary Search for Each Candidate**: For each candidate, a binary search is conducted to find the minimum additional votes (X) needed. The search checks if adding X votes to the candidate ensures that fewer than M candidates have more votes.
+3. **Feasibility Check**: The binary search adjusts the range based on whether the current mid value of X allows the candidate to be elected. If feasible, it tries to find a smaller X; otherwise, it increases X.
+4. **Output**: The results for all candidates are printed, indicating the minimum votes needed or -1 if it's impossible.
+
+This approach ensures correctness and efficiency, handling the large constraints effectively.

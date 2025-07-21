@@ -1,0 +1,153 @@
+To fix this code, we need to ensure that the inclusion-exclusion principle is correctly applied to count the safe squares where a new piece can be placed without being captured by any existing pieces. The previous implementation had some issues in the way the counts were being calculated, particularly in the three-way and four-way intersections.
+
+### Approaches
+1. **Initialization**: Read the grid size `N` and the number of existing pieces `M`.
+2. **Track Constraints**: For each existing piece, track the rows, columns, diagonals (sum `i + j`), and anti-diagonals (difference `i - j`) it affects.
+3. **Inclusion-Exclusion Principle**: Calculate the total number of safe squares by:
+   - Subtracting the squares covered by any single constraint (rows, columns, diagonals, anti-diagonals).
+   - Adding back the squares covered by any two constraints (intersections).
+   - Subtracting the squares covered by any three constraints.
+   - Finally, adding the squares covered by all four constraints.
+4. **Efficiency**: Use sets or sorted vectors to efficiently check for intersections and avoid duplicate counts.
+
+### Solution Code
+```cpp
+#include <bits/stdc++.h>
+
+using namespace std;
+
+typedef long long ll;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+
+    ll N, M;
+    cin >> N >> M;
+
+    set<ll> rows, cols, diag1, diag2;
+    for (int i = 0; i < M; ++i) {
+        ll a, b;
+        cin >> a >> b;
+        rows.insert(a);
+        cols.insert(b);
+        diag1.insert(a + b);
+        diag2.insert(a - b);
+    }
+
+    ll total_squares = N * N;
+    ll unsafe_squares = 0;
+
+    // Subtract squares covered by rows, columns, diag1, diag2
+    unsafe_squares += rows.size() * N;
+    unsafe_squares += cols.size() * N;
+    unsafe_squares += diag1.size() * N;
+    for (ll d : diag2) {
+        ll cnt;
+        if (d > 0) {
+            cnt = N - d;
+        } else {
+            cnt = N + d;
+        }
+        unsafe_squares += cnt;
+    }
+
+    // Add squares covered by two constraints
+    // Rows and columns
+    unsafe_squares -= rows.size() * cols.size();
+    // Rows and diag1
+    unsafe_squares -= rows.size() * diag1.size();
+    // Rows and diag2
+    for (ll r : rows) {
+        for (ll d : diag2) {
+            ll c = r - d;
+            if (1 <= c && c <= N) {
+                unsafe_squares -= 1;
+            }
+        }
+    }
+    // Columns and diag1
+    for (ll c : cols) {
+        for (ll d : diag1) {
+            ll r = d - c;
+            if (1 <= r && r <= N) {
+                unsafe_squares -= 1;
+            }
+        }
+    }
+    // Columns and diag2
+    unsafe_squares -= cols.size() * diag2.size();
+    // Diag1 and diag2
+    for (ll d1 : diag1) {
+        for (ll d2 : diag2) {
+            ll r = (d1 + d2) / 2;
+            ll c = (d1 - d2) / 2;
+            if ((d1 + d2) % 2 == 0 && (d1 - d2) % 2 == 0 && 1 <= r && r <= N && 1 <= c && c <= N) {
+                unsafe_squares -= 1;
+            }
+        }
+    }
+
+    // Subtract squares covered by three constraints
+    // Rows, columns, and diag1
+    for (ll r : rows) {
+        for (ll c : cols) {
+            if (diag1.find(r + c) != diag1.end()) {
+                unsafe_squares += 1;
+            }
+        }
+    }
+    // Rows, columns, and diag2
+    for (ll r : rows) {
+        for (ll c : cols) {
+            if (diag2.find(r - c) != diag2.end()) {
+                unsafe_squares += 1;
+            }
+        }
+    }
+    // Rows, diag1, and diag2
+    for (ll r : rows) {
+        for (ll d1 : diag1) {
+            ll c = d1 - r;
+            if (1 <= c && c <= N && diag2.find(r - c) != diag2.end()) {
+                unsafe_squares += 1;
+            }
+        }
+    }
+    // Columns, diag1, and diag2
+    for (ll c : cols) {
+        for (ll d1 : diag1) {
+            ll r = d1 - c;
+            if (1 <= r && r <= N && diag2.find(r - c) != diag2.end()) {
+                unsafe_squares += 1;
+            }
+        }
+    }
+
+    // Add squares covered by all four constraints
+    for (ll r : rows) {
+        for (ll c : cols) {
+            if (diag1.find(r + c) != diag1.end() && diag2.find(r - c) != diag2.end()) {
+                unsafe_squares -= 1;
+            }
+        }
+    }
+
+    ll safe_squares = total_squares - unsafe_squares;
+    cout << safe_squares << endl;
+
+    return 0;
+}
+```
+
+### Explanation
+1. **Initialization**: We read the grid dimensions and the positions of existing pieces.
+2. **Tracking Constraints**: We use sets to store the rows, columns, diagonals (sum `i + j`), and anti-diagonals (difference `i - j`) that are covered by existing pieces.
+3. **Inclusion-Exclusion Principle**: 
+   - **Single Constraints**: Subtract the squares covered by each individual constraint (rows, columns, diagonals, anti-diagonals).
+   - **Two Constraints**: Add back the squares that were subtracted twice (intersections of any two constraints).
+   - **Three Constraints**: Subtract the squares covered by any three constraints.
+   - **Four Constraints**: Add back the squares covered by all four constraints (if any).
+4. **Result Calculation**: The number of safe squares is the total grid squares minus the unsafe squares calculated through the inclusion-exclusion principle.
+
+This approach ensures that all constraints are correctly accounted for, and the solution efficiently handles the large input sizes specified in the problem constraints.

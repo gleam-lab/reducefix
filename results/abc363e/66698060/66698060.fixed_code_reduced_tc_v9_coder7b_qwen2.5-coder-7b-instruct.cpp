@@ -1,0 +1,85 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+const int MAXN = 1005;
+int H, W, Y;
+vector<vector<int>> grid(MAXN, vector<int>(MAXN));
+
+struct Cell {
+    int x, y, height;
+    Cell(int x, int y, int height) : x(x), y(y), height(height) {}
+    bool operator<(const Cell& other) const {
+        return height > other.height;
+    }
+};
+
+void bfs(vector<vector<bool>>& visited, int start_x, int start_y, int target_height) {
+    queue<pair<int, int>> q;
+    q.push({start_x, start_y});
+    visited[start_x][start_y] = true;
+    
+    while (!q.empty()) {
+        auto [x, y] = q.front();
+        q.pop();
+        
+        for (int dx = -1; dx <= 1; ++dx) {
+            for (int dy = -1; dy <= 1; ++dy) {
+                if (abs(dx) + abs(dy) != 1) continue;
+                int nx = x + dx, ny = y + dy;
+                if (nx < 0 || nx >= H || ny < 0 || ny >= W || visited[nx][ny]) continue;
+                if (grid[nx][ny] <= target_height) {
+                    q.push({nx, ny});
+                    visited[nx][ny] = true;
+                }
+            }
+        }
+    }
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    cin >> H >> W >> Y;
+    
+    for (int i = 0; i < H; ++i) {
+        for (int j = 0; j < W; ++j) {
+            cin >> grid[i][j];
+        }
+    }
+    
+    vector<Cell> cells;
+    for (int i = 0; i < H; ++i) {
+        for (int j = 0; j < W; ++j) {
+            cells.emplace_back(i, j, grid[i][j]);
+        }
+    }
+    
+    sort(cells.begin(), cells.end());
+    
+    for (int y = 0; y < Y; ++y) {
+        int target_height = cells[y].height;
+        vector<vector<bool>> visited(H, vector<bool>(W, false));
+        
+        for (int i = 0; i < H; ++i) {
+            for (int j = 0; j < W; ++j) {
+                if (!visited[i][j] && grid[i][j] <= target_height) {
+                    bfs(visited, i, j, target_height);
+                }
+            }
+        }
+        
+        int remaining_area = 0;
+        for (int i = 0; i < H; ++i) {
+            for (int j = 0; j < W; ++j) {
+                if (!visited[i][j]) {
+                    ++remaining_area;
+                }
+            }
+        }
+        
+        cout << remaining_area << '\n';
+    }
+    
+    return 0;
+}

@@ -1,0 +1,61 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define ll long long
+
+ll dx[4] = {0, 1, 0, -1};
+ll dy[4] = {1, 0, -1, 0};
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+    
+    ll h, w, y;
+    cin >> h >> w >> y;
+    
+    vector<vector<ll>> A(h, vector<ll>(w));
+    for (ll i = 0; i < h; ++i) {
+        for (ll j = 0; j < w; ++j) {
+            cin >> A[i][j];
+        }
+    }
+
+    // We'll use a max-heap to simulate the outermost cells sinking inwards
+    priority_queue<tuple<ll, ll, ll>, vector<tuple<ll, ll, ll>>, greater<tuple<ll, ll, ll>>> pq;
+    vector<vector<bool>> visited(h, vector<bool>(w, false));
+
+    // Mark and add all border cells
+    for (ll i = 0; i < h; ++i) {
+        for (ll j = 0; j < w; ++j) {
+            if (i == 0 || i == h - 1 || j == 0 || j == w - 1) {
+                pq.emplace(A[i][j], i, j);
+                visited[i][j] = true;
+            }
+        }
+    }
+
+    // Total area of island
+    ll total_area = h * w;
+
+    // Process year-by-year
+    for (ll year = 1; year <= y; ++year) {
+        // Expand sinkable area up to current sea level
+        while (!pq.empty() && get<0>(pq.top()) <= year) {
+            auto [elevation, x, y] = pq.top();
+            pq.pop();
+
+            for (ll dir = 0; dir < 4; ++dir) {
+                ll nx = x + dx[dir];
+                ll ny = y + dy[dir];
+
+                if (nx >= 0 && nx < h && ny >= 0 && ny < w && !visited[nx][ny]) {
+                    visited[nx][ny] = true;
+                    pq.emplace(A[nx][ny], nx, ny);
+                }
+            }
+        }
+
+        cout << (total_area - pq.size()) << "\n";
+    }
+
+    return 0;
+}

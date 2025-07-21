@@ -1,0 +1,58 @@
+#include<bits/stdc++.h>
+using namespace std;
+#define ll long long
+
+void solve()
+{
+    ll n;
+    cin >> n;
+    vector<ll> a(n), b(n - 1);
+    for (ll i = 0; i < n; ++i)
+    {
+        cin >> a[i];
+    }
+    for (ll i = 0; i < n - 1; ++i)
+    {
+        cin >> b[i];
+    }
+    
+    // Sort both arrays
+    sort(a.begin(), a.end());
+    sort(b.begin(), b.end());
+    
+    // Initialize variables
+    ll c = 0, ans = INT_MAX;
+    
+    // Iterate through toys from largest to smallest
+    for (ll i = n - 1, j = n - 2; i >= 0 && j >= 0; --i)
+    {
+        if (a[i] <= b[j])
+        {
+            --j;
+        }
+        else
+        {
+            ++c;
+            ans = min(ans, a[i]);
+        }
+    }
+    
+    // Check if we can place all toys without exceeding the number of boxes
+    if (c > 1)
+    {
+        cout << -1 << endl;
+    }
+    else
+    {
+        cout << ans << endl;
+    }
+}
+
+int main()
+{
+    ios_base::sync_with_stdio(false);
+    cin.tie(NULL);
+    cout.tie(NULL);
+    
+    solve();
+}

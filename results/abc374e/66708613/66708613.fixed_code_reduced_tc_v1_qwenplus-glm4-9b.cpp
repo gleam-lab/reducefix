@@ -1,0 +1,54 @@
+#include <iostream>
+#include <string>
+#include <queue>
+#include <vector>
+#include <algorithm>
+using namespace std;
+using ll = long long;
+
+const ll MOD = 998244353;
+const int dy[] = {-1, 0, 1, 0};
+const int dx[] = {0, 1, 0, -1};
+
+int main() {
+    int N;
+    ll X;
+    cin >> N >> X;
+    vector<ll> A(N), P(N), B(N), Q(N);
+
+    for (int i = 0; i < N; i++) {
+        cin >> A[i] >> P[i] >> B[i] >> Q[i];
+    }
+
+    auto f = [&](ll x) {
+        ll res = X;
+        for (int i = 0; i < N; i++) {
+            ll min_cost = INF;
+            // Try all possible numbers of machines s used for B[i] price
+            for (ll s = 0; s <= B[i]; s++) {
+                ll t = (max(0LL, x - A[i] * s) + B[i] - 1) / B[i];
+                min_cost = min(min_cost, s * P[i] + t * Q[i]);
+            }
+            // Try all possible numbers of machines t used for A[i] price
+            for (ll t = 0; t <= A[i]; t++) {
+                ll s = (max(0LL, x - B[i] * t) + A[i] - 1) / A[i];
+                min_cost = min(min_cost, t * Q[i] + s * P[i]);
+            }
+            if (min_cost == INF) return false; // Cannot achieve required processing capacity
+            res -= min_cost;
+        }
+        return res >= 0;
+    };
+
+    ll ub = 1LL << 60, lb = 0;
+    while (ub - lb > 1) {
+        ll mid = (ub + lb) / 2;
+        if (f(mid)) {
+            lb = mid;
+        } else {
+            ub = mid;
+        }
+    }
+
+    cout << lb << endl;
+}

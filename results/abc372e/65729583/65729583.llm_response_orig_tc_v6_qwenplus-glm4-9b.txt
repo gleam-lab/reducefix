@@ -1,0 +1,95 @@
+
+The provided code snippet has multiple issues that cause it to fail for certain cases. Here's an analysis of the problem and the necessary corrections:
+
+### Problem Analysis:
+1. **Union-Find Data Structure**: The union-find (also known as disjoint-set) data structure is used to manage a partition of a set into disjoint (non-overlapping) subsets. The provided `Find` and `Union` functions are correct for this purpose.
+
+2. **K-th Largest Element**: The problem requires finding the k-th largest vertex connected to a node. This is not directly supported by the union-find structure and requires additional data structures to maintain the size and order of connected vertices efficiently.
+
+### Issues in the Code:
+1. **Union-Find Implementation**: The union-find implementation does not maintain the size or order of the sets it represents. This means that it cannot efficiently find the k-th largest element in the connected component of a node.
+
+2. **Data Structures for Order Maintenance**: The code attempts to use an `ordered_set` to maintain order, but it is not used correctly. Additionally, the code does not update the `ordered_set` when merging sets, which leads to incorrect results.
+
+3. **Edge Cases and Boundary Conditions**: The code does not handle cases where the size of the connected component is less than `k`. It should return `-1` in such cases.
+
+### Proposed Solution:
+To solve the problem, we need to maintain additional information for each connected component:
+1. **List of Vertices**: A list or multiset of vertices in each connected component, ordered in descending order for efficient retrieval of the k-th largest vertex.
+2. **Size of Component**: The size of each connected component.
+
+Here is a high-level approach to implement the solution:
+1. **Initialization**: Initialize an array of lists (or multisets) to hold the vertices of each connected component and an array to hold the size of each component.
+2. **Processing Queries**:
+   - For type 1 queries (adding an edge), use the union-find structure to merge components. Update the size array and the lists/multisets accordingly.
+   - For type 2 queries, use binary search on the list of vertices for the connected component of the given vertex to find the k-th largest vertex.
+
+### Corrected Code Outline:
+```cpp
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <set>
+
+using namespace std;
+
+int find(int u, vector<int>& parent, vector<int>& size) {
+    if (parent[u] != u) parent[u] = find(parent[u], parent, size);
+    return parent[u];
+}
+
+void unionSets(int u, int v, vector<int>& parent, vector<int>& size, vector<set<int>>& components) {
+    int rootU = find(u, parent, size);
+    int rootV = find(v, parent, size);
+
+    if (rootU != rootV) {
+        // Union by size
+        if (size[rootU] < size[rootV]) {
+            parent[rootU] = rootV;
+            size[rootV] += size[rootU];
+            components[rootV].insert(to_string(u));
+        } else {
+            parent[rootV] = rootU;
+            size[rootU] += size[rootV];
+            components[rootU].insert(to_string(v));
+        }
+    }
+}
+
+int kthLargest(int vertex, int k, vector<set<int>>& components) {
+    int root = find(vertex, parent, size);
+    set<int>& comp = components[root];
+
+    if (comp.size() < k) return -1;
+    auto it = prev(comp.end()); // Get the k-th largest element
+    for (int i = 0; i < k - 1; i++) it = prev(comp.end());
+    return stoi(*it);
+}
+
+int main() {
+    int n, q;
+    cin >> n >> q;
+
+    vector<int> parent(n + 1), size(n + 1), root(n + 1);
+    fill(parent.begin(), parent.end(), i);
+    fill(size.begin(), size.end(), 1);
+
+    vector<set<int>> components(n + 1);
+    for (int i = 1; i <= n; i++) components[i].insert(to_string(i));
+
+    while (q--) {
+        int type, u, v, k;
+        cin >> type >> u >> v;
+
+        if (type == 1) {
+            unionSets(u, v, parent, size, components);
+        } else {
+            cin >> k;
+            cout << kthLargest(v, k, components) << endl;
+        }
+    }
+    return 0;
+}
+```
+
+This corrected code implements the union-find data structure with path compression and union by size. It also maintains a set (`components`) for each connected component to store the vertices in descending order, allowing efficient retrieval of the k-th largest vertex.

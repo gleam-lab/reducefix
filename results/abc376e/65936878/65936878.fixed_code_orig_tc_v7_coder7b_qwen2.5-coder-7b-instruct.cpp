@@ -1,0 +1,32 @@
+#include <bits/stdc++.h>
+#define ll long long
+using namespace std;
+
+struct cmp {
+    bool operator()(const pair<ll,ll>&a,const pair<ll,ll>&b){
+        return a.first>b.first || (a.first==b.first && a.second<b.second);
+    }
+};
+
+int main(){
+    ios_base::sync_with_stdio(0);cin.tie(0);cout.tie(0);
+    ll t,n,k,i,j,x,y;
+    cin>>t;
+    while(t--){
+        cin>>n>>k;
+        vector<pair<ll,ll>> a(n),b(n);
+        priority_queue<pair<ll,ll>,vector<pair<ll,ll>>,cmp> pq;
+        for(i=0;i<n;++i){
+            cin>>a[i].first;
+            pq.push({a[i].first,b[i]});
+        }
+        sort(b.begin(),b.end());
+        for(i=0;i<k;++i){
+            auto it=pq.top();pq.pop();
+            x=max(x,it.first);
+            y+=it.second;
+        }
+        cout<<x*y<<'\n';
+    }
+    return 0;
+}

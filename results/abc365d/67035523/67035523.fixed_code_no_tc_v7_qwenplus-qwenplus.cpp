@@ -1,0 +1,55 @@
+#include <iostream>
+#include <string>
+using namespace std;
+
+// Function to determine the winner between two moves
+// Returns 1 if x beats y, -1 if y beats x, 0 if draw
+int cmp(char x, char y) {
+    if (x == 'P') {
+        if (y == 'P') return 0;
+        if (y == 'R') return 1;
+        if (y == 'S') return -1;
+    }
+    if (x == 'R') {
+        if (y == 'P') return -1;
+        if (y == 'R') return 0;
+        if (y == 'S') return 1;
+    }
+    if (x == 'S') {
+        if (y == 'P') return 1;
+        if (y == 'R') return -1;
+        if (y == 'S') return 0;
+    }
+    return 0; // Should not reach here
+}
+
+// Function to return the winning move against a given move
+char win(char x) {
+    if (x == 'R') return 'P';
+    if (x == 'S') return 'R';
+    if (x == 'P') return 'S';
+    return 'X'; // Invalid input
+}
+
+int main() {
+    int n;
+    string s;
+    cin >> n >> s;
+
+    int ans = 0;
+    char last_move = 'X'; // No move initially
+
+    for (int i = 0; i < n; ++i) {
+        char current_winning_move = win(s[i]);
+        
+        // If we can use the same move as before, do so (to minimize changes)
+        // Otherwise, switch to the winning move and increment answer
+        if (last_move != current_winning_move) {
+            ans++;
+            last_move = current_winning_move;
+        }
+    }
+
+    cout << ans << endl;
+    return 0;
+}

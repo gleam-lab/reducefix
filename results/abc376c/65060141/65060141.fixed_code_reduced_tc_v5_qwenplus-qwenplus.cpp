@@ -1,0 +1,72 @@
+#include <bits/stdc++.h>
+#define ll long long
+using namespace std;
+
+const int N = 200005;
+
+ll a[N], b[N];
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int n;
+    cin >> n;
+    
+    for (int i = 1; i <= n; ++i) {
+        cin >> a[i];
+    }
+    
+    for (int i = 1; i < n; ++i) {
+        cin >> b[i];
+    }
+
+    // Sort toys and boxes in descending order
+    sort(a + 1, a + n + 1, greater<ll>());
+    sort(b + 1, b + n, greater<ll>());
+
+    ll required_toys = 0;
+    int b_idx = 1;
+
+    // Try to fit the largest toys into the largest boxes
+    for (int i = 1; i <= n; ++i) {
+        if (b_idx <= n - 1 && b[b_idx] >= a[i]) {
+            b_idx++;
+        } else {
+            required_toys++;
+            if (required_toys > 1) {
+                cout << -1 << "\n";
+                return 0;
+            }
+        }
+    }
+
+    // If we need one toy to put in our new box, its size must be at least that toy's size
+    if (required_toys == 1) {
+        // Find the largest toy that couldn't be placed
+        // We can recompute this or store it earlier
+        // Let's do it properly by matching again
+        vector<ll> unassigned;
+        int ptr = 1;
+
+        for (int i = 1; i <= n; ++i) {
+            if (ptr <= n - 1 && b[ptr] >= a[i]) {
+                ptr++;
+            } else {
+                unassigned.push_back(a[i]);
+            }
+        }
+
+        if (unassigned.size() == 1) {
+            cout << unassigned[0] << "\n";
+        } else {
+            cout << -1 << "\n";
+        }
+    } else {
+        // All toys were placed, but we still need to buy a box of some size (minimum needed is 1)
+        // But according to problem statement, x must be positive integer, so output 1
+        cout << 1 << "\n";
+    }
+
+    return 0;
+}

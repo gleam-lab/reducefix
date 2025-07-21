@@ -1,0 +1,44 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define ll long long
+
+void solve() {
+    ll n;
+    cin >> n;
+    vector<ll> a(n), b(n - 1);
+    for (ll i = 0; i < n; ++i) cin >> a[i];
+    for (ll i = 0; i < n - 1; ++i) cin >> b[i];
+
+    sort(a.begin(), a.end());
+    sort(b.begin(), b.end());
+
+    // We need to find the smallest x such that we can assign all toys to boxes
+    // The new box will cover one toy, and the rest must be matched with the available boxes
+    // Try greedy matching from largest toy to largest box
+
+    ll j = n - 2; // pointer for boxes (sorted descending)
+    ll missing_count = 0;
+    ll required_size = -1;
+
+    // Try to match largest toys with largest boxes
+    for (ll i = n - 1; i >= 0; --i) {
+        if (j >= 0 && b[j] >= a[i]) {
+            j--;
+        } else {
+            missing_count++;
+            required_size = a[i];
+            if (missing_count > 1) {
+                cout << -1 << endl;
+                return;
+            }
+        }
+    }
+
+    cout << required_size << endl;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    solve();
+}

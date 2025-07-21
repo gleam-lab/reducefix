@@ -1,0 +1,56 @@
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+using VL = vector<ll>;
+using P = pair<ll, int>;
+const ll inf = 1000000000;
+
+int main() {
+  ios::sync_with_stdio(false);
+  cin.tie(NULL);
+
+  ll N, M;
+  cin >> N >> M;
+
+  vector<ll> A(N);
+  vector<vector<P>> G(N);
+  for (ll i = 0; i < N; ++i) {
+    cin >> A[i];
+  }
+
+  for (ll i = 0; i < M; ++i) {
+    ll u, v, b;
+    cin >> u >> v >> b;
+    --u;
+    --v;
+    G[u].emplace_back(b, v);
+    G[v].emplace_back(b, u);
+  }
+
+  vector<ll> dist(N, inf);
+  priority_queue<P, vector<P>, greater<P>> pq;
+  pq.emplace(0, 0); // Start from vertex 0 with initial cost A[0]
+  dist[0] = A[0];
+
+  while (!pq.empty()) {
+    auto [cost, vertex] = pq.top();
+    pq.pop();
+
+    if (cost > dist[vertex]) continue;
+
+    for (auto [edge_cost, neighbor] : G[vertex]) {
+      ll new_cost = cost + edge_cost + A[neighbor];
+      if (new_cost < dist[neighbor]) {
+        dist[neighbor] = new_cost;
+        pq.emplace(new_cost, neighbor);
+      }
+    }
+  }
+
+  for (ll i = 1; i < N; ++i) {
+    cout << dist[i] << " ";
+  }
+  cout << endl;
+
+  return 0;
+}

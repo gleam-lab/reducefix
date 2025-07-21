@@ -1,0 +1,54 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+#define endl "\n"
+#define int long long
+
+typedef long long ll;
+typedef pair<int, int> pii;
+
+void solve() {
+    int n, k;
+    cin >> n >> k;
+    vector<int> A(n);
+    for (int i = 0; i < n; ++i) {
+        cin >> A[i];
+    }
+
+    // We need to select N-K elements in a contiguous block (since we can only remove K elements arbitrarily)
+    // So the result sequence B will be a window of size (N-K) in the original array
+    // Our task is to find such a window where (max - min) is minimized
+
+    // Use sliding window + monotonic deque to maintain min and max efficiently
+
+    deque<int> minDq, maxDq;
+    int res = LLONG_MAX;
+
+    for (int i = 0; i < n; ++i) {
+        // Maintain minDQ: increasing deque
+        while (!minDq.empty() && A[minDq.back()] >= A[i]) minDq.pop_back();
+        minDq.push_back(i);
+
+        // Maintain maxDQ: decreasing deque
+        while (!maxDq.empty() && A[maxDq.back()] <= A[i]) maxDq.pop_back();
+        maxDq.push_back(i);
+
+        // Remove out-of-window indices
+        if (minDq.front() <= i - (n - k)) minDq.pop_front();
+        if (maxDq.front() <= i - (n - k)) maxDq.pop_front();
+
+        // Once window size is reached, calculate difference
+        if (i >= (n - k - 1)) {
+            res = min(res, A[maxDq.front()] - A[minDq.front()]);
+        }
+    }
+
+    cout << res << endl;
+}
+
+signed main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+    solve();
+    return 0;
+}

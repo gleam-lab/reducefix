@@ -1,0 +1,59 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+typedef long long ll;
+const ll INF = numeric_limits<ll>::max();
+
+struct Edge {
+    ll to, cost;
+};
+
+vector<vector<Edge>> adj;
+vector<ll> dist;
+
+void dijkstra(int src) {
+    dist.assign(adj.size(), INF);
+    dist[src] = 0;
+    priority_queue<pair<ll, ll>, vector<pair<ll, ll>>, greater<pair<ll, ll>>> pq;
+    pq.push({0, src});
+
+    while (!pq.empty()) {
+        auto [d, u] = pq.top(); pq.pop();
+        if (d > dist[u]) continue;
+        for (auto &[v, w] : adj[u]) {
+            if (dist[v] > dist[u] + w) {
+                dist[v] = dist[u] + w;
+                pq.push({dist[v], v});
+            }
+        }
+    }
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int n, m; cin >> n >> m;
+    adj.resize(n);
+    dist.resize(n);
+
+    for (int i = 0; i < n; ++i) {
+        cin >> dist[i];
+    }
+
+    for (int i = 0; i < m; ++i) {
+        int u, v, w; cin >> u >> v >> w;
+        --u, --v;
+        adj[u].emplace_back(v, w);
+        adj[v].emplace_back(u, w);
+    }
+
+    dijkstra(0);
+
+    for (int i = 1; i < n; ++i) {
+        cout << dist[i] << " ";
+    }
+    cout << endl;
+
+    return 0;
+}

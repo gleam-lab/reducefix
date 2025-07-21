@@ -1,0 +1,37 @@
+#include<bits/stdc++.h>
+#include<array>
+#define endl "\n"
+using namespace std;
+
+const int N = 1e5 + 5;
+int a[N];
+
+void solve(void) {
+    int n, q; cin >> n >> q;
+    for (int i = 1; i <= n; i++) {
+        int x; cin >> x;
+        a[x + 100000000]++;  // Adjusting index to be positive
+    }
+    for (int i = 1; i < N; i++) {
+        a[i] += a[i - 1];
+    }
+    for (int j = 1; j <= q; j++) {
+        int x, k; cin >> x >> k;
+        int l = 0, r = n;
+        while (l < r) {
+            int mid = (l + r + 1) / 2;
+            if (a[mid] - a[max(0, x + mid - 100000000)] >= k) {
+                r = mid - 1;
+            } else {
+                l = mid;
+            }
+        }
+        cout << l + 100000000 - x << endl;  // Adjusting back to original coordinates
+    }
+}
+
+int main() {
+    ios::sync_with_stdio(0), cin.tie(0), cout.tie(0);
+    solve();
+    return 0;
+}

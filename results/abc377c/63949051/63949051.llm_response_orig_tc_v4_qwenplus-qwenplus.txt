@@ -1,0 +1,90 @@
+To solve this problem correctly and efficiently, we need to determine how many empty cells on an `N x N` chessboard are *not* under attack by any of the given `M` pieces.
+
+### Key Observations:
+- Each piece can potentially attack **up to 8** specific positions (knight-like moves).
+- The board is huge (`N` can be up to `10^9`), so we cannot represent the entire grid in memory.
+- We only need to count the number of cells that are either:
+  - Occupied by a piece
+  - Under attack by any of the existing pieces
+
+Thus, we use a `std::unordered_set<std::pair<int, int>, PairHash>` to store all forbidden positions (occupied or under attack).
+
+### Challenges in Original Code:
+- The original code uses signed integers for arithmetic with large numbers, which can lead to overflow when squaring `N`.
+- It doesn't use a proper hash function for `std::pair<int, int>`, leading to undefined behavior with unordered containers.
+- The final calculation has precision issues due to improper handling of large values.
+
+---
+
+### Corrected Approach:
+
+1. Use `std::unordered_set` with a custom hash for `std::pair<int, int>`.
+2. For each piece, add itself and its 8 potential attacked positions to the set if they're within bounds.
+3. Calculate total cells as `(i128)N * N` using 64+ bit integer types.
+4. Subtract the number of forbidden cells from the total.
+
+Here's the corrected and fully working solution:
+
+```cpp
+// C++20 required
+
+#include <iostream>
+#include <unordered_set>
+#include <utility>
+#include <vector>
+
+using namespace std;
+
+// Using 64-bit or better integers
+using i128 = long long;
+
+// Custom hash for pair<int, int>
+struct PairHash {
+    size_t operator()(const pair<int, int>& p) const {
+        return ((size_t)(p.first) << 32) | (unsigned int)p.second;
+    }
+};
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int N;
+    int M;
+    cin >> N >> M;
+
+    unordered_set<pair<int, int>, PairHash> forbidden;
+
+    vector<pair<int, int>> directions = {
+        {2, 1}, {1, 2}, {-1, 2}, {-2, 1},
+        {-2, -1}, {-1, -2}, {1, -2}, {2, -1}
+    };
+
+    for (int m = 0; m < M; ++m) {
+        int a, b;
+        cin >> a >> b;
+
+        // Add current piece position
+        forbidden.emplace(a, b);
+
+        // Add all possible attacked positions
+        for (auto [dx, dy] : directions) {
+            int na = a + dx;
+            int nb = b + dy;
+            if (1 <= na && na <= N && 1 <= nb && nb <= N) {
+                forbidden.emplace(na, nb);
+            }
+        }
+    }
+
+    // Total cells: N*N
+    i128 total_cells = (i128)N * N;
+
+    // Forbidden cells = occupied + attacked positions (without duplicates)
+    i128 answer = total_cells - (i128)forbidden.size();
+
+    cout << answer << endl;
+
+    return 0;
+}
+```

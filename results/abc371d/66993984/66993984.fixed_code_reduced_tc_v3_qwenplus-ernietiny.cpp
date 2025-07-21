@@ -1,0 +1,31 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    int n;
+    cin >> n; // Number of elements in the array
+    
+    // Create a map to store the sum of elements in each range
+    map<int, int> sumRange;
+    for (int i = 1; i <= n; ++i) {
+        sumRange[i] = sum[i - 1]; // Initialize the sum of elements in each range with the previous sum
+    }
+    
+    // Read the queries
+    while (true) {
+        int L, R; // Query range boundaries
+        cin >> L >> R; // Read the query range boundaries
+        
+        // Find the difference between the two ranges' indices in the map
+        int diff = lower_bound(sumRange.begin(), sumRange.end(), L) - sumRange.begin(); // Lower bound index
+        int complementDiff = upper_bound(sumRange.begin(), sumRange.end(), R) - sumRange.begin(); // Upper bound index
+        
+        // Calculate the difference between the actual elements in the query range and the sum of elements in the previous range
+        int result = sumRange[R - diff - 1] - sumRange[L - complementDiff]; // Calculate the difference between actual elements and expected sum
+        
+        // Output the result
+        cout << result << endl; // Output the calculated difference
+    }
+    
+    return 0; // Return 0 to indicate successful completion of the program
+}

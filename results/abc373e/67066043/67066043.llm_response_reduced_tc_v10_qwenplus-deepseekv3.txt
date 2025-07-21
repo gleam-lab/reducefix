@@ -1,0 +1,108 @@
+To fix this code, we need to ensure that it correctly computes the minimum number of additional votes each candidate needs to be guaranteed a win, considering all possible distributions of the remaining votes. The previous approach had some logical flaws in how it determined the number of candidates that could surpass the current candidate's vote count.
+
+### Approaches
+1. **Sort and Binary Search**: 
+   - Sort the candidates' votes to efficiently determine the number of candidates that could potentially receive more votes than the current candidate after allocating additional votes.
+   - For each candidate, perform a binary search to find the minimum number of additional votes they need such that no more than `M-1` candidates can have more votes than them, even if all remaining votes are allocated to those candidates.
+2. **Prefix Sums**: 
+   - Use prefix sums to quickly calculate the sum of votes needed for other candidates to surpass the current candidate's vote count.
+
+### Solution Code
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+#define all(x) (x).begin(), (x).end()
+
+int main() {
+    ios_base::sync_with_stdio(0);
+    cin.tie(0);
+    int n, m;
+    ll k;
+    cin >> n >> m >> k;
+    vector<ll> a(n);
+    for (int i = 0; i < n; i++) {
+        cin >> a[i];
+    }
+
+    vector<int> ord(n);
+    iota(all(ord), 0);
+    sort(all(ord), [&](int i, int j) { return a[i] < a[j]; });
+    vector<ll> b = a;
+    sort(all(b));
+
+    vector<ll> pref(n + 1);
+    for (int i = 0; i < n; i++) {
+        pref[i + 1] = b[i] + pref[i];
+    }
+
+    vector<ll> ans(n, -1);
+    for (int idx = 0; idx < n; idx++) {
+        int i = ord[idx];
+        ll current = a[i];
+        ll low = 0, high = k + (current - a[i]);
+        ll best = -1;
+
+        while (low <= high) {
+            ll mid = low + (high - low) / 2;
+            ll new_votes = current + mid;
+
+            int pos = upper_bound(all(b), new_votes) - b.begin();
+            int needed = n - m;
+
+            if (pos <= needed) {
+                low = mid + 1;
+                continue;
+            }
+
+            ll sum = pref[n] - pref[pos];
+            ll required = sum - (n - pos) * new_votes;
+
+            if (required + mid <= k) {
+                best = mid;
+                high = mid - 1;
+            } else {
+                low = mid + 1;
+            }
+        }
+
+        if (best != -1) {
+            ans[i] = best;
+        }
+    }
+
+    for (int i = 0; i < n; i++) {
+        if (ans[i] == -1) {
+            int count = 0;
+            for (int j = 0; j < n; j++) {
+                if (a[j] > a[i]) {
+                    count++;
+                }
+            }
+            if (count < m) {
+                ans[i] = 0;
+            }
+        }
+    }
+
+    for (auto x : ans) {
+        cout << x << ' ';
+    }
+    cout << '\n';
+
+    return 0;
+}
+```
+
+### Explanation
+1. **Sorting and Binary Search**: 
+   - The candidates' votes are sorted to facilitate binary search operations. For each candidate, we determine the minimum number of additional votes (`mid`) they need such that no more than `M-1` candidates can have more votes than them.
+2. **Prefix Sums**: 
+   - The prefix sums array (`pref`) helps in quickly computing the sum of votes required for other candidates to surpass the current candidate's vote count after adding `mid` votes.
+3. **Binary Search Condition**: 
+   - For each candidate, the binary search checks if the remaining votes (`k`) can be allocated in such a way that the candidate's vote count (`current + mid`) ensures they are among the top candidates. The condition involves ensuring that the sum of votes required for other candidates to surpass `current + mid` does not exceed the remaining votes.
+4. **Edge Handling**: 
+   - After the binary search, if a candidate is already in a winning position (fewer than `M` candidates have more votes), they need zero additional votes. If no valid `mid` is found, the candidate cannot win, and the result remains `-1`.
+
+This approach ensures that the solution is efficient and correct under all constraints, including edge cases.

@@ -1,0 +1,20 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    unordered_set<int> st;
+    int q; cin >> q;
+    while(q--) {
+        int x; cin >> x;
+        if(x == 1) {
+            int t; cin >> t;
+            st.insert(t); // Corrected: insert instead of push_back for unordered_set
+        } else if(x == 2) {
+            int t; cin >> t;
+            st.erase(t); // Corrected: erase instead of remove for unordered_set
+        } else if(x == 3) {
+            cout << st.size() << "\n"; // No change needed here
+        }
+    }
+    return 0;
+}

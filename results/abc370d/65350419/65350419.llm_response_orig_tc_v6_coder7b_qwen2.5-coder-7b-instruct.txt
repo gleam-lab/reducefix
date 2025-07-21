@@ -1,0 +1,150 @@
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+#define rep(i,n) for(int i = 0; i < (n); i++)
+#define all(x) begin(x), end(x)
+
+typedef pair<int, int> pii;
+struct segtree {
+    int n, size;
+    vector<int> tree;
+    segtree(vector<int>& v) : n(v.size()), size(1) {
+        while(size < n) size <<= 1;
+        tree.assign(2*size, 0);
+        build(v, 0, 0, size);
+    }
+    void build(vector<int>& v, int node, int start, int end) {
+        if(start == end) tree[node] = v[start];
+        else {
+            int mid = (start+end)/2;
+            build(v, node*2+1, start, mid);
+            build(v, node*2+2, mid+1, end);
+            tree[node] = tree[node*2+1] + tree[node*2+2];
+        }
+    }
+    int sum(int l, int r) { return sum(l, r, 0, 0, size); }
+    int sum(int l, int r, int node, int start, int end) {
+        if(l <= start && end <= r) return tree[node];
+        if(end < l || r < start) return 0;
+        int mid = (start+end)/2;
+        return sum(l, r, node*2+1, start, mid) + sum(l, r, node*2+2, mid+1, end);
+    }
+};
+
+int main() {
+    ios::sync_with_stdio(false); cin.tie(nullptr);
+    int h, w, q; cin >> h >> w >> q;
+    vector<vector<bool>> grid(h, vector<bool>(w));
+    vector<set<int>> rows(w), cols(h);
+
+    for(int i=0; i<h; ++i){
+        for(int j=0; j<w; ++j){
+            rows[j].insert(i);
+            cols[i].insert(j);
+            grid[i][j] = true;
+        }
+    }
+
+    vector<pii> bombs;
+    for(int i=0; i<q; ++i){
+        int r, c; cin >> r >> c; --r, --c;
+        bombs.emplace_back(r, c);
+    }
+
+    vector<int> counts(w);
+    for(int i=0; i<w; ++i){
+        counts[i] = rows[i].size();
+    }
+    segtree st(counts);
+
+    for(auto [r, c]: bombs){
+        if(grid[r][c]){
+            grid[r][c] = false;
+            rows[c].erase(r);
+            cols[r].erase(c);
+
+            counts[c]--;
+            st.tree[1] -= 1;
+            st.tree[st.size] -= 1;
+
+            int idx = c + 1;
+            while(idx < st.size){
+                idx *= 2;
+                st.tree[idx/2] = st.tree[idx] + st.tree[idx^1];
+            }
+        }else{
+            int l = *rows[c].lower_bound(r);
+            int r2 = *rows[c].upper_bound(r);
+            int u = *cols[r].lower_bound(c);
+            int d = *cols[r].upper_bound(c);
+
+            if(l < r){
+                grid[l][c] = false;
+                rows[c].erase(l);
+                cols[l].erase(c);
+
+                counts[c]--;
+                st.tree[1] -= 1;
+                st.tree[st.size] -= 1;
+
+                int idx = c + 1;
+                while(idx < st.size){
+                    idx *= 2;
+                    st.tree[idx/2] = st.tree[idx] + st.tree[idx^1];
+                }
+            }
+
+            if(r2 > r){
+                grid[r2][c] = false;
+                rows[c].erase(r2);
+                cols[r2].erase(c);
+
+                counts[c]--;
+                st.tree[1] -= 1;
+                st.tree[st.size] -= 1;
+
+                int idx = c + 1;
+                while(idx < st.size){
+                    idx *= 2;
+                    st.tree[idx/2] = st.tree[idx] + st.tree[idx^1];
+                }
+            }
+
+            if(u < c){
+                grid[r][u] = false;
+                cols[r].erase(u);
+                rows[u].erase(r);
+
+                counts[r]++;
+                st.tree[1] += 1;
+                st.tree[st.size] += 1;
+
+                int idx = r + 1;
+                while(idx < st.size){
+                    idx *= 2;
+                    st.tree[idx/2] = st.tree[idx] + st.tree[idx^1];
+                }
+            }
+
+            if(d > c){
+                grid[r][d] = false;
+                cols[r].erase(d);
+                rows[d].erase(r);
+
+                counts[r]++;
+                st.tree[1] += 1;
+                st.tree[st.size] += 1;
+
+                int idx = r + 1;
+                while(idx < st.size){
+                    idx *= 2;
+                    st.tree[idx/2] = st.tree[idx] + st.tree[idx^1];
+                }
+            }
+        }
+    }
+
+    cout << st.sum(0, w-1) << '\n';
+    return 0;
+}
+```

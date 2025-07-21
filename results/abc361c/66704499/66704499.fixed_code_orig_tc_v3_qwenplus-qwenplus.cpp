@@ -1,0 +1,46 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    int N, K;
+    cin >> N >> K;
+    
+    vector<int> A(N);
+    for (int i = 0; i < N; ++i) {
+        cin >> A[i];
+    }
+
+    // We will use a sliding window approach to find the minimum possible value of 
+    // (max(B) - min(B)) where B is formed by removing exactly K elements from A.
+    // Since we can't remove more than N-K elements total,
+    // and we must keep N-K elements in original order,
+    // we slide a window of size (N-K) over the array.
+
+    int window_size = N - K;
+    multiset<int> window;
+
+    // Initialize the first window
+    for (int i = 0; i < window_size; ++i) {
+        window.insert(A[i]);
+    }
+
+    int min_diff = *window.rbegin() - *window.begin();
+
+    // Slide the window
+    for (int i = window_size; i < N; ++i) {
+        // Remove the element going out
+        auto it = window.find(A[i - window_size]);
+        if (it != window.end()) {
+            window.erase(it);
+        }
+        
+        // Add the new element
+        window.insert(A[i]);
+
+        // Update the minimum difference
+        min_diff = min(min_diff, *window.rbegin() - *window.begin());
+    }
+
+    cout << min_diff << endl;
+    return 0;
+}

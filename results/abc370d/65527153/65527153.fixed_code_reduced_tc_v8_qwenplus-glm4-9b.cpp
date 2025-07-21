@@ -1,0 +1,61 @@
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+
+const int N = 4e5 + 5;
+int n, m, q;
+int grid[N][N];
+int remainingWalls;
+
+void solve() {
+    cin >> n >> m >> q;
+    remainingWalls = n * m;
+    for (int i = 0; i < n; i++) {
+        for (int j = 0; j < m; j++) {
+            grid[i][j] = 1; // Initialize all cells with a wall
+        }
+    }
+
+    for (int i = 0; i < q; i++) {
+        int r, c;
+        cin >> r >> c;
+        r--; c--; // Convert to 0-based index
+        if (grid[r][c] == 0) continue; // If no wall, skip the query
+
+        // Bomb at (r, c), remove walls
+        grid[r][c] = 0;
+        remainingWalls--;
+
+        // Remove walls above and below
+        for (int j = 0; j < m && (r - j >= 0 || r + j < n); j++) {
+            if (r - j >= 0 && grid[r - j][c] == 1) {
+                grid[r - j][c] = 0;
+                remainingWalls--;
+            }
+            if (r + j < n && grid[r + j][c] == 1) {
+                grid[r + j][c] = 0;
+                remainingWalls--;
+            }
+        }
+
+        // Remove walls to the left and right
+        for (int i = 0; i < n && (c - i >= 0 || c + i < m); i++) {
+            if (c - i >= 0 && grid[r][c - i] == 1) {
+                grid[r][c - i] = 0;
+                remainingWalls--;
+            }
+            if (c + i < m && grid[r][c + i] == 1) {
+                grid[r][c + i] = 0;
+                remainingWalls--;
+            }
+        }
+    }
+
+    cout << remainingWalls << '\n';
+}
+
+int main() {
+    ios::sync_with_stdio(0); cin.tie(0);
+    solve();
+    return 0;
+}

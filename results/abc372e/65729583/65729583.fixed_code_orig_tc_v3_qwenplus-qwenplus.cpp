@@ -1,0 +1,76 @@
+#include <iostream>
+#include <vector>
+#include <set>
+
+using namespace std;
+
+typedef long long ll;
+
+#define debug1(A)            cerr << #A << " : " << A << endl;
+#define debug2(A, B)         cerr << "[ " << #A << " = " << A << " | " << #B << " = " << B << " ]" << endl;
+
+const int MAXN = 2 * 1e5 + 5;
+
+int U[MAXN];
+multiset<int> V[MAXN];
+
+int Find(int u) {
+    if (U[u] == u) return u;
+    return U[u] = Find(U[u]);
+}
+
+void Union(int u, int v) {
+    int fu = Find(u);
+    int fv = Find(v);
+    if (fu == fv) return;
+    // Merge smaller set into larger one for efficiency
+    if (V[fu].size() < V[fv].size()) swap(fu, fv);
+    for (auto x : V[fv]) {
+        V[fu].insert(x);
+    }
+    U[fv] = fu;
+    V[fv].clear();
+}
+
+void cumbia420PaLosCheems(int testCase) {
+    int n, q;
+    cin >> n >> q;
+
+    for (int i = 1; i <= n; ++i) {
+        U[i] = i;
+        V[i].insert(i);
+    }
+
+    while (q--) {
+        int cmd;
+        cin >> cmd;
+        if (cmd == 1) {
+            int u, v;
+            cin >> u >> v;
+            Union(u, v);
+        } else {
+            int v, k;
+            cin >> v >> k;
+            int root = Find(v);
+            if (V[root].size() < (size_t)k) {
+                cout << -1 << endl;
+            } else {
+                auto it = V[root].end();
+                advance(it, -k);
+                cout << *it << endl;
+            }
+        }
+    }
+}
+
+int main() {
+    cin.tie(0);
+    ios_base::sync_with_stdio(0);
+
+    int t = 1;
+    for (int i = 1; i <= t; ++i) {
+        cumbia420PaLosCheems(i);
+    }
+
+    return 0;
+}

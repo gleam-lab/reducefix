@@ -1,0 +1,98 @@
+### Analysis of the Incorrect Code
+The given problem requires determining for each candidate the minimum number of additional votes needed to guarantee their election, considering the worst-case scenario where other candidates receive the remaining votes in a way that maximizes the number of candidates with more votes than the candidate in question.
+
+The incorrect code attempts to solve this by sorting the votes, then using binary search to find the minimum additional votes required for each candidate. However, there are several issues:
+
+1. **Binary Search Logic**: The function `f` checks if a candidate can be elected with `x` additional votes but may not correctly handle the cases where `x` is insufficient or excessive.
+2. **Calculation of `uppercnt`**: The code calculates the number of candidates with more votes than `a[i] + x`, but this may not correctly reflect the worst-case scenario where other candidates receive the remaining votes.
+3. **Handling of Remaining Votes**: The code attempts to ensure that the remaining votes can't push too many candidates above the candidate in question, but the logic might not cover all edge cases, especially when `M` is close to `N`.
+
+### Fixed Code
+To fix these issues, we need to:
+1. **Correctly Identify the Threshold**: For a candidate to be elected, there should be at most `M - 1` candidates with more votes than them. This means we need to ensure that even if all other candidates receive as many votes as possible, the candidate in question is still in the top `M`.
+2. **Binary Search with Proper Conditions**: Use binary search to find the minimum `x` such that the candidate's total votes `a[i] + x` are sufficient to ensure that at most `M - 1` candidates can surpass them, considering the worst-case distribution of the remaining votes.
+
+Here is the corrected and optimized code:
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    ll N, M, K;
+    cin >> N >> M >> K;
+    vector<ll> A(N);
+    for (ll &a : A) cin >> a;
+
+    ll remaining = K;
+    for (ll a : A) remaining -= a;
+
+    vector<ll> sorted_A = A;
+    sort(sorted_A.begin(), sorted_A.end());
+
+    vector<ll> prefix_sum(N + 1, 0);
+    for (int i = 0; i < N; ++i)
+        prefix_sum[i + 1] = prefix_sum[i] + sorted_A[i];
+
+    for (int i = 0; i < N; ++i) {
+        ll a_i = A[i];
+        ll low = 0, high = remaining;
+        ll ans = -1;
+
+        while (low <= high) {
+            ll mid = low + (high - low) / 2;
+            ll total = a_i + mid;
+
+            // Find the number of candidates with votes > total
+            auto it = upper_bound(sorted_A.begin(), sorted_A.end(), total);
+            ll cnt_greater = sorted_A.end() - it;
+
+            // If the candidate is already in the top M, no need for additional votes
+            if (cnt_greater < M) {
+                ans = mid;
+                high = mid - 1;
+                continue;
+            }
+
+            // Otherwise, calculate the required votes to ensure the candidate is in the top M
+            ll required = 0;
+            ll idx = it - sorted_A.begin();
+            ll start = idx - (M - 1);
+            if (start < 0) {
+                // Not possible to have enough candidates with votes <= total
+                low = mid + 1;
+                continue;
+            }
+
+            // Sum of votes from sorted_A[start] to sorted_A[idx - 1] that need to be <= total
+            ll sum = prefix_sum[idx] - prefix_sum[start];
+            required = total * (idx - start) - sum;
+
+            if (required <= remaining - mid) {
+                ans = mid;
+                high = mid - 1;
+            } else {
+                low = mid + 1;
+            }
+        }
+
+        cout << ans << " \n"[i == N - 1];
+    }
+
+    return 0;
+}
+```
+
+### Explanation
+1. **Input Handling**: The code reads the number of candidates `N`, the threshold `M`, and the total votes `K`, followed by the current votes `A` for each candidate.
+2. **Remaining Votes Calculation**: It calculates the remaining votes after accounting for the current votes.
+3. **Sorting and Prefix Sum**: The votes are sorted, and a prefix sum array is constructed to efficiently calculate sums of ranges.
+4. **Binary Search for Each Candidate**: For each candidate, it performs a binary search to find the minimum additional votes `x` such that the candidate will be in the top `M` even in the worst-case scenario.
+5. **Condition Check**: The binary search checks if the candidate can be in the top `M` with `x` additional votes by ensuring that the sum of votes required to push other candidates above the candidate's total is within the remaining votes.
+6. **Output**: The result for each candidate is printed, with `-1` indicating it's impossible to guarantee election.
+
+This approach ensures correctness and efficiency within the problem constraints.

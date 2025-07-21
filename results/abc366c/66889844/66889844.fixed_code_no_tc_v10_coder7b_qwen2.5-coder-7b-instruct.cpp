@@ -1,0 +1,20 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+  int Q; cin >> Q;
+  set<int> bag;
+  
+  while(Q--){
+    int type; cin >> type;
+    if(type == 1){
+      int value; cin >> value;
+      bag.insert(value);
+    } else if(type == 2){
+      int value; cin >> value;
+      bag.erase(bag.find(value));
+    } else if(type == 3){
+      cout << bag.size() << endl;
+    }
+  }
+}

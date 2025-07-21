@@ -1,0 +1,71 @@
+#include <iostream>
+#include <algorithm>
+using namespace std;
+
+typedef struct { int a, p, b, q; } Item;
+Item A[100];
+long long dp[100][10000];  // dp[i][j] = min cost to get j units of item i
+
+int N, X;
+
+// Calculate the minimum cost to get exactly 'n' units of item 'i'
+long long cost(int i, int n) {
+    int cycle = A[i].a * A[i].b;
+    long long full_cycles = n / cycle;
+    int remainder = n % cycle;
+    return dp[i][remainder] + full_cycles * (A[i].p * A[i].b + A[i].q * A[i].a);
+}
+
+// Check if it's possible to buy at least 'n' total items within budget X
+bool feasible(int n) {
+    long long total_cost = 0;
+    for (int i = 0; i < N; i++) {
+        total_cost += cost(i, n);
+        if (total_cost > X)
+            return false;
+    }
+    return true;
+}
+
+int main() {
+    scanf("%d %d", &N, &X);
+
+    for (int i = 0; i < N; i++) {
+        int a, p, b, q;
+        scanf("%d %d %d %d", &a, &p, &b, &q);
+        
+        // Ensure the cheaper option comes first when buying multiples
+        if (a * q < b * p) {
+            swap(a, b);
+            swap(p, q);
+        }
+        
+        A[i] = {a, p, b, q};
+        
+        // Initialize DP for this item
+        dp[i][0] = 0;
+        for (int j = 1; j < a * b; j++) {
+            dp[i][j] = 1e18;  // Set high value as initial state
+            if (j >= A[i].a)
+                dp[i][j] = min(dp[i][j], dp[i][j - A[i].a] + A[i].p);
+            if (j >= A[i].b)
+                dp[i][j] = min(dp[i][j], dp[i][j - A[i].b] + A[i].q);
+        }
+    }
+
+    // Binary search for maximum number of each item that can be bought
+    int low = 0, high = 2e5;  // Adjusted upper bound
+    int answer = 0;
+
+    while (low <= high) {
+        int mid = (low + high) / 2;
+        if (feasible(mid)) {
+            answer = mid;
+            low = mid + 1;
+        } else {
+            high = mid - 1;
+        }
+    }
+
+    printf("%d\n", answer);
+}

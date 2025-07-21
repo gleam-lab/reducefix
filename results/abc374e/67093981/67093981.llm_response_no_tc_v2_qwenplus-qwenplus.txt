@@ -1,0 +1,69 @@
+```cpp
+#include <iostream>
+#include <algorithm>
+#include <climits>
+using namespace std;
+
+typedef struct { int a, p, b, q; } Machine;
+Machine machines[100];
+long long dp[100][10000]; // dp[i][j] = min cost to get j candies from machine i
+
+int N, X;
+
+// Calculate the minimum cost for a machine to produce n candies
+long long cost(int i, int n) {
+    int cycle = machines[i].a * machines[i].b;
+    long long full_cycles = n / cycle;
+    int remainder = n % cycle;
+    return full_cycles * machines[i].p * machines[i].b + dp[i][remainder];
+}
+
+// Check if we can buy at least `n` total candies within budget X
+bool feasible(int total_candies) {
+    long long total_cost = 0;
+    for (int i = 0; i < N; ++i) {
+        total_cost += cost(i, total_candies);
+        if (total_cost > X) return false;
+    }
+    return true;
+}
+
+int main() {
+    cin >> N >> X;
+
+    for (int i = 0; i < N; ++i) {
+        int a, p, b, q;
+        cin >> a >> p >> b >> q;
+
+        // Ensure the more efficient machine is used first (lower cost per candy)
+        if (a * q < b * p) {
+            swap(a, b);
+            swap(p, q);
+        }
+
+        machines[i] = {a, p, b, q};
+
+        // Initialize dp for this machine
+        dp[i][0] = 0;
+        for (int j = 1; j <= a * b; ++j) {
+            dp[i][j] = LLONG_MAX;
+            if (j >= a) dp[i][j] = min(dp[i][j], dp[i][j - a] + p);
+            if (j >= b) dp[i][j] = min(dp[i][j], dp[i][j - b] + q);
+        }
+    }
+
+    // Binary search for the maximum number of candies that can be bought
+    int low = 0, high = 1e9;
+    while (low < high) {
+        int mid = low + (high - low) / 2;
+        if (feasible(mid)) {
+            low = mid;
+        } else {
+            high = mid - 1;
+        }
+    }
+
+    cout << low << endl;
+    return 0;
+}
+```

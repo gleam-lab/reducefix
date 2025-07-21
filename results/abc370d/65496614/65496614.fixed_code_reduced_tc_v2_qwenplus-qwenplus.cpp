@@ -1,0 +1,96 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+#define rep(i,n) for(int i = 0; i < (int)(n); ++i)
+#define rep1(i,n) for(int i = 1; i <= (int)(n); ++i)
+
+using vi = vector<int>;
+using vvi = vector<vi>;
+using vb = vector<bool>;
+using vvb = vector<vb>;
+using pii = pair<int, int>;
+
+template<typename T>
+using vec = vector<T>;
+
+// Main function
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int H, W, Q;
+    cin >> H >> W >> Q;
+
+    // Grid to track remaining walls
+    vvb has_wall(H + 2, vb(W + 2, true));
+
+    // For each row and column, keep ordered sets of wall positions
+    vector<set<int>> row_left(H + 2), row_right(H + 2);
+    vector<set<int>> col_up(H + 2), col_down(H + 2);
+
+    // Initialize the sets
+    rep1(i, H) {
+        rep1(j, W) {
+            row_left[i].insert(j);
+            row_right[i].insert(j);
+            col_up[j].insert(i);
+            col_down[j].insert(i);
+        }
+    }
+
+    auto remove_wall = [&](int r, int c) {
+        if (!has_wall[r][c]) return false;
+        
+        has_wall[r][c] = false;
+        
+        row_left[r].erase(c);
+        row_right[r].erase(c);
+        col_up[c].erase(r);
+        col_down[c].erase(r);
+        
+        return true;
+    };
+
+    while (Q--) {
+        int r, c;
+        cin >> r >> c;
+
+        if (has_wall[r][c]) {
+            remove_wall(r, c);
+        } else {
+            // Up
+            auto it = col_up[c].lower_bound(r);
+            if (it != col_up[c].begin()) {
+                --it;
+                int ur = *it;
+                remove_wall(ur, c);
+            }
+
+            // Down
+            it = col_down[c].lower_bound(r);
+            if (it != col_down[c].end()) {
+                remove_wall(*it, c);
+            }
+
+            // Left
+            auto jt = row_left[r].lower_bound(c);
+            if (jt != row_left[r].begin()) {
+                --jt;
+                int lc = *jt;
+                remove_wall(r, lc);
+            }
+
+            // Right
+            jt = row_right[r].lower_bound(c);
+            if (jt != row_right[r].end()) {
+                remove_wall(r, *jt);
+            }
+        }
+    }
+
+    int ans = 0;
+    rep1(i, H) rep1(j, W) ans += has_wall[i][j];
+    
+    cout << ans << "\n";
+    return 0;
+}

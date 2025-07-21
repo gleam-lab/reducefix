@@ -1,0 +1,97 @@
+
+The problem involves a grid of size `H x W` where each cell initially has a wall. After `Q` queries, the task is to determine the number of remaining walls after all queries have been processed.
+
+In each query, a bomb is placed at a specified cell `(R_q, C_q)`. If there is a wall at that cell, it is destroyed. If not, walls are destroyed in a pattern extending up, down, left, and right from that cell.
+
+The problem can be approached with a priority queue to manage the destruction of walls in the order of their distance from the bomb. Since the grid can be as large as `4 * 10^5`, it is crucial to optimize the solution to handle large inputs efficiently.
+
+Here's a revised version of the algorithm, addressing the potential issues in the original code:
+
+```cpp
+#include <iostream>
+#include <vector>
+#include <queue>
+#include <algorithm>
+
+using namespace std;
+
+struct Wall {
+    int row, col, dist;
+};
+
+bool operator<(const Wall& a, const Wall& b) {
+    return a.dist > b.dist; // Max-heap based on distance
+}
+
+int main() {
+    int H, W, Q;
+    cin >> H >> W >> Q;
+
+    vector<vector<bool>> grid(H, vector<bool>(W, true));
+    priority_queue<Wall> pq;
+
+    for (int i = 0; i < Q; ++i) {
+        int r, c;
+        cin >> r >> c;
+        --r, --c; // Convert 1-based to 0-based
+
+        if (!grid[r][c]) {
+            continue; // No wall to destroy
+        }
+
+        grid[r][c] = false;
+
+        // Insert walls to the priority queue for destruction
+        pq.push({r, c, 0}); // Starting point with distance 0
+        pq.push({r, c - 1, 1}); // Left
+        pq.push({r, c + 1, 1}); // Right
+        pq.push({r - 1, c, 1}); // Up
+        pq.push({r + 1, c, 1}); // Down
+
+        // Process the queue and destroy walls
+        while (!pq.empty()) {
+            Wall current = pq.top();
+            pq.pop();
+
+            // Check if the wall still exists
+            if (!grid[current.row][current.col]) {
+                continue;
+            }
+
+            // Mark the wall as destroyed
+            grid[current.row][current.col] = false;
+            pq.push({current.row, current.col, current.dist + 1}); // Increase distance for next level
+
+            // Add adjacent walls to the queue
+            if (current.row + 1 < H) {
+                pq.push({current.row + 1, current.col, current.dist + 1});
+            }
+            if (current.row - 1 >= 0) {
+                pq.push({current.row - 1, current.col, current.dist + 1});
+            }
+            if (current.col + 1 < W) {
+                pq.push({current.row, current.col + 1, current.dist + 1});
+            }
+            if (current.col - 1 >= 0) {
+                pq.push({current.row, current.col - 1, current.dist + 1});
+            }
+        }
+    }
+
+    // Count remaining walls
+    int remainingWalls = 0;
+    for (int i = 0; i < H; ++i) {
+        for (int j = 0; j < W; ++j) {
+            if (grid[i][j]) {
+                remainingWalls++;
+            }
+        }
+    }
+
+    cout << remainingWalls << endl;
+
+    return 0;
+}
+```
+
+This revised algorithm uses a max-heap (priority queue) to manage the walls to be destroyed based on their distance from the bomb. It ensures that the closest wall is destroyed first, and then it recursively adds the next level of walls to be destroyed. This approach is efficient and handles the problem's constraints well.

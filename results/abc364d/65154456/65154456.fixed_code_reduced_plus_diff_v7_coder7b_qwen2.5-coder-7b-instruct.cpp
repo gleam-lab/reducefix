@@ -1,0 +1,27 @@
+#include<bits/stdc++.h>
+using namespace std;
+
+vector<int> A, B;
+
+int main() {
+    ios_base::sync_with_stdio(false); cin.tie(NULL); cout.tie(NULL);
+
+    int N, Q; cin >> N >> Q;
+    A.resize(N + 1);
+    B.resize(Q + 1);
+
+    for(int i = 1; i <= N; ++i) cin >> A[i];
+    for(int i = 1; i <= Q; ++i) cin >> B[i] >> A[i];
+
+    sort(A.begin(), A.end());
+
+    for(int i = 1; i <= Q; ++i) {
+        auto it = lower_bound(A.begin(), A.end(), B[i]);
+        int index = it - A.begin();
+        int dist = abs(B[i] - A[index]);
+        if(index > 0 && abs(B[i] - A[index - 1]) < dist) dist = abs(B[i] - A[index - 1]);
+        cout << dist << '\n';
+    }
+
+    return 0;
+}

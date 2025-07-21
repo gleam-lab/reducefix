@@ -1,0 +1,39 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    int N;
+    cin >> N;
+    vector<long long> A(N);
+    vector<long long> B(N - 1);
+
+    for (int i = 0; i < N; ++i) {
+        cin >> A[i];
+    }
+    for (int i = 0; i < N - 1; ++i) {
+        cin >> B[i];
+    }
+
+    // Sort toys in descending order of size
+    sort(A.begin(), A.end(), greater<>());
+    // Sort boxes in descending order of size
+    sort(B.begin(), B.end(), greater<>());
+
+    // Try to fit the largest toy in the largest box
+    // The extra toy (A[0]) will be placed in our purchased box, so we check if the rest can fit
+
+    // We need to check if A[i] <= B[i-1] for all i >= 1
+    // Because we use the largest box for second largest toy, and so on
+    // The first toy (largest) goes into our custom box
+
+    for (int i = 1; i < N; ++i) {
+        if (A[i] > B[i - 1]) {
+            cout << -1 << endl;
+            return 0;
+        }
+    }
+
+    // The minimum required size of the purchased box is the size of the largest toy
+    cout << A[0] << endl;
+    return 0;
+}

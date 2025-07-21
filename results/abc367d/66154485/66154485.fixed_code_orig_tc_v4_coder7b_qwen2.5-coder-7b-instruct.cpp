@@ -1,0 +1,26 @@
+#include <iostream>
+#include <vector>
+#include <numeric>
+
+int main() {
+    int n, m;
+    std::cin >> n >> m;
+    std::vector<int> arr(n);
+    for (int i = 0; i < n; ++i) {
+        std::cin >> arr[i];
+    }
+
+    long long ans = 0;
+    for (int start = 0; start < n; ++start) {
+        int sum = 0;
+        for (int end = start; end < n; ++end) {
+            sum += arr[end];
+            if (sum % m == 0) {
+                ++ans;
+            }
+        }
+    }
+
+    std::cout << ans << '\n';
+    return 0;
+}

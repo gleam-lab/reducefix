@@ -1,0 +1,85 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+const int MAXN = 200005;
+const int K_MAX = 10;
+
+int parent[MAXN];
+set<int, greater<int>> component[MAXN];  // Stores top K elements in descending order
+
+// Find with path compression
+int find(int x) {
+    if (parent[x] != x)
+        parent[x] = find(parent[x]);
+    return parent[x];
+}
+
+// Merge smaller component into larger one
+void unite(int u, int v) {
+    int rootU = find(u);
+    int rootV = find(v);
+    
+    if (rootU == rootV)
+        return;
+        
+    // Ensure rootU is the larger set
+    if (component[rootU].size() < component[rootV].size())
+        swap(rootU, rootV);
+        
+    // Merge the smaller set into the larger one
+    for (auto val : component[rootV]) {
+        component[rootU].insert(val);
+        if (component[rootU].size() > K_MAX) {
+            auto last = component[rootU].end();
+            --last;
+            component[rootU].erase(last);
+        }
+    }
+    
+    parent[rootV] = rootU;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int N, Q;
+    cin >> N >> Q;
+    
+    // Initialize DSU and component sets
+    for (int i = 1; i <= N; ++i) {
+        parent[i] = i;
+        component[i].insert(i);
+    }
+    
+    vector<long long> answers;
+    
+    for (int i = 0; i < Q; ++i) {
+        int type;
+        cin >> type;
+        
+        if (type == 1) {
+            int u, v;
+            cin >> u >> v;
+            unite(u, v);
+        } else {
+            int v, k;
+            cin >> v >> k;
+            int root = find(v);
+            
+            if (k > (int)component[root].size()) {
+                answers.push_back(-1);
+            } else {
+                auto it = component[root].begin();
+                advance(it, k - 1);
+                answers.push_back(*it);
+            }
+        }
+    }
+    
+    for (auto ans : answers) {
+        cout << ans << '\n';
+    }
+    
+    return 0;
+}

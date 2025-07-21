@@ -1,0 +1,33 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+
+int main() {
+  int N;
+  std::cin >> N;
+  std::vector<int> H(N);
+  
+  for(int i = 0; i < N; ++i) {
+    std::cin >> H[i];
+  }
+
+  long long total_attacks = 0;
+
+  while(true) {
+    bool any_alive = false;
+    for(int i = 0; i < N; ++i) {
+      if(H[i] > 0) {
+        any_alive = true;
+        if((total_attacks + 1) % 3 == 0) {
+          H[i] -= 3;
+        } else {
+          H[i]--;
+        }
+        total_attacks++;
+      }
+    }
+    if(!any_alive) break;
+  }
+
+  std::cout << total_attacks << std::endl;
+}

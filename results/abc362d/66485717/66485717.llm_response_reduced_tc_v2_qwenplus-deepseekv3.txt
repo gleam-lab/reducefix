@@ -1,0 +1,79 @@
+To fix this code, we need to address the issue observed in the failing test case where the output was incorrect for a graph with no edges. The problem arises because the initial distance value (`inf`) was set too low, causing the output to be truncated or incorrect when the actual path weight exceeds this value. 
+
+### Approaches
+1. **Initialization**: The initial distance for vertex 1 should be set to `A_1` (the weight of vertex 1 itself), and all other vertices should be initialized to a sufficiently large value (e.g., `LLONG_MAX` or `1e18`).
+2. **Edge Handling**: For each edge, the weight of the path includes the weights of the vertices and the edge. Therefore, the relaxation step in Dijkstra's algorithm should account for both the edge weight and the vertex weight of the destination.
+3. **Priority Queue**: Use a priority queue to efficiently retrieve the vertex with the current minimum distance, ensuring logarithmic time complexity for each operation.
+
+### Solution Code
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+using i64 = long long;
+constexpr i64 inf = 1e18;
+
+struct Node {
+    int x;
+    i64 w;
+    bool operator < (const Node& u) const {
+        return w > u.w;
+    }
+};
+
+void solve() {
+    int n, m;
+    cin >> n >> m;
+    vector<i64> a(n + 1);
+    vector<vector<pair<int, i64>>> g(n + 1);
+    vector<i64> d(n + 1, inf);
+    vector<bool> vis(n + 1, false);
+    
+    for (int i = 1; i <= n; ++i) {
+        cin >> a[i];
+    }
+    
+    for (int i = 0; i < m; ++i) {
+        int u, v;
+        i64 b;
+        cin >> u >> v >> b;
+        g[u].emplace_back(v, b);
+        g[v].emplace_back(u, b);
+    }
+    
+    priority_queue<Node> pq;
+    d[1] = a[1];
+    pq.push({1, d[1]});
+    
+    while (!pq.empty()) {
+        auto [x, w] = pq.top();
+        pq.pop();
+        if (vis[x]) continue;
+        vis[x] = true;
+        for (const auto& [y, dw] : g[x]) {
+            if (d[x] + dw + a[y] < d[y]) {
+                d[y] = d[x] + dw + a[y];
+                pq.push({y, d[y]});
+            }
+        }
+    }
+    
+    for (int i = 2; i <= n; ++i) {
+        cout << d[i] << (i == n ? "\n" : " ");
+    }
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    solve();
+    return 0;
+}
+```
+
+### Explanation
+1. **Initialization**: The distances array `d` is initialized with `inf` (a very large value, `1e18`), except for the starting vertex (vertex 1), which is initialized to its own weight `A_1`.
+2. **Graph Construction**: The graph is built using adjacency lists, where each edge is stored with its weight.
+3. **Dijkstra's Algorithm**: A priority queue is used to process vertices in order of increasing distance. For each vertex, the algorithm relaxes the distances of its adjacent vertices by considering the sum of the current vertex's distance, the edge weight, and the adjacent vertex's weight.
+4. **Output**: The distances from vertex 1 to all other vertices are printed, ensuring the output format matches the expected results.
+
+This approach ensures that the solution efficiently computes the minimum path weights even for large graphs, adhering to the constraints and requirements.

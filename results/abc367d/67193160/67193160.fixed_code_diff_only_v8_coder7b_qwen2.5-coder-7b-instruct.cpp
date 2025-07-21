@@ -1,0 +1,22 @@
+#include<bits/stdc++.h>
+using namespace std;
+const int N=1e6+5;
+int n,m,k,sum,cnt,a[N],b[N],d[N];
+int main()
+{
+	ios::sync_with_stdio(0),cin.tie(0),cout.tie(0); 
+	int i,j,x,y,z,t;
+	cin>>n>>m;
+	for(i=1;i<=n;i++)
+		cin>>a[i],a[i+n]=a[i];
+	memset(b,0,sizeof(b));
+	b[0]=1;
+	for(i=1;i<=2*n-1;i++)
+	{
+		d[i]=d[i-1]+a[i%n+1];
+		sum+=b[(d[i]%m+m)%m]; // Adjusting for negative remainders
+		b[(d[i]%m+m)%m]++;
+	}
+	cout<<sum;
+	return 0;
+}

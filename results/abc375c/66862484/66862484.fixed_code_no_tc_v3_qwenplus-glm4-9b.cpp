@@ -1,0 +1,27 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int N;
+    cin >> N;
+
+    long long curX = 0, curY = 0;   // ç¾å¨ä½ç½®ï¼åç¹ï¼
+    long long total = 0;            // ç·ã³ã¹ã
+
+    for (int i = 0; i < N; ++i) {
+        long long x, y;
+        cin >> x >> y;
+
+        total += (curX > x ? curX - x : x - curX) * (curY > y ? curY - y : y - curY); // çµè·¯ã®å·®åã®ç©ãè¶³ã
+        curX = x; curY = y;
+    }
+
+    // æå¾ã®ç¹ããåç¹ã¸æ»ã
+    total += (curX > 0 ? curX : -curX) * (curY > 0 ? curY : -curY);
+
+    cout << fixed << setprecision(6) << sqrt(total) << '\n';
+    return 0;
+}

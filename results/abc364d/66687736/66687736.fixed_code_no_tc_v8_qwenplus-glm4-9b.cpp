@@ -1,0 +1,40 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define ll long long
+#define rep(i, n) for (int i = 0; i < (int)n; i++)
+#define vi vector<int>
+
+ll inf = (1ll << 62);
+
+int get(map<int, int> &mp, int m) {
+    auto it = mp.lower_bound(m);
+    if (it == mp.begin()) return -inf;
+    return (it->first - it->second) + m;
+}
+
+int main() {
+    int n, q; cin >> n >> q;
+    vi a(n);
+    rep(i, n) cin >> a[i];
+    
+    // Create a map to store frequencies of each point
+    map<int, int> mp;
+    rep(i, n) mp[a[i]]++;
+    mp[-inf] = 0; // Add an extra point to handle the edge case when k_j = 1
+
+    while (true) {
+        bool allZeros = true;
+        for (auto &p : mp) {
+            p.second--;
+            if (p.second > 0) allZeros = false;
+        }
+        if (allZeros) break;
+    }
+
+    rep(i, q) {
+        int b, k; cin >> b >> k;
+        int result = get(mp, b);
+        if (result == -inf) cout << k << endl; // If we are at the start of the range
+        else cout << result << endl;
+    }
+}

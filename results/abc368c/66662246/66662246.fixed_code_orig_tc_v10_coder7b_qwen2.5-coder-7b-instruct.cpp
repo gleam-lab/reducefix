@@ -1,0 +1,23 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define rep(i, n) for (int i = 0; i < (n); ++i)
+using ll = long long;
+
+int main() {
+    int n;
+    cin >> n;
+    vector<ll> a(n);
+    rep(i, n) cin >> a[i];
+    ll ans = 0;
+    priority_queue<pair<ll, int>> pq;
+    rep(i, n) pq.push({-a[i], i});
+    while (!pq.empty()) {
+        auto [hp, idx] = pq.top(); pq.pop();
+        hp *= -1;
+        ans++;
+        if (hp % 3 == 0) hp -= 3;
+        else hp--;
+        if (hp > 0) pq.push({-hp, idx});
+    }
+    cout << ans << endl;
+}

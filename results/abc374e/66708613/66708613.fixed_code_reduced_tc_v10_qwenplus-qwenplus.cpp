@@ -1,0 +1,95 @@
+#include<iostream>
+#include<string>
+#include<vector>
+#include<cmath>
+#include<limits>
+using namespace std;
+using ll = long long;
+
+const int inf = 1 << 30;
+const ll INF = 1LL << 62;
+using P = pair<ll, int>;
+
+bool canAchieve(ll x, const vector<ll>& A, const vector<ll>& P, const vector<ll>& B, const vector<ll>& Q, ll budget) {
+    int n = A.size();
+    ll total_cost = 0;
+
+    for (int i = 0; i < n; ++i) {
+        ll min_cost = INF;
+
+        // Try all possible s up to B[i] or until cost becomes too large
+        for (ll s = 0; s <= B[i]; ++s) {
+            ll remaining = max(0LL, x - A[i] * s);
+            ll t = (remaining + B[i] - 1) / B[i];
+            if (t > A[i]) {  // Ensure we don't use more machines than available
+                continue;
+            }
+            ll cost = s * P[i] + t * Q[i];
+            if (cost > budget) continue;
+            min_cost = min(min_cost, cost);
+            break; // Since increasing s further would only increase cost
+        }
+
+        // Try all possible t up to A[i]
+        for (ll t = 0; t <= A[i]; ++t) {
+            ll remaining = max(0LL, x - B[i] * t);
+            ll s = (remaining + A[i] - 1) / A[i];
+            if (s > B[i]) {
+                continue;
+            }
+            ll cost = t * Q[i] + s * P[i];
+            if (cost > budget) continue;
+            min_cost = min(min_cost, cost);
+            break;
+        }
+
+        if (min_cost == INF) {
+            return false;
+        }
+
+        total_cost += min_cost;
+        if (total_cost > budget) {
+            return false;
+        }
+    }
+
+    return total_cost <= budget;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int N;
+    ll X;
+    cin >> N >> X;
+
+    vector<ll> A(N), P(N), B(N), Q(N);
+    for (int i = 0; i < N; ++i) {
+        cin >> A[i] >> P[i] >> B[i] >> Q[i];
+    }
+
+    // Check if even zero processing capacity is possible
+    if (!canAchieve(0, A, P, B, Q, X)) {
+        cout << 0 << endl;
+        return 0;
+    }
+
+    // Binary search for maximum achievable processing capacity
+    ll low = 0, high = 1;
+    while (canAchieve(high, A, P, B, Q, X)) {
+        high *= 2;
+        if (high > 1e18 / 2) break;
+    }
+
+    while (low < high) {
+        ll mid = (low + high + 1) / 2;
+        if (canAchieve(mid, A, P, B, Q, X)) {
+            low = mid;
+        } else {
+            high = mid;
+        }
+    }
+
+    cout << low << endl;
+}

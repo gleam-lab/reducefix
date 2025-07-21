@@ -1,0 +1,67 @@
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+#define rep(i, n) for (ll i = 0; i < (ll)(n); i++)
+#define rep2(i, s, n) for (ll i = (s); i < (ll)(n); i++)
+#define all(x) x.begin(), x.end()
+
+int H, W, Q;
+vector<vector<int>> grid;
+vector<set<pair<int, int>>> rowWalls;
+vector<set<pair<int, int>>> colWalls;
+
+int main() {
+    cin >> H >> W >> Q;
+    grid.resize(H, vector<int>(W, 1)); // Initialize grid with walls (1)
+    rowWalls.resize(H);
+    colWalls.resize(W);
+
+    // Initialize row and column walls sets
+    rep(i, H) {
+        rep(j, W) {
+            rowWalls[i].insert({i, j});
+            colWalls[j].insert({i, j});
+        }
+    }
+
+    ll remainingWalls = H * W; // Initially, all cells have one wall.
+    
+    rep(itr, Q) {
+        int R, C;
+        cin >> R >> C;
+        R--; C--; // Convert to zero-indexed.
+
+        // Check if there's a wall at the given position
+        if (grid[R][C] == 1) {
+            grid[R][C] = 0; // Destroy the wall
+            remainingWalls--;
+        } else {
+            // If no wall at (R, C), remove walls from row and column
+            auto removeRow = [&](int r) {
+                auto it = rowWalls[r].lower_bound(C);
+                if (it != rowWalls[r].begin()) it--;
+                while (it != rowWalls[r].end()) {
+                    grid[(*it).first][(*it).second] = 0;
+                    remainingWalls--;
+                    rowWalls[r].erase(it++);
+                }
+            };
+
+            auto removeCol = [&](int c) {
+                auto it = colWalls[c].lower_bound(R);
+                if (it != colWalls[c].begin()) it--;
+                while (it != colWalls[c].end()) {
+                    grid[(*it).first][(*it).second] = 0;
+                    remainingWalls--;
+                    colWalls[c].erase(it++);
+                }
+            };
+
+            removeRow(R);
+            removeCol(C);
+        }
+    }
+
+    cout << remainingWalls << endl;
+    return 0;
+}

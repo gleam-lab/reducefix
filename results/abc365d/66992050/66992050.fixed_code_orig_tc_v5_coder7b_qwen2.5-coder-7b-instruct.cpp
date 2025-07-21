@@ -1,0 +1,38 @@
+#include <iostream>
+#include <string>
+#include <vector>
+#include <queue>
+
+using namespace std;
+
+int main() {
+    int N;
+    string S;
+    cin >> N >> S;
+    
+    vector<int> count(3); // To keep track of occurrences of P, R, S
+    
+    for (char c : S) {
+        count[c - 'P']++; // Increment the count for the current character ('P' -> 0, 'R' -> 1, 'S' -> 2)
+    }
+    
+    int ans = 0;
+    for (int i = 0; i < N; ++i) {
+        if (count[0] > 0 && count[1] > 0) { // If both 'P' and 'R' are available
+            ans += min(count[0], count[1]); // Add the minimum of their counts
+            count[0] -= min(count[0], count[1]);
+            count[1] -= min(count[0], count[1]);
+        } else if (count[1] > 0 && count[2] > 0) { // If both 'R' and 'S' are available
+            ans += min(count[1], count[2]);
+            count[1] -= min(count[1], count[2]);
+            count[2] -= min(count[1], count[2]);
+        } else if (count[2] > 0 && count[0] > 0) { // If both 'S' and 'P' are available
+            ans += min(count[2], count[0]);
+            count[2] -= min(count[2], count[0]);
+            count[0] -= min(count[2], count[0]);
+        }
+    }
+    
+    cout << ans << endl;
+    return 0;
+}

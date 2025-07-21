@@ -1,0 +1,84 @@
+The initial code attempts to solve the problem by maintaining a sorted list of vertices in each connected component, merging these lists when edges are added, and truncating them to the top 10 elements. However, there are several issues:
+
+1. **Merging Logic**: The merging of two sorted lists is incorrectly implemented. The current code doesn't properly handle the merging of two sorted lists in descending order, leading to incorrect results.
+2. **Truncation**: After merging, the lists are truncated to 10 elements, but this truncation is done after the merge, which might not preserve the top 10 largest elements if the merged list was not correctly sorted.
+3. **Efficiency**: The merging and truncation operations are not efficient enough for large inputs (N and Q up to 2×10^5), leading to potential timeouts.
+
+### Fixed Approach
+1. **Union-Find with Sorted Lists**: Use the Union-Find (Disjoint Set Union, DSU) data structure to manage connected components. Each component's root maintains a sorted list of its vertices in descending order, limited to the top 10 elements.
+2. **Efficient Merging**: When merging two components, merge their sorted lists efficiently (using two pointers) and keep only the top 10 elements to ensure quick access during queries.
+3. **Query Handling**: For Type 2 queries, simply access the k-th largest element from the sorted list of the component's root, if it exists.
+
+### Solution Code
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+const int N = 2e5 + 5;
+
+vector<int> parent;
+vector<vector<int>> top_nodes;
+
+int find_par(int x) {
+    if (parent[x] == x) return x;
+    return parent[x] = find_par(parent[x]);
+}
+
+void unite(int a, int b) {
+    a = find_par(a);
+    b = find_par(b);
+    if (a == b) return;
+    if (top_nodes[a].size() < top_nodes[b].size()) {
+        swap(a, b);
+    }
+    vector<int> merged;
+    int i = 0, j = 0;
+    while ((i < top_nodes[a].size() || j < top_nodes[b].size()) && merged.size() < 10) {
+        if (j >= top_nodes[b].size() || (i < top_nodes[a].size() && top_nodes[a][i] >= top_nodes[b][j])) {
+            merged.push_back(top_nodes[a][i]);
+            i++;
+        } else {
+            merged.push_back(top_nodes[b][j]);
+            j++;
+        }
+    }
+    top_nodes[a] = merged;
+    parent[b] = a;
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int n, q;
+    cin >> n >> q;
+    parent.resize(n + 1);
+    top_nodes.resize(n + 1);
+    for (int i = 1; i <= n; ++i) {
+        parent[i] = i;
+        top_nodes[i] = {i};
+    }
+    while (q--) {
+        int t, u, v;
+        cin >> t >> u >> v;
+        if (t == 1) {
+            unite(u, v);
+        } else {
+            int root = find_par(u);
+            if (top_nodes[root].size() < v) {
+                cout << -1 << '\n';
+            } else {
+                cout << top_nodes[root][v - 1] << '\n';
+            }
+        }
+    }
+    return 0;
+}
+```
+
+### Explanation
+1. **Union-Find Structure**: The `parent` array keeps track of the root of each vertex, and `top_nodes` stores the top 10 largest vertices in each component.
+2. **Merging Components**: The `unite` function merges two components by combining their sorted lists and keeping only the top 10 elements. This ensures efficient merging and quick access during queries.
+3. **Query Processing**: For Type 2 queries, the code checks the size of the component's sorted list. If there are at least `k` elements, it returns the k-th largest; otherwise, it returns `-1`.
+
+This approach efficiently handles the constraints by leveraging the Union-Find data structure and maintaining sorted lists of limited size, ensuring both correctness and performance.

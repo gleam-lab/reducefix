@@ -1,0 +1,43 @@
+#include <iostream>
+#include <algorithm>
+#include <vector>
+using namespace std;
+
+int main() {
+    int n;
+    cin >> n;
+    vector<int> va(n), vb(n - 1);
+    for (int i = 0; i < n; ++i) cin >> va[i];
+    for (int i = 0; i < n - 1; ++i) cin >> vb[i];
+
+    // We want to find the smallest possible box size x
+    // such that all toys can be placed in the boxes.
+    // For this, the size of the smallest toy must be greater than or equal to the size of the smallest box.
+    // Also, the size of the box must be a size that can fit all toys, hence we need to find the maximum size of toys
+    // that is smaller than or equal to the smallest box size.
+
+    // To find the smallest possible box size x:
+    // 1. We take the maximum size of the toys that is smaller or equal to the smallest box size.
+    // 2. We then take the smallest box size that is greater or equal to this maximum toy size.
+
+    int minBoxSize = *min_element(vb.begin(), vb.end()); // The smallest box size
+    int maxToySize = 0;
+
+    // For each toy, find the maximum size of the toys that is smaller or equal to the smallest box size.
+    for (int toySize : va) {
+        if (toySize <= minBoxSize) {
+            maxToySize = max(maxToySize, toySize);
+        }
+    }
+
+    // The smallest box size that can fit all toys must be at least `maxToySize + 1`.
+    // We need to check if there is such a box size available in the list of box sizes.
+    int smallestPossibleBoxSize = maxToySize + 1;
+    if (upper_bound(vb.begin(), vb.end(), smallestPossibleBoxSize) - vb.begin() < n - 1) {
+        cout << smallestPossibleBoxSize << endl;
+    } else {
+        cout << -1 << endl;
+    }
+
+    return 0;
+}

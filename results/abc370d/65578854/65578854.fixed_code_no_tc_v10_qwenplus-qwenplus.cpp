@@ -1,0 +1,92 @@
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+
+#define rep(i, n) for (ll i = 0; i < (ll)(n); i++)
+
+int main() {
+    int H, W, Q;
+    cin >> H >> W >> Q;
+    
+    // For each row, keep track of remaining walls in that row using set
+    vector<set<int>> row_walls(H);
+    // For each column, keep track of remaining walls in that column using set
+    vector<set<int>> col_walls(W);
+
+    // Initialize all walls
+    for (int r = 0; r < H; ++r) {
+        for (int c = 0; c < W; ++c) {
+            row_walls[r].insert(c);
+        }
+    }
+
+    for (int c = 0; c < W; ++c) {
+        for (int r = 0; r < H; ++r) {
+            col_walls[c].insert(r);
+        }
+    }
+
+    ll remaining = (ll)H * W;
+
+    auto destroy_wall = [&](int r, int c) {
+        if (row_walls[r].count(c)) {
+            row_walls[r].erase(c);
+            col_walls[c].erase(r);
+            remaining--;
+        }
+    };
+
+    while (Q--) {
+        int R, C;
+        cin >> R >> C;
+        R--; C--;
+
+        // If there is a wall at (R, C), destroy it and continue
+        if (row_walls[R].count(C)) {
+            destroy_wall(R, C);
+            continue;
+        }
+
+        // Up/Down (in column C)
+        auto& col_set = col_walls[C];
+        auto it = col_set.lower_bound(R);
+
+        // Look up: first wall above R
+        if (it != col_set.begin()) {
+            --it;
+            int r = *it;
+            destroy_wall(r, C);
+            // We removed one wall, re-read the input and process next query
+            continue;
+        }
+
+        // Look down: first wall below R
+        it = col_set.lower_bound(R);
+        if (it != col_set.end()) {
+            int r = *it;
+            destroy_wall(r, C);
+            continue;
+        }
+
+        // Left/Right (in row R)
+        auto& row_set = row_walls[R];
+        it = row_set.lower_bound(C);
+
+        // Look left: first wall to the left of C
+        if (it != row_set.begin()) {
+            --it;
+            int c = *it;
+            destroy_wall(R, c);
+            continue;
+        }
+
+        // Look right: first wall to the right of C
+        it = row_set.lower_bound(C);
+        if (it != row_set.end()) {
+            int c = *it;
+            destroy_wall(R, c);
+        }
+    }
+
+    cout << remaining << endl;
+}

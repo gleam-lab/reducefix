@@ -1,0 +1,62 @@
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+
+#define rrep1(a)          for(ll i = (ll)(a-1); i >= 0; i--)
+#define rrep2(i, a)       for(ll i = (ll)(a-1); i >= 0; i--)
+#define rrep3(i, a, b)    for(ll i = (a); i >= (b); i--)
+#define rrep4(i, a, b, c) for(ll i = (a); i >= (b); i -= (c))
+#define overload4(a, b, c, d, e, ...) e
+#define rrep(...) overload4(__VA_ARGS__, rrep4, rrep3, rrep2, rrep1)(__VA_ARGS__)
+
+#define rep1(a)          for(ll i = 0; i < (ll)(a); i++)
+#define rep2(i, a)       for(ll i = 0; i < (ll)(a); i++)
+#define rep3(i, a, b)    for(ll i = (a); i < (ll)(b); i++)
+#define rep4(i, a, b, c) for(ll i = (a); i < (ll)(b); i += (c))
+#define overload4(a, b, c, d, e, ...) e
+#define rep(...) overload4(__VA_ARGS__, rep4, rep3, rep2, rep1)(__VA_ARGS__)
+
+#define fi first
+#define se second
+#define pb push_back
+#define spa " "
+
+#define all(x) (x).begin(), (x).end()
+#define sz(x) (int)(x).size()
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    ll t;
+    cin >> t;
+    while (t--) {
+        ll n, k;
+        cin >> n >> k;
+        vector<pair<ll, ll>> a(n);
+        vector<ll> b(n);
+        rep(n) cin >> a[i].fi >> a[i].se;
+        rep(n) cin >> b[i];
+
+        sort(all(a), [](const pair<ll, ll>& x, const pair<ll, ll>& y) {
+            return x-fi < y-fi;
+        });
+
+        multiset<ll> s(b.begin(), b.end());
+        ll sum = 0;
+        rep(k) sum += a[i].se;
+        ll ans = sum * a[k - 1].fi;
+
+        for (ll i = k; i < n; ++i) {
+            sum -= *s.rbegin();
+            s.erase(s.find(*s.rbegin()));
+            sum += a[i].se;
+            s.insert(a[i].se);
+            ans = min(ans, sum * a[i].fi);
+        }
+
+        cout << ans << '\n';
+    }
+
+    return 0;
+}

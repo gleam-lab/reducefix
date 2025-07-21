@@ -1,0 +1,49 @@
+#include <bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int n, m;
+    ll k;
+    cin >> n >> m >> k;
+    vector<ll> a(n);
+    for(int i = 0; i < n; ++i) {
+        cin >> a[i];
+        k -= a[i];
+    }
+    
+    vector<pair<ll, int>> sorted_a(n);
+    for(int i = 0; i < n; ++i) sorted_a[i] = {a[i], i};
+    sort(sorted_a.begin(), sorted_a.end());
+    
+    vector<ll> prefix_sum(n + 1);
+    for(int i = 0; i < n; ++i) {
+        prefix_sum[i + 1] = prefix_sum[i] + sorted_a[i].first;
+    }
+    
+    vector<ll> result(n, -1);
+    for(int i = 0; i < n; ++i) {
+        ll current_votes = sorted_a[i].first;
+        int rank = i;
+        
+        // Calculate the maximum votes needed for the candidate to win
+        ll needed_votes = 0;
+        if(rank < m - 1) {
+            needed_votes = (m - 1 - rank) * (current_votes + 1) - (prefix_sum[min(m, n)] - prefix_sum[rank + 1]);
+        } else if(rank == m - 1) {
+            needed_votes = (n - rank - 1) * (current_votes + 1) - (prefix_sum[n] - prefix_sum[rank + 1]) + 1;
+        }
+        
+        if(needed_votes <= k) {
+            result[sorted_a[i].second] = needed_votes;
+        }
+    }
+    
+    for(ll x : result) {
+        cout << x << " ";
+    }
+    return 0;
+}

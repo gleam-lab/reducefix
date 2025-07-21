@@ -1,0 +1,55 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <climits>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int n, k;
+    cin >> n >> k;
+    vector<int> A(n);
+    for (int i = 0; i < n; ++i) {
+        cin >> A[i];
+    }
+
+    // We will consider all windows of size L = n - K and slide them over the array
+    const int L = n - k;
+
+    // To efficiently compute min and max in sliding window we use two deques
+    deque<int> max_deque;  // stores indices in A such that their corresponding values are in decreasing order
+    deque<int> min_deque;  // stores indices in A such that their corresponding values are in increasing order
+
+    long long min_diff = LLONG_MAX;
+
+    for (int i = 0; i < n; ++i) {
+        // Maintain max_deque
+        while (!max_deque.empty() && A[i] > A[max_deque.back()]) {
+            max_deque.pop_back();
+        }
+        max_deque.push_back(i);
+
+        // Maintain min_deque
+        while (!min_deque.empty() && A[i] < A[min_deque.back()]) {
+            min_deque.pop_back();
+        }
+        min_deque.push_back(i);
+
+        // Remove elements out of the current window [i-L+1, i]
+        while (!max_deque.empty() && max_deque.front() <= i - L) {
+            max_deque.pop_front();
+        }
+        while (!min_deque.empty() && min_deque.front() <= i - L) {
+            min_deque.pop_front();
+        }
+
+        // If the window is valid, update the answer
+        if (i >= L - 1) {
+            min_diff = min(min_diff, (long long)(A[max_deque.front()] - A[min_deque.front()]));
+        }
+    }
+
+    cout << min_diff << endl;
+}

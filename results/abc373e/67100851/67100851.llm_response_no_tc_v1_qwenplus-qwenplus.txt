@@ -1,0 +1,98 @@
+```cpp
+#include <iostream>
+#include <vector>
+#include <algorithm>
+
+using namespace std;
+
+typedef long long ll;
+
+struct Candidate {
+    ll votes;
+    int index;
+};
+
+bool compareByVotes(const Candidate &a, const Candidate &b) {
+    return a.votes < b.votes;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    ll N, M, K;
+    cin >> N >> M >> K;
+    vector<Candidate> candidates(N);
+    for (ll i = 0; i < N; ++i) {
+        cin >> candidates[i].votes;
+        candidates[i].index = i;
+    }
+
+    ll total_current_votes = 0;
+    for (const auto &c : candidates)
+        total_current_votes += c.votes;
+
+    ll remaining_votes = K - total_current_votes;
+    if (remaining_votes < 0) {
+        for (ll i = 0; i < N; ++i)
+            cout << -1 << " ";
+        cout << "\n";
+        return 0;
+    }
+
+    // Sort candidates by current votes
+    sort(candidates.begin(), candidates.end(), compareByVotes);
+
+    // Prefix sum of current votes
+    vector<ll> prefix_sum(N + 1, 0);
+    for (ll i = 0; i < N; ++i)
+        prefix_sum[i + 1] = prefix_sum[i] + candidates[i].votes;
+
+    vector<ll> result(N);
+
+    for (ll i = 0; i < N; ++i) {
+        ll idx = candidates[i].index;
+        ll current = candidates[i].votes;
+
+        // Binary search on additional votes needed
+        ll low = 0;
+        ll high = remaining_votes;
+        ll answer = -1;
+
+        while (low <= high) {
+            ll mid = (low + high) / 2;
+            ll new_vote_count = current + mid;
+
+            // Find how many candidates have votes > new_vote_count
+            // We use binary search to find first candidate with votes > new_vote_count
+            ll left = i + 1;
+            ll right = N;
+            while (left < right) {
+                ll m = (left + right) / 2;
+                if (candidates[m].votes > new_vote_count)
+                    right = m;
+                else
+                    left = m + 1;
+            }
+            ll num_above = N - left;
+
+            if (num_above < M) {
+                // Candidate is elected, try with fewer extra votes
+                answer = mid;
+                high = mid - 1;
+            } else {
+                // Need more votes
+                low = mid + 1;
+            }
+        }
+
+        result[idx] = (answer == -1) ? -1 : answer;
+    }
+
+    for (ll i = 0; i < N; ++i)
+        cout << max(0LL, result[i]) << " ";
+    cout << "\n";
+
+    return 0;
+}
+```

@@ -1,0 +1,87 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+typedef long long ll;
+
+int main() {
+    ios_base::sync_with_stdio(0);
+    cin.tie(0);
+
+    int n, m;
+    ll k;
+    cin >> n >> m >> k;
+    
+    vector<ll> a(n);
+    for (int i = 0; i < n; ++i) {
+        cin >> a[i];
+        k -= a[i];
+    }
+
+    // Sort candidates based on their current vote counts
+    vector<pair<ll, int>> candidates(n);
+    for (int i = 0; i < n; ++i) {
+        candidates[i] = {a[i], i};
+    }
+    sort(candidates.begin(), candidates.end());
+
+    // Calculate the prefix sums of sorted vote counts
+    vector<ll> pref(n + 1);
+    for (int i = 0; i < n; ++i) {
+        pref[i + 1] = pref[i] + candidates[i].first;
+    }
+
+    // Initialize the result array with -1 (indicating potentially losing)
+    vector<ll> ans(n, -1);
+
+    // Iterate over each candidate to determine the minimum additional votes needed
+    for (int i = 0; i < n; ++i) {
+        ll x = 0;
+        ll votes_needed = 0;
+        
+        // Calculate the number of candidates with more votes than the current candidate
+        int count = 0;
+        for (int j = i + 1; j < n; ++j) {
+            if (candidates[j].first > candidates[i].first) {
+                ++count;
+            } else if (candidates[j].first == candidates[i].first) {
+                ++votes_needed;
+            }
+        }
+        
+        // If there are fewer or equal to M-1 candidates with more votes, no additional votes are needed
+        if (count <= m - 1) {
+            ans[candidates[i].second] = 0;
+            continue;
+        }
+        
+        // Binary search to find the minimum additional votes needed
+        ll l = 0, r = k;
+        while (l < r) {
+            ll mid = (l + r) / 2;
+            int temp_count = count;
+            ll temp_votes_needed = votes_needed;
+            
+            for (int j = i + 1; j < n; ++j) {
+                if (candidates[j].first > candidates[i].first + mid) {
+                    --temp_count;
+                } else if (candidates[j].first == candidates[i].first + mid) {
+                    ++temp_votes_needed;
+                }
+            }
+            
+            if (temp_count <= m - 1 && temp_votes_needed <= mid) {
+                r = mid;
+            } else {
+                l = mid + 1;
+            }
+        }
+        
+        ans[candidates[i].second] = l;
+    }
+
+    // Output the results
+    for (auto x : ans) {
+        cout << x << " ";
+    }
+    return 0;
+}

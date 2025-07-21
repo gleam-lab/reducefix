@@ -1,0 +1,55 @@
+#include<bits/stdc++.h>
+using namespace std;
+using ll = long long;
+
+int main(){
+    ios_base::sync_with_stdio(false);
+    cin.tie(NULL);
+    
+    int t;
+    cin >> t;
+    while(t--){
+        int n, k;
+        cin >> n >> k;
+        vector<ll> a(n), b(n);
+        
+        // Read input arrays A and B
+        for(int i = 0; i < n; ++i)
+            cin >> a[i];
+        for(int i = 0; i < n; ++i)
+            cin >> b[i];
+        
+        // Sort array B and store indices to sort A accordingly
+        vector<pair<ll, int>> pb(n);
+        for(int i = 0; i < n; ++i)
+            pb[i] = {b[i], i};
+        sort(pb.begin(), pb.end());
+        
+        // Create sorted arrays A and B based on sorted indices of B
+        vector<ll> sorted_a(n), sorted_b(n);
+        for(int i = 0; i < n; ++i){
+            sorted_a[i] = a[pb[i].second];
+            sorted_b[i] = b[pb[i].second];
+        }
+        
+        // Calculate initial sum of first K elements of B
+        ll sum_b = accumulate(sorted_b.begin(), sorted_b.begin() + k, 0LL);
+        
+        // Initialize result with maximum possible value
+        ll result = LLONG_MAX;
+        
+        // Iterate through the sorted arrays to find minimum value of the expression
+        for(int i = 0; i <= n - k; ++i){
+            ll max_a = sorted_a[i + k - 1]; // Maximum element in current window of size K
+            result = min(result, max_a * sum_b);
+            if(i + k < n){
+                sum_b -= sorted_b[i]; // Remove element going out of window
+                sum_b += sorted_b[i + k]; // Add new element entering window
+            }
+        }
+        
+        // Output the result for the current test case
+        cout << result << '\n';
+    }
+    return 0;
+}

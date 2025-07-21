@@ -1,0 +1,77 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+
+using namespace std;
+
+#define ll long long
+
+const int N = 2e5 + 5;
+
+vector<vector<pair<int, int>>> adj(N); // adjacency list, storing edges as {neighbor, weight}
+vector<int> parent(N); // parent array for union-find
+
+// Find function with path compression
+int find(int v) {
+    if (parent[v] != v) {
+        parent[v] = find(parent[v]);
+    }
+    return parent[v];
+}
+
+// Union function with union by rank
+void union_sets(int u, int v) {
+    int root_u = find(u);
+    int root_v = find(v);
+    
+    if (root_u != root_v) {
+        parent[root_v] = root_u;
+    }
+}
+
+// Main function
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int n, q;
+    cin >> n >> q;
+
+    // Initialize parent array (self-loop for each vertex initially)
+    fill(parent.begin(), parent.end(), 1);
+
+    for (int i = 0; i < q; ++i) {
+        int t, u, v;
+        cin >> t >> u >> v;
+        
+        if (t == 1) {
+            // Add edge and union sets
+            adj[u].push_back({v, 0});
+            adj[v].push_back({u, 0});
+            union_sets(u, v);
+        } else if (t == 2) {
+            // Find the root of v
+            int root_v = find(v);
+            
+            // Collect all vertices connected to v through its root
+            vector<int> connected_vertices;
+            for (auto& [neighbor, weight] : adj[root_v]) {
+                if (find(neighbor) == root_v) {
+                    connected_vertices.push_back(neighbor);
+                }
+            }
+            
+            // Sort the connected vertices
+            sort(connected_vertices.rbegin(), connected_vertices.rend());
+            
+            // Output the k-th largest vertex if possible
+            if (k <= connected_vertices.size()) {
+                cout << connected_vertices[k - 1] << '\n';
+            } else {
+                cout << -1 << '\n';
+            }
+        }
+    }
+
+    return 0;
+}

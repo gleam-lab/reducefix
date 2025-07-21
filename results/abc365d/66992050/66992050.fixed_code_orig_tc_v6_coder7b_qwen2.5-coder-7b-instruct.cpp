@@ -1,0 +1,56 @@
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int N;
+    string S;
+    cin >> N >> S;
+
+    vector<int> count(3, 0); // To keep track of counts of P, R, S
+    int result = 0;
+
+    for (char c : S) {
+        switch (c) {
+            case 'P':
+                if (count[2] > 0) { // If there's an 'S' before, change it to 'P'
+                    result += count[2];
+                    count[2]--;
+                } else if (count[1] > 0) { // If there's an 'R' before, change it to 'P'
+                    result += count[1];
+                    count[1]--;
+                } else {
+                    count[0]++;
+                }
+                break;
+            case 'R':
+                if (count[0] > 0) { // If there's a 'P' before, change it to 'R'
+                    result += count[0];
+                    count[0]--;
+                } else if (count[2] > 0) { // If there's an 'S' before, change it to 'R'
+                    result += count[2];
+                    count[2]--;
+                } else {
+                    count[1]++;
+                }
+                break;
+            case 'S':
+                if (count[1] > 0) { // If there's an 'R' before, change it to 'S'
+                    result += count[1];
+                    count[1]--;
+                } else if (count[0] > 0) { // If there's a 'P' before, change it to 'S'
+                    result += count[0];
+                    count[0]--;
+                } else {
+                    count[2]++;
+                }
+                break;
+        }
+    }
+
+    cout << result << endl;
+    return 0;
+}

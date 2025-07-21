@@ -1,0 +1,62 @@
+#include <iostream>
+#include <vector>
+#include <set>
+#include <algorithm>
+
+using namespace std;
+
+int main() {
+    int H, W, Q;
+    cin >> H >> W >> Q;
+
+    vector<vector<set<int>>> grid(H, vector<set<int>>(W));
+
+    // Initialize the grid with walls
+    for (int i = 0; i < H; ++i) {
+        for (int j = 0; j < W; ++j) {
+            grid[i][j].insert(j);  // Each cell has a wall at each column
+        }
+    }
+
+    while (Q--) {
+        int R, C;
+        cin >> R >> C;
+        --R; --C;  // Convert to 0-based index
+
+        if (grid[R][C].empty()) {  // If no wall at (R, C), destroy the walls around it
+            // Check and remove the top wall if exists
+            if (!grid[R - 1][C].empty()) {
+                grid[R - 1][C].erase(C);
+            }
+
+            // Check and remove the bottom wall if exists
+            if (!grid[R + 1][C].empty()) {
+                grid[R + 1][C].erase(C);
+            }
+
+            // Check and remove the left wall if exists
+            if (!grid[R][C - 1].empty()) {
+                grid[R][C - 1].erase(C);
+            }
+
+            // Check and remove the right wall if exists
+            if (!grid[R][C + 1].empty()) {
+                grid[R][C + 1].erase(C);
+            }
+        } else {  // If there's a wall at (R, C), remove it
+            grid[R][C].erase(C);
+        }
+    }
+
+    // Calculate the number of remaining walls
+    int remainingWalls = 0;
+    for (int i = 0; i < H; ++i) {
+        for (int j = 0; j < W; ++j) {
+            remainingWalls += grid[i][j].size();
+        }
+    }
+
+    cout << remainingWalls << endl;
+
+    return 0;
+}

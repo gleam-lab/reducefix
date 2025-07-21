@@ -1,0 +1,33 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int n, m;
+    cin >> n >> m;
+
+    vector<long long> nums(n);
+    for (int i = 0; i < n; ++i) {
+        cin >> nums[i];
+    }
+
+    vector<long long> prefixSum(n + 1, 0);
+    for (int i = 0; i < n; ++i) {
+        prefixSum[i + 1] = prefixSum[i] + nums[i];
+    }
+
+    long long count = 0;
+    for (int s = 1; s <= n; ++s) {
+        for (int t = s + 1; t <= n; ++t) {
+            long long step = prefixSum[t] - prefixSum[s];
+            if (step % m == 0) {
+                count += t - s;
+            }
+        }
+    }
+
+    cout << count << endl;
+    return 0;
+}

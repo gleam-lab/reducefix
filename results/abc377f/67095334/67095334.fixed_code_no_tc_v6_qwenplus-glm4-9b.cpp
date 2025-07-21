@@ -1,0 +1,58 @@
+#include <iostream>
+#include <vector>
+#include <set>
+#include <cmath>
+
+using namespace std;
+
+int main() {
+    long long n, m;
+    cin >> n >> m;
+    
+    vector<pair<long long, long long>> pieces(m);
+    set<long long> rows, cols, diag1, diag2, anti_diag1, anti_diag2;
+
+    for (int i = 0; i < m; ++i) {
+        long long x, y;
+        cin >> x >> y;
+        pieces[i] = make_pair(x, y);
+        rows.insert(x);
+        cols.insert(y);
+        diag1.insert(x + y);
+        diag2.insert(x - y);
+        anti_diag1.insert(y - x);
+        anti_diag2.insert(x + y);
+    }
+
+    // Counting total available cells
+    long long total_cells = n * n;
+    
+    // Cells that are in occupied rows
+    total_cells -= rows.size();
+    // Cells that are in occupied columns
+    total_cells -= cols.size();
+    // Cells that are in occupied diagonals
+    for (auto d : diag1) {
+        long long min_pos = max(d - n + 1, 1LL);
+        long long max_pos = min(d, n);
+        total_cells -= (max_pos - min_pos + 1);
+    }
+    for (auto d : diag2) {
+        long long min_pos = max(d - n + 1, 1LL);
+        long long max_pos = min(d, n);
+        total_cells -= (max_pos - min_pos + 1);
+    }
+    for (auto d : anti_diag1) {
+        long long min_pos = max((n + 1) - d, 1LL);
+        long long max_pos = min(n, d);
+        total_cells -= (max_pos - min_pos + 1);
+    }
+    for (auto d : anti_diag2) {
+        long long min_pos = max((n + 1) - d, 1LL);
+        long long max_pos = min(n, d);
+        total_cells -= (max_pos - min_pos + 1);
+    }
+    
+    cout << total_cells << endl;
+    return 0;
+}

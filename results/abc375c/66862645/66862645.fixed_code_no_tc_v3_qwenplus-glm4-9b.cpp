@@ -1,0 +1,41 @@
+#include <iostream>
+#include <cmath>
+#include <vector>
+
+using namespace std;
+
+int main() {
+    int N;
+    cin >> N;
+    vector<pair<long long, long long>> points(N + 1); // +1 for the origin point
+
+    // Initialize the origin
+    points[0].first = 0;
+    points[0].second = 0;
+
+    // Read the points
+    for (int i = 1; i <= N; ++i) {
+        cin >> points[i].first >> points[i].second;
+    }
+
+    long long total_cost = 0;
+    long long x1, y1, x2, y2;
+
+    // Calculate the cost for each segment and add to total_cost
+    for (int i = 1; i <= N; ++i) {
+        x1 = points[i].first;
+        y1 = points[i].second;
+        x2 = points[i - 1].first;
+        y2 = points[i - 1].second;
+
+        total_cost += sqrt(pow(x1 - x2, 2) + pow(y1 - y2, 2));
+    }
+
+    // Add the return cost to the origin
+    total_cost += sqrt(pow(points[N].first - 0, 2) + pow(points[N].second - 0, 2));
+
+    // Output the total cost
+    cout << fixed << setprecision(10) << total_cost << endl;
+
+    return 0;
+}

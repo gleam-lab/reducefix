@@ -1,0 +1,64 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    long long n, x;
+    cin >> n >> x;
+
+    vector<long long> a(n), p(n), b(n), q(n);
+    for (long long i = 0; i < n; ++i) {
+        cin >> a[i] >> p[i] >> b[i] >> q[i];
+    }
+
+    auto is_possible = [&](long long total) -> bool {
+        long long cost = 0;
+        for (long long i = 0; i < n; ++i) {
+            long long min_cost = numeric_limits<long long>::max();
+            // Try all possible numbers of item A to buy
+            for (long long j = 0; j <= b[i] && j * a[i] <= total; ++j) {
+                long long remaining = total - j * a[i];
+                if (remaining <= 0) {
+                    min_cost = min(min_cost, j * p[i]);
+                    continue;
+                }
+                long long needed_b = (remaining + b[i] - 1) / b[i]; // ceil division
+                if (needed_b <= b[i]) {
+                    min_cost = min(min_cost, j * p[i] + needed_b * q[i]);
+                }
+            }
+            // Try all possible numbers of item B to buy
+            for (long long j = 0; j <= a[i] && j * b[i] <= total; ++j) {
+                long long remaining = total - j * b[i];
+                if (remaining <= 0) {
+                    min_cost = min(min_cost, j * q[i]);
+                    continue;
+                }
+                long long needed_a = (remaining + a[i] - 1) / a[i]; // ceil division
+                if (needed_a <= a[i]) {
+                    min_cost = min(min_cost, j * q[i] + needed_a * p[i]);
+                }
+            }
+            cost += min_cost;
+            if (cost > x) break;
+        }
+        return cost <= x;
+    };
+
+    long long left = 0, right = 1e18;
+    long long ans = 0;
+    while (left <= right) {
+        long long mid = (left + right) / 2;
+        if (is_possible(mid)) {
+            ans = mid;
+            left = mid + 1;
+        } else {
+            right = mid - 1;
+        }
+    }
+
+    cout << ans << "\n";
+    return 0;
+}

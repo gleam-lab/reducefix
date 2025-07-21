@@ -1,0 +1,91 @@
+To fix this code, we need to address several issues:
+
+1. **Memory Allocation**: The original code attempts to allocate an array `a[N]` where `N` is `2e8 + 5`. Given the constraints, this is impractical and likely to cause memory issues. Instead, we should use a more efficient approach to handle the large input size.
+
+2. **Algorithm Choice**: The original approach uses a prefix sum array to count the number of points within a certain distance, which is not suitable for finding the k-th closest point efficiently. Instead, we should sort the `a_i` array and use binary search to find the k-th closest point.
+
+3. **Logic Errors**: The `check` function in the original code does not correctly identify the k-th closest point. The correct approach involves sorting the distances and then selecting the k-th smallest distance.
+
+4. **Edge Cases**: Special cases like all points being the same or multiple queries with the same `b_j` need to be handled efficiently.
+
+Here is the fixed code that addresses these issues:
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+typedef long long ll;
+
+int main() {
+    ios::sync_with_stdio(0);
+    cin.tie(0);
+    cout.tie(0);
+
+    int N, Q;
+    cin >> N >> Q;
+    vector<ll> a(N);
+    for (int i = 0; i < N; ++i) {
+        cin >> a[i];
+    }
+    sort(a.begin(), a.end());
+
+    while (Q--) {
+        ll b;
+        int k;
+        cin >> b >> k;
+        k--; // Convert to 0-based index
+
+        // Binary search to find the k-th closest point
+        int left = 0, right = N - 1;
+        while (left <= right) {
+            int mid = left + (right - left) / 2;
+            if (a[mid] <= b) {
+                left = mid + 1;
+            } else {
+                right = mid - 1;
+            }
+        }
+
+        // Now, left is the first index where a[i] > b
+        int l = right;
+        int r = left;
+        vector<ll> distances;
+        int i = l, j = r;
+        for (int cnt = 0; cnt < k + 1; ) {
+            ll dist_left = (i >= 0) ? abs(a[i] - b) : LLONG_MAX;
+            ll dist_right = (j < N) ? abs(a[j] - b) : LLONG_MAX;
+            if (dist_left < dist_right) {
+                distances.push_back(dist_left);
+                i--;
+                cnt++;
+            } else if (dist_left > dist_right) {
+                distances.push_back(dist_right);
+                j++;
+                cnt++;
+            } else {
+                distances.push_back(dist_left);
+                i--;
+                cnt++;
+                if (cnt < k + 1) {
+                    distances.push_back(dist_right);
+                    j++;
+                    cnt++;
+                }
+            }
+        }
+
+        nth_element(distances.begin(), distances.begin() + k, distances.end());
+        cout << distances[k] << '\n';
+    }
+
+    return 0;
+}
+```
+
+### Explanation
+1. **Sorting**: The array `a` is sorted to facilitate efficient binary search operations.
+2. **Binary Search**: For each query, we perform a binary search to find the position where `b` would fit in the sorted array `a`. This helps us identify the closest points around `b`.
+3. **Two Pointers**: We use two pointers to expand outward from the position found by binary search, collecting distances in sorted order until we have enough to determine the k-th closest distance.
+4. **Nth Element**: We use `nth_element` to efficiently find the k-th smallest distance from the collected distances, which is then printed as the result for the query.
+
+This approach ensures that we handle large inputs efficiently and correctly, adhering to the problem constraints.

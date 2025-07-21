@@ -1,0 +1,82 @@
+To fix this code, we need to address the issue where the incorrect output is produced for certain test cases. The problem involves maintaining a dynamic set of connected components in an undirected graph and efficiently answering queries about the k-th largest vertex in a component. The initial approach uses a Union-Find data structure with path compression and union by size, but the method for merging sorted lists of vertices is flawed, leading to incorrect results.
+
+### Approaches
+1. **Union-Find Data Structure**: We use Union-Find to manage the connected components. Each component's root maintains a sorted list of its vertices in descending order.
+2. **Merging Sorted Lists**: When two components are merged, their sorted lists are merged efficiently to maintain the top 10 largest elements. This ensures that queries can be answered in constant time.
+3. **Efficiency**: The merging process is optimized to handle up to 10 elements, which keeps the operations within acceptable time limits for large inputs.
+
+### Solution Code
+```cpp
+#include <bits/stdc++.h>
+
+using namespace std;
+
+vector<int> parent;
+vector<vector<int>> components;
+
+int find_root(int x) {
+    if (parent[x] != x) {
+        parent[x] = find_root(parent[x]);
+    }
+    return parent[x];
+}
+
+void merge(int a, int b) {
+    a = find_root(a);
+    b = find_root(b);
+    if (a == b) return;
+    if (components[a].size() < components[b].size()) {
+        swap(a, b);
+    }
+    vector<int> merged;
+    int i = 0, j = 0;
+    while ((i < components[a].size() || j < components[b].size()) && merged.size() < 10) {
+        if (j >= components[b].size() || (i < components[a].size() && components[a][i] > components[b][j])) {
+            merged.push_back(components[a][i]);
+            i++;
+        } else {
+            merged.push_back(components[b][j]);
+            j++;
+        }
+    }
+    components[a] = merged;
+    parent[b] = a;
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int n, q;
+    cin >> n >> q;
+    parent.resize(n + 1);
+    components.resize(n + 1);
+    for (int i = 1; i <= n; ++i) {
+        parent[i] = i;
+        components[i] = {i};
+    }
+    while (q--) {
+        int t, a, b;
+        cin >> t >> a >> b;
+        if (t == 1) {
+            merge(a, b);
+        } else {
+            a = find_root(a);
+            if (components[a].size() < b) {
+                cout << -1 << '\n';
+            } else {
+                cout << components[a][b - 1] << '\n';
+            }
+        }
+    }
+    return 0;
+}
+```
+
+### Explanation
+1. **Initialization**: The `parent` array keeps track of the root parent of each vertex, initialized to itself. The `components` array stores a sorted list of vertices for each component, initially containing only the vertex itself.
+2. **Find Root**: The `find_root` function uses path compression to efficiently find the root of a vertex, ensuring future queries are faster.
+3. **Merge Components**: The `merge` function combines two components by merging their sorted lists. It ensures the merged list retains only the top 10 largest elements, optimizing both time and space.
+4. **Query Handling**: For type 2 queries, the root of the vertex is found, and the k-th largest element is retrieved from the component's list. If the list is smaller than k, `-1` is returned.
+
+This approach efficiently handles dynamic graph connectivity and queries, ensuring optimal performance for large inputs.

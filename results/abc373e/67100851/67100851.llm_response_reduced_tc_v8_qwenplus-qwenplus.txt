@@ -1,0 +1,101 @@
+```cpp
+#include <iostream>
+#include <vector>
+#include <algorithm>
+
+using namespace std;
+
+typedef long long ll;
+
+struct Candidate {
+    ll votes;
+    int index;
+};
+
+bool compare(const Candidate &a, const Candidate &b) {
+    return a.votes < b.votes;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    ll N, M, K;
+    cin >> N >> M >> K;
+    vector<Candidate> candidates(N);
+    ll total = 0;
+
+    for (ll i = 0; i < N; ++i) {
+        cin >> candidates[i].votes;
+        candidates[i].index = i;
+        total += candidates[i].votes;
+    }
+
+    // Remaining votes
+    ll remaining = K - total;
+    if (remaining < 0) {
+        for (ll i = 0; i < N; ++i) cout << -1 << " ";
+        cout << endl;
+        return 0;
+    }
+
+    sort(candidates.begin(), candidates.end(), compare);
+
+    vector<ll> prefix_sum(N + 1, 0);
+    for (ll i = 0; i < N; ++i) {
+        prefix_sum[i + 1] = prefix_sum[i] + candidates[i].votes;
+    }
+
+    vector<ll> result(N);
+
+    for (ll i = 0; i < N; ++i) {
+        ll l = 0, r = remaining;
+        ll pos = lower_bound(candidates.begin(), candidates.end(), Candidate{candidates[i].votes, -1}, compare) - candidates.begin();
+        while (pos < N && candidates[pos].votes == candidates[i].votes && pos <= i) pos++;
+        ll left = pos;
+        while (left > 0 && candidates[left - 1].votes == candidates[i].votes) left--;
+
+        ll needed = -1;
+        // Determine the minimum number of votes to be in top M
+        ll target_pos = N - M;
+
+        if (i >= target_pos) {
+            // Already in top M by position
+            result[candidates[i].index] = 0;
+            continue;
+        }
+
+        // Binary search on additional votes
+        while (l <= r) {
+            ll mid = (l + r) / 2;
+            ll new_vote_count = candidates[i].votes + mid;
+
+            // Find how many candidates have strictly more votes than this candidate after adding mid votes
+            ll idx = upper_bound(candidates.begin(), candidates.end(), Candidate{new_vote_count, -1}, compare) - candidates.begin();
+
+            // Exclude current candidate from being counted against themselves
+            if (idx > i) idx--;
+
+            if (idx >= target_pos) {
+                needed = mid;
+                r = mid - 1;
+            } else {
+                l = mid + 1;
+            }
+        }
+
+        if (needed == -1 || needed > remaining) {
+            result[candidates[i].index] = -1;
+        } else {
+            result[candidates[i].index] = needed;
+        }
+    }
+
+    for (ll i = 0; i < N; ++i) {
+        cout << result[i] << " ";
+    }
+    cout << endl;
+
+    return 0;
+}
+```

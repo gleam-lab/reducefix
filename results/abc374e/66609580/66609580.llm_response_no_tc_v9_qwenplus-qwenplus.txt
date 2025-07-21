@@ -1,0 +1,96 @@
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+
+const ll MAX_N = 110;
+ll n, x;
+ll a[MAX_N], p[MAX_N], b[MAX_N], q[MAX_N];
+
+ll gcd(ll a, ll b) {
+    return b == 0 ? a : gcd(b, a % b);
+}
+
+// Compute LCM with handling possible overflow
+ll lcm(ll a, ll b) {
+    return a / gcd(a, b) * b;
+}
+
+bool check(ll v) {
+    ll cnt = 0;
+    
+    for (int i = 0; i < n; i++) {
+        ll _lcm = lcm(a[i], b[i]);
+        
+        // First phase: full cycles
+        ll full_cycles = v / _lcm;
+        ll items_per_cycle = min(p[i] * (_lcm / a[i]), q[i] * (_lcm / b[i]));
+        ll total_items_from_full_cycles = full_cycles * items_per_cycle;
+        
+        cnt += total_items_from_full_cycles;
+        
+        // Second phase: partial cycle
+        ll remaining_time = v % _lcm;
+        ll min_cost = LLONG_MAX;
+        
+        // Try different numbers of item A
+        for (ll na = 0; ; na++) {
+            ll time_used = na * a[i];
+            if (time_used > v) break;
+            
+            ll remaining = v - time_used;
+            ll nb = (remaining + b[i] - 1) / b[i]; // ceil division
+            
+            min_cost = min(min_cost, na * p[i] + nb * q[i]);
+            
+            // Optimization: limit the number of iterations
+            // If we already have a good solution, stop early
+            if (na > 0 && p[i] * na > min_cost) break;
+        }
+        
+        cnt += min_cost;
+        
+        if (cnt > x) return false;
+    }
+    
+    return true;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    cout.tie(nullptr);
+    
+    cin >> n >> x;
+    
+    for (int i = 0; i < n; i++) {
+        cin >> a[i] >> p[i] >> b[i] >> q[i];
+    }
+    
+    // Binary search bounds
+    ll left = 0, right = 1;
+    
+    // Find upper bound
+    while (check(right)) {
+        right *= 2;
+        if (right > 1e18) break; // Safety check
+    }
+    
+    // Binary search
+    while (left < right) {
+        ll mid = (left + right) / 2;
+        if (check(mid)) {
+            left = mid + 1;
+        } else {
+            right = mid;
+        }
+    }
+    
+    // Find the maximum time that is still feasible
+    while (left > 0 && check(left - 1)) {
+        left--;
+    }
+    
+    cout << left;
+}
+```

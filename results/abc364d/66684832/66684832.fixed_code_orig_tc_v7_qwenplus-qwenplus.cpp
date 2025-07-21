@@ -1,0 +1,48 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+#define int long long
+const int INF = 1e18;
+
+int N, Q;
+vector<int> A;
+
+signed main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    cin >> N >> Q;
+    A.resize(N);
+    for (int i = 0; i < N; ++i) {
+        cin >> A[i];
+    }
+    sort(A.begin(), A.end());
+
+    while (Q--) {
+        int b, k;
+        cin >> b >> k;
+
+        // Binary search for the k-th smallest distance
+        int left = 0, right = 2e8 + 10;
+        int answer = 0;
+        while (left <= right) {
+            int mid = (left + right) / 2;
+
+            // Find the first index where A[i] >= b - mid
+            int l = lower_bound(A.begin(), A.end(), b - mid) - A.begin();
+            // Find the first index where A[i] > b + mid
+            int r = upper_bound(A.begin(), A.end(), b + mid) - A.begin();
+
+            if (r - l >= k) {
+                answer = mid;
+                right = mid - 1;
+            } else {
+                left = mid + 1;
+            }
+        }
+
+        cout << answer << "\n";
+    }
+
+    return 0;
+}

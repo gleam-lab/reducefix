@@ -1,0 +1,80 @@
+To fix this code, we need to address the following issues:
+
+1. **Initialization and Data Structures**: The initial approach uses sets to keep track of walls in each row and column, which is a good start. However, the way the sets are initialized and used needs to be refined to efficiently handle the queries.
+
+2. **Query Processing**: The logic for processing each query needs to correctly handle both cases: when there is a wall at the query position and when there isn't. The current implementation has some logical flaws, especially in the second case where it is supposed to destroy the first walls in the four directions.
+
+3. **Efficiency**: Given the constraints, the solution must efficiently handle up to 200,000 queries. The use of sets for each row and column is appropriate because it allows logarithmic time complexity for insertion, deletion, and search operations.
+
+4. **Edge Cases**: The code must handle edge cases such as the first query, queries at the edges of the grid, and repeated queries at the same position.
+
+### Fixed Code
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+#define rep(i, n) for (ll i = 0; i < (ll)(n); i++)
+#define rep2(i, s, n) for (ll i = (s); i < (ll)(n); i++)
+#define all(x) x.begin(), x.end()
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int H, W, Q;
+    cin >> H >> W >> Q;
+    vector<set<int>> row(H + 2), col(W + 2);
+    rep(i, H + 2) {
+        row[i].insert(0);
+        row[i].insert(W + 1);
+    }
+    rep(j, W + 2) {
+        col[j].insert(0);
+        col[j].insert(H + 1);
+    }
+    rep(i, H) rep(j, W) {
+        row[i + 1].insert(j + 1);
+        col[j + 1].insert(i + 1);
+    }
+    ll ans = (ll)H * W;
+    ll cnt = 0;
+    auto erase = [&](int r, int c) {
+        if (row[r].count(c)) {
+            cnt++;
+            row[r].erase(c);
+            col[c].erase(r);
+        }
+    };
+    rep(_, Q) {
+        int R, C;
+        cin >> R >> C;
+        if (row[R].count(C)) {
+            erase(R, C);
+            continue;
+        }
+        auto it = col[C].lower_bound(R);
+        int up = *prev(it);
+        int down = *it;
+        it = row[R].lower_bound(C);
+        int left = *prev(it);
+        int right = *it;
+        if (up != 0) erase(up, C);
+        if (down != H + 1) erase(down, C);
+        if (left != 0) erase(R, left);
+        if (right != W + 1) erase(R, right);
+    }
+    cout << ans - cnt << endl;
+    return 0;
+}
+```
+
+### Explanation
+1. **Initialization**: The code initializes sets for each row and column, including sentinel values (0 and H+1 for rows, 0 and W+1 for columns) to simplify boundary checks.
+
+2. **Query Processing**: For each query:
+   - If there is a wall at the query position, it is removed.
+   - If there isn't a wall, the code searches for the nearest walls in the four directions (up, down, left, right) using lower_bound and removes them if they exist within the grid boundaries.
+
+3. **Efficiency**: The use of sets ensures that each insertion, deletion, and search operation is O(log N), where N is the number of elements in the set. This efficiency is crucial given the constraints.
+
+4. **Edge Cases**: The sentinel values ensure that the code correctly handles queries at the grid boundaries without additional checks, making the logic cleaner and more robust.

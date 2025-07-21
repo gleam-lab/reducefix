@@ -1,0 +1,51 @@
+#include<bits/stdc++.h>
+using namespace std;
+#define int long long 
+vector<pair<int,pair<int, int>>>G[200005]; // Edge with pair<destination, weight>
+int dis[200005], a[200005], n, m;
+
+void dijkstra(int src) {
+    priority_queue<pair<int, int>, vector<pair<int, int>>, greater<pair<int, int>>> pq;
+    pq.push({0, src});
+    memset(dis, 0x3f, sizeof(dis));
+    dis[src] = a[src];
+
+    while (!pq.empty()) {
+        int curWeight = pq.top().first;
+        int curVertex = pq.top().second;
+        pq.pop();
+
+        if (dis[curVertex] < curWeight) {
+            continue;
+        }
+
+        for (auto& [nextVertex, weight] : G[curVertex]) {
+            int nextWeight = curWeight + weight + a[nextVertex];
+            if (dis[nextVertex] > nextWeight) {
+                dis[nextVertex] = nextWeight;
+                pq.push({nextWeight, nextVertex});
+            }
+        }
+    }
+}
+
+signed main() {
+    scanf("%lld%lld", &n, &m);
+    for (int i = 1; i <= n; i++) {
+        scanf("%lld", &a[i]);
+    }
+
+    for (int i = 0; i < m; i++) {
+        int u, v, w;
+        scanf("%lld%lld%lld", &u, &v, &w);
+        G[u].push_back({v, w});
+        G[v].push_back({u, w});
+    }
+
+    dijkstra(1);
+
+    for (int i = 2; i <= n; i++) {
+        cout << dis[i] << (i == n ? "\n" : " ");
+    }
+    return 0;
+}

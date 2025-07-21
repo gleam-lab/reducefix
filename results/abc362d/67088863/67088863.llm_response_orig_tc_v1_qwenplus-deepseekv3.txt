@@ -1,0 +1,85 @@
+After analyzing the incorrect code and the failing test case, I identified the main issue is in how the edge weights are calculated. The current implementation adds the vertex weight to the edge weight, but this leads to incorrect path weight calculations because it double-counts some vertex weights when traversing multiple edges.
+
+Here's the corrected C++ code that properly handles the path weight calculation:
+
+```cpp
+#include <iostream>
+#include <vector>
+#include <queue>
+#include <climits>
+
+using namespace std;
+typedef long long ll;
+
+const ll INF = 1e18;
+
+void solve() {
+    int n, m;
+    cin >> n >> m;
+
+    vector<ll> a(n);
+    for (ll &i : a) cin >> i;
+    
+    vector<vector<pair<int, ll>>> adj(n);
+
+    for (int i = 0; i < m; i++) {
+        int u, v;
+        ll b;
+        cin >> u >> v >> b;
+        u--, v--;
+        adj[u].push_back({v, b});
+        adj[v].push_back({u, b});
+    }
+
+    vector<ll> dist(n, INF);
+    priority_queue<pair<ll, int>, vector<pair<ll, int>>, greater<pair<ll, int>>> pq;
+    dist[0] = a[0];
+    pq.push({dist[0], 0});
+
+    while (!pq.empty()) {
+        auto [d, u] = pq.top();
+        pq.pop();
+        if (d > dist[u]) continue;
+
+        for (auto [v, b] : adj[u]) {
+            ll new_dist = d + b + a[v];
+            if (new_dist < dist[v]) {
+                dist[v] = new_dist;
+                pq.push({dist[v], v});
+            }
+        }
+    }
+
+    for (int i = 1; i < n; i++) {
+        cout << dist[i] << " ";
+    }
+    cout << endl;
+}
+
+int main() {
+    ios::sync_with_stdio(0);
+    cin.tie(0); cout.tie(0);
+
+    int t = 1;
+    while (t--) {
+        solve();
+    }
+    return 0;
+}
+```
+
+Key changes made:
+1. Removed unnecessary includes and unused code
+2. Corrected the edge weight calculation - now we only add the vertex weight when we actually visit a node
+3. The initial distance to node 1 (0-indexed) is set to its vertex weight (a[0])
+4. When moving to a new node, we add both the edge weight (b) and the destination node's vertex weight (a[v])
+5. Fixed the priority queue type to use `ll` for distances (was incorrectly using `int` in the greater comparison)
+6. Simplified the overall structure while maintaining the correct Dijkstra's algorithm implementation
+
+This solution properly calculates the path weights by:
+1. Including the starting vertex's weight in the initial distance
+2. Adding each edge's weight when traversing it
+3. Including each new vertex's weight when first visiting it (but not when revisiting)
+4. Using a priority queue to efficiently find the shortest paths
+
+The complexity is O((N + M) log N) which is efficient enough for the given constraints.

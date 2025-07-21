@@ -1,0 +1,34 @@
+#include<bits/stdc++.h>
+using namespace std;
+
+const int MAXN = 200005;
+
+int n, q, x[MAXN], p[MAXN];
+int sum[MAXN];
+
+int main() {
+    cin >> n;
+    for (int i = 1; i <= n; ++i) {
+        cin >> x[i];
+    }
+    for (int i = 1; i <= n; ++i) {
+        cin >> p[i];
+        sum[i] = sum[i - 1] + p[i];
+    }
+
+    cin >> q;
+    while (q--) {
+        int L, R;
+        cin >> L >> R;
+        // Adjusting indices to match array bounds
+        int l = lower_bound(x + 1, x + n + 1, L) - x;
+        int r = upper_bound(x + 1, x + n + 1, R) - x;
+        
+        if (l <= r && r <= n) { // Ensure the range is valid
+            cout << sum[r] - sum[l - 1] << endl; // Correctly calculate the sum of the range [L, R]
+        } else {
+            cout << "Invalid range" << endl; // Handle invalid ranges gracefully
+        }
+    }
+    return 0;
+}

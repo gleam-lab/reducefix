@@ -1,0 +1,82 @@
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+using ll = long long;
+using vl = vector<ll>;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    ll N, M, K;
+    cin >> N >> M >> K;
+
+    vl A(N);
+    ll total = 0;
+    for (ll i = 0; i < N; ++i) {
+        cin >> A[i];
+        total += A[i];
+    }
+
+    vl sorted_A = A;
+    sort(sorted_A.begin(), sorted_A.end());
+
+    vl prefix_sum(N + 1, 0);
+    for (ll i = 0; i < N; ++i) {
+        prefix_sum[i + 1] = prefix_sum[i] + sorted_A[i];
+    }
+
+    vl result(N);
+    ll remaining = K - total;
+
+    for (ll i = 0; i < N; ++i) {
+        ll a_i = A[i];
+
+        // Binary search to find the minimal X such that candidate i is guaranteed to win
+        ll low = 0, high = remaining + 1;
+        bool possible = false;
+
+        while (low < high) {
+            ll mid = (low + high) / 2;
+            ll new_score = a_i + mid;
+
+            // Number of candidates with strictly more votes than new_score in the sorted list
+            ll cnt = N - (upper_bound(sorted_A.begin(), sorted_A.end(), new_score) - sorted_A.begin());
+
+            if (cnt >= M) {
+                low = mid + 1;
+            } else {
+                // Need to ensure at least (M - 1 - cnt) other candidates can be limited to <= new_score
+                ll need_more = M - 1 - cnt;
+                if (need_more <= 0) {
+                    possible = true;
+                    high = mid;
+                } else {
+                    ll idx = upper_bound(sorted_A.begin(), sorted_A.end(), new_score) - sorted_A.begin();
+                    ll limit_idx = max(0LL, idx - need_more);
+                    ll required = need_more * new_score - (prefix_sum[idx] - prefix_sum[limit_idx]);
+                    if (remaining - mid >= required) {
+                        possible = true;
+                        high = mid;
+                    } else {
+                        low = mid + 1;
+                    }
+                }
+            }
+        }
+
+        if (possible && low <= remaining) {
+            result[i] = low;
+        } else {
+            result[i] = -1;
+        }
+    }
+
+    for (ll i = 0; i < N; ++i) {
+        cout << result[i] << " \n"[i == N - 1];
+    }
+
+    return 0;
+}
+```

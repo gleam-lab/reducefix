@@ -1,0 +1,51 @@
+#include<bits/stdc++.h>
+using namespace std;
+#define ll long long
+
+void solve() {
+    ll n;
+    cin >> n;
+    vector<ll> a(n), b(n - 1);
+    
+    for (ll i = 0; i < n; ++i) cin >> a[i];
+    for (ll i = 0; i < n - 1; ++i) cin >> b[i];
+    
+    sort(a.begin(), a.end());
+    sort(b.begin(), b.end());
+
+    multiset<ll> ms_b(b.begin(), b.end());
+
+    ll need = -1;
+
+    for (ll i = 0; i < n; ++i) {
+        auto it = ms_b.lower_bound(a[i]);
+        if (it != ms_b.end()) {
+            ms_b.erase(it); // use this box
+        } else {
+            // This toy cannot fit in any remaining box, so we must assign it to the new box
+            if (need == -1) {
+                need = a[i];
+            } else {
+                // Already one toy needed bigger box, can't handle more
+                cout << -1 << endl;
+                return;
+            }
+        }
+    }
+
+    if (need == -1) {
+        // All toys could fit into existing boxes, smallest possible added box is just larger than largest toy
+        // But according to problem statement, we must buy a box (x must be positive)
+        // So we can return 1, but better to return minimum possible x which is not used.
+        // Since all toys fit already, x can be 1 (or any value, but minimal is 1)
+        cout << 1 << endl;
+    } else {
+        cout << need << endl;
+    }
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    solve();
+}

@@ -1,0 +1,98 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define rep(i, n) for (int i = 0; i < (n); i++)
+using ll = long long;
+using pi = pair<int, int>;
+using ppi = pair<pi, pi>;
+
+int main() {
+    int h, w, q;
+    cin >> h >> w >> q;
+    vector<set<int>> tate(h + 1), yoko(w + 1);
+
+    // Initialize the matrix with all walls.
+    for (int i = 0; i < h; i++) {
+        for (int j = 0; j < w; j++) {
+            tate[i].insert(j + 1);
+            yoko[i + 1].insert(j + 1);
+        }
+    }
+
+    vector<ppi> queries;
+    queries.reserve(q);
+    for (int i = 0; i < q; i++) {
+        int r, c;
+        cin >> r >> c;
+        queries.emplace_back(r, c);
+    }
+
+    // Sort queries by the target cell in descending order to ensure most queries
+    // remove walls in the same cell first, which makes the logic for checking
+    // existing walls in adjacent queries simpler.
+    sort(queries.begin(), queries.end(), [&](const ppi& a, const ppi& b) {
+        return a.first > b.first || (a.first == b.first && a.second > b.second);
+    });
+
+    vector<set<int>> removed_tate(h + 1), removed_yoko(w + 1);
+    for (auto& query : queries) {
+        int r = query.first, c = query.second;
+
+        // Check if there's a wall at the given cell
+        if (!removed_tate[r].count(c) && !removed_yoko[c].count(r)) {
+            tate[r].erase(c);
+            yoko[c].erase(r);
+        } else {
+            // Remove walls in all four directions
+            set<int> to_remove_tate, to_remove_yoko;
+
+            // Up and down
+            auto it = tate.upper_bound(c);
+            if (it != tate.begin()) {
+                for (int up = *(--it); up >= 1; --up) {
+                    to_remove_tate.insert(up);
+                }
+            }
+            it = tate.lower_bound(c);
+            if (it != tate.end()) {
+                for (int down = *(it); down <= h; ++down) {
+                    to_remove_tate.insert(down);
+                }
+            }
+
+            // Left and right
+            it = yoko.upper_bound(r);
+            if (it != yoko.begin()) {
+                for (int left = *(--it); left >= 1; --left) {
+                    to_remove_yoko.insert(left);
+                }
+            }
+            it = yoko.lower_bound(r);
+            if (it != yoko.end()) {
+                for (int right = *(it); right <= w; ++right) {
+                    to_remove_yoko.insert(right);
+                }
+            }
+
+            for (int r : to_remove_tate) {
+                removed_tate[r].insert(c);
+                yoko[r].erase(c);
+            }
+            for (int c : to_remove_yoko) {
+                removed_yoko[c].insert(r);
+                tate[c].erase(r);
+            }
+        }
+    }
+
+    // Calculate the number of remaining walls
+    ll remaining_walls = 0;
+    for (int i = 1; i <= h; i++) {
+        remaining_walls += tate[i].size();
+    }
+    for (int j = 1; j <= w; j++) {
+        remaining_walls += yoko[j].size();
+    }
+
+    cout << remaining_walls << '\n';
+    return 0;
+}

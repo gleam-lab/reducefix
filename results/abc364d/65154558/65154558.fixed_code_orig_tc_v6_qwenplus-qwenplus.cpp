@@ -1,0 +1,59 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+typedef long long ll;
+
+const int OFFSET = 1e8; // Offset to handle negative coordinates
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int N, Q;
+    cin >> N >> Q;
+
+    // Frequency array with offset to handle negative values
+    int* freq = new int[2 * (int)1e8 + 2](); // Initialize to zero
+
+    for (int i = 0; i < N; ++i) {
+        int x;
+        cin >> x;
+        freq[x + OFFSET]++;
+    }
+
+    // Prefix sum to allow range queries in O(1)
+    ll* prefix = new ll[2 * (int)1e8 + 3]();
+    for (int i = 0; i <= 2 * (int)1e8 + 1; ++i) {
+        prefix[i + 1] = prefix[i] + freq[i];
+    }
+
+    auto count_in_range = [&](ll center, ll radius) -> ll {
+        ll left = max((ll)0, center - radius);
+        ll right = min((ll)(2e8 + 1), center + radius);
+        return prefix[right + 1] - prefix[left];
+    };
+
+    for (int i = 0; i < Q; ++i) {
+        ll b, k;
+        cin >> b >> k;
+        ll target = b + OFFSET;
+
+        // Binary search on the distance
+        ll low = 0, high = 2e8 + 1;
+        while (low < high) {
+            ll mid = (low + high) / 2;
+            if (count_in_range(target, mid) >= k) {
+                high = mid;
+            } else {
+                low = mid + 1;
+            }
+        }
+
+        cout << low << "\n";
+    }
+
+    delete[] freq;
+    delete[] prefix;
+
+    return 0;
+}

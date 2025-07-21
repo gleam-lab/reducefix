@@ -1,0 +1,24 @@
+#include <iostream>
+#include <string>
+#include <algorithm>
+
+using namespace std;
+
+int main() {
+    int n;
+    string s;
+    cin >> n >> s;
+
+    int ans = 0;
+    char prev = s[0];
+
+    for (int i = 1; i < n; ++i) {
+        if (prev != s[i]) {
+            ans++;
+            prev = s[i];
+        }
+    }
+
+    cout << ans << endl;
+    return 0;
+}

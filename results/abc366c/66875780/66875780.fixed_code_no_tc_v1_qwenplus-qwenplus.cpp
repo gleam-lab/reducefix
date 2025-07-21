@@ -1,0 +1,52 @@
+#include <iostream>
+#include <unordered_map>
+using namespace std;
+
+// Fast IO setup
+void fastIO() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    cout.tie(nullptr);
+}
+
+void Solve() {
+    int Q;
+    cin >> Q;
+    
+    unordered_map<int, int> freq;  // To store frequency of each number
+    int distinctCount = 0;         // Track number of distinct integers
+
+    while (Q--) {
+        int type;
+        cin >> type;
+
+        if (type == 1) {
+            int x;
+            cin >> x;
+            if (freq[x] == 0) {
+                distinctCount++;
+            }
+            freq[x]++;
+        } 
+        else if (type == 2) {
+            int x;
+            cin >> x;
+            freq[x]--;
+            if (freq[x] == 0) {
+                distinctCount--;
+            }
+        } 
+        else {  // type == 3
+            cout << distinctCount << "\n";
+        }
+    }
+}
+
+int main() {
+    fastIO();
+    int t = 1;
+    while (t--) {
+        Solve();
+    }
+    return 0;
+}

@@ -1,0 +1,74 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+
+using namespace std;
+
+typedef long long ll;
+
+const int MOD = 1e9 + 7;
+
+int main() {
+    ll n, m;
+    cin >> n >> m;
+
+    vector<pair<ll, ll>> pieces(m);
+    for (ll i = 0; i < m; i++) {
+        ll a, b;
+        cin >> a >> b;
+        a--; b--; // Convert to 0-based index
+        pieces[i] = {a, b};
+    }
+
+    // Sort pieces to process them in order of their row or column
+    sort(pieces.begin(), pieces.end());
+
+    // dp[i][j] will store the number of valid positions in the subgrid starting at (i, j)
+    vector<vector<int>> dp(n, vector<int>(n, 0));
+
+    // Initialize the first piece
+    dp[pieces[0].first][pieces[0].second] = 1;
+
+    // Iterate over the sorted pieces
+    for (ll i = 1; i < m; i++) {
+        ll x = pieces[i].first;
+        ll y = pieces[i].second;
+
+        // Check if the current piece is in the same row, column, or diagonals as the previous piece
+        bool same_row = x == pieces[i-1].first;
+        bool same_col = y == pieces[i-1].second;
+        bool same_up_diag = (x - y) == (pieces[i-1].first - pieces[i-1].second);
+        bool same_down_diag = (x + y) == (pieces[i-1].first + pieces[i-1].second);
+
+        // If the current piece is in the same row or column as the previous piece, update dp accordingly
+        if (same_row || same_col) {
+            continue;
+        }
+
+        // If the current piece is on the same up diagonal, update dp along the diagonal
+        if (same_up_diag) {
+            for (ll j = max(y + 1, pieces[i-1].second + 1); j <= n; j++) {
+                dp[x][j] = (dp[x][j] + dp[x-1][j-1]) % MOD;
+            }
+        }
+
+        // If the current piece is on the same down diagonal, update dp along the diagonal
+        if (same_down_diag) {
+            for (ll j = min(y - 1, pieces[i-1].second - 1); j >= 1; j--) {
+                dp[x][j] = (dp[x][j] + dp[x-1][j+1]) % MOD;
+            }
+        }
+    }
+
+    // Calculate the number of valid positions in the entire grid
+    ll result = 0;
+    for (ll i = 1; i <= n; i++) {
+        for (ll j = 1; j <= n; j++) {
+            result = (result + dp[i][j]) % MOD;
+        }
+    }
+
+    cout << result << endl;
+
+    return 0;
+}

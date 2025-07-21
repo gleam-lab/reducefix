@@ -1,0 +1,50 @@
+#include<iostream>
+#include<vector>
+#include<algorithm>
+using namespace std;
+
+const int MAXN = 2e5 + 10;
+vector<int> adj[MAXN];
+int depth[MAXN], visited[MAXN];
+
+void dfs(int node, int parent, int d) {
+    visited[node] = 1;
+    depth[node] = d;
+    for (auto neighbor : adj[node]) {
+        if (!visited[neighbor]) {
+            dfs(neighbor, node, d + 1);
+        } else if (neighbor != parent) { // Check for backedge
+            depth[node] = min(depth[node], depth[neighbor]);
+        }
+    }
+}
+
+int findMinCycleLength(int n) {
+    int minCycle = INT_MAX;
+    memset(visited, 0, sizeof(visited));
+    for (int i = 1; i <= n; ++i) {
+        if (!visited[i]) {
+            dfs(i, -1, 0);
+            for (int j = 1; j <= n; ++j) {
+                if (depth[j] > 0 && visited[j] && j != i) {
+                    minCycle = min(minCycle, depth[i] + depth[j]);
+                }
+            }
+        }
+    }
+    return minCycle == INT_MAX ? -1 : minCycle;
+}
+
+int main() {
+    int n, m;
+    cin >> n >> m;
+    for (int i = 0; i < m; ++i) {
+        int u, v;
+        cin >> u >> v;
+        adj[u].push_back(v);
+        adj[v].push_back(u); // Assuming undirected graph
+    }
+    int result = findMinCycleLength(n);
+    cout << result << endl;
+    return 0;
+}

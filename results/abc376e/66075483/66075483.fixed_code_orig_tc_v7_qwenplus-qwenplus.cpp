@@ -1,0 +1,53 @@
+#include <iostream>
+#include <vector>
+#include <queue>
+#include <algorithm>
+using namespace std;
+
+#define int long long
+
+const int INF = 1e18;
+
+int t, n, k;
+vector<pair<int, int>> a, b;
+
+signed main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+    cout.tie(0);
+
+    cin >> t;
+    while (t--) {
+        cin >> n >> k;
+        a.resize(n);
+        for (int i = 0; i < n; ++i) {
+            cin >> a[i].first;
+            a[i].second = i;
+        }
+        vector<pair<int, int>> items(n);
+        for (int i = 0; i < n; ++i)
+            cin >> items[i].first;
+        sort(a.begin(), a.end());
+        vector<int> b(n);
+        for (int i = 0; i < n; ++i)
+            b[a[i].second] = items[a[i].second].first;
+        priority_queue<int> pq;
+        int sum = 0;
+        int res = INF;
+        // We need to pick K elements with smallest B values among top A values
+        for (int i = 0; i < n; ++i) {
+            if (i >= k - 1) {
+                res = min(res, a[i].first * sum);
+            }
+            sum += b[i];
+            pq.push(b[i]);
+            if (pq.size() >= k) {
+                sum -= pq.top();
+                pq.pop();
+            }
+        }
+        cout << res << '\n';
+    }
+
+    return 0;
+}

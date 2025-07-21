@@ -1,0 +1,41 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int N;
+    cin >> N;
+
+    long long curX = 0, curY = 0;
+    double total = 0.0;
+
+    vector<pair<long long, long long>> points(N);
+    for (int i = 0; i < N; ++i) {
+        cin >> points[i].first >> points[i].second;
+    }
+
+    // From origin to first point
+    long long dx = curX - points[0].first;
+    long long dy = curY - points[0].second;
+    total += sqrt(static_cast<double>(dx * dx + dy * dy));
+
+    // Between all points
+    for (int i = 1; i < N; ++i) {
+        dx = points[i - 1].first - points[i].first;
+        dy = points[i - 1].second - points[i].second;
+        total += sqrt(static_cast<double>(dx * dx + dy * dy));
+    }
+
+    // From last point back to origin
+    dx = points[N - 1].first - curX;
+    dy = points[N - 1].second - curY;
+    total += sqrt(static_cast<double>(dx * dx + dy * dy));
+
+    // Print with sufficient precision
+    cout.precision(15);
+    cout << fixed << total << '\n';
+
+    return 0;
+}

@@ -1,0 +1,114 @@
+To fix this code, we need to correctly calculate the number of safe squares where a new piece can be placed without being captured by any existing pieces. The existing pieces can capture along rows, columns, and both diagonals (i.e., lines where i + j is constant or i - j is constant). 
+
+### Approaches
+1. **Identify Attack Lines**: For each existing piece, determine the rows, columns, and diagonals it controls. 
+2. **Union of Attack Lines**: Collect all unique rows, columns, and diagonals that are under attack.
+3. **Calculate Safe Squares**: The total safe squares are the total squares minus the squares under attack, adjusted for overlaps where multiple attack lines might cover the same square.
+
+### Solution Code
+```cpp
+#include<bits/stdc++.h>
+using namespace std;
+using i64 = long long;
+
+int main() {
+    std::ios::sync_with_stdio(false);
+    std::cin.tie(nullptr);
+    i64 N, M;
+    cin >> N >> M;
+    set<i64> rows, cols, diag1, diag2;
+    set<pair<i64, i64>> pieces;
+
+    for (int i = 0; i < M; ++i) {
+        i64 a, b;
+        cin >> a >> b;
+        rows.insert(a);
+        cols.insert(b);
+        diag1.insert(a + b);
+        diag2.insert(a - b);
+        pieces.insert({a, b});
+    }
+
+    i64 unsafe = 0;
+
+    // Rows and columns
+    unsafe += rows.size() * N;
+    unsafe += cols.size() * N;
+    unsafe -= rows.size() * cols.size(); // Subtract intersections counted twice
+
+    // Diagonals i+j = k
+    for (auto k : diag1) {
+        i64 x_min = max(1LL, k - N);
+        i64 x_max = min(N, k - 1);
+        if (x_min > x_max) continue;
+        unsafe += x_max - x_min + 1;
+    }
+
+    // Diagonals i-j = k
+    for (auto k : diag2) {
+        i64 x_min = max(1LL, 1 + k);
+        i64 x_max = min(N, N + k);
+        if (x_min > x_max) continue;
+        unsafe += x_max - x_min + 1;
+    }
+
+    // Subtract intersections between rows/cols and diag1/diag2
+    for (auto a : rows) {
+        for (auto k : diag1) {
+            i64 b = k - a;
+            if (b >= 1 && b <= N) {
+                unsafe -= 1;
+            }
+        }
+        for (auto k : diag2) {
+            i64 b = a - k;
+            if (b >= 1 && b <= N) {
+                unsafe -= 1;
+            }
+        }
+    }
+
+    for (auto b : cols) {
+        for (auto k : diag1) {
+            i64 a = k - b;
+            if (a >= 1 && a <= N) {
+                unsafe -= 1;
+            }
+        }
+        for (auto k : diag2) {
+            i64 a = b + k;
+            if (a >= 1 && a <= N) {
+                unsafe -= 1;
+            }
+        }
+    }
+
+    // Add back squares counted in both diag1 and diag2
+    for (auto k1 : diag1) {
+        for (auto k2 : diag2) {
+            if ((k1 + k2) % 2 != 0) continue;
+            i64 a = (k1 + k2) / 2;
+            i64 b = (k1 - k2) / 2;
+            if (a >= 1 && a <= N && b >= 1 && b <= N) {
+                unsafe += 1;
+            }
+        }
+    }
+
+    // Subtract the actual pieces since they were counted multiple times
+    unsafe -= M;
+
+    i64 total = N * N;
+    i64 safe = total - unsafe;
+
+    cout << safe << "\n";
+
+    return 0;
+}
+```
+
+### Explanation
+1. **Identify Attack Lines**: The code uses sets to store rows, columns, and diagonals that are under attack by existing pieces. Each piece contributes to these sets.
+2. **Union of Attack Lines**: The total unsafe squares are calculated by summing the squares covered by each row, column, and diagonal. Overlaps where a square is covered by multiple attack lines are adjusted to avoid double-counting.
+3. **Adjustments for Overlaps**: The code subtracts intersections between rows/columns and diagonals to ensure squares are not counted multiple times. It also adds back squares that fall on both types of diagonals to correct for over-subtraction.
+4. **Final Calculation**: The total safe squares are derived by subtracting the unsafe squares from the total grid squares, ensuring the solution is both correct and efficient.

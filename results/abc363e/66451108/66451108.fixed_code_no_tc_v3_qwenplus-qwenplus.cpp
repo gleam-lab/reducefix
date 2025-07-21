@@ -1,0 +1,73 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+#define int long long
+#define close ios::sync_with_stdio(false); cin.tie(0); cout.tie(0);
+#define endl '\n'
+
+const int MAXN = 1005;
+
+int H, W, Y;
+int grid[MAXN][MAXN];
+bool visited[MAXN][MAXN];
+
+struct Cell {
+    int r, c, val;
+    bool operator<(const Cell& other) const {
+        return val > other.val;
+    }
+};
+
+signed main() {
+    close;
+    cin >> H >> W >> Y;
+    for (int i = 0; i < H; ++i)
+        for (int j = 0; j < W; ++j)
+            cin >> grid[i][j];
+
+    // Initialize priority queue with all border cells
+    priority_queue<Cell> pq;
+    for (int i = 0; i < H; ++i) {
+        for (int j = 0; j < W; ++j) {
+            if (i == 0 || i == H - 1 || j == 0 || j == W - 1) {
+                pq.push({i, j, grid[i][j]});
+                visited[i][j] = true;
+            }
+        }
+    }
+
+    int remaining = H * W;
+    vector<int> ans(Y + 2); // To store answers for each year
+
+    int years_left = Y;
+    int current_year = 1;
+
+    while (!pq.empty() && current_year <= Y) {
+        while (!pq.empty() && pq.top().val <= current_year) {
+            auto top = pq.top(); pq.pop();
+            --remaining;
+
+            for (int d = 0; d < 4; ++d) {
+                int nr = top.r + dx[d];
+                int nc = top.c + dy[d];
+                if (nr >= 0 && nr < H && nc >= 0 && nc < W && !visited[nr][nc]) {
+                    visited[nr][nc] = true;
+                    pq.push({nr, nc, grid[nr][nc]});
+                }
+            }
+        }
+        ans[current_year] = remaining;
+        current_year++;
+    }
+
+    // Fill in any remaining years with the last computed value
+    while (current_year <= Y) {
+        ans[current_year++] = remaining;
+    }
+
+    for (int i = 1; i <= Y; ++i) {
+        cout << ans[i] << endl;
+    }
+
+    return 0;
+}

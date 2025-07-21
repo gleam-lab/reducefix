@@ -1,0 +1,88 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+#define MAXN 1001
+
+int grid[MAXN][MAXN];
+int visited[MAXN][MAXN];
+int n, m, y;
+
+struct Node {
+    int x, y, val;
+    bool operator>(const Node& a) const {
+        return val < a.val;
+    }
+};
+
+void simulate(int sea_level) {
+    priority_queue<Node, vector<Node>, greater<Node>> pq;
+    
+    // Initialize the priority queue with the edges of the grid
+    for (int i = 0; i < n; ++i) {
+        pq.push({i, 0, grid[i][0]});
+        pq.push({i, m - 1, grid[i][m - 1]});
+        visited[i][0] = visited[i][m - 1] = 1;
+    }
+    
+    for (int j = 1; j < m - 1; ++j) {
+        pq.push({0, j, grid[0][j]});
+        pq.push({n - 1, j, grid[n - 1][j]});
+        visited[0][j] = visited[n - 1][j] = 1;
+    }
+    
+    int remaining_area = n * m;
+    
+    while (!pq.empty()) {
+        Node curr = pq.top();
+        pq.pop();
+        
+        if (curr.val <= sea_level) {
+            remaining_area -= 1; // Current cell sinks
+
+            // Check neighbors
+            if (curr.x > 0 && !visited[curr.x - 1][curr.y]) {
+                if (grid[curr.x - 1][curr.y] <= sea_level) {
+                    pq.push({curr.x - 1, curr.y, grid[curr.x - 1][curr.y]});
+                    visited[curr.x - 1][curr.y] = 1;
+                }
+            }
+            if (curr.x < n - 1 && !visited[curr.x + 1][curr.y]) {
+                if (grid[curr.x + 1][curr.y] <= sea_level) {
+                    pq.push({curr.x + 1, curr.y, grid[curr.x + 1][curr.y]});
+                    visited[curr.x + 1][curr.y] = 1;
+                }
+            }
+            if (curr.y > 0 && !visited[curr.x][curr.y - 1]) {
+                if (grid[curr.x][curr.y - 1] <= sea_level) {
+                    pq.push({curr.x, curr.y - 1, grid[curr.x][curr.y - 1]});
+                    visited[curr.x][curr.y - 1] = 1;
+                }
+            }
+            if (curr.y < m - 1 && !visited[curr.x][curr.y + 1]) {
+                if (grid[curr.x][curr.y + 1] <= sea_level) {
+                    pq.push({curr.x, curr.y + 1, grid[curr.x][curr.y + 1]});
+                    visited[curr.x][curr.y + 1] = 1;
+                }
+            }
+        }
+    }
+    
+    cout << remaining_area << '\n';
+}
+
+int main() {
+    cin >> n >> m >> y;
+    
+    for (int i = 0; i < n; ++i) {
+        for (int j = 0; j < m; ++j) {
+            cin >> grid[i][j];
+            visited[i][j] = 0;
+        }
+    }
+    
+    for (int year = 1; year <= y; ++year) {
+        simulate(year);
+    }
+    
+    return 0;
+}

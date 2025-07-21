@@ -1,0 +1,60 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+using ll = long long;
+using Graph = vector<vector<int>>;
+
+#define rep(i,n) for (int i=0; i<(n); ++i)
+#define reps(i,n) for (int i=0; i<=(n); ++i)
+#define all(x) (x).begin(), (x).end()
+#define rall(x) (x).rbegin(), (x).rend()
+#define pb(a) push_back(a)
+#define Yes(b) cout << ((b)?"Yes":"No") << endl
+#define YES(b) cout << ((b)?"YES":"NO") << endl
+
+int dx[4]={1,0,-1,0};
+int dy[4]={0,1,0,-1};
+
+int main(){
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+    
+    int N;
+    cin >> N;
+    vector<int> X(N);
+    vector<ll> P(N+1, 0);
+    rep(i, N) cin >> X[i];
+    rep(i, N){
+        ll p;
+        cin >> p;
+        P[i+1] = P[i] + p;
+    }
+
+    // Use a sorted vector of pairs instead of map to allow binary search
+    vector<pair<int, int>> sorted_x_to_idx;
+    rep(i, N) {
+        sorted_x_to_idx.emplace_back(X[i], i);
+    }
+    sort(all(sorted_x_to_idx));
+
+    int Q;
+    cin >> Q;
+    rep(q, Q){
+        int L, R;
+        cin >> L >> R;
+
+        // Binary search for lower bound of L
+        int l_idx = distance(sorted_x_to_idx.begin(), 
+            lower_bound(all(sorted_x_to_idx), make_pair(L, 0)));
+
+        // Binary search for upper bound of R
+        int r_idx = distance(sorted_x_to_idx.begin(),
+            upper_bound(all(sorted_x_to_idx), make_pair(R, N)));
+
+        int l = (l_idx < N) ? sorted_x_to_idx[l_idx].second : N;
+        int r = (r_idx < N) ? sorted_x_to_idx[r_idx].second : N;
+
+        ll ans = P[r] - P[l];
+        cout << ans << "\n";
+    }
+}

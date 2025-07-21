@@ -1,0 +1,49 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+
+    long long N;
+    int M;
+    cin >> N >> M;
+
+    set<pair<long long, long long>> attacked;
+    set<pair<long long, long long>> occupied;
+
+    // Define the 8 possible relative moves for the knight-like piece
+    vector<pair<int, int>> directions = {
+        {2, 1}, {1, 2}, {-1, 2}, {-2, 1},
+        {-2, -1}, {-1, -2}, {1, -2}, {2, -1}
+    };
+
+    for (int i = 0; i < M; ++i) {
+        long long a, b;
+        cin >> a >> b;
+        occupied.insert({a, b});
+
+        // For each direction, compute the position and add to attacked if valid
+        for (auto& dir : directions) {
+            long long na = a + dir.first;
+            long long nb = b + dir.second;
+            if (1 <= na && na <= N && 1 <= nb && nb <= N) {
+                attacked.insert({na, nb});
+            }
+        }
+    }
+
+    // Remove positions that are already occupied by existing pieces
+    for (auto pos : occupied) {
+        attacked.erase(pos);
+    }
+
+    // Total cells: N*N
+    // Subtract number of attacked positions and occupied positions
+    long long total = N * N;
+    long long blocked = attacked.size() + occupied.size();
+
+    cout << total - blocked << endl;
+
+    return 0;
+}

@@ -1,0 +1,82 @@
+
+The provided code is attempting to solve the problem using a binary search combined with a checking function but encounters a failing case. The main issue is the checking function `check(x, y)` which has logical errors and doesn't correctly determine whether a candidate with additional votes `y` can secure their victory.
+
+Let's break down the problems in the code:
+
+1. **Incorrect Check Function**: The `check(x, y)` function is trying to determine if candidate `i` can secure at least `y` additional votes. The condition:
+   ```
+   (x+y+1)*(z-n+m)-(c[z]-c[n-m-1]-max(x,b[n-m]))>k-y
+   ```
+   seems to be trying to express that the total votes for the top `n-m` candidates minus `x` and `b[n-m]` must be greater than `k-y`, but the logic is not clear and may be incorrect.
+
+2. **Binary Search Logic**: The binary search attempts to find the minimum `y` such that the candidate can secure their victory. The logic is to search between `0` and `k+1`, but the `check` function might return false even if the candidate can secure the victory, leading to incorrect outputs.
+
+3. **Edge Cases**: The code may not handle edge cases where some candidates have already secured their victory (i.e., when the number of votes they have is already greater than or equal to `m` times the number of remaining votes).
+
+Below is a corrected version of the code with explanations:
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+#define int long long
+const int N = 2e5 + 5;
+
+int n, m, k, sum, a[N], b[N], c[N];
+
+// Check if candidate i can secure victory with x additional votes
+bool canSecureVictory(int i, int x) {
+    int totalVotesSoFar = accumulate(a, a + n, 0);
+    int votesNeeded = m - 1; // We need more than m votes to win
+    if (a[i] + x >= votesNeeded) return true;
+
+    // Calculate how many more votes i needs to be sure of winning
+    int votesForOthers = 0;
+    for (int j = 0; j < n; ++j) {
+        if (j != i) {
+            votesForOthers += max(0LL, votesNeeded - a[j]);
+        }
+    }
+    int additionalVotesNeeded = votesForOthers - x;
+    return totalVotesSoFar + additionalVotesNeeded <= k;
+}
+
+// Main logic to find minimum additional votes for each candidate
+signed main() {
+    cin >> n >> m >> k;
+    for (int i = 0; i < n; ++i) cin >> a[i];
+
+    // b[i] will store the number of votes needed for i to secure victory
+    for (int i = 0; i < n; ++i) {
+        b[i] = max(0LL, m - 1 - a[i]);
+    }
+
+    // Sort b to process in increasing order of votes needed
+    sort(b, b + n);
+
+    // Accumulate sorted votes
+    for (int i = 0; i < n; ++i) {
+        c[i] = (i == 0 ? b[i] : c[i - 1] + b[i]);
+    }
+
+    // Find the minimum additional votes for each candidate
+    for (int i = 0; i < n; ++i) {
+        // Binary search for the minimum x to secure victory
+        int low = 0, high = k + 1;
+        while (low < high) {
+            int mid = (low + high) / 2;
+            if (canSecureVictory(i, mid)) {
+                high = mid;
+            } else {
+                low = mid + 1;
+            }
+        }
+        if (low <= k) {
+            cout << low << " ";
+        } else {
+            cout << "-1 ";
+        }
+    }
+    return 0;
+}
+```
+This corrected code tries to implement the logic more clearly, using a binary search to find the minimum number of additional votes each candidate needs to secure victory. It checks if each candidate can secure the victory with a certain number of additional votes by comparing the number of votes remaining. It also handles the edge cases where a candidate has already secured their victory.

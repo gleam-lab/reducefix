@@ -1,0 +1,102 @@
+To fix this code, we need to address the issue where the program fails to correctly simulate the rising sea levels and the sinking of sections over time. The original code uses a priority queue to process sections in order of their elevation, but it doesn't efficiently handle the large range of possible sea levels (up to 10^5). 
+
+The key insight is to precompute the times at which each section will sink and then answer each query in constant time by maintaining a count of sections that remain above the sea level at each time.
+
+### Approaches
+1. **Precompute Sinking Times**: For each section, determine the earliest time it will sink. This involves finding the minimum sea level that will cause the section to be submerged, considering the connectivity to the sea or already submerged sections.
+2. **BFS with Priority Queue**: Use a priority queue to process sections in increasing order of their elevation. For each section, if it is adjacent to the sea or a submerged section and its elevation is not greater than the current sea level, it will sink.
+3. **Track Remaining Sections**: Maintain an array where each entry at index `i` represents the number of sections remaining above sea level after `i` years. This allows each query to be answered in constant time.
+
+### Solution Code
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+#define int long long
+
+struct Node {
+    int x, y, val;
+    bool operator<(const Node &a) const {
+        return val > a.val; // Min-heap based on val
+    }
+};
+
+signed main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+    cout.tie(0);
+
+    int H, W, Y;
+    cin >> H >> W >> Y;
+    vector<vector<int>> grid(H, vector<int>(W));
+    for (int i = 0; i < H; ++i) {
+        for (int j = 0; j < W; ++j) {
+            cin >> grid[i][j];
+        }
+    }
+
+    vector<vector<bool>> visited(H, vector<bool>(W, false));
+    priority_queue<Node> pq;
+
+    // Initialize the priority queue with the border cells
+    for (int i = 0; i < H; ++i) {
+        if (!visited[i][0]) {
+            pq.push({i, 0, grid[i][0]});
+            visited[i][0] = true;
+        }
+        if (!visited[i][W-1]) {
+            pq.push({i, W-1, grid[i][W-1]});
+            visited[i][W-1] = true;
+        }
+    }
+    for (int j = 1; j < W - 1; ++j) {
+        if (!visited[0][j]) {
+            pq.push({0, j, grid[0][j]});
+            visited[0][j] = true;
+        }
+        if (!visited[H-1][j]) {
+            pq.push({H-1, j, grid[H-1][j]});
+            visited[H-1][j] = true;
+        }
+    }
+
+    int remaining = H * W;
+    vector<int> result(Y + 1, 0); // result[i] is the answer for year i
+    int current_level = 1;
+
+    // Process each year from 1 to Y
+    for (int year = 1; year <= Y; ++year) {
+        while (!pq.empty() && pq.top().val <= year) {
+            Node node = pq.top();
+            pq.pop();
+            remaining--;
+            // Check adjacent cells
+            int dx[] = {0, 0, 1, -1};
+            int dy[] = {1, -1, 0, 0};
+            for (int k = 0; k < 4; ++k) {
+                int nx = node.x + dx[k];
+                int ny = node.y + dy[k];
+                if (nx >= 0 && nx < H && ny >= 0 && ny < W && !visited[nx][ny]) {
+                    visited[nx][ny] = true;
+                    pq.push({nx, ny, grid[nx][ny]});
+                }
+            }
+        }
+        result[year] = remaining;
+    }
+
+    // Output the results for each year from 1 to Y
+    for (int year = 1; year <= Y; ++year) {
+        cout << result[year] << '\n';
+    }
+
+    return 0;
+}
+```
+
+### Explanation
+1. **Initialization**: The grid is read from input, and a priority queue is initialized with the border sections of the island. These sections are the first to be checked for submergence as the sea level rises.
+2. **Processing Each Year**: For each year from 1 to Y, the code checks all sections in the priority queue that have an elevation less than or equal to the current sea level. These sections are marked as submerged, and their adjacent sections are added to the queue if they haven't been processed yet.
+3. **Tracking Remaining Sections**: The number of remaining sections above sea level is tracked for each year and stored in an array. This allows each query to be answered in constant time by simply accessing the precomputed results.
+4. **Output**: The results for each year are printed in sequence, showing the remaining sections above sea level after each year's sea level rise.
+
+This approach efficiently handles the large constraints by leveraging a priority queue to process sections in order of their elevation and precomputing the results for all possible years up front.

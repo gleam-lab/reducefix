@@ -1,0 +1,107 @@
+To fix this code, we need to correctly find the k-th closest point to each query point B_j among the points A_1 to A_N. The original approach tried to use a binary search on distances with a cumulative count, which is incorrect for this problem. Instead, we should sort the points A_i and for each query, find the k-th smallest distance by computing the distances from B_j to all A_i, sorting them, and then picking the k-th one.
+
+### Approaches
+1. **Sorting and Binary Search**: 
+   - First, sort the array of points A_i.
+   - For each query point B_j, compute the distances from B_j to each A_i.
+   - Sort these distances and pick the k_j-th smallest distance.
+
+However, given the constraints (N and Q up to 10^5), a direct approach for each query (O(N log N) per query) would be too slow (total O(Q N log N)).
+
+2. **Optimized Approach**:
+   - Sort the array A to allow efficient range queries.
+   - For each query B_j and k_j, the k-th closest points can be found by considering distances around B_j. We can use binary search on possible distances to find the smallest distance such that at least k points are within that distance from B_j.
+   - To count the number of points within a certain distance from B_j efficiently, we can use binary search on the sorted A array.
+   - This approach reduces the complexity to O(N log N + Q log N log(max distance)), which is feasible for the given constraints.
+
+### Solution Code
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int N, Q;
+    cin >> N >> Q;
+    vector<ll> A(N);
+    for (int i = 0; i < N; ++i) {
+        cin >> A[i];
+    }
+    sort(A.begin(), A.end());
+    
+    while (Q--) {
+        ll b;
+        int k;
+        cin >> b >> k;
+        vector<ll> distances(N);
+        for (int i = 0; i < N; ++i) {
+            distances[i] = abs(A[i] - b);
+        }
+        nth_element(distances.begin(), distances.begin() + k - 1, distances.end());
+        cout << distances[k - 1] << '\n';
+    }
+    
+    return 0;
+}
+```
+
+Wait, but this approach uses O(N) per query for computing distances, which would be O(Q N) time, leading to TLE for large Q and N (10^5 each). So, we need a more optimized approach.
+
+Alternative optimized approach (using binary search on the answer):
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int N, Q;
+    cin >> N >> Q;
+    vector<ll> A(N);
+    for (int i = 0; i < N; ++i) {
+        cin >> A[i];
+    }
+    sort(A.begin(), A.end());
+    
+    while (Q--) {
+        ll b;
+        int k;
+        cin >> b >> k;
+        
+        // Binary search the answer
+        ll left = 0;
+        ll right = 2e14; // Sufficiently large to cover all possible distances
+        ll answer = right;
+        
+        while (left <= right) {
+            ll mid = (left + right) / 2;
+            
+            // Calculate the number of points with distance <= mid
+            ll count = upper_bound(A.begin(), A.end(), b + mid) - lower_bound(A.begin(), A.end(), b - mid);
+            
+            if (count >= k) {
+                answer = mid;
+                right = mid - 1;
+            } else {
+                left = mid + 1;
+            }
+        }
+        
+        cout << answer << '\n';
+    }
+    
+    return 0;
+}
+```
+
+This approach uses binary search on the possible distance values (0 to 2e14) to find the smallest distance such that there are at least k points within that distance from B_j. For each candidate distance, we use binary search (upper_bound and lower_bound) on the sorted array A to count the number of points within the range [B_j - mid, B_j + mid]. This reduces the per-query time to O(log(max distance) * log N), making the total time complexity O(N log N + Q log N log(max distance)), which is efficient enough for the given constraints.
+
+The answer for each query is the smallest distance `mid` such that at least `k` points are within `mid` units of `b`.
+
+This should handle the large input sizes efficiently and correctly.

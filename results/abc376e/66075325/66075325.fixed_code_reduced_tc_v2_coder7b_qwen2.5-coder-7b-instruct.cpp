@@ -1,0 +1,56 @@
+#include<iostream>
+#include<algorithm>
+#include<vector>
+using namespace std;
+
+#define ll long long
+
+ll solve(int n, int k, vector<ll>& A, vector<ll>& B) {
+    // Sort A and B based on their values
+    vector<pair<ll, int>> sortedA(n), sortedB(n);
+    for (int i = 0; i < n; ++i) {
+        sortedA[i] = {A[i], i};
+        sortedB[i] = {B[i], i};
+    }
+    sort(sortedA.begin(), sortedA.end());
+    sort(sortedB.begin(), sortedB.end());
+
+    // Create prefix sums for B
+    vector<ll> prefixSum(n + 1);
+    for (int i = 0; i < n; ++i) {
+        prefixSum[i + 1] = prefixSum[i] + sortedB[i].first;
+    }
+
+    ll minCost = LLONG_MAX;
+    for (int i = k - 1; i < n; ++i) {
+        // Calculate the cost for the current subset
+        ll maxA = sortedA[i].first;
+        ll sumB = prefixSum[i + 1] - prefixSum[i - k + 1];
+        minCost = min(minCost, maxA * sumB);
+    }
+    return minCost;
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int T;
+    cin >> T;
+    while (T--) {
+        int n, k;
+        cin >> n >> k;
+        vector<ll> A(n), B(n);
+        for (int i = 0; i < n; ++i) {
+            cin >> A[i];
+        }
+        for (int i = 0; i < n; ++i) {
+            cin >> B[i];
+        }
+
+        ll result = solve(n, k, A, B);
+        cout << result << '\n';
+    }
+
+    return 0;
+}

@@ -1,0 +1,60 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define ll long long
+#define rep(i, n) for(int i = 0; i < n; i++)
+#define vi vector<int>
+
+ll INF = (1LL << 63);
+
+ll rui(ll a, ll b) {
+    if (b == 0) return 1;
+    if (b % 2 == 1) return a * rui(a * a, b / 2);
+    return rui(a * a, b / 2);
+}
+
+int main() {
+    int n, q;
+    cin >> n >> q;
+    vi a(n);
+    rep(i, n) {
+        cin >> a[i];
+    }
+    
+    map<ll, pair<int, int>> mp; // Store the frequency and the sum of positions
+    for (int i = 0; i < n; i++) {
+        mp[a[i]].second += (i + 1);
+        mp[a[i]].first++;
+    }
+    
+    while (mp.begin()->first < -INF) {
+        int min_freq = mp.begin()->second.first;
+        ll min_key = mp.begin()->first;
+        mp.erase(mp.begin());
+        for (int i = 0; i < min_freq; i++) {
+            ll new_key = min_key * 2 - INF;
+            mp[new_key].second += 1;
+            mp[new_key].first++;
+        }
+    }
+    
+    while (mp.begin()->first > INF) {
+        int min_freq = mp.begin()->second.first;
+        ll min_key = mp.begin()->first;
+        mp.erase(mp.begin());
+        for (int i = 0; i < min_freq; i++) {
+            ll new_key = min_key * 2 + INF;
+            mp[new_key].second += 1;
+            mp[new_key].first++;
+        }
+    }
+    
+    rep(i, q) {
+        ll b, k;
+        cin >> b >> k;
+        auto it = mp.lower_bound(b);
+        while (it != mp.begin() && it->first > b + INF) it--;
+        it--;
+        ll dist = it->first - b;
+        cout << (k - it->second.first) * 2LL * dist + dist * dist << endl;
+    }
+}

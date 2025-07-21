@@ -1,0 +1,39 @@
+#include <iostream>
+#include <map>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int Q;
+    cin >> Q;
+
+    map<int, int> countMap;
+    int distinctCount = 0;
+
+    while (Q--) {
+        int type;
+        cin >> type;
+
+        if (type == 1) {
+            int x;
+            cin >> x;
+            if (countMap[x] == 0) {
+                ++distinctCount;
+            }
+            ++countMap[x];
+        } else if (type == 2) {
+            int x;
+            cin >> x;
+            --countMap[x];
+            if (countMap[x] == 0) {
+                --distinctCount;
+            }
+        } else {
+            cout << distinctCount << "\n";
+        }
+    }
+
+    return 0;
+}

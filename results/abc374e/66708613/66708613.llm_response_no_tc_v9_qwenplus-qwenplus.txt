@@ -1,0 +1,82 @@
+```cpp
+#include<iostream>
+#include<vector>
+#include<functional>
+using namespace std;
+using ll = long long;
+
+const int inf = 1 << 30;
+const ll INF = 1LL << 62;
+
+int main() {
+    int N;
+    ll X;
+    cin >> N >> X;
+    vector<ll> A(N), P(N), B(N), Q(N);
+    
+    for(int i = 0; i < N; ++i) {
+        cin >> A[i] >> P[i] >> B[i] >> Q[i];
+    }
+
+    auto can_achieve = [&](ll capacity) -> bool {
+        ll total_cost = 0;
+        
+        for(int i = 0; i < N; ++i) {
+            ll min_cost = INF;
+
+            // Try all possible numbers of machine A used (up to what's needed to reach capacity)
+            for(ll a = 0; ; ++a) {
+                ll remaining = max(0LL, capacity - A[i] * a);
+                ll b = (remaining + B[i] - 1) / B[i]; // ceil division
+                ll cost = a * P[i] + b * Q[i];
+                
+                if (cost < min_cost) {
+                    min_cost = cost;
+                } else {
+                    // Since increasing 'a' further will only decrease remaining and thus 'b',
+                    // we can break early if the cost starts increasing
+                    break;
+                }
+                
+                // Optimization: Break if capacity is already fully achieved with machine A
+                if (a >= (capacity + A[i] - 1) / A[i]) break;
+            }
+
+            // Try all possible numbers of machine B used (symmetrical)
+            for(ll b = 0; ; ++b) {
+                ll remaining = max(0LL, capacity - B[i] * b);
+                ll a = (remaining + A[i] - 1) / A[i]; // ceil division
+                ll cost = b * Q[i] + a * P[i];
+                
+                if (cost < min_cost) {
+                    min_cost = cost;
+                } else {
+                    break;
+                }
+                
+                if (b >= (capacity + B[i] - 1) / B[i]) break;
+            }
+
+            if (min_cost > X) return false;
+            total_cost += min_cost;
+            if (total_cost > X) return false;
+        }
+        
+        return true;
+    };
+
+    // Binary search for maximum achievable processing capacity
+    ll low = 0, high = 1LL << 60;
+    while (low < high) {
+        ll mid = (low + high + 1) / 2;
+        if (can_achieve(mid)) {
+            low = mid;
+        } else {
+            high = mid - 1;
+        }
+    }
+
+    cout << low << endl;
+    return 0;
+}
+```

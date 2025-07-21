@@ -1,0 +1,106 @@
+To solve this problem, we need to determine the **minimum number of additional votes** each candidate needs from the remaining unassigned votes in order to guarantee their election.
+
+### Key Observations:
+
+1. A candidate is elected if fewer than `M` candidates have strictly more votes than them after all votes are counted.
+2. We must find for each candidate the **minimum X**, such that even in the worst-case distribution of the remaining votes among other candidates (i.e., they get just enough to prevent this candidate from being outvoted), the candidate still ends up in the top M.
+
+### Strategy:
+
+- Sort the array of current votes.
+- For each candidate:
+  - Simulate giving them `X` extra votes.
+  - Check how many candidates could possibly end up with **strictly more** than them.
+    - This involves binary search over the sorted vote list to find how many candidates could surpass them even after getting those X votes.
+  - If there are at least `N - M + 1` candidates who can potentially surpass them, then the candidate cannot be elected.
+
+We use binary search on `X` for each candidate to find the minimum number of additional votes required to ensure they are in the top M.
+
+Here's the corrected and efficient solution:
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+
+#define all(x) x.begin(), x.end()
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int N, M;
+    ll K;
+    cin >> N >> M >> K;
+
+    vector<ll> A(N);
+    ll total = 0;
+    for (int i = 0; i < N; ++i) {
+        cin >> A[i];
+        total += A[i];
+    }
+
+    ll remaining = K - total;
+    vector<ll> sorted_A = A;
+    sort(all(sorted_A));
+
+    vector<ll> result(N, -1);
+
+    for (int i = 0; i < N; ++i) {
+        ll l = 0, r = remaining;
+        ll my_votes = A[i];
+
+        auto check = [&](ll x) {
+            ll new_vote = my_votes + x;
+
+            // Find how many candidates can have more than this
+            // Use upper_bound to count how many candidates have > new_vote
+            int cnt = N - (upper_bound(all(sorted_A), new_vote) - sorted_A.begin());
+
+            return cnt < M;
+        };
+
+        if (check(0)) {
+            result[i] = 0;
+            continue;
+        }
+
+        ll ans = -1;
+        ll lo = 0, hi = remaining;
+
+        while (lo <= hi) {
+            ll mid = (lo + hi) / 2;
+            if (check(mid)) {
+                ans = mid;
+                hi = mid - 1;
+            } else {
+                lo = mid + 1;
+            }
+        }
+
+        result[i] = ans;
+    }
+
+    for (auto v : result)
+        cout << v << " ";
+    cout << "\n";
+
+    return 0;
+}
+```
+
+### Explanation:
+
+- We first read inputs and calculate how many votes remain unassigned.
+- We sort the array of current votes once so we can efficiently query how many candidates have **more** votes than a given value using `upper_bound`.
+- For each candidate, we binary search on the number of additional votes needed (`X`) between `0` and `remaining`, checking whether with that many votes, fewer than `M` candidates can surpass them.
+- If even without any additional votes they are already in the top M, we output `0`.
+- Otherwise, we perform the binary search to find the minimal valid `X`.
+
+### Time Complexity:
+
+- Sorting: O(N log N)
+- Per candidate binary search: O(log K * log N)
+- Total: O(N log N + N log K log N)
+
+This approach is efficient and handles all edge cases within the constraints.

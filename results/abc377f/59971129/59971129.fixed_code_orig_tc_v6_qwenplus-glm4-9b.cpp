@@ -1,0 +1,59 @@
+#include <iostream>
+#include <set>
+#include <vector>
+#include <algorithm>
+#include <cmath>
+
+using namespace std;
+
+typedef long long ll;
+const ll MOD = 1000000007;
+
+ll n, m;
+set<pair<ll, ll>> row capturing_rows, col capturing_cols, diag1, diag2, antidiag1, antidiag2;
+
+bool can_place(ll x, ll y) {
+    // Check if the current cell (x, y) is not in the capturing range of any existing piece
+    if (capturing_rows.count({x, 0}) || capturing_cols.count({0, y}) ||
+        diag1.count({x - y + 1, 0}) || diag2.count({x + y, 0}) ||
+        antidiag1.count({x + y - 1, 0}) || antidiag2.count({y, 0})) {
+        return false; // Capture range includes (x, y)
+    }
+    return true;
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    cin >> n >> m;
+    capturing_rows.reserve(n);
+    capturing_cols.reserve(n);
+    diag1.reserve(n);
+    diag2.reserve(n);
+    antidiag1.reserve(n);
+    antidiag2.reserve(n);
+
+    for (ll i = 0; i < m; ++i) {
+        ll a, b;
+        cin >> a >> b;
+        capturing_rows.insert({a, 0});
+        capturing_cols.insert({0, b});
+        diag1.insert({a - b + 1, 0});
+        diag2.insert({a + b, 0});
+        antidiag1.insert({a + b - 1, 0});
+        antidiag2.insert({b, 0});
+    }
+
+    ll free_cells = n * n;
+    for (ll i = 1; i <= n; ++i) {
+        for (ll j = 1; j <= n; ++j) {
+            if (!can_place(i, j)) {
+                free_cells--;
+            }
+        }
+    }
+
+    cout << free_cells << '\n';
+    return 0;
+}

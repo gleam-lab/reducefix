@@ -1,0 +1,87 @@
+To solve this problem correctly and efficiently, we need to determine how many **empty** cells on an `N x N` grid are **not under attack** from any of the existing pieces.
+
+### Key Observations:
+
+- Each piece attacks up to 8 specific positions relative to its current location (knight-like moves).
+- Since `N` can be as large as `10^9`, we cannot represent the entire grid explicitly.
+- We only need to track:
+  - The positions where pieces are already placed (to avoid placing a new piece there).
+  - The positions that are being attacked by these pieces.
+
+### Strategy:
+
+1. Store all given piece positions in a set for quick lookup.
+2. For each piece, compute the 8 possible attackable positions and add them to a separate set.
+3. Remove positions that fall outside the grid bounds `[1..N]`.
+4. Count the total number of valid positions: `N * N - (number of occupied or attacked positions)`.
+
+### Issues in Original Code:
+
+- It incorrectly increments a counter (`ans`) when checking attackable positions rather than collecting them.
+- It attempts to place pieces at attackable positions instead of avoiding them.
+- It uses incorrect indexing logic with `--` operations, leading to off-by-one errors.
+- It fails to deduplicate attackable positions properly.
+
+---
+
+### Corrected C++ Code
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    long long N, M;
+    cin >> N >> M;
+
+    set<pair<long long, long long>> occupied;
+    set<pair<long long, long long>> attacked;
+
+    vector<pair<long long, long long>> moves = {
+        {2, 1}, {1, 2}, {-1, 2}, {-2, 1},
+        {-2, -1}, {-1, -2}, {1, -2}, {2, -1}
+    };
+
+    for (long long i = 0; i < M; ++i) {
+        long long a, b;
+        cin >> a >> b;
+        // Convert from 1-based to 0-based indices
+        --a; --b;
+        occupied.insert({a, b});
+        attacked.insert({a, b}); // You can't place a piece here anyway
+
+        for (auto [dx, dy] : moves) {
+            long long na = a + dx;
+            long long nb = b + dy;
+            if (na >= 0 && na < N && nb >= 0 && nb < N) {
+                attacked.insert({na, nb});
+            }
+        }
+    }
+
+    // Total positions = N*N
+    // Subtract all positions that are either occupied or attacked
+    cout << (N * N) - (long long)attacked.size() << endl;
+
+    return 0;
+}
+```
+
+---
+
+### Explanation:
+
+- We convert input coordinates from 1-based to 0-based to simplify array-style indexing.
+- For each piece, generate all 8 knight-like attack positions and check if they're within bounds before adding to the `attacked` set.
+- The final result is `N * N - size_of(attacked_set)` since the set includes both occupied and attacked squares.
+
+---
+
+### Time Complexity:
+
+- O(M), since we process each piece once and do constant-time work per move.
+- Set insertions are logarithmic but acceptable for up to `2e5` elements.
+
+---
+
+This solution handles the largest constraints efficiently and avoids memory issues while remaining logically correct.

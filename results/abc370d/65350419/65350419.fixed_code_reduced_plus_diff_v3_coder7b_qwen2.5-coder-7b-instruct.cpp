@@ -1,0 +1,96 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define rep(i,n) for(int i = 0; i < (n); i++)
+#define all(x) x.begin(),x.end()
+using ll = long long;
+
+struct Query{
+    int t,r,c;
+};
+
+vector<Query> q;
+vector<vector<int>> g;
+
+bool cmp(Query a, Query b){
+    return a.t < b.t;
+}
+
+void solve(){
+    sort(all(q),cmp);
+    int n = g.size();
+    int m = g[0].size();
+    set<int> v[n];
+    set<int> h[m];
+    for(int i=0;i<n;i++){
+        for(int j=0;j<m;j++){
+            if(g[i][j] == 1){
+                v[i].insert(j);
+                h[j].insert(i);
+            }
+        }
+    }
+    for(auto [t,r,c]:q){
+        r--;c--;
+        if(g[r][c] == 0){
+            auto it = v[r].upper_bound(c);
+            if(it != v[r].end()){
+                int nc = *it;
+                g[r][nc] = 0;
+                v[r].erase(nc);
+                h[nc].erase(r);
+            }
+            it = v[r].lower_bound(c);
+            if(it != v[r].begin()){
+                --it;
+                int nc = *it;
+                g[r][nc] = 0;
+                v[r].erase(nc);
+                h[nc].erase(r);
+            }
+            it = h[c].upper_bound(r);
+            if(it != h[c].end()){
+                int nr = *it;
+                g[nr][c] = 0;
+                h[c].erase(nr);
+                v[nr].erase(c);
+            }
+            it = h[c].lower_bound(r);
+            if(it != h[c].begin()){
+                --it;
+                int nr = *it;
+                g[nr][c] = 0;
+                h[c].erase(nr);
+                v[nr].erase(c);
+            }
+        }else{
+            g[r][c] = 0;
+            v[r].erase(c);
+            h[c].erase(r);
+        }
+    }
+    int ans = 0;
+    for(int i=0;i<n;i++){
+        ans += v[i].size();
+    }
+    cout<<ans<<endl;
+}
+
+int main(void){
+    ios::sync_with_stdio(0);
+    cin.tie(0);
+    int n,m,t;
+    cin>>n>>m>>t;
+    g.resize(n,vector<int>(m));
+    for(int i=0;i<n;i++){
+        for(int j=0;j<m;j++){
+            cin>>g[i][j];
+        }
+    }
+    for(int i=0;i<t;i++){
+        int r,c;
+        cin>>r>>c;
+        q.push_back({i,r,c});
+    }
+    solve();
+    return 0;
+}

@@ -1,0 +1,36 @@
+#include <iostream>
+#include <vector>
+#include <cmath>
+using namespace std;
+
+int main() {
+    int n;
+    cin >> n;
+    vector<pair<long long, long long>> points(n);
+    long long x, y;
+    
+    for (int i = 0; i < n; ++i) {
+        cin >> x >> y;
+        points[i] = {x, y};
+    }
+    
+    long long total_cost = 0;
+    long long prev_x = 0, prev_y = 0;
+
+    for (const auto& point : points) {
+        long long dx = point.first - prev_x;
+        long long dy = point.second - prev_y;
+        total_cost += sqrt(dx * dx + dy * dy);
+        prev_x = point.first;
+        prev_y = point.second;
+    }
+
+    // Return to the origin
+    dx = prev_x - 0;
+    dy = prev_y - 0;
+    total_cost += sqrt(dx * dx + dy * dy);
+
+    cout << fixed << setprecision(9) << total_cost << endl;
+
+    return 0;
+}

@@ -1,0 +1,51 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define int long long
+#define INF 0x3f3f3f3f3f3f3f3f
+
+vector<pair<int, int>> G[200005];
+int dis[200005];
+int a[200005], n, m;
+
+void dijkstra(int start) {
+    priority_queue<pair<int, int>, vector<pair<int, int>>, greater<pair<int, int>>> pq;
+    pq.push({0, start});
+    dis[start] = a[start]; // Include vertex weight in initial distance for correct calculation
+
+    while (!pq.empty()) {
+        int u = pq.top().second;
+        int d = pq.top().first;
+        pq.pop();
+
+        if (d > dis[u]) continue; // To prevent processing same node with larger distance
+
+        for (auto &e : G[u]) {
+            int v = e.first;
+            int weight = e.second;
+            if (dis[u] + weight < dis[v]) {
+                dis[v] = dis[u] + weight;
+                pq.push({dis[v], v});
+            }
+        }
+    }
+}
+
+signed main() {
+    cin >> n >> m;
+    for (int i = 1; i <= n; i++) {
+        cin >> a[i];
+    }
+    for (int i = 0; i < m; i++) {
+        int u, v, w;
+        cin >> u >> v >> w;
+        G[u].push_back({v, w});
+        G[v].push_back({u, w});
+    }
+    dijkstra(1);
+
+    for (int i = 2; i <= n; i++) {
+        cout << dis[i] << (i < n ? " " : "\n");
+    }
+
+    return 0;
+}

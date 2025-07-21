@@ -1,0 +1,57 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+
+#define int long long
+#define ld long double
+
+int n, x;
+vector<int> a, b, p, q;
+
+bool canMake(int mid) {
+    ld total_cost = 0;
+    for (int i = 0; i < n; i++) {
+        // For each store, decide the optimal way to make `mid` cookies considering both deals
+        
+        int baseA = a[i], baseB = b[i];
+        ld priceA = p[i], priceB = q[i];
+
+        // Deal A: buy a[i] for p[i] -> cost per unit = p[i]/a[i]
+        // Deal B: buy b[i] for q[i] -> cost per unit = q[i]/b[i]
+
+        ld unitPriceA = priceA / baseA;
+        ld unitPriceB = priceB / baseB;
+
+        if (unitPriceA < unitPriceB) {
+            // Prefer buying deal A as much as possible
+            int countA = mid / baseA;
+            int remaining = mid % baseA;
+            total_cost += countA * priceA + remaining * unitPriceA;
+        } else {
+            // Prefer buying deal B as much as possible
+            int countB = mid / baseB;
+            int remaining = mid % baseB;
+            total_cost += countB * priceB + remaining * unitPriceB;
+        }
+    }
+
+    return total_cost <= x + 1e-8; // Use tolerance for floating point comparison
+}
+
+signed main() {
+    cin >> n >> x;
+    a.resize(n); b.resize(n); p.resize(n); q.resize(n);
+    for (int i = 0; i < n; i++) cin >> a[i] >> p[i] >> b[i] >> q[i];
+
+    int left = 0, right = 2e10;
+    while (left < right) {
+        int mid = (left + right + 1) >> 1;
+
+        if (canMake(mid)) left = mid;
+        else right = mid - 1;
+    }
+
+    cout << left;
+
+    return 0;
+}

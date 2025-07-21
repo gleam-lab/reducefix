@@ -1,0 +1,50 @@
+#include <bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+
+int main() {
+    ios_base::sync_with_stdio(0);
+    cin.tie(0);
+    int n, m;
+    ll k;
+    cin >> n >> m >> k;
+    vector<ll> a(n);
+    for (int i = 0; i < n; i++) {
+        cin >> a[i];
+        k -= a[i];
+    }
+    vector<ll> sorted_a(a);
+    sort(sorted_a.begin(), sorted_a.end(), greater<ll>());
+
+    // Calculate the minimum votes needed for the candidates to potentially win
+    vector<ll> min_votes_needed(n);
+    for (int i = 0; i < n; i++) {
+        if (i < m) {
+            // For the top M candidates, we need to consider at least 'M' others
+            min_votes_needed[i] = max(m - 1, 0) + sorted_a[i + m] - sorted_a[i];
+        } else {
+            // For the rest, we need to consider all potentially winning candidates
+            min_votes_needed[i] = m + sorted_a[n - m] - sorted_a[i];
+        }
+    }
+
+    // Calculate the additional votes needed for each candidate
+    vector<ll> additional_votes_needed(n, -1); // Start with -1 indicating they cannot win
+    for (int i = 0; i < n; i++) {
+        if (a[i] >= min_votes_needed[i]) {
+            additional_votes_needed[i] = 0; // Already has enough votes
+        } else {
+            ll votes_needed = min_votes_needed[i] - a[i];
+            if (votes_needed <= k) {
+                additional_votes_needed[i] = votes_needed;
+            }
+        }
+    }
+
+    // Output the results
+    for (ll votes : additional_votes_needed) {
+        cout << votes << (votes < additional_votes_needed.back() ? ' ' : '\n');
+    }
+
+    return 0;
+}

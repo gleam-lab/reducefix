@@ -1,0 +1,64 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+using LL = long long;
+const int N = 1e6 + 7;
+
+vector<LL> prefix_sum;
+
+void build_prefix_sum(vector<int>& arr, int n) {
+    prefix_sum.resize(n + 1, 0);
+    for (int i = 1; i <= n; ++i) {
+        prefix_sum[i] = prefix_sum[i - 1] + arr[i - 1];
+    }
+}
+
+LL query_prefix_sum(int left, int right) {
+    return prefix_sum[right] - prefix_sum[left - 1];
+}
+
+int main() {
+    ios_base::sync_with_stdio(false); cin.tie(0);
+
+    int n, m;
+    cin >> n;
+    vector<int> a(n), b(n);
+    for (int i = 0; i < n; ++i) {
+        cin >> a[i];
+    }
+    for (int i = 0; i < n; ++i) {
+        cin >> b[i];
+    }
+
+    vector<int> sorted_a = a;
+    sort(sorted_a.begin(), sorted_a.end());
+
+    vector<int> rank(n);
+    for (int i = 0; i < n; ++i) {
+        rank[lower_bound(sorted_a.begin(), sorted_a.end(), a[i]) - sorted_a.begin()] = i;
+    }
+
+    vector<vector<int>> bucket(n);
+    for (int i = 0; i < n; ++i) {
+        bucket[rank[i]].push_back(b[i]);
+    }
+
+    for (auto& vec : bucket) {
+        sort(vec.begin(), vec.end());
+    }
+
+    build_prefix_sum(bucket, n);
+
+    cin >> m;
+    while (m--) {
+        int l, r;
+        cin >> l >> r;
+        LL sum = 0;
+        for (int i = l - 1; i <= r - 1; ++i) {
+            sum += query_prefix_sum(1, bucket[i].size()) * b[i];
+        }
+        cout << sum << '\n';
+    }
+
+    return 0;
+}

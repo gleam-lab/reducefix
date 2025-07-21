@@ -1,0 +1,32 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+  int N;
+  cin >> N;
+  vector<long long> A(N);
+  for (int i = 0; i < N; i++) cin >> A[i];
+  
+  // dp[j] = max score when considering up to current monster, ending with j % 2 kills
+  vector<long long> dp(2);
+  dp[0] = 0;
+  
+  for (int i = 0; i < N; i++) {
+    vector<long long> p = dp;
+    for (int j = 0; j < 2; j++) {
+      // Skip
+      dp[j] = max(dp[j], p[j]);
+      
+      // Kill
+      if (i > 0 && j == 1) {
+        // If we killed the previous monster, double bonus
+        dp[j ^ 1] = max(dp[j ^ 1], p[j] + 2 * A[i]);
+      } else {
+        dp[j ^ 1] = max(dp[j ^ 1], p[j] + A[i]);
+      }
+    }
+  }
+  
+  cout << max(dp[0], dp[1]) << endl;
+  return 0;
+}

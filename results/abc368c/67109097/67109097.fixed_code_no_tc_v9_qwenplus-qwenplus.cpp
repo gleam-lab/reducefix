@@ -1,0 +1,42 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+
+int main() {
+    int N;
+    cin >> N;
+    vector<long long> H(N);
+    for (int i = 0; i < N; ++i) {
+        cin >> H[i];
+    }
+
+    long long T = 0;
+
+    for (int i = 0; i < N; ++i) {
+        // For each enemy, determine how many attacks it receives:
+        // - Every attack at T where T % 3 == 0 deals 3 damage
+        // - Other attacks deal 1 damage
+
+        long long health = H[i];
+
+        // Let's simulate in groups of 3 attacks:
+        // In 3 attacks: one triple damage (3), two single damage (1 each) => total 5 damage
+        long long full_cycles = health / 5;
+        long long remaining_health = health % 5;
+
+        T += full_cycles * 3;
+
+        // Handle the remaining health
+        while (remaining_health > 0) {
+            T++;
+            if (T % 3 == 0) {
+                remaining_health -= 3;
+            } else {
+                remaining_health -= 1;
+            }
+        }
+    }
+
+    cout << T << endl;
+    return 0;
+}

@@ -1,0 +1,48 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    int N;
+    cin >> N;
+    vector<long long> A(N);
+    vector<long long> B(N - 1);
+
+    for (int i = 0; i < N; ++i) cin >> A[i];
+    for (int i = 0; i < N - 1; ++i) cin >> B[i];
+
+    sort(A.begin(), A.end());
+    sort(B.begin(), B.end());
+
+    // We need to assign each toy to a box such that:
+    // - Each toy goes into a box of size >= its size.
+    // - All boxes except one (the extra one we choose) are used exactly once.
+    // - The extra box must be used exactly once.
+
+    // Try to match largest toys with largest available boxes,
+    // and find the smallest x (toy size not matched by B) to put in the extra box.
+
+    int i = N - 1, j = N - 2;
+    while (i >= 0 && j >= 0) {
+        if (A[i] <= B[j]) {
+            --i;
+            --j;
+        } else {
+            --i;  // This toy cannot fit in any remaining box. Save it for the new box.
+        }
+    }
+
+    if (i >= 0) {
+        // We still have unmatched toys
+        // These must go to the new box
+        cout << A[i] << endl;
+    } else {
+        // All toys matched, we can use smallest leftover box or even smaller
+        // So the minimum x is just the smallest toy not used
+        // Actually, since all toys are matched, we can just return smallest unused toy
+        // But since we matched from top, i == 0 or less, meaning all were matched
+        // So we can use x = A[0]
+        cout << A[0] << endl;
+    }
+
+    return 0;
+}

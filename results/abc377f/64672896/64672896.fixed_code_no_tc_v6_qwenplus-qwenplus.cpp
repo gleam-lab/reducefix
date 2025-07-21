@@ -1,0 +1,133 @@
+#include <bits/stdc++.h>
+using namespace std;
+using i64 = long long;
+
+int main() {
+    std::ios::sync_with_stdio(false);
+    std::cin.tie(nullptr);
+
+    i64 N, M;
+    cin >> N >> M;
+
+    set<i64> rowSet, colSet, diag1Set, diag2Set;
+    for (int i = 0; i < M; ++i) {
+        i64 a, b;
+        cin >> a >> b;
+        rowSet.insert(a);
+        colSet.insert(b);
+        diag1Set.insert(a + b);
+        diag2Set.insert(a - b);
+    }
+
+    // Convert to vectors for easier iteration
+    vector<i64> rows(rowSet.begin(), rowSet.end());
+    vector<i64> cols(colSet.begin(), colSet.end());
+    vector<i64> diag1(diag1Set.begin(), diag1Set.end());
+    vector<i64> diag2(diag2Set.begin(), diag2Set.end());
+
+    // Total number of squares attacked by existing pieces
+    i64 attacked = 0;
+
+    // Count how many squares are attacked via diagonals and rows/columns
+
+    // First: Rows and Diagonals of the form x + y = d
+    map<i64, i64> countSumDiag, countDiffDiag;
+
+    // Row contribution
+    attacked += (i64)rows.size() * N;
+
+    // Column contribution
+    attacked += (i64)cols.size() * N;
+
+    // Diagonal sum (x + y)
+    for (i64 d : diag1) {
+        i64 low = max(1LL, d - N);
+        i64 high = min(N, d - 1);
+        if (low <= high)
+            attacked += high - low + 1;
+    }
+
+    // Diagonal diff (x - y)
+    for (i64 d : diag2) {
+        i64 low = max(1LL, d + 1);
+        i64 high = min(N, N + d);
+        if (low <= high)
+            attacked += high - low + 1;
+    }
+
+    // Remove over-counted intersections
+
+    // Intersections between rows and columns
+    for (i64 r : rows) {
+        for (i64 c : cols) {
+            attacked--;
+        }
+    }
+
+    // Intersections between rows and diagonal sums
+    for (i64 r : rows) {
+        for (i64 d : diag1) {
+            i64 c = d - r;
+            if (c >= 1 && c <= N)
+                attacked--;
+        }
+    }
+
+    // Intersections between rows and diagonal diffs
+    for (i64 r : rows) {
+        for (i64 d : diag2) {
+            i64 c = r - d;
+            if (c >= 1 && c <= N)
+                attacked--;
+        }
+    }
+
+    // Intersections between columns and diagonal sums
+    for (i64 c : cols) {
+        for (i64 d : diag1) {
+            i64 r = d - c;
+            if (r >= 1 && r <= N)
+                attacked--;
+        }
+    }
+
+    // Intersections between columns and diagonal diffs
+    for (i64 c : cols) {
+        for (i64 d : diag2) {
+            i64 r = d + c;
+            if (r >= 1 && r <= N)
+                attacked--;
+        }
+    }
+
+    // Intersections between diagonal sums and diagonal diffs
+    for (i64 d1 : diag1) {
+        for (i64 d2 : diag2) {
+            i64 r = (d1 + d2);
+            i64 c = (d1 - d2);
+            if (r % 2 == 0 && c % 2 == 0) {
+                r /= 2;
+                c /= 2;
+                if (r >= 1 && r <= N && c >= 1 && c <= N)
+                    attacked--;
+        }
+    }
+
+    // Now subtract all overlaps with rows/cols/diags in full
+    i64 totalOverlap = 0;
+    for (i64 r : rows) {
+        for (i64 c : cols) {
+            i64 d1 = r + c;
+            i64 d2 = r - c;
+            bool in_d1 = diag1Set.count(d1);
+            bool in_d2 = diag2Set.count(d2);
+            if (in_d1) totalOverlap++;
+            if (in_d2) totalOverlap++;
+        }
+    }
+
+    // Subtract over-counted overlaps
+    cout << N * N - attacked << '\n';
+
+    return 0;
+}

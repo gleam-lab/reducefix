@@ -1,0 +1,61 @@
+#include <bits/stdc++.h>
+#define ll long long
+using namespace std;
+
+const int N = 2e5 + 5;
+
+ll a[N], b[N];
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+    
+    int n;
+    cin >> n;
+    for (int i = 0; i < n; ++i) {
+        cin >> a[i];
+    }
+    for (int i = 0; i < n - 1; ++i) {
+        cin >> b[i];
+    }
+
+    sort(a, a + n);
+    sort(b, b + n - 1);
+
+    // We need to place each toy in a box such that the box size >= toy size
+    // One additional box of size x can be added. Find minimal x.
+
+    multiset<ll> boxes;
+    for (int i = 0; i < n - 1; ++i) {
+        boxes.insert(b[i]);
+    }
+
+    ll required_x = -1;
+
+    // Try to match largest toys with largest available boxes
+    for (int i = n - 1; i >= 0; --i) {
+        auto it = boxes.upper_bound(a[i]);
+        if (it != boxes.end()) {
+            // Found a suitable box, use it
+            boxes.erase(it);
+        } else {
+            // No suitable box found, we must use our purchased box for this toy
+            if (required_x != -1) {
+                // Already one toy assigned to purchased box, cannot do more
+                cout << -1;
+                return 0;
+            }
+            required_x = a[i];
+        }
+    }
+
+    if (required_x != -1) {
+        cout << required_x;
+    } else {
+        // All toys fit into existing boxes, so x can be as small as possible (but arbitrary)
+        // We just need to provide any valid x, smallest unused box value or even 1 works
+        cout << 1;
+    }
+
+    return 0;
+}

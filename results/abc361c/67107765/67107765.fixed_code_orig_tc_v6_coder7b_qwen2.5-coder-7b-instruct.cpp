@@ -1,0 +1,34 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int n, k;
+    cin >> n >> k;
+    
+    vector<long long> num(n);
+    for(int i = 0; i < n; ++i) {
+        cin >> num[i];
+    }
+
+    sort(num.begin(), num.end());
+
+    // The optimal strategy is to remove the smallest k/2 elements and the largest k/2 elements
+    // If k is odd, remove one more element to minimize the difference further
+    long long ans = LLONG_MAX;
+    int mid = k / 2;
+
+    // Consider removing k/2 elements from the start and k/2 from the end
+    ans = min(ans, num[n - mid - 1] - num[mid]);
+
+    // If k is odd, consider removing one more element from either side
+    if(k % 2 != 0) {
+        ans = min(ans, min(num[n - mid - 2] - num[mid], num[n - mid - 1] - num[mid + 1]));
+    }
+
+    cout << ans << endl;
+
+    return 0;
+}

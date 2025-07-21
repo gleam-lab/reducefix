@@ -1,0 +1,52 @@
+#include <bits/stdc++.h>
+#define int long long
+#define f first
+#define s second
+using namespace std;
+
+signed main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(0);
+    cout.tie(0);
+
+    int t; cin >> t;
+    while(t--) {
+        int n, k; cin >> n >> k;
+        vector<int> A(n), B(n);
+        for(int i=0; i<n; i++) cin >> A[i];
+        for(int i=0; i<n; i++) cin >> B[i];
+
+        // Create pairs of A and B
+        vector<pair<int, int>> AB(n);
+        for(int i=0; i<n; i++) AB[i] = {A[i], B[i]};
+        
+        // Sort based on A values to prioritize larger A values
+        sort(AB.begin(), AB.end());
+
+        // Priority queue to maintain top K elements of B
+        priority_queue<int, vector<int>, greater<int>> pq;
+        long long sum_B = 0;
+        for(int i=0; i<k; i++) {
+            pq.push(AB[i].s);
+            sum_B += AB[i].s;
+        }
+
+        long long result = LLONG_MAX;
+        for(int i=k; i<n; i++) {
+            result = min(result, static_cast<long long>(AB[i].f * sum_B));
+            
+            // Update the sum and priority queue
+            sum_B -= pq.top();
+            pq.pop();
+            pq.push(AB[i].s);
+            sum_B += AB[i].s;
+        }
+        
+        // Check for the last window of size K
+        result = min(result, static_cast<long long>(AB[n-1].f * sum_B));
+
+        cout << result << '\n';
+    }
+
+    return 0;
+}

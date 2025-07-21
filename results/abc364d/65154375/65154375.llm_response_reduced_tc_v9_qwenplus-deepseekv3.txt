@@ -1,0 +1,121 @@
+To fix this code, we need to address the incorrect approach used in the original solution. The problem requires finding the k-th closest point from a set of points A to each query point B. The original code attempted to use a binary search on a frequency array, which is not applicable here. Instead, we should sort the array A and use binary search to find the k-th smallest distance efficiently for each query.
+
+### Approaches
+1. **Sorting**: First, sort the array A. This allows us to use binary search to quickly locate the points around each query B.
+2. **Binary Search for Distance**: For each query point B, we need to find the k-th smallest distance. The distances can be derived from the sorted array A by considering the absolute differences between B and elements in A.
+3. **Two Pointers or Binary Search**: For each query, after sorting A, we can use binary search to find the range of elements in A that are closest to B and then determine the k-th smallest distance from B.
+
+### Solution Code
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+
+void solve() {
+    int N, Q;
+    cin >> N >> Q;
+    vector<ll> A(N);
+    for (int i = 0; i < N; ++i) {
+        cin >> A[i];
+    }
+    sort(A.begin(), A.end());
+
+    for (int q = 0; q < Q; ++q) {
+        ll b, k;
+        cin >> b >> k;
+        int left = 0, right = N - 1;
+        // We will use binary search to find the k-th closest element
+        // The idea is to find the k-th smallest |A[i] - b|
+        // To do this efficiently, we can use binary search on the possible distances
+        // But a better approach is to find the k-th smallest in the sorted differences
+        // Since the array A is sorted, the closest elements to b will be near the position where b would be inserted in A
+        int pos = lower_bound(A.begin(), A.end(), b) - A.begin();
+        // Now, we need to consider elements around pos to find the k-th closest
+        // We can use a two-pointer approach to find the k smallest distances
+        int l = pos - 1;
+        int r = pos;
+        vector<ll> distances;
+        while (k > 0 && (l >= 0 || r < N)) {
+            ll dl = (l >= 0) ? abs(A[l] - b) : LLONG_MAX;
+            ll dr = (r < N) ? abs(A[r] - b) : LLONG_MAX;
+            if (dl <= dr) {
+                distances.push_back(dl);
+                l--;
+            } else {
+                distances.push_back(dr);
+                r++;
+            }
+            k--;
+        }
+        cout << distances[k-1] << endl;
+    }
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    solve();
+    return 0;
+}
+```
+
+Wait, but this approach may not be efficient enough for large N and Q (1e5 each) because for each query, it could potentially take O(N) time in the worst case. So we need a more efficient approach.
+
+An optimal approach is to precompute the sorted differences for each query. However, since each query has a different B, this isn't straightforward. Instead, we can use a binary search over the possible distances and for each mid, count how many elements in A have |A[i] - B| <= mid. This count can be found using binary search (upper_bound and lower_bound on the sorted array A). 
+
+Here's the corrected and optimized approach:
+
+### Optimized Solution
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+
+void solve() {
+    int N, Q;
+    cin >> N >> Q;
+    vector<ll> A(N);
+    for (int i = 0; i < N; ++i) {
+        cin >> A[i];
+    }
+    sort(A.begin(), A.end());
+
+    for (int q = 0; q < Q; ++q) {
+        ll b, k;
+        cin >> b >> k;
+        ll low = 0, high = 2e18;
+        ll answer = 0;
+        while (low <= high) {
+            ll mid = low + (high - low) / 2;
+            // Count the number of elements in A with |A[i] - b| <= mid
+            ll left = b - mid;
+            ll right = b + mid;
+            auto it_l = lower_bound(A.begin(), A.end(), left);
+            auto it_r = upper_bound(A.begin(), A.end(), right);
+            ll count = it_r - it_l;
+            if (count >= k) {
+                answer = mid;
+                high = mid - 1;
+            } else {
+                low = mid + 1;
+            }
+        }
+        cout << answer << endl;
+    }
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    solve();
+    return 0;
+}
+```
+
+### Explanation
+1. **Sorting**: The array A is sorted to facilitate binary search operations.
+2. **Binary Search for Each Query**: For each query (b, k), we perform a binary search on the possible distances from b. The goal is to find the smallest distance `mid` such that there are at least `k` elements in A within the range `[b - mid, b + mid]`.
+3. **Counting Elements in Range**: Using `lower_bound` and `upper_bound`, we efficiently count the number of elements in A within the current range defined by `mid`.
+4. **Adjusting Search Range**: Based on whether the count meets or exceeds `k`, we adjust the binary search range to find the minimal `mid` that satisfies the condition.
+
+This approach ensures efficient handling of each query in logarithmic time relative to the maximum possible distance, making it suitable for large input sizes.

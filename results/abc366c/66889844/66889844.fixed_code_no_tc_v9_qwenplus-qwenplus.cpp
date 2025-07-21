@@ -1,0 +1,33 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    int Q;
+    cin >> Q;
+
+    map<int, int> countMap;  // To keep track of counts of each integer
+
+    while (Q--) {
+        int type;
+        cin >> type;
+
+        if (type == 1) {
+            int x;
+            cin >> x;
+            countMap[x]++;
+        } 
+        else if (type == 2) {
+            int x;
+            cin >> x;
+            countMap[x]--;
+            if (countMap[x] == 0) {
+                countMap.erase(x);
+            }
+        } 
+        else if (type == 3) {
+            cout << countMap.size() << endl;
+        }
+    }
+
+    return 0;
+}

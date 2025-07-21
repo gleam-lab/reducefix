@@ -1,0 +1,120 @@
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+
+#define rep(i, n) for (int i = 0; i < (int)n; ++i)
+#define all(v) v.begin(), v.end()
+
+int H, W, Y;
+const int MAX_H = 1005;
+const int MAX_W = 1005;
+
+int dx[] = {0, 1, 0, -1};
+int dy[] = {1, 0, -1, 0};
+
+struct Cell {
+    int x, y, h;
+    bool operator<(const Cell& o) const { return h < o.h; }
+};
+
+int main() {
+    cin.tie(0);
+    ios_base::sync_with_stdio(false);
+
+    cin >> H >> W >> Y;
+    vector<vector<int>> A(H, vector<int>(W));
+    vector<Cell> cells;
+
+    rep(i, H) rep(j, W) {
+        cin >> A[i][j];
+        cells.push_back({i, j, A[i][j]});
+    }
+
+    // Sort all cells by height in increasing order
+    sort(all(cells));
+
+    vector<vector<bool>> ocean(H, vector<bool>(W, false));
+    vector<vector<bool>> visited(H, vector<bool>(W, false));
+    vector<int> ans(Y + 2, H * W);
+
+    // Union-Find (Disjoint Set Union)
+    vector<int> parent(H * W), size(H * W, 1);
+    iota(all(parent), 0);
+
+    function<int(int)> find = [&](int x) {
+        return parent[x] == x ? x : parent[x] = find(parent[x]);
+    };
+
+    auto unite = [&](int a, int b) {
+        int ra = find(a), rb = find(b);
+        if (ra == rb) return;
+        parent[rb] = ra;
+        size[ra] += size[rb];
+    };
+
+    // Map to track how many land cells are connected to the ocean
+    map<int, int> ocean_component_size;
+    int current_land = H * W;
+
+    // Preprocess border cells
+    queue<pair<int, int>> q;
+    rep(i, H) rep(j, W) {
+        if (i == 0 || i == H - 1 || j == 0 || j == W - 1) {
+            int idx = i * W + j;
+            ocean[i][j] = true;
+            visited[i][j] = true;
+            ocean_component_size[A[i][j]]++;
+            q.push({i, j});
+        }
+    }
+
+    // BFS to mark all cells connected to the ocean at current sea level
+    while (!q.empty()) {
+        auto [x, y] = q.front();
+        q.pop();
+        rep(k, 4) {
+            int nx = x + dx[k], ny = y + dy[k];
+            if (nx >= 0 && nx < H && ny >= 0 && ny < W && !visited[nx][ny]) {
+                visited[nx][ny] = true;
+                if (A[nx][ny] <= A[x][y]) {
+                    ocean[nx][ny] = true;
+                    current_land--;
+                    ocean_component_size[A[nx][ny]]++;
+                    q.push({nx, ny});
+                }
+            }
+        }
+    }
+
+    // Process sorted cells and update land area
+    int ptr = 0;
+    for (int year = 1; year <= Y; ++year) {
+        while (ptr < cells.size() && cells[ptr].h == year) {
+            int x = cells[ptr].x, y = cells[ptr].y;
+            if (!ocean[x][y]) {
+                bool connects_to_ocean = false;
+                rep(k, 4) {
+                    int nx = x + dx[k], ny = y + dy[k];
+                    if (nx >= 0 && nx < H && ny >= 0 && ny < W && ocean[nx][ny]) {
+                        connects_to_ocean = true;
+                        break;
+                    }
+                }
+                if (connects_to_ocean) {
+                    ocean[x][y] = true;
+                    current_land--;
+                    ocean_component_size[year]++;
+                }
+            }
+            ++ptr;
+        }
+        ans[year] = current_land;
+    }
+
+    // Output results
+    for (int i = 1; i <= Y; ++i) {
+        cout << ans[i] << "\n";
+    }
+
+    return 0;
+}

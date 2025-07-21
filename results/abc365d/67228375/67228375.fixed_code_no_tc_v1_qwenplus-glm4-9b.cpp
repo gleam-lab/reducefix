@@ -1,0 +1,39 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define endl "\n"
+#define MOD 1000000007
+
+
+int main() {
+
+    ios_base::sync_with_stdio(false);
+    cin.tie(0);
+
+    map<char, char> beats = {{'R', 'P'}, {'P', 'S'}, {'S', 'R'}};
+    int n;
+    cin >> n;
+    string s;
+    cin >> s;
+    
+    // Initialize variables for tracking the count of beats and not beaten sequences
+    int total_1 = 0;  // Total beats
+    int total_2 = 0;  // Total not beaten
+    char last_move = s[0];  // Initialize last move with the first character of the string
+
+    // Iterate over the string starting from the second character
+    for (int i = 1; i < n; i++) {
+        // Check if the current move beats the last move
+        if (beats[s[i]] == last_move) {
+            total_1++;  // Increment beat count
+        } else {
+            total_2++;  // Increment non-beat count
+            last_move = s[i];  // Update last move
+        }
+    }
+
+    // Output the maximum of the two counts
+    cout << max(total_1, total_2) << endl;
+
+    return 0;
+
+}

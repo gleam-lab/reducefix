@@ -1,0 +1,82 @@
+#include<bits/stdc++.h>
+using namespace std;
+vector<int> adj[200005];
+vector<int> order;
+int parent[200005];
+int rank[200005];
+int size[200005];
+
+// Function to find the size of the component
+int find_size(int v) {
+    return size[parent[v]];
+}
+
+// Union-Find data structure initialization
+void init(int n) {
+    for (int i = 1; i <= n; ++i) {
+        parent[i] = i;
+        rank[i] = 0;
+        size[i] = 1;
+    }
+}
+
+// Find the root of the component
+int find(int v) {
+    if (parent[v] != v) {
+        parent[v] = find(parent[v]);
+    }
+    return parent[v];
+}
+
+// Union operation
+void union_sets(int u, int v) {
+    u = find(u);
+    v = find(v);
+    if (u != v) {
+        if (rank[u] > rank[v]) {
+            parent[v] = u;
+            size[u] += size[v];
+        } else if (rank[u] < rank[v]) {
+            parent[u] = v;
+            size[v] += size[u];
+        } else {
+            parent[v] = u;
+            rank[u]++;
+            size[u] += size[v];
+        }
+    }
+}
+
+// Main function
+int main() {
+    int n, q;
+    cin >> n >> q;
+    init(n);
+
+    for (int i = 0; i < q; ++i) {
+        int op, u, v, k;
+        cin >> op >> u >> v;
+        u++, v++;
+        if (op == 1) {
+            if (find(u) != find(v)) {
+                union_sets(u, v);
+                adj[u].push_back(v);
+                adj[v].push_back(u);
+            }
+        } else if (op == 2) {
+            if (find(u) != find(v)) {
+                cout << "-1\n";
+            } else {
+                int root = find(v);
+                sort(adj[root].begin(), adj[root].end(), greater<int>());
+                if (k > find_size(v)) {
+                    cout << "-1\n";
+                } else {
+                    cout << adj[root][k - 1] << "\n";
+                }
+            }
+        }
+    }
+
+    return 0;
+}

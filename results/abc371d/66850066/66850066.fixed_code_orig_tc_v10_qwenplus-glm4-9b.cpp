@@ -1,0 +1,1 @@
+int ans = P[r] - P[l-1]; // Subtract 1 from l to correct the off-by-one error

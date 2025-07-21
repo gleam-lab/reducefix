@@ -1,0 +1,33 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main(){
+    ios_base::sync_with_stdio(false);
+    cin.tie(NULL);
+
+    int N;
+    string S;
+    cin >> N;
+    cin >> S;
+    
+    int wins = 0;
+    char winmove, prev = 'a'; // 'a' is used as an initial placeholder
+    
+    for (char c : S){
+        if (c == 'R'){
+            winmove = 'P';
+        } else if (c == 'P'){
+            winmove = 'S';
+        } else { // c == 'S'
+            winmove = 'R';
+        }
+        
+        if (winmove != prev){
+            wins++;
+            prev = winmove;
+        } else {
+            prev = c; // we tie, so we play the same move as opponent next round
+        }
+    }   
+    cout << wins;
+}

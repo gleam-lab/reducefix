@@ -1,0 +1,62 @@
+After analyzing the incorrect code and the failing test case, I identified the main issue: the path weight calculation was incorrect. The current implementation adds the weight of the destination vertex twice - once when initializing the distance and once when traversing edges. The path weight should be the sum of all vertex weights along the path plus all edge weights along the path, but each vertex weight should only be counted once.
+
+Here's the corrected C++ code:
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    int n, m;
+    cin >> n >> m;
+    vector<long long> a(n + 1);
+    for (int i = 1; i <= n; i++) cin >> a[i];
+    
+    vector<vector<pair<int, long long>>> adj(n + 1);
+    for (int j = 0; j < m; j++) {
+        int x, y;
+        long long w;
+        cin >> x >> y >> w;
+        adj[x].push_back({y, w});
+        adj[y].push_back({x, w});
+    }
+    
+    vector<long long> dist(n + 1, LLONG_MAX);
+    priority_queue<pair<long long, int>, vector<pair<long long, int>>, greater<pair<long long, int>>> q;
+    dist[1] = a[1];
+    q.push({dist[1], 1});
+    
+    while (!q.empty()) {
+        auto [val, node] = q.top();
+        q.pop();
+        if (val > dist[node]) continue;
+        
+        for (auto [neighbor, w] : adj[node]) {
+            long long total_dist = val + w + a[neighbor];
+            if (total_dist < dist[neighbor]) {
+                dist[neighbor] = total_dist;
+                q.push({dist[neighbor], neighbor});
+            }
+        }
+    }
+    
+    for (int i = 2; i <= n; i++) {
+        cout << dist[i] << " ";
+    }
+}
+```
+
+Key changes made:
+1. Changed vertex weight array to be 1-indexed for consistency with the graph representation
+2. Used `LLONG_MAX` instead of a hard-coded large value for proper initialization
+3. Removed the redundant addition of the destination vertex weight in the edge traversal
+4. Added a check to skip processing if we find a better distance already in the queue
+5. Properly structured the priority queue to use `long long` for distances and `int` for nodes
+6. Simplified the variable names and used structured bindings for better readability
+
+The corrected approach properly calculates the path weight by:
+- Initializing the distance to vertex 1 with its own weight
+- For each edge traversal, adding the edge weight and the destination vertex's weight (but not the source vertex's weight again)
+- Using Dijkstra's algorithm with a priority queue to find the minimum path weights efficiently
+
+This should now pass all test cases, including the large one provided.

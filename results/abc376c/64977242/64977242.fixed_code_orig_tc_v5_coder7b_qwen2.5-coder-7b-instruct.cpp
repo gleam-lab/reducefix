@@ -1,0 +1,38 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+
+using namespace std;
+
+int main() {
+    int N;
+    cin >> N;
+    vector<int> A(N), B(N-1);
+    for(int i = 0; i < N; ++i) cin >> A[i];
+    for(int i = 0; i < N-1; ++i) cin >> B[i];
+
+    // Sort both arrays to facilitate the comparison
+    sort(A.begin(), A.end());
+    sort(B.begin(), B.end());
+
+    // Initialize the maximum box size needed
+    int maxBoxSize = 0;
+
+    // Iterate through the toys and boxes
+    for(int i = 0; i < N-1; ++i) {
+        // If the current toy cannot fit into the current box, increase the box size
+        if(A[i] > B[i]) {
+            maxBoxSize = max(maxBoxSize, A[i]);
+        }
+    }
+
+    // Check if the last toy fits into the largest available box
+    if(A[N-1] > maxBoxSize) {
+        maxBoxSize = max(maxBoxSize, A[N-1]);
+    }
+
+    // Print the result
+    cout << maxBoxSize << endl;
+
+    return 0;
+}

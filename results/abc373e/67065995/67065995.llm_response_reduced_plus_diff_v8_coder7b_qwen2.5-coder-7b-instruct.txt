@@ -1,0 +1,91 @@
+To address the issue in your solution, we need to ensure that the logic correctly handles the requirement for each candidate to determine the minimum number of additional votes needed to guarantee their victory. The key aspects to consider include:
+
+1. **Sorting and Counting**: We need to sort the candidates based on their current vote counts and determine how many candidates are ahead of each candidate.
+2. **Binary Search**: For each candidate, use binary search to find the minimum number of additional votes required to surpass all other candidates.
+3. **Edge Cases**: Handle edge cases where a candidate might already have enough votes to win or where no candidate can win.
+
+Here's the corrected and optimized C++ code:
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+typedef long long ll;
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(0);
+
+    int n, m;
+    ll k;
+    cin >> n >> m >> k;
+    
+    vector<ll> a(n);
+    for(int i = 0; i < n; ++i) {
+        cin >> a[i];
+        k -= a[i];
+    }
+
+    vector<int> ord(n);
+    iota(begin(ord), end(ord), 0);
+    sort(begin(ord), end(ord), [&](int i, int j) { return a[i] < a[j]; });
+
+    auto b = a;
+    sort(begin(b), end(b));
+
+    vector<ll> pref(n + 1);
+    for(int i = 0; i < n; ++i) {
+        pref[i + 1] = b[i] + pref[i];
+    }
+
+    vector<ll> ans(n, -1);
+    for(int i = 0; i < n; ++i) {
+        int lid = n - m - (i >= n - m ? 1 : 0);
+        if(lid < 0) continue;
+
+        ll sum = pref[lid + 1];
+        ll target = b[lid] + 1;
+        ll left = 0, right = k + 1;
+        
+        while(left < right) {
+            ll mid = (left + right) / 2;
+            auto rid = upper_bound(begin(b), begin(b) + min(lid + 1, n), target + mid) - begin(b);
+            if(rid > lid) sum += (rid - lid - 1) * (target + mid) - (pref[rid] - pref[lid + 1]);
+            if(lid <= i && i < rid) sum++;
+            else sum += mid;
+            
+            if(sum > k) {
+                right = mid;
+            } else {
+                left = mid + 1;
+            }
+        }
+        
+        if(left == k + 1) ans[ord[i]] = -1;
+        else ans[ord[i]] = left;
+    }
+
+    for(auto i : ans) cout << i << " ";
+    cout << endl;
+
+    return 0;
+}
+```
+
+### Explanation:
+1. **Initialization**:
+   - Read inputs and calculate the initial total votes (`k`).
+   - Create an ordered list (`ord`) of indices sorted by vote count.
+   - Sort the vote counts (`b`) to facilitate the calculation of prefix sums.
+
+2. **Prefix Sums**:
+   - Compute the prefix sums (`pref`) to quickly calculate the sum of votes up to any index.
+
+3. **Binary Search for Minimum Votes**:
+   - For each candidate, use binary search to find the minimum number of additional votes needed.
+   - Calculate the number of votes needed to surpass all candidates ahead of the current candidate.
+
+4. **Output**:
+   - Print the result for each candidate.
+
+This approach ensures that the solution is efficient and handles all edge cases correctly.

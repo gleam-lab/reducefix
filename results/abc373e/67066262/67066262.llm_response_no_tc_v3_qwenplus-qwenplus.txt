@@ -1,0 +1,103 @@
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+#define all(x) (x).begin(), (x).end()
+
+int main() {
+    ios_base::sync_with_stdio(0);
+    cin.tie(0);
+    int n, m;
+    ll k;
+    cin >> n >> m >> k;
+    vector<ll> a(n);
+    for (int i = 0; i < n; i++) {
+        cin >> a[i];
+    }
+
+    // Total remaining votes to distribute
+    ll total_remaining = k;
+    for (ll ai : a) total_remaining -= ai;
+
+    vector<int> ord(n);
+    iota(all(ord), 0);
+
+    // Sort candidates by current votes
+    sort(all(ord), [&](int i, int j) { return a[i] < a[j]; });
+    vector<ll> sorted_a = a;
+    sort(all(sorted_a));
+
+    // Compute prefix sums of sorted votes
+    vector<ll> prefix(n + 1);
+    for (int i = 0; i < n; i++) {
+        prefix[i + 1] = prefix[i] + sorted_a[i];
+    }
+
+    vector<ll> res(n, -1);
+
+    for (int idx = 0; idx < n; idx++) {
+        int i = ord[idx]; // original index
+        ll low = 0, high = total_remaining + 1;
+
+        while (low < high) {
+            ll mid = (low + high) / 2;
+            ll new_vote = a[i] + mid;
+
+            // Binary search to find how many candidates have strictly more than new_vote
+            int l = 0, r = n;
+            while (l < r) {
+                int m = (l + r) / 2;
+                if (sorted_a[m] > new_vote)
+                    r = m;
+                else
+                    l = m + 1;
+            }
+            int stronger = l;
+
+            // We need at most M-1 candidates with strictly more votes
+            if (stronger < m) {
+                // Already good, no need for extra votes
+                high = mid;
+                continue;
+            }
+
+            // Need to strengthen to beat at least (stronger - (M - 1)) candidates
+            int need_to_beat = stronger - (M - 1);
+            if (need_to_beat <= 0) {
+                res[i] = 0;
+                break;
+            }
+
+            // Find the smallest index where we can start increasing
+            int left = 0, right = n;
+            while (left < right) {
+                int m = (left + right) / 2;
+                if (sorted_a[m] >= sorted_a[i])
+                    right = m;
+                else
+                    left = m + 1;
+            }
+
+            // Try to beat 'need_to_beat' candidates from the top
+            int pos = n - need_to_beat;
+            ll threshold = sorted_a[pos] + 1;
+            ll required = threshold - new_vote;
+
+            if (required <= total_remaining) {
+                high = mid;
+            } else {
+                low = mid + 1;
+            }
+        }
+
+        if (low > total_remaining) {
+            res[i] = -1;
+        } else {
+            res[i] = low;
+        }
+    }
+
+    for (ll x : res) cout << x << ' ';
+    cout << '\n';
+}
+```

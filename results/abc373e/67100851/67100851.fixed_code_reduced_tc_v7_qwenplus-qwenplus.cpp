@@ -1,0 +1,98 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+
+using namespace std;
+
+typedef long long ll;
+
+struct Candidate {
+    ll votes;
+    int index;
+};
+
+bool compareByVotes(const Candidate &a, const Candidate &b) {
+    return a.votes < b.votes;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int N, M;
+    ll K;
+    cin >> N >> M >> K;
+
+    vector<Candidate> candidates(N);
+    ll total_votes = 0;
+
+    for (int i = 0; i < N; ++i) {
+        cin >> candidates[i].votes;
+        total_votes += candidates[i].votes;
+        candidates[i].index = i;
+    }
+
+    // Remaining votes to distribute
+    ll remaining = K - total_votes;
+
+    // Sort candidates by current votes
+    sort(candidates.begin(), candidates.end(), compareByVotes);
+
+    // Prefix sum of current votes
+    vector<ll> prefix_sum(N + 1, 0);
+    for (int i = 0; i < N; ++i) {
+        prefix_sum[i + 1] = prefix_sum[i] + candidates[i].votes;
+    }
+
+    vector<ll> result(N);
+
+    // For each candidate, binary search on minimal required additional votes
+    for (int i = 0; i < N; ++i) {
+        int pos = i; // position in sorted array
+
+        // Binary search bounds
+        ll low = 0;
+        ll high = remaining;
+
+        function<bool(ll)> isWinning = [&](ll added) {
+            ll target = candidates[i].votes + added;
+
+            // Find how many candidates have strictly greater votes than this one
+            // We need to find first index where votes > target
+            int idx = upper_bound(candidates.begin(), candidates.end(), Candidate{target, -1}, 
+                [](const Candidate &a, const Candidate &b) { return a.votes < b.votes; })
+                - candidates.begin();
+
+            // Count how many candidates are strictly better
+            int worse_candidates = N - idx;
+
+            // We win if less than M candidates have more votes
+            return worse_candidates < M;
+        };
+
+        if (!isWinning(remaining)) {
+            result[candidates[i].index] = -1;
+            continue;
+        }
+
+        // Binary search to find minimum X
+        while (low < high) {
+            ll mid = (low + high) / 2;
+            if (isWinning(mid)) {
+                high = mid;
+            } else {
+                low = mid + 1;
+            }
+        }
+
+        result[candidates[i].index] = low;
+    }
+
+    // Print results in original order
+    for (int i = 0; i < N; ++i) {
+        cout << result[i] << " ";
+    }
+    cout << "\n";
+
+    return 0;
+}

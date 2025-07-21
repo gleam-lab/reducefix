@@ -1,0 +1,104 @@
+The initial approach uses a priority queue to simulate the sinking of sections starting from the borders of the island, which is a good start. However, there are a few issues to address:
+
+1. **Initialization of Priority Queue**: The code correctly adds the border sections to the priority queue but doesn't handle cases where the island might be smaller (e.g., 1x1 grid).
+
+2. **Handling of Small Islands**: The loops for adding border sections might not correctly handle grids where `h` or `w` is 1, leading to incorrect initial sinking.
+
+3. **Efficiency**: The code processes each year one by one, which can be inefficient for large `Y` (up to 10^5). Instead, we can precompute the years when each section sinks and then answer queries in constant time per year.
+
+4. **Overflow Handling**: The use of `long long` for all variables is correct given the constraints, so no overflow issues are expected.
+
+5. **Edge Cases**: The problem should handle cases where all sections sink immediately or none sink at all.
+
+### Fixed Approach
+1. **Precompute Sinking Times**: For each section, determine the earliest year it will sink by performing a BFS from all border sections, propagating the sinking condition.
+
+2. **Prefix Sum Array**: Create an array where each entry at index `i` contains the number of sections that sink in year `i`. Then, compute a prefix sum to answer the queries in constant time.
+
+3. **Efficient Query Handling**: After preprocessing, answer each query by subtracting the cumulative number of sections sunk up to that year from the total area.
+
+### Fixed Code
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+#define ll long long
+
+ll dx[4] = {0, 1, 0, -1}, dy[4] = {1, 0, -1, 0};
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(NULL);
+    
+    ll h, w, Y;
+    cin >> h >> w >> Y;
+    vector<vector<ll>> room(h, vector<ll>(w));
+    for (ll i = 0; i < h; ++i) {
+        for (ll j = 0; j < w; ++j) {
+            cin >> room[i][j];
+        }
+    }
+    
+    priority_queue<vector<ll>, vector<vector<ll>>, greater<vector<ll>>> pq;
+    vector<vector<bool>> used(h, vector<bool>(w, false));
+    
+    // Add border sections to the priority queue
+    for (ll i = 0; i < h; ++i) {
+        if (!used[i][0]) {
+            pq.push({room[i][0], i, 0});
+            used[i][0] = true;
+        }
+        if (w > 1 && !used[i][w-1]) {
+            pq.push({room[i][w-1], i, w-1});
+            used[i][w-1] = true;
+        }
+    }
+    for (ll j = 1; j < w-1; ++j) {
+        if (!used[0][j]) {
+            pq.push({room[0][j], 0, j});
+            used[0][j] = true;
+        }
+        if (h > 1 && !used[h-1][j]) {
+            pq.push({room[h-1][j], h-1, j});
+            used[h-1][j] = true;
+        }
+    }
+    
+    ll total = h * w;
+    vector<ll> sink_count(Y + 2, 0); // 1-based to Y
+    
+    while (!pq.empty()) {
+        auto top = pq.top();
+        pq.pop();
+        ll year = top[0], i = top[1], j = top[2];
+        if (year > Y) break;
+        sink_count[year]++;
+        for (ll k = 0; k < 4; ++k) {
+            ll ni = i + dx[k], nj = j + dy[k];
+            if (ni >= 0 && ni < h && nj >= 0 && nj < w && !used[ni][nj]) {
+                pq.push({room[ni][nj], ni, nj});
+                used[ni][nj] = true;
+            }
+        }
+    }
+    
+    vector<ll> prefix(Y + 1, 0);
+    for (ll i = 1; i <= Y; ++i) {
+        prefix[i] = prefix[i-1] + sink_count[i];
+    }
+    
+    for (ll i = 1; i <= Y; ++i) {
+        cout << total - prefix[i] << "\n";
+    }
+    
+    return 0;
+}
+```
+
+### Explanation
+1. **Initialization**: The border sections of the island are added to a priority queue to start the BFS from the edges inward.
+2. **BFS with Priority Queue**: The priority queue processes sections in order of increasing elevation (year they sink). For each section that sinks, its adjacent sections are added to the queue if they haven't been processed yet.
+3. **Sink Count Tracking**: An array `sink_count` keeps track of how many sections sink each year.
+4. **Prefix Sum Calculation**: A prefix sum array `prefix` is built to quickly compute the cumulative number of sections sunk up to any year `i`.
+5. **Query Answering**: For each year `i`, the remaining area is computed as the total area minus the cumulative sections sunk up to year `i`.
+
+This approach ensures that each section is processed exactly once, making the solution efficient with a time complexity of O(HW log(HW) + Y), which is feasible given the constraints.

@@ -1,0 +1,124 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+
+typedef long long ll;
+typedef pair<int, int> pii;
+typedef vector<int> vi;
+typedef vector<pii> vpi;
+
+const int MAXN = 2e5 + 7;
+const ll INF = 1e18;
+
+struct Edge {
+    int u, v, w;
+    bool operator<(const Edge &other) const {
+        return w < other.w;
+    }
+};
+
+vector<Edge> edges;
+vi parent, rank, cost;
+
+int find(int u) {
+    if (parent[u] != u) parent[u] = find(parent[u]);
+    return parent[u];
+}
+
+void union_sets(int u, int v) {
+    u = find(u), v = find(v);
+    if (u == v) return;
+    if (rank[u] < rank[v]) swap(u, v);
+    parent[v] = u;
+    if (rank[u] == rank[v]) ++rank[u];
+    cost[u] = min(cost[u], cost[v]);
+}
+
+void dijkstra(int start, int n) {
+    vector<bool> visited(n, false);
+    vector<ll> dist(n, INF);
+    dist[start] = 0;
+
+    set<pii> pq;
+    pq.insert(pii(0, start));
+
+    while (!pq.empty()) {
+        int u = pq.begin()->second;
+        pq.erase(pq.begin());
+
+        if (visited[u]) continue;
+        visited[u] = true;
+
+        for (Edge &e : edges) {
+            if (e.u == u) {
+                int v = e.v;
+                ll alt = dist[u] + e.w;
+                if (alt < dist[v]) {
+                    dist[v] = alt;
+                    pq.insert(pii(alt, v));
+                }
+            } else if (e.v == u) {
+                int v = e.u;
+                ll alt = dist[u] + e.w;
+                if (alt < dist[v]) {
+                    dist[v] = alt;
+                    pq.insert(pii(alt, v));
+                }
+            }
+        }
+    }
+
+    for (int i = 1; i < n; ++i) {
+        if (dist[i] != INF) {
+            union_sets(start, i);
+            cost[find(start)] = min(cost[find(start)], dist[i]);
+        }
+    }
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(NULL);
+
+    int n, m;
+    cin >> n >> m;
+
+    parent.resize(n);
+    rank.resize(n, 0);
+    cost.resize(n, INF);
+
+    for (int i = 0; i < n; ++i) {
+        parent[i] = i;
+        cost[i] = i == 0 ? 0 : INF;
+    }
+
+    edges.resize(m);
+    for (int i = 0; i < m; ++i) {
+        cin >> edges[i].u >> edges[i].v >> edges[i].w;
+        edges[i].u--, edges[i].v--;
+    }
+
+    sort(edges.begin(), edges.end());
+
+    for (Edge &e : edges) {
+        if (find(e.u) != find(e.v)) {
+            union_sets(e.u, e.v);
+            cost[find(e.u)] = min(cost[find(e.u)], e.w);
+        }
+    }
+
+    for (int i = 0; i < n; ++i) {
+        if (cost[i] == INF) cost[i] = 0;
+    }
+
+    for (int i = 1; i < n; ++i) {
+        dijkstra(i, n);
+    }
+
+    for (int i = 1; i < n; ++i) {
+        cout << cost[i] << " ";
+    }
+    cout << endl;
+
+    return 0;
+}

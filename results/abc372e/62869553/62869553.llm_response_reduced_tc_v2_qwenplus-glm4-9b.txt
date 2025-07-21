@@ -1,0 +1,99 @@
+
+Based on the problem description and constraints, we can use the Union-Find (Disjoint Set Union, DSU) data structure to efficiently manage the dynamic connectivity of the graph. The main operations we need to implement are:
+
+1. **Union**: Connect two components.
+2. **Find**: Find the root representative of a component.
+3. **Find all**: Retrieve all vertices in the component of a vertex.
+
+Here's a detailed breakdown of the implementation:
+
+### Data Structure
+
+- **Union-Find Structure**: This will store the parent of each vertex to represent the tree structure of components. It will support operations to merge components and find the root of any vertex.
+
+### Operations
+
+- **Add Edge**: When adding an edge between vertices `u` and `v`, we only add the edge if the vertices are in different components (i.e., they don't already share the same root representative).
+- **Get size**: After merging two components, we need to know the size of each component to decide which component keeps the other. We use a size array within the Union-Find structure for this.
+- **Find k-th largest**: This is the most complex part. We need to efficiently store the vertices in each component in a way that allows us to quickly retrieve the k-th largest vertex.
+
+### Implementation Steps
+
+1. Initialize each vertex as its own parent (indicating that each vertex is in its own component).
+2. For each query:
+   - If it's an edge addition:
+     - Use the `find` function to check if vertices `u` and `v` are in different components.
+     - If they are in different components, merge the components. During this process, keep track of the sizes of the components.
+     - After merging, update the size array and possibly rearrange vertices within the merged component.
+   - If it's a k-th largest query:
+     - Use the `find` function to find the root representative of the component containing vertex `v`.
+     - Retrieve the list of vertices in the component.
+     - Use binary search to find the k-th largest vertex (or return `-1` if there aren't enough vertices).
+
+### Code Implementation
+
+```cpp
+#include <iostream>
+#include <vector>
+#include <algorithm>
+
+using namespace std;
+
+const int MAX_N = 200005;
+
+int parent[MAX_N], size[MAX_N], vertices_in_component[MAX_N];
+
+int find(int x) {
+    if (parent[x] != x) {
+        parent[x] = find(parent[x]);
+    }
+    return parent[x];
+}
+
+void union_vertices(int u, int v) {
+    int root_u = find(u);
+    int root_v = find(v);
+    if (root_u != root_v) {
+        if (size[root_u] < size[root_v]) {
+            swap(root_u, root_v);
+        }
+        parent[root_v] = root_u;
+        size[root_u] += size[root_v];
+        if (size[root_u] > vertices_in_component[root_u].size()) {
+            // Remove the largest element
+            vertices_in_component[root_u].erase(vertices_in_component[root_u].end() - 1);
+        }
+    }
+}
+
+int main() {
+    int n, q;
+    cin >> n >> q;
+
+    for (int i = 0; i < n; ++i) {
+        parent[i] = i;
+        size[i] = 1;
+        vertices_in_component[i].push_back(i);
+    }
+
+    for (int i = 0; i < q; ++i) {
+        int op, u, v, k;
+        cin >> op >> u >> v;
+
+        if (op == 1) { // Add edge
+            union_vertices(u - 1, v - 1);
+        } else if (op == 2) { // Find k-th largest
+            int root_v = find(v - 1);
+            if (k > vertices_in_component[root_v].size()) {
+                cout << -1 << '\n';
+            } else {
+                cout << vertices_in_component[root_v][vertices_in_component[root_v].size() - k] + 1 << '\n';
+            }
+        }
+    }
+
+    return 0;
+}
+```
+
+This implementation uses a vector to store the vertices in each component, allowing us to efficiently retrieve the k-th largest vertex. Note that after every union operation, we may want to consider refreshing the stored vertices list to ensure it remains sorted. This can be done during the `union_vertices` function by removing the largest element if necessary.

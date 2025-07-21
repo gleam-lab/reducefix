@@ -1,0 +1,1 @@
+s[i+1] = s[i] + p[i]; // Corrected line to update cumulative sum correctly

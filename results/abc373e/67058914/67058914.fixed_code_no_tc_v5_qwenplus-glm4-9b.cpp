@@ -1,0 +1,68 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+using namespace std;
+using ll = long long;
+
+int main() {
+    int N, M, K;
+    cin >> N >> M >> K;
+    vector<ll> A(N + 1);
+    ll sum_votes = 0;
+    
+    for (int i = 1; i <= N; ++i) {
+        cin >> A[i];
+        sum_votes += A[i];
+    }
+
+    // Calculate the remaining votes to be counted
+    ll remaining_votes = K - sum_votes;
+
+    // Create a vector to store the current votes, +1 for 1-based index
+    vector<pair<ll, int>> votes(N + 1);
+    for (int i = 1; i <= N; ++i) {
+        votes[i].first = A[i];
+        votes[i].second = i;
+    }
+
+    // Sort votes by number of votes received, descending
+    sort(votes.rbegin(), votes.rend());
+
+    // Create a result vector to store the minimum additional votes needed
+    vector<ll> result(N + 1, -1);
+    
+    // Calculate the minimum additional votes needed for each candidate
+    for (int i = 1; i <= N; ++i) {
+        // The candidate needs at least (M-1) more votes than the current highest vote-getter
+        ll required_votes = votes[i].first + M - 1;
+        
+        // Calculate the number of highest vote-getters that are currently leading
+        ll current_leaders = votes[i - 1].first == votes[i].first ? i - 1 : i - 2;
+        
+        // If the candidate is already leading
+        if (result[votes[i].second] == -1 && current_leaders < M) {
+            result[votes[i].second] = 0;
+            continue;
+        }
+        
+        // Calculate the minimum additional votes needed to secure a win
+        ll additional_votes_needed = max(0LL, required_votes - votes[i].first);
+        
+        // If the remaining votes are not enough to secure victory, set result to -1
+        if (additional_votes_needed > remaining_votes) {
+            result[votes[i].second] = -1;
+            continue;
+        }
+        
+        // Otherwise, the candidate needs the calculated additional votes
+        result[votes[i].second] = additional_votes_needed;
+    }
+    
+    // Output the results
+    for (int i = 1; i <= N; ++i) {
+        cout << result[i] << " ";
+    }
+    cout << endl;
+    
+    return 0;
+}

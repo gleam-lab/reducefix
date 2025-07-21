@@ -1,0 +1,59 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+#define ll long long
+
+void solve() {
+    ll N;
+    cin >> N;
+    
+    vector<ll> A(N), B(N - 1);
+    for (int i = 0; i < N; ++i) cin >> A[i];
+    for (int i = 0; i < N - 1; ++i) cin >> B[i];
+
+    sort(A.begin(), A.end());
+    sort(B.begin(), B.end());
+
+    multiset<ll> b_set;
+    for (ll x : B) b_set.insert(x);
+
+    // Try to assign the smallest possible toys to available boxes greedily
+    int j = 0;
+    for (int i = 0; i < N - 1; ++i) {
+        if (A[i] <= B[i]) continue;
+        else {
+            cout << -1 << endl;
+            return;
+        }
+    }
+
+    // Now find the minimum box size needed for the largest toy not yet placed
+    // The largest toy must go to the extra purchased box
+    ll max_toy = A.back();
+    auto it = b_set.lower_bound(max_toy);
+    if (it != b_set.end()) {
+        // We can use this box, remove it from available boxes
+        b_set.erase(it);
+        // Check if remaining toys can be assigned to remaining boxes
+        for (int i = N - 2; i >= 0 && !b_set.empty(); --i) {
+            auto it2 = b_set.lower_bound(A[i]);
+            if (it2 != b_set.end()) {
+                b_set.erase(it2);
+            } else {
+                cout << max_toy << endl;
+                return;
+            }
+        }
+        cout << max_toy << endl;
+    } else {
+        // Need a larger box than all existing ones
+        cout << max_toy << endl;
+    }
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    solve();
+    return 0;
+}

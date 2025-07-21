@@ -1,0 +1,67 @@
+// Copyright (C) 2025 hanziwei
+// All rights reserved
+
+#include <bits/stdc++.h>
+
+using u32 = unsigned;
+using i64 = long long;
+using u64 = unsigned long long;
+
+using i128 = __int128;
+using u128 = unsigned __int128;
+
+constexpr int d[4][2] = {{0, 1}, {0, -1}, {1, 0}, {-1, 0}};
+
+int32_t main() {
+    std::ios::sync_with_stdio(false);
+    std::cin.tie(nullptr);
+
+    int H, W, Y;
+    std::cin >> H >> W >> Y;
+
+    std::vector<std::vector<int>> A(H, std::vector<int>(W));
+    for (int i = 0; i < H; ++i) {
+        for (int j = 0; j < W; ++j) {
+            std::cin >> A[i][j];
+        }
+    }
+
+    std::vector<std::vector<bool>> visited(H, std::vector<bool>(W, false));
+    std::queue<std::pair<int, int>> q;
+
+    auto isValid = [&](int x, int y) {
+        return x >= 0 && x < H && y >= 0 && y < W;
+    };
+
+    auto bfs = [&](int seaLevel) {
+        int count = 0;
+        for (int i = 0; i < H; ++i) {
+            for (int j = 0; j < W; ++j) {
+                if (!visited[i][j] && A[i][j] > seaLevel) {
+                    ++count;
+                    q.push({i, j});
+                    visited[i][j] = true;
+                    while (!q.empty()) {
+                        auto [x, y] = q.front();
+                        q.pop();
+                        for (int k = 0; k < 4; ++k) {
+                            int nx = x + d[k][0], ny = y + d[k][1];
+                            if (isValid(nx, ny) && !visited[nx][ny] && A[nx][ny] > seaLevel) {
+                                q.push({nx, ny});
+                                visited[nx][ny] = true;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        return count;
+    };
+
+    for (int i = 0; i < Y; ++i) {
+        std::fill(visited.begin(), visited.end(), false);
+        std::cout << bfs(i) << "\n";
+    }
+
+    return 0;
+}

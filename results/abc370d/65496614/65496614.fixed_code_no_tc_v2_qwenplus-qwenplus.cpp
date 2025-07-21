@@ -1,0 +1,105 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+#define rep(i, n) for(int i = 0; i < (int)(n); ++i)
+#define rep1(i, n) for(int i = 1; i <= (int)(n); ++i)
+
+using namespace std;
+
+int main() {
+    int H, W, Q;
+    cin >> H >> W >> Q;
+
+    // Total number of walls initially
+    long long total_walls = (long long)H * W;
+
+    // Grid to check if a wall exists at (r, c)
+    vector<vector<bool>> has_wall(H + 2, vector<bool>(W + 2, true));
+
+    // For each row, we maintain a set of columns that still have walls
+    vector<set<int>> row(W + 2);
+
+    // For each column, we maintain a set of rows that still have walls
+    vector<set<int>> col(H + 2);
+
+    // Initialize sets
+    for (int i = 1; i <= W; ++i) {
+        for (int r = 1; r <= H; ++r) {
+            row[i].insert(r);
+        }
+    }
+
+    for (int j = 1; j <= H; ++j) {
+        for (int c = 1; c <= W; ++c) {
+            col[j].insert(c);
+        }
+    }
+
+    while (Q--) {
+        int r, c;
+        cin >> r >> c;
+
+        if (has_wall[r][c]) {
+            // Bomb placed on a wall: destroy it
+            has_wall[r][c] = false;
+            row[c].erase(r);
+            col[r].erase(c);
+            --total_walls;
+        } else {
+            // Bomb placed on empty cell: destroy the nearest walls in 4 directions
+
+            // Up
+            auto it = row[c].lower_bound(r);
+            if (it != row[c].begin()) {
+                --it;
+                int x = *it;
+                if (has_wall[x][c]) {
+                    has_wall[x][c] = false;
+                    row[c].erase(x);
+                    col[x].erase(c);
+                    --total_walls;
+                }
+            }
+
+            // Down
+            it = row[c].lower_bound(r);
+            if (it != row[c].end()) {
+                int x = *it;
+                if (has_wall[x][c]) {
+                    has_wall[x][c] = false;
+                    row[c].erase(x);
+                    col[x].erase(c);
+                    --total_walls;
+                }
+            }
+
+            // Left
+            auto jt = col[r].lower_bound(c);
+            if (jt != col[r].begin()) {
+                --jt;
+                int y = *jt;
+                if (has_wall[r][y]) {
+                    has_wall[r][y] = false;
+                    row[y].erase(r);
+                    col[r].erase(y);
+                    --total_walls;
+                }
+            }
+
+            // Right
+            jt = col[r].lower_bound(c);
+            if (jt != col[r].end()) {
+                int y = *jt;
+                if (has_wall[r][y]) {
+                    has_wall[r][y] = false;
+                    row[y].erase(r);
+                    col[r].erase(y);
+                    --total_walls;
+                }
+            }
+        }
+    }
+
+    cout << total_walls << endl;
+    return 0;
+}

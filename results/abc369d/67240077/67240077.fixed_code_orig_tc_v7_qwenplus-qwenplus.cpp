@@ -1,0 +1,49 @@
+#include<bits/stdc++.h>
+#define INF 0x3f3f3f3f3f3f3f3f
+using namespace std;
+typedef long long ll;
+const int MAXN=2e5+10;
+
+// We only need to track previous state, so we can optimize space to O(1)
+ll a[MAXN];
+ll f_prev[2], cnt_prev[2]; // Previous row for DP
+
+int main(){
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    ll n;
+    cin >> n;
+    for(ll i = 1; i <= n; ++i){
+        cin >> a[i];
+    }
+
+    // Initialize base case
+    f_prev[0] = 0;
+    f_prev[1] = a[1];
+    cnt_prev[0] = 0;
+    cnt_prev[1] = 1;
+
+    for(ll i = 2; i <= n; ++i){
+        ll new_f0 = max(f_prev[0], f_prev[1]);
+        ll new_cnt0 = (f_prev[0] > f_prev[1]) ? cnt_prev[0] : cnt_prev[1];
+
+        ll cnt1 = cnt_prev[0] + 1;
+        ll num1 = (cnt1 % 2 == 0) ? a[i] * 2 : a[i];
+
+        ll cnt2 = cnt_prev[1] + 1;
+        ll num2 = (cnt2 % 2 == 0) ? a[i] * 2 : a[i];
+
+        ll new_f1 = max(f_prev[0] + num1, f_prev[1] + num2);
+        ll new_cnt1 = (f_prev[0] + num1 > f_prev[1] + num2) ? cnt1 : cnt2;
+
+        // Update values for next iteration
+        f_prev[0] = new_f0;
+        f_prev[1] = new_f1;
+        cnt_prev[0] = new_cnt0;
+        cnt_prev[1] = new_cnt1;
+    }
+
+    cout << max(f_prev[0], f_prev[1]) << endl;
+    return 0;
+}

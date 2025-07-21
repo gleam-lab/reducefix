@@ -1,0 +1,77 @@
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+
+#define rep(i, n) for (ll i = 0; i < (ll)(n); i++)
+#define rep2(i, s, n) for (ll i = (s); i < (ll)(n); i++)
+#define all(x) x.begin(), x.end()
+
+template<typename T> inline bool chmax(T &a, T b) { return ((a < b) ? (a = b, true) : false); }
+template<typename T> inline bool chmin(T &a, T b) { return ((a > b) ? (a = b, true) : false); }
+
+int main() {
+    int H, W, Q;
+    cin >> H >> W >> Q;
+
+    vector<set<int>> rows(H), cols(W);
+    for (int i = 0; i < H; ++i) {
+        for (int j = 0; j < W; ++j) {
+            rows[i].insert(j);
+            cols[j].insert(i);
+        }
+    }
+
+    ll remaining = (ll)H * W;
+
+    auto destroy = [&](int r, int c) {
+        if (rows[r].count(c)) {
+            rows[r].erase(c);
+            cols[c].erase(r);
+            remaining--;
+        } else {
+            // up
+            auto it = cols[c].lower_bound(r);
+            if (it != cols[c].begin()) {
+                --it;
+                rows[*it].erase(c);
+                cols[c].erase(it);
+                remaining--;
+            }
+
+            // down
+            it = cols[c].lower_bound(r);
+            if (it != cols[c].end()) {
+                rows[*it].erase(c);
+                cols[c].erase(it);
+                remaining--;
+            }
+
+            // left
+            it = rows[r].lower_bound(c);
+            if (it != rows[r].begin()) {
+                --it;
+                rows[r].erase(it);
+                cols[*it].erase(r);
+                remaining--;
+            }
+
+            // right
+            it = rows[r].lower_bound(c);
+            if (it != rows[r].end()) {
+                rows[r].erase(it);
+                cols[*it].erase(r);
+                remaining--;
+            }
+        }
+    };
+
+    for (int q = 0; q < Q; ++q) {
+        int R, C;
+        cin >> R >> C;
+        R--; C--;
+        destroy(R, C);
+    }
+
+    cout << remaining << endl;
+    return 0;
+}

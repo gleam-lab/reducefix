@@ -1,0 +1,60 @@
+#include<iostream>
+#include<vector>
+#include<cmath>
+#include<algorithm>
+using namespace std;
+using ll = long long;
+
+const ll INF = 1e18;
+
+int main(){
+    int N;
+    ll X;
+    cin >> N >> X;
+    vector<ll> A(N), P(N), B(N), Q(N);
+    
+    for(int i = 0; i < N; ++i){
+        cin >> A[i] >> P[i] >> B[i] >> Q[i];
+    }
+
+    // Checks if it's possible to achieve processing capacity `x` with budget X
+    auto is_possible = [&](ll x) {
+        ll total_cost = 0;
+        for(int i = 0; i < N; ++i){
+            ll min_cost = INF;
+
+            // Try all s in [0, B[i]] where s is the number of machine A used
+            for(ll s = 0; s <= B[i]; ++s){
+                ll required_B = max(0LL, (x - A[i] * s + B[i] - 1) / B[i]);
+                ll cost = s * P[i] + required_B * Q[i];
+                min_cost = min(min_cost, cost);
+            }
+
+            // Try all t in [0, A[i]] where t is the number of machine B used
+            for(ll t = 0; t <= A[i]; ++t){
+                ll required_A = max(0LL, (x - B[i] * t + A[i] - 1) / A[i]);
+                ll cost = t * Q[i] + required_A * P[i];
+                min_cost = min(min_cost, cost);
+            }
+
+            if(min_cost > X) return false;
+            total_cost += min_cost;
+            if(total_cost > X) return false;
+        }
+        return true;
+    };
+
+    // Binary search for maximum achievable processing capacity
+    ll low = 0, high = 1e12, ans = 0;
+    while(low <= high){
+        ll mid = (low + high) / 2;
+        if(is_possible(mid)){
+            ans = mid;
+            low = mid + 1;
+        } else {
+            high = mid - 1;
+        }
+    }
+
+    cout << ans << endl;
+}

@@ -1,0 +1,143 @@
+To fix this code, we need to correctly calculate the number of safe squares where a new piece can be placed without being captured by any existing pieces. The initial approach had several issues, including incorrect handling of intersections between different attack patterns and missing some edge cases.
+
+### Approaches
+1. **Identify Attack Patterns**: Each existing piece can attack along its row, column, and both diagonals. These patterns are:
+   - **Row**: All squares in the same row as the piece.
+   - **Column**: All squares in the same column as the piece.
+   - **Diagonal 1 (i - j = constant)**: All squares where the difference `i - j` is the same as the piece's position.
+   - **Diagonal 2 (i + j = constant)**: All squares where the sum `i + j` is the same as the piece's position.
+
+2. **Calculate Total Attacked Squares**: The total number of squares attacked by all existing pieces, considering overlaps. The initial approach subtracted the number of squares attacked by each pattern separately, which led to over-counting intersections.
+
+3. **Inclusion-Exclusion Principle**: Correctly account for intersections between different attack patterns to avoid double-counting squares that fall under multiple attack vectors.
+
+4. **Final Calculation**: The number of safe squares is the total grid squares `N^2` minus the total attacked squares plus the squares that are occupied by existing pieces (since they are already occupied and not available for placement).
+
+### Solution Code
+```cpp
+#include<bits/stdc++.h>
+
+using namespace std;
+using ll = long long;
+
+int main() {
+    ios_base::sync_with_stdio(false), cin.tie(nullptr);
+    ll N, M;
+    cin >> N >> M;
+    set<ll> rows, cols, diag1, diag2;
+    set<pair<ll, ll>> pieces;
+    
+    for (int i = 0; i < M; ++i) {
+        ll a, b;
+        cin >> a >> b;
+        rows.insert(a);
+        cols.insert(b);
+        diag1.insert(a - b);
+        diag2.insert(a + b);
+        pieces.insert({a, b});
+    }
+    
+    ll unsafe = 0;
+    
+    // Squares attacked by rows
+    unsafe += rows.size() * N;
+    
+    // Squares attacked by cols
+    unsafe += cols.size() * N;
+    
+    // Squares attacked by diag1 (i - j = constant c)
+    for (ll c : diag1) {
+        ll min_i = max(1LL, 1 + c);
+        ll max_i = min(N, N + c);
+        if (max_i < min_i) continue;
+        unsafe += (max_i - min_i + 1);
+    }
+    
+    // Squares attacked by diag2 (i + j = constant c)
+    for (ll c : diag2) {
+        ll min_i = max(1LL, c - N);
+        ll max_i = min(N, c - 1);
+        if (max_i < min_i) continue;
+        unsafe += (max_i - min_i + 1);
+    }
+    
+    // Subtract intersections between rows and cols (i.e., squares (r, c) where r is in rows and c is in cols)
+    for (ll r : rows) {
+        for (ll c : cols) {
+            if (pieces.count({r, c})) continue;
+            unsafe -= 1;
+        }
+    }
+    
+    // Subtract intersections between rows and diag1
+    for (ll r : rows) {
+        for (ll c_d1 : diag1) {
+            ll j = r - c_d1;
+            if (j < 1 || j > N) continue;
+            if (pieces.count({r, j})) continue;
+            unsafe -= 1;
+        }
+    }
+    
+    // Subtract intersections between rows and diag2
+    for (ll r : rows) {
+        for (ll c_d2 : diag2) {
+            ll j = c_d2 - r;
+            if (j < 1 || j > N) continue;
+            if (pieces.count({r, j})) continue;
+            unsafe -= 1;
+        }
+    }
+    
+    // Subtract intersections between cols and diag1
+    for (ll c : cols) {
+        for (ll c_d1 : diag1) {
+            ll i = c + c_d1;
+            if (i < 1 || i > N) continue;
+            if (pieces.count({i, c})) continue;
+            unsafe -= 1;
+        }
+    }
+    
+    // Subtract intersections between cols and diag2
+    for (ll c : cols) {
+        for (ll c_d2 : diag2) {
+            ll i = c_d2 - c;
+            if (i < 1 || i > N) continue;
+            if (pieces.count({i, c})) continue;
+            unsafe -= 1;
+        }
+    }
+    
+    // Subtract intersections between diag1 and diag2
+    for (ll c_d1 : diag1) {
+        for (ll c_d2 : diag2) {
+            if ((c_d1 + c_d2) % 2 != 0) continue;
+            ll i = (c_d1 + c_d2) / 2;
+            ll j = (c_d2 - c_d1) / 2;
+            if (i < 1 || i > N || j < 1 || j > N) continue;
+            if (pieces.count({i, j})) continue;
+            unsafe -= 1;
+        }
+    }
+    
+    // Add back the squares that are occupied by existing pieces (since they were subtracted multiple times)
+    unsafe += M;
+    
+    ll total = N * N;
+    ll ans = total - unsafe;
+    
+    cout << ans << "\n";
+    
+    return 0;
+}
+```
+
+### Explanation
+1. **Initialization**: The code reads the grid size `N` and the number of existing pieces `M`.
+2. **Store Attack Patterns**: The positions of existing pieces are stored in sets to track rows, columns, and both diagonals they influence.
+3. **Calculate Unsafe Squares**: The code calculates squares attacked by rows, columns, and both diagonals separately.
+4. **Adjust for Overlaps**: Using the inclusion-exclusion principle, the code adjusts for intersections between different attack patterns to avoid double-counting.
+5. **Final Calculation**: The total safe squares are computed by subtracting the unsafe squares from the total grid squares, and the result is printed.
+
+This approach ensures that all attack patterns are correctly accounted for, and intersections are handled properly to provide an accurate count of safe squares.

@@ -1,0 +1,39 @@
+#include<bits/stdc++.h>
+using namespace std;
+using ll=long long;
+map<ll,vector<ll>>graph;
+map<ll,bool>seen;
+const ll inf=1LL<<60;
+ll ans=inf;
+
+// Function to perform DFS and find the minimum steps to reach node 1 from any other node
+void dfs(ll n, ll hen){
+    seen[n] = true; // Mark the current node as visited
+    for(auto x : graph[n]){
+        if(x == 1){ // If the neighbor is the target node (node 1)
+            if(hen != 1){ // Check if we are not already at node 1
+                ans = min(ans, hen + 1); // Update the answer with the minimum steps
+            }
+            continue;
+        }
+        if(seen[x]) continue; // Skip if the neighbor has already been visited
+        dfs(x, hen + 1); // Recur for the neighbor with incremented step count
+    }
+}
+
+int main(){
+    ll n, m;
+    cin >> n >> m;
+    for(int i = 0; i < m; i++){
+        ll a, b;
+        cin >> a >> b;
+        graph[a].push_back(b); // Add edge from a to b
+        graph[b].push_back(a); // Since it's an undirected graph, add edge from b to a
+        if(!seen.count(a)) seen[a] = false; // Initialize seen status for node a if not already present
+        if(!seen.count(b)) seen[b] = false; // Initialize seen status for node b if not already present
+    }
+    dfs(1, 0); // Start DFS from node 1 with initial step count 0
+    if(ans != inf) cout << ans << endl; // Print the result if a path to node 1 exists
+    else cout << "-1" << endl; // Otherwise, print -1 indicating no path found
+    return 0;
+}

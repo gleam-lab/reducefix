@@ -1,0 +1,42 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    long long N, M;
+    cin >> N >> M;
+
+    // Set to store positions of existing pieces
+    unordered_set<string> pieceSet;
+
+    // Directions where a piece can attack
+    vector<pair<long long, long long>> directions = {
+        {2, 1}, {1, 2}, {-1, 2}, {-2, 1},
+        {-2, -1}, {-1, -2}, {1, -2}, {2, -1}
+    };
+
+    // Store all existing pieces and attacked squares
+    for (long long i = 0; i < M; ++i) {
+        long long a, b;
+        cin >> a >> b;
+        string key = to_string(a) + "," + to_string(b);
+        pieceSet.insert(key);
+
+        // Check all 8 possible attacked cells
+        for (auto [dx, dy] : directions) {
+            long long x = a + dx;
+            long long y = b + dy;
+            if (x >= 1 && x <= N && y >= 1 && y <= N) {
+                string attackedKey = to_string(x) + "," + to_string(y);
+                pieceSet.insert(attackedKey);
+            }
+        }
+    }
+
+    // Total number of cells minus the number of occupied or threatened cells
+    unsigned long long totalCells = N;
+    totalCells *= N;
+
+    cout << totalCells - pieceSet.size() << endl;
+
+    return 0;
+}

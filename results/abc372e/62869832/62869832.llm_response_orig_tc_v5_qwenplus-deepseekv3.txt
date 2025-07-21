@@ -1,0 +1,82 @@
+To fix this code, we need to ensure that the union-find data structure correctly maintains the top 10 largest elements in each connected component. The previous implementation had several issues, including incorrect merging of the top elements and incorrect handling of the union operations. Here's the corrected version:
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+const int MAXN = 200005;
+vector<int> parent(MAXN);
+vector<priority_queue<int, vector<int>, greater<int>>> top_k(MAXN);
+
+int find(int u) {
+    if (parent[u] != u) {
+        parent[u] = find(parent[u]);
+    }
+    return parent[u];
+}
+
+void merge(int u, int v) {
+    int root_u = find(u);
+    int root_v = find(v);
+    if (root_u == root_v) return;
+
+    if (top_k[root_u].size() < top_k[root_v].size()) {
+        swap(root_u, root_v);
+    }
+
+    while (!top_k[root_v].empty()) {
+        top_k[root_u].push(top_k[root_v].top());
+        top_k[root_v].pop();
+        if (top_k[root_u].size() > 10) {
+            top_k[root_u].pop();
+        }
+    }
+    parent[root_v] = root_u;
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int N, Q;
+    cin >> N >> Q;
+
+    for (int i = 1; i <= N; ++i) {
+        parent[i] = i;
+        top_k[i].push(i);
+    }
+
+    while (Q--) {
+        int op, u, v;
+        cin >> op >> u >> v;
+        if (op == 1) {
+            merge(u, v);
+        } else {
+            int root = find(u);
+            if (top_k[root].size() < v) {
+                cout << "-1\n";
+            } else {
+                vector<int> temp;
+                while (top_k[root].size() > v) {
+                    temp.push_back(top_k[root].top());
+                    top_k[root].pop();
+                }
+                cout << top_k[root].top() << "\n";
+                for (int x : temp) {
+                    top_k[root].push(x);
+                }
+            }
+        }
+    }
+
+    return 0;
+}
+```
+
+### Explanation
+1. **Union-Find Data Structure**: This is used to manage the connected components of the graph. The `find` function uses path compression to optimize future queries.
+2. **Priority Queues**: Each component maintains a min-heap (priority queue) of its top 10 largest elements. This ensures efficient access and merging.
+3. **Merge Operation**: When merging two components, the smaller heap is merged into the larger one to maintain efficiency. The merged heap is kept to a maximum size of 10.
+4. **Query Handling**: For type 2 queries, the code checks if the component has at least `k` elements. If not, it outputs `-1`. Otherwise, it retrieves the `k`-th largest element by temporarily popping elements from the heap until the desired element is at the top, then restores the heap.
+
+This approach ensures that all operations are efficient and correct, handling all edge cases and large inputs within the constraints.

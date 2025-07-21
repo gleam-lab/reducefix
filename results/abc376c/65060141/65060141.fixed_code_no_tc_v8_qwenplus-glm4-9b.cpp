@@ -1,0 +1,44 @@
+#include<bits/stdc++.h>
+#define ll long long
+using namespace std;
+
+const ll N = 2e5 + 5;
+ll a[N], b[N];
+
+int main() {
+    ll n;
+    cin >> n;
+    for (ll i = 1; i <= n; i++) {
+        cin >> a[i];
+    }
+    for (ll i = 1; i < n; i++) {
+        cin >> b[i];
+    }
+    sort(a + 1, a + n + 1);
+    sort(b + 1, b + n);
+
+    // Variables to track the last filled positions in the sorted arrays
+    ll last_filled_a = 0, last_filled_b = 0;
+
+    for (ll i = 1; i <= n; i++) {
+        // If the current toy can be placed in the current box
+        if (a[i] <= b[i - 1]) {
+            // Increase the last filled position for the smaller size
+            last_filled_b = max(last_filled_b, i);
+        } else {
+            // If the current toy cannot be placed in the current box
+            if (i - last_filled_a == 1) {
+                // This means the previous toy was placed in a different box
+                // and it's impossible to place the current toy in any box
+                cout << -1 << endl;
+                return 0;
+            }
+            // Update the last filled position for the toy's size
+            last_filled_a = i;
+        }
+    }
+
+    // The minimum box size needed is the last filled position for box sizes
+    cout << last_filled_b << endl;
+    return 0;
+}

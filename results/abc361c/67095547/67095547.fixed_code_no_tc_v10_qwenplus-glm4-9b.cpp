@@ -1,0 +1,43 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+
+using namespace std;
+
+int main() {
+    int n, k;
+    cin >> n >> k;
+    vector<int> a(n);
+    
+    // Read the array elements
+    for (int i = 0; i < n; ++i) {
+        cin >> a[i];
+    }
+
+    // Sort the array to facilitate range queries
+    sort(a.begin(), a.end());
+
+    // We need to consider the effect of removing k elements
+    // We calculate the maximum difference in two ways:
+    // 1. Removing the smallest k elements (i.e., a[0] to a[k-1])
+    // 2. Removing the largest k elements (i.e., a[n-k] to a[n-1])
+
+    // Initialize the results with the maximum possible difference
+    long long result = 0;
+    int maxElementAfterRemoval = 0;
+
+    // Case 1: Remove smallest k elements
+    for (int i = k; i < n; ++i) {
+        result = max(result, static_cast<long long>(a[i] - a[k - 1]));
+    }
+
+    // Case 2: Remove largest k elements
+    for (int i = 0; i < n - k; ++i) {
+        result = max(result, static_cast<long long>(a[i + k] - a[i]));
+    }
+
+    // Output the result
+    cout << result << endl;
+
+    return 0;
+}

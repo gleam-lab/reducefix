@@ -1,0 +1,57 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+using ll = long long;
+using Graph = vector<vector<int>>;
+
+#define rep(i,n) for (int i=0; i<(n); ++i)
+#define reps(i,n) for (int i=0; i<=(n); ++i)
+#define all(x) (x).begin(), (x).end()
+#define rall(x) (x).rbegin(), (x).rend()
+#define pb(a) push_back(a)
+#define Yes(b) cout << ((b)?"Yes":"No") << endl
+#define YES(b) cout << ((b)?"YES":"NO") << endl
+
+int dx[4] = {1, 0, -1, 0};
+int dy[4] = {0, 1, 0, -1};
+
+int main() {
+    int N;
+    cin >> N;
+    vector<ll> P(N+1), X(N);
+    
+    rep(i, N) cin >> X[i];
+    P[0] = 0;
+    rep(i, N) {
+        ll p;
+        cin >> p;
+        P[i+1] = P[i] + p;
+    }
+
+    // Create a sorted vector of pairs (X[i], i) instead of using map
+    vector<pair<int, int>> x_indices(N);
+    rep(i, N) {
+        x_indices[i] = {X[i], i};
+    }
+    sort(all(x_indices));
+
+    int Q;
+    cin >> Q;
+    rep(q, Q) {
+        int L, R;
+        cin >> L >> R;
+
+        // Binary search to find the range of X values in [L, R]
+        vector<pair<int, int>>::iterator left_it, right_it;
+        left_it = lower_bound(all(x_indices), make_pair(L, 0));
+        right_it = upper_bound(all(x_indices), make_pair(R, INT_MAX));
+
+        int l = left_it - x_indices.begin();
+        int r = right_it - x_indices.begin();
+
+        ll ans = P[r] - P[l];
+        cout << ans << endl;
+    }
+
+    return 0;
+}

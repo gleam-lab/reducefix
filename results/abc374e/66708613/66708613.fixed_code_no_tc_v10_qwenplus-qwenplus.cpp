@@ -1,0 +1,69 @@
+#include<iostream>
+#include<vector>
+#include<numeric>
+#include<algorithm>
+using namespace std;
+using ll = long long;
+
+const int inf = 1 << 30;
+const ll INF = 1LL << 62;
+
+// Function to check if we can achieve processing capacity `x` with budget X
+bool canAchieve(ll x, ll X, const vector<ll>& A, const vector<ll>& P, 
+                const vector<ll>& B, const vector<ll>& Q, int N) {
+    for (int i = 0; i < N; ++i) {
+        ll min_cost = INF;
+
+        // Try different numbers of type A machines (up to what's reasonable)
+        for (ll s = 0; s <= B[i] && A[i] * s <= x; ++s) {
+            ll remaining = max(0LL, x - A[i] * s);
+            ll t = (remaining + B[i] - 1) / B[i];  // ceil division
+            if (t <= B[i]) {
+                min_cost = min(min_cost, s * P[i] + t * Q[i]);
+            }
+        }
+
+        // Try different numbers of type B machines
+        for (ll t = 0; t <= A[i] && B[i] * t <= x; ++t) {
+            ll remaining = max(0LL, x - B[i] * t);
+            ll s = (remaining + A[i] - 1) / A[i];  // ceil division
+            if (s <= A[i]) {
+                min_cost = min(min_cost, t * Q[i] + s * P[i]);
+            }
+        }
+
+        if (min_cost > X) {
+            return false;  // Can't afford this stage
+        }
+        X -= min_cost;
+    }
+    return true;
+}
+
+int main() {
+    int N;
+    ll X;
+    cin >> N >> X;
+    vector<ll> A(N), P(N), B(N), Q(N);
+
+    for (int i = 0; i < N; ++i) {
+        cin >> A[i] >> P[i] >> B[i] >> Q[i];
+    }
+
+    // Binary search on the answer (maximum achievable minimum processing capacity)
+    ll low = 0, high = 1LL << 60;
+    ll answer = 0;
+
+    while (low <= high) {
+        ll mid = (low + high) / 2;
+        if (canAchieve(mid, X, A, P, B, Q, N)) {
+            answer = mid;
+            low = mid + 1;
+        } else {
+            high = mid - 1;
+        }
+    }
+
+    cout << answer << endl;
+    return 0;
+}

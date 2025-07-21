@@ -1,0 +1,27 @@
+#include<bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios_base::sync_with_stdio(false); cin.tie(NULL); cout.tie(NULL);
+
+    int n, m;
+    cin >> n >> m;
+    vector<long long> nums(n + 1), prefixsum(n + 2, 0);
+
+    for (int i = 1; i <= n; ++i) {
+        cin >> nums[i];
+        prefixsum[i] = prefixsum[i - 1] + nums[i];
+    }
+
+    long long count = 0;
+    unordered_map<long long, int> remainder_count;
+
+    for (int t = 1; t <= n; ++t) {
+        long long target = (prefixsum[t] * m) % n;
+        count += remainder_count[target];
+        remainder_count[prefixsum[t]]++;
+    }
+
+    cout << count << endl;
+    return 0;
+}

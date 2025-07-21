@@ -1,0 +1,67 @@
+#include<bits/stdc++.h>
+using namespace std;
+using i64 = long long;
+
+int main() {
+    std::ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    i64 N, M;
+    cin >> N >> M;
+    vector<i64> rows, cols, diag1, diag2, anti_diag1, anti_diag2;
+
+    for (i64 i = 0; i < M; ++i) {
+        i64 a, b;
+        cin >> a >> b;
+        rows.push_back(a);
+        cols.push_back(b);
+        diag1.push_back(a + b);
+        diag2.push_back(a - b);
+        anti_diag1.push_back(a - b + N);
+        anti_diag2.push_back(a + b + N);
+    }
+
+    sort(rows.begin(), rows.end());
+    sort(cols.begin(), cols.end());
+    sort(diag1.begin(), diag1.end());
+    sort(diag2.begin(), diag2.end());
+    sort(anti_diag1.begin(), anti_diag1.end());
+    sort(anti_diag2.begin(), anti_diag2.end());
+
+    i64 ans = N * N;
+    i64 row_covered = 0, col_covered = 0, diag1_covered = 0, diag2_covered = 0, anti_diag1_covered = 0, anti_diag2_covered = 0;
+
+    // Subtract captured cells by pieces along rows
+    for (i64 r : rows) {
+        ans -= max(col_covered, N - col_covered);
+        row_covered++;
+    }
+    // Subtract captured cells by pieces along columns
+    for (i64 c : cols) {
+        ans -= max(row_covered, N - row_covered);
+        col_covered++;
+    }
+    // Subtract captured cells by pieces on primary diagonal
+    for (i64 d : diag1) {
+        ans -= max(diag2_covered, N - diag2_covered);
+        diag1_covered++;
+    }
+    // Subtract captured cells by pieces on secondary diagonal
+    for (i64 d : diag2) {
+        ans -= max(diag1_covered, N - diag1_covered);
+        diag2_covered++;
+    }
+    // Subtract captured cells by pieces on anti-diagonal
+    for (i64 d : anti_diag1) {
+        ans -= max(anti_diag2_covered, N - anti_diag2_covered);
+        anti_diag1_covered++;
+    }
+    // Subtract captured cells by pieces on anti-diagonal
+    for (i64 d : anti_diag2) {
+        ans -= max(anti_diag1_covered, N - anti_diag1_covered);
+        anti_diag2_covered++;
+    }
+
+    cout << ans << '\n';
+
+    return 0;
+}

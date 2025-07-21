@@ -1,0 +1,41 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define rep(i, n) for (int i = 0; i < (n); ++i)
+using ll = long long;
+
+// Function to compute the number of attacks needed for one enemy
+ll compute_attacks(int h) {
+    // Binary search for minimum T such that enemy can be killed
+    ll low = 1, high = 2e18;
+    while (low < high) {
+        ll mid = (low + high) / 2;
+        ll three_attacks = mid / 3;
+        ll one_attacks = mid - three_attacks;
+        ll damage = three_attacks * 3 + one_attacks * 1;
+        if (damage >= h) {
+            high = mid;
+        } else {
+            low = mid + 1;
+        }
+    }
+    return low;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+    
+    int n;
+    cin >> n;
+    vector<int> H(n);
+    for (int i = 0; i < n; ++i) {
+        cin >> H[i];
+    }
+
+    ll total_time = 0;
+    for (int h : H) {
+        total_time += compute_attacks(h);
+    }
+
+    cout << total_time << endl;
+}

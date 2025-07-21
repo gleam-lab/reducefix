@@ -1,0 +1,95 @@
+To solve this problem efficiently, we need to handle both adding edges and querying the k-th largest connected vertex for each query. Here's how we can approach it:
+
+1. **Union-Find Data Structure**: To manage the connectivity of vertices, we use a union-find structure. This helps in efficiently merging sets and finding the root of any set.
+
+2. **Priority Queue for Connected Vertices**: For each connected component, maintain a priority queue (max heap) to store the vertices. This allows us to quickly find the k-th largest vertex in logarithmic time.
+
+3. **Handling Queries**:
+   - For type 1 queries, merge the sets of the two vertices involved.
+   - For type 2 queries, retrieve the k-th largest element from the priority queue of the connected component containing the given vertex.
+
+### Implementation Details
+- **Union-Find Operations**: Implement path compression and union by rank to keep the tree flat and operations nearly constant time.
+- **Priority Queues**: Use a map to hold the priority queues for each connected component. The key is the root of the component, and the value is the priority queue of vertices in that component.
+
+Here's the corrected and optimized C++ code:
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+const int MAX_N = 2e5 + 5;
+
+vector<int> parent(MAX_N), rank(MAX_N);
+map<int, priority_queue<int>> pq;
+
+int find(int u) {
+    if (parent[u] == u) return u;
+    return parent[u] = find(parent[u]);
+}
+
+void unite(int u, int v) {
+    u = find(u);
+    v = find(v);
+    if (u == v) return;
+    
+    if (rank[u] > rank[v]) swap(u, v);
+    parent[u] = v;
+    if (rank[u] == rank[v]) ++rank[v];
+    
+    pq[v].merge(pq[u]);
+    pq.erase(u);
+}
+
+int getKthLargest(int v, int k) {
+    v = find(v);
+    auto it = pq.find(v);
+    if (it == pq.end() || it->second.size() < k) return -1;
+    auto kth_largest = it->second;
+    while (--k) kth_largest.pop();
+    return kth_largest.top();
+}
+
+int main() {
+    ios_base::sync_with_stdio(false); cin.tie(nullptr);
+    int n, q;
+    cin >> n >> q;
+    
+    for (int i = 1; i <= n; ++i) {
+        parent[i] = i;
+        rank[i] = 1;
+        pq[i].push(i);
+    }
+    
+    for (int i = 0; i < q; ++i) {
+        int op, u, v;
+        cin >> op >> u >> v;
+        
+        if (op == 1) {
+            unite(u, v);
+        } else {
+            cout << getKthLargest(v, k) << '\n';
+        }
+    }
+    
+    return 0;
+}
+```
+
+### Explanation:
+1. **Initialization**:
+   - Initialize the parent array and rank array for union-find.
+   - Initialize a map `pq` where each key is the root of a component and the value is a priority queue containing all vertices in that component.
+
+2. **Find Operation**:
+   - Path compression is used to flatten the tree, making future queries faster.
+
+3. **Unite Operation**:
+   - Union by rank ensures that the tree remains balanced.
+   - Merge the priority queues of the two components and erase the old queue from the map.
+
+4. **Query Operation**:
+   - Find the root of the component containing the vertex.
+   - Retrieve the k-th largest element from the priority queue using a min-heap trick.
+
+This implementation ensures efficient handling of both types of queries within the given constraints.

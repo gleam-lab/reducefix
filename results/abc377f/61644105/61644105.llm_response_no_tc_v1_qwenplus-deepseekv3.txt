@@ -1,0 +1,163 @@
+To fix this code, we need to correctly calculate the number of safe squares where a new piece can be placed without being captured by any existing pieces. The original code had several issues, including incorrect handling of the grid dimensions and the way it counted the unsafe squares. Here’s the corrected approach:
+
+1. **Identify Unsafe Squares**: The unsafe squares are those that are either in the same row, column, or diagonal (both main and anti-diagonals) as any existing piece.
+2. **Calculate Total Safe Squares**: The total safe squares are the total squares minus the unsafe squares, plus the overlaps that were subtracted multiple times (using inclusion-exclusion principle).
+3. **Efficiency**: Given the constraints (N can be up to 1e9 and M up to 1e3), we need an efficient way to compute the unsafe squares without iterating through each square.
+
+### Approaches
+- **Rows and Columns**: For each existing piece, all squares in its row and column are unsafe.
+- **Diagonals**: For each existing piece, all squares on its two diagonals (i + j = constant or i - j = constant) are unsafe.
+- **Overlaps**: Some squares might be counted multiple times (e.g., a square that is in the same row and column of different pieces). We use the inclusion-exclusion principle to correct for these overlaps.
+- **Efficiency**: We use sets to store unique rows, columns, and diagonal constants to avoid redundant calculations.
+
+### Solution Code
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+typedef long long ll;
+
+int main() {
+    ll N, M;
+    cin >> N >> M;
+    
+    set<ll> rows, cols, diag1, diag2;
+    for (int i = 0; i < M; ++i) {
+        ll a, b;
+        cin >> a >> b;
+        rows.insert(a);
+        cols.insert(b);
+        diag1.insert(a - b);
+        diag2.insert(a + b);
+    }
+    
+    ll unsafe = 0;
+    
+    // Rows and columns
+    unsafe += N * rows.size() + N * cols.size();
+    
+    // Diagonals: a - b = constant and a + b = constant
+    for (auto d : diag1) {
+        // Calculate the number of squares in the diagonal a - b = d
+        if (d >= 0) {
+            unsafe += N - d;
+        } else {
+            unsafe += N + d;
+        }
+    }
+    
+    for (auto s : diag2) {
+        // Calculate the number of squares in the diagonal a + b = s
+        if (s <= N + 1) {
+            unsafe += s - 1;
+        } else {
+            unsafe += 2 * N - s + 1;
+        }
+    }
+    
+    // Overlaps: squares counted multiple times
+    // Rows and columns
+    ll overlap_rows_cols = rows.size() * cols.size();
+    unsafe -= overlap_rows_cols;
+    
+    // Rows and diagonals (a - b)
+    ll overlap_rows_diag1 = 0;
+    for (auto a : rows) {
+        for (auto d : diag1) {
+            ll b = a - d;
+            if (b >= 1 && b <= N) {
+                overlap_rows_diag1++;
+            }
+        }
+    }
+    unsafe -= overlap_rows_diag1;
+    
+    // Rows and diagonals (a + b)
+    ll overlap_rows_diag2 = 0;
+    for (auto a : rows) {
+        for (auto s : diag2) {
+            ll b = s - a;
+            if (b >= 1 && b <= N) {
+                overlap_rows_diag2++;
+            }
+        }
+    }
+    unsafe -= overlap_rows_diag2;
+    
+    // Columns and diagonals (a - b)
+    ll overlap_cols_diag1 = 0;
+    for (auto b : cols) {
+        for (auto d : diag1) {
+            ll a = d + b;
+            if (a >= 1 && a <= N) {
+                overlap_cols_diag1++;
+            }
+        }
+    }
+    unsafe -= overlap_cols_diag1;
+    
+    // Columns and diagonals (a + b)
+    ll overlap_cols_diag2 = 0;
+    for (auto b : cols) {
+        for (auto s : diag2) {
+            ll a = s - b;
+            if (a >= 1 && a <= N) {
+                overlap_cols_diag2++;
+            }
+        }
+    }
+    unsafe -= overlap_cols_diag2;
+    
+    // Diagonals (a - b) and (a + b)
+    ll overlap_diag1_diag2 = 0;
+    for (auto d : diag1) {
+        for (auto s : diag2) {
+            if ((s + d) % 2 != 0) continue;
+            ll a = (s + d) / 2;
+            ll b = (s - d) / 2;
+            if (a >= 1 && a <= N && b >= 1 && b <= N) {
+                overlap_diag1_diag2++;
+            }
+        }
+    }
+    unsafe -= overlap_diag1_diag2;
+    
+    // Triple overlaps: row, column, and either diagonal
+    ll triple_overlap = 0;
+    for (auto a : rows) {
+        for (auto b : cols) {
+            if (diag1.count(a - b) || diag2.count(a + b)) {
+                triple_overlap++;
+            }
+        }
+    }
+    unsafe += triple_overlap;
+    
+    // Quadruple overlap: row, column, and both diagonals
+    ll quadruple_overlap = 0;
+    for (auto a : rows) {
+        for (auto b : cols) {
+            if (diag1.count(a - b) && diag2.count(a + b)) {
+                quadruple_overlap++;
+            }
+        }
+    }
+    unsafe -= quadruple_overlap;
+    
+    // Total safe squares
+    ll total_squares = N * N;
+    ll safe_squares = total_squares - unsafe;
+    
+    cout << safe_squares << endl;
+    
+    return 0;
+}
+```
+
+### Explanation
+- **Unsafe Squares Calculation**: The code first calculates the number of squares in the same rows, columns, and diagonals as any existing piece. This is done by iterating through each piece and marking the corresponding rows, columns, and diagonals.
+- **Overlaps Handling**: The code then corrects for overlaps where a square might be in multiple unsafe categories (e.g., same row and column of different pieces) using the inclusion-exclusion principle. This involves subtracting overlaps between rows and columns, rows and diagonals, columns and diagonals, and between the diagonals themselves.
+- **Higher Order Overlaps**: The code also accounts for triple and quadruple overlaps where a square might be in the same row, column, and one or both diagonals of existing pieces.
+- **Final Safe Squares**: The total safe squares are then computed by subtracting the total unsafe squares from the total grid squares, ensuring all overlaps are correctly accounted for.
+
+This approach efficiently calculates the safe squares by leveraging set operations and inclusion-exclusion principles, making it suitable for large grid sizes.

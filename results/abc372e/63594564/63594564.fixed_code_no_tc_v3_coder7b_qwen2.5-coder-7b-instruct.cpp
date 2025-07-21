@@ -1,0 +1,57 @@
+#include "bits/stdc++.h"
+
+using namespace std;
+
+#define ff first
+#define ss second
+#define ll long long
+#define SZ(s) (int)s.size()
+
+int const N = 2e5 + 5;
+
+vector<vector<int>> adj(N);
+
+int par[N], sz[N];
+
+int find(int x) {
+    if(par[x] == x) return x;
+    return par[x] = find(par[x]);
+}
+
+void merge(int a, int b) {
+    a = find(a), b = find(b);
+    if(a == b) return;
+    if(sz[a] < sz[b]) swap(a, b);
+    adj[a].insert(adj[a].end(), adj[b].begin(), adj[b].end());
+    sort(adj[a].begin(), adj[a].end());
+    adj[a].resize(min((int)adj[a].size(), 10));
+    par[b] = a;
+    sz[a] += sz[b];
+    return;
+}
+
+signed main() {
+    ios_base::sync_with_stdio(false); cin.tie(nullptr);
+
+    int n, q;
+    cin >> n >> q;
+    for(int i = 1; i <= n; i++) {
+        par[i] = i;
+        sz[i] = 1;
+        adj[i].push_back(i);
+    }
+    while(q--) {
+        int t, a, b;
+        cin >> t >> a >> b;
+        if(t == 1) {
+            merge(a, b);
+        }
+        else {
+            a = find(a);
+            if(adj[a].size() < b) cout << -1 << '\n';
+            else cout << adj[a][b-1] << '\n';
+        }
+    }
+
+    return 0;
+}

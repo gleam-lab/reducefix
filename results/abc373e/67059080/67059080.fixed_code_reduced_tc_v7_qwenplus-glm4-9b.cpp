@@ -1,0 +1,40 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+using ll = long long;
+
+int main() {
+    int N, M, K;
+    cin >> N >> M >> K;
+    vector<ll> A(N);
+    for (ll &a : A) cin >> a;
+
+    // Calculate the number of votes each candidate needs to be guaranteed victory
+    vector<ll> needed(N);
+    ll total_votes = 0;
+    for (ll vote : A) total_votes += vote;
+
+    for (ll i = 0; i < N; ++i) {
+        ll votes_needed = M - 1; // To win, this candidate needs to have more votes than M-1 others
+        ll max_other_votes = M * A[i]; // Maximum votes others could get if the worst case
+
+        if (max_other_votes - A[i] > K - total_votes - A[i]) {
+            // If the candidate cannot even get the maximum votes they need with all remaining votes,
+            // then they cannot win regardless of the votes distribution.
+            needed[i] = -1;
+        } else {
+            // The candidate needs "M-1" more votes to guarantee victory if they receive as many additional votes as possible
+            needed[i] = votes_needed - (A[i] - max_other_votes + K - total_votes - A[i]);
+        }
+    }
+
+    // Output the results
+    for (ll vote : needed) {
+        cout << vote << ' ';
+    }
+    cout << '\n';
+
+    return 0;
+}

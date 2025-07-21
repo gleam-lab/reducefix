@@ -1,0 +1,96 @@
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+using i64 = long long;
+
+void solve() {
+    i64 N, M, K;
+    cin >> N >> M >> K;
+
+    vector<i64> A(N);
+    for (auto &x : A) cin >> x;
+
+    i64 remaining = K - accumulate(A.begin(), A.end());
+    if (remaining < 0) {
+        for (int i = 0; i < N; ++i) cout << -1 << " ";
+        cout << "\n";
+        return;
+    }
+
+    // Sort a copy of A to help determine vote thresholds
+    vector<i64> sortedA = A;
+    sort(sortedA.rbegin(), sortedA.rend());
+
+    vector<i64> prefix_sum(N + 1);
+    for (int i = 1; i <= N; ++i)
+        prefix_sum[i] = prefix_sum[i - 1] + sortedA[i - 1];
+
+    auto get_min_votes = [&](i64 candidate_vote) {
+        i64 low = 0, high = remaining, answer = -1;
+
+        while (low <= high) {
+            i64 mid = (low + high) / 2;
+            i64 total = candidate_vote + mid;
+
+            // Binary search to find how many candidates have more votes than `total`
+            int idx = upper_bound(sortedA.begin(), sortedA.end(), total, greater<>()) - sortedA.begin();
+
+            // We can allow at most M-1 candidates to have more votes
+            if (idx >= M) {
+                low = mid + 1;
+                continue;
+            }
+
+            // Need to increase this candidate's votes so that only fewer than M candidates have more votes
+            int required_positions = min(N, idx + M - idx - 1);
+            i64 sum_of_top_M_minus_1 = prefix_sum[idx + M - idx];
+            i64 needed = max(0LL, sum_of_top_M_minus_1 - (prefix_sum[idx] + mid));
+            if (needed <= remaining) {
+                answer = mid;
+                high = mid - 1;
+            } else {
+                low = mid + 1;
+            }
+        }
+
+        return answer;
+    };
+
+    vector<i64> result(N);
+    for (int i = 0; i < N; ++i) {
+        i64 total = A[i];
+        i64 low = 0, high = remaining, ans = -1;
+
+        while (low <= high) {
+            i64 mid = (low + high) / 2;
+            i64 current_with_boost = total + mid;
+
+            // Count how many candidates currently have strictly more votes than current_with_boost
+            int higher = 0;
+            for (int j = 0; j < N; ++j) {
+                if (i == j) continue;
+                if (A[j] > current_with_boost) higher++;
+            }
+
+            if (higher < M) {
+                ans = mid;
+                high = mid - 1;
+            } else {
+                low = mid + 1;
+            }
+        }
+
+        result[i] = ans;
+    }
+
+    for (auto x : result) cout << x << " ";
+    cout << "\n";
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    solve();
+    return 0;
+}
+```

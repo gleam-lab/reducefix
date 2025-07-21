@@ -1,0 +1,102 @@
+
+### Problem Analysis
+The problem involves managing an undirected graph with dynamic connectivity queries. Initially, the graph has no edges, and vertices are numbered from 1 to N. The task is to process a series of queries that either add edges between vertices or request the k-th largest connected vertex for a given vertex v.
+
+### Solution Strategy
+To efficiently manage the dynamic connectivity and queries, we can use the Union-Find (Disjoint Set Union, DSU) data structure. This structure will help in efficiently merging sets of connected vertices and finding the representative (or root) of any vertex. Additionally, for efficient k-th largest retrieval, we can augment the DSU to store the top k elements in each set.
+
+### Key Steps:
+1. **Initialization**: Initialize the Union-Find structure for N vertices.
+2. **Union Operation**: When adding an edge, use the Union-Find structure to merge the sets containing the two vertices.
+3. **Find Operation**: Update the structure with the top k elements when merging sets.
+4. **Query Handling**: For k-th largest queries, retrieve the set of the vertex v, and if its size is sufficient, determine the k-th largest element.
+
+### Code Explanation
+The provided code attempts to implement the above strategy but has logical errors and inefficiencies:
+- The Union-Find structure is not correctly implemented for path compression and union by rank.
+- The way elements are stored and retrieved for the k-th largest query is not efficient.
+
+### Revised Approach
+1. **Union-Find Structure**: Implement the Union-Find with path compression and union by size to keep the tree flat and operations efficient.
+2. **Efficient Storage**: For each node, store a list of the top k elements in the set it belongs to.
+3. **Query Execution**: For each type 2 query, use binary search on the list of connected vertices to find the k-th largest element.
+
+### Sample Code
+```cpp
+#include <iostream>
+#include <vector>
+#include <algorithm>
+
+using namespace std;
+
+const int MAX_N = 200005;
+const int MAX_K = 10;
+
+int parent[MAX_N];
+vector<int> ranks(MAX_N), elements[MAX_N], topK[MAX_N];
+
+void initialize(int n) {
+    fill(parent, parent + n + 1, -1);
+    for (int i = 1; i <= n; i++) {
+        ranks[i] = 0;
+        elements[i].push_back(i);
+    }
+}
+
+int find(int x) {
+    if (parent[x] == -1) return x;
+    parent[x] = find(parent[x]);
+    return parent[x];
+}
+
+void unionSets(int u, int v) {
+    int rootU = find(u);
+    int rootV = find(v);
+    if (rootU != rootV) {
+        if (ranks[rootU] > ranks[rootV]) {
+            parent[rootV] = rootU;
+            elements[rootU].insert(elements[rootU].end(), elements[rootV].begin(), elements[rootV].end());
+            elements[rootV].clear();
+        } else if (ranks[rootU] < ranks[rootV]) {
+            parent[rootU] = rootV;
+            elements[rootV].insert(elements[rootV].end(), elements[rootU].begin(), elements[rootU].end());
+            elements[rootU].clear();
+        } else {
+            parent[rootV] = rootU;
+            ranks[rootU]++;
+            elements[rootU].insert(elements[rootU].end(), elements[rootV].begin(), elements[rootV].end());
+            elements[rootV].clear();
+        }
+    }
+}
+
+int kthLargest(int v, int k) {
+    int rootV = find(v);
+    if (k > topK[rootV].size()) return -1;
+    return topK[rootV][k - 1];
+}
+
+int main() {
+    int n, q;
+    cin >> n >> q;
+    initialize(n);
+
+    while (q--) {
+        int type;
+        cin >> type;
+        if (type == 1) {
+            int u, v;
+            cin >> u >> v;
+            unionSets(u, v);
+        } else {
+            int v, k;
+            cin >> v >> k;
+            cout << kthLargest(v, k) << endl;
+        }
+    }
+
+    return 0;
+}
+```
+
+This code initializes the Union-Find structure, processes union operations to merge sets, and handles queries to find the k-th largest element among the connections. It uses path compression and union by size to keep the Union-Find operations efficient.

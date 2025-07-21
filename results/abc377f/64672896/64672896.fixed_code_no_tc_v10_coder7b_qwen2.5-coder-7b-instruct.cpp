@@ -1,0 +1,34 @@
+#include<bits/stdc++.h>
+using namespace std;
+using i64 = long long;
+
+int main() {
+    ios::sync_with_stdio(false); cin.tie(nullptr);
+
+    i64 N, M; cin >> N >> M;
+    vector<pair<int, int>> pieces(M);
+    set<int> sums, diffs;
+    for (int i = 0; i < M; ++i) {
+        cin >> pieces[i].first >> pieces[i].second;
+        sums.insert(pieces[i].first + pieces[i].second);
+        diffs.insert(pieces[i].first - pieces[i].second);
+    }
+
+    i64 ans = 0;
+    for (int i = 1; i <= N; ++i) {
+        for (int j = 1; j <= N; ++j) {
+            bool can_place = true;
+            if (sums.find(i + j) != sums.end()) can_place = false;
+            if (diffs.find(i - j) != diffs.end()) can_place = false;
+            for (int k = 1; k <= N; ++k) {
+                if (pieces[k-1].first == i && pieces[k-1].second != j) can_place = false;
+                if (pieces[k-1].second == j && pieces[k-1].first != i) can_place = false;
+            }
+            if (can_place) ++ans;
+        }
+    }
+
+    cout << ans << '\n';
+
+    return 0;
+}

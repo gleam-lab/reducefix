@@ -1,0 +1,120 @@
+#include<bits/stdc++.h>
+
+using namespace std;
+using ll = long long;
+
+int main() {
+    ios_base::sync_with_stdio(false), cin.tie(nullptr);
+    
+    ll N, M;
+    cin >> N >> M;
+    
+    set<ll> rows, cols, diag1, diag2;
+    set<pair<ll, ll>> pieces;
+    
+    for (int i = 0; i < M; ++i) {
+        ll a, b;
+        cin >> a >> b;
+        pieces.insert({a, b});
+        rows.insert(a);
+        cols.insert(b);
+        diag1.insert(a - b);
+        diag2.insert(a + b);
+    }
+    
+    ll attacked = 0;
+    
+    // Rows and columns are straightforward
+    attacked += rows.size() * N;
+    attacked += cols.size() * N;
+    
+    // Diagonals: for each distinct a - b = k, the number of squares is N - abs(k)
+    for (auto k : diag1) {
+        ll cnt = N - abs(k);
+        if (k >= 0) {
+            cnt = N - k;
+        } else {
+            cnt = N + k;
+        }
+        attacked += cnt;
+    }
+    
+    // For each distinct a + b = k, the number of squares is N - abs(k - (N + 1))
+    for (auto k : diag2) {
+        ll cnt;
+        if (k <= N + 1) {
+            cnt = k - 1;
+        } else {
+            cnt = 2 * N - k + 1;
+        }
+        attacked += cnt;
+    }
+    
+    // Now, apply inclusion-exclusion for overlaps among rows, cols, diag1, diag2
+    // Subtract intersections that were counted twice
+    
+    // Rows and columns: each intersection is (r, c) for r in rows and c in cols
+    attacked -= rows.size() * cols.size();
+    
+    // Rows and diag1: for each row r and diag1 k, (r, r - k) must be in the grid
+    for (auto r : rows) {
+        for (auto k : diag1) {
+            ll c = r - k;
+            if (c >= 1 && c <= N) {
+                attacked--;
+            }
+        }
+    }
+    
+    // Rows and diag2: for each row r and diag2 k, (r, k - r) must be in the grid
+    for (auto r : rows) {
+        for (auto k : diag2) {
+            ll c = k - r;
+            if (c >= 1 && c <= N) {
+                attacked--;
+            }
+        }
+    }
+    
+    // Columns and diag1: for each column c and diag1 k, (c + k, c) must be in the grid
+    for (auto c : cols) {
+        for (auto k : diag1) {
+            ll r = c + k;
+            if (r >= 1 && r <= N) {
+                attacked--;
+            }
+        }
+    }
+    
+    // Columns and diag2: for each column c and diag2 k, (k - c, c) must be in the grid
+    for (auto c : cols) {
+        for (auto k : diag2) {
+            ll r = k - c;
+            if (r >= 1 && r <= N) {
+                attacked--;
+            }
+        }
+    }
+    
+    // Diag1 and diag2: intersection points ( (k1 + k2)/2 , (k2 - k1)/2 ) must be integers and within grid
+    for (auto k1 : diag1) {
+        for (auto k2 : diag2) {
+            if ((k1 + k2) % 2 != 0) continue;
+            ll r = (k1 + k2) / 2;
+            ll c = (k2 - k1) / 2;
+            if (r >= 1 && r <= N && c >= 1 && c <= N) {
+                attacked++;
+            }
+        }
+    }
+    
+    // Finally, add back the squares that are occupied by pieces (since they were subtracted multiple times)
+    attacked += M;
+    
+    ll total_squares = N * N;
+    ll safe_squares = total_squares - attacked;
+    
+    cout << safe_squares << "\n";
+    
+    return 0;
+}

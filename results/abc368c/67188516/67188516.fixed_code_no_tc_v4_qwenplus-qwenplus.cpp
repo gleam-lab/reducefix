@@ -1,0 +1,58 @@
+#include <iostream>
+#include <vector>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int N;
+    cin >> N;
+    vector<long long> H(N);
+    for (int i = 0; i < N; ++i) {
+        cin >> H[i];
+    }
+
+    long long T = 0;
+    long long extra_bullets[3] = {0}; // bullets at positions 0,1,2 (mod 3)
+
+    for (int i = 0; i < N; ++i) {
+        // Apply the extra bullets to current enemy
+        long long h = H[i];
+        for (int j = 0; j < 3 && h > 0; ++j) {
+            if (extra_bullets[j] > 0) {
+                h -= extra_bullets[j];
+                extra_bullets[j] = 0;
+            }
+        }
+
+        if (h <= 0) continue;
+
+        // Calculate how many full cycles of 3 attacks are needed
+        long long full_cycles = h / 5;
+        T += full_cycles * 3;
+
+        // Update remaining bullets after full cycles
+        extra_bullets[0] += full_cycles;
+        extra_bullets[1] += full_cycles;
+        extra_bullets[2] += full_cycles;
+
+        // Handle remainder attacks
+        long long rem = h % 5;
+
+        for (long long r = 0; r < rem; ++r) {
+            T++;
+            if (T % 3 == 0) {
+                extra_bullets[2]++;
+            } else if (T % 3 == 1) {
+                extra_bullets[0]++;
+            } else {
+                extra_bullets[1]++;
+            }
+        }
+    }
+
+    cout << T << endl;
+
+    return 0;
+}

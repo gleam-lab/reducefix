@@ -1,0 +1,129 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+
+int main() {
+    long long N;
+    int M;
+    cin >> N >> M;
+
+    set<long long> rows, cols, diag1, diag2;
+
+    for (int i = 0; i < M; ++i) {
+        long long a, b;
+        cin >> a >> b;
+        rows.insert(a);
+        cols.insert(b);
+        diag1.insert(a + b);
+        diag2.insert(a - b);
+    }
+
+    // Total squares not attacked by any piece
+    long long total = N * N;
+
+    // Subtract squares attacked in rows and columns
+    total -= (long long)rows.size() * N;
+    total -= (long long)cols.size() * N;
+
+    // Add back overlap of rows and columns
+    total += (long long)rows.size() * cols.size();
+
+    // Subtract squares attacked by diagonal 1: a + b
+    for (auto d : diag1) {
+        long long count;
+        if (d <= N + 1) {
+            count = d - 1;
+        } else {
+            count = 2 * N + 1 - d;
+        }
+        total -= count;
+    }
+
+    // Subtract squares attacked by diagonal 2: a - b
+    for (auto d : diag2) {
+        long long count;
+        if (d < 0) {
+            count = N + d;
+        } else {
+            count = N - d;
+        }
+        total -= count;
+    }
+
+    // Add back intersections:
+    // Row & Diag1
+    for (auto r : rows) {
+        for (auto d : diag1) {
+            long long c = d - r;
+            if (1 <= c && c <= N) {
+                total += 1;
+            }
+        }
+    }
+
+    // Row & Diag2
+    for (auto r : rows) {
+        for (auto d : diag2) {
+            long long c = r - d;
+            if (1 <= c && c <= N) {
+                total += 1;
+            }
+        }
+    }
+
+    // Col & Diag2
+    for (auto c : cols) {
+        for (auto d : diag2) {
+            long long r = d + c;
+            if (1 <= r && r <= N) {
+                total += 1;
+            }
+        }
+    }
+
+    // Col & Diag1
+    for (auto c : cols) {
+        for (auto d : diag1) {
+            long long r = d - c;
+            if (1 <= r && r <= N) {
+                total += 1;
+            }
+        }
+    }
+
+    // Diag1 & Diag2 intersection
+    for (auto d1 : diag1) {
+        for (auto d2 : diag2) {
+            long long r = (d1 + d2) / 2;
+            long long c = (d1 - d2) / 2;
+            if (r >= 1 && r <= N && c >= 1 && c <= N) {
+                total += 1;
+            }
+        }
+    }
+
+    // Subtract triple overlaps
+    for (auto r : rows) {
+        for (auto c : cols) {
+            auto d1 = r + c;
+            auto d2 = r - c;
+            if (diag1.find(d1) != diag1.end()) total -= 1;
+            if (diag2.find(d2) != diag2.end()) total -= 1;
+        }
+    }
+
+    // Quadruple overlaps (row, col, diag1, diag2)
+    for (auto r : rows) {
+        for (auto c : cols) {
+            auto d1 = r + c;
+            auto d2 = r - c;
+            if (diag1.find(d1) != diag1.end() && diag2.find(d2) != diag2.end()) {
+                total += 1;
+            }
+        }
+    }
+
+    cout << total - M << endl;  // Exclude squares already occupied
+
+    return 0;
+}

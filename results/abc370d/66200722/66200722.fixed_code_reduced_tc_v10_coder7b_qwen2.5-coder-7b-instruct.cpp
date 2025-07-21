@@ -1,0 +1,76 @@
+#include <iostream>
+#include <vector>
+#include <map>
+#include <algorithm>
+
+using namespace std;
+
+const int MAXN = 400005;
+
+int main() {
+    int h, w, q;
+    cin >> h >> w >> q;
+
+    vector<map<int, int>> s(h), t(w);
+    int b = 8;
+    map<int, int> uf(b * q);
+    int idx = 0;
+    vector<int> mini(b * q, 1e9), maxi(b * q, -1);
+
+    auto ins = [&](map<int, int> &mp, int c) {
+        mp[c] = idx;
+        mini[idx] = maxi[idx] = c;
+        if (mp.count(c - 1)) {
+            int x = uf.lower_bound(mp[c - 1])->second;
+            int lead = uf.merge(x, idx);
+            chmin(mini[lead], min(mini[idx], mini[x]));
+            chmax(maxi[lead], max(maxi[idx], maxi[x]));
+        }
+        if (mp.count(c + 1)) {
+            int x = uf.upper_bound(mp[c + 1])->second;
+            int lead = uf.merge(x, idx);
+            chmin(mini[lead], min(mini[idx], mini[x]));
+            chmax(maxi[lead], max(maxi[idx], maxi[x]));
+        }
+        ++idx;
+    };
+
+    auto merge = [&](map<int, int> &mp, int c) {
+        int x = uf.find(c)->second;
+        int c2 = mini[x] - 1;
+        if (c2 >= 0) {
+            ins(mp, c2);
+        }
+        c2 = maxi[x] + 1;
+        if (c2 < w) {
+            ins(mp, c2);
+        }
+    };
+
+    while (q--) {
+        int r, c;
+        cin >> r >> c;
+        --r, --c;
+
+        if (!s[r].count(c)) {
+            ins(s[r], c);
+            ins(t[c], r);
+            continue;
+        }
+
+        merge(s[r], c);
+        merge(t[c], r);
+
+        swap(r, c);
+        swap(h, w);
+        swap(s, t);
+    }
+
+    long long ans = static_cast<long long>(h) * w;
+    for (const auto &row : s) {
+        ans -= row.size();
+    }
+    cout << ans << endl;
+
+    return 0;
+}

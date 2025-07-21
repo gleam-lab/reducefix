@@ -1,0 +1,31 @@
+#include <iostream>
+#include <vector>
+using namespace std;
+
+int main() {
+    int n;
+    cin >> n;
+    vector<long long> h(n);
+    for (int i = 0; i < n; ++i) {
+        cin >> h[i];
+    }
+
+    long long ans = 0;
+    for (long long health : h) {
+        if (health % 3 == 0) {
+            ans += health / 3;
+        } else {
+            ans += (health / 3) + 1;
+            health -= (health / 3) * 3;
+            if (health % 3 == 0) {
+                ans += health / 3;
+            } else {
+                ans += (health / 3) + 1;
+            }
+        }
+    }
+
+    cout << ans << endl;
+
+    return 0;
+}

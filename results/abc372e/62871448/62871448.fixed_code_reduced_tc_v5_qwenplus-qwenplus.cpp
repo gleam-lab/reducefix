@@ -1,0 +1,73 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+const int MAXN = 2e5 + 5;
+const int TOP_K = 10;
+
+int parent[MAXN];
+set<int, greater<int>> component[MAXN];
+
+bool initialized[MAXN];
+
+int find(int x) {
+    if (parent[x] != x) {
+        parent[x] = find(parent[x]);
+    }
+    return parent[x];
+}
+
+void unite(int x, int y) {
+    int rootX = find(x);
+    int rootY = find(y);
+    if (rootX == rootY) return;
+
+    // Always merge smaller set into larger one
+    if (component[rootX].size() < component[rootY].size()) {
+        swap(rootX, rootY);
+    }
+
+    // Merge the elements of rootY into rootX
+    for (int val : component[rootY]) {
+        component[rootX].insert(val);
+    }
+    parent[rootY] = rootX;
+    // Clear the smaller component
+    component[rootY].clear();
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int N, Q;
+    cin >> N >> Q;
+
+    // Initialize DSU with sets
+    for (int i = 1; i <= N; ++i) {
+        parent[i] = i;
+        component[i].insert(i);
+    }
+
+    while (Q--) {
+        int type;
+        cin >> type;
+        if (type == 1) {
+            int u, v;
+            cin >> u >> v;
+            unite(u, v);
+        } else if (type == 2) {
+            int v, k;
+            cin >> v >> k;
+            int root = find(v);
+            if (component[root].size() < k) {
+                cout << -1 << '\n';
+            } else {
+                auto it = component[root].begin();
+                advance(it, k - 1);
+                cout << *it << '\n';
+            }
+        }
+    }
+
+    return 0;
+}

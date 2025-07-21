@@ -1,0 +1,62 @@
+To fix this code, we need to ensure that we correctly compute the minimum possible value of the expression \((\max_{i \in S} A_i) \times (\sum_{i \in S} B_i)\) for a subset \(S\) of size \(K\). The issue in the original code is that it sorts the pairs \((A_i, B_i)\) by \(A_i\) and then greedily selects the largest \(B_i\) values when sliding the window, which may not always yield the correct minimum value. 
+
+### Approaches
+1. **Sorting and Sliding Window**: First, sort the elements based on \(A_i\) in ascending order. This allows us to consider subsets where the maximum \(A_i\) is fixed as we slide through the sorted list.
+2. **Maintaining Top K-1 B Values**: For each element \(A_i\) (starting from the \(K\)-th element), the maximum \(A_i\) in the subset \(S\) is \(A_i\). The goal is to select the \(K-1\) smallest \(B_i\) values from the first \(i-1\) elements to minimize the sum. This can be efficiently managed using a max-heap (or a multiset) to keep track of the largest \(B_i\) values, replacing them with smaller values as we iterate.
+
+### Solution Code
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+using pint = pair<int, int>;
+using pll = pair<ll, ll>;
+
+#define rep(i, a, b) for (ll i = (a); i < (b); i++)
+#define rrep(i, a, b) for (ll i = (a); i >= (b); i--)
+#define all(v) (v).begin(), (v).end()
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    ll T;
+    cin >> T;
+    while (T--) {
+        ll N, K;
+        cin >> N >> K;
+        vector<pll> pairs(N);
+        rep(i, 0, N) cin >> pairs[i].first;
+        rep(i, 0, N) cin >> pairs[i].second;
+        sort(all(pairs));
+        
+        priority_queue<ll> max_heap;
+        ll sum = 0;
+        rep(i, 0, K - 1) {
+            max_heap.push(pairs[i].second);
+            sum += pairs[i].second;
+        }
+        
+        ll ans = LLONG_MAX;
+        rep(i, K - 1, N) {
+            ll current_sum = sum + pairs[i].second;
+            ans = min(ans, pairs[i].first * current_sum);
+            if (!max_heap.empty() && pairs[i].second < max_heap.top()) {
+                sum -= max_heap.top();
+                max_heap.pop();
+                sum += pairs[i].second;
+                max_heap.push(pairs[i].second);
+            }
+        }
+        cout << ans << '\n';
+    }
+    return 0;
+}
+```
+
+### Explanation
+1. **Sorting**: The pairs \((A_i, B_i)\) are sorted by \(A_i\) to facilitate processing in ascending order.
+2. **Heap Management**: A max-heap is used to maintain the largest \(B_i\) values encountered so far. The sum of these values is tracked to compute the product with the current \(A_i\) (which is the maximum \(A_i\) in the subset \(S\) of size \(K\)).
+3. **Sliding Window**: For each element \(A_i\) from the \(K\)-th element onwards, the current subset includes \(A_i\) and the \(K-1\) smallest \(B_i\) values from the prior elements. The heap ensures that we always have the smallest possible sum of \(B_i\) values for the current \(A_i\), thus minimizing the product.
+4. **Result Calculation**: For each \(A_i\), the product of \(A_i\) and the sum of the corresponding \(B_i\) values is computed, and the minimum value encountered is kept as the result.
+
+This approach efficiently minimizes the expression by leveraging sorting and a priority queue to manage the necessary subset sums, ensuring optimal performance even for large input sizes.

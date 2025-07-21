@@ -1,0 +1,30 @@
+#include <iostream>
+#include <cmath>
+#include <vector>
+
+using namespace std;
+
+int main() {
+    int n;
+    cin >> n;
+    
+    vector<pair<int, int>> points;
+    int x, y;
+    for (int i = 0; i < n; i++) {
+        cin >> x >> y;
+        points.emplace_back(x, y);
+    }
+    
+    double total_cost = 0.0;
+    int px = 0, py = 0;
+    for (const auto& p : points) {
+        total_cost += hypot(px - p.first, py - p.second);
+        px = p.first;
+        py = p.second;
+    }
+    
+    total_cost += hypot(px, py); // Return to the origin
+    printf("%.10f\n", total_cost);
+    
+    return 0;
+}

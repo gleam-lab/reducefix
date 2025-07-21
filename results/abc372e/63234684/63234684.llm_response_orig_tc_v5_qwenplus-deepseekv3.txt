@@ -1,0 +1,85 @@
+To fix this code, we need to address the issue where the program incorrectly returns `-1` when it should be returning the k-th largest vertex number among the vertices connected to a given vertex. The problem likely stems from how the connected components are being managed and how the k-th largest element is being retrieved.
+
+### Approaches
+1. **Union-Find Data Structure**: This structure helps efficiently manage and merge sets of connected vertices.
+2. **Tracking Connected Components**: For each connected component, maintain a sorted list of vertex numbers to quickly access the k-th largest element.
+3. **Efficient Merging**: When merging two components, ensure the combined list remains sorted and only keeps the top 10 largest elements to optimize performance.
+
+### Solution Code
+```cpp
+#include<bits/stdc++.h>
+using namespace std;
+using ll = long long;
+#define rep(i,n) for(int i = 0;i<n;i++)
+using P = pair<int,int>;
+using T = tuple<int,int,int>;
+
+struct Union_Find {
+    vector<int> sz, par;
+    vector<vector<int>> uni;
+
+    Union_Find(int n) {
+        sz.resize(n,1);
+        par.resize(n,-1);
+        uni.resize(n);
+        rep(i,n) uni[i].emplace_back(i);
+    }
+
+    int root(int v) {
+        if(par[v] == -1) return v;
+        else return par[v] = root(par[v]);
+    }
+
+    bool issame(int x, int y) {
+        return root(x) == root(y);
+    }
+
+    void merge(int x, int y) {
+        x = root(x), y = root(y);
+        if(x == y) return;
+        if(sz[x] < sz[y]) swap(x,y);
+        par[y] = x;
+        sz[x] += sz[y];
+        
+        // Merge the sorted lists
+        vector<int> merged;
+        merge(uni[x].rbegin(), uni[x].rend(), uni[y].rbegin(), uni[y].rend(), back_inserter(merged), greater<int>());
+        if(merged.size() > 10) merged.resize(10);
+        uni[x] = merged;
+    }
+};
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int n, q;
+    cin >> n >> q;
+    Union_Find uf(n);
+
+    rep(i,q) {
+        int ty, a, b;
+        cin >> ty >> a >> b;
+        a--, b--;
+        if(ty == 1) {
+            if(!uf.issame(a, b))
+                uf.merge(a, b);
+        } else {
+            int root = uf.root(a);
+            if(uf.uni[root].size() < b+1) {
+                cout << -1 << '\n';
+            } else {
+                cout << uf.uni[root][b] + 1 << '\n';
+            }
+        }
+    }
+}
+```
+
+### Explanation
+- **Union-Find Data Structure**: This structure is used to manage the connected components of the graph efficiently. The `root` function finds the root of a vertex with path compression, and the `merge` function unions two sets by size.
+- **Tracking Connected Components**: For each component, we maintain a sorted list (in descending order) of vertex numbers. This allows us to quickly access the k-th largest vertex by simply indexing into the list.
+- **Efficient Merging**: When two components are merged, their vertex lists are combined into a single sorted list, keeping only the top 10 elements to ensure the operations remain efficient. This is done using the `merge` function from the C++ standard library, which efficiently merges two sorted ranges.
+- **Query Handling**: For type 2 queries, we check if the connected component of the queried vertex has at least `b+1` elements (since the list is 0-indexed). If not, we return `-1`. Otherwise, we return the `b`-th element (0-indexed) from the sorted list, adjusted by +1 to match the vertex numbering.
+
+This approach ensures that the operations are efficient and the solution can handle the constraints effectively.

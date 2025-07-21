@@ -1,0 +1,35 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+typedef long long ll;
+const int MAXN = 4e5 + 10;
+
+int main() {
+    ll n, m, ans = 0;
+    scanf("%lld %lld", &n, &m);
+    vector<ll> a(n), prefix_sum(2 * n + 1), count(m);
+
+    // Read input into array a and compute prefix sums modulo m
+    for (ll i = 0; i < n; ++i) {
+        scanf("%lld", &a[i]);
+        prefix_sum[i + 1] = (prefix_sum[i] + a[i]) % m;
+        prefix_sum[n + i + 1] = (prefix_sum[n + i] + a[i]) % m;
+    }
+
+    // Count occurrences of each prefix sum
+    for (ll i = 1; i <= 2 * n; ++i) {
+        count[prefix_sum[i]]++;
+    }
+
+    // Calculate the number of valid subarrays with sum divisible by m
+    for (ll i = 1; i <= 2 * n; ++i) {
+        ans += count[prefix_sum[i]];
+        count[prefix_sum[i]]--;
+    }
+
+    // Each subarray is counted twice except those that start from the beginning
+    ans /= 2;
+
+    printf("%lld\n", ans);
+    return 0;
+}

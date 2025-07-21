@@ -1,0 +1,82 @@
+
+The problem requires us to manage an undirected graph with `N` vertices and `0` edges, processing a series of `Q` queries. The queries can either add an edge between two vertices or ask for the `k`-th largest connected vertex of a given vertex.
+
+Here's the analysis and steps to solve the problem correctly:
+
+### Key Concepts:
+1. **Union-Find Data Structure**: This is used to manage the connected components of the graph. It allows us to efficiently find the root of any vertex and unite two components.
+2. **Rank/Size Optimization**: When uniting two components, we want to attach the smaller tree under the root of the larger tree to keep the tree shallow.
+3. **Path Compression**: This technique helps flatten the structure of the tree by making nodes point directly to the root, thus improving the efficiency of find operations.
+4. **Maintaining a List of Vertices in Each Component**: This helps in efficiently querying the `k`-th largest vertex in a connected component.
+
+### Steps to Solve the Problem:
+1. **Initialize the Union-Find Structure**: Each vertex is its own parent initially, and connected components are empty.
+2. **Process Type 1 Queries**: When an edge is added, we unite the components of the two vertices. To maintain the list of vertices in each component, we can use a vector.
+3. **Process Type 2 Queries**: To find the `k`-th largest vertex of a given vertex, we need to first ensure that it's the root of its component. Then, we can sort the list of vertices in the component and return the `(size - k)`-th element from the end.
+4. **Handle Edge Cases**: Ensure that if a vertex does not have at least `k` connected vertices, we return `-1`.
+
+### C++ Code Implementation:
+```cpp
+#include <iostream>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+const int MAXN = 200005;
+
+int parent[MAXN];
+vector<int> vertices[MAXN]; // To store vertices in each component
+
+// Find the root of the component containing x, with path compression
+int find(int x) {
+    if (parent[x] != x) {
+        parent[x] = find(parent[x]);
+    }
+    return parent[x];
+}
+
+// Unite the components containing x and y
+void unite(int x, int y) {
+    int rootX = find(x);
+    int rootY = find(y);
+    if (rootX != rootY) {
+        parent[rootY] = rootX;
+        vertices[rootX].insert(vertices[rootX].end(), vertices[rootY].begin(), vertices[rootY].end());
+        sort(vertices[rootX].rbegin(), vertices[rootX].rend()); // Keep the vertices sorted
+    }
+}
+
+int main() {
+    int n, q;
+    cin >> n >> q;
+
+    // Initialize parent arrays and union-find structure
+    for (int i = 1; i <= n; i++) {
+        parent[i] = i;
+        vertices[i].push_back(i);
+    }
+
+    while (q--) {
+        int op, v, k;
+        cin >> op >> v >> k;
+
+        if (op == 1) { // Add edge
+            v--;
+            int u = v + 1; // Convert to 1-based index
+            unite(u, v);
+        } else if (op == 2) { // Query k-th largest vertex
+            v--;
+            int rootV = find(v);
+            if (vertices[rootV].size() < k) {
+                cout << -1 << endl;
+            } else {
+                cout << vertices[rootV][k - 1] << endl;
+            }
+        }
+    }
+
+    return 0;
+}
+```
+
+This code initializes the union-find structure, processes each query, and handles both types of queries as described. It also ensures that the vertices are kept sorted in each component, allowing for efficient `k`-th largest queries.

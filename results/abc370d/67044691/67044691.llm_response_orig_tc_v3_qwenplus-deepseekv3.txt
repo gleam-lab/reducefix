@@ -1,0 +1,97 @@
+To fix this code, we need to correctly simulate the bomb placement and destruction process as described in the problem. The initial approach attempted to track walls in sets for each row and column, but it had flaws in handling the destruction of walls when no wall was present at the bomb's location. The key issue was that the original code didn't correctly identify the first walls in the four directions when the bomb's cell was empty.
+
+### Approaches
+1. **Data Structures**: Use sets to efficiently track wall positions in each row and column. This allows quick lookups and deletions.
+2. **Bomb Placement Handling**:
+   - If there's a wall at the bomb's location, destroy it immediately.
+   - If there's no wall, find the first walls in the four cardinal directions (up, down, left, right) from the bomb's location and destroy them.
+3. **Efficient Lookups**: Utilize set operations (upper_bound and lower_bound) to quickly find the nearest walls in each direction.
+
+### Solution Code
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int H, W, Q;
+    cin >> H >> W >> Q;
+
+    vector<set<int>> row_walls(H);
+    vector<set<int>> col_walls(W);
+
+    // Initialize all walls as present
+    for (int i = 0; i < H; ++i) {
+        for (int j = 0; j < W; ++j) {
+            row_walls[i].insert(j);
+            col_walls[j].insert(i);
+        }
+    }
+
+    while (Q--) {
+        int R, C;
+        cin >> R >> C;
+        R--; C--;
+
+        if (row_walls[R].count(C)) {
+            // Destroy the wall at (R, C)
+            row_walls[R].erase(C);
+            col_walls[C].erase(R);
+        } else {
+            // Destroy the first walls in four directions
+            // Up
+            auto it_up = col_walls[C].lower_bound(R);
+            if (it_up != col_walls[C].begin()) {
+                --it_up;
+                int r = *it_up;
+                row_walls[r].erase(C);
+                col_walls[C].erase(r);
+            }
+
+            // Down
+            auto it_down = col_walls[C].upper_bound(R);
+            if (it_down != col_walls[C].end()) {
+                int r = *it_down;
+                row_walls[r].erase(C);
+                col_walls[C].erase(r);
+            }
+
+            // Left
+            auto it_left = row_walls[R].lower_bound(C);
+            if (it_left != row_walls[R].begin()) {
+                --it_left;
+                int c = *it_left;
+                row_walls[R].erase(c);
+                col_walls[c].erase(R);
+            }
+
+            // Right
+            auto it_right = row_walls[R].upper_bound(C);
+            if (it_right != row_walls[R].end()) {
+                int c = *it_right;
+                row_walls[R].erase(c);
+                col_walls[c].erase(R);
+            }
+        }
+    }
+
+    int remaining = 0;
+    for (int i = 0; i < H; ++i) {
+        remaining += row_walls[i].size();
+    }
+    cout << remaining << '\n';
+
+    return 0;
+}
+```
+
+### Explanation
+1. **Initialization**: The code initializes sets for each row and column to keep track of the walls present. Initially, all cells have walls.
+2. **Query Processing**:
+   - For each query, if a wall exists at the specified location, it is removed from the corresponding row and column sets.
+   - If no wall exists, the code searches for the nearest walls in the four directions (up, down, left, right) using set operations. The first walls found in each direction are removed from the sets.
+3. **Result Calculation**: After processing all queries, the total number of remaining walls is counted by summing the sizes of all row sets, which still contain wall positions.
+
+This approach efficiently handles wall destruction and lookups using set operations, ensuring optimal performance even for large grid sizes.

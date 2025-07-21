@@ -1,0 +1,46 @@
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+#define rep(i, n) for (ll(i) = 0; (i) < (n); ++(i))
+#define drep(i, n) for (ll(i) = (n) - 1; (i) >= 0; --(i))
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int n;
+    cin >> n;
+    vector<ll> a(n);
+    for (int i = 0; i < n; ++i) {
+        cin >> a[i];
+    }
+
+    if (n == 1) {
+        cout << a[0] << '\n';
+        return 0;
+    } else if (n == 2) {
+        cout << a[0] + 2 * a[1] << '\n';
+        return 0;
+    }
+
+    // dp_odd[i]: max experience ending at i with odd number of catches so far
+    // dp_even[i]: max experience ending at i with even number of catches so far
+    vector<ll> dp_odd(n), dp_even(n);
+
+    dp_odd[0] = a[0];
+    dp_even[0] = 0;
+
+    dp_odd[1] = a[1]; // can't catch two in a row, so just current
+    dp_even[1] = a[0] + 2 * a[1]; // previous and current
+
+    for (int i = 2; i < n; ++i) {
+        // If we caught odd times before, adding current makes it even
+        dp_even[i] = max(dp_even[i - 2] + a[i], dp_odd[i - 1] + 2 * a[i]);
+        // If we caught even times before, adding current makes it odd
+        dp_odd[i] = max(dp_odd[i - 2] + a[i], dp_even[i - 1] + 2 * a[i]);
+    }
+
+    cout << max(dp_odd[n - 1], dp_even[n - 1]) << '\n';
+
+    return 0;
+}

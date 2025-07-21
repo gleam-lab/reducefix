@@ -1,0 +1,90 @@
+To solve this problem efficiently, we need to handle both adding edges and querying the k-th largest vertex connected to a specific vertex. We can use a combination of Disjoint Set Union (DSU) and a multiset to achieve this.
+
+Here's the corrected C++ code that addresses all the issues mentioned:
+
+```cpp
+#include<bits/stdc++.h>
+using namespace std;
+
+const int MAXN = 2e5 + 5;
+const int MAXQ = 2e5 + 5;
+
+vector<int> parent(MAXN), rank(MAXN), size(MAXN);
+multiset<int> connections[MAXN];
+
+void init(int n) {
+    iota(parent.begin(), parent.end(), 0);
+    fill(rank.begin(), rank.end(), 0);
+    fill(size.begin(), size.end(), 1);
+}
+
+int find(int x) {
+    if (parent[x] != x) {
+        return parent[x] = find(parent[x]);
+    }
+    return x;
+}
+
+void unite(int x, int y) {
+    x = find(x);
+    y = find(y);
+    if (x == y) return;
+    
+    if (rank[x] > rank[y]) {
+        parent[y] = x;
+        size[x] += size[y];
+        connections[x].insert(connections[y].begin(), connections[y].end());
+        connections[x].erase(connections[x].find(size[y]));
+        connections[x].insert(size[x]);
+    } else {
+        parent[x] = y;
+        size[y] += size[x];
+        connections[y].insert(connections[x].begin(), connections[x].end());
+        connections[y].erase(connections[y].find(size[x]));
+        connections[y].insert(size[y]);
+        if (rank[x] == rank[y]) rank[y]++;
+    }
+}
+
+int getKthLargest(int node, int k) {
+    node = find(node);
+    auto it = connections[node].upper_bound(k);
+    if (it == connections[node].begin()) return -1;
+    it--;
+    return *it;
+}
+
+int main() {
+    ios::sync_with_stdio(false); cin.tie(nullptr);
+
+    int n, q;
+    cin >> n >> q;
+    init(n);
+
+    while (q--) {
+        int type, u, v, k;
+        cin >> type;
+        if (type == 1) {
+            cin >> u >> v;
+            unite(u, v);
+        } else if (type == 2) {
+            cin >> u >> k;
+            cout << getKthLargest(u, k) << '\n';
+        }
+    }
+
+    return 0;
+}
+```
+
+### Explanation:
+1. **Initialization**: We initialize the DSU structure with each node being its own parent and rank and size set to 1. We also initialize a multiset for each node to store the sizes of connected components.
+
+2. **Union-Find Operations**:
+   - `find`: Path compression to find the root of a node.
+   - `unite`: Union operation that merges two sets. It uses union by rank and size to keep the tree flat and balanced.
+
+3. **Querying K-th Largest Element**:
+   - `getKthLargest`: This function finds the k-th largest element connected to a node. It uses the upper bound to find the correct position and returns the value at that position.
+
+This approach ensures efficient handling of both operations and avoids the issues seen in the original code. The use of DSU and multiset allows us to manage the connectivity and query requirements effectively within the given constraints.

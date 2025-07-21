@@ -1,0 +1,28 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+    cout.tie(0);
+
+    int n, m;
+    cin >> n >> m;
+    vector<int> arr(n);
+    for (int i = 0; i < n; i++) {
+        cin >> arr[i];
+    }
+
+    long long ans = 0;
+    for (int start = 0; start < n; start++) {
+        int sum = 0;
+        for (int len = 1; len <= n - start; len++) {
+            sum += arr[(start + len - 1) % n];
+            if (sum % m == 0) {
+                ans++;
+            }
+        }
+    }
+    cout << ans << endl;
+    return 0;
+}

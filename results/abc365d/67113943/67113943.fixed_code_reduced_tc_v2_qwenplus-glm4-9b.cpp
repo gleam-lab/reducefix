@@ -1,0 +1,30 @@
+#include <iostream>
+using namespace std;
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(NULL);
+
+    int N;
+    string S;
+    cin >> N;
+    cin >> S;
+
+    int wins = 0;
+    char winmove = 'R';
+    for (int i = 0; i < N; ++i) {
+        if (S[i] == 'R') {
+            winmove = 'P';
+        } else if (S[i] == 'P') {
+            winmove = 'S';
+        } else if (S[i] == 'S') {
+            winmove = 'R';
+        }
+        if (S[i] == winmove) {
+            wins++;
+            winmove = 'R'; // Reset winmove to R for next potential win
+        }
+    }
+
+    cout << wins;
+}

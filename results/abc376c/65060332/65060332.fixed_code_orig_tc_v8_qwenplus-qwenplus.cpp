@@ -1,0 +1,78 @@
+#include <bits/stdc++.h>
+#define ll long long
+using namespace std;
+
+const int N = 2e5 + 5;
+
+ll a[N], b[N];
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+
+    ll n;
+    cin >> n;
+    for (int i = 0; i < n; ++i) cin >> a[i];
+    for (int i = 0; i < n - 1; ++i) cin >> b[i];
+
+    sort(a, a + n);
+    sort(b, b + n - 1);
+
+    // We need to find the minimum x such that we can assign each toy to either a box or the new box.
+    // Idea: Use binary search on x. For each candidate x, check if it's possible.
+
+    // To check feasibility:
+    // Try matching smallest toys with smallest boxes possible.
+    // Greedy approach:
+    // - Sort toys and boxes in increasing order.
+    // - Try placing largest toys in the purchased box of size x.
+    // - For the rest, greedily match smallest available box >= toy size.
+
+    vector<ll> sorted_toys = vector<ll>(a, a + n);
+    vector<ll> sorted_boxes = vector<ll>(b, b + n - 1);
+
+    function<bool(ll)> is_possible = [&](ll x) {
+        multiset<ll> boxes(sorted_boxes.begin(), sorted_boxes.end());
+        int cnt = 0;
+
+        for (int i = n - 1; i >= 0; --i) {
+            if (cnt == 1) break; // Already one in custom box
+            if (a[i] > *boxes.rbegin()) {
+                // Need to put this in the custom box
+                if (a[i] <= x) {
+                    cnt++;
+                } else {
+                    return false;
+                }
+            } else {
+                // Find the smallest box that fits this toy
+                auto it = boxes.lower_bound(a[i]);
+                if (it != boxes.end()) {
+                    boxes.erase(it); // Use this box
+                } else {
+                    return false;
+                }
+            }
+        }
+
+        return boxes.empty();
+    };
+
+    // Binary search over x
+    ll low = 1, high = 1e18;
+    ll answer = -1;
+
+    while (low <= high) {
+        ll mid = (low + high) / 2;
+        if (is_possible(mid)) {
+            answer = mid;
+            high = mid - 1;
+        } else {
+            low = mid + 1;
+        }
+    }
+
+    cout << answer << endl;
+
+    return 0;
+}

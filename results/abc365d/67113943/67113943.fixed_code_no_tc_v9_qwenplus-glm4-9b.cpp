@@ -1,0 +1,39 @@
+#include <iostream>
+using namespace std;
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(NULL);
+
+    int N;
+    string S;
+    cin >> N;
+    cin >> S;
+    
+    // Initialize variables to store the current winning move and the previous character in the string
+    char winmove = 'R', prev = 'R';
+    int wins = 0;
+    
+    // Mapping for the winning move in the rock-paper-scissors game
+    map<char, char> winningMoveMap = {
+        {'R', 'P'}, // R beats S
+        {'P', 'S'}, // P beats R
+        {'S', 'R'}  // S beats P
+    };
+    
+    for (char c : S) {
+        // Update the winning move based on the current character
+        winmove = winningMoveMap[c];
+        
+        // Check if the winning move is different from the previous character
+        if (winmove != prev) {
+            wins++;
+            prev = winmove;
+        } else {
+            prev = c;
+        }
+    }
+    
+    cout << wins;
+    return 0;
+}

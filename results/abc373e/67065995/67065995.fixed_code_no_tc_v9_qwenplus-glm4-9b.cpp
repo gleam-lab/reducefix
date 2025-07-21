@@ -1,0 +1,42 @@
+#include <bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+#define all(x) (x).begin(), (x).end()
+
+int main() {
+    ios_base::sync_with_stdio(0);
+    cin.tie(0);
+    int n, m;
+    ll k;
+    cin >> n >> m >> k;
+    vector<ll> a(n);
+    for (int i = 0; i < n; ++i) {
+        cin >> a[i];
+    }
+    vector<int> ord(n);
+    iota(all(ord), 0);
+    sort(all(ord), [&](int i, int j) { return a[i] > a[j]; });
+    auto b = a;
+    sort(all(b));
+    vector<ll> pref(n + 1);
+    for (int i = 0; i < n; ++i) {
+        pref[i + 1] = b[i] + pref[i];
+    }
+    vector<ll> ans(n, -1);
+    for (int i = 0; i < n; ++i) {
+        ll maxOtherVotes = pref[n - m] - pref[i];
+        ll targetVotes = maxOtherVotes + 1;
+        if (a[i] >= targetVotes) {
+            ans[ord[i]] = 0;
+            continue;
+        }
+        ll additionalVotesNeeded = targetVotes - a[i];
+        if (additionalVotesNeeded > k - (pref[n] - pref[n - m])) {
+            ans[ord[i]] = -1;
+            continue;
+        }
+        ans[ord[i]] = additionalVotesNeeded;
+    }
+    for (auto i : ans) cout << i << ' ';
+    return 0;
+}

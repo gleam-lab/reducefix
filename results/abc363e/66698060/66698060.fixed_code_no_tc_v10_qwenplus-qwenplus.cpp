@@ -1,0 +1,80 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define ll long long
+#define rep(i,n) for(ll i=0;i<(ll)n;i++)
+#define vi vector<int>
+#define vl vector<ll>
+#define vd vector<double>
+#define vb vector<bool>
+#define vs vector<string>
+#define vc vector<char>
+#define ull unsigned long long
+#define chmax(a,b) a = max(a,b)
+#define chmin(a,b) a = min(a,b)
+
+ll dx[4] = {0, 1, 0, -1};
+ll dy[4] = {1, 0, -1, 0};
+
+int main() {
+    ll h, w, y;
+    cin >> h >> w >> y;
+    
+    vector<vl> grid(h, vl(w));
+    rep(i, h) rep(j, w) cin >> grid[i][j];
+
+    // Priority queue to simulate the rising sea level
+    priority_queue<tuple<ll, ll, ll>, vector<tuple<ll, ll, ll>>, greater<>> pq;
+    vector<vb> visited(h, vb(w, false));
+
+    // Initialize the border cells as visited and add them to the priority queue
+    for (ll i = 0; i < h; ++i) {
+        for (ll j : {0LL, w-1}) {
+            if (!visited[i][j]) {
+                pq.emplace(grid[i][j], i, j);
+                visited[i][j] = true;
+            }
+        }
+    }
+
+    for (ll j = 1; j < w - 1; ++j) {
+        for (ll i : {0LL, h-1}) {
+            if (!visited[i][j]) {
+                pq.emplace(grid[i][j], i, j);
+                visited[i][j] = true;
+            }
+        }
+    }
+
+    vl result(y + 1, h * w); // Initially whole island is above water
+    ll remaining = h * w;
+
+    // We'll process events in order of elevation
+    // and record how many cells remain above water at each year
+    while (!pq.empty()) {
+        auto [elevation, x, y_pos] = pq.top();
+        pq.pop();
+
+        if (elevation > y) continue; // Only care about up to Y years
+
+        remaining--;
+        result[elevation]--;
+        
+        for (ll d = 0; d < 4; ++d) {
+            ll nx = x + dx[d];
+            ll ny = y_pos + dy[d];
+            if (nx >= 0 && nx < h && ny >= 0 && ny < w && !visited[nx][ny]) {
+                visited[nx][ny] = true;
+                pq.emplace(grid[nx][ny], nx, ny);
+            }
+        }
+    }
+
+    // For each year, we want the maximum remaining area up to that year
+    // because higher elevation cells might be removed in later years
+    for (ll i = 1; i <= y; ++i) {
+        result[i] = min(result[i], result[i - 1]);
+        cout << result[i] << "\n";
+    }
+
+    return 0;
+}

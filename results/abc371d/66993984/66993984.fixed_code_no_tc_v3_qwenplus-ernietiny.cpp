@@ -1,0 +1,39 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    int n, q;
+    cin >> n; // 输入数据点个数
+    
+    // 初始化数组和映射
+    vector<int> x(n), p(n);
+    map<int, int> sum; // 假设sum是一个map，用于存储前缀和
+    
+    // 处理输入数据
+    for (int i = 0; i < n; ++i) {
+        cin >> x[i] >> p[i]; // 读入每个数据点的值和前缀和
+        sum[p[i]]++; // 更新前缀和映射
+    }
+    
+    // 处理查询部分
+    while (q--) {
+        int L, R; // 输入查询区间左右端点
+        cin >> L >> R; // 读入查询区间左右端点
+        // 检查区间是否合法（左右端点应均大于等于1）
+        if (L < 1 || R > n || L > R) {
+            // 处理错误情况，例如输出错误信息或返回错误代码等
+            cerr << "Invalid query range" << endl; // 或返回错误代码
+            continue; // 跳过当前查询并继续处理下一个查询
+        }
+        // 使用二分查找找到符合条件的元素个数差值
+        int c = lower_bound(x.begin(), x.end(), L - 1) - x.begin(); // 二分查找左边界对应的索引值减去1（假设索引从0开始）
+        int d = upper_bound(x.begin(), x.end(), R) - x.begin(); // 二分查找右边界对应的索引值加上1（考虑查询区间的右端点）
+        // 如果存在符合条件的元素，则输出该元素的前缀和差值
+        if (sum.count(d - 1)) { // 检查是否存在符合条件的元素的前缀和差值
+            cout << sum[d - 1] - sum[c - 1] << endl; // 输出结果
+        } else { // 如果不存在符合条件的元素，则输出-1或其他错误信息
+            cout << -1 << endl; // 或者输出其他错误信息提示问题所在区域不存在符合条件的元素或范围不合法等
+        }
+    }
+    return 0; // 返回0表示程序正常结束
+}

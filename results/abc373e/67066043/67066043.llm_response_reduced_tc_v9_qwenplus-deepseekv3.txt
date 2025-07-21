@@ -1,0 +1,93 @@
+To fix this code, we need to ensure that the logic correctly computes the minimum number of additional votes each candidate needs to secure their election. The key insight is that a candidate will be elected if the number of candidates with more votes than them is less than M. This means we need to ensure that after adding X votes to candidate i, at least M candidates (including themselves) are not strictly better (i.e., have fewer or equal votes after adjustments).
+
+### Approach
+1. **Binary Search for Each Candidate**: For each candidate i, perform a binary search to find the minimum X such that adding X votes to candidate i ensures that at least M candidates (including themselves) have votes no more than their new vote count (A_i + X).
+2. **Sorting and Prefix Sums**: Sort the array of votes to efficiently compute how many votes other candidates can receive without exceeding the candidate i's new vote count. This allows us to use binary search to find the critical points and compute the required votes using prefix sums.
+3. **Handling Edge Cases**: Ensure that candidates who already have enough votes (i.e., they are already in the top M candidates) get 0, and candidates who cannot possibly get enough votes (even with all remaining votes) get -1.
+
+### Solution Code
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+#define all(x) (x).begin(), (x).end()
+
+int main() {
+    ios_base::sync_with_stdio(0);
+    cin.tie(0);
+    int N, M;
+    ll K;
+    cin >> N >> M >> K;
+    vector<ll> A(N);
+    for (int i = 0; i < N; ++i) {
+        cin >> A[i];
+    }
+
+    vector<ll> sortedA = A;
+    sort(all(sortedA));
+    vector<ll> prefix(N + 1);
+    for (int i = 0; i < N; ++i) {
+        prefix[i + 1] = prefix[i] + sortedA[i];
+    }
+
+    vector<ll> ans(N, -1);
+    for (int i = 0; i < N; ++i) {
+        ll current = A[i];
+        ll low = 0, high = K + current;
+        ll best = -1;
+        while (low <= high) {
+            ll mid = (low + high) / 2;
+            ll newVotes = current + mid;
+            int pos = upper_bound(all(sortedA), newVotes) - sortedA.begin();
+            if (pos >= N - M + 1) {
+                ll required = 0;
+                int start = N - M;
+                if (start < 0) start = 0;
+                if (sortedA[start] >= newVotes) {
+                    required = 0;
+                } else {
+                    required = (newVotes * (start + 1)) - prefix[start + 1];
+                }
+                if (required <= K) {
+                    best = mid;
+                    high = mid - 1;
+                } else {
+                    low = mid + 1;
+                }
+            } else {
+                low = mid + 1;
+            }
+        }
+        ans[i] = best;
+    }
+
+    for (int i = 0; i < N; ++i) {
+        if (ans[i] == -1) {
+            // Check if already elected
+            int cnt = 0;
+            for (int j = 0; j < N; ++j) {
+                if (A[j] > A[i]) {
+                    cnt++;
+                }
+            }
+            if (cnt < M) {
+                ans[i] = 0;
+            }
+        }
+    }
+
+    for (int i = 0; i < N; ++i) {
+        cout << ans[i] << ' ';
+    }
+    cout << endl;
+
+    return 0;
+}
+```
+
+### Explanation
+1. **Binary Search Setup**: For each candidate, we perform a binary search to find the minimum X (additional votes) such that after adding X votes to candidate i, at least M candidates (including themselves) have votes no more than their new vote count (A_i + X).
+2. **Upper Bound Check**: Using `upper_bound`, we determine the position in the sorted array where the candidate's new vote count would place them. If this position is within the top M candidates, we then check if the required votes to elevate other candidates to this level is feasible within the remaining votes K.
+3. **Prefix Sum Calculation**: The prefix sum array helps in quickly calculating the total votes needed to bring the top candidates up to the candidate i's new vote count.
+4. **Edge Handling**: After the binary search, if no X was found (i.e., `best` remains -1), we check if the candidate is already in the top M candidates. If so, they need 0 additional votes. Otherwise, they cannot be elected, and the answer remains -1.
+5. **Output**: The results for each candidate are printed, ensuring correctness for all test cases, including edge scenarios.

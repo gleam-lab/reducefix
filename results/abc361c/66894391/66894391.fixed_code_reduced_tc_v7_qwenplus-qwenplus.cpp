@@ -1,0 +1,48 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    int N, K;
+    cin >> N >> K;
+    vector<int> A(N);
+    for (int i = 0; i < N; ++i) {
+        cin >> A[i];
+    }
+
+    // We will use a sliding window approach to find the minimum possible value of (max - min)
+    // over all subsequences of length N-K obtained by removing exactly K elements.
+
+    int window_size = N - K;
+    int min_diff = numeric_limits<int>::max();
+
+    // For each possible window of size window_size, compute max and min
+    deque<int> max_deque, min_deque;
+    
+    for (int i = 0; i < N; ++i) {
+        // Maintain max_deque: elements are indices of A in decreasing order of their values
+        while (!max_deque.empty() && A[max_deque.back()] <= A[i]) {
+            max_deque.pop_back();
+        }
+        max_deque.push_back(i);
+
+        // Maintain min_deque: elements are indices of A in increasing order of their values
+        while (!min_deque.empty() && A[min_deque.back()] >= A[i]) {
+            min_deque.pop_back();
+        }
+        min_deque.push_back(i);
+
+        // Remove elements that are out of the current window
+        if (i >= window_size - 1) {
+            while (max_deque.front() <= i - window_size) {
+                max_deque.pop_front();
+            }
+            while (min_deque.front() <= i - window_size) {
+                min_deque.pop_front();
+            }
+            min_diff = min(min_diff, A[max_deque.front()] - A[min_deque.front()]);
+        }
+    }
+
+    cout << min_diff << endl;
+    return 0;
+}

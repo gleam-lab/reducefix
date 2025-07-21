@@ -1,0 +1,73 @@
+#include<bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios_base::sync_with_stdio(false); cin.tie(NULL); cout.tie(NULL);
+    
+    int H, W, Y;
+    cin >> H >> W >> Y;
+    vector<vector<int>> A(H, vector<int>(W));
+    for (int i = 0; i < H; ++i) {
+        for (int j = 0; j < W; ++j) {
+            cin >> A[i][j];
+        }
+    }
+    
+    vector<vector<int>> B = A;
+    sort(B.begin(), B.end());
+    B.erase(unique(B.begin(), B.end()), B.end());
+    
+    map<int, int> mp;
+    for (int i = 0; i < B.size(); ++i) {
+        mp[B[i]] = i + 1;
+    }
+    
+    vector<vector<bool>> vis(H, vector<bool>(W, false));
+    queue<pair<int, int>> q;
+    
+    auto valid = [&](int x, int y) {
+        return x >= 0 && x < H && y >= 0 && y < W;
+    };
+    
+    for (int i = 0; i < H; ++i) {
+        for (int j = 0; j < W; ++j) {
+            if (valid(i, j)) {
+                if (i == 0 || i == H - 1 || j == 0 || j == W - 1) {
+                    vis[i][j] = true;
+                    q.push({i, j});
+                }
+            }
+        }
+    }
+    
+    while (!q.empty()) {
+        pair<int, int> p = q.front(); q.pop();
+        int x = p.first, y = p.second;
+        for (int k = 0; k < 4; ++k) {
+            int nx = x + dx[k], ny = y + dy[k];
+            if (valid(nx, ny) && !vis[nx][ny] && A[nx][ny] <= A[x][y]) {
+                vis[nx][ny] = true;
+                q.push({nx, ny});
+            }
+        }
+    }
+    
+    vector<int> res(Y + 1, 0);
+    for (int i = 0; i < H; ++i) {
+        for (int j = 0; j < W; ++j) {
+            if (!vis[i][j]) {
+                res[mp[A[i][j]]]++;
+            }
+        }
+    }
+    
+    reverse(res.begin() + 1, res.end());
+    partial_sum(res.begin(), res.end(), res.begin());
+    reverse(res.begin() + 1, res.end());
+    
+    for (int i = 1; i <= Y; ++i) {
+        cout << res[i] << '\n';
+    }
+    
+    return 0;
+}

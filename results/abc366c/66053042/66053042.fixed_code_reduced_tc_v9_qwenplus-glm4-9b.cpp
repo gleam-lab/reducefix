@@ -1,0 +1,28 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    map<int, int> m;  // Using a map to keep track of the count of each number in the bag
+    int Q;
+    cin >> Q;
+    
+    for (int i = 0; i < Q; i++) {
+        int type;
+        cin >> type;
+        
+        if (type == 1) {  // Adding a ball to the bag
+            int x;
+            cin >> x;
+            m[x]++;
+        } else if (type == 2) {  // Removing a ball from the bag
+            int x;
+            cin >> x;
+            m[x]--;
+            if (m[x] == 0) m.erase(x);  // Remove the element if its count goes to zero
+        } else if (type == 3) {  // Output the number of distinct integers
+            cout << m.size() << endl;
+        }
+    }
+    
+    return 0;
+}

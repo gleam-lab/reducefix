@@ -1,0 +1,49 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+  int n, k;
+  cin >> n >> k;
+  vector<int> A(n);
+  for (int i = 0; i < n; i++) {
+    cin >> A[i];
+  }
+
+  // The idea is to keep a window of size N-K in the original array,
+  // and compute the minimum possible (max - min) among all such windows.
+  // We can use a sliding window with a multiset or deques to do this efficiently.
+
+  // Use two deques to maintain max and min in the current window
+  deque<int> max_dq, min_dq;
+  int res = numeric_limits<int>::max();
+
+  for (int i = 0; i < n; ++i) {
+    // Maintain max_dq: elements are in decreasing order
+    while (!max_dq.empty() && A[max_dq.back()] <= A[i]) {
+      max_dq.pop_back();
+    }
+    max_dq.push_back(i);
+
+    // Maintain min_dq: elements are in increasing order
+    while (!min_dq.empty() && A[min_dq.back()] >= A[i]) {
+      min_dq.pop_back();
+    }
+    min_dq.push_back(i);
+
+    // Remove elements out of window [i-K+1, i]
+    if (max_dq.front() <= i - (n - k)) {
+      max_dq.pop_front();
+    }
+    if (min_dq.front() <= i - (n - k)) {
+      min_dq.pop_front();
+    }
+
+    // When window size reaches N-K, update result
+    if (i >= n - k - 1) {
+      res = min(res, A[max_dq.front()] - A[min_dq.front()]);
+    }
+  }
+
+  cout << res << endl;
+  return 0;
+}

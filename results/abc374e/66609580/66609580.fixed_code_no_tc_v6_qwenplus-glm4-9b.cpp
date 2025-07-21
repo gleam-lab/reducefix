@@ -1,0 +1,53 @@
+#include <iostream>
+#include <algorithm>
+#include <vector>
+using namespace std;
+
+#define MAX_N 110
+long long a[MAX_N], b[MAX_N], p[MAX_N], q[MAX_N], x;
+long long n;
+
+long long gcd(long long a, long long b) {
+    return b == 0 ? a : gcd(b, a % b);
+}
+
+long long lcm(long long a, long long b) {
+    return a / gcd(a, b) * b;
+}
+
+inline bool check(long long v) {
+    long long cnt = 0;
+    for (int i = 1; i <= n; ++i) {
+        long long _lcm = lcm(a[i], b[i]);
+        long long vm = (v / _lcm - 1) * min(p[i] * (_lcm / a[i]), q[i] * (_lcm / b[i]));
+        cnt += vm;
+
+        long long max_val = max(0LL, v / _lcm - 1) * _lcm;
+        long long ms = LLONG_MAX >> 1;
+        for (long long j = 0; j * a[i] <= v - max_val; ++j) {
+            long long cur_val = j * p[i] + max(0LL, (v - max_val - j * a[i]) / b[i] + (v - max_val - j * a[i]) % b[i] * q[i]);
+            ms = min(ms, cur_val);
+        }
+        cnt += ms;
+        if (cnt > x) return 0;
+    }
+    return 1;
+}
+
+int main() {
+    ios::sync_with_stdio(0);
+    cin.tie(0), cout.tie(0);
+    cin >> n >> x;
+    for (int i = 1; i <= n; ++i) {
+        cin >> a[i] >> p[i] >> b[i] >> q[i];
+    }
+
+    long long l = 0, r = (1LL << 32);
+    while (l + 1 < r) {
+        long long mid = (l + r) >> 1;
+        if (check(mid)) l = mid;
+        else r = mid;
+    }
+    cout << l << '\n';
+    return 0;
+}

@@ -1,0 +1,81 @@
+#include <iostream>
+#include <vector>
+#include <queue>
+#include <algorithm>
+
+using namespace std;
+
+typedef long long ll;
+
+struct Edge {
+    int to;
+    ll cost;
+};
+
+struct Compare {
+    bool operator()(const pair<int, ll>& a, const pair<int, ll>& b) {
+        return a.second > b.second;
+    }
+};
+
+vector<ll> dijkstra(int start, vector<vector<Edge>>& graph, vector<ll>& weights) {
+    int n = graph.size();
+    vector<ll> dist(n, LLONG_MAX);
+    dist[start] = weights[start];
+    priority_queue<pair<int, ll>, vector<pair<int, ll>>, Compare> pq;
+    pq.push({start, weights[start]});
+    
+    while (!pq.empty()) {
+        int u = pq.top().first;
+        ll d = pq.top().second;
+        pq.pop();
+        
+        if (d > dist[u]) continue;
+        
+        for (const auto& e : graph[u]) {
+            int v = e.to;
+            ll weight = e.cost + weights[v];
+            
+            if (dist[u] + weight < dist[v]) {
+                dist[v] = dist[u] + weight;
+                pq.push({v, dist[v]});
+            }
+        }
+    }
+    
+    return dist;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int n, m;
+    cin >> n >> m;
+
+    vector<ll> weights(n);
+    for (int i = 0; i < n; ++i) {
+        cin >> weights[i];
+    }
+
+    vector<vector<Edge>> graph(n);
+    for (int i = 0; i < m; ++i) {
+        int u, v, b;
+        cin >> u >> v >> b;
+        --u, --v; // Convert to 0-based index
+        graph[u].emplace_back(v, b);
+        graph[v].emplace_back(u, b);
+    }
+
+    vector<ll> result(n - 1, LLONG_MAX);
+    for (int i = 1; i < n; ++i) {
+        result[i - 1] = dijkstra(0, graph, weights)[i];
+    }
+
+    for (int i = 0; i < n - 1; ++i) {
+        cout << result[i] << " ";
+    }
+    cout << endl;
+
+    return 0;
+}

@@ -1,0 +1,55 @@
+#include <iostream>
+#include <vector>
+using namespace std;
+using ll = long long;
+
+int main() {
+    int N;
+    cin >> N;
+    vector<ll> H(N);
+    for (int i = 0; i < N; ++i) {
+        cin >> H[i];
+    }
+
+    ll T = 0;
+
+    for (int i = 0; i < N; ++i) {
+        // Determine how many attacks are needed to defeat this enemy
+        ll h = H[i];
+
+        // We simulate the attack pattern to find the minimum T that will reduce this enemy to 0 or less
+        // Each 3 attacks include two 1-damage and one 3-damage => total damage per 3 attacks = 5
+
+        // Full cycles of 3 attacks needed
+        ll full_cycles = h / 5;
+        T += full_cycles * 3;
+        h -= full_cycles * 5;
+
+        // Remaining health between 1-4
+        if (h > 0) {
+            if (T % 3 == 0) {
+                // Next attack is triple damage, which is good - we can use it
+                T += 1;
+            } else if (T % 3 == 1) {
+                // Next attack is single, so we may need to skip one turn to get to triple
+                if (h == 1) {
+                    T += 1; // single damage sufficient
+                } else if (h == 2) {
+                    T += 2; // one single now, one more to reach next single (or triple)
+                } else { // h == 3 or 4
+                    T += 3; // wait for triple damage attack
+                }
+            } else { // T % 3 == 2
+                // Next is single again, better to wait one more to get to triple
+                if (h == 1 || h == 2) {
+                    T += 1; // single damage will be enough
+                } else {
+                    T += 2; // wait for triple damage
+                }
+            }
+        }
+    }
+
+    cout << T << endl;
+    return 0;
+}

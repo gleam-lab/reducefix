@@ -1,0 +1,52 @@
+#include<bits/stdc++.h>
+#define ll long long
+#define yes cout<<"YES\n"
+#define no cout<<"NO\n"
+#define sp ' '
+using namespace std;
+
+void solve() {
+    ll N;
+    cin >> N;
+    vector<ll> a(N), b(N - 1);
+    for (int i = 0; i < N; i++) {
+        cin >> a[i];
+    }
+    for (int i = 0; i < N - 1; i++) {
+        cin >> b[i];
+    }
+
+    sort(a.begin(), a.end());
+    sort(b.begin(), b.end());
+
+    ll max_size = *max_element(a.begin(), a.end());
+    bool possible = true;
+
+    for (int i = 0; i < N - 1; i++) {
+        if (b[i] < a[i]) {
+            possible = false;
+            break;
+        }
+    }
+
+    if (!possible) {
+        cout << -1 << endl;
+        return;
+    }
+
+    if (a.back() > b.back()) {
+        cout << -1 << endl;
+        return;
+    }
+
+    cout << max_size << endl;
+}
+
+int main() {
+    ios::sync_with_stdio(0);
+    cin.tie(0);
+
+    solve();
+
+    return 0;
+}

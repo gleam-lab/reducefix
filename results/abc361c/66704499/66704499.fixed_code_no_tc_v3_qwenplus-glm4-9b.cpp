@@ -1,0 +1,27 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main(void){
+    int n, k;
+    cin >> n >> k;
+
+    vector<int> A(n);
+    for (int i = 0; i < n; i++){
+        cin >> A[i];
+    }
+
+    // Sort the array to easily find the minimum and maximum values
+    sort(A.begin(), A.end());
+
+    // To minimize the difference, we should remove the largest and smallest K elements
+    // so the range is between the (n-k)th smallest and (n-k-1)th smallest element
+    // because the difference between these two elements will be minimized after removal.
+
+    int min_val = A[n - k];
+    int max_val = A[n - 1 - k];
+
+    // Output the minimum possible value of the maximum value of B minus the minimum value of B
+    cout << max_val - min_val << endl;
+
+    return 0;
+}

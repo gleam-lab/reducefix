@@ -1,0 +1,46 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    long long N, M;
+    cin >> N >> M;
+
+    // Set to store all attacked positions and occupied positions
+    unordered_set<string> attacked_or_occupied;
+
+    // Directions a piece can attack
+    vector<pair<long long, long long>> directions = {
+        {2, 1}, {1, 2}, {-1, 2}, {-2, 1},
+        {-2, -1}, {-1, -2}, {1, -2}, {2, -1}
+    };
+
+    for (long long i = 0; i < M; ++i) {
+        long long a, b;
+        cin >> a >> b;
+
+        // Store current piece position
+        string pos = to_string(a) + "," + to_string(b);
+        attacked_or_occupied.insert(pos);
+
+        // For each direction, calculate attacked cell and add to the set
+        for (auto [dx, dy] : directions) {
+            long long x = a + dx;
+            long long y = b + dy;
+
+            if (x >= 1 && x <= N && y >= 1 && y <= N) {
+                string attacked_pos = to_string(x) + "," + to_string(y);
+                attacked_or_occupied.insert(attacked_pos);
+            }
+        }
+    }
+
+    // Total number of cells: N * N
+    // Subtract the number of attacked or occupied cells
+    long long total_cells = N;
+    total_cells *= N;
+    long long safe_cells = total_cells - (long long)attacked_or_occupied.size();
+
+    cout << safe_cells << endl;
+
+    return 0;
+}

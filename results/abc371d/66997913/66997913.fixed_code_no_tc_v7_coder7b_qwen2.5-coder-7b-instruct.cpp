@@ -1,0 +1,45 @@
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+
+int main() {
+  int n;
+  cin >> n;
+  vector<int> x(n);
+  for (int i = 0; i < n; i++) cin >> x[i];
+  sort(x.begin(), x.end()); // Sort the array to use binary search effectively
+  
+  vector<ll> p(n), s(n+1);
+  for (int i = 0; i < n; i++) {
+    cin >> p[i];
+    s[i+1] = s[i]+p[i];
+  }
+  
+  int q;
+  cin >> q;
+  for (int i = 0; i < q; i++) {
+    int l, r;
+    cin >> l >> r;
+    
+    // Find the first element greater than r using upper_bound
+    auto it_r = upper_bound(x.begin(), x.end(), r);
+    if (it_r == x.begin()) { // If no such element exists
+      cout << 0 << endl;
+      continue;
+    }
+    --it_r; // Move to the last element that is less than or equal to r
+    
+    // Find the first element greater than or equal to l using lower_bound
+    auto it_l = lower_bound(x.begin(), x.end(), l);
+    if (it_l == x.end()) { // If no such element exists
+      cout << 0 << endl;
+      continue;
+    }
+    
+    int idx_r = it_r - x.begin();
+    int idx_l = it_l - x.begin();
+    int ans = s[idx_r+1] - s[idx_l];
+    cout << ans << endl;
+  }
+  return 0;
+}

@@ -1,0 +1,46 @@
+#include<bits/stdc++.h>
+#define ll long long
+using namespace std;
+
+ll n, m;
+vector<int> adj[200005];
+
+// BFS function to find shortest cycle length starting from node 1
+ll bfs() {
+    vector<ll> dist(200005, -1);
+    queue<ll> q;
+    
+    dist[1] = 0;
+    q.push(1);
+    
+    while (!q.empty()) {
+        ll u = q.front();
+        q.pop();
+        
+        for (ll v : adj[u]) {
+            if (dist[v] == -1) {
+                dist[v] = dist[u] + 1;
+                q.push(v);
+            } else if (v != 1 && dist[v] >= dist[u]) {
+                // Found a cycle back to node 1 or earlier visited node
+                return dist[u] + dist[v] + 1;
+            }
+        }
+    }
+    
+    return -1; // No cycle found
+}
+
+int main() {
+    cin >> n >> m;
+    
+    for (ll i = 1; i <= m; ++i) {
+        int u, v;
+        cin >> u >> v;
+        adj[u].push_back(v);
+    }
+    
+    cout << bfs();
+    
+    return 0;
+}

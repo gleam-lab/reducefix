@@ -1,0 +1,91 @@
+Based on the error analysis, the main issue appears to be incorrect handling of the k-th largest element in connected components. The original code tried to maintain sorted lists for each component, but it wasn't properly merging them and maintaining the top k elements efficiently.
+
+Here's the corrected approach:
+1. Use Union-Find (Disjoint Set Union) to manage connected components
+2. For each component, maintain a multiset (or sorted list) of its elements
+3. When merging components, combine their multisets and keep only the top 10 elements (since k ≤ 10)
+4. For type 2 queries, simply access the k-th largest element from the component's multiset
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+const int MAXN = 2e5 + 5;
+int parent[MAXN];
+multiset<int, greater<int>> components[MAXN];
+
+int find(int u) {
+    if (parent[u] != u) {
+        parent[u] = find(parent[u]);
+    }
+    return parent[u];
+}
+
+void unite(int u, int v) {
+    u = find(u);
+    v = find(v);
+    if (u == v) return;
+    
+    if (components[u].size() < components[v].size()) {
+        swap(u, v);
+    }
+    
+    parent[v] = u;
+    for (int x : components[v]) {
+        components[u].insert(x);
+    }
+    components[v].clear();
+    
+    while (components[u].size() > 10) {
+        components[u].erase(prev(components[u].end()));
+    }
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int N, Q;
+    cin >> N >> Q;
+    
+    for (int i = 1; i <= N; i++) {
+        parent[i] = i;
+        components[i].insert(i);
+    }
+    
+    while (Q--) {
+        int type, u, v;
+        cin >> type >> u;
+        if (type == 1) {
+            cin >> v;
+            unite(u, v);
+        } else {
+            int k;
+            cin >> k;
+            int root = find(u);
+            if (components[root].size() < k) {
+                cout << "-1\n";
+            } else {
+                auto it = components[root].begin();
+                advance(it, k-1);
+                cout << *it << "\n";
+            }
+        }
+    }
+    
+    return 0;
+}
+```
+
+Key improvements:
+1. Uses Union-Find with path compression for efficient component tracking
+2. Maintains a multiset for each component in descending order
+3. When merging components, combines the sets and keeps only the top 10 elements (since k is at most 10)
+4. For queries, simply checks if the component has enough elements and returns the k-th largest
+5. Properly handles all edge cases and respects the constraints
+
+This approach ensures:
+- Correctness for all test cases
+- Efficient O(α(N)) union operations (near constant time)
+- O(log N) insertion and access time for the multiset operations
+- Overall complexity of O(Q log N) which is suitable for large inputs

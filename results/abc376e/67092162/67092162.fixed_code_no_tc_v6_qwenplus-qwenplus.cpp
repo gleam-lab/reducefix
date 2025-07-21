@@ -1,0 +1,59 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+const int maxN = 2e5 + 5;
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+    cout.tie(nullptr);
+
+    int t;
+    cin >> t;
+
+    while (t--) {
+        int n, k;
+        cin >> n >> k;
+
+        vector<pair<int, int>> items(n);
+        for (int i = 0; i < n; ++i) {
+            cin >> items[i].first;
+        }
+        for (int i = 0; i < n; ++i) {
+            cin >> items[i].second;
+        }
+
+        // Sort by A_i in ascending order
+        sort(items.begin(), items.end());
+
+        // Minimize (max_A_S) * sum_B_S
+        // Keep the smallest K B_i's among the first elements up to current
+
+        // Use a max-heap to keep track of the K smallest B_i's
+        priority_queue<int> pq;
+        long long sum_b = 0;
+        long long result = LLONG_MAX;
+
+        // Initialize with first K elements
+        for (int i = 0; i < k; ++i) {
+            sum_b += items[i].second;
+            pq.push(items[i].second);
+        }
+        result = 1LL * items[k - 1].first * sum_b;
+
+        // Sliding window: try including larger A_i and possibly better sum
+        for (int i = k; i < n; ++i) {
+            if (pq.top() > items[i].second) {
+                sum_b -= pq.top();
+                pq.pop();
+                sum_b += items[i].second;
+                pq.push(items[i].second);
+            }
+            result = min(result, 1LL * items[i].first * sum_b);
+        }
+
+        cout << result << "\n";
+    }
+
+    return 0;
+}

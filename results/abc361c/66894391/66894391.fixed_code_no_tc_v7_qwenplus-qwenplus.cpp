@@ -1,0 +1,37 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    int n, k;
+    cin >> n >> k;
+    vector<int> A(n);
+    for (int i = 0; i < n; ++i) {
+        cin >> A[i];
+    }
+
+    // We will use a sliding window approach to keep N - K elements
+    // The goal is to minimize max(B) - min(B), where B is the resulting sequence
+
+    // To do this efficiently, we can try all possible windows of size (n - K)
+    // and track the minimum difference between max and min in that window.
+    // Since we cannot afford O(n^2), we use a multiset to maintain the window.
+
+    multiset<int> window;
+    for (int i = 0; i < n - k; ++i) {
+        window.insert(A[i]);
+    }
+
+    int ans = *window.rbegin() - *window.begin();
+
+    for (int i = n - k; i < n; ++i) {
+        // Remove the element going out of the window
+        window.erase(window.find(A[i - (n - k)]));
+        // Add the new element coming into the window
+        window.insert(A[i]);
+        // Update the answer
+        ans = min(ans, *window.rbegin() - *window.begin());
+    }
+
+    cout << ans << endl;
+    return 0;
+}

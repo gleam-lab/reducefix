@@ -1,0 +1,69 @@
+#include "bits/stdc++.h"
+
+using namespace std;
+
+#define ff first
+#define ss second
+#define ll long long
+#define SZ(s) (int)s.size()
+
+int const N = 2e5 + 5;
+
+vector <vector <int>> v;
+
+vector <int> p;
+
+int par(int x) {
+    if(p[x] == x) return x;
+    return p[x] = par(p[x]);
+}
+
+void uni(int a, int b) {
+    a = par(a), b = par(b);
+    if(a == b) return;
+    vector <int> v1;
+    int ai = 0, bi = 0;
+    while(ai < SZ(v[a]) or bi < SZ(v[b])) {
+        if(bi == SZ(v[b]) or v[a][ai] > v[b][bi]) {
+            v1.push_back(v[a][ai]);
+            ai++;
+        }
+        else {
+            v1.push_back(v[b][bi]);
+            bi++;
+        }
+    }
+    v[a] = v1;
+    while(SZ(v[a]) > 10) {
+        v[a].pop_back();
+    }
+    p[b] = a;
+    return;
+}
+
+signed main() {
+    ios_base::sync_with_stdio(false); cin.tie(nullptr);
+
+    int n, q;
+    cin >> n >> q;
+    p.resize(n+1);
+    v.resize(n+1);
+    for(int i = 1; i <= n; i++) {
+        p[i] = i;
+        v[i].push_back(i);
+    }
+    while(q--) {
+        int t, a, b;
+        cin >> t >> a >> b;
+        if(t == 1) {
+            uni(a, b);
+        }
+        else {
+            a = par(a);
+            if(SZ(v[a]) < b) cout << -1 << '\n';
+            else cout << v[a][b-1] << '\n';
+        }
+    }
+
+    return 0;
+}

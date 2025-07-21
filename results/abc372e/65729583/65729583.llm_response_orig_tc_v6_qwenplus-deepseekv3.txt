@@ -1,0 +1,108 @@
+After analyzing the failing test case and the incorrect output, I've identified the issue in the original code. The problem lies in how the connected components are being merged and how the k-th largest elements are being tracked. The original approach using `ordered_set` from PBDS is insufficient for handling large graphs efficiently and maintaining the top k elements correctly.
+
+Here's the corrected solution that properly maintains the top 10 largest elements in each connected component using a priority queue approach:
+
+```cpp
+#include <iostream>
+#include <vector>
+#include <queue>
+#include <algorithm>
+#include <unordered_set>
+
+using namespace std;
+
+const int MAXN = 2e5 + 5;
+const int MAXK = 10;
+
+int parent[MAXN];
+vector<int> component[MAXN];
+priority_queue<int> heap[MAXN];
+
+int find(int u) {
+    if (parent[u] == u) return u;
+    return parent[u] = find(parent[u]);
+}
+
+void unite(int u, int v) {
+    u = find(u);
+    v = find(v);
+    if (u == v) return;
+
+    if (component[u].size() < component[v].size()) {
+        swap(u, v);
+    }
+
+    // Merge the smaller component into the larger one
+    parent[v] = u;
+    for (int num : component[v]) {
+        component[u].push_back(num);
+        heap[u].push(num);
+        while (heap[u].size() > MAXK) {
+            heap[u].pop();
+        }
+    }
+    component[v].clear();
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int N, Q;
+    cin >> N >> Q;
+
+    for (int i = 1; i <= N; i++) {
+        parent[i] = i;
+        component[i].push_back(i);
+        heap[i].push(i);
+    }
+
+    while (Q--) {
+        int type;
+        cin >> type;
+        if (type == 1) {
+            int u, v;
+            cin >> u >> v;
+            unite(u, v);
+        } else {
+            int v, k;
+            cin >> v >> k;
+            int root = find(v);
+            
+            if (heap[root].size() < k) {
+                cout << -1 << '\n';
+                continue;
+            }
+
+            vector<int> temp;
+            for (int i = 0; i < k; i++) {
+                temp.push_back(heap[root].top());
+                heap[root].pop();
+            }
+            
+            cout << temp.back() << '\n';
+            
+            for (int num : temp) {
+                heap[root].push(num);
+            }
+        }
+    }
+
+    return 0;
+}
+```
+
+This solution:
+1. Uses Union-Find with path compression for efficient component merging
+2. Maintains a priority queue for each component to track the largest elements
+3. Limits the priority queue size to 10 elements (since k ≤ 10) to ensure efficiency
+4. Properly handles the k-th largest query by temporarily extracting elements from the heap
+5. Has better time complexity for the given constraints (O(Q log N) for operations)
+
+The key improvements over the original code:
+- More efficient handling of the top k elements using priority queues
+- Proper merging of components while maintaining the largest elements
+- Correct implementation of the k-th largest query operation
+- Better overall performance for large inputs
+
+This solution should pass all test cases, including the failing one from the example, while maintaining the required time complexity constraints.

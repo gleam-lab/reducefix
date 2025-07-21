@@ -1,0 +1,23 @@
+#include<bits/stdc++.h>
+using namespace std;
+using ll = long long;
+
+int main() {
+    ll n, ans=0;
+    cin >> n;
+    vector<ll> health(n);
+    for (ll i = 0; i < n; ++i) {
+        cin >> health[i];
+        // Calculate the maximum number of full attacks (T) needed without considering the current attack
+        ans += health[i] / 3;
+        // Calculate the remainder which will determine the number of additional attacks needed
+        health[i] %= 3;
+    }
+
+    // Each of the remainders 1 or 2 requires an additional attack
+    // because we cannot have T % 3 == 0 without an additional increment
+    ans += health[0] + health[1]; // health[2] is zero, so it does not add to the total
+
+    cout << ans << endl;
+    return 0;
+}

@@ -1,0 +1,48 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+using ll = long long;
+using vi = vector<int>;
+#define all(v) v.begin(), v.end()
+#define fast ios_base::sync_with_stdio(0), cin.tie(0), cout.tie(0);
+
+const int MOD = 1e9 + 7, N = 2e5 + 5;
+
+void solve()
+{
+    int n;
+    cin >> n;
+    vector<ll> v(n);
+    ll dp[n + 1][2];
+    for (ll &x : v)
+        cin >> x;
+    
+    // Initialize dp array
+    dp[0][0] = dp[0][1] = 0;
+
+    if (n >= 1) {
+        dp[1][0] = v[0];  // first element taken normally
+        dp[1][1] = v[0];  // first element taken as doubled (not possible but same value)
+    }
+
+    for (int i = 1; i < n; ++i)
+    {
+        // Either do nothing at i-th (dp[i][0]) and carry over, or take single at i-th (dp[i][1] + v[i])
+        dp[i + 1][0] = max(dp[i][1] + v[i], dp[i][0]);
+        // To allow doubling at i-th, previous must not have been used singly: dp[i][0] + 2 * v[i]
+        dp[i + 1][1] = dp[i][0] + 2 * v[i];
+    }
+
+    // The maximum of the two ways to end at the last position
+    cout << max(dp[n][0], dp[n][1]) << '\n';
+}
+
+int main()
+{
+    fast;
+    int t = 1;
+    // cin >> t;
+    while (t--)
+        solve();
+    return 0;
+}

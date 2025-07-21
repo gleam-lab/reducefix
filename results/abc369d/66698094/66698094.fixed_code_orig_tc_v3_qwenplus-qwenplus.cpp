@@ -1,0 +1,51 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+using ll = long long;
+using vi = vector<int>;
+#define all(v) v.begin(), v.end()
+#define fast ios_base::sync_with_stdio(0), cin.tie(0), cout.tie(0);
+
+const int MOD = 1e9 + 7, N = 2e5 + 5;
+
+void solve()
+{
+    int n;
+    cin >> n;
+    vector<ll> v(n);
+    ll dp[2][2]; // Space optimization: current and previous row only
+    for (ll &x : v)
+        cin >> x;
+
+    // Initialize base case
+    dp[0][0] = 0; // No element taken at step 0
+    dp[0][1] = v[0]; // First element taken
+
+    for (int i = 1; i < n; ++i)
+    {
+        int curr = i % 2;
+        int prev = (i - 1) % 2;
+
+        // Transition:
+        // dp[i][0] = max(dp[i-1][1] + 2*v[i])
+        // because to not take current, we must have taken previous
+        dp[curr][0] = dp[prev][1] + 2 * v[i];
+
+        // dp[i][1] = max(dp[i-1][0] + v[i])
+        // because to take current, we must not have taken previous
+        dp[curr][1] = dp[prev][0] + v[i];
+    }
+
+    // Result is max of taking or not taking last element
+    cout << max(dp[(n - 1) % 2][0], dp[(n - 1) % 2][1]) << '\n';
+}
+
+int main()
+{
+    fast;
+    int t = 1;
+    // cin >> t;
+    while (t--)
+        solve();
+    return 0;
+}

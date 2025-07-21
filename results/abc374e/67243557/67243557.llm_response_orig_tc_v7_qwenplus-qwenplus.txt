@@ -1,0 +1,99 @@
+To solve this problem correctly, we need to determine the **maximum number of candies** that can be bought across all types, given a total budget `x`. Each candy type has two options (say, buying in packs of `a` for cost `p`, or in packs of `b` for cost `q`). We're to buy exactly `w` candies per type with minimum cost, and find the maximum `w` such that the total cost over all candy types is within the budget.
+
+---
+
+### Key Observations:
+- The function `f(a, b, p, q, w)` computes the **minimum cost** to buy exactly `w` candies of one type.
+- Since each call to `f()` is independent per candy type, and it's expensive to compute for large values directly, we use **dynamic programming** up to a reasonable bound.
+- We apply **binary search** on the value of `w` from 0 to some upper bound (like `1e9`) and check if the total cost of buying `w` candies of each type stays under the budget.
+
+---
+
+### Flaw in Original Code:
+- The original DP only went up to `10010`, which isn't sufficient when handling large cycles like `a*b`.
+- Also, there was an unnecessary backward pass (`rep(i,10009)dp[10008-i] = min(...)`) which had no purpose.
+- Finally, the cyclic handling wasn't robust enough to avoid MLE or incorrect computation.
+
+---
+
+### Corrected Approach:
+- Use binary search on `w`.
+- For each `w`, compute the minimal cost using a bounded dynamic programming approach.
+- Use cycle optimization to reduce complexity: for large `w`, break into chunks of size `a*b` and handle remainder separately.
+
+Here is the corrected full code:
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+#define rep(i,n) for(long long i=0;i<n;i++)
+using ll = long long;
+
+// Computes minimal cost to buy exactly x candies of one type
+ll f(ll a, ll b, ll p, ll q, ll x) {
+    // dp[i] = min cost to buy i candies
+    ll limit = max(a, b) * max(a, b); // cycle-based bound
+    vector<ll> dp(limit + 2, 1e18);
+    dp[0] = 0;
+
+    // Build DP table
+    for (ll i = 1; i <= limit; ++i) {
+        if (i >= a) dp[i] = min(dp[i], dp[i - a] + p);
+        if (i >= b) dp[i] = min(dp[i], dp[i - b] + q);
+    }
+
+    // Find the minimal cost for x candies using cycle decomposition
+    ll base = a * b;
+    ll full_cycles = x / base;
+    ll remainder = x % base;
+
+    return dp[base] * full_cycles + dp[remainder];
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int n;
+    ll x;
+    cin >> n >> x;
+
+    vector<ll> a(n), b(n), p(n), q(n);
+    for (int i = 0; i < n; ++i) {
+        cin >> a[i] >> p[i] >> b[i] >> q[i];
+    }
+
+    // Binary search on number of candies we can buy
+    ll low = 0, high = 1e9;
+    ll answer = 0;
+
+    while (low <= high) {
+        ll mid = (low + high) / 2;
+        ll total_cost = 0;
+
+        for (int i = 0; i < n; ++i) {
+            total_cost += f(a[i], b[i], p[i], q[i], mid);
+            if (total_cost > x) break;
+        }
+
+        if (total_cost <= x) {
+            answer = mid;
+            low = mid + 1;
+        } else {
+            high = mid - 1;
+        }
+    }
+
+    cout << answer << "\n";
+    return 0;
+}
+```
+
+---
+
+### Complexity:
+- Time per `f()` call: O(ab)
+- Number of binary search steps: ~30
+- Total time: Acceptable for constraints
+
+This solution handles large inputs efficiently, avoids MLE, and correctly implements the logic needed to solve the problem.

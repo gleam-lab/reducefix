@@ -1,0 +1,65 @@
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+using VL = vector<ll>;
+using P = pair<ll, ll>;
+const ll INF = 1000000000;
+
+int main() {
+  ll N, M;
+  cin >> N >> M;
+  
+  VL A(N), B(M);
+  VL ans(N);
+  
+  for (ll i = 0; i < N; ++i) {
+    cin >> A[i];
+  }
+  
+  for (ll i = 0; i < M; ++i) {
+    ll u, v, w;
+    cin >> u >> v >> w;
+    u--; v--;
+    B[i] = w;
+    A[u] += w; // Update vertex u's weight by adding the edge weight
+    A[v] += w; // Update vertex v's weight by adding the edge weight
+  }
+  
+  // Initialize the answer array for each vertex with the cost of reaching it
+  // from vertex 1, which includes its own vertex weight
+  for (ll i = 0; i < N; ++i) {
+    ans[i] = A[i];
+  }
+  
+  // Use Dijkstra's algorithm to find the shortest paths from vertex 0
+  priority_queue<P, VL, greater<P>> pq;
+  pq.push({0, 0}); // Start from vertex 0 with cost 0
+  
+  while (!pq.empty()) {
+    ll current_cost = pq.top().first;
+    ll current_vertex = pq.top().second;
+    pq.pop();
+    
+    // If we have already found a cheaper way to reach this vertex, skip it
+    if (current_cost > ans[current_vertex]) {
+      continue;
+    }
+    
+    // Process all adjacent vertices
+    for (ll u = 0; u < N; ++u) {
+      // Since we know the cost of reaching each vertex after adding edge weights,
+      // we can directly use Dijkstra's algorithm
+      ll next_cost = current_cost + A[u];
+      if (next_cost < ans[u]) {
+        ans[u] = next_cost;
+        pq.push({next_cost, u});
+      }
+    }
+  }
+  
+  // We don't need the cost to reach vertex 0, so we start output from vertex 1
+  for (ll i = 1; i < N; ++i) {
+    cout << ans[i] << " ";
+  }
+  cout << endl;
+}

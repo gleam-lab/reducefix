@@ -1,0 +1,53 @@
+#include<bits/stdc++.h>
+using namespace std;
+
+long long n, x, a[105], p[105], b[105], q[105], l, r, mid, ans, minn, sum;
+
+int main() {
+    cin >> n >> x;
+    for (int i = 1; i <= n; i++) {
+        cin >> a[i] >> p[i] >> b[i] >> q[i];
+    }
+    
+    l = 0, r = 1000000005;
+    while (l <= r) {
+        mid = (l + r) / 2;
+        sum = 0;
+        
+        for (int i = 1; i <= n; i++) {
+            minn = LLONG_MAX;
+            
+            // Calculate cost for using 'a' items
+            for (int j = 0; j <= a[i]; j++) {
+                if ((mid - j * b[i]) <= 0) {
+                    minn = min(minn, j * q[i]);
+                } else {
+                    int k = (mid - j * b[i]) / a[i];
+                    minn = min(minn, j * q[i] + (k + 1) * p[i]);
+                }
+            }
+            
+            // Calculate cost for using 'b' items
+            for (int j = 0; j <= b[i]; j++) {
+                if ((mid - j * a[i]) <= 0) {
+                    minn = min(minn, j * p[i]);
+                } else {
+                    int k = (mid - j * a[i]) / b[i];
+                    minn = min(minn, j * p[i] + (k + 1) * q[i]);
+                }
+            }
+            
+            sum += minn;
+        }
+        
+        if (sum <= x) {
+            ans = mid;
+            l = mid + 1;
+        } else {
+            r = mid - 1;
+        }
+    }
+    
+    cout << ans;
+    return 0;
+}

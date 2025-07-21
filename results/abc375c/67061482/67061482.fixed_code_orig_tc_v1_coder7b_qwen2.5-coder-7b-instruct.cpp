@@ -1,0 +1,29 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+const double EPS = 1e-6;
+
+double dist(double x1, double y1, double x2, double y2) {
+    return sqrt((x1 - x2) * (x1 - x2) + (y1 - y2) * (y1 - y2));
+}
+
+int main() {
+    ios_base::sync_with_stdio(false); cin.tie(0); cout.tie(0);
+
+    int N;
+    cin >> N;
+    vector<pair<double, double>> points(N + 2);
+    points[0] = {0, 0};
+    for (int i = 1; i <= N; ++i) {
+        cin >> points[i].first >> points[i].second;
+    }
+    points[N + 1] = {0, 0};
+
+    double ans = 0;
+    for (int i = 1; i <= N + 1; ++i) {
+        ans += dist(points[i - 1].first, points[i - 1].second, points[i].first, points[i].second);
+    }
+
+    printf("%.10f\n", ans);
+    return 0;
+}

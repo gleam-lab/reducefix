@@ -1,0 +1,47 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+long long n, m;
+vector<vector<bool>> board;
+
+bool isValid(int x, int y) {
+    return x >= 0 && x < n && y >= 0 && y < n;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+
+    cin >> n >> m;
+    board.resize(n, vector<bool>(n, false));
+
+    for(long long i = 0; i < m; ++i) {
+        long long x, y;
+        cin >> x >> y;
+        --x, --y; // Convert to zero-based indexing
+        board[x][y] = true;
+    }
+
+    vector<pair<long long, long long>> moves = {{2, 1}, {1, 2}, {-1, 2}, {-2, 1}, {-2, -1}, {-1, -2}, {1, -2}, {2, -1}};
+
+    long long count = 0;
+    for(long long i = 0; i < n; ++i) {
+        for(long long j = 0; j < n; ++j) {
+            bool canPlace = true;
+            for(auto &move : moves) {
+                long long ni = i + move.first;
+                long long nj = j + move.second;
+                if(isValid(ni, nj) && board[ni][nj]) {
+                    canPlace = false;
+                    break;
+                }
+            }
+            if(canPlace) {
+                ++count;
+            }
+        }
+    }
+
+    cout << count << endl;
+    return 0;
+}

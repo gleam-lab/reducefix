@@ -1,0 +1,31 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+#define rep(i, n) for (ll i = 0; i < (n); i++)
+using ll = long long;
+
+int main()
+{
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int n;
+    cin >> n;
+    vector<ll> a(n);
+    rep(i, n) cin >> a[i];
+
+    // dp_even: max sum ending at i with even number of elements
+    // dp_odd: max sum ending at i with odd number of elements
+    ll dp_even = 0, dp_odd = -1e18;
+    
+    for (int i = 0; i < n; ++i) {
+        ll temp_even = dp_even;
+        ll temp_odd = dp_odd;
+
+        // Extend previous sequences or start new one
+        dp_even = max(temp_even, temp_odd + 2 * a[i]);
+        dp_odd = max(temp_odd, temp_even + a[i]);
+    }
+
+    cout << max(dp_even, dp_odd) << endl;
+}

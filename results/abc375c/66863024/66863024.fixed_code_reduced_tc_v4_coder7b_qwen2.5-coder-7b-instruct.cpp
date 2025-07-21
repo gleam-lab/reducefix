@@ -1,0 +1,32 @@
+#include <iostream>
+#include <cmath>
+#include <vector>
+
+int main() {
+    int N;
+    std::cin >> N;
+
+    // Store the coordinates of the points
+    std::vector<std::pair<long long, long long>> points(N);
+    for (int i = 0; i < N; ++i) {
+        std::cin >> points[i].first >> points[i].second;
+    }
+
+    // Calculate the total cost
+    double total_cost = 0.0;
+    for (size_t i = 0; i < N - 1; ++i) {
+        double dx = points[i].first - points[i + 1].first;
+        double dy = points[i].second - points[i + 1].second;
+        total_cost += std::sqrt(dx * dx + dy * dy);
+    }
+
+    // Return to the origin
+    double dx = points[N - 1].first - 0;
+    double dy = points[N - 1].second - 0;
+    total_cost += std::sqrt(dx * dx + dy * dy);
+
+    // Output the result
+    std::cout << std::fixed << std::setprecision(10) << total_cost << std::endl;
+
+    return 0;
+}

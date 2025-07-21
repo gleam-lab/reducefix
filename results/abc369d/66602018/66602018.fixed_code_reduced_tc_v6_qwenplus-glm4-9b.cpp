@@ -1,0 +1,22 @@
+#include <iostream>
+#include <limits>
+using namespace std;
+
+const long long INF = std::numeric_limits<long long>::max();
+
+int main() {
+    int n;
+    long long dp0 = 0, dp1 = -INF;
+    cin >> n;
+
+    for (int i = 0; i < n; i++) {
+        long long x;
+        cin >> x;
+        long long temp = dp0;
+        dp0 = max(dp1 + (2 * x), dp0);
+        dp1 = max(temp + x, dp1);
+    }
+
+    cout << max(dp0, dp1) << endl;
+    return 0;
+}

@@ -1,0 +1,48 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int N;
+    string S;
+    cin >> N >> S;
+
+    // All possible moves
+    vector<char> moves = {'R', 'P', 'S'};
+    
+    // dp[i][j] = max number of wins up to position i, ending with move j
+    // 0 -> R, 1 -> P, 2 -> S
+    vector<long long> dp(3, 0);
+    vector<long long> prev_dp(3, 0);
+
+    // Initialize for first character
+    for (int j = 0; j < 3; ++j) {
+        if (moves[j] == S[0]) continue; // cannot use same move as opponent
+        bool win = (moves[j] == 'R' && S[0] == 'S') ||
+                   (moves[j] == 'P' && S[0] == 'R') ||
+                   (moves[j] == 'S' && S[0] == 'P');
+        dp[j] = win ? 1 : 0;
+    }
+
+    for (int i = 1; i < N; ++i) {
+        fill(dp.begin(), dp.end(), 0);
+        for (int j = 0; j < 3; ++j) {
+            if (moves[j] == S[i]) continue; // cannot choose same as opponent's move
+
+            bool win = (moves[j] == 'R' && S[i] == 'S') ||
+                       (moves[j] == 'P' && S[i] == 'R') ||
+                       (moves[j] == 'S' && S[i] == 'P');
+
+            for (int k = 0; k < 3; ++k) {
+                if (k != j) {
+                    dp[j] = max(dp[j], prev_dp[k] + (win ? 1 : 0));
+                }
+            }
+        }
+        prev_dp = dp;
+    }
+
+    cout << *max_element(dp.begin(), dp.end()) << endl;
+}

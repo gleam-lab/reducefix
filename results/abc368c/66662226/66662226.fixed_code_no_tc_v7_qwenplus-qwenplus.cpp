@@ -1,0 +1,43 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define rep(i, n) for (int i = 0; i < (n); ++i)
+using ll = long long;
+
+// Function to compute ceiling of division
+ll ceil_div(ll a, ll b) {
+    return (a + b - 1) / b;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int n;
+    cin >> n;
+    vector<ll> H(n);
+    rep(i, n) cin >> H[i];
+
+    ll T = 0;
+    multiset<ll> times;
+
+    // We will use a greedy approach with priority queue logic
+    // For each enemy, we need to determine how many attacks it needs,
+    // and when those attacks occur based on the timing of T
+
+    // We simulate attacking enemies one by one from front to back
+    rep(i, n) {
+        ll h = H[i];
+        while (h > 0) {
+            T++;
+
+            // Check if current T is usable to deal 3 damage
+            if (T % 3 == 0) {
+                h -= 3;
+            } else {
+                h -= 1;
+            }
+        }
+    }
+
+    cout << T << endl;
+}

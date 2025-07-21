@@ -1,0 +1,67 @@
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+
+// Calculates the minimum cost to achieve at least W units of weight using two types of items
+ll min_cost(ll W, ll a, ll p, ll b, ll q) {
+    // Try both strategies: using more of item S (a per unit), and more of item T (b per unit)
+    ll best = LLONG_MAX;
+
+    // Strategy 1: Use as much of S as possible
+    ll x0 = W / a;
+    for (ll dx = 0; dx <= b && x0 - dx >= 0; dx++) {
+        ll x = x0 - dx;
+        ll rem = W - a * x;
+        ll y = (rem <= 0 ? 0 : (rem + b - 1) / b); // ceil division
+        best = min(best, x * p + y * q);
+    }
+
+    // Strategy 2: Use as much of T as possible
+    ll y0 = W / b;
+    for (ll dy = 0; dy <= a && y0 - dy >= 0; dy++) {
+        ll y = y0 - dy;
+        ll rem = W - b * y;
+        ll x = (rem <= 0 ? 0 : (rem + a - 1) / a); // ceil division
+        best = min(best, x * p + y * q);
+    }
+
+    return best;
+}
+
+// Checks if it's possible to achieve at least W total weight with total cost <= X
+bool can(ll W, int N, ll X,
+         const vector<ll>& A, const vector<ll>& P,
+         const vector<ll>& B, const vector<ll>& Q) {
+    ll total_cost = 0;
+    for (int i = 0; i < N; i++) {
+        ll c = min_cost(W, A[i], P[i], B[i], Q[i]);
+        total_cost += c;
+        if (total_cost > X) return false;
+    }
+    return total_cost <= X;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int N;
+    ll X;
+    cin >> N >> X;
+
+    vector<ll> A(N), P(N), B(N), Q(N);
+    for (int i = 0; i < N; i++) {
+        cin >> A[i] >> P[i] >> B[i] >> Q[i];
+    }
+
+    // Binary search over the answer (maximum total weight achievable)
+    ll lo = 0, hi = 1e18; // Large upper bound
+    while (hi - lo > 1) {
+        ll mid = (lo + hi) / 2;
+        if (can(mid, N, X, A, P, B, Q)) lo = mid;
+        else hi = mid;
+    }
+
+    cout << lo << "\n";
+    return 0;
+}

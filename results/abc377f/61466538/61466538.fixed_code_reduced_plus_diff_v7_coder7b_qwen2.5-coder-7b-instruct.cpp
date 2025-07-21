@@ -1,0 +1,89 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+const int MOD = 1e9 + 7;
+
+long long add(long long a, long long b) {
+    return (a + b) % MOD;
+}
+
+long long sub(long long a, long long b) {
+    return (a - b + MOD) % MOD;
+}
+
+long long mul(long long a, long long b) {
+    return (a * b) % MOD;
+}
+
+long long modInverse(long long a) {
+    long long m = MOD, m0 = m, t, q;
+    long long x0 = 0, x1 = 1;
+    if (m == 1) return 0;
+    while (a > 1) {
+        q = a / m;
+        t = m;
+        m = a % m, a = t;
+        t = x0;
+        x0 = x1 - q * x0;
+        x1 = t;
+    }
+    if (x1 < 0) x1 += m0;
+    return x1;
+}
+
+long long powMod(long long base, long long exp) {
+    long long result = 1;
+    while (exp > 0) {
+        if (exp % 2 == 1) result = mul(result, base);
+        base = mul(base, base);
+        exp /= 2;
+    }
+    return result;
+}
+
+long long gcd(long long a, long long b) {
+    while (b != 0) {
+        long long temp = b;
+        b = a % b;
+        a = temp;
+    }
+    return a;
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int n, m;
+    cin >> n >> m;
+    vector<pair<int, int>> q(m);
+    for (int i = 0; i < m; ++i) {
+        cin >> q[i].first >> q[i].second;
+    }
+
+    unordered_set<int> rows, cols, diag1, diag2;
+    for (auto [r, c] : q) {
+        rows.insert(r);
+        cols.insert(c);
+        diag1.insert(r - c);
+        diag2.insert(r + c);
+    }
+
+    long long total_empty_squares = n * n;
+    long long occupied_by_rows = rows.size() * n;
+    long long occupied_by_cols = cols.size() * n;
+    long long occupied_by_diag1 = diag1.size() * n;
+    long long occupied_by_diag2 = diag2.size() * n;
+
+    long long occupied_by_any_row_or_col = add(occupied_by_rows, occupied_by_cols);
+    long long occupied_by_any_row_or_col_and_diag1 = add(occupied_by_any_row_or_col, mul(diag1.size(), n));
+    long long occupied_by_any_row_or_col_and_diag2 = add(occupied_by_any_row_or_col, mul(diag2.size(), n));
+
+    long long occupied_by_all_three_conditions = add(add(occupied_by_any_row_or_col_and_diag1, occupied_by_any_row_or_col_and_diag2), mul(diag1.size(), diag2.size()));
+
+    long long result = sub(sub(total_empty_squares, occupied_by_any_row_or_col), sub(sub(occupied_by_any_row_or_col_and_diag1, occupied_by_any_row_or_col_and_diag2), occupied_by_all_three_conditions));
+
+    cout << result << '\n';
+
+    return 0;
+}

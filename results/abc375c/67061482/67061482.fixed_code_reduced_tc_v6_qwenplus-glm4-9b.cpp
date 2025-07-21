@@ -1,0 +1,21 @@
+#include <iostream>
+#include <cmath>
+using namespace std;
+
+int main() {
+    int N;
+    cin >> N;
+    double x = 0, y = 0, total_cost = 0.0;
+
+    for (int i = 0; i < N; i++) {
+        int cx, cy;
+        cin >> cx >> cy;
+        total_cost += sqrt((x - cx) * (x - cx) + (y - cy) * (y - cy));
+        x = cx;
+        y = cy;
+    }
+    total_cost += sqrt(x * x + y * y); // Return to the origin
+    cout.precision(20);
+    cout << fixed << total_cost << endl;
+    return 0;
+}

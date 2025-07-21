@@ -1,0 +1,34 @@
+#include <bits/stdc++.h>
+#define int long long
+#define f first
+#define s second
+using namespace std;
+
+signed main() {
+    ios_base::sync_with_stdio(0);
+    cin.tie(0);
+
+    int t; cin >> t;
+    while(t--) {
+        int n, k; cin >> n >> k;
+        vector<int> a(n), b(n);
+        for(int i=0;i<n;i++) cin >> a[i];
+        for(int i=0;i<n;i++) cin >> b[i];
+
+        sort(a.begin(), a.end());
+        sort(b.begin(), b.end());
+
+        int sum = accumulate(b.begin(), b.begin()+k, 0LL);
+        int max_a = a[k-1];
+        int ans = max_a * sum;
+
+        for(int i=k;i<n;i++) {
+            sum -= b[i-k];
+            sum += b[i];
+            max_a = max(max_a, a[i]);
+            ans = min(ans, max_a * sum);
+        }
+
+        cout << ans << '\n';
+    }
+}

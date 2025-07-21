@@ -1,0 +1,115 @@
+#include <bits/stdc++.h>
+#define int long long
+#define PII pair<int, int>
+#define inf 1e9 + 7
+
+using namespace std;
+
+int qpowm(int a, int b, int m) {
+    int r = 1;
+    while (b) {
+        if (b & 1) (r *= a) %= m;
+        (a *= a) %= m, b >>= 1;
+    }
+    return r;
+}
+
+int qpow(int a, int b) {
+    int r = 1;
+    while (b) {
+        if (b & 1) r *= a;
+        a *= a;
+        b >>= 1;
+    }
+    return r;
+}
+
+void solve() {
+    int n, m;
+    cin >> n >> m;
+    set<int> h, v, d1, d2; // d1 for diagonals i+j=d, d2 for diagonals i-j=d
+
+    for (int i = 1, x, y; i <= m; i++) {
+        cin >> x >> y;
+        h.insert(x);
+        v.insert(y);
+        d1.insert(x + y);
+        d2.insert(x - y);
+    }
+
+    int ans = (n - h.size()) * (n - v.size());
+
+    for (auto d : d1) {
+        // i+j = d diagonal
+        set<int> s; // record already counted row coordinates
+        for (auto x : h) { // find all horizontal lines intersecting this diagonal
+            if (1 <= d - x && d - x <= n) {
+                s.insert(x);
+            }
+        }
+
+        for (auto y : v) { // find all vertical lines intersecting this diagonal
+            if (1 <= d - y && d - y <= n) {
+                s.insert(d - y);
+            }
+        }
+
+        int len = 0;
+        if (d <= n + 1) { // in the upper-left part, column coordinates 1..d-1
+            len = d - 1;
+        } else { // in the lower-right part, column coordinates d-n..n
+            len = n - (d - n) + 1;
+        }
+        ans -= (len - s.size()); // subtract the number of points already counted
+    }
+
+    for (auto d : d2) {
+        // i-j = d diagonal
+        set<int> s; // record already counted row coordinates
+        for (auto x : h) { // find all horizontal lines intersecting this diagonal
+            if (1 <= x - d && x - d <= n) {
+                s.insert(x);
+            }
+        }
+
+        for (auto y : v) { // find all vertical lines intersecting this diagonal
+            if (1 <= d + y && d + y <= n) {
+                s.insert(d + y);
+            }
+        }
+
+        for (auto e : d1) {
+            // i+j == e, i-j == d
+            if ((e + d) % 2 == 0 && (e - d) % 2 == 0) {
+                int si = (e + d) / 2, sj = (e - d) / 2;
+                if (si >= 2 && si <= n && sj >= 1 && sj <= n) {
+                    s.insert(si);
+                }
+            }
+        }
+
+        int len = 0;
+        if (d <= 0) { // in the upper-right part, column coordinates 1-d..n
+            len = n - (1 - d) + 1;
+        } else { // in the lower-left part, column coordinates 1-n-d
+            len = n - d;
+        }
+        ans -= (len - s.size()); // subtract the number of points already counted
+    }
+
+    cout << ans << endl;
+}
+
+signed main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(0);
+    cout.tie(0);
+
+    int _ = 1;
+    while (_) {
+        solve();
+        _--;
+    }
+
+    return 0;
+}

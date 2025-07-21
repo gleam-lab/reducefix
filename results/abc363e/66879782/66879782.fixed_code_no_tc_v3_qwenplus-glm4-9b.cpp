@@ -1,0 +1,66 @@
+#include <bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+#define all(x) (x).begin(), (x).end()
+
+int main() {
+    ios_base::sync_with_stdio(0);
+    cin.tie(0);
+    int h, w, y;
+    cin >> h >> w >> y;
+    int height[h][w];
+    vector<vector<int>> sea_level(h, vector<int>(w, INT_MAX));
+    vector<vector<bool>> visited(h, vector<bool>(w, false));
+    int di[4][2] = {{-1, 0}, {1, 0}, {0, -1}, {0, 1}};
+    
+    for (int i = 0; i < h; i++) {
+        for (int j = 0; j < w; j++) {
+            cin >> height[i][j];
+            if (i == 0 || i == h - 1 || j == 0 || j == w - 1) {
+                sea_level[i][j] = height[i][j];
+            }
+        }
+    }
+
+    // BFS to propagate the sea level
+    queue<pair<int, int>> q;
+    for (int i = 0; i < h; i++) {
+        for (int j = 0; j < w; j++) {
+            if (sea_level[i][j] != INT_MAX) {
+                q.push({i, j});
+            }
+        }
+    }
+    while (!q.empty()) {
+        auto [r, c] = q.front();
+        q.pop();
+        visited[r][c] = true;
+        for (auto [dr, dc] : di) {
+            int nr = r + dr;
+            int nc = c + dc;
+            if (nr >= 0 && nr < h && nc >= 0 && nc < w && !visited[nr][nc] && height[nr][nc] > sea_level[r][c]) {
+                sea_level[nr][nc] = height[nr][nc];
+                visited[nr][nc] = true;
+                q.push({nr, nc});
+            }
+        }
+    }
+
+    // Calculate the area above sea level after Y years
+    int area_above_sea_level = 0;
+    for (int i = 0; i < h; i++) {
+        for (int j = 0; j < w; j++) {
+            if (sea_level[i][j] > y) {
+                area_above_sea_level++;
+            }
+        }
+    }
+    cout << area_above_sea_level << '\n';
+
+    // Output the result for the next Y years
+    for (int year = 1; year <= y; year++) {
+        cout << area_above_sea_level << '\n';
+    }
+
+    return 0;
+}

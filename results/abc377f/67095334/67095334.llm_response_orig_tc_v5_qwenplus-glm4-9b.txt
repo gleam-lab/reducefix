@@ -1,0 +1,107 @@
+
+The problem is about placing a piece on an empty square in a grid such that it is not captured by any existing pieces. The grid is NxN, and each square can be captured by existing pieces according to certain conditions. The task is to determine the number of squares that can be used to place the new piece.
+
+To approach this problem, we need to understand the capture conditions:
+
+1. The piece can capture other pieces in the same row.
+2. The piece can capture other pieces in the same column.
+3. The piece can capture other pieces on the diagonal going from top-left to bottom-right (i+j = constant).
+4. The piece can capture other pieces on the diagonal going from top-right to bottom-left (i-j = constant).
+
+Given this, we can follow these steps to solve the problem:
+
+1. Calculate the total number of empty squares in the grid, which is \(N^2 - M\).
+2. For each piece:
+   - Calculate the number of rows it can capture.
+   - Calculate the number of columns it can capture.
+   - Calculate the number of squares it can capture on each diagonal.
+   - Subtract the number of captures from the total number of empty squares.
+3. Output the result.
+
+Let's break down the incorrect code and see where the issues are:
+
+- The code uses a set to record the rows, columns, and diagonals that are already captured. However, it doesn't account for different sets of captures for each piece.
+- The code uses a set to store the intersection of rows and columns that are captured by a piece. However, it doesn't consider the diagonals.
+- The code uses the same approach for both diagonals, but one should be adjusted based on the sign of the difference between the row and column coordinates.
+
+Let's refactor the code to correct these issues and implement the above approach:
+
+```cpp
+#include <iostream>
+#include <vector>
+#include <set>
+
+using namespace std;
+
+const int MOD = 1e9 + 7;
+
+ll pown(int b, int e) {
+    ll res = 1;
+    while (e > 0) {
+        if (e & 1) res = res * b % MOD;
+        b = b * b % MOD;
+        e >>= 1;
+    }
+    return res;
+}
+
+int main() {
+    int n, m;
+    cin >> n >> m;
+    vector<pair<int, int>> pieces(m);
+    vector<set<int>> rows(n + 1), cols(n + 1);
+    vector<pair<set<int>, set<int>>> diagonals(2 * n + 1); // For (i+j) and (i-j)
+
+    for (int i = 0; i < m; ++i) {
+        int a, b;
+        cin >> a >> b;
+        pieces[i] = {a, b};
+        rows[a].insert(b);
+        cols[b].insert(a);
+        diagonals[a - b + n].insert(i);
+    }
+
+    ll total = (ll)n * n - (ll)m;
+    set<int> all_cols, all_rows;
+    for (int i = 1; i <= n; ++i) {
+        all_rows.insert(i);
+        all_cols.insert(i);
+    }
+
+    for (int i = 1; i <= n; ++i) {
+        total -= (ll)all_cols.size() - rows[i].size() * rows[i].size(); // Captures at each row
+        all_cols.erase(all_cols.find(i));
+        all_rows.erase(all_rows.find(i));
+    }
+
+    for (int i = 1; i <= n; ++i) {
+        total -= (ll)all_rows.size() - cols[i].size() * cols[i].size(); // Captures at each column
+        all_cols.insert(i);
+        all_rows.erase(all_rows.find(i));
+    }
+
+    for (int i = 1; i <= 2 * n; ++i) {
+        set<int> lines; // To store unique pairs (i+j, i-j)
+        for (auto idx : diagonals[i]) {
+            int a = pieces[idx].first;
+            int b = pieces[idx].second;
+            lines.insert(a + b);
+            lines.insert(a - b);
+        }
+
+        for (auto line : lines) {
+            total -= (ll)all_rows.size() - all_cols.size(); // Captures on each line
+            all_rows.insert((line + 1) / 2);
+            all_cols.insert((line - 1) / 2);
+        }
+
+        all_rows.erase(all_rows.find((i + 1) / 2));
+        all_cols.erase(all_cols.find((i - 1) / 2));
+    }
+
+    cout << total << endl;
+    return 0;
+}
+```
+
+The above code should now correctly calculate the number of empty squares where a new piece can be placed without being captured.

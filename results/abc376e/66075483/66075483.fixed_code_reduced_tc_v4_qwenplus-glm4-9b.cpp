@@ -1,0 +1,48 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+using namespace std;
+#define int long long
+
+int32_t main() {
+    int T;
+    cin >> T;
+    while (T--) {
+        int N, K;
+        cin >> N >> K;
+        vector<int> A(N), B(N);
+        
+        for (int i = 0; i < N; i++) {
+            cin >> A[i];
+        }
+        for (int i = 0; i < N; i++) {
+            cin >> B[i];
+        }
+        
+        sort(A.begin(), A.end(), greater<int>());
+        vector<pair<int, int>> B_indices(N);
+        
+        for (int i = 0; i < N; i++) {
+            B_indices[i] = {B[i], i};
+        }
+        
+        sort(B_indices.begin(), B_indices.end());
+        
+        long long sum_B = 0;
+        long long max_A = 0;
+        long long result = LLONG_MAX;
+        
+        for (int i = 0; i < N; i++) {
+            sum_B += B_indices[i].first;
+            max_A = A[i];
+            
+            if (i >= K - 1) {
+                long long remaining_sum_B = sum_B - (K - 1) * A[i];
+                result = min(result, max_A * remaining_sum_B);
+            }
+        }
+        
+        cout << result << endl;
+    }
+    return 0;
+}

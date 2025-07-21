@@ -1,0 +1,34 @@
+#include <iostream>
+#include <string>
+using namespace std;
+
+int main() {
+    int N;
+    string S;
+    cin >> N;
+    cin >> S;
+
+    int wins = 0;
+    char prev = S[0]; // Initialize prev to the first character of S
+    for (int i = 1; i < N; i++) { // Start from the second character
+        char current = S[i];
+        char winmove;
+        if (prev == 'R' && current == 'P') {
+            winmove = 'R'; // Rock beats Scissors
+        } else if (prev == 'S' && current == 'R') {
+            winmove = 'S'; // Scissors beats Paper
+        } else if (prev == 'P' && current == 'S') {
+            winmove = 'P'; // Paper beats Rock
+        } else {
+            winmove = current; // No win, continue with the same character
+        }
+        if (winmove != prev) {
+            wins++;
+            prev = winmove;
+        } else {
+            prev = current;
+        }
+    }
+    cout << wins;
+    return 0;
+}

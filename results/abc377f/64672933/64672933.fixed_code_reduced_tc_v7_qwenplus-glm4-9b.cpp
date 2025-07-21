@@ -1,0 +1,74 @@
+#include<bits/stdc++.h>
+using namespace std;
+using i64 = long long;
+
+int main() {
+    std::ios::sync_with_stdio(false);
+    std::cin.tie(nullptr);
+    i64 N, M;
+    cin >> N >> M;
+    vector<pair<i64, i64>> pieces;
+    vector<vector<i64>> rows(N + 1), cols(N + 1), diags1(N + 1), diags2(N + 1);
+    vector<vector<bool>> mark(N + 1, vector<bool>(N + 1, false));
+
+    for (i64 i = 0; i < M; ++i) {
+        i64 a, b;
+        cin >> a >> b;
+        pieces.emplace_back(a, b);
+        rows[a].push_back(b);
+        cols[b].push_back(a);
+        diags1[a + b].push_back(a);
+        diags2[abs(a - b)].push_back(a);
+    }
+
+    sort(rows.rbegin(), rows.rend());
+    sort(cols.rbegin(), cols.rend());
+    sort(diags1.rbegin(), diags1.rend());
+    sort(diags2.rbegin(), diags2.rend());
+
+    i64 ans = N * N;
+
+    for (const auto& p : pieces) {
+        i64 a = p.first, b = p.second;
+
+        // Check rows and columns
+        for (i64 i = 0; i < rows[a].size(); ++i) {
+            if (rows[a][i] != b) {
+                mark[a][b] = true;
+                break;
+            }
+        }
+        for (i64 i = 0; i < cols[b].size(); ++i) {
+            if (cols[b][i] != a) {
+                mark[a][b] = true;
+                break;
+            }
+        }
+
+        // Check diagonals
+        for (i64 i = 0; i < diags1[a + b].size(); ++i) {
+            if (diags1[a + b][i] != a) {
+                mark[a][b] = true;
+                break;
+            }
+        }
+        for (i64 i = 0; i < diags2[abs(a - b)].size(); ++i) {
+            if (diags2[abs(a - b)][i] != a) {
+                mark[a][b] = true;
+                break;
+            }
+        }
+    }
+
+    for (i64 i = 1; i <= N; ++i) {
+        for (i64 j = 1; j <= N; ++j) {
+            if (!mark[i][j]) {
+                ans--;
+            }
+        }
+    }
+
+    cout << ans << "\n";
+
+    return 0;
+}

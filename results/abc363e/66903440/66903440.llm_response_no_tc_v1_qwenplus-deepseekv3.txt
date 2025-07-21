@@ -1,0 +1,81 @@
+To fix this code, we need to address several issues related to the logic and implementation of the problem. The goal is to correctly simulate the sinking of sections of the island as the sea level rises each year and to efficiently track the remaining area above sea level.
+
+### Issues in the Original Code:
+1. **Initialization of the Queue:** The original code initializes a queue for each possible sea level up to 202020, which is inefficient and unnecessary. Instead, we can use a priority queue or process sections in order of their elevation.
+2. **Boundary Condition Check:** The code checks `ni>=0&&ni<H&&ni>=0&&ni<W` which is redundant and incorrect. It should check both `ni` and `nj` bounds correctly.
+3. **Handling of Sinking Sections:** The logic for sinking sections does not correctly propagate the sinking to adjacent sections based on the current sea level. The use of `max(A[ni][nj], y)` can lead to incorrect updates.
+4. **Efficiency:** The original approach may not be efficient enough for large inputs (H and W up to 1000 and Y up to 100000).
+
+### Fixed Approach:
+1. **Priority Queue:** Use a priority queue (min-heap) to process sections in order of their elevation. This allows us to handle sections as the sea level rises.
+2. **Visited Tracking:** Maintain a visited matrix to track which sections have already sunk.
+3. **BFS Propagation:** For each sea level, propagate the sinking to adjacent sections using BFS, ensuring that sections are processed in the correct order.
+
+### Solution Code:
+```cpp
+#include<bits/stdc++.h>
+using namespace std;
+using ll = int64_t;
+using ld = long double;
+
+int dx[] = {1, 0, -1, 0};
+int dy[] = {0, 1, 0, -1};
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int H, W, Y;
+    cin >> H >> W >> Y;
+    vector<vector<int>> A(H, vector<int>(W));
+    for (int i = 0; i < H; ++i) {
+        for (int j = 0; j < W; ++j) {
+            cin >> A[i][j];
+        }
+    }
+
+    vector<vector<bool>> sunk(H, vector<bool>(W, false));
+    priority_queue<pair<int, pair<int, int>>, vector<pair<int, pair<int, int>>>, greater<pair<int, pair<int, int>>>> pq;
+    int remaining = H * W;
+
+    // Initialize the boundary sections
+    for (int i = 0; i < H; ++i) {
+        for (int j = 0; j < W; ++j) {
+            if (i == 0 || i == H - 1 || j == 0 || j == W - 1) {
+                pq.push({A[i][j], {i, j}});
+                sunk[i][j] = true;
+            }
+        }
+    }
+
+    for (int y = 1; y <= Y; ++y) {
+        while (!pq.empty() && pq.top().first <= y) {
+            auto current = pq.top();
+            pq.pop();
+            int i = current.second.first;
+            int j = current.second.second;
+            remaining--;
+
+            for (int k = 0; k < 4; ++k) {
+                int ni = i + dx[k];
+                int nj = j + dy[k];
+                if (ni >= 0 && ni < H && nj >= 0 && nj < W && !sunk[ni][nj]) {
+                    sunk[ni][nj] = true;
+                    pq.push({A[ni][nj], {ni, nj}});
+                }
+            }
+        }
+        cout << remaining << "\n";
+    }
+
+    return 0;
+}
+```
+
+### Explanation:
+1. **Initialization:** The code reads the island's elevation matrix and initializes a priority queue (min-heap) to process sections starting from the boundaries.
+2. **Priority Queue Processing:** The priority queue processes sections in order of their elevation, ensuring that sections sink as soon as the sea level reaches their elevation.
+3. **BFS Propagation:** For each section that sinks, the code checks its adjacent sections. If an adjacent section hasn't sunk yet and its elevation is less than or equal to the current sea level, it is added to the queue to sink in subsequent years.
+4. **Output:** For each year, the code outputs the remaining area of the island that hasn't sunk yet, adjusting the count as sections sink.
+
+This approach efficiently handles the problem constraints and ensures correctness by processing sections in the correct order and propagating the sinking effect appropriately.

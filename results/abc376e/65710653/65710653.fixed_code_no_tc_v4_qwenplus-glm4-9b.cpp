@@ -1,0 +1,69 @@
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+using pint = pair<int, int>;
+using pll = pair<ll, ll>;
+
+#define rrep1(a)          for(ll i = (ll)(a) - 1; i >= 0; i--)
+#define rrep2(i, a)       for(ll i = (ll)(a) - 1; i >= 0; i--)
+#define rrep3(i, a, b)    for(ll i = (ll)(b); i < (ll)(a); i++)
+#define rrep4(i, a, b, c) for(ll i = (ll)(b); i < (ll)(a); i += (c))
+#define overload4(a, b, c, d, e, ...) e
+#define rrep(...) overload4(__VA_ARGS__, rrep4, rrep3, rrep2, rrep1)(__VA_ARGS__)
+
+#define rep1(a)          for(ll i = 0; i < (ll)(a); i++)
+#define rep2(i, a)       for(ll i = 0; i < (ll)(a); i++)
+#define rep3(i, a, b)    for(ll i = (ll)(a); i < (ll)(b); i++)
+#define rep4(i, a, b, c) for(ll i = (ll)(a); i < (ll)(b); i += (c))
+#define overload4(a, b, c, d, e, ...) e
+#define rep(...) overload4(__VA_ARGS__, rep4, rep3, rep2, rep1)(__VA_ARGS__)
+
+#define fi first
+#define se second
+#define pb push_back
+#define spa " "
+
+void scan() {}
+template<class Head, class... Tail>
+inline void scan(Head& head, Tail&... tail) { std::cin >> head; scan(tail...); }
+#define LL(...) ll __VA_ARGS__; scan(__VA_ARGS__)
+#define STR(...) string __VA_ARGS__; scan(__VA_ARGS__)
+
+#pragma GCC diagnostic ignored "-Wunused-value"
+void print() { cout << '\n'; }
+template<class T, class... Ts>
+void print(const T& a, const Ts&... b) { cout << a; (cout << ' ', b...); cout << '\n'; }
+#pragma GCC diagnostic warning "-Wunused-value"
+
+int main() {
+    LL(t);
+    while (t--) {
+        LL(n, m);
+        vector<pll> a(n);
+        rep(n) cin >> a[i].fi;
+        rep(n) cin >> a[i].se;
+        sort(a.begin(), a.end());
+        multiset<ll> s;
+        ll sum = 0;
+        ll ans = 0;
+
+        // Select the first m elements
+        for (int i = 0; i < m; i++) {
+            s.insert(a[i].se);
+            sum += a[i].se;
+        }
+        // Calculate initial answer with the first m elements
+        ans = sum * a[m - 1].fi;
+
+        // Try to remove the smallest B element and try the next one from the remaining elements
+        for (int i = 0; i < n - m; i++) {
+            sum -= *s.begin();
+            s.erase(s.begin());
+            sum += a[m + i].se;
+            ans = min(ans, sum * a[m + i].fi);
+        }
+
+        cout << ans << endl;
+    }
+    return 0;
+}

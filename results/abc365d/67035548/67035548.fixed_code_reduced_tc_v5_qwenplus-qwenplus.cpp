@@ -1,0 +1,56 @@
+#include <iostream>
+#include <string>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+// Returns the winning move against c
+char beats(char c) {
+    if (c == 'R') return 'P';
+    if (c == 'P') return 'S';
+    if (c == 'S') return 'R';
+    return 'X'; // shouldn't happen
+}
+
+int main() {
+    int n;
+    string s;
+    cin >> n >> s;
+
+    // We need to find the maximum number of consecutive moves we can make
+    // where each move beats the corresponding character in s.
+    // This is equivalent to finding the longest sequence of characters from s
+    // where each character beats the previous one.
+
+    // We'll use a greedy approach: always play the move that beats the current character,
+    // unless it's the same as our last move.
+
+    // First pass: left to right
+    int count1 = 0;
+    char last_move = 'X'; // no move yet
+    
+    for (char c : s) {
+        char move = beats(c);
+        if (move != last_move) {
+            count1++;
+            last_move = move;
+        }
+    }
+
+    // Second pass: right to left
+    int count2 = 0;
+    last_move = 'X';
+    
+    for (int i = n-1; i >= 0; --i) {
+        char c = s[i];
+        char move = beats(c);
+        if (move != last_move) {
+            count2++;
+            last_move = move;
+        }
+    }
+
+    cout << max(count1, count2) << endl;
+
+    return 0;
+}

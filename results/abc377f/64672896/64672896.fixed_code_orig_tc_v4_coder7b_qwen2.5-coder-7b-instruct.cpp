@@ -1,0 +1,33 @@
+#include<bits/stdc++.h>
+using namespace std;
+using ll = long long;
+
+int main() {
+    ios::sync_with_stdio(false); cin.tie(nullptr);
+
+    ll N, M; cin >> N >> M;
+    vector<pair<ll,ll>> pieces(M);
+    unordered_set<ll> rows, cols, diags1, diags2;
+
+    for(ll i = 0; i < M; ++i){
+        ll a, b; cin >> a >> b;
+        pieces[i] = {a, b};
+        rows.insert(a); cols.insert(b);
+        diags1.insert(a + b); diags2.insert(a - b);
+    }
+
+    ll ans = N*N;
+    ans -= rows.size(); ans -= cols.size();
+    ans -= diags1.size(); ans -= diags2.size();
+
+    for(auto& [r, c]: pieces){
+        if(rows.find(r) != rows.end()) --ans;
+        if(cols.find(c) != cols.end()) --ans;
+        if(diags1.find(r + c) != diags1.end()) --ans;
+        if(diags2.find(r - c) != diags2.end()) --ans;
+    }
+
+    cout << ans << '\n';
+
+    return 0;
+}

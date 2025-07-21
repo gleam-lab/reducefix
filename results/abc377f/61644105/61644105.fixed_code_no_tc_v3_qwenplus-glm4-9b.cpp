@@ -1,0 +1,46 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+
+using namespace std;
+
+int main() {
+    long long n, m;
+    cin >> n >> m;
+
+    vector<pair<long long, long long>> pieces;
+    for (long long i = 0; i < m; ++i) {
+        long long a, b;
+        cin >> a >> b;
+        pieces.emplace_back(a, b);
+    }
+
+    // Sort pieces to process them in order
+    sort(pieces.begin(), pieces.end());
+
+    long long free_squares = n * n;
+    // Mark squares that cannot be placed on
+    for (auto& p : pieces) {
+        long long a = p.first, b = p.second;
+
+        // Mark row and column
+        free_squares -= n; // Exclude all squares in the row and column
+        free_squares -= (a - 1); // Exclude all squares above the given row
+        free_squares -= (n - b); // Exclude all squares below the given column
+
+        // Mark diagonals
+        if (a + b >= 2) {
+            // Diagonal a-b = constant
+            free_squares -= (a + b - 2);
+        }
+        if (a - b >= 1) {
+            // Diagonal a+b = constant
+            free_squares -= (n - abs(a - b));
+        }
+    }
+
+    // Output the result
+    cout << free_squares << endl;
+
+    return 0;
+}

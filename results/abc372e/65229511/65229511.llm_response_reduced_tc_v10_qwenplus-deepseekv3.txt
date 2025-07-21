@@ -1,0 +1,82 @@
+To fix this code, we need to address the issue where the k-th largest vertex number among the connected vertices is incorrectly computed. The problem arises because the code incorrectly merges the sets of vertices when performing union operations, leading to incomplete or incorrect sets being maintained.
+
+### Approaches
+1. **Union-Find Data Structure**: This helps efficiently manage the connected components of the graph.
+2. **Balanced Trees (std::set)**: Each root in the Union-Find structure maintains a set of vertices in its component. This allows for efficient insertion and access to the k-th largest element.
+3. **Merge Operations**: When two components are merged, the smaller set is merged into the larger one to ensure efficiency (O(log n) per operation on average).
+
+### Solution Code
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+#define rep(i, n) for(int i = 0; i < (n); i++)
+#define all(a) a.begin(), a.end()
+#define rall(a) a.rbegin(), a.rend()
+using ll = long long;
+using pi = pair<int, int>;
+const int di[] = {1, -1, 0, 0};
+const int dj[] = {0, 0, 1, -1};
+const int INF = 1e9;
+struct UnionFind {
+    vector<int> parent;
+    vector<set<int>> components;
+    UnionFind(int n) : parent(n), components(n) {
+        for (int i = 0; i < n; i++) {
+            parent[i] = i;
+            components[i].insert(i);
+        }
+    }
+    int findRoot(int x) {
+        if (parent[x] != x) 
+            parent[x] = findRoot(parent[x]);
+        return parent[x];
+    }
+    void unite(int x, int y) {
+        int rx = findRoot(x), ry = findRoot(y);
+        if (rx == ry) return;
+        if (components[rx].size() < components[ry].size()) 
+            swap(rx, ry);
+        parent[ry] = rx;
+        components[rx].insert(all(components[ry]));
+        components[ry].clear();
+    }
+};
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int n, q;
+    cin >> n >> q;
+    UnionFind uf(n);
+    vector<int> ans;
+    rep(qi, q) {
+        int com;
+        cin >> com;
+        if (com == 1) {
+            int u, v;
+            cin >> u >> v;
+            u--; v--;
+            uf.unite(u, v);
+        } else if (com == 2) {
+            int v, k;
+            cin >> v >> k;
+            v--;
+            int root = uf.findRoot(v);
+            if ((int)uf.components[root].size() < k) 
+                ans.push_back(-1);
+            else {
+                auto it = prev(uf.components[root].end(), k);
+                ans.push_back(*it + 1);
+            }
+        }
+    }
+    for (auto x : ans) cout << x << endl;
+    return 0;
+}
+```
+
+### Explanation
+1. **UnionFind Structure**: This structure keeps track of the parent of each vertex and the set of vertices in each component. The `findRoot` method uses path compression to optimize future queries.
+2. **Unite Method**: When merging two components, the smaller set is merged into the larger one to maintain efficiency. This ensures that each merge operation is O(log n) on average.
+3. **Query Handling**: For a Type 2 query, the code checks the size of the component. If the size is less than `k`, it returns `-1`. Otherwise, it retrieves the k-th largest element using reverse iterators on the set, providing the result in O(log n) time per query.
+
+This solution efficiently handles the dynamic connectivity and k-th largest element queries, ensuring correctness and optimal performance for large inputs.

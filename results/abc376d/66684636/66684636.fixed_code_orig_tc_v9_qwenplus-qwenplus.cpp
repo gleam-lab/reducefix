@@ -1,0 +1,50 @@
+#include <bits/stdc++.h>
+#define int long long
+using namespace std;
+
+const int N = 2e5 + 5;
+
+vector<int> g[N];
+int n, m, ans = -1;
+bool vis[N];
+
+void dfs(int u, int dep, int& cnt) {
+    if (vis[u]) return;
+    vis[u] = true;
+    cnt++;
+    for (int v : g[u]) {
+        if (v == 1) {
+            if (dep > 1) { // Avoid immediate self-loop
+                ans = cnt;
+                return;
+            }
+        } else {
+            dfs(v, dep + 1, cnt);
+            if (ans != -1) return;
+        }
+    }
+}
+
+signed main() {
+    cin >> n >> m;
+    for (int i = 1; i <= m; ++i) {
+        int u, v;
+        cin >> u >> v;
+        g[u].push_back(v);
+    }
+
+    // Try each node except 1 to find the shortest cycle through 1
+    for (int u = 2; u <= n; ++u) {
+        if (!g[1].empty() && find(g[1].begin(), g[1].end(), u) != g[1].end()) continue; // Skip direct children of 1
+
+        fill(vis + 1, vis + n + 1, false);
+        vis[1] = true; // Start from 1
+        int cnt = 0;
+        dfs(u, 1, cnt);
+
+        if (ans != -1) break; // Found shortest possible
+    }
+
+    cout << (ans == -1 ? -1 : ans + 1); // +1 because we count edges not nodes
+    return 0;
+}

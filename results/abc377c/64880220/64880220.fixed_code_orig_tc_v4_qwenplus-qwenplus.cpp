@@ -1,0 +1,40 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    long long N, M;
+    cin >> N >> M;
+
+    set<pair<long long, long long>> occupied;
+    vector<pair<long long, long long>> attack_offsets = {
+        {2, 1}, {1, 2}, {-1, 2}, {-2, 1},
+        {-2, -1}, {-1, -2}, {1, -2}, {2, -1}
+    };
+
+    for (int i = 0; i < M; ++i) {
+        long long a, b;
+        cin >> a >> b;
+        occupied.insert({a, b});
+    }
+
+    long long attacked_count = 0;
+
+    for (const auto& pos : occupied) {
+        long long x = pos.first;
+        long long y = pos.second;
+        for (const auto& offset : attack_offsets) {
+            long long nx = x + offset.first;
+            long long ny = y + offset.second;
+            if (nx >= 1 && nx <= N && ny >= 1 && ny <= N) {
+                if (!occupied.count({nx, ny})) {
+                    attacked_count++;
+                }
+            }
+        }
+    }
+
+    // Total squares: N*N
+    // Minus occupied squares (M)
+    // Minus squares under attack (attacked_count)
+    cout << N * N - M - attacked_count << endl;
+}

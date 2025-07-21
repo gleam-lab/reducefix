@@ -1,0 +1,51 @@
+#include <bits/stdc++.h>
+#define ll long long
+using namespace std;
+
+int main() {
+    ll N;
+    cin >> N;
+    vector<ll> A(N), B(N - 1);
+    
+    for (ll i = 0; i < N; i++) {
+        cin >> A[i];
+    }
+    for (ll i = 0; i < N - 1; i++) {
+        cin >> B[i];
+    }
+
+    // Sort both arrays in descending order
+    sort(A.begin(), A.end(), greater<ll>());
+    sort(B.begin(), B.end(), greater<ll>());
+
+    // Initialize the minimum box size to be found
+    ll min_box_size = LLONG_MAX;
+
+    // Iterate through each toy and find the minimum box size that can fit it
+    for (ll i = 0; i < N; i++) {
+        // The toy must fit into one of the existing boxes or a new box
+        ll max_size_needed = 0;
+        // Check existing boxes
+        for (ll j = 0; j < N - 1; j++) {
+            if (A[i] <= B[j]) {
+                max_size_needed = max(max_size_needed, B[j]);
+            }
+        }
+        // If no existing box can fit the toy, consider a new box
+        if (max_size_needed == 0) {
+            max_size_needed = A[i]; // The new box must at least be as large as the toy
+        }
+
+        // Update the minimum box size if the current one is smaller
+        min_box_size = min(min_box_size, max_size_needed);
+    }
+
+    // If the minimum box size is still LLONG_MAX, no valid box size exists
+    if (min_box_size == LLONG_MAX) {
+        cout << -1 << endl;
+    } else {
+        cout << min_box_size << endl;
+    }
+
+    return 0;
+}

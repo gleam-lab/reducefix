@@ -1,0 +1,80 @@
+To fix this code, we need to address a few key issues:
+
+1. **Initialization of the Queue**: The original code initializes a queue for each possible sea level up to 202020, which is inefficient and unnecessary. Instead, we should use a priority queue (or a more efficient data structure) to handle the order in which sections sink based on their elevation relative to the sea level.
+
+2. **Boundary Conditions**: The code correctly identifies the boundary sections but incorrectly checks `ni>=0&&ni<H&&ni>=0&&ni<W` which has a redundant condition. It should check `ni>=0&&ni<H&&nj>=0&&nj<W`.
+
+3. **Process Order**: The sinking process should prioritize sections with lower elevations first, as they will sink sooner when the sea level rises. Using a priority queue (min-heap) ensures that we process sections in the correct order.
+
+4. **Efficiency**: Given the constraints (H and W up to 1000 and Y up to 100000), the solution must be efficient. Using a BFS approach with a priority queue allows us to process each section exactly once, making the solution O(HW log(HW)) which is acceptable.
+
+Here is the corrected code:
+
+```cpp
+#include<bits/stdc++.h>
+using namespace std;
+using ll = int64_t;
+
+int main() {
+    cin.tie(0)->sync_with_stdio(0);
+
+    int H, W, Y;
+    cin >> H >> W >> Y;
+    vector<vector<int>> A(H, vector<int>(W));
+    for (int i = 0; i < H; ++i) {
+        for (int j = 0; j < W; ++j) {
+            cin >> A[i][j];
+        }
+    }
+
+    int ans = H * W;
+    vector<vector<bool>> sunk(H, vector<bool>(W, false));
+    priority_queue<pair<int, pair<int, int>>, vector<pair<int, pair<int, int>>>, greater<pair<int, pair<int, int>>>> pq;
+
+    for (int i = 0; i < H; ++i) {
+        for (int j = 0; j < W; ++j) {
+            if (i == 0 || i == H - 1 || j == 0 || j == W - 1) {
+                pq.push({A[i][j], {i, j}});
+                sunk[i][j] = true;
+            }
+        }
+    }
+
+    vector<int> res(Y + 1, ans);
+    for (int y = 1; y <= Y; ++y) {
+        while (!pq.empty() && pq.top().first <= y) {
+            auto [val, pos] = pq.top();
+            pq.pop();
+            int i = pos.first;
+            int j = pos.second;
+            ans--;
+            int dx[] = {1, 0, -1, 0};
+            int dy[] = {0, 1, 0, -1};
+            for (int k = 0; k < 4; ++k) {
+                int ni = i + dx[k];
+                int nj = j + dy[k];
+                if (ni >= 0 && ni < H && nj >= 0 && nj < W && !sunk[ni][nj]) {
+                    sunk[ni][nj] = true;
+                    pq.push({A[ni][nj], {ni, nj}});
+                }
+            }
+        }
+        res[y] = ans;
+    }
+
+    for (int y = 1; y <= Y; ++y) {
+        cout << res[y] << '\n';
+    }
+
+    return 0;
+}
+```
+
+### Explanation:
+1. **Initialization**: We read the input and initialize the grid `A` and a `sunk` matrix to keep track of which sections have sunk.
+2. **Priority Queue**: We use a priority queue to process sections in order of their elevation. This ensures that sections with lower elevations are processed first as the sea level rises.
+3. **Boundary Handling**: Initially, all boundary sections are added to the priority queue since they are adjacent to the sea.
+4. **Processing**: For each sea level `y`, we process all sections in the priority queue that have an elevation <= `y`. For each processed section, we decrement the remaining area and add its unsunk neighbors to the queue.
+5. **Output**: After processing each sea level, we store the result in an array and print the results for each year from 1 to Y.
+
+This approach ensures that each section is processed exactly once, making the solution efficient and correct.

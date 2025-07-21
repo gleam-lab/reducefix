@@ -1,0 +1,89 @@
+To fix this code, we need to ensure that the Dijkstra's algorithm implementation correctly handles the calculation of the minimum path weight from vertex 1 to all other vertices, considering both vertex and edge weights. The initial problem arises from incorrect handling of the infinity value and the data types used for large numbers.
+
+### Approaches
+1. **Data Type Handling**: Since vertex and edge weights can be as large as \(10^9\) and \(N\) can be up to \(2 \times 10^5\), the sum of weights along a path can be very large. Therefore, we need to use a 64-bit integer (long long) to avoid overflow.
+2. **Dijkstra's Algorithm**: This algorithm is suitable for finding the shortest path in a graph with non-negative weights. Here, the path weight is defined as the sum of vertex weights and edge weights along the path. We need to:
+   - Initialize the distance from vertex 1 to itself as the vertex's weight \(A_1\).
+   - For each neighboring vertex, update the distance if a shorter path is found, which includes the current vertex's weight, the edge weight, and the neighbor's vertex weight.
+3. **Priority Queue**: Use a priority queue to efficiently extract the vertex with the current minimum distance.
+4. **Infinity Value**: Define a sufficiently large value to represent infinity, typically \(10^{18}\) or similar, which is larger than the maximum possible path weight.
+
+### Solution Code
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+
+const ll INF = 1e18;
+
+struct Edge {
+    int to;
+    ll cost;
+};
+
+struct Node {
+    int vertex;
+    ll distance;
+    bool operator<(const Node& other) const {
+        return distance > other.distance; // Min-heap
+    }
+};
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int N, M;
+    cin >> N >> M;
+
+    vector<ll> A(N + 1);
+    for (int i = 1; i <= N; ++i) {
+        cin >> A[i];
+    }
+
+    vector<vector<Edge>> graph(N + 1);
+    for (int i = 0; i < M; ++i) {
+        int u, v;
+        ll b;
+        cin >> u >> v >> b;
+        graph[u].push_back({v, b});
+        graph[v].push_back({u, b});
+    }
+
+    vector<ll> dist(N + 1, INF);
+    dist[1] = A[1];
+    priority_queue<Node> pq;
+    pq.push({1, dist[1]});
+
+    while (!pq.empty()) {
+        Node current = pq.top();
+        pq.pop();
+        int u = current.vertex;
+        if (current.distance > dist[u]) continue;
+
+        for (const Edge& edge : graph[u]) {
+            int v = edge.to;
+            ll cost = edge.cost;
+            if (dist[v] > dist[u] + cost + A[v]) {
+                dist[v] = dist[u] + cost + A[v];
+                pq.push({v, dist[v]});
+            }
+        }
+    }
+
+    for (int i = 2; i <= N; ++i) {
+        cout << dist[i] << (i == N ? "\n" : " ");
+    }
+
+    return 0;
+}
+```
+
+### Explanation
+1. **Initialization**: The vertex weights \(A_i\) are read into an array. The graph is built using adjacency lists where each edge stores the destination vertex and its weight.
+2. **Dijkstra's Setup**: The distance array `dist` is initialized to infinity, except for the starting vertex (vertex 1), which is set to its vertex weight \(A_1\).
+3. **Priority Queue**: The priority queue (min-heap) is initialized with the starting vertex and its distance. This helps efficiently retrieve the vertex with the current minimum distance.
+4. **Relaxation**: For each vertex extracted from the priority queue, the algorithm checks all its neighbors. If a shorter path to a neighbor is found (sum of current vertex's distance, edge weight, and neighbor's vertex weight), the neighbor's distance is updated, and it is added to the priority queue.
+5. **Output**: After processing all vertices, the distances from vertex 1 to all other vertices (from 2 to N) are printed.
+
+This approach ensures that the shortest path is found efficiently with a time complexity of \(O((N + M) \log N)\), suitable for large input sizes.

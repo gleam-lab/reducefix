@@ -1,0 +1,89 @@
+
+### Problem Analysis
+In this problem, we are tasked with determining the minimum number of additional votes each candidate needs to guarantee their victory in an election. The victory condition for a candidate is that the number of other candidates who have received more votes than them is less than a given threshold \( M \). We need to compute this for all candidates and ensure that the solution is efficient given the constraints.
+
+### Solution Strategy
+1. **Initial Sorting and Setup**: We start by sorting the candidates based on the number of votes they have received. This helps in efficiently determining the number of candidates that need to be ahead of a given candidate to ensure victory.
+
+2. **Cumulative Sum Array**: We maintain a cumulative sum array \( psum \) to help quickly compute the sum of votes for any subset of candidates.
+
+3. **Binary Search for Minimum Votes**: For each candidate, we use binary search to determine the minimum number of additional votes required such that they can guarantee their victory. The binary search is performed over the range of additional votes from 0 to \( K - \text{sum of votes already received by all candidates} \).
+
+4. **Efficient Calculation**: During the binary search, we calculate the number of votes required for the candidate to surpass the votes of all other candidates that are not in the top \( M \) positions. This is done using the sorted list and the cumulative sum array.
+
+5. **Edge Cases**: We handle cases where a candidate is already guaranteed to win or cannot win under any circumstances.
+
+### Corrected and Optimized Code
+```cpp
+#include <iostream>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+typedef long long ll;
+
+int main() {
+    int N, M, K;
+    cin >> N >> M >> K;
+    vector<pair<ll, int>> candidates(N);
+    
+    for (int i = 0; i < N; ++i) {
+        cin >> candidates[i].first;
+        candidates[i].second = i;
+    }
+    
+    // Sort candidates based on the number of votes they have received
+    sort(candidates.begin(), candidates.end());
+    
+    // Compute the prefix sum of votes
+    vector<ll> prefix_sum(N);
+    prefix_sum[0] = candidates[0].first;
+    for (int i = 1; i < N; ++i) {
+        prefix_sum[i] = prefix_sum[i - 1] + candidates[i].first;
+    }
+    
+    // We need to find the minimum additional votes required for each candidate
+    vector<ll> result(N, -1);
+    
+    for (int i = 0; i < N; ++i) {
+        int votes_needed = K - prefix_sum[N - 1];
+        int ahead = N - M - 1;
+        
+        if (i > ahead) {
+            // If the candidate is already ahead of the number needed to win
+            result[candidates[i].second] = 0;
+            continue;
+        }
+        
+        // Binary search for the minimum votes needed
+        int low = 0, high = K;
+        while (low < high) {
+            int mid = (low + high + 1) / 2;
+            ll additional_votes = mid;
+            ll current_votes = candidates[i].first + additional_votes;
+            
+            ll sum_needed = 0;
+            for (int j = i + 1; j <= ahead; ++j) {
+                sum_needed += (j - (i + 1)) * (current_votes + 1);
+            }
+            
+            if (sum_needed <= votes_needed) {
+                high = mid - 1;
+            } else {
+                low = mid;
+            }
+        }
+        
+        result[candidates[i].second] = low;
+    }
+    
+    for (int i = 0; i < N; ++i) {
+        cout << result[i] << ' ';
+    }
+    cout << endl;
+    
+    return 0;
+}
+```
+
+This corrected code addresses the issues in the original code and should pass all the given test cases. It efficiently calculates the minimum votes needed using sorting, prefix sums, and binary search.

@@ -1,0 +1,83 @@
+The issue with the original code is in how it handles the vertex weights in the path calculation. The current implementation adds the weight of the current vertex (A[now.id]) to the edge weight when moving to a neighbor, but this doesn't correctly account for the path weight definition which requires summing all vertex and edge weights along the path.
+
+The correct approach is:
+1. When moving from vertex u to vertex v, the path weight should include:
+   - The edge weight B_j
+   - The vertex weight A_v (the destination vertex)
+   - The vertex weight A_u (the source vertex) should NOT be added here since it was already added when we arrived at u
+
+Here's the fixed code:
+
+```cpp
+#include<queue>
+#include<vector>
+#include<cstdio>
+#include<cstring>
+#include<climits> 
+#include<algorithm>
+using namespace std;
+typedef long long ll;
+typedef pair<ll,int> pii;
+const int N=2e5+5;
+
+int n,m;
+ll a[N];
+ll dis[N];
+bool vis[N];
+vector<pii> g[N];
+
+void heap_dijkstra() {
+    memset(vis,false,sizeof(vis));
+    for(int i=1;i<=n;i++)
+        dis[i]=LONG_LONG_MAX;
+    
+    priority_queue<pii, vector<pii>, greater<pii>> q;
+    dis[1] = a[1];
+    q.push({dis[1], 1});
+    
+    while(!q.empty()) {
+        pii now = q.top();
+        q.pop();
+        int u = now.second;
+        if(vis[u]) continue;
+        vis[u] = true;
+        
+        for(pii edge : g[u]) {
+            int v = edge.second;
+            ll w = edge.first + a[v];
+            if(dis[v] > dis[u] + w) {
+                dis[v] = dis[u] + w;
+                q.push({dis[v], v});
+            }
+        }
+    }
+}
+
+int main() {
+    scanf("%d%d",&n,&m);
+    for(int i=1;i<=n;i++)
+        scanf("%lld",&a[i]);
+    for(int i=1;i<=m;i++) {
+        int u,v,w;
+        scanf("%d%d%d",&u,&v,&w);
+        g[u].push_back({w, v});
+        g[v].push_back({w, u});
+    }
+    
+    heap_dijkstra();
+    
+    for(int i=2;i<=n;i++) {
+        printf("%lld ", dis[i]);
+    }
+    return 0;
+}
+```
+
+Key changes:
+1. Changed the priority queue to store pairs of (distance, vertex) and use greater<pii> for min-heap behavior
+2. Initialized dis[1] with a[1] since we need to include vertex 1's weight in the path
+3. Modified the edge relaxation to correctly account for both edge weight and destination vertex weight
+4. Simplified the priority queue implementation using standard pair types
+5. Removed the extra addition of a[i] in the output since it's already included in dis[i]
+
+This implementation correctly calculates the minimum path weight by considering both vertex and edge weights appropriately during the Dijkstra's algorithm execution. The complexity is O((N+M) log N) which is efficient enough for the given constraints.

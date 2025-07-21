@@ -1,0 +1,37 @@
+#include <bits/stdc++.h>
+#define int long long
+using namespace std;
+
+int32_t main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+    cout.tie(nullptr);
+    
+    int t; cin >> t;
+    while (t--) {
+        int n, k; cin >> n >> k;
+        vector<pair<int, int>> v(n);
+        for (int i = 0; i < n; i++) cin >> v[i].f >> v[i].s;
+        
+        // Pair each A_i with the sum of B_{i+1} to B_n
+        vector<pair<int, int>> b;
+        for (int i = n - 1; i >= n - k; i--) {
+            b.push_back({v[i].s, v[i].f});
+        }
+        
+        // Sort by the product of the sum and the value, in descending order
+        sort(b.begin(), b.end(), [](const pair<int, int>& a, const pair<int, int>& b) {
+            return a.first * a.second > b.first * b.second;
+        });
+        
+        // Calculate the minimum possible value
+        long long ans = 0;
+        for (int i = 0; i < b.size(); i++) {
+            ans = min(ans, (b[i].first + b[i + 1].first) * b[i].second);
+        }
+        
+        cout << ans << '\n';
+    }
+    
+    return 0;
+}

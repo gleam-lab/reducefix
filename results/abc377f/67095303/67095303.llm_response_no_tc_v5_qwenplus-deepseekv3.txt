@@ -1,0 +1,99 @@
+To fix this code, we need to correctly calculate the number of safe squares where a new piece can be placed without being captured by any existing pieces. The original code had some logical errors in how it handled the exclusion of squares based on diagonals and intersections between different constraints (rows, columns, and diagonals). 
+
+### Approaches
+1. **Identify Threatened Areas**: The existing pieces threaten squares in their row, column, and both diagonals (i+j = a+b and i-j = a-b).
+2. **Calculate Safe Squares**: The total safe squares are calculated by subtracting the squares threatened by any existing piece from the total grid squares.
+3. **Avoid Overcounting**: Ensure that squares threatened by multiple constraints are only counted once. This involves using inclusion-exclusion principles to account for overlaps between rows, columns, and diagonals.
+
+### Solution Code
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+
+int main() {
+    ll N, M;
+    cin >> N >> M;
+    
+    set<ll> rows, cols, diag1, diag2;
+    
+    for (int i = 0; i < M; ++i) {
+        ll a, b;
+        cin >> a >> b;
+        rows.insert(a);
+        cols.insert(b);
+        diag1.insert(a + b);
+        diag2.insert(a - b);
+    }
+    
+    ll total_safe = N * N - M;
+    
+    // Subtract squares covered by rows
+    ll covered_by_rows = rows.size() * N;
+    // Subtract squares covered by columns, excluding those already in rows
+    ll covered_by_cols = cols.size() * (N - rows.size());
+    // Now, the squares covered by both rows and columns are already subtracted once, so no adjustment needed
+    
+    ll covered_lines = covered_by_rows + covered_by_cols;
+    
+    // Now handle the diagonals
+    // For each diagonal in diag1, calculate the number of squares not covered by rows or columns
+    for (ll d : diag1) {
+        ll min_i = max(1LL, d - N);
+        ll max_i = min(N, d - 1);
+        ll count = max_i - min_i + 1;
+        
+        // Subtract squares already covered by rows or columns
+        for (ll i = min_i; i <= max_i; ++i) {
+            ll j = d - i;
+            if (rows.count(i) || cols.count(j)) {
+                count--;
+            }
+        }
+        
+        covered_lines += count;
+    }
+    
+    // For each diagonal in diag2, calculate the number of squares not covered by rows, columns, or diag1
+    for (ll d : diag2) {
+        ll min_i = max(1LL, 1 + d);
+        ll max_i = min(N, N + d);
+        ll count = max_i - min_i + 1;
+        
+        // Subtract squares already covered by rows or columns
+        for (ll i = min_i; i <= max_i; ++i) {
+            ll j = i - d;
+            if (rows.count(i) || cols.count(j)) {
+                count--;
+            }
+        }
+        
+        // Subtract squares also covered by diag1
+        for (ll i = min_i; i <= max_i; ++i) {
+            ll j = i - d;
+            if (diag1.count(i + j)) {
+                if (!rows.count(i) && !cols.count(j)) {
+                    count--;
+                }
+            }
+        }
+        
+        covered_lines += count;
+    }
+    
+    total_safe -= covered_lines;
+    
+    cout << total_safe << endl;
+    
+    return 0;
+}
+```
+
+### Explanation
+1. **Initialization**: We initialize sets to keep track of rows, columns, and diagonals threatened by existing pieces.
+2. **Total Safe Squares**: The initial total safe squares is the total grid squares minus the squares already occupied by existing pieces.
+3. **Row and Column Coverage**: We calculate the number of squares threatened by rows and columns. The count of squares covered by columns is adjusted to exclude those already covered by rows to avoid double-counting.
+4. **Diagonal Coverage**: For each diagonal (i+j and i-j), we count the squares not already covered by rows or columns. We then adjust for overlaps between different diagonals to ensure each square is only subtracted once.
+5. **Result Calculation**: The final result is obtained by subtracting all threatened squares from the total safe squares, giving the count of squares where a new piece can be safely placed. 
+
+This approach efficiently handles the constraints and ensures accurate counting by systematically addressing overlaps between different types of threats.

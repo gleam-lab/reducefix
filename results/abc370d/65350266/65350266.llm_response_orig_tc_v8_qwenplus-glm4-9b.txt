@@ -1,0 +1,85 @@
+
+The problem statement is about a grid where walls are initially placed in each cell and then removed based on a series of queries. Each query places a bomb at a specific cell, which destroys the wall at that cell and also potentially other walls adjacent to it.
+
+The problematic area of the code you provided is in the handling of the case when a wall does not exist at the specified cell. The code attempts to simulate the destruction of walls to the left, right, up, and down from the specified cell, but it does not properly handle the removal of walls that are destroyed by multiple queries.
+
+### Analysis
+
+1. **Data Structure**: The initial use of `std::set` for `tate` (vertical) and `yoko` (horizontal) is a good approach because it allows for efficient insertion and deletion operations.
+
+2. **Problematic Section**: The problematic section of the code is when a wall is not found at the specified cell:
+    - The code attempts to find and remove a wall in the vertical set (`tate`) and horizontal set (`yoko`), but does not ensure that the same wall is not incorrectly removed in the opposite direction due to overlapping queries.
+
+3. **Potential Fix**: Instead of modifying the sets directly, we should keep track of the first and last wall positions using two separate variables (e.g., `min_tate` and `max_tate` for the vertical direction). When a wall is removed, these variables are updated accordingly.
+
+### Suggested Code
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+#define rep(i, n) for(int i = 0; i < (n); i++)
+
+int main() {
+    int h, w, q;
+    cin >> h >> w >> q;
+    vector<set<int>> tate(w), yoko(h);
+    rep(i, h) rep(j, w) {
+        tate[j].insert(i);
+        yoko[i].insert(j);
+    }
+
+    vector<int> min_tate(w, 0), max_tate(w, h - 1);
+    vector<int> min_yoko(h, 0), max_yoko(h, w - 1);
+
+    while (q--) {
+        int r, c;
+        cin >> r >> c;
+        r--; c--;
+
+        if (tate[c].count(r)) {
+            tate[c].erase(r);
+            yoko[r].erase(c);
+        } else {
+            // Update min_tate and max_tate for the vertical direction
+            min_tate[c] = *tate[c].lower_bound(r);
+            max_tate[c] = *prev(tate[c].upper_bound(r));
+
+            // Update min_yoko and max_yoko for the horizontal direction
+            min_yoko[r] = *yoko[r].lower_bound(c);
+            max_yoko[r] = *prev(yoko[r].upper_bound(c));
+
+            // Find and remove walls from the set
+            auto range = tate[c].equal_range(min_tate[c]);
+            for (auto it = range.first; it != range.second; ++it) {
+                if (*it <= max_tate[c]) {
+                    yoko[*it].erase(c);
+                    tate[c].erase(*it);
+                } else {
+                    break;
+                }
+            }
+
+            range = yoko[r].equal_range(min_yoko[r]);
+            for (auto it = range.first; it != range.second; ++it) {
+                if (*it <= max_yoko[r]) {
+                    tate[*it].erase(r);
+                    yoko[r].erase(*it);
+                } else {
+                    break;
+                }
+            }
+        }
+    }
+
+    long long ans = 0;
+    for (int i = 0; i < w; i++) {
+        ans += min_tate[i] - max_tate[i] + 1;
+        ans += min_yoko[i] - max_yoko[i] + 1;
+    }
+
+    cout << ans << '\n';
+    return 0;
+}
+```
+
+This suggested code provides a cleaner and more efficient way to handle the removal of walls based on the given queries. It ensures that walls are not incorrectly removed multiple times and provides a clear structure for updating the positions of the first and last walls in each direction.

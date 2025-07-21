@@ -1,0 +1,64 @@
+#include <bits/stdc++.h>
+#define endl "\n"
+#define lowbit(x) (x & (-x))
+using namespace std;
+typedef long long ll;
+typedef unsigned long long ull;
+typedef double db;
+
+const int INF = 0x3f3f3f3f;
+const db eps = 1e-9;
+const ll mod = 1e9 + 7;
+const int N = 2e5 + 5;
+int ls(int x) { return x << 1; }
+int rs(int x) { return x << 1 | 1; }
+
+struct Point {
+    int x;
+    int idx;
+};
+
+vector<Point> pointsA, pointsB;
+
+bool cmp(Point a, Point b) {
+    return a.x < b.x;
+}
+
+void solve(void) {
+    int n, q; cin >> n >> q;
+    pointsA.clear(), pointsB.clear();
+    for(int i = 1; i <= n; i++) {
+        int x; cin >> x;
+        pointsA.push_back({x, i});
+    }
+    sort(pointsA.begin(), pointsA.end());
+    for(int i = 1; i <= q; i++) {
+        int x, k; cin >> x >> k;
+        pointsB.push_back({x, i});
+    }
+    sort(pointsB.begin(), pointsB.end());
+
+    vector<int> ans(q);
+    int j = 0;
+    for(auto& [x, idx] : pointsB) {
+        while(j < n && pointsA[j].x <= x) {
+            j++;
+        }
+        if(k <= j) {
+            ans[idx] = abs(pointsA[k - 1].x - x);
+        } else {
+            ans[idx] = -1; // This case should not happen according to problem statement
+        }
+    }
+
+    for(int i = 0; i < q; i++) {
+        cout << ans[i] << endl;
+    }
+}
+
+int main() {
+    ios::sync_with_stdio(0), cin.tie(0), cout.tie(0);
+    int t = 1; //cin >> t;
+    while (t--) solve();
+    return 0;
+}

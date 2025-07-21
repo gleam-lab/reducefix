@@ -1,0 +1,34 @@
+#include <iostream>
+#include <iomanip>
+#include <cmath>
+using namespace std;
+
+int main() {
+    int n;
+    cin >> n;
+    long long x = 0, y = 0;
+    double total_cost = 0;
+    
+    // Read the coordinates of the points
+    for(int i = 0; i < n; ++i) {
+        long long next_x, next_y;
+        cin >> next_x >> next_y;
+        
+        // Calculate the distance to the next point
+        double dx = next_x - x;
+        double dy = next_y - y;
+        total_cost += sqrt(dx * dx + dy * dy);
+        
+        // Update the current position
+        x = next_x;
+        y = next_y;
+    }
+    
+    // Add the distance back to the origin
+    total_cost += sqrt(x * x + y * y);
+    
+    // Output the result with high precision
+    cout << setprecision(10) << fixed << total_cost << endl;
+    
+    return 0;
+}

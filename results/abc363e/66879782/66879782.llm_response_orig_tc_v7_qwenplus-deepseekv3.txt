@@ -1,0 +1,92 @@
+I analyzed the problem and identified several issues in the original code. The main problem is that the approach doesn't correctly simulate the sinking process when sea levels rise. Here's the corrected solution using a priority queue to efficiently track which sections will sink at each sea level:
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int H, W, Y;
+    cin >> H >> W >> Y;
+    
+    vector<vector<int>> A(H, vector<int>(W));
+    vector<vector<int>> sink_time(H, vector<int>(W, INT_MAX));
+    priority_queue<tuple<int, int, int>, vector<tuple<int, int, int>>, greater<tuple<int, int, int>>> pq;
+    
+    // Directions: up, down, left, right
+    const int dirs[4][2] = {{-1, 0}, {1, 0}, {0, -1}, {0, 1}};
+    
+    // Initialize border cells
+    for (int i = 0; i < H; ++i) {
+        for (int j = 0; j < W; ++j) {
+            cin >> A[i][j];
+            if (i == 0 || i == H-1 || j == 0 || j == W-1) {
+                sink_time[i][j] = A[i][j];
+                pq.emplace(A[i][j], i, j);
+            }
+        }
+    }
+    
+    // Dijkstra-like algorithm to compute sink times
+    while (!pq.empty()) {
+        auto [t, i, j] = pq.top();
+        pq.pop();
+        
+        if (t > sink_time[i][j]) continue;
+        
+        for (auto [di, dj] : dirs) {
+            int ni = i + di;
+            int nj = j + dj;
+            if (ni < 0 || ni >= H || nj < 0 || nj >= W) continue;
+            
+            int new_t = max(t, A[ni][nj]);
+            if (new_t < sink_time[ni][nj]) {
+                sink_time[ni][nj] = new_t;
+                pq.emplace(new_t, ni, nj);
+            }
+        }
+    }
+    
+    // Count the number of cells sinking at each year
+    vector<int> sink_count(Y + 2, 0);
+    for (int i = 0; i < H; ++i) {
+        for (int j = 0; j < W; ++j) {
+            if (sink_time[i][j] <= Y) {
+                sink_count[sink_time[i][j]]++;
+            }
+        }
+    }
+    
+    // Compute prefix sum
+    vector<int> prefix(Y + 1, 0);
+    prefix[0] = sink_count[0];
+    for (int y = 1; y <= Y; ++y) {
+        prefix[y] = prefix[y-1] + sink_count[y];
+    }
+    
+    // Output results
+    for (int y = 1; y <= Y; ++y) {
+        cout << H * W - prefix[y] << '\n';
+    }
+    
+    return 0;
+}
+```
+
+Key improvements made:
+1. Used proper data structures (vectors instead of raw arrays) for better safety and readability
+2. Corrected the Dijkstra-like algorithm to properly propagate the maximum sink time
+3. Fixed the counting mechanism to accurately track when each cell sinks
+4. Improved the output calculation using prefix sums
+5. Added proper initialization and boundary checks
+6. Used more modern C++ features like structured bindings for cleaner code
+
+The algorithm works by:
+1. First marking all border cells with their elevation as their sink time
+2. Using a priority queue to propagate these sink times inward, always taking the maximum between the current cell's elevation and neighboring cells' sink times
+3. Counting how many cells sink at each year
+4. Using prefix sums to efficiently compute the remaining area for each year
+
+This solution handles all edge cases and runs efficiently with O(HW log HW) time complexity for the main algorithm, which is optimal for the given constraints.

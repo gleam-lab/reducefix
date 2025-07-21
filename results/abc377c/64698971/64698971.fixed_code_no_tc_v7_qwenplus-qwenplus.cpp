@@ -1,0 +1,55 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+using ll = long long;
+using pii = pair<ll, ll>;
+
+// Hash struct for pair<ll, ll>
+struct hash_pair {
+    template <class T1, class T2>
+    size_t operator()(const pair<T1, T2>& p) const {
+        auto h1 = hash<T1>{}(p.first);
+        auto h2 = hash<T2>{}(p.second);
+        return h1 ^ (h2 << 1);
+    }
+};
+
+int main() {
+    ll N, M;
+    cin >> N >> M;
+
+    // Use an unordered_set to store all the positions that are either:
+    // - occupied by existing pieces
+    // - attackable positions from those pieces
+    unordered_set<pii, hash_pair> blocked;
+
+    // All 8 possible knight-like moves from a position
+    vector<pii> directions = {
+        {2, 1}, {1, 2}, {-1, 2}, {-2, 1},
+        {-2, -1}, {-1, -2}, {1, -2}, {2, -1}
+    };
+
+    for (ll i = 0; i < M; ++i) {
+        ll a, b;
+        cin >> a >> b;
+        a--; b--; // convert to 0-based index
+
+        // Insert the piece's position
+        blocked.insert({a, b});
+
+        // Insert all attackable positions from this piece
+        for (auto [dx, dy] : directions) {
+            ll nx = a + dx;
+            ll ny = b + dy;
+            if (0 <= nx && nx < N && 0 <= ny && ny < N) {
+                blocked.insert({nx, ny});
+            }
+        }
+    }
+
+    // Total number of cells: N * N
+    // Subtract the number of blocked positions
+    cout << N * N - (ll)blocked.size() << endl;
+
+    return 0;
+}

@@ -1,0 +1,36 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+const int N = 1e6 + 5;
+int n, m;
+long long sum;
+int a[2 * N], prefix_mod[N], cnt[N];
+
+int main() {
+    ios::sync_with_stdio(0);
+    cin.tie(0);
+    cout.tie(0);
+
+    cin >> n >> m;
+    for (int i = 0; i < n; ++i) {
+        cin >> a[i];
+        a[n + i] = a[i]; // duplicate array for circular handling
+    }
+
+    // Count the number of subarrays whose sum is divisible by m
+    // Using prefix mod and hash count
+
+    // Initialize count of mod 0 to 1 (empty prefix)
+    cnt[0] = 1;
+    int curr_mod = 0;
+
+    for (int i = 0; i < 2 * n; ++i) {
+        curr_mod = (curr_mod + a[i]) % m;
+        sum += cnt[curr_mod]++;
+        if (i >= n) --cnt[prefix_mod[i - n]];
+        prefix_mod[i] = curr_mod;
+    }
+
+    cout << sum;
+    return 0;
+}

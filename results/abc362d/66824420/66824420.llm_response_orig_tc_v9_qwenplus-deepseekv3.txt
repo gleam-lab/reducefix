@@ -1,0 +1,64 @@
+To fix this code, we need to properly compute the minimum weight of a path from vertex 1 to each of the other vertices. The issue in the original code is that it incorrectly initializes the distance array and doesn't account for the vertex weights properly when traversing edges. 
+
+### Approaches
+1. **Initialization**: The distance from vertex 1 to itself should be the weight of vertex 1 (A_1), but when moving from vertex 1 to another vertex via an edge, the total path weight should include the weight of the destination vertex (A_i) plus the edge weight (B_j).
+2. **Priority Queue**: Use Dijkstra's algorithm with a priority queue to explore the shortest paths. The priority queue should store pairs of (current distance, vertex), where the current distance is the sum of weights of vertices and edges traversed so far.
+3. **Edge Handling**: For each edge, when moving from vertex u to vertex v, the new distance should be `dist[u] + B_j + A[v]` (since the vertex weight is added only once when it is first visited).
+
+### Solution Code
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int N, M;
+    cin >> N >> M;
+    vector<long long> A(N + 1);
+    for (int i = 1; i <= N; ++i) {
+        cin >> A[i];
+    }
+    vector<vector<pair<int, long long>>> adj(N + 1);
+    for (int j = 0; j < M; ++j) {
+        int U, V;
+        long long B;
+        cin >> U >> V >> B;
+        adj[U].emplace_back(V, B);
+        adj[V].emplace_back(U, B);
+    }
+
+    vector<long long> dist(N + 1, LLONG_MAX);
+    dist[1] = A[1];
+    priority_queue<pair<long long, int>, vector<pair<long long, int>>, greater<pair<long long, int>>> pq;
+    pq.emplace(dist[1], 1);
+
+    while (!pq.empty()) {
+        auto [current_dist, u] = pq.top();
+        pq.pop();
+        if (current_dist > dist[u]) continue;
+        for (auto [v, weight] : adj[u]) {
+            long long new_dist = current_dist + weight + A[v];
+            if (new_dist < dist[v]) {
+                dist[v] = new_dist;
+                pq.emplace(new_dist, v);
+            }
+        }
+    }
+
+    for (int i = 2; i <= N; ++i) {
+        cout << dist[i] << " \n"[i == N];
+    }
+
+    return 0;
+}
+```
+
+### Explanation
+1. **Initialization**: The distances are initialized to `LLONG_MAX` (a very large value) except for vertex 1, which is set to its own weight `A[1]`.
+2. **Priority Queue**: The priority queue starts with vertex 1 and its initial distance. The algorithm processes vertices in order of increasing distance from vertex 1.
+3. **Edge Processing**: For each vertex `u` extracted from the queue, the algorithm checks all adjacent vertices `v`. The new distance to `v` is calculated as the sum of the current distance to `u`, the edge weight between `u` and `v`, and the weight of `v`. If this new distance is shorter than the previously known distance to `v`, it updates the distance and adds `v` to the priority queue.
+4. **Output**: The distances to vertices 2 through N are printed, which represent the minimum path weights from vertex 1 to each respective vertex.
+
+This approach ensures that the shortest paths are efficiently computed using Dijkstra's algorithm, which is optimal for graphs with non-negative edge weights. The complexity is O(M log N), where M is the number of edges and N is the number of vertices, making it suitable for the given constraints.

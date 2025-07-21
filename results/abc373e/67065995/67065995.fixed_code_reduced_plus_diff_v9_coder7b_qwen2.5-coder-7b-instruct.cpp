@@ -1,0 +1,70 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+typedef long long ll;
+#define all(x) (x).begin(), (x).end()
+
+int main() {
+    ios_base::sync_with_stdio(0);
+    cin.tie(0);
+
+    int n, m;
+    ll k;
+    cin >> n >> m >> k;
+    
+    vector<ll> a(n);
+    for (int i = 0; i < n; ++i) {
+        cin >> a[i];
+        k -= a[i];
+    }
+
+    // Sort the votes in descending order
+    sort(a.rbegin(), a.rend());
+
+    // Calculate the prefix sum array for the sorted votes
+    vector<ll> pref(n + 1);
+    for (int i = 0; i < n; ++i) {
+        pref[i + 1] = pref[i] + a[i];
+    }
+
+    // Initialize the answer array
+    vector<ll> ans(n, -1);
+
+    // Iterate over each candidate
+    for (int i = 0; i < n; ++i) {
+        ll target = pref[n - i] - a[i];
+        
+        // Binary search for the minimum number of additional votes needed
+        int l = 0, r = k + 1;
+        while (l < r) {
+            ll mid = (l + r) / 2;
+            int lid = upper_bound(a.begin(), a.end(), a[i] + mid) - a.begin();
+            
+            ll cnt = 0;
+            if (lid > i) {
+                cnt += (lid - i - 1) * (a[i] + mid + 1) - (pref[lid] - pref[i + 1]);
+            } else if (lid == i) {
+                cnt++;
+            } else {
+                cnt += mid;
+            }
+            
+            if (cnt > k) {
+                r = mid;
+            } else {
+                l = mid + 1;
+            }
+        }
+        
+        // Adjust the result to ensure it's non-negative
+        ans[i] = max((ll)0, l - 1);
+    }
+
+    // Output the results
+    for (auto x : ans) {
+        cout << x << " ";
+    }
+    cout << endl;
+
+    return 0;
+}

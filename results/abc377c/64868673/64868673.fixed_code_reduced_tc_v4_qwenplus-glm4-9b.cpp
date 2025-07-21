@@ -1,0 +1,60 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+int main() {
+    long long n, m;
+    cin >> n >> m;
+    vector<pair<int, int>> pieces(m);
+    
+    for (int i = 0; i < m; ++i) {
+        cin >> pieces[i].first >> pieces[i].second;
+    }
+    
+    // Sort the pieces by their position to handle capturing order
+    sort(pieces.begin(), pieces.end());
+    
+    long long count = 0;
+    long long i = 0, j = 0;
+    
+    // Process each piece to find their capturing range
+    while (i < m) {
+        // Move to the first piece in the sequence that has at least one empty space in its capturing range
+        while (j < m && (pieces[j].first == pieces[i].first || pieces[j].second == pieces[i].second)) {
+            j++;
+        }
+        
+        // If there is no such piece, continue to the next piece
+        if (j == m) {
+            i++;
+            continue;
+        }
+        
+        // Now we have the first piece with at least one empty space in its capturing range
+        long long k = j;
+        while (k < m && (pieces[k].first == pieces[i].first || pieces[k].second == pieces[i].second)) {
+            // Check if the bottom-right capturing position is feasible
+            if (pieces[k].first <= n - 1 && pieces[k].second <= n - 1) {
+                count += n - pieces[k].first - 1;
+            }
+            // Check if the bottom-left capturing position is feasible
+            if (pieces[k].first >= 1 && pieces[k].second <= n - 1) {
+                count += n - pieces[k].first + 1;
+            }
+            // Move to the next piece
+            k++;
+        }
+        
+        // Move to the next piece that starts a new capturing sequence
+        while (k < m && (pieces[k].first == pieces[i].first || pieces[k].second == pieces[i].second)) {
+            i++;
+            k++;
+        }
+    }
+    
+    // Output the total number of safe positions
+    cout << n * n - count << endl;
+    
+    return 0;
+}

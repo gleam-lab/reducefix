@@ -1,0 +1,56 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+typedef long long ll;
+
+struct Point {
+    ll x, idx;
+};
+
+bool cmp(Point a, Point b) {
+    return a.x < b.x;
+}
+
+vector<ll> solve(vector<ll>& a, vector<Point>& points) {
+    vector<ll> res(points.size());
+    sort(points.begin(), points.end(), cmp);
+
+    multiset<ll> s;
+    for (int i = 0; i < a.size(); ++i) {
+        s.insert(a[i]);
+        if (s.size() > points[points.size()-1].idx) {
+            s.erase(s.find(*s.begin()));
+        }
+    }
+
+    for (int i = points.size()-1; i >= 0; --i) {
+        auto it = s.lower_bound(points[i].x - points[i].idx);
+        res[i] = *it - points[i].x;
+        s.erase(it);
+    }
+
+    return res;
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(0); cout.tie(0);
+
+    int n, q;
+    cin >> n >> q;
+
+    vector<ll> a(n);
+    for (int i = 0; i < n; ++i) cin >> a[i];
+
+    vector<Point> points(q);
+    for (int i = 0; i < q; ++i) {
+        cin >> points[i].x >> points[i].idx;
+        points[i].idx--;
+    }
+
+    vector<ll> res = solve(a, points);
+
+    for (ll x : res) cout << abs(x) << '\n';
+
+    return 0;
+}

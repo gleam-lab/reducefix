@@ -1,0 +1,98 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+typedef long long ll;
+
+const int MAX_COORD = 2e8 + 5;
+const int OFFSET = 1e8;
+
+// Since we need to find the k-th smallest distance,
+// we can use binary search on answer with prefix sums
+
+int cnt[4 * MAX_COORD]; // segment tree size
+
+// Segment Tree implementation for frequency counts
+class SegmentTree {
+public:
+    SegmentTree() {
+        fill(cnt, cnt + 4 * MAX_COORD, 0);
+    }
+
+    void update(int idx, int val, int node = 1, int l = 0, int r = MAX_COORD) {
+        if (l == r) {
+            cnt[node] += val;
+            return;
+        }
+        int mid = (l + r) / 2;
+        if (idx <= mid)
+            update(idx, val, 2 * node, l, mid);
+        else
+            update(idx, val, 2 * node + 1, mid + 1, r);
+        cnt[node] = cnt[2 * node] + cnt[2 * node + 1];
+    }
+
+    int query(int ql, int qr, int node = 1, int l = 0, int r = MAX_COORD) {
+        if (qr < l || r < ql)
+            return 0;
+        if (ql <= l && r <= qr)
+            return cnt[node];
+        int mid = (l + r) / 2;
+        return query(ql, qr, 2 * node, l, mid) +
+               query(ql, qr, 2 * node + 1, mid + 1, r);
+    }
+};
+
+void solve() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int N, Q;
+    cin >> N >> Q;
+
+    SegmentTree st;
+
+    vector<ll> a(N);
+    for (int i = 0; i < N; ++i) {
+        cin >> a[i];
+        // Map coordinates to [0, 2*1e8]
+        st.update(max(0, min(MAX_COORD - 1, (int)(a[i] + OFFSET))), 1);
+    }
+
+    // Sort A for binary searching later
+    sort(a.begin(), a.end());
+
+    for (int q = 0; q < Q; ++q) {
+        ll b;
+        int k;
+        cin >> b >> k;
+
+        // Binary search on distance d
+        ll low = 0, high = 2 * 1e8;
+        ll answer = high;
+
+        while (low <= high) {
+            ll mid = (low + high) / 2;
+            ll left = b - mid;
+            ll right = b + mid;
+
+            // Use lower_bound and upper_bound on sorted array
+            int l = lower_bound(a.begin(), a.end(), left) - a.begin();
+            int r = upper_bound(a.begin(), a.end(), right) - a.begin();
+            int count = r - l;
+
+            if (count >= k) {
+                answer = mid;
+                high = mid - 1;
+            } else {
+                low = mid + 1;
+            }
+        }
+
+        cout << answer << "\n";
+    }
+}
+
+int main() {
+    solve();
+    return 0;
+}

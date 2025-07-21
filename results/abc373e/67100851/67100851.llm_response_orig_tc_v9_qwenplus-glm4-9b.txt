@@ -1,0 +1,84 @@
+
+The problem is asking to determine the minimum number of additional votes each candidate needs to guarantee their victory, given that only a certain number of votes have been counted so far. To achieve this, let's analyze the given code and point out the mistakes as well as the logic needed to fix them.
+
+### Analysis and Steps to Fix the Incorrect Code
+
+1. **Sorting the Candidates by Votes:**
+   The code sorts the candidates based on the votes they have received so far. However, this sorting is not used effectively to minimize the votes needed for the next candidate. Instead, we need to sort the candidates based on their ranks if there were no more votes to secure a victory.
+
+2. **Binary Search for Minimum Votes:**
+   The binary search logic is flawed. The function `f` does not correctly calculate whether a given number of votes `k` would guarantee a candidate's victory. It incorrectly calculates the required number of votes and sometimes yields false positives.
+
+3. **Handling Remaining Votes:**
+   The remaining votes are calculated after all current votes, which is incorrect. We should calculate the remaining votes as `K - sum(A)`.
+
+4. **Binary Search Implementation:**
+   The binary search should find the smallest number of votes that guarantees a candidate's victory, not the largest.
+
+### Fixed Code with Explanation
+
+Here's a revised version of the code with explanations:
+
+```cpp
+#include <iostream>
+#include <algorithm>
+#include <vector>
+using namespace std;
+
+typedef struct {
+    long long a; // Total votes received so far by the candidate
+    int n;       // Total votes that can be cast
+    int rank;    // Rank of the candidate in the sorted result
+} Candidate;
+
+int main() {
+    int N, M, K;
+    cin >> N >> M >> K;
+
+    vector<Candidate> candidates(N);
+    long long total_votes = 0; // Total votes received so far
+
+    for (int i = 0; i < N; ++i) {
+        cin >> candidates[i].a;
+        total_votes += candidates[i].a;
+        candidates[i].n = K - total_votes;
+        candidates[i].rank = 0;
+    }
+
+    // Sort candidates by the votes needed to secure a victory
+    sort(candidates.begin(), candidates.end(), [](const Candidate &a, const Candidate &b) {
+        return a.n < b.n;
+    });
+
+    vector<long long> votes_needed(N);
+    long long remaining_votes = K - total_votes;
+
+    // Calculate the minimum votes needed for each candidate to secure a victory
+    for (int i = 0; i < N; ++i) {
+        if (i < M) {
+            // If there are less than M candidates, they are all guaranteed to win
+            votes_needed[i] = 0;
+        } else {
+            // Calculate the votes needed for the current candidate to surpass the Mth candidate
+            int current_rank = i - M;
+            int votes_to_surpass = candidates[current_rank].a; // Votes of the Mth candidate
+            votes_needed[i] = votes_to_surpass - candidates[i].a;
+            if (votes_needed[i] > remaining_votes) {
+                votes_needed[i] = -1; // Cannot secure victory
+            } else {
+                remaining_votes -= votes_needed[i];
+            }
+        }
+    }
+
+    // Output the votes needed for each candidate
+    for (int i = 0; i < N; ++i) {
+        cout << votes_needed[i] << " ";
+    }
+    cout << endl;
+
+    return 0;
+}
+```
+
+This revised code addresses the issues in the original code by sorting the candidates based on the votes needed to secure a victory, taking into account the remaining votes, and calculating the votes needed for each candidate accurately.

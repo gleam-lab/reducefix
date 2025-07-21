@@ -1,0 +1,50 @@
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int N, K;
+    cin >> N >> K;
+    vector<int> A(N);
+    for (int i = 0; i < N; ++i) {
+        cin >> A[i];
+    }
+
+    // Generate all possible remaining sequences by removing exactly K elements,
+    // but only keep the minimum and maximum values of the resulting sequence.
+    // Try all possible valid windows of size (N-K), maintaining min and max.
+
+    deque<int> max_deque, min_deque;
+    long long result = LLONG_MAX;
+
+    for (int i = 0; i < N; ++i) {
+        // Maintain max_deque: elements are in decreasing order
+        while (!max_deque.empty() && A[max_deque.back()] <= A[i])
+            max_deque.pop_back();
+        max_deque.push_back(i);
+
+        // Maintain min_deque: elements are in increasing order
+        while (!min_deque.empty() && A[min_deque.back()] >= A[i])
+            min_deque.pop_back();
+        min_deque.push_back(i);
+
+        // Remove elements out of window [i - (N-K) + 1, i]
+        int windowSize = N - K;
+        if (max_deque.front() <= i - windowSize)
+            max_deque.pop_front();
+        if (min_deque.front() <= i - windowSize)
+            min_deque.pop_front();
+
+        // Start calculating result once we have a full window
+        if (i >= windowSize - 1) {
+            long long current_diff = A[max_deque.front()] - A[min_deque.front()];
+            result = min(result, current_diff);
+        }
+    }
+
+    cout << result << endl;
+    return 0;
+}

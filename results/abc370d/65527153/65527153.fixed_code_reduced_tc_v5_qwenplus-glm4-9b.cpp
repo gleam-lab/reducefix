@@ -1,0 +1,70 @@
+#include <iostream>
+#include <vector>
+#include <set>
+
+using namespace std;
+
+const int MAXN = 4e5 + 10;
+
+void solve() {
+    int h, w, q;
+    cin >> h >> w >> q;
+
+    vector<set<int>> rows(MAXN), cols(MAXN);
+    vector<vector<bool>> grid(h + 1, vector<bool>(w + 1, true));
+
+    for (int i = 1; i <= h; ++i) {
+        for (int j = 1; j <= w; ++j) {
+            rows[i].insert(j);
+            cols[j].insert(i);
+            grid[i][j] = true;
+        }
+    }
+
+    while (q--) {
+        int r, c;
+        cin >> r >> c;
+        if (!grid[r][c]) {
+            continue;
+        }
+
+        grid[r][c] = false;
+
+        // Remove the column or row if it's fully destroyed
+        if (rows[r].size() == 0) rows.erase(r);
+        if (cols[c].size() == 0) cols.erase(c);
+
+        // Destroy walls in the row
+        for (int i : rows[r]) {
+            grid[i][c] = false;
+            if (cols[c].size() == 0) cols.erase(c);
+            if (rows[r].size() == 0) rows.erase(r);
+        }
+
+        // Destroy walls in the column
+        for (int i : cols[c]) {
+            grid[r][i] = false;
+            if (rows[r].size() == 0) rows.erase(r);
+            if (cols[c].size() == 0) cols.erase(c);
+        }
+    }
+
+    long long remainingWalls = 0;
+    for (const auto& r : rows) {
+        for (int j : r) {
+            remainingWalls += grid[j][c];
+        }
+    }
+
+    cout << remainingWalls << "\n";
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(NULL);
+    int t = 1;
+    while (t--) {
+        solve();
+    }
+    return 0;
+}

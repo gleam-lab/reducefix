@@ -1,0 +1,48 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+#define int long long
+const int N = 105;
+
+int n;
+int x;
+vector<pair<int, int>> a(N), b(N);
+
+int check(int mid) {
+    long long ans = 0;
+    for (int i = 0; i < n; ++i) {
+        long long left = mid / a[i], right = mid % a[i];
+        long long cost1 = left * b[i] + right * (b[i] - mid / b[i]);
+        long long cost2 = mid / b[i] * a[i] + right * a[i] + (b[i] - right) * (b[i] - mid / b[i]);
+        ans += min(cost1, cost2);
+    }
+    return ans <= x;
+}
+
+int32_t main() {
+    cin.tie(0);
+    cout.tie(0);
+    ios_base::sync_with_stdio(0);
+    
+    cin >> n >> x;
+    for (int i = 0; i < n; ++i) {
+        cin >> a[i].first >> a[i].second >> b[i].first >> b[i].second;
+    }
+    
+    sort(a.begin(), a.end());
+    
+    int l = 1, r = 1e18;
+    while (l < r) {
+        int mid = l + (r - l) / 2;
+        if (check(mid)) {
+            l = mid + 1;
+        } else {
+            r = mid;
+        }
+    }
+    
+    cout << l - 1;
+    return 0;
+}

@@ -1,0 +1,95 @@
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+
+int H, W, Y;
+const int MAX = 1005;
+vector<vector<int>> A(MAX, vector<int>(MAX));
+vector<vector<bool>> visited(MAX, vector<bool>(MAX, false));
+
+// Direction vectors for BFS (up, down, left, right)
+int dx[4] = {-1, 1, 0, 0};
+int dy[4] = {0, 0, -1, 1};
+
+struct Cell {
+    int x, y, val;
+    Cell(int x, int y, int val) : x(x), y(y), val(val) {}
+};
+
+// Custom comparator for min-heap based on cell value
+struct Compare {
+    bool operator()(const Cell& a, const Cell& b) {
+        return a.val > b.val;
+    }
+};
+
+int main() {
+    cin.tie(0)->sync_with_stdio(0);
+
+    cin >> H >> W >> Y;
+    for (int i = 0; i < H; ++i)
+        for (int j = 0; j < W; ++j)
+            cin >> A[i][j];
+
+    // Create a border matrix to mark if a cell is on the boundary
+    vector<vector<bool>> is_border(H, vector<bool>(W, false));
+    for (int i = 0; i < H; ++i) {
+        for (int j = 0; j < W; ++j) {
+            if (i == 0 || i == H - 1 || j == 0 || j == W - 1) {
+                is_border[i][j] = true;
+            }
+        }
+    }
+
+    // Binary search setup
+    vector<int> year_results(Y + 2);  // Store results for each year
+
+    // Initialize a max heap to simulate processing in decreasing order of elevation
+    priority_queue<Cell, vector<Cell>, Compare> pq;
+    vector<vector<int>> dist(H, vector<int>(W, INT_MAX));
+
+    // Start from all border cells
+    for (int i = 0; i < H; ++i) {
+        for (int j = 0; j < W; ++j) {
+            if (is_border[i][j]) {
+                dist[i][j] = A[i][j];
+                pq.push(Cell(i, j, A[i][j]));
+            }
+        }
+    }
+
+    // Dijkstra-like algorithm to compute when each cell gets flooded
+    while (!pq.empty()) {
+        auto [x, y, v] = pq.top(); pq.pop();
+
+        for (int k = 0; k < 4; ++k) {
+            int nx = x + dx[k];
+            int ny = y + dy[k];
+            if (nx >= 0 && nx < H && ny >= 0 && ny < W && !visited[nx][ny]) {
+                int new_val = max(v, A[nx][ny]);
+                if (new_val < dist[nx][ny]) {
+                    dist[nx][ny] = new_val;
+                    pq.push(Cell(nx, ny, new_val));
+                }
+            }
+        }
+    }
+
+    // Count how many cells get flooded at each year
+    vector<int> flood_count(Y + 2, 0);
+    for (int i = 0; i < H; ++i) {
+        for (int j = 0; j < W; ++j) {
+            if (dist[i][j] <= Y)
+                flood_count[dist[i][j]]++;
+        }
+    }
+
+    // Compute cumulative sum for area remaining
+    int total_cells = H * W;
+    for (int i = 1; i <= Y; ++i) {
+        flood_count[i] += flood_count[i - 1];
+        cout << total_cells - flood_count[i] << "\n";
+    }
+
+    return 0;
+}

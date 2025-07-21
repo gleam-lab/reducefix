@@ -1,0 +1,48 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+    
+    int n;
+    cin >> n;
+    string s;
+    cin >> s;
+    
+    // Mapping of what each move beats
+    char beats[256];
+    beats['R'] = 'S';
+    beats['S'] = 'P';
+    beats['P'] = 'R';
+
+    // Initialize the best solution as beating every move initially
+    string best(n, 'X');
+    for (int i = 0; i < n; ++i) {
+        best[i] = beats[s[i]];
+    }
+
+    // Greedy pass to avoid adjacent duplicates
+    for (int i = 1; i < n; ++i) {
+        if (best[i] == best[i - 1]) {
+            // Try to change best[i] to something different that still beats s[i]
+            for (char c : {'R', 'S', 'P'}) {
+                if (c != best[i - 1] && beats[c] == s[i]) {
+                    best[i] = c;
+                    break;
+                }
+            }
+        }
+    }
+
+    // Count how many moves are still effective
+    int count = 0;
+    for (int i = 0; i < n; ++i) {
+        if (beats[best[i]] == s[i]) {
+            count++;
+        }
+    }
+
+    cout << count << endl;
+    return 0;
+}

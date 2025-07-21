@@ -1,0 +1,92 @@
+
+The code you provided implements the Union-Find data structure with path compression and union by rank, as well as union by size. However, there are several issues in the implementation that need to be addressed:
+
+1. The union operation does not correctly maintain the sorted order of vertices within the same connected component. This is necessary for efficient retrieval of the k-th largest vertex.
+2. The union operation does not handle the case where k is larger than the number of vertices in the connected component.
+3. There is a logical error in the merge operation where the union of two components is not correctly updated.
+
+To address these issues, we can make the following changes:
+
+1. Maintain a sorted list of vertices for each connected component. This can be done by using a vector of vectors or a balanced binary search tree (like std::set or std::multiset in C++).
+2. Update the union operation to add the vertices of the smaller component to the end of the sorted list of the larger component (or vice versa), while maintaining the sorted order.
+3. Ensure that the merged component maintains the correct number of vertices.
+4. Update the find operation to return the sorted list of vertices for a given component.
+
+Here's the revised code that implements these changes:
+
+```cpp
+#include<bits/stdc++.h>
+using namespace std;
+using ll = long long;
+#define rep(i,n) for(int i = 0;i<n;i++)
+using P = pair<int,int>;
+using T = tuple<int,int,int>;
+
+struct Union_Find{
+  
+  vector<int> sz,par;
+  vector<vector<int>> uni;
+  
+  Union_Find(int n){
+    sz.resize(n,1);
+    par.resize(n,-1);
+    uni.resize(n);
+    rep(i,n) uni[i].emplace_back(i);
+  }
+  
+  int root(int v){
+    if(par[v] == -1) return v;
+    else return par[v] = root(par[v]);
+  }
+  
+  bool issame(int x,int y){
+    return root(x) == root(y);
+  }
+  
+  void merge(int x,int y){
+    x = root(x),y = root(y);
+    if(x == y) return;
+    if(sz[x] < sz[y]) swap(x,y);
+    sz[x] += sz[y];
+    sz[y] = 0;
+    par[y] = x;
+    while(uni[y].size() > 0){
+      uni[x].push_back(uni[y].back());
+      uni[y].pop_back();
+    }
+    // Sort the list of vertices for the component rooted at x
+    sort(uni[x].rbegin(), uni[x].rend());
+    // Ensure that the merged component has the correct number of vertices
+    while(uni[x].size() > 9) uni[x].pop_back();
+  }
+  
+  // Return the sorted list of vertices for the component rooted at v
+  vector<int> get_component(int v){
+    int r = root(v);
+    return uni[r];
+  }
+  
+};
+
+int main(){
+  int n,q;
+  cin >> n >> q;
+  Union_Find uf(n);
+  
+  rep(i,q){
+    int ty,a,b;
+    cin >> ty >> a >> b;
+    a--,b--;
+    if(ty == 1){
+      uf.merge(a,b);
+    }
+    else{
+      vector<int> comp = uf.get_component(b);
+      if(comp.size() <= b) cout << -1 << endl;
+      else cout << comp[b] + 1 << endl;
+    }
+  }
+}
+```
+
+This code should correctly handle the union and find operations and should return the k-th largest vertex in a connected component if the component has at least k vertices. If k is larger than the number of vertices in the component, it will return `-1`.

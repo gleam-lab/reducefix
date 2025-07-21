@@ -1,0 +1,67 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+const int MAXN = 1005;
+int h, w, y, room[MAXN][MAXN];
+bool used[MAXN][MAXN];
+
+struct Cell {
+    int height, x, y;
+    bool operator<(const Cell& other) const {
+        return height > other.height;
+    }
+};
+
+int dx[] = {0, 1, 0, -1};
+int dy[] = {1, 0, -1, 0};
+
+int main() {
+    cin >> h >> w >> y;
+    priority_queue<Cell> pq;
+    
+    for (int i = 0; i < h; ++i) {
+        for (int j = 0; j < w; ++j) {
+            cin >> room[i][j];
+            if (i == 0 || i == h - 1 || j == 0 || j == w - 1) {
+                pq.push({room[i][j], i, j});
+                used[i][j] = true;
+            }
+        }
+    }
+
+    while (!pq.empty()) {
+        auto [height, x, y] = pq.top();
+        pq.pop();
+
+        if (height <= y) continue;
+
+        --height;
+        --y;
+        if (x > 0 && !used[x - 1][y]) {
+            pq.push({room[x - 1][y], x - 1, y});
+            used[x - 1][y] = true;
+        }
+        if (x < h - 1 && !used[x + 1][y]) {
+            pq.push({room[x + 1][y], x + 1, y});
+            used[x + 1][y] = true;
+        }
+        if (y > 0 && !used[x][y - 1]) {
+            pq.push({room[x][y - 1], x, y - 1});
+            used[x][y - 1] = true;
+        }
+        if (y < w - 1 && !used[x][y + 1]) {
+            pq.push({room[x][y + 1], x, y + 1});
+            used[x][y + 1] = true;
+        }
+    }
+
+    int ans = 0;
+    for (int i = 0; i < h; ++i) {
+        for (int j = 0; j < w; ++j) {
+            if (!used[i][j]) ++ans;
+        }
+    }
+
+    cout << ans << '\n';
+    return 0;
+}

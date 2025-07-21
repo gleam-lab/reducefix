@@ -1,0 +1,107 @@
+```cpp
+#include <iostream>
+#include <vector>
+#include <queue>
+
+using namespace std;
+
+const int MAX_N = 2 * 100005;
+
+class UnionFind {
+public:
+    vector<int> parent, rank, size;
+    int components;
+
+    UnionFind(int n) : parent(n), rank(n, 1), size(n, 1), components(n) {
+        for (int i = 0; i < n; ++i) {
+            parent[i] = i;
+        }
+    }
+
+    int find(int x) {
+        if (parent[x] != x) {
+            parent[x] = find(parent[x]); // Path compression
+        }
+        return parent[x];
+    }
+
+    void unite(int x, int y) {
+        int rootX = find(x), rootY = find(y);
+        if (rootX == rootY) return;
+
+        if (rank[rootX] < rank[rootY]) {
+            swap(rootX, rootY);
+        }
+        parent[rootY] = rootX;
+        if (rank[rootX] == rank[rootY]) rank[rootX]++;
+        size[rootX] += size[rootY];
+
+        --components;
+    }
+
+    bool connected(int x, int y) {
+        return find(x) == find(y);
+    }
+
+    int getSize(int x) {
+        return size[find(x)];
+    }
+};
+
+struct Edge {
+    int u, v, weight;
+    bool operator<(const Edge& other) const {
+        return weight < other.weight;
+    }
+};
+
+vector<int> kthLargest(vector<vector<int>>& adjList, int node, int k) {
+    priority_queue<int, vector<int>, greater<int>> pq;
+    for (auto neighbor : adjList[node]) {
+        pq.push(neighbor);
+        if (pq.size() > k) {
+            pq.pop();
+        }
+    }
+
+    vector<int> result(k, -1);
+    for (int i = 0; i < k && !pq.empty(); ++i) {
+        result[i] = pq.top();
+        pq.pop();
+    }
+
+    return result;
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int n, m;
+    cin >> n >> m;
+
+    UnionFind uf(n + 1);
+    vector<vector<int>> adjList(n + 1);
+
+    for (int i = 0; i < m; ++i) {
+        int type, u, v;
+        cin >> type >> u >> v;
+
+        if (type == 1) {
+            uf.unite(u, v);
+        } else {
+            int componentRoot = uf.find(u);
+            auto result = kthLargest(adjList, componentRoot, v);
+            if (!result.empty()) {
+                cout << result.back() << "\n";
+            } else {
+                cout << "-1\n";
+            }
+        }
+    }
+
+    return 0;
+}
+```
+
+This solution uses a union-find data structure to efficiently manage the connectivity of nodes and a priority queue to keep track of the k-th largest elements in each connected component. The `kthLargest` function constructs a min-priority queue to store the k largest elements encountered during traversal of the adjacency list of a node's connected component. This ensures that we can quickly retrieve the k-th largest element when needed.

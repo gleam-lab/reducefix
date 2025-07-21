@@ -1,0 +1,52 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int n, k;
+    cin >> n >> k;
+    vector<int> A(n);
+    for (int i = 0; i < n; ++i) {
+        cin >> A[i];
+    }
+
+    // We will consider all intervals of size (n - k)
+    // and find the one with minimal (max - min)
+    deque<int> min_deque;
+    deque<int> max_deque;
+    long long min_result = numeric_limits<long long>::max();
+
+    for (int i = 0; i < n; ++i) {
+        // Maintain min deque
+        while (!min_deque.empty() && A[i] <= A[min_deque.back()]) {
+            min_deque.pop_back();
+        }
+        min_deque.push_back(i);
+
+        // Remove elements out of window
+        while (!min_deque.empty() && min_deque.front() <= i - (n - k)) {
+            min_deque.pop_front();
+        }
+
+        // Maintain max deque
+        while (!max_deque.empty() && A[i] >= A[max_deque.back()]) {
+            max_deque.pop_back();
+        }
+        max_deque.push_back(i);
+
+        // Remove elements out of window
+        while (!max_deque.empty() && max_deque.front() <= i - (n - k)) {
+            max_deque.pop_front();
+        }
+
+        // When window is full size, record difference
+        if (i >= (n - k) - 1) {
+            min_result = min(min_result, (long long)A[max_deque.front()] - (long long)A[min_deque.front()]);
+        }
+    }
+
+    cout << min_result << endl;
+    return 0;
+}

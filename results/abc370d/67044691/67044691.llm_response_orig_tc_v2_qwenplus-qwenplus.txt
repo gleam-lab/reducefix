@@ -1,0 +1,106 @@
+To solve this problem efficiently, we need to simulate placing bombs on a grid and destroying walls according to specific rules. The challenge lies in doing this efficiently under large constraints.
+
+### Key Observations:
+1. Each cell initially has one wall.
+2. When a bomb is placed on a cell that already has a wall, it destroys that wall.
+3. If the cell already had no wall, the bomb will destroy the first visible walls in each of the four directions (up, down, left, right).
+
+### Efficient Approach:
+- Use `set` structures for each row and column to keep track of remaining walls. These sets allow us to:
+  - Quickly check if a wall exists at a given position.
+  - Efficiently find the nearest walls in all four directions using `upper_bound()` and `lower_bound()`.
+
+### Data Structures:
+- `row[i]`: A set containing all columns in the i-th row that still have walls.
+- `col[j]`: A set containing all rows in the j-th column that still have walls.
+
+This allows efficient insertion and deletion (`O(log N)`), and directional wall detection via binary search.
+
+### Complexity:
+- Time complexity per query: `O(log W + log H)` due to set operations.
+- Total time complexity: `O(Q * log(H + W))`, which is acceptable for `Q <= 2 * 10^5`.
+
+Here's the corrected and complete C++ code:
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+
+    int h, w, q;
+    cin >> h >> w >> q;
+
+    vector<set<int>> row(h), col(w);
+    for (int i = 0; i < h; ++i) {
+        for (int j = 0; j < w; ++j) {
+            row[i].insert(j);
+            col[j].insert(i);
+        }
+    }
+
+    while (q--) {
+        int r, c;
+        cin >> r >> c;
+        r--; c--;
+
+        auto it_row = row[r].find(c);
+        if (it_row != row[r].end()) {
+            // Wall exists, remove it
+            row[r].erase(it_row);
+            col[c].erase(col[c].find(r));
+        } else {
+            // Find walls in four directions
+            vector<pair<int, int>> destroy;
+
+            // Up
+            auto it = col[c].lower_bound(r);
+            if (it != col[c].begin()) {
+                --it;
+                destroy.push_back({*it, c});
+            }
+
+            // Down
+            it = col[c].upper_bound(r);
+            if (it != col[c].end()) {
+                destroy.push_back({*it, c});
+            }
+
+            // Left
+            it = row[r].lower_bound(c);
+            if (it != row[r].begin()) {
+                --it;
+                destroy.push_back({r, *it});
+            }
+
+            // Right
+            it = row[r].upper_bound(c);
+            if (it != row[r].end()) {
+                destroy.push_back({r, *it});
+            }
+
+            // Remove destroyed walls
+            for (auto [x, y] : destroy) {
+                row[x].erase(y);
+                col[y].erase(x);
+            }
+        }
+    }
+
+    long long ans = 0;
+    for (int i = 0; i < h; ++i) {
+        ans += row[i].size();
+    }
+
+    cout << ans << endl;
+}
+```
+
+### Summary of Fixes:
+- Corrected logic for detecting nearest walls in each direction using `lower_bound` and `upper_bound`.
+- Properly removed multiple walls in the same query.
+- Ensured data structure consistency by updating both row and column sets when removing walls.
+
+This version should now correctly handle all test cases efficiently.

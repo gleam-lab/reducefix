@@ -1,0 +1,28 @@
+#include <iostream>
+#include <vector>
+#include <unordered_set>
+using namespace std;
+
+typedef long long ll;
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    ll N, M;
+    cin >> N >> M;
+
+    unordered_set<ll> occupied;
+    for (ll i = 0; i < M; ++i) {
+        ll x, y;
+        cin >> x >> y;
+        --x, --y; // Adjusting indices to zero-based
+        occupied.insert(x * N + y);
+    }
+
+    ll total_empty = N * N - occupied.size();
+
+    cout << total_empty << endl;
+
+    return 0;
+}

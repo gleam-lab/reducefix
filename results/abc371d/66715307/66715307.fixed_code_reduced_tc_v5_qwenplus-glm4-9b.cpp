@@ -1,0 +1,18 @@
+#include <bits/stdc++.h>
+using namespace std;
+int n, x[200050], p[200050], q, a[200050];
+int main(){
+    cin >> n;
+    for (int i = 1; i <= n; i++) cin >> x[i];
+    for (int i = 1; i <= n; i++) cin >> p[i];
+    a[1] = p[1];
+    for (int i = 2; i <= n; i++) a[i] = a[i - 1] + p[i];
+    cin >> q;
+    for (int i = 1; i <= q; i++){
+        int l, r; cin >> l >> r;
+        int l1 = lower_bound(x + 1, x + n + 1, l) - x;
+        int r1 = upper_bound(x + 1, x + n + 1, r) - x - 1;
+        cout << a[r1] - a[l1 - 1] << endl;
+    }
+    return 0;
+}

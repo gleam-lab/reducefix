@@ -1,0 +1,29 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+
+using namespace std;
+
+int main() {
+    int n, k;
+    cin >> n >> k;
+    vector<int> a(n);
+    
+    for (int i = 0; i < n; ++i) {
+        cin >> a[i];
+    }
+
+    // To minimize the range, we need to minimize the max and maximize the min in the remaining sequence
+    // Sorting the array will help us find the minimum and maximum easily
+    sort(a.begin(), a.end());
+
+    // If removing k elements, the smallest possible max value of the remaining sequence will be at least
+    // the (n-k)th smallest element since we cannot remove the smallest (n-k) elements.
+    // The largest possible min value of the remaining sequence will be at most the kth largest element
+    // since we cannot keep the k largest elements.
+    int min_max = a[n - k] - a[k - 1];
+
+    cout << min_max << endl;
+
+    return 0;
+}

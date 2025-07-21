@@ -1,0 +1,102 @@
+To fix this code, we need to correctly handle the process of destroying walls when a bomb is placed at a cell. The original code attempts to use a cache to store distances, but it has several issues, including incorrect caching logic and inefficient handling of the search for the nearest walls in each direction.
+
+### Approaches
+1. **Initialization**: Start with a grid where each cell has a wall (represented as `true`).
+2. **Processing Queries**:
+   - **Destroying the bomb cell**: If the bomb cell has a wall, destroy it.
+   - **Destroying adjacent walls in four directions**: If the bomb cell does not have a wall, search up, down, left, and right for the first wall in each direction and destroy it if found.
+3. **Efficiency**: To efficiently find the first wall in each direction, we can use separate data structures for rows and columns. For each row, maintain a set of columns that still have walls, and for each column, maintain a set of rows that still have walls. This allows us to quickly find the nearest wall in any direction using binary search.
+
+### Solution Code
+```cpp
+#include <iostream>
+#include <vector>
+#include <set>
+using namespace std;
+
+int main() {
+    int H, W, Q;
+    cin >> H >> W >> Q;
+    
+    vector<vector<bool>> map(H, vector<bool>(W, true));
+    vector<set<int>> rowWalls(H);
+    vector<set<int>> colWalls(W);
+    
+    for (int i = 0; i < H; ++i) {
+        for (int j = 0; j < W; ++j) {
+            rowWalls[i].insert(j);
+            colWalls[j].insert(i);
+        }
+    }
+    
+    int broken = 0;
+    for (int q = 0; q < Q; ++q) {
+        int r, c;
+        cin >> r >> c;
+        --r; --c;
+        
+        if (map[r][c]) {
+            ++broken;
+            map[r][c] = false;
+            rowWalls[r].erase(c);
+            colWalls[c].erase(r);
+        } else {
+            // Left
+            auto it = rowWalls[r].lower_bound(c);
+            if (it != rowWalls[r].begin()) {
+                --it;
+                int j = *it;
+                if (map[r][j]) {
+                    ++broken;
+                    map[r][j] = false;
+                    rowWalls[r].erase(j);
+                    colWalls[j].erase(r);
+                }
+            }
+            // Right
+            it = rowWalls[r].upper_bound(c);
+            if (it != rowWalls[r].end()) {
+                int j = *it;
+                if (map[r][j]) {
+                    ++broken;
+                    map[r][j] = false;
+                    rowWalls[r].erase(j);
+                    colWalls[j].erase(r);
+                }
+            }
+            // Up
+            auto it2 = colWalls[c].lower_bound(r);
+            if (it2 != colWalls[c].begin()) {
+                --it2;
+                int i = *it2;
+                if (map[i][c]) {
+                    ++broken;
+                    map[i][c] = false;
+                    rowWalls[i].erase(c);
+                    colWalls[c].erase(i);
+                }
+            }
+            // Down
+            it2 = colWalls[c].upper_bound(r);
+            if (it2 != colWalls[c].end()) {
+                int i = *it2;
+                if (map[i][c]) {
+                    ++broken;
+                    map[i][c] = false;
+                    rowWalls[i].erase(c);
+                    colWalls[c].erase(i);
+                }
+            }
+        }
+    }
+    cout << H * W - broken << endl;
+    return 0;
+}
+```
+
+### Explanation
+1. **Initialization**: The grid is initialized with walls (`true`), and sets `rowWalls` and `colWalls` are populated to keep track of the walls in each row and column.
+2. **Processing Queries**:
+   - **Direct Bomb Impact**: If the bomb cell has a wall, the wall is destroyed, and the corresponding entries in `rowWalls` and `colWalls` are updated.
+   - **Indirect Bomb Impact**: If the bomb cell does not have a wall, the code searches for the nearest walls in each direction (up, down, left, right) using binary search in the sets. If a wall is found, it is destroyed, and the sets are updated accordingly.
+3. **Efficiency**: Using sets for rows and columns allows efficient (logarithmic time) searches for the nearest walls, making the solution scalable for large grid sizes as specified in the problem constraints. The total number of walls remaining is calculated by subtracting the count of destroyed walls from the total grid size.

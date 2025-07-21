@@ -1,0 +1,57 @@
+#include<bits/stdc++.h>
+using namespace std;
+
+#define MAXN 200005
+
+vector<int> adj[MAXN];
+int degree[MAXN];
+priority_queue<int, vector<int>, greater<int>> pq[MAXN];
+
+void addEdge(int u, int v){
+    adj[u].push_back(v);
+    adj[v].push_back(u);
+    degree[u]++;
+    degree[v]++;
+}
+
+void updatePQ(int v, int del, int add){
+    pq[v].erase(pq[v].find(del));
+    pq[v].push(add);
+}
+
+int getKthLargest(int v, int k){
+    if(k > pq[v].size()) return -1;
+    return pq[v].top();
+}
+
+int main(){
+    ios_base::sync_with_stdio(false); cin.tie(NULL);
+    
+    int n, q;
+    cin >> n >> q;
+    
+    for(int i = 1; i <= n; ++i){
+        pq[i].push(i);
+    }
+    
+    while(q--){
+        int type;
+        cin >> type;
+        
+        if(type == 1){
+            int u, v;
+            cin >> u >> v;
+            addEdge(u, v);
+            
+            updatePQ(u, u, v);
+            updatePQ(v, v, u);
+        } else {
+            int v, k;
+            cin >> v >> k;
+            
+            cout << getKthLargest(v, k) << '\n';
+        }
+    }
+    
+    return 0;
+}

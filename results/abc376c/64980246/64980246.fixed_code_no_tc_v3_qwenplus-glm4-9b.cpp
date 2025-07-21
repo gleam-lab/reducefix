@@ -1,0 +1,51 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+#define ll long long
+
+void solve()
+{
+    int n;
+    cin >> n;
+    vector<int> a(n), b(n - 1);
+    for (auto &tt : a)
+        cin >> tt;
+    for (auto &tt : b)
+        cin >> tt;
+    sort(a.begin(), a.end(), greater<int>());
+    sort(b.begin(), b.end());
+    
+    // Check if the smallest toy can fit into the smallest box
+    if (a[0] < b[0])
+        cout << -1 << endl;
+    else
+    {
+        int x = a[0]; // Minimum box size needed to fit the smallest toy
+        for (int i = 1; i < n; ++i)
+        {
+            // Check if the current toy can fit into the existing boxes
+            if (b[i - 1] >= a[i])
+                continue;
+            else
+            {
+                // If no existing box can fit the current toy, a new box of size `a[i]` is needed
+                x = a[i];
+            }
+        }
+        cout << x << endl;
+    }
+}
+
+int main()
+{
+    std::ios::sync_with_stdio(false);
+    std::cin.tie(nullptr);
+
+    int t = 1;
+    // cin >> t;
+    while (t--)
+    {
+        solve();
+    }
+    return 0;
+}

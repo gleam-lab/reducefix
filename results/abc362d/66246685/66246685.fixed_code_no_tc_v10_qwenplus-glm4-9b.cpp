@@ -1,0 +1,65 @@
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+using VL = vector<ll>;
+using P = pair<ll, ll>; // Use long long for edge weights and vertex weights
+
+const ll inf = 1000000000;
+
+int main() {
+  ll N, M;
+  cin >> N >> M;
+
+  VL A(N), B(M);
+  VL ans(N);
+  VL A_sum(N, 0); // To store the prefix sum of vertex weights
+  VL G(N);
+
+  // Read vertex weights and prefix sum them
+  for (ll i = 0; i < N; i++) {
+    cin >> A[i];
+    if (i > 0) {
+      A_sum[i] = A_sum[i - 1] + A[i];
+    }
+  }
+
+  // Read edges and build the graph
+  for (ll i = 0; i < M; i++) {
+    ll u, v, b;
+    cin >> u >> v >> b;
+    u--; v--; // Adjust for 0-based index
+    G[u].emplace_back(v, b);
+    G[v].emplace_back(u, b);
+  }
+
+  // Use Dijkstra's algorithm to find shortest paths from vertex 0
+  priority_queue<P, VL, greater<P>> pq;
+  pq.emplace(0, A_sum[0]); // Start with vertex 0
+  VL dist(N, inf); // Distance from source (vertex 0) to other vertices
+  dist[0] = A_sum[0];
+
+  while (!pq.empty()) {
+    ll u = pq.top().second;
+    pq.pop();
+
+    for (auto &[v, b] : G[u]) {
+      ll alternative = dist[u] + b + A[v]; // Sum of edge weight, current distance, and vertex weight
+      if (alternative < dist[v]) {
+        dist[v] = alternative;
+        pq.emplace(alternative, v);
+      }
+    }
+  }
+
+  // Prepare answers for vertices 2 to N
+  for (ll i = 1; i < N; i++) {
+    ans[i] = dist[i] - A[i]; // Subtract vertex weight from total distance
+  }
+
+  // Output the answers
+  for (ll i = 1; i < N; i++) { // Start from 1 as per problem statement
+    cout << ans[i] << (i < N - 1 ? " " : "");
+  }
+
+  return 0;
+}

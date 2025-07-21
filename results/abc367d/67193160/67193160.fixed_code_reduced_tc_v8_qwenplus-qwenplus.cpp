@@ -1,0 +1,37 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+const int N = 1e6 + 5;
+int n, m, a[N * 2];
+long long sum;
+map<int, int> cnt;
+
+int main() {
+    ios::sync_with_stdio(0);
+    cin.tie(0);
+    cout.tie(0);
+
+    cin >> n >> m;
+    for (int i = 1; i <= n; ++i) {
+        cin >> a[i];
+        a[i + n] = a[i];  // Duplicate array for circular handling
+    }
+
+    long long prefixSum = 0;
+    cnt[0] = 1;  // Initialize count of prefix sum mod m as 1 for zero
+
+    for (int i = 1; i < 2 * n; ++i) {
+        prefixSum += a[i];
+
+        int mod = (prefixSum % m + m) % m;  // Handle negative mods if any
+
+        // Add count of current mod value to result
+        sum += cnt[mod];
+
+        // Increment count of this mod value for future prefixes
+        cnt[mod]++;
+    }
+
+    cout << sum << endl;
+    return 0;
+}

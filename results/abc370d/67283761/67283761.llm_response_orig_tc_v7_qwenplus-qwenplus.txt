@@ -1,0 +1,183 @@
+```cpp
+#include <iostream>
+#include <vector>
+#include <queue>
+#include <tuple>
+#include <set>
+#include <map>
+#include <algorithm>
+#include <cmath>
+#include <cstring>
+
+using namespace std;
+
+const int MAX = 400005;
+typedef pair<int, int> pii;
+
+int H, W, Q;
+bool visited[MAX];
+vector<pii> dirs = {{-1, 0}, {1, 0}, {0, -1}, {0, 1}}; // up, down, left, right
+
+// Utility to convert (r, c) to a unique index
+int idx(int r, int c) {
+    return r * W + c;
+}
+
+// Main function
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+    cout.tie(0);
+
+    cin >> H >> W >> Q;
+    vector<vector<int>> grid(H, vector<int>(W, 0)); // 0 means unvisited
+    int total = H * W;
+
+    // Initialize visited as all cells are walls initially
+    for (int i = 0; i < H; ++i)
+        for (int j = 0; j < W; ++j)
+            visited[idx(i, j)] = false;
+
+    // For each direction, keep track of next possible wall in that direction
+    vector<vector<int>> next_wall[4];
+    for (int d = 0; d < 4; ++d)
+        next_wall[d] = grid;
+
+    // Initialize the next pointers
+    for (int i = 0; i < H; ++i)
+        for (int j = 0; j < W; ++j)
+            grid[i][j] = 1; // Initially all cells have walls
+
+    // Precompute next wall pointers in all directions
+    // Up
+    for (int j = 0; j < W; ++j) {
+        int last = -1;
+        for (int i = H - 1; i >= 0; --i) {
+            if (grid[i][j]) {
+                last = i;
+            }
+            next_wall[0][i][j] = last;
+        }
+    }
+
+    // Down
+    for (int j = 0; j < W; ++j) {
+        int last = -1;
+        for (int i = 0; i < H; ++i) {
+            if (grid[i][j]) {
+                last = i;
+            }
+            next_wall[1][i][j] = last;
+        }
+    }
+
+    // Left
+    for (int i = 0; i < H; ++i) {
+        int last = -1;
+        for (int j = W - 1; j >= 0; --j) {
+            if (grid[i][j]) {
+                last = j;
+            }
+            next_wall[2][i][j] = last;
+        }
+    }
+
+    // Right
+    for (int i = 0; i < H; ++i) {
+        int last = -1;
+        for (int j = 0; j < W; ++j) {
+            if (grid[i][j]) {
+                last = j;
+            }
+            next_wall[3][i][j] = last;
+        }
+    }
+
+    auto destroy = [&](int r, int c) {
+        if (!grid[r][c])
+            return;
+        grid[r][c] = 0;
+        total--;
+    };
+
+    while (Q--) {
+        int R, C;
+        cin >> R >> C;
+        R--; C--;
+
+        if (grid[R][C]) {
+            // Directly destroy this cell
+            destroy(R, C);
+        } else {
+            // Try to find nearest walls in all four directions
+            vector<pii> targets;
+            if (next_wall[0][R][C] != -1 && next_wall[0][R][C] < R)
+                targets.emplace_back(next_wall[0][R][C], C);
+            if (next_wall[1][R][C] != -1 && next_wall[1][R][C] > R)
+                targets.emplace_back(next_wall[1][R][C], C);
+            if (next_wall[2][R][C] != -1 && next_wall[2][R][C] < C)
+                targets.emplace_back(R, next_wall[2][R][C]);
+            if (next_wall[3][R][C] != -1 && next_wall[3][R][C] > C)
+                targets.emplace_back(R, next_wall[3][R][C]);
+
+            // Remove duplicates
+            sort(targets.begin(), targets.end());
+            targets.erase(unique(targets.begin(), targets.end()), targets.end());
+
+            for (auto& p : targets) {
+                int r = p.first, c = p.second;
+                if (grid[r][c]) {
+                    destroy(r, c);
+                    // Update next_wall in all directions affected by this destruction
+                    for (int i = r + 1; i < H; ++i)
+                        if (next_wall[0][i][c] == r)
+                            next_wall[0][i][c] = -1;
+                    for (int i = r - 1; i >= 0; --i)
+                        if (next_wall[1][i][c] == r)
+                            next_wall[1][i][c] = -1;
+                    for (int j = c + 1; j < W; ++j)
+                        if (next_wall[2][r][j] == c)
+                            next_wall[2][r][j] = -1;
+                    for (int j = c - 1; j >= 0; --j)
+                        if (next_wall[3][r][j] == c)
+                            next_wall[3][r][j] = -1;
+                }
+            }
+        }
+
+        // After destruction, recompute the next_wall for current cell
+        if (!grid[R][C]) {
+            // Up
+            for (int i = R + 1; i < H; ++i) {
+                if (grid[i][C]) {
+                    next_wall[0][i][C] = R;
+                    break;
+                }
+            }
+            // Down
+            for (int i = R - 1; i >= 0; --i) {
+                if (grid[i][C]) {
+                    next_wall[1][i][C] = R;
+                    break;
+                }
+            }
+            // Left
+            for (int j = C + 1; j < W; ++j) {
+                if (grid[R][j]) {
+                    next_wall[2][R][j] = C;
+                    break;
+                }
+            }
+            // Right
+            for (int j = C - 1; j >= 0; --j) {
+                if (grid[R][j]) {
+                    next_wall[3][R][j] = C;
+                    break;
+                }
+            }
+        }
+    }
+
+    cout << total << endl;
+}
+```

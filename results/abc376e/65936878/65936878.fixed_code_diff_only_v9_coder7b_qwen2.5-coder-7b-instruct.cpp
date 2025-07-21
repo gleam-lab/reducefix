@@ -1,0 +1,31 @@
+#include <bits/stdc++.h>
+#define int long long
+#define f first
+#define s second
+using namespace std;
+
+signed main() {
+    ios_base::sync_with_stdio(0); cin.tie(0); cout.tie(0);
+
+    int t; cin >> t;
+    while(t--) {
+        int n, k; cin >> n >> k;
+        vector<int> a(n), b(n);
+        for(int i=0;i<n;i++) cin >> a[i];
+        for(int i=0;i<n;i++) cin >> b[i];
+
+        sort(a.begin(), a.end());
+        sort(b.rbegin(), b.rend());
+
+        long long max_a = a[n-k], sum_b = accumulate(b.begin(), b.begin()+k, 0LL);
+        long long ans = max_a * sum_b;
+
+        for(int i=k; i<n; ++i) {
+            sum_b -= b[i-k]; // Remove the smallest element from the current window
+            sum_b += b[i];   // Add the new largest element to the current window
+            ans = min(ans, static_cast<long long>(a[i]) * sum_b);
+        }
+
+        cout << ans << '\n';
+    }
+}

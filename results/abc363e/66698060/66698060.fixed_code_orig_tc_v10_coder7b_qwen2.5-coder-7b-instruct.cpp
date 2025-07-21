@@ -1,0 +1,79 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+struct Node {
+    int x, y, height;
+    Node(int _x, int _y, int _height) : x(_x), y(_y), height(_height) {}
+    bool operator<(const Node &other) const { return height > other.height; }
+};
+
+vector<vector<int>> directions = {{1, 0}, {-1, 0}, {0, 1}, {0, -1}};
+void dfs(vector<vector<int>>& grid, vector<vector<bool>>& visited, int x, int y) {
+    visited[x][y] = true;
+    for (auto& dir : directions) {
+        int nx = x + dir[0], ny = y + dir[1];
+        if (nx >= 0 && nx < grid.size() && ny >= 0 && ny < grid[0].size() && !visited[nx][ny] && grid[nx][ny] <= grid[x][y]) {
+            dfs(grid, visited, nx, ny);
+        }
+    }
+}
+
+vector<int> solve(vector<vector<int>>& grid, int Y) {
+    int H = grid.size(), W = grid[0].size();
+    vector<int> result(Y + 1, H * W);
+    
+    for (int t = 1; t <= Y; ++t) {
+        priority_queue<Node> pq;
+        vector<vector<bool>> visited(H, vector<bool>(W, false));
+        
+        for (int i = 0; i < H; ++i) {
+            pq.push(Node(i, 0, grid[i][0]));
+            pq.push(Node(i, W - 1, grid[i][W - 1]));
+        }
+        
+        for (int j = 1; j < W - 1; ++j) {
+            pq.push(Node(0, j, grid[0][j]));
+            pq.push(Node(H - 1, j, grid[H - 1][j]));
+        }
+        
+        while (!pq.empty()) {
+            auto [x, y, height] = pq.top();
+            pq.pop();
+            
+            if (height <= t) {
+                result[t] -= 1;
+                dfs(grid, visited, x, y);
+            } else {
+                break;
+            }
+        }
+    }
+    
+    for (int i = Y; i >= 1; --i) {
+        result[i] = result[i + 1];
+    }
+    
+    return result;
+}
+
+int main() {
+    ios_base::sync_with_stdio(false); cin.tie(NULL);
+    
+    int H, W, Y;
+    cin >> H >> W >> Y;
+    vector<vector<int>> grid(H, vector<int>(W));
+    
+    for (int i = 0; i < H; ++i) {
+        for (int j = 0; j < W; ++j) {
+            cin >> grid[i][j];
+        }
+    }
+    
+    vector<int> answer = solve(grid, Y);
+    
+    for (int i = 1; i <= Y; ++i) {
+        cout << answer[i] << '\n';
+    }
+    
+    return 0;
+}

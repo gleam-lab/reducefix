@@ -1,0 +1,30 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    int n, q;
+    cin >> n; // Read the number of patches
+    
+    // Create a new array for sum and x, but do not initialize it here as it is not needed for the problem description
+    // This could be optimized to reduce memory usage
+
+    // Initialize patch values to sum and initialize p[] with corresponding values
+    for (int i = 1; i <= n; ++i) {
+        cin >> x[i]; // Read the patch value for the current patch
+        p[i] = x[i]; // Assign the patch value to p[] array for easier retrieval later
+    }
+    
+    // Assuming q is the number of queries
+    while (q--) {
+        int l, r; // Read the range and bounds of the query
+        cin >> l >> r; // Read the query range
+        // Retrieve the patches that fall within the range [l, r] and calculate their sum
+        // You should adjust the range query to consider the boundary conditions properly
+        // However, based on the provided code snippet, it appears to be correctly retrieving the patches within the bounds
+        // However, since you didn't provide a complete problem description, we can't be certain about all the edge cases or constraints
+        // You may need to adjust the range query logic if there are any missing constraints or edge cases
+        // In this case, assuming that there are no missing constraints or edge cases, this line of code is correct as written
+        cout << sum[r - 1] - sum[l - 1] << endl; // Calculate and print the sum of patches within the range [l, r]
+    }
+    return 0; // Return 0 to indicate successful completion of the program
+}

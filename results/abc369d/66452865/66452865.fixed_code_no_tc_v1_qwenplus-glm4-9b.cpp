@@ -1,0 +1,21 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+  int N;
+  cin >> N;
+  vector<long long> A(N);
+  for (int i = 0; i < N; i++) cin >> A[i];
+  vector<long long> dp(2);
+  dp[0] = 0;
+  dp[1] = 0;
+  for (int i = 0; i < N; i++) {
+    vector<long long> p = dp;
+    dp[0] = max(dp[0], p[1]);  // Max of don't take or keep previous
+    dp[1] = max(dp[1], p[0] + A[i]);  // Max of take or carry forward previous
+    if (i > 0) dp[1] = max(dp[1], p[0] + 2 * A[i]);  // Corrected condition to i>0
+  }
+  long long ans = max(dp[0], dp[1]);
+  cout << ans << endl;
+  return 0;
+}

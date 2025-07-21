@@ -1,0 +1,132 @@
+To fix this code, we need to ensure that we correctly calculate the number of empty squares where a new piece can be placed without being captured by any existing pieces. The existing pieces can capture along rows, columns, and both diagonals (sum and difference diagonals). 
+
+### Approaches
+
+1. **Input Handling**: Read the grid size \( N \) and the number of existing pieces \( M \). Then, read the coordinates of each existing piece.
+2. **Tracking Constraints**: For each existing piece, track the rows, columns, sum diagonals (i + j), and difference diagonals (i - j) that are under attack.
+3. **Counting Safe Squares**: Calculate the total number of squares that are not under attack by any existing piece. This involves:
+   - **Total Squares**: The total number of squares is \( N^2 \).
+   - **Attacked Squares**: Subtract the squares attacked along rows, columns, sum diagonals, and difference diagonals.
+   - **Overlap Correction**: Add back the squares that were subtracted multiple times due to overlapping attack lines (using inclusion-exclusion principle).
+4. **Final Calculation**: The result is the total safe squares after all corrections.
+
+### Solution Code
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+typedef long long ll;
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    ll N, M;
+    cin >> N >> M;
+
+    unordered_set<ll> rows, cols, sums, diffs;
+    vector<pair<ll, ll>> pieces(M);
+    for (ll i = 0; i < M; ++i) {
+        ll a, b;
+        cin >> a >> b;
+        pieces[i] = {a, b};
+        rows.insert(a);
+        cols.insert(b);
+        sums.insert(a + b);
+        diffs.insert(a - b);
+    }
+
+    ll unsafe = 0;
+
+    // Rows and columns
+    unsafe += rows.size() * N + cols.size() * N - rows.size() * cols.size();
+
+    // Sum and difference diagonals
+    for (ll s : sums) {
+        ll start_i = max(1LL, s - N);
+        ll end_i = min(N, s - 1);
+        if (start_i > end_i) continue;
+        unsafe += end_i - start_i + 1;
+    }
+
+    for (ll d : diffs) {
+        ll start_i = max(1LL, 1 - d);
+        ll end_i = min(N, N - d);
+        if (start_i > end_i) continue;
+        unsafe += end_i - start_i + 1;
+    }
+
+    // Overlap between sum and difference diagonals
+    for (ll s : sums) {
+        for (ll d : diffs) {
+            if ((s + d) % 2 != 0) continue;
+            ll i = (s + d) / 2;
+            ll j = (s - d) / 2;
+            if (i >= 1 && i <= N && j >= 1 && j <= N) {
+                unsafe--;
+            }
+        }
+    }
+
+    // Overlap between rows and sum/difference diagonals
+    for (ll a : rows) {
+        for (ll s : sums) {
+            ll b = s - a;
+            if (b >= 1 && b <= N) {
+                unsafe--;
+            }
+        }
+        for (ll d : diffs) {
+            ll b = a - d;
+            if (b >= 1 && b <= N) {
+                unsafe--;
+            }
+        }
+    }
+
+    // Overlap between columns and sum/difference diagonals
+    for (ll b : cols) {
+        for (ll s : sums) {
+            ll a = s - b;
+            if (a >= 1 && a <= N) {
+                unsafe--;
+            }
+        }
+        for (ll d : diffs) {
+            ll a = b + d;
+            if (a >= 1 && a <= N) {
+                unsafe--;
+            }
+        }
+    }
+
+    // Overlap between rows, columns, and diagonals
+    for (auto [a, b] : pieces) {
+        if (rows.count(a) && cols.count(b) && sums.count(a + b) && diffs.count(a - b)) {
+            unsafe += 3;
+        } else if (rows.count(a) && cols.count(b) && (sums.count(a + b) || diffs.count(a - b))) {
+            unsafe += 1;
+        }
+    }
+
+    ll total = N * N;
+    ll safe = total - unsafe;
+
+    cout << safe << endl;
+
+    return 0;
+}
+```
+
+### Explanation
+
+1. **Input Handling**: The code reads the grid size \( N \) and the number of existing pieces \( M \). It then reads the coordinates of each existing piece and stores them in a vector.
+2. **Tracking Constraints**: Each existing piece's row, column, sum diagonal (i + j), and difference diagonal (i - j) are stored in unordered sets to avoid duplicates.
+3. **Initial Unsafe Count**: The initial unsafe count is calculated by considering the squares attacked by rows and columns. This is done by multiplying the number of unique rows and columns by \( N \) and then subtracting the overlap (squares that are in both a unique row and column).
+4. **Diagonal Contributions**: For each unique sum diagonal, the code calculates the number of squares along that diagonal and adds it to the unsafe count. Similarly, it does this for each unique difference diagonal.
+5. **Overlap Corrections**: The code corrects for overlaps between sum and difference diagonals, rows and diagonals, and columns and diagonals. This ensures that squares subtracted multiple times are added back appropriately.
+6. **Final Correction**: The code adds back squares that were subtracted multiple times due to being in overlapping attack lines of rows, columns, and diagonals.
+7. **Result Calculation**: The total safe squares are obtained by subtracting the total unsafe squares from the total grid squares \( N^2 \).
+
+This approach ensures that all constraints and overlaps are correctly handled, providing the accurate number of safe squares where a new piece can be placed without being captured.

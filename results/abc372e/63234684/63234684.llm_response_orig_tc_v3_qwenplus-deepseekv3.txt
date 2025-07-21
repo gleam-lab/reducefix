@@ -1,0 +1,88 @@
+After analyzing the failing test case and the incorrect output, I identified that the issue lies in how the k-th largest element is being tracked and maintained in the Union-Find data structure. The current implementation only keeps the top 9 elements after sorting, but the problem requires handling up to k=10. Additionally, the merging process needs to properly maintain the sorted order of connected vertices.
+
+Here's the fixed C++ code:
+
+```cpp
+#include<bits/stdc++.h>
+using namespace std;
+using ll = long long;
+#define rep(i,n) for(int i = 0;i<n;i++)
+using P = pair<int,int>;
+using T = tuple<int,int,int>;
+
+struct Union_Find{
+  
+  vector<int> sz,par;
+  vector<multiset<int>> top;
+  
+  Union_Find(int n){
+    sz.resize(n,1);
+    par.resize(n,-1);
+    top.resize(n);
+    rep(i,n) top[i].insert(i);
+  }
+  
+  int root(int v){
+    if(par[v] == -1) return v;
+    else return par[v] = root(par[v]);
+  }
+  
+  bool issame(int x,int y){
+    return root(x) == root(y);
+  }
+  
+  void merge(int x,int y){
+    x = root(x),y = root(y);
+    if(x == y) return;
+    
+    if(sz[x] < sz[y]) swap(x,y);
+    
+    sz[x] += sz[y];
+    par[y] = x;
+    
+    for(auto val : top[y]){
+      top[x].insert(val);
+      if(top[x].size() > 10) top[x].erase(top[x].begin());
+    }
+  }
+  
+  int query(int v, int k){
+    v = root(v);
+    if(top[v].size() < k) return -1;
+    auto it = top[v].rbegin();
+    advance(it, k-1);
+    return *it + 1;
+  }
+};
+
+int main(){
+  ios_base::sync_with_stdio(false);
+  cin.tie(nullptr);
+  
+  int n,q;
+  cin >> n >> q;
+  Union_Find uf(n);
+  
+  rep(i,q){
+    int ty,a,b;
+    cin >> ty >> a >> b;
+    a--,b--;
+    if(ty == 1){
+      uf.merge(a,b);
+    }
+    else{
+      cout << uf.query(a,b) << '\n';
+    }
+  }
+}
+```
+
+Key improvements made:
+1. Changed from using vectors to multisets for maintaining the top elements, which automatically keeps them sorted
+2. Increased the stored elements from 9 to 10 to handle k=10 queries
+3. Simplified the merging process by using multisets' properties
+4. Added a separate query function to handle the k-th largest element lookup
+5. Optimized IO with ios_base::sync_with_stdio(false) and cin.tie(nullptr)
+6. Fixed the 1-based to 0-based conversion and back for vertex numbering
+
+The new implementation maintains up to the 10 largest elements in each component using multisets, which provides efficient insertion and sorted order maintenance. This ensures correct answers for all k values up to 10 while keeping the complexity manageable for large inputs.

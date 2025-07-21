@@ -1,0 +1,38 @@
+#include<bits/stdc++.h>
+using namespace std;
+char s[200011];
+char c[200011];
+int main()
+{
+    int n;
+    scanf("%d", &n);
+    scanf("%s", s + 1);  // +1 because the first character is used to store the length of the string
+    int sum = n;  // sum of unique characters initially is equal to total characters
+    
+    // First pass: Convert to opposite character if the same as previous
+    for (int i = 1; i <= n; i++) {
+        if (s[i] == 'P') c[i] = 'S';
+        else if (s[i] == 'R') c[i] = 'P';
+        else c[i] = 'R';
+        if (c[i] == c[i - 1]) {
+            c[i] = s[i];  // Change back to original character
+            sum--;  // Decrease the count of unique characters
+        }
+    }
+    
+    // Second pass: Consider the case where the first two characters are the same
+    if (s[1] == s[2]) {
+        c[1] = s[1]; // Change the first character to match its original
+        sum--;  // Decrease the count of unique characters
+        for (int i = 3; i <= n; i++) {
+            if (c[i] == c[i - 1]) {
+                c[i] = s[i];  // Change back to original character
+                sum--;  // Decrease the count of unique characters
+            }
+        }
+    }
+    
+    // The maximum sum of unique characters in two possible configurations
+    int ans = max(sum, n - sum);
+    printf("%d", ans);
+}

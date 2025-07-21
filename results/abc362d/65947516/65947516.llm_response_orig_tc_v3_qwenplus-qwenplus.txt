@@ -1,0 +1,121 @@
+To solve this problem correctly, we need to compute the **minimum path weight** from vertex 1 to every other vertex in a graph where both **vertex weights and edge weights contribute to the total path cost**.
+
+---
+
+### Key Observations:
+
+- Normally, Dijkstra's algorithm calculates the shortest path using only edge weights.
+- Here, each node has an associated weight (`A[i]`), and each edge also has a weight (`B[j]`).
+- The **total cost of a path** is defined as:
+  $$
+  \text{path\_cost} = \sum_{v \in \text{nodes on path}} A[v] + \sum_{e \in \text{edges on path}} B[e]
+  $$
+
+This implies that:
+- When entering a node `v`, you pay its weight `A[v]`.
+- When traversing an edge `(u, v)`, you pay its weight `B[edge]`.
+
+So when calculating the minimum cost to reach node `v`, it's:
+```
+cost_to_v = cost_to_u + B[u][v] + A[v]
+```
+
+But note: **We must not include `A[1]` twice**, i.e., once at the start.
+
+---
+
+### Fixing the Code:
+
+The main bug in the original code was in how the final result was computed. Specifically:
+
+```cpp
+printf("%lld ", dis[i] + a[i]);
+```
+
+This line **adds `a[i]` again** even though it was already included during traversal. That's incorrect because the vertex weight `A[i]` is added **only once** — when arriving at node `i`.
+
+Thus, we should output just `dis[i]` for all `i >= 2`.
+
+Also, in the initialization phase, `dis[1]` should be initialized with `A[1]`, since we have to include the starting node’s weight.
+
+---
+
+### Final Corrected C++ Code:
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+typedef long long ll;
+typedef pair<ll, int> pli;
+
+const ll INF = 1e18;
+
+const int N = 2 * 100000 + 5;
+
+int n, m;
+ll a[N];
+vector<pli> g[N];
+
+ll dis[N];
+bool vis[N];
+
+void dijkstra() {
+    fill(dis, dis + n + 1, INF);
+    memset(vis, false, sizeof(vis));
+    
+    priority_queue<pli, vector<pli>, greater<pli>> pq;
+    
+    dis[1] = a[1]; // Start node's weight is included once
+    pq.push({dis[1], 1});
+    
+    while (!pq.empty()) {
+        auto [d, u] = pq.top(); pq.pop();
+        if (vis[u]) continue;
+        vis[u] = true;
+        
+        for (auto [v, w] : g[u]) {
+            if (!vis[v] && dis[v] > d + w + a[v]) {
+                dis[v] = d + w + a[v];
+                pq.push({dis[v], v});
+            }
+        }
+    }
+}
+
+int main() {
+    ios::sync_with_stdio(false); cin.tie(nullptr); cout.tie(nullptr);
+    
+    cin >> n >> m;
+    for (int i = 1; i <= n; ++i) cin >> a[i];
+    
+    for (int i = 0; i < m; ++i) {
+        int u, v; ll w;
+        cin >> u >> v >> w;
+        g[u].push_back({v, w});
+        g[v].push_back({u, w});
+    }
+    
+    dijkstra();
+    
+    for (int i = 2; i <= n; ++i)
+        cout << dis[i] << " ";
+    cout << "\n";
+}
+```
+
+---
+
+### Summary of Fixes:
+
+1. **Correct Initialization**: Set `dis[1] = a[1]` to account for the initial node weight.
+2. **Correct Transition**: When moving from `u` to `v`, the cost is `dis[u] + edge_weight + a[v]`.
+3. **Correct Output**: Print `dis[i]` directly without adding `a[i]` again.
+4. **Improved Performance & Style**:
+   - Used `pair<long long, int>` instead of custom structs.
+   - Replaced raw arrays with safer `fill()` and `memset()`.
+   - Made use of `priority_queue` with proper ordering via `greater<>`.
+
+This version runs in **O(M log N)** time due to Dijkstra's algorithm with a priority queue, which is efficient enough for the given constraints.
+
+Let me know if you'd like a Python or Java version too!

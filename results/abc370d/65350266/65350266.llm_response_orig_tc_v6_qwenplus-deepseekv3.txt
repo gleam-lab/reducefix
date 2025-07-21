@@ -1,0 +1,101 @@
+To fix this code, we need to analyze why the original solution failed and then implement a correct approach. The problem involves simulating the destruction of walls in a grid based on bomb placements, either directly destroying the bomb's cell or the nearest walls in the four cardinal directions if the bomb's cell is already empty.
+
+### Analysis of the Original Code
+The original code uses sets to track the remaining walls in each row and column. For each query, it checks if the specified cell has a wall. If it does, it removes the wall. If not, it attempts to remove the nearest walls in each direction by finding the appropriate elements in the sets. However, the logic for finding and removing the nearest walls is flawed, leading to incorrect counts.
+
+### Issues in the Original Code
+1. **Incorrect Handling of Nearest Walls**: The code fails to correctly identify the nearest walls in each direction when the bomb's cell is empty. Specifically, it doesn't properly check the boundaries (beginning and end of sets) and doesn't handle cases where no walls exist in a direction.
+2. **Inefficient Data Structures**: Using sets for both rows and columns might not be the most efficient approach given the constraints (H and W can be up to 4e5, Q up to 2e5).
+3. **Logic Errors**: The conditions for checking and removing walls in the four directions are not correctly implemented, especially when dealing with the boundaries.
+
+### Correct Approach
+To efficiently solve this problem, we should:
+1. **Use Separate Data Structures for Rows and Columns**: Maintain a set for each row to track the remaining columns with walls and a set for each column to track the remaining rows with walls.
+2. **Properly Handle Nearest Walls**: For each bomb placement, if the cell is empty, find the nearest walls in all four directions using binary search (via `lower_bound` and `upper_bound` on the sets) and remove them if they exist.
+3. **Edge Cases**: Ensure that we handle cases where no walls exist in a particular direction by checking the bounds of the sets.
+
+### Solution Code
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int H, W, Q;
+    cin >> H >> W >> Q;
+
+    vector<set<int>> row_walls(H), col_walls(W);
+    for (int i = 0; i < H; ++i) {
+        for (int j = 0; j < W; ++j) {
+            row_walls[i].insert(j);
+            col_walls[j].insert(i);
+        }
+    }
+
+    long long remaining = (long long)H * W;
+
+    while (Q--) {
+        int R, C;
+        cin >> R >> C;
+        R--; C--;
+
+        if (row_walls[R].count(C)) {
+            row_walls[R].erase(C);
+            col_walls[C].erase(R);
+            remaining--;
+        } else {
+            // Up
+            auto it_up = col_walls[C].lower_bound(R);
+            if (it_up != col_walls[C].begin()) {
+                --it_up;
+                int r = *it_up;
+                row_walls[r].erase(C);
+                col_walls[C].erase(r);
+                remaining--;
+            }
+
+            // Down
+            auto it_down = col_walls[C].lower_bound(R);
+            if (it_down != col_walls[C].end()) {
+                int r = *it_down;
+                row_walls[r].erase(C);
+                col_walls[C].erase(r);
+                remaining--;
+            }
+
+            // Left
+            auto it_left = row_walls[R].lower_bound(C);
+            if (it_left != row_walls[R].begin()) {
+                --it_left;
+                int c = *it_left;
+                row_walls[R].erase(c);
+                col_walls[c].erase(R);
+                remaining--;
+            }
+
+            // Right
+            auto it_right = row_walls[R].lower_bound(C);
+            if (it_right != row_walls[R].end()) {
+                int c = *it_right;
+                row_walls[R].erase(c);
+                col_walls[c].erase(R);
+                remaining--;
+            }
+        }
+    }
+
+    cout << remaining << '\n';
+    return 0;
+}
+```
+
+### Explanation
+1. **Initialization**: We initialize sets for each row and column to keep track of walls. Initially, all cells have walls, so we populate these sets accordingly.
+2. **Processing Queries**: For each query:
+   - If the specified cell has a wall, we remove it from the corresponding row and column sets and decrement the remaining wall count.
+   - If the cell is empty, we search for the nearest walls in all four directions (up, down, left, right) using binary search operations on the sets. For each found wall, we remove it and decrement the count.
+3. **Output**: After processing all queries, the remaining count of walls is printed.
+
+This approach ensures efficient handling of each query with logarithmic complexity for set operations, making it suitable for large input sizes.

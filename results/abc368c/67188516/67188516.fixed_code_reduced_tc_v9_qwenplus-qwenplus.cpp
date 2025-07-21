@@ -1,0 +1,72 @@
+#include <iostream>
+#include <vector>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int N;
+    cin >> N;
+    vector<long long> H(N);
+    for (int i = 0; i < N; ++i) {
+        cin >> H[i];
+    }
+
+    long long T = 0;
+    // We'll track how many attacks have been made modulo 3
+    // pos = 0 means next attack will be at T % 3 == 1 (not multiple of 3)
+    // pos = 1 means next attack will be at T % 3 == 2
+    // pos = 2 means next attack will be at T % 3 == 0 (multiple of 3)
+    int pos = 0;
+
+    for (long long h : H) {
+        // Each enemy takes 5 damage every 3 seconds (on optimal attack pattern)
+        long long full_cycles = h / 5;
+        T += full_cycles * 3;
+        h -= full_cycles * 5;
+
+        // Handle remaining health (0 <= h <= 4)
+        if (h == 0) continue;
+
+        // Apply the correct attacks based on current position and needed damage
+        if (pos == 0) {
+            // Next attack is T+1 (not multiple of 3) => 1 damage
+            // Then T+2 (not multiple of 3) => 1 damage
+            // Then T+3 (multiple of 3) => 3 damage
+            if (h == 1) {
+                T += 1;
+                pos = 1;
+            } else if (h == 2) {
+                T += 2;
+                pos = 2;
+            } else { // h == 3 or 4
+                T += 3;
+                pos = 0;
+            }
+        } else if (pos == 1) {
+            // Next attack is T+1 (not multiple of 3) => 1 damage
+            // Then T+2 (multiple of 3) => 3 damage
+            if (h <= 2) {
+                T += (h == 1 ? 1 : 2);
+                pos = (pos + h) % 3;
+            } else { // h == 3 or 4
+                T += 2;
+                T += (h - 2 > 0); // One more attack if still alive
+                pos = (pos + h - 2 > 0 ? 0 : 1);
+            }
+        } else { // pos == 2
+            // Next attack is T+1 (multiple of 3) => 3 damage
+            if (h <= 3) {
+                T += 1;
+                pos = (pos + 1) % 3;
+            } else { // h == 4
+                T += 2;
+                pos = 1;
+            }
+        }
+    }
+
+    cout << T << endl;
+    return 0;
+}

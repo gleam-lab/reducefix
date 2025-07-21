@@ -1,0 +1,61 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+#define ll long long
+
+const int N = 105;
+int n, x;
+int a[N], b[N], p[N], q[N];
+
+ll cost(int mid, int type) {
+    if (type == 1) {
+        return (mid + a[1] - 1) / a[1] * p[1];
+    } else {
+        return (mid + b[1] - 1) / b[1] * q[1];
+    }
+}
+
+bool check(ll mid) {
+    vector<ll> dp(mid + 1, LLONG_MAX);
+    dp[0] = 0;
+    
+    for (int i = 1; i <= n; ++i) {
+        for (int j = mid; j >= 0; --j) {
+            dp[j] = min(dp[j], cost(j, 1));
+            if (j >= a[i]) {
+                dp[j] = min(dp[j], dp[j - a[i]] + cost(j, 2));
+            }
+        }
+    }
+
+    for (int i = 1; i <= mid; ++i) {
+        if (dp[i] <= x) {
+            return true;
+        }
+    }
+    return false;
+}
+
+signed main() {
+    ios::sync_with_stdio(0);
+    cin.tie(0);
+    cout.tie(0);
+
+    cin >> n >> x;
+    for (int i = 1; i <= n; ++i) {
+        cin >> a[i] >> p[i] >> b[i] >> q[i];
+    }
+
+    ll l = 0, r = 1e9;
+    while (l < r) {
+        ll mid = (l + r + 1) / 2;
+        if (check(mid)) {
+            l = mid;
+        } else {
+            r = mid - 1;
+        }
+    }
+
+    cout << l << endl;
+    return 0;
+}

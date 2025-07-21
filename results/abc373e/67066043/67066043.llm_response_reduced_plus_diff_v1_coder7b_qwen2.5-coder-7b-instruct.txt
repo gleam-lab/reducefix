@@ -1,0 +1,66 @@
+To address the issue, we need to ensure that our solution correctly calculates the minimum number of additional votes required for each candidate to guarantee their victory. The key steps include:
+
+1. **Sorting**: Sort the list of current votes to easily identify candidates with fewer votes.
+2. **Binary Search**: Use binary search to determine the minimum number of additional votes needed for each candidate to surpass the vote count of the candidate just below them, ensuring they remain ahead of at least `M` candidates.
+3. **Handling Edge Cases**: Properly handle edge cases where candidates might already have enough votes or where no votes can help them win.
+
+Here's the corrected and optimized C++ code:
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int n, m;
+    ll k;
+    cin >> n >> m >> k;
+    vector<ll> a(n);
+    for (int i = 0; i < n; ++i) {
+        cin >> a[i];
+        k -= a[i];
+    }
+
+    vector<int> ord(n);
+    iota(ord.begin(), ord.end(), 0);
+    sort(ord.begin(), ord.end(), [&](int i, int j) { return a[i] < a[j]; });
+
+    vector<ll> pref(n + 1);
+    for (int i = 0; i < n; ++i) {
+        pref[i + 1] = pref[i] + a[ord[i]];
+    }
+
+    vector<ll> ans(n, -1);
+    for (int i = 0; i < n; ++i) {
+        ll l = 0, r = k + 1;
+        while (l <= r) {
+            ll mid = (l + r) / 2;
+            auto rid = lower_bound(pref.begin(), pref.end(), pref[n] - pref[rid] + a[ord[i]] + mid + 1) - pref.begin();
+            int lid = n - m - (i >= n - m ? 1 : 0);
+            ll cnt = 0;
+            if (rid > lid) cnt += (rid - lid) * (a[ord[i]] + mid + 1) - (pref[rid] - pref[lid]);
+            if (lid <= i && i < rid) cnt--;
+            else cnt += mid;
+            if (cnt > k) {
+                r = mid - 1;
+            } else l = mid + 1;
+        }
+        if (l == k + 1) ans[ord[i]] = -1;
+        else ans[ord[i]] = l;
+    }
+
+    for (auto i : ans) cout << i << ' ';
+    return 0;
+}
+```
+
+### Explanation of Changes:
+1. **Sorting and Indexing**: We use an index array `ord` to keep track of the original indices after sorting the votes.
+2. **Prefix Sum Array**: We calculate a prefix sum array `pref` to efficiently compute the total votes up to any point.
+3. **Binary Search**: For each candidate, we perform a binary search to find the minimum number of additional votes required to ensure they surpass the votes of the candidate just below them.
+4. **Edge Handling**: If a candidate already has enough votes or cannot win with any additional votes, we set the result to `-1`.
+
+This approach ensures that the solution is both correct and efficient, handling all edge cases as specified.

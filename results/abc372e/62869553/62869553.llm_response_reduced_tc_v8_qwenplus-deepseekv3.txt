@@ -1,0 +1,70 @@
+To fix this code, we need to properly handle the union-find data structure and maintain the top k largest elements in each connected component. The main issue with the original code was incorrect merging of the top k elements during union operations and incorrect handling of queries.
+
+### Approaches
+1. **Union-Find Data Structure**: This helps in efficiently managing the connected components of the graph. Each component will have a representative (root) node.
+2. **Top K Elements**: For each connected component, maintain a sorted list (or a priority queue) of the largest k elements (where k is up to 10, as per the problem constraints). This allows us to quickly answer queries about the k-th largest element in a component.
+3. **Path Compression and Union by Size**: These optimizations ensure that the union and find operations are nearly constant time, making the solution efficient even for large inputs.
+
+### Solution Code
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+const int MAXN = 2e5 + 5;
+const int K = 10;
+
+int parent[MAXN];
+vector<int> top_k[MAXN];
+
+int find_set(int u) {
+    if (parent[u] == u) return u;
+    return parent[u] = find_set(parent[u]);
+}
+
+void union_sets(int u, int v) {
+    u = find_set(u);
+    v = find_set(v);
+    if (u == v) return;
+    if (top_k[u].size() < top_k[v].size()) swap(u, v);
+    parent[v] = u;
+    top_k[u].insert(top_k[u].end(), top_k[v].begin(), top_k[v].end());
+    sort(top_k[u].rbegin(), top_k[u].rend());
+    if (top_k[u].size() > K) top_k[u].resize(K);
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int N, Q;
+    cin >> N >> Q;
+
+    for (int i = 1; i <= N; ++i) {
+        parent[i] = i;
+        top_k[i].push_back(i);
+    }
+
+    while (Q--) {
+        int op, u, v;
+        cin >> op >> u >> v;
+        if (op == 1) {
+            union_sets(u, v);
+        } else {
+            int root = find_set(u);
+            if (v > (int)top_k[root].size()) {
+                cout << "-1\n";
+            } else {
+                cout << top_k[root][v - 1] << "\n";
+            }
+        }
+    }
+
+    return 0;
+}
+```
+
+### Explanation
+1. **Initialization**: We initialize the parent array for the union-find structure, where each node is its own parent initially. Each node's top k list starts with the node itself.
+2. **Union Operation**: When merging two components, we find their roots and merge the smaller component into the larger one to keep the tree flat. We combine their top k lists, sort them in descending order, and keep only the top 10 elements.
+3. **Query Handling**: For a query, we find the root of the node and check if the requested k-th element exists within the top k list of that root. If it does, we output it; otherwise, we output -1.
+This approach efficiently handles the dynamic connectivity problem and maintains the necessary information to answer k-th largest element queries in logarithmic time per operation.

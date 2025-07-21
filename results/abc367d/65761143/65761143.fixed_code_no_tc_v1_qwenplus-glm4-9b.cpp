@@ -1,0 +1,50 @@
+#include <iostream>
+#include <vector>
+#include <map>
+
+using namespace std;
+
+void solve() {
+    int n, m; cin >> n >> m;
+    vector<int> a(n);
+
+    int sum = 0;
+    for (int &x : a) {
+        cin >> x;
+        x %= m;
+        sum = (sum + x) % m;
+    }
+
+    if (sum == 0) {
+        cout << 0 << '\n';
+        return;
+    }
+
+    map<int, int> occurrences[2];
+    occurrences[0][0] = 1; // one way to have no elements taken
+    occurrences[1][0] = 1; // one way to have no elements taken
+
+    int prefixSum = 0;
+    for (int x : a) {
+        prefixSum = (prefixSum + x) % m;
+
+        // Subtract the number of ways to get the same prefix sum as 'sum' from the current number of ways
+        occurrences[prefixSum % 2][prefixSum] -= occurrences[(prefixSum - sum + m) % m][prefixSum % 2];
+
+        // Add the number of ways to get the current prefix sum
+        occurrences[prefixSum % 2][prefixSum]++;
+    }
+
+    // The result is the number of ways to achieve a prefix sum of 0
+    cout << occurrences[0][0] << '\n';
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0); cout.tie(0);
+
+    int T = 1;
+    cin >> T;
+    while (T--) solve();
+    return 0;
+}

@@ -1,0 +1,28 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int n, k;
+    cin >> n >> k;
+    vector<long long> a(n);
+    for(int i = 0; i < n; ++i) cin >> a[i];
+
+    // Sort the array
+    sort(a.begin(), a.end());
+
+    // The optimal strategy is to remove the smallest k/2 elements and the largest k/2 elements
+    // If k is odd, we also need to consider removing one more element from either end
+    long long min_val = a[k/2], max_val = a[n-k/2-1];
+    if(k % 2 != 0) {
+        min_val = min(min_val, a[(k+1)/2]);
+        max_val = max(max_val, a[n-(k+1)/2-1]);
+    }
+
+    // The result is the difference between the maximum and minimum values of the resulting array
+    cout << max_val - min_val << endl;
+
+    return 0;
+}

@@ -1,0 +1,45 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    int N;
+    cin >> N;
+    string S;
+    cin >> S;
+    
+    // Initialize the next move options
+    vector<char> next = {'R', 'P', 'S'};
+    int total = 0;
+
+    // Iterate through each character in the string S
+    for (int i = 0; i < N; ++i) {
+        int score = 0;
+        char use;
+        
+        // Determine the best move to counter the current move S[i]
+        for (char n : next) {
+            if ((n == 'R' && S[i] == 'S') || 
+                (n == 'P' && S[i] == 'R') || 
+                (n == 'S' && S[i] == 'P')) {
+                score++;
+                use = n;
+                break;
+            }
+        }
+        
+        // If no better move found, use the same move as S[i]
+        if (score == 0) use = S[i];
+        
+        // Clear the next moves list and update it excluding the chosen move
+        next.clear();
+        for (char d : {'R', 'P', 'S'}) {
+            if (d != use) next.push_back(d);
+        }
+        
+        // Add the score to the total
+        total += score;
+    }
+
+    cout << total << endl;
+    return 0;
+}

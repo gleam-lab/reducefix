@@ -1,0 +1,27 @@
+#include<bits/stdc++.h>
+using namespace std;
+
+int main(){
+    ios_base::sync_with_stdio(false); cin.tie(0); cout.tie(0);
+    int t;cin>>t;
+    while(t--){
+        int n,k;cin>>n>>k;
+        vector<pair<int,int>>a(n),b(n);
+        for(int i=0;i<n;i++){
+            cin>>a[i].first;a[i].second=i+1;
+        }
+        for(int i=0;i<n;i++){
+            cin>>b[i].first;
+        }
+        sort(a.begin(),a.end());
+        sort(b.begin(),b.end());
+        vector<int>prefix_sum(n+1);
+        for(int i=0;i<n;i++)
+            prefix_sum[i+1]=prefix_sum[i]+b[i].first;
+        int res=LLONG_MAX;
+        for(int i=k-1;i<n;i++){
+            res=min(res,a[i].first*(prefix_sum[i+1]-prefix_sum[i-k+1]));
+        }
+        cout<<res<<"\n";
+    }
+}

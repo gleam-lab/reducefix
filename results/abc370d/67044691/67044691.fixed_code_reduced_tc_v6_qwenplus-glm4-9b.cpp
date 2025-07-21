@@ -1,0 +1,83 @@
+#include <iostream>
+#include <vector>
+#include <set>
+#include <algorithm>
+
+using namespace std;
+
+int main() {
+    int H, W, Q;
+    cin >> H >> W >> Q;
+    
+    vector<vector<set<int>>> row(H, vector<set<int>>(W));
+    vector<vector<set<int>>> col(W, vector<set<int>>(H));
+    
+    // Initialize sets with wall indices
+    for (int i = 0; i < H; ++i) {
+        for (int j = 0; j < W; ++j) {
+            row[i][j] = {i, j};
+            col[j][i] = {i, j};
+        }
+    }
+    
+    for (int q = 0; q < Q; ++q) {
+        int r, c;
+        cin >> r >> c;
+        --r; --c; // Convert to 0-based index
+        
+        auto &rSet = row[r][c];
+        auto &cSet = col[c][r];
+        
+        if (!rSet.empty()) {
+            // Remove the wall at (r, c)
+            rSet.erase(cSet.find(r));
+            cSet.erase(rSet.find(r));
+        } else {
+            // No wall at (r, c), remove the first wall in all 4 directions
+            // Upwards
+            auto it = rSet.upper_bound(c);
+            if (it != rSet.end()) {
+                int upRow = *it;
+                row[upRow][c].erase(cSet.find(upRow));
+                cSet.erase(row[upRow][c].find(upRow));
+            }
+            
+            // Downwards
+            it = rSet.lower_bound(c);
+            if (it != rSet.begin()) {
+                --it;
+                int downRow = *it;
+                row[downRow][c].erase(cSet.find(downRow));
+                cSet.erase(row[downRow][c].find(downRow));
+            }
+            
+            // Leftwards
+            it = cSet.upper_bound(r);
+            if (it != cSet.end()) {
+                int leftCol = *it;
+                col[leftCol][r].erase(rSet.find(leftCol));
+                rSet.erase(col[leftCol][r].find(leftCol));
+            }
+            
+            // Rightwards
+            it = cSet.lower_bound(r);
+            if (it != cSet.begin()) {
+                --it;
+                int rightCol = *it;
+                col[rightCol][r].erase(rSet.find(rightCol));
+                rSet.erase(col[rightCol][r].find(rightCol));
+            }
+        }
+    }
+    
+    long long remainingWalls = 0;
+    for (int i = 0; i < H; ++i) {
+        for (int j = 0; j < W; ++j) {
+            remainingWalls += row[i][j].size();
+        }
+    }
+    
+    cout << remainingWalls << endl;
+    
+    return 0;
+}

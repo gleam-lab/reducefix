@@ -1,0 +1,39 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(0);
+    cout.tie(0);
+
+    int n;
+    cin >> n;
+    vector<long long> a(n), b(n - 1);
+    
+    // Read sizes of toys and boxes
+    for(int i = 0; i < n; ++i) cin >> a[i];
+    for(int i = 0; i < n - 1; ++i) cin >> b[i];
+
+    // Sort the sizes of toys and boxes
+    sort(a.begin(), a.end());
+    sort(b.begin(), b.end());
+
+    // Check if we can fit all toys in the existing boxes
+    for(int i = 0; i < n - 1; ++i) {
+        if(a[i] > b[i]) {
+            // If not, check if we can use a new box with size equal to the largest toy
+            if(i == n - 2 && a[n - 1] <= b[n - 2]) {
+                cout << a[n - 1] << '\n';
+                return 0;
+            } else {
+                cout << -1 << '\n';
+                return 0;
+            }
+        }
+    }
+
+    // If we can fit all toys in the existing boxes without needing a new one
+    cout << -1 << '\n';
+
+    return 0;
+}

@@ -1,0 +1,77 @@
+#include <bits/stdc++.h>
+
+#define all(x) x.begin(), x.end()
+#define rall(x) x.rbegin(), x.rend()
+
+#define mp make_pair
+#define mt make_tuple
+#define eb emplace_back
+#define g(i,t) get<i>(t)
+
+#define tos(n) to_string(n)
+#define toc(n) '0' + n
+#define toi(s) stoi(s)
+#define btoi(b) static_cast<int>(b.to_ulong())
+
+using namespace std;
+
+using ll=long long int;
+using pi=pair<int,int>;
+using qi=queue<int>;
+using qp=queue<pi>;
+using si=set<int>;
+
+using vi=vector<int>;
+using vll=vector<ll>;
+using vs=vector<string>;
+using vc=vector<char>;
+using vb=vector<bool>;
+
+using vvi=vector<vi>;
+using vvll=vector<vll>;
+
+template<typename T> inline bool chmin(T &a, T b) {
+  if (a > b) {
+    a = b;
+    return true;
+  }
+  return false;
+}
+
+template<typename T> inline bool chmax(T &a, T b) {
+  if (a < b) {
+    a = b;
+    return true;
+  }
+  return false;
+}
+
+int main()
+{
+  ios_base::sync_with_stdio(0);
+  cin.tie(0);
+  cout.tie(0);
+  int N, K;
+  cin >> N >> K;
+  vi A(N);
+  for (int i = 0; i < N; i++) {
+    cin >> A[i];
+  }
+
+  // Sort the array
+  sort(all(A));
+
+  // Initialize variables to store the minimum and maximum differences
+  ll min_diff = LLONG_MAX;
+
+  // Iterate over possible positions to split the array into two parts
+  for (int i = 0; i <= K; i++) {
+    // Calculate the difference between the maximum and minimum values in the resulting sequences
+    ll diff = A[min(N - 1, i + K)] - A[max(0, i)];
+    // Update the minimum difference found so far
+    min_diff = min(min_diff, diff);
+  }
+
+  cout << min_diff << endl;
+  return 0;
+}

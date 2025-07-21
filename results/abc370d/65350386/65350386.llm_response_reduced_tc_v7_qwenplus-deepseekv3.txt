@@ -1,0 +1,100 @@
+To fix this code, we need to address the core issue that is causing the incorrect output. The problem involves efficiently tracking and updating walls in a grid after each bomb query. The original code attempted to use sets to keep track of walls in each row and column, but it seems to have flaws in how it searches for and removes the nearest walls in the four directions when a bomb is placed on an empty cell.
+
+### Approaches
+1. **Data Structures**: Utilize two arrays of sets for rows and columns to efficiently track the walls. This allows for quick insertion, deletion, and search operations.
+2. **Query Processing**:
+   - For each query, check if the specified cell has a wall. If it does, remove it.
+   - If the cell is empty, search for the nearest walls in the four cardinal directions (up, down, left, right) and remove them if they exist.
+3. **Efficiency**: Using sets ensures that each insertion, deletion, and search operation is O(log N), making the overall complexity O(Q log N), where Q is the number of queries and N is the grid dimension.
+
+### Solution Code
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+#define rep(i, n) for(int i = 0; i < (n); i++)
+using ll = long long;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int h, w, q;
+    cin >> h >> w >> q;
+    vector<set<int>> rows(h), cols(w);
+    rep(i, h) rep(j, w) {
+        rows[i].insert(j);
+        cols[j].insert(i);
+    }
+
+    int remaining = h * w;
+
+    rep(qi, q) {
+        int r, c;
+        cin >> r >> c;
+        r--; c--;
+
+        auto& row_set = rows[r];
+        auto& col_set = cols[c];
+
+        if (row_set.count(c)) {
+            row_set.erase(c);
+            col_set.erase(r);
+            remaining--;
+        } else {
+            // Up
+            auto it_up = col_set.lower_bound(r);
+            if (it_up != col_set.begin()) {
+                --it_up;
+                int i = *it_up;
+                rows[i].erase(c);
+                cols[c].erase(i);
+                remaining--;
+            }
+
+            // Down
+            auto it_down = col_set.lower_bound(r);
+            if (it_down != col_set.end()) {
+                int i = *it_down;
+                rows[i].erase(c);
+                cols[c].erase(i);
+                remaining--;
+            }
+
+            // Left
+            auto it_left = row_set.lower_bound(c);
+            if (it_left != row_set.begin()) {
+                --it_left;
+                int j = *it_left;
+                rows[r].erase(j);
+                cols[j].erase(r);
+                remaining--;
+            }
+
+            // Right
+            auto it_right = row_set.lower_bound(c);
+            if (it_right != row_set.end()) {
+                int j = *it_right;
+                rows[r].erase(j);
+                cols[j].erase(r);
+                remaining--;
+            }
+        }
+    }
+
+    cout << remaining << "\n";
+    return 0;
+}
+```
+
+### Explanation
+1. **Initialization**: The code initializes sets for each row and column to keep track of walls. Each cell (i, j) is added to the respective row and column sets.
+2. **Query Processing**:
+   - For each query (r, c), if the cell (r, c) has a wall, it is removed from the sets, and the remaining wall count is decremented.
+   - If the cell is empty, the code searches for the nearest walls in the four directions using lower_bound:
+     - **Up**: The first wall above (r, c) is found by searching the column set for the largest value less than r.
+     - **Down**: The first wall below (r, c) is found by searching the column set for the smallest value greater than or equal to r.
+     - **Left**: The first wall to the left of (r, c) is found by searching the row set for the largest value less than c.
+     - **Right**: The first wall to the right of (r, c) is found by searching the row set for the smallest value greater than or equal to c.
+3. **Output**: After processing all queries, the remaining wall count is printed.
+
+This approach efficiently handles each query in logarithmic time, ensuring the solution is optimal for large grids and query counts.

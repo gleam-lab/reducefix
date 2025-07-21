@@ -1,0 +1,97 @@
+
+The problem involves predicting the outcome of an election, where there are N candidates numbered from 1 to N and M votes. Given the number of votes each candidate has received so far, we need to determine the minimum additional votes required for each candidate to guarantee their election, regardless of how the remaining votes are distributed among the candidates.
+
+To approach this problem, we can use the following strategy:
+
+1. **Sort the candidates based on their votes**: This will help us to determine which candidates are ahead and which are behind more easily.
+
+2. **Calculate the remaining votes**: Subtract the sum of the votes each candidate has received from the total votes to get the remaining votes.
+
+3. **Determine the leader(s)**: If a candidate has more votes than the second-best candidate plus M minus 1, then that candidate is guaranteed to be elected. These candidates are our leaders.
+
+4. **Calculate the additional votes needed for leaders**: If a leader is to be elected, calculate how many additional votes are needed so that no other candidate can surpass them with the remaining votes.
+
+5. **Calculate the additional votes needed for non-leaders**: If a non-leader needs to become a leader, calculate how many additional votes they need so that they surpass the current leader with the remaining votes.
+
+6. **Use binary search to find the minimum votes needed**: Since the number of additional votes to guarantee election can be large, use binary search to find the exact number of votes needed.
+
+Now let's write the code implementing the above strategy:
+
+```cpp
+#include <iostream>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+struct Candidate {
+    ll votes;
+    ll index;
+};
+
+bool compare(Candidate a, Candidate b) {
+    return a.votes > b.votes;
+}
+
+int main() {
+    int N, M, K;
+    cin >> N >> M >> K;
+    vector<Candidate> candidates(N);
+    for (int i = 0; i < N; ++i) {
+        cin >> candidates[i].votes;
+        candidates[i].index = i;
+    }
+
+    sort(candidates.begin(), candidates.end(), compare);
+
+    // Calculate the remaining votes
+    ll remaining_votes = K - accumulate(candidates.begin(), candidates.end(), 0LL);
+
+    vector<ll> additional_votes_needed(N, -1);
+
+    // Assign the minimum additional votes needed for leaders
+    if (M == 1) {
+        for (int i = 0; i < N; ++i) {
+            if (remaining_votes >= 0) {
+                additional_votes_needed[candidates[i].index] = 0;
+            } else {
+                additional_votes_needed[candidates[i].index] = -1;
+            }
+        }
+    } else {
+        for (int i = 0; i < N; ++i) {
+            if (i < M - 1) {
+                additional_votes_needed[candidates[i].index] = 0;
+            } else {
+                // Binary search to find the minimum additional votes needed
+                int left = 0, right = candidates[i].votes + remaining_votes - candidates[M - 2].votes - 1;
+                while (left < right) {
+                    int mid = (left + right + 1) / 2;
+                    ll needed = mid - candidates[i].votes;
+                    if (needed <= remaining_votes) {
+                        if (accumulate(candidates.begin(), candidates.begin() + M - 1, 0LL) + needed == accumulate(candidates.begin() + i, candidates.end(), 0LL) + needed) {
+                            additional_votes_needed[candidates[i].index] = needed;
+                            right = mid;
+                        } else {
+                            left = mid;
+                        }
+                    } else {
+                        left = mid + 1;
+                    }
+                }
+                if (additional_votes_needed[candidates[i].index] == -1) {
+                    additional_votes_needed[candidates[i].index] = right + candidates[i].votes;
+                }
+            }
+        }
+    }
+
+    for (ll i = 0; i < N; ++i) {
+        cout << additional_votes_needed[i] << ' ';
+    }
+    cout << endl;
+
+    return 0;
+}
+```
+
+This code reads the input, processes the candidates, and outputs the minimum additional votes needed for each candidate to guarantee their election. It uses sorting, binary search, and prefix sums to efficiently find the solution.

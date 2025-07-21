@@ -1,0 +1,36 @@
+#include <iostream>
+#include <cmath>
+#include <string>
+
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int N;
+    cin >> N;
+
+    long long curX = 0, curY = 0;
+    double total = 0; // Use double to store the total cost with floating-point precision
+
+    for (int i = 0; i < N; ++i) {
+        long long x, y;
+        cin >> x >> y;
+
+        double dx = curX - x;
+        double dy = curY - y;
+        total += sqrt(dx * dx + dy * dy); // Calculate the distance using sqrt and add to the total cost
+
+        curX = x; curY = y;
+    }
+
+    // Add the distance from the last point back to the origin
+    total += sqrt(curX * curX + curY * curY);
+
+    // Output the total cost with a precision that meets the problem's requirements
+    cout.precision(10);
+    cout << fixed << total << endl;
+
+    return 0;
+}

@@ -1,0 +1,119 @@
+#include <bits/stdc++.h>
+using namespace std;
+using i64 = long long;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    i64 N, M;
+    cin >> N >> M;
+
+    set<pair<i64, i64>> pieces;
+    set<i64> rows, cols, diag1, diag2;
+
+    for (i64 i = 0; i < M; ++i) {
+        i64 a, b;
+        cin >> a >> b;
+        pieces.insert({a, b});
+        rows.insert(a);
+        cols.insert(b);
+        diag1.insert(a + b);
+        diag2.insert(a - b);
+    }
+
+    // Total squares under attack from row and column
+    i64 attacked = 0;
+
+    // Rows covered by existing pieces
+    for (auto r : rows) {
+        attacked += N;  // All columns in this row
+    }
+
+    // Columns covered by existing pieces
+    for (auto c : cols) {
+        attacked += N;  // All rows in this column
+    }
+
+    // Diagonals: x + y = k
+    for (auto d : diag1) {
+        i64 y_min = max(1LL, d - N);
+        i64 y_max = min(N, d - 1);
+        attacked += (y_max - y_min + 1);
+    }
+
+    // Anti-diagonals: x - y = k
+    for (auto d : diag2) {
+        i64 y_min = max(1LL, 1 - d);
+        i64 y_max = min(N, N - d);
+        if (y_min <= y_max) {
+            attacked += (y_max - y_min + 1);
+        }
+    }
+
+    // Subtract overlaps:
+    // Intersections between rows and columns
+    attacked -= (i64)rows.size() * (i64)cols.size();
+
+    // Intersections between rows and diagonals
+    for (auto r : rows) {
+        for (auto d : diag1) {
+            i64 y = d - r;
+            if (y >= 1 && y <= N) {
+                attacked--;
+            }
+        }
+    }
+
+    // Intersections between rows and anti-diagonals
+    for (auto r : rows) {
+        for (auto d : diag2) {
+            i64 y = r - d;
+            if (y >= 1 && y <= N) {
+                attacked--;
+            }
+        }
+    }
+
+    // Intersections between columns and diagonals
+    for (auto c : cols) {
+        for (auto d : diag1) {
+            i64 x = d - c;
+            if (x >= 1 && x <= N) {
+                attacked--;
+            }
+        }
+    }
+
+    // Intersections between columns and anti-diagonals
+    for (auto c : cols) {
+        for (auto d : diag2) {
+            i64 x = d + c;
+            if (x >= 1 && x <= N) {
+                attacked--;
+            }
+        }
+    }
+
+    // Intersections between diagonals and anti-diagonals
+    for (auto d1 : diag1) {
+        for (auto d2 : diag2) {
+            i64 x = (d1 + d2) / 2;
+            i64 y = (d1 - d2) / 2;
+            if ((d1 + d2) % 2 == 0 && (d1 - d2) % 2 == 0 &&
+                x >= 1 && x <= N && y >= 1 && y <= N) {
+                attacked--;
+            }
+        }
+    }
+
+    // Subtract already occupied squares
+    attacked += M;
+
+    // Now compute total available positions
+    i64 totalEmpty = N * N - M;
+    i64 safePositions = totalEmpty - attacked;
+
+    cout << safePositions << "\n";
+
+    return 0;
+}

@@ -1,0 +1,65 @@
+#include <bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+#define all(x) (x).begin(), (x).end()
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int n, m;
+    ll k;
+    cin >> n >> m >> k;
+    vector<ll> a(n);
+    for (ll &x : a) {
+        cin >> x;
+        k -= x;
+    }
+
+    // ord[i] = original index of the candidate ranked i-th by votes
+    vector<int> ord(n);
+    iota(all(ord), 0);
+    sort(all(ord), [&](int i, int j) { return a[i] < a[j]; });
+
+    // b is sorted list of current vote counts
+    vector<ll> b = a;
+    sort(all(b));
+
+    vector<ll> res(n, -1);
+
+    for (int idx = 0; idx < n; ++idx) {
+        int i = ord[idx]; // original index of candidate with rank idx
+
+        ll low = 0;
+        ll high = k + 1;
+
+        while (low < high) {
+            ll mid = (low + high) / 2;
+
+            // We want to ensure that at most M-1 candidates have strictly more votes than i
+            // So find number of candidates who can have >= (a[i] + mid) votes
+            ll target = a[i] + mid;
+            int pos = lower_bound(b.begin(), b.end(), target) - b.begin();
+
+            // We need at least (n - (M - 1)) candidates with <= target votes
+            // So at most (M - 1) candidates can be > target
+            if (pos > n - m) {
+                // Too many candidates have less than target, not enough room for others to beat i
+                low = mid + 1;
+            } else {
+                high = mid;
+            }
+        }
+
+        if (low <= k)
+            res[i] = low;
+        else
+            res[i] = -1;
+    }
+
+    for (ll x : res)
+        cout << x << ' ';
+    cout << '\n';
+
+    return 0;
+}

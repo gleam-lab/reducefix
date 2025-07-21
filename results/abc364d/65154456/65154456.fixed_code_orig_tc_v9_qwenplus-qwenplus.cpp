@@ -1,0 +1,67 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+typedef long long ll;
+
+const int MAX_OFFSET = 2e8;
+const int MAX_COORD = 4e8 + 10; // Because -2e8 to 2e8 is 4e8+1 range
+
+int freq[MAX_COORD]; // frequency array for counts
+
+void solve() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+    
+    int N, Q;
+    cin >> N >> Q;
+    
+    // Initialize frequency array to 0
+    memset(freq, 0, sizeof(freq));
+    
+    // Read all A_i and map them into the frequency array
+    for (int i = 0; i < N; ++i) {
+        int a;
+        cin >> a;
+        int idx = a + MAX_OFFSET; // shift to non-negative index
+        freq[idx]++;
+    }
+    
+    // Prefix sum of frequencies
+    int prefix[MAX_COORD];
+    prefix[0] = freq[0];
+    for (int i = 1; i < MAX_COORD; ++i) {
+        prefix[i] = prefix[i - 1] + freq[i];
+    }
+    
+    // Process each query
+    for (int q = 0; q < Q; ++q) {
+        int b, k;
+        cin >> b >> k;
+        
+        int pos = b + MAX_OFFSET;
+        
+        // Binary search bounds
+        int left = 0;
+        int right = MAX_COORD - 1;
+        int answer = 0;
+        
+        while (left <= right) {
+            int mid = (left + right) / 2;
+            
+            // Range [pos - mid, pos + mid]
+            int l = max(0, pos - mid);
+            int r = min(MAX_COORD - 1, pos + mid);
+            
+            int count = prefix[r] - (l > 0 ? prefix[l - 1] : 0);
+            
+            if (count >= k) {
+                answer = mid;
+                right = mid - 1;
+            } else {
+                left = mid + 1;
+            }
+        }
+        
+        cout << answer << '\n';
+    }
+}

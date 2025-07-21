@@ -1,0 +1,30 @@
+#include<bits/stdc++.h>
+#define ll long long
+
+using namespace std;
+
+int main(){
+    ios_base::sync_with_stdio(false);cin.tie(0);cout.tie(0);
+
+    int n;
+    cin>>n;
+    vector<ll> v(n+1);
+    for(int i=1;i<=n;++i){
+        cin>>v[i];
+    }
+    
+    ll ans=0;
+    for(int i=1;i<=n;++i){
+        if(v[i]==0) continue;
+        if(v[i]%3==0){
+            ans+=(v[i]/3);
+            v[i]-=(v[i]/3)*3;
+        }else{
+            ans+=((v[i]/3)+1);
+            v[i]-=((v[i]/3)+1)*3;
+        }
+    }
+
+    cout<<ans<<endl;
+    return 0;
+}

@@ -1,0 +1,56 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+const int MAXN = 1010;
+
+int main() {
+    ios::sync_with_stdio(false); cin.tie(0);
+    
+    int h, w, y;
+    cin >> h >> w >> y;
+    
+    vector<vector<int>> A(h, vector<int>(w));
+    for(int i = 0; i < h; ++i) {
+        for(int j = 0; j < w; ++j) {
+            cin >> A[i][j];
+        }
+    }
+    
+    vector<vector<bool>> visited(h, vector<bool>(w, false));
+    vector<pair<int, pair<int, int>>> q;
+    
+    auto push_if_valid = [&](int x, int y) {
+        if(x >= 0 && x < h && y >= 0 && y < w && !visited[x][y]) {
+            q.emplace_back(A[x][y], make_pair(x, y));
+            visited[x][y] = true;
+        }
+    };
+    
+    for(int i = 0; i < h; ++i) {
+        push_if_valid(i, 0);
+        push_if_valid(i, w - 1);
+    }
+    
+    for(int j = 0; j < w; ++j) {
+        push_if_valid(0, j);
+        push_if_valid(h - 1, j);
+    }
+    
+    sort(q.begin(), q.end());
+    
+    for(int k = 0; k < y; ++k) {
+        while(!q.empty() && q.front().first <= k + 1) {
+            int x = q.front().second.first, y = q.front().second.second;
+            q.erase(q.begin());
+            
+            push_if_valid(x + 1, y);
+            push_if_valid(x - 1, y);
+            push_if_valid(x, y + 1);
+            push_if_valid(x, y - 1);
+        }
+        
+        cout << (h * w - q.size()) << '\n';
+    }
+    
+    return 0;
+}

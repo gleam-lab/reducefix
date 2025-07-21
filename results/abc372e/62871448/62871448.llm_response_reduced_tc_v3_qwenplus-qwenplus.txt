@@ -1,0 +1,109 @@
+To solve this problem efficiently, we need to support two operations on a dynamic graph:
+
+1. **Add an edge** between two nodes.
+2. **Query the k-th largest vertex number** among all vertices connected to a given node.
+
+This is a classic application of the **Disjoint Set Union (DSU)** (also known as Union-Find) with additional bookkeeping to maintain the top-k largest elements in each connected component.
+
+### Key Observations:
+- We use DSU to manage connected components.
+- For each component (represented by its root), we maintain a sorted list of up to 10 largest vertices (as per constraints).
+- When merging two components, we merge their top-k lists efficiently using a **merge sort-like approach**, keeping only the top 10 values.
+- This ensures that both union and query operations remain fast (O(α(N)) for DSU and O(k) for queries).
+
+Here's the corrected and optimized implementation:
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+const int MAXK = 10;
+const int MAXN = 2e5 + 5;
+
+int parent[MAXN];
+vector<int> topk[MAXN];
+
+int find(int x) {
+    if (parent[x] != x)
+        parent[x] = find(parent[x]);
+    return parent[x];
+}
+
+// Merge two sets' top-k lists while maintaining descending order
+void unite(int u, int v) {
+    int ru = find(u);
+    int rv = find(v);
+    if (ru == rv) return;
+
+    // Always attach smaller rank to larger rank
+    static vector<int> merged;
+    merged.clear();
+    int i = 0, j = 0;
+    for (; i < (int)topk[ru].size() && j < (int)topk[rv].size();) {
+        if (merged.size() >= MAXK) break;
+        if (topk[ru][i] > topk[rv][j])
+            merged.push_back(topk[ru][i++]);
+        else
+            merged.push_back(topk[rv][j++]);
+    }
+
+    while (i < (int)topk[ru].size() && merged.size() < MAXK)
+        merged.push_back(topk[ru][i++]);
+    while (j < (int)topk[rv].size() && merged.size() < MAXK)
+        merged.push_back(topk[rv][j++]);
+
+    // Attach smaller tree to larger tree
+    if (topk[ru].size() >= topk[rv].size()) {
+        parent[rv] = ru;
+        topk[ru] = merged;
+    } else {
+        parent[ru] = rv;
+        topk[rv] = merged;
+    }
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int N, Q;
+    cin >> N >> Q;
+
+    for (int i = 1; i <= N; ++i) {
+        parent[i] = i;
+        topk[i] = {i};
+    }
+
+    for (int q = 0; q < Q; ++q) {
+        int op;
+        cin >> op;
+        if (op == 1) {
+            int u, v;
+            cin >> u >> v;
+            unite(u, v);
+        } else if (op == 2) {
+            int v, k;
+            cin >> v >> k;
+            int root = find(v);
+            if ((int)topk[root].size() < k)
+                cout << -1 << '\n';
+            else
+                cout << topk[root][k - 1] << '\n';
+        }
+    }
+
+    return 0;
+}
+```
+
+### Explanation:
+- `find(x)` uses path compression for efficiency.
+- `unite(u, v)` merges the components of `u` and `v`, combining their top-k lists.
+- Each time a query is made (`op == 2`), we simply retrieve the k-th element from the component’s top-k list or return `-1` if it doesn't exist.
+
+### Complexity:
+- DSU with path compression has near-constant time complexity per operation: O(α(N))
+- Merging two top-k lists takes O(MAXK) time, which is acceptable since MAXK = 10
+- Querying is O(1)
+
+This solution handles all test cases efficiently and adheres strictly to the problem constraints.

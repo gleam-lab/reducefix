@@ -1,0 +1,24 @@
+#include <bits/stdc++.h>
+using namespace std;
+using ll=long long;
+using Graph = vector<vector<int>>;
+#define rep(i,n) for(int i=0;i<n;++i)
+#define all(x) (x).begin(),(x).end()
+int main(){
+    int n,q,l,r;
+    cin>>n>>q;
+    vector<ll> x(n),p(n+1);
+    p[0]=0;
+    rep(i,n){
+        cin>>x[i];
+        p[i+1]=p[i]+x[i];
+    }
+    sort(all(x));
+    rep(i,q){
+        cin>>l>>r;
+        auto lb=lower_bound(all(x),l)-x.begin();
+        auto ub=upper_bound(all(x),r)-x.begin();
+        cout<<p[ub]-p[lb]<<endl;
+    }
+    return 0;
+}

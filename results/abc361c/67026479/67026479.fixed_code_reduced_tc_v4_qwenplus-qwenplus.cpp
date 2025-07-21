@@ -1,0 +1,30 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+  int n, k, m;
+  cin >> n >> k;
+  vector<int> a(n);
+  m = n - k;
+
+  for (int i = 0; i < n; i++) {
+    cin >> a[i];
+  }
+
+  // If we're selecting only one element, the difference is zero
+  if (m == 1) {
+    cout << 0 << endl;
+    return 0;
+  }
+
+  // Sort to find smallest ranges
+  sort(a.begin(), a.end());
+
+  long long min_diff = LLONG_MAX;
+  for (int i = 0; i + m - 1 < n; i++) {
+    long long diff = (long long)a[i + m - 1] - (long long)a[i];
+    min_diff = min(min_diff, diff);
+  }
+
+  cout << min_diff << endl;
+}

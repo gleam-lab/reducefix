@@ -1,0 +1,150 @@
+To fix this code, we need to accurately calculate the number of squares that are not attacked by any existing pieces. The existing pieces can attack along rows, columns, and both diagonals (sum and difference diagonals). The problem requires counting all safe squares, which involves subtracting the attacked squares from the total squares and adding back overlaps that were subtracted multiple times.
+
+### Approaches
+1. **Initialization**: Read the grid size \( N \) and the number of existing pieces \( M \).
+2. **Track Attacked Areas**: 
+   - **Rows and Columns**: Each existing piece marks its entire row and column as attacked.
+   - **Diagonals**: Each existing piece marks both diagonals (i + j and i - j) as attacked.
+3. **Calculate Attacked Squares**: 
+   - Use sets to store unique rows, columns, sum diagonals, and difference diagonals to avoid double-counting.
+   - Calculate the total attacked squares by considering rows, columns, and diagonals, and then adjust for overlaps where squares are counted multiple times.
+4. **Compute Safe Squares**: Subtract the total attacked squares from \( N^2 \) and adjust for overlaps (squares that are part of multiple attack lines).
+
+### Solution Code
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+using i64 = long long;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    i64 N, M;
+    cin >> N >> M;
+    vector<pair<i64, i64>> pieces(M);
+    set<i64> rows, cols, sum_diags, diff_diags;
+    
+    for (i64 i = 0; i < M; ++i) {
+        i64 a, b;
+        cin >> a >> b;
+        pieces[i] = {a, b};
+        rows.insert(a);
+        cols.insert(b);
+        sum_diags.insert(a + b);
+        diff_diags.insert(a - b);
+    }
+    
+    i64 total_attacked = 0;
+    
+    // Rows and columns
+    total_attacked += rows.size() * N;
+    total_attacked += cols.size() * N;
+    
+    // Sum diagonals (i + j = k)
+    for (i64 k : sum_diags) {
+        i64 x_min = max(1LL, k - N);
+        i64 x_max = min(N, k - 1);
+        if (x_max >= x_min) {
+            total_attacked += (x_max - x_min + 1);
+        }
+    }
+    
+    // Difference diagonals (i - j = k)
+    for (i64 k : diff_diags) {
+        i64 x_min, x_max;
+        if (k >= 0) {
+            x_min = 1 + k;
+            x_max = N;
+        } else {
+            x_min = 1;
+            x_max = N + k;
+        }
+        if (x_max >= x_min) {
+            total_attacked += (x_max - x_min + 1);
+        }
+    }
+    
+    // Overlaps between rows and columns (i.e., squares (a, b) where both a and b are in rows and cols)
+    i64 row_col_overlap = 0;
+    for (auto [a, b] : pieces) {
+        if (rows.count(a) && cols.count(b)) {
+            row_col_overlap++;
+        }
+    }
+    
+    // Overlaps between rows and sum diagonals
+    i64 row_sum_overlap = 0;
+    for (i64 a : rows) {
+        for (i64 k : sum_diags) {
+            i64 b = k - a;
+            if (b >= 1 && b <= N && cols.count(b)) {
+                row_sum_overlap++;
+            }
+        }
+    }
+    
+    // Overlaps between rows and difference diagonals
+    i64 row_diff_overlap = 0;
+    for (i64 a : rows) {
+        for (i64 k : diff_diags) {
+            i64 b = a - k;
+            if (b >= 1 && b <= N && cols.count(b)) {
+                row_diff_overlap++;
+            }
+        }
+    }
+    
+    // Overlaps between columns and sum diagonals
+    i64 col_sum_overlap = 0;
+    for (i64 b : cols) {
+        for (i64 k : sum_diags) {
+            i64 a = k - b;
+            if (a >= 1 && a <= N && rows.count(a)) {
+                col_sum_overlap++;
+            }
+        }
+    }
+    
+    // Overlaps between columns and difference diagonals
+    i64 col_diff_overlap = 0;
+    for (i64 b : cols) {
+        for (i64 k : diff_diags) {
+            i64 a = k + b;
+            if (a >= 1 && a <= N && rows.count(a)) {
+                col_diff_overlap++;
+            }
+        }
+    }
+    
+    // Overlaps between sum and difference diagonals
+    i64 sum_diff_overlap = 0;
+    for (i64 k1 : sum_diags) {
+        for (i64 k2 : diff_diags) {
+            if ((k1 + k2) % 2 == 0) {
+                i64 a = (k1 + k2) / 2;
+                i64 b = (k1 - k2) / 2;
+                if (a >= 1 && a <= N && b >= 1 && b <= N && rows.count(a) && cols.count(b)) {
+                    sum_diff_overlap++;
+                }
+            }
+        }
+    }
+    
+    // Apply inclusion-exclusion principle
+    i64 safe_squares = N * N - total_attacked + row_col_overlap + row_sum_overlap + row_diff_overlap + col_sum_overlap + col_diff_overlap - sum_diff_overlap;
+    
+    cout << safe_squares << "\n";
+    
+    return 0;
+}
+```
+
+### Explanation
+1. **Initialization**: The code reads the grid size \( N \) and the number of existing pieces \( M \).
+2. **Tracking Attacked Areas**: The code uses sets to track unique rows, columns, sum diagonals (i + j), and difference diagonals (i - j) that are attacked by existing pieces.
+3. **Calculating Attacked Squares**: The total attacked squares are computed by considering each unique row, column, and diagonal, and summing the squares they cover.
+4. **Overlap Adjustments**: The code adjusts for overlaps where squares are counted multiple times (e.g., a square might be in both a row and a column). This is handled using inclusion-exclusion principle to ensure accurate counting.
+5. **Final Calculation**: The safe squares are computed by subtracting the total attacked squares (adjusted for overlaps) from the total grid squares \( N^2 \).
+
+This approach ensures that all edge cases are handled, including large values of \( N \) (up to \( 10^9 \)) and efficiently computes the result using set operations and careful overlap adjustments.

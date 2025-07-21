@@ -1,0 +1,37 @@
+#include <iostream>
+#include <string>
+
+using namespace std;
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(NULL);
+
+    int N;
+    string S;
+    cin >> N;
+    getline(cin, S);  // Use getline to allow spaces in input string
+
+    int wins = 0;
+    char winmove = 'a';  // Initialize winmove outside the loop to avoid reinitialization
+    char prev = 'a';
+    
+    for (char c : S) {  // Loop through each character in the string
+        if (c == 'R') {
+            winmove = 'P';
+        } else if (c == 'P') {
+            winmove = 'S';
+        } else if (c == 'S') {
+            winmove = 'R';
+        }
+        
+        if (winmove != prev) {  // Check if current winning move is different from previous move
+            wins++;  // Increment wins if the winning move has changed
+            prev = winmove;  // Update previous move to current winning move
+        }
+    }
+    
+    cout << wins << endl;  // Print the number of wins
+
+    return 0;
+}

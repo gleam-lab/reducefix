@@ -1,0 +1,43 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+#define ll long long
+
+int main() {
+    ll N;
+    int M;
+    cin >> N >> M;
+
+    // Set to store positions that are either occupied or can be attacked
+    set<pair<ll, ll>> blocked;
+
+    // The 8 possible attack positions + (0,0) for checking the piece itself
+    vector<pair<ll, ll>> attack_offsets = {
+        {0, 0},
+        {2, 1}, {1, 2}, {-1, 2}, {-2, 1},
+        {-2, -1}, {-1, -2}, {1, -2}, {2, -1}
+    };
+
+    for (int i = 0; i < M; ++i) {
+        ll a, b;
+        cin >> a >> b;
+        // Convert to 0-based indexing
+        a--; b--;
+
+        for (auto [dx, dy] : attack_offsets) {
+            ll nx = a + dx;
+            ll ny = b + dy;
+            if (0 <= nx && nx < N && 0 <= ny && ny < N) {
+                blocked.insert({nx, ny});
+            }
+        }
+    }
+
+    // Total number of squares: N*N (as a ll)
+    ll total_squares = static_cast<ll>(N) * N;
+
+    // Subtract the number of blocked squares from total
+    cout << total_squares - static_cast<ll>(blocked.size()) << endl;
+
+    return 0;
+}

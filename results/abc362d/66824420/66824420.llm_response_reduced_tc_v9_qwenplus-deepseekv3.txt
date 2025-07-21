@@ -1,0 +1,74 @@
+To fix this code, we need to address several issues:
+
+1. **Initialization of Distances**: The initial distance for vertex 1 should be set to the weight of vertex 1 (A[0]), and the distances for other vertices should be initialized to a value representing infinity. The previous code used `1E10+0`, which is insufficient for large values. Instead, we should use `LLONG_MAX` from the `<climits>` header to represent infinity properly.
+
+2. **Edge Case Handling**: The failing case involved a graph with no edges (M=0), meaning the graph consists of isolated vertices except for vertex 1. The expected output for vertex 2 in this case should be infinity (or a very large number), indicating no path exists from vertex 1 to vertex 2. The previous code incorrectly output a finite value.
+
+3. **Path Calculation**: The weight of a path is defined as the sum of the weights of the vertices and edges along the path. The previous code included the weight of the destination vertex in the path calculation, which is correct. However, the initial distance for vertex 1 should only include its own weight, without any edge weights unless traversed.
+
+4. **Priority Queue Handling**: The priority queue should correctly manage the distances, updating them whenever a shorter path is found. The previous implementation correctly used a min-heap, but the initial setup and edge cases were not handled properly.
+
+Here is the corrected code:
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int n, m;
+    cin >> n >> m;
+    vector<ll> a(n);
+    for (int i = 0; i < n; ++i) {
+        cin >> a[i];
+    }
+    
+    vector<vector<pair<int, ll>>> adj(n + 1);
+    for (int j = 0; j < m; ++j) {
+        int u, v;
+        ll b;
+        cin >> u >> v >> b;
+        adj[u].emplace_back(v, b);
+        adj[v].emplace_back(u, b);
+    }
+    
+    vector<ll> dist(n + 1, LLONG_MAX);
+    dist[1] = a[0];
+    priority_queue<pair<ll, int>, vector<pair<ll, int>>, greater<pair<ll, int>>> pq;
+    pq.emplace(a[0], 1);
+    
+    while (!pq.empty()) {
+        auto [current_dist, u] = pq.top();
+        pq.pop();
+        
+        if (current_dist > dist[u]) {
+            continue;
+        }
+        
+        for (auto [v, b] : adj[u]) {
+            ll new_dist = current_dist + b + a[v - 1];
+            if (new_dist < dist[v]) {
+                dist[v] = new_dist;
+                pq.emplace(new_dist, v);
+            }
+        }
+    }
+    
+    for (int i = 2; i <= n; ++i) {
+        cout << (dist[i] == LLONG_MAX ? -1 : dist[i]) << " ";
+    }
+    
+    return 0;
+}
+```
+
+### Key Fixes:
+1. **Initialization**: `dist` is initialized to `LLONG_MAX` to correctly represent infinity.
+2. **Edge Case Handling**: If there is no path to a vertex, it will remain `LLONG_MAX`, and the output will reflect that (though the problem guarantees connectivity, it's good practice).
+3. **Priority Queue**: The priority queue correctly updates distances whenever a shorter path is found, and skips processing if a better distance is already known.
+4. **Output**: For vertices that are unreachable (though the problem states the graph is connected), it would output -1, but this is more of a safeguard as per the problem constraints.
+
+This code should now handle all test cases correctly, including edge cases and large inputs.

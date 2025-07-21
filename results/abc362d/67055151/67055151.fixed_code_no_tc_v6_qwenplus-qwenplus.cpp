@@ -1,0 +1,60 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+#define vec vector
+#define ll long long
+#define INF 5LL << 60
+
+template <typename T>
+void chmin(T& x, const T& y) { x = min(x, y); }
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    ll n, m;
+    cin >> n >> m;
+    vec<ll> A(n);
+    for (ll i = 0; i < n; ++i) cin >> A[i];
+
+    // Build graph: adjacency list with (node, edge_weight)
+    vec<vector<pair<ll, ll>>> graph(n);
+    for (ll i = 0; i < m; ++i) {
+        ll u, v, b;
+        cin >> u >> v >> b;
+        --u; --v;
+        graph[u].emplace_back(v, b);
+        graph[v].emplace_back(u, b);
+    }
+
+    // Dijkstra's algorithm
+    vec<ll> dist(n, INF);
+    dist[0] = A[0];  // Start from vertex 0, include its weight
+
+    using pii = pair<ll, ll>;  // (distance, node)
+    priority_queue<pii, vector<pii>, greater<pii>> pq;
+    pq.emplace(dist[0], 0);
+
+    while (!pq.empty()) {
+        auto [d, u] = pq.top();
+        pq.pop();
+
+        if (d > dist[u]) continue;
+
+        for (auto [v, b] : graph[u]) {
+            ll new_dist = dist[u] + b + A[v];  // path weight = current path + edge + next vertex
+            if (new_dist < dist[v]) {
+                dist[v] = new_dist;
+                pq.emplace(dist[v], v);
+            }
+        }
+    }
+
+    // Output results for nodes 2 to N
+    for (ll i = 1; i < n; ++i) {
+        cout << dist[i] << " ";
+    }
+    cout << "\n";
+
+    return 0;
+}

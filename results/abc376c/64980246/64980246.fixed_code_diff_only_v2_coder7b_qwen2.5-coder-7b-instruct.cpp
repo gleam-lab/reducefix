@@ -1,0 +1,58 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+#define ll long long
+
+void solve() {
+    int n;
+    cin >> n;
+    vector<int> a(n), b(n - 1);
+    for (auto &tt : a)
+        cin >> tt;
+    for (auto &tt : b)
+        cin >> tt;
+    
+    // Sort both arrays in ascending order
+    sort(a.begin(), a.end());
+    sort(b.begin(), b.end());
+
+    // Initialize the answer as -1
+    int x = -1;
+    int j = 0;
+
+    // Iterate through each toy
+    for (int i = 0; i < n; ++i) {
+        // Check if we have enough boxes left
+        if (j >= n - 1) {
+            cout << -1 << endl;
+            return;
+        }
+        // If the current toy fits into the current box
+        if (a[i] <= b[j]) {
+            ++j; // Move to the next box
+        } else {
+            // If the current toy doesn't fit into the current box, check if we can buy a new box
+            if (x == -1 || a[i] <= x) {
+                x = a[i]; // Update the minimum box size needed
+            } else {
+                cout << -1 << endl;
+                return;
+            }
+        }
+    }
+
+    cout << x << endl;
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t = 1;
+    // Uncomment the line below to read multiple test cases
+    // cin >> t;
+    while (t--) {
+        solve();
+    }
+    return 0;
+}

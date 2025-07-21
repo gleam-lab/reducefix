@@ -1,0 +1,73 @@
+To solve this problem correctly and efficiently, we must avoid iterating over the full `N x N` grid (which can be up to `10^9 x 10^9`) due to memory and performance constraints.
+
+### Key Observations:
+- Each piece attacks up to **8** specific positions relative to itself.
+- We need to compute all the positions that are under attack.
+- Additionally, we must not place a piece on an already occupied square or any attacked square.
+
+### Efficient Strategy:
+- Use a `std::unordered_set` to store the coordinates of all existing pieces.
+- For each existing piece, compute its 8 possible attack squares and store them in another `std::unordered_set` if they're within bounds.
+- The answer is:  
+  `Total Squares (N*N) - Number of occupied or attacked squares`.
+
+### Important Notes:
+- Represent coordinates as a unique key using `std::pair<long long, long long>` or encode them into a single 128-bit number. Since C++ doesn't support `pair` hashing natively, we define a custom hash function.
+- This approach ensures we only process `M` pieces and their attack positions (at most `8*M`), which is efficient for `M <= 2*10^5`.
+
+Here's the corrected and optimized code:
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+// Custom hash for pair<long long, long long>
+struct pair_hash {
+    template <class T1, class T2>
+    size_t operator()(const pair<T1, T2>& p) const {
+        auto h1 = hash<T1>{}(p.first);
+        auto h2 = hash<T2>{}(p.second);
+        return h1 ^ (h2 << 16);
+    }
+};
+
+int main() {
+    long long N, M;
+    cin >> N >> M;
+
+    unordered_set<pair<long long, long long>, pair_hash> occupied;
+    unordered_set<pair<long long, long long>, pair_hash> attacked;
+
+    // Possible knight moves (relative positions)
+    vector<pair<long long, long long>> moves = {
+        {2, 1}, {1, 2}, {-1, 2}, {-2, 1},
+        {-2, -1}, {-1, -2}, {1, -2}, {2, -1}
+    };
+
+    for (long long i = 0; i < M; ++i) {
+        long long a, b;
+        cin >> a >> b;
+        occupied.emplace(a, b);
+
+        for (auto [dx, dy] : moves) {
+            long long x = a + dx;
+            long long y = b + dy;
+            if (x >= 1 && x <= N && y >= 1 && y <= N) {
+                attacked.emplace(x, y);
+            }
+        }
+    }
+
+    // Remove positions that are already occupied from attacked set
+    for (auto& pos : occupied) {
+        attacked.erase(pos);
+    }
+
+    // Total valid positions = total cells - (occupied + attacked)
+    long long total_cells = N * N;
+    long long blocked = occupied.size() + attacked.size();
+    cout << total_cells - blocked << endl;
+
+    return 0;
+}
+```

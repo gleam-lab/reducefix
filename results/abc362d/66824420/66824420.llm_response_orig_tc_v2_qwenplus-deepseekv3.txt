@@ -1,0 +1,77 @@
+The issue in the original code is that it incorrectly handles the vertex weights in the path calculation. The weight of a path should include the sum of vertex weights only once for each vertex visited, but the current implementation adds the vertex weight multiple times when revisiting nodes through different paths.
+
+Here's the corrected approach:
+1. The vertex weight should be included only when first visiting a node (similar to how Dijkstra's algorithm normally works)
+2. The edge weights should be added normally for each edge traversed
+3. We need to properly initialize the distance array with INF values except for the starting node
+4. The priority queue should track the current distance without including future vertex weights
+
+Here's the fixed code:
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int n, m;
+    cin >> n >> m;
+    vector<long long> a(n+1);
+    for (int i = 1; i <= n; i++) {
+        cin >> a[i];
+    }
+    
+    vector<vector<pair<int, long long>>> adj(n+1);
+    for (int j = 0; j < m; j++) {
+        int x, y;
+        long long w;
+        cin >> x >> y >> w;
+        adj[x].push_back({y, w});
+        adj[y].push_back({x, w});
+    }
+    
+    const long long INF = 1e18;
+    vector<long long> dist(n+1, INF);
+    dist[1] = 0;
+    
+    priority_queue<pair<long long, int>, vector<pair<long long, int>>, greater<pair<long long, int>>> pq;
+    pq.push({0, 1});
+    
+    while (!pq.empty()) {
+        auto [current_dist, u] = pq.top();
+        pq.pop();
+        
+        if (current_dist > dist[u]) continue;
+        
+        for (auto [v, w] : adj[u]) {
+            long long new_dist = current_dist + w;
+            if (new_dist < dist[v]) {
+                dist[v] = new_dist;
+                pq.push({dist[v], v});
+            }
+        }
+    }
+    
+    for (int i = 2; i <= n; i++) {
+        cout << dist[i] + a[1] + a[i] << " ";
+    }
+    
+    return 0;
+}
+```
+
+Key changes made:
+1. Changed the vertex indexing to be 1-based for consistency with input
+2. Properly initialized the distance array with INF values
+3. The starting node (1) has distance 0 initially
+4. During the Dijkstra's algorithm, we only track edge weights in the distance calculation
+5. After computing all shortest paths, we add the vertex weights (a[1] for source and a[i] for destination) to each distance
+6. Used long long consistently to avoid integer overflow
+7. Added IO optimizations (ios_base::sync_with_stdio(false) and cin.tie(nullptr))
+
+This approach correctly calculates the minimum path weight by:
+1. First finding the minimum sum of edge weights from node 1 to each other node
+2. Then adding the vertex weights of the start and end nodes (since they must be included exactly once in any path)
+3. The priority queue ensures we always process the most promising paths first, maintaining Dijkstra's algorithm's O(M log N) complexity

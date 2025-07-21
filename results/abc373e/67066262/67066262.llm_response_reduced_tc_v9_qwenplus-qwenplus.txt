@@ -1,0 +1,86 @@
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+#define all(x) (x).begin(), (x).end()
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int N, M;
+    ll K;
+    cin >> N >> M >> K;
+    vector<ll> A(N);
+    for (ll &a : A) {
+        cin >> a;
+        K -= a;
+    }
+
+    // ord[i] = original index of the candidate with i-th smallest current votes
+    vector<int> ord(N);
+    iota(all(ord), 0);
+    sort(all(ord), [&](int i, int j) { return A[i] < A[j]; });
+
+    // sortedA[i] = number of votes of the candidate with i-th smallest votes
+    vector<ll> sortedA = A;
+    sort(all(sortedA));
+
+    // prefix sum of sortedA
+    vector<ll> prefix(N + 1);
+    for (int i = 0; i < N; ++i) {
+        prefix[i + 1] = prefix[i] + sortedA[i];
+    }
+
+    vector<ll> res(N, -1);
+
+    for (int idx = 0; idx < N; ++idx) {
+        ll left = 0, right = K + 1;
+
+        while (left < right) {
+            ll mid = (left + right) / 2;
+
+            // Candidate at sorted position idx gets mid additional votes
+            ll new_vote_count = sortedA[idx] + mid;
+
+            // We want to ensure that at most M-1 candidates have more votes than this candidate
+
+            // Find first index in sortedA where value > new_vote_count
+            ll pos = lower_bound(sortedA.begin(), sortedA.end(), new_vote_count + 1) - sortedA.begin();
+
+            // Number of candidates with strictly more votes = N - pos
+            // We need to reduce this number to be <= M-1
+
+            // How many extra votes are needed to bring top (N - M) candidates below our level
+            ll needed = 0;
+
+            // Determine how many candidates have more votes than us
+            // If we're one of them, exclude ourselves temporarily
+            ll start_idx = max(pos, N - M + 1);
+            needed = (N - M + 1) * new_vote_count - (prefix[N - M + 1] - prefix[start_idx]);
+
+            if (idx >= N - M && idx < pos) {
+                // Our candidate is among those counted, so subtract their contribution
+                needed += new_vote_count - A[ord[idx]];
+            }
+
+            if (needed <= K - mid) {
+                right = mid;
+            } else {
+                left = mid + 1;
+            }
+        }
+
+        if (left <= K)
+            res[ord[idx]] = left;
+        else
+            res[ord[idx]] = -1;
+    }
+
+    for (ll val : res)
+        cout << val << " ";
+    cout << "\n";
+
+    return 0;
+}
+```

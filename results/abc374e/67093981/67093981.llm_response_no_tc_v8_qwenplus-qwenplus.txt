@@ -1,0 +1,73 @@
+```cpp
+#include <iostream>
+#include <algorithm>
+#include <climits>
+using namespace std;
+
+typedef struct { int a, p, b, q; } P;
+P A[100];
+long long dp[100][10000];  // dp[i][j] = min cost to get j units of resource
+
+int N, X;
+
+// Calculate the minimum cost for station i to produce n units
+long long cost(int i, int n) {
+    long long d = n / (A[i].a * A[i].b);
+    long long rem = n % (A[i].a * A[i].b);
+    return d * A[i].p * A[i].b + dp[i][rem];
+}
+
+// Check if it's possible to produce 'n' total units within budget X
+bool isPossible(int n) {
+    long long totalCost = 0;
+    for (int i = 0; i < N; i++) {
+        totalCost += cost(i, n);
+        if (totalCost > X) return false;
+    }
+    return true;
+}
+
+int main() {
+    scanf("%d %d", &N, &X);
+
+    for (int i = 0; i < N; i++) {
+        int a, p, b, q;
+        scanf("%d %d %d %d", &a, &p, &b, &q);
+        
+        // Ensure a*q >= b*p for consistency in processing
+        if (a * q < b * p) {
+            swap(a, b);
+            swap(p, q);
+        }
+        A[i] = {a, p, b, q};
+        
+        dp[i][0] = 0;
+        for (int j = 1; j <= a * b; j++) {
+            long long option1 = INT_MAX;
+            long long option2 = INT_MAX;
+            
+            if (j - a >= 0) option1 = dp[i][j - a] + p;
+            if (j - b >= 0) option2 = dp[i][j - b] + q;
+            
+            dp[i][j] = min(option1, option2);
+        }
+    }
+
+    // Binary search for maximum possible production
+    int lo = 0;
+    int hi = 2e9;  // Start with larger upper bound
+    int result = 0;
+    
+    while (lo <= hi) {
+        int mid = lo + (hi - lo) / 2;
+        if (isPossible(mid)) {
+            result = mid;
+            lo = mid + 1;
+        } else {
+            hi = mid - 1;
+        }
+    }
+
+    printf("%d\n", result);
+}
+```

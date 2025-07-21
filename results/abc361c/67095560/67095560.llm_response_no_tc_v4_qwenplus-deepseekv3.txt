@@ -1,0 +1,116 @@
+To fix this code, we need to address the issue of finding the minimum possible value of the maximum value minus the minimum value of the sequence B, which is formed by removing exactly K elements from the original sequence A and concatenating the remaining elements in their original order.
+
+### Analysis of the Incorrect Code
+The original approach sorts the array and then tries to remove K elements alternately from the beginning and the end, which is incorrect because it doesn't consider the original order of the elements. The problem requires maintaining the original order when forming sequence B, so sorting the array destroys this order.
+
+### Correct Approach
+1. **Understanding the Problem**: We need to remove exactly K elements from the array A to form a new array B that maintains the original order of the remaining elements. The goal is to minimize the difference between the maximum and minimum values in B.
+2. **Key Insight**: The optimal solution involves either removing elements from the left, removing elements from the right, or a combination of both. The minimum difference will be achieved by considering all possible windows of size (N - K) in the original array and finding the one with the smallest difference between its maximum and minimum.
+3. **Efficient Calculation**: Since the array size can be up to 2 × 10^5, we need an O(N) or O(N log N) solution. We can iterate through all possible windows of size (N - K) and compute the difference between the maximum and minimum in each window, then take the minimum of these differences.
+
+### Solution Code
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+#define int long long
+
+void solve() {
+    int N, K;
+    cin >> N >> K;
+    vector<int> A(N);
+    for (int i = 0; i < N; ++i) {
+        cin >> A[i];
+    }
+    
+    int min_diff = LLONG_MAX;
+    for (int i = 0; i <= K; ++i) {
+        int left = i;
+        int right = N - (K - i);
+        if (left > right) continue;
+        int current_min = *min_element(A.begin() + left, A.begin() + right);
+        int current_max = *max_element(A.begin() + left, A.begin() + right);
+        min_diff = min(min_diff, current_max - current_min);
+    }
+    cout << min_diff << endl;
+}
+
+signed main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+    solve();
+    return 0;
+}
+```
+
+### Explanation
+1. **Input Handling**: The code reads the input values N (length of the sequence) and K (number of elements to remove), followed by the sequence A.
+2. **Sliding Window Technique**: The code iterates over all possible windows of size (N - K) by varying the number of elements removed from the left (i) and the right (K - i). For each window, it calculates the minimum and maximum values within that window.
+3. **Finding Minimum Difference**: For each window, the difference between the maximum and minimum values is computed, and the minimum of these differences across all windows is stored and printed.
+
+This approach ensures that we efficiently explore all possible ways to remove K elements while maintaining the original order, and find the optimal solution in O(N^2) time in the worst case. However, with constraints up to 2 × 10^5, this approach may not be efficient enough. To optimize further, we can use a sliding window with a deque to find the minimum and maximum in each window in linear time, reducing the overall complexity to O(N). Here's the optimized version:
+
+### Optimized Solution Code
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+#define int long long
+
+void solve() {
+    int N, K;
+    cin >> N >> K;
+    vector<int> A(N);
+    for (int i = 0; i < N; ++i) {
+        cin >> A[i];
+    }
+    
+    int min_diff = LLONG_MAX;
+    int window_size = N - K;
+    if (window_size == 0) {
+        cout << 0 << endl;
+        return;
+    }
+    
+    deque<int> min_deque, max_deque;
+    for (int i = 0; i < N; ++i) {
+        while (!min_deque.empty() && A[min_deque.back()] >= A[i]) {
+            min_deque.pop_back();
+        }
+        min_deque.push_back(i);
+        
+        while (!max_deque.empty() && A[max_deque.back()] <= A[i]) {
+            max_deque.pop_back();
+        }
+        max_deque.push_back(i);
+        
+        if (i >= window_size - 1) {
+            while (min_deque.front() <= i - window_size) {
+                min_deque.pop_front();
+            }
+            while (max_deque.front() <= i - window_size) {
+                max_deque.pop_front();
+            }
+            int current_min = A[min_deque.front()];
+            int current_max = A[max_deque.front()];
+            min_diff = min(min_diff, current_max - current_min);
+        }
+    }
+    cout << min_diff << endl;
+}
+
+signed main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+    solve();
+    return 0;
+}
+```
+
+### Explanation of Optimized Approach
+1. **Deque for Min and Max**: We use two deques to maintain the indices of elements in the current window. The min deque keeps track of elements in increasing order, while the max deque keeps track of elements in decreasing order.
+2. **Sliding Window**: For each element, we remove elements from the back of the deques that are no longer useful (i.e., elements greater than the current element for the min deque and elements smaller than the current element for the max deque).
+3. **Window Adjustment**: As the window slides, we remove elements from the front of the deques that are outside the current window bounds.
+4. **Difference Calculation**: For each window, the difference between the front elements of the max and min deques gives the current window's difference, and we keep track of the minimum difference encountered.
+
+This optimized approach ensures O(N) time complexity, making it suitable for large input sizes.

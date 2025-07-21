@@ -1,0 +1,76 @@
+#include <bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+#define all(x) (x).begin(), (x).end()
+
+int main() {
+    ios_base::sync_with_stdio(0);
+    cin.tie(0);
+    int n, m;
+    ll k;
+    cin >> n >> m >> k;
+    vector<ll> a(n);
+    ll sum_a = 0;
+    for (int i = 0; i < n; i++) {
+        cin >> a[i];
+        sum_a += a[i];
+    }
+    ll remaining = k - sum_a;
+    vector<int> ord(n);
+    iota(all(ord), 0);
+    sort(all(ord), [&](int i, int j) { return a[i] < a[j]; });
+    auto b = a;
+    sort(all(b));
+    vector<ll> pref(n + 1);
+    for (int i = 0; i < n; i++) {
+        pref[i + 1] = b[i] + pref[i];
+    }
+    vector<ll> ans(n, -1);
+    for (int idx = 0; idx < n; idx++) {
+        int i = ord[idx];
+        ll low = 0, high = remaining;
+        ll best = -1;
+        while (low <= high) {
+            ll mid = (low + high) / 2;
+            ll new_votes = a[i] + mid;
+            // Find the number of elements > new_votes
+            auto it = upper_bound(all(b), new_votes);
+            ll num_greater = b.end() - it;
+            // The candidate's new_votes must be such that num_greater < m
+            if (num_greater < m) {
+                // Now check if it's possible to distribute the remaining votes (remaining - mid) without exceeding new_votes for others
+                ll min_required = 0;
+                // The candidate's new_votes is a[i] + mid
+                // The remaining votes: remaining - mid
+                // The other candidates can have up to new_votes votes (since if they have more, num_greater increases)
+                ll max_other = new_votes;
+                // The candidates currently with votes > new_votes - mid will need to be reduced, but that's not possible
+                // So, we need to ensure that the top (m-1) candidates don't get too many votes
+                // The candidates currently with votes > new_votes will need to be capped at new_votes
+                // The rest can be any, but to minimize the votes used, we assume they take as little as possible
+                ll total_used = mid;
+                ll remaining_votes = remaining - mid;
+                // The candidates with current votes > new_votes: need to be reduced to new_votes
+                it = upper_bound(all(b), new_votes);
+                ll cnt = b.end() - it;
+                ll start = it - b.begin();
+                ll end_pos = n;
+                ll needed = (pref[end_pos] - pref[start]) - cnt * new_votes;
+                if (needed <= remaining_votes) {
+                    best = mid;
+                    high = mid - 1;
+                } else {
+                    low = mid + 1;
+                }
+            } else {
+                low = mid + 1;
+            }
+        }
+        ans[i] = (best == -1) ? -1 : best;
+    }
+    for (auto x : ans) {
+        cout << x << ' ';
+    }
+    cout << '\n';
+    return 0;
+}

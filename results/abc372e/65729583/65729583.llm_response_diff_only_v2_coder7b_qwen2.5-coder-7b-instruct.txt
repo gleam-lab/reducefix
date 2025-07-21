@@ -1,0 +1,111 @@
+To solve this problem efficiently, we need to handle both adding edges and querying the k-th largest connected component size. We'll use a union-find data structure to manage the connected components and maintain the sizes of these components using an ordered set to allow efficient k-th largest element queries.
+
+Here's the corrected and optimized C++ code:
+
+```cpp
+#include <iostream>
+#include <vector>
+#include <set>
+#include <algorithm>
+
+using namespace std;
+
+typedef long long int ll;
+
+class UnionFind {
+public:
+    vector<int> parent;
+    vector<int> rank;
+    vector<set<int>> sizes;
+
+    UnionFind(int n) {
+        parent.resize(n + 1);
+        rank.resize(n + 1, 0);
+        for (int i = 1; i <= n; ++i) {
+            parent[i] = i;
+            sizes.push_back({i});
+        }
+    }
+
+    int find(int u) {
+        if (parent[u] != u) {
+            parent[u] = find(parent[u]);
+        }
+        return parent[u];
+    }
+
+    void unite(int u, int v) {
+        u = find(u);
+        v = find(v);
+        if (u != v) {
+            if (rank[u] < rank[v]) {
+                swap(u, v);
+            }
+            parent[v] = u;
+            if (rank[u] == rank[v]) {
+                ++rank[u];
+            }
+            sizes[u].merge(sizes[v]);
+        }
+    }
+
+    int getKthLargest(int u, int k) {
+        u = find(u);
+        auto& s = sizes[u];
+        if (s.size() < k) {
+            return -1;
+        }
+        auto it = s.rbegin();
+        advance(it, k - 1);
+        return *it;
+    }
+};
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int n, q;
+    cin >> n >> q;
+
+    UnionFind uf(n);
+
+    while (q--) {
+        int type;
+        cin >> type;
+        if (type == 1) {
+            int u, v;
+            cin >> u >> v;
+            uf.unite(u, v);
+        } else {
+            int v, k;
+            cin >> v >> k;
+            cout << uf.getKthLargest(v, k) << endl;
+        }
+    }
+
+    return 0;
+}
+```
+
+### Explanation
+1. **Union-Find Data Structure**:
+   - **Parent Array**: Keeps track of the parent of each node.
+   - **Rank Array**: Used for optimization during the union operation.
+   - **Sizes Vector**: Stores sets of sizes of connected components. This allows us to quickly merge sets and keep them sorted.
+
+2. **Initialization**:
+   - Initialize the Union-Find structure with `n` nodes, where each node is its own parent and its size is initially `{node}`.
+
+3. **Find Operation**:
+   - Path compression to flatten the structure and speed up future operations.
+
+4. **Unite Operation**:
+   - Union by rank to keep the tree flat.
+   - Merge the sets of sizes of the two components being united.
+
+5. **GetKthLargest Operation**:
+   - Find the root of the component containing `v`.
+   - Retrieve the k-th largest element from the sorted set of sizes of the component.
+
+This solution ensures that both union and query operations are efficient, making it suitable for large inputs within the given constraints.

@@ -1,0 +1,136 @@
+To fix this code, we need to correctly calculate the number of safe squares where the new piece can be placed without being captured by any existing pieces. The initial approach had some logical errors in the way intersections between different attack lines (rows, columns, diagonals) were handled, leading to incorrect counts.
+
+### Approaches
+1. **Identify Attack Lines**: For each existing queen, determine the lines (rows, columns, and two types of diagonals) that are under attack.
+2. **Calculate Union of Attack Lines**: Compute the total number of squares covered by these attack lines, ensuring that overlaps (squares covered by multiple attack lines) are only counted once.
+3. **Subtract from Total Squares**: Subtract the total number of attacked squares from the total squares in the grid to get the number of safe squares.
+
+### Solution Code
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+typedef long long ll;
+
+int main() {
+    ll N, M;
+    cin >> N >> M;
+    vector<pair<ll, ll>> queens(M);
+    set<ll> rows, cols, diag1, diag2;
+    for (int i = 0; i < M; ++i) {
+        cin >> queens[i].first >> queens[i].second;
+        rows.insert(queens[i].first);
+        cols.insert(queens[i].second);
+        diag1.insert(queens[i].first - queens[i].second);
+        diag2.insert(queens[i].first + queens[i].second);
+    }
+
+    ll total = N * N - M; // Total empty squares initially
+
+    // Squares attacked by rows
+    ll row_attacks = rows.size() * N;
+    // Squares attacked by columns
+    ll col_attacks = cols.size() * N;
+    // Overlapping squares (attacked by both rows and columns)
+    ll row_col_overlap = rows.size() * cols.size();
+
+    // Squares attacked by diagonals (i - j)
+    ll diag1_attacks = 0;
+    for (ll d : diag1) {
+        if (d >= 0) {
+            diag1_attacks += N - d;
+        } else {
+            diag1_attacks += N + d;
+        }
+    }
+    // Squares attacked by diagonals (i + j)
+    ll diag2_attacks = 0;
+    for (ll d : diag2) {
+        if (d <= N + 1) {
+            diag2_attacks += d - 1;
+        } else {
+            diag2_attacks += 2 * N - d + 1;
+        }
+    }
+
+    // Subtract the overlaps between rows and diagonals, columns and diagonals, etc.
+    // We need to compute the intersections between these sets.
+    set<pair<ll, ll>> intersections;
+
+    // Intersections between rows and diag1
+    for (ll r : rows) {
+        for (ll d : diag1) {
+            ll c = r - d;
+            if (c >= 1 && c <= N) {
+                intersections.insert({r, c});
+            }
+        }
+    }
+
+    // Intersections between rows and diag2
+    for (ll r : rows) {
+        for (ll d : diag2) {
+            ll c = d - r;
+            if (c >= 1 && c <= N) {
+                intersections.insert({r, c});
+            }
+        }
+    }
+
+    // Intersections between cols and diag1
+    for (ll c : cols) {
+        for (ll d : diag1) {
+            ll r = c + d;
+            if (r >= 1 && r <= N) {
+                intersections.insert({r, c});
+            }
+        }
+    }
+
+    // Intersections between cols and diag2
+    for (ll c : cols) {
+        for (ll d : diag2) {
+            ll r = d - c;
+            if (r >= 1 && r <= N) {
+                intersections.insert({r, c});
+            }
+        }
+    }
+
+    // Intersections between diag1 and diag2
+    for (ll d1 : diag1) {
+        for (ll d2 : diag2) {
+            if ((d2 + d1) % 2 == 0 && (d2 - d1) % 2 == 0) {
+                ll r = (d2 + d1) / 2;
+                ll c = (d2 - d1) / 2;
+                if (r >= 1 && r <= N && c >= 1 && c <= N) {
+                    intersections.insert({r, c});
+                }
+            }
+        }
+    }
+
+    // Remove intersections that are already occupied by queens
+    for (auto &queen : queens) {
+        intersections.erase(queen);
+    }
+
+    // Total attacked squares: rows + cols + diag1 + diag2 - overlaps
+    ll total_attacked = row_attacks + col_attacks - row_col_overlap + diag1_attacks + diag2_attacks - intersections.size();
+    total -= total_attacked;
+
+    cout << total << endl;
+
+    return 0;
+}
+```
+
+### Explanation
+1. **Input Handling**: The code reads the grid size `N` and the number of queens `M`, followed by their positions.
+2. **Attack Line Identification**: For each queen, its row, column, and two diagonals (i - j and i + j) are recorded in sets to avoid duplicates.
+3. **Initial Attack Calculations**: The squares attacked by rows and columns are calculated separately, and their overlap is accounted for.
+4. **Diagonal Attacks**: The squares attacked by each diagonal (i - j and i + j) are calculated based on the diagonal's offset.
+5. **Overlap Handling**: The intersections between different attack lines (rows with diagonals, columns with diagonals, and diagonals with each other) are computed to ensure overlaps are not double-counted.
+6. **Final Calculation**: The total number of attacked squares is adjusted by subtracting overlaps, and this is subtracted from the total empty squares to get the number of safe squares.
+
+This approach ensures that all attack vectors are correctly accounted for, and overlaps between different attack lines are handled properly to give the correct count of safe squares.

@@ -1,0 +1,54 @@
+#include<bits/stdc++.h>
+using namespace std;
+
+const int MAXN = 200011;
+char s[MAXN], c[MAXN];
+
+void transform(char *s) {
+    for (int i = 1; i <= MAXN; ++i) {
+        if (s[i] == 'P') s[i] = 'S';
+        else if (s[i] == 'R') s[i] = 'P';
+        else s[i] = 'R';
+    }
+}
+
+int solve(const char *s) {
+    int n = strlen(s + 1);
+    int ans = 0, sum = n;
+    
+    // First transformation
+    transform((char *)s);
+    for (int i = 2; i <= n; ++i) {
+        if (s[i] == s[i - 1]) {
+            s[i] = 'S' + ('P' - s[i]);
+            --sum;
+        }
+    }
+    ans = max(ans, sum);
+    
+    // Reset to original state
+    transform((char *)s);
+    
+    // Special case for first two characters
+    if (s[1] == s[2]) {
+        s[1] = 'S' + ('P' - s[1]);
+        --sum;
+        for (int i = 3; i <= n; ++i) {
+            if (s[i] == s[i - 1]) {
+                s[i] = 'S' + ('P' - s[i]);
+                --sum;
+            }
+        }
+    }
+    ans = max(ans, sum);
+    
+    return ans;
+}
+
+int main() {
+    int n;
+    scanf("%d", &n);
+    scanf("%s", s + 1);
+    printf("%d\n", solve(s));
+    return 0;
+}

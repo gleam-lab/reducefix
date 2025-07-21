@@ -1,0 +1,39 @@
+#include<bits/stdc++.h>
+#define ll long long
+using namespace std;
+const ll N=2e5+5;
+ll a[N], b[N];
+
+int main() {
+    ll n;
+    cin >> n;
+    for (ll i = 1; i <= n; i++) {
+        cin >> a[i];
+    }
+    for (ll i = 1; i < n; i++) {
+        cin >> b[i];
+    }
+    
+    // Initialize variables to track the minimum box size and counter
+    ll min_box_size = 0;
+    ll counter = 0;
+    
+    // Iterate through the toys and boxes to find the minimum box size needed
+    for (ll i = 1; i <= n; i++) {
+        // If the last box can't fit the current toy, we need a new box
+        if (i == n || b[i - 1] < a[i]) {
+            // If we already needed a new box before, it's impossible to fit all toys
+            if (counter > 0) {
+                cout << -1 << endl;
+                return 0;
+            }
+            // The size of the new box must be at least the size of the current toy
+            min_box_size = max(min_box_size, a[i]);
+            counter++;
+        }
+    }
+    
+    // Output the minimum box size needed
+    cout << min_box_size << endl;
+    return 0;
+}

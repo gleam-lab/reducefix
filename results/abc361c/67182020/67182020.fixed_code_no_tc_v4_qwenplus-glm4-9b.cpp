@@ -1,0 +1,33 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <climits>
+
+using namespace std;
+
+int main() {
+    int N, K;
+    cin >> N >> K;
+
+    vector<int> A(N);
+    for (int i = 0; i < N; ++i) {
+        cin >> A[i];
+    }
+
+    sort(A.begin(), A.end());
+
+    int minMaxDelta = INT_MAX;
+    for (int i = K; i <= N - K; ++i) {
+        int maxVal = A[N - 1];
+        int minVal = A[0];
+        for (int j = i; j < N - K; j += 2) {
+            maxVal = max(maxVal, A[j]);
+            minVal = min(minVal, A[j]);
+        }
+        minMaxDelta = min(minMaxDelta, maxVal - minVal);
+    }
+
+    cout << minMaxDelta << endl;
+
+    return 0;
+}

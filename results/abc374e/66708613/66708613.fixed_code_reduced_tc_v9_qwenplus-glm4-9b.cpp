@@ -1,0 +1,62 @@
+#include<iostream>
+#include<string>
+#include<queue>
+#include<vector>
+#include<cassert>
+#include<random>
+#include<set>
+#include<map>
+#include<cassert>
+#include<unordered_map>
+#include<bitset>
+#include<numeric>
+#include<algorithm>
+using namespace std;
+using ll = long long;
+const int inf=1<<30;
+const ll INF=1LL<<62;
+using P = pair<ll,int>;
+using PP = pair<int,P>; 
+const ll MOD=998244353;
+const int dy[]={-1,0,1,0};
+const int dx[]={0,1,0,-1};
+
+// Function to calculate the minimum processing capacity that can be achieved within budget X.
+ll minProcessingCapacity(vector<ll>& A, vector<int>& P, vector<ll>& B, vector<int>& Q, ll X) {
+    ll res=X;
+    for(int i=0; i<N; i++) {
+        ll val=INF;
+        // Try to use machine s from 0 to B[i] times.
+        for(ll s=0; s<=B[i]; s++) {
+            ll t=(max(0LL, res-A[i]*s)+B[i]-1)/B[i];
+            val=min(val, s*P[i]+t*Q[i]);
+        }
+        // Try to use machine t from 0 to A[i] times.
+        for(ll t=0; t<=A[i]; t++) {
+            ll s=(max(0LL, res-B[i]*t)+A[i]-1)/A[i];
+            val=min(val, t*Q[i]+s*P[i]);
+        }
+        if(val==INF) return -1; // If it's impossible to achieve the processing capacity with the given budget.
+        res-=val;
+    }
+    return res;
+}
+
+int main(){
+    int N;
+    ll X;
+    cin>>N>>X;
+    vector<ll> A(N),P(N),B(N),Q(N);
+    
+    for(int i=0; i<N; i++){
+        cin>>A[i]>> P[i]>> B[i] >> Q[i];
+    }
+
+    ll minCap = minProcessingCapacity(A, P, B, Q, X);
+    if (minCap == -1) {
+        cout<<0<<endl;
+    } else {
+        cout<<minCap<<endl;
+    }
+    
+}

@@ -1,0 +1,56 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+typedef long long ll;
+
+const int MAXN = 1e5 + 5;
+
+ll a[MAXN];
+
+// Binary search helper to find k-th smallest distance from b
+ll find_kth_distance(int n, ll b, int k) {
+    // Sort array for each query (could be optimized with persistent data structures if needed)
+    // But this is simple and works within time constraints due to memory efficiency
+    ll res;
+    vector<ll> diffs(n);
+    
+    for (int i = 0; i < n; ++i)
+        diffs[i] = abs(a[i] - b);
+    
+    nth_element(diffs.begin(), diffs.begin() + k - 1, diffs.end());
+    res = diffs[k - 1];
+    
+    return res;
+}
+
+void solve() {
+    int N, Q;
+    cin >> N >> Q;
+    
+    for (int i = 0; i < N; ++i)
+        cin >> a[i];
+    
+    sort(a, a + N);  // Sort A once for all queries
+    
+    for (int q = 0; q < Q; ++q) {
+        ll b;
+        int k;
+        cin >> b >> k;
+        
+        // Compute distances and find the k-th smallest
+        cout << find_kth_distance(N, b, k) << endl;
+    }
+}
+
+int main() {
+    ios::sync_with_stdio(0);
+    cin.tie(0);
+    cout.tie(0);
+    
+    int t = 1;
+    // cin >> t;
+    while (t--)
+        solve();
+    
+    return 0;
+}

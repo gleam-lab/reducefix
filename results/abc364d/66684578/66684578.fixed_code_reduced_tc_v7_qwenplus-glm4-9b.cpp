@@ -1,0 +1,70 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define ll long long
+#define rep(i, n) for (int i = 0; i < (int)n; i++)
+#define vi vector<int>
+#define vl vector<ll>
+#define vd vector<double>
+#define vb vector<bool>
+#define vs vector<string>
+#define vc vector<char>
+#define ull unsigned long long
+
+const ll inf = (1LL << 62);
+
+ll rui(ll a, ll b) {
+    if (b == 0) return 1;
+    if (b & 1) return a * rui(a * a, b / 2);
+    return rui(a * a, b / 2);
+}
+
+int main() {
+    int n, q, b, k; cin >> n >> q;
+    vl a(n);
+    rep(i, n) {
+        cin >> a[i];
+    } 
+    
+    vector<pair<ll, ll>> queries;
+    rep(i, q) {
+        cin >> b >> k;
+        queries.emplace_back(b, k);
+    }
+    
+    // Sort the points A
+    sort(a.begin(), a.end());
+    
+    // Sort the queries by the point B
+    sort(queries.begin(), queries.end(), [](const pair<ll, ll>& a, const pair<ll, ll>& b) {
+        return a.first < b.first;
+    });
+    
+    vector<ll> results(q);
+    
+    // Process each query
+    ll currentAIndex = 0;
+    for (auto& q : queries) {
+        ll b = q.first;
+        ll k = q.second;
+        
+        // Move the A index to the k-th closest point to B
+        while (currentAIndex < n && a[currentAIndex] < b) {
+            currentAIndex++;
+        }
+        
+        // Calculate the k-th closest distance
+        if (currentAIndex + k - 1 < n) {
+            ll d = abs(a[currentAIndex + k - 1] - b);
+            results[q.second - 1] = d;
+        } else {
+            results[q.second - 1] = llabs(a[n - 1] - b);
+        }
+    }
+    
+    // Output the results
+    rep(i, q) {
+        cout << results[i] << endl;
+    }
+    
+    return 0;
+}

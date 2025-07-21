@@ -1,0 +1,93 @@
+To fix this code, we need to address the following issues:
+
+1. **Handling of the first wall in each direction**: The original code attempts to find the first walls in the up, down, left, and right directions when the bomb is placed on an empty cell. However, the logic for checking the first wall upwards and leftwards is incorrect. Specifically, the code incorrectly assumes that the lower_bound operation will always find a valid element and doesn't properly handle cases where no such wall exists.
+
+2. **Initialization of sets**: The sets `tate` and `yoko` are initialized correctly, but the way they are used to track walls needs to be optimized for efficient queries.
+
+3. **Efficiency**: Given the constraints (H × W ≤ 4 × 10^5 and Q ≤ 2 × 10^5), the solution must efficiently handle each query in logarithmic time to avoid timeouts.
+
+### Approaches
+1. **Data Structures**: Use separate sets for each column (`tate`) and each row (`yoko`) to keep track of walls. This allows efficient insertion, deletion, and searching operations.
+2. **Handling Queries**:
+   - **If the cell has a wall**: Simply remove it from the respective row and column sets.
+   - **If the cell does not have a wall**: For each direction (up, down, left, right), find the nearest wall using binary search (via `lower_bound` and `upper_bound` operations). Care must be taken to ensure that we correctly identify the first wall in each direction and handle cases where no such wall exists.
+
+### Solution Code
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+#define rep(i, n) for (int i = 0; i < (n); i++)
+using ll = long long;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int h, w, q;
+    cin >> h >> w >> q;
+    vector<set<int>> tate(w), yoko(h);
+
+    rep(i, h) rep(j, w) {
+        tate[j].insert(i);
+        yoko[i].insert(j);
+    }
+
+    rep(qi, q) {
+        int r, c;
+        cin >> r >> c;
+        r--; c--;
+
+        if (tate[c].count(r)) {
+            tate[c].erase(r);
+            yoko[r].erase(c);
+        } else {
+            // Up
+            auto it_up = tate[c].lower_bound(r);
+            if (it_up != tate[c].begin()) {
+                it_up--;
+                int up_row = *it_up;
+                tate[c].erase(up_row);
+                yoko[up_row].erase(c);
+            }
+
+            // Down
+            auto it_down = tate[c].upper_bound(r);
+            if (it_down != tate[c].end()) {
+                int down_row = *it_down;
+                tate[c].erase(down_row);
+                yoko[down_row].erase(c);
+            }
+
+            // Left
+            auto it_left = yoko[r].lower_bound(c);
+            if (it_left != yoko[r].begin()) {
+                it_left--;
+                int left_col = *it_left;
+                yoko[r].erase(left_col);
+                tate[left_col].erase(r);
+            }
+
+            // Right
+            auto it_right = yoko[r].upper_bound(c);
+            if (it_right != yoko[r].end()) {
+                int right_col = *it_right;
+                yoko[r].erase(right_col);
+                tate[right_col].erase(r);
+            }
+        }
+    }
+
+    int ans = 0;
+    rep(i, w) ans += tate[i].size();
+    cout << ans << "\n";
+
+    return 0;
+}
+```
+
+### Explanation
+1. **Initialization**: The code initializes sets `tate` (for columns) and `yoko` (for rows) to keep track of walls. Each cell (i, j) is added to both `tate[j]` and `yoko[i]`.
+2. **Query Processing**: For each query:
+   - If the cell (R_q, C_q) has a wall, it is removed from the respective sets.
+   - If the cell does not have a wall, the code searches for the nearest walls in all four directions (up, down, left, right) using binary search operations (`lower_bound` and `upper_bound`). If such walls are found, they are removed from the sets.
+3. **Efficiency**: The use of sets ensures that insertions, deletions, and searches are handled in logarithmic time, making the solution efficient for large input sizes. The final count of remaining walls is obtained by summing the sizes of all column sets (`tate`).

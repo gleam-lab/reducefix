@@ -1,0 +1,44 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    int n, m;
+    cin >> n >> m;
+    
+    // Using a set to store the positions of the pieces
+    set<pair<long long, long long>> pieces;
+    for (long long i = 0; i < m; ++i) {
+        long long a, b;
+        cin >> a >> b;
+        pieces.insert({a, b});
+    }
+
+    // Directions for capturing pieces
+    vector<int> dx = {1, 1, -1, -1, 2, 2, -2, -2};
+    vector<int> dy = {2, -2, 2, -2, 1, -1, 1, -1};
+
+    // Set to keep track of empty cells we can place our piece
+    set<pair<long long, long long>> empty_cells;
+
+    // Iterate over all possible cells
+    for (long long i = 1; i <= n; ++i) {
+        for (long long j = 1; j <= n; ++j) {
+            bool can_place = true;
+            for (int k = 0; k < 8; ++k) {
+                long long x = i + dx[k], y = j + dy[k];
+                if (pieces.find({x, y}) != pieces.end()) {
+                    can_place = false;
+                    break;
+                }
+            }
+            if (can_place) {
+                empty_cells.insert({i, j});
+            }
+        }
+    }
+
+    // The number of empty cells minus the number of cells already occupied by pieces
+    cout << empty_cells.size() << endl;
+
+    return 0;
+}

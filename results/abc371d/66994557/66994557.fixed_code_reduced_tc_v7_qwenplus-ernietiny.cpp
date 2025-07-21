@@ -1,0 +1,32 @@
+#include<bits/stdc++.h>
+using namespace std;
+
+int main(){
+    int n;
+    cin >> n; // Input size of array x[]
+    
+    // Build a sum array using the values from x[]
+    vector<int> sum(n + 1); // To avoid duplicates, add 1 to the array bounds
+    for(int i = 0; i < n; ++i) {
+        cin >> sum[i]; // Each element of x[] is assigned to its corresponding index in sum array
+    }
+    
+    int q; // Number of queries
+    cin >> q; // Input query count
+    
+    // Process each query separately
+    while (q--) {
+        int L, R; // Lower and Upper bounds of query elements in x[]
+        cin >> L >> R; // Input query elements
+        
+        // Calculate the difference between the sum at the rightmost and leftmost indices of x[]
+        // Using binary search to find the index of the element in sorted array x[]
+        int index = binary_search(sum.begin(), sum.end(), L); // Assuming x[] is sorted in ascending order
+        if (index != -1) { // If the element is found, calculate the difference between its corresponding elements in sum array and query element
+            cout << sum[index] - sum[index - 1] << endl; // Output the difference as expected
+        } else {
+            cout << "0" << endl; // If the element is not found, output 0 as expected (or handle the edge case appropriately)
+        }
+    }
+    return 0; // Return 0 to indicate successful completion of the program
+}

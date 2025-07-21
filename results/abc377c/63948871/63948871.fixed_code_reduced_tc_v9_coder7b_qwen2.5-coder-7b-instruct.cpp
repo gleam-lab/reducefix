@@ -1,0 +1,57 @@
+#include <iostream>
+#include <vector>
+#include <unordered_set>
+
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    uint64_t N, M;
+    cin >> N >> M;
+
+    unordered_set<uint64_t> positions;
+
+    auto hash_func = [](const pair<uint64_t, uint64_t>& p) {
+        return p.first * N + p.second;
+    };
+
+    auto equal_func = [](const pair<uint64_t, uint64_t>& p1, const pair<uint64_t, uint64_t>& p2) {
+        return p1.first == p2.first && p1.second == p2.second;
+    };
+
+    struct Hasher {
+        size_t operator()(const pair<uint64_t, uint64_t>& p) const {
+            return hash_func(p);
+        }
+    };
+
+    struct Equaler {
+        bool operator()(const pair<uint64_t, uint64_t>& p1, const pair<uint64_t, uint64_t>& p2) const {
+            return equal_func(p1, p2);
+        }
+    };
+
+    for (uint64_t i = 0; i < M; ++i) {
+        uint64_t x, y;
+        cin >> x >> y;
+        --x; --y; // Convert to zero-based index
+
+        positions.insert({x, y});
+
+        if (x + 2 < N && y + 1 < N) positions.insert({x + 2, y + 1});
+        if (x + 1 < N && y + 2 < N) positions.insert({x + 1, y + 2});
+        if (x - 1 >= 0 && y + 2 < N) positions.insert({x - 1, y + 2});
+        if (x - 2 >= 0 && y + 1 < N) positions.insert({x - 2, y + 1});
+        if (x - 2 >= 0 && y - 1 >= 0) positions.insert({x - 2, y - 1});
+        if (x - 1 >= 0 && y - 2 >= 0) positions.insert({x - 1, y - 2});
+        if (x + 1 < N && y - 2 >= 0) positions.insert({x + 1, y - 2});
+        if (x + 2 < N && y - 1 >= 0) positions.insert({x + 2, y - 1});
+    }
+
+    uint64_t result = N * N - positions.size();
+    cout << result << endl;
+
+    return 0;
+}

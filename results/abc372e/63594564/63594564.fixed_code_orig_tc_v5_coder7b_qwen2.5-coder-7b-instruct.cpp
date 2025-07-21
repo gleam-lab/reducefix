@@ -1,0 +1,66 @@
+#include "bits/stdc++.h"
+using namespace std;
+
+#define ff first
+#define ss second
+#define ll long long
+#define SZ(s) (int)s.size()
+#define pb push_back
+const int N = 2e5 + 5;
+
+vector<vector<int>> adj[N];
+int deg[N], par[N];
+
+int find(int x) {
+    if(par[x] != x) par[x] = find(par[x]);
+    return par[x];
+}
+
+void merge(int u, int v) {
+    u = find(u), v = find(v);
+    if(u == v) return;
+    if(deg[u] < deg[v]) swap(u, v);
+    adj[u].insert(adj[u].end(), adj[v].begin(), adj[v].end());
+    adj[v].clear();
+    deg[u] += deg[v];
+    par[v] = u;
+}
+
+signed main() {
+    ios_base::sync_with_stdio(0); cin.tie(0);
+    int n, m;
+    cin >> n >> m;
+    for(int i = 1; i <= n; ++i) par[i] = i, deg[i] = 1;
+    while(m--) {
+        int type, u, v;
+        cin >> type >> u >> v;
+        if(type == 1) {
+            --u, --v;
+            if(find(u) != find(v)) {
+                merge(u, v);
+            }
+            adj[u].pb(v);
+            adj[v].pb(u);
+            deg[u]++;
+            deg[v]++;
+        } else {
+            --u;
+            int cnt = 0, ans = -1;
+            priority_queue<int, vector<int>, greater<int>> pq;
+            for(auto &x : adj[find(u)]) {
+                if(cnt < 10) {
+                    pq.push(x);
+                    ++cnt;
+                } else {
+                    if(x > pq.top()) {
+                        pq.pop();
+                        pq.push(x);
+                    }
+                }
+            }
+            if(!pq.empty()) ans = pq.top();
+            cout << ans << "\n";
+        }
+    }
+    return 0;
+}

@@ -1,0 +1,151 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+
+#define int long long
+
+const int MAX_M = 2000;
+
+int N, M;
+
+set<int> rows, cols;
+set<pair<int, int>> diag1, diag2;
+
+signed main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+
+    cin >> N >> M;
+
+    for (int i = 0; i < M; ++i) {
+        int a, b;
+        cin >> a >> b;
+        rows.insert(a);
+        cols.insert(b);
+        diag1.insert({a + b, a});
+        diag2.insert({a - b, a});
+    }
+
+    // Total squares - occupied squares
+    int total_empty = N * N - M;
+
+    // Count how many empty squares are attacked
+    int attacked = 0;
+
+    // For each row, all columns are attacked
+    attacked += rows.size() * N;
+
+    // For each column, all rows are attacked
+    attacked += cols.size() * N;
+
+    // For each diagonal of type x+y=d, count number of points on it
+    map<int, int> d1_counts;
+    for (auto p : diag1) {
+        int d = p.first;
+        d1_counts[d]++;
+    }
+    for (auto [d, cnt] : d1_counts) {
+        int len;
+        if (d >= 2 && d <= N + 1) {
+            len = min(d - 1, N) - max(1LL, d - N) + 1;
+        } else if (d > N + 1 && d <= 2 * N) {
+            len = 2 * N + 1 - d;
+        } else {
+            len = d;
+        }
+        attacked += len;
+    }
+
+    // For each diagonal of type x-y=d, count number of points on it
+    map<int, int> d2_counts;
+    for (auto p : diag2) {
+        int d = p.first;
+        d2_counts[d]++;
+    }
+    for (auto [d, cnt] : d2_counts) {
+        int len;
+        if (d >= -(N - 1) && d <= 0) {
+            len = N + d;
+        } else if (d >= 1 && d <= N - 1) {
+            len = N - d;
+        } else {
+            len = 1;
+        }
+        attacked += len;
+    }
+
+    // Now subtract overcounts: intersections
+
+    // Row and Column overlaps
+    attacked -= rows.size() * cols.size();
+
+    // Row and Diag1 overlaps
+    for (int r : rows) {
+        for (auto p : diag1) {
+            int d = p.first;
+            int c = d - r;
+            if (c >= 1 && c <= N) {
+                attacked--;
+            }
+        }
+    }
+
+    // Row and Diag2 overlaps
+    for (int r : rows) {
+        for (auto p : diag2) {
+            int d = p.first;
+            int c = r - d;
+            if (c >= 1 && c <= N) {
+                attacked--;
+            }
+        }
+    }
+
+    // Col and Diag1 overlaps
+    for (int c : cols) {
+        for (auto p : diag1) {
+            int d = p.first;
+            int r = d - c;
+            if (r >= 1 && r <= N) {
+                attacked--;
+            }
+        }
+    }
+
+    // Col and Diag2 overlaps
+    for (int c : cols) {
+        for (auto p : diag2) {
+            int d = p.first;
+            int r = d + c;
+            if (r >= 1 && r <= N) {
+                attacked--;
+            }
+        }
+    }
+
+    // Diag1 and Diag2 overlaps
+    for (auto p1 : diag1) {
+        int d1 = p1.first;
+        for (auto p2 : diag2) {
+            int d2 = p2.first;
+            int x = (d1 + d2) / 2;
+            int y = (d1 - d2) / 2;
+            if (x >= 1 && x <= N && y >= 1 && y <= N) {
+                attacked--;
+            }
+        }
+    }
+
+    // Row, Column, Diag1, Diag2 overlaps
+    for (int r : rows) {
+        for (int c : cols) {
+            if (diag1.count(r + c)) attacked++;
+            if (diag2.count(r - c)) attacked++;
+        }
+    }
+
+    // Final answer is total empty squares not attacked
+    cout << total_empty - attacked << endl;
+
+    return 0;
+}

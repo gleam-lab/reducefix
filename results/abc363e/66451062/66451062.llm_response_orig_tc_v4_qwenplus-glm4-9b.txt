@@ -1,0 +1,107 @@
+
+The problem is about simulating the rising sea level and its effects on the land. The challenge is to determine the area of the land above the sea level each year for Y years.
+
+Here's a breakdown of the solution approach:
+
+1. **Initialization**: Read the grid dimensions `H` and `W`, the number of years `Y`, and the elevation grid `A`.
+2. **Flood Fill Algorithm**: Use a flood fill algorithm to identify all cells that will be submerged at each level of the rising sea. We'll process cells in a min-heap based on their elevation, with cells closer to the edge of the grid (those that will be submerged first) processed first.
+3. **Simulation**: For each year, simulate the rising sea level. For each submerged cell, mark adjacent cells with lower elevation as submerged if they haven't been marked yet.
+4. **Output**: After processing each year, output the remaining area of the land above the sea level.
+
+The incorrect code provided seems to be implementing the flood fill algorithm but fails to correctly simulate the annual process. The main issues are:
+
+- **Incorrect Heap Usage**: The heap is used to process cells in descending order of elevation, which is counterintuitive for this problem. We should process cells in ascending order of elevation to simulate the effect of rising sea level.
+- **Edge Condition Handling**: The code does not handle the case where the entire grid is submerged, which can happen if all elevations are lower than the initial sea level plus the years of rise.
+- **Performance Concerns**: The code may perform excessive checks or operations that are unnecessary for the problem's constraints.
+
+Here's an outline for the corrected code:
+
+```cpp
+#include <iostream>
+#include <vector>
+#include <queue>
+#include <algorithm>
+
+using namespace std;
+
+struct Pair {
+    int x, y;
+    Pair(int x, int y) : x(x), y(y) {}
+};
+
+const int MAXN = 1000;
+
+int H, W, Y;
+vector<vector<int>> A;
+vector<vector<bool>> visited;
+vector<vector<int>> directions = {{0, 1}, {1, 0}, {0, -1}, {-1, 0}};
+
+void processYear(int year) {
+    priority_queue<pair<int, Pair>, vector<pair<int, Pair>>, greater<pair<int, Pair>>> minHeap;
+    int remainingLand = 0;
+    
+    // Initialize the heap with boundary cells
+    for (int i = 0; i < H; ++i) {
+        minHeap.push(make_pair(A[i][0], Pair(i, 0)));
+        minHeap.push(make_pair(A[i][W - 1], Pair(i, W - 1)));
+        visited[i][0] = visited[i][W - 1] = true;
+    }
+    
+    for (int i = 0; i < W; ++i) {
+        minHeap.push(make_pair(A[0][i], Pair(0, i)));
+        minHeap.push(make_pair(A[H - 1][i], Pair(H - 1, i)));
+        visited[0][i] = visited[H - 1][i] = true;
+    }
+    
+    while (!minHeap.empty()) {
+        auto p = minHeap.top();
+        minHeap.pop();
+        int elevation = p.first;
+        
+        if (elevation <= year) {
+            continue;
+        }
+        
+        for (int i = 0; i < 4; ++i) {
+            int nx = p.second.x + directions[i][0];
+            int ny = p.second.y + directions[i][1];
+            
+            if (nx >= 0 && nx < H && ny >= 0 && ny < W && !visited[nx][ny] && A[nx][ny] > year) {
+                visited[nx][ny] = true;
+                minHeap.push(make_pair(A[nx][ny], Pair(nx, ny)));
+            }
+        }
+    }
+    
+    // Count the remaining land
+    for (int i = 0; i < H; ++i) {
+        for (int j = 0; j < W; ++j) {
+            if (!visited[i][j]) {
+                remainingLand++;
+            }
+        }
+    }
+    
+    cout << remainingLand << endl;
+}
+
+int main() {
+    cin >> H >> W >> Y;
+    A.assign(H, vector<int>(W));
+    visited.assign(H, vector<bool>(W, false));
+    
+    for (int i = 0; i < H; ++i) {
+        for (int j = 0; j < W; ++j) {
+            cin >> A[i][j];
+        }
+    }
+    
+    for (int year = 1; year <= Y; ++year) {
+        processYear(year);
+    }
+    
+    return 0;
+}
+```
+
+This corrected code uses a min-heap to process cells in the correct order and a flood fill algorithm to simulate the effect of rising sea level. It's also optimized to only process cells that have not yet been submerged.

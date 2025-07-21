@@ -1,0 +1,25 @@
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+
+int main() {
+  int N;
+  string S;
+  cin >> N >> S;
+
+  // We will track the number of times we change from one move to another.
+  // We can represent the moves as a sequence and count transitions.
+
+  // The idea is to count how many times consecutive characters differ,
+  // because each different character indicates a new segment (and thus a new hand needed).
+
+  int ans = 1; // At least one move is needed if the input is non-empty
+  for (int i = 1; i < S.size(); ++i) {
+    if (S[i] != S[i - 1]) {
+      ans++;
+    }
+  }
+
+  cout << ans << endl;
+  return 0;
+}

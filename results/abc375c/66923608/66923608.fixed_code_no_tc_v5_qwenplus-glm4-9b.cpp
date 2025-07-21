@@ -1,0 +1,25 @@
+#include <iostream>
+#include <vector>
+#include <cmath>
+#include <iomanip>
+using namespace std;
+
+int main() {
+    int n; cin >> n;
+    vector<pair<double, double>> points(n);
+    
+    for (int i = 0; i < n; ++i) {
+        cin >> points[i].first >> points[i].second;
+    }
+    
+    double total_distance = 0.0;
+    
+    for (int i = 0; i < n; ++i) {
+        total_distance += sqrt(pow(points[i].first - points[(i + 1) % n].first, 2) +
+                               pow(points[i].second - points[(i + 1) % n].second, 2));
+    }
+    
+    cout << fixed << setprecision(12) << total_distance << endl;
+    
+    return 0;
+}

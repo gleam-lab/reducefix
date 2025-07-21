@@ -1,0 +1,34 @@
+#include <iostream>
+#include <vector>
+#include <cmath>
+#include <iomanip>
+
+using namespace std;
+
+int main() {
+    int N;
+    cin >> N;
+
+    vector<pair<long long, long long>> points(N + 1);
+
+    // Read all points including the origin
+    for (int i = 0; i <= N; ++i) {
+        long long x, y;
+        cin >> x >> y;
+        points[i] = {x, y};
+    }
+
+    // Calculate the total cost using the formula
+    double total_cost = 0.0;
+    for (int i = 1; i <= N; ++i) {
+        long long dx = points[i].first;
+        long long dy = points[i].second;
+        total_cost += sqrt(dx * dx + dy * dy);
+    }
+
+    // Set precision and fixed format for output
+    cout << fixed << setprecision(15);
+    cout << total_cost << endl;
+
+    return 0;
+}

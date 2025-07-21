@@ -1,0 +1,27 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+
+int main(){
+    int N;
+    cin >> N; // Number of test cases
+    vector<int> X(N), P(N+1); // Assuming X and P are already provided as input
+    cin >> X[0]; // X[0] represents the first element in the range
+
+    // Sort the elements in P based on their corresponding X values
+    sort(all(P));
+
+    // Map to store the indices of X elements in P
+    map<int, int> x_to_idx;
+    for (int i = 0; i < N; ++i) {
+        x_to_idx[X[i]] = i; // Store indices in P for easier retrieval
+    }
+
+    // Calculate the difference between the rightmost and leftmost elements in P
+    int ans = P[N-1] - P[0]; // Assuming P[N] is the target sum
+
+    // Output the correct answer
+    cout << ans << endl;
+
+    return 0;
+}

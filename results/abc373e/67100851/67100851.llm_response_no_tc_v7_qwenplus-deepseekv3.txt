@@ -1,0 +1,102 @@
+To fix this code, we need to ensure that for each candidate, we correctly determine the minimum number of additional votes they need to guarantee their election regardless of how the other votes are distributed. The key insight is to ensure that after adding X votes to candidate i, there are at most M-1 candidates with votes strictly more than candidate i's new vote count.
+
+### Approaches
+1. **Sorting and Binary Search**: First, sort the candidates' votes to facilitate efficient calculation of the required votes for each candidate.
+2. **Binary Search for Minimum Votes**: For each candidate, perform a binary search to find the minimum X such that when X votes are added to candidate i, the number of candidates with votes strictly greater than the candidate's new vote count (A_i + X) is less than M.
+3. **Efficient Calculation**: Use prefix sums to efficiently calculate the total votes required for other candidates to not exceed the candidate's new vote count, ensuring the solution is efficient within the problem constraints.
+
+### Solution Code
+```cpp
+#include <iostream>
+#include <algorithm>
+#include <vector>
+using namespace std;
+
+typedef long long ll;
+typedef struct {
+    ll a;
+    int idx;
+} node;
+
+vector<node> A;
+vector<ll> sorted_A;
+vector<ll> prefix_sum;
+ll K;
+int N, M;
+
+bool is_possible(ll X, int i) {
+    ll new_votes = sorted_A[i] + X;
+    int pos = upper_bound(sorted_A.begin(), sorted_A.end(), new_votes) - sorted_A.begin();
+    int candidates_above = N - pos;
+    if (candidates_above < M) {
+        return true;
+    }
+    return false;
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(NULL);
+
+    cin >> N >> M >> K;
+    A.resize(N);
+    sorted_A.resize(N);
+    prefix_sum.resize(N + 1, 0);
+
+    for (int i = 0; i < N; ++i) {
+        cin >> A[i].a;
+        A[i].idx = i;
+        sorted_A[i] = A[i].a;
+    }
+
+    sort(sorted_A.begin(), sorted_A.end());
+    for (int i = 0; i < N; ++i) {
+        prefix_sum[i + 1] = prefix_sum[i] + sorted_A[i];
+    }
+
+    ll remaining_votes = K;
+    for (int i = 0; i < N; ++i) {
+        remaining_votes -= A[i].a;
+    }
+
+    vector<ll> result(N, -1);
+    for (int i = 0; i < N; ++i) {
+        ll original = A[i].a;
+        ll low = 0, high = remaining_votes;
+        ll min_X = -1;
+        while (low <= high) {
+            ll mid = (low + high) / 2;
+            ll new_votes = original + mid;
+            int pos = upper_bound(sorted_A.begin(), sorted_A.end(), new_votes) - sorted_A.begin();
+            int candidates_above = N - pos;
+            if (candidates_above < M) {
+                min_X = mid;
+                high = mid - 1;
+            } else {
+                low = mid + 1;
+            }
+        }
+        result[A[i].idx] = min_X;
+    }
+
+    for (int i = 0; i < N; ++i) {
+        if (result[i] != -1) {
+            int pos = upper_bound(sorted_A.begin(), sorted_A.end(), A[i].a) - sorted_A.begin();
+            int candidates_above = N - pos;
+            if (candidates_above < M) {
+                result[i] = 0;
+            }
+        }
+        cout << result[i] << " ";
+    }
+    cout << endl;
+
+    return 0;
+}
+```
+
+### Explanation
+1. **Sorting and Initial Setup**: The candidates' votes are sorted to facilitate binary search operations. Prefix sums are computed for efficient range sum queries.
+2. **Binary Search for Minimum Votes**: For each candidate, we perform a binary search to find the smallest X such that after adding X votes, the number of candidates with votes strictly greater than (A_i + X) is less than M. This ensures the candidate will be elected.
+3. **Edge Cases Handling**: If a candidate already has enough votes to be elected (i.e., fewer than M candidates have more votes), the result for that candidate is set to 0. If no such X exists within the remaining votes, the result remains -1.
+4. **Efficiency**: The solution efficiently checks each candidate using binary search and upper_bound operations, ensuring O(N log N) complexity, which is optimal given the constraints.

@@ -1,0 +1,40 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+long long solve(const string& s) {
+    int n = s.length();
+    long long result = 0, count = 1;
+    
+    for (int i = 1; i < n; ++i) {
+        if (s[i] != s[i - 1]) {
+            result += (count + 1) / 2;
+            count = 1;
+        } else {
+            ++count;
+        }
+    }
+    result += (count + 1) / 2;
+    
+    for (int i = 1; i + 1 < n; ++i) {
+        if (s[i] > s[i - 1] && s[i] > s[i + 1]) {
+            --result;
+        }
+    }
+    
+    return result;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;
+    while (t--) {
+        string s;
+        cin >> s;
+        cout << solve(s) << '\n';
+    }
+    
+    return 0;
+}

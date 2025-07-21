@@ -1,0 +1,51 @@
+#include <bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+
+int main() {
+    ios_base::sync_with_stdio(0);
+    cin.tie(0);
+
+    int n, m;
+    ll k;
+    cin >> n >> m >> k;
+    
+    vector<ll> a(n);
+    for(int i = 0; i < n; ++i) {
+        cin >> a[i];
+        k -= a[i];
+    }
+
+    vector<int> order(n);
+    iota(order.begin(), order.end(), 0);
+    sort(order.begin(), order.end(), [&](int i, int j){ return a[i] < a[j]; });
+
+    vector<ll> pref(n + 1);
+    for(int i = 0; i < n; ++i) {
+        pref[i + 1] = a[i] + pref[i];
+    }
+
+    vector<ll> ans(n, -1);
+    for(int i = 0; i < n; ++i) {
+        int id = order[i];
+        ll l = 0, r = k + 1;
+        while(l <= r) {
+            ll mid = (l + r) / 2;
+            int rid = upper_bound(pref.begin(), pref.end(), pref[n] - pref[id] + mid) - pref.begin();
+            int lid = n - m - (i >= n - m ? 1 : 0);
+            ll cnt = 0;
+            if(rid > lid) cnt += (rid - lid) * (a[id] + mid + 1) - (pref[rid] - pref[lid]);
+            if(lid <= i && i < rid) cnt--;
+            else cnt += mid;
+            if(cnt > k) {
+                r = mid - 1;
+            } else l = mid + 1;
+        }
+        if(l == k + 1) ans[id] = -1;
+        else ans[id] = l;
+    }
+
+    for(auto x : ans) cout << x << " ";
+
+    return 0;
+}

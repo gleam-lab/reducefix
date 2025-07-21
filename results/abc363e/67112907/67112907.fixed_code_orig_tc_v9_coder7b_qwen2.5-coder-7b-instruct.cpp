@@ -1,0 +1,43 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+struct Point {
+    int x, y, h;
+    bool operator<(const Point& other) const {
+        return h > other.h;
+    }
+};
+
+int main() {
+    ios_base::sync_with_stdio(0); cin.tie(0); cout.tie(0);
+
+    int H, W, Y; cin >> H >> W >> Y;
+    vector<vector<int>> A(H, vector<int>(W)), B(H, vector<int>(W));
+    for(int i = 0; i < H; ++i) for(int j = 0; j < W; ++j) cin >> A[i][j];
+
+    priority_queue<Point> pq;
+    vector<vector<bool>> seen(H, vector<bool>(W));
+
+    auto add = [&](int x, int y, int h){
+        if(x < 0 || x >= H || y < 0 || y >= W || seen[x][y] || A[x][y] <= h) return;
+        seen[x][y] = true;
+        pq.emplace(h, x, y);
+    };
+
+    for(int i = 0; i < H; ++i) add(i, 0, A[i][0]), add(i, W-1, A[i][W-1]);
+    for(int j = 0; j < W; ++j) add(0, j, A[0][j]), add(H-1, j, A[H-1][j]);
+
+    while(Y--) {
+        int h = pq.top().h;
+        int cnt = 0;
+        while(!pq.empty() && pq.top().h == h) {
+            auto [_, x, y] = pq.top(); pq.pop();
+            B[x][y] = 1;
+            cnt++;
+            add(x-1, y, h), add(x+1, y, h), add(x, y-1, h), add(x, y+1, h);
+        }
+        cout << H * W - cnt << '\n';
+    }
+
+    return 0;
+}

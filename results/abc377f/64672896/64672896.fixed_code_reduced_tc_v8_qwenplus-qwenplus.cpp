@@ -1,0 +1,101 @@
+#include <bits/stdc++.h>
+using namespace std;
+using i64 = long long;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    i64 N, M;
+    cin >> N >> M;
+
+    set<i64> rows, cols, diag1, diag2;
+
+    for (int i = 0; i < M; ++i) {
+        i64 a, b;
+        cin >> a >> b;
+        rows.insert(a);
+        cols.insert(b);
+        diag1.insert(a + b);
+        diag2.insert(a - b);
+    }
+
+    // Total attacked cells
+    i64 attacked = 0;
+
+    // Row and column contributions
+    attacked += rows.size() * N;
+    attacked += cols.size() * N;
+
+    // Diagonals: a + b = const
+    attacked += diag1.size() * N;
+
+    // Anti-diagonals: a - b = const
+    attacked += diag2.size() * N;
+
+    // Subtract overlaps
+
+    // Rows x Columns intersections
+    for (auto r : rows)
+        for (auto c : cols)
+            attacked -= 1; // Each cell counted twice
+
+    // Row x diag1
+    for (auto r : rows)
+        for (auto d : diag1)
+            if (1 <= d - r && d - r <= N)
+                attacked -= 1;
+
+    // Row x diag2
+    for (auto r : rows)
+        for (auto d : diag2)
+            if (1 <= r - d && r - d <= N)
+                attacked -= 1;
+
+    // Col x diag1
+    for (auto c : cols)
+        for (auto d : diag1)
+            if (1 <= d - c && d - c <= N)
+                attacked -= 1;
+
+    // Col x diag2
+    for (auto c : cols)
+        for (auto d : diag2)
+            if (1 <= c + d && c + d <= N)
+                attacked -= 1;
+
+    // diag1 x diag2 => intersection at points
+    for (auto d1 : diag1)
+        for (auto d2 : diag2) {
+            i64 x = (d1 + d2) / 2;
+            i64 y = (d1 - d2) / 2;
+            if ((d1 + d2) % 2 == 0 && x >= 1 && x <= N && y >= 1 && y <= N)
+                attacked -= 1;
+        }
+
+    // Subtract overlaps more than once (Inclusion-Exclusion correction)
+
+    // Row x diag1 x diag2
+    for (auto r : rows)
+        for (auto d1 : diag1)
+            for (auto d2 : diag2) {
+                i64 y = d1 - r;
+                if (y >= 1 && y <= N && r - y == d2)
+                    attacked += 1;
+            }
+
+    // Col x diag1 x diag2
+    for (auto c : cols)
+        for (auto d1 : diag1)
+            for (auto d2 : diag2) {
+                i64 x = d1 - c;
+                if (x >= 1 && x <= N && x - c == d2)
+                    attacked += 1;
+            }
+
+    // Final count
+    i64 total = N * N - attacked;
+    cout << total << "\n";
+
+    return 0;
+}

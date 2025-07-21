@@ -1,0 +1,91 @@
+To fix this code, we need to address several issues:
+
+1. **Input Reading**: The original code incorrectly reads `q` before `n`, which should be the other way around since the input format specifies `N Q` first.
+2. **Union-Find Data Structure**: The code uses a union-find (disjoint set) structure to manage connected components, but the merging of the top 10 largest vertices is not handled correctly. Specifically, the merging process doesn't correctly maintain the top 10 largest vertices in the component.
+3. **Handling Type 2 Queries**: When a Type 2 query is encountered, the code directly accesses the `iy-1` index of the array without ensuring that the index is valid or that there are enough vertices connected to `v`.
+4. **Array Initialization**: The array `as` is initialized with `-1`, but the logic for merging doesn't account for these `-1` values, leading to incorrect top 10 lists.
+
+### Approaches
+1. **Correct Input Reading**: Read `N` and `Q` correctly.
+2. **Union-Find with Top K Tracking**: For each component, maintain a list of the top 10 largest vertices. When merging two components, merge their top 10 lists and keep only the top 10 unique elements.
+3. **Handling Queries**: For Type 1 queries, merge the components and update the top 10 lists. For Type 2 queries, check if the requested index is within the bounds of the top 10 list and return the appropriate value or `-1` if the index is out of bounds.
+
+### Solution Code
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+const int MAX_N = 200005;
+const int K = 10;
+
+int fa[MAX_N];
+vector<int> top[MAX_N];
+
+int find(int x) {
+    if (fa[x] == x) return x;
+    return fa[x] = find(fa[x]);
+}
+
+void merge(int x, int y) {
+    x = find(x);
+    y = find(y);
+    if (x == y) return;
+    if (top[x].size() < top[y].size()) {
+        swap(x, y);
+    }
+    vector<int> merged;
+    int i = 0, j = 0;
+    while ((i < top[x].size() || j < top[y].size()) && merged.size() < K) {
+        if (i < top[x].size() && (j >= top[y].size() || top[x][i] >= top[y][j])) {
+            if (merged.empty() || merged.back() != top[x][i]) {
+                merged.push_back(top[x][i]);
+            }
+            i++;
+        } else {
+            if (merged.empty() || merged.back() != top[y][j]) {
+                merged.push_back(top[y][j]);
+            }
+            j++;
+        }
+    }
+    top[x] = merged;
+    fa[y] = x;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int N, Q;
+    cin >> N >> Q;
+
+    for (int i = 1; i <= N; ++i) {
+        fa[i] = i;
+        top[i] = {i};
+    }
+
+    while (Q--) {
+        int op, u, v;
+        cin >> op >> u >> v;
+        if (op == 1) {
+            merge(u, v);
+        } else {
+            int root = find(u);
+            if (v > top[root].size()) {
+                cout << -1 << '\n';
+            } else {
+                cout << top[root][v - 1] << '\n';
+            }
+        }
+    }
+
+    return 0;
+}
+```
+
+### Explanation
+1. **Union-Find Initialization**: Each vertex starts as its own parent, and each component's top list initially contains only the vertex itself.
+2. **Merging Components**: When merging two components, their top 10 lists are merged by selecting the largest elements from both lists, ensuring no duplicates and maintaining the top 10 largest elements.
+3. **Query Handling**: For Type 1 queries, the components of the given vertices are merged. For Type 2 queries, the code checks if the requested index is within the bounds of the top list of the component containing the vertex. If it is, the corresponding element is returned; otherwise, `-1` is printed.
+
+This approach ensures that the operations are efficient and correct, handling the constraints effectively.

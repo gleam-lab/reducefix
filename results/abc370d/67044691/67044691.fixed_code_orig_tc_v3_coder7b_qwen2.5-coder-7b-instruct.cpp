@@ -1,0 +1,87 @@
+#include<bits/stdc++.h>
+using namespace std;
+
+#define ll long long
+#define rep(i,n) for(int i=0;i<n;i++)
+#define vi vector<int>
+
+const ll inf = 1e18;
+
+struct SegTree {
+    vi st, lz;
+    int n;
+
+    SegTree(int n) {
+        this->n = n;
+        st.resize(n * 4 + 5);
+        lz.resize(n * 4 + 5);
+    }
+
+    void push_down(int v, int tl, int tr) {
+        if(lz[v] != 0) {
+            st[v] += lz[v];
+            if(tl != tr) {
+                lz[v * 2] += lz[v];
+                lz[v * 2 + 1] += lz[v];
+            }
+            lz[v] = 0;
+        }
+    }
+
+    void update(int v, int tl, int tr, int l, int r, int val) {
+        push_down(v, tl, tr);
+        if(l > r) return;
+        if(l == tl && r == tr) {
+            st[v] += val;
+            lz[v] += val;
+        } else {
+            int tm = (tl + tr) / 2;
+            update(v * 2, tl, tm, l, min(r, tm), val);
+            update(v * 2 + 1, tm + 1, tr, max(l, tm + 1), r, val);
+            st[v] = max(st[v * 2], st[v * 2 + 1]);
+        }
+    }
+
+    int get_max(int v, int tl, int tr, int l, int r) {
+        push_down(v, tl, tr);
+        if(l > r) return -inf;
+        if(l == tl && r == tr) return st[v];
+        int tm = (tl + tr) / 2;
+        return max(get_max(v * 2, tl, tm, l, min(r, tm)), 
+                   get_max(v * 2 + 1, tm + 1, tr, max(l, tm + 1), r));
+    }
+};
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(NULL);
+
+    int h, w, q;
+    cin >> h >> w >> q;
+
+    SegTree seg_row(h), seg_col(w);
+    
+    while(q--) {
+        int r, c;
+        cin >> r >> c;
+        --r, --c;
+
+        if(seg_row.get_max(1, 0, h - 1, r, r) == 0) {
+            seg_row.update(1, 0, h - 1, r, r, 1);
+            seg_col.update(1, 0, w - 1, c, c, 1);
+        } else {
+            int min_r = seg_row.get_max(1, 0, h - 1, 0, r - 1);
+            int min_c = seg_col.get_max(1, 0, w - 1, 0, c - 1);
+            seg_row.update(1, 0, h - 1, min_r, min_r, 1);
+            seg_col.update(1, 0, w - 1, min_c, min_c, 1);
+        }
+    }
+
+    ll ans = 0;
+    ans += seg_row.get_max(1, 0, h - 1, 0, h - 1);
+    ans += seg_col.get_max(1, 0, w - 1, 0, w - 1);
+
+    cout << ans << '\n';
+
+    return 0;
+}

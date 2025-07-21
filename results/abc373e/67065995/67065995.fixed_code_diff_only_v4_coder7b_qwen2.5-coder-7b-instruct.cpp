@@ -1,0 +1,54 @@
+#include <bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(NULL);
+
+    int n, m;
+    ll k;
+    cin >> n >> m >> k;
+    vector<ll> a(n);
+    for (int i = 0; i < n; ++i) {
+        cin >> a[i];
+        k -= a[i];
+    }
+
+    // Sort indices based on the number of votes in ascending order
+    vector<int> ids(n);
+    iota(ids.begin(), ids.end(), 0);
+    sort(ids.begin(), ids.end(), [&](int i, int j) { return a[i] < a[j]; });
+
+    // Calculate prefix sums of sorted votes
+    vector<ll> pref(n + 1);
+    for (int i = 0; i < n; ++i) {
+        pref[i + 1] = pref[i] + a[ids[i]];
+    }
+
+    vector<ll> ans(n, -1);
+    for (int i = 0; i < n; ++i) {
+        int rank = n - i - 1; // Rank of the current candidate
+        if (rank < m) {
+            // If the candidate is among the top M, no additional votes are needed
+            ans[ids[i]] = 0;
+        } else {
+            // Calculate the minimum number of votes needed
+            ll needed = k / (n - rank); // Base calculation
+            if (k % (n - rank)) needed++; // Adjust if there's a remainder
+            if (a[ids[i]] + needed > pref[n] - pref[rank]) {
+                // Ensure the candidate has more votes than the candidate at rank M
+                needed = max(needed, pref[n] - pref[rank] - a[ids[i]] + 1);
+            }
+            ans[ids[i]] = needed;
+        }
+    }
+
+    // Output the results
+    for (int i = 0; i < n; ++i) {
+        cout << ans[i] << " ";
+    }
+    cout << endl;
+
+    return 0;
+}

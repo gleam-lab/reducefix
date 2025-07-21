@@ -1,0 +1,78 @@
+To solve this problem efficiently, we need to compute the number of valid positions on a huge chessboard (up to 10⁹ × 10⁹) where we can place our piece such that it is not attacked by any of the given `M` pieces.
+
+Each piece at position `(i,j)` can attack up to 8 specific positions based on knight-like L-shaped moves. The challenge lies in efficiently tracking these forbidden positions without explicitly constructing the entire grid.
+
+### Key Observations:
+- We cannot construct the full board due to its size (`N²` could be up to `1e18`).
+- We only need to track the positions occupied by existing pieces and the positions under attack.
+- Use a `std::unordered_set<std::pair<int, int>>` with a custom hash function to avoid collisions and maintain efficiency.
+- Avoid double-counting: A piece's attack area may overlap with another piece’s, so use a set to store unique forbidden positions.
+
+We compute:
+- Total empty cells = `N * N - M`
+- Subtract the number of unique cells that are under attack from the above value.
+
+Here is the corrected and efficient C++ implementation:
+
+```cpp
+#include <iostream>
+#include <unordered_set>
+#include <vector>
+#include <tuple>
+
+using namespace std;
+
+// Custom hash for pair<int, int>
+struct pair_hash {
+    template <class T1, class T2>
+    size_t operator()(const pair<T1, T2>& p) const {
+        auto h1 = hash<T1>{}(p.first);
+        auto h2 = hash<T2>{}(p.second);
+        return h1 ^ (h2 << 16);
+    }
+};
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    long long N;
+    int M;
+    cin >> N >> M;
+
+    using ll = long long;
+    unordered_set<pair<ll, ll>, pair_hash> occupied;
+
+    vector<pair<ll, ll>> deltas = {
+        {2, 1}, {1, 2}, {-1, 2}, {-2, 1},
+        {-2, -1}, {-1, -2}, {1, -2}, {2, -1}
+    };
+
+    for (int i = 0; i < M; ++i) {
+        ll a, b;
+        cin >> a >> b;
+        occupied.insert({a, b});
+        for (auto [dx, dy] : deltas) {
+            ll x = a + dx;
+            ll y = b + dy;
+            if (x >= 1 && x <= N && y >= 1 && y <= N) {
+                occupied.insert({x, y});
+            }
+        }
+    }
+
+    // Total possible positions = N*N
+    // Subtract already occupied and attacked positions
+    cout << (N * N - (ll)occupied.size()) << "\n";
+
+    return 0;
+}
+```
+
+### Explanation:
+- **Input Reading**: Efficiently read all piece positions.
+- **Attack Zones**: For each piece, mark all 8 possible positions it can attack.
+- **Set Usage**: `unordered_set` ensures no duplicate entries for both occupied and threatened positions.
+- **Final Count**: Calculate total available safe positions as `N * N - occupied.size()`.
+
+This approach runs in O(M) time and space complexity, which is optimal given constraints. It avoids constructing the whole board and handles overlaps correctly.

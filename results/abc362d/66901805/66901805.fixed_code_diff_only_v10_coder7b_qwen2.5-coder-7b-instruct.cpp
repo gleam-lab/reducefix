@@ -1,0 +1,56 @@
+#include<bits/stdc++.h>
+using namespace std;
+
+const int INF = 1e9 + 7;
+const int MAXN = 2e5 + 5;
+
+vector<pair<int, int>> G[MAXN];
+int dis[MAXN], a[MAXN], n, m;
+
+// Function to perform Dijkstra's algorithm
+void dijkstra(int start) {
+    priority_queue<pair<int, int>, vector<pair<int, int>>, greater<pair<int, int>>> pq;
+    pq.push({0, start});
+    memset(dis, 0x3f, sizeof(dis));
+    dis[start] = 0;
+
+    while (!pq.empty()) {
+        auto [dist, u] = pq.top();
+        pq.pop();
+
+        if (dist > dis[u]) continue;
+
+        for (auto [v, w] : G[u]) {
+            int new_dist = dist + a[v] + w;
+            if (new_dist < dis[v]) {
+                dis[v] = new_dist;
+                pq.push({new_dist, v});
+            }
+        }
+    }
+}
+
+int main() {
+    scanf("%d%d", &n, &m);
+    for (int i = 1; i <= n; i++) {
+        scanf("%d", &a[i]);
+    }
+
+    for (int i = 1; i <= m; i++) {
+        int u, v, w;
+        scanf("%d%d%d", &u, &v, &w);
+        G[u].push_back({v, w});
+        G[v].push_back({u, w});
+    }
+
+    // Perform Dijkstra's algorithm starting from vertex 1
+    dijkstra(1);
+
+    // Print the results for vertices 2 to n
+    for (int i = 2; i <= n; i++) {
+        printf("%d ", dis[i]);
+    }
+    printf("\n");
+
+    return 0;
+}

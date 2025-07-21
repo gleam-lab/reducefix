@@ -1,0 +1,65 @@
+#include <iostream>
+#include <vector>
+#include <queue>
+#include <algorithm>
+
+using namespace std;
+
+#define int long long
+
+signed main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int T;
+    cin >> T;
+
+    while (T--) {
+        int N, K;
+        cin >> N >> K;
+
+        vector<int> A(N), B(N);
+        for (int i = 0; i < N; ++i) {
+            cin >> A[i];
+        }
+        for (int i = 0; i < N; ++i) {
+            cin >> B[i];
+        }
+
+        // Pair up A[i] and B[i], and sort by A[i]
+        vector<pair<int, int>> items(N);
+        for (int i = 0; i < N; ++i) {
+            items[i] = {A[i], B[i]};
+        }
+        sort(items.begin(), items.end());
+
+        // Min-heap to keep track of top K smallest B[i] values
+        priority_queue<int, vector<int>, greater<>> pq;
+        int sumB = 0;
+        int res = 1e18; // Large initial value
+
+        for (int i = 0; i < N; ++i) {
+            int a_val = items[i].first;
+            int b_val = items[i].second;
+
+            // Always include current item
+            pq.push(b_val);
+            sumB += b_val;
+
+            // If more than K items, remove the largest among them
+            if (pq.size() > K) {
+                sumB -= pq.top();
+                pq.pop();
+            }
+
+            // When we have exactly K items, compute cost
+            if (pq.size() == K) {
+                res = min(res, a_val * sumB);
+            }
+        }
+
+        cout << res << '\n';
+    }
+
+    return 0;
+}

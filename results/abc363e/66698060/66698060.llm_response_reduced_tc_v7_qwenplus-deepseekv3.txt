@@ -1,0 +1,83 @@
+The issue in the original code was that it didn't handle the case when the sea level exceeds the maximum elevation in the grid. In such cases, the island would completely sink, and the remaining area should be 0. The original code kept outputting 1 in such cases (as seen in the failing test case) because it didn't properly account for when all cells have been processed.
+
+Here's the corrected code that handles all cases properly:
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+#define ll long long
+
+ll dx[4] = {0, 1, 0, -1}, dy[4] = {1, 0, -1, 0};
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    ll h, w, y;
+    cin >> h >> w >> y;
+    ll ans = h * w;
+    vector<vector<ll>> room(h, vector<ll>(w));
+    priority_queue<vector<ll>, vector<vector<ll>>, greater<vector<ll>>> pq;
+    vector<vector<bool>> used(h, vector<bool>(w, false));
+    
+    for (ll i = 0; i < h; i++) {
+        for (ll j = 0; j < w; j++) {
+            cin >> room[i][j];
+        }
+    }
+    
+    // Add border cells to priority queue
+    for (ll i = 0; i < h; i++) {
+        if (!used[i][0]) {
+            pq.push({room[i][0], i, 0});
+            used[i][0] = true;
+        }
+        if (!used[i][w-1]) {
+            pq.push({room[i][w-1], i, w-1});
+            used[i][w-1] = true;
+        }
+    }
+    for (ll j = 1; j < w-1; j++) {
+        if (!used[0][j]) {
+            pq.push({room[0][j], 0, j});
+            used[0][j] = true;
+        }
+        if (!used[h-1][j]) {
+            pq.push({room[h-1][j], h-1, j});
+            used[h-1][j] = true;
+        }
+    }
+    
+    ll current_level = 1;
+    while (current_level <= y) {
+        while (!pq.empty() && pq.top()[0] <= current_level) {
+            auto cell = pq.top();
+            pq.pop();
+            ans--;
+            
+            for (ll k = 0; k < 4; k++) {
+                ll ni = cell[1] + dx[k];
+                ll nj = cell[2] + dy[k];
+                if (ni >= 0 && ni < h && nj >= 0 && nj < w && !used[ni][nj]) {
+                    used[ni][nj] = true;
+                    pq.push({room[ni][nj], ni, nj});
+                }
+            }
+        }
+        cout << ans << '\n';
+        current_level++;
+    }
+    
+    return 0;
+}
+```
+
+Key fixes:
+1. Added proper initialization of the grid and priority queue
+2. Changed the loop structure to properly handle the sea level increments
+3. Used `current_level` to track the current sea level instead of the confusing `now` variable
+4. Added ios_base::sync_with_stdio(false) and cin.tie(nullptr) for faster I/O
+5. Properly handled the case when all cells have been processed (ans will be 0 when appropriate)
+6. Fixed the output format to use '\n' instead of endl for better performance
+
+The algorithm now correctly simulates the flooding process for each year, properly accounting for cells that sink due to adjacency to the sea or other sunk cells, and outputs the remaining area for each year up to Y.

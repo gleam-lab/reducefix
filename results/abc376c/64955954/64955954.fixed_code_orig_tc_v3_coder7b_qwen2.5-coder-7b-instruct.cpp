@@ -1,0 +1,47 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+bool canStore(int x, vector<int>& A, vector<int>& B) {
+    priority_queue<int> pq;
+    for (int i = 0; i < A.size(); ++i) {
+        if (A[i] <= x) {
+            pq.push(A[i]);
+        } else {
+            while (!pq.empty() && pq.top() + B[i] >= A[i]) {
+                pq.pop();
+            }
+            if (pq.empty()) return false;
+            pq.pop();
+        }
+    }
+    return true;
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(0);
+
+    int n;
+    cin >> n;
+    vector<int> A(n), B(n-1);
+    for (int i = 0; i < n; ++i) cin >> A[i];
+    for (int i = 0; i < n-1; ++i) cin >> B[i];
+
+    sort(A.begin(), A.end());
+    sort(B.begin(), B.end());
+
+    int l = 0, r = 1e9;
+    while (l < r) {
+        int m = (l + r) / 2;
+        if (canStore(m, A, B)) {
+            r = m;
+        } else {
+            l = m + 1;
+        }
+    }
+
+    if (canStore(l, A, B)) cout << l << '\n';
+    else cout << "-1\n";
+
+    return 0;
+}

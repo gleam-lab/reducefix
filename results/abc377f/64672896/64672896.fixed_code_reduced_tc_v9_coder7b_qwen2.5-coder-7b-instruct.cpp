@@ -1,0 +1,46 @@
+#include<bits/stdc++.h>
+using namespace std;
+using i64 = long long;
+
+int main() {
+    ios_base::sync_with_stdio(false); cin.tie(nullptr);
+    i64 N, M;
+    cin >> N >> M;
+    vector<array<int, 2>> g(M);
+    set<pair<int, int>> st;
+    for(int i = 0; i < M; i++) {
+        int a, b;
+        cin >> a >> b;
+        g[i] = {a, b};
+        st.insert({a + b, a - b});
+    }
+
+    auto check = [&](int a, int b, int c, int d) -> int {
+        i64 res = 0;
+        for(i64 x = 1; x <= N; x++) {
+            for(i64 y = 1; y <= N; y++) {
+                bool ok = true;
+                if(a && x + y == a) ok = false;
+                if(b && x - y == b) ok = false;
+                if(c && x == c) ok = false;
+                if(d && y == d) ok = false;
+                if(ok) res++;
+            }
+        }
+        return res;
+    };
+
+    i64 ans = 0;
+    for(auto [s, d] : st) {
+        if(s > 0 && s <= 2 * N) {
+            ans += check(0, s, 0, 0);
+        }
+        if(abs(d) <= N) {
+            ans += check(abs(d), 0, 0, 0);
+        }
+    }
+
+    ans += N * N - M;
+    cout << ans << '\n';
+    return 0;
+}

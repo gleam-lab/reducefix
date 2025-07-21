@@ -1,0 +1,105 @@
+The original code attempts to solve the problem by maintaining a disjoint set (Union-Find) data structure where each root node's component stores a sorted list of its vertices in descending order. However, there are several issues:
+
+1. **Merging Logic**: The merging of two sorted lists is incorrect because it doesn't handle the merging of larger lists efficiently, especially under the constraints where N and Q can be up to 2 × 10^5. The current approach merges two lists and then truncates to the top 100 elements, which is not efficient and can lead to incorrect results.
+
+2. **Handling k-th Largest**: The code assumes that after merging, the list `v[a]` will have the top 100 elements, but this is not guaranteed to be correct for all cases, especially when the component size is large.
+
+3. **Performance**: Merging lists in every union operation is too slow for the given constraints, leading to a time complexity that is too high.
+
+### Fixed Approach
+To efficiently handle the queries, we can use the Union-Find data structure and maintain for each component a set (or a priority queue) of the top 10 largest vertices. This ensures that we can quickly access the k-th largest vertex in the component when needed.
+
+Here’s the corrected code:
+
+```cpp
+#include <bits/stdc++.h>
+
+using namespace std;
+
+#define ff first
+#define ss second
+#define ll long long
+#define SZ(s) (int)s.size()
+
+int const N = 2e5 + 5;
+
+vector<priority_queue<int, vector<int>, greater<int>>> top_k; // Min-heap to keep top 10 largest
+vector<int> p;
+
+int par(int x) {
+    if (p[x] == x) return x;
+    return p[x] = par(p[x]);
+}
+
+void uni(int a, int b) {
+    a = par(a), b = par(b);
+    if (a == b) return;
+
+    // Ensure 'a' is the larger component
+    if (top_k[a].size() < top_k[b].size()) {
+        swap(a, b);
+    }
+
+    // Merge the top elements from 'b' into 'a'
+    while (!top_k[b].empty()) {
+        top_k[a].push(top_k[b].top());
+        top_k[b].pop();
+        if (top_k[a].size() > 10) {
+            top_k[a].pop(); // Keep only the top 10
+        }
+    }
+
+    p[b] = a;
+}
+
+signed main() {
+    ios_base::sync_with_stdio(false); cin.tie(nullptr);
+
+    int n, q;
+    cin >> n >> q;
+    p.resize(n + 1);
+    top_k.resize(n + 1);
+
+    for (int i = 1; i <= n; i++) {
+        p[i] = i;
+        top_k[i].push(i);
+    }
+
+    while (q--) {
+        int t, a, b;
+        cin >> t >> a >> b;
+        if (t == 1) {
+            uni(a, b);
+        } else {
+            a = par(a);
+            if (top_k[a].size() < b) {
+                cout << -1 << '\n';
+            } else {
+                // Since we use a min-heap, the k-th largest is (size - k)-th element if sorted in ascending order.
+                // To get the k-th largest, we need to collect all elements and then select.
+                // To optimize, we can transfer the elements to a vector and sort.
+                vector<int> temp;
+                while (!top_k[a].empty()) {
+                    temp.push_back(top_k[a].top());
+                    top_k[a].pop();
+                }
+                sort(temp.rbegin(), temp.rend());
+                cout << temp[b - 1] << '\n';
+                // Restore the heap
+                for (int num : temp) {
+                    top_k[a].push(num);
+                }
+            }
+        }
+    }
+
+    return 0;
+}
+```
+
+### Explanation
+1. **Union-Find with Top-k Elements**: Each component's root maintains a min-heap of the top 10 largest vertices. This allows efficient merging and access to the k-th largest element.
+2. **Merging Components**: When merging two components, the smaller heap is merged into the larger one, ensuring the combined heap retains only the top 10 elements.
+3. **Query Handling**: For a query asking for the k-th largest element, the heap is temporarily converted into a sorted list to quickly access the required element. The heap is then restored for future operations.
+
+This approach ensures the operations are efficient and meet the problem constraints, providing correct results for all queries.

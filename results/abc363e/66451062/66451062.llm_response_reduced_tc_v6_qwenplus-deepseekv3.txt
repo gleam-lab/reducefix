@@ -1,0 +1,102 @@
+To fix this code, we need to ensure that the algorithm correctly processes the island's sections as the sea level rises each year. The initial approach was on the right track using a priority queue to handle the sections by their elevation, but it missed some critical details in the implementation.
+
+### Approaches
+
+1. **Problem Analysis**: The island is represented as an H x W grid where each cell has an elevation. The sea level rises by 1 each year, and sections adjacent to the sea or already submerged sections with elevation not greater than the current sea level will also submerge. This spreading continues until no more sections can submerge.
+
+2. **Intuition**: We can use a priority queue (min-heap) to process the sections in order of their elevation. This allows us to efficiently determine which sections submerge as the sea level increases each year. We start with the border sections since they are adjacent to the sea initially.
+
+3. **Algorithm**:
+    - Initialize a min-heap with all border sections of the island.
+    - Use a visited matrix to keep track of submerged sections.
+    - For each year from 1 to Y, process all sections in the heap with elevation <= current sea level.
+    - For each processed section, check its adjacent sections. If they haven't been submerged and their elevation <= current sea level, add them to the heap and mark as submerged.
+    - The remaining area is the total sections (H x W) minus the submerged sections.
+
+4. **Complexity Analysis**: 
+    - The min-heap operations (insertion and extraction) are O(log N) per operation, where N is the number of sections.
+    - Each section is processed exactly once, leading to O(HW log HW) time complexity for the heap operations.
+    - The space complexity is O(HW) for storing the grid and visited matrix.
+
+### Solution Code
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+#define int long long
+
+struct Node {
+    int x, y, val;
+    bool operator < (const Node &other) const {
+        return val > other.val; // Min-heap based on val
+    }
+};
+
+signed main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+    cout.tie(0);
+
+    int H, W, Y;
+    cin >> H >> W >> Y;
+    vector<vector<int>> grid(H, vector<int>(W));
+    for (int i = 0; i < H; ++i) {
+        for (int j = 0; j < W; ++j) {
+            cin >> grid[i][j];
+        }
+    }
+
+    vector<vector<bool>> vis(H, vector<bool>(W, false));
+    priority_queue<Node> pq;
+
+    // Push all border cells into the priority queue
+    for (int i = 0; i < H; ++i) {
+        for (int j = 0; j < W; ++j) {
+            if (i == 0 || i == H - 1 || j == 0 || j == W - 1) {
+                pq.push({i, j, grid[i][j]});
+                vis[i][j] = true;
+            }
+        }
+    }
+
+    int submerged = 0;
+    int current_level = 1;
+    vector<int> result(Y);
+
+    int dx[] = {0, 0, 1, -1};
+    int dy[] = {1, -1, 0, 0};
+
+    for (int year = 1; year <= Y; ++year) {
+        while (!pq.empty() && pq.top().val <= year) {
+            Node node = pq.top();
+            pq.pop();
+            submerged++;
+            for (int k = 0; k < 4; ++k) {
+                int nx = node.x + dx[k];
+                int ny = node.y + dy[k];
+                if (nx >= 0 && nx < H && ny >= 0 && ny < W && !vis[nx][ny]) {
+                    vis[nx][ny] = true;
+                    pq.push({nx, ny, grid[nx][ny]});
+                }
+            }
+        }
+        result[year - 1] = H * W - submerged;
+    }
+
+    for (int year = 0; year < Y; ++year) {
+        cout << result[year] << '\n';
+    }
+
+    return 0;
+}
+```
+
+### Explanation
+
+1. **Initialization**: The grid is read from input, and a priority queue is initialized to process sections in order of their elevation. The border sections are added to the queue first since they are adjacent to the sea initially.
+
+2. **Processing Each Year**: For each year from 1 to Y, the algorithm processes sections from the priority queue whose elevation is less than or equal to the current sea level (year). For each processed section, adjacent sections are checked and added to the queue if they meet the submerging criteria.
+
+3. **Tracking Submerged Sections**: The submerged count is incremented each time a section is processed, and the remaining area is calculated as the total sections minus the submerged count. The results for each year are stored in a vector and printed at the end.
+
+This approach ensures that the sections are processed efficiently in order of their elevation, and the spreading of submerged sections is handled correctly as the sea level rises each year. The use of a priority queue ensures optimal performance, and the visited matrix prevents redundant processing of sections.

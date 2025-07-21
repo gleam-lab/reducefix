@@ -1,0 +1,35 @@
+#include <iostream>
+#include <vector>
+#include <set>
+
+using namespace std;
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(0);
+    
+    int n, m;
+    cin >> n >> m;
+    
+    set<pair<int, int>> pieces;
+    for(int i = 0; i < m; ++i) {
+        int x, y;
+        cin >> x >> y;
+        pieces.insert({x, y});
+        
+        // Add all positions that a knight could move to from this position
+        int dx[] = {-2, -2, -1, -1, 1, 1, 2, 2};
+        int dy[] = {-1, 1, -2, 2, -2, 2, -1, 1};
+        for(int j = 0; j < 8; ++j) {
+            int nx = x + dx[j], ny = y + dy[j];
+            if(nx >= 1 && nx <= n && ny >= 1 && ny <= n) {
+                pieces.insert({nx, ny});
+            }
+        }
+    }
+    
+    // Total number of positions minus the number of positions that a knight could move to from the pieces
+    cout << (long long)n*n - pieces.size() << endl;
+    
+    return 0;
+}

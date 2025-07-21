@@ -1,0 +1,84 @@
+To fix this code, we need to address several issues:
+
+1. **Input Reading**: The original code reads `q` (number of queries) and `n` (number of vertices) in the wrong order. It should be `N` (vertices) first and `Q` (queries) second.
+2. **Union-Find Data Structure**: The union-find (disjoint set) structure is used to manage connected components, but the merging of the top 10 elements is incorrect. The code should correctly merge the top 10 elements from both sets in descending order.
+3. **Edge Cases**: The code should handle cases where the number of connected vertices is less than `k` by returning `-1`.
+4. **Efficiency**: The constraints require handling up to 200,000 queries efficiently, so the operations should be optimized.
+
+### Approaches
+1. **Union-Find with Top K Tracking**: For each connected component, maintain a sorted list (in descending order) of the top 10 vertices. When merging two components, merge their top 10 lists and keep the largest 10 elements.
+2. **Efficient Merging**: Use a priority queue or a simple array to merge the top elements from both components efficiently.
+3. **Query Handling**: For type 2 queries, directly access the `k-th` element from the top list of the component.
+
+### Solution Code
+```cpp
+#include<bits/stdc++.h>
+using namespace std;
+
+const int MAXN = 200005;
+int fa[MAXN];
+vector<int> top[MAXN]; // Each component's root stores the top 10 elements in descending order
+
+int find(int x) {
+    if (fa[x] == x) return x;
+    return fa[x] = find(fa[x]);
+}
+
+void unite(int u, int v) {
+    u = find(u);
+    v = find(v);
+    if (u == v) return;
+    if (top[u].size() < top[v].size()) swap(u, v);
+    vector<int> merged;
+    int i = 0, j = 0;
+    while ((i < top[u].size() || j < top[v].size()) && merged.size() < 10) {
+        if (i < top[u].size() && (j >= top[v].size() || top[u][i] >= top[v][j])) {
+            merged.push_back(top[u][i]);
+            i++;
+        } else {
+            merged.push_back(top[v][j]);
+            j++;
+        }
+    }
+    top[u] = merged;
+    fa[v] = u;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int N, Q;
+    cin >> N >> Q;
+
+    for (int i = 1; i <= N; ++i) {
+        fa[i] = i;
+        top[i] = {i};
+    }
+
+    while (Q--) {
+        int op, u, v;
+        cin >> op >> u >> v;
+        if (op == 1) {
+            unite(u, v);
+        } else {
+            int root = find(u);
+            if (v > top[root].size()) {
+                cout << -1 << '\n';
+            } else {
+                cout << top[root][v - 1] << '\n';
+            }
+        }
+    }
+
+    return 0;
+}
+```
+
+### Explanation
+- **Initialization**: The `fa` array initializes each vertex as its own parent. Each `top` vector starts with the vertex itself.
+- **Union Operation**: When merging two components, the `top` vectors of the roots are merged by selecting the largest 10 elements from both vectors in descending order.
+- **Find Operation**: Uses path compression to efficiently find the root of a vertex.
+- **Query Handling**: For type 2 queries, it checks if the component has at least `k` vertices. If not, it returns `-1`. Otherwise, it returns the `k-th` largest vertex from the `top` vector of the component's root.
+
+This approach ensures efficient handling of the constraints by leveraging the union-find data structure and maintaining sorted lists of top elements for quick access during queries.

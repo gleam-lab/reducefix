@@ -1,0 +1,76 @@
+#include <iostream>
+#include <set>
+#include <vector>
+#include <algorithm>
+
+using namespace std;
+
+int main() {
+    int h, w, q;
+    cin >> h >> w >> q;
+
+    vector<vector<set<pair<int, int>>>> grid(h + 2, vector<set<pair<int, int>>>(w + 2));
+
+    for (int i = 1; i <= h; ++i) {
+        for (int j = 1; j <= w; ++j) {
+            grid[i][j].insert({i, j});
+        }
+    }
+
+    int r, c;
+    while (q--) {
+        cin >> r >> c;
+        auto it = grid[r][c].lower_bound({r, c});
+        if (it != grid[r][c].end() && *it == {r, c}) {
+            grid[r][c].erase(it);
+        } else {
+            int min_row = 1;
+            int max_row = r;
+            int min_col = 1;
+            int max_col = c;
+
+            while (min_row < r) {
+                it = grid[min_row][c].lower_bound({r, c});
+                if (it != grid[min_row][c].end() && *it == {r, c}) {
+                    grid[min_row][c].erase(it);
+                    break;
+                }
+                min_row++;
+            }
+            while (max_row < h) {
+                it = grid[max_row][c].lower_bound({r, c});
+                if (it != grid[max_row][c].end() && *it == {r, c}) {
+                    grid[max_row][c].erase(it);
+                    break;
+                }
+                max_row++;
+            }
+            while (min_col < c) {
+                it = grid[r][min_col].lower_bound({r, c});
+                if (it != grid[r][min_col].end() && *it == {r, c}) {
+                    grid[r][min_col].erase(it);
+                    break;
+                }
+                min_col++;
+            }
+            while (max_col < w) {
+                it = grid[r][max_col].lower_bound({r, c});
+                if (it != grid[r][max_col].end() && *it == {r, c}) {
+                    grid[r][max_col].erase(it);
+                    break;
+                }
+                max_col++;
+            }
+        }
+    }
+
+    int remaining_walls = 0;
+    for (int i = 1; i <= h; ++i) {
+        for (int j = 1; j <= w; ++j) {
+            remaining_walls += grid[i][j].size();
+        }
+    }
+
+    cout << remaining_walls / 2 << endl; // Each removed wall was counted twice
+    return 0;
+}

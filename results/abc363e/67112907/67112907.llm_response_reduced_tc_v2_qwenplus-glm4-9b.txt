@@ -1,0 +1,100 @@
+
+The problem involves simulating the rising sea levels on an island and determining the area of the island that remains above the sea level after each year.
+
+The incorrect code attempts to use a priority queue to keep track of the highest elevation sections that are adjacent to the sea. However, the code is not handling the propagation of the sea level accurately, leading to incorrect results in the failing case.
+
+Let's provide a step-by-step analysis of the failing case and the incorrect code, and then propose a correct solution.
+
+### Failing Case Analysis
+For the given input:
+```
+1 1 100000
+51412
+```
+- The sea level starts at 0.
+- The initial elevation of the single square is 51412.
+- After the first year, the sea level rises by 1. The entire island should be underwater, and the area should be 0. However, the incorrect code does not reflect this.
+
+### Incorrect Code Analysis
+1. The code initializes a 2D vector to store the elevations.
+2. It adds the edges of the island to a priority queue as they could potentially be the first to be submerged.
+3. Each year, it checks the top of the priority queue, and if the elevation is less than the sea level (i.e., equal to the year), it decrements the total area.
+4. It then checks the adjacent cells to see if they are submerged and adds them to the priority queue if they are.
+
+### Issues in the Incorrect Code
+1. The code does not handle the recursive submersion of adjacent cells effectively. It adds them to the priority queue but does not check if they will also sink immediately.
+2. For the failing case, the code does not reflect the fact that a single cell with a high elevation is submerged when the sea level rises above it in the first year.
+
+### Correct Approach
+The correct approach is to use a flood fill algorithm (similar to the "paint bucket" tool in graphics programs) to determine which parts of the island will be submerged each year.
+
+1. Start with the edge cells that are initially below the sea level.
+2. Perform a flood fill to mark all cells that are submerged each year.
+3. Keep track of the remaining cells above the sea level and calculate their area.
+
+Let's provide a correct solution using the flood fill approach:
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+const int d[4][2] = {{0, 1}, {0, -1}, {1, 0}, {-1, 0}};
+
+int main() {
+    int H, W, Y;
+    cin >> H >> W >> Y;
+    vector<vector<int>> grid(H, vector<int>(W));
+    for (int i = 0; i < H; ++i) {
+        for (int j = 0; j < W; ++j) {
+            cin >> grid[i][j];
+        }
+    }
+
+    // Use a 2D vector to keep track of visited cells
+    vector<vector<bool>> visited(H, vector<bool>(W, false));
+    queue<pair<int, int>> q;
+
+    // Initialize the queue with the cells that are initially underwater
+    for (int i = 0; i < H; ++i) {
+        for (int j = 0; j < W; ++j) {
+            if (grid[i][j] <= 0) {
+                visited[i][j] = true;
+                q.push({i, j});
+            }
+        }
+    }
+
+    // Process the queue
+    while (!q.empty()) {
+        auto [x, y] = q.front();
+        q.pop();
+
+        for (int k = 0; k < 4; ++k) {
+            int nx = x + d[k][0], ny = y + d[k][1];
+            if (nx >= 0 && nx < H && ny >= 0 && ny < W && !visited[nx][ny] && grid[nx][ny] <= 0) {
+                visited[nx][ny] = true;
+                q.push({nx, ny});
+            }
+        }
+    }
+
+    // Calculate the remaining area
+    int remaining_area = 0;
+    for (int i = 0; i < H; ++i) {
+        for (int j = 0; j < W; ++j) {
+            if (!visited[i][j]) {
+                remaining_area++;
+            }
+        }
+    }
+
+    // Output the remaining area for each year
+    for (int year = 0; year < Y; year++) {
+        cout << remaining_area << '\n';
+    }
+
+    return 0;
+}
+```
+
+This correct solution uses a flood fill to mark cells that are submerged and then calculates the remaining area above the sea level. It outputs this remaining area for each year up to `Y`.

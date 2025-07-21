@@ -1,0 +1,87 @@
+After analyzing the problem and the incorrect code, I identified that the main issue is in the union operation where the code attempts to merge two vectors and keep only the top 100 elements. This approach is too slow for large inputs (N and Q up to 2×10^5) because it performs O(N) operations per union, leading to O(N^2) time complexity in the worst case.
+
+Here's the corrected solution that uses a more efficient approach with Union-Find and maintains sorted lists of connected components, keeping only the top 10 elements (since k ≤ 10 in queries):
+
+```cpp
+#include "bits/stdc++.h"
+
+using namespace std;
+
+#define ff first
+#define ss second
+#define ll long long
+#define SZ(s) (int)s.size()
+
+int const N = 2e5 + 5;
+
+vector<multiset<int>> v;
+vector<int> p;
+vector<int> sz;
+
+int par(int x) {
+    if (p[x] == x) return x;
+    return p[x] = par(p[x]);
+}
+
+void uni(int a, int b) {
+    a = par(a), b = par(b);
+    if (a == b) return;
+    if (sz[a] < sz[b]) swap(a, b);
+    
+    // Merge smaller set into larger
+    for (auto x : v[b]) {
+        v[a].insert(x);
+        if (v[a].size() > 10) {
+            v[a].erase(v[a].begin());
+        }
+    }
+    v[b].clear();
+    p[b] = a;
+    sz[a] += sz[b];
+}
+
+signed main() {
+    ios_base::sync_with_stdio(false); cin.tie(nullptr);
+
+    int n, q;
+    cin >> n >> q;
+    p.resize(n + 1);
+    sz.resize(n + 1, 1);
+    v.resize(n + 1);
+    for (int i = 1; i <= n; i++) {
+        p[i] = i;
+        v[i].insert(i);
+    }
+    while (q--) {
+        int t, a, b;
+        cin >> t >> a >> b;
+        if (t == 1) {
+            uni(a, b);
+        } else {
+            a = par(a);
+            if (v[a].size() < b) {
+                cout << -1 << '\n';
+            } else {
+                auto it = v[a].end();
+                advance(it, -b);
+                cout << *it << '\n';
+            }
+        }
+    }
+
+    return 0;
+}
+```
+
+Key improvements:
+1. Replaced vectors with multisets for efficient insertion and deletion
+2. Only keep up to 10 elements in each set since k ≤ 10
+3. Used proper union by size (rank) to keep trees balanced
+4. More efficient merging of sets by always merging smaller into larger
+
+This solution has:
+- O(α(N)) for find/union operations (amortized)
+- O(k log k) per union operation (since k ≤ 10, this is effectively constant)
+- O(k) per query operation (since we only need the k-th largest from a size 10 set)
+
+The overall complexity is O(Q α(N)), which is efficient enough for the given constraints.

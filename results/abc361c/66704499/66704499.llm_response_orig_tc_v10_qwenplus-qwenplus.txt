@@ -1,0 +1,98 @@
+To solve this problem, we need to **minimize the difference between the maximum and minimum values** in a subsequence `B` formed by removing exactly `K` elements from the original sequence `A` of length `N`.
+
+### Key Observations:
+
+- We must keep exactly `N - K` elements.
+- The elements must remain in their **original order**.
+- Therefore, we are looking for a **contiguous subarray of length N - K** that has the **minimum possible range (max - min)**.
+
+### Efficient Strategy:
+
+1. Since we want to find a contiguous subsequence of length `N - K`, we can slide a window of size `N - K` across array `A`.
+2. For each window, compute the difference between the max and min values.
+3. Track the **minimum** such difference over all windows.
+
+This would be O(N) if we could track max and min efficiently in a sliding window — but naively recalculating min/max for each window leads to O(N^2).
+
+Instead, we can use **two monotonic deques** to maintain:
+- Maximum value in current window
+- Minimum value in current window
+
+This allows us to process each element only once, giving an **O(N)** solution.
+
+---
+
+### ✅ Corrected C++ Code:
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int N, K;
+    cin >> N >> K;
+
+    vector<int> A(N);
+    for (int i = 0; i < N; ++i) {
+        cin >> A[i];
+    }
+
+    int windowSize = N - K;
+    deque<int> maxDeque, minDeque;
+    int result = numeric_limits<int>::max();
+
+    for (int i = 0; i < N; ++i) {
+        // Maintain maxDeque: elements are in decreasing order
+        while (!maxDeque.empty() && A[i] > A[maxDeque.back()]) {
+            maxDeque.pop_back();
+        }
+        maxDeque.push_back(i);
+
+        // Maintain minDeque: elements are in increasing order
+        while (!minDeque.empty() && A[i] < A[minDeque.back()]) {
+            minDeque.pop_back();
+        }
+        minDeque.push_back(i);
+
+        // Remove elements out of the current window
+        while (!maxDeque.empty() && maxDeque.front() <= i - windowSize) {
+            maxDeque.pop_front();
+        }
+        while (!minDeque.empty() && minDeque.front() <= i - windowSize) {
+            minDeque.pop_front();
+        }
+
+        // Once window is full, calculate the range
+        if (i >= windowSize - 1) {
+            int currentMax = A[maxDeque.front()];
+            int currentMin = A[minDeque.front()];
+            result = min(result, currentMax - currentMin);
+        }
+    }
+
+    cout << result << endl;
+    return 0;
+}
+```
+
+---
+
+### Why Your Original Code Was Incorrect:
+
+- You sorted the array, which destroys the original order of elements.
+- The problem requires the remaining elements to stay in their **original order**, so sorting invalidates the constraints.
+- You were trying to minimize the range using median logic — but that doesn't align with the requirement of finding a contiguous subsequence of fixed size.
+
+---
+
+### Time Complexity:
+- Each index is pushed/popped at most once into each deque → **O(N)** total time.
+
+### Edge Cases Handled:
+- All elements equal → answer is 0
+- Very large input size (up to 200,000 elements)
+- Minimal or maximal `K` (`K = 1` or `K = N - 1`)
+
+This approach guarantees correctness and efficiency for all test cases.

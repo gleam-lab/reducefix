@@ -1,0 +1,40 @@
+#include<bits/stdc++.h>
+#include<vector>
+#include<algorithm>
+using namespace std;
+
+vector<int> points;
+
+void preprocess() {
+    sort(points.begin(), points.end());
+}
+
+int query(int k, int target) {
+    int left = 0, right = points.size() - 1;
+    while (left < right) {
+        int mid = (left + right) / 2;
+        if (points[mid] - target < k) {
+            left = mid + 1;
+        } else {
+            right = mid;
+        }
+    }
+    return points[left] - target;
+}
+
+int main() {
+    int n, q;
+    cin >> n >> q;
+    for (int i = 0; i < n; i++) {
+        int x;
+        cin >> x;
+        points.push_back(x);
+    }
+    preprocess();
+    for (int i = 0; i < q; i++) {
+        int b, k;
+        cin >> b >> k;
+        cout << query(k, b) << '\n';
+    }
+    return 0;
+}

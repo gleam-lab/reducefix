@@ -1,0 +1,48 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define rep(i,n) for(int i = 0; i < n; i++)
+using ll = long long;
+using Graph = vector<vector<int>>;
+
+ll f(ll a, ll b, ll p, ll q, ll x) {
+  ll z = x;
+  ll ans = 0;
+  vector<ll> dp(1000011, LLONG_MAX);
+  dp[0] = 0;
+
+  while (x > 0) {
+    ll cur = min(p, q);
+    vector<ll> ndp(dp.size());
+    for (ll i = 0; i < dp.size(); i++) {
+      if (i - a >= 0 && dp[i - a] + cur <= LLONG_MAX) ndp[i] = min(ndp[i], dp[i - a] + cur);
+      if (i - b >= 0 && dp[i - b] + cur <= LLONG_MAX) ndp[i] = min(ndp[i], dp[i - b] + cur);
+    }
+    dp = ndp;
+    x -= cur;
+  }
+
+  return dp[0];
+}
+
+int main() {
+  int n, x;
+  cin >> n >> x;
+  vector<int> a(n), b(n);
+  vector<ll> p(n), q(n);
+  rep(i, n) {
+    cin >> a[i] >> p[i] >> b[i] >> q[i];
+  }
+  ll now; // wã®åè£
+  ll l = 0, r = 1e9;
+  while (l + 1 < r) {
+    now = (l + r) / 2;
+    ll tmp = 0;
+    for (int i = 0; i < n; i++) {
+      tmp += max(f(a[i], b[i], p[i], q[i], now), 0LL);
+    }
+    if (tmp <= x) l = now;
+    else r = now;
+  }
+  cout << l;
+  return 0;
+}

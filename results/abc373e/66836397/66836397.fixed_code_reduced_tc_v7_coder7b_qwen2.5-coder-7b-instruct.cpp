@@ -1,0 +1,68 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <cassert>
+
+using namespace std;
+
+long long midpoint(long long a, long long b) {
+    return (a + b) / 2;
+}
+
+bool can_win(vector<long long>& a, vector<long long>& ac, int i, long long x, int m, long long k) {
+    long long na = a[i] + x;
+    long long r = upper_bound(a.begin(), a.end(), na) - a.begin();
+    long long uppercnt = a.size() - r;
+    long long rem = k - x;
+    long long M = m - uppercnt;
+    if (M <= 0) return false;
+    long long l = max(0L, r - M);
+    long long len = r - l;
+    bool flag = a[l] <= a[i];
+    if (flag && l > 0) --l;
+    long long cnt = (na + 1) * len - (ac[r] - ac[l] - (flag ? a[i] : 0));
+    return rem >= cnt;
+}
+
+vector<long long> solve(int n, int m, long long k, vector<long long>& a) {
+    vector<long long> ac(n + 1, 0);
+    for (int i = 0; i < n; ++i) ac[i + 1] = ac[i] + a[i];
+
+    vector<long long> ans(n, -1);
+    for (int i = 0; i < n; ++i) {
+        if (can_win(a, ac, i, 0, m, k)) {
+            ans[i] = 0;
+            continue;
+        }
+
+        long long ok = k, ng = -1;
+        while (abs(ok - ng) > 1) {
+            long long mid = midpoint(ng, ok);
+            if (can_win(a, ac, i, mid, m, k)) ok = mid;
+            else ng = mid;
+        }
+        if (can_win(a, ac, i, ok, m, k)) ans[i] = ok;
+    }
+
+    return ans;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int n, m;
+    long long k;
+    cin >> n >> m >> k;
+    vector<long long> a(n);
+    for (int i = 0; i < n; ++i) cin >> a[i];
+
+    vector<long long> result = solve(n, m, k, a);
+    for (int i = 0; i < n; ++i) {
+        if (i > 0) cout << " ";
+        cout << result[i];
+    }
+    cout << endl;
+
+    return 0;
+}

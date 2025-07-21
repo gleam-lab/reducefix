@@ -1,0 +1,114 @@
+To solve this problem efficiently, we need to manage a dynamic undirected graph and answer queries about the k-th largest vertex in a connected component.
+
+### Key Observations:
+1. **Union-Find (Disjoint Set Union - DSU)** is an efficient data structure for managing dynamically connected components.
+2. Since each query of type 2 asks for the **k-th largest vertex**, maintaining a sorted list of vertices in descending order per component helps us answer these queries quickly.
+3. We can merge sets using **union by size/rank** and keep the top 10 largest elements in each set since `k <= 10`.
+
+---
+
+### Strategy:
+- Use path-compressed DSU to track which set a node belongs to.
+- Each root of a set maintains a vector of up to 10 largest vertices in that set, sorted in descending order.
+- When merging two sets, combine their top lists and maintain only the top 10 values to ensure performance remains acceptable even for large N and Q.
+
+---
+
+### Corrected & Optimized C++ Code:
+```cpp
+#include <bits/stdc++.h>
+
+using namespace std;
+
+#define ff first
+#define ss second
+#define ll long long
+#define SZ(s) ((int)s.size())
+
+const int N = 2e5 + 5;
+
+vector<vector<int>> components(N); // Each component stores up to 10 largest nodes
+vector<int> parent(N), rank(N);
+
+int find(int x) {
+    if (parent[x] != x)
+        parent[x] = find(parent[x]);
+    return parent[x];
+}
+
+void unite(int a, int b) {
+    int rootA = find(a);
+    int rootB = find(b);
+    if (rootA == rootB)
+        return;
+
+    // Always attach smaller tree under larger tree
+    if (components[rootA].size() < components[rootB].size())
+        swap(rootA, rootB);
+
+    // Merge components[rootB] into components[rootA]
+    vector<int> merged;
+    int i = 0, j = 0;
+    while (i < SZ(components[rootA]) && j < SZ(components[rootB])) {
+        if (components[rootA][i] > components[rootB][j])
+            merged.push_back(components[rootA][i++]);
+        else
+            merged.push_back(components[rootB][j++]);
+    }
+    while (i < SZ(components[rootA]))
+        merged.push_back(components[rootA][i++]);
+    while (j < SZ(components[rootB]))
+        merged.push_back(components[rootB][j++]);
+
+    // Keep only top 10 elements
+    if (merged.size() > 10)
+        merged.resize(10);
+
+    components[rootA] = merged;
+    parent[rootB] = rootA;
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int n, q;
+    cin >> n >> q;
+
+    // Initialize DSU and components
+    for (int i = 0; i <= n; ++i) {
+        parent[i] = i;
+        rank[i] = 1;
+        components[i].push_back(i);
+    }
+
+    while (q--) {
+        int t;
+        cin >> t;
+        if (t == 1) {
+            int u, v;
+            cin >> u >> v;
+            unite(u, v);
+        } else {
+            int v, k;
+            cin >> v >> k;
+            int root = find(v);
+            if (SZ(components[root]) < k)
+                cout << -1 << '\n';
+            else
+                cout << components[root][k - 1] << '\n';
+        }
+    }
+
+    return 0;
+}
+```
+
+---
+
+### Why This Works:
+- **DSU with Path Compression** ensures nearly constant time complexity for union and find operations.
+- **Maintaining Top 10 Elements** allows fast access for Type 2 queries without sorting the entire component.
+- Efficient merging of sorted lists ensures that combining sets takes at most O(20) steps per operation, which is acceptable due to the constraint `k <= 10`.
+
+This solution runs efficiently within the given constraints and handles all edge cases correctly.

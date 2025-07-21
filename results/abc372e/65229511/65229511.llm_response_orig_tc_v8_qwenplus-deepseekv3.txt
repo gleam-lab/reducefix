@@ -1,0 +1,113 @@
+To fix this code, we need to address the incorrect handling of union operations and the maintenance of connected components' vertex sets. The problem requires efficient union-find operations with tracking of connected vertices, and the current implementation has flaws in merging sets and updating roots correctly.
+
+### Approaches
+
+1. **Union-Find Data Structure**: The Union-Find (Disjoint Set) data structure is used to efficiently manage and merge sets of vertices. Each set will keep track of its vertices in a sorted manner (or at least be able to access the k-th largest element efficiently).
+
+2. **Tracking Connected Components**: For each connected component, we maintain a set (or multiset) of vertex indices. When two components are merged, the smaller set is merged into the larger one to maintain efficiency (union by size).
+
+3. **Handling Queries**: For type 2 queries, we need to quickly access the k-th largest vertex in the connected component of the given vertex. If the size of the component is smaller than k, we return -1.
+
+### Solution Code
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+#define rep(i, n) for(int i = 0; i < (n); ++i)
+#define all(a) a.begin(), a.end()
+#define rall(a) a.rbegin(), a.rend()
+using ll = long long;
+using pi = pair<int, int>;
+const int INF = 1e9;
+
+struct UnionFind {
+    vector<int> parent;
+    vector<int> rank;
+    vector<set<int>> vertices;
+
+    UnionFind(int n) : parent(n), rank(n, 0), vertices(n) {
+        for (int i = 0; i < n; ++i) {
+            parent[i] = i;
+            vertices[i].insert(i + 1); // vertices are 1-based
+        }
+    }
+
+    int findRoot(int x) {
+        if (parent[x] != x) {
+            parent[x] = findRoot(parent[x]);
+        }
+        return parent[x];
+    }
+
+    void unite(int x, int y) {
+        int rx = findRoot(x);
+        int ry = findRoot(y);
+        if (rx == ry) return;
+
+        if (rank[rx] < rank[ry]) {
+            swap(rx, ry);
+        }
+        parent[ry] = rx;
+        for (int v : vertices[ry]) {
+            vertices[rx].insert(v);
+        }
+        vertices[ry].clear();
+        if (rank[rx] == rank[ry]) {
+            rank[rx]++;
+        }
+    }
+};
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int N, Q;
+    cin >> N >> Q;
+
+    UnionFind uf(N);
+    vector<int> ans;
+
+    rep(qi, Q) {
+        int com;
+        cin >> com;
+
+        if (com == 1) {
+            int u, v;
+            cin >> u >> v;
+            u--; v--;
+            uf.unite(u, v);
+        } else if (com == 2) {
+            int v, k;
+            cin >> v >> k;
+            v--;
+            int root = uf.findRoot(v);
+            if ((int)uf.vertices[root].size() < k) {
+                ans.push_back(-1);
+            } else {
+                auto it = uf.vertices[root].rbegin();
+                advance(it, k - 1);
+                ans.push_back(*it);
+            }
+        }
+    }
+
+    for (int x : ans) {
+        cout << x << '\n';
+    }
+
+    return 0;
+}
+```
+
+### Explanation
+
+1. **UnionFind Structure**: The `UnionFind` class includes vectors for `parent` (to track the root of each vertex), `rank` (to optimize union operations), and `vertices` (a vector of sets to store vertices of each component).
+
+2. **Initialization**: In the constructor, each vertex is initialized to be its own parent, with rank 0, and its set contains only itself (vertices are 1-based in the problem).
+
+3. **Union Operation**: The `unite` method merges two components. It uses union by rank to keep the tree flat. The smaller set is merged into the larger one to maintain efficiency. After merging, the vertices of the smaller component are added to the larger component's set.
+
+4. **Query Handling**: For type 2 queries, we find the root of the given vertex and check if the size of its set is at least `k`. If not, we return -1. Otherwise, we use a reverse iterator to access the k-th largest element in the sorted set.
+
+This approach ensures that union operations are efficient (near O(1) due to path compression and union by rank) and k-th largest queries are handled in O(k) time per query, which is feasible given the constraints (k ≤ 10). The use of sets ensures that vertices within each component are always sorted, allowing efficient access to the k-th largest element.

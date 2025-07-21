@@ -1,0 +1,37 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+#define endl "\n"
+#define int long long
+
+void solve() {
+    int n, k;
+    cin >> n >> k;
+    vector<int> A(n);
+    for (int i = 0; i < n; ++i) {
+        cin >> A[i];
+    }
+
+    // We need to keep (n - K) elements in B such that max(B) - min(B) is minimized
+    // Since we can only remove K elements, we should try to keep the densest subsequence of size (n-K)
+
+    // Sort the array to make it easier to find windows with smallest range
+    sort(A.begin(), A.end());
+
+    int window_size = n - k;
+    int min_diff = numeric_limits<int>::max();
+
+    // Try every consecutive window of size window_size
+    for (int i = 0; i + window_size <= n; ++i) {
+        min_diff = min(min_diff, A[i + window_size - 1] - A[i]);
+    }
+
+    cout << min_diff;
+}
+
+signed main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(NULL);
+    solve();
+    return 0;
+}

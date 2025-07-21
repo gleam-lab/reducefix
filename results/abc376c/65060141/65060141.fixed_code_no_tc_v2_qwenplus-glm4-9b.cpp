@@ -1,0 +1,43 @@
+#include<bits/stdc++.h>
+#define ll long long
+using namespace std;
+
+const ll N = 2e5 + 5;
+ll a[N], b[N];
+
+int main() {
+    ll n;
+    cin >> n;
+    for (ll i = 0; i < n; ++i) {
+        cin >> a[i];
+    }
+    for (ll i = 0; i < n - 1; ++i) {
+        cin >> b[i];
+    }
+
+    // To store the minimum size x that can be used for a new box
+    ll x = LLONG_MAX;
+
+    // Iterate over sorted toy sizes
+    for (ll i = 0; i < n; ++i) {
+        // Find the largest box size that is less than or equal to the current toy size
+        ll j = upper_bound(b, b + n - 1, a[i]) - 1;
+        
+        // If there is no such box, x must be the size of the current toy
+        if (j == -1) {
+            x = min(x, a[i]);
+        } else {
+            // Otherwise, the box size can be at least the size of the current toy
+            x = min(x, b[j]);
+        }
+    }
+
+    // If x is still LLONG_MAX, it means we couldn't find any valid box size
+    if (x == LLONG_MAX) {
+        cout << -1 << endl;
+    } else {
+        cout << x << endl;
+    }
+
+    return 0;
+}

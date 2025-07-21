@@ -1,0 +1,20 @@
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+
+int main() {
+  int N;
+  string S;
+  cin >> N >> S;
+  
+  vector<int> cnt(3);
+  int ans = 0;
+  
+  for (char c : S) {
+    ++cnt[c - 'P'];
+    ans += min({cnt['P' - 'P'], cnt['R' - 'P'], cnt['S' - 'P']});
+  }
+  
+  cout << ans << endl;
+  return 0;
+}

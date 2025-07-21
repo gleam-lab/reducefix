@@ -1,0 +1,40 @@
+#include<bits/stdc++.h>
+#define INF 0x3f3f3f3f3f3f3f3f
+using namespace std;
+typedef long long ll;
+const int MAXN=2e5+10;
+vector<int> vec[MAXN];
+queue<int> q;
+int step[MAXN];
+bool vis[MAXN];
+
+int main(){
+    ios_base::sync_with_stdio(false); cin.tie(NULL); cout.tie(NULL);
+    ll n,m,u,v;
+    cin>>n>>m;
+    for(ll i=1;i<=m;i++){
+        cin>>u>>v;
+        vec[u].push_back(v);
+    }
+    q.push(1);
+    vis[1] = true;
+    step[1] = 0;
+    while(!q.empty()){
+        int top = q.front();
+        q.pop();
+        for(int i=0;i<vec[top].size();i++){
+            int to = vec[top][i];
+            if(to==1){
+                printf("%d\n",step[top]);
+                return 0;
+            }
+            if(!vis[to]){
+                step[to] = step[top] + 1;
+                q.push(to);
+                vis[to] = true;
+            }
+        }
+    }
+    printf("-1\n");
+    return 0;
+}

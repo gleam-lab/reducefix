@@ -1,0 +1,35 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+
+using namespace std;
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(NULL);
+
+    int n;
+    cin >> n;
+
+    vector<long long> nums(n);
+    for(int i = 0; i < n; ++i) {
+        cin >> nums[i];
+    }
+
+    // If all numbers are negative, the maximum sum is the largest negative number
+    if(all_of(nums.begin(), nums.end(), [](long long num){return num < 0;})) {
+        cout << *max_element(nums.begin(), nums.end()) << '\n';
+        return 0;
+    }
+
+    long long max_sum = 0;
+    long long current_max = 0;
+    for(auto num : nums) {
+        current_max = max(num, current_max + num);
+        max_sum = max(max_sum, current_max);
+    }
+
+    cout << max_sum << '\n';
+
+    return 0;
+}

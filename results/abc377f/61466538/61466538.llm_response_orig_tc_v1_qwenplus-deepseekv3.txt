@@ -1,0 +1,140 @@
+To fix this code, we need to correctly calculate the number of safe squares where a new piece can be placed without being captured by any existing pieces. The initial approach had several issues, including incorrect calculations for the diagonals and not properly accounting for overlaps between different attack vectors.
+
+### Approaches
+1. **Precompute Attacked Squares**: 
+   - **Rows and Columns**: Any square in the same row or column as an existing piece is under attack.
+   - **Diagonals**: For each piece, compute the two diagonals (i - j and i + j). Any square on these diagonals is under attack.
+2. **Count Unique Attacked Squares**: 
+   - Use sets to store unique rows, columns, and diagonals to avoid double-counting.
+   - Calculate the total number of squares under attack by considering overlaps between rows, columns, and diagonals.
+3. **Calculate Safe Squares**: 
+   - Subtract the total attacked squares from the total possible squares (N^2).
+   - Ensure that the existing pieces' positions are not counted as safe squares.
+
+### Solution Code
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+typedef long long ll;
+
+int main() {
+    ll N, M;
+    cin >> N >> M;
+    set<ll> rows, cols, diag1, diag2;
+    set<pair<ll, ll>> pieces;
+
+    for (ll i = 0; i < M; ++i) {
+        ll a, b;
+        cin >> a >> b;
+        rows.insert(a);
+        cols.insert(b);
+        diag1.insert(a - b);
+        diag2.insert(a + b);
+        pieces.insert({a, b});
+    }
+
+    ll total = N * N;
+    ll attacked = 0;
+
+    // Rows and columns
+    attacked += rows.size() * N;
+    attacked += cols.size() * N;
+    attacked -= rows.size() * cols.size();
+
+    // Diagonals (i - j)
+    for (ll d : diag1) {
+        ll cnt = 0;
+        if (d >= 0) {
+            cnt = N - d;
+        } else {
+            cnt = N + d;
+        }
+        attacked += cnt;
+    }
+
+    // Diagonals (i + j)
+    for (ll d : diag2) {
+        ll cnt = 0;
+        if (d <= N + 1) {
+            cnt = d - 1;
+        } else {
+            cnt = 2 * N - d + 1;
+        }
+        attacked += cnt;
+    }
+
+    // Subtract overlaps between rows/columns and diagonals
+    for (ll r : rows) {
+        for (ll d : diag1) {
+            ll c = r - d;
+            if (c >= 1 && c <= N) {
+                if (pieces.count({r, c}) == 0) {
+                    attacked--;
+                }
+            }
+        }
+        for (ll d : diag2) {
+            ll c = d - r;
+            if (c >= 1 && c <= N) {
+                if (pieces.count({r, c}) == 0) {
+                    attacked--;
+                }
+            }
+        }
+    }
+
+    for (ll c : cols) {
+        for (ll d : diag1) {
+            ll r = c + d;
+            if (r >= 1 && r <= N) {
+                if (pieces.count({r, c}) == 0) {
+                    attacked--;
+                }
+            }
+        }
+        for (ll d : diag2) {
+            ll r = d - c;
+            if (r >= 1 && r <= N) {
+                if (pieces.count({r, c}) == 0) {
+                    attacked--;
+                }
+            }
+        }
+    }
+
+    // Subtract overlaps between the two diagonals
+    for (ll d1 : diag1) {
+        for (ll d2 : diag2) {
+            ll r = (d1 + d2) / 2;
+            ll c = (d2 - d1) / 2;
+            if ((d1 + d2) % 2 == 0 && (d2 - d1) % 2 == 0) {
+                if (r >= 1 && r <= N && c >= 1 && c <= N) {
+                    if (pieces.count({r, c}) == 0) {
+                        attacked--;
+                    }
+                }
+            }
+        }
+    }
+
+    // Subtract the existing pieces (they are not empty)
+    attacked += M;
+
+    ll safe = total - attacked;
+    cout << max(safe, 0LL) << endl;
+
+    return 0;
+}
+```
+
+### Explanation
+1. **Input Handling**: Read the grid size (N) and the number of existing pieces (M). Store each piece's position in a set for quick lookup.
+2. **Attacked Squares Calculation**:
+   - **Rows and Columns**: Use sets to store unique rows and columns. The total attacked squares are calculated by considering all squares in these rows and columns, adjusting for overlaps.
+   - **Diagonals**: For each diagonal (i - j and i + j), calculate the number of squares on that diagonal within the grid bounds.
+3. **Overlap Adjustment**: Subtract overlaps where squares are counted multiple times (e.g., a square in both a row and a diagonal).
+4. **Existing Pieces Adjustment**: Ensure existing pieces are not counted as safe squares by adjusting the attacked count.
+5. **Safe Squares Calculation**: Subtract the total attacked squares from the total grid squares (N^2) to get the number of safe squares. The result is clamped to zero to avoid negative values.
+
+This approach ensures that all constraints are met and efficiently calculates the safe squares using set operations to avoid redundant checks.

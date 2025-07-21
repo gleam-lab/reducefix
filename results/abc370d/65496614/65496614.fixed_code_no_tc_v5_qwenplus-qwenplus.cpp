@@ -1,0 +1,72 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+#define rep(i, n) for(int i = 0; i < (int)(n); ++i)
+#define rep1(i, n) for(int i = 1; i <= (int)(n); ++i)
+
+using ll = long long;
+using pii = pair<int, int>;
+
+const int dx[4] = {-1, 1, 0, 0};
+const int dy[4] = {0, 0, -1, 1};
+
+int main() {
+    int h, w, q;
+    cin >> h >> w >> q;
+
+    // Use flat arrays for efficiency
+    vector<vector<bool>> has_wall(h + 2, vector<bool>(w + 2, true));
+
+    // For each row and column, maintain ordered sets of wall positions
+    vector<set<int>> rows(h + 2), cols(w + 2);
+    rep1(i, h) rep1(j, w) {
+        rows[i].insert(j);
+        cols[j].insert(i);
+    }
+
+    auto destroy = [&](int r, int c) {
+        if (!has_wall[r][c]) return;
+
+        // Remove from both row and column sets
+        rows[r].erase(c);
+        cols[c].erase(r);
+        has_wall[r][c] = false;
+    };
+
+    while (q--) {
+        int r, c;
+        cin >> r >> c;
+
+        if (has_wall[r][c]) {
+            destroy(r, c);
+            continue;
+        }
+
+        // Directions: up, down, left, right
+        // For vertical directions
+        if (!cols[c].empty()) {
+            auto it = cols[c].lower_bound(r);
+            if (it != cols[c].end()) destroy(*it, c); // down
+            if (it != cols[c].begin()) {
+                --it;
+                destroy(*it, c); // up
+            }
+        }
+
+        // For horizontal directions
+        if (!rows[r].empty()) {
+            auto it = rows[r].lower_bound(c);
+            if (it != rows[r].end()) destroy(r, *it); // right
+            if (it != rows[r].begin()) {
+                --it;
+                destroy(r, *it); // left
+            }
+        }
+    }
+
+    int ans = 0;
+    rep1(i, h) rep1(j, w) ans += has_wall[i][j];
+
+    cout << ans << endl;
+    return 0;
+}

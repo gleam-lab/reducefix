@@ -1,0 +1,29 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+
+using namespace std;
+
+int main() {
+    int n, k;
+    cin >> n >> k;
+    
+    vector<int> a(n);
+    for (int i = 0; i < n; i++) {
+        cin >> a[i];
+    }
+    
+    // Sort the array to find the minimum maximum difference
+    sort(a.begin(), a.end());
+    
+    // If we remove k elements, the best strategy is to remove the largest k elements
+    // because this will minimize the maximum value of the new sequence B.
+    int max_element = a[n - 1];
+    int min_element = a[n - k - 1];
+    
+    // The minimum possible value of the maximum value of B minus the minimum value of B
+    // is the difference between the last element and the second last element after removing k elements.
+    cout << max_element - min_element << endl;
+    
+    return 0;
+}

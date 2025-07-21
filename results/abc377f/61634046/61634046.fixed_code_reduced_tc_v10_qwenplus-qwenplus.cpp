@@ -1,0 +1,123 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    long long N;
+    int M;
+    cin >> N >> M;
+
+    set<pair<long long, long long>> pieces;
+    set<long long> rows, cols;
+    set<long long> diag1, diag2; // x + y, x - y
+
+    for (int i = 0; i < M; ++i) {
+        long long x, y;
+        cin >> x >> y;
+        pieces.emplace(x, y);
+        rows.insert(x);
+        cols.insert(y);
+        diag1.insert(x + y);
+        diag2.insert(x - y);
+    }
+
+    // Total empty squares
+    long long total_empty = N * N - M;
+
+    // Squares under attack from any direction
+    auto count_attack = [&](long long x, long long y) -> bool {
+        if (rows.count(x)) return true;
+        if (cols.count(y)) return true;
+        if (diag1.count(x + y)) return true;
+        if (diag2.count(x - y)) return true;
+        return false;
+    };
+
+    // First subtract all squares in attacked rows or columns
+    long long attacked_by_row_or_col = (rows.size() * N + cols.size() * N - rows.size() * cols.size());
+    
+    // Subtract diagonals
+    long long attacked_by_diag1 = 0;
+    for (auto d : diag1) {
+        long long cnt = 0;
+        if (d >= 2 && d <= 2 * N) {
+            long long start = max(1LL, d - N);
+            long long end = min(N, d - 1);
+            cnt = end - start + 1;
+        }
+        attacked_by_diag1 += cnt;
+    }
+
+    long long attacked_by_diag2 = 0;
+    for (auto d : diag2) {
+        long long cnt = 0;
+        if (-N < d && d < N) {
+            long long start = max(1LL, 1 + d);
+            long long end = min(N, N + d);
+            cnt = end - start + 1;
+        } else if (-N <= d && d <= N) {
+            long long start = max(1LL, 1 + d);
+            long long end = min(N, N + d);
+            cnt = end - start + 1;
+        }
+        attacked_by_diag2 += cnt;
+    }
+
+    // Inclusion-exclusion: add back overlaps between row/col/diag1/diag2
+
+    // Overlaps between row and col (just the pieces)
+    long long overlap_row_col = M;
+
+    // Overlaps between row and diag1/diag2
+    long long overlap_row_diag1 = 0, overlap_row_diag2 = 0;
+    for (auto p : pieces) {
+        long long x = p.first, y = p.second;
+        long long d1 = x + y;
+        long long d2 = x - y;
+        if (diag1.count(d1)) overlap_row_diag1++;
+        if (diag2.count(d2)) overlap_row_diag2++;
+    }
+
+    // Overlaps between col and diag1/diag2
+    long long overlap_col_diag1 = 0, overlap_col_diag2 = 0;
+    for (auto p : pieces) {
+        long long x = p.first, y = p.second;
+        long long d1 = x + y;
+        long long d2 = x - y;
+        if (diag1.count(d1)) overlap_col_diag1++;
+        if (diag2.count(d2)) overlap_col_diag2++;
+    }
+
+    // Overlaps between diag1 and diag2
+    long long overlap_diag1_diag2 = 0;
+    for (auto p : pieces) {
+        long long x = p.first, y = p.second;
+        long long d1 = x + y;
+        long long d2 = x - y;
+        if (diag1.count(d1) && diag2.count(d2)) {
+            overlap_diag1_diag2++;
+        }
+    }
+
+    // Three-way overlaps
+    long long three_way_overlap = M;
+
+    // Four-way overlap (should be zero unless a piece is on all four sets)
+    long long four_way_overlap = M;
+
+    // Use inclusion-exclusion principle
+    long long attacked_squares = attacked_by_row_or_col + attacked_by_diag1 + attacked_by_diag2
+                               - overlap_row_col - overlap_row_diag1 - overlap_row_diag2
+                               - overlap_col_diag1 - overlap_col_diag2 - overlap_diag1_diag2
+                               + three_way_overlap - four_way_overlap;
+
+    // Now compute safe squares
+    long long answer = total_empty - attacked_squares;
+
+    cout << answer << endl;
+
+    return 0;
+}

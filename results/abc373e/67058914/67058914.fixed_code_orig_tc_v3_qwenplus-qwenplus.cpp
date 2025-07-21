@@ -1,0 +1,87 @@
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+
+int main() {
+    int N, M;
+    ll K;
+    cin >> N >> M >> K;
+
+    vector<pair<ll, int>> a(N);
+    for (int i = 0; i < N; ++i) {
+        cin >> a[i].first;
+        a[i].second = i;
+    }
+
+    // Sort candidates by current votes
+    sort(a.begin(), a.end());
+
+    vector<ll> prefix(N + 1);
+    for (int i = 1; i <= N; ++i)
+        prefix[i] = prefix[i - 1] + a[i - 1].first;
+
+    ll total_votes_so_far = prefix[N];
+    ll remaining = K - total_votes_so_far;
+
+    vector<ll> result(N);
+
+    // For each candidate, find minimum additional votes to guarantee win
+    for (int i = 0; i < N; ++i) {
+        int idx = i;
+        ll A_i = a[i].first;
+
+        // Binary search on required extra votes
+        auto canGuaranteeWin = [&](ll X) {
+            ll cur = A_i + X;
+            // Find how many candidates have strictly more votes than cur
+            int low = i + 1, high = N;
+            while (low < high) {
+                int mid = (low + high) / 2;
+                if (a[mid - 1].first > cur)
+                    low = mid;
+                else
+                    high = mid;
+            }
+            int stronger = N - low + 1;
+
+            if (stronger >= M)
+                return false;
+
+            // Need to block enough of the remaining candidates to ensure less than M are better
+            int need_to_block = M - stronger - 1;
+            if (need_to_block <= 0)
+                return true;
+
+            // Compute how much we need to raise our vote count to surpass those `need_to_block` candidates
+            ll sum_needed = cur * need_to_block;
+            ll available = remaining - X;
+
+            if (available < 0)
+                return false;
+
+            ll sum_available = prefix[low - 1] - prefix[low - 1 - need_to_block];
+            return sum_needed >= sum_available;
+        };
+
+        if (!canGuaranteeWin(0)) {
+            // Even with all remaining votes, cannot guarantee win
+            result[a[i].second] = -1;
+        } else {
+            ll l = 0, r = remaining + 1;
+            while (l < r) {
+                ll mid = (l + r) / 2;
+                if (canGuaranteeWin(mid))
+                    r = mid;
+                else
+                    l = mid + 1;
+            }
+            result[a[i].second] = l;
+        }
+    }
+
+    for (int i = 0; i < N; ++i)
+        cout << result[i] << " ";
+    cout << "\n";
+
+    return 0;
+}

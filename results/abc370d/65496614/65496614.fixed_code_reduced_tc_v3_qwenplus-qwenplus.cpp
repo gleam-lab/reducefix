@@ -1,0 +1,100 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+#define rep(i,n) for(int i = 0; i < (int)(n); ++i)
+#define rep1(i,n) for(int i = 1; i <= (int)(n); ++i)
+
+using vi = vector<int>;
+using vvi = vector<vi>;
+using vb = vector<bool>;
+using vvb = vector<vb>;
+
+int main() {
+    int h, w, q;
+    cin >> h >> w >> q;
+
+    const int H = h + 2;
+    const int W = w + 2;
+
+    // Initialize grid: true means wall exists
+    vvb has_wall(H, vb(W, true));
+
+    // For each row and column, keep track of walls using ordered sets
+    vector<set<int>> row_set(H);
+    vector<set<int>> col_set(W);
+
+    // Initialize with all positions having walls
+    rep1(i, h) {
+        rep1(j, w) {
+            row_set[i].insert(j);
+            col_set[j].insert(i);
+        }
+    }
+
+    while (q--) {
+        int r, c;
+        cin >> r >> c;
+
+        if (has_wall[r][c]) {
+            // Wall exists here, destroy it
+            has_wall[r][c] = false;
+            row_set[r].erase(c);
+            col_set[c].erase(r);
+        } else {
+            // No wall here, destroy the first walls in each direction
+
+            // Left
+            if (!row_set[r].empty() && *row_set[r].begin() < c) {
+                auto it = row_set[r].lower_bound(c);
+                if (it != row_set[r].begin()) {
+                    --it;
+                    int j = *it;
+                    has_wall[r][j] = false;
+                    row_set[r].erase(it);
+                    col_set[j].erase(r);
+                }
+            }
+
+            // Right
+            if (!row_set[r].empty() && *row_set[r].rbegin() > c) {
+                auto it = row_set[r].upper_bound(c);
+                if (it != row_set[r].end()) {
+                    int j = *it;
+                    has_wall[r][j] = false;
+                    row_set[r].erase(it);
+                    col_set[j].erase(r);
+                }
+            }
+
+            // Up
+            if (!col_set[c].empty() && *col_set[c].begin() < r) {
+                auto it = col_set[c].lower_bound(r);
+                if (it != col_set[c].begin()) {
+                    --it;
+                    int i = *it;
+                    has_wall[i][c] = false;
+                    col_set[c].erase(it);
+                    row_set[i].erase(c);
+                }
+            }
+
+            // Down
+            if (!col_set[c].empty() && *col_set[c].rbegin() > r) {
+                auto it = col_set[c].upper_bound(r);
+                if (it != col_set[c].end()) {
+                    int i = *it;
+                    has_wall[i][c] = false;
+                    col_set[c].erase(it);
+                    row_set[i].erase(c);
+                }
+            }
+        }
+    }
+
+    // Count remaining walls
+    int ans = 0;
+    rep1(i, h) rep1(j, w) ans += has_wall[i][j];
+
+    cout << ans << endl;
+    return 0;
+}

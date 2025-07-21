@@ -1,0 +1,59 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+const int MAXN = 105;
+const long long INF = 2e18;
+
+int main() {
+    ios::sync_with_stdio(false); cin.tie(0);
+
+    int n, x;
+    cin >> n >> x;
+    
+    vector<vector<long long>> a(n), p(n), b(n), q(n);
+    for(int i = 0; i < n; ++i) {
+        a[i].resize(2), p[i].resize(2), b[i].resize(2), q[i].resize(2);
+        cin >> a[i][0] >> p[i][0] >> b[i][0] >> q[i][0];
+        a[i][1] = a[i][0], p[i][1] = p[i][0], b[i][1] = b[i][0], q[i][1] = q[i][0];
+        if(a[i][0] > b[i][0]) swap(a[i][0], b[i][0]), swap(p[i][0], q[i][0]);
+    }
+
+    long long l = 0, r = 1e10 + 7;
+    while(l <= r) {
+        long long mid = (l + r) / 2;
+        long long sum = 0;
+        
+        for(int i = 0; i < n; ++i) {
+            long long minn = INF;
+            for(int j = 0; j <= b[i][0]; ++j) {
+                if(mid - j * a[i][0] >= 0) {
+                    minn = min(minn, j * p[i][0]);
+                    if(mid - j * a[i][0] >= b[i][0])
+                        minn = min(minn, j * p[i][0] + (mid - j * a[i][0]) / b[i][0] * q[i][0]);
+                    else
+                        minn = min(minn, j * p[i][0] + ((mid - j * a[i][0]) / b[i][0] + 1) * q[i][0]);
+                }
+            }
+            for(int j = 0; j <= a[i][0]; ++j) {
+                if(mid - j * b[i][0] >= 0) {
+                    minn = min(minn, j * q[i][0]);
+                    if(mid - j * b[i][0] >= a[i][0])
+                        minn = min(minn, j * q[i][0] + (mid - j * b[i][0]) / a[i][0] * p[i][0]);
+                    else
+                        minn = min(minn, j * q[i][0] + ((mid - j * b[i][0]) / a[i][0] + 1) * p[i][0]);
+                }
+            }
+            sum += minn;
+        }
+        
+        if(sum <= x) {
+            ans = max(ans, mid);
+            l = mid + 1;
+        } else {
+            r = mid - 1;
+        }
+    }
+    
+    cout << ans << endl;
+    return 0;
+}

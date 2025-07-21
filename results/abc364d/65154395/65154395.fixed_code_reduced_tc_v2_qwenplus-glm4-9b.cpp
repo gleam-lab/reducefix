@@ -1,0 +1,41 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+
+using namespace std;
+
+const int N = 200000;
+
+int main() {
+    int n, q;
+    cin >> n >> q;
+    vector<int> a(N + 1);
+    for (int i = 0; i < n; i++) {
+        int x;
+        cin >> x;
+        a[x]++;
+    }
+
+    for (int i = 1; i <= N; i++) {
+        a[i] += a[i - 1];
+    }
+
+    while (q--) {
+        int b, k;
+        cin >> b >> k;
+        k = min(k, (int)a.size());
+        int left = 0, right = b;
+        while (left < right) {
+            int mid = left + (right - left) / 2;
+            int count = upper_bound(a.begin(), a.begin() + k, b - mid) - a.begin();
+            if (count <= k) {
+                left = mid + 1;
+            } else {
+                right = mid;
+            }
+        }
+        cout << b - left << endl;
+    }
+
+    return 0;
+}

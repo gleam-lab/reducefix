@@ -1,0 +1,30 @@
+#include <iostream>
+#include <vector>
+
+using namespace std;
+
+int main() {
+    int n;
+    cin >> n;
+    vector<int> hp(n);
+    for (int i = 0; i < n; ++i) {
+        cin >> hp[i];
+    }
+
+    long long t = 0;
+    for (int i = 0; i < n; ++i) {
+        if (hp[i] > 0) {
+            // Calculate the minimum number of attacks needed to reduce current enemy's health to 0 or less
+            while (hp[i] > 0) {
+                // If current health is a multiple of 3, attack 3 times (each time reducing 1 health)
+                // Otherwise, attack once (reducing 1 health)
+                t += (hp[i] / 3) * 3;
+                hp[i] -= (hp[i] / 3) * 3;
+                t++;
+                hp[i]--;
+            }
+        }
+    }
+    cout << t << endl;
+    return 0;
+}

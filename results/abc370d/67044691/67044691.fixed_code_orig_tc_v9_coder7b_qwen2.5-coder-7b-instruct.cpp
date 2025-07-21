@@ -1,0 +1,76 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define ll long long
+#define rep(i,n) for(int i=0;i<n;i++)
+#define repj(j,m) for(int j=0;j<m;j++)
+#define INF (1LL<<60)
+#define MOD (1000000007)
+
+typedef pair<int,int> pii;
+typedef pair<ll,ll> pll;
+
+vector<vector<int>> grid;
+vector<vector<int>> row;
+vector<vector<int>> col;
+vector<vector<int>> visited;
+
+void dfs(int r,int c){
+    if(r<0||r>=grid.size()||c<0||c>=grid[0].size())return;
+    if(grid[r][c]==0)return;
+    if(visited[r][c])return;
+    visited[r][c]=1;
+    grid[r][c]=0;
+    dfs(r+1,c);
+    dfs(r-1,c);
+    dfs(r,c+1);
+    dfs(r,c-1);
+}
+
+int main(){
+    ios_base::sync_with_stdio(false);
+    cin.tie(NULL);
+    int h,w,q;
+    cin >> h >> w >> q;
+    grid.resize(h,vector<int>(w,1));
+    row.resize(h);
+    col.resize(w);
+    visited.resize(h,vector<int>(w,0));
+
+    rep(i,h){
+        rep(j,w){
+            row[i].push_back(j);
+            col[j].push_back(i);
+        }
+    }
+
+    while(q--){
+        int r,c;
+        cin >> r >> c;
+        r--;c--;
+
+        if(grid[r][c]==0){
+            continue;
+        }
+
+        grid[r][c]=0;
+        visited.resize(h,vector<int>(w,0));
+        dfs(r,c);
+
+        rep(i,h){
+            if(grid[i][c]==1)row[i].pop_back();
+        }
+
+        rep(j,w){
+            if(grid[r][j]==1)col[j].pop_back();
+        }
+    }
+
+    int count=0;
+    rep(i,h){
+        count+=row[i].size();
+    }
+
+    cout << count << endl;
+
+    return 0;
+}

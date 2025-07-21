@@ -1,0 +1,70 @@
+#include <iostream>
+#include <algorithm>
+#include <climits>
+using namespace std;
+
+typedef struct { int a, p, b, q; } Pattern;
+Pattern A[100];
+long long dp[100][10000];  // dp[i][j] = min cost to get j pattern units for type i
+
+int N, X;
+
+// Calculate the minimum cost for a specific pattern to reach 'n' units
+long long cost(int i, int n) {
+    if (n <= 0) return 0;
+    int period = A[i].a * A[i].b;
+    long long full_cycles = n / period;
+    int remainder = n % period;
+    return full_cycles * A[i].p * A[i].b + dp[i][remainder];
+}
+
+// Check if it's possible to produce 'n' total items within budget X
+bool isPossible(int n) {
+    long long total_cost = 0;
+    for (int i = 0; i < N; i++) {
+        total_cost += cost(i, n);
+        if (total_cost > X) return false;
+    }
+    return true;
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    scanf("%d %d", &N, &X);
+
+    for (int i = 0; i < N; i++) {
+        int a, p, b, q;
+        scanf("%d %d %d %d", &a, &p, &b, &q);
+        
+        // Ensure the more efficient option is stored first
+        if (a * q < b * p) {
+            swap(a, b);
+            swap(p, q);
+        }
+        A[i] = {a, p, b, q};
+        
+        // Initialize DP for this pattern
+        dp[i][0] = 0;
+        for (int j = 1; j < a * b; j++) {
+            dp[i][j] = LLONG_MAX;
+            if (j >= A[i].a)
+                dp[i][j] = min(dp[i][j], dp[i][j - A[i].a] + A[i].p);
+            if (j >= A[i].b)
+                dp[i][j] = min(dp[i][j], dp[i][j - A[i].b] + A[i].q);
+        }
+    }
+
+    // Binary search for maximum number of items we can buy
+    int lo = 0, hi = 1e9;
+    while (lo < hi) {
+        int mid = (lo + hi + 1) / 2;
+        if (isPossible(mid))
+            lo = mid;
+        else
+            hi = mid - 1;
+    }
+
+    printf("%d\n", lo);
+}

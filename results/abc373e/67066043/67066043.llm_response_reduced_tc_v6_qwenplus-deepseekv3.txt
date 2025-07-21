@@ -1,0 +1,117 @@
+To fix this code, we need to address the problem of determining the minimum number of additional votes each candidate needs to secure their victory, ensuring that no more than M-1 candidates have more votes than them. The initial approach had some logical gaps and incorrect calculations, especially in how it handled the binary search and the conditions for determining the required votes.
+
+### Approaches
+1. **Sorting and Binary Search**: 
+   - Sort the candidates' vote counts to easily find the M-th largest vote count.
+   - For each candidate, determine the minimum additional votes needed such that after adding these votes, at most M-1 candidates can have more votes than them, even if the remaining votes are distributed optimally to other candidates.
+
+2. **Binary Search for Minimum Votes**:
+   - For each candidate, perform a binary search to find the smallest number of votes `X` such that when added to their current votes, the number of candidates with more votes is less than `M`.
+   - The binary search should consider the worst-case scenario where other candidates receive the maximum possible votes from the remaining ballots.
+
+3. **Checking Feasibility**:
+   - For each candidate, after adding `X` votes, check if the remaining votes can be distributed in a way that ensures no more than `M-1` candidates exceed their new vote count. This involves calculating the total votes needed to push other candidates above the new vote count and ensuring the sum does not exceed the remaining votes.
+
+### Solution Code
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+#define all(x) (x).begin(), (x).end()
+
+int main() {
+    ios_base::sync_with_stdio(0);
+    cin.tie(0);
+    int N, M;
+    ll K;
+    cin >> N >> M >> K;
+    vector<ll> A(N);
+    ll sum_A = 0;
+    for (int i = 0; i < N; ++i) {
+        cin >> A[i];
+        sum_A += A[i];
+    }
+    ll remaining = K - sum_A;
+
+    vector<int> ord(N);
+    iota(all(ord), 0);
+    sort(all(ord), [&](int i, int j) { return A[i] < A[j]; });
+    vector<ll> sorted_A(N);
+    for (int i = 0; i < N; ++i) {
+        sorted_A[i] = A[ord[i]];
+    }
+
+    vector<ll> pref(N + 1);
+    for (int i = 0; i < N; ++i) {
+        pref[i + 1] = pref[i] + sorted_A[i];
+    }
+
+    vector<ll> ans(N, -1);
+    for (int idx = 0; idx < N; ++idx) {
+        ll current = sorted_A[idx];
+        ll low = 0, high = remaining;
+        ll best_X = -1;
+        while (low <= high) {
+            ll mid = (low + high) / 2;
+            ll new_votes = current + mid;
+            int pos = upper_bound(all(sorted_A), new_votes) - sorted_A.begin();
+            int needed = N - pos;
+            if (needed < M) {
+                best_X = mid;
+                high = mid - 1;
+            } else {
+                low = mid + 1;
+            }
+        }
+        if (best_X != -1) {
+            int pos = upper_bound(all(sorted_A), current + best_X) - sorted_A.begin();
+            if (pos <= N - M) {
+                best_X = -1;
+            } else {
+                ll sum_required = 0;
+                int start = N - M;
+                if (pos > start) {
+                    sum_required = (current + best_X + 1) * (pos - start) - (pref[pos] - pref[start]);
+                }
+                if (sum_required <= remaining) {
+                    ans[ord[idx]] = best_X;
+                } else {
+                    best_X = -1;
+                }
+            }
+        }
+        if (best_X == -1) {
+            ans[ord[idx]] = -1;
+        }
+    }
+
+    for (int i = 0; i < N; ++i) {
+        if (ans[i] == -1) {
+            int count = 0;
+            for (int j = 0; j < N; ++j) {
+                if (A[j] > A[i]) {
+                    count++;
+                }
+            }
+            if (count < M) {
+                ans[i] = 0;
+            } else {
+                ans[i] = -1;
+            }
+        }
+    }
+
+    for (int i = 0; i < N; ++i) {
+        cout << ans[i] << ' ';
+    }
+    cout << endl;
+
+    return 0;
+}
+```
+
+### Explanation
+- **Sorting and Binary Search**: The candidates' votes are sorted to facilitate binary search operations. This helps in efficiently determining the positions where candidates' votes would lie after additional votes are added.
+- **Binary Search for Minimum Votes**: For each candidate, we perform a binary search to find the smallest `X` such that adding `X` votes to the candidate ensures that no more than `M-1` candidates can have more votes. This involves checking the position of the candidate's new vote count in the sorted list and ensuring it is within the top `M` positions.
+- **Feasibility Check**: After determining a potential `X`, we check if the remaining votes can be distributed to other candidates in a way that does not allow more than `M-1` candidates to exceed the candidate's new vote count. This involves calculating the sum of votes required to push other candidates above the new vote count and ensuring this sum does not exceed the remaining votes.
+- **Edge Cases Handling**: After the main calculation, we handle cases where candidates might already have secured their position or where it is impossible for them to secure a position regardless of the additional votes. This ensures the solution covers all possible scenarios.

@@ -1,0 +1,41 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define rep(i,n) for(int i = 0; i < (n); i++)
+using ll = long long;
+
+int main(void) {
+    int h, w, q;
+    cin >> h >> w >> q;
+    vector<vector<bool>> grid(h, vector<bool>(w, true));
+    while (q--) {
+        int r, c;
+        cin >> r >> c;
+        r--; c--;
+        if (grid[r][c]) {
+            grid[r][c] = false;
+        } else {
+            // Find the nearest walls to the left, right, up, and down
+            int x = c - 1;
+            while (x >= 0 && !grid[r][x]) x--;
+            if (x >= 0) grid[r][x] = false;
+
+            x = c + 1;
+            while (x < w && !grid[r][x]) x++;
+            if (x < w) grid[r][x] = false;
+
+            int y = r - 1;
+            while (y >= 0 && !grid[y][c]) y--;
+            if (y >= 0) grid[y][c] = false;
+
+            y = r + 1;
+            while (y < h && !grid[y][c]) y++;
+            if (y < h) grid[y][c] = false;
+        }
+    }
+    int ans = 0;
+    for (const auto& row : grid) {
+        ans += count(row.begin(), row.end(), true);
+    }
+    cout << ans << "\n";
+    return 0;
+}

@@ -1,0 +1,225 @@
+To fix this code, we need to properly handle the destruction of walls in the grid when a bomb is placed at a given cell. The original code attempted to destroy walls by checking all four directions (left, right, up, down) but had some logical errors in how it tracked and updated the walls. The correct approach involves efficiently finding the nearest wall in each direction when the bomb is placed on an empty cell.
+
+### Approaches
+1. **Initialization**: Start with a grid where all cells have walls initially.
+2. **Handling Queries**:
+   - If the cell has a wall, remove it.
+   - If the cell is empty, find the nearest walls in all four directions (up, down, left, right) and remove them.
+3. **Efficiency**: Use data structures to efficiently track the nearest walls in each direction for each cell. For each row and column, we can maintain sets to keep track of walls that still exist, allowing us to quickly find the nearest walls in each direction.
+
+### Solution Code
+```cpp
+#include <vector>
+#include <set>
+#include <iostream>
+using namespace std;
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int H, W, Q;
+    cin >> H >> W >> Q;
+
+    vector<set<int>> rowWalls(H + 1);
+    vector<set<int>> colWalls(W + 1);
+
+    for (int i = 1; i <= H; ++i) {
+        rowWalls[i].insert(0);
+        rowWalls[i].insert(W + 1);
+    }
+    for (int j = 1; j <= W; ++j) {
+        colWalls[j].insert(0);
+        colWalls[j].insert(H + 1);
+    }
+
+    int broken = 0;
+
+    for (int q = 0; q < Q; ++q) {
+        int R, C;
+        cin >> R >> C;
+
+        if (rowWalls[R].count(C)) {
+            rowWalls[R].erase(C);
+            colWalls[C].erase(R);
+            broken++;
+        } else {
+            // Left
+            auto it_left = rowWalls[R].lower_bound(C);
+            it_left--;
+            int left = *it_left;
+            if (left >= 1) {
+                rowWalls[R].insert(left);
+                colWalls[left].insert(R);
+                broken--;
+                rowWalls[R].erase(left);
+                colWalls[left].erase(R);
+                broken++;
+            }
+
+            // Right
+            auto it_right = rowWalls[R].upper_bound(C);
+            int right = *it_right;
+            if (right <= W) {
+                rowWalls[R].insert(right);
+                colWalls[right].insert(R);
+                broken--;
+                rowWalls[R].erase(right);
+                colWalls[right].erase(R);
+                broken++;
+            }
+
+            // Up
+            auto it_up = colWalls[C].lower_bound(R);
+            it_up--;
+            int up = *it_up;
+            if (up >= 1) {
+                colWalls[C].insert(up);
+                rowWalls[up].insert(C);
+                broken--;
+                colWalls[C].erase(up);
+                rowWalls[up].erase(C);
+                broken++;
+            }
+
+            // Down
+            auto it_down = colWalls[C].upper_bound(R);
+            int down = *it_down;
+            if (down <= H) {
+                colWalls[C].insert(down);
+                rowWalls[down].insert(C);
+                broken--;
+                colWalls[C].erase(down);
+                rowWalls[down].erase(C);
+                broken++;
+            }
+        }
+    }
+
+    cout << (H * W - broken) << endl;
+
+    return 0;
+}
+```
+
+Wait, no. That's not quite right. The original problem's logic requires that when placing a bomb at an empty cell, we destroy the first walls in four directions. The code above tries to reinsert walls and then check again, which isn't correct.
+
+Let me rethink the approach. We should maintain sets for each row and column that keep track of the existing walls. When a bomb is placed on an empty cell, we find the nearest walls in each direction using these sets and remove them.
+
+Here's the corrected approach:
+
+1. **Initialization**: For each row, maintain a set of columns with walls, and for each column, maintain a set of rows with walls.
+2. **Handling Queries**:
+   - If the cell (R, C) has a wall, remove it from the row and column sets.
+   - If the cell is empty, find the nearest walls:
+     - **Left**: The largest column less than C in row R's set.
+     - **Right**: The smallest column greater than C in row R's set.
+     - **Up**: The largest row less than R in column C's set.
+     - **Down**: The smallest row greater than R in column C's set.
+   - Remove these walls if they exist.
+
+### Corrected Solution Code
+```cpp
+#include <vector>
+#include <set>
+#include <iostream>
+using namespace std;
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int H, W, Q;
+    cin >> H >> W >> Q;
+
+    vector<set<int>> rowWalls(H + 1);
+    vector<set<int>> colWalls(W + 1);
+
+    for (int i = 1; i <= H; ++i) {
+        for (int j = 1; j <= W; ++j) {
+            rowWalls[i].insert(j);
+            colWalls[j].insert(i);
+        }
+    }
+
+    int broken = 0;
+
+    for (int q = 0; q < Q; ++q) {
+        int R, C;
+        cin >> R >> C;
+
+        auto& row = rowWalls[R];
+        auto& col = colWalls[C];
+
+        if (row.count(C)) {
+            row.erase(C);
+            col.erase(R);
+            broken++;
+        } else {
+            // Left
+            auto it_left = row.lower_bound(C);
+            if (it_left != row.begin()) {
+                --it_left;
+                int left = *it_left;
+                if (left >= 1) {
+                    row.erase(left);
+                    colWalls[left].erase(R);
+                    broken++;
+                }
+            }
+
+            // Right
+            auto it_right = row.upper_bound(C);
+            if (it_right != row.end()) {
+                int right = *it_right;
+                if (right <= W) {
+                    row.erase(right);
+                    colWalls[right].erase(R);
+                    broken++;
+                }
+            }
+
+            // Up
+            auto it_up = col.lower_bound(R);
+            if (it_up != col.begin()) {
+                --it_up;
+                int up = *it_up;
+                if (up >= 1) {
+                    col.erase(up);
+                    rowWalls[up].erase(C);
+                    broken++;
+                }
+            }
+
+            // Down
+            auto it_down = col.upper_bound(R);
+            if (it_down != col.end()) {
+                int down = *it_down;
+                if (down <= H) {
+                    col.erase(down);
+                    rowWalls[down].erase(C);
+                    broken++;
+                }
+            }
+        }
+    }
+
+    cout << (H * W - broken) << endl;
+
+    return 0;
+}
+```
+
+### Explanation
+1. **Initialization**: We initialize sets for each row and column to keep track of walls. Initially, all cells have walls, so we populate these sets accordingly.
+2. **Handling Queries**: For each query:
+   - If the cell (R, C) has a wall, we remove it from the row and column sets and increment the broken walls count.
+   - If the cell is empty, we find the nearest walls in all four directions using the sets:
+     - **Left**: The largest column less than C in row R's set.
+     - **Right**: The smallest column greater than C in row R's set.
+     - **Up**: The largest row less than R in column C's set.
+     - **Down**: The smallest row greater than R in column C's set.
+   - We remove these walls if they exist and increment the broken walls count.
+3. **Output**: The remaining walls are calculated as the total cells (H * W) minus the broken walls count, which is then printed.
+
+This approach efficiently manages the walls using sets, ensuring quick lookup and removal operations, making it suitable for large grid sizes and numerous queries.

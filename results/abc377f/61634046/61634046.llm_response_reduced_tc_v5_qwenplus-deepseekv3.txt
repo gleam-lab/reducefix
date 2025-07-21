@@ -1,0 +1,206 @@
+To fix this code, we need to correctly calculate the number of safe squares where a new piece can be placed without being captured by any existing pieces. The existing approach had some issues in handling the intersections of different attack patterns (rows, columns, diagonals, and anti-diagonals), leading to incorrect counts in some cases.
+
+### Approaches
+1. **Identify Forbidden Squares**: A square is forbidden if it lies in the same row, column, diagonal (i + j = a + b), or anti-diagonal (i - j = a - b) as any existing piece.
+2. **Use Inclusion-Exclusion Principle**: Calculate the total forbidden squares by considering all individual attack patterns and their intersections to avoid double-counting.
+3. **Efficient Data Structures**: Use sets or sorted arrays to store and check the existing pieces' rows, columns, diagonals, and anti-diagonals for quick lookups.
+4. **Correct Intersection Calculations**: Ensure that intersections between different attack patterns are correctly accounted for to get the accurate count of forbidden squares.
+
+### Solution Code
+```cpp
+#include <bits/stdc++.h>
+
+using namespace std;
+
+int main() {
+    long long N, M;
+    cin >> N >> M;
+    
+    unordered_set<long long> rows, cols, diag1, diag2;
+    for (int i = 0; i < M; ++i) {
+        long long a, b;
+        cin >> a >> b;
+        rows.insert(a);
+        cols.insert(b);
+        diag1.insert(a + b);
+        diag2.insert(a - b);
+    }
+    
+    long long total = N * N;
+    long long forbidden = 0;
+    
+    // Forbidden due to rows
+    forbidden += rows.size() * N;
+    
+    // Forbidden due to columns
+    forbidden += cols.size() * N;
+    
+    // Forbidden due to diagonals (i + j = k)
+    for (long long d : diag1) {
+        long long min_val = max(1LL, d - N);
+        long long max_val = min(N, d - 1);
+        if (max_val >= min_val) {
+            forbidden += max_val - min_val + 1;
+        }
+    }
+    
+    // Forbidden due to anti-diagonals (i - j = k)
+    for (long long d : diag2) {
+        long long min_i = max(1LL, 1 + d);
+        long long max_i = min(N, N + d);
+        if (max_i >= min_i) {
+            forbidden += max_i - min_i + 1;
+        }
+    }
+    
+    // Count intersections: rows and columns
+    long long row_col_intersect = 0;
+    for (long long r : rows) {
+        for (long long c : cols) {
+            if (rows.count(r) && cols.count(c)) {
+                row_col_intersect++;
+            }
+        }
+    }
+    forbidden -= row_col_intersect;
+    
+    // Count intersections: rows and diag1
+    long long row_diag1_intersect = 0;
+    for (long long r : rows) {
+        for (long long d : diag1) {
+            long long j = d - r;
+            if (1 <= j && j <= N && cols.count(j)) {
+                row_diag1_intersect++;
+            }
+        }
+    }
+    forbidden -= row_diag1_intersect;
+    
+    // Count intersections: rows and diag2
+    long long row_diag2_intersect = 0;
+    for (long long r : rows) {
+        for (long long d : diag2) {
+            long long j = r - d;
+            if (1 <= j && j <= N && cols.count(j)) {
+                row_diag2_intersect++;
+            }
+        }
+    }
+    forbidden -= row_diag2_intersect;
+    
+    // Count intersections: columns and diag1
+    long long col_diag1_intersect = 0;
+    for (long long c : cols) {
+        for (long long d : diag1) {
+            long long i = d - c;
+            if (1 <= i && i <= N && rows.count(i)) {
+                col_diag1_intersect++;
+            }
+        }
+    }
+    forbidden -= col_diag1_intersect;
+    
+    // Count intersections: columns and diag2
+    long long col_diag2_intersect = 0;
+    for (long long c : cols) {
+        for (long long d : diag2) {
+            long long i = c + d;
+            if (1 <= i && i <= N && rows.count(i)) {
+                col_diag2_intersect++;
+            }
+        }
+    }
+    forbidden -= col_diag2_intersect;
+    
+    // Count intersections: diag1 and diag2
+    long long diag1_diag2_intersect = 0;
+    for (long long d1 : diag1) {
+        for (long long d2 : diag2) {
+            long long i = (d1 + d2) / 2;
+            long long j = (d1 - d2) / 2;
+            if ((d1 + d2) % 2 == 0 && (d1 - d2) % 2 == 0 && 1 <= i && i <= N && 1 <= j && j <= N && rows.count(i) && cols.count(j)) {
+                diag1_diag2_intersect++;
+            }
+        }
+    }
+    forbidden += diag1_diag2_intersect;
+    
+    // Count intersections: rows, columns, and diag1
+    long long row_col_diag1_intersect = 0;
+    for (long long r : rows) {
+        for (long long c : cols) {
+            long long d = r + c;
+            if (diag1.count(d)) {
+                row_col_diag1_intersect++;
+            }
+        }
+    }
+    forbidden += row_col_diag1_intersect;
+    
+    // Count intersections: rows, columns, and diag2
+    long long row_col_diag2_intersect = 0;
+    for (long long r : rows) {
+        for (long long c : cols) {
+            long long d = r - c;
+            if (diag2.count(d)) {
+                row_col_diag2_intersect++;
+            }
+        }
+    }
+    forbidden += row_col_diag2_intersect;
+    
+    // Count intersections: rows, diag1, and diag2
+    long long row_diag1_diag2_intersect = 0;
+    for (long long r : rows) {
+        for (long long d1 : diag1) {
+            for (long long d2 : diag2) {
+                long long j = (d1 - d2) / 2;
+                if ((d1 - d2) % 2 == 0 && 1 <= j && j <= N && cols.count(j) && (r + j == d1) && (r - j == d2)) {
+                    row_diag1_diag2_intersect++;
+                }
+            }
+        }
+    }
+    forbidden += row_diag1_diag2_intersect;
+    
+    // Count intersections: columns, diag1, and diag2
+    long long col_diag1_diag2_intersect = 0;
+    for (long long c : cols) {
+        for (long long d1 : diag1) {
+            for (long long d2 : diag2) {
+                long long i = (d1 + d2) / 2;
+                if ((d1 + d2) % 2 == 0 && 1 <= i && i <= N && rows.count(i) && (i + c == d1) && (i - c == d2)) {
+                    col_diag1_diag2_intersect++;
+                }
+            }
+        }
+    }
+    forbidden += col_diag1_diag2_intersect;
+    
+    // Count intersections: rows, columns, diag1, and diag2
+    long long all_intersect = 0;
+    for (long long r : rows) {
+        for (long long c : cols) {
+            long long d1 = r + c;
+            long long d2 = r - c;
+            if (diag1.count(d1) && diag2.count(d2)) {
+                all_intersect++;
+            }
+        }
+    }
+    forbidden -= all_intersect;
+    
+    long long safe = total - forbidden;
+    cout << safe << endl;
+    
+    return 0;
+}
+```
+
+### Explanation
+1. **Initialization**: We read the grid size `N` and the number of existing pieces `M`.
+2. **Tracking Attack Patterns**: We use unordered sets to store the rows, columns, diagonals (`i + j`), and anti-diagonals (`i - j`) of existing pieces for efficient lookups.
+3. **Forbidden Squares Calculation**: We calculate the total number of squares forbidden by each attack pattern individually, then adjust for overlaps using the inclusion-exclusion principle to avoid double-counting.
+4. **Final Count**: The safe squares are computed by subtracting the total forbidden squares from the total grid squares (`N * N`), and the result is printed.
+
+This approach ensures that all forbidden squares are accurately accounted for, and the solution efficiently handles the constraints using set operations and careful intersection calculations.

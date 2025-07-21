@@ -1,0 +1,61 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define int long long
+
+const int N = 105;
+int n, x;
+int a[N], p[N], b[N], q[N];
+
+bool check(int mid) {
+    int total = 0;
+    for (int i = 1; i <= n; ++i) {
+        int min_cost = numeric_limits<int>::max();
+        // Try all possible number of type A attacks
+        for (int j = 0; j <= b[i]; ++j) {
+            // Calculate how many times we need to use B after using A j times
+            int remaining_health = max(0LL, mid - j * a[i]);
+            int needed_b_attacks = (remaining_health + b[i] - 1) / b[i];
+            int cost = j * p[i] + needed_b_attacks * q[i];
+            min_cost = min(min_cost, cost);
+        }
+        // Try all possible number of type B attacks
+        for (int j = 0; j <= b[i]; ++j) {
+            int remaining_health = max(0LL, mid - j * b[i]);
+            int needed_a_attacks = (remaining_health + a[i] - 1) / a[i];
+            int cost = j * q[i] + needed_a_attacks * p[i];
+            min_cost = min(min_cost, cost);
+        }
+        total += min_cost;
+        if (total > x)
+            return false;
+    }
+    return true;
+}
+
+signed main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    cout.tie(nullptr);
+
+    cin >> n >> x;
+
+    for (int i = 1; i <= n; ++i) {
+        cin >> a[i] >> p[i] >> b[i] >> q[i];
+    }
+
+    int low = 0, high = 1e18;
+    int answer = 0;
+
+    while (low <= high) {
+        int mid = (low + high) / 2;
+        if (check(mid)) {
+            answer = mid;
+            low = mid + 1;
+        } else {
+            high = mid - 1;
+        }
+    }
+
+    cout << answer << '\n';
+    return 0;
+}

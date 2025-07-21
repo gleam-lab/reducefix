@@ -1,0 +1,138 @@
+To solve this problem efficiently, we need to handle two types of queries on a dynamic undirected graph:
+
+1. **Adding an edge between two vertices.**
+2. **Finding the k-th largest vertex in the connected component of a given vertex.**
+
+This suggests that we need a data structure that can:
+- Efficiently manage dynamically changing disjoint sets (Union-Find).
+- Maintain elements in sorted order for quick access to the k-th largest element.
+
+---
+
+### Key Observations
+
+- For query type 2, we only need the top 10 largest elements in a connected component.
+- We can use `std::multiset` or `std::set` to store the vertices in each component in sorted order.
+- When merging components, always merge the smaller set into the larger one to maintain efficiency (this is called the "smaller-to-larger" heuristic).
+
+---
+
+### Why Your Code Fails
+
+Your code uses `set<int>` and merges them by inserting all elements from one root into another. However, this is inefficient when sets are large, especially under tight time constraints.
+
+Also, you're using `advance(it, k - 1)` on a reverse iterator, which has linear complexity in the worst case (up to 10 steps), but it's acceptable here due to the constraint `k <= 10`.
+
+---
+
+### Fix Strategy
+
+- Use `multiset<int, greater<>>` so that the k-th largest element can be accessed via a forward iterator.
+- Always merge the smaller set into the larger one.
+- Maintain only one valid multiset per component; clear merged ones.
+
+Here is the corrected and optimized C++ code:
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+#define rep(i, n) for(int i = 0; i < (n); i++)
+#define all(a) (a).begin(), (a).end()
+#define rall(a) (a).rbegin(), (a).rend()
+using ll = long long;
+using pii = pair<int, int>;
+
+struct UnionFind {
+    vector<int> parent, rank;
+    vector<multiset<int, greater<int>>> comps;
+
+    UnionFind(int n) : parent(n), rank(n, 0), comps(n) {
+        for (int i = 0; i < n; i++) {
+            comps[i].insert(i);
+            parent[i] = i;
+        }
+    }
+
+    int findRoot(int x) {
+        if (parent[x] != x)
+            parent[x] = findRoot(parent[x]);
+        return parent[x];
+    }
+
+    bool unite(int x, int y) {
+        int rx = findRoot(x), ry = findRoot(y);
+        if (rx == ry) return false;
+
+        // Merge smaller set into larger
+        if (comps[rx].size() < comps[ry].size()) swap(rx, ry);
+
+        for (int val : comps[ry]) {
+            comps[rx].insert(val);
+        }
+        comps[ry].clear();
+        parent[ry] = rx;
+        return true;
+    }
+
+    multiset<int, greater<int>>& getComponent(int x) {
+        return comps[findRoot(x)];
+    }
+};
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int N, Q;
+    cin >> N >> Q;
+
+    UnionFind uf(N);
+    vector<int> ans;
+
+    while (Q--) {
+        int t;
+        cin >> t;
+        if (t == 1) {
+            int u, v;
+            cin >> u >> v;
+            u--; v--;
+            uf.unite(u, v);
+        } else {
+            int v, k;
+            cin >> v >> k;
+            v--;
+            auto& comp = uf.getComponent(v);
+            if (comp.size() < k) {
+                ans.push_back(-1);
+            } else {
+                auto it = comp.begin();
+                advance(it, k - 1);
+                ans.push_back(*it + 1);
+            }
+        }
+    }
+
+    for (int x : ans) cout << x << "\n";
+
+    return 0;
+}
+```
+
+---
+
+### Complexity Analysis
+
+- **Union Operation**: Amortized O(α(N)) for path compression + O(log N) for small-to-large merging.
+- **Query Type 2**: O(k) = O(1) since k ≤ 10.
+- Total time complexity: Efficient enough for N, Q up to 2 × 10⁵.
+
+---
+
+### Final Notes
+
+- The key optimization is using `multiset<int, greater<int>>` to keep the elements in descending order.
+- This allows direct access to the k-th largest element with `advance(it, k - 1)`.
+- The small-to-large merging ensures efficient union operations.
+
+This implementation should now pass all test cases correctly and efficiently.

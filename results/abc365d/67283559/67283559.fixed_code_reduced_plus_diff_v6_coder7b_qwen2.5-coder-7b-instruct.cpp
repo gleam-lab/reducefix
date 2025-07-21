@@ -1,0 +1,65 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int N;
+    cin >> N;
+    string S;
+    cin >> S;
+
+    const vector<char> hand = {'R', 'P', 'S'};
+
+    auto getScore = [&](char c1, char c2) {
+        if ((c1 == 'R' && c2 == 'S') || (c1 == 'P' && c2 == 'R') || (c1 == 'S' && c2 == 'P')) return 1;
+        return 0;
+    };
+
+    auto getNextHand = [&](const vector<char>& currentHand, char usedChar) {
+        vector<char> nextHand;
+        for (char h : currentHand) {
+            if (h != usedChar) nextHand.push_back(h);
+        }
+        return nextHand;
+    };
+
+    int total1 = 0, total2 = 0;
+
+    // First strategy
+    vector<char> currentHand1(hand.begin(), hand.end());
+    for (int i = 0; i < N; ++i) {
+        int bestScore = 0;
+        char bestChoice = S[i];
+        for (char h : currentHand1) {
+            bestScore = max(bestScore, getScore(h, S[i]));
+            if (bestScore > 0) {
+                bestChoice = h;
+                break;
+            }
+        }
+        total1 += bestScore;
+        currentHand1 = getNextHand(currentHand1, bestChoice);
+    }
+
+    // Second strategy
+    vector<char> currentHand2(getNextHand(hand, S[0]));
+    for (int i = 1; i < N; ++i) {
+        int bestScore = 0;
+        char bestChoice = S[i];
+        for (char h : currentHand2) {
+            bestScore = max(bestScore, getScore(h, S[i]));
+            if (bestScore > 0) {
+                bestChoice = h;
+                break;
+            }
+        }
+        total2 += bestScore;
+        currentHand2 = getNextHand(currentHand2, bestChoice);
+    }
+
+    cout << max(total1, total2) << endl;
+
+    return 0;
+}

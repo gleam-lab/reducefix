@@ -1,0 +1,53 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int simulate(const string& S, const vector<char>& hand, char first_move) {
+    int n = S.size();
+    vector<char> next = {first_move};
+    int score = 0;
+    
+    for (int i = 0; i < n; ++i) {
+        bool win = false;
+        for (char move : next) {
+            if ((move == 'R' && S[i] == 'S') ||
+                (move == 'P' && S[i] == 'R') ||
+                (move == 'S' && S[i] == 'P')) {
+                score++;
+                win = true;
+                next.clear();
+                for (char h : hand) {
+                    if (h != move) next.push_back(h);
+                }
+                break;
+            }
+        }
+        if (!win) {
+            // Choose any move that doesn't win (could be tie or loss)
+            char move = next[0];
+            next.clear();
+            for (char h : hand) {
+                if (h != move) next.push_back(h);
+            }
+        }
+    }
+    return score;
+}
+
+int main() {
+    int N;
+    cin >> N;
+    string S;
+    cin >> S;
+    
+    vector<char> hand = {'R', 'P', 'S'};
+    
+    // Try all possible first moves and choose the best result
+    int max_score = 0;
+    for (char first_move : hand) {
+        int current_score = simulate(S, hand, first_move);
+        max_score = max(max_score, current_score);
+    }
+    
+    cout << max_score;
+    return 0;
+}

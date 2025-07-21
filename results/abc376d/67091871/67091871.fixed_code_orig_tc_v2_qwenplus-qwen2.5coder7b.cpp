@@ -1,0 +1,51 @@
+#include<bits/stdc++.h>
+#define ll long long
+using namespace std;
+
+const int MAXN = 200005;
+
+vector<int> adj[MAXN];
+bool visited[MAXN];
+
+// Depth First Search to find cycles
+void dfs(int node, int parent, int &cycleLength) {
+    visited[node] = true;
+    for (auto neighbor : adj[node]) {
+        if (!visited[neighbor]) {
+            dfs(neighbor, node, cycleLength);
+        } else if (neighbor != parent) {
+            // If we encounter an already visited node that is not the parent,
+            // it means we have found a back edge which indicates a cycle.
+            cycleLength = min(cycleLength, abs(node - neighbor));
+        }
+    }
+}
+
+int main() {
+    ios_base::sync_with_stdio(false); cin.tie(NULL);
+
+    int n, m;
+    cin >> n >> m;
+
+    for (int i = 0; i < m; ++i) {
+        int u, v;
+        cin >> u >> v;
+        adj[u].push_back(v);
+        adj[v].push_back(u);
+    }
+
+    int minCycle = INT_MAX;
+    for (int i = 1; i <= n; ++i) {
+        if (!visited[i]) {
+            dfs(i, -1, minCycle);
+        }
+    }
+
+    if (minCycle == INT_MAX) {
+        cout << "-1";
+    } else {
+        cout << minCycle + 1;
+    }
+
+    return 0;
+}

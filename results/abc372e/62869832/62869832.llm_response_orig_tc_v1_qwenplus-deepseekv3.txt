@@ -1,0 +1,84 @@
+To fix this code, we need to correctly handle the union-find (disjoint set) operations and maintain the top k largest elements in each component. The previous implementation had several issues, including incorrect merging of sets and incorrect handling of the top k elements during union operations.
+
+### Approaches
+1. **Union-Find Data Structure**: We use the union-find data structure to manage the connected components. This involves path compression and union by size or rank to ensure efficient operations.
+2. **Top K Elements**: For each component, we maintain a set of the top k largest elements (where k is up to 10, as per the problem constraints). When two components are merged, we combine their top k elements and keep the largest k elements from the combined set.
+3. **Queries Handling**: For type 2 queries, we directly access the top k elements of the component containing the queried vertex and return the k-th largest element if it exists, otherwise -1.
+
+### Solution Code
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+const int MAXN = 2e5 + 5;
+const int MAXK = 10;
+
+int parent[MAXN];
+vector<int> topk[MAXN];
+
+int find_set(int v) {
+    if (v == parent[v])
+        return v;
+    return parent[v] = find_set(parent[v]);
+}
+
+void union_sets(int u, int v) {
+    u = find_set(u);
+    v = find_set(v);
+    if (u == v)
+        return;
+    
+    if (topk[u].size() < topk[v].size())
+        swap(u, v);
+    
+    vector<int> merged;
+    merge(topk[u].rbegin(), topk[u].rend(),
+          topk[v].rbegin(), topk[v].rend(),
+          back_inserter(merged), greater<int>());
+    
+    topk[u].clear();
+    for (int i = 0; i < min((int)merged.size(), MAXK); ++i)
+        topk[u].push_back(merged[i]);
+    
+    parent[v] = u;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int N, Q;
+    cin >> N >> Q;
+    
+    for (int i = 1; i <= N; ++i) {
+        parent[i] = i;
+        topk[i].push_back(i);
+    }
+    
+    while (Q--) {
+        int op, u, v;
+        cin >> op >> u >> v;
+        
+        if (op == 1) {
+            union_sets(u, v);
+        } else {
+            int root = find_set(u);
+            if (v > (int)topk[root].size()) {
+                cout << "-1\n";
+            } else {
+                cout << topk[root][v - 1] << "\n";
+            }
+        }
+    }
+    
+    return 0;
+}
+```
+
+### Explanation
+1. **Initialization**: We initialize the parent array for the union-find structure and a vector `topk` for each node to store its top k largest elements (initially just the node itself).
+2. **Union Operation**: When merging two sets, we combine their top k elements into a single sorted list in descending order. We then take the first k elements from this merged list to form the new top k elements for the merged set.
+3. **Find Operation**: The find operation uses path compression to optimize future queries, ensuring logarithmic time complexity.
+4. **Query Handling**: For a type 2 query, we check if the queried k-th largest element exists in the top k elements of the component. If it does, we return it; otherwise, we return -1.
+
+This approach efficiently merges sets and maintains the top k elements dynamically, ensuring correct and fast responses to each query.

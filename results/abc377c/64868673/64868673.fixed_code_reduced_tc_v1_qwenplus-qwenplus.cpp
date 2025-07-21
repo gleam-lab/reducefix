@@ -1,0 +1,51 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    long long N, M;
+    cin >> N >> M;
+    
+    // The 8 possible attack positions relative to a knight
+    vector<pair<long long, long long>> directions = {
+        {2, 1}, {1, 2}, {-1, 2}, {-2, 1},
+        {-2, -1}, {-1, -2}, {1, -2}, {2, -1}
+    };
+    
+    // Use a set to store occupied or threatened squares
+    unordered_set<string> threatened;
+    
+    // Function to create a unique string key for map coordinates
+    auto getKey = [](long long x, long long y) {
+        return to_string(x) + "," + to_string(y);
+    };
+    
+    for (long long i = 0; i < M; ++i) {
+        long long a, b;
+        cin >> a >> b;
+        
+        // Add the piece itself
+        threatened.insert(getKey(a, b));
+        
+        // Add all 8 threatening positions
+        for (auto [dx, dy] : directions) {
+            long long x = a + dx;
+            long long y = b + dy;
+            
+            // Only add if within bounds
+            if (x >= 1 && x <= N && y >= 1 && y <= N) {
+                threatened.insert(getKey(x, y));
+            }
+        }
+    }
+    
+    // Total squares that are either occupied or threatened
+    long long totalThreatened = threatened.size();
+    
+    // Calculate available squares
+    cout << (N * N - totalThreatened) << endl;
+    
+    return 0;
+}

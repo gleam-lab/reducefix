@@ -1,0 +1,94 @@
+To fix this code, we need to ensure that the logic for determining the minimum additional votes required for each candidate to guarantee their victory is correctly implemented. The problem involves sorting the candidates' votes and applying binary search to find the required votes efficiently.
+
+### Approaches
+1. **Sorting and Binary Search**: For each candidate, we first sort all the current votes. Then, for each candidate, we use binary search to determine the minimum additional votes they need such that they will always be in the top M candidates after all remaining votes are distributed in the worst case (i.e., other candidates receive as many votes as possible to disadvantage the candidate in question).
+
+2. **Prefix Sums**: Compute prefix sums of the sorted votes to efficiently calculate the sum of votes needed to ensure the candidate's position in the top M candidates.
+
+3. **Binary Search Condition**: For each candidate, the binary search checks if adding X votes ensures that the candidate is in the top M candidates, considering the remaining votes and the worst-case distribution.
+
+### Solution Code
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    ll N, M, K;
+    cin >> N >> M >> K;
+    vector<ll> A(N);
+    ll total = 0;
+    for (ll &a : A) {
+        cin >> a;
+        total += a;
+    }
+    ll remaining = K - total;
+
+    vector<ll> sorted_A = A;
+    sort(sorted_A.begin(), sorted_A.end());
+
+    vector<ll> prefix(N + 1, 0);
+    for (int i = 0; i < N; ++i) {
+        prefix[i + 1] = prefix[i] + sorted_A[i];
+    }
+
+    vector<ll> res(N);
+    for (int i = 0; i < N; ++i) {
+        ll current = A[i];
+        ll left = 0, right = remaining;
+        ll ans = -1;
+
+        while (left <= right) {
+            ll mid = left + (right - left) / 2;
+            ll new_votes = current + mid;
+
+            auto it = upper_bound(sorted_A.begin(), sorted_A.end(), new_votes);
+            int pos = it - sorted_A.begin();
+            int upper_count = N - pos;
+
+            if (upper_count < M) {
+                ans = mid;
+                right = mid - 1;
+            } else {
+                left = mid + 1;
+            }
+        }
+
+        if (ans != -1) {
+            // Now check if the remaining votes can be distributed such that 'ans' is sufficient
+            ll new_votes = current + ans;
+            auto it = upper_bound(sorted_A.begin(), sorted_A.end(), new_votes);
+            int pos = it - sorted_A.begin();
+            int upper_count = N - pos;
+
+            if (upper_count < M) {
+                res[i] = ans;
+            } else {
+                res[i] = -1;
+            }
+        } else {
+            res[i] = -1;
+        }
+    }
+
+    for (int i = 0; i < N; ++i) {
+        cout << res[i] << " \n"[i == N - 1];
+    }
+
+    return 0;
+}
+```
+
+### Explanation
+1. **Input Handling**: The code reads the number of candidates \( N \), the threshold \( M \), the total votes \( K \), and the current votes for each candidate \( A_i \).
+
+2. **Sorting and Prefix Sum**: The current votes are sorted to facilitate efficient binary search. Prefix sums of the sorted votes are computed to quickly calculate the sum of votes up to any position.
+
+3. **Binary Search for Each Candidate**: For each candidate, the code performs a binary search to find the minimum additional votes \( X \) such that, after adding \( X \) votes to the candidate's current votes, the candidate will be in the top \( M \) candidates. The binary search checks if the candidate's new vote count ensures they have fewer than \( M \) candidates above them, even if the remaining votes are distributed in the worst possible way.
+
+4. **Output**: The results for each candidate are printed, showing the minimum additional votes needed or \(-1\) if it's impossible to guarantee their victory.
+
+This approach ensures that the solution is efficient (O(N log N)) and handles all edge cases, including maximum constraints and single-element inputs.

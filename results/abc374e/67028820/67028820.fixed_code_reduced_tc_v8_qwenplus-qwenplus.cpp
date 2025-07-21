@@ -1,0 +1,61 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+
+#define int long long
+#define ld long double
+
+int n, x;
+vector<int> a, b, q, p;
+
+bool canMake(int mid) {
+    ld total_cost = 0;
+    for (int i = 0; i < n; i++) {
+        int requiredA = a[i];
+        int costA = p[i];
+        int requiredB = b[i];
+        int costB = q[i];
+
+        ld costPerUnitA = costA / (ld)requiredA;
+        ld costPerUnitB = costB / (ld)requiredB;
+
+        if (costPerUnitA < costPerUnitB) {
+            // Prefer using A first
+            int numFullA = mid / requiredA;
+            total_cost += numFullA * costA;
+            int remaining = mid - numFullA * requiredA;
+            total_cost += remaining * costPerUnitA;
+        } else {
+            // Prefer using B first
+            int numFullB = mid / requiredB;
+            total_cost += numFullB * costB;
+            int remaining = mid - numFullB * requiredB;
+            total_cost += remaining * costPerUnitB;
+        }
+    }
+
+    return total_cost <= x + 1e-9; // Tolerance for floating point precision
+}
+
+signed main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    cin >> n >> x;
+    a.resize(n); p.resize(n); b.resize(n); q.resize(n);
+    for (int i = 0; i < n; i++) {
+        cin >> a[i] >> p[i] >> b[i] >> q[i];
+    }
+
+    int left = 0, right = 1e10;
+    while (left < right) {
+        int mid = (left + right + 1) >> 1;
+
+        if (canMake(mid)) left = mid;
+        else right = mid - 1;
+    }
+
+    cout << left << "\n";
+
+    return 0;
+}

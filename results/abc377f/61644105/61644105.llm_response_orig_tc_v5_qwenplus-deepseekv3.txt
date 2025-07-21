@@ -1,0 +1,115 @@
+To fix this code, we need to accurately calculate the number of safe squares where a new piece can be placed without being captured by any existing pieces. The original code had several issues, including incorrect sorting and unique operations, as well as incorrect calculations for the intersections of different attack patterns (rows, columns, diagonals, and anti-diagonals). 
+
+### Approaches
+1. **Identify Attack Patterns**: Each existing piece attacks along its row, column, diagonal (i + j = constant), and anti-diagonal (i - j = constant). 
+2. **Count Safe Squares**: The total number of safe squares is computed by subtracting the squares under attack from the total squares, then adding back the squares that were subtracted multiple times (using inclusion-exclusion principle).
+3. **Inclusion-Exclusion Principle**: Properly account for overlaps between different attack patterns to avoid double-counting or missing squares.
+
+### Solution Code
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+typedef long long ll;
+
+int main() {
+    ll N, M;
+    cin >> N >> M;
+
+    vector<ll> rows, cols, diags, anti_diags;
+    for (int i = 0; i < M; ++i) {
+        ll a, b;
+        cin >> a >> b;
+        rows.push_back(a);
+        cols.push_back(b);
+        diags.push_back(a + b);
+        anti_diags.push_back(a - b);
+    }
+
+    // Sort and remove duplicates
+    sort(rows.begin(), rows.end());
+    rows.erase(unique(rows.begin(), rows.end()), rows.end());
+    sort(cols.begin(), cols.end());
+    cols.erase(unique(cols.begin(), cols.end()), cols.end());
+    sort(diags.begin(), diags.end());
+    diags.erase(unique(diags.begin(), diags.end()), diags.end());
+    sort(anti_diags.begin(), anti_diags.end());
+    anti_diags.erase(unique(anti_diags.begin(), anti_diags.end()), anti_diags.end());
+
+    ll R = rows.size();
+    ll C = cols.size();
+    ll D = diags.size();
+    ll A = anti_diags.size();
+
+    // Total squares under attack
+    ll attacked = 0;
+
+    // Rows and columns
+    attacked += R * N + C * N - R * C;
+
+    // Diagonals (a + b = s)
+    for (ll s : diags) {
+        ll min_a = max(1LL, s - N);
+        ll max_a = min(N, s - 1);
+        if (min_a > max_a) continue;
+        attacked += (max_a - min_a + 1);
+    }
+
+    // Anti-diagonals (a - b = d)
+    for (ll d : anti_diags) {
+        ll min_a = max(1LL, 1 + d);
+        ll max_a = min(N, N + d);
+        if (min_a > max_a) continue;
+        attacked += (max_a - min_a + 1);
+    }
+
+    // Subtract intersections between rows/columns and diagonals/anti-diagonals
+    for (ll a : rows) {
+        for (ll s : diags) {
+            ll b = s - a;
+            if (b >= 1 && b <= N) attacked--;
+        }
+        for (ll d : anti_diags) {
+            ll b = a - d;
+            if (b >= 1 && b <= N) attacked--;
+        }
+    }
+
+    for (ll b : cols) {
+        for (ll s : diags) {
+            ll a = s - b;
+            if (a >= 1 && a <= N) attacked--;
+        }
+        for (ll d : anti_diags) {
+            ll a = b + d;
+            if (a >= 1 && a <= N) attacked--;
+        }
+    }
+
+    // Add intersections between diagonals and anti-diagonals
+    for (ll s : diags) {
+        for (ll d : anti_diags) {
+            ll a = (s + d) / 2;
+            ll b = (s - d) / 2;
+            if ((s + d) % 2 == 0 && (s - d) % 2 == 0 && a >= 1 && a <= N && b >= 1 && b <= N) {
+                attacked++;
+            }
+        }
+    }
+
+    // Total safe squares
+    ll total = N * N - attacked;
+    cout << total << endl;
+
+    return 0;
+}
+```
+
+### Explanation
+1. **Input Handling**: The code reads the grid size \( N \) and the number of existing pieces \( M \), followed by their coordinates.
+2. **Unique Attack Patterns**: The rows, columns, diagonals (i + j), and anti-diagonals (i - j) of the existing pieces are stored in separate vectors, duplicates are removed.
+3. **Initial Attack Calculation**: The total squares under attack are calculated by considering rows, columns, and diagonals separately.
+4. **Inclusion-Exclusion Adjustments**: The overlaps between rows/columns and diagonals/anti-diagonals are subtracted to avoid double-counting. The intersections between diagonals and anti-diagonals are added back to account for squares captured by both.
+5. **Safe Squares Calculation**: The total safe squares are derived by subtracting the attacked squares from the total grid squares \( N^2 \).
+
+This approach ensures accurate counting of safe squares while efficiently handling the large constraints using set operations and mathematical adjustments.

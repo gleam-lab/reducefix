@@ -1,0 +1,95 @@
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+
+int main() {
+    int N, M;
+    ll K;
+    cin >> N >> M >> K;
+    vector<pair<ll, int>> A(N);
+    for (int i = 0; i < N; ++i) {
+        cin >> A[i].first;
+        A[i].second = i;
+    }
+
+    ll total = 0;
+    for (auto &p : A) total += p.first;
+    ll remaining = K - total;
+
+    vector<ll> res(N);
+
+    // Create a sorted list of votes only
+    vector<ll> sorted_A;
+    for (auto &p : A) sorted_A.push_back(p.first);
+    sort(sorted_A.begin(), sorted_A.end());
+
+    // Precompute prefix sums
+    vector<ll> prefix(N + 1);
+    for (int i = 0; i < N; ++i)
+        prefix[i + 1] = prefix[i] + sorted_A[i];
+
+    // For each candidate, binary search on needed votes
+    for (int i = 0; i < N; ++i) {
+        ll ai = A[i].first;
+        int idx = lower_bound(sorted_A.begin(), sorted_A.end(), ai), end_sorted = N;
+        
+        // Binary search for the minimum X
+        ll low = 0, high = remaining;
+        ll answer = -1;
+
+        auto is_possible = [&](ll x) {
+            ll my_total = ai + x;
+            ll need = 0;
+            // We have remaining - x votes to distribute among others
+            ll available = remaining - x;
+
+            // Find how many candidates are strictly greater than my_total
+            int cnt = N - (upper_bound(sorted_A.begin(), sorted_A.end(), my_total) - sorted_A.begin());
+
+            if (cnt >= M) return false;
+
+            // Need to reduce votes of top (M - cnt - 1) candidates so they don't exceed my_total
+            int needed = M - cnt - 1;
+            if (needed <= 0) return true;
+
+            // Find how many in the sorted list are > my_total
+            int l = 0, r = N;
+            while (l < r) {
+                int mid = (l + r) / 2;
+                if (sorted_A[mid] > my_total)
+                    r = mid;
+                else
+                    l = mid + 1;
+            }
+            int start = l;
+
+            // Take the smallest `needed` from those who can be beaten
+            vector<ll> to_reduce;
+            for (int j = 0; j < start && (int)to_reduce.size() < needed; ++j)
+                if (sorted_A[j] > my_total)
+                    to_reduce.push_back(sorted_A[j] - my_total);
+
+            ll sum = 0;
+            for (ll d : to_reduce) sum += d;
+            return sum <= available;
+        };
+
+        while (low <= high) {
+            ll mid = (low + high) / 2;
+            if (is_possible(mid)) {
+                answer = mid;
+                high = mid - 1;
+            } else {
+                low = mid + 1;
+            }
+        }
+
+        res[A[i].second] = (answer == -1 ? -1 : answer);
+    }
+
+    for (ll val : res)
+        cout << val << " ";
+    cout << "\n";
+
+    return 0;
+}

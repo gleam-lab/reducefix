@@ -1,0 +1,40 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+
+int main() {
+    int N;
+    cin >> N;
+    vector<long long> H(N);
+    for (int i = 0; i < N; ++i) {
+        cin >> H[i];
+    }
+
+    long long T = 0;
+
+    // For each enemy
+    for (int i = 0; i < N; ++i) {
+        if (H[i] == 0) continue;
+
+        // We simulate the attacks using a smarter approach than brute force
+
+        // Let's determine how many full cycles of 3 attacks we can do:
+        // In each 3-step cycle, we can deal 3 + 1 + 1 = 5 damage
+        long long full_cycles = H[i] / 5;
+        long long remaining_health = H[i] % 5;
+        T += full_cycles * 3;
+
+        // Apply full cycles
+        H[i] -= full_cycles * 5;
+
+        // Handle remaining health
+        while (H[i] > 0) {
+            if (T % 3 == 0) H[i] -= 3;
+            else H[i] -= 1;
+            T++;
+        }
+    }
+
+    cout << T << endl;
+    return 0;
+}

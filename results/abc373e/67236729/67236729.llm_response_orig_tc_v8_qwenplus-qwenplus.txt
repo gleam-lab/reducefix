@@ -1,0 +1,105 @@
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+using i64 = long long;
+
+template<typename T>
+void sort_and_discretize(vector<T>& a, vector<int>& idx) {
+    int n = a.size();
+    idx.resize(n);
+    iota(idx.begin(), idx.end(), 0);
+    sort(idx.begin(), idx.end(), [&](int i, int j) { return a[i] < a[j]; });
+}
+
+void solve() {
+    int N, M;
+    i64 K;
+    cin >> N >> M >> K;
+    vector<i64> A(N);
+    for (auto& x : A) cin >> x;
+
+    vector<int> sorted_idx;
+    sort_and_discretize(A, sorted_idx);
+
+    vector<i64> sorted_A(N), prefix_sum(N + 1);
+    for (int i = 0; i < N; ++i)
+        sorted_A[i] = A[sorted_idx[i]];
+
+    for (int i = 0; i < N; ++i)
+        prefix_sum[i + 1] = prefix_sum[i] + sorted_A[i];
+
+    vector<i64> res(N);
+    i64 total_remaining = K - prefix_sum[N];
+    if (M == N) {
+        cout << string(N, '0') << "\n";
+        return;
+    }
+
+    auto calc = [&](int pos) {
+        i64 low = 0, high = K;
+        i64 ans = -1;
+        i64 orig = A[pos];
+        while (low <= high) {
+            i64 mid = (low + high) / 2;
+            i64 curr = orig + mid;
+
+            // Binary search to find how many candidates have votes > curr
+            int cnt = N - (upper_bound(sorted_A.begin(), sorted_A.end(), curr) - sorted_A.begin());
+
+            if (cnt < M) {
+                ans = mid;
+                high = mid - 1;
+                continue;
+            }
+
+            // Need to ensure this candidate has enough votes to surpass at least M candidates
+            int need_over = M - cnt;
+            if (need_over <= 0) {
+                ans = 0;
+                break;
+            }
+
+            // Find the next `need_over` candidates that can be overtaken
+            int l = 0, r = N;
+            while (l < r) {
+                int m = (l + r) / 2;
+                if (sorted_A[m] > orig)
+                    r = m;
+                else
+                    l = m + 1;
+            }
+            int start = l;
+
+            if (start + need_over > N) {
+                low = mid + 1;
+                continue;
+            }
+
+            i64 gain = 0;
+            for (int i = start; i < start + need_over; ++i)
+                gain += (curr + 1 - sorted_A[i]);
+
+            if (gain > 0 && mid >= gain) {
+                ans = gain;
+                high = mid - 1;
+            } else {
+                low = mid + 1;
+            }
+        }
+        return max<i64>(0, min(ans, K));
+    };
+
+    for (int i = 0; i < N; ++i)
+        res[i] = calc(i);
+
+    for (auto x : res)
+        cout << x << " ";
+    cout << "\n";
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    solve();
+}
+```

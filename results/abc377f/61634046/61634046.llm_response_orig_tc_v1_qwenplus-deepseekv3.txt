@@ -1,0 +1,97 @@
+To fix this code, we need to correctly calculate the number of safe squares where a new piece can be placed without being captured by any existing pieces on the grid. The existing pieces can capture along rows, columns, and diagonals (both main and anti-diagonals). The key is to efficiently compute the union of all these constraints and subtract them from the total number of squares.
+
+### Approaches
+1. **Identify Constraints**: For each existing piece, determine the rows, columns, and diagonals it controls.
+2. **Count Unique Constraints**: Use sets to store unique rows, columns, and diagonals to avoid duplicates.
+3. **Calculate Overlaps**: Use inclusion-exclusion principle to account for overlaps between different constraints (rows with columns, rows with diagonals, etc.) to avoid double-counting.
+4. **Compute Safe Squares**: Subtract the total number of constrained squares from the total grid size, adjusting for overlaps.
+
+### Solution Code
+```cpp
+#include <bits/stdc++.h>
+
+using namespace std;
+
+int main() {
+    long long N, M;
+    cin >> N >> M;
+    
+    set<long long> rows, cols, up_diags, down_diags;
+    
+    for (int i = 0; i < M; ++i) {
+        long long a, b;
+        cin >> a >> b;
+        rows.insert(a);
+        cols.insert(b);
+        up_diags.insert(a + b);
+        down_diags.insert(a - b);
+    }
+    
+    long long total = N * N;
+    
+    long long row_count = rows.size();
+    long long col_count = cols.size();
+    long long up_count = up_diags.size();
+    long long down_count = down_diags.size();
+    
+    total -= row_count * N;
+    total -= col_count * N;
+    total += row_count * col_count;
+    
+    for (long long d : up_diags) {
+        long long min_val = max(1LL, d - N);
+        long long max_val = min(N, d - 1);
+        if (max_val >= min_val) {
+            total -= (max_val - min_val + 1);
+        }
+    }
+    
+    for (long long d : down_diags) {
+        long long min_val = max(1LL, 1 - d);
+        long long max_val = min(N, N - d);
+        if (max_val >= min_val) {
+            total -= (max_val - min_val + 1);
+        }
+    }
+    
+    for (long long r : rows) {
+        for (long long d : up_diags) {
+            long long c = d - r;
+            if (cols.count(c)) {
+                total += 1;
+            }
+        }
+        for (long long d : down_diags) {
+            long long c = r - d;
+            if (cols.count(c)) {
+                total += 1;
+            }
+        }
+    }
+    
+    for (long long d1 : up_diags) {
+        for (long long d2 : down_diags) {
+            if ((d1 + d2) % 2 != 0) continue;
+            long long r = (d1 + d2) / 2;
+            long long c = (d1 - d2) / 2;
+            if (rows.count(r) && cols.count(c)) {
+                total += 1;
+            }
+        }
+    }
+    
+    cout << total << endl;
+    
+    return 0;
+}
+```
+
+### Explanation
+1. **Initialization and Input Handling**: The code reads the grid size \( N \) and the number of existing pieces \( M \). The positions of these pieces are stored in sets for rows, columns, and two types of diagonals (sum and difference of coordinates).
+2. **Total Safe Squares Calculation**: The initial total safe squares is \( N^2 \).
+3. **Subtracting Constrained Squares**: The code subtracts squares controlled by rows and columns. It then adds back squares that were subtracted twice (intersection of rows and columns).
+4. **Diagonal Constraints**: For each diagonal, the code calculates the range of valid squares and subtracts these from the total.
+5. **Overlap Adjustments**: Using inclusion-exclusion, the code adjusts for overlaps between rows and diagonals, columns and diagonals, and between diagonals themselves to ensure no double-counting or omissions.
+6. **Output**: The final count of safe squares is printed.
+
+This approach efficiently handles the constraints and ensures accurate counting of safe squares by systematically addressing each type of constraint and their intersections.

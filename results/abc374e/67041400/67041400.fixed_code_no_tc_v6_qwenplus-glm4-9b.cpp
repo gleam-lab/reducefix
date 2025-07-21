@@ -1,0 +1,69 @@
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+
+ll cost_for_W(int N, ll W, ll X, const vector<ll>& A, const vector<ll>& P, const vector<ll>& B, const vector<ll>& Q) {
+    ll total = 0;
+    for (int i = 0; i < N; i++) {
+        ll best = X + 1;
+        vector<ll> xs;
+
+        // Include boundary values for x
+        xs.push_back(0);
+        xs.push_back((W + A[i] - 1) / A[i]);
+        xs.push_back((W + B[i] - 1) / B[i]);
+
+        // Calculate x_star and surrounding values
+        long double x_star = (long double)W * Q[i] / (A[i] * Q[i] + B[i] * P[i]);
+        ll xf = ll(floor(x_star)), xc = ll(ceil(x_star));
+        xs.insert(lower_bound(xs.begin(), xs.end(), xf - 1), xf - 1);
+        xs.insert(lower_bound(xs.begin(), xs.end(), xf), xf);
+        xs.insert(lower_bound(xs.begin(), xs.end(), xf + 1), xf + 1);
+        xs.insert(lower_bound(xs.begin(), xs.end(), xc), xc);
+        xs.insert(lower_bound(xs.begin(), xs.end(), xc + 1), xc + 1);
+
+        // Remove duplicates and sort
+        sort(xs.begin(), xs.end());
+        xs.erase(unique(xs.begin(), xs.end()), xs.end());
+
+        // Calculate minimum cost for each x
+        for (ll x : xs) {
+            if (x < 0 || x > (W + A[i] - 1) / A[i]) continue;
+            ll rem = W - A[i] * x;
+            ll y = rem <= 0 ? 0 : (rem + B[i] - 1) / B[i];
+            ll c = P[i] * x + Q[i] * y;
+            if (c < best) best = c;
+        }
+
+        total += best;
+        if (total > X) return X + 1;  // Early return if budget exceeded
+    }
+    return total;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int N;
+    ll X;
+    cin >> N >> X;
+    vector<ll> A(N), P(N), B(N), Q(N);
+    for (int i = 0; i < N; i++) {
+        cin >> A[i] >> P[i] >> B[i] >> Q[i];
+    }
+
+    ll lo = 0, hi = (X + 1) / 2 + 1;
+
+    while (lo < hi) {
+        ll mid = lo + (hi - lo) / 2;
+        if (cost_for_W(N, mid, X, A, P, B, Q) <= X) {
+            lo = mid + 1;  // Possible solution, try for higher W
+        } else {
+            hi = mid;  // Mid is too high, try lower
+        }
+    }
+
+    cout << lo - 1 << "\n";  // Output the last valid lo
+    return 0;
+}

@@ -1,0 +1,119 @@
+To solve this problem efficiently, we need to support two operations on a dynamic undirected graph:
+
+1. **Add an edge** between two vertices.
+2. **Query the k-th largest vertex number** in the connected component that contains a given vertex.
+
+---
+
+### Key Observations:
+- This is a classic **Union-Find (Disjoint Set Union - DSU)** problem where we need to maintain and query the components dynamically.
+- For each union operation, we want to merge two sets while keeping track of the top `k` largest elements in each set for fast querying.
+- Since `k <= 10`, we can store only the **top 10 largest vertices** in each component.
+
+---
+
+### Efficient Approach:
+1. Use **Union-Find with path compression and union by size/rank** to ensure efficient merging.
+2. Maintain a list of up to **10 largest vertices** in each component's root.
+3. When merging two components:
+   - Merge their top 10 lists.
+   - Sort and keep the top 10 again.
+
+This ensures each query runs in constant time, and union operations are nearly constant due to path compression.
+
+---
+
+### Final C++ Code:
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+const int MAXN = 2e5 + 5;
+const int K = 10;
+
+int parent[MAXN];
+vector<int> topKVertices[MAXN];
+
+int find(int x) {
+    if (parent[x] != x)
+        parent[x] = find(parent[x]);
+    return parent[x];
+}
+
+void unite(int x, int y) {
+    int fx = find(x);
+    int fy = find(y);
+    if (fx == fy) return;
+
+    // Union by size
+    if (topKVertices[fx].size() < topKVertices[fy].size())
+        swap(fx, fy);
+
+    // Merge top-K lists
+    vector<int> merged;
+    merged.reserve(K * 2);
+    merged.insert(merged.end(), topKVertices[fx].begin(), topKVertices[fx].end());
+    merged.insert(merged.end(), topKVertices[fy].begin(), topKVertices[fy].end());
+
+    // Sort descending and keep top-K
+    sort(merged.begin(), merged.end(), greater<int>());
+    merged.resize(min(K, (int)merged.size()));
+
+    // Update the larger set
+    topKVertices[fx] = merged;
+
+    // Point smaller set to larger set
+    parent[fy] = fx;
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int N, Q;
+    cin >> N >> Q;
+
+    // Initialize DSU
+    for (int i = 1; i <= N; ++i) {
+        parent[i] = i;
+        topKVertices[i].push_back(i);
+    }
+
+    while (Q--) {
+        int type;
+        cin >> type;
+        if (type == 1) {
+            int u, v;
+            cin >> u >> v;
+            unite(u, v);
+        } else {
+            int v, k;
+            cin >> v >> k;
+            int root = find(v);
+            if ((int)topKVertices[root].size() < k)
+                cout << -1 << '\n';
+            else
+                cout << topKVertices[root][k - 1] << '\n';
+        }
+    }
+
+    return 0;
+}
+```
+
+---
+
+### Explanation:
+- We use `find()` with path compression for fast lookup.
+- Each node maintains a list of up to 10 largest vertices in its component.
+- When two components merge, we combine these lists, sort them in descending order, and retain only the top 10.
+- Querying is simply looking at the list stored in the root of the component.
+
+---
+
+### Time Complexity:
+- **Union**: O(log* N + K log K) ≈ O(1), where K = 10
+- **Find**: O(α(N)) ~ O(1)
+- **Query**: O(1)
+
+This ensures performance within constraints even for maximum input sizes.

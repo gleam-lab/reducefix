@@ -1,0 +1,72 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+
+int main() {
+    ios_base::sync_with_stdio(false); cin.tie(0);
+
+    long long n, m;
+    cin >> n >> m;
+
+    set<long long> rows, cols, diags1, diags2;
+
+    for (long long i = 0; i < m; ++i) {
+        long long x, y;
+        cin >> x >> y;
+        rows.insert(x);
+        cols.insert(y);
+        diags1.insert(x + y);
+        diags2.insert(x - y);
+    }
+
+    long long res = (n - rows.size()) * (n - cols.size());
+    
+    for (long long d1 : diags1) {
+        set<long long> seenRows;
+        for (long long x : rows) {
+            if (1 <= d1 - x && d1 - x <= n) {
+                seenRows.insert(x);
+            }
+        }
+        for (long long y : cols) {
+            if (1 <= d1 - y && d1 - y <= n) {
+                seenRows.insert(d1 - y);
+            }
+        }
+        if (d1 <= n + 1) {
+            res -= (d1 - 1 - seenRows.size());
+        } else {
+            res -= (n - (d1 - n) - seenRows.size());
+        }
+    }
+
+    for (long long d2 : diags2) {
+        set<long long> seenRows;
+        for (long long x : rows) {
+            if (1 <= x - d2 && x - d2 <= n) {
+                seenRows.insert(x);
+            }
+        }
+        for (long long y : cols) {
+            if (1 <= d2 + y && d2 + y <= n) {
+                seenRows.insert(d2 + y);
+            }
+        }
+        for (long long e : diags1) {
+            if ((e + d2) % 2 == 0 && (e - d2) % 2 == 0) {
+                long long si = (e + d2) / 2, sj = (e - d2) / 2;
+                if (si >= 2 && si <= n && sj >= 1 && sj <= n) {
+                    seenRows.insert(si);
+                }
+            }
+        }
+        if (d2 <= 0) {
+            res -= (n - (1 - d2) - seenRows.size());
+        } else {
+            res -= (n - d2 - seenRows.size());
+        }
+    }
+
+    cout << res << '\n';
+    return 0;
+}

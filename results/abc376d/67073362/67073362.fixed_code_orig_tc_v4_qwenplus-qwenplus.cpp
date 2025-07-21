@@ -1,0 +1,50 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+const int INF = 1e9;
+const int N = 2e5 + 5;
+
+vector<vector<int>> adj(N);
+int dist[N];
+
+void bfs(int start) {
+    queue<int> q;
+    for (int i = 0; i < N; ++i) dist[i] = INF;
+    dist[start] = 0;
+    q.push(start);
+
+    while (!q.empty()) {
+        int u = q.front();
+        q.pop();
+        for (int v : adj[u]) {
+            if (dist[v] > dist[u] + 1) {
+                dist[v] = dist[u] + 1;
+                q.push(v);
+            }
+        }
+    }
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+    cout.tie(0);
+
+    int n, m;
+    cin >> n >> m;
+
+    for (int i = 0; i < m; ++i) {
+        int u, v;
+        cin >> u >> v;
+        adj[u].push_back(v);
+    }
+
+    bfs(1);
+
+    if (dist[1] == INF)
+        cout << -1 << endl;
+    else
+        cout << dist[1] << endl;
+
+    return 0;
+}

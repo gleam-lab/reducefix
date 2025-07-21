@@ -1,0 +1,54 @@
+#include<bits/stdc++.h>
+using namespace std;
+#define ll long long
+
+void solve() {
+    ll n;
+    cin >> n;
+    vector<ll> a(n), b(n);
+    
+    // Read and store toy sizes in vector a
+    for (ll i = 0; i < n; ++i) {
+        cin >> a[i];
+    }
+    
+    // Read and store box sizes in vector b
+    for (ll i = 0; i < n - 1; ++i) {
+        cin >> b[i];
+    }
+    
+    // Initialize a possible answer
+    ll ans = -1;
+    
+    // Check for each box size if it can serve as the smallest box size to fit all toys
+    for (ll i = 0; i < n - 1; ++i) {
+        bool possible = true;
+        
+        // Check each toy if it can be placed in the current box size
+        for (ll j = 0; j < n; ++j) {
+            if (a[j] > b[i]) {
+                possible = false;
+                break; // If any toy cannot fit, this box size is not suitable
+            }
+        }
+        
+        // If all toys can fit, check if it's the minimum possible box size
+        if (possible) {
+            if (ans == -1 || b[i] < ans) {
+                ans = b[i];
+            }
+        }
+    }
+    
+    // Output the result
+    if (ans == -1) {
+        cout << -1 << endl;
+    } else {
+        cout << ans << endl;
+    }
+}
+
+int main() {
+    solve();
+    return 0;
+}

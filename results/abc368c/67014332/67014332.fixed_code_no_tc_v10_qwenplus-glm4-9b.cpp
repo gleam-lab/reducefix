@@ -1,0 +1,27 @@
+#include<bits/stdc++.h>
+using namespace std;
+using ll = long long;
+
+int main() {
+    ll n, ans=0;
+    cin>>n;
+    for(ll i=0; i<n; i++) {
+        ll h;
+        cin>>h;
+        // Calculate the number of attacks needed to make the health 0 or less
+        // Each full set of 3 health units can be removed in 4 moves (3 for T multiple of 3 and 1 for T not multiple of 3)
+        // Remaining health units < 3 can be removed as follows:
+        // - 1 health unit: 1 move for T not multiple of 3 (tri=1)
+        // - 2 health units: 2 moves (tri=1 for the first and tri=2 for the second)
+        ans += (h + 2) / 3 * 3; // Divide by 3 and take the ceiling, then multiply by 3
+        // Handle the remainder
+        if ((h + 2) % 3 == 0) {
+            ans++; // If exactly divisible by 3, we need one more move
+        } else if ((h + 2) % 3 == 1) {
+            ans += 2; // If remainder is 1, we do tri=1 for the first and tri=2 for the second
+        } else {
+            ans += 1; // If remainder is 2, we do tri=1 for the first
+        }
+    }
+    cout<<ans;
+}

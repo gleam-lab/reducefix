@@ -1,0 +1,48 @@
+#include<bits/stdc++.h>
+#define ll long long
+#define yes cout<<"YES\n"
+#define no cout<<"NO\n"
+#define sp ' '
+using namespace std;
+
+bool check(vector<ll>& a, vector<ll>& b, ll mid){
+    int n = a.size();
+    sort(b.begin(), b.end());
+    multiset<ll> s;
+    for(int i = 0; i < n - 1; ++i){
+        s.insert(b[i]);
+    }
+    for(int i = 0; i < n; ++i){
+        auto it = s.upper_bound(a[i] - 1);
+        if(it == s.end()){
+            return false;
+        }else{
+            s.erase(it);
+        }
+    }
+    return true;
+}
+
+void solve(){
+    ll n;
+    cin >> n;
+    vector<ll> a(n), b(n - 1);
+    for(int i = 0; i < n; ++i){
+        cin >> a[i];
+    }
+    for(int i = 0; i < n - 1; ++i){
+        cin >> b[i];
+    }
+    if(check(a, b, *max_element(a.begin(), a.end()))){
+        cout << *max_element(a.begin(), a.end()) << endl;
+    }else{
+        cout << -1 << endl;
+    }
+}
+
+int main(){
+    ios::sync_with_stdio(0);
+    cin.tie(0);
+    solve();
+    return 0;
+}

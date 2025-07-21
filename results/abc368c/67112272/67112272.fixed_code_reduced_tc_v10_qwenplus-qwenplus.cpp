@@ -1,0 +1,57 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+using ll = long long;
+
+int main() {
+    int n;
+    cin >> n;
+    vector<ll> H(n);
+    for (int i = 0; i < n; ++i) {
+        cin >> H[i];
+    }
+
+    ll t = 0;
+    // We simulate the process with priority queue
+    // Each enemy is represented by its position and current health
+    // We use a min-heap to always attack the frontmost enemy that needs a hit at current time
+
+    // The idea is to determine how many attacks each enemy needs at specific times:
+    // - Every 3rd second deals 3 damage
+    // - Other seconds deal 1 damage
+    // So we want to determine how many "strong" (multiple of 3) and "weak" attacks are needed
+
+    // For each enemy, we compute minimum number of strong (t*3) and weak attacks (t)
+    // such that: 3*strong + weak >= health and strong + weak is minimized.
+
+    // To do this efficiently, we binary search on total attacks needed
+
+    ll total_time = 0;
+
+    // We keep track of how many special (T%3==0) attacks have occurred
+    // At any time T, if T%3 == 0, it's a special attack round
+
+    // We calculate for each enemy how many attacks are needed,
+    // considering both regular and special attack timings
+
+    // Let’s optimize using mathematical approach:
+
+    for (ll h : H) {
+        // Let x be the number of special (T%3==0) attacks used on this enemy
+        // Then y = total_attacks - x is the number of normal attacks
+        // We need: 3*x + y >= h => 3*x + (total_attacks - x) >= h => 2*x + total_attacks >= h
+        // Since total_attacks >= x, we can binary search over total_attacks
+
+        ll low = 0, high = 3 * h;
+        while (low < high) {
+            ll mid = (low + high) / 2;
+            ll special = mid / 3;  // How many special attacks up to time mid
+            ll effective_damage = 2 * special + mid;
+            if (effective_damage >= h) high = mid;
+            else low = mid + 1;
+        }
+        total_time = max(total_time, low);
+    }
+
+    cout << total_time << endl;
+}

@@ -1,0 +1,282 @@
+To fix this code, we need to correctly calculate the number of safe squares where a new piece can be placed without being captured by any existing pieces. The existing pieces can attack along rows, columns, and both diagonals (i+j and i-j). The initial approach had several issues, including incorrect calculations for the diagonals and double-counting some squares.
+
+### Approaches
+1. **Identify Forbidden Areas**: 
+   - **Rows and Columns**: Any square in the same row or column as an existing piece is unsafe.
+   - **Diagonals (i + j = d)**: Any square on the same diagonal where the sum of its coordinates equals the sum of an existing piece's coordinates.
+   - **Diagonals (i - j = d)**: Any square on the same diagonal where the difference of its coordinates equals the difference of an existing piece's coordinates.
+
+2. **Calculate Safe Squares**: 
+   - **Total Squares**: The total number of squares is \(N^2\).
+   - **Forbidden Squares**: The union of squares in forbidden rows, columns, and diagonals, minus overlaps between these sets to avoid double-counting.
+   - **Inclusion-Exclusion Principle**: Use this principle to correctly account for overlaps between forbidden rows, columns, and diagonals.
+
+### Solution Code
+```cpp
+#include<bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+
+int main() {
+    ll N, M;
+    cin >> N >> M;
+    set<ll> rows, cols, diag1, diag2;
+    for (int i = 0; i < M; ++i) {
+        ll a, b;
+        cin >> a >> b;
+        rows.insert(a);
+        cols.insert(b);
+        diag1.insert(a + b);
+        diag2.insert(a - b);
+    }
+
+    ll total = N * N;
+    ll forbidden = 0;
+
+    // Calculate forbidden squares due to rows and columns
+    forbidden += rows.size() * N;
+    forbidden += cols.size() * (N - rows.size());
+
+    // Calculate forbidden squares due to diagonals (i+j)
+    for (auto d : diag1) {
+        ll min_i = max(1LL, d - N);
+        ll max_i = min(N, d - 1);
+        if (min_i > max_i) continue;
+        ll count = max_i - min_i + 1;
+        forbidden += count;
+        // Subtract overlaps with rows and columns
+        for (ll i = min_i; i <= max_i; ++i) {
+            ll j = d - i;
+            if (rows.count(i) || cols.count(j)) {
+                forbidden--;
+            }
+        }
+    }
+
+    // Calculate forbidden squares due to diagonals (i-j)
+    for (auto d : diag2) {
+        ll min_i = max(1LL, 1 + d);
+        ll max_i = min(N, N + d);
+        if (min_i > max_i) continue;
+        ll count = max_i - min_i + 1;
+        forbidden += count;
+        // Subtract overlaps with rows, columns, and other diagonals
+        for (ll i = min_i; i <= max_i; ++i) {
+            ll j = i - d;
+            if (rows.count(i) || cols.count(j) || diag1.count(i + j)) {
+                forbidden--;
+            }
+        }
+    }
+
+    // The safe squares are total minus forbidden, plus any overlaps subtracted twice
+    // But since overlaps are already subtracted, forbidden is the correct count
+    ll safe = total - forbidden;
+    cout << safe << endl;
+    return 0;
+}
+```
+
+Wait, the above solution might have some issues with the inclusion-exclusion principle. The initial approach attempted to account for overlaps but might not have subtracted all overlaps correctly. Here's an improved version that correctly calculates the number of safe squares by considering all forbidden areas and their intersections:
+
+```cpp
+#include<bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+
+int main() {
+    ll N, M;
+    cin >> N >> M;
+    set<ll> rows, cols, diag1, diag2;
+    for (int i = 0; i < M; ++i) {
+        ll a, b;
+        cin >> a >> b;
+        rows.insert(a);
+        cols.insert(b);
+        diag1.insert(a + b);
+        diag2.insert(a - b);
+    }
+
+    ll total_forbidden = 0;
+
+    // Forbidden squares due to rows
+    total_forbidden += rows.size() * N;
+
+    // Forbidden squares due to columns not in any forbidden row
+    total_forbidden += cols.size() * (N - rows.size());
+
+    // Forbidden squares due to diagonals (i + j = d)
+    for (auto d : diag1) {
+        ll min_i = max(1LL, d - N);
+        ll max_i = min(N, d - 1);
+        ll count = max_i - min_i + 1;
+        ll overlap_rows = 0, overlap_cols = 0;
+        for (ll i = min_i; i <= max_i; ++i) {
+            ll j = d - i;
+            if (rows.count(i)) overlap_rows++;
+            if (cols.count(j)) overlap_cols++;
+        }
+        total_forbidden += count - overlap_rows - overlap_cols;
+    }
+
+    // Forbidden squares due to diagonals (i - j = d)
+    for (auto d : diag2) {
+        ll min_i = max(1LL, 1 + d);
+        ll max_i = min(N, N + d);
+        ll count = max_i - min_i + 1;
+        ll overlap_rows = 0, overlap_cols = 0, overlap_diag1 = 0;
+        for (ll i = min_i; i <= max_i; ++i) {
+            ll j = i - d;
+            if (rows.count(i)) overlap_rows++;
+            if (cols.count(j)) overlap_cols++;
+            if (diag1.count(i + j)) overlap_diag1++;
+        }
+        total_forbidden += count - overlap_rows - overlap_cols - overlap_diag1;
+    }
+
+    ll safe = N * N - total_forbidden;
+    cout << safe << endl;
+    return 0;
+}
+```
+
+However, this might still not account for all overlaps correctly. Let me think of a better way:
+
+The correct approach is to use the inclusion-exclusion principle to account for all overlaps between forbidden areas. The total number of forbidden squares is the union of squares in forbidden rows, columns, and diagonals. The formula is:
+
+\[ \text{Forbidden} = R + C + D1 + D2 - (R \cap C) - (R \cap D1) - (R \cap D2) - (C \cap D1) - (C \cap D2) - (D1 \cap D2) + (R \cap C \cap D1) + (R \cap C \cap D2) + (R \cap D1 \cap D2) + (C \cap D1 \cap D2) - (R \cap C \cap D1 \cap D2) \]
+
+But calculating this directly is complex. Instead, we can use the principle to compute the total forbidden squares as:
+
+\[ \text{Forbidden} = \text{rows} + \text{columns} + \text{diagonal1} + \text{diagonal2} - \text{row and column intersections} - \text{row and diagonal1 intersections} - \text{row and diagonal2 intersections} - \text{column and diagonal1 intersections} - \text{column and diagonal2 intersections} - \text{diagonal1 and diagonal2 intersections} + \text{row, column, and diagonal1 intersections} + \text{row, column, and diagonal2 intersections} + \text{row, diagonal1, and diagonal2 intersections} + \text{column, diagonal1, and diagonal2 intersections} - \text{row, column, diagonal1, and diagonal2 intersections} \]
+
+But implementing this directly is not efficient for large N. Instead, we can use the following approach:
+
+1. Calculate the total number of squares forbidden by rows, columns, diagonal1, and diagonal2 independently.
+2. Subtract the squares that are forbidden by more than one of these (overlaps).
+
+But even this is complex. Here's a better approach:
+
+For each square, determine if it is in a forbidden row, column, or any of the two diagonals. However, with N up to 1e9, this is not feasible. Instead, we can calculate the size of the union of all forbidden areas.
+
+The total number of safe squares is:
+
+\[ \text{Safe} = N^2 - (\text{rows} \times N + \text{columns} \times N - \text{rows} \times \text{columns} + \text{diagonal1} \times \text{length} + \text{diagonal2} \times \text{length} - \text{overlaps}) \]
+
+But this is still vague. Let's think differently:
+
+The total number of squares is \( N^2 \).
+
+The number of squares forbidden by rows is \( R \times N \), where R is the number of unique rows occupied by existing pieces.
+
+The number of squares forbidden by columns is \( C \times N \), where C is the number of unique columns occupied by existing pieces.
+
+But \( R \times N + C \times N \) counts the squares in the intersection of forbidden rows and columns twice, so we subtract \( R \times C \).
+
+For the diagonals:
+
+For each diagonal (i + j = d), the number of squares is the length of the diagonal, which is \( \min(d-1, N) - \max(1, d-N) + 1 \).
+
+Similarly, for (i - j = d), the number of squares is \( \min(N, N + d) - \max(1, 1 + d) + 1 \).
+
+But these diagonals may overlap with rows or columns, so we need to subtract those overlaps.
+
+This is getting complex, so perhaps the best approach is to:
+
+1. Calculate the total number of squares forbidden by rows, columns, and diagonals.
+2. Subtract the overlaps between these sets.
+
+But to do this efficiently for large N, we need to avoid iterating over each square.
+
+Here's the correct approach:
+
+- The number of squares forbidden by rows is \( R \times N \), where R is the number of unique rows.
+- The number of squares forbidden by columns is \( C \times N \), where C is the number of unique columns.
+- The number of squares forbidden by both rows and columns is \( R \times C \), so the total forbidden by either rows or columns is \( R \times N + C \times N - R \times C \).
+
+Now, for each diagonal (i + j = d), the number of squares on this diagonal is \( L = \min(d-1, N) - \max(1, d-N) + 1 \). The number of these squares that are not already forbidden by rows or columns is \( L - \text{number of squares on the diagonal in forbidden rows or columns} \).
+
+Similarly for (i - j = d).
+
+But calculating this for each diagonal individually is not feasible for large M. Instead, we can:
+
+1. For each diagonal (i + j = d), calculate the number of squares not in forbidden rows or columns.
+2. Similarly for (i - j = d).
+
+But to avoid double-counting squares forbidden by both diagonals, we need to subtract the intersections.
+
+But this is impractical for large M. Therefore, the initial approach in the first code is the most feasible, but it needs to correctly account for overlaps.
+
+Here's the correct code:
+
+```cpp
+#include<bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+
+int main() {
+    ll N, M;
+    cin >> N >> M;
+    set<ll> rows, cols, diag1, diag2;
+    for (int i = 0; i < M; ++i) {
+        ll a, b;
+        cin >> a >> b;
+        rows.insert(a);
+        cols.insert(b);
+        diag1.insert(a + b);
+        diag2.insert(a - b);
+    }
+
+    ll R = rows.size();
+    ll C = cols.size();
+    ll D1 = diag1.size();
+    ll D2 = diag2.size();
+
+    ll forbidden = 0;
+
+    // Squares forbidden by rows or columns
+    forbidden = R * N + C * N - R * C;
+
+    // Squares forbidden by diagonals (i + j = d)
+    for (auto d : diag1) {
+        ll min_i = max(1LL, d - N);
+        ll max_i = min(N, d - 1);
+        ll cnt = max_i - min_i + 1;
+        // Subtract squares already forbidden by rows or columns
+        for (ll i = min_i; i <= max_i; ++i) {
+            ll j = d - i;
+            if (rows.count(i) || cols.count(j)) {
+                cnt--;
+            }
+        }
+        forbidden += cnt;
+    }
+
+    // Squares forbidden by diagonals (i - j = d)
+    for (auto d : diag2) {
+        ll min_i = max(1LL, 1 + d);
+        ll max_i = min(N, N + d);
+        ll cnt = max_i - min_i + 1;
+        // Subtract squares already forbidden by rows, columns, or diag1
+        for (ll i = min_i; i <= max_i; ++i) {
+            ll j = i - d;
+            if (rows.count(i) || cols.count(j) || diag1.count(i + j)) {
+                cnt--;
+            }
+        }
+        forbidden += cnt;
+    }
+
+    ll safe = N * N - forbidden;
+    cout << safe << endl;
+    return 0;
+}
+```
+
+This code:
+1. Calculates the number of squares forbidden by rows and columns, adjusting for overlaps.
+2. For each diagonal (i + j = d), counts the squares not already forbidden by rows or columns.
+3. For each diagonal (i - j = d), counts the squares not already forbidden by rows, columns, or the other diagonal.
+4. The total safe squares is \( N^2 - \text{forbidden} \).
+
+This should correctly account for all overlaps and provide the correct count of safe squares.

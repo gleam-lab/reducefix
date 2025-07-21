@@ -1,0 +1,68 @@
+#include<bits/stdc++.h>
+using namespace std;
+
+struct Pair {
+    int first, second;
+};
+
+bool cmp(Pair a, Pair b) {
+    return a.first > b.first;
+}
+
+long long minimumValue(int N, int K, vector<long long>& A, vector<long long>& B) {
+    vector<Pair> vec(N);
+    
+    for(int i = 0; i < N; ++i) {
+        vec[i].first = A[i];
+        vec[i].second = B[i];
+    }
+
+    sort(vec.begin(), vec.end(), cmp);
+    
+    priority_queue<long long> pq;
+    long long sum = 0, res = LLONG_MAX;
+    
+    for(int i = 0; i < K; ++i) {
+        pq.push(-vec[i].second);
+        sum += vec[i].second;
+    }
+    
+    res = min(res, vec[K - 1].first * sum);
+    
+    for(int i = K; i < N; ++i) {
+        sum += vec[i].second + pq.top();
+        pq.pop();
+        pq.push(-vec[i].second);
+        
+        res = min(res, vec[i].first * sum);
+    }
+    
+    return res;
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(NULL);
+    
+    int T;
+    cin >> T;
+    
+    while(T--) {
+        int N, K;
+        cin >> N >> K;
+        
+        vector<long long> A(N), B(N);
+        
+        for(int i = 0; i < N; ++i) {
+            cin >> A[i];
+        }
+        
+        for(int i = 0; i < N; ++i) {
+            cin >> B[i];
+        }
+        
+        cout << minimumValue(N, K, A, B) << '\n';
+    }
+    
+    return 0;
+}

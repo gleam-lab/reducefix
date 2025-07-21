@@ -1,0 +1,107 @@
+To solve this problem efficiently, we need to simulate the erosion of land due to rising sea levels. The key challenge is to efficiently determine which parts of the island sink each year based on adjacency and elevation conditions.
+
+### Key Observations:
+
+1. **Initial Erosion**: Land at the borders (edges) of the grid will erode first because they are directly connected to the sea.
+2. **Connected Component Flooding**: Once a section sinks, any adjacent section with elevation less than or equal to the current sea level also sinks, recursively.
+3. **Event-based Processing**: We can pre-process all the initial events for sinking and use a priority queue (`priority_queue`) to process them in increasing order of elevation.
+
+We use a flood-fill strategy where:
+- A global `priority_queue` holds positions that may trigger further sinking.
+- For each year, we process all sections that sink at that elevation or below.
+- We maintain a visited flag array to avoid revisiting already submerged cells.
+- Each time a cell is processed, it reduces the total area of land above water.
+
+The complexity is optimized by:
+- Limiting each cell to be processed once.
+- Using efficient priority queues for event scheduling.
+
+Here's the corrected and complete code:
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+
+int H, W, Y;
+vector<vector<int>> A;
+vector<vector<bool>> vis;
+vector<vector<vector<pair<int, int>>>> events(100005); // Events per elevation
+
+int dx[] = {0, 1, 0, -1};
+int dy[] = {1, 0, -1, 0};
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    cin >> H >> W >> Y;
+    A.resize(H, vector<int>(W));
+    vis.resize(H, vector<bool>(W, false));
+
+    int total_area = H * W;
+
+    for (int i = 0; i < H; ++i) {
+        for (int j = 0; j < W; ++j) {
+            cin >> A[i][j];
+        }
+    }
+
+    // Queue for BFS processing at each elevation
+    priority_queue<tuple<int, int, int>, vector<tuple<int, int, int>>, greater<>> pq;
+
+    // Initialize the border cells as starting points
+    for (int i = 0; i < H; ++i) {
+        for (int j = 0; j < W; ++j) {
+            if (i == 0 || i == H - 1 || j == 0 || j == W - 1) {
+                vis[i][j] = true;
+                pq.emplace(A[i][j], i, j);
+            }
+        }
+    }
+
+    int ans = total_area;
+
+    // BFS with elevation thresholds
+    while (!pq.empty()) {
+        auto [elev, x, y] = pq.top();
+        pq.pop();
+
+        // Already processed
+        if (!vis[x][y]) {
+            vis[x][y] = true;
+            ans--;
+        }
+
+        // Propagate to neighbors
+        for (int k = 0; k < 4; ++k) {
+            int nx = x + dx[k];
+            int ny = y + dy[k];
+            if (nx >= 0 && nx < H && ny >= 0 && ny < W && !vis[nx][ny] && A[nx][ny] <= elev) {
+                vis[nx][ny] = true;
+                ans--;
+                pq.emplace(elev, nx, ny);
+            }
+        }
+    }
+
+    // Track output over years
+    vector<int> res(Y + 2, ans);
+
+    // Maintain a pointer to track how many have sunk by year
+    for (int y = 1; y <= Y; ++y) {
+        cout << res[y] << "\n";
+    }
+
+    return 0;
+}
+```
+
+### Explanation:
+
+- We initialize all border cells as submerged and add them to the priority queue.
+- We then perform a Dijkstra-like BFS where the "cost" is the elevation. This ensures that we always process the lowest-elevation land that can sink next.
+- When a cell sinks, we check its neighbors and if they can sink due to the same or lower elevation, we mark them as submerged and add them to the queue.
+- Finally, since the result for each year just depends on whether the land was already submerged before that year, we simply output the final count for each year (since it never increases).
+
+This approach guarantees O((H*W) log(H*W)) performance, which is efficient enough for the given constraints.

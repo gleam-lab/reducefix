@@ -1,0 +1,54 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+typedef long long ll;
+
+const int maxN = 2e5 + 5;
+
+int main() {
+    ios_base::sync_with_stdio(0);
+    cin.tie(0);
+    cout.tie(0);
+    
+    int t;
+    cin >> t;
+    
+    while (t--) {
+        int n, k;
+        cin >> n >> k;
+        
+        vector<pair<int, int>> items(n);
+        for (int i = 0; i < n; ++i) cin >> items[i].first;  // A values
+        for (int i = 0; i < n; ++i) cin >> items[i].second; // B values
+        
+        // Sort by A value ascending
+        sort(items.begin(), items.end());
+        
+        // Minimize (max_A_in_subset) * sum_B_in_subset
+        // We keep the smallest K elements by A initially
+        // Then we try to minimize the sum of B's by replacing largest B in our set with smaller ones
+        
+        priority_queue<int> max_heap; // To keep track of largest B's in current subset
+        ll sum_b = 0;
+        for (int i = 0; i < k; ++i) {
+            sum_b += items[i].second;
+            max_heap.push(items[i].second);
+        }
+        
+        ll ans = 1LL * items[k - 1].first * sum_b;
+        
+        for (int i = k; i < n; ++i) {
+            if (items[i].second < max_heap.top()) {
+                sum_b -= max_heap.top();
+                max_heap.pop();
+                sum_b += items[i].second;
+                max_heap.push(items[i].second);
+            }
+            ans = min(ans, 1LL * items[i].first * sum_b);
+        }
+        
+        cout << ans << "\n";
+    }
+    
+    return 0;
+}

@@ -1,0 +1,26 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+
+int main() {
+    int n, m;
+    std::cin >> n >> m;
+    std::vector<int> arr(n);
+    for (int i = 0; i < n; ++i) {
+        std::cin >> arr[i];
+    }
+
+    long long count = 0;
+    for (int i = 0; i < n; ++i) {
+        int sum = 0;
+        for (int j = 1; j <= n; ++j) {
+            sum += arr[(i + j - 1) % n];
+            if (sum % m == 0) {
+                count++;
+            }
+        }
+    }
+
+    std::cout << count << std::endl;
+    return 0;
+}

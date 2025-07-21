@@ -1,0 +1,82 @@
+To fix this code, we need to address several issues, including incorrect condition checks when searching for the nearest walls in the four directions and potential undefined behavior when accessing elements in sets. The main problem arises from how the code handles the cases where the bomb is placed on a cell without a wall, leading to incorrect searches for the nearest walls in the four directions.
+
+### Approaches
+1. **Initial Setup**: Maintain two sets for each row and column to track the walls. `tate[c]` tracks the walls in column `c`, and `yoko[r]` tracks the walls in row `r`.
+2. **Query Processing**:
+   - **If the cell (r, c) has a wall**: Remove it from both `tate[c]` and `yoko[r]`.
+   - **If the cell does not have a wall**: Search for the nearest walls in all four directions (up, down, left, right) and remove them:
+     - **Up**: The largest number less than `r` in `tate[c]`.
+     - **Down**: The smallest number greater than `r` in `tate[c]`.
+     - **Left**: The largest number less than `c` in `yoko[r]`.
+     - **Right**: The smallest number greater than `c` in `yoko[r]`.
+3. **Edge Cases**: Ensure that when searching for nearest walls, we handle cases where no such wall exists (e.g., when the set is empty or when the iterator reaches the end).
+
+### Solution Code
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+#define rep(i,n) for(int i = 0; i < (n); i++)
+using ll = long long;
+
+int main() {
+    int h, w, q;
+    cin >> h >> w >> q;
+    vector<set<int>> tate(w), yoko(h);
+    rep(i, h) rep(j, w) {
+        tate[j].insert(i);
+        yoko[i].insert(j);
+    }
+    rep(qi, q) {
+        int r, c;
+        cin >> r >> c;
+        r--; c--;
+        if (tate[c].count(r)) {
+            tate[c].erase(r);
+            yoko[r].erase(c);
+        } else {
+            // Up
+            auto it_up = tate[c].lower_bound(r);
+            if (it_up != tate[c].begin()) {
+                it_up--;
+                int tmp = *it_up;
+                tate[c].erase(tmp);
+                yoko[tmp].erase(c);
+            }
+            // Down
+            auto it_down = tate[c].lower_bound(r);
+            if (it_down != tate[c].end()) {
+                int tmp = *it_down;
+                tate[c].erase(tmp);
+                yoko[tmp].erase(c);
+            }
+            // Left
+            auto it_left = yoko[r].lower_bound(c);
+            if (it_left != yoko[r].begin()) {
+                it_left--;
+                int tmp = *it_left;
+                yoko[r].erase(tmp);
+                tate[tmp].erase(r);
+            }
+            // Right
+            auto it_right = yoko[r].lower_bound(c);
+            if (it_right != yoko[r].end()) {
+                int tmp = *it_right;
+                yoko[r].erase(tmp);
+                tate[tmp].erase(r);
+            }
+        }
+    }
+    int ans = 0;
+    rep(i, w) ans += tate[i].size();
+    cout << ans << "\n";
+    return 0;
+}
+```
+
+### Explanation
+1. **Initial Setup**: The code initializes `tate` and `yoko` sets, where each column and row has a set of indices indicating the presence of walls.
+2. **Query Processing**:
+   - **Wall Removal**: If the queried cell (r, c) has a wall, it is removed from both `tate[c]` and `yoko[r]`.
+   - **Nearest Wall Search**: If the cell does not have a wall, the code searches for the nearest walls in all four directions using `lower_bound` to find the smallest element not less than the given value, then adjusts the iterator to find the closest wall in each direction.
+3. **Edge Cases**: The checks `it != set.begin()` and `it != set.end()` ensure that the code only processes valid walls, preventing undefined behavior when no walls exist in a particular direction.
+4. **Result Calculation**: After processing all queries, the total remaining walls are counted by summing the sizes of all `tate` sets, which track the walls in each column. This count is printed as the result.

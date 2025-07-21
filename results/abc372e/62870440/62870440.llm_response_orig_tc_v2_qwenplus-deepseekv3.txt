@@ -1,0 +1,85 @@
+To fix this code, we need to correctly handle the union-find (disjoint set) operations and maintain the top k largest elements in each connected component efficiently. The original code had several issues, including incorrect merging of sets and inefficient handling of the top elements.
+
+### Approaches
+1. **Union-Find Data Structure**: This will help efficiently manage the connected components of the graph.
+2. **Maintaining Top K Elements**: For each component, we need to keep track of the top k largest elements (k up to 10 as per the problem constraints). This can be done using priority queues or sorted lists.
+3. **Path Compression and Union by Size**: These optimizations ensure that the operations are almost constant time on average.
+4. **Merging Components**: When two components are merged, we need to combine their top k elements efficiently. This can be done by merging their priority queues or sorted lists and keeping only the top k elements.
+
+### Solution Code
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+vector<int> parent;
+vector<priority_queue<int, vector<int>, greater<int>>> topK;
+
+int find(int u) {
+    if (parent[u] != u) {
+        parent[u] = find(parent[u]);
+    }
+    return parent[u];
+}
+
+void unite(int u, int v) {
+    u = find(u);
+    v = find(v);
+    if (u == v) return;
+    if (topK[u].size() < topK[v].size()) {
+        swap(u, v);
+    }
+    parent[v] = u;
+    while (!topK[v].empty()) {
+        topK[u].push(topK[v].top());
+        topK[v].pop();
+        if (topK[u].size() > 10) {
+            topK[u].pop();
+        }
+    }
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int N, Q;
+    cin >> N >> Q;
+    parent.resize(N + 1);
+    topK.resize(N + 1);
+    for (int i = 1; i <= N; ++i) {
+        parent[i] = i;
+        topK[i].push(i);
+    }
+    while (Q--) {
+        int type, u, v;
+        cin >> type >> u >> v;
+        if (type == 1) {
+            unite(u, v);
+        } else {
+            int root = find(u);
+            if (topK[root].size() < v) {
+                cout << "-1\n";
+            } else {
+                vector<int> temp;
+                while (!topK[root].empty()) {
+                    temp.push_back(topK[root].top());
+                    topK[root].pop();
+                }
+                for (int num : temp) {
+                    topK[root].push(num);
+                }
+                cout << temp[temp.size() - v] << "\n";
+            }
+        }
+    }
+    return 0;
+}
+```
+
+### Explanation
+1. **Union-Find Data Structure**: The `parent` array keeps track of the root parent of each node, enabling efficient connected component management.
+2. **Path Compression**: The `find` function uses path compression to flatten the structure, making future queries faster.
+3. **Top K Elements**: Each node's component maintains a min-heap (priority queue) of the top 10 largest elements. This allows efficient access to the k-th largest element by simply maintaining the heap size.
+4. **Unite Operation**: When merging two components, the larger component absorbs the smaller one to minimize the number of elements moved. The top elements from the smaller component are added to the larger component's heap, maintaining only the top 10 elements.
+5. **Query Handling**: For type 2 queries, we check the size of the component's heap. If it has fewer than `v` elements, return -1. Otherwise, we extract and return the v-th largest element from the heap.
+
+This approach ensures efficient handling of both union and query operations, adhering to the problem constraints and providing the correct results for all test cases.

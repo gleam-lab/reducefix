@@ -1,0 +1,29 @@
+#include<bits/stdc++.h>
+
+using namespace std;
+
+int main() {
+    int N;
+    cin >> N;
+    vector<int> H(N + 9);
+    for (int i = 1; i <= N; i++) cin >> H[i];
+    long long T = 0;
+    for (int i = 1; i <= N; i++) {
+        // Calculate the number of full attacks of 3 damage
+        long long full_attacks = H[i] / 3;
+        T += full_attacks * 3;
+        // Remainder health after full attacks of 3 damage
+        H[i] -= full_attacks * 3;
+        // If there's any remainder, it needs one attack (which could be 1 or 3 damage)
+        if (H[i] > 0) {
+            T += 1;
+            if (T % 3 == 0) {
+                H[i] -= 3;
+            } else {
+                H[i] -= 1;
+            }
+        }
+    }
+    cout << T << endl;
+    return 0;
+}

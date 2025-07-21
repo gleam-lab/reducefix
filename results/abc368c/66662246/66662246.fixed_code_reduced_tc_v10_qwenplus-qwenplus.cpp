@@ -1,0 +1,36 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define rep(i, n) for (int i = 0; i < (n); ++i)
+using ll = long long;
+
+int main()
+{
+    int n;
+    cin >> n;
+    vector<ll> a(n);
+    rep(i, n) cin >> a[i];
+
+    ll ans = 0;
+    rep(i, n)
+    {
+        // Each enemy is attacked once every 3 turns:
+        // Turn T: attack if T % 3 == 1 -> damage 1
+        // Turn T: attack if T % 3 == 2 -> damage 1
+        // Turn T: attack if T % 3 == 0 -> damage 3
+        // So every 3 attacks deal total damage of 5 (1+1+3)
+
+        ll h = a[i];
+        ll full_cycles = h / 5;
+        ll remainder = h % 5;
+
+        ans += full_cycles * 3;
+
+        if (remainder > 0) {
+            ans++; // attack at T%3 == 1
+            if (remainder > 1) ans++; // attack at T%3 == 2
+            if (remainder > 2) ans++; // attack at T%3 == 0
+        }
+    }
+
+    cout << ans << endl;
+}

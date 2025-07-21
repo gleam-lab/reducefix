@@ -1,0 +1,62 @@
+#include <iostream>
+#include <vector>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int N;
+    cin >> N;
+    vector<long long> H(N);
+    for (int i = 0; i < N; ++i) {
+        cin >> H[i];
+    }
+
+    long long T = 0;
+    long long special_attacks = 0; // Number of attacks that hit on a multiple of 3
+
+    for (int i = 0; i < N; ++i) {
+        long long h = H[i];
+
+        // Each enemy takes T attacks: some regular (1 damage), some special (3 damage)
+        // Let x be the number of special attacks (T is multiple of 3)
+        // Let y be the number of regular attacks (T is not multiple of 3)
+        // So total damage: 3x + y >= h
+        // Total attacks T = x + y
+
+        // We also need to consider the position in the cycle (mod 3) due to timing of special attacks
+
+        // The idea: simulate how many attacks are needed considering the current position in time (T mod 3)
+
+        // To determine how many special attacks we can do while processing this enemy:
+        // We know that every 3 attacks, there's 1 special attack
+        // So among the next k attacks, floor((k + pos) / 3) are special, where pos is T % 3
+        // This makes it hard to compute directly, so we take a different approach
+
+        // Instead, we can binary search on the minimum number of total attacks needed for this enemy
+        // Given that previous attacks have already been counted in T
+
+        long long low = 0;
+        long long high = 2e18;
+
+        while (low < high) {
+            long long mid = (low + high) / 2;
+            long long special_in_mid = mid / 3;
+            long long special_total = special_attacks + special_in_mid;
+            long long total_damage = 3 * special_total + (mid - special_in_mid);
+            if (total_damage >= h) {
+                high = mid;
+            } else {
+                low = mid + 1;
+            }
+        }
+
+        T = low;
+        special_attacks += T / 3;
+    }
+
+    cout << T << '\n';
+
+    return 0;
+}

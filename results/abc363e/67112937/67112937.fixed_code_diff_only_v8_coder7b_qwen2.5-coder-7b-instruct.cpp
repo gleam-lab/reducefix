@@ -1,0 +1,62 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+const int MAXN = 1005;
+int h[MAXN], w[MAXN], y;
+bool vis[MAXN][MAXN];
+
+struct node {
+    int val, x, y;
+    bool operator<(const node &b) const {
+        return val > b.val;
+    }
+};
+
+void bfs(int level) {
+    priority_queue<node> pq;
+    for (int i = 0; i < h[0]; i++) {
+        if (h[i] > level && !vis[i][0]) {
+            pq.push({h[i], i, 0});
+            vis[i][0] = true;
+        }
+    }
+    for (int i = 1; i < w[0]; i++) {
+        if (w[i] > level && !vis[0][i]) {
+            pq.push({w[i], 0, i});
+            vis[0][i] = true;
+        }
+    }
+    while (!pq.empty()) {
+        auto [val, x, y] = pq.top();
+        pq.pop();
+        for (int k = 0; k < 4; k++) {
+            int nx = x + d[k][0], ny = y + d[k][1];
+            if (nx >= 0 && nx < h[0] && ny >= 0 && ny < w[0] && !vis[nx][ny] && h[nx] <= level) {
+                pq.push({h[nx], nx, ny});
+                vis[nx][ny] = true;
+            }
+        }
+    }
+}
+
+int main() {
+    cin >> h[0] >> w[0] >> y;
+    for (int i = 0; i < h[0]; i++) {
+        for (int j = 0; j < w[0]; j++) {
+            cin >> h[i][j];
+            w[j] = max(w[j], h[i][j]);
+        }
+    }
+    memset(vis, false, sizeof(vis));
+    for (int i = 1; i <= y; i++) {
+        bfs(i);
+        int cnt = 0;
+        for (int j = 0; j < h[0]; j++) {
+            for (int k = 0; k < w[0]; k++) {
+                if (!vis[j][k]) cnt++;
+            }
+        }
+        cout << cnt << endl;
+    }
+    return 0;
+}

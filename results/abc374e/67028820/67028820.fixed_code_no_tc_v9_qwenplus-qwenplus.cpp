@@ -1,0 +1,55 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+
+#define int long long
+
+int n, x;
+vector<int> a, b, p, q;
+
+bool canMake(int mid) {
+    int total_cost = 0;
+    for (int i = 0; i < n; i++) {
+        // Case 1: use as much a as possible, then b
+        int temp = mid;
+        int maxA = mid / a[i];
+        int costA = maxA * p[i];
+        int remainingA = mid - maxA * a[i];
+        int costARemainingB = remainingA * b[i] ? (remainingA + b[i] - 1) / b[i] * q[i] : 0;
+
+        int totalCostA = costA + costARemainingB;
+
+        // Case 2: use as much b as possible, then a
+        int maxB = mid / b[i];
+        int costB = maxB * q[i];
+        int remainingB = mid - maxB * b[i];
+        int costBRemainingA = remainingB * a[i] ? (remainingB + a[i] - 1) / a[i] * p[i] : 0;
+
+        int totalCostB = costB + costBRemainingA;
+
+        total_cost += min(totalCostA, totalCostB);
+
+        if (total_cost > x) return false;
+    }
+
+    return total_cost <= x;
+}
+
+signed main() {
+    cin >> n >> x;
+    a.resize(n); p.resize(n); b.resize(n); q.resize(n);
+    for (int i = 0; i < n; i++) {
+        cin >> a[i] >> p[i] >> b[i] >> q[i];
+    }
+
+    int left = 0, right = 1e10;
+    while (left < right) {
+        int mid = (left + right + 1) >> 1;
+        if (canMake(mid)) left = mid;
+        else right = mid - 1;
+    }
+
+    cout << left << "\n";
+
+    return 0;
+}

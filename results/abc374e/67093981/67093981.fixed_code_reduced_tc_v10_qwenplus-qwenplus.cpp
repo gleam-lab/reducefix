@@ -1,0 +1,82 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <climits>
+using namespace std;
+
+typedef struct { int a, p, b, q; } Machine;
+vector<Machine> machines;
+long long** dp;
+
+int N, X;
+
+// Function to calculate the minimum cost for n candies using i-th machine
+long long cost(int i, int n) {
+    if (n == 0) return 0;
+    long long d = n / (machines[i].a * machines[i].b);
+    long long rem = n % (machines[i].a * machines[i].b);
+    return dp[i][rem] + d * machines[i].p * machines[i].b;
+}
+
+// Function to check if we can produce total 'n' candies within budget X
+bool isPossible(int n) {
+    long long totalCost = 0;
+    for (int i = 0; i < N; ++i) {
+        totalCost += cost(i, n);
+        if (totalCost > X)
+            return false;
+    }
+    return true;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    cin >> N >> X;
+
+    machines.resize(N);
+    dp = new long long*[N];
+    
+    for (int i = 0; i < N; ++i) {
+        int a, p, b, q;
+        cin >> a >> p >> b >> q;
+        
+        // Ensure we always have the better option first
+        if (a * q < b * p) swap(a, b), swap(p, q);
+        machines[i] = {a, p, b, q};
+        
+        // Initialize dp for this machine
+        dp[i] = new long long[a * b + 1];
+        dp[i][0] = 0;
+        for (int j = 1; j <= a * b; ++j) {
+            dp[i][j] = LLONG_MAX;
+            if (j >= a) dp[i][j] = min(dp[i][j], dp[i][j - a] + p);
+            if (j >= b) dp[i][j] = min(dp[i][j], dp[i][j - b] + q);
+        }
+    }
+
+    // Binary search for maximum number of candies we can produce
+    long long low = 0, high = 1e18;
+    long long answer = 0;
+
+    while (low <= high) {
+        long long mid = (low + high) / 2;
+        if (isPossible(mid)) {
+            answer = mid;
+            low = mid + 1;
+        } else {
+            high = mid - 1;
+        }
+    }
+
+    cout << answer << endl;
+
+    // Clean up memory
+    for (int i = 0; i < N; ++i) {
+        delete[] dp[i];
+    }
+    delete[] dp;
+
+    return 0;
+}

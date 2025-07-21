@@ -1,0 +1,50 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+using ll = long long;
+using Graph = vector<vector<int>>;
+
+#define rep(i,n) for (int i=0; i<(n); ++i)
+#define reps(i,n) for (int i=0; i<=(n); ++i)
+#define all(x) (x).begin(), (x).end()
+#define rall(x) (x).rbegin(), (x).rend()
+#define pb(a) push_back(a)
+
+int dx[4] = {1, 0, -1, 0};
+int dy[4] = {0, 1, 0, -1};
+
+int main() {
+    int N;
+    cin >> N;
+    vector<ll> P(N + 1), X(N);
+    P[0] = 0;
+    rep(i, N) cin >> X[i];
+    rep(i, N) {
+        int p;
+        cin >> p;
+        P[i + 1] = P[i] + p;
+    }
+
+    // Create a sorted vector of pairs (X[i], i) instead of using map
+    vector<pair<int, int>> points(N);
+    rep(i, N) {
+        points[i] = {X[i], i};
+    }
+    sort(all(points));
+
+    int Q;
+    cin >> Q;
+    rep(q, Q) {
+        int L, R;
+        cin >> L >> R;
+
+        // Binary search to find the leftmost index where X[i] >= L
+        int l = lower_bound(all(points), make_pair(L, -1)) - points.begin();
+        // Binary search to find the rightmost index where X[i] <= R
+        int r = upper_bound(all(points), make_pair(R, N)) - points.begin();
+
+        cout << P[r] - P[l] << endl;
+    }
+
+    return 0;
+}

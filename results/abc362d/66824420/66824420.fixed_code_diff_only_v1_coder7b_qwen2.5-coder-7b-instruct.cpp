@@ -1,0 +1,42 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    int n, m;
+    cin >> n >> m;
+    vector<long long> a(n + 1);
+    for (int i = 1; i <= n; i++) cin >> a[i];
+    
+    vector<vector<pair<int, int>>> adj(n + 1);
+    for (int j = 0; j < m; j++) {
+        int x, y, w;
+        cin >> x >> y >> w;
+        adj[x].push_back({y, w});
+        adj[y].push_back({x, w});
+    }
+
+    vector<long long> dist(n + 1, LLONG_MAX);
+    dist[1] = a[1]; // Corrected indexing for a
+    priority_queue<pair<long long, int>, vector<pair<long long, int>>, greater<pair<long long, int>>> pq;
+    pq.push({a[1], 1}); // Corrected indexing for a
+
+    while (!pq.empty()) {
+        auto p = pq.top();
+        pq.pop();
+        long long val = p.first, node = p.second;
+
+        for (auto& it : adj[node]) {
+            long long total_dist = val + it.second + a[it.first]; // Corrected indexing for a
+            if (total_dist < dist[it.first]) {
+                dist[it.first] = total_dist;
+                pq.push({total_dist, it.first});
+            }
+        }
+    }
+
+    for (int i = 2; i <= n; i++) {
+        cout << dist[i] << " ";
+    }
+
+    return 0;
+}

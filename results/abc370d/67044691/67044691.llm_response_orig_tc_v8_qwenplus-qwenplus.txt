@@ -1,0 +1,101 @@
+To solve this problem efficiently, we need to simulate placing bombs on a grid and destroying walls according to specific rules. Given the constraints (up to 4×10⁵ cells and 2×10⁵ queries), we must ensure that our data structures and operations are efficient.
+
+### Key Observations:
+- Each cell starts with one wall.
+- When a bomb is placed at a cell:
+  - If there's a wall, destroy it.
+  - If not, destroy the first wall in each of the four directions: up, down, left, right.
+- We need an efficient way to find and remove these walls quickly.
+
+### Strategy:
+We use `std::set` for rows and columns to maintain the positions of existing walls. Sets allow logarithmic time complexity for insertions, deletions, and lookups (`lower_bound`, `upper_bound`).
+
+### Data Structures:
+- `row[i]`: A set containing all column indices where there is a wall in row `i`.
+- `col[j]`: A set containing all row indices where there is a wall in column `j`.
+
+### Efficient Operations:
+- Check if a wall exists at `(r, c)` by checking `row[r].count(c)`.
+- If placing a bomb where a wall exists, simply remove that wall from both sets.
+- Otherwise, use `upper_bound`/`lower_bound` to find the nearest walls in all four directions and remove them.
+
+This approach ensures that each query runs in O(log N) time due to set operations, which is acceptable given the input limits.
+
+---
+
+Here is the corrected and fully functional code:
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int h, w, q;
+    cin >> h >> w >> q;
+
+    vector<set<int>> row(h), col(w);
+
+    // Initialize all walls
+    for (int i = 0; i < h; ++i) {
+        for (int j = 0; j < w; ++j) {
+            row[i].insert(j);
+            col[j].insert(i);
+        }
+    }
+
+    while (q--) {
+        int r, c;
+        cin >> r >> c;
+        r--; c--;
+
+        auto it = row[r].find(c);
+        if (it != row[r].end()) {
+            // Wall already exists here
+            row[r].erase(it);
+            col[c].erase(col[c].find(r));
+        } else {
+            // Look in four directions
+            vector<pair<int, int>> to_remove;
+
+            // Right
+            auto rit = row[r].upper_bound(c);
+            if (rit != row[r].end())
+                to_remove.emplace_back(r, *rit);
+
+            // Left
+            if (rit != row[r].begin()) {
+                --rit;
+                if (*rit < c)
+                    to_remove.emplace_back(r, *rit);
+            }
+
+            // Down
+            auto cit = col[c].upper_bound(r);
+            if (cit != col[c].end())
+                to_remove.emplace_back(*cit, c);
+
+            // Up
+            if (cit != col[c].begin()) {
+                --cit;
+                if (*cit < r)
+                    to_remove.emplace_back(*cit, c);
+            }
+
+            // Remove found walls
+            for (auto [x, y] : to_remove) {
+                row[x].erase(y);
+                col[y].erase(x);
+            }
+        }
+    }
+
+    long long ans = 0;
+    for (int i = 0; i < h; ++i)
+        ans += row[i].size();
+
+    cout << ans << "\n";
+}
+```

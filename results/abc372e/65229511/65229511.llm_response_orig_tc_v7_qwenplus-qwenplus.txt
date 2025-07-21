@@ -1,0 +1,103 @@
+The issue in the original code arises from incorrect handling of the union by size/rank during the union-find merge. Specifically, when merging two sets, the logic for transferring elements between `set<int>` containers was flawed, leading to missing or incorrect vertices in the connected component.
+
+To fix this:
+
+### Key Fixes:
+1. **Properly manage the set merges**:
+   - Always merge the smaller set into the larger one (union by size).
+   - Use efficient insertion (logarithmic time per element) since we only ever need up to 10 largest elements per query.
+
+2. **Ensure that the representative root always has the full set**:
+   - When merging, ensure that `cnt[root]` maintains all elements of the component.
+   - Clear the old set after transfer.
+
+3. **Correctly return k-th largest**:
+   - Use reverse iterators (`rbegin()`) and advance by `k-1`.
+
+---
+
+Here is the corrected and complete C++ code:
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+#define rep(i, n) for(int i = 0; i < (n); ++i)
+#define all(a) a.begin(), a.end()
+typedef long long ll;
+typedef pair<int, int> pi;
+
+struct UnionFind {
+    vector<int> parent;
+    vector<int> rank;
+    vector<set<int>> components;
+
+    UnionFind(int n) : parent(n), rank(n, 0), components(n) {
+        for (int i = 0; i < n; ++i) {
+            parent[i] = i;
+            components[i].insert(i);
+        }
+    }
+
+    int findRoot(int x) {
+        if (parent[x] != x)
+            parent[x] = findRoot(parent[x]);
+        return parent[x];
+    }
+
+    void unite(int x, int y) {
+        int rx = findRoot(x);
+        int ry = findRoot(y);
+
+        if (rx == ry) return;
+
+        // Always merge smaller into larger
+        if (components[rx].size() < components[ry].size())
+            swap(rx, ry);
+
+        // Merge ry into rx
+        for (int val : components[ry])
+            components[rx].insert(val);
+        components[ry].clear();
+        parent[ry] = rx;
+    }
+};
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int N, Q;
+    cin >> N >> Q;
+
+    UnionFind uf(N);
+    vector<int> ans;
+
+    while (Q--) {
+        int type;
+        cin >> type;
+
+        if (type == 1) {
+            int u, v;
+            cin >> u >> v;
+            uf.unite(u - 1, v - 1);
+        } else if (type == 2) {
+            int v, k;
+            cin >> v >> k;
+            int root = uf.findRoot(v - 1);
+            if (uf.components[root].size() < k) {
+                ans.push_back(-1);
+            } else {
+                auto it = uf.components[root].rbegin();
+                advance(it, k - 1);
+                ans.push_back(*it + 1);
+            }
+        }
+    }
+
+    for (int x : ans)
+        cout << x << '\n';
+
+    return 0;
+}
+```

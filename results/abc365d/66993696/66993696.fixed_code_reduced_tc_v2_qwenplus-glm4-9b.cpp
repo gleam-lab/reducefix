@@ -1,0 +1,48 @@
+#include<bits/stdc++.h>
+using namespace std;
+
+int main() {
+    char s[200011], c[200011], original[200011];
+    int n;
+    scanf("%d", &n);
+    scanf("%s", s+1);
+    
+    // Copy the original string for later reference
+    for (int i = 1; i <= n; i++) {
+        original[i] = s[i];
+    }
+    
+    // First pass: convert to 'P' -> 'R', 'R' -> 'S', 'S' -> 'P'
+    for (int i = 1; i <= n; i++) {
+        if (s[i] == 'R') c[i] = 'S';
+        else if (s[i] == 'S') c[i] = 'P';
+        else c[i] = 'R';
+    }
+    
+    int ans = 0, sum = n;
+    
+    // Second pass: handle consecutive characters
+    for (int i = 2; i <= n; i++) {
+        if (c[i] == c[i-1]) {
+            c[i] = original[i];
+            sum--;
+        }
+    }
+    ans = max(ans, sum);
+    
+    // Third pass: handle the case where the first two characters are the same
+    if (original[1] == original[2]) {
+        c[1] = original[1];
+        sum--;
+        for (int i = 3; i <= n; i++) {
+            if (c[i] == c[i-1]) {
+                c[i] = original[i];
+                sum--;
+            }
+        }
+    }
+    ans = max(ans, sum);
+    
+    printf("%d", ans);
+    return 0;
+}

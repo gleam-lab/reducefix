@@ -1,0 +1,47 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    int N;
+    cin >> N;
+    
+    vector<long long> A(N);
+    vector<long long> B(N - 1);
+    
+    for (int i = 0; i < N; ++i) cin >> A[i];
+    for (int i = 0; i < N - 1; ++i) cin >> B[i];
+    
+    sort(A.begin(), A.end());
+    sort(B.begin(), B.end());
+    
+    // We will use binary search to find minimal x
+    long long low = 1, high = 2e9, answer = -1;
+
+    while (low <= high) {
+        long long mid = (low + high) / 2;
+        
+        // Create a list of available box sizes (B + one box of size mid)
+        vector<long long> boxes = B;
+        boxes.push_back(mid);
+        sort(boxes.begin(), boxes.end());
+        
+        bool canAccommodate = true;
+        // Try to assign each toy to a box in non-decreasing order
+        for (int i = 0; i < N; ++i) {
+            if (A[i] > boxes[i]) {
+                canAccommodate = false;
+                break;
+            }
+        }
+
+        if (canAccommodate) {
+            answer = mid;
+            high = mid - 1; // Try smaller x
+        } else {
+            low = mid + 1; // Need larger x
+        }
+    }
+
+    cout << answer << endl;
+    return 0;
+}

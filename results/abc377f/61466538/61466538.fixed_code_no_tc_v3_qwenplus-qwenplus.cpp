@@ -1,0 +1,148 @@
+#include <bits/stdc++.h>
+#include <ext/pb_ds/assoc_container.hpp>
+#include <ext/pb_ds/tree_policy.hpp>
+using namespace std;
+using namespace __gnu_pbds;
+
+typedef long long ll;
+typedef pair<int, int> pii;
+typedef pair<ll, ll> pll;
+typedef pair<pll, ll> plll;
+typedef pair<pll, pll> ppll;
+typedef long double ld;
+typedef tree<int,null_type,less<>,rb_tree_tag,tree_order_statistics_node_update> ordered_set;
+
+#define all(x) (x).begin(), (x).end()
+#define rall(x) (x).rbegin(), (x).rend()
+#define V vector
+#define FOR(i, a, b) for (int i = (a); i < (b); ++i)
+#define ROF(i, a, b) for (int i = (b) - 1; i >= (a); --i)
+
+template<typename T> void re(T &x) { cin >> x; }
+template<typename T, typename ... U> void re(T &t, U &...u) { re(t); re(u...); }
+template<typename T> void re(V<T> &x) { for(auto &a : x) re(a); }
+
+bool inBounds(const pll &a, const ll n) {
+    return 1 <= a.first && a.first <= n && 1 <= a.second && a.second <= n;
+}
+
+// Function to calculate the number of squares attacked by a single diagonal
+ll diag_count(ll d, ll n) {
+    return d <= n ? d : 2 * n - d + 1;
+}
+
+void solve() {
+    ll n, m;
+    re(n, m);
+    set<ll> rows, cols, diag1, diag2;
+    set<pair<ll, ll>> occupied;
+
+    FOR(i, 0, m) {
+        ll a, b;
+        re(a, b);
+        occupied.insert({a, b});
+        rows.insert(a);
+        cols.insert(b);
+        diag1.insert(a - b);
+        diag2.insert(a + b);
+    }
+
+    // Total safe cells = total cells - attacked cells
+    // We compute: total attacked = row_attack + col_attack + diag1_attack + diag2_attack - overlaps
+    ll total_attacked = 0;
+
+    // Add rows and columns
+    total_attacked += (ll)rows.size() * n;
+    total_attacked += (ll)cols.size() * n;
+
+    // Subtract intersections of rows and columns
+    ll row_col_intersections = 0;
+    for (auto r : rows) {
+        for (auto c : cols) {
+            if (occupied.count({r, c}) == 0) {
+                ++row_col_intersections;
+            }
+        }
+    }
+    total_attacked -= row_col_intersections;
+
+    // Add diagonals from diag1: i - j
+    for (auto d : diag1) {
+        ll cnt = n - abs(d);
+        total_attacked += cnt;
+
+        // Subtract overlaps with rows, cols
+        set<pair<ll, ll>> overlap;
+        for (auto r : rows) {
+            ll j = r - d;
+            if (1 <= j && j <= n) {
+                overlap.insert({r, j});
+            }
+        }
+        for (auto c : cols) {
+            ll i = c + d;
+            if (1 <= i && i <= n) {
+                overlap.insert({i, c});
+            }
+        }
+        total_attacked -= overlap.size();
+    }
+
+    // Add diagonals from diag2: i + j
+    for (auto d : diag2) {
+        ll cnt = diag_count(d, n);
+        total_attacked += cnt;
+
+        // Subtract overlaps with rows, cols, and diag1
+        set<pair<ll, ll>> overlap;
+        for (auto r : rows) {
+            ll j = d - r;
+            if (1 <= j && j <= n) {
+                overlap.insert({r, j});
+            }
+        }
+        for (auto c : cols) {
+            ll i = d - c;
+            if (1 <= i && i <= n) {
+                overlap.insert({i, c});
+            }
+        }
+        for (auto dp : diag1) {
+            // Solve: i + j = d, i - j = dp => i = (d + dp)/2, j = (d - dp)/2
+            if ((d + dp) % 2 != 0 || (d - dp) % 2 != 0) continue;
+            ll i = (d + dp) / 2;
+            ll j = (d - dp) / 2;
+            if (inBounds({i, j}, n)) {
+                overlap.insert({i, j});
+            }
+        }
+        total_attacked -= overlap.size();
+    }
+
+    // Now subtract overlaps between diag1 and diag2
+    for (auto d1 : diag1) {
+        for (auto d2 : diag2) {
+            if ((d1 + d2) % 2 != 0) continue;
+            ll i = (d2 + d1) / 2;
+            ll j = (d2 - d1) / 2;
+            if (inBounds({i, j}, n) && occupied.count({i, j}) == 0) {
+                ++total_attacked;
+            }
+        }
+    }
+
+    // Subtract the M occupied cells themselves
+    ll total_safe = n * n - total_attacked;
+    cout << total_safe << "\n";
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(NULL);
+
+    int t = 1;
+    //cin >> t;
+    while(t--) solve();
+
+    return 0;
+}

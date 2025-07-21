@@ -1,0 +1,33 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(NULL);
+
+    int N;
+    string S;
+    cin >> N >> S;
+
+    int wins = 0;
+    char prev_move = 'a'; // Initially invalid to force first move
+
+    for (char c : S) {
+        char winmove;
+        if (c == 'R') winmove = 'P';
+        else if (c == 'P') winmove = 'S';
+        else if (c == 'S') winmove = 'R';
+
+        if (winmove != prev_move) {
+            wins++;
+            prev_move = winmove;
+        } else {
+            // We must choose a different move than previous, so we lose or tie
+            // No increment in wins
+            // Update prev_move to current opponent move as per the problem's logic
+            prev_move = c;
+        }
+    }
+
+    cout << wins << endl;
+}

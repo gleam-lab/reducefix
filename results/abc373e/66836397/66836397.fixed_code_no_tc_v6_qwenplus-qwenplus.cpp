@@ -1,0 +1,82 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+using ll = long long;
+
+#define rep(i, x, limit) for (int i = (x); i < (limit); i++)
+
+void solve() {
+    ll N, M, K;
+    cin >> N >> M >> K;
+    vector<ll> A(N);
+    ll total = 0;
+    for (ll &a : A) {
+        cin >> a;
+        total += a;
+    }
+    ll rem = K - total;
+
+    vector<pair<ll, int>> sorted_A(N);
+    for (int i = 0; i < N; ++i) {
+        sorted_A[i] = {A[i], i};
+    }
+    sort(sorted_A.begin(), sorted_A.end());
+
+    vector<ll> prefix_sum(N + 1, 0);
+    for (int i = 0; i < N; ++i) {
+        prefix_sum[i + 1] = prefix_sum[i] + sorted_A[i].first;
+    }
+
+    vector<ll> result(N);
+
+    for (int idx = 0; idx < N; ++idx) {
+        ll a_i = A[idx];
+
+        // Binary search for the minimum X
+        ll low = 0, high = rem;
+        ll answer = -1;
+
+        while (low <= high) {
+            ll mid = (low + high) / 2;
+            ll new_vote = a_i + mid;
+
+            // Find how many candidates currently have strictly more votes than new_vote
+            // using binary search on sorted_A
+            int l = 0, r = N;
+            while (l < r) {
+                int m = (l + r) / 2;
+                if (sorted_A[m].first > new_vote)
+                    r = m;
+                else
+                    l = m + 1;
+            }
+            int num_strictly_more = N - l;
+
+            // To guarantee election, candidate needs to be in top (M) candidates
+            // So after adding mid votes, number of candidates with strictly more votes must be < M
+            if (num_strictly_more < M) {
+                answer = mid;
+                high = mid - 1;
+            } else {
+                low = mid + 1;
+            }
+        }
+
+        if (answer != -1 && answer <= rem)
+            result[idx] = answer;
+        else
+            result[idx] = -1;
+    }
+
+    for (int i = 0; i < N; ++i) {
+        cout << max(0LL, result[i]) << " ";
+    }
+    cout << endl;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    solve();
+    return 0;
+}

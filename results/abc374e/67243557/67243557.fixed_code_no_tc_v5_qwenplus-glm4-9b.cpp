@@ -1,0 +1,45 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define rep(i,n) for(long long i=0;i<n;i++)
+using ll = long long;
+
+ll f(ll a, ll b, ll p, ll q, ll w) {
+    ll dp[10010] = {1e10};
+    dp[0] = 0;
+    for (ll j = 1; j <= 10009; ++j) {
+        if (j - a >= 0) dp[j] = min(dp[j], dp[j - a] + p);
+        if (j - b >= 0) dp[j] = min(dp[j], dp[j - b] + q);
+    }
+    ll ans = 0;
+    for (ll j = w; j <= 10009; ++j) {
+        ans = max(ans, dp[j]);
+    }
+    return ans;
+}
+
+int main() {
+    int n, x;
+    cin >> n >> x;
+    vector<pair<int, int>> a(n), b(n);
+    vector<ll> p(n), q(n);
+    rep(i, n) {
+        cin >> a[i].first >> p[i] >> a[i].second >> q[i];
+        b[i] = {p[i], q[i]};
+    }
+    sort(a.begin(), a.end());
+    sort(b.begin(), b.end());
+    ll low = 0, high = 10000000000;
+    while (high - low > 1) {
+        ll mid = (low + high) / 2;
+        ll tmp = 0;
+        for (int i = 0; i < n; ++i) {
+            ll cost1 = f(a[i].first, a[i].second, b[i].first, b[i].second, mid);
+            ll cost2 = f(b[i].first, b[i].second, a[i].first, a[i].second, mid);
+            tmp += min(cost1, cost2);
+        }
+        if (tmp <= x) low = mid;
+        else high = mid;
+    }
+    cout << low << endl;
+    return 0;
+}

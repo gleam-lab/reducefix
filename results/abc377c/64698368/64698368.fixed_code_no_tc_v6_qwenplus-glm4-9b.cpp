@@ -1,0 +1,43 @@
+#include <bits/stdc++.h>
+#define rep(i, n) for (int i = 0; i < (int)(n); i++)
+#define repi(i, a, b) for (int i = (int)(a); i <= (int)(b); i++)
+#define rrep(i, n) for (int i = n-1; i >= (int)(0); i--)
+#define rrepi(i, a, b) for (int i = (int)(a); i >= (int)(b); i--)
+
+using namespace std;
+
+const int dir[8][2] = {{0, 2}, {2, 1}, {1, 2}, {-1, 2}, {-2, 1}, {-2, -1}, {-1, -2}, {1, -2}};
+
+int N, M;
+
+void insert_capture_area(int x, int y) {
+    if (0 <= x && x < N && 0 <= y && y < N) {
+        for (auto& d : dir) {
+            int nx = x + d[0], ny = y + d[1];
+            if (0 <= nx && nx < N && 0 <= ny && ny < N) {
+                st.insert({nx, ny});
+            }
+        }
+    }
+}
+
+int main() {
+    cin >> N >> M;
+    N *= N;
+
+    set<pair<int, int>> st;
+    rep(i, M) {
+        int x, y;
+        cin >> x >> y;
+        insert_capture_area(x - 1, y - 1);
+    }
+
+    // Add the coordinates of all cells to the set for simplicity
+    for (int i = 0; i < N; ++i) {
+        st.insert({i / N, i % N});
+    }
+
+    // Subtract the size of the capture area from the total number of cells
+    cout << N - st.size();
+    return 0;
+}

@@ -1,0 +1,119 @@
+#include <iostream>
+#include <vector>
+#include <queue>
+#include <cstring>
+
+using namespace std;
+
+const int MAXN = 1000;
+int H, W, Y;
+vector<vector<int>> grid(MAXN, vector<int>(MAXN));
+
+bool isValid(int x, int y) {
+    return x >= 0 && x < H && y >= 0 && y < W;
+}
+
+void preprocess() {
+    queue<pair<int, int>> q;
+    vector<vector<bool>> visited(H, vector<bool>(W, false));
+    vector<vector<int>> waterLevel(H, vector<int>(W, 0));
+
+    // Initialize the queue with the edges of the grid
+    for (int i = 0; i < H; ++i) {
+        q.push({i, 0});
+        q.push({i, W - 1});
+        visited[i][0] = visited[i][W - 1] = true;
+        waterLevel[i][0] = waterLevel[i][W - 1] = 1;
+    }
+    for (int j = 1; j < W - 1; ++j) {
+        q.push({0, j});
+        q.push({H - 1, j});
+        visited[0][j] = visited[H - 1][j] = true;
+        waterLevel[0][j] = waterLevel[H - 1][j] = 1;
+    }
+
+    // BFS to set the water levels
+    while (!q.empty()) {
+        int x = q.front().first;
+        int y = q.front().second;
+        q.pop();
+
+        for (int i = 0; i < 4; ++i) {
+            int nx = x + dx[i];
+            int ny = y + dy[i];
+            if (isValid(nx, ny) && !visited[nx][ny] && grid[nx][ny] < waterLevel[x][y] + 1) {
+                visited[nx][ny] = true;
+                waterLevel[nx][ny] = waterLevel[x][y] + 1;
+                q.push({nx, ny});
+            }
+        }
+    }
+}
+
+void solve() {
+    preprocess();
+
+    // Count the number of cells at each water level
+    vector<pair<int, int>> countLevels;
+    for (int i = 0; i < H; ++i) {
+        for (int j = 0; j < W; ++j) {
+            if (!grid[i][j]) continue;
+            countLevels.push_back({grid[i][j], 1});
+        }
+    }
+
+    // Sort levels and calculate the remaining area
+    sort(countLevels.begin(), countLevels.end());
+    int remainingArea = H * W;
+    for (int i = 0; i < countLevels.size(); ++i) {
+        int level = countLevels[i].first;
+        int occurrences = countLevels[i].second;
+        remainingArea -= occurrences;
+        if (level == Y) {
+            cout << remainingArea << endl;
+            return;
+        }
+    }
+}
+
+int main() {
+    cin >> H >> W >> Y;
+    for (int i = 0; i < H; ++i) {
+        for (int j = 0; j < W; ++j) {
+            cin >> grid[i][j];
+        }
+    }
+
+    // Set directions for DFS
+    int dx[] = {-1, 1, 0, 0};
+    int dy[] = {0, 0, -1, 1};
+    int visited[MAXN][MAXN];
+
+    // Perform DFS from the edges to calculate the water levels
+    for (int i = 0; i < H; ++i) {
+        for (int j = 0; j < W; ++j) {
+            if (visited[i][j]) continue;
+            queue<pair<int, int>> q;
+            q.push({i, j});
+            visited[i][j] = 1;
+            while (!q.empty()) {
+                int x = q.front().first;
+                int y = q.front().second;
+                q.pop();
+                for (int k = 0; k < 4; ++k) {
+                    int nx = x + dx[k];
+                    int ny = y + dy[k];
+                    if (isValid(nx, ny) && !visited[nx][ny] && grid[nx][ny] <= grid[x][y] + 1) {
+                        visited[nx][ny] = 1;
+                        q.push({nx, ny});
+                        grid[nx][ny] = grid[x][y] + 1;
+                    }
+                }
+            }
+        }
+    }
+
+    solve();
+
+    return 0;
+}

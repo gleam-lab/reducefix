@@ -1,0 +1,55 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <limits>
+using namespace std;
+typedef long long ll;
+
+int main() {
+    int n, m;
+    ll k;
+    cin >> n >> m >> k;
+    vector<ll> a(n);
+    for (int i = 0; i < n; i++) {
+        cin >> a[i];
+        k -= a[i];
+    }
+    sort(a.begin(), a.end(), greater<ll>()); // Sort descending to get the top candidates first
+
+    vector<ll> required_votes(n); // This will store the minimum additional votes for each candidate
+    for (int i = 0; i < n; i++) {
+        if (i < m) {
+            // If there are less than m candidates who have more votes, they are already guaranteed to win
+            required_votes[i] = 0;
+        } else {
+            // Calculate how many more votes the i-th candidate needs to be guaranteed to win
+            ll votes_needed = a[m-1] - a[i] + 1;
+            required_votes[i] = max(0LL, votes_needed);
+        }
+    }
+
+    // Check if we have enough votes to guarantee at least m top candidates
+    sort(required_votes.begin(), required_votes.begin() + m);
+    ll cumulative_votes_needed = 0;
+    for (int i = 0; i < m; i++) {
+        cumulative_votes_needed += required_votes[i];
+        if (cumulative_votes_needed > k) {
+            cout << -1 << " ";
+            continue;
+        }
+    }
+
+    // If we do have enough votes, check if all candidates can be guaranteed to win
+    if (cumulative_votes_needed <= k) {
+        for (int i = m; i < n; i++) {
+            required_votes[i] = max(0LL, required_votes[i] - (cumulative_votes_needed - k));
+            cout << required_votes[i] << " ";
+        }
+    } else {
+        for (int i = m; i < n; i++) {
+            cout << -1 << " ";
+        }
+    }
+
+    return 0;
+}

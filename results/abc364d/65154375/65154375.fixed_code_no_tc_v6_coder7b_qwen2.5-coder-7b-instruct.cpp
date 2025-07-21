@@ -1,0 +1,53 @@
+#include<bits/stdc++.h>
+#define endl "\n"
+using namespace std;
+typedef long long ll;
+
+const int INF = 0x3f3f3f3f;
+const int N = 1e5 + 5;
+
+struct Point{
+    int coord;
+    int index;
+};
+
+vector<Point> pointsA, pointsB;
+
+bool cmp(Point a, Point b){
+    return a.coord < b.coord;
+}
+
+void solve(void) {
+    int n, q; cin >> n >> q;
+    pointsA.resize(n);
+    for(int i = 0; i < n; i++){
+        cin >> pointsA[i].coord;
+        pointsA[i].index = i + 1;
+    }
+    sort(pointsA.begin(), pointsA.end(), cmp);
+
+    pointsB.resize(q);
+    for(int i = 0; i < q; i++){
+        cin >> pointsB[i].coord;
+        cin >> pointsB[i].index;
+    }
+
+    vector<int> sortedDistances(n * q);
+    for(int i = 0; i < q; i++){
+        for(int j = 0; j < n; j++){
+            sortedDistances[i * n + j] = abs(pointsA[j].coord - pointsB[i].coord);
+        }
+        sort(sortedDistances.begin() + i * n, sortedDistances.begin() + (i + 1) * n);
+    }
+
+    for(int i = 0; i < q; i++){
+        cout << sortedDistances[i * n + pointsB[i].index - 1] << endl;
+    }
+}
+
+int main(){
+    ios::sync_with_stdio(0), cin.tie(0), cout.tie(0);
+    int t = 1; //cin >> t;
+    while (t--) solve();
+    return 0;
+}

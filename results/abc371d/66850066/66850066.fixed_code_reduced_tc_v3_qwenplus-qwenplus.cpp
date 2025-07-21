@@ -1,0 +1,58 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+using ll = long long;
+using Graph = vector<vector<int>>;
+
+#define rep(i,n) for (int i=0; i<(n); ++i)
+#define reps(i,n) for (int i=0; i<=(n); ++i)
+#define all(x) (x).begin(), (x).end()
+#define rall(x) (x).rbegin(), (x).rend()
+#define pb(a) push_back(a)
+#define Yes(b) cout << ((b)?"Yes":"No") << endl
+#define YES(b) cout << ((b)?"YES":"NO") << endl
+
+int dx[4]={1,0,-1,0};
+int dy[4]={0,1,0,-1};
+
+int main(){
+    int N;
+    cin >> N;
+    vector<ll> P(N+1), X(N);
+    P[0] = 0;
+    rep(i, N) cin >> X[i];
+    rep(i, N){
+        ll p;
+        cin >> p;
+        P[i+1] = P[i] + p;
+    }
+    
+    // Create a vector of pairs to sort both X and their indices together
+    vector<pair<ll, int>> sorted_X(N);
+    rep(i, N) {
+        sorted_X[i] = {X[i], i};
+    }
+    sort(all(sorted_X));
+
+    // Extract the sorted X values for binary search
+    vector<ll> sorted_values(N);
+    rep(i, N) {
+        sorted_values[i] = sorted_X[i].first;
+    }
+
+    int Q;
+    cin >> Q;
+    rep(q, Q){
+        ll L, R;
+        cin >> L >> R;
+        
+        // Use binary search to find the range
+        int l_idx = lower_bound(all(sorted_values), L) - sorted_values.begin();
+        int r_idx = upper_bound(all(sorted_values), R) - sorted_values.begin();
+        
+        // Get prefix sums from original P array
+        // Need to adjust because P[i] corresponds to first i elements
+        ll ans = P[r_idx] - P[l_idx];
+        cout << ans << endl;
+    }
+}

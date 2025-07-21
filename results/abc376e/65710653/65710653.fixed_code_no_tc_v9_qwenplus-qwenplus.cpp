@@ -1,0 +1,61 @@
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+using pll = pair<ll, ll>;
+
+#define rep(i, a, b) for(ll i = (a); i < (b); ++i)
+#define per(i, a, b) for(ll i = (b)-1; i >= (a); --i)
+#define trav(it, v) for(auto& it : v)
+
+// Function to read input fast
+template<typename T>
+void read(T &x) { cin >> x; }
+template<typename T>
+void read(vector<T> &v) { for(auto &x : v) cin >> x; }
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    ll t;
+    read(t);
+
+    while(t--) {
+        ll n, k;
+        read(n); read(k);
+
+        vector<pll> pairs(n);
+        rep(i, 0, n) read(pairs[i].first);
+        rep(i, 0, n) read(pairs[i].second);
+
+        // Sort by A_i ascending
+        sort(pairs.begin(), pairs.end());
+
+        // Use a max-heap (priority queue) to keep track of the K largest B_i values
+        priority_queue<ll> max_heap;
+        ll sum_b = 0;
+
+        // Initialize with first K elements
+        rep(i, 0, k) {
+            sum_b += pairs[i].second;
+            max_heap.push(pairs[i].second);
+        }
+
+        ll ans = sum_b * pairs[k - 1].first;
+
+        // Try including better B_i values from remaining elements
+        rep(i, k, n) {
+            if(pairs[i].second > max_heap.top()) {
+                sum_b -= max_heap.top();
+                max_heap.pop();
+                sum_b += pairs[i].second;
+                max_heap.push(pairs[i].second);
+                ans = min(ans, sum_b * pairs[i].first);
+            }
+        }
+
+        cout << ans << "\n";
+    }
+
+    return 0;
+}

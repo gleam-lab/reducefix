@@ -1,0 +1,46 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int n, k;
+    cin >> n >> k;
+    int m = n - k;
+    vector<int> a(n);
+    for (int i = 0; i < n; ++i) {
+        cin >> a[i];
+    }
+
+    // We need to find the minimum possible value of max(B) - min(B)
+    // where B is any subsequence of length m obtained by removing K elements
+
+    // Sliding window with a multiset or two heaps approach can work
+            // To solve this efficiently, we can use a sliding window over the array,
+            // maintaining the min and max in each window of size m.
+            // A good way is to use two heaps: one min heap and one max heap.
+
+    // However, for better performance, we'll use two multisets.
+
+    multiset<int> window;
+    long long min_diff = 1e18;
+
+    for (int i = 0; i < n; ++i) {
+        window.insert(a[i]);
+
+        if (i >= m) {
+            // Remove the element that goes out of the window
+            window.erase(window.find(a[i - m]));
+        }
+
+        if (i >= m - 1 && window.size() == m) {
+            int current_min = *window.begin();
+            int current_max = *window.rbegin();
+            min_diff = min(min_diff, 1LL * (current_max - current_min));
+        }
+    }
+
+    cout << min_diff << "\n";
+    return 0;
+}

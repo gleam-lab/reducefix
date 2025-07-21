@@ -1,0 +1,105 @@
+
+The problem is about managing an undirected graph with vertices and edges dynamically based on a series of queries, and answering vertex-related queries efficiently. Here's a step-by-step analysis and a corrected version of the code:
+
+### Analysis
+
+1. **Union-Find Data Structure**: The Union-Find (or Disjoint Set Union, DSU) data structure is used to efficiently manage the merging of sets and finding the representative of each set. It's ideal for problems involving connectivity queries.
+
+2. **Graph Representation**: We represent the graph using a Union-Find structure where each vertex is its own parent initially. As edges are added, we union the sets containing the two vertices.
+
+3. **Query Processing**:
+   - **Type 1 (Add Edge)**: Connect two vertices. If they are in different sets, union their sets.
+   - **Type 2 (Query k-th Largest)**: Find the representative of the set containing the vertex in the query, then find the k-th largest element in this set.
+
+### Issues in the Provided Code
+
+1. **Incorrect Union Operation**: The union operation is not correctly handled. It should correctly propagate the parent and rank information.
+2. **Incorrect Query Handling**: The k-th largest query logic is not handled correctly. It should sort the vertices in the set and then fetch the k-th largest.
+3. **Data Structures**: Using a `set` for storing vertices in each set can lead to inefficient operations, especially when the number of vertices is large.
+
+### Corrected Code
+
+```cpp
+#include <iostream>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+const int MAXN = 2e5 + 10;
+int parent[MAXN], rank[MAXN], size[MAXN];
+
+// Initialize the Union-Find structure
+void init(int n) {
+    for (int i = 0; i < n; ++i) {
+        parent[i] = i;
+        rank[i] = 0;
+        size[i] = 1;
+    }
+}
+
+// Find the root of the set containing x
+int find(int x) {
+    if (x != parent[x]) {
+        parent[x] = find(parent[x]);
+    }
+    return parent[x];
+}
+
+// Union the sets containing x and y
+void unite(int x, int y) {
+    int rootX = find(x);
+    int rootY = find(y);
+    if (rootX != rootY) {
+        if (rank[rootX] < rank[rootY]) {
+            swap(rootX, rootY);
+        }
+        if (rank[rootX] == rank[rootY]) {
+            rank[rootX]++;
+        }
+        parent[rootY] = rootX;
+        size[rootX] += size[rootY];
+    }
+}
+
+// Query the k-th largest vertex in the set containing x
+int query_kth_largest(int x, int k) {
+    int root = find(x);
+    vector<int> vertices;
+    for (int i = 0; i < size[root]; ++i) {
+        vertices.push_back(root + i);
+    }
+    sort(vertices.rbegin(), vertices.rend());
+    if (k > size[root]) {
+        return -1;
+    }
+    return vertices[k - 1];
+}
+
+int main() {
+    int n, q;
+    cin >> n >> q;
+    init(n);
+
+    while (q--) {
+        int type, u, v, k;
+        cin >> type;
+        if (type == 1) {
+            cin >> u >> v;
+            unite(u, v);
+        } else if (type == 2) {
+            cin >> v >> k;
+            cout << query_kth_largest(v - 1, k) + 1 << endl;
+        }
+    }
+
+    return 0;
+}
+```
+
+### Explanation
+
+1. **Union-Find Initialization**: The `init` function initializes the parent, rank, and size arrays.
+2. **Find and Union Operations**: The `find` function implements path compression, and the `unite` function implements union by rank and size.
+3. **Query Operation**: The `query_kth_largest` function finds the representative, collects all vertices in its set, sorts them, and returns the k-th largest.
+
+This corrected code should handle the given problem constraints efficiently and correctly respond to the queries.

@@ -1,0 +1,83 @@
+#include <bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+
+struct DSU {
+    vector<int> parent, rank;
+    DSU(int n) : parent(n + 1), rank(n + 1, 0) {
+        for (int i = 1; i <= n; ++i) {
+            parent[i] = i;
+        }
+    }
+    int find(int x) {
+        if (parent[x] != x) {
+            parent[x] = find(parent[x]); // Path compression
+        }
+        return parent[x];
+    }
+    bool unionSets(int x, int y) {
+        int rootX = find(x);
+        int rootY = find(y);
+        if (rootX != rootY) {
+            if (rank[rootX] > rank[rootY]) {
+                parent[rootY] = rootX;
+            } else if (rank[rootX] < rank[rootY]) {
+                parent[rootX] = rootY;
+            } else {
+                parent[rootY] = rootX;
+                rank[rootX]++;
+            }
+            return true;
+        }
+        return false;
+    }
+};
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int n, m;
+    cin >> n >> m;
+
+    vector<ll> vertex_weights(n + 1);
+    for (int i = 1; i <= n; ++i) {
+        cin >> vertex_weights[i];
+    }
+
+    vector<vector<pair<int, ll>>> adj(n + 1);
+    for (int i = 0; i < m; ++i) {
+        int u, v, w;
+        cin >> u >> v >> w;
+        adj[u].push_back({v, w});
+        adj[v].push_back({u, w});
+    }
+
+    // Kruskal's algorithm to find the Minimum Spanning Tree (MST)
+    vector<pair<ll, pair<int, int>>> edges;
+    for (int i = 1; i <= n; ++i) {
+        for (auto &e : adj[i]) {
+            edges.emplace_back(vertex_weights[i] + e.second, {i, e.first});
+        }
+    }
+
+    sort(edges.begin(), edges.end());
+
+    DSU dsu(n + 1);
+    vector<ll> min_path_weights(n + 1, LLONG_MAX);
+    min_path_weights[1] = 0;
+
+    for (auto &edge : edges) {
+        auto [cost, {u, v}] = edge;
+        if (dsu.unionSets(u, v)) {
+            min_path_weights[v] = min(min_path_weights[v], min_path_weights[u] + cost);
+        }
+    }
+
+    // Output the minimum path weights for each vertex from 2 to n
+    for (int i = 2; i <= n; ++i) {
+        cout << min_path_weights[i] << (i < n ? " " : "\n");
+    }
+
+    return 0;
+}

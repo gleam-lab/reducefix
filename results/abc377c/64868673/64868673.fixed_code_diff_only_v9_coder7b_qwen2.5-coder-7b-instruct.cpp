@@ -1,0 +1,42 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    long long n, m;
+    cin >> n >> m;
+    
+    // Using set for efficient insertion and lookup
+    set<pair<long long, long long>> occupied;
+    vector<vector<bool>> canPlace(n, vector<bool>(n, true));
+    
+    for (long long i = 0; i < m; ++i) {
+        long long a, b;
+        cin >> a >> b;
+        --a, --b; // Adjusting for 0-based indexing
+        
+        occupied.insert({a, b});
+        
+        // Mark positions that can be attacked by the current piece
+        int dx[] = {1, 1, -1, -1, 2, 2, -2, -2};
+        int dy[] = {2, -2, 2, -2, 1, -1, 1, -1};
+        for (int d = 0; d < 8; ++d) {
+            long long x = a + dx[d], y = b + dy[d];
+            if (x >= 0 && x < n && y >= 0 && y < n) {
+                canPlace[x][y] = false;
+            }
+        }
+    }
+
+    // Count the number of valid positions to place the new piece
+    long long ans = 0;
+    for (long long i = 0; i < n; ++i) {
+        for (long long j = 0; j < n; ++j) {
+            if (canPlace[i][j]) {
+                ++ans;
+            }
+        }
+    }
+
+    cout << ans << endl;
+    return 0;
+}

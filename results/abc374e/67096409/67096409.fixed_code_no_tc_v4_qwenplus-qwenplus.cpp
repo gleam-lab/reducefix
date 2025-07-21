@@ -1,0 +1,69 @@
+#include <iostream>
+#include <algorithm>
+#include <climits>
+using namespace std;
+
+typedef struct { int a, p, b, q; } Machine;
+Machine machines[100];
+long long dp[100][10000];  // dp[i][j] = min cost to get j units of item from machine i
+
+int N, X;
+
+// Calculate the minimum cost to produce 'n' units using machine i
+long long cost(int i, int n) {
+    int lcm = machines[i].a * machines[i].b;
+    long long full_blocks = n / lcm;
+    int remainder = n % lcm;
+    return full_blocks * (machines[i].p * machines[i].b) + dp[i][remainder];
+}
+
+// Check if we can produce 'n' items within budget X
+bool is_possible(int n) {
+    long long total_cost = 0;
+    for (int i = 0; i < N; i++) {
+        total_cost += cost(i, n);
+        if (total_cost > X) return false;
+    }
+    return true;
+}
+
+int main() {
+    cin >> N >> X;
+
+    for (int i = 0; i < N; i++) {
+        int a, p, b, q;
+        cin >> a >> p >> b >> q;
+        
+        // Ensure we always have the better rate first
+        if (a * q < b * p) swap(a, b), swap(p, q);
+        machines[i] = {a, p, b, q};
+        
+        // Initialize DP for this machine
+        dp[i][0] = 0;
+        for (int j = 1; j < a * b; j++) {
+            dp[i][j] = LLONG_MAX;
+            if (j - a >= 0) dp[i][j] = min(dp[i][j], dp[i][j - a] + p);
+            if (j - b >= 0) dp[i][j] = min(dp[i][j], dp[i][j - b] + q);
+        }
+    }
+
+    // Binary search for maximum n that can be produced
+    int lo = 0, hi = 2e9;
+    while (lo < hi) {
+        int mid = lo + (hi - lo) / 2;
+        if (is_possible(mid)) {
+            lo = mid + 1;
+        } else {
+            hi = mid;
+        }
+    }
+
+    // Check if the final value is actually possible
+    if (is_possible(lo)) {
+        cout << lo << endl;
+    } else {
+        cout << lo - 1 << endl;
+    }
+
+    return 0;
+}

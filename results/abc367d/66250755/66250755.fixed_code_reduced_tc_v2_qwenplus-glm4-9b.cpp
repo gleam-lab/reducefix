@@ -1,0 +1,35 @@
+#include<bits/stdc++.h>
+using namespace std;
+int n, m, a[400005], t[1000005], an, w[400005];
+
+int main() {
+    cin >> n >> m;
+    for (int i = 1; i <= n; i++) {
+        cin >> a[i];
+        a[i] %= m;
+        a[i + n] = a[i];
+    }
+    
+    // Initialize the number of occurrences of each remainder
+    for (int i = 1; i <= m; i++) {
+        t[i] = 0;
+    }
+    
+    // Calculate the prefix sums of remainders in the array
+    for (int i = 1; i <= 2 * n; i++) {
+        w[i] = (w[i - 1] + a[i]) % m;
+    }
+    
+    // Calculate the number of valid pairs
+    for (int i = 1; i <= 2 * n; i++) {
+        if (i >= n) {
+            an += t[w[i] + m]; // Add the count of complementary remainders
+            t[w[i]]++;
+        } else {
+            t[w[i]]++;
+        }
+    }
+    
+    cout << an << endl;
+    return 0;
+}

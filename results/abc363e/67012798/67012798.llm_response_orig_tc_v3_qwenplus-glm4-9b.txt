@@ -1,0 +1,86 @@
+
+Based on the provided problem statement and the incorrect code, there are several issues that need to be addressed:
+
+1. **Queue Initialization**: The queue is initialized to a size of `1e5 + 5` which seems arbitrary. The size of the queue should be based on the maximum number of elements that can be in it at any given time, which is `H * W` for the entire grid.
+
+2. **Edge Cases**: The code checks if a cell is an edge cell, but does not consider the case where a cell is on an edge and can potentially connect to the sea. If a cell is on an edge and its elevation is greater than the sea level, then it should not be marked as a new sea sink point since it is already connected to the sea.
+
+3. **Propagation of Sinking**: The code does not properly handle the propagation of sinking. When a cell sinks due to its adjacent cells sinking, it should update its neighbors if they are within the grid boundaries and have not yet been processed.
+
+4. **Efficiency**: The current approach does not handle the propagation of sinking efficiently as it does not avoid revisiting cells.
+
+5. **Edge Cases Handling**: The code is not handling the case when the sea level is equal to the elevation of the cells. This can potentially cause infinite loops or incorrect results.
+
+Here is a revised version of the code, considering the above points:
+
+```cpp
+#include <bits/stdc++.h>
+
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int H, W, Y;
+    cin >> H >> W >> Y;
+
+    vector<vector<int>> A(H, vector<int>(W));
+    for (int i = 0; i < H; ++i) {
+        for (int j = 0; j < W; ++j) {
+            cin >> A[i][j];
+        }
+    }
+
+    vector<vector<bool>> visited(H, vector<bool>(W, false));
+    vector<queue<pair<int, int>>> q(Y + 1);
+
+    // Initialize the queue for each sea level
+    for (int i = 0; i < H; ++i) {
+        for (int j = 0; j < W; ++j) {
+            if (A[i][j] == 0) {
+                q[0].push({i, j});
+            }
+            visited[i][j] = A[i][j] == 0;
+        }
+    }
+
+    int initially_flooded = count(q[0].begin(), q[0].end(), pair<int, int>());
+    int remaining_area = H * W - initially_flooded;
+
+    for (int year = 1; year <= Y; ++year) {
+        int num_flooded_this_year = 0;
+        while (!q[year].empty()) {
+            auto [x, y] = q[year].front();
+            q[year].pop();
+
+            // Check all four neighbors
+            for (int dx : {-1, 0, 1}) {
+                for (int dy : {-1, 0, 1}) {
+                    int nx = x + dx;
+                    int ny = y + dy;
+
+                    if (nx < 0 || nx >= H || ny < 0 || ny >= W) {
+                        continue;
+                    }
+
+                    // If the neighbor has not been visited and is within the elevation range
+                    if (!visited[nx][ny] && A[nx][ny] <= year) {
+                        visited[nx][ny] = true;
+                        num_flooded_this_year++;
+                        q[year + 1].push({nx, ny});
+                    }
+                }
+            }
+        }
+
+        // Subtract the number of cells that will flood this year from the remaining area
+        remaining_area -= num_flooded_this_year;
+        cout << remaining_area << '\n';
+    }
+
+    return 0;
+}
+```
+
+This version of the code addresses the issues mentioned above by using a BFS approach to propagate the sinking of the island and correctly tracking which cells have been flooded.

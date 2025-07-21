@@ -1,0 +1,76 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define INT(...) \
+    int __VA_ARGS__; \
+    cin >> __VA_ARGS__;
+#define LL(...) \
+    long long __VA_ARGS__; \
+    cin >> __VA_ARGS__;
+#define PII pair<int, int>
+#define REP1(i, n) for (int i = 1; i <= n; ++i)
+#define REP2(i, a, b) for (int i = a; i <= b; ++i)
+#define all(x) (x).begin(), (x).end()
+#define sz(x) (int)(x).size()
+using vi = vector<int>;
+using vvi = vector<vi>;
+using ll = long long;
+
+struct UnionFind {
+    vector<int> par, rank;
+    UnionFind(int n) : par(n), rank(n, 0) { fill(par.begin(), par.end(), -1); }
+    int find(int x) {
+        if (par[x] < 0) return x;
+        return par[x] = find(par[x]);
+    }
+    bool unite(int x, int y) {
+        x = find(x), y = find(y);
+        if (x == y) return false;
+
+        if (rank[x] < rank[y]) swap(x, y);
+        par[x] += par[y];
+        par[y] = x;
+        if (rank[x] == rank[y]) rank[x]++;
+        return true;
+    }
+};
+
+int main() {
+    INT(h, w, q);
+    UnionFind uf(h * w + 1);
+    vector<vector<int>> grid(h, vector<int>(w, 0));
+    vector<bool> destroyed(h * w, false);
+
+    for (int i = 0; i < q; ++i) {
+        LL(r, c);
+        --r, --c;
+
+        if (grid[r][c] == 0) {
+            grid[r][c] = h * w + i + 1;
+            destroyed[h * w + i + 1] = true;
+        }
+
+        const vector<PII> dirs = {{-1, 0}, {1, 0}, {0, -1}, {0, 1}};
+        for (const auto& dir : dirs) {
+            int x = r + dir.first, y = c + dir.second;
+            if (x >= 0 && x < h && y >= 0 && y < w && grid[x][y] != 0) {
+                int id = grid[x][y];
+                if (!destroyed[id]) {
+                    uf.unite(id, h * w + i + 1);
+                    destroyed[id] = true;
+                }
+            }
+        }
+    }
+
+    int remaining = 0;
+    for (int i = 0; i < h; ++i) {
+        for (int j = 0; j < w; ++j) {
+            if (grid[i][j] == 0) {
+                remaining++;
+            }
+        }
+    }
+
+    cout << remaining << endl;
+    return 0;
+}

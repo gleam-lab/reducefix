@@ -1,0 +1,127 @@
+#include <iostream>
+#include <set>
+#include <map>
+#include <vector>
+
+using namespace std;
+
+int main() {
+    long long n, m;
+    cin >> n >> m;
+
+    vector<pair<long long, long long>> positions(m);
+    set<pair<long long, long long>> rows, cols, diag1, diag2;
+    set<pair<long long, long long>> anti_diag1, anti_diag2;
+    map<pair<long long, long long>, long long> row_counts, col_counts, diag1_counts, diag2_counts;
+    map<pair<long long, long long>, long long> anti_diag1_counts, anti_diag2_counts;
+
+    for (long long i = 0; i < m; ++i) {
+        long long x, y;
+        cin >> x >> y;
+        positions[i] = {x, y};
+
+        // Add to rows and columns
+        rows.insert({x, 0});
+        cols.insert({y, 0});
+        diag1.insert({x - y, 1});
+        diag2.insert({x + y, 1});
+        anti_diag1.insert({y - x, 1});
+        anti_diag2.insert({y + x, 1});
+
+        // Update counts
+        row_counts[{x, 0}]++;
+        col_counts[{y, 0}]++;
+        diag1_counts[{x - y, 1}]++;
+        diag2_counts[{x + y, 1}]++;
+        anti_diag1_counts[{y - x, 1}]++;
+        anti_diag2_counts[{y + x, 1}]++;
+    }
+
+    long long total = n * n;
+    long long empty = total;
+
+    // Subtract occupied rows and columns
+    for (auto &p : rows) {
+        long long count = p.second;
+        empty -= count * n;
+    }
+    for (auto &p : cols) {
+        long long count = p.second;
+        empty -= count * n;
+    }
+    for (auto &p : diag1) {
+        long long count = p.second;
+        empty -= count;
+    }
+    for (auto &p : diag2) {
+        long long count = p.second;
+        empty -= count;
+    }
+    for (auto &p : anti_diag1) {
+        long long count = p.second;
+        empty -= count;
+    }
+    for (auto &p : anti_diag2) {
+        long long count = p.second;
+        empty -= count;
+    }
+
+    // Add back intersections
+    for (auto &p : row_counts) {
+        long long x = p.first.first;
+        long long count = p.first.second;
+        for (auto &p2 : col_counts) {
+            long long y = p2.first.first;
+            if (row_counts.count({x, y}) == 0) {
+                empty += count * p2.first.second;
+            }
+        }
+    }
+
+    for (auto &p : diag1_counts) {
+        long long offset = p.first.first;
+        long long count = p.first.second;
+        for (long long x = 1; x <= n; ++x) {
+            long long y = x - offset;
+            if (diag1_counts.count({x, y}) == 0) {
+                empty += count;
+            }
+        }
+    }
+
+    for (auto &p : diag2_counts) {
+        long long offset = p.first.first;
+        long long count = p.first.second;
+        for (long long x = 1; x <= n; ++x) {
+            long long y = x + offset;
+            if (diag2_counts.count({x, y}) == 0) {
+                empty += count;
+            }
+        }
+    }
+
+    for (auto &p : anti_diag1_counts) {
+        long long offset = p.first.first;
+        long long count = p.first.second;
+        for (long long y = 1; y <= n; ++y) {
+            long long x = y - offset;
+            if (anti_diag1_counts.count({x, y}) == 0) {
+                empty += count;
+            }
+        }
+    }
+
+    for (auto &p : anti_diag2_counts) {
+        long long offset = p.first.first;
+        long long count = p.first.second;
+        for (long long y = 1; y <= n; ++y) {
+            long long x = y + offset;
+            if (anti_diag2_counts.count({x, y}) == 0) {
+                empty += count;
+            }
+        }
+    }
+
+    cout << empty << endl;
+    return 0;
+}

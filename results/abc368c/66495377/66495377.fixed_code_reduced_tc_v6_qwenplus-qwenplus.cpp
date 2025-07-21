@@ -1,0 +1,44 @@
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+
+// Function to calculate the number of attacks needed to reduce health h to 0 or less
+ll required_attacks(ll t, ll h) {
+    // We will perform binary search on number of attacks
+    ll low = 0, high = 2 * h; // upper bound is generous overestimate
+    while (low < high) {
+        ll mid = (low + high) / 2;
+        ll damage = 0;
+        
+        // Count how many attacks are at T values divisible by 3 within [t+1, t+mid]
+        ll num_triples = (t + mid) / 3 - t / 3;
+        damage += num_triples * 3;
+        damage += (mid - num_triples) * 1;
+        
+        if (damage >= h)
+            high = mid;
+        else
+            low = mid + 1;
+    }
+    return low;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int n;
+    cin >> n;
+    vector<ll> H(n);
+    for (int i = 0; i < n; ++i) {
+        cin >> H[i];
+    }
+
+    ll t = 0;
+    for (int i = 0; i < n; ++i) {
+        ll attacks_needed = required_attacks(t, H[i]);
+        t += attacks_needed;
+    }
+
+    cout << t << endl;
+}

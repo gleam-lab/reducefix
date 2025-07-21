@@ -1,0 +1,81 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define rep(i,n) for(int i = 0; i < (n); i++)
+using ll = long long;
+
+// We will represent the grid using row and column sets.
+// Each set contains the positions of walls in that row or column.
+
+int main() {
+    int H, W, Q;
+    cin >> H >> W >> Q;
+
+    // Store remaining walls in sets for rows and columns
+    vector<set<int>> row(H), col(W);
+    
+    // Initialize all walls
+    for (int i = 0; i < H; ++i) {
+        for (int j = 0; j < W; ++j) {
+            row[i].insert(j);
+            col[j].insert(i);
+        }
+    }
+
+    while (Q--) {
+        int R, C;
+        cin >> R >> C;
+        R--; C--;
+
+        if (row[R].count(C)) {
+            // Wall exists at this position: remove it
+            row[R].erase(C);
+            col[C].erase(R);
+        } else {
+            // Wall does not exist: destroy nearest in four directions
+
+            // Up
+            auto it = col[C].lower_bound(R);
+            if (it != col[C].begin()) {
+                --it;
+                int up = *it;
+                row[up].erase(C);
+                col[C].erase(it);
+            }
+
+            // Down
+            it = col[C].lower_bound(R);
+            if (it != col[C].end()) {
+                int down = *it;
+                row[down].erase(C);
+                col[C].erase(it);
+            }
+
+            // Left
+            auto jt = row[R].lower_bound(C);
+            if (jt != row[R].begin()) {
+                --jt;
+                int left = *jt;
+                col[left].erase(R);
+                row[R].erase(jt);
+            }
+
+            // Right
+            jt = row[R].lower_bound(C);
+            if (jt != row[R].end()) {
+                int right = *jt;
+                col[right].erase(R);
+                row[R].erase(jt);
+            }
+        }
+    }
+
+    // Count remaining walls
+    int ans = 0;
+    for (int i = 0; i < H; ++i) {
+        ans += row[i].size();
+    }
+
+    cout << ans << endl;
+
+    return 0;
+}

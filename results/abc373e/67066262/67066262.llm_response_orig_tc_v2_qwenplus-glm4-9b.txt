@@ -1,0 +1,96 @@
+
+To solve this problem, let's first break down the main idea.
+
+The goal is to find the minimum number of additional votes (`X`) that candidate `i` needs to guarantee their victory, which means the number of candidates with more votes than them should be less than `M`. To achieve this, we need to consider the votes that have not been counted yet (`k - sum(A_i)`).
+
+Here is the step-by-step approach to solving this problem:
+
+1. Calculate the remaining votes:
+   - `remaining_votes = k - sum(A_i)`
+
+2. Sort candidates based on the number of votes they have already received (`A_i`) in descending order. This helps us to determine which candidates are leading and who are trailing.
+
+3. For each candidate, we will calculate the minimum votes (`X`) required to reach the next candidate with one less vote than the current candidate's leading votes. If the next candidate is `M` positions away (i.e., we're looking at the trailing candidates), we check if it's feasible to reach them with the remaining votes.
+
+4. While iterating through the sorted list, we will update our estimate for the votes required to guarantee victory for each candidate.
+
+5. The result for each candidate is given by the minimum votes (`X`) calculated in step 3.
+
+Let's start implementing this approach.
+
+```cpp
+#include <iostream>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+const long long INF = 1e18;
+
+struct Candidate {
+    long long votes;
+    int index;
+};
+
+int main() {
+    int n, m, k;
+    cin >> n >> m >> k;
+    vector<long long> A(n);
+    for (int i = 0; i < n; ++i) {
+        cin >> A[i];
+    }
+
+    // Step 1: Calculate remaining votes
+    long long remaining_votes = k - accumulate(A.begin(), A.end(), 0LL);
+
+    // Step 2: Sort candidates by votes in descending order
+    vector<Candidate> candidates(n);
+    for (int i = 0; i < n; ++i) {
+        candidates[i] = {A[i], i};
+    }
+    sort(candidates.begin(), candidates.end(), [](const Candidate &a, const Candidate &b) {
+        return a.votes > b.votes;
+    });
+
+    // Step 3: Determine the minimum votes required for each candidate
+    vector<long long> required_votes(n);
+    for (int i = 0; i < n; ++i) {
+        // Check if the next candidate is within the top M candidates
+        int next_candidate_index = lower_bound(candidates.begin() + i + 1, candidates.end(),
+                                              Candidate{A[i] - 1, 0}, [](const Candidate &a, const Candidate &b) {
+                                                  return a.votes > b.votes;
+                                              }) - candidates.begin();
+
+        // If the next candidate is within the top M candidates, calculate the votes required to reach them
+        if (next_candidate_index - i <= m) {
+            long long votes_needed = (A[i] - 1) - candidates[next_candidate_index].votes;
+            required_votes[candidates[i].index] = votes_needed;
+        } else {
+            // If not, check if we can reach any candidate with less than M votes ahead
+            int j = i;
+            while (j + 1 < n && candidates[j + 1].votes > A[i] - 1) {
+                ++j;
+            }
+            if (j + 1 < n) {
+                required_votes[candidates[i].index] = (A[i] - 1) - candidates[j + 1].votes;
+            } else {
+                // If we cannot reach any candidate, it's impossible to guarantee victory for this candidate
+                required_votes[candidates[i].index] = INF;
+            }
+        }
+    }
+
+    // Step 4: Output the minimum votes required for each candidate
+    for (const auto &vote : required_votes) {
+        if (vote == INF) {
+            cout << -1 << ' ';
+        } else {
+            cout << vote << ' ';
+        }
+    }
+    cout << '\n';
+
+    return 0;
+}
+```
+
+This solution should work for cases like the one provided in the failing test case, but make sure to test it with multiple inputs and edge cases to ensure its correctness.

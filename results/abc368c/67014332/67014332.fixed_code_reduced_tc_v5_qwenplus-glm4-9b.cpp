@@ -1,0 +1,31 @@
+#include<bits/stdc++.h>
+using namespace std;
+using ll = long long;
+int main() {
+    ll n, ans = 0;
+    cin >> n;
+    vector<ll> enemies(n);
+    for (ll &h : enemies) {
+        cin >> h;
+    }
+    int i = 0;
+    while (i < n) {
+        ll h = enemies[i];
+        int tri = 3;
+        // Process the current enemy
+        while (h > 0) {
+            ans++;
+            if (tri == 3) {
+                h -= 3;
+            } else {
+                h--;
+            }
+            tri--;
+            if (tri < 1) {
+                tri = 3;
+            }
+        }
+        i++;
+    }
+    cout << ans;
+}

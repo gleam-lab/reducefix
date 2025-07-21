@@ -1,0 +1,198 @@
+To fix this code, we need to address the issue arising from the incorrect calculation of the number of safe squares where the new piece can be placed without being captured by any existing pieces. The initial approach tried to use inclusion-exclusion principle but had some flaws in the implementation, leading to incorrect results in certain cases.
+
+### Approaches
+1. **Problem Analysis**: The problem involves determining the number of empty squares on an N x N grid where a new piece can be placed without being captured by any existing M pieces. The existing pieces can capture along rows, columns, and both diagonals (i+j and i-j).
+
+2. **Key Insight**: The safe squares are those not attacked by any existing piece. We can compute the total safe squares by subtracting the squares attacked by any existing piece, using the inclusion-exclusion principle to avoid double-counting squares attacked by multiple pieces.
+
+3. **Algorithm Selection**: 
+   - **Total Squares**: The total number of squares is \(N^2\).
+   - **Attacked Squares**: For each piece, calculate the squares it attacks (rows, columns, diagonals i+j, and diagonals i-j). Use sets to track unique rows, columns, and diagonals to avoid duplication.
+   - **Inclusion-Exclusion**: Compute the union of all attacked squares correctly by accounting for overlaps between different attack patterns (rows, columns, and diagonals).
+
+4. **Complexity**: The solution efficiently handles up to \(M = 10^3\) pieces, leveraging set operations to manage uniqueness and intersections, ensuring optimal performance.
+
+### Solution Code
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    long long N, M;
+    cin >> N >> M;
+    set<long long> rows, cols, diag1, diag2;
+    set<pair<long long, long long>> pieces;
+
+    for (int i = 0; i < M; ++i) {
+        long long a, b;
+        cin >> a >> b;
+        rows.insert(a);
+        cols.insert(b);
+        diag1.insert(a + b);
+        diag2.insert(a - b);
+        pieces.insert({a, b});
+    }
+
+    long long attacked = 0;
+    
+    // Rows and columns
+    attacked += N * rows.size() + N * cols.size();
+    
+    // Diagonals i+j = k
+    for (long long d : diag1) {
+        long long min_sum = 2;
+        long long max_sum = 2 * N;
+        if (d < min_sum || d > max_sum) continue;
+        long long cnt = min(d - 1, 2 * N - d + 1);
+        attacked += cnt;
+    }
+    
+    // Diagonals i-j = k
+    for (long long d : diag2) {
+        long long min_diff = -(N - 1);
+        long long max_diff = N - 1;
+        if (d < min_diff || d > max_diff) continue;
+        long long cnt = N - abs(d);
+        attacked += cnt;
+    }
+    
+    // Overlaps between rows and columns
+    attacked -= rows.size() * cols.size();
+    
+    // Overlaps between rows and diag1 (i+j = k)
+    for (long long a : rows) {
+        for (long long d : diag1) {
+            long long b = d - a;
+            if (b >= 1 && b <= N) {
+                if (pieces.count({a, b}) == 0) {
+                    attacked--;
+                }
+            }
+        }
+    }
+    
+    // Overlaps between rows and diag2 (i-j = k)
+    for (long long a : rows) {
+        for (long long d : diag2) {
+            long long b = a - d;
+            if (b >= 1 && b <= N) {
+                if (pieces.count({a, b}) == 0) {
+                    attacked--;
+                }
+            }
+        }
+    }
+    
+    // Overlaps between columns and diag1 (i+j = k)
+    for (long long b : cols) {
+        for (long long d : diag1) {
+            long long a = d - b;
+            if (a >= 1 && a <= N) {
+                if (pieces.count({a, b}) == 0) {
+                    attacked--;
+                }
+            }
+        }
+    }
+    
+    // Overlaps between columns and diag2 (i-j = k)
+    for (long long b : cols) {
+        for (long long d : diag2) {
+            long long a = d + b;
+            if (a >= 1 && a <= N) {
+                if (pieces.count({a, b}) == 0) {
+                    attacked--;
+                }
+            }
+        }
+    }
+    
+    // Overlaps between diag1 and diag2
+    for (long long sum : diag1) {
+        for (long long diff : diag2) {
+            long long a = (sum + diff) / 2;
+            long long b = (sum - diff) / 2;
+            if ((sum + diff) % 2 == 0 && (sum - diff) % 2 == 0) {
+                if (a >= 1 && a <= N && b >= 1 && b <= N) {
+                    if (pieces.count({a, b}) == 0) {
+                        attacked--;
+                    }
+                }
+            }
+        }
+    }
+    
+    // Overlaps between rows, columns, and diag1
+    for (long long a : rows) {
+        for (long long b : cols) {
+            if (pieces.count({a, b}) == 0) {
+                if (diag1.count(a + b) > 0) {
+                    attacked++;
+                }
+            }
+        }
+    }
+    
+    // Overlaps between rows, columns, and diag2
+    for (long long a : rows) {
+        for (long long b : cols) {
+            if (pieces.count({a, b}) == 0) {
+                if (diag2.count(a - b) > 0) {
+                    attacked++;
+                }
+            }
+        }
+    }
+    
+    // Overlaps between rows, diag1, and diag2
+    for (long long a : rows) {
+        for (long long sum : diag1) {
+            long long b = sum - a;
+            if (b >= 1 && b <= N) {
+                if (pieces.count({a, b}) == 0 && diag2.count(a - b) > 0) {
+                    attacked++;
+                }
+            }
+        }
+    }
+    
+    // Overlaps between columns, diag1, and diag2
+    for (long long b : cols) {
+        for (long long sum : diag1) {
+            long long a = sum - b;
+            if (a >= 1 && a <= N) {
+                if (pieces.count({a, b}) == 0 && diag2.count(a - b) > 0) {
+                    attacked++;
+                }
+            }
+        }
+    }
+    
+    // Overlaps between rows, columns, diag1, and diag2
+    for (long long a : rows) {
+        for (long long b : cols) {
+            if (pieces.count({a, b}) == 0) {
+                if (diag1.count(a + b) > 0 && diag2.count(a - b) > 0) {
+                    attacked--;
+                }
+            }
+        }
+    }
+
+    long long total = N * N - M;
+    long long safe = total - attacked;
+    cout << safe << endl;
+
+    return 0;
+}
+```
+
+### Explanation
+1. **Initialization**: We read the grid size \(N\) and the number of pieces \(M\). We use sets to store unique rows, columns, and diagonals (i+j and i-j) that are attacked by the existing pieces.
+2. **Attacked Squares Calculation**: 
+   - **Rows and Columns**: Each existing piece attacks its entire row and column. The total is \(N \times \text{number of unique rows} + N \times \text{number of unique columns}\).
+   - **Diagonals**: For each diagonal (i+j or i-j), we calculate the number of squares along that diagonal within the grid bounds.
+3. **Inclusion-Exclusion Principle**: We adjust the total attacked squares by subtracting overlaps between different attack patterns (e.g., squares attacked by both a row and a column). We further adjust for higher-order overlaps involving two or more attack patterns.
+4. **Safe Squares**: The total safe squares are computed by subtracting the attacked squares from the total empty squares (\(N^2 - M\)).
+
+This approach ensures all edge cases and large inputs are handled efficiently, providing the correct count of safe squares.

@@ -1,0 +1,81 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+const int MAXN = 4e5 + 5;
+
+struct SegTree {
+    int tree[4 * MAXN];
+    void init(int node, int start, int end) {
+        if (start == end) {
+            tree[node] = 1;
+        } else {
+            int mid = (start + end) / 2;
+            init(node * 2, start, mid);
+            init(node * 2 + 1, mid + 1, end);
+            tree[node] = tree[node * 2] + tree[node * 2 + 1];
+        }
+    }
+    void update(int node, int start, int end, int idx) {
+        if (start == end) {
+            tree[node] = 0;
+        } else {
+            int mid = (start + end) / 2;
+            if (idx <= mid) {
+                update(node * 2, start, mid, idx);
+            } else {
+                update(node * 2 + 1, mid + 1, end, idx);
+            }
+            tree[node] = tree[node * 2] + tree[node * 2 + 1];
+        }
+    }
+    int query(int node, int start, int end, int l, int r) {
+        if (r < start || end < l) {
+            return 0;
+        }
+        if (l <= start && end <= r) {
+            return tree[node];
+        }
+        int mid = (start + end) / 2;
+        return query(node * 2, start, mid, l, r) + query(node * 2 + 1, mid + 1, end, l, r);
+    }
+};
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int H, W, Q;
+    cin >> H >> W >> Q;
+
+    SegTree horizontal[H], vertical[W];
+
+    for (int i = 0; i < H; ++i) {
+        horizontal[i].init(1, 0, W - 1);
+    }
+    for (int i = 0; i < W; ++i) {
+        vertical[i].init(1, 0, H - 1);
+    }
+
+    while (Q--) {
+        int R, C;
+        cin >> R >> C;
+        --R, --C;
+
+        if (!horizontal[R].query(1, 0, W - 1, C, C)) {
+            horizontal[R].update(1, 0, W - 1, C);
+            vertical[C].update(1, 0, H - 1, R);
+        }
+    }
+
+    int totalWalls = H * W;
+    for (int i = 0; i < H; ++i) {
+        totalWalls -= horizontal[i].query(1, 0, W - 1, 0, W - 1);
+    }
+    for (int i = 0; i < W; ++i) {
+        totalWalls -= vertical[i].query(1, 0, H - 1, 0, H - 1);
+    }
+
+    cout << totalWalls << '\n';
+
+    return 0;
+}

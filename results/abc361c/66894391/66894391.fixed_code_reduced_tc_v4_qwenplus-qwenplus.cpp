@@ -1,0 +1,46 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    int N, K;
+    cin >> N >> K;
+    vector<int> A(N);
+    for (int i = 0; i < N; ++i) {
+        cin >> A[i];
+    }
+
+    // We will use a sliding window approach to find the minimum possible value of max - min
+    // over all subsequences of length N-K
+
+    // To efficiently compute min and max in windows, we use two deques
+    deque<int> max_deque;
+    deque<int> min_deque;
+
+    int result = numeric_limits<int>::max();
+
+    for (int i = 0; i < N; ++i) {
+        // Maintain deque for maximum values
+        while (!max_deque.empty() && A[i] > A[max_deque.back()])
+            max_deque.pop_back();
+        max_deque.push_back(i);
+
+        // Maintain deque for minimum values
+        while (!min_deque.empty() && A[i] < A[min_deque.back()])
+            min_deque.pop_back();
+        min_deque.push_back(i);
+
+        // Remove elements out of the current window
+        while (!max_deque.empty() && max_deque.front() <= i - (N - K))
+            max_deque.pop_front();
+        while (!min_deque.empty() && min_deque.front() <= i - (N - K))
+            min_deque.pop_front();
+
+        // Once window size reaches N - K, update result
+        if (i >= N - K - 1) {
+            result = min(result, A[max_deque.front()] - A[min_deque.front()]);
+        }
+    }
+
+    cout << result << endl;
+    return 0;
+}

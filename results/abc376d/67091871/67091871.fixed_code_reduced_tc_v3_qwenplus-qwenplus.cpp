@@ -1,0 +1,51 @@
+#include<bits/stdc++.h>
+#define ll long long
+using namespace std;
+
+ll n, m;
+vector<int> adj[200005];
+
+// Function to perform BFS and find the shortest cycle length
+ll shortestCycle() {
+    ll mn = 200005;
+    for (int i = 1; i <= n; ++i) {
+        ll dist[200005];
+        fill(dist, dist + n + 1, -1);
+        queue<ll> q;
+        q.push(i);
+        dist[i] = 0;
+        
+        while (!q.empty()) {
+            ll u = q.front();
+            q.pop();
+            
+            for (ll v : adj[u]) {
+                if (dist[v] == -1) {
+                    dist[v] = dist[u] + 1;
+                    q.push(v);
+                } else if (dist[v] >= dist[u]) { // back edge -> cycle detected
+                    mn = min(mn, dist[u] + dist[v] + 1);
+                }
+            }
+        }
+    }
+    return mn == 200005 ? -1 : mn;
+}
+
+int main(){
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+    cout.tie(0);
+
+    cin >> n >> m;
+    for(int i = 1; i <= m; ++i){
+        int u, v;
+        cin >> u >> v;
+        adj[u].push_back(v);
+        adj[v].push_back(u); // since graph is undirected for cycle detection
+    }
+
+    cout << shortestCycle();
+
+    return 0;
+}

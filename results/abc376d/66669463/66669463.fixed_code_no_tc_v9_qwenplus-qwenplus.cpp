@@ -1,0 +1,62 @@
+#include <algorithm>
+#include <iostream>
+#include <cstdio>
+#include <queue>
+#include <vector>
+using namespace std;
+
+struct Edge {
+    int to;
+};
+
+vector<vector<Edge>> graph;
+const int INF = 1e9;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int n, m;
+    cin >> n >> m;
+    
+    graph.resize(n + 1);
+    
+    for (int i = 0; i < m; ++i) {
+        int u, v;
+        cin >> u >> v;
+        graph[u].push_back({v});
+    }
+    
+    vector<int> dist(n + 1, INF);
+    queue<int> q;
+    vector<bool> in_queue(n + 1, false);
+    
+    // Start from node 1
+    dist[1] = 0;
+    q.push(1);
+    in_queue[1] = true;
+    
+    while (!q.empty()) {
+        int u = q.front();
+        q.pop();
+        in_queue[u] = false;
+        
+        for (const auto& e : graph[u]) {
+            int v = e.to;
+            if (dist[v] > dist[u] + 1) {
+                dist[v] = dist[u] + 1;
+                if (!in_queue[v]) {
+                    q.push(v);
+                    in_queue[v] = true;
+                }
+            }
+        }
+    }
+    
+    if (dist[1] == INF)
+        cout << -1 << endl;
+    else
+        cout << dist[1] << endl;
+    
+    return 0;
+}

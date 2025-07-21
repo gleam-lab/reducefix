@@ -1,0 +1,33 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    int n, q;
+    cin >> n; // 输入数据量
+    
+    // 初始化数组和映射
+    vector<int> x(n), p(n);
+    map<int, int> sum; // 假设sum是一个按顺序存储数组元素的映射
+    
+    // 处理输入数据
+    for (int i = 0; i < n; ++i) {
+        cin >> x[i] >> p[i]; // 读入每个元素的x和p值
+        sum[p[i]]++; // 根据p值更新sum映射中对应元素的计数
+    }
+    
+    // 处理查询操作
+    while (q--) {
+        int L, R; // 读入查询区间L和R
+        cin >> L >> R; // 读入查询区间内的元素范围
+        int c = lower_bound(x.begin(), x.end(), L) - x.begin(); // 找到小于L的第一个元素的索引c
+        int d = upper_bound(x.begin(), x.end(), R) - x.begin(); // 找到大于R的第一个元素的索引d
+        // 如果sum映射中不存在该元素，输出-1表示错误或特殊情况处理
+        if (sum.find(p[d]) == sum.end()) {
+            cout << -1 << endl; // 或者根据实际情况处理错误情况
+        } else {
+            // 计算并输出结果
+            cout << sum[p[d]] - sum[c] << endl; // 使用sum映射中的值进行计算并输出结果
+        }
+    }
+    return 0; // 结束程序
+}

@@ -1,0 +1,24 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    int n, k;
+    cin >> n >> k;
+    vector<int> a(n);
+    for (int i = 0; i < n; i++) {
+        cin >> a[i];
+    }
+    sort(a.begin(), a.end());
+
+    int min_diff = INT_MAX;
+    for (int i = 0; i <= k; i++) {
+        int j = i + (n - k) - 1;
+        if (j >= n) continue;
+        int current_diff = a[j] - a[i];
+        if (current_diff < min_diff) {
+            min_diff = current_diff;
+        }
+    }
+    cout << min_diff << endl;
+    return 0;
+}

@@ -1,0 +1,76 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int N;
+    cin >> N;
+    vector<long long> H(N);
+    for (int i = 0; i < N; ++i) {
+        cin >> H[i];
+    }
+
+    // We will use a priority queue to always attack the enemies with the least remaining health first.
+    // Since we need to process enemies in order, we simulate each step carefully.
+
+    long long T = 0;
+    long long additional_attacks = 0;
+
+    for (int i = 0; i < N; ++i) {
+        long long h = H[i];
+
+        if (h <= 0) continue;
+
+        // Every 3 attacks, we get an extra strong one (3 damage), otherwise 1 damage
+        // So over 3 attacks: total damage is 1 + 1 + 3 = 5
+        // So per full group of 3 attacks: 5 damage
+
+        long long full_cycles = h / 5;
+        long long remaining_health = h % 5;
+
+        T += full_cycles * 3;
+
+        // Apply the remaining attacks needed for the remainder
+        if (remaining_health > 0) {
+            T++;
+            if (T % 3 == 0) {
+                remaining_health -= 3;
+            } else {
+                remaining_health -= 1;
+            }
+        }
+        if (remaining_health > 0) {
+            T++;
+            if (T % 3 == 0) {
+                remaining_health -= 3;
+            } else {
+                remaining_health -= 1;
+            }
+        }
+        if (remaining_health > 0) {
+            T++;
+            if (T % 3 == 0) {
+                remaining_health -= 3;
+            } else {
+                remaining_health -= 1;
+            }
+        }
+
+        // Ensure that health does not go below zero
+        if (remaining_health < 0) {
+            // Adjust T accordingly if overshoot
+            // For example, if last attack was enough
+            if (T % 3 == 0 && remaining_health + 3 <= 0) {
+                T--;
+            }
+            if (T % 3 == 0 && remaining_health + 3 <= 0) {
+                T--;
+            }
+        }
+    }
+
+    cout << T << endl;
+    return 0;
+}

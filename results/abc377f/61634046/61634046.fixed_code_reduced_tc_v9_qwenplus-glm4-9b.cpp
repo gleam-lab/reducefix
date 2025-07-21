@@ -1,0 +1,59 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <set>
+#include <map>
+
+using namespace std;
+
+const long long MOD = 1e9 + 7;
+
+struct Point {
+    int x, y;
+    bool operator<(const Point& other) const {
+        if (x != other.x) return x < other.x;
+        return y < other.y;
+    }
+};
+
+int N, M;
+vector<Point> points;
+
+long long count_empty_squares(int x, int y) {
+    set<Point> row, col, diag1, diag2;
+    for (const auto& p : points) {
+        if (p.x == x) row.insert({p.x, p.y});
+        if (p.y == y) col.insert({p.x, p.y});
+        if (p.x + p.y == x + y) diag1.insert({p.x, p.y});
+        if (p.x - p.y == x - y) diag2.insert({p.x, p.y});
+    }
+
+    int row_size = row.size();
+    int col_size = col.size();
+    int diag1_size = diag1.size();
+    int diag2_size = diag2.size();
+
+    return N * N - (row_size + col_size + diag1_size + diag2_size);
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    cin >> N >> M;
+    points.resize(M);
+    for (int i = 0; i < M; ++i) {
+        cin >> points[i].x >> points[i].y;
+    }
+
+    long long result = 0;
+    for (int x = 1; x <= N; ++x) {
+        for (int y = 1; y <= N; ++y) {
+            result = (result + count_empty_squares(x, y)) % MOD;
+        }
+    }
+
+    cout << result << endl;
+
+    return 0;
+}

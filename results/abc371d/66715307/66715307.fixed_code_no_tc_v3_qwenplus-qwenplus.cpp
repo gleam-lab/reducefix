@@ -1,0 +1,63 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+const int MAXN = 200050;
+int n, x[MAXN], p_prefix[MAXN];
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    cin >> n;
+    for (int i = 1; i <= n; ++i) {
+        cin >> x[i];
+    }
+    for (int i = 1; i <= n; ++i) {
+        cin >> p_prefix[i];
+        p_prefix[i] += p_prefix[i - 1];
+    }
+
+    int q;
+    cin >> q;
+    while (q--) {
+        int l, r;
+        cin >> l >> r;
+
+        // Binary search for the first index where x[i] >= l
+        int left = 1, right = n;
+        int start = -1;
+        while (left <= right) {
+            int mid = (left + right) / 2;
+            if (x[mid] >= l) {
+                start = mid;
+                right = mid - 1;
+            } else {
+                left = mid + 1;
+            }
+        }
+
+        // If no element >= l found
+        if (start == -1 || x[start] > r) {
+            cout << 0 << '\n';
+            continue;
+        }
+
+        // Binary search for last index where x[i] <= r
+        left = 1, right = n;
+        int end = -1;
+        while (left <= right) {
+            int mid = (left + right) / 2;
+            if (x[mid] <= r) {
+                end = mid;
+                left = mid + 1;
+            } else {
+                right = mid - 1;
+            }
+        }
+
+        // Output prefix sum difference
+        cout << p_prefix[end] - p_prefix[start - 1] << '\n';
+    }
+
+    return 0;
+}

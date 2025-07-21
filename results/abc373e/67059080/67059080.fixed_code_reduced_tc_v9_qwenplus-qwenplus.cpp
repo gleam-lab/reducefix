@@ -1,0 +1,102 @@
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+
+int main() {
+  std::cin.tie(nullptr)->sync_with_stdio(false);
+  int N, M;
+  ll K;
+  cin >> N >> M >> K;
+
+  vector<ll> A(N);
+  for (int i = 0; i < N; ++i) {
+    cin >> A[i];
+  }
+
+  ll total_current = accumulate(A.begin(), A.end(), 0LL);
+  ll remaining_votes = K - total_current;
+
+  vector<ll> sorted_A = A;
+  sort(sorted_A.begin(), sorted_A.end());
+
+  vector<ll> suffix_sum(N + 1);
+  for (int i = N - 1; i >= 0; --i) {
+    suffix_sum[i] = suffix_sum[i + 1] + sorted_A[i];
+  }
+
+  vector<ll> result(N);
+
+  for (int i = 0; i < N; ++i) {
+    ll current = A[i];
+
+    // Binary search on minimum number of votes needed
+    ll left = 0, right = remaining_votes;
+    ll answer = -1;
+
+    while (left <= right) {
+      ll mid = (left + right) / 2;
+
+      // We assume candidate i gets `mid` additional votes
+      ll extended = current + mid;
+
+      // Find how many candidates currently have strictly more than `extended`
+      int idx = lower_bound(sorted_A.begin(), sorted_A.end(), extended + 1) - sorted_A.begin();
+      int num_strictly_higher = N - idx;
+
+      // Now we need to make sure that even if the rest of the votes are distributed optimally to others,
+      // no more than M-1 candidates can end up with more votes than i.
+
+      // So we try to raise the top (num_strictly_higher) candidates to at least `extended`
+      // and see if it's possible within the remaining votes
+
+      // Number of votes available to distribute among those who can be raised above i
+      ll remaining = remaining_votes - mid;
+
+      // We try to raise the highest (num_strictly_higher) candidates to at least (extended)
+      // by computing how much is needed to bring them up to (extended)
+
+      ll needed = 0;
+      if (num_strictly_higher >= M) {
+        // Not enough; too many people already above us
+        left = mid + 1;
+        continue;
+      }
+
+      // The number of candidates we must ensure do NOT exceed our value
+      int target = M - num_strictly_higher - 1;
+
+      if (target < 0) {
+        // Already good
+        answer = mid;
+        right = mid - 1;
+        continue;
+      }
+
+      // Take the top (target) candidates below our level and try to raise them to (extended)
+      if (idx > 0 && target > 0) {
+        int low_idx = max(0LL, (ll)idx - target);
+        needed = target * extended - (suffix_sum[low_idx] - suffix_sum[idx]);
+        if (needed <= remaining) {
+          answer = mid;
+          right = mid - 1;
+        } else {
+          left = mid + 1;
+        }
+      } else {
+        answer = mid;
+        right = mid - 1;
+      }
+    }
+
+    result[i] = (answer == -1 ? -1 : answer);
+  }
+
+  for (int i = 0; i < N; ++i) {
+    if (result[i] == -1) {
+      cout << -1 << ' ';
+    } else {
+      cout << result[i] << ' ';
+    }
+  }
+  cout << '\n';
+}

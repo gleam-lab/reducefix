@@ -1,0 +1,33 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+int main() {
+    int T;
+    cin >> T;
+    while (T--) {
+        int N, K;
+        cin >> N >> K;
+        vector<int> A(N + 1), B(N + 1), prefixB(N + 1, 0);
+        for (int i = 1; i <= N; ++i) {
+            cin >> A[i];
+        }
+        for (int i = 1; i <= N; ++i) {
+            cin >> B[i];
+            prefixB[i] = prefixB[i - 1] + B[i];
+        }
+
+        // We need to find the minimum value of max(A[i]) * sum(B[i..i+K-1])
+        // This can be tricky because we need to consider the prefix sums.
+        int ans = INT_MAX;
+        for (int i = 1; i <= N - K + 1; ++i) {
+            // sum(B[i..i+K-1]) is prefixB[i+K-1] - prefixB[i-1]
+            int sumB = (i + K - 1 <= N) ? prefixB[i + K - 1] - prefixB[i - 1] : 0;
+            ans = min(ans, A[i] * sumB);
+        }
+
+        cout << ans << endl;
+    }
+    return 0;
+}

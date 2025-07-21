@@ -1,0 +1,45 @@
+#include<bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+
+int main(){
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int n, q;
+    cin >> n;
+    
+    vector<ll> x(n+2), p(n+2);  // Using 1-based indexing
+    
+    for(int i = 1; i <= n; ++i) {
+        cin >> x[i];
+    }
+    
+    for(int i = 1; i <= n; ++i) {
+        cin >> p[i];
+    }
+    
+    // Build prefix sum of p
+    vector<ll> sum(n+2, 0);
+    for(int i = 1; i <= n; ++i) {
+        sum[i] = sum[i-1] + p[i];
+    }
+    
+    cin >> q;
+    
+    while(q--) {
+        ll L, R;
+        cin >> L >> R;
+        
+        // Find first index where x[i] >= L
+        int left = lower_bound(x.begin() + 1, x.begin() + n + 1, L) - x.begin();
+        
+        // Find first index where x[i] > R
+        int right = upper_bound(x.begin() + 1, x.begin() + n + 1, R) - x.begin();
+        
+        // Elements from left to right-1 are in the range [L, R]
+        cout << sum[right - 1] - sum[left - 1] << "\n";
+    }
+    
+    return 0;
+}

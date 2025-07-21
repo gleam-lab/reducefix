@@ -1,0 +1,33 @@
+#include <iostream>
+#include <algorithm>
+#include <iomanip>
+#include <cmath>
+#include <queue>
+#include <map>
+#include <set>
+using namespace std;
+
+int main() {
+    int n;
+    double c = 0.0;
+    cin >> n;
+    vector<pair<int, int>> points(n);
+    for (int i = 0; i < n; ++i) {
+        cin >> points[i].first >> points[i].second;
+    }
+    
+    // Calculate the distance from origin to the first point
+    c += sqrt(points[0].first * points[0].first + points[0].second * points[0].second);
+    
+    // Calculate the distances between consecutive points
+    for (int i = 0; i < n - 1; ++i) {
+        c += sqrt((points[i].first - points[i + 1].first) * (points[i].first - points[i + 1].first) +
+                   (points[i].second - points[i + 1].second) * (points[i].second - points[i + 1].second));
+    }
+    
+    // Calculate the distance from the last point back to the origin
+    c += sqrt(points[n - 1].first * points[n - 1].first + points[n - 1].second * points[n - 1].second);
+    
+    cout << setprecision(10) << c << endl;
+    return 0;
+}

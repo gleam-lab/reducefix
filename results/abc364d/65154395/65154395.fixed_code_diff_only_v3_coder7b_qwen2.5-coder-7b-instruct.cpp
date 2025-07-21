@@ -1,0 +1,30 @@
+#include<bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+
+const int N = 100005;
+int n, q;
+ll a[N], b[N];
+
+void solve(void) {
+    cin >> n >> q;
+    for(int i = 1; i <= n; i++) cin >> a[i];
+    sort(a + 1, a + n + 1);
+
+    for(int i = 1; i <= q; i++){
+        cin >> b[i] >> a[i];
+    }
+
+    for(int i = 1; i <= q; i++){
+        auto it = lower_bound(a + 1, a + n + 1, b[i]);
+        if(it == a + n + 1) cout << abs(b[i] - a[n]) << endl;
+        else if(it == a + 1) cout << abs(b[i] - a[1]) << endl;
+        else cout << min(abs(b[i] - *it), abs(b[i] - *(it - 1))) << endl;
+    }
+}
+
+int main(){
+    ios::sync_with_stdio(0), cin.tie(0), cout.tie(0);
+    solve();
+    return 0;
+}

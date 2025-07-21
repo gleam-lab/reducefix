@@ -1,0 +1,40 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define rep(i, n) for (int i = 0; i < (n); ++i)
+using ll = long long;
+
+int main()
+{
+    int n;
+    cin >> n;
+    vector<ll> H(n);
+    rep(i, n) cin >> H[i];
+
+    ll T = 0;
+
+    // We will simulate the process using a queue to track enemies that need more attacks
+    queue<int> activeEnemies;
+    rep(i, n) {
+        if (H[i] > 0) {
+            activeEnemies.push(i);
+        }
+    }
+
+    while (!activeEnemies.empty()) {
+        T++;
+        int idx = activeEnemies.front();
+        int damage = (T % 3 == 0) ? 3 : 1;
+        H[idx] -= damage;
+
+        // Remove if dead
+        if (H[idx] <= 0) {
+            activeEnemies.pop();
+        } else {
+            // Otherwise move to the back for next round
+            activeEnemies.pop();
+            activeEnemies.push(idx);
+        }
+    }
+
+    cout << T << endl;
+}

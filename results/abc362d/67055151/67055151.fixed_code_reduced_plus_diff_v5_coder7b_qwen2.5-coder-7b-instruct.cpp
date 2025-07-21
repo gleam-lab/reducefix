@@ -1,0 +1,103 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+#define all(x) begin(x), end(x)
+#define rall(x) rbegin(x), rend(x)
+#define sz(x) (int) (x).size()
+#define pb push_back
+#define eb emplace_back
+#define mp make_pair
+#define mt make_tuple
+#define ll long long
+#define ld long double
+#define pii pair<int, int>
+#define pll pair<ll, ll>
+#define vi vector<int>
+#define vl vector<ll>
+#define vii vector<pii>
+#define vll vector<pll>
+#define viii vector<vi>
+#define vvii vector<vii>
+#define vvvii vector<viii>
+#define vvl vector<vl>
+#define vvvl vector<vvl>
+#define PQ(type) priority_queue<type>
+#define PQD(type) priority_queue<type, vector<type>, greater<type>>
+
+mt19937 rng(chrono::steady_clock::now().time_since_epoch().count());
+inline int rand_int(int l, int r) { return uniform_int_distribution<int>(l, r)(rng); }
+inline ll rand_ll(ll l, ll r) { return uniform_int_distribution<ll>(l, r)(rng); }
+
+const int INF = 0x3f3f3f3f;
+const ll LINF = 0x3f3f3f3f3f3f3f3f;
+const int MOD = 1e9 + 7;
+
+struct Edge {
+    int to, cost;
+    Edge(int to, int cost) : to(to), cost(cost) {}
+};
+
+struct Graph {
+    int n;
+    vector<vector<Edge>> adj;
+    Graph(int n) : n(n), adj(n) {}
+    void add_edge(int u, int v, int cost) {
+        adj[u].pb(Edge(v, cost));
+        adj[v].pb(Edge(u, cost));
+    }
+};
+
+struct Dijkstra {
+    Graph& g;
+    int start;
+    vector<ll> dist;
+    Dijkstra(Graph& g, int start) : g(g), start(start), dist(g.n, LINF) {
+        dist[start] = 0;
+        priority_queue<pair<ll, int>, vector<pair<ll, int>>, greater<pair<ll, int>>> pq;
+        pq.emplace(dist[start], start);
+        while (!pq.empty()) {
+            int u = pq.top().second; pq.pop();
+            if (dist[u] < pq.top().first) continue;
+            for (auto& e : g.adj[u]) {
+                int v = e.to, cost = e.cost;
+                if (dist[u] + cost < dist[v]) {
+                    dist[v] = dist[u] + cost;
+                    pq.emplace(dist[v], v);
+                }
+            }
+        }
+    }
+};
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(0);
+    
+    int n, m;
+    cin >> n >> m;
+    vector<int> a(n);
+    for (int i = 0; i < n; ++i) {
+        cin >> a[i];
+    }
+    
+    Graph g(n);
+    for (int i = 0; i < m; ++i) {
+        int u, v, w;
+        cin >> u >> v >> w;
+        --u; --v;
+        g.add_edge(u, v, w);
+    }
+    
+    vector<ll> ans(n - 1);
+    for (int i = 1; i < n; ++i) {
+        Dijkstra dijkstra(g, i);
+        ans[i - 1] = dijkstra.dist[0] + a[0];
+    }
+    
+    for (int i = 0; i < n - 1; ++i) {
+        cout << ans[i] << " ";
+    }
+    cout << endl;
+    
+    return 0;
+}

@@ -1,0 +1,39 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+long long calc(long long n, long long k) {
+    return (n - k + 1) * (n - k + 2) / 2;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+
+    long long N, M;
+    cin >> N >> M;
+
+    long long ans = N * N;
+    unordered_set<long long> taken;
+    for (long long i = 0; i < M; ++i) {
+        long long x, y;
+        cin >> x >> y;
+        --x, --y;
+        for (auto dx : {-2, -1, 1, 2}) {
+            for (auto dy : {-2, -1, 1, 2}) {
+                if (dx == 0 || dy == 0) continue;
+                long long nx = x + dx, ny = y + dy;
+                if (nx >= 0 && nx < N && ny >= 0 && ny < N) {
+                    taken.insert(nx * N + ny);
+                }
+            }
+        }
+    }
+
+    for (const auto &t : taken) {
+        ans -= calc(N, t % N) + calc(N, t / N);
+    }
+
+    cout << ans << '\n';
+
+    return 0;
+}

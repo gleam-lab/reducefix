@@ -1,0 +1,126 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+#define LL long long
+#define INF 1e18
+
+struct Edge {
+    int u, v, w;
+};
+
+struct DSU {
+    vector<int> parent, rank;
+    DSU(int n) {
+        parent.resize(n+1);
+        rank.resize(n+1, 1);
+        for(int i=1;i<=n;i++) parent[i]=i;
+    }
+    
+    int find(int x) {
+        if(parent[x]!=x) parent[x]=find(parent[x]);
+        return parent[x];
+    }
+    
+    void unite(int x, int y) {
+        int px=find(x), py=find(y);
+        if(px==py) return;
+        if(rank[px]<rank[py]) swap(px, py);
+        parent[py]=px;
+        rank[px]+=rank[py];
+    }
+};
+
+struct Graph {
+    int n;
+    vector<vector<pair<int, int>>> adj;
+    Graph(int _n): n(_n), adj(_n+1) {}
+    
+    void addEdge(int u, int v, int w) {
+        adj[u].push_back({v, w});
+        adj[v].push_back({u, w});
+    }
+    
+    vector<LL> dijkstra(int src) {
+        vector<LL> dist(n+1, INF);
+        priority_queue<pair<LL, int>, vector<pair<LL, int>>, greater<pair<LL, int>>> pq;
+        
+        dist[src] = 0;
+        pq.push({dist[src], src});
+        
+        while(!pq.empty()) {
+            auto [d, u] = pq.top(); pq.pop();
+            
+            if(d > dist[u]) continue;
+            
+            for(auto &[v, w]: adj[u]) {
+                if(dist[u] + w < dist[v]) {
+                    dist[v] = dist[u] + w;
+                    pq.push({dist[v], v});
+                }
+            }
+        }
+        
+        return dist;
+    }
+};
+
+int main() {
+    ios::sync_with_stdio(false); cin.tie(0); cout.tie(0);
+
+    int n, m;
+    cin >> n >> m;
+    
+    vector<LL> A(n+1);
+    for(int i=1;i<=n;i++) cin >> A[i];
+    
+    vector<Edge> edges(m);
+    for(int i=0;i<m;i++) {
+        cin >> edges[i].u >> edges[i].v >> edges[i].w;
+    }
+    
+    Graph g(n);
+    for(auto &e: edges) {
+        g.addEdge(e.u, e.v, e.w);
+    }
+    
+    DSU dsu(n);
+    vector<LL> res(n);
+    vector<bool> visited(n+1);
+    
+    for(int i=1;i<=n;i++) {
+        if(visited[i]) continue;
+        
+        queue<int> q;
+        q.push(i);
+        visited[i] = true;
+        
+        while(!q.empty()) {
+            int u = q.front(); q.pop();
+            
+            for(auto &[v, w]: g.adj[u]) {
+                if(!visited[v]) {
+                    visited[v] = true;
+                    dsu.unite(u, v);
+                    q.push(v);
+                }
+            }
+        }
+    }
+    
+    for(int i=1;i<=n;i++) {
+        if(i==1) res[i] = A[i];
+        else {
+            res[i] = INF;
+            for(int j=1;j<=n;j++) {
+                if(dsu.find(j)==dsu.find(i)) {
+                    res[i] = min(res[i], A[j]+g.dijkstra(j)[i]);
+                }
+            }
+        }
+    }
+    
+    for(int i=2;i<=n;i++) cout << res[i] << " ";
+    cout << endl;
+    
+    return 0;
+}

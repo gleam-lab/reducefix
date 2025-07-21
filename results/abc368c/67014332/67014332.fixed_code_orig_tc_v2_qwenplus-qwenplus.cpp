@@ -1,0 +1,40 @@
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    ll N;
+    cin >> N;
+    vector<ll> H(N);
+    for (ll i = 0; i < N; ++i) {
+        cin >> H[i];
+    }
+
+    // We'll use a priority queue to always attack the frontmost enemy with health > 0
+    // Store enemies as pairs: {position, health}
+    // Since enemies are in fixed order, we just simulate from left to right
+
+    ll T = 0;
+    ll tri_count = 0; // Number of attacks that are multiples of 3
+
+    for (ll i = 0; i < N; ++i) {
+        ll h = H[i];
+        if (h == 0) continue;
+
+        while (h > 0) {
+            ++T;
+            if (T % 3 == 0) {
+                h -= 3;
+                ++tri_count;
+            } else {
+                h -= 1;
+            }
+        }
+    }
+
+    cout << T << endl;
+    return 0;
+}

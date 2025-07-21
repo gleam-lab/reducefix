@@ -1,0 +1,41 @@
+#include<bits/stdc++.h>
+using namespace std;
+
+typedef long long ll;
+const int N = 1e6 + 5;
+
+int n, m;
+ll sum;
+int a[2*N], d[2*N];
+map<int, int> cnt;
+
+int main() {
+    ios::sync_with_stdio(0);
+    cin.tie(0);
+    cout.tie(0);
+
+    cin >> n >> m;
+    for(int i = 0; i < n; i++) {
+        cin >> a[i];
+        a[i + n] = a[i];  // Duplicate array for circular property
+    }
+
+    cnt[0] = 1;  // Prefix sum mod m count
+
+    for(int i = 1; i < 2*n; i++) {
+        d[i] = (d[i-1] + a[i-1]) % m;
+
+        // If we're past the first n elements, decrease count from the other side
+        if(i > n) {
+            cnt[d[i - n] % m]--;
+        }
+
+        sum += cnt[d[i] % m];
+        if(i < n) {
+            cnt[d[i] % m]++;
+        }
+    }
+
+    cout << sum << "\n";
+    return 0;
+}

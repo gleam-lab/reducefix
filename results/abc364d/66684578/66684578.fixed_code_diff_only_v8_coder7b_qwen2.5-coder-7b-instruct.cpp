@@ -1,0 +1,56 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+#define ll long long
+#define rep(i,n) for(int i=0;i<n;i++)
+#define all(x) x.begin(),x.end()
+
+struct Point {
+    ll x, idx;
+};
+
+bool cmp(const Point& a, const Point& b) {
+    return a.x < b.x;
+}
+
+vector<ll> solve(vector<Point>& A, vector<pair<ll, int>>& queries) {
+    sort(all(A));
+    vector<ll> res(queries.size());
+    for (auto [b, k] : queries) {
+        int pos = upper_bound(all(A), Point{b, INT_MAX}) - A.begin();
+        int left = max(pos - k, 0);
+        int right = min(pos + k - 1, (int)A.size() - 1);
+        ll sum = 0;
+        for (int i = left; i <= right; ++i) {
+            sum += abs(A[i].x - b);
+        }
+        res[b] = sum / (right - left + 1);
+    }
+    return res;
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int n, q;
+    cin >> n >> q;
+    vector<Point> A(n);
+    rep(i, n) {
+        cin >> A[i].x;
+        A[i].idx = i;
+    }
+    
+    vector<pair<ll, int>> queries(q);
+    rep(i, q) {
+        cin >> queries[i].first >> queries[i].second;
+    }
+    
+    auto result = solve(A, queries);
+    
+    rep(i, q) {
+        cout << result[queries[i].first] << '\n';
+    }
+    
+    return 0;
+}

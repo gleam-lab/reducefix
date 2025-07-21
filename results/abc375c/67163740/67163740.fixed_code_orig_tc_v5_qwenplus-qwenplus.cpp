@@ -1,0 +1,29 @@
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int n;
+    cin >> n;
+
+    long double x = 0, y = 0;
+    long double total = 0;
+
+    for (int i = 0; i < n; ++i) {
+        long double a, b;
+        cin >> a >> b;
+        total += sqrt((x - a) * (x - a) + (y - b) * (y - b));
+        x = a;
+        y = b;
+    }
+
+    total += sqrt(x * x + y * y); // Return to origin
+
+    cout.precision(15);
+    cout << fixed << total << endl;
+
+    return 0;
+}

@@ -1,0 +1,86 @@
+```cpp
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <climits>
+using namespace std;
+
+typedef long long ll;
+
+struct Item {
+    int a, p, b, q;
+};
+
+int N;
+ll X;
+Item items[100];
+ll dp[100][10000]; // dp[i][j]: min cost to get j units from item i
+
+// Calculate cost for n units of item i
+ll cost(int i, int n) {
+    int a = items[i].a * items[i].b;
+    ll full = n / a;
+    int rem = n % a;
+    return full * (items[i].p * items[i].b + items[i].q * items[i].a) / 2 + dp[i][rem];
+}
+
+// Check if we can produce total n units within budget X
+bool is_possible(int n) {
+    ll total_cost = 0;
+    for (int i = 0; i < N; ++i) {
+        ll c = cost(i, n);
+        total_cost += c;
+        if (total_cost > X)
+            return false;
+    }
+    return true;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    cin >> N >> X;
+
+    for (int i = 0; i < N; ++i) {
+        int a, p, b, q;
+        cin >> a >> p >> b >> q;
+
+        // Ensure the property: a*q <= b*p
+        if (a * q > b * p) {
+            swap(a, b);
+            swap(p, q);
+        }
+
+        items[i] = {a, p, b, q};
+
+        // Initialize dp table for this item
+        const int max_state = a * b;
+        fill(dp[i], dp[i] + max_state + 1, LLONG_MAX / 2);
+        dp[i][0] = 0;
+
+        for (int j = 1; j <= max_state; ++j) {
+            int prev1 = max(0, j - a);
+            int prev2 = max(0, j - b);
+            dp[i][j] = min(dp[i][prev1] + p, dp[i][prev2] + q);
+        }
+    }
+
+    // Binary search for maximum total units possible
+    int low = 0, high = 1e9;
+    int answer = 0;
+
+    while (low <= high) {
+        int mid = low + ((high - low) >> 1);
+        if (is_possible(mid)) {
+            answer = mid;
+            low = mid + 1;
+        } else {
+            high = mid - 1;
+        }
+    }
+
+    cout << answer << endl;
+    return 0;
+}
+```

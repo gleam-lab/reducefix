@@ -1,0 +1,100 @@
+To fix this code, we need to address the core algorithmic issue in determining the minimum number of additional votes each candidate needs to guarantee their election. The original approach had flaws in how it calculated the required votes, especially in handling the thresholds and binary search logic.
+
+### Approaches
+
+1. **Binary Search for Each Candidate**: For each candidate, we perform a binary search to find the minimum number of additional votes \( X \) needed such that, even if the other candidates receive all remaining votes, the candidate will still be among the top \( M \) candidates.
+2. **Sort and Prefix Sum**: We first sort the candidates' current votes to efficiently compute the sum of votes needed to surpass or match other candidates.
+3. **Efficient Calculation**: Using the sorted list and prefix sums, we can quickly determine how many votes are necessary to ensure the candidate's position is within the top \( M \) after distributing the remaining votes.
+
+### Solution Code
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+#define all(x) (x).begin(), (x).end()
+
+int main() {
+    ios_base::sync_with_stdio(0);
+    cin.tie(0);
+    int N, M;
+    ll K;
+    cin >> N >> M >> K;
+    vector<ll> A(N);
+    ll sum_A = 0;
+    for (int i = 0; i < N; ++i) {
+        cin >> A[i];
+        sum_A += A[i];
+    }
+    ll remaining = K - sum_A;
+
+    vector<int> ord(N);
+    iota(all(ord), 0);
+    sort(all(ord), [&](int i, int j) { return A[i] > A[j]; });
+    vector<ll> sorted_A(N);
+    for (int i = 0; i < N; ++i) {
+        sorted_A[i] = A[ord[i]];
+    }
+
+    vector<ll> prefix(N + 1);
+    for (int i = 0; i < N; ++i) {
+        prefix[i + 1] = prefix[i] + sorted_A[i];
+    }
+
+    vector<ll> ans(N, -1);
+    for (int idx = 0; idx < N; ++idx) {
+        ll current = sorted_A[idx];
+        int original_pos = ord[idx];
+        
+        ll low = 0;
+        ll high = remaining;
+        ll min_X = -1;
+        while (low <= high) {
+            ll mid = (low + high) / 2;
+            ll new_votes = current + mid;
+
+            int left = 0;
+            int right = N;
+            while (left < right) {
+                int mid_pos = (left + right) / 2;
+                if (sorted_A[mid_pos] > new_votes) {
+                    left = mid_pos + 1;
+                } else {
+                    right = mid_pos;
+                }
+            }
+            int rank = left;
+            if (rank < M) {
+                min_X = mid;
+                high = mid - 1;
+            } else {
+                ll needed = 0;
+                if (M > 0) {
+                    needed = (new_votes + 1) * (rank - M + 1) - (prefix[rank + 1] - prefix[M]);
+                }
+                if (needed <= remaining - mid) {
+                    min_X = mid;
+                    high = mid - 1;
+                } else {
+                    low = mid + 1;
+                }
+            }
+        }
+        ans[original_pos] = (min_X != -1) ? min_X : -1;
+    }
+    
+    for (int i = 0; i < N; ++i) {
+        cout << ans[i] << ' ';
+    }
+    cout << '\n';
+    return 0;
+}
+```
+
+### Explanation
+
+1. **Binary Search Setup**: For each candidate, we perform a binary search between 0 and the remaining votes to find the minimum \( X \) (additional votes) required.
+2. **Rank Calculation**: For each mid value in the binary search, we determine the candidate's rank if they receive `current + mid` votes. This is done by finding how many candidates currently have more votes than this new value.
+3. **Check Feasibility**: If the rank is within the top \( M \), the candidate is elected. If not, we calculate the total votes needed for other candidates to not surpass this new value, ensuring the candidate's election. If this total is within the remaining votes, the mid value is feasible.
+4. **Result Assignment**: The binary search result is stored for each candidate, and the results are printed in the original order.
+
+This approach ensures that each candidate's minimum additional votes are calculated efficiently and correctly, considering all possible distributions of the remaining votes. The use of sorting and prefix sums allows for efficient rank and vote calculations, making the solution both optimal and correct for large input sizes.

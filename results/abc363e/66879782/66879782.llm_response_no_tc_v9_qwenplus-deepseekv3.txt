@@ -1,0 +1,89 @@
+To fix this code, we need to address the following issues:
+
+1. **Priority Queue Handling**: The current approach uses a priority queue to propagate the sinking process, but it doesn't correctly account for the minimum sea level at which a cell sinks. Specifically, the priority queue should prioritize cells with lower elevations first to ensure that the earliest possible sinking time is recorded.
+
+2. **Sinking Time Calculation**: The sinking time for each cell should be the minimum of its own elevation and the maximum elevation of its adjacent sunk cells. The current implementation incorrectly sets `sink[nr][nc] = min(H, sink[nr][nc])`, which doesn't accurately reflect the earliest time a cell sinks.
+
+3. **Prefix Sum Calculation**: The prefix sum array should correctly accumulate the number of cells that have sunk by each year. The current implementation increments `pref[sink[i][j]]` only if `sink[i][j] <= y`, which might miss some cells if `sink[i][j]` exceeds `y`.
+
+4. **Edge Cases**: The code should handle cases where all cells sink immediately or none sink, and ensure that the output is correct for all years from 1 to Y.
+
+### Fixed Code
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+#define all(x) (x).begin(), (x).end()
+
+int main() {
+    ios_base::sync_with_stdio(0);
+    cin.tie(0);
+    int h, w, y;
+    cin >> h >> w >> y;
+    vector<vector<int>> height(h, vector<int>(w));
+    vector<vector<int>> sink(h, vector<int>(w, INT_MAX));
+    priority_queue<pair<int, pair<int, int>>, vector<pair<int, pair<int, int>>>, greater<pair<int, pair<int, int>>>> pq;
+    int di[4][2] = {{-1, 0}, {1, 0}, {0, -1}, {0, 1}};
+    
+    for (int i = 0; i < h; i++) {
+        for (int j = 0; j < w; j++) {
+            cin >> height[i][j];
+            if (i == 0 || i == h - 1 || j == 0 || j == w - 1) {
+                sink[i][j] = height[i][j];
+                pq.push({sink[i][j], {i, j}});
+            }
+        }
+    }
+
+    while (!pq.empty()) {
+        auto [H, p] = pq.top();
+        auto [r, c] = p;
+        pq.pop();
+        if (H > sink[r][c]) continue;
+        for (int i = 0; i < 4; i++) {
+            int nr = r + di[i][0];
+            int nc = c + di[i][1];
+            if (nr < 0 || nr >= h || nc < 0 || nc >= w) continue;
+            int new_sink = max(H, height[nr][nc]);
+            if (new_sink < sink[nr][nc]) {
+                sink[nr][nc] = new_sink;
+                pq.push({sink[nr][nc], {nr, nc}});
+            }
+        }
+    }
+
+    vector<int> cnt(y + 2, 0);
+    for (int i = 0; i < h; i++) {
+        for (int j = 0; j < w; j++) {
+            if (sink[i][j] <= y) {
+                cnt[sink[i][j]]++;
+            } else {
+                cnt[y + 1]++;
+            }
+        }
+    }
+
+    vector<int> pref(y + 1, 0);
+    pref[0] = cnt[0];
+    for (int i = 1; i <= y; i++) {
+        pref[i] = pref[i - 1] + cnt[i];
+    }
+
+    for (int i = 1; i <= y; i++) {
+        cout << h * w - pref[i] << '\n';
+    }
+
+    return 0;
+}
+```
+
+### Explanation
+1. **Initialization**: The `height` and `sink` matrices are initialized. The `sink` matrix records the earliest year a cell sinks, initialized to `INT_MAX` except for border cells, which are initialized to their elevation.
+
+2. **Priority Queue Processing**: The priority queue processes cells in order of increasing elevation. For each cell, it checks its neighbors and updates their sinking time to the maximum of the current cell's sinking time and the neighbor's elevation, ensuring the earliest possible sinking time is recorded.
+
+3. **Counting Sunk Cells**: The `cnt` array counts how many cells sink at each year. Cells that sink after year `Y` are counted in `cnt[y + 1]`.
+
+4. **Prefix Sum Calculation**: The `pref` array accumulates the number of cells sunk by each year, allowing the remaining area to be calculated as `h * w - pref[i]` for each year `i`.
+
+This approach ensures that the sinking process is efficiently and correctly simulated, and the results are accurately computed for each year.

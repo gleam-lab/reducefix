@@ -1,0 +1,38 @@
+#include <iostream>
+#include <string>
+#include <unordered_map>
+
+using namespace std;
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(0);
+
+    unordered_map<char, char> beats = {{'R', 'P'}, {'P', 'S'}, {'S', 'R'}};
+    int n;
+    cin >> n;
+    string s;
+    cin >> s;
+
+    // Since the problem is about counting consecutive games where the current player wins, 
+    // we can use a single loop to count both required totals.
+    int total_1 = 0; // Total length of one winning streak
+    int max_streak = 0; // Maximum length of any winning streak
+    char last_move = beats[s[0]]; // Initial move
+    int current_streak = 1; // Current streak length
+
+    for (int i = 1; i < n; i++) {
+        if (beats[s[i]] == last_move) {
+            current_streak++;
+        } else {
+            last_move = s[i];
+            current_streak = 1;
+        }
+        total_1 += current_streak;
+        max_streak = max(max_streak, current_streak);
+    }
+
+    cout << max_streak << endl; // Output the maximum streak length
+
+    return 0;
+}

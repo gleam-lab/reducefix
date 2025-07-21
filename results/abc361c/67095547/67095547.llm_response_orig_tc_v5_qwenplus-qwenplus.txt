@@ -1,0 +1,89 @@
+To solve this problem correctly, we need to understand the **core idea**:
+
+Given a sequence `A` of length `N`, and an integer `K < N`, we are allowed to **remove exactly K elements** from `A`. After removal, the remaining elements must be in the **same order as in A**, and we form a new sequence `B`.
+
+Our goal is to minimize the value:
+```
+max(B) - min(B)
+```
+
+### Key Observations:
+- We must **choose any N-K elements in order** from `A`.
+- Since we want to minimize `max(B) - min(B)`, intuitively, we should try to keep all chosen elements as close together as possible in value.
+- This implies that we should consider subarrays of size `N-K` (since we remove K elements), and for each such window, compute `max - min`.
+- The minimum among all these `max - min` values will be our answer.
+
+### Efficient Approach:
+1. Use a **sliding window** of size `N-K`.
+2. For each window, efficiently compute the maximum and minimum using two deques:
+   - One deque for maintaining max (`max_deque`)
+   - One deque for maintaining min (`min_deque`)
+3. Slide the window and update deques accordingly.
+4. Track the minimum difference between max and min over all windows.
+
+This approach has time complexity **O(N)** since each element is pushed and popped at most once from each deque.
+
+---
+
+Here is the corrected and efficient C++ implementation:
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+#define int long long
+
+void solve() {
+    int N, K;
+    cin >> N >> K;
+
+    vector<int> A(N);
+    for (int i = 0; i < N; ++i) {
+        cin >> A[i];
+    }
+
+    int windowSize = N - K;
+
+    deque<int> maxDeque, minDeque;
+    int result = LLONG_MAX;
+
+    // Sliding window with deques for max and min
+    for (int i = 0; i < N; ++i) {
+        // Maintain maxDeque: elements in decreasing order
+        while (!maxDeque.empty() && A[maxDeque.back()] <= A[i]) {
+            maxDeque.pop_back();
+        }
+        maxDeque.push_back(i);
+
+        // Maintain minDeque: elements in increasing order
+        while (!minDeque.empty() && A[minDeque.back()] >= A[i]) {
+            minDeque.pop_back();
+        }
+        minDeque.push_back(i);
+
+        // Remove out-of-window indices
+        if (i >= windowSize) {
+            if (maxDeque.front() <= i - windowSize) {
+                maxDeque.pop_front();
+            }
+            if (minDeque.front() <= i - windowSize) {
+                minDeque.pop_front();
+            }
+        }
+
+        // Once window is valid, compute diff
+        if (i >= windowSize - 1) {
+            result = min(result, A[maxDeque.front()] - A[minDeque.front()]);
+        }
+    }
+
+    cout << result << endl;
+}
+
+signed main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(NULL);
+    solve();
+    return 0;
+}
+```

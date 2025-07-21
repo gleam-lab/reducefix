@@ -1,0 +1,95 @@
+
+The provided code seems to be implementing a union-find data structure along with a balanced binary search tree (order statistic tree) to maintain the connected components and their sizes. It uses the union-find for merging sets and then uses the order statistic tree to store vertices in the merged set while keeping them sorted. This is a good approach for finding the k-th largest or smallest value efficiently.
+
+However, the provided code is non-typical and lacks a standard structure, which makes it difficult to debug. Additionally, the union-find structure doesn't seem to be used properly for merging and finding the k-th largest vertex in the connected component. Let's break down the problem and the given code:
+
+1. Union-Find:
+   - You have an array `U` to keep track of the parent of each node.
+   - The `Find` function is used to find the root of the component that a node belongs to.
+   - The `Union` function is used to merge two components.
+
+2. Order Statistic Tree:
+   - You have an array `V` where each element is a `std::set` that stores the vertices in the connected component of its parent node.
+   - When merging two components, you insert all vertices of the smaller component into the larger component and potentially truncate the larger component to keep only the largest `30` vertices to keep the `set` small.
+
+3. Queries:
+   - Type 1: Add an edge and merge the connected components of the two vertices.
+   - Type 2: Find the k-th largest vertex in the component of the given vertex.
+
+The problem with the given code is that it doesn't seem to manage the order statistic tree correctly during the merging process. Moreover, the union-find structure is not being properly used to ensure the correct component of each vertex is updated. 
+
+Here's a more standard and correct approach to solve the problem:
+
+```cpp
+#include <iostream>
+#include <vector>
+#include <set>
+#include <algorithm>
+
+using namespace std;
+
+const int N = 2e5 + 9;
+vector<int> parent(N);
+vector<int> size(N);
+vector<vector<int>> adj(N);
+
+void find(int u) {
+    if (parent[u] != u) {
+        parent[u] = find(parent[u]);
+    }
+    return parent[u];
+}
+
+void unite(int u, int v) {
+    u = find(u);
+    v = find(v);
+    if (u != v) {
+        if (size[u] < size[v]) {
+            swap(u, v);
+        }
+        parent[v] = u;
+        size[u] += size[v];
+        // Add all edges from v's component to u's component
+        for (int to : adj[v]) {
+            adj[u].push_back(to);
+        }
+        adj[v].clear();
+    }
+}
+
+int main() {
+    int n, q;
+    cin >> n >> q;
+    fill(parent.begin(), parent.end(), -1);
+    fill(size.begin(), size.end(), 0);
+
+    for (int i = 0; i < q; i++) {
+        int queryType;
+        cin >> queryType;
+        if (queryType == 1) {
+            int u, v;
+            cin >> u >> v;
+            u--;
+            v--;
+            unite(u, v);
+        } else if (queryType == 2) {
+            int v, k;
+            cin >> v >> k;
+            v--;
+            int root = find(v);
+            set<int> component = {v};
+            for (int to : adj[root]) {
+                component.insert(find(to));
+            }
+            if (component.size() < k) {
+                cout << -1 << endl;
+            } else {
+                cout << *(prev(component.end()) - (k - 1)) + 1 << endl;
+            }
+        }
+    }
+    return 0;
+}
+```
+
+This corrected code uses the union-find structure properly to merge components and then iterates over the adjacency list of the root node to find all vertices in the component. It then uses a set to store these vertices and finds the k-th largest element.

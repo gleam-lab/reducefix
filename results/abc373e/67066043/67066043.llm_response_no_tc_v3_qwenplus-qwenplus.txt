@@ -1,0 +1,121 @@
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+#define all(x) (x).begin(), (x).end()
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int N, M;
+    ll K;
+    cin >> N >> M >> K;
+    vector<ll> A(N);
+    for (ll &a : A) {
+        cin >> a;
+        K -= a;
+    }
+
+    // Create sorted copy of A to use for binary search and prefix sums
+    vector<ll> sorted_A = A;
+    sort(all(sorted_A));
+
+    // Precompute prefix sums of the sorted array
+    vector<ll> prefix(N + 1, 0);
+    for (int i = 0; i < N; ++i) {
+        prefix[i + 1] = prefix[i] + sorted_A[i];
+    }
+
+    vector<ll> result(N, -1);
+
+    for (int i = 0; i < N; ++i) {
+        ll low = 0, high = K;
+        ll target_votes = -1;
+
+        while (low <= high) {
+            ll mid = (low + high) / 2;
+
+            // Candidate i's total votes if they get mid more
+            ll total_i = A[i] + mid;
+
+            // We want to find how many candidates can have >= total_i votes
+            // Find first index in sorted_A where value >= total_i
+            int idx = lower_bound(sorted_A.begin(), sorted_A.end(), total_i) - sorted_A.begin();
+
+            // Count how many candidates can potentially have >= total_i
+            int count_above = N - idx;
+
+            // If there are at least M candidates strictly greater than i who can get >= total_i,
+            // then candidate i is not elected.
+            bool is_elected = true;
+
+            if (count_above >= M) {
+                is_elected = false;
+            } else {
+                // Need to ensure that even if remaining votes are distributed to maximize others,
+                // candidate i still has less than M candidates above them.
+
+                // Total extra votes needed to raise candidate i's score to total_i
+                // and make sure no more than M-1 candidates can be above them
+
+                // The idea: we need to make sure at least (N - M + 1) candidates have <= total_i
+                // So we take the top (M - 1) candidates above i and cap their votes to total_i
+
+                // Index of threshold candidate
+                int threshold_idx = max(0, N - M);
+
+                // How many candidates are currently >= total_i
+                ll cap_needed = 0;
+                for (int j = idx; j < N; ++j) {
+                    if (sorted_A[j] > total_i && (j != i || sorted_A[j] != A[i])) {
+                        cap_needed++;
+                    }
+                }
+
+                // Total cost to bring all those candidates down to total_i - 1
+                ll required_votes = 0;
+                int threshold = N - M;
+                for (int j = N - 1; j >= 0; --j) {
+                    if (sorted_A[j] >= total_i) {
+                        if (threshold > 0) {
+                            threshold--;
+                        } else {
+                            required_votes += (sorted_A[j] - total_i + 1);
+                        }
+                    } else {
+                        break;
+                    }
+                }
+
+                if (required_votes <= K - mid) {
+                    target_votes = mid;
+                    high = mid - 1;
+                } else {
+                    low = mid + 1;
+                }
+            }
+        }
+
+        if (target_votes == -1 && K >= 0) {
+            // Check if already elected
+            ll total_i = A[i];
+            int idx = lower_bound(sorted_A.begin(), sorted_A.end(), total_i) - sorted_A.begin();
+            int count_above = N - idx;
+            if (count_above < M)
+                result[i] = 0;
+            else
+                result[i] = -1;
+        } else {
+            result[i] = target_votes;
+        }
+    }
+
+    for (ll val : result) {
+        cout << val << " ";
+    }
+    cout << "\n";
+
+    return 0;
+}
+```

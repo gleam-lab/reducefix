@@ -1,0 +1,129 @@
+#include <bits/stdc++.h>
+
+using i64 = long long;
+
+constexpr int dx[] = {0, 1, 0, -1};
+constexpr int dy[] = {1, 0, -1, 0};
+
+int main() {
+    std::ios::sync_with_stdio(false);
+    std::cin.tie(nullptr);
+
+    int H, W, Y;
+    std::cin >> H >> W >> Y;
+
+    std::vector<std::vector<int>> A(H, std::vector<int>(W));
+    for (int i = 0; i < H; ++i) {
+        for (int j = 0; j < W; ++j) {
+            std::cin >> A[i][j];
+        }
+    }
+
+    // Add a border around the island to simplify edge checks
+    const int N = H + 2, M = W + 2;
+    std::vector<std::vector<int>> grid(N, std::vector<int>(M, 0));
+    for (int i = 1; i <= H; ++i) {
+        for (int j = 1; j <= W; ++j) {
+            grid[i][j] = A[i - 1][j - 1];
+        }
+    }
+
+    // Binary search setup
+    std::vector<std::vector<int>> vis(N, std::vector<int>(M, 0));
+    std::vector<int> years(Y + 2);
+
+    for (int y = 1; y <= Y; ++y) {
+        years[y] = y;
+    }
+
+    std::function<int(int)> is_ok = [&](int level) {
+        // Reset visited matrix
+        for (int i = 0; i < N; ++i) {
+            for (int j = 0; j < M; ++j) {
+                vis[i][j] = 0;
+            }
+        }
+
+        std::queue<std::pair<int, int>> q;
+
+        // Mark and enqueue border cells
+        for (int i = 1; i <= H; ++i) {
+            if (grid[i][1] <= level) {
+                vis[i][1] = 1;
+                q.emplace(i, 1);
+            }
+            if (grid[i][W] <= level) {
+                vis[i][W] = 1;
+                q.emplace(i, W);
+            }
+        }
+
+        for (int j = 1; j <= W; ++j) {
+            if (grid[1][j] <= level) {
+                vis[1][j] = 1;
+                q.emplace(1, j);
+            }
+            if (grid[H][j] <= level) {
+                vis[H][j] = 1;
+                q.emplace(H, j);
+            }
+        }
+
+        // BFS to find all land connected to sea
+        while (!q.empty()) {
+            auto [x, y] = q.front();
+            q.pop();
+
+            for (int k = 0; k < 4; ++k) {
+                int nx = x + dx[k], ny = y + dy[k];
+                if (nx < 1 || nx > H || ny < 1 || ny > W || vis[nx][ny]) {
+                    continue;
+                }
+                if (grid[nx][ny] <= level) {
+                    vis[nx][ny] = 1;
+                    q.emplace(nx, ny);
+                }
+            }
+        }
+
+        // Count remaining land area
+        int cnt = 0;
+        for (int i = 1; i <= H; ++i) {
+            for (int j = 1; j <= W; ++j) {
+                if (!vis[i][j]) {
+                    cnt++;
+                }
+            }
+        }
+
+        return cnt;
+    };
+
+    // Store results of binary search
+    std::vector<int> res(Y + 2);
+    std::function<void(int, int, int)> bin_search = [&](int l, int r, int low) {
+        if (l > r) return;
+        int mid = (l + r) / 2;
+        int val = is_ok(mid);
+        if (val == low) {
+            // All queries in this range have the same result
+            for (int i = l; i <= r; ++i) {
+                res[i] = val;
+            }
+            return;
+        }
+        int m = (l + r) / 2;
+        int v = is_ok(m);
+        res[m] = v;
+        bin_search(l, m - 1, v);
+        bin_search(m + 1, r, val);
+    };
+
+    bin_search(1, Y, is_ok(Y));
+
+    for (int i = 1; i <= Y; ++i) {
+        std::cout << res[i] << "\n";
+    }
+
+    return 0;
+}

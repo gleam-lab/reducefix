@@ -1,0 +1,50 @@
+//<<In the name of Allah, The Most Gracious and The Most Merciful>>
+#include<bits/stdc++.h>
+using namespace std;
+#define ll long long
+
+void solve()
+{
+    ll n;
+    cin >> n;
+    vector<ll> a(n), b(n - 1);
+    for (ll i = 0; i < n; i++) {
+        cin >> a[i];
+    }
+    for (ll i = 0; i < n - 1; i++) {
+        cin >> b[i];
+    }
+
+    // Sort both arrays to facilitate finding the smallest box size
+    sort(a.begin(), a.end());
+    sort(b.begin(), b.end());
+
+    // Initialize variables to track the number of extra boxes needed and the answer
+    ll extraBoxes = 0, ans = INT_MAX;
+
+    // Iterate through the sorted toy sizes
+    for (ll i = 0; i < n; i++) {
+        // If the current toy can fit into the current box, move to the next toy
+        if (i == 0 || a[i] > b[i - 1]) {
+            continue;
+        } else {
+            // Calculate how many extra boxes are needed
+            extraBoxes++;
+            // Update the answer with the maximum toy size that needs a new box
+            ans = min(ans, a[i]);
+        }
+    }
+
+    // If we need more than one extra box, it's impossible to fit all toys
+    if (extraBoxes > 1) {
+        cout << -1 << endl;
+    } else {
+        cout << ans << endl;
+    }
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(NULL);
+    solve();
+}

@@ -1,0 +1,27 @@
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+
+int n;
+int main() {
+    cin >> n;
+    vector<int> data(n);
+    for (int i = 0; i < n; i++) {
+        cin >> data[i];
+    }
+
+    ll sum = 0;
+    bool even_index = true;
+
+    for (int i = 0; i < n; i++) {
+        if (even_index) {
+            sum += data[i] * 2;
+        } else {
+            sum += data[i + 1] * 2;  // Note: data[i + 1] will be processed by the next iteration
+        }
+        even_index = !even_index;
+    }
+
+    cout << sum << endl;
+    return 0;
+}

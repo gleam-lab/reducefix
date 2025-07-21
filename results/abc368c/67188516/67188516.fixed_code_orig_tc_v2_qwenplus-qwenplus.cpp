@@ -1,0 +1,38 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int N;
+    cin >> N;
+    vector<long long> H(N);
+    for (int i = 0; i < N; ++i) {
+        cin >> H[i];
+    }
+
+    // We will simulate the process using a priority queue.
+    // Each enemy is represented by its current health and position (index)
+    // Since we always attack the frontmost enemy with health > 0,
+    // we don't need a complex data structure - just iterate through enemies in order.
+
+    long long T = 0;
+    for (int i = 0; i < N; ++i) {
+        long long h = H[i];
+        if (h <= 0) continue;
+
+        // At each step, we simulate attacks until this enemy's health drops to 0 or less
+        while (h > 0) {
+            ++T;
+            if (T % 3 == 0) {
+                h -= 3;
+            } else {
+                h -= 1;
+            }
+        }
+    }
+
+    cout << T << "\n";
+    return 0;
+}

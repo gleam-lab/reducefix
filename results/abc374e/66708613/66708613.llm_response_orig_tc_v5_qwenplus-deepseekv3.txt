@@ -1,0 +1,91 @@
+To fix this code, we need to address the issue where the algorithm incorrectly calculates the maximum processing capacity that can be achieved within the given budget. The problem arises from the way the code iterates through possible combinations of machines to achieve the desired processing capacity, which can lead to incorrect results or extremely large values due to overflow or incorrect bounds.
+
+### Approaches
+1. **Binary Search**: We use binary search to determine the maximum processing capacity that can be achieved within the budget. The binary search is performed between lower bound `lb` (initially 0) and upper bound `ub` (initially a very large number, `1LL << 60`).
+2. **Feasibility Check**: For each mid value in the binary search, we check if it's feasible to achieve that processing capacity with the given budget. This involves:
+   - For each process, determine the minimum cost to achieve the required processing capacity by considering all possible combinations of the two types of machines.
+   - Ensure that the total cost does not exceed the budget.
+
+### Solution Code
+```cpp
+#include<iostream>
+#include<vector>
+#include<algorithm>
+using namespace std;
+using ll = long long;
+const ll INF = 1LL << 60;
+
+int main() {
+    int N;
+    ll X;
+    cin >> N >> X;
+    vector<ll> A(N), P(N), B(N), Q(N);
+    
+    for (int i = 0; i < N; ++i) {
+        cin >> A[i] >> P[i] >> B[i] >> Q[i];
+    }
+
+    auto f = [&](ll x) {
+        ll total_cost = 0;
+        for (int i = 0; i < N; ++i) {
+            ll min_cost = INF;
+            // Iterate possible s (number of type A machines)
+            // The maximum s is such that A[i] * s >= x => s <= ceil(x / A[i])
+            ll max_s = (x + A[i] - 1) / A[i];
+            max_s = min(max_s, B[i]); // Cannot exceed B[i] machines
+            for (ll s = 0; s <= max_s; ++s) {
+                ll remaining = max(0LL, x - A[i] * s);
+                ll t = (remaining + B[i] - 1) / B[i];
+                t = min(t, Q[i]); // Cannot exceed Q[i] machines
+                ll cost = s * P[i] + t * Q[i];
+                if (cost < min_cost) {
+                    min_cost = cost;
+                }
+            }
+            // Iterate possible t (number of type B machines)
+            ll max_t = (x + B[i] - 1) / B[i];
+            max_t = min(max_t, Q[i]); // Cannot exceed Q[i] machines
+            for (ll t = 0; t <= max_t; ++t) {
+                ll remaining = max(0LL, x - B[i] * t);
+                ll s = (remaining + A[i] - 1) / A[i];
+                s = min(s, P[i]); // Cannot exceed P[i] machines
+                ll cost = t * Q[i] + s * P[i];
+                if (cost < min_cost) {
+                    min_cost = cost;
+                }
+            }
+            if (min_cost == INF) {
+                return false;
+            }
+            total_cost += min_cost;
+            if (total_cost > X) {
+                return false;
+            }
+        }
+        return total_cost <= X;
+    };
+
+    ll lb = 0, ub = 1LL << 60;
+    while (ub - lb > 1) {
+        ll mid = (lb + ub) / 2;
+        if (f(mid)) {
+            lb = mid;
+        } else {
+            ub = mid;
+        }
+    }
+
+    cout << lb << endl;
+    return 0;
+}
+```
+
+### Explanation
+1. **Binary Search Setup**: The binary search is initialized with `lb` (lower bound) as 0 and `ub` (upper bound) as a very large number (`1LL << 60`).
+2. **Feasibility Check Function (`f`)**: For each processing capacity `x` (mid value in binary search), the function checks if it's possible to achieve `x` within the budget `X`.
+   - For each process, it calculates the minimum cost required to achieve `x` by considering all combinations of the two types of machines (type A and type B).
+   - The cost is calculated by iterating over possible numbers of machines of each type, ensuring the number of machines does not exceed the given constraints.
+3. **Binary Search Execution**: The binary search adjusts `lb` and `ub` based on whether the mid value is feasible. If feasible, `lb` is set to `mid`, otherwise `ub` is set to `mid`.
+4. **Output**: The maximum feasible processing capacity (`lb`) is printed after the binary search completes.
+
+This approach ensures that we efficiently and correctly determine the maximum processing capacity achievable within the given budget, handling all edge cases and constraints properly.

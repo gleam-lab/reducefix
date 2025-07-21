@@ -1,0 +1,32 @@
+#include<bits/stdc++.h>
+using namespace std;
+int n, m;
+int main() {
+    cin >> n >> m;
+    vector<int> nums(n);
+    for(int i = 0; i < n; i++) {
+        cin >> nums[i];
+    }
+    vector<int> prefixsum(n + 1, 0);
+    for(int i = 0; i < n; i++) {
+        prefixsum[i + 1] = prefixsum[i] + nums[i];
+    }
+    int count = 0;
+    // Use a set to avoid counting the same (s, t) pairs multiple times
+    set<pair<int, int>> seenPairs;
+
+    // Find all possible (s, t) pairs
+    for(int s = 1; s <= n; s++) {
+        for(int t = 1; t <= n; t++) {
+            if(s == t) continue;
+            // Calculate step size based on the order of s and t
+            int step = (t < s) ? prefixsum[t] - prefixsum[s - 1] : prefixsum[t] - prefixsum[s];
+            if(step % m == 0) {
+                seenPairs.insert({min(s, t), max(s, t)});
+            }
+        }
+    }
+    // Each (s, t) pair is counted twice (once as (s, t) and once as (t, s)), so divide the count by 2
+    cout << seenPairs.size() / 2 << endl;
+    return 0;
+}

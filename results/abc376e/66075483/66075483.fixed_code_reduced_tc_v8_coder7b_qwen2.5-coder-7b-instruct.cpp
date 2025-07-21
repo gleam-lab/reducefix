@@ -1,0 +1,50 @@
+#include<iostream>
+#include<algorithm>
+using namespace std;
+
+#define ll long long
+
+void solve(){
+    ll n, k;
+    cin >> n >> k;
+    vector<pair<ll, ll>> a(n), b(n);
+    for(ll i = 0; i < n; i++){
+        cin >> a[i].first;
+        a[i].second = i;
+    }
+    for(ll i = 0; i < n; i++){
+        cin >> b[i].first;
+        b[i].second = i;
+    }
+    
+    sort(a.begin(), a.end());
+    sort(b.begin(), b.end());
+    
+    ll sum = 0;
+    priority_queue<ll, vector<ll>, greater<ll>> pq;
+    for(ll i = 0; i < k; i++){
+        sum += b[i].first;
+        pq.push(b[i].first);
+    }
+    
+    ll ans = sum * a[k-1].first;
+    for(ll i = k; i < n; i++){
+        sum += b[i].first - pq.top();
+        pq.pop();
+        pq.push(b[i].first);
+        ans = min(ans, sum * a[i].first);
+    }
+    
+    cout << ans << "\n";
+}
+
+int main(){
+    ios_base::sync_with_stdio(false);
+    cin.tie(NULL);
+    ll t;
+    cin >> t;
+    while(t--){
+        solve();
+    }
+    return 0;
+}

@@ -1,0 +1,47 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+const int INF = 1e9 + 7;
+
+struct Point {
+    int x, y;
+};
+
+bool compareY(const Point& a, const Point& b) {
+    return a.y < b.y;
+}
+
+vector<int> findKthClosest(vector<Point>& points, int targetX, int k) {
+    sort(points.begin(), points.end(), compareY);
+    vector<int> distances(k, INF);
+    int pos = 0;
+    for (const auto& point : points) {
+        int dist = abs(point.x - targetX);
+        if (dist < distances.back()) {
+            distances.pop_back();
+            distances.insert(lower_bound(distances.begin(), distances.end(), dist), dist);
+        }
+    }
+    return distances;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+
+    int n, q;
+    cin >> n >> q;
+    vector<Point> A(n);
+    for (int i = 0; i < n; ++i) {
+        cin >> A[i].x >> A[i].y;
+    }
+
+    for (int i = 0; i < q; ++i) {
+        int bx, kj;
+        cin >> bx >> kj;
+        vector<int> kthDistances = findKthClosest(A, bx, kj);
+        cout << kthDistances[kj - 1] << '\n';
+    }
+
+    return 0;
+}

@@ -1,0 +1,37 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+int main() {
+    int n, k;
+    cin >> n >> k;
+    vector<int> a(n);
+    for (int &x : a) cin >> x;
+    
+    // Sort the array to easily find the minimum and maximum values
+    sort(a.begin(), a.end());
+    
+    // Find the best possible new sequence B by removing exactly K elements
+    // The best sequence B would either have K smallest or K largest elements removed
+    // We consider two cases:
+    // 1. Remove K smallest elements
+    // 2. Remove K largest elements
+    
+    // For case 1, the new sequence B will be from index K to n-1
+    // For case 2, the new sequence B will be from index 0 to n-K-1
+    
+    // Calculate the maximum and minimum of B for both cases
+    int max1 = *max_element(a.begin() + k, a.end());
+    int min1 = a[k];
+    int max2 = a[n - k - 1];
+    int min2 = *min_element(a.begin(), a.begin() + n - k);
+    
+    // The minimum possible value of the maximum minus the minimum of B
+    int result = min(max1 - min1, max2 - min2);
+    
+    // Output the result
+    cout << result << endl;
+    
+    return 0;
+}

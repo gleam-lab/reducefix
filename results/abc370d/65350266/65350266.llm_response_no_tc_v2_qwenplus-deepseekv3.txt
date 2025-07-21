@@ -1,0 +1,98 @@
+To fix this code, we need to address several issues in the original implementation. The main problems are:
+
+1. **Initialization of Sets**: The sets `tate` and `yoko` are initialized correctly, but the way they are used later has some logical flaws.
+2. **Handling of Bomb Placement**: The logic for handling the case where there is no wall at the bomb's position is incorrect. Specifically, the code does not properly check for the existence of walls in the four directions (up, down, left, right) before attempting to destroy them.
+3. **Boundary Conditions**: The code does not handle cases where there are no walls in certain directions (e.g., when looking up and there are no walls above the bomb's position).
+
+### Approaches
+1. **Initialization**: We initialize two sets per row and column to keep track of the walls:
+   - `rows[r]` contains the columns where walls exist in row `r`.
+   - `cols[c]` contains the rows where walls exist in column `c`.
+2. **Bomb Placement**:
+   - If there is a wall at the bomb's position, we remove it.
+   - If there isn't a wall, we look for the nearest walls in the four directions (up, down, left, right) and remove them if they exist.
+3. **Efficiency**: Using sets allows us to efficiently find the nearest walls using `lower_bound` and `upper_bound` operations, which are logarithmic in complexity.
+
+### Solution Code
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+#define rep(i, n) for (int i = 0; i < (n); i++)
+using ll = long long;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int h, w, q;
+    cin >> h >> w >> q;
+
+    vector<set<int>> rows(h), cols(w);
+    rep(i, h) rep(j, w) {
+        rows[i].insert(j);
+        cols[j].insert(i);
+    }
+
+    int ans = h * w;
+
+    rep(qi, q) {
+        int r, c;
+        cin >> r >> c;
+        r--; c--;
+
+        if (rows[r].count(c)) {
+            rows[r].erase(c);
+            cols[c].erase(r);
+            ans--;
+        } else {
+            // Check up
+            auto it_up = cols[c].lower_bound(r);
+            if (it_up != cols[c].begin()) {
+                it_up--;
+                int i = *it_up;
+                rows[i].erase(c);
+                cols[c].erase(i);
+                ans--;
+            }
+
+            // Check down
+            auto it_down = cols[c].upper_bound(r);
+            if (it_down != cols[c].end()) {
+                int i = *it_down;
+                rows[i].erase(c);
+                cols[c].erase(i);
+                ans--;
+            }
+
+            // Check left
+            auto it_left = rows[r].lower_bound(c);
+            if (it_left != rows[r].begin()) {
+                it_left--;
+                int j = *it_left;
+                rows[r].erase(j);
+                cols[j].erase(r);
+                ans--;
+            }
+
+            // Check right
+            auto it_right = rows[r].upper_bound(c);
+            if (it_right != rows[r].end()) {
+                int j = *it_right;
+                rows[r].erase(j);
+                cols[j].erase(r);
+                ans--;
+            }
+        }
+    }
+
+    cout << ans << "\n";
+    return 0;
+}
+```
+
+### Explanation
+1. **Initialization**: We initialize two sets for each row and column to keep track of the walls. Each cell (i, j) is initially present in `rows[i]` and `cols[j]`.
+2. **Processing Queries**:
+   - **Direct Hit**: If the bomb is placed on a cell with a wall, we simply remove the wall from both sets and decrement the total count of walls.
+   - **Indirect Hit**: If the bomb is placed on a cell without a wall, we look for the nearest walls in the four directions (up, down, left, right) using `lower_bound` and `upper_bound` operations. If such walls are found, they are removed from the sets, and the total count is decremented accordingly.
+3. **Efficiency**: The use of sets ensures that each insertion and deletion operation is O(log n), making the solution efficient even for large grid sizes and query counts. The total time complexity is O(Q log (H + W)), which is feasible given the constraints.

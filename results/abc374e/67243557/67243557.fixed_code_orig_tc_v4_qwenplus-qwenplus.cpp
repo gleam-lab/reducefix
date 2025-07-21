@@ -1,0 +1,75 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define rep(i,n) for(long long i=0;i<(n);i++)
+using ll = long long;
+
+// Function to compute minimum cost to buy 'need' items using two deals
+ll f(ll a, ll b, ll p, ll q, ll need) {
+    // dp[i] = minimum cost to get i items
+    vector<ll> dp(2010, 1e18);
+    dp[0] = 0;
+    
+    // Fill dp using both options
+    for (int i = 0; i < 2010; ++i) {
+        if (i >= a) dp[i] = min(dp[i], dp[i - a] + p);
+        if (i >= b) dp[i] = min(dp[i], dp[i - b] + q);
+    }
+
+    // Optimization: Since the function is periodic with period = LCM(a,b),
+    // we can use this property to avoid computing large values directly.
+    // Let's use the precomputed values for small quantities and extrapolate.
+
+    // We'll use the maximum of the first a*b values since that's enough to find a pattern
+    ll period = a * b;
+    if (need <= period) {
+        return dp[need];
+    } else {
+        // Find the minimum cost per item after "period" items
+        ll base_cost = dp[period];
+        ll items_per_base = period;
+        
+        // Compute how many full cycles we can buy
+        ll full_cycles = need / period;
+        ll remaining = need % period;
+        
+        return base_cost * full_cycles + dp[remaining];
+    }
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+    
+    int n;
+    ll x;
+    cin >> n >> x;
+    
+    vector<ll> a(n), p(n), b(n), q(n);
+    for (int i = 0; i < n; ++i) {
+        cin >> a[i] >> p[i] >> b[i] >> q[i];
+    }
+
+    // Binary search on the number of items we can buy
+    ll left = 0, right = 1e14; // Adjusted upper bound
+
+    while (left < right) {
+        ll mid = (left + right + 1) / 2;
+        ll total_cost = 0;
+        
+        for (int i = 0; i < n; ++i) {
+            total_cost += f(a[i], b[i], p[i], q[i], mid);
+            
+            // Early exit if already over budget
+            if (total_cost > x) break;
+        }
+        
+        if (total_cost <= x) {
+            left = mid;
+        } else {
+            right = mid - 1;
+        }
+    }
+    
+    cout << left << endl;
+    return 0;
+}

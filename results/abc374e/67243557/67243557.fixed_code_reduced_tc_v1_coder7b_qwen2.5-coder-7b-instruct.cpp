@@ -1,0 +1,35 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+const int MAXN = 105;
+const int MAXM = 100000010;
+
+int n, x;
+int a[MAXN], b[MAXN], p[MAXN], q[MAXN];
+long long dp[MAXN][MAXM];
+
+long long solve(int i, int j) {
+    if (i == n || j == 0) return 0;
+    if (dp[i][j] != -1) return dp[i][j];
+    
+    long long ans = solve(i+1, j);
+    if (a[i] * j / p[i] > 0) ans = max(ans, solve(i+1, j - a[i] * j / p[i]) + a[i] * j / p[i]);
+    if (b[i] * j / q[i] > 0) ans = max(ans, solve(i+1, j - b[i] * j / q[i]) + b[i] * j / q[i]);
+    
+    return dp[i][j] = ans;
+}
+
+int main() {
+    ios::sync_with_stdio(false); cin.tie(nullptr);
+    cin >> n >> x;
+    
+    memset(dp, -1, sizeof(dp));
+    
+    for (int i = 0; i < n; ++i) {
+        cin >> a[i] >> p[i] >> b[i] >> q[i];
+    }
+    
+    cout << solve(0, x) << endl;
+    
+    return 0;
+}

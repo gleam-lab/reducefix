@@ -1,0 +1,75 @@
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+#define rep(i,n) for(long long i=0;i<n;i++)
+using ll = long long;
+
+// Function to compute minimum cost to buy at least x candies of type a and b using deals
+ll f(ll a, ll b, ll p, ll q, ll need) {
+    // We want to buy at least 'need' candies of the two types
+    // Since a and b can be large, we only compute up to min(a,b)*min(p,q) or up to need + max(a,b)
+    
+    // Cap the maximum number of candies we precompute up to
+    ll cap = max(a, b) * 200; // Use a reasonable multiple to avoid MLE but still capture patterns
+    if (cap < need) cap = need;
+
+    vector<ll> dp(cap + 10, 1e18);
+    dp[0] = 0;
+
+    for (ll i = 0; i <= cap; i++) {
+        if (i + a <= cap) dp[i + a] = min(dp[i + a], dp[i] + p);
+        if (i + b <= cap) dp[i + b] = min(dp[i + b], dp[i] + q);
+    }
+
+    // Now compute prefix minima so we can get minimum cost for at least x candies
+    for (ll i = 1; i <= cap; i++) {
+        dp[i] = min(dp[i], dp[i-1]);
+    }
+
+    return dp[min(need, cap)];
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+    int n;
+    ll x;
+    cin >> n >> x;
+    vector<ll> a(n), b(n), p(n), q(n);
+
+    rep(i,n) {
+        cin >> a[i] >> p[i] >> b[i] >> q[i];
+    }
+
+    ll low = 0, high = 1;
+    // First find upper bound for binary search
+    while (true) {
+        ll total_cost = 0;
+        for (int i = 0; i < n && total_cost <= x; ++i) {
+            total_cost += f(a[i], b[i], p[i], q[i], high);
+        }
+        if (total_cost > x) break;
+        if (high > 1e10) break; // Avoid overflow
+        high *= 2;
+    }
+
+    // Binary search
+    ll ans = 0;
+    while (low <= high) {
+        ll mid = (low + high) / 2;
+        ll total_cost = 0;
+        for (int i = 0; i < n && total_cost <= x; ++i) {
+            total_cost += f(a[i], b[i], p[i], q[i], mid);
+        }
+        if (total_cost <= x) {
+            ans = mid;
+            low = mid + 1;
+        } else {
+            high = mid - 1;
+        }
+    }
+
+    cout << ans << '\n';
+    return 0;
+}
+```

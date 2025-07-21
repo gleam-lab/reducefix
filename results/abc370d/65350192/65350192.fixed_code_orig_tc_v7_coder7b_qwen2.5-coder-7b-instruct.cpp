@@ -1,0 +1,26 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios_base::sync_with_stdio(false);cin.tie(0);cout.tie(0);
+    int h, w, q;
+    cin >> h >> w >> q;
+    vector<vector<bool>> grid(h, vector<bool>(w));
+    while (q--) {
+        int r, c;
+        cin >> r >> c;
+        --r, --c;
+        if (!grid[r][c]) {
+            for (int i = 0; i < h; ++i) if (grid[i][c] && i < r) grid[i][c] = false;
+            for (int i = h-1; i >= 0; --i) if (grid[i][c] && i > r) grid[i][c] = false;
+            for (int j = 0; j < w; ++j) if (grid[r][j] && j < c) grid[r][j] = false;
+            for (int j = w-1; j >= 0; --j) if (grid[r][j] && j > c) grid[r][j] = false;
+        } else {
+            grid[r][c] = false;
+        }
+    }
+    int ans = 0;
+    for (int i = 0; i < h; ++i) for (int j = 0; j < w; ++j) if (grid[i][j]) ++ans;
+    cout << ans << '\n';
+    return 0;
+}

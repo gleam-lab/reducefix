@@ -1,0 +1,65 @@
+#include <algorithm>
+#include <iostream>
+#include <cstdio>
+#include <vector>
+#include <queue>
+#include <climits>
+using namespace std;
+
+struct edge {
+    int to;
+};
+
+int n, m;
+vector<vector<edge>> graph;
+const int MAXN = 200001;
+int ans[MAXN];
+
+void bfs() {
+    queue<int> q;
+    q.push(1);
+    ans[1] = 0;
+
+    while (!q.empty()) {
+        int u = q.front();
+        q.pop();
+
+        for (auto &e : graph[u]) {
+            int v = e.to;
+            if (ans[v] > ans[u] + 1) {
+                ans[v] = ans[u] + 1;
+                q.push(v);
+            }
+        }
+    }
+}
+
+inline int read() {
+    int res = 0;
+    char c = getchar();
+    while (c < '0' || c > '9') c = getchar();
+    while (c >= '0' && c <= '9') res = (res << 1) + (res << 3) + (c ^ 48), c = getchar();
+    return res;
+}
+
+int main() {
+    n = read(); m = read();
+    graph.resize(n + 1);
+
+    for (int i = 1; i <= n; ++i) {
+        ans[i] = INT_MAX;
+    }
+
+    for (int i = 1, u, v; i <= m; ++i) {
+        u = read(); v = read();
+        graph[u].push_back({v});
+    }
+
+    bfs();
+
+    if (ans[n] == INT_MAX) {
+        printf("-1");
+    } else {
+        printf("%d", ans[n]);
+    }
+}

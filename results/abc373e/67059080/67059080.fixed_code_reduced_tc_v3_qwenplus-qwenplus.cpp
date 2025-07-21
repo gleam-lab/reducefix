@@ -1,0 +1,95 @@
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+
+int main() {
+  ios::sync_with_stdio(false);
+  cin.tie(nullptr);
+
+  int N, M;
+  ll K;
+  cin >> N >> M >> K;
+
+  vector<pair<ll, int>> A(N);
+  for (int i = 0; i < N; ++i) {
+    cin >> A[i].first;
+    A[i].second = i;
+  }
+
+  // Sort the candidates by current votes
+  vector<int> sorted_indices(N);
+  iota(sorted_indices.begin(), sorted_indices.end(), 0);
+  sort(sorted_indices.begin(), sorted_indices.end(), [&](int i, int j) {
+    return A[i].first < A[j].first;
+  });
+
+  // Precompute prefix sums of current votes
+  vector<ll> prefix_sum(N + 1);
+  for (int i = 0; i < N; ++i) {
+    prefix_sum[i + 1] = prefix_sum[i] + A[sorted_indices[i]].first;
+  }
+
+  // Total remaining votes
+  ll remaining_votes = K - prefix_sum[N];
+
+  vector<ll> result(N, -1);
+
+  // For each candidate, compute minimum required additional votes
+  for (int i = 0; i < N; ++i) {
+    int idx = sorted_indices[i];
+    ll current = A[idx].first;
+
+    // Binary search on X: number of additional votes needed
+    ll low = 0, high = remaining_votes;
+    while (low <= high) {
+      ll mid = (low + high) / 2;
+      ll new_score = current + mid;
+
+      // We want to ensure that at most M-1 candidates have more votes than this candidate
+      // Find first index in sorted list where score > new_score
+      int l = 0, r = N;
+      while (l < r) {
+        int m = (l + r) / 2;
+        if (A[sorted_indices[m]].first > new_score)
+          r = m;
+        else
+          l = m + 1;
+      }
+      int pos = l;
+
+      // The number of candidates with strictly higher votes is pos
+      // We need pos < M to guarantee victory
+      if (pos < M) {
+        result[idx] = mid;
+        high = mid - 1;
+      } else {
+        // Not enough, try more votes
+        low = mid + 1;
+      }
+    }
+
+    // If even with all remaining votes it's not enough, result stays -1
+    if (result[idx] == -1 && low <= remaining_votes) {
+      result[idx] = low;
+    }
+  }
+
+  // Output the results in original order
+  for (int i = 0; i < N; ++i) {
+    if (result[i] == -1) {
+      // Check if already guaranteed win
+      // Count how many have more votes
+      int count = 0;
+      for (int j = 0; j < N; ++j) {
+        if (j != i && A[j].first > A[i].first) {
+          count++;
+        }
+      }
+      if (count < M) result[i] = 0;
+    }
+    cout << result[i] << " ";
+  }
+  cout << "\n";
+
+  return 0;
+}

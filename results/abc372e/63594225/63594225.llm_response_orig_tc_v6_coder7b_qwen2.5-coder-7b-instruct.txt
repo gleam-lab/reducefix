@@ -1,0 +1,100 @@
+To solve this problem efficiently, we need to handle both union-find operations and querying the k-th largest element in a set of connected components. We can use a combination of union-find with path compression and size heuristics to manage the connectivity, and a balanced binary search tree like `std::multiset` to keep track of the degrees of nodes within each component.
+
+Here's the corrected and optimized C++ code:
+
+```cpp
+#include "bits/stdc++.h"
+using namespace std;
+
+#define ff first
+#define ss second
+#define ll long long
+#define SZ(s) (int)s.size()
+
+const int N = 2e5 + 5;
+
+struct Node {
+    multiset<int> degree;
+    int parent, rank;
+};
+
+Node dsu[N];
+
+int find(int u) {
+    if (dsu[u].parent != u) {
+        dsu[u].parent = find(dsu[u].parent);
+    }
+    return dsu[u].parent;
+}
+
+void unite(int u, int v) {
+    u = find(u);
+    v = find(v);
+    
+    if (u == v) return;
+    
+    if (dsu[u].rank < dsu[v].rank) swap(u, v);
+    
+    dsu[v].degree.insert(dsu[u].degree.begin(), dsu[u].degree.end());
+    dsu[v].degree.insert(1); // Adding new node with degree 1
+    
+    dsu[u].degree.clear();
+    
+    dsu[v].rank += dsu[u].rank + 1;
+    dsu[u].parent = v;
+}
+
+int kthLargest(vector<int>& degrees, int k) {
+    if (k > degrees.size()) return -1;
+    auto it = degrees.rbegin();
+    advance(it, k - 1);
+    return *it;
+}
+
+int main() {
+    ios_base::sync_with_stdio(false); cin.tie(nullptr);
+
+    int n, q;
+    cin >> n >> q;
+    
+    for (int i = 1; i <= n; ++i) {
+        dsu[i].parent = i;
+        dsu[i].rank = 1;
+        dsu[i].degree.insert(1);
+    }
+    
+    while (q--) {
+        int t, a, b;
+        cin >> t >> a >> b;
+        
+        if (t == 1) {
+            unite(a, b);
+        } else {
+            a = find(a);
+            int k = b - 1;
+            cout << kthLargest(dsu[a].degree, k) << '\n';
+        }
+    }
+    
+    return 0;
+}
+```
+
+### Explanation:
+1. **Union-Find Data Structure**: 
+   - Each node maintains its parent, rank, and a set (`degree`) that stores the degrees of all nodes in the same component as itself.
+   
+2. **Path Compression**:
+   - When finding the root of a node, we update the parent pointer to point directly to the root, which flattens the structure, making future queries faster.
+
+3. **Rank Heuristic**:
+   - When uniting two sets, we attach the smaller tree under the larger tree to keep the depth of the overall structure small.
+
+4. **Degree Tracking**:
+   - When uniting two components, we insert all degrees from one component into the other and add a new node with degree 1.
+   - This ensures that we always have the correct set of degrees for each component.
+
+5. **K-th Largest Element Query**:
+   - For a given component, we use a `std::multiset` to store the degrees and retrieve the k-th largest element efficiently using reverse iterators.
+
+This approach ensures efficient handling of both union operations and k-th largest degree queries, making it suitable for large inputs up to the specified constraints.

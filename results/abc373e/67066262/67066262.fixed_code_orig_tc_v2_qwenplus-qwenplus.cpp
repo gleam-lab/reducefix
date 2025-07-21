@@ -1,0 +1,64 @@
+#include <bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+#define all(x) (x).begin(), (x).end()
+
+int main() {
+    ios_base::sync_with_stdio(0);
+    cin.tie(0);
+    int N, M;
+    ll K;
+    cin >> N >> M >> K;
+    vector<ll> A(N);
+    for (int i = 0; i < N; ++i) {
+        cin >> A[i];
+    }
+
+    vector<int> idx(N);
+    iota(idx.begin(), idx.end(), 0);
+
+    // Sort by current votes
+    sort(idx.begin(), idx.end(), [&](int i, int j) { return A[i] < A[j]; });
+    vector<ll> sorted_A = A;
+    sort(sorted_A.begin(), sorted_A.end());
+
+    // Prefix sum of sorted_A
+    vector<ll> prefix(N + 1);
+    for (int i = 0; i < N; ++i) {
+        prefix[i + 1] = prefix[i] + sorted_A[i];
+    }
+
+    vector<ll> C(N, -1);
+
+    for (int i = 0; i < N; ++i) {
+        int original_index = idx[i];
+        ll ai = A[original_index];
+
+        // Binary search on number of additional votes needed
+        ll low = 0, high = K + 1;
+        while (low < high) {
+            ll mid = (low + high) / 2;
+
+            // Number of candidates with strictly more votes than ai + mid
+            ll cnt = N - (upper_bound(sorted_A.begin(), sorted_A.end(), ai + mid) - sorted_A.begin());
+
+            if (cnt >= M) {
+                // Candidate can't be in top M even with mid votes
+                low = mid + 1;
+            } else {
+                high = mid;
+            }
+        }
+
+        // Check if it's possible to win within remaining votes
+        if (low <= K) {
+            C[original_index] = low;
+        } else {
+            C[original_index] = -1;
+        }
+    }
+
+    // Output result
+    for (ll c : C) cout << c << ' ';
+    cout << '\n';
+}

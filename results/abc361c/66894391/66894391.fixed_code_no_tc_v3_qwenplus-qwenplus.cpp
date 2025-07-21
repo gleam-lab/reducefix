@@ -1,0 +1,45 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    int n, k;
+    cin >> n >> k;
+    vector<int> A(n);
+    for (int i = 0; i < n; ++i) {
+        cin >> A[i];
+    }
+
+    // Sliding window approach to minimize max - min in a subsequence of size n - K
+    deque<int> minDeque, maxDeque;
+    int result = numeric_limits<int>::max();
+
+    for (int i = 0; i < n; ++i) {
+        // Maintain deque for min
+        while (!minDeque.empty() && A[minDeque.back()] >= A[i]) {
+            minDeque.pop_back();
+        }
+        minDeque.push_back(i);
+
+        // Maintain deque for max
+        while (!maxDeque.empty() && A[maxDeque.back()] <= A[i]) {
+            maxDeque.pop_back();
+        }
+        maxDeque.push_back(i);
+
+        // Remove elements out of the current window of size n-K
+        if (i >= n - k - 1) {
+            int windowStart = i - (n - k - 1);
+            while (minDeque.front() < windowStart) {
+                minDeque.pop_front();
+            }
+            while (maxDeque.front() < windowStart) {
+                maxDeque.pop_front();
+            }
+
+            result = min(result, A[maxDeque.front()] - A[minDeque.front()]);
+        }
+    }
+
+    cout << result << endl;
+    return 0;
+}

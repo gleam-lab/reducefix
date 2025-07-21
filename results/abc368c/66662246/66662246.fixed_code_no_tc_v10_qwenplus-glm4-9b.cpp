@@ -1,0 +1,27 @@
+#include <iostream>
+using namespace std;
+#define ll long long
+
+int main() {
+    int n;
+    ll T = 0;
+    cin >> n;
+    ll H;
+    for (int i = 0; i < n; ++i) {
+        cin >> H;
+        // Calculate the number of attacks needed for each enemy
+        while (H > 0) {
+            if (T % 3 == 0) {
+                // When T is a multiple of 3, attack with 3 damage
+                H -= 3;
+            } else {
+                // Otherwise, attack with 1 damage
+                H -= 1;
+            }
+            // Increment T after each attack
+            T++;
+        }
+    }
+    cout << T << endl;
+    return 0;
+}

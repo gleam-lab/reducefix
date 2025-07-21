@@ -1,0 +1,104 @@
+To solve this problem, we must determine the **minimum number of additional votes** each candidate needs to guarantee their victory, regardless of how the remaining votes are distributed among other candidates.
+
+### Key Observations:
+
+1. **Victory Condition**: Candidate `i` wins if **fewer than M candidates** have more votes than them.
+2. To guarantee a win for candidate `i`, we need to ensure that even in the worst-case scenario (where other candidates take as many votes as possible), candidate `i` still has enough votes to be among the top `(N - M + 1)` candidates.
+3. We can binary search over the number of additional votes candidate `i` needs and simulate whether they would win with that many added votes.
+
+### Strategy:
+- Sort the current vote counts.
+- For each candidate `i`, perform a binary search on the number of additional votes `X` from `0` to remaining unassigned votes `K`.
+- For each `X`, simulate giving `X` extra votes to candidate `i`, and count how many candidates could possibly have strictly more votes than them.
+- Use prefix sums and binary search techniques efficiently to manage large input sizes within time constraints.
+
+Here's the corrected and optimized solution:
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+
+int main() {
+    cin.tie(nullptr)->sync_with_stdio(false);
+
+    int N, M;
+    ll K;
+    cin >> N >> M >> K;
+
+    vector<ll> A(N);
+    ll total = 0;
+    for (int i = 0; i < N; ++i) {
+        cin >> A[i];
+        total += A[i];
+    }
+
+    // Remaining votes
+    ll rem = K - total;
+
+    vector<ll> sorted_A(A);
+    sort(sorted_A.begin(), sorted_A.end());
+
+    // Prefix sum array
+    vector<ll> prefix(N + 1);
+    for (int i = 0; i < N; ++i)
+        prefix[i + 1] = prefix[i] + sorted_A[i];
+
+    vector<ll> result(N);
+
+    for (int i = 0; i < N; ++i) {
+        ll my_votes = A[i];
+
+        // Binary search over required additional votes
+        ll low = 0, high = rem, ans = -1;
+        while (low <= high) {
+            ll mid = (low + high) / 2;
+            ll cur_total = my_votes + mid;
+
+            // Find how many candidates could have more votes than cur_total
+            int pos = upper_bound(sorted_A.begin(), sorted_A.end(), cur_total) - sorted_A.begin();
+
+            // Count how many candidates have more than cur_total
+            ll needed = max(0LL, N - pos);
+            if (needed >= M) {
+                high = mid - 1;
+                continue;
+            }
+
+            // Now we must make sure at most (M - 1) candidates can get more than cur_total
+            // So we cap all others to at most cur_total
+            ll available = rem - mid;
+
+            // Number of candidates above us: N - pos
+            // Those candidates must be reduced to at most cur_total
+            ll need_more = max(0LL, N - pos - (my_votes + mid == cur_total ? 0 : 1));
+
+            ll required = cur_total * need_more - (prefix[N] - prefix[pos]);
+
+            if (required <= available) {
+                ans = mid;
+                high = mid - 1;
+            } else {
+                low = mid + 1;
+            }
+        }
+
+        result[i] = ans;
+    }
+
+    for (ll x : result)
+        cout << x << " ";
+    cout << "\n";
+
+    return 0;
+}
+```
+
+### Explanation:
+- **Sorting & Prefix Sums**: These help efficiently compute how many candidates could potentially beat the current one after redistribution.
+- **Binary Search**: For each candidate, we find the minimal number of votes that guarantees a win.
+- **Simulation per Mid**: In each step, simulate giving `mid` extra votes to the candidate and calculate how many votes are needed to prevent more than `M-1` candidates from having more votes.
+
+This code runs in **O(N log K)** time due to the binary search per candidate and uses sorting and prefix sums effectively to maintain efficiency for large inputs (up to 2×10⁵ candidates and 10¹² votes).
+
+Let me know if you want an annotated version or further breakdown of the logic!

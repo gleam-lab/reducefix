@@ -1,0 +1,79 @@
+#include <iostream>
+#include <vector>
+#include <queue>
+#include <unordered_map>
+
+using namespace std;
+
+struct Edge {
+    int to;
+    long long weight;
+};
+
+class Graph {
+private:
+    int n;
+    vector<vector<Edge>> adj;
+public:
+    Graph(int _n) : n(_n), adj(_n) {}
+
+    void addEdge(int u, int v, long long w) {
+        adj[u].emplace_back(v, w);
+        adj[v].emplace_back(u, w);
+    }
+
+    vector<long long> dijkstra(int start) {
+        vector<long long> dist(n, LLONG_MAX);
+        dist[start] = 0;
+        priority_queue<pair<long long, int>, vector<pair<long long, int>>, greater<pair<long long, int>>> pq;
+        pq.emplace(0, start);
+
+        while (!pq.empty()) {
+            auto [d, u] = pq.top(); pq.pop();
+
+            if (d > dist[u]) continue;
+
+            for (auto [v, w] : adj[u]) {
+                if (dist[u] + w < dist[v]) {
+                    dist[v] = dist[u] + w;
+                    pq.emplace(dist[v], v);
+                }
+            }
+        }
+
+        return dist;
+    }
+};
+
+int main() {
+    int n, m;
+    cin >> n >> m;
+
+    vector<long long> a(n);
+    for (long long& x : a) cin >> x;
+
+    Graph g(n);
+
+    for (int i = 0; i < m; ++i) {
+        int u, v;
+        long long w;
+        cin >> u >> v >> w;
+        --u, --v;
+        g.addEdge(u, v, w);
+    }
+
+    vector<long long> ans;
+    for (int i = 1; i < n; ++i) {
+        vector<long long> dist = g.dijkstra(i);
+        long long minDist = LLONG_MAX;
+        for (int j = 0; j < n; ++j) {
+            minDist = min(minDist, dist[j] + a[j]);
+        }
+        ans.push_back(minDist);
+    }
+
+    for (long long d : ans) cout << d << " ";
+    cout << "\n";
+
+    return 0;
+}

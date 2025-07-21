@@ -1,0 +1,120 @@
+To fix this code, we need to address the issue that caused the incorrect output for the given test case. The problem involves placing a piece on an N x N grid such that it cannot be captured by any of the existing M pieces. The existing pieces can capture along rows, columns, and diagonals (both main and anti-diagonals).
+
+### Analysis of the Original Code
+1. **Input Handling**: The original code mistakenly swapped the values of N and M when reading the input.
+2. **Counting Attacked Squares**: The logic for counting the squares under attack by existing pieces was incorrect, particularly in how it handled the intersections of different attack lines (rows, columns, and diagonals).
+3. **Inclusion-Exclusion Principle**: The code attempted to use the inclusion-exclusion principle to account for overlaps in the attacked squares but had errors in the implementation, especially in the three-way and four-way intersections.
+
+### Solution Approach
+1. **Correct Input Reading**: Ensure N and M are read correctly.
+2. **Track Attack Lines**: For each existing piece, track the attacked rows, columns, main diagonals (i - j), and anti-diagonals (i + j).
+3. **Use Sets for Unique Lines**: Utilize sets to store unique attack lines to avoid duplicates.
+4. **Calculate Total Attacked Squares**: Use the inclusion-exclusion principle to accurately count the total number of squares under attack, considering overlaps.
+5. **Compute Safe Squares**: Subtract the total attacked squares from the total grid squares (N^2) to get the number of safe squares.
+
+### Final Corrected Code
+```cpp
+#include <bits/stdc++.h>
+
+using namespace std;
+
+int main() {
+    long long N, M;
+    cin >> N >> M;
+    
+    unordered_set<long long> rows, cols, diag1, diag2;
+    
+    for (int i = 0; i < M; ++i) {
+        long long a, b;
+        cin >> a >> b;
+        rows.insert(a);
+        cols.insert(b);
+        diag1.insert(a - b);
+        diag2.insert(a + b);
+    }
+    
+    long long attacked = 0;
+    
+    // Rows
+    attacked += N * rows.size();
+    // Columns
+    attacked += N * cols.size();
+    // Diagonals (a - b)
+    for (long long d : diag1) {
+        long long min_val = max(1 - d, 1 + d);
+        long long max_val = min(N - d, N + d);
+        if (min_val > max_val) continue;
+        attacked += (max_val - min_val + 1);
+    }
+    // Diagonals (a + b)
+    for (long long s : diag2) {
+        long long min_val = max(s - N, 1LL);
+        long long max_val = min(s - 1, N);
+        if (min_val > max_val) continue;
+        attacked += (max_val - min_val + 1);
+    }
+    
+    // Subtract intersections: row & col
+    attacked -= rows.size() * cols.size();
+    // Subtract intersections: row & diag1
+    for (long long r : rows) {
+        for (long long d : diag1) {
+            long long c = r - d;
+            if (cols.count(c)) attacked--;
+        }
+    }
+    // Subtract intersections: row & diag2
+    for (long long r : rows) {
+        for (long long s : diag2) {
+            long long c = s - r;
+            if (cols.count(c)) attacked--;
+        }
+    }
+    // Subtract intersections: col & diag1
+    for (long long c : cols) {
+        for (long long d : diag1) {
+            long long r = c + d;
+            if (rows.count(r)) attacked--;
+        }
+    }
+    // Subtract intersections: col & diag2
+    for (long long c : cols) {
+        for (long long s : diag2) {
+            long long r = s - c;
+            if (rows.count(r)) attacked--;
+        }
+    }
+    // Subtract intersections: diag1 & diag2
+    for (long long d : diag1) {
+        for (long long s : diag2) {
+            if ((s - d) % 2 != 0) continue;
+            long long r = (s + d) / 2;
+            long long c = (s - d) / 2;
+            if (rows.count(r) && cols.count(c)) attacked--;
+        }
+    }
+    
+    // Add back three-way intersections
+    for (long long r : rows) {
+        for (long long c : cols) {
+            if (diag1.count(r - c) && diag2.count(r + c)) attacked++;
+        }
+    }
+    
+    long long total_squares = N * N;
+    long long safe_squares = total_squares - attacked;
+    
+    cout << safe_squares << endl;
+    
+    return 0;
+}
+```
+
+### Explanation
+1. **Input Handling**: The code reads N and M, then reads the positions of the M pieces.
+2. **Tracking Attack Lines**: It uses unordered sets to store the rows, columns, main diagonals (i - j), and anti-diagonals (i + j) that are under attack by existing pieces.
+3. **Counting Attacked Squares**: The code calculates the number of squares attacked by rows, columns, and diagonals separately.
+4. **Inclusion-Exclusion Principle**: It subtracts overlaps between rows and columns, rows and diagonals, and columns and diagonals. It then adds back the three-way intersections to ensure accurate counting.
+5. **Safe Squares Calculation**: The total safe squares are computed by subtracting the attacked squares from the total grid squares (N^2).
+
+This approach ensures that all edge cases and large constraints are handled efficiently and correctly.

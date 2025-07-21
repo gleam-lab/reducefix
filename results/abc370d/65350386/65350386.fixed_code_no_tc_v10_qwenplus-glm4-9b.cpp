@@ -1,0 +1,60 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define rep(i,n) for(int i = 0; i < (n); i++)
+using ll = long long;
+
+int main(void) {
+    int h, w, q;
+    cin >> h >> w >> q;
+    vector<vector<int>> tate(h+1, vector<int>(w+1, h)); // y-coordinate of the topmost wall in each cell
+    vector<vector<int>> yoko(w+1, vector<int>(h+1, w)); // x-coordinate of the leftmost wall in each cell
+
+    rep(i, h) rep(j, w) {
+        if (i > 0) tate[i][j] = min(tate[i][j], tate[i-1][j]);
+        if (j > 0) yoko[i][j] = min(yoko[i][j], yoko[i][j-1]);
+    }
+
+    rep(qi, q) {
+        int r, c;
+        cin >> r >> c;
+        r--; c--;
+        if (tate[r][c] == h) {
+            // Bomb placed on a wall, just remove the wall
+            tate[r][c] = c; // Update the topmost wall to the right of the current cell
+            yoko[r][c] = w; // Update the leftmost wall to the bottom of the current cell
+        } else {
+            // Bomb placed on no wall, destroy the first walls from top, bottom, left, right
+            tate[r][c] = c; // Update the topmost wall to the right of the current cell
+            yoko[r][c] = w; // Update the leftmost wall to the bottom of the current cell
+
+            // Update walls from top
+            for (int i = r - 1; i >= 0 && tate[i][c] == c; --i) {
+                tate[i][c] = min(tate[i-1][c], i);
+            }
+
+            // Update walls from bottom
+            for (int i = r + 1; i < h && tate[i][c] == c; ++i) {
+                tate[i][c] = min(tate[i+1][c], i);
+            }
+
+            // Update walls from left
+            for (int j = c - 1; j >= 0 && yoko[r][j] == r; --j) {
+                yoko[r][j] = min(yoko[r][j-1], j);
+            }
+
+            // Update walls from right
+            for (int j = c + 1; j < w && yoko[r][j] == r; ++j) {
+                yoko[r][j] = min(yoko[r][j+1], j);
+            }
+        }
+    }
+
+    // Count the remaining walls
+    ll ans = 0;
+    rep(i, h) rep(j, w) {
+        ans += (tate[i][j] == h || yoko[i][j] == w) ? 0 : 1;
+    }
+    cout << ans << endl;
+
+    return 0;
+}

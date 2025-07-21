@@ -1,0 +1,26 @@
+#include<bits/stdc++.h>
+using namespace std;
+int n,q,x[200005],p[200005];
+long long sum[200005]; // Changed array size to match index usage
+int main(){
+    cin>>n;
+    for(int i=1;i<=n;i++){
+        cin>>x[i];
+    }
+    for(int i=1;i<=n;i++){
+        cin>>p[i];
+        sum[i] = sum[i-1] + p[i]; // Corrected array access and type for sum
+    }
+    cin>>q;
+    while(q--){
+        int L,R;
+        cin>>L>>R;
+        int l = lower_bound(x+1,x+n+1,L)-x; // Ensure correct range [1, n]
+        int r = upper_bound(x+1,x+n+1,R)-x; // Ensure correct range [1, n]
+        if(l <= r) { // Check if the indices are valid
+            cout<<sum[r] - sum[l-1]<<endl; // Adjusted the formula based on 0-indexing
+        } else {
+            cout<<"0"<<endl; // Handle invalid range gracefully
+        }
+    }
+}

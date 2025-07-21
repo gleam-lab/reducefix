@@ -1,0 +1,1 @@
+safe_rows * safe_cols

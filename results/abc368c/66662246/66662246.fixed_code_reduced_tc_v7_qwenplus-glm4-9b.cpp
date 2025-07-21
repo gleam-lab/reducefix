@@ -1,0 +1,28 @@
+#include <iostream>
+#include <vector>
+
+using namespace std;
+
+int main() {
+    int n;
+    cin >> n;
+    vector<int> healths(n);
+    
+    // Read health values
+    for (int i = 0; i < n; ++i) {
+        cin >> healths[i];
+    }
+    
+    long long T = 0;
+    for (int health : healths) {
+        // Increase T by the number of full sets of 3 needed for the current health
+        T += health / 3;
+        // Remaining health that needs to be decreased by 1
+        health %= 3;
+        // Increase T by the remaining health
+        T += health;
+    }
+    
+    cout << T << endl;
+    return 0;
+}

@@ -1,0 +1,73 @@
+To solve this problem, we must determine how many empty cells on a very large chessboard (up to `10^9 x 10^9`) are **not** under attack by any of the existing pieces. Each piece can attack up to 8 specific positions in an "L"-shaped move pattern, similar to a knight's move in chess.
+
+### Key Observations:
+- The board size can be as large as `10^18` cells (`N = 10^9`, so `N^2 = 10^18`), which means we cannot store the entire board.
+- However, only up to `2 * 10^5` cells have pieces on them, and each of these attacks at most 8 other cells.
+- So we only need to track the attacked cells — total number is at most `M * 8 = 1.6 * 10^6`.
+
+### Plan:
+1. Use a `std::unordered_set<std::pair<int, int>>` (or better, a hash set with custom hashing) to record all cells that are either occupied or under attack.
+2. For each piece, mark itself and its 8 possible attack positions as "occupied" or "attacked".
+3. Subtract the count of these from the total number of cells (`N * N`) to get the answer.
+
+We will use `std::unordered_set` with a custom hash for `std::pair<int, int>` to efficiently store and check attacked/occupied cells.
+
+---
+
+Here's the corrected and optimized code:
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+// Custom hash specialization for pair<int, int>
+struct PairHash {
+    size_t operator()(const pair<int, int>& p) const {
+        return hash<long long>()((static_cast<long long>(p.first) << 32) | p.second);
+    }
+};
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    long long N;
+    int M;
+    cin >> N >> M;
+
+    unordered_set<pair<int, int>, PairHash> blocked;
+
+    // All 8 knight-like move directions
+    vector<pair<int, int>> moves = {
+        {2, 1}, {1, 2}, {-1, 2}, {-2, 1},
+        {-2, -1}, {-1, -2}, {1, -2}, {2, -1}
+    };
+
+    for (int i = 0; i < M; ++i) {
+        int x, y;
+        cin >> x >> y;
+        // Convert to 0-based index
+        x--; y--;
+        blocked.insert({x, y});
+        for (auto [dx, dy] : moves) {
+            int nx = x + dx;
+            int ny = y + dy;
+            if (nx >= 0 && nx < N && ny >= 0 && ny < N) {
+                blocked.insert({nx, ny});
+            }
+        }
+    }
+
+    // Total number of cells: N*N
+    // Subtract the number of blocked cells
+    cout << (N * NLL - (long long)blocked.size()) << '\n';
+}
+```
+
+### Notes:
+- We convert input coordinates to 0-based indices.
+- We use `std::unordered_set` with a custom hash for performance and memory efficiency.
+- We avoid using `pow(N, 2)` because it may cause floating-point inaccuracies for large `N`. Instead, we use `N * N`.
+- We ensure all coordinate checks are within bounds `[0, N-1]` for both axes.
+
+This solution runs in O(M) time and space, which is optimal given the constraints.

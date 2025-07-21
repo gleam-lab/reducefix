@@ -1,0 +1,177 @@
+### Problem Description
+Score : 500 points
+
+### Problem Statement
+
+An election is being held with N candidates numbered 1, 2, \ldots, N. There are K votes, some of which have been counted so far.
+
+Up until now, candidate i has received A\_i votes.
+
+After all ballots are counted, candidate i (1 \leq i \leq N) will be elected if and only if the number of candidates who have received more votes than them is less than M. There may be multiple candidates elected.
+
+For each candidate, find the minimum number of additional votes they need from the remaining ballots to guarantee their victory regardless of how the other candidates receive votes.
+
+Formally, solve the following problem for each i = 1,2,\ldots,N.
+
+Determine if there is a non-negative integer X not exceeding K - \displaystyle{\sum\_{i=1}^{N}} A\_i satisfying the following condition. If it exists, find the minimum possible such integer.
+
+* If candidate i receives X additional votes, then candidate i will always be elected.
+
+### Constraints
+
+* 1 \leq M \leq N \leq 2 \times 10^5
+* 1 \leq K \leq 10^{12}
+* 0 \leq A\_i \leq 10^{12}
+* \displaystyle{\sum\_{i=1}^{N} A\_i} \leq K
+* All input values are integers.
+
+---
+
+### Input
+
+The input is given from Standard Input in the following format:
+
+```
+N M K
+A_1 A_2 \ldots A_N
+
+```
+
+### Output
+
+Let C\_i be the minimum number of additional votes candidate i needs from the remaining ballots to guarantee their victory regardless of how other candidates receive votes. Print C\_1, C\_2, \ldots, C\_N separated by spaces.
+
+If candidate i has already secured their victory, then let C\_i = 0. If candidate i cannot secure their victory under any circumstances, then let C\_i = -1.
+
+---
+
+### Your Incorrect Code
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+
+int N, M;
+ll K;
+
+struct Node {
+  ll val;
+  int idx;
+} ;
+
+int main() {
+  cin >> N >> M >> K;
+
+  vector<Node> a(N + 5);
+
+  for (int i = 1; i <= N; ++i) {
+    cin >> a[i].val;
+    a[i].idx = i;
+  }
+
+  auto cmp = [](const auto &A, const auto &B)->bool {
+    return A.val < B.val;
+  };
+
+  sort(a.begin() + 1, a.begin() + N + 1, cmp) ;
+
+  vector<ll> pre(N + 5);
+  pre[0] = 0LL;
+  for (int i = 1; i <= N; ++i) {
+    pre[i] = pre[i - 1] + a[i].val;
+  }
+
+  K -= pre[N];
+
+  vector<Node> ans(N + 5);
+  for (int i = 1; i <= N; ++i) {
+    ans[i].idx = a[i].idx;
+  }
+
+  auto get = [&](ll add, ll i, ll zan)->ll {
+    ll remain = K - add;
+    ll cur = a[i].val + add;
+    ll tar = cur + 1;
+    int L = 0, R = zan;
+    while (L < R) {
+      int MID = (L + R + 1) >> 1;
+      ll need = tar * MID - (pre[zan] - pre[zan - MID]);
+      if (zan - MID < i) {
+        need -= (add + 1);
+      }
+      if (need > remain) R = MID - 1;
+      else L = MID;
+    }
+    return L - (zan - L < i);
+  } ;
+
+  for (int i = 1; i <= N; ++i) {
+    ll cur = a[i].val + K;
+    int idx = upper_bound(a.begin() + i + 1, a.begin() + N + 1, (Node) {cur, 0}, cmp) - a.begin();
+    int cnt = (N - idx + 1);
+    // cerr << "Now i = " << i << ", a[" << i << "].val = " << a[i].val << '\n';
+    // cerr << "Now cnt = " << cnt << '\n';
+    if (cnt >= M) {
+      ans[i].val = -1;
+      // cerr << "ans[" << i << "].val = " << ans[i].val << '\n';
+      // cerr << "ans[" << i << "].idx = " << ans[i].idx << '\n';
+      continue;
+    }
+    int l = 0, r = K;
+    for (int j = 0; j <= K; ++j) {
+      cur = a[i].val + j;
+      idx = upper_bound(a.begin() + i + 1, a.begin() + N + 1, (Node) {cur, 0}, cmp) - a.begin();
+      // cerr << "now j = " << j << ", get(" << j << ", " << i << ", " << idx - 1 << ") = " << get(j, i, idx - 1) << '\n';
+    }
+    while (l < r) {
+      int mid = (l + r) >> 1;
+      cur = a[i].val + mid;
+      idx = upper_bound(a.begin() + i + 1, a.begin() + N + 1, (Node) {cur, 0}, cmp) - a.begin();
+      ll cnt = get(mid, i, idx - 1) + (N - idx + 1);
+      if (cnt < M) r = mid;
+      else l = mid + 1;
+    }
+    ans[i].val = l;
+  }
+
+  sort(ans.begin() + 1, ans.begin() + N + 1, [](const auto &A, const auto &B)->bool {
+    return A.idx < B.idx;
+  }) ;
+
+  for (int i = 1; i <= N; ++i) {
+    cout << ans[i].val << ' ';
+  }
+
+
+  return 0;
+}
+```
+
+### Failing Case #1
+Input:
+```
+1 3142 23897815067
+1703098
+
+```
+Error: Line 1: Got '0', Expected '5901392'
+Your Output:
+```
+0 
+```
+Expected Output:
+```
+5901392 
+```
+
+### Your Task
+Fix the C++ code to pass ALL test cases (including hidden ones).
+
+### Critical Guidelines
+1. Focus on algorithmic correctness - NO hard-coded values or special cases
+2. Ensure proper data structures and complexity (aim for O(N log N) or better when possible)
+3. Handle edge cases (empty input, single elements, max constraints)
+4. Use standard C++20 features; avoid non-portable code
+
+### Output Format
+Provide ONLY the complete fixed C++ code in a single ```cpp block.

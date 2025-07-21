@@ -1,0 +1,71 @@
+#include <iostream>
+#include <algorithm>
+using namespace std;
+
+typedef struct { int a, p, b, q; } Printer;
+Printer A[100];
+long long dp[100][10000]; // dp[i][j] = min cost to print j pages using printer i
+
+int N, X;
+
+// Calculate the minimum cost for printer i to print n pages
+long long cost(int i, int n) {
+    if (n == 0) return 0;
+    int period = A[i].a * A[i].b;
+    long long full_blocks = n / period;
+    int remainder = n % period;
+    return full_blocks * (A[i].p * A[i].b + A[i].q * A[i].a) + dp[i][remainder];
+}
+
+// Check if we can print 'pages' total pages within budget X
+bool is_possible(int pages) {
+    long long total_cost = 0;
+    for (int i = 0; i < N; i++) {
+        total_cost += cost(i, pages);
+        if (total_cost > X) return false;
+    }
+    return true;
+}
+
+int main() {
+    cin >> N >> X;
+
+    for (int i = 0; i < N; i++) {
+        int a, p, b, q;
+        cin >> a >> p >> b >> q;
+        
+        // Ensure a*p <= b*q (better first option)
+        if (a * q < b * p) {
+            swap(a, b);
+            swap(p, q);
+        }
+        A[i] = {a, p, b, q};
+        
+        // Initialize dp for this printer
+        dp[i][0] = 0;
+        for (int j = 1; j < A[i].a * A[i].b; j++) {
+            dp[i][j] = 1e18; // Set to large value initially
+            if (j >= A[i].a)
+                dp[i][j] = min(dp[i][j], dp[i][j - A[i].a] + A[i].p);
+            if (j >= A[i].b)
+                dp[i][j] = min(dp[i][j], dp[i][j - A[i].b] + A[i].q);
+        }
+    }
+
+    // Binary search for maximum possible pages
+    int low = 0, high = 2e9;
+    int answer = 0;
+    
+    while (low <= high) {
+        int mid = (long long)low + (high - low) / 2;
+        if (is_possible(mid)) {
+            answer = mid;
+            low = mid + 1;
+        } else {
+            high = mid - 1;
+        }
+    }
+
+    cout << answer << endl;
+    return 0;
+}

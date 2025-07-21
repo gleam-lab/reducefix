@@ -1,0 +1,106 @@
+To fix this code, we need to address the inefficient handling of the grid and the queries, which is causing the incorrect output. The original approach tried to use a 2D vector to represent the grid and a cache mechanism to store the nearest walls in each direction, but it didn't handle the queries efficiently, especially for large grids.
+
+### Approaches
+1. **Efficient Data Structures**: Use sets to keep track of the remaining walls in each row and column. This allows for efficient insertion, deletion, and searching operations.
+2. **Handling Queries**: For each query, check if the cell has a wall. If it does, remove it. If not, find the nearest walls in all four directions (up, down, left, right) using the sets and remove those walls if they exist.
+3. **Complexity**: Using sets ensures that each insertion and deletion is O(log n), and finding the nearest walls is also O(log n) per direction, making the overall complexity O(Q log (H + W)) per query, which is efficient for the problem constraints.
+
+### Solution Code
+```cpp
+#include <iostream>
+#include <vector>
+#include <set>
+#include <algorithm>
+
+using namespace std;
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int H, W, Q;
+    cin >> H >> W >> Q;
+
+    vector<set<int>> rows(H + 2);
+    vector<set<int>> cols(W + 2);
+
+    for (int i = 1; i <= H; ++i) {
+        for (int j = 1; j <= W; ++j) {
+            rows[i].insert(j);
+            cols[j].insert(i);
+        }
+    }
+
+    int total = H * W;
+    int broken = 0;
+
+    for (int q = 0; q < Q; ++q) {
+        int r, c;
+        cin >> r >> c;
+
+        auto& row_set = rows[r];
+        auto& col_set = cols[c];
+
+        if (row_set.count(c)) {
+            row_set.erase(c);
+            col_set.erase(r);
+            ++broken;
+        } else {
+            // Find nearest wall in each direction
+            // Left
+            auto it_left = row_set.lower_bound(c);
+            if (it_left != row_set.begin()) {
+                --it_left;
+                int j = *it_left;
+                if (rows[r].count(j)) {
+                    rows[r].erase(j);
+                    cols[j].erase(r);
+                    ++broken;
+                }
+            }
+            // Right
+            auto it_right = row_set.upper_bound(c);
+            if (it_right != row_set.end()) {
+                int j = *it_right;
+                if (rows[r].count(j)) {
+                    rows[r].erase(j);
+                    cols[j].erase(r);
+                    ++broken;
+                }
+            }
+            // Up
+            auto it_up = col_set.lower_bound(r);
+            if (it_up != col_set.begin()) {
+                --it_up;
+                int i = *it_up;
+                if (cols[c].count(i)) {
+                    cols[c].erase(i);
+                    rows[i].erase(c);
+                    ++broken;
+                }
+            }
+            // Down
+            auto it_down = col_set.upper_bound(r);
+            if (it_down != col_set.end()) {
+                int i = *it_down;
+                if (cols[c].count(i)) {
+                    cols[c].erase(i);
+                    rows[i].erase(c);
+                    ++broken;
+                }
+            }
+        }
+    }
+
+    cout << total - broken << endl;
+
+    return 0;
+}
+```
+
+### Explanation
+1. **Initialization**: We initialize sets for each row and column to keep track of the walls. Each set contains the column indices for rows and row indices for columns where walls exist.
+2. **Processing Queries**: For each query, if the cell (r, c) has a wall, we remove it from the respective row and column sets. If the cell doesn't have a wall, we find the nearest walls in all four directions (left, right, up, down) using set operations (lower_bound and upper_bound) and remove those walls if they exist.
+3. **Output**: The remaining walls are calculated as the total initial walls minus the broken walls, printed at the end.
+
+This approach efficiently handles the queries by leveraging the ordered nature of sets, allowing for quick lookups and deletions, ensuring the solution is both correct and efficient.

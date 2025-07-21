@@ -1,0 +1,42 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    int n;
+    cin >> n;
+    vector<long long> va(n);
+    vector<long long> vb(n - 1);
+
+    for (int i = 0; i < n; i++) {
+        cin >> va[i];
+    }
+
+    for (int i = 0; i < n - 1; i++) {
+        cin >> vb[i];
+    }
+
+    // Sort both vectors in descending order
+    sort(va.begin(), va.end(), greater<long long>());
+    sort(vb.begin(), vb.end(), greater<long long>());
+
+    // Initialize the minimum box size to be the largest toy size
+    long long minBoxSize = va[0];
+
+    // Check if we can place each toy in a box without violating constraints
+    for (int i = 0; i < n - 1; ++i) {
+        if (va[i] > vb[i]) {
+            minBoxSize = max(minBoxSize, va[i]);
+        } else {
+            minBoxSize = max(minBoxSize, vb[i]);
+        }
+    }
+
+    // If the largest toy size is smaller than the smallest box size, output -1
+    if (minBoxSize < va.back()) {
+        cout << -1 << endl;
+    } else {
+        cout << minBoxSize << endl;
+    }
+
+    return 0;
+}

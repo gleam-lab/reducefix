@@ -1,0 +1,86 @@
+After analyzing the problem and the incorrect code, I've identified the issue. The original approach uses a Union-Find with sorted vectors for each component, which is not efficient enough for the constraints (N and Q up to 2×10^5). We need a more efficient way to maintain the top k elements for each component.
+
+Here's the corrected approach:
+1. Use Union-Find (Disjoint Set Union) with path compression and union by size
+2. For each component, maintain a set (or multiset) of the largest 10 elements
+3. When merging two components, we only need to keep the top 10 elements from the combined sets
+
+This ensures that each union operation is O(k log k) where k=10, which is acceptable for the constraints.
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+const int N = 2e5 + 5;
+const int K = 10; // We only need to keep track of up to 10 largest elements
+
+int parent[N];
+int size[N];
+set<int> top[N]; // Stores the largest up to K elements in each component
+
+int find(int u) {
+    if (parent[u] != u) {
+        parent[u] = find(parent[u]);
+    }
+    return parent[u];
+}
+
+void unite(int u, int v) {
+    u = find(u);
+    v = find(v);
+    if (u == v) return;
+    
+    if (size[u] < size[v]) swap(u, v);
+    
+    // Merge the smaller set into the larger one
+    for (int x : top[v]) {
+        top[u].insert(x);
+        if (top[u].size() > K) {
+            top[u].erase(top[u].begin());
+        }
+    }
+    parent[v] = u;
+    size[u] += size[v];
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int n, q;
+    cin >> n >> q;
+    
+    for (int i = 1; i <= n; i++) {
+        parent[i] = i;
+        size[i] = 1;
+        top[i].insert(i);
+    }
+    
+    while (q--) {
+        int t, u, v;
+        cin >> t >> u >> v;
+        if (t == 1) {
+            unite(u, v);
+        } else {
+            u = find(u);
+            if (top[u].size() < v) {
+                cout << "-1\n";
+            } else {
+                auto it = top[u].end();
+                advance(it, -v);
+                cout << *it << '\n';
+            }
+        }
+    }
+    
+    return 0;
+}
+```
+
+The key improvements in this solution:
+1. Uses Union-Find with path compression and union by size for efficient component tracking
+2. Maintains only the top 10 elements in each component using sets
+3. Efficient merging by always merging smaller sets into larger ones
+4. For queries, simply accesses the k-th largest element from the set if it exists
+
+This solution should handle all test cases efficiently within the constraints, including the failing case in the original problem. The complexity is O(Q * α(N) * K log K) where α is the inverse Ackermann function, which is effectively constant for practical purposes.

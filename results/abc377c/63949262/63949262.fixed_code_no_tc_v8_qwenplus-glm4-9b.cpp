@@ -1,0 +1,47 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+#define MAXN 1000000000
+
+int N, M;
+vector<pair<int, int>> pieces;
+
+bool isSafe(int x, int y) {
+    return (x > 0 && x <= N) && (y > 0 && y <= N);
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    cin >> N >> M;
+    pieces.resize(M);
+    for (int i = 0; i < M; ++i) {
+        int x, y;
+        cin >> x >> y;
+        pieces[i] = {x, y};
+    }
+
+    int safeCount = N * N; // total number of cells
+
+    // Check each piece if it can capture any cell
+    for (auto& p : pieces) {
+        int x = p.first;
+        int y = p.second;
+        // Check all the cells that can be attacked by the current piece
+        int dx[8] = {-2, -2, -1, -1, 1, 1, 2, 2};
+        int dy[8] = {-1, 1, -2, 2, -2, 2, -1, 1};
+        for (int i = 0; i < 8; ++i) {
+            int nx = x + dx[i];
+            int ny = y + dy[i];
+            if (isSafe(nx, ny)) {
+                safeCount--;
+            }
+        }
+    }
+
+    cout << safeCount << endl;
+    return 0;
+}

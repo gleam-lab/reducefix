@@ -1,0 +1,56 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+
+const int MAXN = 4e5 + 10;
+
+bool grid[MAXN][MAXN];
+int dr[] = {-1, 1, 0, 0};
+int dc[] = {0, 0, -1, 1};
+
+void destroyWall(int x, int y, int n, int m) {
+    if(grid[x][y]) {
+        grid[x][y] = false;
+    } else {
+        for(int d = 0; d < 4; ++d) {
+            int dist = 0;
+            for(int nx = x, ny = y; ; ++dist) {
+                nx += dr[d];
+                ny += dc[d];
+                if(nx < 0 || nx >= n || ny < 0 || ny >= m) break;
+                if(grid[nx][ny]) {
+                    grid[nx][ny] = false;
+                    break;
+                }
+            }
+        }
+    }
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int n, m, q;
+    cin >> n >> m >> q;
+
+    memset(grid, true, sizeof grid);
+
+    while(q--) {
+        int r, c;
+        cin >> r >> c;
+        --r, --c;
+        destroyWall(r, c, n, m);
+    }
+
+    int ans = 0;
+    for(int i = 0; i < n; ++i) {
+        for(int j = 0; j < m; ++j) {
+            ans += grid[i][j];
+        }
+    }
+
+    cout << ans << '\n';
+
+    return 0;
+}

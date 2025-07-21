@@ -1,0 +1,43 @@
+#include<bits/stdc++.h>
+using namespace std;
+
+const int MAXN = 200011;
+
+char s[MAXN], c[MAXN];
+
+void solve() {
+    int n;
+    scanf("%d", &n);
+    scanf("%s", s + 1);
+
+    // Initialize the answer with the maximum possible length of the sequence
+    int ans = n;
+
+    // Try replacing each character with its corresponding winning move
+    for (int replace = 'P'; replace <= 'R'; ++replace) {
+        memcpy(c, s, sizeof(char) * (n + 1));
+        int sum = n;
+        for (int i = 1; i <= n; ++i) {
+            if (c[i] == replace) {
+                c[i] = replace == 'P' ? 'S' : (replace == 'R' ? 'P' : 'R');
+                --sum;
+            }
+        }
+
+        for (int i = 2; i <= n; ++i) {
+            if (c[i] == c[i - 1]) {
+                c[i] = s[i];
+                --sum;
+            }
+        }
+
+        ans = max(ans, sum);
+    }
+
+    printf("%d\n", ans);
+}
+
+int main() {
+    solve();
+    return 0;
+}

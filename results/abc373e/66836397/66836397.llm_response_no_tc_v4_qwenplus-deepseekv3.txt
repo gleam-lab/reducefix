@@ -1,0 +1,88 @@
+I analyzed the code and found several issues in the approach to solving the problem. Here's the corrected version with explanations:
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+
+int main() {
+    ll N, M, K;
+    cin >> N >> M >> K;
+    vector<ll> A(N);
+    ll sum = 0;
+    for (ll &a : A) {
+        cin >> a;
+        sum += a;
+    }
+    ll rem = K - sum;
+
+    vector<ll> sorted_A = A;
+    sort(sorted_A.begin(), sorted_A.end());
+    
+    vector<ll> prefix(N + 1, 0);
+    for (int i = 0; i < N; i++) {
+        prefix[i + 1] = prefix[i] + sorted_A[i];
+    }
+
+    for (int i = 0; i < N; i++) {
+        ll a_i = A[i];
+        ll low = 0, high = rem;
+        ll ans = -1;
+
+        while (low <= high) {
+            ll mid = low + (high - low) / 2;
+            ll total = a_i + mid;
+            
+            // Find how many candidates have > total votes (upper_cnt)
+            ll upper_cnt = sorted_A.end() - upper_bound(sorted_A.begin(), sorted_A.end(), total);
+            
+            // If more than M-1 candidates have > total, we need more votes
+            if (upper_cnt >= M) {
+                low = mid + 1;
+                continue;
+            }
+            
+            // Now we need to ensure that at most M-1 candidates can get > total votes
+            // after distributing remaining votes (rem - mid)
+            
+            // Find the position where total would be in the sorted array
+            auto it = upper_bound(sorted_A.begin(), sorted_A.end(), total);
+            ll pos = it - sorted_A.begin();
+            
+            // The candidates we need to consider are from pos-(M-1 - upper_cnt) to pos-1
+            ll needed = max(0LL, (M - 1) - upper_cnt);
+            ll left = max(0LL, pos - needed);
+            
+            // Calculate the votes needed to push these candidates above total
+            ll existing = prefix[pos] - prefix[left];
+            ll required = (total + 1) * (pos - left) - existing;
+            
+            // If we can't push them above total with remaining votes, we win
+            if (required > (rem - mid)) {
+                ans = mid;
+                high = mid - 1;
+            } else {
+                low = mid + 1;
+            }
+        }
+        
+        cout << (ans != -1 ? ans : -1) << " \n"[i == N-1];
+    }
+}
+```
+
+Key fixes and improvements:
+1. Simplified the binary search logic to directly find the minimum votes needed
+2. Corrected the calculation of how many candidates can potentially surpass the current candidate
+3. Fixed the logic for determining if remaining votes are sufficient to prevent other candidates from surpassing
+4. Improved variable naming and readability
+5. Ensured proper handling of edge cases where a candidate is already winning or cannot win
+
+The approach now:
+1. Sorts the candidates' votes
+2. Uses binary search to find the minimum additional votes needed for each candidate
+3. For each candidate being checked, calculates how many other candidates could potentially surpass them
+4. Determines if the remaining votes are sufficient to prevent enough candidates from surpassing them
+5. Outputs the minimum required votes or -1 if impossible
+
+This solution efficiently handles the large constraints (up to 2×10^5 candidates) with O(N log N) complexity.

@@ -1,0 +1,28 @@
+#include<bits/stdc++.h>
+using namespace std;
+
+int main(){
+    int n;
+    cin >> n; // Number of elements in the array
+    
+    // Initialize the sum array with correct values
+    for (int i = 0; i < n; ++i) {
+        sum[i] = i + 1; // Assuming x[i] is the value of the element in the array
+    }
+    
+    // Read input
+    int x[3], p[3]; // Assuming there are three elements in the array
+    cin >> x[0] >> x[1] >> x[2]; // Read the first two elements of the array
+    cin >> p[0] >> p[1]; // Read the second element of the second element of the array
+    
+    // Process the query cases
+    while (true) {
+        int L, R; // Query cases
+        cin >> L >> R; // Read the left and right indices of the element to be checked
+        int l = lower_bound(sum + 1, sum + n + 1, L) - sum - 1; // Calculate the index of the element to be checked
+        int r = upper_bound(sum + 1, sum + n + 1, R) - sum - 1; // Calculate the index of the rightmost element to be checked
+        // Calculate difference between sum[r-1] and sum[l-1] and output it
+        cout << sum[r - 1] - sum[l - 1] << endl; // Corrected code here
+    }
+    return 0; // Return 0 to indicate successful completion of the program
+}

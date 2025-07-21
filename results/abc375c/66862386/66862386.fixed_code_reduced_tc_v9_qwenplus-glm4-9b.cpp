@@ -1,0 +1,33 @@
+#include <iostream>
+#include <cmath>
+#include <vector>
+
+using namespace std;
+
+int main() {
+    int n;
+    cin >> n;
+
+    vector<pair<long long, long long>> points(2 * n + 1);
+    points[0] = {0, 0}; // Starting at the origin
+    long long x, y;
+
+    for (int i = 1; i <= n; i++) {
+        cin >> x >> y;
+        points[i] = {x, y};
+    }
+    points[n + 1] = {0, 0}; // Ending at the origin
+
+    long double total_cost = 0.0;
+
+    for (int i = 0; i < n + 2; i++) {
+        long long dx = points[i].first - points[i - 1].first;
+        long long dy = points[i].second - points[i - 1].second;
+        total_cost += sqrt(dx * dx + dy * dy);
+    }
+
+    cout.precision(10);
+    cout << fixed << total_cost << endl;
+
+    return 0;
+}

@@ -1,0 +1,56 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+#define int long long
+const int N = 2e5 + 9;
+
+int n, k, T, sumB[N], maxA[N];
+
+// Sort the pairs of A and B values based on A values
+bool cmp(const pair<int, int>& a, const pair<int, int>& b) {
+    return a.first < b.first;
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    cin >> T;
+    while (T--) {
+        cin >> n >> k;
+        vector<pair<int, int>> a(n);
+
+        for (int i = 0; i < n; ++i) {
+            cin >> a[i].first >> a[i].second;
+        }
+
+        // Sort by A values
+        sort(a.begin(), a.end(), cmp);
+
+        // Calculate prefix sums of B values
+        sumB[0] = a[0].second;
+        for (int i = 1; i < n; ++i) {
+            sumB[i] = sumB[i - 1] + a[i].second;
+        }
+
+        // Calculate prefix max of A values
+        maxA[0] = a[0].first;
+        for (int i = 1; i < n; ++i) {
+            maxA[i] = max(maxA[i - 1], a[i].first);
+        }
+
+        // Calculate the minimum result using the prefix sums and max of A
+        long long minResult = LLONG_MAX;
+        for (int i = 0; i <= k - 1; ++i) {
+            long long sumBk = sumB[k - 1] - sumB[i];
+            long long maxAk = (i == 0) ? a[k - 1].first : maxA[i - 1];
+            minResult = min(minResult, maxAk * sumBk);
+        }
+
+        cout << minResult << '\n';
+    }
+
+    return 0;
+}

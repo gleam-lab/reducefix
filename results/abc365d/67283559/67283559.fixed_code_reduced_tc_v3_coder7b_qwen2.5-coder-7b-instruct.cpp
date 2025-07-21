@@ -1,0 +1,41 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    int N;
+    cin >> N;
+    string S;
+    cin >> S;
+
+    // Initialize the set of possible moves
+    unordered_set<char> hand = {'R', 'P', 'S'};
+
+    // Function to calculate the maximum score
+    auto calculateScore = [&](char firstMove) {
+        int total = 0;
+        for (int i = 0; i < N; ++i) {
+            int score = 0;
+            char use = firstMove;
+            for (auto move : hand) {
+                if ((move == 'R' && S[i] == 'S') ||
+                    (move == 'P' && S[i] == 'R') ||
+                    (move == 'S' && S[i] == 'P')) {
+                    score++;
+                    use = move;
+                    break;
+                }
+            }
+            total += score;
+            hand.erase(use); // Remove the used move from the set
+        }
+        return total;
+    };
+
+    // Calculate scores for both possible first moves
+    int scoreRR = calculateScore('R');
+    int scorePR = calculateScore('P');
+    int scoreSR = calculateScore('S');
+
+    // Output the maximum score
+    cout << max({scoreRR, scorePR, scoreSR});
+}

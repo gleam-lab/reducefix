@@ -1,0 +1,178 @@
+```cpp
+#include <bits/stdc++.h>
+
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    long long N;
+    int M;
+    cin >> N >> M;
+
+    set<pair<long long, long long>> blocked;
+    set<long long> rows, cols;
+    set<long long> diag1, diag2; // i + j, i - j
+
+    for (int i = 0; i < M; ++i) {
+        long long a, b;
+        cin >> a >> b;
+        blocked.emplace(a, b);
+        rows.insert(a);
+        cols.insert(b);
+        diag1.insert(a + b);
+        diag2.insert(a - b);
+    }
+
+    // Total empty squares = total squares - occupied squares
+    long long total_empty = N * N - M;
+
+    // Subtract all squares that are in dangerous lines
+    long long dangerous = 0;
+
+    // Rows with pieces
+    dangerous += (long long)rows.size() * N;
+    // Columns with pieces
+    dangerous += (long long)cols.size() * N;
+    // Diagonal 1 (i + j)
+    for (auto d : diag1) {
+        // Number of cells on diagonal i+j=d: if d <= N+1 then min(d-1, N), else min(2*N+1-d, N)
+        long long cnt = d <= N + 1 ? d - 1 : 2 * N + 1 - d;
+        dangerous += cnt;
+    }
+    // Diagonal 2 (i - j)
+    for (auto d : diag2) {
+        // Number of cells on diagonal i-j=d: if d >= 0 then N-d, else N+d
+        long long cnt = d >= 0 ? N - d : N + d;
+        dangerous += cnt;
+    }
+
+    // Add back intersections (inclusion-Exclusion Principle)
+
+    // Row ∩ Column
+    for (auto r : rows) {
+        for (auto c : cols) {
+            if (!blocked.count({r, c})) {
+                ++dangerous;
+            }
+        }
+    }
+
+    // Row ∩ Diag1 (solve i=r and i+j=d => j=d-r)
+    for (auto r : rows) {
+        for (auto d : diag1) {
+            long long c = d - r;
+            if (1 <= c && c <= N && !blocked.count({r, c})) {
+                ++dangerous;
+            }
+        }
+    }
+
+    // Row ∩ Diag2 (solve i=r and i-j=d => j=i-d)
+    for (auto r : rows) {
+        for (auto d : diag2) {
+            long long c = r - d;
+            if (1 <= c && c <= N && !blocked.count({r, c})) {
+                ++dangerous;
+            }
+        }
+    }
+
+    // Column ∩ Diag1 (solve j=c and i+j=d => i=d-c)
+    for (auto c : cols) {
+        for (auto d : diag1) {
+            long long r = d - c;
+            if (1 <= r && r <= N && !blocked.count({r, c})) {
+                ++dangerous;
+            }
+        }
+    }
+
+    // Column ∩ Diag2 (solve j=c and i-j=d => i=d+c)
+    for (auto c : cols) {
+        for (auto d : diag2) {
+            long long r = d + c;
+            if (1 <= r && r <= N && !blocked.count({r, c})) {
+                ++dangerous;
+            }
+        }
+    }
+
+    // Diag1 ∩ Diag2 (solve i+j=d1 and i-j=d2 => i=(d1+d2)/2, j=(d1-d2)/2)
+    for (auto d1 : diag1) {
+        for (auto d2 : diag2) {
+            if ((d1 + d2) % 2 != 0) continue;
+            long long r = (d1 + d2) / 2;
+            long long c = (d1 - d2) / 2;
+            if (1 <= r && r <= N && 1 <= c && c <= N && !blocked.count({r, c})) {
+                ++dangerous;
+            }
+        }
+    }
+
+    // Subtract triple overlaps
+
+    // Row ∩ Column ∩ Diag1
+    for (auto r : rows) {
+        for (auto c : cols) {
+            auto d = r + c;
+            if (diag1.count(d) && !blocked.count({r, c})) {
+                ++dangerous;
+            }
+        }
+    }
+
+    // Row ∩ Column ∩ Diag2
+    for (auto r : rows) {
+        for (auto c : cols) {
+            auto d = r - c;
+            if (diag2.count(d) && !blocked.count({r, c})) {
+                ++dangerous;
+            }
+        }
+    }
+
+    // Row ∩ Diag1 ∩ Diag2
+    for (auto r : rows) {
+        for (auto d1 : diag1) {
+            for (auto d2 : diag2) {
+                long long c1 = d1 - r;
+                long long c2 = r - d2;
+                if (c1 == c2 && 1 <= c1 && c1 <= N && !blocked.count({r, c1})) {
+                    ++dangerous;
+                }
+            }
+        }
+    }
+
+    // Column ∩ Diag1 ∩ Diag2
+    for (auto c : cols) {
+        for (auto d1 : diag1) {
+            for (auto d2 : diag2) {
+                long long r1 = d1 - c;
+                long long r2 = d2 + c;
+                if (r1 == r2 && 1 <= r1 && r1 <= N && !blocked.count({r1, c})) {
+                    ++dangerous;
+                }
+            }
+        }
+    }
+
+    // Diag1 ∩ Diag2 ∩ Row/Column handled above
+
+    // Add back quadruple overlap (Row ∩ Column ∩ Diag1 ∩ Diag2)
+    for (auto r : rows) {
+        for (auto c : cols) {
+            if (diag1.count(r + c) && diag2.count(r - c) && !blocked.count({r, c})) {
+                ++dangerous;
+            }
+        }
+    }
+
+    // Safe positions = total empty - dangerous positions
+    cout << (total_empty - dangerous) << endl;
+
+    return 0;
+}
+```

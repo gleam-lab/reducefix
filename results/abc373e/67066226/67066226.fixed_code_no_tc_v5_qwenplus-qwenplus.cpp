@@ -1,0 +1,94 @@
+#include <bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+#define all(x) (x).begin(), (x).end()
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int N, M;
+    ll K;
+    cin >> N >> M >> K;
+    vector<ll> A(N);
+    for (ll &a : A) {
+        cin >> a;
+        K -= a;
+    }
+
+    // Create sorted version of A
+    vector<pair<ll, int>> sortedA(N);
+    for (int i = 0; i < N; ++i)
+        sortedA[i] = {A[i], i};
+    sort(all(sortedA));
+
+    // For each candidate, we'll store the minimum votes needed
+    vector<ll> result(N, -1);
+
+    // We process candidates in order of increasing A[i]
+    // This allows us to maintain a prefix sum efficiently
+    vector<ll> prefix(N + 1);
+    for (int i = 0; i < N; ++i)
+        prefix[i + 1] = prefix[i] + sortedA[i].first;
+
+    for (int idx = 0; idx < N; ++idx) {
+        ll target_votes = sortedA[idx].first;
+        int original_idx = sortedA[idx].second;
+
+        ll low = 0, high = K;
+        ll answer = -1;
+
+        while (low <= high) {
+            ll mid = (low + high) / 2;
+            ll new_target = target_votes + mid;
+
+            // Find how many candidates have votes strictly greater than new_target
+            // If we can ensure at most M-1 such candidates, we win
+            int left = 0, right = N;
+            while (left < right) {
+                int m = (left + right) / 2;
+                if (sortedA[m].first > new_target)
+                    right = m;
+                else
+                    left = m + 1;
+            }
+
+            // Candidates from left to N-1 have more than new_target
+            // We need at most M-1 such candidates
+            if (N - left <= M - 1) {
+                // Candidate can win with mid additional votes
+                answer = mid;
+                high = mid - 1;
+            } else {
+                // Need more votes
+                low = mid + 1;
+            }
+        }
+
+        result[original_idx] = (answer == -1) ? -1 : answer;
+    }
+
+    // If candidate already has enough votes to be elected regardless of others, output 0
+    for (int i = 0; i < N; ++i) {
+        if (result[i] == 0 || result[i] == -1) continue;
+        
+        ll current = A[i];
+        ll required = result[i];
+
+        // Check if current votes are already sufficient
+        ll count_greater = 0;
+        for (int j = 0; j < N; ++j) {
+            if (j == i) continue;
+            if (A[j] > current)
+                count_greater++;
+        }
+
+        if (count_greater < M)
+            result[i] = 0;
+    }
+
+    for (ll val : result)
+        cout << val << ' ';
+    cout << '\n';
+
+    return 0;
+}

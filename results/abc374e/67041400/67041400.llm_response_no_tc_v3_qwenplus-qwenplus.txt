@@ -1,0 +1,77 @@
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+
+// 各工程 i で能力 W を達成する最小コストを計算
+ll cost_for_W(int N, ll W, ll X,
+              const vector<ll>& A, const vector<ll>& P,
+              const vector<ll>& B, const vector<ll>& Q)
+{
+    ll total = 0;
+    for (int i = 0; i < N; ++i) {
+        ll best = X + 1;
+
+        // xの候補（floor(x*), ceil(x*)周辺と境界）
+        vector<ll> xs;
+        xs.push_back(0);
+        xs.push_back((W + A[i] - 1) / A[i]);
+
+        // 最適解の連続緩和からの近似
+        long double x_star = (long double)W * Q[i] / ((long double)(A[i] * Q[i]) + (long double)(B[i] * P[i]));
+        for (ll dx = -2; dx <= 2; ++dx) {
+            xs.push_back((ll)(x_star + dx));
+        }
+
+        // 重複削除
+        sort(xs.begin(), xs.end());
+        xs.erase(unique(xs.begin(), xs.end()), xs.end());
+
+        ll max_x = (W + A[i] - 1) / A[i];
+        for (ll x : xs) {
+            if (x < 0 || x > max_x) continue;
+            ll rem = W - A[i] * x;
+            ll y = rem <= 0 ? 0 : (rem + B[i] - 1) / B[i];
+            ll c = P[i] * x + Q[i] * y;
+            if (c < best) best = c;
+        }
+
+        total += best;
+        if (total > X) return X + 1;  // 早期リターン
+    }
+    return total;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int N;
+    ll X;
+    cin >> N >> X;
+    vector<ll> A(N), P(N), B(N), Q(N);
+    for (int i = 0; i < N; ++i) {
+        cin >> A[i] >> P[i] >> B[i] >> Q[i];
+    }
+
+    // 下限・上限設定：最悪ケースにも耐えるように
+    ll lo = 0, hi = 0;
+    for (int i = 0; i < N; ++i) {
+        hi += A[i] * (X / P[i]) + B[i] * (X / Q[i]);  // 粗い上界
+    }
+    hi /= N;  // 平均的に達成可能な性能
+
+    // 二分探索
+    while (lo + 1 < hi) {
+        ll mid = lo + (hi - lo) / 2;
+        if (cost_for_W(N, mid, X, A, P, B, Q) <= X) {
+            lo = mid;
+        } else {
+            hi = mid;
+        }
+    }
+
+    cout << lo << "\n";
+    return 0;
+}
+```

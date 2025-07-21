@@ -1,0 +1,54 @@
+#include<iostream>
+#include<algorithm>
+using namespace std;
+
+const int MAXN = 2e5 + 9;
+long long A[MAXN], B[MAXN];
+
+void solve(int n, int k) {
+    pair<long long, int> a[n + 1], b[n + 1];
+    for (int i = 1; i <= n; ++i) {
+        a[i].first = A[i];
+        a[i].second = i;
+    }
+    for (int i = 1; i <= n; ++i) {
+        b[i].first = B[i];
+        b[i].second = i;
+    }
+    sort(a + 1, a + n + 1);
+    sort(b + 1, b + n + 1);
+
+    long long prefix_sum_b[200005] = {0};
+    for (int i = 1; i <= n; ++i) {
+        prefix_sum_b[i] = prefix_sum_b[i - 1] + b[i].first;
+    }
+
+    long long ans = LLONG_MAX;
+    for (int i = k; i <= n; ++i) {
+        long long max_a = a[i].first;
+        long long sum_b = prefix_sum_b[i] - prefix_sum_b[i - k];
+        ans = min(ans, max_a * sum_b);
+    }
+
+    cout << ans << '\n';
+}
+
+int main() {
+    ios_base::sync_with_stdio(false); cin.tie(0); cout.tie(0);
+
+    int T;
+    cin >> T;
+    while (T--) {
+        int n, k;
+        cin >> n >> k;
+        for (int i = 1; i <= n; ++i) {
+            cin >> A[i];
+        }
+        for (int i = 1; i <= n; ++i) {
+            cin >> B[i];
+        }
+        solve(n, k);
+    }
+
+    return 0;
+}

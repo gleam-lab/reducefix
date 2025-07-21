@@ -1,0 +1,60 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+#define endl "\n"
+#define int long long
+
+typedef long long ll;
+typedef pair<int, int> pii;
+
+void solve() {
+    int n, k;
+    cin >> n >> k;
+    vector<int> A(n);
+    for (int i = 0; i < n; ++i) cin >> A[i];
+
+    // We will maintain a sliding window of size (n - K)
+    int windowSize = n - k;
+    int minDiff = numeric_limits<int>::max();
+
+    // Sliding window approach to find the minimum (max - min) over any window of size (n-K)
+    deque<int> maxDeque, minDeque;
+
+    // Fill lambda functions for sliding window
+    auto removeOutofWindow = [&](int i) {
+        if (!maxDeque.empty() && maxDeque.front() == i - windowSize)
+            maxDeque.pop_front();
+        if (!minDeque.empty() && minDeque.front() == i - windowSize)
+            minDeque.pop_front();
+    };
+
+    auto addElement = [&](int i) {
+        while (!maxDeque.empty() && A[maxDeque.back()] <= A[i])
+            maxDeque.pop_back();
+        maxDeque.push_back(i);
+
+        while (!minDeque.empty() && A[minDeque.back()] >= A[i])
+            minDeque.pop_back();
+        minDeque.push_back(i);
+    };
+
+    for (int i = 0; i < n; ++i) {
+        removeOutofWindow(i);
+        addElement(i);
+
+        if (i >= windowSize - 1) {
+            int currentMax = A[maxDeque.front()];
+            int currentMin = A[minDeque.front()];
+            minDiff = min(minDiff, currentMax - currentMin);
+        }
+    }
+
+    cout << minDiff << endl;
+}
+
+signed main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(NULL);
+    solve();
+    return 0;
+}

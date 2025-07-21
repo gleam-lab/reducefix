@@ -1,0 +1,47 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+
+using namespace std;
+
+int main() {
+    int n, q;
+    cin >> n >> q;
+    vector<long long> a(n + 1);
+    for (int i = 0; i < n; i++) {
+        cin >> a[i + 1];
+    }
+    vector<pair<int, int>> queries(q);
+    for (int i = 0; i < q; i++) {
+        int b, k;
+        cin >> b >> k;
+        queries[i] = {b, k};
+    }
+
+    // Sort the queries by b value to process them in increasing order
+    sort(queries.begin(), queries.end());
+
+    // Create a prefix sum array for the distances
+    for (int i = 1; i <= n; i++) {
+        a[i] += a[i - 1];
+    }
+
+    for (auto [b, k] : queries) {
+        // Find the k-th closest point A_i to point B_j
+        int low = 1, high = n;
+        while (low < high) {
+            int mid = (low + high) / 2;
+            // We need to check if the k-th closest point is in the range [mid, mid + 1]
+            // because A_i is uniquely determined if we can confirm the range.
+            if ((a[mid + 1] - a[mid]) >= k) {
+                high = mid;
+            } else {
+                low = mid + 1;
+            }
+        }
+        // The distance d_{k_j}' is the distance between A_i and B_j
+        cout << abs(b - (low)) * (long long)(n + 1) << endl; // multiply by (n + 1) to get the distance in full precision
+    }
+
+    return 0;
+}

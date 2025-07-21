@@ -1,0 +1,86 @@
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+using i64 = long long;
+
+constexpr int N = 2e5 + 10;
+
+void solve() {
+    int n, m; i64 k;
+    cin >> n >> m >> k;
+    if (m == n) {
+        for (int i = 0; i < n; ++i) cout << 0 << " ";
+        cout << "\n";
+        return;
+    }
+
+    vector<i64> A(n);
+    for (auto &x: A) cin >> x;
+
+    vector<i64> sorted_A = A;
+    sort(sorted_A.begin(), sorted_A.end());
+
+    // Compute prefix sums of the top M-1 candidates excluding current candidate
+    vector<i64> suffix_sum(n + 2); // suffix_sum[i] = sum of A[i..n-1]
+    for (int i = n - 1; i >= 0; --i)
+        suffix_sum[i] = suffix_sum[i + 1] + sorted_A[i];
+
+    for (int i = 0; i < n; ++i) {
+        i64 a_i = A[i];
+        int idx = lower_bound(sorted_A.begin(), sorted_A.end(), a_i) - sorted_A.begin();
+        bool found = (idx < n && sorted_A[idx] == a_i);
+        if (!found) {
+            cout << -1 << " ";
+            continue;
+        }
+
+        int l = 0, r = k;
+        int ans = -1;
+        while (l <= r) {
+            int mid = (l + r) / 2;
+            i64 votes_needed = mid;
+            i64 total_votes = a_i + votes_needed;
+
+            // Find how many candidates have more votes than total_votes
+            int pos = upper_bound(sorted_A.begin(), sorted_A.end(), total_votes) - sorted_A.begin();
+            int stronger = n - pos;
+
+            if (stronger < m) {
+                ans = votes_needed;
+                r = mid - 1;
+                continue;
+            }
+
+            // Need to beat exactly (m - stronger - 1) candidates beyond position
+            int need_beat = m - stronger - 1;
+            if (need_beat <= 0) {
+                ans = votes_needed;
+                r = mid - 1;
+                continue;
+            }
+
+            if (pos - need_beat <= 0) {
+                l = mid + 1;
+                continue;
+            }
+
+            i64 sum = suffix_sum[pos - need_beat] - suffix_sum[pos];
+            i64 delta = max<i64>(0, (total_votes + 1) * need_beat - sum);
+            if (delta <= k - votes_needed) {
+                ans = votes_needed;
+                r = mid - 1;
+            } else {
+                l = mid + 1;
+            }
+        }
+
+        cout << (ans == -1 ? -1 : ans) << " ";
+    }
+}
+
+signed main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    solve();
+}
+```

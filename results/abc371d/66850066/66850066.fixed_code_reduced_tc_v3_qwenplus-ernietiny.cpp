@@ -1,0 +1,22 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+
+int main(){
+    int N;
+    cin >> N; // Number of test cases
+    vector<int> X(N+1); // Array to store X values
+    for (int i = 0; i < N; ++i) cin >> X[i]; // Read X values
+
+    // Create a map to store X values as indices and their corresponding indices in P array
+    map<int, int> x_to_index;
+    for (int i = 0; i < N; ++i) x_to_index[X[i]] = i; // Assign indices to X values
+
+    // Calculate P[r] - P[l] and store the result in answer variable
+    int answer = X[N] - P[x_to_index[N]]; // Use the correct index for N
+
+    // Print the answer as required
+    cout << answer << endl;
+
+    return 0;
+}

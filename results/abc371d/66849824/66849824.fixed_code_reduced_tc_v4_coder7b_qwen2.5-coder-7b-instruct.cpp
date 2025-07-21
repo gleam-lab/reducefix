@@ -1,0 +1,36 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+using ll = long long;
+
+#define rep(i, n) for (int i = 0; i < (n); ++i)
+#define all(x) (x).begin(), (x).end()
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int N;
+    cin >> N;
+    vector<ll> X(N), P(N + 1);
+    rep(i, N) cin >> X[i];
+    rep(i, N) {
+        int p;
+        cin >> p;
+        P[i + 1] = P[i] + p;
+    }
+
+    int Q;
+    cin >> Q;
+    while (Q--) {
+        int L, R;
+        cin >> L >> R;
+        auto it1 = lower_bound(all(X), L);
+        auto it2 = upper_bound(all(X), R);
+        int l = distance(X.begin(), it1);
+        int r = distance(X.begin(), it2);
+        cout << P[r] - P[l] << '\n';
+    }
+
+    return 0;
+}

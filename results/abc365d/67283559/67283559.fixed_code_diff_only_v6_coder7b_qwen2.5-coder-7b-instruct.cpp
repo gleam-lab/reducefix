@@ -1,0 +1,78 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    int N;
+    cin >> N;
+    string S;
+    cin >> S;
+    
+    // Initialize variables
+    vector<char> next = {'R', 'P', 'S'};
+    int total = 0;
+    
+    // Iterate through each character in the string S
+    for (int i = 0; i < N; ++i) {
+        int score = 0;
+        char use;
+        
+        // Determine the best move to counter the current move S[i]
+        for (char n : next) {
+            if ((n == 'R' && S[i] == 'S') || 
+                (n == 'P' && S[i] == 'R') || 
+                (n == 'S' && S[i] == 'P')) {
+                score++;
+                use = n;
+                break;
+            }
+        }
+        
+        // If no move can be scored, use the current move
+        if (score == 0) use = S[i];
+        
+        // Update the total score
+        total += score;
+        
+        // Update the next possible moves
+        next.clear();
+        for (char d : {'R', 'P', 'S'}) {
+            if (d != use) next.push_back(d);
+        }
+    }
+    
+    // Reset next for the second part of the calculation
+    next = {'R', 'P', 'S'};
+    int total2 = 0;
+    
+    // Calculate the maximum score using the first move as the base
+    for (int i = 1; i < N; ++i) {
+        int score = 0;
+        char use;
+        
+        // Determine the best move to counter the current move S[i]
+        for (char n : next) {
+            if ((n == 'R' && S[i] == 'S') || 
+                (n == 'P' && S[i] == 'R') || 
+                (n == 'S' && S[i] == 'P')) {
+                score++;
+                use = n;
+                break;
+            }
+        }
+        
+        // If no move can be scored, use the current move
+        if (score == 0) use = S[i];
+        
+        // Update the total score
+        total2 += score;
+        
+        // Update the next possible moves
+        next.clear();
+        for (char d : {'R', 'P', 'S'}) {
+            if (d != use) next.push_back(d);
+        }
+    }
+    
+    // Output the maximum score between total and total2
+    cout << max(total, total2);
+}

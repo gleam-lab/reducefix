@@ -1,0 +1,52 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+typedef long long ll;
+
+void solve() {
+    int N, Q;
+    cin >> N >> Q;
+    
+    vector<ll> A(N);
+    for (int i = 0; i < N; ++i) {
+        cin >> A[i];
+    }
+    sort(A.begin(), A.end());
+    
+    for (int q = 0; q < Q; ++q) {
+        ll b;
+        int k;
+        cin >> b >> k;
+        
+        // Binary search on the k-th smallest distance
+        auto valid = [&](ll dist) {
+            // Count how many A[i] are within [b - dist, b + dist]
+            ll low = b - dist;
+            ll high = b + dist;
+            int l = lower_bound(A.begin(), A.end(), low) - A.begin();
+            int r = upper_bound(A.begin(), A.end(), high) - A.begin();
+            return r - l >= k;
+        };
+        
+        ll left = 0, right = 2e14; // Sufficiently large upper bound
+        while (left < right) {
+            ll mid = (left + right) / 2;
+            if (valid(mid)) {
+                right = mid;
+            } else {
+                left = mid + 1;
+            }
+        }
+        
+        cout << left << "\n";
+    }
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    cout.tie(nullptr);
+    
+    solve();
+    return 0;
+}

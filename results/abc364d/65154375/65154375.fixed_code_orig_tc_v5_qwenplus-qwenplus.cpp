@@ -1,0 +1,73 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+typedef long long ll;
+
+const int MAXN = 1e5 + 5;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+
+    int N, Q;
+    cin >> N >> Q;
+
+    vector<ll> A(N);
+    for (int i = 0; i < N; ++i) {
+        cin >> A[i];
+    }
+
+    // Sort the A array to enable binary search
+    sort(A.begin(), A.end());
+
+    for (int q = 0; q < Q; ++q) {
+        ll b;
+        int k;
+        cin >> b >> k;
+
+        // Binary search for the position where b would be inserted
+        int left = 0, right = N;
+        while (left < right) {
+            int mid = (left + right) / 2;
+            if (A[mid] < b)
+                left = mid + 1;
+            else
+                right = mid;
+        }
+
+        // Now left is the insertion point
+        int l = left - 1, r = left;
+        int count = 0;
+
+        // Use two pointers to find the k-th closest element
+        while (count < k) {
+            if (l >= 0 && r < N) {
+                ll dl = abs(A[l] - b);
+                ll dr = abs(A[r] - b);
+                if (dl <= dr) {
+                    --l;
+                } else {
+                    ++r;
+                }
+            } else if (l >= 0) {
+                --l;
+            } else {
+                ++r;
+            }
+            ++count;
+        }
+
+        // Determine which direction we ended up in
+        if (l >= 0 && r < N) {
+            ll dl = abs(A[l] - b);
+            ll dr = abs(A[r] - b);
+            cout << ((k == 1) ? min(dl, dr) : max(dl, dr)) << '\n';
+        } else if (l >= 0) {
+            cout << abs(A[l] - b) << '\n';
+        } else {
+            cout << abs(A[r] - b) << '\n';
+        }
+    }
+
+    return 0;
+}

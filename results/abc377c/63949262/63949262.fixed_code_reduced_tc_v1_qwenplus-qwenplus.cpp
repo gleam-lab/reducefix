@@ -1,0 +1,56 @@
+#include <iostream>
+#include <unordered_set>
+#include <vector>
+#include <utility>
+#include <cmath>
+
+using namespace std;
+
+// Custom hash for pairs to use in unordered_set
+struct pair_hash {
+    template <class T1, class T2>
+    size_t operator()(const pair<T1, T2>& p) const {
+        auto h1 = hash<T1>{}(p.first);
+        auto h2 = hash<T2>{}(p.second);
+        return h1 ^ (h2 << 16); // Combine hashes
+    }
+};
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    long long N;
+    int M;
+    cin >> N >> M;
+
+    unordered_set<pair<long long, long long>, pair_hash> attacked_positions;
+
+    vector<pair<long long, long long>> knight_moves = {
+        {2, 1}, {1, 2}, {-1, 2}, {-2, 1},
+        {-2, -1}, {-1, -2}, {1, -2}, {2, -1}
+    };
+
+    for (int i = 0; i < M; ++i) {
+        long long a, b;
+        cin >> a >> b;
+
+        // Add the piece itself
+        attacked_positions.insert({a, b});
+
+        // Check all 8 possible attack positions
+        for (auto [dx, dy] : knight_moves) {
+            long long x = a + dx;
+            long long y = b + dy;
+            if (x >= 1 && x <= N && y >= 1 && y <= N) {
+                attacked_positions.insert({x, y});
+            }
+        }
+    }
+
+    // Total cells: N * N
+    // Subtract number of attacked positions
+    cout << (1LL * N * N - attacked_positions.size()) << endl;
+
+    return 0;
+}

@@ -1,0 +1,41 @@
+#include <iostream>
+#include <vector>
+#include <string>
+#include <set>
+
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    long long N, M;
+    cin >> N >> M;
+
+    set<pair<long long, long long>> pieces;
+    for(long long i = 0; i < M; ++i){
+        long long x, y;
+        cin >> x >> y;
+        pieces.insert({x, y});
+    }
+
+    long long count = 0;
+    for(long long i = 1; i <= N; ++i){
+        for(long long j = 1; j <= N; ++j){
+            bool can_place = true;
+            if(i + 2 <= N && j + 1 <= N && pieces.find({i + 2, j + 1}) != pieces.end()) can_place = false;
+            if(i + 1 <= N && j + 2 <= N && pieces.find({i + 1, j + 2}) != pieces.end()) can_place = false;
+            if(i - 1 >= 1 && j + 2 <= N && pieces.find({i - 1, j + 2}) != pieces.end()) can_place = false;
+            if(i - 2 >= 1 && j + 1 <= N && pieces.find({i - 2, j + 1}) != pieces.end()) can_place = false;
+            if(i - 2 >= 1 && j - 1 >= 1 && pieces.find({i - 2, j - 1}) != pieces.end()) can_place = false;
+            if(i - 1 >= 1 && j - 2 >= 1 && pieces.find({i - 1, j - 2}) != pieces.end()) can_place = false;
+            if(i + 1 <= N && j - 2 >= 1 && pieces.find({i + 1, j - 2}) != pieces.end()) can_place = false;
+            if(i + 2 <= N && j - 1 >= 1 && pieces.find({i + 2, j - 1}) != pieces.end()) can_place = false;
+            if(can_place) count++;
+        }
+    }
+
+    cout << count << endl;
+
+    return 0;
+}

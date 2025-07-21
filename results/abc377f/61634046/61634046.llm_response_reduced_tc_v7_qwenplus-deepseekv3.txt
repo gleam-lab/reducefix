@@ -1,0 +1,198 @@
+To fix this code, we need to properly calculate the number of safe squares where a new piece can be placed without being captured by any existing pieces. The issue in the original code arises from incorrect handling of the inclusion-exclusion principle and the bounds when subtracting the unsafe squares. 
+
+### Approaches
+1. **Identify Unsafe Squares**: The existing pieces can capture squares in their row, column, diagonal (i+j), and anti-diagonal (i-j). We need to track all such squares.
+2. **Union of Unsafe Squares**: Combine the squares from all four directions (row, column, diagonal, anti-diagonal) for each existing piece. However, we must ensure that each square is only counted once even if it is covered by multiple criteria.
+3. **Inclusion-Exclusion Principle**: Calculate the total unsafe squares by considering overlaps correctly. This involves:
+   - Summing the squares covered by rows, columns, diagonals, and anti-diagonals.
+   - Subtracting the overlaps between any two criteria.
+   - Adding back the overlaps between three criteria.
+   - Subtracting the overlaps between all four criteria.
+4. **Efficient Calculation**: Given the constraints (N up to 10^9 and M up to 10^3), we need an algorithm that processes each piece in O(1) time per piece, using sets to store unique values for rows, columns, diagonals, and anti-diagonals.
+
+### Solution Code
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    long long N, M;
+    cin >> N >> M;
+    
+    unordered_set<long long> rows, cols, diags, anti_diags;
+    
+    for (long long i = 0; i < M; ++i) {
+        long long a, b;
+        cin >> a >> b;
+        rows.insert(a);
+        cols.insert(b);
+        diags.insert(a - b);
+        anti_diags.insert(a + b);
+    }
+    
+    long long unsafe = 0;
+    
+    // Rows
+    unsafe += N * rows.size();
+    
+    // Columns
+    unsafe += N * cols.size();
+    
+    // Diagonals (a - b = constant)
+    for (const auto &d : diags) {
+        long long min_a = max(1LL, 1 + d);
+        long long max_a = min(N, N + d);
+        if (max_a >= min_a) {
+            unsafe += max_a - min_a + 1;
+        }
+    }
+    
+    // Anti-diagonals (a + b = constant)
+    for (const auto &s : anti_diags) {
+        long long min_a = max(1LL, s - N);
+        long long max_a = min(N, s - 1);
+        if (max_a >= min_a) {
+            unsafe += max_a - min_a + 1;
+        }
+    }
+    
+    // Overlaps: row and column
+    long long row_col = rows.size() * cols.size();
+    unsafe -= row_col;
+    
+    // Overlaps: row and diagonal
+    long long row_diag = 0;
+    for (const auto &r : rows) {
+        for (const auto &d : diags) {
+            long long col = r - d;
+            if (col >= 1 && col <= N) {
+                row_diag++;
+            }
+        }
+    }
+    unsafe -= row_diag;
+    
+    // Overlaps: row and anti-diagonal
+    long long row_anti_diag = 0;
+    for (const auto &r : rows) {
+        for (const auto &s : anti_diags) {
+            long long col = s - r;
+            if (col >= 1 && col <= N) {
+                row_anti_diag++;
+            }
+        }
+    }
+    unsafe -= row_anti_diag;
+    
+    // Overlaps: column and diagonal
+    long long col_diag = 0;
+    for (const auto &c : cols) {
+        for (const auto &d : diags) {
+            long long row = c + d;
+            if (row >= 1 && row <= N) {
+                col_diag++;
+            }
+        }
+    }
+    unsafe -= col_diag;
+    
+    // Overlaps: column and anti-diagonal
+    long long col_anti_diag = 0;
+    for (const auto &c : cols) {
+        for (const auto &s : anti_diags) {
+            long long row = s - c;
+            if (row >= 1 && row <= N) {
+                col_anti_diag++;
+            }
+        }
+    }
+    unsafe -= col_anti_diag;
+    
+    // Overlaps: diagonal and anti-diagonal
+    long long diag_anti_diag = 0;
+    for (const auto &d : diags) {
+        for (const auto &s : anti_diags) {
+            long long row = (s + d) / 2;
+            long long col = (s - d) / 2;
+            if ((s + d) % 2 == 0 && (s - d) % 2 == 0 && row >= 1 && row <= N && col >= 1 && col <= N) {
+                diag_anti_diag++;
+            }
+        }
+    }
+    unsafe -= diag_anti_diag;
+    
+    // Overlaps: row, column, diagonal
+    long long row_col_diag = 0;
+    for (const auto &r : rows) {
+        for (const auto &c : cols) {
+            if (diags.find(r - c) != diags.end()) {
+                row_col_diag++;
+            }
+        }
+    }
+    unsafe += row_col_diag;
+    
+    // Overlaps: row, column, anti-diagonal
+    long long row_col_anti_diag = 0;
+    for (const auto &r : rows) {
+        for (const auto &c : cols) {
+            if (anti_diags.find(r + c) != anti_diags.end()) {
+                row_col_anti_diag++;
+            }
+        }
+    }
+    unsafe += row_col_anti_diag;
+    
+    // Overlaps: row, diagonal, anti-diagonal
+    long long row_diag_anti_diag = 0;
+    for (const auto &r : rows) {
+        for (const auto &d : diags) {
+            long long c = r - d;
+            if (c >= 1 && c <= N && anti_diags.find(r + c) != anti_diags.end()) {
+                row_diag_anti_diag++;
+            }
+        }
+    }
+    unsafe += row_diag_anti_diag;
+    
+    // Overlaps: column, diagonal, anti-diagonal
+    long long col_diag_anti_diag = 0;
+    for (const auto &c : cols) {
+        for (const auto &d : diags) {
+            long long r = c + d;
+            if (r >= 1 && r <= N && anti_diags.find(r + c) != anti_diags.end()) {
+                col_diag_anti_diag++;
+            }
+        }
+    }
+    unsafe += col_diag_anti_diag;
+    
+    // Overlaps: row, column, diagonal, anti-diagonal
+    long long all_four = 0;
+    for (const auto &r : rows) {
+        for (const auto &c : cols) {
+            if (diags.find(r - c) != diags.end() && anti_diags.find(r + c) != anti_diags.end()) {
+                all_four++;
+            }
+        }
+    }
+    unsafe -= all_four;
+    
+    long long total_squares = N * N;
+    long long safe_squares = total_squares - unsafe;
+    
+    cout << safe_squares << endl;
+    
+    return 0;
+}
+```
+
+### Explanation
+1. **Initialization**: We read the grid size `N` and the number of existing pieces `M`. We use unordered sets to store the rows, columns, diagonals (i-j), and anti-diagonals (i+j) that are occupied by existing pieces.
+2. **Total Unsafe Squares Calculation**: 
+   - **Rows and Columns**: For each row and column occupied by a piece, all squares in that row or column are unsafe.
+   - **Diagonals and Anti-diagonals**: For each diagonal (i-j) and anti-diagonal (i+j), the number of unsafe squares is calculated by determining the valid range of rows and columns that lie within the grid.
+3. **Inclusion-Exclusion Principle**: We account for overlaps between different criteria (rows, columns, diagonals, anti-diagonals) to avoid double-counting unsafe squares. This involves adding and subtracting overlaps in a systematic manner.
+4. **Safe Squares Calculation**: Subtract the total unsafe squares from the total grid squares (N²) to get the number of safe squares where a new piece can be placed.
+
+This approach ensures that all criteria are efficiently checked and overlaps are correctly handled, providing the correct count of safe squares.

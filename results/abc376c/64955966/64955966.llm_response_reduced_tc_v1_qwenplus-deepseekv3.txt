@@ -1,0 +1,144 @@
+To solve this problem, we need to determine the smallest possible size \( x \) of an additional box that Takahashi can purchase such that all \( N \) toys can be placed into \( N \) boxes (the original \( N-1 \) boxes plus the new one) with each toy in a separate box of size not less than the toy's size. 
+
+### Approach
+1. **Sort Arrays**: First, sort the array of toy sizes \( A \) in descending order and the array of box sizes \( B \) in descending order. This allows us to efficiently match the largest toys to the largest boxes.
+2. **Greedy Matching**: Attempt to match each toy to a box. The largest toy should ideally go into the largest box. If a toy cannot fit into any of the remaining boxes (after considering the boxes already matched to larger toys), then we need to use the new box \( x \).
+3. **Determine Minimum \( x \)**: The smallest \( x \) required will be the size of the largest toy that cannot fit into any of the original boxes. However, we must ensure that all other toys can fit into the remaining boxes (including the new box) without conflict.
+
+### Solution Code
+```cpp
+#include<bits/stdc++.h>
+using namespace std;
+
+void solve() {
+    int N;
+    cin >> N;
+    vector<int> A(N), B(N-1);
+    for (int i = 0; i < N; ++i) cin >> A[i];
+    for (int i = 0; i < N-1; ++i) cin >> B[i];
+    
+    sort(A.begin(), A.end(), greater<int>());
+    sort(B.begin(), B.end(), greater<int>());
+    
+    int i = 0, j = 0;
+    vector<bool> used(N-1, false);
+    int required_x = -1;
+    
+    while (i < N && j < N-1) {
+        if (A[i] <= B[j]) {
+            used[j] = true;
+            i++;
+            j++;
+        } else {
+            if (required_x == -1) {
+                required_x = A[i];
+                i++;
+            } else {
+                cout << -1 << endl;
+                return;
+            }
+        }
+    }
+    
+    if (i < N) {
+        if (required_x == -1) {
+            required_x = A.back();
+        } else {
+            cout << -1 << endl;
+            return;
+        }
+    }
+    
+    // Now, check if the remaining boxes can accommodate the remaining toys without x
+    // But we have to use the new box x for one toy
+    // So, the minimal x is the minimal possible among unmatched toys
+    // But during the initial pass, we might have more than one toy left
+    
+    // So we need to find all toys that couldn't be matched and find the smallest x that covers the largest of them.
+    // Alternatively, re-check with x included
+    
+    // The correct approach is to find the minimal x such that:
+    // x is >= the largest remaining toy (which is the first one that couldn't be matched)
+    // and all other toys can be matched to the remaining boxes (including the boxes left after the initial matching)
+    
+    // So the required_x is the largest toy that couldn't be matched in the first pass
+    
+    // But we need to ensure that all other toys can fit in the boxes not used in the first pass plus x
+    
+    // So, collect all toys that couldn't be matched in the first pass and find the minimal x (max among them)
+    // Then, collect all boxes not used in the first pass and see if the remaining toys (excluding the one assigned to x) can fit into them
+    
+    // Find the unused boxes
+    vector<int> unused_boxes;
+    for (int k = 0; k < N-1; ++k) {
+        if (!used[k]) unused_boxes.push_back(B[k]);
+    }
+    sort(unused_boxes.begin(), unused_boxes.end(), greater<int>());
+    
+    // The remaining toys are those after position i (if any)
+    // Alternatively, during the first pass, we tried to match as many as possible
+    // So the remaining toys are those that couldn't be matched, which would be N - (i) toys
+    
+    // So, if required_x is set, then in the first pass, i can be up to N-1, but if another toy is left, it needs to fit in x
+    
+    if (required_x != -1) {
+        // The new box is used for required_x
+        // Now, check if the remaining toys (if any) can fit into the unused boxes
+        // The remaining toys are those in A from i to N-1 (since i is the first unmatched)
+        // But in the first loop, i is the first toy that couldn't be matched
+        
+        // The remaining toys are all toys after the first unmatched (including the first unmatched)
+        // So, the number of remaining toys is (N - i)
+        // But we are using one box (x) for one toy (required_x), so the remaining toys are (N - i - 1)
+        // These must fit into the unused boxes
+        
+        int remaining_toys_start = i;
+        
+        // The unused boxes are those not marked in 'used'
+        if (unused_boxes.size() < (N - remaining_toys_start - 1)) {
+            cout << -1 << endl;
+            return;
+        }
+        
+        // Check if the remaining toys can fit into the unused boxes
+        sort(A.begin() + remaining_toys_start + 1, A.end(), greater<int>());
+        bool possible = true;
+        for (int k = 0, t = remaining_toys_start + 1; t < N && k < unused_boxes.size(); ++k, ++t) {
+            if (A[t] > unused_boxes[k]) {
+                possible = false;
+                break;
+            }
+        }
+        if (!possible) {
+            cout << -1 << endl;
+            return;
+        }
+        
+        cout << required_x << endl;
+    } else {
+        // All toys were matched, but we have one box extra (the new x)
+        // So, the minimal x is 1 (or the minimal possible)
+        // But x can be any positive integer, but since no toys are left to be placed in x, x can be 1 (but the problem says to store all toys)
+        // Wait, no: we have N toys and N boxes (N-1 original + 1 new). So if all toys are placed in original boxes, then x can be any, but the problem says to place all toys in boxes (including the new one)
+        // So, this scenario is impossible if all toys are matched to original boxes. Hence, output -1.
+        cout << -1 << endl;
+    }
+}
+
+int main() {
+    ios::sync_with_stdio(0);
+    cin.tie(0);
+    
+    solve();
+    
+    return 0;
+}
+```
+
+### Explanation
+1. **Sorting**: The toys and boxes are sorted in descending order to facilitate a greedy matching approach.
+2. **Greedy Matching**: We attempt to match each toy to the largest available box. If a toy cannot fit into any remaining box, it is assigned to the new box \( x \), which must be at least as large as the toy.
+3. **Validation**: After identifying the necessary \( x \), we check if the remaining toys (those not matched in the initial pass) can fit into the remaining boxes (those not used in the initial pass). If not, the solution is impossible.
+4. **Output**: The smallest valid \( x \) is printed if found; otherwise, \(-1\) is printed indicating no solution exists without purchasing a new box of appropriate size.
+
+This approach efficiently checks for the feasibility of placing all toys into boxes while minimizing the size of the newly purchased box.

@@ -1,0 +1,70 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+
+constexpr int d[4][2] = {{0, 1}, {0, -1}, {1, 0}, {-1, 0}};
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int H, W, Y;
+    cin >> H >> W >> Y;
+
+    vector<vector<int>> A(H, vector<int>(W));
+    for (int i = 0; i < H; ++i) {
+        for (int j = 0; j < W; ++j) {
+            cin >> A[i][j];
+        }
+    }
+
+    // Priority queue to simulate rising sea level
+    priority_queue<tuple<int, int, int>, vector<tuple<int, int, int>>, greater<>> pq;
+    vector<vector<bool>> vis(H, vector<bool>(W, false));
+
+    // Initialize the border cells as visited and add to queue
+    for (int i = 0; i < H; ++i) {
+        for (int j = 0; j < W; ++j) {
+            if (i == 0 || i == H - 1 || j == 0 || j == W - 1) {
+                pq.emplace(A[i][j], i, j);
+                vis[i][j] = true;
+            }
+        }
+    }
+
+    int remaining = H * W;
+    vector<int> result(Y + 1); // Store results for each year
+    iota(result.begin(), result.end(), 0); // Initially assume all years have full area
+
+    // Process the priority queue
+    while (!pq.empty()) {
+        auto [h, x, y] = pq.top();
+        pq.pop();
+
+        if (h > Y) continue; // No need to process beyond Y years
+
+        // This cell gets submerged at year h
+        // So it affects the answer for year h and all later years
+        if (remaining > 0) {
+            for (int year = h; year <= Y; ++year) {
+                result[year]--;
+            }
+        }
+
+        // Explore neighbors
+        for (auto [dx, dy] : d) {
+            int nx = x + dx, ny = y + dy;
+            if (nx >= 0 && nx < H && ny >= 0 && ny < W && !vis[nx][ny]) {
+                vis[nx][ny] = true;
+                pq.emplace(A[nx][ny], nx, ny);
+            }
+        }
+    }
+
+    // Output the results
+    for (int i = 1; i <= Y; ++i) {
+        cout << result[i] << "\n";
+    }
+
+    return 0;
+}

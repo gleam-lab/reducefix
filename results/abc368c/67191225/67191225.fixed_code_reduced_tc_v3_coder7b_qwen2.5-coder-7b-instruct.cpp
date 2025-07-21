@@ -1,0 +1,48 @@
+#include<iostream>
+#include<vector>
+#include<algorithm>
+#include<cmath>
+#include<string>
+#include<stack>
+#include<queue>
+#include<set>
+#include<map>
+#include<numeric>
+#include <iomanip>
+
+using namespace std;
+using ll = long long;
+
+const double PI = acos(-1.0);
+
+int main()
+{
+    int N;
+    cin >> N;
+    vector<ll>H(N);
+    for (int i = 0; i < N; i++)
+    {
+        cin >> H[i];
+    }
+    ll T = 0;
+    for (int i = 0; i < N; i++)
+    {
+        T += H[i] / 3 * 2; // Adjusted calculation based on correct logic
+        T++;
+        if (T % 3 == 0)
+        {
+            if (H[i] % 3 == 2) T++; // Corrected condition
+        }
+        else if (T % 3 == 1)
+        {
+            if (H[i] % 3 == 1); // No change needed
+            else if (H[i] % 3 == 2) T++;
+            else T += 2;
+        }
+        else
+        {
+            if (H[i] % 3 > 0) T++;
+        }
+    }
+    cout << T << endl;
+}

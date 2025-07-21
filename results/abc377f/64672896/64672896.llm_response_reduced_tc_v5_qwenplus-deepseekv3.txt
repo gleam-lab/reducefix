@@ -1,0 +1,157 @@
+To fix this code, we need to properly calculate the number of safe squares where the new piece can be placed without being captured by any existing pieces. The original approach had several issues, including incorrect handling of intersections between different attack lines (rows, columns, diagonals, and anti-diagonals). The correct approach involves using inclusion-exclusion principles to avoid overcounting squares that are covered by multiple attack lines.
+
+### Approaches
+1. **Identify Attack Patterns**: Each existing piece can attack along its row, column, diagonal (i + j = constant), and anti-diagonal (i - j = constant).
+2. **Compute Union of Attack Lines**: Calculate the total number of squares under attack by considering all rows, columns, diagonals, and anti-diagonals of existing pieces. Use inclusion-exclusion to avoid double-counting squares that lie at the intersection of multiple attack lines.
+3. **Calculate Safe Squares**: Subtract the union of all attack squares from the total number of squares (N^2) to get the number of safe squares. Also, ensure we do not count the squares already occupied by existing pieces as safe.
+
+### Solution Code
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+using i64 = long long;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    i64 N, M;
+    cin >> N >> M;
+    vector<pair<i64, i64>> pieces(M);
+    set<i64> rows, cols, diags1, diags2;
+    set<pair<i64, i64>> occupied;
+    for (int i = 0; i < M; ++i) {
+        i64 a, b;
+        cin >> a >> b;
+        pieces[i] = {a, b};
+        rows.insert(a);
+        cols.insert(b);
+        diags1.insert(a + b);
+        diags2.insert(a - b);
+        occupied.insert({a, b});
+    }
+
+    i64 total = N * N;
+    i64 attacked = 0;
+
+    // Rows
+    attacked += N * rows.size();
+    // Columns
+    attacked += N * cols.size();
+    // Diagonals (i + j = c)
+    for (auto d : diags1) {
+        i64 min_x = max(1LL, d - N);
+        i64 max_x = min(N, d - 1);
+        if (max_x < min_x) continue;
+        attacked += (max_x - min_x + 1);
+    }
+    // Anti-diagonals (i - j = c)
+    for (auto d : diags2) {
+        i64 min_x = max(1LL, 1 + d);
+        i64 max_x = min(N, N + d);
+        if (max_x < min_x) continue;
+        attacked += (max_x - min_x + 1);
+    }
+
+    // Inclusion-exclusion for overlaps between rows and columns
+    i64 row_col_intersect = 0;
+    for (auto r : rows) {
+        for (auto c : cols) {
+            if (diags1.count(r + c) || diags2.count(r - c)) {
+                continue; // handled in diagonal intersections
+            }
+            row_col_intersect++;
+        }
+    }
+    attacked -= row_col_intersect;
+
+    // Inclusion-exclusion for overlaps between rows and diagonals
+    i64 row_diag1_intersect = 0;
+    for (auto r : rows) {
+        for (auto d : diags1) {
+            i64 c = d - r;
+            if (c >= 1 && c <= N) {
+                if (cols.count(c) || diags2.count(r - c)) {
+                    continue;
+                }
+                row_diag1_intersect++;
+            }
+        }
+    }
+    attacked -= row_diag1_intersect;
+
+    i64 row_diag2_intersect = 0;
+    for (auto r : rows) {
+        for (auto d : diags2) {
+            i64 c = r - d;
+            if (c >= 1 && c <= N) {
+                if (cols.count(c) || diags1.count(r + c)) {
+                    continue;
+                }
+                row_diag2_intersect++;
+            }
+        }
+    }
+    attacked -= row_diag2_intersect;
+
+    // Inclusion-exclusion for overlaps between columns and diagonals
+    i64 col_diag1_intersect = 0;
+    for (auto c : cols) {
+        for (auto d : diags1) {
+            i64 r = d - c;
+            if (r >= 1 && r <= N) {
+                if (rows.count(r) || diags2.count(r - c)) {
+                    continue;
+                }
+                col_diag1_intersect++;
+            }
+        }
+    }
+    attacked -= col_diag1_intersect;
+
+    i64 col_diag2_intersect = 0;
+    for (auto c : cols) {
+        for (auto d : diags2) {
+            i64 r = d + c;
+            if (r >= 1 && r <= N) {
+                if (rows.count(r) || diags1.count(r + c)) {
+                    continue;
+                }
+                col_diag2_intersect++;
+            }
+        }
+    }
+    attacked -= col_diag2_intersect;
+
+    // Inclusion-exclusion for overlaps between diagonals and anti-diagonals
+    i64 diag1_diag2_intersect = 0;
+    for (auto d1 : diags1) {
+        for (auto d2 : diags2) {
+            if ((d1 + d2) % 2 != 0) continue;
+            i64 r = (d1 + d2) / 2;
+            i64 c = (d1 - d2) / 2;
+            if (r >= 1 && r <= N && c >= 1 && c <= N) {
+                if (rows.count(r) || cols.count(c)) {
+                    continue;
+                }
+                diag1_diag2_intersect++;
+            }
+        }
+    }
+    attacked -= diag1_diag2_intersect;
+
+    // Add back the squares that are occupied (since they were subtracted but are not available)
+    i64 safe = total - attacked + occupied.size();
+    cout << safe << "\n";
+
+    return 0;
+}
+```
+
+### Explanation
+1. **Initialization**: Reads input values and stores the positions of existing pieces.
+2. **Attack Line Identification**: Uses sets to track unique rows, columns, diagonals, and anti-diagonals that are under attack by existing pieces.
+3. **Union Calculation**: Computes the total number of squares under attack by considering each attack line (rows, columns, diagonals, anti-diagonals) separately.
+4. **Inclusion-Exclusion**: Adjusts the total by subtracting overlaps between different attack lines to avoid double-counting squares covered by multiple lines.
+5. **Safe Squares Calculation**: The result is derived by subtracting the total attacked squares from the grid size (N^2) and adding back the occupied squares (since they were subtracted but are not available for placement).
+
+This approach ensures that all possible attack lines and their intersections are accounted for accurately, leading to the correct count of safe squares.

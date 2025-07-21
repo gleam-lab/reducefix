@@ -1,0 +1,55 @@
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+
+int N, M;
+ll K;
+
+struct Node {
+  ll val;
+  int idx;
+};
+
+int main() {
+  cin >> N >> M >> K;
+
+  vector<Node> a(N + 5);
+
+  for (int i = 1; i <= N; ++i) {
+    cin >> a[i].val;
+    a[i].idx = i;
+  }
+
+  auto cmp = [](const auto &A, const auto &B)->bool {
+    return A.val < B.val;
+  };
+
+  sort(a.begin() + 1, a.begin() + N + 1, cmp) ;
+
+  vector<ll> pre(N + 5);
+  pre[0] = 0LL;
+  for (int i = 1; i <= N; ++i) {
+    pre[i] = pre[i - 1] + a[i].val;
+  }
+
+  K -= pre[N];
+
+  vector<ll> ans(N + 5, -1);
+  for (int i = 1; i <= N; ++i) {
+    ll cur = a[i].val + K;
+    int idx = lower_bound(a.begin() + i + 1, a.begin() + N + 1, (Node) {cur, 0}, cmp) - a.begin();
+    int cnt = (N - idx + 1);
+    if (cnt >= M) {
+      ans[i] = 0;
+      continue;
+    }
+    ll add = (M - cnt) * (a[idx].val - a[i].val) - (K - pre[idx - 1] + pre[i - 1]);
+    if (add > 0) ans[i] = add;
+  }
+
+  for (int i = 1; i <= N; ++i) {
+    cout << ans[i] << ' ';
+  }
+
+  return 0;
+}

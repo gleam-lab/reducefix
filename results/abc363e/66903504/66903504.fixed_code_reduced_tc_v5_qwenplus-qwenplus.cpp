@@ -1,0 +1,83 @@
+#include <bits/stdc++.h>
+using namespace std;
+using atcoder::min_priority_queue;
+
+typedef long long ll;
+typedef pair<int, int> pii;
+
+const int INF = 1e9 + 7;
+
+int H, W, Y;
+vector<vector<int>> A;
+vector<vector<bool>> visited;
+
+// Directions: up, right, down, left
+int dx[4] = {-1, 0, 1, 0};
+int dy[4] = {0, 1, 0, -1};
+
+// Check if cell is on border
+bool isBorder(int x, int y) {
+    return (x == 0 || x == H-1 || y == 0 || y == W-1);
+}
+
+int main() {
+    cin.tie(0)->sync_with_stdio(0);
+
+    cin >> H >> W >> Y;
+    A.assign(H, vector<int>(W));
+    visited.assign(H, vector<bool>(W, false));
+
+    for (int i = 0; i < H; ++i)
+        for (int j = 0; j < W; ++j)
+            cin >> A[i][j];
+
+    // Priority queue to process cells in increasing order of elevation
+    min_priority_queue<tuple<int, int, int>> pq;
+
+    // Initialize queue with border cells
+    for (int i = 0; i < H; ++i) {
+        for (int j = 0; j < W; ++j) {
+            if (isBorder(i, j)) {
+                pq.emplace(A[i][j], i, j);
+                visited[i][j] = true;
+            }
+        }
+    }
+
+    vector<int> result(Y + 2, H * W);  // Store remaining area for each year
+    int count = H * W;
+
+    while (!pq.empty()) {
+        int h, x, y;
+        tie(h, x, y) = pq.top();
+        pq.pop();
+
+        // If this cell would be submerged this or earlier year
+        int year = h;
+        if (year <= Y) {
+            count--;
+            result[year] = min(result[year], count);
+        }
+
+        for (int dir = 0; dir < 4; ++dir) {
+            int nx = x + dx[dir];
+            int ny = y + dy[dir];
+
+            if (nx >= 0 && nx < H && ny >= 0 && ny < W && !visited[nx][ny]) {
+                visited[nx][ny] = true;
+                pq.emplace(max(h, A[nx][ny]), nx, ny);
+            }
+        }
+    }
+
+    // Propagate results backward to fill in intermediate years
+    for (int y = Y - 1; y >= 1; --y) {
+        if (result[y] > result[y + 1])
+            result[y] = result[y + 1];
+    }
+
+    for (int y = 1; y <= Y; ++y)
+        cout << result[y] << "\n";
+
+    return 0;
+}

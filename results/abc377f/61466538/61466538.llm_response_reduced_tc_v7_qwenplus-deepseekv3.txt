@@ -1,0 +1,139 @@
+To fix this code, we need to accurately calculate the number of safe squares where a new piece can be placed without being captured by any existing pieces. The existing code attempts to count the unsafe squares by considering rows, columns, and diagonals (both types) but has some issues in the calculation, particularly in handling the intersections of these sets.
+
+### Approaches
+1. **Rows and Columns**: Any square in the same row or column as an existing piece is unsafe. The total unsafe squares from rows and columns is `(number of distinct rows) * N + (number of distinct columns) * N - (number of distinct row-column pairs)` to avoid double-counting the squares where both row and column are captured.
+2. **Diagonals (i + j = constant and i - j = constant)**:
+   - For each diagonal of type `i + j = d`, the number of squares is `min(d - 1, 2*N - d + 1)`.
+   - For each diagonal of type `i - j = d`, the number of squares is `N - abs(d)`.
+   - We need to subtract the squares covered by these diagonals but add back the intersections that were subtracted multiple times (e.g., squares captured by both a row and a diagonal).
+
+### Solution Code
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+typedef long long ll;
+typedef pair<ll, ll> pll;
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(NULL);
+
+    ll N, M;
+    cin >> N >> M;
+    vector<pll> queens(M);
+    for (int i = 0; i < M; ++i) {
+        cin >> queens[i].first >> queens[i].second;
+    }
+
+    unordered_set<ll> rows, cols, diag1, diag2;
+    for (auto &q : queens) {
+        ll i = q.first;
+        ll j = q.second;
+        rows.insert(i);
+        cols.insert(j);
+        diag1.insert(i - j);
+        diag2.insert(i + j);
+    }
+
+    ll unsafe = 0;
+
+    // Rows and columns
+    unsafe += rows.size() * N;
+    unsafe += cols.size() * N;
+    unsafe -= rows.size() * cols.size();
+
+    // Diagonals i-j = d
+    for (ll d : diag1) {
+        ll cnt = N - abs(d);
+        unsafe += cnt;
+    }
+
+    // Diagonals i+j = d
+    for (ll d : diag2) {
+        ll cnt;
+        if (d <= N + 1) {
+            cnt = d - 1;
+        } else {
+            cnt = 2 * N - d + 1;
+        }
+        unsafe += cnt;
+    }
+
+    // Subtract intersections between rows/columns and diagonals
+    // Also subtract intersections between diagonals
+    set<pll> intersections;
+
+    // Intersections between rows and diag1 (i-j = d)
+    for (ll r : rows) {
+        for (ll d : diag1) {
+            ll j = r - d;
+            if (1 <= j && j <= N) {
+                intersections.insert({r, j});
+            }
+        }
+    }
+
+    // Intersections between columns and diag1 (i-j = d)
+    for (ll c : cols) {
+        for (ll d : diag1) {
+            ll i = c + d;
+            if (1 <= i && i <= N) {
+                intersections.insert({i, c});
+            }
+        }
+    }
+
+    // Intersections between rows and diag2 (i+j = d)
+    for (ll r : rows) {
+        for (ll d : diag2) {
+            ll j = d - r;
+            if (1 <= j && j <= N) {
+                intersections.insert({r, j});
+            }
+        }
+    }
+
+    // Intersections between columns and diag2 (i+j = d)
+    for (ll c : cols) {
+        for (ll d : diag2) {
+            ll i = d - c;
+            if (1 <= i && i <= N) {
+                intersections.insert({i, c});
+            }
+        }
+    }
+
+    // Intersections between diag1 and diag2
+    for (ll d1 : diag1) {
+        for (ll d2 : diag2) {
+            ll i = (d1 + d2) / 2;
+            ll j = (d2 - d1) / 2;
+            if ((d1 + d2) % 2 == 0 && (d2 - d1) % 2 == 0) {
+                if (1 <= i && i <= N && 1 <= j && j <= N) {
+                    intersections.insert({i, j});
+                }
+            }
+        }
+    }
+
+    unsafe -= intersections.size();
+
+    // Total safe squares
+    ll total = N * N - unsafe - M; // Subtract M for the squares already occupied by queens
+    cout << total << '\n';
+
+    return 0;
+}
+```
+
+### Explanation
+1. **Initial Setup**: We read the grid size `N` and the number of queens `M`, followed by their positions.
+2. **Tracking Rows, Columns, and Diagonals**: We use sets to store distinct rows, columns, and the two types of diagonals (`i-j` and `i+j`).
+3. **Calculating Unsafe Squares**:
+   - **Rows and Columns**: The unsafe squares from rows and columns are calculated, adjusting for overlaps.
+   - **Diagonals**: For each diagonal type, we calculate the number of squares they cover.
+4. **Handling Intersections**: We account for intersections between rows, columns, and diagonals to avoid multiple counts of the same square.
+5. **Final Calculation**: The total safe squares are computed by subtracting the unsafe squares and the squares already occupied by queens from the total grid squares.
+
+This approach ensures that all possible unsafe squares are accurately counted, and their intersections are properly handled to avoid overcounting, leading to the correct number of safe squares for placing the new piece.

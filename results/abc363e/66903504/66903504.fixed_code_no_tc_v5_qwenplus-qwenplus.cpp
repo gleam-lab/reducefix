@@ -1,0 +1,67 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+#define rep(i, n) for (int i = 0; i < (int)(n); ++i)
+#define all(a) a.begin(), a.end()
+#define pb push_back
+
+using ll = long long;
+const int INF = 1 << 30;
+
+int dx[4] = {1, -1, 0, 0};
+int dy[4] = {0, 0, 1, -1};
+
+int main() {
+    cin.tie(0);
+    ios::sync_with_stdio(false);
+
+    int H, W, Y;
+    cin >> H >> W >> Y;
+    vector<vector<int>> A(H, vector<int>(W));
+    rep(i, H) rep(j, W) cin >> A[i][j];
+
+    // Mark cells that are currently land
+    vector<vector<bool>> is_land(H, vector<bool>(W, true));
+
+    // Queue for each height
+    vector<queue<pair<int, int>>> Q(Y + 2);  // up to Y+1
+
+    // Initialize: mark border cells and add them to queue if they sink in year A[i][j]
+    rep(i, H) rep(j, W) {
+        if (i == 0 || i == H - 1 || j == 0 || j == W - 1) {
+            if (A[i][j] <= Y) {
+                Q[A[i][j]].push({i, j});
+            }
+            is_land[i][j] = false;
+        }
+    }
+
+    int remaining = H * W - 2 * H - 2 * W + 4;  // subtract border count
+
+    // Process year by year
+    for (int y = 1; y <= Y; ++y) {
+        queue<pair<int, int>> q = Q[y];
+        Q[y] = queue<pair<int, int>>();  // clear current queue
+
+        while (!q.empty()) {
+            auto [x, y_pos] = q.front();
+            q.pop();
+
+            rep(k, 4) {
+                int nx = x + dx[k];
+                int ny = y_pos + dy[k];
+                if (nx >= 0 && nx < H && ny >= 0 && ny < W && is_land[nx][ny]) {
+                    is_land[nx][ny] = false;
+                    remaining--;
+                    if (A[nx][ny] <= Y) {
+                        Q[A[nx][ny]].push({nx, ny});
+                    }
+                }
+            }
+        }
+
+        cout << remaining + 2 * H + 2 * W - 4 << endl;
+    }
+
+    return 0;
+}

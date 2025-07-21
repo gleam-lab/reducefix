@@ -1,0 +1,67 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define int long long
+
+const int N = 200010;
+int a[N], b[N];
+int sa[N];
+int ans[200010];
+
+struct Pair {
+    int max_a, sum_b;
+    Pair(int ma, int sb) : max_a(ma), sum_b(sb) {}
+};
+
+struct Compare {
+    bool operator()(Pair& l, Pair& r) {
+        return l.max_a * l.sum_b > r.max_a * r.sum_b;
+    }
+};
+
+int main() {
+    ios_base::sync_with_stdio(0);
+    cin.tie(0);
+    int t;
+    cin >> t;
+
+    for (int cs = 1; cs <= t; cs++) {
+        int n, k;
+        cin >> n >> k;
+
+        for (int i = 1; i <= n; i++) cin >> a[i];
+        for (int i = 1; i <= n; i++) cin >> b[i];
+
+        for (int i = 1; i <= n; i++) {
+            sa[i] = Pair(a[i], b[i]);
+        }
+
+        sort(sa + 1, sa + 1 + n, [](const Pair& l, const Pair& r) {
+            return l.max_a * l.sum_b < r.max_a * r.sum_b;
+        });
+
+        long long res = LLONG_MAX;
+        long long sum = 0, s = 0;
+        priority_queue<int> q;
+        for (int i = 1; i <= k; i++) {
+            sum += sa[i].sum_b;
+            q.push(sa[i].sum_b);
+        }
+
+        for (int i = k + 1; i <= n; i++) {
+            sum += sa[i].sum_b;
+            q.push(sa[i].sum_b);
+            res = min(res, sa[i].max_a * sum);
+            s += q.top();
+            sum -= q.top();
+            q.pop();
+        }
+
+        ans[cs] = res;
+    }
+
+    for (int i = 1; i <= t; i++) {
+        cout << ans[i] << endl;
+    }
+
+    return 0;
+}

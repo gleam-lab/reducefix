@@ -1,0 +1,45 @@
+#include <iostream>
+#include <deque>
+#include <algorithm>
+using namespace std;
+
+int main() {
+    int n, k;
+    cin >> n >> k;
+    deque<int> dq;
+    
+    // Create a deque with all elements to keep track of the sequence
+    for (int i = 0; i < n; i++) {
+        int a;
+        cin >> a;
+        dq.push_back(a);
+    }
+    
+    // Sort the deque to easily find min and max
+    sort(dq.begin(), dq.end());
+    
+    // If we remove k elements, we will be left with n-k elements
+    int remaining_elements = n - k;
+    
+    // Calculate the minimum possible value of the max of B minus the min of B
+    // We should remove elements from both ends to minimize the range
+    int left = dq[0]; // Minimum element after removal
+    int right = dq[remaining_elements - 1]; // Maximum element after removal
+    
+    // Find the position where we will split the remaining elements
+    // We are trying to maximize the range by minimizing the difference between
+    // the largest element in the left part and the smallest element in the right part
+    int maximum_range = 0;
+    for (int i = 1; i <= k; i++) {
+        maximum_range = max(maximum_range, dq[i + remaining_elements - 1] - dq[0]);
+    }
+    
+    // Calculate the answer by subtracting the maximum of the remaining elements
+    // from the minimum of the remaining elements
+    int ans = right - left;
+    
+    // The answer is the minimum of the calculated range and the maximum possible range
+    cout << min(ans, maximum_range) << endl;
+    
+    return 0;
+}

@@ -1,0 +1,54 @@
+#include "bits/stdc++.h"
+using namespace std;
+
+#define ff first
+#define ss second
+#define ll long long
+#define pb push_back
+#define mp make_pair
+#define all(x) x.begin(),x.end()
+#define rall(x) x.rbegin(),x.rend()
+#define sz(x) ((long long)x.size())
+#define mem(a,b) memset(a,b,sizeof(a))
+#define vi vector<int>
+#define vb vector<bool>
+#define vvi vector<vector<int>>
+#define pii pair<int,int>
+#define pll pair<ll,ll>
+
+const int N = 2e5 + 5;
+vvi adj(N);
+priority_queue<int,vector<int>,greater<int>> pq[N];
+
+void add_edge(int u,int v){
+    adj[u].pb(v);
+    adj[v].pb(u);
+    pq[u].push(v);
+    pq[v].push(u);
+}
+
+int get_kth_largest(int u,int k){
+    while(!pq[u].empty()){
+        if(sz(pq[u])<k)return -1;
+        pq[u].pop();
+    }
+    return pq[u].top();
+}
+
+int main(){
+    ios_base::sync_with_stdio(0);cin.tie(0);cout.tie(0);
+    int n,q;
+    cin>>n>>q;
+    while(q--){
+        int type,u,v,k;
+        cin>>type;
+        if(type==1){
+            cin>>u>>v;
+            add_edge(u,v);
+        }else{
+            cin>>u>>k;
+            cout<<get_kth_largest(u,k)<<'\n';
+        }
+    }
+    return 0;
+}

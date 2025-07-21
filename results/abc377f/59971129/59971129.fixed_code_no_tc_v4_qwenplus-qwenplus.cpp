@@ -1,0 +1,71 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+typedef long long ll;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+
+    ll N, M;
+    cin >> N >> M;
+
+    set<ll> rows, cols;
+    set<ll> diag1, diag2; // diag1: i-j, diag2: i+j
+
+    for (ll i = 0; i < M; ++i) {
+        ll a, b;
+        cin >> a >> b;
+        rows.insert(a);
+        cols.insert(b);
+        diag1.insert(a - b);
+        diag2.insert(a + b);
+    }
+
+    // Total empty squares = total squares - occupied squares
+    ll total_empty = N * N - M;
+
+    // All squares under attack
+    set<pair<ll, ll>> attacked;
+
+    // Add all squares in the same row and column
+    for (ll r : rows) {
+        for (ll j = 1; j <= N; ++j) {
+            attacked.insert({r, j});
+        }
+    }
+
+    for (ll c : cols) {
+        for (ll i = 1; i <= N; ++i) {
+            if (!attacked.count({i, c})) {
+                attacked.insert({i, c});
+            }
+        }
+    }
+
+    // Add all squares on diagonals i-j = d
+    for (ll d : diag1) {
+        for (ll i = max(1LL, d + 1); i <= min(N, N + d); ++i) {
+            ll j = i - d;
+            if (j >= 1 && j <= N && !attacked.count({i, j})) {
+                attacked.insert({i, j});
+            }
+        }
+    }
+
+    // Add all squares on diagonals i+j = s
+    for (ll s : diag2) {
+        for (ll i = max(1LL, s - N); i <= min(N, s - 1); ++i) {
+            ll j = s - i;
+            if (j >= 1 && j <= N && !attacked.count({i, j})) {
+                attacked.insert({i, j});
+            }
+        }
+    }
+
+    // Subtract number of attacked empty squares
+    ll result = total_empty - attacked.size();
+    cout << result << endl;
+
+    return 0;
+}

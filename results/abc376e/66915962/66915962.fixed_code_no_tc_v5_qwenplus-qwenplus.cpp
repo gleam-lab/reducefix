@@ -1,0 +1,64 @@
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+using P = pair<int, int>;
+
+constexpr ll LINF = 1001001001001001001ll;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int T;
+    cin >> T;
+
+    while (T--) {
+        int N, K;
+        cin >> N >> K;
+        vector<P> pairs(N);
+        for (int i = 0; i < N; ++i) {
+            cin >> pairs[i].first;
+        }
+        for (int i = 0; i < N; ++i) {
+            cin >> pairs[i].second;
+        }
+
+        // Sort by A_i in ascending order
+        sort(pairs.begin(), pairs.end());
+
+        multiset<ll> selected_B;
+        ll sumB = 0;
+
+        // Initialize with first K elements
+        for (int i = 0; i < K; ++i) {
+            selected_B.insert(pairs[i].second);
+            sumB += pairs[i].second;
+        }
+
+        ll ans = (ll)pairs[K - 1].first * sumB;
+
+        // Try each possible max A_i from position K onward
+        for (int i = K; i < N; ++i) {
+            // Current A_i is pairs[i].first
+            ll current_A = pairs[i].first;
+            ll current_B = pairs[i].second;
+
+            // Find the largest B currently in the set
+            ll max_B_in_set = *prev(selected_B.end());
+
+            // Only replace if current_B is smaller than the largest in set
+            if (current_B < max_B_in_set) {
+                sumB -= max_B_in_set;
+                sumB += current_B;
+                selected_B.erase(prev(selected_B.end()));
+                selected_B.insert(current_B);
+            }
+
+            ans = min(ans, current_A * sumB);
+        }
+
+        cout << ans << '\n';
+    }
+
+    return 0;
+}

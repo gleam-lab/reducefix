@@ -1,0 +1,31 @@
+#include <iostream>
+#include <cmath>
+#include <iomanip>
+
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int N;
+    cin >> N;
+
+    double originX = 0.0, originY = 0.0;
+    double total = 0.0;
+
+    for (int i = 0; i < N; ++i) {
+        double x, y;
+        cin >> x >> y;
+
+        double cost = sqrt(pow(originX - x, 2) + pow(originY - y, 2));
+        total += cost;
+
+        originX = x;
+        originY = y;
+    }
+    total += sqrt(pow(originX, 2) + pow(originY, 2)); // Add the return to the origin
+
+    // Set precision and fixed format for output
+    cout << fixed << setprecision(15) << total << '\n';
+}

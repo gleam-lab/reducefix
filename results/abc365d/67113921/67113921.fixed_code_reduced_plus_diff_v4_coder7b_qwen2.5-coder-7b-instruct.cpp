@@ -1,0 +1,32 @@
+#include <iostream>
+#include <string>
+#include <vector>
+#include <algorithm>
+
+int main() {
+    std::ios_base::sync_with_stdio(false);
+    std::cin.tie(nullptr);
+
+    int N;
+    std::string S;
+    std::cin >> N >> S;
+
+    // If the length of the string is less than 2, it's not possible to win more than one game.
+    if (N < 2) {
+        std::cout << "0" << std::endl;
+        return 0;
+    }
+
+    // Calculate the number of winning moves.
+    int wins = 0;
+    for (size_t i = 1; i < S.length(); ++i) {
+        if (S[i] != S[i - 1]) {
+            ++wins;
+        }
+    }
+
+    // The result is the maximum of 1 and the calculated wins because we can always win at least one game.
+    std::cout << std::max(1, wins) << std::endl;
+
+    return 0;
+}

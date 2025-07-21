@@ -1,0 +1,110 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+struct Candidate {
+    long long votes;
+    int index;
+};
+
+bool compare(const Candidate& a, const Candidate& b) {
+    return a.votes < b.votes;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    cout.tie(nullptr);
+
+    int N, M;
+    long long K;
+    cin >> N >> M >> K;
+    vector<Candidate> candidates(N);
+    long long total_votes = 0;
+
+    for (int i = 0; i < N; ++i) {
+        cin >> candidates[i].votes;
+        candidates[i].index = i;
+        total_votes += candidates[i].votes;
+    }
+
+    long long remaining = K - total_votes;
+    vector<int> result(N, 0); // Default: already enough to win
+
+    if (M == 0) {
+        // Special case: M=0 means no one can be elected, so all are not elected
+        for (int i = 0; i < N; ++i) result[i] = -1;
+        for (int i = 0; i < N; ++i) {
+            cout << result[i];
+            if (i != N-1) cout << " ";
+        }
+        cout << "\n";
+        return 0;
+    }
+
+    // Sort candidates by votes
+    sort(candidates.begin(), candidates.end(), compare);
+
+    // Precompute prefix sums of sorted votes
+    vector<long long> prefix_sum(N+1, 0);
+    for (int i = 0; i < N; ++i)
+        prefix_sum[i+1] = prefix_sum[i] + candidates[i].votes;
+
+    // For each candidate, compute minimum required additional votes
+    for (int i = 0; i < N; ++i) {
+        int idx = candidates[i].index;
+        long long needed = 0;
+
+        // Binary search on X: minimal number of additional votes
+        long long low = 0, high = remaining;
+        bool possible = false;
+
+        while (low <= high) {
+            long long mid = (low + high) / 2;
+            long long current_total = candidates[i].votes + mid;
+
+            // Find how many candidates have more votes than current_total
+            int pos = upper_bound(candidates.begin(), candidates.end(), Candidate{current_total, -1}, [](const Candidate& a, const Candidate& b) {
+                return a.votes < b.votes;
+            }) - candidates.begin();
+
+            int max_rank = N - M;
+            if (pos > max_rank) {
+                // Current candidate is in top M
+                possible = true;
+                high = mid - 1;
+            } else {
+                // Need to raise other candidates above us
+                long long extra_needed = 0;
+                // We need at least (max_rank - pos) candidates to be strictly greater than current_total
+                // So we raise the ones from [pos..max_rank-1] to current_total + 1
+                if (pos < max_rank) {
+                    extra_needed = (current_total + 1) * (max_rank - pos) - (prefix_sum[max_rank] - prefix_sum[pos]);
+                }
+
+                if (extra_needed <= remaining - mid) {
+                    possible = true;
+                    high = mid - 1;
+                } else {
+                    possible = false;
+                    low = mid + 1;
+                }
+            }
+        }
+
+        if (possible) {
+            result[idx] = max(0LL, low);
+        } else {
+            result[idx] = -1;
+        }
+    }
+
+    for (int i = 0; i < N; ++i) {
+        cout << result[i];
+        if (i != N-1) cout << " ";
+    }
+    cout << "\n";
+
+    return 0;
+}

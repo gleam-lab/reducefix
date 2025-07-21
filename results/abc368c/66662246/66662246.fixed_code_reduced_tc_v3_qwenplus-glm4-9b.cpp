@@ -1,0 +1,29 @@
+#include <iostream>
+using namespace std;
+using ll = long long;
+
+int main() {
+    int n;
+    cin >> n;
+    vector<ll> hp(n);
+    ll ans = 0;
+    
+    for (int i = 0; i < n; ++i) {
+        cin >> hp[i];
+        // Calculate how many full 3 attacks we can perform
+        ans += (hp[i] / 3) * 3;
+        // Calculate remaining health after full 3 attacks
+        hp[i] %= 3;
+        // Perform attacks on the remaining health
+        while (hp[i] > 0) {
+            ans++;
+            if (hp[i] % 3 == 0) {
+                hp[i] -= 3;
+            } else {
+                hp[i]--;
+            }
+        }
+    }
+    
+    cout << ans << endl;
+}

@@ -1,0 +1,69 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+
+#define all(x) x.begin(), x.end()
+#define eb emplace_back
+#define ll long long
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int N, K;
+    cin >> N >> K;
+    vector<int> A(N);
+    for (int i = 0; i < N; ++i) {
+        cin >> A[i];
+    }
+
+    // We will use a sliding window of size (N - K)
+    int window_size = N - K;
+    int min_diff = numeric_limits<int>::max();
+
+    // To efficiently find min and max in subarrays of size window_size,
+    // we can use two deques: one for max and one for min.
+    deque<int> max_deque, min_deque;
+
+    // Populate the initial window
+    for (int i = 0; i < window_size; ++i) {
+        // Maintain max deque
+        while (!max_deque.empty() && A[i] > max_deque.back())
+            max_deque.pop_back();
+        max_deque.push_back(A[i]);
+
+        // Maintain min deque
+        while (!min_deque.empty() && A[i] < min_deque.back())
+            min_deque.pop_back();
+        min_deque.push_back(A[i]);
+    }
+
+    // Initial difference
+    min_diff = min(min_diff, max_deque.front() - min_deque.front());
+
+    // Slide the window
+    for (int i = window_size; i < N; ++i) {
+        // Remove elements out of the window
+        if (A[i - window_size] == max_deque.front())
+            max_deque.pop_front();
+        if (A[i - window_size] == min_deque.front())
+            min_deque.pop_front();
+
+        // Add new element to the window
+        // Maintain max deque
+        while (!max_deque.empty() && A[i] > max_deque.back())
+            max_deque.pop_back();
+        max_deque.push_back(A[i]);
+
+        // Maintain min deque
+        while (!min_deque.empty() && A[i] < min_deque.back())
+            min_deque.pop_back();
+        min_deque.push_back(A[i]);
+
+        // Update answer
+        min_diff = min(min_diff, max_deque.front() - min_deque.front());
+    }
+
+    cout << min_diff << endl;
+    return 0;
+}

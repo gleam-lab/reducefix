@@ -1,0 +1,64 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+
+struct Point {
+    int x, y;
+};
+
+const int dx[] = {0, 0, -1, 1};
+const int dy[] = {-1, 1, 0, 0};
+
+void destroyWall(vector<vector<bool>>& grid, vector<vector<Point>>& cache, int x, int y) {
+    for (int d = 0; d < 4; ++d) {
+        int nx = x, ny = y;
+        while (nx + dx[d] >= 0 && nx + dx[d] < grid.size() && ny + dy[d] >= 0 && ny + dy[d] < grid[0].size()) {
+            nx += dx[d];
+            ny += dy[d];
+            if (grid[nx][ny]) {
+                grid[nx][ny] = false;
+                cache[d][nx][ny] = 0;
+                break;
+            }
+            cache[d][nx][ny]++;
+        }
+    }
+}
+
+int main() {
+    ios::sync_with_stdio(false); cin.tie(nullptr);
+
+    int H, W, Q;
+    cin >> H >> W >> Q;
+
+    vector<vector<bool>> grid(H, vector<bool>(W, true));
+    vector<vector<Point>> cache(4, vector<Point>(H, {-1, -1}));
+
+    for (int i = 0; i < Q; ++i) {
+        int x, y;
+        cin >> x >> y;
+        --x, --y;
+
+        if (grid[x][y]) {
+            grid[x][y] = false;
+            continue;
+        }
+
+        for (int d = 0; d < 4; ++d) {
+            if (cache[d][x][y].x == -1) continue;
+
+            int nx = cache[d][x][y].x, ny = cache[d][x][y].y;
+            grid[nx][ny] = false;
+            destroyWall(grid, cache, nx, ny);
+        }
+    }
+
+    int ans = 0;
+    for (auto& row : grid) {
+        for (bool b : row) ans += !b;
+    }
+
+    cout << ans << '\n';
+
+    return 0;
+}

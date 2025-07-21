@@ -1,0 +1,50 @@
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+
+map<ll, vector<ll>> graph;
+map<ll, bool> visited;
+
+ll ans = -1;
+bool found = false;
+
+// Using a queue for BFS
+void bfs(ll start) {
+    queue<pair<ll, ll>> q;
+    q.push({start, 0});
+    visited[start] = true;
+
+    while (!q.empty()) {
+        auto [node, dist] = q.front();
+        q.pop();
+
+        for (auto neighbor : graph[node]) {
+            if (neighbor == 1) {
+                ans = dist + 1;
+                found = true;
+                return;
+            }
+            if (!visited[neighbor]) {
+                visited[neighbor] = true;
+                q.push({neighbor, dist + 1});
+            }
+        }
+    }
+}
+
+int main() {
+    ll n, m;
+    cin >> n >> m;
+
+    for (ll i = 0; i < m; ++i) {
+        ll a, b;
+        cin >> a >> b;
+        graph[a].push_back(b);
+        if (visited.find(a) == visited.end()) visited[a] = false;
+        if (visited.find(b) == visited.end()) visited[b] = false;
+    }
+
+    bfs(1);
+
+    cout << (found ? ans : -1) << endl;
+}

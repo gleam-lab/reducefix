@@ -1,0 +1,49 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+const int N = 2e5 + 9;
+const long long inf = 1e18;
+int n, k;
+long long ans;
+vector<pair<int, int>> a, b;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int T;
+    cin >> T;
+    while (T--) {
+        cin >> n >> k;
+        a.resize(n);
+        b.resize(n);
+        for (int i = 0; i < n; i++) {
+            cin >> a[i].first;
+            a[i].second = i;
+        }
+        for (int i = 0; i < n; i++) {
+            cin >> b[i].first;
+            b[i].second = i;
+        }
+        sort(a.begin(), a.end());
+        sort(b.begin(), b.end(), [](const pair<int, int>& p1, const pair<int, int>& p2) {
+            return p1.first < p2.first;
+        });
+
+        long long sum = 0;
+        for (int i = 0; i < k - 1; i++) {
+            sum += b[i].first;
+        }
+
+        long long res = (a[k - 1].first + (k - 1) * b[k - 1].first) * sum;
+        for (int i = k - 1; i < n; i++) {
+            long long newRes = (a[i].first * sum - b[a[i].second].first) * b[i + 1].first + (a[i].first + b[i + 1].first) * (sum - b[a[i].second].first);
+            res = min(res, newRes);
+        }
+
+        cout << res << '\n';
+    }
+
+    return 0;
+}

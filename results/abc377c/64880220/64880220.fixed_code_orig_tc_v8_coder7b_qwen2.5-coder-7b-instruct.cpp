@@ -1,0 +1,53 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+const int MOD = 1e9 + 7;
+
+long long modPow(long long base, long long exp, long long mod) {
+    long long result = 1;
+    while (exp > 0) {
+        if (exp % 2 == 1) {
+            result = (result * base) % mod;
+        }
+        base = (base * base) % mod;
+        exp /= 2;
+    }
+    return result;
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(0);
+
+    long long n, m;
+    cin >> n >> m;
+
+    set<pair<long long, long long>> occupied;
+    for (long long i = 0; i < m; ++i) {
+        long long a, b;
+        cin >> a >> b;
+        occupied.insert({a, b});
+    }
+
+    long long totalSquares = n * n;
+    long long invalidSquares = 0;
+
+    for (auto [a, b] : occupied) {
+        for (int dx = -2; dx <= 2; ++dx) {
+            for (int dy = -2; dy <= 2; ++dy) {
+                if (abs(dx) + abs(dy) == 3 && dx != 0 && dy != 0) {
+                    long long x = a + dx, y = b + dy;
+                    if (x >= 1 && x <= n && y >= 1 && y <= n) {
+                        invalidSquares += modPow(2, 64, MOD); // Assuming large enough MOD
+                    }
+                }
+            }
+        }
+    }
+
+    invalidSquares %= MOD;
+    long long validSquares = (totalSquares - invalidSquares + MOD) % MOD;
+    cout << validSquares << endl;
+
+    return 0;
+}

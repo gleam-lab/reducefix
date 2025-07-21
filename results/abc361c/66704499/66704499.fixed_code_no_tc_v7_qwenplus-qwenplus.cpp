@@ -1,0 +1,51 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    int n, k;
+    cin >> n >> k;
+    
+    vector<int> A(n);
+    for (int i = 0; i < n; ++i) {
+        cin >> A[i];
+    }
+
+    // Sliding window to find minimum (max - min) when keeping (n - K) elements
+    int window_size = n - k;
+    
+    // We will use a monotonic deque to maintain min and max in the window
+    deque<int> min_deque, max_deque;
+    int result = numeric_limits<int>::max();
+
+    for (int i = 0; i < n; ++i) {
+        // Maintain min_deque: remove indices of values >= current A[i]
+        while (!min_deque.empty() && A[min_deque.back()] >= A[i]) {
+            min_deque.pop_back();
+        }
+        min_deque.push_back(i);
+
+        // Maintain max_deque: remove indices of values <= current A[i]
+        while (!max_deque.empty() && A[max_deque.back()] <= A[i]) {
+            max_deque.pop_back();
+        }
+        max_deque.push_back(i);
+
+        // Remove elements out of the window
+        if (i >= window_size) {
+            if (min_deque.front() <= i - window_size) {
+                min_deque.pop_front();
+            }
+            if (max_deque.front() <= i - window_size) {
+                max_deque.pop_front();
+            }
+        }
+
+        // Once window is full, update result
+        if (i >= window_size - 1) {
+            result = min(result, A[max_deque.front()] - A[min_deque.front()]);
+        }
+    }
+
+    cout << result << endl;
+    return 0;
+}

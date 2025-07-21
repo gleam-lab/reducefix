@@ -1,0 +1,140 @@
+import os
+import subprocess
+from typing import List, Tuple, Set, Optional
+import sys
+
+def run_program(program_path: str, input_data: bytes) -> bytes:
+    result = subprocess.run(
+        [program_path],
+        input=input_data,
+        capture_output=True,
+        check=True,
+        timeout=10
+    )
+    return result.stdout
+
+def create_input_bytes(H: int, W: int, queries: List[Tuple[int, int]], kept_H: Optional[Set[int]] = None, kept_W: Optional[Set[int]] = None) -> bytes:
+    if kept_H is not None and kept_W is not None:
+        new_H = len(kept_H)
+        new_W = len(kept_W)
+        new_queries = []
+        for r, c in queries:
+            if r in kept_H and c in kept_W:
+                new_r = sorted(kept_H).index(r) + 1
+                new_c = sorted(kept_W).index(c) + 1
+                new_queries.append((new_r, new_c))
+        lines = [f"{new_H} {new_W} {len(new_queries)}\n"] + [f"{r} {c}\n" for r, c in new_queries]
+    else:
+        lines = [f"{H} {W} {len(queries)}\n"] + [f"{r} {c}\n" for r, c in queries]
+    return "".join(lines).encode("utf-8")
+
+def test_interesting(H: int, W: int, queries: List[Tuple[int, int]], kept_H: Optional[Set[int]] = None, kept_W: Optional[Set[int]] = None) -> bool:
+    input_data = create_input_bytes(H, W, queries, kept_H, kept_W)
+    try:
+        wa_output = run_program("./wa", input_data).strip()
+        ac_output = run_program("./ac", input_data).strip()
+        return wa_output != ac_output
+    except:
+        return True
+
+def reduce_input(input_file: str, output_file: str):
+    if not os.path.exists(input_file):
+        print(f"[Error] 输入文件不存在: {input_file}", file=sys.stderr)
+        return
+    
+    with open(input_file, "r", encoding="utf-8") as f:
+        lines = [line.rstrip("\n") for line in f]
+    
+    if not lines:
+        raise ValueError("输入文件为空")
+    
+    header = lines[0].split()
+    if len(header) != 3:
+        raise ValueError(f"第一行格式错误: {header}")
+    
+    H, W, Q = map(int, header)
+    queries = []
+    for line in lines[1:]:
+        if not line.strip():
+            continue
+        r, c = map(int, line.split())
+        queries.append((r, c))
+    
+    if not queries or len(queries) != Q:
+        raise ValueError(f"查询数量不匹配: 期望 {Q}, 实际 {len(queries)}")
+
+    # Reduce rows
+    row_indices = set(range(1, H + 1))
+    granularity = 2
+    while granularity <= len(row_indices):
+        subset_size = max(1, len(row_indices) // granularity)
+        row_removed = False
+        sorted_rows = sorted(row_indices)
+        
+        # Try removing blocks
+        for i in range(0, len(sorted_rows), subset_size):
+            block = set(sorted_rows[i:i+subset_size])
+            candidate_rows = row_indices - block
+            if candidate_rows and test_interesting(H, W, queries, candidate_rows, set(range(1, W+1))):
+                row_indices = candidate_rows
+                granularity = 2
+                row_removed = True
+                break
+        if row_removed:
+            continue
+        
+        # Try keeping only blocks
+        for i in range(0, len(sorted_rows), subset_size):
+            block = set(sorted_rows[i:i+subset_size])
+            if len(block) == 0 or len(block) == len(row_indices):
+                continue
+            if test_interesting(H, W, queries, block, set(range(1, W+1))):
+                row_indices = block
+                granularity = 2
+                row_removed = True
+                break
+        if row_removed:
+            continue
+        
+        granularity *= 2
+
+    # Reduce columns
+    col_indices = set(range(1, W + 1))
+    granularity = 2
+    while granularity <= len(col_indices):
+        subset_size = max(1, len(col_indices) // granularity)
+        col_removed = False
+        sorted_cols = sorted(col_indices)
+        
+        # Try removing blocks
+        for i in range(0, len(sorted_cols), subset_size):
+            block = set(sorted_cols[i:i+subset_size])
+            candidate_cols = col_indices - block
+            if candidate_cols and test_interesting(H, W, queries, row_indices, candidate_cols):
+                col_indices = candidate_cols
+                granularity = 2
+                col_removed = True
+                break
+        if col_removed:
+            continue
+        
+        # Try keeping only blocks
+        for i in range(0, len(sorted_cols), subset_size):
+            block = set(sorted_cols[i:i+subset_size])
+            if len(block) == 0 or len(block) == len(col_indices):
+                continue
+            if test_interesting(H, W, queries, row_indices, block):
+                col_indices = block
+                granularity = 2
+                col_removed = True
+                break
+        if col_removed:
+            continue
+        
+        granularity *= 2
+
+    # Generate reduced input
+    output_bytes = create_input_bytes(H, W, queries, row_indices, col_indices)
+    with open(output_file, "wb") as f:
+        f.write(output_bytes)
+    print(f"[Info] 缩减过程完成，结果已写入: {output_file}")

@@ -1,0 +1,79 @@
+To fix this code, we need to correctly handle the process of destroying walls based on the given queries. The original code had some logical errors, especially in how it handled the cases where the bomb was placed on a cell without a wall. The main issue was in how it searched for the first walls in the four directions (up, down, left, right) and the incorrect use of the `lower_bound` function for the row direction.
+
+### Approaches
+1. **Initial Setup**: We start with all cells having walls, so the initial count is `H * W`.
+2. **Tracking Walls**: We use two sets of sets: `X` for tracking columns in each row, and `Y` for tracking rows in each column. This allows efficient insertion, deletion, and search operations.
+3. **Handling Queries**: For each query:
+   - If the cell has a wall, it is destroyed.
+   - If the cell does not have a wall, we search for the nearest walls in the four cardinal directions (up, down, left, right) and destroy them if they exist.
+4. **Efficiency**: Using sets ensures that each insertion, deletion, and search operation is O(log n), making the overall solution efficient given the constraints.
+
+### Solution Code
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+#define rep(i, n) for (ll i = 0; i < (ll)(n); i++)
+#define rep2(i, s, n) for (ll i = (s); i < (ll)(n); i++)
+#define all(x) x.begin(), x.end()
+
+int main() {
+    int H, W, Q;
+    cin >> H >> W >> Q;
+    vector<set<int>> X(H + 2), Y(W + 2);  // 1-based indexing and extra boundary
+    rep2(i, 1, H + 1) rep2(j, 1, W + 1) {
+        X[i].insert(j);
+        Y[j].insert(i);
+    }
+    ll ans = (ll)H * W;
+    ll cnt = 0;
+    auto erase = [&](int r, int c) {
+        if (X[r].count(c)) {
+            cnt++;
+            X[r].erase(c);
+            Y[c].erase(r);
+        }
+    };
+    rep(itr, Q) {
+        int R, C;
+        cin >> R >> C;
+        if (X[R].count(C)) {
+            erase(R, C);
+            continue;
+        }
+        // Up
+        auto it_up = Y[C].lower_bound(R);
+        if (it_up != Y[C].begin()) {
+            --it_up;
+            erase(*it_up, C);
+        }
+        // Down
+        auto it_down = Y[C].lower_bound(R);
+        if (it_down != Y[C].end()) {
+            erase(*it_down, C);
+        }
+        // Left
+        auto it_left = X[R].lower_bound(C);
+        if (it_left != X[R].begin()) {
+            --it_left;
+            erase(R, *it_left);
+        }
+        // Right
+        auto it_right = X[R].lower_bound(C);
+        if (it_right != X[R].end()) {
+            erase(R, *it_right);
+        }
+    }
+    cout << ans - cnt << endl;
+    return 0;
+}
+```
+
+### Explanation
+1. **Initial Setup**: The grid is initialized with walls in all cells, and the sets `X` and `Y` are populated to keep track of these walls.
+2. **Handling Queries**: For each query:
+   - If the cell `(R, C)` has a wall, it is destroyed by removing it from both sets `X` and `Y`.
+   - If the cell does not have a wall, the code searches for the nearest walls in the four directions (up, down, left, right) using `lower_bound` to efficiently find the closest walls. These walls are then destroyed if they exist.
+3. **Efficiency**: The use of sets ensures that each operation (insertion, deletion, search) is O(log n), making the solution efficient for large grids and query counts. The final count of remaining walls is printed by subtracting the number of destroyed walls from the initial total.
+
+This approach ensures that the solution is both correct and efficient, handling all edge cases and constraints as specified.

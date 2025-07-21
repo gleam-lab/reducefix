@@ -1,0 +1,68 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+const int OFFSET = 100000000; // To handle negative coordinates
+const int MAX_COORD = 200000000 + 10; // -1e8 to 1e8 with offset
+
+int freq[MAX_COORD + 1]; // Frequency array for counting sort
+int prefixSum[MAX_COORD + 1]; // Prefix sum for cumulative counts
+
+// Function to find the k-th smallest distance from point b
+int findKthDistance(int b, int k) {
+    int left = 0;
+    int right = MAX_COORD;
+    
+    // Binary search on the answer (distance)
+    while (left < right) {
+        int mid = (left + right) / 2;
+        
+        // Count how many points are within distance <= mid of b
+        int l = max(0, b - mid);
+        int r = min(MAX_COORD, b + mid);
+        int count = prefixSum[r] - (l > 0 ? prefixSum[l - 1] : 0);
+        
+        if (count >= k) {
+            right = mid;
+        } else {
+            left = mid + 1;
+        }
+    }
+    
+    return left;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int N, Q;
+    cin >> N >> Q;
+    
+    // Initialize frequency array
+    fill(freq, freq + MAX_COORD + 1, 0);
+    
+    // Read A points and update frequency array
+    for (int i = 0; i < N; ++i) {
+        int a;
+        cin >> a;
+        int idx = a + OFFSET;
+        freq[idx]++;
+    }
+    
+    // Build prefix sum array
+    prefixSum[0] = freq[0];
+    for (int i = 1; i <= MAX_COORD; ++i) {
+        prefixSum[i] = prefixSum[i - 1] + freq[i];
+    }
+    
+    // Process queries
+    for (int i = 0; i < Q; ++i) {
+        int b, k;
+        cin >> b >> k;
+        int idx = b + OFFSET;
+        int result = findKthDistance(idx, k);
+        cout << result << '\n';
+    }
+    
+    return 0;
+}

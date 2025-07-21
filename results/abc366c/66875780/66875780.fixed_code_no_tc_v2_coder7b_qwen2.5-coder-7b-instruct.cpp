@@ -1,0 +1,39 @@
+#include <iostream>
+#include <set>
+#include <vector>
+using namespace std;
+
+// Function to solve the problem
+void solve() {
+    int Q;
+    cin >> Q;
+    set<int> s; // Using set to automatically handle duplicates and maintain sorted order
+    while(Q--) {
+        int op;
+        cin >> op;
+        if(op == 1) { // Insert operation
+            int x;
+            cin >> x;
+            s.insert(x); // Inserting element into the set
+        } else if(op == 2) { // Delete operation
+            int x;
+            cin >> x;
+            s.erase(s.find(x)); // Removing element from the set
+        } else { // Query operation
+            cout << s.size() << '\n'; // Printing the size of the set
+        }
+    }
+}
+
+int main() {
+    ios_base::sync_with_stdio(false); // Fast I/O optimization
+    cin.tie(NULL);
+
+    int T;
+    cin >> T; // Number of test cases
+    while(T--) {
+        solve(); // Solving each test case
+    }
+
+    return 0;
+}

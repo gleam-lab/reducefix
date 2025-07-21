@@ -1,0 +1,78 @@
+The initial code has several issues that need to be addressed to correctly solve the problem. Here's the analysis and the fixed code:
+
+### Issues in the Original Code:
+1. **Initialization of Priority Queue**: The initial code only pushes the border cells into the priority queue, missing some edge cases where the initial sinking might start from non-border cells adjacent to the sea.
+2. **Decrementing Elevations**: The code decrements all elevations by 1 (`--A[i][j]`), which is unnecessary and can lead to incorrect comparisons.
+3. **Handling Sinking Process**: The sinking process should consider all adjacent cells (including diagonals if specified, but the problem mentions only vertical and horizontal adjacency).
+4. **Efficiency**: The original code might not efficiently handle the large constraints (H, W up to 1000 and Y up to 100000).
+
+### Fixed Approach:
+1. **Initialize Priority Queue**: Push all border cells into the priority queue, as these are adjacent to the sea initially.
+2. **Track Visited Cells**: Use a visited matrix to avoid reprocessing the same cells.
+3. **Process Cells in Order**: Use a priority queue to process cells in increasing order of their elevation. For each year, process all cells that can sink at the current sea level.
+4. **Update Remaining Area**: For each year, output the remaining area after sinking all possible cells.
+
+### Fixed Code:
+```cpp
+#include <bits/stdc++.h>
+
+using namespace std;
+
+constexpr int dx[] = {0, 0, 1, -1};
+constexpr int dy[] = {1, -1, 0, 0};
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int H, W, Y;
+    cin >> H >> W >> Y;
+
+    vector<vector<int>> A(H, vector<int>(W));
+    for (int i = 0; i < H; ++i) {
+        for (int j = 0; j < W; ++j) {
+            cin >> A[i][j];
+        }
+    }
+
+    priority_queue<tuple<int, int, int>, vector<tuple<int, int, int>>, greater<tuple<int, int, int>>> pq;
+    vector<vector<bool>> visited(H, vector<bool>(W, false));
+
+    // Push all border cells into the priority queue
+    for (int i = 0; i < H; ++i) {
+        for (int j = 0; j < W; ++j) {
+            if (i == 0 || i == H - 1 || j == 0 || j == W - 1) {
+                pq.emplace(A[i][j], i, j);
+                visited[i][j] = true;
+            }
+        }
+    }
+
+    int ans = H * W;
+    for (int year = 1; year <= Y; ++year) {
+        while (!pq.empty()) {
+            auto [h, x, y] = pq.top();
+            if (h > year) break;
+            pq.pop();
+            --ans;
+            for (int k = 0; k < 4; ++k) {
+                int nx = x + dx[k];
+                int ny = y + dy[k];
+                if (nx < 0 || nx >= H || ny < 0 || ny >= W || visited[nx][ny]) continue;
+                visited[nx][ny] = true;
+                pq.emplace(A[nx][ny], nx, ny);
+            }
+        }
+        cout << ans << '\n';
+    }
+
+    return 0;
+}
+```
+
+### Explanation:
+1. **Initialization**: The priority queue is initialized with all border cells, as these are adjacent to the sea and will start sinking first.
+2. **Processing**: For each year, the code processes all cells in the priority queue with elevations less than or equal to the current year's sea level. These cells are marked as sunk, and their adjacent cells are added to the queue if they haven't been processed yet.
+3. **Output**: After processing each year, the remaining area is printed, which is the total area minus the number of sunk cells up to that year.
+
+This approach ensures that the sinking process is simulated efficiently and correctly for each year, handling large inputs within the given constraints.

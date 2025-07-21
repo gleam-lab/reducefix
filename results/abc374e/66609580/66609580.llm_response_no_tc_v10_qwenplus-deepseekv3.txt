@@ -1,0 +1,78 @@
+After analyzing the code, I found several issues that need to be fixed:
+
+1. The `check` function's logic for calculating the minimum cost is incorrect. It doesn't properly account for all possible combinations of a and b purchases within the given time `v`.
+
+2. The binary search range is too large (`UINT_MAX << 1`), which can lead to overflow and incorrect comparisons.
+
+3. The calculation of `_lcm` and the remaining time after complete cycles needs to be more carefully handled.
+
+Here's the fixed code with proper handling of these cases:
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+
+int n;
+ll x;
+ll a[110], b[110], p[110], q[110];
+
+bool check(ll v) {
+    ll total_cost = 0;
+    for (int i = 1; i <= n; ++i) {
+        ll lcm_ab = a[i] / __gcd(a[i], b[i]) * b[i];
+        ll full_cycles = v / lcm_ab;
+        ll remaining = v % lcm_ab;
+        
+        // Cost for full cycles
+        ll cost_full = full_cycles * min(p[i] * (lcm_ab / a[i]), q[i] * (lcm_ab / b[i]));
+        
+        // Cost for remaining time
+        ll min_remaining = LLONG_MAX;
+        ll max_a = remaining / a[i] + 1;
+        for (ll k = 0; k <= max_a; ++k) {
+            ll time_a = k * a[i];
+            if (time_a > remaining) break;
+            ll time_b = remaining - time_a;
+            ll cnt_b = (time_b + b[i] - 1) / b[i];  // ceiling division
+            min_remaining = min(min_remaining, k * p[i] + cnt_b * q[i]);
+        }
+        
+        total_cost += cost_full + min_remaining;
+        if (total_cost > x) return false;
+    }
+    return true;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    cin >> n >> x;
+    for (int i = 1; i <= n; ++i) {
+        cin >> a[i] >> p[i] >> b[i] >> q[i];
+    }
+    
+    ll left = 0, right = 1e18;
+    while (left < right) {
+        ll mid = left + (right - left + 1) / 2;
+        if (check(mid)) {
+            left = mid;
+        } else {
+            right = mid - 1;
+        }
+    }
+    
+    cout << left << '\n';
+    return 0;
+}
+```
+
+Key improvements:
+1. Proper calculation of full cycles and remaining time
+2. More accurate cost calculation for remaining time by considering all possible combinations of a and b purchases
+3. Safer binary search implementation with a reasonable upper bound (1e18)
+4. Cleaner code structure with better variable naming
+5. Proper handling of edge cases where remaining time is exactly divisible by a[i] or b[i]
+
+The fixed code should now correctly calculate the maximum time that can be achieved without exceeding the cost limit x, while considering all possible purchase combinations of the two types of items.

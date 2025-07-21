@@ -1,0 +1,96 @@
+To fix this code, we need to ensure that the algorithm correctly calculates the remaining area of the island after each year's sea level rise. The initial approach was to use a priority queue to process sections that could sink, but it missed some critical aspects of the problem, particularly the need to account for all sections that could be affected by the rising sea level, not just those adjacent to the sea or already sunk sections.
+
+### Approaches
+1. **Priority Queue Initialization**: Start by adding all border sections to a priority queue since they are adjacent to the sea and will be the first to sink as the sea level rises.
+2. **BFS with Priority Queue**: Use a priority queue to process sections in order of their elevation. For each section that sinks, check its adjacent sections. If an adjacent section's elevation is not greater than the current sea level, it also sinks, and we add it to the queue.
+3. **Tracking Sunk Sections**: Maintain a visited matrix to keep track of sections that have already sunk to avoid reprocessing.
+4. **Dynamic Result Calculation**: For each year, dynamically update the remaining area by subtracting the number of sections that have sunk due to the current sea level.
+
+### Solution Code
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+#define int long long
+#define close ios::sync_with_stdio(false); cin.tie(0); cout.tie(0);
+#define MAXN 1005
+#define LIMIT 22
+#define inf 0x3f3f3f3f3f3f
+#define endl '\n'
+const double eps = 1e-7;
+int dx[] = {0, 0, 1, -1};
+int dy[] = {1, -1, 0, 0};
+const int MOD = 1e9 + 7;
+
+struct Node {
+    int x, y, val;
+    bool operator<(const Node &a) const {
+        return val > a.val;
+    }
+};
+
+signed main() {
+    close;
+    int h, w; cin >> h >> w;
+    int Y; cin >> Y;
+    vector<vector<int>> grid(h, vector<int>(w));
+    for (int i = 0; i < h; i++) {
+        for (int j = 0; j < w; j++) {
+            cin >> grid[i][j];
+        }
+    }
+
+    vector<vector<bool>> vis(h, vector<bool>(w, false));
+    priority_queue<Node> q;
+
+    for (int i = 0; i < h; i++) {
+        if (!vis[i][0]) {
+            q.push({i, 0, grid[i][0]});
+            vis[i][0] = true;
+        }
+        if (!vis[i][w-1]) {
+            q.push({i, w-1, grid[i][w-1]});
+            vis[i][w-1] = true;
+        }
+    }
+    for (int j = 1; j < w-1; j++) {
+        if (!vis[0][j]) {
+            q.push({0, j, grid[0][j]});
+            vis[0][j] = true;
+        }
+        if (!vis[h-1][j]) {
+            q.push({h-1, j, grid[h-1][j]});
+            vis[h-1][j] = true;
+        }
+    }
+
+    int res = h * w;
+    vector<int> ans(Y + 1, 0);
+    for (int level = 1; level <= Y; level++) {
+        while (!q.empty() && q.top().val <= level) {
+            Node cur = q.top(); q.pop();
+            res--;
+            for (int i = 0; i < 4; i++) {
+                int nx = cur.x + dx[i];
+                int ny = cur.y + dy[i];
+                if (nx >= 0 && nx < h && ny >= 0 && ny < w && !vis[nx][ny]) {
+                    vis[nx][ny] = true;
+                    q.push({nx, ny, grid[nx][ny]});
+                }
+            }
+        }
+        ans[level] = res;
+    }
+
+    for (int i = 1; i <= Y; i++) {
+        cout << ans[i] << endl;
+    }
+
+    return 0;
+}
+```
+
+### Explanation
+1. **Initialization**: The grid is read, and a priority queue is initialized with all border sections. These sections are marked as visited since they are adjacent to the sea.
+2. **Processing Levels**: For each year (sea level), the priority queue processes sections in order of their elevation. Sections with elevation not greater than the current sea level are removed from the island (res decremented). Their neighbors are checked and added to the queue if they meet the sinking criteria.
+3. **Dynamic Updates**: The remaining area after each year is stored in an array and printed at the end. This ensures that each year's result is computed in logarithmic time relative to the number of sections processed.
+4. **Efficiency**: Using a priority queue ensures that sections are processed in the correct order, and the visited matrix prevents redundant processing, leading to an efficient solution with a time complexity of O(HW log HW) for the grid processing.

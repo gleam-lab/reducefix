@@ -1,0 +1,25 @@
+#include <iostream>
+#include <vector>
+#include <unordered_map>
+
+using namespace std;
+
+int main() {
+    int N;
+    cin >> N; // Assuming the input contains number of queries and their ranges.
+    vector<int> X(N + 1); // X[i] is the index of node i in the graph.
+    for (int i = 0; i < N; ++i) {
+        cin >> X[i]; // Read node index in the graph.
+    }
+    vector<ll> P(N + 1); // Patched here, P[i] is the sum of X[i] edges to nodes outside range [L, R].
+    // The graph might contain multiple nodes outside the given range, but this is assumed in the given code snippet.
+
+    // Processing each query case
+    for (int Q; ~scanf("%d", &Q); ++Q) { // Don't forget to check the input value for Q
+        int L, R; // Query range starts and ends here.
+        cin >> L >> R; // Read the range of nodes to bepatched.
+        ll patched_sum = P[R] - P[L]; // Patched here to calculate the sum of edges outside the range.
+        cout << patched_sum << endl; // Output the result of patching the sum of edges outside the range.
+    }
+    return 0;
+}

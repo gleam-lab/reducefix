@@ -1,0 +1,102 @@
+To fix this code, we need to address several issues:
+
+1. **Input Reading**: The original code incorrectly reads `n` and `q` (it reads `q` first and then `n`), which should be the other way around as per the problem statement.
+2. **Union-Find Data Structure**: The code uses a union-find (disjoint set) structure but doesn't handle the merging of sorted lists correctly. Each set should maintain a list of up to 10 largest vertices, sorted in descending order.
+3. **Handling Queries**: For type 2 queries, the code needs to efficiently access the k-th largest vertex in the connected component of `v` and ensure that the component has at least `k` vertices.
+
+### Approaches
+
+1. **Union-Find with Merged Lists**: 
+   - Each root in the union-find structure maintains a list of the top 10 largest vertices in its component.
+   - When two components are merged, the new root's list is formed by merging the top 10 elements from both components and truncating to the first 10 elements. This ensures the list remains sorted in descending order and of manageable size.
+
+2. **Efficient Query Processing**:
+   - For type 2 queries, simply access the (k-1)-th element in the root's list if it exists, otherwise return -1.
+
+### Solution Code
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+const int MAX_N = 200005;
+vector<int> parent(MAX_N);
+vector<vector<int>> top(MAX_N, vector<int>());
+
+int find(int u) {
+    if (parent[u] != u) {
+        parent[u] = find(parent[u]);
+    }
+    return parent[u];
+}
+
+void merge(int u, int v) {
+    u = find(u);
+    v = find(v);
+    if (u == v) return;
+    if (top[u].size() < top[v].size()) {
+        swap(u, v);
+    }
+    vector<int> merged;
+    int i = 0, j = 0;
+    while (i < top[u].size() && j < top[v].size() && merged.size() < 10) {
+        if (top[u][i] > top[v][j]) {
+            merged.push_back(top[u][i++]);
+        } else {
+            merged.push_back(top[v][j++]);
+        }
+    }
+    while (i < top[u].size() && merged.size() < 10) {
+        merged.push_back(top[u][i++]);
+    }
+    while (j < top[v].size() && merged.size() < 10) {
+        merged.push_back(top[v][j++]);
+    }
+    top[u] = merged;
+    parent[v] = u;
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int N, Q;
+    cin >> N >> Q;
+    
+    for (int i = 1; i <= N; ++i) {
+        parent[i] = i;
+        top[i].push_back(i);
+    }
+    
+    while (Q--) {
+        int op, u, v;
+        cin >> op >> u >> v;
+        if (op == 1) {
+            merge(u, v);
+        } else {
+            int root = find(u);
+            if (v > top[root].size()) {
+                cout << -1 << '\n';
+            } else {
+                cout << top[root][v - 1] << '\n';
+            }
+        }
+    }
+    
+    return 0;
+}
+```
+
+### Explanation
+1. **Initialization**: 
+   - The parent array is initialized so each vertex is its own parent.
+   - Each vertex's `top` list initially contains only itself.
+
+2. **Union-Find Operations**:
+   - The `find` function uses path compression to efficiently locate the root of a vertex.
+   - The `merge` function combines two components by merging their `top` lists. The merged list contains the top 10 largest vertices from both lists, ensuring it remains sorted in descending order.
+
+3. **Query Processing**:
+   - For type 1 queries, vertices are merged.
+   - For type 2 queries, the root of the vertex is found, and the k-th largest vertex is accessed from the root's `top` list if it exists; otherwise, `-1` is printed.
+
+This approach efficiently handles the constraints and ensures optimal performance for large input sizes.

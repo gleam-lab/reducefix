@@ -1,0 +1,80 @@
+To fix this code, we need to address several issues:
+
+1. **Input Reading**: The original code incorrectly reads `q` before `n`, which is the opposite of the input format specified.
+2. **Union-Find Data Structure**: The Union-Find (Disjoint Set Union, DSU) implementation is mostly correct but the merging of sets and handling of the top k elements needs improvement.
+3. **Handling Top k Elements**: The current approach attempts to merge the top 20 elements from each set, but this is inefficient and doesn't correctly maintain the top k elements for each connected component. Instead, we should maintain a sorted list of the top 10 elements (since k is up to 10) for each component.
+4. **Edge Cases**: The code should handle cases where there are fewer than `k` elements in the connected component by returning `-1`.
+
+Here’s the corrected and optimized code:
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+const int MAX_N = 200005;
+
+vector<int> top[MAX_N];
+int fa[MAX_N];
+
+int find(int x) {
+    if (fa[x] != x) {
+        fa[x] = find(fa[x]);
+    }
+    return fa[x];
+}
+
+void merge(int u, int v) {
+    u = find(u);
+    v = find(v);
+    if (u == v) return;
+    if (top[u].size() < top[v].size()) {
+        swap(u, v);
+    }
+    vector<int> merged;
+    merged.reserve(top[u].size() + top[v].size());
+    merge(top[u].begin(), top[u].end(), top[v].begin(), top[v].end(), back_inserter(merged), greater<int>());
+    if (merged.size() > 10) {
+        merged.resize(10);
+    }
+    top[u] = merged;
+    fa[v] = u;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int N, Q;
+    cin >> N >> Q;
+
+    for (int i = 1; i <= N; ++i) {
+        fa[i] = i;
+        top[i] = {i};
+    }
+
+    while (Q--) {
+        int op, u, v;
+        cin >> op >> u >> v;
+        if (op == 1) {
+            merge(u, v);
+        } else {
+            int root = find(u);
+            if (v > top[root].size()) {
+                cout << -1 << '\n';
+            } else {
+                cout << top[root][v - 1] << '\n';
+            }
+        }
+    }
+
+    return 0;
+}
+```
+
+### Explanation:
+1. **Union-Find Data Structure**: The `find` function uses path compression to efficiently find the root of a node. The `merge` function combines two sets by size (smaller into larger) and merges their top 10 elements.
+2. **Top k Elements Handling**: For each connected component, we maintain a sorted list (in descending order) of up to 10 elements. When merging two components, we merge their sorted lists and keep only the top 10 elements.
+3. **Efficiency**: The use of merge sort (via `std::merge`) ensures that the merging of top elements is efficient, and maintaining only the top 10 elements keeps the operations within feasible time limits for large inputs.
+4. **Handling Queries**: For type 2 queries, we check if the requested `k` is within the bounds of the connected component's top elements. If not, we return `-1`; otherwise, we return the `k-th` largest element.
+
+This approach ensures that the solution is both correct and efficient, handling the constraints effectively.

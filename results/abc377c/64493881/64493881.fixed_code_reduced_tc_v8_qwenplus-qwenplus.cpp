@@ -1,0 +1,47 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int64_t N;
+    int M;
+    cin >> N >> M;
+    
+    unordered_set<int64_t> attacked;
+    auto pack = [&](int x, int y) {
+        return (int64_t)x << 32 | y;
+    };
+    
+    vector<pair<int, int>> knights;
+    
+    for (int i = 0; i < M; ++i) {
+        int a, b;
+        cin >> a >> b;
+        knights.emplace_back(a, b);
+        attacked.insert(pack(a, b));
+    }
+    
+    // The 8 possible attack positions relative to a knight
+    const array<array<int, 2>, 8> deltas = {{
+        {2, 1}, {1, 2}, {-1, 2}, {-2, 1},
+        {-2, -1}, {-1, -2}, {1, -2}, {2, -1}
+    }};
+    
+    for (const auto& [a, b] : knights) {
+        for (const auto& [dx, dy] : deltas) {
+            int na = a + dx;
+            int nb = b + dy;
+            if (1 <= na && na <= N && 1 <= nb && nb <= N) {
+                attacked.insert(pack(na, nb));
+            }
+        }
+    }
+    
+    // Total number of squares is N*N
+    // Subtract the number of attacked squares
+    cout << (int64_t)N * N - (int64_t)attacked.size() << '\n';
+    
+    return 0;
+}

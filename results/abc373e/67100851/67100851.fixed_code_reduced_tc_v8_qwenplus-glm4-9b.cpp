@@ -1,0 +1,81 @@
+#include <iostream>
+#include <algorithm>
+#include <vector>
+using namespace std;
+
+typedef struct {
+    long long a;
+    int idx;
+} node;
+
+bool is_vulnerable(long long x, const vector<node>& A, vector<long long>& psum, long long K, long long M) {
+    long long votes_needed = 0;
+    for (int i = 0; i < A.size(); ++i) {
+        if (A[i].a + x < A[i].a) return true; // Avoid division by zero
+        if (i >= static_cast<int>(M) && i - M < 0) {
+            votes_needed += (A[i].a + x - 1) / A[i].a;
+        } else if (i >= static_cast<int>(M) && i - M >= 0) {
+            votes_needed += (psum[i] - psum[i - M] + A[i].a - 1) / A[i].a;
+        }
+    }
+    return votes_needed > K;
+}
+
+int main() {
+    int N, M;
+    long long K;
+    cin >> N >> M >> K;
+    vector<node> A(N);
+    vector<long long> psum(N + 1, 0);
+
+    for (int i = 0; i < N; ++i) {
+        cin >> A[i].a;
+        A[i].idx = i;
+    }
+
+    sort(A.begin(), A.end(), [](const node& a, const node& b) {
+        return a.a < b.a;
+    });
+    for (int i = 0; i < N; ++i) {
+        psum[i + 1] = psum[i] + A[i].a;
+    }
+
+    vector<long long> result(N, -1);
+    long long remaining_votes = K - psum[N];
+
+    for (int i = 0; i < N; ++i) {
+        if (result[i] != -1) continue; // Skip if already solved
+        long long min_votes_needed = -1;
+        long long current_votes = A[i].a;
+
+        for (long long x = 1; x <= remaining_votes; ++x) {
+            long long next_votes = current_votes + x;
+            if (is_vulnerable(x, A, psum, remaining_votes, M)) {
+                break;
+            }
+            long long votes_needed = 0;
+            for (int j = 0; j < N; ++j) {
+                if (j >= static_cast<int>(M)) {
+                    if (i == j) {
+                        votes_needed += x;
+                    } else {
+                        votes_needed += (next_votes - 1) / A[j].a;
+                    }
+                }
+            }
+            if (votes_needed <= remaining_votes) {
+                min_votes_needed = x;
+            } else {
+                break;
+            }
+        }
+
+        result[i] = min_votes_needed;
+    }
+
+    for (long long votes : result) {
+        cout << votes << " ";
+    }
+    cout << endl;
+    return 0;
+}

@@ -1,0 +1,47 @@
+#include <bits/stdc++.h>
+#define endl "\n"
+using namespace std;
+
+const int N = 2000010; // Use 2e8 + 5 for a, but we need an extra space for 1-based index
+int a[N];
+
+int main() {
+    int n, q;
+    cin >> n >> q;
+    
+    // Shift all a_i to positive side to simplify the distance calculation
+    for (int i = 1; i <= n; ++i) {
+        int x;
+        cin >> x;
+        a[x + 100000000]++; // Store the count of points with coordinate x + 100000000
+    }
+    
+    // Compute the prefix sum to get the number of points up to each coordinate
+    for (int i = 1; i < N; ++i) {
+        a[i] += a[i - 1];
+    }
+    
+    while (q--) {
+        int x, k;
+        cin >> x >> k;
+        
+        // Binary search to find the closest point A_i to B_j
+        int l = 1, r = n;
+        while (l + 1 < r) {
+            int mid = l + (r - l) / 2;
+            int left_count = upper_bound(a + 1, a + N, x - k + 1) - a; // Points closer to B_j than x - k
+            int right_count = lower_bound(a + 1, a + N, x + k) - a - left_count; // Points closer to B_j than x + k
+            if (right_count < k) {
+                l = mid;
+            } else {
+                r = mid;
+            }
+        }
+        
+        // Calculate the distance to the closest point A_i
+        int answer = min(abs(x - a[l] + 100000000), abs(x - a[r] + 100000000));
+        cout << answer << endl;
+    }
+    
+    return 0;
+}

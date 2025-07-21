@@ -1,0 +1,34 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define rep(i, n) for (int i = 0; i < (n); ++i)
+using ll = long long;
+
+int main()
+{
+    int n;
+    cin >> n;
+    vector<ll> a(n);
+    rep(i, n) cin >> a[i];
+
+    ll ans = 0;
+    rep(i, n)
+    {
+        ll h = a[i];
+        // We simulate attacks on this enemy until dead
+        // T increments by 1 each attack
+        // Attack deals 3 damage at T % 3 == 0, else 1 damage
+
+        // Let's compute how many full cycles of 3 attacks we can do: each cycle does 5 damage total (3+1+1)
+        ll cycles = h / 5;
+        ans += cycles * 3;
+        h -= cycles * 5;
+
+        // Remaining health is less than 5
+        if (h > 0) {
+            // 1-4 damage remaining
+            ans += (h + 2) / 3 * 3; // Round up to nearest multiple of 3 for timing when it will be eliminated
+        }
+    }
+
+    cout << ans << endl;
+}

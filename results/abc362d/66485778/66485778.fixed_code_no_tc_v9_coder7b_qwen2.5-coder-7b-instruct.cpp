@@ -1,0 +1,79 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+#define ll long long
+
+struct DSU {
+private:
+    vector<int> parent, rank;
+public:
+    DSU(int n) : parent(n + 1), rank(n + 1, 1) {
+        for(int i = 1; i <= n; ++i) parent[i] = i;
+    }
+
+    int find(int u) {
+        if(parent[u] != u) parent[u] = find(parent[u]);
+        return parent[u];
+    }
+
+    void unite(int u, int v) {
+        int pu = find(u), pv = find(v);
+        if(pu == pv) return;
+        if(rank[pu] > rank[pv]) parent[pv] = pu;
+        else if(rank[pu] < rank[pv]) parent[pu] = pv;
+        else {
+            parent[pu] = pv;
+            rank[pv]++;
+        }
+    }
+};
+
+struct Edge {
+    int u, v, w;
+    bool operator<(const Edge &other) const { return w < other.w; }
+};
+
+ll dijkstra(int n, vector<vector<pair<int, int>>> &graph, vector<ll> &weights) {
+    priority_queue<pair<ll, int>, vector<pair<ll, int>>, greater<>> pq;
+    vector<ll> dist(n + 1, LLONG_MAX);
+    dist[1] = weights[1];
+    pq.push({dist[1], 1});
+
+    while (!pq.empty()) {
+        auto [cost, u] = pq.top(); pq.pop();
+        if(cost != dist[u]) continue;
+
+        for(auto &[v, w] : graph[u]) {
+            if(dist[u] + w + weights[v] < dist[v]) {
+                dist[v] = dist[u] + w + weights[v];
+                pq.push({dist[v], v});
+            }
+        }
+    }
+
+    return dist[n];
+}
+
+int main() {
+    ios_base::sync_with_stdio(false); cin.tie(nullptr);
+
+    int n, m; cin >> n >> m;
+    vector<ll> weights(n + 1);
+    for(int i = 1; i <= n; ++i) cin >> weights[i];
+
+    vector<vector<pair<int, int>>> graph(n + 1);
+    for(int i = 0; i < m; ++i) {
+        int u, v, w; cin >> u >> v >> w;
+        graph[u].push_back({v, w});
+        graph[v].push_back({u, w});
+    }
+
+    vector<ll> ans;
+    for(int i = 2; i <= n; ++i) {
+        ans.push_back(dijkstra(i, graph, weights));
+    }
+
+    for(ll x : ans) cout << x << " ";
+
+    return 0;
+}

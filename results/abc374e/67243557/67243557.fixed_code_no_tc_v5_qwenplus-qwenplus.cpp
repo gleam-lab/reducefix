@@ -1,0 +1,65 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define rep(i,n) for(long long i=0;i<n;i++)
+using ll = long long;
+
+// Computes the minimum cost to buy 'need' number of items using options (a,p) and (b,q)
+ll compute_min_cost(ll a, ll b, ll p, ll q, ll need) {
+    // dp[i] = min cost to buy i items
+    vector<ll> dp(2 * (a + b), 1e18);
+    dp[0] = 0;
+    
+    // Use dynamic programming to fill up to a*b items
+    // This is safe because if a and b are coprime, then all numbers >= (a*b - a - b) can be formed
+    ll limit = min(need, 2LL * (a + b));
+    for (ll i = 0; i <= limit; ++i) {
+        if (i + a <= limit) dp[i + a] = min(dp[i + a], dp[i] + p);
+        if (i + b <= limit) dp[i + b] = min(dp[i + b], dp[i] + q);
+    }
+
+    return dp[need];
+}
+
+// Main function that calculates the minimum cost to get 'num' items across all stores
+ll f(ll a, ll b, ll p, ll q, ll num) {
+    ll period = a * b;  // After this many items, pattern repeats
+    ll full_cycles = num / period;
+    ll remainder = num % period;
+
+    ll cost = full_cycles * compute_min_cost(a, b, p, q, period);
+    cost += compute_min_cost(a, b, p, q, remainder);
+
+    return cost;
+}
+
+int main() {
+    int n;
+    ll x;
+    cin >> n >> x;
+    vector<ll> a(n), b(n), p(n), q(n);
+    rep(i, n) cin >> a[i] >> p[i] >> b[i] >> q[i];
+
+    // Binary search on answer
+    ll l = 0, r = 1e14;  // We increase search range significantly
+    ll ans = 0;
+
+    while (l <= r) {
+        ll mid = (l + r) / 2;
+        ll total_cost = 0;
+        
+        for (int i = 0; i < n; ++i) {
+            total_cost += f(a[i], b[i], p[i], q[i], mid);
+            if (total_cost > x) break;  // Avoid overflow
+        }
+
+        if (total_cost <= x) {
+            ans = mid;
+            l = mid + 1;
+        } else {
+            r = mid - 1;
+        }
+    }
+
+    cout << ans << endl;
+    return 0;
+}

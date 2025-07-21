@@ -1,0 +1,28 @@
+#include <iostream>
+#include <vector>
+#include <cmath>
+#include <iomanip>
+
+using namespace std;
+
+double calculateDistance(double x1, double y1, double x2, double y2) {
+    return sqrt((x2 - x1) * (x2 - x1) + (y2 - y1) * (y2 - y1));
+}
+
+int main() {
+    int N;
+    cin >> N;
+    
+    vector<pair<double, double>> points(N);
+    for (int i = 0; i < N; ++i) {
+        cin >> points[i].first >> points[i].second;
+    }
+
+    double totalCost = 0.0;
+    for (int i = 1; i <= N; ++i) {
+        totalCost += calculateDistance(points[i % N].first, points[i % N].second, points[(i - 1) % N].first, points[(i - 1) % N].second);
+    }
+
+    cout << fixed << setprecision(12) << totalCost << endl;
+    return 0;
+}

@@ -1,0 +1,77 @@
+To fix this code, we need to ensure that for each candidate, we correctly compute the minimum number of additional votes required to guarantee their election under all possible distributions of the remaining votes. The key idea is to determine for each candidate \( i \) the smallest \( X \) such that after adding \( X \) votes to \( A_i \), at least \( N - M \) candidates have votes less than or equal to \( A_i + X \).
+
+### Approaches
+1. **Sorting and Prefix Sums**: First, we sort the candidates' votes to facilitate binary search and prefix sum calculations.
+2. **Binary Search for Minimum \( X \)**: For each candidate \( i \), perform a binary search to find the smallest \( X \) such that any distribution of the remaining \( K - \sum A_i \) votes would not allow more than \( M - 1 \) candidates to surpass \( A_i + X \).
+3. **Check Feasibility**: For each candidate, check if the required \( X \) is within the remaining votes (i.e., \( X \leq K - \sum A_i \)).
+
+### Solution Code
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+#define all(x) (x).begin(), (x).end()
+
+int main() {
+    ios_base::sync_with_stdio(0);
+    cin.tie(0);
+    int n, m;
+    ll k;
+    cin >> n >> m >> k;
+    vector<ll> a(n);
+    ll sum_a = 0;
+    for (int i = 0; i < n; i++) {
+        cin >> a[i];
+        sum_a += a[i];
+    }
+    ll remaining = k - sum_a;
+
+    vector<int> ord(n);
+    iota(all(ord), 0);
+    sort(all(ord), [&](int i, int j) { return a[i] < a[j]; });
+    auto b = a;
+    sort(all(b));
+    vector<ll> pref(n + 1);
+    for (int i = 0; i < n; i++) {
+        pref[i + 1] = b[i] + pref[i];
+    }
+
+    vector<ll> ans(n, -1);
+    for (int idx = 0; idx < n; idx++) {
+        int i = ord[idx];
+        ll low = 0, high = remaining;
+        ll best_x = -1;
+        while (low <= high) {
+            ll mid = (low + high) / 2;
+            ll new_val = a[i] + mid;
+            // Find the first index in b where b[j] > new_val
+            ll pos = upper_bound(all(b), new_val) - b.begin();
+            // Number of candidates with votes > new_val is n - pos
+            if (n - pos < m) {
+                best_x = mid;
+                high = mid - 1;
+            } else {
+                low = mid + 1;
+            }
+        }
+        if (best_x != -1 && best_x <= remaining) {
+            ans[i] = best_x;
+        } else if (n - (upper_bound(all(b), a[i]) - b.begin()) < m) {
+            ans[i] = 0;
+        }
+    }
+
+    for (auto num : ans) {
+        cout << num << ' ';
+    }
+    cout << endl;
+    return 0;
+}
+```
+
+### Explanation
+1. **Sorting and Prefix Sums**: The candidates' votes are sorted to simplify the calculation of how many candidates have votes exceeding a certain threshold.
+2. **Binary Search**: For each candidate, we use binary search to find the minimum \( X \) such that when \( X \) votes are added to their current votes, no more than \( M - 1 \) candidates can surpass their new vote count.
+3. **Feasibility Check**: The binary search checks if the computed \( X \) is feasible within the remaining votes. If it is, the candidate's answer is set to \( X \); otherwise, it is set to -1 or 0 if they already meet the election criteria without additional votes.
+
+This approach efficiently computes the solution by leveraging sorting and binary search, ensuring optimal performance even for large input sizes.

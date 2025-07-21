@@ -1,0 +1,83 @@
+To fix the issue in your binary search approach and ensure correctness, let's analyze the problem:
+
+You're trying to **maximize** the number of burgers (represented by `mid`) such that the total cost does not exceed `x`. For each burger count, you're computing the **minimum cost** to produce at least that many burgers across all given types.
+
+### Key Issues:
+1. Your logic for calculating the minimum cost per burger type is overly complex and inefficient.
+2. The inner loops (`j` from 0 to `a[i]` or `b[i]`) lead to a high time complexity, especially since `a[i]` and `b[i]` can be up to 1e5.
+3. You're considering both combinations of using one type more than the other — this redundancy can be eliminated.
+
+### Optimized Plan:
+- Use **binary search** on the number of burgers (`mid`).
+- For each `mid`, compute the **minimum possible cost** to make exactly `mid` burgers using two types.
+- For each burger type pair `(a[i], p[i])` and `(b[i], q[i])`, iterate over how many times we use the cheaper burger (say up to `min(mid, b[i])`), and fill the rest with the other.
+
+This will reduce unnecessary computation while still ensuring correctness.
+
+Here is the **corrected and optimized C++ code**:
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+    cout.tie(0);
+
+    long long n, x;
+    cin >> n >> x;
+
+    vector<long long> a(n), p(n), b(n), q(n);
+    for (int i = 0; i < n; ++i) {
+        cin >> a[i] >> p[i] >> b[i] >> q[i];
+    }
+
+    auto can_make = [&](long long target) -> bool {
+        long long total_cost = 0;
+        for (int i = 0; i < n; ++i) {
+            long long min_cost = 1e18;
+            // Try using j of a[i], rest with b[i]
+            for (long long j = 0; j <= min(target, a[i]); ++j) {
+                long long needed_b = max(0LL, (target - j * b[i] + a[i] - 1) / a[i]);
+                if (j * b[i] + needed_b * a[i] >= target) {
+                    min_cost = min(min_cost, j * q[i] + needed_b * p[i]);
+                }
+            }
+            // Try using j of b[i], rest with a[i]
+            for (long long j = 0; j <= min(target, b[i]); ++j) {
+                long long needed_a = max(0LL, (target - j * a[i] + b[i] - 1) / b[i]);
+                if (j * a[i] + needed_a * b[i] >= target) {
+                    min_cost = min(min_cost, j * p[i] + needed_a * q[i]);
+                }
+            }
+            total_cost += min_cost;
+            if (total_cost > x) return false;
+        }
+        return true;
+    };
+
+    long long l = 0, r = 1e6, ans = 0;
+    while (l <= r) {
+        long long mid = (l + r) / 2;
+        if (can_make(mid)) {
+            ans = mid;
+            l = mid + 1;
+        } else {
+            r = mid - 1;
+        }
+    }
+
+    cout << ans << '\n';
+}
+```
+
+### Explanation:
+- We use a helper function `can_make(target)` to check whether it's possible to build `target` burgers within budget `x`.
+- We limit the number of iterations inside `can_make()` to only necessary values (up to `min(target, a[i])` or `b[i]`) for efficiency.
+- Binary search runs on the range `[0, 1e6]` which is safe based on constraints.
+
+This solution ensures:
+- Efficiency: O(N * K log M), where K is small due to limiting inner loop bounds.
+- Correctness: Covers all valid ways to form the required number of burgers.
+- Portability: Uses standard C++ features without platform-specific assumptions.

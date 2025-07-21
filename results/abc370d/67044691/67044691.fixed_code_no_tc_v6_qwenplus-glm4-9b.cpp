@@ -1,0 +1,59 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define ll long long
+
+int main() {
+    ll h, w, q;
+    cin >> h >> w >> q;
+    vector<vector<bool>> grid(h, vector<bool>(w, true)); // true indicates the presence of a wall
+    vector<pair<ll, ll>> queries(q);
+
+    // Read queries
+    for (ll i = 0; i < q; ++i) {
+        ll r, c;
+        cin >> r >> c;
+        queries[i] = {r - 1, c - 1}; // Convert to zero-based index
+    }
+
+    // Process each query
+    for (auto& query : queries) {
+        ll r = query.first;
+        ll c = query.second;
+
+        // Check if there's a wall at the given position
+        if (grid[r][c]) {
+            grid[r][c] = false; // Destroy the wall
+        } else {
+            // No wall at (r, c), destroy walls in all four directions
+            // Check above
+            for (ll i = r - 1; i >= 0 && !grid[i][c]; --i) {
+                grid[i][c] = false;
+            }
+            // Check below
+            for (ll i = r + 1; i < h && !grid[i][c]; ++i) {
+                grid[i][c] = false;
+            }
+            // Check left
+            for (ll j = c - 1; j >= 0 && !grid[r][j]; --j) {
+                grid[r][j] = false;
+            }
+            // Check right
+            for (ll j = c + 1; j < w && !grid[r][j]; ++j) {
+                grid[r][j] = false;
+            }
+        }
+    }
+
+    // Count remaining walls
+    ll remainingWalls = 0;
+    for (ll i = 0; i < h; ++i) {
+        for (ll j = 0; j < w; ++j) {
+            if (grid[i][j]) {
+                remainingWalls++;
+            }
+        }
+    }
+
+    // Output the result
+    cout << remainingWalls << endl;
+}

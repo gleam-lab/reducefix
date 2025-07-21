@@ -1,0 +1,69 @@
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+
+// Calculate minimum cost to achieve at least W units of weight using two item types
+ll min_cost(ll W, ll a, ll p, ll b, ll q) {
+    // Ensure a <= b for efficiency (swap if necessary)
+    if (a > b) {
+        swap(a, b);
+        swap(p, q);
+    }
+
+    ll best = LLONG_MAX;
+
+    // Try all possible numbers of first item in range that makes sense
+    // We bound iterations by min(b, W/a + 1) due to the mathematical properties
+    for (ll x = 0; x <= min(W / a + 1, b); ++x) {
+        ll remaining = max(0LL, W - a * x);
+        ll y = (remaining + b - 1) / b; // ceil division
+        best = min(best, p * x + q * y);
+    }
+
+    // Same idea but try with y first
+    for (ll y = 0; y <= min(W / b + 1, a); ++y) {
+        ll remaining = max(0LL, W - b * y);
+        ll x = (remaining + a - 1) / a; // ceil division
+        best = min(best, p * x + q * y);
+    }
+
+    return best;
+}
+
+bool can(ll W, int N, ll X,
+         const vector<ll>& A, const vector<ll>& P,
+         const vector<ll>& B, const vector<ll>& Q) {
+    ll total_cost = 0;
+    for (int i = 0; i < N; ++i) {
+        ll c = min_cost(W, A[i], P[i], B[i], Q[i]);
+        total_cost += c;
+        if (total_cost > X) return false;
+    }
+    return true;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int N;
+    ll X;
+    cin >> N >> X;
+    vector<ll> A(N), P(N), B(N), Q(N);
+    for (int i = 0; i < N; ++i) {
+        cin >> A[i] >> P[i] >> B[i] >> Q[i];
+    }
+
+    ll lo = 0, hi = 1e18; // Generous upper bound
+    while (lo < hi) {
+        ll mid = (lo + hi + 1) / 2; // Use +1 to avoid infinite loops
+        if (can(mid, N, X, A, P, B, Q)) {
+            lo = mid;
+        } else {
+            hi = mid - 1;
+        }
+    }
+
+    cout << lo << "\n";
+    return 0;
+}

@@ -1,0 +1,81 @@
+To fix this code, we need to correctly determine the minimum number of additional votes each candidate needs to guarantee their election, considering the conditions and constraints provided. The original code attempts to solve this using binary search and prefix sums, but it has logical flaws in how it calculates the required votes.
+
+### Approaches
+1. **Sorting and Prefix Sums**: First, we sort the candidates' votes to facilitate efficient computation. We also compute prefix sums for these sorted votes to quickly calculate sums of ranges of votes.
+2. **Binary Search for Each Candidate**: For each candidate, we perform a binary search to find the minimum number of additional votes they need to secure their election. The binary search checks if a certain number of votes ensures that no more than `M-1` candidates have more votes than them.
+3. **Check Feasibility**: During the binary search, for a candidate `i`, we check if the candidate can be placed in a position where fewer than `M` candidates have more votes. This involves ensuring that the sum of votes needed to surpass other candidates does not exceed the remaining votes `K`.
+
+### Solution Code
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+#define all(x) (x).begin(), (x).end()
+
+int main() {
+    ios_base::sync_with_stdio(0);
+    cin.tie(0);
+    int N, M;
+    ll K;
+    cin >> N >> M >> K;
+    vector<ll> A(N);
+    ll total = 0;
+    for (int i = 0; i < N; ++i) {
+        cin >> A[i];
+        total += A[i];
+    }
+    ll remaining = K - total;
+    vector<int> ord(N);
+    iota(all(ord), 0);
+    sort(all(ord), [&](int i, int j) { return A[i] < A[j]; });
+    vector<ll> sorted_A(N);
+    for (int i = 0; i < N; ++i) {
+        sorted_A[i] = A[ord[i]];
+    }
+    vector<ll> prefix(N + 1, 0);
+    for (int i = 0; i < N; ++i) {
+        prefix[i + 1] = prefix[i] + sorted_A[i];
+    }
+    vector<ll> ans(N, -1);
+    for (int i = 0; i < N; ++i) {
+        ll original_index = ord[i];
+        ll low = 0, high = remaining;
+        ll best = -1;
+        while (low <= high) {
+            ll mid = (low + high) / 2;
+            ll new_votes = sorted_A[i] + mid;
+            int pos = upper_bound(all(sorted_A), new_votes) - sorted_A.begin();
+            if (pos > N - M) {
+                best = mid;
+                high = mid - 1;
+            } else {
+                ll required = 0;
+                int start = N - M;
+                if (start < pos) start = pos;
+                required = new_votes * (N - start) - (prefix[N] - prefix[start]);
+                if (required <= remaining - mid) {
+                    best = mid;
+                    high = mid - 1;
+                } else {
+                    low = mid + 1;
+                }
+            }
+        }
+        ans[original_index] = best;
+    }
+    for (int i = 0; i < N; ++i) {
+        cout << ans[i] << ' ';
+    }
+    cout << '\n';
+    return 0;
+}
+```
+
+### Explanation
+1. **Initial Setup**: The code starts by reading the input values and initializing necessary variables. The total votes already counted are summed to find the remaining votes `K`.
+2. **Sorting and Prefix Sum**: The candidates' votes are sorted, and their indices are stored in `ord`. The sorted votes are stored in `sorted_A`, and a prefix sum array `prefix` is computed for efficient range sum queries.
+3. **Binary Search for Each Candidate**: For each candidate, the binary search determines the minimum votes needed (`mid`) to ensure that the candidate is among the top `M` candidates. The upper bound of `sorted_A` helps find how many candidates would still have more votes after adding `mid` votes to the current candidate.
+4. **Feasibility Check**: The code checks if the required votes to surpass other candidates do not exceed the remaining votes. If feasible, the binary search narrows down to find the minimum such votes.
+5. **Output**: The results for each candidate are printed, indicating the minimum votes needed, or `-1` if it's impossible to secure their election.
+
+This approach efficiently checks each candidate's requirements using binary search and prefix sums, ensuring optimal performance even for large input sizes.

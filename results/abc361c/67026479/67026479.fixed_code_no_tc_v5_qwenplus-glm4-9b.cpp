@@ -1,0 +1,31 @@
+#include <bits/stdc++.h>
+using namespace std;
+int main(){
+    int n, k;
+    cin >> n >> k;
+    vector<int> a(n);
+    
+    // Read the array elements
+    for(int i = 0; i < n; i++) cin >> a[i];
+    
+    // Sort the array to easily find the minimum and maximum elements
+    sort(a.begin(), a.end());
+    
+    // Initial answer is the difference between the maximum and minimum of the full array
+    long long min_diff = a[n - 1] - a[0];
+    
+    // We only need to consider the last k elements we remove and the rest of the array
+    // because sorting the entire array, we have k elements that can potentially be removed
+    // and the remaining n-k elements are still in sorted order.
+    for (int i = 0; i <= n - k; i++) {
+        // Calculate the new maximum and minimum after removing k elements starting from index i
+        long long new_max = a[n - k - 1] - 1; // We could potentially be taking out the last element in the k removed elements
+        long long new_min = a[i + k];        // We could potentially be leaving out the first element in the k removed elements
+        
+        // Update the minimum difference
+        min_diff = min(min_diff, new_max - new_min);
+    }
+    
+    // Output the minimum possible difference
+    cout << min_diff << endl;
+}

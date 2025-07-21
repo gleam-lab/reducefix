@@ -1,0 +1,43 @@
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+
+#define rep(i, n) for (int i = 0; i < (n); ++i)
+#define all(x) (x).begin(), (x).end()
+
+int main() {
+    int N;
+    cin >> N;
+    vector<ll> P(N + 1, 0);
+    vector<int> X(N);
+    rep(i, N) cin >> X[i];
+    ll p;
+    cin >> p;
+    P[1] = p;
+    rep(i, N - 1) {
+        cin >> p;
+        P[i + 2] = P[i + 1] + p;
+    }
+    map<int, int> x_to_ptr;
+    rep(i, N) {
+        x_to_ptr.emplace(X[i], i);
+    }
+
+    int Q;
+    cin >> Q;
+    rep(q, Q) {
+        int L, R;
+        cin >> L >> R;
+        auto X_l = x_to_ptr.lower_bound(L);
+        auto X_r = x_to_ptr.upper_bound(R - 1);
+
+        if (X_l == x_to_ptr.end()) {
+            cout << "0\n";
+        } else if (X_r == x_to_ptr.end()) {
+            cout << P[N] - P[X_l->second] << "\n";
+        } else {
+            cout << P[X_r->second] - P[X_l->second] << "\n";
+        }
+    }
+    return 0;
+}

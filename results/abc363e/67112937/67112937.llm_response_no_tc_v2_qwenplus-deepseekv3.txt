@@ -1,0 +1,93 @@
+The initial approach attempts to solve the problem by using a priority queue to simulate the sinking process, starting from the borders of the island. However, there are several issues in the code that need to be addressed:
+
+1. **Initialization of the Priority Queue**: The code misses some border cells in the initialization, such as the top-left and bottom-right corners, which can lead to incorrect sinking results.
+
+2. **Decrementing Elevation**: The code decrements the elevation values by 1 (`--A[i][j]`), which is unnecessary and could lead to incorrect comparisons.
+
+3. **Handling of Visited Cells**: The visited cells are marked as soon as they are added to the priority queue, which might not account for cells that are reachable via multiple paths (though this might not be a problem in the current context).
+
+4. **Output Timing**: The output is printed for each year `i`, but the sinking process is cumulative, and the queue is not reset between years, which is correct. However, the initial approach might not efficiently handle very large values of `Y` (up to 10^5) due to the nested loop structure.
+
+To fix these issues, we should:
+- Correctly initialize the priority queue with all border cells.
+- Avoid modifying the elevation values.
+- Ensure the sinking process accurately reflects the problem's requirements.
+- Efficiently handle large values of `Y` by processing the priority queue in a single pass.
+
+Here's the corrected code:
+
+```cpp
+#include <bits/stdc++.h>
+
+using namespace std;
+
+constexpr int d[4][2] = {{0, 1}, {0, -1}, {1, 0}, {-1, 0}};
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int H, W, Y;
+    cin >> H >> W >> Y;
+
+    vector<vector<int>> A(H, vector<int>(W));
+    for (int i = 0; i < H; i++) {
+        for (int j = 0; j < W; j++) {
+            cin >> A[i][j];
+        }
+    }
+
+    priority_queue<tuple<int, int, int>, vector<tuple<int, int, int>>, greater<tuple<int, int, int>>> pq;
+    vector<vector<bool>> vis(H, vector<bool>(W, false));
+
+    // Add all border cells to the priority queue
+    for (int i = 0; i < H; i++) {
+        pq.push({A[i][0], i, 0});
+        vis[i][0] = true;
+        if (W > 1) {
+            pq.push({A[i][W-1], i, W-1});
+            vis[i][W-1] = true;
+        }
+    }
+    for (int j = 1; j < W-1; j++) {
+        pq.push({A[0][j], 0, j});
+        vis[0][j] = true;
+        if (H > 1) {
+            pq.push({A[H-1][j], H-1, j});
+            vis[H-1][j] = true;
+        }
+    }
+
+    int ans = H * W;
+    vector<int> res(Y);
+    for (int i = 0; i < Y; i++) {
+        while (!pq.empty()) {
+            auto [h, x, y] = pq.top();
+            if (h > i) break;
+            pq.pop();
+            ans--;
+            for (int j = 0; j < 4; j++) {
+                int dx = x + d[j][0], dy = y + d[j][1];
+                if (dx < 0 || dx >= H || dy < 0 || dy >= W || vis[dx][dy]) continue;
+                vis[dx][dy] = true;
+                pq.push({A[dx][dy], dx, dy});
+            }
+        }
+        res[i] = ans;
+    }
+
+    for (int i = 0; i < Y; i++) {
+        cout << res[i] << '\n';
+    }
+
+    return 0;
+}
+```
+
+### Key Improvements:
+1. **Correct Initialization**: All border cells are correctly added to the priority queue, ensuring no cells are missed.
+2. **No Unnecessary Modifications**: The elevation values are read as-is without decrementing.
+3. **Efficient Processing**: The priority queue processes cells in order of their elevation, ensuring the sinking is simulated correctly for each year.
+4. **Output Handling**: The results for each year are stored in a vector and printed at the end, which is more efficient for large `Y`.
+
+This approach ensures correctness and efficiency within the problem's constraints.

@@ -1,0 +1,35 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int N;
+    cin >> N;
+
+    long double total = 0.0;
+    long double curr_x = 0.0, curr_y = 0.0;
+
+    for (int i = 0; i < N; ++i) {
+        long double x, y;
+        cin >> x >> y;
+
+        long double dx = x - curr_x;
+        long double dy = y - curr_y;
+        total += sqrt(dx * dx + dy * dy);
+
+        curr_x = x;
+        curr_y = y;
+    }
+
+    // Return to origin
+    long double dx = 0.0 - curr_x;
+    long double dy = 0.0 - curr_y;
+    total += sqrt(dx * dx + dy * dy);
+
+    cout.precision(15);
+    cout << fixed << total << endl;
+
+    return 0;
+}

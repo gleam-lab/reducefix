@@ -1,0 +1,55 @@
+#include <iostream>
+#include <algorithm>
+#include <vector>
+#include <numeric>
+#include <cmath>
+
+using namespace std;
+
+long long gcd(long long a, long long b) {
+    return b == 0 ? a : gcd(b, a % b);
+}
+
+long long lcm(long long a, long long b) {
+    return a / gcd(a, b) * b;
+}
+
+int main() {
+    ios::sync_with_stdio(0);
+    cin.tie(0), cout.tie(0);
+
+    int n;
+    long long x;
+    cin >> n >> x;
+
+    vector<pair<long long, pair<long long, long long>>> v(n);
+
+    for (int i = 0; i < n; ++i) {
+        long long a, b, p, q;
+        cin >> a >> p >> b >> q;
+        v[i] = {lcm(a, b), {p, q}};
+    }
+
+    sort(v.begin(), v.end());
+
+    long long l = 0, r = 1e18;
+
+    while (r - l > 1) {
+        long long mid = (l + r) >> 1;
+        long long cnt = 0;
+        for (int i = 0; i < n; ++i) {
+            long long dm = v[i].first;
+            auto& k = v[i].second;
+            long long r = (mid / dm) - 1;
+            long long maxv = min(r * k.first, r * k.second);
+            cnt += maxv;
+            if (cnt > x) break;
+        }
+
+        if (cnt > x) r = mid;
+        else l = mid;
+    }
+
+    cout << l << '\n';
+    return 0;
+}

@@ -1,0 +1,37 @@
+#include <bits/stdc++.h>
+#define INF 0x3f3f3f3f3f3f3f3f
+using namespace std;
+typedef long long ll;
+const int MAXN = 2e5 + 10;
+
+ll a[MAXN], f[MAXN][2];
+// f[i][0] = max sum up to i without taking the ith element
+// f[i][1] = max sum up to i with taking the ith element
+
+int main() {
+    ll n;
+    scanf("%lld", &n);
+    for (ll i = 1; i <= n; ++i) {
+        scanf("%lld", &a[i]);
+    }
+
+    // Initialize base cases
+    f[0][0] = 0;
+    f[0][1] = 0;
+
+    for (ll i = 1; i <= n; ++i) {
+        // Not taking a[i], best of previous take or not take
+        f[i][0] = max(f[i-1][0], f[i-1][1]);
+
+        // Taking a[i]
+        // If last was not taken, this is first in sequence -> no multiplier
+        // If last was taken, this is second in sequence -> double multiplier
+        f[i][1] = f[i-1][0] + a[i];  // Start new sequence: odd count
+        if (i >= 2) {
+            f[i][1] = max(f[i][1], f[i-2][0] + a[i] * 2);  // Take two in sequence
+        }
+    }
+
+    printf("%lld\n", max(f[n][0], f[n][1]));
+    return 0;
+}

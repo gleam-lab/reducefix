@@ -1,0 +1,68 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <unordered_set>
+
+using namespace std;
+
+using i64 = long long;
+
+int main() {
+    i64 N, M;
+    cin >> N >> M;
+    vector<pair<i64, i64>> pieces(M);
+    for (i64 i = 0; i < M; ++i) {
+        i64 a, b;
+        cin >> a >> b;
+        pieces[i] = {a, b};
+    }
+
+    // Sort pieces by their row and column (and diagonals)
+    sort(pieces.begin(), pieces.end());
+
+    unordered_set<i64> rows, cols, diag1, diag2;
+
+    // Collect rows, columns, and diagonals that are attacked by existing pieces
+    for (auto& p : pieces) {
+        rows.insert(p.first);
+        cols.insert(p.second);
+        diag1.insert(p.first + p.second);
+        diag2.insert(p.first - p.second);
+    }
+
+    i64 safe_rows = N - rows.size();
+    i64 safe_cols = N - cols.size();
+    i64 safe_diag1 = N - diag1.size();
+    i64 safe_diag2 = N - diag2.size();
+
+    // Calculate the number of safe squares
+    // Subtract the intersections of attacked rows and columns
+    for (auto& r : rows) {
+        safe_cols = min(safe_cols, N - cols.count(r));
+        safe_diag1 = min(safe_diag1, N - diag1.count(r));
+        safe_diag2 = min(safe_diag2, N - diag2.count(r));
+    }
+
+    for (auto& c : cols) {
+        safe_rows = min(safe_rows, N - rows.count(c));
+        safe_diag1 = min(safe_diag1, N - diag1.count(c));
+        safe_diag2 = min(safe_diag2, N - diag2.count(c));
+    }
+
+    // Subtract the intersections of attacked diagonals
+    for (auto& d1 : diag1) {
+        safe_diag2 = min(safe_diag2, N - diag2.count(d1));
+    }
+
+    for (auto& d2 : diag2) {
+        safe_diag1 = min(safe_diag1, N - diag1.count(d2));
+    }
+
+    // Calculate the total number of safe squares
+    i64 safe_squares = safe_rows * safe_cols;
+    safe_squares += safe_diag1 * safe_diag2;
+
+    cout << safe_squares << endl;
+
+    return 0;
+}

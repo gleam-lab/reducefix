@@ -1,0 +1,95 @@
+To solve this problem correctly, we must compute the **minimum path cost** from vertex 1 to every other vertex in a **graph**, where each **path cost** is defined as the **sum of both vertex and edge weights along the path**.
+
+---
+
+### Key Observations:
+
+1. **Path Cost Definition**:
+   - When moving from node A to B through an edge with weight `B_j`, and node B has a vertex weight `A_B`, the total cost increase is `B_j + A_B`.
+   - The starting node (node 1) includes its own vertex weight `A_1`.
+
+2. **Dijkstra's Algorithm**:
+   - This is a classic shortest path problem on a weighted graph.
+   - We can apply **Dijkstra’s algorithm** using a priority queue (`std::priority_queue`) to find the minimum cost paths efficiently.
+
+3. **Data Structures**:
+   - Use an adjacency list for storing the graph edges.
+   - Use a min-heap priority queue for efficient extraction of the next node with the least distance.
+   - Initialize distances to a large number (`INF`), and set `dist[1] = A[0]`.
+
+4. **Bug in Original Code**:
+   - The original code initializes all nodes' distances to `1e10`, but fails to update some unreachable nodes properly.
+   - It also may not handle the vertex weight inclusion correctly during traversal.
+   - Missing use of `long long` for data types when dealing with large values up to `1e18`.
+
+---
+
+### Fixed and Optimized C++ Code:
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+
+    int N, M;
+    cin >> N >> M;
+
+    vector<long long> A(N);
+    for (int i = 0; i < N; ++i) {
+        cin >> A[i];
+    }
+
+    vector<vector<pair<int, long long>>> adj(N + 1); // adj[u] contains pairs (v, edge_weight)
+    for (int j = 0; j < M; ++j) {
+        int u, v;
+        long long b;
+        cin >> u >> v >> b;
+        adj[u].push_back({v, b});
+        adj[v].push_back({u, b});
+    }
+
+    const long long INF = 1e18;
+    vector<long long> dist(N + 1, INF);
+    dist[1] = A[0]; // Start node's cost includes its vertex weight
+
+    priority_queue<pair<long long, int>, vector<pair<long long, int>>, greater<>> pq;
+    pq.push({dist[1], 1});
+
+    while (!pq.empty()) {
+        auto [current_dist, u] = pq.top();
+        pq.pop();
+
+        if (current_dist > dist[u]) continue;
+
+        for (auto &[v, edge_cost] : adj[u]) {
+            long long new_cost = current_dist + edge_cost + A[v - 1]; // Add edge and destination vertex weight
+            if (new_cost < dist[v]) {
+                dist[v] = new_cost;
+                pq.push({new_cost, v});
+            }
+        }
+    }
+
+    for (int i = 2; i <= N; ++i) {
+        cout << dist[i] << " ";
+    }
+    cout << '\n';
+
+    return 0;
+}
+```
+
+---
+
+### Why This Works:
+
+- **Initialization**: Starts from node 1 with its own vertex weight.
+- **Relaxation Rule**: For any edge from `u -> v` with weight `B`, the total cost to reach `v` is:  
+  `cost_to_u + B_uv + A[v]`
+- **Efficiency**: Runs in `O((N + M) log N)` due to Dijkstra’s with a priority queue.
+- **Correctness**: Properly handles all constraints including large weights and ensures no overflow or incorrect initialization issues.
+
+This version should pass all test cases, including hidden ones, and avoid any premature saturation at `1e10`.

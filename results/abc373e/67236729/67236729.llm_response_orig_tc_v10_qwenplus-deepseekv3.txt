@@ -1,0 +1,90 @@
+To fix this code, we need to ensure that for each candidate, we correctly determine the minimum number of additional votes they need to secure their victory. The key insight is to sort the candidates' votes and then, for each candidate, determine how many votes they need to ensure that at most M-1 candidates have more votes than them after all remaining votes are distributed.
+
+### Approaches
+
+1. **Sorting and Prefix Sums**: 
+   - First, sort the array of votes to easily access the highest votes and calculate prefix sums for efficient range sum queries.
+   - For each candidate, determine the threshold value they need to reach to ensure that no more than M-1 candidates have more votes than them. This involves binary search to find the position in the sorted array that would be affected by the candidate's additional votes.
+
+2. **Binary Search for Minimum Votes**:
+   - For each candidate, perform a binary search to find the minimum number of additional votes (X) needed such that when added to their current votes, the number of candidates with votes strictly greater than (A_i + X) is less than M.
+   - The binary search should efficiently check if a given X is sufficient by considering the worst-case distribution of the remaining votes (K - X) among other candidates.
+
+### Solution Code
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+using i64 = long long;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    i64 N, M, K;
+    cin >> N >> M >> K;
+    vector<i64> A(N);
+    for (int i = 0; i < N; ++i) {
+        cin >> A[i];
+    }
+
+    vector<i64> B = A;
+    sort(B.begin(), B.end());
+    vector<i64> prefix(N + 1, 0);
+    for (int i = 0; i < N; ++i) {
+        prefix[i + 1] = prefix[i] + B[i];
+    }
+
+    for (int i = 0; i < N; ++i) {
+        i64 current = A[i];
+        i64 low = 0, high = K, ans = -1;
+        while (low <= high) {
+            i64 mid = (low + high) / 2;
+            i64 new_votes = current + mid;
+
+            // Find the first element in B greater than new_votes
+            auto it = upper_bound(B.begin(), B.end(), new_votes);
+            int cnt = B.end() - it;
+
+            if (cnt < M) {
+                // Need to check if remaining votes can't push more than M-1 candidates above new_votes
+                i64 remaining = K - mid;
+                i64 total = 0;
+
+                if (cnt > 0) {
+                    // Sum the top cnt elements and see if they can be increased to new_votes + 1
+                    i64 sum = prefix[N] - prefix[N - cnt];
+                    i64 needed = cnt * (new_votes + 1) - sum;
+                    if (needed <= remaining) {
+                        ans = mid;
+                        high = mid - 1;
+                    } else {
+                        low = mid + 1;
+                    }
+                } else {
+                    ans = mid;
+                    high = mid - 1;
+                }
+            } else {
+                low = mid + 1;
+            }
+        }
+        cout << ans << " ";
+    }
+    cout << endl;
+
+    return 0;
+}
+```
+
+### Explanation
+
+1. **Sorting and Prefix Sums**: 
+   - The array `B` is created as a sorted version of the original votes array `A`. This allows us to efficiently find the number of candidates with votes greater than any given value.
+   - The prefix sum array `prefix` is built to quickly compute the sum of the top `k` elements in the sorted array.
+
+2. **Binary Search for Minimum Votes**:
+   - For each candidate, the code performs a binary search to find the smallest `mid` (additional votes) such that adding `mid` to the candidate's votes ensures that no more than `M-1` candidates have votes strictly greater than the candidate's new total.
+   - For each candidate, the code checks if the remaining votes (after allocating `mid` to the candidate) can be distributed to other candidates to push at most `M-1` candidates above the candidate's new vote count. If possible, the candidate can secure victory with `mid` additional votes; otherwise, the search continues for a higher `mid`.
+
+This approach ensures that the solution is efficient and handles large input sizes within the constraints, leveraging sorting and binary search to achieve O(N log N) complexity.

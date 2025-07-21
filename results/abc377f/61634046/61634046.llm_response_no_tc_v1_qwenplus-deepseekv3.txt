@@ -1,0 +1,105 @@
+To fix this code, we need to address several issues, including incorrect variable names (like `m` and `n` being swapped), incorrect logic in counting the unsafe squares, and inefficiencies in handling large inputs (since N can be up to 1e9). The solution involves calculating the total safe squares by considering the squares attacked by existing pieces and subtracting them from the total.
+
+### Approaches
+1. **Identify Attacked Rows and Columns**: Any square in the same row or column as an existing piece is unsafe.
+2. **Identify Attacked Diagonals**: Squares on the same diagonal (both i+j and i-j) are unsafe.
+3. **Use Inclusion-Exclusion Principle**: To avoid double-counting squares that are unsafe due to multiple conditions.
+4. **Efficient Calculation**: Given the constraints, we need to manage the calculations efficiently, especially considering the large grid size (up to 1e9 x 1e9).
+
+### Solution Code
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+#define ll long long
+
+int main() {
+    ll N, M;
+    cin >> N >> M;
+    
+    unordered_set<ll> rows, cols, diag1, diag2;
+    
+    for (int i = 0; i < M; ++i) {
+        ll a, b;
+        cin >> a >> b;
+        rows.insert(a);
+        cols.insert(b);
+        diag1.insert(a + b);
+        diag2.insert(a - b);
+    }
+    
+    ll unsafe = 0;
+    
+    // Rows and columns
+    unsafe += rows.size() * N;
+    unsafe += cols.size() * N;
+    unsafe -= rows.size() * cols.size();
+    
+    // Diagonals (i + j)
+    for (ll d : diag1) {
+        ll start = max(1LL, d - N);
+        ll end = min(N, d - 1);
+        if (start <= end) {
+            unsafe += end - start + 1;
+        }
+    }
+    
+    // Diagonals (i - j)
+    for (ll d : diag2) {
+        ll start_row = max(1LL, 1 + d);
+        ll end_row = min(N, N + d);
+        if (start_row <= end_row) {
+            unsafe += end_row - start_row + 1;
+        }
+    }
+    
+    // Intersections between diagonals and rows/columns
+    for (ll a : rows) {
+        for (ll d : diag1) {
+            ll b = d - a;
+            if (b >= 1 && b <= N && cols.count(b)) {
+                unsafe--;
+            }
+        }
+        for (ll d : diag2) {
+            ll b = a - d;
+            if (b >= 1 && b <= N && cols.count(b)) {
+                unsafe--;
+            }
+        }
+    }
+    
+    // Intersections between diagonals themselves
+    for (ll d1 : diag1) {
+        for (ll d2 : diag2) {
+            if ((d1 + d2) % 2 == 0) {
+                ll a = (d1 + d2) / 2;
+                ll b = (d1 - d2) / 2;
+                if (a >= 1 && a <= N && b >= 1 && b <= N) {
+                    if (rows.count(a) && cols.count(b)) {
+                        unsafe++;
+                    }
+                }
+            }
+        }
+    }
+    
+    ll total = N * N;
+    ll safe = total - unsafe;
+    
+    cout << safe << endl;
+    
+    return 0;
+}
+```
+
+### Explanation
+1. **Initialization**: We read the grid size `N` and the number of pieces `M`.
+2. **Tracking Uniqueness**: We use unordered sets to track unique rows, columns, and diagonals (both `i+j` and `i-j`) that are already occupied by pieces.
+3. **Counting Unsafe Squares**: 
+   - **Rows and Columns**: We calculate the squares unsafe due to rows and columns, adjusting for overlaps using inclusion-exclusion.
+   - **Diagonals**: For each diagonal, we determine the range of squares that lie within the grid boundaries and count them.
+4. **Adjusting Overlaps**: We adjust for squares counted multiple times (like those lying on both a row and a diagonal) by subtracting overlaps.
+5. **Final Calculation**: The total safe squares are obtained by subtracting the unsafe squares from the total grid squares.
+
+This approach efficiently handles the large grid size by focusing only on the unique rows, columns, and diagonals affected by the existing pieces, ensuring optimal performance.

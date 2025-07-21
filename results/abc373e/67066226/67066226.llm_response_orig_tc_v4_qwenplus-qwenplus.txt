@@ -1,0 +1,113 @@
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+#define all(x) (x).begin(), (x).end()
+
+int main() {
+    ios_base::sync_with_stdio(0);
+    cin.tie(0);
+    int N, M;
+    ll K;
+    cin >> N >> M >> K;
+    vector<ll> A(N);
+    for (int i = 0; i < N; ++i) {
+        cin >> A[i];
+        K -= A[i];
+    }
+
+    vector<int> idx(N);
+    iota(all(idx), 0);
+
+    // Sort candidates by current votes
+    sort(all(idx), [&](int i, int j) { return A[i] < A[j]; });
+    vector<ll> sortedA = A;
+    sort(all(sortedA));
+
+    vector<ll> prefixSum(N + 1);
+    for (int i = 0; i < N; ++i) {
+        prefixSum[i + 1] = prefixSum[i] + sortedA[i];
+    }
+
+    vector<ll> C(N, -1);
+
+    for (int i = 0; i < N; ++i) {
+        int pos = i;  // position in the sorted list
+        ll myVotes = sortedA[pos];
+
+        // Binary search on required additional votes
+        ll low = 0, high = K;
+        ll answer = -1;
+
+        while (low <= high) {
+            ll mid = (low + high) / 2;
+            ll totalNeeded = 0;
+
+            // We want candidate i to have at least myVotes + mid so that fewer than M other candidates can have more than this.
+            ll threshold = myVotes + mid;
+
+            // Find how many candidates currently have more than threshold
+            int cntHigher = N - (upper_bound(sortedA.begin(), sortedA.end(), threshold) - sortedA.begin());
+
+            if (cntHigher < M) {
+                // Already good, try with less additional votes
+                answer = mid;
+                high = mid - 1;
+                continue;
+            }
+
+            // Need to beat enough top candidates to reduce their count above us
+            int needToBeat = cntHigher - M + 1;
+            int left = N - needToBeat;
+
+            // Binary search to find how many candidates are below threshold
+            int l = 0, r = N;
+            while (l < r) {
+                int m = (l + r) / 2;
+                if (sortedA[m] < threshold)
+                    l = m + 1;
+                else
+                    r = m;
+            }
+
+            ll cost = 0;
+            ll totalAvailable = K;
+
+            // Try to raise our candidate to make sure only M-1 others have more
+            // This is a greedy approach: we assume we take from remaining votes to boost ourselves and suppress others
+            if (needToBeat > 0) {
+                // We must bring the top 'needToBeat' candidates down to <= threshold
+                // We do this by increasing our own votes to threshold, and making those top 'needToBeat' candidates also at most threshold
+                ll extraNeeded = (threshold - sortedA[left]) + 1;
+                cost += extraNeeded;
+
+                // Now calculate how much it takes to reduce the top 'needToBeat' candidates to <= threshold
+                ll sumTop = prefixSum[N] - prefixSum[left];
+                ll target = threshold * (N - left);
+                ll diff = max(0LL, target - sumTop);
+                cost += diff;
+
+                if (cost <= K) {
+                    answer = mid;
+                    high = mid - 1;
+                } else {
+                    low = mid + 1;
+                }
+            } else {
+                // No need to adjust others, we're already in top M
+                answer = mid;
+                high = mid - 1;
+            }
+        }
+
+        if (answer == -1) {
+            C[idx[i]] = -1;
+        } else {
+            C[idx[i]] = max(0LL, answer);
+        }
+    }
+
+    for (auto val : C) cout << val << " ";
+    cout << "\n";
+}
+```

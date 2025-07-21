@@ -1,0 +1,85 @@
+To fix this code, we need to address the issue of accurately determining which sections of the island will sink as the sea level rises each year. The original approach uses a priority queue to propagate the sinking from the borders inward, but it might not correctly account for all possible sinking paths or efficiently handle the large constraints.
+
+### Approaches
+1. **Priority Queue for Sinking Propagation**: We use a min-heap (priority queue) to process sections in order of their elevation, starting from the borders. This ensures that we process sections in the correct order as the sea level rises.
+2. **Tracking Sinking Times**: For each section, we track the earliest time it sinks, which is the maximum of its elevation and the sinking times of its adjacent sections that have already sunk.
+3. **Prefix Sum for Efficient Querying**: After determining the sinking times for all sections, we use a prefix sum array to efficiently compute the remaining area for each year.
+
+### Solution Code
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+#define all(x) (x).begin(), (x).end()
+
+int main() {
+    ios_base::sync_with_stdio(0);
+    cin.tie(0);
+    int h, w, y;
+    cin >> h >> w >> y;
+    vector<vector<int>> height(h, vector<int>(w));
+    vector<vector<int>> sink(h, vector<int>(w, INT_MAX));
+    priority_queue<pair<int, pair<int, int>>, vector<pair<int, pair<int, int>>>, greater<pair<int, pair<int, int>>>> pq;
+    int di[4][2] = {{-1, 0}, {1, 0}, {0, -1}, {0, 1}};
+
+    for (int i = 0; i < h; i++) {
+        for (int j = 0; j < w; j++) {
+            cin >> height[i][j];
+            if (i == 0 || i == h - 1 || j == 0 || j == w - 1) {
+                sink[i][j] = height[i][j];
+                pq.push({sink[i][j], {i, j}});
+            }
+        }
+    }
+
+    while (!pq.empty()) {
+        auto current = pq.top();
+        pq.pop();
+        int current_height = current.first;
+        int r = current.second.first;
+        int c = current.second.second;
+
+        for (int k = 0; k < 4; k++) {
+            int nr = r + di[k][0];
+            int nc = c + di[k][1];
+            if (nr >= 0 && nr < h && nc >= 0 && nc < w) {
+                int new_sink = max(current_height, height[nr][nc]);
+                if (new_sink < sink[nr][nc]) {
+                    sink[nr][nc] = new_sink;
+                    pq.push({sink[nr][nc], {nr, nc}});
+                }
+            }
+        }
+    }
+
+    vector<int> cnt(y + 2, 0);
+    for (int i = 0; i < h; i++) {
+        for (int j = 0; j < w; j++) {
+            if (sink[i][j] <= y) {
+                cnt[sink[i][j]]++;
+            }
+        }
+    }
+
+    vector<int> prefix(y + 1, 0);
+    prefix[0] = cnt[0];
+    for (int i = 1; i <= y; i++) {
+        prefix[i] = prefix[i - 1] + cnt[i];
+    }
+
+    for (int i = 1; i <= y; i++) {
+        cout << h * w - prefix[i] << '\n';
+    }
+
+    return 0;
+}
+```
+
+### Explanation
+1. **Initialization**: We read the input dimensions and the elevation matrix. The borders are immediately added to the priority queue with their elevations as their sinking times.
+2. **Priority Queue Processing**: Using a min-heap, we process each section, updating the sinking times of adjacent sections to be the maximum of their own elevation or the current section's sinking time. This ensures that sections are processed in the correct order as the sea level rises.
+3. **Counting Sinking Sections**: We count how many sections sink at each sea level using an array `cnt`.
+4. **Prefix Sum Calculation**: We compute a prefix sum array to quickly answer queries about the total sections sunk by any given year.
+5. **Output**: For each year, we output the remaining area by subtracting the total sunk sections from the total island area.
+
+This approach efficiently handles the constraints and ensures correct results by propagating sinking conditions from the borders inward, using a priority queue to manage the order of processing. The prefix sum array allows for constant-time queries after an initial O(Y) setup.

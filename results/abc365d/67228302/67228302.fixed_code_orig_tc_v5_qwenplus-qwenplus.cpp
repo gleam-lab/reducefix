@@ -1,0 +1,34 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define endl "\n"
+#define MOD 1000000007
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(0);
+
+    map<char, char> beats = {{'R', 'P'}, {'P', 'S'}, {'S', 'R'}};
+    int n;
+    cin >> n;
+    string s;
+    cin >> s;
+
+    int total = 1;
+    vector<char> moves;
+
+    // Initialize with the first move's counter
+    moves.push_back(beats[s[0]]);
+
+    for (int i = 1; i < n; ++i) {
+        char counter = beats[s[i]];
+
+        // Check if this counter can be appended to the current sequence
+        if (moves.empty() || beats[s[i]] != moves.back()) {
+            moves.push_back(counter);
+        }
+    }
+
+    cout << moves.size() << endl;
+
+    return 0;
+}

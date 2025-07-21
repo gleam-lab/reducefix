@@ -1,0 +1,37 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false); cin.tie(0); cout.tie(0);
+
+    long long n, m;
+    cin >> n >> m;
+
+    set<pair<long long, long long>> s;
+    for(long long i = 0; i < m; i++) {
+        long long a, b;
+        cin >> a >> b;
+        s.insert({a, b});
+    }
+
+    long long ans = 0;
+    for(long long i = 1; i <= n; i++) {
+        for(long long j = 1; j <= n; j++) {
+            bool valid = true;
+            vector<vector<long long>> moves = {{2, 1}, {1, 2}, {-1, 2}, {-2, 1}, {-2, -1}, {-1, -2}, {1, -2}, {2, -1}};
+            for(auto &move : moves) {
+                long long x = i + move[0], y = j + move[1];
+                if(x >= 1 && x <= n && y >= 1 && y <= n && s.find({x, y}) != s.end()) {
+                    valid = false;
+                    break;
+                }
+            }
+            if(valid) {
+                ans++;
+            }
+        }
+    }
+
+    cout << ans << '\n';
+    return 0;
+}

@@ -1,0 +1,58 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    long long N, M;
+    cin >> N >> M;
+
+    // Set to store positions with pieces
+    unordered_set<string> piecePositions;
+
+    // Set to store positions that are under attack
+    unordered_set<string> attackedPositions;
+
+    // Directions for attack positions
+    vector<pair<long long, long long>> directions = {
+        {2, 1}, {1, 2}, {-1, 2}, {-2, 1},
+        {-2, -1}, {-1, -2}, {1, -2}, {2, -1}
+    };
+
+    for (long long i = 0; i < M; ++i) {
+        long long a, b;
+        cin >> a >> b;
+
+        // Store current piece position
+        string key = to_string(a) + "," + to_string(b);
+        piecePositions.insert(key);
+
+        // Check all attackable positions from this piece
+        for (auto [dx, dy] : directions) {
+            long long x = a + dx;
+            long long y = b + dy;
+
+            if (x >= 1 && x <= N && y >= 1 && y <= N) {
+                string attackKey = to_string(x) + "," + to_string(y);
+                attackedPositions.insert(attackKey);
+            }
+        }
+    }
+
+    // Now count valid positions
+    long long totalValid = 0;
+
+    // Iterate over all attacked and piece positions to find valid ones
+    for (auto pos : attackedPositions) {
+        if (piecePositions.find(pos) == piecePositions.end()) {
+            totalValid++;
+        }
+    }
+
+    // Total squares is N*N
+    // Subtract number of attacked or occupied positions
+    long long totalSquares = N * N;
+    long long unavailable = piecePositions.size() + totalValid;
+
+    cout << totalSquares - unavailable << endl;
+
+    return 0;
+}

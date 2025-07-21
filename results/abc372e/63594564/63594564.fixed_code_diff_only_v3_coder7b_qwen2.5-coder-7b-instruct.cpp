@@ -1,0 +1,60 @@
+#include "bits/stdc++.h"
+
+using namespace std;
+
+#define ff first
+#define ss second
+#define ll long long
+#define SZ(s) (int)s.size()
+
+int const N = 2e5 + 5;
+
+vector <set <int>> v;
+vector <int> p;
+
+int par(int x) {
+    if(p[x] == x) return x;
+    return p[x] = par(p[x]);
+}
+
+void uni(int a, int b) {
+    a = par(a), b = par(b);
+    if(a == b) return;
+    if(SZ(v[a]) > SZ(v[b])) swap(a, b);
+    for(auto &x : v[a]) v[b].insert(x);
+    while(SZ(v[b]) > 10) v[b].erase(prev(end(v[b])));
+    p[a] = b;
+    return;
+}
+
+signed main() {
+    ios_base::sync_with_stdio(false); cin.tie(nullptr);
+
+    int n, q;
+    cin >> n >> q;
+    p.resize(n+1);
+    v.resize(n+1);
+    for(int i = 1; i <= n; i++) {
+        p[i] = i;
+        v[i].insert(i);
+    }
+    while(q--) {
+        int t, a, b;
+        cin >> t >> a >> b;
+        if(t == 1) {
+            uni(a, b);
+        }
+        else {
+            a = par(a);
+            auto it = prev(end(v[a]));
+            if(it >= begin(v[a]) && distance(begin(v[a]), it) >= b-1) {
+                cout << *it << '\n';
+            }
+            else {
+                cout << -1 << '\n';
+            }
+        }
+    }
+
+    return 0;
+}

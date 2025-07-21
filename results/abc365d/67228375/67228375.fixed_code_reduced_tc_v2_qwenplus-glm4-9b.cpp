@@ -1,0 +1,36 @@
+#include <iostream>
+#include <string>
+#include <map>
+
+using namespace std;
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(0);
+
+    map<char, char> beats = {{'R', 'P'}, {'P', 'S'}, {'S', 'R'}};
+    string s;
+    cin >> s;
+    
+    int total_1 = 0;
+    char last_move = ' ';
+    for (char c : s) {
+        if (beats[c] == last_move) {
+            last_move = c;
+            total_1++;
+        }
+    }
+
+    int total_2 = 0;
+    last_move = ' ';
+    for (char c : s) {
+        if (beats[c] == last_move) {
+            last_move = c;
+            total_2++;
+        }
+    }
+
+    cout << max(total_1, total_2) << endl;
+
+    return 0;
+}

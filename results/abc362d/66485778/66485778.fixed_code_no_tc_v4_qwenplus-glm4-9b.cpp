@@ -1,0 +1,58 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define int long long 
+
+int n, m;
+vector<pair<int, int>> g[n + 1]; // to store edges
+vector<int> a(n + 1); // to store vertex weights
+vector<int> d(n + 1, 1e18); // to store minimum distances from vertex 1 to all other vertices
+vector<bool> vis(n + 1, false); // to keep track of visited vertices
+
+void solve() {
+    // weights of vertices
+    for (int i = 1; i <= n; i++) {
+        cin >> a[i];
+    }
+
+    // edges of the graph
+    for (int i = 0; i < m; i++) {
+        int u, v, w;
+        cin >> u >> v >> w;
+        g[u].push_back({v, w});
+        g[v].push_back({u, w});
+    }
+
+    // min heap to perform dijkstra's algorithm
+    priority_queue<pair<int, int>, vector<pair<int, int>>, greater<pair<int, int>>> pq;
+    pq.push({a[1], 1}); // start from vertex 1 with the weight of the vertex itself
+    d[1] = a[1]; // set the distance to the starting vertex
+
+    // dijkstra's algorithm
+    while (!pq.empty()) {
+        auto [curr_weight, u] = pq.top();
+        pq.pop();
+
+        if (vis[u]) continue;
+        vis[u] = true;
+
+        for (auto& [v, weight] : g[u]) {
+            if (curr_weight + weight + a[v] < d[v]) {
+                d[v] = curr_weight + weight + a[v];
+                pq.push({d[v], v});
+            }
+        }
+    }
+
+    // output the minimum weights for paths from vertex 1 to all other vertices
+    for (int i = 2; i <= n; i++) {
+        cout << d[i] << " ";
+    }
+    cout << endl;
+}
+
+int main() {
+    // number of vertices and edges
+    cin >> n >> m;
+    solve();
+    return 0;
+}

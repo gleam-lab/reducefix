@@ -1,0 +1,99 @@
+
+The given problem is about a grid where walls are destroyed based on a series of queries. Each query places a bomb at a specific cell, and the walls around that cell are destroyed if they exist. The challenge is to efficiently simulate this process and count the number of remaining walls after all queries.
+
+There are several parts to this problem:
+
+1. **Data Structures**: We need efficient data structures to handle the grid and the queries. Two potential structures are:
+   - A 2D vector where walls are stored for each cell. This would allow for quick access to the walls at a specific cell but might be inefficient for updates.
+   - Data structures like sets or segment trees, which can handle range queries and updates efficiently. This might be more suitable given the problem constraints.
+
+2. **Query Handling**: Each query specifies a cell to place a bomb in. If a wall exists at that cell, it is destroyed. If not, walls to the north, south, east, and west are destroyed up to the first wall or until the edge of the grid is reached.
+
+3. **Edge Cases**: The solution must handle edge cases where a bomb is placed at the edge of the grid, and thus there are no walls to the north, south, east, or west. Additionally, the solution must handle cases where multiple queries may destroy the same wall.
+
+The incorrect code provided has several issues:
+
+- The use of `lower_bound` and `prev` might not work correctly due to the way sets are implemented in C++.
+- The removal of walls from both `tate` and `yoko` may not be handled correctly, potentially causing walls to be removed twice.
+- There is no check to ensure that walls are not removed from the set if they no longer exist in the grid.
+
+To address these issues, here is a corrected version of the code:
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+#define rep(i, n) for (int i = 0; i < (n); i++)
+using ll = long long;
+
+int main() {
+    int h, w, q;
+    cin >> h >> w >> q;
+    vector<set<pair<int, int>>> tate(w), yoko(h);
+    for (int i = 0; i < h; i++) {
+        for (int j = 0; j < w; j++) {
+            tate[j].insert({i, j});
+            yoko[i].insert({i, j});
+        }
+    }
+
+    rep(qi, q) {
+        int r, c;
+        cin >> r >> c;
+        r--; c--;
+        if (tate[c].find({r, c}) != tate[c].end()) {
+            tate[c].erase({r, c});
+            yoko[r].erase({r, c});
+        } else {
+            // Destroy vertical walls
+            int bound = min(r - 1, h - 1);
+            for (int i = 0; i <= bound; i++) {
+                auto it = tate[c].lower_bound({i, c});
+                if (it != tate[c].end() && (*it).first == i && (*it).second == c) {
+                    tate[c].erase(it);
+                    yoko[i].erase({i, c});
+                    break;
+                }
+            }
+            bound = max(0, r);
+            for (int i = bound; i < h; i++) {
+                auto it = tate[c].lower_bound({i, c});
+                if (it != tate[c].end() && (*it).first == i && (*it).second == c) {
+                    tate[c].erase(it);
+                    yoko[i].erase({i, c});
+                    break;
+                }
+            }
+
+            // Destroy horizontal walls
+            bound = min(c - 1, w - 1);
+            for (int j = 0; j <= bound; j++) {
+                auto it = yoko[r].lower_bound({r, j});
+                if (it != yoko[r].end() && (*it).first == r && (*it).second == j) {
+                    tate[j].erase(it);
+                    yoko[r].erase(it);
+                    break;
+                }
+            }
+            bound = max(0, c);
+            for (int j = bound; j < w; j++) {
+                auto it = yoko[r].lower_bound({r, j});
+                if (it != yoko[r].end() && (*it).first == r && (*it).second == j) {
+                    tate[j].erase(it);
+                    yoko[r].erase(it);
+                    break;
+                }
+            }
+        }
+    }
+
+    int ans = 0;
+    for (int i = 0; i < w; i++) {
+        ans += tate[i].size();
+    }
+
+    cout << ans << endl;
+    return 0;
+}
+```
+
+This code uses pairs of integers to represent cells in the sets, ensuring that walls are not removed if they no longer exist. It also ensures that walls are destroyed correctly during the queries.

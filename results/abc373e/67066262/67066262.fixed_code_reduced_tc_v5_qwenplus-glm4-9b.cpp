@@ -1,0 +1,45 @@
+#include <bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+
+int main() {
+    ios_base::sync_with_stdio(0);
+    cin.tie(0);
+    int n, m;
+    ll k;
+    cin >> n >> m >> k;
+    vector<ll> a(n);
+    vector<ll> needed_votes(n);
+    vector<ll> sorted_a(a);
+    
+    // Read and subtract votes already received from total votes
+    for (int i = 0; i < n; ++i) {
+        cin >> a[i];
+        k -= a[i];
+    }
+
+    // Sort the array of votes to find the lower bound for victory
+    sort(sorted_a.begin(), sorted_a.end());
+
+    // Calculate the number of votes needed to guarantee victory
+    for (int i = 0; i < n; ++i) {
+        // If there are more candidates than m, check the one at the m-th position
+        // because this is the upper bound for the number of candidates that can have the same or more votes
+        ll victory_votes = (i >= m ? sorted_a[m] : sorted_a[n - 1]);
+        needed_votes[i] = victory_votes - a[i];
+
+        // If the remaining votes are less than the needed votes to guarantee victory
+        // or if there are no more votes left, the candidate cannot secure victory
+        if (needed_votes[i] > k) {
+            needed_votes[i] = -1;
+        }
+    }
+
+    // Output the votes needed for each candidate to secure their victory
+    for (int i = 0; i < n; ++i) {
+        cout << needed_votes[i] << " ";
+    }
+    cout << endl;
+
+    return 0;
+}

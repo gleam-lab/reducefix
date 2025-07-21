@@ -1,0 +1,35 @@
+#include <iostream> // cout, endl, cin
+using namespace std;
+
+int cmp(char x, char y) {
+    if (x == 'P') return (y == 'R') ? 1 : (y == 'S') ? -1 : 0;
+    if (x == 'R') return (y == 'P') ? -1 : (y == 'S') ? 1 : 0;
+    if (x == 'S') return (y == 'P') ? -1 : (y == 'R') ? 1 : 0;
+    return -100; // Assuming 'X' should always be considered less than any game piece
+}
+
+char win(char x) {
+    if (x == 'R') return 'P';
+    if (x == 'S') return 'R';
+    if (x == 'P') return 'S';
+    return 'X'; // Assuming 'X' cannot win
+}
+
+int main() {
+    int n;
+    string s;
+    cin >> n >> s;
+    
+    int ans = 1; // Start with 1 because the first character always counts as a sequence start
+    char prev = 'X'; // Initialize prev with 'X' to ensure the first character comparison is valid
+    
+    for (int i = 0; i < n; i++) {
+        if (cmp(s[i], prev) > 0) {
+            ans++; // Increment if the current character has a higher precedence than the previous one
+            prev = s[i]; // Update prev to the current character
+        }
+    }
+    
+    cout << ans << endl; // Output the number of sequences
+    return 0;
+}

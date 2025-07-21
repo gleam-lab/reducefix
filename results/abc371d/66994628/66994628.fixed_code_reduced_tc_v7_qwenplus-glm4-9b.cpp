@@ -1,0 +1,31 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int n, q;
+int x[200005], p[200005];
+int sum[200005], index[200005];
+
+int main() {
+    cin >> n;
+    for (int i = 0; i < n; i++) {
+        cin >> x[i];
+        index[i] = i;
+    }
+    sort(index, index + n, [&](int a, int b) {
+        return x[a] < x[b];
+    });
+
+    for (int i = 0; i < n; i++) {
+        cin >> p[i];
+        sum[index[i]] = (i > 0 ? sum[index[i - 1]] : 0) + p[i];
+    }
+
+    cin >> q;
+    while (q--) {
+        int l, r;
+        cin >> l >> r;
+        auto it1 = lower_bound(index, index + n, l);
+        auto it2 = lower_bound(index, index + n, r);
+        cout << sum[*it2 - 1] - sum[*it1 - 1] << endl;
+    }
+}

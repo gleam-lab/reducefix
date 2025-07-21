@@ -1,0 +1,91 @@
+To fix this code, we need to address the core logic that determines the minimum number of additional votes each candidate needs to secure their victory. The original approach had issues in correctly determining the upper bound and the required votes calculation. The revised approach involves sorting the candidates' current votes, calculating the necessary votes for each candidate to ensure they are among the top M candidates after all votes are counted, and then translating this back to the original indices.
+
+### Approaches
+1. **Sorting and Prefix Sums**: First, sort the candidates' current votes. This allows us to efficiently compute the sum of votes for any subset of candidates.
+2. **Binary Search for Minimum Votes**: For each candidate, use binary search to determine the minimum number of additional votes they need to secure their position in the top M candidates. This involves calculating the total votes required to ensure that no more than M-1 candidates have votes higher than the given candidate's votes plus the additional votes.
+3. **Efficiency**: The approach ensures that the solution is efficient with a time complexity of O(N log N), which is suitable given the constraints.
+
+### Solution Code
+```cpp
+#include <iostream>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+typedef long long ll;
+
+struct Candidate {
+    ll a;
+    int idx;
+};
+
+int main() {
+    int N, M;
+    ll K;
+    cin >> N >> M >> K;
+    vector<Candidate> A(N);
+    for (int i = 0; i < N; ++i) {
+        cin >> A[i].a;
+        A[i].idx = i;
+    }
+    
+    // Sort the candidates based on their current votes
+    sort(A.begin(), A.end(), [](const Candidate& a, const Candidate& b) {
+        return a.a < b.a;
+    });
+    
+    vector<ll> prefix_sum(N + 1, 0);
+    for (int i = 0; i < N; ++i) {
+        prefix_sum[i + 1] = prefix_sum[i] + A[i].a;
+    }
+    
+    ll remaining_votes = K - prefix_sum[N];
+    vector<ll> res(N, -1);
+    
+    for (int i = 0; i < N; ++i) {
+        // Binary search to find the minimal X for candidate i
+        ll left = 0;
+        ll right = remaining_votes;
+        ll answer = -1;
+        
+        while (left <= right) {
+            ll mid = (left + right) / 2;
+            
+            // Calculate the new vote count for candidate i
+            ll new_votes = A[i].a + mid;
+            
+            // Find the first candidate with votes > new_votes
+            auto it = upper_bound(A.begin(), A.end(), Candidate{new_votes, 0}, 
+                [](const Candidate& x, const Candidate& y) {
+                    return x.a < y.a;
+                });
+            int cnt_greater = A.end() - it;
+            
+            if (cnt_greater < M) {
+                answer = mid;
+                right = mid - 1;
+            } else {
+                left = mid + 1;
+            }
+        }
+        
+        res[A[i].idx] = answer;
+    }
+    
+    // Output the results in the original order
+    for (int i = 0; i < N; ++i) {
+        cout << res[i] << " ";
+    }
+    cout << endl;
+    
+    return 0;
+}
+```
+
+### Explanation
+1. **Sorting**: The candidates are sorted based on their current votes to facilitate efficient binary search and sum calculations.
+2. **Binary Search**: For each candidate, we perform a binary search to find the minimum number of additional votes (`X`) required such that, after adding `X` votes, the candidate is among the top M candidates.
+3. **Upper Bound Calculation**: The `upper_bound` function is used to determine how many candidates would have votes greater than the candidate's new vote count (after adding `X` votes). If this count is less than M, the candidate is guaranteed to be elected.
+4. **Result Construction**: The results are stored in an array according to the original indices of the candidates and printed in the required order.
+
+This approach ensures that the solution is both correct and efficient, handling the constraints effectively.

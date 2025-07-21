@@ -1,0 +1,45 @@
+#include <bits/stdc++.h>
+using namespace std;
+using LL = long long;
+
+void solve() {
+    int n, m; cin >> n >> m;
+    vector<int> a(n);
+
+    int sum = 0;
+    for(auto &x : a) {
+        cin >> x;
+        x %= m;
+        sum = (sum + x) % m;
+    }
+
+    LL res = 0;
+    unordered_map<int, int> mp[2];
+    mp[0][0]++, mp[1][0]++;
+    int pre = 0;
+    for(int x : a) {
+        pre = (pre + x) % m;
+        res += mp[0].count(pre);
+        res += mp[1].count((pre - sum + m) % m);
+        mp[0][pre]++;
+        mp[1][pre]++;
+    }
+
+    cout << res << '\n';
+}
+
+int main() {
+    ios_base::sync_with_stdio(false), cin.tie(nullptr), cout.tie(nullptr);
+#ifndef ONLINE_JUDGE
+    ifstream in("in.txt"); ofstream out("out.txt");
+    cin.rdbuf(in.rdbuf()), cout.rdbuf(out.rdbuf());
+#endif
+    int T = 1;
+    // cin >> T;
+    while(T--) solve();
+#ifndef ONLINE_JUDGE
+    auto end_time = chrono::high_resolution_clock::now();
+    cerr << "Execution time: " << chrono::duration<double>(end_time - begin_time).count() << " ms\n";
+#endif
+    return 0;
+}

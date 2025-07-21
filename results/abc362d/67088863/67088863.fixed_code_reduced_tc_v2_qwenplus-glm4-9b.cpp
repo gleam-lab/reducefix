@@ -1,0 +1,59 @@
+#include <iostream>
+#include <vector>
+#include <queue>
+#include <algorithm>
+using namespace std;
+
+const long long INF = 1e18;
+const int MAXN = 2e5 + 5;
+
+vector<pair<int, long long>> adj[MAXN];
+int n, m;
+long long vertexWeights[MAXN];
+
+void solve() {
+    long long dist[MAXN];
+    fill(dist, dist + n, INF);
+
+    priority_queue<pair<long long, int>> pq;
+    pq.push({0, 0});
+    dist[0] = 0;
+
+    for (int i = 0; i < n; ++i) {
+        if (pq.empty()) break;
+        auto [d, u] = pq.top(); pq.pop();
+
+        if (d > dist[u]) continue;
+        for (auto [v, weight] : adj[u]) {
+            long long newDist = d + weight + vertexWeights[v];
+            if (newDist < dist[v]) {
+                dist[v] = newDist;
+                pq.push({newDist, v});
+            }
+        }
+    }
+
+    for (int i = 1; i < n; ++i) {
+        cout << dist[i] << ' ';
+    }
+    cout << endl;
+}
+
+int main() {
+    ios::sync_with_stdio(0);
+    cin.tie(0);
+
+    cin >> n >> m;
+    for (int i = 0; i < n; ++i) cin >> vertexWeights[i];
+
+    for (int i = 0; i < m; ++i) {
+        int u, v, w;
+        cin >> u >> v >> w;
+        adj[u]..emplace_back(v, w);
+        adj[v].emplace_back(u, w);
+    }
+
+    solve();
+
+    return 0;
+}

@@ -1,0 +1,87 @@
+To solve this problem, we need to handle both adding edges and querying the k-th largest vertex number among the neighbors of a given vertex efficiently. Here's a step-by-step approach to fix the provided code:
+
+1. **Union-Find Data Structure**: To manage connected components and efficiently merge them when edges are added.
+2. **Sorted Containers**: To maintain a sorted list of neighbors' degrees for quick access to the k-th largest element.
+
+### Key Changes and Improvements:
+
+1. **Union-Find Implementation**: Simplify and optimize the union-find operations using path compression and union by rank.
+2. **Sorted Containers**: Use `std::multiset` to keep track of degrees of nodes in each connected component. This allows efficient insertion, deletion, and access to the k-th largest element.
+
+Here is the corrected and optimized code:
+
+```cpp
+#include<bits/stdc++.h>
+using namespace std;
+
+struct UF {
+    vector<int> parent, size;
+    
+    UF(int n) : parent(n), size(n, 1) {
+        iota(parent.begin(), parent.end(), 0);
+    }
+    
+    int find(int x) {
+        if (parent[x] != x) 
+            parent[x] = find(parent[x]);
+        return parent[x];
+    }
+    
+    void unite(int x, int y) {
+        x = find(x), y = find(y);
+        if (x == y) return;
+        if (size[x] < size[y]) swap(x, y);
+        parent[y] = x;
+        size[x] += size[y];
+    }
+};
+
+int main() {
+    ios_base::sync_with_stdio(false); cin.tie(nullptr);
+
+    int n, q;
+    cin >> n >> q;
+
+    UF uf(n + 1);
+    vector<multiset<int>> adj(n + 1);
+
+    while (q--) {
+        int type, u, v, k;
+        cin >> type >> u >> v;
+
+        if (type == 1) {
+            int pu = uf.find(u), pv = uf.find(v);
+            if (pu != pv) {
+                // Merge sets
+                multiset<int>& sa = adj[pu], &sb = adj[pv];
+                sa.insert(sb.begin(), sb.end());
+                sa.insert(v);
+                sb.clear();
+                uf.unite(u, v);
+            }
+        } else {
+            int pu = uf.find(u);
+            auto& s = adj[pu];
+            if (s.size() < k) cout << "-1\n";
+            else cout << *next(s.rbegin(), k - 1) << '\n';
+        }
+    }
+
+    return 0;
+}
+```
+
+### Explanation:
+
+1. **Union-Find (`UF` Class)**:
+   - `find`: Path-compression optimized find operation.
+   - `unite`: Union by rank operation to merge sets efficiently.
+
+2. **Adjacency List with Sorted Sets**:
+   - For each connected component, use a `multiset` to store the degrees of its vertices.
+   - When merging components, combine the multisets and update the parent accordingly.
+
+3. **Query Handling**:
+   - For type 2 queries, directly fetch the k-th largest element from the relevant set if it exists, otherwise print `-1`.
+
+This solution ensures that both adding edges and querying the k-th largest degree are handled efficiently, even for large inputs up to the specified constraints.

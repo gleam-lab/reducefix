@@ -1,0 +1,36 @@
+#include <iostream>
+#include <vector>
+#include <cmath>
+using namespace std;
+
+int main() {
+    int n;
+    cin >> n;
+    
+    if (n == 0) {
+        cout << 0.0 << endl;
+        return 0;
+    }
+
+    vector<pair<long long, long long>> points(n + 1);
+    points[0] = {0, 0};
+    
+    long long x, y;
+    for (int i = 1; i <= n; i++) {
+        cin >> x >> y;
+        points[i] = {x, y};
+    }
+    
+    double total_distance = 0.0;
+    for (int i = 1; i <= n; i++) {
+        total_distance += sqrt(pow(points[i].first - points[i - 1].first, 2) 
+                               + pow(points[i].second - points[i - 1].second, 2));
+    }
+
+    // Print the total distance to the origin one last time
+    total_distance += sqrt(pow(points[n].first - points[0].first, 2)
+                           + pow(points[n].second - points[0].second, 2));
+    
+    cout << fixed << setprecision(12) << total_distance << endl;
+    return 0;
+}

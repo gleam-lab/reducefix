@@ -1,0 +1,52 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    int N;
+    cin >> N;
+    vector<long long> A(N);
+    vector<long long> B(N - 1);
+
+    for (int i = 0; i < N; ++i) cin >> A[i];
+    for (int i = 0; i < N - 1; ++i) cin >> B[i];
+
+    // Sort toys and boxes in descending order
+    sort(A.begin(), A.end(), greater<>());
+    sort(B.begin(), B.end(), greater<>());
+
+    // Try to fit the largest toy into the largest box or the new one
+    // We'll simulate placing toys greedily using binary search on x
+
+    // Binary search bounds
+    long long low = 1, high = 1e18;
+    long long answer = -1;
+
+    while (low <= high) {
+        long long mid = (low + high) / 2;
+
+        // Create a copy of B and insert the new box size mid
+        multiset<long long> boxes;
+        for (long long b : B) boxes.insert(b);
+        boxes.insert(mid);
+
+        bool ok = true;
+        for (int i = 0; i < N; ++i) {
+            // Find smallest box >= A[i]
+            auto it = boxes.lower_bound(A[i]);
+            if (it == boxes.end()) {
+                ok = false;
+                break;
+            }
+            boxes.erase(it); // Use this box
+        }
+
+        if (ok) {
+            answer = mid;
+            high = mid - 1;
+        } else {
+            low = mid + 1;
+        }
+    }
+
+    cout << answer << endl;
+}

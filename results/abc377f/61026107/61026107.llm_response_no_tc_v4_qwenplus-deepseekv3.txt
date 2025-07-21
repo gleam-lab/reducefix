@@ -1,0 +1,214 @@
+To fix this code, we need to ensure that we correctly account for all squares that are under attack by any of the existing pieces. The original code attempts to subtract the attacked squares from the total squares but misses some overlaps and incorrect calculations, especially in the inclusion-exclusion principle parts.
+
+### Approaches
+1. **Count Attacked Squares**: The key observation is that any square (i, j) is under attack if it shares the same row, column, diagonal (i - j = constant), or anti-diagonal (i + j = constant) with any existing piece. We need to count all such squares without double-counting overlaps.
+2. **Inclusion-Exclusion Principle**: To handle overlaps where a square might be under attack by multiple conditions (e.g., same row and same column), we use the inclusion-exclusion principle to correctly subtract the unique squares.
+3. **Efficiency**: Given the constraints (N up to 10^9), we must avoid O(N) operations. Instead, we focus on the M existing pieces (M up to 10^3) and compute the attacked squares using set operations and mathematical formulas.
+
+### Solution Code
+```cpp
+#include<bits/stdc++.h>
+
+using namespace std;
+using ll = long long;
+
+void solve() {
+    ll n, m; cin >> n >> m;
+    set<ll> rows, cols, diags1, diags2;
+    set<pair<ll, ll>> pieces;
+
+    for (int i = 0; i < m; ++i) {
+        ll a, b; cin >> a >> b;
+        rows.insert(a);
+        cols.insert(b);
+        diags1.insert(a - b);
+        diags2.insert(a + b);
+        pieces.insert({a, b});
+    }
+
+    ll total_safe = 0;
+
+    // Total squares
+    ll total = n * n;
+
+    // Squares attacked by rows
+    ll row_attacks = rows.size() * n;
+
+    // Squares attacked by columns
+    ll col_attacks = cols.size() * n;
+
+    // Squares attacked by diagonals (a - b = constant)
+    ll diag1_attacks = 0;
+    for (auto d : diags1) {
+        // The number of squares (i, j) where i - j = d
+        // i ranges from max(1, 1 + d) to min(n, n + d)
+        // j = i - d
+        ll lower_i = max(1LL, 1LL + d);
+        ll upper_i = min(n, n + d);
+        if (upper_i >= lower_i) {
+            diag1_attacks += (upper_i - lower_i + 1);
+        }
+    }
+
+    // Squares attacked by anti-diagonals (a + b = constant)
+    ll diag2_attacks = 0;
+    for (auto d : diags2) {
+        // The number of squares (i, j) where i + j = d
+        // i ranges from max(1, d - n) to min(n, d - 1)
+        // j = d - i
+        ll lower_i = max(1LL, d - n);
+        ll upper_i = min(n, d - 1);
+        if (upper_i >= lower_i) {
+            diag2_attacks += (upper_i - lower_i + 1);
+        }
+    }
+
+    // Inclusion-exclusion for overlaps
+    // Rows and columns
+    ll row_col_intersect = 0;
+    for (auto r : rows) {
+        for (auto c : cols) {
+            if (pieces.count({r, c}) == 0) {
+                row_col_intersect++;
+            }
+        }
+    }
+
+    // Rows and diag1
+    ll row_diag1_intersect = 0;
+    for (auto r : rows) {
+        for (auto d : diags1) {
+            ll j = r - d;
+            if (j >= 1 && j <= n && pieces.count({r, j}) == 0) {
+                row_diag1_intersect++;
+            }
+        }
+    }
+
+    // Rows and diag2
+    ll row_diag2_intersect = 0;
+    for (auto r : rows) {
+        for (auto d : diags2) {
+            ll j = d - r;
+            if (j >= 1 && j <= n && pieces.count({r, j}) == 0) {
+                row_diag2_intersect++;
+            }
+        }
+    }
+
+    // Columns and diag1
+    ll col_diag1_intersect = 0;
+    for (auto c : cols) {
+        for (auto d : diags1) {
+            ll i = c + d;
+            if (i >= 1 && i <= n && pieces.count({i, c}) == 0) {
+                col_diag1_intersect++;
+            }
+        }
+    }
+
+    // Columns and diag2
+    ll col_diag2_intersect = 0;
+    for (auto c : cols) {
+        for (auto d : diags2) {
+            ll i = d - c;
+            if (i >= 1 && i <= n && pieces.count({i, c}) == 0) {
+                col_diag2_intersect++;
+            }
+        }
+    }
+
+    // Diag1 and diag2
+    ll diag1_diag2_intersect = 0;
+    for (auto d1 : diags1) {
+        for (auto d2 : diags2) {
+            if ((d1 + d2) % 2 != 0) continue;
+            ll i = (d1 + d2) / 2;
+            ll j = (d2 - d1) / 2;
+            if (i >= 1 && i <= n && j >= 1 && j <= n && pieces.count({i, j}) == 0) {
+                diag1_diag2_intersect++;
+            }
+        }
+    }
+
+    // Three-way intersections
+    ll row_col_diag1_intersect = 0;
+    for (auto r : rows) {
+        for (auto c : cols) {
+            if (diags1.count(r - c) && pieces.count({r, c}) == 0) {
+                row_col_diag1_intersect++;
+            }
+        }
+    }
+
+    ll row_col_diag2_intersect = 0;
+    for (auto r : rows) {
+        for (auto c : cols) {
+            if (diags2.count(r + c) && pieces.count({r, c}) == 0) {
+                row_col_diag2_intersect++;
+            }
+        }
+    }
+
+    ll row_diag1_diag2_intersect = 0;
+    for (auto r : rows) {
+        for (auto d1 : diags1) {
+            ll j = r - d1;
+            if (j >= 1 && j <= n && diags2.count(r + j) && pieces.count({r, j}) == 0) {
+                row_diag1_diag2_intersect++;
+            }
+        }
+    }
+
+    ll col_diag1_diag2_intersect = 0;
+    for (auto c : cols) {
+        for (auto d1 : diags1) {
+            ll i = c + d1;
+            if (i >= 1 && i <= n && diags2.count(i + c) && pieces.count({i, c}) == 0) {
+                col_diag1_diag2_intersect++;
+            }
+        }
+    }
+
+    // Four-way intersection
+    ll row_col_diag1_diag2_intersect = 0;
+    for (auto r : rows) {
+        for (auto c : cols) {
+            if (diags1.count(r - c) && diags2.count(r + c) && pieces.count({r, c}) == 0) {
+                row_col_diag1_diag2_intersect++;
+            }
+        }
+    }
+
+    // Apply inclusion-exclusion principle
+    ll attacked = row_attacks + col_attacks + diag1_attacks + diag2_attacks
+                - row_col_intersect - row_diag1_intersect - row_diag2_intersect
+                - col_diag1_intersect - col_diag2_intersect - diag1_diag2_intersect
+                + row_col_diag1_intersect + row_col_diag2_intersect
+                + row_diag1_diag2_intersect + col_diag1_diag2_intersect
+                - row_col_diag1_diag2_intersect;
+
+    total_safe = total - attacked - m + pieces.size(); // Subtract existing pieces as they are not empty
+
+    cout << total_safe << "\n";
+}
+
+int main() {
+    ios_base::sync_with_stdio(false), cin.tie(nullptr);
+    cout.precision(12);
+    int NT = 1;
+    while(NT--) solve();
+    return 0;
+}
+```
+
+### Explanation
+1. **Initialization**: We read the grid size `N` and the number of pieces `M`. We then store the positions of these pieces in sets for rows, columns, diagonals, and anti-diagonals.
+2. **Total Squares**: The total number of squares in the grid is `N * N`.
+3. **Attacked Squares Calculation**:
+   - **Rows and Columns**: For each unique row and column, the number of attacked squares is `N` per row or column.
+   - **Diagonals and Anti-diagonals**: For each unique diagonal (i - j = constant) and anti-diagonal (i + j = constant), we calculate the valid squares within the grid boundaries.
+4. **Inclusion-Exclusion Principle**: We handle overlaps between different attack conditions (e.g., a square attacked by both a row and a column) by subtracting the intersections and adding back higher-order intersections to avoid double-counting.
+5. **Final Calculation**: The total safe squares are derived by subtracting the attacked squares and the existing pieces from the total squares, ensuring correctness through careful application of the inclusion-exclusion principle.
+
+This approach efficiently computes the safe squares by focusing on the existing pieces and their attack patterns, leveraging set operations and mathematical formulas to handle large grid sizes within feasible computational limits.

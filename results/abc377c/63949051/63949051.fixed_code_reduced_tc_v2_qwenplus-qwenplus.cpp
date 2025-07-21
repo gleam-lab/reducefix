@@ -1,0 +1,47 @@
+#include <iostream>
+#include <vector>
+#include <set>
+#include <tuple>
+
+using namespace std;
+
+using i64 = long long;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    i64 N;
+    int M;
+    cin >> N >> M;
+
+    set<pair<i64, i64>> attacked;
+    vector<pair<i64, i64>> pieces(M);
+
+    for (int i = 0; i < M; ++i) {
+        i64 a, b;
+        cin >> a >> b;
+        pieces[i] = {a, b};
+    }
+
+    // The 8 possible attack positions relative to (i,j)
+    const vector<pair<i64, i64>> directions = {
+        {2, 1}, {1, 2}, {-1, 2}, {-2, 1},
+        {-2, -1}, {-1, -2}, {1, -2}, {2, -1}
+    };
+
+    for (const auto& [x, y] : pieces) {
+        attacked.insert({x, y});
+        for (const auto& [dx, dy] : directions) {
+            i64 nx = x + dx;
+            i64 ny = y + dy;
+            if (1 <= nx && nx <= N && 1 <= ny && ny <= N) {
+                attacked.insert({nx, ny});
+            }
+        }
+    }
+
+    cout << (N * N - static_cast<i64>(attacked.size())) << '\n';
+
+    return 0;
+}

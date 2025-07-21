@@ -1,0 +1,48 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <numeric>
+using namespace std;
+
+int main() {
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, k;
+        cin >> n >> k;
+        vector<int> a(n);
+        vector<int> b(n);
+        
+        for (int i = 0; i < n; i++) {
+            cin >> a[i];
+        }
+        for (int i = 0; i < n; i++) {
+            cin >> b[i];
+        }
+        
+        vector<pair<int, int>> ab(n);
+        for (int i = 0; i < n; i++) {
+            ab[i] = {a[i], b[i]};
+        }
+        
+        // Sort by A[i] descending
+        sort(ab.begin(), ab.end(), [](const pair<int, int>& p1, const pair<int, int>& p2) {
+            return p1.first > p2.first;
+        });
+        
+        vector<int> prefix_sum(n + 1, 0);
+        // Calculate prefix sum of B[i]
+        for (int i = 0; i < n; i++) {
+            prefix_sum[i + 1] = prefix_sum[i] + ab[i].second;
+        }
+        
+        long long min_value = LLONG_MAX;
+        // Try to find the minimum possible value of the expression
+        for (int i = k; i <= n; i++) {
+            min_value = min(min_value, (long long)ab[i - 1].first * (prefix_sum[n] - prefix_sum[i - 1]));
+        }
+        
+        cout << min_value << endl;
+    }
+    return 0;
+}

@@ -1,0 +1,52 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+const int MAXN = 2e5 + 5;
+int a[MAXN];
+int n, q;
+
+// Binary search to find the k-th smallest distance using two pointers approach
+int solve(int b, int k) {
+    int left = 0, right = n - 1;
+    
+    // Find the middle index closest to b
+    int mid = lower_bound(a, a + n, b) - a;
+    
+    // Sliding window to find the k-th smallest distance
+    deque<int> window;
+    int i = mid - 1, j = mid;
+    
+    while (!window.empty() || (i >= 0 && j < n)) {
+        if (window.size() == k) break;
+        
+        if (i >= 0 && (j == n || abs(a[i] - b) <= abs(a[j] - b))) {
+            window.push_back(a[i--]);
+        } else {
+            window.push_back(a[j++]);
+        }
+    }
+
+    return abs(window[k - 1] - b);
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    cout.tie(nullptr);
+
+    cin >> n >> q;
+
+    for (int i = 0; i < n; ++i) {
+        cin >> a[i];
+    }
+
+    sort(a, a + n);
+
+    while (q--) {
+        int b, k;
+        cin >> b >> k;
+        cout << solve(b, k) << "\n";
+    }
+
+    return 0;
+}

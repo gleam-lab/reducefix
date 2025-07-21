@@ -1,0 +1,74 @@
+#include <bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+#define all(x) (x).begin(), (x).end()
+
+int main() {
+    ios_base::sync_with_stdio(0);
+    cin.tie(0);
+    
+    int h, w, y;
+    cin >> h >> w >> y;
+    
+    vector<vector<int>> height(h, vector<int>(w));
+    for (int i = 0; i < h; ++i) {
+        for (int j = 0; j < w; ++j) {
+            cin >> height[i][j];
+        }
+    }
+
+    // We'll use a priority queue to simulate the sinking process from borders inward
+    typedef pair<int, pair<int, int>> Node;
+    priority_queue<Node, vector<Node>, greater<Node>> pq;
+
+    vector<vector<bool>> visited(h, vector<bool>(w, false));
+    int di[4][2] = {{-1, 0}, {1, 0}, {0, -1}, {0, 1}};
+
+    // Initialize queue with border cells and mark them as visited
+    for (int i = 0; i < h; ++i) {
+        for (int j = 0; j < w; ++j) {
+            if (i == 0 || i == h - 1 || j == 0 || j == w - 1) {
+                pq.push({height[i][j], {i, j}});
+                visited[i][j] = true;
+            }
+        }
+    }
+
+    // To keep track of how many cells are submerged each year
+    vector<int> submerged(y + 2, 0); // 1-based indexing up to Y
+
+    while (!pq.empty()) {
+        auto [H, pos] = pq.top();
+        auto [r, c] = pos;
+        pq.pop();
+
+        // Record when this cell is submerged (year = H)
+        if (H <= y) {
+            submerged[H]++;
+        }
+
+        for (int d = 0; d < 4; ++d) {
+            int nr = r + di[d][0];
+            int nc = c + di[d][1];
+
+            if (nr >= 0 && nr < h && nc >= 0 && nc < w && !visited[nr][nc]) {
+                visited[nr][nc] = true;
+                pq.push({max(H, height[nr][nc]), {nr, nc}});
+            }
+        }
+    }
+
+    // Build prefix sum of submerged area
+    vector<int> total_submerged(y + 2, 0);
+    for (int i = 1; i <= y; ++i) {
+        total_submerged[i] = total_submerged[i - 1] + submerged[i];
+    }
+
+    // Output remaining area at each year
+    int total_cells = h * w;
+    for (int i = 1; i <= y; ++i) {
+        cout << total_cells - total_submerged[i] << "\n";
+    }
+
+    return 0;
+}

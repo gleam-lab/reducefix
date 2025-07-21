@@ -1,0 +1,50 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+
+using namespace std;
+
+struct Node {
+    long long val;
+    int idx;
+};
+
+int main() {
+    int N, M, K;
+    cin >> N >> M >> K;
+    vector<long long> A(N);
+    for (int i = 0; i < N; ++i) {
+        cin >> A[i];
+    }
+
+    vector<pair<long long, int>> B(A.begin(), A.end());
+    sort(B.begin(), B.end());
+
+    vector<long long> prefix(N);
+    prefix[0] = 0;
+    for (int i = 1; i < N; ++i) {
+        prefix[i] = prefix[i - 1] + B[i].first;
+    }
+    long long total_votes_given = prefix[N - 1];
+
+    vector<long long> ans(N);
+    for (int i = 0; i < N; ++i) {
+        long long votes_needed = 0;
+        long long votes_to_win = prefix[M - 2] + M + 1 - B[i].first;
+
+        if (votes_to_win - total_votes_given <= K - total_votes_given) {
+            votes_needed = votes_to_win - total_votes_given;
+        } else {
+            votes_needed = -1;  // Impossible to win
+        }
+
+        ans[i] = votes_needed;
+    }
+
+    for (int i = 0; i < N; ++i) {
+        cout << ans[i] << " ";
+    }
+    cout << endl;
+
+    return 0;
+}

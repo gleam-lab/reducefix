@@ -1,0 +1,101 @@
+#include <bits/stdc++.h>
+using namespace std;
+#include <atcoder/binary_heap.hpp>
+
+using ll = int64_t;
+using ld = long double;
+int inf = 1000000001;
+ll INF = 1e18;
+
+#define rep(i, n) for(int i=0; i < n; ++i)
+#define all(x) x.begin(),x.end()
+template<typename T> bool chmin(T& a, T b) { if(a > b){a = b; return true;} return false; }
+template<typename T> bool chmax(T& a, T b) { if(a < b){a = b; return true;} return false; }
+
+// Direction vectors (up, down, left, right)
+int dx[4] = {-1, 1, 0, 0};
+int dy[4] = {0, 0, -1, 1};
+
+int main() {
+    cin.tie(0)->sync_with_stdio(0);
+    int H, W, Y;
+    cin >> H >> W >> Y;
+    vector<vector<int>> A(H, vector<int>(W));
+    int max_elevation = 0;
+    rep(i, H) rep(j, W) {
+        cin >> A[i][j];
+        max_elevation = max(max_elevation, A[i][j]);
+    }
+
+    // Ensure Y is at least as big as the maximum elevation to avoid out-of-bound writes
+    Y = max(Y, max_elevation + 1);
+
+    // Priority queue of positions indexed by elevation
+    vector<queue<pair<int, int>>> level_queues(Y + 2); // +2 to be safe
+
+    // Visited or submerged marker
+    vector<vector<bool>> submerged(H, vector<bool>(W, false));
+
+    // Initialize boundaries
+    rep(i, H) {
+        rep(j, W) {
+            if(i == 0 || i == H-1 || j == 0 || j == W-1) {
+                int e = A[i][j];
+                level_queues[e].push({i, j});
+                submerged[i][j] = true;
+            }
+        }
+    }
+
+    int total_area = H * W;
+    vector<int> result(Y + 1, total_area); // All land initially assumed to exist
+
+    // We will subtract as we submerge land
+    for (int y = 1; y <= Y; ++y) {
+        queue<pair<int, int>> q;
+        // Move from level_queues[y]
+        while (!level_queues[y].empty()) {
+            auto [i, j] = level_queues[y].front();
+            level_queues[y].pop();
+            if (!submerged[i][j]) {
+                submerged[i][j] = true;
+                result[y]--;
+                q.push({i, j});
+            }
+        }
+
+        // BFS flood fill for this year
+        while (!q.empty()) {
+            auto [i, j] = q.front();
+            q.pop();
+            for (int d = 0; d < 4; ++d) {
+                int ni = i + dx[d];
+                int nj = j + dy[d];
+                if (ni >= 0 && ni < H && nj >= 0 && nj < W && !submerged[ni][nj]) {
+                    int h = A[ni][nj];
+                    if (h <= y) {
+                        submerged[ni][nj] = true;
+                        result[y]--;
+                        q.push({ni, nj});
+                    } else {
+                        level_queues[h].push({ni, nj});
+                    }
+                }
+            }
+        }
+
+        // Carry over previous year's area if no change
+        if (result[y] == result[y - 1]) {
+            for (int z = y + 1; z <= Y && result[z] == total_area; ++z) {
+                result[z] = result[y];
+            }
+        }
+    }
+
+    // Output results from year 1 to Y
+    for (int y = 1; y <= Y; ++y) {
+        cout << result[y] << '\n';
+    }
+
+    return 0;
+}

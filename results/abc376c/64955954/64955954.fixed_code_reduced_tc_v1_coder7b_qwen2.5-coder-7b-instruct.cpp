@@ -1,0 +1,33 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+bool canFit(vector<int>& toys, vector<int>& boxes, int size) {
+    for(int i = 0; i < toys.size(); ++i) {
+        if(toys[i] > size || (i > 0 && toys[i] <= boxes[i-1])) return false;
+    }
+    return true;
+}
+
+int main() {
+    ios::sync_with_stdio(false); cin.tie(0); cout.tie(0);
+    int n;
+    cin >> n;
+    vector<int> toys(n), boxes(n-1);
+    for(int i = 0; i < n; ++i) cin >> toys[i];
+    for(int i = 0; i < n-1; ++i) cin >> boxes[i];
+
+    sort(toys.begin(), toys.end());
+    sort(boxes.begin(), boxes.end());
+
+    int l = toys.back(), r = 1e9 + 10;
+    while(l < r) {
+        int m = (l + r) / 2;
+        if(canFit(toys, boxes, m)) r = m;
+        else l = m + 1;
+    }
+
+    if(r == 1e9 + 10) cout << -1 << '\n';
+    else cout << r << '\n';
+
+    return 0;
+}

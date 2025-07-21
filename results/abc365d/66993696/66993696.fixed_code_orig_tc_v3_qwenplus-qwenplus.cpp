@@ -1,0 +1,51 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+
+    int n;
+    string s;
+    cin >> n >> s;
+
+    // Function to compute the score for a given mapping of opponent moves
+    auto compute_score = [&](char r, char p, char s) {
+        vector<char> c(n);
+        int count = 0;
+
+        for (int i = 0; i < n; ++i) {
+            if (s[i] == 'R') c[i] = r;
+            else if (s[i] == 'P') c[i] = p;
+            else c[i] = s;
+        }
+
+        for (int i = 1; i < n; ++i) {
+            if (c[i] == c[i - 1]) {
+                c[i] = s[i];
+            }
+        }
+
+        for (int i = 0; i < n; ++i) {
+            if (c[i] != s[i]) ++count;
+        }
+
+        return count;
+    };
+
+    // Try all possible mappings where each move is countered once and handle tie-breaking
+    int max_score = 0;
+
+    // There are 6 permutations of responses we can try:
+    // Each permutation corresponds to a different way of mapping R, P, S to counter moves
+    max_score = max(max_score, compute_score('P', 'S', 'R'));
+    max_score = max(max_score, compute_score('P', 'R', 'S'));
+    max_score = max(max_score, compute_score('R', 'S', 'P'));
+    max_score = max(max_score, compute_score('R', 'P', 'S'));
+    max_score = max(max_score, compute_score('S', 'R', 'P'));
+    max_score = max(max_score, compute_score('S', 'P', 'R'));
+
+    cout << max_score << endl;
+
+    return 0;
+}

@@ -1,0 +1,39 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main(){
+    ios_base::sync_with_stdio(false);
+    cin.tie(NULL);
+
+    int N;
+    string S;
+    cin >> N;
+    cin >> S;
+    int wins = 0;
+    char winmove = 'a', prev = 'a';
+    for (char c : S){
+        if (c == 'R'){
+            winmove = 'P';
+        } else if (c == 'P'){
+            winmove = 'S';
+        } else if (c == 'S'){
+            winmove = 'R';
+        }
+        if (winmove != prev){
+            wins++;
+            prev = winmove;
+        } else {
+            // We need to change our move to something different than current opponent move
+            // when previous move was same as winning move.
+            // So pick any losing move to reset the sequence
+            if (c == 'R') {
+                prev = 'S'; // choose a move that loses against R
+            } else if (c == 'P') {
+                prev = 'R'; // choose a move that loses against P
+            } else {
+                prev = 'P'; // choose a move that loses against S
+            }
+        }
+    }   
+    cout << wins;
+}

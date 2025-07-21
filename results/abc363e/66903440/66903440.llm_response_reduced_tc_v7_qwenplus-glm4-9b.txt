@@ -1,0 +1,77 @@
+
+The problem involves simulating the process of sea level rise over multiple years and calculating the area of the island that remains above sea level. The provided solution has some inefficiencies and potential issues that need to be addressed.
+
+### Issues in the Incorrect Code:
+1. **Efficiency**: The code uses a queue to manage the sinking of sections of the island. While this works for small inputs, it can be very slow for larger inputs due to the nested loops and the repeated checks and pushes to the queue.
+2. **Initialization**: The initial flooding of the island is not correctly handled. The code assumes that if the section is on the edge of the island or has an elevation of 0, it should sink immediately. However, this doesn't consider that the sea level starts at 1, not 0.
+3. **Queue Management**: The queue management could be improved. For each year, the code processes all the sections that have sunk and adds their neighbors to the queue. This could lead to multiple checks and re-queueing for the same section if it's adjacent to multiple sinking sections.
+4. **Edge Cases**: The code doesn't handle edge cases gracefully. For example, if the entire island sinks, the code should output 0 for the remaining years as well.
+
+### Corrected Solution Approach:
+1. **Initial Flood Simulation**: To handle the initial flooding, we can simulate the process of the sea level rising to 1 first. This marks all the sections that would sink.
+2. **Efficient Sinking Simulation**: Instead of using a queue, we can use a priority queue (min-heap) to efficiently manage which sections will sink first. We can push all sections with elevation <= 1 into the priority queue and process them based on the current sea level.
+3. **Queue Optimization**: For each section that sinks, we only need to check its neighbors once and enqueue them if they meet the sinking condition.
+4. **Handling Edge Cases**: If all sections are submerged at any point, we can break out of the loop early and output 0 for the remaining years.
+
+Here is the refined code based on the above points:
+
+```cpp
+#include<bits/stdc++.h>
+using namespace std;
+using ll = long long;
+
+int h, w, y;
+int grid[1001][1001];
+
+int main() {
+    cin >> h >> w >> y;
+    for (int i = 0; i < h; i++) {
+        for (int j = 0; j < w; j++) {
+            cin >> grid[i][j];
+        }
+    }
+
+    // Priority queue to manage sinking
+    priority_queue<pair<int, pair<int, int>>, vector<pair<int, pair<int, int>>>, greater<pair<int, pair<int, int>>>> pq;
+
+    // Initialize the priority queue for the first year
+    for (int i = 0; i < h; i++) {
+        for (int j = 0; j < w; j++) {
+            if (grid[i][j] <= 1) {
+                pq.push({grid[i][j], {i, j}});
+            }
+        }
+    }
+
+    ll remaining_area = h * w;
+
+    for (int year = 1; year <= y; year++) {
+        while (!pq.empty()) {
+            auto [height, pos] = pq.top();
+            pq.pop();
+            int i = pos.first;
+            int j = pos.second;
+            remaining_area--;
+
+            // Check neighbors
+            if (i > 0 && grid[i - 1][j] <= year) pq.push({grid[i - 1][j], {i - 1, j}});
+            if (i < h - 1 && grid[i + 1][j] <= year) pq.push({grid[i + 1][j], {i + 1, j}});
+            if (j > 0 && grid[i][j - 1] <= year) pq.push({grid[i][j - 1], {i, j - 1}});
+            if (j < w - 1 && grid[i][j + 1] <= year) pq.push({grid[i][j + 1], {i, j + 1}});
+        }
+
+        cout << remaining_area << endl;
+        
+        // Increase the sea level for the next year
+        if (!pq.empty()) {
+            auto [top_height, top_pos] = pq.top();
+            pq.pop();
+            pq.push({top_height + 1, top_pos});
+        }
+    }
+
+    return 0;
+}
+```
+
+This refined solution uses a priority queue to efficiently manage which sections of the island will sink and processes them based on the current sea level. It is optimized for larger inputs and handles edge cases more effectively.

@@ -1,0 +1,44 @@
+#include <bits/stdc++.h>
+#define ll long long
+using namespace std;
+
+void solve() {
+    ll N;
+    cin >> N;
+    vector<ll> A(N), B(N - 1);
+
+    for (ll i = 0; i < N; ++i) cin >> A[i];
+    for (ll i = 0; i < N - 1; ++i) cin >> B[i];
+
+    // Sort toys and boxes in descending order
+    sort(A.begin(), A.end(), greater<ll>());
+    sort(B.begin(), B.end(), greater<ll>());
+
+    // We need to find the minimum x such that one extra box of size x
+    // allows us to fit all toys in separate boxes.
+
+    // The idea: greedily match largest toys to largest boxes.
+    // If a toy cannot fit in the current box, it must go into the extra box.
+    // So we track what would be the "leftover" toy that needs the extra box.
+
+    ll extra = -1;
+    ll b_idx = 0;
+
+    for (ll i = 0; i < N; ++i) {
+        if (b_idx < N - 1 && A[i] <= B[b_idx]) {
+            b_idx++;
+        } else {
+            // This toy must go into the extra box
+            extra = A[i];
+        }
+    }
+
+    cout << extra << endl;
+}
+
+int main() {
+    ios::sync_with_stdio(0);
+    cin.tie(0);
+    solve();
+    return 0;
+}

@@ -1,0 +1,61 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+int main() {
+    int N;
+    ll X;
+    cin >> N >> X;
+    vector<ll> A(N), P(N), B(N), Q(N);
+    
+    for (int i = 0; i < N; i++) {
+        cin >> A[i] >> P[i] >> B[i] >> Q[i];
+    }
+
+    auto can_buy = [&](ll budget) -> bool {
+        for (int i = 0; i < N; i++) {
+            if (budget < P[i]) return false;
+            ll max_s = (budget - P[i] + B[i] - 1) / B[i];
+            ll max_t = (budget - Q[i] + A[i] - 1) / A[i];
+            if (max_s * P[i] + max_t * Q[i] < budget - A[i] * max_s) return false;
+        }
+        return true;
+    };
+
+    if (!can_buy(X)) {
+        cout << 0 << endl;
+        return 0;
+    }
+
+    auto process_capacity = [&](ll budget) -> ll {
+        ll res = budget;
+        for (int i = 0; i < N; i++) {
+            ll min_cost = LLONG_MAX;
+            ll max_s = (budget - P[i] + B[i] - 1) / B[i];
+            ll max_t = (budget - Q[i] + A[i] - 1) / A[i];
+            for (ll s = 0; s <= B[i]; s++) {
+                ll t = (max_s - s + B[i] - 1) / B[i];
+                min_cost = min(min_cost, s * P[i] + t * Q[i]);
+            }
+            for (ll t = 0; t <= A[i]; t++) {
+                ll s = (max_t - t + A[i] - 1) / A[i];
+                min_cost = min(min_cost, t * Q[i] + s * P[i]);
+            }
+            res -= min_cost;
+        }
+        return res;
+    };
+
+    ll min_capacity = 0, max_capacity = X;
+    while (max_capacity - min_capacity > 1) {
+        ll mid = (min_capacity + max_capacity) / 2;
+        if (process_capacity(mid) >= 0) {
+            min_capacity = mid;
+        } else {
+            max_capacity = mid;
+        }
+    }
+
+    cout << min_capacity << endl;
+}

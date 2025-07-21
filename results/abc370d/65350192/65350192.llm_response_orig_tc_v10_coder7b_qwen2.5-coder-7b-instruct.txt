@@ -1,0 +1,86 @@
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+#define rep(i,n) for(int i = 0; i < (n); i++)
+using ll = long long;
+
+struct SegmentTree{
+    int n;
+    vector<ll> segtree;
+    SegmentTree(int _n): n(_n), segtree(2*n, INT_MAX){
+        for(int i=n-1;i>=0;i--){
+            segtree[i] = min(segtree[2*i],segtree[2*i+1]);
+        }
+    }
+
+    void update(int pos,ll val){
+        pos+=n;
+        segtree[pos] = val;
+        while(pos>1){
+            pos/=2;
+            segtree[pos] = min(segtree[2*pos],segtree[2*pos+1]);
+        }
+    }
+
+    ll query(int l,int r){
+        l+=n;r+=n;
+        ll res = INT_MAX;
+        while(l<r){
+            if(l&1)res=min(res,segtree[l++]);
+            if(r&1)res=min(res,segtree[--r]);
+            l/=2;r/=2;
+        }
+        return res;
+    }
+};
+
+int main(void) {
+    int h, w, q;
+    cin >> h >> w >> q;
+    vector<vector<bool>> grid(h,vector<bool>(w,true));
+    SegmentTree row(h),col(w);
+
+    rep(i,h)rep(j,w){
+        if(grid[i][j]){
+            row.update(i,1);
+            col.update(j,1);
+        }
+    }
+
+    rep(qi,q) {
+        int r, c;
+        cin >> r >> c;
+        r--; c--;
+
+        if (grid[r][c]) {
+            grid[r][c]=false;
+            row.update(r,0);
+            col.update(c,0);
+        } else {
+            int row_min = row.query(0,r)+1;
+            int col_min = col.query(0,c)+1;
+
+            if(row_min==r+1 && col_min==c+1){
+                grid[r][c]=true;
+                row.update(r,1);
+                col.update(c,1);
+            }else{
+                int x = r-row_min+1,y=c-col_min+1;
+                if(x<=y){
+                    grid[r][c+x-1]=false;
+                    row.update(r+x-1,0);
+                    col.update(c,0);
+                }else{
+                    grid[r+y-1][c]=false;
+                    row.update(r,0);
+                    col.update(c+y-1,0);
+                }
+            }
+        }
+    }
+    int ans = 0;
+    rep(i,w)ans += count(grid.begin(),grid.end(),vector<bool>(w,false)[i]);
+    cout << ans << "\n";
+    return 0;
+}
+```

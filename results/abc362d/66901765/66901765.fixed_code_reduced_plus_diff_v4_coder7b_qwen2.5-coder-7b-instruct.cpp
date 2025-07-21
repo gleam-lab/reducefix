@@ -1,0 +1,71 @@
+#include<bits/stdc++.h>
+using namespace std;
+
+#define ll long long
+const int N = 2e5 + 10;
+vector<pair<ll,ll>> adj[N];
+
+struct Edge{
+    int u, v, w;
+};
+
+bool operator<(Edge &a, Edge &b){
+    return a.w > b.w;
+}
+
+ll dis[N];
+priority_queue<Edge> pq;
+set<int> st;
+map<pair<int,int>, bool> mp;
+
+void djikstra(int src){
+    fill(dis, dis+N, LLONG_MAX);
+    dis[src] = 0;
+    pq.push({src, 0});
+    
+    while(!pq.empty()){
+        auto it = pq.top(); pq.pop();
+        int u = it.u;
+        
+        if(st.find(u) != st.end()) continue;
+        st.insert(u);
+        
+        for(auto child : adj[u]){
+            int v = child.first;
+            ll wt = child.second;
+            
+            if(mp[{u, v}] || mp[{v, u}]) continue;
+            
+            if(dis[v] > dis[u] + wt){
+                dis[v] = dis[u] + wt;
+                pq.push({v, dis[v]});
+            }
+        }
+    }
+}
+
+int main(){
+    ios_base::sync_with_stdio(false); cin.tie(NULL);
+
+    int n, m;
+    cin >> n >> m;
+
+    vector<ll> a(n+1);
+    for(int i=1; i<=n; i++) cin >> a[i];
+
+    for(int i=1; i<=m; i++){
+        int u, v, w;
+        cin >> u >> v >> w;
+        adj[u].push_back({v, w});
+        adj[v].push_back({u, w});
+        mp[{u, v}] = false;
+    }
+
+    djikstra(1);
+
+    for(int i=2; i<=n; i++){
+        cout << dis[i] + a[i] << " ";
+    }
+
+    return 0;
+}

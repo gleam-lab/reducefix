@@ -1,0 +1,28 @@
+#include<bits/stdc++.h>
+using namespace std;
+
+void solve(){
+    long long N;
+    cin>>N;
+    vector<long long> a(N), b(N-1);
+    for(int i=0; i<N; i++) cin>>a[i];
+    for(int i=0; i<N-1; i++) cin>>b[i];
+    
+    sort(a.begin(), a.end(), greater<long long>());
+    sort(b.begin(), b.end(), greater<long long>());
+    
+    long long x = -1;
+    for(int i = 0, j = 0; i < N; i++) {
+        if (j < N-1 && a[i] <= b[j]) j++;
+        else x = max(x, a[i]);
+    }
+    
+    cout << (x == -1 ? -1 : x) << endl;
+}
+
+int main(){
+    ios::sync_with_stdio(0);
+    cin.tie(0);
+    solve();
+    return 0;
+}

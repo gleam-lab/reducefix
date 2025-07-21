@@ -1,0 +1,82 @@
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+#define rep(i, n) for (int i = 0; i < (n); i++)
+using P = pair<int, int>;
+using T = tuple<int, int, int>;
+
+struct Union_Find {
+    vector<int> par, sz;
+    vector<vector<int>> components;
+
+    Union_Find(int n) {
+        par.resize(n, -1);
+        sz.resize(n, 1);
+        components.resize(n);
+        for (int i = 0; i < n; ++i) {
+            components[i].push_back(i);
+        }
+    }
+
+    int root(int x) {
+        if (par[x] == -1)
+            return x;
+        else
+            return par[x] = root(par[x]);
+    }
+
+    bool same(int x, int y) {
+        return root(x) == root(y);
+    }
+
+    void unite(int x, int y) {
+        x = root(x), y = root(y);
+        if (x == y) return;
+
+        // Always merge smaller component into larger one
+        if (sz[x] < sz[y]) swap(x, y);
+
+        // Merge y into x
+        for (int node : components[y]) {
+            components[x].push_back(node);
+        }
+        sort(components[x].rbegin(), components[x].rend());
+        if (components[x].size() > 10) {
+            components[x].resize(10);
+        }
+
+        par[y] = x;
+        sz[x] += sz[y];
+        sz[y] = 0;
+        components[y].clear();
+    }
+};
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+    int N, Q;
+    cin >> N >> Q;
+    Union_Find uf(N);
+
+    while (Q--) {
+        int type, v, w;
+        cin >> type >> v >> w;
+        v--;  // Convert to 0-based index
+        if (type == 1) {
+            w--;
+            uf.unite(v, w);
+        } else {
+            int k = w;
+            int r = uf.root(v);
+            auto& comp = uf.components[r];
+            if (k > (int)comp.size()) {
+                cout << -1 << "\n";
+            } else {
+                cout << comp[k - 1] + 1 << "\n";  // Convert back to 1-based vertex number
+            }
+        }
+    }
+
+    return 0;
+}

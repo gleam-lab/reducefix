@@ -1,0 +1,103 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define close ios::sync_with_stdio(false); cin.tie(0); cout.tie(0);
+#define MAXN 1100
+#define LIMIT 22
+#define inf 0x3f3f3f3f3f3f
+#define endl '\n'
+const double eps = 1e-7;
+int dx[] = {0, 0, 1, -1};
+int dy[] = {1, -1, 0, 0};
+const int MOD = 1e9 + 7;
+
+struct UnionFind {
+    vector<int> parent, rank, size;
+    UnionFind(int n) : parent(n), rank(n, 1), size(n, 1) {
+        iota(parent.begin(), parent.end(), 0);
+    }
+
+    int find(int u) {
+        if (parent[u] != u) {
+            parent[u] = find(parent[u]);
+        }
+        return parent[u];
+    }
+
+    void unite(int u, int v) {
+        u = find(u);
+        v = find(v);
+        if (u == v) return;
+        if (rank[u] < rank[v]) swap(u, v);
+        parent[v] = u;
+        size[u] += size[v];
+        if (rank[u] == rank[v]) rank[u]++;
+    }
+
+    int getSize(int u) {
+        return size[find(u)];
+    }
+};
+
+signed main() {
+    close;
+    int h, w; cin >> h >> w;
+    int y; cin >> y;
+    vector<vector<int>> grid(h, vector<int>(w));
+    for(int i = 0; i < h; i++) {
+        for(int j = 0; j < w; j++) {
+            cin >> grid[i][j];
+        }
+    }
+
+    UnionFind uf(h * w + 1);
+    vector<vector<bool>> visited(h, vector<bool>(w, false));
+
+    auto isValid = [&](int x, int y) {
+        return x >= 0 && x < h && y >= 0 && y < w;
+    };
+
+    auto getId = [&](int x, int y) {
+        return x * w + y;
+    };
+
+    for(int level = 1; level <= y; level++) {
+        set<pair<int, pair<int, int>>> pq;
+        for(int i = 0; i < h; i++) {
+            for(int j = 0; j < w; j++) {
+                if(grid[i][j] <= level) {
+                    pq.insert({getId(i, j), {i, j}});
+                }
+            }
+        }
+
+        for(auto& [id, coord] : pq) {
+            int x = coord.first, y = coord.second;
+            visited[x][y] = true;
+            for(int k = 0; k < 4; k++) {
+                int nx = x + dx[k], ny = y + dy[k];
+                if(isValid(nx, ny) && grid[nx][ny] <= level && !visited[nx][ny]) {
+                    uf.unite(id, getId(nx, ny));
+                }
+            }
+        }
+
+        int totalArea = 0;
+        unordered_set<int> uniqueParents;
+        for(int i = 0; i < h; i++) {
+            for(int j = 0; j < w; j++) {
+                if(grid[i][j] > level) {
+                    int pid = uf.find(getId(i, j));
+                    uniqueParents.insert(pid);
+                }
+            }
+        }
+
+        for(int pid : uniqueParents) {
+            totalArea += uf.getSize(pid);
+        }
+
+        cout << totalArea << endl;
+    }
+
+    return 0;
+}

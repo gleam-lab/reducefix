@@ -1,0 +1,113 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define int long long
+
+const int N = 2 * 100000 + 5;
+
+int n, m, k;
+int a[N];
+int sorted_votes[N];
+int prefix_sum[N];
+
+// This function checks if candidate i can be guaranteed to win with x additional votes
+bool is_possible(int base_vote, int extra_vote) {
+    int total_vote = base_vote + extra_vote;
+
+    // We want to find the number of candidates with vote > total_vote
+    // These are the candidates that must be strictly greater than total_vote
+    // So we count how many in sorted_votes are > total_vote
+    int idx = upper_bound(sorted_votes + 1, sorted_votes + n + 1, total_vote) - (sorted_votes + 1);
+
+    int remaining_candidates = n - idx;
+
+    // To guarantee election, candidate must be in top M
+    // i.e., number of candidates with more votes must be < M
+    // which means at most M-1 candidates have more votes
+    if (remaining_candidates < m) return true;
+
+    // Now consider worst-case distribution: other candidates get as many votes as possible
+    // The top (m-1) candidates will take as much as possible from the remaining votes
+    // We need to ensure even in this scenario, our candidate still has enough votes
+
+    // Total votes available for distribution among other candidates
+    int remaining_votes = k - extra_vote;
+
+    // Take the top (m-1) candidates' current votes
+    int cap = sorted_votes[n - m + 1]; // the vote count that would be the cutoff
+
+    // We try to raise the top (m-1) candidates to at least `cap`
+    // Calculate how many votes are needed to bring all of them to cap
+    int needed = 0;
+    for (int i = n - m + 1; i <= n; ++i) {
+        needed += max(cap, sorted_votes[i]) - sorted_votes[i];
+    }
+
+    // If we can afford to bring those candidates up to cap
+    if (needed <= remaining_votes) {
+        // Then we need to beat the new cap
+        int new_cap = cap;
+        return total_vote > new_cap;
+    }
+
+    // Binary search to find the minimum threshold vote we need to beat
+    int low = total_vote, high = 1e18;
+    while (low < high) {
+        int mid = (low + high) / 2;
+
+        // How many votes needed to bring top (m-1) candidates to mid
+        int required = 0;
+        for (int i = n - m + 1; i <= n; ++i) {
+            if (sorted_votes[i] < mid) {
+                required += mid - sorted_votes[i];
+            }
+        }
+
+        if (required <= remaining_votes) {
+            low = mid;
+        } else {
+            high = mid - 1;
+        }
+    }
+
+    return total_vote > low;
+}
+
+signed main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    cout.tie(nullptr);
+
+    cin >> n >> m >> k;
+    for (int i = 1; i <= n; ++i) {
+        cin >> a[i];
+    }
+
+    // Sort votes to simulate worst-case scenario for each candidate
+    memcpy(sorted_votes + 1, a + 1, n * sizeof(int));
+    sort(sorted_votes + 1, sorted_votes + n + 1);
+
+    // Precompute prefix sums for optimization (not used directly here but useful for variants)
+    for (int i = 1; i <= n; ++i) {
+        prefix_sum[i] = prefix_sum[i - 1] + sorted_votes[i];
+    }
+
+    // For each candidate, binary search on minimum extra votes needed
+    for (int i = 1; i <= n; ++i) {
+        int l = 0, r = k + 1;
+        while (l < r) {
+            int mid = (l + r) / 2;
+            if (is_possible(a[i], mid)) {
+                r = mid;
+            } else {
+                l = mid + 1;
+            }
+        }
+
+        if (l <= k)
+            cout << l << " ";
+        else
+            cout << "-1 ";
+    }
+
+    return 0;
+}

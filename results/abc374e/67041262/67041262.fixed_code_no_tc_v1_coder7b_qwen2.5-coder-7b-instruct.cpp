@@ -1,0 +1,55 @@
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+
+// Function to calculate the minimum cost for a given production capacity W
+ll min_cost(ll W, ll a, ll p, ll b, ll q) {
+    // If using machine S is more efficient than machine T
+    if (p * b < q * a) {
+        // Use machine S as much as possible
+        ll x = W / a;
+        ll rem = W % a;
+        ll y = (rem == 0) ? 0 : (b - (a - rem) % b) % b;
+        return p * x + q * y;
+    } else {
+        // Use machine T as much as possible
+        ll y = W / b;
+        ll rem = W % b;
+        ll x = (rem == 0) ? 0 : (a - (b - rem) % a) % a;
+        return p * x + q * y;
+    }
+}
+
+// Function to check if a given production capacity W is feasible within budget X
+bool can(ll W, int N, ll X,
+         const vector<ll>& A, const vector<ll>& P,
+         const vector<ll>& B, const vector<ll>& Q) {
+    ll sum = 0;
+    for (int i = 0; i < N; i++) {
+        sum += min_cost(W, A[i], P[i], B[i], Q[i]);
+        if (sum > X) return false;
+    }
+    return true;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int N;
+    ll X;
+    cin >> N >> X;
+    vector<ll> A(N), P(N), B(N), Q(N);
+    for (int i = 0; i < N; i++) {
+        cin >> A[i] >> P[i] >> B[i] >> Q[i];
+    }
+
+    ll lo = 0, hi = 1000000000000LL; // Upper limit is sufficiently large
+    while (hi - lo > 1) {
+        ll mid = (lo + hi) / 2;
+        if (can(mid, N, X, A, P, B, Q)) lo = mid;
+        else hi = mid;
+    }
+    cout << lo << "\n";
+    return 0;
+}

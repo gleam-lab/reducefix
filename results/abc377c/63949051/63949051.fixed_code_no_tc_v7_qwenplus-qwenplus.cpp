@@ -1,0 +1,51 @@
+#include <iostream>
+#include <vector>
+#include <set>
+#include <utility>
+
+using namespace std;
+
+using i32 = int;
+using i64 = long long;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    i32 N;
+    i32 M;
+    cin >> N >> M;
+
+    vector<pair<i32, i32>> pieces(M);
+    for (auto &p : pieces) {
+        cin >> p.first >> p.second;
+    }
+
+    // Use a set to store all positions that are either occupied by existing pieces or can be captured
+    set<pair<i32, i32>> forbidden;
+
+    // 8 possible knight-style moves as offsets
+    const vector<pair<i32, i32>> directions = {
+        {2, 1}, {1, 2}, {-1, 2}, {-2, 1},
+        {-2, -1}, {-1, -2}, {1, -2}, {2, -1}
+    };
+
+    for (const auto &[x, y] : pieces) {
+        forbidden.emplace(x, y); // The piece's position itself is not available
+
+        for (const auto &[dx, dy] : directions) {
+            i32 nx = x + dx;
+            i32 ny = y + dy;
+            if (nx >= 1 && nx <= N && ny >= 1 && ny <= N) {
+                forbidden.emplace(nx, ny);
+            }
+        }
+    }
+
+    // Total number of cells: N * N
+    // Forbidden cells: forbidden.size()
+    // Available cells = total - forbidden
+    cout << (1LL * N * N - forbidden.size()) << '\n';
+
+    return 0;
+}

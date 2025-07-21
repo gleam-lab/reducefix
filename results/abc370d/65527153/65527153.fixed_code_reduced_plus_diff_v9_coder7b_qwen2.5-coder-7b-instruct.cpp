@@ -1,0 +1,54 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(NULL);
+
+    int H, W, Q;
+    cin >> H >> W >> Q;
+    
+    // Initialize the grid with walls represented as true
+    vector<vector<bool>> grid(H, vector<bool>(W, true));
+    
+    for(int q = 0; q < Q; ++q){
+        int r, c;
+        cin >> r >> c;
+        --r, --c; // Adjusting for zero-based indexing
+        
+        // Check if there's a wall at the position
+        if(grid[r][c]){
+            grid[r][c] = false; // Destroy the wall
+        } else {
+            // Find the nearest wall in each direction
+            bool found = false;
+            for(int i = r-1; i >= 0 && !found; --i){
+                if(grid[i][c]) {grid[i][c] = false; found = true;}
+            }
+            
+            for(int i = r+1; i < H && !found; ++i){
+                if(grid[i][c]) {grid[i][c] = false; found = true;}
+            }
+            
+            for(int j = c-1; j >= 0 && !found; --j){
+                if(grid[r][j]) {grid[r][j] = false; found = true;}
+            }
+            
+            for(int j = c+1; j < W && !found; ++j){
+                if(grid[r][j]) {grid[r][j] = false; found = true;}
+            }
+        }
+    }
+    
+    // Count the remaining walls
+    int walls = 0;
+    for(auto &row : grid){
+        for(bool wall : row){
+            if(wall) ++walls;
+        }
+    }
+    
+    cout << walls << endl;
+    return 0;
+}

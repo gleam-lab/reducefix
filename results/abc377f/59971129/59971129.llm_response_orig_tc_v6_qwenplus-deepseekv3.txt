@@ -1,0 +1,99 @@
+To fix this code, I need to ensure that the solution correctly counts the number of empty squares where a new piece can be placed without being captured by any existing pieces. The existing pieces can capture along rows, columns, diagonals (both i+j and i-j), so we need to mark all these squares as unsafe and then count the safe squares.
+
+### Approaches
+1. **Marking Unsafe Squares**: We need to consider all squares that are under attack by any existing piece. These include:
+   - All squares in the same row as any existing piece.
+   - All squares in the same column as any existing piece.
+   - All squares on the same diagonal (i + j) as any existing piece.
+   - All squares on the same anti-diagonal (i - j) as any existing piece.
+
+2. **Counting Safe Squares**: The total number of safe squares is the total number of squares minus the squares that are under attack. However, since the grid is large (up to 10^9 x 10^9), we need an efficient way to compute this without iterating through each square.
+
+3. **Efficient Calculation**: Use sets to store the rows, columns, diagonals (i+j), and anti-diagonals (i-j) that are already occupied or under attack. The number of safe squares is calculated by:
+   - Total squares: N * N
+   - Minus squares in attacked rows: N * number of unique rows in existing pieces
+   - Minus squares in attacked columns: N * number of unique columns in existing pieces
+   - Plus squares in intersections of rows and columns (since they are subtracted twice): number of unique (row, column) pairs
+   - Minus squares in attacked diagonals (i + j): each diagonal has a certain number of squares, which is N - |(i + j) - (N + 1)| + 1
+   - Minus squares in attacked anti-diagonals (i - j): each anti-diagonal has N - |i - j| squares
+   - Plus squares that are counted multiple times in diagonals and anti-diagonals intersections.
+
+### Solution Code
+```cpp
+#include<bits/stdc++.h>
+
+using namespace std;
+
+typedef long long ll;
+
+int main() {
+    ll N, M;
+    scanf("%lld %lld", &N, &M);
+    
+    set<ll> rows, cols, diags1, diags2;
+    set<pair<ll, ll>> pieces;
+    
+    for (int i = 0; i < M; ++i) {
+        ll a, b;
+        scanf("%lld %lld", &a, &b);
+        rows.insert(a);
+        cols.insert(b);
+        diags1.insert(a + b);
+        diags2.insert(a - b);
+        pieces.insert({a, b});
+    }
+    
+    ll unsafe = 0;
+    
+    // Rows and columns
+    unsafe += rows.size() * N;
+    unsafe += cols.size() * N;
+    unsafe -= rows.size() * cols.size();
+    
+    // Diagonals (i + j)
+    for (auto d : diags1) {
+        ll cnt;
+        if (d <= N + 1) {
+            cnt = d - 1;
+        } else {
+            cnt = 2 * N - d + 1;
+        }
+        unsafe += cnt;
+    }
+    
+    // Anti-diagonals (i - j)
+    for (auto d : diags2) {
+        ll cnt;
+        if (d >= 0) {
+            cnt = N - d;
+        } else {
+            cnt = N + d;
+        }
+        unsafe += cnt;
+    }
+    
+    // Subtract intersections between diags1 and diags2
+    // Each piece (a, b) is at the intersection of a+b and a-b
+    // So we have to subtract the count of pieces since they are counted in both diags
+    unsafe -= pieces.size();
+    
+    // Total safe squares
+    ll total = N * N;
+    ll safe = total - unsafe;
+    
+    printf("%lld\n", safe);
+    
+    return 0;
+}
+```
+
+### Explanation
+1. **Input Handling**: Read the grid size \( N \) and the number of existing pieces \( M \).
+2. **Sets Initialization**: Use sets to store unique rows, columns, diagonals (i+j), and anti-diagonals (i-j) of existing pieces. Also, store each piece's coordinates to avoid double-counting intersections.
+3. **Unsafe Squares Calculation**: 
+   - **Rows and Columns**: Calculate squares under attack along rows and columns. Subtract the intersections (squares attacked by both a row and a column) to avoid double-counting.
+   - **Diagonals and Anti-diagonals**: For each unique diagonal and anti-diagonal, compute the number of squares they cover. These are calculated based on their positions relative to the grid boundaries.
+   - **Intersection Adjustment**: Subtract the count of existing pieces since they are counted in both diagonals and anti-diagonals.
+4. **Safe Squares Calculation**: Subtract the total unsafe squares from the grid's total squares to get the number of safe squares.
+
+This approach efficiently calculates the safe squares by leveraging set operations and mathematical formulas to avoid brute-force checks, making it suitable for large grid sizes.

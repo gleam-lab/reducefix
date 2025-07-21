@@ -1,0 +1,50 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+using namespace std;
+#define int long long
+
+int solve(int n, int k, vector<int>& a, vector<int>& b) {
+    vector<pair<int, int>> ab(n); // Pair of (A[i], B[i])
+    for (int i = 0; i < n; ++i) {
+        ab[i] = {a[i], b[i]};
+    }
+    
+    // Sort by A[i] descending, if A[i] are equal, then by B[i] ascending
+    sort(ab.begin(), ab.end(), [](const pair<int, int>& x, const pair<int, int>& y) {
+        return x.first > y.first || (x.first == y.first && x.second < y.second);
+    });
+
+    // Calculate the maximum possible value
+    long long max_value = 0;
+    long long sum_b = 0;
+    for (int i = 0; i < n; ++i) {
+        if (i < k - 1) {
+            sum_b += ab[i].second;
+        } else if (i >= k - 1 && i < n) {
+            sum_b += ab[i].second;
+            max_value = max(max_value, (long long)ab[i].first * sum_b);
+        }
+    }
+
+    return max_value;
+}
+
+int main() {
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, k;
+        cin >> n >> k;
+        vector<int> a(n);
+        vector<int> b(n);
+        for (int i = 0; i < n; ++i) {
+            cin >> a[i];
+        }
+        for (int i = 0; i < n; ++i) {
+            cin >> b[i];
+        }
+        cout << solve(n, k, a, b) << endl;
+    }
+    return 0;
+}

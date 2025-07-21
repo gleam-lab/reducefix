@@ -1,0 +1,37 @@
+#include <vector>
+#include <iostream>
+#include <algorithm>
+#include <cmath>
+#include <string>
+#include <numeric>
+
+using namespace std;
+
+#define INF 1e18
+
+int main(){
+    int n;
+    long long dp0 = 0, dp1 = -INF, x;
+    
+    cin >> n;
+    vector<long long> prefix_sums(n + 1, 0);
+    
+    for (int i = 0; i < n; ++i) {
+        cin >> x;
+        prefix_sums[i+1] = prefix_sums[i] + x;
+    }
+    
+    // We need to find the best point to switch between sequences
+    // Use prefix sums to calculate possible values
+    long long max_profit = 0;
+    for (int i = 0; i <= n; ++i) {
+        for (int j = i; j <= n; ++j) {
+            long long first_part = prefix_sums[j] - prefix_sums[i];
+            long long second_part = prefix_sums[n] - first_part;
+            max_profit = max(max_profit, first_part + (first_part + second_part));
+        }
+    }
+    
+    cout << max_profit << endl;
+    return 0;
+}

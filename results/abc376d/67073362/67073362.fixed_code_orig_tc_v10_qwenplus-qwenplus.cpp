@@ -1,0 +1,58 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+#define IOS ios::sync_with_stdio(false); cin.tie(0); cout.tie(0)
+#define int long long
+
+const int MAXN = 2e5 + 10;
+
+vector<int> adj[MAXN];
+int visited[MAXN];
+int depth[MAXN];
+int min_cycle = -1;
+
+void dfs(int u, int parent) {
+    visited[u] = 1;
+    for (int v : adj[u]) {
+        if (!visited[v]) {
+            depth[v] = depth[u] + 1;
+            dfs(v, u);
+            if (min_cycle != -1) return;
+        } else if (v != parent && depth[u] - depth[v] + 1 >= 3) {
+            min_cycle = depth[u] - depth[v] + 1;
+            return;
+        }
+    }
+    visited[u] = 2;
+}
+
+void solve() {
+    int n, m;
+    cin >> n >> m;
+    for (int i = 0; i < m; ++i) {
+        int u, v;
+        cin >> u >> v;
+        adj[u].push_back(v);
+        adj[v].push_back(u);
+    }
+
+    for (int i = 1; i <= n; ++i) {
+        if (!visited[i]) {
+            depth[i] = 1;
+            dfs(i, -1);
+            if (min_cycle != -1) break;
+        }
+    }
+
+    cout << min_cycle << endl;
+}
+#undef int
+int main() {
+    IOS;
+    int T = 1;
+    //cin >> T;
+    while(T--) {
+        solve();
+    }
+    return 0;
+}

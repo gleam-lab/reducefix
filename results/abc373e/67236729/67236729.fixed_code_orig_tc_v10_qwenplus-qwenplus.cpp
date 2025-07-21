@@ -1,0 +1,66 @@
+#include <bits/stdc++.h>
+using namespace std;
+using i64 = long long;
+
+constexpr int N = 2e5 + 10;
+
+i64 a[N], b[N];
+
+bool can_win(i64 score, i64 X, i64 K, i64 n, i64 m) {
+    // Add X to the candidate's score
+    score += X;
+    
+    // We need to find if there are at least (m) candidates with higher scores than this one
+    // So we check how many have scores >= score
+    i64 count = 0;
+    for (i64 i = 0; i < n; ++i) {
+        if (a[i] > score) {
+            count++;
+        }
+    }
+
+    if (count < m) return true;
+
+    // If there are already at least m candidates ahead, even after adding X votes,
+    // then this candidate cannot win.
+    return false;
+}
+
+void solve() {
+    i64 n, m, k;
+    cin >> n >> m >> k;
+    
+    for (i64 i = 0; i < n; ++i) {
+        cin >> a[i];
+    }
+
+    vector<i64> res(n);
+    i64 total_remaining = k;
+    
+    for (int t = 0; t < n; ++t) {
+        i64 l = 0, r = k;
+        i64 ans = -1;
+        
+        while (l <= r) {
+            i64 mid = (l + r) / 2;
+            if (can_win(a[t], mid, total_remaining, n, m)) {
+                ans = mid;
+                r = mid - 1;
+            } else {
+                l = mid + 1;
+            }
+        }
+
+        res[t] = ans;
+    }
+
+    for (auto x : res)
+        cout << x << " ";
+    cout << "\n";
+}
+
+signed main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    solve();
+}

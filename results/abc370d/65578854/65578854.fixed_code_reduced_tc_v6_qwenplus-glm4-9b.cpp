@@ -1,0 +1,97 @@
+#include <iostream>
+#include <vector>
+#include <set>
+#include <algorithm>
+
+using namespace std;
+
+int main() {
+    int H, W, Q;
+    cin >> H >> W >> Q;
+    vector<set<int>> X(H), Y(W);
+    vector<vector<bool>> grid(H, vector<bool>(W, true));
+    
+    for (int i = 0; i < H; i++) {
+        for (int j = 0; j < W; j++) {
+            X[i].insert(j);
+            Y[j].insert(i);
+            grid[i][j] = true;
+        }
+    }
+
+    int remainingWalls = H * W; // Start with all walls present
+    for (int q = 0; q < Q; q++) {
+        int R, C;
+        cin >> R >> C;
+        R--; C--; // Convert to zero-indexed
+
+        if (!grid[R][C]) {
+            // The cell has already been destroyed
+            continue;
+        }
+
+        // Set the cell to destroyed
+        grid[R][C] = false;
+        for (int i : X[R]) {
+            X[R].erase(i);
+        }
+        for (int i : Y[C]) {
+            Y[C].erase(i);
+        }
+        
+        // Remove walls above
+        auto it = Y[C].lower_bound(R);
+        if (it != Y[C].begin()) {
+            it--;
+            grid[*it][C] = false;
+            X[*it].erase(C);
+        }
+        if (it != Y[C].end()) {
+            grid[*it][C] = false;
+            X[*it].erase(C);
+        }
+
+        // Remove walls below
+        it = Y[C].lower_bound(R);
+        if (it != Y[C].end()) {
+            it++;
+            if (it != Y[C].end()) {
+                grid[*it][C] = false;
+                X[*it].erase(C);
+            }
+        }
+
+        // Remove walls left
+        it = X[R].lower_bound(C);
+        if (it != X[R].begin()) {
+            it--;
+            grid[R][*it] = false;
+            Y[*it].erase(R);
+        }
+        if (it != X[R].end()) {
+            grid[R][*it] = false;
+            Y[*it].erase(R);
+        }
+
+        // Remove walls right
+        it = X[R].lower_bound(C);
+        if (it != X[R].end()) {
+            it++;
+            if (it != X[R].end()) {
+                grid[R][*it] = false;
+                Y[*it].erase(R);
+            }
+        }
+    }
+
+    // Count remaining walls
+    for (int i = 0; i < H; i++) {
+        remainingWalls -= X[i].size();
+    }
+    for (int i = 0; i < W; i++) {
+        remainingWalls -= Y[i].size();
+    }
+
+    cout << remainingWalls << endl;
+    return 0;
+}

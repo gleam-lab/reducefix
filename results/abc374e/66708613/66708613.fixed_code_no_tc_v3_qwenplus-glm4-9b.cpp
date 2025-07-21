@@ -1,0 +1,58 @@
+#include <iostream>
+#include <string>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+const int inf = 1 << 30;
+
+int main() {
+    int N;
+    ll X;
+    cin >> N >> X;
+    vector<ll> A(N), P(N), B(N), Q(N);
+    
+    for (int i = 0; i < N; i++) {
+        cin >> A[i] >> P[i] >> B[i] >> Q[i];
+    }
+
+    bool can_buy = true;
+    for (int i = 0; i < N; i++) {
+        if (X < P[i] && X < Q[i]) {
+            can_buy = false;
+            break;
+        }
+    }
+
+    if (!can_buy) {
+        cout << 0 << endl;
+        return 0;
+    }
+
+    auto f = [&](ll x) {
+        ll res = X;
+        for (int i = 0; i < N; i++) {
+            ll min_cost = inf;
+            ll max_s = min(x, B[i]); // Maximum machines s that can be bought for type 1
+            for (ll s = max_s; s >= max(0LL, x - A[i] * max_s); s--) {
+                ll t = (max(0LL, x - A[i] * s) + B[i] - 1) / B[i]; // Maximum machines t that can be bought for type 2
+                min_cost = min(min_cost, s * P[i] + t * Q[i]);
+            }
+            if (min_cost == inf) return false; // Cannot achieve A[i] with the given budget
+            res -= min_cost;
+        }
+        return res >= 0;
+    };
+
+    ll lb = 0, ub = inf;
+    while (ub - lb > 1) {
+        ll mid = (ub + lb) / 2;
+        if (f(mid)) {
+            ub = mid;
+        } else {
+            lb = mid;
+        }
+    }
+
+    cout << ub << endl; // Output the minimum processing capacity that can be achieved within budget X.
+}

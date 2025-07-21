@@ -1,0 +1,45 @@
+#include <iostream>
+#include <vector>
+#include <map>
+#include <algorithm>
+
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int N;
+    cin >> N;
+    vector<long long> X(N), P(N + 1);
+    map<long long, int> x_to_ptr;
+
+    P[0] = 0;
+    for (int i = 0; i < N; ++i) {
+        cin >> X[i];
+    }
+    for (int i = 0; i < N; ++i) {
+        int p;
+        cin >> p;
+        P[i + 1] = P[i] + p;
+    }
+
+    for (int i = 0; i < N; ++i) {
+        x_to_ptr[X[i]] = i;
+    }
+
+    int Q;
+    cin >> Q;
+    while (Q--) {
+        int L, R;
+        cin >> L >> R;
+        auto X_l = x_to_ptr.lower_bound(L);
+        auto X_r = x_to_ptr.upper_bound(R);
+        int l = (X_l == x_to_ptr.end()) ? N : (*X_l).second;
+        int r = (X_r == x_to_ptr.end()) ? N : (*prev(X_r)).second;
+        long long ans = P[r] - P[l];
+        cout << ans << '\n';
+    }
+
+    return 0;
+}

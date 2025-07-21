@@ -1,0 +1,27 @@
+#include<bits/stdc++.h>
+using namespace std;
+
+int n, m;
+
+int main() {
+    cin >> n >> m;
+    vector<int> nums(n + 1);
+    for (int i = 1; i <= n; ++i) {
+        cin >> nums[i];
+        nums[i] += nums[i - 1]; // Correctly calculate prefix sum
+    }
+
+    int count = 0;
+    // Finding possible (s, t) pairs
+    for (int s = 1; s <= n; ++s) {
+        for (int t = s + 1; t <= n; ++t) { // Ensure s < t to avoid duplicate pairs
+            int step = abs(nums[t] - nums[s]);
+            if (step % m == 0) {
+                count++;
+            }
+        }
+    }
+
+    cout << count << endl;
+    return 0;
+}

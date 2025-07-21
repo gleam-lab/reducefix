@@ -1,0 +1,95 @@
+
+This problem can be solved by implementing Kruskal's algorithm with union-find data structure optimized by rank and path compression. We use the union-find to keep track of connected components and a priority queue (or a sorted data structure) to maintain order of vertices for each component. Here is how to approach the problem:
+
+1. **Data Structures**:
+    * **Union-Find**: A data structure to efficiently find the root of a set, and to unite two sets.
+    * **Priority Queue**: To always maintain the k-th largest vertex in each component.
+
+2. **Main Steps**:
+    * **Initialization**: Initialize union-find for N vertices, where each vertex is its own parent (self-loop).
+    * **Processing Queries**:
+        * For type 1 query, use union-find to unite vertices u and v. If they are not already united, unite them and update the priority queue for each component.
+        * For type 2 query, find the connected component for vertex v using union-find, find the k-th largest vertex using the priority queue of that component.
+
+3. **Optimizations**:
+    * Use path compression in the union-find to speed up the find operation.
+    * Use union by rank to keep the tree flat.
+    * Maintain a priority queue for each component to efficiently get the k-th largest vertex.
+
+4. **Code Explanation**:
+    The provided code has a number of issues but is a good starting point. Here are some of the issues and how to fix them:
+    * **Union-Find Implementation**: The code uses path compression but not union by rank. It's better to implement union by rank as well.
+    * **Priority Queue Maintenance**: When unifying two components, it's not needed to copy all the vertices from the second component to the first. Instead, insert them into the priority queue. Also, when processing type 2 queries, if the size of the priority queue is less than k, output `-1` directly.
+    * **Memory Management**: The code uses static arrays which may lead to out-of-bounds errors or inefficient memory usage.
+
+Here is a corrected version of the code that follows the above approach and optimizations:
+
+```cpp
+#include <iostream>
+#include <vector>
+#include <queue>
+#include <algorithm>
+
+using namespace std;
+
+struct UnionFind {
+    vector<int> par, rank, size;
+    UnionFind(int n) {
+        par.resize(n + 1);
+        rank.resize(n + 1, 0);
+        size.resize(n + 1, 1);
+        for (int i = 0; i <= n; ++i) {
+            par[i] = i;
+        }
+    }
+
+    int find(int x) {
+        if (x == par[x]) return x;
+        par[x] = find(par[x]);
+        return par[x];
+    }
+
+    bool unite(int x, int y) {
+        x = find(x);
+        y = find(y);
+        if (x == y) return false;
+        if (rank[x] < rank[y]) swap(x, y);
+        par[y] = x;
+        size[x] += size[y];
+        if (rank[x] == rank[y]) rank[x]++;
+        return true;
+    }
+};
+
+int main() {
+    int N, Q;
+    cin >> N >> Q;
+    UnionFind uf(N);
+    vector<priority_queue<int>> pq(N + 1);
+    vector<int> ans;
+
+    for (int i = 0; i < Q; ++i) {
+        int op, u, v, k;
+        cin >> op >> u >> v;
+        if (op == 1) {
+            uf.unite(u, v);
+        } else if (op == 2) {
+            int root = uf.find(v);
+            if (pq[root].size() < k) {
+                ans.push_back(-1);
+            } else {
+                ans.push_back(pq[root].top());
+                pq[root].pop();
+            }
+        }
+    }
+
+    for (int a : ans) {
+        cout << a << endl;
+    }
+
+    return 0;
+}
+```
+
+This code uses union-find with rank and path compression, and maintains a priority queue for each connected component to efficiently find the k-th largest vertex.

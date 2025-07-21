@@ -1,0 +1,34 @@
+#include<bits/stdc++.h>
+using namespace std;
+const int N=2e5+5;
+int n,q,k,a[N],b[N];
+
+void solve() {
+    cin >> n >> q;
+    for(int i = 1; i <= n; ++i) 
+        cin >> a[i];
+    
+    sort(a + 1, a + n + 1);
+    
+    while(q--) {
+        cin >> b[q] >> k;
+        int left = 0, right = 1e9;
+        while(left < right) {
+            int mid = left + (right - left) / 2;
+            int count = upper_bound(a + 1, a + n + 1, b[q] + mid) - lower_bound(a + 1, a + n + 1, b[q] - mid);
+            if(count >= k)
+                right = mid;
+            else
+                left = mid + 1;
+        }
+        cout << left << "\n";
+    }
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(NULL);
+    cout.tie(NULL);
+    solve();
+    return 0;
+}

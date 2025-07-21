@@ -1,0 +1,97 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+#define int long long
+#define pbk push_back
+template <class T>
+using V = vector<T>;
+template <class T>
+using VV = vector<vector<T>>;
+template <class T>
+using VVV = vector<vector<vector<T>>>;
+
+struct DSU {
+private:
+    vector<int> fa, sz;
+public:
+    DSU(int n) : fa(n + 1), sz(n + 1, 1) {
+        iota(fa.begin(), fa.end(), 0);
+    }
+    int find(int x) {
+        return fa[x] == x ? x : fa[x] = find(fa[x]);
+    }
+    bool same(int x, int y) {
+        return find(x) == find(y);
+    }
+    bool merge(int x, int y) {
+        x = find(x), y = find(y);
+        if (x == y) return false;
+        if (sz[x] < sz[y]) swap(x, y);
+        fa[y] = x;
+        sz[x] += sz[y];
+        return true;
+    }
+};
+
+struct Edge {
+    int x, y, c;
+    bool operator<(const Edge& other) const {
+        return c < other.c;
+    }
+};
+
+using i128 = __int128;
+
+void solve() {
+    int n, m;
+    cin >> n >> m;
+    V<int> a(n + 1, 0);
+    vector<i128> d(n + 1, LLONG_MAX);
+    vector<bool> vis(n + 1, false);
+
+    for (int i = 1; i <= n; ++i) {
+        cin >> a[i];
+    }
+
+    vector<pair<int, int>> g[n + 1];
+    for (int i = 1; i <= m; ++i) {
+        int x, y, c;
+        cin >> x >> y >> c;
+        g[x].pbk({y, c});
+        g[y].pbk({x, c});
+    }
+
+    priority_queue<pair<i128, int>, vector<pair<i128, int>>, greater<>> pq;
+    pq.push({a[1], 1});
+
+    while (!pq.empty()) {
+        auto [w, u] = pq.top();
+        pq.pop();
+
+        if (vis[u]) continue;
+        vis[u] = true;
+
+        for (auto [v, c] : g[u]) {
+            if (w + c + a[v] < d[v]) {
+                d[v] = w + c + a[v];
+                pq.push({d[v], v});
+            }
+        }
+    }
+
+    for (int i = 2; i <= n; ++i) {
+        cout << d[i] << " ";
+    }
+    cout << "\n";
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int t = 1;
+    // cin >> t;
+    while (t--) {
+        solve();
+    }
+    return 0;
+}

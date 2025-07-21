@@ -1,0 +1,54 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+const int INF = 1e9 + 7;
+
+void solve() {
+    int n, m;
+    cin >> n >> m;
+
+    vector<vector<int>> adj(n + 1);
+    for (int i = 0; i < m; ++i) {
+        int u, v;
+        cin >> u >> v;
+        adj[u].push_back(v);
+    }
+
+    queue<int> q;
+    vector<int> dist(n + 1, INF);
+    vector<bool> visited(n + 1, false);
+
+    q.push(1);
+    dist[1] = 0;
+    visited[1] = true;
+
+    while (!q.empty()) {
+        int u = q.front();
+        q.pop();
+
+        for (int v : adj[u]) {
+            if (dist[v] > dist[u] + 1) {
+                dist[v] = dist[u] + 1;
+                if (!visited[v]) {
+                    visited[v] = true;
+                    q.push(v);
+                }
+            }
+        }
+    }
+
+    if (dist[1] == INF)
+        cout << -1;
+    else
+        cout << dist[1];
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    cout.tie(nullptr);
+
+    solve();
+
+    return 0;
+}

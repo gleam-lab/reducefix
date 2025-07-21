@@ -1,0 +1,89 @@
+
+The problem involves managing an undirected graph where edges can be added between vertices and queries can be made to determine the k-th largest vertex in the connected component of a given vertex. The solution should efficiently handle union-find operations for edge additions and queries for finding k-th largest vertices.
+
+### Analysis of the Incorrect Code
+
+The incorrect code provided uses a union-find data structure with path compression and union by size. However, there are several issues with the code:
+
+1. **Membership and Size Tracking**: The code correctly maintains the parent pointer for each vertex and uses union by size to keep the tree shallow. However, it fails to maintain the size of the tree (the number of vertices in the connected component).
+
+2. **Edge Union Operation**: The function `uni` merges two trees (connected components). It attempts to merge the vertexes in descending order of their values and then trims the last element if the size exceeds 10. This approach is inefficient and could lead to incorrect results for k > 10.
+
+3. **Query Operation**: The query operation uses the parent of the vertex to find its connected component. It then checks if the size of the component is less than k and prints `-1` if true. Otherwise, it prints the k-th largest vertex. This approach is inefficient because it does not maintain a sorted list of vertices in each connected component.
+
+### Corrected Approach
+
+To address these issues, the following steps should be taken:
+
+1. **Union and Find Operations**: Maintain the parent and size of each connected component. When merging two components, update the parent of the smaller component to the larger one and adjust the sizes accordingly.
+
+2. **Maintain Sorted List of Vertices**: After merging two components, maintain a sorted list of vertices in each component. This will allow for efficient retrieval of the k-th largest vertex.
+
+3. **Efficient Query Handling**: For each query, quickly retrieve the sorted list of vertices from the connected component and return the k-th largest vertex.
+
+### Implementation
+
+Here is a corrected implementation that addresses the issues mentioned:
+
+```cpp
+#include <iostream>
+#include <vector>
+#include <algorithm>
+
+using namespace std;
+
+const int MAXN = 2e5 + 5;
+
+vector<int> parent(MAXN, -1);
+vector<vector<int>> graph(MAXN);
+vector<vector<int>> vertices(MAXN);  // to store sorted vertices in the component
+
+int find(int x) {
+    if (parent[x] == -1) return x;
+    parent[x] = find(parent[x]);
+    return parent[x];
+}
+
+void unionSets(int x, int y) {
+    x = find(x);
+    y = find(y);
+    if (x != y) {
+        if (vertices[x].size() < vertices[y].size()) {
+            swap(x, y);
+        }
+        for (int u : vertices[y]) {
+            graph[x].push_back(u);
+        }
+        vertices[x].insert(vertices[x].end(), vertices[y].begin(), vertices[y].end());
+        vertices[y].clear();
+        parent[y] = x;
+    }
+}
+
+int main() {
+    int n, q;
+    cin >> n >> q;
+    for (int i = 1; i <= n; ++i) {
+        parent[i] = i;
+        vertices[i].push_back(i);
+    }
+    while (q--) {
+        int type, u, v;
+        cin >> type >> u >> v;
+        if (type == 1) {
+            unionSets(u, v);
+        } else if (type == 2) {
+            int p = find(v);
+            if (vertices[p].size() < v) {
+                cout << -1 << '\n';
+            } else {
+                sort(vertices[p].rbegin(), vertices[p].rend());
+                cout << vertices[p][v - 1] << '\n';
+            }
+        }
+    }
+    return 0;
+}
+```
+
+This implementation should efficiently handle the union and find operations and provide the correct k-th largest vertex for each query.

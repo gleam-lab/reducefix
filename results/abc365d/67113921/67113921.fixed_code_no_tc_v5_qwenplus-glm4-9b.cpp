@@ -1,0 +1,38 @@
+#include <iostream>
+using namespace std;
+
+int main(){
+    ios_base::sync_with_stdio(false);
+    cin.tie(NULL);
+
+    int N;
+    string S;
+    cin >> N;
+    cin >> S;
+    
+    // Initialize variables for counting wins and storing the previous character
+    int wins = 0;
+    char prev = 'a';
+    
+    // Iterate over the string to determine winning moves
+    for (char c : S) {
+        // Determine the winning move based on the current move
+        char winmove;
+        switch (c) {
+            case 'R': winmove = 'P'; break;
+            case 'P': winmove = 'S'; break;
+            case 'S': winmove = 'R'; break;
+        }
+        
+        // Check if the current winning move is different from the previous move
+        if (winmove != prev) {
+            wins++; // Increment wins if there was a change in the winning move
+            prev = winmove; // Update the previous move
+        } else {
+            prev = c; // Update the previous move if no change in winning move
+        }
+    }
+    
+    // Output the total number of wins
+    cout << wins;
+}

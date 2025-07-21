@@ -1,0 +1,27 @@
+#include<bits/stdc++.h>
+using namespace std;
+
+#define rep(i, n) for (ll i = 0; i < (n); ++i)
+using ll = long long;
+
+int main() {
+    int n; cin >> n;
+    ll ans = 0;
+    vector<ll> h(n);
+    rep(i, n) {
+        cin >> h[i];
+    }
+
+    for (ll i = 0; i < n; ++i) {
+        // Calculate the number of hits required to kill the enemy
+        ll hits = ceil(h[i] / 3.0);
+        // If the health is not divisible by 3, we need one more hit
+        if (h[i] % 3 != 0) {
+            hits += 1;
+        }
+        // Add the number of hits to the total
+        ans += hits;
+    }
+
+    cout << ans << endl;
+}

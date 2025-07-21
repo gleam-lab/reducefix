@@ -1,0 +1,59 @@
+#include<bits/stdc++.h>
+using namespace std;
+using ll = long long;
+
+const int MAX_N = 1000;
+const int MAX_Y = 100005;
+int H, W, Y;
+int A[MAX_N][MAX_N];
+bool visited[MAX_N][MAX_N];
+int dx[4] = {1, 0, -1, 0};
+int dy[4] = {0, 1, 0, -1};
+
+void bfs(int sea_level) {
+    memset(visited, false, sizeof(visited));
+    queue<pair<int, int>> q;
+    for (int i = 0; i < H; i++) {
+        for (int j = 0; j < W; j++) {
+            if (!visited[i][j] && A[i][j] <= sea_level) {
+                visited[i][j] = true;
+                q.push({i, j});
+            }
+        }
+    }
+    while (!q.empty()) {
+        int x = q.front().first;
+        int y = q.front().second;
+        q.pop();
+        for (int k = 0; k < 4; k++) {
+            int nx = x + dx[k];
+            int ny = y + dy[k];
+            if (nx >= 0 && nx < H && ny >= 0 && ny < W && !visited[nx][ny] && A[nx][ny] <= sea_level) {
+                visited[nx][ny] = true;
+                q.push({nx, ny});
+            }
+        }
+    }
+}
+
+int main() {
+    cin >> H >> W >> Y;
+    for (int i = 0; i < H; i++) {
+        for (int j = 0; j < W; j++) {
+            cin >> A[i][j];
+        }
+    }
+    int ans = H * W;
+    for (int y = 1; y <= Y; y++) {
+        bfs(A[0][0] + y); // Start BFS from the edge or from the lowest elevation point
+        for (int i = 0; i < H; i++) {
+            for (int j = 0; j < W; j++) {
+                if (!visited[i][j]) {
+                    ans--;
+                }
+            }
+        }
+        cout << ans << endl;
+    }
+    return 0;
+}

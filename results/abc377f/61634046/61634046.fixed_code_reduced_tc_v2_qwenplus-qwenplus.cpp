@@ -1,0 +1,134 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+
+using ll = long long;
+using pii = pair<int, int>;
+
+const int MAX_M = 2000 + 5;
+
+int N, M;
+set<int> rows, cols;
+set<ll> diag1, diag2;
+
+int main() {
+    scanf("%d %d", &N, &M);
+    for (int i = 0; i < M; ++i) {
+        int x, y;
+        scanf("%d %d", &x, &y);
+        rows.insert(x);
+        cols.insert(y);
+        diag1.insert((ll)x - y);
+        diag2.insert((ll)x + y);
+    }
+
+    ll total = 1LL * N * N;
+    ll blocked = 0;
+
+    // Count all squares in attacked rows
+    blocked += (ll)rows.size() * N;
+
+    // Count all squares in attacked columns
+    blocked += (ll)cols.size() * N;
+
+    // Subtract overlaps: squares that are both in attacked row and column
+    for (int r : rows) {
+        for (int c : cols) {
+            blocked--;
+        }
+    }
+
+    // Count diagonals of type x - y = c
+    for (const auto& d : diag1) {
+        // Number of points on diagonal x - y = d in [1..N] x [1..N]
+        int lo = max(1, d + 1);
+        int hi = min(N + d, N);
+        if (lo <= hi) {
+            blocked += hi - lo + 1;
+        }
+    }
+
+    // Count diagonals of type x + y = c
+    for (const auto& d : diag2) {
+        int lo = max(1LL, d - N);
+        int hi = min(d - 1, N);
+        if (lo <= hi) {
+            blocked += hi - lo + 1;
+        }
+    }
+
+    // Remove overlap between rows and diag1
+    for (int r : rows) {
+        for (const auto& d : diag1) {
+            int c = r - d;
+            if (1 <= c && c <= N) {
+                blocked--;
+            }
+        }
+    }
+
+    // Remove overlap between rows and diag2
+    for (int r : rows) {
+        for (const auto& d : diag2) {
+            int c = d - r;
+            if (1 <= c && c <= N) {
+                blocked--;
+            }
+        }
+    }
+
+    // Remove overlap between cols and diag1
+    for (int c : cols) {
+        for (const auto& d : diag1) {
+            int r = d + c;
+            if (1 <= r && r <= N) {
+                blocked--;
+            }
+        }
+    }
+
+    // Remove overlap between cols and diag2
+    for (int c : cols) {
+        for (const auto& d : diag2) {
+            int r = d - c;
+            if (1 <= r && r <= N) {
+                blocked--;
+            }
+        }
+    }
+
+    // Remove overlap between diag1 and diag2
+    for (const auto& d1 : diag1) {
+        for (const auto& d2 : diag2) {
+            int r = (d2 + d1) / 2;
+            int c = (d2 - d1) / 2;
+            if ((d2 + d1) % 2 == 0 && (d2 - d1) % 2 == 0 && 1 <= r && r <= N && 1 <= c && c <= N) {
+                blocked--;
+            }
+        }
+    }
+
+    // Add back overlaps of three types that were subtracted twice
+    for (int r : rows) {
+        for (int c : cols) {
+            ll d1 = r - c;
+            ll d2 = r + c;
+            if (diag1.count(d1)) blocked++;
+            if (diag2.count(d2)) blocked++;
+        }
+    }
+
+    // Subtract overlaps of four types that were added back too many times
+    for (int r : rows) {
+        for (int c : cols) {
+            ll d1 = r - c;
+            ll d2 = r + c;
+            if (diag1.count(d1) && diag2.count(d2)) {
+                blocked--;
+            }
+        }
+    }
+
+    printf("%lld\n", total - blocked);
+    return 0;
+}

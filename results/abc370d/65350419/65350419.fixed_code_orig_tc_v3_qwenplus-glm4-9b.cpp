@@ -1,0 +1,68 @@
+#include <iostream>
+#include <vector>
+#include <set>
+
+using namespace std;
+
+int main() {
+    int h, w, q;
+    cin >> h >> w >> q;
+    
+    vector<vector<int>> grid(h, vector<int>(w));
+    vector<vector<set<pair<int, int>>>> up Walls(h);
+    vector<vector<set<pair<int, int>>>> down Walls(h);
+    vector<vector<set<pair<int, int>>>> left Walls(w);
+    vector<vector<set<pair<int, int>>>> right Walls(w);
+
+    // Initialize all walls
+    for (int i = 0; i < h; ++i) {
+        for (int j = 0; j < w; ++j) {
+            grid[i][j] = 1;
+        }
+    }
+
+    while (q--) {
+        int r, c;
+        cin >> r >> c;
+        r--; c--; // Convert to 0-indexed
+        if (grid[r][c] == 1) {
+            grid[r][c] = 0; // Remove the wall
+        } else {
+            // Check and remove walls in all four directions
+            for (auto &p : left[c]) if (p.first == r) left[c].erase(p);
+            for (auto &p : right[c]) if (p.first == r) right[c].erase(p);
+            for (auto &p : up[r]) if (p.second == c) up[r].erase(p);
+            for (auto &p : down[r]) if (p.second == c) down[r].erase(p);
+
+            // Remove existing walls from the grid
+            grid[r][c] = 0;
+            for (auto &p : left[c]) grid[p.first][c] = 0;
+            for (auto &p : right[c]) grid[p.first][c] = 0;
+            for (auto &p : up[r]) grid[p.first][c] = 0;
+            for (auto &p : down[r]) grid[p.first][c] = 0;
+
+            // Insert new walls in all four directions
+            for (int i = max(r - 1, 0); i < min(r + 2, h); ++i) {
+                if (i == r) continue; // Skip the current row
+                left[c].insert({i, c});
+                right[c].insert({i, c});
+            }
+            for (int j = max(c - 1, 0); j < min(c + 2, w); ++j) {
+                if (j == c) continue; // Skip the current column
+                up[r].insert({r, j});
+                down[r].insert({r, j});
+            }
+        }
+    }
+
+    // Count the number of remaining walls
+    int remainingWalls = 0;
+    for (int i = 0; i < h; ++i) {
+        for (int j = 0; j < w; ++j) {
+            remainingWalls += grid[i][j];
+        }
+    }
+
+    cout << remainingWalls << endl;
+    return 0;
+}

@@ -1,0 +1,81 @@
+#include "bits/stdc++.h"
+
+using namespace std;
+
+#define ff first
+#define ss second
+#define ll long long
+#define SZ(s) (int)s.size()
+
+int const N = 2e5 + 5;
+
+vector <set<int>> components;
+vector <int> parent;
+
+int find(int x) {
+    if(parent[x] != x)
+        parent[x] = find(parent[x]);
+    return parent[x];
+}
+
+void unite(int a, int b) {
+    int root_a = find(a);
+    int root_b = find(b);
+    
+    if(root_a == root_b)
+        return;
+    
+    // Always merge smaller into larger
+    if(components[root_a].size() < components[root_b].size())
+        swap(root_a, root_b);
+    
+    // Merge the sets
+    for(int x : components[root_b]) {
+        components[root_a].insert(x);
+        parent[x] = root_a;
+    }
+    
+    // Keep only top 10 largest elements in each set
+    while(components[root_a].size() > 10) {
+        auto it = components[root_a].begin();
+        components[root_a].erase(it);
+    }
+}
+
+signed main() {
+    ios_base::sync_with_stdio(false); cin.tie(nullptr);
+
+    int n, q;
+    cin >> n >> q;
+    
+    components.resize(n+1);
+    parent.resize(n+1);
+    
+    for(int i = 1; i <= n; ++i) {
+        components[i].insert(i);
+        parent[i] = i;
+    }
+    
+    while(q--) {
+        int t, a, b;
+        cin >> t >> a >> b;
+        
+        if(t == 1) {
+            unite(a, b);
+        } else {
+            int root = find(a);
+            if(components[root].size() < b) {
+                cout << -1 << '\n';
+                continue;
+            }
+            
+            auto it = components[root].end();
+            for(int i = 0; i < b; ++i)
+                --it;
+            
+            cout << *it << '\n';
+        }
+    }
+
+    return 0;
+}

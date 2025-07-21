@@ -1,0 +1,84 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+typedef long long ll;
+
+const int MAX_COORD = 2e8 + 5;
+const int OFFSET = 1e8;
+
+int freq[4 * MAX_COORD]; // Segment tree size (sufficiently large)
+int prefix_sum[4 * MAX_COORD];
+
+// Build frequency and prefix sum segment trees
+void build(int node, int l, int r) {
+    if (l == r) {
+        freq[node] = 0;
+        prefix_sum[node] = 0;
+        return;
+    }
+    int mid = (ll)l + r >> 1;
+    build(node*2, l, mid);
+    build(node*2+1, mid+1, r);
+    freq[node] = freq[node*2] + freq[node*2+1];
+    prefix_sum[node] = prefix_sum[node*2] + prefix_sum[node*2+1];
+}
+
+// Update frequency at position x by cnt
+void update(int node, int l, int r, int x, int cnt) {
+    if (l == r) {
+        freq[node] += cnt;
+        prefix_sum[node] = freq[node] * l;
+        return;
+    }
+    int mid = (ll)l + r >> 1;
+    if (x <= mid) update(node*2, l, mid, x, cnt);
+    else update(node*2+1, mid+1, r, x, cnt);
+    freq[node] = freq[node*2] + freq[node*2+1];
+    prefix_sum[node] = prefix_sum[node*2] + prefix_sum[node*2+1];
+}
+
+// Query the number of points in [a, b]
+int query_count(int node, int l, int r, int a, int b) {
+    if (r < a || l > b) return 0;
+    if (a <= l && r <= b) return freq[node];
+    int mid = (ll)l + r >> 1;
+    return query_count(node*2, l, mid, a, b) +
+           query_count(node*2+1, mid+1, r, a, b);
+}
+
+// Binary search to find the k-th smallest distance from point b
+ll find_kth_distance(int b, int k) {
+    ll left = 0, right = 1e8;
+    while (left < right) {
+        ll mid = (left + right) / 2;
+        int count = query_count(1, -1e8, 1e8, b - mid, b + mid);
+        if (count >= k) right = mid;
+        else left = mid + 1;
+    }
+    return left;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int N, Q;
+    cin >> N >> Q;
+
+    // Initialize segment tree
+    build(1, -1e8, 1e8);
+
+    vector<ll> A(N);
+    for (int i = 0; i < N; ++i) {
+        cin >> A[i];
+        update(1, -1e8, 1e8, A[i], 1);
+    }
+
+    for (int i = 0; i < Q; ++i) {
+        int b, k;
+        cin >> b >> k;
+        cout << find_kth_distance(b, k) << '\n';
+    }
+
+    return 0;
+}

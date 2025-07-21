@@ -1,0 +1,74 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <cassert>
+
+using namespace std;
+
+struct Candidate {
+    long long votes;
+    int index;
+};
+
+bool canWin(const vector<Candidate>& candidates, int index, long long additionalVotes, int M, long long totalRemainingVotes) {
+    int aheadCount = 0;
+    for (int i = 0; i < candidates.size(); ++i) {
+        if (candidates[i].index == index) continue;
+        if (candidates[i].votes + additionalVotes > candidates[index].votes) {
+            ++aheadCount;
+        }
+    }
+    return aheadCount < M;
+}
+
+void solve() {
+    int N, M;
+    long long K;
+    cin >> N >> M >> K;
+    
+    vector<Candidate> candidates(N);
+    for (int i = 0; i < N; ++i) {
+        cin >> candidates[i].votes;
+        candidates[i].index = i;
+    }
+    
+    sort(candidates.begin(), candidates.end(), [](const Candidate& a, const Candidate& b) { return a.votes < b.votes; });
+    
+    vector<long long> results(N, -1);
+    long long totalVotesReceived = 0;
+    for (int i = 0; i < N; ++i) {
+        totalVotesReceived += candidates[i].votes;
+    }
+    
+    if (totalVotesReceived >= K) {
+        for (int i = 0; i < N; ++i) {
+            results[i] = 0;
+        }
+    } else {
+        long long remainingVotes = K - totalVotesReceived;
+        for (int i = 0; i < N; ++i) {
+            long long minAdditionalVotes = 0;
+            if (!canWin(candidates, i, 0, M, remainingVotes)) {
+                for (long long additionalVotes = 1; ; ++additionalVotes) {
+                    if (canWin(candidates, i, additionalVotes, M, remainingVotes)) {
+                        minAdditionalVotes = additionalVotes;
+                        break;
+                    }
+                }
+            }
+            results[i] = minAdditionalVotes;
+        }
+    }
+    
+    for (int i = 0; i < N; ++i) {
+        cout << results[i] << " ";
+    }
+    cout << endl;
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+    solve();
+    return 0;
+}

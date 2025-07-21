@@ -1,0 +1,76 @@
+#include <bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+#define all(x) (x).begin(), (x).end()
+
+int main() {
+    ios_base::sync_with_stdio(0);
+    cin.tie(0);
+    
+    int H, W, Y;
+    cin >> H >> W >> Y;
+    
+    vector<vector<int>> A(H, vector<int>(W));
+    for (int i = 0; i < H; ++i) {
+        for (int j = 0; j < W; ++j) {
+            cin >> A[i][j];
+        }
+    }
+
+    // Priority queue to process cells from sea outward using BFS with min-heap
+    priority_queue<tuple<int, int, int>, vector<tuple<int, int, int>>, greater<tuple<int, int, int>>> pq;
+
+    // visited matrix
+    vector<vector<bool>> sink(H, vector<bool>(W, false));
+
+    // Initialize the border cells as "sea"
+    for (int i = 0; i < H; ++i) {
+        for (int j = 0; j < W; ++j) {
+            if (i == 0 || i == H - 1 || j == 0 || j == W - 1) {
+                pq.emplace(A[i][j], i, j);
+                sink[i][j] = true;
+            }
+        }
+    }
+
+    // Directions: up, down, left, right
+    vector<pair<int, int>> dirs = {{-1, 0}, {1, 0}, {0, -1}, {0, 1}};
+
+    // Process cells in order of increasing elevation (like Dijkstra's)
+    while (!pq.empty()) {
+        auto [height, r, c] = pq.top();
+        pq.pop();
+
+        for (auto &[dr, dc] : dirs) {
+            int nr = r + dr;
+            int nc = c + dc;
+            if (nr >= 0 && nr < H && nc >= 0 && nc < W && !sink[nr][nc]) {
+                if (A[nr][nc] <= height) {
+                    sink[nr][nc] = true;
+                    pq.emplace(height, nr, nc);
+                }
+            }
+        }
+    }
+
+    // Count how many cells remain above water at each year
+    vector<int> area(Y + 2, 0); // index from year 1 to Y
+
+    for (int i = 0; i < H; ++i) {
+        for (int j = 0; j < W; ++j) {
+            int a = A[i][j];
+            bool is_sunk = sink[i][j];
+            if (!is_sunk) {
+                area[a]++;
+            }
+        }
+    }
+
+    // Prefix sum to accumulate cells that remain unsunk by year
+    for (int y = 1; y <= Y; ++y) {
+        area[y] += area[y - 1];
+        cout << H * W - area[y] << '\n';
+    }
+
+    return 0;
+}

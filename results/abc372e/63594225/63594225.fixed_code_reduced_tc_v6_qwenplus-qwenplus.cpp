@@ -1,0 +1,75 @@
+#include "bits/stdc++.h"
+
+using namespace std;
+
+#define ff first
+#define ss second
+#define ll long long
+#define SZ(s) (int)s.size()
+
+int const N = 2e5 + 5;
+
+// Instead of storing only top 100, we'll store all elements and use a priority queue for queries
+vector<int> parent;
+vector<set<int>> components;
+
+int find(int x) {
+    if (parent[x] != x)
+        parent[x] = find(parent[x]);
+    return parent[x];
+}
+
+void unite(int a, int b) {
+    int rootA = find(a);
+    int rootB = find(b);
+    if (rootA == rootB)
+        return;
+    
+    // Union by size
+    if (components[rootA].size() < components[rootB].size())
+        swap(rootA, rootB);
+    
+    // Merge smaller set into larger set
+    for (int node : components[rootB]) {
+        components[rootA].insert(node);
+        parent[node] = rootA;
+    }
+}
+
+signed main() {
+    ios_base::sync_with_stdio(false); cin.tie(nullptr);
+
+    int n, q;
+    cin >> n >> q;
+    parent.resize(n + 1);
+    components.resize(n + 1);
+    
+    for (int i = 1; i <= n; ++i) {
+        parent[i] = i;
+        components[i].insert(i);
+    }
+
+    while (q--) {
+        int type, v, k;
+        cin >> type >> v >> k;
+        
+        if (type == 1) {
+            int u = k;
+            unite(v, u);
+        } 
+        else {
+            int root = find(v);
+            if (k > components[root].size()) {
+                cout << -1 << '\n';
+                continue;
+            }
+            
+            // Use order-statistics to find the k-th largest
+            auto it = components[root].rbegin();
+            advance(it, k - 1);
+            cout << *it << '\n';
+        }
+    }
+
+    return 0;
+}

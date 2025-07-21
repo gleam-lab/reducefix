@@ -1,0 +1,43 @@
+#include<bits/stdc++.h>
+using namespace std;
+#define int long long 
+vector<pair<int, int>> G[200005];
+int dis[200005], dis2[200005], a[200005], n, m;
+void dij(int u) {
+    priority_queue<pair<int, int>, vector<pair<int, int>>, greater<pair<int, int>>> q;
+    q.push({0, u});
+    while (!q.empty()) {
+        int u = q.top().second;
+        q.pop();
+        if (dis[u] != 0) continue; // Skip processing if already visited and distance is set
+        dis[u] = dis2[u] + a[u];  // Set the distance considering the vertex weight
+        for (auto [v, w] : G[u]) {
+            if (dis[v] > dis[u] + w) {  // Relax the edge
+                dis[v] = dis[u] + w;
+                q.push({dis[v], v});
+            }
+        }
+    }
+}
+
+signed main() {
+    scanf("%lld%lld", &n, &m);
+    for (int i = 1; i <= n; i++) {
+        cin >> a[i];
+    }
+    for (int i = 1; i <= m; i++) {
+        int u, v, w;
+        scanf("%lld%lld%lld", &u, &v, &w);
+        G[u].push_back({v, w});
+        G[v].push_back({u, w});
+    }
+    memset(dis, 0, sizeof(dis));  // Initialize all distances to 0
+    memset(dis2, 0x3f, sizeof(dis2));  // Initialize distances from vertex 1 to 0x3f3f3f3f (infinity)
+    dis2[1] = 0;  // Distance from vertex 1 to itself is 0
+    dij(1);
+    for (int i = 2; i <= n; i++) {
+        cout << dis[i] << ' ';
+    }
+    cout << '\n';
+    return 0;
+}

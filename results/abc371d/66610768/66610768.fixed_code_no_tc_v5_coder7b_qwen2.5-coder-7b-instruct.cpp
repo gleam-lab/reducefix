@@ -1,0 +1,48 @@
+#include<bits/stdc++.h>
+using namespace std;
+
+vector<long long> prefixSum;
+
+long long getSumInRange(int left, int right) {
+    if (left == 0) return prefixSum[right];
+    else return prefixSum[right] - prefixSum[left - 1];
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(NULL);
+
+    int n, q;
+    cin >> n;
+    vector<int> x(n), p(n);
+    
+    for(int i = 0; i < n; ++i)
+        cin >> x[i];
+
+    for(int i = 0; i < n; ++i)
+        cin >> p[i];
+
+    prefixSum.resize(n + 1, 0);
+    for(int i = 0; i < n; ++i)
+        prefixSum[i + 1] = prefixSum[i] + p[i];
+
+    cin >> q;
+    while(q--) {
+        int l, r;
+        cin >> l >> r;
+        
+        auto it_l = lower_bound(x.begin(), x.end(), l);
+        auto it_r = upper_bound(x.begin(), x.end(), r);
+
+        int index_l = it_l - x.begin();
+        int index_r = it_r - x.begin();
+
+        // Adjusting indices to match our prefix sum array's indexing
+        --index_r;
+        if(index_r >= n) index_r = n - 1;
+
+        cout << getSumInRange(index_l, index_r) << '\n';
+    }
+
+    return 0;
+}

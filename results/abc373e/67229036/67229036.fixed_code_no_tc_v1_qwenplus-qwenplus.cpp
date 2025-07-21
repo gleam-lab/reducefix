@@ -1,0 +1,89 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define int long long
+
+const int N = 2e5 + 5;
+
+int n, m, k;
+int a[N];
+int sorted_votes[N];
+int prefix_sum[N];
+
+// Function to compute how many candidates can have votes strictly greater than target
+int count_greater(int target, int extra) {
+    int total_remaining = k - extra;
+    if (total_remaining < 0) return -1;
+
+    // Binary search for first index where sorted_votes[i] > target
+    int l = 1, r = n, res = n + 1;
+    while (l <= r) {
+        int mid = (l + r) / 2;
+        if (sorted_votes[mid] > target) {
+            res = mid;
+            r = mid - 1;
+        } else {
+            l = mid + 1;
+        }
+    }
+
+    int cnt = n - res + 1; // number of candidates with votes > target
+    int sum_extra = 0;
+
+    // We need to ensure that even with optimal distribution of remaining votes,
+    // at most M-1 candidates can have more votes than our target.
+    // So we allow top (M-1) candidates to take as many votes as needed to stay above us
+    // and check if the rest of the votes are enough.
+
+    int available = total_remaining;
+    for (int i = res; i <= min(n, res + m - 1); ++i) {
+        int need = max(0LL, target + 1 - sorted_votes[i]);
+        if (available >= need) {
+            available -= need;
+        } else {
+            return -1; // not enough votes to keep these candidates above us
+        }
+    }
+
+    return 0; // success, we can guarantee election
+}
+
+int solve_for_candidate(int base) {
+    int l = 0, r = k + 1;
+    int ans = -1;
+
+    while (l <= r) {
+        int mid = (l + r) / 2;
+        int result = count_greater(base + mid, mid);
+        if (result == 0) {
+            ans = mid;
+            r = mid - 1;
+        } else {
+            l = mid + 1;
+        }
+    }
+
+    return ans;
+}
+
+signed main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    cin >> n >> m >> k;
+    for (int i = 1; i <= n; ++i) {
+        cin >> a[i];
+    }
+
+    // Sort the array excluding current candidate (will be handled separately)
+    for (int i = 1; i <= n; ++i) {
+        sorted_votes[i] = a[i];
+    }
+    sort(sorted_votes + 1, sorted_votes + n + 1);
+
+    for (int i = 1; i <= n; ++i) {
+        int res = solve_for_candidate(a[i]);
+        cout << (res == -1 ? -1 : res) << " ";
+    }
+
+    return 0;
+}

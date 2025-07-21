@@ -1,0 +1,39 @@
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+typedef pair<ll, ll> PII;
+const int mod = 1e9 + 7;
+
+void solve() {
+    int n;
+    ll M;
+    cin >> n >> M;
+    vector<ll> a(n);
+    for (int i = 0; i < n; ++i) {
+        cin >> a[i];
+    }
+
+    vector<ll> prefix_sum(n + 1, 0);
+    for (int i = 0; i < n; ++i) {
+        prefix_sum[i + 1] = (prefix_sum[i] + a[i]) % M;
+    }
+
+    map<ll, ll> cnt;
+    ll ans = 0;
+    cnt[0] = 1; // To count subarrays starting from index 0
+
+    for (int i = 1; i <= n; ++i) {
+        // Count how many times this remainder has been seen before
+        ans += cnt[prefix_sum[i] % M];
+        cnt[prefix_sum[i] % M]++;
+    }
+
+    cout << ans << endl;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+    solve();
+    return 0;
+}

@@ -1,0 +1,81 @@
+To fix this code, we need to address a few key issues:
+1. **Initialization of the Queue**: The original code initializes the queues for each possible sea level (up to 100,005) and marks the boundary sections as sunk immediately. However, it pushes them into the queue corresponding to their elevation, which might not be the correct approach because the sinking should happen when the sea level reaches their elevation, not immediately.
+2. **Handling of Sinking Process**: The sinking process should propagate correctly for each sea level year by year. The original code decrements the answer for each section that sinks, but it doesn't account for the fact that sections should only sink when the sea level reaches their elevation and they are adjacent to the sea or already sunk sections.
+3. **Efficiency**: The original approach might not be efficient enough given the constraints (H and W up to 1000 and Y up to 100,000). We need a way to process the sinking sections efficiently without revisiting the same sections multiple times.
+
+### Approaches
+1. **Priority Queue for Elevation Processing**: Use a priority queue (min-heap) to process sections in order of their elevation. This ensures that we process sections as the sea level rises.
+2. **Union-Find (Disjoint Set Union) for Connected Components**: This helps in efficiently managing the connected components of the island and determining when sections sink due to adjacency to the sea.
+3. **BFS for Propagation**: For each elevation, propagate the sinking to adjacent sections that are at or below the current sea level.
+
+### Solution Code
+
+```cpp
+#include <bits/stdc++.h>
+
+using namespace std;
+
+constexpr int dx[] = {-1, 1, 0, 0};
+constexpr int dy[] = {0, 0, -1, 1};
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int H, W, Y;
+    cin >> H >> W >> Y;
+
+    vector<vector<int>> A(H, vector<int>(W));
+    for (int i = 0; i < H; i++) {
+        for (int j = 0; j < W; j++) {
+            cin >> A[i][j];
+        }
+    }
+
+    vector<vector<bool>> sunk(H, vector<bool>(W, false));
+    priority_queue<tuple<int, int, int>, vector<tuple<int, int, int>>, greater<tuple<int, int, int>>> pq;
+
+    for (int i = 0; i < H; i++) {
+        for (int j = 0; j < W; j++) {
+            if (i == 0 || i == H - 1 || j == 0 || j == W - 1) {
+                pq.emplace(A[i][j], i, j);
+                sunk[i][j] = true;
+            }
+        }
+    }
+
+    int ans = H * W;
+    vector<int> res(Y + 1);
+
+    for (int y = 1; y <= Y; y++) {
+        while (!pq.empty() && get<0>(pq.top()) <= y) {
+            auto [a, i, j] = pq.top();
+            pq.pop();
+            ans--;
+
+            for (int d = 0; d < 4; d++) {
+                int ni = i + dx[d];
+                int nj = j + dy[d];
+                if (ni >= 0 && ni < H && nj >= 0 && nj < W && !sunk[ni][nj]) {
+                    sunk[ni][nj] = true;
+                    pq.emplace(A[ni][nj], ni, nj);
+                }
+            }
+        }
+        res[y] = ans;
+    }
+
+    for (int y = 1; y <= Y; y++) {
+        cout << res[y] << '\n';
+    }
+
+    return 0;
+}
+```
+
+### Explanation
+1. **Initialization**: The code reads the island's elevation data and initializes a priority queue (min-heap) to process sections in order of their elevation. Boundary sections are marked as sunk and added to the queue.
+2. **Processing Sea Levels**: For each year from 1 to Y, the code processes sections from the priority queue whose elevation is less than or equal to the current sea level. Each processed section is marked as sunk, and its adjacent sections are checked and added to the queue if they haven't been sunk yet.
+3. **Result Calculation**: The remaining area of the island is calculated for each year by decrementing the total area whenever a section sinks. The results are stored and printed for each year.
+
+This approach efficiently handles the sinking process by leveraging a priority queue to process sections in elevation order, ensuring that each section is processed exactly once when the sea level reaches its elevation. The complexity is optimized to handle the large constraints effectively.

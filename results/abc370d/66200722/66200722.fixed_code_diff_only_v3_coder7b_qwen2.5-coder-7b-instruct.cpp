@@ -1,0 +1,74 @@
+#include <iostream>
+#include <vector>
+#include <unordered_map>
+#include <algorithm>
+
+using namespace std;
+
+struct UnionFind {
+    vector<int> parent;
+    UnionFind(int n) : parent(n, -1) {}
+
+    int find(int u) {
+        if (parent[u] < 0) return u;
+        return parent[u] = find(parent[u]);
+    }
+
+    bool unite(int u, int v) {
+        u = find(u);
+        v = find(v);
+        if (u == v) return false;
+        if (parent[u] > parent[v]) swap(u, v);
+        parent[u] += parent[v];
+        parent[v] = u;
+        return true;
+    }
+};
+
+int main() {
+    int h, w, q;
+    cin >> h >> w >> q;
+    
+    UnionFind uf(h * w);
+    unordered_map<int, int> s[h];
+    unordered_map<int, int> t[w];
+
+    for (int qi = 0; qi < q; ++qi) {
+        int r, c;
+        cin >> r >> c;
+        --r; --c;
+
+        if (!s[r].contains(c)) {
+            s[r][c] = qi;
+            t[c][r] = qi;
+            uf.unite(r * w + c, (r + 1) * w + c);
+            uf.unite(r * w + c, r * w + c + 1);
+            uf.unite(r * w + c, (r - 1) * w + c);
+            uf.unite(r * w + c, r * w + c - 1);
+        } else {
+            int root = s[r][c];
+            int row_root = find(root / w) / w;
+            int col_root = find(root % w);
+
+            if (row_root != r && !t[row_root][c]) {
+                t[row_root][c] = qi;
+                uf.unite(root, row_root * w + c);
+            }
+
+            if (col_root != c && !s[r][col_root]) {
+                s[r][col_root] = qi;
+                uf.unite(root, r * w + col_root);
+            }
+        }
+    }
+
+    int total_walls = h * w;
+    for (int i = 0; i < h; ++i) {
+        for (auto& [_, id] : s[i]) {
+            total_walls -= uf.find(id) == find(i * w + (w - 1));
+        }
+    }
+
+    cout << total_walls << endl;
+    return 0;
+}

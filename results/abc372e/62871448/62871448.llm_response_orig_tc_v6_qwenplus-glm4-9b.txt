@@ -1,0 +1,90 @@
+
+The given code is trying to solve a problem involving an undirected graph with union-find structure and a specific query pattern. It uses a union-find data structure for managing the connected components of the graph and maintains a priority queue for each component (or root node) to efficiently find the k-th largest vertex connected to a given vertex.
+
+However, there are several issues in the code:
+
+1. **Incorrect Union-Find Implementation**: The code uses a union-find data structure but does not correctly implement the union operation. It merges the trees based on the maximum values of the priority queues but does not update the parent pointers correctly.
+2. **Priority Queue Management**: The code uses priority queues to store the vertices of each tree but does not maintain the order of the priority queues after merging them. This leads to undefined behavior when attempting to find the k-th largest vertex.
+3. **Edge Case Handling**: The code does not handle the case where there are fewer than k vertices connected to a vertex. It should return `-1` in such cases, but the code does not do this.
+
+To fix the code, follow these steps:
+
+1. **Correct Union-Find Structure**: Use the union-by-rank heuristic to ensure that the smaller tree is always added to the root of the larger tree, maintaining a balanced tree structure.
+2. **Maintain Priority Queue Order**: After merging two trees, merge their priority queues and maintain the total number of vertices in each priority queue.
+3. **Handle Edge Cases**: Check the size of the priority queue before attempting to find the k-th largest vertex. If the size is less than k, return `-1`.
+
+Here is a corrected version of the code:
+
+```cpp
+#include<bits/stdc++.h>
+using namespace std;
+vector<int> parent;
+vector<int> size;
+vector<priority_queue<int, vector<int>, greater<int>>> pq;
+
+int root(int x) {
+    if (parent[x] == x) return x;
+    int rootX = root(parent[x]);
+    parent[x] = rootX; // Path compression
+    return rootX;
+}
+
+void union_sets(int x, int y) {
+    int rootX = root(x);
+    int rootY = root(y);
+    if (rootX != rootY) {
+        if (size[rootX] < size[rootY]) {
+            parent[rootX] = rootY;
+            size[rootY] += size[rootX];
+            pq[rootY].merge(pq[rootX]);
+            pq[rootX].clear();
+        } else {
+            parent[rootY] = rootX;
+            size[rootX] += size[rootY];
+            pq[rootX].merge(pq[rootY]);
+            pq[rootY].clear();
+        }
+    }
+}
+
+int kth_largest(int v, int k) {
+    int rootV = root(v);
+    if (size[rootV] < k) {
+        return -1;
+    }
+    int count = 0;
+    while (!pq[rootV].empty()) {
+        count++;
+        if (count == k) {
+            return pq[rootV].top();
+        }
+        pq[rootV].pop();
+    }
+    return -1; // This should never happen if size[rootV] >= k
+}
+
+int main() {
+    int n, q;
+    cin >> n >> q;
+    parent.resize(n + 1);
+    size.resize(n + 1, 1);
+    pq.resize(n + 1);
+    for (int i = 1; i <= n; ++i) {
+        parent[i] = i;
+        pq[i].push(i);
+    }
+    int u, v, k;
+    for (int i = 0; i < q; ++i) {
+        cin >> u >> v;
+        if (u == 1) {
+            union_sets(u, v);
+        } else {
+            cin >> k;
+            cout << kth_largest(v, k) << '\n';
+        }
+    }
+    return 0;
+}
+```
+
+This code should correctly solve the problem as described, with proper handling of union-find operations, priority queue management, and edge cases.

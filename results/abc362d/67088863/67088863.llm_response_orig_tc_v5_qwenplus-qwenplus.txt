@@ -1,0 +1,109 @@
+The issue in your code lies in how you're computing the path weight. Specifically, you are not correctly accounting for the fact that when moving from node to node, the **vertex weight** of the *starting* node should be included once, and the vertex weight of the *ending* node is added only at the end.
+
+In your current implementation:
+
+```cpp
+adj[a].push_back({b, 1ll * w + val[a]});
+adj[b].push_back({a, 1ll * w + val[b]});
+```
+
+This means that each edge carries with it the vertex weight of the source node. That leads to double-counting when multiple steps are taken along a path (since each step includes its own "start" vertex cost). This is incorrect.
+
+---
+
+### Correct Approach
+
+Each **edge** contributes:
+- The **edge weight**
+- The **destination vertex weight**
+
+But the **starting vertex weight** (`A[0]`) must be added **once** at the beginning of the path.
+
+Hence, we should initialize `dist[0] = A[0];` instead of `0`.
+
+And in the adjacency list, edges should only include the sum of the edge weight and the destination vertex weight, i.e., `B_j + A[v]`.
+
+So the correct way to build the graph is:
+
+```cpp
+adj[u].push_back({v, B_j + A[v]});
+adj[v].push_back({u, B_j + A[u]});
+```
+
+Wait — no! That would still cause issues because you'd be adding both vertex weights on the same edge twice.
+
+Actually, for each edge between `u` and `v`, we define two directed transitions:
+- From `u` to `v`: cost = `B_j + A[v]`
+- From `v` to `u`: cost = `B_j + A[u]`
+
+Thus, in Dijkstra's algorithm, the starting point is `dist[0] = A[0];`.
+
+---
+
+### Fix Summary
+
+1. Initialize distance to `dist[0] = A[0]`.
+2. For each undirected edge `(u, v, B)`, create two directed edges:
+   - `u -> v` with cost = `B + A[v]`
+   - `v -> u` with cost = `B + A[u]`
+3. In the final output, do **not** add `A[i]` again (as it was already considered in the distance).
+
+---
+
+Here is the **corrected and complete C++ code**:
+
+```cpp
+#include <iostream>
+#include <vector>
+#include <queue>
+#include <utility>
+using namespace std;
+typedef long long ll;
+
+const ll INF = 1e18;
+
+void solve() {
+    int n, m;
+    cin >> n >> m;
+
+    vector<ll> A(n);
+    for (int i = 0; i < n; ++i) cin >> A[i];
+
+    vector<vector<pair<int, ll>>> adj(n);
+    for (int i = 0; i < m; ++i) {
+        int u, v;
+        ll b;
+        cin >> u >> v >> b;
+        u--, v--;
+        adj[u].push_back({v, b + A[v]});
+        adj[v].push_back({u, b + A[u]});
+    }
+
+    vector<ll> dist(n, INF);
+    dist[0] = A[0];
+    priority_queue<pair<ll, int>, vector<pair<ll, int>>, greater<>> pq;
+    pq.push({dist[0], 0});
+
+    while (!pq.empty()) {
+        auto [d, u] = pq.top(); pq.pop();
+        if (d > dist[u]) continue;
+
+        for (auto &[v, cost] : adj[u]) {
+            if (dist[u] + cost < dist[v]) {
+                dist[v] = dist[u] + cost;
+                pq.push({dist[v], v});
+            }
+        }
+    }
+
+    for (int i = 1; i < n; ++i)
+        cout << dist[i] << " ";
+    cout << "\n";
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    solve();
+}
+```

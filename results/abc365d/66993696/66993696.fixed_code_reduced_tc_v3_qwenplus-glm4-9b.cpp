@@ -1,0 +1,55 @@
+#include<bits/stdc++.h>
+using namespace std;
+
+int main() {
+    int n;
+    scanf("%d", &n);
+    if (n <= 2) {
+        printf("%d\n", n);
+        return 0;
+    }
+    
+    char s[200011];
+    char c[200011];
+    scanf("%s", s + 1);
+    
+    int ans = 0;
+    int sum = n;
+    
+    for (int i = 1; i <= n; i++) {
+        if (s[i] == 'P') {
+            c[i] = 'S';
+        } else if (s[i] == 'R') {
+            c[i] = 'P';
+        } else {
+            c[i] = 'R';
+        }
+    }
+    
+    // First pass to remove consecutive equal characters
+    for (int i = 2; i < n; i++) {
+        if (c[i] == c[i - 1]) {
+            c[i] = s[i];
+            sum--;
+        }
+    }
+    
+    ans = max(ans, sum);
+    
+    // Second pass to consider the case when first two characters are the same
+    if (c[2] == c[3]) {
+        c[3] = s[3];
+        sum--;
+    }
+    
+    for (int i = 3; i < n; i++) {
+        if (c[i] == c[i - 1]) {
+            c[i] = s[i];
+            sum--;
+        }
+    }
+    
+    ans = max(ans, sum);
+    
+    printf("%d\n", ans);
+}

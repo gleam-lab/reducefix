@@ -1,0 +1,38 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define rep(i,n) for(int i = 0; i < (n); ++i)
+using ll = long long;
+
+int main() {
+    ll n, m;
+    cin >> n >> m;
+    
+    set<pair<ll, ll>> occupied;
+    
+    // Define all 8 possible attack directions
+    const array<array<int, 2>, 8> directions = {{
+        {2, 1}, {1, 2}, {-1, 2}, {-2, 1},
+        {-2, -1}, {-1, -2}, {1, -2}, {2, -1}
+    }};
+    
+    for (ll i = 0; i < m; ++i) {
+        ll a, b;
+        cin >> a >> b;
+        --a; --b; // Convert to 0-based index
+        
+        // Add the piece itself to the occupied set
+        occupied.insert({a, b});
+        
+        // For each direction, calculate the position that can be attacked from this piece
+        for (const auto& d : directions) {
+            ll ni = a + d[0];
+            ll nj = b + d[1];
+            if (ni >= 0 && ni < n && nj >= 0 && nj < n) {
+                occupied.insert({ni, nj});
+            }
+        }
+    }
+    
+    // Total squares = n*n, subtract the number of squares that are either occupied or under attack
+    cout << (n * n) - (ll)occupied.size() << endl;
+}

@@ -1,0 +1,49 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+const int MOD = 1e9 + 7;
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int n, m;
+    cin >> n >> m;
+
+    vector<int> row(n+1), col(n+1);
+    map<int, int> up, down;
+
+    for(int i = 1; i <= m; ++i) {
+        int x, y;
+        cin >> x >> y;
+        row[y]++;
+        col[x]++;
+        up[x+y]++;
+        down[x-y]++;
+    }
+
+    long long total_empty_squares = n*n - m;
+
+    // Subtract squares attacked by horizontal lines
+    for(int i = 1; i <= n; ++i) {
+        total_empty_squares -= max(0, row[i] - 1);
+    }
+
+    // Subtract squares attacked by vertical lines
+    for(int i = 1; i <= n; ++i) {
+        total_empty_squares -= max(0, col[i] - 1);
+    }
+
+    // Add back squares double-counted by diagonals
+    for(auto& [key, value] : up) {
+        total_empty_squares += max(0, value - 1);
+    }
+
+    for(auto& [key, value] : down) {
+        total_empty_squares += max(0, value - 1);
+    }
+
+    cout << total_empty_squares % MOD << endl;
+
+    return 0;
+}

@@ -1,0 +1,31 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+
+using namespace std;
+
+int main() {
+    int N;
+    cin >> N;
+    vector<long long> A(N), B(N - 1);
+    
+    for (int i = 0; i < N; i++) cin >> A[i];
+    for (int i = 0; i < N - 1; i++) cin >> B[i];
+
+    // Sort the toy sizes and box sizes in descending order
+    sort(A.rbegin(), A.rend());
+    sort(B.rbegin(), B.rend());
+
+    // Determine the minimum box size needed to store all toys
+    long long minBoxSize = A[0]; // The size of the largest toy
+    for (int i = 0; i < N - 1; i++) {
+        if (B[i] < minBoxSize) {
+            minBoxSize = B[i];
+        }
+    }
+
+    // The minimum box size to store all toys is either the size of the largest toy or the size of the smallest box that can hold the largest toy
+    cout << min(minBoxSize, A[0]) << endl;
+
+    return 0;
+}

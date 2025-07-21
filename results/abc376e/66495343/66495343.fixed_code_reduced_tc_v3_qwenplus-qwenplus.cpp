@@ -1,0 +1,63 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define int long long
+#define PII pair<int, int>
+
+const int INF = 1e18;
+
+int a[200200], b[200200];
+
+signed main() {
+    ios::sync_with_stdio(0);
+    cin.tie(0);
+    cout.tie(0);
+
+    int t;
+    cin >> t;
+
+    while (t--) {
+        int n, k;
+        cin >> n >> k;
+
+        for (int i = 1; i <= n; ++i) {
+            cin >> a[i];
+        }
+
+        for (int i = 1; i <= n; ++i) {
+            cin >> b[i];
+        }
+
+        vector<PII> pairs(n + 1);
+        for (int i = 1; i <= n; ++i) {
+            pairs[i] = {a[i], b[i]};
+        }
+
+        sort(pairs.begin() + 1, pairs.end());
+
+        int res = INF;
+        int sum_b = 0;
+        priority_queue<int> pq;
+
+        for (int i = 1; i <= n; ++i) {
+            if (i <= k) {
+                sum_b += pairs[i].second;
+                pq.push(pairs[i].second);
+            } else {
+                if (!pq.empty() && pairs[i].second < pq.top()) {
+                    sum_b -= pq.top();
+                    pq.pop();
+                    sum_b += pairs[i].second;
+                    pq.push(pairs[i].second);
+                }
+            }
+
+            if (i >= k) {
+                res = min(res, pairs[i].first * sum_b);
+            }
+        }
+
+        cout << res << '\n';
+    }
+
+    return 0;
+}

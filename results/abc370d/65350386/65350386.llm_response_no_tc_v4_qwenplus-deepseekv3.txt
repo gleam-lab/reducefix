@@ -1,0 +1,88 @@
+To fix this code, we need to address the issues in the logic used to handle the queries. The original code attempts to use sets to track walls in each row and column, but it has several flaws:
+
+1. **Initialization**: The initial sets `tate` and `yoko` are correctly initialized to contain all walls, but the way they are used later is problematic.
+2. **Query Handling**: When a bomb is placed at a cell that already has no wall, the code is supposed to destroy the first walls in the four directions (up, down, left, right). However, the logic to find these walls is incorrect, leading to potential misses or incorrect deletions.
+3. **Edge Cases**: The code does not handle cases where the sets are empty or when the lower_bound operation returns the first element, leading to incorrect checks.
+
+### Approaches
+1. **Efficient Storage**: Use sets to store the walls in each row (`yoko`) and each column (`tate`). This allows efficient searching for the nearest walls.
+2. **Query Processing**: For each query:
+   - If the cell has a wall, remove it directly.
+   - If the cell does not have a wall, search for the nearest walls in each of the four directions (up, down, left, right) and remove them if they exist.
+3. **Correctness**: Ensure that the searches for walls in the four directions correctly handle edge cases (like no walls in a direction) and accurately find the nearest walls.
+
+### Solution Code
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+#define rep(i,n) for(int i = 0; i < (n); i++)
+using ll = long long;
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int h, w, q;
+    cin >> h >> w >> q;
+    vector<set<int>> tate(w), yoko(h);
+    rep(i, h) rep(j, w) {
+        tate[j].insert(i);
+        yoko[i].insert(j);
+    }
+    int ans = h * w;
+    rep(qi, q) {
+        int r, c;
+        cin >> r >> c;
+        r--; c--;
+        if (tate[c].count(r)) {
+            tate[c].erase(r);
+            yoko[r].erase(c);
+            ans--;
+        } else {
+            // Up
+            auto it_up = tate[c].lower_bound(r);
+            if (it_up != tate[c].begin()) {
+                it_up--;
+                int i = *it_up;
+                tate[c].erase(i);
+                yoko[i].erase(c);
+                ans--;
+            }
+            // Down
+            auto it_down = tate[c].lower_bound(r);
+            if (it_down != tate[c].end()) {
+                int i = *it_down;
+                tate[c].erase(i);
+                yoko[i].erase(c);
+                ans--;
+            }
+            // Left
+            auto it_left = yoko[r].lower_bound(c);
+            if (it_left != yoko[r].begin()) {
+                it_left--;
+                int j = *it_left;
+                yoko[r].erase(j);
+                tate[j].erase(r);
+                ans--;
+            }
+            // Right
+            auto it_right = yoko[r].lower_bound(c);
+            if (it_right != yoko[r].end()) {
+                int j = *it_right;
+                yoko[r].erase(j);
+                tate[j].erase(r);
+                ans--;
+            }
+        }
+    }
+    cout << ans << "\n";
+    return 0;
+}
+```
+
+### Explanation
+1. **Initialization**: The sets `tate` and `yoko` are initialized to include all cell coordinates, representing walls in each column and row respectively.
+2. **Query Processing**: For each query:
+   - If the cell has a wall, it is removed directly from both sets, and the count of remaining walls (`ans`) is decremented.
+   - If the cell does not have a wall, the code searches for the nearest walls in each direction (up, down, left, right) using `lower_bound` on the sets. If found, these walls are removed, and the count is decremented.
+3. **Edge Handling**: The checks ensure that we do not attempt to remove non-existent walls (e.g., when `lower_bound` returns the end iterator or when the set is empty).
+4. **Efficiency**: The use of sets allows efficient insertion, deletion, and search operations (all O(log n)), making the solution scalable for large grids and query counts.

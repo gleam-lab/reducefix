@@ -1,0 +1,92 @@
+To fix this code, we need to address several issues:
+
+1. **Input Reading**: The original code incorrectly reads `q` first and then `n`, which should be the other way around since the problem specifies `N` (number of vertices) and `Q` (number of queries).
+
+2. **Union-Find Data Structure**: The union-find (disjoint set) implementation is mostly correct, but the merging of the k-th largest elements is flawed. Specifically, when merging two sets, the code incorrectly appends the elements of one set to another, sorts them, and then truncates to keep only the top 10 elements. 
+
+3. **Handling k-th Largest Elements**: The code attempts to keep track of the top 10 largest elements in each set, but the merging process is inefficient and incorrect. Instead, we should maintain a sorted list (or a priority queue) for each set's elements, but sorting after each merge is too slow for large N and Q.
+
+4. **Efficiency**: Given the constraints (N and Q up to 2×10^5), we need an efficient way to maintain the top 10 largest elements in each set. Using a priority queue (max-heap) for each set and merging them in a way that keeps only the top 10 elements is more efficient.
+
+Here's the corrected code:
+
+```cpp
+#include<bits/stdc++.h>
+using namespace std;
+
+const int MAXN = 200005;
+int parent[MAXN];
+vector<priority_queue<int, vector<int>, greater<int>>> topK(MAXN); // Min-heap to keep top 10 largest
+
+int find(int x) {
+    if (parent[x] != x) {
+        parent[x] = find(parent[x]);
+    }
+    return parent[x];
+}
+
+void unite(int u, int v) {
+    int rootU = find(u);
+    int rootV = find(v);
+    if (rootU == rootV) return;
+
+    if (topK[rootU].size() < topK[rootV].size()) {
+        swap(rootU, rootV);
+    }
+
+    while (!topK[rootV].empty()) {
+        topK[rootU].push(topK[rootV].top());
+        topK[rootV].pop();
+        if (topK[rootU].size() > 10) {
+            topK[rootU].pop();
+        }
+    }
+
+    parent[rootV] = rootU;
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int N, Q;
+    cin >> N >> Q;
+
+    for (int i = 1; i <= N; ++i) {
+        parent[i] = i;
+        topK[i].push(i);
+    }
+
+    while (Q--) {
+        int op, u, v;
+        cin >> op >> u >> v;
+        if (op == 1) {
+            unite(u, v);
+        } else {
+            int root = find(u);
+            if (topK[root].size() < v) {
+                cout << -1 << '\n';
+            } else {
+                vector<int> temp;
+                while (!topK[root].empty()) {
+                    temp.push_back(topK[root].top());
+                    topK[root].pop();
+                }
+                cout << temp[temp.size() - v] << '\n';
+                for (int num : temp) {
+                    topK[root].push(num);
+                }
+            }
+        }
+    }
+
+    return 0;
+}
+```
+
+### Explanation:
+1. **Union-Find with Path Compression**: The `find` function uses path compression to keep the tree flat, ensuring efficient lookups.
+2. **Merging Sets**: The `unite` function merges two sets by always merging the smaller set into the larger one (union by size). It also merges their top 10 elements by combining the heaps and keeping only the top 10 largest elements.
+3. **Handling Queries**: For type 2 queries, it checks if the connected component has at least `k` elements. If not, it outputs `-1`. Otherwise, it retrieves the k-th largest element by temporarily extracting all elements from the min-heap, accessing the k-th largest from the sorted list, and then restoring the heap.
+
+This approach ensures that each union and find operation is nearly constant time (amortized), and the handling of top 10 elements is efficient due to the use of heaps.

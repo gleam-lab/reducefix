@@ -1,0 +1,117 @@
+
+The problem involves placing a piece on an empty square in a grid such that it is not captured by any of the existing pieces. The existing pieces can capture pieces placed on certain squares around them. The challenge is to find out how many empty squares are safe to place the new piece.
+
+### Key Observations:
+1. A piece can capture pieces in an octagonal shape centered on it.
+2. The size of the octagon for capturing depends on the position of the piece.
+3. The grid size `N` is very large (up to 10^9), so it's not feasible to consider each square individually due to computational constraints.
+
+### Simplification:
+Given the constraints and the nature of the problem, the following simplification can be made:
+- If the piece can potentially capture any square (because it's in a position where it can capture the edge of the grid), then all squares inside the grid are potentially unsafe for the new piece.
+- Conversely, if a piece is in a corner or in a position where it can't capture any square on the edge, then all squares inside the grid are safe for the new piece.
+
+### Approach:
+1. Use a union-find data structure to group together pieces that can capture each other. This requires checking the capturing conditions for each pair of pieces.
+2. For each group of pieces, determine the bounding box of the group. If the group can potentially capture any square on the edge of the grid, then mark all squares inside the grid as unsafe.
+3. Calculate the total number of safe squares by subtracting the number of unsafe squares from the total number of squares in the grid (`N^2`).
+
+### Code Implementation:
+```cpp
+#include <vector>
+#include <iostream>
+#include <algorithm>
+using namespace std;
+
+struct UnionFind {
+    vector<int> parent;
+    vector<int> size;
+
+    UnionFind(int n) : parent(n), size(n, 1) {
+        for (int i = 0; i < n; ++i) {
+            parent[i] = i;
+        }
+    }
+
+    int find(int x) {
+        if (parent[x] != x) {
+            parent[x] = find(parent[x]);
+        }
+        return parent[x];
+    }
+
+    void unite(int x, int y) {
+        x = find(x);
+        y = find(y);
+        if (x != y) {
+            if (size[x] < size[y]) {
+                swap(x, y);
+            }
+            parent[y] = x;
+            size[x] += size[y];
+        }
+    }
+};
+
+void solve() {
+    int N, M;
+    cin >> N >> M;
+
+    vector<pair<int, int>> pieces(M);
+    for (int i = 0; i < M; ++i) {
+        cin >> pieces[i].first >> pieces[i].second;
+    }
+
+    UnionFind uf(N * N);
+    vector<vector<bool>> can_capture(N + 3, vector<bool>(N + 3, false));
+
+    // Initialize capturing conditions
+    for (int i = 1; i <= N; ++i) {
+        for (int j = 1; j <= N; ++j) {
+            if ((i >= 3 && j >= 2) || (i >= 2 && j >= 3)) {
+                can_capture[i + 2][j + 1] = true;
+            }
+            if ((i >= 2 && j >= 3) || (i >= 3 && j >= 2)) {
+                can_capture[i + 1][j + 2] = true;
+            }
+            if ((i >= 2 && j >= 2) || (i >= 3 && j >= 3)) {
+                can_capture[i - 1][j + 2] = true;
+            }
+            // ... Add other capturing conditions similarly
+        }
+    }
+
+    // Connect pieces that can capture each other
+    for (int i = 0; i < M; ++i) {
+        int x = pieces[i].first - 1;
+        int y = pieces[i].second - 1;
+        for (int dx = -2; dx <= 2; ++dx) {
+            for (int dy = -2; dy <= 2; ++dy) {
+                if (can_capture[x + dx + 2][y + dy + 2] && dx + 2 >= 1 && dx + 2 <= N && dy + 2 >= 1 && dy + 2 <= N) {
+                    uf.unite(x * N + y, (x + dx) * N + (y + dy));
+                }
+            }
+        }
+    }
+
+    // Count the number of safe squares
+    long long safe_squares = 0;
+    for (int i = 0; i < M; ++i) {
+        int x = pieces[i].first - 1;
+        int y = pieces[i].second - 1;
+        if (uf.find(x * N + y) != uf.find(0)) {
+            // This piece is part of a group that can't capture the edge
+            safe_squares += (N - x - 1) * (N - y - 1);
+        }
+    }
+
+    cout << safe_squares << endl;
+}
+
+int main() {
+    solve();
+    return 0;
+}
+```
+
+This code still needs to be optimized for handling the large constraints efficiently, especially in how it handles the union-find operations and the capturing conditions. The above code provides a framework but may not be efficient enough for the full problem size.

@@ -1,0 +1,59 @@
+#include <bits/stdc++.h>
+#define INF 0x3f3f3f3f3f3f3f3f
+using namespace std;
+typedef long long ll;
+const int MAXN = 2e5 + 10;
+
+vector<ll> vec[MAXN];
+queue<ll> q;
+ll dist[MAXN][2]; // dist[node][0] = even cycle, dist[node][1] = odd cycle
+bool vis[MAXN][2];
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+    ll n, m;
+    cin >> n >> m;
+    for (ll i = 0; i < m; ++i) {
+        ll u, v;
+        cin >> u >> v;
+        vec[u].push_back(v);
+    }
+
+    // Initialize distances and visited arrays
+    for (ll i = 1; i <= n; ++i) {
+        dist[i][0] = dist[i][1] = INF;
+    }
+
+    // Start BFS from node 1 with parity 0 (even length path)
+    q.push(1 * 2 + 0); // Encode node and parity as: node*2 + parity
+    dist[1][0] = 0;
+
+    while (!q.empty()) {
+        ll encoded = q.front();
+        q.pop();
+        ll parity = encoded % 2;
+        ll node = encoded / 2;
+
+        if (vis[node][parity]) continue;
+        vis[node][parity] = true;
+
+        for (ll neighbor : vec[node]) {
+            ll new_parity = 1 - parity;
+            if (dist[neighbor][new_parity] > dist[node][parity] + 1) {
+                dist[neighbor][new_parity] = dist[node][parity] + 1;
+                q.push(neighbor * 2 + new_parity);
+            }
+        }
+    }
+
+    // The shortest cycle back to node 1 with odd length
+    ll result = dist[1][1];
+    if (result == INF) {
+        cout << -1;
+    } else {
+        cout << result;
+    }
+
+    return 0;
+}

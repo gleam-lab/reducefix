@@ -1,0 +1,174 @@
+To fix this code, we need to address the following issues:
+1. **Input Reading**: The code incorrectly reads `m` and `n` instead of `n` and `m`.
+2. **Variable Names**: The variables `row` and `col` are swapped in the reading loop, which causes confusion and incorrect processing.
+3. **Sorting and Uniqueness**: The sorting and uniqueness checks are applied incorrectly to the arrays, leading to incorrect counts and checks.
+4. **Counting Logic**: The counting logic for the intersections of rows, columns, diagonals, and anti-diagonals is flawed, resulting in incorrect exclusion and inclusion counts.
+5. **Edge Cases**: The code doesn't handle large values of `n` (up to \(10^9\)) properly, leading to potential integer overflow or incorrect calculations.
+
+Here is the corrected code:
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+typedef long long ll;
+
+int main() {
+    ll N, M;
+    cin >> N >> M;
+    
+    unordered_set<ll> rows, cols, diag1, diag2;
+    for (int i = 0; i < M; ++i) {
+        ll a, b;
+        cin >> a >> b;
+        rows.insert(a);
+        cols.insert(b);
+        diag1.insert(a + b);
+        diag2.insert(a - b);
+    }
+    
+    ll total = N * N;
+    ll unsafe = 0;
+    
+    // Unsafe squares: rows, cols, diag1, diag2
+    unsafe += rows.size() * N;
+    unsafe += cols.size() * N;
+    
+    for (ll d : diag1) {
+        ll minX = max(1LL, d - N);
+        ll maxX = min(N, d - 1);
+        unsafe += (maxX - minX + 1);
+    }
+    
+    for (ll d : diag2) {
+        ll minX = max(1LL, 1 - d);
+        ll maxX = min(N, N - d);
+        unsafe += (maxX - minX + 1);
+    }
+    
+    // Intersections: row & col, row & diag1, row & diag2, col & diag1, col & diag2, diag1 & diag2
+    ll intersect = 0;
+    
+    // row & col
+    intersect += rows.size() * cols.size();
+    
+    // row & diag1
+    for (ll a : rows) {
+        for (ll d : diag1) {
+            ll b = d - a;
+            if (b >= 1 && b <= N) {
+                intersect++;
+            }
+        }
+    }
+    
+    // row & diag2
+    for (ll a : rows) {
+        for (ll d : diag2) {
+            ll b = a - d;
+            if (b >= 1 && b <= N) {
+                intersect++;
+            }
+        }
+    }
+    
+    // col & diag1
+    for (ll b : cols) {
+        for (ll d : diag1) {
+            ll a = d - b;
+            if (a >= 1 && a <= N) {
+                intersect++;
+            }
+        }
+    }
+    
+    // col & diag2
+    for (ll b : cols) {
+        for (ll d : diag2) {
+            ll a = b + d;
+            if (a >= 1 && a <= N) {
+                intersect++;
+            }
+        }
+    }
+    
+    // diag1 & diag2
+    for (ll d1 : diag1) {
+        for (ll d2 : diag2) {
+            ll a = (d1 + d2) / 2;
+            ll b = (d1 - d2) / 2;
+            if ((d1 + d2) % 2 == 0 && (d1 - d2) % 2 == 0) {
+                if (a >= 1 && a <= N && b >= 1 && b <= N) {
+                    intersect++;
+                }
+            }
+        }
+    }
+    
+    // Triple intersections: row & col & diag1, row & col & diag2, row & diag1 & diag2, col & diag1 & diag2
+    ll triple = 0;
+    
+    // row & col & diag1
+    for (ll a : rows) {
+        for (ll b : cols) {
+            if (diag1.find(a + b) != diag1.end()) {
+                triple++;
+            }
+        }
+    }
+    
+    // row & col & diag2
+    for (ll a : rows) {
+        for (ll b : cols) {
+            if (diag2.find(a - b) != diag2.end()) {
+                triple++;
+            }
+        }
+    }
+    
+    // row & diag1 & diag2
+    for (ll a : rows) {
+        for (ll d1 : diag1) {
+            ll b = d1 - a;
+            if (b >= 1 && b <= N && diag2.find(a - b) != diag2.end()) {
+                triple++;
+            }
+        }
+    }
+    
+    // col & diag1 & diag2
+    for (ll b : cols) {
+        for (ll d1 : diag1) {
+            ll a = d1 - b;
+            if (a >= 1 && a <= N && diag2.find(a - b) != diag2.end()) {
+                triple++;
+            }
+        }
+    }
+    
+    // Quadruple intersection: row & col & diag1 & diag2
+    ll quadruple = 0;
+    for (ll a : rows) {
+        for (ll b : cols) {
+            if (diag1.find(a + b) != diag1.end() && diag2.find(a - b) != diag2.end()) {
+                quadruple++;
+            }
+        }
+    }
+    
+    // Applying inclusion-exclusion principle
+    ll safe = total - unsafe + intersect - triple + quadruple;
+    cout << safe << endl;
+    
+    return 0;
+}
+```
+
+### Explanation:
+1. **Input Handling**: The code reads the grid size `N` and the number of pieces `M`, then stores the positions of the pieces in sets for rows, columns, diagonals (sum `a + b`), and anti-diagonals (difference `a - b`).
+2. **Unsafe Squares Calculation**: It calculates the total unsafe squares by considering rows, columns, diagonals, and anti-diagonals separately.
+3. **Intersection Handling**: It uses the inclusion-exclusion principle to count intersections between rows, columns, diagonals, and anti-diagonals to avoid double-counting.
+4. **Edge Cases**: The code handles large values of `N` by using `long long` to prevent overflow and ensures all calculations are done within the bounds of the grid.
+5. **Output**: Finally, it computes the number of safe squares by subtracting the unsafe squares and adjusting for intersections, then prints the result.
+
+This approach ensures correctness and efficiency, even for large values of `N` up to \(10^9\).

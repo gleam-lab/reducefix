@@ -1,0 +1,146 @@
+To fix this code, we need to address both correctness and efficiency issues. The original approach attempted to calculate the number of safe squares by subtracting the squares under attack from the total squares, but it had several flaws, particularly in handling the diagonal intersections and counting overlapping squares appropriately.
+
+### Approaches
+1. **Total Squares**: The total number of squares is \( N^2 \).
+2. **Under Attack Squares**: Squares under attack are those in the same row, column, or diagonal (both types) as any existing piece.
+3. **Inclusion-Exclusion Principle**: To avoid double-counting squares that are under attack from multiple directions, we use inclusion-exclusion. Specifically:
+   - Subtract squares under attack by rows and columns.
+   - Add back squares where both row and column attacks overlap (since they were subtracted twice).
+   - Subtract squares under attack by the two types of diagonals.
+   - Add back squares where diagonals intersect with rows or columns, and where diagonals of different types intersect.
+
+### Solution Code
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+typedef long long ll;
+
+int main() {
+    ll N, M;
+    cin >> N >> M;
+    vector<pair<ll, ll>> queens(M);
+    set<ll> rows, cols, diag1, diag2;
+    for (ll i = 0; i < M; ++i) {
+        ll a, b;
+        cin >> a >> b;
+        queens[i] = {a, b};
+        rows.insert(a);
+        cols.insert(b);
+        diag1.insert(a - b);
+        diag2.insert(a + b);
+    }
+
+    ll total = N * N;
+    ll attacked = 0;
+
+    // Rows and columns
+    ll rowCount = rows.size();
+    ll colCount = cols.size();
+    attacked += rowCount * N;
+    attacked += colCount * N;
+    attacked -= rowCount * colCount; // Intersection of rows and columns
+
+    // Diagonals (type 1: a - b = constant)
+    for (ll d : diag1) {
+        ll minX, maxX;
+        if (d >= 0) {
+            minX = 1 + d;
+            maxX = N;
+        } else {
+            minX = 1;
+            maxX = N + d;
+        }
+        ll cnt = maxX - minX + 1;
+        if (cnt > 0) {
+            attacked += cnt;
+            // Subtract intersections with rows and columns
+            for (ll r : rows) {
+                ll c = r - d;
+                if (c >= 1 && c <= N) {
+                    attacked--;
+                }
+            }
+            for (ll c : cols) {
+                ll r = c + d;
+                if (r >= 1 && r <= N) {
+                    attacked--;
+                }
+            }
+            // Add back intersections of both rows and columns (already subtracted twice)
+            for (ll r : rows) {
+                ll c = r - d;
+                if (c >= 1 && c <= N && cols.count(c)) {
+                    attacked++;
+                }
+            }
+        }
+    }
+
+    // Diagonals (type 2: a + b = constant)
+    for (ll d : diag2) {
+        ll minX = max(1LL, d - N);
+        ll maxX = min(N, d - 1);
+        ll cnt = maxX - minX + 1;
+        if (cnt > 0) {
+            attacked += cnt;
+            // Subtract intersections with rows and columns
+            for (ll r : rows) {
+                ll c = d - r;
+                if (c >= 1 && c <= N) {
+                    attacked--;
+                }
+            }
+            for (ll c : cols) {
+                ll r = d - c;
+                if (r >= 1 && r <= N) {
+                    attacked--;
+                }
+            }
+            // Add back intersections of both rows and columns (already subtracted twice)
+            for (ll r : rows) {
+                ll c = d - r;
+                if (c >= 1 && c <= N && cols.count(c)) {
+                    attacked++;
+                }
+            }
+            // Subtract intersections with type 1 diagonals
+            for (ll d1 : diag1) {
+                ll x = (d + d1) / 2;
+                ll y = (d - d1) / 2;
+                if (x >= 1 && x <= N && y >= 1 && y <= N && (x - y == d1) && (x + y == d)) {
+                    attacked--;
+                }
+            }
+        }
+    }
+
+    // Add back intersections of diagonals type 1 and type 2 (subtracted twice)
+    for (ll d1 : diag1) {
+        for (ll d2 : diag2) {
+            ll x = (d2 + d1) / 2;
+            ll y = (d2 - d1) / 2;
+            if ((x + y == d2) && (x - y == d1) && x >= 1 && x <= N && y >= 1 && y <= N) {
+                attacked++;
+            }
+        }
+    }
+
+    ll safe = total - attacked + M; // M squares are already occupied
+    cout << safe << endl;
+    return 0;
+}
+```
+
+### Explanation
+1. **Initialization**: The code reads the grid size \( N \) and the number of queens \( M \).
+2. **Sets for Tracking**: Sets `rows`, `cols`, `diag1`, and `diag2` are used to store unique row indices, column indices, and the two types of diagonal indices (i.e., \( i - j \) and \( i + j \)) for the queens.
+3. **Total and Attacked Squares Calculation**:
+   - **Rows and Columns**: The total squares under attack by rows and columns are calculated, adjusting for overlaps using the inclusion-exclusion principle.
+   - **Diagonals (Type 1 and Type 2)**:
+     - For each diagonal, the number of squares it covers is calculated.
+     - The intersections with rows and columns are subtracted to avoid double-counting.
+     - Overlaps between different diagonals are handled by adding back the intersections that were subtracted twice.
+4. **Final Safe Squares**: The total safe squares are computed by subtracting the attacked squares from the total squares and adjusting for already occupied squares.
+
+This approach ensures that all overlaps are correctly accounted for, providing the accurate count of safe squares where a new piece can be placed without being captured.

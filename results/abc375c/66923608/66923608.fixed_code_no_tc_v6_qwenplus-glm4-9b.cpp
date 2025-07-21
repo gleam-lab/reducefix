@@ -1,0 +1,34 @@
+#include <iostream>
+#include <vector>
+#include <cmath>
+#include <iomanip>
+
+using namespace std;
+
+int main() {
+    int n;
+    cin >> n;
+
+    vector<pair<int, int>> points(n);
+    double total_cost = 0.0;
+
+    for (int i = 0; i < n; ++i) {
+        cin >> points[i].first >> points[i].second;
+    }
+
+    // Adding the origin at the beginning and the end of the list
+    points.insert(points.begin(), {0, 0});
+    points.push_back({0, 0});
+
+    for (int i = 0; i < n; ++i) {
+        // Calculate the Euclidean distance between the current point and the next point
+        double distance = sqrt(pow(points[i].first - points[i + 1].first, 2) +
+                               pow(points[i].second - points[i + 1].second, 2));
+        total_cost += distance;
+    }
+
+    // Output the total cost, with precision up to 6 decimal places
+    cout << fixed << setprecision(6) << total_cost << endl;
+
+    return 0;
+}

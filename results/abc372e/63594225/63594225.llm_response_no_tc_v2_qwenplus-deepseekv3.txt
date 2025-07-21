@@ -1,0 +1,81 @@
+To fix this code, we need to address several issues, primarily focusing on the efficiency and correctness of the union-find (disjoint set) operations and the management of connected vertices. The original approach attempts to maintain a sorted list of vertices for each component, which can be inefficient for large N and Q (up to 2 × 10^5). Instead, we should use a more efficient data structure like a set or a priority queue to keep track of the top k elements for each component.
+
+### Approaches
+1. **Union-Find Data Structure**: This structure helps efficiently manage the connected components. Each node's parent is tracked, and path compression is used for efficiency.
+2. **Maintaining Top K Elements**: For each component, we maintain a set (or a priority queue) that keeps the largest elements up to a certain size (e.g., 10, since k is up to 10). This allows quick access to the k-th largest element during queries.
+3. **Efficient Merging**: When two components are merged, their respective sets are combined, and only the top elements are retained to keep the size manageable.
+
+### Solution Code
+```cpp
+#include <bits/stdc++.h>
+
+using namespace std;
+
+int const N = 2e5 + 5;
+
+vector<int> parent;
+vector<multiset<int>> component;
+
+int find(int x) {
+    if (parent[x] != x) {
+        parent[x] = find(parent[x]);
+    }
+    return parent[x];
+}
+
+void merge(int a, int b) {
+    a = find(a);
+    b = find(b);
+    if (a == b) return;
+    if (component[a].size() < component[b].size()) swap(a, b);
+    for (int num : component[b]) {
+        component[a].insert(num);
+        if (component[a].size() > 10) {
+            auto it = component[a].begin();
+            component[a].erase(it);
+        }
+    }
+    parent[b] = a;
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int n, q;
+    cin >> n >> q;
+    parent.resize(n + 1);
+    component.resize(n + 1);
+    for (int i = 1; i <= n; ++i) {
+        parent[i] = i;
+        component[i].insert(i);
+    }
+
+    while (q--) {
+        int t, a, b;
+        cin >> t >> a >> b;
+        if (t == 1) {
+            merge(a, b);
+        } else {
+            int root = find(a);
+            if (component[root].size() < b) {
+                cout << -1 << '\n';
+            } else {
+                auto it = component[root].rbegin();
+                advance(it, b - 1);
+                cout << *it << '\n';
+            }
+        }
+    }
+
+    return 0;
+}
+```
+
+### Explanation
+1. **Union-Find with Path Compression**: The `find` function uses path compression to ensure that future queries are fast. This helps in keeping the time complexity nearly constant per operation.
+2. **Component Management**: Each component is represented by a `multiset` that maintains the largest elements (up to 10) in sorted order. This allows efficient access to the k-th largest element during type 2 queries.
+3. **Merging Components**: When merging two components, the smaller set is merged into the larger one to minimize the number of operations. The merged set retains only the top 10 elements to ensure efficiency.
+4. **Query Handling**: For type 2 queries, the k-th largest element is accessed by traversing the set in reverse order (from largest to smallest), ensuring quick access without needing a full sort each time.
+
+This approach efficiently handles the constraints by leveraging the union-find structure and maintaining only necessary elements in each component, ensuring optimal performance for large input sizes.

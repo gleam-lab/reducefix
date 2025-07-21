@@ -1,0 +1,128 @@
+To fix this code, we need to correctly identify whether the graph contains an odd-length cycle, which determines if the graph is bipartite. If the graph is bipartite, it means it can be divided into two sets of vertices such that no two graph vertices within the same set are adjacent, and thus, the graph does not contain any odd-length cycles. If it is not bipartite, then it contains at least one odd-length cycle.
+
+The original code was attempting to find the length of the cycle but did not correctly check for bipartiteness. The BFS approach should be modified to color the graph and check for any conflicts in coloring, which would indicate an odd-length cycle.
+
+### Fixed Code
+```cpp
+#include <bits/stdc++.h>
+
+using namespace std;
+using ll = long long;
+using pii = pair<int, int>;
+
+const int N = 2e5 + 5;
+vector<int> g[N];
+int n, m, color[N];
+
+int bfs() {
+    queue<pii> q;
+    q.push({1, 1});
+    color[1] = 1;
+    while (!q.empty()) {
+        int u = q.front().first, c = q.front().second;
+        q.pop();
+        for (auto v : g[u]) {
+            if (color[v] == 0) {
+                color[v] = 3 - c;
+                q.push({v, color[v]});
+            } else if (color[v] == c) {
+                return (dep[u] + dep[v] - 1);
+            }
+        }
+    }
+    return -1;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    cout.tie(nullptr);
+    
+    cin >> n >> m;
+    for (int i = 1; i <= m; i++) {
+        int u, v;
+        cin >> u >> v;
+        g[u].push_back(v);
+        g[v].push_back(u);
+    }
+    
+    cout << bfs() << '\n';
+    return 0;
+}
+```
+
+Wait, no, the previous approach was flawed because it didn't correctly track the depth or properly check for odd cycles. Let's re-examine the problem and the correct approach.
+
+The problem is to determine if the graph has an odd-length cycle. If it does, we should return the length of the shortest such cycle; otherwise, return -1. The original code tried to use BFS to find cycles but didn't correctly handle the detection of odd-length cycles.
+
+Here's the correct approach:
+1. Perform a BFS from each node to detect cycles.
+2. For each node, if we encounter a node that has already been visited and is at the same level (indicating an even-length cycle), we continue.
+3. If we encounter a node that has been visited and is at a different level (indicating an odd-length cycle), we calculate the cycle length and keep track of the shortest one.
+
+Now, let's implement this correctly.
+
+### Corrected Code
+```cpp
+#include <bits/stdc++.h>
+
+using namespace std;
+using ll = long long;
+using pii = pair<int, int>;
+
+const int N = 2e5 + 5;
+const int INF = 1e9;
+vector<int> g[N];
+int n, m, dep[N];
+
+int bfs(int start) {
+    fill(dep, dep + n + 1, -1);
+    queue<pii> q;
+    q.push({start, -1});
+    dep[start] = 0;
+    int res = INF;
+    while (!q.empty()) {
+        int u = q.front().first, parent = q.front().second;
+        q.pop();
+        for (int v : g[u]) {
+            if (v == parent) continue;
+            if (dep[v] == -1) {
+                dep[v] = dep[u] + 1;
+                q.push({v, u});
+            } else {
+                res = min(res, dep[u] + dep[v] + 1);
+            }
+        }
+    }
+    return res;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    cout.tie(nullptr);
+    
+    cin >> n >> m;
+    for (int i = 1; i <= m; i++) {
+        int u, v;
+        cin >> u >> v;
+        g[u].push_back(v);
+        g[v].push_back(u);
+    }
+    
+    int ans = INF;
+    for (int i = 1; i <= n; i++) {
+        ans = min(ans, bfs(i));
+    }
+    
+    cout << (ans == INF ? -1 : ans) << '\n';
+    return 0;
+}
+```
+
+### Explanation
+1. **Initialization**: We initialize the `dep` array to keep track of the depth of each node from the starting node during BFS.
+2. **BFS Function**: The `bfs` function starts from a given node and explores all adjacent nodes. If it encounters a node that has already been visited (not the parent), it calculates the cycle length as the sum of the depths of the current node and the encountered node plus one (for the connecting edge).
+3. **Main Function**: We perform BFS from each node to ensure we find the shortest cycle. The result is the minimum cycle length found; if no cycle is found, it returns -1.
+
+This approach ensures that we correctly detect the shortest odd-length cycle if it exists, or return -1 if the graph is bipartite.

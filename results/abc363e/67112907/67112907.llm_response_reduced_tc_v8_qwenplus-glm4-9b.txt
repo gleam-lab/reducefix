@@ -1,0 +1,88 @@
+
+Given the problem description, the task is to simulate how the island will evolve as the sea level rises, and for each year calculate how much of the island remains above sea level. The main difficulty lies in efficiently updating and recalculating the answer for each year as the sea level rises, especially considering the large constraints that can lead to a significant number of possible islands.
+
+### Key Observations:
+
+1. **Drying Up**: The algorithm should be able to efficiently mark sections of the island that become dry due to the rising tide.
+2. **Wetland Formation**: The areas adjacent to sea level and those that will become dry should be marked and updated for subsequent years.
+3. **Priority Queue**: It will be helpful to use a priority queue (or a min-heap) to process the areas that become submerged first and mark their adjacent wetlands.
+4. **Efficient Traversal**: Since the process is influenced by the sea level, a wave-like approach could be used, processing areas in layers starting from the lowest.
+
+### Approach:
+
+1. **Initialization**: Start by reading the grid dimensions and the sea level rise for each year. Convert the grid to 0-based indexing.
+2. **Mark the Sea Level**: For each cell, mark if it is immediately adjacent to the sea level.
+3. **Heap Initialization**: Use a heap to keep track of the next areas that will be submerged. Initially, the heap should only contain the sea level.
+4. **Yearly Simulation**: For each year:
+   - Extract all elements from the heap that are below the current sea level and mark their adjacent cells.
+   - Add the newly submerged cells to the heap.
+   - Update the answer for the current year with the remaining area.
+5. **Output**: After processing all years, output the remaining area for each year.
+
+### Code Implementation:
+
+```cpp
+#include <iostream>
+#include <vector>
+#include <queue>
+using namespace std;
+
+const int dx[4] = {1, -1, 0, 0};
+const int dy[4] = {0, 0, 1, -1};
+
+int main() {
+    int H, W, Y;
+    cin >> H >> W >> Y;
+    
+    vector<vector<int>> grid(H, vector<int>(W));
+    for (int i = 0; i < H; ++i) {
+        for (int j = 0; j < W; ++j) {
+            cin >> grid[i][j];
+        }
+    }
+    
+    priority_queue<pair<int, pair<int, int>>, vector<pair<int, pair<int, int>>>, greater<pair<int, pair<int, int>>>> pq;
+    for (int i = 0; i < H; ++i) {
+        for (int j = 0; j < W; ++j) {
+            if (grid[i][j] == 0) {
+                pq.push({grid[i][j], {i, j}});
+            }
+        }
+    }
+    
+    long long remaining_area = H * W;
+    vector<long long> results(Y);
+    
+    for (int year = 0; year < Y; ++year) {
+        while (!pq.empty()) {
+            int h = pq.top().first;
+            auto pos = pq.top().second;
+            pq.pop();
+            
+            if (h > year + 1) continue;  // Skip if the height is greater than current sea level
+            
+            remaining_area -= 1;  // The current cell is now under water
+            
+            for (int dir = 0; dir < 4; ++dir) {
+                int ni = pos.first + dx[dir];
+                int nj = pos.second + dy[dir];
+                
+                if (ni < 0 || ni >= H || nj < 0 || nj >= W) continue;
+                if (grid[ni][nj] <= h + 1) {
+                    pq.push({grid[ni][nj], {ni, nj}});
+                    grid[ni][nj] = h + 1;
+                }
+            }
+        }
+        results[year] = remaining_area;
+    }
+    
+    for (int year = 0; year < Y; ++year) {
+        cout << results[year] << endl;
+    }
+    
+    return 0;
+}
+```
+
+This approach will efficiently handle the large constraints by using a priority queue to process the areas that will be submerged and by updating the grid in a wave-like fashion.

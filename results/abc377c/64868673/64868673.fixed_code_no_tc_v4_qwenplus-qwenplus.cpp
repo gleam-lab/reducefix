@@ -1,0 +1,49 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    long long N, M;
+    cin >> N >> M;
+
+    // Set to store all positions that are either occupied or under attack
+    unordered_set<string> attacked_positions;
+
+    // Directions where a piece can attack
+    vector<pair<long long, long long>> directions = {
+        {2, 1}, {1, 2}, {-1, 2}, {-2, 1},
+        {-2, -1}, {-1, -2}, {1, -2}, {2, -1}
+    };
+
+    for (long long i = 0; i < M; ++i) {
+        long long a, b;
+        cin >> a >> b;
+
+        // Mark the current piece's position as occupied
+        string key = to_string(a) + "," + to_string(b);
+        attacked_positions.insert(key);
+
+        // Check all 8 possible squares this piece could attack
+        for (auto [dx, dy] : directions) {
+            long long x = a + dx;
+            long long y = b + dy;
+
+            if (x >= 1 && x <= N && y >= 1 && y <= N) {
+                string pos = to_string(x) + "," + to_string(y);
+                attacked_positions.insert(pos);
+            }
+        }
+    }
+
+    // Total number of squares: N * N
+    // Subtract the number of attacked or occupied squares
+    long long total_squares = N * N;
+    long long unavailable_squares = attacked_positions.size();
+    long long available_squares = total_squares - unavailable_squares;
+
+    cout << available_squares << endl;
+
+    return 0;
+}

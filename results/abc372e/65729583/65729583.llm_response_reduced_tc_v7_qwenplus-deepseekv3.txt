@@ -1,0 +1,83 @@
+To fix this code, we need to address the issue where the initial implementation incorrectly handles the k-th largest vertex in a connected component. The problem arises because the ordered_set (a policy-based data structure from GNU) is not correctly maintaining the connected vertices in sorted order, leading to incorrect answers.
+
+### Approaches
+1. **Union-Find Data Structure**: This helps efficiently manage connected components and union operations.
+2. **Tracking Connected Vertices**: For each root of a connected component, maintain a sorted set of vertices. This allows quick access to the k-th largest vertex.
+3. **Efficient Merging**: When merging two components, combine their vertex sets while maintaining the sorted order. Given the constraints, we need to ensure this operation is efficient.
+
+### Solution Code
+```cpp
+#include <iostream>
+#include <vector>
+#include <set>
+#include <algorithm>
+using namespace std;
+
+const int MAXN = 2e5 + 5;
+int parent[MAXN];
+vector<int> components[MAXN];
+
+int find(int u) {
+    if (parent[u] != u) {
+        parent[u] = find(parent[u]);
+    }
+    return parent[u];
+}
+
+void unite(int u, int v) {
+    u = find(u);
+    v = find(v);
+    if (u == v) return;
+    if (components[u].size() < components[v].size()) {
+        swap(u, v);
+    }
+    parent[v] = u;
+    components[u].insert(components[u].end(), components[v].begin(), components[v].end());
+    components[v].clear();
+    sort(components[u].begin(), components[u].end(), greater<int>());
+    if (components[u].size() > 10) {
+        components[u].resize(10);
+    }
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int N, Q;
+    cin >> N >> Q;
+
+    for (int i = 1; i <= N; ++i) {
+        parent[i] = i;
+        components[i] = {i};
+    }
+
+    while (Q--) {
+        int type;
+        cin >> type;
+        if (type == 1) {
+            int u, v;
+            cin >> u >> v;
+            unite(u, v);
+        } else {
+            int v, k;
+            cin >> v >> k;
+            v = find(v);
+            if (components[v].size() < k) {
+                cout << -1 << '\n';
+            } else {
+                cout << components[v][k - 1] << '\n';
+            }
+        }
+    }
+
+    return 0;
+}
+```
+
+### Explanation
+1. **Initialization**: We initialize each vertex as its own parent and store each vertex in its own component list.
+2. **Union Operation**: When merging two components, the larger component absorbs the smaller one. The vertices from the smaller component are added to the larger component's list, which is then sorted in descending order and truncated to keep only the top 10 elements for efficiency.
+3. **Query Handling**: For a query asking for the k-th largest vertex in a component, we check the size of the component's vertex list. If the size is sufficient, we return the k-th largest element; otherwise, we return -1.
+
+This approach ensures that each union operation is efficient (O(log N) on average due to path compression) and queries are handled in O(1) time for the top 10 elements, leveraging the sorted property of the component lists. The solution efficiently meets the problem constraints and handles all edge cases correctly.

@@ -1,0 +1,59 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+typedef long long ll;
+
+const int MAXN = 4e5 + 10;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+
+    ll n, m;
+    cin >> n >> m;
+
+    vector<ll> a(n);
+    for (ll i = 0; i < n; ++i) {
+        cin >> a[i];
+    }
+
+    // Since all elements are equal to 1e9, and modulus is m,
+    // we can directly calculate how many subarrays have sum divisible by m.
+    // But in general case, we'd need prefix sums with modular arithmetic.
+
+    // However, the actual bug in your code seems to be due to overflow or incorrect use of prefix sums.
+
+    // Let's fix the approach using a correct prefix mod sum method:
+
+    unordered_map<ll, ll> freq;
+    vector<ll> prefix_mod(n + 1, 0);
+    ll count = 0;
+
+    for (ll i = 0; i < n; ++i) {
+        prefix_mod[i + 1] = (prefix_mod[i] + a[i]) % m;
+
+        // Count number of previous indices j such that prefix_mod[j] == prefix_mod[i+1]
+        count += freq[prefix_mod[i + 1]];
+        freq[prefix_mod[i + 1]]++;
+    }
+
+    // Because we're considering circular array, we also need to consider wrapping around:
+    // For each index i, consider extending prefix to i+n
+
+    // Reset frequency map
+    freq.clear();
+    for (ll i = 0; i < n; ++i) {
+        prefix_mod[i + 1] = (prefix_mod[i] + a[i]) % m;
+        freq[prefix_mod[i]]++;
+    }
+
+    for (ll i = 0; i < n; ++i) {
+        count += freq[prefix_mod[i + n]];
+        freq[prefix_mod[i]]--;
+        freq[prefix_mod[i + n]]++;
+    }
+
+    cout << count << endl;
+
+    return 0;
+}

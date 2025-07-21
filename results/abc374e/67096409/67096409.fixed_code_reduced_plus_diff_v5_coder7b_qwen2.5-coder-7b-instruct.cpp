@@ -1,0 +1,55 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <climits>
+
+using namespace std;
+
+struct Item {
+    int a, p, b, q;
+};
+
+long long cost(const vector<Item>& items, int i, int n) {
+    int d = n / (items[i].a * items[i].b);
+    int rem = n % (items[i].a * items[i].b);
+    return rem * min(items[i].p, items[i].q) + d * max(items[i].p, items[i].q);
+}
+
+bool feasible(const vector<Item>& items, int X, int n) {
+    long long totalCost = 0;
+    for (int i = 0; i < items.size(); ++i) {
+        totalCost += cost(items, i, n);
+        if (totalCost > X) return false;
+    }
+    return true;
+}
+
+int binarySearch(const vector<Item>& items, int X) {
+    int low = 0, high = INT_MAX;
+    while (low < high) {
+        int mid = low + (high - low) / 2;
+        if (feasible(items, X, mid)) {
+            high = mid;
+        } else {
+            low = mid + 1;
+        }
+    }
+    return low;
+}
+
+int main() {
+    int N, X;
+    cin >> N >> X;
+
+    vector<Item> items(N);
+    for (int i = 0; i < N; ++i) {
+        cin >> items[i].a >> items[i].p >> items[i].b >> items[i].q;
+        if (items[i].a * items[i].q < items[i].b * items[i].p) {
+            swap(items[i].a, items[i].b);
+            swap(items[i].p, items[i].q);
+        }
+    }
+
+    cout << binarySearch(items, X) << endl;
+    return 0;
+}

@@ -1,0 +1,50 @@
+#include <iostream>
+#include <set>
+#include <vector>
+#include <utility>
+
+using namespace std;
+
+using i32 = int32_t;
+using i64 = int64_t;
+using pii = pair<i32, i32>;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    i64 N;
+    i32 M;
+    cin >> N >> M;
+
+    // Set to store all positions that are either occupied or under attack
+    set<pair<i64, i64>> forbidden;
+
+    // Offsets for the 8 possible knight-like moves
+    const vector<pair<i64, i64>> directions = {
+        {2, 1}, {1, 2}, {-1, 2}, {-2, 1},
+        {-2, -1}, {-1, -2}, {1, -2}, {2, -1}
+    };
+
+    for (i32 i = 0; i < M; ++i) {
+        i64 a, b;
+        cin >> a >> b;
+
+        // Add the current piece's position
+        forbidden.insert({a, b});
+
+        // Add all positions that this piece can attack
+        for (const auto& [dx, dy] : directions) {
+            i64 x = a + dx;
+            i64 y = b + dy;
+            if (x >= 1 && x <= N && y >= 1 && y <= N) {
+                forbidden.insert({x, y});
+            }
+        }
+    }
+
+    // Total number of cells is N*N, subtract the number of forbidden cells
+    cout << (N * N - static_cast<i64>(forbidden.size())) << '\n';
+
+    return 0;
+}

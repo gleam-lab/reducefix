@@ -1,0 +1,69 @@
+#include<bits/stdc++.h>
+using namespace std;
+
+struct Pair {
+    int a, b;
+};
+
+int main() {
+    int n, x;
+    cin >> n >> x;
+    int a[105], p[105], b[105], q[105];
+    Pair p_a[105], p_b[105];
+    
+    for (int i = 1; i <= n; i++) {
+        cin >> a[i] >> p[i] >> b[i] >> q[i];
+        p_a[i].a = a[i];
+        p_a[i].b = p[i];
+        p_b[i].a = b[i];
+        p_b[i].b = q[i];
+    }
+
+    sort(p_a, p_a + n);
+    sort(p_b, p_b + n, greater<Pair>());
+
+    int l = 0, r = 1000000005, ans = 0;
+
+    while (l <= r) {
+        int mid = (l + r) / 2;
+        long long sum = 0, i = 0, j = 0;
+
+        // Process p_a in ascending order
+        while (i < n && p_a[i].a <= mid) {
+            while (j < n && p_b[j].a <= mid) {
+                if ((mid - p_a[i].a * (p_b[j].b + 1)) <= 0) {
+                    sum += p_a[i].b * p_b[j].b;
+                    j++;
+                } else {
+                    sum += p_a[i].b * p_b[j].b + (mid - p_a[i].a * (p_b[j].b + 1) + p_a[i].a) / p_b[j].b * p_b[j].b;
+                    j++;
+                }
+            }
+            i++;
+        }
+
+        // Process p_b in descending order
+        while (i < n && p_a[i].a <= mid) {
+            while (j < n && p_b[j].a <= mid) {
+                if ((mid - p_a[i].a * (p_b[j].b + 1)) <= 0) {
+                    sum += p_a[i].b * p_b[j].b;
+                    j++;
+                } else {
+                    sum += p_a[i].b * p_b[j].b + (mid - p_a[i].a * (p_b[j].b + 1) + p_a[i].a) / p_b[j].b * p_b[j].b;
+                    j++;
+                }
+            }
+            i++;
+        }
+
+        if (sum <= x) {
+            ans = mid;
+            l = mid + 1;
+        } else {
+            r = mid - 1;
+        }
+    }
+
+    cout << ans;
+    return 0;
+}

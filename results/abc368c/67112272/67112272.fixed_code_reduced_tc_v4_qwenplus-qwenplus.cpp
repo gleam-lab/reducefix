@@ -1,0 +1,43 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+using ll = long long;
+
+int main() {
+    int n;
+    cin >> n;
+    vector<ll> H(n);
+    for (int i = 0; i < n; ++i) {
+        cin >> H[i];
+    }
+
+    // Priority queue to process enemies needing most attacks first
+    priority_queue<ll, vector<ll>, greater<ll>> pq;
+
+    ll time = 0;
+
+    for (int i = 0; i < n; ++i) {
+        ll h = H[i];
+        // We simulate the attack pattern:
+        // Every 3rd attack deals 3 damage, others deal 1
+        // To calculate how many total attacks needed:
+        // Let x be number of full 3-attack cycles, y remainder
+        // Each cycle consists of 3 attacks: 3 + 2*1 = 5 damage
+        // So total damage per x cycles: 5*x
+        // Then we add y attacks for remaining damage
+
+        ll attacks_needed;
+        if (h % 5 == 0) {
+            attacks_needed = (h / 5) * 3;
+        } else {
+            attacks_needed = (h / 5) * 3 + ((h % 5) > 0 ? 1 : 0) + ((h % 5) > 1 ? 1 : 0) + ((h % 5) > 2 ? 1 : 0);
+        }
+        
+        pq.push(attacks_needed);
+        time += attacks_needed;
+    }
+
+    cout << time << endl;
+    
+    return 0;
+}

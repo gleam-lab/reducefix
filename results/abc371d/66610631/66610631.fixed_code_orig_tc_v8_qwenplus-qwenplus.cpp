@@ -1,0 +1,55 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+using LL = long long;
+const int N = 2e6 + 7;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int n;
+    cin >> n;
+
+    vector<LL> a(n), b(n), prefix_b(n);
+    
+    for (int i = 0; i < n; ++i) {
+        cin >> a[i];
+    }
+    
+    for (int i = 0; i < n; ++i) {
+        cin >> b[i];
+        if (i == 0) {
+            prefix_b[i] = b[i];
+        } else {
+            prefix_b[i] = prefix_b[i - 1] + b[i];
+        }
+    }
+
+    int m;
+    cin >> m;
+
+    while (m--) {
+        LL l, r;
+        cin >> l >> r;
+
+        // Find the first index where a[i] >= l using lower_bound
+        auto left = lower_bound(a.begin(), a.end(), l);
+        // Find the first index where a[i] > r using upper_bound
+        auto right = upper_bound(a.begin(), a.end(), r);
+
+        // Calculate the sum of b's in this range
+        LL sum = 0;
+        if (left != a.end() && left <= right) {
+            int start_idx = distance(a.begin(), left);
+            int end_idx = distance(a.begin(), right) - 1;
+            if (end_idx >= 0 && start_idx < n && end_idx < n && start_idx <= end_idx) {
+                sum = prefix_b[end_idx] - (start_idx > 0 ? prefix_b[start_idx - 1] : 0);
+            }
+        }
+
+        cout << sum << "\n";
+    }
+
+    return 0;
+}

@@ -1,0 +1,74 @@
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+
+int main() {
+    int N, M;
+    ll K;
+    cin >> N >> M >> K;
+    vector<pair<ll, int>> A(N);
+    for (int i = 0; i < N; ++i) {
+        cin >> A[i].first;
+        A[i].second = i;
+    }
+
+    ll total = 0;
+    for (auto [val, idx] : A)
+        total += val;
+    ll remaining = K - total;
+
+    vector<ll> ans(N);
+
+    // Sort by current votes
+    vector<int> idx_order(N);
+    iota(idx_order.begin(), idx_order.end(), 0);
+    sort(idx_order.begin(), idx_order.end(), [&](int i, int j) {
+        return A[i].first < A[j].first;
+    });
+
+    // Prefix sum of sorted votes
+    vector<ll> prefix(N + 1);
+    for (int i = 0; i < N; ++i)
+        prefix[i + 1] = prefix[i] + A[idx_order[i]].first;
+
+    for (int i = 0; i < N; ++i) {
+        int idx = idx_order[i];
+        ll cur = A[idx].first;
+
+        // Binary search on needed additional votes
+        ll low = 0, high = remaining;
+        ll res = -1;
+
+        while (low <= high) {
+            ll mid = (low + high) / 2;
+            ll new_score = cur + mid;
+
+            // Find how many candidates have strictly more than new_score
+            // We need less than M such candidates to guarantee win
+            int l = 0, r = N;
+            while (l < r) {
+                int m = (l + r) / 2;
+                if (A[idx_order[m]].first > new_score)
+                    r = m;
+                else
+                    l = m + 1;
+            }
+            int better = N - l;
+
+            if (better < M) {
+                res = mid;
+                high = mid - 1;
+            } else {
+                low = mid + 1;
+            }
+        }
+
+        ans[idx] = res;
+    }
+
+    for (int i = 0; i < N; ++i)
+        cout << ans[i] << " ";
+    cout << endl;
+
+    return 0;
+}

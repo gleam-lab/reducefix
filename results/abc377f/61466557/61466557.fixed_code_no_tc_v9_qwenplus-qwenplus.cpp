@@ -1,0 +1,121 @@
+#include <bits/stdc++.h>
+#include <ext/pb_ds/assoc_container.hpp>
+#include <ext/pb_ds/tree_policy.hpp>
+using namespace std;
+using namespace __gnu_pbds;
+
+typedef long long ll;
+typedef pair<ll, ll> pll;
+typedef tree<int, null_type, less<>, rb_tree_tag, tree_order_statistics_node_update> ordered_set;
+
+#define all(x) (x).begin(), (x).end()
+#define FOR(i, a, b) for (int i = (a); i < (b); ++i)
+#define pb push_back
+
+template<typename T> void re(T &x) { cin >> x; }
+template<typename T, typename... U> void re(T &t, U&... u) { re(t); re(u...); }
+
+bool inBounds(const pll &p, ll n) {
+    return p.first >= 1 && p.first <= n && p.second >= 1 && p.second <= n;
+}
+
+void solve() {
+    ll n, m;
+    re(n, m);
+    
+    set<ll> rows, cols;
+    set<ll> diag1, diag2; // i-j and i+j
+    vector<pll> pieces;
+
+    for (ll i = 0; i < m; ++i) {
+        ll a, b;
+        re(a, b);
+        pieces.pb({a, b});
+        rows.insert(a);
+        cols.insert(b);
+        diag1.insert(a - b);
+        diag2.insert(a + b);
+    }
+
+    // Total squares
+    ll total = n * n;
+
+    // Subtract rows and columns
+    total -= (ll)rows.size() * n;
+    total -= (ll)cols.size() * n;
+    
+    // Add back intersection of rows and columns (double counted)
+    total += (ll)(rows.size() * cols.size());
+
+    // Subtract diagonals of type i-j
+    for (ll d : diag1) {
+        // Number of squares on diagonal i-j = d
+        ll cnt;
+        if (d >= 0) {
+            cnt = n - d;
+        } else {
+            cnt = n + d;
+        }
+        total -= cnt;
+        
+        // Add back intersections with rows and columns
+        set<pll> intersections;
+        for (ll r : rows) {
+            ll c = r - d;
+            if (c >= 1 && c <= n) intersections.insert({r, c});
+        }
+        for (ll c : cols) {
+            ll r = d + c;
+            if (r >= 1 && r <= n) intersections.insert({r, c});
+        }
+        total += intersections.size();
+    }
+
+    // Subtract diagonals of type i+j
+    for (ll d : diag2) {
+        // Number of squares on diagonal i+j = d
+        ll cnt;
+        if (d < 2 || d > 2 * n) {
+            cnt = 0;
+        } else if (d <= n + 1) {
+            cnt = d - 1;
+        } else {
+            cnt = 2 * n + 1 - d;
+        }
+        total -= cnt;
+
+        // Add back intersections with rows, columns, and other diagonals
+        set<pll> intersections;
+        for (ll r : rows) {
+            ll c = d - r;
+            if (c >= 1 && c <= n) intersections.insert({r, c});
+        }
+        for (ll c : cols) {
+            ll r = d - c;
+            if (r >= 1 && r <= n) intersections.insert({r, c});
+        }
+        for (ll od : diag1) {
+            // Solve: i + j = d, i - j = od
+            if ((d + od) % 2 == 0) {
+                ll i = (d + od) / 2;
+                ll j = (d - od) / 2;
+                if (inBounds({i, j}, n)) {
+                    intersections.insert({i, j});
+                }
+            }
+        }
+        total += intersections.size();
+    }
+
+    // Finally, subtract the positions where the pieces are placed themselves
+    total -= m;
+
+    cout << total << "\n";
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(NULL);
+    solve();
+    return 0;
+}

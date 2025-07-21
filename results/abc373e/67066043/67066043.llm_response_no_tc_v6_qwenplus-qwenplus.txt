@@ -1,0 +1,80 @@
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+#define all(x) (x).begin(), (x).end()
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int N, M;
+    ll K;
+    cin >> N >> M >> K;
+    vector<ll> A(N);
+    for (ll &a : A) {
+        cin >> a;
+        K -= a;
+    }
+
+    // ord[i] = original index of the candidate with i-th smallest current votes
+    vector<int> ord(N);
+    iota(all(ord), 0);
+    sort(all(ord), [&](int i, int j) { return A[i] < A[j]; });
+
+    vector<ll> sortedA = A;
+    sort(all(sortedA));
+
+    vector<ll> prefix(N + 1);
+    for (int i = 0; i < N; ++i)
+        prefix[i + 1] = prefix[i] + sortedA[i];
+
+    vector<ll> result(N, -1);
+
+    for (int idx = 0; idx < N; ++idx) {
+        ll low = 0, high = K + 1;
+        ll target_votes = sortedA[idx];
+        int original_idx = ord[idx];
+
+        while (low < high) {
+            ll mid = (low + high) / 2;
+
+            // Candidate i now has A[i] + mid votes
+            ll required = target_votes + mid;
+
+            // We assume that other candidates can take as many votes as possible,
+            // but we want at least M candidates to have <= our candidate's votes.
+            // So we select the top (M-1) candidates who currently have more than us,
+            // and make sure their total votes do not exceed 'required'.
+            int left = idx - 1;
+            int right = N - 1;
+            int count = 0;
+            ll needed = 0;
+
+            // Start from the largest vote-getters and pick up to M-1 of them
+            for (int i = N - 1; i >= 0 && count < M; --i) {
+                if (i == idx) continue;
+                if (sortedA[i] > required) {
+                    needed += (sortedA[i] - required);
+                    count++;
+                }
+            }
+
+            if (needed <= K - mid)
+                high = mid;
+            else
+                low = mid + 1;
+        }
+
+        if (low <= K)
+            result[original_idx] = low;
+        else
+            result[original_idx] = -1;
+    }
+
+    for (ll val : result)
+        cout << max(val, 0LL) << ' ';
+    cout << '\n';
+
+    return 0;
+}
+```

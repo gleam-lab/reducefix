@@ -1,0 +1,112 @@
+To fix this code, we need to ensure that for each candidate, the minimum additional votes required to guarantee their election is calculated correctly. The original code had some logical flaws, particularly in the binary search and the way it handled determining the number of candidates with more votes.
+
+### Approaches
+1. **Sort and Analyze**:
+   - First, sort the candidates by their current votes in descending order. This helps in determining the relative positions efficiently.
+   
+2. **Calculate Prefix Sums**:
+   - Compute prefix sums of the votes to quickly calculate the sum of votes of top candidates.
+
+3. **Binary Search for Each Candidate**:
+   - For each candidate, perform a binary search to find the minimum additional votes required such that the candidate will have enough votes to be in the top M candidates after all remaining votes are distributed in the worst case (other candidates receive all remaining votes).
+
+4. **Check Conditions**:
+   - For each candidate, if they are already guaranteed to be in the top M candidates, output 0.
+   - If it's impossible for them to be in the top M regardless of additional votes, output -1.
+   - Otherwise, compute the minimum additional votes required.
+
+### Solution Code
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+
+int main() {
+    std::ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int N, M;
+    ll K;
+    cin >> N >> M >> K;
+
+    vector<pair<ll, int>> A(N);
+    for (int i = 0; i < N; ++i) {
+        cin >> A[i].first;
+        A[i].second = i;
+    }
+
+    sort(A.rbegin(), A.rend());
+
+    vector<ll> prefix(N + 1);
+    for (int i = 0; i < N; ++i) {
+        prefix[i + 1] = prefix[i] + A[i].first;
+    }
+
+    ll total = prefix[N];
+    ll remaining = K - total;
+
+    vector<ll> res(N, -1);
+
+    for (int i = 0; i < N; ++i) {
+        ll low = 0;
+        ll high = remaining;
+        ll best = -1;
+
+        while (low <= high) {
+            ll mid = (low + high) / 2;
+            ll new_vote = A[i].first + mid;
+            
+            auto it = upper_bound(A.begin(), A.end(), make_pair(new_vote, N), greater<pair<ll, int>>());
+            int pos = it - A.begin();
+            
+            if (pos < M) {
+                best = mid;
+                high = mid - 1;
+            } else {
+                ll sum_extra = 0;
+                if (pos > 0) {
+                    sum_extra = new_vote * pos - prefix[pos];
+                }
+                if (sum_extra <= remaining - mid) {
+                    best = mid;
+                    high = mid - 1;
+                } else {
+                    low = mid + 1;
+                }
+            }
+        }
+
+        res[A[i].second] = best;
+    }
+
+    for (int i = 0; i < N; ++i) {
+        if (res[i] == -1) {
+            auto it = upper_bound(A.begin(), A.end(), make_pair(A[i].first, N), greater<pair<ll, int>>());
+            int pos = it - A.begin();
+            if (pos < M) {
+                res[i] = 0;
+            }
+        }
+        cout << res[i] << ' ';
+    }
+
+    return 0;
+}
+```
+
+### Explanation
+1. **Sorting**:
+   - The candidates are sorted in descending order of their current votes to easily identify the top candidates.
+
+2. **Prefix Sums**:
+   - Prefix sums are computed to quickly access the sum of votes of the top `k` candidates, which is useful for determining how many votes are needed to surpass them.
+
+3. **Binary Search**:
+   - For each candidate, a binary search is performed to find the minimum additional votes (`mid`) needed such that, when added to the candidate's current votes, the candidate's position is in the top M candidates.
+   - The binary search checks if the candidate's new vote count, after adding `mid` votes, ensures their position is within the top M, even if all remaining votes are given to other candidates in a way that maximizes their votes.
+
+4. **Edge Cases Handling**:
+   - If a candidate is already in the top M, the result is 0.
+   - If it's impossible for the candidate to be in the top M even with all remaining votes, the result is -1.
+
+This approach ensures that the solution is efficient and correct, handling the constraints effectively.

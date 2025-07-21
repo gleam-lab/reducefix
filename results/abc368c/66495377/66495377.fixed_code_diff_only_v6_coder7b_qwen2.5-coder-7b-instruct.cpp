@@ -1,0 +1,26 @@
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+
+ll calculate_rounds_to_zero(ll health) {
+    if (health <= 0) return 0;
+    if (health % 3 == 0) return health / 3;
+    return health / 3 + 1;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int n;
+    cin >> n;
+    ll total_rounds = 0;
+
+    for(int i = 0; i < n; ++i){
+        ll health;
+        cin >> health;
+        total_rounds += calculate_rounds_to_zero(health);
+    }
+
+    cout << total_rounds << '\n';
+}

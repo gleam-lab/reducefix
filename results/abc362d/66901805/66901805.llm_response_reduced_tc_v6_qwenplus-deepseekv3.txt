@@ -1,0 +1,74 @@
+To fix this code, we need to address several issues that arise from the incorrect implementation of Dijkstra's algorithm. The primary problems include:
+
+1. **Use of a Queue Instead of a Priority Queue**: Dijkstra's algorithm requires a priority queue to always process the node with the current minimum distance. Using a regular queue (BFS approach) does not guarantee this, leading to incorrect shortest path calculations.
+
+2. **Initialization of Distances**: The initial distance for vertex 1 should be `a[1]` (the weight of the vertex itself), but the distances for other vertices should be initialized to a very large value (infinity). The current initialization uses `memset` with `0x3f`, which is acceptable, but the handling of vertex 1's distance needs to be correct.
+
+3. **Handling of Vertex and Edge Weights**: The weight of a path includes the weights of all vertices and edges along the path. The current code adds the vertex weight `a[v]` and the edge weight `w` to the distance, but it should correctly accumulate the weights without double-counting any vertices.
+
+4. **Visited Array Misuse**: The visited array is intended to prevent reprocessing nodes, but in Dijkstra's algorithm with a priority queue, once a node is processed, its distance is finalized, and it doesn't need to be processed again. The current implementation marks nodes as visited but still pushes them into the queue, which can lead to inefficiencies and incorrect processing.
+
+### Approaches
+The correct approach involves:
+1. **Priority Queue Usage**: Utilize a min-heap (priority queue) to always extract the node with the smallest current distance.
+2. **Proper Distance Initialization**: Initialize the distance for vertex 1 to `a[1]` and other vertices to infinity.
+3. **Correct Weight Accumulation**: Ensure that the vertex weights and edge weights are correctly accumulated in the path calculation.
+4. **Visited Handling**: Once a node's distance is finalized, avoid reprocessing it by not pushing it into the priority queue again if a shorter distance is already found.
+
+### Solution Code
+```cpp
+#include<bits/stdc++.h>
+using namespace std;
+#define int long long 
+const int INF = 1e18;
+vector<pair<int,int>> G[200005];
+int dis[200005];
+int a[200005];
+int n, m;
+
+void dij(int u) {
+    priority_queue<pair<int,int>, vector<pair<int,int>>, greater<pair<int,int>>> pq;
+    pq.push({a[u], u});
+    dis[u] = a[u];
+    while (!pq.empty()) {
+        int current_dist = pq.top().first;
+        int u = pq.top().second;
+        pq.pop();
+        if (current_dist > dis[u]) continue;
+        for (auto [v, w] : G[u]) {
+            if (dis[v] > dis[u] + a[v] + w) {
+                dis[v] = dis[u] + a[v] + w;
+                pq.push({dis[v], v});
+            }
+        }
+    }
+}
+
+signed main() {
+    scanf("%lld%lld", &n, &m);
+    for(int i = 1; i <= n; i++) {
+        scanf("%lld", &a[i]);
+    }
+    for(int i = 1; i <= m; i++) {
+        int u, v, w;
+        scanf("%lld%lld%lld", &u, &v, &w);
+        G[u].push_back({v, w});
+        G[v].push_back({u, w});
+    }
+    fill(dis, dis + n + 1, INF);
+    dij(1);
+    for(int i = 2; i <= n; i++) {
+        printf("%lld ", dis[i]);
+    }
+    printf("\n");
+    return 0;
+}
+```
+
+### Explanation
+1. **Initialization**: The distances are initialized to `INF` (a very large value) except for vertex 1, which is initialized to its own weight `a[1]`.
+2. **Priority Queue**: The priority queue is used to process nodes in order of their current shortest distance from the source (vertex 1).
+3. **Relaxation**: For each node, the algorithm checks all adjacent nodes. If a shorter path is found through the current node, the distance is updated, and the node is added to the priority queue.
+4. **Output**: After processing all nodes, the distances from vertex 1 to all other vertices are printed, ensuring the shortest path weights according to the problem's definition.
+
+This approach ensures that the shortest paths are correctly computed with an efficient time complexity of O((N + M) log N), suitable for large input sizes as specified in the problem constraints.

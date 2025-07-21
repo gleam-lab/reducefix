@@ -1,0 +1,54 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+
+#define int long long
+#define ld long double
+
+int n, x;
+vector<int> a, b, q, p;
+
+bool canMake(int mid) {
+    ld total_cost = 0;
+    for (int i = 0; i < n; i++) {
+        int s = mid / a[i];
+        int t = mid / b[i];
+        
+        // Calculate the cost of using only type S machine
+        ld cost_s = s * p[i];
+        // Calculate the remaining capacity after using type S machine
+        int remaining_capacity_after_s = mid - s * a[i];
+        
+        // Calculate the cost of using only type T machine
+        ld cost_t = t * q[i];
+        // Calculate the remaining capacity after using type T machine
+        int remaining_capacity_after_t = mid - t * b[i];
+        
+        // The optimal choice is to use both machines if it reduces the cost
+        if ((cost_s + remaining_capacity_after_t * q[i]) < (cost_t + remaining_capacity_after_s * p[i])) {
+            total_cost += cost_s + min(remaining_capacity_after_s * p[i], q[i]);
+        } else {
+            total_cost += cost_t + min(remaining_capacity_after_t * q[i], p[i]);
+        }
+    }
+
+    return (int)(ceil(total_cost)) <= x;
+}
+
+signed main() {
+    cin >> n >> x;
+    a.resize(n); b.resize(n); p.resize(n); q.resize(n);
+    for (int i = 0; i < n; i++) cin >> a[i] >> p[i] >> b[i] >> q[i];
+
+    int left = 0, right = 1e9;
+    while (left < right) {
+        int mid = (left + right + 1) >> 1;
+
+        if (canMake(mid)) left = mid;
+        else right = mid - 1;
+    }
+
+    cout << left;
+
+    return 0;
+}

@@ -1,0 +1,31 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+  int n, k, m;
+  cin >> n >> k;
+  vector<int> a(n);
+  m = n - k;
+
+  for (int i = 0; i < n; i++) {
+    cin >> a[i];
+  }
+
+  // If we can only keep one element, the difference is zero
+  if (m == 1) {
+    cout << 0 << endl;
+    return 0;
+  }
+
+  vector<int> sorted_a = a;
+  sort(sorted_a.begin(), sorted_a.end());
+
+  long long dmin = 1e18; // Use large enough initial value
+
+  // Check all windows of size m in the sorted array
+  for (int i = 0; i + m - 1 < n; i++) {
+    dmin = min(dmin, (long long)(sorted_a[i + m - 1] - sorted_a[i]));
+  }
+
+  cout << dmin << endl;
+}

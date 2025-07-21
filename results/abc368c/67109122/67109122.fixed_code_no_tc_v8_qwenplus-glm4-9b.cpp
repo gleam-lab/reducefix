@@ -1,0 +1,28 @@
+#include<bits/stdc++.h>
+
+using namespace std;
+
+int main() {
+    int N;
+    cin >> N;
+    vector<int> H(N);
+    for (int i = 0; i < N; i++) cin >> H[i];
+    long long T = 0;
+
+    while (!all_of(H.begin(), H.end(), [](int h) { return h <= 0; })) {
+        for (int i = 0; i < N; i++) {
+            if (H[i] > 0) {
+                if (T % 3 == 0) {
+                    H[i] -= 3;
+                } else {
+                    H[i] -= 1;
+                }
+                break; // We only need to attack the first enemy with health left
+            }
+        }
+        T++;
+    }
+
+    cout << T << endl;
+    return 0;
+}

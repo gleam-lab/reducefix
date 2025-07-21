@@ -1,0 +1,57 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+
+const int N = 1010;
+int h[N][N], q[N*N], dis[N*N], cnt[N*N], n, m, k;
+bool st[N][N];
+
+void bfs(int s) {
+    memset(st, false, sizeof st);
+    memset(dis, 0x3f, sizeof dis);
+    queue<int> q;
+    q.push(s), st[s/n][s%n] = true, dis[s] = 0;
+    while (!q.empty()) {
+        auto t = q.front();
+        q.pop();
+        for (int i = 0; i < 4; i++) {
+            int a = t / m + d[i][0], b = t % m + d[i][1];
+            if (a >= 0 && a < n && b >= 0 && b < m && !st[a][b] && h[a][b] <= s/m) {
+                st[a][b] = true;
+                dis[t*m+b] = dis[t] + 1;
+                q.push(t*m+b);
+            }
+        }
+    }
+}
+
+int main() {
+    cin >> n >> m >> k;
+    for (int i = 0; i < n; i++) {
+        for (int j = 0; j < m; j++) {
+            cin >> h[i][j];
+            h[i][j]--;
+        }
+    }
+    for (int i = 0; i < n; i++) {
+        for (int j = 0; j < m; j++) {
+            if (i == 0 || i == n-1 || j == 0 || j == m-1) {
+                bfs(i*m+j);
+            }
+        }
+    }
+    sort(q+1, q+k+1);
+    for (int i = 1; i <= k; i++) {
+        if (dis[q[i]] != i-1) continue;
+        for (int j = 0; j < n; j++) {
+            for (int p = 0; p < m; p++) {
+                if (st[j][p] && h[j][p] <= q[i]/m) cnt[q[i]]++;
+            }
+        }
+    }
+    for (int i = k; i >= 1; i--) {
+        cnt[i] += cnt[i+1];
+    }
+    for (int i = 1; i <= k; i++) cout << cnt[i] << endl;
+    return 0;
+}

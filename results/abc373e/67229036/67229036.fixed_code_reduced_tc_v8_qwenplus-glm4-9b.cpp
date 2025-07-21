@@ -1,0 +1,69 @@
+#include<bits/stdc++.h>
+using namespace std;
+#define int long long
+const int N=2e5+5;
+int n,m,k;
+int a[N], b[N], c[N];
+int d[N][N];
+
+bool check(int x, int y, int z) {
+    int l = lower_bound(b + 1, b + 1 + n, y) - b - 1;
+    int r = lower_bound(b + 1, b + 1 + n, x) - b - 1;
+
+    if (r < m) {
+        return (x + y) * (m - r) >= z;
+    }
+    if (r == m) {
+        return y >= z - (x + y) * (m - r);
+    }
+    if (l == n - m) {
+        return y >= z - (x + y) * (r - n + m) + c[n - m] - c[n - m - 1] - max(0LL, x - b[n - m]);
+    }
+    return y + c[n - m] - c[n - m - 1] - max(0LL, x - b[n - m]) >= z - (x + y) * (r - n + m);
+}
+
+int binary_search(int l, int r, int z) {
+    while (l <= r) {
+        int mid = (l + r) / 2;
+        if (check(a[n - m], mid, z)) {
+            l = mid + 1;
+        } else {
+            r = mid - 1;
+        }
+    }
+    return r;
+}
+
+int32_t main() {
+    ios::sync_with_stdio(0), cin.tie(0), cout.tie(0);
+    cin >> n >> m >> k;
+    for (int i = 1; i <= n; i++) {
+        cin >> a[i];
+    }
+    sort(a + 1, a + n + 1);
+    for (int i = 1; i <= n - m; i++) {
+        b[i] = a[i];
+    }
+    for (int i = 1; i <= n; i++) {
+        c[i] = c[i - 1] + b[i - 1];
+    }
+    for (int i = n - m + 1; i <= n; i++) {
+        b[i] = a[i] - a[i - m];
+    }
+    for (int i = 1; i <= n; i++) {
+        d[i][0] = i;
+        for (int j = 1; j <= m; j++) {
+            d[i][j] = d[i - 1][j] + b[i - 1];
+        }
+    }
+    for (int i = 1; i <= n; i++) {
+        int z = k - c[n - m] + c[n - m - 1] + max(0LL, (n - m) * a[i] - b[n - m]);
+        int l = 0, r = k - (n - m) * a[i] + m;
+        if (check(a[i], r, z)) {
+            cout << r << " ";
+        } else {
+            cout << binary_search(r, k - (n - m) * a[i] + m, z) << " ";
+        }
+    }
+    return 0;
+}

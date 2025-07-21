@@ -1,0 +1,119 @@
+
+Based on the provided code, there are several issues that need to be addressed:
+
+1. **Initialization of `island`**:
+   The `island` array is initialized as `true`, which means that all sections are assumed to be above sea level initially. However, the sections that are adjacent to the sea (i.e., the borders of the island) should not be considered as above sea level. We need to update this to `false` for border sections.
+
+2. **Priority Queue (Min-Heap)**:
+   Instead of using a priority queue for each year, we can use a single priority queue where the priority is the negative of the elevation. This way, we can always pop the section with the lowest elevation first, which will be the first to sink.
+
+3. **Boundary Check**:
+   When checking boundaries, the code checks if the neighbor is out of bounds but does not check if the neighbor is already considered to be sinking. We need to add additional checks to ensure we do not process a section more than once.
+
+4. **Efficiency of the Algorithm**:
+   The current implementation uses a BFS-like approach on each year's pop operation from the queue. This approach could be improved by using a flood fill algorithm.
+
+Let's address these issues step by step.
+
+### Step-by-Step Solution
+
+#### 1. Initialize `island` correctly
+We need to set the sections adjacent to the sea (i.e., the borders) to `false`.
+
+#### 2. Use a single min-heap for all years
+We can use a single min-heap to store all sections sorted by elevation. By pushing all sections into the heap, we can always pop the section with the lowest elevation first.
+
+#### 3. Efficiently check boundaries and avoid processing a section more than once
+When we consider a section for sinking, we need to make sure we don't repeat the process for sections that have already sunk or are out of bounds.
+
+#### 4. Implement a flood fill for sinking
+Instead of checking each neighbor section individually, we can implement a flood fill algorithm to mark all sections that will sink in a single iteration.
+
+Here's the updated algorithm with these changes:
+
+```cpp
+#include <iostream>
+#include <vector>
+#include <queue>
+#include <algorithm>
+
+using namespace std;
+
+const int dx[] = {-1, 1, 0, 0};
+const int dy[] = {0, 0, -1, 1};
+
+int main() {
+    int H, W, Y;
+    cin >> H >> W >> Y;
+    vector<vector<int>> A(H, vector<int>(W));
+    for (int i = 0; i < H; i++) {
+        for (int j = 0; j < W; j++) {
+            cin >> A[i][j];
+        }
+    }
+
+    vector<vector<bool>> island(H, vector<bool>(W, true));
+    priority_queue<pair<int, pair<int, int>>, vector<pair<int, pair<int, int>>>, greater<pair<int, pair<int, int>>>> pq;
+    int initial_area = 0;
+
+    // Initialize the priority queue with sections above sea level
+    for (int i = 0; i < H; i++) {
+        for (int j = 0; j < W; j++) {
+            if ((i == 0 || i == H - 1 || j == 0 || j == W - 1) || A[i][j] == 0) {
+                island[i][j] = false;
+            } else {
+                pq.push({-A[i][j], {i, j}});
+                initial_area++;
+            }
+        }
+    }
+
+    vector<int> years_left(initial_area, Y);
+
+    for (int year = 1; year <= Y; year++) {
+        // Use flood fill to mark all sections that will sink this year
+        queue<pair<int, int>> to_process;
+        while (!pq.empty()) {
+            auto [neg_elevation, {x, y}] = pq.top();
+            pq.pop();
+
+            if (!island[x][y]) continue;
+
+            to_process.push({x, y});
+            island[x][y] = false;
+
+            for (int d = 0; d < 4; d++) {
+                int nx = x + dx[d];
+                int ny = y + dy[d];
+                if (nx < 0 || nx >= H || ny < 0 || ny >= W) continue;
+                if (A[nx][ny] <= neg_elevation - year) {
+                    pq.push({-A[nx][ny] - year, {nx, ny}});
+                    years_left[abs(neg_elevation) - 1]--;
+                }
+            }
+        }
+
+        // Update remaining years for all processed sections
+        while (!to_process.empty()) {
+            auto [x, y] = to_process.front();
+            to_process.pop();
+
+            for (int d = 0; d < 4; d++) {
+                int nx = x + dx[d];
+                int ny = y + dy[d];
+                if (nx < 0 || nx >= H || ny < 0 || ny >= W) continue;
+                if (years_left[A[nx][ny] - 1] > 0) {
+                    years_left[A[nx][ny] - 1]--;
+                    pq.push({-A[nx][ny], {nx, ny}});
+                }
+            }
+        }
+
+        cout << initial_area - years_left[abs(neg_elevation) - 1] << endl;
+    }
+
+    return 0;
+}
+```
+
+Note: This code assumes that the priority queue operations are efficient enough for the input size. If the input is too large, we might need to consider a more efficient data structure or algorithm.

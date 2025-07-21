@@ -1,0 +1,51 @@
+#include <iostream>
+#include <algorithm>
+using namespace std;
+
+struct Package {
+    int a, p, b, q;
+};
+
+Package A[100];
+long long dp[100][10000];
+
+int N, X;
+
+long long cost(int i, int n) {
+    long long d = n / (A[i].a * A[i].b), rem = n % (A[i].a * A[i].b);
+    return dp[i][rem] + d * A[i].p * A[i].b;
+}
+
+bool feasible(long long n) {
+    long long totalCost = 0;
+    for (int i = 0; i < N; ++i) {
+        totalCost += cost(i, n);
+        if (totalCost > X) return false;
+    }
+    return true;
+}
+
+int main() {
+    cin >> N >> X;
+
+    for (int i = 0; i < N; ++i) {
+        cin >> A[i].a >> A[i].p >> A[i].b >> A[i].q;
+        if (A[i].a * A[i].q < A[i].b * A[i].p) swap(A[i].a, A[i].b), swap(A[i].p, A[i].q);
+        dp[i][0] = 0;
+        for (int j = 1; j <= A[i].a * A[i].b; ++j) {
+            dp[i][j] = min(dp[i][max(0, j - A[i].a)] + A[i].p, dp[i][max(0, j - A[i].b)] + A[i].q);
+        }
+    }
+
+    int low = 0, high = 1e9;
+    while (high - low > 1) {
+        int mid = (low + high) >> 1;
+        if (feasible(mid)) low = mid;
+        else high = mid - 1;
+    }
+
+    if (low != high && feasible(high)) low = high;
+    cout << low << endl;
+
+    return 0;
+}

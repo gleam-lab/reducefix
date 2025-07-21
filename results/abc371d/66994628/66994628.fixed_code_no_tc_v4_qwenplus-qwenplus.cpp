@@ -1,0 +1,42 @@
+#include<bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int n, q;
+    cin >> n;
+    vector<int> x(n + 2), p(n + 2);  // +2 to avoid off-by-one issues
+    for(int i = 1; i <= n; ++i) {
+        cin >> x[i];
+    }
+    for(int i = 1; i <= n; ++i) {
+        cin >> p[i];
+    }
+    
+    // Build prefix sum of p
+    vector<int> sum(n + 2, 0);
+    for(int i = 1; i <= n; ++i) {
+        sum[i] = sum[i - 1] + p[i];
+    }
+
+    cin >> q;
+    while(q--) {
+        int l, r;
+        cin >> l >> r;
+        
+        // Find first index where x[i] >= l
+        int left = lower_bound(x.begin() + 1, x.begin() + n + 1, l) - x.begin();
+        // Find first index where x[i] > r
+        int right = upper_bound(x.begin() + 1, x.begin() + n + 1, r) - x.begin();
+
+        if (left > right) {
+            cout << 0 << '\n';
+        } else {
+            cout << sum[right - 1] - sum[left - 1] << '\n';
+        }
+    }
+    
+    return 0;
+}

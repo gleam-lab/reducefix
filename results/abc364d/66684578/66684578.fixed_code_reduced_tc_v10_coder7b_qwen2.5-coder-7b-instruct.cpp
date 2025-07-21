@@ -1,0 +1,40 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+const int INF = 1e9 + 7;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+    
+    int n, q;
+    cin >> n >> q;
+    
+    vector<long long> a(n), b(q);
+    vector<int> k(q);
+    
+    for (int i = 0; i < n; ++i) {
+        cin >> a[i];
+    }
+    
+    for (int i = 0; i < q; ++i) {
+        cin >> b[i] >> k[i];
+    }
+    
+    sort(a.begin(), a.end());
+    
+    for (int i = 0; i < q; ++i) {
+        auto it = lower_bound(a.begin(), a.end(), b[i]);
+        
+        int leftDist = (it == a.begin()) ? INF : abs(*prev(it) - b[i]);
+        int rightDist = (it == a.end()) ? INF : abs(*it - b[i]);
+        
+        if (leftDist <= rightDist) {
+            cout << leftDist << '\n';
+        } else {
+            cout << rightDist << '\n';
+        }
+    }
+    
+    return 0;
+}

@@ -1,0 +1,49 @@
+#include <iostream>
+#include <unordered_set>
+#include <vector>
+#include <utility>
+
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    long long N;
+    int M;
+    cin >> N >> M;
+
+    // Use a hash-based set to store attacked positions efficiently
+    unordered_set<long long> attacked;
+
+    // Knight move deltas: (dx, dy) for all 8 possible knight moves
+    vector<pair<int, int>> moves = {
+        {2, 1}, {1, 2}, {-1, 2}, {-2, 1},
+        {-2, -1}, {-1, -2}, {1, -2}, {2, -1}
+    };
+
+    for (int i = 0; i < M; ++i) {
+        int x, y;
+        cin >> x >> y;
+
+        // Mark position of the existing piece
+        long long pos = (1LL * x << 32) | y;
+        attacked.insert(pos);
+
+        // Mark all positions that this piece can attack
+        for (auto [dx, dy] : moves) {
+            int nx = x + dx;
+            int ny = y + dy;
+            if (nx >= 1 && nx <= N && ny >= 1 && ny <= N) {
+                long long att_pos = (1LL * nx << 32) | ny;
+                attacked.insert(att_pos);
+            }
+        }
+    }
+
+    // Total number of squares: N*N
+    // Subtract the number of attacked positions
+    cout << (1LL * N * N - attacked.size()) << "\n";
+
+    return 0;
+}

@@ -1,0 +1,138 @@
+To fix this code, we need to ensure that we correctly calculate the number of squares that are not under attack by any of the existing pieces. The existing pieces can attack along rows, columns, and both diagonals (sum diagonals and difference diagonals). The key is to compute the union of all these attacked squares efficiently, especially given the constraints where N can be as large as 10^9 and M up to 10^3.
+
+### Approaches
+1. **Identify Attacked Squares**: Each existing piece attacks its entire row, column, sum diagonal (i + j = constant), and difference diagonal (i - j = constant). The union of all these attacked squares needs to be computed.
+2. **Set Operations**: Use sets to store unique rows, columns, sum diagonals, and difference diagonals to avoid counting duplicates.
+3. **Inclusion-Exclusion Principle**: Calculate the total attacked squares by considering the union of rows, columns, and diagonals, and then applying inclusion-exclusion to avoid overcounting intersections.
+4. **Final Count**: The number of safe squares is the total grid squares (N^2) minus the total attacked squares, plus the squares that were subtracted multiple times due to intersections.
+
+### Solution Code
+```cpp
+#include<bits/stdc++.h>
+using namespace std;
+using i64 = long long;
+
+int main() {
+    std::ios::sync_with_stdio(false);
+    std::cin.tie(nullptr);
+    i64 N, M;
+    cin >> N >> M;
+    vector<array<i64, 2>> pieces(M);
+    unordered_set<i64> rows, cols, sum_diags, diff_diags;
+    for (int i = 0; i < M; ++i) {
+        i64 a, b;
+        cin >> a >> b;
+        pieces[i] = {a, b};
+        rows.insert(a);
+        cols.insert(b);
+        sum_diags.insert(a + b);
+        diff_diags.insert(a - b);
+    }
+    
+    i64 total_attacked = 0;
+    
+    // Rows and columns
+    i64 unique_rows = rows.size();
+    i64 unique_cols = cols.size();
+    total_attacked += unique_rows * N + unique_cols * N - unique_rows * unique_cols;
+    
+    // Sum diagonals (i + j = k)
+    i64 unique_sum = sum_diags.size();
+    for (i64 k : sum_diags) {
+        i64 min_ij = max(1LL, k - N);
+        i64 max_ij = min(N, k - 1);
+        if (max_ij < min_ij) continue;
+        total_attacked += (max_ij - min_ij + 1);
+    }
+    
+    // Difference diagonals (i - j = k)
+    i64 unique_diff = diff_diags.size();
+    for (i64 k : diff_diags) {
+        i64 min_i = max(1LL, 1 + k);
+        i64 max_i = min(N, N + k);
+        if (max_i < min_i) continue;
+        total_attacked += (max_i - min_i + 1);
+    }
+    
+    // Subtract intersections between rows, columns, and diagonals
+    // Intersection of row and sum diagonal: (a, k - a)
+    for (i64 a : rows) {
+        for (i64 k : sum_diags) {
+            i64 b = k - a;
+            if (b >= 1 && b <= N) {
+                total_attacked--;
+            }
+        }
+    }
+    
+    // Intersection of row and difference diagonal: (a, a - k)
+    for (i64 a : rows) {
+        for (i64 k : diff_diags) {
+            i64 b = a - k;
+            if (b >= 1 && b <= N) {
+                total_attacked--;
+            }
+        }
+    }
+    
+    // Intersection of column and sum diagonal: (k - b, b)
+    for (i64 b : cols) {
+        for (i64 k : sum_diags) {
+            i64 a = k - b;
+            if (a >= 1 && a <= N) {
+                total_attacked--;
+            }
+        }
+    }
+    
+    // Intersection of column and difference diagonal: (b + k, b)
+    for (i64 b : cols) {
+        for (i64 k : diff_diags) {
+            i64 a = b + k;
+            if (a >= 1 && a <= N) {
+                total_attacked--;
+            }
+        }
+    }
+    
+    // Intersection of sum and difference diagonals: ( (k1 + k2)/2, (k1 - k2)/2 )
+    for (i64 k1 : sum_diags) {
+        for (i64 k2 : diff_diags) {
+            if ((k1 + k2) % 2 != 0) continue;
+            i64 a = (k1 + k2) / 2;
+            i64 b = (k1 - k2) / 2;
+            if (a >= 1 && b >= 1 && a <= N && b <= N) {
+                total_attacked--;
+            }
+        }
+    }
+    
+    // Add back intersections that were subtracted three times
+    for (i64 a : rows) {
+        for (i64 b : cols) {
+            if (sum_diags.count(a + b) && diff_diags.count(a - b)) {
+                total_attacked += 2; // because it was subtracted three times
+            }
+        }
+    }
+    
+    // Subtract the original M pieces, as they were counted in rows, cols, and diagonals
+    total_attacked -= M;
+    
+    i64 safe_squares = N * N - total_attacked;
+    cout << safe_squares << "\n";
+    
+    return 0;
+}
+```
+
+### Explanation
+1. **Initialization**: We read the grid size N and the number of pieces M. Each piece is stored, and we track the unique rows, columns, sum diagonals (i + j), and difference diagonals (i - j) they occupy.
+2. **Attacked Squares Calculation**: 
+   - **Rows and Columns**: The total attacked squares from rows and columns is calculated, adjusted for intersections (squares in both a row and a column).
+   - **Diagonals**: For each sum and difference diagonal, we calculate the number of squares they cover, adjusting for boundaries.
+3. **Inclusion-Exclusion**: We handle intersections between rows, columns, and diagonals to avoid overcounting:
+   - Subtract intersections between rows and diagonals, and columns and diagonals.
+   - Subtract intersections between sum and difference diagonals.
+   - Add back intersections that were subtracted multiple times.
+4. **Final Count**: Subtract the original M pieces (as they were counted multiple times) and then compute the safe squares as the total squares minus the attacked squares. The result is printed.

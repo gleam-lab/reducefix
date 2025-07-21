@@ -1,0 +1,55 @@
+#include <bits/stdc++.h>
+#define rep(i, n) for (int i = 0; i < (int)(n); i++)
+#define repi(i, a, b) for (int i = (int)(a); i < (int)(b); i++)
+#define rrep(i, n) for (int i = n-1; i >= (int)(0); i--)
+#define rrepi(i, a, b) for (int i = (int)(a); i > (int)(b); i--)
+#define ALL(a) (a).begin(),(a).end()
+using namespace std;
+
+using ll = long long;
+using P = pair<int, int>;
+
+// Custom hash for pair<int, int>
+struct phash {
+    size_t operator()(const P& p) const {
+        const auto h1 = hash<int>()(p.first);
+        const auto h2 = hash<int>()(p.second);
+        return h1 ^ (h2 << 16); // Spread bits more
+    }
+};
+
+int main() {
+    ll N;
+    int M;
+    cin >> N >> M;
+
+    unordered_set<P, phash> attacked;
+    vector<P> deltas = {
+        {2, 1}, {1, 2}, {-1, 2}, {-2, 1},
+        {-2, -1}, {-1, -2}, {1, -2}, {2, -1}
+    };
+
+    rep(i, M) {
+        int a, b;
+        cin >> a >> b;
+        // Convert to 0-based index
+        a--; b--;
+        // Add current piece position (it's not safe to place our piece here)
+        attacked.insert({a, b});
+        // Add all positions that this piece can attack
+        for (auto [dx, dy] : deltas) {
+            int nx = a + dx;
+            int ny = b + dy;
+            if (0 <= nx && nx < N && 0 <= ny && ny < N) {
+                attacked.insert({nx, ny});
+            }
+        }
+    }
+
+    // Total cells - occupied cells - attacked cells
+    ll total = N * N;
+    ll result = total - static_cast<ll>(attacked.size());
+    cout << result << endl;
+
+    return 0;
+}

@@ -1,0 +1,74 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define ll long long
+#define rep(i, n) for (int i = 0; i < (int)n; ++i)
+#define vi vector<int>
+#define vl vector<ll>
+#define vb vector<bool>
+#define vb vector<bool>
+#define vs vector<string>
+
+int main() {
+    ll n, q;
+    cin >> n >> q;
+    vl a(n);
+    vector<pair<ll, ll>> queries(q);
+    
+    for (ll i = 0; i < n; ++i) {
+        cin >> a[i];
+    }
+    
+    for (ll i = 0; i < q; ++i) {
+        ll b, k;
+        cin >> b >> k;
+        queries[i] = {b, k};
+    }
+    
+    // Sort points A by their coordinates
+    sort(a.begin(), a.end());
+    
+    // Sort queries by the coordinate of B to_process them in order
+    sort(queries.begin(), queries.end());
+    
+    // Use a Fenwick Tree (Binary Indexed Tree) to keep track of the frequencies of distances
+    vector<ll> fenwickTree(2000010, 0); // Using a size slightly larger than the max possible value of a_i or b_j
+    ll currentDistances = 0; // To keep track of the number of distances added to the Fenwick Tree
+    
+    vector<ll> results(q);
+    
+    for (const auto& query : queries) {
+        ll b = query.first;
+        ll k = query.second;
+        
+        // Calculate the distance from B to each point in A
+        ll distance = b - a[0]; // Initial distance to the first point in A
+        ll rank = 1; // Rank start from 1
+        
+        // Use the Fenwick Tree to find the rank of the number of points that have a distance <= current distance
+        while (distance < 2000010 && rank <= currentDistances + fenwickTree[distance]) {
+            rank += fenwickTree[distance];
+            distance++;
+        }
+        
+        // If the rank is equal to k, it means the k-th closest point is at this distance
+        if (rank == k) {
+            results[query.second - 1] = distance * distance;
+        }
+        
+        // Update the Fenwick Tree
+        currentDistances++;
+        distance = b - a[currentDistances]; // Update the distance to the next point in A
+        while (distance < 2000010 && rank <= currentDistances + fenwickTree[distance]) {
+            rank += fenwickTree[distance];
+            distance++;
+        }
+        fenwickTree[distance]++;
+    }
+    
+    // Output the results for each query
+    for (ll result : results) {
+        cout << result << '\n';
+    }
+    
+    return 0;
+}

@@ -1,0 +1,50 @@
+#include<bits/stdc++.h>
+using namespace std;
+
+vector<vector<bool>> grid;
+int h, w, q;
+
+bool valid(int x, int y){
+    return x>=0 && x<h && y>=0 && y<w;
+}
+
+void destroy_walls(int x, int y){
+    queue<pair<int,int>> q;
+    q.push({x,y});
+    while(!q.empty()){
+        auto [cx,cy]=q.front();
+        q.pop();
+        if(grid[cx][cy]) continue;
+        grid[cx][cy]=true;
+        for(int dx=-1;dx<=1;dx++){
+            for(int dy=-1;dy<=1;dy++){
+                if(dx==0&&dy==0) continue;
+                int nx=cx+dx,ny=cy+dy;
+                if(valid(nx,ny)&&!grid[nx][ny]){
+                    q.push({nx,ny});
+                }
+            }
+        }
+    }
+}
+
+int main(){
+    cin>>h>>w>>q;
+    grid.resize(h,vector<bool>(w,false));
+    while(q--){
+        int x,y;
+        cin>>x>>y;
+        x--;y--;
+        if(grid[x][y]==false){
+            destroy_walls(x,y);
+        }
+    }
+    int count=0;
+    for(int i=0;i<h;i++){
+        for(int j=0;j<w;j++){
+            if(grid[i][j]==false) count++;
+        }
+    }
+    cout<<count<<endl;
+    return 0;
+}

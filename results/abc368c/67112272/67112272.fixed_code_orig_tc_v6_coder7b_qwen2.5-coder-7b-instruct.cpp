@@ -1,0 +1,23 @@
+#include<bits/stdc++.h>
+using namespace std;
+
+#define rep(i,n) for (ll i=0;i < (n); i++)
+using ll = long long;
+
+int main()
+{
+    int n; cin >> n;
+    ll ans=0;
+    vector<ll> h(n);
+    rep(i,n)
+    {
+        cin >> h[i];
+        ll temp1=h[i]/3;
+        ll temp2=h[i]%3;
+
+        ans += temp1*3;
+        if(temp2==2) ans+=3;
+        else if(temp2==1) ans+=2;
+    }
+    cout << ans << endl;
+}

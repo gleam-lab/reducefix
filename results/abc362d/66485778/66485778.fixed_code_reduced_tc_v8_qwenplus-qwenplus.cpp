@@ -1,0 +1,74 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+using i64 = long long;
+using pii = pair<int, int>;
+
+struct Node {
+    i64 dist;
+    int u;
+    bool operator < (const Node& other) const {
+        return dist > other.dist;
+    }
+};
+
+constexpr int MAXN = 2 * 1e5 + 10;
+constexpr i64 INF = 1e18;
+
+void solve() {
+    int n, m;
+    cin >> n >> m;
+    
+    vector<i64> A(n + 1);
+    for (int i = 1; i <= n; ++i) {
+        cin >> A[i];
+    }
+
+    vector<vector<pair<int, i64>>> graph(n + 1);
+    for (int i = 0; i < m; ++i) {
+        int u, v;
+        i64 b;
+        cin >> u >> v >> b;
+        graph[u].push_back({v, b});
+        graph[v].push_back({u, b});
+    }
+
+    vector<i64> min_dist(n + 1, INF);
+    priority_queue<Node> pq;
+
+    // Start from node 1 with its weight as the initial distance
+    min_dist[1] = A[1];
+    pq.push({min_dist[1], 1});
+
+    while (!pq.empty()) {
+        auto [dist_u, u] = pq.top();
+        pq.pop();
+
+        if (dist_u > min_dist[u]) continue;
+
+        for (auto [v, edge_weight] : graph[u]) {
+            i64 new_dist = dist_u + edge_weight + A[v];
+
+            if (new_dist < min_dist[v]) {
+                min_dist[v] = new_dist;
+                pq.push({new_dist, v});
+            }
+        }
+    }
+
+    for (int i = 2; i <= n; ++i) {
+        cout << min_dist[i] << " ";
+    }
+    cout << "\n";
+}
+
+int main() {
+    cin.tie(nullptr)->sync_with_stdio(false);
+    int t = 1;
+    // If multiple test cases are needed, uncomment this:
+    // cin >> t;
+    while (t--) {
+        solve();
+    }
+    return 0;
+}

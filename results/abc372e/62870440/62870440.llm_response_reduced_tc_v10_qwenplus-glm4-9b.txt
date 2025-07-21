@@ -1,0 +1,118 @@
+
+### Problem Analysis
+
+The problem involves managing an undirected graph with dynamic connectivity queries. Initially, the graph has no edges and only isolated vertices. The task is to process a series of queries that either add an edge between two vertices or request the k-th largest vertex connected to a given vertex.
+
+### Solution Strategy
+
+The solution can be efficiently handled using the Union-Find data structure (also known as Disjoint Set Union, DSU) with path compression and union by rank. This data structure will help manage the connectivity of vertices efficiently.
+
+For the k-th largest vertex query, we need to maintain a dynamic data structure that allows for efficient retrieval of the k-th largest element. A balanced binary search tree (BST) or a Fenwick Tree (Binary Indexed Tree) could be used for this purpose.
+
+### Detailed Steps
+
+1. **Initialization**:
+   - Use the Union-Find structure to manage the connectivity of vertices.
+   - For each vertex, maintain a list of its connected vertices.
+   - Use a data structure like a BST or Fenwick Tree to keep the vertices of each connected component sorted.
+
+2. **Processing Queries**:
+   - For adding an edge (`Type 1` query), union the sets of the two vertices.
+   - For the k-th largest query (`Type 2` query), retrieve and print the k-th largest vertex from the sorted list of the target vertex's connected vertices.
+
+### Code Implementation
+
+```cpp
+#include <iostream>
+#include <vector>
+#include <algorithm>
+
+using namespace std;
+
+const int MAX_N = 200005;
+int parent[MAX_N], size[MAX_N], rank[MAX_N];
+
+void init(int n) {
+    for (int i = 0; i <= n; i++) {
+        parent[i] = i;
+        size[i] = 1;
+        rank[i] = 0;
+    }
+}
+
+int find(int x) {
+    if (parent[x] != x) {
+        parent[x] = find(parent[x]);
+    }
+    return parent[x];
+}
+
+void unionSets(int x, int y) {
+    int rootX = find(x);
+    int rootY = find(y);
+    if (rootX != rootY) {
+        if (rank[rootX] > rank[rootY]) {
+            parent[rootY] = rootX;
+            size[rootX] += size[rootY];
+        } else if (rank[rootX] < rank[rootY]) {
+            parent[rootX] = rootY;
+            size[rootY] += size[rootX];
+        } else {
+            parent[rootY] = rootX;
+            size[rootX] += size[rootY];
+            rank[rootX] += 1;
+        }
+    }
+}
+
+int main() {
+    int n, q;
+    cin >> n >> q;
+    init(n);
+
+    vector<pair<int, int>> queries;
+    for (int i = 0; i < q; i++) {
+        int type, u, v;
+        cin >> type >> u >> v;
+        queries.push_back({type, u, v});
+    }
+
+    sort(queries.begin(), queries.end());
+
+    vector<int> componentSize(n + 1, 0);
+    vector<int> componentLeaders(n + 1);
+    vector<vector<int>> components(n + 1);
+
+    for (auto& q : queries) {
+        if (q.first == 1) { // Union operation
+            int u = q.second;
+            int v = q.third;
+            int rootU = find(u);
+            int rootV = find(v);
+            if (rootU != rootV) {
+                componentSize[rootU] += componentSize[rootV];
+                components[rootU].insert(end(components[rootU]), begin(components[rootV]), end(components[rootV]));
+                components[rootU].push_back(max(u, v));
+                components[rootV].clear();
+                unionSets(u, v);
+                componentLeaders[rootU] = max(componentLeaders[rootU], max(u, v));
+            }
+        } else if (q.first == 2) { // Find k-th largest
+            int v = q.second;
+            int k = q.third;
+            int rootV = find(v);
+            if (k > componentSize[rootV]) {
+                cout << -1 << endl;
+            } else {
+                vector<int> sortedComponents = components[rootV];
+                sort(sortedComponents.rbegin(), sortedComponents.rend());
+                cout << sortedComponents[k - 1] << endl;
+            }
+        }
+    }
+
+    return 0;
+}
+```
+
+This code initializes the Union-Find structure, processes the queries, and handles both types of queries as described. The union operation merges sets and updates the size and leader of each component. The k-th largest query retrieves the k-th largest element from the sorted list of vertices in the target component.

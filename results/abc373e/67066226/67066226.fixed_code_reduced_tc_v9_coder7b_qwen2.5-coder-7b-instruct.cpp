@@ -1,0 +1,75 @@
+#include <bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+
+int main() {
+    ios_base::sync_with_stdio(0);
+    cin.tie(0);
+
+    int n, m;
+    ll k;
+    cin >> n >> m >> k;
+    vector<ll> a(n);
+    for (int i = 0; i < n; i++) {
+        cin >> a[i];
+        k -= a[i];
+    }
+
+    // Sort the votes in descending order
+    vector<pair<ll, int>> sorted_a(n);
+    for (int i = 0; i < n; i++) {
+        sorted_a[i] = {a[i], i};
+    }
+    sort(sorted_a.rbegin(), sorted_a.rend());
+
+    // Calculate the prefix sum of votes
+    vector<ll> pref(n + 1);
+    for (int i = 0; i < n; i++) {
+        pref[i + 1] = pref[i] + sorted_a[i].first;
+    }
+
+    // Determine the minimum additional votes needed for each candidate
+    vector<ll> ans(n, -1);
+    for (int i = 0; i < n; i++) {
+        ll target_votes = sorted_a[i].first + 1;
+        int min_exceeding_candidates = m - 1;
+
+        // Binary search to find the minimum number of additional votes needed
+        ll l = 0, r = k + 1;
+        while (l < r) {
+            ll mid = (l + r) / 2;
+            ll exceed = 0;
+            for (int j = 0; j < min_exceeding_candidates; j++) {
+                if (sorted_a[j].second != sorted_a[i].second) {
+                    exceed += max(0LL, target_votes + mid - sorted_a[j].first);
+                }
+            }
+            if (exceed > k) {
+                r = mid;
+            } else {
+                l = mid + 1;
+            }
+        }
+
+        // Check if the found number of votes guarantees victory
+        bool can_win = true;
+        for (int j = 0; j < min_exceeding_candidates; j++) {
+            if (sorted_a[j].second != sorted_a[i].second) {
+                if (target_votes + l - sorted_a[j].first <= 0) {
+                    can_win = false;
+                    break;
+                }
+            }
+        }
+
+        if (can_win) {
+            ans[sorted_a[i].second] = l - 1;
+        }
+    }
+
+    // Output the results
+    for (ll x : ans) {
+        cout << x << " ";
+    }
+    return 0;
+}

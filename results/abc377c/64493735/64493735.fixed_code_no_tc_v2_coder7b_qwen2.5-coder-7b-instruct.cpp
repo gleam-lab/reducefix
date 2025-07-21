@@ -1,0 +1,25 @@
+#include <iostream>
+#include <set>
+#include <cmath>
+using namespace std;
+
+typedef long long ll;
+
+int main() {
+    ll N, M;
+    cin >> N >> M;
+    
+    set<ll> X, Y;
+    for(ll i = 0; i < M; ++i){
+        ll x, y;
+        cin >> x >> y;
+        X.insert(x);
+        Y.insert(y);
+    }
+    
+    ll res = (N - X.size()) * (N - Y.size());
+    
+    cout << res << endl;
+    
+    return 0;
+}

@@ -1,0 +1,45 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define rep(i,n) for(int i = 0; i < n; i++)
+using ll = long long;
+
+ll f(ll a, ll b, ll p, ll q, ll x) {
+    ll dp[10010] = {1e10};
+    dp[0] = 0;
+    for (int i = 1; i <= 10009; i++) {
+        if (i - a >= 0) dp[i] = min(dp[i], dp[i - a] + p);
+        if (i - b >= 0) dp[i] = min(dp[i], dp[i - b] + q);
+    }
+    for (int i = 10009; i >= 0; i--) dp[10009 - i] = min(dp[10009 - i], dp[i]);
+    return dp[x];
+}
+
+int main() {
+    int n, x;
+    cin >> n >> x;
+    vector<pair<int, int>> ab;
+    vector<pair<int, int>> pq;
+    for (int i = 0; i < n; i++) {
+        int a, b, p, q;
+        cin >> a >> b >> p >> q;
+        ab.push_back({a, b});
+        pq.push_back({p, q});
+    }
+    ll now; // wã®åè£
+    ll l = 0, r = 10000000000;
+    while (r - l > 1) {
+        now = (r + l) / 2;
+        ll tmp = 0;
+        for (int i = 0; i < n; i++) {
+            ll a = ab[i].first;
+            ll b = ab[i].second;
+            ll p = pq[i].first;
+            ll q = pq[i].second;
+            tmp += f(a, b, p, q, now);
+        }
+        if (tmp <= x) l = now;
+        else r = now;
+    }
+    cout << l + 1 << endl;
+    return 0;
+}

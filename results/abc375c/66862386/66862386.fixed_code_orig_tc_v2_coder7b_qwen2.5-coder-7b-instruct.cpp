@@ -1,0 +1,32 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    long long n;
+    cin >> n;
+    
+    vector<pair<long long, long long>> points(n);
+    for(long long i = 0; i < n; ++i) {
+        cin >> points[i].first >> points[i].second;
+    }
+    
+    long double total_cost = 0;
+    for(long long i = 0; i < n - 1; ++i) {
+        long double dx = points[i + 1].first - points[i].first;
+        long double dy = points[i + 1].second - points[i].second;
+        total_cost += sqrt(dx * dx + dy * dy);
+    }
+    
+    // Return to origin
+    long double dx = points[0].first;
+    long double dy = points[0].second;
+    total_cost += sqrt(dx * dx + dy * dy);
+    
+    cout.precision(10);
+    cout << total_cost << '\n';
+    
+    return 0;
+}

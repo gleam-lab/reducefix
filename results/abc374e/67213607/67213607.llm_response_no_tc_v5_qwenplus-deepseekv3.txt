@@ -1,0 +1,75 @@
+### Analysis of the Original Code
+The original code attempts to solve a problem where we need to find the maximum time `mid` such that the total cost `sum` across all `n` items is less than or equal to `x`. For each item, it calculates the minimum cost to achieve at least `mid` units by either:
+1. Using some combination of `a[i]` units at cost `p[i]` and `b[i]` units at cost `q[i]`.
+2. Or vice versa, using `b[i]` units at cost `q[i]` and `a[i]` units at cost `p[i]`.
+
+However, the code has several issues:
+1. **Incorrect Looping**: The loops `for(int j=0;j<=b[i];j++)` and `for(int j=0;j<=a[i];j++)` are not correctly bounded. The upper bounds should be based on how many times `a[i]` or `b[i]` can fit into `mid`, not just `a[i]` or `b[i]` themselves.
+2. **Redundant Calculations**: The code unnecessarily checks both combinations (a then b, and b then a) separately, leading to redundant calculations and potential incorrect minimum values.
+3. **Edge Cases**: The conditions for when `(mid-j*a[i])` or `(mid-j*b[i])` are less than or equal to zero are handled, but the logic might not cover all edge cases correctly.
+4. **Efficiency**: The nested loops and redundant calculations make the solution inefficient, especially for large values.
+
+### Fixed Code
+The fixed code simplifies the logic by:
+1. Calculating the maximum possible `j` for each item to avoid unnecessary loops.
+2. Directly computing the minimum cost by considering all possible combinations of `a[i]` and `b[i]` without redundant checks.
+3. Ensuring the binary search correctly updates the bounds to find the maximum `mid` where the total cost is ≤ `x`.
+
+Here’s the corrected code:
+
+```cpp
+#include<bits/stdc++.h>
+using namespace std;
+long long n,x,a[105],p[105],b[105],q[105],l,r,mid,ans,minn,sum;
+int main()
+{
+    cin>>n>>x;
+    for(int i=1;i<=n;i++)
+        cin>>a[i]>>p[i]>>b[i]>>q[i];
+    l=0,r=2e18; // Adjusted to a sufficiently large upper bound
+    while(l<=r)
+    {
+        mid=(l+r)/2;
+        sum=0;
+        bool valid=true;
+        for(int i=1;i<=n;i++)
+        {
+            minn=LLONG_MAX;
+            long long max_j = mid / a[i] + 1;
+            for(long long j=0;j<=max_j;j++)
+            {
+                long long remaining = mid - j * a[i];
+                if(remaining <= 0)
+                {
+                    minn=min(minn,j*p[i]);
+                    continue;
+                }
+                long long k = (remaining + b[i] - 1) / b[i]; // Ceiling division
+                minn=min(minn,j*p[i]+k*q[i]);
+            }
+            sum+=minn;
+            if(sum > x)
+            {
+                valid=false;
+                break;
+            }
+        }
+        if(valid)
+        {
+            ans=mid;
+            l=mid+1;
+        }
+        else
+        {
+            r=mid-1;
+        }
+    }
+    cout<<ans;
+}
+```
+
+### Key Improvements
+1. **Corrected Loop Bounds**: The loop for `j` now goes up to `mid / a[i] + 1`, which is the maximum number of `a[i]` units needed to reach `mid`.
+2. **Efficient Calculation**: The minimum cost is computed by directly calculating the required `k` (number of `b[i]` units) for each `j` using ceiling division.
+3. **Early Termination**: If the `sum` exceeds `x` during the calculation, the loop breaks early to save computation.
+4. **Large Upper Bound**: The initial upper bound `r` is set to a sufficiently large value (`2e18`) to cover all possible cases.

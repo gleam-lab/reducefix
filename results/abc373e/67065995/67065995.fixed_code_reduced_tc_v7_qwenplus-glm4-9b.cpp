@@ -1,0 +1,60 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define all(x) (x).begin(), (x).end()
+
+int main()
+{
+    ios_base::sync_with_stdio(0);
+    cin.tie(0);
+    int n, m;
+    ll k;
+    cin >> n >> m >> k;
+    vector<ll> a(n);
+    for(int i = 0; i < n; ++i) {
+        cin >> a[i];
+        k -= a[i];
+    }
+    
+    // Pair each candidate with their votes and index
+    vector<pair<ll, int>> candidates(n);
+    for(int i = 0; i < n; ++i) {
+        candidates[i] = {a[i], i};
+    }
+    
+    // Sort candidates based on the number of votes they have received
+    sort(candidates.begin(), candidates.end(), [](const pair<ll, int>& a, const pair<ll, int>& b) {
+        return a.first < b.first;
+    });
+    
+    // Prepare to count how many candidates have more votes than the current candidate
+    vector<int> count(n);
+    for(int i = 0, cnt = 0; i < n; ++i) {
+        count[i] = cnt++;
+        if(candidates[i].first == candidates[i - 1].first) continue;
+        if(i < m) count[i] += m - 1;
+    }
+    
+    // For each candidate, determine the minimum additional votes needed
+    vector<ll> ans(n);
+    for(int i = 0; i < n; ++i) {
+        int required_winners = max(0, m - count[i]);
+        if(required_winners == 0) {
+            ans[candidates[i].second] = 0;
+            continue;
+        }
+        
+        // Calculate the minimum additional votes needed to ensure victory
+        ll needed_votes = candidates[m - 1 - required_winners].first - candidates[i].first + 1 + required_winners * (k - (n - 1 - m + required_winners) * candidates[m - 1 - required_winners].first);
+        if(needed_votes > k) {
+            ans[candidates[i].second] = -1;
+        } else {
+            ans[candidates[i].second] = needed_votes;
+        }
+    }
+    
+    // Output the result
+    for(ll vote : ans) {
+        cout << vote << ' ';
+    }
+    cout << '\n';
+}

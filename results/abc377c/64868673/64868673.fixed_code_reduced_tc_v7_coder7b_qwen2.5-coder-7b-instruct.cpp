@@ -1,0 +1,38 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    long long n, m;
+    cin >> n >> m;
+    
+    // Using unordered_set for faster lookup
+    unordered_set<long long> ex;
+    for (int i = 0; i < m; ++i) {
+        long long a, b;
+        cin >> a >> b;
+        // Convert 2D coordinates to a unique 1D index
+        long long idx = ((a - 1) * n + b);
+        if (!ex.count(idx)) {
+            ex.insert(idx);
+        }
+        
+        // Check all 8 possible directions
+        vector<int> dx = {1, 1, -1, -1, 2, 2, -2, -2};
+        vector<int> dy = {2, -2, 2, -2, 1, -1, 1, -1};
+        for (int d = 0; d < 8; ++d) {
+            int nx = a + dx[d], ny = b + dy[d];
+            if (nx > 0 && nx <= n && ny > 0 && ny <= n) {
+                long long nidx = ((nx - 1) * n + ny);
+                if (!ex.count(nidx)) {
+                    ex.insert(nidx);
+                }
+            }
+        }
+    }
+
+    // Calculate the number of valid positions
+    long long totalPositions = n * n;
+    long long invalidPositions = ex.size();
+    cout << totalPositions - invalidPositions << endl;
+    return 0;
+}

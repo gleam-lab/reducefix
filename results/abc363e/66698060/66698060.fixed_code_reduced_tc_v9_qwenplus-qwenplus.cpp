@@ -1,0 +1,65 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define ll long long
+#define rep(i,n) for(ll i=0;i<(ll)n;i++)
+#define vi vector<int>
+#define vl vector<ll>
+#define vd vector<double>
+#define vb vector<bool>
+#define vs vector<string>
+#define vc vector<char>
+#define ull unsigned long long
+#define chmax(a,b) a=max(a,b)
+#define chmin(a,b) a=min(a,b)
+
+ll dx[4] = {0, 1, 0, -1};
+ll dy[4] = {1, 0, -1, 0};
+
+int main() {
+    ll h, w, y;
+    cin >> h >> w >> y;
+    ll ans = h * w;
+    vector<vl> room(h, vl(w));
+    rep(i, h) rep(j, w) cin >> room[i][j];
+
+    priority_queue<vl, vector<vl>, greater<vl>> pq;
+    vector<vb> used(h, vb(w, 0));
+
+    // Push all border cells into the priority queue
+    for (ll i = 0; i < h; ++i) {
+        for (ll j : {0, w - 1}) {
+            if (!used[i][j]) {
+                pq.push({room[i][j], i, j});
+                used[i][j] = true;
+            }
+        }
+    }
+
+    for (ll j = 1; j < w - 1; ++j) {
+        for (ll i : {0, h - 1}) {
+            if (!used[i][j]) {
+                pq.push({room[i][j], i, j});
+                used[i][j] = true;
+            }
+        }
+    }
+
+    ll current_year = 0;
+    while (current_year++ < y) {
+        while (!pq.empty() && pq.top()[0] <= current_year) {
+            ll ni = pq.top()[1];
+            ll nj = pq.top()[2];
+            pq.pop();
+            ans--;
+            rep(k, 4) {
+                ll nexi = ni + dx[k];
+                ll nexj = nj + dy[k];
+                if (0 <= nexi && nexi < h && 0 <= nexj && nexj < w && !used[nexi][nexj]) {
+                    pq.push({room[nexi][nexj], nexi, nexj});
+                    used[nexi][nexj] = true;
+                }
+            }
+        }
+        cout << ans << endl;
+    }
+}

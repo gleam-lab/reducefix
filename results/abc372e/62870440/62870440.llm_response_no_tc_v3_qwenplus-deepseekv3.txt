@@ -1,0 +1,78 @@
+To fix this code, we need to address several issues related to handling the union-find (disjoint set) data structure and maintaining the top k largest vertices in each connected component. Here's the corrected version with explanations:
+
+### Issues in the Original Code
+1. **Input Reading**: The original code incorrectly reads `q` and `n` in reverse order, leading to incorrect processing of queries.
+2. **Union-Find Implementation**: The path compression and union operations are not correctly merging the sets and maintaining the top k elements.
+3. **Top k Maintenance**: The method for merging and sorting the top k elements is inefficient and incorrect, especially when merging two sets.
+
+### Approaches
+1. **Union-Find with Path Compression**: Use a standard union-find data structure to manage connected components efficiently.
+2. **Maintaining Sorted Lists**: For each root node, maintain a sorted list (in descending order) of the top 10 largest vertices in its component. This list is updated during union operations by merging the lists of the two components being united and keeping only the top 10 elements.
+3. **Efficient Merging**: When two components are united, merge their sorted lists and retain the largest 10 elements to ensure quick access during queries.
+
+### Solution Code
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+const int MAXN = 200005;
+int parent[MAXN];
+vector<int> topk[MAXN];
+
+int find(int x) {
+    if (parent[x] != x) {
+        parent[x] = find(parent[x]);
+    }
+    return parent[x];
+}
+
+void unite(int x, int y) {
+    x = find(x);
+    y = find(y);
+    if (x == y) return;
+    if (topk[x].size() < topk[y].size()) {
+        swap(x, y);
+    }
+    vector<int> merged;
+    merge(topk[x].begin(), topk[x].end(), topk[y].begin(), topk[y].end(), back_inserter(merged), greater<int>());
+    if (merged.size() > 10) {
+        merged.resize(10);
+    }
+    topk[x] = merged;
+    parent[y] = x;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int N, Q;
+    cin >> N >> Q;
+    for (int i = 1; i <= N; ++i) {
+        parent[i] = i;
+        topk[i] = {i};
+    }
+    while (Q--) {
+        int op, u, v;
+        cin >> op >> u >> v;
+        if (op == 1) {
+            unite(u, v);
+        } else {
+            int root = find(u);
+            if (v > topk[root].size()) {
+                cout << -1 << '\n';
+            } else {
+                cout << topk[root][v - 1] << '\n';
+            }
+        }
+    }
+    return 0;
+}
+```
+
+### Explanation
+1. **Union-Find Initialization**: Each node is initially its own parent, and each node's `topk` list contains only itself.
+2. **Union Operation**: When uniting two nodes, the root nodes of the components are found. The larger component's `topk` list is merged with the smaller one's, and the combined list is sorted in descending order. Only the top 10 elements are retained to ensure efficiency.
+3. **Query Handling**: For a query of type 2, the root node of the queried vertex is found. The k-th largest element is accessed directly from the root's `topk` list if it exists; otherwise, `-1` is returned.
+4. **Efficiency**: The solution efficiently handles each query in nearly constant time due to path compression in union-find and the limited size (10) of the `topk` lists, ensuring operations remain within feasible time complexity for large inputs.
+
+This approach ensures correctness and efficiency, meeting the problem's constraints and requirements.

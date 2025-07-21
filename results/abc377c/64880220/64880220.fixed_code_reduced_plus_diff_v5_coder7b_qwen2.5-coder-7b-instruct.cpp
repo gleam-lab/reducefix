@@ -1,0 +1,64 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+const int MAXN = 1e9 + 10;
+const int DIR[8][2] = {{2, 1}, {1, 2}, {-1, 2}, {-2, 1}, {-2, -1}, {-1, -2}, {1, -2}, {2, -1}};
+
+bool isValid(int x, int y, int n) {
+    return x >= 1 && x <= n && y >= 1 && y <= n;
+}
+
+int main() {
+    ios_base::sync_with_stdio(false); cin.tie(0); cout.tie(0);
+
+    long long n, m;
+    cin >> n >> m;
+
+    vector<vector<bool>> board(n + 1, vector<bool>(n + 1));
+    vector<vector<bool>> visited(n + 1, vector<bool>(n + 1));
+
+    // Read the positions of the pieces
+    for(long long i = 0; i < m; ++i) {
+        long long a, b;
+        cin >> a >> b;
+        board[a][b] = true;
+    }
+
+    // Flood fill to mark all squares that can be captured
+    for(long long i = 1; i <= n; ++i) {
+        for(long long j = 1; j <= n; ++j) {
+            if(board[i][j]) {
+                queue<pair<long long, long long>> q;
+                q.push({i, j});
+                visited[i][j] = true;
+
+                while(!q.empty()) {
+                    auto [x, y] = q.front();
+                    q.pop();
+
+                    for(auto &dir : DIR) {
+                        long long nx = x + dir[0], ny = y + dir[1];
+                        if(isValid(nx, ny, n) && !visited[nx][ny] && board[nx][ny]) {
+                            visited[nx][ny] = true;
+                            q.push({nx, ny});
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    // Count the number of empty squares that are not marked
+    long long empty_squares = 0;
+    for(long long i = 1; i <= n; ++i) {
+        for(long long j = 1; j <= n; ++j) {
+            if(!board[i][j] && !visited[i][j]) {
+                empty_squares++;
+            }
+        }
+    }
+
+    cout << empty_squares << endl;
+
+    return 0;
+}

@@ -1,0 +1,52 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(NULL);
+
+    long long n, x;
+    cin >> n >> x;
+    vector<long long> a(n), p(n), b(n), q(n);
+    for(long long i = 0; i < n; ++i)
+        cin >> a[i] >> p[i] >> b[i] >> q[i];
+
+    auto check = [&](long long mid) {
+        long long sum = 0;
+        for(long long i = 0; i < n; ++i) {
+            long long minn = LLONG_MAX;
+            for(long long j = 0; j <= b[i]; ++j) {
+                if(mid - j * a[i] <= 0)
+                    minn = min(minn, j * p[i]);
+                else if((mid - j * a[i]) % b[i] == 0)
+                    minn = min(minn, j * p[i] + (mid - j * a[i]) / b[i] * q[i]);
+                else
+                    minn = min(minn, j * p[i] + ((mid - j * a[i]) / b[i] + 1) * q[i]);
+            }
+            for(long long j = 0; j <= a[i]; ++j) {
+                if(mid - j * b[i] <= 0)
+                    minn = min(minn, j * q[i]);
+                else if((mid - j * b[i]) % a[i] == 0)
+                    minn = min(minn, j * q[i] + (mid - j * b[i]) / a[i] * p[i]);
+                else
+                    minn = min(minn, j * q[i] + ((mid - j * b[i]) / a[i] + 1) * p[i]);
+            }
+            sum += minn;
+        }
+        return sum <= x;
+    };
+
+    long long l = 0, r = 1e10, ans = 0;
+    while(l <= r) {
+        long long mid = (l + r) / 2;
+        if(check(mid)) {
+            ans = mid;
+            l = mid + 1;
+        } else {
+            r = mid - 1;
+        }
+    }
+
+    cout << ans;
+    return 0;
+}

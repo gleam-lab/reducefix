@@ -1,0 +1,91 @@
+The provided code attempts to solve the problem using Dijkstra's algorithm to find the shortest path from vertex 1 to all other vertices, considering both vertex and edge weights. However, there are some issues in the implementation that need to be addressed:
+
+1. **Vertex Weight Inclusion**: The vertex weight should be included only once for each vertex in the path, but the current implementation adds the vertex weight each time it is visited. This is incorrect because the problem states that the weight of the path is the sum of the weights of the vertices and edges that appear on the path, meaning each vertex's weight should be counted once even if it appears multiple times in the path.
+
+2. **Initialization**: The initial distance to vertex 1 is set to `a[1]`, which is correct since the path starts at vertex 1 and includes its weight. However, the relaxation step adds `a[y]` each time, which leads to incorrect accumulation of vertex weights.
+
+3. **Priority Queue Handling**: The priority queue is correctly implemented using a min-heap (via `operator<`), but the distance updates and vertex weight handling need to be adjusted.
+
+4. **Edge Cases**: The code should handle cases where vertex weights are zero or large, and edge weights are zero or large, within the given constraints.
+
+Here is the corrected code:
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+using ll = long long;
+
+struct Edge {
+    int to;
+    ll cost;
+};
+
+struct Node {
+    int vertex;
+    ll distance;
+    bool operator<(const Node& other) const {
+        return distance > other.distance; // Min-heap
+    }
+};
+
+void solve() {
+    int N, M;
+    cin >> N >> M;
+    vector<ll> A(N + 1);
+    for (int i = 1; i <= N; ++i) {
+        cin >> A[i];
+    }
+    vector<vector<Edge>> graph(N + 1);
+    for (int i = 0; i < M; ++i) {
+        int U, V;
+        ll B;
+        cin >> U >> V >> B;
+        graph[U].push_back({V, B});
+        graph[V].push_back({U, B});
+    }
+
+    vector<ll> dist(N + 1, LLONG_MAX);
+    priority_queue<Node> pq;
+    dist[1] = A[1];
+    pq.push({1, dist[1]});
+
+    while (!pq.empty()) {
+        Node current = pq.top();
+        pq.pop();
+        int u = current.vertex;
+        ll d = current.distance;
+        if (d > dist[u]) continue;
+        for (const Edge& edge : graph[u]) {
+            int v = edge.to;
+            ll cost = edge.cost;
+            if (dist[v] > dist[u] + cost + A[v]) {
+                dist[v] = dist[u] + cost + A[v];
+                pq.push({v, dist[v]});
+            }
+        }
+    }
+
+    for (int i = 2; i <= N; ++i) {
+        cout << dist[i] << " \n"[i == N];
+    }
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    solve();
+    return 0;
+}
+```
+
+### Explanation of Fixes:
+1. **Vertex Weight Handling**: The vertex weight `A[v]` is added only once when the vertex `v` is first reached via some edge. This is correct because the problem defines the path weight as the sum of the weights of vertices and edges that appear on the path, meaning each vertex's weight is counted once.
+
+2. **Initialization**: The initial distance to vertex 1 is set to `A[1]` because the path starts at vertex 1 and includes its weight.
+
+3. **Relaxation Step**: For each edge `(u, v)`, the distance to `v` is updated to `dist[u] + cost + A[v]`, ensuring that `A[v]` is added only once when `v` is first reached.
+
+4. **Efficiency**: The algorithm uses Dijkstra's with a priority queue, which is efficient for graphs with non-negative edge weights, as is the case here. The complexity is O(M + N log N), suitable for the given constraints.
+
+This corrected implementation ensures that the shortest path from vertex 1 to all other vertices is computed correctly, considering both vertex and edge weights as specified in the problem.

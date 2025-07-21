@@ -1,0 +1,128 @@
+#include<bits/stdc++.h>
+
+using namespace std;
+using ll = long long;
+
+const int MOD = 1000000007;
+
+ll modular_pow(ll base, ll exp, ll mod) {
+    ll result = 1;
+    base = base % mod;
+    while (exp > 0) {
+        if (exp % 2 == 1) {
+            result = (result * base) % mod;
+        }
+        exp = exp >> 1;
+        base = (base * base) % mod;
+    }
+    return result;
+}
+
+void solve() {
+    ll n, m; cin >> n >> m;
+    vector<pair<ll, ll>> pieces;
+    for (int i = 1; i <= m; ++i) {
+        ll x, y;
+        cin >> x >> y;
+        pieces.emplace_back(x, y);
+    }
+
+    // Total number of squares
+    ll total_squares = n * n;
+
+    // Count of squares that are captured by any piece
+    set<ll> horizontal capturing, vertical capturing, diagonal1 capturing, diagonal2 capturing;
+
+    for (const auto& piece : pieces) {
+        ll x = piece.first;
+        ll y = piece.second;
+
+        // Horizontal capturing
+        horizontal capturing.insert(x);
+        
+        // Vertical capturing
+        vertical capturing.insert(y);
+        
+        // Diagonal 1 capturing (x + y)
+        diagonal1 capturing.insert(x + y);
+        
+        // Diagonal 2 capturing (x - y)
+        diagonal2 capturing.insert(x - y);
+    }
+
+    // Calculate the number of free squares
+    ll free_squares = total_squares;
+
+    // Subtract squares in capturing lines
+    free_squares -= horizontal.size() * n;
+    free_squares -= vertical.size() * n;
+    free_squares -= diagonal1.size();
+    free_squares -= diagonal2.size();
+
+    // Subtract the intersections of capturing lines
+    // Since the problem does not specify capturing multiple lines at once,
+    // we subtract the number of intersections for each type of capturing
+    set<ll> intersections;
+
+    // Horizontal and vertical intersections
+    for (const auto& x : horizontal) {
+        for (const auto& y : vertical) {
+            if (x + y <= n) {
+                intersections.insert(x + y);
+            } else {
+                intersections.insert(2 * n - (x + y));
+            }
+        }
+    }
+
+    // Horizontal and diagonal1 intersections
+    for (const auto& x : horizontal) {
+        for (const auto& d1 : diagonal1) {
+            if ((x + d1) % 2 == 1) {
+                intersections.insert((x + d1) / 2);
+            }
+        }
+    }
+
+    // Horizontal and diagonal2 intersections
+    for (const auto& x : horizontal) {
+        for (const auto& d2 : diagonal2) {
+            if ((x + d2) % 2 == 0) {
+                intersections.insert((x + d2) / 2);
+            }
+        }
+    }
+
+    // Vertical and diagonal1 intersections
+    for (const auto& y : vertical) {
+        for (const auto& d1 : diagonal1) {
+            if ((y + d1) % 2 == 0) {
+                intersections.insert((y + d1) / 2);
+            }
+        }
+    }
+
+    // Vertical and diagonal2 intersections
+    for (const auto& y : vertical) {
+        for (const auto& d2 : diagonal2) {
+            if ((y + d2) % 2 == 1) {
+                intersections.insert((y + d2) / 2);
+            }
+        }
+    }
+
+    // Subtract intersections from free squares
+    free_squares -= intersections.size();
+    free_squares %= MOD;
+
+    cout << free_squares << '\n';
+}
+
+int main() {
+    ios_base::sync_with_stdio(false), cin.tie(nullptr);
+    cout.precision(12);
+    int NT = 1;
+    // cin >> NT;
+    while (NT--) solve();
+    return 0;
+}

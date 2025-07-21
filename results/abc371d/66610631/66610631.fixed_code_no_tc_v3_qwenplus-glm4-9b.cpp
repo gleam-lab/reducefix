@@ -1,0 +1,36 @@
+#include<bits/stdc++.h>
+using namespace std;
+using LL = __int128;
+typedef long long ll;
+
+const int N = 1e6 + 7;
+int n, m;
+vector<int> a(N + 1, 0), prefix_sum(N + 1, 0);
+
+int main() {
+    cin >> n;
+    for (int i = 1; i <= n; ++i) {
+        cin >> a[i];
+    }
+    prefix_sum[0] = 0;
+    for (int i = 1; i <= n; ++i) {
+        prefix_sum[i] = prefix_sum[i - 1] + a[i];
+    }
+    cin >> m;
+    while (m--) {
+        int l, r;
+        cin >> l >> r;
+        if (l > r) {
+            // Inverted range, swap them
+            swap(l, r);
+        }
+        if (l == 1) {
+            cout << prefix_sum[r] << endl;
+        } else if (r == n) {
+            cout << prefix_sum[n] - prefix_sum[l - 1] << endl;
+        } else {
+            cout << prefix_sum[r] - prefix_sum[l - 1] << endl;
+        }
+    }
+    return 0;
+}

@@ -1,0 +1,92 @@
+To fix this code, we need to address the issue where the algorithm incorrectly merges the sorted lists of connected vertices. The goal is to maintain, for each connected component, a sorted list of vertex numbers in descending order, ensuring that for any query of type 2, we can quickly retrieve the k-th largest vertex number in the component.
+
+### Approaches
+1. **Union-Find Data Structure**: This structure helps efficiently manage and merge connected components.
+2. **Maintaining Sorted Lists**: For each component, maintain a sorted list (in descending order) of its vertices. This list should only keep the top 10 largest vertices to optimize space and time complexity.
+3. **Efficient Merging**: When merging two components, combine their sorted lists and retain only the top 10 elements to ensure queries for k-th largest (where k ≤ 10) can be answered quickly.
+
+### Solution Code
+```cpp
+#include <bits/stdc++.h>
+
+using namespace std;
+
+struct UnionFind {
+    vector<int> parent;
+    vector<vector<int>> top;
+
+    UnionFind(int n) : parent(n + 1), top(n + 1) {
+        for (int i = 1; i <= n; ++i) {
+            parent[i] = i;
+            top[i].push_back(i);
+        }
+    }
+
+    int find(int u) {
+        if (parent[u] != u) {
+            parent[u] = find(parent[u]);
+        }
+        return parent[u];
+    }
+
+    void unite(int u, int v) {
+        u = find(u);
+        v = find(v);
+        if (u == v) return;
+        if (top[u].size() < top[v].size()) {
+            swap(u, v);
+        }
+        vector<int> merged;
+        int i = 0, j = 0;
+        while (i < top[u].size() && j < top[v].size() && merged.size() < 10) {
+            if (top[u][i] > top[v][j]) {
+                merged.push_back(top[u][i++]);
+            } else {
+                merged.push_back(top[v][j++]);
+            }
+        }
+        while (i < top[u].size() && merged.size() < 10) {
+            merged.push_back(top[u][i++]);
+        }
+        while (j < top[v].size() && merged.size() < 10) {
+            merged.push_back(top[v][j++]);
+        }
+        top[u] = merged;
+        parent[v] = u;
+    }
+};
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int N, Q;
+    cin >> N >> Q;
+    UnionFind uf(N);
+
+    while (Q--) {
+        int t, a, b;
+        cin >> t >> a >> b;
+        if (t == 1) {
+            uf.unite(a, b);
+        } else {
+            int root = uf.find(a);
+            if (uf.top[root].size() < b) {
+                cout << -1 << '\n';
+            } else {
+                cout << uf.top[root][b - 1] << '\n';
+            }
+        }
+    }
+
+    return 0;
+}
+```
+
+### Explanation
+1. **UnionFind Structure**: This structure includes parent pointers for each vertex and a list (`top`) that maintains the top 10 largest vertices in the component.
+2. **Find Operation**: Implements path compression to efficiently track the root parent of any vertex.
+3. **Unite Operation**: Merges two components by combining their top lists. The merging process ensures that only the top 10 elements are retained, maintaining efficiency.
+4. **Query Handling**: For type 2 queries, the code checks the size of the top list of the component containing the queried vertex. If the list size is smaller than `k`, it outputs `-1`; otherwise, it outputs the k-th largest element from the list.
+
+This approach ensures that each operation (union and query) is handled in logarithmic time relative to the number of elements, making the solution efficient and scalable for large inputs.

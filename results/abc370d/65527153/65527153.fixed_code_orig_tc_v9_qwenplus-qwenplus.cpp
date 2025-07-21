@@ -1,0 +1,74 @@
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+
+const int INF = 0x3f3f3f3f;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int H, W, Q;
+    cin >> H >> W >> Q;
+
+    vector<set<int>> row(W + 1), col(H + 1); // row[c] contains rows with walls in column c; similarly for col[r]
+    
+    for (int r = 1; r <= H; ++r) {
+        for (int c = 1; c <= W; ++c) {
+            row[c].insert(r);
+            col[r].insert(c);
+        }
+    }
+
+    while (Q--) {
+        int r, c;
+        cin >> r >> c;
+
+        auto it = row[c].find(r);
+        if (it != row[c].end()) {
+            // Cell has wall, destroy it
+            row[c].erase(it);
+            col[r].erase(c);
+        } else {
+            // Destroy the first wall above, below, left, right
+
+            // Up
+            it = row[c].lower_bound(r);
+            if (it != row[c].begin()) {
+                --it;
+                row[c].erase(it);
+                col[*it].erase(c);
+            }
+
+            // Down
+            it = row[c].lower_bound(r);
+            if (it != row[c].end()) {
+                row[c].erase(it);
+                col[*it].erase(c);
+            }
+
+            // Left
+            auto it2 = col[r].lower_bound(c);
+            if (it2 != col[r].begin()) {
+                --it2;
+                col[r].erase(it2);
+                row[*it2].erase(r);
+            }
+
+            // Right
+            it2 = col[r].lower_bound(c);
+            if (it2 != col[r].end()) {
+                col[r].erase(it2);
+                row[*it2].erase(r);
+            }
+        }
+    }
+
+    ll remaining = 0;
+    for (int i = 1; i <= H; ++i) {
+        remaining += col[i].size();
+    }
+    cout << remaining << '\n';
+
+    return 0;
+}

@@ -1,0 +1,101 @@
+#include <bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+#define all(x) (x).begin(), (x).end()
+
+int main() {
+    ios_base::sync_with_stdio(0);
+    cin.tie(0);
+    int N, M;
+    ll K;
+    cin >> N >> M >> K;
+    vector<ll> A(N);
+    for (int i = 0; i < N; ++i) {
+        cin >> A[i];
+        K -= A[i];
+    }
+
+    // Create sorted version and order mapping
+    vector<int> ord(N);
+    iota(all(ord), 0);
+    sort(all(ord), [&](int i, int j) { return A[i] < A[j]; });
+    vector<ll> sorted_A = A;
+    sort(all(sorted_A));
+
+    // Precompute prefix sums of sorted_A
+    vector<ll> prefix(N + 1, 0);
+    for (int i = 0; i < N; ++i) {
+        prefix[i + 1] = prefix[i] + sorted_A[i];
+    }
+
+    vector<ll> result(N, -1);
+
+    for (int idx = 0; idx < N; ++idx) {
+        int i = ord[idx]; // original index
+        ll a_i = A[i];
+
+        ll low = 0;
+        ll high = K;
+        ll answer = -1;
+
+        while (low <= high) {
+            ll mid = (low + high) / 2;
+            ll target = a_i + mid;
+
+            // Binary search to find how many candidates have votes > target
+            int pos = upper_bound(all(sorted_A), target) - sorted_A.begin();
+            int count_greater = N - pos;
+
+            // We need at least (M - count_greater) candidates to give up their positions
+            if (count_greater >= M) {
+                // Already in top M, this candidate is elected
+                result[i] = 0;
+                break;
+            }
+
+            // Need to force (M - count_greater) candidates with votes > target to fall below it
+            int left = pos;
+            int right = N - 1;
+            int need = M - count_greater;
+
+            if (need <= 0) {
+                result[i] = max(0LL, 0LL);
+                break;
+            }
+
+            if (need > left) {
+                // Not enough candidates to "beat"
+                high = mid - 1;
+                continue;
+            }
+
+            // Find minimal increase needed using binary search
+            ll total_extra = 0;
+
+            // Take the `need` highest-ranked candidates that are > target (from start)
+            // These would be the first `left` candidates in the sorted array
+            // To bring them below target, we set their votes to at most `target`
+            ll sum_current = prefix[pos];
+            ll required_sum = need * (target - 1);
+            ll extra_needed = required_sum - sum_current;
+
+            if (extra_needed <= K - mid) {
+                answer = mid;
+                high = mid - 1;
+            } else {
+                low = mid + 1;
+            }
+        }
+
+        if (result[i] == -1 && answer <= K) {
+            result[i] = answer;
+        } else if (result[i] == -1) {
+            result[i] = -1;
+        }
+    }
+
+    for (ll val : result) {
+        cout << val << " ";
+    }
+    cout << "\n";
+}

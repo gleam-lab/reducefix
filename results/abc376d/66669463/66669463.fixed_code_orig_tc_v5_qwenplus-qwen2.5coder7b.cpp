@@ -1,0 +1,57 @@
+#include <algorithm>
+#include <iostream>
+#include <cstdio>
+#include <bitset>
+using namespace std;
+
+struct Edge {
+    int next, to;
+};
+
+const int MAXN = 200001;
+Edge edges[MAXN * 2];
+int head[MAXN], cnt = 0, n, m, ans[MAXN];
+bitset<MAXN> visited;
+
+int read() {
+    int res = 0;
+    char c = getchar();
+    while (c < '0' || c > '9') c = getchar();
+    while (c >= '0' && c <= '9') res = (res << 1) + (res << 3) + (c ^ 48), c = getchar();
+    return res;
+}
+
+void add(int u, int v) {
+    edges[++cnt].next = head[u];
+    edges[cnt].to = v;
+    head[u] = cnt;
+}
+
+void dfs(int u, int depth) {
+    if (u == 1 && depth) {
+        ans[1] = min(ans[1], depth);
+        return;
+    }
+    visited[u] = true;
+    for (int e = head[u]; e; e = edges[e].next) {
+        int v = edges[e].to;
+        if ((!visited[v] || v == 1) && depth + 1 < ans[v]) {
+            ans[v] = depth + 1;
+            dfs(v, depth + 1);
+        }
+    }
+}
+
+int main() {
+    n = read(), m = read();
+    for (int i = 1; i <= n; ++i) ans[i] = 1e9;
+    for (int i = 1, u, v; i <= m; ++i) {
+        u = read(), v = read();
+        add(u, v);
+        add(v, u); // Make the graph undirected
+    }
+    dfs(1, 0);
+    if (ans[1] == 1e9) printf("-1\n");
+    else printf("%d\n", ans[1]);
+    return 0;
+}

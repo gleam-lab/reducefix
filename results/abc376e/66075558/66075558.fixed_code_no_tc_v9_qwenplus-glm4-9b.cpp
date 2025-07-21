@@ -1,0 +1,59 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <numeric>
+using namespace std;
+
+int main() {
+    int T;
+    cin >> T;
+    while (T--) {
+        int N, K;
+        cin >> N >> K;
+        vector<int> A(N), B(N);
+        for (int i = 0; i < N; i++) {
+            cin >> A[i];
+        }
+        for (int i = 0; i < N; i++) {
+            cin >> B[i];
+        }
+
+        // Pair elements of A and B with their indices and sort by A[i] asc
+        vector<pair<int, pair<int, int>>> elements(N);
+        for (int i = 0; i < N; i++) {
+            elements[i] = {A[i], {i, B[i]}};
+        }
+        sort(elements.begin(), elements.end());
+
+        // Use a min-heap to keep the sum of B elements in the top K elements of A
+        priority_queue<int, vector<int>, greater<int>> maxHeap;
+        long long sumB = 0, sumKB = 0, maxProduct = 0;
+
+        for (int i = 0; i < N; i++) {
+            int index = elements[i].second.first;
+            int valueB = elements[i].second.second;
+
+            // Add current B element to the sum if it helps to reach K elements
+            if (i < K - 1) {
+                sumB += valueB;
+                maxHeap.push(valueB);
+            } else {
+                // If we have exactly K elements, calculate the product
+                if (maxHeap.size() == K) {
+                    sumKB = max(sumKB, accumulate(maxHeap.begin(), maxHeap.end(), 0LL));
+                    maxProduct = max(maxProduct, (long long)sumKB * elements[i].first);
+                } else {
+                    sumKB += valueB;
+                    maxHeap.push(valueB);
+                    // Remove the smallest element from sumKB if it's not part of maxHeap
+                    if (maxHeap.top() == valueB) {
+                        sumKB -= valueB;
+                    }
+                }
+            }
+        }
+
+        cout << maxProduct << endl;
+    }
+    return 0;
+}

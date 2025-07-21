@@ -1,0 +1,37 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+
+using namespace std;
+
+int main() {
+    int h, w, q;
+    cin >> h >> w >> q;
+    
+    vector<vector<int>> grid(h, vector<int>(w, 1)); // 1 represents a wall, 0 represents no wall
+    int remainingWalls = h * w; // Start with all walls
+
+    for (int i = 0; i < q; ++i) {
+        int r, c;
+        cin >> r >> c;
+        --r, --c; // Convert to 0-based index
+
+        // Check if there's a wall at the given cell
+        if (grid[r][c] == 1) {
+            grid[r][c] = 0; // Destroy the wall
+            remainingWalls--;
+        } else {
+            // No wall at the given cell, destroy walls in all four directions
+            for (int j = 0; j < w; ++j) {
+                if (grid[r][j] == 1) grid[r][j] = 0;
+            }
+            for (int j = 0; j < h; ++j) {
+                if (grid[j][c] == 1) grid[j][c] = 0;
+            }
+            remainingWalls -= 2 * (w + h - 2); // We destroyed w walls in one row and h walls in one column
+        }
+    }
+
+    cout << remainingWalls << '\n';
+    return 0;
+}

@@ -1,0 +1,68 @@
+#include <iostream>
+#include <algorithm>
+using namespace std;
+
+typedef struct { int a, p, b, q; } Product;
+Product A[100];
+long long dp[100][10000];
+
+int N, X;
+
+// Calculate minimum cost to produce 'n' items for the i-th machine
+long long cost(int i, int n) {
+    int cycle = A[i].a * A[i].b;
+    long long full_cycles = n / cycle;
+    int remainder = n % cycle;
+    return dp[i][remainder] + full_cycles * (A[i].p * A[i].b + A[i].q * A[i].a);
+}
+
+// Check if it's possible to produce 'n' units within budget X
+bool isPossible(int n) {
+    long long total = 0;
+    for (int i = 0; i < N; ++i) {
+        total += cost(i, n);
+        if (total > X) return false;
+    }
+    return true;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    scanf("%d %d", &N, &X);
+
+    for (int i = 0; i < N; ++i) {
+        int a, p, b, q;
+        scanf("%d %d %d %d", &a, &p, &b, &q);
+        
+        // Ensure a*q >= b*p to guarantee optimal ordering
+        if (a * q < b * p) {
+            swap(a, b);
+            swap(p, q);
+        }
+        A[i] = {a, p, b, q};
+        
+        // Precompute DP table for this machine up to a*b
+        dp[i][0] = 0;
+        for (int j = 1; j < a * b; ++j) {
+            long long use_a = (j >= a) ? dp[i][j - a] + p : 1e18;
+            long long use_b = (j >= b) ? dp[i][j - b] + q : 1e18;
+            dp[i][j] = min(use_a, use_b);
+        }
+    }
+
+    // Binary search for maximum number of products we can make
+    int low = 0, high = 1e9;
+    while (low <= high) {
+        int mid = low + ((high - low) >> 1);
+        if (isPossible(mid)) {
+            low = mid + 1;
+        } else {
+            high = mid - 1;
+        }
+    }
+
+    printf("%d\n", high);
+    return 0;
+}

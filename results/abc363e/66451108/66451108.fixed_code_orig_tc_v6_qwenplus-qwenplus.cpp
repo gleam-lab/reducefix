@@ -1,0 +1,121 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+#define int long long
+#define close ios::sync_with_stdio(false); cin.tie(0); cout.tie(0);
+const int MAXN = 1005;
+const int dx[] = {0, 0, 1, -1};
+const int dy[] = {1, -1, 0, 0};
+
+struct Node {
+    int x, y, val;
+    bool operator < (const Node &a) const {
+        return val > a.val;
+    }
+};
+
+signed main() {
+    close;
+    int h, w, y;
+    cin >> h >> w >> y;
+    
+    int grid[MAXN][MAXN];
+    for (int i = 0; i < h; ++i)
+        for (int j = 0; j < w; ++j)
+            cin >> grid[i][j];
+
+    bool vis[MAXN][MAXN] = {};
+    priority_queue<Node> pq;
+    
+    // Initialize border cells
+    for (int i = 0; i < h; ++i) {
+        if (!vis[i][0]) {
+            vis[i][0] = true;
+            pq.push({i, 0, grid[i][0]});
+        }
+        if (!vis[i][w-1]) {
+            vis[i][w-1] = true;
+            pq.push({i, w-1, grid[i][w-1]});
+        }
+    }
+
+    for (int j = 1; j < w-1; ++j) {
+        if (!vis[0][j]) {
+            vis[0][j] = true;
+            pq.push({0, j, grid[0][j]});
+        }
+        if (!vis[h-1][j]) {
+            vis[h-1][j] = true;
+            pq.push({h-1, j, grid[h-1][j]});
+        }
+    }
+
+    int total = h * w;
+    vector<int> ans(y + 2, 0);
+
+    // We'll track the current year we're processing
+    while (!pq.empty()) {
+        auto cur = pq.top();
+        pq.pop();
+
+        int level = cur.val;
+        while (!pq.empty() && pq.top().val == level) {
+            auto tmp = pq.top();
+            pq.pop();
+            if (tmp.x == cur.x && tmp.y == cur.y) continue;
+            if (!vis[tmp.x][tmp.y]) {
+                cur = tmp;
+                break;
+            }
+        }
+
+        // If there are still elements with the same value, push them back
+        queue<Node> leftover;
+        while (!pq.empty() && pq.top().val <= level) {
+            auto tmp = pq.top(); pq.pop();
+            if (tmp.x == cur.x && tmp.y == cur.y) continue;
+            if (!vis[tmp.x][tmp.y]) {
+                leftover.push(tmp);
+            }
+        }
+
+        // Process BFS from cur
+        if (!vis[cur.x][cur.y]) {
+            queue<Node> q;
+            q.push(cur);
+            vis[cur.x][cur.y] = true;
+            int cnt = 0;
+
+            while (!q.empty()) {
+                auto u = q.front(); q.pop();
+                cnt++;
+                for (int d = 0; d < 4; ++d) {
+                    int nx = u.x + dx[d];
+                    int ny = u.y + dy[d];
+                    if (nx >= 0 && nx < h && ny >= 0 && ny < w && !vis[nx][ny] && grid[nx][ny] <= level) {
+                        vis[nx][ny] = true;
+                        q.push({nx, ny, grid[nx][ny]});
+                    }
+                }
+            }
+
+            // Apply this area loss to all years <= level
+            ans[level] += cnt;
+        }
+
+        // Reinsert leftovers back into priority queue
+        while (!leftover.empty()) {
+            auto l = leftover.front(); leftover.pop();
+            pq.push(l);
+        }
+    }
+
+    // Accumulate results
+    int curr = h * w;
+    for (int i = 1; i <= y; ++i) {
+        curr -= ans[i];
+        cout << curr << '\n';
+    }
+
+    return 0;
+}

@@ -1,0 +1,34 @@
+#include <iostream>
+#include <vector>
+#include <cmath>
+
+int main() {
+    int N;
+    std::cin >> N;
+    
+    if (N == 0) {
+        std::cout << 0.0 << std::endl;
+        return 0;
+    }
+
+    std::vector<std::pair<int, int>> points(N);
+    for (int i = 0; i < N; ++i) {
+        std::cin >> points[i].first >> points[i].second;
+    }
+
+    double total_cost = 0.0;
+
+    // Calculate distance from origin to first point
+    total_cost += std::hypot(points[0].first, points[0].second);
+
+    // Calculate distances between consecutive points
+    for (size_t i = 1; i < N; ++i) {
+        total_cost += std::hypot(points[i].first - points[i-1].first, points[i].second - points[i-1].second);
+    }
+
+    // Calculate distance from last point back to origin
+    total_cost += std::hypot(points[N-1].first, points[N-1].second);
+
+    std::cout << total_cost << std::endl;
+    return 0;
+}

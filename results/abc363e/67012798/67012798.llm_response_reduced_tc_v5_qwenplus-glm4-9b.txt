@@ -1,0 +1,79 @@
+
+From the failing case, we can see that the input is a single cell island with the elevation equal to itself, and it should not sink in any year according to the problem statement. However, the provided code suggests that the area of the island remains 1 even after 100,000 years, which contradicts the problem statement.
+
+The problem in the code is that it does not take into account that if a cell has an elevation less than or equal to the sea level, it will sink. The code also does not handle the case where the sea level initially equals the elevation of a cell, which should lead to that cell sinking.
+
+To fix the code, we need to:
+
+1. Remove the incorrect initialization of `island` for edge cells. Cells at the border are already considered as sinking based on the problem statement.
+2. Before processing each year, calculate which cells will sink based on the current sea level (`i`) and update the sea level accordingly.
+3. Update the island area by removing the sinking cells each year.
+4. Ensure that no cells are marked for sinking more than once during each year's processing.
+
+Below is the corrected code implementing these changes:
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int H, W, Y;
+    cin >> H >> W >> Y;
+
+    vector<vector<int>> A(H, vector<int>(W));
+    for (int i = 0; i < H; i++) {
+        for (int j = 0; j < W; j++) {
+            cin >> A[i][j];
+        }
+    }
+
+    vector<vector<bool>> island(H, vector<bool>(W, true));
+    queue<pair<int, int>> q;
+
+    // Initialize the queue with all edge cells and mark them as sinking.
+    for (int i = 0; i < H; i++) {
+        for (int j = 0; j < W; j++) {
+            if ((i == 0 || i == H - 1 || j == 0 || j == W - 1) && A[i][j] <= Y) {
+                q.push({i, j});
+                island[i][j] = false;
+            }
+        }
+    }
+
+    int ans = H * W;
+    while (!q.empty()) {
+        int year = q.front().first;
+        q.pop();
+
+        // Process only the cells that are sinking in the current year.
+        if (year == Y) {
+            while (!q.empty()) {
+                int x = q.front().second;
+                int y = q.front().first;
+                q.pop();
+
+                // Check all adjacent cells to see if they should sink.
+                for (int dx = -1; dx <= 1; dx++) {
+                    for (int dy = -1; dy <= 1; dy++) {
+                        int nx = x + dx, ny = y + dy;
+                        if (nx >= 0 && nx < H && ny >= 0 && ny < W && A[nx][ny] <= year + 1) {
+                            island[nx][ny] = false;
+                            q.push({nx, ny});
+                        }
+                    }
+                }
+            }
+            // Remove all sinking cells from the island area.
+            ans -= count(island[year].begin(), island[year].end(), true);
+        }
+    }
+
+    cout << ans << endl;
+    return 0;
+}
+```
+
+This corrected code should now correctly calculate the remaining area of the island above the rising sea level after each year up to `Y`.

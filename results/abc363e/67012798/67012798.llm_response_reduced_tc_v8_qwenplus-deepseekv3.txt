@@ -1,0 +1,86 @@
+To fix this code, we need to address the issue where the sea level rises each year, and sections of the island that are adjacent to the sea or already sunk sections with elevation not greater than the current sea level will sink. The original code incorrectly marks all border sections as sunk immediately and doesn't properly handle the sinking process for subsequent years.
+
+### Approaches
+
+1. **Initialization**: Read the input values, including the island dimensions, number of years, and elevation matrix.
+2. **Priority Queue for Processing**: Use a priority queue (min-heap) to process sections in order of their elevation. This ensures we always process the lowest sections first as the sea level rises.
+3. **BFS for Sinking Sections**: For each elevation level, perform a BFS to sink all connected sections that are at or below the current sea level and adjacent to already sunk sections or the sea.
+4. **Tracking Remaining Area**: Maintain a count of the remaining sections above the sea level and adjust it as sections sink each year.
+
+### Solution Code
+
+```cpp
+#include <bits/stdc++.h>
+
+using namespace std;
+
+constexpr int dx[] = {-1, 1, 0, 0};
+constexpr int dy[] = {0, 0, -1, 1};
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int H, W, Y;
+    cin >> H >> W >> Y;
+
+    vector<vector<int>> A(H, vector<int>(W));
+    for (int i = 0; i < H; ++i) {
+        for (int j = 0; j < W; ++j) {
+            cin >> A[i][j];
+        }
+    }
+
+    vector<vector<bool>> sunk(H, vector<bool>(W, false));
+    priority_queue<pair<int, pair<int, int>>, vector<pair<int, pair<int, int>>>, greater<pair<int, pair<int, int>>>> pq;
+
+    for (int i = 0; i < H; ++i) {
+        for (int j = 0; j < W; ++j) {
+            if (i == 0 || i == H - 1 || j == 0 || j == W - 1) {
+                pq.push({A[i][j], {i, j}});
+                sunk[i][j] = true;
+            }
+        }
+    }
+
+    int remaining = H * W;
+    vector<int> result(Y + 1, 0);
+    result[0] = remaining;
+
+    for (int year = 1; year <= Y; ++year) {
+        while (!pq.empty() && pq.top().first <= year) {
+            auto current = pq.top();
+            pq.pop();
+            int x = current.second.first;
+            int y = current.second.second;
+            remaining--;
+
+            for (int d = 0; d < 4; ++d) {
+                int nx = x + dx[d];
+                int ny = y + dy[d];
+
+                if (nx >= 0 && nx < H && ny >= 0 && ny < W && !sunk[nx][ny]) {
+                    sunk[nx][ny] = true;
+                    pq.push({A[nx][ny], {nx, ny}});
+                }
+            }
+        }
+        result[year] = remaining;
+    }
+
+    for (int i = 1; i <= Y; ++i) {
+        cout << result[i] << '\n';
+    }
+
+    return 0;
+}
+```
+
+### Explanation
+
+1. **Initialization**: The code starts by reading the island dimensions `H` and `W`, the number of years `Y`, and the elevation matrix `A`.
+2. **Priority Queue Setup**: A priority queue is initialized to process sections in ascending order of their elevation. Border sections are added to the queue immediately as they are adjacent to the sea.
+3. **BFS Processing**: For each year, the code processes all sections in the priority queue with elevation less than or equal to the current year. These sections are marked as sunk, and their neighbors are checked. If any neighbor is not already sunk, it is added to the queue.
+4. **Tracking Remaining Area**: The remaining area above sea level is tracked for each year and stored in the `result` vector. After processing all years, the results for each year are printed.
+
+This approach efficiently handles the sinking process by leveraging a priority queue to process sections in the correct order and BFS to propagate the sinking effect to adjacent sections, ensuring optimal performance and correctness.

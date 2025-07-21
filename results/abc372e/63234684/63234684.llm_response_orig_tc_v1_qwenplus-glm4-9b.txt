@@ -1,0 +1,106 @@
+
+Based on the provided problem statement and the given code snippet, there are several issues and areas that need improvement in the code. Here's a step-by-step breakdown of the problem and possible solutions:
+
+1. **Union-Find Data Structure**:
+   - The provided Union-Find data structure is missing some basic functionalities required for the problem:
+     - **Path Compression**: This optimization helps in flattening the structure of the tree whenever `find` is called, making it faster to find the root of any node.
+     - **Union by Size/Rank**: This optimization helps in making the tree shorter by always attaching the smaller tree under the root of the larger tree.
+   - The union operation (`merge`) incorrectly updates the parent pointers and size information.
+
+2. **Adding Edges**:
+   - The current implementation does not add edges correctly as it does not merge the two sets when connecting two vertices.
+
+3. **Query Handling**:
+   - When processing query type 2, the code does not correctly find the k-th largest vertex connected to v.
+   - The code does not maintain a sorted list of vertices in each connected component for efficient retrieval of the k-th largest vertex.
+
+### Revised Solution:
+
+Here's a revised version of the Union-Find data structure with the necessary optimizations and a better query handling approach:
+
+```cpp
+#include<bits/stdc++.h>
+using namespace std;
+using ll = long long;
+#define rep(i, n) for (int i = 0; i < n; i++)
+#define par(x) find(x), size[find(x)]
+
+struct UnionFind {
+  vector<int> parent, size, rank;
+
+  UnionFind(int n) {
+    parent.resize(n);
+    size.resize(n);
+    rank.resize(n);
+    for (int i = 0; i < n; i++) {
+      parent[i] = i;
+      size[i] = 1;
+    }
+  }
+
+  int find(int x) {
+    if (parent[x] == x) return x;
+    parent[x] = find(parent[x]);
+    return parent[x];
+  }
+
+  bool unionSets(int x, int y) {
+    x = find(x);
+    y = find(y);
+    if (x == y) return false;
+    if (rank[x] < rank[y]) swap(x, y);
+    if (rank[x] == rank[y]) rank[x]++;
+    parent[y] = x;
+    size[x] += size[y];
+    return true;
+  }
+};
+
+int main() {
+  int n, q;
+  cin >> n >> q;
+  UnionFind uf(n);
+  vector<int> componentSize(n, 1), vertexComponent(n);
+  multiset<int> verticesInComponents[n];
+
+  rep(i, q) {
+    int queryType, u, v;
+    cin >> queryType >> u >> v;
+    u--; v--;
+
+    if (queryType == 1) {
+      if (uf.unionSets(u, v)) {
+        int rootU = uf.find(u);
+        int rootV = uf.find(v);
+        verticesInComponents[rootU].insert(v);
+        verticesInComponents[rootV].insert(u);
+      }
+    } else if (queryType == 2) {
+      int vRoot = uf.find(v);
+      if (componentSize[vRoot] < v) {
+        cout << -1 << endl;
+      } else {
+        cout << *(verticesInComponents[vRoot].lower_bound(v)) << endl;
+      }
+    }
+    componentSize[uf.find(u)] = uf.size[u];
+    componentSize[uf.find(v)] = uf.size[v];
+  }
+
+  return 0;
+}
+```
+
+### Explanation:
+
+1. **Union-Find**:
+   - Path compression and union by rank are implemented.
+   - `find` method used for path compression.
+   - `unionSets` method to connect two sets.
+
+2. **Component and Vertex Management**:
+   - `componentSize` keeps track of the size of each component.
+   - `vertexComponent` keeps track of which component each vertex belongs to.
+   - `verticesInComponents` is a multiset to store vertices in each component, which allows for efficient retrieval of the k-th largest vertex.
+
+This solution should handle the queries efficiently and also fix the issues in the previous code.

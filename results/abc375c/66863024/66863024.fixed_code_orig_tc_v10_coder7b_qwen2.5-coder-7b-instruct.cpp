@@ -1,0 +1,32 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(0);
+    cout.tie(0);
+
+    long long n;
+    cin >> n;
+
+    vector<pair<long long, long long>> points(n);
+    for(long long i = 0; i < n; i++){
+        cin >> points[i].first >> points[i].second;
+    }
+
+    long double ans = 0;
+    for(long long i = 1; i < n; i++){
+        long double dx = points[i].first - points[i-1].first;
+        long double dy = points[i].second - points[i-1].second;
+        ans += sqrtl(dx*dx + dy*dy);
+    }
+
+    // Distance from last point to origin
+    long double dx = points[n-1].first - 0;
+    long double dy = points[n-1].second - 0;
+    ans += sqrtl(dx*dx + dy*dy);
+
+    cout << setprecision(15) << ans << '\n';
+
+    return 0;
+}

@@ -1,0 +1,1 @@
+result = N * N - (occupied_positions + attacked_positions)

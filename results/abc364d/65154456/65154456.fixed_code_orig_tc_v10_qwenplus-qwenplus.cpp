@@ -1,0 +1,68 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+const int OFFSET = 100000000; // to handle negative coordinates
+const int MAX_COORD = 200000000 + 10; // max coordinate after offset
+
+int freq[MAX_COORD + 1]; // frequency of each point
+int prefix_sum[MAX_COORD + 1]; // prefix sum of frequencies
+
+// Binary search for the smallest radius such that at least k points are within it
+int find_kth_distance(int b, int k) {
+    int left = 0;
+    int right = MAX_COORD;
+    int answer = MAX_COORD;
+    
+    while (left <= right) {
+        int mid = (left + right) / 2;
+        // Calculate range in the array considering the offset
+        int low = max(0, b - mid + OFFSET);
+        int high = min(MAX_COORD, b + mid + OFFSET);
+        
+        int count = prefix_sum[high] - prefix_sum[low - 1];
+        
+        if (count >= k) {
+            answer = mid;
+            right = mid - 1;
+        } else {
+            left = mid + 1;
+        }
+    }
+    
+    return answer;
+}
+
+void solve() {
+    int N, Q;
+    cin >> N >> Q;
+    
+    // Initialize frequency array
+    fill(freq, freq + MAX_COORD + 1, 0);
+    fill(prefix_sum, prefix_sum + MAX_COORD + 1, 0);
+    
+    // Read A points
+    for (int i = 0; i < N; ++i) {
+        int a;
+        cin >> a;
+        freq[a + OFFSET]++;
+    }
+    
+    // Build prefix sum
+    for (int i = 0; i <= MAX_COORD; ++i) {
+        prefix_sum[i] = freq[i] + (i > 0 ? prefix_sum[i - 1] : 0);
+    }
+    
+    // Process queries
+    for (int q = 0; q < Q; ++q) {
+        int b, k;
+        cin >> b >> k;
+        cout << find_kth_distance(b, k) << "\n";
+    }
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    solve();
+    return 0;
+}

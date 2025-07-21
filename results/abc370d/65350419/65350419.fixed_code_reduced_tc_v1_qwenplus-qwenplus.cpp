@@ -1,0 +1,75 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define rep(i,n) for(int i = 0; i < (n); i++)
+using ll = long long;
+
+int main() {
+    int h, w, q;
+    cin >> h >> w >> q;
+    
+    // tate[j] represents the set of rows that have walls in column j
+    // yoko[i] represents the set of columns that have walls in row i
+    vector<set<int>> tate(w), yoko(h);
+    for (int i = 0; i < h; ++i) {
+        for (int j = 0; j < w; ++j) {
+            tate[j].insert(i);
+            yoko[i].insert(j);
+        }
+    }
+
+    while (q--) {
+        int r, c;
+        cin >> r >> c;
+        r--; c--;
+
+        // Check if there's a wall at (r, c)
+        if (tate[c].count(r)) {
+            // Destroy the wall at (r, c)
+            tate[c].erase(r);
+            yoko[r].erase(c);
+        } else {
+            // Up
+            auto& col_set = tate[c];
+            auto it = col_set.lower_bound(r);
+            if (it != col_set.begin()) {
+                --it;
+                int destroy_row = *it;
+                col_set.erase(it);
+                yoko[destroy_row].erase(c);
+            }
+
+            // Down
+            it = col_set.lower_bound(r);
+            if (it != col_set.end()) {
+                int destroy_row = *it;
+                col_set.erase(it);
+                yoko[destroy_row].erase(c);
+            }
+
+            // Left
+            auto& row_set = yoko[r];
+            auto jt = row_set.lower_bound(c);
+            if (jt != row_set.begin()) {
+                --jt;
+                int destroy_col = *jt;
+                row_set.erase(jt);
+                tate[destroy_col].erase(r);
+            }
+
+            // Right
+            jt = row_set.lower_bound(c);
+            if (jt != row_set.end()) {
+                int destroy_col = *jt;
+                row_set.erase(jt);
+                tate[destroy_col].erase(r);
+            }
+        }
+    }
+
+    int ans = 0;
+    for (int i = 0; i < w; ++i) {
+        ans += tate[i].size();
+    }
+    cout << ans << "\n";
+    return 0;
+}

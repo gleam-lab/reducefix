@@ -1,0 +1,59 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+
+using namespace std;
+
+int main() {
+    int n;
+    cin >> n;
+    vector<int> toys(n);
+    vector<int> boxes(n - 1);
+    vector<int> toy_sizes(n);
+    vector<int> box_sizes(n - 1);
+
+    // Reading the size of toys and boxes
+    for (int i = 0; i < n; ++i) {
+        cin >> toy_sizes[i];
+    }
+    for (int i = 0; i < n - 1; ++i) {
+        cin >> box_sizes[i];
+    }
+
+    // Sort toy sizes and box sizes in descending order
+    sort(toy_sizes.begin(), toy_sizes.end(), greater<int>());
+    sort(box_sizes.begin(), box_sizes.end(), greater<int>());
+
+    // Start from the largest toy and try to fit it into the largest box
+    for (int i = 0; i < n; ++i) {
+        // If the current toy cannot fit into the current box, we need a larger box
+        if (toys[i] > box_sizes[i]) {
+            // If the current box is the largest box we have, we need to buy a larger box
+            if (i == n - 1) {
+                // If the largest toy is smaller than the largest box, we can't fit it without buying a new box
+                if (toys[i] < box_sizes[i]) {
+                    cout << toys[i] << endl; // The minimum size box we need to buy
+                    return 0;
+                }
+                // If the largest toy is larger than the largest box, it's impossible to fit all toys
+                else {
+                    cout << -1 << endl;
+                    return 0;
+                }
+            }
+            // Otherwise, we continue checking with the next box
+            else {
+                continue;
+            }
+        }
+        // If the toy fits into the box, we move on to the next toy
+        else {
+            toys[i] = 0; // Mark the toy as placed
+        }
+    }
+
+    // If all toys are placed, we've found the minimum size box that can be used to place all toys
+    // Note: This case should not be reached because we always try to buy the smallest box needed
+    cout << -1 << endl;
+    return 0;
+}

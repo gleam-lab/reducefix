@@ -1,0 +1,29 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    int n, q;
+    cin >> n; // 输入数据点个数
+    
+    // 初始化数组和映射
+    vector<int> x(n), p(n);
+    map<int, int> sum; // 假设sum是一个map，用于存储前缀和
+    
+    // 处理输入数据
+    for (int i = 0; i < n; ++i) {
+        cin >> x[i] >> p[i]; // 读入每个数据点的值和前缀和
+        sum[p[i]]++; // 对前缀和进行累加操作
+    }
+    
+    // 处理查询请求
+    while (q--) {
+        int L, R; // 查询区间左端点和右端点
+        cin >> L >> R; // 读入查询区间左端点和右端点
+        int leftSum = sum[L - 1]; // 当前查询区间的左端点的前缀和
+        int rightSum = sum[R]; // 当前查询区间的右端点的前缀和
+        // 计算并输出结果
+        cout << leftSum - rightSum << endl; // 这里假设sum是一个前缀和map，可以直接进行减法操作得到结果
+    }
+    
+    return 0; // 结束程序
+}

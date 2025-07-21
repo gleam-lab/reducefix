@@ -1,0 +1,52 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+const int MAXN = 1e5 + 5;
+
+int n, q;
+vector<int> a;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    cout.tie(nullptr);
+
+    cin >> n >> q;
+    a.resize(n);
+    for (int i = 0; i < n; ++i) {
+        cin >> a[i];
+    }
+    sort(a.begin(), a.end());
+
+    while (q--) {
+        int b, k;
+        cin >> b >> k;
+
+        // Binary search on the distance from b
+        int left = 0, right = 2e8;
+        int answer = -1;
+
+        while (left <= right) {
+            int mid = (left + right) / 2;
+            // Find first index in a >= (b - mid)
+            int low = b - mid;
+            // Find first index > (b + mid)
+            int high = b + mid;
+
+            auto l = lower_bound(a.begin(), a.end(), low);
+            auto r = upper_bound(a.begin(), a.end(), high);
+            int count = r - l;
+
+            if (count >= k) {
+                answer = mid;
+                right = mid - 1;
+            } else {
+                left = mid + 1;
+            }
+        }
+
+        cout << answer << '\n';
+    }
+
+    return 0;
+}

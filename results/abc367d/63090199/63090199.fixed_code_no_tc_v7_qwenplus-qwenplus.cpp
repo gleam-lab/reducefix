@@ -1,0 +1,32 @@
+#include<bits/stdc++.h>
+using namespace std;
+
+int main(){
+    int n, m;
+    cin >> n >> m;
+    vector<int> nums(n);
+    for(int i = 0; i < n; i++){
+        cin >> nums[i];
+    }
+
+    // Compute prefix sums modulo m
+    vector<int> prefixSum(n + 1, 0);
+    for(int i = 1; i <= n; i++){
+        prefixSum[i] = (prefixSum[i - 1] + nums[i - 1]) % m;
+    }
+
+    // Use a map to count occurrences of each remainder
+    map<int, int> remainderCount;
+    int result = 0;
+
+    for(int i = 0; i <= n; i++){
+        int rem = prefixSum[i];
+        // Count how many times this remainder has occurred before
+        result += remainderCount[rem];
+        // Increment the count for this remainder
+        remainderCount[rem]++;
+    }
+
+    cout << result << endl;
+    return 0;
+}

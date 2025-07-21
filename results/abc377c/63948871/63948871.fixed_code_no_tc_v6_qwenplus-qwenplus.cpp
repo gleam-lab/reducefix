@@ -1,0 +1,65 @@
+#include <iostream>
+#include <set>
+#include <utility>
+#include <vector>
+
+using namespace std;
+
+using i32 = int32_t;
+using i64 = int64_t;
+using pii = pair<i32, i32>;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    i32 N;
+    i32 M;
+    cin >> N >> M;
+
+    set<pair<i64, i64>> attacked_positions;
+    vector<pii> pieces(M);
+
+    // Read all pieces
+    for (i32 i = 0; i < M; ++i) {
+        i32 a, b;
+        cin >> a >> b;
+        pieces[i] = {a, b};
+    }
+
+    // Define the 8 possible attacking positions relative to a piece
+    const vector<pii> attack_offsets = {
+        {2, 1}, {1, 2}, {-1, 2}, {-2, 1},
+        {-2, -1}, {-1, -2}, {1, -2}, {2, -1}
+    };
+
+    // For each piece, mark the positions it can attack
+    for (const auto& [x, y] : pieces) {
+        for (const auto& [dx, dy] : attack_offsets) {
+            i64 nx = static_cast<i64>(x) + dx;
+            i64 ny = static_cast<i64>(y) + dy;
+            if (nx >= 1 && nx <= N && ny >= 1 && ny <= N) {
+                attacked_positions.emplace(nx, ny);
+            }
+        }
+    }
+
+    // Remove positions that are already occupied by pieces
+    for (const auto& [x, y] : pieces) {
+        attacked_positions.erase({x, y});
+    }
+
+    // Total number of squares is N*N
+    i64 total_squares = static_cast<i64>(N) * N;
+
+    // The number of squares we cannot place our piece on is:
+    // - All positions under attack (attacked_positions)
+    // - Plus all positions occupied by existing pieces (M)
+    i64 unavailable_squares = static_cast<i64>(attacked_positions.size()) + M;
+
+    i64 result = total_squares - unavailable_squares;
+
+    cout << result << '\n';
+
+    return 0;
+}

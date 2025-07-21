@@ -1,0 +1,50 @@
+#include <iostream>
+#include <set>
+#include <utility>
+#include <vector>
+
+using namespace std;
+
+using i32 = int;
+using i64 = long long;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    i64 N;
+    i32 M;
+    cin >> N >> M;
+
+    // Set to store all positions that are either occupied or under attack
+    set<pair<i64, i64>> attacked_or_occupied;
+
+    // Knight move patterns (8 directions)
+    vector<pair<i64, i64>> knight_moves = {
+        {2, 1}, {1, 2}, {-1, 2}, {-2, 1},
+        {-2, -1}, {-1, -2}, {1, -2}, {2, -1}
+    };
+
+    for (i32 i = 0; i < M; ++i) {
+        i64 a, b;
+        cin >> a >> b;
+
+        // Add the piece's position
+        attacked_or_occupied.emplace(a, b);
+
+        // Add all positions that this piece can attack
+        for (auto [dx, dy] : knight_moves) {
+            i64 x = a + dx;
+            i64 y = b + dy;
+            if (1 <= x && x <= N && 1 <= y && y <= N) {
+                attacked_or_occupied.emplace(x, y);
+            }
+        }
+    }
+
+    // Total number of squares: N * N
+    // Subtract the number of squares that are either occupied or under attack
+    cout << N * N - static_cast<i64>(attacked_or_occupied.size()) << '\n';
+
+    return 0;
+}

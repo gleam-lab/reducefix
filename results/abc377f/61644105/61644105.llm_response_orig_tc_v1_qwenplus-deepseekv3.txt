@@ -1,0 +1,110 @@
+To fix this code, we need to address the issue of counting the safe squares where the new piece cannot be captured by any existing pieces. The original code had a logical error in the inclusion-exclusion principle application, particularly in handling the intersections of multiple constraints.
+
+### Approaches
+1. **Identify Constraints**: Each existing piece can capture squares in four ways:
+   - Same row
+   - Same column
+   - Same diagonal (i + j = constant)
+   - Same anti-diagonal (i - j = constant)
+2. **Count Total Squares**: The total number of squares is \(N^2\).
+3. **Subtract Unsafe Squares**: Subtract the squares that are under attack by any existing piece. Ensure to handle overlaps correctly using inclusion-exclusion to avoid double-counting.
+4. **Add Back Overlaps**: After subtracting, add back the squares that were subtracted multiple times due to overlapping constraints (e.g., a square is in both a row and a column of different pieces).
+
+### Solution Code
+```cpp
+#include <bits/stdc++.h>
+
+using namespace std;
+
+typedef long long ll;
+
+int main() {
+    ll N, M;
+    cin >> N >> M;
+    
+    unordered_set<ll> rows, cols, diag1, diag2;
+    
+    for (int i = 0; i < M; ++i) {
+        ll a, b;
+        cin >> a >> b;
+        rows.insert(a);
+        cols.insert(b);
+        diag1.insert(a + b);
+        diag2.insert(a - b);
+    }
+    
+    ll total = N * N;
+    
+    ll rows_count = rows.size();
+    ll cols_count = cols.size();
+    ll diag1_count = diag1.size();
+    ll diag2_count = diag2.size();
+    
+    total -= rows_count * N + cols_count * N;
+    
+    for (auto d : diag1) {
+        ll min_sum = 2;
+        ll max_sum = 2 * N;
+        if (d < min_sum || d > max_sum) continue;
+        ll cnt = min(d - 1, 2 * N - d + 1);
+        total -= cnt;
+    }
+    
+    for (auto d : diag2) {
+        ll min_diff = -(N - 1);
+        ll max_diff = N - 1;
+        if (d < min_diff || d > max_diff) continue;
+        ll cnt = N - abs(d);
+        total -= cnt;
+    }
+    
+    total += rows_count * cols_count;
+    
+    for (auto r : rows) {
+        for (auto c : cols) {
+            if (diag1.find(r + c) != diag1.end()) {
+                total++;
+            }
+            if (diag2.find(r - c) != diag2.end()) {
+                total++;
+            }
+        }
+    }
+    
+    for (auto d1 : diag1) {
+        for (auto d2 : diag2) {
+            if ((d1 + d2) % 2 != 0) continue;
+            ll x = (d1 + d2) / 2;
+            ll y = (d1 - d2) / 2;
+            if (x >= 1 && x <= N && y >= 1 && y <= N) {
+                if (rows.find(x) != rows.end() || cols.find(y) != cols.end()) {
+                    total++;
+                }
+            }
+        }
+    }
+    
+    for (auto r : rows) {
+        for (auto c : cols) {
+            if (diag1.find(r + c) != diag1.end() && diag2.find(r - c) != diag2.end()) {
+                total--;
+            }
+        }
+    }
+    
+    cout << total << endl;
+    
+    return 0;
+}
+```
+
+### Explanation
+1. **Initialization**: We read the grid size \(N\) and the number of pieces \(M\).
+2. **Tracking Constraints**: We use unordered sets to track rows, columns, diagonals (i + j), and anti-diagonals (i - j) that are under attack by existing pieces.
+3. **Total Squares Calculation**: The total squares is \(N^2\).
+4. **Subtracting Unsafe Squares**: Subtract squares under attack by rows, columns, diagonals, and anti-diagonals. For diagonals and anti-diagonals, we calculate the number of squares in each diagonal/anti-diagonal that fall within the grid.
+5. **Inclusion-Exclusion Principle**: Add back squares that were subtracted multiple times due to overlapping constraints (e.g., a square in both a row and a column). Use nested loops to check intersections between different constraints (rows, columns, diagonals, anti-diagonals).
+6. **Final Adjustment**: Adjust for squares that were added back more than necessary by checking intersections of all four constraints.
+7. **Output**: The remaining count of safe squares is printed.
+
+This approach ensures that all constraints are correctly accounted for and avoids double-counting, providing the accurate number of safe squares.

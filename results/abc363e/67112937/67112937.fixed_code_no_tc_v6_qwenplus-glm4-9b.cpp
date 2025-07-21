@@ -1,0 +1,54 @@
+#include <iostream>
+#include <vector>
+#include <queue>
+#include <algorithm>
+
+using namespace std;
+
+using P = pair<int, int>;
+
+int main() {
+    int H, W, Y;
+    cin >> H >> W >> Y;
+
+    vector<vector<int>> A(H, vector<int>(W));
+    for (int i = 0; i < H; i++) {
+        for (int j = 0; j < W; j++) {
+            cin >> A[i][j];
+        }
+    }
+
+    priority_queue<P, vector<P>, greater<P>> pq;
+    vector<vector<bool>> vis(H, vector<bool>(W, false));
+
+    // Initialize the priority queue with the edges of the island
+    for (int i = 0; i < H; i++) {
+        pq.emplace(A[i][0], i, 0);
+        vis[i][0] = true;
+        pq.emplace(A[i][W - 1], i, W - 1);
+        vis[i][W - 1] = true;
+    }
+    for (int j = 1; j < W; j++) {
+        pq.emplace(A[0][j], 0, j);
+        vis[0][j] = true;
+        pq.emplace(A[H - 1][j], H - 1, j);
+        vis[H - 1][j] = true;
+    }
+
+    // Process the years
+    for (int year = 1; year <= Y; year++) {
+        int remaining_area = H * W;
+        while (!pq.empty()) {
+            auto [h, x, y] = pq.top();
+            if (h <= year) {
+                pq.pop();
+            } else {
+                remaining_area--;
+                break;
+            }
+        }
+        cout << remaining_area << "\n";
+    }
+
+    return 0;
+}

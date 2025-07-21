@@ -1,0 +1,95 @@
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+
+int main() {
+    int N, M;
+    ll K;
+    cin >> N >> M >> K;
+
+    vector<pair<ll, int>> A(N);
+    for (int i = 0; i < N; ++i) {
+        cin >> A[i].first;
+    }
+
+    // We'll store the answer in a vector of size N
+    vector<ll> ans(N);
+
+    // Create prefix sum array based on sorted votes
+    vector<pair<ll, int>> sorted_A = A;
+    sort(sorted_A.begin(), sorted_A.end());
+
+    // Prefix sum of sorted votes
+    vector<ll> prefix(N + 1);
+    for (int i = 1; i <= N; ++i) {
+        prefix[i] = prefix[i - 1] + sorted_A[i - 1].first;
+    }
+
+    // Total remaining votes
+    ll total_remaining = K - prefix[N];
+
+    // For each candidate, perform binary search to find minimum additional votes needed
+    for (int i = 0; i < N; ++i) {
+        ll original = A[i].first;
+        ll low = 0, high = total_remaining;
+        ll result = -1;
+
+        while (low <= high) {
+            ll mid = (low + high) / 2;
+            ll new_vote = original + mid;
+
+            // Binary search how many candidates have votes strictly greater than new_vote
+            int left = 0, right = N;
+            while (left < right) {
+                int m = (left + right) / 2;
+                if (sorted_A[m].first > new_vote)
+                    right = m;
+                else
+                    left = m + 1;
+            }
+            int idx = left;
+
+            // Now we need to ensure that even if all remaining votes go to the strongest rivals,
+            // our candidate still has enough to stay in top (N - M + 1)
+            ll extra_needed = 0;
+            if (idx >= M) {
+                // Already in top M, no need for additional votes
+                result = 0;
+                break;
+            }
+
+            // Calculate how many votes needed to surpass (N - M + 1)th candidate
+            int pos = N - M + 1;
+            if (pos <= idx) {
+                // Already in winning position
+                result = 0;
+                break;
+            } else {
+                // Need to surpass the current (N-M+1)th candidate
+                int target_idx = min(pos - 1, idx);
+                ll target_votes = sorted_A[target_idx].first;
+                ll diff = max(0LL, target_votes - new_vote + 1);
+                ll required = diff;
+
+                if (total_remaining - mid >= required) {
+                    result = mid;
+                    high = mid - 1;
+                } else {
+                    low = mid + 1;
+                }
+            }
+        }
+
+        ans[i] = (result == -1 ? -1 : result);
+    }
+
+    // Output the results
+    for (int i = 0; i < N; ++i) {
+        cout << ans[i] << " ";
+    }
+    cout << endl;
+
+    return 0;
+}
+```

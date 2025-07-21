@@ -1,0 +1,29 @@
+#include<bits/stdc++.h>
+using namespace std;
+using ll = long long;
+
+int main() {
+    ll n;
+    cin >> n;
+    vector<ll> H(n);
+    for (int i = 0; i < n; ++i) cin >> H[i];
+
+    ll T = 0, tri = 1; // T is the total time, tri tracks when to do triple damage
+
+    for (ll h : H) {
+        // We simulate attacks until this enemy is defeated
+        while (h > 0) {
+            if (tri == 3) {
+                h -= 3;
+                tri = 1;
+            } else {
+                h -= 1;
+                tri++;
+            }
+            T++;
+        }
+        tri = 1; // Reset for next enemy
+    }
+
+    cout << T << endl;
+}

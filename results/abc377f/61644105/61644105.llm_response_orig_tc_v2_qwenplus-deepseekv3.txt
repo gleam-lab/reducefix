@@ -1,0 +1,150 @@
+To fix this code, we need to correctly calculate the number of safe squares where a new piece can be placed without being captured by any existing pieces. The original code had issues primarily with the inclusion-exclusion principle implementation and the handling of large values, especially when N is up to 10^9 and M is up to 10^3. The fixed code will correctly apply the inclusion-exclusion principle to count the safe squares by considering rows, columns, diagonals (sum and difference), and their intersections.
+
+### Approaches
+1. **Initial Count**: The total number of squares is `N * N`.
+2. **Subtract Threatened Squares**: Subtract the squares threatened by existing pieces:
+   - **Rows**: Each existing piece threatens all squares in its row.
+   - **Columns**: Each existing piece threatens all squares in its column.
+   - **Diagonals (Sum and Difference)**:
+     - **Sum Diagonal (i + j = constant)**: Each existing piece threatens all squares in its sum diagonal.
+     - **Difference Diagonal (i - j = constant)**: Each existing piece threatens all squares in its difference diagonal.
+3. **Add Overlaps**: Use the inclusion-exclusion principle to add back squares that were subtracted multiple times (e.g., squares in both a row and a column).
+4. **Subtract Higher-Order Overlaps**: Subtract squares that were added back too many times (e.g., squares in a row, column, and both diagonals).
+
+### Solution Code
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    long long N, M;
+    cin >> N >> M;
+
+    set<long long> rows, cols, sum_diags, diff_diags;
+    set<pair<long long, long long>> pieces;
+
+    for (int i = 0; i < M; ++i) {
+        long long a, b;
+        cin >> a >> b;
+        rows.insert(a);
+        cols.insert(b);
+        sum_diags.insert(a + b);
+        diff_diags.insert(a - b);
+        pieces.insert({a, b});
+    }
+
+    long long total = N * N;
+    long long row_count = rows.size();
+    long long col_count = cols.size();
+    long long sum_diag_count = sum_diags.size();
+    long long diff_diag_count = diff_diags.size();
+
+    total -= row_count * N;
+    total -= col_count * N;
+    total -= sum_diag_count * (N - abs(1 - (*(sum_diags.begin()))));
+    for (auto s : sum_diags) {
+        long long min_ij = max(1LL, 1 + s - N);
+        long long max_ij = min(N, s - 1);
+        if (max_ij >= min_ij) {
+            total += (max_ij - min_ij + 1);
+        }
+    }
+    for (auto d : diff_diags) {
+        long long min_ij = max(1LL, 1 + d);
+        long long max_ij = min(N, N + d);
+        if (max_ij >= min_ij) {
+            total += (max_ij - min_ij + 1);
+        }
+    }
+
+    // Inclusion for intersections: row and col, row and sum, row and diff, col and sum, col and diff, sum and diff
+    for (auto a : rows) {
+        for (auto b : cols) {
+            if (sum_diags.find(a + b) != sum_diags.end() && diff_diags.find(a - b) != diff_diags.end()) {
+                total += 1;
+            }
+        }
+    }
+
+    for (auto a : rows) {
+        for (auto s : sum_diags) {
+            long long b = s - a;
+            if (b >= 1 && b <= N) {
+                if (cols.find(b) != cols.end() && diff_diags.find(a - b) != diff_diags.end()) {
+                    total += 1;
+                }
+            }
+        }
+    }
+
+    for (auto a : rows) {
+        for (auto d : diff_diags) {
+            long long b = a - d;
+            if (b >= 1 && b <= N) {
+                if (cols.find(b) != cols.end() && sum_diags.find(a + b) != sum_diags.end()) {
+                    total += 1;
+                }
+            }
+        }
+    }
+
+    for (auto b : cols) {
+        for (auto s : sum_diags) {
+            long long a = s - b;
+            if (a >= 1 && a <= N) {
+                if (rows.find(a) != rows.end() && diff_diags.find(a - b) != diff_diags.end()) {
+                    total += 1;
+                }
+            }
+        }
+    }
+
+    for (auto b : cols) {
+        for (auto d : diff_diags) {
+            long long a = d + b;
+            if (a >= 1 && a <= N) {
+                if (rows.find(a) != rows.end() && sum_diags.find(a + b) != sum_diags.end()) {
+                    total += 1;
+                }
+            }
+        }
+    }
+
+    for (auto s : sum_diags) {
+        for (auto d : diff_diags) {
+            if ((s + d) % 2 == 0) {
+                long long a = (s + d) / 2;
+                long long b = (s - d) / 2;
+                if (a >= 1 && a <= N && b >= 1 && b <= N) {
+                    if (rows.find(a) != rows.end() && cols.find(b) != cols.end()) {
+                        total += 1;
+                    }
+                }
+            }
+        }
+    }
+
+    // Inclusion for triple intersections: row and col and sum, row and col and diff, row and sum and diff, col and sum and diff
+    for (auto a : rows) {
+        for (auto b : cols) {
+            if (sum_diags.find(a + b) != sum_diags.end()) {
+                if (diff_diags.find(a - b) != diff_diags.end()) {
+                    total -= 1;
+                }
+            }
+        }
+    }
+
+    cout << total << endl;
+    return 0;
+}
+```
+
+### Explanation
+1. **Initialization**: The code reads the grid size `N` and the number of pieces `M`. It initializes sets to store unique rows, columns, sum diagonals (i + j), and difference diagonals (i - j) of existing pieces.
+2. **Total Squares Calculation**: The total number of squares is `N * N`.
+3. **Subtracting Threatened Squares**: The code subtracts squares threatened by rows, columns, sum diagonals, and difference diagonals of existing pieces.
+4. **Inclusion-Exclusion Principle**: The code adds back squares that were subtracted multiple times (intersections of rows and columns, rows and diagonals, etc.) and then subtracts squares that were added back too many times (higher-order intersections).
+5. **Output**: The final count of safe squares is printed.
+
+This approach efficiently handles the constraints by using set operations to manage unique values and applying the inclusion-exclusion principle to avoid overcounting or undercounting squares.

@@ -1,0 +1,64 @@
+#include "bits/stdc++.h"
+using namespace std;
+
+#define ff first
+#define ss second
+#define ll long long
+#define vi vector<int>
+#define pb push_back
+#define mp make_pair
+
+const int N = 2e5 + 5;
+
+vi adj[N];
+vi degree(N, 0);
+priority_queue<int, vi, greater<>> pq[N];
+
+void addEdge(int u, int v) {
+    adj[u].pb(v);
+    adj[v].pb(u);
+    degree[u]++;
+    degree[v]++;
+}
+
+void dfs(int u, int p) {
+    pq[u].push(u);
+    for(auto &v : adj[u]) {
+        if(v != p) {
+            dfs(v, u);
+            while(!pq[v].empty()) {
+                int x = pq[v].top(); pq[v].pop();
+                pq[u].push(x);
+                if(pq[u].size() > degree[u]) pq[u].pop();
+            }
+        }
+    }
+}
+
+int getKthLargest(int u, int k) {
+    if(k > pq[u].size()) return -1;
+    return pq[u].kth_largest(k);
+}
+
+int main() {
+    ios_base::sync_with_stdio(0); cin.tie(0);
+
+    int n, q;
+    cin >> n >> q;
+    for(int i = 1; i < n; ++i) {
+        int u, v;
+        cin >> u >> v;
+        addEdge(u, v);
+    }
+    dfs(1, -1);
+    while(q--) {
+        int type, u, k;
+        cin >> type >> u >> k;
+        if(type == 1) {
+            // No need to do anything since we already did DFS during initialization
+        } else {
+            cout << getKthLargest(u, k) << '\n';
+        }
+    }
+    return 0;
+}

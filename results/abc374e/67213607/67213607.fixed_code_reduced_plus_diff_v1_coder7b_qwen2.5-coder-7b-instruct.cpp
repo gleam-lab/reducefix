@@ -1,0 +1,41 @@
+#include<bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(NULL);
+
+    int n, x;
+    cin >> n >> x;
+    vector<int> a(n), p(n), b(n), q(n);
+    for(int i = 0; i < n; ++i) {
+        cin >> a[i] >> p[i] >> b[i] >> q[i];
+    }
+
+    int l = 0, r = 1e9 + 7;
+    while(l <= r) {
+        int mid = (l + r) / 2;
+        long long sum = 0;
+        bool valid = true;
+        for(int i = 0; i < n; ++i) {
+            long long min_cost = LLONG_MAX;
+            for(int j = 0; j * a[i] <= mid; ++j) {
+                if(j * a[i] > mid) break;
+                min_cost = min(min_cost, (long long)j * p[i] + max(0LL, (mid - j * a[i]) / b[i]) * q[i]);
+            }
+            sum += min_cost;
+            if(sum > x) {
+                valid = false;
+                break;
+            }
+        }
+        if(valid) {
+            l = mid + 1;
+        } else {
+            r = mid - 1;
+        }
+    }
+
+    cout << r << endl;
+    return 0;
+}

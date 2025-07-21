@@ -1,0 +1,40 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+typedef long long ll;
+
+const int MAX_OFFSET = 200000000;
+const int TOTAL_RANGE = 400000001; // From -2e8 to +2e8
+
+int freq[TOTAL_RANGE]; // frequency array for counting sort
+
+// Binary search to find the smallest distance such that there are at least k points within it from b
+ll findKthSmallestDistance(const vector<ll>& A, ll b, ll k) {
+    vector<ll> distances;
+    for (ll a : A) {
+        distances.push_back(abs(a - b));
+    }
+    sort(distances.begin(), distances.end());
+    return distances[k - 1];
+}
+
+void solve() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    cout.tie(nullptr);
+
+    ll N, Q;
+    cin >> N >> Q;
+
+    vector<ll> A(N);
+    for (ll i = 0; i < N; ++i) {
+        cin >> A[i];
+    }
+
+    for (ll i = 0; i < Q; ++i) {
+        ll b;
+        ll k;
+        cin >> b >> k;
+        cout << findKthSmallestDistance(A, b, k) << "\n";
+    }
+}

@@ -1,0 +1,76 @@
+#include<bits/stdc++.h>
+#define int long long
+using namespace std;
+
+int gcd(int a, int b) {
+    while (b) swap(a %= b, b);
+    return a;
+}
+
+void solve() {
+    int n, m;
+    cin >> n >> m;
+    vector<pair<int, int>> points(m);
+    for (int i = 0; i < m; ++i) {
+        cin >> points[i].first >> points[i].second;
+    }
+
+    // Initialize the union-find structure
+    vector<int> parent(n * n + 1), rank(n * n + 1, 0);
+    iota(parent.begin(), parent.end(), 1);  // Initialize parent pointers for each element
+    
+    // Union operation for rows and columns
+    function<void(int, int)> unite = [&](int a, int b) {
+        int rootA = find(a), rootB = find(b);
+        if (rootA != rootB) {
+            if (rank[rootA] < rank[rootB]) swap(rootA, rootB);
+            if (rank[rootA] == rank[rootB]) rank[rootA]++;
+            parent[rootB] = rootA;
+        }
+    };
+
+    // Find operation
+    function<int(int)> find = [&](int x) {
+        if (parent[x] != x) parent[x] = find(parent[x]);
+        return parent[x];
+    };
+
+    // Union rows and columns that have pieces
+    for (int i = 0; i < m; ++i) {
+        int x = points[i].first, y = points[i].second;
+        int idx1 = x * n + y;
+        int idx2 = (x + n) * n + y;
+        int idx3 = (y + n) * n + x;
+        int idx4 = (y - 1 + n) * n + x;
+
+        unionFind.unionSet(idx1, idx2);
+        unionFind.unionSet(idx1, idx3);
+        unionFind.unionSet(idx2, idx3);
+        unionFind.unionSet(idx2, idx4);
+    }
+
+    // Calculate the number of free squares
+    int freeSquares = n * n;
+    for (int i = 0; i < m; ++i) {
+        int x = points[i].first, y = points[i].second;
+        int idx1 = x * n + y;
+        int idx2 = (x + n) * n + y;
+        int idx3 = (y + n) * n + x;
+        int idx4 = (y - 1 + n) * n + x;
+
+        int root1 = find(idx1), root2 = find(idx2), root3 = find(idx3), root4 = find(idx4);
+        if (root1 == root2 || root1 == root3 || root1 == root4 || root2 == root3 || root2 == root4 || root3 == root4) {
+            freeSquares--;
+        }
+    }
+
+    cout << freeSquares << endl;
+}
+
+int main() {
+    int t = 1;
+    while (t--) {
+        solve();
+    }
+    return 0;
+}

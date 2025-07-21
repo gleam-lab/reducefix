@@ -1,0 +1,81 @@
+
+The problem is a simulation of how an island will erode over time as the sea level rises. Each cell on the island has an elevation, and cells adjacent to the sea or to a cell that has just flooded will also flood if their elevation is not greater than the current sea level.
+
+The algorithm should efficiently simulate this process for `Y` years and output the remaining area of the island each year.
+
+Let's analyze the code and identify the issues and inefficiencies.
+
+1. **Initialization**: The code initializes a 2D boolean array `vis` to keep track of flooded cells. This is a good approach, but it doesn't account for the fact that the same cell could flood multiple times within a single year due to the recursive nature of the flooding process.
+2. **Priority Queue**: The use of a priority queue with nodes containing the elevation of a cell is useful for determining the order in which cells should be flooded. However, the current approach does not reprocess the priority queue once cells are added, which is inefficient.
+3. **Flooding Logic**: The current flooding logic is inefficient because it processes all the cells in the priority queue even if they are at or below the current sea level, regardless of whether they have already been flooded.
+4. **Updating the Remaining Area**: The area calculation is done by subtracting the flooded area from the total area, but this is not efficient and does not handle recursive flooding correctly.
+
+Here's an improved approach:
+
+1. **Use a Set for Visited Cells**: Instead of using a 2D boolean array, use a set to keep track of all the cells that have been flooded at any point.
+2. **Queue for Flooding**: Use a queue to process cells to be flooded. This way, once a cell is added to the queue, it's not reprocessed until it actually floods.
+3. **Recursive Flooding**: When a cell floods, recursively add all its non-flooded neighbors to the queue that have an elevation less than or equal to the current sea level and thus will also flood.
+4. **Calculate Remaining Area**: After each year, iterate through the grid and count the number of cells that have not been flooded.
+
+Here's a revised version of the code incorporating the above approach:
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+#define int long long
+
+int H, W, Y;
+vector<vector<int>> A;
+bool flood[1001][1001];
+set<pair<int, int>> flooded;
+
+void process_flood(int x, int y) {
+    if (x < 0 || x >= H || y < 0 || y >= W || flood[x][y] || A[x][y] <= Y) return;
+    flood[x][y] = true;
+    flooded.insert({x, y});
+    process_flood(x + 1, y);
+    process_flood(x - 1, y);
+    process_flood(x, y + 1);
+    process_flood(x, y - 1);
+}
+
+int main() {
+    cin >> H >> W >> Y;
+    A.resize(H, vector<int>(W));
+    for (int i = 0; i < H; i++) {
+        for (int j = 0; j < W; j++) {
+            cin >> A[i][j];
+        }
+    }
+
+    for (int year = 1; year <= Y; year++) {
+        memset(flood, false, sizeof(flood));
+        flooded.clear();
+
+        // Initially flood the cells at the edges of the island
+        for (int j = 0; j < W; j++) {
+            process_flood(0, j);
+            process_flood(H - 1, j);
+        }
+        for (int i = 0; i < H; i++) {
+            process_flood(i, 0);
+            process_flood(i, W - 1);
+        }
+
+        // Calculate the remaining area
+        long long remaining_area = 0;
+        for (int i = 0; i < H; i++) {
+            for (int j = 0; j < W; j++) {
+                if (!flood[i][j]) {
+                    remaining_area++;
+                }
+            }
+        }
+        cout << remaining_area << endl;
+    }
+
+    return 0;
+}
+```
+
+This approach should be significantly more efficient and correctly simulate the flooding process for the given constraints.

@@ -1,0 +1,93 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+typedef long long ll;
+typedef pair<ll, ll> pll;
+
+const int MAXN = 2e5 + 5;
+ll dist[MAXN], parent[MAXN];
+
+struct DSU {
+    int n;
+    vector<int> parent, rank;
+
+    DSU(int _n) : n(_n), parent(_n), rank(_n, 1) {
+        for (int i = 0; i < n; i++) parent[i] = i;
+    }
+
+    int find(int u) {
+        if (parent[u] != u) parent[u] = find(parent[u]);
+        return parent[u];
+    }
+
+    void merge(int u, int v) {
+        int pu = find(u), pv = find(v);
+        if (pu == pv) return;
+        if (rank[pu] < rank[pv]) swap(pu, pv);
+        parent[pv] = pu;
+        rank[pu] += rank[pv];
+    }
+};
+
+void dijkstra(vector<vector<pll>>& adj, int src) {
+    priority_queue<pll, vector<pll>, greater<pll>> pq;
+    fill(dist, dist + MAXN, LLONG_MAX);
+    dist[src] = 0;
+    pq.push({0, src});
+
+    while (!pq.empty()) {
+        auto [d, u] = pq.top();
+        pq.pop();
+
+        if (d > dist[u]) continue;
+
+        for (auto [v, w] : adj[u]) {
+            if (dist[v] > dist[u] + w) {
+                dist[v] = dist[u] + w;
+                parent[v] = u;
+                pq.push({dist[v], v});
+            }
+        }
+    }
+}
+
+vector<ll> shortestPath(int n, int m, vector<int>& a, vector<vector<int>>& edges) {
+    vector<vector<pll>> adj(n + 1);
+    for (auto &e : edges) {
+        adj[e[0]].push_back({e[1], e[2]});
+        adj[e[1]].push_back({e[0], e[2]});
+    }
+
+    dijkstra(adj, 1);
+
+    vector<ll> result(n + 1, 0);
+    for (int i = 2; i <= n; i++) {
+        result[i] = dist[i] + a[i];
+    }
+
+    return result;
+}
+
+int main() {
+    ios_base::sync_with_stdio(0); cin.tie(0); cout.tie(0);
+
+    int n, m;
+    cin >> n >> m;
+
+    vector<int> a(n + 1);
+    for (int i = 1; i <= n; i++) cin >> a[i];
+
+    vector<vector<int>> edges(m, vector<int>(3));
+    for (int i = 0; i < m; i++) {
+        cin >> edges[i][0] >> edges[i][1] >> edges[i][2];
+    }
+
+    vector<ll> result = shortestPath(n, m, a, edges);
+
+    for (int i = 2; i <= n; i++) {
+        cout << result[i] << " ";
+    }
+    cout << "\n";
+
+    return 0;
+}

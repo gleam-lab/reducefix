@@ -1,0 +1,58 @@
+#include<bits/stdc++.h>
+using namespace std;
+#define int long long
+const int N = 2e5+5;
+
+int n, m, k;
+int a[N], b[N], d[N];
+
+// Binary search to find the minimum additional votes required for candidate i
+int bs(int i, int &low, int &high, int min_votes, int &remaining_votes) {
+    int mid, left_votes, right_votes;
+    while(low <= high) {
+        mid = (low + high) / 2;
+        left_votes = max(0, mid - a[i]);
+        right_votes = remaining_votes - (d[mid] - d[n - m - 1] - (a[i] > b[mid] ? 0 : a[i]));
+
+        if(left_votes + right_votes >= min_votes) {
+            high = mid - 1;
+        } else {
+            low = mid + 1;
+        }
+    }
+    return low;
+}
+
+signed main() {
+    ios::sync_with_stdio(0), cin.tie(0), cout.tie(0);
+    cin >> n >> m >> k;
+    for(int i = 0; i < n; ++i) {
+        cin >> a[i];
+        b[i] = a[i];
+    }
+    sort(b, b + n);
+    int s = 0;
+    for(int i = 0; i < n; ++i) {
+        s += a[i];
+        d[i] = s;
+    }
+
+    for(int i = 0; i < n; ++i) {
+        int votes_needed = 0;
+        if(i + 1 < n - m + 1) {
+            votes_needed = bs(i, 0, k - a[i], m - 1, k - s);
+        } else {
+            votes_needed = bs(i, 0, k - a[i], n - m, k - s);
+        }
+        if(votes_needed <= k - a[i]) {
+            if(votes_needed >= 0) {
+                cout << votes_needed << " ";
+            } else {
+                cout << "-1 ";
+            }
+        } else {
+            cout << "-1 ";
+        }
+    }
+    return 0;
+}

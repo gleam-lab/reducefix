@@ -1,0 +1,109 @@
+To fix this code, we need to address the issue where the program incorrectly counts the remaining walls after processing the queries. The primary problem lies in how the code handles the destruction of walls when a bomb is placed on an already empty cell.
+
+### Analysis
+1. **Initial Setup**: The grid is initialized with walls in every cell, represented by sets `st1` (rows) and `st2` (columns). Each row and column keeps track of the walls present in them.
+2. **Query Processing**:
+   - If the bomb's cell has a wall, it is destroyed.
+   - If the cell is empty, the code should destroy the first walls in the four directions (up, down, left, right) that are not obstructed by other walls.
+3. **Issue Identification**: The original code incorrectly handles the case where the bomb is placed on an empty cell. Specifically, it fails to correctly identify and destroy the first walls in each direction. The logic for decrementing iterators and checking sizes is flawed, leading to incorrect deletions.
+
+### Solution
+1. **Correct Destruction Logic**: For each direction, we need to find the nearest wall that is not obstructed. This involves:
+   - **Up**: The first wall above the bomb's row in the same column.
+   - **Down**: The first wall below the bomb's row in the same column.
+   - **Left**: The first wall to the left of the bomb's column in the same row.
+   - **Right**: The first wall to the right of the bomb's column in the same row.
+2. **Efficient Searching**: Using sets to maintain the walls allows for efficient searching with `lower_bound` and `upper_bound` operations, ensuring logarithmic time complexity for each query.
+
+### Fixed Code
+```cpp
+#ifndef LOCAL
+#pragma optimize(2)
+#endif
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+using PII = pair<int, int>;
+#define x first
+#define y second
+#define all(x) x.begin(),x.end()
+#define zjj master
+const int N = 200020, INF = 0x3f3f3f3f;
+int n, m;
+
+void solve()
+{
+    int q;
+    cin >> n >> m >> q;
+    vector<set<int>> st1(n + 1), st2(m + 1);
+    for (int i = 1; i <= n; i++) {
+        for (int j = 1; j <= m; j++) {
+            st1[i].insert(j);
+            st2[j].insert(i);
+        }
+    }
+
+    auto erase = [&](int r, int c) -> void {
+        st1[r].erase(c);
+        st2[c].erase(r);
+    };
+
+    while (q--) {
+        int r, c; cin >> r >> c;
+        if (st1[r].count(c)) {
+            erase(r, c);
+            continue;
+        }
+
+        // Left
+        auto it_left = st1[r].lower_bound(c);
+        if (it_left != st1[r].begin()) {
+            --it_left;
+            erase(r, *it_left);
+        }
+
+        // Right
+        auto it_right = st1[r].upper_bound(c);
+        if (it_right != st1[r].end()) {
+            erase(r, *it_right);
+        }
+
+        // Up
+        auto it_up = st2[c].lower_bound(r);
+        if (it_up != st2[c].begin()) {
+            --it_up;
+            erase(*it_up, c);
+        }
+
+        // Down
+        auto it_down = st2[c].upper_bound(r);
+        if (it_down != st2[c].end()) {
+            erase(*it_down, c);
+        }
+    }
+
+    ll ans = 0;
+    for (int i = 1; i <= n; i++) ans += st1[i].size();
+    cout << ans << "\n";
+}
+
+signed main()
+{
+#ifdef LOCAL
+    freopen("in.in", "r", stdin);freopen("out.out", "w", stdout);
+#endif
+    ios::sync_with_stdio(0); cin.tie(0); cout.tie(0);
+    int T = 1;
+    while (T--) solve();
+    return 0;
+}
+```
+
+### Explanation
+- **Initialization**: The sets `st1` and `st2` are initialized to keep track of walls in each row and column, respectively.
+- **Query Processing**: For each query:
+  - If the cell has a wall, it is removed.
+  - If the cell is empty, the nearest walls in the four directions are found and removed using `lower_bound` and `upper_bound` to efficiently navigate the sets.
+- **Counting Remaining Walls**: After processing all queries, the remaining walls are counted by summing the sizes of the sets in `st1`.
+
+This approach ensures that the destruction of walls is handled correctly and efficiently, adhering to the problem constraints and requirements.

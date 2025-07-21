@@ -1,0 +1,52 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <queue>
+
+using namespace std;
+
+int main() {
+    int n;
+    cin >> n;
+    vector<int> a(n), b(n - 1);
+
+    for(int i = 0; i < n; ++i) cin >> a[i];
+    for(int i = 0; i < n - 1; ++i) cin >> b[i];
+
+    sort(a.begin(), a.end());
+    sort(b.begin(), b.end());
+
+    priority_queue<int> pq;
+
+    for(int i = 0; i < n - 1; ++i) {
+        pq.push(b[i]);
+    }
+
+    int max_b = pq.top();
+    pq.pop();
+
+    int i = 0;
+    while(i < n && a[i] <= max_b) {
+        ++i;
+    }
+
+    if(i == n) {
+        cout << max_b << endl;
+        return 0;
+    }
+
+    int min_a = a[i];
+    int ans = min_a + 1;
+
+    while(!pq.empty()) {
+        int top_b = pq.top();
+        pq.pop();
+        if(top_b >= ans) {
+            break;
+        }
+        ans++;
+    }
+
+    cout << ans << endl;
+    return 0;
+}

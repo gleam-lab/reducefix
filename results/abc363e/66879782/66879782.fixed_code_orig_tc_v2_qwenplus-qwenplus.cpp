@@ -1,0 +1,96 @@
+#include <bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+#define all(x) (x).begin(), (x).end()
+
+int main() {
+    ios_base::sync_with_stdio(0);
+    cin.tie(0);
+
+    int H, W, Y;
+    cin >> H >> W >> Y;
+
+    vector<vector<int>> A(H, vector<int>(W));
+    for (int i = 0; i < H; ++i) {
+        for (int j = 0; j < W; ++j) {
+            cin >> A[i][j];
+        }
+    }
+
+    // Create a list of all cells with their coordinates
+    vector<tuple<int, int, int>> cells;
+    for (int i = 0; i < H; ++i) {
+        for (int j = 0; j < W; ++j) {
+            cells.emplace_back(A[i][j], i, j);
+        }
+    }
+
+    // Sort the cells by elevation
+    sort(cells.begin(), cells.end());
+
+    // Union-Find (Disjoint Set Union) structure
+    vector<int> parent(H * W), size(H * W, 1);
+    iota(parent.begin(), parent.end(), 0);
+
+    function<int(int)> find = [&](int x) {
+        return parent[x] == x ? x : parent[x] = find(parent[x]);
+    };
+
+    auto unite = [&](int x, int y) {
+        int xr = find(x), yr = find(y);
+        if (xr != yr) {
+            parent[yr] = xr;
+            size[xr] += size[yr];
+        }
+    };
+
+    // Directions for adjacent cells
+    int dx[] = {-1, 1, 0, 0};
+    int dy[] = {0, 0, -1, 1};
+
+    vector<int> result(Y + 2, H * W); // Start with full area
+    vector<bool> is_land(H * W, true); // Track whether a cell is still land
+
+    int idx = 0;
+    for (int year = 1; year <= Y; ++year) {
+        // Process all cells with elevation equal to current year
+        while (idx < cells.size() && get<0>(cells[idx]) == year) {
+            int r = get<1>(cells[idx]);
+            int c = get<2>(cells[idx]);
+            int pos = r * W + c;
+            is_land[pos] = false;
+
+            // Check all four neighbors
+            for (int d = 0; d < 4; ++d) {
+                int nr = r + dx[d];
+                int nc = c + dy[d];
+                if (nr >= 0 && nr < H && nc >= 0 && nc < W) {
+                    int neighbor_pos = nr * W + nc;
+                    if (!is_land[neighbor_pos]) {
+                        // Neighbor has already sunk, merge
+                        unite(pos, neighbor_pos);
+                    }
+                }
+            }
+            ++idx;
+        }
+
+        // Count connected components that are still above sea level
+        unordered_set<int> roots;
+        for (int i = 0; i < H * W; ++i) {
+            if (is_land[i]) {
+                roots.insert(find(i));
+            }
+        }
+
+        // Remaining area is number of remaining connected components
+        result[year] = roots.size();
+    }
+
+    // Print results
+    for (int year = 1; year <= Y; ++year) {
+        cout << result[year] << "\n";
+    }
+
+    return 0;
+}

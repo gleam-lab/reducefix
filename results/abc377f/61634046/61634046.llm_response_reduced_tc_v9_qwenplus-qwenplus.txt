@@ -1,0 +1,79 @@
+```cpp
+#include <bits/stdc++.h>
+
+using namespace std;
+
+using i64 = int64_t;
+using pii = pair<int, int>;
+
+constexpr int MAX_M = 2000;
+
+set<int> rows, cols;
+set<pii> diag1, diag2;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    i64 N;
+    int M;
+    cin >> N >> M;
+
+    for (int i = 0; i < M; ++i) {
+        int x, y;
+        cin >> x >> y;
+        rows.insert(x);
+        cols.insert(y);
+        diag1.emplace(x + y, x);
+        diag2.emplace(x - y, x);
+    }
+
+    // Total squares: N * N
+    // Subtract:
+    // - squares in same row: |rows| * N
+    // - squares in same column: |cols| * N
+    // - squares in same diagonal (x+y): For each (s, x), count valid y such that x + y = s and 1 <= y <= N
+    //   So y = s - x => 1 <= s - x <= N => s - N <= x <= s - 1
+    //   But x must be in range [1, N]
+    // - squares in same anti-diagonal (x-y): Similar logic
+
+    i64 total = N * N;
+    
+    // Remove rows and columns
+    total -= (i64)rows.size() * N;
+    total -= (i64)cols.size() * N;
+    total += (i64)rows.size() * cols.size();  // Overlap of rows and cols
+
+    // Remove diagonals (x + y)
+    map<int, vector<int>> sum_diag;
+    for (const auto& [s, x] : diag1) {
+        int lo = max(1, s - N);
+        int hi = min(N, s - 1);
+        if (lo <= hi) {
+            total -= (hi - lo + 1);
+        }
+    }
+
+    // Remove anti-diagonals (x - y)
+    for (const auto& [d, x] : diag2) {
+        int lo = max(1, x - d);
+        int hi = min(N, N + x - d);
+        if (lo <= hi) {
+            total -= (hi - lo + 1);
+        }
+    }
+
+    // Add back intersections between diagonals and rows/cols
+    for (int r : rows) {
+        for (int c : cols) {
+            if (diag1.count({r + c, r}) || diag2.count({r - c, r})) {
+                ++total; // was subtracted twice
+            }
+        }
+    }
+
+    cout << total << endl;
+
+    return 0;
+}
+```

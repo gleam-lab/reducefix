@@ -1,0 +1,61 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+typedef long long ll;
+
+const int MAXN = 1e5 + 5;
+
+ll a[MAXN];
+
+// Binary search to find the k-th smallest distance from b
+ll query(ll b, ll k, int n) {
+    int pos = lower_bound(a, a + n, b) - a;
+    
+    // Left and right pointers for two pointers approach
+    int l = pos - 1;
+    int r = pos;
+    
+    // We need to find the k-th closest element
+    for(int i = 0; i < k; ++i) {
+        if(r >= n || (l >= 0 && abs(a[l] - b) <= abs(a[r] - b))) {
+            l--;
+        } else {
+            r++;
+        }
+    }
+    
+    // After moving k times, the next closest will be either at l+1 or r-1
+    if(l >= -1 && r < n) {
+        if(abs(a[l+1] - b) <= abs(a[r-1] - b)) {
+            return abs(a[l+1] - b);
+        } else {
+            return abs(a[r-1] - b);
+        }
+    } else if (l >= 0) {
+        return abs(a[l] - b);
+    } else {
+        return abs(a[r] - b);
+    }
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int N, Q;
+    cin >> N >> Q;
+    
+    for(int i = 0; i < N; ++i) {
+        cin >> a[i];
+    }
+    
+    sort(a, a + N);
+    
+    for(int i = 0; i < Q; ++i) {
+        ll b, k;
+        cin >> b >> k;
+        cout << query(b, k, N) << "\n";
+    }
+    
+    return 0;
+}

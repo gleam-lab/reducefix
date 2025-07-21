@@ -1,0 +1,75 @@
+#include <iostream>
+#include <algorithm>
+using namespace std;
+
+typedef struct {
+    int a, p, b, q;
+} P;
+
+P A[100];
+long long dp[100][10000];  // dp[i][j]: min cost to get j units from i-th machine
+
+int N, X;
+
+// Calculate the minimum cost for machine i to produce n units
+long long cost(int i, int n) {
+    if (n == 0) return 0;
+    int period = A[i].a * A[i].b;
+    long long full_cycles = n / period;
+    int remainder = n % period;
+    return full_cycles * min(A[i].a * A[i].p, A[i].b * A[i].q) + dp[i][remainder];
+}
+
+// Check if we can produce 'n' units within budget X
+bool is_possible(int n) {
+    long long total_cost = 0;
+    for (int i = 0; i < N; i++) {
+        total_cost += cost(i, n);
+        if (total_cost > X) return false;
+    }
+    return true;
+}
+
+int main() {
+    cin >> N >> X;
+
+    for (int i = 0; i < N; i++) {
+        int a, p, b, q;
+        cin >> a >> p >> b >> q;
+        
+        // Ensure type 1 is more efficient than type 2
+        if (a * q < b * p) {
+            swap(a, b);
+            swap(p, q);
+        }
+        
+        A[i] = {a, p, b, q};
+        
+        // Precompute dp for this machine
+        dp[i][0] = 0;
+        for (int j = 1; j < a * b; j++) {
+            dp[i][j] = 1e18;  // Initialize with large value
+            if (j >= A[i].a) {
+                dp[i][j] = min(dp[i][j], dp[i][j - A[i].a] + A[i].p);
+            }
+            if (j >= A[i].b) {
+                dp[i][j] = min(dp[i][j], dp[i][j - A[i].b] + A[i].q);
+            }
+        }
+    }
+
+    // Binary search for maximum number of units
+    int low = 0;
+    int high = 1e9;
+    while (low <= high) {
+        int mid = low + (high - low) / 2;
+        if (is_possible(mid)) {
+            low = mid + 1;
+        } else {
+            high = mid - 1;
+        }
+    }
+
+    cout << high << endl;
+    return 0;
+}

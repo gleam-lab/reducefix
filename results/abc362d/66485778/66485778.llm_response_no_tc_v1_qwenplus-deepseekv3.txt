@@ -1,0 +1,94 @@
+The original code uses Dijkstra's algorithm to find the shortest path from vertex 1 to all other vertices, where the path weight is defined as the sum of vertex weights and edge weights along the path. However, there are a few issues in the code that need to be fixed:
+
+1. **Vertex Weight Inclusion**: The initial distance for vertex 1 is set to `a[1]`, but the vertex weight should be included only once per vertex in the path. The current implementation includes `a[y]` when relaxing edges, which might lead to incorrect path weights.
+
+2. **Data Types**: The code uses `i128` (128-bit integers) for distances, which is unnecessary since the constraints allow using `long long` (64-bit integers) without overflow.
+
+3. **Priority Queue**: The priority queue comparison is incorrect. It should prioritize nodes with smaller distances, but the current operator overload has `w > u.w` which makes it a max-heap instead of a min-heap.
+
+4. **Edge Relaxation**: The edge relaxation logic should account for the vertex weights correctly, ensuring each vertex's weight is added exactly once when the vertex is first visited.
+
+Here's the corrected code that addresses these issues:
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+const ll INF = 1e18;
+
+struct Edge {
+    int to;
+    ll cost;
+};
+
+struct Node {
+    int vertex;
+    ll distance;
+    bool operator>(const Node& other) const {
+        return distance > other.distance;
+    }
+};
+
+void solve() {
+    int n, m;
+    cin >> n >> m;
+    vector<ll> a(n + 1);
+    for (int i = 1; i <= n; ++i) {
+        cin >> a[i];
+    }
+    vector<vector<Edge>> adj(n + 1);
+    for (int i = 0; i < m; ++i) {
+        int u, v;
+        ll b;
+        cin >> u >> v >> b;
+        adj[u].push_back({v, b});
+        adj[v].push_back({u, b});
+    }
+
+    vector<ll> dist(n + 1, INF);
+    vector<bool> visited(n + 1, false);
+    priority_queue<Node, vector<Node>, greater<Node>> pq;
+
+    dist[1] = a[1];
+    pq.push({1, dist[1]});
+
+    while (!pq.empty()) {
+        Node current = pq.top();
+        pq.pop();
+        int u = current.vertex;
+        if (visited[u]) continue;
+        visited[u] = true;
+
+        for (const Edge& edge : adj[u]) {
+            int v = edge.to;
+            ll cost = edge.cost;
+            if (dist[v] > dist[u] + cost + a[v]) {
+                dist[v] = dist[u] + cost + a[v];
+                pq.push({v, dist[v]});
+            }
+        }
+    }
+
+    for (int i = 2; i <= n; ++i) {
+        cout << dist[i] << (i == n ? "\n" : " ");
+    }
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    solve();
+    return 0;
+}
+```
+
+### Key Fixes:
+1. **Vertex Weight Handling**: The vertex weight `a[1]` is included in the initial distance for vertex 1. For other vertices, their weight `a[v]` is added when relaxing edges to ensure each vertex's weight is counted exactly once in the path.
+
+2. **Priority Queue**: Changed to a min-heap using `greater<Node>` to correctly prioritize nodes with smaller distances.
+
+3. **Data Types**: Simplified to use `long long` for distances, which is sufficient given the problem constraints.
+
+4. **Edge Relaxation**: The edge relaxation now correctly updates the distance by adding the edge cost and the destination vertex's weight.
+
+This corrected code efficiently computes the minimum path weights from vertex 1 to all other vertices using Dijkstra's algorithm with a priority queue.

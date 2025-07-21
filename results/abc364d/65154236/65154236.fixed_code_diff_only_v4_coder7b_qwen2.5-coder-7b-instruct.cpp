@@ -1,0 +1,29 @@
+#include<bits/stdc++.h>
+using namespace std;
+
+vector<int> a;
+
+int main() {
+    int n, q; cin >> n >> q;
+    a.resize(n);
+    for(int i = 0; i < n; i++) cin >> a[i];
+    
+    sort(a.begin(), a.end());
+    
+    for(int i = 0; i < q; i++){
+        int b, k; cin >> b >> k;
+        auto it = lower_bound(a.begin(), a.end(), abs(b-a[0]));
+        int index = it - a.begin();
+        if(index == 0 && k == 1) cout << abs(b-a[index]) << endl;
+        else if(k == 1) cout << abs(b-a[index-1]) << endl;
+        else if(index == n-1 && k == 1) cout << abs(b-a[index]) << endl;
+        else{
+            int leftDist = abs(b-a[index-1]);
+            int rightDist = abs(b-a[index]);
+            if(leftDist < rightDist) cout << leftDist << endl;
+            else cout << rightDist << endl;
+        }
+    }
+
+    return 0;
+}

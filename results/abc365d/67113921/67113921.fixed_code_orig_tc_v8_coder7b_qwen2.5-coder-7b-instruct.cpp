@@ -1,0 +1,28 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(NULL);
+
+    int N;
+    string S;
+    cin >> N;
+    cin >> S;
+    int wins = 0;
+    char winmove, prev = ' ';
+    for (char c : S) {
+        if (prev == ' ') {
+            prev = c;
+            continue;
+        }
+        if ((c == 'R' && prev == 'P') || (c == 'P' && prev == 'S') || (c == 'S' && prev == 'R')) {
+            wins++;
+            prev = c;
+        } else {
+            prev = c;
+        }
+    }
+    cout << wins;
+    return 0;
+}

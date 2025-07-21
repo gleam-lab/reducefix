@@ -1,0 +1,26 @@
+#include <iostream>
+#include <cmath>
+using namespace std;
+
+int main() {
+    int n;
+    cin >> n;
+    double sum = 0.0;
+    double x = 0, y = 0;
+
+    for (int i = 0; i < n; ++i) {
+        int a, b;
+        cin >> a >> b;
+        sum += sqrt((x - a) * (x - a) + (y - b) * (y - b));
+        x = a;
+        y = b;
+    }
+
+    // Calculate the distance from the last point to the origin and add it to the sum
+    sum += sqrt(x * x + y * y);
+
+    cout.precision(10);
+    cout << fixed << sum << endl;
+
+    return 0;
+}

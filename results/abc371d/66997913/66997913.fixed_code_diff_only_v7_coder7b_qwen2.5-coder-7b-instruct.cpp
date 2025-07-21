@@ -1,0 +1,40 @@
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+
+int main() {
+  int n;
+  cin >> n;
+  vector<int> x(n);
+  for (int i = 0; i < n; i++) cin >> x[i];
+  sort(x.begin(), x.end()); // Sort the array to use binary search efficiently
+  
+  vector<ll> p(n), s(n+1);
+  for (int i = 0; i < n; i++) {
+    cin >> p[i];
+    s[i+1] = s[i] + p[i];
+  }
+  
+  int q;
+  cin >> q;
+  for (int i = 0; i < q; i++) {
+    int l, r;
+    cin >> l >> r;
+    
+    // Find the first element greater than or equal to 'l' using lower_bound
+    auto it_l = lower_bound(x.begin(), x.end(), l);
+    int idx_l = distance(x.begin(), it_l); // Get index of the found element
+    
+    // Find the first element greater than 'r' using upper_bound
+    auto it_r = upper_bound(x.begin(), x.end(), r);
+    int idx_r = distance(x.begin(), it_r); // Get index of the next element after 'r'
+    
+    if (idx_r == 0) { // If no elements are greater than 'r', sum up all elements from 'l' onwards
+      idx_r = n;
+    }
+    
+    int ans = s[idx_r] - s[idx_l]; // Calculate the sum between 'l' and 'r'
+    cout << ans << endl;
+  }
+  return 0;
+}

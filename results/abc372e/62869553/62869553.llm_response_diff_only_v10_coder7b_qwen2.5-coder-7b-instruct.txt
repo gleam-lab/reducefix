@@ -1,0 +1,95 @@
+```cpp
+#include<bits/stdc++.h>
+using namespace std;
+
+const int MAXN = 2 * 100005;
+const int LOGN = 20;
+
+vector<int> adj[MAXN];
+int parent[MAXN][LOGN], depth[MAXN];
+
+void dfs(int node, int par, int d) {
+    parent[node][0] = par;
+    depth[node] = d;
+    for (int i = 1; i < LOGN; ++i) {
+        if (parent[node][i - 1] != -1) {
+            parent[node][i] = parent[parent[node][i - 1]][i - 1];
+        }
+    }
+    for (int neighbor : adj[node]) {
+        if (neighbor != par) {
+            dfs(neighbor, node, d + 1);
+        }
+    }
+}
+
+int LCA(int u, int v) {
+    if (depth[u] > depth[v]) swap(u, v);
+    int diff = depth[v] - depth[u];
+    for (int i = 0; i < LOGN; ++i) {
+        if ((diff >> i) & 1) {
+            v = parent[v][i];
+        }
+    }
+    if (u == v) return u;
+    for (int i = LOGN - 1; i >= 0; --i) {
+        if (parent[u][i] != parent[v][i]) {
+            u = parent[u][i];
+            v = parent[v][i];
+        }
+    }
+    return parent[u][0];
+}
+
+int kthAncestor(int u, int k) {
+    for (int i = 0; i < LOGN; ++i) {
+        if ((k >> i) & 1) {
+            u = parent[u][i];
+        }
+    }
+    return u;
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(NULL);
+
+    int n, q;
+    cin >> n >> q;
+
+    for (int i = 1; i <= n; ++i) {
+        parent[i][0] = -1;
+    }
+
+    while (q--) {
+        int type;
+        cin >> type;
+        if (type == 1) {
+            int u, v;
+            cin >> u >> v;
+            adj[u].push_back(v);
+            adj[v].push_back(u);
+            if (parent[u][0] == -1) {
+                dfs(u, -1, 0);
+            }
+        } else if (type == 2) {
+            int v, k;
+            cin >> v >> k;
+            if (k > adj[v].size()) {
+                cout << "-1\n";
+            } else {
+                vector<int> ancestors;
+                for (int neighbor : adj[v]) {
+                    ancestors.push_back(kthAncestor(neighbor, k));
+                }
+                sort(ancestors.begin(), ancestors.end());
+                cout << ancestors.back() << "\n";
+            }
+        }
+    }
+
+    return 0;
+}
+```
+
+This solution uses a Depth-First Search (DFS) to preprocess the tree and compute the Lowest Common Ancestor (LCA) using binary lifting. For each query of type 2, it finds the k-th ancestor of all neighbors of the queried vertex and outputs the maximum of these values. This approach ensures that both preprocessing and query processing are efficient, meeting the problem constraints.

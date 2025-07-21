@@ -1,0 +1,37 @@
+#include <bits/stdc++.h>
+using namespace std;
+int n, x[200050], p[200050], q;
+long long a[200050];
+
+int main() {
+    cin >> n;
+    for (int i = 0; i < n; i++) cin >> x[i];
+    for (int i = 1; i <= n; i++) {
+        cin >> p[i];
+        a[i] = a[i - 1] + p[i];
+    }
+    cin >> q;
+    for (int i = 0; i < q; i++) {
+        int l, r; cin >> l >> r;
+        int l1 = 0, r1 = n, l2 = 0, r2 = n;
+        while (l1 < r1) {
+            int mid = l1 + (r1 - l1) / 2;
+            if (x[mid] >= l) r1 = mid;
+            else l1 = mid + 1;
+        }
+        l1++;
+        while (l2 < r2) {
+            int mid = l2 + (r2 - l2 + 1) / 2;
+            if (x[mid] <= r) l2 = mid;
+            else r2 = mid - 1;
+        }
+        l2++;
+        // Adjust l2 and l1 to be within the bounds of the prefix sums array
+        if (l1 <= n && l2 <= n) {
+            cout << a[l2 - 1] - a[l1 - 1] << endl;
+        } else {
+            cout << "0" << endl;  // If l1 or l2 is out of bounds, output 0
+        }
+    }
+    return 0;
+}

@@ -1,0 +1,80 @@
+To solve this problem efficiently, we need to simulate the process of attacking enemies optimally. Each enemy must be reduced to zero or less health using a combination of attacks that depend on time `T`.
+
+Key insights:
+
+1. **Attack Pattern**: Every 3rd second (when `T % 3 == 0`), you deal **3 damage**, otherwise **1 damage**.
+2. **Goal**: Minimize total time `T` such that all enemies' health is ≤ 0.
+
+### Strategy:
+We can use **binary search** over possible values of `T`. For each candidate value of `T`, we check whether it's sufficient to defeat all enemies under the attack rules.
+
+### How to Check a Given T?
+For each enemy:
+- We calculate how many triple-damage attacks (i.e., at times divisible by 3) will occur within time `T`.
+- Let `t_attack = T / 3` → number of triple-damage attacks.
+- The rest are single-damage attacks: `s_attack = T - t_attack`
+- Since we want to kill enemies in front first, we greedily assign more powerful attacks (triple-damage) to higher health enemies.
+
+This logic can be implemented efficiently with a loop and greedy allocation.
+
+Here's the corrected and optimized code using binary search:
+
+```cpp
+#include <bits/stdc++.h>
+
+using namespace std;
+
+bool can_defeat_all(int N, vector<long long>& H, long long T) {
+    // We'll keep track of how many triple attacks we can make
+    long long triple_attacks = T / 3;
+    long long single_attacks = T - triple_attacks;
+
+    for (int i = 0; i < N; ++i) {
+        long long h = H[i];
+
+        // Prioritize triple attacks
+        long long needed_triples = min(triple_attacks, h / 3 + (h % 3 != 0 ? 1 : 0));
+        h -= needed_triples * 3;
+        triple_attacks -= needed_triples;
+
+        if (h <= 0) continue;
+
+        // Use single attacks if triples are not enough
+        if (single_attacks >= h) {
+            single_attacks -= h;
+        } else {
+            return false;
+        }
+    }
+
+    return true;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int N;
+    cin >> N;
+    vector<long long> H(N);
+    for (int i = 0; i < N; ++i) {
+        cin >> H[i];
+    }
+
+    long long low = 0;
+    long long high = 1e18; // Upper bound for binary search
+
+    while (low < high) {
+        long long mid = (low + high) / 2;
+        if (can_defeat_all(N, H, mid)) {
+            high = mid;
+        } else {
+            low = mid + 1;
+        }
+    }
+
+    cout << low << endl;
+
+    return 0;
+}
+```

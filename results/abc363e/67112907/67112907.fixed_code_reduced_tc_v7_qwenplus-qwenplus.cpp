@@ -1,0 +1,78 @@
+#include <bits/stdc++.h>
+
+using i64 = int64_t;
+using u32 = unsigned int;
+
+constexpr int d[4][2] = {{0, 1}, {0, -1}, {1, 0}, {-1, 0}};
+
+int main() {
+    std::ios::sync_with_stdio(false);
+    std::cin.tie(nullptr);
+
+    int H, W, Y;
+    std::cin >> H >> W >> Y;
+
+    std::vector<std::vector<int>> A(H, std::vector<int>(W));
+    for (int i = 0; i < H; ++i) {
+        for (int j = 0; j < W; ++j) {
+            std::cin >> A[i][j];
+        }
+    }
+
+    // We will use a max-heap to keep track of the outer boundary of the island
+    std::priority_queue<std::tuple<int, int, int>, std::vector<std::tuple<int, int, int>>, std::greater<>> pq;
+    std::vector<std::vector<bool>> visited(H, std::vector<bool>(W, false));
+
+    // Initialize: add all border cells to the priority queue
+    for (int i = 0; i < H; ++i) {
+        for (int j = 0; j < W; ++j) {
+            if (i == 0 || i == H - 1 || j == 0 || j == W - 1) {
+                visited[i][j] = true;
+                pq.emplace(A[i][j], i, j);
+            }
+        }
+    }
+
+    // Total land area
+    int remaining = H * W;
+    std::vector<int> ans(Y + 1, 0);
+    ans[0] = remaining;
+
+    while (!pq.empty()) {
+        auto [h, x, y] = pq.top();
+        pq.pop();
+
+        // If this cell's height is greater than current year, it won't sink yet
+        if (h > Y) {
+            break;
+        }
+
+        // This cell sinks into the sea
+        remaining--;
+        ans[h] = remaining;
+
+        // Explore neighbors
+        for (auto& dir : d) {
+            int nx = x + dir[0];
+            int ny = y + dir[1];
+            if (nx >= 0 && nx < H && ny >= 0 && ny < W && !visited[nx][ny]) {
+                visited[nx][ny] = true;
+                pq.emplace(A[nx][ny], nx, ny);
+            }
+        }
+    }
+
+    // Fill in any missing answers
+    for (int i = 1; i <= Y; ++i) {
+        if (ans[i] == 0) {
+            ans[i] = ans[i - 1];
+        }
+    }
+
+    // Output results
+    for (int i = 1; i <= Y; ++i) {
+        std::cout << ans[i] << "\n";
+    }
+
+    return 0;
+}

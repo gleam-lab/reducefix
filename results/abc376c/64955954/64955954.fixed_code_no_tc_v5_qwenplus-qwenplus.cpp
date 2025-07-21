@@ -1,0 +1,50 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int N;
+    cin >> N;
+    vector<long long> A(N), B(N - 1);
+
+    for (int i = 0; i < N; ++i) cin >> A[i];
+    for (int i = 0; i < N - 1; ++i) cin >> B[i];
+
+    sort(A.begin(), A.end());
+    sort(B.begin(), B.end());
+
+    // We need to assign N toys to N boxes: N-1 existing and one additional box
+    // To minimize the size of the extra box, we try to match largest toys with largest available boxes
+
+    // Try binary search on x (size of additional box)
+    long long left = 1, right = 1e18, answer = -1;
+
+    while (left <= right) {
+        long long mid = (left + right) / 2;
+
+        // Create a temporary list of boxes including the new one
+        vector<long long> temp_boxes = B;
+        temp_boxes.push_back(mid);
+        sort(temp_boxes.begin(), temp_boxes.end());
+
+        // Try greedy matching from smallest to largest
+        int a_idx = 0;
+        for (long long box : temp_boxes) {
+            if (a_idx < N && box >= A[a_idx]) {
+                ++a_idx;
+            }
+        }
+
+        if (a_idx == N) {
+            answer = mid;
+            right = mid - 1;  // Try smaller x
+        } else {
+            left = mid + 1;   // Need larger x
+        }
+    }
+
+    cout << answer << endl;
+    return 0;
+}

@@ -1,0 +1,51 @@
+#include<bits/stdc++.h>
+#define ll long long
+#define yes cout<<"YES\n"
+#define no cout<<"NO\n"
+#define sp ' '
+using namespace std;
+
+void solve() {
+    ll N;
+    cin >> N;
+    vector<ll> a(N), b(N - 1);
+    for (int i = 0; i < N; i++) {
+        cin >> a[i];
+    }
+    for (int i = 0; i < N - 1; i++) {
+        cin >> b[i];
+    }
+
+    // Sort both arrays in ascending order
+    sort(a.begin(), a.end());
+    sort(b.begin(), b.end());
+
+    // Find the maximum size required to store any toy
+    ll max_size_needed = *max_element(a.begin(), a.end());
+
+    // Check if we can fit all toys in the existing boxes with additional box of size max_size_needed
+    bool can_fit = true;
+    int j = 0;
+    for (int i = 0; i < N - 1 && can_fit; i++) {
+        while (j < N && a[j] <= b[i]) {
+            j++;
+        }
+        if (j == N || a[j] > b[i]) {
+            can_fit = false;
+        }
+    }
+
+    // If we can fit all toys, print the minimum box size needed
+    if (can_fit) {
+        cout << max_size_needed << endl;
+    } else {
+        cout << -1 << endl;
+    }
+}
+
+int main() {
+    ios::sync_with_stdio(0);
+    cin.tie(0);
+    solve();
+    return 0;
+}

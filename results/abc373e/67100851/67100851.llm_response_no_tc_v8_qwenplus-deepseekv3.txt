@@ -1,0 +1,88 @@
+To fix this code, we need to ensure that for each candidate, we correctly determine the minimum number of additional votes required to guarantee their election, considering the constraints and the way votes are distributed among other candidates. The previous approach had some logical flaws in the binary search and condition checks.
+
+### Approaches
+1. **Sorting and Binary Search**: First, we sort the candidates by their current votes. This helps us efficiently determine how many candidates have more or fewer votes.
+2. **Binary Search for Minimum Votes**: For each candidate, perform a binary search to find the minimum votes needed such that the candidate is among the top candidates after the remaining votes are distributed.
+3. **Validation Function**: For each candidate and a proposed number of additional votes, verify if the candidate will be among the top M candidates, considering the worst-case distribution of the remaining votes.
+
+### Solution Code
+```cpp
+#include <iostream>
+#include <algorithm>
+#include <vector>
+using namespace std;
+
+typedef long long ll;
+typedef struct {
+    ll a;
+    int idx;
+} node;
+
+vector<node> A;
+vector<ll> psum;
+ll K;
+int N, M;
+
+bool is_possible(ll x, int i) {
+    ll total_votes = A[i].a + x;
+    int pos = upper_bound(A.begin(), A.end(), node{total_votes, -1}, 
+        [](const node &a, const node &b) { return a.a < b.a; }) - A.begin();
+    pos = N - pos;
+    if (pos < M) {
+        ll remaining = K - x;
+        ll required = 0;
+        int l = N - M;
+        if (i >= l) {
+            required = (total_votes + 1) * (l) - psum[l];
+        } else {
+            required = (total_votes + 1) * (l + 1) - (psum[l + 1] + x);
+        }
+        if (required <= remaining) {
+            return true;
+        }
+    }
+    return false;
+}
+
+int main() {
+    cin >> N >> M >> K;
+    A.resize(N);
+    psum.resize(N + 1, 0);
+    for (int i = 0; i < N; ++i) {
+        cin >> A[i].a;
+        A[i].idx = i;
+    }
+    sort(A.begin(), A.end(), [](const node &a, const node &b) { return a.a < b.a; });
+    for (int i = 1; i <= N; ++i) {
+        psum[i] = psum[i - 1] + A[i - 1].a;
+    }
+    vector<ll> res(N);
+    for (int i = 0; i < N; ++i) {
+        ll lo = 0, hi = K;
+        ll ans = -1;
+        while (lo <= hi) {
+            ll mid = (lo + hi) / 2;
+            if (is_possible(mid, i)) {
+                ans = mid;
+                hi = mid - 1;
+            } else {
+                lo = mid + 1;
+            }
+        }
+        res[A[i].idx] = ans;
+    }
+    for (int i = 0; i < N; ++i) {
+        cout << res[i] << " ";
+    }
+    cout << endl;
+    return 0;
+}
+```
+
+### Explanation
+1. **Input Handling and Initial Setup**: The input values are read, and the candidates' votes are stored in a vector of structures. The vector is then sorted based on the number of votes each candidate has.
+2. **Prefix Sum Calculation**: A prefix sum array is computed to quickly access the sum of votes for any range of candidates.
+3. **Binary Search for Minimum Votes**: For each candidate, a binary search is performed to find the minimum number of additional votes (`x`) that ensures the candidate is among the top M candidates after all votes are counted. The binary search checks if the candidate's total votes (current votes + `x`) can position them within the top M candidates, considering the worst-case scenario where other candidates receive the maximum possible votes.
+4. **Output**: The results for each candidate are stored in a vector and printed in the original order of the candidates.
+
+This approach ensures that we efficiently and correctly determine the minimum votes needed for each candidate to secure their position, considering all constraints and edge cases.

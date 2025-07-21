@@ -1,0 +1,60 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+const int OFFSET = 1e8;
+const int MAX_COORD = 2 * (int)1e8 + 10; // Total possible coordinate range
+
+int freq[MAX_COORD];      // Frequency array for counting sort
+int prefix_sum[MAX_COORD]; // Prefix sum array for quick k-th element lookup
+
+void solve() {
+    int N, Q;
+    cin >> N >> Q;
+
+    // Reset frequency array
+    memset(freq, 0, sizeof(freq));
+
+    // Read A points and update frequency array
+    for (int i = 0; i < N; ++i) {
+        int a;
+        cin >> a;
+        freq[a + OFFSET]++;
+    }
+
+    // Build prefix sum array
+    prefix_sum[0] = freq[0];
+    for (int i = 1; i < MAX_COORD; ++i) {
+        prefix_sum[i] = prefix_sum[i - 1] + freq[i];
+    }
+
+    // Process queries
+    for (int q = 0; q < Q; ++q) {
+        int b, k;
+        cin >> b >> k;
+
+        // Binary search on distance
+        int left = 0, right = 2 * (int)1e8;
+        while (left < right) {
+            int mid = (left + right) / 2;
+
+            // Count how many elements are within distance <= mid from b
+            int l = max(0, b - mid + OFFSET);
+            int r = min(MAX_COORD - 1, b + mid + OFFSET);
+
+            int count = prefix_sum[r] - (l > 0 ? prefix_sum[l - 1] : 0);
+
+            if (count >= k)
+                right = mid;
+            else
+                left = mid + 1;
+        }
+
+        cout << left << "\n";
+    }
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+    solve();
+}

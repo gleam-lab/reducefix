@@ -1,0 +1,129 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+const int MAXN = 1000;
+int parent[MAXN * MAXN];
+int rank[MAXN * MAXN];
+
+void init(int n) {
+    for (int i = 0; i < n * n; ++i) {
+        parent[i] = i;
+        rank[i] = 0;
+    }
+}
+
+int find(int x) {
+    if (parent[x] != x) {
+        parent[x] = find(parent[x]);
+    }
+    return parent[x];
+}
+
+void unite(int x, int y) {
+    int px = find(x), py = find(y);
+    if (px == py) return;
+    if (rank[px] > rank[py]) {
+        parent[py] = px;
+    } else {
+        parent[px] = py;
+        if (rank[px] == rank[py]) {
+            ++rank[py];
+        }
+    }
+}
+
+bool same(int x, int y) {
+    return find(x) == find(y);
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int h, w, y;
+    cin >> h >> w >> y;
+
+    int grid[MAXN][MAXN];
+    for (int i = 0; i < h; ++i) {
+        for (int j = 0; j < w; ++j) {
+            cin >> grid[i][j];
+        }
+    }
+
+    vector<vector<int>> sink(h, vector<int>(w, INT_MAX));
+    queue<pair<int, pair<int, int>>> q;
+    int di[4][2] = {{-1, 0}, {1, 0}, {0, -1}, {0, 1}};
+
+    // Initialize the sink heights and add boundary cells to the queue
+    for (int i = 0; i < h; ++i) {
+        for (int j = 0; j < w; ++j) {
+            sink[i][j] = grid[i][j];
+            if (i == 0 || i == h - 1 || j == 0 || j == w - 1) {
+                q.emplace(grid[i][j], make_pair(i, j));
+            }
+        }
+    }
+
+    // Process the queue to update sink heights
+    while (!q.empty()) {
+        auto [H, p] = q.front(); q.pop();
+        auto [r, c] = p;
+        for (int k = 0; k < 4; ++k) {
+            int nr = r + di[k][0], nc = c + di[k][1];
+            if (nr < 0 || nr >= h || nc < 0 || nc >= w) continue;
+            if (grid[nr][nc] <= H && sink[nr][nc] > H) {
+                sink[nr][nc] = H;
+                q.emplace(H, make_pair(nr, nc));
+            }
+        }
+    }
+
+    // Count the number of connected components for each sea level
+    init(h * w);
+    for (int i = 0; i < h; ++i) {
+        for (int j = 0; j < w; ++j) {
+            if (sink[i][j] > y) continue;
+            int idx = i * w + j;
+            if (i > 0 && sink[i - 1][j] <= y) unite(idx, idx - w);
+            if (i < h - 1 && sink[i + 1][j] <= y) unite(idx, idx + w);
+            if (j > 0 && sink[i][j - 1] <= y) unite(idx, idx - 1);
+            if (j < w - 1 && sink[i][j + 1] <= y) unite(idx, idx + 1);
+        }
+    }
+
+    // Calculate the sizes of connected components
+    vector<int> component_sizes(h * w);
+    unordered_set<int> seen_components;
+    for (int i = 0; i < h; ++i) {
+        for (int j = 0; j < w; ++j) {
+            if (sink[i][j] > y) continue;
+            int idx = i * w + j;
+            int root = find(idx);
+            if (!seen_components.count(root)) {
+                seen_components.insert(root);
+                component_sizes[root] = 1;
+            } else {
+                ++component_sizes[root];
+            }
+        }
+    }
+
+    // Sort the component sizes in descending order
+    sort(component_sizes.begin(), component_sizes.end(), greater<int>());
+
+    // Calculate the remaining area for each sea level
+    vector<int> result(y + 1, h * w);
+    for (int i = 1; i <= y; ++i) {
+        for (int sz : component_sizes) {
+            if (sz > i) break;
+            result[i] -= sz;
+        }
+    }
+
+    // Print the results
+    for (int i = 1; i <= y; ++i) {
+        cout << result[i] << '\n';
+    }
+
+    return 0;
+}

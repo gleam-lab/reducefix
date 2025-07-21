@@ -1,0 +1,59 @@
+#include <iostream>
+#include <algorithm>
+#include <vector>
+#include <numeric>
+#include <limits>
+
+using namespace std;
+
+long long gcd(long long a, long long b) {
+    while (b != 0) {
+        long long t = b;
+        b = a % b;
+        a = t;
+    }
+    return a;
+}
+
+long long lcm(long long a, long long b) {
+    return a / gcd(a, b) * b;
+}
+
+bool check(long long v) {
+    long long cnt = 0;
+    for (int i = 1; i <= n; ++i) {
+        long long _lcm = lcm(a[i], b[i]);
+        long long vm = (v / _lcm - 1) * min(p[i] * (_lcm / a[i]), q[i] * (_lcm / b[i]));
+        cnt += vm;
+        if (cnt > x) return 0;
+        long long val = (v / _lcm - 1) * _lcm;
+        long long ms = LLONG_MAX >> 1;
+        long long j = 0;
+        while (j * a[i] <= v - val) {
+            ms = min(ms, j * p[i] + max(0LL, ((v - val - j * a[i]) / b[i] + 
+                ((v - val - j * a[i]) % b[i] != 0)) * q[i]));
+            j++;
+        }
+        cnt += ms;
+        if (cnt > x) return 0;
+    }
+    return 1;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr), cout.tie(nullptr);
+    cin >> n >> x;
+    vector<long long> a(n + 1), p(n + 1), b(n + 1), q(n + 1);
+    for (int i = 1; i <= n; ++i) {
+        cin >> a[i] >> p[i] >> b[i] >> q[i];
+    }
+    long long l = 0, r = 2e18;
+    while (l + 1 < r) {
+        long long mid = (l + r) / 2;
+        if (check(mid)) l = mid;
+        else r = mid;
+    }
+    cout << l << '\n';
+    return 0;
+}

@@ -1,0 +1,78 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+
+constexpr int dx[] = {-1, 1, 0, 0};
+constexpr int dy[] = {0, 0, -1, 1};
+
+int main()
+{
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int H, W, Y;
+    cin >> H >> W >> Y;
+
+    vector<vector<int>> A(H, vector<int>(W));
+    for (int i = 0; i < H; ++i)
+    {
+        for (int j = 0; j < W; ++j)
+        {
+            cin >> A[i][j];
+        }
+    }
+
+    // Priority queue to process cells in order of increasing elevation
+    priority_queue<tuple<int, int, int>, vector<tuple<int, int, int>>, greater<>> pq;
+    vector<vector<bool>> visited(H, vector<bool>(W, false));
+
+    // Mark borders as visited and add them to the queue
+    for (int i = 0; i < H; ++i)
+    {
+        for (int j = 0; j < W; ++j)
+        {
+            if (i == 0 || i == H - 1 || j == 0 || j == W - 1)
+            {
+                pq.emplace(A[i][j], i, j);
+                visited[i][j] = true;
+            }
+        }
+    }
+
+    // Process each year
+    vector<int> result(Y + 2, H * W);  // Start with full area
+
+    while (!pq.empty())
+    {
+        auto [elev, x, y] = pq.top();
+        pq.pop();
+
+        if (elev > Y) continue;
+
+        result[elev]--;
+        for (int d = 0; d < 4; ++d)
+        {
+            int nx = x + dx[d];
+            int ny = y + dy[d];
+
+            if (nx >= 0 && ny >= 0 && nx < H && ny < W && !visited[nx][ny])
+            {
+                visited[nx][ny] = true;
+                pq.emplace(A[nx][ny], nx, ny);
+            }
+        }
+    }
+
+    // Accumulate results from high elevations down to ensure correct sinking over time
+    for (int i = Y; i >= 1; --i)
+    {
+        result[i] = min(result[i], result[i + 1]);
+    }
+
+    for (int i = 1; i <= Y; ++i)
+    {
+        cout << result[i] << '\n';
+    }
+
+    return 0;
+}

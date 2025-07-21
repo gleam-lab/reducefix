@@ -1,0 +1,156 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+
+#define int long long
+
+const int MAX_M = 1005;
+
+int N, M;
+
+set<int> rows, cols;
+set<int> diag1, diag2;
+
+signed main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+
+    cin >> N >> M;
+
+    for (int i = 0; i < M; ++i) {
+        int x, y;
+        cin >> x >> y;
+
+        rows.insert(x);
+        cols.insert(y);
+        diag1.insert(x + y);
+        diag2.insert(x - y);
+    }
+
+    int total = N * N;
+
+    // Remove squares occupied by existing pieces
+    total -= M;
+
+    // Remove squares that are in the same row, column or diagonal as any existing piece
+    total -= (rows.size() + cols.size() + diag1.size() + diag2.size()) * (N - 1);
+
+    // Add back intersections of row-col
+    for (int r : rows) {
+        for (int c : cols) {
+            total += 1;
+        }
+    }
+
+    // Add back intersections of row-diag1
+    for (int r : rows) {
+        for (int d : diag1) {
+            int c = d - r;
+            if (1 <= c && c <= N) {
+                total += 1;
+            }
+        }
+    }
+
+    // Add back intersections of row-diag2
+    for (int r : rows) {
+        for (int d : diag2) {
+            int c = r + d;
+            if (1 <= c && c <= N) {
+                total += 1;
+            }
+        }
+    }
+
+    // Add back intersections of col-diag1
+    for (int c : cols) {
+        for (int d : diag1) {
+            int r = d - c;
+            if (1 <= r && r <= N) {
+                total += 1;
+            }
+        }
+    }
+
+    // Add back intersections of col-diag2
+    for (int c : cols) {
+        for (int d : diag2) {
+            int r = d + c;
+            if (1 <= r && r <= N) {
+                total += 1;
+            }
+        }
+    }
+
+    // Add back intersections of diag1-diag2
+    for (int d1 : diag1) {
+        for (int d2 : diag2) {
+            int x = (d1 + d2) / 2;
+            int y = (d1 - d2) / 2;
+            if (1 <= x && x <= N && 1 <= y && y <= N) {
+                total += 1;
+            }
+        }
+    }
+
+    // Subtract intersections of row-col-diag1
+    for (int r : rows) {
+        for (int c : cols) {
+            int d1 = r + c;
+            if (diag1.count(d1)) {
+                total -= 1;
+            }
+        }
+    }
+
+    // Subtract intersections of row-col-diag2
+    for (int r : rows) {
+        for (int c : cols) {
+            int d2 = r - c;
+            if (diag2.count(d2)) {
+                total -= 1;
+            }
+        }
+    }
+
+    // Subtract intersections of row-diag1-diag2
+    for (int r : rows) {
+        for (int d1 : diag1) {
+            for (int d2 : diag2) {
+                int x = (d1 + d2) / 2;
+                int y = (d1 - d2) / 2;
+                if (x == r && 1 <= x && x <= N && 1 <= y && y <= N) {
+                    total -= 1;
+                }
+            }
+        }
+    }
+
+    // Subtract intersections of col-diag1-diag2
+    for (int c : cols) {
+        for (int d1 : diag1) {
+            for (int d2 : diag2) {
+                int x = (d1 + d2) / 2;
+                int y = (d1 - d2) / 2;
+                if (y == c && 1 <= x && x <= N && 1 <= y && y <= N) {
+                    total -= 1;
+                }
+            }
+        }
+    }
+
+    // Add back intersections of row-col-diag1-diag2
+    for (int r : rows) {
+        for (int c : cols) {
+            int d1 = r + c;
+            int d2 = r - c;
+            if (diag1.count(d1) && diag2.count(d2)) {
+                total += 1;
+            }
+        }
+    }
+
+    cout << total << endl;
+
+    return 0;
+}

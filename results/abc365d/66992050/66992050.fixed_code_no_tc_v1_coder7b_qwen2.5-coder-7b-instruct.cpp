@@ -1,0 +1,53 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(NULL);
+
+    int N;
+    string S;
+    cin >> N >> S;
+
+    vector<int> wins(N, 0); // Array to store the maximum wins ending at each position
+    char prev_move = ' '; // Variable to keep track of the previous move
+
+    for(int i = 0; i < N; ++i) {
+        char current_move = S[i];
+        
+        // Determine the best move for Takahashi to win or not lose
+        if(current_move == 'R') {
+            if(prev_move != 'P') { // If Aoki plays Rock, Takahashi should play Paper to win
+                wins[i] = (i > 0 ? wins[i - 1] : 0) + 1;
+                prev_move = 'P';
+            } else {
+                wins[i] = (i > 0 ? wins[i - 1] : 0);
+                prev_move = 'R';
+            }
+        } else if(current_move == 'P') {
+            if(prev_move != 'S') { // If Aoki plays Paper, Takahashi should play Scissors to win
+                wins[i] = (i > 0 ? wins[i - 1] : 0) + 1;
+                prev_move = 'S';
+            } else {
+                wins[i] = (i > 0 ? wins[i - 1] : 0);
+                prev_move = 'P';
+            }
+        } else { // current_move == 'S'
+            if(prev_move != 'R') { // If Aoki plays Scissors, Takahashi should play Rock to win
+                wins[i] = (i > 0 ? wins[i - 1] : 0) + 1;
+                prev_move = 'R';
+            } else {
+                wins[i] = (i > 0 ? wins[i - 1] : 0);
+                prev_move = 'S';
+            }
+        }
+
+        // Ensure that Takahashi's moves do not repeat consecutively
+        if(i > 0 && wins[i] > wins[i - 1]) {
+            prev_move = current_move;
+        }
+    }
+
+    cout << wins[N - 1] << endl;
+    return 0;
+}

@@ -1,0 +1,57 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+const int MOD = 1e9 + 7;
+long long power(long long a, long long b) {
+    long long res = 1;
+    while (b > 0) {
+        if (b & 1) res = (res * a) % MOD;
+        a = (a * a) % MOD;
+        b >>= 1;
+    }
+    return res;
+}
+
+int main() {
+    int N, M, K;
+    cin >> N >> M >> K;
+    vector<long long> A(N);
+    for (int i = 0; i < N; ++i) cin >> A[i];
+
+    vector<pair<long long, int>> votes(N);
+    for (int i = 0; i < N; ++i) votes[i] = {A[i], i + 1};
+    
+    sort(votes.begin(), votes.end(), greater<pair<long long, int>>());
+
+    vector<long long> suffixSum(N);
+    suffixSum[0] = votes[0].first;
+    for (int i = 1; i < N; ++i) {
+        suffixSum[i] = suffixSum[i - 1] + votes[i].first;
+    }
+
+    long long remainingVotes = K - suffixSum[0];
+    long long requiredVotes = power(2, (int)M) - 1;
+
+    for (int i = 0; i < N; ++i) {
+        if (i + 1 < M) {
+            // Not enough candidates to compete
+            cout << "-1" << " ";
+        } else {
+            if (i == 0) {
+                // Only one candidate left, they automatically win
+                cout << "0 ";
+            } else {
+                long long votesNeeded = requiredVotes - suffixSum[i - 1];
+                if (votesNeeded <= remainingVotes) {
+                    cout << votesNeeded << " ";
+                } else {
+                    cout << "-1 ";
+                }
+                remainingVotes -= votesNeeded;
+            }
+        }
+    }
+    return 0;
+}

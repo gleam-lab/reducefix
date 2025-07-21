@@ -1,0 +1,50 @@
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+
+// Function to compute the minimum number of attacks needed for one enemy
+ll compute_attacks(ll t, ll h) {
+    // We need to simulate how many total attacks are needed to reduce health h to 0 or less
+    // Attacks at times that are multiples of 3 do 3 damage, otherwise 1 damage
+
+    ll low = 0;
+    ll high = 2 * h; // upper bound on number of attacks (worst case: all 1-damage)
+
+    while (low < high) {
+        ll mid = (low + high) / 2;
+        ll damage = 0;
+
+        // Count how many of the last `mid` attacks fall on multiples of 3
+        ll num_three_damage = mid / 3;
+        if ((t + mid) % 3 == 0) num_three_damage++; // check if final attack is multiple of 3
+
+        damage += num_three_damage * 3;
+        damage += (mid - num_three_damage) * 1;
+
+        if (damage >= h)
+            high = mid;
+        else
+            low = mid + 1;
+    }
+
+    return low;
+}
+
+int main() {
+    int n;
+    cin >> n;
+    vector<ll> H(n);
+    for (int i = 0; i < n; ++i) cin >> H[i];
+
+    ll T = 0;
+
+    for (int i = 0; i < n; ++i) {
+        ll h = H[i];
+        ll attacks_needed = compute_attacks(T, h);
+        T += attacks_needed;
+    }
+
+    cout << T << endl;
+
+    return 0;
+}

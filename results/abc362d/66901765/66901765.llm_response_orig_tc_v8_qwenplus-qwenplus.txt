@@ -1,0 +1,89 @@
+To solve this problem, we need to compute the **minimum path weight** from vertex `1` to every other vertex in a graph where both **vertex weights and edge weights contribute to the total path cost**. The key is to treat the combined cost of vertices and edges correctly during traversal.
+
+Here’s what's wrong with your original code:
+
+- Your Dijkstra implementation starts with `dis[1] = A[1]`, but when you move to neighbor nodes, you're adding `a[v] + w` (i.e., destination vertex weight and edge weight). This double-counts the destination node's weight if you don't subtract the source node's weight appropriately.
+- Since the initial node's weight is added once at the start, all subsequent steps should only add the edge weight and the new vertex weight — **but not include the current node's weight again**.
+
+### Solution Strategy:
+We use **Dijkstra's algorithm**, modified to handle the custom path cost definition:
+- The cost of a path is: `sum of all vertex weights along the path + sum of all edge weights along the path`.
+- We maintain a priority queue of `(current_cost, current_node)` pairs.
+- For each node, we update its minimum path cost if we find a better one through a neighboring node.
+- We must be careful **not to double-count node weights**.
+
+---
+
+### Fixed Code
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+#define int long long
+
+const int INF = 1e18;
+
+vector<vector<pair<int, int>>> G(200005); // G[u] = list of (v, B_uv)
+int dis[200005];                        // Minimum path cost to reach each node
+int A[200005];                         // Vertex weights
+bool vis[200005];                      // Visited array
+
+void dijkstra(int start, int N) {
+    fill(dis, dis + N + 1, INF);
+    dis[start] = A[start]; // Start includes weight of node 1
+    priority_queue<pair<int, int>, vector<pair<int, int>>, greater<>> pq;
+    pq.push({dis[start], start});
+
+    while (!pq.empty()) {
+        auto [d, u] = pq.top();
+        pq.pop();
+        if (vis[u]) continue;
+        vis[u] = true;
+
+        for (auto [v, b] : G[u]) {
+            // d already includes A[u]
+            int new_cost = d + b + A[v] - A[u]; // Subtract A[u] to avoid double count
+            if (!vis[v] && new_cost < dis[v]) {
+                dis[v] = new_cost;
+                pq.push({dis[v], v});
+            }
+        }
+    }
+}
+
+signed main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int N, M;
+    cin >> N >> M;
+    for (int i = 1; i <= N; ++i) {
+        cin >> A[i];
+    }
+
+    for (int i = 1; i <= M; ++i) {
+        int u, v, b;
+        cin >> u >> v >> b;
+        G[u].push_back({v, b});
+        G[v].push_back({u, b}); // Undirected graph
+    }
+
+    dijkstra(1, N);
+
+    for (int i = 2; i <= N; ++i) {
+        cout << dis[i] << " ";
+    }
+    cout << endl;
+
+    return 0;
+}
+```
+
+---
+
+### Key Fixes:
+- **Correctly account for vertex weights**: When moving from node `u` to `v`, the cost becomes `dis[u] + B_uv + A[v] - A[u]`. This ensures that only the new vertex's weight (`A[v]`) is added, avoiding duplication.
+- **Use min-heap for Dijkstra**: Ensures log(N) per operation and overall O(M log N) performance, which is efficient for large inputs.
+- **Avoid reprocessing visited nodes**: Standard Dijkstra optimization.
+
+This solution handles all constraints efficiently and correctly, including large graphs up to 200,000 nodes and edges.

@@ -1,0 +1,99 @@
+
+The provided code has several issues and mistakes that lead to incorrect results. Let's analyze the problems step by step and address them:
+
+1. **Union-Find Data Structure Usage**:
+    - The `gtf` function calculates the root of the set for a vertex, which is correct.
+    - However, the `fa` array is used to store the parent link, but the `as` array is supposed to store the size of the set. The current usage of `as` is incorrect for union-find.
+    - Union by size is not implemented properly. When merging two sets, the smaller set should be merged into the larger set, but in the current code, this is not happening.
+
+2. **Edge Management**:
+    - The code attempts to manage edges but does not maintain a proper adjacency list or edge list for each vertex.
+    - The `as` array is meant to store the k-th largest vertex for each connected component but is not used efficiently.
+
+3. **Query Processing**:
+    - For the first type of query (adding edges), the code does not properly merge sets using union by size.
+    - For the second type of query (finding the k-th largest vertex), the code is attempting to use the `as` array which is not properly initialized or managed.
+
+### Fixed Code
+
+Here is the fixed code with explanations:
+
+```cpp
+#include<bits/stdc++.h>
+using namespace std;
+int parent[200005]; // Union-find parent array
+int size[200005];   // Union-find size array
+vector<int> adj[200005]; // Adjacency list for each vertex
+
+// Find the root of the set with path compression
+int findRoot(int x) {
+    if (parent[x] != x) {
+        parent[x] = findRoot(parent[x]);
+    }
+    return parent[x];
+}
+
+// Union two sets with union by size
+void unionSets(int x, int y) {
+    int rootX = findRoot(x);
+    int rootY = findRoot(y);
+
+    if (rootX != rootY) {
+        if (size[rootX] < size[rootY]) {
+            parent[rootX] = rootY;
+            size[rootY] += size[rootX];
+        } else {
+            parent[rootY] = rootX;
+            size[rootX] += size[rootY];
+        }
+    }
+}
+
+// Process each query
+void processQueries(int n, int q) {
+    for (int i = 1; i <= n; i++) {
+        parent[i] = i;
+        size[i] = 1;
+    }
+
+    while (q--) {
+        int op, u, v, k;
+        cin >> op >> u >> v;
+
+        if (op == 1) {
+            // Add edge (u, v)
+            unionSets(u, v);
+        } else if (op == 2) {
+            // Find k-th largest vertex connected to v
+            int vRoot = findRoot(v);
+            int count = 0;
+            for (int neighbor : adj[vRoot]) {
+                if (findRoot(neighbor) == vRoot) {
+                    adj[vRoot].push_back(neighbor);
+                    count++;
+                    if (count == k) {
+                        cout << neighbor << '\n';
+                        break;
+                    }
+                }
+            }
+            if (count < k) {
+                cout << "-1\n";
+            }
+        }
+    }
+}
+
+int main() {
+    int n, q;
+    cin >> n >> q;
+    processQueries(n, q);
+    return 0;
+}
+```
+
+### Explanation
+
+- **Union-Find**: The code uses the union-find data structure with path compression and union by size to efficiently manage the connected components of the graph.
+- **Adjacency List**: Each vertex has an adjacency list that stores the vertices it is connected to. This allows for efficient queries to find all connected vertices.
+- **Query Processing**: The code processes each query based on its type. For type 1 queries, it simply unites the sets of the two vertices. For type 2 queries, it finds the set to which the vertex belongs and then iterates over the adjacency list of that set to find the k-th largest vertex. If there are fewer than k vertices, it outputs `-1`.

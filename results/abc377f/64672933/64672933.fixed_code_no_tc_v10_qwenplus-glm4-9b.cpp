@@ -1,0 +1,44 @@
+#include<bits/stdc++.h>
+using namespace std;
+
+long long solve(long long N, long long M, vector<pair<long long, long long>>& pieces) {
+    // Calculate initial available cells
+    long long cells = N * N;
+    
+    // Check rows and columns
+    for (auto& p : pieces) {
+        if (p.first == 1 || p.second == 1) {
+            cells--;
+        }
+    }
+    
+    // Check diagonals
+    for (long long i = 2; i <= N; ++i) {
+        long long l = lower_bound(pieces.begin(), pieces.end(), make_pair(i, i)) - pieces.begin();
+        long long r = upper_bound(pieces.begin(), pieces.end(), make_pair(i, -i)) - pieces.begin() - 1;
+        if (l <= r) {
+            cells -= (r - l + 1);
+        }
+        l = lower_bound(pieces.begin(), pieces.end(), make_pair(-i, i)) - pieces.begin();
+        r = upper_bound(pieces.begin(), pieces.end(), make_pair(-i, -i)) - pieces.begin() - 1;
+        if (l <= r) {
+            cells -= (r - l + 1);
+        }
+    }
+    
+    return cells;
+}
+
+int main() {
+    long long N, M;
+    cin >> N >> M;
+    vector<pair<long long, long long>> pieces(M);
+    for (long long i = 0; i < M; ++i) {
+        cin >> pieces[i].first >> pieces[i].second;
+        pieces[i].first -= 1; // Convert to zero-indexed
+        pieces[i].second -= 1;
+    }
+    
+    cout << solve(N, M, pieces) << '\n';
+    return 0;
+}

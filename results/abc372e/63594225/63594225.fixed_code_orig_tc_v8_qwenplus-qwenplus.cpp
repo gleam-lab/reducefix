@@ -1,0 +1,89 @@
+#include "bits/stdc++.h"
+
+using namespace std;
+
+#define ff first
+#define ss second
+#define ll long long
+#define SZ(s) (int)s.size()
+
+int const N = 2e5 + 5;
+
+vector <vector <int>> component(N);
+
+vector <int> parent;
+
+int find(int x) {
+    if(parent[x] != x) {
+        parent[x] = find(parent[x]);
+    }
+    return parent[x];
+}
+
+void unite(int a, int b) {
+    int rootA = find(a);
+    int rootB = find(b);
+    
+    if (rootA == rootB)
+        return;
+    
+    // Always merge smaller into larger for efficiency
+    if (component[rootA].size() < component[rootB].size()) {
+        swap(rootA, rootB);
+    }
+
+    // Merge the components
+    component[rootA].insert(
+        component[rootA].end(),
+        make_move_iterator(component[rootB].begin()),
+        make_move_iterator(component[rootB].end())
+    );
+
+    // Sort in descending order and keep top 100 elements
+    sort(component[rootA].begin(), component[rootA].end(), greater<int>());
+    if (component[rootA].size() > 100) {
+        component[rootA].resize(100);
+    }
+
+    // Update parent pointer
+    parent[rootB] = rootA;
+}
+
+int main() {
+    ios_base::sync_with_stdio(false); cin.tie(nullptr);
+
+    int n, q;
+    cin >> n >> q;
+
+    // Initialize each node as its own parent
+    parent.resize(n + 1);
+    for (int i = 0; i <= n; ++i) {
+        parent[i] = i;
+    }
+
+    // Each component initially contains only itself
+    component.resize(n + 1);
+    for (int i = 1; i <= n; ++i) {
+        component[i].push_back(i);
+    }
+
+    while (q--) {
+        int t, a, b;
+        cin >> t >> a >> b;
+        if (t == 1) {
+            int u, v;
+            u = a, v = b;
+            unite(u, v);
+        } else {
+            int v = a, k = b;
+            int root = find(v);
+            if (component[root].size() < k) {
+                cout << -1 << '\n';
+            } else {
+                cout << component[root][k-1] << '\n';
+            }
+        }
+    }
+
+    return 0;
+}

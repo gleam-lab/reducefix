@@ -1,0 +1,87 @@
+To fix this code, we need to address several issues:
+
+1. **Input Reading**: The original code incorrectly reads `q` before `n`, which should be the other way around since the input specifies `N` (number of vertices) followed by `Q` (number of queries).
+
+2. **Union-Find Data Structure**: The union-find (disjoint set) implementation is mostly correct but needs to ensure path compression is properly applied. The current implementation has a minor bug in the path compression logic where it updates `fa[l]` before moving to the next parent.
+
+3. **Handling Connected Components**: The code attempts to maintain the top 10 largest vertices in each connected component. However, the merging logic is flawed. When merging two components, it incorrectly appends the second component's top 10 to the first's and then sorts the combined list. This approach does not correctly maintain the top 10 elements after merging.
+
+4. **Edge Cases**: The code does not handle cases where the number of connected vertices is less than `k` for Type 2 queries, which should return `-1`.
+
+5. **Efficiency**: Given the constraints, the solution needs to efficiently handle up to 200,000 queries. The original approach may not be efficient enough due to the sorting step during each union operation.
+
+### Fixed Approach
+- **Union-Find with Path Compression**: Use the standard union-find data structure with path compression to efficiently manage connected components.
+- **Maintaining Top Elements**: For each component, maintain a sorted list (in descending order) of the top 10 largest vertices. When merging two components, merge their top 10 lists, sort the combined list, and keep only the top 10 elements.
+- **Handling Queries**: For Type 2 queries, simply access the `k-1`th element in the sorted list of the component's top vertices if it exists; otherwise, return `-1`.
+
+### Fixed Code
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+const int MAXN = 200005;
+int parent[MAXN];
+vector<int> top[MAXN]; // Each component's top 10 largest vertices in descending order
+
+int find(int x) {
+    if (parent[x] != x) {
+        parent[x] = find(parent[x]);
+    }
+    return parent[x];
+}
+
+void unite(int x, int y) {
+    x = find(x);
+    y = find(y);
+    if (x == y) return;
+    if (top[x].size() < top[y].size()) {
+        swap(x, y);
+    }
+    // Merge top[y] into top[x]
+    vector<int> merged;
+    merge(top[x].begin(), top[x].end(), top[y].begin(), top[y].end(), back_inserter(merged), greater<int>());
+    if (merged.size() > 10) {
+        merged.resize(10);
+    }
+    top[x] = merged;
+    parent[y] = x;
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int N, Q;
+    cin >> N >> Q;
+    
+    for (int i = 1; i <= N; ++i) {
+        parent[i] = i;
+        top[i] = {i};
+    }
+    
+    while (Q--) {
+        int op, u, v;
+        cin >> op >> u >> v;
+        if (op == 1) {
+            unite(u, v);
+        } else {
+            int root = find(u);
+            if (v > top[root].size()) {
+                cout << -1 << '\n';
+            } else {
+                cout << top[root][v - 1] << '\n';
+            }
+        }
+    }
+    
+    return 0;
+}
+```
+
+### Explanation
+1. **Union-Find with Path Compression**: The `find` function uses path compression to ensure future queries are faster.
+2. **Maintaining Top Elements**: Each component's top 10 largest vertices are stored in a vector. When merging two components, the vectors are merged and sorted in descending order, keeping only the top 10 elements.
+3. **Handling Queries**: For Type 2 queries, the code checks if the requested index `k` is within the bounds of the top elements vector. If not, it returns `-1`; otherwise, it returns the `k-1`th element (0-indexed) from the sorted list.
+
+This approach ensures that the operations are efficient and meet the problem's constraints.

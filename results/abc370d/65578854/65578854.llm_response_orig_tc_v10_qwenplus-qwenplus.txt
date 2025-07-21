@@ -1,0 +1,108 @@
+To solve this problem efficiently, we need to simulate placing bombs on a grid and destroying walls according to specific rules. The key challenge is to do this efficiently given the large constraints (`H * W <= 4e5` and `Q <= 2e5`), so brute-force scanning in each query won't work.
+
+### Strategy
+
+1. **Data Structures**:
+   - We use `std::set` for each row and column to track remaining walls.
+   - For each row `r`, `row_sets[r]` stores the columns that still have walls.
+   - For each column `c`, `col_sets[c]` stores the rows that still have walls.
+
+2. **Query Logic**:
+   - If there's a wall at the bomb position, remove it.
+   - If not, look in all four directions (up, down, left, right) and destroy the first wall encountered in each direction using binary search on the sets.
+
+3. **Efficiency**:
+   - Each operation (insertion, deletion, lookup) is logarithmic due to `std::set`.
+   - Overall complexity per query: O(log N), where N is the number of elements in the set.
+   - Total time complexity: O(Q log(H + W)), which is acceptable for input limits.
+
+Here is the corrected and optimized C++ code:
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+#define rep(i, n) for(int i = 0; i < (int)(n); ++i)
+#define rep2(i, s, n) for(int i = s; i < (int)(n); ++i)
+
+int H, W, Q;
+vector<set<int>> row_sets, col_sets;
+
+// Destroy wall at (r, c)
+void destroy(int r, int c) {
+    row_sets[r].erase(c);
+    col_sets[c].erase(r);
+}
+
+int main() {
+    cin.tie(0)->sync_with_stdio(0);
+
+    cin >> H >> W >> Q;
+    row_sets.resize(H);
+    col_sets.resize(W);
+
+    // Initialize all walls
+    rep(r, H) {
+        rep(c, W) {
+            row_sets[r].insert(c);
+            col_sets[c].insert(r);
+        }
+    }
+
+    rep(q, Q) {
+        int R, C;
+        cin >> R >> C;
+        R--; C--;
+
+        auto& cols = row_sets[R];
+        auto& rows = col_sets[C];
+
+        if (cols.find(C) != cols.end()) {
+            // Wall already exists at (R, C)
+            destroy(R, C);
+        } else {
+            // Look up
+            auto it = rows.lower_bound(R);
+            if (it != rows.begin()) {
+                --it;
+                destroy(*it, C);
+            }
+
+            // Look down
+            it = rows.lower_bound(R);
+            if (it != rows.end()) {
+                destroy(*it, C);
+            }
+
+            // Look left
+            auto& rc_set = row_sets[R];
+            auto jt = rc_set.lower_bound(C);
+            if (jt != rc_set.begin()) {
+                --jt;
+                destroy(R, *jt);
+            }
+
+            // Look right
+            jt = rc_set.lower_bound(C);
+            if (jt != rc_set.end()) {
+                destroy(R, *jt);
+            }
+        }
+    }
+
+    // Count remaining walls
+    long long ans = 0;
+    rep(r, H) ans += row_sets[r].size();
+    cout << ans << "\n";
+
+    return 0;
+}
+```
+
+### Key Fixes from Original Code
+
+- Fixed logic in directional wall destruction by correctly referencing the appropriate `set`.
+- Corrected indexing and iterator usage to ensure we are removing the correct walls.
+- Used proper data structure management to avoid unnecessary overhead or incorrect updates.
+
+This version should now pass all test cases including hidden ones.

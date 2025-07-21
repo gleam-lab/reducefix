@@ -1,0 +1,1 @@
+printf("%lld ", dis[i] + a[i]);

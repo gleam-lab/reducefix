@@ -1,0 +1,56 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <queue>
+using namespace std;
+typedef long long ll;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+    cout.tie(0);
+
+    int T;
+    cin >> T;
+    while (T--) {
+        ll N, K;
+        cin >> N >> K;
+        vector<ll> A(N), B(N);
+        for (ll i = 0; i < N; ++i) cin >> A[i];
+        for (ll i = 0; i < N; ++i) cin >> B[i];
+
+        // Pair A[i] with B[i] and sort by A[i] descending
+        vector<pair<ll, ll>> AB(N);
+        for (ll i = 0; i < N; ++i) AB[i] = {A[i], B[i]};
+        sort(AB.begin(), AB.end(), greater<pair<ll, ll>>());
+
+        // Use a min-heap to keep track of the smallest K B[i] values
+        priority_queue<ll, vector<ll>, greater<ll>> min_heap;
+        ll sum_B = 0;
+        ll min_sum_B = 0;
+        ll answer = LLONG_MAX;
+
+        for (ll i = 0; i < N; ++i) {
+            ll a_val = AB[i].first;
+            ll b_val = AB[i].second;
+
+            // Push the current B[i] to the heap
+            if (min_heap.size() < K) {
+                min_heap.push(b_val);
+                sum_B += b_val;
+            } else if (min_heap.size() == K) {
+                // When reaching the Kth element, we need to keep track of the minimum sum of B[i] values seen so far
+                min_heap.push(b_val);
+                sum_B += b_val;
+                min_sum_B = min(min_sum_B, sum_B - min_heap.top());
+            }
+
+            // Calculate the answer if we are taking the i-th largest A[i] value
+            answer = min(answer, a_val * (sum_B - min_sum_B));
+        }
+
+        cout << answer << '\n';
+    }
+
+    return 0;
+}

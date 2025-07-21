@@ -1,0 +1,112 @@
+To solve this problem efficiently, we need to simulate the placement of bombs on a grid and destroy walls according to specific rules. The challenge lies in handling up to 200,000 queries on a potentially large grid (up to 400,000 cells), which requires an efficient data structure.
+
+---
+
+### Key Observations:
+1. Each cell starts with a wall.
+2. When a bomb is placed:
+   - If the cell has a wall: it's destroyed.
+   - If not: look in all four directions (up, down, left, right) and destroy the **first** wall found in each direction.
+3. This means for each row/column, we need fast access to the nearest walls in both directions — which suggests using ordered sets (`std::set`) to store remaining walls.
+
+---
+
+### Efficient Strategy:
+- Maintain two arrays of `set<int>`:
+  - `row_walls[i]`: set of columns where there are still walls in row `i`.
+  - `col_walls[j]`: set of rows where there are still walls in column `j`.
+- For each query:
+  - Check if current cell `(r, c)` has a wall by checking `row_walls[r].count(c)`.
+    - If yes: remove from both sets.
+    - If no: use `lower_bound` and `--lower_bound` to find nearest walls in all four directions and remove them if they exist.
+
+This approach ensures O(log N) operations per query, which is efficient enough for large inputs.
+
+---
+
+### Corrected & Optimized Code:
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+
+    int H, W, Q;
+    cin >> H >> W >> Q;
+
+    vector<set<int>> row_walls(H), col_walls(W);
+    for (int i = 0; i < H; ++i) {
+        for (int j = 0; j < W; ++j) {
+            row_walls[i].insert(j);
+            col_walls[j].insert(i);
+        }
+    }
+
+    while (Q--) {
+        int r, c;
+        cin >> r >> c;
+        r--; c--;
+
+        if (row_walls[r].find(c) != row_walls[r].end()) {
+            // Wall exists at (r,c)
+            row_walls[r].erase(c);
+            col_walls[c].erase(r);
+        } else {
+            // Look in four directions
+
+            // Up and Down
+            auto& col_set = col_walls[c];
+            auto it_down = col_set.lower_bound(r);
+            if (it_down != col_set.end()) {
+                int y = *it_down;
+                row_walls[y].erase(c);
+                col_set.erase(it_down);
+            }
+
+            auto it_up = col_set.lower_bound(r);
+            if (it_up != col_set.begin()) {
+                --it_up;
+                int y = *it_up;
+                row_walls[y].erase(c);
+                col_set.erase(it_up);
+            }
+
+            // Left and Right
+            auto& row_set = row_walls[r];
+            auto it_right = row_set.lower_bound(c);
+            if (it_right != row_set.end()) {
+                int x = *it_right;
+                col_walls[x].erase(r);
+                row_set.erase(it_right);
+            }
+
+            auto it_left = row_set.lower_bound(c);
+            if (it_left != row_set.begin()) {
+                --it_left;
+                int x = *it_left;
+                col_walls[x].erase(r);
+                row_set.erase(it_left);
+            }
+        }
+    }
+
+    long long ans = 0;
+    for (int i = 0; i < H; ++i) {
+        ans += row_walls[i].size();
+    }
+    cout << ans << '\n';
+
+    return 0;
+}
+```
+
+---
+
+### Summary:
+- Uses `std::set` to maintain order and allow efficient lookup/erasure.
+- Handles all cases correctly including when walls don't exist in some directions.
+- Achieves acceptable performance for max constraints.
+- Avoids unnecessary debugging prints or incorrect logic (as in the original code).

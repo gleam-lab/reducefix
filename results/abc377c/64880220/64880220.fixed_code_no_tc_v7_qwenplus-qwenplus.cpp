@@ -1,0 +1,43 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    long long N, M;
+    cin >> N >> M;
+
+    // Set to store all occupied squares and threatened empty squares
+    unordered_set<string> threatened_or_occupied;
+
+    // Function to convert (a, b) to a string key for the hash set
+    auto to_key = [](long long a, long long b) {
+        return to_string(a) + "," + to_string(b);
+    };
+
+    vector<pair<long long, long long>> attack_offsets = {
+        {2, 1}, {1, 2}, {-1, 2}, {-2, 1},
+        {-2, -1}, {-1, -2}, {1, -2}, {2, -1}
+    };
+
+    for (long long i = 0; i < M; ++i) {
+        long long a, b;
+        cin >> a >> b;
+
+        // Mark current piece as occupied
+        threatened_or_occupied.insert(to_key(a, b));
+
+        // Mark all 8 possible attacked positions
+        for (auto [dx, dy] : attack_offsets) {
+            long long x = a + dx;
+            long long y = b + dy;
+            if (x >= 1 && x <= N && y >= 1 && y <= N) {
+                threatened_or_occupied.insert(to_key(x, y));
+            }
+        }
+    }
+
+    // The total number of usable squares is total squares minus
+    // the number of occupied or threatened squares
+    cout << (N * N - (long long)threatened_or_occupied.size()) << endl;
+
+    return 0;
+}

@@ -1,0 +1,39 @@
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+#define rep(i, n) for (ll i = 0; i < (ll)(n); i++)
+#define rep2(i, s, n) for (ll i = (s); i < (ll)(n); i++)
+#define all(x) x.begin(), x.end()
+template<typename T> inline bool chmax(T &a, T b) { return ((a < b) ? (a = b, true) : (false)); }
+template<typename T> inline bool chmin(T &a, T b) { return ((a > b) ? (a = b, true) : (false)); }
+
+int main() {
+    int H, W, Q;
+    cin >> H >> W >> Q;
+    vector<vector<bool>> grid(H, vector<bool>(W, true));
+    ll ans = H * W;
+    rep(itr, Q){
+        int R, C;
+        cin >> R >> C;
+        R--; C--;
+        if(grid[R][C]){
+            grid[R][C] = false;
+            ans--;
+        } else {
+            // Find the nearest walls in all four directions
+            int top = R, bottom = R, left = C, right = C;
+            while(top > 0 && !grid[--top][C]) {}
+            while(bottom < H-1 && !grid[++bottom][C]) {}
+            while(left > 0 && !grid[R][--left]) {}
+            while(right < W-1 && !grid[R][++right]) {}
+
+            // Erase the nearest walls
+            if(top != R) grid[top][C] = false, ans--;
+            if(bottom != R) grid[bottom][C] = false, ans--;
+            if(left != C) grid[R][left] = false, ans--;
+            if(right != C) grid[R][right] = false, ans--;
+        }
+    }
+    cout << ans << endl;
+    return 0;
+}

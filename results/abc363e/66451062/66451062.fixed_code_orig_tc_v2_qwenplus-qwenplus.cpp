@@ -1,0 +1,71 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+#define int long long
+#define close ios::sync_with_stdio(false); cin.tie(0); cout.tie(0);
+const int MAXN = 1005;
+const int dx[] = {0, 0, 1, -1};
+const int dy[] = {1, -1, 0, 0};
+
+struct Cell {
+    int x, y, h;
+    bool operator<(const Cell& other) const {
+        return h < other.h;
+    }
+};
+
+signed main() {
+    close;
+    int H, W, Y;
+    cin >> H >> W >> Y;
+    
+    int grid[H][W];
+    for (int i = 0; i < H; ++i)
+        for (int j = 0; j < W; ++j)
+            cin >> grid[i][j];
+    
+    // Priority queue to process cells in increasing order of height
+    priority_queue<Cell, vector<Cell>, greater<>> pq;
+    bool visited[H][W];
+    memset(visited, false, sizeof(visited));
+    
+    // Mark boundary cells and add them to the priority queue
+    for (int i = 0; i < H; ++i) {
+        for (int j = 0; j < W; ++j) {
+            if (i == 0 || i == H - 1 || j == 0 || j == W - 1) {
+                visited[i][j] = true;
+                pq.push({i, j, grid[i][j]});
+            }
+        }
+    }
+
+    int totalArea = H * W;
+    int year = 1;
+    int idx = 0;
+    vector<int> result(Y + 2);
+
+    while (idx <= Y) {
+        while (!pq.empty() && pq.top().h <= year) {
+            Cell cur = pq.top();
+            pq.pop();
+            if (!visited[cur.x][cur.y]) {
+                totalArea--;
+                visited[cur.x][cur.y] = true;
+            }
+            for (int d = 0; d < 4; ++d) {
+                int nx = cur.x + dx[d];
+                int ny = cur.y + dy[d];
+                if (nx >= 0 && nx < H && ny >= 0 && ny < W && !visited[nx][ny]) {
+                    pq.push({nx, ny, grid[nx][ny]});
+                }
+            }
+        }
+        result[idx++] = totalArea;
+        year++;
+    }
+
+    for (int i = 1; i <= Y; ++i)
+        cout << result[i] << '\n';
+
+    return 0;
+}

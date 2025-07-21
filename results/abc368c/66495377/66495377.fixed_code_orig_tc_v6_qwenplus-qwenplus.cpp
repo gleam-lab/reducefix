@@ -1,0 +1,59 @@
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+
+// Function to calculate how many attacks are needed to reduce health h to 0 or less
+// given that the first attack occurs at time t
+ll attacks_needed(ll t, ll h) {
+    // We'll perform full cycles of 3 attacks:
+    // - Two normal attacks (damage 1)
+    // - One triple attack (damage 3)
+    // Each cycle deals 5 damage and takes 3 seconds
+
+    ll full_cycles = h / 5;
+    ll remaining_health = h % 5;
+
+    ll total_attacks = full_cycles * 3;
+
+    // After full cycles, we need to deal with remaining health
+    if (remaining_health > 0) {
+        // We need one more attack for each point of remaining health
+        // but we have to account for whether T is a multiple of 3
+        for (ll i = 0; i < remaining_health; ++i) {
+            t += 1;
+            if (t % 3 == 0) {
+                total_attacks += 1;
+            } else {
+                total_attacks += 1;
+            }
+        }
+    }
+
+    return total_attacks;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int n;
+    cin >> n;
+    
+    vector<ll> H(n);
+    for (int i = 0; i < n; ++i) {
+        cin >> H[i];
+    }
+
+    ll T = 0;
+    for (int i = 0; i < n; ++i) {
+        ll h = H[i];
+        if (h == 0) continue;  // Skip if health is already 0
+        
+        // Calculate number of attacks needed for this enemy
+        ll attacks = attacks_needed(T, h);
+        T += attacks;
+    }
+
+    cout << T << endl;
+    return 0;
+}

@@ -1,0 +1,55 @@
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+using P = pair<ll, ll>; // (cost, node)
+
+const ll INF = 1e18;
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    ll N, M;
+    cin >> N >> M;
+
+    vector<ll> A(N);
+    for (ll i = 0; i < N; ++i) {
+        cin >> A[i];
+    }
+
+    vector<vector<P>> G(N); // (to, edge_cost)
+    for (ll i = 0; i < M; ++i) {
+        ll u, v, b;
+        cin >> u >> v >> b;
+        u--; v--;
+        G[u].emplace_back(v, b);
+        G[v].emplace_back(u, b);
+    }
+
+    vector<ll> ans(N, INF);
+    priority_queue<P, vector<P>, greater<>> pq;
+    ans[0] = A[0]; // Starting point includes its own vertex weight
+    pq.emplace(ans[0], 0);
+
+    while (!pq.empty()) {
+        auto [current_cost, u] = pq.top();
+        pq.pop();
+
+        if (current_cost > ans[u]) continue;
+
+        for (auto [v, edge_cost] : G[u]) {
+            ll new_cost = current_cost + edge_cost + A[v];
+            if (new_cost < ans[v]) {
+                ans[v] = new_cost;
+                pq.emplace(ans[v], v);
+            }
+        }
+    }
+
+    for (ll i = 1; i < N; ++i) {
+        cout << ans[i] << " ";
+    }
+    cout << '\n';
+
+    return 0;
+}

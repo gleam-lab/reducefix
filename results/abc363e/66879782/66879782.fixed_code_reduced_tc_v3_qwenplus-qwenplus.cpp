@@ -1,0 +1,111 @@
+#include <bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+
+const int MAXN = 1005;
+const int MAXH = 100005;
+const int INF = 1e9 + 5;
+
+int H, W, Y;
+int A[MAXN][MAXN];
+bool visited[MAXN][MAXN];
+int sink_time[MAXN][MAXN];
+
+// Directions: up, down, left, right
+int dx[4] = {-1, 1, 0, 0};
+int dy[4] = {0, 0, -1, 1};
+
+// For priority queue: {height, {x, y}}
+typedef pair<int, pair<int, int>> pqnode;
+priority_queue<pqnode, vector<pqnode>, greater<pqnode>> pq;
+
+void input() {
+    cin >> H >> W >> Y;
+    for (int i = 0; i < H; ++i) {
+        for (int j = 0; j < W; ++j) {
+            cin >> A[i][j];
+            sink_time[i][j] = INF;
+        }
+    }
+}
+
+// Check if cell is on the boundary
+bool is_boundary(int x, int y) {
+    return (x == 0 || x == H - 1 || y == 0 || y == W - 1);
+}
+
+// BFS-like flood fill from boundaries using min-heap (priority queue)
+void preprocess_sink_times() {
+    // Initialize boundary cells into PQ with their height
+    for (int i = 0; i < H; ++i) {
+        for (int j = 0; j < W; ++j) {
+            if (is_boundary(i, j)) {
+                pq.push({A[i][j], {i, j}});
+                sink_time[i][j] = A[i][j];
+            }
+        }
+    }
+
+    while (!pq.empty()) {
+        auto [curr_h, pos] = pq.top();
+        auto [x, y] = pos;
+        pq.pop();
+
+        if (visited[x][y]) continue;
+        visited[x][y] = true;
+
+        for (int d = 0; d < 4; ++d) {
+            int nx = x + dx[d];
+            int ny = y + dy[d];
+            if (nx >= 0 && nx < H && ny >= 0 && ny < W && !visited[nx][ny]) {
+                // The time when this cell gets submerged is max of current path
+                int new_sink_time = max(curr_h, A[nx][ny]);
+                if (new_sink_time < sink_time[nx][ny]) {
+                    sink_time[nx][ny] = new_sink_time;
+                    pq.push({new_sink_time, {nx, ny}});
+                }
+            }
+        }
+    }
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    input();
+
+    // Initialize sink_time to INF and process using Dijkstra-like approach
+    memset(visited, 0, sizeof(visited));
+    for (int i = 0; i < H; ++i) {
+        for (int j = 0; j < W; ++j) {
+            sink_time[i][j] = INF;
+        }
+    }
+
+    preprocess_sink_times();
+
+    // Count how many cells sink at each year
+    vector<int> area_after_year(Y + 2, 0);  // 1-based indexing
+
+    for (int i = 0; i < H; ++i) {
+        for (int j = 0; j < W; ++j) {
+            if (sink_time[i][j] <= Y) {
+                area_after_year[sink_time[i][j]]++;
+            }
+        }
+    }
+
+    // Prefix sum: total cells sunk by year i
+    for (int i = 1; i <= Y; ++i) {
+        area_after_year[i] += area_after_year[i - 1];
+    }
+
+    // Output remaining area
+    int total_cells = H * W;
+    for (int i = 1; i <= Y; ++i) {
+        cout << total_cells - area_after_year[i] << "\n";
+    }
+
+    return 0;
+}

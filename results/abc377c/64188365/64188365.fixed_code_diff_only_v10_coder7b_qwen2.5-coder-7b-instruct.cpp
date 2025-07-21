@@ -1,0 +1,32 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    long long n, m;
+    cin >> n >> m;
+    
+    // Using unordered_set for O(1) average time complexity insert and find operations
+    unordered_set<long long> c;
+    
+    rep(i, m) {
+        long long a, b;
+        cin >> a >> b;
+        --a, --b; // Adjusting indices to 0-based
+        
+        // Adding current position
+        c.insert((a * n) + b);
+        
+        // Adding all possible positions that can be captured by the current piece
+        if (a + 2 < n && b + 1 < n) c.insert(((a + 2) * n) + (b + 1));
+        if (a + 2 < n && b - 1 >= 0) c.insert(((a + 2) * n) + (b - 1));
+        if (a + 1 < n && b + 2 < n) c.insert(((a + 1) * n) + (b + 2));
+        if (a + 1 < n && b - 2 >= 0) c.insert(((a + 1) * n) + (b - 2));
+        if (a - 2 >= 0 && b + 1 < n) c.insert(((a - 2) * n) + (b + 1));
+        if (a - 2 >= 0 && b - 1 >= 0) c.insert(((a - 2) * n) + (b - 1));
+        if (a - 1 >= 0 && b + 2 < n) c.insert(((a - 1) * n) + (b + 2));
+        if (a - 1 >= 0 && b - 2 >= 0) c.insert(((a - 1) * n) + (b - 2));
+    }
+
+    // Total empty squares minus the squares occupied by pieces or their capturable positions
+    cout << n * n - c.size() << endl;
+}

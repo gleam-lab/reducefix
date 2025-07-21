@@ -1,0 +1,59 @@
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+using VI = vector<int>;
+using P = pair<int, int>;
+constexpr int INF = 1001001001;
+constexpr ll LINF = 1001001001001001001ll;
+
+#define rep(i, n) for (ll i = 0; i < (ll)(n); i++)
+#define rep2(i, k, n) for (ll i = k; i < (ll)(n); i++)
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+    
+    int T;
+    cin >> T;
+    
+    while (T--) {
+        int N, K;
+        cin >> N >> K;
+        vector<P> items(N);
+        for (int i = 0; i < N; ++i) {
+            cin >> items[i].first;
+        }
+        for (int i = 0; i < N; ++i) {
+            cin >> items[i].second;
+        }
+
+        // Sort by A_i in increasing order
+        sort(items.begin(), items.end());
+
+        multiset<ll> b_values;
+        ll sumB = 0;
+        // Initialize with first K elements
+        for (int i = 0; i < K; ++i) {
+            b_values.insert(items[i].second);
+            sumB += items[i].second;
+        }
+
+        ll ans = items[K - 1].first * sumB;
+
+        // Try adding better B values
+        for (int i = K; i < N; ++i) {
+            // Remove the largest B in current set
+            sumB -= *b_values.rbegin();
+            b_values.erase(prev(b_values.end()));
+            // Add new B value
+            sumB += items[i].second;
+            b_values.insert(items[i].second);
+            // Update answer using current max A_i (A[i])
+            ans = min(ans, items[i].first * sumB);
+        }
+
+        cout << ans << '\n';
+    }
+
+    return 0;
+}

@@ -1,0 +1,62 @@
+#include <bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+#define all(x) (x).begin(), (x).end()
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int N, M;
+    ll K;
+    cin >> N >> M >> K;
+    vector<ll> A(N);
+    for (ll &a : A) {
+        cin >> a;
+        K -= a;
+    }
+
+    // ord[i] = original index of the candidate with i-th smallest current votes
+    vector<int> ord(N);
+    iota(all(ord), 0);
+    sort(all(ord), [&](int i, int j) { return A[i] < A[j]; });
+
+    vector<ll> sorted_A = A;
+    sort(all(sorted_A));
+
+    vector<ll> prefix_sum(N + 1);
+    for (int i = 0; i < N; ++i) {
+        prefix_sum[i + 1] = prefix_sum[i] + sorted_A[i];
+    }
+
+    vector<ll> result(N, -1);
+
+    for (int idx = 0; idx < N; ++idx) {
+        ll left = 0, right = K;
+        ll ans = -1;
+
+        while (left <= right) {
+            ll mid = (left + right) / 2;
+            ll required_votes = sorted_A[idx] + mid;
+
+            // Find how many candidates have strictly more votes than required_votes
+            int stronger = N - (upper_bound(all(sorted_A), required_votes) - sorted_A.begin());
+
+            if (stronger < M) {
+                ans = mid;
+                right = mid - 1;
+            } else {
+                left = mid + 1;
+            }
+        }
+
+        result[ord[idx]] = ans;
+    }
+
+    for (ll val : result) {
+        cout << val << " ";
+    }
+    cout << "\n";
+
+    return 0;
+}

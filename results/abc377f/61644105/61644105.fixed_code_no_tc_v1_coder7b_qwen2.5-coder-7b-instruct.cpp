@@ -1,0 +1,75 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+typedef long long ll;
+
+const int MAX_N = 1000;
+
+ll n, m;
+vector<ll> row, col, up[2], down[2];
+
+bool exists(vector<ll>& arr, ll val) {
+    return binary_search(arr.begin(), arr.end(), val);
+}
+
+ll count(vector<ll>& arr, ll l, ll r) {
+    auto lb = lower_bound(arr.begin(), arr.end(), l);
+    auto ub = upper_bound(arr.begin(), arr.end(), r);
+    return ub - lb;
+}
+
+void preprocess() {
+    sort(row.begin(), row.end());
+    sort(col.begin(), col.end());
+    sort(up[0].begin(), up[0].end());
+    sort(up[1].begin(), up[1].end());
+    sort(down[0].begin(), down[0].end());
+    sort(down[1].begin(), down[1].end());
+}
+
+ll solve() {
+    ll ans = n * n - m;
+    
+    // Remove squares that can be captured by pieces in the same row or column
+    for (auto x : col) {
+        ans -= count(row, 1, x - 1) + count(row, x + 1, n);
+    }
+    
+    for (auto y : row) {
+        ans -= count(col, 1, y - 1) + count(col, y + 1, n);
+    }
+
+    // Remove squares that can be captured by pieces in the same diagonal
+    for (auto u : up[0]) {
+        ans -= count(up[1], -u + 1, n - u);
+    }
+    
+    for (auto d : down[0]) {
+        ans -= count(down[1], d + 1, n + d);
+    }
+
+    return ans;
+}
+
+int main() {
+    cin >> n >> m;
+    row.resize(n + 1);
+    col.resize(n + 1);
+    up[0].resize(n + 1);
+    up[1].resize(n + 1);
+    down[0].resize(n + 1);
+    down[1].resize(n + 1);
+
+    for (ll i = 1; i <= m; ++i) {
+        ll x, y;
+        cin >> x >> y;
+        row[i] = x;
+        col[i] = y;
+        up[(x + y) % 2].push_back(x - y);
+        down[(x + y) % 2].push_back(x + y);
+    }
+
+    preprocess();
+    cout << solve() << endl;
+    return 0;
+}

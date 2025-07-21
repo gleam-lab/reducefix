@@ -1,0 +1,24 @@
+#include <iostream>
+#include <algorithm>
+#include <limits>
+
+using namespace std;
+
+int main() {
+    int n;
+    long long dp0, dp1, x;
+    cin >> n;
+
+    dp0 = 0;
+    dp1 = -numeric_limits<long long>::max(); // Initialize to negative infinity
+
+    for (int i = 0; i < n; i++) {
+        cin >> x;
+        long long temp0 = dp0;
+        dp0 = max(dp1 + 2 * x, dp0);
+        dp1 = max(temp0 + x, dp1);
+    }
+
+    cout << max(dp0, dp1) << endl;
+    return 0;
+}

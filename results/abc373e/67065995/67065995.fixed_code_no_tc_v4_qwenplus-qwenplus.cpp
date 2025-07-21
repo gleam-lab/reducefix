@@ -1,0 +1,107 @@
+#include <bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+#define all(x) (x).begin(), (x).end()
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int N, M;
+    ll K;
+    cin >> N >> M >> K;
+    vector<ll> A(N);
+    for (ll& a : A) {
+        cin >> a;
+        K -= a;
+    }
+
+    // ord[i] = original index of the candidate with i-th smallest current votes
+    vector<int> ord(N);
+    iota(all(ord), 0);
+    sort(all(ord), [&](int i, int j) { return A[i] < A[j]; });
+
+    // sortedA[i] = number of votes of the i-th smallest candidate
+    vector<ll> sortedA = A;
+    sort(all(sortedA));
+
+    // prefix sum of sortedA
+    vector<ll> prefix(N + 1);
+    for (int i = 0; i < N; ++i)
+        prefix[i + 1] = prefix[i] + sortedA[i];
+
+    vector<ll> res(N, -1);
+
+    for (int idx = 0; idx < N; ++idx) {
+        ll low = 0, high = K + 1;
+        ll target_votes = sortedA[idx];
+        ll candidate_original_index = ord[idx];
+
+        auto is_electable = [&](ll additional) {
+            ll total_needed = 0;
+            ll required = A[candidate_original_index] + additional;
+
+            // Find how many candidates currently have strictly more than 'required'
+            // If less than M, then we're good.
+            // So we need to ensure at most M-1 candidates can have >= required votes.
+
+            // We assume other candidates get as much as possible from remaining votes
+            // So find worst-case scenario
+
+            int l = 0, r = N;
+            while (l < r) {
+                int m = (l + r) / 2;
+                if (sortedA[m] < required)
+                    l = m + 1;
+                else
+                    r = m;
+            }
+            // All candidates from l to N-1 have >= required in current state
+
+            int count_ge = N - l;
+            if (count_ge <= M - 1)
+                return true;
+
+            // Too many candidates already have >= required. Need to raise their votes
+            // Only top M-1 can have >= required. The rest must be raised to at least required+1
+
+            int last_safe_idx = N - M;
+            for (int i = 0; i < N; ++i) {
+                if (i == candidate_original_index) continue;
+                if (A[i] >= required)
+                    last_safe_idx--;
+            }
+
+            if (last_safe_idx < 0)
+                return true;
+
+            ll needed = 0;
+            for (int i = 0; i < N; ++i) {
+                if (i == candidate_original_index) continue;
+                if (A[i] > A[candidate_original_index] + additional) {
+                    needed += max(0LL, A[i] - (A[candidate_original_index] + additional) + 1);
+                }
+            }
+
+            return needed <= K - additional;
+        };
+
+        // Binary search for minimal X such that i gets elected
+        ll left = 0, right = K + 1;
+        while (left < right) {
+            ll mid = (left + right) / 2;
+            if (is_electable(mid)) {
+                right = mid;
+            } else {
+                left = mid + 1;
+            }
+        }
+
+        if (left <= K)
+            res[candidate_original_index] = left;
+        else
+            res[candidate_original_index] = -1;
+    }
+
+    for (ll x : res)
+        cout << x << " ";
+}

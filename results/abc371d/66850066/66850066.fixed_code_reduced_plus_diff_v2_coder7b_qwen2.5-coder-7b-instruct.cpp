@@ -1,0 +1,163 @@
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+using Graph = vector<vector<int>>;
+#define rep(i, n) for (int i = 0; i < (n); ++i)
+#define repi(i, s, e) for (int i = s; i <= (e); ++i)
+#define repd(i, n) for (int i = (n)-1; i >= 0; --i)
+#define rrep(i, s, e) for (int i = (e); i >= s; --i)
+#define trav(a, x) for (auto &a : x)
+#define sz(x) (int)(x).size()
+#define all(x) begin(x), end(x)
+#define rall(x) rbegin(x), rend(x)
+#define lb(x, k) lower_bound(all(x), k)
+#define ub(x, k) upper_bound(all(x), k)
+#define ff first
+#define ss second
+#define pb push_back
+#define eb emplace_back
+#define mp make_pair
+#define mt make_tuple
+#define pti pair<int, int>
+#define pll pair<ll, ll>
+#define vi vector<int>
+#define vl vector<ll>
+#define vvi vector<vi>
+#define vvl vector<vl>
+#define vvii vector<vvi>
+#define vvll vector<vvl>
+#define vs vector<string>
+#define vb vector<bool>
+#define vpii vector<pti>
+#define vpll vector<pll>
+#define umap unordered_map
+#define uset unordered_set
+#define PQ priority_queue
+mt19937 rng(chrono::steady_clock::now().time_since_epoch().count());
+
+inline namespace FileIO {
+void setIn(string s) { freopen(s.c_str(), "r", stdin); }
+void setOut(string s) { freopen(s.c_str(), "w", stdout); }
+void setIO(string s = "") {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+    cout.tie(nullptr);
+    if (sz(s)) setIn(s), setOut(s);
+}
+}
+
+namespace Debug {
+template<typename A, typename B>
+string to_string(pair<A, B> p);
+template<typename T>
+string to_string(T v);
+
+string to_string(const string& s) { return '"' + s + '"'; }
+string to_string(char c) { return "'" + string(1, c) + "'"; }
+string to_string(const char* s) { return to_string((string)s); }
+string to_string(bool b) { return b ? "true" : "false"; }
+string to_string(vector<bool> v) {
+    bool f = true;
+    string res;
+    for (int i = 0; i < sz(v); ++i) {
+        if (!f) res += ", ";
+        f = false;
+        res += to_string(v[i]);
+    }
+    return '{' + res + '}';
+}
+
+template<size_t N>
+string to_string(bitset<N> v) {
+    string res;
+    for (size_t i = 0; i < N; ++i) res += char('0' + v[i]);
+    return res;
+}
+
+template<typename A>
+string to_string(A v) {
+    bool f = true;
+    string res;
+    for (const auto& x : v) {
+        if (!f) res += ", ";
+        f = false;
+        res += to_string(x);
+    }
+    return '{' + res + '}';
+}
+
+template<typename A, typename B>
+string to_string(pair<A, B> p) {
+    return "(" + to_string(p.first) + ", " + to_string(p.second) + ")";
+}
+
+void debug_out() { cerr << endl; }
+template<typename Head, typename... Tail>
+void debug_out(Head H, Tail... T) {
+    cerr << " " << to_string(H);
+    debug_out(T...);
+}
+
+#ifdef LOCAL_DEBUG
+#define deb(...) cerr << "[" << #__VA_ARGS__ << "]:", debug_out(__VA_ARGS__)
+#else
+#define deb(...)
+#endif
+}
+
+constexpr int MOD = 1e9 + 7;
+constexpr int INF = 1e9 + 7;
+constexpr ll INFL = 1LL << 60;
+constexpr double EPS = 1e-9;
+
+// BEGIN SOLUTION
+class Solution {
+public:
+    vector<long long> solve(int n, vector<long long>& X, vector<long long>& P) {
+        vector<long long> prefix_sum(n + 1, 0);
+        map<int, int> x_to_ptr;
+        
+        for (int i = 0; i < n; ++i) {
+            prefix_sum[i + 1] = prefix_sum[i] + P[i];
+            x_to_ptr[X[i]] = i;
+        }
+        
+        vector<long long> results;
+        for (int q = 0; q < n; ++q) {
+            int L, R;
+            cin >> L >> R;
+            
+            auto it_l = x_to_ptr.lower_bound(L);
+            auto it_r = x_to_ptr.upper_bound(R);
+            
+            if (it_l == x_to_ptr.end()) it_l--;
+            if (it_r == x_to_ptr.begin()) it_r++;
+            
+            int l = it_l->second;
+            int r = it_r->second - 1;
+            
+            results.push_back(prefix_sum[r + 1] - prefix_sum[l]);
+        }
+        
+        return results;
+    }
+};
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int n;
+    cin >> n;
+    vector<long long> X(n), P(n);
+    for (int i = 0; i < n; ++i) cin >> X[i];
+    for (int i = 0; i < n; ++i) cin >> P[i];
+    
+    Solution sol;
+    vector<long long> results = sol.solve(n, X, P);
+    
+    for (long long result : results) cout << result << '\n';
+    
+    return 0;
+}
+// END SOLUTION

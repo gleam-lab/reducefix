@@ -1,0 +1,56 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <set>
+#include <cmath>
+
+using namespace std;
+
+const int MAX_PIECES = 1000;
+
+int n, m;
+vector<pair<int, int>> pieces[MAX_PIECES];
+
+bool canPlacePiece(int x, int y) {
+    for (int i = 0; i < m; ++i) {
+        int dx = abs(pieces[i][0] - x);
+        int dy = abs(pieces[i][1] - y);
+        if (dx == 0 || dy == 0 || dx == dy || dx == n - dy) {
+            return false;
+        }
+    }
+    return true;
+}
+
+int main() {
+    cin >> n >> m;
+    for (int i = 0; i < m; ++i) {
+        int a, b;
+        cin >> a >> b;
+        pieces[i].push_back({a, b});
+        pieces[i].push_back({b, a});
+    }
+
+    set<pair<int, int>> emptySquares;
+    for (int i = 1; i <= n; ++i) {
+        for (int j = 1; j <= n; ++j) {
+            emptySquares.insert({i, j});
+        }
+    }
+
+    for (int i = 0; i < m; ++i) {
+        for (auto& p : pieces[i]) {
+            emptySquares.erase(p);
+        }
+    }
+
+    int validCount = 0;
+    for (auto& p : emptySquares) {
+        if (canPlacePiece(p.first, p.second)) {
+            validCount++;
+        }
+    }
+
+    cout << validCount << endl;
+    return 0;
+}

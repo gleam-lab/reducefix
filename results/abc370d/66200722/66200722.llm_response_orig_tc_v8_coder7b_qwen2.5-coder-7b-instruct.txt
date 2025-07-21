@@ -1,0 +1,112 @@
+To address this problem, we need to simulate the process of placing bombs and destroying walls according to the rules provided. The key challenge lies in efficiently managing the state of walls and handling the destruction process. Here's a step-by-step approach to fix the provided code:
+
+1. **Data Structures**: We will use a `Union-Find` data structure to manage the connected components of walls. This allows us to quickly determine which walls are connected and handle the merging and splitting of these components.
+
+2. **Wall Representation**: We will represent the grid as a set of horizontal and vertical lines. Each line segment can be represented by its endpoints.
+
+3. **Processing Queries**: For each query, we will:
+   - Identify the line segments that intersect with the bomb position.
+   - Merge these segments using the Union-Find data structure.
+   - Destroy the appropriate walls based on the merging process.
+
+4. **Efficiency**: To ensure efficiency, we will use binary search and sorting to quickly find and merge line segments.
+
+Here's the corrected C++ code:
+
+```cpp
+#include <iostream>
+#include <vector>
+#include <set>
+#include <algorithm>
+
+using namespace std;
+
+const int MAXN = 400005;
+
+struct UnionFind {
+    vector<int> parent, rank;
+
+    UnionFind(int n) : parent(n), rank(n, 1) {
+        for (int i = 0; i < n; ++i) parent[i] = i;
+    }
+
+    int find(int u) {
+        if (parent[u] != u) parent[u] = find(parent[u]);
+        return parent[u];
+    }
+
+    void unite(int u, int v) {
+        u = find(u), v = find(v);
+        if (u == v) return;
+        if (rank[u] < rank[v]) swap(u, v);
+        parent[v] = u;
+        rank[u] += rank[v];
+    }
+};
+
+struct Line {
+    int type, x1, x2, y1, y2;
+    Line(int type, int x1, int x2, int y1, int y2) : type(type), x1(x1), x2(x2), y1(y1), y2(y2) {}
+    bool operator<(const Line& other) const {
+        if (type != other.type) return type < other.type;
+        if (type == 0) return x1 < other.x1;
+        else return y1 < other.y1;
+    }
+};
+
+int main() {
+    int H, W, Q;
+    cin >> H >> W >> Q;
+
+    UnionFind uf(H + W);
+
+    vector<Line> lines;
+    for (int q = 0; q < Q; ++q) {
+        int R, C;
+        cin >> R >> C;
+        --R, --C;
+
+        if (!lines.empty()) {
+            int prev_x = lines.back().x2;
+            int prev_y = lines.back().y2;
+            lines.emplace_back(0, prev_x, C, prev_y, R);
+        }
+
+        lines.emplace_back(1, C, C + 1, R, R + 1);
+        lines.emplace_back(0, C + 1, C + 1, R, R + 1);
+    }
+
+    sort(lines.begin(), lines.end());
+
+    int cnt = 0;
+    for (const auto& line : lines) {
+        if (line.type == 0) {
+            int u = uf.find(line.x1);
+            int v = uf.find(line.x2);
+            if (u != v) {
+                uf.unite(u, v);
+                ++cnt;
+            }
+        } else {
+            int u = uf.find(line.y1);
+            int v = uf.find(line.y2);
+            if (u != v) {
+                uf.unite(u, v);
+                ++cnt;
+            }
+        }
+    }
+
+    cout << (H * W - cnt) << endl;
+
+    return 0;
+}
+```
+
+### Explanation:
+1. **Union-Find Data Structure**: Manages the connected components of walls.
+2. **Line Representation**: Represents both horizontal and vertical line segments.
+3. **Sorting**: Ensures that we process lines in the correct order.
+4. **Merging**: Merges connected components using Union-Find.
+
+This approach ensures that we efficiently manage the state of walls and correctly handle the destruction process based on the queries. The time complexity is dominated by the sorting step, making it efficient enough for the given constraints.

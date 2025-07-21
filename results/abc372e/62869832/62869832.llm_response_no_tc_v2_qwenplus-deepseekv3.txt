@@ -1,0 +1,82 @@
+The original code has several issues that prevent it from correctly solving the problem. The main problems are:
+
+1. **Input Reading**: The code reads `n` and `q` in reverse order (it reads `q` first then `n`).
+2. **Union-Find Implementation**: The union operation incorrectly merges the top 10 elements of the two sets by simply concatenating and sorting, which doesn't maintain the correct top 10 elements when merging larger sets.
+3. **Handling k-th Largest**: The code assumes the top 10 elements are always maintained, but the merging logic is flawed, leading to incorrect results when querying for the k-th largest element.
+
+### Approaches
+To fix the code, we need to:
+1. Correctly read the input values for `N` and `Q`.
+2. Use a more efficient and correct method to maintain the top 10 elements in each connected component. This involves using a priority queue or a sorted list for each component's root and merging these lists when components are united.
+3. Ensure that during the union operation, the top 10 elements from both components are combined and only the largest 10 are kept.
+
+### Solution Code
+```cpp
+#include<bits/stdc++.h>
+using namespace std;
+
+const int MAXN = 200005;
+vector<int> top[MAXN]; // Each root maintains a sorted list of up to 10 largest elements in descending order
+int fa[MAXN];
+
+int find(int x) {
+    if (fa[x] != x) {
+        fa[x] = find(fa[x]);
+    }
+    return fa[x];
+}
+
+void unite(int u, int v) {
+    u = find(u);
+    v = find(v);
+    if (u == v) return;
+    if (top[u].size() < top[v].size()) swap(u, v);
+    // Merge v into u
+    vector<int> merged;
+    int i = 0, j = 0;
+    while ((i < top[u].size() || j < top[v].size()) && merged.size() < 10) {
+        if (i < top[u].size() && (j >= top[v].size() || top[u][i] >= top[v][j])) {
+            merged.push_back(top[u][i]);
+            i++;
+        } else {
+            merged.push_back(top[v][j]);
+            j++;
+        }
+    }
+    top[u] = merged;
+    fa[v] = u;
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(NULL);
+    int N, Q;
+    cin >> N >> Q;
+    for (int i = 1; i <= N; ++i) {
+        fa[i] = i;
+        top[i].push_back(i);
+    }
+    while (Q--) {
+        int op, u, v;
+        cin >> op >> u >> v;
+        if (op == 1) {
+            unite(u, v);
+        } else {
+            int root = find(u);
+            if (v > top[root].size()) {
+                cout << "-1\n";
+            } else {
+                cout << top[root][v - 1] << "\n";
+            }
+        }
+    }
+    return 0;
+}
+```
+
+### Explanation
+1. **Initialization**: We initialize the Union-Find data structure where each node is its own parent and maintains a list of its largest elements (initially just itself).
+2. **Union Operation**: When merging two components, we combine their lists of largest elements, keeping only the top 10 elements in descending order. This ensures efficient merging and correct maintenance of the largest elements.
+3. **Query Handling**: For each query, if it's a type 1 (union), we merge the components. If it's a type 2 (query), we check the root's list of largest elements and return the k-th largest or `-1` if there are fewer than k elements.
+
+This approach efficiently handles the constraints by maintaining only the necessary top elements and using Union-Find with path compression for optimal performance.

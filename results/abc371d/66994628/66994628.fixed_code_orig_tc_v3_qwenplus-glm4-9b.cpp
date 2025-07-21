@@ -1,0 +1,29 @@
+#include<bits/stdc++.h>
+using namespace std;
+int n, q, x[200005], p[200005];
+long long sum[2000005];
+
+int main() {
+    cin >> n;
+    for (int i = 1; i <= n; i++) {
+        cin >> x[i];
+    }
+    for (int i = 1; i <= n; i++) {
+        cin >> p[i];
+        sum[i] = sum[i - 1] + p[i];
+    }
+    cin >> q;
+    while (q--) {
+        int l, r;
+        cin >> l >> r;
+        l = lower_bound(x + 1, x + n + 1, l) - x;
+        r = upper_bound(x + 1, x + n + 1, r) - x;
+        // Ensure that r-1 is within the bounds of the sum array
+        if (r > 0) {
+            cout << sum[r - 1] - sum[l - 1] << endl;
+        } else {
+            cout << 0 << endl; // In case l > r, this prevents accessing negative index in sum array
+        }
+    }
+    return 0;
+}

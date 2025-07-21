@@ -1,0 +1,136 @@
+To fix this code, we need to ensure that the solution correctly calculates the number of safe squares where a new piece can be placed without being captured by any existing pieces. The previous approach had several issues, including incorrect handling of the intersections between different lines of attack (rows, columns, and diagonals) and incorrect calculations of the total number of unsafe squares.
+
+### Approaches
+1. **Identify Attacked Squares**: The existing pieces attack all squares in their row, column, and both diagonals (i.e., squares where the sum or difference of their coordinates equals the sum or difference of the piece's coordinates).
+2. **Union of Attacked Squares**: Calculate the total number of unique squares attacked by all pieces. This involves:
+   - Collecting all unique rows, columns, diagonal sums (i + j), and diagonal differences (i - j) from the pieces.
+   - For each unique row, column, diagonal sum, and diagonal difference, calculate the number of squares they cover, adjusting for overlaps.
+3. **Inclusion-Exclusion Principle**: To avoid double-counting squares that are in multiple attack lines (e.g., a square that is in both a row and a column of different pieces), we use the inclusion-exclusion principle to subtract overlaps from the total.
+
+### Solution Code
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+typedef long long ll;
+
+int main() {
+    ll N, M;
+    cin >> N >> M;
+    vector<pair<ll, ll>> pieces(M);
+    set<ll> rows, cols, diag1, diag2;
+    for (int i = 0; i < M; ++i) {
+        cin >> pieces[i].first >> pieces[i].second;
+        rows.insert(pieces[i].first);
+        cols.insert(pieces[i].second);
+        diag1.insert(pieces[i].first - pieces[i].second);
+        diag2.insert(pieces[i].first + pieces[i].second);
+    }
+
+    ll unsafe = 0;
+
+    // Rows and columns
+    unsafe += rows.size() * N;
+    unsafe += cols.size() * N;
+    unsafe -= rows.size() * cols.size(); // subtract intersections
+
+    // Diagonals (i - j)
+    for (auto d : diag1) {
+        ll cnt;
+        if (d >= 0) {
+            cnt = N - d;
+        } else {
+            cnt = N + d;
+        }
+        unsafe += cnt;
+    }
+
+    // Diagonals (i + j)
+    for (auto d : diag2) {
+        ll cnt;
+        if (d <= N + 1) {
+            cnt = d - 1;
+        } else {
+            cnt = 2 * N - d + 1;
+        }
+        unsafe += cnt;
+    }
+
+    // Subtract intersections between rows/columns and diagonals
+    set<pair<ll, ll>> intersections;
+    for (auto r : rows) {
+        for (auto d1 : diag1) {
+            ll c = r - d1;
+            if (1 <= c && c <= N) {
+                intersections.insert({r, c});
+            }
+        }
+        for (auto d2 : diag2) {
+            ll c = d2 - r;
+            if (1 <= c && c <= N) {
+                intersections.insert({r, c});
+            }
+        }
+    }
+    for (auto c : cols) {
+        for (auto d1 : diag1) {
+            ll r = c + d1;
+            if (1 <= r && r <= N) {
+                intersections.insert({r, c});
+            }
+        }
+        for (auto d2 : diag2) {
+            ll r = d2 - c;
+            if (1 <= r && r <= N) {
+                intersections.insert({r, c});
+            }
+        }
+    }
+    unsafe -= intersections.size();
+
+    // Subtract intersections between the two diagonals
+    set<pair<ll, ll>> diag_intersections;
+    for (auto d1 : diag1) {
+        for (auto d2 : diag2) {
+            ll i = (d1 + d2) / 2;
+            ll j = (d2 - d1) / 2;
+            if ((d1 + d2) % 2 == 0 && (d2 - d1) % 2 == 0) {
+                if (1 <= i && i <= N && 1 <= j && j <= N) {
+                    diag_intersections.insert({i, j});
+                }
+            }
+        }
+    }
+    unsafe -= diag_intersections.size();
+
+    // Add back intersections counted in both previous steps
+    set<pair<ll, ll>> all_intersections;
+    for (auto p : intersections) {
+        all_intersections.insert(p);
+    }
+    for (auto p : diag_intersections) {
+        all_intersections.insert(p);
+    }
+    unsafe += all_intersections.size();
+
+    // Ensure we don't count existing pieces again
+    unsafe -= M;
+
+    ll total_squares = N * N;
+    ll safe_squares = total_squares - unsafe;
+    cout << max(safe_squares, 0LL) << endl;
+
+    return 0;
+}
+```
+
+### Explanation
+1. **Input Handling**: The code reads the grid size `N` and the number of pieces `M`, followed by their coordinates.
+2. **Tracking Attack Lines**: The code uses sets to track all unique rows, columns, diagonal sums (`i + j`), and diagonal differences (`i - j`) that are under attack by the existing pieces.
+3. **Calculating Unsafe Squares**: 
+   - **Rows and Columns**: The total squares attacked by rows and columns are calculated, adjusting for overlaps.
+   - **Diagonals**: For each diagonal (sum and difference), the number of squares they cover is determined based on their position relative to the grid boundaries.
+   - **Overlaps**: The intersections between rows/columns and diagonals, and between the two types of diagonals, are calculated and adjusted using the inclusion-exclusion principle to avoid double-counting.
+4. **Final Calculation**: The total number of safe squares is derived by subtracting the unsafe squares from the total grid squares, ensuring the result is non-negative.
+
+This approach efficiently accounts for all possible attack lines and their intersections, providing an accurate count of safe squares.

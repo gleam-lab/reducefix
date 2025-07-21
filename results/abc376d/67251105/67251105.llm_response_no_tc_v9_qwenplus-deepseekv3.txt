@@ -1,0 +1,83 @@
+I analyzed the code and found the following issues:
+
+1. The problem seems to involve finding the shortest cycle that includes node 0, but the original approach only checks for direct edges back to node 0 from other nodes (which would form a 2-node cycle), missing longer cycles that might be shorter in total distance.
+
+2. The initial BFS calculates distances from node 0, but doesn't properly account for cycles that include node 0 where the path back might not be a direct edge.
+
+Here's the fixed code that properly finds the shortest cycle containing node 0 by:
+- Performing BFS from node 0
+- For each node, checking if it has an edge back to node 0
+- Calculating the cycle length as distance + 1 (for the edge back)
+- Keeping track of the minimum such cycle length
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+const long long INF = 1LL << 60;
+const long long MOD = 998244353LL;
+
+int main(){
+    int N, M;
+    cin >> N >> M;
+    vector<vector<int>> G(N);
+    for(int i=0; i<M; i++){
+        int u, v;
+        cin >> u >> v;
+        u--, v--;
+        G[u].push_back(v);
+    }
+    
+    vector<int> dist(N, -1);
+    queue<int> que;
+    que.push(0);
+    dist[0] = 0;
+    
+    while(!que.empty()){
+        int pos = que.front();
+        que.pop();
+        for(int nex : G[pos]){
+            if(dist[nex] == -1){
+                dist[nex] = dist[pos] + 1;
+                que.push(nex);
+            }
+        }
+    }
+    
+    int ans = INT_MAX;
+    // Check direct neighbors of 0 for a 2-node cycle
+    for(int nex : G[0]){
+        if(nex == 0){
+            ans = 1;
+            break;
+        }
+    }
+    
+    if(ans != 1){  // If no 2-node cycle found, check longer cycles
+        for(int i=1; i<N; i++){
+            if(dist[i] == -1) continue;  // Skip unreachable nodes
+            for(int nex : G[i]){
+                if(nex == 0){
+                    ans = min(ans, dist[i] + 1);
+                    break;
+                }
+            }
+        }
+    }
+    
+    cout << (ans == INT_MAX ? -1 : ans) << endl;
+    return 0;
+}
+```
+
+Key improvements:
+1. Simplified the BFS implementation
+2. Properly checks for both 2-node cycles and longer cycles
+3. Uses INT_MAX instead of a magic number for initial ans value
+4. More efficient cycle checking by breaking loops early when possible
+5. Better handling of unreachable nodes
+
+The fixed code will correctly find the shortest cycle containing node 0, or return -1 if no such cycle exists. This covers all edge cases including:
+- No cycle containing node 0
+- Multiple cycles of different lengths
+- Direct 2-node cycles (0→0)
+- Larger cycles that require multiple hops before returning to 0

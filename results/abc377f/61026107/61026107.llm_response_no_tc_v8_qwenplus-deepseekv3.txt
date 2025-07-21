@@ -1,0 +1,168 @@
+To fix this code, we need to correctly calculate the number of safe squares where a new piece can be placed without being captured by any existing pieces. The original code attempts to account for all threatened squares by considering rows, columns, and diagonals, but it incorrectly handles the intersections and overlaps between these sets, leading to incorrect counts.
+
+### Approaches
+1. **Identify Threatened Rows and Columns**: Each existing piece threatens all squares in its row and column.
+2. **Identify Threatened Diagonals**: Each existing piece threatens all squares on its two diagonals (i+j = constant and i-j = constant).
+3. **Calculate Total Threatened Squares**: The total number of threatened squares is the union of all rows, columns, and diagonals threatened by the existing pieces. To avoid double-counting squares that are in multiple threatened sets, we use the inclusion-exclusion principle.
+4. **Subtract Overlaps**: The intersections of rows, columns, and diagonals need to be accounted for to avoid counting the same square multiple times.
+
+### Solution Code
+```cpp
+#include<bits/stdc++.h>
+
+using namespace std;
+using ll = long long;
+
+void solve() {
+    ll n, m; cin >> n >> m;
+    set<ll> rows, cols, diag1, diag2;
+    for (int i = 0; i < m; ++i) {
+        ll a, b; cin >> a >> b;
+        rows.insert(a);
+        cols.insert(b);
+        diag1.insert(a - b);
+        diag2.insert(a + b);
+    }
+
+    ll total_safe = n * n - m; // Total empty squares initially
+
+    // Subtract squares threatened by rows
+    total_safe -= rows.size() * n;
+    // Subtract squares threatened by columns
+    total_safe -= cols.size() * n;
+    // Subtract squares threatened by first diagonals (a - b = constant)
+    for (auto d : diag1) {
+        ll cnt;
+        if (d >= 0) {
+            cnt = n - d;
+        } else {
+            cnt = n + d;
+        }
+        total_safe -= cnt;
+    }
+    // Subtract squares threatened by second diagonals (a + b = constant)
+    for (auto d : diag2) {
+        ll cnt;
+        if (d <= n + 1) {
+            cnt = d - 1;
+        } else {
+            cnt = 2 * n - d + 1;
+        }
+        total_safe -= cnt;
+    }
+
+    // Add back squares that were subtracted multiple times
+    // Intersection of row and column
+    total_safe += rows.size() * cols.size();
+    // Intersection of row and first diagonal
+    for (auto r : rows) {
+        for (auto d : diag1) {
+            ll c = r - d;
+            if (c >= 1 && c <= n) {
+                total_safe += 1;
+            }
+        }
+    }
+    // Intersection of row and second diagonal
+    for (auto r : rows) {
+        for (auto d : diag2) {
+            ll c = d - r;
+            if (c >= 1 && c <= n) {
+                total_safe += 1;
+            }
+        }
+    }
+    // Intersection of column and first diagonal
+    for (auto c : cols) {
+        for (auto d : diag1) {
+            ll r = c + d;
+            if (r >= 1 && r <= n) {
+                total_safe += 1;
+            }
+        }
+    }
+    // Intersection of column and second diagonal
+    for (auto c : cols) {
+        for (auto d : diag2) {
+            ll r = d - c;
+            if (r >= 1 && r <= n) {
+                total_safe += 1;
+            }
+        }
+    }
+    // Intersection of first and second diagonals
+    for (auto d1 : diag1) {
+        for (auto d2 : diag2) {
+            if ((d1 + d2) % 2 != 0) continue;
+            ll r = (d1 + d2) / 2;
+            ll c = (d2 - d1) / 2;
+            if (r >= 1 && r <= n && c >= 1 && c <= n) {
+                total_safe += 1;
+            }
+        }
+    }
+
+    // Subtract squares that were added back but are actually triple intersections
+    // Intersection of row, column, and first diagonal
+    for (auto r : rows) {
+        for (auto c : cols) {
+            if (diag1.count(r - c)) {
+                total_safe -= 1;
+            }
+        }
+    }
+    // Intersection of row, column, and second diagonal
+    for (auto r : rows) {
+        for (auto c : cols) {
+            if (diag2.count(r + c)) {
+                total_safe -= 1;
+            }
+        }
+    }
+    // Intersection of row, first diagonal, and second diagonal
+    for (auto r : rows) {
+        for (auto d1 : diag1) {
+            ll c = r - d1;
+            if (c >= 1 && c <= n && diag2.count(r + c)) {
+                total_safe -= 1;
+            }
+        }
+    }
+    // Intersection of column, first diagonal, and second diagonal
+    for (auto c : cols) {
+        for (auto d1 : diag1) {
+            ll r = c + d1;
+            if (r >= 1 && r <= n && diag2.count(r + c)) {
+                total_safe -= 1;
+            }
+        }
+    }
+
+    // Add back squares that were subtracted too many times (quadruple intersections)
+    for (auto r : rows) {
+        for (auto c : cols) {
+            if (diag1.count(r - c) && diag2.count(r + c)) {
+                total_safe += 1;
+            }
+        }
+    }
+
+    cout << total_safe << "\n";
+}
+
+int main() {
+    ios_base::sync_with_stdio(false), cin.tie(nullptr);
+    cout.precision(12);
+    int NT = 1;
+    while(NT--) solve();
+    return 0;
+}
+```
+
+### Explanation
+1. **Initial Setup**: The code reads the grid size `n` and the number of pieces `m`, then initializes sets to keep track of threatened rows, columns, and diagonals.
+2. **Threatened Squares Calculation**: The code calculates the number of squares threatened by each existing piece's row, column, and both diagonals, using the sets to avoid duplicates.
+3. **Inclusion-Exclusion Principle**: The code uses this principle to correctly account for overlaps between different threatened sets (rows, columns, diagonals) to ensure each square is only counted once.
+4. **Final Count**: The total safe squares are computed by subtracting the threatened squares from the total grid squares, adjusting for overlaps, and ensuring the count is accurate.
+
+This approach ensures efficient and correct calculation of safe squares even for very large grids, adhering to the constraints.

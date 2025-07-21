@@ -1,0 +1,36 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main(){
+    int n;
+    cin >> n; // Read the number of elements
+    
+    // Create the arrays for x and p based on the given inputs
+    vector<int> x(n); // Assuming x[] represents sorted elements
+    vector<int> p(n); // Assuming p[] represents sorted coefficients
+    
+    // Process the array elements for x and p accordingly
+    for (int i = 1; i <= n; i++) cin >> x[i]; // Reads the values of x[]
+    for (int i = 1; i <= n; i++) p[i] = i; // Initializes p[] with consecutive integers
+    
+    // Read the number of queries q
+    cin >> q; // Reads the number of queries
+    
+    // Initialize variables for query processing
+    int left, right; // The query indices for the binary search algorithm
+    vector<int> l1, l2; // The indices of elements within the left half of the range
+    vector<int> r1, r2; // The indices of elements within the right half of the range
+    
+    // Binary search algorithm to find the difference between two elements in the sorted range
+    while (q--) {
+        cin >> left >> right; // Reads the query indices
+        l1 = r1 = -1; // Initialize l1 and r1 to -1 if they haven't been initialized before
+        r2 = n - 1; // Initialize r2 to the last element of the sorted range for negative values
+        l2 = binary_search(x.begin(), x.end(), right); // Executes binary search algorithm to find the index of the target element in sorted range
+        
+        // Calculate and print the difference between target element and adjacent elements in sorted range
+        cout << (x[l2] - x[l1 - 1]) << endl; // Prints the difference between target element and adjacent elements if found within range
+    }
+    
+    return 0; // Main function should end with a return statement
+}

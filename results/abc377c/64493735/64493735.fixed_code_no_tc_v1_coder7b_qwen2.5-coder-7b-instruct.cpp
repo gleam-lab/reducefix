@@ -1,0 +1,44 @@
+#include <iostream>
+#include <set>
+#include <vector>
+#include <utility>
+#include <algorithm>
+
+using namespace std;
+
+long long count_valid_squares(long long n, const vector<pair<long long, long long>>& pieces) {
+    // Directions for capturing moves
+    vector<pair<long long, long long>> directions = {{2, 1}, {1, 2}, {-1, 2}, {-2, 1}, {-2, -1}, {-1, -2}, {1, -2}, {2, -1}};
+    
+    // Set to store all invalid positions
+    set<pair<long long, long long>> invalid_positions;
+    
+    // Mark all invalid positions based on the rules provided
+    for (const auto& piece : pieces) {
+        for (const auto& dir : directions) {
+            long long x = piece.first + dir.first;
+            long long y = piece.second + dir.second;
+            if (x >= 1 && x <= n && y >= 1 && y <= n) {
+                invalid_positions.insert({x, y});
+            }
+        }
+    }
+    
+    // Calculate valid positions
+    long long total_squares = n * n;
+    long long valid_squares = total_squares - invalid_positions.size();
+    
+    return valid_squares;
+}
+
+int main() {
+    long long n, m;
+    cin >> n >> m;
+    vector<pair<long long, long long>> pieces(m);
+    for (auto& piece : pieces) {
+        cin >> piece.first >> piece.second;
+    }
+
+    cout << count_valid_squares(n, pieces) << endl;
+    return 0;
+}

@@ -1,0 +1,69 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+typedef long long ll;
+
+const int MAX_OFFSET = 2e8;
+const int MAX_COORD = 4e8 + 10; // Total size of the frequency array
+
+// Coordinate compression helper
+int getCompressedIndex(ll coord) {
+    return coord + MAX_OFFSET;
+}
+
+void solve() {
+    int N, Q;
+    cin >> N >> Q;
+
+    vector<int> freq(MAX_COORD, 0);
+
+    // Read A points and populate frequency array
+    for (int i = 0; i < N; ++i) {
+        ll a;
+        cin >> a;
+        freq[getCompressedIndex(a)]++;
+    }
+
+    // Build prefix sum array
+    vector<ll> prefix(MAX_COORD + 1, 0);
+    for (int i = 0; i < MAX_COORD; ++i) {
+        prefix[i + 1] = prefix[i] + freq[i];
+    }
+
+    // Process each query
+    for (int q = 0; q < Q; ++q) {
+        ll b;
+        int k;
+        cin >> b >> k;
+
+        // Binary search for the smallest radius r such that at least k points are within distance r from b
+        ll left = 0;
+        ll right = 2e8;
+
+        while (left < right) {
+            ll mid = (left + right) / 2;
+            ll l = b - mid;
+            ll r_coord = b + mid;
+
+            int l_idx = max(0LL, getCompressedIndex(l));
+            int r_idx = min(MAX_COORD - 1, getCompressedIndex(r_coord));
+
+            ll count = prefix[r_idx + 1] - prefix[l_idx];
+
+            if (count >= k) {
+                right = mid;
+            } else {
+                left = mid + 1;
+            }
+        }
+
+        cout << left << '\n';
+    }
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    solve();
+    return 0;
+}

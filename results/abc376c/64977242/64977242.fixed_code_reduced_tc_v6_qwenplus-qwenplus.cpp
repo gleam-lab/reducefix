@@ -1,0 +1,61 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+
+using namespace std;
+
+int main() {
+    int N;
+    cin >> N;
+    vector<long long> A(N), B(N - 1);
+    for (int i = 0; i < N; ++i) cin >> A[i];
+    for (int i = 0; i < N - 1; ++i) cin >> B[i];
+
+    // Sort toys and available boxes in ascending order
+    sort(A.begin(), A.end());
+    sort(B.begin(), B.end());
+
+    // Try to fit smallest toys into the smallest boxes
+    for (int i = 0; i < N - 1; ++i) {
+        if (A[i] > B[i]) {
+            cout << -1 << endl;
+            return 0;
+        }
+    }
+
+    // The toy that will go into the additional box is A[N-1]
+    // We need to find the smallest x such that x >= A[N-1], and
+    // we can still place the other N-1 toys into the existing boxes.
+
+    // To do this, we try placing each of the remaining toys (except one)
+    // into a box. One of the toys (the biggest one) will go into the new box.
+    // We want to minimize the size of the new box.
+
+    long long min_x = -1;
+
+    // Try each toy as the one that goes into the extra box
+    for (int exclude_idx = 0; exclude_idx < N; ++exclude_idx) {
+        vector<long long> remaining_A;
+        for (int i = 0; i < N; ++i) {
+            if (i != exclude_idx) remaining_A.push_back(A[i]);
+        }
+
+        bool possible = true;
+        for (int i = 0; i < N - 1; ++i) {
+            if (remaining_A[i] > B[i]) {
+                possible = false;
+                break;
+            }
+        }
+
+        if (possible) {
+            long long x = A[exclude_idx];
+            if (min_x == -1 || x < min_x) {
+                min_x = x;
+            }
+        }
+    }
+
+    cout << min_x << endl;
+    return 0;
+}

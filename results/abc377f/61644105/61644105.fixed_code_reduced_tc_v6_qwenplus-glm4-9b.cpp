@@ -1,0 +1,50 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+
+using namespace std;
+
+typedef long long ll;
+
+int main() {
+    ll n, m;
+    cin >> n >> m;
+
+    vector<pair<ll, ll>> pieces(m);
+    for (ll i = 0; i < m; ++i) {
+        ll a, b;
+        cin >> a >> b;
+        pieces[i] = {a, b};
+    }
+
+    // Sort pieces to make it easier to count captured points
+    sort(pieces.begin(), pieces.end());
+
+    // Count the number of empty spaces in the grid
+    ll emptySpaces = n * n - m;
+
+    // Iterate over all pieces to find the captured spaces
+    for (auto& p1 : pieces) {
+        // Check if the piece captures pieces in the same row and column
+        auto it = lower_bound(pieces.begin(), pieces.end(), {p1.first, 0});
+        if (it != pieces.begin() && prev(it)->second < p1.second) {
+            emptySpaces--;
+        }
+        it = lower_bound(pieces.begin(), pieces.end(), {0, p1.second});
+        if (it != pieces.begin() && prev(it)->first < p1.first) {
+            emptySpaces--;
+        }
+
+        // Check diagonals
+        ll diagonals[4] = {p1.first - p1.second, p1.first + p1.second, n + p1.first - p1.second, n + p1.first + p1.second};
+        for (ll i = 0; i < 4; ++i) {
+            it = lower_bound(pieces.begin(), pieces.end(), {diagonals[i], 0});
+            if (it != pieces.begin() && prev(it)->second < diagonals[i] - (i & 1)) {
+                emptySpaces--;
+            }
+        }
+    }
+
+    cout << emptySpaces << endl;
+    return 0;
+}

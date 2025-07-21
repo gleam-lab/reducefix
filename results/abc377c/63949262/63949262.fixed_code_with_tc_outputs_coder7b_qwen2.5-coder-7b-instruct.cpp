@@ -1,0 +1,61 @@
+#include <iostream>
+#include <vector>
+#include <string>
+#include <set>
+#include <cmath>
+
+using namespace std;
+
+#define i64 long long
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    i64 N;
+    cin >> N;
+
+    i64 M;
+    cin >> M;
+
+    set<pair<i64, i64>> occupied;
+
+    for (i64 k = 0; k < M; ++k) {
+        i64 a, b;
+        cin >> a >> b;
+
+        occupied.emplace(a, b);
+
+        if (a + 2 <= N && b + 1 <= N) {
+            occupied.emplace(a + 2, b + 1);
+        }
+        if (a + 1 <= N && b + 2 <= N) {
+            occupied.emplace(a + 1, b + 2);
+        }
+        if (a - 1 >= 1 && b + 2 <= N) {
+            occupied.emplace(a - 1, b + 2);
+        }
+        if (a - 2 >= 1 && b + 1 <= N) {
+            occupied.emplace(a - 2, b + 1);
+        }
+        if (a - 2 >= 1 && b - 1 >= 1) {
+            occupied.emplace(a - 2, b - 1);
+        }
+        if (a - 1 >= 1 && b - 2 >= 1) {
+            occupied.emplace(a - 1, b - 2);
+        }
+        if (a + 1 <= N && b - 2 >= 1) {
+            occupied.emplace(a + 1, b - 2);
+        }
+        if (a + 2 <= N && b - 1 >= 1) {
+            occupied.emplace(a + 2, b - 1);
+        }
+    }
+
+    i64 total = N * N;
+    i64 occupied_count = occupied.size();
+
+    cout << (total - occupied_count) << "\n";
+
+    return 0;
+}

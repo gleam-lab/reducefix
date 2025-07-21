@@ -1,0 +1,66 @@
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+#define rep(i, n) for (ll i = 0; i < (ll)(n); i++)
+#define rep2(i, s, n) for (ll i = (s); i < (ll)(n); i++)
+#define all(x) x.begin(), x.end()
+
+int main() {
+    int H, W, Q;
+    cin >> H >> W >> Q;
+    vector<set<pair<int, int>>> rows(H), cols(W);
+    rep(i, H) rep(j, W) {
+        rows[i].insert({i, j});
+        cols[j].insert({i, j});
+    }
+    ll ans = H * W;
+    auto erase = [&](set<pair<int, int>>& data, int target) {
+        auto it = data.lower_bound({target, 0});
+        if (it != data.begin() && it->first == target) {
+            it--;
+            data.erase(it);
+            ans--;
+        }
+    };
+    rep(itr, Q) {
+        int R, C;
+        cin >> R >> C;
+        R--; C--;
+        if (rows[R].count({R, C})) {
+            erase(rows[R], C);
+            erase(cols[C], {R, C});
+            continue;
+        }
+
+        bool hasWall = false;
+        // Find the first and last wall in the row
+        auto it = rows[R].lower_bound({R, C});
+        if (it != rows[R].begin()) {
+            it--;
+            hasWall = (it->second == C);
+        }
+        it = rows[R].upper_bound({R, C});
+        if (it != rows[R].end()) {
+            hasWall = hasWall || (it->second == C);
+        }
+
+        // Find the first and last wall in the column
+        it = cols[C].lower_bound({R, C});
+        if (it != cols[C].begin()) {
+            it--;
+            hasWall = hasWall || (it->second == R);
+        }
+        it = cols[C].upper_bound({R, C});
+        if (it != cols[C].end()) {
+            hasWall = hasWall || (it->second == R);
+        }
+
+        if (!hasWall) continue;
+
+        // Remove all walls in the row and column
+        erase(rows[R], C);
+        erase(cols[C], {R, C});
+    }
+    cout << ans << endl;
+    return 0;
+}

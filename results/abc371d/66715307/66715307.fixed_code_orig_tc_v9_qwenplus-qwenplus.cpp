@@ -1,0 +1,60 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+const int MAXN = 200050;
+
+int n, q;
+long long a[MAXN]; // prefix sum array for p
+int x[MAXN];
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+    
+    cin >> n;
+    for (int i = 1; i <= n; ++i) {
+        cin >> x[i];
+    }
+    for (int i = 1; i <= n; ++i) {
+        long long p;
+        cin >> p;
+        a[i] = a[i - 1] + p;
+    }
+    cin >> q;
+    while (q--) {
+        long long l, r;
+        cin >> l >> r;
+        
+        // Binary search to find the first index where x[i] >= l
+        int left = 1, right = n, L = n + 1;
+        while (left <= right) {
+            int mid = (left + right) / 2;
+            if (x[mid] >= l) {
+                L = mid;
+                right = mid - 1;
+            } else {
+                left = mid + 1;
+            }
+        }
+
+        // Binary search to find the last index where x[i] <= r
+        left = 1, right = n;
+        int R = 0;
+        while (left <= right) {
+            int mid = (left + right) / 2;
+            if (x[mid] <= r) {
+                R = mid;
+                left = mid + 1;
+            } else {
+                right = mid - 1;
+            }
+        }
+
+        if (L <= R)
+            cout << a[R] - a[L - 1] << "\n";
+        else
+            cout << "0\n"; // No elements in range
+    }
+
+    return 0;
+}

@@ -1,0 +1,158 @@
+To fix this code, we need to correctly calculate the number of safe squares where the new piece can be placed without being captured by any existing pieces. The existing pieces can capture along rows, columns, and both diagonals. The solution involves counting all squares that are not under attack from any existing piece.
+
+### Approaches
+
+1. **Identify Attacked Squares**: For each existing piece, mark all squares it can attack. This includes:
+   - All squares in the same row.
+   - All squares in the same column.
+   - All squares on the two diagonals (i + j = constant or i - j = constant).
+
+2. **Union of Attacked Squares**: Combine all attacked squares from all pieces, ensuring each square is only counted once even if it is attacked by multiple pieces.
+
+3. **Calculate Safe Squares**: Subtract the number of attacked squares from the total number of squares (N^2) to get the number of safe squares. Additionally, ensure we do not count the squares already occupied by existing pieces as safe.
+
+### Solution Code
+
+```cpp
+#include<bits/stdc++.h>
+using namespace std;
+using i64 = long long;
+
+int main() {
+    std::ios::sync_with_stdio(false);
+    std::cin.tie(nullptr);
+    i64 N, M;
+    cin >> N >> M;
+    vector<pair<i64, i64>> pieces(M);
+    set<i64> rows, cols, diag1, diag2;
+    set<pair<i64, i64>> occupied;
+
+    for (int i = 0; i < M; ++i) {
+        i64 a, b;
+        cin >> a >> b;
+        pieces[i] = {a, b};
+        rows.insert(a);
+        cols.insert(b);
+        diag1.insert(a + b);
+        diag2.insert(a - b);
+        occupied.insert({a, b});
+    }
+
+    i64 attacked = 0;
+
+    // Rows
+    for (auto r : rows) {
+        attacked += N;
+    }
+
+    // Columns
+    for (auto c : cols) {
+        attacked += N;
+    }
+
+    // Diagonals (i + j)
+    for (auto d : diag1) {
+        i64 L = max(1LL, d - N);
+        i64 R = min(N, d - 1);
+        if (L <= R) {
+            attacked += (R - L + 1);
+        }
+    }
+
+    // Diagonals (i - j)
+    for (auto d : diag2) {
+        i64 L = max(1LL, 1 + d);
+        i64 R = min(N, N + d);
+        if (L <= R) {
+            attacked += (R - L + 1);
+        }
+    }
+
+    // Subtract intersections of rows and columns
+    for (auto r : rows) {
+        for (auto c : cols) {
+            if (diag1.count(r + c) && diag2.count(r - c)) {
+                attacked -= 1;
+            }
+        }
+    }
+
+    // Subtract intersections of rows and diag1
+    for (auto r : rows) {
+        for (auto d1 : diag1) {
+            i64 c = d1 - r;
+            if (c >= 1 && c <= N && cols.count(c)) {
+                attacked -= 1;
+            }
+        }
+    }
+
+    // Subtract intersections of rows and diag2
+    for (auto r : rows) {
+        for (auto d2 : diag2) {
+            i64 c = r - d2;
+            if (c >= 1 && c <= N && cols.count(c)) {
+                attacked -= 1;
+            }
+        }
+    }
+
+    // Subtract intersections of columns and diag1
+    for (auto c : cols) {
+        for (auto d1 : diag1) {
+            i64 r = d1 - c;
+            if (r >= 1 && r <= N && rows.count(r)) {
+                attacked -= 1;
+            }
+        }
+    }
+
+    // Subtract intersections of columns and diag2
+    for (auto c : cols) {
+        for (auto d2 : diag2) {
+            i64 r = c + d2;
+            if (r >= 1 && r <= N && rows.count(r)) {
+                attacked -= 1;
+            }
+        }
+    }
+
+    // Add back intersections of rows, columns, diag1, diag2 (inclusion-exclusion)
+    for (auto r : rows) {
+        for (auto c : cols) {
+            if (diag1.count(r + c) && diag2.count(r - c)) {
+                attacked += 1;
+            }
+        }
+    }
+
+    // Total safe squares
+    i64 total_squares = N * N;
+    i64 safe_squares = total_squares - attacked + occupied.size();
+    for (auto p : occupied) {
+        i64 r = p.first;
+        i64 c = p.second;
+        if (rows.count(r) || cols.count(c) || diag1.count(r + c) || diag2.count(r - c)) {
+            safe_squares -= 1;
+        }
+    }
+
+    cout << safe_squares << "\n";
+
+    return 0;
+}
+```
+
+### Explanation
+
+1. **Input Handling**: The code reads the grid size `N` and the number of pieces `M`. It then reads the positions of these pieces and stores them in sets for rows, columns, and diagonals (both types).
+
+2. **Attacked Squares Calculation**:
+   - **Rows and Columns**: For each unique row and column in the set of pieces, it adds `N` to the count of attacked squares (since each row or column covers `N` squares).
+   - **Diagonals**: For each unique diagonal (i+j or i-j), it calculates the range of squares covered and adds the count of these squares to the attacked total.
+
+3. **Overlap Adjustment**: The code adjusts for overlaps where squares are counted multiple times (e.g., a square attacked by both a row and a column) using inclusion-exclusion principles to ensure accurate counting.
+
+4. **Safe Squares Calculation**: The total safe squares are computed by subtracting the attacked squares from the total grid squares and adjusting for already occupied squares, ensuring they are not counted as safe if they are under attack.
+
+This approach efficiently handles the constraints and ensures correctness by systematically accounting for all possible attacks and overlaps.

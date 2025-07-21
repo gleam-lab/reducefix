@@ -1,0 +1,108 @@
+To solve this problem efficiently, we must simulate bomb placements on a grid where each cell initially contains a wall. When a bomb is placed:
+
+- If the cell has a wall, it destroys it.
+- If the cell is empty, it destroys the first walls in the four cardinal directions (up, down, left, right), if they exist.
+
+Given the constraints (`H * W <= 4*10^5` and `Q <= 2*10^5`), we need an efficient way to track and remove these walls without scanning the entire row/column every time.
+
+### Key Ideas:
+- Use ordered sets (`std::set`) for each row and column to store indices of remaining walls.
+- For each query:
+  - If the current cell still has a wall, remove it from both its row and column set.
+  - Otherwise, find the nearest walls in the four directions using `upper_bound()` and `lower_bound()` operations on the sets.
+
+This approach ensures that each operation per query takes logarithmic time relative to the number of remaining walls in the respective row or column.
+
+Here's the corrected C++ code:
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+#define ll long long
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+
+    ll h, w, q;
+    cin >> h >> w >> q;
+
+    // Each row and column stores the set of columns/rows with remaining walls
+    vector<set<ll>> rows(h), cols(w);
+    for (ll i = 0; i < h; ++i) {
+        for (ll j = 0; j < w; ++j) {
+            rows[i].insert(j);
+            cols[j].insert(i);
+        }
+    }
+
+    while (q--) {
+        ll r, c;
+        cin >> r >> c;
+        r--; c--;
+
+        // Check if there's a wall at (r,c)
+        if (rows[r].count(c)) {
+            // Destroy the wall at (r,c)
+            rows[r].erase(c);
+            cols[c].erase(r);
+        } else {
+            // Find the nearest walls in all four directions
+            vector<pair<ll, ll>> destroy;
+
+            // Up
+            auto it = cols[c].lower_bound(r);
+            if (it != cols[c].begin()) {
+                --it;
+                destroy.push_back({*it, c});
+            }
+
+            // Down
+            it = cols[c].upper_bound(r);
+            if (it != cols[c].end()) {
+                destroy.push_back({*it, c});
+            }
+
+            // Left
+            auto jt = rows[r].lower_bound(c);
+            if (jt != rows[r].begin()) {
+                --jt;
+                destroy.push_back({r, *jt});
+            }
+
+            // Right
+            jt = rows[r].upper_bound(c);
+            if (jt != rows[r].end()) {
+                destroy.push_back({r, *jt});
+            }
+
+            // Remove those walls
+            for (auto [x, y] : destroy) {
+                rows[x].erase(y);
+                cols[y].erase(x);
+            }
+        }
+    }
+
+    // Count remaining walls
+    ll total = 0;
+    for (ll i = 0; i < h; ++i) {
+        total += rows[i].size();
+    }
+    cout << total << '\n';
+
+    return 0;
+}
+```
+
+### Explanation:
+- **Data Structures**: We use `set<ll>` for each row and column to maintain sorted indices of walls.
+- **Query Handling**:
+  - When placing a bomb, we check if the current cell has a wall.
+  - If yes, remove it.
+  - If no, look for the closest walls in each direction using `lower_bound` and `upper_bound`.
+- **Efficiency**:
+  - Each insertion/deletion/search in a set is O(log N), ensuring the solution handles large inputs efficiently.
+
+This code correctly simulates the required behavior and should pass all test cases within the given constraints.

@@ -1,0 +1,84 @@
+After analyzing the code, I found several issues that need to be fixed:
+
+1. The cost calculation in `canMake` is incorrect. It should compare the cost per unit time (p[i]/a[i] vs q[i]/b[i]) and choose the more efficient option first, then use the remaining time for the other option.
+
+2. The ceiling operation might introduce small floating-point errors. It's better to avoid floating-point operations when possible.
+
+3. The binary search bounds might not cover all cases correctly.
+
+Here's the fixed version:
+
+```cpp
+#include <bits/stdc++.h>
+
+using namespace std;
+
+#define int long long
+
+int n, x;
+vector<int> a, b, p, q;
+
+bool canMake(int mid) {
+    int total_cost = 0;
+    for (int i = 0; i < n; i++) {
+        int remaining = mid;
+        int cost_p = (p[i] + a[i] - 1) / a[i]; // ceil(p[i]/a[i])
+        int cost_q = (q[i] + b[i] - 1) / b[i]; // ceil(q[i]/b[i])
+        
+        if (p[i] * b[i] < q[i] * a[i]) { // Compare p[i]/a[i] < q[i]/b[i] without floating point
+            int full = remaining / a[i];
+            total_cost += full * p[i];
+            remaining -= full * a[i];
+            
+            int partial = (remaining + b[i] - 1) / b[i]; // ceil(remaining/b[i])
+            if (partial > 0) {
+                total_cost += min(partial * q[i], q[i]);
+            }
+        } else {
+            int full = remaining / b[i];
+            total_cost += full * q[i];
+            remaining -= full * b[i];
+            
+            int partial = (remaining + a[i] - 1) / a[i]; // ceil(remaining/a[i])
+            if (partial > 0) {
+                total_cost += min(partial * p[i], p[i]);
+            }
+        }
+        
+        if (total_cost > x) return false;
+    }
+    return total_cost <= x;
+}
+
+signed main() {
+    cin >> n >> x;
+    a.resize(n); b.resize(n); p.resize(n); q.resize(n);
+    for (int i = 0; i < n; i++) cin >> a[i] >> p[i] >> b[i] >> q[i];
+
+    int left = 0, right = 1e18;
+    int answer = 0;
+    while (left <= right) {
+        int mid = left + (right - left) / 2;
+        if (canMake(mid)) {
+            answer = mid;
+            left = mid + 1;
+        } else {
+            right = mid - 1;
+        }
+    }
+
+    cout << answer;
+
+    return 0;
+}
+```
+
+Key improvements:
+1. Removed floating-point operations entirely by using integer comparisons
+2. Fixed the cost calculation to properly handle both full and partial usages of each option
+3. Added early termination in `canMake` if the cost exceeds x
+4. Improved the binary search implementation to ensure it finds the maximum valid time
+5. Used proper ceiling operations with integers only
+6. Expanded the search range to handle larger cases
+
+The fixed version should now correctly compute the maximum time that can be achieved without exceeding the budget x.

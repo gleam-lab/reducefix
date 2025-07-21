@@ -1,0 +1,36 @@
+#include<bits/stdc++.h>
+using namespace std;
+
+typedef long long ll;
+
+void solve() {
+    int n, q; cin >> n >> q;
+    vector<ll> a(n), b(q);
+    vector<int> k(q);
+    for(int i = 0; i < n; i++) cin >> a[i];
+    for(int i = 0; i < q; i++) {
+        cin >> b[i] >> k[i];
+        k[i]--;
+    }
+
+    sort(a.begin(), a.end());
+    
+    for(int i = 0; i < q; i++) {
+        auto it = lower_bound(a.begin(), a.end(), b[i]);
+        int dist = abs(b[i] - *it);
+        if(it != a.begin()) {
+            dist = min(dist, abs(b[i] - *(it - 1)));
+        }
+        if(next(it) != a.end()) {
+            dist = min(dist, abs(b[i] - *next(it)));
+        }
+        cout << dist << endl;
+    }
+}
+
+int main(){
+    ios_base::sync_with_stdio(false); cin.tie(NULL); cout.tie(NULL);
+    int t = 1; //cin >> t;
+    while (t--) solve();
+    return 0;
+}

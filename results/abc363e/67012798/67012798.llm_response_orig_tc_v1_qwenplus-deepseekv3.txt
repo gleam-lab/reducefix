@@ -1,0 +1,90 @@
+After analyzing the failing test case and the code, I noticed that the issue is not immediately apparent since the output appears identical. However, the problem likely lies in how the code handles sections that are not on the border initially but become connected to the sea as adjacent sections sink over time. The current code only processes border sections at the start and doesn't properly account for interior sections becoming connected to the sea in subsequent years.
+
+Here's the fixed code that handles this correctly by:
+1. Using a priority queue to process sections in order of their elevation
+2. Maintaining a visited matrix to track which sections have sunk
+3. Using BFS to propagate sinking to adjacent sections when the sea level rises
+
+```cpp
+#include <bits/stdc++.h>
+
+using namespace std;
+
+constexpr int dx[] = {-1, 1, 0, 0};
+constexpr int dy[] = {0, 0, -1, 1};
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int H, W, Y;
+    cin >> H >> W >> Y;
+
+    vector<vector<int>> A(H, vector<int>(W));
+    for (int i = 0; i < H; i++) {
+        for (int j = 0; j < W; j++) {
+            cin >> A[i][j];
+        }
+    }
+
+    priority_queue<pair<int, pair<int, int>>, 
+                   vector<pair<int, pair<int, int>>>, 
+                   greater<pair<int, pair<int, int>>>> pq;
+    vector<vector<bool>> sunk(H, vector<bool>(W, false));
+
+    // Initialize with border cells
+    for (int i = 0; i < H; i++) {
+        for (int j = 0; j < W; j++) {
+            if (i == 0 || i == H - 1 || j == 0 || j == W - 1) {
+                pq.push({A[i][j], {i, j}});
+                sunk[i][j] = true;
+            }
+        }
+    }
+
+    int remaining = H * W;
+    vector<int> result(Y + 1, 0);
+    result[0] = remaining;
+
+    for (int year = 1; year <= Y; year++) {
+        while (!pq.empty() && pq.top().first <= year) {
+            auto current = pq.top();
+            pq.pop();
+            remaining--;
+
+            int x = current.second.first;
+            int y = current.second.second;
+
+            for (int d = 0; d < 4; d++) {
+                int nx = x + dx[d];
+                int ny = y + dy[d];
+
+                if (nx >= 0 && nx < H && ny >= 0 && ny < W && !sunk[nx][ny]) {
+                    sunk[nx][ny] = true;
+                    pq.push({A[nx][ny], {nx, ny}});
+                }
+            }
+        }
+        result[year] = remaining;
+    }
+
+    for (int i = 1; i <= Y; i++) {
+        cout << result[i] << '\n';
+    }
+
+    return 0;
+}
+```
+
+Key improvements:
+1. Uses a min-heap (priority queue) to process sections in order of their elevation
+2. Properly tracks sunk sections with a visited matrix
+3. Processes sections as the sea level rises year by year
+4. Maintains accurate counts of remaining sections for each year
+5. Handles the propagation of sinking correctly through BFS-style processing
+
+This approach ensures that:
+- All sections are processed in the correct order (lowest elevation first)
+- Sections become connected to the sea properly as adjacent sections sink
+- The count of remaining sections is accurate for each year
+- The solution handles the maximal constraints efficiently

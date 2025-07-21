@@ -1,0 +1,78 @@
+#include <bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+#define all(x) (x).begin(), (x).end()
+
+int main() {
+    ios_base::sync_with_stdio(0);
+    cin.tie(0);
+    int n, m;
+    ll k;
+    cin >> n >> m >> k;
+    vector<ll> a(n);
+    for (int i = 0; i < n; ++i) {
+        cin >> a[i];
+    }
+    
+    // Remaining votes
+    ll total_remaining = k;
+    for (ll ai : a) {
+        total_remaining -= ai;
+    }
+
+    // Prepare sorted values and indices
+    vector<int> idx(n);
+    iota(all(idx), 0);
+    sort(all(idx), [&](int i, int j) { return a[i] < a[j]; });
+    vector<ll> sorted_a = a;
+    sort(all(sorted_a));
+
+    vector<ll> prefix(n + 1);
+    for (int i = 0; i < n; ++i) {
+        prefix[i + 1] = prefix[i] + sorted_a[i];
+    }
+
+    vector<ll> res(n, -1);
+
+    for (int i = 0; i < n; ++i) {
+        int pos = idx[i]; // original index in a
+        ll current = a[pos];
+
+        ll low = 0;
+        ll high = total_remaining + 1;
+
+        while (low < high) {
+            ll mid = (low + high) / 2;
+            ll new_score = current + mid;
+
+            // Binary search to find how many candidates have score >= new_score
+            int l = 0, r = n;
+            while (l < r) {
+                int c = (l + r) / 2;
+                if (sorted_a[c] < new_score)
+                    l = c + 1;
+                else
+                    r = c;
+            }
+
+            int cnt_ge = n - l;
+            if (cnt_ge < m) {
+                // We can guarantee win
+                high = mid;
+            } else {
+                // Need more votes
+                low = mid + 1;
+            }
+        }
+
+        if (low > total_remaining) {
+            res[pos] = -1;
+        } else {
+            res[pos] = low;
+        }
+    }
+
+    for (ll val : res) {
+        cout << val << " ";
+    }
+}

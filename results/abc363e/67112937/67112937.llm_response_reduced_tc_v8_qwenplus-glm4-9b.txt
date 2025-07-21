@@ -1,0 +1,131 @@
+
+The provided code is an attempt to solve the problem using a priority queue to simulate the process of the sea level rise affecting the island. However, there are several issues with the code that lead to incorrect outputs. Let's analyze the problem step by step and then look into the code.
+
+**Problem Analysis:**
+
+1. We have an island divided into `H` rows and `W` columns.
+2. Each cell has an elevation `A[i][j]`.
+3. The sea level rises each year by 1 unit.
+4. A cell will sink if it's at the edge of the island or adjacent to a sinking cell, provided its elevation is not greater than the current sea level.
+5. We need to determine the area of the island above the sea level after `Y` years.
+
+**Issues with the provided code:**
+
+1. The priority queue is used to select which cells will sink, but it's not managing the sinking process correctly.
+2. The priority queue only considers the edges of the island initially, which doesn't account for the entire process of the sea level rise.
+3. The `vis` array is used to keep track of visited cells, but it's not used effectively in the sinking process.
+4. The code doesn't actually calculate the new area of the island after `Y` years, it just keeps decrementing the total area based on the assumption that the first cell to sink is always at the boundary.
+
+**How to fix the code:**
+
+To solve the problem correctly, we need to:
+
+1. Create a priority queue that sorts cells based on their elevation and distance from the edge (if any) to simulate which cells will be the first to sink.
+2. For each year, remove cells from the priority queue that are at the sea level and mark them as sinking.
+3. Update the border conditions for the island after each cell sinks.
+4. Recalculate the area of the island that is above the sea level after each year.
+
+Here's a conceptual outline of how to implement the solution:
+
+```cpp
+#include <iostream>
+#include <vector>
+#include <queue>
+#include <algorithm>
+
+using namespace std;
+
+struct Cell {
+    int x, y;
+    int height;
+    Cell(int x, int y, int height) : x(x), y(y), height(height) {}
+};
+
+bool operator>(const Cell& a, const Cell& b) {
+    return a.height < b.height;
+}
+
+int main() {
+    int H, W, Y;
+    cin >> H >> W >> Y;
+
+    vector<vector<int>> heights(H, vector<int>(W));
+    vector<vector<bool>> visited(H, vector<bool>(W, false));
+
+    for (int i = 0; i < H; ++i) {
+        for (int j = 0; j < W; ++j) {
+            cin >> heights[i][j];
+        }
+    }
+
+    priority_queue<Cell, vector<Cell>, greater<Cell>> pq;
+    int initialArea = 0;
+
+    // Add all border cells to the priority queue
+    for (int i = 0; i < H; ++i) {
+        pq.push(Cell(i, 0, heights[i][0]));
+        visited[i][0] = true;
+        initialArea++;
+    }
+    for (int j = 0; j < W; ++j) {
+        pq.push(Cell(0, j, heights[0][j]));
+        visited[0][j] = true;
+        initialArea++;
+    }
+    for (int i = 0; i < H; ++i) {
+        pq.push(Cell(i, W - 1, heights[i][W - 1]));
+        visited[i][W - 1] = true;
+        initialArea++;
+    }
+    for (int j = 0; j < W; ++j) {
+        pq.push(Cell(H - 1, j, heights[H - 1][j]));
+        visited[H - 1][j] = true;
+        initialArea++;
+    }
+
+    // Process sinking cells for Y years
+    for (int year = 1; year <= Y; ++year) {
+        int areaThisYear = 0;
+        while (!pq.empty()) {
+            Cell cell = pq.top();
+            pq.pop();
+            if (cell.height > year) {
+                pq.push(cell); // The cell still hasn't sunk
+                break;
+            }
+            // Mark the cell as sunk
+            visited[cell.x][cell.y] = true;
+            // Add all adjacent cells to the queue
+            if (cell.x > 0 && !visited[cell.x - 1][cell.y]) {
+                pq.push(Cell(cell.x - 1, cell.y, heights[cell.x - 1][cell.y]));
+                visited[cell.x - 1][cell.y] = true;
+            }
+            if (cell.x < H - 1 && !visited[cell.x + 1][cell.y]) {
+                pq.push(Cell(cell.x + 1, cell.y, heights[cell.x + 1][cell.y]));
+                visited[cell.x + 1][cell.y] = true;
+            }
+            if (cell.y > 0 && !visited[cell.x][cell.y - 1]) {
+                pq.push(Cell(cell.x, cell.y - 1, heights[cell.x][cell.y - 1]));
+                visited[cell.x][cell.y - 1] = true;
+            }
+            if (cell.y < W - 1 && !visited[cell.x][cell.y + 1]) {
+                pq.push(Cell(cell.x, cell.y + 1, heights[cell.x][cell.y + 1]));
+                visited[cell.x][cell.y + 1] = true;
+            }
+        }
+        // Calculate the area of the island that is still above the sea level for this year
+        for (int i = 0; i < H; ++i) {
+            for (int j = 0; j < W; ++j) {
+                if (!visited[i][j] && heights[i][j] > year) {
+                    areaThisYear++;
+                }
+            }
+        }
+        cout << areaThisYear << "\n";
+    }
+
+    return 0;
+}
+```
+
+This code still has some inefficiencies and could be optimized further, but it should address the fundamental issues with the original code and correctly calculate the area of the island above the sea level after `Y` years.

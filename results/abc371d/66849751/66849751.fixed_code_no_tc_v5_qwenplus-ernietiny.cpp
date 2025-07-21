@@ -1,0 +1,33 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+
+int main(){
+    int N;
+    cin >> N; // Assuming N is the number of elements in P and X arrays
+    vector<int> P(N+1), X(N);
+    P[0] = 0; // Initialize P[0] as 0 since it's the only element in the problem description
+
+    // Read the elements in P and X array
+    rep(i, N) cin >> P[i]; // Assuming P[i] represents the patch value for X[i]
+    rep(i, N) X[i] = i; // Assuming X[i] represents the index of the patch in the array P
+
+    // Fix the code to correctly calculate the modified value of X array
+    int Q; // Number of queries to be processed
+    cin >> Q; // Read the number of queries
+
+    // Sort the patches based on their patch value in ascending order
+    sort(all(X)); // Sort the patches based on their index in ascending order
+
+    // Process each query separately
+    for (int query = 0; query < Q; ++query){
+        int L, R; // Query left and right indices
+        cin >> L >> R; // Read the left and right indices of the patch being modified
+        // Calculate the modified value of X array based on sorted patches
+        int ans = P[R] - P[L]; // Assuming P[R] represents the modified value of X[R]
+        // Output the result for the query
+        cout << ans << endl; // Output the modified value of X array for the query
+    }
+
+    return 0; // Return 0 to indicate successful completion of the program
+}

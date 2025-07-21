@@ -1,0 +1,119 @@
+To address the issues and ensure the program passes all test cases, we need to carefully review the logic and data structures used. Specifically, the problem seems to involve maintaining connectivity and efficiently querying the k-th largest element among neighbors. Let's address the key areas where the solution might have failed:
+
+1. **Union-Find Structure**: We need to ensure that the union-find structure supports efficient union and find operations.
+2. **Order Statistics Tree**: To support efficient k-th largest queries, we need to use an ordered statistics tree like `std::multiset` or `__gnu_pbds::tree`.
+3. **Handling Queries Efficiently**: Both insertion and deletion in the ordered statistics tree should be handled correctly.
+
+Let's implement these changes:
+
+```cpp
+#include <iostream>
+#include <vector>
+#include <set>
+#include <algorithm>
+
+using namespace std;
+
+typedef long long int ll;
+
+struct UF {
+    vector<int> parent, rank;
+    
+    UF(int n) : parent(n), rank(n, 1) {
+        for (int i = 0; i < n; ++i) {
+            parent[i] = i;
+        }
+    }
+
+    int find(int u) {
+        return parent[u] == u ? u : parent[u] = find(parent[u]);
+    }
+
+    void unite(int u, int v) {
+        u = find(u);
+        v = find(v);
+        if (u != v) {
+            if (rank[u] < rank[v]) {
+                swap(u, v);
+            }
+            parent[v] = u;
+            rank[u] += rank[v];
+        }
+    }
+};
+
+class Solution {
+public:
+    vector<vector<int>> g;
+    vector<multiset<int>> sets;
+
+    Solution(int n) : g(n), sets(n) {}
+
+    void addEdge(int u, int v) {
+        g[u].push_back(v);
+        g[v].push_back(u);
+    }
+
+    void dfs(int node, int parent, UF &uf) {
+        uf.unite(node, parent);
+        sets[uf.find(node)].insert(node);
+        
+        for (auto neighbor : g[node]) {
+            if (neighbor != parent) {
+                dfs(neighbor, node, uf);
+            }
+        }
+    }
+
+    int query(int node, int k) {
+        auto &st = sets[UF().find(node)];
+        if (k > st.size()) return -1;
+        auto it = st.rbegin();
+        advance(it, k - 1);
+        return *it;
+    }
+};
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int n, q;
+    cin >> n >> q;
+
+    UF uf(n);
+    Solution sol(n);
+
+    for (int i = 1; i < n; ++i) {
+        int u, v;
+        cin >> u >> v;
+        sol.addEdge(u, v);
+    }
+
+    sol.dfs(1, 0, uf);
+
+    for (int i = 0; i < q; ++i) {
+        int type, u, k;
+        cin >> type >> u >> k;
+        if (type == 1) {
+            sol.addEdge(u, v);
+            sol.dfs(u, 0, uf);
+        } else {
+            cout << sol.query(u, k) << '\n';
+        }
+    }
+
+    return 0;
+}
+```
+
+### Explanation of Changes:
+1. **Union-Find Class**: This class handles the union and find operations.
+2. **Solution Class**:
+   - **g**: Adjacency list for the graph.
+   - **sets**: Vector of multisets where each multiset stores nodes in a connected component.
+   - **addEdge**: Adds an edge between two nodes and updates the adjacency list and sets.
+   - **dfs**: Performs a DFS traversal starting from node 1, updating the parent and rank arrays in the union-find structure and inserting nodes into the corresponding multisets.
+   - **query**: Finds the k-th largest node in the set corresponding to the connected component containing the queried node.
+
+This implementation ensures that both union and find operations are efficient, and the k-th largest element query can be performed using a multiset, which supports logarithmic time complexity for insertions, deletions, and finding the k-th largest element.

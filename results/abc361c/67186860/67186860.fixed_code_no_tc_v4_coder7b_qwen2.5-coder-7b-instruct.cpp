@@ -1,0 +1,17 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+  int n, k;
+  cin >> n >> k;
+  vector<int> a(n);
+  for (int i = 0; i < n; i++) {
+    cin >> a[i];
+  }
+  sort(a.begin(), a.end());
+  
+  // Calculate the difference between the largest and smallest elements after removing k elements
+  int ans = a[n-k] - a[k];
+  cout << ans << endl;
+  return 0;
+}

@@ -1,0 +1,85 @@
+
+The problem asks to determine the area of the island that remains above sea level after a specified number of years, where the sea level rises by one unit each year. The process involves a wave-like expansion from the edges of the island inward, with sections that are not higher than the current sea level sinking.
+
+The provided C++ code seems to be attempting a solution by simulating this wave-like expansion using a priority queue to always process the highest elevations first. However, the code is incorrect and contains multiple bugs and issues.
+
+Here's an analysis of the issues and the corrected code:
+
+### Issues in the Incorrect Code:
+1. The code is using a `vis` variable, but it should be a `vector<vector<bool>>` to represent whether a cell has been visited.
+2. The code does not handle the case where the sea level is equal to the elevation of some cells correctly.
+3. The code stops processing the priority queue as soon as it encounters an elevation that is greater than the current sea level, which is not correct.
+4. The code is inefficient in handling the wave expansion. It should also consider the newly submerged regions' neighbors.
+
+### Corrected Code:
+```cpp
+#include <iostream>
+#include <vector>
+#include <queue>
+#include <climits>
+
+using namespace std;
+
+int main() {
+    int H, W, Y;
+    cin >> H >> W >> Y;
+
+    vector<vector<int>> A(H, vector<int>(W));
+    for (int i = 0; i < H; i++) {
+        for (int j = 0; j < W; j++) {
+            cin >> A[i][j];
+        }
+    }
+
+    priority_queue<pair<int, pair<int, int>>, vector<pair<int, pair<int, int>>>, greater<pair<int, pair<int, int>>>> pq;
+    vector<vector<bool>> visited(H, vector<bool>(W, false));
+
+    // Initialize the priority queue with the edges of the island
+    for (int i = 0; i < H; i++) {
+        pq.push({A[i][0], {i, 0}});
+        visited[i][0] = true;
+        if (i < H - 1) pq.push({A[i][W - 1], {i, W - 1}});
+        visited[i][W - 1] = true;
+    }
+    for (int j = 0; j < W; j++) {
+        pq.push({A[0][j], {0, j}});
+        visited[0][j] = true;
+        if (j < W - 1) pq.push({A[H - 1][j], {H - 1, j}});
+        visited[H - 1][j] = true;
+    }
+
+    int remainingArea = H * W; // Start with the total area
+
+    for (int year = 0; year < Y; year++) {
+        int newSubmergedArea = 0;
+        while (!pq.empty()) {
+            int h = pq.top().first;
+            int x = pq.top().second.first;
+            int y = pq.top().second.second;
+            pq.pop();
+
+            if (h <= year) { // If the current elevation is less than or equal to the sea level
+                newSubmergedArea += 1;
+                for (int dx = -1; dx <= 1; dx++) {
+                    int nx = x + dx;
+                    if (nx < 0 || nx >= H) continue;
+                    for (int dy = -1; dy <= 1; dy++) {
+                        int ny = y + dy;
+                        if (ny < 0 || ny >= W) continue;
+                        if (!visited[nx][ny] && A[nx][ny] <= year) {
+                            visited[nx][ny] = true;
+                            pq.push({A[nx][ny], {nx, ny}});
+                        }
+                    }
+                }
+            }
+        }
+        remainingArea -= newSubmergedArea; // Subtract the area that has sunk into the sea
+        cout << remainingArea << '\n';
+    }
+
+    return 0;
+}
+```
+
+This corrected code correctly initializes the priority queue with the edges of the island, processes each year's sea level rise, and calculates the remaining area of the island above the sea level. It also ensures that all adjacent sections that will sink are added to the priority queue for subsequent processing.

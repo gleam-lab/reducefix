@@ -1,0 +1,61 @@
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+
+const ll INF = 1e18;
+
+int n;
+ll a[110], b[110], p[110], q[110], x;
+
+inline ll lcm(ll a, ll b) {
+    return a / gcd(a, b) * b;
+}
+
+bool check(ll v) {
+    ll cnt = 0;
+    for (int i = 1; i <= n; ++i) {
+        ll l = lcm(a[i], b[i]);
+        ll full_cycles = v / l;
+        
+        // Count how many we can buy in full cycles
+        ll cost_per_cycle = min(p[i] * (l / a[i]), q[i] * (l / b[i]));
+        ll total_full_cost = full_cycles * cost_per_cycle;
+        
+        // Remaining time after full cycles
+        ll remaining_time = v - full_cycles * l;
+        
+        // Try all possible numbers of A potions and compute minimum B potions needed
+        ll min_combo_cost = INF;
+        for (ll j = 0; j * a[i] <= remaining_time; ++j) {
+            ll b_needed = max(0LL, (remaining_time - j * a[i]) / b[i] + 
+                             ((remaining_time - j * a[i]) % b[i] != 0));
+            ll total_cost = j * p[i] + b_needed * q[i];
+            min_combo_cost = min(min_combo_cost, total_cost);
+        }
+        
+        ll total_cost = total_full_cost + min_combo_cost;
+        cnt += total_cost;
+        if (cnt > x) return false;
+    }
+    return true;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    cout.tie(nullptr);
+    
+    cin >> n >> x;
+    for (int i = 1; i <= n; ++i) {
+        cin >> a[i] >> p[i] >> b[i] >> q[i];
+    }
+    
+    ll l = 0, r = (ll)2e14;
+    while (l + 1 < r) {
+        ll mid = (l + r) / 2;
+        if (check(mid)) l = mid;
+        else r = mid;
+    }
+    
+    cout << l << '\n';
+}

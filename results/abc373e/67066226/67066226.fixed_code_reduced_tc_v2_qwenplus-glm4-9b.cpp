@@ -1,0 +1,70 @@
+#include <bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+
+int main() {
+    ios_base::sync_with_stdio(0);
+    cin.tie(0);
+    int n, m;
+    ll k;
+    cin >> n >> m >> k;
+    vector<ll> A(n);
+    ll total_votes = 0;
+    for (int i = 0; i < n; ++i) {
+        cin >> A[i];
+        total_votes += A[i];
+    }
+
+    // If there are M or fewer candidates with more votes, all candidates are guaranteed to win
+    if (m >= n) {
+        for (int i = 0; i < n; ++i) {
+            cout << 0 << " ";
+        }
+        return 0;
+    }
+
+    // Sort candidates by their votes
+    vector<pair<ll, int>> sorted_A;
+    for (int i = 0; i < n; ++i) {
+        sorted_A.emplace_back(A[i], i);
+    }
+    sort(sorted_A.begin(), sorted_A.end());
+
+    vector<ll> votes_needed(n, -1);
+    ll remaining_votes = k - total_votes;
+
+    // Calculate the minimum votes needed for each candidate
+    for (int i = 0; i < n; ++i) {
+        // The candidate at the m-th position in sorted order is the one who just missed the winning criteria
+        if (i + 1 < m) {
+            // If the current candidate is already above the threshold, no need for additional votes
+            votes_needed[sorted_A[i].second] = 0;
+        } else if (i + 1 == m) {
+            // Calculate the votes needed to surpass the candidate just below the threshold
+            ll votes_to_surpass = sorted_A[i].first - (sorted_A[m - 1].first + 1);
+            if (votes_to_surpass <= remaining_votes) {
+                votes_needed[sorted_A[i].second] = votes_to_surpass;
+                remaining_votes -= votes_to_surpass;
+            } else {
+                // Not enough votes to guarantee victory
+                votes_needed[sorted_A[i].second] = -1;
+            }
+        } else {
+            // Calculate the votes needed to surpass all candidates below the threshold
+            ll votes_to_surpass = sorted_A[i].first - (sorted_A[m].first + 1);
+            if (votes_to_surpass <= remaining_votes) {
+                votes_needed[sorted_A[i].second] = votes_to_surpass;
+                remaining_votes -= votes_to_surpass;
+            } else {
+                // Not enough votes to guarantee victory
+                votes_needed[sorted_A[i].second] = -1;
+            }
+        }
+    }
+
+    // Output the result
+    for (ll votes : votes_needed) {
+        cout << votes << " ";
+    }
+    cout << "\n";
+}

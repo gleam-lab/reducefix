@@ -1,0 +1,64 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define rep(i,n) for(int i = 0; i < (n); i++)
+using ll = long long;
+
+int main(void) {
+    int h, w, q;
+    cin >> h >> w >> q;
+    vector<bool> tate(h*w), yoko(h*w);
+    rep(i,h) rep(j,w) {
+        tate[i*w+j] = true;
+        yoko[i*w+j] = true;
+    }
+    rep(qi,q) {
+        int r, c;
+        cin >> r >> c;
+        r--; c--;
+        int idx = r*w+c;
+        if (tate[idx]) {
+            tate[idx] = false;
+            yoko[idx] = false;
+        } else {
+            bool found = false;
+            for (int i=r-1; i>=0 && !found; i--) {
+                int idy = i*w+c;
+                if (tate[idy]) {
+                    tate[idy] = false;
+                    yoko[idy] = false;
+                    found = true;
+                }
+            }
+            for (int i=r+1; i<h && !found; i++) {
+                int idy = i*w+c;
+                if (tate[idy]) {
+                    tate[idy] = false;
+                    yoko[idy] = false;
+                    found = true;
+                }
+            }
+            for (int j=c-1; j>=0 && !found; j--) {
+                int idy = r*w+j;
+                if (yoko[idy]) {
+                    yoko[idy] = false;
+                    tate[idy] = false;
+                    found = true;
+                }
+            }
+            for (int j=c+1; j<w && !found; j++) {
+                int idy = r*w+j;
+                if (yoko[idy]) {
+                    yoko[idy] = false;
+                    tate[idy] = false;
+                    found = true;
+                }
+            }
+        }
+    }
+    int ans = 0;
+    rep(i,h*w) {
+        if (tate[i] || yoko[i]) ans++;
+    }
+    cout << ans << "\n";
+    return 0;
+}

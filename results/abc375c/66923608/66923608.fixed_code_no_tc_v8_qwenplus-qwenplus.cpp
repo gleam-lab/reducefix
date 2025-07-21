@@ -1,0 +1,37 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define rep(i, n) for (int i = 0; i < (int)(n); i++)
+
+double euclid(double x1, double y1, double x2, double y2) {
+    return sqrt((x1 - x2) * (x1 - x2) + (y1 - y2) * (y1 - y2));
+}
+
+int main() {
+    int n;
+    cin >> n;
+    double ans = 0;
+
+    vector<double> x(n + 2), y(n + 2);
+
+    // Start at origin (0, 0)
+    x[0] = 0;
+    y[0] = 0;
+
+    // Read the N points
+    for (int i = 1; i <= n; ++i) {
+        cin >> x[i] >> y[i];
+    }
+
+    // Return to origin (0, 0) at the end
+    x[n + 1] = 0;
+    y[n + 1] = 0;
+
+    // Compute total distance
+    for (int i = 0; i <= n; ++i) {
+        ans += euclid(x[i], y[i], x[i + 1], y[i + 1]);
+    }
+
+    cout << fixed << setprecision(12) << ans << endl;
+
+    return 0;
+}

@@ -1,0 +1,80 @@
+### Analysis
+The original code attempts to solve the problem by sorting the pairs (A_i, B_i) by A_i in ascending order and then using a priority queue to maintain the top K-1 B_i values. The idea is to, for each element in the sorted list, calculate the product of A_i (the current max) and the sum of the top K-1 B_i values plus the current B_i.
+
+However, there are several issues:
+1. **Priority Queue Handling**: The priority queue is not correctly maintaining the top K-1 elements. The logic for pushing and popping elements is flawed, leading to incorrect sums.
+2. **Initialization**: The sum is not initialized properly for the first K elements.
+3. **Resizing the Queue**: The code does not ensure the queue always contains exactly K-1 elements before calculating the product.
+
+### Fixed Approach
+1. **Sorting**: First, sort the pairs (A_i, B_i) by A_i in ascending order. This allows us to consider each A_i as the potential max in the subset.
+2. **Priority Queue**: Use a min-heap (priority queue) to maintain the top K-1 largest B_i values up to the current index. This ensures that when we consider A_i as the max, the sum of the top K-1 B_i values (plus B_i itself) gives the minimal sum for that max A_i.
+3. **Sum Calculation**: For each element from K to N, calculate the product of A_i and the sum of the top K-1 B_i values (from the heap) plus B_i. Keep track of the minimum product encountered.
+
+### Solution Code
+```cpp
+#include<bits/stdc++.h>
+using namespace std;
+#define int long long
+#define PII pair<int,int>
+#define fi first
+#define se second
+
+const int N=2e5+10, INF=1e18;
+
+PII sa[N];
+
+signed main() {
+    ios::sync_with_stdio(0); cin.tie(0); cout.tie(0);
+    int t;
+    cin >> t;
+
+    while(t--) {
+        int n, k;
+        cin >> n >> k;
+
+        for(int i=1; i<=n; i++)
+            cin >> sa[i].fi;
+        
+        for(int i=1; i<=n; i++)
+            cin >> sa[i].se;
+        
+        sort(sa+1, sa+1+n);
+
+        priority_queue<int, vector<int>, greater<int>> min_heap;
+        int sum = 0;
+        int res = INF;
+
+        for(int i=1; i<=n; i++) {
+            if(i <= k) {
+                sum += sa[i].se;
+                min_heap.push(sa[i].se);
+                if(i == k) {
+                    res = min(res, sa[i].fi * sum);
+                }
+                continue;
+            }
+
+            if(sa[i].se > min_heap.top()) {
+                sum -= min_heap.top();
+                min_heap.pop();
+                sum += sa[i].se;
+                min_heap.push(sa[i].se);
+            }
+
+            res = min(res, sa[i].fi * sum);
+        }
+
+        cout << res << endl;
+    }
+    return 0;
+}
+```
+
+### Explanation
+1. **Sorting**: The pairs (A_i, B_i) are sorted by A_i in ascending order to systematically consider each A_i as the potential max in the subset.
+2. **Min-Heap Initialization**: For the first K elements, the B_i values are added to the heap and their sum is computed. When the K-th element is reached, the product of A_K and the sum is calculated as a candidate for the result.
+3. **Heap Maintenance**: For subsequent elements, if the current B_i is larger than the smallest element in the heap (top of the min-heap), the smallest element is replaced with the current B_i. This ensures the heap always contains the largest K B_i values up to the current index.
+4. **Result Calculation**: For each element from K+1 to N, the product of A_i and the sum of the top K B_i values (maintained in the heap) is computed, and the minimum product encountered is stored as the result.
+
+This approach efficiently computes the minimal product by leveraging sorting and a priority queue to maintain the necessary subset properties, ensuring optimal performance within the given constraints.

@@ -1,0 +1,55 @@
+#include <iostream>
+#include <string>
+using namespace std;
+
+// Function to determine the winner of a single RPS round
+int cmp(char x, char y) {
+    if (x == 'P') {
+        if (y == 'P') return 0;
+        if (y == 'R') return 1;
+        if (y == 'S') return -1;
+    }
+    if (x == 'R') {
+        if (y == 'P') return -1;
+        if (y == 'R') return 0;
+        if (y == 'S') return 1;
+    }
+    if (x == 'S') {
+        if (y == 'P') return 1;
+        if (y == 'R') return -1;
+        if (y == 'S') return 0;
+    }
+    return -100; // Should not reach here for valid inputs
+}
+
+// Function to return the winning move against a given move
+char win(char x) {
+    if (x == 'R') return 'P';
+    if (x == 'S') return 'R';
+    if (x == 'P') return 'S';
+    return 'X'; // Invalid input
+}
+
+int main() {
+    int n;
+    string s;
+    cin >> n >> s;
+
+    int ans = 0;
+    char current_move = 'X'; // Initially no move
+
+    for (int i = 0; i < n; ++i) {
+        char opponent_move = s[i];
+        char desired_move = win(opponent_move);
+
+        // If we can use the same move as before, do so (no change needed)
+        // Otherwise, we need to change our move
+        if (current_move != desired_move) {
+            ans++; // One additional patch needed
+            current_move = desired_move;
+        }
+    }
+
+    cout << ans << endl;
+    return 0;
+}

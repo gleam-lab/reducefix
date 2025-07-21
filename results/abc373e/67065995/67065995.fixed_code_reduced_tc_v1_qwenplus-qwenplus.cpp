@@ -1,0 +1,82 @@
+#include <bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+#define all(x) (x).begin(), (x).end()
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int N, M;
+    ll K;
+    cin >> N >> M >> K;
+    vector<ll> A(N);
+    for (int i = 0; i < N; ++i) {
+        cin >> A[i];
+        K -= A[i];
+    }
+
+    // ord will store indices of candidates sorted by current votes
+    vector<int> ord(N);
+    iota(all(ord), 0);
+    sort(all(ord), [&](int i, int j) { return A[i] < A[j]; });
+
+    // b is the list of sorted votes
+    vector<ll> b = A;
+    sort(all(b));
+
+    // Compute prefix sums of sorted votes
+    vector<ll> pref(N + 1, 0);
+    for (int i = 0; i < N; ++i) {
+        pref[i + 1] = pref[i] + b[i];
+    }
+
+    vector<ll> result(N, -1);
+
+    for (int idx = 0; idx < N; ++idx) {
+        int i = ord[idx]; // Current candidate index
+        ll a_i = A[i];
+
+        ll low = 0;
+        ll high = K + 1;
+
+        while (low < high) {
+            ll mid = (low + high) / 2;
+
+            // We want to check if even in the worst case,
+            // candidate i with A[i]+mid votes can still be elected.
+
+            // To block i from being elected, at least M other candidates must beat i.
+            // So we consider the top M candidates that could potentially beat i.
+            // Find how many additional votes are needed to ensure at least M candidates cannot beat i.
+
+            ll threshold = a_i + mid;
+
+            // Binary search to find how many candidates currently have >= threshold votes
+            int cnt = N - (lower_bound(all(b), threshold) - b.begin());
+
+            if (cnt >= M) {
+                // i is not guaranteed to be elected, need more votes
+                low = mid + 1;
+            } else {
+                // i could be elected with this X, try smaller X
+                high = mid;
+            }
+        }
+
+        // After binary search, low is minimum number of extra votes needed
+        // Now verify if it's possible within remaining votes
+        if (low <= K) {
+            result[i] = low;
+        } else {
+            result[i] = -1;
+        }
+    }
+
+    for (ll val : result) {
+        cout << val << ' ';
+    }
+    cout << '\n';
+
+    return 0;
+}

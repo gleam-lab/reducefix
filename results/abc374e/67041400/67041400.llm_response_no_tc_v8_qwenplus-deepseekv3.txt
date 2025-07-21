@@ -1,0 +1,94 @@
+After analyzing the code, I found the main issue is in how the candidate x values are generated and filtered in the `cost_for_W` function. The current approach doesn't properly handle all possible optimal solutions, especially when the optimal point is at the boundary. Here's the fixed code:
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+
+ll cost_for_W(int N, ll W, ll X,
+    const vector<ll>& A, const vector<ll>& P,
+    const vector<ll>& B, const vector<ll>& Q)
+{
+    ll total = 0;
+    for(int i = 0; i < N; i++){
+        ll best = X + 1;
+
+        // The maximum possible x is when we use only S machines
+        ll max_x = (W + A[i] - 1) / A[i];
+        
+        // The optimal x could be 0, max_x, or somewhere in between
+        // We need to check these boundary points and the derived optimal point
+        
+        // Check x = 0 (only T machines)
+        ll y0 = (W + B[i] - 1) / B[i];
+        best = min(best, Q[i] * y0);
+        
+        // Check x = max_x (only S machines)
+        best = min(best, P[i] * max_x);
+        
+        // Check the optimal point if it exists within the range
+        if (A[i] * Q[i] != B[i] * P[i]) {  // Avoid division by zero
+            ll x_star_num = W * Q[i];
+            ll x_star_den = A[i] * Q[i] + B[i] * P[i];
+            ll x_star = x_star_num / x_star_den;
+            
+            // Check nearby points to handle integer division
+            for (ll x = max(0LL, x_star - 1); x <= min(max_x, x_star + 1); x++) {
+                ll rem = W - A[i] * x;
+                ll y = rem <= 0 ? 0 : (rem + B[i] - 1) / B[i];
+                ll cost = P[i] * x + Q[i] * y;
+                best = min(best, cost);
+            }
+        }
+
+        total += best;
+        if(total > X) return X+1;
+    }
+    return total;
+}
+
+int main(){
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int N;
+    ll X;
+    cin >> N >> X;
+    vector<ll> A(N), P(N), B(N), Q(N);
+    for(int i = 0; i < N; i++){
+        cin >> A[i] >> P[i] >> B[i] >> Q[i];
+    }
+
+    // Calculate upper bound for binary search
+    ll lo = 0, hi = 0;
+    for(int i = 0; i < N; i++){
+        hi += max((X / P[i]) * A[i], (X / Q[i]) * B[i]);
+    }
+    hi += 1;  // To ensure we cover the maximum possible W
+
+    // Binary search
+    while(lo < hi){
+        ll mid = lo + (hi - lo) / 2;
+        if(cost_for_W(N, mid, X, A, P, B, Q) <= X){
+            lo = mid + 1;
+        } else {
+            hi = mid;
+        }
+    }
+
+    cout << lo - 1 << "\n";
+    return 0;
+}
+```
+
+Key improvements made:
+1. Simplified the x candidate generation in `cost_for_W` to focus on three key cases:
+   - Using only T machines (x = 0)
+   - Using only S machines (x = max_x)
+   - The mathematically optimal point (if it exists within range)
+2. Added proper handling of integer division when calculating the optimal point
+3. Improved the binary search bounds calculation by considering each machine's capability separately
+4. Fixed the binary search loop to properly handle the inclusive/exclusive bounds
+5. Removed unnecessary floating-point calculations and replaced with integer arithmetic where possible
+
+The fixed code should now correctly find the maximum achievable W within the given budget X, while being more efficient and robust against edge cases.

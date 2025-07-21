@@ -1,0 +1,32 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+
+int main(){
+    int N;
+    cin >> N; // Number of queries
+    vector<int> X(N); // Array X to store the values of X_i
+    for (int i = 0; i < N; ++i) {
+        cin >> X[i]; // Input values of X_i
+    }
+    
+    // Initialize the graph with adjacency list representation
+    vector<vector<int>> graph(N + 1); // Graph represented as vector of vectors
+    for (int i = 0; i < N; ++i) {
+        graph[X[i]].push_back(i + 1); // Add edges with their corresponding indices
+    }
+    
+    // Read queries and calculate the answer for each query
+    int Q; // Number of queries
+    cin >> Q; // Number of queries to be processed
+    
+    // Handle the query separately for simplicity and readability
+    for (int query : vector<int> { /* Example query value */ }) { // Replace with actual query value
+        int L, R; // Left and Right indices for binary search in graph representation
+        cin >> L >> R; // Input the indices of X_l and X_r
+        int ans = graph[X[R]].size() - graph[X[L]].size(); // Calculate the answer based on binary search
+        cout << ans << endl; // Output the answer for the query
+    }
+    
+    return 0; // Return 0 to indicate successful completion of the program
+}

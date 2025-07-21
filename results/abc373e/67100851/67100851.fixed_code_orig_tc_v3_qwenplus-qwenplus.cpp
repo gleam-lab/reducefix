@@ -1,0 +1,102 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+typedef long long ll;
+
+struct Candidate {
+    ll votes;
+    int idx;
+};
+
+bool compare(const Candidate& a, const Candidate& b) {
+    return a.votes < b.votes;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int N, M;
+    ll K;
+    cin >> N >> M >> K;
+
+    vector<ll> A(N);
+    for (int i = 0; i < N; ++i) {
+        cin >> A[i];
+    }
+
+    vector<ll> result(N, -1);
+
+    vector<Candidate> candidates(N);
+    for (int i = 0; i < N; ++i) {
+        candidates[i] = {A[i], i};
+    }
+
+    sort(candidates.begin(), candidates.end(), compare);
+
+    // Prefix sum of sorted votes
+    vector<ll> prefix_sum(N + 1, 0);
+    for (int i = 0; i < N; ++i) {
+        prefix_sum[i + 1] = prefix_sum[i] + candidates[i].votes;
+    }
+
+    ll total_remaining_votes = K - prefix_sum[N];
+
+    // For each candidate, determine minimum additional votes needed
+    for (int i = 0; i < N; ++i) {
+        ll current_votes = A[i];
+        if (M == 0) {
+            result[i] = 0;
+            continue;
+        }
+
+        // Find how many candidates have more than current_votes
+        // Since the list is sorted, we can binary search
+        int pos = lower_bound(candidates.begin(), candidates.end(), Candidate{current_votes, -1}, compare) - candidates.begin();
+
+        // If at least (N - M) candidates have strictly more votes, then already elected
+        if (pos >= N - M + 1) {
+            result[i] = 0;
+            continue;
+        }
+
+        // We need to make sure that after adding some X votes to this candidate,
+        // at most (M - 1) candidates have more votes
+
+        // Binary search on X
+        ll low = 0, high = total_remaining_votes;
+        bool possible = false;
+
+        while (low <= high) {
+            ll mid = (low + high) / 2;
+            ll new_vote_count = current_votes + mid;
+
+            // Count how many candidates have strictly more than new_vote_count
+            int count = N - (upper_bound(candidates.begin(), candidates.end(), Candidate{new_vote_count, -1}, compare) - candidates.begin());
+
+            if (count < M) {
+                high = mid - 1;
+                possible = true;
+            } else {
+                low = mid + 1;
+            }
+        }
+
+        if (possible) {
+            result[i] = max(0LL, high + 1);
+        } else {
+            result[i] = -1;
+        }
+    }
+
+    // Output results in original order
+    for (int i = 0; i < N; ++i) {
+        cout << result[i];
+        if (i != N - 1) cout << " ";
+    }
+    cout << endl;
+
+    return 0;
+}

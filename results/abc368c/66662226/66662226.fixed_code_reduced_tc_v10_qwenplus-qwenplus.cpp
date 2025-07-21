@@ -1,0 +1,47 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define rep(i, n) for (int i = 0; i < (n); ++i)
+using ll = long long;
+
+int main()
+{
+    int n;
+    cin >> n;
+    vector<ll> H(n);
+    rep(i, n) cin >> H[i];
+
+    ll T = 0;
+    priority_queue<pair<ll, ll>, vector<pair<ll, ll>>, greater<>> pq;
+
+    // Initialize the queue with initial healths and position 0
+    rep(i, n) {
+        if (H[i] > 0)
+            pq.push({H[i], 0});
+    }
+
+    while (!pq.empty()) {
+        auto [health, pos] = pq.top();
+        pq.pop();
+
+        T++;
+
+        // If this enemy has already been processed beyond current T, skip
+        if (health <= 0) continue;
+
+        // Apply damage
+        if (T % 3 == 0) {
+            health -= 3;
+        } else {
+            health--;
+        }
+
+        if (health > 0 && pos + 1 < n) {
+            // Push the next enemy with its health
+            pq.push({H[pos + 1], pos + 1});
+        }
+
+        H[pos] = health; // Update the health
+    }
+
+    cout << T << endl;
+}

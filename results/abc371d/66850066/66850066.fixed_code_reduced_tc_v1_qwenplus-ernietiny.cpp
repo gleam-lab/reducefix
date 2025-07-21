@@ -1,0 +1,32 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+
+int main(){
+    int N;
+    cin >> N; // Number of test cases
+    vector<int> X(N+1); // Array for input X values
+    for (int i = 0; i < N; ++i) cin >> X[i]; // Read values from X array
+    
+    // Build graph with the X values and corresponding P values
+    vector<vector<int>> graph(N); // Use vector for graph storage
+    for (int i = 0; i < N; ++i) {
+        graph[X[i]].push_back(i+1); // Add edges to graph based on X values
+    }
+    
+    // Find correct P value based on the range of X values
+    int correctP = 0; // Initialize correct P value as 0
+    for (int x : X){ // Iterate over all possible X values
+        int r = find(graph[x].begin(), graph[x].end(), N); // Find the rightmost index in graph
+        correctP = max(correctP, P[r]); // Update correct P value based on current X range
+    }
+    
+    int Q; // Number of queries
+    cin >> Q; // Read number of queries
+    while (Q--) { // Process each query
+        int L, R; // Left and Right indices of the query interval
+        cin >> L >> R; // Read the query intervals L and R
+        cout << correctP - P[L] << endl; // Output the correct answer
+    }
+    return 0;
+}

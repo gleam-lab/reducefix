@@ -1,0 +1,78 @@
+To fix this code, we need to address several issues in the original approach. The problem requires finding the k-th smallest distance between each query point B_j and all points A_i. The original code attempted to use a binary search approach with a frequency array, but it had several flaws:
+
+1. **Memory Usage**: The original code declared an array `a[N]` where `N = 2e8 + 5`. This is too large and will likely cause a stack overflow or memory issues.
+2. **Algorithmic Correctness**: The approach of using a frequency array and prefix sums to count points within a certain distance is not suitable for this problem because it doesn't correctly account for the distances to all points A_i.
+3. **Distance Calculation**: The original code didn't correctly compute the distances for each query point relative to all A_i points.
+
+The correct approach involves:
+1. Sorting the array A to efficiently compute the distances.
+2. For each query point B_j, compute the absolute differences between B_j and all A_i points, then sort these distances.
+3. Select the k_j-th smallest distance from the sorted list.
+
+However, sorting the distances for each query point would result in O(Q * N log N) time complexity, which is too slow for the given constraints (N, Q ≤ 1e5). 
+
+To optimize, we can:
+1. Sort the array A.
+2. For each query point B_j, use binary search to find the k-th smallest distance. This involves:
+   - Binary searching the possible distance range.
+   - For each candidate distance, count how many points in A are within that distance from B_j using binary search (lower_bound or upper_bound).
+   - Adjust the binary search range based on whether the count is sufficient to reach k_j.
+
+This approach reduces the time complexity to O(N log N) for sorting and O(Q log N log (max_distance)) for the queries, which is feasible given the constraints.
+
+Here's the corrected code:
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+
+int main() {
+    ios::sync_with_stdio(0);
+    cin.tie(0);
+    cout.tie(0);
+
+    int N, Q;
+    cin >> N >> Q;
+    vector<ll> A(N);
+    for (int i = 0; i < N; ++i) {
+        cin >> A[i];
+    }
+    sort(A.begin(), A.end());
+
+    while (Q--) {
+        ll b;
+        int k;
+        cin >> b >> k;
+        k--; // converting to 0-based index
+
+        ll low = 0, high = 2e18;
+        ll answer = 0;
+        while (low <= high) {
+            ll mid = low + (high - low) / 2;
+            auto left = lower_bound(A.begin(), A.end(), b - mid);
+            auto right = upper_bound(A.begin(), A.end(), b + mid);
+            int count = right - left;
+            if (count > k) {
+                answer = mid;
+                high = mid - 1;
+            } else {
+                low = mid + 1;
+            }
+        }
+        cout << answer << '\n';
+    }
+
+    return 0;
+}
+```
+
+### Explanation:
+1. **Sorting**: The array A is sorted to enable efficient binary search operations.
+2. **Binary Search for Each Query**: For each query (B_j, k_j):
+   - The possible distance range is from 0 to a very large number (2e18 is chosen to cover all possible distances given the constraints).
+   - For each candidate distance `mid`, we count how many points in A are within `mid` distance from B_j using `lower_bound` and `upper_bound`.
+   - Adjust the search range based on whether the count is sufficient to cover k_j (adjusted to 0-based index).
+3. **Output**: The smallest distance `mid` that satisfies having at least k_j points within `mid` distance is printed for each query.
+
+This approach efficiently handles the constraints by leveraging sorting and binary search, ensuring optimal performance for large input sizes.

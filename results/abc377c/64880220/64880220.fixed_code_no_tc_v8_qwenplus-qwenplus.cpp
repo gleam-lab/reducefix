@@ -1,0 +1,57 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    long long N, M;
+    cin >> N >> M;
+
+    // Set to store positions with pieces
+    unordered_set<string> piece_positions;
+
+    // Directions where a piece can attack
+    vector<pair<long long, long long>> directions = {
+        {2, 1}, {1, 2}, {-1, 2}, {-2, 1},
+        {-2, -1}, {-1, -2}, {1, -2}, {2, -1}
+    };
+
+    for (long long i = 0; i < M; ++i) {
+        long long a, b;
+        cin >> a >> b;
+        string key = to_string(a) + "," + to_string(b);
+        piece_positions.insert(key);
+    }
+
+    // Set to store positions under attack
+    unordered_set<string> attacked_positions;
+
+    // For each piece, mark the positions it can attack
+    for (long long i = 0; i < M; ++i) {
+        long long a, b;
+        cin >> a >> b; // Reading again for each piece
+
+        for (auto [dx, dy] : directions) {
+            long long x = a + dx;
+            long long y = b + dy;
+
+            if (x >= 1 && x <= N && y >= 1 && y <= N) {
+                string key = to_string(x) + "," + to_string(y);
+                // Only mark as attacked if not occupied by another piece
+                if (piece_positions.find(key) == piece_positions.end()) {
+                    attacked_positions.insert(key);
+                }
+            }
+        }
+    }
+
+    // Total squares = N*N
+    // Subtract number of attacked empty squares and occupied squares
+    long long total_squares = N * N;
+    long long blocked_squares = piece_positions.size() + attacked_positions.size();
+
+    cout << max(0LL, total_squares - blocked_squares) << endl;
+
+    return 0;
+}

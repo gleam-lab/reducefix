@@ -1,0 +1,82 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <cmath>
+#include <map>
+#include <set>
+#include <unordered_map>
+#include <unordered_set>
+#include <queue>
+#include <stack>
+#include <string>
+#include <limits>
+#include <climits>
+
+using namespace std;
+
+// Typedefs for convenience
+typedef long long ll;
+typedef pair<int, int> pii;
+typedef vector<int> vi;
+typedef vector<ll> vll;
+
+// Constants
+const int INF = 1e9 + 7;
+const ll LINF = 1e18;
+const int MOD = 1e9 + 7;
+
+// Fast IO
+void fastIO()
+{
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    cout.tie(nullptr);
+}
+
+// Debug helper (optional)
+#define debug(x) cerr << #x << " = " << x << "\n"
+
+// Function to solve the problem
+void Solve()
+{
+    ll Q;
+    cin >> Q;
+    unordered_set<ll> s; // Using unordered_set for O(1) average time complexity for insert, erase, and find operations
+    while (Q--)
+    {
+        ll a;
+        cin >> a;
+        if (a == 1)
+        {
+            ll tp;
+            cin >> tp;
+            s.insert(tp); // Insert the element into the set
+        }
+        else if (a == 2)
+        {
+            ll tp;
+            cin >> tp;
+            s.erase(tp); // Erase the element from the set
+        }
+        else
+        {
+            cout << s.size() << "\n"; // Output the size of the set which represents the number of unique elements
+        }
+    }
+}
+
+int main()
+{
+    fastIO();
+
+    // Your code here
+    int t = 1;
+    // cin >> t;
+    while (t--)
+    {
+        // Solve each test case
+        Solve();
+    }
+
+    return 0;
+}

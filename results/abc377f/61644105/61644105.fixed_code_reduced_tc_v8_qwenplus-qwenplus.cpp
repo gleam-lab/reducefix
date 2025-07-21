@@ -1,0 +1,133 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+
+using ll = long long;
+using pii = pair<int, int>;
+
+constexpr int MAX_M = 2000;
+
+unordered_set<ll> rowSet, colSet;
+unordered_set<ll> diag1Set, diag2Set;
+
+ll n;
+int m;
+
+// To avoid hash collisions and for efficient lookup
+struct Hash {
+    size_t operator()(const pair<ll, ll>& p) const {
+        return hash<ll>()(p.first) ^ (hash<ll>()(p.second) << 1);
+    }
+};
+
+unordered_set<pair<ll, ll>, Hash> occupied;
+
+ll countOverlap(unordered_set<ll>& s1, unordered_set<ll>& s2) {
+    ll cnt = 0;
+    if (s1.size() > s2.size()) swap(s1, s2);
+    for (auto& x : s1)
+        if (s2.count(x)) cnt++;
+    return cnt;
+}
+
+ll countTriple(unordered_set<ll>& r, unordered_set<ll>& c, unordered_set<ll>& d1, unordered_set<ll>& d2) {
+    ll total = 0;
+    for (auto& a : r)
+        for (auto& b : c)
+            if (a != b && d1.count(a - b) && d2.count(a + b))
+                total++;
+    return total;
+}
+
+int main() {
+    cin >> n >> m;
+
+    vector<pii> pieces(m);
+
+    set<pair<ll, ll>> seen;
+    for (int i = 0; i < m; ++i) {
+        ll x, y;
+        cin >> x >> y;
+        pieces[i] = {x, y};
+        if (seen.count({x, y})) {
+            cout << 0 << endl;
+            return 0;
+        }
+        seen.insert({x, y});
+        rowSet.insert(x);
+        colSet.insert(y);
+        diag1Set.insert(y - x);
+        diag2Set.insert(x + y);
+        occupied.insert({x, y});
+    }
+
+    // Total number of squares under attack from existing pieces:
+    // Each piece attacks its entire row, column, and two diagonals.
+
+    ll totalAttacked = 0;
+    totalAttacked += rowSet.size() * n; // Rows
+    totalAttacked += colSet.size() * n; // Columns
+    for (auto d : diag1Set) totalAttacked += n; // Diagonals \
+    for (auto d : diag2Set) totalAttacked += n; // Diagonals /
+
+    // Inclusion-exclusion: subtract overcounts
+
+    // Row-Column overlaps
+    totalAttacked -= 1LL * rowSet.size() * colSet.size();
+
+    // Row-Diag1 overlaps
+    for (auto r : rowSet)
+        for (auto d : diag1Set) {
+            ll c = d + r;
+            if (1 <= c && c <= n)
+                totalAttacked--;
+        }
+
+    // Row-Diag2 overlaps
+    for (auto r : rowSet)
+        for (auto d : diag2Set) {
+            ll c = d - r;
+            if (1 <= c && c <= n)
+                totalAttacked--;
+        }
+
+    // Col-Diag1 overlaps
+    for (auto c : colSet)
+        for (auto d : diag1Set) {
+            ll r = c - d;
+            if (1 <= r && r <= n)
+                totalAttacked--;
+        }
+
+    // Col-Diag2 overlaps
+    for (auto c : colSet)
+        for (auto d : diag2Set) {
+            ll r = d - c;
+            if (1 <= r && r <= n)
+                totalAttacked--;
+        }
+
+    // Diag1-Diag2 overlaps
+    for (auto d1 : diag1Set)
+        for (auto d2 : diag2Set) {
+            ll r = (d2 - d1);
+            if (r % 2 != 0) continue;
+            r /= 2;
+            ll c = d1 + r;
+            if (1 <= r && r <= n && 1 <= c && c <= n)
+                totalAttacked--;
+        }
+
+    // Add back triple overlaps
+    for (auto r : rowSet)
+        for (auto c : colSet)
+            if (diag1Set.count(c - r) && diag2Set.count(r + c))
+                totalAttacked++;
+
+    // Subtract positions already occupied
+    ll ans = n * n - totalAttacked - m;
+
+    cout << ans << endl;
+
+    return 0;
+}

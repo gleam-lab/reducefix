@@ -1,0 +1,59 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+using namespace std;
+using ll = long long;
+
+const ll INF = 1LL << 60;
+
+int main() {
+    int N;
+    ll X;
+    cin >> N >> X;
+    vector<ll> A(N), P(N), B(N), Q(N);
+    for (int i = 0; i < N; ++i) {
+        cin >> A[i] >> P[i] >> B[i] >> Q[i];
+    }
+
+    // Can we achieve processing capacity 'x' with budget X?
+    auto is_possible = [&](ll x) {
+        ll remaining = X;
+        for (int i = 0; i < N; ++i) {
+            ll min_cost = INF;
+
+            // Try all possible counts of machine A (up to B[i])
+            for (ll a = 0; a <= B[i]; ++a) {
+                ll b_needed = max(0LL, (x - A[i] * a + B[i] - 1) / B[i]);
+                if (b_needed <= A[i]) {
+                    min_cost = min(min_cost, a * P[i] + b_needed * Q[i]);
+                }
+            }
+
+            // Try all possible counts of machine B (up to A[i])
+            for (ll b = 0; b <= A[i]; ++b) {
+                ll a_needed = max(0LL, (x - B[i] * b + A[i] - 1) / A[i]);
+                if (a_needed <= B[i]) {
+                    min_cost = min(min_cost, b * Q[i] + a_needed * P[i]);
+                }
+            }
+
+            if (min_cost > remaining) return false;
+            remaining -= min_cost;
+        }
+        return true;
+    };
+
+    // Binary search for maximum achievable processing capacity
+    ll low = 0, high = 1LL << 60;
+    while (low < high) {
+        ll mid = (low + high + 1) / 2;
+        if (is_possible(mid)) {
+            low = mid;
+        } else {
+            high = mid - 1;
+        }
+    }
+
+    cout << low << endl;
+    return 0;
+}

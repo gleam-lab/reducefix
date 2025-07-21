@@ -1,0 +1,37 @@
+#include<bits/stdc++.h>
+using namespace std;
+#define int long long
+const int N=200005;
+int n, m, k, a[N];
+
+int main() {
+    ios::sync_with_stdio(0), cin.tie(0), cout.tie(0);
+    cin >> n >> m >> k;
+    for (int i = 1; i <= n; i++) {
+        cin >> a[i];
+        a[i] -= m - 1; // Reduce the requirements to be at least M-1 votes more than the (N-M)th candidate
+    }
+
+    sort(a + 1, a + n + 1); // Sort the array of votes minus required votes
+
+    int i = 0, res = 0;
+    for (i = 1; i <= n && a[i] == 0; i++); // Skip non-positive values
+
+    // Calculate the minimum votes needed for each candidate
+    for (int j = n; j >= i; j--) {
+        res = max(res, k - (j - i) * (a[j] + m - 1)); // Calculate the minimum additional votes needed
+        k -= max(0LL, a[j] - res); // Adjust the remaining votes accordingly
+        if (res > k) break; // If remaining votes cannot satisfy the condition, break
+    }
+
+    for (int j = n; j >= i; j--) {
+        if (j < i || res == (k - (j - i) * (a[j] + m - 1)) && k >= j - i) {
+            cout << 0 << ' ';
+        } else {
+            cout << -1 << ' ';
+        }
+        k = j - i;
+    }
+
+    return 0;
+}

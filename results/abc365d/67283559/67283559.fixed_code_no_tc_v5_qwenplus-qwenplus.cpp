@@ -1,0 +1,62 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int simulate(const string& S, const vector<char>& hand, char first_move) {
+    int total = 0;
+    vector<char> next = hand;
+    char use = first_move;
+    
+    // Remove the first move from available moves
+    next.clear();
+    for (auto d : hand) {
+        if (d != use) next.push_back(d);
+    }
+
+    for (size_t i = 1; i < S.size(); i++) {
+        int score = 0;
+        char best_move;
+        bool win_found = false;
+
+        // Try all possible moves to find the best one
+        for (int j = 0; j < next.size(); j++) {
+            char n = next[j];
+            if ((n == 'R' && S[i] == 'S') || 
+                (n == 'P' && S[i] == 'R') || 
+                (n == 'S' && S[i] == 'P')) {
+                score = 1;
+                best_move = n;
+                win_found = true;
+                break;
+            }
+        }
+
+        total += score;
+        
+        // Update available moves
+        vector<char> new_next;
+        for (auto d : hand) {
+            if (d != best_move) new_next.push_back(d);
+        }
+        next = new_next;
+    }
+    
+    return total;
+}
+
+int main() {
+    int N;
+    cin >> N;
+    string S;
+    cin >> S;
+    
+    vector<char> hand = {'R', 'P', 'S'};
+    
+    // Calculate maximum wins by trying all possible initial moves
+    int max_wins = 0;
+    for (char first_move : hand) {
+        max_wins = max(max_wins, simulate(S, hand, first_move));
+    }
+    
+    cout << max_wins << endl;
+    return 0;
+}

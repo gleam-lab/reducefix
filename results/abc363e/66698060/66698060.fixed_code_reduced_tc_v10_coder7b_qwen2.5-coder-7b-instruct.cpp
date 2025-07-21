@@ -1,0 +1,74 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define ll long long
+const int MAXN = 1005;
+
+struct Node {
+    int x, y, height;
+    Node(int _x, int _y, int _height) : x(_x), y(_y), height(_height) {}
+    bool operator<(const Node& other) const { return height > other.height; }
+};
+
+int h, w, y;
+vector<vector<int>> grid(MAXN, vector<int>(MAXN));
+bool visited[MAXN][MAXN];
+
+void bfs(int start_x, int start_y, int sea_level) {
+    queue<pair<int, int>> q;
+    q.push({start_x, start_y});
+    visited[start_x][start_y] = true;
+
+    while (!q.empty()) {
+        auto [cx, cy] = q.front();
+        q.pop();
+
+        for (int k = 0; k < 4; ++k) {
+            int nx = cx + dx[k], ny = cy + dy[k];
+            if (nx >= 0 && nx < h && ny >= 0 && ny < w && !visited[nx][ny] && grid[nx][ny] <= sea_level) {
+                visited[nx][ny] = true;
+                q.push({nx, ny});
+            }
+        }
+    }
+}
+
+int main() {
+    cin >> h >> w >> y;
+    for (int i = 0; i < h; ++i) {
+        for (int j = 0; j < w; ++j) {
+            cin >> grid[i][j];
+        }
+    }
+
+    priority_queue<Node> pq;
+    for (int i = 0; i < h; ++i) {
+        pq.push(Node(i, 0, grid[i][0]));
+        pq.push(Node(i, w - 1, grid[i][w - 1]));
+    }
+    for (int j = 1; j < w - 1; ++j) {
+        pq.push(Node(0, j, grid[0][j]));
+        pq.push(Node(h - 1, j, grid[h - 1][j]));
+    }
+
+    while (!pq.empty() && y--) {
+        auto [cx, cy, c_height] = pq.top();
+        pq.pop();
+
+        if (grid[cx][cy] <= c_height) {
+            bfs(cx, cy, c_height);
+        }
+    }
+
+    int remaining_area = 0;
+    for (int i = 0; i < h; ++i) {
+        for (int j = 0; j < w; ++j) {
+            if (!visited[i][j]) {
+                ++remaining_area;
+            }
+        }
+    }
+
+    cout << remaining_area << endl;
+
+    return 0;
+}

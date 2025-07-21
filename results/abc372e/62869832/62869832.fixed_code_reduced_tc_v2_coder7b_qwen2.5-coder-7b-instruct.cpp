@@ -1,0 +1,79 @@
+#include<bits/stdc++.h>
+using namespace std;
+
+const int MAXN = 2e5 + 5;
+vector<int> adj[MAXN];
+int deg[MAXN], sz[MAXN], rankx[MAXN], par[MAXN];
+
+void make_set(int x){
+    par[x] = x;
+    rankx[x] = 0;
+}
+
+int find_set(int x){
+    if(par[x] == x)return x;
+    return par[x] = find_set(par[x]);
+}
+
+void union_sets(int x, int y){
+    x = find_set(x), y = find_set(y);
+    if(rankx[x] > rankx[y]){
+        swap(x, y);
+    }
+    par[x] = y;
+    if(rankx[x] == rankx[y])rankx[y]++;
+}
+
+void dfs(int u, int p){
+    sz[u] = 1;
+    for(auto &v : adj[u]){
+        if(v != p){
+            dfs(v, u);
+            sz[u] += sz[v];
+        }
+    }
+}
+
+vector<int> topologicalSort(int root){
+    vector<int> topo;
+    stack<int> st;
+    st.push(root);
+    while(!st.empty()){
+        int u = st.top(); st.pop();
+        topo.push_back(u);
+        for(auto &v : adj[u]){
+            if(sz[v] > 0){
+                st.push(v);
+                sz[v] = 0;
+            }
+        }
+    }
+    reverse(topo.begin(), topo.end());
+    return topo;
+}
+
+int main(){
+    ios_base::sync_with_stdio(false); cin.tie(NULL);
+    int n, q; cin >> n >> q;
+    for(int i = 1; i <= n; ++i){
+        make_set(i);
+    }
+    for(int i = 0; i < n - 1; ++i){
+        int u, v; cin >> u >> v;
+        adj[u].push_back(v);
+        adj[v].push_back(u);
+        union_sets(u, v);
+    }
+    dfs(find_set(1), -1);
+    auto topo = topologicalSort(find_set(1));
+    for(int u : topo){
+        sort(adj[u].begin(), adj[u].end(), [&](int x, int y){return sz[x] > sz[y];});
+    }
+    while(q--){
+        int type, u, k; cin >> type >> u >> k;
+        u = find_set(u);
+        if(k > adj[u].size())cout << -1 << '\n';
+        else cout << adj[u][k - 1] << '\n';
+    }
+    return 0;
+}

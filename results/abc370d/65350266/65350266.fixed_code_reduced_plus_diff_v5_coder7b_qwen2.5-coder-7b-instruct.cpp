@@ -1,0 +1,49 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+typedef pair<int, int> PII;
+const int INF = 1e9+7;
+
+vector<vector<bool>> grid;
+vector<vector<int>> dist;
+
+void bfs(int n, int m) {
+    queue<PII> q;
+    for(int i=0;i<n;++i) for(int j=0;j<m;++j) if(grid[i][j]) {
+        q.push({i,j});
+        dist[i][j] = 0;
+    }
+    while(!q.empty()) {
+        PII p = q.front(); q.pop();
+        int x = p.first, y = p.second;
+        for(auto [dx, dy]: vector<PII>{{-1,0},{1,0},{0,-1},{0,1}}) {
+            int nx = x + dx, ny = y + dy;
+            if(nx>=0 && nx<n && ny>=0 && ny<m && !grid[nx][ny] && dist[nx][ny]==INF) {
+                dist[nx][ny] = dist[x][y]+1;
+                q.push({nx,ny});
+            }
+        }
+    }
+}
+
+int main() {
+    ios::sync_with_stdio(false); cin.tie(0); cout.tie(0);
+    int n, m, q; cin >> n >> m >> q;
+    grid.resize(n, vector<bool>(m));
+    dist.resize(n, vector<int>(m, INF));
+
+    for(int i=0;i<n;++i) for(int j=0;j<m;++j) {
+        char c; cin >> c;
+        grid[i][j] = (c=='#');
+    }
+
+    bfs(n, m);
+
+    while(q--) {
+        int x, y; cin >> x >> y; --x, --y;
+        if(dist[x][y]!=INF) cout << dist[x][y] << '\n';
+        else cout << 0 << '\n';
+    }
+
+    return 0;
+}

@@ -1,0 +1,53 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+    
+    int n, m;
+    cin >> n >> m;
+    vector<long long> A(n + 1); // Using 1-based indexing
+    for (int i = 1; i <= n; ++i) {
+        cin >> A[i];
+    }
+
+    // Build adjacency list: each edge connects u and v with weight B
+    vector<vector<pair<int, long long>>> adj(n + 1);
+    for (int j = 0; j < m; ++j) {
+        int u, v, b;
+        cin >> u >> v >> b;
+        adj[u].push_back({v, b});
+        adj[v].push_back({u, b});
+    }
+
+    // Dijkstra's algorithm
+    vector<long long> dist(n + 1, 1e18);
+    dist[1] = A[1]; // Start from vertex 1, include its value
+
+    priority_queue<pair<long long, int>, vector<pair<long long, int>>, greater<>> pq;
+    pq.push({dist[1], 1});
+
+    while (!pq.empty()) {
+        auto [d, u] = pq.top();
+        pq.pop();
+
+        if (d > dist[u]) continue;
+
+        for (auto &[v, b] : adj[u]) {
+            long long new_dist = d + b + A[v]; // current path cost + edge weight + destination vertex value
+            if (new_dist < dist[v]) {
+                dist[v] = new_dist;
+                pq.push({dist[v], v});
+            }
+        }
+    }
+
+    // Output result for nodes 2 to N
+    for (int i = 2; i <= n; ++i) {
+        cout << dist[i] << " ";
+    }
+    cout << "\n";
+
+    return 0;
+}

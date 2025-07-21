@@ -1,0 +1,32 @@
+#include<bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+
+const int N = 2e5 + 5;
+vector<ll> a(N), b(N);
+
+void solve(void) {
+    int n, q; cin >> n >> q;
+    for(int i = 1; i <= n; i++){
+        cin >> a[i];
+    }
+    sort(a.begin() + 1, a.begin() + n + 1);
+    for(int i = 1; i <= q; i++){
+        cin >> b[i] >> a[i];
+        auto it = lower_bound(a.begin() + 1, a.begin() + n + 1, b[i]);
+        int idx = it - a.begin();
+        if(idx == 0) cout << abs(b[i] - a[idx]) << endl;
+        else if(idx == n + 1) cout << abs(b[i] - a[idx - 1]) << endl;
+        else{
+            if(abs(b[i] - a[idx]) < abs(b[i] - a[idx - 1])) cout << abs(b[i] - a[idx]) << endl;
+            else cout << abs(b[i] - a[idx - 1]) << endl;
+        }
+    }
+}
+
+int main(){
+    ios::sync_with_stdio(0), cin.tie(0), cout.tie(0);
+    int t = 1; //cin >> t;
+    while (t--) solve();
+    return 0;
+}

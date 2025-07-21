@@ -1,0 +1,101 @@
+To fix this code, we need to correctly calculate the number of safe squares where our piece can be placed without being captured by any existing pieces. The existing approach has several issues, including incorrect calculation of diagonal intersections and double-counting of squares. Here’s the corrected approach:
+
+1. **Identify Forbidden Squares**: First, we identify all squares that are under attack by existing pieces. These include squares in the same row, column, or diagonals (both i+j and i-j diagonals) as any existing piece.
+2. **Handle Overlaps**: Ensure that squares that are under attack by multiple pieces are not double-counted. We need to use sets to track unique rows, columns, and diagonals.
+3. **Calculate Safe Squares**: Subtract the forbidden squares from the total available squares, considering overlaps correctly.
+
+### Fixed Code
+```cpp
+#include<bits/stdc++.h>
+#define int long long
+using namespace std;
+
+void solve() {
+    int N, M;
+    cin >> N >> M;
+    set<int> rows, cols, diag1, diag2; // diag1: i+j, diag2: i-j
+    
+    for (int i = 0; i < M; ++i) {
+        int a, b;
+        cin >> a >> b;
+        rows.insert(a);
+        cols.insert(b);
+        diag1.insert(a + b);
+        diag2.insert(a - b);
+    }
+    
+    int total_rows = rows.size();
+    int total_cols = cols.size();
+    int total_diag1 = diag1.size();
+    int total_diag2 = diag2.size();
+    
+    // Calculate total attacked squares without overlaps
+    int attacked = 0;
+    
+    // Rows and columns
+    attacked += N * total_rows + N * total_cols - total_rows * total_cols;
+    
+    // Diagonals (i+j)
+    for (int d : diag1) {
+        int min_i = max(1LL, d - N);
+        int max_i = min(N, d - 1);
+        int len = max_i - min_i + 1;
+        attacked += len;
+    }
+    
+    // Diagonals (i-j)
+    for (int d : diag2) {
+        int min_i = max(1LL, 1 + d);
+        int max_i = min(N, N + d);
+        int len = max_i - min_i + 1;
+        attacked += len;
+    }
+    
+    // Subtract overlaps between rows/columns and diagonals
+    // For each existing piece, it's already counted in rows/columns and diagonals
+    attacked -= M;
+    
+    // Now, subtract overlaps between diagonals (i+j) and (i-j)
+    // For each intersection point (i,j) where i+j = d1 and i-j = d2
+    // We have i = (d1 + d2)/2, j = (d1 - d2)/2
+    // They must be integers and within [1, N]
+    set<pair<int, int>> diagonal_intersections;
+    for (int d1 : diag1) {
+        for (int d2 : diag2) {
+            if ((d1 + d2) % 2 != 0 || (d1 - d2) % 2 != 0) continue;
+            int i = (d1 + d2) / 2;
+            int j = (d1 - d2) / 2;
+            if (i >= 1 && i <= N && j >= 1 && j <= N) {
+                diagonal_intersections.insert({i, j});
+            }
+        }
+    }
+    attacked -= diagonal_intersections.size();
+    
+    // Total safe squares: N^2 - M (existing pieces) - attacked squares
+    // But attacked squares already include the existing pieces, so adjust
+    int safe = N * N - M - attacked;
+    cout << safe << endl;
+}
+
+signed main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int _ = 1;
+    // cin >> _;
+    while (_--) {
+        solve();
+    }
+    
+    return 0;
+}
+```
+
+### Explanation
+1. **Sets for Tracking**: We use sets to track rows, columns, and diagonals (both i+j and i-j) that are under attack by existing pieces. This ensures uniqueness and avoids double-counting.
+2. **Initial Attacked Squares Calculation**: We calculate the total squares under attack by rows and columns first, then add squares under attack by diagonals.
+3. **Overlap Adjustment**: We adjust for overlaps between rows/columns and diagonals by subtracting the existing pieces (counted once in rows/columns and once in diagonals). We also adjust for intersections between diagonals by checking for valid integer solutions to the equations i+j=d1 and i-j=d2.
+4. **Final Safe Squares**: The total safe squares are computed by subtracting the existing pieces and the adjusted attacked squares from the total grid squares (N^2).
+
+This approach ensures correctness and efficiency, even for large values of N (up to 10^9) and M (up to 10^3).

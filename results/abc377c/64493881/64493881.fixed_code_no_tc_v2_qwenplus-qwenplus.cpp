@@ -1,0 +1,39 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+
+    int64_t N;
+    int M;
+    cin >> N >> M;
+
+    unordered_set<int64_t> attacked_or_occupied;
+    const int dir[8][2] = {
+        {2, 1}, {1, 2}, {-1, 2}, {-2, 1},
+        {-2, -1}, {-1, -2}, {1, -2}, {2, -1}
+    };
+
+    for (int i = 0; i < M; ++i) {
+        int64_t a, b;
+        cin >> a >> b;
+
+        // Store the piece's position
+        attacked_or_occupied.insert(a * 1000000000 + b);
+
+        // Generate all 8 positions it can attack and mark them
+        for (auto& d : dir) {
+            int64_t na = a + d[0];
+            int64_t nb = b + d[1];
+            if (1 <= na && na <= N && 1 <= nb && nb <= N) {
+                attacked_or_occupied.insert(na * 1000000000 + nb);
+            }
+        }
+    }
+
+    // Total cells - occupied or attacked cells
+    cout << (N * N - static_cast<int64_t>(attacked_or_occupied.size())) << endl;
+
+    return 0;
+}

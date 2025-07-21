@@ -1,0 +1,89 @@
+After analyzing the failing case and the expected output, I notice that the main issue is in how we're handling the k-th largest element query. The original code keeps only the top 9 elements in each connected component's sorted list, but this can cause incorrect answers when k=10 is queried. We should keep at least 10 elements (since k can be up to 10) and properly handle cases where the component size is smaller than k.
+
+Here's the fixed code:
+
+```cpp
+#include<bits/stdc++.h>
+using namespace std;
+using ll = long long;
+#define rep(i,n) for(int i = 0;i<n;i++)
+using P = pair<int,int>;
+using T = tuple<int,int,int>;
+
+struct Union_Find{
+  
+  vector<int> sz,par;
+  vector<vector<int>> uni;
+  
+  Union_Find(int n){
+    sz.resize(n,1);
+    par.resize(n,-1);
+    uni.resize(n);
+    rep(i,n) uni[i].emplace_back(i);
+  }
+  
+  int root(int v){
+    if(par[v] == -1) return v;
+    else return par[v] = root(par[v]);
+  }
+  
+  bool issame(int x,int y){
+    return root(x) == root(y);
+  }
+  
+  void merge(int x,int y){
+    x = root(x),y = root(y);
+    if(x == y) return;
+    
+    if(uni[x].size() < uni[y].size()) swap(x,y);
+    
+    par[y] = x;
+    sz[x] += sz[y];
+    
+    uni[x].insert(uni[x].end(), uni[y].begin(), uni[y].end());
+    uni[y].clear();
+    
+    sort(uni[x].rbegin(), uni[x].rend());
+    if(uni[x].size() > 10) uni[x].resize(10);
+  }
+  
+};
+
+int main(){
+  ios::sync_with_stdio(false);
+  cin.tie(nullptr);
+  
+  int n,q;
+  cin >> n >> q;
+  Union_Find uf(n);
+  
+  rep(i,q){
+    int ty,a,b;
+    cin >> ty >> a >> b;
+    a--,b--;
+    if(ty == 1){
+      uf.merge(a,b);
+    }
+    else{
+      int root = uf.root(a);
+      if(uf.uni[root].size() < b){
+        cout << -1 << endl;
+      }
+      else{
+        cout << uf.uni[root][b-1] + 1 << endl;
+      }
+    }
+  }
+}
+```
+
+Key changes made:
+1. Changed the maximum number of stored elements from 9 to 10 (since k can be up to 10)
+2. Fixed the indexing in the query - now using `b-1` to access the correct element (0-based vs 1-based)
+3. Optimized the merge operation by merging smaller set into larger one
+4. Added fast I/O to handle large input sizes efficiently
+5. Simplified the merge logic by using standard vector operations
+
+The main issue was that we were keeping only 9 elements but queries could ask for the 10th largest element. Also, there was an off-by-one error in accessing the k-th element (using b instead of b-1). The new code properly handles these cases while maintaining efficient operations.
+
+This solution should now pass all test cases, including the hidden ones, as it correctly maintains the top 10 largest elements in each connected component and properly handles the queries.

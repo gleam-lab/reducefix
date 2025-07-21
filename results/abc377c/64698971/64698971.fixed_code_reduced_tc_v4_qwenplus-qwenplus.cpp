@@ -1,0 +1,66 @@
+#include <bits/stdc++.h>
+#define rep(i, n) for (int i = 0; i < (int)(n); i++)
+#define repi(i, a, b) for (int i = (int)(a); i < (int)(b); i++)
+#define rrep(i, n) for (int i = n-1; i >= (int)(0); i--)
+#define rrepi(i, a, b) for (int i = (int)(a); i > (int)(b); i--)
+#define ALL(a) (a).begin(),(a).end()
+#define ALL_(a) (a),(a)+size(a)
+#define IF_T if(Is_test)
+
+#define ll long long
+using namespace std;
+
+struct phash {
+    inline size_t operator()(const pair<ll,ll> & p) const {
+        // Use standard hash mixing for large integers
+        return hash<ll>()(p.first * 1000000007 + p.second);
+    }
+};
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    ll N;
+    int M;
+    cin >> N >> M;
+
+    unordered_set<pair<ll, ll>, phash> attacked_cells;
+    set<pair<ll, ll>> occupied_cells;
+
+    vector<pair<ll, ll>> attack_offsets = {
+        {2, 1}, {1, 2}, {-1, 2}, {-2, 1},
+        {-2, -1}, {-1, -2}, {1, -2}, {2, -1}
+    };
+
+    rep(i, M) {
+        ll a, b;
+        cin >> a >> b;
+        // Convert to 0-based indexing
+        a--; b--;
+
+        // Add this cell to occupied cells
+        occupied_cells.insert({a, b});
+
+        // Mark all reachable cells from this piece
+        for (auto [dx, dy] : attack_offsets) {
+            ll nx = a + dx;
+            ll ny = b + dy;
+            if (nx >= 0 && nx < N && ny >= 0 && ny < N) {
+                attacked_cells.insert({nx, ny});
+            }
+        }
+    }
+
+    // Remove occupied cells from attacked cells (we cannot place our piece there anyway)
+    for (auto cell : occupied_cells) {
+        attacked_cells.erase(cell);
+    }
+
+    // Total empty cells that are not attacked
+    ll total_safe_cells = N * N - occupied_cells.size() - attacked_cells.size();
+
+    cout << total_safe_cells << endl;
+
+    return 0;
+}

@@ -1,0 +1,55 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+struct Item {
+    int a, p, b, q;
+};
+
+vector<Item> items;
+vector<vector<long long>> dp;
+
+long long cost(int i, int n) {
+    long long d = n / (items[i].a * items[i].b);
+    long long rem = n % (items[i].a * items[i].b);
+    return dp[i][rem] + d * items[i].p * items[i].b;
+}
+
+bool feasible(long long n) {
+    long long totalCost = 0;
+    for (int i = 0; i < items.size(); ++i) {
+        totalCost += cost(i, n);
+        if (totalCost > X) return false;
+    }
+    return true;
+}
+
+int main() {
+    int N, X;
+    cin >> N >> X;
+
+    for (int i = 0; i < N; ++i) {
+        int a, p, b, q;
+        cin >> a >> p >> b >> q;
+        if (a * q < b * p) swap(a, b), swap(p, q);
+        items.push_back({a, p, b, q});
+        dp.push_back(vector<long long>(a * b + 1, 0));
+        for (int j = 1; j <= a * b; ++j) {
+            dp.back()[j] = min(dp.back()[max(0, j - a)] + p, dp.back()[max(0, j - b)] + q);
+        }
+    }
+
+    int low = 0, high = 1e9;
+    while (low < high) {
+        int mid = low + (high - low) / 2;
+        if (feasible(mid)) {
+            high = mid;
+        } else {
+            low = mid + 1;
+        }
+    }
+
+    cout << low << endl;
+    return 0;
+}

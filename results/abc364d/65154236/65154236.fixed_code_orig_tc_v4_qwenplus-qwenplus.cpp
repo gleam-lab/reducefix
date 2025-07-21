@@ -1,0 +1,59 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+const int OFFSET = 1e8;
+const int MAX_COORD = 2 * (int)1e8 + 10; // max coordinate after offset
+
+void solve() {
+    int N, Q;
+    cin >> N >> Q;
+
+    vector<int> freq(MAX_COORD, 0);
+
+    for (int i = 0; i < N; ++i) {
+        int a;
+        cin >> a;
+        freq[a + OFFSET]++;
+    }
+
+    // Build prefix sum array
+    vector<long long> prefix(MAX_COORD + 1, 0);
+    for (int i = 0; i < MAX_COORD; ++i) {
+        prefix[i + 1] = prefix[i] + freq[i];
+    }
+
+    while (Q--) {
+        int b, k;
+        cin >> b >> k;
+        int pos = b + OFFSET;
+
+        // Binary search bounds
+        int lo = 0, hi = MAX_COORD - 1;
+        int answer = 0;
+
+        while (lo <= hi) {
+            int mid = (lo + hi) / 2;
+
+            // Count how many points are within distance `mid` from b
+            int l = max(0, pos - mid);
+            int r = min(MAX_COORD - 1, pos + mid);
+            long long cnt = prefix[r + 1] - prefix[l];
+
+            if (cnt >= k) {
+                answer = mid;
+                hi = mid - 1;
+            } else {
+                lo = mid + 1;
+            }
+        }
+
+        cout << answer << '\n';
+    }
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    solve();
+    return 0;
+}

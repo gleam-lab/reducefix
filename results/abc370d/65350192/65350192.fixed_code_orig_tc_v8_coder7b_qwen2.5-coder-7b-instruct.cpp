@@ -1,0 +1,72 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define rep(i,n) for(int i = 0; i < (n); i++)
+using ll = long long;
+
+struct node{
+    int val;
+    int idx;
+    bool operator<(const node &other) const {return val < other.val;}
+};
+
+int main(void){
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+    int h, w, q;
+    cin >> h >> w >> q;
+    vector<vector<bool>> grid(h,vector<bool>(w,true));
+    set<node> up,down,left,right;
+    rep(i,h)rep(j,w){
+        up.insert({i,j});
+        down.insert({h-1-i,j});
+        left.insert({j,i});
+        right.insert({w-1-j,i});
+    }
+
+    while(q--){
+        int r,c;
+        cin >> r >> c;
+        --r,--c;
+        if(grid[r][c]){
+            grid[r][c] = false;
+            up.erase(up.find({r,c}));
+            down.erase(down.find({h-1-r,c}));
+            left.erase(left.find({c,r}));
+            right.erase(right.find({w-1-c,r}));
+        }
+        else{
+            int u_idx = *(up.upper_bound({r,c}))->idx;
+            int d_idx = (*(down.lower_bound({r,c})))->idx;
+            int l_idx = (*(left.upper_bound({c,r}))->idx;
+            int r_idx = (*(right.lower_bound({c,r})))->idx;
+
+            if(u_idx == r){
+                down.erase(down.find({d_idx,c}));
+                left.erase(left.find({l_idx,r}));
+                right.erase(right.find({r_idx,r}));
+            }
+            else if(d_idx == h-1-r){
+                up.erase(up.find({u_idx,c}));
+                left.erase(left.find({l_idx,r}));
+                right.erase(right.find({r_idx,r}));
+            }
+            else if(l_idx == c){
+                up.erase(up.find({r,u_idx}));
+                down.erase(down.find({d_idx,r}));
+                right.erase(right.find({r_idx,c}));
+            }
+            else if(r_idx == w-1-c){
+                up.erase(up.find({r,u_idx}));
+                down.erase(down.find({d_idx,r}));
+                left.erase(left.find({l_idx,r}));
+            }
+            grid[r][c] = true;
+        }
+    }
+    int ans = 0;
+    for(auto x:grid){
+        for(auto y:x)ans+=y;
+    }
+    cout << ans << '\n';
+    return 0;
+}

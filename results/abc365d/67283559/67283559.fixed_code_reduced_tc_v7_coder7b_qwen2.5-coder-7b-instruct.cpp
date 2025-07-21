@@ -1,0 +1,51 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+  int N;
+  cin >> N;
+  string S;
+  cin >> S;
+  
+  vector<char> hand = {'R', 'P', 'S'};
+  int total = 0;
+  
+  // First iteration to calculate scores
+  for (int i = 0; i < N; ++i) {
+    int score = 0;
+    char use;
+    for (char n : hand) {
+      if ((n == 'R' && S[i] == 'S') || (n == 'P' && S[i] == 'R') || (n == 'S' && S[i] == 'P')) {
+        score++;
+        use = n;
+        break;
+      }
+    }
+    if (score == 0) use = S[i];
+    total += score;
+    hand.erase(remove(hand.begin(), hand.end(), use), hand.end());
+  }
+
+  // Reset hand for second iteration
+  hand = {'R', 'P', 'S'};
+  int total2 = 0;
+  
+  // Second iteration with updated hand
+  for (int i = 1; i < N; ++i) {
+    int score = 0;
+    char use;
+    for (char n : hand) {
+      if ((n == 'R' && S[i] == 'S') || (n == 'P' && S[i] == 'R') || (n == 'S' && S[i] == 'P')) {
+        score++;
+        use = n;
+        break;
+      }
+    }
+    if (score == 0) use = S[i];
+    total2 += score;
+    hand.erase(remove(hand.begin(), hand.end(), use), hand.end());
+  }
+
+  cout << max(total, total2);
+  return 0;
+}

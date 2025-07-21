@@ -1,0 +1,81 @@
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+#define rep(i,n) for(int i = 0; i < (n); i++)
+using ll = long long;
+
+struct SegTree {
+    int n;
+    vector<int> seg;
+    SegTree(int _n) : n(_n), seg(4*n+1) {}
+    void update(int idx, int l, int r, int pos, bool val) {
+        if(l == r) {
+            seg[idx] = val ? 0 : 1;
+            return;
+        }
+        int mid = (l+r)/2;
+        if(pos <= mid) update(idx*2, l, mid, pos, val);
+        else update(idx*2+1, mid+1, r, pos, val);
+        seg[idx] = seg[idx*2] + seg[idx*2+1];
+    }
+    int query(int idx, int l, int r, int ql, int qr) {
+        if(ql <= l && r <= qr) return seg[idx];
+        if(qr < l || r < ql) return 0;
+        int mid = (l+r)/2;
+        return query(idx*2, l, mid, ql, qr) + query(idx*2+1, mid+1, r, ql, qr);
+    }
+};
+
+int main(void) {
+    int h, w, q;
+    cin >> h >> w >> q;
+    vector<vector<bool>> grid(h, vector<bool>(w));
+    SegTree cols(w), rows(h);
+
+    rep(i, h) rep(j, w) grid[i][j] = true;
+
+    rep(qi, q) {
+        int r, c;
+        cin >> r >> c;
+        r--, c--;
+
+        if(grid[r][c]) {
+            grid[r][c] = false;
+            cols.update(1, 0, w-1, c, true);
+            rows.update(1, 0, h-1, r, true);
+        } else {
+            auto col_query = cols.query(1, 0, w-1, 0, c);
+            if(col_query == 0) {
+                while(true) {
+                    c++;
+                    if(c == w) break;
+                    if(grid[r][c]) {
+                        cols.update(1, 0, w-1, c, false);
+                        grid[r][c] = false;
+                        break;
+                    }
+                }
+            }
+
+            auto row_query = rows.query(1, 0, h-1, 0, r);
+            if(row_query == 0) {
+                while(true) {
+                    r++;
+                    if(r == h) break;
+                    if(grid[r][c]) {
+                        rows.update(1, 0, h-1, r, false);
+                        grid[r][c] = false;
+                        break;
+                    }
+                }
+            }
+        }
+    }
+
+    int ans = 0;
+    rep(i, h) rep(j, w) ans += !grid[i][j];
+
+    cout << ans << endl;
+    return 0;
+}
+```

@@ -1,0 +1,62 @@
+#include <iostream>
+#include <vector>
+#include <set>
+
+using namespace std;
+
+using ll = long long;
+using pll = pair<int, int>;
+
+ll solve(ll n, vector<pll>& pieces) {
+    set<int> rows, cols, diag1, diag2;
+
+    // Collect the pieces' positions on rows, columns, and diagonals
+    for (auto& p : pieces) {
+        rows.insert(p.first);
+        cols.insert(p.second);
+        diag1.insert(p.first - p.second);
+        diag2.insert(p.first + p.second);
+    }
+
+    // Calculate the number of free positions
+    ll free_positions = n * n;
+
+    // Subtract the occupied positions and intersections
+    free_positions -= rows.size() * n;       // Subtract pieces on rows
+    free_positions -= cols.size() * n;       // Subtract pieces on columns
+    free_positions += rows.size() * cols.size();  // Add intersections
+
+    // Calculate the number of positions that need to be removed from each diagonal set
+    for (int d = 1; d <= n; ++d) {
+        if (diag1.count(d)) {
+            free_positions -= (n - abs(d) + 1);  // Subtract all positions on diagonal 1
+        }
+        if (diag2.count(d)) {
+            free_positions -= (n - abs(d) + 1);  // Subtract all positions on diagonal 2
+        }
+    }
+
+    // Output the result
+    cout << free_positions << endl;
+    return free_positions;
+}
+
+int main() {
+    ll n;
+    int m;
+    cin >> n >> m;
+
+    vector<pll> pieces(m);
+    for (int i = 0; i < m; ++i) {
+        cin >> pieces[i].first >> pieces[i].second;
+    }
+
+    // Since n can be as large as 10^9, we need to handle this efficiently
+    // The maximum number of pieces is m = 10^3, so we can use a set to store unique positions
+    set<pair<int, int>> unique_pieces(pieces.begin(), pieces.end());
+
+    // Call the solving function
+    solve(n, unique_pieces);
+
+    return 0;
+}

@@ -1,0 +1,29 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define rep(i, n) for (int i = 0; i < (int)(n); i++)
+using ll = long long;
+
+int main() {
+    int n;
+    cin >> n;
+    vector<ll> data(n);
+    rep(i, n) {
+        cin >> data[i];
+    }
+
+    // dp[i] = max total sum considering first i elements
+    vector<ll> dp(n + 1, 0);
+    dp[0] = 0;  // no elements selected
+
+    if (n >= 1) dp[1] = data[0];  // only one element, we take it normally
+
+    for (int i = 2; i <= n; ++i) {
+        // Two choices:
+        // 1. Take i-th element normally: dp[i-1] + data[i-1]
+        // 2. Take i-th and (i-1)-th as a pair: dp[i-2] + 2 * data[i-1] + 2 * data[i-2]
+        dp[i] = max(dp[i - 1] + data[i - 1], dp[i - 2] + 2 * data[i - 1] + 2 * data[i - 2]);
+    }
+
+    cout << dp[n] << endl;
+    return 0;
+}

@@ -1,0 +1,39 @@
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+
+void solve() {
+    int n;
+    cin >> n;
+    vector<pair<ll, ll>> points;
+    points.emplace_back(0, 0); // Start at the origin
+
+    for (int i = 0; i < n; i++) {
+        ll x, y;
+        cin >> x >> y;
+        points.emplace_back(x, y);
+    }
+
+    // Add the origin at the end to close the path
+    points.emplace_back(0, 0);
+
+    ll total_cost = 0;
+
+    // Calculate the cost of moving between consecutive points
+    for (int i = 0; i < n + 1; i++) {
+        ll a = points[i].first;
+        ll b = points[i].second;
+        ll c = points[(i + 1) % (n + 1)].first;
+        ll d = points[(i + 1) % (n + 1)].second;
+        total_cost += sqrt((a - c) * (a - c) + (b - d) * (b - d));
+    }
+
+    cout << fixed << setprecision(12) << total_cost << endl;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+    solve();
+    return 0;
+}

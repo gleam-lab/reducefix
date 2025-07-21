@@ -1,0 +1,100 @@
+To solve this problem efficiently, we need to find the minimum value of the expression:
+
+$$
+\left(\max_{i \in S} A_i\right) \times \left(\sum_{i \in S} B_i\right)
+$$
+
+for every test case where $ S $ is a subset of indices of size exactly $ K $. Given the constraints (up to 200,000 test cases with total N across all cases also up to 200,000), we must ensure that our algorithm runs in **O(N log K)** per test case.
+
+---
+
+### Key Observations:
+
+1. Since we are selecting exactly K elements from the list of pairs (A, B), and the cost involves both the maximum A and the sum of Bs, it's efficient to fix the maximum A and greedily choose the best K-1 elements with minimal B values.
+
+2. Sorting by `A` allows us to process each element as a candidate for the maximum `A[i]`. For each such candidate at index i:
+   - We want to pick the K smallest `B[j]` values among the first i elements.
+   - The max A is `A[i]`, and the sum of those K smallest B values gives a potential answer.
+
+3. Using a **max-heap** of size K helps maintain the smallest K B values seen so far. When we exceed K elements, we remove the largest B from the heap to keep only the K smallest ones.
+
+---
+
+### Optimizations:
+
+- We sort the array by A values.
+- As we iterate through sorted A, we maintain a running sum of K smallest B values using a max-heap.
+- This ensures we always have the optimal combination for each possible maximum A[i].
+
+---
+
+### Corrected Code:
+
+```cpp
+#include <iostream>
+#include <vector>
+#include <queue>
+#include <algorithm>
+
+using namespace std;
+
+#define int long long
+
+signed main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+
+    int T;
+    cin >> T;
+
+    while (T--) {
+        int N, K;
+        cin >> N >> K;
+
+        vector<pair<int, int>> A(N);
+        for (int i = 0; i < N; ++i) {
+            cin >> A[i].first;
+        }
+        for (int i = 0; i < N; ++i) {
+            cin >> A[i].second;
+        }
+
+        // Sort by A in increasing order
+        sort(A.begin(), A.end());
+
+        priority_queue<int> pq;
+        int sum_b = 0;
+        int result = 1e18;
+
+        for (int i = 0; i < N; ++i) {
+            sum_b += A[i].second;
+            pq.push(A[i].second);
+
+            // Keep only K smallest B values
+            if (pq.size() > K) {
+                sum_b -= pq.top();
+                pq.pop();
+            }
+
+            // Once we have at least K elements, compute the cost
+            if (i >= K - 1) {
+                result = min(result, A[i].first * sum_b);
+            }
+        }
+
+        cout << result << "\n";
+    }
+
+    return 0;
+}
+```
+
+---
+
+### Why This Works:
+
+- **Sorting** ensures that when we consider `A[i]` as the max A value, all previous elements have smaller or equal A values.
+- **Max-Heap** maintains the smallest K `B` values efficiently.
+- At each step, we compute the cost using current A[i] as max A and the sum of selected B values.
+
+This approach guarantees correctness and efficiency, avoiding issues like incorrect greedy logic or improper heap management found in the original code.

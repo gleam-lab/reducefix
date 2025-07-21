@@ -1,0 +1,46 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+
+    long long N;
+    int M;
+    cin >> N >> M;
+
+    set<pair<long long, long long>> attacked_positions;
+    set<pair<long long, long long>> existing_pieces;
+
+    vector<pair<long long, long long>> knight_moves = {
+        {2, 1}, {1, 2}, {-1, 2}, {-2, 1},
+        {-2, -1}, {-1, -2}, {1, -2}, {2, -1}
+    };
+
+    for (int i = 0; i < M; ++i) {
+        long long a, b;
+        cin >> a >> b;
+        existing_pieces.insert({a, b});
+        
+        for (auto& move : knight_moves) {
+            long long ni = a + move.first;
+            long long nj = b + move.second;
+            if (ni >= 1 && ni <= N && nj >= 1 && nj <= N) {
+                attacked_positions.insert({ni, nj});
+            }
+        }
+    }
+
+    // Remove positions that are already occupied by existing pieces
+    for (auto& pos : existing_pieces) {
+        attacked_positions.erase(pos);
+    }
+
+    // Total number of safe positions = total cells - occupied or attacked cells
+    long long total_cells = N * N;
+    long long occupied_or_attacked = existing_pieces.size() + attacked_positions.size();
+
+    cout << total_cells - occupied_or_attacked << "\n";
+
+    return 0;
+}

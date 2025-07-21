@@ -1,0 +1,35 @@
+#include<bits/stdc++.h>
+using namespace std;
+const int N = 1e6 + 5;
+int n, m, k, sum, cnt, a[N], b[N], d[N];
+
+int main() {
+    ios::sync_with_stdio(0), cin.tie(0), cout.tie(0);
+    
+    cin >> n >> m;
+    for (int i = 1; i <= n; i++) {
+        cin >> a[i];
+        a[i + n] = a[i]; // Extend the array for wrap-around
+    }
+    
+    // Initialize the modulo frequency array
+    b[0] = 1;
+    
+    // Calculate the prefix sum array for the extended array
+    for (int i = 1; i <= n * 2; i++) {
+        if (i >= n) {
+            b[(d[i - n] % m) % m]--; // Increment or decrement based on the modulo of the previous index
+        }
+        
+        d[i] = d[i - 1] + a[i]; // Update the prefix sum
+        sum += b[d[i] % m]; // Add the count of current prefix sum modulo
+        
+        if (i < n) {
+            b[d[i] % m]++; // Increment after processing current index for i < n
+        }
+    }
+    
+    cout << sum;
+    
+    return 0;
+}

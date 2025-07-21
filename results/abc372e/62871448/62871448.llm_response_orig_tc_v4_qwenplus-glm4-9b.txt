@@ -1,0 +1,94 @@
+
+The problem involves managing an undirected graph with dynamic edges and queries to retrieve specific information about the graph. The primary issues with the provided code are as follows:
+
+1. **Incorrect Union-Find**: The union-find implementation does not correctly handle the union operation. The `gtf` function is used to find the root of the set for a given vertex, but the union operation does not correctly merge the sets or maintain the size information needed to efficiently answer the queries.
+
+2. **Dynamic Tree Representation**: The code attempts to store the maximum vertex for each tree, but the implementation is not efficient and does not correctly track the size of the trees.
+
+3. **Query Handling**: The queries are not processed correctly. For the union operation, the code is not correctly handling the merging of the trees and maintaining the order of the vertices. For the query operation, the code is not correctly retrieving the k-th largest vertex.
+
+### Corrected Approach
+
+To solve this problem, we can use the Union-Find data structure with path compression and union by size. Additionally, we will need to maintain a dynamic order of vertices for each set to efficiently answer the k-th largest query.
+
+Here's a step-by-step breakdown of the approach:
+
+1. **Initialize Union-Find**: Initialize the Union-Find structure with each vertex in its own set.
+
+2. **Process Union Operations**: When an edge is added, use the union-find structure to merge the sets of the two vertices.
+
+3. **Maintain Dynamic Order**: Whenever we merge two sets, we need to maintain a dynamic order of vertices. This can be done by using a data structure like a balanced binary search tree (or two heaps) to maintain the order of vertices.
+
+4. **Answer Queries**: For the k-th largest query, we can use the data structure from step 3 to efficiently find the k-th largest vertex in the set of the given vertex.
+
+5. **Optimize for k <= 10**: Since k is always <= 10, we can optimize our data structure to handle this constraint efficiently.
+
+### Implementation
+
+Here is a rough sketch of how the implementation might look in C++ using the Union-Find data structure with two heaps (priority queues) to maintain the order of vertices:
+
+```cpp
+#include <iostream>
+#include <vector>
+#include <queue>
+using namespace std;
+
+struct UnionFind {
+    vector<int> parent, size, max_val; // max_val is the maximum value in the set
+    priority_queue<int, vector<int>, greater<int>> max_heap; // max heap to store the maximum values
+    priority_queue<int, vector<int>, less<int>> min_heap; // min heap to store the minimum values
+
+    UnionFind(int n) : parent(n), size(n, 1), max_val(n, -1) {
+        for (int i = 0; i < n; i++) {
+            parent[i] = i;
+        }
+    }
+
+    int find(int x) {
+        if (x != parent[x])
+            parent[x] = find(parent[x]);
+        return parent[x];
+    }
+
+    void union_sets(int x, int y) {
+        x = find(x), y = find(y);
+        if (x == y) return;
+        if (size[x] < size[y]) swap(x, y);
+        parent[y] = x;
+        size[x] += size[y];
+        max_val[x] = max(max_val[x], max_val[y]);
+        // Move max_val of the smaller tree to the root tree
+        if (max_heap.size() && max_heap.top() == max_val[y]) {
+            max_heap.push(max_val[x]);
+        } else {
+            max_heap.push(max_val[y]);
+        }
+        max_heap.push(max_val[x]);
+        // Rebalance the heaps
+        while (max_heap.size() > 2 * min_heap.size() + 1) {
+            max_heap.pop();
+        }
+        while (!max_heap.empty() && max_heap.top() < min_heap.top()) {
+            int top = min_heap.top();
+            min_heap.pop();
+            max_heap.pop();
+            min_heap.push(top);
+        }
+        // Set the maximum value for the new root
+        max_val[x] = max_heap.top();
+    }
+
+    // Other member functions for union and find operations
+};
+
+int main() {
+    int n, q;
+    cin >> n >> q;
+    UnionFind uf(n);
+    // Process queries
+    // ...
+    return 0;
+}
+```
+
+This is a high-level sketch and would need to be expanded to fully handle all parts of the problem. The key is to maintain the dynamic order of vertices and use efficient data structures to handle the union and find operations.

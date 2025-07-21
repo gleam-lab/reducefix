@@ -1,0 +1,36 @@
+#include<bits/stdc++.h>
+#define ll long long
+using namespace std;
+const int MAXN = 2e5 + 5;
+ll n, m, mn = 2e9, vis[MAXN];
+vector<int> b[MAXN];
+
+void dfs(int x, int cnt) {
+    vis[x] = 1;
+    ll ans = cnt + 1;
+    for (int i = 0; i < b[x].size(); i++) {
+        if (!vis[b[x][i]]) {
+            dfs(b[x][i], ans);
+        }
+    }
+}
+
+int main() {
+    cin >> n >> m;
+    for (int i = 1; i <= m; i++) {
+        int u, v;
+        cin >> u >> v;
+        b[u].push_back(v);
+    }
+    for (int i = 1; i <= n; i++) {
+        if (!vis[i]) {
+            dfs(i, 0);
+        }
+    }
+    if (mn == 2e9) {
+        cout << -1;
+    } else {
+        cout << mn;
+    }
+    return 0;
+}

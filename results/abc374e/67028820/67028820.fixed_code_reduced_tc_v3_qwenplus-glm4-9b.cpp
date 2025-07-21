@@ -1,0 +1,57 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+#define int long long
+#define ld long double
+
+int n, x;
+vector<ld> a, b, p, q;
+vector<pair<ld, pair<ld, ld>>> events;
+
+bool canMake(ld mid) {
+    ld total_cost = 0.0, time_spent = 0.0;
+
+    for (ld& event_time : events) {
+        while (time_spent < event_time && time_spent < mid) {
+            time_spent += (mid - time_spent) / a[events.size() - 1 - static_cast<int>(events.size()) * (event_time - time_spent) / b[events.size() - 1 - static_cast<int>(events.size()) * (event_time - time_spent) / b[events.size() - 1]];
+            total_cost += p[events.size() - 1 - static_cast<int>(events.size()) * (event_time - time_spent) / b[events.size() - 1]] * (mid - time_spent);
+        }
+    }
+
+    return (int)(ceil(total_cost)) <= x;
+}
+
+ld binarySearch() {
+    ld left = 0, right = 1e18, mid;
+    while (right - left > 1e-6) {
+        mid = (left + right) / 2;
+
+        if (canMake(mid)) {
+            right = mid;
+        } else {
+            left = mid;
+        }
+    }
+    return right;
+}
+
+signed main() {
+    cin >> n >> x;
+    a.resize(n), b.resize(n), p.resize(n), q.resize(n);
+
+    for (int i = 0; i < n; i++) {
+        int a_i, p_i, b_i, q_i;
+        cin >> a_i >> p_i >> b_i >> q_i;
+        a[i] = (ld)a_i;
+        b[i] = (ld)b_i;
+        p[i] = (ld)p_i;
+        q[i] = (ld)q_i;
+        events.push_back({p[i] / a[i], {q[i] / b[i], (ld)i}});
+        events.push_back({q[i] / b[i], {p[i] / a[i], (ld)i}});
+    }
+
+    sort(events.begin(), events.end());
+
+    cout << fixed << setprecision(6) << binarySearch();
+    return 0;
+}

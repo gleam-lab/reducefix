@@ -1,0 +1,89 @@
+To solve this problem correctly, we need to determine the **maximum time `T`** such that the total cost of all operations (each with its own periodic behavior) up to time `T` does not exceed a given budget `x`.
+
+Each operation has:
+- A period `a[i]` and cost per period `p[i]`
+- Another period `b[i]` and cost per period `q[i]`
+
+We aim to compute the **minimum total cost** to cover all time units from 1 to `T` for each operation, then find the maximum `T` such that this total cost is ≤ `x`.
+
+### Issues in the Original Code
+
+1. **Incorrect LCM computation**: The original code computes `LCM(a[i], b[i])` as `a[i] / gcd * b[i]`, which can overflow or be incorrect if not casted properly.
+2. **Approximation logic flaw**: In computing the minimum cost for remaining parts after full cycles (`ms`), there was an off-by-one error in how many combinations of `a[i]` and `b[i]` were tried, potentially missing optimal combinations.
+3. **Binary search bounds**: Used `UINT_MAX << 1`, which may be too small depending on input constraints.
+
+---
+
+### Fixes Implemented
+
+- Use `__int128` or ensure proper casting during LCM calculation to prevent overflow.
+- Improve the brute-force part (`ms`) to try more values safely within bounds.
+- Set binary search bounds conservatively based on input limits.
+- Ensure no macro (`stdlib(...)`) breaks standard output/debugging.
+
+---
+
+### Final Corrected C++ Code
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+#define int long long
+
+const int INF = 1e18;
+
+int n, x;
+int a[110], p[110], b[110], q[110];
+
+inline int lcm(int a, int b) {
+    return a / __gcd(a, b) * b;
+}
+
+bool check(int v) {
+    int cnt = 0;
+    for (int i = 1; i <= n; ++i) {
+        int g = __gcd(a[i], b[i]);
+        int L = lcm(a[i], b[i]);
+
+        // Full complete blocks of LCM
+        int full_cycles = v / L;
+        int block_cost = min(p[i] * (L / a[i]), q[i] * (L / b[i]));
+        cnt += full_cycles * block_cost;
+
+        if (cnt > x) return false;
+
+        // Remaining part: [full_cycles * L + 1 ... v]
+        int rem = v - full_cycles * L;
+
+        int min_cost = INF;
+        for (int j = 0; j * a[i] <= rem; ++j) {
+            int rem_b = rem - j * a[i];
+            int k = max(0LL, rem_b / b[i] + (rem_b % b[i] != 0));
+            min_cost = min(min_cost, j * p[i] + k * q[i]);
+        }
+
+        cnt += min_cost;
+        if (cnt > x) return false;
+    }
+    return true;
+}
+
+signed main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr); cout.tie(nullptr);
+
+    cin >> n >> x;
+    for (int i = 1; i <= n; ++i)
+        cin >> a[i] >> p[i] >> b[i] >> q[i];
+
+    int l = 0, r = INF;
+    while (l + 1 < r) {
+        int mid = (l + r) / 2;
+        if (check(mid)) l = mid;
+        else r = mid;
+    }
+
+    cout << l << '\n';
+}
+```

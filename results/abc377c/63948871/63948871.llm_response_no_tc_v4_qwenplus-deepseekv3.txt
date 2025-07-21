@@ -1,0 +1,82 @@
+The original code has a few issues that need to be addressed:
+
+1. It doesn't properly account for squares that are already occupied by existing pieces (these should not be counted as safe squares)
+2. The calculation of total safe squares is incorrect because it subtracts all squares in `anti_dup` (which includes both attackable squares and occupied squares) from the total squares
+3. The use of `pow(N, 2)` can lead to precision issues with large N (up to 1e9)
+4. The solution is not optimized for large N (up to 1e9) and M (up to 2e5)
+
+Here's the corrected solution:
+
+```cpp
+#include <iostream>
+#include <vector>
+#include <set>
+#include <unordered_set>
+#include <tuple>
+
+using namespace std;
+
+using i64 = long long;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    i64 N, M;
+    cin >> N >> M;
+
+    set<pair<i64, i64>> pieces;
+    unordered_set<i64> attacked;
+
+    // Helper function to mark attacked squares
+    auto mark_attacked = [&](i64 i, i64 j) {
+        vector<pair<i64, i64>> moves = {
+            {i+2, j+1}, {i+1, j+2}, {i-1, j+2}, {i-2, j+1},
+            {i-2, j-1}, {i-1, j-2}, {i+1, j-2}, {i+2, j-1}
+        };
+
+        for (auto [x, y] : moves) {
+            if (x >= 1 && x <= N && y >= 1 && y <= N) {
+                attacked.insert(x * N + y);
+            }
+        }
+    };
+
+    for (i64 k = 0; k < M; ++k) {
+        i64 a, b;
+        cin >> a >> b;
+        pieces.insert({a, b});
+        mark_attacked(a, b);
+    }
+
+    // Total squares = N*N
+    // Safe squares = Total - occupied - attacked + (occupied AND attacked)
+    // But we can't directly compute this because N is too large
+    
+    // Instead, we'll count:
+    // safe_squares = N*N - M - (attacked.size() - intersection_size)
+    // Where intersection_size is number of pieces that are in attacked positions
+    
+    i64 intersection_size = 0;
+    for (auto [a, b] : pieces) {
+        if (attacked.count(a * N + b)) {
+            intersection_size++;
+        }
+    }
+
+    i64 safe_squares = N * N - M - (attacked.size() - intersection_size);
+    cout << safe_squares << '\n';
+
+    return 0;
+}
+```
+
+Key improvements:
+1. Uses proper types (i64) to handle large numbers
+2. Separates tracking of occupied squares (pieces) and attacked squares
+3. Correctly calculates safe squares by accounting for overlaps between occupied and attacked squares
+4. More efficient storage of attacked positions using a hash set with encoded coordinates
+5. Avoids floating-point operations by using integer arithmetic for N*N
+6. Handles edge cases like N=1e9 and M=1 correctly
+
+The solution now correctly counts all safe squares where a new piece can be placed without being captured by existing knights.

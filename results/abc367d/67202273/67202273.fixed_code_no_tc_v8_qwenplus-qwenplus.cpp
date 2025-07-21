@@ -1,0 +1,38 @@
+#include <bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+
+const int MAXN = 4e5 + 10;
+
+ll a[MAXN], prefix_sum[MAXN];
+map<ll, ll> count_map;
+
+int main() {
+    ll n, m, ans = 0;
+    scanf("%lld %lld", &n, &m);
+
+    for (ll i = 1; i <= n; ++i) {
+        scanf("%lld", &a[i]);
+        a[i + n] = a[i];  // Duplicate array to handle circular subarrays
+    }
+
+    // Precompute prefix sums modulo m
+    for (ll i = 1; i <= 2 * n; ++i) {
+        prefix_sum[i] = (prefix_sum[i - 1] + a[i]) % m;
+    }
+
+    count_map[0] = 1;  // To count subarrays starting from index 0
+
+    for (ll i = 1; i <= n; ++i) {
+        // We want (prefix_sum[j] - prefix_sum[i]) mod m >= 0
+        // So we look for prefix_sum[j] mod m in the map such that:
+        // (prefix_sum[j] - prefix_sum[i]) % m >= 0 => prefix_sum[j] >= prefix_sum[i]
+        // That is equivalent to counting all prefix_sum[j] such that prefix_sum[j] == prefix_sum[i]
+
+        ans += count_map[prefix_sum[i]];
+        count_map[prefix_sum[i]]++;
+    }
+
+    printf("%lld\n", ans);
+    return 0;
+}

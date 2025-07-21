@@ -1,0 +1,80 @@
+To fix this code, we need to address the issue of correctly determining when each section of the island sinks into the sea and efficiently calculating the remaining area for each year up to Y. The original code attempted to use a priority queue to propagate the sinking process from the borders inward, but it might not correctly handle all cases, especially when multiple sections can sink at the same sea level.
+
+### Approaches
+1. **Priority Queue Initialization**: Start by pushing all border sections into a priority queue (min-heap) because these sections will sink first when the sea level reaches their elevation.
+2. **Dijkstra-like Propagation**: Use a Dijkstra-like approach to propagate the sinking process. For each section pulled from the priority queue, check its neighbors. If a neighbor's elevation is not greater than the current sea level, it will sink at the same sea level, and we push it into the priority queue.
+3. **Prefix Sum Array**: After determining the sea level at which each section sinks, use a prefix sum array to count how many sections sink at each sea level. This allows us to quickly compute the remaining area for each year by subtracting the cumulative sunk sections from the total area.
+
+### Solution Code
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+#define all(x) (x).begin(), (x).end()
+
+int main() {
+    ios_base::sync_with_stdio(0);
+    cin.tie(0);
+    int h, w, y;
+    cin >> h >> w >> y;
+    vector<vector<int>> height(h, vector<int>(w));
+    vector<vector<int>> sink(h, vector<int>(w, INT_MAX));
+    priority_queue<pair<int, pair<int, int>>, vector<pair<int, pair<int, int>>>, greater<pair<int, pair<int, int>>>> pq;
+    int di[4][2] = {{-1, 0}, {1, 0}, {0, -1}, {0, 1}};
+    
+    for (int i = 0; i < h; i++) {
+        for (int j = 0; j < w; j++) {
+            cin >> height[i][j];
+            if (i == 0 || i == h-1 || j == 0 || j == w-1) {
+                sink[i][j] = height[i][j];
+                pq.push({height[i][j], {i, j}});
+            }
+        }
+    }
+    
+    while (!pq.empty()) {
+        auto current = pq.top();
+        pq.pop();
+        int H = current.first;
+        int r = current.second.first;
+        int c = current.second.second;
+        if (H > sink[r][c]) continue;
+        for (int i = 0; i < 4; i++) {
+            int nr = r + di[i][0];
+            int nc = c + di[i][1];
+            if (nr < 0 || nr >= h || nc < 0 || nc >= w) continue;
+            if (sink[nr][nc] > max(H, height[nr][nc])) {
+                sink[nr][nc] = max(H, height[nr][nc]);
+                pq.push({sink[nr][nc], {nr, nc}});
+            }
+        }
+    }
+    
+    vector<int> cnt(y + 2, 0);
+    for (int i = 0; i < h; i++) {
+        for (int j = 0; j < w; j++) {
+            if (sink[i][j] <= y) {
+                cnt[sink[i][j]]++;
+            }
+        }
+    }
+    
+    for (int i = 1; i <= y; i++) {
+        cnt[i] += cnt[i-1];
+    }
+    
+    for (int i = 1; i <= y; i++) {
+        cout << h*w - cnt[i] << '\n';
+    }
+    
+    return 0;
+}
+```
+
+### Explanation
+1. **Initialization**: The `height` matrix stores the elevation of each section. The `sink` matrix is initialized to `INT_MAX` except for border sections, which are set to their own elevation and added to the priority queue.
+2. **Priority Queue Processing**: The priority queue processes sections in order of increasing elevation. For each section, its neighbors are checked. If a neighbor's elevation is not greater than the current sea level (stored in `sink[r][c]`), the neighbor's sink level is updated, and it is added to the queue.
+3. **Prefix Sum Calculation**: The `cnt` array counts how many sections sink at each sea level. The prefix sum of `cnt` allows efficient calculation of the cumulative number of sunk sections up to each year.
+4. **Output**: For each year, the remaining area is computed by subtracting the cumulative sunk sections from the total area (h*w).
+
+This approach ensures that we efficiently and correctly determine the sinking process and compute the remaining area for each year, handling all edge cases and large constraints appropriately.

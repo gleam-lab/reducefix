@@ -1,0 +1,39 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define int long long
+const int N = 105;
+int n, x;
+int a[N], b[N], p[N], q[N];
+int c[N];
+
+bool check(int mid) {
+    for (int i = 1; i <= n; i++) {
+        c[i] = min(c[i], min((mid / b[i]) * q[i] + (mid % b[i]) * p[i], (mid / a[i]) * p[i] + (mid % a[i]) * q[i]));
+    }
+    int ans = 0;
+    for (int i = 1; i <= n; i++) {
+        ans += c[i];
+    }
+    return ans > x;
+}
+
+signed main() {
+    ios::sync_with_stdio(0);
+    cin.tie(0);
+    cout.tie(0);
+    cin >> n >> x;
+    for (int i = 1; i <= n; i++) {
+        cin >> a[i] >> p[i] >> b[i] >> q[i];
+    }
+    int l = 1, r = n * max({a[1], b[1], a[2], b[2], a[3], b[3]});
+    while (l <= r) {
+        int mid = (l + r) / 2;
+        if (check(mid)) {
+            l = mid + 1;
+        } else {
+            r = mid - 1;
+        }
+    }
+    cout << l - 1;
+    return 0;
+}

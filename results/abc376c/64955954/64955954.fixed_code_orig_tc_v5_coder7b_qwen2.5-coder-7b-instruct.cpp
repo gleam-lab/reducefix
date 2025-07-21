@@ -1,0 +1,41 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios_base::sync_with_stdio(false); cin.tie(0); cout.tie(0);
+
+    int n;
+    cin >> n;
+    vector<long long> a(n), b(n-1);
+    for(int i = 0; i < n; ++i) cin >> a[i];
+    for(int i = 0; i < n-1; ++i) cin >> b[i];
+
+    sort(a.begin(), a.end());
+    sort(b.begin(), b.end());
+
+    long long lo = 1, hi = 1e9 + 7, ans = -1;
+    while(lo <= hi) {
+        long long mid = (lo + hi) / 2;
+        int j = 0;
+        for(int i = 0; i < n && j < n-1;) {
+            if(a[i] <= mid) {
+                if(b[j] >= a[i]) {
+                    ++i;
+                } else {
+                    ++j;
+                }
+            } else {
+                ++i;
+            }
+        }
+        if(j == n-1) {
+            ans = mid;
+            hi = mid - 1;
+        } else {
+            lo = mid + 1;
+        }
+    }
+
+    cout << ans << '\n';
+    return 0;
+}

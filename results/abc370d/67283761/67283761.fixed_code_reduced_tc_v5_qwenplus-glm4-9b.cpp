@@ -1,0 +1,71 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+
+using namespace std;
+
+struct Query {
+    int r, c;
+    bool operator>(const Query& other) const {
+        if (c == other.c) return r > other.r;
+        return c > other.c;
+    }
+};
+
+int main() {
+    int H, W, Q;
+    cin >> H >> W >> Q;
+    vector<vector<int>> grid(H, vector<int>(W, 1)); // start with 1 wall in each cell
+
+    vector<Query> queries(Q);
+    for (int i = 0; i < Q; ++i) {
+        cin >> queries[i].r >> queries[i].c;
+        queries[i].r--; queries[i].c--; // convert to 0-based indices
+    }
+
+    sort(queries.begin(), queries.end());
+
+    int remainingWalls = H * W; // start with all walls
+    int activeRows = H;
+    int activeCols = W;
+
+    for (const auto& query : queries) {
+        if (query.r < 0 || query.r >= H || query.c < 0 || query.c >= W) continue; // skip out-of-bounds queries
+
+        if (grid[query.r][query.c] == 1) {
+            // Destroy the wall
+            grid[query.r][query.c] = 0;
+            remainingWalls--;
+            // Update the number of active rows and columns
+            activeRows = min(activeRows, query.r); // only the smallest index matters
+            activeCols = min(activeCols, query.c); // only the smallest index matters
+            activeRows = max(activeRows, query.r + 1); // only the largest index matters
+            activeCols = max(activeCols, query.c + 1); // only the largest index matters
+        } else {
+            // Find the next wall in the row or column
+            int start = min(max(0, query.r - activeRows), H - 1);
+            int end = max(min(H, query.r + activeRows + 1), 0);
+            for (int i = start; i < end; ++i) {
+                if (grid[i][query.c] == 1) {
+                    grid[i][query.c] = 0;
+                    remainingWalls--;
+                    break;
+                }
+            }
+
+            start = min(max(0, query.c - activeCols), W - 1);
+            end = max(min(W, query.c + activeCols + 1), 0);
+            for (int i = start; i < end; ++i) {
+                if (grid[query.r][i] == 1) {
+                    grid[query.r][i] = 0;
+                    remainingWalls--;
+                    break;
+                }
+            }
+        }
+    }
+
+    cout << remainingWalls << endl;
+
+    return 0;
+}

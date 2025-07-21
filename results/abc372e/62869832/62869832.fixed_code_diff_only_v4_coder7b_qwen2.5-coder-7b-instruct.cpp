@@ -1,0 +1,55 @@
+#include<bits/stdc++.h>
+using namespace std;
+vector<int> adj[200005];
+int rank[200005], parent[200005];
+
+int find(int u) {
+    if (parent[u] != u) parent[u] = find(parent[u]);
+    return parent[u];
+}
+
+void unionSet(int u, int v) {
+    int pu = find(u), pv = find(v);
+    if (pu == pv) return;
+    if (rank[pu] > rank[pv]) {
+        parent[pv] = pu;
+    } else if (rank[pu] < rank[pv]) {
+        parent[pu] = pv;
+    } else {
+        parent[pv] = pu;
+        rank[pu]++;
+    }
+}
+
+int main() {
+    ios_base::sync_with_stdio(false); cin.tie(NULL);
+    int n, q;
+    cin >> n >> q;
+    for (int i = 1; i <= n; ++i) {
+        parent[i] = i;
+        rank[i] = 0;
+    }
+    
+    while(q--) {
+        int type;
+        cin >> type;
+        if(type == 1) {
+            int u, v;
+            cin >> u >> v;
+            unionSet(u, v);
+        } else if(type == 2) {
+            int v, k;
+            cin >> v >> k;
+            vector<int> temp;
+            for(auto& child : adj[v]) {
+                if(find(child) == find(v)) {
+                    temp.push_back(child);
+                }
+            }
+            sort(temp.begin(), temp.end());
+            if(k - 1 >= temp.size()) cout << -1 << "\n";
+            else cout << temp[temp.size() - k] << "\n";
+        }
+    }
+    return 0;
+}

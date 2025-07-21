@@ -1,0 +1,46 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    int n, m;
+    cin >> n >> m;
+    vector<long long> A(n);
+    for (int i = 0; i < n; i++) {
+        cin >> A[i];
+    }
+    
+    vector<vector<pair<int, long long>>> adj(n + 1);
+    for (int i = 0; i < m; i++) {
+        int u, v, b;
+        cin >> u >> v >> b;
+        adj[u].push_back({v, b});
+        adj[v].push_back({u, b});
+    }
+    
+    vector<long long> dist(n + 1, LLONG_MAX);
+    dist[1] = A[0];
+    priority_queue<pair<long long, int>, vector<pair<long long, int>>, greater<pair<long long, int>>> pq;
+    pq.push({A[0], 1});
+    
+    while (!pq.empty()) {
+        auto [current_dist, node] = pq.top();
+        pq.pop();
+        
+        if (current_dist > dist[node]) continue;
+        
+        for (auto &edge : adj[node]) {
+            long long next_node = edge.first;
+            long long next_dist = current_dist + edge.second + A[next_node - 1];
+            if (next_dist < dist[next_node]) {
+                dist[next_node] = next_dist;
+                pq.push({next_dist, next_node});
+            }
+        }
+    }
+    
+    for (int i = 2; i <= n; i++) {
+        cout << dist[i] << (i < n ? " " : "");
+    }
+    
+    return 0;
+}

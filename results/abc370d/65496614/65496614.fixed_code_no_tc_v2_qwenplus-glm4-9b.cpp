@@ -1,0 +1,67 @@
+#include <iostream>
+#include <vector>
+#include <set>
+
+using namespace std;
+
+int main() {
+    int H, W, Q;
+    cin >> H >> W >> Q;
+
+    vector<vector<bool>> grid(H + 2, vector<bool>(W + 2, true)); // grid[1][1] to grid[H][W]
+
+    for (int i = 2; i <= H + 1; ++i) grid[i][1] = grid[i][W] = false; // walls at the sides
+    for (int j = 2; j <= W + 1; ++j) grid[1][j] = grid[H][j] = false; // walls at the top and bottom
+
+    for (int q = 0; q < Q; ++q) {
+        int R, C;
+        cin >> R >> C;
+        R++, C++; // convert to 1-based index
+
+        if (!grid[R][C]) {
+            // Bomb placed in a cell without a wall, destroying the walls around it
+            grid[R][C] = true; // The bomb itself does not destroy the wall at (R, C)
+            set<int> rows, cols;
+
+            // Add all the walls adjacent to (R, C)
+            for (int i = R - 1; i > 1; --i) rows.insert(i); // Walls above (R, C)
+            for (int i = R + 1; i <= H + 1; ++i) rows.insert(i); // Walls below (R, C)
+            for (int j = C - 1; j > 1; --j) cols.insert(j); // Walls left of (R, C)
+            for (int j = C + 1; j <= W + 1; ++j) cols.insert(j); // Walls right of (R, C)
+
+            // Remove the walls along each row (R)
+            for (auto& r : rows) {
+                for (auto& c : cols) {
+                    if (grid[r][c]) {
+                        grid[r][c] = false; // Destroy the wall at (r, c)
+                        // Remove the column index from the set of walls along this row
+                        cols.erase(c);
+                    }
+                }
+            }
+
+            // Remove the walls along each column (C)
+            for (auto& c : cols) {
+                for (auto& r : rows) {
+                    if (grid[r][c]) {
+                        grid[r][c] = false; // Destroy the wall at (r, c)
+                        // Remove the row index from the set of walls along this column
+                        rows.erase(r);
+                    }
+                }
+            }
+        }
+    }
+
+    // Count the remaining walls
+    int remainingWalls = 0;
+    for (int i = 2; i <= H + 1; ++i) {
+        for (int j = 2; j <= W + 1; ++j) {
+            remainingWalls += grid[i][j];
+        }
+    }
+
+    cout << remainingWalls << endl;
+
+    return 0;
+}

@@ -1,0 +1,57 @@
+#include <bits/stdc++.h>
+#define ll long long
+using namespace std;
+
+const int N = 200005;
+
+ll a[N], b[N];
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    ll n;
+    cin >> n;
+    
+    for (ll i = 1; i <= n; ++i) {
+        cin >> a[i];
+    }
+    
+    for (ll i = 1; i < n; ++i) {
+        cin >> b[i];
+    }
+
+    sort(a + 1, a + n + 1);
+    sort(b + 1, b + n);
+
+    ll need = 0;
+    ll j = n - 1;
+
+    // Try to fit the smallest N-1 toys into the available boxes
+    for (ll i = 1; i < n; ++i) {
+        if (j > 0 && b[i] >= a[j]) {
+            j--;
+        } else if (b[i] >= a[n]) {
+            continue;  // This box can hold the largest toy
+        } else {
+            need++;
+            if (need > 1) {
+                cout << -1 << "\n";
+                return 0;
+            }
+        }
+    }
+
+    // If we haven't used the largest toy in the boxes yet
+    if (j == 0 || b[n - 1] < a[j]) {
+        need++;
+    }
+
+    if (need > 1) {
+        cout << -1 << "\n";
+    } else {
+        cout << a[n] << "\n";  // The largest toy will be in the purchased box
+    }
+
+    return 0;
+}

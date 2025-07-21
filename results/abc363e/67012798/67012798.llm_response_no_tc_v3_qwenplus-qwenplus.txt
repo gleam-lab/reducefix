@@ -1,0 +1,100 @@
+```cpp
+#include <bits/stdc++.h>
+
+using namespace std;
+
+constexpr int dx[] = {-1, 1, 0, 0};
+constexpr int dy[] = {0, 0, -1, 1};
+
+int main()
+{
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int H, W, Y;
+    cin >> H >> W >> Y;
+
+    vector<vector<int>> A(H, vector<int>(W));
+    for (int i = 0; i < H; ++i)
+    {
+        for (int j = 0; j < W; ++j)
+        {
+            cin >> A[i][j];
+        }
+    }
+
+    // Initialize the island map (true = still above water)
+    vector<vector<bool>> aboveWater(H, vector<bool>(W, true));
+
+    // For each height up to Y, store the cells at that height on the border
+    vector<vector<pair<int, int>>> borderCells(Y + 2); // Use Y+2 to avoid overflow
+
+    // Initialize queue with border cells
+    for (int i = 0; i < H; ++i)
+    {
+        for (int j = 0; j < W; ++j)
+        {
+            // Check if cell is on the border of the grid
+            if (i == 0 || i == H - 1 || j == 0 || j == W - 1)
+            {
+                int h = A[i][j];
+                if (h <= Y)
+                    borderCells[h].emplace_back(i, j);
+                aboveWater[i][j] = false;
+            }
+        }
+    }
+
+    // Total remaining area above water
+    long long remaining = H * W;
+
+    // Process each year from 1 to Y
+    for (int year = 1; year <= Y; ++year)
+    {
+        // BFS to process all cells submerged this year
+        queue<pair<int, int>> q;
+        
+        // Add current year's border cells to queue
+        for (const auto& p : borderCells[year])
+        {
+            q.push(p);
+        }
+
+        while (!q.empty())
+        {
+            auto [x, y] = q.front();
+            q.pop();
+            
+            // If already processed, skip
+            if (!aboveWater[x][y]) continue;
+            aboveWater[x][y] = false;
+            --remaining;
+
+            for (int d = 0; d < 4; ++d)
+            {
+                int nx = x + dx[d];
+                int ny = y + dy[d];
+
+                if (nx >= 0 && nx < H && ny >= 0 && ny < W && aboveWater[nx][ny])
+                {
+                    int neighborHeight = A[nx][ny];
+                    if (neighborHeight <= year)
+                    {
+                        // This cell will be processed in this year
+                        q.push({nx, ny});
+                    }
+                    else if (neighborHeight <= Y)
+                    {
+                        // Add to future processing list if within range
+                        borderCells[neighborHeight].push_back({nx, ny});
+                    }
+                }
+            }
+        }
+
+        cout << remaining << '\n';
+    }
+
+    return 0;
+}
+```

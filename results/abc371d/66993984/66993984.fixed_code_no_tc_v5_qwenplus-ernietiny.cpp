@@ -1,0 +1,34 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    int n, q;
+    cin >> n; // 输入数据点个数
+    
+    // 初始化数组和映射
+    vector<int> x(n), p(n);
+    map<int, int> sum; // 假设sum是一个map，用于存储前缀和
+    
+    // 处理输入数据
+    for (int i = 0; i < n; ++i) {
+        cin >> x[i] >> p[i]; // 读入每个数据点的值和前缀和
+        sum[p[i]]++; // 更新前缀和映射
+    }
+    
+    // 处理查询部分
+    while (q--) {
+        int L, R; // 输入查询区间左右端点
+        cin >> L >> R; // 读入查询区间左右端点
+        // 检查区间是否合法（左右端点值在有效范围内）
+        if (L < 1 || R > n || L > R + 1) { // 处理边界情况
+            cout << "Invalid range" << endl; // 输出错误信息
+            continue; // 跳过当前查询并继续处理下一个查询
+        }
+        // 使用二分查找找到区间内的元素个数差值
+        int c = lower_bound(x.begin(), x.end(), L) - x.begin(); // 二分查找左边界的索引
+        int d = upper_bound(x.begin(), x.end(), R) - x.begin(); // 二分查找右边界的索引
+        // 根据映射计算区间内元素差值并输出结果
+        cout << sum[R - sum[c - 1]] - sum[L - sum[c - 1]] << endl; // 使用映射进行计算并输出结果
+    }
+    return 0; // 结束程序
+}

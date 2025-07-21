@@ -1,0 +1,91 @@
+#include <bits/stdc++.h>
+using namespace std;
+#include <atcoder/all>
+using namespace atcoder;
+
+using ll = int64_t;
+
+int main() {
+    cin.tie(0)->sync_with_stdio(0);
+
+    int H, W, Y;
+    cin >> H >> W >> Y;
+    vector<vector<int>> A(H, vector<int>(W));
+    for (int i = 0; i < H; ++i) {
+        for (int j = 0; j < W; ++j) {
+            cin >> A[i][j];
+        }
+    }
+
+    // Coordinate compression of years to avoid large memory usage
+    set<int> year_set;
+    for (int i = 0; i < H; ++i) {
+        for (int j = 0; j < W; ++j) {
+            if (A[i][j] <= Y) {
+                year_set.insert(A[i][j]);
+            }
+        }
+    }
+    for (int y = 1; y <= Y; ++y) {
+        year_set.insert(y);
+    }
+    map<int, int> year_to_idx;
+    int idx = 0;
+    for (int y : year_set) {
+        year_to_idx[y] = idx++;
+    }
+    vector<vector<pair<int, int>>> events(idx);
+    
+    // Initialize queue for BFS from the sea
+    vector<queue<pair<int, int>>> Q(idx);
+    vector<vector<bool>> visited(H, vector<bool>(W, false));
+
+    // Mark and enqueue boundary cells
+    for (int i = 0; i < H; ++i) {
+        for (int j = 0; j < W; ++j) {
+            bool is_boundary = (i == 0 || i == H - 1 || j == 0 || j == W - 1);
+            if (is_boundary) {
+                int height = A[i][j];
+                int effective_year = max(height, 1);
+                Q[year_to_idx[effective_year]].push({i, j});
+                visited[i][j] = true;
+            }
+        }
+    }
+
+    // Process each year and perform BFS
+    int remaining = H * W;
+    vector<int> result(Y + 2); // Store results for all Y years
+
+    for (int y = 1; y <= Y; ++y) {
+        int current_year_idx = year_to_idx[y];
+
+        while (!Q[current_year_idx].empty()) {
+            auto [i, j] = Q[current_year_idx].front();
+            Q[current_year_idx].pop();
+            remaining--;
+
+            // Explore neighbors
+            int dirs[4][2] = {{-1, 0}, {1, 0}, {0, -1}, {0, 1}};
+            for (auto& d : dirs) {
+                int ni = i + d[0], nj = j + d[1];
+                if (ni >= 0 && ni < H && nj >= 0 && nj < W && !visited[ni][nj]) {
+                    int cell_height = A[ni][nj];
+                    int flood_year = max(y, cell_height);
+                    int flood_year_idx = year_to_idx[flood_year];
+                    Q[flood_year_idx].push({ni, nj});
+                    visited[ni][nj] = true;
+                }
+            }
+        }
+
+        result[y] = remaining;
+    }
+
+    // Output the area for each year
+    for (int y = 1; y <= Y; ++y) {
+        cout << result[y] << "\n";
+    }
+
+    return 0;
+}

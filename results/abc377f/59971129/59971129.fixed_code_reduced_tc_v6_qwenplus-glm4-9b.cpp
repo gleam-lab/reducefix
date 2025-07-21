@@ -1,0 +1,41 @@
+#include<bits/stdc++.h>
+
+using namespace std;
+
+typedef long long ll;
+
+#define N 1005
+
+set<ll> rows, cols, diag1, diag2;
+
+int main() {
+    ll n, m;
+    cin >> n >> m;
+
+    for (ll i = 0; i < m; ++i) {
+        ll a, b;
+        cin >> a >> b;
+        rows.insert(a);
+        cols.insert(b);
+        diag1.insert(a - b);
+        diag2.insert(a + b);
+    }
+
+    ll free_rows = n - rows.size();
+    ll free_cols = n - cols.size();
+    ll free_diag1 = n - diag1.size();
+    ll free_diag2 = n - diag2.size();
+
+    ll result = free_rows * free_cols; // Free squares in rows and columns only
+
+    // Subtract squares captured by diagonals
+    for (ll d : diag1) {
+        result -= min(free_diag1 - d, n - d - (free_diag2 - (n - d)));
+    }
+    for (ll d : diag2) {
+        result -= min(free_diag2 - d, n - d - (free_diag1 - (n - d)));
+    }
+
+    cout << result << endl;
+    return 0;
+}

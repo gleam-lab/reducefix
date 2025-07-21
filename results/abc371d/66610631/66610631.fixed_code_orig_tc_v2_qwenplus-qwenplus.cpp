@@ -1,0 +1,58 @@
+#include <bits/stdc++.h>
+using namespace std;
+using LL = long long;  // __int128 is not needed as the expected output fits in long long
+
+typedef long long ll;
+
+const int N = 2e5 + 7;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int n;
+    cin >> n;
+    vector<LL> a(n + 2, 0);  // Use LL to avoid overflow in prefix sums
+    for (int i = 1; i <= n; ++i) {
+        cin >> a[i];
+    }
+
+    vector<LL> b(n + 2, 0);
+    for (int i = 1; i <= n; ++i) {
+        cin >> b[i];
+    }
+
+    // Prefix sum of b
+    vector<LL> prefix_b(n + 2, 0);
+    for (int i = 1; i <= n; ++i) {
+        prefix_b[i] = prefix_b[i - 1] + b[i];
+    }
+
+    int m;
+    cin >> m;
+    while (m--) {
+        int l, r;
+        cin >> l >> r;
+
+        // Find left and right indices in array a using binary search
+        int left = lower_bound(a.begin(), a.end(), l) - a.begin();
+        int right = upper_bound(a.begin(), a.end(), r) - a.begin();
+
+        if (left >= n + 1 || right <= 1) {
+            cout << 0 << "\n";
+            continue;
+        }
+
+        // Clamp values to be within bounds
+        left = max(1, left);
+        right = min(n, right - 1);
+
+        if (left > right) {
+            cout << 0 << "\n";
+        } else {
+            cout << prefix_b[right] - prefix_b[left - 1] << "\n";
+        }
+    }
+
+    return 0;
+}

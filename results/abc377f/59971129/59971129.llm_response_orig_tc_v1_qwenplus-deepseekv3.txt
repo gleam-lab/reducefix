@@ -1,0 +1,339 @@
+To fix this code, we need to correctly identify all the squares that are safe from being captured by any existing pieces. The original approach had several issues, including incorrect handling of diagonal checks and overlapping conditions. Here's a revised approach that correctly computes the number of safe squares:
+
+### Approaches
+1. **Identify Forbidden Areas**: 
+   - **Rows and Columns**: Any square in the same row or column as an existing piece is unsafe.
+   - **Diagonals**: Any square on the same diagonal (both \(i + j = a + b\) and \(i - j = a - b\)) as an existing piece is unsafe.
+2. **Count Safe Squares**: 
+   - Calculate the total safe squares by subtracting the unsafe squares from the total possible squares. The total squares is \(N^2\), and we subtract squares in forbidden rows, columns, and diagonals, then add back the overlaps that were subtracted multiple times (using inclusion-exclusion principle).
+
+### Solution Code
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+
+int main() {
+    ll N, M;
+    cin >> N >> M;
+    
+    set<ll> rows, cols, diag1, diag2;
+    
+    for (int i = 0; i < M; ++i) {
+        ll a, b;
+        cin >> a >> b;
+        rows.insert(a);
+        cols.insert(b);
+        diag1.insert(a - b);
+        diag2.insert(a + b);
+    }
+    
+    ll total = N * N;
+    ll unsafe = 0;
+    
+    unsafe += rows.size() * N;
+    unsafe += cols.size() * N;
+    unsafe -= rows.size() * cols.size();
+    
+    for (auto d : diag1) {
+        ll cnt = 0;
+        if (d >= 0) {
+            cnt = N - d;
+        } else {
+            cnt = N + d;
+        }
+        unsafe += cnt;
+    }
+    
+    for (auto d : diag2) {
+        ll cnt = 0;
+        if (d <= N + 1) {
+            cnt = d - 1;
+        } else {
+            cnt = 2 * N - d + 1;
+        }
+        unsafe += cnt;
+    }
+    
+    set<pair<ll, ll>> intersections;
+    for (auto r : rows) {
+        for (auto c : cols) {
+            if (diag1.count(r - c) && diag2.count(r + c)) {
+                intersections.insert({r, c});
+            }
+        }
+    }
+    
+    for (auto d1 : diag1) {
+        for (auto d2 : diag2) {
+            ll i_plus_j = d2;
+            ll i_minus_j = d1;
+            ll i = (i_plus_j + i_minus_j) / 2;
+            ll j = (i_plus_j - i_minus_j) / 2;
+            if ((i_plus_j + i_minus_j) % 2 == 0 && (i_plus_j - i_minus_j) % 2 == 0) {
+                if (i >= 1 && i <= N && j >= 1 && j <= N) {
+                    if (rows.count(i) && cols.count(j)) {
+                        intersections.insert({i, j});
+                    }
+                }
+            }
+        }
+    }
+    
+    unsafe -= intersections.size();
+    
+    ll safe = total - unsafe;
+    cout << safe << endl;
+    
+    return 0;
+}
+```
+
+Wait, no. The previous approach might not correctly account for all overlaps. Let me think of a better way.
+
+The correct approach is to use the inclusion-exclusion principle to correctly calculate the number of unsafe squares. The total unsafe squares can be computed as:
+
+- Squares in any of the rows with pieces.
+- Plus squares in any of the columns with pieces.
+- Plus squares in any of the diagonals (i+j = constant or i-j = constant) with pieces.
+- Minus squares that were counted multiple times (e.g., squares at the intersection of a row and a column, or a row and a diagonal, etc.).
+
+But implementing this correctly requires careful handling, especially with large N (up to 1e9). Here's a more efficient and correct approach:
+
+### Approaches
+1. **Rows and Columns**: Each existing piece makes its entire row and column unsafe.
+2. **Diagonals**: Each existing piece makes its two diagonals (i+j and i-j) unsafe.
+3. **Overlaps**: We need to account for squares that are counted multiple times (e.g., a square that is in both a forbidden row and a forbidden diagonal).
+4. **Inclusion-Exclusion Principle**: Use this to ensure squares are not over-counted or under-counted.
+
+### Solution Code
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+
+int main() {
+    ll N, M;
+    cin >> N >> M;
+    
+    set<ll> rows, cols, diag1, diag2;
+    set<pair<ll, ll>> pieces;
+    
+    for (int i = 0; i < M; ++i) {
+        ll a, b;
+        cin >> a >> b;
+        rows.insert(a);
+        cols.insert(b);
+        diag1.insert(a - b);
+        diag2.insert(a + b);
+        pieces.insert({a, b});
+    }
+    
+    ll unsafe = 0;
+    
+    // Rows and columns
+    unsafe += rows.size() * N;
+    unsafe += cols.size() * N;
+    unsafe -= rows.size() * cols.size();
+    
+    // Diagonals type 1 (i - j = d)
+    for (auto d : diag1) {
+        ll i_min, i_max, j_min, j_max;
+        if (d >= 0) {
+            i_min = 1 + d;
+            i_max = N;
+            j_min = 1;
+            j_max = N - d;
+        } else {
+            i_min = 1;
+            i_max = N + d;
+            j_min = 1 - d;
+            j_max = N;
+        }
+        ll cnt = min(i_max - i_min + 1, j_max - j_min + 1);
+        if (cnt > 0) {
+            unsafe += cnt;
+        }
+    }
+    
+    // Diagonals type 2 (i + j = d)
+    for (auto d : diag2) {
+        ll i_min, i_max, j_min, j_max;
+        if (d <= N + 1) {
+            i_min = 1;
+            i_max = d - 1;
+            j_min = 1;
+            j_max = d - 1;
+        } else {
+            i_min = d - N;
+            i_max = N;
+            j_min = d - N;
+            j_max = N;
+        }
+        ll cnt = min(i_max - i_min + 1, j_max - j_min + 1);
+        if (cnt > 0) {
+            unsafe += cnt;
+        }
+    }
+    
+    // Subtract overlaps between rows/columns and diagonals
+    for (auto r : rows) {
+        for (auto d1 : diag1) {
+            ll j = r - d1;
+            if (j >= 1 && j <= N) {
+                if (cols.count(j)) {
+                    unsafe--;
+                }
+            }
+        }
+        for (auto d2 : diag2) {
+            ll j = d2 - r;
+            if (j >= 1 && j <= N) {
+                if (cols.count(j)) {
+                    unsafe--;
+                }
+            }
+        }
+    }
+    
+    // Subtract overlaps between columns and diagonals
+    for (auto c : cols) {
+        for (auto d1 : diag1) {
+            ll i = c + d1;
+            if (i >= 1 && i <= N) {
+                if (rows.count(i)) {
+                    unsafe--;
+                }
+            }
+        }
+        for (auto d2 : diag2) {
+            ll i = d2 - c;
+            if (i >= 1 && i <= N) {
+                if (rows.count(i)) {
+                    unsafe--;
+                }
+            }
+        }
+    }
+    
+    // Add back the pieces themselves (may have been subtracted multiple times)
+    unsafe += pieces.size();
+    
+    ll safe = N * N - unsafe;
+    cout << safe << endl;
+    
+    return 0;
+}
+```
+
+Wait, this approach still has some issues, especially with the way overlaps are handled. Let me think of a more straightforward way.
+
+The most reliable way is to:
+
+1. Calculate the total number of squares that are in any of the forbidden rows, columns, or diagonals.
+2. Use the inclusion-exclusion principle to avoid double-counting squares that are in multiple forbidden areas.
+
+Here's a more accurate approach:
+
+### Correct Approach
+1. **Rows and Columns**: Each existing piece contributes its entire row and column to the unsafe squares.
+2. **Diagonals**: Each existing piece contributes its two diagonals (i+j and i-j) to the unsafe squares.
+3. **Overlaps**: Use inclusion-exclusion to count squares that are in multiple forbidden areas exactly once.
+
+### Solution Code
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+
+int main() {
+    ll N, M;
+    cin >> N >> M;
+    
+    set<ll> rows, cols, diag1, diag2;
+    
+    for (int i = 0; i < M; ++i) {
+        ll a, b;
+        cin >> a >> b;
+        rows.insert(a);
+        cols.insert(b);
+        diag1.insert(a - b);
+        diag2.insert(a + b);
+    }
+    
+    ll unsafe = 0;
+    
+    // Add squares in forbidden rows
+    unsafe += rows.size() * N;
+    
+    // Add squares in forbidden columns, excluding those already in forbidden rows
+    unsafe += cols.size() * (N - rows.size());
+    
+    // Add squares in forbidden diag1 (i-j=d), excluding those in forbidden rows or columns
+    for (auto d : diag1) {
+        ll cnt;
+        if (d >= 0) {
+            cnt = N - d;
+        } else {
+            cnt = N + d;
+        }
+        // Subtract squares already in forbidden rows or columns
+        for (auto r : rows) {
+            ll j = r - d;
+            if (j >= 1 && j <= N) {
+                cnt--;
+            }
+        }
+        for (auto c : cols) {
+            ll i = c + d;
+            if (i >= 1 && i <= N && !rows.count(i)) {
+                cnt--;
+            }
+        }
+        unsafe += max(cnt, 0LL);
+    }
+    
+    // Add squares in forbidden diag2 (i+j=d), excluding those in forbidden rows, columns, or diag1
+    for (auto d : diag2) {
+        ll cnt;
+        if (d <= N + 1) {
+            cnt = d - 1;
+        } else {
+            cnt = 2 * N - d + 1;
+        }
+        // Subtract squares already in forbidden rows or columns
+        for (auto r : rows) {
+            ll j = d - r;
+            if (j >= 1 && j <= N) {
+                cnt--;
+            }
+        }
+        for (auto c : cols) {
+            ll i = d - c;
+            if (i >= 1 && i <= N && !rows.count(i)) {
+                cnt--;
+            }
+        }
+        // Subtract squares already in forbidden diag1
+        for (auto d1 : diag1) {
+            ll i = (d + d1) / 2;
+            ll j = (d - d1) / 2;
+            if ((d + d1) % 2 == 0 && (d - d1) % 2 == 0) {
+                if (i >= 1 && i <= N && j >= 1 && j <= N) {
+                    if (!rows.count(i) && !cols.count(j)) {
+                        cnt--;
+                    }
+                }
+            }
+        }
+        unsafe += max(cnt, 0LL);
+    }
+    
+    ll safe = N * N - unsafe;
+    cout << safe << endl;
+    
+    return 0;
+}
+```
+
+This code should correctly count the number of safe squares by carefully accounting for overlaps between forbidden rows, columns, and diagonals. The inclusion-exclusion principle is applied to ensure that squares are not counted multiple times in the unsafe total.

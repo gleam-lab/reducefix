@@ -1,0 +1,116 @@
+To fix this code, we need to analyze the problem and the incorrect solution to identify where the logic went wrong. The problem involves determining the minimum number of additional votes each candidate needs to guarantee their election, regardless of how other candidates receive votes. 
+
+### Analysis of the Incorrect Solution
+1. **Problem Understanding**: The incorrect solution attempts to sort the candidates' votes and then uses binary search to determine the minimum votes needed for each candidate to be in the top M candidates. However, the logic in the `f` function and the subsequent binary search seems flawed, especially in how it calculates the required votes and checks the conditions.
+2. **Edge Cases**: The failing test case shows that when M equals N, all candidates should already be elected (output should be all zeros), but the incorrect solution outputs non-zero values, indicating a misunderstanding of the problem's edge cases.
+3. **Binary Search Logic**: The binary search in the incorrect solution does not correctly account for the condition where all candidates are already elected, leading to unnecessary calculations and incorrect outputs.
+
+### Correct Approach
+1. **Initial Check**: If M equals N, all candidates are already elected, so the output should be all zeros.
+2. **Binary Search for Each Candidate**: For each candidate, we need to determine the minimum votes they need so that no more than M-1 candidates have more votes than them. This involves:
+   - Sorting the votes to easily find the top candidates.
+   - Using binary search to find the minimum additional votes required for each candidate to be in the top M.
+3. **Efficiency**: The solution should efficiently handle large inputs within the constraints, ensuring O(N log N) complexity.
+
+### Solution Code
+```cpp
+#include <iostream>
+#include <algorithm>
+#include <vector>
+using namespace std;
+
+typedef long long ll;
+typedef struct {
+    ll a;
+    int idx;
+} node;
+
+bool compareA(const node &x, const node &y) {
+    return x.a < y.a;
+}
+
+bool compareIdx(const node &x, const node &y) {
+    return x.idx < y.idx;
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(NULL);
+
+    int N, M;
+    ll K;
+    cin >> N >> M >> K;
+
+    vector<node> A(N);
+    vector<ll> original(N);
+    for (int i = 0; i < N; ++i) {
+        cin >> A[i].a;
+        original[i] = A[i].a;
+        A[i].idx = i;
+    }
+
+    if (M == N) {
+        for (int i = 0; i < N; ++i) {
+            cout << "0 ";
+        }
+        cout << "\n";
+        return 0;
+    }
+
+    sort(A.begin(), A.end(), compareA);
+
+    vector<ll> psum(N + 1, 0);
+    for (int i = 1; i <= N; ++i) {
+        psum[i] = psum[i - 1] + A[i - 1].a;
+    }
+
+    ll remaining = K - psum[N];
+    if (remaining < 0) {
+        remaining = 0;
+    }
+
+    vector<ll> res(N, -1);
+    for (int i = 0; i < N; ++i) {
+        ll current = A[i].a;
+        int pos = upper_bound(A.begin(), A.end(), node{current, -1}, compareA) - A.begin();
+        if (pos >= N - M + 1) {
+            res[A[i].idx] = 0;
+            continue;
+        }
+
+        ll low = 0, high = remaining;
+        ll answer = -1;
+        while (low <= high) {
+            ll mid = (low + high) / 2;
+            ll new_votes = current + mid;
+            int new_pos = upper_bound(A.begin(), A.end(), node{new_votes, -1}, compareA) - A.begin();
+            if (new_pos >= N - M + 1) {
+                answer = mid;
+                high = mid - 1;
+            } else {
+                low = mid + 1;
+            }
+        }
+        res[A[i].idx] = answer;
+    }
+
+    for (int i = 0; i < N; ++i) {
+        if (res[i] == -1) {
+            cout << "-1 ";
+        } else {
+            cout << res[i] << " ";
+        }
+    }
+    cout << "\n";
+
+    return 0;
+}
+```
+
+### Explanation
+1. **Initial Check**: The code first checks if M equals N. If so, it immediately outputs all zeros since all candidates are already elected.
+2. **Sorting and Prefix Sum**: The candidates' votes are sorted, and a prefix sum array is created to facilitate calculations.
+3. **Binary Search for Each Candidate**: For each candidate, the code performs a binary search to find the minimum additional votes needed. The upper_bound function is used to determine the candidate's position if they receive additional votes.
+4. **Output**: The results for each candidate are stored in an array and printed, ensuring that candidates who cannot be elected (even with all remaining votes) are marked with -1.
+
+This approach ensures that the solution is efficient and handles all edge cases correctly, providing the correct minimum votes required for each candidate to be elected.

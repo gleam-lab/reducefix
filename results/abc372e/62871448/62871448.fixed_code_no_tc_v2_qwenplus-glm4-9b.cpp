@@ -1,0 +1,57 @@
+#include<bits/stdc++.h>
+using namespace std;
+#define MAXN 200005
+#define MAXK 10
+
+vector<int> adj[MAXN];
+int n, q;
+int parent[MAXN];
+
+int find(int x) {
+    if (x == parent[x]) return x;
+    parent[x] = find(parent[x]);
+    return parent[x];
+}
+
+bool union_sets(int x, int y) {
+    int rootX = find(x);
+    int rootY = find(y);
+    if (rootX != rootY) {
+        if (rootX < rootY) swap(rootX, rootY);
+        parent[rootX] = rootY;
+        return true;
+    }
+    return false;
+}
+
+int main() {
+    scanf("%d %d", &n, &q);
+    for (int i = 1; i <= n; i++) {
+        parent[i] = i;
+    }
+
+    for (int i = 0; i < q; i++) {
+        int op, u, v;
+        scanf("%d %d %d", &op, &u, &v);
+        if (op == 1) {
+            union_sets(u, v);
+        } else if (op == 2) {
+            int rootV = find(v);
+            int count = 0;
+            for (auto neighbor : adj[rootV]) {
+                if (find(neighbor) == rootV) {
+                    count++;
+                    if (count == v) {
+                        printf("%d\n", neighbor);
+                        break;
+                    }
+                }
+            }
+            if (count < v) {
+                printf("-1\n");
+            }
+        }
+    }
+
+    return 0;
+}

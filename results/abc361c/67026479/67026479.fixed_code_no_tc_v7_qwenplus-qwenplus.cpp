@@ -1,0 +1,52 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+  int n, k;
+  cin >> n >> k;
+  vector<int> a(n);
+  int m = n - k;
+
+  for (int i = 0; i < n; ++i) {
+    cin >> a[i];
+  }
+
+  // We need to find the minimum difference between min and max
+  // in any subsequence of length m formed by removing K elements
+
+  // Sliding window approach:
+  // For each window of size m, calculate diff = max - min
+  // Keep track of the minimum such difference
+
+  deque<int> maxdq;  // stores indices, values are decreasing
+  deque<int> mindq;  // stores indices, values are increasing
+
+  int result = numeric_limits<int>::max();
+
+  for (int i = 0; i < n; ++i) {
+    // Maintain max deque
+    while (!maxdq.empty() && a[i] > a[maxdq.back()])
+      maxdq.pop_back();
+    maxdq.push_back(i);
+
+    // Remove elements out of window
+    if (maxdq.front() <= i - m)
+      maxdq.pop_front();
+
+    // Maintain min deque
+    while (!mindq.empty() && a[i] < a[mindq.back()])
+      mindq.pop_back();
+    mindq.push_back(i);
+
+    if (mindq.front() <= i - m)
+      mindq.pop_front();
+
+    // Start calculating once we have a valid window
+    if (i >= m - 1) {
+      result = min(result, a[maxdq.front()] - a[mindq.front()]);
+    }
+  }
+
+  cout << result << endl;
+  return 0;
+}

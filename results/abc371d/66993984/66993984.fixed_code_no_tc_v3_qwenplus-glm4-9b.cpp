@@ -1,0 +1,29 @@
+#include<bits/stdc++.h>
+using namespace std;
+int n, q, x[200005], p[200005];
+long long sum[200005];
+
+int main() {
+    cin >> n;
+    for (int i = 1; i <= n; i++) {
+        cin >> x[i];
+    }
+    sum[0] = 0; // Initialize sum[0] to handle the case when the range starts from 1
+    for (int i = 1; i <= n; i++) {
+        cin >> p[i];
+        sum[i] = sum[i - 1] + p[i] * x[i]; // Multiply p[i] by x[i] to include the value from x array in the sum
+    }
+    cin >> q;
+    while (q--) {
+        int L, R;
+        cin >> L >> R;
+        int c = lower_bound(x + 1, x + n + 1, L) - x;
+        int d = upper_bound(x + 1, x + n + 1, R) - x;
+        if (c > d) {
+            cout << "0" << endl; // Handle the case when there are no elements in the range
+        } else {
+            cout << sum[d - 1] - sum[c - 1] << endl; // Calculate the sum of p[i] * x[i] in the range
+        }
+    }
+    return 0;
+}

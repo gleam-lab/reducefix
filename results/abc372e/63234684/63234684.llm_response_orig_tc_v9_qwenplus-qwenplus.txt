@@ -1,0 +1,110 @@
+To solve this problem efficiently, we need to manage a dynamic collection of connected components in an undirected graph and quickly answer queries about the k-th largest vertex in the component that contains a given vertex.
+
+The main challenge lies in maintaining these components under union operations and being able to retrieve the k-th largest vertex in constant or logarithmic time for each query.
+
+### Key Observations:
+1. **Union-Find with Enhanced Data Structure**:
+   - Use Disjoint Set Union (DSU) / Union-Find structure to track connected components.
+   - Each set should maintain a sorted list of its vertices in descending order so that retrieving the k-th largest is fast (up to k=10 per requirement).
+2. **Efficient Merging**:
+   - When merging two sets, always merge the smaller into the larger to keep time complexity low (amortized `O(log N)` per operation).
+3. **Query Handling**:
+   - For type-2 queries (`2 v k`), get the root of `v`, then access the k-th element from the sorted list in that root's data.
+
+### Fixing the Code:
+- The incorrect code tried to maintain a sorted list but had issues during merging and sorting.
+- We fix it by ensuring that:
+  - After every merge, the parent component maintains a sorted list of all elements in descending order.
+  - Only keep up to the top 10 elements since we are only ever asked for k ≤ 10.
+
+Here's the corrected and fully working C++ code:
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+struct UnionFind {
+    vector<int> parent;
+    vector<vector<int>> components;
+
+    UnionFind(int n) {
+        parent.resize(n);
+        components.resize(n);
+        for (int i = 0; i < n; ++i) {
+            parent[i] = i;
+            components[i].push_back(i);
+        }
+    }
+
+    int find(int x) {
+        if (parent[x] != x)
+            parent[x] = find(parent[x]);
+        return parent[x];
+    }
+
+    void unite(int x, int y) {
+        int rootX = find(x);
+        int rootY = find(y);
+
+        if (rootX == rootY) return;
+
+        // Always merge smaller into larger
+        if (components[rootX].size() < components[rootY].size())
+            swap(rootX, rootY);
+
+        for (int val : components[rootY]) {
+            components[rootX].push_back(val);
+        }
+
+        // Sort and keep only top 10 values
+        sort(components[rootX].rbegin(), components[rootX].rend());
+        if (components[rootX].size() > 10)
+            components[rootX].resize(10);
+
+        parent[rootY] = rootX;
+    }
+};
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int N, Q;
+    cin >> N >> Q;
+
+    UnionFind uf(N);
+
+    while (Q--) {
+        int type;
+        cin >> type;
+
+        if (type == 1) {
+            int u, v;
+            cin >> u >> v;
+            --u, --v;
+            uf.unite(u, v);
+        } else if (type == 2) {
+            int v, k;
+            cin >> v >> k;
+            --v;
+
+            int root = uf.find(v);
+            if ((int)uf.components[root].size() >= k) {
+                cout << uf.components[root][k - 1] + 1 << '\n';
+            } else {
+                cout << -1 << '\n';
+            }
+        }
+    }
+
+    return 0;
+}
+```
+
+### Explanation:
+- `UnionFind` class manages disjoint sets.
+- Each set stores its vertices in descending order and keeps only up to 10 largest ones.
+- On each union, small component is merged into large one, preserving sorted order.
+- Type-2 query simply retrieves the (k-1)-th element from the sorted list, or returns `-1`.
+
+This solution ensures optimal performance under constraints and handles edge cases correctly.

@@ -1,0 +1,49 @@
+#include<bits/stdc++.h>
+#define ll long long
+using namespace std;
+const int MAXN = 200005;
+bool vis[MAXN];
+vector<int> adj[MAXN];
+
+void dfs(int node, int dist) {
+    vis[node] = true;
+    for (int neighbor : adj[node]) {
+        if (!vis[neighbor]) {
+            dfs(neighbor, dist + 1);
+        }
+    }
+}
+
+int main() {
+    ios_base::sync_with_stdio(false); cin.tie(NULL);
+    int n, m;
+    cin >> n >> m;
+    for (int i = 0; i < m; ++i) {
+        int u, v;
+        cin >> u >> v;
+        adj[u].push_back(v);
+        adj[v].push_back(u);
+    }
+
+    int minDist = INT_MAX;
+    bool found = false;
+
+    for (int i = 1; i <= n; ++i) {
+        memset(vis, false, sizeof(vis));
+        dfs(i, 0);
+        for (int j = 1; j <= n; ++j) {
+            if (vis[j]) {
+                minDist = min(minDist, dist[i][j]);
+                found = true;
+            }
+        }
+    }
+
+    if (!found) {
+        cout << -1;
+    } else {
+        cout << minDist;
+    }
+
+    return 0;
+}

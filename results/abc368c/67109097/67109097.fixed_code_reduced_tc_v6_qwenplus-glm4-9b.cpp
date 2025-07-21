@@ -1,0 +1,26 @@
+#include<bits/stdc++.h>
+
+using namespace std;
+
+int main() {
+    int N;
+    cin >> N;
+    vector<int> H(N);
+    for (int i = 0; i < N; i++) cin >> H[i];
+    long long T = 0;
+    
+    for (int i = 0; i < N; i++) {
+        // Calculate how many full attacks of 3 are needed
+        T += (H[i] + 2) / 3;
+        // Reduce the health by the effective damage
+        H[i] -= ((H[i] + 2) / 3) * 3;
+        // Increment T for the remaining health
+        T++;
+        // Attack with remaining health
+        H[i]--;
+        T++;
+    }
+    
+    cout << T << endl;
+    return 0;
+}

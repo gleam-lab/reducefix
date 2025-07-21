@@ -1,0 +1,51 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+#define rep(i,a,b) for(int i=a;i<b;++i)
+#define trav(a,x) for(auto&a:x)
+#define sz(x) ((int)x.size())
+#define all(x) begin(x),end(x)
+#define rall(x) rbegin(x),rend(x)
+using ll = long long;
+using ld = long double;
+using pii = pair<int,int>;
+using pll = pair<ll,ll>;
+
+int main(){
+    ios_base::sync_with_stdio(false);
+    cin.tie(NULL);
+    int h,w,y; cin>>h>>w>>y;
+    vector<vector<int>> a(h,vector<int>(w));
+    rep(i,0,h)rep(j,0,w)cin>>a[i][j];
+
+    auto ok=[&](int lvl){
+        vector<vector<bool>> seen(h,vector<bool>(w,false));
+        queue<pii> q;
+        rep(i,0,h)rep(j,0,w){
+            if(a[i][j]>lvl&&!seen[i][j]){
+                q.emplace(i,j);
+                seen[i][j]=true;
+                int ans=0;
+                while(sz(q)){
+                    auto [r,c]=q.front();q.pop();
+                    ++ans;
+                    rep(k,0,4){
+                        int nr=r+dx[k],nc=c+dy[k];
+                        if(nr>=0&&nr<h&&nc>=0&&nc<w&&!seen[nr][nc]&&a[nr][nc]<=lvl){
+                            seen[nr][nc]=true;
+                            q.emplace(nr,nc);
+                        }
+                    }
+                }
+                return ans;
+            }
+        }
+        return 0;
+    };
+
+    vector<int> res(y);
+    rep(i,0,y)res[i]=ok(i);
+
+    rep(i,0,y)cout<<res[i]<<'\n';
+    return 0;
+}

@@ -1,0 +1,89 @@
+#include <iostream>
+#include <vector>
+#include <set>
+#include <algorithm>
+
+using namespace std;
+
+int main() {
+    long long N, M;
+    cin >> N >> M;
+
+    vector<pair<long long, long long>> pieces(N * N);
+    for (long long i = 0; i < M; ++i) {
+        long long a, b;
+        cin >> a >> b;
+        --a; --b; // Convert to 0-based indexing
+        pieces[i] = {a, b};
+    }
+
+    // Sort pieces by row and then by column for efficient processing
+    sort(pieces.begin(), pieces.end());
+
+    // Set to store the minimum x and y coordinates that are captured by any piece
+    set<long long> x_coords, y_coords;
+    for (const auto& p : pieces) {
+        x_coords.insert(p.first);
+        y_coords.insert(p.second);
+    }
+
+    // Calculate the maximum distance that a piece can capture
+    long long max_dist = *max_element(pieces.begin(), pieces.end()) - *min_element(pieces.begin(), pieces.end());
+
+    // Calculate the number of free squares that can be placed
+    long long total_squares = N * N;
+    long long captured_squares = 0;
+
+    // Calculate the number of squares captured vertically
+    for (long long i = 0; i <= N; ++i) {
+        // Check if the vertical line i is fully captured
+        bool full_captured = true;
+        for (long long j = 1; j <= N; ++j) {
+            if ((i + j <= N) && !x_coords.count(i + j) && !x_coords.count(i - j) &&
+                (j + 1 <= N) && !y_coords.count(j + 1) && !y_coords.count(j - 1)) {
+                full_captured = false;
+                break;
+            }
+        }
+        if (full_captured) {
+            captured_squares += 2 * N; // Each captured vertical line captures 2N squares
+        }
+    }
+
+    // Calculate the number of squares captured horizontally
+    for (long long j = 0; j <= N; ++j) {
+        // Check if the horizontal line j is fully captured
+        bool full_captured = true;
+        for (long long i = 1; i <= N; ++i) {
+            if ((i + j <= N) && !x_coords.count(i + j) && !x_coords.count(i - j) &&
+                (j + 1 <= N) && !y_coords.count(j + 1) && !y_coords.count(j - 1)) {
+                full_captured = false;
+                break;
+            }
+        }
+        if (full_captured) {
+            captured_squares += 2 * N; // Each captured horizontal line captures 2N squares
+        }
+    }
+
+    // Calculate the number of squares captured diagonally
+    for (long long i = 0; i <= max_dist; ++i) {
+        // Check if the diagonal line i is fully captured
+        bool full_captured = true;
+        for (long long j = 1; j <= max_dist - i; ++j) {
+            if ((i + j <= N) && !x_coords.count(i + j) && !x_coords.count(i - j) &&
+                (j + 1 <= N) && !y_coords.count(j + 1) && !y_coords.count(j - 1)) {
+                full_captured = false;
+                break;
+            }
+        }
+        if (full_captured) {
+            captured_squares += N; // Each captured diagonal line captures N squares
+        }
+    }
+
+    // The number of free squares is the total squares minus the captured squares
+    cout << total_squares - captured_squares << endl;
+
+    return 0;
+}

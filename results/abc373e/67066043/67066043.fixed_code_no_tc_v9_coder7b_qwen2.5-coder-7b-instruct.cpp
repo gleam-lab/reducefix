@@ -1,0 +1,55 @@
+#include <bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+#define all(x) (x).begin(), (x).end()
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int n, m;
+    ll k;
+    cin >> n >> m >> k;
+    vector<ll> a(n);
+    for (int i = 0; i < n; ++i) {
+        cin >> a[i];
+        k -= a[i];
+    }
+
+    // Sort indices based on the number of votes in ascending order
+    vector<int> ord(n);
+    iota(all(ord), 0);
+    sort(all(ord), [&](int i, int j) { return a[i] < a[j]; });
+
+    // Calculate prefix sum array for sorted votes
+    vector<ll> pref(n + 1);
+    for (int i = 0; i < n; ++i) {
+        pref[i + 1] = a[ord[i]] + pref[i];
+    }
+
+    vector<ll> ans(n, -1);
+    for (int i = 0; i < n; ++i) {
+        // Binary search to find the minimum additional votes needed
+        ll l = 0, r = k + 1;
+        while (l < r) {
+            ll mid = (l + r) / 2;
+            int lid = max(0, n - m - (i >= n - m ? 1 : 0));
+            ll cnt = 0;
+            if (lid <= i) {
+                cnt += (i - lid + 1) * (a[ord[i]] + mid + 1);
+                if (lid > 0) cnt -= pref[lid];
+            } else {
+                cnt += mid;
+            }
+            if (cnt > k) {
+                r = mid;
+            } else {
+                l = mid + 1;
+            }
+        }
+        ans[ord[i]] = l - 1;
+    }
+
+    for (auto i : ans) cout << i << ' ';
+    return 0;
+}

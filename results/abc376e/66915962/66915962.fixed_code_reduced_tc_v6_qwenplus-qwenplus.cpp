@@ -1,0 +1,57 @@
+#include<bits/stdc++.h>
+using namespace std;
+using ll = long long;
+using VI = vector<int>;
+using P = pair<int, int>;
+constexpr int INF = 1001001001;
+constexpr ll LINF = 1001001001001001001ll;
+#define rep(i, n) for (ll i = 0; i < (ll)(n); i++)
+#define rep2(i, k, n) for (ll i = k; i < (ll)(n); i++)
+#define OUT(x) cout << #x << ":" << x << endl
+
+int main(){
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+    
+    int t;
+    cin >> t;
+    
+    rep(qi, t){
+        int n, k;
+        cin >> n >> k;
+        vector<P> items(n);
+        rep(i, n) cin >> items[i].first;
+        rep(i, n) cin >> items[i].second;
+
+        // Sort by A_i ascending
+        sort(items.begin(), items.end());
+
+        ll sumB = 0;
+        multiset<ll> bSet;
+
+        // First K elements
+        rep(i, k) {
+            sumB += items[i].second;
+            bSet.insert(items[i].second);
+        }
+
+        ll ans = items[k-1].first * sumB;
+
+        // Sliding window maintaining K elements with smallest B_i to remove
+        rep2(i, k, n) {
+            // We always keep the current element
+            sumB += items[i].second;
+            bSet.insert(items[i].second);
+
+            // Remove the largest B in set to maintain size K
+            ll maxB = *bSet.rbegin();
+            sumB -= maxB;
+            bSet.erase(bSet.find(maxB));
+
+            // Current max A is items[i].first since we process in A order
+            ans = min(ans, items[i].first * sumB);
+        }
+
+        cout << ans << '\n';
+    }
+}

@@ -1,0 +1,62 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define ll long long
+#define rep(i,n) for(int i=0;i<(int)n;i++)
+#define vi vector<int>
+#define vl vector<ll>
+#define pb push_back
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+    
+    int N, Q;
+    cin >> N >> Q;
+    
+    vi a(N);
+    for (int i = 0; i < N; ++i) {
+        cin >> a[i];
+    }
+    
+    // Sort A for binary search usage
+    sort(a.begin(), a.end());
+    
+    for (int q = 0; q < Q; ++q) {
+        int b, k;
+        cin >> b >> k;
+        
+        // Binary search to find the k-th closest element
+        int left = 0, right = N - 1;
+        while (left < right) {
+            int mid = (left + right) / 2;
+            if (a[mid] < b) left = mid + 1;
+            else right = mid;
+        }
+        
+        // Now, we use two pointers to find the k-th closest
+        int l = left - 1, r = left;
+        vi distances;
+        
+        // Collect k closest distances
+        while (distances.size() < k && (l >= 0 || r < N)) {
+            if (l < 0) {
+                distances.pb(abs(a[r++] - b));
+            } else if (r >= N) {
+                distances.pb(abs(a[l--] - b));
+            } else {
+                int dl = abs(a[l] - b);
+                int dr = abs(a[r] - b);
+                if (dl <= dr) {
+                    distances.pb(dl);
+                    l--;
+                } else {
+                    distances.pb(dr);
+                    r++;
+                }
+            }
+        }
+        
+        // The distances are already in increasing order due to our selection method
+        cout << distances[k-1] << "\n";
+    }
+}

@@ -1,0 +1,111 @@
+The issue in your code is related to the way you're computing the minimum value of the expression:
+
+```
+(max_A_i) * (sum_B_i)
+```
+
+Where `max_A_i` is the maximum A-value among a subset of K elements, and `sum_B_i` is the sum of their B-values.
+
+Your current approach tries to maintain a running window of K elements sorted by `A[i]`, and for each new element, it maintains a max-heap of size K-1 with the smallest `B[i]` values removed. However, this is incorrect because:
+
+1. **You are only keeping track of B-values**, but not ensuring that the corresponding A-values are properly paired and considered together.
+2. You're assuming that the `A[i]` values can be processed in order and that the optimal solution will always include the current A-value as the max in the subset. But this isn't guaranteed.
+3. **Using a priority queue of B-values without tracking their A-values** makes it hard to ensure you're always pairing the correct A-value with the best possible set of B-values.
+
+---
+
+### Correct Strategy:
+To solve this problem efficiently, we need to:
+1. Sort all items by `A[i]`.
+2. Iterate through the sorted list and try to form subsets of size `K`, where the current item has the highest `A[i]` in the subset.
+3. Maintain a min-heap of size `K` to keep track of the top-K smallest B-values among the first i elements.
+4. For each `i >= K-1`, compute the product: `A[i] * sum_of_selected_B_values`.
+
+This ensures that:
+- The current `A[i]` is the largest among the selected K elements.
+- We're choosing the K-1 smallest B-values from the previous `i` elements (excluding itself), plus the current one.
+- We minimize the total product by trying all valid combinations.
+
+Let's fix the code accordingly:
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+#define int long long
+
+struct cmp {
+    bool operator()(const pair<int, int>& a, const pair<int, int>& b) {
+        return a.second > b.second; // min-heap on B[i]
+    }
+};
+
+signed main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int T;
+    cin >> T;
+
+    while (T--) {
+        int N, K;
+        cin >> N >> K;
+
+        vector<int> A(N + 1), B(N + 1);
+        for (int i = 1; i <= N; ++i) cin >> A[i];
+        for (int i = 1; i <= N; ++i) cin >> B[i];
+
+        vector<pair<int, int>> items(N + 1); // 1-based index
+        for (int i = 1; i <= N; ++i) {
+            items[i] = {A[i], B[i]};
+        }
+
+        sort(items.begin() + 1, items.end());
+
+        priority_queue<pair<int, int>, vector<pair<int, int>>, cmp> pq;
+        int sum_b = 0;
+        int res = numeric_limits<int>::max();
+
+        for (int i = 1; i <= N; ++i) {
+            if (pq.size() == K - 1) {
+                // Remove the largest B-value so far to make room
+                if (!pq.empty() && B[i] < pq.top().second) {
+                    sum_b -= pq.top().second;
+                    pq.pop();
+                } else {
+                    // Current B is larger, skip adding it
+                    // Because we want to pick smallest K-1 B-values
+                    // So we only keep small B-values
+                    goto skip_push;
+                }
+            }
+
+            pq.push({items[i].first, items[i].second});
+            sum_b += items[i].second;
+
+        skip_push:
+            if (i >= K) {
+                // Now we have at least K elements: take K-1 smallest B-values from previous ones
+                // and add current B[i]
+                // So current A[i] is the max in the group
+                int curr_max_a = items[i].first;
+                res = min(res, curr_max_a * sum_b);
+            }
+        }
+
+        cout << res << '\n';
+    }
+
+    return 0;
+}
+```
+
+---
+
+### Key Fixes:
+- **Sorting by A[i]** ensures we always know which A is the max in any subset ending at position i.
+- **Min-heap on B[i]** keeps track of the smallest (K-1) B-values before i.
+- We ensure that the current A[i] is included in the subset and treated as the maximum.
+- We avoid using fixed arrays and instead use dynamic structures to handle large inputs safely.
+
+This approach is efficient with time complexity **O(N log K)** per test case due to sorting and heap operations, which is acceptable under the constraints.

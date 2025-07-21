@@ -1,0 +1,47 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+const int MAXN = 1e9 + 10;
+long long n, m, rowN, colN, upN[2], downN[2];
+long long row[MAXN], col[MAXN], up[2][MAXN], down[2][MAXN];
+
+bool exist(const vector<long long>& arr, long long x) {
+    return lower_bound(arr.begin(), arr.end(), x) != arr.end() && arr.back() == x;
+}
+
+void add(vector<long long>& arr, long long x) {
+    arr.push_back(x);
+    sort(arr.begin(), arr.end());
+    arr.erase(unique(arr.begin(), arr.end()), arr.end());
+}
+
+long long count(const vector<long long>& arr, long long l, long long r) {
+    auto lb = lower_bound(arr.begin(), arr.end(), l);
+    auto ub = upper_bound(arr.begin(), arr.end(), r);
+    return ub - lb;
+}
+
+int main() {
+    cin >> n >> m;
+    for(int i = 1; i <= m; ++i) {
+        long long x, y; cin >> x >> y;
+        int d = (x + y) & 1;
+        add(row, y);
+        add(col, x);
+        add(up[d], y - x);
+        add(down[d], x + y);
+    }
+    
+    long long ans = n * n - row.size() - col.size();
+    for(int i = 0; i < 2; ++i) {
+        for(int j = 1; j <= upN[i]; ++j) {
+            ans -= count(row, up[i][j] + 1, n) + count(col, n - up[i][j], n);
+        }
+        for(int j = 1; j <= downN[i]; ++j) {
+            ans -= count(row, down[i][j] - n + 1, n) + count(col, down[i][j] - n, 0);
+        }
+    }
+
+    cout << ans << endl;
+    return 0;
+}

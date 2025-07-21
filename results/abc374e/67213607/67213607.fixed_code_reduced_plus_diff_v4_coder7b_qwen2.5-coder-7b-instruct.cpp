@@ -1,0 +1,49 @@
+#include<bits/stdc++.h>
+using namespace std;
+
+int main() {
+    int n, x;
+    cin >> n >> x;
+    vector<int> a(n), p(n), b(n), q(n);
+    for(int i = 0; i < n; ++i) {
+        cin >> a[i] >> p[i] >> b[i] >> q[i];
+    }
+    
+    long long l = 0, r = 1e14; // Adjusted upper bound for larger inputs
+    while(l <= r) {
+        long long mid = (l + r) / 2;
+        long long sum = 0;
+        
+        for(int i = 0; i < n; ++i) {
+            long long minn = LLONG_MAX;
+            for(long long j = 0; j <= b[i]; ++j) {
+                long long cost = j * p[i];
+                if(mid >= j * a[i])
+                    cost += (mid - j * a[i]) / b[i] * q[i];
+                else
+                    cost += ((mid - j * a[i]) / b[i] + 1) * q[i];
+                minn = min(minn, cost);
+            }
+            
+            for(long long j = 0; j <= a[i]; ++j) {
+                long long cost = j * q[i];
+                if(mid >= j * b[i])
+                    cost += (mid - j * b[i]) / a[i] * p[i];
+                else
+                    cost += ((mid - j * b[i]) / a[i] + 1) * p[i];
+                minn = min(minn, cost);
+            }
+            
+            sum += minn;
+        }
+        
+        if(sum <= x) {
+            l = mid + 1;
+        } else {
+            r = mid - 1;
+        }
+    }
+    
+    cout << r << endl; // Changed output to r as it is the correct answer after the loop
+    return 0;
+}

@@ -1,0 +1,36 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    long long cost = 0;
+    long long ans = 0;
+    int n;
+    cin >> n;
+    
+    vector<pair<int, int>> points(n);
+    for(int i = 0; i < n; i++) {
+        cin >> points[i].first >> points[i].second;
+    }
+
+    // Start from origin (0, 0)
+    int nowX = 0, nowY = 0;
+
+    // Calculate the total cost to visit all points in order and return to origin
+    for(int i = 0; i <= n; i++) {
+        int nextX = (i == n ? 0 : points[i].first);
+        int nextY = (i == n ? 0 : points[i].second);
+
+        cost = sqrt(pow(nextX - nowX, 2) + pow(nextY - nowY, 2));
+        ans += cost;
+
+        nowX = nextX;
+        nowY = nextY;
+    }
+
+    cout << fixed << setprecision(15) << ans << '\n';
+
+    return 0;
+}

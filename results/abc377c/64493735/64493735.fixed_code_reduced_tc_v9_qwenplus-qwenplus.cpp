@@ -1,0 +1,45 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    long long N;
+    int M;
+    cin >> N >> M;
+    
+    // Set to store all positions that are either occupied or can be attacked
+    set<pair<long long, long long>> attacked_or_occupied;
+    
+    vector<pair<long long, long long>> knights(M);
+    
+    // Directions a knight can attack from (dx, dy)
+    const array<array<long long, 2>, 8> directions = {{
+        {2, 1}, {1, 2}, {-1, 2}, {-2, 1},
+        {-2, -1}, {-1, -2}, {1, -2}, {2, -1}
+    }};
+    
+    for (int i = 0; i < M; ++i) {
+        long long a, b;
+        cin >> a >> b;
+        
+        // Add the current knight position
+        attacked_or_occupied.emplace(a, b);
+        
+        // Add all positions that this knight can attack
+        for (const auto& dir : directions) {
+            long long x = a + dir[0];
+            long long y = b + dir[1];
+            
+            if (x >= 1 && x <= N && y >= 1 && y <= N) {
+                attacked_or_occupied.emplace(x, y);
+            }
+        }
+    }
+    
+    // Total number of cells not under attack and not occupied
+    cout << (N * N - static_cast<long long>(attacked_or_occupied.size())) << endl;
+    
+    return 0;
+}

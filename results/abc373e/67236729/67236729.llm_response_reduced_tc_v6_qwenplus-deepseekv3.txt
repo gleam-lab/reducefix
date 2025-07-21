@@ -1,0 +1,91 @@
+To fix this code, we need to correctly determine the minimum number of additional votes each candidate requires to guarantee their victory, regardless of how other candidates receive the remaining votes. The key insight is to ensure that after adding X votes to a candidate, no more than M-1 candidates have strictly more votes than them.
+
+### Approaches
+1. **Sorting and Prefix Sums**: First, sort the array of votes received by candidates. This helps in efficiently calculating the sum of votes needed to ensure that a candidate can secure their position.
+2. **Binary Search**: For each candidate, use binary search to determine the minimum number of additional votes (X) needed such that after adding X votes to the candidate, at most M-1 candidates can have more votes than them. This involves checking the feasibility of X by considering the worst-case scenario where other candidates receive as many votes as possible to minimize the candidate's chances.
+3. **Feasibility Check**: For each candidate, the feasibility check involves:
+   - Calculating how many candidates can potentially have more votes than the candidate after the addition of X votes.
+   - Summing the votes required to ensure that no more than M-1 candidates surpass the candidate's vote count.
+
+### Solution Code
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+using i64 = long long;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int N, M;
+    i64 K;
+    cin >> N >> M >> K;
+    
+    vector<i64> A(N);
+    for (auto &a : A) {
+        cin >> a;
+    }
+    
+    vector<i64> sorted_A = A;
+    sort(sorted_A.begin(), sorted_A.end());
+    
+    vector<i64> prefix_sum(N + 1);
+    for (int i = 0; i < N; ++i) {
+        prefix_sum[i + 1] = prefix_sum[i] + sorted_A[i];
+    }
+    
+    for (int i = 0; i < N; ++i) {
+        i64 a = A[i];
+        i64 low = 0, high = K, answer = -1;
+        
+        while (low <= high) {
+            i64 mid = (low + high) / 2;
+            i64 new_votes = a + mid;
+            
+            auto it = upper_bound(sorted_A.begin(), sorted_A.end(), new_votes);
+            int cnt = sorted_A.end() - it;
+            
+            if (cnt < M) {
+                answer = mid;
+                high = mid - 1;
+            } else {
+                low = mid + 1;
+            }
+        }
+        
+        if (answer != -1) {
+            i64 new_votes = a + answer;
+            auto it = upper_bound(sorted_A.begin(), sorted_A.end(), new_votes);
+            int cnt = sorted_A.end() - it;
+            
+            if (cnt >= M) {
+                answer = -1;
+            } else {
+                i64 required = 0;
+                if (cnt > 0) {
+                    int start_pos = N - cnt;
+                    required = new_votes * cnt - (prefix_sum[N] - prefix_sum[start_pos]);
+                }
+                
+                if (required > (K - answer)) {
+                    answer = -1;
+                }
+            }
+        }
+        
+        cout << answer << " ";
+    }
+    cout << "\n";
+    
+    return 0;
+}
+```
+
+### Explanation
+1. **Input Handling**: The code reads the number of candidates (N), the threshold (M), and the total votes (K), followed by the votes each candidate has received so far (A).
+2. **Sorting and Prefix Sum**: The votes are sorted to facilitate binary search and prefix sums are computed to efficiently calculate cumulative sums.
+3. **Binary Search for Each Candidate**: For each candidate, the code performs a binary search to find the minimum votes (X) needed. The search checks if adding X votes ensures that no more than M-1 candidates have more votes.
+4. **Feasibility Check**: For each candidate, after determining a potential X, the code verifies if the remaining votes (K - X) are sufficient to ensure that the candidate meets the threshold. If not, X is adjusted accordingly.
+5. **Output**: The results for each candidate are printed, indicating the minimum votes needed (0 if already sufficient, -1 if impossible).
+
+This approach ensures that each candidate's minimum required votes are computed efficiently, considering the worst-case distribution of remaining votes among other candidates.

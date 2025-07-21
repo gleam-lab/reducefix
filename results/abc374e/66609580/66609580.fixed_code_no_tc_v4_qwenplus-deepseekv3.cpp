@@ -1,0 +1,59 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int n;
+long long a[110], b[110], p[110], q[110], x;
+
+inline bool check(long long v) {
+    long long total = 0;
+    for (int i = 1; i <= n; i++) {
+        long long g = __gcd(a[i], b[i]);
+        long long lcm = a[i] / g * b[i];
+        
+        long long full_cycles = v / lcm;
+        long long partial = v % lcm;
+        
+        // Calculate maximum value from full cycles
+        long long full_a = lcm / a[i] * p[i];
+        long long full_b = lcm / b[i] * q[i];
+        long long max_full = min(full_a, full_b);
+        long long full_value = max(0LL, full_cycles - 1) * max_full;
+        
+        // Calculate maximum value from remaining partial cycle
+        long long max_partial = 0;
+        long long max_a = (partial / a[i]) * p[i];
+        long long max_b = (partial / b[i]) * q[i];
+        max_partial = max(max_a, max_b);
+        
+        // Also consider combinations of a and b in partial cycle
+        for (long long j = 0; j * a[i] <= partial; j++) {
+            long long remaining = partial - j * a[i];
+            long long current = j * p[i] + (remaining / b[i]) * q[i];
+            max_partial = max(max_partial, current);
+        }
+        
+        total += full_value + max_partial;
+        if (total > x) return false;
+    }
+    return true;
+}
+
+int main() {
+    ios::sync_with_stdio(0);
+    cin.tie(0), cout.tie(0);
+    
+    cin >> n >> x;
+    for (int i = 1; i <= n; i++) {
+        cin >> a[i] >> p[i] >> b[i] >> q[i];
+    }
+    
+    long long l = 0, r = 1e18;
+    while (l < r) {
+        long long mid = (l + r + 1) / 2;
+        if (check(mid)) l = mid;
+        else r = mid - 1;
+    }
+    
+    cout << l << '\n';
+    return 0;
+}

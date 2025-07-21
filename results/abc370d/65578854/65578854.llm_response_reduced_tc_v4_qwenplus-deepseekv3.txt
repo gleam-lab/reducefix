@@ -1,0 +1,86 @@
+To fix this code, we need to address the issue where the code incorrectly handles the destruction of walls when a bomb is placed in a cell that already has no wall. The problem lies in the logic that checks for the first walls in the four directions (up, down, left, right) from the bomb's position. 
+
+### Approaches
+1. **Initialization**: We maintain two sets for each row and column to keep track of the walls that still exist. This allows efficient insertion, deletion, and search operations.
+2. **Query Processing**: For each query, we first check if the cell at (R_q, C_q) has a wall. If it does, we remove it and proceed to the next query. If not, we search for the nearest walls in the four directions (up, down, left, right) and remove them if they exist.
+3. **Search Directions**: 
+   - **Up** (same column, lower rows): We use `lower_bound` to find the first position less than R_q and check if it exists.
+   - **Down** (same column, higher rows): Similarly, we use `lower_bound` to find the first position greater than R_q.
+   - **Left** (same row, lower columns): We check the set for the row to find the first position less than C_q.
+   - **Right** (same row, higher columns): We check the set for the row to find the first position greater than C_q.
+4. **Counting Removed Walls**: We keep a count of the walls removed and subtract this count from the total initial walls to get the remaining walls.
+
+### Solution Code
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+#define rep(i, n) for (ll i = 0; i < (ll)(n); i++)
+#define rep2(i, s, n) for (ll i = (s); i < (ll)(n); i++)
+#define all(x) x.begin(), x.end()
+template<typename T> inline bool chmax(T &a, T b) { return ((a < b) ? (a = b, true) : (false)); }
+template<typename T> inline bool chmin(T &a, T b) { return ((a > b) ? (a = b, true) : (false)); }
+
+int main() {
+    int H, W, Q;
+    cin >> H >> W >> Q;
+    vector<set<int>> row(H), col(W);
+    rep(i, H) rep(j, W) {
+        row[i].insert(j);
+        col[j].insert(i);
+    }
+    ll ans = (ll)H * W;
+    ll cnt = 0;
+    auto erase = [&](int r, int c) {
+        if (row[r].count(c)) {
+            cnt++;
+            row[r].erase(c);
+            col[c].erase(r);
+        }
+    };
+    rep(_, Q) {
+        int R, C;
+        cin >> R >> C;
+        R--; C--;
+        if (row[R].count(C)) {
+            erase(R, C);
+            continue;
+        }
+        // Up
+        auto it = col[C].lower_bound(R);
+        if (it != col[C].begin()) {
+            --it;
+            erase(*it, C);
+            it++;
+        }
+        // Down
+        it = col[C].lower_bound(R);
+        if (it != col[C].end()) {
+            erase(*it, C);
+        }
+        // Left
+        it = row[R].lower_bound(C);
+        if (it != row[R].begin()) {
+            --it;
+            erase(R, *it);
+            it++;
+        }
+        // Right
+        it = row[R].lower_bound(C);
+        if (it != row[R].end()) {
+            erase(R, *it);
+        }
+    }
+    cout << ans - cnt << endl;
+    return 0;
+}
+```
+
+### Explanation
+1. **Initialization**: We initialize sets `row` and `col` to keep track of the walls present in each row and column.
+2. **Erase Function**: The `erase` function checks if a wall exists at a given position (row, column) and removes it from both sets if it exists, while incrementing the count of removed walls.
+3. **Query Processing**: For each query, we first check if the specified cell has a wall. If it does, we remove it. If not, we search for the nearest walls in all four directions and remove them.
+4. **Direction Handling**: For each direction (up, down, left, right), we use `lower_bound` to efficiently find the nearest walls. If a wall is found, it is removed.
+5. **Result Calculation**: The result is calculated as the total initial walls minus the count of removed walls, printed at the end.
+
+This approach ensures efficient handling of each query with logarithmic time complexity for each operation, suitable for large input sizes.

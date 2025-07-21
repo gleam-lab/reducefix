@@ -1,0 +1,121 @@
+
+The given problem involves a grid where each cell has a wall initially. We have to process a series of queries that place a bomb in a specific cell and destroy walls based on the query's rules. The ultimate goal is to determine the number of remaining walls after processing all queries.
+
+### Incorrect Code Analysis
+
+The provided code uses a data structure called `set` to keep track of rows and columns that need to be destroyed. However, there are several issues with the code that lead to incorrect behavior:
+
+1. **Data Structures**: The code uses two sets, `tate` and `yoko`, to store the rows and columns that need to be destroyed. However, these sets are not being used correctly to track which walls are destroyed after each query.
+
+2. **Query Processing**: The code does not correctly handle the logic for destroying walls around the bomb's location. The logic for destroying walls based on the given rules is not implemented correctly.
+
+3. **Boundary Conditions**: The code does not handle boundary conditions properly. For example, it does not check if the bomb's position is on the edge of the grid, which could lead to incorrect wall destruction.
+
+### Correct Approach
+
+To solve this problem, we can use a segment tree data structure to efficiently manage and query the grid. The segment tree can be used to keep track of the walls that are destroyed in each row and column.
+
+1. **Segment Tree Initialization**: Initialize a segment tree for each row and column. Each node in the segment tree will represent a range of cells in the grid or on the edge of the grid.
+
+2. **Query Processing**:
+   - When a bomb is placed, check if there is a wall in the cell. If yes, destroy it and update the segment trees.
+   - If there is no wall in the cell, determine the range of rows and columns that need to be destroyed based on the given rules and update the segment trees accordingly.
+
+3. **Count Remaining Walls**: After processing all queries, count the remaining walls by traversing the segment trees and checking which walls have not been destroyed.
+
+### Implementation
+
+```cpp
+#include <iostream>
+#include <vector>
+#include <algorithm>
+
+using namespace std;
+
+struct SegmentTree {
+    vector<int> tree;
+    int n;
+
+    SegmentTree(int n) : n(n), tree(n * 4, 0) {}
+
+    void update(int idx, int val) {
+        for (int i = idx + n; i > 0; i /= 2) {
+            tree[i] += val;
+        }
+    }
+
+    int query(int l, int r) {
+        int res = 0;
+        for (int i = l + n; i <= r + n; i *= 2) {
+            res += tree[i];
+        }
+        return res;
+    }
+};
+
+int main() {
+    int H, W, Q;
+    cin >> H >> W >> Q;
+    vector<vector<int>> grid(H, vector<int>(W, 1)); // 1 represents a wall
+    vector<SegmentTree> row(H), col(W);
+
+    for (int i = 0; i < H; ++i) {
+        row[i] = SegmentTree(W);
+    }
+    for (int j = 0; j < W; ++j) {
+        col[j] = SegmentTree(H);
+    }
+
+    for (int q = 0; q < Q; ++q) {
+        int r, c;
+        cin >> r >> c;
+        r--; c--;
+
+        // Check if there is a wall at (r, c)
+        if (grid[r][c]) {
+            grid[r][c] = 0;
+            row[r].update(c, -1);
+            col[c].update(r, -1);
+        } else {
+            // Find the first row above and below
+            int above = -1, below = H;
+            for (int i = r - 1; i >= 0; --i) {
+                if (row[i].query(c, c) == 0) {
+                    above = i;
+                    break;
+                }
+            }
+            for (int i = r + 1; i < H; ++i) {
+                if (row[i].query(c, c) == 0) {
+                    below = i;
+                    break;
+                }
+            }
+
+            // Update the segment trees
+            for (int i = above + 1; i < below; ++i) {
+                row[i].update(c, 1);
+            }
+            for (int j = c - 1; j >= 0; --j) {
+                col[j].update(r, 1);
+            }
+            for (int j = c + 1; j < W; ++j) {
+                col[j].update(r, 1);
+            }
+        }
+    }
+
+    int remainingwalls = 0;
+    for (int i = 0; i < H; ++i) {
+        remainingwalls += row[i].query(W - 1, W - 1);
+    }
+    for (int j = 0; j < W; ++j) {
+        remainingwalls += col[j].query(H - 1, H - 1);
+    }
+
+    cout << remainingwalls << endl;
+    return 0;
+}
+```
+
+This implementation uses a segment tree to efficiently manage the walls' destruction and counts the remaining walls after all queries are processed.

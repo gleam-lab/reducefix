@@ -1,0 +1,58 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+
+using namespace std;
+
+const int N = 2 * 10^5 + 5;
+
+vector<int> parent(N + 1);
+vector<int> size(N + 1);
+vector<vector<int>> adjList(N + 1);
+
+void unionSets(int u, int v) {
+    u = parent[u];
+    v = parent[v];
+    if (u != v) {
+        if (size[u] < size[v]) swap(u, v);
+        parent[v] = u;
+        size[u] += size[v];
+        vector<int> uList = adjList[u];
+        vector<int> vList = adjList[v];
+        for (int node : vList) {
+            uList.push_back(node);
+        }
+        sort(uList.begin(), uList.end(), greater<int>());
+        adjList[u] = uList;
+        while (size(adjList[u]) > 100) {
+            adjList[u].pop_back();
+        }
+    }
+}
+
+int find(int u) {
+    if (parent[u] != u) parent[u] = find(parent[u]);
+    return parent[u];
+}
+
+int main() {
+    int n, q;
+    cin >> n >> q;
+    for (int i = 1; i <= n; i++) {
+        parent[i] = i;
+        size[i] = 1;
+    }
+    while (q--) {
+        int type, u, v, k;
+        cin >> type >> u >> v;
+        if (type == 1) {
+            unionSets(u, v);
+        } else {
+            int root = find(v);
+            int numVertices = size(adjList[root]);
+            if (k > numVertices) cout << -1 << endl;
+            else cout << adjList[root][k - 1] << endl;
+        }
+    }
+    return 0;
+}

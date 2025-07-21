@@ -1,0 +1,26 @@
+#include <iostream>
+#include <vector>
+using namespace std;
+
+int main() {
+    int n, m;
+    cin >> n >> m;
+
+    vector<int> arr(n);
+    for (int i = 0; i < n; i++) {
+        cin >> arr[i];
+    }
+
+    for (int i = 0; i < n; i++) {
+        int sum = 0, prefix_sum = 0, count = 0;
+        for (int j = i; j < n; j++) {
+            prefix_sum += arr[j];
+            sum += prefix_sum;
+            if (sum % m == 0) {
+                count++;
+            }
+        }
+        cout << count << " ";
+    }
+    return 0;
+}

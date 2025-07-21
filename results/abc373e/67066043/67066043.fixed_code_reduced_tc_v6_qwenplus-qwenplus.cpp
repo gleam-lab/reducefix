@@ -1,0 +1,90 @@
+#include <bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+#define all(x) (x).begin(), (x).end()
+
+int main() {
+    ios_base::sync_with_stdio(0);
+    cin.tie(0);
+    int N, M;
+    ll K;
+    cin >> N >> M >> K;
+    vector<ll> A(N);
+    for (int i = 0; i < N; ++i) {
+        cin >> A[i];
+        K -= A[i];
+    }
+
+    // Create a list of indices sorted by current votes
+    vector<int> ord(N);
+    iota(all(ord), 0);
+    sort(all(ord), [&](int i, int j) { return A[i] < A[j]; });
+
+    vector<ll> sorted_A = A;
+    sort(all(sorted_A));
+
+    vector<ll> prefix_sum(N + 1);
+    for (int i = 0; i < N; ++i) {
+        prefix_sum[i + 1] = prefix_sum[i] + sorted_A[i];
+    }
+
+    vector<ll> result(N, -1);
+
+    for (int idx = 0; idx < N; ++idx) {
+        int i = ord[idx]; // original index
+        ll low = 0, high = K + 1;
+        ll ans = -1;
+
+        while (low <= high) {
+            ll mid = (low + high) / 2;
+            ll total = A[i] + mid;
+
+            // Binary search to find how many candidates have strictly more votes than current
+            int upper = N - (lower_bound(sorted_A.begin(), sorted_A.end(), total) - sorted_A.begin());
+
+            if (upper >= M) {
+                // Already elected even without this candidate getting any additional votes
+                ans = 0;
+                break;
+            }
+
+            // Need to increase our candidate's votes so that less than M candidates have more
+            // We need to make sure at most M-1 candidates have more than total
+            int left = 0, right = N;
+            while (left < right) {
+                int m = (left + right) / 2;
+                if (sorted_A[m] < total)
+                    left = m + 1;
+                else
+                    right = m;
+            }
+            // Now left is the first index with value >= total
+            // All before are < total
+
+            ll required_votes = 0;
+            // Make top M candidates below us have at most total
+            int top_m_index = N - M;
+            if (top_m_index > idx) {
+                // This candidate is in the bottom M, can be beaten by others
+                // Need to raise their score to beat at least one of the top N-M
+                // So we consider the next after them
+                int limit_index = min(N, N - M + (A[i] >= sorted_A[N - M]));
+                required_votes = max(0LL, total - sorted_A[limit_index] + 1);
+            }
+
+            // Check if we can afford it
+            if (required_votes <= K) {
+                ans = required_votes;
+                high = mid - 1;
+            } else {
+                low = mid + 1;
+            }
+        }
+
+        result[i] = (ans == -1) ? -1 : ans;
+    }
+
+    for (ll val : result) {
+        cout << val << ' ';
+    }
+}

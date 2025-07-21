@@ -1,0 +1,77 @@
+### Analysis of the Problem and the Code
+
+The problem involves handling a large number of queries on a sequence of points. Each query asks for the sum of prefix distances between points within a specified range `[L, R]`. The given code is inefficient for large inputs, primarily due to its use of a `map` for `x_to_ptr` and the way it processes each query.
+
+### Issues with the Code:
+1. **Inefficiency with `map`**: The use of `map` for storing `X[i]` to its index `i` is not optimal for large datasets due to the logarithmic time complexity of `lower_bound` and `upper_bound`.
+2. **Large Input Size**: For `N = 200000`, the operations inside the loop become very slow due to the use of `map` and the number of queries.
+3. **Memory Usage**: Using `map` might also consume more memory compared to a more compact data structure like `vector` with binary search.
+
+### Solution Approach:
+1. **Sort and Use Binary Search**: Instead of using `map`, we can sort the `X` array and use binary search to find the indices corresponding to `L` and `R`. This will reduce the time complexity to O(log N) for each query.
+2. **Prefix Sum Array**: We already have a prefix sum array `P` which is efficiently used to compute the sum of distances within the range.
+
+### Optimized Code:
+```cpp
+#include <iostream>
+#include <vector>
+#include <algorithm>
+
+using namespace std;
+using ll = long long;
+
+int main() {
+    int N;
+    cin >> N;
+    vector<ll> P(N + 1), X(N);
+    P[0] = 0;
+    
+    for (int i = 0; i < N; ++i) {
+        cin >> X[i];
+    }
+    
+    for (int i = 0; i < N; ++i) {
+        int p;
+        cin >> p;
+        P[i + 1] = P[i] + p;
+    }
+    
+    // Sort X array and store the original indices
+    vector<pair<int, int>> sortedX;
+    for (int i = 0; i < N; ++i) {
+        sortedX.emplace_back(X[i], i);
+    }
+    sort(sortedX.begin(), sortedX.end());
+    
+    int Q;
+    cin >> Q;
+    while (Q--) {
+        int L, R;
+        cin >> L >> R;
+        
+        // Binary search to find the leftmost and rightmost indices in sortedX within range [L, R]
+        auto leftIt = lower_bound(sortedX.begin(), sortedX.end(), make_pair(L, -1));
+        auto rightIt = upper_bound(sortedX.begin(), sortedX.end(), make_pair(R, N));
+        
+        int leftIdx = (leftIt != sortedX.end()) ? leftIt->second : N;
+        int rightIdx = (rightIt != sortedX.begin()) ? (rightIt - 1)->second : -1;
+        
+        // Handle edge case where no valid index is found on the right
+        if (rightIdx == -1) rightIdx = N - 1;
+        
+        // Calculate the sum of prefix distances within the range [leftIdx, rightIdx]
+        ll ans = P[rightIdx + 1] - P[leftIdx];
+        cout << ans << endl;
+    }
+    
+    return 0;
+}
+```
+
+### Explanation:
+1. **Reading Input**: We read the `X` values and the prefix sums `P`.
+2. **Sorting**: We store each `X[i]` with its index `i` in a `vector<pair<int, int>>` called `sortedX` and sort it.
+3. **Binary Search**: For each query, we use `lower_bound` and `upper_bound` to find the indices in `sortedX` that correspond to the range `[L, R]`.
+4. **Calculating the Answer**: Using the found indices, we compute the sum of prefix distances using the prefix sum array `P`.
+
+This approach ensures that each query is processed efficiently in O(log N) time, making it suitable for large input sizes.

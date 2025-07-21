@@ -1,0 +1,67 @@
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+
+int main() {
+    ll N, M, K;
+    cin >> N >> M >> K;
+    vector<ll> A(N);
+    ll total = 0;
+    for (int i = 0; i < N; ++i) {
+        cin >> A[i];
+        total += A[i];
+    }
+    ll remaining = K - total;
+
+    vector<pair<ll, int>> sorted_A(N);
+    for (int i = 0; i < N; ++i) {
+        sorted_A[i] = {A[i], i};
+    }
+    sort(sorted_A.begin(), sorted_A.end());
+
+    vector<ll> prefix_sum(N + 1, 0);
+    for (int i = 0; i < N; ++i) {
+        prefix_sum[i + 1] = prefix_sum[i] + sorted_A[i].first;
+    }
+
+    vector<ll> result(N, -1);
+
+    for (int i = 0; i < N; ++i) {
+        ll a_i = A[i];
+
+        // Binary search for the minimal X
+        ll low = 0, high = remaining;
+        ll answer = -1;
+
+        while (low <= high) {
+            ll mid = (low + high) / 2;
+            ll new_vote = a_i + mid;
+
+            // Find how many candidates have votes strictly greater than new_vote
+            auto it = upper_bound(sorted_A.begin(), sorted_A.end(), make_pair(new_vote, N));
+            ll cnt_strictly_greater = N - (it - sorted_A.begin());
+
+            if (cnt_strictely_greater < M) {
+                // Already good, can try smaller X
+                answer = mid;
+                high = mid - 1;
+            } else {
+                // Need more votes
+                low = mid + 1;
+            }
+        }
+
+        // After finding the minimal X using binary search
+        if (answer <= remaining)
+            result[i] = max(0LL, answer);
+        else
+            result[i] = -1;
+    }
+
+    for (int i = 0; i < N; ++i) {
+        cout << result[i] << " ";
+    }
+    cout << endl;
+
+    return 0;
+}

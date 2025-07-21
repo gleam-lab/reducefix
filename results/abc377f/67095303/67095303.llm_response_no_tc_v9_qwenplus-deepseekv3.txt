@@ -1,0 +1,112 @@
+To fix this code, we need to address several issues:
+
+1. **Incorrect Diagonal Length Calculation**: The initial approach tries to calculate the length of each diagonal incorrectly, leading to wrong counts of safe squares.
+2. **Overlap Handling**: The code attempts to handle overlaps between rows, columns, and diagonals but does so incorrectly, leading to overcounting or undercounting.
+3. **Efficiency**: Given the constraints (N up to 1e9 and M up to 1e3), the code needs to be optimized to avoid excessive computations.
+
+### Approaches
+1. **Initial Safe Squares Calculation**: Calculate the number of squares not in any row or column of existing pieces. This is done by subtracting the unique rows and columns from the total grid size.
+2. **Diagonal Handling**: For each diagonal (both types), calculate the number of squares that are not already covered by rows or columns. This requires checking intersections of diagonals with rows and columns.
+3. **Overlap Correction**: Ensure that squares covered by both diagonals and rows/columns are not double-counted. This is done by tracking which squares are already covered by rows or columns.
+
+### Solution Code
+```cpp
+#include<bits/stdc++.h>
+#define int long long
+#define PII pair<int,int>
+#define inf 1e9+7
+
+using namespace std;
+
+void solve() {
+    int N, M;
+    cin >> N >> M;
+    set<int> rows, cols, diag1, diag2;
+    for (int i = 0; i < M; ++i) {
+        int a, b;
+        cin >> a >> b;
+        rows.insert(a);
+        cols.insert(b);
+        diag1.insert(a + b);
+        diag2.insert(a - b);
+    }
+
+    int safe_rows = N - rows.size();
+    int safe_cols = N - cols.size();
+    int initial_safe = safe_rows * safe_cols;
+
+    // Calculate safe squares on diagonals not covered by rows or columns
+    for (auto d : diag1) {
+        int min_ij = max(1LL, d - N);
+        int max_ij = min(N, d - 1);
+        int length = max_ij - min_ij + 1;
+        set<int> covered;
+        for (auto r : rows) {
+            if (1 <= d - r && d - r <= N) {
+                covered.insert(d - r);
+            }
+        }
+        for (auto c : cols) {
+            if (1 <= d - c && d - c <= N) {
+                covered.insert(c);
+            }
+        }
+        initial_safe += (length - covered.size());
+    }
+
+    for (auto d : diag2) {
+        int min_i = max(1LL, 1 + d);
+        int max_i = min(N, N + d);
+        int length = max_i - min_i + 1;
+        set<int> covered;
+        for (auto r : rows) {
+            if (1 <= r - d && r - d <= N) {
+                covered.insert(r - d);
+            }
+        }
+        for (auto c : cols) {
+            if (1 <= c + d && c + d <= N) {
+                covered.insert(c);
+            }
+        }
+        initial_safe += (length - covered.size());
+    }
+
+    // Subtract overlaps between diag1 and diag2 that were counted twice
+    set<PII> intersections;
+    for (auto d1 : diag1) {
+        for (auto d2 : diag2) {
+            if ((d1 + d2) % 2 == 0 && (d1 - d2) % 2 == 0) {
+                int i = (d1 + d2) / 2;
+                int j = (d1 - d2) / 2;
+                if (1 <= i && i <= N && 1 <= j && j <= N) {
+                    if (rows.find(i) == rows.end() && cols.find(j) == rows.end()) {
+                        intersections.insert({i, j});
+                    }
+                }
+            }
+        }
+    }
+    initial_safe -= intersections.size();
+
+    cout << initial_safe << endl;
+}
+
+signed main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(NULL);
+
+    int _ = 1;
+    while (_--) {
+        solve();
+    }
+
+    return 0;
+}
+```
+
+### Explanation
+1. **Initial Safe Squares Calculation**: The initial safe squares are those not in any row or column occupied by existing pieces. This is calculated as `(N - rows.size()) * (N - cols.size())`.
+2. **Diagonal Handling**: For each diagonal, we calculate the number of squares not already covered by rows or columns. This involves checking intersections of diagonals with rows and columns to avoid double-counting.
+3. **Overlap Correction**: Intersections between the two types of diagonals are identified and subtracted to ensure they are not counted twice. The intersections are found by solving the equations for both diagonal types simultaneously.
+4. **Efficiency**: By using sets to track covered rows and columns and calculating intersections efficiently, the solution handles large values of N (up to 1e9) and M (up to 1e3) within feasible computational limits.

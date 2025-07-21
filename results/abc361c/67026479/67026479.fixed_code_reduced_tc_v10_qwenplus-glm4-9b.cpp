@@ -1,0 +1,18 @@
+#include <bits/stdc++.h>
+using namespace std;
+int main(){
+  int n, k;
+  cin >> n >> k;
+  vector<int> a(n);
+  for(int i = 0; i < n; i++) cin >> a[i];
+  sort(a.begin(), a.end());
+  
+  // Calculate the maximum possible value of the minimum element in the remaining sequence after removing k elements
+  int max_min_after_removal = a[k];
+  
+  // Calculate the minimum possible value of the maximum element in the remaining sequence after removing k elements
+  int min_max_after_removal = a[n-k-1];
+  
+  // The answer is the difference between these two
+  cout << min_max_after_removal - max_min_after_removal << endl;
+}

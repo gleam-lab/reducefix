@@ -1,0 +1,98 @@
+To fix this code, we need to address several issues with the original approach. The main problem revolves around correctly identifying and removing the first walls in the four directions (up, down, left, right) when a bomb is placed on a cell without a wall. The original code had logical flaws in how it handled these cases, especially in checking for the existence of walls in the specified directions and correctly updating the data structures.
+
+### Approaches
+1. **Data Structures**: We use two arrays of sets, `row_walls` and `col_walls`, to keep track of the walls in each row and column. This allows efficient insertion, deletion, and range queries.
+2. **Query Processing**:
+   - **Direct Hit**: If the bomb's cell contains a wall, remove it.
+   - **Indirect Hit**: If the cell is empty, find the nearest walls in the four directions (up, down, left, right) and remove them. This involves:
+     - **Up**: The largest row index less than the current row where a wall exists.
+     - **Down**: The smallest row index greater than the current row where a wall exists.
+     - **Left**: The largest column index less than the current column where a wall exists.
+     - **Right**: The smallest column index greater than the current column where a wall exists.
+3. **Efficiency**: Using sets allows each operation to be performed in logarithmic time relative to the number of walls in the row or column, which is efficient given the constraints.
+
+### Solution Code
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+#define rep(i, n) for (int i = 0; i < (n); i++)
+using ll = long long;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int h, w, q;
+    cin >> h >> w >> q;
+    vector<set<int>> row_walls(h), col_walls(w);
+
+    rep(i, h) rep(j, w) {
+        row_walls[i].insert(j);
+        col_walls[j].insert(i);
+    }
+
+    int ans = h * w;
+    rep(qi, q) {
+        int r, c;
+        cin >> r >> c;
+        r--; c--;
+
+        bool has_wall = row_walls[r].count(c);
+        if (has_wall) {
+            row_walls[r].erase(c);
+            col_walls[c].erase(r);
+            ans--;
+        } else {
+            // Up
+            auto it_up = col_walls[c].lower_bound(r);
+            if (it_up != col_walls[c].begin()) {
+                it_up--;
+                int up_row = *it_up;
+                row_walls[up_row].erase(c);
+                col_walls[c].erase(up_row);
+                ans--;
+            }
+            // Down
+            auto it_down = col_walls[c].lower_bound(r);
+            if (it_down != col_walls[c].end()) {
+                int down_row = *it_down;
+                row_walls[down_row].erase(c);
+                col_walls[c].erase(down_row);
+                ans--;
+            }
+            // Left
+            auto it_left = row_walls[r].lower_bound(c);
+            if (it_left != row_walls[r].begin()) {
+                it_left--;
+                int left_col = *it_left;
+                row_walls[r].erase(left_col);
+                col_walls[left_col].erase(r);
+                ans--;
+            }
+            // Right
+            auto it_right = row_walls[r].lower_bound(c);
+            if (it_right != row_walls[r].end()) {
+                int right_col = *it_right;
+                row_walls[r].erase(right_col);
+                col_walls[right_col].erase(r);
+                ans--;
+            }
+        }
+    }
+    cout << ans << "\n";
+    return 0;
+}
+```
+
+### Explanation
+1. **Initialization**: We initialize `row_walls` and `col_walls` to keep track of all walls in each row and column. Each cell (i, j) is initially marked as having a wall by inserting j into `row_walls[i]` and i into `col_walls[j]`.
+2. **Query Processing**:
+   - **Direct Hit**: If the cell (r, c) has a wall, it is removed from both `row_walls[r]` and `col_walls[c]`, and the total wall count `ans` is decremented.
+   - **Indirect Hit**: If the cell is empty, we search for the nearest walls in the four directions:
+     - **Up**: Using `lower_bound` on `col_walls[c]`, we find the first wall above (r, c) and remove it.
+     - **Down**: Using `lower_bound` on `col_walls[c]`, we find the first wall below (r, c) and remove it.
+     - **Left**: Using `lower_bound` on `row_walls[r]`, we find the first wall to the left of (r, c) and remove it.
+     - **Right**: Using `lower_bound` on `row_walls[r]`, we find the first wall to the right of (r, c) and remove it.
+3. **Output**: After processing all queries, the remaining wall count `ans` is printed.
+
+This approach ensures efficient handling of each query and correctly updates the wall counts in logarithmic time per operation, making it suitable for large input sizes.

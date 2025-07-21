@@ -1,0 +1,157 @@
+#include <bits/stdc++.h>
+using namespace std;
+using i64 = long long;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    i64 N, M;
+    cin >> N >> M;
+
+    set<i64> row_set, col_set, diag_sum, diag_diff;
+    vector<pair<i64, i64>> pieces(M);
+
+    for (i64 i = 0; i < M; ++i) {
+        i64 a, b;
+        cin >> a >> b;
+        pieces[i] = {a, b};
+        row_set.insert(a);
+        col_set.insert(b);
+        diag_sum.insert(a + b);
+        diag_diff.insert(a - b);
+    }
+
+    // Total attacked positions from each type
+    i64 total_attacked = 0;
+
+    // Add rows and columns contribution
+    total_attacked += (i64)row_set.size() * N;
+    total_attacked += (i64)col_set.size() * N;
+
+    // Add diagonals and anti-diagonals
+    auto count_cells_on_diagonal = [&](i64 s) {
+        if (s < 2 || s > 2 * N) return 0LL;
+        i64 low = max(1LL, s - N);
+        i64 high = min(N, s - 1);
+        return high - low + 1;
+    };
+
+    auto count_cells_on_antidiagonal = [&](i64 d) {
+        i64 low = max(1LL, 1 + d);
+        i64 high = min(N, N + d);
+        if (low > high) return 0LL;
+        return high - low + 1;
+    };
+
+    for (auto s : diag_sum) {
+        total_attacked += count_cells_on_diagonal(s);
+    }
+    for (auto d : diag_diff) {
+        total_attacked += count_cells_on_antidiagonal(d);
+    }
+
+    // Subtract overlaps: row-col intersections
+    for (auto r : row_set) {
+        for (auto c : col_set) {
+            total_attacked--;
+        }
+    }
+
+    // Subtract overlaps: row-diag intersections
+    for (auto r : row_set) {
+        for (auto s : diag_sum) {
+            i64 c = s - r;
+            if (c >= 1 && c <= N) total_attacked--;
+        }
+    }
+
+    // Subtract overlaps: row-antidiag intersections
+    for (auto r : row_set) {
+        for (auto d : diag_diff) {
+            i64 c = r - d;
+            if (c >= 1 && c <= N) total_attacked--;
+        }
+    }
+
+    // Subtract overlaps: col-diag intersections
+    for (auto c : col_set) {
+        for (auto s : diag_sum) {
+            i64 r = s - c;
+            if (r >= 1 && r <= N) total_attacked--;
+        }
+    }
+
+    // Subtract overlaps: col-antidiag intersections
+    for (auto c : col_set) {
+        for (auto d : diag_diff) {
+            i64 r = d + c;
+            if (r >= 1 && r <= N) total_attacked--;
+        }
+    }
+
+    // Subtract overlaps: diag-antidiag intersections
+    for (auto s : diag_sum) {
+        for (auto d : diag_diff) {
+            i64 x = (s + d) / 2;
+            i64 y = s - x;
+            if ((s + d) % 2 == 0 && x >= 1 && x <= N && y >= 1 && y <= N) {
+                total_attacked--;
+            }
+        }
+    }
+
+    // Add back overlaps of three types that were subtracted too many times
+    for (auto r : row_set) {
+        for (auto c : col_set) {
+            for (auto s : diag_sum) {
+                if (r + c == s) total_attacked++;
+            }
+            for (auto d : diag_diff) {
+                if (r - c == d) total_attacked++;
+            }
+        }
+    }
+
+    for (auto r : row_set) {
+        for (auto s : diag_sum) {
+            i64 c = s - r;
+            if (c >= 1 && c <= N) {
+                for (auto d : diag_diff) {
+                    if (r - c == d) total_attacked++;
+                }
+            }
+        }
+    }
+
+    for (auto c : col_set) {
+        for (auto s : diag_sum) {
+            i64 r = s - c;
+            if (r >= 1 && r <= N) {
+                for (auto d : diag_diff) {
+                    if (r - c == d) total_attacked++;
+                }
+            }
+        }
+    }
+
+    for (auto s : diag_sum) {
+        for (auto d : diag_diff) {
+            i64 x = (s + d) / 2;
+            i64 y = s - x;
+            if ((s + d) % 2 == 0 && x >= 1 && x <= N && y >= 1 && y <= N) {
+                for (auto r : row_set) {
+                    if (x == r) total_attacked++;
+                }
+                for (auto c : col_set) {
+                    if (y == c) total_attacked++;
+                }
+            }
+        }
+    }
+
+    // Final result
+    cout << N * N - total_attacked << "\n";
+
+    return 0;
+}

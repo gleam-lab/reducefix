@@ -1,0 +1,96 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+#define int long long
+#define pii pair<int, int>
+#define fi first
+#define se second
+#define pb push_back
+#define close ios::sync_with_stdio(false); cin.tie(0); cout.tie(0);
+const int MOD = 1e9 + 7;
+const int MAXN = 1005;
+
+int H, W, Y;
+int grid[MAXN][MAXN];
+bool sunk[MAXN][MAXN];
+
+// BFS queue
+queue<pii> q;
+
+// Check if (x, y) is on border
+bool isBorder(int x, int y) {
+    return (x == 0 || x == H - 1 || y == 0 || y == W - 1);
+}
+
+signed main() {
+    close;
+    cin >> H >> W >> Y;
+    
+    for (int i = 0; i < H; i++) {
+        for (int j = 0; j < W; j++) {
+            cin >> grid[i][j];
+        }
+    }
+
+    // Initialize: mark borders as sunk if their elevation <= initial sea level
+    // Initially sea level = 0, so only cells with value <= 0 would be sunk, which is impossible
+    // So we initialize all as not sunk
+
+    // Prepare to process by putting all outer border into the priority queue based on their height
+    priority_queue<pair<int, pii>, vector<pair<int, pii>>, greater<pair<int, pii>>> pq;
+
+    for (int i = 0; i < H; i++) {
+        for (int j = 0; j < W; j++) {
+            if (isBorder(i, j)) {
+                pq.push({grid[i][j], {i, j}});
+            }
+        }
+    }
+
+    // We will process in order of increasing elevation
+    int remaining = H * W;
+    int year = 1;
+    vector<int> ans(Y + 2);
+
+    while (!pq.empty()) {
+        auto [height, pos] = pq.top();
+        pq.pop();
+        int x = pos.fi, y = pos.se;
+
+        // If already sunk, skip
+        if (sunk[x][y]) continue;
+
+        // This cell sinks at 'height' level
+        sunk[x][y] = true;
+        remaining--;
+
+        // If it's still within our query years, update answer
+        while (year <= Y && year <= height) {
+            ans[year] = remaining;
+            year++;
+        }
+
+        // Propagate to neighbors
+        for (int d = 0; d < 4; d++) {
+            int nx = x + dx[d], ny = y + dy[d];
+            if (nx >= 0 && nx < H && ny >= 0 && ny < W) {
+                if (!sunk[nx][ny]) {
+                    pq.push({grid[nx][ny], {nx, ny}});
+                }
+            }
+        }
+    }
+
+    // Fill any unprocessed years
+    while (year <= Y) {
+        ans[year] = remaining;
+        year++;
+    }
+
+    // Output
+    for (int i = 1; i <= Y; i++) {
+        cout << ans[i] << endl;
+    }
+
+    return 0;
+}

@@ -1,0 +1,22 @@
+#include <iostream>
+#include <cmath>
+using namespace std;
+
+int main() {
+    int n;
+    cin >> n;
+    double currentX = 0, currentY = 0, totalCost = 0.0;
+
+    for (int i = 0; i < n; i++) {
+        int x, y;
+        cin >> x >> y;
+        totalCost += sqrt((currentX - x) * (currentX - x) + (currentY - y) * (currentY - y));
+        currentX = x;
+        currentY = y;
+    }
+
+    // Add the cost to return to origin
+    totalCost += sqrt(currentX * currentX + currentY * currentY);
+    cout << fixed << setprecision(10) << totalCost << endl;
+    return 0;
+}

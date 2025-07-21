@@ -1,0 +1,94 @@
+To fix this code, we need to address the algorithmic errors related to the destruction of walls in the grid. The original code attempts to use sets to track the presence of walls and perform deletions, but it has several issues:
+
+1. **Initialization of Sets**: The sets `row` and `col` are initialized incorrectly. Each row's set should contain all column indices where walls exist, and similarly for columns. The initial setup doesn't reflect the grid's initial state properly.
+
+2. **Erasing Logic**: The logic for erasing walls when a bomb is placed at an empty cell is flawed. The code tries to erase the first walls in all four directions but doesn't correctly handle cases where no walls are present in a direction.
+
+3. **Boundary Conditions**: The code doesn't properly handle the grid's boundaries, leading to potential out-of-bound accesses or incorrect deletions.
+
+4. **Efficiency**: The original approach may not be efficient enough given the constraints (H × W ≤ 4 × 10^5 and Q ≤ 2 × 10^5). We need a more efficient data structure, such as binary indexed trees (Fenwick trees) or segment trees, to handle range queries and updates efficiently.
+
+Here's the corrected and optimized solution using sets to maintain the walls in each row and column:
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int H, W, Q;
+    cin >> H >> W >> Q;
+
+    vector<set<int>> row(H + 2), col(W + 2);
+    for (int i = 1; i <= H; ++i) {
+        for (int j = 1; j <= W; ++j) {
+            row[i].insert(j);
+            col[j].insert(i);
+        }
+    }
+
+    int remaining = H * W;
+
+    while (Q--) {
+        int R, C;
+        cin >> R >> C;
+
+        if (row[R].count(C)) {
+            row[R].erase(C);
+            col[C].erase(R);
+            remaining--;
+        } else {
+            // Check up
+            auto it = col[C].lower_bound(R);
+            if (it != col[C].begin()) {
+                --it;
+                row[*it].erase(C);
+                col[C].erase(it);
+                remaining--;
+            }
+
+            // Check down
+            it = col[C].upper_bound(R);
+            if (it != col[C].end()) {
+                row[*it].erase(C);
+                col[C].erase(it);
+                remaining--;
+            }
+
+            // Check left
+            it = row[R].lower_bound(C);
+            if (it != row[R].begin()) {
+                --it;
+                col[*it].erase(R);
+                row[R].erase(it);
+                remaining--;
+            }
+
+            // Check right
+            it = row[R].upper_bound(C);
+            if (it != row[R].end()) {
+                col[*it].erase(R);
+                row[R].erase(it);
+                remaining--;
+            }
+        }
+    }
+
+    cout << remaining << endl;
+
+    return 0;
+}
+```
+
+### Explanation:
+1. **Initialization**: We initialize sets `row` and `col` to keep track of the walls present in each row and column. Initially, all cells have walls, so we populate these sets accordingly.
+
+2. **Query Processing**:
+   - If the queried cell `(R, C)` has a wall, we remove it from the sets and decrement the remaining count.
+   - If the cell is empty, we look for the first walls in all four directions (up, down, left, right) using `lower_bound` and `upper_bound` operations on the sets. For each found wall, we remove it from the sets and decrement the remaining count.
+
+3. **Efficiency**: The use of sets allows efficient insertion, deletion, and searching operations (each in O(log n) time), making the solution suitable for large input sizes as specified in the problem constraints.
+
+This approach ensures that we correctly handle the destruction of walls and efficiently maintain the count of remaining walls after each query.

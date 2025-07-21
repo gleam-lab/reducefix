@@ -1,0 +1,40 @@
+#include <iostream>
+#include <string>
+
+int main() {
+    std::ios_base::sync_with_stdio(false);
+    std::cin.tie(nullptr);
+
+    int N;
+    std::string S;
+    std::cin >> N;
+    std::cin >> S;
+
+    int wins = 0;
+    char winmove = 'A'; // Initialize with an invalid move that will always change
+    char prev = 'A';
+
+    for (char c : S) {
+        switch (c) {
+            case 'R':
+                winmove = 'P';
+                break;
+            case 'P':
+                winmove = 'S';
+                break;
+            case 'S':
+                winmove = 'R';
+                break;
+        }
+
+        if (winmove != prev) {
+            wins++;
+            prev = winmove;
+        } else {
+            prev = c;
+        }
+    }
+
+    std::cout << wins << std::endl;
+    return 0;
+}

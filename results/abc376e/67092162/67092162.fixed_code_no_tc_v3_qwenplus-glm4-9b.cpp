@@ -1,0 +1,66 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <queue>
+using namespace std;
+
+const int maxN = 2e5 + 5;
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, k;
+        cin >> n >> k;
+        vector<int> A(n), B(n);
+        
+        for (int i = 0; i < n; ++i) {
+            cin >> A[i];
+        }
+        for (int i = 0; i < n; ++i) {
+            cin >> B[i];
+        }
+        
+        // Pair each element of A with its corresponding B value and sort by A descending
+        vector<pair<int, int>> AB(n);
+        for (int i = 0; i < n; ++i) {
+            AB[i] = {A[i], B[i]};
+        }
+        sort(AB.begin(), AB.end(), [](const pair<int, int> &a, const pair<int, int> &b) {
+            return a.first > b.first; // Sort descending by A
+        });
+
+        long long sum = 0;
+        priority_queue<int> maxB;
+        long long ans = LLONG_MAX;
+
+        // Calculate the initial sum of B values and push them into the maxB as a max-heap
+        for (int i = 0; i < k; ++i) {
+            sum += AB[i].second;
+            maxB.push(AB[i].second);
+        }
+        // Calculate the initial answer (k-th maximum A multiplied by sum of all B)
+        ans = (long long)AB[k-1].first * sum;
+
+        // Slide the window from k to n and find the optimal solution
+        for (int i = k; i < n; ++i) {
+            // Remove the smallest B from the sum and maxB if the current B is greater
+            if (AB[i].second > maxB.top()) {
+                sum -= maxB.top();
+                maxB.pop();
+            }
+            // Push the new B into the maxB and update the sum
+            maxB.push(AB[i].second);
+            sum += AB[i].second;
+            // Update the answer if a better one is found
+            ans = min(ans, (long long)AB[i].first * sum);
+        }
+
+        cout << ans << '\n';
+    }
+
+    return 0;
+}

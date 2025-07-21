@@ -1,0 +1,54 @@
+#include<bits/stdc++.h>
+using namespace std;
+#include<queue>
+using ll=int64_t;
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int H, W, Y;
+    cin >> H >> W >> Y;
+    vector<vector<int>> A(H, vector<int>(W));
+    vector<vector<bool>> visited(H, vector<bool>(W, false));
+    vector<queue<pair<int, int>>> bfs queues(Y + 1);
+
+    for (int i = 0; i < H; ++i) {
+        for (int j = 0; j < W; ++j) {
+            cin >> A[i][j];
+            if (i == 0 || i == H - 1 || j == 0 || j == W - 1) {
+                visited[i][j] = true;
+            }
+        }
+    }
+
+    for (int i = 0; i < H; ++i) {
+        for (int j = 0; j < W; ++j) {
+            if (!visited[i][j]) {
+                queues[A[i][j]].push({i, j});
+            }
+        }
+    }
+
+    int initial_area = H * W;
+    cout << initial_area << '\n';
+
+    for (int year = 1; year <= Y; ++year) {
+        while (!queues[year].empty()) {
+            auto [i, j] = queues[year].front();
+            queues[year].pop();
+
+            for (int k = 0; k < 4; ++k) {
+                int ni = i + (k == 0 ? -1 : k == 1 ? 1 : 0);
+                int nj = j + (k == 2 ? -1 : k == 3 ? 1 : 0);
+                if (ni >= 0 && ni < H && nj >= 0 && nj < W && !visited[ni][nj] && A[ni][nj] > year) {
+                    visited[ni][nj] = true;
+                    queues[A[ni][nj]].push({ni, nj});
+                }
+            }
+        }
+        cout << (initial_area - queues[year + 1].size()) << '\n';
+    }
+
+    return 0;
+}

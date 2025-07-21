@@ -1,0 +1,187 @@
+#include <iostream>
+#include <algorithm>
+#include <vector>
+using namespace std;
+
+typedef struct {
+    long long a;
+    int idx;
+} node;
+
+node A[200000];
+long long psum[200001];
+long long K;
+int N, M;
+
+bool is_elected(long long x, int i) {
+    long long total_votes = A[i].a + x;
+    long long remaining_votes = K - x;
+
+    // The number of candidates with strictly more votes than total_votes
+    // Needs to be less than M
+
+    // Find the first candidate in the sorted array with a > total_votes
+    int cnt = N - (upper_bound(A, A + N, node{total_votes, -1}, [](node a, node b) { return a.a < b.a; }) - A);
+
+    if (cnt < M) {
+        return true;
+    } else {
+        // Even if remaining votes are given to the top M-1 candidates, can we ensure cnt < M?
+        // To maximize cnt, distribute remaining votes to candidates who can overtake total_votes
+        // The candidates with A[j].a <= total_votes can't overtake even with all remaining votes
+        // So, the worst case is when as many candidates as possible have A[j].a + remaining_j > total_votes
+        // The minimal cnt is the original cnt, but can be increased by giving votes to candidates just below total_votes
+
+        // The candidates that can overtake are those where A[j].a + remaining_j > total_votes
+        // To minimize the number of candidates overtaking, we need to minimize the votes given to other candidates
+        // So, the worst case is when as many candidates as possible get just enough to overtake, starting from the highest
+
+        // The M-th candidate from the top needs to have votes <= total_votes
+        // So, we need to ensure that after adding X, there are at most M-1 candidates with more votes
+
+        // The candidates are sorted in ascending order, so the top (N - pos) candidates have a > total_votes
+        // pos is the first position where A[pos].a > total_votes
+        // So, initially, cnt = N - pos
+
+        // If cnt >= M, then even without any additional votes to others, the candidate is not elected
+        // So, we need X such that after adding X, cnt < M
+
+        // So, to ensure that after adding X, the number of candidates with more votes is less than M
+        // We need to make sure that even if we give all remaining K - X votes to other candidates, the cnt is still < M
+
+        // The worst case is when we give as many candidates as possible just enough votes to exceed total_votes
+        // So, we need to find how many candidates can be pushed above total_votes with the remaining K - X votes
+
+        // The minimal X is when we just ensure that the (M-1)-th largest candidate (after distribution) has <= total_votes votes
+
+        // So, the minimal X is such that after adding X to candidate i, the M-th largest candidate has <= total_votes votes
+        // Which means the top M-1 candidates can have > total_votes votes, but the M-th must have <= total_votes
+
+        // So, the minimal X is the minimal value where when we sort all candidates (including X added to candidate i),
+        // the M-th largest candidate has <= candidate i's total votes (A[i].a + X)
+
+        // Therefore, the condition is that after sorting all candidates (with X added to candidate i), in the worst case (other candidates get as many votes as possible to push candidate i down),
+        // the candidate i is still in the top M candidates (i.e., there are at most M-1 candidates with more votes)
+
+        // So, the minimal X is the X where the (M)-th largest candidate's votes can't exceed total_votes, even if all remaining votes are given to others in the worst way
+
+        // So, to compute this, we need to find how many candidates can be pushed above total_votes with the remaining K - X votes, and ensure that this number is < M
+
+        // The candidates that can be pushed above total_votes are those where A[j].a + (votes given) > total_votes
+
+        // The minimal votes given to each such candidate j is max(0, total_votes + 1 - A[j].a)
+
+        // The sum of these minimal votes over all candidates j that can be pushed above total_votes must be <= remaining_votes (K - X)
+
+        // So, the maximal number of candidates that can be pushed above total_votes is the largest S such that the sum of the S smallest (total_votes + 1 - A[j].a) for A[j].a <= total_votes is <= remaining_votes
+
+        // But since the candidates are sorted in ascending order, we can compute this sum for the largest S candidates with A[j].a <= total_votes
+
+        // So, we can binary search S, compute the minimal votes needed to push S candidates above total_votes, and see if S + cnt < M
+
+        // If S + cnt < M, then candidate i is elected; otherwise, not even with X
+
+        // So, the initial cnt is the number of candidates already above total_votes (without any additional votes)
+
+        // So, the total number of candidates above total_votes after distribution is cnt + S, where S is the number of candidates that can be pushed above total_votes with the remaining votes
+
+        // We need cnt + S < M
+
+        // So, the maximal S is M - 1 - cnt
+
+        // If M - 1 - cnt < 0, then S cannot be negative, so no additional candidates can be pushed above total_votes
+        // So, S = 0, but we already have cnt >= M, so candidate i cannot be elected
+
+        // Otherwise, we need to see if the sum of the minimal votes to push M - 1 - cnt candidates above total_votes is <= remaining_votes
+
+        // The candidates to consider are those with A[j].a <= total_votes, sorted in descending order (to prefer pushing those closest to total_votes first)
+
+        // So, the sum is sum_{j=0 to S-1} (total_votes + 1 - A[some j].a)
+
+        // So, candidate i can be elected if cnt + S < M, where S is the maximal number of candidates that can be pushed above total_votes with remaining_votes
+
+        // So, the condition is: cnt + S < M, where S is the largest integer such that the sum of the minimal votes to push S candidates above total_votes is <= remaining_votes
+
+        // So, we need to compute S, which is the maximal integer S where the sum of the S smallest (total_votes + 1 - A[j].a) for A[j].a <= total_votes is <= remaining_votes
+
+        // But since candidates are sorted in ascending order, the candidates with A[j].a <= total_votes are A[0..pos-1], where pos is the first candidate with A[pos].a > total_votes
+
+        // So, the candidates to consider are A[pos - S .. pos - 1], and the sum is sum_{j=pos - S}^{pos - 1} (total_votes + 1 - A[j].a)
+
+        int pos = upper_bound(A, A + N, node{total_votes, -1}, [](node a, node b) { return a.a < b.a; }) - A;
+        cnt = N - pos;
+
+        if (cnt >= M) {
+            return false;
+        }
+
+        long long max_S = M - 1 - cnt;
+        if (max_S < 0) {
+            return false;
+        }
+
+        long long available = remaining_votes;
+        long long sum_needed = 0;
+        int s = 0;
+
+        for (int j = pos - 1; j >= 0 && s < max_S; --j) {
+            long long needed = total_votes + 1 - A[j].a;
+            if (needed <= 0) {
+                s++;
+                continue;
+            }
+            if (sum_needed + needed <= available) {
+                sum_needed += needed;
+                s++;
+            } else {
+                break;
+            }
+        }
+
+        if (cnt + s < M) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+}
+
+int main() {
+    scanf("%d %d %lld", &N, &M, &K);
+    long long sum_A = 0;
+    for (int i = 0; i < N; i++) {
+        scanf("%lld", &A[i].a);
+        A[i].idx = i;
+        sum_A += A[i].a;
+    }
+    sort(A, A + N, [](node a, node b) { return a.a < b.a; });
+    K -= sum_A;
+
+    for (int i = 0; i <= N; i++) {
+        psum[i] = (i == 0) ? 0 : psum[i - 1] + A[i - 1].a;
+    }
+
+    vector<long long> res(N, -1);
+
+    for (int i = 0; i < N; i++) {
+        long long lo = 0, hi = K;
+        long long ans = -1;
+        while (lo <= hi) {
+            long long mid = (lo + hi) / 2;
+            if (is_elected(mid, i)) {
+                ans = mid;
+                hi = mid - 1;
+            } else {
+                lo = mid + 1;
+            }
+        }
+        res[A[i].idx] = ans;
+    }
+
+    for (int i = 0; i < N; i++) {
+        printf("%lld ", res[i]);
+    }
+    printf("\n");
+
+    return 0;
+}

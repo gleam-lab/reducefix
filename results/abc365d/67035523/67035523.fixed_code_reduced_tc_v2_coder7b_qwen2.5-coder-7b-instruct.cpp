@@ -1,0 +1,24 @@
+#include <iostream>
+#include <string>
+using namespace std;
+
+int main() {
+    int n;
+    string s;
+    cin >> n >> s;
+    
+    int wins = 0;
+    char last_move = 'X'; // Initial value should not conflict with any actual move
+    
+    for (int i = 0; i < n; ++i) {
+        if (last_move == 'X' || s[i] != last_move) {
+            wins++;
+            if (s[i] == 'R') last_move = 'P';
+            else if (s[i] == 'P') last_move = 'S';
+            else if (s[i] == 'S') last_move = 'R';
+        }
+    }
+    
+    cout << wins << endl;
+    return 0;
+}

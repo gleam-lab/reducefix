@@ -1,0 +1,80 @@
+To fix this code, we need to correctly determine the minimum number of additional votes each candidate needs to guarantee their victory, regardless of how the other candidates receive the remaining votes. The key insight is that a candidate will be elected if they have enough votes to ensure that no more than M-1 candidates have more votes than them after all votes are distributed. 
+
+### Approaches
+1. **Sorting and Binary Search**: For each candidate, we need to determine the minimum number of additional votes they need such that they are in the top M candidates after all votes are distributed. This involves:
+   - Sorting the votes of other candidates to efficiently compute the required votes.
+   - Using binary search to find the minimal X such that adding X votes to the candidate ensures their position in the top M candidates, considering the worst-case scenario where other candidates receive as many votes as possible.
+
+2. **Prefix Sums**: To efficiently calculate the sum of votes needed to ensure other candidates do not surpass the current candidate's votes, we use prefix sums on the sorted array of votes.
+
+3. **Check Feasibility**: For each candidate, we check if it's possible to achieve the required votes with the remaining unallocated votes. If not, the candidate cannot be elected, and we return -1.
+
+### Solution Code
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+
+int main() {
+    ll N, M, K;
+    cin >> N >> M >> K;
+    vector<ll> A(N);
+    ll total = 0;
+    for (ll i = 0; i < N; ++i) {
+        cin >> A[i];
+        total += A[i];
+    }
+    ll rem = K - total;
+    
+    vector<ll> sorted_A = A;
+    sort(sorted_A.begin(), sorted_A.end());
+    vector<ll> prefix(N + 1, 0);
+    for (ll i = 0; i < N; ++i) {
+        prefix[i + 1] = prefix[i] + sorted_A[i];
+    }
+    
+    for (ll i = 0; i < N; ++i) {
+        ll a_i = A[i];
+        ll low = 0, high = rem;
+        ll res = -1;
+        
+        while (low <= high) {
+            ll mid = (low + high) / 2;
+            ll new_a = a_i + mid;
+            
+            ll pos = upper_bound(sorted_A.begin(), sorted_A.end(), new_a) - sorted_A.begin();
+            ll cnt = N - pos; // number of candidates with votes > new_a
+            
+            if (cnt < M) {
+                // Need to ensure that no more than M-1 candidates have > new_a votes after redistribution
+                // The worst case is when other candidates get as many votes as possible to surpass new_a
+                ll needed = 0;
+                ll left = max(0LL, N - (M - 1));
+                needed = new_a * left - (prefix[left] - prefix[0]);
+                
+                if (needed <= rem - mid) {
+                    res = mid;
+                    high = mid - 1;
+                } else {
+                    low = mid + 1;
+                }
+            } else {
+                low = mid + 1;
+            }
+        }
+        
+        cout << res << " \n"[i == N - 1];
+    }
+    
+    return 0;
+}
+```
+
+### Explanation
+1. **Input and Initialization**: The code reads the number of candidates (N), the required top positions (M), and the total votes (K). It also reads the current votes for each candidate and calculates the remaining votes (rem) that can be distributed.
+2. **Sorting and Prefix Sum**: The votes are sorted to facilitate efficient binary search and prefix sums are computed to quickly calculate sums of subsets of the sorted array.
+3. **Binary Search for Each Candidate**: For each candidate, the code performs a binary search to determine the minimal additional votes (X) needed. The binary search checks if the candidate can be placed in the top M positions after adding X votes, considering the worst-case redistribution of remaining votes to other candidates.
+4. **Feasibility Check**: The code checks if the required votes (needed) to ensure other candidates do not surpass the current candidate's votes can be met with the remaining votes. If feasible, it updates the result; otherwise, it continues searching.
+5. **Output**: The results for each candidate are printed, indicating the minimal votes needed or -1 if it's impossible.
+
+This approach efficiently handles the problem using sorting and binary search, ensuring optimal performance even for large input sizes.

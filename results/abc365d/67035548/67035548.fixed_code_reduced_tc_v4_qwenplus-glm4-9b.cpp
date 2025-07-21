@@ -1,0 +1,61 @@
+#include <iostream>
+#include <string>
+#include <vector>
+#include <cmath>
+
+using namespace std;
+
+int compare(char a, char b) {
+    if (a == 'R' || b == 'R') return 1;
+    if (a == 'P' || b == 'S') return 1;
+    return 0;
+}
+
+int main() {
+    int n;
+    string s;
+    cin >> n >> s;
+
+    vector<int> left(n), right(n);
+    int leftCounter = 0, rightCounter = 0;
+    int leftMax = 0, rightMax = 0;
+
+    // Calculate left max subarrays
+    for (int i = 0; i < n; ++i) {
+        if (s[i] == 'X') {
+            left[i] = 0;
+        } else {
+            if (i == 0 || s[i-1] == 'X') {
+                left[i] = 1;
+            } else {
+                left[i] = left[i-1] + 1;
+            }
+        }
+        leftMax = max(leftMax, left[i]);
+    }
+
+    // Calculate right max subarrays
+    for (int i = n - 1; i >= 0; --i) {
+        if (s[i] == 'X') {
+            right[i] = 0;
+        } else {
+            if (i == n - 1 || s[i+1] == 'X') {
+                right[i] = 1;
+            } else {
+                right[i] = right[i+1] + 1;
+            }
+        }
+        rightMax = max(rightMax, right[i]);
+    }
+
+    // Calculate the maximum size of a subarray that can be removed
+    int maxRemoved = max(leftMax, rightMax);
+
+    // Calculate the minimum remaining length after removal
+    int totalRemoved = (n + 1) / 2 - maxRemoved;
+    int minRemaining = totalRemoved * 2 - maxRemoved;
+
+    cout << minRemaining << endl;
+
+    return 0;
+}

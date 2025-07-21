@@ -1,0 +1,29 @@
+#include<bits/stdc++.h>
+using namespace std;
+
+#define rep(i,n) for (ll i=0;i < (n); i++)
+using ll = long long;
+
+int main()
+{
+    int n; cin >> n;
+    vector<ll> a(n);
+    rep(i,n) cin >> a[i];
+
+    // Initialize variables to store the maximum experience points
+    ll dp_even = 0, dp_odd = -1, temp;
+
+    // Iterate through each monster's strength
+    rep(i,n)
+    {
+        // Store the current value of dp_even before updating
+        temp = dp_even;
+        // Update dp_even based on defeating the monster
+        dp_even = max(dp_odd + 2 * a[i], dp_even);
+        // Update dp_odd based on letting the monster go or defeating it
+        dp_odd = max(temp + a[i], dp_odd);
+    }
+
+    // Output the maximum experience points that can be gained
+    cout << max(dp_even, dp_odd) << endl;
+}

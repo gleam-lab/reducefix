@@ -1,0 +1,75 @@
+#include "bits/stdc++.h"
+
+using namespace std;
+
+#define ff first
+#define ss second
+#define ll long long
+#define SZ(s) (int)s.size()
+
+int const N = 2e5 + 5;
+
+vector<vector<int>> adj[N];
+
+void addEdge(int u, int v) {
+    adj[u].push_back(v);
+    adj[v].push_back(u);
+}
+
+void dfs(int node, int parent, vector<int>& subtreeSizes, vector<int>& ranks) {
+    subtreeSizes[node] = 1;
+    ranks[node] = 0;
+    for(auto& child : adj[node]) {
+        if(child != parent) {
+            dfs(child, node, subtreeSizes, ranks);
+            subtreeSizes[node] += subtreeSizes[child];
+            ranks[node] = max(ranks[node], ranks[child] + 1);
+        }
+    }
+}
+
+void preprocess(vector<int>& subtreeSizes, vector<int>& ranks) {
+    for(int i = 1; i <= N; i++) {
+        sort(adj[i].begin(), adj[i].end());
+    }
+    vector<int> tempSubtreeSizes(N + 1, 0);
+    vector<int> tempRanks(N + 1, 0);
+    dfs(1, -1, tempSubtreeSizes, tempRanks);
+    swap(subtreeSizes, tempSubtreeSizes);
+    swap(ranks, tempRanks);
+}
+
+int getKthLargest(int node, int k) {
+    int leftSize = ranks[node] * 10;
+    if(leftSize >= k) {
+        int mid = leftSize / 2;
+        int pos = lower_bound(adj[node].begin(), adj[node].end(), adj[node][mid]) - adj[node].begin();
+        return adj[node][pos];
+    } else {
+        k -= leftSize;
+        int rightSize = subtreeSizes[node] - leftSize;
+        int mid = rightSize / 2;
+        int pos = lower_bound(adj[node].begin() + leftSize, adj[node].end(), adj[node][leftSize + mid]) - adj[node].begin();
+        return adj[node][pos];
+    }
+}
+
+int main() {
+    ios_base::sync_with_stdio(false); cin.tie(nullptr);
+
+    int n, q;
+    cin >> n >> q;
+    preprocess(subtreeSizes, ranks);
+    while(q--) {
+        int t, a, b;
+        cin >> t >> a >> b;
+        if(t == 1) {
+            addEdge(a, b);
+            preprocess(subtreeSizes, ranks);
+        } else {
+            cout << (adj[a].size() < b ? -1 : getKthLargest(a, b)) << '\n';
+        }
+    }
+
+    return 0;
+}

@@ -1,0 +1,41 @@
+#include<bits/stdc++.h>
+#define ll long long
+using namespace std;
+
+const int MAXN = 200005;
+
+ll n, m, mn = INT_MAX, vis[MAXN];
+vector<int> adj[MAXN];
+
+void dfs(int x, int cnt) {
+    vis[x] = 1;
+    for (int i = 0; i < adj[x].size(); ++i) {
+        int v = adj[x][i];
+        if (!vis[v]) {
+            dfs(v, cnt + 1);
+        }
+    }
+}
+
+int main() {
+    cin >> n >> m;
+    for (int i = 1; i <= m; ++i) {
+        int u, v;
+        cin >> u >> v;
+        adj[u].push_back(v);
+    }
+
+    for (int i = 1; i <= n; ++i) {
+        if (!vis[i]) {
+            mn = min(mn, static_cast<ll>(adj[i].size()));
+            dfs(i, 0);
+        }
+    }
+
+    if (mn == INT_MAX) {
+        cout << -1;
+    } else {
+        cout << mn;
+    }
+    return 0;
+}

@@ -1,0 +1,77 @@
+To fix this code, we need to address the algorithmic issues that prevent it from correctly solving the problem. The problem requires finding the minimum possible value of the expression \((\max_{i \in S} A_i) \times (\sum_{i \in S} B_i)\) for a subset \(S\) of size \(K\).
+
+### Analysis of the Original Code
+1. **Sorting by A**: The code correctly sorts the pairs \((A_i, B_i)\) by \(A_i\) in ascending order. This allows us to consider subsets where the maximum \(A_i\) in the subset is \(A_i\) for some \(i\) in the sorted list.
+2. **Initial Sum and Set**: The code initializes the sum of \(B_i\) for the first \(K\) elements and maintains a set of these \(B_i\) values. However, the set doesn't help in maintaining the sum of the smallest \(K-1\) \(B_i\) values when moving to the next element.
+3. **Updating the Sum**: The code attempts to replace the largest \(B_i\) in the set with the current \(B_i\) when moving to the next element. This approach is flawed because it doesn't ensure that the sum of the smallest \(K\) \(B_i\) values up to the current \(A_i\) is maintained.
+
+### Correct Approach
+1. **Sort by A**: As before, sort the pairs by \(A_i\).
+2. **Priority Queue for B**: Maintain a max-heap (priority queue) of the smallest \(K\) \(B_i\) values up to the current \(A_i\). This allows efficient replacement of the largest \(B_i\) in the heap when a smaller \(B_i\) is encountered.
+3. **Track Sum**: Keep track of the sum of the \(B_i\) values in the heap. For each \(i\) from \(K\) to \(N\), the maximum \(A_i\) in the subset \(S\) is \(A_i\), and the sum of \(B_i\) is the sum of the smallest \(K-1\) \(B_i\) values up to \(i-1\) plus \(B_i\).
+
+### Fixed Code
+```cpp
+#include<bits/stdc++.h>
+using namespace std;
+using ll = long long;
+using VI = vector<int>;
+using P = pair<int, int>;
+constexpr int INF = 1001001001;
+constexpr ll LINF = 1001001001001001001ll;
+#define rep(i, n) for (ll i = 0; i < (ll)(n); i++)
+#define rep2(i, k, n) for (ll i = k; i < (ll)(n); i++)
+#define OUT(x) cout << #x << ":" << x << endl
+
+int main(){
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;
+    while(t--){
+        int n, k;
+        cin >> n >> k;
+        vector<P> p(n);
+        rep(i, n) cin >> p[i].first;
+        rep(i, n) cin >> p[i].second;
+        sort(p.begin(), p.end());
+        
+        vector<ll> a(n), b(n);
+        rep(i, n){
+            a[i] = p[i].first;
+            b[i] = p[i].second;
+        }
+        
+        priority_queue<ll> pq;
+        ll sumB = 0;
+        rep(i, k-1){
+            pq.push(b[i]);
+            sumB += b[i];
+        }
+        
+        ll ans = LINF;
+        rep2(i, k-1, n){
+            if(pq.size() == k-1){
+                ll current = a[i] * (sumB + b[i]);
+                ans = min(ans, current);
+            }
+            if(!pq.empty() && pq.top() > b[i]){
+                sumB -= pq.top();
+                pq.pop();
+                sumB += b[i];
+                pq.push(b[i]);
+            }
+        }
+        cout << ans << '\n';
+    }
+}
+```
+
+### Explanation
+1. **Sorting**: The pairs are sorted by \(A_i\) to ensure that when we consider \(A_i\) as the maximum in the subset, all previous \(A_j\) are smaller or equal.
+2. **Priority Queue**: A max-heap is used to keep track of the smallest \(K-1\) \(B_i\) values before the current \(A_i\). This allows efficient replacement of the largest \(B_i\) in the heap when a smaller \(B_i\) is encountered.
+3. **Sum Tracking**: The sum of the \(B_i\) values in the heap is maintained. For each \(i\), the sum is updated by replacing the largest \(B_i\) in the heap if the current \(B_i\) is smaller.
+4. **Compute Minimum**: For each \(i\), the expression \(A_i \times (\sum \text{of smallest } K-1 \text{ } B_i \text{ values before } i + B_i)\) is computed, and the minimum value is tracked.
+
+This approach ensures that we efficiently compute the minimum possible value of the given expression for each test case.

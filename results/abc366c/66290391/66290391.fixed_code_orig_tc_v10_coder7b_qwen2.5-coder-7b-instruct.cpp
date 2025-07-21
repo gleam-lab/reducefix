@@ -1,0 +1,25 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define rep(i, n) for (int i = 0; i < (n); ++i)
+using ll = long long;
+
+int main()
+{
+    int q;
+    cin >> q;
+    set<int> st;
+    while(q--) {
+        int type, x;
+        cin >> type;
+        if(type == 1) {
+            cin >> x;
+            st.insert(x);
+        } else if(type == 2) {
+            cin >> x;
+            st.erase(st.find(x));
+        } else {
+            cout << st.size() << endl;
+        }
+    }
+    return 0;
+}

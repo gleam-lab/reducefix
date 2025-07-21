@@ -1,0 +1,66 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+const int N = 200005;
+int n, k;
+int a[N], b[N];
+long long sum_a[N], sum_b[N];
+int sum_b_prefix[N];
+
+long long solve() {
+    long long ans = LLONG_MAX;
+    
+    // Calculate prefix sums of b
+    for (int i = 0; i < n; ++i) {
+        sum_b[i] = (i > 0 ? sum_b[i - 1] : 0) + b[i];
+    }
+
+    // Sort by A values in descending order (higher values first)
+    for (int i = 0; i < n; ++i) {
+        sum_a[i] = (i > 0 ? sum_a[i - 1] : 0) + a[i];
+    }
+    vector<pair<int, long long>> sorted_by_a(n);
+    for (int i = 0; i < n; i++) {
+        sorted_by_a[i] = {a[i], sum_a[i]};
+    }
+    sort(sorted_by_a.begin(), sorted_by_a.end(), greater<pair<int, long long>>());
+
+    // Calculate prefix sums of A's cumulative sums
+    for (int i = 0; i < n; ++i) {
+        sum_b_prefix[i] = (i > 0 ? sum_b_prefix[i - 1] : 0) + (i >= k ? sum_b[sorted_by_a[i].first - k] : 0);
+    }
+
+    // Iterate over possible subsets
+    for (int i = 0; i < n; ++i) {
+        if (i >= k - 1) {
+            long long sum_b_k = (i >= k - 1 ? sum_b_prefix[i] : 0);
+            long long max_a = sorted_by_a[i].first;
+            ans = min(ans, max_a * sum_b_k);
+        }
+    }
+
+    return ans;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(NULL);
+
+    int T;
+    cin >> T;
+    while (T--) {
+        cin >> n >> k;
+        for (int i = 0; i < n; ++i) {
+            cin >> a[i];
+        }
+        for (int i = 0; i < n; ++i) {
+            cin >> b[i];
+        }
+
+        cout << solve() << '\n';
+    }
+
+    return 0;
+}

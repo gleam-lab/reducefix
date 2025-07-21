@@ -1,0 +1,68 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define int long long
+#define close ios::sync_with_stdio(false); cin.tie(0); cout.tie(0);
+const int MAXN = 1010;
+const int MOD = 1e9 + 7;
+
+int dx[] = {0, 0, 1, -1};
+int dy[] = {1, -1, 0, 0};
+
+struct Node {
+    int x, y, val;
+    bool operator < (const Node &a) const {
+        return val > a.val;
+    }
+};
+
+signed main() {
+    close;
+    int H, W, Y;
+    cin >> H >> W >> Y;
+    int grid[H][W];
+    for (int i = 0; i < H; ++i) {
+        for (int j = 0; j < W; ++j) {
+            cin >> grid[i][j];
+        }
+    }
+
+    bool vis[H][W];
+    memset(vis, false, sizeof(vis));
+
+    priority_queue<Node> pq;
+
+    // Push all the boundary cells into the priority queue
+    for (int i = 0; i < H; ++i) {
+        pq.push({i, 0, grid[i][0]});
+        pq.push({i, W - 1, grid[i][W - 1]});
+        vis[i][0] = vis[i][W - 1] = true;
+    }
+
+    for (int j = 1; j < W - 1; ++j) {
+        pq.push({0, j, grid[0][j]});
+        pq.push({H - 1, j, grid[H - 1][j]});
+        vis[0][j] = vis[H - 1][j] = true;
+    }
+
+    int total_area = H * W;
+
+    // Process each year
+    for (int year = 1; year <= Y; ++year) {
+        while (!pq.empty() && pq.top().val <= year) {
+            Node cur = pq.top(); pq.pop();
+            total_area--;
+
+            for (int d = 0; d < 4; ++d) {
+                int nx = cur.x + dx[d];
+                int ny = cur.y + dy[d];
+                if (nx >= 0 && nx < H && ny >= 0 && ny < W && !vis[nx][ny]) {
+                    vis[nx][ny] = true;
+                    pq.push({nx, ny, grid[nx][ny]});
+                }
+            }
+        }
+        cout << total_area << endl;
+    }
+
+    return 0;
+}

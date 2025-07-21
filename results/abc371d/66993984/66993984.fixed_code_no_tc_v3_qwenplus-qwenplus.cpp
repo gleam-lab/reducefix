@@ -1,0 +1,37 @@
+#include<bits/stdc++.h>
+using namespace std;
+
+int main(){
+    int n, q;
+    cin >> n;
+    vector<int> x(n), p(n);
+    
+    for(int i = 0; i < n; ++i){
+        cin >> x[i];
+    }
+    for(int i = 0; i < n; ++i){
+        cin >> p[i];
+    }
+    
+    // Prefix sum of p
+    vector<long long> prefix_sum(n + 1, 0);
+    for(int i = 0; i < n; ++i){
+        prefix_sum[i + 1] = prefix_sum[i] + p[i];
+    }
+    
+    cin >> q;
+    while(q--){
+        int L, R;
+        cin >> L >> R;
+        
+        // Find the leftmost index where x[i] >= L
+        int left = lower_bound(x.begin(), x.end(), L) - x.begin();
+        
+        // Find the rightmost index where x[i] <= R
+        int right = upper_bound(x.begin(), x.end(), R) - x.begin();
+        
+        cout << prefix_sum[right] - prefix_sum[left] << endl;
+    }
+
+    return 0;
+}

@@ -1,0 +1,56 @@
+#include<bits/stdc++.h>
+using namespace std;
+
+const int N = 2e5 + 5;
+int n, m, k, sum, cnt, a[N];
+
+// Function to find the k-th smallest distance using binary search
+int findKthSmallest(int x, vector<int>& distances, int k) {
+    int left = 0, right = 1e9;
+    while (left < right) {
+        int mid = left + (right - left) / 2;
+        int count = 0;
+        
+        // Count how many points have distance less than or equal to mid
+        for (int d : distances) {
+            if (abs(d - x) <= mid) count++;
+        }
+        
+        if (count >= k) {
+            right = mid;
+        } else {
+            left = mid + 1;
+        }
+    }
+    return left;
+}
+
+int main() {
+    ios::sync_with_stdio(0), cin.tie(0), cout.tie(0);
+    
+    cin >> n >> m;
+    for (int i = 1; i <= n; i++) {
+        cin >> a[i];
+    }
+    
+    vector<vector<int>> sortedDistances(n);
+    
+    // Precompute sorted distances for each point B_j
+    for (int j = 1; j <= m; j++) {
+        int b;
+        cin >> b >> k;
+        vector<int> distances;
+        for (int i = 1; i <= n; i++) {
+            distances.push_back(abs(a[i] - b));
+        }
+        sort(distances.begin(), distances.end());
+        sortedDistances[j - 1] = distances;
+    }
+    
+    // For each query, directly fetch the k-th smallest distance
+    for (int j = 0; j < m; j++) {
+        cout << sortedDistances[j][k - 1] << "\n";
+    }
+    
+    return 0;
+}

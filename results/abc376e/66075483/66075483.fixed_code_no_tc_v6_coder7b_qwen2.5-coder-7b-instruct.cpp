@@ -1,0 +1,46 @@
+#include<iostream>
+#include<vector>
+#include<algorithm>
+using namespace std;
+
+typedef long long ll;
+
+const int maxn = 2e5 + 9;
+ll n, m, t, ans, k;
+pair<ll, ll> a[maxn], b[maxn];
+
+signed main() {
+    ios::sync_with_stdio(false); cin.tie(0); cout.tie(0);
+
+    cin >> t;
+    while (t--) {
+        cin >> n >> k;
+        for (int i = 1; i <= n; i++)
+            cin >> a[i].first, a[i].second = i;
+        for (int i = 1; i <= n; i++)
+            cin >> b[i].first, b[i].second = i;
+
+        sort(a + 1, a + n + 1);
+        sort(b + 1, b + n + 1);
+
+        priority_queue<pair<ll, ll>, vector<pair<ll, ll>>, greater<pair<ll, ll>>> pq;
+        ll sum = 0;
+        for (int i = 1; i <= k; i++) {
+            pq.push({b[a[i].second].first, a[i].second});
+            sum += b[a[i].second].first;
+        }
+
+        ans = sum * a[k].first;
+        for (int i = k + 1; i <= n; i++) {
+            sum -= pq.top().first;
+            pq.pop();
+            pq.push({b[a[i].second].first, a[i].second});
+            sum += b[a[i].second].first;
+            ans = min(ans, sum * a[i].first);
+        }
+
+        cout << ans << '\n';
+    }
+
+    return 0;
+}

@@ -1,0 +1,62 @@
+#include<bits/stdc++.h>
+using namespace std;
+using ll = long long;
+using VI = vector<int>;
+using P = pair<int, int>;
+constexpr int INF = 1001001001;
+constexpr ll LINF = 1001001001001001001ll;
+#define rep(i, n) for (ll i = 0; i < (ll)(n); i++)
+#define rep2(i, k, n) for (ll i = k; i < (ll)(n); i++)
+#define OUT(x) cout << #x << ":" << x << endl
+
+int main(){
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+
+    int t;
+    cin >> t;
+    
+    rep(qi, t){
+        int n, k;
+        cin >> n >> k;
+        vector<pair<ll, ll>> items(n);
+        
+        vector<ll> a(n), b(n);
+        rep(i, n) cin >> a[i];
+        rep(i, n) cin >> b[i];
+        
+        // Pair A_i and B_i together
+        rep(i, n) {
+            items[i] = {a[i], b[i]};
+        }
+
+        // Sort by A_i ascending
+        sort(items.begin(), items.end());
+
+        // Min-heap to keep track of smallest K B_i values
+        priority_queue<ll, vector<ll>, greater<ll>> pq;
+        ll sumB = 0;
+
+        // Initialize with first K elements
+        rep(i, k) {
+            sumB += items[i].second;
+            pq.push(items[i].second);
+        }
+
+        ll ans = items[k - 1].first * sumB;
+
+        // Try each next item
+        rep2(i, k, n) {
+            // If current B_i is smaller than the largest in heap
+            if (items[i].second < pq.top()) {
+                sumB -= pq.top(); pq.pop();
+                sumB += items[i].second;
+                pq.push(items[i].second);
+            }
+            // Update answer
+            ans = min(ans, items[i].first * sumB);
+        }
+
+        cout << ans << '\n';
+    }
+}

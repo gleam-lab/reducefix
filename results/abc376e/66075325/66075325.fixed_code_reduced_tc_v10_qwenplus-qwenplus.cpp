@@ -1,0 +1,59 @@
+#include <iostream>
+#include <vector>
+#include <queue>
+#include <algorithm>
+using namespace std;
+#define int long long
+
+signed main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int T;
+    cin >> T;
+    
+    while (T--) {
+        int N, K;
+        cin >> N >> K;
+        
+        vector<pair<int, int>> A(N);
+        for (int i = 0; i < N; ++i) {
+            cin >> A[i].first;
+            A[i].second = i;
+        }
+        
+        vector<int> B(N);
+        for (int i = 0; i < N; ++i) {
+            cin >> B[i];
+        }
+        
+        // Sort elements by A value
+        sort(A.begin(), A.end());
+        
+        // Min-heap to maintain top K B values among first i+1 elements
+        priority_queue<int, vector<int>, greater<>> pq;
+        int sumB = 0;
+        int res = 1e18;  // Large enough initial value
+        
+        for (int i = 0; i < N; ++i) {
+            int idx = A[i].second;
+            pq.push(B[idx]);
+            sumB += B[idx];
+            
+            // If we have more than K elements, remove the smallest one
+            if (pq.size() > K) {
+                sumB -= pq.top();
+                pq.pop();
+            }
+            
+            // Once we have considered at least K elements
+            if (i >= K - 1) {
+                res = min(res, A[i].first * sumB);
+            }
+        }
+        
+        cout << res << "\n";
+    }
+    
+    return 0;
+}

@@ -1,0 +1,96 @@
+To solve this problem correctly, we need to compute the **minimum path weight** from vertex `1` (0-based index `0`) to all other vertices in a graph. The path weight is defined as the sum of:
+
+- Vertex weights (`A[i]`)
+- Edge weights (`B[j]`)
+
+for all nodes and edges along the path.
+
+---
+
+### Key Observations
+
+1. This is essentially a **shortest path problem**, where each edge's cost includes:
+   - The weight of the destination vertex
+   - The weight of the edge itself
+2. Since all weights are non-negative, we can use **Dijkstra's algorithm** for efficient computation.
+3. Each edge from node `u` to `v` has an associated cost: when traversing from `u` to `v`, the cost added is `B_uv + A[v]`.
+
+---
+
+### Algorithm Summary
+
+- Use Dijkstra's algorithm with a priority queue.
+- Initialize the distance array `dist[]` with infinity.
+- Set `dist[0] = A[0]` since the path starts at vertex 1 (index 0) and includes its vertex weight.
+- For each node popped from the heap, relax its neighbors by considering the total cost: `dist[u] + edge_weight + A[v]`.
+- Output the minimum path weights from vertex 1 to vertices 2 through N.
+
+---
+
+### Corrected Code
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+using ll = long long;
+constexpr ll INF = 5LL << 60;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    ll n, m;
+    cin >> n >> m;
+    vector<ll> A(n);
+    for (ll i = 0; i < n; ++i) cin >> A[i];
+
+    vector<vector<pair<ll, ll>>> graph(n);
+    for (ll i = 0; i < m; ++i) {
+        ll u, v, b;
+        cin >> u >> v >> b;
+        --u; --v;
+        graph[u].push_back({v, b});
+        graph[v].push_back({u, b});
+    }
+
+    vector<ll> dist(n, INF);
+    dist[0] = A[0]; // Starting node includes its own vertex weight
+
+    using T = pair<ll, ll>; // (distance, node)
+    priority_queue<T, vector<T>, greater<T>> pq;
+    pq.push({dist[0], 0});
+
+    while (!pq.empty()) {
+        auto [d, u] = pq.top(); pq.pop();
+        if (d > dist[u]) continue;
+
+        for (auto [v, b] : graph[u]) {
+            ll new_cost = d + b + A[v];
+            if (new_cost < dist[v]) {
+                dist[v] = new_cost;
+                pq.push({dist[v], v});
+            }
+        }
+    }
+
+    for (ll i = 1; i < n; ++i) {
+        cout << dist[i] << " ";
+    }
+    cout << "\n";
+
+    return 0;
+}
+```
+
+---
+
+### Explanation of Fix
+
+The original code had issues in how it managed the priority queue and calculated the path costs. It incorrectly pushed cumulative values into the queue without ensuring that previously found shorter paths were prioritized.
+
+This corrected version uses Dijkstra's standard form with a min-heap and ensures:
+
+- We only process each node once with the smallest known distance.
+- We update distances correctly by including both edge and vertex weights.
+- Time complexity is `O((N + M) log N)` due to the use of a priority queue, which is efficient for the given constraints.

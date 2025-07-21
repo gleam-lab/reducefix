@@ -1,0 +1,104 @@
+To fix this code, we need to address several issues related to the logic used to calculate the sinking of the island sections over time. The main problems in the original code are:
+
+1. **Initialization of the Queue**: The original code initializes the queue for each possible sea level (up to 1e5 + 5), which is inefficient and unnecessary. Instead, we should use a priority queue or process the sections in a way that handles the sea levels incrementally.
+
+2. **Processing Order**: The original code processes all sections at sea level `i` in year `i`, but it doesn't account for the fact that sections with lower elevations might sink earlier and affect adjacent sections in subsequent years. We need to process sections in order of increasing sea levels.
+
+3. **Efficiency**: The original approach might not handle large inputs efficiently due to the way it initializes and processes the queues. We need a more efficient method, possibly using a priority queue to process sections in the order of their elevations.
+
+### Approaches
+To solve this problem correctly, we can use a Breadth-First Search (BFS) approach combined with a priority queue (min-heap) to process sections in the order of their elevations. Here’s the step-by-step approach:
+
+1. **Initial Setup**: Start by marking all border sections of the island. These sections are the first to be checked as the sea level rises.
+2. **Priority Queue**: Use a priority queue to process sections in increasing order of their elevations. This ensures that sections are processed as soon as the sea level reaches their elevation.
+3. **BFS for Adjacent Sections**: For each section processed, check its adjacent sections. If an adjacent section's elevation is not greater than the current sea level, it sinks, and we add it to the queue for processing.
+4. **Tracking Remaining Area**: Maintain a count of the remaining sections above sea level, decrementing it each time a section sinks.
+
+### Solution Code
+```cpp
+#include <bits/stdc++.h>
+
+using namespace std;
+
+constexpr int dx[] = {-1, 1, 0, 0};
+constexpr int dy[] = {0, 0, -1, 1};
+
+int main()
+{
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int H, W, Y;
+    cin >> H >> W >> Y;
+
+    vector<vector<int>> A(H, vector<int>(W));
+    for (int i = 0; i < H; i++)
+    {
+        for (int j = 0; j < W; j++)
+        {
+            cin >> A[i][j];
+        }
+    }
+
+    vector<vector<bool>> sunk(H, vector<bool>(W, false));
+    priority_queue<pair<int, pair<int, int>>, vector<pair<int, pair<int, int>>>, greater<pair<int, pair<int, int>>>> pq;
+
+    // Initialize the priority queue with border cells
+    for (int i = 0; i < H; i++)
+    {
+        for (int j = 0; j < W; j++)
+        {
+            if (i == 0 || i == H - 1 || j == 0 || j == W - 1)
+            {
+                pq.push({A[i][j], {i, j}});
+                sunk[i][j] = true;
+            }
+        }
+    }
+
+    int ans = H * W;
+    vector<int> result(Y + 1, 0);
+    result[0] = ans;
+
+    for (int year = 1; year <= Y; year++)
+    {
+        while (!pq.empty() && pq.top().first <= year)
+        {
+            auto current = pq.top();
+            pq.pop();
+            int x = current.second.first;
+            int y = current.second.second;
+
+            ans--;
+
+            for (int d = 0; d < 4; d++)
+            {
+                int nx = x + dx[d];
+                int ny = y + dy[d];
+
+                if (nx >= 0 && nx < H && ny >= 0 && ny < W && !sunk[nx][ny])
+                {
+                    sunk[nx][ny] = true;
+                    pq.push({A[nx][ny], {nx, ny}});
+                }
+            }
+        }
+        result[year] = ans;
+    }
+
+    for (int i = 1; i <= Y; i++)
+    {
+        cout << result[i] << endl;
+    }
+
+    return 0;
+}
+```
+
+### Explanation
+1. **Initialization**: We read the island's elevation data and initialize a priority queue to process sections in order of their elevations.
+2. **Border Sections**: The priority queue is initially populated with all border sections of the island, as these are the first to be affected by rising sea levels.
+3. **Processing**: For each year, we process all sections in the priority queue whose elevation is less than or equal to the current sea level. For each processed section, we check its adjacent sections. If they haven't sunk yet and their elevation is not greater than the current sea level, they are added to the queue.
+4. **Result Tracking**: The remaining area of the island is tracked for each year and stored in a result vector, which is printed at the end.
+
+This approach ensures that sections are processed efficiently in the correct order, and the remaining area is accurately calculated for each year as the sea level rises.

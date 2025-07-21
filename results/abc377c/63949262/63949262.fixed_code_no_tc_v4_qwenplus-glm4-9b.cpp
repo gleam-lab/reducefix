@@ -1,0 +1,47 @@
+#include <iostream>
+#include <vector>
+#include <unordered_set>
+
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int N, M;
+    cin >> N >> M;
+
+    vector<pair<int, int>> pieces(M);
+    for (int i = 0; i < M; ++i) {
+        cin >> pieces[i].first >> pieces[i].second;
+    }
+
+    unordered_set<pair<int, int>> reachable;
+    for (auto& p : pieces) {
+        int i = p.first;
+        int j = p.second;
+        // Add reachable positions based on the rules given
+        reachable.insert({i + 2, j + 1});
+        reachable.insert({i + 1, j + 2});
+        reachable.insert({i - 1, j + 2});
+        reachable.insert({i - 2, j + 1});
+        reachable.insert({i - 2, j - 1});
+        reachable.insert({i - 1, j - 2});
+        reachable.insert({i + 1, j - 2});
+        reachable.insert({i + 2, j - 1});
+    }
+
+    // Calculate the total number of cells minus the number of cells which can be attacked
+    long long result = (long long)N * N;
+    for (int i = 1; i <= N; ++i) {
+        for (int j = 1; j <= N; ++j) {
+            if (reachable.count({i, j}) > 0) {
+                result--;
+            }
+        }
+    }
+
+    cout << result << endl;
+
+    return 0;
+}

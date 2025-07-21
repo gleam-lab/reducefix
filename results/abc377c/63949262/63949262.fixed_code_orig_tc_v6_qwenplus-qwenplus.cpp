@@ -1,0 +1,52 @@
+#include <iostream>
+#include <unordered_set>
+#include <vector>
+#include <utility>
+
+using namespace std;
+
+// Custom hash for pairs (used in unordered_set)
+struct pair_hash {
+    template <class T1, class T2>
+    size_t operator()(const pair<T1, T2>& p) const {
+        return hash<T1>{}(p.first) ^ (hash<T2>{}(p.second) << 16);
+    }
+};
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    long long N;
+    int M;
+    cin >> N >> M;
+
+    unordered_set<pair<long long, long long>, pair_hash> attacked_positions;
+    vector<pair<long long, long long>> knights(M);
+
+    // Knight move offsets
+    const int dx[8] = {2, 1, -1, -2, -2, -1, 1, 2};
+    const int dy[8] = {1, 2, 2, 1, -1, -2, -2, -1};
+
+    for (int i = 0; i < M; ++i) {
+        cin >> knights[i].first >> knights[i].second;
+        // Mark the knight's position
+        attacked_positions.insert(knights[i]);
+    }
+
+    // For each knight, mark all positions it can attack
+    for (const auto& knight : knights) {
+        for (int d = 0; d < 8; ++d) {
+            long long nx = knight.first + dx[d];
+            long long ny = knight.second + dy[d];
+            if (nx >= 1 && nx <= N && ny >= 1 && ny <= N) {
+                attacked_positions.insert({nx, ny});
+            }
+        }
+    }
+
+    // Total squares - occupied or attacked squares
+    cout << (i128)(N * N) - (i128)(attacked_positions.size()) << "\n";
+
+    return 0;
+}

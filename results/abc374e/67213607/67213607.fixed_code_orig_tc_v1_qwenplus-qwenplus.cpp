@@ -1,0 +1,59 @@
+#include<bits/stdc++.h>
+using namespace std;
+long long n, x, a[105], p[105], b[105], q[105], l, r, mid, ans, minn, sum;
+
+// Helper function to compute ceiling division
+long long ceil_div(long long a, long long b) {
+    return (a + b - 1) / b;
+}
+
+int main() {
+    cin >> n >> x;
+    for(int i = 1; i <= n; i++)
+        cin >> a[i] >> p[i] >> b[i] >> q[i];
+    
+    l = 0;
+    r = 1000000005; // Initial upper bound
+
+    while(l <= r) {
+        mid = (l + r) / 2;
+        sum = 0;
+
+        for(int i = 1; i <= n && sum <= x; i++) {
+            minn = LLONG_MAX;
+
+            // Try all possible number of type A cookies made
+            for(int j = 0; j <= b[i]; j++) {
+                long long remaining = mid - j * a[i];
+                if(remaining <= 0)
+                    minn = min(minn, (long long)j * p[i]);
+                else {
+                    long long k = ceil_div(remaining, b[i]);
+                    minn = min(minn, (long long)j * p[i] + k * q[i]);
+                }
+            }
+
+            // Try all possible number of type B cookies made
+            for(int j = 0; j <= a[i]; j++) {
+                long long remaining = mid - j * b[i];
+                if(remaining <= 0)
+                    minn = min(minn, (long long)j * q[i]);
+                else {
+                    long long k = ceil_div(remaining, a[i]);
+                    minn = min(minn, (long long)j * q[i] + k * p[i]);
+                }
+            }
+
+            sum += minn;
+        }
+
+        if(sum <= x) {
+            ans = mid;
+            l = mid + 1;
+        } else {
+            r = mid - 1;
+        }
+    }
+
+    cout << ans;
+}

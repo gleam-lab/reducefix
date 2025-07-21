@@ -1,0 +1,108 @@
+
+The problem is about managing an undirected graph with dynamic connectivity queries. The graph starts with no edges, and the operations include adding edges and querying for the k-th largest vertex connected to a given vertex.
+
+The key to solving this problem efficiently lies in the Union-Find data structure combined with a data structure to keep track of the size of each connected component and maintain a sorted list of vertices for each component.
+
+### Problem Analysis
+
+1. **Union-Find Data Structure**: This data structure will help manage the connectivity of vertices. It allows us to efficiently find the root of any vertex and to merge two components.
+
+2. **Tracking Component Sizes**: Each component will have a size associated with it, which helps in efficiently handling the k-th largest query.
+
+3. **Maintaining Sorted Lists**: For each component, maintain a sorted list of vertices. This allows us to quickly find the k-th largest vertex by binary searching the sorted list.
+
+### Solution Steps
+
+1. **Initialize Data Structures**: Create arrays for the Union-Find structure, component sizes, and sorted lists of vertices.
+
+2. **Process Queries**:
+   - **Type 1 Query (Add Edge)**: Use the Union-Find structure to determine if the two vertices belong to different components. If they do, merge the components and update the sizes and sorted lists accordingly.
+   - **Type 2 Query (Find k-th Largest)**: For the given vertex, find its component root, retrieve the sorted list of vertices for that component, and use binary search to find the k-th largest vertex.
+
+3. **Optimizations**:
+   - Path compression in Union-Find helps flatten the structure, speeding up future operations.
+   - Use a balanced binary search tree (or similar) for maintaining sorted lists to ensure efficient insertions and searches.
+
+### Implementation
+
+```cpp
+#include <iostream>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+struct UnionFind {
+    vector<int> parent;
+    vector<int> rank;
+    vector<int> size;
+    vector<vector<int>> vertices;
+
+    UnionFind(int n) : parent(n + 1), rank(n + 1, 0), size(n + 1, 1) {
+        for (int i = 0; i <= n; ++i) {
+            parent[i] = i;
+        }
+    }
+
+    int find(int x) {
+        if (x != parent[x]) {
+            parent[x] = find(parent[x]);
+        }
+        return parent[x];
+    }
+
+    void unite(int x, int y) {
+        int rootX = find(x);
+        int rootY = find(y);
+
+        if (rootX != rootY) {
+            if (rank[rootX] < rank[rootY]) {
+                parent[rootX] = rootY;
+                size[rootY] += size[rootX];
+                vertices[rootY].insert(vertices[rootY].end(), vertices[rootX].begin(), vertices[rootX].end());
+            } else if (rank[rootX] > rank[rootY]) {
+                parent[rootY] = rootX;
+                size[rootX] += size[rootY];
+                vertices[rootX].insert(vertices[rootX].end(), vertices[rootY].begin(), vertices[rootY].end());
+            } else {
+                parent[rootY] = rootX;
+                rank[rootX]++;
+                size[rootX] += size[rootY];
+                vertices[rootX].insert(vertices[rootX].end(), vertices[rootY].begin(), vertices[rootY].end());
+            }
+        }
+    }
+
+    vector<int>& get_vertices(int x) {
+        return vertices[find(x)];
+    }
+};
+
+int main() {
+    int n, q;
+    cin >> n >> q;
+
+    UnionFind uf(n);
+
+    for (int i = 0; i < q; ++i) {
+        int type, v, k;
+        cin >> type >> v >> k;
+
+        if (type == 1) {
+            int u;
+            cin >> u;
+            uf.unite(v, u);
+        } else if (type == 2) {
+            vector<int> component_vertices = uf.get_vertices(v);
+            if (k > component_vertices.size()) {
+                cout << -1 << '\n';
+            } else {
+                cout << component_vertices(component_vertices.size() - k) << '\n';
+            }
+        }
+    }
+
+    return 0;
+}
+```
+
+This refined solution uses a Union-Find data structure to manage the connectivity of the graph and maintain sorted lists of vertices for each component. This allows efficient processing of both types of queries.

@@ -1,0 +1,54 @@
+#include<bits/stdc++.h>
+using namespace std;
+
+vector<long long> prefix_sum;
+
+long long get_sum(int left, int right) {
+    if(left == 0) return prefix_sum[right];
+    else return prefix_sum[right] - prefix_sum[left - 1];
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(NULL);
+
+    int n, q;
+    cin >> n;
+    vector<int> x(n + 1), p(n + 1);
+    for(int i = 1; i <= n; ++i) {
+        cin >> x[i];
+    }
+    for(int i = 1; i <= n; ++i) {
+        cin >> p[i];
+    }
+
+    // Create a map to store the cumulative sum of people in each village
+    map<int, long long> cum_people;
+    for(int i = 1; i <= n; ++i) {
+        cum_people[x[i]] += p[i];
+    }
+
+    // Calculate the prefix sums for quick range sum calculation
+    long long current_sum = 0;
+    for(auto& [pos, people] : cum_people) {
+        current_sum += people;
+        prefix_sum.push_back(current_sum);
+    }
+
+    cin >> q;
+    while(q--) {
+        int l, r;
+        cin >> l >> r;
+        auto it_l = cum_people.lower_bound(l);
+        auto it_r = cum_people.upper_bound(r);
+        if(it_l != cum_people.end() && it_l->first > r) --it_l; // Adjust iterator if it goes past the target range
+        if(it_r != cum_people.begin()) --it_r; // Adjust iterator if it goes past the target range
+        if(it_l == cum_people.end() || it_r == cum_people.begin()) {
+            cout << "0\n";
+        } else {
+            cout << get_sum(distance(cum_people.begin(), it_l), distance(cum_people.begin(), it_r)) << "\n";
+        }
+    }
+
+    return 0;
+}

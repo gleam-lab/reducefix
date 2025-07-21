@@ -1,0 +1,60 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+#define ll long long
+
+void solve()
+{
+    int n;
+    cin >> n;
+    vector<int> a(n), b(n - 1);
+    for (auto &tt : a)
+        cin >> tt;
+    for (auto &tt : b)
+        cin >> tt;
+    
+    sort(a.begin(), a.end());
+    sort(b.begin(), b.end());
+
+    // We will use a multiset to efficiently find matching boxes for toys
+    multiset<int> boxSizes;
+    for (int i = 0; i < n - 1; ++i) {
+        boxSizes.insert(b[i]);
+    }
+
+    // Try to fit the smallest toy in the smallest box
+    int x = -1;
+    for (int i = 0; i < n; ++i) {
+        // Find the smallest box that can fit this toy
+        auto it = boxSizes.lower_bound(a[i]);
+        if (it == boxSizes.end()) {
+            // No suitable box found, we need a new box for this toy
+            if (x == -1) {
+                x = a[i];
+            } else {
+                // Already used a custom box, can't handle this
+                cout << -1 << endl;
+                return;
+            }
+        } else {
+            // Use this box
+            boxSizes.erase(it);
+        }
+    }
+    
+    cout << x << endl;
+}
+
+int main()
+{
+    std::ios::sync_with_stdio(false);
+    std::cin.tie(nullptr);
+
+    int t = 1;
+    // cin >> t;
+    while (t--)
+    {
+        solve();
+    }
+    return 0;
+}

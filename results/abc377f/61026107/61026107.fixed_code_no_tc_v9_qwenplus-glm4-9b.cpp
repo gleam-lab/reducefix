@@ -1,0 +1,34 @@
+#include<bits/stdc++.h>
+
+using namespace std;
+using ll = long long;
+
+void solve() {
+    ll n, m; cin >> n >> m;
+    vector<vector<bool>> row(n+1, vector<bool>(n+1, false)), col(n+1, vector<bool>(n+1, false)), main_diag(n+1, vector<bool>(n+1, false)), anti_diag(n+1, vector<bool>(n+1, false));
+
+    for (int i = 0; i < m; i++) {
+        ll x, y; cin >> x >> y;
+        row[x][y] = col[y][x] = main_diag[x+y] = anti_diag[x-y] = true;
+    }
+
+    ll ans = 0;
+    for (ll i = 1; i <= n; i++) {
+        for (ll j = 1; j <= n; j++) {
+            if (!row[i][j] && !col[j][i] && !main_diag[i+j] && !anti_diag[i-j]) {
+                ans++;
+            }
+        }
+    }
+
+    cout << ans << "\n";
+}
+
+int main() {
+    ios_base::sync_with_stdio(false), cin.tie(nullptr);
+    cout.precision(12);
+    ll NT = 1;
+    // cin >> NT;
+    while(NT--) solve();
+    return 0;
+}

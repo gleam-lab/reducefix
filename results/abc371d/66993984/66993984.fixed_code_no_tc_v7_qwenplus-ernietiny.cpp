@@ -1,0 +1,31 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    int n, q;
+    cin >> n; // 输入数据点个数
+    
+    // 初始化数组和映射
+    vector<int> x(n), p(n); // 使用vector存储输入数据，同时为映射做准备
+    map<int, int> sum; // 用于存储累加和的映射
+    
+    // 读取数据并填充映射
+    for (int i = 0; i < n; ++i) {
+        cin >> x[i] >> p[i]; // 读入每个数据点的值和上一个数据的差值
+        sum[p[i]] += x[i]; // 将当前差值累加到映射中
+    }
+    
+    // 读取问题数量，并进行相应的操作
+    cin >> q; // 读入问题的数量
+    while (q--) { // 对于每个问题进行处理
+        int L, R; // 读入查询区间两端点
+        cin >> L >> R; // 读入查询区间左右端点
+        
+        // 使用二分查找找到区间的正确位置（由于已经从左端点开始，因此这里无需重新排序）
+        int correctPosition = lower_bound(x.begin(), x.end(), L) - x.begin() + 1; // 获取正确位置的下标减一，因为索引从1开始
+        // 计算区间内的和差值并输出结果
+        cout << sum[R] - sum[correctPosition - 1] << endl; // 使用映射中的值进行计算并输出结果
+    }
+    
+    return 0; // 返回0表示程序正常结束
+}

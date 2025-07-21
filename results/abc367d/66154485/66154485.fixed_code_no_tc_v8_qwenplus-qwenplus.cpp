@@ -1,0 +1,37 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    int n, m;
+    cin >> n >> m;
+    vector<int> arr(n);
+    for (int i = 0; i < n; i++) {
+        cin >> arr[i];
+    }
+
+    // Prefix sum mod array
+    vector<int> prefix_mod(n + 1, 0);
+    for (int i = 0; i < n; i++) {
+        prefix_mod[i + 1] = (prefix_mod[i] + arr[i]) % m;
+    }
+
+    // To count the occurrences of each mod value
+    vector<long long> count_mod(m, 0);
+
+    // We will use a sliding window over the circular array
+    // Since it's circular, we simulate the array twice to handle wraparound
+    for (int i = 0; i < 2 * n; i++) {
+        int val = (prefix_mod[i % n] + arr[i % n]) % m;
+        if (i >= n) {
+            // When the window is full, remove the contribution of the element leaving the window
+            count_mod[prefix_mod[(i - n) % n]]--;
+        }
+        // Add current prefix mod count to answer if it's in the first cycle
+        ans += count_mod[val];
+        // Increment count of current mod value
+        count_mod[prefix_mod[(i + 1) % n]]++;
+    }
+
+    cout << ans;
+    return 0;
+}

@@ -1,0 +1,51 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+using ll = long long;
+using pii = pair<int, int>;
+
+const int N = 200010;
+vector<int> g[N];
+int n, m, dep[N];
+
+int bfs() {
+    queue<pii> q;
+    q.push({1, 0});
+    dep[1] = 1;
+
+    while (!q.empty()) {
+        auto [u, p] = q.front();
+        q.pop();
+
+        for (auto v : g[u]) {
+            if (v == p) continue;
+
+            if (dep[v]) {
+                // A cycle is found. The length of the cycle is dep[u] - dep[v] + 1
+                return dep[u] - dep[v] + 1;
+            }
+
+            dep[v] = dep[u] + 1;
+            q.push({v, u});
+        }
+    }
+
+    return -1; // No cycle found
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    cout.tie(nullptr);
+
+    cin >> n >> m;
+    for (int i = 1; i <= m; ++i) {
+        int u, v;
+        cin >> u >> v;
+        g[u].push_back(v);
+        g[v].push_back(u); // Undirected graph
+    }
+
+    cout << bfs() << '\n';
+    return 0;
+}

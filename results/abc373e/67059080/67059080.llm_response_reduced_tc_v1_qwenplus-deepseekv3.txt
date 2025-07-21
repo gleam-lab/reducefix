@@ -1,0 +1,79 @@
+To fix this code, we need to correctly determine the minimum number of additional votes each candidate needs to secure their victory. The key insight is to ensure that after adding X votes to candidate i, the number of candidates who have strictly more votes than candidate i is less than M, regardless of how the remaining votes are distributed among other candidates.
+
+### Approaches
+1. **Sort and Analyze**: First, sort the candidates based on their current votes. This helps in efficiently determining how many candidates are ahead or behind a particular candidate.
+2. **Binary Search for Minimum Votes**: For each candidate, perform a binary search to find the minimum X such that adding X votes to candidate i ensures their victory. The condition to check is whether the number of candidates with more votes than candidate i after the addition is less than M.
+3. **Handle Edge Cases**: Special cases include when there's only one candidate (they always win) and when the remaining votes are insufficient to make a candidate's votes surpass others.
+
+### Solution Code
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+
+int main() {
+    std::cin.tie(nullptr)->sync_with_stdio(false);
+    int N, M;
+    ll K;
+    cin >> N >> M >> K;
+
+    vector<ll> A(N);
+    for (int i = 0; i < N; ++i) {
+        cin >> A[i];
+    }
+
+    vector<pair<ll, int>> sortedA(N);
+    for (int i = 0; i < N; ++i) {
+        sortedA[i] = {A[i], i};
+    }
+    sort(sortedA.begin(), sortedA.end());
+
+    vector<ll> prefixSum(N + 1);
+    for (int i = 0; i < N; ++i) {
+        prefixSum[i + 1] = prefixSum[i] + sortedA[i].first;
+    }
+
+    ll remainingVotes = K - prefixSum[N];
+    vector<ll> result(N, -1);
+
+    for (int i = 0; i < N; ++i) {
+        ll currentVotes = sortedA[i].first;
+        ll low = 0;
+        ll high = remainingVotes;
+        ll bestX = -1;
+
+        while (low <= high) {
+            ll mid = (low + high) / 2;
+            ll newVotes = currentVotes + mid;
+            auto it = upper_bound(sortedA.begin(), sortedA.end(), make_pair(newVotes, INT_MAX));
+            int countAbove = sortedA.end() - it;
+
+            if (countAbove < M) {
+                bestX = mid;
+                high = mid - 1;
+            } else {
+                low = mid + 1;
+            }
+        }
+
+        if (bestX != -1) {
+            result[sortedA[i].second] = bestX;
+        } else if (i >= N - M) {
+            result[sortedA[i].second] = 0;
+        }
+    }
+
+    for (int i = 0; i < N; ++i) {
+        cout << result[i] << ' ';
+    }
+
+    return 0;
+}
+```
+
+### Explanation
+1. **Sorting and Prefix Sum**: The candidates' votes are sorted to facilitate binary search. The prefix sum array helps in quickly calculating the total votes required for certain operations.
+2. **Binary Search for X**: For each candidate, we perform a binary search to find the smallest X such that adding X votes to the candidate ensures that no more than M-1 candidates have more votes. This is done by checking how many candidates would still have more votes after the addition.
+3. **Edge Handling**: If a candidate is already in the top M candidates (after sorting), they require 0 additional votes. If no amount of additional votes can place them in the top M, the result remains -1.
+
+This approach efficiently checks each candidate's condition with binary search, ensuring optimal performance and correctness.

@@ -1,0 +1,125 @@
+To fix this code, we need to correctly calculate the number of safe squares where a new piece can be placed without being captured by any existing pieces. The initial approach had some issues in accurately counting the overlaps between different attack lines (rows, columns, diagonals, and anti-diagonals) and missed some intersections.
+
+### Approaches
+1. **Identify Attack Lines**: Each existing piece can attack along its row, column, diagonal (i - j = constant), and anti-diagonal (i + j = constant). We need to track all these lines.
+2. **Calculate Affected Squares**: For each type of attack line, count the number of squares they cover, considering overlaps:
+   - **Rows and Columns**: Each row or column covers `N` squares. The overlaps between rows and columns (i.e., squares covered by both a row and a column) are counted once.
+   - **Diagonals and Anti-diagonals**: Each diagonal or anti-diagonal covers a variable number of squares depending on its position. Overlaps between diagonals, anti-diagonals, and rows/columns must be handled carefully to avoid double-counting.
+3. **Inclusion-Exclusion Principle**: Use this principle to accurately count the total number of squares under attack by considering overlaps between different attack lines.
+
+### Solution Code
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+typedef long long ll;
+
+int main() {
+    ll N, M;
+    cin >> N >> M;
+    set<ll> rows, cols, diag1, diag2;
+    for (int i = 0; i < M; ++i) {
+        ll a, b;
+        cin >> a >> b;
+        rows.insert(a);
+        cols.insert(b);
+        diag1.insert(a - b);
+        diag2.insert(a + b);
+    }
+
+    ll total = N * N;
+    ll row_attack = rows.size() * N;
+    ll col_attack = cols.size() * N;
+    ll row_col_overlap = rows.size() * cols.size();
+    ll diag1_attack = 0;
+    for (ll d : diag1) {
+        if (d >= 0) {
+            diag1_attack += N - d;
+        } else {
+            diag1_attack += N + d;
+        }
+    }
+    ll diag2_attack = 0;
+    for (ll d : diag2) {
+        if (d <= N + 1) {
+            diag2_attack += d - 1;
+        } else {
+            diag2_attack += 2 * N - d + 1;
+        }
+    }
+
+    total -= row_attack + col_attack - row_col_overlap;
+    total -= diag1_attack + diag2_attack;
+
+    // Now, add back overlaps between diagonals and rows/columns
+    // and between diagonals themselves
+    set<pair<ll, ll>> intersections;
+
+    // Overlap between row and diag1
+    for (ll r : rows) {
+        for (ll d : diag1) {
+            ll c = r - d;
+            if (1 <= c && c <= N) {
+                intersections.insert({r, c});
+            }
+        }
+    }
+
+    // Overlap between col and diag1
+    for (ll c : cols) {
+        for (ll d : diag1) {
+            ll r = c + d;
+            if (1 <= r && r <= N) {
+                intersections.insert({r, c});
+            }
+        }
+    }
+
+    // Overlap between row and diag2
+    for (ll r : rows) {
+        for (ll d : diag2) {
+            ll c = d - r;
+            if (1 <= c && c <= N) {
+                intersections.insert({r, c});
+            }
+        }
+    }
+
+    // Overlap between col and diag2
+    for (ll c : cols) {
+        for (ll d : diag2) {
+            ll r = d - c;
+            if (1 <= r && r <= N) {
+                intersections.insert({r, c});
+            }
+        }
+    }
+
+    // Overlap between diag1 and diag2
+    for (ll d1 : diag1) {
+        for (ll d2 : diag2) {
+            ll x = (d1 + d2) / 2;
+            ll y = (d2 - d1) / 2;
+            if ((d1 + d2) % 2 == 0 && (d2 - d1) % 2 == 0 &&
+                1 <= x && x <= N && 1 <= y && y <= N) {
+                intersections.insert({x, y});
+            }
+        }
+    }
+
+    total += intersections.size();
+
+    cout << total << endl;
+    return 0;
+}
+```
+
+### Explanation
+1. **Input Handling**: The code reads the grid size `N` and the number of existing pieces `M`, followed by their positions.
+2. **Tracking Attack Lines**: Sets are used to track unique rows, columns, diagonals (`i - j`), and anti-diagonals (`i + j`) covered by existing pieces.
+3. **Initial Attack Calculation**: The total number of squares under attack by rows and columns is calculated, adjusting for overlaps between rows and columns.
+4. **Diagonal and Anti-diagonal Attacks**: For each diagonal and anti-diagonal, the number of squares they cover is computed based on their position relative to the grid boundaries.
+5. **Overlap Handling**: The inclusion-exclusion principle is applied to account for overlaps between different attack lines (rows, columns, diagonals, and anti-diagonals). This ensures squares are not double-counted or missed.
+6. **Output**: The final result is printed, representing the number of safe squares where the new piece can be placed without being captured.
+
+This approach ensures accurate counting by systematically addressing each type of attack line and their intersections, providing the correct number of safe squares for placement.

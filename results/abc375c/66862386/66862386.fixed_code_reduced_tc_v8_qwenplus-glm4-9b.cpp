@@ -1,0 +1,32 @@
+#include <iostream>
+#include <cmath>
+#include <vector>
+#include <iomanip>
+
+using namespace std;
+
+int main() {
+    int N;
+    cin >> N;
+
+    vector<pair<long long, long long>> points(N + 1);
+
+    points[0] = {0, 0};
+    for (int i = 1; i <= N; ++i) {
+        cin >> points[i].first >> points[i].second;
+    }
+
+    double cost = 0.0;
+    for (int i = 1; i <= N; ++i) {
+        long long x1 = points[i].first;
+        long long y1 = points[i].second;
+        long long x2 = points[i - 1].first;
+        long long y2 = points[i - 1].second;
+
+        cost += sqrt(pow(x2 - x1, 2) + pow(y2 - y1, 2));
+    }
+
+    cout << fixed << setprecision(12) << cost << endl;
+
+    return 0;
+}

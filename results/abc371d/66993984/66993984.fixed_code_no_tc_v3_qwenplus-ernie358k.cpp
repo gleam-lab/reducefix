@@ -1,0 +1,67 @@
+#include <iostream>
+#include <vector>
+#include <map>
+#include <algorithm>
+
+using namespace std;
+
+int main() {
+    int n, q;
+    cin >> n;
+    vector<int> x(n + 1), p(n + 1);  // Using vector for dynamic array management and +1 for 1-based indexing simulation
+    map<int, int> prefixSum;
+
+    // Input for array x
+    for (int i = 1; i <= n; ++i) {
+        cin >> x[i];
+    }
+
+    // Input for array p and calculate prefix sums
+    for (int i = 1; i <= n; ++i) {
+        cin >> p[i];
+        prefixSum[x[i]] += p[i];  // Directly use x[i] as the key in the map
+    }
+
+    // Handling prefix sums for ranges not explicitly in x
+    auto it = prefixSum.begin();
+    int currentSum = 0;
+    for (; it != prefixSum.end(); ++it) {
+        int prevSum = currentSum;
+        currentSum += it->second;
+        prefixSum[it->first] = currentSum;  // Update with cumulative sum
+        if (prevSum != 0) {
+            prefixSum[prevSum] = currentSum - it->second;  // Store previous cumulative sum at the previous sum value for range queries
+        }
+    }
+
+    // To handle ranges where x[i] is the smallest/largest and there's no "previous" sum
+    prefixSum[0] = 0;  // Ensure 0 is a valid key with sum 0
+
+    cin >> q;
+    while (q--) {
+        int L, R;
+        cin >> L >> R;
+
+        // Find the lower_bound and upper_bound equivalents in x using map
+        auto lb = prefixSum.lower_bound(L);
+        auto ub = prefixSum.upper_bound(R);
+
+        // If lb points to beyond the end, it means there's no element >= L
+        if (lb == prefixSum.end()) {
+            cout << 0 << endl;
+        } else if (lb->first > R) {
+            // If the smallest element in the map is greater than R, no valid range exists
+            cout << 0 << endl;
+        } else {
+            // lb->first is the smallest x[i] >= L
+            // We need to find the cumulative sum just before the first element >= L and >= R
+            int sumL = (lb->first == L) ? lb->second : prefixSum[lb->first - 1];
+            int sumR = (ub == prefixSum.begin() || ub->first > R) ? currentSum : ub->second - (ub == prefixSum.begin() ? 0 : prefixSum[prev(ub)->first]);
+
+            // Output the difference in prefix sums
+            cout << sumR - sumL << endl;
+        }
+    }
+
+    return 0;
+}

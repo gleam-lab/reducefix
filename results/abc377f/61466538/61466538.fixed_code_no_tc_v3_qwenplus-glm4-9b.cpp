@@ -1,0 +1,40 @@
+#include <iostream>
+#include <vector>
+#include <set>
+using namespace std;
+
+long long n, m;
+vector<pair<int, int>> pieces;
+
+bool isSafe(long long x, long long y) {
+    for (auto& p : pieces) {
+        if ((x == p.first || y == p.second) ||
+            (x + y == p.first + p.second) ||
+            (x - y == p.first - p.second)) {
+            return false;
+        }
+    }
+    return true;
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(NULL);
+    cin >> n >> m;
+    pieces.resize(m);
+    for (long long i = 0; i < m; ++i) {
+        cin >> pieces[i].first >> pieces[i].second;
+    }
+
+    long long emptyCount = 0;
+    for (long long i = 1; i <= n; ++i) {
+        for (long long j = 1; j <= n; ++j) {
+            if (isSafe(i, j)) {
+                ++emptyCount;
+            }
+        }
+    }
+
+    cout << emptyCount << endl;
+    return 0;
+}

@@ -1,0 +1,57 @@
+#include <bits/stdc++.h>
+#define rep(i, n) for (int i = 0; i < (int)(n); i++)
+#define repi(i, a, b) for (int i = (int)(a); i < (int)(b); i++)
+#define rrep(i, n) for (int i = n-1; i >= (int)(0); i--)
+#define rrepi(i, a, b) for (int i = (int)(a); i > (int)(b); i--)
+#define ALL(a) (a).begin(),(a).end()
+#define ALL_(a) (a),(a)+size(a)
+#define IF_T if(Is_test)
+
+#define ll long long
+using namespace std;
+
+struct phash {
+    inline size_t operator()(const pair<ll,ll> & p) const {
+        // Use XOR of hashes with shift to reduce collision probability
+        const auto h1 = hash<ll>()(p.first * 123456789 + p.second);
+        const auto h2 = hash<ll>()(p.second * 987654321 + p.first);
+        return h1 ^ (h2 << 1);
+    }
+};
+
+int main() {
+    cin.tie(nullptr);
+    ios::sync_with_stdio(false);
+
+    ll N;
+    int M;
+    cin >> N >> M;
+
+    unordered_set<pair<ll, ll>, phash> attacked;
+    vector<pair<ll, ll>> directions = {
+        {2, 1}, {1, 2}, {-1, 2}, {-2, 1},
+        {-2, -1}, {-1, -2}, {1, -2}, {2, -1}
+    };
+
+    rep(i, M) {
+        ll a, b;
+        cin >> a >> b;
+        // Convert to 0-based indexing
+        a--; b--;
+
+        // Insert the position itself as it's occupied
+        attacked.insert({a, b});
+
+        // Mark all squares this piece can attack
+        for (auto [dx, dy] : directions) {
+            ll nx = a + dx;
+            ll ny = b + dy;
+            if (0 <= nx && nx < N && 0 <= ny && ny < N) {
+                attacked.insert({nx, ny});
+            }
+        }
+    }
+
+    // Total number of cells minus the number of attacked or occupied cells
+    cout << (N * N - (ll)attacked.size()) << '\n';
+}

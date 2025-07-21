@@ -1,0 +1,58 @@
+#include<queue>
+#include<vector>
+#include<cstdio>
+#include<cstring>
+#include<climits> 
+#include<algorithm>
+using namespace std;
+typedef long long ll;
+typedef pair<int,pair<int,ll>> pii;
+const int N=2e5+5;
+int n,m;
+ll a[N];
+ll dis[N];
+bool vis[N];
+vector<pii>g[N]; // Edge list with (u, v, weight)
+
+void dijkstra(int start) {
+    memset(vis, false, sizeof(vis));
+    for (int i = 0; i <= n; i++)
+        dis[i] = LLONG_MAX;
+    dis[start] = a[start]; // Start with vertex's own weight
+    priority_queue<pii, vector<pii>, greater<pii>> pq; // Min-heap for edges
+    pq.push({dis[start], start});
+    
+    while (!pq.empty()) {
+        int u = pq.top().second;
+        pq.pop();
+        if (vis[u]) continue;
+        vis[u] = true;
+        for (auto &ed : g[u]) {
+            int v = ed.first;
+            ll weight = ed.second;
+            if (dis[u] + weight < dis[v]) {
+                dis[v] = dis[u] + weight;
+                pq.push({dis[v], v});
+            }
+        }
+    }
+}
+
+int main() {
+    scanf("%d%d", &n, &m);
+    for (int i = 1; i <= n; i++) {
+        scanf("%lld", &a[i]);
+    }
+    for (int i = 0; i < m; i++) {
+        int u, v, w;
+        scanf("%d%d%d", &u, &v, &w);
+        g[u].push_back({v, w});
+        g[v].push_back({u, w});
+    }
+    dijkstra(1); // Start Dijkstra's from vertex 1
+    for (int i = 2; i <= n; i++) {
+        printf("%lld ", dis[i]);
+    }
+    printf("\n");
+    return 0;
+}

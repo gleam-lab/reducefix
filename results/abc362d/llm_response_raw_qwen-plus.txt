@@ -1,0 +1,197 @@
+```python
+# START --- abc362d/reducer.py --- START
+import os
+import subprocess
+from typing import List, Tuple, Optional, Set, Dict
+import sys
+
+def run_program(program_path: str, input_data: bytes) -> bytes:
+    result = subprocess.run(
+        [program_path], 
+        input=input_data,
+        capture_output=True,
+        check=True,  
+        timeout=10   
+    )
+    return result.stdout
+
+def parse_input(lines: List[str]) -> Tuple[int, List[int], List[Tuple[int, int, int]]]:
+    if len(lines) < 3:
+        raise ValueError(f"输入行数不足，期望至少3行，实际{len(lines)}行")
+    
+    n_m = lines[0].strip().split()
+    if len(n_m) != 2:
+        raise ValueError(f"第一行应包含两个整数 N M，实际得到 {n_m}")
+    
+    N = int(n_m[0])
+    M = int(n_m[1])
+    
+    A_line = lines[1].strip().split()
+    if len(A_line) != N:
+        raise ValueError(f"A数组长度应为{N}，实际为{len(A_line)}")
+    
+    A = [int(x) for x in A_line]
+    
+    edges = []
+    for i in range(1, M+1):
+        if i + 1 >= len(lines):
+            break
+        parts = lines[i+1].strip().split()
+        if len(parts) != 3:
+            continue
+        u, v, b = map(int, parts)
+        edges.append((u, v, b))
+    
+    return N, A, edges
+
+def create_subgraph(N: int, A: List[int], edges: List[Tuple[int, int, int]], kept_nodes: Set[int]) -> Tuple[List[int], List[Tuple[int, int, int]]]:
+    sub_A = [A[i-1] for i in sorted(kept_nodes)]
+    
+    sub_edges = []
+    for u, v, b in edges:
+        if u in kept_nodes and v in kept_nodes:
+            new_u = sorted(kept_nodes).index(u) + 1
+            new_v = sorted(kept_nodes).index(v) + 1
+            sub_edges.append((new_u, new_v, b))
+    
+    return sub_A, sub_edges
+
+def create_input_bytes(N: int, A: List[int], edges: List[Tuple[int, int, int]]) -> bytes:
+    lines = [f"{N} {len(edges)}\n"]
+    lines.append(" ".join(map(str, A)) + "\n")
+    for u, v, b in edges:
+        lines.append(f"{u} {v} {b}\n")
+    return "".join(lines).encode("utf-8")
+
+def test_interesting(original_N: int, original_A: List[int], original_edges: List[Tuple[int, int, int]], kept_nodes: Set[int]) -> bool:
+    if not kept_nodes:
+        return False
+    
+    # Create subgraph
+    sub_A, sub_edges = create_subgraph(original_N, original_A, original_edges, kept_nodes)
+    
+    # Generate input
+    input_data = create_input_bytes(len(sub_A), sub_A, sub_edges)
+    
+    try:
+        wa_output = run_program("./wa", input_data)
+        ac_output = run_program("./ac", input_data)
+        return (wa_output.strip() != ac_output.strip())
+    except Exception as e:
+        print(f"[Error] 测试有趣性时发生错误: {e}", file=sys.stderr)
+        return False
+
+def reduce_graph_ddmin(original_N: int, original_A: List[int], original_edges: List[Tuple[int, int, int]]) -> Tuple[List[int], List[Tuple[int, int, int]]]:
+    all_nodes = set(range(1, original_N + 1))
+    
+    if not test_interesting(original_N, original_A, original_edges, all_nodes):
+        print("[Error] 初始输入并未造成 WA 与 AC 不一致，无法缩减。")
+        return original_A, original_edges
+    
+    print(f"[Info] 初始网格 N={original_N} 已确认导致输出差异，开始 ddmin 缩减...\n")
+    current_nodes = set(range(1, original_N + 1))
+    granularity = 2
+    
+    while len(current_nodes) > 1:
+        print(f"[Reduce] 当前节点集大小={len(current_nodes)}: {sorted(current_nodes)}")
+        print(f"         尝试粒度: {granularity}")
+        num_nodes = len(current_nodes)
+        subset_size = max(1, num_nodes // granularity)
+        
+        node_list = sorted(current_nodes)
+        made_progress = False
+        
+        def check_candidate(candidate_nodes: Set[int]) -> bool:
+            return test_interesting(original_N, original_A, original_edges, candidate_nodes)
+        
+        print(f"         1) 尝试『移除』大小约={subset_size} 的分块...")
+        start_idx = 0
+        while start_idx < num_nodes:
+            block = set(node_list[start_idx:start_idx + subset_size])
+            candidate_nodes = current_nodes - block
+            
+            if not candidate_nodes:
+                start_idx += subset_size
+                continue
+                
+            print(f"            - 移除 {sorted(block)} ... ", end="")
+            if check_candidate(candidate_nodes):
+                print(f"成功! 新节点集大小={len(candidate_nodes)}")
+                current_nodes = candidate_nodes
+                granularity = 2
+                made_progress = True
+                break
+            else:
+                print("失败")
+                start_idx += subset_size
+        
+        if made_progress:
+            continue
+        
+        print(f"         2) 尝试『只保留』大小约={subset_size} 的分块...")
+        start_idx = 0
+        while start_idx < num_nodes:
+            block = set(node_list[start_idx:start_idx + subset_size])
+            candidate_nodes = block
+            
+            if len(candidate_nodes) == 0 or len(candidate_nodes) == num_nodes:
+                start_idx += subset_size
+                continue
+                
+            print(f"            - 只保留 {sorted(block)} ... ", end="")
+            if check_candidate(candidate_nodes):
+                print(f"成功! 新节点集大小={len(candidate_nodes)}")
+                current_nodes = candidate_nodes
+                granularity = 2
+                made_progress = True
+                break
+            else:
+                print("失败")
+                start_idx += subset_size
+        
+        if made_progress:
+            continue
+        
+        if granularity < num_nodes:
+            new_gran = min(granularity * 2, num_nodes)
+            print(f"         -> 无进展，增大粒度至 {new_gran}\n")
+            granularity = new_gran
+        else:
+            print("\n[Reduce] 已无法进一步缩减 —— 到达 1-minimal。")
+            break
+    
+    final_A, final_edges = create_subgraph(original_N, original_A, original_edges, current_nodes)
+    print(f"\n[Result] 缩减后图有 {len(final_A)} 个顶点")
+    return final_A, final_edges
+
+def reduce_input(input_file: str, output_file: str):
+    if not os.path.exists(input_file):
+        print(f"[Error] 输入文件不存在: {input_file}", file=sys.stderr)
+        return
+    
+    with open(input_file, "r", encoding="utf-8") as f:
+        lines = [line.rstrip("\n") for line in f]
+    
+    if not lines:
+        raise ValueError("输入文件为空")
+    
+    try:
+        N, A, edges = parse_input(lines)
+    except Exception as e:
+        raise ValueError(f"解析输入时出错: {e}")
+    
+    reduced_A, reduced_edges = reduce_graph_ddmin(N, A, edges)
+    
+    output_lines = [f"{len(reduced_A)} {len(reduced_edges)}\n"]
+    output_lines.append(" ".join(map(str, reduced_A)) + "\n")
+    for u, v, b in reduced_edges:
+        output_lines.append(f"{u} {v} {b}\n")
+    
+    output_bytes = "".join(output_lines).encode("utf-8")
+    
+    with open(output_file, "wb") as f:
+        f.write(output_bytes)
+    
+    print(f"[Info] 缩减过程完成，结果已写入: {output_file}")
+# END --- abc362d/reducer.py --- END
+```

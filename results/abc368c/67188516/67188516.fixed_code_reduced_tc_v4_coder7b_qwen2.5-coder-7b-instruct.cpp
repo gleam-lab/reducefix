@@ -1,0 +1,37 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+
+int main() {
+  int N;
+  std::cin >> N;
+  
+  std::vector<long long> enemies(N);
+  for(int i = 0; i < N; ++i) {
+    std::cin >> enemies[i];
+  }
+
+  long long time = 0;
+  while(true) {
+    bool anyEnemyLeft = false;
+    for(int i = 0; i < N; ++i) {
+      if(enemies[i] > 0) {
+        anyEnemyLeft = true;
+        if((time + 1) % 3 == 0) {
+          enemies[i] -= 3;
+        } else {
+          enemies[i]--;
+        }
+        if(enemies[i] <= 0) {
+          enemies[i] = 0;
+        }
+      }
+    }
+    if(!anyEnemyLeft) break;
+    ++time;
+  }
+
+  std::cout << time << std::endl;
+
+  return 0;
+}

@@ -1,0 +1,71 @@
+#include<bits/stdc++.h>
+using namespace std;
+using ll = long long;
+#define rep(i, n) for (int i = 0; i < (int)n; ++i)
+
+struct UnionFind {
+    vector<int> parent;
+    vector<int> size;
+    vector<vector<int>> order;  // To store the order of vertices in each component
+
+    UnionFind(int n) {
+        parent.resize(n);
+        size.resize(n);
+        order.resize(n);
+        for (int i = 0; i < n; ++i) {
+            parent[i] = i;
+            size[i] = 1;
+        }
+    }
+
+    int find(int x) {
+        if (parent[x] != x) parent[x] = find(parent[x]);  // Path compression
+        return parent[x];
+    }
+
+    void unite(int x, int y) {
+        int rootX = find(x);
+        int rootY = find(y);
+        if (rootX != rootY) {
+            if (size[rootX] < size[rootY]) swap(rootX, rootY);  // Union by size
+            parent[rootY] = rootX;
+            size[rootX] += size[rootY];
+            order[rootX].insert(order[rootX].end(), order[rootY].begin(), order[rootY].end());
+            order[rootY].clear();
+        }
+    }
+
+    void addVertex(int x) {
+        int rootX = find(x);
+        order[rootX].push_back(x);
+    }
+
+    int getSize(int x) {
+        return size[find(x)];
+    }
+
+    int getKthLargest(int x, int k) {
+        int rootX = find(x);
+        if (k <= 0 || k > order[rootX].size()) return -1;  // If k is out of bounds
+        return order[rootX].back() - order[rootX].end() + k;  // Adjust the index
+    }
+};
+
+int main() {
+    int n, q;
+    cin >> n >> q;
+    UnionFind uf(n);
+
+    while (q--) {
+        int type, u, v;
+        cin >> type >> u >> v;
+        if (type == 1) {
+            uf.unite(u, v);
+        } else if (type == 2) {
+            int k;
+            cin >> k;
+            cout << uf.getKthLargest(u, k) << endl;
+        }
+    }
+    return 0;
+}

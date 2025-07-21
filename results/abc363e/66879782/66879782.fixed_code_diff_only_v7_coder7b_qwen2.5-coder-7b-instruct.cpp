@@ -1,0 +1,60 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(NULL);
+
+    int h, w, y;
+    cin >> h >> w >> y;
+
+    vector<vector<int>> heights(h, vector<int>(w));
+    vector<vector<bool>> visited(h, vector<bool>(w, false));
+
+    for (int i = 0; i < h; ++i)
+        for (int j = 0; j < w; ++j)
+            cin >> heights[i][j];
+
+    vector<vector<int>> sink(h, vector<int>(w, INT_MAX));
+    vector<pair<int, pair<int, int>>> pq;
+
+    int di[] = {-1, 1, 0, 0}, dj[] = {0, 0, -1, 1};
+
+    for (int i = 0; i < h; ++i) {
+        for (int j = 0; j < w; ++j) {
+            if (i == 0 || i == h - 1 || j == 0 || j == w - 1) {
+                sink[i][j] = heights[i][j];
+                pq.push_back({heights[i][j], {i, j}});
+            }
+        }
+    }
+
+    while (!pq.empty()) {
+        auto [height, pos] = pq.front(); pq.pop();
+        auto [i, j] = pos;
+
+        if (visited[i][j]) continue;
+        visited[i][j] = true;
+
+        for (int k = 0; k < 4; ++k) {
+            int ni = i + di[k], nj = j + dj[k];
+            if (ni < 0 || ni >= h || nj < 0 || nj >= w) continue;
+            if (heights[ni][nj] <= height && sink[ni][nj] > height) {
+                sink[ni][nj] = height;
+                pq.push_back({height, {ni, nj}});
+            }
+        }
+    }
+
+    vector<int> areas(y + 1, 0);
+    for (int i = 0; i < h; ++i)
+        for (int j = 0; j < w; ++j)
+            areas[min(sink[i][j], y)]++;
+
+    partial_sum(areas.begin(), areas.end(), areas.begin());
+
+    for (int i = 1; i <= y; ++i)
+        cout << h * w - areas[y - i] << '\n';
+
+    return 0;
+}

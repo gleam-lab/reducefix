@@ -1,0 +1,39 @@
+#include<bits/stdc++.h>
+using namespace std;
+
+typedef long long ll;
+const int N = 1e6 + 5;
+
+int n, m;
+ll sum;
+int a[2*N], prefix_mod[2*N];
+map<int, int> freq;
+
+int main() {
+    ios::sync_with_stdio(0);
+    cin.tie(0);
+    cout.tie(0);
+
+    cin >> n >> m;
+    for(int i = 1; i <= n; ++i) {
+        cin >> a[i];
+        a[i + n] = a[i];
+    }
+
+    // Compute prefix sums modulo m
+    for(int i = 1; i < 2*n; ++i) {
+        prefix_mod[i] = (prefix_mod[i-1] + a[i]) % m;
+    }
+
+    // Initialize with prefix_mod[0] = 0 (empty subarray)
+    freq[0] = 1;
+
+    for(int i = 1; i <= n; ++i) {
+        // Only consider valid length subarrays (<=n)
+        sum += freq[prefix_mod[i]];
+        freq[prefix_mod[i]]++;
+    }
+
+    cout << sum << "\n";
+    return 0;
+}

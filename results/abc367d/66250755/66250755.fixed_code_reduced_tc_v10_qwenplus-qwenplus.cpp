@@ -1,0 +1,38 @@
+#include<bits/stdc++.h>
+using namespace std;
+
+int main() {
+    int n, m;
+    cin >> n >> m;
+    
+    vector<long long> a(2 * n + 1);
+    for(int i = 1; i <= n; ++i) {
+        cin >> a[i];
+        a[i] %= m;
+        a[i + n] = a[i];
+    }
+    
+    vector<long long> prefix(2 * n + 1, 0);
+    map<long long, int> count;
+    long long ans = 0;
+    
+    count[0] = 1; // For subarrays starting at index 1
+    
+    for(int i = 1; i <= 2 * n; ++i) {
+        prefix[i] = (prefix[i - 1] + a[i]) % m;
+        
+        // We're only interested in subarrays of length <= n
+        if(i > n) {
+            count[prefix[i - n]]--;
+        }
+        
+        if(i >= n) {
+            ans += count[prefix[i]];
+        }
+        
+        count[prefix[i]]++;
+    }
+    
+    cout << ans;
+    return 0;
+}

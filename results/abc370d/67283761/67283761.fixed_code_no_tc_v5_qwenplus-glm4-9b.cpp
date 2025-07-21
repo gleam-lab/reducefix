@@ -1,0 +1,71 @@
+#include <iostream>
+#include <vector>
+
+using namespace std;
+
+using pi = pair<int, int>;
+
+int main() {
+    int h, w, q;
+    cin >> h >> w >> q;
+    
+    // Initialize the grid with walls
+    vector<vector<bool>> walls(h, vector<bool>(w, true));
+
+    // Process each query
+    while (q--) {
+        int r, c;
+        cin >> r >> c;
+        r--; // Convert to zero-indexed
+        c--;
+
+        // If there's a wall at the given position, destroy it
+        if (walls[r][c]) {
+            walls[r][c] = false;
+        } else {
+            // Find the topmost wall in the column
+            int top = r;
+            while (top >= 0 && !walls[top][c]) {
+                top--;
+            }
+            // Find the bottommost wall in the column
+            int bottom = r;
+            while (bottom < h && !walls[bottom][c]) {
+                bottom++;
+            }
+
+            // Find the leftmost wall in the row
+            int left = c;
+            while (left >= 0 && !walls[r][left]) {
+                left--;
+            }
+            // Find the rightmost wall in the row
+            int right = c;
+            while (right < w && !walls[r][right]) {
+                right++;
+            }
+
+            // All walls between top and bottom and left and right are destroyed
+            for (int i = top + 1; i < bottom; i++) {
+                walls[i][c] = false;
+            }
+            for (int i = left + 1; i < right; i++) {
+                walls[r][i] = false;
+            }
+        }
+    }
+
+    // Calculate the number of remaining walls
+    int remaining_walls = 0;
+    for (int i = 0; i < h; i++) {
+        for (int j = 0; j < w; j++) {
+            if (walls[i][j]) {
+                remaining_walls++;
+            }
+        }
+    }
+
+    cout << remaining_walls << endl;
+
+    return 0;
+}

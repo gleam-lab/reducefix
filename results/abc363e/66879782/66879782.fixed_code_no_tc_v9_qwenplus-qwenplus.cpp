@@ -1,0 +1,77 @@
+#include <bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+#define all(x) (x).begin(), (x).end()
+
+int main() {
+    ios_base::sync_with_stdio(0);
+    cin.tie(0);
+    int h, w, y;
+    cin >> h >> w >> y;
+    vector<vector<int>> height(h, vector<int>(w));
+    vector<vector<int>> sink_year(h, vector<int>(w, INT_MAX));
+    
+    // Priority queue to process from borders inward
+    priority_queue<pair<int, pair<int, int>>, 
+                   vector<pair<int, pair<int, int>>>, 
+                   greater<pair<int, pair<int, int>>>> pq;
+
+    // Directions: up, down, left, right
+    int dirs[4][2] = {{-1, 0}, {1, 0}, {0, -1}, {0, 1}};
+
+    // Read input and initialize border cells
+    for (int i = 0; i < h; ++i) {
+        for (int j = 0; j < w; ++j) {
+            cin >> height[i][j];
+            if (i == 0 || i == h - 1 || j == 0 || j == w - 1) {
+                sink_year[i][j] = height[i][j];
+                pq.push({height[i][j], {i, j}});
+            }
+        }
+    }
+
+    // Visited matrix to avoid reprocessing
+    vector<vector<bool>> visited(h, vector<bool>(w, false));
+
+    // Process using Dijkstra-like BFS with priority queue
+    while (!pq.empty()) {
+        auto [current_level, pos] = pq.top();
+        int r = pos.first;
+        int c = pos.second;
+        pq.pop();
+
+        if (visited[r][c]) continue;
+        visited[r][c] = true;
+
+        for (auto& d : dirs) {
+            int nr = r + d[0];
+            int nc = c + d[1];
+            if (nr >= 0 && nr < h && nc >= 0 && nc < w && !visited[nr][nc]) {
+                int new_sink_year = max(current_level, height[nr][nc]);
+                if (sink_year[nr][nc] > new_sink_year) {
+                    sink_year[nr][nc] = new_sink_year;
+                    pq.push({new_sink_year, {nr, nc}});
+                }
+            }
+        }
+    }
+
+    // Count how many cells sink in each year
+    vector<int> sink_count(y + 2, 0);  // Up to Y+1 to handle edge case
+    for (int i = 0; i < h; ++i) {
+        for (int j = 0; j < w; ++j) {
+            if (sink_year[i][j] <= y) {
+                sink_count[sink_year[i][j]]++;
+            }
+        }
+    }
+
+    // Cumulative sum to get number of sunk cells by year
+    vector<ll> cum_sink(y + 2, 0);
+    for (int i = 1; i <= y; ++i) {
+        cum_sink[i] = cum_sink[i - 1] + sink_count[i];
+        cout << 1LL * h * w - cum_sink[i] << "\n";
+    }
+
+    return 0;
+}

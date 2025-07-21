@@ -1,0 +1,70 @@
+#include "bits/stdc++.h"
+
+using namespace std;
+
+#define ff first
+#define ss second
+#define ll long long
+#define SZ(s) (int)s.size()
+
+int const N = 2e5 + 5;
+
+vector <vector <int>> v;
+vector <int> p;
+
+int par(int x) {
+    if(p[x] == x) return x;
+    return p[x] = par(p[x]);
+}
+
+void uni(int a, int b) {
+    a = par(a), b = par(b);
+    if(a == b) return;
+    
+    if (v[a].size() < v[b].size()) {
+        swap(a, b);
+    }
+    
+    vector<int> merged;
+    merged.reserve(v[a].size() + v[b].size());
+    merge(v[a].begin(), v[a].end(), 
+          v[b].begin(), v[b].end(), 
+          back_inserter(merged), greater<int>());
+    
+    if (merged.size() > 10) {
+        merged.resize(10);
+    }
+    
+    v[a] = merged;
+    p[b] = a;
+}
+
+signed main() {
+    ios_base::sync_with_stdio(false); cin.tie(nullptr);
+
+    int n, q;
+    cin >> n >> q;
+    p.resize(n+1);
+    v.resize(n+1);
+    for(int i = 1; i <= n; i++) {
+        p[i] = i;
+        v[i] = {i};
+    }
+    while(q--) {
+        int t, a, b;
+        cin >> t >> a >> b;
+        if(t == 1) {
+            uni(a, b);
+        }
+        else {
+            a = par(a);
+            if(SZ(v[a]) < b) {
+                cout << -1 << '\n';
+            } else {
+                cout << v[a][b-1] << '\n';
+            }
+        }
+    }
+
+    return 0;
+}

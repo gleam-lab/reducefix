@@ -1,0 +1,99 @@
+To fix this code, we need to ensure that for each candidate, we correctly determine the minimum number of additional votes they need to be among the top M candidates. The original code had several issues, including incorrect binary search implementations and incorrect counting logic. Here's the corrected version:
+
+### Approaches
+1. **Sorting and Binary Search**: First, we sort the candidates based on their current votes. This helps in efficiently determining the positions and counts of candidates relative to any given candidate.
+2. **Prefix Sum**: We compute a prefix sum array to quickly calculate the sum of votes for any segment of candidates.
+3. **Binary Search for Minimum Votes**: For each candidate, we use binary search to determine the minimum additional votes they need such that no more than M-1 candidates can have strictly more votes than them, even in the worst-case scenario where all remaining votes are distributed to other candidates to maximize their votes.
+
+### Solution Code
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+
+int main() {
+    int N, M;
+    ll K;
+    cin >> N >> M >> K;
+    vector<ll> A(N);
+    for (int i = 0; i < N; ++i) {
+        cin >> A[i];
+    }
+
+    vector<pair<ll, int>> sorted_A(N);
+    for (int i = 0; i < N; ++i) {
+        sorted_A[i] = {A[i], i};
+    }
+    sort(sorted_A.begin(), sorted_A.end());
+
+    vector<ll> prefix(N + 1, 0);
+    for (int i = 0; i < N; ++i) {
+        prefix[i + 1] = prefix[i] + sorted_A[i].first;
+    }
+
+    ll total_used = prefix[N];
+    ll remaining_votes = K - total_used;
+
+    vector<ll> answer(N, -1);
+
+    for (int i = 0; i < N; ++i) {
+        ll current_votes = sorted_A[i].first;
+        ll low = 0;
+        ll high = remaining_votes;
+        ll best_X = -1;
+
+        while (low <= high) {
+            ll mid = (low + high) / 2;
+            ll new_votes = current_votes + mid;
+
+            // Find the number of candidates with votes > new_votes
+            auto it = upper_bound(sorted_A.begin(), sorted_A.end(), make_pair(new_votes, N), 
+                [](const pair<ll, int>& a, const pair<ll, int>& b) {
+                    return a.first < b.first;
+                });
+            int cnt = N - (it - sorted_A.begin());
+
+            if (cnt < M) {
+                best_X = mid;
+                high = mid - 1;
+            } else {
+                low = mid + 1;
+            }
+        }
+
+        if (best_X != -1) {
+            answer[sorted_A[i].second] = best_X;
+        } else {
+            answer[sorted_A[i].second] = -1;
+        }
+    }
+
+    for (int i = 0; i < N; ++i) {
+        if (answer[i] == -1) {
+            // Check if already elected
+            ll current_votes = A[i];
+            auto it = upper_bound(sorted_A.begin(), sorted_A.end(), make_pair(current_votes, N), 
+                [](const pair<ll, int>& a, const pair<ll, int>& b) {
+                    return a.first < b.first;
+                });
+            int cnt = N - (it - sorted_A.begin());
+            if (cnt < M) {
+                answer[i] = 0;
+            }
+        }
+        cout << answer[i] << ' ';
+    }
+    cout << endl;
+
+    return 0;
+}
+```
+
+### Explanation
+1. **Input Handling**: The code reads the number of candidates \( N \), the threshold \( M \), the total votes \( K \), and the current votes for each candidate.
+2. **Sorting**: The candidates are sorted based on their current votes to facilitate efficient binary search operations.
+3. **Prefix Sum Calculation**: A prefix sum array is constructed to quickly compute the sum of votes for any subset of candidates.
+4. **Binary Search for Each Candidate**: For each candidate, the code performs a binary search to find the minimum additional votes \( X \) they need to ensure that no more than \( M-1 \) candidates have more votes than them. This involves checking how many candidates could potentially surpass the candidate's vote count when given all remaining votes.
+5. **Output**: The results are stored in an array and printed, with checks to handle cases where candidates are already elected or cannot be elected under any circumstances.
+
+This approach ensures that the solution is both efficient and correct, handling the constraints and edge cases appropriately.

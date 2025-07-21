@@ -1,0 +1,32 @@
+#include<bits/stdc++.h>
+using namespace std;
+
+vector<int> a;
+
+void solve(void) {
+    int n, q; cin >> n >> q;
+    a.resize(n + 1);
+    for(int i = 1; i <= n; i++){
+        int x; cin >> x;
+        a[i] = x;
+    }
+    sort(a.begin() + 1, a.end());
+    for(int i = 1; i <= q; i++){
+        int x, y; cin >> x >> y;
+        auto it = lower_bound(a.begin(), a.end(), x);
+        int pos = it - a.begin();
+        int dist = abs(x - a[pos]);
+        if(pos > 1 && abs(x - a[pos - 1]) < dist) dist = abs(x - a[pos - 1]);
+        if(pos < n && abs(x - a[pos + 1]) < dist) dist = abs(x - a[pos + 1]);
+        if(y == 1) cout << dist << endl;
+        else if(y == n) cout << dist << endl;
+        else cout << min(dist, abs(a[y - 1] - a[y])) << endl;
+    }
+}
+
+int main(){
+    ios::sync_with_stdio(0), cin.tie(0), cout.tie(0);
+    int t = 1; //cin >> t;
+    while (t--) solve();
+    return 0;
+}

@@ -1,0 +1,39 @@
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+
+int main() {
+    ll n;
+    cin >> n;
+    vector<ll> H(n);
+    for (int i = 0; i < n; ++i) {
+        cin >> H[i];
+    }
+
+    ll T = 0;
+    ll tri = 1; // Tracks current turn modulo 3
+
+    for (int idx = 0; idx < n; ++idx) {
+        ll h = H[idx];
+
+        // Process current enemy
+        while (h > 0) {
+            if (tri == 3) {
+                // Every 3rd attack, deal 3 damage
+                h -= 3;
+                tri = 1;
+            } else {
+                // Otherwise, deal 1 damage
+                h -= 1;
+                tri++;
+            }
+            T++;
+        }
+
+        // After finishing this enemy, tri is reset to next enemy's first attack
+        tri = 1;
+    }
+
+    cout << T << endl;
+    return 0;
+}

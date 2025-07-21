@@ -1,0 +1,85 @@
+To fix this code, we need to address the issue where the code incorrectly handles the destruction of walls when the bomb is placed on a cell that no longer has a wall. The problem arises because the code attempts to destroy walls in all four directions even when some directions might not have any walls to destroy. Additionally, the code does not properly check if the lower_bound operation returns the beginning of the set when checking for walls in the upward direction.
+
+### Approaches
+1. **Initialization**: We maintain two sets for each row and column to track the walls that are still standing. This allows efficient insertion and deletion operations.
+2. **Query Processing**: For each query, we first check if the specified cell has a wall. If it does, we remove it. If not, we look for the nearest walls in each of the four directions (up, down, left, right) and remove them if they exist.
+3. **Efficient Search**: Using the `lower_bound` method on sets, we efficiently find the nearest walls in each direction. We ensure that we only perform deletions if the respective walls exist.
+
+### Solution Code
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+#define rep(i,n) for(int i = 0; i < (n); i++)
+using ll = long long;
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int h, w, q;
+    cin >> h >> w >> q;
+    vector<set<int>> row_walls(h), col_walls(w);
+    rep(i, h) rep(j, w) {
+        row_walls[i].insert(j);
+        col_walls[j].insert(i);
+    }
+    int total_walls = h * w;
+    rep(qi, q) {
+        int r, c;
+        cin >> r >> c;
+        r--; c--;
+        if (row_walls[r].count(c)) {
+            row_walls[r].erase(c);
+            col_walls[c].erase(r);
+            total_walls--;
+        } else {
+            // Up
+            auto it_up = col_walls[c].lower_bound(r);
+            if (it_up != col_walls[c].begin()) {
+                it_up--;
+                int up_pos = *it_up;
+                row_walls[up_pos].erase(c);
+                col_walls[c].erase(up_pos);
+                total_walls--;
+            }
+            // Down
+            auto it_down = col_walls[c].lower_bound(r);
+            if (it_down != col_walls[c].end()) {
+                int down_pos = *it_down;
+                row_walls[down_pos].erase(c);
+                col_walls[c].erase(down_pos);
+                total_walls--;
+            }
+            // Left
+            auto it_left = row_walls[r].lower_bound(c);
+            if (it_left != row_walls[r].begin()) {
+                it_left--;
+                int left_pos = *it_left;
+                row_walls[r].erase(left_pos);
+                col_walls[left_pos].erase(r);
+                total_walls--;
+            }
+            // Right
+            auto it_right = row_walls[r].lower_bound(c);
+            if (it_right != row_walls[r].end()) {
+                int right_pos = *it_right;
+                row_walls[r].erase(right_pos);
+                col_walls[right_pos].erase(r);
+                total_walls--;
+            }
+        }
+    }
+    cout << total_walls << "\n";
+    return 0;
+}
+```
+
+### Explanation
+1. **Initialization**: We initialize sets `row_walls` and `col_walls` to keep track of the walls in each row and column. Initially, every cell has a wall, so we populate these sets accordingly.
+2. **Query Processing**: For each query, we check if the specified cell has a wall. If it does, we remove the wall from both sets and decrement the total wall count. If there is no wall, we search for the nearest walls in each direction:
+   - **Up**: We use `lower_bound` to find the first wall above the cell. If found, we remove it.
+   - **Down**: Similarly, we use `lower_bound` to find the first wall below the cell and remove it if found.
+   - **Left**: We use `lower_bound` to find the first wall to the left of the cell and remove it if found.
+   - **Right**: We use `lower_bound` to find the first wall to the right of the cell and remove it if found.
+3. **Output**: After processing all queries, the remaining wall count is printed, which is maintained by decrementing `total_walls` each time a wall is destroyed.
+
+This approach ensures that each query is processed efficiently, leveraging the properties of sets for quick lookups and deletions, thus maintaining an optimal time complexity.

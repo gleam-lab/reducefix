@@ -1,0 +1,122 @@
+To fix this code, we need to ensure that the algorithm accurately simulates the destruction of walls as described in the problem statement. The original code attempts to use a caching mechanism to store the distance to the nearest wall in each direction, but it has several issues, including incorrect distance calculations and inefficient search loops.
+
+### Approaches
+1. **Initialization**: 
+   - Initialize a 2D grid to track walls (true for walls, false for destroyed).
+   - Initialize data structures to efficiently find the nearest walls in each direction (up, down, left, right) for any given cell.
+
+2. **Handling Queries**:
+   - For each query, check if the cell has a wall. If it does, destroy it.
+   - If the cell does not have a wall, destroy the nearest walls in each of the four directions (up, down, left, right). This requires efficiently finding the nearest wall in each direction without scanning the entire row or column each time.
+
+3. **Efficient Search**:
+   - Use separate sets for each row and column to track the positions of walls. This allows us to use binary search to quickly find the nearest walls in any direction.
+
+### Solution Code
+```cpp
+#include <vector>
+#include <set>
+#include <iostream>
+using namespace std;
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int H, W, Q;
+    cin >> H >> W >> Q;
+
+    vector<vector<bool>> grid(H + 2, vector<bool>(W + 2, true));
+    vector<set<int>> rowWalls(H + 2);
+    vector<set<int>> colWalls(W + 2);
+
+    for (int i = 1; i <= H; ++i) {
+        for (int j = 1; j <= W; ++j) {
+            rowWalls[i].insert(j);
+            colWalls[j].insert(i);
+        }
+    }
+
+    int broken = 0;
+
+    while (Q--) {
+        int R, C;
+        cin >> R >> C;
+
+        if (grid[R][C]) {
+            grid[R][C] = false;
+            rowWalls[R].erase(C);
+            colWalls[C].erase(R);
+            broken++;
+        } else {
+            // Up
+            auto it = colWalls[C].lower_bound(R);
+            if (it != colWalls[C].begin()) {
+                --it;
+                int i = *it;
+                if (grid[i][C]) {
+                    grid[i][C] = false;
+                    rowWalls[i].erase(C);
+                    colWalls[C].erase(i);
+                    broken++;
+                }
+                ++it;
+            }
+
+            // Down
+            it = colWalls[C].lower_bound(R);
+            if (it != colWalls[C].end()) {
+                int i = *it;
+                if (grid[i][C]) {
+                    grid[i][C] = false;
+                    rowWalls[i].erase(C);
+                    colWalls[C].erase(i);
+                    broken++;
+                }
+            }
+
+            // Left
+            auto jt = rowWalls[R].lower_bound(C);
+            if (jt != rowWalls[R].begin()) {
+                --jt;
+                int j = *jt;
+                if (grid[R][j]) {
+                    grid[R][j] = false;
+                    rowWalls[R].erase(j);
+                    colWalls[j].erase(R);
+                    broken++;
+                }
+                ++jt;
+            }
+
+            // Right
+            jt = rowWalls[R].lower_bound(C);
+            if (jt != rowWalls[R].end()) {
+                int j = *jt;
+                if (grid[R][j]) {
+                    grid[R][j] = false;
+                    rowWalls[R].erase(j);
+                    colWalls[j].erase(R);
+                    broken++;
+                }
+            }
+        }
+    }
+
+    cout << (H * W - broken) << endl;
+
+    return 0;
+}
+```
+
+### Explanation
+1. **Initialization**: 
+   - The grid is initialized with `true` indicating walls are present.
+   - Sets `rowWalls` and `colWalls` are used to store the column indices of walls in each row and the row indices of walls in each column, respectively.
+
+2. **Query Processing**:
+   - For each query, if the cell (R, C) has a wall, it is destroyed, and the corresponding entries are removed from the sets.
+   - If the cell does not have a wall, the nearest walls in the four directions (up, down, left, right) are found using binary search within the sets. If found, these walls are destroyed, and the sets updated accordingly.
+
+3. **Efficiency**: 
+   - Using sets allows for O(log n) time complexity for each insertion, deletion, and search operation. This ensures the solution handles the constraints efficiently, with an overall time complexity of O(Q log (H + W)) per query.

@@ -1,0 +1,49 @@
+#include <iostream>
+#include <set>
+#include <utility>
+
+using namespace std;
+
+using i32 = int;
+using i64 = long long;
+using u64 = unsigned long long;
+using pii = pair<i32, i32>;
+
+#define FOR_U(r, b, e, s) for (i64 r = (i64)(b); r < (i64)(e); r += (i64)(s))
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    i64 N;
+    i32 M;
+    cin >> N >> M;
+
+    set<pair<i64, i64>> attacked;
+    const array<array<i64, 2>, 8> moves = {{
+        {2, 1}, {1, 2}, {-1, 2}, {-2, 1},
+        {-2, -1}, {-1, -2}, {1, -2}, {2, -1}
+    }};
+
+    for (i32 m = 0; m < M; ++m) {
+        i64 a, b;
+        cin >> a >> b;
+        
+        // Add the piece itself to the set of attacked positions
+        attacked.insert({a, b});
+        
+        // For each knight move pattern
+        for (const auto& move : moves) {
+            i64 ni = a + move[0];
+            i64 nj = b + move[1];
+            if (1 <= ni && ni <= N && 1 <= nj && nj <= N) {
+                attacked.insert({ni, nj});
+            }
+        }
+    }
+
+    // Total squares - attacked squares
+    cout << (N * N - (i64)attacked.size()) << '\n';
+
+    return 0;
+}

@@ -1,0 +1,113 @@
+To solve this problem efficiently, we need to handle two types of queries on a dynamic undirected graph:
+
+1. **Add an edge** between two vertices.
+2. **Query the k-th largest vertex number** among all vertices connected to a given vertex.
+
+---
+
+### Key Observations
+
+- Since we're dealing with **connected components**, using **Disjoint Set Union (DSU)** (also known as Union-Find) is ideal.
+- To support the second operation (k-th largest), we need to maintain for each component:
+  - A list of its member nodes.
+  - The list must be sorted in descending order so we can quickly access the k-th largest node.
+- We'll use a `map<int, vector<int>>` where the key is the representative of the component (from DSU), and the value is the sorted list of nodes in that component.
+
+---
+
+### Strategy
+
+1. **Union-Find Data Structure**: Track connected components.
+2. **Path Compression & Union by Size/Depth**: Ensure near-constant time complexity per operation.
+3. **Sorted Lists**: Maintain sorted lists of nodes in each component.
+4. **Merge Strategy**: When merging two components, merge the smaller one into the larger one to keep operations efficient (`O(log N)` amortized).
+
+---
+
+### Final Code
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+const int MAXN = 2e5 + 5;
+
+int parent[MAXN];
+int size[MAXN];
+map<int, vector<int>> componentMembers;
+
+int find(int x) {
+    if (parent[x] != x)
+        parent[x] = find(parent[x]);
+    return parent[x];
+}
+
+void unite(int x, int y) {
+    int fx = find(x);
+    int fy = find(y);
+    if (fx == fy) return;
+
+    // Always merge smaller set into larger one
+    if ((int)componentMembers[fx].size() < (int)componentMembers[fy].size()) {
+        swap(fx, fy);
+    }
+
+    // Merge fy's elements into fx
+    for (int node : componentMembers[fy]) {
+        componentMembers[fx].push_back(node);
+    }
+    sort(componentMembers[fx].rbegin(), componentMembers[fx].rend());
+
+    parent[fy] = fx;
+    componentMembers.erase(fy); // Remove the old component
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+
+    int N, Q;
+    cin >> N >> Q;
+
+    // Initialize DSU and component members
+    for (int i = 1; i <= N; ++i) {
+        parent[i] = i;
+        size[i] = 1;
+        componentMembers[i] = {i};
+    }
+
+    while (Q--) {
+        int op;
+        cin >> op;
+
+        if (op == 1) {
+            int u, v;
+            cin >> u >> v;
+            unite(u, v);
+        } else if (op == 2) {
+            int v, k;
+            cin >> v >> k;
+            int root = find(v);
+            const vector<int>& members = componentMembers[root];
+            if ((int)members.size() < k) {
+                cout << -1 << '\n';
+            } else {
+                cout << members[k - 1] << '\n';
+            }
+        }
+    }
+
+    return 0;
+}
+```
+
+---
+
+### Complexity Analysis
+
+- **Time per query**:
+  - Union: `O(α(N))` (Inverse Ackermann function ~ constant).
+  - Merge of sorted lists: Amortized `O(log N)` due to small-to-large merging.
+  - Querying k-th largest: `O(1)` because list is already sorted.
+
+This ensures the code runs efficiently even under maximum constraints.

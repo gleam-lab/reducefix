@@ -1,0 +1,36 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int N;
+    cin >> N;
+
+    double curX = 0.0, curY = 0.0;  // 現在位置（原点）
+    double total = 0.0;             // 総コスト
+
+    for (int i = 0; i < N; ++i) {
+        double x, y;
+        cin >> x >> y;
+
+        double dx = curX - x;
+        double dy = curY - y;
+        total += sqrt(dx * dx + dy * dy);
+
+        curX = x;
+        curY = y;
+    }
+
+    // 最後の点から原点へ戻る
+    double dx = curX - 0.0;
+    double dy = curY - 0.0;
+    total += sqrt(dx * dx + dy * dy);
+
+    // 出力精度の設定
+    cout.precision(15);
+    cout << fixed << total << '\n';
+
+    return 0;
+}

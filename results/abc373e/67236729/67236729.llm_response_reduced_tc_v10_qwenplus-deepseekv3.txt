@@ -1,0 +1,104 @@
+To fix this code, we need to ensure that for each candidate, we correctly compute the minimum number of additional votes required to guarantee their election, considering all possible distributions of the remaining votes. The key insight is to determine the threshold for each candidate such that no more than M-1 candidates can have more votes than them after all votes are counted.
+
+### Approaches
+1. **Sorting and Prefix Sums**: 
+   - First, sort the array of initial votes to efficiently compute the required sums.
+   - Compute prefix sums to quickly access the sum of the top elements.
+2. **Binary Search for Each Candidate**:
+   - For each candidate, determine the minimum number of additional votes (X) they need such that after adding X votes, at most M-1 candidates can have more votes than them.
+   - Use binary search to efficiently find the minimum X for each candidate.
+
+### Solution Code
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+using i64 = long long;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int N, M;
+    i64 K;
+    cin >> N >> M >> K;
+    
+    vector<i64> A(N);
+    for (int i = 0; i < N; ++i) {
+        cin >> A[i];
+    }
+    
+    if (M == N) {
+        for (int i = 0; i < N; ++i) {
+            cout << 0 << " ";
+        }
+        cout << "\n";
+        return 0;
+    }
+    
+    vector<i64> B = A;
+    sort(B.begin(), B.end());
+    vector<i64> prefix(N + 1, 0);
+    for (int i = 0; i < N; ++i) {
+        prefix[i + 1] = prefix[i] + B[i];
+    }
+    
+    vector<i64> res(N);
+    for (int i = 0; i < N; ++i) {
+        i64 a = A[i];
+        i64 low = 0, high = K, ans = -1;
+        
+        while (low <= high) {
+            i64 mid = (low + high) / 2;
+            i64 new_a = a + mid;
+            
+            int pos = upper_bound(B.begin(), B.end(), new_a) - B.begin();
+            int cnt = N - pos;
+            
+            if (cnt < M) {
+                i64 needed = 0;
+                if (cnt < M - 1) {
+                    int start = N - (M - 1 - cnt);
+                    if (start >= 0) {
+                        needed = prefix[N] - prefix[start] - new_a * (M - 1 - cnt);
+                    }
+                }
+                
+                if (new_a * (M - 1) - (prefix[N] - prefix[N - (M - 1)] - needed) <= K - mid) {
+                    ans = mid;
+                    high = mid - 1;
+                } else {
+                    low = mid + 1;
+                }
+            } else {
+                low = mid + 1;
+            }
+        }
+        
+        res[i] = ans;
+    }
+    
+    for (i64 num : res) {
+        cout << num << " ";
+    }
+    cout << "\n";
+    
+    return 0;
+}
+```
+
+### Explanation
+1. **Initial Setup**: 
+   - The input is read, including the number of candidates (N), the threshold (M), the total votes (K), and the initial votes for each candidate (A).
+   - If M equals N, all candidates will be elected regardless of additional votes, so the output is all zeros.
+
+2. **Sorting and Prefix Sums**:
+   - The initial votes are sorted into array B, and prefix sums are computed to allow efficient sum queries over ranges of B.
+
+3. **Binary Search for Each Candidate**:
+   - For each candidate, binary search is used to find the minimum X (additional votes) required. The binary search checks if, after adding X votes to the candidate, at most M-1 other candidates can have more votes.
+   - The check involves determining the position of the candidate's new vote count in the sorted array and ensuring the sum of votes that would exceed this count is manageable within the remaining votes (K - X).
+
+4. **Output**:
+   - The results for each candidate are printed, indicating the minimum additional votes needed or -1 if it's impossible.
+
+This approach ensures that each candidate's situation is evaluated efficiently using sorting and binary search, maintaining an optimal time complexity of O(N log N).

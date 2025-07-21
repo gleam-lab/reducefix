@@ -1,0 +1,145 @@
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+
+template<typename T>
+struct SegmentTree {
+    int n;
+    vector<T> data;
+    T identity;
+
+    SegmentTree(int _n, T init_val) : n(1), identity(init_val) {
+        while (n < _n) n <<= 1;
+        data.assign(n << 1, identity);
+    }
+
+    void update(int pos, T val) {
+        for (data[pos += n] = val; pos >>= 1;) {
+            data[pos] = merge(data[pos << 1], data[pos << 1 | 1]);
+        }
+    }
+
+    T query(int l, int r) {
+        T res = identity;
+        for (l += n, r += n + 1; l < r; l >>= 1, r >>= 1) {
+            if (l & 1) res = merge(res, data[l++]);
+            if (r & 1) res = merge(res, data[--r]);
+        }
+        return res;
+    }
+
+    virtual T merge(T a, T b) = 0;
+};
+
+struct Wall {
+    bool exists;
+    int index;
+    Wall() : exists(false), index(-1) {}
+    Wall(bool e, int i) : exists(e), index(i) {}
+};
+
+// For row segments: check nearest wall in column direction
+struct RowNode : public SegmentTree<Wall> {
+    using SegmentTree::SegmentTree;
+
+    Wall merge(Wall a, Wall b) override {
+        return a.exists ? a : b;
+    }
+};
+
+// For col segments: check nearest wall in row direction
+struct ColNode : public SegmentTree<Wall> {
+    using SegmentTree::SegmentTree;
+
+    Wall merge(Wall a, Wall b) override {
+        return a.exists ? a : b;
+    }
+};
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int H, W, Q;
+    cin >> H >> W >> Q;
+
+    // Each row has a segment tree for columns
+    vector<RowNode*> rows(H, nullptr);
+    // Each column has a segment tree for rows
+    vector<ColNode*> cols(W, nullptr);
+
+    for (int i = 0; i < H; ++i) {
+        rows[i] = new RowNode(W, Wall(false, -1));
+        for (int j = 0; j < W; ++j) {
+            rows[i]->update(j, Wall(true, j));
+        }
+    }
+
+    for (int j = 0; j < W; ++j) {
+        cols[j] = new ColNode(H, Wall(false, -1));
+        for (int i = 0; i < H; ++i) {
+            cols[j]->update(i, Wall(true, i));
+        }
+    }
+
+    auto destroy = [&](int r, int c) {
+        if (rows[r]->query(c, c).exists) {
+            // Direct hit
+            rows[r]->update(c, Wall(false, -1));
+            cols[c]->update(r, Wall(false, -1));
+            return;
+        }
+
+        // Up/Down
+        {
+            auto res = cols[c]->query(r + 1, H - 1);
+            if (res.exists) {
+                rows[res.index]->update(c, Wall(false, -1));
+                cols[c]->update(res.index, Wall(false, -1));
+            }
+        }
+        {
+            auto res = cols[c]->query(0, r - 1);
+            if (res.exists) {
+                rows[res.index]->update(c, Wall(false, -1));
+                cols[c]->update(res.index, Wall(false, -1));
+            }
+        }
+
+        // Left/Right
+        {
+            auto res = rows[r]->query(c + 1, W - 1);
+            if (res.exists) {
+                rows[r]->update(res.index, Wall(false, -1));
+                cols[res.index]->update(r, Wall(false, -1));
+            }
+        }
+        {
+            auto res = rows[r]->query(0, c - 1);
+            if (res.exists) {
+                rows[r]->update(res.index, Wall(false, -1));
+                cols[res.index]->update(r, Wall(false, -1));
+            }
+        }
+    };
+
+    while (Q--) {
+        int r, c;
+        cin >> r >> c;
+        r--; c--;
+        destroy(r, c);
+    }
+
+    ll ans = 0;
+    for (int i = 0; i < H; ++i) {
+        ans += rows[i]->query(0, W - 1).exists ? 1 : 0;
+    }
+
+    cout << ans << "\n";
+
+    // Cleanup
+    for (auto& row : rows) delete row;
+    for (auto& col : cols) delete col;
+
+    return 0;
+}

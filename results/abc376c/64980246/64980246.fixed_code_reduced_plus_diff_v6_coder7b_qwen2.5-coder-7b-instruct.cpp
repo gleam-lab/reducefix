@@ -1,0 +1,56 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+
+typedef long long LL;
+
+struct Node {
+    int size, idx;
+};
+
+bool cmp(Node &a, Node &b) {
+    return a.size > b.size;
+}
+
+vector<int> findBoxes(vector<int> sizes) {
+    int n = sizes.size();
+    vector<Node> nodes(n);
+    for(int i=0; i<n; i++) {
+        nodes[i].size = sizes[i];
+        nodes[i].idx = i+1;
+    }
+    
+    sort(nodes.begin(), nodes.end(), cmp);
+    
+    vector<int> ans(n+1, 0);
+    int pos = 0;
+    for(auto node: nodes) {
+        ans[node.idx] = pos + 1;
+        pos++;
+    }
+
+    return ans;
+}
+
+int main() {
+    ios_base::sync_with_stdio(false); cin.tie(0); cout.tie(0);
+
+    int n;
+    cin >> n;
+    vector<int> a(n), b(n-1);
+    for(auto& x:a) cin >> x;
+    for(auto& x:b) cin >> x;
+
+    auto boxes = findBoxes(b);
+
+    for(int i=0; i<a.size(); i++) {
+        if(a[i] > boxes[i]) {
+            cout << "-1\n";
+            return 0;
+        }
+    }
+
+    cout << *max_element(boxes.begin()+1, boxes.end()) << "\n";
+
+    return 0;
+}

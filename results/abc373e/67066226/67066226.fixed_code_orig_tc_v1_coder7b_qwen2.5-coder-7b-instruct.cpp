@@ -1,0 +1,59 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+typedef long long ll;
+const ll INF = LLONG_MAX;
+
+vector<long long> minAdditionalVotes(int N, int M, long long K, vector<long long>& A) {
+    vector<long long> res(N, 0);
+
+    // Sort the votes in descending order
+    sort(A.rbegin(), A.rend());
+
+    // Calculate the sum of top M candidates' votes
+    long long topMSum = accumulate(A.begin(), A.begin() + M, 0LL);
+
+    // Iterate over each candidate
+    for (int i = 0; i < N; ++i) {
+        // Calculate the maximum votes needed for candidate i to win
+        long long needed = topMSum - A[i];
+
+        // Check if there are enough remaining votes to ensure victory
+        if (K - topMSum >= needed) {
+            res[i] = needed;
+        } else {
+            // If not enough votes left, calculate the minimum votes needed to ensure victory
+            long long remaining = K - topMSum;
+            long long votesNeeded = remaining / (N - M - 1);
+            if ((remaining % (N - M - 1)) != 0) {
+                votesNeeded++;
+            }
+
+            res[i] = max(votesNeeded, A[i]);
+        }
+    }
+
+    return res;
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(NULL);
+
+    int N, M;
+    long long K;
+    cin >> N >> M >> K;
+
+    vector<long long> A(N);
+    for (int i = 0; i < N; ++i) {
+        cin >> A[i];
+    }
+
+    vector<long long> result = minAdditionalVotes(N, M, K, A);
+
+    for (int i = 0; i < N; ++i) {
+        cout << result[i] << " ";
+    }
+
+    return 0;
+}

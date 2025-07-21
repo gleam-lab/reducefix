@@ -1,0 +1,58 @@
+#include<bits/stdc++.h>
+using namespace std;
+
+int dx[] = {1, 0, -1, 0, 1, 1, -1, -1};
+int dy[] = {0, 1, 0, -1, 1, -1, 1, -1};
+
+void bfs(vector<vector<int>>& A, vector<vector<bool>>& visited, int sea_level, int &remaining_area) {
+    queue<pair<int, int>> q;
+    for (int i = 0; i < A.size(); ++i) {
+        for (int j = 0; j < A[0].size(); ++j) {
+            if (!visited[i][j] && A[i][j] > sea_level) {
+                q.push({i, j});
+                remaining_area--;
+                visited[i][j] = true;
+            }
+        }
+    }
+    
+    while (!q.empty()) {
+        auto [x, y] = q.front();
+        q.pop();
+        
+        for (int k = 0; k < 8; ++k) {
+            int nx = x + dx[k];
+            int ny = y + dy[k];
+            
+            if (nx >= 0 && nx < A.size() && ny >= 0 && ny < A[0].size() && !visited[nx][ny] && A[nx][ny] > sea_level) {
+                q.push({nx, ny});
+                remaining_area--;
+                visited[nx][ny] = true;
+            }
+        }
+    }
+}
+
+int main() {
+    ios::sync_with_stdio(false); cin.tie(nullptr);
+    
+    int H, W, Y;
+    cin >> H >> W >> Y;
+    vector<vector<int>> A(H, vector<int>(W));
+    for (int i = 0; i < H; ++i) {
+        for (int j = 0; j < W; ++j) {
+            cin >> A[i][j];
+        }
+    }
+    
+    vector<vector<bool>> visited(H, vector<bool>(W, false));
+    int total_area = H * W;
+    int remaining_area = total_area;
+    
+    for (int sea_level = 1; sea_level <= Y; ++sea_level) {
+        bfs(A, visited, sea_level, remaining_area);
+        cout << remaining_area << endl;
+    }
+    
+    return 0;
+}

@@ -1,0 +1,92 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+using ll = long long;
+using Graph = vector<vector<int>>;
+
+#define rep(i,n) for (int i=0; i<(n); ++i)
+#define reps(i,n) for (int i=0; i<=(n); ++i)
+#define all(x) (x).begin(), (x).end()
+#define rall(x) (x).rbegin(), (x).rend()
+#define pb(a) push_back(a)
+#define Yes(b) cout << ((b)?"Yes":"No") << endl
+#define YES(b) cout << ((b)?"YES":"NO") << endl
+
+int dx[4]={1,0,-1,0};
+int dy[4]={0,1,0,-1};
+
+int main(){
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+    int N;
+    cin >> N;
+    vector<ll> P(N+1), X(N);
+    P[0] = 0;
+    rep(i, N) cin >> X[i];
+    rep(i, N){
+        ll p;
+        cin >> p;
+        P[i+1] = P[i] + p;
+    }
+
+    // Build prefix sum of X values to allow range sum queries in O(log N)
+    vector<pair<ll, int>> sorted_X;
+    rep(i, N) {
+        sorted_X.emplace_back(X[i], i);
+    }
+    sort(all(sorted_X));
+
+    // Coordinate compression
+    vector<ll> compressed(N);
+    map<ll, int> index_map;
+    rep(i, N) {
+        compressed[i] = X[i];
+    }
+    sort(compressed.begin(), compressed.end());
+    auto it = unique(compressed.begin(), compressed.end());
+    compressed.resize(distance(compressed.begin(), it));
+    for (int i = 0; i < (int)compressed.size(); ++i) {
+        index_map[compressed[i]] = i;
+    }
+
+    // Build prefix sums for each X value in the sorted order
+    vector<ll> prefix_sum(compressed.size() + 1, 0);
+    vector<ll> count(compressed.size() + 1, 0);
+    rep(i, N) {
+        int idx = index_map[X[i]];
+        prefix_sum[idx + 1] += P[i + 1] - P[i];  // weight is P[i+1] - P[i]
+        count[idx + 1] += 1;
+    }
+
+    // Compute prefix sums for the compressed indices
+    for (int i = 1; i <= (int)compressed.size(); ++i) {
+        prefix_sum[i] += prefix_sum[i - 1];
+        count[i] += count[i - 1];
+    }
+
+    int Q;
+    cin >> Q;
+    rep(q, Q) {
+        ll L, R;
+        cin >> L >> R;
+
+        // Find lower and upper bounds in compressed array
+        int left_idx = lower_bound(compressed.begin(), compressed.end(), L) - compressed.begin();
+        int right_idx = upper_bound(compressed.begin(), compressed.end(), R) - compressed.begin();
+
+        if (left_idx >= (int)compressed.size()) {
+            cout << 0 << endl;
+            continue;
+        }
+
+        if (right_idx == 0 || left_idx >= right_idx) {
+            cout << 0 << endl;
+            continue;
+        }
+
+        ll total = prefix_sum[right_idx] - prefix_sum[left_idx];
+        cout << total << endl;
+    }
+
+    return 0;
+}

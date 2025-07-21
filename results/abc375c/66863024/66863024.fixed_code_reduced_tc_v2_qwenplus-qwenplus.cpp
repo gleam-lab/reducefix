@@ -1,0 +1,34 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int N;
+    cin >> N;
+
+    long double total = 0.0;
+    long double curr_x = 0.0, curr_y = 0.0;
+    long double prev_x = 0.0, prev_y = 0.0;
+
+    for (int i = 0; i < N; ++i) {
+        long double x, y;
+        cin >> x >> y;
+
+        long double dx = curr_x - x;
+        long double dy = curr_y - y;
+        total += sqrtl(dx * dx + dy * dy);
+
+        curr_x = x;
+        curr_y = y;
+    }
+
+    // Return to origin
+    total += sqrtl(curr_x * curr_x + curr_y * curr_y);
+
+    // Print with sufficient precision
+    cout << fixed << setprecision(15) << total << '\n';
+
+    return 0;
+}

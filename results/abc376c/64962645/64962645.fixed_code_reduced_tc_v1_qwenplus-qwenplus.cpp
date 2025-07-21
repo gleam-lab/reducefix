@@ -1,0 +1,77 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int N;
+    cin >> N;
+    vector<long long> A(N);
+    vector<long long> B(N - 1);
+
+    for (int i = 0; i < N; ++i) cin >> A[i];
+    for (int i = 0; i < N - 1; ++i) cin >> B[i];
+
+    sort(A.begin(), A.end());
+    sort(B.begin(), B.end());
+
+    // We will use binary search to find the minimal x
+    // First, check if it's possible without needing extra box
+    // That is, can we match all toys to boxes without using any toy in the new box?
+    // This would require every A[i] <= B[i] for 0 <= i < N-1
+    // But since we have N toys and N-1 boxes, one toy must go into the new box
+
+    // We binary search on which toy is assigned to the new box
+
+    // Let's binary search on the index of the largest toy that can be matched
+    // with greedy assignment to boxes. The remaining toy will be our candidate.
+
+    // To determine feasibility, we can try assigning smallest toys to smallest boxes
+    // that can contain them.
+
+    // We'll do a binary search over the sorted toys to find the smallest toy that needs the extra box
+
+    sort(A.begin(), A.end());
+    sort(B.begin(), B.end());
+
+    // Binary search setup
+    int left = 0;
+    int right = N;
+    int answer = -1;
+
+    while (left < right) {
+        int mid = (left + right) / 2;
+
+        // Try to assign all toys except A[mid], which would be the one needing x
+        vector<long long> tempB = B;
+        bool possible = true;
+        int bIndex = 0;
+
+        for (int i = 0; i < N; ++i) {
+            if (i == mid) continue;
+            while (bIndex < N - 1 && A[i] > tempB[bIndex]) {
+                bIndex++;
+            }
+            if (bIndex >= N - 1 || A[i] > tempB[bIndex]) {
+                possible = false;
+                break;
+            }
+            bIndex++;
+        }
+
+        if (possible) {
+            right = mid;
+        } else {
+            left = mid + 1;
+        }
+    }
+
+    if (left < N) {
+        cout << A[left] << endl;
+    } else {
+        cout << -1 << endl;
+    }
+
+    return 0;
+}

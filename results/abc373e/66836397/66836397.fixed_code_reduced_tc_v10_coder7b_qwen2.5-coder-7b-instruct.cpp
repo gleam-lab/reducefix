@@ -1,0 +1,57 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <numeric>
+
+using namespace std;
+
+long long binary_search(long long left, long long right, const function<bool(long long)> &predicate) {
+    while (left < right) {
+        long long mid = left + (right - left) / 2;
+        if (predicate(mid)) {
+            right = mid;
+        } else {
+            left = mid + 1;
+        }
+    }
+    return left;
+}
+
+int main() {
+    long long n, m, k;
+    cin >> n >> m >> k;
+    vector<long long> a(n);
+    for (long long i = 0; i < n; ++i) {
+        cin >> a[i];
+    }
+    
+    vector<long long> sorted_a = a;
+    sort(sorted_a.begin(), sorted_a.end());
+    
+    vector<long long> prefix_sum(n + 1);
+    partial_sum(sorted_a.begin(), sorted_a.end(), prefix_sum.begin() + 1);
+    
+    vector<long long> results(n);
+    for (long long i = 0; i < n; ++i) {
+        long long votes_needed = 0;
+        if (i >= m - 1) {
+            votes_needed += sorted_a[i] - sorted_a[i - m + 1];
+        }
+        long long remaining_votes = k - accumulate(a.begin(), a.end(), 0LL);
+        if (votes_needed > remaining_votes) {
+            results[i] = -1;
+        } else {
+            long long target_votes = sorted_a[i] + votes_needed + 1;
+            long long idx = lower_bound(sorted_a.begin(), sorted_a.end(), target_votes) - sorted_a.begin();
+            long long additional_votes = target_votes - sorted_a[idx - 1];
+            results[i] = additional_votes;
+        }
+    }
+    
+    for (long long result : results) {
+        cout << result << " ";
+    }
+    cout << endl;
+    
+    return 0;
+}

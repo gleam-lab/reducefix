@@ -1,0 +1,45 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+
+using namespace std;
+using ll = long long;
+
+const int MOD = 1e9 + 7, N = 2e5 + 5;
+
+void solve() {
+    int n;
+    cin >> n;
+    vector<ll> v(n);
+    ll dp[n + 1][2];
+    for (int i = 0; i < n; ++i)
+        cin >> v[i];
+
+    // Initialize dp array
+    memset(dp, -1, sizeof(dp));
+    dp[0][0] = dp[0][1] = 0;
+    dp[1][0] = dp[1][1] = v[0];
+
+    // Fill dp array
+    for (int i = 1; i < n; ++i) {
+        dp[i + 1][0] = max(dp[i + 1][0], dp[i][1] + 2 * v[i]); // Take 2 v[i] from dp[i][1]
+        dp[i + 1][1] = max(dp[i + 1][1], dp[i][0] + v[i]); // Take v[i] from dp[i][0]
+        // Also consider taking 2 v[i] from dp[i][0] to dp[i + 1][0]
+        dp[i + 1][0] = max(dp[i + 1][0], dp[i][0] + 2 * v[i]);
+    }
+
+    // Output the maximum value possible
+    cout << max(dp[n][0], dp[n][1]) << '\n';
+}
+
+int main() {
+    ios_base::sync_with_stdio(0);
+    cin.tie(0);
+    cout.tie(0);
+    int t = 1;
+    cin >> t;
+    while (t--) {
+        solve();
+    }
+    return 0;
+}

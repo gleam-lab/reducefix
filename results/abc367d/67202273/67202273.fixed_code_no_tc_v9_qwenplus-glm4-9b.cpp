@@ -1,0 +1,36 @@
+#include<bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+const int MAXN = 4e5 + 10;
+ll a[MAXN], sum[MAXN], cnt[MAXN];
+
+int main() {
+    ll n, m;
+    scanf("%lld %lld", &n, &m);
+    
+    // Initialize the array a with values, and replicate them for the second half
+    for (ll i = 1; i <= n; i++) {
+        scanf("%lld", &a[i]);
+        a[i + n] = a[i];
+    }
+    
+    // Calculate the prefix sums and count the occurrences of each sum
+    for (ll i = 1; i <= 2 * n; i++) {
+        sum[i] = (sum[i - 1] + a[i]) % m; // Corrected to use sum[i-1]
+        
+        // Only increment cnt for sums within the first half
+        if (i <= n) {
+            cnt[sum[i]]++;
+        }
+    }
+    
+    // Calculate the result by checking the counts of sums in the second half
+    ll ans = 0;
+    for (ll i = n + 1; i <= 2 * n; i++) {
+        ans += cnt[sum[i]]; // Correctly increment ans by cnt[sum[i]]
+    }
+    
+    // Output the result
+    printf("%lld\n", ans);
+    return 0;
+}

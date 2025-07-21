@@ -1,0 +1,44 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+
+using namespace std;
+
+int main() {
+    int n;
+    cin >> n;
+    vector<int> A(n), B(n - 1);
+    for (int i = 0; i < n; ++i) {
+        cin >> A[i];
+    }
+    for (int i = 0; i < n - 1; ++i) {
+        cin >> B[i];
+    }
+
+    // Create a vector to store the maximum size of toys that can fit in each box
+    vector<int> max_in_box(n - 1);
+    for (int i = 0; i < n - 1; ++i) {
+        max_in_box[i] = B[i];
+    }
+
+    // Sort the sizes of toys and the maximum sizes in the boxes
+    sort(A.begin(), A.end());
+    sort(max_in_box.begin(), max_in_box.end());
+
+    // We need to find the smallest box size that can fit the largest toy
+    int min_box_size = INT_MAX;
+    for (int i = 0; i < n - 1; ++i) {
+        if (A[n - 1] <= max_in_box[i]) {
+            min_box_size = min(min_box_size, max_in_box[i]);
+        }
+    }
+
+    // If we found such a box size, print it, otherwise print -1
+    if (min_box_size != INT_MAX) {
+        cout << min_box_size << endl;
+    } else {
+        cout << -1 << endl;
+    }
+
+    return 0;
+}

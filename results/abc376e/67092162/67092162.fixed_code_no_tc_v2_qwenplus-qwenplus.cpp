@@ -1,0 +1,61 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+const int maxN = 2e5 + 5;
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+    cout.tie(nullptr);
+
+    int T;
+    cin >> T;
+
+    while (T--) {
+        int N, K;
+        cin >> N >> K;
+
+        vector<pair<int, int>> items(N); // pair: (A_i, B_i)
+
+        for (int i = 0; i < N; ++i) {
+            cin >> items[i].first;
+        }
+        for (int i = 0; i < N; ++i) {
+            cin >> items[i].second;
+        }
+
+        // Sort by A_i ascending
+        sort(items.begin(), items.end());
+
+        // Minimize the maximum A_i * sum of B_i
+        priority_queue<int> max_heap; // To store top K smallest B's (as a max heap)
+        long long sum_b = 0;
+        long long result = 1e18; // Initialize to large number
+
+        // First K elements
+        for (int i = 0; i < K; ++i) {
+            sum_b += items[i].second;
+            max_heap.push(items[i].second);
+        }
+
+        result = 1LL * items[K - 1].first * sum_b;
+
+        // Sliding window approach
+        for (int i = K; i < N; ++i) {
+            if (items[i].second < max_heap.top()) {
+                // Remove the largest B in current set
+                sum_b -= max_heap.top();
+                max_heap.pop();
+                // Add new smaller B
+                sum_b += items[i].second;
+                max_heap.push(items[i].second);
+            }
+            // Update answer with current max A_i (items[i].first) and sum_b
+            result = min(result, 1LL * items[i].first * sum_b);
+        }
+
+        cout << result << "\n";
+    }
+
+    return 0;
+}

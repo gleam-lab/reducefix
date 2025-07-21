@@ -1,0 +1,82 @@
+To fix this code, we need to address the issue where the initial incorrect solution did not correctly handle the sinking of sections with elevations not greater than the sea level. The main problem lies in the way the priority queue is initialized and how the sinking process is simulated. 
+
+### Approaches
+1. **Initialization**: We start by initializing a priority queue (min-heap) to keep track of the sections that can potentially sink as the sea level rises. The priority queue should initially contain all the border sections of the island.
+2. **Simulate Rising Sea Level**: For each year from 1 to Y, we process the priority queue to determine which sections sink. When a section's elevation is not greater than the current sea level, it sinks, and its neighbors are checked. If these neighbors haven't sunk yet and their elevation is not greater than the current sea level, they are added to the queue to be processed in subsequent steps.
+3. **Track Remaining Area**: We maintain a count of the remaining sections above the sea level and update this count as sections sink.
+
+### Solution Code
+```cpp
+#include <bits/stdc++.h>
+
+using namespace std;
+
+constexpr int d[4][2] = {{0, 1}, {0, -1}, {1, 0}, {-1, 0}};
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int H, W, Y;
+    cin >> H >> W >> Y;
+
+    vector<vector<int>> A(H, vector<int>(W));
+    for (int i = 0; i < H; i++) {
+        for (int j = 0; j < W; j++) {
+            cin >> A[i][j];
+        }
+    }
+
+    priority_queue<tuple<int, int, int>, vector<tuple<int, int, int>>, greater<tuple<int, int, int>>> pq;
+    vector<vector<bool>> vis(H, vector<bool>(W, false));
+
+    for (int j = 0; j < W; j++) {
+        if (!vis[0][j]) {
+            pq.push(make_tuple(A[0][j], 0, j));
+            vis[0][j] = true;
+        }
+        if (!vis[H-1][j]) {
+            pq.push(make_tuple(A[H-1][j], H-1, j));
+            vis[H-1][j] = true;
+        }
+    }
+    for (int i = 1; i < H-1; i++) {
+        if (!vis[i][0]) {
+            pq.push(make_tuple(A[i][0], i, 0));
+            vis[i][0] = true;
+        }
+        if (!vis[i][W-1]) {
+            pq.push(make_tuple(A[i][W-1], i, W-1));
+            vis[i][W-1] = true;
+        }
+    }
+
+    int ans = H * W;
+    for (int year = 1; year <= Y; year++) {
+        while (!pq.empty()) {
+            auto [h, x, y] = pq.top();
+            if (h > year) break;
+            pq.pop();
+            ans--;
+            for (int k = 0; k < 4; k++) {
+                int nx = x + d[k][0];
+                int ny = y + d[k][1];
+                if (nx < 0 || nx >= H || ny < 0 || ny >= W) continue;
+                if (vis[nx][ny]) continue;
+                vis[nx][ny] = true;
+                pq.push(make_tuple(A[nx][ny], nx, ny));
+            }
+        }
+        cout << ans << '\n';
+    }
+
+    return 0;
+}
+```
+
+### Explanation
+1. **Initialization**: The priority queue is initialized with all border sections of the island. These sections are marked as visited to avoid reprocessing.
+2. **Processing Each Year**: For each year, the priority queue processes sections in order of their elevation. If a section's elevation is not greater than the current year (sea level), it sinks, and its neighbors are checked. Neighbors that haven't been processed and meet the sinking criteria are added to the queue.
+3. **Tracking Remaining Area**: The total remaining area is decremented each time a section sinks. The result for each year is printed after processing all possible sinking sections for that year.
+
+This approach ensures that we efficiently simulate the rising sea level and accurately track the remaining island area each year using a priority queue to process sections in the correct order. The complexity is managed by processing each section only once, making the solution both optimal and correct.

@@ -1,0 +1,74 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+const int MAXN = 200005;
+const int KMAX = 10;
+
+int parent[MAXN];
+set<int, greater<int>> group[MAXN]; // Store top 10 largest vertices in descending order
+bool is_root[MAXN];
+
+int find(int x) {
+    if (parent[x] != x)
+        parent[x] = find(parent[x]);
+    return parent[x];
+}
+
+void merge(int x, int y) {
+    int fx = find(x);
+    int fy = find(y);
+    if (fx == fy)
+        return;
+
+    // Always merge smaller group into larger group for efficiency
+    if (group[fx].size() < group[fy].size())
+        swap(fx, fy);
+
+    // Merge the sets
+    for (int val : group[fy]) {
+        group[fx].insert(val);
+        if (group[fx].size() > KMAX)
+            group[fx].erase(--group[fx].end());
+    }
+
+    parent[fy] = fx;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    cout.tie(nullptr);
+
+    int N, Q;
+    cin >> N >> Q;
+
+    for (int i = 1; i <= N; ++i) {
+        parent[i] = i;
+        group[i].insert(i);
+        is_root[i] = true;
+    }
+
+    while (Q--) {
+        int op;
+        cin >> op;
+
+        if (op == 1) {
+            int u, v;
+            cin >> u >> v;
+            merge(u, v);
+        } else if (op == 2) {
+            int v, k;
+            cin >> v >> k;
+            int root = find(v);
+            if (group[root].size() < k) {
+                cout << -1 << '\n';
+            } else {
+                auto it = group[root].begin();
+                advance(it, k - 1);
+                cout << *it << '\n';
+            }
+        }
+    }
+
+    return 0;
+}

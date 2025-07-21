@@ -1,0 +1,77 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+using namespace std;
+using ll = long long;
+
+int N, M;
+ll K;
+
+struct Node {
+  ll votes;
+  int idx;
+};
+
+int main() {
+  cin >> N >> M >> K;
+  vector<Node> candidates(N);
+  for (int i = 0; i < N; ++i) {
+    cin >> candidates[i].votes;
+    candidates[i].idx = i;
+  }
+
+  // Sort candidates by votes received in descending order
+  sort(candidates.begin(), candidates.end(), [](const Node &a, const Node &b) {
+    return a.votes > b.votes;
+  });
+
+  // Calculate the number of votes needed to guarantee victory
+  vector<ll> needed_votes(N, -1);
+  for (int i = 0; i < N; ++i) {
+    ll votes_needed = 0;
+    // Calculate the votes needed to make this candidate the M-th most voted candidate
+    votes_needed = (i + M) * candidates[i].votes - (i + 1) * candidates[i - 1].votes;
+    // Check if the candidate can reach at least M votes
+    if (candidates[i].votes + ceil((double) votes_needed / N) >= M) {
+      needed_votes[candidates[i].idx] = votes_needed;
+    }
+  }
+
+  // Binary search to find the minimum votes needed to guarantee victory
+  for (int i = 0; i < N; ++i) {
+    if (needed_votes[i] == -1) continue;
+    ll low = 0, high = K, mid, votes;
+    while (low < high) {
+      mid = (low + high + 1) / 2;
+      votes = candidates[i].votes + mid;
+      vector<ll> votes_left(N);
+      votes_left[0] = K - mid;
+      for (int j = 1; j < N; ++j) {
+        votes_left[j] = votes_left[j - 1] + candidates[j].votes;
+      }
+      ll threshold = votes + (votes - M + 1);
+      int count = 0;
+      for (int j = 0; j < N; ++j) {
+        if (votes_left[j] <= threshold) count++;
+      }
+      if (count >= M) {
+        high = mid - 1;
+      } else {
+        low = mid;
+      }
+    }
+    needed_votes[i] = low;
+  }
+
+  // Output the results
+  for (int i = 0; i < N; ++i) {
+    if (needed_votes[i] == -1) {
+      cout << -1 << ' ';
+    } else {
+      cout << needed_votes[i] << ' ';
+    }
+  }
+  cout << endl;
+
+  return 0;
+}

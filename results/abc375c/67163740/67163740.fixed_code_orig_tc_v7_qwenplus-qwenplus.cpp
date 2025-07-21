@@ -1,0 +1,27 @@
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+
+    int n;
+    double x = 0, y = 0, total = 0;
+    cin >> n;
+
+    for (int i = 0; i < n; ++i) {
+        double a, b;
+        cin >> a >> b;
+        total += hypot(x - a, y - b); // computes sqrt((x-a)^2 + (y-b)^2)
+        x = a;
+        y = b;
+    }
+
+    total += hypot(x, y); // return to origin
+
+    cout.precision(15);
+    cout << fixed << total << endl;
+
+    return 0;
+}

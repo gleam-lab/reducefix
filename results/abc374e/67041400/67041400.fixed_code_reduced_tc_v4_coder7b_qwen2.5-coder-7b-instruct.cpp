@@ -1,0 +1,49 @@
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+
+// Function to calculate the minimum cost to achieve a given production capacity W
+ll cost_for_W(int N, ll W, ll X,
+              const vector<ll>& A, const vector<ll>& P,
+              const vector<ll>& B, const vector<ll>& Q) {
+    ll total_cost = 0;
+    for (int i = 0; i < N; ++i) {
+        // Calculate the minimum cost to produce at least W items for process i
+        ll min_cost = LLONG_MAX;
+        for (ll x = 0; x <= W / A[i]; ++x) {
+            ll y = max(0LL, (W - A[i] * x + B[i] - 1) / B[i]);
+            ll current_cost = P[i] * x + Q[i] * y;
+            min_cost = min(min_cost, current_cost);
+        }
+        total_cost += min_cost;
+        if (total_cost > X) return X + 1; // If total cost exceeds budget, return early
+    }
+    return total_cost;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int N;
+    ll X;
+    cin >> N >> X;
+    vector<ll> A(N), P(N), B(N), Q(N);
+    for (int i = 0; i < N; ++i) {
+        cin >> A[i] >> P[i] >> B[i] >> Q[i];
+    }
+
+    // Binary search for the maximum achievable production capacity
+    ll lo = 0, hi = X;
+    while (lo <= hi) {
+        ll mid = lo + (hi - lo) / 2;
+        if (cost_for_W(N, mid, X, A, P, B, Q) <= X) {
+            lo = mid + 1; // Try for higher capacity
+        } else {
+            hi = mid - 1; // Reduce capacity
+        }
+    }
+
+    cout << hi << "\n"; // The highest capacity that fits within the budget
+    return 0;
+}

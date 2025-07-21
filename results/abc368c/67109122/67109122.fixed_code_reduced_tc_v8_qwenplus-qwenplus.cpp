@@ -1,0 +1,45 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+
+int main() {
+    int N;
+    cin >> N;
+    vector<long long> H(N + 1); // Use long long to avoid overflow
+    for (int i = 1; i <= N; i++) cin >> H[i];
+
+    long long T = 0;
+    
+    // We will simulate the process efficiently
+    // Instead of simulating each attack, we compute how much damage is needed per enemy
+    // and fast-forward through the turns that would be used on that enemy.
+
+    for (int i = 1; i <= N; i++) {
+        long long h = H[i];
+        if (h <= 0) continue;
+
+        // Let’s compute how many full cycles of 3 attacks are needed.
+        // Each cycle consists of:
+        // - Turn not divisible by 3: -1
+        // - Turn not divisible by 3: -1
+        // - Turn divisible by 3: -3
+        // Total damage per cycle: 5
+
+        long long full_cycles = h / 5;
+        long long remaining_health = h % 5;
+
+        T += full_cycles * 3;
+
+        // Now simulate the remaining health
+        for (int j = 0; j < 3 && remaining_health > 0; ++j) {
+            T++;
+            if (T % 3 == 0)
+                remaining_health -= 3;
+            else
+                remaining_health -= 1;
+        }
+    }
+
+    cout << T << endl;
+    return 0;
+}

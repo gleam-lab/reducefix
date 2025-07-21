@@ -1,0 +1,43 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+
+int main(){
+    int N;
+    cin >> N; // Number of queries
+    vector<int> X(N); // Array X to store the values of X_i
+    for (int i = 0; i < N; ++i) {
+        cin >> X[i]; // Input values of X_i
+    }
+    
+    // Initialize the graph with edge weights as given in X
+    vector<vector<int>> graph(N+1); // Graph to store the edges and their weights
+    for (int i = 0; i < N; ++i) {
+        int p;
+        cin >> p; // Input edge weight p
+        graph[i].push_back({i, p}); // Add edges with given weights
+    }
+    
+    // Read the queries and store the results in variables for later analysis
+    int Q; // Number of queries to be processed
+    cin >> Q; // Number of queries to analyze
+    
+    // Main logic for query processing starts here
+    for (int query_num = 0; query_num < Q; ++query_num) {
+        int L, R; // Query locations L and R
+        cin >> L >> R; // Input the query locations L and R
+        // Initialize the variables for later analysis
+        int ans = INT_MAX; // Initialize with the maximum possible answer if necessary
+        int x_ptr = x_to_ptr.find(L); // Find the index of X_i in the map x_to_ptr
+        // Get the weight associated with X_i from the map or use appropriate values for query locations
+        // ... Additional logic to find weight or query location details ...
+        int weight_sum = query_weight(graph, L, R); // Compute the weight sum for query range
+        ans = min(ans, weight_sum - X[x_ptr]); // Calculate the answer for the current query
+        // Output the answer for the current query if necessary
+        // ... Additional logic to output answer or show result ...
+    }
+    return 0; // Return the result as it does not affect execution time in this case
+}
+
+// Helper function to compute the weight sum for a query range in the graph using topological sort algorithm or other appropriate techniques.
+// Provide a proper implementation for this function according to the graph representation and edge weights.

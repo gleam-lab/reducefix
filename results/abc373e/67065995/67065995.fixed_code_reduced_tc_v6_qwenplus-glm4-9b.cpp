@@ -1,0 +1,58 @@
+#include <iostream>
+#include <algorithm>
+#include <vector>
+#include <set>
+using namespace std;
+typedef long long ll;
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+    cout.tie(nullptr);
+
+    int n, m, k;
+    cin >> n >> m >> k;
+
+    vector<ll> a(n);
+    for (ll &x : a) cin >> x;
+
+    sort(a.begin(), a.end());
+    vector<ll> current(n);
+    for (int i = 0; i < n; i++) {
+        current[i] = a[n - 1 - i] - a[n - 2 - i];
+    }
+
+    vector<ll> votes_needed(n, -1);
+    ll remaining_votes = 0;
+
+    for (int i = 0; i < n; ++i) {
+        if (a[i] + remaining_votes + 1 >= m) {
+            votes_needed[i] = 0;
+        } else {
+            ll votes_to_secure = m - (a[i] + remaining_votes + 1);
+            if (votes_to_secure <= 0) {
+                votes_needed[i] = 0;
+            } else {
+                ll additional_votes = votes_to_secure / n;
+                if (votes_to_secure % n != 0) additional_votes++;
+                votes_needed[i] = additional_votes;
+                remaining_votes += votes_to_secure - additional_votes * n;
+            }
+        }
+        if (votes_needed[i] != 0) {
+            break;
+        }
+    }
+
+    for (int i = n - 1; i >= 0; --i) {
+        if (votes_needed[i] == -1 && (i == 0 || votes_needed[i - 1] == 0)) {
+            votes_needed[i] = 0;
+        }
+    }
+
+    for (int i = 0; i < n; ++i) {
+        cout << votes_needed[i] << " ";
+    }
+
+    return 0;
+}

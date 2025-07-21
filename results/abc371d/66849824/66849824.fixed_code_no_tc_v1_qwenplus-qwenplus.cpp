@@ -1,0 +1,67 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+using ll = long long;
+using Graph = vector<vector<int>>;
+
+#define rep(i,n) for (int i=0; i<(n); ++i)
+#define reps(i,n) for (int i=0; i<=(n); ++i)
+#define all(x) (x).begin(), (x).end()
+#define rall(x) (x).rbegin(), (x).rend()
+#define pb(a) push_back(a)
+#define Yes(b) cout << ((b)?"Yes":"No") << endl
+#define YES(b) cout << ((b)?"YES":"NO") << endl
+
+int dx[4] = {1, 0, -1, 0};
+int dy[4] = {0, 1, 0, -1};
+
+int main() {
+    int N;
+    cin >> N;
+    vector<ll> P(N + 1);
+    vector<ll> X(N);
+    
+    for (int i = 0; i < N; ++i) {
+        cin >> X[i];
+    }
+    
+    P[0] = 0;
+    for (int i = 0; i < N; ++i) {
+        ll p;
+        cin >> p;
+        P[i + 1] = P[i] + p;
+    }
+
+    // Create prefix sum array
+    vector<ll> prefix_sum(N + 1, 0);
+    for (int i = 0; i < N; ++i) {
+        prefix_sum[i + 1] = prefix_sum[i] + P[i + 1];
+    }
+
+    // Prepare sorted list of (X[i], position) pairs
+    vector<pair<ll, int>> x_pos(N);
+    for (int i = 0; i < N; ++i) {
+        x_pos[i] = {X[i], i};
+    }
+    sort(all(x_pos));
+
+    int Q;
+    cin >> Q;
+    while (Q--) {
+        int L, R;
+        cin >> L >> R;
+
+        // Binary search to find the range in x_pos
+        int left_idx = lower_bound(all(x_pos), make_pair(L, -1)) - x_pos.begin();
+        int right_idx = upper_bound(all(x_pos), make_pair(R, N)) - x_pos.begin();
+
+        // Calculate the sum using prefix sums
+        if (left_idx >= right_idx) {
+            cout << 0 << endl;
+        } else {
+            cout << prefix_sum[right_idx] - prefix_sum[left_idx] << endl;
+        }
+    }
+
+    return 0;
+}

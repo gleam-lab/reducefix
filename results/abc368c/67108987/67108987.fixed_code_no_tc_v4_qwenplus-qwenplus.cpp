@@ -1,0 +1,63 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+
+int main() {
+    int N;
+    cin >> N;
+    vector<long long> H(N);
+    for (int i = 0; i < N; ++i) {
+        cin >> H[i];
+    }
+
+    long long T = 0;
+
+    // We will simulate the process properly:
+    // At each step, we attack the first enemy with health > 0.
+    // The time T increases by 1 each attack.
+    // At every T that is a multiple of 3, damage is 3, else 1.
+
+    // To optimize, we simulate attacks on each enemy in sequence,
+    // computing how many attacks it takes to kill current frontmost enemy.
+
+    for (int i = 0; i < N; ++i) {
+        if (H[i] <= 0) continue;
+
+        // Compute how many attacks are needed to kill this enemy
+        // Each cycle of 3 attacks does 1 + 1 + 3 = 5 damage
+        long long full_cycles = H[i] / 5;
+        long long remaining_damage = H[i] % 5;
+
+        // Each full cycle takes 3 seconds
+        T += full_cycles * 3;
+
+        // Apply remaining attacks manually
+        if (remaining_damage > 0) {
+            T++;
+            remaining_damage -= 1;
+        }
+        if (remaining_damage > 0) {
+            T++;
+            remaining_damage -= 1;
+        }
+        if (remaining_damage > 0) {
+            T++;
+            remaining_damage -= 3;
+        }
+
+        // Now handle ripple effect on next enemies using the same T
+        // Any attack on this enemy happens before moving forward
+        // So we can now push this "wave" forward
+
+        // Distribute the extra hits that would have gone to this enemy
+        // to affect future enemies indirectly via timing
+
+        // Actually, above method already works because we're only simulating
+        // the number of attacks required to eliminate this enemy,
+        // and T grows accordingly. No need to simulate one-by-one.
+
+    }
+
+    cout << T << endl;
+    return 0;
+}

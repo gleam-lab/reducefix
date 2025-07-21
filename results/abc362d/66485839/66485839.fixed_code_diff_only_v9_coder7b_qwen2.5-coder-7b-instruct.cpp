@@ -1,0 +1,84 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+#define int long long 
+
+struct DSU {
+private:
+    vector<int> fa, sz;
+public:
+    DSU(int n) : fa(n + 1), sz(n + 1, 1) {
+        iota(fa.begin(), fa.end(), 0);
+    }
+    int find(int x) {
+        if (fa[x] != x) fa[x] = find(fa[x]);
+        return fa[x];
+    }
+    void merge(int x, int y) {
+        x = find(x), y = find(y);
+        if (x == y) return;
+        if (sz[x] < sz[y]) swap(x, y);
+        fa[y] = x;
+        sz[x] += sz[y];
+    }
+};
+
+struct Edge {
+    int x, y, c;
+    bool operator<(const Edge &other) const {
+        return c < other.c;
+    }
+};
+
+void solve() {
+    int n, m;
+    cin >> n >> m;
+    vector<int> a(n + 1, 0);
+    vector<vector<pair<int, int>>> g(n + 1);
+    
+    for (int i = 1; i <= n; ++i) {
+        cin >> a[i];
+    }
+    for (int i = 1; i <= m; ++i) {
+        int u, v, b;
+        cin >> u >> v >> b;
+        g[u].push_back({v, b});
+        g[v].push_back({u, b});
+    }
+    
+    priority_queue<pair<long long, int>, vector<pair<long long, int>>, greater<>> pq;
+    vector<long long> dist(n + 1, LLONG_MAX);
+    dist[1] = a[1];
+    pq.push({dist[1], 1});
+
+    while (!pq.empty()) {
+        auto [d, u] = pq.top();
+        pq.pop();
+
+        if (d > dist[u]) continue;
+
+        for (auto &[v, b] : g[u]) {
+            if (dist[u] + b + a[v] < dist[v]) {
+                dist[v] = dist[u] + b + a[v];
+                pq.push({dist[v], v});
+            }
+        }
+    }
+
+    for (int i = 2; i <= n; ++i) {
+        cout << dist[i] << " ";
+    }
+    cout << "\n";
+}
+
+signed main() {
+    ios_base::sync_with_stdio(false); cin.tie(nullptr);
+
+    int t = 1;
+    // cin >> t;
+    while (t--) {
+        solve();
+    }
+
+    return 0;
+}

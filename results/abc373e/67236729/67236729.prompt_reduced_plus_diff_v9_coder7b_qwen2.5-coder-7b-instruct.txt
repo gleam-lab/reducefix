@@ -1,0 +1,982 @@
+### Problem Description
+Score : 500 points
+
+### Problem Statement
+
+An election is being held with N candidates numbered 1, 2, \ldots, N. There are K votes, some of which have been counted so far.
+
+Up until now, candidate i has received A\_i votes.
+
+After all ballots are counted, candidate i (1 \leq i \leq N) will be elected if and only if the number of candidates who have received more votes than them is less than M. There may be multiple candidates elected.
+
+For each candidate, find the minimum number of additional votes they need from the remaining ballots to guarantee their victory regardless of how the other candidates receive votes.
+
+Formally, solve the following problem for each i = 1,2,\ldots,N.
+
+Determine if there is a non-negative integer X not exceeding K - \displaystyle{\sum\_{i=1}^{N}} A\_i satisfying the following condition. If it exists, find the minimum possible such integer.
+
+* If candidate i receives X additional votes, then candidate i will always be elected.
+
+### Constraints
+
+* 1 \leq M \leq N \leq 2 \times 10^5
+* 1 \leq K \leq 10^{12}
+* 0 \leq A\_i \leq 10^{12}
+* \displaystyle{\sum\_{i=1}^{N} A\_i} \leq K
+* All input values are integers.
+
+---
+
+### Input
+
+The input is given from Standard Input in the following format:
+
+```
+N M K
+A_1 A_2 \ldots A_N
+
+```
+
+### Output
+
+Let C\_i be the minimum number of additional votes candidate i needs from the remaining ballots to guarantee their victory regardless of how other candidates receive votes. Print C\_1, C\_2, \ldots, C\_N separated by spaces.
+
+If candidate i has already secured their victory, then let C\_i = 0. If candidate i cannot secure their victory under any circumstances, then let C\_i = -1.
+
+---
+
+### Your Incorrect Code
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+using u32 = unsigned int;
+using i64 = long long;
+using u64 = unsigned long long;
+using i128 = __int128;
+using u128 = unsigned __int128;
+using f128 = __float128;
+constexpr int dir4[4][2] = {{0, 1}, {1, 0}, {0, -1}, {-1, 0}};
+constexpr int dir8[8][2] = {{0, 1},  {1, 1},   {1, 0},  {1, -1},
+                            {0, -1}, {-1, -1}, {-1, 0}, {-1, 1}};
+constexpr int maxinf = 0x3f3f3f3f;
+constexpr i64 maxinff = 0x3f3f3f3f3f3f3f3f;
+constexpr i64 mininf = 0x3f3f3f3f3f3f3f3f;
+constexpr i64 mininff = 0xcfcfcfcfcfcfcfcf;
+#if defined(ENABLE_FASTIO)
+struct FastIO {
+  static const int S = 1 << 18;
+  char ibuf[S], *p1, *p2;
+  char obuf[S], *p3 = obuf;
+  FastIO() : p1(ibuf), p2(ibuf) {
+    std::ios::sync_with_stdio(false);
+    std::cin.tie(nullptr);
+  }
+  inline char getch() {
+    if (p1 == p2) p1 = ibuf, p2 = ibuf + fread(ibuf, 1, S, stdin);
+    return p1 == p2 ? EOF : *p1++;
+  }
+  template <typename T>
+      typename std::enable_if<std::is_integral<T>::value,
+                              FastIO &>::typeoperator >>
+      (T & x) {
+    x = 0;
+    char c = getch();
+    bool sign = 0;
+    while (!isdigit(c)) sign |= (c == '-'), c = getch();
+    while (isdigit(c)) x = x * 10 + (c ^ '0'), c = getch();
+    if (sign) x = -x;
+    return *this;
+  }
+  template <typename T>
+      typename std::enable_if<std::is_floating_point<T>::value,
+                              FastIO &>::typeoperator >>
+      (T & x) {
+    x = 0.0;
+    double frac = 1.0;
+    char c = getch();
+    bool sign = 0, after_dot = 0;
+    while (!isdigit(c) && c != '.') sign |= (c == '-'), c = getch();
+    while (isdigit(c) || c == '.') {
+      if (c == '.')
+        after_dot = 1;
+      else if (!after_dot)
+        x = x * 10 + (c - '0');
+      else {
+        frac *= 0.1;
+        x += (c - '0') * frac;
+      }
+      c = getch();
+    }
+    if (sign) x = -x;
+    return *this;
+  }
+  FastIO &operator>>(char *s) {
+    int cnt = 0;
+    char c = getch();
+    while (isspace(c)) c = getch();
+    while (!isspace(c) && c != EOF) s[cnt++] = c, c = getch();
+    s[cnt] = '\0';
+    return *this;
+  }
+  template <typename T>
+  typename std::enable_if<!std::is_arithmetic<T>::value, FastIO &>::type
+  operator>>(T &x) {
+    x.read(*this);
+    return *this;
+  }
+  inline void putch(char c) {
+    if (p3 - obuf >= S) flush();
+    *p3++ = c;
+  }
+  template <typename T>
+      typename std::enable_if<std::is_integral<T>::value,
+                              FastIO &>::typeoperator
+      << (T x) {
+    static char stk[40];
+    int top = 0;
+    if (x < 0) putch('-'), x = -x;
+    do stk[top++] = x % 10 + '0', x /= 10;
+    while (x);
+    while (top) putch(stk[--top]);
+    return *this;
+  }
+  template <typename T>
+      typename std::enable_if<std::is_floating_point<T>::value,
+                              FastIO &>::typeoperator
+      << (T x) {
+    const int precision = 6;
+    if (x < 0) putch('-'), x = -x;
+    long long integer = static_cast<long long>(x);
+    *this << integer << '.';
+    x -= integer;
+    for (int i = 0; i < precision; ++i) {
+      x *= 10;
+      int digit = static_cast<int>(x);
+      putch(digit + '0');
+      x -= digit;
+    }
+    return *this;
+  }
+  FastIO &operator<<(const char *s) {
+    while (*s) putch(*s++);
+    return *this;
+  }
+  template <typename T>
+      typename std::enable_if<!std::is_arithmetic<T>::value,
+                              FastIO &>::typeoperator
+      << (const T &x) {
+    x.write(*this);
+    return *this;
+  }
+  friend FastIO &operator>>(FastIO &fio, std::string &s) {
+    s.clear();
+    char c = fio.getch();
+    while (isspace(c)) c = fio.getch();
+    while (!isspace(c) && c != EOF) {
+      s.push_back(c);
+      c = fio.getch();
+    }
+    return fio;
+  }
+  friend FastIO &operator<<(FastIO &fio, const std::string &s) {
+    for (char c : s) fio.putch(c);
+    return fio;
+  }
+  void flush() { fwrite(obuf, 1, p3 - obuf, stdout), p3 = obuf; }
+  ~FastIO() { flush(); }
+} fio;
+#define cin fio
+#define cout fio
+#else
+struct FastIO {
+  FastIO() {
+    std::ios::sync_with_stdio(false);
+    std::cin.tie(nullptr);
+    std::cout << std::fixed;
+  }
+} fio;
+#endif
+#define LOCAL
+#if defined(LOCAL)
+#define SHOW(...) \
+  SHOW_IMPL(__VA_ARGS__, SHOW6, SHOW5, SHOW4, SHOW3, SHOW2, SHOW1)(__VA_ARGS__)
+#define SHOW_IMPL(_1, _2, _3, _4, _5, _6, NAME, ...) NAME
+#define SHOW1(x) std::cerr << #x << " = " << (x) << std::endl
+#define SHOW2(x, y) \
+  std::cerr << #x << " = " << (x) << ", " << #y << " = " << (y) << std::endl
+#define SHOW3(x, y, z)                                                        \
+  std::cerr << #x << " = " << (x) << ", " << #y << " = " << (y) << ", " << #z \
+            << " = " << (z) << std::endl
+#define SHOW4(x, y, z, w)                                                     \
+  std::cerr << #x << " = " << (x) << ", " << #y << " = " << (y) << ", " << #z \
+            << " = " << (z) << ", " << #w << " = " << (w) << std::endl
+#define SHOW5(x, y, z, w, v)                                                  \
+  std::cerr << #x << " = " << (x) << ", " << #y << " = " << (y) << ", " << #z \
+            << " = " << (z) << ", " << #w << " = " << (w) << ", " << #v       \
+            << " = " << (v) << std::endl
+#else
+#define SHOW(...)
+#endif
+#define DEBUG 1
+#ifdef DEBUG
+#define dbg(...)                                                            \
+  std::cerr << "DEBUG [Line " << __LINE__ << "] " << #__VA_ARGS__ << " = ", \
+      debug_out(__VA_ARGS__)
+#else
+#define dbg(...) 42
+#endif
+void debug_out() { std::cerr << std::endl; }
+template <typename Head, typename... Tail>
+void debug_out(Head H, Tail... T) {
+  std::cerr << H;
+  if (sizeof...(T)) std::cerr << ", ";
+  debug_out(T...);
+}
+#define fi first
+#define se second
+#define mp make_pair
+#define pb push_back
+#define stoi stoll
+#define popf pop_front
+#define popb pop_back
+#define pbf push_front
+#define eb emplace_back
+#define bg begin()
+#define ed end()
+#define all(v) v.begin(), v.end()
+#define onebits(x) __builtin_popcountll(x)        // 二进制1
+#define zerobits(x) __builtin_ctzll(x)            // 末尾0
+#define toone_bit(x, i) ((x) |= (1LL << (i)))     // i位置1
+#define clear_bit(x, i) ((x) &= ~(1LL << (i)))    // 清为0
+#define rev_bit(x, i) ((x) ^= (1LL << (i)))       // 取反
+#define check_bit(x, i) (!!((x) & (1LL << (i))))  // 是否为1
+#define ps(y) cout << fixed << setprecision(y)
+#define rep2(a) for (decay_t<decltype(a)> _ = 0; _ < (a); ++_)
+#define rep3(i, a) for (decay_t<decltype(a)> i = 0; i < (a); ++i)
+#define rep4(i, a, b) for (decay_t<decltype(b)> i = a; i < (b); ++i)
+#define rep5(i, a, b, c) for (decay_t<decltype(b)> i = a; i < (b); i += (c))
+#define rep6(a) for (decay_t<decltype(a)> _ = 1; _ <= (a); ++_)
+#define rep7(i, a) for (decay_t<decltype(a)> i = 1; i <= (a); ++i)
+#define rep8(i, a, b) for (decay_t<decltype(b)> i = a; i <= (b); ++i)
+#define rep9(i, a, b, c) for (decay_t<decltype(b)> i = a; i <= (b); i += (c))
+#define per2(a) for (decay_t<decltype(a)> _ = (a) - 1; _ >= (0); --_)
+#define per3(i, a) for (decay_t<decltype(a)> i = (a) - 1; i >= (0); --i)
+#define per4(i, a, b) for (decay_t<decltype(b)> i = (b) - 1; i >= (a); --i)
+#define per5(i, a, b, c) \
+  for (decay_t<decltype(b)> i = (b) - 1; i >= (a); i -= (c))
+#define per6(a) for (decay_t<decltype(a)> _ = (a); _ >= 1; --_)
+#define per7(i, a) for (decay_t<decltype(a)> i = (a); i >= 1; --i)
+#define per8(i, a, b) for (decay_t<decltype(b)> i = (b); i >= (a); --i)
+#define per9(i, a, b, c) for (decay_t<decltype(b)> i = (b); i >= (a); i -= (c))
+#define rev1(v) reverse(all(v))
+#define rev2(first, last) std::reverse((first), (last))
+#define overload4(a, b, c, d, e, ...) e
+#define overloadr(a, b, c, ...) e
+#define rev(...) overloadr(__VA_ARGS__, rev1, rev2)(__VA_ARGS__)
+#define rep0(...) overload4(__VA_ARGS__, rep5, rep4, rep3, rep2)(__VA_ARGS__)
+#define rep1(...) overload4(__VA_ARGS__, rep9, rep8, rep7, rep6)(__VA_ARGS__)
+#define per0(...) overload4(__VA_ARGS__, per5, per4, per3, per2)(__VA_ARGS__)
+#define per1(...) overload4(__VA_ARGS__, per9, per8, per7, per6)(__VA_ARGS__)
+#define overload_scanf(_1, _2, _3, NAME, ...) NAME
+#define lb(c, x) distance((c).begin(), lower_bound(all(c), (x)))
+#define lbg(c, x) distance((c).begin(), lower_bound(all(c), (x), greater{}))
+#define ub(c, x) distance((c).begin(), upper_bound(all(c), (x)))
+#define ubg(c, x) distance((c).begin(), upper_bound(all(c), (x), greater{}))
+#define uniq(x) sort(all(x)), x.erase(unique(all(x)), x.end())
+template <typename T>
+int sz(const T &x) {
+  return static_cast<int>(x.size());
+}
+template <typename T>
+void sc(T &value) {
+  if constexpr (is_same_v<T, int>) {
+    scanf("%d", &value);
+  } else if constexpr (is_same_v<T, char>) {
+    scanf(" %c", &value);
+  } else if constexpr (is_same_v<T, long long>) {
+    scanf("%lld", &value);
+  }
+}
+template <typename T, typename U>
+void sc2(T &value1, U &value2) {
+  sc(value1);
+  sc(value2);
+}
+template <typename T, typename U, typename V>
+void sc3(T &value1, U &value2, V &value3) {
+  sc(value1);
+  sc(value2);
+  sc(value3);
+}
+#define sc(...) overload_scanf(__VA_ARGS__, sc3, sc2, sc)(__VA_ARGS__)
+#define overload_printf(_1, _2, _3, NAME, ...) NAME
+template <typename T>
+void pr(T value) {
+  if constexpr (is_same_v<T, int>) {
+    printf("%d ", value);
+  } else if constexpr (is_same_v<T, char>) {
+    printf("%c ", value);
+  } else if constexpr (is_same_v<T, long long>) {
+    printf("%lld ", value);
+  }
+}
+template <typename T, typename U>
+void pr2(T value1, U value2) {
+  pr(value1);
+  pr(value2);
+}
+template <typename T, typename U, typename V>
+void pr3(T value1, U value2, V value3) {
+  pr(value1);
+  pr(value2);
+  pr(value3);
+}
+#define pr(...) overload_printf(__VA_ARGS__, pr3, pr2, pr)(__VA_ARGS__)
+template <class T>
+auto minarray(const T &a) {
+  return *min_element(all(a));
+}
+template <class T>
+auto maxarray(const T &a) {
+  return *max_element(all(a));
+}
+template <class T1>
+istream &operator>>(istream &cin, vector<T1> &a) {
+  for (auto &x : a) cin >> x;
+  return cin;
+}
+template <class T1>
+ostream &operator<<(ostream &cout, vector<T1> a) {
+  int n = a.size();
+  if (!n) return cout;
+  cout << a[0];
+  for (int i = 1; i < n; i++) cout << ' ' << a[i];
+  return cout;
+}
+istream &operator>>(istream &cin, i128 &x) {
+  bool flg = 0;
+  x = 0;
+  static string s;
+  cin >> s;
+  if (s[0] == '-') flg = 1, s = s.substr(1);
+  for (char c : s) x = x * 10 + (c - '0');
+  if (flg) x = -x;
+  return cin;
+}
+ostream &operator<<(ostream &cout, i128 x) {
+  static char s[60];
+  if (x < 0) cout << '-', x = -x;
+  int tp = 1;
+  s[0] = '0' + (x % 10);
+  while (x /= 10) s[tp++] = '0' + (x % 10);
+  while (tp--) cout << s[tp];
+  return cout;
+}
+template <typename T1, typename T2>
+inline T1 min(T1 a, T2 b) {
+  b = (T1)b;
+  return a > b ? b : a;
+}
+template <typename T1, typename T2>
+inline T1 max(T1 a, T2 b) {
+  b = (T1)b;
+  return a > b ? a : b;
+}
+template <class T>
+bool chmin(T &a, const T &b) {
+  return b < a ? a = b, 1 : 0;
+}
+template <class T>
+bool chmax(T &a, const T &b) {
+  return a < b ? a = b, 1 : 0;
+}
+template <typename T, typename U>
+T ceil(T x, U y) {
+  return (x > 0 ? (x + y - 1) / y : x / y);
+}
+template <typename T, typename U>
+T floor(T x, U y) {
+  return (x > 0 ? x / y : (x - y + 1) / y);
+}
+template <class T>
+std::ostream &operator<<(std::ostream &cout,
+                         const std::vector<std::vector<T>> &a) {
+  for (const auto &row : a) {
+    cout << row << '\n';
+  }
+  return cout;
+}
+template <class T>
+void rsort(vector<T> &v) {
+  sort(v.rbegin(), v.rend());
+}
+template <class T>
+void sort(vector<T> &v) {
+  sort(v.begin(), v.end());
+}
+template <class Iterator>
+void rsort(Iterator first, Iterator last) {
+  sort(first, last, greater<typename iterator_traits<Iterator>::value_type>());
+}
+template <typename T>
+using pii = pair<T, T>;
+template <typename T, typename T1>
+using ppi = pair<T, T1>;
+template <typename T>
+using vpii = vector<pair<T, T>>;
+template <typename T, typename T1>
+using vppi = vector<pair<T, T1>>;
+template <typename T>
+using vi = vector<T>;
+template <typename T>
+using vvi = vector<vector<T>>;
+template <typename T, typename U>
+using umap = unordered_map<T, U>;
+template <typename T>
+using uset = unordered_set<T>;
+template <typename T>
+using vti = vector<tuple<T, T, T>>;
+template <typename T>
+using si = set<T>;
+template <typename T, typename U>
+using mpi = map<T, U>;
+template <typename T>
+using qi = queue<T>;
+template <typename T>
+using pqmin = priority_queue<T, vector<T>, greater<T>>;
+template <typename T>
+using pqmax = priority_queue<T, vector<T>, less<T>>;
+template <typename T, size_t N>
+using arr = array<T, N>;
+template <typename T>
+T gcd(T a, T b) {
+  return b ? gcd(b, a % b) : a;
+}
+template <typename T>
+T lcm(T a, T b) {
+  return a / gcd(a, b) * b;
+}
+template <typename T>
+T ksm(T a, T b) {
+  T res = 1;
+  while (b) {
+    if (b & 1) res *= a;
+    a *= a;
+    b >>= 1;
+  }
+  return res;
+}
+template <typename T>
+T ksm(T a, T b, T mod) {
+  T res = 1;
+  while (b) {
+    if (b & 1) res = res * a % mod;
+    a = a * a % mod;
+    b >>= 1;
+  }
+  return res;
+}
+template <typename T>
+T inv(T a, T mod) {
+  return pow_mod(a, mod - 2, mod);
+}
+template <typename T>
+bool is_pow2(T x) {
+  return x && !(x & (x - 1));
+}
+template <typename T>
+T next_pow2(T x) {
+  return x ? T(1) << (sizeof(T) * 8 - clz(x)) : 1;
+}
+template <typename T>
+vector<T> presum(const vector<T> &v) {
+  vector<T> res(v.size() + 1);
+  for (int i = 0; i < v.size(); ++i) res[i + 1] = res[i] + v[i];
+  return res;
+}
+template <typename T>
+vector<T> sufsum(const vector<T> &v) {
+  vector<T> res(v.size() + 1);
+  for (int i = (int)v.size() - 1; i >= 0; --i) res[i] = res[i + 1] + v[i];
+  return res;
+}
+template <template <typename...> class Container = vector>
+Container<string> split(const string &s, char delim = ' ') {
+  Container<string> tokens;
+  string token;
+  istringstream iss(s);
+  while (getline(iss, token, delim)) {
+    if (!token.empty()) {
+      tokens.push_back(token);
+    }
+  }
+  return tokens;
+}
+template <typename T>
+T floor(T a, T b) {
+  return a / b - (a % b && (a ^ b) < 0);
+}
+template <typename T>
+T ceil(T x, T y) {
+  return floor(x + y - 1, y);
+}
+template <typename T, typename U>
+T SUM(const vector<U> &A) {
+  T sm = 0;
+  for (auto &&a : A) sm += a;
+  return sm;
+}
+template <typename T>
+vector<int> idxsort(const vector<T> &A) {
+  vector<int> ids(len(A));
+  iota(all(ids), 0);
+  sort(all(ids),
+       [&](int i, int j) { return (A[i] == A[j] ? i < j : A[i] < A[j]); });
+  return ids;
+}
+template <class T, size_t N>
+std::istream &operator>>(std::istream &cin, std::array<T, N> &a) {
+  for (auto &x : a) cin >> x;
+  return cin;
+}
+template <class T, size_t N>
+std::ostream &operator<<(std::ostream &cout, const std::array<T, N> &a) {
+  for (size_t i = 0; i < N; ++i) {
+    if (i > 0) cout << ' ';
+    cout << a[i];
+  }
+  return cout;
+}
+template <class T, size_t N>
+std::istream &operator>>(std::istream &cin, std::vector<std::array<T, N>> &vp) {
+  for (auto &arr : vp) {
+    cin >> arr;
+  }
+  return cin;
+}
+template <class T, size_t N>
+std::ostream &operator<<(std::ostream &cout,
+                         const std::vector<std::array<T, N>> &vp) {
+  for (size_t i = 0; i < vp.size(); ++i) {
+    if (i > 0) cout << '\n';
+    cout << vp[i];
+  }
+  return cout;
+}
+template <typename T1, typename T2, typename T3>
+struct Node {
+  T1 x;
+  T2 y;
+  T3 z;
+  Node(T1 x = T1(), T2 y = T2(), T3 z = T3()) : x(x), y(y), z(z) {}
+};
+template <typename T1, typename T2, typename T3>
+std::istream &operator>>(std::istream &cin, Node<T1, T2, T3> &a) {
+  return cin >> a.x >> a.y >> a.z;
+}
+template <typename T1, typename T2, typename T3>
+std::ostream &operator<<(std::ostream &cout, const Node<T1, T2, T3> &a) {
+  return cout << a.x << ' ' << a.y << ' ' << a.z;
+}
+template <typename T1, typename T2, typename T3>
+std::ostream &operator<<(std::ostream &cout,
+                         const std::vector<Node<T1, T2, T3>> &a) {
+  for (const auto &x : a) {
+    cout << x << '\n';
+  }
+  return cout;
+}
+template <class T1, class T2>
+istream &operator>>(istream &cin, pair<T1, T2> &a) {
+  return cin >> a.first >> a.second;
+}
+template <class T1, class T2>
+ostream &operator<<(ostream &cout, const pair<T1, T2> &a) {
+  return cout << a.first << ' ' << a.second;
+}
+template <class T1, class T2>
+ostream &operator<<(ostream &cout, const vector<pair<T1, T2>> &a) {
+  for (auto &x : a) cout << x << '\n';
+  return cout;
+}
+template <typename T, typename = std::enable_if_t<std::is_integral_v<T>>>
+int popcnt(T x) {
+  if constexpr (std::is_signed_v<T>) {
+    return __builtin_popcountll(static_cast<unsigned long long>(x));
+  } else {
+    return __builtin_popcount(x);
+  }
+}
+template <typename T, typename = std::enable_if_t<std::is_integral_v<T>>>
+int popcnt_mod_2(T x) {
+  if constexpr (std::is_signed_v<T>) {
+    return __builtin_parityll(static_cast<unsigned long long>(x));
+  } else {
+    return __builtin_parity(x);
+  }
+}
+template <typename T, typename = std::enable_if_t<std::is_integral_v<T>>>
+int topbit(T x) {
+  if (x == 0) {
+    return -1;
+  }
+  if constexpr (std::is_signed_v<T>) {
+    return 63 - __builtin_clzll(static_cast<unsigned long long>(x));
+  } else {
+    return (sizeof(T) * 8 - 1) - __builtin_clz(x);
+  }
+}
+template <typename T, typename = std::enable_if_t<std::is_integral_v<T>>>
+int lowbit(T x) {
+  if (x == 0) {
+    return -1;
+  }
+  if constexpr (std::is_signed_v<T>) {
+    return __builtin_ctzll(static_cast<unsigned long long>(x));
+  } else {
+    return __builtin_ctz(x);
+  }
+}
+template <typename T>
+vector<T> &operator+=(vector<T> &a, const vector<T> &b) {
+  assert(a.size() == b.size());
+  for (size_t i = 0; i < a.size(); ++i) a[i] += b[i];
+  return a;
+}
+template <typename T>
+vector<T> operator+(vector<T> a, const vector<T> &b) {
+  return a += b;
+}
+template <typename T>
+vector<T> &operator-=(vector<T> &a, const vector<T> &b) {
+  assert(a.size() == b.size());
+  for (size_t i = 0; i < a.size(); ++i) a[i] -= b[i];
+  return a;
+}
+template <typename T>
+vector<T> operator-(vector<T> a, const vector<T> &b) {
+  return a -= b;
+}
+template <typename T>
+std::string vi_to_s(const vi<T> &vec, const std::string &delimiter) {
+  if (vec.empty()) return "";
+  std::string result = std::to_string(vec[0]);
+  for (size_t i = 1; i < vec.size(); ++i) {
+    result += delimiter + std::to_string(vec[i]);
+  }
+  return result;
+}
+template <typename T>
+std::unordered_map<T, int> every_count(const vi<T> &vec) {
+  std::unordered_map<T, int> cnt;
+  for (const auto &element : vec) {
+    ++cnt[element];
+  }
+  return cnt;
+}
+template <typename T>
+T max_count(const vi<T> &vec) {
+  auto cnt = count_elements(vec);
+  T res;
+  int cntt = 0;
+  for (const auto &pair : cnt) {
+    if (pair.second > cntt) {
+      cntt = pair.second;
+      res = pair.first;
+    }
+  }
+  return res;
+}
+template <class t, class u>
+vi<t> &operator*=(vi<t> &a, u x) {
+  for (auto &v : a) v *= x;
+  return a;
+}
+template <class t, class u>
+vi<t> operator*(vi<t> a, u x) {
+  return a *= x;
+}
+template <class t, class u>
+vi<t> &operator/=(vi<t> &a, u x) {
+  for (auto &v : a) v /= x;
+  return a;
+}
+template <class t, class u>
+vi<t> operator/(vi<t> a, u x) {
+  return a /= x;
+}
+template <class t, class u>
+vi<t> &operator-=(vi<t> &a, u x) {
+  for (auto &v : a) v -= x;
+  return a;
+}
+template <class t, class u>
+vi<t> operator-(vi<t> a, u x) {
+  return a -= x;
+}
+template <class t, class u>
+vi<t> &operator+=(vi<t> &a, u x) {
+  for (auto &v : a) v += x;
+  return a;
+}
+template <class t, class u>
+vi<t> operator+(vi<t> a, u x) {
+  return a += x;
+}
+i128 toi128(const std::string &s) {
+  i128 n = 0;
+  for (auto c : s) {
+    n = n * 10 + (c - '0');
+  }
+  return n;
+}
+i128 sqrti128(i128 n) {
+  i128 lo = 0, hi = 1E16;
+  while (lo < hi) {
+    i128 x = (lo + hi + 1) / 2;
+    if (x * x <= n) {
+      lo = x;
+    } else {
+      hi = x - 1;
+    }
+  }
+  return lo;
+}
+i128 gcd(i128 a, i128 b) {
+  while (b) {
+    a %= b;
+    std::swap(a, b);
+  }
+  return a;
+}
+bool o(int x) {
+  bool t = (x % 2 == 0 ? 1 : 0);
+  return t;
+}
+void YES(bool t = 1) { cout << (t ? "YES" : "NO") << endl; }
+void NO(bool t = 1) { YES(!t); }
+void Yes(bool t = 1) { cout << (t ? "Yes" : "No") << endl; }
+void No(bool t = 1) { Yes(!t); }
+void yes(bool t = 1) { cout << (t ? "yes" : "no") << endl; }  // split
+void no(bool t = 1) { yes(!t); }
+string to_lower(string s) {
+  transform(s.begin(), s.end(), s.begin(), ::tolower);
+  return s;
+}
+string to_upper(string s) {
+  transform(s.begin(), s.end(), s.begin(), ::toupper);
+  return s;
+}
+vi<int> s_to_vi(const string &S, char first_char) {
+  vi<int> A(S.size());
+  for (int i = 0; i < sz(S); i++) {
+    A[i] = (S[i] != '?' ? S[i] - first_char : -1);
+  }
+  return A;
+}
+/*
+ _______ ______ ______ ______ ______ ______ ______ ______ ______ ______ ______
+______ ______ ______ ______ ______ ______ _____
+|______//_____//_____//_____//_____//_____//_____//_____//_____//_____//_____//_____//_____//_____//_____//_____//_____//___
+|
+|\| | |
+|/|   _     _      _     _      _     _      _     _      _     _       _     _
+_     _      _     _      _     _      |/|
+|\|  (c).-.(c)    (c).-.(c)    (c).-.(c)    (c).-.(c)    (c).-.(c)     (c).-.(c)
+(c).-.(c)    (c).-.(c)    (c).-.(c)     |\|
+|/|   / ._. \      / ._. \      / ._. \      / ._. \      / ._. \       / ._. \
+/ ._. \      / ._. \      / ._. \      |/|
+|\| __\( Z )/__  __\( Z )/__  __\( Z )/__  __\( Z )/__  __\( Z )/__   __\( Z
+)/__  __\( Z )/__  __\( Z )/__  __\( Z )/__    |\|
+|/|(_.-/'-'\-._)(_.-/'-'\-._)(_.-/'-'\-._)(_.-/'-'\-._)(_.-/'-'\-._)
+(_.-/'-'\-._)(_.-/'-'\-._)(_.-/'-'\-._)(_.-/'-'\-._)   |/|
+|\|   || Z ||      || Z ||      || H ||      || H ||      || H ||       || H ||
+|| H ||      || H ||      || H ||      |\|
+|/| _.' `-' '._  _.' `-' '._  _.' `-' '._  _.' `-' '._  _.' `-' '._   _.' `-'
+'._  _.' `-' '._  _.' `-' '._  _.' `-' '._    |/|
+|\|(.-./`-'\.-.)(.-./`-'\.-.)(.-./`-'\.-.)(.-./`-'\.-.)(.-./`-`\.-.)
+(.-./`-'\.-.)(.-./`-'\.-.)(.-./`-'\.-.)(.-./`-'\.-.)   |\|
+|/| `-'     `-'  `-'     `-'  `-'     `-'  `-'     `-'  `-'     `-'   `-' `-'
+`-'     `-'  `-'     `-'  `-'     `-'    |/|
+|\|   _     _      _____   _____    __   __    (\_/)               ____   _____
+___     ____      _____      _     _    |\|
+|/|  (c).-.(c)    /__  /  /__  /   |  |_|  |  ( •.• )   ⣿⣿⣿⣿     / ___| |_   _|
+/ _ \    |  _ \   |_   _|    (c).-.(c)   |/|
+|\|   / ._. \       / /     / /    |   _   |  (")_(")   (\_/)     \___ \   | |
+/ /_\ \   | |_) |    | |       / ._. \    |\|
+|/| __\( Z )/__    / /___  / /__   |  | |  |   ⣿⣿⣿⣿   ( •.• )     ___) |  | | /
+_____ \  |  _ <     | |     __\( Z )/__  |/|
+|\|(_.-/'-'\-._)  /_____/ /____/   |__| |__|           (")_(")    |____/   |_|
+/_/     \_\ |_| \_\    |_|    (_.-/'-'\-._) |\|
+|/|   || Z || || Z ||    |/|
+|\| _.' `-' '._ ❀❀❀❀❀❀❀❀❀❀❀❀❀❀❀❀❀❀❀❀❀❀❀❀❀❀❀❀❀❀❀❀❀❀❀❀❀❀❀❀❀❀❀❀❀❀❀❀❀❀❀❀❀❀❀❀❀❀❀❀❀❀❀
+_.' `-' '._  |\|
+|/|(.-./`-'\.-.)   ❀ ┌───┬───┬───┬───┐     ___________      __________
+___________      _____________ ❀ (.-./`-'\.-.)|/|
+|\| `-'     `-'    ❀ │ C │ ± │ % │ ÷ │    /           |    / ________ \      |
+_______  \    |  ___________|❀  `-'     `-' |\|
+|/|                ❀ ├───┼───┼───┼───┤   /  __________|   / /        \ \     | |
+___ \  \   | |            ❀    _     _   |/|
+|\|   _     _      ❀ │ 7 │ 8 │ 9 │ × │   |  |            | |          | |    | |
+|   | |  |  | |            ❀   (c).-.(c)  |\|
+|/|  (c).-.(c)     ❀ ├───┼───┼───┼───┤   |  |            | |          | |    | |
+|   | |  |  | |___________ ❀    / ._. \   |/|
+|\|   / ._. \      ❀ │ 4 │ 5 │ 6 │ - │   |  |            | |          | |    | |
+|   | |  |  |  ___________|❀  __\( Z )/__ |\|
+|/| __\( Z )/__    ❀ ├───┼───┼───┼───┤   |  |            | |          | |    | |
+|   | |  |  | |            ❀ (_.-/'-'\-._)|/|
+|\|(_.-/'-'\-._)   ❀ │ 1 │ 2 │ 3 │ + │   |  |_________   | |          | |    | |
+|___| |  |  | |            ❀    || Z ||   |\|
+|/|   || Z ||      ❀ ├───┴───┼───┼───┤    \           |   \ \________/ /     |
+|______/  /   | |___________ ❀  _.' `-' '._ |/|
+|/| _.' `-' '._    ❀ │   0   │ . │ = │     \__________|    \__________/
+|__________/    |_____________|❀ (.-./`-'\.-.)|/|
+|\|(.-./`-'\.-.)   ❀ └───────┴───┴───┘ ❀  `-'     `-' |\|
+|/| `-'     `-' ❀❀❀❀❀❀❀❀❀❀❀❀❀❀❀❀❀❀❀❀❀❀❀❀❀❀❀❀❀❀❀❀❀❀❀❀❀❀❀❀❀❀❀❀❀❀❀❀❀❀❀❀❀❀❀❀❀❀❀❀❀❀❀
+|/|
+|\|   _     _      _     _      _     _      _     _      _     _       _     _
+_     _      _     _      _     _      |\|
+|/|  (c).-.(c)    (c).-.(c)    (c).-.(c)    (c).-.(c)    (c).-.(c)     (c).-.(c)
+(c).-.(c)    (c).-.(c)    (c).-.(c)     |/|
+|\|   / ._. \      / ._. \      / ._. \      / ._. \      / ._. \       / ._. \
+/ ._. \      / ._. \      / ._. \      |\|
+|/| __\( Z )/__  __\( Z )/__  __\( Z )/__  __\( Z )/__  __\( Z )/__   __\( Z
+)/__  __\( Z )/__  __\( Z )/__  __\( Z )/__    |/|
+|/|(_.-/'-'\-._)(_.-/'-'\-._)(_.-/'-'\-._)(_.-/'-'\-._)(_.-/'-'\-._)
+(_.-/'-'\-._)(_.-/'-'\-._)(_.-/'-'\-._)(_.-/'-'\-._)   |/|
+|\|   || Y ||      || Y ||      || H ||      || H ||      || H ||       || H ||
+|| H ||      || H ||      || H ||      |\|
+|/| _.' `-' '._  _.' `-' '._  _.' `-' '._  _.' `-' '._  _.' `-' '._   _.' `-'
+'._  _.' `-' '._  _.' `-' '._  _.' `-' '._    |/|
+|\|(.-./`-'\.-.)(.-./`-'\.-.)(.-./`-'\.-.)(.-./`-'\.-.)(.-./`-`\.-.)
+(.-./`-'\.-.)(.-./`-'\.-.)(.-./`-'\.-.)(.-./`-'\.-.)   |\|
+|/| `-'     `-'  `-'     `-'  `-'     `-'  `-'     `-'  `-'     `-'   `-' `-'
+`-'     `-'  `-'     `-'  `-'     `-'    |/|
+|\|_____ ______ ______ ______ ______ ______ ______ ______ ______ ______ ______
+______ ______ ______ ______ ______ ______ ___|\|
+|______//_____//_____//_____//_____//_____//_____//_____//_____//_____//_____//_____//_____//_____//_____//_____//_____//_____|
+ /\_/\    ∧__∧    ∧__∧     ∧__∧   ∧__∧    /\_/\     /\_/\     ♡    ♡
+/\_/\    /\_/\    ∧__∧    ∧__∧    ∧__∧    ∧__∧     /\_/\ ( •.• )  (｀･ω･)
+(｀･ω･)  (｀･ω･) (｀･ω･)  (  •ω•)  (  •ω•)       ♡     (•ω•  )  (•ω•  ) (･ω･｀)
+(･ω･｀)  (･ω･｀)  (･ω･｀)   ( •.• ) (   > ♡  / 　 ♡  / 　 ♡   / 　 ♡  / 　 ♡ >⌒<
+>⌒<     ♡   ♡     >⌒<      >⌒<   \ 　 ♡   \ 　 ♡  \ 　 ♡   \ 　 ♡   ♡  < )
+/_/ \_\  しーーーJ   しーーーJ   しーーーJ   しーーーJ                       \|/
+しーーーJ   しーーーJ   しーーーJ   しーーーJ    /_/ \_\ ♡
+ /\_/\    /\_/\    /\_/\     /\_/\       /\_/\     /\_/\     /\_/\      /\_/\
+/\_/\       /\_/\      /\_/\      /\_/\ ( •.• )  ( •.• )  ( •.• )   ( •.• )    (
+•.• )   ( •.• )   ( •.• )    ( •.• )   ( •.• )     ( •.• )   ( •.• )     ( •.• )
+(   >♡  (   >♡   (   > ♡   (    >♡   (   >♡   (   >♡     (   >♡    (   >♡    (
+>♡       (   >♡    (   >♡     (   >♡
+/_/ \_\ /_/ \_\ /_/ \_\  /_/ \_\   /_/ \_\   /_/ \_\    /_/ \_\    /_/
+\_\    /_/ \_\    /_/ \_\    /_/ \_\     /_/ \_\
+
+ */
+const int N = 2e5 + 10;
+int a[N], b[N], sm[N];
+void solve() {
+  i64 m, n, k;
+  cin >> n >> m >> k;  // m-1个人比他多
+  if (n == m) {
+    rep0(i, n) { cout << 0 << " "; }
+    cout << "\n";
+    return;
+  }
+  rep1(i, n) { cin >> a[i]; }
+  rep1(i, n) {
+    b[i] = a[i];
+    k -= a[i];
+  }
+  sort(b + 1, b + 1 + n);
+  for (int i = n; i >= 1; i--) {
+    sm[i] = sm[i + 1] + b[i];
+  }
+  auto check = [&](i64 o, i64 d) -> bool {
+    int p = upper_bound(b + 1, b + n + 1, o + d) - b;
+    int up = n - p + 1;
+    if (up >= m) {
+      return false;
+    }
+    i64 S = (sm[p - (m - up)] - sm[p]);
+    if (b[p - (m - up)] <= o && o <= b[p - 1]) {
+      S -= o;
+      S += b[p - (m - up) - 1];
+    }
+    return (o + d + 1) * (m - up)-S > k - d;
+  };
+  //  cerr << 66 << "\n";
+  rep1(i, n) {
+    i64 l = 0, r = k, ans = -1;
+    while (l <= r) {
+      i64 mid = l + r >> 1;
+      if (check(a[i], mid)) {
+        ans = mid;
+        r = mid - 1;
+      } else {
+        l = mid + 1;
+      }
+    }
+    cout << ans << " ";
+  }
+}
+signed main() {
+  ios::sync_with_stdio(false);
+  cin.tie(nullptr);
+  cout.tie(0);
+  int T = 1;
+  //  cin >> T;
+  while (T--) {
+    solve();
+  }
+  return 0;
+}
+/*
+ * ┌───┐   ┌───┬───┬───┬───┐ ┌───┬───┬───┬───┐ ┌───┬───┬───┬───┐ ┌───┬───┬───┐
+ * │Esc│   │ F1│ F2│ F3│ F4│ │ F5│ F6│ F7│ F8│ │ F9│F10│F11│F12│ │P/S│S L│P/B│
+ * ┌┐    ┌┐    ┌┐ └───┘   └───┴───┴───┴───┘ └───┴───┴───┴───┘ └───┴───┴───┴───┘
+ * └───┴───┴───┘  └┘    └┘    └┘
+ * ┌───┬───┬───┬───┬───┬───┬───┬───┬───┬───┬───┬───┬───┬───────┐ ┌───┬───┬───┐
+ * ┌───┬───┬───┬───┐ │~ `│! 1│@ 2│# 3│$ 4│% 5│^ 6│& 7│* 8│( 9│) 0│_ -│+ =│ BacSp
+ * │ │Ins│Hom│PUp│ │Num│ / │ * │ - │
+ * ├───┴─┬─┴─┬─┴─┬─┴─┬─┴─┬─┴─┬─┴─┬─┴─┬─┴─┬─┴─┬─┴─┬─┴─┬─┴─┬─────┤ ├───┼───┼───┤
+ * ├───┼───┼───┼───┤ │ Tab │ Q │ W │ E │ R │ T │ Y │ U │ I │ O │ P │{ [│} ]│ |
+ * \ │ │Del│End│PDn│ │ 7 │ 8 │ 9 │   │
+ * ├─────┴┬──┴┬──┴┬──┴┬──┴┬──┴┬──┴┬──┴┬──┴┬──┴┬──┴┬──┴┬──┴─────┤ └───┴───┴───┘
+ * ├───┼───┼───┤ + │ │ Caps │ A │ S │ D │ F │ G │ H │ J │ K │ L │: ;│" '│ Enter
+ * │               │ 4 │ 5 │ 6 │   │
+ * ├──────┴─┬─┴─┬─┴─┬─┴─┬─┴─┬─┴─┬─┴─┬─┴─┬─┴─┬─┴─┬─┴─┬─┴────────┤     ┌───┐
+ * ├───┼───┼───┼───┤ │ Shift  │ Z │ X │ C │ V │ B │ N │ M │< ,│> .│? /│  Shift
+ * │     │ ↑ │     │ 1 │ 2 │ 3 │   │
+ * ├─────┬──┴─┬─┴──┬┴───┴───┴───┴───┴───┴──┬┴───┼───┴┬────┬────┤ ┌───┼───┼───┐
+ * ├───┴───┼───┤ E││ │ Ctrl│ Win│ Alt│         Space         │ Alt│
+ * Win│Menu│Ctrl│ │ ← │ ↓ │ → │ │   0   │ . │←─┘│
+ * └─────┴────┴────┴───────────────────────┴────┴────┴────┴────┘ └───┴───┴───┘
+ * └───────┴───┴───┘
+ */
+```
+
+### Failing Case #1
+Input:
+```
+1 31854 10544663219
+8916864
+
+```
+### Failing Case #2 (Alternative Size)
+Input:
+```
+109725 31854 743581726168
+8916864 3263711 5600733 11431700 7640446 721186 11314651 9026426 13320231 8484689 9996076 11684787 2401589 2083644 6592497 1136122 11269432 1621455 12518610 8364792 12722254 9208008 7253629 13186988 2543694 3487361 5792874 12776994 7599167 9253403 8126585 7425783 11417039 1446604 7395906 7692533 9565616 3785341 10717569 7762678 4456556 729539 6776563 9895957 10575819 321967 591487 7993859 13198428 3522914 11264063 10915716 12677703 12613939 10602422 11888816 10460745 13034383 1480593 11199287 8436056 808337 8500487 6987466 2375761 13104847 12746692 2837474 4171248 101671 9360191 3874114 9790586 11422196 11221453 10933311 4884287 8626494 4704241 6099703 6701738 1696776 2000180 4789148 6648085 3500899 2799582 8338488 7625368 354394 5315786 1645971 2682936 8184586 10552437 8076477 2076579 9876537 5273240 10930563 5447599 1484318 1270356 7213289 6001957 2220635 13069557 12796496 4905096 6201654 10652583 7520451 13063112 10092426 3143095 11713906 2947370 7596583 2718159 2523367 10173707 6234570 2432927 5757237 1191327 1971691 10998157 177106 1285929 8648269 5777736 4898878 13298232 2812387 3968874 8615252 3530469 895375 8249165 6318618 6967081 11782919 630992 5647239 4627035 9901118 303897 10324244 549037 5833417 6623119 10707651 12548103 10102429 2292843 1957220 4983274 4801255 8719620 8345497 2681655 12655601 10118508 10262349 8712350 9468552 6371203 8293647 12178473 8114805 4801500 10097715 12776606 313997 9804036 291174 8296210 6731239 1121255 8774563 9007772 2676614 2865240 12520451 12520778 4978312 4358898 8507787 8469234 4362283 11062023 9059728 4296449 6834880 296807 10649515 5198473 9751861 12188123 6851147 5888201 1119696 5348358 7241315 1911742 7104473 2742367 3900345 4512816 12920793 6210762 12214284 13319143 2067165 7780365 1995852 3786221 10433128 3956613 9974706 12556336 7265471 6697917 1996355 7158731 8780397 1419015 6401739 12629918 3281085 7924320 13072134 4509205 9025284 564961 10939382 3699239 10480228 5076532 7922358 6544150 8271316 9302343 2115393 12361127 10132912 2656102 6233921 12596012 11814160 10228516 12838376 3456109 10868686 3173986 8176859 7809398 9323958 6295090 2267478 7914954 9688763 8435687 3760373 11586878 5824423 881936 1821213 11389037 11960369 9605689 5432784 3897918 4271520 13122119 10526879 4434236 327051 4035068 6560178 1093918 6260836 2561094 7057364 12610523 7485476 7656617 6402731 11399583 5349421 4682355 4273311 3205309 4852222 7401635 10365713 5226480 300897 3516659 12554705 5790452 5395981 12272491 7161490 9089157 12019256 8196793 998638 4337213 12280381 10946770 3043656 2354362 2702978 4580828 10797608 12627824 9251636 10821247 5281551 6372957 6022047 11594380 4422114 8725689 2121287 2579141 871442 11685374 4181123 2955487 9891689 6871732 3558659 4958462 11534253 6013918 7003723 9493007 8262576 13104049 9345577 10092349 422457 928681 6564833 12177340 12353290 8766551 10052300 5646575 9874091 6429549 9176648 2641266 4236727 2424554 4729619 6362125 10279497 3748535 1423090 4458486 12710437 6870028 12975273 10340046 7133642 518930 11538360 12424886 2161524 10515434 12274868 12025595 2471881 2988224 8537385 5612156 9650286 2596733 11848317 6247193 11655158 8026170 3934508 11142489 808086 8044186 112653 10417144 163227 5347474 10546930 60634 1540283 11702810 1390184 3573311 1550776 11717282 1462522 1628897 11802606 10674949 9237875 8672425 9310000 7173699 12301431 4543618 12708354 5035111 3821451 940964 8972215 437850 1673474 11378836 11757887 12492791 3805888 2924324 378545 809274 3412597 3948875 4085407 11019653 1564075 8960232 782007 1240331 1831650 7758778 8289351 12503039 4811163 6823982 308735 5196681 10995363 6795312 6110782 5771378 9887703 6438381 5694319 6130165 11047740 3716893 5399628 9356493 4674568 10522226 8052098 11148747 9908901 4515421 8523980 6810641 1864451 7561461 7061997 1626009 4346384 5357907 264925 10072509 12953032 12251702 8741404 1469048 7364973 11437790 2861537 12246409 5602831 11500235 420938 5832384 5108353 7871769 9533915 1689184 586127 8031590 9750067 11774439 295866 11921480 3280171 12368441 3814209 9727813 6178071 8827237 6385210 1718704 4753904 6757171 6628678 8197022 521097 10708400 13259212 722121 1166902 3473723 5463489 3444777 7542511 3052600 9873177 6766989 2206897 1698811 6641982 9865668 7123703 7816047 1805068 2808422 5219430 5439991 7554400 5338854 8853628 6889797 11382518 3250791 13088861 11726536 2572100 12482375 9543637 9448911 5699284 11135038 11113508 8805532 3760651 12592786 6353276 1000089 11404575 5300922 2447997 11356724 708981 8132973 12705661 2033506 1163961 10065882 7864504 4753680 7197354 1508964 6314198 6910853 1782006 2052958 5492792 2322290 7339647 5258503 707884 3573551 1522955 5090574 9913117 6398400 6602000 4897085 11046006 12405225 3022462 1033393 8300386 11210447 8916128 1345668 4866318 533782 9691407 10577231 9777037 536277 9116332 10728483 5710910 6950741 847760 7553905 9031957 1462581 6206115 2226741 6292486 7381270 1850508 13172924 1869799 7436173 13323595 5643068 5221599 6306861 9576827 12740090 4686817 10988861 11090045 6247860 1183206 13121648 2986936 5107711 9940350 8551448 6464112 10421135 1214287 10311036 1560835 7903614 8564911 6461978 9697509 2637327 11002599 9216992 4987853 9132337 2259657 9144781 10029587 3689364 9994557 8621573 11696899 1358341 2458621 13157344 5271072 10690067 4940367 7159247 4939327 12452258 12691626 7229202 7419662 2272893 12827022 11235265 7749877 11648150 7922558 785975 931917 9506829 4436944 1281193 3787498 10385863 8855372 3866611 708492 250946 3745263 7574140 12851576 4943883 9165633 10250734 589801 9823429 12839994 12243654 2741772 8059048 12729657 7499516 11665020 2122692 1850041 12805767 1506606 2164113 8590553 1719912 7831351 1682216 705564 6761956 11739890 12208598 5825795 10447080 7000211 12273054 11368165 9601622 6678667 9105376 3647276 5969696 9865848 5714921 1212557 10869435 11103707 9851164 736411 9487399 7382157 5574684 6521826 9109014 1919766 11466945 7347954 8427992 6028579 7638669 9139814 2050317 8477158 862398 1956087 7475076 12669885 6857467 1381300 2633235 10034562 3812531 8506392 3979675 7395022 11408057 4109503 2134520 9248150 5437317 5504563 9850907 1010089 7022371 12981406 3975945 1240796 2573965 3276380 3464991 7798586 6587073 8438290 11759773 6491752 12713316 13327552 8065777 9694214 11192873 3424196 7190123 6488834 3170982 11119931 12518769 7951379 8718935 2763868 12751776 4973453 2260613 5270332 7479415 8237548 7663553 1642382 9558730 12391848 12846265 632418 4922926 7591229 6228657 10355812 7338129 11020287 8633552 981508 4935369 3353673 4655482 13102749 31503 11969681 10204158 6285975 12053975 11548250 7377378 5024931 11766926 10513943 244870 12852050 9258552 4119420 10422477 5281557 2344358 4210951 9062767 8162237 3707974 4506246 7557983 1792889 7852058 6119946 6577077 9316870 9518960 8115736 12096825 9729522 1466630 11301611 4340556 5867377 3824613 9213237 8665074 399583 8135502 969747 11577284 8356842 10819009 1210320 6513899 1349353 2795094 1887841 7543832 5538673 6930002 10982106 8892037 10718368 3933617 9295300 2953452 1389543 2348097 12562065 10170386 1970959 541223 5014866 4445174 8106459 12323996 8391476 5361360 2236986 4105748 11631277 8174148 5714315 2151387 9715083 4538092 2114900 8451943 6835466 12482433 1794154 2545506 2076765 4460854 8394028 5361632 154767 6224277 6229225 11912265 4867408 13001895 7616081 100823 9157160 12294196 6725342 9147794 12931709 10191683 7420162 8853082 4159673 8005021 910980 6127368 6759197 787542 12711295 5618611 2991183 5457566 3870167 4895750 6805289 2464319 4394423 10634124 3518275 5325927 6219146 9416663 9068588 7118093 6735192 1865954 7076763 226741 1751639 3772254 13278899 2801331 3692422 7767950 2199068 8640595 10120140 5580703 12894658 6914957 12916030 12666082 4185090 1612834 3631349 8938447 12447278 12172918 2379059 2931603 7808536 4607956 12693865 9670125 12679058 8867301 8974695 8597722 3321110 9838805 2938786 6797166 11125472 8869246 184254 5154671 1253446 8887820 11477880 11509110 5560354 8482733 2645326 7729842 4744444 7652691 8533355 11452775 3066516 10666618 8125413 4061443 9647810 2330700 13199746 6624267 8568850 6492001 7405178 12055791 4748210 754164 9256871 11175551 68362 9369505 8950825 4092650 4865481 7833479 9387090 412439 11691194 10157242 10184068 12102446 1535329 7948141 3995655 7203496 6043740 1508552 597731 494373 10620941 7805463 3927633 7111566 4421248 7251419 9072734 7735869 2467116 1167531 6547921 8813895 2641828 3735945 5348947 7462135 3333586 6029978 2588878 10752300 5881878 9323788 9332410 6019432 10293900 5019671 11094446 10689275 7478315 7317053 3136237 929281 6637600 10320326 1783646 12164516 3986371 11283206 8951974 585095 3152419 1596801 10481096 4466637 5040413 6418635 5440391 5378704 12465402 9926771 1916168 487454 993490 3807778 10045356 3286750 11517947 4917332 11649227 12827145 11901231 9160927 10323020 12070550 762363 7814429 12473795 10965881 1087147 4176887 2886018 6782416 10174056 11899906 5243746 8740917 9869824 8069234 6340972 1476651 2675290 12598818 6477678 6766670 1981234 4539880 11098173 10884367 5933391 4038235 5526492 4472238 11496307 5287770 5736939 10621032 5071808 13045765 10631581 2494968 3162318 5606877 1825817 6027672 13246731 2384149 1022789 9940766 4313131 2962058 3082545 4377347 1656429 7405402 4992067 9768476 4628864 10758471 4124372 5307907 7280670 10025448 8920558 12244436 6909057 2522537 7291261 10931551 933980 2855911 3075033 6541905 5544701 3395956 3377015 2132115 3655534 6603056 10253932 353003 6500248 613655 6304072 4308839 1683034 11275376 8252226 3521932 7533990 5724049 813325 4181580 10486248 12174045 4987537 8307613 12063760 7116413 11108936 8513042 7370752 11669044 10746531 1444230 2861757 10605257 2110656 9788520 6454140 6270445 6622363 2717611 5116251 7346832 6640055 2245643 593495 8285090 4217171 6009600 123063 6109480 1891687 11118882 13160978 7134305 3243018 437252 5361701 12609995 2610344 405999 933130 1955465 735301 5980707 13018446 10171089 12736138 11759436 11318485 12339031 6822615 8756379 6768412 11229598 4793171 7748097 1573099 8272138 2695815 10016520 11801626 5281663 3948734 888003 7873596 182355 6838608 5795345 11524040 286767 1252995 4680633 5781858 9818954 9635917 8342774 3755599 1421576 10379861 9918322 12934577 6762340 5886730 263452 8842852 7773059 6941388 214695 3780001 1254002 6781274 2845785 5028004 9855947 4666214 3035527 11915735 11665926 1311198 7464768 2749058 10953970 9577921 3241223 690660 5385431 11952350 5248454 10888685 8563058 7682961 10189023 431181 7778212 7318023 1297419 4014633 9236288 5645303 7716091 3786069 7199614 12707375 13300689 6297659 8227426 2455635 717593 7564117 7395440 11075995 1143068 8188395 247694 12744908 1191131 3045620 5373104 10321402 2831132 9364303 10456140 4076232 3205856 3455639 290690 2468072 7245610 1077835 12012566 12659322 7552024 12413237 5729666 11040737 11626827 10673946 9322790 3800496 7443711 11864517 3760782 8028610 4949056 10762254 9932218 3806034 11987612 8606287 9975627 12435501 7512680 472269 10450070 8105597 11525575 9535140 3001982 2020445 8190930 3581672 1361073 1166010 3889449 1247996 653497 6179939 583871 454971 10511270 5865792 11996096 3089373 4657862 10209656 3220816 9509679 5293613 8644620 1995742 8886511 8798767 1140246 10634871 3372391 1179120 9418820 9823183 4079318 12745002 13211064 4808898 10211248 3781422 8051822 12622368 5811990 6902457 2551153 10714184 11106095 6837863 12990599 11777232 2826287 4626115 5010072 12173168 2429835 12266225 5275853 5953256 13171104 11886206 8029676 12657885 4005826 10177115 3632820 1776619 12205460 4190133 2276846 10668810 8343077 8642315 5176856 7045797 8381024 10164477 10079616 3372446 13085292 6599525 10532435 12424428 4316891 5999290 13241422 7045091 2281857 2337450 10174528 12629284 5979712 9681310 1324485 7289238 11578258 5632540 9561072 11142107 11508200 3340162 2217218 9474716 944383 8482680 12378031 3580039 8636924 6368042 291094 3298032 8758101 20151 12224437 5347328 1386400 5510213 8420609 182998 12238082 9070810 7678762 12178612 4594277 10965618 8709643 3415813 10013084 8698660 11318876 4506196 13133255 7357227 6317515 1800631 7547799 12127284 10679277 7440641 11003650 6249287 7685399 11447566 7631424 6546838 5924099 11699467 11533462 9560323 1982889 11309044 12858646 2437361 9645111 4464142 8641480 10710055 5747903 9622009 3362752 51280 8344853 12817219 2298350 2701954 8606576 6303286 9624732 7455566 6085175 12267562 2851460 12794607 5649866 10334400 989971 428780 1274612 3258252 455883 7181954 5808751 2000290 3276649 5111652 10032871 9538366 7425115 3100193 11120280 10333767 11002603 6673871 1709114 2742367 12523299 10239001 8428717 1794157 2217402 9496773 263341 8521866 6258126 8435566 3344746 9048454 902602 7985492 480101 4322959 5781791 3827696 2694877 9321065 246161 1438248 1694239 1863079 9534422 6353154 6828668 4500642 5070760 233729 3771407 2009897 10263837 12849989 9467381 9515907 5622576 5210255 7556505 410042 6241134 7717094 9674093 12468540 11246328 12967508 12754865 983576 1123081 3835440 5638545 2538705 4795177 9131549 5300504 6585795 4473510 9286426 6524552 4844849 6757538 12116816 7538542 1707850 12306825 6689308 9936999 1118594 5820944 6461945 12132259 10907401 8823257 4858659 3590839 3203057 3787598 8928316 2342578 3084889 6472267 83867 10620216 9689139 6114155 4122471 5181802 2963902 9950052 5698561 5238269 3308268 9786669 7008546 8318894 5594004 5383594 138842 10140656 2386996 6865188 415627 12251305 5188901 11205194 8356891 7547171 6473226 12093144 2680520 3444751 236068 11605368 4122750 9491596 7342651 2912202 13246896 11850629 1391638 4946821 8712171 12265942 4328265 9133437 10500516 12705561 4234876 12478359 5406168 1165910 7865576 9134874 10313803 7244010 5553479 11813474 157897 3943853 2828374 1869486 5972379 5659271 479432 8905651 9309902 12993201 4466599 725898 2381653 10867737 11472470 8491319 2704172 2548874 5812440 8800799 4122175 4420812 6558275 1259869 9614777 769217 11898044 12790350 1126749 7991010 328694 12768696 394857 159862 12132537 7961860 7463033 6798465 7519781 12178081 6751686 9668808 11993948 7717679 11835837 7223033 8228630 6962263 6960168 4263708 9463523 4295264 1090329 11302732 12419215 7124384 6259127 10667853 8548780 13055425 10904763 8680188 10777392 6175855 5494677 6159370 3206610 8306149 9141247 9599339 11265646 7785030 12828836 4102589 4751885 2157859 6936641 1729572 2692058 7293412 9924328 6874606 10827433 1284549 2688790 10798668 12165036 10677688 4582651 3875383 5537568 5904933 11571730 8160809 7157592 4996376 7135590 9234309 2103836 9731171 10065873 11085282 12723882 10325503 9757297 4245374 6157611 7134074 2502906 3222135 9301808 3030086 5718881 10520679 930075 9368421 13055121 8295657 4604110 4051501 9868962 12072487 11049825 10251172 1604377 10764878 2265555 5126603 1541510 9298652 2331485 8545021 1188554 4733183 13121918 8313970 6439432 12870231 7788501 1452824 4832867 9763530 3869330 11044504 10767410 4218099 5028445 6349301 8132168 7801412 10059360 1918735 3953810 8194193 6622598 11590099 3557502 9373492 13275660 12382040 6866560 10050431 10201282 195260 11828930 11114999 8890498 7478014 1667608 3672794 6720811 191012 1075376 9694281 8178715 6950835 1371396 3903735 29571 6113873 6418952 9863635 2464976 2907597 10350484 5103682 8872223 10483200 8019207 7226831 7872621 8694762 8254628 7869684 5100093 704742 1447482 2386492 5159852 4694893 6918760 330009 8279901 4193430 12797512 6502542 5017986 2646141 2368700 13196036 10551716 3029892 10974199 2854413 12175715 11996857 11066275 12290281 2746578 6676880 6886078 10870480 11925130 8924464 10244221 10192395 5135587 3513840 3016335 10992390 10053064 7839769 7445595 6050036 145708 11467926 3752832 3616420 4474632 4060014 3721480 7189699 3047983 656309 7600756 2785745 4593078 10695092 11423717 12341799 3102662 8534134 1589437 10985719 1806558 11982374 2277350 12343046 9143026 4796057 1457785 1689567 5317284 12641311 5366393 11828495 12035864 6085501 7405649 5901520 11594548 6586050 10124471 2156741 2702063 8958051 10284198 159891 9999650 5610093 1542205 13013272 2562074 1350833 9114359 3285399 996751 8947268 1568813 2489200 5450281 4896389 11442360 6580428 4774845 4541393 5815516 10678483 12700312 3671285 12518789 2880181 7997455 6533149 4520542 2330310 2008989 10820699 2642674 6895910 6604359 12545964 12162975 3327015 11909656 7067521 2922004 11970055 9843036 954003 205099 13047063 6863615 8312255 4984640 4247097 8157815 12661551 11913708 12843742 8079093 2016857 9228967 1093617 4714441 1361292 1288597 7787522 12475343 6853479 1929584 9253233 3790166 4131048 4059306 8868583 11066337 1466104 725696 114505 11137322 6697187 4632370 1593583 5499901 11059925 1083592 3511121 5009969 10875283 8798211 12902719 6143609 9044946 6282533 10702453 4355614 7360155 2725166 1406306 257861 2584393 4866280 11762110 10337926 11880287 8963061 4336487 1630210 4702007 4225391 11433634 664495 12010811 12351045 3983922 1013808 5735125 12652889 286846 11478295 101268 8451748 10823832 7930437 3224680 12539658 7853023 4320085 535437 298042 3103772 10251223 13244267 1485891 712537 3933578 604103 1602691 7811313 3130896 12803926 10810687 7449935 6543288 2434661 4123734 1998273 6241441 11582323 5543036 4262148 7211207 10394190 5328844 1404107 4739229 5970321 11997694 11650039 7435536 3898103 6815721 10437528 5200271 1958660 10523485 5464900 1756494 9135737 12534150 9801935 10012971 7640790 6721603 7410843 8527773 2590535 9618946 5924193 7162866 12823520 7189622 3130181 6785164 7496330 265216 1166539 6108341 2962080 10876118 5466143 6681181 2561785 11746952 9524836 10930515 1880843 10079822 128666 10189915 1059589 4667026 5971755 5724784 5040819 13009485 9211883 12858118 12530437 177589 84704 10210824 3914309 12278176 6683113 5290981 9670444 6469274 4817753 1733052 6555031 12566849 7533187 2938341 5121813 8277709 3162047 10009483 572186 4261321 11990983 8345434 10903442 7898744 6827157 8805093 10407668 7733199 126802 11727114 9639687 10806034 11770134 10998396 1598208 6404132 7893698 441061 7508629 2312841 1150553 9805468 2965896 2284610 10171281 6124855 7686797 3212682 3532100 6943334 10663127 6892918 7023056 7707182 3202487 8014267 2256124 9706938 5260380 5630637 6034213 3358663 8257171 2078017 262780 1154518 8438454 1472186 5635175 890450 6808519 11741585 10419192 8145194 13031834 3936401 3246109 6934526 5707141 3173831 8697861 5172362 1744737 4447584 13143105 4175372 3471978 8709581 658281 11273325 2136881 8649672 8090135 10669666 651919 3922986 1764768 10501823 9344602 3152988 11198433 2255902 4508384 6331348 9715710 13180709 4685063 9691435 7499813 13182178 8903096 590211 6414275 6617816 12163466 5948272 7064700 9152594 7012089 13093187 5325789 5271869 11260133 3777552 1336111 8130380 8109349 8854860 5003356 12496427 68721 12307965 11123167 10271293 4728608 4948031 1826133 154269 5524639 5746873 9906651 2824950 4082060 11024123 10092427 6511858 9639947 1522586 6618083 1161917 2594509 754101 4716253 8443383 10185987 291312 5619666 12890939 10649105 365746 3678289 11379111 12366922 5744096 10733909 12387593 12772359 4369815 1225179 12282496 11147357 11377258 2691897 4741387 4008359 6995550 10178938 8395085 761041 5262756 5263756 9365929 11192110 6519356 3991093 12517987 533290 12367596 11961977 8714665 8101118 64228 6216685 10917379 10531401 9633110 13228536 12462387 9424951 7220028 5222198 1089477 13185485 2798027 10174448 5279357 3109537 3934314 3738641 6110658 5416179 8554554 10140031 1489351 271100 8418796 4337894 3929281 13296629 11344784 1128635 1585770 11710726 3973790 2194314 546122 2046745 10732675 289244 4472227 6112176 6169765 2059326 8632320 3580527 6910163 930036 5662766 3626338 3231902 5337498 12752478 1502352 1648479 10088893 10081756 8392684 10209091 6559220 13263886 9712616 2313368 8006820 11761255 895954 12367951 8493006 7906091 10032942 4393880 5118802 666678 4203211 9259877 7167919 3261071 54321 8752264 7320675 10150461 13300248 2197606 1322641 12986604 147846 12775614 4638245 12602975 2685594 2678864 12883632 12980483 11344738 7473796 5519984 568628 2910048 3010508 3588419 4411360 8123837 885812 4025356 10084976 11041712 4692049 6310304 11109892 1748789 12880548 7324569 3640178 1750764 9068492 13292134 11333916 1444838 7217178 4161281 2715234 8876409 1584585 958830 2678329 11514993 278384 4677923 1374879 6433632 9308496 12603555 11222112 10534432 8515670 6640561 13129677 5938281 2022944 6516484 5283278 8931989 11131120 1930222 1329501 4411205 268851 1057087 209594 3715177 4646069 3425883 6285551 587422 5461118 6418180 3488770 5570094 7638128 3918131 8481642 13295700 6950832 2238167 1738968 4243416 3355932 9083493 8425030 9781951 8874593 1483435 5444854 4280708 10289376 992964 5793447 13289001 12445974 1645184 7480173 11408367 6292042 94948 10229405 13178636 6106556 1357026 664165 10669767 10467295 7159669 1160514 6452820 8010464 226251 456760 10964835 3661105 10453228 3956159 12943201 7780473 4754401 13127995 5680773 1579434 5910885 11635855 1065930 4289811 11428253 4922442 10571704 1388764 11286810 1533101 11335396 10165298 9340898 4656971 2911867 1574045 2825242 833847 9360434 632103 12900206 5993232 4804435 4076075 1126357 2161434 4059826 11928241 1698825 6077901 306646 1059522 11276464 8460241 784253 13070901 8000000 8590471 5735596 6656486 11697269 5921331 2135952 3909933 13092292 1281936 6739304 12436362 3106818 11577592 9749156 6346649 5045866 993692 8088012 7848481 11999423 2792651 1650397 12556211 8026330 11793924 13334687 10577394 2780087 6011325 2714061 10609938 5859773 503546 3342183 12515956 3938726 5217373 6965875 8843088 3119465 8376091 8076447 6536759 1853001 1314074 10960546 9955991 1121945 2923906 13290762 1587313 11376515 1917247 7366362 8639804 3778110 8576468 8040212 85192 9364926 1241853 6442264 12389569 4025450 8214890 8380579 4043248 5365258 7758951 5375473 10806404 4560356 12541588 5217143 581007 1992373 3870673 12689101 3857523 8611637 2332782 1754779 8155742 8452680 2128621 7701666 2605859 6598222 4489960 11407417 2590364 10458166 11757015 6490733 4788721 3121256 3435402 7819490 5510280 11356820 1285251 6281556 4048292 6037904 1979064 2765445 11534517 1670589 2154169 7083511 8986448 8732777 5265338 3882920 9195278 9473918 12391822 2932692 3107315 345149 11441917 13030559 3758888 5883298 794739 12007852 837134 809989 2822123 8984578 2283433 6323348 511707 1052247 5750639 4646586 1171861 3595639 3786381 11493579 6991132 4153818 984708 868078 6650984 8153678 6354299 12049265 5703258 3208918 5327635 2058738 1490196 1158412 12378990 271228 2149059 1899273 4545587 5807713 81449 5002546 5119998 11823165 5319804 11911906 8686651 1227948 4578132 3020097 5817345 1683478 766542 5538083 3867288 12532742 10698082 8856434 10852191 2983878 393289 9296304 1904283 12444093 8309044 8706139 9159721 12208132 3562381 6946040 9925866 13288101 11908292 11220201 5741162 10913 5020665 5323170 5850660 11074447 8172891 2431312 3130892 5656079 4044699 3082833 4620803 12156712 7586481 11940896 5651654 61473 7674834 12742634 1975180 9421136 3924704 5574368 2935848 8289391 10876399 6854820 7448324 7979368 5970369 12461678 7993396 643140 9532783 2887485 2550450 3463963 12442566 10195547 140938 7904362 712812 3652283 10195346 1847136 9426062 12979629 5712076 12668233 12158570 6560990 5245410 6348815 8561393 2664540 6102830 5631651 5766257 4648676 4857135 5956026 2742459 4373093 1409972 7107050 9596776 4761204 4018207 12498458 11678442 12052707 2935744 2448520 7066702 1534643 7814042 10119474 2238940 10667807 11664051 9772660 9850711 9923099 8729145 7140807 4626899 11546143 6871214 10353857 895191 11628633 11601437 2955548 8603170 9406687 12744629 10969465 4494776 9883833 6283094 7372269 11428368 6182845 7671194 3493061 13211755 6555600 6701076 927630 8590637 9504074 452128 9472737 425428 1886049 613103 794233 1585215 2439970 8397097 11493524 7759793 4715689 3301239 11673991 11996453 2616767 11807729 6024004 3622093 3620912 2387073 9283986 10293965 11156183 2361029 441765 676614 12835961 3539962 159427 11168486 848614 6935617 12766697 2510836 7433614 6786294 11523704 23952 341637 1725908 7784316 12427097 1553385 6503697 2055141 8169413 2792399 1356737 4851508 1319599 8050195 5313951 6909216 10040202 7712458 5396170 27709 9400905 5300167 683115 13277798 12870966 2923042 6089627 6534808 8521108 11138849 11776591 963611 2253196 8454783 10225665 11452287 9459083 92405 10639223 5075389 3061172 4480657 2812191 12809288 4809843 6107361 3856031 11769581 3234700 9636003 5370641 11471209 7046361 6882743 5620885 1713482 2865843 6203571 9910493 1020585 12660434 10609655 13015824 3136373 2822427 3981446 1920400 12181675 11822620 9636313 10881560 7528248 2830035 3623614 1307959 2497023 7456360 7245856 10638697 9455429 13338193 5839261 1328055 3467475 13104330 2558135 9411313 1347377 12491548 1347508 9387711 2017016 9811960 13023274 5926103 4628317 10532200 13279363 6757256 1632403 2319276 10190109 4321750 5991349 8129746 2723595 4978672 7101466 6819808 2102790 8107097 9537955 6432860 1873321 11743913 8347605 7147247 5796601 6675528 2153728 10350731 10227280 5176027 1959440 477551 11314917 9164763 4830819 3853692 11320853 9374287 11552870 582239 12757227 3386615 9505357 4025867 7999326 3968643 10413357 10281914 407551 9430787 671699 9761596 5099508 8215650 11993448 4541268 5812340 8200367 7255990 8183592 1040945 2195028 4577333 5538874 3347009 12768870 2903754 8491080 9113839 4257163 9949724 1857195 5191697 11255225 5868772 4929378 7955606 845234 615438 713104 1905067 2994373 5233933 161012 8042352 10702128 6526588 2255910 3462959 9153587 12011451 9549837 10062750 2280815 3682655 471704 4423298 11743862 4006805 12319885 1940817 9970805 10696530 448910 1005275 8981966 8013256 3577595 11588178 7011850 3639539 6400271 12546175 4760137 10215317 11881268 11848953 8840119 1463936 1640853 1046378 8874537 11672133 230341 9088382 7935945 6179512 5717816 617992 6486717 1150433 12007711 78115 1729414 11721039 13336308 12087125 8984598 10770870 3635015 966160 11311070 11298782 9173179 2384740 5454602 3595383 10484879 10331337 1288698 5288030 11278320 13335889 5847054 9610833 457448 11921720 11907976 11379794 9863673 8561899 2887125 4799555 4909352 9906001 11045846 9397184 2677576 7260115 12186436 6384813 11369096 3463689 1001893 8186234 10411634 3869494 9596844 11250346 10854695 5621422 8994938 8815169 7495399 12395714 5647853 685145 7890516 11130540 10389928 8532087 2548140 3059688 5262436 391403 9160984 9118054 7790371 11495687 1712684 12995811 7725697 5041185 4024309 3475928 8965757 5625934 11207072 4930834 3511590 11325436 2487669 12970869 13211611 7668369 3672870 3236074 8808419 6176940 12673269 13191470 12825032 6648566 313821 2210702 8500350 3926446 12795365 2902772 6298490 4681231 3326756 5437282 9361142 10137649 12563431 886953 3112841 4807017 5373794 9146973 1776712 5271327 12301119 9795521 12313215 5357196 4607261 6531307 1966736 9843535 4713171 33070 249872 4968061 518662 1553689 2329644 6529146 9554089 8303306 6470966 6942707 10110659 3309700 4670174 4950519 11199573 8357573 4544675 12129863 2544553 2325158 4825058 3217296 8475620 10008830 12939817 8769926 902257 4771565 886652 884693 8887941 10885290 3517897 5487803 4345287 9568065 5788521 12281476 1745264 6919752 12586644 7294928 3112361 6185402 1144125 12506485 8825570 4274564 2133024 9484033 6501515 9663725 9873135 5405956 10318182 13216379 11048189 388778 1633479 6778814 11782813 4789012 606835 1697211 2378160 8530033 462364 11722488 7722799 4347827 459910 7032310 8498297 682601 3654738 2560286 7134654 12099778 5772885 4380381 9841011 13266038 1252984 8331484 3956701 5323815 440832 12284695 11690578 2354917 7366054 6620741 4498264 105815 10781880 3087787 2040698 10046171 11406316 10703389 6058566 1644537 4749094 1493096 1086737 3868371 11222346 3291303 13215753 12883429 7521809 5726122 8359852 11984465 6167045 9039935 6271350 6500741 11672867 3462291 10722424 7208925 2224914 2156433 3555877 12172362 12831266 2560428 519939 8219041 7863183 3112475 1580592 3590958 9182463 1822704 9099145 12650411 10275833 10047117 4310913 10405375 13018350 12906453 9309856 11205803 6925 11479598 1473449 2268153 6959842 11474766 2471494 3323623 7907007 5337246 10370445 6557611 4740457 3243442 13196777 8992879 5630641 7123368 8870219 613768 6628883 1027604 5009131 13331381 1194745 7725090 5703367 773239 1934922 4922691 3027420 11677019 5814401 5282810 7501474 6861544 1786632 1473329 6532211 6508979 4640930 11518146 6619903 3125478 6574867 6737919 10489263 7880180 1618103 7621136 6995696 8540554 12303457 12809182 2302943 2706994 5981116 1482791 9753521 2609098 981787 3390978 2470798 3261627 2802722 9069565 7689078 7537293 3194737 11988058 869780 4263397 12179939 10447957 11644790 10450286 246589 8470855 949451 5988025 7352375 1924500 4115500 2799926 10044733 7854586 4981830 12139672 6138229 8344310 3997706 5487424 1403038 6578463 3501939 4718408 10121180 11100127 11819825 5478119 557359 12602662 6188545 1560405 1611223 2244406 2947576 1846652 1515034 5030240 1882273 358933 7535475 589345 7649254 634443 9265658 1979936 9130352 6391437 1115126 7589356 7799351 8840605 800832 4339262 12989143 11857490 8782090 9354657 3922082 1199046 9722144 3043048 6431416 387630 7375605 4812748 7456810 4618972 12710772 7660803 6009966 2839197 1776118 2628590 10930729 13135181 4179881 801104 7044924 11906496 6803732 1901153 4890100 4338612 3426231 5668934 7669904 2031378 12014009 12228651 1750665 971825 6013907 8577289 3629599 8745760 9627218 6546767 11992387 13279522 7518221 1050139 8671425 4278398 3628748 2543004 13083361 2759590 4542340 3350892 6174320 10179251 6620259 728520 1009607 5258948 10883837 4475139 9533611 9292797 8246372 8231519 12730537 11073086 8165191 2787046 3435468 9622160 3242168 7190644 10902321 12187409 3971455 6796415 10580982 3747975 791084 6058520 1169115 7191089 3332535 1177670 7646177 1388651 4320343 4176832 6066207 12187510 10235953 7598370 10357445 3461047 675165 2509000 374407 8535862 11546121 8786350 3669927 7000696 7719278 7481764 4285254 4692590 4194519 5098596 11933499 5981074 2692102 6446540 3628526 11208058 8991152 5910461 9602718 11044439 3330164 9012857 2142208 13291353 11216837 2731233 271294 12020590 6949319 1684280 7129867 10201882 7130559 10349075 7719785 3523446 5647595 12454433 4724581 11408899 5270828 8720465 10281803 4389673 1155845 8211724 427178 3855850 7569415 1539794 4830619 12973248 3212230 773552 1034241 2022849 4741181 10813106 2879972 3991708 4788638 5021851 11669906 7183851 66644 3849148 12780958 5605873 1310178 3710492 10990948 12371245 4872408 2746425 6321960 4260559 1415872 1376953 1214079 11340331 576680 3078506 3970523 4768813 9784052 98021 7101840 10681606 2538925 1938110 6194916 6295166 13273174 11027681 9689762 9859998 2347526 5675278 10760990 12778721 9893995 1918386 7280152 9381345 6939771 12241171 5237058 11691582 3536556 1205356 7556494 2321698 2879728 4115341 4357900 7118491 10250898 10787491 9235046 5961400 3658451 8368133 6906759 6263981 3371788 11300994 12340752 3280737 2601826 8459435 8963933 8698446 9614311 6488018 3027686 12067661 3938783 9409723 12946915 5700839 9909087 2567243 9564370 9140798 11977518 342145 737701 3182399 12003632 1748385 5590259 9961163 4274583 12653333 1473127 13081739 4059712 5514360 5599506 3425376 8890415 8365374 4741692 9108939 5533830 10558639 3434665 8281919 10567138 9506817 12887618 811433 5014632 4365514 136481 5017319 589686 12487145 8261144 7607597 10863591 10847092 7854371 305100 4973162 5402641 1480919 12914001 6388671 10570100 250855 9499422 12423646 4790414 8599459 5417827 9292234 10515458 8732127 12739715 1338054 4831655 11041311 5518174 10123339 5036376 9864624 6172739 5517890 10400711 3366623 7557354 6284921 11612498 2370175 9127260 2724592 6637340 522265 596865 3070952 1384569 7247063 12526032 8562857 11509869 8812999 5161970 3552932 9066222 5189085 4590131 7175573 2864948 9103310 6569612 4324401 6902637 7162057 2454823 10762813 7099304 8234317 8936502 3001881 12055325 7364537 5049031 9163222 12821163 10391339 12146579 12359245 1410 10194646 3607450 3548634 5600205 8220808 10486239 5496201 12684428 7663235 268182 3609838 7073442 4348238 10845934 13012695 11524335 240491 1688217 9550799 12909176 32076 3363706 12390377 5012983 2901051 11883420 4735372 3602639 1433778 8032260 6582132 9418918 8755154 4928089 11136389 12540149 6023272 13214227 5355730 667125 2445263 11213591 13283520 8160135 13146300 5043945 9507315 10178421 6232808 10270905 8999739 169029 3251464 10707347 1341530 11811436 7673828 1838481 1643873 2431594 11277160 12164913 8865768 5337440 8504177 7059389 5237745 4322416 7817147 5193175 11846183 11758380 1720856 11358664 6143454 5187928 7717476 13313840 8188425 806355 7223007 722130 9419892 2822283 1333397 10924197 5057005 8544296 1695054 11525671 7721989 1929652 9577624 549986 3526757 10059459 8668151 1535973 4811843 4112437 867249 1573594 2542019 12419689 6333049 2397068 1874029 5132718 7491008 3124659 1557568 7095908 2009695 6635684 2906553 2585880 9754740 3237870 11189294 6023928 13199884 7683990 8083145 6672283 3592174 3950912 9575547 12003484 2641779 9108168 9288625 8040628 191040 12067759 4738818 2325680 4657302 8681947 4484799 841930 9401156 4719296 4748514 3289230 10453860 6893667 11844231 10099759 635842 12209536 4141252 6694016 1006874 12529010 3482812 9293685 13244249 6498675 3912315 11860918 12072357 9917450 7618209 12758273 4881038 5994716 6052287 13098636 9243479 654577 502139 6868848 12019814 10477284 1121579 10951038 12118215 5777427 2503029 11669784 8158972 1954882 7076748 10546944 10311890 8373122 7848392 7634000 12800688 12374289 6741680 3490727 2121543 6574389 989156 2263243 3562118 2310701 7029868 2503530 12988065 2059976 4682475 3266297 6426386 10881565 3340012 2711014 5310187 10938737 9301534 6635761 9974502 4031071 1403855 217040 5420980 11279445 12607389 12093997 1409891 9115404 734715 12965293 11690866 1691186 2151963 1321843 9239766 866509 7429585 6629819 364423 5956373 5771187 10738534 7880860 12353031 10421365 2145934 1154107 1922865 7544782 8355331 1284485 2366197 8496279 9393580 11164176 3777699 11044001 11541411 9974320 11424905 1686333 1591821 9557176 12333609 5132474 8105806 1532154 7979999 2174135 3221884 8266195 9936451 6726153 12870771 7522204 8175839 5734736 284270 4870775 10650310 4783211 10262992 9250786 6520065 6833037 9741508 1985727 1253017 6761166 6190619 2178347 12558202 4771387 7930998 8494873 13226593 12229556 480180 10213432 8397788 9688024 6088471 10698053 8092020 218415 5800317 3960399 6597146 2539003 3286703 11422731 998754 6185215 11341201 2830906 2692882 8948391 7495119 7684993 7803068 5972684 8298173 6433028 3729671 162425 10499287 5174969 1794480 9570603 9596745 4019496 9817038 9531999 9959066 7637689 556183 12630239 3163907 12138849 2133629 7730167 12877343 3788806 5403028 3154407 7437024 2050370 5267797 9212993 10712850 5271641 9055404 1753424 12847038 4915596 7139158 10764737 10361109 5869486 10977244 9604151 4718058 11133106 1204670 9259095 10628499 828301 7571468 3251586 5467585 8247765 1558835 2492220 9712403 4229129 10741403 2774880 2928666 10096091 7892631 12964474 10091116 9949229 558256 10919564 9845256 7664839 9007941 4938345 12834179 3677548 8522934 6891435 8013686 2293631 9923842 5077035 7516624 9377300 8496853 6142528 9343281 12458204 4591186 4070924 10922273 8710100 8524277 12970119 10385811 8231921 12772883 8577476 12760604 10443683 11693605 5306752 2683447 6499956 4447515 3576307 7262958 9309452 13052076 9648440 5987848 2370954 241466 6260762 2317811 729540 11957887 2888209 7284796 11585914 7469701 3020429 7777238 6611414 6821484 3991770 4232674 2479981 12232836 11436603 12911966 1367064 10950003 5891404 6782991 6798279 8405050 8005469 4035558 3740508 8261523 1379551 9957634 7262858 13334588 12234298 2140161 10199592 7194484 6834990 10777987 11921526 11660590 8257426 12887327 6062460 5610604 6812552 8355906 2777340 2513627 4448469 4988695 2265414 1023357 957671 4258028 6132465 3130090 12739817 2360830 329963 1293546 1285663 5537294 12974234 8710933 2157843 2205803 9141185 7992662 9270794 7832382 9628695 11637870 6374992 6324997 2829917 6360758 1241892 10981375 11763708 7814095 8841371 1438785 6494278 11615867 3276926 10990399 2367675 2400239 9069076 3612733 2777635 1020387 11716046 6005447 12163164 12132955 1757409 978465 1646409 8913678 6189056 9791910 4755218 2900581 8614236 1352814 43181 8061373 5245519 8654698 5863615 8139818 6996972 2665436 6493861 1804208 11062638 3342096 856654 12322171 11069334 3894789 5201478 7832509 581903 8900381 2539664 12666118 10647438 6698404 12447827 5589472 5934903 10516640 3420283 10226598 10105098 12264386 12446694 2811083 3996560 8721182 10100174 1048201 8830880 937910 6282997 4056085 2954416 10986324 8586251 8493454 11680466 7850713 11097785 2265379 5640809 11099487 2746266 12345383 13196297 5805464 4806928 7187873 3041287 9975225 36482 2240592 9581831 7178204 9168606 9517928 8751993 12456871 2682746 11684033 4220012 4506162 2215219 7109823 60439 6179643 7430774 2589576 12758644 10886641 11007131 1791471 13045743 6856510 4330368 642516 1974061 5763243 7905426 1619601 8586957 6837075 10438693 5701926 7949368 3881898 5499221 12409288 5623441 13129394 2315562 12530360 11625766 4030576 11969226 4011842 4291984 6087789 3841203 8376880 1404762 5100322 11893840 4619790 2973475 4145895 1113211 5174359 4960414 3555201 3828306 11829177 3129018 11945693 6173479 12114131 4010084 6514804 12924759 9104182 12803500 6032770 12451925 285705 12378760 2040206 9062696 9721369 8317504 8531197 2755123 6243282 10350243 12476863 7315709 8131060 882316 1058840 2011722 8543866 5135921 10135072 2299250 9684000 3033969 3591827 11898992 6903235 13058045 2939531 5095904 2249343 2501819 12843677 8236883 13256159 2914442 5657927 5423140 8283468 969948 6784705 7082842 3313039 2490340 10552894 11299609 7526560 245657 4150182 6673006 7006861 10924080 6205002 8650320 7552949 8528911 3952676 7232688 12183364 8871296 5435139 10816526 5574026 5990763 2861222 2772581 5153773 2629288 1047281 8313350 13221671 2612561 9463890 5259811 10351033 2765826 6669056 7907794 11498347 9929932 1485950 6762097 7768409 2309141 4560522 12839482 3599349 6345104 2644973 8579255 3807904 7647723 11126886 96184 10620866 2560513 5274544 8880348 10945302 5791270 1226066 7421650 12246213 9234454 11584121 13289528 5359154 10414719 5684451 12908971 6551152 1415353 4054454 10376537 9886153 2551088 3411891 2239541 1786644 3864282 1768308 11495765 11717130 6539000 8514553 11424981 9905518 8384416 7374611 78517 4077054 544950 9939830 12198451 5389121 11713130 188068 1831682 12999149 5421288 10195415 7387416 3383113 839046 3594265 7738258 10331826 2577199 11556130 1742458 875793 8243757 12908383 1794144 777167 7507394 166685 8153349 6658544 11485204 6280509 8731764 10705551 1464180 1433913 6967081 6799422 8020636 12039162 4778550 2531213 961779 1207072 6910260 10897323 1082185 3318673 258394 11336088 11562330 1625323 8938945 10664417 6820259 5353784 4917022 2608564 3139748 7752865 12918715 11887961 5743036 1216839 8109866 11125284 9670008 191830 3215976 2114719 2267890 8561872 3717318 371905 8565551 4962644 8093715 6817674 4185566 5991917 7517023 12000894 500882 7715280 3625550 8619561 12853573 817503 10628918 1967174 7461217 4365830 6995518 10834724 8895708 4450624 5234243 3565159 3908628 3656575 12037465 12220715 2806094 5031045 6371504 5335891 3496946 43539 5836098 4456273 748667 3296741 2955766 3270759 598418 6554416 9564572 11505448 612640 10111597 7711810 12061288 6769730 11271836 4565775 5283978 4520436 3895993 7231617 1181895 10104532 3235895 8901848 5957625 8082826 6860161 11166212 3398553 8002969 9148124 1349879 4834262 4540828 11344751 11383738 2933379 2186476 11605032 1703708 1727175 11267293 181565 3674665 3368017 9013794 9552315 4465612 3693083 11737201 2994184 4015681 13166882 2220425 12388172 4844228 3161025 12933058 10751117 1605784 8172100 3414927 11879823 2366925 2299579 5373760 6994875 4651194 241717 12941145 6235498 1723612 7877698 918499 10329378 1137359 12129735 8585622 8981732 10559270 6346849 11772642 7728393 9290818 11414290 10519604 1285449 1281574 4132119 6621933 10593104 2248967 3486905 292932 11499384 4798079 6104315 2447815 2997457 12343720 12709913 1540087 4033890 6554338 6132063 8377370 390884 1899178 13121272 7749378 1265281 8358050 9249328 7519493 7308421 1791821 577045 4092929 595155 427111 11683951 3655788 12684330 5430240 733315 8145803 993199 4780676 5119825 2542235 1993079 13190871 7440040 7353122 2275416 1626529 8290614 7991705 2631740 6918241 6351069 1190247 9926654 2499150 8184095 5720207 4658809 8767350 3761260 11186600 9308422 7310382 12700012 3005857 1190503 8707139 9700720 12357442 6607285 9933803 6717237 5274711 5731504 2741316 4006179 4758739 13025589 6813826 5807054 4437079 5520671 5237473 191576 1140162 3644634 1667501 6339744 10061946 3983374 1208523 3618146 13032105 5688889 1988904 4214331 7154069 4222211 11739521 8239145 2801931 4133964 10048913 5901657 756345 2480929 7435203 2275850 307024 5957248 4120242 6659811 8969528 2223137 567617 2170346 2815501 10488933 11640558 766851 11208831 769
+```
+Error: Line 1: Got '681753 6334906 3997884 0 1958171 8877431 0 572191 0 1113928 0 0 7197028 7514973 3006120 8462495 0 7977162 0 1233825 0 390609 2344988 0 7054923 6111256 3805743 0 1999450 345214 1472032 2172834 0 8152013 2202711 1906084 33001 5813276 0 1835939 5142061 8869078 2822054 0 0 9276650 9007130 1604758 0 6075703 0 0 0 0 0 0 0 0 8118024 0 1162561 8790280 1098130 2611151 7222856 0 0 6761143 5427369 9496946 238426 5724503 0 0 0 0 4714330 972123 4894376 3498914 2896879 7901841 7598437 4809469 2950532 6097718 6799035 1260129 1973249 9244223 4282831 7952646 6915681 1414031 0 1522140 7522038 0 4325377 0 4151018 8114299 8328261 2385328 3596660 7377982 0 0 4693521 3396963 0 2078166 0 0 6455522 0 6651247 2002034 6880458 7075250 0 3364047 7165690 3841380 8407290 7626926 0 9421511 8312688 950348 3820881 4699739 0 6786230 5629743 983365 6068148 8703242 1349452 3279999 2631536 0 8967625 3951378 4971582 0 9294720 0 9049580 3765200 2975498 0 0 0 7305774 7641397 4615343 4797362 878997 1253120 6916962 0 0 0 886267 130065 3227414 1304970 0 1483812 4797117 0 0 9284620 0 9307443 1302407 2867378 8477362 824054 590845 6922003 6733377 0 0 4620305 5239719 1090830 1129383 5236334 0 538889 5302168 2763737 9301810 0 4400144 0 0 2747470 3710416 8478921 4250259 2357302 7686875 2494144 6856250 5698272 5085801 0 3387855 0 0 7531452 1818252 7602765 5812396 0 5642004 0 0 2333146 2900700 7602262 2439886 818220 8179602 3196878 0 6317532 1674297 0 5089412 573333 9033656 0 5899378 0 4522085 1676259 3054467 1327301 296274 7483224 0 0 6942515 3364696 0 0 0 0 6142508 0 6424631 1421758 1789219 274659 3303527 7331139 1683663 0 1162930 5838244 0 3774194 8716681 7777404 0 0 0 4165833 5700699 5327097 0 0 5164381 9271566 5563549 3038439 8504699 3337781 7037523 2541253 0 2113141 1942000 3195886 0 4249196 4916262 5325306 6393308 4746395 2196982 0 4372137 9297720 6081958 0 3808165 4202636 0 2437127 509460 0 1401824 8599979 5261404 0 0 6554961 7244255 6895639 5017789 0 0 346981 0 4317066 3225660 3576570 0 5176503 872928 7477330 7019476 8727175 0 5417494 6643130 0 2726885 6039958 4640155 0 3584699 2594894 105610 1336041 0 253040 0 9176160 8669936 3033784 0 0 832066 0 3952042 0 3169068 421969 6957351 5361890 7174063 4868998 3236492 0 5850082 8175527 5140131 0 2728589 0 0 2464975 9079687 0 0 7437093 0 0 0 7126736 6610393 1061232 3986461 0 7001884 0 3351424 0 1572447 5664109 0 8790531 1554431 9485964 0 9435390 4251143 0 9537983 8058334 0 8208433 6025306 8047841 0 8136095 7969720 0 0 360742 926192 288617 2424918 0 5054999 0 4563506 5777166 8657653 626402 9160767 7925143 0 0 0 5792729 6674293 9220072 8789343 6186020 5649742 5513210 0 8034542 638385 8816610 8358286 7766967 1839839 1309266 0 4787454 2774635 9289882 4401936 0 2803305 3487835 3827239 0 3160236 3904298 3468452 0 5881724 4198989 242124 4924049 0 1546519 0 0 5083196 1074637 2787976 7734166 2037156 2536620 7972608 5252233 4240710 9333692 0 0 0 857213 8129569 2233644 0 6737080 0 3995786 0 9177679 3766233 4490264 1726848 64702 7909433 9012490 1567027 0 0 9302751 0 6318446 0 5784408 0 3420546 771380 3213407 7879913 4844713 2841446 2969939 1401595 9077520 0 0 8876496 8431715 6124894 4135128 6153840 2056106 6546017 0 2831628 7391720 7899806 2956635 0 2474914 1782570 7793549 6790195 4379187 4158626 2044217 4259763 744989 2708820 0 6347826 0 0 7026517 0 54980 149706 3899333 0 0 793085 5837966 0 3245341 8598528 0 4297695 7150620 0 8889636 1465644 0 7565111 8434656 0 1734113 4844937 2401263 8089653 3284419 2687764 7816611 7545659 4105825 7276327 2258970 4340114 8890733 6025066 8075662 4508043 0 3200217 2996617 4701532 0 0 6576155 8565224 1298231 0 682489 8252949 4732299 9064835 0 0 0 9062340 482285 0 3887707 2647876 8750857 2044712 566660 8136036 3392502 7371876 3306131 2217347 7748109 0 7728818 2162444 0 3955549 4377018 3291756 21790 0 4911800 0 0 3350757 8415411 0 6611681 4490906 0 1047169 3134505 0 8384330 0 8037782 1695003 1033706 3136639 0 6961290 0 381625 4610764 466280 7338960 453836 0 5909253 0 977044 0 8240276 7139996 0 4327545 0 4658250 2439370 4659290 0 0 2369415 2178955 7325724 0 0 1848740 0 1676059 8812642 8666700 91788 516', Expected '2151752 7804474 5467630 0 3428073 10346806 0 2042198 0 2583894 1072581 0 8666531 8984452 4475942 9931901 0 9446605 0 2703782 0 1860630 3814860 0 8524437 7580841 5275504 0 3469348 1815238 2941971 3642719 0 9621443 3672594 3375990 1503041 7282884 351088 3305850 6611720 10338453 4291890 1172700 492838 10745994 10476495 3074686 0 7545291 0 152941 0 0 466235 0 607912 0 9587457 0 2632523 10259661 2568097 4081003 8692357 0 0 8230679 6897006 10966274 1708458 7194118 1278071 0 0 135346 6184022 2442100 6364054 4968698 4366709 9371290 9067909 6279154 4420358 7567304 8268568 2730084 3443149 10713570 5752556 9422091 8385205 2883974 516220 2992075 8991516 1192120 5795098 138094 5620753 9583732 9797678 3855197 5066437 8847471 0 0 6163214 4866755 416074 3548058 0 976231 7925081 0 8120791 3471932 8349985 8544762 894950 4833842 8635195 5311138 9876701 9096396 70500 10890844 9782106 2420326 5290641 6169432 0 8255764 7099365 2453341 7537737 10172630 2819400 4749800 4101386 0 10436993 5421128 6441254 1167539 10764063 744413 10518942 5234964 4445322 361006 0 966228 8775268 9110866 6085042 6267047 2348981 2723075 8386486 0 950149 806308 2356250 1600105 4697219 2774921 0 2953750 6266802 970942 0 10753964 1264621 10776785 2772358 4337210 9946767 2294042 2060851 8391527 8202915 0 0 6090004 6709371 2560798 2599348 6705986 6634 2008899 6771815 4233577 10771152 419142 5869860 1316796 0 4217311 5180184 9948326 5719986 3827173 9156340 3964005 8325779 7167889 6555464 0 4857648 0 0 9000929 3288164 9072237 7282004 635529 7111625 1093951 0 3803019 4370530 9071734 3909751 2288208 9649030 4666685 0 7787102 3144220 0 6559075 2043340 10503019 129275 7368980 588429 5991791 3146182 4524285 2797251 1766302 8952705 0 935745 8412037 4834491 0 0 840141 0 7612091 199971 7894193 2891700 3259133 1744689 4773326 8800632 3153585 1379894 2632892 7307850 0 5243957 10186068 9246863 0 0 1462968 5635567 7170316 6796742 0 541778 6634038 10740911 7033176 4508258 9974102 4807578 8507038 4011110 0 3583031 3411903 4665693 0 5718923 6385938 6794951 7862872 6216084 3666865 702944 5841855 10767063 7551546 0 5277926 5672367 0 3906992 1979472 0 2871768 10069375 6731054 0 121887 8024513 8713754 8365165 6487458 271049 0 1817005 247410 5786788 4695465 5046348 0 6646160 2342912 8946811 8488992 10196561 0 6887132 8112675 1176968 4196728 7509549 6109852 0 5054477 4064747 1575650 2805990 0 1723071 976308 10645512 10139327 4503604 0 0 2302053 1016357 5421792 1194566 4638877 1891987 8426872 6831532 8643567 6338678 4706296 789160 7319687 9644955 6609790 0 4198432 0 728611 3934838 10549046 0 0 8906577 553223 0 0 8596244 8079940 2531202 5456208 1418371 8471402 0 4821220 0 3042378 7133728 0 10259912 3024363 10955292 651513 10904722 5720870 521727 11007307 9527771 0 9677859 7494898 9517279 0 9605526 9439164 0 393708 1830765 2396172 1758646 3894784 0 6524665 0 6033209 7246777 10127044 2096405 10630120 9394590 0 0 0 7262339 8143836 10689421 10258724 7655600 7119363 6982841 49004 9503981 2108387 10285989 9827700 9236426 3309750 2779217 0 6257140 4244474 10759225 5871652 73294 4273142 4957620 5296998 1180954 4630046 5374051 4938239 20917 7351327 5668720 1712156 6393725 546431 3016452 0 1159756 6552860 2544606 4257814 9203628 3507052 4006478 9442052 6721884 5710438 10803032 996148 0 0 2327198 9599001 3703525 0 8206618 0 5465532 0 10647031 5235997 5959973 3196767 1534742 9378881 10481854 3036958 1318590 0 10772093 0 7788016 0 7254018 1340844 4890336 2241372 4683213 9349364 6314395 4311280 4439764 2871539 10546880 360257 0 10345871 9901124 7594478 5604864 7623422 3526000 8015569 1195480 4301463 8861208 9369255 4426461 1202989 3944776 3252485 9263006 8259729 5848904 5628360 3514112 5729489 2214983 4178664 0 7817393 0 0 8496033 0 1525020 1619745 5369087 0 0 2263075 7307572 0 4715145 10067924 0 5767418 8620126 0 10359010 2935583 0 9034586 9904064 1002775 3204032 6314619 3871131 9559088 4754220 4157610 9286067 9015135 5575563 8745824 3728849 5809834 10360107 7494658 9545098 5977750 1155540 4670024 4466440 6171225 22651 0 8045705 10034623 2768183 0 2152488 9722371 6201989 10534195 1377250 491426 1291620 105317'
+
+### Your Task
+Fix the C++ code to pass ALL test cases (including hidden ones).
+
+### Critical Guidelines
+1. Focus on algorithmic correctness - NO hard-coded values or special cases
+2. Ensure proper data structures and complexity (aim for O(N log N) or better when possible)
+3. Handle edge cases (empty input, single elements, max constraints)
+4. Use standard C++20 features; avoid non-portable code
+
+### Output Format
+Provide ONLY the complete fixed C++ code in a single ```cpp block.

@@ -1,0 +1,33 @@
+#include<bits/stdc++.h>
+using namespace std;
+
+#define ll long long
+
+void solve() {
+    ll n, k;
+    cin >> n >> k;
+    vector<ll> a(n);
+    for(ll i = 0; i < n; i++) cin >> a[i];
+
+    // Sort the array to easily find the minimum and maximum values after removal
+    sort(a.begin(), a.end());
+
+    // Initialize the result with the difference between the largest and smallest element
+    ll res = a[n - 1] - a[0];
+
+    // Try removing different sets of k elements to minimize the difference
+    for(ll i = 0; i <= k; i++) {
+        // Calculate the difference if we remove i smallest and k-i largest elements
+        ll diff = a[min(n - 1, i + k)] - a[max(0LL, i)];
+        res = min(res, diff);
+    }
+
+    cout << res << endl;
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(NULL);
+    solve();
+    return 0;
+}

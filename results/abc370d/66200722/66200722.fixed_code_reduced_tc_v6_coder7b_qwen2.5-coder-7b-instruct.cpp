@@ -1,0 +1,59 @@
+#include <iostream>
+#include <vector>
+#include <unordered_map>
+#include <algorithm>
+
+using namespace std;
+
+void solve() {
+    int h, w, q;
+    cin >> h >> w >> q;
+    
+    vector<vector<bool>> grid(h, vector<bool>(w, true));
+    
+    while (q--) {
+        int r, c;
+        cin >> r >> c;
+        --r, --c;
+        
+        if (!grid[r][c]) continue;
+        
+        grid[r][c] = false;
+        
+        // Check up
+        for (int i = r - 1; i >= 0 && grid[i][c]; --i) {
+            grid[i][c] = false;
+        }
+        
+        // Check down
+        for (int i = r + 1; i < h && grid[i][c]; ++i) {
+            grid[i][c] = false;
+        }
+        
+        // Check left
+        for (int j = c - 1; j >= 0 && grid[r][j]; --j) {
+            grid[r][j] = false;
+        }
+        
+        // Check right
+        for (int j = c + 1; j < w && grid[r][j]; ++j) {
+            grid[r][j] = false;
+        }
+    }
+    
+    int count = 0;
+    for (const auto& row : grid) {
+        count += count_if(row.begin(), row.end(), [](bool b){ return !b; });
+    }
+    
+    cout << count << endl;
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    solve();
+    
+    return 0;
+}

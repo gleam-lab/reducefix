@@ -1,0 +1,53 @@
+#include<bits/stdc++.h>
+using namespace std;
+#define ll long long
+
+void solve() {
+    ll n;
+    cin >> n;
+    vector<ll> a(n), b(n - 1);
+    for (ll i = 0; i < n; ++i) cin >> a[i];
+    for (ll i = 0; i < n - 1; ++i) cin >> b[i];
+
+    sort(a.begin(), a.end());
+    sort(b.begin(), b.end());
+
+    // We need to find the smallest x such that we can assign all toys to boxes
+    // with one of them being x.
+
+    // Idea: Try to match largest toys first to largest available boxes.
+    // If a toy cannot go into the current box, it must go into our chosen x.
+
+    ll required_x = -1;
+    ll j = n - 2; // pointer for boxes (n-1 boxes)
+
+    for (ll i = n - 1; i >= 0; --i) {
+        if (j >= 0 && b[j] >= a[i]) {
+            j--; // use this box
+        } else {
+            // This toy is too big for any remaining box, must be placed in our chosen x
+            if (required_x == -1)
+                required_x = a[i];
+            else {
+                // Already needed to place another toy in x => Can't do
+                cout << -1 << endl;
+                return;
+            }
+        }
+    }
+
+    if (required_x == -1) {
+        // All toys matched to existing boxes. Any x will work, choose minimum size
+        // Since all toys are already assigned, x can be as small as the smallest unassigned toy
+        // But since all are assigned, x is unused -> set to 1 or minimal allowed value
+        // However, problem requires us to pick smallest x that still allows assignment
+        // So x just needs to be at least one toy's size
+        cout << a[0] << endl;
+    } else {
+        cout << required_x << endl;
+    }
+}
+
+int main() {
+    solve();
+}

@@ -1,0 +1,34 @@
+#include<bits/stdc++.h>
+using namespace std;
+
+bool check(long long mid, vector<pair<int,int>>& A, vector<pair<int,int>>& B, long long X) {
+    for(auto& [a, p] : A) {
+        long long x = max(0LL, (mid - (mid % a)) / a);
+        long long y = mid - x * a;
+        long long cost = x * p + min(y * b.first, (y + b.second - 1) / b.second * b.second * b.second);
+        X -= cost;
+        if(X < 0) return false;
+    }
+    return true;
+}
+
+int main() {
+    long long n, x;
+    cin >> n >> x;
+    vector<pair<int,int>> A(n), B(n);
+    for(long long i = 0; i < n; ++i) {
+        cin >> A[i].first >> A[i].second >> B[i].first >> B[i].second;
+    }
+
+    long long l = 0, r = 1e7;
+    while(l <= r) {
+        long long mid = (l + r) / 2;
+        if(check(mid, A, B, x)) {
+            l = mid + 1;
+        } else {
+            r = mid - 1;
+        }
+    }
+    cout << r << endl;
+    return 0;
+}

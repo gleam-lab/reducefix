@@ -1,0 +1,33 @@
+#include<bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+
+int main(){
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int n, q;
+    cin >> n;
+    
+    vector<ll> x(n + 2), p(n + 2);
+    for(int i = 1; i <= n; ++i) cin >> x[i];
+    for(int i = 1; i <= n; ++i) {
+        cin >> p[i];
+        p[i] += p[i - 1]; // prefix sum of p
+    }
+    
+    cin >> q;
+    while(q--) {
+        ll l, r;
+        cin >> l >> r;
+        
+        // Find first index where x[i] >= l (left bound)
+        int left = lower_bound(x.begin() + 1, x.begin() + n + 1, l) - x.begin();
+        // Find first index where x[i] > r (exclusive right bound)
+        int right = upper_bound(x.begin() + 1, x.begin() + n + 1, r) - x.begin();
+        
+        cout << p[right - 1] - p[left - 1] << endl;
+    }
+    
+    return 0;
+}

@@ -1,0 +1,54 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+#define INF 0x3f3f3f3f3f3f3f3f
+typedef long long ll;
+const int MAXN = 2e5 + 10;
+
+vector<int> vec[MAXN];
+queue<int> q;
+bool vis[MAXN];
+int step[MAXN];
+
+void bfs(int start, int end) {
+    memset(vis, false, sizeof(vis));
+    memset(step, -1, sizeof(step));
+    q.push(start);
+    step[start] = 0;
+    vis[start] = true;
+    
+    while (!q.empty()) {
+        int top = q.front();
+        q.pop();
+        
+        for (int neighbor : vec[top]) {
+            if (!vis[neighbor]) {
+                step[neighbor] = step[top] + 1;
+                vis[neighbor] = true;
+                q.push(neighbor);
+                
+                if (neighbor == end) {
+                    printf("%d\n", step[neighbor]);
+                    return;
+                }
+            }
+        }
+    }
+    
+    printf("-1\n");
+}
+
+int main() {
+    int n, m, u, v;
+    scanf("%lld %lld", &n, &m);
+    
+    for (int i = 0; i < m; ++i) {
+        scanf("%lld %lld", &u, &v);
+        vec[u].push_back(v);
+        vec[v].push_back(u); // Assuming undirected graph
+    }
+    
+    bfs(1, n);
+    
+    return 0;
+}

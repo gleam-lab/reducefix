@@ -1,0 +1,59 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+using LL = __int128;
+typedef long long ll;
+const int N = 1e6 + 7;
+
+vector<LL> prefix_sum;
+
+void preprocess(const vector<int>& arr, const vector<int>& brr) {
+    prefix_sum.resize(N + 1, 0);
+    for (int i = 1; i <= brr.size(); ++i) {
+        prefix_sum[brr[i]] += arr[i];
+    }
+}
+
+LL query(int l, int r) {
+    return prefix_sum[r] - prefix_sum[l - 1];
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int n, m;
+    cin >> n;
+    vector<int> a(n + 1), b(n + 1), c(n + 1);
+
+    for (int i = 1; i <= n; ++i) {
+        cin >> a[i];
+    }
+
+    for (int i = 1; i <= n; ++i) {
+        cin >> b[i];
+        c[i] = b[i] + c[i - 1];
+    }
+
+    preprocess(a, b);
+
+    cin >> m;
+    while (m--) {
+        int l, r;
+        cin >> l >> r;
+        auto l_i = lower_bound(b.begin() + 1, b.end(), l);
+        auto r_i = upper_bound(b.begin() + 1, b.end(), r);
+
+        if (r_i == b.end() && l_i == b.begin() + 1) {
+            cout << prefix_sum.back() << endl;
+        } else if (r_i == b.end()) {
+            cout << prefix_sum.back() - prefix_sum[l_i - b.begin()] << endl;
+        } else if (l_i == b.begin() + 1) {
+            cout << prefix_sum[r_i - b.begin() - 1] << endl;
+        } else {
+            cout << prefix_sum[r_i - b.begin() - 1] - prefix_sum[l_i - b.begin()] << endl;
+        }
+    }
+
+    return 0;
+}

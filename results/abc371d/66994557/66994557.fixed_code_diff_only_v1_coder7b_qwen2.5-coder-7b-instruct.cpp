@@ -1,0 +1,28 @@
+#include<bits/stdc++.h>
+using namespace std;
+
+const int MAXN = 200005;
+
+int n, q, x[MAXN], p[MAXN];
+long long sum[MAXN];
+
+int main() {
+    cin >> n;
+    for (int i = 1; i <= n; ++i) {
+        cin >> x[i];
+    }
+    for (int i = 1; i <= n; ++i) {
+        cin >> p[i];
+        sum[i] = sum[i - 1] + p[i];
+    }
+    cin >> q;
+    while (q--) {
+        int L, R;
+        cin >> L >> R;
+        int l = lower_bound(x + 1, x + n + 1, L) - x;
+        int r = upper_bound(x + 1, x + n + 1, R) - x;
+        if (l > r) --r; // Adjust to handle overlapping ranges correctly
+        cout << sum[r] - sum[l - 1] << endl;
+    }
+    return 0;
+}

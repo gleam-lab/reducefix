@@ -1,0 +1,80 @@
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+
+int main() {
+    int N, M;
+    ll K;
+    cin >> N >> M >> K;
+    vector<ll> A(N);
+    ll sum_A = 0;
+    for (int i = 0; i < N; ++i) {
+        cin >> A[i];
+        sum_A += A[i];
+    }
+
+    ll remaining = K - sum_A;
+
+    vector<ll> sorted_A = A;
+    sort(sorted_A.begin(), sorted_A.end());
+
+    vector<ll> prefix_sum(N + 1);
+    for (int i = 1; i <= N; ++i) {
+        prefix_sum[i] = prefix_sum[i - 1] + sorted_A[i - 1];
+    }
+
+    vector<ll> result(N);
+
+    // Binary search to find how many candidates are strictly less than current candidate's votes after adding X
+    auto count_needed = [&](ll x, int idx) -> ll {
+        ll total = A[idx] + x;
+        int low = 0, high = N;
+        while (low < high) {
+            int mid = (low + high) / 2;
+            if (sorted_A[mid] < total)
+                low = mid + 1;
+            else
+                high = mid;
+        }
+        return low;
+    };
+
+    for (int i = 0; i < N; ++i) {
+        ll l = 0, r = remaining;
+        ll base = A[i];
+        bool possible = false;
+
+        // First check if already has enough
+        ll cnt = N - (lower_bound(sorted_A.begin(), sorted_A.end(), base) - sorted_A.begin());
+        if (cnt < M) {
+            result[i] = 0;
+            continue;
+        }
+
+        while (l < r) {
+            ll mid = (l + r) / 2;
+            ll cur = base + mid;
+            int pos = lower_bound(sorted_A.begin(), sorted_A.end(), cur) - sorted_A.begin();
+            ll needed = mid + (cur * pos - (prefix_sum[pos]));
+
+            if (needed > remaining) {
+                l = mid + 1;
+            } else {
+                r = mid;
+                possible = true;
+            }
+        }
+
+        if (!possible) {
+            result[i] = -1;
+        } else {
+            result[i] = l;
+        }
+    }
+
+    for (ll val : result) {
+        cout << val << " ";
+    }
+
+    return 0;
+}

@@ -1,0 +1,52 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+#define ll long long
+#define vi vector<int>
+#define vl vector<ll>
+#define vpii vector<pair<int, int>>
+#define vpll vector<pair<ll, ll>>
+
+class Solution {
+public:
+    ll solve() {
+        ll N, M;
+        cin >> N >> M;
+        
+        unordered_set<ll> seen;
+        for (ll i = 0; i < M; ++i) {
+            ll x, y;
+            cin >> x >> y;
+            // Convert 2D coordinates to 1D using a unique hash function
+            seen.insert(x * N + y);
+
+            // Check all possible positions a knight can move from (x, y)
+            vector<pair<ll, ll>> moves = {{2, 1}, {1, 2}, {-1, 2}, {-2, 1}, {-2, -1}, {-1, -2}, {1, -2}, {2, -1}};
+            for (auto &move : moves) {
+                ll nx = x + move.first;
+                ll ny = y + move.second;
+                if (nx >= 1 && nx <= N && ny >= 1 && ny <= N) {
+                    // Insert the new position into the seen set
+                    seen.insert(nx * N + ny);
+                }
+            }
+        }
+
+        // Calculate the number of valid empty squares
+        ll total_squares = N * N;
+        ll valid_empty_squares = total_squares - seen.size();
+
+        cout << valid_empty_squares << endl;
+        return valid_empty_squares;
+    }
+};
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(NULL);
+    cout.tie(NULL);
+
+    Solution sol;
+    sol.solve();
+    return 0;
+}

@@ -1,0 +1,42 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    long long N, M;
+    cin >> N >> M;
+
+    // Set to store all occupied squares and attacked squares
+    unordered_set<string> blocked;
+
+    // Directions for knight-like moves (8 directions)
+    vector<pair<long long, long long>> directions = {
+        {2, 1}, {1, 2}, {-1, 2}, {-2, 1},
+        {-2, -1}, {-1, -2}, {1, -2}, {2, -1}
+    };
+
+    for (long long i = 0; i < M; ++i) {
+        long long a, b;
+        cin >> a >> b;
+
+        // Block the square itself (occupied)
+        blocked.insert(to_string(a) + "," + to_string(b));
+
+        // Block all squares that can capture this piece
+        for (auto [dx, dy] : directions) {
+            long long x = a + dx;
+            long long y = b + dy;
+            if (x >= 1 && x <= N && y >= 1 && y <= N) {
+                blocked.insert(to_string(x) + "," + to_string(y));
+            }
+        }
+    }
+
+    // Total number of cells is N * N
+    // Subtract the number of blocked cells and existing pieces
+    long long totalCells = N * N;
+    long long result = totalCells - (long long)blocked.size();
+
+    cout << result << endl;
+
+    return 0;
+}

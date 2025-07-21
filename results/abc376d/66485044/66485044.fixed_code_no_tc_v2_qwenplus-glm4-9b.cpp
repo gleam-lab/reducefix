@@ -1,0 +1,40 @@
+#include<bits/stdc++.h>
+#define INF 0x3f3f3f3f3f3f3f3f
+using namespace std;
+typedef long long ll;
+const int MAXN=2e5+10;
+vector<ll> vec[MAXN];
+int dist[MAXN];
+bool visited[MAXN];
+
+int main(){
+    ll n, m, u, v;
+    scanf("%lld %lld", &n, &m);
+    for(ll i = 1; i <= m; i++){
+        scanf("%lld %lld", &u, &v);
+        vec[u].push_back(v);
+    }
+    deque<int> q;
+    dist[1] = 0;
+    q.push_back(1);
+    visited[1] = true;
+
+    while(!q.empty()){
+        int top = q.front();
+        q.pop();
+        for(int i = 0; i < vec[top].size(); i++){
+            int to = vec[top][i];
+            if(to == 1){
+                printf("%d", dist[top] + 1);
+                return 0;
+            }
+            if(!visited[to]){
+                dist[to] = dist[top] + 1;
+                visited[to] = true;
+                q.push_back(to);
+            }
+        }
+    }
+    printf("-1");
+    return 0;
+}

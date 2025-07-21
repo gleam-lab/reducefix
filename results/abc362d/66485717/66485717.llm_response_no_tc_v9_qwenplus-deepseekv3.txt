@@ -1,0 +1,83 @@
+To fix this code, we need to ensure that the Dijkstra's algorithm is correctly implemented to account for the vertex weights and edge weights in the path calculation. The original code attempts to use Dijkstra's algorithm, but there are some issues in how the vertex weights are incorporated into the path weight calculation.
+
+### Issues in the Original Code:
+1. **Vertex Weight Handling**: The vertex weights \(A_i\) should be included in the path cost. The original code includes \(A_1\) in the initial distance and adds \(A_y\) when moving to vertex \(y\), but this might not correctly account for the vertex weights along the path.
+2. **Edge Weight Handling**: The edge weights \(B_j\) are correctly added to the path cost, but the total path cost should be the sum of all vertex weights and edge weights along the path.
+3. **Priority Queue Handling**: The priority queue should prioritize nodes with the smallest current distance, and the comparison operator in the `Node` struct should reflect this (using `w > u.w` for a min-heap).
+
+### Fixed Approach:
+1. **Initial Distance**: The initial distance for vertex 1 should be \(A_1\) because the path starts at vertex 1, and we include its weight.
+2. **Relaxation Step**: When moving from vertex \(x\) to vertex \(y\) through an edge with weight \(B_j\), the new distance to \(y\) should be \(d[x] + B_j + A_y\). This accounts for the edge weight and the destination vertex's weight.
+3. **Priority Queue**: Ensure the priority queue correctly implements a min-heap to always extract the node with the smallest current distance.
+
+### Fixed Code:
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+using i64 = long long;
+constexpr i64 inf = 1e18;
+
+struct Node {
+    int x;
+    i64 w;
+    bool operator < (const Node& u) const {
+        return w > u.w;
+    }
+};
+
+void solve() {
+    int n, m;
+    cin >> n >> m;
+    vector<i64> a(n + 1);
+    for (int i = 1; i <= n; ++i) {
+        cin >> a[i];
+    }
+    
+    vector<vector<pair<int, int>>> g(n + 1);
+    for (int i = 1; i <= m; ++i) {
+        int u, v, b;
+        cin >> u >> v >> b;
+        g[u].emplace_back(v, b);
+        g[v].emplace_back(u, b);
+    }
+    
+    vector<i64> d(n + 1, inf);
+    vector<bool> vis(n + 1, false);
+    priority_queue<Node> pq;
+    
+    d[1] = a[1];
+    pq.push({1, d[1]});
+    
+    while (!pq.empty()) {
+        auto [x, w] = pq.top();
+        pq.pop();
+        if (vis[x]) continue;
+        vis[x] = true;
+        for (const auto& [y, b] : g[x]) {
+            if (d[y] > d[x] + b + a[y]) {
+                d[y] = d[x] + b + a[y];
+                pq.push({y, d[y]});
+            }
+        }
+    }
+    
+    for (int i = 2; i <= n; ++i) {
+        cout << d[i] << " \n"[i == n];
+    }
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    solve();
+    return 0;
+}
+```
+
+### Explanation:
+1. **Initial Setup**: The vertex weights \(A_i\) are read and stored. The graph is constructed using adjacency lists, where each edge stores the connected vertex and its weight \(B_j\).
+2. **Dijkstra's Algorithm**: The algorithm starts from vertex 1 with an initial distance of \(A_1\). For each vertex, it explores all adjacent vertices, updating their distances if a shorter path is found (sum of current distance, edge weight, and adjacent vertex's weight).
+3. **Output**: After processing all vertices, the distances from vertex 1 to each vertex \(i\) (for \(i = 2\) to \(N\)) are printed, representing the minimum path weights.
+
+This approach ensures that both vertex and edge weights are correctly accounted for in the path cost calculation, and it efficiently computes the shortest paths using Dijkstra's algorithm with a priority queue.

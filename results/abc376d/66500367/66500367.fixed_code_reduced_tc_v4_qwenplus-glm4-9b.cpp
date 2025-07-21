@@ -1,0 +1,50 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+using ll = long long;
+using pii = pair <int, int>;
+
+const int N = 2e5 + 5;
+vector <int> g[N];
+int n, m, dep[N];
+
+bool visited[N];
+
+int bfs () {
+	queue <int> q;
+	q.push (1);
+	dep[1] = 1;
+	visited[1] = true;
+	
+	while (!q.empty ()) {
+		int u = q.front ();
+		q.pop ();
+		for (auto v : g[u])
+			if (!visited[v]) {
+				visited[v] = true;
+				dep[v] = dep[u] + 1;
+				q.push (v);
+			}
+	}
+	return visited[n]; // Return true if all nodes are visited, else false
+}
+
+int main () {
+	ios :: sync_with_stdio (false);
+	cin.tie (nullptr);
+	cout.tie (nullptr);
+	
+	cin >> n >> m;
+	for (int i = 1; i <= m; i++) {
+		int u, v;
+		cin >> u >> v;
+		g[u].push_back (v);
+	}
+
+	// If not all nodes are visited, return -1, else return the depth of node n
+	if (!bfs())
+		cout << -1 << '\n';
+	else
+		cout << dep[n] - 1 << '\n'; // Subtract 1 because dep is 1-based index
+	return 0;
+}

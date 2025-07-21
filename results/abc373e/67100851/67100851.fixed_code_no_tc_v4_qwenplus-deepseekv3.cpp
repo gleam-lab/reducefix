@@ -1,0 +1,88 @@
+#include <iostream>
+#include <algorithm>
+#include <vector>
+using namespace std;
+
+typedef long long ll;
+
+struct Candidate {
+    ll a;
+    int idx;
+};
+
+int main() {
+    int N, M;
+    ll K;
+    cin >> N >> M >> K;
+    vector<Candidate> A(N);
+    for (int i = 0; i < N; ++i) {
+        cin >> A[i].a;
+        A[i].idx = i;
+    }
+
+    // Sort by votes in descending order for easier processing
+    sort(A.begin(), A.end(), [](const Candidate& x, const Candidate& y) {
+        return x.a > y.a;
+    });
+
+    vector<ll> prefix_sum(N + 1, 0);
+    for (int i = 0; i < N; ++i) {
+        prefix_sum[i + 1] = prefix_sum[i] + A[i].a;
+    }
+
+    ll remaining_votes = K - prefix_sum[N];
+    vector<ll> result(N);
+
+    for (int i = 0; i < N; ++i) {
+        // The candidate is already in top M
+        if (i < M) {
+            // We need to ensure that at most M-1 candidates have > A[i].a + X
+            // The M-th candidate (A[M-1].a) must be <= A[i].a + X
+            // So X >= max(A[M-1].a - A[i].a, 0)
+            ll required = max(A[M-1].a - A[i].a, 0LL);
+            if (i == M-1) {
+                // For the M-th candidate, we need to ensure that no more than M-1 candidates are above
+                // So the (M+1)-th candidate must be <= A[i].a + X
+                if (M < N) {
+                    required = max(A[M].a - A[i].a, 0LL);
+                } else {
+                    required = 0;
+                }
+            }
+            // Check if we have enough remaining votes
+            if (required <= remaining_votes) {
+                result[A[i].idx] = required;
+            } else {
+                result[A[i].idx] = -1;
+            }
+        } else {
+            // For candidates not in top M initially, they need to surpass at least the M-th candidate
+            // So X >= (A[M-1].a + 1) - A[i].a
+            ll required = (A[M-1].a + 1) - A[i].a;
+            if (required < 0) required = 0;
+            // Also need to ensure that after adding X, the sum of votes doesn't exceed K
+            ll total_used = required;
+            // The votes needed for others (M-1 candidates) to not surpass A[i].a + X
+            // The top M-1 candidates can have at most A[i].a + X - 1 votes
+            if (M > 1) {
+                ll new_sum_top_M_minus_1 = (A[i].a + required) * (M - 1);
+                ll current_sum_top_M_minus_1 = prefix_sum[M-1];
+                if (new_sum_top_M_minus_1 > current_sum_top_M_minus_1) {
+                    total_used += new_sum_top_M_minus_1 - current_sum_top_M_minus_1;
+                }
+            }
+            if (total_used <= remaining_votes) {
+                result[A[i].idx] = required;
+            } else {
+                result[A[i].idx] = -1;
+            }
+        }
+    }
+
+    for (int i = 0; i < N; ++i) {
+        cout << result[i] << " ";
+    }
+    cout << endl;
+
+    return 0;
+}

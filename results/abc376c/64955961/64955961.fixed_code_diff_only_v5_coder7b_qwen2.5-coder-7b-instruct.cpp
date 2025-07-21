@@ -1,0 +1,61 @@
+#include<bits/stdc++.h>
+using namespace std;
+#define ll long long
+
+void solve()
+{
+    ll n;
+    cin >> n;
+    vector<ll> a(n), b(n - 1);
+    for (ll i = 0; i < n; i++) {
+        cin >> a[i];
+    }
+    for (ll i = 0; i < n - 1; i++) {
+        cin >> b[i];
+    }
+
+    // Sort both arrays to facilitate finding the smallest box size needed
+    sort(a.begin(), a.end());
+    sort(b.begin(), b.end());
+
+    // Initialize variables
+    ll ans = INT_MAX, max_size_needed = 0;
+
+    // Iterate through the sorted sizes of toys
+    for (ll i = 0, j = 0; i < n; ++i) {
+        // Find the smallest box that can accommodate the current toy
+        while (j < n - 1 && b[j] < a[i]) {
+            ++j;
+        }
+        
+        // If we have found a suitable box, update the answer
+        if (j < n - 1) {
+            ans = min(ans, b[j]);
+            max_size_needed = max(max_size_needed, a[i]);
+        } else {
+            // If no suitable box is found, break the loop as further boxes won't help
+            break;
+        }
+    }
+
+    // Check if it's possible to place all toys without exceeding the largest toy size
+    if (max_size_needed > ans) {
+        cout << -1 << endl;
+    } else {
+        cout << ans << endl;
+    }
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(0);
+    cout.tie(0);
+
+    int t;
+    cin >> t;
+    while (t--) {
+        solve();
+    }
+
+    return 0;
+}

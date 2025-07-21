@@ -1,0 +1,64 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+
+using namespace std;
+using ll = long long;
+
+int main() {
+    int n;
+    cin >> n;
+    vector<int> x(n);
+    for (int i = 0; i < n; i++) cin >> x[i];
+    vector<ll> p(n), s(n + 1, 0);
+    for (int i = 0; i < n; i++) {
+        cin >> p[i];
+        s[i + 1] = s[i] + p[i];
+    }
+    
+    sort(x.begin(), x.end()); // Sort the x array to use binary search correctly
+    
+    int q;
+    cin >> q;
+    for (int i = 0; i < q; i++) {
+        int l, r;
+        cin >> l >> r;
+        // Find the position of the smallest element greater than or equal to l in x
+        auto it_lt = lower_bound(x.begin(), x.end(), l);
+        // Find the position of the smallest element greater than r in x
+        auto it_rt = upper_bound(x.begin(), x.end(), r);
+        
+        // Calculate the corresponding indices in the sorted x array
+        int idx_lt = it_lt - x.begin();
+        int idx_rt = it_rt - x.begin();
+        
+        // Since we are dealing with prefix sums, we need to adjust the right index
+        // to exclude elements greater than r (if any) and ensure correct range
+        ll ans;
+        if (idx_lt <= idx_rt) {
+            ans = s[idx_rt] - s[idx_lt];
+            // If l and r fall within the same element in the original array,
+            // we need to adjust based on the actual weights in p
+            if (idx_lt < n && x[idx_lt] == l) {
+                // Find the first occurrence of l in the original array
+                auto first_occ_l = find(x.begin(), x.end(), l);
+                auto last_occ_l = find_if(first_occ_l, x.end(), [&](int val) { return val != l; });
+                int count_l = distance(first_occ_l, last_occ_l);
+                ans -= (count_l - 1) * p[idx_lt]; // Subtract extra weights if l repeats
+                if (r == l) ans = p[idx_lt]; // If l == r, the answer is just the weight of that element
+                else if (x[idx_rt - 1] == r) {
+                    // If r falls exactly on an element in x, adjust based on the last occurrence of r in the original array
+                    auto first_occ_r = find(x.begin(), x.end(), r);
+                    auto last_occ_r = find_if(first_occ_r, x.end(), [&](int val) { return val != r; });
+                    int count_r = distance(first_occ_r, last_occ_r);
+                    ans += (count_r - 1) * p[idx_rt - 1]; // Add missing weights if r repeats (considering s[idx_rt] already excludes this element)
+                }
+            }
+        } else {
+            ans = 0; // No elements in the range [l, r]
+        }
+        
+        cout << ans << endl;
+    }
+    return 0;
+}

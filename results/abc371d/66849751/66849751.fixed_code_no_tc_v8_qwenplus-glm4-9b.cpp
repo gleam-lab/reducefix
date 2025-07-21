@@ -1,0 +1,33 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+using ll = long long;
+using Graph = vector<vector<int>>;
+
+#define rep(i, n) for (int i = 0; i < (n); ++i)
+#define all(x) (x).begin(), (x).end()
+
+int main() {
+    int N;
+    cin >> N;
+    vector<int> P(N + 1), X(N);
+    P[0] = 0;
+    rep(i, N) cin >> X[i];
+    rep(i, N) cin >> P[i + 1]; // Read prefix sums from 1 to N
+    rep(i, N) P[i + 1] += P[i]; // Compute prefix sums
+
+    map<int, int> x_to_ptr;
+    rep(i, N) x_to_ptr.emplace(X[i], i);
+
+    int Q;
+    cin >> Q;
+    rep(q, Q) {
+        int L, R;
+        cin >> L >> R;
+        auto X_l = x_to_ptr.lower_bound(L);
+        auto X_r = x_to_ptr.upper_bound(R);
+        int l = X_l != x_to_ptr.end() ? X_l->second : N;
+        int r = X_r != x_to_ptr.end() ? X_r->second + 1 : N + 1;
+        cout << P[r] - P[l] << endl;
+    }
+}

@@ -1,0 +1,69 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+typedef long long ll;
+
+const int MAXN = 1e5 + 5;
+
+ll a[MAXN];
+
+// Binary search to find the k-th smallest distance from b
+ll query(ll b, ll k, int n) {
+    // Create an array of distances |a[i] - b|
+    vector<ll> diffs(n);
+    for (int i = 0; i < n; ++i) {
+        diffs[i] = abs(a[i] - b);
+    }
+    
+    // Use nth_element to find the k-th smallest distance in O(n) average time
+    nth_element(diffs.begin(), diffs.begin() + k - 1, diffs.end());
+    return diffs[k - 1];
+}
+
+void solve() {
+    int n, q;
+    cin >> n >> q;
+    for (int i = 0; i < n; ++i) {
+        cin >> a[i];
+    }
+    
+    // Sort A for binary searching in alternative solution
+    sort(a, a + n);
+    
+    for (int i = 0; i < q; ++i) {
+        ll b, k;
+        cin >> b >> k;
+        
+        // Alternative approach using binary search and counting
+        // Determine lower and upper bounds for binary search
+        ll low = 0, high = 2e8; // Max possible distance on given input range
+        ll answer = 0;
+        
+        while (low <= high) {
+            ll mid = (low + high) / 2;
+            // Count number of elements within distance <= mid from b
+            int left = lower_bound(a, a + n, b - mid) - a;
+            int right = upper_bound(a, a + n, b + mid) - a;
+            int count = right - left;
+            
+            if (count >= k) {
+                answer = mid;
+                high = mid - 1;
+            } else {
+                low = mid + 1;
+            }
+        }
+        
+        cout << answer << endl;
+    }
+}
+
+int main() {
+    ios::sync_with_stdio(0);
+    cin.tie(0);
+    cout.tie(0);
+    
+    solve();
+    
+    return 0;
+}

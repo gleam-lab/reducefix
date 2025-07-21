@@ -1,0 +1,178 @@
+To fix this code, we need to address the core issue in the original approach. The original code attempted to use a binary search on a frequency array, which is not suitable for finding the k-th closest element efficiently, especially given the constraints (N and Q up to 10^5). 
+
+### Approaches
+1. **Sorting and Binary Search**: 
+   - First, sort the array of points `A` to facilitate efficient distance calculations.
+   - For each query point `B_j`, compute the distances of all points in `A` to `B_j`, sort these distances, and then find the k-th smallest distance. However, this approach would be O(Q * N log N), which is too slow for large inputs.
+   
+2. **Optimized Approach Using Sorting and Prefix Sums**: 
+   - Sort the array `A` once.
+   - For each query point `B_j`, use binary search to find the position where `B_j` would fit in the sorted array `A`. This helps in quickly determining the closest elements around `B_j`.
+   - Use a sliding window or two pointers to find the k-th closest element by expanding around the found position in the sorted array.
+
+### Solution Code
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(0);
+    cin.tie(0);
+    
+    int N, Q;
+    cin >> N >> Q;
+    vector<int> A(N);
+    for (int i = 0; i < N; ++i) {
+        cin >> A[i];
+    }
+    sort(A.begin(), A.end());
+    
+    while (Q--) {
+        int b, k;
+        cin >> b >> k;
+        
+        int left = 0, right = N - 1;
+        vector<int> distances(N);
+        for (int i = 0; i < N; ++i) {
+            distances[i] = abs(A[i] - b);
+        }
+        
+        sort(distances.begin(), distances.end());
+        cout << distances[k - 1] << '\n';
+    }
+    
+    return 0;
+}
+```
+
+Wait, this approach would still be O(Q * N log N), which is too slow for N and Q up to 1e5. 
+
+To optimize, we need a better way. Let's think differently:
+
+1. **Sort the array A**.
+2. For each query point `b`, the k-th closest element can be found by considering the elements around `b` in the sorted array. We can use binary search to find the position of `b` in the sorted array `A`, then use a two-pointer approach to find the k closest elements.
+
+Here's the optimized approach:
+
+1. Sort the array `A`.
+2. For each query `(b, k)`:
+   - Use binary search to find the lower bound of `b` in `A`.
+   - Use two pointers to expand around this position, comparing the distances of elements to `b`, and collect the k smallest distances.
+
+This approach reduces the complexity to O(N log N + Q * k), which is acceptable if k is small. However, in the worst case, k can be up to N, making it O(Q * N), which is still too slow.
+
+Hence, we need a more efficient way. 
+
+Alternative approach:
+
+1. Sort the array `A`.
+2. For each query `(b, k)`, the k-th smallest distance can be found by:
+   - The element at position `k-1` in the array of distances if the distances are sorted. But sorting for each query is O(N log N), which is too slow.
+   
+   - Instead, we can note that the k-th smallest distance is the k-th element in the sorted list of distances. Since we can't afford to sort for each query, we need a way to find the k-th smallest distance without sorting.
+
+Another idea: Use a priority queue (max-heap) of size k to keep track of the k smallest distances. For each element in `A`, compute the distance to `b` and maintain the heap. This would be O(N log k) per query, which is O(Q * N log k). For k up to N, this is O(Q * N log N), which is too slow.
+
+Given the constraints, the only feasible approach is to precompute for each possible `b` the sorted distances and answer queries in O(1), but this is impossible due to the large range of `b`.
+
+Thus, the initial approach with sorting per query is the only feasible one, but it's too slow. 
+
+Therefore, the correct approach must be to accept that for each query, we sort the distances. Given that in practice, the code might pass due to optimizations, but for large N and Q, it's not feasible. Hence, the problem likely expects this approach, despite its theoretical inefficiency.
+
+But the original code tried a different method, which was incorrect. The correct approach is to sort the distances for each query and pick the k-th one.
+
+Here's the corrected code:
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int N, Q;
+    cin >> N >> Q;
+    vector<int> A(N);
+    for (int i = 0; i < N; ++i) {
+        cin >> A[i];
+    }
+    
+    while (Q--) {
+        int b, k;
+        cin >> b >> k;
+        vector<int> distances(N);
+        for (int i = 0; i < N; ++i) {
+            distances[i] = abs(A[i] - b);
+        }
+        nth_element(distances.begin(), distances.begin() + k - 1, distances.end());
+        cout << distances[k - 1] << '\n';
+    }
+    
+    return 0;
+}
+```
+
+This code uses `nth_element` which is O(N) on average per query, making the total complexity O(Q * N), which is acceptable for the given constraints (since Q and N are up to 1e5, and 1e5 * 1e5 = 1e10, which is too slow).
+
+Wait, no. 1e10 operations is way too slow. So this approach won't pass.
+
+Thus, the problem requires a more efficient approach. 
+
+Alternative idea: For each query, the k-th closest element's distance is the k-th smallest in the array of |A_i - b|. To find this without sorting, we can use a binary search on the answer. For a given distance `d`, count how many elements in `A` have |A_i - b| <= d. The smallest `d` for which this count is >= k is the answer.
+
+This approach is O(Q * N log D), where D is the maximum possible distance (2e8). For Q=1e5, N=1e5, log D is about 28, so total operations are about 2.8e8, which is feasible.
+
+Here's the code using binary search for each query:
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int N, Q;
+    cin >> N >> Q;
+    vector<int> A(N);
+    for (int i = 0; i < N; ++i) {
+        cin >> A[i];
+    }
+    sort(A.begin(), A.end());
+    
+    while (Q--) {
+        int b, k;
+        cin >> b >> k;
+        
+        int low = 0, high = 2e8;
+        int answer = high;
+        
+        while (low <= high) {
+            int mid = low + (high - low) / 2;
+            auto it_l = lower_bound(A.begin(), A.end(), b - mid);
+            auto it_r = upper_bound(A.begin(), A.end(), b + mid);
+            int count = it_r - it_l;
+            
+            if (count >= k) {
+                answer = mid;
+                high = mid - 1;
+            } else {
+                low = mid + 1;
+            }
+        }
+        cout << answer << '\n';
+    }
+    
+    return 0;
+}
+```
+
+This approach uses binary search on the answer and leverages the sorted array `A` to count the number of elements within a certain distance `d` of `b` using `lower_bound` and `upper_bound`, each of which is O(log N). The total complexity is O(N log N + Q * log D * log N), which is efficient enough for the given constraints. 
+
+For each query:
+- Binary search on `d` from 0 to 2e8.
+- For each `d`, use `lower_bound` and `upper_bound` to count the number of elements in `A` that are within `d` distance from `b`.
+- Adjust the binary search range based on whether the count is >= `k`.
+
+This should pass all test cases efficiently.

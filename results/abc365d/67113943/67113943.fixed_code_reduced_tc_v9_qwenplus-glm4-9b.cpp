@@ -1,0 +1,35 @@
+#include <iostream>
+#include <string>
+
+int main() {
+    std::ios_base::sync_with_stdio(false);
+    std::cin.tie(NULL);
+
+    int N;
+    std::string S;
+    std::cin >> N;
+    std::cin >> S;
+    int wins = 0;
+    char winmove = 'X'; // Initialize with 'X' to handle the initial move comparison
+    char prev = 'X';    // Initialize with 'X' to handle the initial move comparison
+
+    // Map the moves to the winning moves
+    std::string moves = "PSR";
+    
+    for (char c : S) {
+        // Find the index of the current and previous move in the moves string
+        int currentMoveIndex = moves.find(c);
+        int previousMoveIndex = moves.find(prev);
+        
+        // Check if the current move wins over the previous move
+        if ((currentMoveIndex - 1 + 3) % 3 == previousMoveIndex) { // Circularly find the previous move's winning move
+            wins++;
+            prev = c; // Update the previous move to the current move
+        } else {
+            prev = c; // Update the previous move to the current move if it doesn't win
+        }
+    }
+    
+    std::cout << wins;
+    return 0;
+}

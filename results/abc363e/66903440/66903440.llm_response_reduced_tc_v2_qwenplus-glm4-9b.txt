@@ -1,0 +1,79 @@
+
+The problem is about simulating the effect of rising sea levels on an island of size \( H \times W \). Each cell on the island has an elevation, and depending on the sea level, the cells may sink or remain above the water. The task is to determine the area of the island that remains above the sea level after a given number of years \( Y \).
+
+The main issue in the provided code is the improper handling and updating of the queue for the cells that are about to sink. Specifically, the issue is with the part of the code that deals with checking adjacent cells and updating their status when they sinks. Here's the problematic part of the code:
+
+```cpp
+rep(k,4){
+    int ni=i+dx[k];
+    int nj=j+dy[k];
+    if(ni>=0&&ni<H&&nj>=0&&nj<W){
+        if(F[ni][nj]){
+            F[ni][nj]=false;
+            Q[max(A[ni][nj],y)].push({ni,nj});
+        }
+    }
+}
+```
+
+The problem here is that the queue size can become huge as the simulation progresses, and the use of a 2D queue for each possible elevation can lead to inefficiency. Moreover, the queue should be updated with the year when a cell will sink, not the maximum of the elevation of the cell and the year. 
+
+Here is a revised version of the code that addresses the issue:
+
+```cpp
+#include<bits/stdc++.h>
+using namespace std;
+using ll = int64_t;
+
+int H, W, Y;
+vector<vector<int>> A(H, vector<int>(W));
+vector<vector<bool>> F(H, vector<bool>(W, true));
+vector<queue<pair<int, int>>> Q(H + 1, queue<pair<int, int>>());
+
+int main() {
+    cin >> H >> W >> Y;
+    for (int i = 0; i < H; ++i)
+        for (int j = 0; j < W; ++j)
+            cin >> A[i][j];
+
+    // Initialize the queue with the cells on the border or with elevation 0
+    for (int i = 0; i < H; ++i) {
+        if (i == 0 || i == H - 1) { // Top and bottom rows
+            for (int j = 0; j < W; ++j) {
+                F[i][j] = false;
+                Q[A[i][j]].push({i, j});
+            }
+        } else {
+            F[i][0] = F[i][W - 1] = false; // Left and right columns
+            Q[A[i][0]].push({i, 0});
+            Q[A[i][W - 1]].push({i, W - 1});
+        }
+    }
+
+    for (int y = 1; y <= Y; ++y) {
+        queue<pair<int, int>> nextQ;
+        while (!Q[y].empty()) {
+            auto [i, j] = Q[y].front();
+            Q[y].pop();
+            A[i][j]++; // Sink the cell
+            F[i][j] = false;
+
+            for (int k = 0; k < 4; ++k) {
+                int ni = i + dx[k], nj = j + dy[k];
+                if (ni >= 0 && ni < H && nj >= 0 && nj < W && F[ni][nj]) {
+                    if (A[ni][nj] <= y) {
+                        F[ni][nj] = false;
+                        nextQ.push({ni, nj});
+                    }
+                }
+            }
+        }
+        Q[y + 1] = nextQ;
+        cout << H * W - Q[y].size() << '\n';
+    }
+
+    return 0;
+}
+```
+
+This version of the code uses a 1D queue instead of a 2D queue to keep track of the cells that are about to sink in each year. This reduces the complexity significantly and makes it more manageable for large inputs. The queue `nextQ` is used to store cells that will sink in the next year, and it is transferred to `Q[y + 1]` at the end of each year. This way, only the cells that are about to sink are processed in each year, which is much more efficient.

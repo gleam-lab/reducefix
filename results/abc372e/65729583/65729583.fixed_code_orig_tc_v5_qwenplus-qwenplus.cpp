@@ -1,0 +1,77 @@
+#include <iostream>
+#include <vector>
+#include <set>
+#include <algorithm>
+
+using namespace std;
+
+typedef long long ll;
+typedef vector<int> vi;
+
+const int MAXN = 200005;
+
+int parent[MAXN];
+set<int> components[MAXN];
+
+int find(int u) {
+    if (parent[u] != u) {
+        parent[u] = find(parent[u]);
+    }
+    return parent[u];
+}
+
+void unite(int u, int v) {
+    int pu = find(u), pv = find(v);
+    if (pu == pv) return;
+    
+    // Always merge smaller set into larger set for better performance
+    if (components[pu].size() < components[pv].size()) {
+        swap(pu, pv);
+    }
+
+    for (int x : components[pv]) {
+        components[pu].insert(x);
+        parent[x] = pu;
+    }
+}
+
+void init(int n) {
+    for (int i = 1; i <= n; ++i) {
+        parent[i] = i;
+        components[i].insert(i);
+    }
+}
+
+int query_kth(set<int>& s, int k) {
+    if ((int)s.size() < k) return -1;
+    auto it = s.rbegin(); // reverse iterator for descending order
+    for (int i = 1; i < k; ++i) ++it;
+    return *it;
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int N, Q;
+    cin >> N >> Q;
+
+    init(N);
+
+    while (Q--) {
+        int type;
+        cin >> type;
+        if (type == 1) {
+            int u, v;
+            cin >> u >> v;
+            unite(u, v);
+        } else {
+            int v, k;
+            cin >> v >> k;
+            int root = find(v);
+            cout << query_kth(components[root], k) << '\n';
+        }
+    }
+
+    return 0;
+}

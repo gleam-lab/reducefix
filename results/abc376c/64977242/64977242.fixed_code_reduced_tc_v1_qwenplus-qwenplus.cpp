@@ -1,0 +1,48 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int N;
+    cin >> N;
+    vector<long long> A(N), B(N - 1);
+
+    for (int i = 0; i < N; ++i) cin >> A[i];
+    for (int i = 0; i < N - 1; ++i) cin >> B[i];
+
+    // Sort toys and boxes in ascending order
+    sort(A.begin(), A.end());
+    sort(B.begin(), B.end());
+
+    // Check if we can fit all but one toy into the existing boxes
+    bool possible = true;
+    for (int i = 0; i < N - 1; ++i) {
+        if (A[i] > B[i]) {
+            possible = false;
+            break;
+        }
+    }
+
+    if (!possible) {
+        cout << -1 << endl;
+        return 0;
+    }
+
+    // Find the minimum size that the extra box must have
+    long long min_box_size = 0;
+    for (int i = 0; i < N - 1; ++i) {
+        if (A[i + 1] > B[i]) {
+            min_box_size = A[i + 1];
+            break;
+        }
+    }
+
+    cout << min_box_size << endl;
+
+    return 0;
+}

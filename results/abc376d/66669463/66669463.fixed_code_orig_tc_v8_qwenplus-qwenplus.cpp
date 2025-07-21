@@ -1,0 +1,47 @@
+#include <algorithm>
+#include <iostream>
+#include <vector>
+#include <queue>
+#include <bitset>
+using namespace std;
+
+const int INF = 2000000000;
+int n, m;
+vector<vector<int>> adj(200001);
+int dist[200001];
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    cin >> n >> m;
+    for (int i = 0; i < m; ++i) {
+        int u, v;
+        cin >> u >> v;
+        adj[u].push_back(v);
+    }
+
+    // BFS from node 1
+    bitset<200001> visited;
+    queue<pair<int, int>> q;
+    q.push({1, 0});
+    visited[1] = true;
+    int ans = INF;
+
+    while (!q.empty()) {
+        auto [u, d] = q.front(); q.pop();
+        if (u == 1) {
+            ans = d;
+            break;
+        }
+        for (int v : adj[u]) {
+            if (!visited[v]) {
+                visited[v] = true;
+                q.push({v, d + 1});
+            }
+        }
+    }
+
+    cout << (ans == INF ? -1 : ans) << '\n';
+    return 0;
+}

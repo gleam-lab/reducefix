@@ -1,0 +1,89 @@
+To fix this code, we need to address several issues related to the handling of the k-th largest vertex in the connected component. The original code attempts to maintain a sorted list of the largest vertices in each connected component, but it has some flaws in the merging logic and the way it handles the k-th largest query.
+
+### Issues in the Original Code
+1. **Merging Logic**: The `merge` function in the `Union_Find` structure attempts to merge the sorted lists of two components, but it does not correctly maintain the top 10 largest vertices after merging. It sorts the combined list and then discards elements beyond the 9th index, but the merging process is inefficient and could lead to incorrect results when the combined list is not correctly sorted.
+2. **Index Handling**: In the type 2 query, the code checks if the size of the connected component is less than or equal to `b`, which is incorrect because `b` is the 0-based index of the k-th largest vertex. The correct check should be if the size is less than `k` (adjusted for 0-based indexing).
+3. **Initialization**: The `uni` vector is initialized with each vertex having only itself, which is correct, but the merging logic needs to ensure that the top 10 largest vertices are maintained correctly after each merge.
+
+### Approaches
+1. **Union-Find with Top K Tracking**: Maintain a list of the top 10 largest vertices in each connected component. When merging two components, merge their lists, sort them in descending order, and keep only the top 10 elements. This ensures that each component's list is always up-to-date and contains the largest vertices.
+2. **Efficient Merging**: When merging two components, combine their lists, sort them, and truncate to the top 10 elements. This approach leverages the fact that `k` is small (up to 10), making the sorting and truncation operations efficient.
+3. **Query Handling**: For a type 2 query, check if the connected component has at least `k` vertices. If not, return `-1`. Otherwise, return the k-th largest vertex (adjusted for 1-based indexing in the output).
+
+### Solution Code
+```cpp
+#include<bits/stdc++.h>
+using namespace std;
+using ll = long long;
+#define rep(i,n) for(int i = 0;i<n;i++)
+using P = pair<int,int>;
+using T = tuple<int,int,int>;
+
+struct Union_Find{
+    vector<int> sz, par;
+    vector<vector<int>> top;
+
+    Union_Find(int n) {
+        sz.resize(n, 1);
+        par.resize(n, -1);
+        top.resize(n);
+        rep(i, n) top[i].push_back(i);
+    }
+
+    int root(int v) {
+        if (par[v] == -1) return v;
+        else return par[v] = root(par[v]);
+    }
+
+    bool issame(int x, int y) {
+        return root(x) == root(y);
+    }
+
+    void merge(int x, int y) {
+        x = root(x), y = root(y);
+        if (x == y) return;
+        if (sz[x] < sz[y]) swap(x, y);
+        par[y] = x;
+        sz[x] += sz[y];
+        for (int val : top[y]) {
+            top[x].push_back(val);
+        }
+        sort(top[x].rbegin(), top[x].rend());
+        if (top[x].size() > 10) {
+            top[x].resize(10);
+        }
+    }
+};
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int n, q;
+    cin >> n >> q;
+    Union_Find uf(n);
+
+    rep(i, q) {
+        int ty, a, b;
+        cin >> ty >> a >> b;
+        a--, b--;
+        if (ty == 1) {
+            uf.merge(a, b);
+        } else {
+            int v = a;
+            int k = b + 1; // convert to 1-based k
+            if (uf.top[uf.root(v)].size() < k) {
+                cout << -1 << '\n';
+            } else {
+                cout << uf.top[uf.root(v)][k - 1] + 1 << '\n';
+            }
+        }
+    }
+}
+```
+
+### Explanation
+1. **Initialization**: The `Union_Find` structure initializes each vertex to be its own parent, with size 1 and a list containing only itself as the largest vertices.
+2. **Merging**: When merging two components, the larger component absorbs the smaller one. The top vertices from both components are combined, sorted in descending order, and truncated to keep only the top 10 vertices.
+3. **Query Handling**: For a type 2 query, the code checks if the connected component of vertex `v` has at least `k` vertices. If not, it outputs `-1`. Otherwise, it outputs the k-th largest vertex (adjusted for 1-based indexing).
+4. **Efficiency**: The merging operation is efficient because it only deals with small lists (up to 10 elements), and the union-find operations are nearly constant time due to path compression. This ensures the solution handles the constraints efficiently.

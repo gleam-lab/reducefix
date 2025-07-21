@@ -1,0 +1,43 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+
+using namespace std;
+
+int main() {
+    long long n, m;
+    cin >> n >> m;
+    vector<pair<long long, long long>> pieces(m);
+    
+    for (long long i = 0; i < m; ++i) {
+        long long a, b;
+        cin >> a >> b;
+        pieces[i] = make_pair(a - 1, b - 1); // Convert to 0-indexed
+    }
+    
+    // Sort the pieces by position
+    sort(pieces.begin(), pieces.end());
+    
+    // Count the number of captureable cells
+    long long captureable_cells = 0;
+    for (int i = 0; i < m; ++i) {
+        long long x = pieces[i].first;
+        long long y = pieces[i].second;
+        // Check all possible capture positions for this piece
+        for (int j = 0; j < 8; ++j) {
+            long long capture_x = x + (j % 2) * 2 - (j / 2);
+            long long capture_y = y + (j / 2) * 2 - (j % 2);
+            if (capture_x >= 0 && capture_x < n && capture_y >= 0 && capture_y < n) {
+                captureable_cells++;
+            }
+        }
+    }
+    
+    // Calculate the total number of cells minus the captureable cells
+    long long total_cells = n * n;
+    long long safe_cells = total_cells - captureable_cells;
+    
+    cout << safe_cells << endl;
+    
+    return 0;
+}

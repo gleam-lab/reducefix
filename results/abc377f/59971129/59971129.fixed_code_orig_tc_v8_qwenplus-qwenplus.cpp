@@ -1,0 +1,76 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+typedef long long ll;
+typedef pair<ll, ll> pll;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+
+    ll N, M;
+    cin >> N >> M;
+
+    set<pll> occupied;
+    set<ll> row, col, diag1, diag2;
+
+    for (ll i = 0; i < M; ++i) {
+        ll a, b;
+        cin >> a >> b;
+        occupied.insert({a, b});
+        row.insert(a);
+        col.insert(b);
+        diag1.insert(a - b);
+        diag2.insert(a + b);
+    }
+
+    // Total empty squares: all grid squares minus occupied ones
+    ll total_empty = N * N - M;
+
+    // These are the squares under attack
+    set<pll> attacked;
+
+    // Add all squares in rows and columns with pieces
+    for (ll r : row) {
+        for (ll j = 1; j <= N; ++j) {
+            attacked.insert({r, j});
+        }
+    }
+
+    for (ll c : col) {
+        for (ll i = 1; i <= N; ++i) {
+            attacked.insert({i, c});
+        }
+    }
+
+    // Add all squares on diagonals of existing pieces
+    for (ll d : diag1) {
+        for (ll i = max(1LL, d + 1); i <= min(N, N + d); ++i) {
+            ll j = i - d;
+            if (1 <= j && j <= N) {
+                attacked.insert({i, j});
+            }
+        }
+    }
+
+    for (ll d : diag2) {
+        for (ll i = max(1LL, d - N); i <= min(N, d - 1); ++i) {
+            ll j = d - i;
+            if (1 <= j && j <= N) {
+                attacked.insert({i, j});
+            }
+        }
+    }
+
+    // Now subtract attacked squares that are not already occupied
+    ll attack_count = 0;
+    for (const auto& p : attacked) {
+        if (occupied.find(p) == occupied.end()) {
+            ++attack_count;
+        }
+    }
+
+    cout << (total_empty - attack_count) << endl;
+
+    return 0;
+}

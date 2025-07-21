@@ -1,0 +1,64 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define rep(i, n) for (int i = 0; i < (n); ++i)
+using ll = long long;
+
+// Function to calculate the number of attacks needed for a single enemy
+ll calc_attacks(ll h) {
+    // Binary search to find the minimum T such that we can reduce health to 0 or less in T steps
+    ll low = 0, high = 3 * h; // upper bound is overly generous
+    while (low < high) {
+        ll mid = (low + high) / 2;
+        // In mid steps, how many damage points can we do at most?
+        // Every 3rd attack does 3 damage, others do 1
+        // So number of "triple" attacks is floor(mid / 3)
+        ll triple = mid / 3;
+        ll total_damage = triple * 3 + (mid - triple) * 1;
+        if (total_damage >= h)
+            high = mid;
+        else
+            low = mid + 1;
+    }
+    return low;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int n;
+    cin >> n;
+    vector<ll> H(n);
+    for (int i = 0; i < n; ++i) {
+        cin >> H[i];
+    }
+
+    // We need to process enemies in order, tracking global time
+    ll current_time = 0;
+
+    for (int i = 0; i < n; ++i) {
+        // For each enemy, determine how many attacks it receives starting from current_time+1
+        // An attack happens every time step, but only when the enemy is frontmost
+
+        ll attacks_needed = 0;
+        ll remaining_health = H[i];
+
+        // Use binary search to find the minimum number of attacks needed
+        ll low = 0, high = remaining_health;
+        while (low < high) {
+            ll attacks = (low + high) / 2;
+            ll triple = (current_time + attacks) / 3 - current_time / 3;
+            ll single = attacks - triple;
+            ll damage = triple * 3 + single * 1;
+            if (damage >= remaining_health)
+                high = attacks;
+            else
+                low = attacks + 1;
+        }
+
+        // Apply the necessary attacks
+        current_time += low;
+    }
+
+    cout << current_time << endl;
+}

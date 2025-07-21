@@ -1,0 +1,56 @@
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+using VL = vector<ll>;
+using P = pair<ll, ll>; // Changed from int to ll to handle large weights
+const ll inf = 1000000000LL; // Ensure inf is a long long to handle large weights
+
+int main() {
+  ll N, M;
+  cin >> N >> M;
+  
+  VL A(N), B(M), ans(N, inf);
+  VL U(M), V(M);
+  for (int i = 0; i < N; i++) {
+    cin >> A[i];
+  }
+  
+  for (int i = 0; i < M; i++) {
+    cin >> U[i] >> V[i] >> B[i];
+    U[i]--; // Convert to 0-based index
+    V[i]--; // Convert to 0-based index
+  }
+  
+  // Create the graph
+  VL<vector<P>> G(N); // Pairs of (vertex, edge_weight)
+  for (int i = 0; i < M; i++) {
+    G[U[i]].emplace_back(V[i], B[i]);
+    G[V[i]].emplace_back(U[i], B[i]);
+  }
+  
+  // Start Dijkstra's algorithm from vertex 0
+  priority_queue<P, VL<P>, greater<P>> q; // Max-heap to get the smallest path first
+  q.emplace(A[0], 0); // (current_path_weight, vertex)
+  while (!q.empty()) {
+    ll dist = q.top().first;
+    ll v = q.top().second;
+    q.pop();
+    
+    if (dist > ans[v]) continue; // Skip if we've already found a better path
+    
+    for (auto &p : G[v]) {
+      ll nv = p.first;
+      ll weight = p.second;
+      if (dist + weight < ans[nv]) {
+        ans[nv] = dist + weight;
+        q.emplace(ans[nv], nv);
+      }
+    }
+  }
+  
+  // Output the minimum path weights for vertices 2 to N
+  for (ll i = 1; i < N; i++) {
+    cout << ans[i] << " ";
+  }
+  cout << endl;
+}

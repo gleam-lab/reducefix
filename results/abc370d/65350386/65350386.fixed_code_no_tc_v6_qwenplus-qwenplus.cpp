@@ -1,0 +1,76 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define rep(i, n) for (int i = 0; i < (n); i++)
+using ll = long long;
+
+int main() {
+    int h, w, q;
+    cin >> h >> w >> q;
+    vector<set<int>> rows(h), cols(w);
+
+    // Initialize sets with all wall positions
+    for (int i = 0; i < h; ++i) {
+        for (int j = 0; j < w; ++j) {
+            rows[i].insert(j);
+            cols[j].insert(i);
+        }
+    }
+
+    while (q--) {
+        int r, c;
+        cin >> r >> c;
+        r--; c--;
+
+        // If there's a wall at the bomb position
+        if (rows[r].count(c)) {
+            // Remove that wall
+            rows[r].erase(c);
+            cols[c].erase(r);
+        } else {
+            // Otherwise, destroy first walls in each direction
+
+            // Up (in column c, above r)
+            auto it = cols[c].lower_bound(r);
+            if (it != cols[c].begin()) {
+                it--;
+                int up_r = *it;
+                rows[up_r].erase(c);
+                cols[c].erase(up_r);
+            }
+
+            // Down (in column c, below r)
+            it = cols[c].lower_bound(r);
+            if (it != cols[c].end() && *it != r) {
+                int down_r = *it;
+                rows[down_r].erase(c);
+                cols[c].erase(down_r);
+            }
+
+            // Left (in row r, left of c)
+            it = rows[r].lower_bound(c);
+            if (it != rows[r].begin()) {
+                it--;
+                int left_c = *it;
+                cols[left_c].erase(r);
+                rows[r].erase(left_c);
+            }
+
+            // Right (in row r, right of c)
+            it = rows[r].lower_bound(c);
+            if (it != rows[r].end() && *it != c) {
+                int right_c = *it;
+                cols[right_c].erase(r);
+                rows[r].erase(right_c);
+            }
+        }
+    }
+
+    // Count remaining walls
+    int ans = 0;
+    for (int i = 0; i < h; ++i) {
+        ans += rows[i].size();
+    }
+    cout << ans << "\n";
+
+    return 0;
+}

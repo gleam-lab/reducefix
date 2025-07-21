@@ -1,0 +1,42 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+using ll = long long;
+typedef pair<int, int> PII;
+const int mod = 1e9 + 7;
+
+void solve() {
+    int n;
+    ll M;
+    cin >> n >> M;
+    vector<ll> a(n + 1);
+    for (int i = 1; i <= n; ++i) {
+        cin >> a[i];
+    }
+
+    vector<ll> prefix_sum(n + 2, 0); // prefix_sum[0] = 0
+    for (int i = 1; i <= n; ++i) {
+        prefix_sum[i] = (prefix_sum[i - 1] + a[i]) % M;
+    }
+
+    map<ll, ll> count_map;
+    ll result = 0;
+    count_map[0] = 1; // Initialize with prefix_sum[-1] = 0
+
+    for (int i = 1; i <= n; ++i) {
+        // Count how many times this remainder has appeared before
+        result += count_map[prefix_sum[i]];
+        count_map[prefix_sum[i]]++;
+    }
+
+    cout << result << "\n";
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    solve();
+
+    return 0;
+}

@@ -1,0 +1,72 @@
+To fix this code, we need to address the incorrect handling of the connected components and the storage of the top k largest vertices in each component. The original code attempts to maintain a sorted list of up to 20 vertices for each component, but it fails to correctly merge these lists when components are unioned.
+
+### Approaches
+1. **Union-Find Data Structure**: We'll use the Union-Find (Disjoint Set Union, DSU) data structure to efficiently manage the connected components. This will help us quickly find the root of any vertex and merge components.
+2. **Maintaining Top K Elements**: For each component, we'll maintain a sorted list (or a priority queue) of the top 10 largest vertices. When two components are merged, we'll merge their lists and keep only the top 10 elements.
+3. **Handling Queries**: For type 2 queries, we'll directly access the top k elements from the root's list and handle cases where k exceeds the size of the list.
+
+### Solution Code
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+const int MAXN = 200005;
+
+vector<vector<int>> topK(MAXN, vector<int>());
+int parent[MAXN];
+int n, q;
+
+int find(int u) {
+    if (parent[u] != u)
+        parent[u] = find(parent[u]);
+    return parent[u];
+}
+
+void merge(int u, int v) {
+    u = find(u);
+    v = find(v);
+    if (u == v) return;
+    if (topK[u].size() < topK[v].size())
+        swap(u, v);
+    parent[v] = u;
+    topK[u].insert(topK[u].end(), topK[v].begin(), topK[v].end());
+    sort(topK[u].rbegin(), topK[u].rend());
+    if (topK[u].size() > 10)
+        topK[u].resize(10);
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    cin >> n >> q;
+    for (int i = 1; i <= n; ++i) {
+        parent[i] = i;
+        topK[i] = {i};
+    }
+
+    while (q--) {
+        int op, u, v;
+        cin >> op >> u >> v;
+        if (op == 1) {
+            merge(u, v);
+        } else {
+            u = find(u);
+            if (topK[u].size() < v) {
+                cout << "-1\n";
+            } else {
+                cout << topK[u][v - 1] << "\n";
+            }
+        }
+    }
+
+    return 0;
+}
+```
+
+### Explanation
+1. **Initialization**: We initialize the DSU structures (`parent` array) and the `topK` array, which stores the top 10 largest vertices for each component.
+2. **Union Operation**: When merging two components, we first find their roots. If they are different, we merge the smaller component into the larger one to maintain efficiency. We then combine their top vertex lists, sort them in descending order, and keep only the top 10 elements.
+3. **Query Handling**: For type 2 queries, we check the size of the top vertices list of the component's root. If the requested index `k` exceeds the list size, we return `-1`. Otherwise, we return the k-th largest vertex (1-based index).
+
+This approach ensures that we efficiently manage the connected components and maintain the top k largest vertices for each component, providing correct results for all queries. The complexity is optimized by leveraging the DSU structure and maintaining sorted lists of bounded size.

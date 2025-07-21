@@ -1,0 +1,47 @@
+#include<bits/stdc++.h>
+using namespace std;
+
+using ll = long long;
+const int INF = 1e9 + 10;
+const ll inf = 1LL << 60;
+
+void solve() {
+  int n, k; cin >> n >> k;
+  vector<pair<ll, ll>> ab(n);
+  for (int i = 0; i < n; i++) cin >> ab[i].first;
+  for (int i = 0; i < n; i++) cin >> ab[i].second;
+  sort(ab.begin(), ab.end());
+  
+  ll ans = inf;
+  
+  // We need to find the subset of size k that minimizes (max(A_i) * sum(B_i))
+  // We can achieve this by focusing on the largest elements in B that accompany the smallest possible A_i in the subset
+  
+  // To find the minimum possible value of (max_{i in S} A_i) * (sum_{i in S} B_i),
+  // we need to consider combinations of the largest elements in B with the smallest elements in A that are not in the sum of B yet
+  priority_queue<ll, vector<ll>, greater<ll>> min_heap;
+  
+  // We will use a min_heap to keep track of the smallest B_i values that are not selected yet
+  for (int i = n - 1; i >= 0; i--) {
+    // Update the answer with the current max A_i and the current sum of the smallest selected B_i values
+    ans = min(ans, ab[i].first * (min_heap.empty() ? 0 : min_heap.top()));
+    
+    // If the heap is not full, push the current B_i value into the heap
+    if (min_heap.size() < k && i > 0) {
+      min_heap.push(ab[i].second);
+    } else if (min_heap.size() == k) {
+      // If the heap is full and we need to select a new element for the subset, remove the smallest element from the heap
+      min_heap.pop();
+    }
+  }
+  
+  // The final answer for this test case
+  cout << ans << '\n';
+}
+
+int main() {
+  ios::sync_with_stdio(false);
+  cin.tie(nullptr);
+  int t; cin >> t;
+  while (t--) solve();
+}

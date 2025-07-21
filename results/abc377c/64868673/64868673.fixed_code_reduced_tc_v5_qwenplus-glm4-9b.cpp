@@ -1,0 +1,59 @@
+#include <iostream>
+#include <vector>
+#include <set>
+using namespace std;
+
+struct Point {
+    int x, y;
+
+    Point(int x, int y) : x(x), y(y) {}
+
+    bool operator<(const Point& p) const {
+        if (x == p.x)
+            return y < p.y;
+        return x < p.x;
+    }
+
+    vector<Point> neighbors() const {
+        return {
+            {x + 2, y + 1}, {x + 1, y + 2}, {x - 1, y + 2},
+            {x - 2, y + 1}, {x - 2, y - 1}, {x - 1, y - 2},
+            {x + 1, y - 2}, {x + 2, y - 1}
+        };
+    }
+};
+
+int main() {
+    int n, m;
+    cin >> n >> m;
+    vector<Point> pieces;
+    set<Point> captured;
+
+    for (int i = 0; i < m; ++i) {
+        int a, b;
+        cin >> a >> b;
+        pieces.emplace_back(a, b);
+    }
+
+    // Mark all points captured by any piece
+    for (const auto& piece : pieces) {
+        captured.insert(piece);
+        for (const auto& neighbor : piece.neighbors()) {
+            if (neighbor.x >= 1 && neighbor.x <= n && neighbor.y >= 1 && neighbor.y <= n) {
+                captured.insert(neighbor);
+            }
+        }
+    }
+
+    // Count the number of empty points
+    int emptyCount = 0;
+    for (int i = 1; i <= n; ++i) {
+        for (int j = 1; j <= n; ++j) {
+            if (captured.find({i, j}) == captured.end()) {
+                ++emptyCount;
+            }
+        }
+    }
+
+    cout << emptyCount << endl;
+}

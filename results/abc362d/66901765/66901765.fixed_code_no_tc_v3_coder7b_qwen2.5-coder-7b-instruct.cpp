@@ -1,0 +1,44 @@
+#include<bits/stdc++.h>
+using namespace std;
+#define int long long 
+vector<pair<int,int>>G[200005];
+int dis[200005],a[200005],n,m,vis[200005];
+void dij(int u){
+	priority_queue<pair<int,int>, vector<pair<int,int>>, greater<pair<int,int>>>q; // Change min heap to max heap for correct comparison
+	q.push({a[u],u}); // Push initial distance as vertex weight only
+	while(!q.empty()){
+		int u=q.top().second;
+		int d = q.top().first; // Get current distance
+		q.pop();
+		if(vis[u]) continue; // Skip already visited nodes
+		vis[u] = 1;
+		for(auto [v,w]:G[u]){
+			int new_dist = d + w + a[v]; // Calculate new distance
+			if(new_dist < dis[v]){ // Update distance if shorter path found
+				dis[v] = new_dist;
+				q.push({new_dist,v});
+			}
+		}
+	}
+}
+
+signed main() {
+	scanf("%lld%lld",&n,&m);
+	for(int i=1;i<=n;i++){
+		scanf("%lld",&a[i]); // Corrected reading of vertex weights
+	}
+	for(int i=1;i<=m;i++){
+		int u,v,w;
+		scanf("%lld%lld%lld",&u,&v,&w);
+		G[u].push_back({v,w});
+		G[v].push_back({u,w});
+	}
+	memset(dis,0x3f,sizeof dis); // Initialize distances to infinity
+	dis[1] = a[1]; // Set starting point's distance to its own weight
+	dij(1);
+	for(int i=2;i<=n;i++){
+		printf("%lld ",dis[i]); // Print results without trailing space
+	}
+	cout<<"\n";
+	return 0;
+}

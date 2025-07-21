@@ -1,0 +1,72 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int N;
+    cin >> N;
+    vector<long long> A(N), B(N - 1);
+
+    for (int i = 0; i < N; ++i) cin >> A[i];
+    for (int i = 0; i < N - 1; ++i) cin >> B[i];
+
+    // Sort toys and boxes in ascending order
+    sort(A.begin(), A.end());
+    sort(B.begin(), B.end());
+
+    // Check if we can fit N-1 smallest toys into existing boxes
+    bool possible = true;
+    for (int i = 0; i < N - 1; ++i) {
+        if (A[i] > B[i]) {
+            possible = false;
+            break;
+        }
+    }
+
+    if (!possible) {
+        cout << -1 << endl;
+        return 0;
+    }
+
+    // The required size of the new box must be at least A[N-1] (largest toy)
+    // Also, for each i from 0 to N-2, we need to ensure that B[i] >= A[i]
+    // To maintain this ordering while adding one more box, the new box must take A[N-1]
+    // And we check what's the minimum x such that it fits all constraints
+
+    // We now find the minimal x by checking where A[i] > B[i]
+    long long min_x = A.back();
+
+    // Now binary search on possible x values
+    long long low = 1, high = A.back();
+    while (low < high) {
+        long long mid = (low + high) / 2;
+
+        // Insert mid into B, keep it sorted
+        vector<long long> temp = B;
+        temp.push_back(mid);
+        sort(temp.begin(), temp.end());
+
+        // Check if A[i] <= temp[i] for all i from 0 to N-1
+        bool valid = true;
+        for (int i = 0; i < N; ++i) {
+            if (A[i] > temp[i]) {
+                valid = false;
+                break;
+            }
+        }
+
+        if (valid) {
+            high = mid;
+        } else {
+            low = mid + 1;
+        }
+    }
+
+    cout << low << endl;
+    return 0;
+}

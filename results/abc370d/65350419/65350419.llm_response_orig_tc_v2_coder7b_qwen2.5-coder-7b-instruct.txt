@@ -1,0 +1,69 @@
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+#define rep(i,n) for(int i = 0; i < (n); i++)
+using ll = long long;
+
+struct SegTree{
+    int n;
+    vector<ll> dat;
+    SegTree(int _n){
+        n=1;
+        while(n<_n)n*=2;
+        dat.resize(2*n,LLONG_MAX/2);
+    }
+    void update(int p,ll x){
+        p+=n-1;
+        dat[p]=x;
+        while(p>0){
+            p=(p-1)/2;
+            dat[p]=min(dat[2*p],dat[2*p+1]);
+        }
+    }
+    ll query(int l,int r,int k,int a,int b){
+        if(l<=a&&b<=r)return dat[k];
+        if(b<l||r<a)return LLONG_MAX/2;
+        int mid=(a+b)/2;
+        return min(query(l,r,2*k,a,mid),query(l,r,2*k+1,mid+1,b));
+    }
+};
+
+int main(void) {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int h, w, q;
+    cin >> h >> w >> q;
+    vector<SegTree> seg_h(h), seg_w(w);
+    for(int i=0;i<h;++i)seg_h[i] = SegTree(w);
+    for(int i=0;i<w;++i)seg_w[i] = SegTree(h);
+
+    rep(i,h)rep(j,w){
+        seg_h[i].update(j,1);
+        seg_w[j].update(i,1);
+    }
+
+    rep(qi,q){
+        int r, c;
+        cin >> r >> c;
+        --r,--c;
+        if(seg_h[r].query(c,c+1,1,0,w-1)==1){
+            seg_h[r].update(c,0);
+            seg_w[c].update(r,0);
+        }else{
+            int tl = seg_h[r].query(0,c,1,0,w-1);
+            int tr = seg_h[r].query(c+1,w,1,0,w-1);
+            int bl = seg_w[c].query(0,r,1,0,h-1);
+            int br = seg_w[c].query(r+1,h,1,0,h-1);
+            
+            if(bl==0&&tl==0)seg_w[c].update(r,0);
+            if(br==0&&tr==0)seg_h[r].update(c,0);
+        }
+    }
+
+    ll ans = 0;
+    for(int i=0;i<h;++i)ans+=seg_h[i].query(0,w,1,0,w-1);
+    for(int i=0;i<w;++i)ans+=seg_w[i].query(0,h,1,0,h-1);
+    cout << ans/2 << '\n';
+    return 0;
+}
+```

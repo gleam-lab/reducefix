@@ -1,0 +1,75 @@
+#include <bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+#define all(x) (x).begin(), (x).end()
+
+int main() {
+    ios_base::sync_with_stdio(0);
+    cin.tie(0);
+    int N, M;
+    ll K;
+    cin >> N >> M >> K;
+    vector<ll> A(N);
+    for (int i = 0; i < N; ++i) {
+        cin >> A[i];
+        K -= A[i];
+    }
+
+    // Create sorted version of A to help with calculations
+    vector<pair<ll, int>> sorted_A(N);
+    for (int i = 0; i < N; ++i)
+        sorted_A[i] = {A[i], i};
+    sort(all(sorted_A));
+
+    vector<ll> result(N);
+
+    for (int i = 0; i < N; ++i) {
+        ll current = A[i];
+        ll low = 0, high = K + 1;
+        ll answer = -1;
+
+        while (low <= high) {
+            ll mid = (low + high) / 2;
+            ll total_needed = 0;
+            ll threshold = current + mid;
+
+            // Binary search to find how many candidates have votes > threshold
+            int left = 0, right = N;
+            while (left < right) {
+                int m = (left + right) / 2;
+                if (sorted_A[m].first > threshold)
+                    right = m;
+                else
+                    left = m + 1;
+            }
+
+            int cnt = left;
+
+            // Find how many candidates (not self) have votes > threshold
+            for (int j = N - 1; j >= N - M; --j) {
+                if (cnt == 0) break;
+                if (sorted_A[j].second == i && sorted_A[j].first <= threshold) break;
+                if (sorted_A[j].second == i) continue;
+                if (sorted_A[j].first > threshold) {
+                    cnt--;
+                }
+            }
+
+            if (cnt <= M - 1) {
+                answer = mid;
+                high = mid - 1;
+            } else {
+                low = mid + 1;
+            }
+        }
+
+        result[i] = (answer <= K) ? answer : -1;
+        if (result[i] < 0) result[i] = -1;
+    }
+
+    for (int i = 0; i < N; ++i)
+        cout << max(0LL, result[i]) << " ";
+    cout << "\n";
+
+    return 0;
+}
