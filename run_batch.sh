@@ -52,9 +52,9 @@ for i in "${!problems[@]}"; do
     
     # 执行repair评估命令并记录日志
     echo "开始时间: $(date)"
-    echo "命令: python3 evaluate_repair.py $problem --model-tag $RESULT_TAG --reducer-model $REDUCER_MODEL --repair-model $REPAIR_MODEL"
+    echo "命令: python3 evaluate_repair_main.py $problem --model-tag $RESULT_TAG --reducer-model $REDUCER_MODEL --repair-model $REPAIR_MODEL"
     
-    if python3 evaluate_repair.py "$problem" --model-tag "$RESULT_TAG" --reducer-model "$REDUCER_MODEL" --repair-model "$REPAIR_MODEL" --max-threads 10; then
+    if python3 evaluate_repair_main.py "$problem" --model-tag "$RESULT_TAG" --reducer-model "$REDUCER_MODEL" --repair-model "$REPAIR_MODEL" --max-threads 10; then
         echo "✓ $problem 完成"
     else
         echo "✗ $problem 失败 (详情见 $log_file)"
