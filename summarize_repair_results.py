@@ -504,7 +504,7 @@ def main():
     
     # 计算并显示各难度的pass@k
     difficulties = ['Easy', 'Medium', 'Hard']
-    difficulty_labels = ['Easy (bc)', 'Medium (d)', 'Hard (ef)']
+    difficulty_labels = ['Easy (c)', 'Medium (d)', 'Hard (ef)']
     
     for diff, label in zip(difficulties, difficulty_labels):
         line_parts = [f"{label:10}"]
