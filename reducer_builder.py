@@ -34,7 +34,7 @@ EXAMPLE_PROBLEM_ID_STR = "abc330d" # ID for the example
 EXAMPLE_REDUCER_PATH = "results/abc330d/reducer.py" # Path to the one-shot example (under results/)
 TARGET_FILENAME = "reducer.py"        # Name of the file to generate
 LLM_MAX_TOKENS = 4096                 # Max tokens (passed to llm.py)
-LLM_TEMPERATURE = 0.3                 # Temperature (passed to llm.py)
+LLM_TEMPERATURE = 0.0                 # Temperature=0 for greedy decoding (as per paper)
 
 # --- Helper Functions ---
 
