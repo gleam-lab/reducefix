@@ -31,7 +31,7 @@ except Exception as e:
 
 # --- Configuration ---
 EXAMPLE_PROBLEM_ID_STR = "abc330d" # ID for the example
-EXAMPLE_REDUCER_PATH = "abc330d/reducer.py" # Path to the one-shot example
+EXAMPLE_REDUCER_PATH = "results/abc330d/reducer.py" # Path to the one-shot example (under results/)
 TARGET_FILENAME = "reducer.py"        # Name of the file to generate
 LLM_MAX_TOKENS = 4096                 # Max tokens (passed to llm.py)
 LLM_TEMPERATURE = 0.3                 # Temperature (passed to llm.py)
@@ -184,7 +184,8 @@ def main():
         print(f"[Error] Invalid target problem ID format: '{target_problem_id_input}'", file=sys.stderr)
         sys.exit(1)
     contest_id, problem_letter = parsed_ids
-    problem_dir_name = f"{contest_id}{problem_letter.lower()}" # e.g., abc123x
+    # 统一放在 results/ 下，例如 results/abc123x
+    problem_dir_name = f"results/{contest_id}{problem_letter.lower()}" # e.g., results/abc123x
 
     # Prevent overwriting the example itself
     if problem_dir_name == os.path.dirname(EXAMPLE_REDUCER_PATH):
