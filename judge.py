@@ -28,44 +28,44 @@ def submit_and_get_results(contest_id: str,
         "ac_count": None,
         "error_message": None
     }
-    print(f"[Core] 尝试从 {cookie_file_path} 加载会话...")
+    print(f"[Core] Attempting to load session from {cookie_file_path}...")
     session = load_session_with_cookie_file(cookie_file_path)
     if session is None:
-        result["error_message"] = f"无法加载 cookie 文件: {cookie_file_path}"
+        result["error_message"] = f"Cannot load cookie file: {cookie_file_path}"
         return result
     service = AtCoderService()
     problem = AtCoderProblem(contest_id=contest_id, problem_id=problem_id)
     try:
-        print("[Core] 验证 Cookie 有效性...")
+        print("[Core] Validating cookie validity...")
         _ = [language.id for language in problem.get_available_languages(session=session)]
-        print("[Core] Cookie 验证成功！")
+        print("[Core] Cookie validation successful!")
     except NotLoggedInError:
-        result["error_message"] = "Cookie 无效或已过期"
+        result["error_message"] = "Cookie invalid or expired"
         return result
     except Exception as e:
-        result["error_message"] = f"验证 Cookie 时出错: {e}"
+        result["error_message"] = f"Error validating cookie: {e}"
         if isinstance(e, requests.exceptions.HTTPError) and e.response.status_code == 404:
-             result["error_message"] += f". 无法找到比赛 '{contest_id}' 或题目 '{problem_id}'。"
+             result["error_message"] += f". Cannot find contest '{contest_id}' or problem '{problem_id}'."
         return result
     submission = None
     try:
-        print(f"[Core] 提交代码到 {problem.get_url()} 使用语言 {language_id}...")
+        print(f"[Core] Submitting code to {problem.get_url()} using language {language_id}...")
         code_bytes = code_str.encode('utf-8')
         submission = problem.submit_code(code_bytes, language_id, session=session)
         result["submission_url"] = submission.get_url()
-        print(f"[Core] 提交成功！URL: {result['submission_url']}")
+        print(f"[Core] Submission successful! URL: {result['submission_url']}")
     except NotLoggedInError:
-        result["error_message"] = "提交失败：未登录或 Session 过期"
+        result["error_message"] = "Submission failed: Not logged in or session expired"
         return result
     except SubmissionError as e:
-        result["error_message"] = f"提交失败: {e}"
+        result["error_message"] = f"Submission failed: {e}"
         return result
     except Exception as e:
         print(traceback.format_exc())
-        result["error_message"] = f"提交过程中发生意外错误: {type(e).__name__}: {e}"
+        result["error_message"] = f"Unexpected error during submission: {type(e).__name__}: {e}"
         return result
     if submission:
-        print("[Core] 开始查询评测状态...")
+        print("[Core] Starting to query judging status...")
         submission_url = result["submission_url"]
         final_status = None
         basic_pending_statuses = {"WJ", "WR", "Judging", "Compiling"}
@@ -74,77 +74,77 @@ def submit_and_get_results(contest_id: str,
         for attempt in range(max_poll_attempts):
             current_status = get_submission_status(submission_url, session)
             if current_status is None:
-                print(f"[Core] 第 {attempt + 1} 次尝试获取状态失败，{poll_wait_seconds} 秒后重试...")
+                print(f"[Core] Attempt {attempt + 1} to get status failed, retrying in {poll_wait_seconds} seconds...")
             elif current_status in basic_pending_statuses or partial_status_pattern.match(current_status):
-                print(f"[Core] 当前状态: {current_status} (尝试 {attempt + 1}/{max_poll_attempts})，{poll_wait_seconds} 秒后重试...")
+                print(f"[Core] Current status: {current_status} (attempt {attempt + 1}/{max_poll_attempts}), retrying in {poll_wait_seconds} seconds...")
             else:
                 final_status = current_status
-                print(f"[Core] 获取到最终状态: {final_status}")
+                print(f"[Core] Got final status: {final_status}")
                 break
             time.sleep(poll_wait_seconds)
         else:
-            print("[Core] 查询超时，未能获取到最终评测状态。")
+            print("[Core] Query timeout, unable to get final judging status.")
             final_status = current_status
 
         result["final_status"] = final_status
 
-        # -- 修改开始: 无论失败还是 AC，都尝试获取 Case 详情/AC 数量 --
-        # 定义需要查询详情的状态集合 (失败状态 + AC 状态)
+        # -- Modification start: Try to get case details/AC count for both failed and AC status --
+        # Define status set that needs details query (failed status + AC status)
         statuses_to_get_details = {"WA", "TLE", "MLE", "RE", "OLE", "AC"}
 
         if final_status in statuses_to_get_details:
-            print(f"[Core] 状态为 {final_status}，查询 Case 详情/AC 数量...")
-            # 稍微等待一下，确保页面更新完毕
+            print(f"[Core] Status is {final_status}, querying case details/AC count...")
+            # Wait a bit to ensure page update is complete
             time.sleep(1)
             failed_name, failed_status, _, ac_count = get_first_failed_case_info(submission_url, session)
 
-            result["ac_count"] = ac_count # 始终记录 ac_count (可能是 None)
+            result["ac_count"] = ac_count # Always record ac_count (might be None)
 
             if final_status == "AC":
                  if ac_count is not None:
-                     print(f"[Core] 评测通过！共通过 {ac_count} 个测试点。")
+                     print(f"[Core] Judging passed! Total {ac_count} test cases passed.")
                  else:
-                     print("[Core] 评测通过！但未能解析通过的测试点数量。")
+                     print("[Core] Judging passed! But unable to parse the number of passed test cases.")
             elif failed_name is None and ac_count is None:
-                 # 针对失败状态，但解析失败的情况
-                 print("[Core] 尝试解析HTML页面，但未能找到失败详情或 AC 计数。")
+                 # For failed status but parsing failed
+                 print("[Core] Attempted to parse HTML page, but unable to find failure details or AC count.")
                  result["failed_case_name"] = "Unknown - Parse Failed"
-                 result["failed_case_status"] = final_status # 报告原始失败状态
+                 result["failed_case_status"] = final_status # Report original failure status
             elif failed_name == "All Passed":
-                 # 理论上 final_status 不是 AC 时不应进入此分支，但作为健壮性检查
-                 print(f"[Core] 警告：状态为 {final_status} 但详情解析为 'All Passed'? AC 数量: {ac_count if ac_count is not None else '未知'}")
-                 # 即使是这种情况，也记录 AC 数量
-            elif failed_name is not None: # 明确找到失败 case
-                 print(f"[Core] 找到首个失败 Case: {failed_name} ({failed_status}), 之前 AC 数量: {ac_count if ac_count is not None else '未知'}")
+                 # Theoretically shouldn't enter this branch when final_status is not AC, but as robustness check
+                 print(f"[Core] Warning: Status is {final_status} but details parsed as 'All Passed'? AC count: {ac_count if ac_count is not None else 'Unknown'}")
+                 # Even in this case, record AC count
+            elif failed_name is not None: # Explicitly found failed case
+                 print(f"[Core] Found first failed case: {failed_name} ({failed_status}), previous AC count: {ac_count if ac_count is not None else 'Unknown'}")
                  result["failed_case_name"] = failed_name
                  result["failed_case_status"] = failed_status
-            # else: 不需要处理，ac_count 已被记录
+            # else: No need to handle, ac_count has been recorded
         else:
-             # 对于 CE, IE, WJ 等状态，不查询 Case 详情
-             print(f"[Core] 最终状态为 {final_status}，不查询 Case 详情/AC 数量。")
-        # -- 修改结束 --
+             # For CE, IE, WJ etc. status, don't query case details
+             print(f"[Core] Final status is {final_status}, not querying case details/AC count.")
+        # -- Modification end --
 
         result["success"] = True
 
     else:
-        result["error_message"] = "未知错误导致提交对象未创建"
+        result["error_message"] = "Unknown error caused submission object not created"
 
     return result
 
 def main():
-    print("--- AtCoder 提交脚本 (测试模式) ---")
+    print("--- AtCoder Submission Script (Test Mode) ---")
     contest_id = "abc330"
     problem_id = "abc330_d"
     code_file_path = "my_solution.cc"
     cookie_file = "/home/barty/.local/share/online-judge-tools/cookie.jar"
     
-    print(f"测试配置:")
-    print(f"  比赛: {contest_id}")
-    print(f"  题目: {problem_id}")
-    print(f"  代码文件: {code_file_path}")
-    print(f"  Cookie 文件: {cookie_file}")
+    print(f"Test configuration:")
+    print(f"  Contest: {contest_id}")
+    print(f"  Problem: {problem_id}")
+    print(f"  Code file: {code_file_path}")
+    print(f"  Cookie file: {cookie_file}")
 
-    print(f"\n正在读取代码文件: {code_file_path}...")
+    print(f"\nReading code file: {code_file_path}...")
     with open(code_file_path, 'r', encoding='utf-8') as f: 
         code_str = f.read()
     result = submit_and_get_results(contest_id=contest_id,
@@ -152,25 +152,25 @@ def main():
                                     code_str=code_str,
                                     cookie_file_path=cookie_file)
 
-    print("\n--- 提交结果 ---")
-    print(f"操作成功: {result['success']}")
-    print(f"提交 URL: {result['submission_url'] or 'N/A'}")
-    print(f"最终状态: {result['final_status'] or '未知'}")
+    print("\n--- Submission Results ---")
+    print(f"Operation successful: {result['success']}")
+    print(f"Submission URL: {result['submission_url'] or 'N/A'}")
+    print(f"Final status: {result['final_status'] or 'Unknown'}")
     if result['failed_case_name'] and result['failed_case_name'] != "All Passed":
-        print(f"首个失败Case: {result['failed_case_name']} ({result['failed_case_status']}), AC 数量: {result['ac_count'] if result['ac_count'] is not None else '未知'}" )
+        print(f"First failed case: {result['failed_case_name']} ({result['failed_case_status']}), AC count: {result['ac_count'] if result['ac_count'] is not None else 'Unknown'}" )
     elif result['failed_case_name'] == "All Passed":
-         print(f"首个失败Case: (所有解析的 Case 均通过), AC 数量: {result['ac_count'] if result['ac_count'] is not None else '未知'}")
+         print(f"First failed case: (All parsed cases passed), AC count: {result['ac_count'] if result['ac_count'] is not None else 'Unknown'}")
     elif result['final_status'] == "AC":
-         print(f"通过的测试点数: {result['ac_count'] if result['ac_count'] is not None else '查询AC数量失败或未实现'}")
+         print(f"Number of passed test cases: {result['ac_count'] if result['ac_count'] is not None else 'Failed to query AC count or not implemented'}")
     else:
-         print(f"首个失败Case: (未找到、不适用或解析失败), AC 数量: {result['ac_count'] if result['ac_count'] is not None else '未知'}")
+         print(f"First failed case: (Not found, not applicable, or parse failed), AC count: {result['ac_count'] if result['ac_count'] is not None else 'Unknown'}")
     if result['error_message']:
-        print(f"错误信息: {result['error_message']}")
+        print(f"Error message: {result['error_message']}")
     print("---------------")
 
 
 if __name__ == "__main__":
-    # 确保 online-judge-tools, bs4, and lxml 安装
+    # Ensure online-judge-tools, bs4, and lxml are installed
     try:
         import onlinejudge
         import bs4
@@ -184,8 +184,8 @@ if __name__ == "__main__":
              package_name = 'online-judge-tools'
         # Add other potential direct imports from onlinejudge if needed
         
-        print(f"错误: 找不到库 '{module_name}'。", file=sys.stderr)
-        print(f"请运行: pip install {package_name}", file=sys.stderr)
+        print(f"Error: Cannot find library '{module_name}'.", file=sys.stderr)
+        print(f"Please run: pip install {package_name}", file=sys.stderr)
         sys.exit(1)
 
     main()

@@ -47,7 +47,7 @@ MAX_PAGES_TO_SCRAPE = 200   # Limit scraping to avoid excessive requests
 MAX_WA_SUBMISSIONS = 10 # Final target number of WA submissions to keep
 SEARCH_MULTIPLIER = 2 # Search for 2x submissions, then select best ones
 RESULT_JSON_PATH = "result.json" # Path for the output JSON
-REDUCER_TIMEOUT = 180 # Timeout for the reducer process in seconds (3 minutes)
+REDUCER_TIMEOUT = 60 # Timeout for the reducer process in seconds (as per paper)
 
 # --- File Locking Helper ---
 class FileLocker:

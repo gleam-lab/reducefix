@@ -34,18 +34,16 @@ DEFAULT_TIMEOUT = 300 # 5 minutes
 # Baidu Qianfan API (ERNIE) configuration
 BAIDU_QIANFAN_URL = "https://qianfan.baidubce.com/v2/chat/completions"
 # Access token should be provided via environment variable to avoid hard-coding credentials
-BAIDU_QIANFAN_TOKEN = "bce-v3/ALTAK-kFfbOgAQ8xL73uUQfew1p/20b9545cf5d0381329c3f77bc24da0cc27e237fe"
+BAIDU_QIANFAN_TOKEN = ""
 
-# --- Token 估算工具 ---
-
-# --- 限制与重试参数 ---
-MAX_BAIDU_TOKENS = 3000  # 输入 token 上限
-BAIDU_RATE_LIMIT_BACKOFF = 30  # 秒
+# --- Rate limiting and retry parameters ---
+MAX_BAIDU_TOKENS = 3000  # Input token limit
+BAIDU_RATE_LIMIT_BACKOFF = 30  # seconds
 BAIDU_RATE_LIMIT_RETRIES = 5
 
 
 def _rough_token_count(text: str) -> int:
-    """粗略估算 tokens 数量；优先使用 tiktoken，如不可用则退化到字符长度/3。"""
+    """Roughly estimate token count; prioritize tiktoken, fallback to character length/3 if unavailable."""
     try:
         import tiktoken  # type: ignore
         enc = tiktoken.get_encoding("cl100k_base")
@@ -70,23 +68,23 @@ def call_baidu_llm(
     retries_left: int = BAIDU_RATE_LIMIT_RETRIES,
 ) -> Optional[str]:
     """
-    使用百度千帆大模型 chat/completions 接口完成对话请求。
+    Call Baidu Qianfan LLM chat/completions API for conversation requests.
 
-    目前仅实现非流式调用，若需要流式可后续扩展。
+    Currently only implements non-streaming calls, streaming support can be added later if needed.
     """
 
     if not BAIDU_QIANFAN_TOKEN:
-        print("[Error] BAIDU_QIANFAN_TOKEN 环境变量未设置，无法调用百度千帆接口。", file=sys.stderr)
+        print("[Error] BAIDU_QIANFAN_TOKEN environment variable not set, cannot call Baidu Qianfan API.", file=sys.stderr)
         return None
 
-    # ========= 截断过长输入 =========
+    # ========= Truncate overly long input =========
     total_tokens_est = _estimate_messages_tokens(prompt_history)
     if total_tokens_est > MAX_BAIDU_TOKENS:
         excess = total_tokens_est - MAX_BAIDU_TOKENS
-        approx_char_per_token = 3  # 与 _rough_token_count 对应
-        cut_chars = excess * approx_char_per_token + 128  # 多留冗余
+        approx_char_per_token = 3  # Corresponds to _rough_token_count
+        cut_chars = excess * approx_char_per_token + 128  # Extra buffer
 
-        # 只截断最后一条消息内容
+        # Only truncate the last message content
         last_idx = len(prompt_history) - 1
         last_content = prompt_history[last_idx]["content"]
         if len(last_content) > cut_chars:
@@ -94,12 +92,12 @@ def call_baidu_llm(
             prompt_history[last_idx] = prompt_history[last_idx].copy()
             prompt_history[last_idx]["content"] = last_content[:-cut_chars]
             print(
-                f"[Info] Total tokens≈{total_tokens_est}>={MAX_BAIDU_TOKENS}, 已截断末条消息 {cut_chars} 字符.",
+                f"[Info] Total tokens≈{total_tokens_est}>={MAX_BAIDU_TOKENS}, truncated last message by {cut_chars} characters.",
                 file=sys.stderr,
             )
         else:
             print(
-                f"[Warning] 需要截断 {cut_chars} 字符，但最后消息长度不足，保持原文。",
+                f"[Warning] Need to truncate {cut_chars} characters, but last message length insufficient, keeping original.",
                 file=sys.stderr,
             )
 
@@ -126,10 +124,10 @@ def call_baidu_llm(
         )
 
         elapsed = time.time() - start_time
-        print(f"[Info] Baidu Qianfan HTTP 请求已发送，用时 {elapsed:.2f}s，状态 {resp.status_code}。")
+        print(f"[Info] Baidu Qianfan HTTP request sent, took {elapsed:.2f}s, status {resp.status_code}.")
 
         if resp.status_code != 200:
-            print(f"[Error] Baidu Qianfan API 返回非 200 状态码：{resp.status_code}，响应：{resp.text}", file=sys.stderr)
+            print(f"[Error] Baidu Qianfan API returned non-200 status code: {resp.status_code}, response: {resp.text}", file=sys.stderr)
             return None
 
         final_response_content = ""
@@ -138,9 +136,9 @@ def call_baidu_llm(
             print("\n" + "="*20 + " Baidu Qianfan Response Stream " + "="*20 + "\n")
             for raw_line in resp.iter_lines(decode_unicode=True):
                 if not raw_line:
-                    continue  # 跳过心跳或空行
+                    continue  # Skip heartbeat or empty lines
                 line = raw_line.strip()
-                # 兼容 data: 前缀
+                # Handle data: prefix compatibility
                 if line.startswith("data:"):
                     line = line[len("data:"):].strip()
                 if line == "[DONE]":
@@ -148,11 +146,11 @@ def call_baidu_llm(
                 try:
                     data_json = json.loads(line)
                 except Exception:
-                    print(f"[Warning] 解析 JSON 失败: {line}", file=sys.stderr)
+                    print(f"[Warning] Failed to parse JSON: {line}", file=sys.stderr)
                     continue
 
                 delta_content = None
-                # 千帆流式目前使用 result 字段持续输出
+                # Qianfan streaming currently uses 'result' field for continuous output
                 if "result" in data_json:
                     delta_content = data_json["result"]
                 elif data_json.get("choices"):
@@ -163,23 +161,23 @@ def call_baidu_llm(
                     final_response_content += delta_content
                     print(delta_content, end="", flush=True)
 
-            print()  # 最终换行
+            print()  # Final newline
         else:
             data = resp.json()
 
-            # 如果包含 error_code 且不为 0，则认为接口返回错误
+            # If contains error_code and not 0, consider API returning error
             if data.get("error_code") and data.get("error_code") != 0:
-                print(f"[Error] Baidu Qianfan API 错误 {data.get('error_code')}: {data.get('error_msg')}", file=sys.stderr)
+                print(f"[Error] Baidu Qianfan API error {data.get('error_code')}: {data.get('error_msg')}", file=sys.stderr)
                 return None
 
-            # OpenAI 兼容格式
+            # OpenAI compatible format
             if data.get("choices"):
                 final_response_content = data["choices"][0]["message"]["content"]
-            # 千帆自有格式
+            # Qianfan native format
             elif data.get("result"):
                 final_response_content = data["result"]
             else:
-                print("[Warning] 无法从百度千帆响应中提取结果内容。", file=sys.stderr)
+                print("[Warning] Cannot extract result content from Baidu Qianfan response.", file=sys.stderr)
                 return None
 
         # --------- Rate Limit Handling ---------
@@ -192,7 +190,7 @@ def call_baidu_llm(
 
             if err_code == "tpm_rate_limit_exceeded" and retries_left > 0:
                 print(
-                    f"[Warning] TPM rate limit exceeded. 将在 {BAIDU_RATE_LIMIT_BACKOFF}s 后重试，剩余 {retries_left} 次。",
+                    f"[Warning] TPM rate limit exceeded. Will retry in {BAIDU_RATE_LIMIT_BACKOFF}s, {retries_left} retries left.",
                     file=sys.stderr,
                 )
                 time.sleep(BAIDU_RATE_LIMIT_BACKOFF)
@@ -206,12 +204,12 @@ def call_baidu_llm(
                     retries_left=retries_left - 1,
                 )
 
-        # 针对非流式且 HTTP 200 的情况下，若响应体仍提示 rate limit，则重试
+        # For non-streaming and HTTP 200 cases, if response body still indicates rate limit, retry
         if not stream and "data" in locals():
             err_code_inner = data.get("error", {}).get("code") or data.get("error_code")
             if err_code_inner == "tpm_rate_limit_exceeded" and retries_left > 0:
                 print(
-                    f"[Warning] TPM rate limit exceeded (200). {BAIDU_RATE_LIMIT_BACKOFF}s 后重试，剩余 {retries_left} 次。",
+                    f"[Warning] TPM rate limit exceeded (200). Retry in {BAIDU_RATE_LIMIT_BACKOFF}s, {retries_left} retries left.",
                     file=sys.stderr,
                 )
                 time.sleep(BAIDU_RATE_LIMIT_BACKOFF)
@@ -228,7 +226,7 @@ def call_baidu_llm(
         return final_response_content
 
     except Exception as e:
-        print(f"[Error] 调用百度千帆接口失败: {type(e).__name__}: {e}", file=sys.stderr)
+        print(f"[Error] Failed to call Baidu Qianfan API: {type(e).__name__}: {e}", file=sys.stderr)
         traceback.print_exc()
         return None
 
@@ -255,7 +253,7 @@ def call_llm(
         The final concatenated response content as a string, or None if an error occurred
         or the client is unavailable.
     """
-    # 根据模型名称自动选择调用后端：包含 'qwen' -> 阿里 Qwen；否则使用百度千帆
+    # Auto-select backend based on model name: contains 'qwen' -> Alibaba Qwen; otherwise use Baidu Qianfan
     if 'qwen' not in model_name.lower():
         return call_baidu_llm(
             prompt_history=prompt_history,

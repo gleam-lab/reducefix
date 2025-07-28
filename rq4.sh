@@ -72,26 +72,16 @@ echo "  - Sampling: 10 candidate patches per bug"
 echo "  - Metrics: pass@k for k ∈ {1,5,10}"
 echo "------------------------------------------"
 
-# Note: For RQ4, we need a ChatRepair implementation that can switch between
-# original and reduced inputs. This might require:
-# 1. A modified ChatRepair script that accepts input type parameter
-# 2. Integration with our reducer pipeline
-# 3. Comparison framework for both approaches
-
 echo ""
-echo "Checking for ChatRepair implementation..."
+echo "Checking for ChatRepair evaluation script..."
 
-if [[ -f "chatrepair.py" ]]; then
-  echo "  Found chatrepair.py - using integrated implementation"
-  CHATREPAIR_SCRIPT="chatrepair.py"
-elif [[ -f "evaluate_chatrepair.py" ]]; then
-  echo "  Found evaluate_chatrepair.py - using specialized ChatRepair evaluator"
-  CHATREPAIR_SCRIPT="evaluate_chatrepair.py"
+if [[ -f "evaluate_repair_with_chatrepair.py" ]]; then
+  echo "  Found evaluate_repair_with_chatrepair.py - using integrated ChatRepair evaluation"
+  CHATREPAIR_SCRIPT="evaluate_repair_with_chatrepair.py"
 else
-  echo "  ChatRepair implementation not found. Creating placeholder..."
-  echo "  Note: For full RQ4 reproduction, implement ChatRepair integration"
-  echo "  Using standard repair evaluation as approximation..."
-  CHATREPAIR_SCRIPT="evaluate_repair.py"
+  echo "  ERROR: evaluate_repair_with_chatrepair.py not found!"
+  echo "  This script is required for RQ4 ChatRepair evaluation."
+  exit 1
 fi
 
 echo ""
@@ -105,32 +95,10 @@ for idx in "${!problems[@]}"; do
   echo "[$progress/$total] Evaluating: $problem"
   echo "--- $(date) ---" > "$log_file"
 
-  if [[ "$CHATREPAIR_SCRIPT" == "chatrepair.py" ]]; then
-    # Full ChatRepair implementation with both original and reduced modes
-    echo "  Running ChatRepair (Original mode)..."
-    echo "python3 chatrepair.py $problem --model $CHATREPAIR_MODEL --mode original --max-retry 1 --length 2 --result-tag ${RESULT_TAG}_original $EXTRA_ARGS" | tee -a "$log_file"
-    
-    python3 chatrepair.py "$problem" --model "$CHATREPAIR_MODEL" --mode original --max-retry 1 --length 2 --result-tag "${RESULT_TAG}_original" $EXTRA_ARGS >> "$log_file" 2>&1 || echo "    ✗ Original mode failed" | tee -a "$log_file"
-    
-    echo "  Running ChatRepair + ReduceFix (Reduced mode)..."
-    echo "python3 chatrepair.py $problem --model $CHATREPAIR_MODEL --mode reduced --max-retry 1 --length 2 --result-tag ${RESULT_TAG}_reduced $EXTRA_ARGS" | tee -a "$log_file"
-    
-    python3 chatrepair.py "$problem" --model "$CHATREPAIR_MODEL" --mode reduced --max-retry 1 --length 2 --result-tag "${RESULT_TAG}_reduced" $EXTRA_ARGS >> "$log_file" 2>&1 || echo "    ✗ Reduced mode failed" | tee -a "$log_file"
-    
-  elif [[ "$CHATREPAIR_SCRIPT" == "evaluate_chatrepair.py" ]]; then
-    # Specialized ChatRepair evaluator
-    echo "  Running ChatRepair comparison (both modes)..."
-    echo "python3 evaluate_chatrepair.py $problem --model-tag $RESULT_TAG --chatrepair-model $CHATREPAIR_MODEL --reducer-model $REDUCER_MODEL --max-threads 5 $EXTRA_ARGS" | tee -a "$log_file"
-    
-    python3 evaluate_chatrepair.py "$problem" --model-tag "$RESULT_TAG" --chatrepair-model "$CHATREPAIR_MODEL" --reducer-model "$REDUCER_MODEL" --max-threads 5 $EXTRA_ARGS >> "$log_file" 2>&1 || echo "    ✗ ChatRepair evaluation failed" | tee -a "$log_file"
-    
-  else
-    # Fallback: use standard repair evaluation as approximation
-    echo "  Running standard repair evaluation (approximation for ChatRepair)..."
-    echo "python3 evaluate_repair.py $problem --model-tag $RESULT_TAG --reducer-model $REDUCER_MODEL --repair-model $CHATREPAIR_MODEL --max-threads 5 $EXTRA_ARGS" | tee -a "$log_file"
-    
-    python3 evaluate_repair.py "$problem" --model-tag "$RESULT_TAG" --reducer-model "$REDUCER_MODEL" --repair-model "$CHATREPAIR_MODEL" --max-threads 5 $EXTRA_ARGS >> "$log_file" 2>&1 || echo "    ✗ Repair evaluation failed" | tee -a "$log_file"
-  fi
+  echo "  Running ChatRepair evaluation (both original and reduced modes)..."
+  echo "python3 evaluate_repair_with_chatrepair.py $problem --model-tag $RESULT_TAG --chatrepair-model $CHATREPAIR_MODEL --reducer-model $REDUCER_MODEL --max-threads 5 $EXTRA_ARGS" | tee -a "$log_file"
+  
+  python3 evaluate_repair_with_chatrepair.py "$problem" --model-tag "$RESULT_TAG" --chatrepair-model "$CHATREPAIR_MODEL" --reducer-model "$REDUCER_MODEL" --max-threads 5 $EXTRA_ARGS >> "$log_file" 2>&1 || echo "    ✗ ChatRepair evaluation failed" | tee -a "$log_file"
 
   echo "    ✓ Problem $problem evaluation completed" | tee -a "$log_file"
   echo "  ---" | tee -a "$log_file"
@@ -150,17 +118,16 @@ echo "Total time: ${hours}h ${minutes}m ${seconds}s"
 echo "Log directory: $LOG_DIR/"
 echo ""
 
-if [[ "$CHATREPAIR_SCRIPT" == "chatrepair.py" ]]; then
-  echo "Results files:"
-  echo "  - result_${RESULT_TAG}_original.json (ChatRepair original)"
-  echo "  - result_${RESULT_TAG}_reduced.json (ChatRepair + ReduceFix)"
-elif [[ "$CHATREPAIR_SCRIPT" == "evaluate_chatrepair.py" ]]; then
-  echo "Results file:"
-  echo "  - result_${RESULT_TAG}.json (contains both ChatRepair modes)"
+echo "Results file:"
+echo "  - result_chatrepair_${RESULT_TAG}.json (contains both ChatRepair original and reduced modes)"
+
+echo ""
+echo "Analyzing ChatRepair results..."
+if [[ -f "summarize_chatrepair_results.py" ]]; then
+  echo "python3 summarize_chatrepair_results.py result_chatrepair_${RESULT_TAG}.json"
+  python3 summarize_chatrepair_results.py "result_chatrepair_${RESULT_TAG}.json" || echo "  ✗ Result summarization failed"
 else
-  echo "Results file:"
-  echo "  - result_${RESULT_TAG}.json (standard repair evaluation)"
-  echo "  Note: This is an approximation. Implement ChatRepair integration for exact RQ4."
+  echo "  WARNING: summarize_chatrepair_results.py not found, skipping result analysis"
 fi
 
 echo ""
@@ -171,10 +138,6 @@ echo "  - D-difficulty: 37.5% → 46.2% (+23.2% relative)"
 echo "  - E&F-difficulty: 10.0% → 16.7% (+67.0% relative)"
 echo ""
 echo "Next steps for RQ4 analysis:"
-if [[ "$CHATREPAIR_SCRIPT" == "chatrepair.py" ]]; then
-  echo "  python3 analyze_rq4.py --original result_${RESULT_TAG}_original.json --reduced result_${RESULT_TAG}_reduced.json"
-else
-  echo "  python3 analyze_rq4.py --result-file result_${RESULT_TAG}.json --chatrepair-comparison"
-fi
-echo "  python3 compare_chatrepair_modes.py"
+echo "  python3 analyze_repair_stats.py result_chatrepair_${RESULT_TAG}.json --model chatrepair-${RESULT_TAG}"
+echo "  python3 compare_chatrepair_modes.py result_chatrepair_${RESULT_TAG}.json"
 echo "==============================================" 

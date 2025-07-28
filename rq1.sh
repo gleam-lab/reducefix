@@ -94,6 +94,18 @@ echo ""
 echo "Consolidating reducer results..."
 python3 consolidate_reducer_results.py --incremental
 
+# Step 4: Generate RQ1 statistical analysis
+echo ""
+echo "Generating RQ1 statistical analysis..."
+if [ -f "reducer_results.json" ]; then
+  echo "Analyzing reducer effectiveness (success rate and compression ratio)..."
+  python3 analyze_rq1_stats.py reducer_results.json --detailed
+  echo ""
+  echo "RQ1 analysis saved. Use the output above for Table 1 in the paper."
+else
+  echo "Warning: reducer_results.json not found. Run consolidate_reducer_results.py first."
+fi
+
 end_time=$(date +%s)
 cost=$((end_time - start_time))
 hours=$((cost / 3600))
@@ -108,8 +120,9 @@ echo "Total time: ${hours}h ${minutes}m ${seconds}s"
 echo "Results files:"
 echo "  - reducer_results.json (consolidated reducer test results)"
 echo "  - result_${RESULT_TAG}.json (individual problem results)"
-echo "  - Logs: $LOG_DIR/"
 echo ""
-echo "Next steps for RQ1 analysis:"
-echo "  python3 analyze_rq1.py --result-file reducer_results.json"
+echo "Key outputs for RQ1:"
+echo "  1. Table 1 data: Success rate and compression ratio by difficulty"
+echo "  2. Violin plot data: Raw compression ratios for visualization"
+echo "  3. Comparison data: ReduceFix vs Pure LLM baseline (if available)"
 echo "==============================================" 
