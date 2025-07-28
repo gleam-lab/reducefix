@@ -14,7 +14,6 @@ The pipeline receives five inputs: the task description P, a correct reference s
 ## Prerequisites
 
 - Python 3.8+
-- Required Python packages: `pip install -r requirements.txt`
 - Access to LLM APIs (Qwen-Plus, DeepSeek-V3, etc.) with API keys configured in `tutor.py`
 - AtCoder test cases (download and place in `tests/` directory)
 
@@ -23,7 +22,6 @@ The pipeline receives five inputs: the task description P, a correct reference s
 1. **Setup Configuration**:
    ```bash
    # Configure your API keys in tutor.py
-   cp tutor.py.template tutor.py
    # Edit tutor.py with your actual API credentials
    ```
 
@@ -97,8 +95,10 @@ ReduceFix/
 ├── reducer_builder.py         # Generate problem-specific reducers
 ├── reducer_test.py            # Test reducers on WA submissions
 ├── evaluate_repair.py         # Evaluate repair strategies
-├── consolidate_reducer_results.py  # Merge reducer results
-├── summarize_repair_results.py     # Analyze repair results
+├── evaluate_repair_with_chatrepair.py  # ChatRepair evaluation (RQ4)
+├── consolidate_reducer_results.py      # Merge reducer results
+├── summarize_repair_results.py         # Analyze repair results
+├── summarize_chatrepair_results.py     # Analyze ChatRepair results (RQ4)
 ├── llm.py                     # LLM interface
 ├── tutor.py                   # API client configuration
 ├── tools.py                   # Utility functions
@@ -109,6 +109,7 @@ ReduceFix/
 
 - `reducer_results.json`: Consolidated reducer testing results
 - `result_<model_tag>.json`: Repair evaluation results for each model
+- `result_chatrepair_<model_tag>.json`: ChatRepair evaluation results (RQ4)
 - `<problem>/reducer.py`: Generated reducer for each problem
 - `<problem>/<submission_id>.*`: Individual submission artifacts
 
@@ -118,3 +119,4 @@ ReduceFix/
 2. **Missing Test Cases**: Download AtCoder test cases and place in `tests/` directory
 3. **Memory Issues**: Reduce `--max-threads` parameter for repair evaluation
 4. **Timeout Issues**: Increase timeout values in configuration files
+5. **Missing Analysis Scripts**: Some analysis scripts referenced in RQ scripts may need to be implemented or use the existing `summarize_*.py` scripts for result analysis
