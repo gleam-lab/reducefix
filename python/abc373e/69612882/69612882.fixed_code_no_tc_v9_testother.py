@@ -1,0 +1,120 @@
+python
+import sys
+
+def solve():
+    N, M, K = map(int, input().split())
+    A = list(map(int, input().split()))
+    
+    total_counted = sum(A)
+    remaining_votes = K - total_counted
+    
+    # If there are no remaining votes, check current status
+    if remaining_votes == 0:
+        # Count how many candidates have strictly more votes than candidate i
+        ans = []
+        for i in range(N):
+            more_votes = sum(1 for j in range(N) if A[j] > A[i])
+            if more_votes < M:
+                ans.append(0)
+            else:
+                ans.append(-1)
+        print(*ans)
+        return
+    
+    # Special case: if M == N, then everyone is elected (since less than N people can't have more votes)
+    if M == N:
+        print(*[0] * N)
+        return
+    
+    # We need to compute for each candidate the minimum additional votes needed
+    ans = [0] * N
+    
+    # Create list of (votes, original_index) and sort by votes descending
+    candidates = [(A[i], i) for i in range(N)]
+    candidates.sort(reverse=True)
+    
+    # For each candidate in descending order of current votes
+    for votes, orig_idx in candidates:
+        # How many candidates currently have more votes than this candidate?
+        # We want that after adding x votes to candidate orig_idx, 
+        # fewer than M candidates have more votes than him.
+        
+        # We'll try to find minimal x such that no matter how the remaining votes are distributed,
+        # at most M-1 candidates can have more votes than candidate orig_idx.
+        
+        # After giving x votes to candidate orig_idx, his total is: A[orig_idx] + x
+        
+        # Worst case: other candidates get as many votes as possible to beat him.
+        # We need to ensure that at most M-1 candidates can end up with > (A[orig_idx] + x)
+        
+        # Let's consider: what is the maximum number of candidates that could possibly
+        # have more votes than A[orig_idx] + x?
+        
+        # We simulate: suppose we try to make as many candidates as possible exceed A[orig_idx] + x.
+        # But we only have 'remaining_votes - x' votes to distribute among others.
+        
+        # However, note: we cannot take away votes from anyone, only add.
+        
+        # Strategy:
+        # To prevent too many candidates from surpassing candidate i,
+        # we need to ensure that even in the worst-case distribution of the remaining votes (excluding x for candidate i),
+        # at most M-1 candidates can surpass A[i] + x.
+        
+        current_votes = A[orig_idx]
+        target = current_votes  # we will increase this until condition is satisfied
+        
+        # We are going to binary search on x (additional votes needed)
+        lo, hi = 0, remaining_votes + 1
+        
+        while lo < hi:
+            x = (lo + hi) // 2
+            total_after = current_votes + x
+            # Now, how many candidates can possibly get more than total_after?
+            # For each other candidate j != orig_idx, they start at A[j] and can get extra votes.
+            # The maximum number of candidates that can exceed total_after is limited by:
+            #   available votes: remaining_votes - x
+            #   and their starting points.
+            
+            # For each candidate j != orig_idx, the minimum extra votes needed to surpass total_after is:
+            #   max(0, total_after - A[j] + 1)   [because need > total_after]
+            # But wait: we want to know the maximum number of candidates that can be made to exceed total_after
+            # This is equivalent to: what's the maximum number of candidates we can "boost" above total_after
+            # given a budget of (remaining_votes - x)?
+            
+            # Actually, reverse thinking: what's the minimum cost to make k candidates exceed total_after?
+            # We want the largest k such that we can make k candidates exceed total_after within budget.
+            
+            # Consider all candidates except orig_idx
+            costs = []
+            for j in range(N):
+                if j == orig_idx:
+                    continue
+                # votes needed for candidate j to exceed total_after
+                need = total_after - A[j] + 1
+                if need > 0:
+                    costs.append(need)
+            
+            costs.sort()  # smallest costs first
+            budget = remaining_votes - x
+            can_make_exceed = 0
+            for cost in costs:
+                if cost <= budget:
+                    budget -= cost
+                    can_make_exceed += 1
+                else:
+                    break
+            
+            # can_make_exceed is the maximum number of other candidates that can be made to exceed total_after
+            if can_make_exceed < M:
+                hi = x
+            else:
+                lo = x + 1
+        
+        if lo <= remaining_votes:
+            ans[orig_idx] = lo
+        else:
+            ans[orig_idx] = -1
+    
+    print(*ans)
+
+solve()

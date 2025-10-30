@@ -1,0 +1,37 @@
+Based on the crash details and code, the issue is a use-of-uninitialized-value in `pdf_load_font_descriptor` which eventually leads to `fz_drop_buffer`. The problem stems from an incomplete string comparison function that was cut off mid-implementation.
+
+The file shows `strcmp_ignore_space()` being defined but cut off, leaving it as an incomplete function. This would cause undefined behavior when called.
+
+Here's the fix:
+
+```c
+<<<<<<< SEARCH
+static int strcmp_ignore_space(const char *a
+=======
+static int strcmp_ignore_space(const char *a, const char *b)
+{
+	while (*a && *b)
+	{
+		while (*a == ' ') a++;
+		while (*b == ' ') b++;
+		if (*a != *b)
+			return 0;
+		if (!*a)
+			return 1;
+		a++;
+		b++;
+	}
+	while (*a == ' ') a++;
+	while (*b == ' ') b++;
+	return !*a && !*b;
+}
+>>>>>>> REPLACE
+```
+
+This completes the `strcmp_ignore_space()` function by:
+1. Adding the missing parameter `const char *b`
+2. Implementing proper space-ignoring string comparison logic
+3. Handling all edge cases including trailing spaces
+4. Returning correct boolean result (1 for equal, 0 for different)
+
+The function is likely used in font name comparisons, and its incomplete state would lead to uninitialized value usage and subsequent crashes when trying to compare font names with embedded spaces.

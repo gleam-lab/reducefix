@@ -1,0 +1,62 @@
+```python
+import sys
+from collections import deque
+
+def main():
+    H, W, Y = map(int, sys.stdin.readline().split())
+    
+    # Read elevation data
+    A = []
+    for _ in range(H):
+        row = list(map(int, sys.stdin.readline().split()))
+        A.append(row)
+    
+    # Initialize result array for each year
+    result = [H * W] * Y  # area remaining after i years (1-indexed)
+    
+    # We'll simulate the flooding from the edges inward using BFS with priority based on elevation
+    # Instead of simulating year by year, we determine when each cell gets flooded
+    
+    # Priority queue: (elevation_threshold, row, col)
+    heap = []
+    visited = [[False] * W for _ in range(H)]
+    
+    # Add all border cells to the heap
+    for i in range(H):
+        for j in range(W):
+            if i == 0 or i == H-1 or j == 0 or j == W-1:
+                heap.append((A[i][j], i, j))
+                visited[i][j] = True
+    
+    import heapq
+    heapq.heapify(heap)
+    
+    # Process cells in order of increasing elevation threshold
+    # A cell at elevation 'e' will be submerged when sea level >= e
+    while heap:
+        elev, i, j = heapq.heappop(heap)
+        
+        # This cell gets submerged at year = elev (if elev <= Y)
+        if elev <= Y:
+            # All years from 'elev' onward lose one more unit of area
+            for year in range(elev - 1, Y):
+                result[year] -= 1
+        
+        # Check neighbors
+        for di, dj in [(0,1), (0,-1), (1,0), (-1,0)]:
+            ni, nj = i + di, j + dj
+            if 0 <= ni < H and 0 <= nj < W and not visited[ni][nj]:
+                visited[ni][nj] = True
+                # The water can flow through this cell only when sea level reaches at least A[ni][nj]
+                # But due to connectivity, it's limited by the maximum along the path from ocean
+                # So we use max(path_max, current_cell_elevation)
+                new_elev = max(elev, A[ni][nj])
+                heapq.heappush(heap, (new_elev, ni, nj))
+    
+    # Output results for each year
+    for i in range(Y):
+        print(result[i])
+
+if __name__ == '__main__':
+    main()
+```

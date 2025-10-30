@@ -1,0 +1,53 @@
+ ### 核心触发条件分析
+
+从崩溃日志中可以看出，错误发生在 `BEInt<unsigned short, 2>::operator unsigned short()` 方法中。具体来说，地址 `0x0000009de494` 越界读取了 2 字节的数据。根据栈跟踪信息，这个错误是由于调用 `OT::gvar::get_offset` 方法时传入的参数不正确导致的。
+
+### 修复策略
+
+为了修复这个问题，我们需要确保在调用 `OT::gvar::get_offset` 方法时传入的参数是有效的，并且不会导致缓冲区越界。这可能涉及到以下几点：
+
+1. **检查传入参数的有效性**：确保传入的索引值在有效范围内。
+2. **增加边界检查**：在调用 `get_offset` 方法之前，添加边界检查逻辑，以防止越界访问。
+3. **更新依赖库**：如果问题出在依赖库中，考虑升级到最新版本，因为新版本可能会修复这个问题。
+
+### 具体的代码修复建议
+
+以下是具体的代码修复建议：
+
+1. **检查传入参数的有效性**：
+
+   在 `OT::gvar::get_offset` 方法中，添加对索引值的检查：
+
+   ```cpp
+   unsigned int OT::gvar::get_offset(unsigned int index, unsigned int count) const {
+       if (index >= count) {
+           // 处理无效索引的情况，例如抛出异常或返回默认值
+           throw std::out_of_range("Index out of range");
+       }
+       // 继续执行获取偏移量的逻辑
+       return _data[index];
+   }
+   ```
+
+2. **增加边界检查**：
+
+   在调用 `OT::gvar::get_offset` 方法之前，添加边界检查：
+
+   ```cpp
+   void OT::gvar::accelerator_t::apply_deltas_to_points(unsigned int glyph_index, hb_array_t<int> deltas, hb_array_t<OT::contour_point_t> points) const {
+       unsigned int num_glyphs = _glyph_count;
+       if (glyph_index >= num_glyphs) {
+           // 处理无效索引的情况，例如抛出异常或返回
+           return;
+       }
+
+       unsigned int offset = _gvar->get_offset(glyph_index, num_glyphs);
+       // 继续执行应用偏移量的逻辑
+   }
+   ```
+
+3. **更新依赖库**：
+
+   如果问题出在依赖库中，可以尝试更新到最新版本，或者查看是否有相关的 bug fix 可用。
+
+通过以上修复建议，可以有效地避免缓冲区越界的问题，并提高程序的健壮性。

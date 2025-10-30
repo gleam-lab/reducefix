@@ -1,0 +1,74 @@
+class UnionFind:
+    def __init__(self, n):
+        self.par = list(range(n))
+        self.size = [1] * n
+
+    def find(self, x):
+        if self.par[x] != x:
+            self.par[x] = self.find(self.par[x])
+        return self.par[x]
+
+    def unite(self, x, y):
+        x = self.find(x)
+        y = self.find(y)
+        if x == y:
+            return False
+        if self.size[x] < self.size[y]:
+            x, y = y, x
+        self.par[y] = x
+        self.size[x] += self.size[y]
+        return True
+
+    def same(self, x, y):
+        return self.find(x) == self.find(y)
+
+N, Q = map(int, input().split())
+
+# Store the vertices in each component, kept sorted in descending order
+components = [[] for _ in range(N + 1)]
+for i in range(1, N + 1):
+    components[i] = [i]
+
+uf = UnionFind(N + 1)
+
+ans = []
+for _ in range(Q):
+    query = list(map(int, input().split()))
+    if query[0] == 1:
+        u, v = query[1], query[2]
+        if not uf.same(u, v):
+            root_u = uf.find(u)
+            root_v = uf.find(v)
+            # Always merge smaller into larger (by root index or by size, doesn't matter for correctness)
+            # But we want to keep the largest root as representative? Actually, union-find handles that.
+            uf.unite(u, v)
+            new_root = uf.find(u)
+            
+            # Merge the two lists
+            if root_u == new_root:
+                # root_v will be merged into root_u
+                other = components[root_v]
+            else:
+                # root_u will be merged into root_v, so swap
+                other = components[root_u]
+                components[root_u] = []
+            
+            # Merge and sort in descending order, but only keep up to 10 largest
+            merged = components[new_root] + other
+            merged.sort(reverse=True)
+            # Keep only top 10
+            components[new_root] = merged[:10]
+            # Clear the old component if needed
+            if root_u != new_root:
+                components[root_u] = []
+    else:  # query[0] == 2
+        v, k = query[1], query[2]
+        root = uf.find(v)
+        comp = components[root]
+        if len(comp) < k:
+            ans.append(-1)
+        else:
+            ans.append(comp[k - 1])
+
+for a in ans:
+    print(a)

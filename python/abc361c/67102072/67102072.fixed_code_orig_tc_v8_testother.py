@@ -1,0 +1,22 @@
+n, k = map(int, input().split())
+a = list(map(int, input().split()))
+
+# We are removing exactly K elements, so we keep (n - k) elements.
+# To minimize (max(B) - min(B)), we should choose a contiguous segment of (n-k) elements
+# from the sorted array, but we must preserve original order? 
+# However, note: we can remove any K elements arbitrarily. So optimal strategy:
+# Sort the array, then consider all contiguous subarrays of length (n-k) in the sorted array.
+# Why is this valid? Because we are allowed to remove arbitrary elements, so we can choose which values to keep.
+# The minimal range will always come from keeping some values that are close together.
+
+a.sort()
+m = n - k
+if m == 1:
+    print(0)
+else:
+    min_diff = float('inf')
+    for i in range(n - m + 1):
+        diff = a[i + m - 1] - a[i]
+        if diff < min_diff:
+            min_diff = diff
+    print(min_diff)

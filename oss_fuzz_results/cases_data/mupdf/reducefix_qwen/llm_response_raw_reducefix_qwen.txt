@@ -1,0 +1,198 @@
+```python
+def generated_reduce(input_bytes: bytes, test_fn, verbose: bool = True) -> bytes:
+    """
+    Format-aware test case reducer for mupdf
+    Strategy: Exploit PDF structure (obj/endobj blocks, dictionaries, streams) to reduce while preserving crash.
+    Stages: 1) Remove entire objects 2) Remove dictionary keys 3) Reduce stream content 4) Line/byte cleanup
+    """
+    import time
+    import re
+
+    start_time = time.time()
+    original_size = len(input_bytes)
+    if verbose:
+        print(f"[ReduceFix] Starting reduction")
+        print(f"[ReduceFix] Original size: {original_size} bytes")
+
+    # Convert to string for easier manipulation (PDF is mostly text-based despite binary streams)
+    try:
+        content = input_bytes.decode('latin1')
+    except:
+        content = input_bytes.decode('raw_unicode_escape')
+
+    current = content
+    test_count = 0
+
+    def validate(candidate: str) -> bool:
+        nonlocal test_count
+        test_count += 1
+        candidate_bytes = candidate.encode('latin1')
+        return test_fn(candidate_bytes)
+
+    # Stage 1: Remove complete obj...endobj blocks (coarsest structural unit)
+    if verbose:
+        print("[ReduceFix] Stage 1: Removing PDF object blocks")
+    
+    obj_pattern = r'\s*\d+\s+\d+\s+obj\r?\n(.*?)\r?\nendobj\s*'
+    obj_matches = list(re.finditer(obj_pattern, current, re.DOTALL))
+    total_objs = len(obj_matches)
+    
+    if verbose:
+        print(f"  [ReduceFix] Found {total_objs} objects to consider removing")
+
+    # Try removing one object at a time, starting from the end
+    i = len(obj_matches) - 1
+    while i >= 0:
+        match = obj_matches[i]
+        candidate = current[:match.start()] + current[match.end():]
+        
+        if len(candidate.strip()) > 0 and validate(candidate):
+            current = candidate
+            obj_matches = list(re.finditer(obj_pattern, current, re.DOTALL))  # Re-scan
+            if verbose and test_count % 25 == 0:
+                print(f"  [ReduceFix] Tested {test_count} candidates, current: {len(obj_matches)} objs, {len(current)} bytes, elapsed={time.time()-start_time:.1f}s")
+        else:
+            i -= 1
+
+    if verbose:
+        stage1_size = len(current)
+        reduction1 = (original_size - stage1_size) / original_size * 100
+        print(f"[ReduceFix] Stage 1 complete: {original_size} → {stage1_size} bytes ({reduction1:.1f}% reduction)")
+
+    # Stage 2: Remove dictionary keys within remaining objects
+    if verbose:
+        print("[ReduceFix] Stage 2: Removing dictionary entries (/Key)")
+    
+    dict_key_pattern = r'/[A-Za-z]+\s+[^<>\[\]{}/\s\r\n]+(?=\s+(?:/[A-Za-z]|>>|\]))|/[A-Za-z]+\s+(?:<<.*?>>|\[.*?\])'
+    # First pass: remove non-critical known keys
+    critical_keys = {'/Type', '/Length', '/Filter', '/Resources', '/Contents', '/Parent', '/Kids'}
+    
+    lines = current.split('\n')
+    prev_line_count = len(lines)
+    
+    i = 0
+    while i < len(lines):
+        line = lines[i].strip()
+        if line.startswith('/'):
+            key_match = re.match(r'/([A-Za-z]+)', line)
+            if key_match:
+                key = f"/{key_match.group(1)}"
+                if key not in critical_keys:
+                    candidate_lines = lines[:i] + lines[i+1:]
+                    candidate = '\n'.join(candidate_lines)
+                    if len(candidate.strip()) > 0 and validate(candidate):
+                        lines = candidate_lines
+                        continue
+        i += 1
+        
+        if verbose and abs(len(lines) - prev_line_count) >= 10:
+            prev_line_count = len(lines)
+            print(f"  [ReduceFix] Tested {test_count} candidates, current: {len(lines)} lines, {len('\n'.join(lines))} bytes, elapsed={time.time()-start_time:.1f}s")
+
+    current = '\n'.join(lines)
+    if verbose:
+        stage2_size = len(current)
+        reduction2 = (original_size - stage2_size) / original_size * 100
+        print(f"[ReduceFix] Stage 2 complete: {original_size} → {stage2_size} bytes ({reduction2:.1f}% reduction)")
+
+    # Stage 3: Reduce stream content (between stream and endstream)
+    if verbose:
+        print("[ReduceFix] Stage 3: Reducing stream data")
+    
+    stream_pattern = r'(stream\r?\n)(.*?)(\r?\nendstream)'
+    stream_matches = list(re.finditer(stream_pattern, current, re.DOTALL))
+    
+    for match in stream_matches:
+        # Replace stream content with minimal version
+        minimal_stream = b'x' * 1  # Minimal valid stream data
+        replacement = f"{match.group(1).decode('latin1')}{minimal_stream.decode('latin1')}{match.group(3).decode('latin1')}"
+        candidate = current[:match.start()] + replacement + current[match.end():]
+        
+        # Update Length in dictionary before this stream if possible
+        pre_stream = current[:match.start()]
+        length_match = re.search(r'/Length\s+(\d+)', pre_stream)
+        if length_match:
+            pre_length = pre_stream[:length_match.start()]
+            new_length = f"/Length {len(minimal_stream)}"
+            updated_pre = pre_length + " " + new_length
+            candidate = updated_pre + pre_stream[length_match.end():] + replacement + current[match.end():]
+        
+        if len(candidate.strip()) > 0 and validate(candidate):
+            current = candidate
+            break  # One reduced stream is enough for now
+
+    # Also try removing entire stream objects if possible
+    obj_with_stream_pattern = r'\s*\d+\s+\d+\s+obj\r?\n(.*?)\r?\nstream\r?\n.*?\r?\nendstream\r?\n(.*?)\r?\nendobj\s*'
+    obj_stream_matches = list(re.finditer(obj_with_stream_pattern, current, re.DOTALL))
+    
+    for match in reversed(obj_stream_matches):
+        # Try to keep only obj header and endobj, empty stream
+        inner_header = match.group(1)
+        if '/Length' in inner_header:
+            new_length = re.sub(r'/Length\s+\d+', '/Length 1', inner_header)
+        else:
+            new_length = inner_header + ' /Length 1'
+        
+        replacement = f"\n{match.group(0).split()[0]} {match.group(0).split()[1]} obj\n{new_length}\nstream\nx\nendstream\n{match.group(2)}\nendobj"
+        candidate = current[:match.start()] + replacement + current[match.end():]
+        
+        if len(candidate.strip()) > 0 and validate(candidate):
+            current = candidate
+            break
+
+    if verbose:
+        stage3_size = len(current)
+        reduction3 = (original_size - stage3_size) / original_size * 100
+        print(f"[ReduceFix] Stage 3 complete: {original_size} → {stage3_size} bytes ({reduction3:.1f}% reduction)")
+
+    # Stage 4: Fine-grained line and byte reduction
+    if verbose:
+        print("[ReduceFix] Stage 4: Line and byte-level reduction")
+    
+    lines = current.split('\n')
+    i = 0
+    prev_report = len(lines)
+    while i < len(lines):
+        # Try removing line
+        candidate_lines = lines[:i] + lines[i+1:]
+        if len(candidate_lines) == 0:
+            i += 1
+            continue
+            
+        candidate = '\n'.join(candidate_lines)
+        if validate(candidate):
+            lines = candidate_lines
+            if verbose and abs(prev_report - len(lines)) >= 10:
+                prev_report = len(lines)
+                print(f"  [ReduceFix] Tested {test_count} candidates, current: {len(lines)} lines, {len('\n'.join(lines))} bytes, elapsed={time.time()-start_time:.1f}s")
+            continue
+        i += 1
+
+    # Final byte-level reduction on small inputs
+    final_content = '\n'.join(lines)
+    if len(final_content) < 1000:
+        chars = list(final_content)
+        i = 0
+        while i < len(chars):
+            orig_char = chars[i]
+            if orig_char not in ['\n', '\r']:
+                # Try removing or shortening repeated chars
+                chars[i] = ''
+                candidate = ''.join(chars)
+                if len(candidate) > 0 and validate(candidate):
+                    final_content = candidate
+                    chars = list(final_content)
+                    continue
+            i += 1
+
+    final_bytes = final_content.encode('latin1')
+    final_size = len(final_bytes)
+    total_time = time.time() - start_time
+    overall_reduction = (original_size - final_size) / original_size * 100
+
+    if verbose:
+        print(f"[ReduceFix] Complete: {original_size} → {final_size} bytes ({overall_reduction:.1f}% reduction)")
+        print(f"[ReduceFix] Total tests: {test_count}, total time: {total_time:.1f}s")
+
+    return final_bytes
+```

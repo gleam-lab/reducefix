@@ -1,0 +1,41 @@
+=== LLM Response for reduced_tc version 1 ===
+Model: qwen-plus
+Temperature: 1.0
+======================================================================
+
+After analyzing the crash details and code, I can identify the root cause of the heap-use-after-free issue. The problem occurs when `fz_get_pixmap_from_image` fails and returns NULL, but the code continues to use `pixmap->w` and `pixmap->h` in the subsequent condition check for image scaling.
+
+The issue is in the sequence where:
+1. `pixmap = fz_get_pixmap_from_image(...)` may return NULL
+2. Later code uses `pixmap->w` and `pixmap->h` without checking if pixmap is NULL
+3. This leads to a use-after-free or null pointer dereference
+
+The fix is to add a NULL check after getting the pixmap and return early if it's NULL.
+
+```c
+### source/fitz/draw-device.c
+- start_line: 1983
+- end_line: 1985
+<<<<<<< SEARCH
+		pixmap = fz_get_pixmap_from_image(ctx, image, &src_area, &local_ctm, &dx, &dy);
+
+		state[1].mask = fz_new_pixmap_with_bbox(ctx, NULL, bbox, NULL, 1);
+		fz_clear_pixmap(ctx, state[1].mask);
+=======
+		pixmap = fz_get_pixmap_from_image(ctx, image, &src_area, &local_ctm, &dx, &dy);
+		if (pixmap == NULL)
+			return;
+
+		state[1].mask = fz_new_pixmap_with_bbox(ctx, NULL, bbox, NULL, 1);
+		fz_clear_pixmap(ctx, state[1].mask);
+>>>>>>> REPLACE
+```
+
+This fix:
+1. Adds a NULL check after obtaining the pixmap
+2. Returns early if the pixmap is NULL, preventing further use of invalid pointer
+3. Maintains the existing error handling pattern seen elsewhere in the function
+4. Is minimal and doesn't disrupt the macro structure (fz_try/fz_always/fz_catch)
+5. Uses tabs for indentation as required by the codebase
+
+The fix addresses the heap-use-after-free by ensuring we don't proceed with a NULL pixmap pointer, which would lead to accessing freed memory when checking pixmap->w and pixmap->h in the scaling condition.

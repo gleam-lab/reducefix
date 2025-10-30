@@ -1,0 +1,234 @@
+=== Prompt for 缩减测试用例 (reduced_tc) version 2 ===
+Case ID: arvo-51180
+Target: php-src
+Model: qwen-plus
+Temperature: 1.0
+Use SEARCH/REPLACE: True
+======================================================================
+
+We are currently solving the following crash issue:
+--- BEGIN ISSUE ---
+Crash in unknown
+
+### Crash Details
+- Type: Heap-use-after-free READ 4
+- Function: unknown
+- Severity: High
+- Sanitizer: asan
+
+### Crash Stack Trace
+```
+timelib_error_container_dtor
+php_date_initialize
+zim_DateTime___construct
+```
+
+### Crash Log
+
+--- END ISSUE ---
+
+
+🎯 **EXACT BUG LOCATION**:
+- File: `ext/date/php_date.c`, Lines 2264-2283
+
+Below are the source files that contain the bug:
+--- BEGIN FILES ---
+### ext/date/php_date.c
+**Function containing the bug** (lines 2264-2283):
+
+```c
+/* Helper function used to store the latest found warnings and errors while
+ * parsing, from either strtotime or parse_from_format. */  // <-- ⚠️ BUG IS HERE (Line 2265)
+static void update_errors_warnings(timelib_error_container **last_errors) /* {{{ */  // <-- ⚠️ BUG IS HERE (Line 2266)
+{  // <-- ⚠️ BUG IS HERE (Line 2267)
+	if (DATEG(last_errors)) {  // <-- ⚠️ BUG IS HERE (Line 2268)
+		timelib_error_container_dtor(DATEG(last_errors));  // <-- ⚠️ BUG IS HERE (Line 2269)
+		DATEG(last_errors) = NULL;  // <-- ⚠️ BUG IS HERE (Line 2270)
+	}  // <-- ⚠️ BUG IS HERE (Line 2271)
+  // <-- ⚠️ BUG IS HERE (Line 2272)
+	if (last_errors == NULL || (*last_errors) == NULL) {  // <-- ⚠️ BUG IS HERE (Line 2273)
+		return;  // <-- ⚠️ BUG IS HERE (Line 2274)
+	}  // <-- ⚠️ BUG IS HERE (Line 2275)
+  // <-- ⚠️ BUG IS HERE (Line 2276)
+	if ((*last_errors)->warning_count || (*last_errors)->error_count) {  // <-- ⚠️ BUG IS HERE (Line 2277)
+		DATEG(last_errors) = *last_errors;  // <-- ⚠️ BUG IS HERE (Line 2278)
+	}  // <-- ⚠️ BUG IS HERE (Line 2279)
+  // <-- ⚠️ BUG IS HERE (Line 2280)
+	timelib_error_container_dtor(*last_errors);  // <-- ⚠️ BUG IS HERE (Line 2281)
+	*last_errors = NULL;  // <-- ⚠️ BUG IS HERE (Line 2282)
+} /* }}} */  // <-- ⚠️ BUG IS HERE (Line 2283)
+```
+
+**🎯 Bug Location** (lines 2264-2283):
+```c
+ * parsing, from either strtotime or parse_from_format. */
+static void update_errors_warnings(timelib_error_container **last_errors) /* {{{ */
+{
+	if (DATEG(last_errors)) {
+		timelib_error_container_dtor(DATEG(last_errors));
+		DATEG(last_errors) = NULL;
+	}
+
+	if (last_errors == NULL || (*last_errors) == NULL) {
+		return;
+	}
+
+	if ((*last_errors)->warning_count || (*last_errors)->error_count) {
+		DATEG(last_errors) = *last_errors;
+	}
+
+	timelib_error_container_dtor(*last_errors);
+	*last_errors = NULL;
+} /* }}} */
+```
+
+**⚠️ IMPORTANT**: When generating your SEARCH/REPLACE edit:
+- The shown function has 20 lines total
+- Bug is at lines 2264-2283
+- Variables declared before the bug MUST NOT be removed (they may be used after)
+- Check for paired macros (fz_try/always/catch, do/while) - keep them balanced
+- Only edit the MINIMAL lines needed to fix the bug
+
+--- END FILES ---
+
+### Buggy Code Snippet
+- **File**: `ext/date/php_date.c`, **Lines**: 2264-2283
+
+```c
+// File: ext/date/php_date.c (lines 2264-2283)
+// This code needs to be fixed:
+/* Helper function used to store the latest found warnings and errors while
+ * parsing, from either strtotime or parse_from_format. */
+static void update_errors_warnings(timelib_error_container **last_errors) /* {{{ */
+{
+	if (DATEG(last_errors)) {
+		timelib_error_container_dtor(DATEG(last_errors));
+		DATEG(last_errors) = NULL;
+	}
+
+	if (last_errors == NULL || (*last_errors) == NULL) {
+		return;
+	}
+
+	if ((*last_errors)->warning_count || (*last_errors)->error_count) {
+		DATEG(last_errors) = *last_errors;
+	}
+
+	timelib_error_container_dtor(*last_errors);
+	*last_errors = NULL;
+} /* }}} */
+```
+
+### Failing Test Case (Minimized by Automated Reduction)
+
+**Minimization Summary**:
+Original: 6,578 bytes → Minimized: 195 bytes (97.0% reduction)
+
+**Purpose of Minimization**:
+The test case has been automatically reduced using delta debugging to identify the MINIMAL input 
+that still triggers the crash. This helps reveal the specific pattern or edge case that causes the bug.
+
+**How to use this information**:
+1. The minimized input reveals a specific triggering pattern (not just random data)
+2. Consider: What makes this particular input trigger the bug? (boundary condition, special character, size, structure)
+3. Your fix should handle this pattern and similar edge cases gracefully
+
+**Input Characteristics**:
+- Medium-sized input
+- Mostly printable ASCII → likely text-based input
+
+**Note**: Complete minimized input shown below (195 bytes).
+
+**Minimized Input** (hex format):
+```
+3c3f636c61737320636f6e737472756374735f696e5f64657374727563746f727b66756e6374696f6e205f5f646573747275637428297b666f722824693b24693c313b297b24613d6e657720636f6e737472756374735f696e5f64657374727563746f723b2f2f0a2474696d653d2733273b7472797b24743d6e6577204461746554696d65282474696d652c2465293b7d63617463682865297b7d7d2f2f0a7d7d24613d6e657720636f6e737472756374735f696e5f64657374727563746f723b2f2f
+```
+
+**Expected Behavior After Fix**:
+- The program should handle this input without crashing
+- Focus on preventing Heap-use-after-free READ 4
+
+### Your Task
+Analyze the crash and generate a patch to fix the bug.
+
+**Instructions**:
+1. Identify the root cause based on crash information and code
+2. Generate a minimal fix targeting the buggy lines
+3. Ensure the fix handles edge cases properly
+4. Do not over-engineer - focus on the specific issue
+
+### Output Format
+Please first localize the bug, then generate *SEARCH/REPLACE* edits to fix the issue.
+
+Every *SEARCH/REPLACE* edit must use this format:
+1. The file path wrapped in ### (e.g., ### src/file.cpp)
+2. The start and end line numbers (- start_line: N, - end_line: M)
+3. The start of search block: <<<<<<< SEARCH
+4. A contiguous chunk of lines to search for in the existing source code
+5. The dividing line: =======
+6. The lines to replace into the source code
+7. The end of the replace block: >>>>>>> REPLACE
+
+Example (MINIMAL edit with context awareness):
+```cpp
+### src/memory/allocator.cpp
+- start_line: 145
+- end_line: 149
+<<<<<<< SEARCH
+	if (size > 0) {
+		ptr = malloc(size);
+		use_memory(ptr);
+	}
+=======
+	if (size > 0) {
+		ptr = malloc(size);
+		if (ptr != NULL)
+			use_memory(ptr);
+	}
+>>>>>>> REPLACE
+```
+
+**CRITICAL COMPILATION SAFETY REQUIREMENTS**:
+
+1. **MINIMAL edits ONLY** - Include only 3-8 lines in SEARCH block (bug line + 1-3 context lines)
+   - More lines = higher risk of breaking dependencies
+   - Focus ONLY on the buggy statement and immediate neighbors
+
+2. **Variable Dependency Check** - Before removing/modifying any line, verify:
+   - ❌ NEVER remove variable declarations if they're used later
+   - ❌ NEVER remove assignments if the variable is referenced afterwards
+   - ✅ Check if variables in your SEARCH block are used outside it
+
+3. **Macro Pairing Safety** - Special macros MUST stay paired:
+   - `fz_try(ctx) { ... } fz_always(ctx) { ... } fz_catch(ctx) { ... }` → NEVER break this chain
+   - `do { ... } while(...)` → NEVER remove the `while` if you keep the `do`
+   - `if (...) { ... } else { ... }` → Be careful not to create dangling else
+
+4. **Code Block Integrity**:
+   - ❌ NEVER remove opening/closing braces unless removing entire block
+   - ❌ NEVER remove function declarations/definitions
+   - ✅ Preserve the structural indentation and nesting
+
+5. **Indentation**:
+   - **Use TAB characters (\t)** for indentation, NOT spaces - the codebase uses tabs
+   - The SEARCH block must match EXACTLY (preserve all tabs and spacing)
+
+6. **Context Awareness** - When editing, mentally visualize:
+   ```
+   [Lines before SEARCH - you don't see these, assume they exist]
+   <<<<<<< SEARCH
+   your visible edit zone (3-8 lines)
+   =======
+   your proposed changes
+   >>>>>>> REPLACE
+   [Lines after SEARCH - you don't see these, assume they exist]
+   ```
+   Your edit should work correctly with unknown context before and after!
+
+**Common Compilation Errors to AVOID**:
+- ❌ "use of undeclared identifier 'X'" → You removed the declaration of X
+- ❌ "expected 'while' in do/while loop" → You broke a macro pairing
+- ❌ "function definition not allowed here" → You accidentally removed a closing brace
+- ❌ "extraneous closing brace" → You removed code but left its closing brace
+
+**Golden Rule**: If unsure whether a line is safe to remove, KEEP IT. Only modify the absolute minimum needed to fix the bug.

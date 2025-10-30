@@ -1,0 +1,27 @@
+diff --git a/ext/date/php_date.c b/ext/date/php_date.c
+index abda2a305c..8e89f4e9e1 100644
+--- a/ext/date/php_date.c
++++ b/ext/date/php_date.c
+@@ -2274,11 +2274,21 @@ static void update_errors_warnings(timelib_error_container **last_errors) /* {{{
+ 		return;
+ 	}
+ 
++	/* Avoid use-after-free: if *last_errors was the same as old DATEG(last_errors),
++	 * it's now been freed. So we must not access its fields. */
+ 	if ((*last_errors)->warning_count || (*last_errors)->error_count) {
+ 		DATEG(last_errors) = *last_errors;
++	} else {
++		/* No errors/warnings; just clean up and return */
++		timelib_error_container_dtor(*last_errors);
++		*last_errors = NULL;
++		return;
+ 	}
+ 
+-	timelib_error_container_dtor(*last_errors);
++	/* Only dtor if not transferred to DATEG(last_errors) */
++	if (DATEG(last_errors) != *last_errors) {
++		timelib_error_container_dtor(*last_errors);
++	}
+ 	*last_errors = NULL;
+ } /* }}} */
+ 

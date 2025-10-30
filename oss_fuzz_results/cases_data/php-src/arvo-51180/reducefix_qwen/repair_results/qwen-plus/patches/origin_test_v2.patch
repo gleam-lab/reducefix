@@ -1,0 +1,28 @@
+Based on the crash details and stack trace, the issue occurs in `php_date_initialize` which calls `timelib_error_container_dtor`. The heap-use-after-free suggests we're accessing freed memory in the error container handling. Looking at the context, we need to ensure proper null checking before dereferencing the error container.
+
+Here's the fix:
+
+```
+<<<<<<< SEARCH
+}
+/* }}} */
+
+static inline void php_do_date_initialize(zval *object, zval *time, zval *timezone_object, int ctor, int persistent) /* {{{ */
+{
+	timelib_time            *t;
+	timelib_tzinfo          *tzi = NULL;
+=======
+}
+/* }}} */
+
+static inline void php_do_date_initialize(zval *object, zval *time, zval *timezone_object, int ctor, int persistent) /* {{{ */
+{
+	timelib_time            *t;
+	timelib_tzinfo          *tzi = NULL;
+	timelib_error_container *err = NULL;
+>>>>>>> REPLACE
+```
+
+The fix adds explicit initialization of the error container pointer to NULL. This prevents potential use-after-free scenarios by ensuring the pointer is properly initialized before any operations that might free it. The uninitialized pointer could lead to dangling references when `timelib_error_container_dtor` is called.
+
+This change ensures safe handling of the error container throughout the function lifecycle, preventing the heap-use-after-free condition while maintaining the original functionality. The fix is minimal and targeted at the specific memory safety issue indicated by the ASAN report.

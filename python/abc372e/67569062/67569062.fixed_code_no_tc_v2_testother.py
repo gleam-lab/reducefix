@@ -1,0 +1,66 @@
+import sys
+
+def main():
+    import sys
+    input = sys.stdin.read
+    data = input().split()
+    
+    idx = 0
+    N = int(data[idx])
+    Q = int(data[idx + 1])
+    idx += 2
+    
+    # Store the connected vertices for each component root
+    comp = [set() for _ in range(N + 1)]
+    for i in range(1, N + 1):
+        comp[i].add(i)
+    
+    # Union-Find with path compression and union by size
+    parent = list(range(N + 1))
+    size = [1] * (N + 1)
+    
+    def find(x):
+        if parent[x] != x:
+            parent[x] = find(parent[x])
+        return parent[x]
+    
+    def unite(x, y):
+        rx = find(x)
+        ry = find(y)
+        if rx == ry:
+            return
+        
+        # Always merge smaller into larger
+        if size[rx] < size[ry]:
+            rx, ry = ry, rx
+        if rx != ry:
+            parent[ry] = rx
+            size[rx] += size[ry]
+            # Move all nodes from ry to rx
+            comp[rx].update(comp[ry])
+            comp[ry].clear()
+    
+    output = []
+    for _ in range(Q):
+        t = int(data[idx])
+        if t == 1:
+            u = int(data[idx + 1])
+            v = int(data[idx + 2])
+            idx += 3
+            if find(u) != find(v):
+                unite(u, v)
+        else:  # t == 2
+            v = int(data[idx + 1])
+            k = int(data[idx + 2])
+            idx += 3
+            root = find(v)
+            connected = sorted(comp[root], reverse=True)
+            if k <= len(connected):
+                output.append(str(connected[k - 1]))
+            else:
+                output.append("-1")
+    
+    print('\n'.join(output))
+
+if __name__ == '__main__':
+    main()

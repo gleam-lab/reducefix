@@ -1,0 +1,140 @@
+```python
+def can_achieve(capacity):
+    total_cost = 0
+    for i in range(n):
+        a, p, b, q = machines[i]
+        min_cost = float('inf')
+        
+        # Determine how many units of each machine we need
+        # For S_i: need ceil(capacity / a) units
+        # For T_i: need ceil(capacity / b) units
+        
+        # Try all possible combinations? Actually, since we can buy any number,
+        # we just need the minimal cost to achieve at least `capacity` in process i.
+        
+        # But note: we can mix machines. So we want min cost such that:
+        #   x * a + y * b >= capacity, minimize x*p + y*q
+        
+        # However, capacity might be large. Instead, iterate over one variable.
+        # Since a, b <= 100, we can fix the number of one type up to capacity//min(a,b)+1
+        
+        # But worst-case capacity could be ~1e7, so we can't iterate too much.
+        # Insight: we only need to try up to b units of machine S (or a units of T)
+        # because of coin problem / linear Diophantine: beyond that, we can replace
+        # combinations with cheaper equivalents.
+        
+        # We try x from 0 to (capacity + b - 1) // a if we were to use only S
+        # But better: use bounded search: x from 0 to b (if b > 0), because after that
+        # we can replace b copies of S with a copies of T potentially?
+        # Actually, standard unbounded knapsack optimization: iterate x from 0 to b-1
+        # and then the rest by T, or vice versa.
+        
+        # Correct approach: iterate over number of S machines from 0 to (capacity + a - 1) // a
+        # but that's too big.
+        
+        # Instead: iterate over number of S machines from 0 to b (inclusive) because
+        # if we use more than b S machines, we can replace b of them with a T machines?
+        # Not exactly. The standard trick in knapsack for two items: 
+        #   To minimize cost for production >= cap, we can restrict one variable to [0, other_item_amount)
+        # But here it's not modular arithmetic directly.
+        
+        # Alternate: iterate over number of S machines from 0 to capacity // a + 1, but that's too slow.
+        
+        # Better: we know that if we use more than b units of S, then we might as well consider replacing
+        # b units of S (which produce b*a) with a units of T (which produce a*b) -> same output.
+        # So we should compare cost: b * p vs a * q
+        # If b * p >= a * q, then using a units of T is cheaper or equal to b units of S -> so never use more than b-1 S
+        # Otherwise, T is more expensive per equivalent block, so we prefer S, and limit T to a-1 units.
+        
+        # This is the key insight: we only need to try up to b-1 units of S OR up to a-1 units of T, 
+        # depending on which "block" is cheaper.
+        
+        # Actually, we can do: try x from 0 to b (meaning 0 to b units of S), then remaining needed = max(0, capacity - x*a)
+        # then y = ceil(remaining / b) = (remaining + b - 1) // b
+        # and update min_cost = min(min_cost, x*p + y*q)
+        
+        # Then similarly, try y from 0 to a, x = ceil((capacity - y*b)/a)
+        # But this double counts. Instead, standard method: try x from 0 to min(b, (capacity+a-1)//a)
+        # and also try y from 0 to min(a, (capacity+b-1)//b) ? No, that's messy.
+        
+        # Actually, known trick: to cover all residues modulo lcm(a,b), we only need to check x in [0, b-1] 
+        # if we are going to use mostly T after that, but only if we know the exchange rate.
+        
+        # Simpler: since a, b <= 100, we can iterate x from 0 to capacity // a + 1, but worst-case capacity is large.
+        
+        # But note: maximum capacity we will test is at most around X/min(P_i,Q_i) * max(A_i,B_i) ~ 1e7/1 * 100 = 1e9, too big.
+        
+        # We need a smarter way.
+        
+        # Use the fact: if we fix the number of S machines to x, then we need y >= max(0, ceil((capacity - x*a)/b))
+        # so cost = x*p + ceil(max(0, capacity - x*a)/b)*q
+        
+        # But x can be from 0 to ceil(capacity/a). That's up to 1e9, too big.
+        
+        # Instead, we use the dominance idea:
+        #   Let’s say we want to produce at least C units.
+        #   Consider two options:
+        #       Option 1: Use x S-machines and y T-machines.
+        #   We can assume without loss of generality that x < b, because if x >= b, 
+        #   then we can replace b S-machines with a T-machines? No, b S-machines produce b*a units, 
+        #   a T-machines produce a*b units — same amount.
+        #   So if b * p >= a * q, then it's better to use a T-machines instead of b S-machines.
+        #   Therefore, if b * p >= a * q, we should never use more than b-1 S-machines.
+        #   Similarly, if b * p < a * q, then we should never use more than a-1 T-machines.
+        
+        # So:
+        best = float('inf')
+        if b * p >= a * q:
+            # Prefer T over S in blocks of b S vs a T
+            # So we don't want too many S: limit x to 0..b-1
+            max_s = b
+        else:
+            # Prefer S, so limit T to 0..a-1
+            max_s = capacity + 1  # meaning we won't bound S, but bound T instead
+        
+        if b * p >= a * q:
+            for x in range(0, b + 1):  # x from 0 to b
+                produced = x * a
+                if produced >= capacity:
+                    cost = x * p
+                else:
+                    needed = capacity - produced
+                    y = (needed + b - 1) // b
+                    cost = x * p + y * q
+                best = min(best, cost)
+        else:
+            for y in range(0, a + 1):  # y from 0 to a
+                produced = y * b
+                if produced >= capacity:
+                    cost = y * q
+                else:
+                    needed = capacity - produced
+                    x = (needed + a - 1) // a
+                    cost = x * p + y * q
+                best = min(best, cost)
+        
+        total_cost += best
+        if total_cost > x:
+            break
+    
+    return total_cost <= x
+
+n, x = map(int, input().split())
+machines = []
+for _ in range(n):
+    row = list(map(int, input().split()))
+    machines.append(row)
+
+# Binary search on the production capacity
+lo = 0
+hi = 10**9  # upper bound: even if we spend all money on cheapest machine, max output per process
+
+while lo < hi:
+    mid = (lo + hi + 1) // 2
+    if can_achieve(mid):
+        lo = mid
+    else:
+        hi = mid - 1
+
+print(lo)
+```

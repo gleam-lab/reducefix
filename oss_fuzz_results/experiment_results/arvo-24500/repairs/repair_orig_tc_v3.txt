@@ -1,0 +1,68 @@
+### 1. 为什么这个输入会触发崩溃
+
+根据崩溃信息，问题出在 `hb_vector_t<CFF::op_str_t>::resize` 函数中。具体来说，在调用 `__asan_memset` 进行内存设置时发生了段错误（segmentation fault）。这通常是因为尝试访问或写入一个无效的内存地址。从堆栈跟踪来看，问题可能出现在以下几种情况之一：
+
+- 在分配新的内存空间时，没有正确处理边界条件。
+- 在释放旧的内存空间后，仍然有指针指向该空间。
+- 内存越界，导致访问到未分配的内存区域。
+
+### 2. 修复策略
+
+为了解决这个问题，我们需要确保在 `resize` 函数中正确处理内存分配和释放，并且避免越界访问。具体步骤如下：
+
+1. **检查内存分配**：确保在分配新内存时不会发生越界。
+2. **清理旧内存**：在释放旧内存后，确保所有指针都被置为空。
+3. **边界条件检查**：在调整大小时，始终检查边界条件，确保不会访问无效的内存地址。
+
+### 3. 具体的代码修复建议
+
+以下是针对 `hb_vector_t<CFF::op_str_t>::resize` 函数的具体修复建议：
+
+```cpp
+template <typename T>
+void hb_vector_t<T>::resize(int new_size) {
+    if (new_size == size_) return;
+
+    // Allocate new memory
+    T* new_data = nullptr;
+    if (new_size > 0) {
+        new_data = static_cast<T*>(malloc(new_size * sizeof(T)));
+        if (!new_data) {
+            // Handle allocation failure
+            free(data_);
+            data_ = nullptr;
+            size_ = 0;
+            capacity_ = 0;
+            throw std::bad_alloc();
+        }
+    }
+
+    // Copy existing elements to new memory
+    for (int i = 0; i < std::min(size_, new_size); ++i) {
+        new (new_data + i) T(std::move(data_[i])); // Use placement new and move semantics
+    }
+
+    // Destruct old elements
+    for (int i = 0; i < size_; ++i) {
+        data_[i].~T(); // Explicitly call destructor
+    }
+
+    // Free old memory
+    free(data_);
+
+    // Update pointers and sizes
+    data_ = new_data;
+    size_ = new_size;
+    capacity_ = new_size;
+}
+```
+
+在这个修复版本中，我们做了以下改进：
+
+1. **内存分配**：使用 `malloc` 分配新内存，并在分配失败时抛出异常并释放已分配的内存。
+2. **元素复制**：使用 `placement new` 和移动语义来复制现有元素到新内存中。
+3. **析构旧元素**：显式调用旧元素的析构函数。
+4. **释放旧内存**：在分配新内存成功后，释放旧内存。
+5. **更新指针和大小**：更新 `data_` 指针和 `size_`、`capacity_` 变量。
+
+通过这些改进，可以确保在调整大小时不会发生内存越界访问，并且能够正确处理内存分配和释放。

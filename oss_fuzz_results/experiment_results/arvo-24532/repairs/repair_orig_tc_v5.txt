@@ -1,0 +1,71 @@
+ ### 1. 为什么这个输入会触发崩溃
+
+根据崩溃信息，问题出在 `hb_vector_t<CFF::parsed_cs_op_t>::resize` 函数中，具体是在调用 `__asan_memset` 时发生了段错误。这通常是因为尝试访问一个无效的内存地址进行写操作。
+
+### 2. 修复策略
+
+为了修复这个问题，我们需要确保在调用 `resize` 函数时，向量有足够的空间来存储新的元素，并且不会超出其容量限制。
+
+### 3. 具体的代码修复建议
+
+以下是一些可能的修复措施：
+
+#### 3.1 检查向量容量和大小
+
+在 `resize` 函数中，添加对当前向量容量和大小的检查，确保在扩展向量时不会超出其容量限制。
+
+```cpp
+template <typename T>
+void hb_vector_t<T>::resize(int new_size) {
+    if (new_size > capacity()) {
+        // 确保容量足够
+        while (capacity() < new_size) {
+            reserve(capacity() * 2); // 或者选择其他合适的扩容策略
+        }
+    }
+    // 继续执行 resize 的逻辑
+    ...
+}
+```
+
+#### 3.2 添加边界检查
+
+在向量的 `push` 和 `pop` 方法中，添加边界检查，确保不会超出向量的有效范围。
+
+```cpp
+template <typename T>
+void hb_vector_t<T>::push(const T& item) {
+    if (size() >= capacity()) {
+        resize(size() + 1);
+    }
+    data_[size()] = item;
+    ++count_;
+}
+```
+
+#### 3.3 使用智能指针管理内存
+
+如果向量中的元素是动态分配的，可以考虑使用智能指针（如 `std::unique_ptr` 或 `std::shared_ptr`）来自动管理内存，避免手动释放内存导致的潜在问题。
+
+```cpp
+#include <memory>
+
+template <typename T>
+class hb_vector_t {
+public:
+    void push(const T& item) {
+        if (size() >= capacity()) {
+            resize(size() + 1);
+        }
+        std::unique_ptr<T> new_item(new T(item));
+        data_[size()] = std::move(new_item);
+        ++count_;
+    }
+
+private:
+    std::vector<std::unique_ptr<T>> data_;
+    size_t count_{0};
+};
+```
+
+通过这些修复措施，可以有效防止由于向量容量不足或边界越界导致的段错误，从而提高代码的稳定性和可靠性。

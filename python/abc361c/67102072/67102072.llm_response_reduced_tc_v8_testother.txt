@@ -1,0 +1,257 @@
+```python
+n, k = map(int, input().split())
+a = list(map(int, input().split()))
+
+# We are removing exactly K elements, so we keep (n - k) elements.
+# We want to minimize (max(B) - min(B)) for the remaining subsequence B in original order.
+
+# Since we can only remove elements (not reorder), the remaining elements must be a contiguous subsequence?
+# Actually: not necessarily contiguous in index? But we cannot reorder -> they stay in original order.
+# However, to minimize the difference, it's optimal to remove from both ends — we can think greedily.
+
+# Important observation:
+# The remaining elements form a contiguous segment in the original array? Not necessarily.
+# But note: if we sort the array, then any valid set of n-k elements that minimizes (max - min) would be a contiguous block in sorted order.
+# However, the catch: the remaining elements must appear in the original order.
+
+# Alternate approach:
+# Since we can choose which K elements to remove arbitrarily, the remaining sequence is any subsequence of length (n-k) in order.
+# But to minimize max - min, we should pick values that are as close as possible.
+
+# Key idea:
+# Sort the array along with keeping original indices.
+# Then, consider all contiguous segments of length (n-k) in the sorted array. For each such segment, check whether the elements in that segment appear in increasing index order (i.e., can be selected without violating the original order).
+# However, checking order for each segment is expensive.
+
+# Better idea:
+# Instead, note that the optimal remaining sequence will have its minimum and maximum among the original array values.
+# We can try to fix the leftmost element (smallest value) and rightmost element (largest value) in the final sequence.
+
+# Even better known solution:
+# After sorting by value, we can observe that an optimal solution corresponds to a window of size (n-k) in the sorted array, but we must ensure that the indices of these elements are increasing.
+# But this is complex.
+
+# Simpler and correct idea:
+# We can remove K elements. So we are going to keep L = N - K elements.
+# The answer is minimized when the kept values are as close as possible.
+# However, the kept elements must appear in the original order.
+
+# Alternate known solution for this problem:
+# We can use sliding window on the sorted array, but we need to verify if a set of values can be chosen in order.
+
+# Insight:
+# Instead, we can try all possible splits of removals: remove i elements from the left and (K - i) from the right, but also possibly from middle?
+
+# But wait: since the relative order must be preserved, one effective strategy is to consider that the best result comes from taking a contiguous block of (n-k) elements from the original array? 
+# NO — because non-contiguous selection might allow skipping large gaps.
+
+# However, here's a known similar problem: "Minimum Difference After Removing K Elements"
+# Solution: 
+# Sort the array with indices. Then, the optimal answer is achieved by a window of size (n-k) in the sorted array, AND we can always rearrange the removals so that the remaining elements form a subsequence with increasing indices? 
+
+# Actually, no: we cannot change the order.
+
+# Correct known approach:
+# We can consider: after sorting A, we try every contiguous subarray of length (n-k). For each such subarray (in sorted order), we check whether the indices of these elements are strictly increasing (so they appear in order in the original array). If yes, then candidate = last_value - first_value.
+
+# But worst-case O(n^2) which is too slow for 2e5.
+
+# Another idea:
+# Instead, we can try to fix how many elements we take from the prefix and suffix.
+
+# Insight from known problems:
+# We can remove K elements. Then the remaining sequence is a subsequence of length (n-k).
+# We want to minimize (max - min).
+
+# We can try all possibilities where the minimum element in B is A[i] and maximum is A[j], but too expensive.
+
+# Better solution:
+# Sort the array by value, and for each contiguous block of (n-k) elements in the sorted array, we check if the corresponding indices form an increasing sequence. But checking increasing for each block is O(n) per block → O(n^2).
+
+# We need a more efficient method.
+
+# Alternative known solution:
+# We can consider that the remaining elements must lie within some range [L, R], and we want to minimize R-L.
+# Use two pointers on sorted array to find smallest R-L such that there exists a subsequence of length (n-k) with values in [L,R] and indices increasing.
+
+# How to check quickly if there exists a subsequence of length (n-k) within a value range [L,R] that appears in increasing index order?
+# Given a fixed value range, we can traverse the original array and count how many elements fall in [L,R]. But we need them to form a subsequence — actually, any subset in order is fine. So if there are at least (n-k) elements in [L,R], we can always pick (n-k) of them in order? YES, because we just go left to right and pick up to (n-k) elements.
+
+# Therefore, for a fixed [L,R], if the number of elements in the original array with value in [L,R] is >= (n-k), then it's feasible.
+
+# Then we can do: 
+# Sort by value. Use two pointers (sliding window) to find the minimal (A[r] - A[l]) such that the number of elements in [l,r] (in original array) is >= (n-k).
+
+# But note: the elements in the value range [A[l], A[r]] may not be contiguous in the array, but we don't care — as long as there are at least (n-k) of them, we can select (n-k) of them in order.
+
+# However, caution: the same element cannot be counted twice.
+
+# Steps:
+# 1. Create array of (value, index)
+# 2. Sort by value
+# 3. Use two pointers l=0, r=0, and a frequency structure? Actually, we just need count.
+#    But the count of how many elements in [l,r] that appear in the original array? 
+#    Actually, we are considering a value range [A_sorted[l], A_sorted[r]], and we want to know how many elements in the original array have values in this range.
+
+# But wait: we can precompute nothing? We can use two pointers on the sorted array, and the number of elements in the current window is (r-l+1). But that's the number of distinct elements in sorted order, not in the original array.
+
+# Actually, in the sorted array, each element is unique in terms of index. So the number of elements in the value range [A_sorted[l].value, A_sorted[r].value] is exactly (r-l+1). But we are including all elements with values in that range.
+
+# However, our sorted array contains all elements. So the window [l, r] in the sorted array has exactly (r-l+1) elements.
+
+# Therefore, we want the smallest (A_sorted[r].value - A_sorted[l].value) such that (r-l+1) >= (n-k).
+
+# But wait: that would mean we just need a contiguous block of (n-k) elements in sorted order, and the answer is min over all such blocks of (max - min).
+
+# Is that sufficient? 
+
+# Example: 
+#   A = [1, 3, 2], K=1 -> keep 2 elements.
+#   Sorted: [(1,0), (2,2), (3,1)]
+#   Blocks of size 2:
+#       [1,2]: diff=1 -> can we pick 1 and 2 in order? indices: 0 then 2 -> yes (1 at index0, 2 at index2) -> valid.
+#       [2,3]: diff=1 -> indices: 2 then 1 -> decreasing -> cannot pick both in order? 
+#           But we can pick 1 and 3: values 1 and 3 -> diff=2, or 3 and 2 -> but 3 at index1, 2 at index2 -> increasing index -> valid? 
+#           Wait: 3 at index1, 2 at index2 -> we can pick them? But 3 comes before 2 in array, so we can pick both? Yes, and their values are 3 and 2 -> but then min=2, max=3 -> diff=1.
+#           But in sorted order, (2,2) and (3,1): the indices are 2 and 1 -> not increasing. So we cannot pick both in the subsequence? 
+#           Because 3 appears at index1, 2 at index2 -> we can pick 3 then 2? Yes, because index1 < index2. 
+#           But wait: 3 is at index1, 2 at index2 -> index1 < index2 -> so we can include both in order.
+
+# The confusion: when we say "in increasing index", we mean the indices of the selected elements must be increasing. So as long as the index of the element with value 3 (which is 1) is less than the index of the element with value 2 (which is 2)? No: 1<2 -> so we can pick both.
+
+# But in the sorted array by value, we have:
+#   value: 1(index0), 2(index2), 3(index1)
+# When we pick the block [2,3] in value, we get elements: 2(index2) and 3(index1). Their indices: 2 and 1 -> 2>1 -> so if we try to pick them in increasing index order, we cannot have both because 3 comes before 2 in the array, but 2 has smaller value and we are considering a block in sorted value.
+
+# But we don't require the values to be increasing in the subsequence, only the indices. And we can pick any elements as long as their indices are increasing.
+
+# However, the block in sorted array [l..r] gives us a set of values. We don't have to pick them in sorted order. We can pick them in index order.
+
+# The key: if we have a set S of elements (with indices), we can form a subsequence from them in the original array if and only if we can order them by increasing index. And we always can — just sort by index.
+
+# Therefore, as long as the set S has at least (n-k) elements, we can form a subsequence of length (n-k) from them (by picking any (n-k) of them and ordering by index).
+
+# But wait: we are forced to preserve the original order, but we can skip arbitrarily. So if we have a set of elements, we can always pick a subsequence using those elements in increasing index order.
+
+# Therefore, the condition is simply: the number of elements in the value range [L,R] is >= (n-k).
+
+# Then the problem reduces to: 
+#   Find the minimum value of (R - L) such that there are at least (n-k) elements in A with values in [L,R].
+
+# This is a classic two pointers / sliding window on sorted array.
+
+# Steps:
+#   sort A
+#   let L=0, R=0
+#   use a while loop to expand R until the window [L,R] has at least (n-k) elements
+#   then update ans = min(ans, A[R]-A[L])
+#   then move L forward
+
+# But note: the window [L,R] in the sorted array has (R-L+1) elements.
+
+# So we want the minimum (A[i+(n-k-1)] - A[i]) for i from 0 to n-(n-k)
+
+# Exactly: 
+#   ans = min_{i=0}^{k} (A[i+(n-k)] - A[i])
+
+# Why? 
+#   We are taking a contiguous block of (n-k) elements in sorted order. The number of such blocks is (k+1): from i=0 to i=k.
+
+# Example: 
+#   N=4, K=1 -> keep 3 elements.
+#   sorted A: [a0,a1,a2,a3]
+#   blocks: 
+#       i=0: [a0,a1,a2] -> diff = a2-a0
+#       i=1: [a1,a2,a3] -> diff = a3-a1
+#   i goes from 0 to K (which is 1) -> 2 blocks.
+
+# In general: i from 0 to K (inclusive) -> because the last block starts at index K: [A[K], A[K+1], ..., A[K+(n-k)-1]] = [A[K],...,A[N-1]]
+
+# So total blocks: K+1.
+
+# But why is this valid? 
+#   Because we can always choose (n-k) elements that lie in a contiguous value interval of length (A[i+n-k-1]-A[i]), and we can form a subsequence from them (since we can pick any (n-k) elements as long as we preserve order, and we can always do that if we have enough elements in the range).
+
+# However, wait: what if the (n-k) elements in the sorted block are scattered in the original array? 
+#   But we don't need them to be consecutive in the array, only in increasing index order. And we can always pick any subset in increasing index order.
+
+# Therefore, the answer is:
+#   sort(A)
+#   ans = min(A[i + (n-k) - 1] - A[i] for i in range(0, k+1))
+
+# Let's test with the failing case:
+#   Input: "2 0" -> N=2, K=0 -> remove 0 elements, so keep 2.
+#   A = [780031076, 658404808]
+#   sorted A = [658404808, 780031076]
+#   n-k = 2
+#   i in range(0, 0+1) = range(0,1) -> i=0
+#   ans = A[0+2-1] - A[0] = A[1] - A[0] = 780031076 - 658404808 = 121626268 -> matches expected.
+
+# Another test: 
+#   N=3, K=1, A=[1,3,2]
+#   sorted: [1,2,3], n-k=2
+#   i in range(0,2): i=0,1
+#   i=0: A[1]-A[0] = 2-1 = 1
+#   i=1: A[2]-A[1] = 3-2 = 1
+#   ans = 1.
+
+# Can we achieve 1? 
+#   Remove one element:
+#     Remove 1: B=[3,2] -> max=3,min=2 -> diff=1.
+#     Remove 3: B=[1,2] -> diff=1.
+#     Remove 2: B=[1,3] -> diff=2.
+#   So minimum is 1 -> correct.
+
+# But what about this case: 
+#   N=4, K=2, A = [1, 4, 2, 3]
+#   We keep 2 elements.
+#   sorted: [1,2,3,4]
+#   n-k=2
+#   i in [0,1,2]:
+#     i=0: A[1]-A[0]=2-1=1
+#     i=1: A[2]-A[1]=3-2=1
+#     i=2: A[3]-A[2]=4-3=1
+#   ans=1.
+#   Can we achieve 1? 
+#     We need two elements with difference 1: pairs: (1,2), (2,3), (3,4)
+#     (1,2): indices 0 and 2 -> increasing -> valid.
+#     (2,3): indices 2 and 3 -> valid.
+#     (3,4): 3 at index3, 4 at index1 -> 3>1 -> cannot pick 4 then 3? 
+#         But we can pick 4 at index1 and then 3 at index3? That would be allowed? 
+#         But then the values are 4 and 3 -> min=3, max=4 -> diff=1, but the pair (3,4) in values requires both to be present.
+#         However, we can pick 4 and 3: but then the subsequence is [4,3] -> min=3, max=4 -> diff=1.
+#         But do we have both? Yes.
+#         But the issue: we need two elements with consecutive values? Not necessarily, but in this case we do have pairs.
+#     So yes, we can achieve 1.
+
+# However, what if we had: A = [1, 100, 2, 101], K=2 -> keep 2.
+#   sorted: [1,2,100,101]
+#   blocks of 2:
+#       [1,2] -> diff=1
+#       [2,100] -> diff=98
+#       [100,101] -> diff=1
+#   min = 1.
+#   Can we pick two elements with diff 1? 
+#       (1,2): indices 0 and 2 -> valid -> diff=1.
+#   So yes.
+
+# But what if: A = [1, 100, 101, 2], K=2 -> keep 2.
+#   sorted: [1,2,100,101]
+#   same as above -> min=1.
+#   Can we pick 1 and 2? indices: 0 and 3 -> 0<3 -> valid.
+
+# Therefore, the algorithm works.
+
+# Conclusion:
+#   Sort the array.
+#   Let L = n - k (number of elements to keep)
+#   Then answer = min(A[i+L-1] - A[i] for i in range(0, k+1))
+
+# Why i from 0 to k? 
+#   Because the starting index i can go from 0 to n-L = n - (n-k) = k.
+
+# So range is i in [0, k] inclusive.
+
+# Code:
+
+n, k =

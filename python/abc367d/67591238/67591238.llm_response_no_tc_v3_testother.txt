@@ -1,0 +1,251 @@
+```python
+from collections import defaultdict
+
+N, M = map(int, input().split())
+A = list(map(int, input().split()))
+
+# 累積和（時計回りの距離）
+cum = [0] * (N + 1)
+for i in range(N):
+    cum[i + 1] = cum[i] + A[i]
+
+# 全体の周長
+total = cum[N]
+
+# mod M の値の出現回数をカウント
+count_mod = defaultdict(int)
+answer = 0
+
+# 各累積和に対して、同じ mod M の値とのペアをカウント
+for val in cum:
+    mod = val % M
+    answer += count_mod[mod]
+    count_mod[mod] += 1
+
+# ただし、時計回りの距離が total を超える経路（つまり反時計回り）を考慮すると、
+# 実際には「s → t の時計回り距離が mod M == 0」となる必要がある。
+# しかし問題は「時計回りで s から t までの最小ステップ数が M の倍数」とあるが、
+# 「最小ステップ数」は時計回りと反時計回りのうち小さい方である。
+
+# 重要な誤解：問題文では「時計回りで s から t まで行く」場合の話だが、
+# 「最小ステップ数」ではなく、「時計回りに進んだ場合のステップ数」が M の倍数という条件。
+# 問題文: "The minimum number of steps required to walk clockwise from rest area s to rest area t"
+# → "clockwise" なので、これは「時計回りに進む場合のステップ数」であり、最短経路ではない。
+# よって、s から t まで時計回りに進む距離が M の倍数であればよい。
+
+# しかし、s → t 時計回りの距離は cum[t] - cum[s] （ただしインデックス注意）
+
+# 今、cum[i] は rest area 1 から i+1 までの時計回り距離。
+# よって、rest area s から t への時計回り距離は：
+#   d = cum[t-1] - cum[s-1]
+# これが M の倍数 ⇔ cum[t-1] ≡ cum[s-1] (mod M)
+
+# したがって、cum 配列の各要素について、同じ mod M の値を持つペア (i, j) (i < j) の個数が答え。
+
+# ただし、s ≠ t なので、同じ累積和でも異なる位置ならOK。
+# 上のコードはその通りにやっている。
+
+# しかし、時計回りに一周以上することは想定していない（必要ない）。
+# また、cum は単調増加だが、mod M なのでループあり。
+
+# ただし、一つの問題点：距離が M の倍数かどうかだけ見るが、
+# 距離が非常に大きく M の倍数でも、それが「一方向時計回り」の距離として正しいか？
+
+# 条件は満たしている。なぜなら、cum[j] - cum[i] ≡ 0 (mod M) ⇔ cum[j] ≡ cum[i] (mod M)
+
+# したがって、元のコードのロジックは実は正しい。
+
+# しかし、例えば cum[i] = 10, cum[j] = 20, M=5 のとき、差は10で5の倍数 → OK。
+
+# よって、このコードは理論上正しい。
+
+# ただし、制約上、cum の値は最大で 2e5 * 1e9 = 2e14 なので、int で大丈夫。
+
+# しかし、サンプルが通るか確認が必要。
+
+# 例：N=3, M=5, A=[2,3,5] → cum=[0,2,5,10]
+# mod 5: [0,2,0,0] → count: 
+#   0: 0 → ans=0, count[0]=1
+#   2: 0 → ans=0, count[2]=1
+#   0: 1 → ans=1, count[0]=2
+#   0: 2 → ans=1+2=3
+# 答え=3
+
+# ペアを見てみる：
+# s=1,t=1: d=0 → 除く(s≠t)
+# s=1,t=2: d=2 → not multiple of 5
+# s=1,t=3: d=5 → OK
+# s=2,t=3: d=3 → NG
+# s=2,t=1: d=8 (A2+A3=3+5=8) → NG
+# s=3,t=1: d=5 → OK
+# s=3,t=2: d=8 → NG
+# s=1,t=1: skip
+# 他に？
+# s=1,t=1以外で、dが5の倍数：s=1→t=3 (5), s=3→t=1? 3→1時計回りは A3 + A1 = 5+2=7 → NG
+# s=2→t=1: A2+A3=3+5=8 → NG
+# s=3→t=2: A3+A1=5+2=7? → NG
+
+# いや、累積和：
+# cum[0]=0 (area1)
+# cum[1]=2 (area2)
+# cum[2]=5 (area3)
+# cum[3]=10 (area1 again)
+
+# s=1 (index0), t=3 (index2): d = cum[2]-cum[0] = 5 → OK
+# s=1 (index0), t=1 (index3): d=10 → OK but s=t? 1と1は同じエリア？→番号で見るとs=1,t=1 → s=t → 除外
+# s=2 (index1), t=3 (index2): d=5-2=3 → NG
+# s=2 (index1), t=1 (index3): d=10-2=8 → NG
+# s=3 (index2), t=1 (index3): d=10-5=5 → OK → s=3,t=1 → valid
+# s=3 (index2), t=2 (index1): 時計回り？ index2→index1は直接できない。時計回りは2→3→1→2なので、3→2は3→1→2 = 5+2=7 → だが累積和では cum[1] - cum[2] = 2-5 = -3 → 無効。
+
+# 累積和を使うときは i < j のみを考える。つまり、時計回りに進める範囲。
+
+# したがって、ペア(i,j) で i<j のみが有効。そして距離は cum[j]-cum[i]。
+
+# 上記の例で有効なペア：
+# (0,2): area1→area3: 5 → OK
+# (0,3): area1→area1: 10 → s=t → 除外
+# (1,3): area2→area1: 8 → NG
+# (2,3): area3→area1: 5 → OK → s=3,t=1 → valid and s≠t
+
+# さらに (0,0) など？ → i<j なので (0,3) は i=0,j=3 → 10 → s=t → 除外すべき？
+
+# ここで問題：累積和のインデックス i は rest area i+1 を出発点とする？
+# 実際、cum[0] = 0 → rest area 1
+# cum[1] = A0 = rest area 2
+# cum[2] = A0+A1 = rest area 3
+# cum[3] = total = rest area 1 (一周後)
+
+# つまり、cum[i] は rest area 1 から rest area (i+1) までの距離。
+# よって、rest area s から t への時計回り距離は、
+# sのインデックス = s-1, tのインデックス = t-1 → ただし s-1 <= t-1 なら cum[t-1]-cum[s-1]
+# でも s > t なら？ → 時計回りに一周するので、cum[t-1 + N] - cum[s-1] = cum[t-1] + total - cum[s-1]
+
+# しかし、累積和配列は長さ N+1 で、cum[N] = total。
+
+# 一般的に、s から t へ時計回りの距離は：
+# if s <= t: cum[t-1] - cum[s-1]
+# else: cum[t-1] + total - cum[s-1] = (cum[t-1] - cum[s-1]) + total
+
+# これを統一的に表すには、cum モジュラスを考えるが、距離自体は正。
+
+# 別の方法：すべての s,t (s≠t) について、時計回り距離を D(s,t) とすると、
+# D(s,t) = (cum[t-1] - cum[s-1]) mod total ? でも mod total はダメ。
+
+# 正しくは、D(s,t) = cum[t-1] - cum[s-1] if t > s
+#            = cum[t-1] + total - cum[s-1] if t < s
+
+# これは、cum[t-1] - cum[s-1] + k*total (k=0 or 1) となる。
+
+# そして、これが M の倍数 ⇔ D(s,t) ≡ 0 (mod M)
+
+# 今、cum[t-1] - cum[s-1] ≡ 0 (mod M) または cum[t-1] - cum[s-1] + total ≡ 0 (mod M)
+
+# つまり、二つのケースがある。
+
+# 元のコードは、cum 配列全体（N+1個）で同じ mod M のペアを数えている。
+# これは、cum[i] ≡ cum[j] (mod M) かつ i < j となる (i,j) の個数。
+# このとき、i と j に対応する rest area は i+1 と j+1。
+# 距離は cum[j] - cum[i] = cum[(j+1)-1] - cum[(i+1)-1] → これは i+1 <= j+1 のときの距離。
+# しかし、i+1 > j+1 の場合はどうか？ → i+1 > j+1 ⇒ i >= j → だが i < j なので、i+1 <= j+1 が常に成り立つ。
+
+# したがって、元のコードで数えているのは、s = i+1, t = j+1 で s <= t の場合のみ。
+
+# つまり、s > t のケース（一周するケース）が抜けている！
+
+# これが大きな誤り。
+
+# 例えば、s=3, t=1：s>t → 時計回りに A3 + A1 = 5+2=7？ → 先ほどの例では A=[2,3,5] → total=10
+# s=3→t=1：距離 = A3 = 5? → いや、rest area 3→4(=1) は A3 = 5 → 5ステップ。
+# したがって、s=3,t=1：距離=5 → OK。
+
+# このとき、cum[s-1] = cum[2] = 5, cum[t-1] = cum[0] = 0
+# そして、距離 = cum[t-1] + total - cum[s-1] = 0 + 10 - 5 = 5 → 一致。
+
+# 一般に、s > t のとき、距離 = total - (cum[s-1] - cum[t-1]) = total - diff
+# でも cum[s-1] > cum[t-1] なので、diff = cum[s-1] - cum[t-1]
+
+# したがって、距離 = total - (cum[s-1] - cum[t-1])
+
+# これが M の倍数 ⇔ total - (cum[s-1] - cum[t-1]) ≡ 0 (mod M)
+#                         ⇔ cum[s-1] - cum[t-1] ≡ total (mod M)
+#                         ⇔ cum[s-1] ≡ cum[t-1] + total (mod M)
+
+# あるいは、cum[t-1] ≡ cum[s-1] - total (mod M)
+
+# つまり、s > t のケースでは、cum[s-1] ≡ X (mod M), cum[t-1] ≡ X - total (mod M) が必要。
+
+# したがって、すべてのペア (s,t) (s≠t) を扱うには：
+
+# ケース1: s < t → 距離 = cum[t-1] - cum[s-1] → これが ≡0 (mod M) ⇔ cum[t-1] ≡ cum[s-1] (mod M)
+
+# ケース2: s > t → 距離 = total - (cum[s-1] - cum[t-1]) → これが ≡0 (mod M) ⇔ cum[s-1] - cum[t-1] ≡ total (mod M) ⇔ cum[s-1] ≡ cum[t-1] + total (mod M)
+
+# つまり、s > t で cum[s-1] ≡ cum[t-1] + total (mod M)
+
+# ここで、s と t は rest area の番号。
+
+# まとめると：
+# ペア (s,t) (s≠t) で、時計回り距離が M の倍数になるのは：
+# - s < t かつ cum[t-1] ≡ cum[s-1] (mod M)
+# - s > t かつ cum[s-1] ≡ cum[t-1] + total (mod M)
+
+# これらを別々に数える必要がある。
+
+# しかし、cum 配列のインデックスで考えよう。
+# cum[i] は rest area i+1 に対応。
+
+# ケース1: s < t → s=i+1, t=j+1, i<j → cum[j] ≡ cum[i] (mod M) かつ i<j
+# → これは元のコードと同じ。
+
+# ケース2: s > t → s=i+1, t=j+1, i>j → cum[i] ≡ cum[j] + total (mod M)
+
+# つまり、すべての i ≠ j について：
+# - i < j かつ cum[j] ≡ cum[i] (mod M)
+# - i > j かつ cum[i] ≡ cum[j] + total (mod M)
+
+# これは、以下のように数えられる：
+
+# 方法1: すべての i,j (i≠j) をループ → O(N^2) → N=2e5 で 4e10 通り → 不可能。
+
+# 方法2: 辞書を使って、cum[i] の mod M の頻度を数える。
+
+# ケース1: 各 mod 値 v について、freq[v] = f ならば、ペア数は C(f,2) = f*(f-1)//2
+# → これは元のコードのやり方（順に足すことで実現）
+
+# ケース2: 各 j に対して、cum[i] ≡ cum[j] + total (mod M) となる i>j の個数を数える。
+# → あるいは、すべての i に対して、cum[j] ≡ cum[i] - total (mod M) となる j<i の個数。
+
+# これも同様に、左から走査して、cum[i] - total (mod M) の頻度を管理すればよい。
+
+# しかし、注意：ケース1とケース2は排他的か？
+# s=t は除外されている。s≠t なので、i≠j。
+
+# また、s<t と s>t は排他的。
+
+# したがって、総数 = ケース1 + ケース2
+
+# ケース1: 元のコードの answer1
+# ケース2: 新しく計算
+
+# ただし、total が M で割れるかどうかに関係なく、mod M で考える。
+
+# よって、修正版：
+
+# Step 1: 累積和を計算
+# Step 2: ケース1: i<j かつ cum[i] ≡ cum[j] (mod M) の個数 → 元のコードの通り
+# Step 3: ケース2: i>j かつ cum[i] ≡ cum[j] + total (mod M) の個数
+#         → これは、j<i かつ cum[j] ≡ cum[i] - total (mod M) と同じ
+#         → 左から i=0 から N まで見て、cum[i] - total (mod M) の頻度をカウント
+
+# ただし、cum[i] - total (mod M) = (cum[i] - total) % M だが、負かもしれないので注意。
+
+# 例に戻る：N=3, M=5, A=[2,3,5] → total=10
+# cum = [0,2,5,10] → mod5: [0,2,0,0]
+
+# ケース1: 
+#   mod0: 0,2,3 → インデックス0,2,3 → ペア: (0,2),(0,3),(2,3) → 3個
+#   mod2: 1 → 1個 → ペア0
+#   合計3
+
+# ケ

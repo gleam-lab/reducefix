@@ -1,0 +1,527 @@
+=== Prompt for no_tc version 2 ===
+Model: qwen-plus
+Temperature: 1.0
+Use SEARCH/REPLACE: True
+======================================================================
+
+We are currently solving the following crash issue:
+--- BEGIN ISSUE ---
+Crash in unknown
+
+### Crash Details
+- Type: Use-of-uninitialized-value
+- Function: unknown
+- Severity: Medium
+- Sanitizer: msan
+
+### Crash Stack Trace
+```
+fz_paint_pixmap_with_mask
+fz_draw_pop_clip
+fz_pop_clip
+```
+
+### Crash Log
+
+--- END ISSUE ---
+
+
+🎯 **EXACT BUG LOCATION**:
+- File: `source/fitz/draw-device.c`, Lines 1923-2048
+
+Below are the source files that contain the bug:
+--- BEGIN FILES ---
+### source/fitz/draw-device.c
+**Function containing the bug** (lines 1923-2048):
+
+```c
+fz_draw_clip_image_mask(fz_context *ctx, fz_device *devp, fz_image *image, fz_matrix in_ctm, fz_rect scissor)
+{  // <-- ⚠️ BUG IS HERE (Line 1924)
+	fz_draw_device *dev = (fz_draw_device*)devp;  // <-- ⚠️ BUG IS HERE (Line 1925)
+	fz_matrix local_ctm = fz_concat(in_ctm, dev->transform);  // <-- ⚠️ BUG IS HERE (Line 1926)
+	fz_irect bbox;  // <-- ⚠️ BUG IS HERE (Line 1927)
+	fz_pixmap *scaled = NULL;  // <-- ⚠️ BUG IS HERE (Line 1928)
+	fz_pixmap *pixmap = NULL;  // <-- ⚠️ BUG IS HERE (Line 1929)
+	int dx, dy;  // <-- ⚠️ BUG IS HERE (Line 1930)
+	fz_draw_state *state = push_stack(ctx, dev, "clip image mask");  // <-- ⚠️ BUG IS HERE (Line 1931)
+	fz_colorspace *model = state->dest->colorspace;  // <-- ⚠️ BUG IS HERE (Line 1932)
+	fz_irect clip;  // <-- ⚠️ BUG IS HERE (Line 1933)
+	fz_irect src_area;  // <-- ⚠️ BUG IS HERE (Line 1934)
+  // <-- ⚠️ BUG IS HERE (Line 1935)
+	fz_var(pixmap);  // <-- ⚠️ BUG IS HERE (Line 1936)
+  // <-- ⚠️ BUG IS HERE (Line 1937)
+	if (dev->top == 0 && dev->resolve_spots)  // <-- ⚠️ BUG IS HERE (Line 1938)
+		state = push_group_for_separations(ctx, dev, fz_default_color_params /* FIXME */, dev->default_cs);  // <-- ⚠️ BUG IS HERE (Line 1939)
+  // <-- ⚠️ BUG IS HERE (Line 1940)
+	clip = fz_pixmap_bbox(ctx, state->dest);  // <-- ⚠️ BUG IS HERE (Line 1941)
+	clip = fz_intersect_irect(clip, state->scissor);  // <-- ⚠️ BUG IS HERE (Line 1942)
+  // <-- ⚠️ BUG IS HERE (Line 1943)
+	if (image->w == 0 || image->h == 0)  // <-- ⚠️ BUG IS HERE (Line 1944)
+	{  // <-- ⚠️ BUG IS HERE (Line 1945)
+#ifdef DUMP_GROUP_BLENDS  // <-- ⚠️ BUG IS HERE (Line 1946)
+		dump_spaces(dev->top-1, "Clip (image mask) (empty) begin\n");  // <-- ⚠️ BUG IS HERE (Line 1947)
+#endif  // <-- ⚠️ BUG IS HERE (Line 1948)
+		state[1].scissor = fz_empty_irect;  // <-- ⚠️ BUG IS HERE (Line 1949)
+		state[1].mask = NULL;  // <-- ⚠️ BUG IS HERE (Line 1950)
+		return;  // <-- ⚠️ BUG IS HERE (Line 1951)
+	}  // <-- ⚠️ BUG IS HERE (Line 1952)
+  // <-- ⚠️ BUG IS HERE (Line 1953)
+	local_ctm = fz_gridfit_matrix(devp->flags & FZ_DEVFLAG_GRIDFIT_AS_TILED, local_ctm);  // <-- ⚠️ BUG IS HERE (Line 1954)
+  // <-- ⚠️ BUG IS HERE (Line 1955)
+	src_area = find_src_area_required(local_ctm, image, clip);  // <-- ⚠️ BUG IS HERE (Line 1956)
+	if (fz_is_empty_irect(src_area))  // <-- ⚠️ BUG IS HERE (Line 1957)
+		return;  // <-- ⚠️ BUG IS HERE (Line 1958)
+  // <-- ⚠️ BUG IS HERE (Line 1959)
+	bbox = fz_irect_from_rect(fz_transform_rect(fz_unit_rect, local_ctm));  // <-- ⚠️ BUG IS HERE (Line 1960)
+	bbox = fz_intersect_irect(bbox, state->scissor);  // <-- ⚠️ BUG IS HERE (Line 1961)
+	if (!fz_is_infinite_rect(scissor))  // <-- ⚠️ BUG IS HERE (Line 1962)
+	{  // <-- ⚠️ BUG IS HERE (Line 1963)
+		fz_rect tscissor = fz_transform_rect(scissor, dev->transform);  // <-- ⚠️ BUG IS HERE (Line 1964)
+		bbox = fz_intersect_irect(bbox, fz_irect_from_rect(tscissor));  // <-- ⚠️ BUG IS HERE (Line 1965)
+	}  // <-- ⚠️ BUG IS HERE (Line 1966)
+	if (!fz_is_valid_irect(bbox))  // <-- ⚠️ BUG IS HERE (Line 1967)
+	{  // <-- ⚠️ BUG IS HERE (Line 1968)
+#ifdef DUMP_GROUP_BLENDS  // <-- ⚠️ BUG IS HERE (Line 1969)
+		dump_spaces(dev->top-1, "Clip (image mask) (invalid) begin\n");  // <-- ⚠️ BUG IS HERE (Line 1970)
+#endif  // <-- ⚠️ BUG IS HERE (Line 1971)
+		state[1].scissor = fz_empty_irect;  // <-- ⚠️ BUG IS HERE (Line 1972)
+		state[1].mask = NULL;  // <-- ⚠️ BUG IS HERE (Line 1973)
+		return;  // <-- ⚠️ BUG IS HERE (Line 1974)
+	}  // <-- ⚠️ BUG IS HERE (Line 1975)
+  // <-- ⚠️ BUG IS HERE (Line 1976)
+#ifdef DUMP_GROUP_BLENDS  // <-- ⚠️ BUG IS HERE (Line 1977)
+	dump_spaces(dev->top-1, "Clip (image mask) begin\n");  // <-- ⚠️ BUG IS HERE (Line 1978)
+#endif  // <-- ⚠️ BUG IS HERE (Line 1979)
+  // <-- ⚠️ BUG IS HERE (Line 1980)
+	fz_try(ctx)  // <-- ⚠️ BUG IS HERE (Line 1981)
+	{  // <-- ⚠️ BUG IS HERE (Line 1982)
+		pixmap = fz_get_pixmap_from_image(ctx, image, &src_area, &local_ctm, &dx, &dy);  // <-- ⚠️ BUG IS HERE (Line 1983)
+  // <-- ⚠️ BUG IS HERE (Line 1984)
+		state[1].mask = fz_new_pixmap_with_bbox(ctx, NULL, bbox, NULL, 1);  // <-- ⚠️ BUG IS HERE (Line 1985)
+		fz_clear_pixmap(ctx, state[1].mask);  // <-- ⚠️ BUG IS HERE (Line 1986)
+  // <-- ⚠️ BUG IS HERE (Line 1987)
+		state[1].dest = fz_new_pixmap_with_bbox(ctx, model, bbox, state[0].dest->seps, state[0].dest->alpha);  // <-- ⚠️ BUG IS HERE (Line 1988)
+		fz_copy_pixmap_rect(ctx, state[1].dest, state[0].dest, bbox, dev->default_cs);  // <-- ⚠️ BUG IS HERE (Line 1989)
+		if (state[0].shape)  // <-- ⚠️ BUG IS HERE (Line 1990)
+		{  // <-- ⚠️ BUG IS HERE (Line 1991)
+			state[1].shape = fz_new_pixmap_with_bbox(ctx, NULL, bbox, NULL, 1);  // <-- ⚠️ BUG IS HERE (Line 1992)
+			fz_clear_pixmap(ctx, state[1].shape);  // <-- ⚠️ BUG IS HERE (Line 1993)
+		}  // <-- ⚠️ BUG IS HERE (Line 1994)
+		if (state[0].group_alpha)  // <-- ⚠️ BUG IS HERE (Line 1995)
+		{  // <-- ⚠️ BUG IS HERE (Line 1996)
+			state[1].group_alpha = fz_new_pixmap_with_bbox(ctx, NULL, bbox, NULL, 1);  // <-- ⚠️ BUG IS HERE (Line 1997)
+			fz_clear_pixmap(ctx, state[1].group_alpha);  // <-- ⚠️ BUG IS HERE (Line 1998)
+		}  // <-- ⚠️ BUG IS HERE (Line 1999)
+  // <-- ⚠️ BUG IS HERE (Line 2000)
+		state[1].blendmode |= FZ_BLEND_ISOLATED;  // <-- ⚠️ BUG IS HERE (Line 2001)
+		state[1].scissor = bbox;  // <-- ⚠️ BUG IS HERE (Line 2002)
+  // <-- ⚠️ BUG IS HERE (Line 2003)
+		if (!(devp->hints & FZ_DONT_INTERPOLATE_IMAGES) && ctx->tuning->image_scale(ctx->tuning->image_scale_arg, dx, dy, pixmap->w, pixmap->h))  // <-- ⚠️ BUG IS HERE (Line 2004)
+		{  // <-- ⚠️ BUG IS HERE (Line 2005)
+			int gridfit = !(dev->flags & FZ_DRAWDEV_FLAGS_TYPE3);  // <-- ⚠️ BUG IS HERE (Line 2006)
+			scaled = fz_transform_pixmap(ctx, dev, pixmap, &local_ctm, state->dest->x, state->dest->y, dx, dy, gridfit, &clip);  // <-- ⚠️ BUG IS HERE (Line 2007)
+			if (!scaled)  // <-- ⚠️ BUG IS HERE (Line 2008)
+			{  // <-- ⚠️ BUG IS HERE (Line 2009)
+				if (dx < 1)  // <-- ⚠️ BUG IS HERE (Line 2010)
+					dx = 1;  // <-- ⚠️ BUG IS HERE (Line 2011)
+				if (dy < 1)  // <-- ⚠️ BUG IS HERE (Line 2012)
+					dy = 1;  // <-- ⚠️ BUG IS HERE (Line 2013)
+				scaled = fz_scale_pixmap_cached(ctx, pixmap, pixmap->x, pixmap->y, dx, dy, NULL, dev->cache_x, dev->cache_y);  // <-- ⚠️ BUG IS HERE (Line 2014)
+			}  // <-- ⚠️ BUG IS HERE (Line 2015)
+			if (scaled)  // <-- ⚠️ BUG IS HERE (Line 2016)
+			{  // <-- ⚠️ BUG IS HERE (Line 2017)
+				fz_drop_pixmap(ctx, pixmap);  // <-- ⚠️ BUG IS HERE (Line 2018)
+				pixmap = scaled;  // <-- ⚠️ BUG IS HERE (Line 2019)
+			}  // <-- ⚠️ BUG IS HERE (Line 2020)
+		}  // <-- ⚠️ BUG IS HERE (Line 2021)
+  // <-- ⚠️ BUG IS HERE (Line 2022)
+#ifdef DUMP_GROUP_BLENDS  // <-- ⚠️ BUG IS HERE (Line 2023)
+		dump_spaces(dev->top, "");  // <-- ⚠️ BUG IS HERE (Line 2024)
+		fz_dump_blend(ctx, "Creating imagemask: plotting ", pixmap);  // <-- ⚠️ BUG IS HERE (Line 2025)
+		fz_dump_blend(ctx, " onto ", state[1].mask);  // <-- ⚠️ BUG IS HERE (Line 2026)
+		if (state[1].shape)  // <-- ⚠️ BUG IS HERE (Line 2027)
+			fz_dump_blend(ctx, "/S=", state[1].shape);  // <-- ⚠️ BUG IS HERE (Line 2028)
+		if (state[1].group_alpha)  // <-- ⚠️ BUG IS HERE (Line 2029)
+			fz_dump_blend(ctx, "/GA=", state[1].group_alpha);  // <-- ⚠️ BUG IS HERE (Line 2030)
+#endif  // <-- ⚠️ BUG IS HERE (Line 2031)
+  // <-- ⚠️ BUG IS HERE (Line 2032)
+		fz_paint_image(ctx, state[1].mask, &bbox, state[1].shape, state[1].group_alpha, pixmap, local_ctm, 255, !(devp->hints & FZ_DONT_INTERPOLATE_IMAGES), 0);  // <-- ⚠️ BUG IS HERE (Line 2033)
+  // <-- ⚠️ BUG IS HERE (Line 2034)
+#ifdef DUMP_GROUP_BLENDS  // <-- ⚠️ BUG IS HERE (Line 2035)
+		fz_dump_blend(ctx, " to get ", state[1].mask);  // <-- ⚠️ BUG IS HERE (Line 2036)
+		if (state[1].shape)  // <-- ⚠️ BUG IS HERE (Line 2037)
+			fz_dump_blend(ctx, "/S=", state[1].shape);  // <-- ⚠️ BUG IS HERE (Line 2038)
+		if (state[1].group_alpha)  // <-- ⚠️ BUG IS HERE (Line 2039)
+			fz_dump_blend(ctx, "/GA=", state[1].group_alpha);  // <-- ⚠️ BUG IS HERE (Line 2040)
+		printf("\n");  // <-- ⚠️ BUG IS HERE (Line 2041)
+#endif  // <-- ⚠️ BUG IS HERE (Line 2042)
+	}  // <-- ⚠️ BUG IS HERE (Line 2043)
+	fz_always(ctx)  // <-- ⚠️ BUG IS HERE (Line 2044)
+		fz_drop_pixmap(ctx, pixmap);  // <-- ⚠️ BUG IS HERE (Line 2045)
+	fz_catch(ctx)  // <-- ⚠️ BUG IS HERE (Line 2046)
+		fz_rethrow(ctx);  // <-- ⚠️ BUG IS HERE (Line 2047)
+}  // <-- ⚠️ BUG IS HERE (Line 2048)
+```
+
+**Special macros/structures in this function**:
+  - Line 1936: fz_var(pixmap);
+  - Line 1981: fz_try(ctx)
+  - Line 2044: fz_always(ctx)
+  - Line 2046: fz_catch(ctx)
+
+**🎯 Bug Location** (lines 1923-2048):
+```c
+{
+	fz_draw_device *dev = (fz_draw_device*)devp;
+	fz_matrix local_ctm = fz_concat(in_ctm, dev->transform);
+	fz_irect bbox;
+	fz_pixmap *scaled = NULL;
+	fz_pixmap *pixmap = NULL;
+	int dx, dy;
+	fz_draw_state *state = push_stack(ctx, dev, "clip image mask");
+	fz_colorspace *model = state->dest->colorspace;
+	fz_irect clip;
+	fz_irect src_area;
+
+	fz_var(pixmap);
+
+	if (dev->top == 0 && dev->resolve_spots)
+		state = push_group_for_separations(ctx, dev, fz_default_color_params /* FIXME */, dev->default_cs);
+
+	clip = fz_pixmap_bbox(ctx, state->dest);
+	clip = fz_intersect_irect(clip, state->scissor);
+
+	if (image->w == 0 || image->h == 0)
+	{
+#ifdef DUMP_GROUP_BLENDS
+		dump_spaces(dev->top-1, "Clip (image mask) (empty) begin\n");
+#endif
+		state[1].scissor = fz_empty_irect;
+		state[1].mask = NULL;
+		return;
+	}
+
+	local_ctm = fz_gridfit_matrix(devp->flags & FZ_DEVFLAG_GRIDFIT_AS_TILED, local_ctm);
+
+	src_area = find_src_area_required(local_ctm, image, clip);
+	if (fz_is_empty_irect(src_area))
+		return;
+
+	bbox = fz_irect_from_rect(fz_transform_rect(fz_unit_rect, local_ctm));
+	bbox = fz_intersect_irect(bbox, state->scissor);
+	if (!fz_is_infinite_rect(scissor))
+	{
+		fz_rect tscissor = fz_transform_rect(scissor, dev->transform);
+		bbox = fz_intersect_irect(bbox, fz_irect_from_rect(tscissor));
+	}
+	if (!fz_is_valid_irect(bbox))
+	{
+#ifdef DUMP_GROUP_BLENDS
+		dump_spaces(dev->top-1, "Clip (image mask) (invalid) begin\n");
+#endif
+		state[1].scissor = fz_empty_irect;
+		state[1].mask = NULL;
+		return;
+	}
+
+#ifdef DUMP_GROUP_BLENDS
+	dump_spaces(dev->top-1, "Clip (image mask) begin\n");
+#endif
+
+	fz_try(ctx)
+	{
+		pixmap = fz_get_pixmap_from_image(ctx, image, &src_area, &local_ctm, &dx, &dy);
+
+		state[1].mask = fz_new_pixmap_with_bbox(ctx, NULL, bbox, NULL, 1);
+		fz_clear_pixmap(ctx, state[1].mask);
+
+		state[1].dest = fz_new_pixmap_with_bbox(ctx, model, bbox, state[0].dest->seps, state[0].dest->alpha);
+		fz_copy_pixmap_rect(ctx, state[1].dest, state[0].dest, bbox, dev->default_cs);
+		if (state[0].shape)
+		{
+			state[1].shape = fz_new_pixmap_with_bbox(ctx, NULL, bbox, NULL, 1);
+			fz_clear_pixmap(ctx, state[1].shape);
+		}
+		if (state[0].group_alpha)
+		{
+			state[1].group_alpha = fz_new_pixmap_with_bbox(ctx, NULL, bbox, NULL, 1);
+			fz_clear_pixmap(ctx, state[1].group_alpha);
+		}
+
+		state[1].blendmode |= FZ_BLEND_ISOLATED;
+		state[1].scissor = bbox;
+
+		if (!(devp->hints & FZ_DONT_INTERPOLATE_IMAGES) && ctx->tuning->image_scale(ctx->tuning->image_scale_arg, dx, dy, pixmap->w, pixmap->h))
+		{
+			int gridfit = !(dev->flags & FZ_DRAWDEV_FLAGS_TYPE3);
+			scaled = fz_transform_pixmap(ctx, dev, pixmap, &local_ctm, state->dest->x, state->dest->y, dx, dy, gridfit, &clip);
+			if (!scaled)
+			{
+				if (dx < 1)
+					dx = 1;
+				if (dy < 1)
+					dy = 1;
+				scaled = fz_scale_pixmap_cached(ctx, pixmap, pixmap->x, pixmap->y, dx, dy, NULL, dev->cache_x, dev->cache_y);
+			}
+			if (scaled)
+			{
+				fz_drop_pixmap(ctx, pixmap);
+				pixmap = scaled;
+			}
+		}
+
+#ifdef DUMP_GROUP_BLENDS
+		dump_spaces(dev->top, "");
+		fz_dump_blend(ctx, "Creating imagemask: plotting ", pixmap);
+		fz_dump_blend(ctx, " onto ", state[1].mask);
+		if (state[1].shape)
+			fz_dump_blend(ctx, "/S=", state[1].shape);
+		if (state[1].group_alpha)
+			fz_dump_blend(ctx, "/GA=", state[1].group_alpha);
+#endif
+
+		fz_paint_image(ctx, state[1].mask, &bbox, state[1].shape, state[1].group_alpha, pixmap, local_ctm, 255, !(devp->hints & FZ_DONT_INTERPOLATE_IMAGES), 0);
+
+#ifdef DUMP_GROUP_BLENDS
+		fz_dump_blend(ctx, " to get ", state[1].mask);
+		if (state[1].shape)
+			fz_dump_blend(ctx, "/S=", state[1].shape);
+		if (state[1].group_alpha)
+			fz_dump_blend(ctx, "/GA=", state[1].group_alpha);
+		printf("\n");
+#endif
+	}
+	fz_always(ctx)
+		fz_drop_pixmap(ctx, pixmap);
+	fz_catch(ctx)
+		fz_rethrow(ctx);
+}
+```
+
+**⚠️ IMPORTANT**: When generating your SEARCH/REPLACE edit:
+- The shown function has 126 lines total
+- Bug is at lines 1923-2048
+- Variables declared before the bug MUST NOT be removed (they may be used after)
+- Check for paired macros (fz_try/always/catch, do/while) - keep them balanced
+- Only edit the MINIMAL lines needed to fix the bug
+
+--- END FILES ---
+
+### Buggy Code Snippet
+- **File**: `source/fitz/draw-device.c`, **Lines**: 1923-2048
+
+```c
+// File: source/fitz/draw-device.c (lines 1923-2048)
+// This code needs to be fixed:
+fz_draw_clip_image_mask(fz_context *ctx, fz_device *devp, fz_image *image, fz_matrix in_ctm, fz_rect scissor)
+{
+	fz_draw_device *dev = (fz_draw_device*)devp;
+	fz_matrix local_ctm = fz_concat(in_ctm, dev->transform);
+	fz_irect bbox;
+	fz_pixmap *scaled = NULL;
+	fz_pixmap *pixmap = NULL;
+	int dx, dy;
+	fz_draw_state *state = push_stack(ctx, dev, "clip image mask");
+	fz_colorspace *model = state->dest->colorspace;
+	fz_irect clip;
+	fz_irect src_area;
+
+	fz_var(pixmap);
+
+	if (dev->top == 0 && dev->resolve_spots)
+		state = push_group_for_separations(ctx, dev, fz_default_color_params /* FIXME */, dev->default_cs);
+
+	clip = fz_pixmap_bbox(ctx, state->dest);
+	clip = fz_intersect_irect(clip, state->scissor);
+
+	if (image->w == 0 || image->h == 0)
+	{
+#ifdef DUMP_GROUP_BLENDS
+		dump_spaces(dev->top-1, "Clip (image mask) (empty) begin\n");
+#endif
+		state[1].scissor = fz_empty_irect;
+		state[1].mask = NULL;
+		return;
+	}
+
+	local_ctm = fz_gridfit_matrix(devp->flags & FZ_DEVFLAG_GRIDFIT_AS_TILED, local_ctm);
+
+	src_area = find_src_area_required(local_ctm, image, clip);
+	if (fz_is_empty_irect(src_area))
+		return;
+
+	bbox = fz_irect_from_rect(fz_transform_rect(fz_unit_rect, local_ctm));
+	bbox = fz_intersect_irect(bbox, state->scissor);
+	if (!fz_is_infinite_rect(scissor))
+	{
+		fz_rect tscissor = fz_transform_rect(scissor, dev->transform);
+		bbox = fz_intersect_irect(bbox, fz_irect_from_rect(tscissor));
+	}
+	if (!fz_is_valid_irect(bbox))
+	{
+#ifdef DUMP_GROUP_BLENDS
+		dump_spaces(dev->top-1, "Clip (image mask) (invalid) begin\n");
+#endif
+		state[1].scissor = fz_empty_irect;
+		state[1].mask = NULL;
+		return;
+	}
+
+#ifdef DUMP_GROUP_BLENDS
+	dump_spaces(dev->top-1, "Clip (image mask) begin\n");
+#endif
+
+	fz_try(ctx)
+	{
+		pixmap = fz_get_pixmap_from_image(ctx, image, &src_area, &local_ctm, &dx, &dy);
+
+		state[1].mask = fz_new_pixmap_with_bbox(ctx, NULL, bbox, NULL, 1);
+		fz_clear_pixmap(ctx, state[1].mask);
+
+		state[1].dest = fz_new_pixmap_with_bbox(ctx, model, bbox, state[0].dest->seps, state[0].dest->alpha);
+		fz_copy_pixmap_rect(ctx, state[1].dest, state[0].dest, bbox, dev->default_cs);
+		if (state[0].shape)
+		{
+			state[1].shape = fz_new_pixmap_with_bbox(ctx, NULL, bbox, NULL, 1);
+			fz_clear_pixmap(ctx, state[1].shape);
+		}
+		if (state[0].group_alpha)
+		{
+			state[1].group_alpha = fz_new_pixmap_with_bbox(ctx, NULL, bbox, NULL, 1);
+			fz_clear_pixmap(ctx, state[1].group_alpha);
+		}
+
+		state[1].blendmode |= FZ_BLEND_ISOLATED;
+		state[1].scissor = bbox;
+
+		if (!(devp->hints & FZ_DONT_INTERPOLATE_IMAGES) && ctx->tuning->image_scale(ctx->tuning->image_scale_arg, dx, dy, pixmap->w, pixmap->h))
+		{
+			int gridfit = !(dev->flags & FZ_DRAWDEV_FLAGS_TYPE3);
+			scaled = fz_transform_pixmap(ctx, dev, pixmap, &local_ctm, state->dest->x, state->dest->y, dx, dy, gridfit, &clip);
+			if (!scaled)
+			{
+				if (dx < 1)
+					dx = 1;
+				if (dy < 1)
+					dy = 1;
+				scaled = fz_scale_pixmap_cached(ctx, pixmap, pixmap->x, pixmap->y, dx, dy, NULL, dev->cache_x, dev->cache_y);
+			}
+			if (scaled)
+			{
+				fz_drop_pixmap(ctx, pixmap);
+				pixmap = scaled;
+			}
+		}
+
+#ifdef DUMP_GROUP_BLENDS
+		dump_spaces(dev->top, "");
+		fz_dump_blend(ctx, "Creating imagemask: plotting ", pixmap);
+		fz_dump_blend(ctx, " onto ", state[1].mask);
+		if (state[1].shape)
+			fz_dump_blend(ctx, "/S=", state[1].shape);
+		if (state[1].group_alpha)
+			fz_dump_blend(ctx, "/GA=", state[1].group_alpha);
+#endif
+
+		fz_paint_image(ctx, state[1].mask, &bbox, state[1].shape, state[1].group_alpha, pixmap, local_ctm, 255, !(devp->hints & FZ_DONT_INTERPOLATE_IMAGES), 0);
+
+#ifdef DUMP_GROUP_BLENDS
+		fz_dump_blend(ctx, " to get ", state[1].mask);
+		if (state[1].shape)
+			fz_dump_blend(ctx, "/S=", state[1].shape);
+		if (state[1].group_alpha)
+			fz_dump_blend(ctx, "/GA=", state[1].group_alpha);
+		printf("\n");
+#endif
+	}
+	fz_always(ctx)
+		fz_drop_pixmap(ctx, pixmap);
+	fz_catch(ctx)
+		fz_rethrow(ctx);
+}
+```
+
+### Your Task
+Analyze the crash and generate a patch to fix the bug.
+
+**Instructions**:
+1. Identify the root cause based on crash information and code
+2. Generate a minimal fix targeting the buggy lines
+3. Ensure the fix handles edge cases properly
+4. Do not over-engineer - focus on the specific issue
+
+### Output Format
+Please first localize the bug, then generate *SEARCH/REPLACE* edits to fix the issue.
+
+Every *SEARCH/REPLACE* edit must use this format:
+1. The file path wrapped in ### (e.g., ### src/file.cpp)
+2. The start and end line numbers (- start_line: N, - end_line: M)
+3. The start of search block: <<<<<<< SEARCH
+4. A contiguous chunk of lines to search for in the existing source code
+5. The dividing line: =======
+6. The lines to replace into the source code
+7. The end of the replace block: >>>>>>> REPLACE
+
+Example (MINIMAL edit with context awareness):
+```cpp
+### src/memory/allocator.cpp
+- start_line: 145
+- end_line: 149
+<<<<<<< SEARCH
+	if (size > 0) {
+		ptr = malloc(size);
+		use_memory(ptr);
+	}
+=======
+	if (size > 0) {
+		ptr = malloc(size);
+		if (ptr != NULL)
+			use_memory(ptr);
+	}
+>>>>>>> REPLACE
+```
+
+**CRITICAL COMPILATION SAFETY REQUIREMENTS**:
+
+1. **MINIMAL edits ONLY** - Include only 3-8 lines in SEARCH block (bug line + 1-3 context lines)
+   - More lines = higher risk of breaking dependencies
+   - Focus ONLY on the buggy statement and immediate neighbors
+
+2. **Variable Dependency Check** - Before removing/modifying any line, verify:
+   - ❌ NEVER remove variable declarations if they're used later
+   - ❌ NEVER remove assignments if the variable is referenced afterwards
+   - ✅ Check if variables in your SEARCH block are used outside it
+
+3. **Macro Pairing Safety** - Special macros MUST stay paired:
+   - `fz_try(ctx) { ... } fz_always(ctx) { ... } fz_catch(ctx) { ... }` → NEVER break this chain
+   - `do { ... } while(...)` → NEVER remove the `while` if you keep the `do`
+   - `if (...) { ... } else { ... }` → Be careful not to create dangling else
+
+4. **Code Block Integrity**:
+   - ❌ NEVER remove opening/closing braces unless removing entire block
+   - ❌ NEVER remove function declarations/definitions
+   - ✅ Preserve the structural indentation and nesting
+
+5. **Indentation**:
+   - **Use TAB characters (\t)** for indentation, NOT spaces - the codebase uses tabs
+   - The SEARCH block must match EXACTLY (preserve all tabs and spacing)
+
+6. **Context Awareness** - When editing, mentally visualize:
+   ```
+   [Lines before SEARCH - you don't see these, assume they exist]
+   <<<<<<< SEARCH
+   your visible edit zone (3-8 lines)
+   =======
+   your proposed changes
+   >>>>>>> REPLACE
+   [Lines after SEARCH - you don't see these, assume they exist]
+   ```
+   Your edit should work correctly with unknown context before and after!
+
+**Common Compilation Errors to AVOID**:
+- ❌ "use of undeclared identifier 'X'" → You removed the declaration of X
+- ❌ "expected 'while' in do/while loop" → You broke a macro pairing
+- ❌ "function definition not allowed here" → You accidentally removed a closing brace
+- ❌ "extraneous closing brace" → You removed code but left its closing brace
+
+**Golden Rule**: If unsure whether a line is safe to remove, KEEP IT. Only modify the absolute minimum needed to fix the bug.

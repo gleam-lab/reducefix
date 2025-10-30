@@ -1,0 +1,279 @@
+=== Prompt for reduced_tc version 9 ===
+Model: qwen-plus
+Temperature: 1.0
+Use SEARCH/REPLACE: True
+======================================================================
+
+We are currently solving the following crash issue:
+--- BEGIN ISSUE ---
+Crash in unknown
+
+### Crash Details
+- Type: Use-of-uninitialized-value
+- Function: unknown
+- Severity: Medium
+- Sanitizer: msan
+
+### Crash Stack Trace
+```
+fz_drop_buffer
+pdf_load_embedded_font
+pdf_load_font_descriptor
+```
+
+### Crash Log
+
+--- END ISSUE ---
+
+
+🎯 **EXACT BUG LOCATION**:
+- File: `source/pdf/pdf-font.c`, Lines 551-587
+
+Below are the source files that contain the bug:
+--- BEGIN FILES ---
+### source/pdf/pdf-font.c
+**Function containing the bug** (lines 551-583):
+
+```c
+pdf_load_embedded_font(fz_context *ctx, pdf_document *doc, pdf_font_desc *fontdesc, const char *fontname, pdf_obj *stmref)
+{  // <-- ⚠️ BUG IS HERE (Line 552)
+	fz_buffer *buf;  // <-- ⚠️ BUG IS HERE (Line 553)
+	unsigned char *data;  // <-- ⚠️ BUG IS HERE (Line 554)
+	size_t size;  // <-- ⚠️ BUG IS HERE (Line 555)
+  // <-- ⚠️ BUG IS HERE (Line 556)
+	buf = pdf_load_stream(ctx, stmref);  // <-- ⚠️ BUG IS HERE (Line 557)
+  // <-- ⚠️ BUG IS HERE (Line 558)
+	fz_try(ctx)  // <-- ⚠️ BUG IS HERE (Line 559)
+	{  // <-- ⚠️ BUG IS HERE (Line 560)
+		/* Extract CFF subtable for OpenType fonts: */  // <-- ⚠️ BUG IS HERE (Line 561)
+		size = fz_buffer_storage(ctx, buf, &data);  // <-- ⚠️ BUG IS HERE (Line 562)
+		if (size > 12) {  // <-- ⚠️ BUG IS HERE (Line 563)
+			if (!memcmp("OTTO", data, 4)) {  // <-- ⚠️ BUG IS HERE (Line 564)
+				fz_buffer *cff = pdf_extract_cff_subtable(ctx, data, size);  // <-- ⚠️ BUG IS HERE (Line 565)
+				if (cff)  // <-- ⚠️ BUG IS HERE (Line 566)
+				{  // <-- ⚠️ BUG IS HERE (Line 567)
+					fz_drop_buffer(ctx, buf);  // <-- ⚠️ BUG IS HERE (Line 568)
+					buf = cff;  // <-- ⚠️ BUG IS HERE (Line 569)
+				}  // <-- ⚠️ BUG IS HERE (Line 570)
+			}  // <-- ⚠️ BUG IS HERE (Line 571)
+		}  // <-- ⚠️ BUG IS HERE (Line 572)
+  // <-- ⚠️ BUG IS HERE (Line 573)
+		fontdesc->font = fz_new_font_from_buffer(ctx, fontname, buf, 0, 1);  // <-- ⚠️ BUG IS HERE (Line 574)
+	}  // <-- ⚠️ BUG IS HERE (Line 575)
+	fz_always(ctx)  // <-- ⚠️ BUG IS HERE (Line 576)
+		fz_drop_buffer(ctx, buf);  // <-- ⚠️ BUG IS HERE (Line 577)
+	fz_catch(ctx)  // <-- ⚠️ BUG IS HERE (Line 578)
+		fz_rethrow(ctx);  // <-- ⚠️ BUG IS HERE (Line 579)
+  // <-- ⚠️ BUG IS HERE (Line 580)
+	fontdesc->size += fz_buffer_storage(ctx, buf, NULL);  // <-- ⚠️ BUG IS HERE (Line 581)
+	fontdesc->is_embedded = 1;  // <-- ⚠️ BUG IS HERE (Line 582)
+}  // <-- ⚠️ BUG IS HERE (Line 583)
+```
+
+**Special macros/structures in this function**:
+  - Line 559: fz_try(ctx)
+  - Line 576: fz_always(ctx)
+  - Line 578: fz_catch(ctx)
+
+**🎯 Bug Location** (lines 551-587):
+```c
+{
+	fz_buffer *buf;
+	unsigned char *data;
+	size_t size;
+
+	buf = pdf_load_stream(ctx, stmref);
+
+	fz_try(ctx)
+	{
+		/* Extract CFF subtable for OpenType fonts: */
+		size = fz_buffer_storage(ctx, buf, &data);
+		if (size > 12) {
+			if (!memcmp("OTTO", data, 4)) {
+				fz_buffer *cff = pdf_extract_cff_subtable(ctx, data, size);
+				if (cff)
+				{
+					fz_drop_buffer(ctx, buf);
+					buf = cff;
+				}
+			}
+		}
+
+		fontdesc->font = fz_new_font_from_buffer(ctx, fontname, buf, 0, 1);
+	}
+	fz_always(ctx)
+		fz_drop_buffer(ctx, buf);
+	fz_catch(ctx)
+		fz_rethrow(ctx);
+
+	fontdesc->size += fz_buffer_storage(ctx, buf, NULL);
+	fontdesc->is_embedded = 1;
+}
+```
+
+**⚠️ IMPORTANT**: When generating your SEARCH/REPLACE edit:
+- The shown function has 33 lines total
+- Bug is at lines 551-587
+- Variables declared before the bug MUST NOT be removed (they may be used after)
+- Check for paired macros (fz_try/always/catch, do/while) - keep them balanced
+- Only edit the MINIMAL lines needed to fix the bug
+
+--- END FILES ---
+
+### Buggy Code Snippet
+- **File**: `source/pdf/pdf-font.c`, **Lines**: 551-587
+
+```c
+// File: source/pdf/pdf-font.c (lines 551-587)
+// This code needs to be fixed:
+pdf_load_embedded_font(fz_context *ctx, pdf_document *doc, pdf_font_desc *fontdesc, const char *fontname, pdf_obj *stmref)
+{
+	fz_buffer *buf;
+	unsigned char *data;
+	size_t size;
+
+	buf = pdf_load_stream(ctx, stmref);
+
+	fz_try(ctx)
+	{
+		/* Extract CFF subtable for OpenType fonts: */
+		size = fz_buffer_storage(ctx, buf, &data);
+		if (size > 12) {
+			if (!memcmp("OTTO", data, 4)) {
+				fz_buffer *cff = pdf_extract_cff_subtable(ctx, data, size);
+				if (cff)
+				{
+					fz_drop_buffer(ctx, buf);
+					buf = cff;
+				}
+			}
+		}
+
+		fontdesc->font = fz_new_font_from_buffer(ctx, fontname, buf, 0, 1);
+	}
+	fz_always(ctx)
+		fz_drop_buffer(ctx, buf);
+	fz_catch(ctx)
+		fz_rethrow(ctx);
+
+	fontdesc->size += fz_buffer_storage(ctx, buf, NULL);
+	fontdesc->is_embedded = 1;
+}
+
+/*
+ * Create and destroy
+ */
+```
+
+### Failing Test Case (Minimized by Automated Reduction)
+
+**Minimization Summary**:
+Original: 91,133 bytes → Minimized: 40,456 bytes (55.6% reduction)
+
+**Purpose of Minimization**:
+The test case has been automatically reduced using delta debugging to identify the MINIMAL input 
+that still triggers the crash. This helps reveal the specific pattern or edge case that causes the bug.
+
+**How to use this information**:
+1. The minimized input reveals a specific triggering pattern (not just random data)
+2. Consider: What makes this particular input trigger the bug? (boundary condition, special character, size, structure)
+3. Your fix should handle this pattern and similar edge cases gracefully
+
+**Input Characteristics**:
+- Mostly printable ASCII → likely text-based input
+
+**Note**: Showing first 1KB (1024 bytes) of minimized input for analysis. Full input is 40,456 bytes.
+
+**Minimized Input** (hex format):
+```
+255044462d312e370d34342030206f626a0d3c3c2f4163726f466f726d203534203020522f457874656e73696f6e733c3c2f414442453c3c2f4261736556657273696f6e2f312e372f457874656e73696f6e4c6576656c20333e3e3e3e2f4d61726b496e666f3c3c2f4d61726b656420747275653e3e2f4d65746164617461203132203020522f4e616d6573203535203020522f5061676573203431203020522f53747275637454726565526f6f74203231203020522f547970652f436174616c6f673e3e0d34382030206f626a0d3c3c2f416e6e6f7473203630203020522f436f6e74656e7473203531203020522f43726f70426f785b302e3020302e30203631322e30203739322e305d2f4d65646961426f785b302e3020302e30203631322e30203739322e305d2f506172656e74203431203020522f5265736f75726365733c3c2f466f6e743c3c2f54315f30203639203020523e3e2f50726f635365745b2f5044462f546578745d3e3e2f526f7461746520302f547970652f506167653e3e0d35302030206f626a0d3c3c2f46696c7465722f466c6174654465636f64652f4669727374203131372f4c656e67746820313337392f4e2031362f547970652f4f626a53746d3e3e73747265616d0d0a68dec4576d6fdb3610fe2bdc371b5bccd723a52208903835daad29b2386bbb1941a1d88c2d54960c592992fdfa3da49417376e9bcd1b96e04c1d8fe4dd3d773a1dc930c18898929a91654a1323c734294609d32e659432232cb38219ad9995cc241814734630ab991402a36152e1104b4c924899b54c3a30d6312512c8131cacc0a74c5963d8fe3e3f3eecf157bef80cede757f899b33e3f3e836054950d862893092467fce4b6ceb3d9695ded9df9f97591d54ca64170803f3eca7d315b4fa40d3317fcc3e870d25bd53e5b5e16be2fc3646f5a9557f9bcaf22d3f8e5aac81adfd7912daa6956f8b16ffa26f237cbd5d237599f227755d5cb7e3cb937cb9a6ced9b75df457655ad9b5647b4f1e2e00046ff9c7dcec6d33a5f3501cb682166df664bbf9ef47e383c3e7af9e28500621fdff97a3d5c7c1a37755eced77d6acfdcb2e25d56439c6c88d5837858cdfc47b83c5cf8e9a73ea58f4c1933134fe5e34766dd8becd745b44534b111c910f738e87630ed40ed60db216abde842bc25746220ee62dee72366f8e89c9fdff0935ff6f711ce53e45734e034ab7dd9208f22f72b13fccc4f9b89346e209d648ee4402be46c2a070616382707d2d20507a6d7d3a6db2df8f8fab2b95d79fe3e9fcd7dc3cff7472f472321c8086109742484d320f0ce76734310788d3810e4100b3a3ee0e7bff5c60857e1599197fe27765d16f9326ffc8c15be9c378b3e3f0f9a0ecbb26ad1fc47009c64376f7c8955cf8742d226149ab640217782427d1b8a16
+```
+
+**Expected Behavior After Fix**:
+- The program should handle this input without crashing
+- Focus on preventing Use-of-uninitialized-value
+
+### Your Task
+Analyze the crash and generate a patch to fix the bug.
+
+**Instructions**:
+1. Identify the root cause based on crash information and code
+2. Generate a minimal fix targeting the buggy lines
+3. Ensure the fix handles edge cases properly
+4. Do not over-engineer - focus on the specific issue
+
+### Output Format
+Please first localize the bug, then generate *SEARCH/REPLACE* edits to fix the issue.
+
+Every *SEARCH/REPLACE* edit must use this format:
+1. The file path wrapped in ### (e.g., ### src/file.cpp)
+2. The start and end line numbers (- start_line: N, - end_line: M)
+3. The start of search block: <<<<<<< SEARCH
+4. A contiguous chunk of lines to search for in the existing source code
+5. The dividing line: =======
+6. The lines to replace into the source code
+7. The end of the replace block: >>>>>>> REPLACE
+
+Example (MINIMAL edit with context awareness):
+```cpp
+### src/memory/allocator.cpp
+- start_line: 145
+- end_line: 149
+<<<<<<< SEARCH
+	if (size > 0) {
+		ptr = malloc(size);
+		use_memory(ptr);
+	}
+=======
+	if (size > 0) {
+		ptr = malloc(size);
+		if (ptr != NULL)
+			use_memory(ptr);
+	}
+>>>>>>> REPLACE
+```
+
+**CRITICAL COMPILATION SAFETY REQUIREMENTS**:
+
+1. **MINIMAL edits ONLY** - Include only 3-8 lines in SEARCH block (bug line + 1-3 context lines)
+   - More lines = higher risk of breaking dependencies
+   - Focus ONLY on the buggy statement and immediate neighbors
+
+2. **Variable Dependency Check** - Before removing/modifying any line, verify:
+   - ❌ NEVER remove variable declarations if they're used later
+   - ❌ NEVER remove assignments if the variable is referenced afterwards
+   - ✅ Check if variables in your SEARCH block are used outside it
+
+3. **Macro Pairing Safety** - Special macros MUST stay paired:
+   - `fz_try(ctx) { ... } fz_always(ctx) { ... } fz_catch(ctx) { ... }` → NEVER break this chain
+   - `do { ... } while(...)` → NEVER remove the `while` if you keep the `do`
+   - `if (...) { ... } else { ... }` → Be careful not to create dangling else
+
+4. **Code Block Integrity**:
+   - ❌ NEVER remove opening/closing braces unless removing entire block
+   - ❌ NEVER remove function declarations/definitions
+   - ✅ Preserve the structural indentation and nesting
+
+5. **Indentation**:
+   - **Use TAB characters (\t)** for indentation, NOT spaces - the codebase uses tabs
+   - The SEARCH block must match EXACTLY (preserve all tabs and spacing)
+
+6. **Context Awareness** - When editing, mentally visualize:
+   ```
+   [Lines before SEARCH - you don't see these, assume they exist]
+   <<<<<<< SEARCH
+   your visible edit zone (3-8 lines)
+   =======
+   your proposed changes
+   >>>>>>> REPLACE
+   [Lines after SEARCH - you don't see these, assume they exist]
+   ```
+   Your edit should work correctly with unknown context before and after!
+
+**Common Compilation Errors to AVOID**:
+- ❌ "use of undeclared identifier 'X'" → You removed the declaration of X
+- ❌ "expected 'while' in do/while loop" → You broke a macro pairing
+- ❌ "function definition not allowed here" → You accidentally removed a closing brace
+- ❌ "extraneous closing brace" → You removed code but left its closing brace
+
+**Golden Rule**: If unsure whether a line is safe to remove, KEEP IT. Only modify the absolute minimum needed to fix the bug.

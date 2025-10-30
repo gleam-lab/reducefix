@@ -1,0 +1,68 @@
+### 1. 为什么这个输入会触发崩溃
+
+根据崩溃日志中的信息，错误发生在 `BEInt<unsigned short, 2>::operator unsigned short()` 这个函数中。具体来说，`AddressSanitizer` 检测到在地址 `0x0000009de494` 处发生了一个全局缓冲区溢出（global-buffer-overflow），尝试读取了大小为2字节的数据。这个错误表明程序试图访问一个超出其分配内存范围的内存位置。
+
+从调用栈上看，错误发生在 `OT::gvar::accelerator_t::apply_deltas_to_points` 函数中，该函数调用了 `OT::gvar::get_glyph_var_data_bytes`，然后是 `OT::gvar::get_offset`，最后是 `BEInt<unsigned short, 2>::operator unsigned short()`。
+
+触发崩溃的原因可能是 `get_offset` 函数返回的偏移量超出了有效范围，导致 `get_glyph_var_data_bytes` 在读取数据时越界访问了内存。
+
+### 2. 修复策略
+
+修复策略应该包括以下几个方面：
+
+1. **验证偏移量的有效性**：确保 `get_offset` 返回的偏移量在有效范围内。
+2. **增加边界检查**：在访问内存之前进行严格的边界检查，以防止越界访问。
+3. **更新依赖库**：如果可能，使用更稳定的库版本，这些版本可能已经修复了相关的内存管理问题。
+
+### 3. 具体的代码修复建议
+
+以下是一些具体的代码修复建议：
+
+#### 修改 `get_offset` 函数
+
+在 `OT::gvar::get_offset` 函数中添加边界检查：
+
+```cpp
+unsigned int OT::gvar::get_offset(unsigned int index, unsigned int num_glyphs) const {
+    if (index >= num_glyphs) {
+        // Handle the error, e.g., log an error message or throw an exception
+        return 0; // Return a default value or handle it appropriately
+    }
+    // Original code to calculate offset
+    return some_calculation(index);
+}
+```
+
+#### 修改 `get_glyph_var_data_bytes` 函数
+
+在 `OT::gvar::get_glyph_var_data_bytes` 函数中添加边界检查：
+
+```cpp
+bool OT::gvar::get_glyph_var_data_bytes(hb_blob_t* blob, unsigned int glyph_index, unsigned int num_glyphs) const {
+    unsigned int offset = get_offset(glyph_index, num_glyphs);
+    if (offset + sizeof(uint16_t) > hb_blob_get_length(blob)) {
+        // Handle the error, e.g., log an error message or throw an exception
+        return false; // Return false or handle it appropriately
+    }
+    // Original code to read data bytes
+    uint16_t delta_set_count = *(uint16_t*)(hb_blob_get_data(blob, nullptr) + offset);
+    return true;
+}
+```
+
+#### 修改 `BEInt<unsigned short, 2>::operator unsigned short()` 函数
+
+在 `BEInt<unsigned short, 2>::operator unsigned short()` 函数中添加边界检查：
+
+```cpp
+template <>
+BEInt<unsigned short, 2>::operator unsigned short() const {
+    if (data.size() < 2) {
+        // Handle the error, e.g., log an error message or throw an exception
+        return 0; // Return a default value or handle it appropriately
+    }
+    return (static_cast<unsigned short>(data[1]) << 8) | static_cast<unsigned short>(data[0]);
+}
+```
+
+通过以上修改，可以有效地避免内存越界访问，从而修复崩溃问题。同时，建议对所有相关的函数进行类似的边界检查，以确保程序的健壮性。

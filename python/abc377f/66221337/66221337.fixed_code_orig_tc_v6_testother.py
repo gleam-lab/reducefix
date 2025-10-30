@@ -1,0 +1,51 @@
+N, M = map(int, input().split())
+pieces = [tuple(map(int, input().split())) for _ in range(M)]
+
+if M == 0:
+    print(N * N)
+else:
+    # Sets to store attacked lines and diagonals
+    rows = set()
+    cols = set()
+    diag1 = set()  # i + j
+    diag2 = set()  # i - j
+
+    for a, b in pieces:
+        rows.add(a)
+        cols.add(b)
+        diag1.add(a + b)
+        diag2.add(a - b)
+
+    # Total squares under attack
+    total_attacked = set()
+
+    for a, b in pieces:
+        # Add all squares in the same row
+        for c in range(1, N + 1):
+            total_attacked.add((a, c))
+        # Add all squares in the same column
+        for r in range(1, N + 1):
+            total_attacked.add((r, b))
+        # Add all squares in the diagonal (i + j = a + b)
+        # i from max(1, a+b-N) to min(N, a+b-1)
+        start_i = max(1, a + b - N)
+        end_i = min(N, a + b - 1)
+        for i in range(start_i, end_i + 1):
+            j = a + b - i
+            if 1 <= j <= N:
+                total_attacked.add((i, j))
+        # Add all squares in the anti-diagonal (i - j = a - b)
+        # i from max(1, 1 + (a - b)) to min(N, N + (a - b))
+        start_i = max(1, 1 + (a - b))
+        end_i = min(N, N + (a - b))
+        for i in range(start_i, end_i + 1):
+            j = i - (a - b)
+            if 1 <= j <= N:
+                total_attacked.add((i, j))
+
+    # Remove existing piece positions since they are occupied and not empty
+    for pos in pieces:
+        total_attacked.discard(pos)
+
+    safe_squares = N * N - len(total_attacked) - M
+    print(max(0, safe_squares))

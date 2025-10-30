@@ -1,0 +1,542 @@
+SYSTEM:
+You are an expert in test case reduction with deep understanding of file formats and data structures.
+
+Your task: Generate a **format-aware** reducer for ffmpeg that processes Media container files and codec-specific bitstreams (various video/audio formats).
+
+**Your approach must be**:
+1. **Analyze first**: You will receive actual file format analysis (type, structure, characteristics)
+2. **Think strategically**: Identify the natural reduction units for this specific format
+3. **Design multi-stage**: Create stages from coarse-grained to fine-grained reduction
+4. **Implement intelligently**: Use format-specific patterns (regex, delimiters, structure markers)
+5. **Stay generic**: Must work for ALL ffmpeg test cases, not just the analyzed one
+
+**Required function signature:**
+```python
+def generated_reduce(input_bytes: bytes, test_fn, verbose: bool = True) -> bytes:
+    """
+    Format-aware test case reducer for ffmpeg
+    
+    Args:
+      - input_bytes: Original input data (Media container files and codec-specific bitstreams (various video/audio formats))
+      - test_fn: Oracle function - returns True if candidate still reproduces the bug
+      - verbose: Enable detailed progress output (default True)
+    
+    Strategy:
+      - Stage 1: Remove large structural units (format-specific)
+      - Stage 2: Remove smaller units or attributes
+      - Stage 3: Reduce content within remaining units  
+      - Stage 4: Fine-grained reduction (lines/bytes)
+      - Each stage must validate candidates using test_fn
+    
+    Output:
+      - Smallest input that still satisfies test_fn
+      - Progress with [ReduceFix] prefix
+      - Metrics: test count, time, reduction rate
+    """
+    import time
+    # Your format-aware implementation here
+```
+
+**Output requirements:**
+- Only output Python code block (```python ... ```)
+- No explanations outside code
+- Include progress output inside implementation
+
+**Common pitfalls to avoid:**
+- ❌ f-string cannot contain backslash inside curly braces
+  Example of WRONG code: f-string with backslash-n inside the braces
+- ✅ Calculate string operations first, then use result in f-string
+  Example: temp = newline_join(x); then use temp in f-string
+- ❌ Mixing bytes and str types inconsistently
+- ✅ Choose bytes or str and use consistently throughout
+
+**CRITICAL: Progress output requirements (MUST follow strictly):**
+
+1. **Count ALL tests** (success OR failure):
+   ```python
+   test_count = 0  # Initialize once
+   # In EVERY test (regardless of result):
+   test_count += 1
+   if test_fn(candidate):
+       # success
+   else:
+       # failure
+   ```
+
+2. **Output progress regularly** (every 100-200 tests):
+   ```python
+   if test_count % 100 == 0 and verbose:
+       elapsed = time.time() - start_time
+       # Use f-string to show: test count, current size, elapsed time
+       print(f"  [ReduceFix] Progress: {test_count} tests, {len(current)} bytes, {elapsed:.1f}s")
+   ```
+
+3. **MUST print at stage transitions**:
+   ```python
+   if verbose:
+       # Show stage number and name
+       print(f"[ReduceFix] Stage {N}: {stage_name}")
+       print(f"  Starting size: {len(current)} bytes")
+   ```
+
+4. **MUST print after each major step** (e.g., each chunk size):
+   ```python
+   if verbose:
+       # Print EVEN IF no reduction
+       print(f"  [ReduceFix] Chunk {chunk_size}: {before} → {after} bytes")
+   ```
+
+**Progress output template:**
+```
+[ReduceFix] Starting reduction
+[ReduceFix] Original size: 100109 bytes
+
+[ReduceFix] Stage 1: Remove fuzzer signatures
+  Starting size: 100109 bytes
+  [ReduceFix] Progress: 100 tests, 98000 bytes, 3.2s
+  [ReduceFix] ✓ Removed signature at offset 98000
+[ReduceFix] Stage 1 complete: 100109 → 98000 bytes (2.1% reduction)
+
+[ReduceFix] Stage 2: DDMin reduction
+  Starting size: 98000 bytes
+  [ReduceFix] Chunk sizes: [256, 64, 16, 4, 1]
+  [ReduceFix] Progress: 200 tests, 95000 bytes, 6.5s
+  [ReduceFix] Chunk 256: 98000 → 95000 bytes (3.1% reduction)
+  [ReduceFix] Progress: 400 tests, 92000 bytes, 13.1s
+  [ReduceFix] Chunk 64: 95000 → 92000 bytes (3.2% reduction)
+  [ReduceFix] Progress: 800 tests, 90000 bytes, 26.3s
+  [ReduceFix] Chunk 16: 92000 → 90000 bytes (2.2% reduction)
+  [ReduceFix] Chunk 4: 90000 → 90000 bytes (no change)
+  [ReduceFix] Chunk 1: 90000 → 89500 bytes (0.6% reduction)
+[ReduceFix] Stage 2 complete: 98000 → 89500 bytes (8.7% reduction)
+
+[ReduceFix] Complete: 100109 → 89500 bytes (10.6% reduction)
+[ReduceFix] Total tests: 1234, total time: 45.6s
+```
+
+**WHY this is critical:**
+- User needs to see progress to know the reducer is working
+- Without progress, they think it's stuck after 5000+ tests
+- Progress helps debug if a stage is inefficient
+
+**Critical DDMin implementation pattern** (for reference - adapt to your format):
+```python
+def ddmin_pass(data: bytes, chunk_size: int, test_fn) -> bytes:
+    """One pass of DDMin: try removing each chunk of given size"""
+    if len(data) <= chunk_size:
+        return data
+    
+    current = data
+    i = 0
+    while i < len(current):
+        chunk_start = i
+        chunk_end = min(i + chunk_size, len(current))
+        
+        # Try removing this chunk
+        candidate = current[:chunk_start] + current[chunk_end:]
+        if len(candidate) > 0 and test_fn(candidate):
+            current = candidate  # Success! Continue from same position
+            # DON'T increment i - re-check this position with new data
+        else:
+            i += chunk_size  # Failed, move to next chunk
+    
+    return current
+
+# Multi-pass with decreasing chunk sizes
+data = input_bytes
+for chunk_size in [256, 64, 16, 4, 1]:  # Adapt based on file size
+    changed = True
+    while changed:  # Keep trying until no more progress
+        before = len(data)
+        data = ddmin_pass(data, chunk_size, test_fn)
+        changed = (len(data) < before)
+```
+
+**Critical**: Your reducer's effectiveness depends on:
+1. Understanding the format structure (if identifiable)
+2. Using appropriate algorithms (DDMin for unknown/minimal files, format-aware for structured files)
+3. Adaptive strategy based on file analysis (YOU WILL receive detailed analysis, use it!)
+
+
+USER:
+Generate a format-aware reducer for the ffmpeg project:
+
+# Target project: ffmpeg
+# Expected format type: Media container files and codec-specific bitstreams (various video/audio formats)
+
+
+## Actual Test Case Analysis:
+File type (from 'file' command): oss_fuzz/cases_data/ffmpeg/arvo-13552/testcase: data
+File size: 6190 bytes (6.0 KB)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📊 INTELLIGENT FORMAT ANALYSIS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+✓ BINARY FILE (not valid UTF-8)
+
+  🔍 Format: **FUZZER-GENERATED TEST CASE** (likely minimal trigger)
+    - Fuzzer signatures found: UZZ-T at offset 6167, UZZG at offset 6176, FUZZ at offset 6175
+    - Byte frequency:
+      • 0x60: 4032 occurrences (65.1%)
+      • 0x20: 1584 occurrences (25.6%)
+    - Longest byte run: 601 × 0x60
+
+    ⚠️  **CRITICAL STRATEGY FOR FUZZER INPUTS**:
+    - This is likely a MINIMAL test case already highly optimized by fuzzer
+    - Traditional 'format-aware' reduction may NOT work well
+    - Bug triggered by SPECIFIC BYTE SEQUENCES at SPECIFIC OFFSETS
+    - Recommended: AGGRESSIVE DDMin with adaptive chunk sizing
+    - File size 6190 bytes → Start with 256-byte chunks, then halve repeatedly
+    - Printable character ratio: 93.1%
+    - Mixed text/binary (high printable ratio)
+
+Structural characteristics:
+  - Few newlines (1) - likely binary or compact format
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🔧 FILE HEADER (first 256 bytes in hexadecimal)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+00000000  20 20 20 20 20 20 20 20 00 20 01 20 20 20 20 20   |        . .     |
+00000010  20 20 20 20 20 ff 20 20 77 19 78 19 20 20 20 20   |     .  w.x.    |
+00000020  f9 f9 f9 ff 20 20 20 f9 f9 f9 ff ff 20 20 20 f9   |....   .....   .|
+00000030  f9 f9 ff ff 20 20 f9 20 f9 20 ff 20 20 f9 20 20   |....  . . .  .  |
+00000040  ff 20 20 20 ff 20 f9 ff f9 f9 f9 f9 20 20 f9 20   |.   . ......  . |
+00000050  20 20 ff 20 20 20 ff 20 20 20 ff f9 20 20 f9 20   |  .   .   ..  . |
+00000060  20 20 20 20 20 20 ff ff 20 20 ff 20 20 20 20 20   |      ..  .     |
+00000070  20 20 20 20 20 ff ff ff 20 ff ff ff 20 ff ff ff   |     ... ... ...|
+00000080  20 ff ff ff 20 ff ff ff 20 20 20 20 20 20 20 ff   | ... ...       .|
+00000090  20 20 20 f9 20 ff 20 20 20 ff 20 20 f9 20 20 20   |   . .   .  .   |
+000000a0  f9 f9 f9 ff f9 f9 f9 f9 f9 f9 f9 f9 f9 f9 f9 f9   |................|
+000000b0  20 20 20 f9 f9 f9 ff ff 20 20 f9 f9 f9 20 ff 20   |   .....  ... . |
+000000c0  20 20 20 ff 20 20 20 ff 20 20 20 ff 20 20 20 ff   |   .   .   .   .|
+000000d0  ff ff 20 20 20 20 20 20 20 20 20 20 20 20 20 20   |..              |
+000000e0  20 20 20 20 ff 20 60 20 20 20 ff 20 20 20 20 20   |    . `   .     |
+000000f0  20 20 20 20 20 20 20 20 20 20 ff 20 20 20 20 20   |          .     |
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🔧 FILE TAIL (last 256 bytes in hexadecimal)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+0000172e  60 60 60 60 60 60 60 60 60 60 60 60 60 60 60 60   |````````````````|
+0000173e  60 60 60 60 60 60 60 60 60 60 60 60 60 60 60 60   |````````````````|
+0000174e  60 60 60 60 60 60 60 60 60 60 60 60 60 60 60 60   |````````````````|
+0000175e  60 60 60 60 60 60 60 ff ff ff ff ff ff ff 1f 60   |```````........`|
+0000176e  60 60 60 60 60 60 60 60 60 60 60 60 60 60 60 60   |````````````````|
+0000177e  60 60 60 60 60 60 60 60 60 7b 7b 7b 7b 7b 7b 7b   |`````````{{{{{{{|
+0000178e  7b 7b 7b 7b 73 7b 7b 7b 7b 7b 7b 7b 7b 07 07 47   |{{{{s{{{{{{{{..G|
+0000179e  ff 60 60 60 60 60 60 60 60 60 60 60 60 60 60 60   |.```````````````|
+000017ae  60 60 60 60 60 60 60 60 60 60 60 60 60 60 60 60   |````````````````|
+000017be  60 60 60 60 60 60 60 60 60 60 60 ff ff ff ff ff   |```````````.....|
+000017ce  ff ff 1f 60 60 60 60 60 60 60 60 60 60 60 60 60   |...`````````````|
+000017de  60 60 60 60 60 60 60 60 60 60 60 60 60 60 60 60   |````````````````|
+000017ee  60 60 60 60 60 60 60 60 60 60 60 60 60 60 60 60   |````````````````|
+000017fe  60 7b 7b 7b 7b 7b 7b 7b 7b 7b 7b 7b 73 7b 7b 7b   |`{{{{{{{{{{{s{{{|
+0000180e  7b 7b 7b 7b 7b 07 07 47 ff 55 5a 5a 2d 54 03 e8   |{{{{{..G.UZZ-T..|
+0000181e  fe 46 55 5a 5a 47 ff 46 00 00 00 00 00 00 00 00   |.FUZZG.F........|
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+💡 YOUR TASK
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Based on the analysis above (including both HEAD and TAIL):
+1. Identify the format type (XML, PDF, JSON, image, font, source code, plain text, binary)
+2. Determine text vs binary nature and overall structure
+3. Identify natural "reduction units" for this specific format
+4. Note structural patterns at both beginning and end (e.g., XML root tags, PDF trailer)
+5. Design a multi-stage reduction strategy exploiting format structure
+6. Implement using format-specific patterns (regex, delimiters, structure markers)
+
+⚠️  CRITICAL: This reducer must be GENERIC - it will be used for ALL test cases
+of this target, not just this one file. Use the format analysis to guide your 
+design, but ensure the strategy generalizes to similar files.
+
+
+**Your task is to THINK and DESIGN**:
+1. Analyze the format information above carefully
+2. Determine the file structure (text vs binary, structured vs unstructured)
+3. Identify natural "reduction units" specific to this format
+4. Design a multi-stage reduction strategy (coarse to fine granularity)
+5. Implement format-aware reduction, NOT just generic block/line deletion
+
+**Format-specific strategy examples** (as inspiration, not templates):
+
+| If format is... | Consider these strategies |
+|-----------------|---------------------------|
+| XML/HTML | Match `<tag>...</tag>` pairs → remove elements → remove attributes → reduce text content |
+| PDF | Find `obj...endobj` blocks → remove objects → reduce stream content → prune dictionaries |
+| JSON | Parse `Ellipsis` and `[...]` → remove objects/arrays → remove keys → reduce values |
+| Images | Identify file signature → preserve header → reduce metadata chunks → reduce pixel data |
+| Fonts | Parse table directory → remove non-essential tables → reduce glyph data |
+| Source code | Find function/class boundaries → remove functions → remove statements → simplify |
+| Plain text | Split by paragraphs → remove paragraphs → remove lines → reduce line content |
+| Binary (unknown) | Fixed-size blocks → byte-level reduction |
+
+**Critical**: These are EXAMPLES to show the thinking process. Your actual strategy must be based
+on the SPECIFIC format analysis provided above!
+
+
+## Implementation guidelines (format-specific hints):
+  - FFmpeg processes diverse multimedia formats: containers (MP4, AVI, MKV), codecs (H.264, VP9, AAC), images, subtitle formats
+  - Input types vary GREATLY: some are well-structured containers, others are raw codec bitstreams
+  - Common patterns in fuzzer-generated test cases:
+  -   - Small files (1-10KB) with artificial padding or repeated patterns
+  -   - Fuzzer signatures: 'UZZ-T', 'UZZG', 'FUZZ' markers appended by OSS-Fuzz
+  -   - High ratio of specific bytes: spaces (0x20), 0xFF, 0xF9, backticks (0x60)
+  -   - Malformed headers, truncated streams, or crafted invalid data
+  - **CRITICAL insight for FFmpeg fuzzer test cases**:
+  -   - Many fuzzer inputs are MINIMAL TRIGGER FILES already highly reduced by fuzzer
+  -   - Traditional format-aware reduction (removing 'non-essential' structures) may fail
+  -   - Bug often triggered by SPECIFIC BYTE SEQUENCES at SPECIFIC OFFSETS
+  -   - Codec bugs are extremely sensitive to bitstream corruption
+  - 
+  - **🎯 TARGET: 50%+ COMPRESSION - Multi-stage strategy (in priority order)**:
+  - 
+  - **Stage 0: Aggressive prefix reduction** ⭐⭐⭐⭐⭐ (HIGHEST PRIORITY - 必须实现)
+  -   - STEP 1: First try removing ENTIRE second half immediately:
+  -     ```python
+  -     # Try keeping only first 50%
+  -     if test_fn(data[:len(data)//2]):
+  -         data = data[:len(data)//2]  # SUCCESS: 50% reduction immediately!
+  -     ```
+  -   - STEP 2: If step 1 succeeded, try 25%, 12.5%, etc.
+  -   - STEP 3: Then use binary search to find exact minimum:
+  -     ```python
+  -     low = len(data) // 2  # Start from 50%
+  -     high = len(data)
+  -     best = len(data)
+  -     while low <= high:
+  -         mid = (low + high) // 2
+  -         if test_fn(data[:mid]):
+  -             best = mid
+  -             high = mid - 1  # Try shorter
+  -         else:
+  -             low = mid + 1
+  -     data = data[:best]
+  -     ```
+  -   - Expected: 50-70% compression for typical fuzzer inputs
+  -   - 这是最重要的阶段，必须首先实现！
+  - 
+  - **Stage 1: Binary shrink repetitive byte runs** ⭐⭐⭐⭐⭐
+  -   - Fuzzer files often have long runs (e.g., 601 consecutive backticks)
+  -   - For each run >=16 bytes, use BINARY SEARCH to find minimum needed
+  -   - Algorithm:
+  -     ```
+  -     Find run of same byte (length >= 16)
+  -     Use binary search to shrink: try keeping 1, 2, 4, 8, ... bytes
+  -     Keep minimum that still passes test_fn
+  -     ```
+  -   - DON'T remove chunk by chunk (too slow), shrink the WHOLE run at once
+  -   - Expected: 5-10% additional compression
+  - 
+  - **Stage 2: Remove fuzzer signatures and trailing padding**:
+  -   - Remove UZZ-T, UZZG, FUZZ markers and surrounding bytes
+  -   - Strip trailing runs of padding bytes
+  -   - Expected: 0.5-2% compression
+  - 
+  - **Stage 3: Adaptive DDMin with region awareness** ⭐⭐⭐⭐:
+  -   - Identify repetitive regions (runs of same byte >32)
+  -   - Use DIFFERENT chunk sizes for different regions:
+  -     • Repetitive regions: larger chunks (256, 128, 64)
+  -     • Sparse regions: smaller chunks (32, 16, 8)
+  -   - File size based chunk selection:
+  -     • 0-1KB: [64, 32, 16, 8, 4]
+  -     • 1-5KB: [256, 128, 64, 32, 16, 8]
+  -     • 5-20KB: [512, 256, 128, 64, 32, 16]
+  -     • >20KB: [2048, 1024, 512, 256, 128, 64]
+  -   - Multi-pass: keep trying each chunk size until no progress
+  -   - Expected: 10-20% additional compression
+  - 
+  - **Stage 4: Aggressive zero-fill optimization** ⭐⭐⭐⭐⭐ (关键策略):
+  -   - 很多bug不关心具体数据内容，只关心文件结构和特定位置
+  -   - STEP 1: 尝试将整个后半部分替换为0x00:
+  -     ```python
+  -     mid = len(data) // 2
+  -     candidate = data[:mid] + bytes(len(data) - mid)
+  -     if test_fn(candidate):
+  -         data = candidate  # 50% data zeroed!
+  -     ```
+  -   - STEP 2: 尝试将文件分成4块，逐个尝试零填充每一块:
+  -     ```python
+  -     chunk_size = len(data) // 4
+  -     for i in range(4):
+  -         start = i * chunk_size
+  -         end = start + chunk_size if i < 3 else len(data)
+  -         candidate = data[:start] + bytes(end-start) + data[end:]
+  -         if test_fn(candidate):
+  -             data = candidate  # This quarter zeroed!
+  -     ```
+  -   - STEP 3: 尝试更小的块 (512字节、256字节)
+  -   - Expected: 20-50% data can often be zeroed
+  -   - 注意：零填充不减少文件大小，但简化内容，便于后续DDMin删除
+  - 
+  - **Stage 5: Fine-grained DDMin** (if needed):
+  -   - Only if above stages didn't achieve >40% compression
+  -   - Try smaller chunks (4, 2, 1 bytes)
+  -   - Stop after 5000-10000 tests to avoid infinite grinding
+  - 
+  - **IMPLEMENTATION EXAMPLES**:
+  - 
+  - **Example 1: Aggressive prefix reduction (Stage 0) - 必须实现:**
+  - ```python
+  - def aggressive_prefix_reduction(data, test_fn):
+  -     '''Try removing chunks from the end, starting with 50%'''
+  -     if len(data) < 100:
+  -         return data
+  -     
+  -     # Step 1: Try 50%, 25%, 12.5%
+  -     for fraction in [0.5, 0.25, 0.125]:
+  -         keep_len = int(len(data) * fraction)
+  -         if keep_len > 0 and test_fn(data[:keep_len]):
+  -             data = data[:keep_len]
+  -             print(f'  ✓ Kept only {fraction*100}% of file!')
+  -     
+  -     # Step 2: Binary search for exact minimum
+  -     low, high = len(data) // 2, len(data)
+  -     best = len(data)
+  -     while low <= high:
+  -         mid = (low + high) // 2
+  -         if test_fn(data[:mid]):
+  -             best = mid
+  -             high = mid - 1
+  -         else:
+  -             low = mid + 1
+  -     return data[:best]
+  - ```
+  - 
+  - **Example 2: Aggressive zero-fill (Stage 4) - 必须实现:**
+  - ```python
+  - def aggressive_zero_fill(data, test_fn):
+  -     '''Try replacing large chunks with zeros'''
+  -     result = data
+  -     
+  -     # Step 1: Try zeroing entire second half
+  -     mid = len(result) // 2
+  -     candidate = result[:mid] + bytes(len(result) - mid)
+  -     if test_fn(candidate):
+  -         result = candidate
+  -         print(f'  ✓ Zeroed second half!')
+  -     
+  -     # Step 2: Try zeroing each quarter
+  -     chunk_size = len(result) // 4
+  -     for i in range(4):
+  -         start = i * chunk_size
+  -         end = start + chunk_size if i < 3 else len(result)
+  -         candidate = result[:start] + bytes(end - start) + result[end:]
+  -         if test_fn(candidate):
+  -             result = candidate
+  -             print(f'  ✓ Zeroed quarter {i+1}/4')
+  -     
+  -     # Step 3: Try smaller blocks (512, 256 bytes)
+  -     for block_size in [512, 256]:
+  -         i = 0
+  -         while i < len(result):
+  -             end = min(i + block_size, len(result))
+  -             candidate = result[:i] + bytes(end - i) + result[end:]
+  -             if test_fn(candidate):
+  -                 result = candidate
+  -             else:
+  -                 i += block_size
+  -     
+  -     return result
+  - ```
+  - 
+  - Binary shrink repetitive runs:
+  - ```python
+  - def shrink_runs(data, test_fn):
+  -     result = data
+  -     changed = True
+  -     while changed:
+  -         changed = False
+  -         i = 0
+  -         while i < len(result) - 16:
+  -             # Find run
+  -             run_len = 1
+  -             while i+run_len < len(result) and result[i] == result[i+run_len]:
+  -                 run_len += 1
+  -             
+  -             if run_len >= 16:
+  -                 byte_val = result[i]
+  -                 # Binary search for minimum
+  -                 low, high = 1, run_len
+  -                 best = run_len
+  -                 while low <= high:
+  -                     mid = (low + high) // 2
+  -                     candidate = result[:i] + bytes([byte_val])*mid + result[i+run_len:]
+  -                     if test_fn(candidate):
+  -                         best = mid
+  -                         high = mid - 1
+  -                     else:
+  -                         low = mid + 1
+  -                 if best < run_len:
+  -                     result = result[:i] + bytes([byte_val])*best + result[i+run_len:]
+  -                     changed = True
+  -                     break
+  -             i += run_len
+  -     return result
+  - ```
+  - 
+  - **Format-specific notes** (if format can be identified):
+  -   - **MP4/MOV**: Remove atoms/boxes one by one, preserve moov/mdat
+  -   - **AVI**: Remove chunks, preserve RIFF structure
+  -   - **MPEG-TS**: Remove packets (188-byte units), preserve PAT/PMT
+  -   - **H.264/H.265 bitstreams**: Remove NAL units, preserve SPS/PPS
+  -   - **Image files (PNG, JPEG, GIF)**: Remove chunks/segments, preserve headers
+  -   - **Unknown/raw codec data**: Use the binary search strategies above
+  - 
+  - **Common FFmpeg fuzzer bugs patterns**:
+  -   - Buffer overflows in codec decoders (triggered by specific byte sequences)
+  -   - Out-of-bounds reads in demuxers (triggered by malformed headers)
+  -   - Integer overflows in size calculations
+  -   - Crashes on truncated/incomplete frames
+  - 
+  - **Performance tips**:
+  -   - FFmpeg test execution is FAST (usually <100ms), so test count is not the bottleneck
+  -   - Binary search is O(log N), much faster than linear scan
+  -   - Stage 0 (binary search min length) typically needs only 10-15 tests for 6KB file
+  -   - Prioritize EFFECTIVE reduction over test count minimization
+  - 
+  - **Implementation critical points (必读):**:
+  -   - ⭐⭐⭐ MUST implement Stage 0 (aggressive prefix reduction) - 直接尝试删除50%
+  -   - ⭐⭐⭐ MUST implement Stage 4 (aggressive zero-fill) - 尝试将50%数据置零
+  -   - These two stages are NON-NEGOTIABLE - 这是实现50%目标的关键
+  -   - Stage 0应该首先尝试 test_fn(data[:len(data)//2]) - 一次测试就能知道能否删除一半
+  -   - Stage 4应该首先尝试 test_fn(data[:mid] + bytes(len(data)-mid)) - 一次测试就能知道能否零填充一半
+  -   - Handle edge cases: empty input, single-byte input
+  -   - For each stage, report progress: 'Stage N: X → Y bytes (Z% reduction)'
+  -   - 每个stage结束后必须输出压缩率，如果某个stage没有效果要明确说明
+  - 
+  - **Expected results (REALISTIC targets)**:
+  -   - Files with trailing garbage: 50-70% compression (via Stage 0)
+  -   - Files with long repetitive runs: 20-40% compression (via Stage 1)
+  -   - Well-structured containers: 40-80% compression (combined)
+  -   - Already-minimal fuzzer inputs: 10-30% compression
+  -   - TARGET: At least 50% compression for typical fuzzer inputs
+
+## Requirements:
+1. **Format awareness**: Design stages based on the ACTUAL file analysis provided above
+2. **Multi-stage strategy**: Implement multiple reduction stages from coarse to fine
+3. **Generality**: Must work for all ffmpeg test cases, not just this specific one
+4. **Validation**: Use test_fn(candidate) to check if bug still reproduces
+5. **Progress output**: 
+   - Use [ReduceFix] prefix for all output
+   - Show stage start/completion
+   - Report progress every 10-50 tests
+   - Final summary: tests, time, reduction rate
+6. **Function signature**: 
+   ```python
+   def generated_reduce(input_bytes: bytes, test_fn, verbose: bool = True) -> bytes:
+   ```
+
+## Critical Python syntax rules:
+⚠️  **f-string limitation**: CANNOT use backslash inside curly brace expressions
+- WRONG: Putting string join with newline directly inside f-string braces
+- CORRECT: First calculate joined = lines_join(lines), then use joined in f-string
+- Always calculate string operations BEFORE f-string formatting, not inside braces
+
+**Critical thinking required**: 
+- Don't just implement generic block/line reduction
+- Actually parse or pattern-match the format structure
+- Design stages that respect the format's natural boundaries
+- Balance between format correctness and aggressive reduction
+
+Output ONLY the complete Python code block. No explanations or markdown outside the code.

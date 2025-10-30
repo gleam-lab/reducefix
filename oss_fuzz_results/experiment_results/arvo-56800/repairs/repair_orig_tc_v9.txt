@@ -1,0 +1,48 @@
+### 为什么这个输入会触发崩溃
+
+从崩溃日志来看，问题出在 `BEInt<unsigned short, 2>::operator unsigned short()` 这一行，具体错误是全局缓冲区溢出（global-buffer-overflow）。这意味着程序试图读取或写入了一个超出其分配范围的内存地址。
+
+在崩溃栈中，`OT::gvar::get_offset(unsigned int, unsigned int)` 和 `OT::gvar::get_glyph_var_data_bytes(hb_blob_t*, unsigned int, unsigned int)` 等函数被调用，这些函数涉及到处理字体变位数据（GVAR table），并且最终导致了内存访问越界。
+
+### 修复策略
+
+为了修复这个问题，我们需要确保在处理 GVAR 表时不会发生内存越界访问。这可以通过以下步骤实现：
+
+1. **验证输入数据的有效性**：在解析和使用 GVAR 表之前，确保输入数据是有效的。
+2. **边界检查**：在读取和写入内存时进行边界检查，确保不会超出有效范围。
+3. **使用更安全的数据结构**：考虑使用更安全的数据结构来避免缓冲区溢出。
+
+### 具体的代码修复建议
+
+以下是具体的代码修复建议：
+
+1. **验证输入数据的有效性**：
+   在解析 GVAR 表之前，添加对输入数据的验证，确保其长度符合预期。
+
+   ```cpp
+   if (blob->length < expected_length) {
+       return HB_ERROR_INVALID_DATA;
+   }
+   ```
+
+2. **边界检查**：
+   在读取和写入内存时进行边界检查，确保不会超出有效范围。
+
+   ```cpp
+   if (offset + sizeof(uint16_t) > blob->length) {
+       return HB_ERROR_INVALID_DATA;
+   }
+   uint16_t value = *reinterpret_cast<const uint16_t*>(blob->data + offset);
+   ```
+
+3. **使用更安全的数据结构**：
+   考虑使用更安全的数据结构来避免缓冲区溢出，例如使用 `std::vector` 或 `std::array`。
+
+   ```cpp
+   std::vector<uint16_t> buffer(blob->data, blob->data + blob->length);
+   for (size_t i = 0; i < buffer.size(); ++i) {
+       // 处理每个元素
+   }
+   ```
+
+通过以上修复措施，可以有效地防止内存越界访问，从而避免崩溃问题的发生。

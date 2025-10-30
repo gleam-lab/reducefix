@@ -1,0 +1,42 @@
+import itertools as it
+import heapq as hq
+import sys
+
+def main():
+    def around(x):
+        h, w = divmod(x, W)
+        return it.compress(
+            (x-1, x+1, x+W, x-W),
+            (w>0, w<W-1, h<H-1, h>0),
+        )
+    
+    H, W, Y = map(int, sys.stdin.readline().split())
+    SQ = H*W
+
+    A = list(map(int, sys.stdin.read().replace('\n', ' ').split()))
+
+    unmarked = [True]*SQ
+    left = SQ
+
+    heap = []
+    for i in it.chain(range(W), range(SQ-W, SQ), range(W, SQ-W, W), range(2*W-1, SQ-W, W)):
+        unmarked[i] = False
+        left -= 1
+        heap.append((A[i], i))
+    hq.heapify(heap)
+
+    while left:
+        t, i = hq.heappop(heap)
+        assert A[i] == t
+        for j in around(i):
+            if unmarked[j]:
+                unmarked[j] = False
+                left -= 1
+                if A[j] < t:
+                    A[j] = t
+                hq.heappush(heap, (A[j], j))
+    
+    cnt = [0]*(10**5+1)
+    cnt[0] = SQ
+    for a in A: cnt[a] -= 1
+    print(*it.islice(it.accumulate(cnt), 1, Y+1), sep = '\n')

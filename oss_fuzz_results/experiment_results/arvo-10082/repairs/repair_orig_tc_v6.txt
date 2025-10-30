@@ -1,0 +1,68 @@
+ ### 1. 为什么这个输入会触发崩溃
+
+根据崩溃信息，崩溃发生在 `BEInt<unsigned short, 2>::operator unsigned short()` 函数中。具体来说，崩溃的原因是栈上的使用后返回（stack-use-after-return），即在函数返回后仍然尝试读取或写入该栈帧中的内存。
+
+从堆栈跟踪来看，崩溃发生在以下调用链中：
+
+```
+BEInt<unsigned short, 2>::operator unsigned short()
+OT::CoverageFormat2::Iter::more()
+OT::SingleSubstFormat2::closure(OT::hb_closure_context_t*)
+_hb_void_t const* OT::hb_closure_context_t::dispatch<OT::SingleSubstFormat2>(OT::SingleSubstFormat2 const&)
+OT::hb_closure_context_t::return_t OT::SingleSubst::dispatch<OT::hb_closure_context_t>(OT::hb_closure_context_t*) const
+```
+
+崩溃发生在 `BEInt<unsigned short, 2>::operator unsigned short()` 中，该函数试图访问一个已经超出作用域的变量。
+
+### 2. 修复策略
+
+为了修复这个问题，我们需要确保在函数返回后不再访问已释放的资源。这通常涉及到检查对象的有效性，并在必要时进行边界检查。
+
+### 3. 具体的代码修复建议
+
+假设 `BEInt` 类有一个构造函数来初始化其成员变量，并且有一个析构函数来清理资源。我们可以添加一些额外的检查来确保在函数返回后不会访问无效的对象。
+
+#### 修改 `BEInt` 类
+
+```cpp
+template <typename T, int N>
+class BEInt {
+public:
+    BEInt(const T& value) : data(value), valid(true) {}
+
+    ~BEInt() {
+        valid = false;
+    }
+
+    operator T() const {
+        if (!valid) {
+            // Handle error or return a default value
+            throw std::runtime_error("Accessing invalid BEInt object");
+        }
+        return data;
+    }
+
+private:
+    T data;
+    bool valid;
+};
+```
+
+在这个修改后的版本中，我们添加了一个 `valid` 标志来跟踪对象的有效性。在 `operator unsigned short()` 中，我们检查 `valid` 标志，如果对象无效，则抛出一个异常。
+
+#### 修改 `OT::CoverageFormat2::Iter::more()` 函数
+
+在 `OT::CoverageFormat2::Iter::more()` 函数中，确保在返回前检查 `BEInt` 对象的有效性。
+
+```cpp
+bool OT::CoverageFormat2::Iter::more() const {
+    if (!current.isValid()) {
+        // Handle error or return false
+        return false;
+    }
+    // Continue processing
+    return true;
+}
+```
+
+通过这些修改，我们可以确保在函数返回后不会访问已释放的资源，从而避免栈使用后返回的问题。

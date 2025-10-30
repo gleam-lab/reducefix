@@ -1,0 +1,71 @@
+ ### 1. 为什么这个输入会触发崩溃
+
+根据崩溃日志和栈跟踪信息，我们可以推断出崩溃的原因是由于内存访问错误导致的。具体来说：
+
+- 在 `__asan_memset` 函数中发生了段错误（segmentation fault），这通常意味着程序试图访问一个无效的内存地址。
+- 这个错误发生在 `hb_vector_t<CFF::parsed_cs_op_t>::resize` 函数中，该函数在尝试调整向量大小时调用了 `__asan_memset`。
+- 问题可能出现在 `hb_vector_t<CFF::parsed_cs_op_t>::push` 函数中，该函数在尝试向向量中添加元素时调用了 `resize`。
+
+### 2. 修复策略
+
+为了修复这个问题，我们需要确保在调整向量大小时不会超出合法的内存范围。具体步骤包括：
+
+- 检查向量的当前大小和容量，确保在调整大小时不会导致越界。
+- 确保在分配新内存时，有足够的空间来存储新的元素。
+- 添加边界检查，以防止对无效内存地址进行写操作。
+
+### 3. 具体的代码修复建议
+
+以下是具体的代码修复建议：
+
+#### 修改 `hb_vector_t<CFF::parsed_cs_op_t>::resize` 函数
+
+```cpp
+template <typename T>
+void hb_vector_t<T>::resize(int new_size) {
+    if (new_size <= capacity()) {
+        return;
+    }
+
+    // 计算新的容量
+    int new_capacity = std::max(capacity() * 2, new_size);
+
+    // 分配新的内存
+    T* new_data = static_cast<T*>(malloc(new_capacity * sizeof(T)));
+    if (!new_data) {
+        throw std::bad_alloc();
+    }
+
+    // 复制现有数据到新内存
+    for (int i = 0; i < size(); ++i) {
+        new (&new_data[i]) T(data_[i]); // 使用 placement new 初始化新对象
+    }
+
+    // 销毁旧数据
+    for (int i = 0; i < size(); ++i) {
+        data_[i].~T(); // 显式调用析构函数
+    }
+
+    // 释放旧内存
+    free(data_);
+
+    // 更新数据指针和容量
+    data_ = new_data;
+    capacity_ = new_capacity;
+}
+```
+
+#### 修改 `hb_vector_t<CFF::parsed_cs_op_t>::push` 函数
+
+```cpp
+template <typename T>
+void hb_vector_t<T>::push(const T& value) {
+    if (size() >= capacity()) {
+        resize(size() + 1);
+    }
+    new (&data_[size()]) T(value); // 使用 placement new 初始化新对象
+    size_++;
+}
+```
+
+通过这些修改，我们确保了在调整向量大小和添加元素时不会发生越界访问，从而避免了段错误。同时，使用 `placement new` 和显式调用析构函数可以确保对象的正确初始化和销毁。

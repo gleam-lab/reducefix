@@ -1,0 +1,70 @@
+=== LLM Response for orig_tc version 10 ===
+Model: qwen-plus
+Temperature: 1.0
+======================================================================
+
+Based on the crash details and code, this is a heap-use-after-free in `fz_draw_clip_image_mask`. The issue occurs when `pixmap` is accessed after being dropped in the `fz_always` block. The problem is that the `fz_var(pixmap)` macro indicates `pixmap` can be used across exception boundaries, but it's being used after `fz_drop_pixmap(ctx, pixmap)`.
+
+The fix is to ensure we don't access `pixmap` after it has been freed by checking if it's NULL before use in the debug dumps:
+
+```cpp
+### source/fitz/draw-device.c
+- start_line: 2023
+- end_line: 2041
+<<<<<<< SEARCH
+#ifdef DUMP_GROUP_BLENDS
+		dump_spaces(dev->top, "");
+		fz_dump_blend(ctx, "Creating imagemask: plotting ", pixmap);
+		fz_dump_blend(ctx, " onto ", state[1].mask);
+		if (state[1].shape)
+			fz_dump_blend(ctx, "/S=", state[1].shape);
+		if (state[1].group_alpha)
+			fz_dump_blend(ctx, "/GA=", state[1].group_alpha);
+#endif
+
+		fz_paint_image(ctx, state[1].mask, &bbox, state[1].shape, state[1].group_alpha, pixmap, local_ctm, 255, !(devp->hints & FZ_DONT_INTERPOLATE_IMAGES), 0);
+
+#ifdef DUMP_GROUP_BLENDS
+		fz_dump_blend(ctx, " to get ", state[1].mask);
+		if (state[1].shape)
+			fz_dump_blend(ctx, "/S=", state[1].shape);
+		if (state[1].group_alpha)
+			fz_dump_blend(ctx, "/GA=", state[1].group_alpha);
+		printf("\n");
+#endif
+=======
+#ifdef DUMP_GROUP_BLENDS
+		dump_spaces(dev->top, "");
+		if (pixmap) {
+			fz_dump_blend(ctx, "Creating imagemask: plotting ", pixmap);
+			fz_dump_blend(ctx, " onto ", state[1].mask);
+			if (state[1].shape)
+				fz_dump_blend(ctx, "/S=", state[1].shape);
+			if (state[1].group_alpha)
+				fz_dump_blend(ctx, "/GA=", state[1].group_alpha);
+		}
+#endif
+
+		if (pixmap)
+			fz_paint_image(ctx, state[1].mask, &bbox, state[1].shape, state[1].group_alpha, pixmap, local_ctm, 255, !(devp->hints & FZ_DONT_INTERPOLATE_IMAGES), 0);
+
+#ifdef DUMP_GROUP_BLENDS
+		if (pixmap && state[1].mask) {
+			fz_dump_blend(ctx, " to get ", state[1].mask);
+			if (state[1].shape)
+				fz_dump_blend(ctx, "/S=", state[1].shape);
+			if (state[1].group_alpha)
+				fz_dump_blend(ctx, "/GA=", state[1].group_alpha);
+			printf("\n");
+		}
+#endif
+>>>>>>> REPLACE
+```
+
+This fix:
+1. Adds NULL checks for `pixmap` before accessing it in debug output
+2. Only calls `fz_paint_image` if `pixmap` is valid
+3. Checks both `pixmap` and `state[1].mask` before final debug output
+4. Preserves all variable declarations and control flow
+5. Maintains proper fz_try/fz_always/fz_catch macro pairing
+6. Uses same indentation style as original code

@@ -1,0 +1,639 @@
+=== Prompt for 无测试用例 (no_tc) version 4 ===
+Case ID: arvo-20200
+Target: poppler
+Model: qwen-plus
+Temperature: 1.0
+Use SEARCH/REPLACE: True
+======================================================================
+
+We are currently solving the following crash issue:
+--- BEGIN ISSUE ---
+Crash in unknown
+
+### Crash Details
+- Type: Use-of-uninitialized-value
+- Function: unknown
+- Severity: Medium
+- Sanitizer: msan
+
+### Crash Stack Trace
+```
+BaseCryptStream::BaseCryptStream
+DecryptStream::DecryptStream
+Parser::getObj
+```
+
+### Crash Log
+
+--- END ISSUE ---
+
+
+🎯 **EXACT BUG LOCATION**:
+- File: `poppler/SecurityHandler.cc`, Lines 117-267
+
+Below are the source files that contain the bug:
+--- BEGIN FILES ---
+### poppler/SecurityHandler.cc
+**Function containing the bug** (lines 128-318):
+
+```cpp
+    userPassword = userPasswordA;
+  }
+
+  ~StandardAuthData() {
+    if (ownerPassword) {
+      delete ownerPassword;
+    }
+    if (userPassword) {
+      delete userPassword;
+    }
+  }
+
+  StandardAuthData(const StandardAuthData &) = delete;
+  StandardAuthData& operator=(const StandardAuthData &) = delete;
+
+  GooString *ownerPassword;
+  GooString *userPassword;
+};
+
+StandardSecurityHandler::StandardSecurityHandler(PDFDoc *docA,
+						 Object *encryptDictA):  // <-- ⚠️ BUG IS HERE (Line 148)
+  SecurityHandler(docA)  // <-- ⚠️ BUG IS HERE (Line 149)
+{  // <-- ⚠️ BUG IS HERE (Line 150)
+  ok = gFalse;  // <-- ⚠️ BUG IS HERE (Line 151)
+  fileID = nullptr;  // <-- ⚠️ BUG IS HERE (Line 152)
+  ownerKey = nullptr;  // <-- ⚠️ BUG IS HERE (Line 153)
+  userKey = nullptr;  // <-- ⚠️ BUG IS HERE (Line 154)
+  ownerEnc = nullptr;  // <-- ⚠️ BUG IS HERE (Line 155)
+  userEnc = nullptr;  // <-- ⚠️ BUG IS HERE (Line 156)
+  fileKeyLength = 0;  // <-- ⚠️ BUG IS HERE (Line 157)
+  // <-- ⚠️ BUG IS HERE (Line 158)
+  Object versionObj = encryptDictA->dictLookup("V");  // <-- ⚠️ BUG IS HERE (Line 159)
+  Object revisionObj = encryptDictA->dictLookup("R");  // <-- ⚠️ BUG IS HERE (Line 160)
+  Object lengthObj = encryptDictA->dictLookup("Length");  // <-- ⚠️ BUG IS HERE (Line 161)
+  Object ownerKeyObj = encryptDictA->dictLookup("O");  // <-- ⚠️ BUG IS HERE (Line 162)
+  Object userKeyObj = encryptDictA->dictLookup("U");  // <-- ⚠️ BUG IS HERE (Line 163)
+  Object ownerEncObj = encryptDictA->dictLookup("OE");  // <-- ⚠️ BUG IS HERE (Line 164)
+  Object userEncObj = encryptDictA->dictLookup("UE");  // <-- ⚠️ BUG IS HERE (Line 165)
+  Object permObj = encryptDictA->dictLookup("P");  // <-- ⚠️ BUG IS HERE (Line 166)
+  if (permObj.isInt64()) {  // <-- ⚠️ BUG IS HERE (Line 167)
+      unsigned int permUint = permObj.getInt64();  // <-- ⚠️ BUG IS HERE (Line 168)
+      int perms = permUint - UINT_MAX - 1;  // <-- ⚠️ BUG IS HERE (Line 169)
+      permObj = Object(perms);  // <-- ⚠️ BUG IS HERE (Line 170)
+  }  // <-- ⚠️ BUG IS HERE (Line 171)
+  Object fileIDObj = doc->getXRef()->getTrailerDict()->dictLookup("ID");  // <-- ⚠️ BUG IS HERE (Line 172)
+  if (versionObj.isInt() &&  // <-- ⚠️ BUG IS HERE (Line 173)
+      revisionObj.isInt() &&  // <-- ⚠️ BUG IS HERE (Line 174)
+      permObj.isInt() &&  // <-- ⚠️ BUG IS HERE (Line 175)
+      ownerKeyObj.isString() &&  // <-- ⚠️ BUG IS HERE (Line 176)
+      userKeyObj.isString()) {  // <-- ⚠️ BUG IS HERE (Line 177)
+    encVersion = versionObj.getInt();  // <-- ⚠️ BUG IS HERE (Line 178)
+    encRevision = revisionObj.getInt();  // <-- ⚠️ BUG IS HERE (Line 179)
+    if ((encRevision <= 4 &&  // <-- ⚠️ BUG IS HERE (Line 180)
+	 ownerKeyObj.getString()->getLength() == 32 &&  // <-- ⚠️ BUG IS HERE (Line 181)
+	 userKeyObj.getString()->getLength() == 32) ||  // <-- ⚠️ BUG IS HERE (Line 182)
+	((encRevision == 5 || encRevision == 6) &&  // <-- ⚠️ BUG IS HERE (Line 183)
+	 // the spec says 48 bytes, but Acrobat pads them out longer  // <-- ⚠️ BUG IS HERE (Line 184)
+	 ownerKeyObj.getString()->getLength() >= 48 &&  // <-- ⚠️ BUG IS HERE (Line 185)
+	 userKeyObj.getString()->getLength() >= 48 &&  // <-- ⚠️ BUG IS HERE (Line 186)
+	 ownerEncObj.isString() &&  // <-- ⚠️ BUG IS HERE (Line 187)
+	 ownerEncObj.getString()->getLength() == 32 &&  // <-- ⚠️ BUG IS HERE (Line 188)
+	 userEncObj.isString() &&  // <-- ⚠️ BUG IS HERE (Line 189)
+	 userEncObj.getString()->getLength() == 32)) {  // <-- ⚠️ BUG IS HERE (Line 190)
+      encAlgorithm = cryptRC4;  // <-- ⚠️ BUG IS HERE (Line 191)
+      // revision 2 forces a 40-bit key - some buggy PDF generators  // <-- ⚠️ BUG IS HERE (Line 192)
+      // set the Length value incorrectly  // <-- ⚠️ BUG IS HERE (Line 193)
+      if (encRevision == 2 || !lengthObj.isInt()) {  // <-- ⚠️ BUG IS HERE (Line 194)
+	fileKeyLength = 5;  // <-- ⚠️ BUG IS HERE (Line 195)
+      } else {  // <-- ⚠️ BUG IS HERE (Line 196)
+	fileKeyLength = lengthObj.getInt() / 8;  // <-- ⚠️ BUG IS HERE (Line 197)
+      }  // <-- ⚠️ BUG IS HERE (Line 198)
+      encryptMetadata = gTrue;  // <-- ⚠️ BUG IS HERE (Line 199)
+      //~ this currently only handles a subset of crypt filter functionality  // <-- ⚠️ BUG IS HERE (Line 200)
+      //~ (in particular, it ignores the EFF entry in encryptDictA, and  // <-- ⚠️ BUG IS HERE (Line 201)
+      //~ doesn't handle the case where StmF, StrF, and EFF are not all the  // <-- ⚠️ BUG IS HERE (Line 202)
+      //~ same)  // <-- ⚠️ BUG IS HERE (Line 203)
+      if ((encVersion == 4 || encVersion == 5) &&  // <-- ⚠️ BUG IS HERE (Line 204)
+	  (encRevision == 4 || encRevision == 5 || encRevision == 6)) {  // <-- ⚠️ BUG IS HERE (Line 205)
+	Object cryptFiltersObj = encryptDictA->dictLookup("CF");  // <-- ⚠️ BUG IS HERE (Line 206)
+	Object streamFilterObj = encryptDictA->dictLookup("StmF");  // <-- ⚠️ BUG IS HERE (Line 207)
+	Object stringFilterObj = encryptDictA->dictLookup("StrF");  // <-- ⚠️ BUG IS HERE (Line 208)
+	if (cryptFiltersObj.isDict() &&  // <-- ⚠️ BUG IS HERE (Line 209)
+	    streamFilterObj.isName() &&  // <-- ⚠️ BUG IS HERE (Line 210)
+	    stringFilterObj.isName() &&  // <-- ⚠️ BUG IS HERE (Line 211)
+	    !strcmp(streamFilterObj.getName(), stringFilterObj.getName())) {  // <-- ⚠️ BUG IS HERE (Line 212)
+	  if (!strcmp(streamFilterObj.getName(), "Identity")) {  // <-- ⚠️ BUG IS HERE (Line 213)
+	    // no encryption on streams or strings  // <-- ⚠️ BUG IS HERE (Line 214)
+	    encVersion = encRevision = -1;  // <-- ⚠️ BUG IS HERE (Line 215)
+	  } else {  // <-- ⚠️ BUG IS HERE (Line 216)
+	    Object cryptFilterObj = cryptFiltersObj.dictLookup(streamFilterObj.getName());  // <-- ⚠️ BUG IS HERE (Line 217)
+	    if (cryptFilterObj.isDict()) {  // <-- ⚠️ BUG IS HERE (Line 218)
+	      Object cfmObj = cryptFilterObj.dictLookup("CFM");  // <-- ⚠️ BUG IS HERE (Line 219)
+	      if (cfmObj.isName("V2")) {  // <-- ⚠️ BUG IS HERE (Line 220)
+		encVersion = 2;  // <-- ⚠️ BUG IS HERE (Line 221)
+		encRevision = 3;  // <-- ⚠️ BUG IS HERE (Line 222)
+		Object cfLengthObj = cryptFilterObj.dictLookup("Length");  // <-- ⚠️ BUG IS HERE (Line 223)
+		if (cfLengthObj.isInt()) {  // <-- ⚠️ BUG IS HERE (Line 224)
+		  //~ according to the spec, this should be cfLengthObj / 8  // <-- ⚠️ BUG IS HERE (Line 225)
+		  fileKeyLength = cfLengthObj.getInt();  // <-- ⚠️ BUG IS HERE (Line 226)
+		}  // <-- ⚠️ BUG IS HERE (Line 227)
+	      } else if (cfmObj.isName("AESV2")) {  // <-- ⚠️ BUG IS HERE (Line 228)
+		encVersion = 2;  // <-- ⚠️ BUG IS HERE (Line 229)
+		encRevision = 3;  // <-- ⚠️ BUG IS HERE (Line 230)
+		encAlgorithm = cryptAES;  // <-- ⚠️ BUG IS HERE (Line 231)
+		Object cfLengthObj = cryptFilterObj.dictLookup("Length");  // <-- ⚠️ BUG IS HERE (Line 232)
+		if (cfLengthObj.isInt()) {  // <-- ⚠️ BUG IS HERE (Line 233)
+		  //~ according to the spec, this should be cfLengthObj / 8  // <-- ⚠️ BUG IS HERE (Line 234)
+		  fileKeyLength = cfLengthObj.getInt();  // <-- ⚠️ BUG IS HERE (Line 235)
+		}  // <-- ⚠️ BUG IS HERE (Line 236)
+	      } else if (cfmObj.isName("AESV3")) {  // <-- ⚠️ BUG IS HERE (Line 237)
+		encVersion = 5;  // <-- ⚠️ BUG IS HERE (Line 238)
+		// let encRevision be 5 or 6  // <-- ⚠️ BUG IS HERE (Line 239)
+		encAlgorithm = cryptAES256;  // <-- ⚠️ BUG IS HERE (Line 240)
+		Object cfLengthObj = cryptFilterObj.dictLookup("Length");  // <-- ⚠️ BUG IS HERE (Line 241)
+		if (cfLengthObj.isInt()) {  // <-- ⚠️ BUG IS HERE (Line 242)
+		  //~ according to the spec, this should be cfLengthObj / 8  // <-- ⚠️ BUG IS HERE (Line 243)
+		  fileKeyLength = cfLengthObj.getInt();  // <-- ⚠️ BUG IS HERE (Line 244)
+		}  // <-- ⚠️ BUG IS HERE (Line 245)
+	      }  // <-- ⚠️ BUG IS HERE (Line 246)
+	    }  // <-- ⚠️ BUG IS HERE (Line 247)
+	  }  // <-- ⚠️ BUG IS HERE (Line 248)
+	}  // <-- ⚠️ BUG IS HERE (Line 249)
+	Object encryptMetadataObj = encryptDictA->dictLookup("EncryptMetadata");  // <-- ⚠️ BUG IS HERE (Line 250)
+	if (encryptMetadataObj.isBool()) {  // <-- ⚠️ BUG IS HERE (Line 251)
+	  encryptMetadata = encryptMetadataObj.getBool();  // <-- ⚠️ BUG IS HERE (Line 252)
+	}  // <-- ⚠️ BUG IS HERE (Line 253)
+      }  // <-- ⚠️ BUG IS HERE (Line 254)
+      permFlags = permObj.getInt();  // <-- ⚠️ BUG IS HERE (Line 255)
+      ownerKey = ownerKeyObj.getString()->copy();  // <-- ⚠️ BUG IS HERE (Line 256)
+      userKey = userKeyObj.getString()->copy();  // <-- ⚠️ BUG IS HERE (Line 257)
+      if (encVersion >= 1 && encVersion <= 2 &&  // <-- ⚠️ BUG IS HERE (Line 258)
+	  encRevision >= 2 && encRevision <= 3) {  // <-- ⚠️ BUG IS HERE (Line 259)
+	if (fileIDObj.isArray()) {  // <-- ⚠️ BUG IS HERE (Line 260)
+	  Object fileIDObj1 = fileIDObj.arrayGet(0);  // <-- ⚠️ BUG IS HERE (Line 261)
+	  if (fileIDObj1.isString()) {  // <-- ⚠️ BUG IS HERE (Line 262)
+	    fileID = fileIDObj1.getString()->copy();  // <-- ⚠️ BUG IS HERE (Line 263)
+	  } else {  // <-- ⚠️ BUG IS HERE (Line 264)
+	    fileID = new GooString();  // <-- ⚠️ BUG IS HERE (Line 265)
+	  }  // <-- ⚠️ BUG IS HERE (Line 266)
+	} else {  // <-- ⚠️ BUG IS HERE (Line 267)
+	  fileID = new GooString();  // <-- ⚠️ BUG IS HERE (Line 268)
+	}  // <-- ⚠️ BUG IS HERE (Line 269)
+	if (fileKeyLength > 16 || fileKeyLength < 0) {  // <-- ⚠️ BUG IS HERE (Line 270)
+	  fileKeyLength = 16;  // <-- ⚠️ BUG IS HERE (Line 271)
+	}  // <-- ⚠️ BUG IS HERE (Line 272)
+	ok = gTrue;  // <-- ⚠️ BUG IS HERE (Line 273)
+      } else if (encVersion == 5 && (encRevision == 5 || encRevision == 6)) {  // <-- ⚠️ BUG IS HERE (Line 274)
+	fileID = new GooString(); // unused for V=R=5  // <-- ⚠️ BUG IS HERE (Line 275)
+	if (ownerEncObj.isString() && userEncObj.isString()) {  // <-- ⚠️ BUG IS HERE (Line 276)
+	  ownerEnc = ownerEncObj.getString()->copy();  // <-- ⚠️ BUG IS HERE (Line 277)
+	  userEnc = userEncObj.getString()->copy();  // <-- ⚠️ BUG IS HERE (Line 278)
+	  if (fileKeyLength > 32 || fileKeyLength < 0) {  // <-- ⚠️ BUG IS HERE (Line 279)
+	    fileKeyLength = 32;  // <-- ⚠️ BUG IS HERE (Line 280)
+	  }  // <-- ⚠️ BUG IS HERE (Line 281)
+	  ok = gTrue;  // <-- ⚠️ BUG IS HERE (Line 282)
+	} else {  // <-- ⚠️ BUG IS HERE (Line 283)
+	  error(errSyntaxError, -1, "Weird encryption owner/user info");  // <-- ⚠️ BUG IS HERE (Line 284)
+	}  // <-- ⚠️ BUG IS HERE (Line 285)
+      } else if (!(encVersion == -1 && encRevision == -1)) {  // <-- ⚠️ BUG IS HERE (Line 286)
+	error(errUnimplemented, -1,  // <-- ⚠️ BUG IS HERE (Line 287)
+	      "Unsupported version/revision ({0:d}/{1:d}) of Standard security handler",  // <-- ⚠️ BUG IS HERE (Line 288)
+	      encVersion, encRevision);  // <-- ⚠️ BUG IS HERE (Line 289)
+      }  // <-- ⚠️ BUG IS HERE (Line 290)
+    } else {  // <-- ⚠️ BUG IS HERE (Line 291)
+      error(errSyntaxError, -1, "Invalid encryption key length");  // <-- ⚠️ BUG IS HERE (Line 292)
+    }  // <-- ⚠️ BUG IS HERE (Line 293)
+  } else {  // <-- ⚠️ BUG IS HERE (Line 294)
+    error(errSyntaxError, -1, "Weird encryption info");  // <-- ⚠️ BUG IS HERE (Line 295)
+  }  // <-- ⚠️ BUG IS HERE (Line 296)
+}  // <-- ⚠️ BUG IS HERE (Line 297)
+  // <-- ⚠️ BUG IS HERE (Line 298)
+StandardSecurityHandler::~StandardSecurityHandler() {
+  if (fileID) {
+    delete fileID;
+  }
+  if (ownerKey) {
+    delete ownerKey;
+  }
+  if (userKey) {
+    delete userKey;
+  }
+  if (ownerEnc) {
+    delete ownerEnc;
+  }
+  if (userEnc) {
+    delete userEnc;
+  }
+}
+
+GBool StandardSecurityHandler::isUnencrypted() {
+  if (!ok) {
+```
+
+**🎯 Bug Location** (lines 117-267):
+```cpp
+						 Object *encryptDictA):
+  SecurityHandler(docA)
+{
+  ok = gFalse;
+  fileID = nullptr;
+  ownerKey = nullptr;
+  userKey = nullptr;
+  ownerEnc = nullptr;
+  userEnc = nullptr;
+  fileKeyLength = 0;
+
+  Object versionObj = encryptDictA->dictLookup("V");
+  Object revisionObj = encryptDictA->dictLookup("R");
+  Object lengthObj = encryptDictA->dictLookup("Length");
+  Object ownerKeyObj = encryptDictA->dictLookup("O");
+  Object userKeyObj = encryptDictA->dictLookup("U");
+  Object ownerEncObj = encryptDictA->dictLookup("OE");
+  Object userEncObj = encryptDictA->dictLookup("UE");
+  Object permObj = encryptDictA->dictLookup("P");
+  if (permObj.isInt64()) {
+      unsigned int permUint = permObj.getInt64();
+      int perms = permUint - UINT_MAX - 1;
+      permObj = Object(perms);
+  }
+  Object fileIDObj = doc->getXRef()->getTrailerDict()->dictLookup("ID");
+  if (versionObj.isInt() &&
+      revisionObj.isInt() &&
+      permObj.isInt() &&
+      ownerKeyObj.isString() &&
+      userKeyObj.isString()) {
+    encVersion = versionObj.getInt();
+    encRevision = revisionObj.getInt();
+    if ((encRevision <= 4 &&
+	 ownerKeyObj.getString()->getLength() == 32 &&
+	 userKeyObj.getString()->getLength() == 32) ||
+	((encRevision == 5 || encRevision == 6) &&
+	 // the spec says 48 bytes, but Acrobat pads them out longer
+	 ownerKeyObj.getString()->getLength() >= 48 &&
+	 userKeyObj.getString()->getLength() >= 48 &&
+	 ownerEncObj.isString() &&
+	 ownerEncObj.getString()->getLength() == 32 &&
+	 userEncObj.isString() &&
+	 userEncObj.getString()->getLength() == 32)) {
+      encAlgorithm = cryptRC4;
+      // revision 2 forces a 40-bit key - some buggy PDF generators
+      // set the Length value incorrectly
+      if (encRevision == 2 || !lengthObj.isInt()) {
+	fileKeyLength = 5;
+      } else {
+	fileKeyLength = lengthObj.getInt() / 8;
+      }
+      encryptMetadata = gTrue;
+      //~ this currently only handles a subset of crypt filter functionality
+      //~ (in particular, it ignores the EFF entry in encryptDictA, and
+      //~ doesn't handle the case where StmF, StrF, and EFF are not all the
+      //~ same)
+      if ((encVersion == 4 || encVersion == 5) &&
+	  (encRevision == 4 || encRevision == 5 || encRevision == 6)) {
+	Object cryptFiltersObj = encryptDictA->dictLookup("CF");
+	Object streamFilterObj = encryptDictA->dictLookup("StmF");
+	Object stringFilterObj = encryptDictA->dictLookup("StrF");
+	if (cryptFiltersObj.isDict() &&
+	    streamFilterObj.isName() &&
+	    stringFilterObj.isName() &&
+	    !strcmp(streamFilterObj.getName(), stringFilterObj.getName())) {
+	  if (!strcmp(streamFilterObj.getName(), "Identity")) {
+	    // no encryption on streams or strings
+	    encVersion = encRevision = -1;
+	  } else {
+	    Object cryptFilterObj = cryptFiltersObj.dictLookup(streamFilterObj.getName());
+	    if (cryptFilterObj.isDict()) {
+	      Object cfmObj = cryptFilterObj.dictLookup("CFM");
+	      if (cfmObj.isName("V2")) {
+		encVersion = 2;
+		encRevision = 3;
+		Object cfLengthObj = cryptFilterObj.dictLookup("Length");
+		if (cfLengthObj.isInt()) {
+		  //~ according to the spec, this should be cfLengthObj / 8
+		  fileKeyLength = cfLengthObj.getInt();
+		}
+	      } else if (cfmObj.isName("AESV2")) {
+		encVersion = 2;
+		encRevision = 3;
+		encAlgorithm = cryptAES;
+		Object cfLengthObj = cryptFilterObj.dictLookup("Length");
+		if (cfLengthObj.isInt()) {
+		  //~ according to the spec, this should be cfLengthObj / 8
+		  fileKeyLength = cfLengthObj.getInt();
+		}
+	      } else if (cfmObj.isName("AESV3")) {
+		encVersion = 5;
+		// let encRevision be 5 or 6
+		encAlgorithm = cryptAES256;
+		Object cfLengthObj = cryptFilterObj.dictLookup("Length");
+		if (cfLengthObj.isInt()) {
+		  //~ according to the spec, this should be cfLengthObj / 8
+		  fileKeyLength = cfLengthObj.getInt();
+		}
+	      }
+	    }
+	  }
+	}
+	Object encryptMetadataObj = encryptDictA->dictLookup("EncryptMetadata");
+	if (encryptMetadataObj.isBool()) {
+	  encryptMetadata = encryptMetadataObj.getBool();
+	}
+      }
+      permFlags = permObj.getInt();
+      ownerKey = ownerKeyObj.getString()->copy();
+      userKey = userKeyObj.getString()->copy();
+      if (encVersion >= 1 && encVersion <= 2 &&
+	  encRevision >= 2 && encRevision <= 3) {
+	if (fileIDObj.isArray()) {
+	  Object fileIDObj1 = fileIDObj.arrayGet(0);
+	  if (fileIDObj1.isString()) {
+	    fileID = fileIDObj1.getString()->copy();
+	  } else {
+	    fileID = new GooString();
+	  }
+	} else {
+	  fileID = new GooString();
+	}
+	if (fileKeyLength > 16 || fileKeyLength < 0) {
+	  fileKeyLength = 16;
+	}
+	ok = gTrue;
+      } else if (encVersion == 5 && (encRevision == 5 || encRevision == 6)) {
+	fileID = new GooString(); // unused for V=R=5
+	if (ownerEncObj.isString() && userEncObj.isString()) {
+	  ownerEnc = ownerEncObj.getString()->copy();
+	  userEnc = userEncObj.getString()->copy();
+	  if (fileKeyLength > 32 || fileKeyLength < 0) {
+	    fileKeyLength = 32;
+	  }
+	  ok = gTrue;
+	} else {
+	  error(errSyntaxError, -1, "Weird encryption owner/user info");
+	}
+      } else if (!(encVersion == -1 && encRevision == -1)) {
+	error(errUnimplemented, -1,
+	      "Unsupported version/revision ({0:d}/{1:d}) of Standard security handler",
+	      encVersion, encRevision);
+      }
+    } else {
+      error(errSyntaxError, -1, "Invalid encryption key length");
+    }
+  } else {
+    error(errSyntaxError, -1, "Weird encryption info");
+  }
+}
+
+```
+
+**⚠️ IMPORTANT**: When generating your SEARCH/REPLACE edit:
+- The shown function has 191 lines total
+- Bug is at lines 117-267
+- Variables declared before the bug MUST NOT be removed (they may be used after)
+- Check for paired macros (fz_try/always/catch, do/while) - keep them balanced
+- Only edit the MINIMAL lines needed to fix the bug
+
+--- END FILES ---
+
+### Buggy Code Snippet
+- **File**: `poppler/SecurityHandler.cc`, **Lines**: 117-267
+
+```cpp
+// File: poppler/SecurityHandler.cc (lines 117-267)
+// This code needs to be fixed:
+StandardSecurityHandler::StandardSecurityHandler(PDFDoc *docA,
+						 Object *encryptDictA):
+  SecurityHandler(docA)
+{
+  ok = false;
+  fileID = nullptr;
+  ownerKey = nullptr;
+  userKey = nullptr;
+  ownerEnc = nullptr;
+  userEnc = nullptr;
+  fileKeyLength = 0;
+
+  Object versionObj = encryptDictA->dictLookup("V");
+  Object revisionObj = encryptDictA->dictLookup("R");
+  Object lengthObj = encryptDictA->dictLookup("Length");
+  Object ownerKeyObj = encryptDictA->dictLookup("O");
+  Object userKeyObj = encryptDictA->dictLookup("U");
+  Object ownerEncObj = encryptDictA->dictLookup("OE");
+  Object userEncObj = encryptDictA->dictLookup("UE");
+  Object permObj = encryptDictA->dictLookup("P");
+  if (permObj.isInt64()) {
+      unsigned int permUint = permObj.getInt64();
+      int perms = permUint - UINT_MAX - 1;
+      permObj = Object(perms);
+  }
+  Object fileIDObj = doc->getXRef()->getTrailerDict()->dictLookup("ID");
+  if (versionObj.isInt() &&
+      revisionObj.isInt() &&
+      permObj.isInt() &&
+      ownerKeyObj.isString() &&
+      userKeyObj.isString()) {
+    encVersion = versionObj.getInt();
+    encRevision = revisionObj.getInt();
+    if ((encRevision <= 4 &&
+	 ownerKeyObj.getString()->getLength() == 32 &&
+	 userKeyObj.getString()->getLength() == 32) ||
+	((encRevision == 5 || encRevision == 6) &&
+	 // the spec says 48 bytes, but Acrobat pads them out longer
+	 ownerKeyObj.getString()->getLength() >= 48 &&
+	 userKeyObj.getString()->getLength() >= 48 &&
+	 ownerEncObj.isString() &&
+	 ownerEncObj.getString()->getLength() == 32 &&
+	 userEncObj.isString() &&
+	 userEncObj.getString()->getLength() == 32)) {
+      encAlgorithm = cryptRC4;
+      // revision 2 forces a 40-bit key - some buggy PDF generators
+      // set the Length value incorrectly
+      if (encRevision == 2 || !lengthObj.isInt()) {
+	fileKeyLength = 5;
+      } else {
+	fileKeyLength = lengthObj.getInt() / 8;
+      }
+      encryptMetadata = true;
+      //~ this currently only handles a subset of crypt filter functionality
+      //~ (in particular, it ignores the EFF entry in encryptDictA, and
+      //~ doesn't handle the case where StmF, StrF, and EFF are not all the
+      //~ same)
+      if ((encVersion == 4 || encVersion == 5) &&
+	  (encRevision == 4 || encRevision == 5 || encRevision == 6)) {
+	Object cryptFiltersObj = encryptDictA->dictLookup("CF");
+	Object streamFilterObj = encryptDictA->dictLookup("StmF");
+	Object stringFilterObj = encryptDictA->dictLookup("StrF");
+	if (cryptFiltersObj.isDict() &&
+	    streamFilterObj.isName() &&
+	    stringFilterObj.isName() &&
+	    !strcmp(streamFilterObj.getName(), stringFilterObj.getName())) {
+	  if (!strcmp(streamFilterObj.getName(), "Identity")) {
+	    // no encryption on streams or strings
+	    encVersion = encRevision = -1;
+	  } else {
+	    Object cryptFilterObj = cryptFiltersObj.dictLookup(streamFilterObj.getName());
+	    if (cryptFilterObj.isDict()) {
+	      Object cfmObj = cryptFilterObj.dictLookup("CFM");
+	      if (cfmObj.isName("V2")) {
+		encVersion = 2;
+		encRevision = 3;
+		Object cfLengthObj = cryptFilterObj.dictLookup("Length");
+		if (cfLengthObj.isInt()) {
+		  //~ according to the spec, this should be cfLengthObj / 8
+		  fileKeyLength = cfLengthObj.getInt();
+		}
+	      } else if (cfmObj.isName("AESV2")) {
+		encVersion = 2;
+		encRevision = 3;
+		encAlgorithm = cryptAES;
+		Object cfLengthObj = cryptFilterObj.dictLookup("Length");
+		if (cfLengthObj.isInt()) {
+		  //~ according to the spec, this should be cfLengthObj / 8
+		  fileKeyLength = cfLengthObj.getInt();
+		}
+	      } else if (cfmObj.isName("AESV3")) {
+		encVersion = 5;
+		// let encRevision be 5 or 6
+		encAlgorithm = cryptAES256;
+		Object cfLengthObj = cryptFilterObj.dictLookup("Length");
+		if (cfLengthObj.isInt()) {
+		  //~ according to the spec, this should be cfLengthObj / 8
+		  fileKeyLength = cfLengthObj.getInt();
+		}
+	      }
+	    }
+	  }
+	}
+	Object encryptMetadataObj = encryptDictA->dictLookup("EncryptMetadata");
+	if (encryptMetadataObj.isBool()) {
+	  encryptMetadata = encryptMetadataObj.getBool();
+	}
+      }
+      permFlags = permObj.getInt();
+      ownerKey = ownerKeyObj.getString()->copy();
+      userKey = userKeyObj.getString()->copy();
+      if (encVersion >= 1 && encVersion <= 2 &&
+	  encRevision >= 2 && encRevision <= 3) {
+	if (fileIDObj.isArray()) {
+	  Object fileIDObj1 = fileIDObj.arrayGet(0);
+	  if (fileIDObj1.isString()) {
+	    fileID = fileIDObj1.getString()->copy();
+	  } else {
+	    fileID = new GooString();
+	  }
+	} else {
+	  fileID = new GooString();
+	}
+	if (fileKeyLength > 16 || fileKeyLength < 0) {
+	  fileKeyLength = 16;
+	}
+	ok = true;
+      } else if (encVersion == 5 && (encRevision == 5 || encRevision == 6)) {
+	fileID = new GooString(); // unused for V=R=5
+	if (ownerEncObj.isString() && userEncObj.isString()) {
+	  ownerEnc = ownerEncObj.getString()->copy();
+	  userEnc = userEncObj.getString()->copy();
+	  if (fileKeyLength > 32 || fileKeyLength < 0) {
+	    fileKeyLength = 32;
+	  }
+	  ok = true;
+	} else {
+	  error(errSyntaxError, -1, "Weird encryption owner/user info");
+	}
+      } else if (!(encVersion == -1 && encRevision == -1)) {
+	error(errUnimplemented, -1,
+	      "Unsupported version/revision ({0:d}/{1:d}) of Standard security handler",
+	      encVersion, encRevision);
+      }
+    } else {
+      error(errSyntaxError, -1, "Invalid encryption key length");
+    }
+  } else {
+    error(errSyntaxError, -1, "Weird encryption info");
+  }
+}
+```
+
+### Your Task
+Analyze the crash and generate a patch to fix the bug.
+
+**Instructions**:
+1. Identify the root cause based on crash information and code
+2. Generate a minimal fix targeting the buggy lines
+3. Ensure the fix handles edge cases properly
+4. Do not over-engineer - focus on the specific issue
+
+### Output Format
+Please first localize the bug, then generate *SEARCH/REPLACE* edits to fix the issue.
+
+Every *SEARCH/REPLACE* edit must use this format:
+1. The file path wrapped in ### (e.g., ### src/file.cpp)
+2. The start and end line numbers (- start_line: N, - end_line: M)
+3. The start of search block: <<<<<<< SEARCH
+4. A contiguous chunk of lines to search for in the existing source code
+5. The dividing line: =======
+6. The lines to replace into the source code
+7. The end of the replace block: >>>>>>> REPLACE
+
+Example (MINIMAL edit with context awareness):
+```cpp
+### src/memory/allocator.cpp
+- start_line: 145
+- end_line: 149
+<<<<<<< SEARCH
+	if (size > 0) {
+		ptr = malloc(size);
+		use_memory(ptr);
+	}
+=======
+	if (size > 0) {
+		ptr = malloc(size);
+		if (ptr != NULL)
+			use_memory(ptr);
+	}
+>>>>>>> REPLACE
+```
+
+**CRITICAL COMPILATION SAFETY REQUIREMENTS**:
+
+1. **MINIMAL edits ONLY** - Include only 3-8 lines in SEARCH block (bug line + 1-3 context lines)
+   - More lines = higher risk of breaking dependencies
+   - Focus ONLY on the buggy statement and immediate neighbors
+
+2. **Variable Dependency Check** - Before removing/modifying any line, verify:
+   - ❌ NEVER remove variable declarations if they're used later
+   - ❌ NEVER remove assignments if the variable is referenced afterwards
+   - ✅ Check if variables in your SEARCH block are used outside it
+
+3. **Macro Pairing Safety** - Special macros MUST stay paired:
+   - `fz_try(ctx) { ... } fz_always(ctx) { ... } fz_catch(ctx) { ... }` → NEVER break this chain
+   - `do { ... } while(...)` → NEVER remove the `while` if you keep the `do`
+   - `if (...) { ... } else { ... }` → Be careful not to create dangling else
+
+4. **Code Block Integrity**:
+   - ❌ NEVER remove opening/closing braces unless removing entire block
+   - ❌ NEVER remove function declarations/definitions
+   - ✅ Preserve the structural indentation and nesting
+
+5. **Indentation**:
+   - **Use TAB characters (\t)** for indentation, NOT spaces - the codebase uses tabs
+   - The SEARCH block must match EXACTLY (preserve all tabs and spacing)
+
+6. **Context Awareness** - When editing, mentally visualize:
+   ```
+   [Lines before SEARCH - you don't see these, assume they exist]
+   <<<<<<< SEARCH
+   your visible edit zone (3-8 lines)
+   =======
+   your proposed changes
+   >>>>>>> REPLACE
+   [Lines after SEARCH - you don't see these, assume they exist]
+   ```
+   Your edit should work correctly with unknown context before and after!
+
+**Common Compilation Errors to AVOID**:
+- ❌ "use of undeclared identifier 'X'" → You removed the declaration of X
+- ❌ "expected 'while' in do/while loop" → You broke a macro pairing
+- ❌ "function definition not allowed here" → You accidentally removed a closing brace
+- ❌ "extraneous closing brace" → You removed code but left its closing brace
+
+**Golden Rule**: If unsure whether a line is safe to remove, KEEP IT. Only modify the absolute minimum needed to fix the bug.

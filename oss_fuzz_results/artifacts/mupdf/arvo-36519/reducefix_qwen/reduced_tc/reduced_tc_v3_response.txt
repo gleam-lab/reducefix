@@ -1,0 +1,29 @@
+=== LLM Response for reduced_tc version 3 ===
+Model: qwen-plus
+Temperature: 1.0
+======================================================================
+
+After analyzing the crash details and code, I can identify the root cause of the heap-use-after-free issue. The problem occurs when `fz_get_pixmap_from_image` fails and returns NULL, but we still attempt to access `pixmap->w` and `pixmap->h` in the conditional check for image scaling.
+
+The bug is in the conditional check that uses `pixmap->w` and `pixmap->h` without verifying that `pixmap` is not NULL. This creates a use-after-free situation when the pixmap allocation fails.
+
+Here's the fix:
+
+```c
+### source/fitz/draw-device.c
+- start_line: 2004
+- end_line: 2017
+<<<<<<< SEARCH
+		if (!(devp->hints & FZ_DONT_INTERPOLATE_IMAGES) && ctx->tuning->image_scale(ctx->tuning->image_scale_arg, dx, dy, pixmap->w, pixmap->h))
+		{
+			int gridfit = !(dev->flags & FZ_DRAWDEV_FLAGS_TYPE3);
+			scaled = fz_transform_pixmap(ctx, dev, pixmap, &local_ctm, state->dest->x, state->dest->y, dx, dy, gridfit, &clip);
+=======
+		if (pixmap && !(devp->hints & FZ_DONT_INTERPOLATE_IMAGES) && ctx->tuning->image_scale(ctx->tuning->image_scale_arg, dx, dy, pixmap->w, pixmap->h))
+		{
+			int gridfit = !(dev->flags & FZ_DRAWDEV_FLAGS_TYPE3);
+			scaled = fz_transform_pixmap(ctx, dev, pixmap, &local_ctm, state->dest->x, state->dest->y, dx, dy, gridfit, &clip);
+>>>>>>> REPLACE
+```
+
+This fix adds a null check for `pixmap` before accessing its members in the conditional. If `fz_get_pixmap_from_image` fails and returns NULL, we skip the image scaling block entirely, preventing the use-after-free error. The `fz_always` block will still safely handle the NULL pixmap in `fz_drop_pixmap`.

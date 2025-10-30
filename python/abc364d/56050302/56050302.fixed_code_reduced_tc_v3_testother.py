@@ -1,0 +1,43 @@
+import bisect
+
+n, q = map(int, input().split())
+a = list(map(int, input().split()))
+a.sort()
+
+for _ in range(q):
+    b, k = map(int, input().split())
+    
+    # Find the position where b would be inserted
+    pos = bisect.bisect_left(a, b)
+    
+    # We'll maintain a list of candidate distances, but instead of building all,
+    # we can use two pointers expanding from the insertion point
+    left = pos - 1
+    right = pos
+    distances = []
+    
+    # Instead of trying to be too clever with early termination,
+    # since k can be up to n and n is 1e5, worst-case we might need to consider many points.
+    # But note: we only need the k-th smallest distance, so we can collect candidates
+    # from both sides until we have enough.
+    
+    # Expand outward from the insertion point
+    while len(distances) < k and (left >= 0 or right < n):
+        if left >= 0 and (right >= n or abs(a[left] - b) <= abs(a[right] - b)):
+            distances.append(abs(a[left] - b))
+            left -= 1
+        elif right < n:
+            distances.append(abs(a[right] - b))
+            right += 1
+    
+    # If we still don't have enough distances, continue collecting from whichever side remains
+    while len(distances) < k and left >= 0:
+        distances.append(abs(a[left] - b))
+        left -= 1
+    while len(distances) < k and right < n:
+        distances.append(abs(a[right] - b))
+        right += 1
+    
+    # Sort and get the k-th smallest (1-indexed k, so k-1 in 0-indexed)
+    distances.sort()
+    print(distances[k-1])

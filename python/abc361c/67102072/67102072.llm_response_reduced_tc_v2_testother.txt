@@ -1,0 +1,257 @@
+```python
+n, k = map(int, input().split())
+a = list(map(int, input().split()))
+
+# We need to remove exactly K elements, so we keep (n - k) elements.
+# To minimize (max - min) of the remaining sequence,
+# we should choose a contiguous segment of (n - k) elements in the sorted array.
+# However, since the order must be preserved (concatenate remaining in original order),
+# we cannot sort and take any arbitrary segment.
+
+# But note: we can choose any K elements to remove arbitrarily.
+# So the optimal strategy is to decide how many elements to remove from left and right ends.
+# Because if we want minimal range (max - min), it's best to remove extreme values.
+
+# Idea:
+# Sort the array along with original indices.
+# Then, the remaining elements must form a subsequence of the original array (preserving order).
+# However, an easier and correct approach:
+# Since we are allowed to remove any K elements, the best way to minimize max-min is to
+# keep a contiguous block of (n-k) elements in the sorted order? Not necessarily — but wait:
+
+# Actually, we can consider: 
+# The final sequence B must preserve the original order. So if we keep some elements,
+# their relative positions are fixed.
+
+# Alternate idea:
+# We can try all possible splits: remove i elements from the left and (k-i) from the right,
+# for i from 0 to k. But that only considers removing from the ends.
+
+# However, is it sufficient to only consider removing from the two ends?
+# Yes! Because suppose we have an optimal solution where we keep a set S of (n-k) elements.
+# Let L be the leftmost kept element and R be the rightmost kept element.
+# Then, all elements between L and R that we skipped could have been kept without increasing the range (since min <= A[L], max >= A[R]).
+# But actually, we want to minimize max - min. If we keep elements inside [L,R], we might increase the max or decrease the min?
+
+# Important insight:
+# In fact, we can always achieve the minimum range by keeping a contiguous segment of (n-k) elements in the original array.
+# Why? No — not contiguous in original array, but we can simulate by considering which prefix and suffix to remove.
+
+# Correct known approach:
+# We can remove K elements arbitrarily. So the remaining elements are a subsequence of length (n-k) in order.
+# To minimize (max - min), we can consider: 
+#   Sort the array with indices. Then, the optimal remaining elements will be a contiguous block in the sorted array?
+# But they must appear in increasing index order in the original array.
+
+# However, there is a simpler greedy idea:
+# The answer is the minimum over i of (a[i + (n-k) - 1] - a[i]) where the array a is sorted.
+# BUT only if the elements a[i] to a[i+(n-k)-1] can be found in the original array in increasing index order?
+
+# That becomes complex.
+
+# Known similar problem: "Sliding Window" after sorting by value, but ensuring the indices are increasing.
+
+# Alternative known solution:
+# We can fix the minimum and maximum in the final array.
+# But better: try all possible numbers of removals from the left and right.
+
+# Insight: 
+# It is optimal to remove some number of elements from the beginning and some from the end.
+# Why? Suppose we keep elements from index l to r (not necessarily contiguous in value, but in position).
+# But we can show that there exists an optimal solution where the kept elements form a contiguous segment in the original array? 
+# NO — consider: [1, 100, 2, 101], k=2: removing 100 and 101 gives [1,2] -> diff=1, which is non contiguous.
+
+# But note: we are allowed to remove arbitrary elements. So we can keep non contiguous ones.
+
+# However, here's a known solution for this exact problem:
+# Sort the array along with original indices. Then use a sliding window of size (n-k) on the sorted array,
+# and check whether the elements in the window can appear in increasing order of indices (i.e., they form a valid subsequence).
+
+# But that is O(n^2) in worst case.
+
+# Another known solution:
+# Instead, we can try to fix how many elements we remove from the prefix and suffix.
+# Specifically, we can remove i elements from the prefix and (k-i) from the suffix, for i in [0, k].
+# Then the remaining elements are a[ i : n - (k-i) ] = a[i : n - k + i]
+# And the cost is max(a[i:n-k+i]) - min(a[i:n-k+i])
+
+# But is this sufficient? Can an optimal solution require removing elements from the middle?
+# Claim: Yes, but we can simulate that by choosing appropriate i and j such that we remove i from left and j from right with i+j=k.
+
+# Why is that optimal?
+# Consider any set of kept elements. Let L be the first kept element's index, R be the last kept element's index.
+# Then all elements outside [L, R] are removed. And we can also remove up to k elements inside [L,R]. 
+# But if we keep non consecutive elements inside [L,R], we could instead keep all elements from L to R and then remove more from the sides?
+# Not exactly.
+
+# However, note: if we fix the leftmost and rightmost kept elements, then we must keep everything in between? No, we can skip some.
+# But skipping some inside doesn't help reduce the range — it might even increase it (if we skip a low or high value).
+
+# Actually, the key is: the range is determined only by the minimum and maximum of the kept elements.
+# So if we fix the minimum and maximum values among kept elements, we can keep all elements in between in the original array.
+
+# But here's the catch: we are constrained by the order.
+
+# Known efficient solution:
+# Try all i from 0 to k:
+#   Remove i elements from the beginning and (k-i) from the end.
+#   Then the remaining array is a[i : n - (k-i)] = a[i : n-k+i]
+#   Compute max(remaining) - min(remaining)
+# Take the minimum over i.
+
+# Why is this correct?
+# Because any optimal solution has a leftmost kept element at some position i and a rightmost kept element at some position j.
+# The total number of elements from 0 to i-1 removed is i, and from j+1 to n-1 is (n-1-j).
+# So total removed from outside [i,j] is i + (n-1-j).
+# We can remove additional (k - (i + n - 1 - j)) elements from inside [i,j].
+# But if we do that, the min and max of the kept elements can only get worse (the min might increase, the max might decrease, but not necessarily improving the difference).
+# However, if we keep ALL elements from i to j, then the min and max are fixed, and we have (j-i+1) kept elements.
+# We require j-i+1 >= n-k.
+
+# But in our candidate solutions, we are keeping a contiguous segment. Is it possible that a non contiguous segment yields a smaller range?
+
+# Counterexample? 
+# A = [1, 3, 2, 4], k=2.
+# Option 1: remove from ends: 
+#   i=0: keep [1,3,2] -> range = 3-1 = 2
+#   i=1: keep [3,2,4] -> range = 4-2 = 2? no: 4-3=1? wait: min=2, max=4 -> 2
+#   i=2: keep [2,4] -> range=2
+# But what if we remove 3 and 2? keep [1,4] -> range=3 -> worse.
+# What if we remove 1 and 4? keep [3,2] -> range=1 -> better!
+# But [3,2] is not contiguous in the original array? It is, indices 1 and 2.
+
+# Wait: [3,2] is contiguous? Yes, indices 1 and 2. So in the slice a[1:3] -> [3,2]. So i=1, and we keep a[1: n-k+1] = a[1: 4-2+1]=a[1:3] -> [3,2].
+
+# So it is covered.
+
+# But what if we had A = [1, 10, 2, 11, 3], k=3.
+# We want to keep two elements. 
+# Possibility: keep 1 and 3 -> range=2
+# Possibility: keep 2 and 3 -> range=1
+# Possibility: keep 10 and 11 -> range=1
+# How do we get 1 and 3? 
+#   We would need to remove from left: 0 elements, from right: 3 elements? then keep a[0:5-3+0]=a[0:2] -> [1,10] -> range=9
+#   i=1: remove 1 from left, 2 from right: keep a[1:5-3+1]=a[1:3] -> [10,2] -> range=8
+#   i=2: remove 2 from left, 1 from right: keep a[2:5-3+2]=a[2:4] -> [2,11] -> range=9
+#   i=3: remove 3 from left, 0 from right: keep a[3:5] -> [11,3] -> range=8
+
+# But we never consider keeping [1,3] because they are not contiguous in the array.
+
+# So our method fails.
+
+# Therefore, we cannot assume the kept elements are contiguous in the original array.
+
+# But note: the problem says "concatenate the remaining elements in their original order". 
+# So if we keep index 0 and index 4, the result is [1,3]. They don't have to be contiguous in the original array.
+
+# So the previous method (only considering contiguous segments) is insufficient.
+
+# Revised approach:
+
+# We need to choose a subsequence of (n-k) elements (in increasing index order) such that (max - min) is minimized.
+
+# How to solve?
+# We can sort the array by value, and then use a sliding window on the sorted array to find a window of size (n-k) such that the corresponding indices form an increasing sequence (which they always do if we pick in increasing index order?) — no, the values are sorted, but indices may be arbitrary.
+
+# We want to know: is there a subsequence of length (n-k) within the current window (in sorted order) that appears in increasing order of indices?
+
+# Alternatively, we can do:
+# Sort by value: (value, original_index)
+# Then for a window [l, r] in this sorted array, we want to know if there exists a subsequence of (n-k) elements in the original array that are within this window and appear in increasing index order.
+
+# But note: if we fix the smallest and largest value in the kept set, then the range is fixed. We want to minimize (max_value - min_value) such that there exists a subsequence of length (n-k) with all values in [min_value, max_value] and indices increasing.
+
+# We can use two pointers on the sorted array and maintain the indices of the elements in the current window, and check if the longest increasing subsequence (by index) in the window is at least (n-k)? 
+# But that is too expensive.
+
+# Better: we can check if the window contains a subsequence of length (n-k) in the original array by checking if the minimum number of removals needed to make the entire array contain only elements in the window is <= k? 
+# But that doesn't guarantee the kept ones are in order.
+
+# Actually, the condition is: the elements in the window must include a subsequence of length (n-k) that appears in increasing order of indices. 
+# But every set of elements forms a subsequence if we pick them in increasing index order. The only constraint is that we can only pick each once.
+
+# So in the window, we can always pick the elements in increasing order of index to form a subsequence. 
+# But we are constrained by the original array: we can only pick one occurrence per index.
+
+# So the question reduces to: does the window contain at least (n-k) elements? 
+# But no: because we cannot pick two elements that are out of order in indices? Actually, we can skip around.
+
+# Actually, we can always pick a subsequence from the window by scanning the original array and picking every element that falls in the window until we have (n-k) elements.
+
+# So for a given window [l, r] in the sorted array (by value), we can check: traverse the original array and count how many elements fall in the window. 
+# If the count >= (n-k), then we can keep at least (n-k) elements from the window.
+
+# But wait: we are allowed to keep exactly (n-k) elements. So if there are >= (n-k) elements in the window, we can choose any (n-k) of them, and since they appear in the original array in some order, we can pick them in increasing index order.
+
+# Therefore, the condition is simply: the number of elements in the array with value in [sorted[l], sorted[r]] is >= (n-k).
+
+# But note: the window [l, r] in the sorted array includes exactly (r-l+1) elements.
+
+# So if (r-l+1) >= (n-k), then we can potentially use this window.
+
+# But wait: what if multiple elements have the same value? Then the sorted array has duplicates, and the window [l,r] may include more than (r-l+1) elements? 
+# Actually, no: in the sorted array, each element is one entry.
+
+# We have sorted the array of n elements. So window [l, r] has (r-l+1) elements.
+
+# So we require (r-l+1) >= (n-k). But we want exactly (n-k) kept elements. So we can choose any (n-k) from these (r-l+1) elements.
+
+# But we also require that these (n-k) elements can be chosen as a subsequence in the original array. 
+# And they can, because we can go through the original array and pick the first (n-k) elements that are in the window.
+
+# Therefore, the problem reduces to: 
+# Find the minimum (A_sorted[r] - A_sorted[l]) over all l, r such that (r-l+1) >= (n-k).
+
+# But that is not correct: because the condition (r-l+1) >= (n-k) means there are at least (n-k) elements in the sorted window, but those elements might not be spread throughout the array — however, we don't care about their positions for the count.
+
+# But wait: we are counting distinct elements in the sorted array. Each element in the sorted array corresponds to one element in the original array.
+
+# So if we have (r-l+1) >= (n-k), then there are at least (n-k) elements in the original array with values in [A_sorted[l], A_sorted[r]]. 
+# Therefore, we can select (n-k) of them to keep.
+
+# But is that sufficient? Yes.
+
+# However, consider: what if the window [l, r] has many elements but they are all clustered at the beginning? 
+# Then when we try to pick (n-k) elements in increasing index order, we might run into issues? 
+# No, because we can pick them in any order of appearance. We just traverse the array and pick the ones in the window until we have (n-k) elements.
+
+# Therefore, the answer is: 
+#   Sort the array.
+#   Use two pointers (sliding window) to find the minimum difference between A_sorted[r] and A_sorted[l] such that (r-l+1) >= (n-k).
+
+# But wait: the window must have at least (n-k) elements. So we can let the window size be exactly (n-k) and slide it.
+
+# Specifically:
+#   ans = min_{i=0}^{k} (A_sorted[i+(n-k)-1] - A_sorted[i])
+
+# Example: 
+#   A = [1, 10, 2, 11, 3], k=3, n=5, so keep 2 elements.
+#   Sorted: [1,2,3,10,11]
+#   i=0: 3-1 = 2
+#   i=1: 10-2 = 8
+#   i=2: 11-3 = 8
+#   minimum = 2.
+
+# But earlier we thought of keeping [2,3] -> range=1, which is better than 2.
+
+# Why didn't we get 1? 
+# Because in the sorted array, 2 and 3 are at indices 1 and 2, so window [1,2] has size 2, which is (n-k)=2, and the difference is 3-2=1.
+# So i=1: A_sorted[1+2-1] = A_sorted[2]=3, A_sorted[1]=2 -> 3-2=1.
+
+# So we do get 1.
+
+# But wait: i runs from 0 to ? 
+# The window [i, i+(n-k)-1] must be within [0, n-1]. So i from 0 to n-(n-k) = k.
+
+# So i in [0, k] inclusive? 
+#   i=0: [0, 1] -> 2 elements -> 2-1=1? no: A_sorted[0]=1, A_sorted[1]=2 -> 2-1=1
+#   i=1: [1,2] -> 3-2=1
+#   i=2: [2,3] -> 10-3=7
+#   i=3: [3,4] -> 11-10=1
+#   minimum = 1.
+
+# But wait, the answer should be 1? yes, we can achieve 1 by keeping [2,3] or [10,11] or [1,2] etc.
+
+# But what about the example that failed earlier: 
+# Input: "2 0\n780031076 658404808"
+# n=2, k=0, so

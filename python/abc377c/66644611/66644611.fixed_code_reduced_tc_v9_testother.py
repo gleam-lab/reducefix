@@ -1,0 +1,19 @@
+n, m = map(int, input().split())
+captured = set()
+
+# The 8 possible knight moves (i+2,j+1), (i+1,j+2), etc.
+moves = [(2,1), (1,2), (-1,2), (-2,1), (-2,-1), (-1,-2), (1,-2), (2,-1)]
+
+for _ in range(m):
+    a, b = map(int, input().split())
+    # Add the piece's own position (so we don't count occupied squares)
+    captured.add((a, b))
+    # For each of the 8 knight moves, mark the square that would be attacked
+    for dx, dy in moves:
+        x, y = a + dx, b + dy
+        if 1 <= x <= n and 1 <= y <= n:
+            captured.add((x, y))
+
+# Total empty squares minus those that are under attack or occupied
+ans = n * n - len(captured)
+print(ans)

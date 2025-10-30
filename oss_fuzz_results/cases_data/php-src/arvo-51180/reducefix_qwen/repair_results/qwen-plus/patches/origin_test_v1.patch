@@ -1,0 +1,120 @@
+Looking at the crash details, we have a heap-use-after-free READ 4 in the function chain:
+```
+timelib_error_container_dtor
+php_date_initialize
+zim_DateTime___construct
+```
+
+The issue is located in `ext/date/php_date.c` around lines 2264-2283. The crash occurs when a timelib error container is being accessed after it has been freed.
+
+From the stack trace, the problem is in the date/time initialization code where an error container is being used after destruction. The most likely scenario is that `timelib_error_container_dtor()` is called to free the error container, but then the code still tries to access it.
+
+Looking at typical patterns in PHP date handling, the issue is likely that the error container pointer is not being properly managed - it's being freed but the pointer is still being referenced.
+
+Based on the context and common patterns in this codebase, I need to examine how error containers are handled in the date initialization function:
+
+```c
+<<<<<<< SEARCH
+/*
+   +----------------------------------------------------------------------+
+   | Copyright (c) The PHP Group                                          |
+   +----------------------------------------------------------------------+
+   | This source file is subject to version 3.01 of the PHP license,      |
+   | that is bundled with this package in the file LICENSE, and is        |
+   | available through the world-wide-web at the following url:           |
+   | https://www.php.net/license/3_01.txt                                 |
+   | If you did not receive a copy of the PHP license and are unable to   |
+   | obtain it through the world-wide-web, please send a note to          |
+   | license@php.net so we can mail you a copy immediately.               |
+   +----------------------------------------------------------------------+
+   | Authors: Derick Rethans <derick@derickrethans.nl>                    |
+   +----------------------------------------------------------------------+
+ */
+
+#include "php.h"
+#include "php_streams.h"
+#include "php_main.h"
+#include "php_globals.h"
+#include "php_ini.h"
+#include "ext/standard/info.h"
+#include "ext/standard/php_versioning.h"
+#include "ext/standard/php_math.h"
+#include "php_date.h"
+#include "zend_interfaces.h"
+#include "zend_exceptions.h"
+#include "lib/timelib.h"
+#include "lib/timelib_private.h"
+=======
+/*
+   +----------------------------------------------------------------------+
+   | Copyright (c) The PHP Group                                          |
+   +----------------------------------------------------------------------+
+   | This source file is subject to version 3.01 of the PHP license,      |
+   | that is bundled with this package in the file LICENSE, and is        |
+   | available through the world-wide-web at the following url:           |
+   | https://www.php.net/license/3_01.txt                                 |
+   | If you did not receive a copy of the PHP license and are unable to   |
+   | obtain it through the world-wide-web, please send a note to          |
+   | license@php.net so we can mail you a copy immediately.               |
+   +----------------------------------------------------------------------+
+   | Authors: Derick Rethans <derick@derickrethans.nl>                    |
+   +----------------------------------------------------------------------+
+ */
+
+#include "php.h"
+#include "php_streams.h"
+#include "php_main.h"
+#include "php_globals.h"
+#include "php_ini.h"
+#include "ext/standard/info.h"
+#include "ext/standard/php_versioning.h"
+#include "ext/standard/php_math.h"
+#include "php_date.h"
+#include "zend_interfaces.h"
+#include "zend_exceptions.h"
+#include "lib/timelib.h"
+#include "lib/timelib_private.h"
+#ifndef PHP_WIN32
+#include <time.h>
+#else
+#include "win32/time.h"
+#endif
+>>>>>>> REPLACE
+```
+
+Wait, I see that the code snippet provided is incomplete and cuts off mid-function. However, based on the crash signature and the function names involved, I can infer that the issue is in the `php_date_initialize` function where a `timelib_error_container` is being used after it has been destroyed.
+
+The most likely fix is to ensure proper ordering of operations and null checking when dealing with the error container. Since I don't have the complete code, I'll provide a generic but targeted fix based on common patterns in this codebase:
+
+```c
+<<<<<<< SEARCH
+	timelib_error_container_dtor(tstate->error_messages);
+=======
+	// Store the error messages before destroying the container
+	if (tstate->error_messages && tstate->error_messages->error_count > 0) {
+		// Process any error messages before destroying the container
+	}
+	timelib_error_container_dtor(tstate->error_messages);
+	tstate->error_messages = NULL; // Prevent use-after-free
+>>>>>>> REPLACE
+```
+
+Actually, without seeing the actual code around lines 2264-2283, I can't provide an exact search/replace. But based on the crash pattern, the fix should ensure that:
+
+1. The error container is not accessed after being destroyed
+2. The pointer is set to NULL after destruction
+3. Any references to the error container are checked for validity
+
+Since the code wasn't fully provided, I'll make an educated guess about the most likely location and fix:
+
+```c
+<<<<<<< SEARCH
+	timelib_error_container_dtor(tstate->error_messages);
+=======
+	timelib_error_container *errors = tstate->error_messages;
+	tstate->error_messages = NULL;
+	if (errors) {
+		timelib_error_container_dtor(errors);
+	}
+>>>>>>> REPLACE
+```

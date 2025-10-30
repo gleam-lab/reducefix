@@ -1,0 +1,74 @@
+import sys
+
+def solve():
+    T = int(sys.stdin.readline())
+    
+    for _ in range(T):
+        N, K = map(int, sys.stdin.readline().split())
+        A = list(map(int, sys.stdin.readline().split()))
+        B = list(map(int, sys.stdin.readline().split()))
+        
+        # Create list of (A_i, B_i) and sort by A_i
+        items = sorted([(A[i], B[i]) for i in range(N)])
+        
+        # We'll consider each element as candidate for max A_i in subset S
+        ans = float('inf')
+        
+        # Use a min-heap to maintain the smallest B_i values among selected items
+        import heapq
+        
+        # Precompute prefix sums of B for smallest K-1 elements in current window?
+        # Instead: iterate from left to right, but fix the maximum A_i to be items[r][0]
+        # Then we can pick any K-1 elements from indices [0, r-1] with smallest B_i sum
+        
+        # Maintain a max-heap (using negative values) for the largest B_i in current selection
+        # Actually, use min-heap for B_i and keep at most K-1 elements? 
+        # Better: for each r >= K-1, consider items[r] as having max A_i
+        # Then choose K-1 items from [0, r-1] with minimum sum of B_i
+        
+        if K == 1:
+            ans = min(A[i] * B[i] for i in range(N))
+        else:
+            # Sort already done by A_i
+            # For each r from K-1 to N-1, we can choose items[r] and K-1 items from [0, r-1]
+            # We want minimum sum of B_i for K-1 items in [0, r-1]
+            
+            # Use heap to maintain the smallest K-1 B_i values seen so far
+            heap = []  # max-heap using negative values
+            current_sum = 0
+            
+            # Initialize with first K-1 elements
+            for i in range(K-1):
+                b_val = items[i][1]
+                heapq.heappush(heap, -b_val)
+                current_sum += b_val
+            
+            # Now consider each position r from K-1 to N-1
+            for r in range(K-1, N):
+                # Option 1: take current_sum (K-1 smallest B's from [0,r-1]) + items[r][1]
+                total_b = current_sum + items[r][1]
+                candidate = items[r][0] * total_b
+                ans = min(ans, candidate)
+                
+                # If r == N-1, we break after processing
+                if r == N-1:
+                    break
+                    
+                # Add items[r][1] to the pool for future selections
+                b_next = items[r][1]
+                
+                # If this B value is smaller than the largest in our current K-1 set,
+                # replace it to get smaller sum for next steps
+                if len(heap) < K-1:
+                    heapq.heappush(heap, -b_next)
+                    current_sum += b_next
+                elif -heap[0] > b_next:
+                    # Remove largest, add smaller one
+                    removed = -heapq.heappop(heap)
+                    heapq.heappush(heap, -b_next)
+                    current_sum = current_sum - removed + b_next
+                # Otherwise, skip this value (it's too large to improve sum)
+        
+        print(ans)
+
+solve()

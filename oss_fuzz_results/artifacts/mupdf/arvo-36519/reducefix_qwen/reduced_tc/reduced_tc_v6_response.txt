@@ -1,0 +1,69 @@
+=== LLM Response for reduced_tc version 6 ===
+Model: qwen-plus
+Temperature: 1.0
+======================================================================
+
+After analyzing the crash details and code, I've identified a heap-use-after-free issue in `fz_draw_clip_image_mask`. The problem occurs when accessing `pixmap->w` and `pixmap->h` after potentially freeing the pixmap in the scaling section. The `fz_get_pixmap_from_image` call might return NULL, but the code later dereferences `pixmap` without checking.
+
+The fix needs to add a null check after getting the pixmap and before using its dimensions in the image scaling condition.
+
+```c
+### source/fitz/draw-device.c
+- start_line: 1983
+- end_line: 2007
+<<<<<<< SEARCH
+		pixmap = fz_get_pixmap_from_image(ctx, image, &src_area, &local_ctm, &dx, &dy);
+
+		state[1].mask = fz_new_pixmap_with_bbox(ctx, NULL, bbox, NULL, 1);
+		fz_clear_pixmap(ctx, state[1].mask);
+
+		state[1].dest = fz_new_pixmap_with_bbox(ctx, model, bbox, state[0].dest->seps, state[0].dest->alpha);
+		fz_copy_pixmap_rect(ctx, state[1].dest, state[0].dest, bbox, dev->default_cs);
+		if (state[0].shape)
+		{
+			state[1].shape = fz_new_pixmap_with_bbox(ctx, NULL, bbox, NULL, 1);
+			fz_clear_pixmap(ctx, state[1].shape);
+		}
+		if (state[0].group_alpha)
+		{
+			state[1].group_alpha = fz_new_pixmap_with_bbox(ctx, NULL, bbox, NULL, 1);
+			fz_clear_pixmap(ctx, state[1].group_alpha);
+		}
+
+		state[1].blendmode |= FZ_BLEND_ISOLATED;
+		state[1].scissor = bbox;
+
+		if (!(devp->hints & FZ_DONT_INTERPOLATE_IMAGES) && ctx->tuning->image_scale(ctx->tuning->image_scale_arg, dx, dy, pixmap->w, pixmap->h))
+=======
+		pixmap = fz_get_pixmap_from_image(ctx, image, &src_area, &local_ctm, &dx, &dy);
+		if (!pixmap)
+			return;
+
+		state[1].mask = fz_new_pixmap_with_bbox(ctx, NULL, bbox, NULL, 1);
+		fz_clear_pixmap(ctx, state[1].mask);
+
+		state[1].dest = fz_new_pixmap_with_bbox(ctx, model, bbox, state[0].dest->seps, state[0].dest->alpha);
+		fz_copy_pixmap_rect(ctx, state[1].dest, state[0].dest, bbox, dev->default_cs);
+		if (state[0].shape)
+		{
+			state[1].shape = fz_new_pixmap_with_bbox(ctx, NULL, bbox, NULL, 1);
+			fz_clear_pixmap(ctx, state[1].shape);
+		}
+		if (state[0].group_alpha)
+		{
+			state[1].group_alpha = fz_new_pixmap_with_bbox(ctx, NULL, bbox, NULL, 1);
+			fz_clear_pixmap(ctx, state[1].group_alpha);
+		}
+
+		state[1].blendmode |= FZ_BLEND_ISOLATED;
+		state[1].scissor = bbox;
+
+		if (!(devp->hints & FZ_DONT_INTERPOLATE_IMAGES) && pixmap && ctx->tuning->image_scale(ctx->tuning->image_scale_arg, dx, dy, pixmap->w, pixmap->h))
+>>>>>>> REPLACE
+```
+
+The fix adds two safety checks:
+1. Returns early if `fz_get_pixmap_from_image` returns NULL
+2. Adds a null check for `pixmap` in the image scaling condition
+
+This prevents the heap-use-after-free by ensuring we don't dereference a null or freed pixmap pointer. The `fz_always` block will still safely handle the pixmap cleanup via `fz_drop_pixmap` even in error cases.

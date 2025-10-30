@@ -1,0 +1,37 @@
+from collections import defaultdict, deque
+
+def main():
+    n, m = map(int, input().split())
+    graph = defaultdict(list)
+    
+    for _ in range(m):
+        a, b = map(int, input().split())
+        a -= 1
+        b -= 1
+        graph[a].append(b)
+    
+    # BFS from vertex 0 (vertex 1) to find shortest cycle containing vertex 0
+    INF = float('inf')
+    min_cycle_length = INF
+    
+    # For each neighbor of vertex 0, do BFS from that neighbor back to 0
+    # This avoids counting the initial edge twice
+    for start_neighbor in graph[0]:
+        dist = [INF] * n
+        dist[start_neighbor] = 1  # One edge from 0 to start_neighbor
+        queue = deque([start_neighbor])
+        
+        while queue:
+            u = queue.popleft()
+            
+            for v in graph[u]:
+                if v == 0:  # Found a path back to vertex 0
+                    min_cycle_length = min(min_cycle_length, dist[u] + 1)
+                elif dist[v] == INF:  # Not visited yet
+                    dist[v] = dist[u] + 1
+                    queue.append(v)
+    
+    print(min_cycle_length if min_cycle_length != INF else -1)
+
+if __name__ == "__main__":
+    main()

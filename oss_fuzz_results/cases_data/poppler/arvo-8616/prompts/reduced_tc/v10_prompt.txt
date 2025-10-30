@@ -1,0 +1,736 @@
+=== Prompt for 缩减测试用例 (reduced_tc) version 10 ===
+Case ID: arvo-8616
+Target: poppler
+Model: qwen-plus
+Temperature: 1.0
+Use SEARCH/REPLACE: True
+======================================================================
+
+We are currently solving the following crash issue:
+--- BEGIN ISSUE ---
+Crash in unknown
+
+### Crash Details
+- Type: Use-of-uninitialized-value
+- Function: unknown
+- Severity: Medium
+- Sanitizer: msan
+
+### Crash Stack Trace
+```
+SplashFTFont::makeGlyph
+SplashFont::getGlyph
+Splash::fillChar
+```
+
+### Crash Log
+
+--- END ISSUE ---
+
+
+🎯 **EXACT BUG LOCATION**:
+- File: `splash/SplashFTFont.cc`, Lines 60-231
+
+Below are the source files that contain the bug:
+--- BEGIN FILES ---
+### splash/SplashFTFont.cc
+**Function containing the bug** (lines 41-252):
+
+```cpp
+#include "SplashFTFontEngine.h"
+#include "SplashFTFontFile.h"
+#include "SplashFTFont.h"
+
+#include "goo/GooLikely.h"
+
+//------------------------------------------------------------------------
+
+static int glyphPathMoveTo(const FT_Vector *pt, void *path);
+static int glyphPathLineTo(const FT_Vector *pt, void *path);
+static int glyphPathConicTo(const FT_Vector *ctrl, const FT_Vector *pt,
+			    void *path);
+static int glyphPathCubicTo(const FT_Vector *ctrl1, const FT_Vector *ctrl2,
+			    const FT_Vector *pt, void *path);
+
+//------------------------------------------------------------------------
+// SplashFTFont
+//------------------------------------------------------------------------
+
+SplashFTFont::SplashFTFont(SplashFTFontFile *fontFileA, SplashCoord *matA,
+			   SplashCoord *textMatA):  // <-- ⚠️ BUG IS HERE (Line 61)
+  SplashFont(fontFileA, matA, textMatA, fontFileA->engine->aa),   // <-- ⚠️ BUG IS HERE (Line 62)
+  enableFreeTypeHinting(fontFileA->engine->enableFreeTypeHinting),  // <-- ⚠️ BUG IS HERE (Line 63)
+  enableSlightHinting(fontFileA->engine->enableSlightHinting)  // <-- ⚠️ BUG IS HERE (Line 64)
+{  // <-- ⚠️ BUG IS HERE (Line 65)
+  FT_Face face;  // <-- ⚠️ BUG IS HERE (Line 66)
+  int div;  // <-- ⚠️ BUG IS HERE (Line 67)
+  int x, y;  // <-- ⚠️ BUG IS HERE (Line 68)
+#ifdef USE_FIXEDPOINT  // <-- ⚠️ BUG IS HERE (Line 69)
+  SplashCoord scale;  // <-- ⚠️ BUG IS HERE (Line 70)
+#endif  // <-- ⚠️ BUG IS HERE (Line 71)
+  // <-- ⚠️ BUG IS HERE (Line 72)
+  face = fontFileA->face;  // <-- ⚠️ BUG IS HERE (Line 73)
+  if (FT_New_Size(face, &sizeObj)) {  // <-- ⚠️ BUG IS HERE (Line 74)
+    return;  // <-- ⚠️ BUG IS HERE (Line 75)
+  }  // <-- ⚠️ BUG IS HERE (Line 76)
+  face->size = sizeObj;  // <-- ⚠️ BUG IS HERE (Line 77)
+  size = splashRound(splashDist(0, 0, mat[2], mat[3]));  // <-- ⚠️ BUG IS HERE (Line 78)
+  if (size < 1) {  // <-- ⚠️ BUG IS HERE (Line 79)
+    size = 1;  // <-- ⚠️ BUG IS HERE (Line 80)
+  }  // <-- ⚠️ BUG IS HERE (Line 81)
+  if (FT_Set_Pixel_Sizes(face, 0, size)) {  // <-- ⚠️ BUG IS HERE (Line 82)
+    return;  // <-- ⚠️ BUG IS HERE (Line 83)
+  }  // <-- ⚠️ BUG IS HERE (Line 84)
+  // if the textMat values are too small, FreeType's fixed point  // <-- ⚠️ BUG IS HERE (Line 85)
+  // arithmetic doesn't work so well  // <-- ⚠️ BUG IS HERE (Line 86)
+  textScale = splashDist(0, 0, textMat[2], textMat[3]) / size;  // <-- ⚠️ BUG IS HERE (Line 87)
+  // <-- ⚠️ BUG IS HERE (Line 88)
+  if (unlikely(textScale == 0)) {  // <-- ⚠️ BUG IS HERE (Line 89)
+    return;  // <-- ⚠️ BUG IS HERE (Line 90)
+  }  // <-- ⚠️ BUG IS HERE (Line 91)
+  // <-- ⚠️ BUG IS HERE (Line 92)
+  div = face->bbox.xMax > 20000 ? 65536 : 1;  // <-- ⚠️ BUG IS HERE (Line 93)
+  // <-- ⚠️ BUG IS HERE (Line 94)
+#ifdef USE_FIXEDPOINT  // <-- ⚠️ BUG IS HERE (Line 95)
+  scale = (SplashCoord)1 / (SplashCoord)face->units_per_EM;  // <-- ⚠️ BUG IS HERE (Line 96)
+  // <-- ⚠️ BUG IS HERE (Line 97)
+  // transform the four corners of the font bounding box -- the min  // <-- ⚠️ BUG IS HERE (Line 98)
+  // and max values form the bounding box of the transformed font  // <-- ⚠️ BUG IS HERE (Line 99)
+  x = (int)(mat[0] * (scale * (face->bbox.xMin / div)) +  // <-- ⚠️ BUG IS HERE (Line 100)
+	    mat[2] * (scale * (face->bbox.yMin / div)));  // <-- ⚠️ BUG IS HERE (Line 101)
+  xMin = xMax = x;  // <-- ⚠️ BUG IS HERE (Line 102)
+  y = (int)(mat[1] * (scale * (face->bbox.xMin / div)) +  // <-- ⚠️ BUG IS HERE (Line 103)
+	    mat[3] * (scale * (face->bbox.yMin / div)));  // <-- ⚠️ BUG IS HERE (Line 104)
+  yMin = yMax = y;  // <-- ⚠️ BUG IS HERE (Line 105)
+  x = (int)(mat[0] * (scale * (face->bbox.xMin / div)) +  // <-- ⚠️ BUG IS HERE (Line 106)
+	    mat[2] * (scale * (face->bbox.yMax / div)));  // <-- ⚠️ BUG IS HERE (Line 107)
+  if (x < xMin) {  // <-- ⚠️ BUG IS HERE (Line 108)
+    xMin = x;  // <-- ⚠️ BUG IS HERE (Line 109)
+  } else if (x > xMax) {  // <-- ⚠️ BUG IS HERE (Line 110)
+    xMax = x;  // <-- ⚠️ BUG IS HERE (Line 111)
+  }  // <-- ⚠️ BUG IS HERE (Line 112)
+  y = (int)(mat[1] * (scale * (face->bbox.xMin / div)) +  // <-- ⚠️ BUG IS HERE (Line 113)
+	    mat[3] * (scale * (face->bbox.yMax / div)));  // <-- ⚠️ BUG IS HERE (Line 114)
+  if (y < yMin) {  // <-- ⚠️ BUG IS HERE (Line 115)
+    yMin = y;  // <-- ⚠️ BUG IS HERE (Line 116)
+  } else if (y > yMax) {  // <-- ⚠️ BUG IS HERE (Line 117)
+    yMax = y;  // <-- ⚠️ BUG IS HERE (Line 118)
+  }  // <-- ⚠️ BUG IS HERE (Line 119)
+  x = (int)(mat[0] * (scale * (face->bbox.xMax / div)) +  // <-- ⚠️ BUG IS HERE (Line 120)
+	    mat[2] * (scale * (face->bbox.yMin / div)));  // <-- ⚠️ BUG IS HERE (Line 121)
+  if (x < xMin) {  // <-- ⚠️ BUG IS HERE (Line 122)
+    xMin = x;  // <-- ⚠️ BUG IS HERE (Line 123)
+  } else if (x > xMax) {  // <-- ⚠️ BUG IS HERE (Line 124)
+    xMax = x;  // <-- ⚠️ BUG IS HERE (Line 125)
+  }  // <-- ⚠️ BUG IS HERE (Line 126)
+  y = (int)(mat[1] * (scale * (face->bbox.xMax / div)) +  // <-- ⚠️ BUG IS HERE (Line 127)
+	    mat[3] * (scale * (face->bbox.yMin / div)));  // <-- ⚠️ BUG IS HERE (Line 128)
+  if (y < yMin) {  // <-- ⚠️ BUG IS HERE (Line 129)
+    yMin = y;  // <-- ⚠️ BUG IS HERE (Line 130)
+  } else if (y > yMax) {  // <-- ⚠️ BUG IS HERE (Line 131)
+    yMax = y;  // <-- ⚠️ BUG IS HERE (Line 132)
+  }  // <-- ⚠️ BUG IS HERE (Line 133)
+  x = (int)(mat[0] * (scale * (face->bbox.xMax / div)) +  // <-- ⚠️ BUG IS HERE (Line 134)
+	    mat[2] * (scale * (face->bbox.yMax / div)));  // <-- ⚠️ BUG IS HERE (Line 135)
+  if (x < xMin) {  // <-- ⚠️ BUG IS HERE (Line 136)
+    xMin = x;  // <-- ⚠️ BUG IS HERE (Line 137)
+  } else if (x > xMax) {  // <-- ⚠️ BUG IS HERE (Line 138)
+    xMax = x;  // <-- ⚠️ BUG IS HERE (Line 139)
+  }  // <-- ⚠️ BUG IS HERE (Line 140)
+  y = (int)(mat[1] * (scale * (face->bbox.xMax / div)) +  // <-- ⚠️ BUG IS HERE (Line 141)
+	    mat[3] * (scale * (face->bbox.yMax / div)));  // <-- ⚠️ BUG IS HERE (Line 142)
+  if (y < yMin) {  // <-- ⚠️ BUG IS HERE (Line 143)
+    yMin = y;  // <-- ⚠️ BUG IS HERE (Line 144)
+  } else if (y > yMax) {  // <-- ⚠️ BUG IS HERE (Line 145)
+    yMax = y;  // <-- ⚠️ BUG IS HERE (Line 146)
+  }  // <-- ⚠️ BUG IS HERE (Line 147)
+#else // USE_FIXEDPOINT  // <-- ⚠️ BUG IS HERE (Line 148)
+  // transform the four corners of the font bounding box -- the min  // <-- ⚠️ BUG IS HERE (Line 149)
+  // and max values form the bounding box of the transformed font  // <-- ⚠️ BUG IS HERE (Line 150)
+  x = (int)((mat[0] * face->bbox.xMin + mat[2] * face->bbox.yMin) /  // <-- ⚠️ BUG IS HERE (Line 151)
+	    (div * face->units_per_EM));  // <-- ⚠️ BUG IS HERE (Line 152)
+  xMin = xMax = x;  // <-- ⚠️ BUG IS HERE (Line 153)
+  y = (int)((mat[1] * face->bbox.xMin + mat[3] * face->bbox.yMin) /  // <-- ⚠️ BUG IS HERE (Line 154)
+	    (div * face->units_per_EM));  // <-- ⚠️ BUG IS HERE (Line 155)
+  yMin = yMax = y;  // <-- ⚠️ BUG IS HERE (Line 156)
+  x = (int)((mat[0] * face->bbox.xMin + mat[2] * face->bbox.yMax) /  // <-- ⚠️ BUG IS HERE (Line 157)
+	    (div * face->units_per_EM));  // <-- ⚠️ BUG IS HERE (Line 158)
+  if (x < xMin) {  // <-- ⚠️ BUG IS HERE (Line 159)
+    xMin = x;  // <-- ⚠️ BUG IS HERE (Line 160)
+  } else if (x > xMax) {  // <-- ⚠️ BUG IS HERE (Line 161)
+    xMax = x;  // <-- ⚠️ BUG IS HERE (Line 162)
+  }  // <-- ⚠️ BUG IS HERE (Line 163)
+  y = (int)((mat[1] * face->bbox.xMin + mat[3] * face->bbox.yMax) /  // <-- ⚠️ BUG IS HERE (Line 164)
+	    (div * face->units_per_EM));  // <-- ⚠️ BUG IS HERE (Line 165)
+  if (y < yMin) {  // <-- ⚠️ BUG IS HERE (Line 166)
+    yMin = y;  // <-- ⚠️ BUG IS HERE (Line 167)
+  } else if (y > yMax) {  // <-- ⚠️ BUG IS HERE (Line 168)
+    yMax = y;  // <-- ⚠️ BUG IS HERE (Line 169)
+  }  // <-- ⚠️ BUG IS HERE (Line 170)
+  x = (int)((mat[0] * face->bbox.xMax + mat[2] * face->bbox.yMin) /  // <-- ⚠️ BUG IS HERE (Line 171)
+	    (div * face->units_per_EM));  // <-- ⚠️ BUG IS HERE (Line 172)
+  if (x < xMin) {  // <-- ⚠️ BUG IS HERE (Line 173)
+    xMin = x;  // <-- ⚠️ BUG IS HERE (Line 174)
+  } else if (x > xMax) {  // <-- ⚠️ BUG IS HERE (Line 175)
+    xMax = x;  // <-- ⚠️ BUG IS HERE (Line 176)
+  }  // <-- ⚠️ BUG IS HERE (Line 177)
+  y = (int)((mat[1] * face->bbox.xMax + mat[3] * face->bbox.yMin) /  // <-- ⚠️ BUG IS HERE (Line 178)
+	    (div * face->units_per_EM));  // <-- ⚠️ BUG IS HERE (Line 179)
+  if (y < yMin) {  // <-- ⚠️ BUG IS HERE (Line 180)
+    yMin = y;  // <-- ⚠️ BUG IS HERE (Line 181)
+  } else if (y > yMax) {  // <-- ⚠️ BUG IS HERE (Line 182)
+    yMax = y;  // <-- ⚠️ BUG IS HERE (Line 183)
+  }  // <-- ⚠️ BUG IS HERE (Line 184)
+  x = (int)((mat[0] * face->bbox.xMax + mat[2] * face->bbox.yMax) /  // <-- ⚠️ BUG IS HERE (Line 185)
+	    (div * face->units_per_EM));  // <-- ⚠️ BUG IS HERE (Line 186)
+  if (x < xMin) {  // <-- ⚠️ BUG IS HERE (Line 187)
+    xMin = x;  // <-- ⚠️ BUG IS HERE (Line 188)
+  } else if (x > xMax) {  // <-- ⚠️ BUG IS HERE (Line 189)
+    xMax = x;  // <-- ⚠️ BUG IS HERE (Line 190)
+  }  // <-- ⚠️ BUG IS HERE (Line 191)
+  y = (int)((mat[1] * face->bbox.xMax + mat[3] * face->bbox.yMax) /  // <-- ⚠️ BUG IS HERE (Line 192)
+	    (div * face->units_per_EM));  // <-- ⚠️ BUG IS HERE (Line 193)
+  if (y < yMin) {  // <-- ⚠️ BUG IS HERE (Line 194)
+    yMin = y;  // <-- ⚠️ BUG IS HERE (Line 195)
+  } else if (y > yMax) {  // <-- ⚠️ BUG IS HERE (Line 196)
+    yMax = y;  // <-- ⚠️ BUG IS HERE (Line 197)
+  }  // <-- ⚠️ BUG IS HERE (Line 198)
+#endif // USE_FIXEDPOINT  // <-- ⚠️ BUG IS HERE (Line 199)
+  // This is a kludge: some buggy PDF generators embed fonts with  // <-- ⚠️ BUG IS HERE (Line 200)
+  // zero bounding boxes.  // <-- ⚠️ BUG IS HERE (Line 201)
+  if (xMax == xMin) {  // <-- ⚠️ BUG IS HERE (Line 202)
+    xMin = 0;  // <-- ⚠️ BUG IS HERE (Line 203)
+    xMax = size;  // <-- ⚠️ BUG IS HERE (Line 204)
+  }  // <-- ⚠️ BUG IS HERE (Line 205)
+  if (yMax == yMin) {  // <-- ⚠️ BUG IS HERE (Line 206)
+    yMin = 0;  // <-- ⚠️ BUG IS HERE (Line 207)
+    yMax = (int)((SplashCoord)1.2 * size);  // <-- ⚠️ BUG IS HERE (Line 208)
+  }  // <-- ⚠️ BUG IS HERE (Line 209)
+  // <-- ⚠️ BUG IS HERE (Line 210)
+  // compute the transform matrix  // <-- ⚠️ BUG IS HERE (Line 211)
+#ifdef USE_FIXEDPOINT  // <-- ⚠️ BUG IS HERE (Line 212)
+  matrix.xx = (FT_Fixed)((mat[0] / size).get16Dot16());  // <-- ⚠️ BUG IS HERE (Line 213)
+  matrix.yx = (FT_Fixed)((mat[1] / size).get16Dot16());  // <-- ⚠️ BUG IS HERE (Line 214)
+  matrix.xy = (FT_Fixed)((mat[2] / size).get16Dot16());  // <-- ⚠️ BUG IS HERE (Line 215)
+  matrix.yy = (FT_Fixed)((mat[3] / size).get16Dot16());  // <-- ⚠️ BUG IS HERE (Line 216)
+  textMatrix.xx = (FT_Fixed)((textMat[0] / (textScale * size)).get16Dot16());  // <-- ⚠️ BUG IS HERE (Line 217)
+  textMatrix.yx = (FT_Fixed)((textMat[1] / (textScale * size)).get16Dot16());  // <-- ⚠️ BUG IS HERE (Line 218)
+  textMatrix.xy = (FT_Fixed)((textMat[2] / (textScale * size)).get16Dot16());  // <-- ⚠️ BUG IS HERE (Line 219)
+  textMatrix.yy = (FT_Fixed)((textMat[3] / (textScale * size)).get16Dot16());  // <-- ⚠️ BUG IS HERE (Line 220)
+#else  // <-- ⚠️ BUG IS HERE (Line 221)
+  matrix.xx = (FT_Fixed)((mat[0] / size) * 65536);  // <-- ⚠️ BUG IS HERE (Line 222)
+  matrix.yx = (FT_Fixed)((mat[1] / size) * 65536);  // <-- ⚠️ BUG IS HERE (Line 223)
+  matrix.xy = (FT_Fixed)((mat[2] / size) * 65536);  // <-- ⚠️ BUG IS HERE (Line 224)
+  matrix.yy = (FT_Fixed)((mat[3] / size) * 65536);  // <-- ⚠️ BUG IS HERE (Line 225)
+  textMatrix.xx = (FT_Fixed)((textMat[0] / (textScale * size)) * 65536);  // <-- ⚠️ BUG IS HERE (Line 226)
+  textMatrix.yx = (FT_Fixed)((textMat[1] / (textScale * size)) * 65536);  // <-- ⚠️ BUG IS HERE (Line 227)
+  textMatrix.xy = (FT_Fixed)((textMat[2] / (textScale * size)) * 65536);  // <-- ⚠️ BUG IS HERE (Line 228)
+  textMatrix.yy = (FT_Fixed)((textMat[3] / (textScale * size)) * 65536);  // <-- ⚠️ BUG IS HERE (Line 229)
+#endif  // <-- ⚠️ BUG IS HERE (Line 230)
+}  // <-- ⚠️ BUG IS HERE (Line 231)
+  // <-- ⚠️ BUG IS HERE (Line 232)
+SplashFTFont::~SplashFTFont() {
+}
+
+GBool SplashFTFont::getGlyph(int c, int xFrac, int yFrac,
+			     SplashGlyphBitmap *bitmap, int x0, int y0, SplashClip *clip, SplashClipResult *clipRes) {
+  return SplashFont::getGlyph(c, xFrac, 0, bitmap, x0, y0, clip, clipRes);
+}
+
+static FT_Int32 getFTLoadFlags(GBool type1, GBool trueType, GBool aa, GBool enableFreeTypeHinting, GBool enableSlightHinting)
+{
+  int ret = FT_LOAD_DEFAULT;
+  if (aa)
+    ret |= FT_LOAD_NO_BITMAP;
+  
+  if (enableFreeTypeHinting) {
+    if (enableSlightHinting) {
+      ret |= FT_LOAD_TARGET_LIGHT;
+    } else {
+      if (trueType) {
+	// FT2's autohinting doesn't always work very well (especially with
+```
+
+**Variable declarations before bug**:
+  - Line 49: static int glyphPathMoveTo(const FT_Vector *pt, void *path);
+  - Line 50: static int glyphPathLineTo(const FT_Vector *pt, void *path);
+  - Line 52: void *path);
+  - Line 54: const FT_Vector *pt, void *path);
+
+**🎯 Bug Location** (lines 60-231):
+```cpp
+			   SplashCoord *textMatA):
+  SplashFont(fontFileA, matA, textMatA, fontFileA->engine->aa), 
+  enableFreeTypeHinting(fontFileA->engine->enableFreeTypeHinting),
+  enableSlightHinting(fontFileA->engine->enableSlightHinting)
+{
+  FT_Face face;
+  int div;
+  int x, y;
+#ifdef USE_FIXEDPOINT
+  SplashCoord scale;
+#endif
+
+  face = fontFileA->face;
+  if (FT_New_Size(face, &sizeObj)) {
+    return;
+  }
+  face->size = sizeObj;
+  size = splashRound(splashDist(0, 0, mat[2], mat[3]));
+  if (size < 1) {
+    size = 1;
+  }
+  if (FT_Set_Pixel_Sizes(face, 0, size)) {
+    return;
+  }
+  // if the textMat values are too small, FreeType's fixed point
+  // arithmetic doesn't work so well
+  textScale = splashDist(0, 0, textMat[2], textMat[3]) / size;
+
+  if (unlikely(textScale == 0)) {
+    return;
+  }
+
+  div = face->bbox.xMax > 20000 ? 65536 : 1;
+
+#ifdef USE_FIXEDPOINT
+  scale = (SplashCoord)1 / (SplashCoord)face->units_per_EM;
+
+  // transform the four corners of the font bounding box -- the min
+  // and max values form the bounding box of the transformed font
+  x = (int)(mat[0] * (scale * (face->bbox.xMin / div)) +
+	    mat[2] * (scale * (face->bbox.yMin / div)));
+  xMin = xMax = x;
+  y = (int)(mat[1] * (scale * (face->bbox.xMin / div)) +
+	    mat[3] * (scale * (face->bbox.yMin / div)));
+  yMin = yMax = y;
+  x = (int)(mat[0] * (scale * (face->bbox.xMin / div)) +
+	    mat[2] * (scale * (face->bbox.yMax / div)));
+  if (x < xMin) {
+    xMin = x;
+  } else if (x > xMax) {
+    xMax = x;
+  }
+  y = (int)(mat[1] * (scale * (face->bbox.xMin / div)) +
+	    mat[3] * (scale * (face->bbox.yMax / div)));
+  if (y < yMin) {
+    yMin = y;
+  } else if (y > yMax) {
+    yMax = y;
+  }
+  x = (int)(mat[0] * (scale * (face->bbox.xMax / div)) +
+	    mat[2] * (scale * (face->bbox.yMin / div)));
+  if (x < xMin) {
+    xMin = x;
+  } else if (x > xMax) {
+    xMax = x;
+  }
+  y = (int)(mat[1] * (scale * (face->bbox.xMax / div)) +
+	    mat[3] * (scale * (face->bbox.yMin / div)));
+  if (y < yMin) {
+    yMin = y;
+  } else if (y > yMax) {
+    yMax = y;
+  }
+  x = (int)(mat[0] * (scale * (face->bbox.xMax / div)) +
+	    mat[2] * (scale * (face->bbox.yMax / div)));
+  if (x < xMin) {
+    xMin = x;
+  } else if (x > xMax) {
+    xMax = x;
+  }
+  y = (int)(mat[1] * (scale * (face->bbox.xMax / div)) +
+	    mat[3] * (scale * (face->bbox.yMax / div)));
+  if (y < yMin) {
+    yMin = y;
+  } else if (y > yMax) {
+    yMax = y;
+  }
+#else // USE_FIXEDPOINT
+  // transform the four corners of the font bounding box -- the min
+  // and max values form the bounding box of the transformed font
+  x = (int)((mat[0] * face->bbox.xMin + mat[2] * face->bbox.yMin) /
+	    (div * face->units_per_EM));
+  xMin = xMax = x;
+  y = (int)((mat[1] * face->bbox.xMin + mat[3] * face->bbox.yMin) /
+	    (div * face->units_per_EM));
+  yMin = yMax = y;
+  x = (int)((mat[0] * face->bbox.xMin + mat[2] * face->bbox.yMax) /
+	    (div * face->units_per_EM));
+  if (x < xMin) {
+    xMin = x;
+  } else if (x > xMax) {
+    xMax = x;
+  }
+  y = (int)((mat[1] * face->bbox.xMin + mat[3] * face->bbox.yMax) /
+	    (div * face->units_per_EM));
+  if (y < yMin) {
+    yMin = y;
+  } else if (y > yMax) {
+    yMax = y;
+  }
+  x = (int)((mat[0] * face->bbox.xMax + mat[2] * face->bbox.yMin) /
+	    (div * face->units_per_EM));
+  if (x < xMin) {
+    xMin = x;
+  } else if (x > xMax) {
+    xMax = x;
+  }
+  y = (int)((mat[1] * face->bbox.xMax + mat[3] * face->bbox.yMin) /
+	    (div * face->units_per_EM));
+  if (y < yMin) {
+    yMin = y;
+  } else if (y > yMax) {
+    yMax = y;
+  }
+  x = (int)((mat[0] * face->bbox.xMax + mat[2] * face->bbox.yMax) /
+	    (div * face->units_per_EM));
+  if (x < xMin) {
+    xMin = x;
+  } else if (x > xMax) {
+    xMax = x;
+  }
+  y = (int)((mat[1] * face->bbox.xMax + mat[3] * face->bbox.yMax) /
+	    (div * face->units_per_EM));
+  if (y < yMin) {
+    yMin = y;
+  } else if (y > yMax) {
+    yMax = y;
+  }
+#endif // USE_FIXEDPOINT
+  // This is a kludge: some buggy PDF generators embed fonts with
+  // zero bounding boxes.
+  if (xMax == xMin) {
+    xMin = 0;
+    xMax = size;
+  }
+  if (yMax == yMin) {
+    yMin = 0;
+    yMax = (int)((SplashCoord)1.2 * size);
+  }
+
+  // compute the transform matrix
+#ifdef USE_FIXEDPOINT
+  matrix.xx = (FT_Fixed)((mat[0] / size).get16Dot16());
+  matrix.yx = (FT_Fixed)((mat[1] / size).get16Dot16());
+  matrix.xy = (FT_Fixed)((mat[2] / size).get16Dot16());
+  matrix.yy = (FT_Fixed)((mat[3] / size).get16Dot16());
+  textMatrix.xx = (FT_Fixed)((textMat[0] / (textScale * size)).get16Dot16());
+  textMatrix.yx = (FT_Fixed)((textMat[1] / (textScale * size)).get16Dot16());
+  textMatrix.xy = (FT_Fixed)((textMat[2] / (textScale * size)).get16Dot16());
+  textMatrix.yy = (FT_Fixed)((textMat[3] / (textScale * size)).get16Dot16());
+#else
+  matrix.xx = (FT_Fixed)((mat[0] / size) * 65536);
+  matrix.yx = (FT_Fixed)((mat[1] / size) * 65536);
+  matrix.xy = (FT_Fixed)((mat[2] / size) * 65536);
+  matrix.yy = (FT_Fixed)((mat[3] / size) * 65536);
+  textMatrix.xx = (FT_Fixed)((textMat[0] / (textScale * size)) * 65536);
+  textMatrix.yx = (FT_Fixed)((textMat[1] / (textScale * size)) * 65536);
+  textMatrix.xy = (FT_Fixed)((textMat[2] / (textScale * size)) * 65536);
+  textMatrix.yy = (FT_Fixed)((textMat[3] / (textScale * size)) * 65536);
+#endif
+}
+
+```
+
+**⚠️ IMPORTANT**: When generating your SEARCH/REPLACE edit:
+- The shown function has 212 lines total
+- Bug is at lines 60-231
+- Variables declared before the bug MUST NOT be removed (they may be used after)
+- Check for paired macros (fz_try/always/catch, do/while) - keep them balanced
+- Only edit the MINIMAL lines needed to fix the bug
+
+--- END FILES ---
+
+### Buggy Code Snippet
+- **File**: `splash/SplashFTFont.cc`, **Lines**: 60-231
+
+```cpp
+// File: splash/SplashFTFont.cc (lines 60-231)
+// This code needs to be fixed:
+SplashFTFont::SplashFTFont(SplashFTFontFile *fontFileA, SplashCoord *matA,
+			   SplashCoord *textMatA):
+  SplashFont(fontFileA, matA, textMatA, fontFileA->engine->aa), 
+  enableFreeTypeHinting(fontFileA->engine->enableFreeTypeHinting),
+  enableSlightHinting(fontFileA->engine->enableSlightHinting)
+{
+  FT_Face face;
+  int div;
+  int x, y;
+#ifdef USE_FIXEDPOINT
+  SplashCoord scale;
+#endif
+
+  face = fontFileA->face;
+  if (FT_New_Size(face, &sizeObj)) {
+    return;
+  }
+  face->size = sizeObj;
+  size = splashRound(splashDist(0, 0, mat[2], mat[3]));
+  if (size < 1) {
+    size = 1;
+  }
+  if (FT_Set_Pixel_Sizes(face, 0, size)) {
+    return;
+  }
+  // if the textMat values are too small, FreeType's fixed point
+  // arithmetic doesn't work so well
+  textScale = splashDist(0, 0, textMat[2], textMat[3]) / size;
+
+  if (unlikely(textScale == 0)) {
+    return;
+  }
+
+  div = face->bbox.xMax > 20000 ? 65536 : 1;
+
+#ifdef USE_FIXEDPOINT
+  scale = (SplashCoord)1 / (SplashCoord)face->units_per_EM;
+
+  // transform the four corners of the font bounding box -- the min
+  // and max values form the bounding box of the transformed font
+  x = (int)(mat[0] * (scale * (face->bbox.xMin / div)) +
+	    mat[2] * (scale * (face->bbox.yMin / div)));
+  xMin = xMax = x;
+  y = (int)(mat[1] * (scale * (face->bbox.xMin / div)) +
+	    mat[3] * (scale * (face->bbox.yMin / div)));
+  yMin = yMax = y;
+  x = (int)(mat[0] * (scale * (face->bbox.xMin / div)) +
+	    mat[2] * (scale * (face->bbox.yMax / div)));
+  if (x < xMin) {
+    xMin = x;
+  } else if (x > xMax) {
+    xMax = x;
+  }
+  y = (int)(mat[1] * (scale * (face->bbox.xMin / div)) +
+	    mat[3] * (scale * (face->bbox.yMax / div)));
+  if (y < yMin) {
+    yMin = y;
+  } else if (y > yMax) {
+    yMax = y;
+  }
+  x = (int)(mat[0] * (scale * (face->bbox.xMax / div)) +
+	    mat[2] * (scale * (face->bbox.yMin / div)));
+  if (x < xMin) {
+    xMin = x;
+  } else if (x > xMax) {
+    xMax = x;
+  }
+  y = (int)(mat[1] * (scale * (face->bbox.xMax / div)) +
+	    mat[3] * (scale * (face->bbox.yMin / div)));
+  if (y < yMin) {
+    yMin = y;
+  } else if (y > yMax) {
+    yMax = y;
+  }
+  x = (int)(mat[0] * (scale * (face->bbox.xMax / div)) +
+	    mat[2] * (scale * (face->bbox.yMax / div)));
+  if (x < xMin) {
+    xMin = x;
+  } else if (x > xMax) {
+    xMax = x;
+  }
+  y = (int)(mat[1] * (scale * (face->bbox.xMax / div)) +
+	    mat[3] * (scale * (face->bbox.yMax / div)));
+  if (y < yMin) {
+    yMin = y;
+  } else if (y > yMax) {
+    yMax = y;
+  }
+#else // USE_FIXEDPOINT
+  // transform the four corners of the font bounding box -- the min
+  // and max values form the bounding box of the transformed font
+  x = (int)((mat[0] * face->bbox.xMin + mat[2] * face->bbox.yMin) /
+	    (div * face->units_per_EM));
+  xMin = xMax = x;
+  y = (int)((mat[1] * face->bbox.xMin + mat[3] * face->bbox.yMin) /
+	    (div * face->units_per_EM));
+  yMin = yMax = y;
+  x = (int)((mat[0] * face->bbox.xMin + mat[2] * face->bbox.yMax) /
+	    (div * face->units_per_EM));
+  if (x < xMin) {
+    xMin = x;
+  } else if (x > xMax) {
+    xMax = x;
+  }
+  y = (int)((mat[1] * face->bbox.xMin + mat[3] * face->bbox.yMax) /
+	    (div * face->units_per_EM));
+  if (y < yMin) {
+    yMin = y;
+  } else if (y > yMax) {
+    yMax = y;
+  }
+  x = (int)((mat[0] * face->bbox.xMax + mat[2] * face->bbox.yMin) /
+	    (div * face->units_per_EM));
+  if (x < xMin) {
+    xMin = x;
+  } else if (x > xMax) {
+    xMax = x;
+  }
+  y = (int)((mat[1] * face->bbox.xMax + mat[3] * face->bbox.yMin) /
+	    (div * face->units_per_EM));
+  if (y < yMin) {
+    yMin = y;
+  } else if (y > yMax) {
+    yMax = y;
+  }
+  x = (int)((mat[0] * face->bbox.xMax + mat[2] * face->bbox.yMax) /
+	    (div * face->units_per_EM));
+  if (x < xMin) {
+    xMin = x;
+  } else if (x > xMax) {
+    xMax = x;
+  }
+  y = (int)((mat[1] * face->bbox.xMax + mat[3] * face->bbox.yMax) /
+	    (div * face->units_per_EM));
+  if (y < yMin) {
+    yMin = y;
+  } else if (y > yMax) {
+    yMax = y;
+  }
+#endif // USE_FIXEDPOINT
+  // This is a kludge: some buggy PDF generators embed fonts with
+  // zero bounding boxes.
+  if (xMax == xMin) {
+    xMin = 0;
+    xMax = size;
+  }
+  if (yMax == yMin) {
+    yMin = 0;
+    yMax = (int)((SplashCoord)1.2 * size);
+  }
+
+  // compute the transform matrix
+#ifdef USE_FIXEDPOINT
+  matrix.xx = (FT_Fixed)((mat[0] / size).get16Dot16());
+  matrix.yx = (FT_Fixed)((mat[1] / size).get16Dot16());
+  matrix.xy = (FT_Fixed)((mat[2] / size).get16Dot16());
+  matrix.yy = (FT_Fixed)((mat[3] / size).get16Dot16());
+  textMatrix.xx = (FT_Fixed)((textMat[0] / (textScale * size)).get16Dot16());
+  textMatrix.yx = (FT_Fixed)((textMat[1] / (textScale * size)).get16Dot16());
+  textMatrix.xy = (FT_Fixed)((textMat[2] / (textScale * size)).get16Dot16());
+  textMatrix.yy = (FT_Fixed)((textMat[3] / (textScale * size)).get16Dot16());
+#else
+  matrix.xx = (FT_Fixed)((mat[0] / size) * 65536);
+  matrix.yx = (FT_Fixed)((mat[1] / size) * 65536);
+  matrix.xy = (FT_Fixed)((mat[2] / size) * 65536);
+  matrix.yy = (FT_Fixed)((mat[3] / size) * 65536);
+  textMatrix.xx = (FT_Fixed)((textMat[0] / (textScale * size)) * 65536);
+  textMatrix.yx = (FT_Fixed)((textMat[1] / (textScale * size)) * 65536);
+  textMatrix.xy = (FT_Fixed)((textMat[2] / (textScale * size)) * 65536);
+  textMatrix.yy = (FT_Fixed)((textMat[3] / (textScale * size)) * 65536);
+#endif
+}
+```
+
+### Failing Test Case (Minimized by Automated Reduction)
+
+**Minimization Summary**:
+Original: 15,308 bytes → Minimized: 14,787 bytes (3.4% reduction)
+
+**Purpose of Minimization**:
+The test case has been automatically reduced using delta debugging to identify the MINIMAL input 
+that still triggers the crash. This helps reveal the specific pattern or edge case that causes the bug.
+
+**How to use this information**:
+1. The minimized input reveals a specific triggering pattern (not just random data)
+2. Consider: What makes this particular input trigger the bug? (boundary condition, special character, size, structure)
+3. Your fix should handle this pattern and similar edge cases gracefully
+
+**Input Characteristics**:
+- Mostly printable ASCII → likely text-based input
+
+**Note**: Showing first 1KB (1024 bytes) of minimized input for analysis. Full input is 14,787 bytes.
+
+**Minimized Input** (hex format):
+```
+2020202020202020202020202020202020312030206f626a20203c3c2fffffff2020202020202020ff2f5061676573203220302052202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020200a322030206f626a20203c3c2fffffff202020202020ff2f436f756e7420312f4b6964735b2033203020525d2020202020202020202020200a332030206f626a20203c3c20202020202020202020202020202020202020202020202f5265736f75726365733c3c2f466f6e743c3c2f46312035203020523e3e2fffffffffffffffff20203c20202020202020202020203e20202020202020202020202020202020202020202020202020202020202020202020202020202020203e3e2020202020202020202020202020202020202020202020202020202020202f436f6e74656e74732034203020522020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020203e3e20202020202020202020342030206f626a20203c3c2f46696c7465722f466c20202020202020202020202020202020202020203e3e202073747265616d200a789c8d91c14a03311086ef81bcc31c2787cd6692ec2685d243776b5128205d4fad07d1b52dd60ad6f7c7ec414c940d4b208730f3e5fb67a0bc87f9202020202da8c52020ff20cb8eb3f28620202a0bdd2b67042a1c02a7a4d7205cada4f3d0bd87baff202020ca20822020ad39dbe120ff1420cf2761f0453c4277c7d92a2007ee0f69a6ff6513200e20aa85d5a62088e4209220abff20d47a0a44672054ff9a24010c20ff20fff02020203c2009ff2020928b202020ffb4ac922057aa676662209b81b868c22020202020202020202020202020202020202020202020202020202020202020202020ff202020202020202020202020ff2020202020202020202020202020202020202020202020202020200a352030206f626a20203c3c2fffffff2020202020ff2fffffffffffff202020202020202020ff2fffffff202020ff2fffffffffffffff202020202020202020202020202020ff2fffffffffffffff20202020202020202020202020202020ff2f466f6e7444657363726970746f722036203020522020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020200a362030206f626a20203c3c2fffffff20202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020
+```
+
+**Expected Behavior After Fix**:
+- The program should handle this input without crashing
+- Focus on preventing Use-of-uninitialized-value
+
+### Your Task
+Analyze the crash and generate a patch to fix the bug.
+
+**Instructions**:
+1. Identify the root cause based on crash information and code
+2. Generate a minimal fix targeting the buggy lines
+3. Ensure the fix handles edge cases properly
+4. Do not over-engineer - focus on the specific issue
+
+### Output Format
+Please first localize the bug, then generate *SEARCH/REPLACE* edits to fix the issue.
+
+Every *SEARCH/REPLACE* edit must use this format:
+1. The file path wrapped in ### (e.g., ### src/file.cpp)
+2. The start and end line numbers (- start_line: N, - end_line: M)
+3. The start of search block: <<<<<<< SEARCH
+4. A contiguous chunk of lines to search for in the existing source code
+5. The dividing line: =======
+6. The lines to replace into the source code
+7. The end of the replace block: >>>>>>> REPLACE
+
+Example (MINIMAL edit with context awareness):
+```cpp
+### src/memory/allocator.cpp
+- start_line: 145
+- end_line: 149
+<<<<<<< SEARCH
+	if (size > 0) {
+		ptr = malloc(size);
+		use_memory(ptr);
+	}
+=======
+	if (size > 0) {
+		ptr = malloc(size);
+		if (ptr != NULL)
+			use_memory(ptr);
+	}
+>>>>>>> REPLACE
+```
+
+**CRITICAL COMPILATION SAFETY REQUIREMENTS**:
+
+1. **MINIMAL edits ONLY** - Include only 3-8 lines in SEARCH block (bug line + 1-3 context lines)
+   - More lines = higher risk of breaking dependencies
+   - Focus ONLY on the buggy statement and immediate neighbors
+
+2. **Variable Dependency Check** - Before removing/modifying any line, verify:
+   - ❌ NEVER remove variable declarations if they're used later
+   - ❌ NEVER remove assignments if the variable is referenced afterwards
+   - ✅ Check if variables in your SEARCH block are used outside it
+
+3. **Macro Pairing Safety** - Special macros MUST stay paired:
+   - `fz_try(ctx) { ... } fz_always(ctx) { ... } fz_catch(ctx) { ... }` → NEVER break this chain
+   - `do { ... } while(...)` → NEVER remove the `while` if you keep the `do`
+   - `if (...) { ... } else { ... }` → Be careful not to create dangling else
+
+4. **Code Block Integrity**:
+   - ❌ NEVER remove opening/closing braces unless removing entire block
+   - ❌ NEVER remove function declarations/definitions
+   - ✅ Preserve the structural indentation and nesting
+
+5. **Indentation**:
+   - **Use TAB characters (\t)** for indentation, NOT spaces - the codebase uses tabs
+   - The SEARCH block must match EXACTLY (preserve all tabs and spacing)
+
+6. **Context Awareness** - When editing, mentally visualize:
+   ```
+   [Lines before SEARCH - you don't see these, assume they exist]
+   <<<<<<< SEARCH
+   your visible edit zone (3-8 lines)
+   =======
+   your proposed changes
+   >>>>>>> REPLACE
+   [Lines after SEARCH - you don't see these, assume they exist]
+   ```
+   Your edit should work correctly with unknown context before and after!
+
+**Common Compilation Errors to AVOID**:
+- ❌ "use of undeclared identifier 'X'" → You removed the declaration of X
+- ❌ "expected 'while' in do/while loop" → You broke a macro pairing
+- ❌ "function definition not allowed here" → You accidentally removed a closing brace
+- ❌ "extraneous closing brace" → You removed code but left its closing brace
+
+**Golden Rule**: If unsure whether a line is safe to remove, KEEP IT. Only modify the absolute minimum needed to fix the bug.

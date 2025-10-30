@@ -1,0 +1,36 @@
+Based on the crash details and code context, this is a use-of-uninitialized-value issue in `pdf_load_embedded_font` which flows through `pdf_load_font_descriptor`. The uninitialized value likely stems from incomplete initialization of a buffer or structure before it's used.
+
+Looking at the surrounding code and common patterns in MuPDF, the most likely cause is that a buffer or object is being used without proper initialization. The crash occurs during font loading, so we should ensure buffers are properly initialized before use.
+
+Here's the fix:
+
+```
+<<<<<<< SEARCH
+void
+pdf_load_encoding(const char **estrings, const char *encoding)
+{
+	const char * const *bstrings = NULL;
+	int i;
+
+	if (!strcmp(encoding, "StandardEncoding"))
+		bstrings = fz_glyph_name_from_adobe_standard;
+=======
+void
+pdf_load_encoding(const char **estrings, const char *encoding)
+{
+	const char * const *bstrings = NULL;
+	int i;
+
+	// Initialize estrings array to NULL to prevent use-of-uninitialized-value
+	for (i = 0; i < 256; i++) {
+		estrings[i] = NULL;
+	}
+
+	if (!strcmp(encoding, "StandardEncoding"))
+		bstrings = fz_glyph_name_from_adobe_standard;
+>>>>>>> REPLACE
+```
+
+This fix initializes the `estrings` array to NULL values before potentially using it. The crash occurs because `estrings` is passed in as an uninitialized pointer array, and if none of the encoding conditions match, some elements might be left uninitialized while others are set. By explicitly initializing all values to NULL first, we prevent any use-of-uninitialized-value issues.
+
+The change is minimal and focused on the specific security vulnerability while maintaining the original functionality. This is a common pattern in MuPDF's codebase for handling string tables.

@@ -1,0 +1,305 @@
+```python
+import sys
+
+def solve():
+    data = sys.stdin.read().split()
+    N = int(data[0])
+    M = int(data[1])
+    K = int(data[2])
+    A = list(map(int, data[3:3+N]))
+    
+    total_counted = sum(A)
+    remaining_votes = K - total_counted
+    
+    # If there are no remaining votes, we just evaluate current state
+    if remaining_votes == 0:
+        # Count how many have strictly more votes than candidate i
+        ans = []
+        for i in range(N):
+            more_votes = sum(1 for j in range(N) if A[j] > A[i])
+            if more_votes < M:
+                ans.append(0)
+            else:
+                ans.append(-1)
+        print(*ans)
+        return
+    
+    # Special case: if M >= N, then condition "less than M candidates have more votes" is always true
+    # because at most N-1 other candidates can have more votes
+    if M >= N:
+        print(*([0] * N))
+        return
+    
+    # We'll compute for each candidate the minimum additional votes needed
+    ans = [0] * N
+    
+    # Create list of (votes, original_index) and sort by votes descending
+    candidates = [(A[i], i) for i in range(N)]
+    candidates.sort(reverse=True)
+    
+    # For each candidate in order of current vote count
+    for votes, orig_idx in candidates:
+        # We want to guarantee that candidate orig_idx wins
+        # That means at most M-1 candidates should have more votes than them
+        
+        # Current votes of candidate
+        cur_votes = A[orig_idx]
+        
+        # Count how many candidates currently have more votes
+        num_higher = sum(1 for v in A if v > cur_votes)
+        
+        # If already fewer than M candidates have more votes, no extra votes needed
+        if num_higher < M:
+            ans[orig_idx] = 0
+            continue
+        
+        # Otherwise, we need to overtake enough candidates so that at most M-1 remain above
+        # We need to ensure that at most M-1 candidates end up with > (cur_votes + X)
+        # So we must overtake (num_higher - (M-1)) candidates who currently have more votes
+        
+        # But others can also gain votes from remaining pool
+        # Worst case: all remaining votes go to the top M candidates excluding possibly this one
+        
+        # Let's collect all vote counts
+        vote_counts = sorted(A, reverse=True)
+        
+        # Find the threshold: we need to surpass at least (num_higher - M + 1) candidates
+        # Actually, we need to be above at least (num_higher - M + 1) of the candidates that are above us
+        # But worst-case scenario: the other candidates get as many votes as possible
+        
+        # We simulate: what is the minimal X such that even in worst case, 
+        # at most M-1 candidates have more votes than (cur_votes + X)
+        
+        # Consider: after adding X votes to candidate orig_idx, they have V = cur_votes + X
+        # The adversary will try to make as many candidates as possible exceed V
+        # They have 'remaining_votes' total, but cannot give any to candidate orig_idx (already assigned X)
+        
+        # How many candidates could potentially have > V?
+        # Only candidates other than orig_idx
+        
+        # We need to check whether it's possible to distribute remaining_votes among others 
+        # so that more than M-1 candidates end up > V.
+        # We want the smallest X such that no matter how remaining_votes are distributed (excluding orig_idx),
+        # at most M-1 candidates can exceed V = cur_votes + X.
+        
+        # Equivalently: even if we try our best to boost other candidates,
+        # we cannot make M or more candidates exceed V.
+        
+        # But actually, we're looking for the minimal X such that in every distribution,
+        # candidate orig_idx is elected.
+        
+        # So we want: after giving X votes to orig_idx, 
+        # even if the remaining_votes are distributed optimally to minimize orig_idx's rank,
+        # still at most M-1 candidates have more votes.
+        
+        # How to compute minimal X?
+        
+        # Idea: binary search on X for each candidate? But N up to 2e5, so too slow.
+        
+        # Alternate idea:
+        # We want to make sure that at least (N - M) candidates have <= (cur_votes + X)
+        # Or equivalently: we need to beat at least (num_higher - M + 1) candidates who are currently above,
+        # but also account for vote inflation.
+        
+        # Known approach from similar problems:
+        # Let T be the (M)-th highest score among other candidates in the worst case.
+        # We need cur_votes + X > T
+        
+        # But worst-case: the other candidates can get all remaining votes except what we use.
+        
+        # Actually, consider: after we assign X votes to candidate i, there are (remaining_votes - X) votes left
+        # for others. These can be used to boost other candidates.
+        
+        # To prevent candidate i from winning, an adversary would try to make M candidates have as many votes as possible.
+        # Specifically, choose M candidates different from i, and distribute the (remaining_votes - X) votes among them
+        # to maximize the number of candidates exceeding (A[i] + X).
+        
+        # But we want to guarantee victory regardless of distribution, so we need:
+        # A[i] + X > final_votes[j] for at least (N - M) candidates j ≠ i
+        
+        # Alternatively: sort all candidates by current votes (descending), exclude candidate i,
+        # take the top M candidates from the rest, and see how high they can go.
+        
+        # Let’s define:
+        #   Let B = list of A[j] for j != i
+        #   Sort B in descending order
+        #   The top M values in B can be boosted using the remaining_votes - X votes
+        #
+        # To maximize the chance that many candidates exceed (A[i]+X), the adversary will concentrate votes
+        # on the top M candidates (or less if some are already below threshold).
+        #
+        # The maximum number of candidates that can exceed (A[i]+X) is determined by how many of the top M
+        # can be raised above (A[i]+X) using (remaining_votes - X) votes.
+        #
+        # We want this number to be < M, i.e., at most M-1.
+        #
+        # So we require that even if we use all (remaining_votes - X) votes to help others,
+        # we cannot make M candidates exceed (A[i] + X).
+        #
+        # How many votes are needed to make M specific candidates exceed V = A[i] + X?
+        # Take the M candidates with highest current votes among j ≠ i.
+        # For each of these M candidates, the votes needed to bring them to V+1 is max(0, V+1 - A[j])
+        # But we don't need to bring all to V+1; we only care whether we can make M of them exceed V.
+        #
+        # The minimal total votes needed to make M candidates (other than i) exceed V is:
+        #   sum_{j=1}^{M} max(0, V+1 - B[j])   where B is sorted descending (top M others)
+        #
+        # But if this required amount > (remaining_votes - X), then it's impossible to make M candidates exceed V,
+        # so candidate i is safe.
+        #
+        # So we need the smallest X ≥ 0 such that:
+        #   sum_{j=1}^{M} max(0, (A[i]+X)+1 - B_j) > (remaining_votes - X)
+        #
+        # Where B_j are the top M vote-getters among candidates other than i.
+        #
+        # However, note: if candidate i is among the top M in current votes, then when we remove i,
+        # the M-th highest might be lower.
+        
+        # This leads to an O(N log N) per candidate solution which is too slow.
+        
+        # Alternate known solution from similar AtCoder problems:
+        #   Sort the array A in descending order.
+        #   For a candidate with current votes v, we need to ensure that at most M-1 candidates can surpass v+X.
+        #   The worst-case is that the top M candidates (excluding possibly this one) get all the remaining votes.
+        #
+        # Insight:
+        #   After adding X votes to candidate i, let V = A[i] + X.
+        #   The adversary has R = remaining_votes - X votes to distribute among the other N-1 candidates.
+        #   Let S be the sum of max(0, min(R, ???)) — not straightforward.
+        #
+        # Another known approach:
+        #   Let’s assume we fix X. Then candidate i has V = A[i] + X.
+        #   The number of candidates that can possibly have > V is limited by how many can be pushed above V
+        #   with R = remaining_votes - X votes.
+        #   For each candidate j ≠ i, the votes needed to make A[j] > V is max(0, V - A[j] + 1)
+        #   But we can’t exceed R total.
+        #   So the maximum number of candidates that can exceed V is the maximum size of a subset of candidates j≠i
+        #   such that the sum of max(0, V - A[j] + 1) over the subset ≤ R.
+        #   This is knapsack-like and too expensive.
+        
+        # Simpler idea from known solutions to "Election" problems:
+        #   We want to find minimal X such that:
+        #       A[i] + X > Q_M
+        #   where Q_M is the M-th largest value among { A[j] + allocation[j] } for j≠i, 
+        #   and allocation uses at most (remaining_votes - X) total.
+        #
+        #   The maximal possible Q_M under adversarial allocation is minimized when spreading votes,
+        #   but to maximize Q_M, the adversary concentrates votes on the top M candidates.
+        #
+        #   Actually, to maximize the number of candidates above A[i]+X, the adversary should focus on making
+        #   the strongest candidates even stronger.
+        #
+        #   Standard solution:
+        #     Sort A in descending order.
+        #     For candidate i, consider the other candidates. We are interested in the M-th largest final value
+        #     among others. We can increase others by at most (remaining_votes - X).
+        #     The minimal possible M-th largest final value among others is not helpful; we want the maximal possible.
+        #
+        #   The maximal achievable for the M-th highest among others:
+        #     Start with the current top M candidates (excluding i). We can add votes to them.
+        #     The best way to maximize the M-th highest is to raise the top M as evenly as possible.
+        #
+        #   But actually, to prevent candidate i from being elected, we want at least M others > A[i]+X.
+        #   So we ask: can the adversary make M candidates (≠i) have > A[i]+X?
+        #   The minimal cost to do that is: sum_{j in S} max(0, A[i]+X+1 - A[j]), where S is a set of M candidates ≠i.
+        #   To minimize the cost, choose the M candidates with the largest A[j] (closest to A[i]+X).
+        #
+        #   So define:
+        #       cost(X) = min_{S ⊆ [N]\{i}, |S|=M} sum_{j∈S} max(0, A[i]+X+1 - A[j])
+        #   But since we want to maximize the chance, we pick the M easiest-to-boost candidates, i.e., those with highest A[j].
+        #
+        #   Actually, to make M candidates exceed A[i]+X, the cheapest way is to pick the M candidates with the largest current A[j],
+        #   because they require fewer additional votes.
+        #
+        #   So:
+        #       Let B = sorted([A[j] for j in range(N) if j != i], reverse=True)
+        #       cost = 0
+        #       for j in range(M):
+        #           if B[j] <= A[i] + X:
+        #               cost += (A[i] + X + 1 - B[j])
+        #       If cost > remaining_votes - X, then it's impossible to make M candidates exceed A[i]+X, so candidate i wins.
+        #
+        #   We want the smallest X≥0 such that cost > remaining_votes - X.
+        #
+        #   But note: X must be ≤ remaining_votes.
+        #
+        #   We can binary search on X for each candidate. Total complexity O(N * M * log(K)), which is too slow for N,M=2e5.
+        #
+        # Need a more efficient method.
+        
+        # Insight from known problems (e.g., ABC317F): 
+        #   Instead, we can try to directly compute X.
+        #
+        #   We require:
+        #       sum_{j=0}^{M-1} max(0, A[i]+X+1 - B[j]) > remaining_votes - X
+        #
+        #   Let F(X) = sum_{j=0}^{M-1} max(0, A[i]+X+1 - B[j]) + X
+        #   We want F(X) > remaining_votes
+        #
+        #   Note: F(X) is a piecewise linear increasing function.
+        #
+        #   Let’s define:
+        #       Let T = A[i] + X
+        #       Then condition: sum_{j=0}^{M-1} max(0, T+1 - B[j]) > remaining_votes - (T - A[i])
+        #       => sum_{j=0}^{M-1} max(0, T+1 - B[j]) + T > remaining_votes + A[i]
+        #
+        #   Let G(T) = sum_{j=0}^{M-1} max(0, T+1 - B[j]) + T
+        #   We want the smallest T ≥ A[i] such that G(T) > remaining_votes + A[i]
+        #   Then X = T - A[i]
+        #
+        #   Now, G(T) is increasing in T.
+        #   Breakpoints occur at T = B[j]-1.
+        #
+        #   Since B is fixed for candidate i, and M ≤ 2e5, we could iterate over breakpoints?
+        #   But doing this for each candidate i would be O(N*M) = 4e10, too slow.
+        #
+        # We need a global approach.
+        
+        # Another known solution pattern:
+        #   Sort candidates by A[i] descending.
+        #   Precompute prefix sums.
+        #   For each candidate, if they are in the top M, they might need 0.
+        #   Otherwise, they need to climb into the top M, but accounting for vote inflation.
+        #
+        # After reading known solutions for similar problems:
+        #   Solution idea:
+        #     Let S = remaining_votes
+        #     For candidate i, let’s suppose we give them X votes.
+        #     Then we have S - X votes for others.
+        #     We want that at most M-1 candidates can have > A[i]+X.
+        #     Consider the other candidates. Sort their current votes in descending order.
+        #     Let C be the list of A[j] for j != i, sorted descending.
+        #     The adversary will try to create as many candidates as possible with > A[i]+X.
+        #     The maximum number of candidates that can exceed A[i]+X is:
+        #         max { k | sum_{j=0}^{k-1} max(0, A[i]+X+1 - C[j]) ≤ S - X }
+        #     We want this k ≤ M-1.
+        #
+        #     So we need:
+        #         sum_{j=0}^{M-1} max(0, A[i]+X+1 - C[j]) > S - X
+        #
+        #     => sum_{j=0}^{M-1} max(0, A[i]+X+1 - C[j]) + X > S
+        #
+        #   Let’s denote:
+        #       f(X) = sum_{j=0}^{M-1} max(0, A[i]+X+1 - C[j]) + X
+        #   We want the smallest X≥0 such that f(X) > S.
+        #
+        #   f(X) is convex and piecewise linear. We can ternary search? But O(log(S)) per candidate, and S up to 1e12, 
+        #   and N up to 2e5 -> 2e5*log(1e12) ≈ 2e5*40 = 8e6, acceptable in Pyton? Maybe, but let's see if we can do better.
+        #
+        #   Alternatively, we can solve analytically.
+        #
+        #   Let D_j = A[i]+X+1 - C[j]
+        #   For fixed i, C is fixed. Let’s define thresholds.
+        #   For each j in 0..M-1, the term max(0, A[i]+X+1 - C[j]) becomes active when X ≥ C[j] - A[i] - 1.
+        #
+        #   Sort the thresholds: let T_j = max(0, C[j] - A[i] - 1)  --> wait, activation when X >= C[j] - A[i] - 1
+        #   But note: if C[j] <= A[i], then even at X=0, we have A[i]+X+1 - C[j] >= 1, so always active.
+        #
+        #   So split the M terms into two parts:
+        #     Let L = [C[j] for j in range(M) if C[j] > A[i]]
+        #     For these, the term is zero until X >= C[j] - A[i]
+        #     Actually: A[i]+X+1 - C[j] > 0 iff X > C[j] - A[i] - 1, i.e., X >= C[j] - A[i]  (since integer)
+        #
+        #   So for X < min_L (where min_L = min(L) - A[i]? ), the sum is only over those C[j] <= A[i]
+        #   But easier: let’s define for X, the sum is:
+        #       sum_{j=0}^{M-1} [X >= max(0

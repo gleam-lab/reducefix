@@ -1,0 +1,62 @@
+n, m = map(int, input().split())
+blocked = set()
+
+# Directions for the 8 possible capture moves
+capture_deltas = [
+    (2, 1), (1, 2), (-1, 2), (-2, 1),
+    (-2, -1), (-1, -2), (1, -2), (2, -1)
+]
+
+for _ in range(m):
+    a, b = map(int, input().split())
+    # Add all squares that are under threat from this piece
+    for da, db in capture_deltas:
+        i, j = a + da, b + db
+        if 1 <= i <= n and 1 <= j <= n:
+            blocked.add((i, j))
+
+# Total empty safe squares = total squares - (occupied + threatened)
+# But note: we must not double-count; only count each threatened or occupied square once
+
+# All occupied squares are also not available
+for _ in range(m):
+    a, b = map(int, input().split())
+    blocked.add((a, b))
+
+# However, the above loop reads input twice. Fix: store pieces first.
+# Let's rewrite properly:
+
+# Actually, re-read the input because we consumed it already? No, better to fix structure.
+
+# Correct approach:
+import sys
+
+sys.stdin = open(0)
+data = sys.stdin.read().split()
+if not data:
+    print(n * n)
+else:
+    n = int(data[0])
+    m = int(data[1])
+    pieces = []
+    index = 2
+    for i in range(m):
+        a = int(data[index]); b = int(data[index+1]); index += 2
+        pieces.append((a, b))
+    
+    blocked = set()
+    capture_deltas = [(2,1),(1,2),(-1,2),(-2,1),(-2,-1),(-1,-2),(1,-2),(2,-1)]
+    
+    # Add all occupied squares
+    for a, b in pieces:
+        blocked.add((a, b))
+    
+    # Add all squares that can be captured by existing pieces
+    for a, b in pieces:
+        for da, db in capture_deltas:
+            na, nb = a + da, b + db
+            if 1 <= na <= n and 1 <= nb <= n:
+                blocked.add((na, nb))
+    
+    ans = n * n - len(blocked)
+    print(ans)

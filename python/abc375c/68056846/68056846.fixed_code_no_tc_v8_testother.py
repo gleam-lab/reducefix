@@ -1,0 +1,20 @@
+import math
+
+N = int(input())
+X, Y = 0, 0
+total_cost = 0.0
+
+# Read all points and calculate distance from current to next
+for i in range(N):
+    x, y = map(int, input().split())
+    # Distance from current point (X, Y) to next point (x, y)
+    distance = math.sqrt((X - x) ** 2 + (Y - y) ** 2)
+    total_cost += distance
+    # Update current position
+    X, Y = x, y
+
+# Return to origin (0, 0)
+distance_to_origin = math.sqrt((X - 0) ** 2 + (Y - 0) ** 2)
+total_cost += distance_to_origin
+
+print(total_cost)

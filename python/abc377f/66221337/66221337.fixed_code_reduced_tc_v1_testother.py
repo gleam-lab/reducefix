@@ -1,0 +1,161 @@
+def main():
+    import sys
+    data = sys.stdin.read().split()
+    N = int(data[0])
+    M = int(data[1])
+    pieces = []
+    index = 2
+    for i in range(M):
+        a = int(data[index])
+        b = int(data[index+1])
+        index += 2
+        pieces.append((a, b))
+    
+    if M == 0:
+        print(N * N)
+        return
+        
+    # Sets to store occupied lines
+    rows = set()
+    cols = set()
+    diag1 = set()  # i + j
+    diag2 = set()  # i - j
+    
+    for a, b in pieces:
+        rows.add(a)
+        cols.add(b)
+        diag1.add(a + b)
+        diag2.add(a - b)
+    
+    # Count total squares under attack (union of all lines)
+    total_attacked = 0
+    
+    # Add contribution from each unique row
+    total_attacked += len(rows) * N
+    
+    # Add contribution from each unique column
+    total_attacked += len(cols) * N
+    
+    # Add contribution from each unique diagonal (i+j)
+    for s in diag1:
+        # Number of cells where i+j = s, with 1<=i<=N, 1<=j<=N
+        if s < 2:
+            count = 0
+        elif s <= N + 1:
+            count = s - 1
+        else:
+            count = 2 * N - s + 1
+        total_attacked += count
+    
+    # Add contribution from each unique diagonal (i-j)
+    for d in diag2:
+        # Number of cells where i-j = d
+        if d >= 0:
+            # i = j + d, j from 1 to N, i <= N => j <= N - d
+            count = N - d if d < N else 1 if d == N else 0
+        else:
+            # d < 0: j = i - d, i from 1 to N, j <= N => i <= N + d (since d<0)
+            count = N + d  # since d is negative, this is N - |d|
+        total_attacked += count
+
+    # Now subtract overlaps (inclusion-exclusion principle)
+
+    # Subtract intersections: row ∩ col
+    for r in rows:
+        for c in cols:
+            total_attacked -= 1  # cell (r,c) counted twice
+
+    # Subtract intersections: row ∩ diag1
+    for r in rows:
+        for s in diag1:
+            j = s - r
+            if 1 <= j <= N:
+                total_attacked -= 1
+
+    # Subtract intersections: row ∩ diag2
+    for r in rows:
+        for d in diag2:
+            j = r - d
+            if 1 <= j <= N:
+                total_attacked -= 1
+
+    # Subtract intersections: col ∩ diag1
+    for c in cols:
+        for s in diag1:
+            i = s - c
+            if 1 <= i <= N:
+                total_attacked -= 1
+
+    # Subtract intersections: col ∩ diag2
+    for c in cols:
+        for d in diag2:
+            i = c + d
+            if 1 <= i <= N:
+                total_attacked -= 1
+
+    # Subtract intersections: diag1 ∩ diag2
+    for s in diag1:
+        for d in diag2:
+            # Solve: i+j = s, i-j = d  ->  i = (s+d)/2, j = (s-d)/2
+            if (s + d) % 2 == 0:
+                i = (s + d) // 2
+                j = (s - d) // 2
+                if 1 <= i <= N and 1 <= j <= N:
+                    total_attacked -= 1
+
+    # Add back triple intersections: row ∩ col ∩ diag1
+    for r in rows:
+        for c in cols:
+            s = r + c
+            if s in diag1:
+                total_attacked += 1
+
+    # Add back triple intersections: row ∩ col ∩ diag2
+    for r in rows:
+        for c in cols:
+            d = r - c
+            if d in diag2:
+                total_attacked += 1
+
+    # Add back triple intersections: row ∩ diag1 ∩ diag2
+    for r in rows:
+        for s in diag1:
+            for d in diag2:
+                if (s + d) % 2 == 0:
+                    i = (s + d) // 2
+                    j = (s - d) // 2
+                    if i == r and 1 <= i <= N and 1 <= j <= N:
+                        total_attacked += 1
+
+    # Add back triple intersections: col ∩ diag1 ∩ diag2
+    for c in cols:
+        for s in diag1:
+            for d in diag2:
+                if (s + d) % 2 == 0:
+                    i = (s + d) // 2
+                    j = (s - d) // 2
+                    if j == c and 1 <= i <= N and 1 <= j <= N:
+                        total_attacked += 1
+
+    # Subtract quadruple intersection: row ∩ col ∩ diag1 ∩ diag2
+    for r in rows:
+        for c in cols:
+            s = r + c
+            d = r - c
+            if s in diag1 and d in diag2:
+                total_attacked -= 1
+
+    # The attacked set now has correct count via inclusion-exclusion
+    safe_squares = N * N - total_attacked
+    
+    # But we must ensure that we don't count any already occupied square as safe
+    # However, the problem asks for empty squares not under attack.
+    # Our calculation counts all non-attacked squares, but note:
+    # A piece's own position is attacked by itself, so it's included in the attacked set.
+    # So our `total_attacked` already includes all occupied squares.
+    # Thus `safe_squares` are unoccupied and not attacked.
+
+    print(safe_squares)
+
+if __name__ == '__main__':
+    main()

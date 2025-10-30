@@ -1,0 +1,55 @@
+def min_cost_for_capacity(target):
+    total_cost = 0
+    for i in range(n):
+        a, p, b, q = machines[i]
+        min_cost = float('inf')
+        
+        # Try all possible numbers of S_i machines (from 0 up to what's needed)
+        # We only need to consider up to target units of capacity from this machine
+        max_s_needed = (target + a - 1) // a if a > 0 else 0
+        max_t_needed = (target + b - 1) // b if b > 0 else 0
+        
+        # We can limit search since we don't need more than target capacity
+        # Try different counts of machine S_i
+        for s_count in range(max_s_needed + 1):
+            s_capacity = s_count * a
+            if s_capacity >= target:
+                min_cost = min(min_cost, s_count * p)
+            else:
+                remaining = target - s_capacity
+                t_count = (remaining + b - 1) // b  # ceiling division
+                min_cost = min(min_cost, s_count * p + t_count * q)
+        
+        # Also try using only T_i machines
+        for t_count in range(max_t_needed + 1):
+            t_capacity = t_count * b
+            if t_capacity >= target:
+                min_cost = min(min_cost, t_count * q)
+        
+        if min_cost == float('inf'):
+            return float('inf')
+            
+        total_cost += min_cost
+        if total_cost > x:  # Early termination
+            return float('inf')
+    
+    return total_cost
+
+# Read input
+n, x = map(int, input().split())
+machines = []
+for _ in range(n):
+    a, p, b, q = map(int, input().split())
+    machines.append((a, p, b, q))
+
+# Binary search on the production capacity
+left, right = 0, 2 * 10**7  # Upper bound: even with slowest machine, budget limits capacity
+
+while left < right:
+    mid = (left + right + 1) // 2
+    if min_cost_for_capacity(mid) <= x:
+        left = mid
+    else:
+        right = mid - 1
+
+print(left)

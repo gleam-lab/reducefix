@@ -1,0 +1,49 @@
+ ### 核心触发条件分析
+
+从崩溃信息来看，问题出在 `hb_vector_t<CFF::cff1_font_dict_values_t, 8u>::~hb_vector_t` 函数中。具体来说，在调用 `hb_vector_t<CFF::op_str_t, 8u>::fini()` 时发生了双释放错误。双释放错误通常是由于在同一个指针上多次调用了 `free()` 或 `delete` 导致的。
+
+### 修复策略
+
+要解决这个问题，我们需要确保在 `hb_vector_t` 的析构函数中正确处理内存释放，避免重复释放内存。这通常涉及到检查指针是否已经为空，或者在释放内存后将其设置为 `nullptr`。
+
+### 具体的代码修复建议
+
+以下是具体的代码修复建议：
+
+1. **在 `hb_vector_t` 的析构函数中添加空指针检查**：
+   在 `hb_vector_t` 的析构函数中，确保在释放内存之前检查指针是否为空。
+
+2. **在释放内存后将指针设置为 `nullptr`**：
+   释放内存后立即将指针设置为 `nullptr`，以防止重复释放。
+
+以下是一个可能的修复示例：
+
+```cpp
+template <typename T, unsigned int Prealloc>
+struct hb_vector_t {
+    // ... other members ...
+
+    ~hb_vector_t() {
+        fini();
+    }
+
+    void fini() {
+        for (unsigned i = 0; i < length; i++) {
+            data[i].~T(); // Call destructor of the elements
+        }
+        free(data); // Free the allocated memory
+        data = nullptr; // Set pointer to nullptr after freeing
+        length = 0;
+        capacity = 0;
+    }
+
+private:
+    T* data = nullptr;
+    unsigned length = 0;
+    unsigned capacity = 0;
+};
+```
+
+### 总结
+
+通过在 `hb_vector_t` 的析构函数和 `fini` 方法中添加空指针检查，并在释放内存后立即将指针设置为 `nullptr`，可以有效避免双释放错误。这样可以确保内存管理的安全性，避免程序崩溃。

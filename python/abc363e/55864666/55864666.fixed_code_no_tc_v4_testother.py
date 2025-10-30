@@ -1,0 +1,129 @@
+import sys
+from collections import deque
+
+def main():
+    H, W, Y = map(int, sys.stdin.readline().split())
+    
+    # Read elevation data
+    A = []
+    for _ in range(H):
+        row = list(map(int, sys.stdin.readline().split()))
+        A.append(row)
+    
+    # Initialize the result array for each year
+    result = [H * W] * Y  # Initially full area, will decrease over time
+    
+    # We'll simulate sea level rise from year 1 to Y
+    # Instead of simulating each year separately, we process cells by when they get submerged
+    
+    # Priority queue: (elevation_threshold, row, col)
+    heap = []
+    
+    # Mark border cells as initially connected to the sea
+    # Any cell on the border with elevation <= sea_level will be submerged
+    visited = [[False] * W for _ in range(H)]
+    
+    # Add all border cells to the priority queue
+    for i in range(H):
+        for j in range(W):
+            if i == 0 or i == H-1 or j == 0 or j == W-1:
+                heap.append((A[i][j], i, j))
+                visited[i][j] = True
+    
+    # Min-heapify
+    import heapq
+    heapq.heapify(heap)
+    
+    # Process cells in order of when they get submerged
+    # When a cell gets submerged, it may trigger adjacent cells to submerge earlier
+    current_area = H * W
+    
+    # For each sea level (year), track when cells are removed
+    removal_year = [0] * (current_area + 1)  # Not used directly
+    submerged_count = 0
+    
+    # Process the heap
+    while heap and submerged_count < current_area:
+        elev, i, j = heapq.heappop(heap)
+        
+        # This cell gets submerged at sea_level = elev
+        # So it disappears at year = elev
+        if elev <= Y:
+            # All years >= elev will have this cell submerged
+            # But we need to account for it only once
+            pass
+        
+        # Check neighbors
+        for di, dj in [(0,1), (0,-1), (1,0), (-1,0)]:
+            ni, nj = i + di, j + dj
+            if 0 <= ni < H and 0 <= nj < W and not visited[ni][nj]:
+                # The neighbor will be submerged when sea level reaches max(A[ni][nj], elev)
+                # Actually: neighbor is submerged when sea level >= A[ni][nj]
+                # But it becomes accessible from sea when its elevation <= current sea level
+                # However, the flooding propagates: once connected to submerged region and sea level is high enough
+                # But the key insight: a cell (ni,nj) gets submerged at year = min(sea_level when connected to border via path where all elevations <= sea_level)
+                
+                # Actually, correct approach:
+                # A cell gets submerged at year = minimum sea level such that there's a path from border
+                # where every step has elevation <= sea_level
+                # So effective "submersion time" for (ni,nj) is the minimum value T such that there's a path
+                # from border to (ni,nj) with all elevations <= T
+                # This equals the maximum elevation along the minimum-maximum-elevation path from border
+                # Which we're computing via Dijkstra-like algorithm
+                
+                new_level = max(elev, A[ni][nj])
+                heapq.heappush(heap, (new_level, ni, nj))
+                visited[ni][nj] = True
+    
+    # Now rebuild: collect all submersion times
+    submersion_times = []
+    for i in range(H):
+        for j in range(W):
+            if i == 0 or i == H-1 or j == 0 or j == W-1:
+                submersion_times.append(A[i][j])
+    
+    # Actually, we need to re-run properly
+    # Let's do it correctly
+    
+    # Reset
+    visited = [[False] * W for _ in range(H)]
+    heap = []
+    
+    # Add all border cells
+    for i in range(H):
+        for j in range(W):
+            if i == 0 or i == H-1 or j == 0 or j == W-1:
+                heapq.heappush(heap, (A[i][j], i, j))
+                visited[i][j] = True
+    
+    # List to store when each cell gets submerged
+    submergence_year = []
+    
+    while heap:
+        elev, i, j = heapq.heappop(heap)
+        submergence_year.append(elev)
+        
+        for di, dj in [(0,1), (0,-1), (1,0), (-1,0)]:
+            ni, nj = i + di, j + dj
+            if 0 <= ni < H and 0 <= nj < W and not visited[ni][nj]:
+                # The new cell will be reachable when sea level is high enough
+                # It gets submerged at max(current_path_max, A[ni][nj])
+                new_max = max(elev, A[ni][nj])
+                heapq.heappush(heap, (new_max, ni, nj))
+                visited[ni][nj] = True
+    
+    # Sort the submergence years
+    submergence_year.sort()
+    
+    # Now compute remaining area for each year
+    idx = 0
+    remaining = H * W
+    for year in range(1, Y + 1):
+        # Subtract all cells that submerge at this year
+        while idx < len(submergence_year) and submergence_year[idx] <= year:
+            remaining -= 1
+            idx += 1
+        print(remaining)
+
+if __name__ == "__main__":
+    main()

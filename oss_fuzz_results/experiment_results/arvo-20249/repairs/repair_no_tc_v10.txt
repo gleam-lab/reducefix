@@ -1,0 +1,79 @@
+### 1. 崩溃原因分析
+
+根据崩溃日志和堆栈跟踪信息，问题出现在 `hb_array_t<OT::IntType<unsigned char, 1u> const>` 类的 `copy` 方法中。具体来说，在调用 `hb_array_t<OT::IntType<unsigned char, 1u> const>::copy` 时发生了堆缓冲区溢出（heap-buffer-overflow）。这个错误通常是由于尝试访问超出分配内存范围的数据引起的。
+
+从堆栈跟踪可以看出，`OT::UnsizedArrayOf<OT::IntType<unsigned char, 1u> >::copy` 和 `OT::SBIXGlyph::copy` 等方法都涉及到对数组的复制操作。问题可能发生在这些方法中的某一个，或者是在调用这些方法的过程中。
+
+### 2. 修复策略
+
+要解决这个问题，需要仔细检查所有与数组复制相关的代码，确保在进行内存操作之前进行了正确的边界检查。特别是要注意以下几点：
+
+- 确保目标数组有足够的空间来存储源数组的内容。
+- 在进行数组复制时，正确处理边界条件。
+
+### 3. 具体的代码修复建议
+
+假设 `OT::UnsizedArrayOf<OT::IntType<unsigned char, 1u> >::copy` 的实现如下：
+
+```cpp
+template <typename T>
+class UnsizedArrayOf {
+public:
+    T* data;
+    size_t length;
+
+    UnsizedArrayOf(T* d, size_t l) : data(d), length(l) {}
+
+    UnsizedArrayOf(const UnsizedArrayOf& other) {
+        if (other.length > 0) {
+            data = new T[other.length];
+            std::copy(other.data, other.data + other.length, data);
+        } else {
+            data = nullptr;
+        }
+        length = other.length;
+    }
+
+    ~UnsizedArrayOf() {
+        delete[] data;
+    }
+};
+```
+
+我们可以看到，构造函数中的 `std::copy` 操作可能会导致堆缓冲区溢出。我们需要添加边界检查。
+
+修复后的代码如下：
+
+```cpp
+template <typename T>
+class UnsizedArrayOf {
+public:
+    T* data;
+    size_t length;
+
+    UnsizedArrayOf(T* d, size_t l) : data(d), length(l) {}
+
+    UnsizedArrayOf(const UnsizedArrayOf& other) {
+        if (other.length > 0) {
+            data = new T[other.length];
+            if (data != nullptr) {
+                std::copy(other.data, other.data + other.length, data);
+            } else {
+                // Handle memory allocation failure
+                throw std::bad_alloc();
+            }
+        } else {
+            data = nullptr;
+        }
+        length = other.length;
+    }
+
+    ~UnsizedArrayOf() {
+        delete[] data;
+    }
+};
+```
+
+在这个修复中，我们添加了一个简单的空指针检查，以确保在分配内存成功后才进行复制操作。如果内存分配失败，抛出 `std::bad_alloc` 异常。
+
+此外，还需要在整个代码库中查找其他类似的数组复制操作，并进行相应的边界检查。

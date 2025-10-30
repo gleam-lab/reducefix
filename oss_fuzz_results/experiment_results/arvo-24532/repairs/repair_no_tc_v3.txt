@@ -1,0 +1,69 @@
+### 崩溃原因分析
+根据提供的崩溃信息，崩溃发生在 `__asan_memset` 函数中，这表明程序试图对一个未知地址进行写操作。具体来说，错误发生在 `hb_vector_t<CFF::parsed_cs_op_t>::resize` 函数中，该函数调用了 `__asan_memset` 来初始化新分配的内存区域。
+
+从栈跟踪来看，问题出现在以下代码行：
+```cpp
+#2 0x9040a9 in hb_vector_t<CFF::parsed_cs_op_t>::resize(int) /work/build/../../src/harfbuzz/src/hb-vector.hh:223:7
+#3 0x903f68 in hb_vector_t<CFF::parsed_cs_op_t>::push() /work/build/../../src/harfbuzz/src/hb-vector.hh:167:9
+```
+
+在 `hb_vector_t::resize` 中，可能存在以下几种情况导致崩溃：
+1. 内存分配失败，导致 `resize` 方法尝试访问无效的内存地址。
+2. 在 `resize` 方法内部，存在数组越界的情况。
+
+### 修复策略
+为了解决这个问题，我们需要确保在 `resize` 方法中正确处理内存分配和数组越界情况。具体步骤如下：
+
+1. **检查内存分配是否成功**：在 `resize` 方法中添加对内存分配结果的检查。
+2. **避免数组越界**：确保在访问数组元素时不会超出有效范围。
+
+### 具体的代码修复建议
+以下是具体的代码修复建议：
+
+#### 1. 检查内存分配是否成功
+在 `resize` 方法中添加对内存分配结果的检查。如果内存分配失败，应该返回错误码或抛出异常。
+
+```cpp
+template <typename T>
+void hb_vector_t<T>::resize(int new_size) {
+    if (new_size <= capacity_) {
+        count_ = new_size;
+        return;
+    }
+
+    // Allocate new memory
+    T* new_data = static_cast<T*>(realloc(data_, new_size * sizeof(T)));
+    if (!new_data) {
+        // Handle memory allocation failure
+        // For example, log an error or throw an exception
+        // Here we simply return without resizing
+        return;
+    }
+
+    data_ = new_data;
+    capacity_ = new_size;
+    count_ = new_size;
+
+    // Initialize the newly allocated memory
+    for (int i = old_count; i < new_size; ++i) {
+        new (&data_[i]) T();
+    }
+}
+```
+
+#### 2. 避免数组越界
+确保在访问数组元素时不会超出有效范围。可以在 `resize` 方法中添加边界检查。
+
+```cpp
+template <typename T>
+void hb_vector_t<T>::push(const T& value) {
+    if (count_ >= capacity_) {
+        resize(capacity_ + growth_policy_);
+    }
+
+    new (&data_[count_]) T(value);
+    ++count_;
+}
+```
+
+通过上述修复措施，可以确保在 `resize` 和 `push` 方法中不会发生内存分配失败或数组越界的情况，从而避免段错误。

@@ -1,0 +1,76 @@
+N = int(input())
+S = input().strip()
+
+# Map Aoki's move to the winning and losing moves for Takahashi
+# For each of Aoki's move, we know:
+#   - The move that beats it (win)
+#   - The move that loses to it (lose)
+#   - The move that ties
+
+# Winning move against Aoki's move
+win_move = {'R': 'P', 'P': 'S', 'S': 'R'}
+lose_move = {'R': 'S', 'P': 'R', 'S': 'P'}
+
+# We'll use DP where dp[i][j] = maximum wins up to game i, with Takahashi's last move being j
+# j: 0 = Rock, 1 = Paper, 2 = Scissors
+# But we can optimize space by only keeping previous state
+
+prev_dp = [-1] * 3  # Initialize all to -1 (invalid)
+
+# Initialize first game
+aoki_first = S[0]
+w = win_move[aoki_first]
+t = aoki_first  # tie move
+l = lose_move[aoki_first]
+
+# Only valid moves are win or tie (Takahashi never loses)
+if w == 'R':
+    prev_dp[0] = 1
+elif w == 'P':
+    prev_dp[1] = 1
+else:  # w == 'S'
+    prev_dp[2] = 1
+
+# Tie move gives 0 win
+if t == 'R':
+    if prev_dp[0] < 0:
+        prev_dp[0] = 0
+elif t == 'P':
+    if prev_dp[1] < 0:
+        prev_dp[1] = 0
+else:  # t == 'S'
+    if prev_dp[2] < 0:
+        prev_dp[2] = 0
+
+# Iterate from second game onwards
+for i in range(1, N):
+    curr_dp = [-1] * 3
+    aoki_move = S[i]
+    w = win_move[aoki_move]
+    t = aoki_move
+    l = lose_move[aoki_move]
+    
+    # Possible moves for Takahashi: win or tie (never lose)
+    valid_moves = []
+    if w == 'R': valid_moves.append((0, 1))
+    elif w == 'P': valid_moves.append((1, 1))
+    else: valid_moves.append((2, 1))
+    
+    if t == 'R': valid_moves.append((0, 0))
+    elif t == 'P': valid_moves.append((1, 0))
+    else: valid_moves.append((2, 0))
+    
+    # For each possible move in current game
+    for move_idx, win_bonus in valid_moves:
+        # Consider transitions from previous game
+        best_prev = -1
+        for prev_move in range(3):
+            if prev_move != move_idx:  # Adjacent moves must be different
+                if prev_dp[prev_move] >= 0:
+                    best_prev = max(best_prev, prev_dp[prev_move])
+        if best_prev >= 0:
+            curr_dp[move_idx] = best_prev + win_bonus
+    
+    prev_dp = curr_dp
+
+print(max(prev_dp))

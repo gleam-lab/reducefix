@@ -1,0 +1,40 @@
+根据崩溃日志和关键差异分析，问题出在 `hb_vector_t<CFF::op_str_t, 8u>::fini` 方法中尝试释放已经被释放过的内存。具体来说，在调用 `__interceptor_free` 时发生了双释放错误。
+
+### 输入的哪些特征会触发此崩溃
+
+从提供的输入数据（十六进制）`78` 看不出直接的特征，但可以推测输入数据可能与某种特定的 CFF 字体结构有关。双释放通常发生在对同一个对象进行多次删除操作时。
+
+### 为什么 hb_vector_t<CFF::op_str_t, 8u>::fini 会出现 unknown
+
+`unknown` 类型的崩溃表明崩溃原因不明确，可能是由于其他未捕获的异常或逻辑错误导致的。然而，根据提供的栈跟踪信息，崩溃的根本原因是双释放错误。
+
+### 如何修复以处理这种边界情况
+
+为了解决这个问题，需要确保在释放内存之前检查内存是否已经被释放过。可以通过引入一个标志来表示内存是否已经被释放，并在释放之前检查这个标志。以下是具体的代码修复建议：
+
+```cpp
+template <typename T, unsigned N>
+class hb_vector_t {
+public:
+    // 其他成员变量和方法
+
+    void fini() {
+        if (!is_fini_) {
+            for (unsigned i = 0; i < length_; ++i) {
+                elements_[i].~T();
+            }
+            ::free(elements_);
+            is_fini_ = true;
+        }
+    }
+
+private:
+    T* elements_;
+    unsigned length_;
+    bool is_fini_ = false; // 新增标志，用于标记是否已经释放
+};
+```
+
+在这个修复中，新增了一个 `is_fini_` 标志来表示 `hb_vector_t` 是否已经完成初始化。在 `fini` 方法中，首先检查 `is_fini_` 标志，如果已经为 `true`，则跳过释放操作。这样可以避免对已经释放过的内存进行再次释放。
+
+通过这种方式，可以有效地防止双释放错误，从而修复崩溃问题。

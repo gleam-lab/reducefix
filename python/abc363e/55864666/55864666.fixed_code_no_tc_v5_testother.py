@@ -1,0 +1,81 @@
+import sys
+from collections import deque
+
+def main():
+    H, W, Y = map(int, sys.stdin.readline().split())
+    
+    # Read elevation matrix
+    A = []
+    for _ in range(H):
+        row = list(map(int, sys.stdin.readline().split()))
+        A.append(row)
+    
+    # Initialize result array: area remaining after each year
+    result = []
+    
+    # We'll simulate sea level rise from 1 to Y
+    # Instead of simulating every year, we can precompute when each cell gets submerged
+    
+    # For each cell, determine the earliest year it gets submerged
+    # Cell (i,j) is submerged when sea level >= A[i][j], but only if connected to the sea
+    
+    # We'll use a BFS starting from all border cells, processing cells in increasing order of elevation
+    # This gives us the "flood time" for each cell
+    
+    # Priority queue: (elevation, i, j)
+    heap = []
+    visited = [[False] * W for _ in range(H)]
+    
+    # Add all border cells to the priority queue
+    for i in range(H):
+        for j in range(W):
+            if i == 0 or i == H-1 or j == 0 or j == W-1:
+                heap.append((A[i][j], i, j))
+                visited[i][j] = True
+    
+    import heapq
+    heapq.heapify(heap)
+    
+    # Array to store the year when each cell gets submerged
+    # Actually, we want to count how many cells remain above water at each year
+    submerged_year = []  # List of years when cells get submerged (in order)
+    
+    # Directions for adjacent cells
+    directions = [(0, 1), (0, -1), (1, 0), (-1, 0)]
+    
+    while heap:
+        elev, i, j = heapq.heappop(heap)
+        # This cell gets submerged at "year = elev" (since sea level rises by 1 per year)
+        submerged_year.append(elev)
+        
+        # Check neighbors
+        for di, dj in directions:
+            ni, nj = i + di, j + dj
+            if 0 <= ni < H and 0 <= nj < W and not visited[ni][nj]:
+                visited[ni][nj] = True
+                # The neighbor will be submerged through this path, but only when sea level reaches its elevation
+                # However, if its elevation is lower than current path's threshold, it would have been flooded earlier
+                # But since we're using min-heap, we process lower elevations first
+                heapq.heappush(heap, (A[ni][nj], ni, nj))
+    
+    # Count remaining area for each year
+    total_cells = H * W
+    submerged_count = 0
+    year_index = 0
+    submerged_year.sort()  # They should already be sorted due to heap, but just to be sure
+    
+    for year in range(1, Y + 1):
+        # All cells with elevation <= year that are connected to border are submerged
+        while year_index < len(submerged_year) and submerged_year[year_index] <= year:
+            submerged_count += 1
+            year_index += 1
+            
+        remaining = total_cells - submerged_count
+        result.append(remaining)
+    
+    # Output each result on separate line
+    for res in result:
+        print(res)
+
+if __name__ == "__main__":
+    main()

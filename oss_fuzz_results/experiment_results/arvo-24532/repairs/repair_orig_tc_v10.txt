@@ -1,0 +1,71 @@
+ ### 1. 为什么这个输入会触发崩溃
+
+从崩溃信息来看，问题出在 `hb_vector_t<CFF::parsed_cs_op_t>::resize` 函数中。具体来说，崩溃发生在调用 `__asan_memset` 函数时，该函数尝试对一个未知地址进行写操作。这通常是由于内存越界或未初始化的指针导致的。
+
+根据崩溃栈跟踪，我们可以看到崩溃发生在以下代码行：
+```cpp
+#2 0x9040a9 in hb_vector_t<CFF::parsed_cs_op_t>::resize(int) /work/build/../../src/harfbuzz/src/hb-vector.hh:223:7
+```
+在这行代码中，`resize` 函数尝试调整向量的大小，并使用 `__asan_memset` 来设置新的内存区域。如果在这个过程中发生了内存越界或指针无效，就会导致段错误。
+
+### 2. 修复策略
+
+为了修复这个问题，我们需要确保在调用 `resize` 函数之前，向量有足够的空间来容纳新的元素。此外，我们需要检查向量的边界条件，以避免内存越界访问。
+
+### 3. 具体的代码修复建议
+
+以下是具体的代码修复建议：
+
+#### 修改 `resize` 函数
+
+在 `resize` 函数中，确保在调整向量大小之前，有足够多的内存空间。可以在调整大小之前添加一些边界检查。
+
+```cpp
+template <typename T>
+void hb_vector_t<T>::resize(int new_size) {
+    if (new_size > capacity()) {
+        // 计算新的容量，确保有足够的空间
+        int new_capacity = std::max(new_size, capacity() * 2);
+        allocate(new_capacity); // 分配新的内存
+    }
+    // 使用 __asan_memset 设置新的内存区域
+    __asan_memset(data + size(), 0, sizeof(T) * (new_size - size()));
+    size_ = new_size;
+}
+```
+
+#### 添加边界检查
+
+在调用 `push` 或其他可能涉及向量扩容的操作时，添加边界检查，确保不会发生内存越界。
+
+```cpp
+template <typename T>
+bool hb_vector_t<T>::push(const T& value) {
+    if (size_ == capacity()) {
+        // 如果没有足够的空间，尝试扩容
+        resize(size_ + 1);
+    }
+    data[size_] = value;
+    ++size_;
+    return true;
+}
+```
+
+#### 确保向量初始化正确
+
+确保在创建向量实例时，初始化为正确的大小和容量。
+
+```cpp
+template <typename T>
+hb_vector_t<T>::hb_vector_t(int initial_capacity)
+    : data(nullptr), size_(0), capacity_(initial_capacity) {
+    allocate(initial_capacity); // 初始化分配内存
+}
+
+template <typename T>
+hb_vector_t<T>::~hb_vector_t() {
+    deallocate(); // 释放内存
+}
+```
+
+通过这些修改，可以确保向量在调整大小时有足够的空间，并且在添加新元素时不会发生内存越界访问，从而避免崩溃。

@@ -1,0 +1,417 @@
+```python
+python
+N, M = map(int, input().split())
+pieces = [tuple(map(int, input().split())) for _ in range(M)]
+
+# If there are no pieces, every empty square is valid
+if M == 0:
+    print(N * N)
+    exit()
+
+# Sets to store unique lines attacked by existing pieces
+rows = set()      # attacked rows
+cols = set()      # attacked cols
+diag1 = set()     # diagonal: i + j = const
+diag2 = set()     # anti-diagonal: i - j = const
+
+# Count total attacked cells, but avoid double counting
+for a, b in pieces:
+    rows.add(a)
+    cols.add(b)
+    diag1.add(a + b)
+    diag2.add(a - b)
+
+# Total number of distinct attacked cells
+total_attacked = 0
+
+# Add all cells in attacked rows
+total_attacked += len(rows) * N
+
+# Add all cells in attacked cols
+total_attacked += len(cols) * N
+
+# Add all cells in attacked diag1 (i + j = const)
+for s in diag1:
+    # Number of integer solutions (i,j) such that i+j = s, 1<=i<=N, 1<=j<=N
+    if s < 2:
+        count = 0
+    elif s <= N + 1:
+        count = s - 1
+    else:
+        count = 2 * N - s + 1
+    total_attacked += count
+
+# Add all cells in attacked diag2 (i - j = d)
+for d in diag2:
+    # Number of integer solutions (i,j) such that i-j = d, 1<=i<=N, 1<=j<=N
+    if d >= 0:
+        # i = j + d => j >= 1, i <= N => j <= N - d
+        count = N - d if d < N else 0
+    else:
+        # j = i - d => i >= 1, j <= N => i <= N + d (since d is negative)
+        count = N + d
+    total_attacked += count
+
+# Subtract overlaps: cells counted multiple times
+
+# Overlap between rows and cols: each (r,c) where r in rows, c in cols
+total_attacked -= len(rows) * len(cols)
+
+# Overlap between rows and diag1: for each row r and sum s, cell (r, s-r) exists if 1 <= s-r <= N
+for r in rows:
+    for s in diag1:
+        c = s - r
+        if 1 <= c <= N:
+            total_attacked -= 1
+
+# Overlap between rows and diag2: for each row r and diff d, cell (r, r-d) exists if 1 <= r-d <= N
+for r in rows:
+    for d in diag2:
+        c = r - d
+        if 1 <= c <= N:
+            total_attacked -= 1
+
+# Overlap between cols and diag1: for each col c and sum s, cell (s-c, c) exists if 1 <= s-c <= N
+for c in cols:
+    for s in diag1:
+        r = s - c
+        if 1 <= r <= N:
+            total_attacked -= 1
+
+# Overlap between cols and diag2: for each col c and diff d, cell (c+d, c) exists if 1 <= c+d <= N
+for c in cols:
+    for d in diag2:
+        r = c + d
+        if 1 <= r <= N:
+            total_attacked -= 1
+
+# Overlap between diag1 and diag2: for each s in diag1, d in diag2, solve i+j=s, i-j=d => i=(s+d)/2, j=(s-d)/2
+for s in diag1:
+    for d in diag2:
+        if (s + d) % 2 == 0:
+            i = (s + d) // 2
+            j = (s - d) // 2
+            if 1 <= i <= N and 1 <= j <= N:
+                total_attacked -= 1
+
+# Now add back the triple and quadruple overlaps (inclusion-exclusion principle)
+
+# Triple overlap: rows ∩ cols ∩ diag1
+for r in rows:
+    for c in cols:
+        s = r + c
+        if s in diag1:
+            total_attacked += 1  # subtracted 3 times, added 3 times in pairwise, so add one back
+
+# Triple overlap: rows ∩ cols ∩ diag2
+for r in rows:
+    for c in cols:
+        d = r - c
+        if d in diag2:
+            total_attacked += 1
+
+# Triple overlap: rows ∩ diag1 ∩ diag2
+for r in rows:
+    for s in diag1:
+        c = s - r
+        if 1 <= c <= N:
+            d = r - c
+            if d in diag2:
+                total_attacked += 1
+
+# Triple overlap: cols ∩ diag1 ∩ diag2
+for c in cols:
+    for s in diag1:
+        r = s - c
+        if 1 <= r <= N:
+            d = r - c
+            if d in diag2:
+                total_attacked += 1
+
+# Quadruple overlap: rows ∩ cols ∩ diag1 ∩ diag2
+for r in rows:
+    for c in cols:
+        s = r + c
+        d = r - c
+        if s in diag1 and d in diag2:
+            total_attacked -= 1  # was added back too many times
+
+# However, inclusion-exclusion can get complex. Instead, we can use an alternative method:
+# Since M is small (<= 1000), we can collect all attacked cells via union of attacks from each piece.
+# But N is up to 1e9, so we cannot iterate over grid.
+
+# Alternative approach: compute union of attacked cells using inclusion exclusion over M pieces is too expensive.
+
+# Actually, simpler idea: the total attacked cells = union of:
+#   R = all cells in any attacked row
+#   C = all cells in any attacked col
+#   D1 = all cells in any attacked diag1
+#   D2 = all cells in any attacked diag2
+#
+# Use inclusion-exclusion:
+# |R ∪ C ∪ D1 ∪ D2| = 
+#   |R| + |C| + |D1| + |D2|
+#   - |R∩C| - |R∩D1| - |R∩D2| - |C∩D1| - |C∩D2| - |D1∩D2|
+#   + |R∩C∩D1| + |R∩C∩D2| + |R∩D1∩D2| + |C∩D1∩D2|
+#   - |R∩C∩D1∩D2|
+
+# We already computed this above.
+
+# But note: our previous calculation tried to simulate inclusion-exclusion step by step.
+# Let's recompute cleanly using inclusion-exclusion:
+
+R = len(rows) * N
+C = len(cols) * N
+
+D1 = 0
+for s in diag1:
+    if 2 <= s <= N+1:
+        D1 += s - 1
+    elif N+1 < s <= 2*N:
+        D1 += 2*N - s + 1
+
+D2 = 0
+for d in diag2:
+    if d >= 0:
+        D2 += N - d
+    else:
+        D2 += N + d
+
+# Two-way intersections
+RC = 0
+for r in rows:
+    for c in cols:
+        RC += 1  # each (r,c) is in both R and C
+
+RD1 = 0
+for r in rows:
+    for s in diag1:
+        c = s - r
+        if 1 <= c <= N:
+            RD1 += 1
+
+RD2 = 0
+for r in rows:
+    for d in diag2:
+        c = r - d
+        if 1 <= c <= N:
+            RD2 += 1
+
+CD1 = 0
+for c in cols:
+    for s in diag1:
+        r = s - c
+        if 1 <= r <= N:
+            CD1 += 1
+
+CD2 = 0
+for c in cols:
+    for d in diag2:
+        r = c + d
+        if 1 <= r <= N:
+            CD2 += 1
+
+D1D2 = 0
+for s in diag1:
+    for d in diag2:
+        if (s + d) % 2 == 0:
+            i = (s + d) // 2
+            j = (s - d) // 2
+            if 1 <= i <= N and 1 <= j <= N:
+                D1D2 += 1
+
+# Three-way intersections
+RCD1 = 0
+for r in rows:
+    for c in cols:
+        s = r + c
+        if s in diag1:
+            RCD1 += 1
+
+RCD2 = 0
+for r in rows:
+    for c in cols:
+        d = r - c
+        if d in diag2:
+            RCD2 += 1
+
+RD1D2 = 0
+for r in rows:
+    for s in diag1:
+        c = s - r
+        if 1 <= c <= N:
+            d = r - c
+            if d in diag2:
+                RD1D2 += 1
+
+CD1D2 = 0
+for c in cols:
+    for s in diag1:
+        r = s - c
+        if 1 <= r <= N:
+            d = r - c
+            if d in diag2:
+                CD1D2 += 1
+
+# Four-way intersection
+RCD1D2 = 0
+for r in rows:
+    for c in cols:
+        s = r + c
+        d = r - c
+        if s in diag1 and d in diag2:
+            RCD1D2 += 1
+
+# Inclusion-Exclusion
+attacked_cells = (R + C + D1 + D2) \
+                 - (RC + RD1 + RD2 + CD1 + CD2 + D1D2) \
+                 + (RCD1 + RCD2 + RD1D2 + CD1D2) \
+                 - RCD1D2
+
+# But wait: the above counts cells that may not exist? No, because we checked bounds.
+
+# However, this counts the union of all attacked cells due to the coverage of rows, cols, diags.
+# But note: a piece only attacks its own row, col, diag1, diag2 — so the entire union is correct.
+
+# But caution: the same cell might be attacked by multiple pieces, but we want the union.
+
+# The issue: the above inclusion-exclusion computes the size of R ∪ C ∪ D1 ∪ D2 correctly.
+
+# However, we must remember: the original pieces occupy M cells, but they are already included in attacked cells.
+# And we cannot place on occupied cells anyway.
+
+# So the available safe squares = total grid - attacked cells - ??? 
+
+# Wait: no. The attacked cells include all cells that are under attack, including possibly occupied ones.
+# But we cannot place on occupied cells, and also cannot place on attacked cells.
+
+# However, the problem says: place on an **empty** square that **cannot be captured**.
+
+# So we need:
+#   safe_squares = (all squares) - (occupied squares) - (unoccupied but attacked squares)
+
+# But note: occupied squares are already part of attacked cells? Yes, because each piece attacks its own row/col/diag.
+
+# So:
+#   total_safe = N*N - (number of squares that are either occupied or attacked)
+
+# But actually: "attacked" means can be captured — regardless of occupancy.
+# And we cannot place on occupied squares.
+
+# So:
+#   forbidden_squares = { all squares that are either occupied OR attacked }
+#   BUT: actually, the condition is: we can only place on empty squares that are NOT attacked.
+
+# So:
+#   safe_squares = (N*N - occupied_count) - (attacked_cells - occupied_that_are_attacked)
+
+# But since all occupied squares are attacked (each piece attacks its own position), then:
+#   attacked_cells includes all occupied squares.
+
+# Therefore:
+#   total_forbidden_by_attack = attacked_cells   (this includes some empty cells and all occupied)
+#   but we cannot place on any of these, even if empty.
+
+# However, wait: the definition is: a piece on (i,j) attacks entire row, col, diag1, diag2.
+# So yes, (i,j) is attacked by itself.
+
+# So the set of squares where we cannot place = attacked_cells (because if a square is attacked, we cannot place there — even if empty)
+#   plus: we also cannot place on occupied squares — but those are already in attacked_cells.
+
+# Therefore, the only requirement is: not attacked and not occupied?
+# But if a square is not attacked, it's automatically not occupied? Not necessarily.
+
+# Actually: we must place on an empty square that is not attacked.
+
+# So:
+#   safe_squares = (all squares) - (squares that are attacked OR occupied)
+
+# But since every occupied square is attacked (by at least the piece on it), then:
+#   attacked_cells already includes all occupied squares.
+
+# So:
+#   safe_squares = N*N - attacked_cells
+
+# BUT: wait, is that true?
+
+# Example: two pieces on same row: (1,1) and (1,2). Then attacked_cells includes entire row 1 -> N cells.
+# But occupied are 2 cells. attacked_cells = N (from row 1) + ... etc. — so it's more than just row.
+
+# But our inclusion-exclusion computed the full union of all attacked cells.
+
+# So yes: any square that is in attacked_cells is unsafe (either because attacked or because occupied and attacked).
+# And any square not in attacked_cells is safe (and also not occupied, because occupied implies attacked).
+
+# Therefore:
+safe_squares = N * N - attacked_cells
+
+# However, let's test with a small example.
+# N=2, M=1, piece at (1,1)
+# Attacked: row1: (1,1),(1,2); col1: (1,1),(2,1); diag1: (1,1) [sum=2]; diag2: (1,1) [diff=0]
+# So attacked_cells = |{ (1,1), (1,2), (2,1) }| = 3
+# So safe_squares = 4 - 3 = 1 -> which is (2,2)
+# But (2,2): is it attacked? 
+#   row2? no piece in row2 -> no
+#   col2? no piece in col2 -> no
+#   diag1: 2+2=4, piece at (1,1) has 1+1=2 -> different
+#   diag2: 2-2=0, piece at (1,1) has 1-1=0 -> same! so (2,2) is on the same diagonal (anti-diagonal) as (1,1)?
+#   diag2: i-j = constant. (1,1): 0, (2,2): 0 -> yes, so (2,2) IS attacked.
+
+# So why did we not include (2,2) in attacked_cells?
+
+# Because diag2 = {0}, and for d=0, the number of cells with i-j=0 is N = 2: (1,1) and (2,2)
+# So D2 = 2
+# R = 1*2 = 2
+# C = 1*2 = 2
+# D1 = for s=2: count = 2-1 = 1
+# So R+C+D1+D2 = 2+2+1+2 = 7
+# Intersections:
+#   RC: (1,1) -> 1
+#   RD1: r=1,s=2 -> c=1 -> valid -> 1
+#   RD2: r=1,d=0 -> c=1 -> valid -> 1
+#   CD1: c=1,s=2 -> r=1 -> valid -> 1
+#   CD2: c=1,d=0 -> r=1 -> valid -> 1
+#   D1D2: s=2,d=0 -> i=(2+0)/2=1, j=(2-0)/2=1 -> (1,1) -> 1
+# Two-way sum = 6
+# Three-way:
+#   RCD1: r=1,c=1,s=2 -> yes -> 1
+#   RCD2: r=1,c=1,d=0 -> yes -> 1
+#   RD1D2: r=1,s=2 -> c=1, d=r-c=0 in diag2 -> yes -> 1
+#   CD1D2: c=1,s=2 -> r=1, d=0 -> yes -> 1
+# Sum = 4
+# Four-way: r=1,c=1,s=2,d=0 -> yes -> 1
+# So total = 7 - 6 + 4 - 1 = 4
+# Then safe_squares = 4 - 4 = 0.
+
+# Which is correct: (2,2) is attacked by the piece at (1,1) via the diagonal i-j=0.
+
+# So the formula gives 0, which is correct.
+
+# But earlier I thought (2,2) wasn't counted — but it is, through diag2.
+
+# So the code should be:
+
+# Compute attacked_cells using inclusion-exclusion over the four sets.
+
+# However, note: the above computation is O(M^2) in the worst case (because we iterate over pairs of rows, cols, etc., but rows, cols, diag1, diag2 have size at most M each), and M <= 1000, so M^2 = 1e6, acceptable.
+
+# But note: rows, cols, diag1, diag2 each have size at most M.
+
+# So we can do nested loops up to M*M.
+
+# Let's code accordingly.
+
+# Reinitialize:
+
+rows = set()
+cols = set()
+diag1 = set()  # i+j
+diag2 = set()  # i-j
+
+for a, b in pieces:
+    rows.add(a)
+    cols.add(b)
+    diag1.add(a + b)
+    diag2.add(a - b)
+
+# Size of

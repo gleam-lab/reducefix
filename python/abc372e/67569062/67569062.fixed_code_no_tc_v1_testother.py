@@ -1,0 +1,71 @@
+import sys
+
+def main():
+    import sys
+    input = sys.stdin.read
+    data = input().split()
+    
+    idx = 0
+    N = int(data[idx])
+    Q = int(data[idx + 1])
+    idx += 2
+    
+    # Store the component representative -> sorted list of vertices (in descending order, limited to top 10)
+    comp = [None] * (N + 1)
+    for i in range(1, N + 1):
+        comp[i] = [i]  # Each vertex starts as its own component with only itself
+    
+    # Union-Find with path compression and union by size
+    parent = list(range(N + 1))
+    size = [0] * (N + 1)
+    for i in range(1, N + 1):
+        size[i] = 1
+    
+    def find(x):
+        if parent[x] != x:
+            parent[x] = find(parent[x])
+        return parent[x]
+    
+    def unite(x, y):
+        rx = find(x)
+        ry = find(y)
+        if rx == ry:
+            return
+        
+        # Always merge smaller into larger for better performance
+        if size[rx] < size[ry]:
+            rx, ry = ry, rx
+            x, y = x, y
+        
+        # Merge ry into rx
+        parent[ry] = rx
+        size[rx] += size[ry]
+        
+        # Merge the lists: combine comp[ry] and comp[rx], sort in descending order, keep top 10
+        merged = comp[rx] + comp[ry]
+        merged.sort(reverse=True)
+        comp[rx] = merged[:10]
+        comp[ry] = []  # Clear the old component
+    
+    output = []
+    for _ in range(Q):
+        t = int(data[idx])
+        if t == 1:
+            u = int(data[idx + 1])
+            v = int(data[idx + 2])
+            idx += 3
+            unite(u, v)
+        else:
+            v = int(data[idx + 1])
+            k = int(data[idx + 2])
+            idx += 3
+            root = find(v)
+            if k <= len(comp[root]):
+                output.append(str(comp[root][k - 1]))
+            else:
+                output.append("-1")
+    
+    print('\n'.join(output))
+
+if __name__ == "__main__":
+    main()

@@ -1,0 +1,208 @@
+python
+import sys
+
+def main():
+    data = sys.stdin.read().split()
+    N = int(data[0])
+    M = int(data[1])
+    K = int(data[2])
+    A = list(map(int, data[3:3+N]))
+    
+    total_counted = sum(A)
+    remaining_votes = K - total_counted
+    
+    # If there are no remaining votes, we just check current state
+    if remaining_votes == 0:
+        # Count how many have more votes than candidate i
+        ans = []
+        for i in range(N):
+            count_more = 0
+            for j in range(N):
+                if A[j] > A[i]:
+                    count_more += 1
+            if count_more < M:
+                ans.append(0)
+            else:
+                ans.append(-1)
+        print(*ans)
+        return
+    
+    # Special case: if M >= N, then condition "less than M candidates have more votes" is always true
+    # because at most N-1 candidates can have more votes than any one candidate
+    if M >= N:
+        print(' '.join(['0'] * N))
+        return
+    
+    # We'll compute for each candidate the minimum additional votes needed
+    ans = [0] * N
+    
+    # Create list of (votes, original_index) and sort in descending order
+    candidates = [(A[i], i) for i in range(N)]
+    candidates.sort(reverse=True)
+    
+    # For each candidate, we need to ensure that at most M-1 candidates have strictly more votes
+    # That means we must be at least tied for the M-th highest vote count or better
+    
+    # Precompute prefix sums isn't necessary, but we need to understand the threshold
+    # Strategy: For candidate i, we want to find minimal x such that even in worst-case distribution
+    # of remaining votes, candidate i ends up with at most M-1 candidates having more votes.
+    
+    # For a given candidate, what is the minimal x so that after adding x votes to them,
+    # they are guaranteed to have at most M-1 candidates with strictly more votes?
+    
+    # Idea: Suppose we add x votes to candidate i. Then their final vote count is A[i] + x.
+    # The adversary will try to make as many other candidates as possible exceed this value.
+    # But note: we can also consider how much we need to surpass a certain threshold.
+    
+    # Alternate approach:
+    # To guarantee election, candidate i needs to ensure that at most M-1 other candidates 
+    # can possibly have more votes than them after all remaining votes are distributed.
+    
+    # So we want: number of candidates that could potentially get more than (A[i] + x) <= M-1
+    # Or equivalently: at least N-M+1 candidates (including self) must have <= (A[i]+x) votes.
+    
+    # Actually, simpler: candidate i wins if fewer than M candidates have more votes than them.
+    # So we need to ensure that at most M-1 candidates end up with > (A[i] + x).
+    
+    # How many candidates currently have > (A[i] + x)? And how many could potentially reach it?
+    
+    # Instead, we can use binary search on x for each candidate? But N up to 2e5, so O(N log K) might be acceptable?
+    # However, worst-case K=1e12, so log K ~ 40, 2e5*40 = 8e6 which is acceptable in Pyton.
+    
+    # But let's try to do it deterministically.
+    
+    # Insight:
+    # After giving x votes to candidate i, their total is T = A[i] + x.
+    # The remaining votes available to others is R = remaining_votes - x (if x <= remaining_votes, else impossible)
+    # We want to know whether it's possible for M or more candidates to have > T votes.
+    # The adversary will try to push M candidates (other than i) to exceed T.
+    
+    # So: can the adversary distribute at most R votes among the other N-1 candidates so that M of them exceed T?
+    # For each candidate j != i, the number of votes needed to bring them above T is max(0, T - A[j] + 1) if A[j] <= T, else 0.
+    # But actually: if A[j] > T, they're already above.
+    
+    # Let's define:
+    #   base = A[i] + x
+    #   count_already_above = number of j != i with A[j] > base
+    #   If count_already_above >= M, then even without any additional votes, M candidates already have more -> fail.
+    #   Otherwise, we need to see if the adversary can bring at least (M - count_already_above) candidates from <= base to > base.
+    #
+    # For each candidate j != i with A[j] <= base, the cost to push them above base is (base - A[j] + 1)
+    # So if the sum of the smallest (M - count_already_above) such costs exceeds R, then the adversary cannot do it -> safe.
+    #
+    # Therefore, for fixed x, candidate i is safe iff:
+    #   Let base = A[i] + x
+    #   Let R = remaining_votes - x   (must have x <= remaining_votes)
+    #   Let above = [j != i such that A[j] > base]
+    #   If len(above) >= M: not safe
+    #   Else:
+    #       need_to_push = M - len(above)
+    #       costs = sorted([base - A[j] + 1 for j in range(N) if j != i and A[j] <= base])
+    #       if sum(costs[:need_to_push]) > R: safe
+    #       else: not safe
+    #
+    # We want the minimum x (>=0) such that the above holds.
+    
+    # But doing this for each candidate with binary search would be O(N^2 log K) worst-case, too slow.
+    
+    # Alternative efficient approach:
+    
+    # Insight from known similar problems (e.g., CodeForces "Elections"): 
+    # We can try to determine a target vote count that ensures top-M position.
+    
+    # Another idea:
+    # Sort candidates by current votes descending.
+    # For candidate i, suppose we want them to have at least the M-th highest final vote count.
+    # But note: it's not about being in top M, but having fewer than M candidates above you.
+    # So we need to be at least tied for (M)-th place? Not exactly: if M=1, we need to be strictly first.
+    # Actually: we need at most M-1 candidates with more votes -> we need to be at least (M)-th highest (counting ties properly).
+    
+    # Known solution pattern:
+    # For each candidate i, we can try to set their final vote count to V, and see if it's achievable.
+    # We want minimal x such that A[i]+x = V and V satisfies: even if all remaining votes are used against i,
+    # at most M-1 candidates can surpass V.
+    
+    # How many votes are needed to prevent M candidates from exceeding V?
+    # The total "anti-votes" required to block M candidates from exceeding V is:
+    #   sum over the M candidates with largest A[j] (j != i) of max(0, A[j] - V + 1)  ??? No.
+    #
+    # Actually: to keep a candidate j below or equal to V, we don't need to do anything if A[j] <= V.
+    # But if A[j] > V, then even without additional votes, j already exceeds V.
+    #
+    # So: if there are already M or more candidates j (j != i) with A[j] > V, then impossible.
+    # Otherwise, the adversary has R = remaining_votes - x votes to distribute, and can use them to push candidates above V.
+    # The number of candidates that can be pushed above V is limited by how many votes are needed.
+    #
+    # Specifically, for each candidate j != i with A[j] <= V, the votes needed to push them above V is (V - A[j] + 1).
+    # So the maximum number of such candidates that can be pushed above V is the maximum subset whose total cost <= R.
+    # But we only care whether more than (M - already_above) can be pushed.
+    #
+    # So condition: the sum of the smallest (M - already_above) costs among {max(0, V - A[j] + 1) for j != i, A[j] <= V} > R
+    # => then not enough votes to create M candidates above V -> safe.
+    
+    # Now we can binary search on x (or V = A[i]+x) for each candidate.
+    
+    # Given constraints, we need an efficient implementation.
+    
+    # Let's pre-sort the array once.
+    sorted_A = sorted(A, reverse=True)
+    
+    # Precompute nothing more? We'll do binary search per candidate.
+    
+    # But worst-case 2e5 * log(1e12) ~ 2e5 * 40 = 8e6 iterations, which is acceptable in Pyton if implemented carefully.
+    
+    def can_guarantee(i, x):
+        if x > remaining_votes:
+            return False
+        V = A[i] + x
+        R = remaining_votes - x  # votes available to others
+        
+        # Count how many other candidates already have > V
+        already_above = 0
+        costs = []
+        for j in range(N):
+            if j == i:
+                continue
+            if A[j] > V:
+                already_above += 1
+            else:
+                # cost to push j above V
+                cost = V - A[j] + 1
+                costs.append(cost)
+        
+        if already_above >= M:
+            return False
+        
+        needed_to_push = M - already_above
+        if needed_to_push <= 0:
+            return True
+            
+        if len(costs) < needed_to_push:
+            return True
+            
+        costs.sort()
+        total_cost = sum(costs[:needed_to_push])
+        
+        return total_cost > R
+    
+    for i in range(N):
+        # Binary search on x in [0, remaining_votes+1]
+        lo, hi = 0, remaining_votes + 1
+        res_x = -1
+        while lo <= hi:
+            mid = (lo + hi) // 2
+            if can_guarantee(i, mid):
+                res_x = mid
+                hi = mid - 1
+            else:
+                lo = mid + 1
+        
+        if res_x == -1 or res_x > remaining_votes:
+            ans[i] = -1
+        else:
+            ans[i] = res_x
+    
+    print(*ans)
+
+if __name__ == '__main__':
+    main()

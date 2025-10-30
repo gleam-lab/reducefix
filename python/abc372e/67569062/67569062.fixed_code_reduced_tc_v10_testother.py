@@ -1,0 +1,71 @@
+class UnionFind:
+    def __init__(self, n):
+        self.par = list(range(n))
+        self.size = [1] * n
+
+    def find(self, x):
+        if self.par[x] != x:
+            self.par[x] = self.find(self.par[x])
+        return self.par[x]
+
+    def unite(self, x, y):
+        x = self.find(x)
+        y = self.find(y)
+        if x == y:
+            return False
+        if self.size[x] < self.size[y]:
+            x, y = y, x
+        self.par[y] = x
+        self.size[x] += self.size[y]
+        return True
+
+    def same(self, x, y):
+        return self.find(x) == self.find(y)
+
+N, Q = map(int, input().split())
+
+# mem[i] will store the top 10 largest vertex numbers in the component of root i
+mem = [[] for _ in range(N + 1)]
+for i in range(1, N + 1):
+    mem[i] = [i]
+
+uf = UnionFind(N + 1)
+
+ans = []
+
+for _ in range(Q):
+    query = list(map(int, input().split()))
+    if query[0] == 1:
+        u, v = query[1], query[2]
+        if not uf.same(u, v):
+            ru = uf.find(u)
+            rv = uf.find(v)
+            # Always merge smaller into larger (by root index or by size, we use union by size already)
+            if uf.size[ru] < uf.size[rv] or (uf.size[ru] == uf.size[rv] and ru > rv):
+                ru, rv = rv, ru
+            # Merge rv into ru
+            # Combine the two lists and keep at most 10 largest values
+            combined = []
+            i = j = 0
+            # Both lists are maintained in descending order
+            list_u = mem[ru]
+            list_v = mem[rv]
+            while (i < len(list_u) or j < len(list_v)) and len(combined) < 10:
+                if i < len(list_u) and (j >= len(list_v) or list_u[i] > list_v[j]):
+                    combined.append(list_u[i])
+                    i += 1
+                elif j < len(list_v):
+                    combined.append(list_v[j])
+                    j += 1
+            mem[ru] = combined
+            uf.unite(u, v)
+    else:  # query[0] == 2
+        v, k = query[1], query[2]
+        root = uf.find(v)
+        if k <= len(mem[root]):
+            ans.append(mem[root][k-1])  # k-th largest is at index k-1
+        else:
+            ans.append(-1)
+
+for a in ans:
+    print(a)

@@ -1,0 +1,152 @@
+```python
+import sys
+
+def main():
+    import sys
+    input = sys.stdin.read
+    data = input().split()
+    
+    n = int(data[0])
+    k = int(data[1])
+    A = list(map(int, data[2:2+n]))
+    
+    # We are removing exactly K elements, so we keep (n - k) elements.
+    # To minimize (max(B) - min(B)), we should choose a contiguous segment of (n-k) elements
+    # from the sorted array, but preserving original order isn't needed for value selection.
+    # However, since we can only remove elements and keep the rest in original order,
+    # we need to consider that the remaining elements must form a subsequence in original order.
+    #
+    # But note: We are allowed to remove any K elements arbitrarily. So we can pick any N-K
+    # elements as long as their relative order is preserved. To minimize max-min,
+    # the optimal set of values will be close together. Hence, we sort and consider windows.
+    #
+    # Key idea:
+    # Sort the array along with original indices. Then, try every contiguous window of size (n-k)
+    # in the sorted array. For each such window, check if the corresponding indices (original positions)
+    # can form a valid subsequence (i.e., appear in increasing order in the original array).
+    # However, checking subsequence for every window would be O(n^2).
+    #
+    # Alternate approach:
+    # Instead, note that we can always rearrange removals so that the kept elements are within
+    # some range [L, R] in the sorted array. The minimal difference is achieved by a contiguous
+    # block in sorted order. But we must ensure that at least (n-k) elements in this block appear
+    # in increasing index order (so they can remain in sequence).
+    #
+    # Even better: We can use two pointers or sliding window on sorted values, and for each window
+    # of size (n-k), check whether the indices of these elements are in increasing order.
+    # But that's expensive.
+    #
+    # Insight: Actually, we don't need to preserve the exact values — we want the smallest possible
+    # (max - min). So we can do:
+    #   Sort by value, then for each window of length (n-k), compute diff = A[r]-A[l].
+    #   Then check if the elements in this window can appear in increasing index order (i.e.,
+    #   their original indices form an increasing sequence). If yes, candidate = diff.
+    #
+    # How to check quickly? We could precompute for each window the minimum last index required?
+    # Alternatively, we can note: the elements in the window can be kept in order iff there exists
+    # a subsequence of length (n-k) within the window whose indices are increasing.
+    # But actually, if we take all elements in the window, and sort them by index, and if the number
+    # of elements is (n-k), then we just need that when sorted by index, they are increasing — which they are.
+    # But the catch: we are not forced to take all elements in the value-range. However, taking more
+    # elements doesn't hurt the possibility of forming a subsequence. So if we have >= (n-k) elements
+    # in a value range, we can potentially pick (n-k) ones with increasing indices.
+    #
+    # However, even if we have enough elements in a value range, we might not be able to pick (n-k)
+    # that are in increasing order of appearance? Actually, we can always pick a subsequence from them
+    # by going left to right in the original array and selecting those that fall in the range.
+    #
+    # Therefore, for a given value range [L, R], we can keep all elements in A that are in [L,R],
+    # and traverse the array to greedily collect up to (n-k) elements — if we can collect at least (n-k),
+    # then this range is feasible.
+    #
+    # But we want to minimize (R-L). So we can do a two-pointer (sliding window) over the sorted array.
+    #
+    # Steps:
+    # 1. Create list of (value, index) and sort by value.
+    # 2. Use two pointers l=0, r=0. Expand r until the current window [l,r] contains at least (n-k) elements
+    #    that can be selected as a subsequence in original order — but actually, we can simulate:
+    #    For a fixed window of values, count how many elements in the original array fall in this value range
+    #    and appear in increasing order? No, instead: for a fixed value range, we can always select elements
+    #    in increasing index order by scanning left to right and picking each element that falls in [L,R].
+    #    The maximum number we can pick is just the count of elements in [L,R]? Not exactly — because we can skip
+    #    some, but since we only care about existence of (n-k) elements, we can simply count how many elements
+    #    in the entire array are in [L,R]. But wait: no constraint prevents us from taking all of them — we can
+    #    remove others. So if there are >= (n-k) elements in [L,R], then we can keep (n-k) of them (and remove others).
+    #    BUT: we cannot reorder them. However, we are allowed to keep them in their original order. So as long as
+    #    we keep only elements in [L,R], the resulting sequence B will consist of those values in original order.
+    #    So feasibility is just: count of elements in [L,R] >= (n-k).
+    #
+    # 3. Therefore, we can do:
+    #    Sort by value: arr = sorted((A[i], i) for i in range(n))
+    #    Use two pointers to find the minimal (arr[r][0] - arr[l][0]) such that the number of elements in the window
+    #    from l to r is at least (n-k).
+    #
+    # But note: the window in sorted array may not correspond to contiguous indices, but that doesn't matter.
+    # Because we are only counting how many elements have values in [arr[l][0], arr[r][0]]. And if there are at least (n-k),
+    # then we can remove the other elements and keep (n-k) of them (even more, but we can also remove extra ones within the range).
+    #
+    # However, we must keep exactly (n-k) elements. So if there are more than (n-k) in the range, we can still remove
+    # some of them to get down to (n-k). So condition is: total count in [L,R] >= (n-k).
+    #
+    # Therefore, algorithm:
+    #   arr = sorted((A[i], i) for i in range(n))
+    #   l = 0
+    #   ans = float('inf')
+    #   for r in range(n):
+    #       while (r - l + 1) >= (n - k):
+    #           # window [l, r] has at least (n-k) elements
+    #           diff = arr[r][0] - arr[l][0]
+    #           ans = min(ans, diff)
+    #           l += 1
+    #   print(ans)
+    #
+    # But wait: the condition (r-l+1) >= (n-k) means the number of elements in the sorted window is >= (n-k).
+    # Since the window in sorted array contains exactly (r-l+1) elements, and each corresponds to one element in A,
+    # then yes, there are (r-l+1) elements in A with values between arr[l][0] and arr[r][0]. So if (r-l+1) >= (n-k),
+    # we can choose any (n-k) of them to keep.
+    #
+    # Therefore, we can use a simple sliding window over the sorted array.
+    #
+    # Example: n=4, k=1 -> keep 3 elements.
+    #   A = [1, 3, 2, 4]
+    #   sorted: [(1,0), (2,2), (3,1), (4,3)]
+    #   We need window with at least 3 elements.
+    #   [1,2,3]: diff=3-1=2
+    #   [2,3,4]: diff=4-2=2
+    #   [1,2,3,4]: diff=3
+    #   So min diff=2.
+    #   Is it possible? Remove one element. 
+    #     Remove 1: [3,2,4] -> max=4,min=2 -> 2
+    #     Remove 3: [1,2,4] -> max=4,min=1 -> 3
+    #     Remove 2: [1,3,4] -> max=4,min=1 -> 3
+    #     Remove 4: [1,3,2] -> max=3,min=1 -> 2
+    #   So answer is 2. Correct.
+    #
+    # However, note: when we keep non-consecutive values in the sorted array, but they are spread out in the original array,
+    # we can still keep them as long as we don't break the order. But our method counts the total number of elements in the value range,
+    # regardless of positions. And since we are allowed to remove arbitrarily, we can keep any subset of the elements in the range.
+    # So the count is sufficient.
+    #
+    # Therefore, final plan:
+    #   Sort the array with indices.
+    #   Use two pointers to maintain a window of values such that the number of elements in the window is at least (n-k).
+    #   Minimize (max_value - min_value) in the window.
+    
+    arr = sorted((A[i], i) for i in range(n))
+    ans = float('inf')
+    l = 0
+    # We need at least (n-k) elements in the window
+    for r in range(n):
+        # Expand window to include arr[r]
+        while (r - l + 1) >= (n - k):
+            # This window has enough elements
+            diff = arr[r][0] - arr[l][0]
+            if diff < ans:
+                ans = diff
+            l += 1
+    
+    print(ans)
+
+if __name__ == '__main__':
+    main()
+```

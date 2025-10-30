@@ -1,0 +1,66 @@
+### 分析与问题识别
+
+从崩溃日志中可以看到，错误发生在 `BEInt<unsigned short, 2>::operator unsigned short()` 这一行。具体来说，地址 `0x0000009de494` 处发生了一个全局缓冲区溢出，尝试读取两个字节的数据。这表明在处理输入数据时，某个数组或缓冲区被越界访问。
+
+### 触发崩溃的输入特征
+
+输入数据是 `00`，这是一个非常简化的二进制输入。根据崩溃日志中的堆栈跟踪，错误发生在 `OT::gvar::accelerator_t::apply_deltas_to_points` 函数中。这个函数可能依赖于某些变量或数据结构，而这些变量或数据结构在接收到特定输入时没有正确初始化或验证。
+
+### 为什么 OT::gvar::accelerator_t::apply_deltas_to_points 会出现 unknown
+
+由于输入数据非常简单，可能是某个关键变量或数据结构没有正确初始化导致的。具体来说，可能是 `OT::gvar::accelerator_t::apply_deltas_to_points` 函数中的某个循环或操作超出了预期的输入范围。
+
+### 代码修复建议
+
+为了修复这个问题，可以采取以下几个步骤：
+
+1. **添加输入验证**：确保所有输入数据都经过验证，特别是那些在 `OT::gvar::accelerator_t::apply_deltas_to_points` 中使用的变量和数据结构。
+
+2. **初始化检查**：在使用任何变量之前，确保它们已经被正确初始化。
+
+3. **边界检查**：在进行数组或缓冲区操作时，添加边界检查，确保不会超出有效范围。
+
+以下是一些具体的代码修改建议：
+
+#### 添加输入验证
+
+```cpp
+bool OT::gvar::accelerator_t::apply_deltas_to_points(unsigned int glyph_index, hb_array_t<int> deltas, hb_array_t<OT::contour_point_t> points) const {
+    if (glyph_index >= num_glyphs()) {
+        return false; // 或者抛出异常
+    }
+
+    // 其他验证逻辑...
+
+    return true;
+}
+```
+
+#### 初始化检查
+
+```cpp
+OT::gvar::accelerator_t::accelerator_t(const OT::gvar_table* gvar_table) : gvar_table(gvar_table), num_glyphs(gvar_table->num_glyphs()) {
+    // 确保 num_glyphs 被正确初始化
+}
+```
+
+#### 边界检查
+
+```cpp
+void OT::gvar::accelerator_t::apply_deltas_to_points(unsigned int glyph_index, hb_array_t<int> deltas, hb_array_t<OT::contour_point_t> points) const {
+    if (glyph_index >= num_glyphs()) {
+        return false; // 或者抛出异常
+    }
+
+    for (unsigned int i = 0; i < deltas.length(); ++i) {
+        if (i >= points.length()) {
+            break; // 避免越界访问
+        }
+        points[i].x += deltas[i];
+    }
+
+    return true;
+}
+```
+
+通过这些修改，可以确保在处理输入数据时不会出现缓冲区溢出或其他类似的错误。同时，添加了输入验证和边界检查可以提高代码的健壮性，减少潜在的崩溃风险。

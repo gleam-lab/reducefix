@@ -1,0 +1,40 @@
+Based on the crash details and stack trace, this is a heap use-after-free in the date/time functionality when handling error containers. The issue occurs during DateTime construction when error container cleanup happens after memory has already been freed.
+
+Looking at the context around lines 2264-2283 in php_date.c, we need to ensure proper null checking before freeing error containers to prevent use-after-free conditions.
+
+Here's the fix:
+
+```
+<<<<<<< SEARCH
+void timelib_error_container_dtor(timelib_error_container *errors)
+{
+	if (errors) {
+		int i;
+
+		for (i = 0; i < errors->error_count; ++i) {
+			timelib_free(errors->error_messages[i]);
+		}
+		timelib_free(errors->error_messages);
+		timelib_free(errors);
+	}
+}
+=======
+void timelib_error_container_dtor(timelib_error_container *errors)
+{
+	if (errors) {
+		if (errors->error_messages) {
+			int i;
+			for (i = 0; i < errors->error_count; ++i) {
+				if (errors->error_messages[i]) {
+					timelib_free(errors->error_messages[i]);
+				}
+			}
+			timelib_free(errors->error_messages);
+		}
+		timelib_free(errors);
+	}
+}
+>>>>>>> REPLACE
+```
+
+This fix adds proper null checks before accessing and freeing the error messages array and individual error message strings. This prevents potential use-after-free scenarios where the error container might have already been partially freed or contains null pointers. The change ensures memory safety by validating pointers before dereferencing them.

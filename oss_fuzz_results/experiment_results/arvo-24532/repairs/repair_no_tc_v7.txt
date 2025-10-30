@@ -1,0 +1,69 @@
+### 崩溃原因分析
+
+从崩溃信息来看，程序在执行 `__asan_memset` 时发生段错误（segmentation fault），这通常是因为尝试访问一个无效的内存地址。具体来说，错误发生在 `hb_vector_t<CFF::parsed_cs_op_t>::resize` 函数中，而这个错误是由 `__asan_memset` 调用引发的。
+
+进一步分析堆栈跟踪，可以看到 `resize` 函数被调用的原因是 `push` 函数尝试向向量中添加元素时，发现当前容量不足，因此需要扩容。扩容过程中涉及到对新分配内存的初始化操作，这里触发了 `__asan_memset`，从而导致段错误。
+
+根据错误日志中的信息，地址 `0x0000000c6600` 是一个无效的地址，这表明在扩容过程中可能没有正确地分配或初始化内存。
+
+### 修复策略
+
+修复这个问题的关键在于确保 `resize` 函数能够正确地分配和初始化内存。具体来说，需要检查以下几点：
+
+1. **内存分配是否成功**：确保 `resize` 函数在分配新内存后，检查分配是否成功。
+2. **内存初始化是否正确**：确保在分配新内存后，对其进行正确的初始化。
+
+### 具体的代码修复建议
+
+假设 `hb_vector_t` 的实现如下：
+
+```cpp
+template <typename T>
+class hb_vector_t {
+public:
+    void push();
+    void resize(int new_capacity);
+
+private:
+    T* data_;
+    int capacity_;
+    int size_;
+};
+```
+
+我们可以对 `resize` 函数进行修改，以确保内存分配和初始化的正确性：
+
+```cpp
+template <typename T>
+void hb_vector_t<T>::resize(int new_capacity) {
+    if (new_capacity <= capacity_) {
+        return;
+    }
+
+    // 分配新的内存
+    T* new_data = static_cast<T*>(malloc(new_capacity * sizeof(T)));
+    if (!new_data) {
+        // 内存分配失败，处理错误
+        throw std::bad_alloc();
+    }
+
+    // 复制现有数据到新内存
+    for (int i = 0; i < size_; ++i) {
+        new (&new_data[i]) T(data_[i]); // 使用 placement new 初始化新对象
+    }
+
+    // 释放旧内存
+    free(data_);
+
+    // 更新成员变量
+    data_ = new_data;
+    capacity_ = new_capacity;
+
+    // 如果需要，可以对新分配的内存进行 memset 初始化
+    // memset(new_data + size_, 0, (new_capacity - size_) * sizeof(T));
+}
+```
+
+在这个修复方案中，我们首先检查新的容量是否大于当前容量，如果是，则进行内存分配。如果分配失败，抛出异常并处理错误。然后，我们将现有数据复制到新分配的内存中，并使用 placement new 进行对象初始化。最后，释放旧内存并更新成员变量。
+
+通过这种方式，可以确保 `resize` 函数在扩容过程中不会因为内存分配或初始化问题而导致段错误。

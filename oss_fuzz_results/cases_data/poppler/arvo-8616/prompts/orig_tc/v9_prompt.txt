@@ -1,0 +1,713 @@
+=== Prompt for 原始测试用例 (orig_tc) version 9 ===
+Case ID: arvo-8616
+Target: poppler
+Model: qwen-plus
+Temperature: 1.0
+Use SEARCH/REPLACE: True
+======================================================================
+
+We are currently solving the following crash issue:
+--- BEGIN ISSUE ---
+Crash in unknown
+
+### Crash Details
+- Type: Use-of-uninitialized-value
+- Function: unknown
+- Severity: Medium
+- Sanitizer: msan
+
+### Crash Stack Trace
+```
+SplashFTFont::makeGlyph
+SplashFont::getGlyph
+Splash::fillChar
+```
+
+### Crash Log
+
+--- END ISSUE ---
+
+
+🎯 **EXACT BUG LOCATION**:
+- File: `splash/SplashFTFont.cc`, Lines 60-231
+
+Below are the source files that contain the bug:
+--- BEGIN FILES ---
+### splash/SplashFTFont.cc
+**Function containing the bug** (lines 41-252):
+
+```cpp
+#include "SplashFTFontEngine.h"
+#include "SplashFTFontFile.h"
+#include "SplashFTFont.h"
+
+#include "goo/GooLikely.h"
+
+//------------------------------------------------------------------------
+
+static int glyphPathMoveTo(const FT_Vector *pt, void *path);
+static int glyphPathLineTo(const FT_Vector *pt, void *path);
+static int glyphPathConicTo(const FT_Vector *ctrl, const FT_Vector *pt,
+			    void *path);
+static int glyphPathCubicTo(const FT_Vector *ctrl1, const FT_Vector *ctrl2,
+			    const FT_Vector *pt, void *path);
+
+//------------------------------------------------------------------------
+// SplashFTFont
+//------------------------------------------------------------------------
+
+SplashFTFont::SplashFTFont(SplashFTFontFile *fontFileA, SplashCoord *matA,
+			   SplashCoord *textMatA):  // <-- ⚠️ BUG IS HERE (Line 61)
+  SplashFont(fontFileA, matA, textMatA, fontFileA->engine->aa),   // <-- ⚠️ BUG IS HERE (Line 62)
+  enableFreeTypeHinting(fontFileA->engine->enableFreeTypeHinting),  // <-- ⚠️ BUG IS HERE (Line 63)
+  enableSlightHinting(fontFileA->engine->enableSlightHinting)  // <-- ⚠️ BUG IS HERE (Line 64)
+{  // <-- ⚠️ BUG IS HERE (Line 65)
+  FT_Face face;  // <-- ⚠️ BUG IS HERE (Line 66)
+  int div;  // <-- ⚠️ BUG IS HERE (Line 67)
+  int x, y;  // <-- ⚠️ BUG IS HERE (Line 68)
+#ifdef USE_FIXEDPOINT  // <-- ⚠️ BUG IS HERE (Line 69)
+  SplashCoord scale;  // <-- ⚠️ BUG IS HERE (Line 70)
+#endif  // <-- ⚠️ BUG IS HERE (Line 71)
+  // <-- ⚠️ BUG IS HERE (Line 72)
+  face = fontFileA->face;  // <-- ⚠️ BUG IS HERE (Line 73)
+  if (FT_New_Size(face, &sizeObj)) {  // <-- ⚠️ BUG IS HERE (Line 74)
+    return;  // <-- ⚠️ BUG IS HERE (Line 75)
+  }  // <-- ⚠️ BUG IS HERE (Line 76)
+  face->size = sizeObj;  // <-- ⚠️ BUG IS HERE (Line 77)
+  size = splashRound(splashDist(0, 0, mat[2], mat[3]));  // <-- ⚠️ BUG IS HERE (Line 78)
+  if (size < 1) {  // <-- ⚠️ BUG IS HERE (Line 79)
+    size = 1;  // <-- ⚠️ BUG IS HERE (Line 80)
+  }  // <-- ⚠️ BUG IS HERE (Line 81)
+  if (FT_Set_Pixel_Sizes(face, 0, size)) {  // <-- ⚠️ BUG IS HERE (Line 82)
+    return;  // <-- ⚠️ BUG IS HERE (Line 83)
+  }  // <-- ⚠️ BUG IS HERE (Line 84)
+  // if the textMat values are too small, FreeType's fixed point  // <-- ⚠️ BUG IS HERE (Line 85)
+  // arithmetic doesn't work so well  // <-- ⚠️ BUG IS HERE (Line 86)
+  textScale = splashDist(0, 0, textMat[2], textMat[3]) / size;  // <-- ⚠️ BUG IS HERE (Line 87)
+  // <-- ⚠️ BUG IS HERE (Line 88)
+  if (unlikely(textScale == 0)) {  // <-- ⚠️ BUG IS HERE (Line 89)
+    return;  // <-- ⚠️ BUG IS HERE (Line 90)
+  }  // <-- ⚠️ BUG IS HERE (Line 91)
+  // <-- ⚠️ BUG IS HERE (Line 92)
+  div = face->bbox.xMax > 20000 ? 65536 : 1;  // <-- ⚠️ BUG IS HERE (Line 93)
+  // <-- ⚠️ BUG IS HERE (Line 94)
+#ifdef USE_FIXEDPOINT  // <-- ⚠️ BUG IS HERE (Line 95)
+  scale = (SplashCoord)1 / (SplashCoord)face->units_per_EM;  // <-- ⚠️ BUG IS HERE (Line 96)
+  // <-- ⚠️ BUG IS HERE (Line 97)
+  // transform the four corners of the font bounding box -- the min  // <-- ⚠️ BUG IS HERE (Line 98)
+  // and max values form the bounding box of the transformed font  // <-- ⚠️ BUG IS HERE (Line 99)
+  x = (int)(mat[0] * (scale * (face->bbox.xMin / div)) +  // <-- ⚠️ BUG IS HERE (Line 100)
+	    mat[2] * (scale * (face->bbox.yMin / div)));  // <-- ⚠️ BUG IS HERE (Line 101)
+  xMin = xMax = x;  // <-- ⚠️ BUG IS HERE (Line 102)
+  y = (int)(mat[1] * (scale * (face->bbox.xMin / div)) +  // <-- ⚠️ BUG IS HERE (Line 103)
+	    mat[3] * (scale * (face->bbox.yMin / div)));  // <-- ⚠️ BUG IS HERE (Line 104)
+  yMin = yMax = y;  // <-- ⚠️ BUG IS HERE (Line 105)
+  x = (int)(mat[0] * (scale * (face->bbox.xMin / div)) +  // <-- ⚠️ BUG IS HERE (Line 106)
+	    mat[2] * (scale * (face->bbox.yMax / div)));  // <-- ⚠️ BUG IS HERE (Line 107)
+  if (x < xMin) {  // <-- ⚠️ BUG IS HERE (Line 108)
+    xMin = x;  // <-- ⚠️ BUG IS HERE (Line 109)
+  } else if (x > xMax) {  // <-- ⚠️ BUG IS HERE (Line 110)
+    xMax = x;  // <-- ⚠️ BUG IS HERE (Line 111)
+  }  // <-- ⚠️ BUG IS HERE (Line 112)
+  y = (int)(mat[1] * (scale * (face->bbox.xMin / div)) +  // <-- ⚠️ BUG IS HERE (Line 113)
+	    mat[3] * (scale * (face->bbox.yMax / div)));  // <-- ⚠️ BUG IS HERE (Line 114)
+  if (y < yMin) {  // <-- ⚠️ BUG IS HERE (Line 115)
+    yMin = y;  // <-- ⚠️ BUG IS HERE (Line 116)
+  } else if (y > yMax) {  // <-- ⚠️ BUG IS HERE (Line 117)
+    yMax = y;  // <-- ⚠️ BUG IS HERE (Line 118)
+  }  // <-- ⚠️ BUG IS HERE (Line 119)
+  x = (int)(mat[0] * (scale * (face->bbox.xMax / div)) +  // <-- ⚠️ BUG IS HERE (Line 120)
+	    mat[2] * (scale * (face->bbox.yMin / div)));  // <-- ⚠️ BUG IS HERE (Line 121)
+  if (x < xMin) {  // <-- ⚠️ BUG IS HERE (Line 122)
+    xMin = x;  // <-- ⚠️ BUG IS HERE (Line 123)
+  } else if (x > xMax) {  // <-- ⚠️ BUG IS HERE (Line 124)
+    xMax = x;  // <-- ⚠️ BUG IS HERE (Line 125)
+  }  // <-- ⚠️ BUG IS HERE (Line 126)
+  y = (int)(mat[1] * (scale * (face->bbox.xMax / div)) +  // <-- ⚠️ BUG IS HERE (Line 127)
+	    mat[3] * (scale * (face->bbox.yMin / div)));  // <-- ⚠️ BUG IS HERE (Line 128)
+  if (y < yMin) {  // <-- ⚠️ BUG IS HERE (Line 129)
+    yMin = y;  // <-- ⚠️ BUG IS HERE (Line 130)
+  } else if (y > yMax) {  // <-- ⚠️ BUG IS HERE (Line 131)
+    yMax = y;  // <-- ⚠️ BUG IS HERE (Line 132)
+  }  // <-- ⚠️ BUG IS HERE (Line 133)
+  x = (int)(mat[0] * (scale * (face->bbox.xMax / div)) +  // <-- ⚠️ BUG IS HERE (Line 134)
+	    mat[2] * (scale * (face->bbox.yMax / div)));  // <-- ⚠️ BUG IS HERE (Line 135)
+  if (x < xMin) {  // <-- ⚠️ BUG IS HERE (Line 136)
+    xMin = x;  // <-- ⚠️ BUG IS HERE (Line 137)
+  } else if (x > xMax) {  // <-- ⚠️ BUG IS HERE (Line 138)
+    xMax = x;  // <-- ⚠️ BUG IS HERE (Line 139)
+  }  // <-- ⚠️ BUG IS HERE (Line 140)
+  y = (int)(mat[1] * (scale * (face->bbox.xMax / div)) +  // <-- ⚠️ BUG IS HERE (Line 141)
+	    mat[3] * (scale * (face->bbox.yMax / div)));  // <-- ⚠️ BUG IS HERE (Line 142)
+  if (y < yMin) {  // <-- ⚠️ BUG IS HERE (Line 143)
+    yMin = y;  // <-- ⚠️ BUG IS HERE (Line 144)
+  } else if (y > yMax) {  // <-- ⚠️ BUG IS HERE (Line 145)
+    yMax = y;  // <-- ⚠️ BUG IS HERE (Line 146)
+  }  // <-- ⚠️ BUG IS HERE (Line 147)
+#else // USE_FIXEDPOINT  // <-- ⚠️ BUG IS HERE (Line 148)
+  // transform the four corners of the font bounding box -- the min  // <-- ⚠️ BUG IS HERE (Line 149)
+  // and max values form the bounding box of the transformed font  // <-- ⚠️ BUG IS HERE (Line 150)
+  x = (int)((mat[0] * face->bbox.xMin + mat[2] * face->bbox.yMin) /  // <-- ⚠️ BUG IS HERE (Line 151)
+	    (div * face->units_per_EM));  // <-- ⚠️ BUG IS HERE (Line 152)
+  xMin = xMax = x;  // <-- ⚠️ BUG IS HERE (Line 153)
+  y = (int)((mat[1] * face->bbox.xMin + mat[3] * face->bbox.yMin) /  // <-- ⚠️ BUG IS HERE (Line 154)
+	    (div * face->units_per_EM));  // <-- ⚠️ BUG IS HERE (Line 155)
+  yMin = yMax = y;  // <-- ⚠️ BUG IS HERE (Line 156)
+  x = (int)((mat[0] * face->bbox.xMin + mat[2] * face->bbox.yMax) /  // <-- ⚠️ BUG IS HERE (Line 157)
+	    (div * face->units_per_EM));  // <-- ⚠️ BUG IS HERE (Line 158)
+  if (x < xMin) {  // <-- ⚠️ BUG IS HERE (Line 159)
+    xMin = x;  // <-- ⚠️ BUG IS HERE (Line 160)
+  } else if (x > xMax) {  // <-- ⚠️ BUG IS HERE (Line 161)
+    xMax = x;  // <-- ⚠️ BUG IS HERE (Line 162)
+  }  // <-- ⚠️ BUG IS HERE (Line 163)
+  y = (int)((mat[1] * face->bbox.xMin + mat[3] * face->bbox.yMax) /  // <-- ⚠️ BUG IS HERE (Line 164)
+	    (div * face->units_per_EM));  // <-- ⚠️ BUG IS HERE (Line 165)
+  if (y < yMin) {  // <-- ⚠️ BUG IS HERE (Line 166)
+    yMin = y;  // <-- ⚠️ BUG IS HERE (Line 167)
+  } else if (y > yMax) {  // <-- ⚠️ BUG IS HERE (Line 168)
+    yMax = y;  // <-- ⚠️ BUG IS HERE (Line 169)
+  }  // <-- ⚠️ BUG IS HERE (Line 170)
+  x = (int)((mat[0] * face->bbox.xMax + mat[2] * face->bbox.yMin) /  // <-- ⚠️ BUG IS HERE (Line 171)
+	    (div * face->units_per_EM));  // <-- ⚠️ BUG IS HERE (Line 172)
+  if (x < xMin) {  // <-- ⚠️ BUG IS HERE (Line 173)
+    xMin = x;  // <-- ⚠️ BUG IS HERE (Line 174)
+  } else if (x > xMax) {  // <-- ⚠️ BUG IS HERE (Line 175)
+    xMax = x;  // <-- ⚠️ BUG IS HERE (Line 176)
+  }  // <-- ⚠️ BUG IS HERE (Line 177)
+  y = (int)((mat[1] * face->bbox.xMax + mat[3] * face->bbox.yMin) /  // <-- ⚠️ BUG IS HERE (Line 178)
+	    (div * face->units_per_EM));  // <-- ⚠️ BUG IS HERE (Line 179)
+  if (y < yMin) {  // <-- ⚠️ BUG IS HERE (Line 180)
+    yMin = y;  // <-- ⚠️ BUG IS HERE (Line 181)
+  } else if (y > yMax) {  // <-- ⚠️ BUG IS HERE (Line 182)
+    yMax = y;  // <-- ⚠️ BUG IS HERE (Line 183)
+  }  // <-- ⚠️ BUG IS HERE (Line 184)
+  x = (int)((mat[0] * face->bbox.xMax + mat[2] * face->bbox.yMax) /  // <-- ⚠️ BUG IS HERE (Line 185)
+	    (div * face->units_per_EM));  // <-- ⚠️ BUG IS HERE (Line 186)
+  if (x < xMin) {  // <-- ⚠️ BUG IS HERE (Line 187)
+    xMin = x;  // <-- ⚠️ BUG IS HERE (Line 188)
+  } else if (x > xMax) {  // <-- ⚠️ BUG IS HERE (Line 189)
+    xMax = x;  // <-- ⚠️ BUG IS HERE (Line 190)
+  }  // <-- ⚠️ BUG IS HERE (Line 191)
+  y = (int)((mat[1] * face->bbox.xMax + mat[3] * face->bbox.yMax) /  // <-- ⚠️ BUG IS HERE (Line 192)
+	    (div * face->units_per_EM));  // <-- ⚠️ BUG IS HERE (Line 193)
+  if (y < yMin) {  // <-- ⚠️ BUG IS HERE (Line 194)
+    yMin = y;  // <-- ⚠️ BUG IS HERE (Line 195)
+  } else if (y > yMax) {  // <-- ⚠️ BUG IS HERE (Line 196)
+    yMax = y;  // <-- ⚠️ BUG IS HERE (Line 197)
+  }  // <-- ⚠️ BUG IS HERE (Line 198)
+#endif // USE_FIXEDPOINT  // <-- ⚠️ BUG IS HERE (Line 199)
+  // This is a kludge: some buggy PDF generators embed fonts with  // <-- ⚠️ BUG IS HERE (Line 200)
+  // zero bounding boxes.  // <-- ⚠️ BUG IS HERE (Line 201)
+  if (xMax == xMin) {  // <-- ⚠️ BUG IS HERE (Line 202)
+    xMin = 0;  // <-- ⚠️ BUG IS HERE (Line 203)
+    xMax = size;  // <-- ⚠️ BUG IS HERE (Line 204)
+  }  // <-- ⚠️ BUG IS HERE (Line 205)
+  if (yMax == yMin) {  // <-- ⚠️ BUG IS HERE (Line 206)
+    yMin = 0;  // <-- ⚠️ BUG IS HERE (Line 207)
+    yMax = (int)((SplashCoord)1.2 * size);  // <-- ⚠️ BUG IS HERE (Line 208)
+  }  // <-- ⚠️ BUG IS HERE (Line 209)
+  // <-- ⚠️ BUG IS HERE (Line 210)
+  // compute the transform matrix  // <-- ⚠️ BUG IS HERE (Line 211)
+#ifdef USE_FIXEDPOINT  // <-- ⚠️ BUG IS HERE (Line 212)
+  matrix.xx = (FT_Fixed)((mat[0] / size).get16Dot16());  // <-- ⚠️ BUG IS HERE (Line 213)
+  matrix.yx = (FT_Fixed)((mat[1] / size).get16Dot16());  // <-- ⚠️ BUG IS HERE (Line 214)
+  matrix.xy = (FT_Fixed)((mat[2] / size).get16Dot16());  // <-- ⚠️ BUG IS HERE (Line 215)
+  matrix.yy = (FT_Fixed)((mat[3] / size).get16Dot16());  // <-- ⚠️ BUG IS HERE (Line 216)
+  textMatrix.xx = (FT_Fixed)((textMat[0] / (textScale * size)).get16Dot16());  // <-- ⚠️ BUG IS HERE (Line 217)
+  textMatrix.yx = (FT_Fixed)((textMat[1] / (textScale * size)).get16Dot16());  // <-- ⚠️ BUG IS HERE (Line 218)
+  textMatrix.xy = (FT_Fixed)((textMat[2] / (textScale * size)).get16Dot16());  // <-- ⚠️ BUG IS HERE (Line 219)
+  textMatrix.yy = (FT_Fixed)((textMat[3] / (textScale * size)).get16Dot16());  // <-- ⚠️ BUG IS HERE (Line 220)
+#else  // <-- ⚠️ BUG IS HERE (Line 221)
+  matrix.xx = (FT_Fixed)((mat[0] / size) * 65536);  // <-- ⚠️ BUG IS HERE (Line 222)
+  matrix.yx = (FT_Fixed)((mat[1] / size) * 65536);  // <-- ⚠️ BUG IS HERE (Line 223)
+  matrix.xy = (FT_Fixed)((mat[2] / size) * 65536);  // <-- ⚠️ BUG IS HERE (Line 224)
+  matrix.yy = (FT_Fixed)((mat[3] / size) * 65536);  // <-- ⚠️ BUG IS HERE (Line 225)
+  textMatrix.xx = (FT_Fixed)((textMat[0] / (textScale * size)) * 65536);  // <-- ⚠️ BUG IS HERE (Line 226)
+  textMatrix.yx = (FT_Fixed)((textMat[1] / (textScale * size)) * 65536);  // <-- ⚠️ BUG IS HERE (Line 227)
+  textMatrix.xy = (FT_Fixed)((textMat[2] / (textScale * size)) * 65536);  // <-- ⚠️ BUG IS HERE (Line 228)
+  textMatrix.yy = (FT_Fixed)((textMat[3] / (textScale * size)) * 65536);  // <-- ⚠️ BUG IS HERE (Line 229)
+#endif  // <-- ⚠️ BUG IS HERE (Line 230)
+}  // <-- ⚠️ BUG IS HERE (Line 231)
+  // <-- ⚠️ BUG IS HERE (Line 232)
+SplashFTFont::~SplashFTFont() {
+}
+
+GBool SplashFTFont::getGlyph(int c, int xFrac, int yFrac,
+			     SplashGlyphBitmap *bitmap, int x0, int y0, SplashClip *clip, SplashClipResult *clipRes) {
+  return SplashFont::getGlyph(c, xFrac, 0, bitmap, x0, y0, clip, clipRes);
+}
+
+static FT_Int32 getFTLoadFlags(GBool type1, GBool trueType, GBool aa, GBool enableFreeTypeHinting, GBool enableSlightHinting)
+{
+  int ret = FT_LOAD_DEFAULT;
+  if (aa)
+    ret |= FT_LOAD_NO_BITMAP;
+  
+  if (enableFreeTypeHinting) {
+    if (enableSlightHinting) {
+      ret |= FT_LOAD_TARGET_LIGHT;
+    } else {
+      if (trueType) {
+	// FT2's autohinting doesn't always work very well (especially with
+```
+
+**Variable declarations before bug**:
+  - Line 49: static int glyphPathMoveTo(const FT_Vector *pt, void *path);
+  - Line 50: static int glyphPathLineTo(const FT_Vector *pt, void *path);
+  - Line 52: void *path);
+  - Line 54: const FT_Vector *pt, void *path);
+
+**🎯 Bug Location** (lines 60-231):
+```cpp
+			   SplashCoord *textMatA):
+  SplashFont(fontFileA, matA, textMatA, fontFileA->engine->aa), 
+  enableFreeTypeHinting(fontFileA->engine->enableFreeTypeHinting),
+  enableSlightHinting(fontFileA->engine->enableSlightHinting)
+{
+  FT_Face face;
+  int div;
+  int x, y;
+#ifdef USE_FIXEDPOINT
+  SplashCoord scale;
+#endif
+
+  face = fontFileA->face;
+  if (FT_New_Size(face, &sizeObj)) {
+    return;
+  }
+  face->size = sizeObj;
+  size = splashRound(splashDist(0, 0, mat[2], mat[3]));
+  if (size < 1) {
+    size = 1;
+  }
+  if (FT_Set_Pixel_Sizes(face, 0, size)) {
+    return;
+  }
+  // if the textMat values are too small, FreeType's fixed point
+  // arithmetic doesn't work so well
+  textScale = splashDist(0, 0, textMat[2], textMat[3]) / size;
+
+  if (unlikely(textScale == 0)) {
+    return;
+  }
+
+  div = face->bbox.xMax > 20000 ? 65536 : 1;
+
+#ifdef USE_FIXEDPOINT
+  scale = (SplashCoord)1 / (SplashCoord)face->units_per_EM;
+
+  // transform the four corners of the font bounding box -- the min
+  // and max values form the bounding box of the transformed font
+  x = (int)(mat[0] * (scale * (face->bbox.xMin / div)) +
+	    mat[2] * (scale * (face->bbox.yMin / div)));
+  xMin = xMax = x;
+  y = (int)(mat[1] * (scale * (face->bbox.xMin / div)) +
+	    mat[3] * (scale * (face->bbox.yMin / div)));
+  yMin = yMax = y;
+  x = (int)(mat[0] * (scale * (face->bbox.xMin / div)) +
+	    mat[2] * (scale * (face->bbox.yMax / div)));
+  if (x < xMin) {
+    xMin = x;
+  } else if (x > xMax) {
+    xMax = x;
+  }
+  y = (int)(mat[1] * (scale * (face->bbox.xMin / div)) +
+	    mat[3] * (scale * (face->bbox.yMax / div)));
+  if (y < yMin) {
+    yMin = y;
+  } else if (y > yMax) {
+    yMax = y;
+  }
+  x = (int)(mat[0] * (scale * (face->bbox.xMax / div)) +
+	    mat[2] * (scale * (face->bbox.yMin / div)));
+  if (x < xMin) {
+    xMin = x;
+  } else if (x > xMax) {
+    xMax = x;
+  }
+  y = (int)(mat[1] * (scale * (face->bbox.xMax / div)) +
+	    mat[3] * (scale * (face->bbox.yMin / div)));
+  if (y < yMin) {
+    yMin = y;
+  } else if (y > yMax) {
+    yMax = y;
+  }
+  x = (int)(mat[0] * (scale * (face->bbox.xMax / div)) +
+	    mat[2] * (scale * (face->bbox.yMax / div)));
+  if (x < xMin) {
+    xMin = x;
+  } else if (x > xMax) {
+    xMax = x;
+  }
+  y = (int)(mat[1] * (scale * (face->bbox.xMax / div)) +
+	    mat[3] * (scale * (face->bbox.yMax / div)));
+  if (y < yMin) {
+    yMin = y;
+  } else if (y > yMax) {
+    yMax = y;
+  }
+#else // USE_FIXEDPOINT
+  // transform the four corners of the font bounding box -- the min
+  // and max values form the bounding box of the transformed font
+  x = (int)((mat[0] * face->bbox.xMin + mat[2] * face->bbox.yMin) /
+	    (div * face->units_per_EM));
+  xMin = xMax = x;
+  y = (int)((mat[1] * face->bbox.xMin + mat[3] * face->bbox.yMin) /
+	    (div * face->units_per_EM));
+  yMin = yMax = y;
+  x = (int)((mat[0] * face->bbox.xMin + mat[2] * face->bbox.yMax) /
+	    (div * face->units_per_EM));
+  if (x < xMin) {
+    xMin = x;
+  } else if (x > xMax) {
+    xMax = x;
+  }
+  y = (int)((mat[1] * face->bbox.xMin + mat[3] * face->bbox.yMax) /
+	    (div * face->units_per_EM));
+  if (y < yMin) {
+    yMin = y;
+  } else if (y > yMax) {
+    yMax = y;
+  }
+  x = (int)((mat[0] * face->bbox.xMax + mat[2] * face->bbox.yMin) /
+	    (div * face->units_per_EM));
+  if (x < xMin) {
+    xMin = x;
+  } else if (x > xMax) {
+    xMax = x;
+  }
+  y = (int)((mat[1] * face->bbox.xMax + mat[3] * face->bbox.yMin) /
+	    (div * face->units_per_EM));
+  if (y < yMin) {
+    yMin = y;
+  } else if (y > yMax) {
+    yMax = y;
+  }
+  x = (int)((mat[0] * face->bbox.xMax + mat[2] * face->bbox.yMax) /
+	    (div * face->units_per_EM));
+  if (x < xMin) {
+    xMin = x;
+  } else if (x > xMax) {
+    xMax = x;
+  }
+  y = (int)((mat[1] * face->bbox.xMax + mat[3] * face->bbox.yMax) /
+	    (div * face->units_per_EM));
+  if (y < yMin) {
+    yMin = y;
+  } else if (y > yMax) {
+    yMax = y;
+  }
+#endif // USE_FIXEDPOINT
+  // This is a kludge: some buggy PDF generators embed fonts with
+  // zero bounding boxes.
+  if (xMax == xMin) {
+    xMin = 0;
+    xMax = size;
+  }
+  if (yMax == yMin) {
+    yMin = 0;
+    yMax = (int)((SplashCoord)1.2 * size);
+  }
+
+  // compute the transform matrix
+#ifdef USE_FIXEDPOINT
+  matrix.xx = (FT_Fixed)((mat[0] / size).get16Dot16());
+  matrix.yx = (FT_Fixed)((mat[1] / size).get16Dot16());
+  matrix.xy = (FT_Fixed)((mat[2] / size).get16Dot16());
+  matrix.yy = (FT_Fixed)((mat[3] / size).get16Dot16());
+  textMatrix.xx = (FT_Fixed)((textMat[0] / (textScale * size)).get16Dot16());
+  textMatrix.yx = (FT_Fixed)((textMat[1] / (textScale * size)).get16Dot16());
+  textMatrix.xy = (FT_Fixed)((textMat[2] / (textScale * size)).get16Dot16());
+  textMatrix.yy = (FT_Fixed)((textMat[3] / (textScale * size)).get16Dot16());
+#else
+  matrix.xx = (FT_Fixed)((mat[0] / size) * 65536);
+  matrix.yx = (FT_Fixed)((mat[1] / size) * 65536);
+  matrix.xy = (FT_Fixed)((mat[2] / size) * 65536);
+  matrix.yy = (FT_Fixed)((mat[3] / size) * 65536);
+  textMatrix.xx = (FT_Fixed)((textMat[0] / (textScale * size)) * 65536);
+  textMatrix.yx = (FT_Fixed)((textMat[1] / (textScale * size)) * 65536);
+  textMatrix.xy = (FT_Fixed)((textMat[2] / (textScale * size)) * 65536);
+  textMatrix.yy = (FT_Fixed)((textMat[3] / (textScale * size)) * 65536);
+#endif
+}
+
+```
+
+**⚠️ IMPORTANT**: When generating your SEARCH/REPLACE edit:
+- The shown function has 212 lines total
+- Bug is at lines 60-231
+- Variables declared before the bug MUST NOT be removed (they may be used after)
+- Check for paired macros (fz_try/always/catch, do/while) - keep them balanced
+- Only edit the MINIMAL lines needed to fix the bug
+
+--- END FILES ---
+
+### Buggy Code Snippet
+- **File**: `splash/SplashFTFont.cc`, **Lines**: 60-231
+
+```cpp
+// File: splash/SplashFTFont.cc (lines 60-231)
+// This code needs to be fixed:
+SplashFTFont::SplashFTFont(SplashFTFontFile *fontFileA, SplashCoord *matA,
+			   SplashCoord *textMatA):
+  SplashFont(fontFileA, matA, textMatA, fontFileA->engine->aa), 
+  enableFreeTypeHinting(fontFileA->engine->enableFreeTypeHinting),
+  enableSlightHinting(fontFileA->engine->enableSlightHinting)
+{
+  FT_Face face;
+  int div;
+  int x, y;
+#ifdef USE_FIXEDPOINT
+  SplashCoord scale;
+#endif
+
+  face = fontFileA->face;
+  if (FT_New_Size(face, &sizeObj)) {
+    return;
+  }
+  face->size = sizeObj;
+  size = splashRound(splashDist(0, 0, mat[2], mat[3]));
+  if (size < 1) {
+    size = 1;
+  }
+  if (FT_Set_Pixel_Sizes(face, 0, size)) {
+    return;
+  }
+  // if the textMat values are too small, FreeType's fixed point
+  // arithmetic doesn't work so well
+  textScale = splashDist(0, 0, textMat[2], textMat[3]) / size;
+
+  if (unlikely(textScale == 0)) {
+    return;
+  }
+
+  div = face->bbox.xMax > 20000 ? 65536 : 1;
+
+#ifdef USE_FIXEDPOINT
+  scale = (SplashCoord)1 / (SplashCoord)face->units_per_EM;
+
+  // transform the four corners of the font bounding box -- the min
+  // and max values form the bounding box of the transformed font
+  x = (int)(mat[0] * (scale * (face->bbox.xMin / div)) +
+	    mat[2] * (scale * (face->bbox.yMin / div)));
+  xMin = xMax = x;
+  y = (int)(mat[1] * (scale * (face->bbox.xMin / div)) +
+	    mat[3] * (scale * (face->bbox.yMin / div)));
+  yMin = yMax = y;
+  x = (int)(mat[0] * (scale * (face->bbox.xMin / div)) +
+	    mat[2] * (scale * (face->bbox.yMax / div)));
+  if (x < xMin) {
+    xMin = x;
+  } else if (x > xMax) {
+    xMax = x;
+  }
+  y = (int)(mat[1] * (scale * (face->bbox.xMin / div)) +
+	    mat[3] * (scale * (face->bbox.yMax / div)));
+  if (y < yMin) {
+    yMin = y;
+  } else if (y > yMax) {
+    yMax = y;
+  }
+  x = (int)(mat[0] * (scale * (face->bbox.xMax / div)) +
+	    mat[2] * (scale * (face->bbox.yMin / div)));
+  if (x < xMin) {
+    xMin = x;
+  } else if (x > xMax) {
+    xMax = x;
+  }
+  y = (int)(mat[1] * (scale * (face->bbox.xMax / div)) +
+	    mat[3] * (scale * (face->bbox.yMin / div)));
+  if (y < yMin) {
+    yMin = y;
+  } else if (y > yMax) {
+    yMax = y;
+  }
+  x = (int)(mat[0] * (scale * (face->bbox.xMax / div)) +
+	    mat[2] * (scale * (face->bbox.yMax / div)));
+  if (x < xMin) {
+    xMin = x;
+  } else if (x > xMax) {
+    xMax = x;
+  }
+  y = (int)(mat[1] * (scale * (face->bbox.xMax / div)) +
+	    mat[3] * (scale * (face->bbox.yMax / div)));
+  if (y < yMin) {
+    yMin = y;
+  } else if (y > yMax) {
+    yMax = y;
+  }
+#else // USE_FIXEDPOINT
+  // transform the four corners of the font bounding box -- the min
+  // and max values form the bounding box of the transformed font
+  x = (int)((mat[0] * face->bbox.xMin + mat[2] * face->bbox.yMin) /
+	    (div * face->units_per_EM));
+  xMin = xMax = x;
+  y = (int)((mat[1] * face->bbox.xMin + mat[3] * face->bbox.yMin) /
+	    (div * face->units_per_EM));
+  yMin = yMax = y;
+  x = (int)((mat[0] * face->bbox.xMin + mat[2] * face->bbox.yMax) /
+	    (div * face->units_per_EM));
+  if (x < xMin) {
+    xMin = x;
+  } else if (x > xMax) {
+    xMax = x;
+  }
+  y = (int)((mat[1] * face->bbox.xMin + mat[3] * face->bbox.yMax) /
+	    (div * face->units_per_EM));
+  if (y < yMin) {
+    yMin = y;
+  } else if (y > yMax) {
+    yMax = y;
+  }
+  x = (int)((mat[0] * face->bbox.xMax + mat[2] * face->bbox.yMin) /
+	    (div * face->units_per_EM));
+  if (x < xMin) {
+    xMin = x;
+  } else if (x > xMax) {
+    xMax = x;
+  }
+  y = (int)((mat[1] * face->bbox.xMax + mat[3] * face->bbox.yMin) /
+	    (div * face->units_per_EM));
+  if (y < yMin) {
+    yMin = y;
+  } else if (y > yMax) {
+    yMax = y;
+  }
+  x = (int)((mat[0] * face->bbox.xMax + mat[2] * face->bbox.yMax) /
+	    (div * face->units_per_EM));
+  if (x < xMin) {
+    xMin = x;
+  } else if (x > xMax) {
+    xMax = x;
+  }
+  y = (int)((mat[1] * face->bbox.xMax + mat[3] * face->bbox.yMax) /
+	    (div * face->units_per_EM));
+  if (y < yMin) {
+    yMin = y;
+  } else if (y > yMax) {
+    yMax = y;
+  }
+#endif // USE_FIXEDPOINT
+  // This is a kludge: some buggy PDF generators embed fonts with
+  // zero bounding boxes.
+  if (xMax == xMin) {
+    xMin = 0;
+    xMax = size;
+  }
+  if (yMax == yMin) {
+    yMin = 0;
+    yMax = (int)((SplashCoord)1.2 * size);
+  }
+
+  // compute the transform matrix
+#ifdef USE_FIXEDPOINT
+  matrix.xx = (FT_Fixed)((mat[0] / size).get16Dot16());
+  matrix.yx = (FT_Fixed)((mat[1] / size).get16Dot16());
+  matrix.xy = (FT_Fixed)((mat[2] / size).get16Dot16());
+  matrix.yy = (FT_Fixed)((mat[3] / size).get16Dot16());
+  textMatrix.xx = (FT_Fixed)((textMat[0] / (textScale * size)).get16Dot16());
+  textMatrix.yx = (FT_Fixed)((textMat[1] / (textScale * size)).get16Dot16());
+  textMatrix.xy = (FT_Fixed)((textMat[2] / (textScale * size)).get16Dot16());
+  textMatrix.yy = (FT_Fixed)((textMat[3] / (textScale * size)).get16Dot16());
+#else
+  matrix.xx = (FT_Fixed)((mat[0] / size) * 65536);
+  matrix.yx = (FT_Fixed)((mat[1] / size) * 65536);
+  matrix.xy = (FT_Fixed)((mat[2] / size) * 65536);
+  matrix.yy = (FT_Fixed)((mat[3] / size) * 65536);
+  textMatrix.xx = (FT_Fixed)((textMat[0] / (textScale * size)) * 65536);
+  textMatrix.yx = (FT_Fixed)((textMat[1] / (textScale * size)) * 65536);
+  textMatrix.xy = (FT_Fixed)((textMat[2] / (textScale * size)) * 65536);
+  textMatrix.yy = (FT_Fixed)((textMat[3] / (textScale * size)) * 65536);
+#endif
+}
+```
+
+### Failing Test Case
+Input (hex):
+```
+2020202020202020202020202020202020312030206f626a20203c3c2fffffff2020202020202020ff2f5061676573203220302052202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020200a322030206f626a20203c3c2fffffff202020202020ff2f436f756e7420312f4b6964735b2033203020525d2020202020202020202020200a332030206f626a20203c3c20202020202020202020202020202020202020202020202f5265736f75726365733c3c2f466f6e743c3c2f46312035203020523e3e2fffffffffffffffff20203c20202020202020202020203e20202020202020202020202020202020202020202020202020202020202020202020202020202020203e3e2020202020202020202020202020202020202020202020202020202020202f436f6e74656e74732034203020522020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020203e3e20202020202020202020342030206f626a20203c3c2f46696c7465722f466c20202020202020202020202020202020202020203e3e202073747265616d200a789c8d91c14a03311086ef81bcc31c2787cd6692ec2685d243776b5128205d4fad07d1b52dd60ad6f7c7ec414c940d4b208730f3e5fb67a0bc87f9202020202da8c52020ff20cb8eb3f28620202a0bdd2b67042a1c02a7a4d7205cada4f3d0bd87baff202020ca20822020ad39dbe120ff1420cf2761f0453c4277c7d92a2007ee0f69a6ff6513200e20aa85d5a62088e4209220abff20d47a0a44672054ff9a24010c20ff20fff02020203c2009ff2020928b202020ffb4ac922057aa676662209b81b868c22020202020202020202020202020202020202020202020202020202020202020202020ff202020202020202020202020ff2020202020202020202020202020202020202020202020202020200a352030206f626a20203c3c2fffffff2020202020ff2fffffffffffff202020202020202020ff2fffffff202020ff2fffffffffffffff202020202020202020202020202020ff2fffffffffffffff20202020202020202020202020202020ff2f466f6e7444657363726970746f722036203020522020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020200a362030206f626a20203c3c2fffffff20202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020206569676874203235302f5374656d562035322f466f6e7442426f785b202d353033202d3235302031323430203735305d202f466f6e7446696c6532203233203020523e3e0d0a656e646f626a0d0a372030206f626a0d0a3c3c2f547970652f4578744753746174652f424d2f4e6f726d616c2f636120313e3e0d0a656e646f626a0d0a382030206f626a0d0a3c3c2f417574686f722854696d2076616e20646572204d65696a29202f43726561746f7228feff004d006900630072006f0073006f0066007400ae00200057006f007200640020003200300031003329202f4372656174696f6e4461746528443a32303134303732323134303835382b30322730302729202f4d6f644461746528443a32303134303732323134303835382b30322730302729202f50726f647563657228feff004d006900630072006f0073006f0066007400ae00200057006f007200640020003200300031003329203e3e0d0a656e646f626a0d0a3320353235203439382030203020353235203233302030203435352032333020302035323520353237203020302033343920333931203333355d200d0a656e646f626a0d0a32332030206f626a0d0a3c3c2f46696c7465722f466c6174654465636f64652f4c656e6774682038313037332f4c656e67746831203137353332343e3e0d0a73747265616d0d0a789cec7b097c54d5d9fe39772633935932334926db2499498624c024842c84842519b2410801423290008184847d0b61474004458da2b88b2b6e604571328004b08a8a5a776badb66ec556ab55b16ad55614f23de7be73d8b47efefa6ffffdfcfd7292e73ecf79cf72cf79ef79cf3d1306c619630e5cb46c7c795dd5c897d6644d62cad573184b5856515a5ebf6bde53cb18bb7b0c63fab28ad23165eebd77bfced8f65b18d304469657547ef0c4978c2957ac42fed391e3c7d5cd6d1bba91b15d5b19bfc53cb2ce5faad1f4fb86292351bff28d7175d9b9dfbcd58dbafc77b86b73ebc296f6c139434e3096d18df66dad2b96b903371f7985b186518c8525ce6a9fbdf0ebaf6bcc8c7913190b4f98ddb2b49d25320fee7f39dadb662f583d6b45d1876ec69ada188b796acecc96b64fdec93d8afea7a2bc600e0c9607746f207f2df27de62c5cb6aa566fbc0d032e642c6dfdfc991d8b3c93531f66eceab528dfbd60716b4bf233893731b62c93b1e4b10b5b56b5a7e4f4d98af6181f732f6a593833febe25e731760dca2dc5ed8b972eeb71b2cd18cf0251dede31b37dfe83ca49c6f2d17f1f1b13be0deb9e606dbf6bde74ebb0af58bc818974e8e3b5cf0b7eee8d3d9bbe3d7ee2b2f04ff40f211bce144609ed74ec24e3478cdbbf3d7e7c7bf8276a4f6724cd3661b1a6b3712c4c3528ccc6b2d94cc6ec5b715fb58ad6cbb7a2d410b62d2c0f5d26136b5e669b1566608a354c5114ad46d11e654a8f8fdddf43f765aca6ceed663e88ed3406fd6d4aba9bf1dbd54ef787458899a2f788d3a3e12fb17f7bd27ec2eefff7f7fa9f4bbad7ffff8c57f3001bf953ea85a5b2fbfed363e94dbd49f35b36f55f6a37834dfe29f5b4f9acf9ac76dfb2a67fe57e3fd784f96f939abfc62efa57fbd1dc75563fdbfe59bd33eff7bdb2c29ff6cc7e2829cf9eddaf2685d5fea476bb59cabf7acfded49b7a536fea4dbde9bf95949bb9f1bf3d867f675216b28b8035ffc97b6806b1cbfe93fdf7a6ded49b7a536fea4dbda937f5a6ded49b7a536fea4dbda937f5a6ded49b7a536fea4dff87932684c4d0b7c39e450e4a798869d96e26bea5e58612c9c252593f56ce6a581df3b3163693cd650bd862b68c6defe909d570b3be67d4686573d87cb68875a83578cf57b8d5c49e577bfece4c2c8add717a103dada1bb279e35b66816c712604ba6916a466b6ee0369ec093f964dec417f0c57c055fc72fe75bf94d4cc73f516b7d7eeeb7dc905742df8953d88f277efa3e673868bde6fcffdd8d3f90e2be67293f434f03e6fc9361609c344f3587b9e28ad9e28af9aa369af3cf2769feadbdfdac56a66f64dbf4694d53a74c6e6cf0d7d74da81d3f6e6ccd98ead155a34656569497958ef095140f1f36744851e1e08241d903b232fba6a7f5f1a4bae2a2ed36abc5640c37e875615a8dc2596685a7b2d91d486f0e68d33da3466589bca7058696330ccd01374c9567d709b89bd56aeeb36bfa5073d639357d54d377aa26b7b987b1615999ee0a8f3bf042b9c7ddcd27d736406f29f734ba03c7545da36a6dba9ab12093928216ee8ab839e5ee006f7657042a57cce9ac682e477f5d266399a76ca6312b9375194d9026a8405f4f7b17ef5bcc55a1f4ad18d2a5308345dc36a049ab68690b8caf6da82877a6a434aa3656a6f615d09505f46a5feeb962ccec327757e6e1cecbbb6d6c46b3d7dce6696b99da10d0b4a051a7a6a2b3f3e280dd1be8e7290ff45bf35e1ca63c3390e929af08783de8ac7ac2a91bf040589acde3eefc8a61f09e639f9c6d6909597469b6af9890628aa7dc8472a919c68611627e2929622c9775fbd80c64021b6a1b28ef66339c41e6cbf6360694665172589638fca264832c39d5bcd993221e554573e877c59cb8c08619eeac4c785ffd4dc32fcadd014d7af38cd639825b66767acacbc96ff50d015f3984af2534d78aae81d9a8dfd28c49cc156ea86d08647bda03d19e52aa00835b3c83b9750d6a9350b34074598035b7865a05b22bcac5b8dc159dcde53440d197a7b6e100cbeb39da95ef76eec963f9ac518c2310538687925ed1d9d0362be06a76b6617dce7237385302be46b8afd1d330b3513c258f2dd0ef286e97a2de516d85b99d535b561633d7a719dc0d8a53d3289e160cee4a5c3ca5c35060c3e352b3e289960e7337702793d57097500da1ceea07194d5ad92851a4114dcb4639531a5328fdc8909ca13185a5050c67f46583e1d498e83eff7468545b0ca89fbb6266f919033cabd3b0d00043bdfdf03815e18bd08dd1c2201ee72859a44943e4c2a6a01bd5249e629c3bc0c6bb1b3c333d8d1eac21dff8063137e16bf5f956d779aa6b2737a84f3bb44aeacfca517921e5022c05c532a394610d567a9df2b1aaf9916afe5476d439c555b2d8dd69f054d7758ace3da10e991b118449ebd2ab5a2e2b8ccc4768566277f354b678dc367765674b77cf86199d5d3e5f677b45f39c21a20f4f555ba7a7ae6198531deb848675ce35e25691ac9a57d797666562ef29edf2f04b6abb7cfc92bac90d076c78db5c52df1054b852d65cdad8d507650d07dc8cf954ab22acc228326e91113d4d40c6a0d6771ef031b6412dd5aa0635dfdacd996a33481b67addd0ad96cd2a6c0a6259b4fb58984871437072ec6765be16e138f676de39ccee646115c2c068f12bf3cc03dc52ca0788abbb8a233078c9e99a50193a754d84b84bd84ec3a61d76361f0180ee7883da9b3d9837d0a0baa8139392d458de8d2ddddd353df90f282f358630a96da5460724320dc8bbd3f2c6d34ea8d146886796460436b8b1807f33788b6fab4aad6462c5bd921aa5405c2d14378a807d4a854db88e58846ad783678806afb0dc8043634061abde2a60d731bd5e56c0bb0519e2178ecd46758bab851766367a427578d4d848231ed6241e1181bab6b208b1359dcac919ca43763e4ad1e14b536bbe16d2d6badc352a7bdd4e824cb4c6c89daf4992a8cce502113d3d2a4992cc640f80074885fa14d03444886a5e91b1b69f06aeee25005dcdb16306144e967b832d400de415195180b7e2fc65045d5c74437b5dd6c82671576163168b5273d8a0396b4aa166cfed4de048ba7503636883dc214eae30859f562e666f85d9356dfddb3d3b33ae58c9495e9112f07b13099f30016366bec3cd71098e2cdca349c6bb5a8e6ce4e83e5871b90bf0c96532c8cee0abc35180b866bdcddca857bc3e3f868884d526c94e20229364871be14eba55827c55a29ce93628d14aba55825c54a295648b15c8a65522c95628914ed522c966291140ba55820c57c29e64931578a3952cc9662961433a56893a2558a1952b448d12cc57429a649d124c55429a64831598a46291aa49824c54429fc52d44b5127c504296aa5182fc53829c64a5123c51829aaa5182d459514a3a4182945a5141552944b512645a91423a4f049512245b114c3a51826c550298648512445a11483a52890629014f952e449912b458e1403a5c8966280145952644ae195a2bf14fda4e82b458614e952a449d1470a8f14a952a448e196c22545b2144952244ae19422418a7829e2a4889522460a8714d15244491129855d0a9b14562922a4b0486196c22485518a70290c52e8a5d049112685560a8d148a145c0a1612bc478a93529c90e23b29be95e2b814df48f10f29fe2ec5d7527c25c59752fc4d8a2fa4f85c8acfa4f8ab149f4a714c8a4fa4f8588a8fa4f88b141f4af181147f96e27d29de93e24f52fc518a77a5382ac51fa478478ab7a5784b8a37a578438adf4bf13b295e97e235297e2bc5ab52fc468a57a4f8b5142f4bf192142f4af18214cf4bf19c14cf4af18c14bf92e269299e92e249298e48f184148f4bf1981487a578548a47a4f8a5140f4b71488a83521c90a25b8afd523c24c53e29f64ab1478aa0145d5204a478508add523c20c5fd52ec92e23e297e21c5bd52ec94628714f74871b714774971a7147748b15d8adba5b84d8a5ba5b8458a9ba5b8498a6d52dc28c50d525c2fc575525c2bc530525c2dc555526c95e24a29ae90628b14974b7199149d525c2ac525525c2cc566292e92421e7bb83cf67079ece1f2d8c3e5b187cb630f97c71e2e8f3d5c1e7bb83cf67079ece1f2d8c3e5b187cb630f97c71e2e8f3d5c1e7bb83cf6f00e29e4f987cbf30f97e71f2ecf3f5c9e7fb83cff7079fee1f2fcc3e5f987cbf30f97e71f2ecf3f5c9e7fb83cff7079fee1f2fcc3e5f987cbf30f97e71f2ecf3f5c9e7fb83cff7079fee1f2fcc3e5f987cbf30f97e71f2ecf3f5c9e7fb83cff7079fee1f2fcc3e5b187cb630f97c71e2e4f3b5c9e76b83ced7079dae1f2b4c3e56987cbd30e97a71d2e4f3bbc6c8f10333007938b5d383307931da08d94bb20983c04b48172e713ad0f269b41eb28b796e83ca23544ab83492340ab824965a095442b889653d932ca2d25ea20e392605229a89d6831d122aab2906801d1fc606205681ed15ca23944b389660513cb413329d746d44a3483a885a899683ad1346ad744b9a94453882613351235104d229a48e427aa27aa239a40544b349e681cd158a21aa23144d544a383ce2a5015d1a8a0733468245165d0590daa083ac780ca89ca884aa96c04b5f3119550bb62a2e144c3a8e650a221d4bc88a89068305101d120ea2c9f288f7ac925ca211a489d65130da076594499445ea2fe44fd88fa126550d7e94469d4671f220f512a759d42e4a6762ea264a224a2442227514230612c289e282e98300e144b14434607513419a3882289ec546623b2923182c84264a632139191289cca0c447a225d307e3c282c185f0bd21269c8a8508e133195780fd149b50a3f41b9ef88be253a4e65df50ee1f447f27fa9ae8ab605c3de8cb605c1de86f94fb82e873a2cfa8ecaf94fb94e818d12754f631d14764fc0bd187441f10fd99aabc4fb9f728f727cafd91e85da2a354f607a277c8f836d15b446f12bd41557e4fb9df11bd1e8c9d047a2d183b11f45ba257c9f81ba257887e4df432557989e84532be40f43cd17344cf529567887e45c6a7899e227a92e808d11354f371ca3d467498e8512a7b84e897647c98e810d141a20344dd54733fe51e22da47b497684f30a604140cc64c01751105881e24da4df400d1fd44bb88ee0bc660bfe6bfa05eee25da49653b88ee21ba9be82ea23b89ee20da4e743b75761bf5722bd12d547633d14d44db886ea4063750ee7aa2eb88aea5b26ba897ab89aea2b2ad4457125d41b485e872aa7919e53a892e25ba84e862a2cd41470be8a2a06306e842a24d41c72cd046a20b820e3f6843d081cd989f1f741480d613ada3e66ba9dd79446b828e36d06a6abe8a6825d10aa2e544cb889652d71dd47c09517bd0d10a5a4c9d2da29a0b891610cd279a473497dacd219a4d239b45cd6712b551cd56a219442d44cd44d389a6d1a49b68645389a6d0a42753d78d74a306a24934dc8974233ff5524f54473481a83618ed038d0f468b3b8c0b468be53d3618bd0954138cce028da12ad544a383d13817f02aca8d221a49c6ca60f47a504530fa62507930fa7c5059307a03a8341859091a41e4232a212a0e46e2fdce87536e58d0de081a4a342468174ba388a830681f091a1cb437800a82f6c9a04154964f9417b4678272a9664ed02e2636306817b1994d34809a67d11d3289bcd4597fa27ed4595fa20ca274a2b4a05d78a90f9187fa4ca53e53a83337f5e2224aa676494489444ea204a2f8a0ad091417b44d03c5066dd34131440ea268a228a2486a60a70636325a8922882c4466aa69a29a463286131988f4443aaa194635b564d41029449c88f97aac335c0227adadae13d636d777d0df02c7816f60fb076c7f07be06be02be84fd6fc01728fb1cf9cf80bf029f02c760ff04f818651f21ff17e043e003e0cf11b35def47cc71bd07fc09f823f02e6c47c17f00de01de46fe2df09bc01bc0ef81df59e6bb5eb7e4b85e03ffd6b2c0f5aa25ddf51be015e85f5bbcae978197801751fe026ccf5b16ba9e837e16fa19e85f59e6b99eb6cc753d6599e37ad232db75046d9f407f8f038f01be9ec3b83e0a3c02fcd2bcc4f5b0b9c375c8bcd475d0bccc7500e806f6c3fe10b00f657b51b607b620d0050480074dab5dbb4d6b5c0f98d6baee37ad73ed32ad77dd07fc02b817d809ec00ee3165b9ee06df05dc89367780b79be6bb6e87be0dfa56e016e89bd1d74de86b1bfaba11b61b80eb81eb806b816b80abd1ee2af4b7d538d675a5719ceb0ae36cd716e33daecb8d3b5d1769d25c176a0a5d9b78a16ba37f83ff825d1bfce7fbd7f9d7ef5ae737ade3a675ce75d5ebce5bb76bdd9beb7c913ae35aff1aff79bbd6f857fb57fa57ed5ae93fa86c66b3948b7cc3fc2b762df76b97472f5fb65cf3e572be6b392f5fce072ee70a5b6e5bee5eae312ff377f897eeeaf0b38ef11d1b3a021ddaa1818ea31d0aebe0c6ee9ec37b3a9cc99560dfda0e8bad72897fb1bf7dd762ffa2590bfdf330c0b985b3fd7376cdf6cf2a6cf3cfdcd5e66f2d9ce16f296cf64f2f6cf24fdbd5e49f5a38d93f65d7647f6361837f12ea4f2cacf7fb77d5fbeb0a6bfd1376d5fac7158ef58f85bda6b0da3f6657b57f74e1287fd5ae51fe918595fe0a4c9e25da12dd891a9b18c0d8448c843979e940a7cf79d4f99953cb9c01e761a726d29ae04a50fa59e379d9b878be38fefcf82be335d6b897e2145f5cbfcc4a6bec4bb17f88fd6bac36ca17db6f40258bb1c5b863340e31b7989afa4a954bca897306a973ad89f1a4575a1ddcea7039940a978333fb51fb67768de351db4b36c56ae5566b8f55f15951dd1ae18a50c4a52742e38bc8195c69b5272c8ab8f45834313e0b2ca2c70cf3f8fa4aabc96552fc25a67126c5672a29abf499b20656320d77732ebe84e4e61a83180577b82a11d77b627818c7fbbcabbeceebadee36b009d501c3f829017e4920ad4e5c7db59303ba4b02cc3f794a4317e757347671a5ac3e102dfec556cd5fb4650b2b4daa0e24d53504b6273556073640f884e88160495d31acb4d13b6de9f2a55eefb269b84c5bbaccabfe22c7978b9c5718c5efd265c88b9fe56a9e797f345135d0f4a548cba471d98fb7fabf9ef87f7b003fffd4c5c4970c46f42817b2366513b011b800d8009c0fac07d6016b81f38035c06a6015b01258012c0796014b8125403bb01858042c041600f38179c05c600e301b9805cc04da80566006d0023403d381694013301598024c061a810660123011f003f5401d3001a805c603e380b1400d3006a806460355c028602450095400e54019500a8c007c4009500c0c078601438121401150080c060a8041403e9007e40239c040201b18006401998017e80ff403fa0219403a9006f4013c402a9002b80117900c24018980134800e28138201688011c40341005440276c006588108c0029801136004c20103a007744018a01dd183ab0650000e30d6c661e3278113c077c0b7c071e01be01fc0df81af81af802f81bf015f009f039f017f053e058e019f001f031f017f013e043e00fe0cbc0fbc07fc09f823f02e7014f803f00ef036f016f026f006f07be077c0ebc06bc06f815781df00af00bf065e065e025e045e009e079e039e059e017e053c0d3c053c091c019e001e071e030e038f028f00bf041e060e010781034037b01f7808d807ec05f60041a00b08000f02bb810780fb815dc07dc02f807b819dc00ee01ee06ee02ee04ee00e603b703b701b702b700b70337013b00db811b801b81eb80eb816b806b81ab80ad80a5c095c016c012e072e033a814b814b808b81cdc045ac6dc4068ef8e7887f8ef8e7887f8ef8e7887f8ef8e7887f8ef8e7887f8ef8e7887f8ef8e7887f8ef8e7887f8ef8e7887fde01600fe0d80338f6008e3d80630fe0d80338f6008e3d80630fe0d80338f6008e3d80630fe0d80338f6008e3d80630fe0d80338f6008e3d80630fe0d80338f6008e3d80630fe0d80338f6008e3d80630fe0d80338f6008e3d8023fe39e29f23fe39629f23f639629f23f639629f23f639629f23f639629f23f6ffdbfbf0cf3c35feb707f0334f71d3a731a6bf8db193d79cf55debf16c1e5bca36e06733dbc2ae618fb237d90cb6096a1bdbce76b05fb0007b8c3dc35eff7ffd5af999e9e4eab085ccacd9cf742c8ab19ee33dc74eee00bac322ceb05c835c94d67ddad263ebf9f41cdba727afe9b19decd64532a3dad6a2bc02ebdff8899ee378bf22df5320f2cac5d056b5c5e7fadb4e3e7872e7393ea86593d914369535b166d682f9b7b1396c2e3c339f2d600bd92235b70865b3719d85dc74f55bee6daa3e5d6b316b073ad832b69cadc04f3bf4d2504e942d51f3cbd94afcac62abd91b761e5bcbd685ae2b55cb5a94ac51f3ab80f5ec7c3c990bd846554926cb267621bb084fed627609bbf44773979e529dec3276399ef315ecca7faab79c95db8a9fabd8d5580fd7b2ebd8f5ec46ac8b9bd92de7586f50ed37b1dbd8ed5833a2ec3a586e5795287d983dc5f6b1ddec41f690eacb56788d3c22fd324bf5613b7cb01633dc74c688c97f2b4f796b3de62ee6d6199ae92ad8379ed16245c88fa2e626d4a45ee839885ed69de389ad9803e9d333a0dc75eafc4f5bcff4ca8f59a53f6e39c33337ab39a1ceb5fe337d3dbb15117807aec2ab42dd094dea76559f69bfed54dded6afe2e7637bb07cf62a7aa24936507f44e762f62fb3eb68bdd8f9fd3fa4c45bc9b3da03eb900eb6241b687edc5937c88ed67ddaafdc7ca7ec8be27640f9eb21c6007d921ac9047d861ec348fe3475a7e09dba321eb11d546f9c7d913c88b5a947b8a3d8d1dea59f61c7b9ebdc49e44ee45f5fa2be45e66afb0dfb0d7b905ead7ec2fb89e602f87bdc722d808c6c20ec2cfb7b069f809c3aeb454f30a76110dd3b32256c3c6b2290f330b5ef7316c08dfb7cf515e6ec8d23f8257b9c2dc380c1818e7653eab56b1ec4f4828f1ec1fa4dba2b15775f3acbd25fa2d38e6969c78e7c48bd927de391659947d8c67bffdee3befda3e7fd15e949df7eeabefe60ce4f614bb8ae80845af8fd6795207288332d20bf2f2728b9541f9e99ed40845b5e5170c2ed6e4e5262b9a68692956449e6b5ef96eb266dc099db2de5332312f2c39c11a6dd1852989719159c3d26c7553d2860d48d26bf43a4d9841df7770696af5828ad437f4f624474c52a4c1109914e348b2eb4fbc191671fc8bb0886fcbb40bbebd56a31b3ab5a48fe646a341d1ea74ddc971f1fd87a6544db446d9b4a6289b3dc6a08fb49bfb964f3db1d99128fa487438a8af133570cbfd8c69af840723998badf42595a4f0a8381baf89b2597189b6e01269c625ce84cb217c96612ca1e7c33da891d0ddf3d91e6b882d2a7fbdc7acf2877b503be1103e7584b3386e0e46d43abb797a57583d2b395602bfbeabbedd5e25ca19d824fce949494d1f64cf2fc84b819bf4f903148fc72edcaabd72e23d9fed38f9696cbf7eb13cedde0f6faddd97bff8becd0f76adbdafa348b9e9de6fef99e0cad06ecc704dbaebc36d73f75d38fa3b7bf186c7c4ff5cbbbfe7b8ce8b990d63f7fb6ccdc5edc58a65e0c0d8ec6ce380b83875903f6512dd8add97dc27c76c360aaf1885578c3654341a51cb28bc623c8879b29ec3be7864589f825a535cac253b2e6780ced5b7d6e58ff487f9590952646c913daf8467bfeaa579e7daf36ca794bd6878765e9e3d0fce48934bc6eee1111aa132b8c77eca982f565bb212cbf3389698900e9dd710ed8a8f4d89322827f334264752b42339daa49c1cc90dd1eef83877943ed339c73db04f5c385f19c6379b125ce9f10badce287382c1ac0f0bd39b0ddad9df5eab37ea355abd518725b5ed947d47ff3ee684beceef26697624f78f3785472539e0d9913dc734ad6129ac8a7d70808de8f970afd5c6c78c08b950655b88cd2aabae1cd1ad64fabcb9bea8683e26d767e7357d72fbe49a9d71a2ad53b8d469b3890b9a38855f9d07f1a9197edde3845bc51fdce2431c4dfc90d58e63bc79c0219ec10633234ff799eceec17cb0cf64e663ece2af7946a106db07db63867573f3be11ceb07e7531ddbc5f57d844b110238b8a8ed98b8ab2b3bdde26db31db31f16890e8994452815ca29cfcaf95714c013f4017caeb1ca1e72376004774b24ed35ab6f28ea6118b270d8d35690d664344def825a30b9bcafae44e98bb68ce84bca173afaaf74eaa1916a5d32a1a9d496fca2e6f1a52303e3f21b76edea27975797cfe942b5a7363dca971692e44be3eb5af2779f0f8bcc16387e6e415d72f19577bfec42c6bbc2bca648f8b8a4c8c0a4ff424250d2c4d2b183b2c376f78dd123ca3fb7a8e69578745332fdbe64b6acee26eb17edd62fdba85b3dd62fdba859fc5774c7d76e673c0adbe2871c1b36131a100890905484ce8e9c684022426f454630e2a3666c4534173f187685f38ba30a64fb04d709ef63456bd74e5abded34e6de2a75735b9d5618f0ef9f69445bbba6243f7f2f981f5e558cc0971a95186ccbae555d5cb6bb1e853e2e352a2c2f93b2b0e6c282d5efdd04a8d472edcefbe98bcb9312bb361e3244dacb489ffed3a152bb744f32ccb633e16f0b9ada5aed2ec528d293c36df8c49e50bcfe40ba7e4dbc4b2ccefe67ff745b08c0c2be366267cc7868456f510317f4b884dc46a180ce9560cbe687bec932cdf96af0c3d9ccf593ecfcf1f30a27f3777faac2fa7f2d4546dd24703460f7fcb5ca365d96247c4dba6e9985d5c974c6b92fbe311efb4a6a26cda22728b72064ec3cea0c32b273d7dd0209deed44b256f503e2dbb9045ab7a4d4f0b31262fb760b0a6c496e84c70450cbdaa76e4d2daace265f7ce5d1b9333b668784b558ed9600ed7ea9da51367e5b75c529f7ef796f2b65257e3f8118b87c799cd3a9dd93cb9a432ad72d68831eda3d32af3c70f722679920cb6786b7c528227292ad3bfbefe486c5649bfcabad272acb9c9f0ae5bf30c1bc42eed4a5463d5a6c6ea51e129263c24b6c88cd0d2ca082d2df0a7c2a5192157823f120d32ba1593cf921dc123e23f70f98c9651ae3edd5cd91b355af3710efade1b6e199593d9cd755de1357871bfea3da65e787613adaf23c26f3903b19deace780323527514a850b4d6d4f7b45b09d3c70fab6ec86eb97ee6a0114bb6357a6bcb07c585eb94488b3563987fc8caf3537c4dc38a269678cd62a3bcd31e6fb7c4a72545facedbb3fca247d70cb525a4c64544c54566b852faa6ecdf3d695383b78fd763884a12abae197eb9059f9ed27146b9cce72a19ca4dce22b1d68a441416897daf48acae22b1f48a0ef16ff096cd26af65879c951d72567668fd65879c95ddad187dc6a8944a535186531bd15ffc6364dc682c5ced9e889ab03178f388f5155b5472ce5b57aca8d3af9a3317546e4ceca9e0d3a4a7877634d5538335b7e8ed89d1e2183172db94d6cb27f5cd9d71d5f4719b7cfa68575cbc3b327c47d9baf29286c1f18efc89235286fb2a33e2117c5a2d826f65cdc49a4d5d33961dba7064459962d25b444c5af4272aea260d9bb1d657be71e6f0c8fe6539c25b4df0d636c4a897e5b3ddbefed90525058b0b34516e7116718b5349544aa6784b640a6f650a3766aad18ab5f0cdbe72efdd5ec50b27ed434d6fbe36b4f8b4a135a6e64d2a53b86a85ff5252329fdea0ddaa550e6bf9cb5aaed52666bf953e3aeea3e688f6082522fca34475813585227549870cd1dcb7bdb4d8600e6d683a4fca19cbca71f6e2531c1905aa43f59a6d19f12782c995edb5beb6aa6cb3dea4d3281abda960e212dfe29d1d43862dd9de3aefbae6ac1d9ad52b874f2d4e55142523a57ad5c4018e04873e223ed21265359be2e3a28ad774af5976e0828af2a53737446dbc76c0989983c5c9675bcf71cdf6b0252c97adde5b92cffb4785160bf83375d651a15d3c2ab4ab4775f37ff862934d62399a84474dc2b726d5ad265166643e14319c016c88b8fd59a3fb54c68f51975789700ac7bb5275046d5767ad2dbbba3fe9f4f6ef6ff60505b4cab61b22dd62fd18e206540d2c5e5b8eac7a6cd1479179e4d6aac9e78d498937980c5a2d2e8ab5665a799f06ff89cba425ac102f59ad78d39e78bfba6af8ac4b5bc44abaa8e738af0dcb660e96c22edf5fe219e759ecd1c48476eeb3de64512a1f3de78d476fb843ca1296c81ce42947a8952354ea902e75c04d0f195d3eb4145fd0d81b6fab52fdf3da316f68b58422cf7bb67342be8812db523a3e3820fe78f1b90e88ca1c3ac42b70ca059a0bf534613d1f38a47fbf22403ef9b578f2f9ec3a9fb9a480f7cbe139be485e830df365759839a180c8119bac59653520720e29192c959943b33187168639345d7368ba66b1181262b2b29898282d8a98545358dfaac44abb5c10383bf16c6cbf787b7dae86c95139ef5313cfe03fb01c387d66c20eade73c2646b3d610959ae0f4c45975272f3cd723bcde10199f1a179fea08b7584f1ee48b2ca604b104347a4b38ffe2a4e5fb0be3bb57f80aa3255c83300b37c7d94e1e3c996677847cc68be13307f3ed2f891d17bb3856c342d367a1e9b3d0f4997cda4cfc0716a3ad529d71e8f9fee073fdfeb38cfffed04ec52c76bd5c76adcf1a6913d12a2ea1f0554fd451a195793a6a4f457128bcf1709cc926f13ea128162f150a6a359e51be3f14c8228c7dc6acd1fde3fb54c9488e2c121fce42911c0a65359699d7fb13c2d9f1bf85b32e32313626c9a61f7343cdff12ce9a0b0d263ca9709361a57f1ca2b95944b3385dbc030f45b10c76af2fb1a41fef1bc9fbd979ba85a79b79ba81a7eb797f0defa7f0e4d04b3339e4b0e4d0a24f0ebd0592430e4b169b7f72b6911ba3c5e9385ab82b5abc67a2c567de68e1b3e8838a517c0ad96f6535ed784cf1e21b3dd6d11e9c44bac26a429f679b422e93470fb1d243899ff307007dfea90f09ea5b42f3ce90a50f742cbe675141d1d2fb978207ef7616cf1b5735b73cc559326fdca879e56efefea2039bab4bd7efed008f06afadda38a3287ffac69ad11b5b8af2a76da4d5a3ec54cfb5ad7bdb07f1746b6869584333b5ca856b0dad1dab582b91671cf8c5b45982b19ba7f9c2bda3d3ad0e779543ac0a04b398e211796e2f3ae3dcaebeca7e6021a871ac53762aba70832136a98f237ee0a0219e739741da8821454996943e4966ad866b66c424dbc3c3c30dd103c60c3e11f8fe42d854509e61d5188cc6f008a78897da9e63caffb077eee15155e7c25f7bf6dc3313920021812813c225e112101028200445e54e8c42112b127281682e4332810405474444e558f458aad42a528bd45ab4dada566d1b85222a2262d094a085085a69106a99906339ecf35b6bef0913c01efc9eef7ce78f2ff33ebfbdd75eb777ad77bdebb28767c86e7a3c59eccef10d9e3a7eeacca9774e7d7eaa23e635b4c57afd543e30411e473b9ff37aaa5e4bb503393dcd7751f5162aa78bf52a2adf42a54ff478456b51aff85eb9e8f972d442c8635fea1bef7bde67f3657f3cd2fbb7c4dcc4f989c144dd7ce56c94ef9b5392ff6a7a49dbcba6f5aa79b37c158a79d53cbb377cdb574ddbee61f356ce18f2ddab87247bedf25572c0f8d9a3fa4f1cdaa35f4eeeaceb72fa65e5dd9ed77bd2e8acae2e9db5cfebf4f41a317970ff9cacae993979b3aecfe9a7c55f5dca78774bedd2bb67e7ee09ae1e811e491923faf41d9ed9b3d78071b3c75e9e3f79a02fa96b82af537242626a822b3935b973c690b47e9767067af51f7b831c8b74e3b8adccfe0b315a7cef57592231639065f341d6580cb2c66290352f07595e39483aa1af9b7fd0b18c4997f88f759b7419e7d65fbacc69f5ae74bb61d669f5ddede651de6e7d3322b74af3e527ea73d6ce91919128df7acc585b993b219095dded9ac29c4b56744a72b8fdeee5d165f873f9e693d4e9f391d776eb9dd6c5edf038ec375dd22b21dee3ec33b56a862d3ed0bb73f744d7872e72d93d3e0289dd3bf70e9cf1de7c8bc7eb71c4a7b022695ea3453be098c7ce9125e27fede8d3637ac2354c998f77b77d6160bb5cefdbb6c39ff355e0ef5df2abb8b42457a2e6ee9a6f29dc62ab3bde939ad9b367568ac79392d5b36766aa47ab8eee11fa2bbe249fc3e94bf4fdf33be9037ac4c5f518909e3e28352e2e75102370cf9967b47f381e1019a2574e575d3aae2e1d574ff0f9b5697ad79e71f788f18331a7f96586134b25754b4e364ffdfdb275d926eb1b4bedf82d37df7293438bbf2435a97b679f3e226f545acfefe40dd33c0969c9ddd2126c8e056f9db9f1c38fcecc7dc79718e7b039dd8ee2f71b3e5ebcf8c09ff72eb43b9dbad39b207d62192dfa9c16a58b61bf1349e65c4bb2fc42de7f2d5b96a4bec889532b8fd9c20143dbbe6f71c96fbffaf61d317244d2e5c36dfd2c3b764b4ed23e4f1b75dd08ddd7b97b52f74bfc9ae37bf3e6cdb3db12d2ba754d4b74db1656db52177fdcf07eb1c3edb439e2127d6f6bcf7cf4a1f6cc5b9e042fad73dadf3d3393dde401bdd8b6c1511d1dbb1e7daf4db896b17b7768ecd84517ed736292bbdaee7626744b4ae268d2cddb25bd5b4a7a178f76e6de767143faeaaba383a7bd170d9db9ac7d5c4282fad7aca7be9d68f1ff43f2eab717dbbf9d2f7a4a877c6b79f39bc57efd05e4a8298e07fe77c4d949c99a7f25ae5e4a8ada494bacb857fd4bf94f533cdbce17eff80ee9900ef91f9355ff8fe4ddb84bbea514744887744887744887744887744887744887744887744887744887744887744887fcff26eadf93e55fe879966b77315fd8c558cda66d308e69099acd38ce7539d74b89896873557c29f11f734d30f670ed6eece47aa9f107aecb8d57b9ae537936182dda12957f2df93fe49a603471ed6e1ce67aa97184eb72e32ff26ffc50db3a727ea16d20e7e75c13d4b5bb8ab9d438ca75b9d1cc7583f1a96aef205b2f11fd9b4885eaaaab5ec4ab2719b68978dd2ea27f9dabb79e6485ed31791c22451f61859d31f12eb1449f6185dda23f2966d82302fa762becb56d6ccb1f2766eb87adb04ff4b78fb6c27edba3f6689e7851ea3cddf697b586ba1659614db85c1bacb04db8dc47a37f434b24b9a37f89cb1e93c7217c1edd0a3b63e25d628ca79315768baeae0a2bec11099e2956d8abe5b6e58f13033c73adb04f74f5dc6385fdda344f344fbc18e1fd4cfe3533bbc7b2b31936ed6c864d3b9b61d3ce66d81e93c7b4b31976c6c49b7636c3a69dcdb06967336cdad90c9b7636c3a69dcdb06967336cdaf9672220868a21e232ae01315dfd1ab55254882a281621e2ae52bfe2357fcb9b4f4c09a172914dca04518a04441e710bc522d2aad45311f722722fe15a48ceab28574a9e05c49590a344e5cb8732ea2a5479cb79aa22ae5ca599e54b684100f2c927ffca562d4f4b0985d01550bf1d5e40b8948501d5e66a4a17aadf262f54b55458b586c85166e9943902f4b142e92c52bf41967d99acfa5a4c4cbefa6d6ca5ea4540ddf3552fa55eb31f05a40c543597a9985255633e3632e3a35acaa8a754592c68b5b29c9832a5d5ac53f63314d302a931a8fa12fdedb4696db3eda5ea2f8d2d25bcc8b2b86c95fc9db0fcfd75483dc91e87dac6c3b499a925a0da5e6ef5ab42d97681ca79b6c5b13d9256ab51e5cc5edfc673b6f287d8d1eca76a2b5335d42a3b545b231f6b6f396266ff8b54fb65ffcd71a954de20efa64639d601ea08b6f5c66ce3422b4f154fcbacda43f4c21ca1256da394af7c249fd8b276fd8a7ab3fc6b6cf94a7f81a53f5b79ec42355632e5fc3930fabc5ecfb63ca7c4f2b1cba9652433e89b3d3da474162a4f945a6e6b1b83a86d2e34f7165a7e1d6ccb2d3dd71cf172f21729df99468e0291a96c9a459e4255dfb5aa6c85aa3f8404e9c76064a9926c35a7daebcbb66a1f4cb85679e042d5ea2035d4122b2d56ac7a2c3db57dadd1f862f53f06542a7f89d677a3ea83e925b56a74ab540b43ca8fabd4bc334b07541fe41c28522358a27414a9315ca0ca46ad75b59845bf2758652b6352ccf953a86c72764e2cb57e69bfe81bf49acf326f012358ad6c58d8e663852a3da83ca436c6af82aaa7e59667997515a9ab9c292f476f6c643332935272a4a4372c68d374a156959f57f3c5dbe86cedd1553160ad6b21d5ee8276ebcbf97d8fae26e7b66b4c8c05644fccbe98ab6c749fa86c5bb10bd59a55aed6aefc6feca969e7fc763635677c8575357b6586ab95e755ab92856afecbde14b5d5237396aa59f3af46e8ffd6bc383b2706abd6c83960aefcd96aac82a2e66781a1432e1b1a985e5250595155511c0a5c555119aca8cc0f955494670726949606f24a162e0a5505f28aaa8a2a971415665f955f5ab2a0b224505215c80f94551416559607aaf2cbab02a49714078af3cb4a4a6b034b4b428b0255d50b42a54581ca8aeaf2c292f28555810ab2868aca28595e1828a8a82c2faaacca0e4c0e058a8bf243d595455581caa2fcd24049081d055503035565f9b4a0203f48581629ab2e0d9504a9b2bcbaaca8929c55452155415520585941bb65b3a9bdb4b4626960110d0f949405f30b428192f24048f683965124505a528eae8ae2c0829285aa625351a8a82644e192db8ab2035637fb5505caf2cb6b0305d574de6c776811fa8b96062af3e94b6509dda6607e59a03a28d550e34262aa4a96913d54418796c82ee50796e6579699baa4990b16e557d2b0a2caecbca285d5a5f9956d23303aaa7a36c6a13b81cbb3470e6d67f450657e6151597ee56db207b23567476f21b60ecae8820a3a5e5e5254953dadba2033bf2a2b505814b8b6b2a222b428140a8e1e3c78e9d2a5d965d172d9641f1caa0d562caccc0f2eaa1d5c102aae280f55595965b8381ff5b7c97c3756546392da40755511ca69904c0ee4330245956525a15051616041ad6ad6d5b3a64d20b5523d303e85d5e6482c5d5452b028a62cf792f282d2ea428a62b1c292aa60290aa4ad829525642820575179283b10d55d51ce40669664058aca16c84267ab2a8f66be608b5476e98a0c4b55a8b2a4c0f49736edd24da2758d510dc82c410b2e2be744a574ecc28aa5e5a515f9b14a6973bed952069eee626319a80e05ab43987d49494191ccb3a8a834784e872e662cd4480c2e2c2acec7f9b3f3ab82356def4dc24811abcffd5f7bac77129d33b85774162ec3109dacbffaeb2421937ba9106def3117fea4e83ff4f934f2688f5c6c7ebf5fe6578a2e2a7fa74e2a7fe9c5e64f4850f91b2e367f62a2ccaf4fbcd8fcb293939233bbdd1f238f2879e382b2a7dbd75149e992d2bd4d265a32e58292ab64b6756f2f61eb2af3ed5052df2666e94f524ea4f64f2d4c7d22758b94736b4fdd7a21315c2498d5171998d594d50a4d5967faef1cf08494aca601af0d383ae0e840fbc0f8815d06be82d4678f4372b3e70e7edc923f5c161ed677d85f873f3c6238326e64cac8b9236b46bd68c96ba3768caa1fdd1f19357af59803573895acbbe20d25a7c78d18f79c252f5f719ae7e7c69d504f27c6dbc6dbc63d377e60ce8339af4dc8be7a0ef2c9b58bae5867e6e67ec2cc35799ccc3779da945e53864c193765cbd4be4a72a7deaaa466eaeaa98f73ad99fa367270dab269e1699f4c0f22eb67cc2757ee8cdd33764f7d9beb2f53459a6634cff87a6658c9e699bb947c32b3193e99d9926b9fd9427a73eedcdc03b94dd7859087f302e4db2020202020202020202020202020202020202020202020202020202020202020202020202020200a202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020200a202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020200a202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020200a2020202020202020202020202020202020202020202020202020202020202020202020202020202020202020207265615b37302e383234203636382e303220313034206f626a0d3c3c2f41203332203020522f42533c3c2f532f552f547970652f426f726465722f572031203331203020522f42533c3c2f532f532f547970652f426f726465722f5720333e3e2f426f726465725b30203020335d2f482f4e2f526563745b37302e383234203731332e3032203132332e333633203732342e30365d2f537562747970652f4c696e6b2f547970652f416e6e6f743e3e0d656e646f626a0d33312030206f626a0d3c3c2f445b33203020522f46697456202d322035343220353938203834335d2f532f476f546f3e3e0d656e646f626a2d33322030206f626a0d3c3c2f445b33203020522f46697452202d322035343220353938203834335d2f532f476f546f3e3e0d656e646f626a0d33332030206f626a0d3c3c2f445b33203020522f46697452202d322035343220353938203834335d2f532f476f546f3e3e0d656e646f626a0d33342030206f626a0d3c3c2f445b332030203030303834343236203030303030206e0d0a3320310d0a30303030303834353435203030303030206e0d0a3820310d0a30303030303834383133203030303030206e0d0a32352031300d0a30303030303834393930203030303030206e0d0a30303030303838353630203030303030206e0d0a3030303030380d0a30303030303839323131203030303030206e0d0a30303030303839323638203030303030206e0d0a30303030303839333235203030303030206e0d0a747261696c65720d0a3c3c2f53697a652033352f526f6f742031203020522f496e666f2038203020522f49445b3c31383338334544314344463439353441414635413941443736394630314541373e3c38353439443932363433453545363436393942343633363131364146454237323e5d2f507265762038343234383e3e0d0a7374617274787265660d0a38393337310d0a2525454f460d0a
+```
+### Your Task
+Analyze the crash and generate a patch to fix the bug.
+
+**Instructions**:
+1. Identify the root cause based on crash information and code
+2. Generate a minimal fix targeting the buggy lines
+3. Ensure the fix handles edge cases properly
+4. Do not over-engineer - focus on the specific issue
+
+### Output Format
+Please first localize the bug, then generate *SEARCH/REPLACE* edits to fix the issue.
+
+Every *SEARCH/REPLACE* edit must use this format:
+1. The file path wrapped in ### (e.g., ### src/file.cpp)
+2. The start and end line numbers (- start_line: N, - end_line: M)
+3. The start of search block: <<<<<<< SEARCH
+4. A contiguous chunk of lines to search for in the existing source code
+5. The dividing line: =======
+6. The lines to replace into the source code
+7. The end of the replace block: >>>>>>> REPLACE
+
+Example (MINIMAL edit with context awareness):
+```cpp
+### src/memory/allocator.cpp
+- start_line: 145
+- end_line: 149
+<<<<<<< SEARCH
+	if (size > 0) {
+		ptr = malloc(size);
+		use_memory(ptr);
+	}
+=======
+	if (size > 0) {
+		ptr = malloc(size);
+		if (ptr != NULL)
+			use_memory(ptr);
+	}
+>>>>>>> REPLACE
+```
+
+**CRITICAL COMPILATION SAFETY REQUIREMENTS**:
+
+1. **MINIMAL edits ONLY** - Include only 3-8 lines in SEARCH block (bug line + 1-3 context lines)
+   - More lines = higher risk of breaking dependencies
+   - Focus ONLY on the buggy statement and immediate neighbors
+
+2. **Variable Dependency Check** - Before removing/modifying any line, verify:
+   - ❌ NEVER remove variable declarations if they're used later
+   - ❌ NEVER remove assignments if the variable is referenced afterwards
+   - ✅ Check if variables in your SEARCH block are used outside it
+
+3. **Macro Pairing Safety** - Special macros MUST stay paired:
+   - `fz_try(ctx) { ... } fz_always(ctx) { ... } fz_catch(ctx) { ... }` → NEVER break this chain
+   - `do { ... } while(...)` → NEVER remove the `while` if you keep the `do`
+   - `if (...) { ... } else { ... }` → Be careful not to create dangling else
+
+4. **Code Block Integrity**:
+   - ❌ NEVER remove opening/closing braces unless removing entire block
+   - ❌ NEVER remove function declarations/definitions
+   - ✅ Preserve the structural indentation and nesting
+
+5. **Indentation**:
+   - **Use TAB characters (\t)** for indentation, NOT spaces - the codebase uses tabs
+   - The SEARCH block must match EXACTLY (preserve all tabs and spacing)
+
+6. **Context Awareness** - When editing, mentally visualize:
+   ```
+   [Lines before SEARCH - you don't see these, assume they exist]
+   <<<<<<< SEARCH
+   your visible edit zone (3-8 lines)
+   =======
+   your proposed changes
+   >>>>>>> REPLACE
+   [Lines after SEARCH - you don't see these, assume they exist]
+   ```
+   Your edit should work correctly with unknown context before and after!
+
+**Common Compilation Errors to AVOID**:
+- ❌ "use of undeclared identifier 'X'" → You removed the declaration of X
+- ❌ "expected 'while' in do/while loop" → You broke a macro pairing
+- ❌ "function definition not allowed here" → You accidentally removed a closing brace
+- ❌ "extraneous closing brace" → You removed code but left its closing brace
+
+**Golden Rule**: If unsure whether a line is safe to remove, KEEP IT. Only modify the absolute minimum needed to fix the bug.

@@ -1,0 +1,242 @@
+n, k = map(int, input().split())
+a = list(map(int, input().split()))
+
+# We are removing exactly K elements, so we keep (n - k) elements.
+# We want to minimize (max(B) - min(B)) for the remaining subsequence B.
+
+# Since we must preserve the original order, but we can choose which K elements to remove,
+# an optimal strategy is to consider contiguous subarrays of length (n - k) in the sorted version?
+# BUT: we cannot reorder. So we must pick a subsequence of n-k elements in original order.
+
+# However, note: to minimize max - min, it's best to remove the extremes.
+# Insight: after sorting with indices, the optimal remaining set will be a contiguous block in the sorted array?
+# But we must preserve original order. So we can't just take any contiguous block.
+
+# Alternate approach:
+# We can fix which elements remain. The remaining sequence must consist of n-k elements in original order.
+# We want to minimize (max(remaining) - min(remaining)).
+
+# Idea: try all possible choices of leftmost and rightmost elements in the final sequence?
+# But that would be O(n^2), which may be acceptable if we can check quickly whether there's a valid subsequence.
+
+# Better idea:
+# Sort the array along with original indices.
+# Then, notice: the answer is determined by some value x (min) and y (max) such that y - x is minimized,
+# and there exists a subsequence of length n-k with all values in [x,y] and appearing in increasing index order.
+
+# How about: we fix the minimum element in B, then find the smallest maximum such that we can pick n-k elements 
+# including this minimum, with values between min and max, and in order.
+
+# Alternatively, use two pointers on the sorted array?
+
+# Known similar problem: "Minimum Difference Subsequence" or sliding window on sorted indices.
+
+# Correct solution idea:
+# Step 1: pair each element with its index, sort by value.
+# Step 2: use a sliding window on this sorted array to find the minimal difference such that the corresponding indices 
+#         contain an increasing subsequence of length >= (n-k). But we need exactly n-k? Actually, we can always pick n-k 
+#         from more than n-k.
+
+# Actually: we need to check if in a set of values (within current window), their original indices contain an increasing 
+# subsequence of length at least (n-k)? But we don't need LIS, we just need to know if we can pick (n-k) elements in order.
+
+# Actually, we can do: for a fixed window [L,R] in the sorted array, collect all indices of elements in this window.
+# Then check if we can select (n-k) elements from these indices such that they appear in increasing order? 
+# But that's trivial: just sort the indices and see if the number of elements is >= (n-k) — but no, because we can only 
+# pick in original order, but since the indices are positions, as long as we have at least (n-k) elements, we can pick 
+# them in increasing index order? YES! Because the remaining elements must be in original order, which corresponds to 
+# increasing index.
+
+# So: if we have a set S of elements (with indices) whose values are in [v_L, v_R], then we can form a valid sequence 
+# of length |S| (by taking them in increasing index order). So we need |S| >= n-k.
+
+# Therefore, we can do:
+#   Sort A with indices: arr = [(A[i], i) for i in range(n)], sorted by A[i]
+#   Use two pointers (sliding window) over arr to find the minimal (arr[r][0] - arr[l][0]) such that 
+#   the number of elements in the window is >= n-k, AND the indices in the window can form a subsequence of length n-k? 
+#   But wait: the condition is automatically satisfied if we have at least n-k elements — because we can always pick 
+#   n-k of them in increasing index order (just pick any n-k by scanning left to right).
+
+# However, caution: we are allowed to skip arbitrarily, so yes, if we have m >= n-k elements in the window, we can pick 
+# n-k of them in increasing index order.
+
+# But note: the entire point is that we are going to remove K elements, so we must leave exactly n-k. So having more than 
+# n-k is okay — we can drop the extra ones.
+
+# Therefore, algorithm:
+#   Let target = n - k
+#   If target == 0: return 0? but k < n, so target >= 1.
+#   Sort the array with indices by value.
+#   Use two pointers l=0, r=0, and expand r until we have at least target elements in the window.
+#   Then move l forward and update.
+#   For each valid window [l, r] with at least target elements, compute arr[r][0]-arr[l][0], and take the minimum.
+
+# But wait: does every set of at least target elements (in value window) guarantee that we can pick target elements 
+# in original order? Yes, because we can sort the indices and pick the first target in index order? 
+# But actually, we don't even need to sort: we can scan the original array and pick up to target elements that fall 
+# in the value range. But we don't care about the actual selection — the existence is guaranteed by the fact that 
+# we have enough elements and we can choose any subset in order.
+
+# However, there is a catch: the elements in the window might be scattered, but since we are allowed to remove 
+# arbitrarily, we can always keep the ones that are in the window and skip others. And we can keep them in order.
+
+# Example: A = [5,1,3,2], k=2 -> keep 2 elements. 
+#   Suppose we choose value window [1,2]: values 1,3,2 -> 3 is not in [1,2]? So only 1 and 2 -> indices 1 and 3 -> we can keep both -> diff=1.
+#   But if we take window [1,3]: values 1,3,2 -> indices 1,2,3 -> we have 3 elements, we can pick any 2 in order -> so valid.
+
+# So the sliding window on sorted-by-value array works.
+
+# Steps:
+#   target = n - k
+#   if target == 1: then answer = 0? because one element -> max=min -> diff=0.
+#   But wait: if we keep one element, then max-min=0.
+
+#   So special case: if target==1, answer=0.
+
+#   Otherwise, sort by value.
+#   Use two pointers to maintain a window [l, r] such that the number of elements in the window is at least target.
+#   But note: the window is contiguous in the sorted array, so we can use two pointers.
+
+#   However, the condition is simply: (r-l+1) >= target? 
+#   But wait: the window [l,r] in the sorted array has exactly (r-l+1) elements. So we need (r-l+1) >= target.
+
+#   But that would mean we are just looking for the minimal difference between two elements that are at least target apart in the sorted array? 
+#   That doesn't involve indices at all!
+
+#   This suggests: the answer is independent of the original order? 
+
+#   Counterexample: 
+#       A = [1, 100, 2], k=1 -> we remove 1 element, so keep 2.
+#       Possibilities:
+#           Remove A[0]=1: B=[100,2] -> diff = 98
+#           Remove A[1]=100: B=[1,2] -> diff = 1
+#           Remove A[2]=2: B=[1,100] -> diff = 99
+#       So answer = 1.
+
+#       Now sort by value: [(1,0), (2,2), (100,1)]
+#       target = 2.
+#       We need a window of at least 2 consecutive elements in sorted array.
+#       Window [0,1]: values [1,2] -> diff=1 -> candidate.
+#       Window [1,2]: values [2,100] -> diff=98.
+#       So minimal diff = 1 -> correct.
+
+#   But why didn't the indices matter? Because in the window [1,2] (values 1 and 2), we have indices 0 and 2 -> we can pick both in order? 
+#   Yes: we go through the array: index0:1 -> keep, index1:100 -> skip, index2:2 -> keep. So we get [1,2].
+
+#   So the indices are not constraining the possibility? Because even if the indices are not consecutive, as long as we have the elements, 
+#   we can skip the ones not in the window.
+
+#   Therefore, the only requirement is that we have at least target elements in the value window. And since the window is defined by 
+#   min_value = arr[l][0], max_value = arr[r][0], and we have (r-l+1) elements in between, then we can always form a sequence of 
+#   length (r-l+1) by taking all of them in index order? But wait: we don't require to take all, just target.
+
+#   So if we have at least target elements in the value window [arr[l][0], arr[r][0]], then we can form a valid sequence.
+
+#   And the number of elements in the window is (r-l+1). So we require (r-l+1) >= target.
+
+#   Therefore, we can simply:
+#       sort the array (without indices even?) -> but we don't need indices for the count.
+#       Then the minimal difference is the minimal (arr[r] - arr[l]) for which (r-l+1) >= target.
+
+#   But wait: we are iterating over the sorted array, so we can do:
+
+#       a_sorted = sorted(a)
+#       ans = a_sorted[target-1] - a_sorted[0]   # first window
+#       for l in range(n - target + 1):
+#           r = l + target - 1
+#           ans = min(ans, a_sorted[r] - a_sorted[l])
+
+#   Why is this correct?
+
+#   Explanation: 
+#       In the sorted array, any contiguous segment of length L>=target will have a minimal difference of 
+#       (last - first) in that segment. But we are allowed to pick any target elements from the entire array 
+#       as long as they lie in a value interval [x,y]. The minimal such y-x is achieved when the chosen target 
+#       elements are consecutive in the sorted array? 
+
+#   Why consecutive? 
+#       Suppose the optimal solution uses values that are not consecutive in sorted order. Then we could potentially 
+#       shrink the window by moving the lower bound up or the upper bound down without losing feasibility, unless 
+#       the gap is forced by missing elements. But if we have a non-consecutive set, say we skip a value in the middle, 
+#       then we could replace one of the endpoints with that middle value to reduce the range? Not necessarily.
+
+#   Actually, known fact: the minimal range that contains at least k elements in a sorted array is achieved by a contiguous 
+#   block of k elements. Because if you fix the smallest and largest, you can always include everything in between and 
+#   the range doesn't increase.
+
+#   But here we are not required to take contiguous elements in the sorted array, but the minimal difference 
+#   (max - min) over any set of target elements is minimized when the set is a contiguous block in the sorted array.
+
+#   Why? Consider any set S of target elements. Let m = min(S), M = max(S). Then the entire block from the first 
+#   occurrence of m to the last occurrence of M in the sorted array contains at least the elements of S, so certainly 
+#   at least target elements. And the difference is M - m. But we can find a contiguous block of exactly target 
+#   elements within [m, M] that has difference <= M - m? Not necessarily, but we are scanning all contiguous blocks.
+
+#   Actually, the standard solution for this problem is:
+#       sort the array
+#       answer = min_{i=0}^{n-target} (a_sorted[i+target-1] - a_sorted[i])
+
+#   Let me test with the example: 
+#       A = [780031076, 658404808], k=0 -> remove 0, so keep both -> target=2.
+#       sorted: [658404808, 780031076]
+#       i=0: a[1]-a[0] = 780031076 - 658404808 = 121626268 -> matches expected.
+
+#   Another example: A=[1,100,2], k=1 -> target=2.
+#       sorted: [1,2,100]
+#       i=0: a[1]-a[0] = 2-1 = 1
+#       i=1: a[2]-a[1] = 100-2 = 98
+#       min = 1 -> correct.
+
+#   But wait: what if the array has duplicates? 
+#       A = [1,1,2,2], k=1 -> target=3.
+#       sorted: [1,1,2,2]
+#       i=0: a[2]-a[0] = 2-1 = 1
+#       i=1: a[3]-a[1] = 2-1 = 1
+#       answer=1 -> correct? 
+#           We can keep three elements: e.g., [1,1,2] -> diff=1, or [1,2,2] -> diff=1.
+
+#   But what if the elements in the middle of the sorted array are not available in the original array in an order that allows picking? 
+#   But we don't care: we only care about the values. As long as there are at least target elements in the value range [a[i], a[i+target-1]], 
+#   we can pick target of them in the original order.
+
+#   However, note: the sorted array has all the elements. The block from index i to i+target-1 in the sorted array contains exactly target 
+#   elements. So we know there are at least target elements in [a[i], a[i+target-1]]. Therefore, we can form a valid sequence.
+
+#   Therefore, the solution is:
+#       sort the array
+#       target = n - k
+#       if target == 1:
+#           print(0)
+#       else:
+#           ans = 10**18
+#           for i in range(n - target + 1):
+#               j = i + target - 1
+#               ans = min(ans, a[j] - a[i])
+#           print(ans)
+
+#   But note: when target==1, then the loop runs for i in range(n) and j=i, so a[i]-a[i]=0. So we don't need special case.
+
+#   So we can simply:
+#       sort the array
+#       target = n - k
+#       ans = min( a[i+target-1] - a[i] for i in range(n - target + 1) )
+
+#   Let me test with the provided example: 
+#       Input: "2 0" -> n=2, k=0 -> target=2
+#       a = [780031076, 658404808] -> sorted: [658404808, 780031076]
+#       i=0: a[1]-a[0] = 780031076 - 658404808 = 121626268 -> correct.
+
+#   Edge: n=2, k=1 -> target=1 -> then we iterate i from 0 to n-target = 2-1 = 1, so i in [0,1] -> but range(2) -> i=0,1.
+#       i=0: a[0]-a[0] = 0
+#       i=1: a[1]-a[1] = 0 -> min=0 -> correct.
+
+#   So code:
+
+n, k = map(int, input().split())
+a = list(map(int, input().split()))
+
+target = n - k
+a.sort()
+
+ans = min(a[i + target - 1] - a[i] for i in range(n - target + 1))
+print(ans)

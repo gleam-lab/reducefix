@@ -1,0 +1,64 @@
+```python
+import sys
+
+def solve():
+    N, K = map(int, input().split())
+    A = list(map(int, input().split()))
+    B = list(map(int, input().split()))
+    
+    # Create list of (A_i, B_i) and sort by A_i
+    items = sorted(zip(A, B))
+    
+    # We want to minimize (max_A_in_S) * (sum_B_in_S)
+    # Idea: Fix the maximum A_i in the subset S. Then we can only use indices j with A_j <= current A_i.
+    # Among those, we want to pick K elements with smallest possible sum of B_i, but we must include at least one element with A_i equal to the current max.
+    
+    # However, a better idea: iterate through each item as the one that sets the max A value.
+    # For each i from K-1 to N-1 (since we need K elements), consider items[0..i] as candidates.
+    # We must include items[i] to ensure max is A[i], then choose K-1 more from items[0..i-1] with smallest B sum.
+    
+    # Use a max-heap to maintain the K-1 smallest B values from the first i elements
+    import heapq
+    
+    if K == 1:
+        return min(A[i] * B[i] for i in range(N))
+    
+    ans = float('inf')
+    # We'll traverse i from K-1 to N-1 because we need at least K elements up to index i
+    heap = []  # max-heap for B values (we store negative values)
+    sum_b = 0
+    
+    # Initialize heap with first K-1 elements
+    for j in range(K-1):
+        b_val = items[j][1]
+        sum_b += b_val
+        heapq.heappush(heap, -b_val)
+    
+    # Now consider each i from K-1 to N-1 as the largest A in the set
+    for i in range(K-1, N):
+        a_max = items[i][0]
+        # Option 1: include items[i] and K-1 smallest B from items[0:i]
+        current_sum_b = sum_b + items[i][1]
+        candidate = a_max * current_sum_b
+        ans = min(ans, candidate)
+        
+        # Prepare for next iteration: add items[i] to the pool for selection in the K-1 group
+        if i < N - 1:  # we don't need to update after last iteration
+            b_val = items[i][1]
+            if len(heap) < K-1:
+                heapq.heappush(heap, -b_val)
+                sum_b += b_val
+            else:
+                # If this B value is smaller than the largest in heap, replace
+                if b_val < -heap[0]:
+                    removed = -heapq.heappop(heap)
+                    heapq.heappush(heap, -b_val)
+                    sum_b = sum_b - removed + b_val
+                # else do nothing, we don't include it
+    
+    return ans
+
+T = int(input())
+for _ in range(T):
+    print(solve())
+```

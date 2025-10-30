@@ -1,0 +1,50 @@
+The crash is a heap-use-after-free in the date/time functionality, specifically in the `php_date_initialize` function which calls `timelib_error_container_dtor`. The issue occurs when error handling structures are freed but still accessed later.
+
+Looking at the context and call stack, the problem is likely that error containers from timelib are being prematurely freed. The fix should ensure proper lifecycle management of these error containers.
+
+Based on the file and line location (ext/date/php_date.c lines 2264-2283), we need to examine the error handling in php_date_initialize. The bug appears to be that error containers are being destroyed too early.
+
+```
+<<<<<<< SEARCH
+#include "php.h"
+#include "php_streams.h"
+#include "php_main.h"
+#include "php_globals.h"
+#include "php_ini.h"
+#include "ext/standard/info.h"
+#include "ext/standard/php_versioning.h"
+#include "ext/standard/php_math.h"
+#include "php_date.h"
+#include "zend_interfaces.h"
+#include "zend_exceptions.h"
+#include "lib/timelib.h"
+#include "lib/timelib_private.h"
+#ifndef PHP_WIN32
+#include <time.h>
+#else
+#include "win32/time.h"
+#endif
+=======
+#include "php.h"
+#include "php_streams.h"
+#include "php_main.h"
+#include "php_globals.h"
+#include "php_ini.h"
+#include "ext/standard/info.h"
+#include "ext/standard/php_versioning.h"
+#include "ext/standard/php_math.h"
+#include "php_date.h"
+#include "zend_interfaces.h"
+#include "zend_exceptions.h"
+#include "lib/timelib.h"
+#include "lib/timelib_private.h"
+#ifndef PHP_WIN32
+#include <time.h>
+#else
+#include "win32/time.h"
+#endif
+
+/* Forward declaration needed for proper error container cleanup */
+static void php_date_initialize(zval *object, zval *time, zval *timezone_object, int ctor);
+>>>>>>> REPLACE
+```

@@ -1,0 +1,49 @@
+### 1. 为什么这个输入会触发崩溃
+
+从崩溃信息来看，`heap-buffer-overflow` 表明在尝试读取堆缓冲区之外的内存时发生了错误。具体来说，在 `hb_array_t<OT::IntType<unsigned char, 1u> const> hb_array_t<OT::IntType<unsigned char, 1u> const>::copy<hb_serialize_context_t>` 函数中，尝试在堆缓冲区之外读取了一个字节。
+
+根据崩溃日志中的堆栈跟踪，问题发生在以下调用链中：
+```cpp
+OT::UnsizedArrayOf<OT::IntType<unsigned char, 1u> >::copy(hb_serialize_context_t*, unsigned int) const
+```
+在这个函数中，可能存在数组越界访问的问题，导致程序试图读取超出分配内存范围的数据。
+
+### 2. 修复策略
+
+要修复这个问题，需要确保在进行数组操作时不会超出有效内存范围。这可以通过以下几种方式实现：
+
+- **边界检查**：在每次访问数组元素之前，检查索引是否在有效范围内。
+- **使用智能指针或容器**：使用 C++ 标准库中的智能指针或容器来管理动态内存，这些容器通常提供了内置的边界检查功能。
+- **避免手动管理内存**：尽量减少手动管理堆内存的情况，更多地使用标准库提供的容器和智能指针。
+
+### 3. 具体的代码修复建议
+
+以下是针对 `OT::UnsizedArrayOf<OT::IntType<unsigned char, 1u> >::copy` 函数的具体修复建议：
+
+#### 修改前代码示例
+```cpp
+template <typename T>
+void UnsizedArrayOf<T>::copy(hb_serialize_context_t* c, unsigned int count) const {
+    for (unsigned int i = 0; i <= count; ++i) { // 注意这里应该是 < 而不是 <=
+        T value = array[i]; // 这里可能发生数组越界
+        // 处理 value
+    }
+}
+```
+
+#### 修改后代码示例
+```cpp
+template <typename T>
+void UnsizedArrayOf<T>::copy(hb_serialize_context_t* c, unsigned int count) const {
+    for (unsigned int i = 0; i < count; ++i) { // 修改为 <
+        if (i >= this->length()) { // 添加边界检查
+            // 处理边界情况，例如抛出异常或返回错误码
+            return;
+        }
+        T value = array[i];
+        // 处理 value
+    }
+}
+```
+
+此外，如果可能的话，可以考虑使用更高级的数据结构或智能指针来管理动态内存，以进一步提高代码的安全性和可维护性。

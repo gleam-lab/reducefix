@@ -1,0 +1,94 @@
+ ### 为什么这个输入会触发崩溃
+
+根据崩溃信息，我们可以看到在执行 `__asan_memset` 函数时发生了段错误（segmentation fault）。具体来说，错误发生在 `hb_vector_t<CFF::op_str_t>::resize` 函数中，当尝试写入内存地址 `0x000000094e08` 时发生了越界访问。这个地址是无效的或未分配的内存区域，因此导致了程序崩溃。
+
+### 修复策略
+
+要修复这个问题，我们需要确保在 `hb_vector_t<CFF::op_str_t>::resize` 函数中不会发生数组越界访问。这通常涉及到以下几个步骤：
+
+1. **检查数组大小**：在调整数组大小之前，确保新的大小是有效的。
+2. **边界检查**：在每次访问数组元素时，进行边界检查。
+3. **动态内存管理**：确保动态分配的内存被正确释放，并且不会重复释放。
+
+### 具体的代码修复建议
+
+以下是具体的代码修复建议：
+
+#### 1. 检查数组大小
+
+在 `hb_vector_t<CFF::op_str_t>::resize` 函数中，确保新的大小是有效的。可以在调整大小之前添加一个检查：
+
+```cpp
+template <typename T>
+void hb_vector_t<T>::resize(int new_size) {
+    if (new_size < 0 || new_size > max_size()) {
+        // Handle error: invalid size
+        return;
+    }
+    // Continue with resizing logic
+}
+```
+
+#### 2. 边界检查
+
+在每次访问数组元素时，进行边界检查。可以在 `push` 函数中添加边界检查：
+
+```cpp
+template <typename T>
+void hb_vector_t<T>::push(const T& value) {
+    if (size() >= capacity()) {
+        resize(capacity() * 2); // Example resizing strategy
+    }
+    data[size()] = value; // Boundary check should be done here if necessary
+    ++size_;
+}
+```
+
+#### 3. 动态内存管理
+
+确保动态分配的内存被正确释放，并且不会重复释放。可以使用智能指针来管理动态内存，例如 `std::unique_ptr` 或 `std::shared_ptr`：
+
+```cpp
+#include <memory>
+
+template <typename T>
+class hb_vector_t {
+public:
+    hb_vector_t() : data_(nullptr), size_(0), capacity_(0) {}
+    ~hb_vector_t() { delete[] data_; }
+
+    void resize(int new_size);
+    void push(const T& value);
+
+private:
+    T* data_;
+    int size_;
+    int capacity_;
+
+    void allocate(int new_capacity);
+};
+
+template <typename T>
+void hb_vector_t<T>::resize(int new_size) {
+    if (new_size < 0 || new_size > max_size()) {
+        // Handle error: invalid size
+        return;
+    }
+    T* new_data = new T[new_size];
+    std::copy(data_, data_ + size_, new_data);
+    delete[] data_;
+    data_ = new_data;
+    size_ = new_size;
+}
+
+template <typename T>
+void hb_vector_t<T>::push(const T& value) {
+    if (size() >= capacity()) {
+        resize(capacity() * 2); // Example resizing strategy
+    }
+    data_[size_] = value;
+    ++size_;
+}
+```
+
+通过这些修改，可以确保在调整数组大小和访问数组元素时不会发生越界访问，从而避免段错误的发生。

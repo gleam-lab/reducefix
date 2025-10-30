@@ -1,0 +1,235 @@
+import sys
+
+def main():
+    data = sys.stdin.read().split()
+    if not data:
+        print(0)
+        return
+        
+    N = int(data[0])
+    M = int(data[1])
+    
+    # Sets to store occupied lines (row, col, diag1, diag2)
+    rows = set()
+    cols = set()
+    diag1 = set()  # i + j
+    diag2 = set()  # i - j
+    
+    index = 2
+    for _ in range(M):
+        a = int(data[index])
+        b = int(data[index + 1])
+        index += 2
+        
+        rows.add(a)
+        cols.add(b)
+        diag1.add(a + b)
+        diag2.add(a - b)
+    
+    # Total squares under attack from all pieces
+    attacked = set()
+    
+    for _ in range(M):
+        a = int(data[2 + _*2])
+        b = int(data[2 + _*2 + 1])
+        
+        # Add all squares in the same row
+        for c in [1, N]:
+            attacked.add((a, c))
+        # Add all squares in the same column
+        for r in [1, N]:
+            attacked.add((r, b))
+        # Add all squares in the diagonal (i+j = a+b)
+        # The values of i range from max(1, a+b-N) to min(N, a+b-1)
+        start_i = max(1, a + b - N)
+        end_i = min(N, a + b - 1)
+        attacked.add((start_i, a + b - start_i))
+        attacked.add((end_i, a + b - end_i))
+        
+        # Add all squares in the anti-diagonal (i-j = a-b)
+        # i = j + (a-b), so j >= 1 => i >= a-b+1, and j <= N => i <= N + a - b
+        start_j = max(1, 1 - (a - b))
+        end_j = min(N, N - (a - b))
+        start_i = start_j + (a - b)
+        end_i = end_j + (a - b)
+        if 1 <= start_i <= N:
+            attacked.add((start_i, start_j))
+        if 1 <= end_i <= N:
+            attacked.add((end_i, end_j))
+    
+    # Instead of simulating every intersection, use inclusion-exclusion principle
+    total_attacked = 0
+    
+    # Rows: each occupied row attacks N squares
+    total_attacked += len(rows) * N
+    
+    # Cols: each occupied col attacks N squares
+    total_attacked += len(cols) * N
+    
+    # Diag1: for each diagonal i+j = s, number of squares is min(s-1, N) - max(s-N-1, 0)
+    for s in diag1:
+        if s <= N + 1:
+            total_attacked += s - 1
+        else:
+            total_attacked += 2 * N - s + 1
+    
+    # Diag2: for each diagonal i-j = d, number of squares is N - |d|
+    for d in diag2:
+        total_attacked += N - abs(d)
+    
+    # Now subtract overlaps using inclusion-exclusion
+    
+    # Subtract intersections between rows and columns (pieces themselves and crossings)
+    # Each row-col intersection is counted twice: once in row, once in col
+    for r in rows:
+        for c in cols:
+            total_attacked -= 1  # Overlap at (r,c)
+    
+    # Subtract row-diag1 overlaps
+    for r in rows:
+        for s in diag1:
+            c = s - r
+            if 1 <= c <= N:
+                total_attacked -= 1
+    
+    # Subtract row-diag2 overlaps
+    for r in rows:
+        for d in diag2:
+            c = r - d
+            if 1 <= c <= N:
+                total_attacked -= 1
+    
+    # Subtract col-diag1 overlaps
+    for c in cols:
+        for s in diag1:
+            r = s - c
+            if 1 <= r <= N:
+                total_attacked -= 1
+    
+    # Subtract col-diag2 overlaps
+    for c in cols:
+        for d in diag2:
+            r = c + d
+            if 1 <= r <= N:
+                total_attacked -= 1
+    
+    # Subtract diag1-diag2 overlaps
+    for s in diag1:
+        for d in diag2:
+            # Solve: i+j=s, i-j=d --> i=(s+d)/2, j=(s-d)/2
+            if (s + d) % 2 == 0:
+                i = (s + d) // 2
+                j = (s - d) // 2
+                if 1 <= i <= N and 1 <= j <= N:
+                    total_attacked -= 1
+    
+    # Now add back triple overlaps (inclusion-exclusion)
+    
+    # Add back row-col-diag1
+    for r in rows:
+        for c in cols:
+            s = r + c
+            if s in diag1:
+                total_attacked += 1
+    
+    # Add back row-col-diag2
+    for r in rows:
+        for c in cols:
+            d = r - c
+            if d in diag2:
+                total_attacked += 1
+    
+    # Add back row-diag1-diag2
+    for r in rows:
+        for s in diag1:
+            for d in diag2:
+                if (s + d) % 2 == 0:
+                    i = (s + d) // 2
+                    j = (s - d) // 2
+                    if i == r and 1 <= j <= N:
+                        total_attacked += 1
+    
+    # Add back col-diag1-diag2
+    for c in cols:
+        for s in diag1:
+            for d in diag2:
+                if (s + d) % 2 == 0:
+                    i = (s + d) // 2
+                    j = (s - d) // 2
+                    if j == c and 1 <= i <= N:
+                        total_attacked += 1
+    
+    # Add back diag1-diag2-row/col equivalent - but we already did above
+    
+    # Finally subtract quadruple overlaps
+    for r in rows:
+        for c in cols:
+            s = r + c
+            d = r - c
+            if s in diag1 and d in diag2:
+                total_attacked -= 1
+    
+    # Remove the original piece positions since they're occupied (not empty)
+    # But note: our calculation includes them in attacked, which is correct for "capture"
+    # However, we cannot place on occupied squares anyway
+    
+    # The total number of distinct attacked squares might be complex,
+    # but notice: when M=1000 and N=32, it's possible that entire board is covered
+    
+    # Alternative approach: since M <= 1000, we can compute attacked squares directly
+    if N <= 10**5 or M <= 1000:
+        attacked = set()
+        pieces = []
+        index = 2
+        for i in range(M):
+            a = int(data[index]); b = int(data[index+1]); index += 2
+            pieces.append((a,b))
+        
+        for a, b in pieces:
+            # Row
+            for j in range(1, N+1):
+                attacked.add((a, j))
+            # Column
+            for i in range(1, N+1):
+                attacked.add((i, b))
+            # Diagonal 1: i+j = a+b
+            # i from max(1, a+b-N) to min(N, a+b-1)
+            start_i = max(1, a + b - N)
+            end_i = min(N, a + b - 1)
+            for i in range(start_i, end_i + 1):
+                j = a + b - i
+                attacked.add((i, j))
+            # Diagonal 2: i-j = a-b
+            # i = j + (a-b), j from max(1, 1 - (a-b)) to min(N, N - (a-b))
+            start_j = max(1, 1 - (a - b))
+            end_j = min(N, N - (a - b))
+            for j in range(start_j, end_j + 1):
+                i = j + (a - b)
+                attacked.add((i, j))
+        
+        # Count occupied squares (the M pieces)
+        occupied = set(pieces)
+        
+        # Valid squares: attacked squares minus occupied ones (since we can't place on occupied)
+        safe_attacked_or_occupied = attacked.union(occupied)
+        
+        # We can only place on empty squares that are NOT attacked
+        total_squares = N * N
+        result = total_squares - len(safe_attacked_or_occupied)
+        
+        # But wait: actually, we want empty AND not attacked
+        # Empty squares = total - occupied_size
+        # Among empty, remove those that are attacked
+        # So: result = (N*N - M) - (attacked - occupied) 
+        #     = N*N - M - (|attacked| - |attacked ∩ occupied|)
+        # But simpler: total safe = N*N - |attacked ∪ occupied|
+        
+        print(max(0, result))
+        return
+    
+    # Fallback for large N (but M small) - though above handles M<=1000
+    # But given constraints M<=1000, we always use direct simulation
+    # So we should never reach here
+    print(max(0, N*N - total_attacked))
+
+main()

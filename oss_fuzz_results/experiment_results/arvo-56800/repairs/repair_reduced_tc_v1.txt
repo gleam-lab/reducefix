@@ -1,0 +1,75 @@
+ ### 核心触发条件分析
+
+从崩溃日志中可以看到，错误发生在 `BEInt<unsigned>` 类型的操作上。具体来说，在调用 `BEInt<unsigned short, 2>::operator unsigned short()` 时，发生了一个全局缓冲区溢出。这表明在访问内存时超出了有效范围。
+
+根据崩溃日志中的堆栈跟踪，问题出现在以下代码行：
+
+```cpp
+#0 0x59ed1e in BEInt<unsigned short, 2>::operator unsigned short() const /work/build/../../src/harfbuzz/src/hb-algs.hh:120:56
+```
+
+在这个文件的第120行，`BEInt<unsigned short, 2>::operator unsigned short()` 方法试图读取一个大小为2字节的数据，并将其转换为 `unsigned short` 类型。由于输入数据仅为0x00，这意味着尝试读取的内存区域可能为空或未初始化，导致越界访问。
+
+### 修复策略
+
+为了修复这个全局缓冲区溢出问题，需要确保在读取内存时不会超出有效范围。具体策略包括：
+
+1. **检查输入数据长度**：在读取内存之前，确保输入数据的长度足够大以容纳所需的读取操作。
+2. **使用边界检查**：在访问数组或内存区域时，添加边界检查，确保索引在有效范围内。
+3. **初始化内存**：确保所有内存区域在使用前都被正确初始化。
+
+### 具体的代码修复建议
+
+1. **添加输入数据长度检查**：
+
+   在 `BEInt<unsigned short, 2>::operator unsigned short()` 方法中添加对输入数据长度的检查。
+
+   ```cpp
+   template <typename T, unsigned N>
+   class BEInt {
+   public:
+       operator T() const {
+           if (sizeof(T) > N) {
+               // Handle error or log warning
+               throw std::runtime_error("Buffer underflow");
+           }
+           return *reinterpret_cast<const T*>(data);
+       }
+
+   private:
+       unsigned char data[N];
+   };
+   ```
+
+2. **添加边界检查**：
+
+   在调用 `OT::gvar::accelerator_t::apply_deltas_to_points` 方法时，添加边界检查以确保索引在有效范围内。
+
+   ```cpp
+   void apply_deltas_to_points(unsigned int index, hb_array_t<int> deltas, hb_array_t<OT::contour_point_t> points) const {
+       if (index >= points.length()) {
+           // Handle error or log warning
+           throw std::out_of_range("Index out of range");
+       }
+       // Continue with the rest of the method
+   }
+   ```
+
+3. **初始化内存**：
+
+   确保所有内存区域在使用前都被正确初始化。可以在构造函数中进行初始化。
+
+   ```cpp
+   template <typename T, unsigned N>
+   class BEInt {
+   public:
+       BEInt() {
+           memset(data, 0, sizeof(data));
+       }
+
+   private:
+       unsigned char data[N];
+   };
+   ```
+
+通过这些修复措施，可以避免全局缓冲区溢出问题，提高代码的安全性和稳定性。

@@ -1,0 +1,48 @@
+import heapq
+
+def main():
+    import sys
+    input = sys.stdin.read
+    data = input().split()
+    
+    # Parse input
+    n = int(data[0])
+    m = int(data[1])
+    A = list(map(int, data[2:2+n]))
+    
+    # Build graph
+    G = [[] for _ in range(n)]
+    index = 2 + n
+    for _ in range(m):
+        u = int(data[index]) - 1
+        v = int(data[index+1]) - 1
+        b = int(data[index+2])
+        index += 3
+        G[u].append((v, b))
+        G[v].append((u, b))
+    
+    # Dijkstra's algorithm
+    INF = float('inf')
+    dist = [INF] * n
+    dist[0] = A[0]  # Start with vertex weight at vertex 1 (index 0)
+    
+    pq = [(A[0], 0)]  # (distance, vertex)
+    
+    while pq:
+        d, u = heapq.heappop(pq)
+        
+        if d > dist[u]:
+            continue
+            
+        for v, edge_weight in G[u]:
+            # Total cost to reach v via u: current distance to u + edge weight + vertex weight of v
+            new_dist = d + edge_weight + A[v]
+            if new_dist < dist[v]:
+                dist[v] = new_dist
+                heapq.heappush(pq, (new_dist, v))
+    
+    # Output results for vertices 2 to N (indices 1 to N-1)
+    print(' '.join(map(str, dist[1:])))
+
+if __name__ == '__main__':
+    main()

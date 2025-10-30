@@ -1,0 +1,77 @@
+### 崩溃原因分析
+
+从崩溃日志中可以看出，错误类型为`AddressSanitizer: stack-use-after-return`。这意味着在函数返回后仍然尝试访问栈上的数据。具体来说，错误发生在`BEInt<unsigned short, 2>::operator unsigned short()`函数中，该函数试图读取一个已经超出作用域的变量。
+
+根据堆栈跟踪信息，问题出现在以下位置：
+
+```cpp
+#0 0x5365ad in BEInt<unsigned short, 2>::operator unsigned short() const /src/harfbuzz/src/./hb-machinery.hh:625:13
+```
+
+在`/src/harfbuzz/src/./hb-machinery.hh`文件的第625行，函数`BEInt<unsigned short, 2>::operator unsigned short()`尝试读取一个已经超出作用域的变量。
+
+### 修复策略
+
+修复这种错误的关键在于确保在函数返回后不再访问任何已超出作用域的变量。通常，这可以通过以下几种方式来实现：
+
+1. **避免在函数返回后使用局部变量**。
+2. **使用智能指针或其他资源管理机制**来确保资源在使用完毕后被正确释放。
+3. **对返回值进行检查**，确保它们是有效的。
+
+### 具体的代码修复建议
+
+假设`BEInt<unsigned short, 2>`类定义如下：
+
+```cpp
+template<typename T, int N>
+class BEInt {
+public:
+    operator T() const {
+        // 这里可能会访问一个已经超出作用域的变量
+        return static_cast<T>(value);
+    }
+private:
+    uint8_t value[N];
+};
+```
+
+为了修复这个问题，可以考虑以下方法：
+
+1. **将成员变量改为静态或全局变量**，这样可以在整个程序生命周期内保持其有效性。
+
+```cpp
+template<typename T, int N>
+class BEInt {
+public:
+    operator T() const {
+        // 使用静态变量确保其在整个程序生命周期内有效
+        return static_cast<T>(static_value);
+    }
+private:
+    static uint8_t static_value[N];
+};
+
+// 初始化静态变量
+template<typename T, int N>
+uint8_t BEInt<T, N>::static_value[N] = {0};
+```
+
+2. **使用智能指针或其他资源管理机制**，确保在使用完毕后被正确释放。
+
+```cpp
+#include <memory>
+
+template<typename T, int N>
+class BEInt {
+public:
+    operator T() const {
+        // 使用智能指针确保资源在使用完毕后被正确释放
+        std::unique_ptr<uint8_t[]> ptr(new uint8_t[N]);
+        return static_cast<T>(*ptr);
+    }
+private:
+    uint8_t value[N];
+};
+```
+
+通过这些方法，可以确保在函数返回后不会访问任何已超出作用域的变量，从而避免`stack-use-after-return`错误。

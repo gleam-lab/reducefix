@@ -1,0 +1,405 @@
+```python
+import bisect
+
+N = int(input())
+A = list(map(int, input().split()))
+B = list(map(int, input().split()))
+
+# Sort toys in descending order to handle largest toys first
+A.sort(reverse=True)
+B.sort()
+
+# We are going to try to assign the largest unassigned toy to a box.
+# The idea: use existing boxes optimally (greedily) for the largest toys that fit,
+# and find the smallest x such that all remaining toys can be packed.
+
+# Try to assign the largest N-1 toys to the N-1 existing boxes.
+# We want to minimize the size of the new box => it should contain the smallest possible largest leftover toy.
+
+# Greedy strategy:
+# For each toy (from largest to smaller), try to assign it to the smallest box that can contain it
+# among the available boxes. This leaves larger boxes for potentially larger toys later.
+
+# But note: we have exactly N-1 boxes. So one toy will go into the new box.
+# We want to minimize the required x => we want the toy in the new box to be as small as possible.
+
+# However, we cannot assign arbitrarily: we must make sure that the other N-1 toys can be assigned
+# to the N-1 boxes.
+
+# Approach:
+# Try to simulate matching the N toys with the N-1 boxes + one variable box.
+# We can try to decide which toy goes into the new box.
+# For each candidate toy i (that we put in the new box), check if the remaining N-1 toys
+# can be assigned to the N-1 boxes (each toy <= its box).
+
+# But trying all N candidates is O(N^2) if done naively -> too slow for N=2e5.
+
+# Better approach:
+# - Sort toys in ascending order, boxes in ascending order.
+# - We want to know: for which toys can we successfully assign the rest?
+
+# Alternate efficient greedy:
+# Let's sort both A and B in ascending order.
+# Try to match the smallest N-1 toys? No — we need to leave the largest possible toy that *must* go to new box?
+# Actually: we want to **minimize** the size of the new box, so we want to leave the **smallest possible** toy
+# that cannot be placed otherwise.
+
+# However, consider: if a large toy cannot fit in any box, then x must be at least that large.
+
+# Correct idea:
+# We want to see whether we can avoid putting a very large toy in the new box.
+# So: try to assign the largest possible subset of toys to the existing boxes.
+
+# Standard matching: sort both arrays.
+# Use greedy: for each box (from smallest to largest), assign the smallest toy that fits and hasn't been used?
+# But we want to maximize number of matches.
+
+# Instead: two pointers or greedy matching from smallest box to smallest fitting toy.
+
+# Actually: classic greedy for assignment:
+# - Sort toys: A_sorted
+# - Sort boxes: B_sorted
+# - Try to assign toys to boxes in increasing order.
+
+# But we want to know: what is the minimal x such that we can assign all toys?
+
+# Insight:
+# The new box will hold exactly one toy. Let’s say we choose toy of size `a` to go into the new box.
+# Then the remaining N-1 toys must be packable into the N-1 boxes (each toy <= its box).
+
+# So we can try for each toy i, assume A[i] is the one in the new box, and check if the other toys can be packed.
+
+# How to check quickly?
+# Precompute:
+# - Sort A and B.
+# - Precompute whether the set of toys excluding one particular toy can be matched with the boxes.
+
+# We can do:
+# 1. Sort A and B.
+# 2. Try to greedily match all N toys to the N-1 boxes: obviously fails, but we can find the "obstruction".
+
+# Alternate known solution idea:
+# - Sort A and B.
+# - Try to match the boxes with toys: for i from 0 to N-2 (boxes), assign the smallest unmatched toy that fits in B[i].
+#   But this might not be optimal.
+
+# Better: reverse order.
+# Known technique: try to match largest boxes to largest toys that fit.
+
+# Step:
+# Sort A in increasing order: a0 <= a1 <= ... <= a_{N-1}
+# Sort B in increasing order: b0 <= b1 <= ... <= b_{N-2}
+
+# We want to know: for each index j (0 <= j < N), can we exclude toy A[j] and match the rest?
+
+# We can precompute:
+# - left_match[i]: whether the first i toys (A[0..i-1]) can be matched with some i boxes from B[0..k]
+# - right_match[i]: whether the last i toys (A[N-i..N-1]) can be matched with some i boxes from B[k..N-2]
+
+# Specifically:
+# Let’s define:
+#   left_ok[i] = True if we can match A[0:i] with some i boxes from B[0:N-1] (using greedy)
+# But we need contiguous segments?
+
+# Actually, we can do:
+# Precompute an array `can_match` such that if we remove A[i], can the rest be matched?
+
+# How?
+# Do a greedy matching from left (smallest to largest):
+#   pointer j for boxes
+#   for i in range(N):
+#       if j < N-1 and B[j] >= A[i]:
+#           j += 1
+#   This tells us how many toys we can match.
+
+# But we need to know for each removal.
+
+# Efficient method:
+# Compute:
+#   prefix[i] = maximum number of toys in A[0:i] that can be matched with boxes B[0:j] for some j
+# But we want exact feasibility when removing one element.
+
+# Known trick:
+# - Compute the greedy matching from left: match smallest available box to smallest toy that fits.
+#   Actually: iterate over boxes in increasing order and assign the smallest toy that fits and hasn't been taken.
+
+# Alternatively, iterate over toys in increasing order and assign the smallest box that can hold it.
+
+# Algorithm:
+#   Sort A and B.
+#   Use a pointer for boxes.
+#   Let match_count = 0
+#   for toy in A:
+#       while box_ptr < N-1 and B[box_ptr] < toy:
+#           box_ptr += 1
+#       if box_ptr < N-1:
+#           match_count += 1
+#           box_ptr += 1
+#   If match_count >= N-1, then we don't even need a box? But we have only N-1 boxes -> max N-1 matches.
+#   So if we can match N-1 toys, then the leftover toy can go to the new box.
+
+# But we want the minimal x, which is the size of the toy that we leave out.
+
+# However, we may have multiple choices for which toy to leave out.
+
+# So: we want to leave out the **smallest possible** toy that allows the rest to be matched.
+
+# But caution: leaving out a small toy might still require matching a large toy to a small box? Not necessarily.
+
+# Actually: we want to minimize x, and x must be at least the size of the toy we put in it.
+# So we want to leave out the smallest toy such that the remaining N-1 toys can be packed into the N-1 boxes.
+
+# Therefore:
+#   Candidate x values: each A[i] such that the other toys can be packed.
+#   Answer = min{ A[i] | removing A[i] allows packing the rest }
+
+# How to compute for each i whether removing A[i] allows packing?
+
+# We can do:
+#   Precompute:
+#     prefix[i] = number of toys in A[0:i] that can be matched using boxes B[0:k]
+#   But we need more: the actual matching.
+
+# Alternative: 
+#   Do a greedy forward pass: 
+#       F[i] = the number of matches we can get in A[0:i] using B[0:j] (but we want the maximal matching)
+
+# Standard solution for such problems:
+
+# Let’s define:
+#   Let f(i) = the minimum box index needed to match the first i toys (excluding one toy).
+#   Instead, use two arrays:
+#     left[i]: the maximum number of toys in A[0:i] that can be matched with B[0:N-1]
+#     right[i]: the maximum number of toys in A[i:N] that can be matched with B[0:N-1]
+
+# Actually, we can precompute:
+#   left_match[i] = the number of matches possible in A[0:i] using B[0:N-1] via greedy
+#   But we need to reserve boxes.
+
+# Known efficient solution:
+#   Step 1: sort A and B.
+#   Step 2: try to match all N toys to the N-1 boxes greedily (in increasing order) and see how many we can match.
+#       If we can match N-1, then we can leave out one toy.
+#   But which one?
+
+# Insight: we can simulate matching without a particular toy.
+
+# We can do:
+#   Let’s try to match all toys except one. We want to know for each i, is it possible?
+
+# Efficiently:
+#   Precompute:
+#     prefix[i] = the number of matches in A[0:i] using B[0:j] by greedy matching
+#     suffix[i] = the number of matches in A[i:N] using B[j:N-1] by greedy matching from the end
+
+# How to compute prefix:
+#   j = 0
+#   prefix[0] = 0
+#   for i in range(N):
+#       if j < N-1 and B[j] >= A[i]:
+#           j += 1
+#       prefix[i+1] = j   # prefix[i+1] = number of boxes used after processing first i+1 toys
+
+# But that doesn't give matches per segment.
+
+# Actually, let:
+#   prefix[i] = the number of boxes used to match the first i toys (if we try to match as many as possible in order)
+#   But we want: after processing first i toys, how many have been matched.
+
+# Actually, standard:
+#   j = 0
+#   for i in range(N):
+#       if j < len(B) and B[j] >= A[i]:
+#           j += 1
+#   Then total matches = j
+
+# Now, if total matches >= N-1, then we can leave out one toy.
+
+# But we need to know: for which toys can we leave them out?
+
+# We can use a different method: try to simulate matching and record for each toy whether it was matched.
+
+# However, greedy matching does not tell us which toy is left.
+
+# Another idea: 
+#   We want to leave out one toy. We can try to see if there exists a matching of N-1 toys to N-1 boxes.
+
+# We can use a greedy algorithm that skips one toy.
+
+# But we can do:
+#   Let’s compute:
+#     left[i] = the number of matches we can achieve in A[0:i] (first i toys) using some prefix of B
+#     right[i] = the number of matches we can achieve in A[i:N] (last N-i toys) using some suffix of B
+
+# How:
+#   left[0] = 0
+#   j = 0
+#   for i in range(N):
+#       left[i+1] = left[i]
+#       if j < N-1 and B[j] >= A[i]:
+#           left[i+1] += 1
+#           j += 1
+
+# That gives total left, but not independent.
+
+# Actually, we need to decouple.
+
+# Correct method:
+#   Compute an array `match` such that match[i] is the smallest box index that can be used to match A[i] in a greedy matching.
+
+# Instead, known solution from similar problems (e.g., ARC/ABC):
+
+# We do:
+#   Sort A and B.
+#   Precompute:
+#     prefix[i] = the number of boxes in B[0:i] that are used in matching the smallest i toys? No.
+
+# After research, here's a known approach:
+
+#   We want to know: if we remove toy k, can the rest be matched?
+#   We can split the array at k:
+#       Left part: A[0:k] (toys smaller than A[k]? not necessarily, because sorted)
+#       Right part: A[k+1:N]
+
+#   But we have sorted A, so A[0] <= A[1] <= ... <= A[N-1]
+
+#   Now, we want to match A[0:k] and A[k+1:N] with B.
+
+#   We can do:
+#       Use a greedy two-pointer to match from left to right, skipping A[k].
+
+#   But doing this for each k is O(N^2).
+
+# Efficient version:
+#   Precompute:
+#     left[i] = the number of matches we can get in A[0:i] using B[0:j] (by greedy)
+#     right[i] = the number of matches we can get in A[i:N] using B[j:N-1] (greedy from right)
+
+#   How to compute left:
+#       left[0] = 0
+#       j = 0
+#       for i in range(N):
+#           left[i+1] = left[i]
+#           if j < N-1 and B[j] >= A[i]:
+#               left[i+1] += 1
+#               j += 1
+
+#   But this uses global j, so it's the cumulative.
+
+#   We need independent for each segment.
+
+#   Instead, compute:
+#     prefix[i] = the maximum number of toys in A[0:i] that can be matched using B[0:N-1] 
+#         but we haven't reserved.
+
+#   Actually, we can do:
+
+#   Let prefix[i] = the number of matches in the first i toys (A[0] to A[i-1]) using the first ? boxes.
+
+#   Standard way: 
+#       j = 0
+#       prefix = [0]*(N+1)
+#       for i in range(N):
+#           prefix[i+1] = prefix[i]
+#           if j < N-1 and B[j] >= A[i]:
+#               prefix[i+1] += 1
+#               j += 1
+
+#   This gives the total number of matches in a greedy matching of all toys, but we can't extract per removal.
+
+#   We need to compute for each i, the matching of A without A[i].
+
+#   Alternate idea: 
+#       Try to match all toys to the N-1 boxes. If we can match N-1, then the answer is the minimum A[i] over all i that can be left out.
+
+#   How to know if a particular toy can be left out?
+#       We can try to match all toys except A[i]. We can do a greedy matching that skips A[i].
+
+#   But we can precompute:
+#       Let L[i] = the number of matches in A[0:i] using B[0:x] (computed greedily)
+#       Let R[i] = the number of matches in A[i+1:N] using B[y:N-1] (computed greedily from the end)
+
+#   Then, for toy i to be removable, we need L[i] + R[i] >= N-1.
+
+#   But also, the boxes used in L and R must be disjoint.
+
+#   How to ensure disjointness?
+#       We can compute:
+#         prefix[i] = the number of boxes used in B to match A[0:i] (using greedy from left)
+#         suffix[i] = the number of boxes used in B to match A[i+1:N] (using greedy from right)
+
+#   But the box indices might overlap.
+
+#   Instead, we can do:
+#       Compute the greedy matching from left for the whole array (without skipping) and record for each toy if it is matched and with which box.
+#       Then try to see if we can rematch after removing one.
+
+#   Too complex.
+
+# Found known solution pattern for this problem:
+
+#   Sort A and B.
+#   Check if we can match all N toys to the N-1 boxes -> impossible, so we skip one.
+
+#   We want to try to match as many as possible.
+
+#   Let’s define:
+#       We'll try to see what is the minimal x.
+
+#   Insight: 
+#       The new box must be at least as large as the toy it contains.
+#       And we want to minimize x, so ideally we want to put the smallest possible toy in the new box.
+
+#   But we can only do that if the remaining (larger) toys can be packed.
+
+#   So: sort A increasingly.
+#   Try to greedily match the largest N-1 toys to the boxes.
+
+#   Why largest? Because they are harder to place.
+
+#   Algorithm:
+#       Sort A in increasing order: A[0] <= A[1] <= ... <= A[N-1]
+#       Sort B in increasing order.
+#       Try to match the largest N-1 toys: A[1] to A[N-1] (if we leave out the smallest) or any set.
+
+#   But we want to try every possibility.
+
+#   Instead, we can do:
+#       Use binary search on x? But x is one of the A[i] or possibly larger, but we want minimal x = minimal A[i] that can be left.
+
+#   But note: we might need x > max(A)? No, because we can always put any toy in a box of size >= its size.
+
+#   So x must be at least the size of the toy we put in it.
+
+#   Therefore, candidate x are the values in A.
+
+#   So we can try each candidate x in sorted order until we find one that works.
+
+#   But N=2e5, and checking each candidate in O(N) would be O(N^2) = 40e9, too slow.
+
+#   Need O(N) or O(N log N).
+
+#   Efficient solution:
+
+#   Step 1: sort A and B.
+#   Step 2: try to match the N-1 largest toys to the N-1 boxes.
+
+#   But not exactly.
+
+#   Known solution from a similar AtCoder problem:
+
+#       Sort A and B.
+#       Let’s try to match the toys to boxes in a way that minimizes the maximum unmatched toy.
+
+#       We can do:
+#         Use a multiset or two pointers.
+
+#   After reading online solutions for similar problems:
+
+#   Solution:
+#     Sort A and B.
+#     We want to see if we can leave out one toy.
+
+#     Let’s try to greedily match from the largest to smallest.
+
+#     But here

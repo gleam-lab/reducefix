@@ -1,0 +1,42 @@
+def can_achieve(capacity):
+    total_cost = 0
+    for i in range(n):
+        a, p, b, q = machines[i]
+        min_cost = float('inf')
+        
+        # Maximum number of S_i machines we might need
+        max_s = (capacity + a - 1) // a if a > 0 else 0
+        # Try all possible numbers of machine S_i
+        for num_s in range(max_s + 1):
+            processed_by_s = num_s * a
+            remaining = max(0, capacity - processed_by_s)
+            num_t = (remaining + b - 1) // b if b > 0 else 0
+            
+            cost = num_s * p + num_t * q
+            min_cost = min(min_cost, cost)
+            
+            # Early termination if too many S machines
+            if num_s > capacity:
+                break
+                
+        total_cost += min_cost
+        if total_cost > x:
+            return False
+    return total_cost <= x
+
+n, x = map(int, input().split())
+machines = []
+for _ in range(n):
+    machines.append(list(map(int, input().split())))
+
+# Binary search on the production capacity
+lo, hi = 0, 2 * 10**7  # upper bound: even with cheapest machines
+
+while lo < hi:
+    mid = (lo + hi + 1) // 2
+    if can_achieve(mid):
+        lo = mid
+    else:
+        hi = mid - 1
+
+print(lo)

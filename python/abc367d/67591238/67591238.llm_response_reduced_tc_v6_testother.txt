@@ -1,0 +1,245 @@
+```python
+from collections import defaultdict
+
+N, M = map(int, input().split())
+A = list(map(int, input().split()))
+
+# 累積和
+cum = [0] * (N + 1)
+for i in range(N):
+    cum[i + 1] = cum[i] + A[i]
+
+# mod M の値の出現回数
+count_mod = defaultdict(int)
+answer = 0
+
+for val in cum:
+    mod = val % M
+    answer += count_mod[mod]
+    count_mod[mod] += 1
+
+# 同一の休息場所間の移動は無効（s != t の条件）
+# cum[i] と cum[j] が同じ mod M なら、i → j の距離は M の倍数
+# ただし、i == j の場合は s == t なので除外したいが、
+# ループ内で count_mod[mod] をインクリメントする前に answer を更新しているため、
+# 自身より前のインデックスとのみペアを形成している。
+# よって、累積和の異なる2つの位置が同じ mod M であれば、それが有効な (s,t) ペア。
+
+# しかし、問題は s != t かつ時計回りに s から t へ移動すること。
+# このとき、cum[j] - cum[i] ≡ 0 (mod M) ⇨ cum[j] ≡ cum[i] (mod M)
+# そしてこれは i < j で rest area i+1 から rest area j+1 への移動に対応。
+# ただし、このコードは円環全体を考慮できているか？
+
+# 実際には、時計回りのパスしか考えていないので正しい。
+# しかし、入力例 N=1 のとき、rest area は1つしかない。
+# よって s != t を満たすペアは存在しない。答えは0。
+
+# 上記のコードは N=1 のとき cum = [0, 136872], M=1 なので両方 mod 1 = 0
+# → answer += count_mod[0] (初回0), その後 count_mod[0]=1 → 次に answer +=1 → answer=1
+# しかし、N=1 では s と t が異なることはできない！(s ≠ t)
+
+# つまり、ペア (i,j) で i < j かつ j - i >= 1 だが、
+# 休息場所は 1 から N まで。累積和のインデックス i は rest area i+1 を始点とする前
+# よって、cum[j] - cum[i] は rest area i+1 から j+1 への距離。
+
+# しかし N=1 のとき、cum[0] と cum[1] は rest area 1 → rest area 1（一周）を意味する？
+# 問題文：「時計回りに s から t へ」。s ≠ t。
+# N=1 のとき、s と t はどちらも 1 しかありえない → s ≠ t を満たせない → ペアは0。
+
+# したがって、累積和配列のインデックス i と j (i < j) について、
+# rest area (i+1) から (j+1) への移動。ただし j+1 は mod N ではなく、直接対応。
+# N=1 のとき、i=0 → s=1, j=1 → t=2 → だが rest area 2 は存在しない！
+
+# 間違いの原因：
+# cum[i] は rest area 1 から rest area i+1 への累積距離。
+# よって cum[j] - cum[i] は rest area i+1 から j+1 への距離。
+# しかし j+1 は 1..N でなければならない。j は 0..N なので j+1 は 1..N+1。
+# j = N のとき j+1 = N+1 → これは rest area 1。
+
+# つまり、この方法は「時計回りの部分区間」だけを扱っている。
+# 円周全体の任意の s→t (時計回り) は、s <= t なら cum[t-1]-cum[s-1]、
+# s > t なら cum[N]-cum[s-1] + cum[t-1] となるが、それは一周以上？いや、最小距離ではない。
+
+# 問題文：「時計回りに s から t へ」の最小ステップ数 — ただし時計回りにしか歩いていないので、
+# s から t まで時計回りに進む経路の長さが M の倍数かどうか。
+
+# そして、s ≠ t。
+
+# 重要な点：時計回りのパスは、s から t まで途中で一周以上しない最短経路ではない。
+# 「時計回りに歩く」というのは方向の指定。距離は累積和の差でよい。
+# 例えば s=3, t=1 なら、3→4→...→N→1 の距離 = cum[N] - cum[2] + cum[0]? 違う。
+
+# 正しい累積和の使い方：
+# cum[0] = 0
+# cum[1] = A1 (1→2)
+# cum[2] = A1+A2 (1→3)
+# ...
+# cum[N] = 全周
+
+# s=i から t=j への時計回り距離：
+# if i < j: cum[j-1] - cum[i-1]
+# if i > j: cum[N] - cum[i-1] + cum[j-1]  → だがこれは全周から反時計回りを引いたもの？
+
+# 実は、s=i から t=j の時計回り距離は、
+# D(i,j) = cum[j-1] - cum[i-1]  if i <= j
+#         = total - (cum[i-1] - cum[j-1]) だが、これは反時計回り？違う。
+
+# 時計回りに i から j へ行くには：
+# i → i+1 → ... → j  (if i < j)
+# i → i+1 → ... → N → 1 → ... → j (if i > j)
+
+# 距離は：
+# if i < j: cum[j-1] - cum[i-1]
+# if i > j: (cum[N] - cum[i-1]) + cum[j-1]
+
+# これを統一的に表すには、累積和を円環的に考える。
+# しかし、我々の現在のコードは「部分列の差」しか見ていない（i < j のみ）。
+
+# 今のコードは、cum[i] ≡ cum[j] (mod M) なる i < j を数えている。
+# これは rest area i+1 から j+1 への時計回り距離が M の倍数であることに対応。
+# ただし j+1 が N+1 を超えることはない？ j <= N → j+1 <= N+1.
+
+# j = N のとき j+1 = N+1 → これは rest area 1.
+# つまり、rest area i+1 から rest area 1 への時計回り距離（i+1 > 1 のとき）？
+
+# 例えば i=1, j=N: rest area 2 から rest area 1 への時計回り距離？
+# 2→3→...→N→1 という経路。距離 = A2+...+AN+A1? 違う、A2+...+AN だけ？
+# cum[N] - cum[1] = (A1+...+AN) - A1 = A2+...+AN.
+
+# でも 2→1 の時計回り距離は A2+...+AN ではなく、A2+...+AN で正しい？ 
+# 2→3: A2, ..., N-1→N: A_{N-1}, N→1: AN → よって A2+...+AN.
+
+# だが cum[N] - cum[1] = A2+...+AN → 正しい。
+
+# さらに、i=0, j=N: cum[0]=0, cum[N]=total → 差 = total → rest area 1 から 1 へ（一周）
+# しかし s ≠ t なので、s=1, t=1 は無効。
+
+# つまり、今のコードは：
+# cum[i] ≡ cum[j] (mod M) なる i < j をすべて数えている。
+# それぞれは rest area i+1 から j+1 への時計回り距離が M の倍数。
+# ただし、j+1 は 1-indexed で、j+1 = N+1 のとき → rest area 1.
+
+# しかし、rest area の番号は 1..N なので、j+1 が N+1 ならばそれは 1。
+# よって、rest area i+1 から ((j+1)-1)%N+1 = j+1 if j+1<=N else 1
+
+# つまり、ペア (s,t) = (i+1, (j+1) if j+1<=N else 1) = (i+1, j+1 if j<N else 1)
+
+# 例: N=1, i=0, j=1: s=1, t=2 → だが rest area 2 は存在しない！
+
+# 問題：j=1 のとき t = j+1 = 2 → だが N=1 なので rest area 2 は存在しない。
+
+# 正しくは：累積和のインデックス k は、rest area 1 から rest area k+1 への距離。
+# したがって、k は 0 から N まで。k=N は rest area 1 に戻る（一周）。
+
+# しかし、rest areas は 1..N なので、k+1 が N+1 になるとき（k=N）は rest area 1 を指す。
+# つまり、cum[k] は rest area 1 から rest area ((k) % N)+1 への距離？ そうではない。
+
+# 定義：
+# cum[0] = 0 → rest area 1
+# cum[1] = A1 → rest area 2
+# cum[2] = A1+A2 → rest area 3
+# ...
+# cum[N-1] = A1+...+A_{N-1} → rest area N
+# cum[N] = A1+...+AN → rest area 1（一周後）
+
+# よって、cum[i] は rest area 1 から rest area (i % N)+1 への距離ではない。
+# cum[i] は rest area 1 から rest area i+1 への距離（i=0..N-1）、そして cum[N] は全周。
+
+# したがって、i < j なる cum[i] と cum[j] の差は、rest area i+1 から j+1 への距離。
+# ここで j+1 が N+1 になるのは j=N のときのみ。そのとき j+1 = N+1 → これは rest area 1。
+
+# しかし rest area 1 は存在する。よって、s = i+1, t = j+1 if j < N else 1.
+
+# 例: N=1
+# cum[0] = 0 → rest area 1
+# cum[1] = A1 → rest area 1（一周後）
+# ペア (i,j)=(0,1): s=1, t=1 → s=t → 無効。
+
+# したがって、このペアは除外すべき。
+
+# つまり、ペア (i,j) に対して、s = i+1, t = (j+1 if j < N else 1)
+# そして s ≠ t が必要。
+
+# s = t となるのは？
+# i+1 = (j+1 if j < N else 1)
+# 場合分け：
+# - j < N: i+1 = j+1 → i = j → だが i < j なので不可能
+# - j = N: i+1 = 1 → i = 0
+
+# よって、j = N かつ i = 0 のとき s = 1, t = 1 → s = t → 無効。
+
+# したがって、ペア (i,j) で j = N かつ i = 0 のものは除外しなければならない。
+
+# しかし、現状のコードはそれを含んでしまう。
+
+# 修正案：
+# 1. 累積和の mod を取るが、j = N のとき（つまり cum[N]）を特別扱い？
+# 2. または、累積和のインデックス i=0..N-1 のみを使う？ でも cum[N] も必要。
+
+# 別の考え方：
+# s → t の時計回り距離が M の倍数 ⇔ cum[t-1] - cum[s-1] ≡ 0 (mod M) （s <= t のとき）
+# s > t のとき：距離 = (cum[N] - cum[s-1]) + cum[t-1] = cum[t-1] - cum[s-1] + cum[N]
+# ⇔ cum[t-1] - cum[s-1] + total ≡ 0 (mod M)
+
+# しかし、これは扱いにくい。
+
+# 実は、円環的な累積和を考えると、
+# s → t の時計回り距離 = cum[t-1] - cum[s-1] (mod ???)
+# だが、負の場合がある。
+
+# 一般的なテクニック：円環上の2点間の距離が M の倍数 ⇔ cum[s-1] ≡ cum[t-1] (mod M) とは限らない。
+
+# 正しい方法：
+# すべての s,t (s≠t) について、時計回り距離 d(s,t) を計算し、d(s,t) ≡ 0 (mod M) を満たすものを数える。
+# しかし O(N^2) なので TLE。
+
+# 別解：
+# 円環上での「距離が M の倍数」という条件を、累積和の mod で処理。
+# しかし、今使っている方法は「連続する弧」の距離が M の倍数な場合のみ対応している。
+# 例えば s=2, t=1 の距離は cum[N] - cum[1] + cum[0] = total - A1.
+# これは cum[N] - cum[1] に等しい（cum[0]=0）。
+
+# 一般に、s=i, t=j の時計回り距離：
+# if i <= j: d = cum[j-1] - cum[i-1]
+# if i > j: d = cum[N] - cum[i-1] + cum[j-1] = (cum[j-1] + cum[N]) - cum[i-1]
+
+# ここで、cum[N] = total.
+
+# これを統一的に書くには、累積和を拡張する。
+# あるいは、mod M で考え、cum[i-1] ≡ X, cum[j-1] ≡ Y として、
+# i<=j なら Y - X ≡ 0 (mod M)
+# i>j なら (Y + total) - X ≡ 0 (mod M) → Y - X ≡ -total (mod M)
+
+# つまり、2種類の条件がある。
+
+# しかし、これでは複雑。
+
+# 実は、もっと簡単な方法がある。
+# 「時計回りに s から t へ行く距離が M の倍数」⇔「cum[t-1] - cum[s-1] ≡ 0 (mod M)」
+# は s <= t のときのみ成立。
+
+# s > t のときは、距離 = total - (cum[s-1] - cum[t-1]) ではなく、
+# 時計回りに s から t へは s→s+1→...→N→1→...→t なので、
+# 距離 = (cum[N] - cum[s-1]) + cum[t-1] = total - cum[s-1] + cum[t-1]
+
+# これが M の倍数 ⇔ total + cum[t-1] - cum[s-1] ≡ 0 (mod M)
+
+# したがって、ペア (s,t) が条件を満たすのは：
+# - s < t かつ cum[t-1] ≡ cum[s-1] (mod M)
+# - s > t かつ cum[t-1] ≡ cum[s-1] - total (mod M)
+
+# ここで、s,t は 1..N, s≠t.
+
+# これを O(N^2) でやると間に合わない。
+
+# 代わりに、事前計算：
+# まず、cum[0..N-1] を計算（cum[N] は total）
+# cum[i] for i in 0..N-1 は rest area 1 から i+1 への距離。
+
+# 条件1: s < t かつ cum[s-1] ≡ cum[t-1] (mod M)
+# s>=1, t>=2, s<t → s-1 in [0, N-2], t-1 in [1, N-1]
+# → cum[i] ≡ cum[j] (mod M), i<j, i,j in [0, N-1]
+
+# 条件2: s > t かつ cum[t-1] ≡ cum[s-1] - total (mod M)
+# ⇔ cum[s-1] ≡ cum[t-1] + total (mod M)
+# s>t, s>=2, t>=1 → s-1 in [1,

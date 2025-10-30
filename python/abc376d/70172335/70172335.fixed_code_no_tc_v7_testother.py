@@ -1,0 +1,38 @@
+from collections import deque
+import sys
+
+def main():
+    n, m = map(int, input().split())
+    
+    # Build adjacency list
+    graph = [[] for _ in range(n)]
+    for _ in range(m):
+        a, b = map(int, sys.stdin.readline().split())
+        graph[a-1].append(b-1)  # Convert to 0-indexed
+    
+    # BFS to find shortest cycle containing vertex 0 (original vertex 1)
+    # We need to find shortest path from vertex 0 back to itself with at least one edge
+    dist = [-1] * n
+    dist[0] = 0
+    queue = deque([0])
+    
+    min_cycle_length = float('inf')
+    
+    while queue:
+        u = queue.popleft()
+        
+        for v in graph[u]:
+            if v == 0:
+                # Found a cycle back to vertex 1 (vertex 0 in 0-indexed)
+                min_cycle_length = min(min_cycle_length, dist[u] + 1)
+            elif dist[v] == -1:  # Not visited yet
+                dist[v] = dist[u] + 1
+                queue.append(v)
+    
+    if min_cycle_length == float('inf'):
+        print(-1)
+    else:
+        print(min_cycle_length)
+
+if __name__ == "__main__":
+    main()

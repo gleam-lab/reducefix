@@ -1,0 +1,50 @@
+### 崩溃原因分析
+根据提供的崩溃日志，崩溃发生在 `BEInt<unsigned short, 2>::operator unsigned short()` 这一行。错误类型是全局缓冲区溢出（global-buffer-overflow），具体地址为 `0x0000009de494`。这表明程序试图读取一个超出其分配范围的内存区域。
+
+从堆栈跟踪来看，问题出现在 `OT::gvar::accelerator_t::apply_deltas_to_points` 函数中，该函数调用了 `OT::gvar::get_glyph_var_data_bytes` 和 `OT::gvar::get_offset` 等函数。这些函数都与处理字形变体数据有关，特别是涉及到从表中读取偏移量和数据。
+
+### 修复策略
+1. **验证边界条件**：确保所有索引操作都在有效范围内。
+2. **初始化变量**：确保所有使用的变量在使用前都被正确初始化。
+3. **添加边界检查**：在关键的数组访问处添加边界检查，以防止越界访问。
+
+### 具体的代码修复建议
+以下是一些具体的修复建议：
+
+#### 1. 在 `OT::gvar::get_offset` 中添加边界检查
+```cpp
+unsigned int OT::gvar::get_offset(unsigned int index, unsigned int num_offsets) const {
+    if (index >= num_offsets) {
+        // Handle the error appropriately, e.g., log an error or return a default value
+        return 0; // Example default value
+    }
+    // Continue with the original logic
+    return offsets[index];
+}
+```
+
+#### 2. 在 `OT::gvar::get_glyph_var_data_bytes` 中添加边界检查
+```cpp
+hb_bool_t OT::gvar::get_glyph_var_data_bytes(hb_blob_t *blob, unsigned int glyph_index, unsigned int num_glyphs) const {
+    if (glyph_index >= num_glyphs) {
+        // Handle the error appropriately
+        return false;
+    }
+    // Continue with the original logic
+    // ...
+}
+```
+
+#### 3. 在 `OT::gvar::accelerator_t::apply_deltas_to_points` 中添加边界检查
+```cpp
+void OT::gvar::accelerator_t::apply_deltas_to_points(unsigned int glyph_index, hb_array_t<int> deltas, hb_array_t<OT::contour_point_t> points) const {
+    if (glyph_index >= num_glyphs) {
+        // Handle the error appropriately
+        return;
+    }
+    // Continue with the original logic
+    // ...
+}
+```
+
+通过这些修复，可以有效地避免全局缓冲区溢出的问题，从而提高程序的安全性和稳定性。

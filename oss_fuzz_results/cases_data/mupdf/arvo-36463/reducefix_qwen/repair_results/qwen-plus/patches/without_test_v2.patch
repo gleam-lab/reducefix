@@ -1,0 +1,39 @@
+diff --git a/source/fitz/draw-device.c b/source/fitz/draw-device.c
+index a537b41fb..eb3f6e8b6 100644
+--- a/source/fitz/draw-device.c
++++ b/source/fitz/draw-device.c
+@@ -1810,9 +1810,33 @@ fz_draw_fill_image(fz_context *ctx, fz_device *devp, fz_image *image, fz_matrix
+ 			}
+ 			if (scaled)
+ 			{
+-				fz_drop_pixmap(ctx, pixmap);
++				fz_pixmap *old_pixmap = pixmap;
+ 				pixmap = scaled;
++				fz_drop_pixmap(ctx, old_pixmap);
+ 			}
++=======
++```
++
++Wait, I made an error in my analysis. The issue isn't about dropping the pixmap twice, but rather about using the pixmap after it might have been freed. Let me reconsider.
++
++Actually, the real issue is that `pixmap` is declared outside the `fz_try` block and is subject to change within it. The `fz_var(pixmap)` macro is used to handle this, but there's a potential issue with how the pixmap is managed.
++
++Looking more carefully, the problem is likely that `fz_get_pixmap_from_image` might fail and throw an exception, leaving `pixmap` in an undefined state, but we still try to access `pixmap->w` and `pixmap->h` in the condition for scaling.
++
++```cpp
++### source/fitz/draw-device.c
++- start_line: 2004
++- end_line: 2007
++<<<<<<< SEARCH
++		if (!(devp->hints & FZ_DONT_INTERPOLATE_IMAGES) && ctx->tuning->image_scale(ctx->tuning->image_scale_arg, dx, dy, pixmap->w, pixmap->h))
++		{
++			int gridfit = !(dev->flags & FZ_DRAWDEV_FLAGS_TYPE3);
++			scaled = fz_transform_pixmap(ctx, dev, pixmap, &local_ctm, state->dest->x, state->dest->y, dx, dy, gridfit, &clip);
++=======
++		if (pixmap && !(devp->hints & FZ_DONT_INTERPOLATE_IMAGES) && ctx->tuning->image_scale(ctx->tuning->image_scale_arg, dx, dy, pixmap->w, pixmap->h))
++		{
++			int gridfit = !(dev->flags & FZ_DRAWDEV_FLAGS_TYPE3);
++			scaled = fz_transform_pixmap(ctx, dev, pixmap, &local_ctm, state->dest->x, state->dest->y, dx, dy, gridfit, &clip);
+ 		}
+ 
+ 		if (conversion_required && after)

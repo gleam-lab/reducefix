@@ -1,0 +1,48 @@
+N = int(input())
+S = input().strip()
+
+# Map Aoki's move to the move Takahashi should play to win
+win_move = {'R': 'P', 'P': 'S', 'S': 'R'}
+lose_move = {'R': 'S', 'P': 'R', 'S': 'P'}
+
+# dp[i][j] will store the maximum wins up to game i, where j represents Takahashi's move in game i
+# 0: Rock (R), 1: Paper (P), 2: Scissors (S)
+dp = [[-1] * 3 for _ in range(N)]
+
+# Initialize first game
+for j in range(3):
+    move = "RPS"[j]
+    aoki_move = S[0]
+    if move == win_move[aoki_move]:
+        dp[0][j] = 1  # Win
+    elif move == lose_move[aoki_move]:
+        dp[0][j] = 0  # Draw (not losing)
+    else:
+        dp[0][j] = -1  # Losing is not allowed
+
+# Fill DP table
+for i in range(1, N):
+    for curr in range(3):
+        move = "RPS"[curr]
+        aoki_move = S[i]
+        
+        # Check if this move loses
+        if move == lose_move[aoki_move]:
+            continue  # This would be a loss, not allowed
+        
+        # Determine outcome
+        if move == win_move[aoki_move]:
+            base_wins = 1
+        else:
+            base_wins = 0  # Draw
+        
+        # Try transitions from previous moves (must be different)
+        for prev in range(3):
+            if prev == curr:  # Same move not allowed consecutively
+                continue
+            if dp[i-1][prev] == -1:  # Invalid state
+                continue
+            if dp[i][curr] < dp[i-1][prev] + base_wins:
+                dp[i][curr] = dp[i-1][prev] + base_wins
+
+print(max(dp[N-1]))

@@ -1,0 +1,209 @@
+```python
+import sys
+
+def solve():
+    data = sys.stdin.read().split()
+    t = int(data[0])
+    index = 1
+    results = []
+    
+    for _ in range(t):
+        N = int(data[index])
+        K = int(data[index + 1])
+        index += 2
+        A = list(map(int, data[index:index + N]))
+        index += N
+        B = list(map(int, data[index:index + N]))
+        index += N
+        
+        # Create list of (A_i, B_i) and sort by A_i
+        items = sorted(zip(A, B), key=lambda x: x[0])
+        
+        # We'll consider each element as the maximum A_i in the subset
+        # Then we want to pick K-1 other elements from those with A_i <= current A_i
+        # such that sum of B_i is minimized
+        from heapq import heappush, heappop
+        
+        min_sum_heap = []  # max-heap using negative values for smallest B_i among selected
+        current_b_sum = 0
+        
+        ans = float('inf')
+        
+        # Traverse from smallest to largest A_i
+        for i in range(N):
+            a_val, b_val = items[i]
+            
+            # Include current element
+            if len(min_sum_heap) < K - 1:
+                heappush(min_sum_heap, b_val)
+                current_b_sum += b_val
+            else:
+                # Maintain exactly K-1 smallest B values from previous elements
+                if K > 1 and b_val < min_sum_heap[-1]:  # note: min_sum_heap is actually a max-heap via negative
+                    # We need to restructure: use negative values for max-heap behavior
+                    pass
+                else:
+                    heappush(min_sum_heap, b_val)
+                    current_b_sum += b_val
+                    # Remove the largest one if we have more than K-1
+                    if len(min_sum_heap) > K - 1:
+                        removed = heappop(min_sum_heap)
+                        current_b_sum -= removed
+            # Recreate logic with correct max-heap simulation
+            
+        # Let's do it correctly: use a max-heap via negative values
+        max_heap = []  # will store negative B_i to simulate max-heap
+        current_b_sum = 0
+        
+        for i in range(N):
+            a_val, b_val = items[i]
+            
+            total_b = b_val  # must include current item
+            temp_heap = max_heap[:]  # copy
+            temp_sum = current_b_sum
+            
+            # Try to get K-1 smallest B_i from indices <= i (excluding current)
+            # But easier: process in order and maintain K-1 smallest among first i
+            # Instead, let's iterate and maintain heap properly
+            
+        # Correct approach: go from left to right, maintaining K-1 smallest B_i seen so far
+        max_heap = []
+        current_b_sum = 0
+        
+        for i in range(N):
+            a_val, b_val = items[i]
+            
+            # We are considering a_val as max A in subset
+            # Need to choose K-1 elements from [0, i-1] with smallest B_i sum
+            if K == 1:
+                candidate = a_val * b_val
+                ans = min(ans, candidate)
+            else:
+                if len(max_heap) == K - 1:
+                    if b_val < -max_heap[0]:
+                        # Replace the largest in heap
+                        removed = -heappop(max_heap)
+                        heappush(max_heap, -b_val)
+                        current_b_sum = current_b_sum - removed + b_val
+                    # else don't include b_val in the K-1 selection
+                elif len(max_heap) < K - 1:
+                    heappush(max_heap, -b_val)
+                    current_b_sum += b_val
+                
+                # Now if we have at least K-1 elements before or including this?
+                # Actually, we can only form a set of size K if we have at least K-1 prior elements
+                if i >= K - 1:
+                    # We can form a valid subset ending at i
+                    total_b_sum = current_b_sum + b_val
+                    candidate = a_val * total_b_sum
+                    ans = min(ans, candidate)
+                    
+                # But wait: above includes current b_val twice? No: current_b_sum has b_val only if we added it
+                # Problem: we added current b_val into the heap which is meant for K-1 others
+                # So fix: do not add current b_val to heap until after processing
+                
+        # Revised: process element i without adding it first
+        max_heap = []
+        current_b_sum = 0
+        ans = float('inf')
+        
+        for i in range(N):
+            a_val, b_val = items[i]
+            
+            # First, compute if we can form a valid subset using this as max A
+            if len(max_heap) == K - 1:
+                # We have K-1 elements with smallest B_i from indices < i
+                total_b_sum = current_b_sum + b_val
+                candidate = a_val * total_b_sum
+                ans = min(ans, candidate)
+                
+                # Now add current b_val to the pool for future subsets
+                if K > 1 and (len(max_heap) < K - 1 or b_val < -max_heap[0]):
+                    if len(max_heap) == K - 1:
+                        removed = -heappop(max_heap)
+                        heappush(max_heap, -b_val)
+                        current_b_sum = current_b_sum - removed + b_val
+                    else:
+                        heappush(max_heap, -b_val)
+                        current_b_sum += b_val
+                # else: skip adding if not better
+            elif len(max_heap) < K - 1:
+                # We don't have enough elements yet to form a subset of size K
+                # But we can still add current to heap for future
+                heappush(max_heap, -b_val)
+                current_b_sum += b_val
+                
+                # After adding, if we now have K-1 elements and this is the K-th element?
+                # We can form a subset only when i+1 >= K
+                if len(max_heap) == K - 1 and i >= K - 1:
+                    total_b_sum = current_b_sum + b_val  # wait no: current_b_sum already includes b_val
+                    # So this is wrong
+                    
+        # Even better approach: delay adding current element until after computing candidate
+        max_heap = []
+        current_b_sum = 0
+        ans = float('inf')
+        
+        for i in range(N):
+            a_val, b_val = items[i]
+            
+            # Try to form subset with current as max A
+            if len(max_heap) >= K - 1:
+                # We have at least K-1 candidates from previous elements
+                # But we maintain exactly K-1 smallest
+                total_b_sum = current_b_sum + b_val
+                candidate = a_val * total_b_sum
+                ans = min(ans, candidate)
+            elif len(max_heap) == K - 1:  # redundant
+                pass
+            
+            # Now add current element's B_i to the pool for future subsets
+            if K > 1:
+                if len(max_heap) < K - 1:
+                    heappush(max_heap, -b_val)
+                    current_b_sum += b_val
+                else:
+                    # Heap has K-1 elements
+                    if b_val < -max_heap[0]:
+                        removed = -heappop(max_heap)
+                        heappush(max_heap, -b_val)
+                        current_b_sum = current_b_sum - removed + b_val
+                    # else don't add
+            else:
+                # K == 1: no need to maintain heap
+                pass
+        
+        # Handle K == 1 separately for clarity
+        if K == 1:
+            ans = float('inf')
+            for i in range(N):
+                ans = min(ans, items[i][0] * items[i][1])
+        else:
+            max_heap = []
+            current_b_sum = 0
+            ans = float('inf')
+            for i in range(N):
+                a_val, b_val = items[i]
+                # Use current as max A -> need K-1 elements from [0, i-1] with smallest B sum
+                if len(max_heap) == K - 1:
+                    total_b_sum = current_b_sum + b_val
+                    candidate = a_val * total_b_sum
+                    ans = min(ans, candidate)
+                
+                # Add current B to pool
+                if len(max_heap) < K - 1:
+                    heappush(max_heap, -b_val)
+                    current_b_sum += b_val
+                else:
+                    if b_val < -max_heap[0]:
+                        removed = -heappop(max_heap)
+                        heappush(max_heap, -b_val)
+                        current_b_sum = current_b_sum - removed + b_val
+                    # else skip
+        
+        results.append(str(ans))
+    
+    print("\n".join(results))
+
+solve()
+```

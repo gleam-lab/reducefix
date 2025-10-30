@@ -1,0 +1,28 @@
+from collections import defaultdict
+
+N, M = map(int, input().split())
+A = list(map(int, input().split()))
+
+# 累積和（時計回りの距離）
+cum = [0] * (N + 1)
+for i in range(N):
+    cum[i + 1] = cum[i] + A[i]
+
+# mod M の値の出現回数をカウント
+count_mod = defaultdict(int)
+answer = 0
+
+# 累積和の各値に対して、同じmod Mの値とのペアを数える
+for val in cum:
+    mod = val % M
+    answer += count_mod[mod]
+    count_mod[mod] += 1
+
+# 全体からスタートとゴールが同じ場合（s == t）を除外する必要があるが、
+# この問題では s ≠ t かつ時計回りの距離が M の倍数であるペアを数えている。
+# 累積和の差が M の倍数 → mod M で等しい2点を選ぶことで達成。
+# 上のループでは、i < j となる (i,j) ペアで cum[j] - cum[i] ≡ 0 (mod M) を満たすものを数えている。
+# これは rest area i+1 から rest area j への時計回りの距離が M の倍数であることを意味する。
+# よって s = i+1, t = j というペアになる。すべての s ≠ t の条件も満たす。
+
+print(answer)

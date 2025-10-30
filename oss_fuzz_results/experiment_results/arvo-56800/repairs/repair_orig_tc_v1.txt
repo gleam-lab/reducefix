@@ -1,0 +1,58 @@
+ ### 1. 为什么这个输入会触发崩溃
+
+根据崩溃日志，错误类型是 `global-buffer-overflow`，具体在地址 `0x0000009de494` 处发生了读取操作，大小为 2 字节。从栈跟踪信息来看，这个错误发生在 `BEInt<unsigned short, 2>::operator unsigned short()` 调用中，该调用尝试将一个 `unsigned short` 类型的数据从内存读取到一个 `unsigned short` 变量中。
+
+进一步分析堆栈跟踪，可以看到错误发生在以下函数调用链中：
+- `OT::gvar::accelerator_t::apply_deltas_to_points`
+- `OT::gvar::get_glyph_var_data_bytes`
+- `OT::gvar::get_offset`
+
+这些函数涉及对 `gvar` 表的处理，特别是对偏移量的计算和读取。崩溃可能是因为在计算偏移量时，提供的索引超出了 `gvar` 表的有效范围，导致越界访问。
+
+### 2. 修复策略
+
+为了修复这个问题，需要确保在计算和使用偏移量时进行边界检查。具体来说，需要验证提供的索引是否在有效范围内。
+
+### 3. 具体的代码修复建议
+
+以下是具体的代码修复建议：
+
+#### 在 `OT::gvar::get_offset` 函数中添加边界检查
+
+```cpp
+unsigned int OT::gvar::get_offset(unsigned int index, unsigned int num_glyphs) const {
+    if (index >= num_glyphs) {
+        // Handle the error appropriately, e.g., log an error or return a default value
+        return 0; // Example default value
+    }
+    // Continue with the original logic
+    return /* calculate offset */ ;
+}
+```
+
+#### 在 `OT::gvar::get_glyph_var_data_bytes` 函数中添加边界检查
+
+```cpp
+bool OT::gvar::get_glyph_var_data_bytes(hb_blob_t* blob, unsigned int glyph_index, unsigned int num_glyphs) const {
+    if (glyph_index >= num_glyphs) {
+        // Handle the error appropriately
+        return false;
+    }
+    // Continue with the original logic
+    return true; // Example return value
+}
+```
+
+#### 在 `OT::gvar::accelerator_t::apply_deltas_to_points` 函数中添加边界检查
+
+```cpp
+void OT::gvar::accelerator_t::apply_deltas_to_points(unsigned int glyph_index, hb_array_t<int> deltas, hb_array_t<OT::contour_point_t> points) const {
+    if (glyph_index >= num_glyphs) {
+        // Handle the error appropriately
+        return;
+    }
+    // Continue with the original logic
+}
+```
+
+通过在关键函数中添加边界检查，可以确保在计算和使用偏移量时不会发生越界访问，从而避免崩溃。

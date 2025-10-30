@@ -1,0 +1,31 @@
+I'll analyze the crash and provide a fix.
+
+The issue is a "Use-of-uninitialized-value" crash in MuPDF's font loading code. The stack trace shows it occurs in `fz_drop_buffer` called from `pdf_load_embedded_font`, which is called from `pdf_load_font_descriptor`.
+
+Looking at the code around lines 551-587 in pdf-font.c, I notice that there's an incomplete function definition for `strcmp_ignore_space` that appears to be cut off mid-function. This is likely causing memory safety issues when this function is used elsewhere.
+
+The function should properly compare strings while ignoring spaces, but the current implementation is incomplete and may access uninitialized memory or return uninitialized values.
+
+Here's the fix:
+
+```
+<<<<<<< SEARCH
+static int strcmp_ignore_space(const char *a
+=======
+static int strcmp_ignore_space(const char *a, const char *b)
+{
+	while (*a && *b)
+	{
+		while (*a == ' ')
+			a++;
+		while (*b == ' ')
+			b++;
+		if (*a != *b)
+			return 0;
+		a++;
+		b++;
+	}
+	return *a == *b;
+}
+>>>>>>> REPLACE
+```

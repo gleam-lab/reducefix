@@ -1,0 +1,114 @@
+import sys
+from typing import Dict, Tuple
+
+def main():
+    data = sys.stdin.read().split()
+    if not data:
+        print(0)
+        return
+    
+    H = int(data[0]); W = int(data[1]); Q = int(data[2])
+    total_walls = H * W
+    
+    # For each column c, maintain the next wall above and below for each row
+    # Use union-find style path compression with dictionaries
+    up: Dict[int, Dict[int, int]] = [dict() for _ in range(W + 1)]  # up[c][r] = next wall above row r in col c
+    down: Dict[int, Dict[int, int]] = [dict() for _ in range(W + 1)]  # down[c][r] = next wall below row r in col c
+    left: Dict[int, Dict[int, int]] = [dict() for _ in range(H + 1)]  # left[r][c] = next wall to left of col c in row r
+    right: Dict[int, Dict[int, int]] = [dict() for _ in range(H + 1)]  # right[r][c] = next wall to right of col c in row r
+    
+    def find_up(c: int, r: int) -> int:
+        if r <= 0:
+            return 0
+        if r not in up[c]:
+            return r
+        up[c][r] = find_up(c, up[c][r])
+        return up[c][r]
+    
+    def find_down(c: int, r: int) -> int:
+        if r > H:
+            return H + 1
+        if r not in down[c]:
+            return r
+        down[c][r] = find_down(c, down[c][r])
+        return down[c][r]
+    
+    def find_left(r: int, c: int) -> int:
+        if c <= 0:
+            return 0
+        if c not in left[r]:
+            return c
+        left[r][c] = find_left(r, left[r][c])
+        return left[r][c]
+    
+    def find_right(r: int, c: int) -> int:
+        if c > W:
+            return W + 1
+        if c not in right[r]:
+            return c
+        right[r][c] = find_right(r, right[r][c])
+        return right[r][c]
+    
+    index = 3
+    for _ in range(Q):
+        R_q = int(data[index]); C_q = int(data[index+1]); index += 2
+        
+        # Check if there's a wall at (R_q, C_q)
+        # In column C_q, is R_q still reachable from itself?
+        if find_up(C_q, R_q) == R_q and find_down(C_q, R_q) == R_q:
+            # Wall exists at (R_q, C_q), destroy it
+            total_walls -= 1
+            
+            # Update vertical links in column C_q
+            up[C_q][R_q] = find_up(C_q, R_q - 1)
+            down[C_q][R_q] = find_down(C_q, R_q + 1)
+            
+            # Update horizontal links in row R_q
+            left[R_q][C_q] = find_left(R_q, C_q - 1)
+            right[R_q][C_q] = find_right(R_q, C_q + 1)
+        else:
+            # No wall at (R_q, C_q), try to destroy first walls in each direction
+            destroyed = set()
+            
+            # Up direction
+            pos = find_up(C_q, R_q - 1)
+            if pos > 0:
+                # Check if all cells between pos and R_q are empty
+                if find_down(C_q, pos) >= R_q:
+                    destroyed.add((pos, C_q))
+            
+            # Down direction
+            pos = find_down(C_q, R_q + 1)
+            if pos <= H:
+                if find_up(C_q, pos) <= R_q:
+                    destroyed.add((pos, C_q))
+            
+            # Left direction
+            pos = find_left(R_q, C_q - 1)
+            if pos > 0:
+                if find_right(R_q, pos) >= C_q:
+                    destroyed.add((R_q, pos))
+            
+            # Right direction
+            pos = find_right(R_q, C_q + 1)
+            if pos <= W:
+                if find_left(R_q, pos) <= C_q:
+                    destroyed.add((R_q, pos))
+            
+            total_walls -= len(destroyed)
+            
+            # Update the structures for each destroyed wall
+            for r, c in destroyed:
+                # Update vertical
+                if c <= W:
+                    up[c][r] = find_up(c, r - 1)
+                    down[c][r] = find_down(c, r + 1)
+                # Update horizontal
+                if r <= H:
+                    left[r][c] = find_left(r, c - 1)
+                    right[r][c] = find_right(r, c + 1)
+    
+    print(total_walls)
+
+if __name__ == "__main__":
+    main()

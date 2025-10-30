@@ -1,0 +1,29 @@
+=== LLM Response for reduced_tc version 7 ===
+Model: qwen-plus
+Temperature: 1.0
+======================================================================
+
+After analyzing the crash and code, I've identified the root cause of the heap-use-after-free issue. The problem occurs when `pixmap` is used after being freed in the scaling block. Specifically, when `scaled` is successfully created, `pixmap` is dropped but then later used in `fz_paint_image` without checking if it was replaced.
+
+The fix needs to ensure that `pixmap` is only accessed if it's valid, and we need to handle the case where `fz_get_pixmap_from_image` might fail or return NULL.
+
+```c
+### source/fitz/draw-device.c
+- start_line: 1983
+- end_line: 1985
+<<<<<<< SEARCH
+		pixmap = fz_get_pixmap_from_image(ctx, image, &src_area, &local_ctm, &dx, &dy);
+
+		state[1].mask = fz_new_pixmap_with_bbox(ctx, NULL, bbox, NULL, 1);
+		fz_clear_pixmap(ctx, state[1].mask);
+=======
+		pixmap = fz_get_pixmap_from_image(ctx, image, &src_area, &local_ctm, &dx, &dy);
+		if (!pixmap)
+			return;
+
+		state[1].mask = fz_new_pixmap_with_bbox(ctx, NULL, bbox, NULL, 1);
+		fz_clear_pixmap(ctx, state[1].mask);
+>>>>>>> REPLACE
+```
+
+This fix adds a null check after getting the pixmap. If `fz_get_pixmap_from_image` fails and returns NULL, we exit early before attempting to use it. This prevents the use-after-free condition by ensuring we don't proceed with invalid pixmap data. The `fz_always` block will still safely handle cleanup of any allocated resources through the exception mechanism.

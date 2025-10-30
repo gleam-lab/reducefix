@@ -1,0 +1,330 @@
+```python
+import bisect
+
+N = int(input())
+A = list(map(int, input().split()))
+B = list(map(int, input().split()))
+
+# Sort toys in descending order to handle largest toys first
+A.sort(reverse=True)
+B.sort()
+
+# We are going to try to assign the largest unassigned toy to an existing box if possible.
+# If not, we will need a new box of at least the toy's size.
+
+# We want to minimize x, so we try to use existing boxes as much as possible.
+# Use binary search on x (the size of the new box), or simulate greedy matching.
+
+# Alternate approach:
+# Try to match the toys with boxes greedily: for each toy from large to small,
+# check if there's an available box >= toy size. If not, this toy must go into the new box.
+# Then x must be at least that toy's size.
+# But note: multiple toys can't go into one box, and we can only add one new box.
+
+# So idea:
+# - We have N-1 existing boxes and N toys.
+# - One toy must go into the new box. We want the smallest x such that the remaining N-1 toys
+#   can be packed into the N-1 existing boxes (each box holds at most one toy).
+
+# Therefore: for each candidate toy i to be placed in the new box (of size A[i]),
+# check whether the other N-1 toys can be assigned to the N-1 boxes (with B[j] >= A[k]).
+
+# How to check if N-1 toys can fit in the boxes?
+# -> classic greedy: sort both toys (excluding candidate) and boxes in increasing order,
+#    and try to assign smallest box that fits each toy.
+
+# But trying all N candidates would be O(N^2 log N), which may be too slow for N=2e5.
+
+# Better idea:
+# Let’s assume we are going to put the toy of size 'x' in the new box. To minimize x,
+# we want to choose the smallest possible x such that the rest can be packed.
+
+# But note: we are allowed to choose any x. The new box must be at least as big as the toy it contains.
+# So if we decide to put toy of size 'a' in the new box, then x >= a.
+# Our goal is to minimize x, so ideally x = max{ a | a is the largest toy that cannot be packed otherwise }
+
+# However, we can choose which toy goes into the new box.
+
+# Strategy:
+# 1. Sort toys in ascending order.
+# 2. Sort boxes in ascending order.
+# 3. Try to see what is the minimum required x such that we can pack all toys.
+
+# We can use binary search on x (from 1 to maybe max(A)) and check if packing is possible.
+
+# But note: the new box has size x, so it can hold any toy <= x.
+# So in feasibility check for a given x:
+#   - We can choose one toy ≤ x to put in the new box.
+#   - The rest must be packable into the existing boxes (classic assignment: sort toys and boxes, greedy match).
+
+# How to check feasibility for a given x?
+#   - Consider all toys. We can omit one toy that is ≤ x.
+#   - Then check if the remaining N-1 toys can be matched with the N-1 boxes.
+
+# We want the minimal x such that this is possible.
+
+# But binary search over x in [1, 10^9] and for each x do O(N log N) matching? Total O(N log N * log(max_A)) ~ 2e5 * log(1e9) ~ 2e5*30 = 6e6, acceptable.
+
+# Alternatively, we can try to avoid binary search by determining which toy *must* be left out.
+
+# Alternate efficient idea:
+# Step 1: Check if we can pack all toys without using the new box? That is, can N toys go into N-1 boxes? No, because one-to-one.
+# So exactly one toy must go to the new box.
+
+# Step 2: Precompute the maximum number of toys (from the original set) that can be packed into the existing boxes.
+# But we need to know: for each toy, if we exclude it, can the rest be packed?
+
+# We can do:
+#   - Sort A and B.
+#   - Precompute the "greedy matching" of sorted toys (all N) against sorted boxes (N-1): 
+#     how many toys can be matched?
+
+# But we need to know: is it possible to match N-1 toys?
+
+# Greedy algorithm for matching:
+#   Sort toys: a0 <= a1 <= ... <= a_{N-1}
+#   Sort boxes: b0 <= b1 <= ... <= b_{N-2}
+#   Use two pointers: for each box, assign the smallest toy that fits and hasn't been used.
+
+# Actually: standard way is to iterate over boxes and for each box, assign the smallest toy that fits and is not yet assigned.
+
+# But we want to know: can we assign N-1 toys?
+
+# We can compute the maximum matching size between toys and boxes (without new box). If it's less than N-1, then even with optimal choice of toy to remove, we might fail.
+
+# But actually: we are allowed to remove one toy. So we want to know: is there a toy we can remove such that the rest can be matched?
+
+# We can try to simulate the greedy matching and see which toys are hard to place.
+
+# Efficient method:
+#   Let’s sort A and B.
+#   We try to match the N toys (sorted) with the N-1 boxes (sorted) using greedy:
+#       j = 0
+#       count = 0
+#       for i in range(N-1):  # for each box
+#           while j < N and A[j] > B[i]:
+#               j += 1
+#           if j < N:
+#               count += 1
+#               j += 1
+#   This gives the maximum number of toys that can be packed.
+
+# But we need exactly N-1. So if maximum matching < N-1, then impossible? Then answer -1.
+
+# But wait: we can choose which toy to remove. So we want to know: is there a toy such that when removed, the remaining N-1 toys can be packed into the N-1 boxes?
+
+# How to check that efficiently?
+
+# Idea from known problems: 
+#   Sort A and B.
+#   Try to simulate matching from left to right, but also consider skipping one toy.
+
+# We can precompute:
+#   prefix[i] = maximum number of toys among A[0:i] that can be matched with boxes[0:i-1]? Not exactly.
+
+# Alternatively: 
+#   Let’s define:
+#     Let f(k) = whether we can match k boxes with some k toys.
+#   But we want: after removing one toy, can we match all boxes?
+
+# Known trick: 
+#   Compute the matching if we skip no toy: but we have N toys and N-1 boxes, so we can match at most N-1.
+#   We want to know: is the maximum matching size == N-1? 
+#   But even if it is, we still need to make sure that the unmatched toy can be covered by the new box (i.e., x >= that toy's size).
+
+# However, we are allowed to choose which toy to leave out. So we want the minimum x such that:
+#   There exists a toy of size <= x, and the remaining N-1 toys can be matched with the N-1 boxes.
+
+# So:
+#   Step 1: Sort A and B.
+#   Step 2: Find the minimum x such that there exists an index i with A[i] <= x and the other N-1 toys can be packed into B.
+
+# How to quickly check for each i whether the other toys can be packed?
+
+# We can do:
+#   Precompute the matching of all toys against boxes, allowing one skip.
+
+# Standard solution for "matching with one skip":
+#   We can compute:
+#     Let L[i] = the number of matches we can get from A[0:i] and B[0:i] (but sizes matter).
+#   Instead, do:
+
+#   Use greedy to compute an array `match` where we simulate matching without skipping.
+
+#   Actually, we can do:
+#     Let’s try to match the toys in sorted order with boxes in sorted order, but allow skipping one toy.
+
+#   We can compute:
+#     dp[i][j] = whether we can match first i boxes using first j toys with at most one skip -> too heavy.
+
+# Better: 
+#   Compute two arrays:
+#     prefix[i]: the maximum number of boxes from B[0:i] that can be matched with toys from A, excluding one toy that is skipped, but we don't know which.
+#   Instead, known technique:
+
+#   Step 1: Without skipping any toy, what is the maximum number of matches we can get? We can get at most N-1.
+#   But we want exactly N-1.
+
+#   We can compute:
+#     Let’s define:
+#       Let j = 0
+#       matches = []
+#       for i in range(N-1):
+#           while j < N and A[j] <= B[i]:
+#               j += 1
+#           if j == 0: continue
+#           # we can match B[i] with A[j-1]?
+#       This is messy.
+
+#   Correct greedy for matching: 
+#       Sort A and B.
+#       j = 0
+#       count = 0
+#       for i in range(N-1):
+#           # find the smallest toy >= ? no: we want toy <= B[i]
+#           while j < N and A[j] <= B[i]:
+#               # push A[j] into a max-heap? 
+#               # Actually: we want to assign the smallest toy that fits? No: to maximize count, we should assign the smallest toy that fits? 
+#               # But since all toys are independent, we can use greedy: assign the smallest toy that fits to the current box? 
+#               # Actually: standard is to iterate toys and boxes together.
+
+#   Standard two-pointer for matching when both sorted:
+#       j = 0
+#       count = 0
+#       for i in range(N-1):
+#           while j < N and A[j] <= B[i]:
+#               j += 1
+#           if j > 0 and A[j-1] <= B[i]: 
+#               # but we already passed those
+#           Actually:
+
+#   Correct method:
+#       We want to assign boxes to toys: for each box (in increasing order), assign the smallest toy that fits and hasn't been used.
+
+#   But we can simulate:
+#       j = 0
+#       for i in range(N-1):
+#           # find the smallest toy >= ??? no: we need toy <= B[i]
+#           # Since A is sorted, we can advance j until A[j] > B[i], but we want the first toy that is not yet used and <= B[i].
+#           # Instead: 
+#           while j < N and A[j] <= B[i]:
+#               j += 1
+#           # Now j is the first index such that A[j] > B[i], so toys 0 to j-1 are <= B[i]
+#           # But we may have already used some.
+
+#   This doesn't work because we lose track of used toys.
+
+#   Instead, we can use a pointer that moves forward and mark used, but we want efficiency.
+
+#   Alternate: 
+#       Use a pointer j starting at 0.
+#       For each box in B (sorted):
+#           if j < N and A[j] <= B[i]:
+#               then we can match A[j] with B[i], j++.
+#           else:
+#               we cannot match this box? But maybe a later toy fits? 
+
+#   But that is wrong: we should not necessarily match the smallest toy; we might save it for a smaller box.
+
+#   Actually: to maximize the number of matches, we should assign the smallest toy that fits to the smallest box? 
+#   But standard: sort both, and for each box (in increasing order), assign the smallest toy that fits and hasn't been used.
+
+#   How to do without heap? 
+#       We can use two pointers if we do it differently.
+
+#   Known: 
+#       Sort A and B.
+#       j = 0
+#       count = 0
+#       for i in range(N):
+#           if j < N-1 and A[i] <= B[j]:
+#               # then we can assign toy i to box j
+#               count += 1
+#               j += 1
+#       This is the standard "assign toy to box" if we iterate toys in increasing order and boxes in increasing order.
+
+#   But that is not correct: we should iterate boxes and for each box, pick the smallest available toy that fits.
+
+#   Actually, the above is a known greedy for "maximum matching" in this setting:
+#       Sort toys: A[0..N-1] ascending
+#       Sort boxes: B[0..N-2] ascending
+#       j = 0
+#       for i in range(N):
+#           if j < N-1 and A[i] <= B[j]:
+#               j += 1   # we use box j for toy i, then move to next box
+#       Then j is the number of boxes used.
+
+#   But this is not correct: consider A=[1,2,3], B=[2,3]. 
+#       i=0: A[0]=1 <= B[0]=2 -> j=1
+#       i=1: A[1]=2 <= B[1]=3 -> j=2
+#       i=2: j==2, stop. count=2 -> correct.
+#   Another: A=[1,2,4], B=[2,3]
+#       i=0: 1<=2 -> j=1
+#       i=1: 2<=3 -> j=2
+#       i=2: skip -> count=2.
+#   But what if A=[1,3,4], B=[2,3]:
+#       i=0: 1<=2 -> j=1
+#       i=1: 3<=3 -> j=2
+#       i=2: skip -> count=2. Correct.
+#   But what if A=[2,3,4], B=[1,5]:
+#       i=0: 2<=1? no -> skip
+#       i=1: 3<=1? no -> skip
+#       i=2: 4<=1? no -> j=0. But we could match 2 with 5? 
+#   The issue: we are comparing A[i] with B[j], but j only increases when we make a match. 
+#   But in this case, B[0]=1 is too small for any toy? 
+#   Actually: B[0]=1, B[1]=5. 
+#   We should match the smallest box with the smallest toy that fits. 
+#   Toy 2: fits in B[1]=5, but not in B[0]=1.
+#   So we should skip B[0] and use B[1] for toy 2.
+
+#   The above greedy does not skip boxes.
+
+#   Correction: we need to iterate over boxes, not over toys.
+
+#   Correct greedy:
+#       j = 0
+#       for i in range(N-1):   # for each box
+#           while j < N and A[j] < B[i]:  # no: we want A[j] <= B[i], but if A[j] <= B[i], we can use it
+#           Actually: we want to find the smallest toy that is >= ??? no: we want toy <= box.
+#           But since toys are sorted, we can do:
+#           while j < N and A[j] <= B[i]:
+#               j += 1
+#           then we can use one of the toys from 0 to j-1 that hasn't been used? But we don't track.
+
+#   Instead, use a pointer for toys and iterate boxes:
+#       j = 0
+#       count = 0
+#       for i in range(N-1):
+#           # advance j to the first toy that is > B[i]? 
+#           # But we want to pick a toy that is <= B[i] and not used.
+#           # Since we want to save larger toys for larger boxes, we should use the smallest available toy that fits.
+#           # So if the smallest available toy (at index j) is <= B[i], we can use it.
+#           if j < N and A[j] <= B[i]:
+#               j += 1
+#               count += 1
+#           # else: we skip this box? But we might have a larger toy that fits? 
+#           # But if the smallest available toy is > B[i], then no toy fits -> skip box.
+#       This works.
+
+#   Example: A=[2,3,4], B=[1,5] (sorted: A=[2,3,4], B=[1,5])
+#       i=0: B[0]=1, A[j]=A[0]=2>1 -> skip box0.
+#       i=1: B[1]=5, A[0]=2<=5 -> use it, j=1, count=1.
+#       So we can match 1 box. But we need 2? -> fails.
+
+#   But we have 3 toys and 2 boxes, we only need to match 2 toys. But here we only matched 1.
+
+#   However, we could match toy0 (2) with box1 (5), and toy1 (3) with nothing? 
+#   But we only have two boxes: we can only use one of them? 
+
+#   But we skipped box0 because no toy fits? Actually, no toy fits in box0 (size1): the smallest toy is 2>1.
+#   So only one box (box1) can be used. So maximum matching is 1.
+
+#   But we need to match 2 toys (since one toy goes to new box, we need to pack 2 into the two boxes). 
+#   But we only have one usable box? -> impossible.
+
+#   So in this example, it's impossible? But we have two boxes: B=[1,5]. Only box1 is usable.
+
+#   So maximum number of toys we can pack into existing boxes is 1, so we cannot pack 2 toys -> impossible.
+
+#   Therefore, the condition is: the maximum number of toys that can be packed into the existing boxes must be at least N-1? 
+#   But we only have N-

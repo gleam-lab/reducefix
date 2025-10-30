@@ -1,0 +1,41 @@
+### 崩溃原因分析
+
+从崩溃日志来看，错误类型是 `global-buffer-overflow`，这意味着程序试图读取超出全局缓冲区范围的数据。具体来说，错误发生在 `BEInt<unsigned short, 2>::operator unsigned short()` 函数中，尝试从地址 `0x0000009de494` 读取数据，但该地址超出了预期的缓冲区范围。
+
+根据堆栈跟踪，这个错误是由 `OT::gvar::accelerator_t::apply_deltas_to_points` 函数中的调用链引起的。具体来说，问题可能出在 `OT::gvar::get_offset`、`OT::gvar::get_glyph_var_data_bytes` 或其他相关函数中对数组索引的处理上。
+
+### 修复策略
+
+1. **检查数组边界**：确保在访问数组元素时，索引在有效范围内。
+2. **初始化变量**：确保所有变量在使用前都已正确初始化。
+3. **增加调试信息**：添加更多的调试信息，以便更好地理解数据结构的状态。
+
+### 具体的代码修复建议
+
+假设 `OT::gvar::get_offset` 和 `OT::gvar::get_glyph_var_data_bytes` 中涉及到数组访问的地方，可以在这些地方添加边界检查。以下是一个伪代码示例：
+
+```cpp
+// 假设这是一个获取偏移量的函数
+unsigned int OT::gvar::get_offset(unsigned int glyph_index, unsigned int point_index) const {
+    // 假设 offsets 是一个存储偏移量的数组
+    if (glyph_index >= num_glyphs || point_index >= num_points) {
+        // 处理越界情况，例如返回错误码或抛出异常
+        return ERROR_CODE;
+    }
+    return offsets[glyph_index * num_points + point_index];
+}
+
+// 假设这是一个获取字节数据的函数
+void OT::gvar::get_glyph_var_data_bytes(hb_blob_t* blob, unsigned int glyph_index, unsigned int point_index) const {
+    // 假设 data 是一个存储字节数据的数组
+    if (glyph_index >= num_glyphs || point_index >= num_points) {
+        // 处理越界情况，例如返回错误码或抛出异常
+        return;
+    }
+    // 计算字节数据的位置并进行读取操作
+    uint8_t* byte_data = reinterpret_cast<uint8_t*>(data + offsets[glyph_index * num_points + point_index]);
+    // 进行读取操作...
+}
+```
+
+通过这种方式，可以在访问数组元素之前进行边界检查，避免访问无效内存区域导致的崩溃。如果需要更详细的调试信息，可以添加日志记录来跟踪关键变量的状态。

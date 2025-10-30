@@ -1,0 +1,71 @@
+n, m = map(int, input().split())
+captured = set()
+
+# The 8 possible knight move directions (i+2,j+1), (i+1,j+2), etc.
+moves = [(2,1), (1,2), (-1,2), (-2,1), (-2,-1), (-1,-2), (1,-2), (2,-1)]
+
+for _ in range(m):
+    a, b = map(int, input().split())
+    # Add all squares that this piece can capture (i.e. knight moves from (a,b))
+    for dx, dy in moves:
+        x, y = a + dx, b + dy
+        if 1 <= x <= n and 1 <= y <= n:
+            captured.add((x, y))
+
+# Total empty squares minus the ones under threat (captured)
+ans = n * n - len(captured)
+
+# But we must not count occupied squares as available
+# However, captured set only includes unoccupied squares that are under attack
+# But our calculation above does not subtract the M occupied squares
+# So total safe = total squares - occupied squares - attacked (but not occupied) squares
+# However, captured set may include occupied squares? No, because we just add positions regardless.
+
+# But: we cannot place on occupied squares, and also cannot place on captured squares
+# Our captured set contains only squares that are attacked, even if they are occupied.
+# But we should not count occupied squares as available, and also not double subtract.
+
+# Actually: total available = total squares - occupied squares - attacked squares that are not occupied
+# But in our current "captured" set, we have attacked squares, possibly overlapping with occupied.
+
+# However, since we cannot place on occupied squares anyway, and we only care about placing on empty squares,
+# We want: answer = (n*n - M) - (number of empty squares that are attacked)
+
+# But currently: ans = n*n - |captured| 
+# This is wrong because:
+# - It doesn't subtract the M occupied squares (we can't place on them)
+# - And it subtracts all captured squares, including those that are occupied
+
+# So correct logic:
+# Total safe = total squares - occupied squares - attacked empty squares
+# But: attacked empty squares = (captured set) minus (captured ∩ occupied)
+
+# Alternatively: total safe = (n*n) - M - (|captured| - |captured ∩ occupied|)
+
+# But easier: start with all squares, remove occupied and attacked (but avoid double counting)
+
+# Let's do:
+# forbidden = occupied_set ∪ captured_set
+# Then answer = n*n - |forbidden|
+
+# But we don't have occupied set stored yet.
+
+occupied = set()
+captured.clear()
+
+for _ in range(m):
+    a, b = map(int, input().split())
+    occupied.add((a, b))
+
+# Now compute all captured squares
+for a, b in occupied:
+    for dx, dy in moves:
+        x, y = a + dx, b + dy
+        if 1 <= x <= n and 1 <= y <= n:
+            captured.add((x, y))
+
+# Forbidden squares: occupied or under attack
+forbidden = occupied | captured  # union
+ans = n * n - len(forbidden)
+
+print(ans)

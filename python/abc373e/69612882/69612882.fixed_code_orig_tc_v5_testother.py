@@ -1,0 +1,90 @@
+import sys
+
+def solve():
+    input = sys.stdin.read
+    data = input().split()
+    
+    N = int(data[0])
+    M = int(data[1])
+    K = int(data[2])
+    A = list(map(int, data[3:3+N]))
+    
+    total_votes_so_far = sum(A)
+    remaining_votes = K - total_votes_so_far
+    
+    # If M == N, everyone wins regardless
+    if M == N:
+        print(' '.join(['0'] * N))
+        return
+    
+    # Create list of (votes, original_index) for sorting
+    candidates = [(A[i], i) for i in range(N)]
+    candidates.sort(reverse=True)
+    
+    # For each candidate, we need to compute minimum additional votes needed
+    result = [0] * N
+    
+    # Precompute the M-th highest vote count after adding votes optimally
+    # We'll use binary search or direct calculation for each candidate
+    
+    for idx in range(N):
+        current_votes, orig_idx = candidates[idx]
+        
+        # Check if already guaranteed victory
+        # Count how many candidates currently have more votes than this candidate
+        # But we must consider that other candidates can get up to remaining_votes distributed
+        # The safest way is to simulate worst-case scenario
+        
+        # In worst case, other candidates get as many votes as possible
+        # We need to ensure that at most M-1 candidates have more votes than us
+        
+        # Let's try to find minimum X such that even if other candidates get optimal distribution,
+        # candidate still has at most M-1 candidates with strictly more votes
+        
+        # Binary search on X
+        left, right = 0, remaining_votes + 1
+        answer = -1
+        
+        while left < right:
+            mid = (left + right) // 2
+            our_final = current_votes + mid
+            
+            # Simulate worst case: distribute remaining_votes - mid to other candidates
+            # to maximize the number of candidates with > our_final votes
+            available_votes = remaining_votes - mid
+            if available_votes < 0:
+                right = mid
+                continue
+                
+            # Count how many candidates can exceed our_final in worst case
+            exceed_count = 0
+            virtual_votes = [a for a, _ in candidates]
+            
+            # Our vote is updated
+            virtual_votes[idx] = our_final
+            
+            # For each other candidate, calculate maximum votes they can have
+            for j in range(N):
+                if j == idx:
+                    continue
+                max_possible = virtual_votes[j] + available_votes
+                if max_possible > our_final:
+                    exceed_count += 1
+                    # Allocate just enough to make them exceed
+                    needed = max(0, our_final - virtual_votes[j] + 1)
+                    available_votes -= needed
+            
+            if exceed_count < M:
+                answer = mid
+                right = mid
+            else:
+                left = mid + 1
+        
+        if answer == -1:
+            result[orig_idx] = -1
+        else:
+            result[orig_idx] = answer
+    
+    print(' '.join(map(str, result)))
+
+solve()

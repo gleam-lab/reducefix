@@ -1,0 +1,45 @@
+根据提供的崩溃日志和测试用例，我们可以推断出以下几点：
+
+1. **输入特征**：崩溃发生在输入为 `00` 时。这表明输入数据的长度可能不足以正确初始化某些变量或结构体成员。
+
+2. **崩溃原因**：崩溃发生在 `OT::gvar::accelerator_t::apply_deltas_to_points` 函数中，具体是在尝试访问全局缓冲区时发生了越界读取。错误发生在 `BEInt<unsigned short, 2>::operator unsigned short()` 和 `OT::IntType<unsigned short, 2u>::operator unsigned int()` 处，这表明在处理输入数据时，某些操作假设了数据的存在性，而实际上没有足够的数据来满足这些假设。
+
+3. **修复建议**：为了修复这个问题，我们需要确保在调用 `OT::gvar::accelerator_t::apply_deltas_to_points` 之前，所有必要的数据都已经正确加载并且长度足够。以下是具体的修复步骤：
+
+   - **检查输入数据的有效性**：在进入 `OT::gvar::accelerator_t::apply_deltas_to_points` 之前，添加对输入数据长度的检查。如果数据长度不足，则返回一个错误状态或跳过该操作。
+   
+   - **增加边界检查**：在 `OT::gvar::accelerator_t::apply_deltas_to_points` 内部，增加对数组和缓冲区的边界检查，确保在访问任何元素之前，索引都在有效范围内。
+   
+   - **使用智能指针或RAII机制**：考虑使用智能指针或资源获取即初始化（RAII）机制来管理动态分配的内存，确保在对象生命周期结束时自动释放资源，避免野指针问题。
+
+   - **调试和测试**：修复后，进行充分的测试，包括边界条件和异常情况下的测试，确保崩溃不再发生。
+
+具体的代码修改示例：
+
+```cpp
+bool OT::gvar::accelerator_t::apply_deltas_to_points(unsigned int glyph_index, hb_array_t<int> deltas, hb_array_t<OT::contour_point_t> points) const {
+    if (glyph_index >= num_glyphs()) {
+        // Handle error: glyph index out of bounds
+        return false;
+    }
+
+    // Check if there is enough data to process
+    if (deltas.length() < expected_delta_count(glyph_index)) {
+        // Handle error: not enough delta data
+        return false;
+    }
+
+    for (unsigned int i = 0; i < points.length(); ++i) {
+        if (i >= max_contours(glyph_index)) {
+            // Handle error: contour point index out of bounds
+            return false;
+        }
+        // Process each contour point
+        apply_delta_to_point(points[i], deltas[i]);
+    }
+
+    return true;
+}
+```
+
+通过上述修改，我们可以在处理 `OT::gvar::accelerator_t::apply_deltas_to_points` 之前和内部增加必要的边界检查，从而避免全局缓冲区溢出和其他潜在的运行时错误。

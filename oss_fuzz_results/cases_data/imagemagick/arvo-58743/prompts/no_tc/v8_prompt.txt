@@ -1,0 +1,259 @@
+=== Prompt for 无测试用例 (no_tc) version 8 ===
+Case ID: arvo-58743
+Target: imagemagick
+Model: qwen-plus
+Temperature: 1.0
+Use SEARCH/REPLACE: True
+======================================================================
+
+We are currently solving the following crash issue:
+--- BEGIN ISSUE ---
+Crash in unknown
+
+⚠️  **Note: The buggy file is a build/configuration script**, not source code.
+   The crash may be caused by:
+   - **Missing or incorrect compiler/linker flags**
+   - **Dependency version conflicts or linking issues**
+   - **Enabled features that trigger bugs in dependencies** (consider disabling problematic features)
+   - **Missing build guards or sanitization options**
+   
+   **Common fixes for build scripts:**
+   - Disable problematic features: `-DWITH_XXX=off`, `--disable-xxx`
+   - Add missing flags: `-DCMAKE_C_FLAGS="$CFLAGS"`, `CXXFLAGS="..."`
+   - Change build configuration: `-DCMAKE_BUILD_TYPE`, `-DBUILD_TESTING=off`
+   - Work around linking issues by disabling optional components
+   
+   **⚠️  CRITICAL**: The crash location in the stack trace may be **misleading**!
+   - A crash in library X doesn't mean you need to fix library X's code
+   - It may mean you need to **change how library X is built or linked**
+   - Focus on **what the build script enables/disables**, not just the crash location
+
+### Crash Details
+- Type: Stack-buffer-overflow WRITE 8
+- Function: unknown
+- Severity: High
+- Sanitizer: asan
+
+### Crash Stack Trace
+```
+_TIFFVGetField
+Fax3VGetField
+TIFFGetField
+```
+
+### Crash Log
+
+--- END ISSUE ---
+
+
+🎯 **EXACT BUG LOCATION**:
+- File: `Magick++/fuzz/build_dependencies.sh`, Lines 71-77
+
+Below are the source files that contain the bug:
+--- BEGIN FILES ---
+### Magick++/fuzz/build_dependencies.sh
+**Function containing the bug** (lines 41-101):
+
+```bash
+pushd "$SRC/Little-CMS"
+autoreconf -fiv
+./configure --disable-shared --prefix="$WORK"
+make -j$(nproc)
+make install
+popd
+
+# build libraw
+pushd "$SRC/libraw"
+autoreconf -fiv
+./configure --prefix="$WORK" --disable-shared --with-pic=yes --disable-examples PKG_CONFIG_PATH="$WORK/lib/pkgconfig" CXXFLAGS="$CXXFLAGS -DLIBRAW_USE_CALLOC_INSTEAD_OF_MALLOC=on"
+make -j$(nproc)
+make install
+popd
+
+# Build freetype2
+pushd "$SRC/freetype"
+./autogen.sh
+./configure --prefix="$WORK" --disable-shared PKG_CONFIG_PATH="$WORK/lib/pkgconfig"
+make -j$(nproc)
+make install
+popd
+
+# Build libde265
+pushd "$SRC/libde265"
+./autogen.sh
+./configure --disable-shared --prefix="$WORK"
+make -j$(nproc)
+make install
+popd
+
+# Build libheif  // <-- ⚠️ BUG IS HERE (Line 72)
+pushd "$SRC/libheif"  // <-- ⚠️ BUG IS HERE (Line 73)
+cmake . -DCMAKE_INSTALL_PREFIX=$WORK -DBUILD_SHARED_LIBS=off -DWITH_EXAMPLES=off -DCMAKE_BUILD_TYPE=Release  // <-- ⚠️ BUG IS HERE (Line 74)
+make -j$(nproc)  // <-- ⚠️ BUG IS HERE (Line 75)
+make install  // <-- ⚠️ BUG IS HERE (Line 76)
+popd  // <-- ⚠️ BUG IS HERE (Line 77)
+  // <-- ⚠️ BUG IS HERE (Line 78)
+# Build webp
+pushd "$SRC/libwebp"
+./autogen.sh
+./configure --disable-shared  --disable-png --disable-jpeg --disable-tiff --prefix="$WORK"
+make -j$(nproc)
+make install
+popd
+
+# Build openjpg
+pushd "$SRC/openjpeg"
+cmake . -DCMAKE_INSTALL_PREFIX=$WORK -DBUILD_SHARED_LIBS=off -DBUILD_CODEC=off -DCMAKE_BUILD_TYPE=Release
+make -j$(nproc)
+make install
+popd
+
+# Build libjxl
+pushd "$SRC/libjxl"
+cmake . -DCMAKE_INSTALL_PREFIX=$WORK -DBUILD_TESTING=off -DBUILD_SHARED_LIBS=false -DJPEGXL_FORCE_SYSTEM_LCMS2=true -DJPEGXL_ENABLE_EXAMPLES=false -DJPEGXL_ENABLE_FUZZERS=false -DJPEGXL_ENABLE_TOOLS=false -DJPEGXL_ENABLE_JPEGLI=false -DCMAKE_C_FLAGS="$CFLAGS" -DCMAKE_CXX_FLAGS="$CXXFLAGS"
+make -j$(nproc)
+make install
+cp third_party/brotli/*.a $WORK/lib
+cp third_party/brotli/*.pc $WORK/lib/pkgconfig
+popd
+```
+
+**🎯 Bug Location** (lines 71-77):
+```bash
+# Build libheif
+pushd "$SRC/libheif"
+cmake . -DCMAKE_INSTALL_PREFIX=$WORK -DBUILD_SHARED_LIBS=off -DWITH_EXAMPLES=off -DCMAKE_BUILD_TYPE=Release
+make -j$(nproc)
+make install
+popd
+
+```
+
+**⚠️ IMPORTANT**: When generating your SEARCH/REPLACE edit:
+- The shown function has 61 lines total
+- Bug is at lines 71-77
+- Variables declared before the bug MUST NOT be removed (they may be used after)
+- Check for paired macros (fz_try/always/catch, do/while) - keep them balanced
+- Only edit the MINIMAL lines needed to fix the bug
+
+--- END FILES ---
+
+### Buggy Code Snippet
+- **File**: `Magick++/fuzz/build_dependencies.sh`, **Lines**: 71-77
+
+```bash
+// File: Magick++/fuzz/build_dependencies.sh (lines 71-77)
+// This code needs to be fixed:
+# Build libheif
+pushd "$SRC/libheif"
+cmake . -DCMAKE_INSTALL_PREFIX=$WORK -DBUILD_SHARED_LIBS=off -DWITH_EXAMPLES=off -DENABLE_PLUGIN_LOADING=off -DCMAKE_BUILD_TYPE=Release
+make -j$(nproc)
+make install
+popd
+```
+
+### Your Task
+Analyze the crash and generate a patch to fix the bug.
+
+**Instructions**:
+1. Identify the root cause based on crash information and code
+2. Generate a minimal fix targeting the buggy lines
+3. Ensure the fix handles edge cases properly
+4. Do not over-engineer - focus on the specific issue
+
+**🔍 Special Analysis for Build Scripts**:
+
+Before generating the fix, consider these questions:
+1. **Does the crash indicate a linking/dependency issue?**
+   - Undefined references, symbol conflicts, or version mismatches
+   - Consider disabling problematic features rather than adding flags
+
+2. **Is the crash in a library that's being built?**
+   - The fix might be in how that library is configured (CMake flags, configure options)
+   - Check if similar libraries in the build script use different flags
+
+3. **What features are currently enabled?**
+   - Look for `-DWITH_XXX=on` or `--enable-xxx` that might trigger bugs
+   - Try disabling optional features: `-DWITH_JPEG_DECODER=off`, `-DENABLE_PLUGIN_LOADING=off`
+
+4. **Are all dependencies built consistently?**
+   - Do other libraries use `-DCMAKE_C_FLAGS="$CFLAGS"`? Should this one too?
+   - Or is adding sanitizer flags unnecessary/harmful in this case?
+
+**💡 Tip**: For oss-fuzz builds, disabling non-essential features is often the right fix, not adding flags.
+
+### Output Format
+Please first localize the bug, then generate *SEARCH/REPLACE* edits to fix the issue.
+
+Every *SEARCH/REPLACE* edit must use this format:
+1. The file path wrapped in ### (e.g., ### src/file.cpp)
+2. The start and end line numbers (- start_line: N, - end_line: M)
+3. The start of search block: <<<<<<< SEARCH
+4. A contiguous chunk of lines to search for in the existing source code
+5. The dividing line: =======
+6. The lines to replace into the source code
+7. The end of the replace block: >>>>>>> REPLACE
+
+Example (MINIMAL edit with context awareness):
+```cpp
+### src/memory/allocator.cpp
+- start_line: 145
+- end_line: 149
+<<<<<<< SEARCH
+	if (size > 0) {
+		ptr = malloc(size);
+		use_memory(ptr);
+	}
+=======
+	if (size > 0) {
+		ptr = malloc(size);
+		if (ptr != NULL)
+			use_memory(ptr);
+	}
+>>>>>>> REPLACE
+```
+
+**CRITICAL COMPILATION SAFETY REQUIREMENTS**:
+
+1. **MINIMAL edits ONLY** - Include only 3-8 lines in SEARCH block (bug line + 1-3 context lines)
+   - More lines = higher risk of breaking dependencies
+   - Focus ONLY on the buggy statement and immediate neighbors
+
+2. **Variable Dependency Check** - Before removing/modifying any line, verify:
+   - ❌ NEVER remove variable declarations if they're used later
+   - ❌ NEVER remove assignments if the variable is referenced afterwards
+   - ✅ Check if variables in your SEARCH block are used outside it
+
+3. **Macro Pairing Safety** - Special macros MUST stay paired:
+   - `fz_try(ctx) { ... } fz_always(ctx) { ... } fz_catch(ctx) { ... }` → NEVER break this chain
+   - `do { ... } while(...)` → NEVER remove the `while` if you keep the `do`
+   - `if (...) { ... } else { ... }` → Be careful not to create dangling else
+
+4. **Code Block Integrity**:
+   - ❌ NEVER remove opening/closing braces unless removing entire block
+   - ❌ NEVER remove function declarations/definitions
+   - ✅ Preserve the structural indentation and nesting
+
+5. **Indentation**:
+   - **Use TAB characters (\t)** for indentation, NOT spaces - the codebase uses tabs
+   - The SEARCH block must match EXACTLY (preserve all tabs and spacing)
+
+6. **Context Awareness** - When editing, mentally visualize:
+   ```
+   [Lines before SEARCH - you don't see these, assume they exist]
+   <<<<<<< SEARCH
+   your visible edit zone (3-8 lines)
+   =======
+   your proposed changes
+   >>>>>>> REPLACE
+   [Lines after SEARCH - you don't see these, assume they exist]
+   ```
+   Your edit should work correctly with unknown context before and after!
+
+**Common Compilation Errors to AVOID**:
+- ❌ "use of undeclared identifier 'X'" → You removed the declaration of X
+- ❌ "expected 'while' in do/while loop" → You broke a macro pairing
+- ❌ "function definition not allowed here" → You accidentally removed a closing brace
+- ❌ "extraneous closing brace" → You removed code but left its closing brace
+
+**Golden Rule**: If unsure whether a line is safe to remove, KEEP IT. Only modify the absolute minimum needed to fix the bug.

@@ -1,0 +1,142 @@
+```python
+import sys
+from collections import defaultdict
+
+def main():
+    data = sys.stdin.read().split()
+    if not data:
+        print(0)
+        return
+    
+    H = int(data[0]); W = int(data[1]); Q = int(data[2])
+    total_walls = H * W
+    
+    # For each row, maintain the next existing wall to the left and right
+    left_wall = [list(range(-1, W+1)) for _ in range(H+1)]  # left_wall[r][c] = farthest unbroken wall to the left in row r
+    right_wall = [list(range(W+2)) for _ in range(H+1)]     # right_wall[r][c] = farthest unbroken wall to the right in row r
+    
+    # For each column, maintain the next existing wall above and below
+    up_wall = [list(range(-1, H+1)) for _ in range(W+1)]    # up_wall[c][r] = farthest unbroken wall above in col c
+    down_wall = [list(range(H+2)) for _ in range(W+1)]      # down_wall[c][r] = farthest unbroken wall below in col c
+    
+    def find_left(r, c):
+        if left_wall[r][c] != c:
+            left_wall[r][c] = find_left(r, left_wall[r][c])
+        return left_wall[r][c]
+    
+    def find_right(r, c):
+        if right_wall[r][c] != c:
+            right_wall[r][c] = find_right(r, right_wall[r][c])
+        return right_wall[r][c]
+    
+    def find_up(c, r):
+        if up_wall[c][r] != r:
+            up_wall[c][r] = find_up(c, up_wall[c][r])
+        return up_wall[c][r]
+    
+    def find_down(c, r):
+        if down_wall[c][r] != r:
+            down_down = find_down(c, down_wall[c][r])
+            down_wall[c][r] = down_down
+        return down_wall[c][r]
+    
+    index = 3
+    for _ in range(Q):
+        R_q = int(data[index]); C_q = int(data[index+1]); index += 2
+        
+        # Check if there's a wall at (R_q, C_q)
+        # In row R_q, check if C_q is reachable from itself to the left/right
+        left_bound = find_left(R_q, C_q)
+        right_bound = find_right(R_q, C_q)
+        up_bound = find_up(C_q, R_q)
+        down_bound = find_down(C_q, R_q)
+        
+        has_wall_here = (left_bound == C_q) and (right_bound == C_q) and (up_bound == R_q) and (down_bound == R_q)
+        
+        if has_wall_here:
+            # Destroy the wall at (R_q, C_q)
+            total_walls -= 1
+            
+            # Update neighbors: merge left and right in row R_q
+            left_neighbor = find_left(R_q, C_q - 1)
+            right_neighbor = find_right(R_q, C_q + 1)
+            left_wall[R_q][C_q] = left_neighbor
+            right_wall[R_q][C_q] = right_neighbor
+            # Path compression: update the boundaries of adjacent cells
+            if left_neighbor >= 0:
+                right_wall[R_q][left_neighbor] = right_neighbor
+            if right_neighbor <= W:
+                left_wall[R_q][right_neighbor] = left_neighbor
+                
+            # Update neighbors: merge up and down in column C_q
+            up_neighbor = find_up(C_q, R_q - 1)
+            down_neighbor = find_down(C_q, R_q + 1)
+            up_wall[C_q][R_q] = up_neighbor
+            down_wall[C_q][R_q] = down_neighbor
+            if up_neighbor >= 0:
+                down_wall[C_q][up_neighbor] = down_neighbor
+            if down_neighbor <= H:
+                up_wall[C_q][down_neighbor] = up_neighbor
+                
+        else:
+            # No wall at (R_q, C_q), so try to destroy first wall in each direction
+            destroyed = set()
+            
+            # Up: find the first wall above R_q in column C_q
+            r_up = find_up(C_q, R_q - 1)
+            if r_up > 0:  # valid row
+                # Check if path is clear: no walls between r_up and R_q
+                next_below_r_up = find_down(C_q, r_up + 1)
+                if next_below_r_up == R_q:
+                    destroyed.add((r_up, C_q))
+            
+            # Down: find the first wall below R_q in column C_q
+            r_down = find_down(C_q, R_q + 1)
+            if r_down <= H:
+                next_above_r_down = find_up(C_q, r_down - 1)
+                if next_above_r_down == R_q:
+                    destroyed.add((r_down, C_q))
+            
+            # Left: find the first wall to the left of C_q in row R_q
+            c_left = find_left(R_q, C_q - 1)
+            if c_left > 0:
+                next_right_c_left = find_right(R_q, c_left + 1)
+                if next_right_c_left == C_q:
+                    destroyed.add((R_q, c_left))
+            
+            # Right: find the first wall to the right of C_q in row R_q
+            c_right = find_right(R_q, C_q + 1)
+            if c_right <= W:
+                next_left_c_right = find_left(R_q, c_right - 1)
+                if next_left_c_right == C_q:
+                    destroyed.add((R_q, c_right))
+            
+            total_walls -= len(destroyed)
+            
+            # Now actually destroy these walls by updating DSU-like structures
+            for r, c in destroyed:
+                # Update row R=r
+                left_neighbor = find_left(r, c - 1)
+                right_neighbor = find_right(r, c + 1)
+                left_wall[r][c] = left_neighbor
+                right_wall[r][c] = right_neighbor
+                if left_neighbor >= 0:
+                    right_wall[r][left_neighbor] = right_neighbor
+                if right_neighbor <= W:
+                    left_wall[r][right_neighbor] = left_neighbor
+                    
+                # Update column C=c
+                up_neighbor = find_up(c, r - 1)
+                down_neighbor = find_down(c, r + 1)
+                up_wall[c][r] = up_neighbor
+                down_wall[c][r] = down_neighbor
+                if up_neighbor >= 0:
+                    down_wall[c][up_neighbor] = down_neighbor
+                if down_neighbor <= H:
+                    up_wall[c][down_neighbor] = up_neighbor
+    
+    print(total_walls)
+
+if __name__ == "__main__":
+    main()
+```

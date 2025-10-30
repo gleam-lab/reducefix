@@ -1,0 +1,65 @@
+### 崩溃原因分析
+
+根据崩溃信息，`AddressSanitizer: stack-use-after-return` 表明在函数 `BEInt<unsigned short, 2>::operator unsigned short()` 返回后，仍然尝试读取栈上已经释放的数据。具体来说，在调用 `BEInt<unsigned short, 2>::operator unsigned short()` 后，程序继续访问该地址，导致了崩溃。
+
+从堆栈跟踪来看，问题发生在以下代码行：
+```cpp
+#0 0x5365ad in BEInt<unsigned short, 2>::operator unsigned short() const /src/harfbuzz/src/./hb-machinery.hh:625:13
+```
+
+这表明在 `BEInt<unsigned short, 2>::operator unsigned short()` 中，可能存在对栈上已释放数据的读取操作。
+
+### 修复策略
+
+要解决这个问题，需要确保在 `BEInt<unsigned short, 2>::operator unsigned short()` 中不会访问栈上已经释放的数据。可以通过以下步骤进行修复：
+
+1. **检查并初始化变量**：确保所有变量在使用前都被正确初始化。
+2. **避免返回后使用局部变量**：如果在函数返回后仍然需要使用某个局部变量，应该将其转换为静态变量或其他方式保存。
+3. **使用智能指针**：如果涉及动态内存分配，可以考虑使用智能指针来管理内存，以避免手动释放内存时可能出现的问题。
+
+### 具体的代码修复建议
+
+假设 `BEInt<unsigned short, 2>` 类定义如下：
+```cpp
+template<typename T, int N>
+class BEInt {
+public:
+    T value;
+
+    operator T() const {
+        // 可能存在对栈上已释放数据的读取操作
+        return value;
+    }
+};
+```
+
+修复后的代码示例如下：
+```cpp
+template<typename T, int N>
+class BEInt {
+public:
+    T value;
+
+    operator T() const {
+        // 确保 value 在使用前被正确初始化
+        if (!is_valid()) {
+            return default_value();
+        }
+        return value;
+    }
+
+private:
+    bool is_valid() const {
+        // 实现验证逻辑，确保 value 是有效的
+        // 例如，检查 value 是否在允许的范围内
+        return true; // 示例中总是返回 true
+    }
+
+    T default_value() const {
+        // 提供默认值
+        return 0;
+    }
+};
+```
+
+通过上述修改，可以在返回后检查 `value` 是否有效，从而避免对栈上已释放数据的读取操作，从而修复崩溃问题。

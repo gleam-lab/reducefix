@@ -1,0 +1,47 @@
+### 1. 崩溃原因分析
+
+从崩溃日志来看，错误发生在 `__interceptor_free` 函数中，表明程序尝试释放一个已经被释放过的内存块。这通常是因为在对象的析构函数或类似方法中多次调用了 `free` 或 `delete` 操作，导致双释放（double-free）问题。
+
+具体来说，在 `hb_vector_t<CFF::CFF1FontDictValues, 8u>::~hb_vector_t()` 析构函数中，调用了 `fini()` 方法，而在 `fini()` 方法中又尝试释放了同一个内存块两次。
+
+### 2. 修复策略
+
+修复这种双释放的问题需要确保每个内存块只被释放一次。可以通过以下步骤来解决：
+
+1. **添加标志位**：在类中添加一个标志位，用于标记内存是否已经被释放。
+2. **智能指针**：使用智能指针（如 `std::unique_ptr` 或 `std::shared_ptr`）来管理动态分配的内存，以避免手动释放内存时出现错误。
+3. **双重删除检查**：在释放内存之前，检查内存是否已经为空。
+
+### 3. 具体的代码修复建议
+
+假设我们选择使用标志位来修复这个问题，可以在 `hb_vector_t` 类中添加一个布尔标志位 `is_fini_called_` 来标记 `fini()` 是否已经被调用过。以下是修改后的伪代码：
+
+```cpp
+template <typename T, size_t N>
+class hb_vector_t {
+public:
+    ~hb_vector_t() {
+        fini();
+    }
+
+    void fini() {
+        if (!is_fini_called_) {
+            // 释放内存的操作
+            for (size_t i = 0; i < length_; ++i) {
+                data_[i].~T(); // 调用元素的析构函数
+            }
+            free(data_);
+            is_fini_called_ = true;
+        }
+    }
+
+private:
+    T* data_;
+    size_t length_;
+    bool is_fini_called_ = false;
+};
+```
+
+在这个修复方案中，`is_fini_called_` 标志位用于确保 `fini()` 方法只会被调用一次。如果 `fini()` 已经被调用过了，则不再执行释放操作，从而避免了双释放的问题。
+
+通过这种方式，可以有效地修复由于双释放引起的崩溃问题。

@@ -1,0 +1,40 @@
+=== LLM Response for no_tc version 10 ===
+Model: qwen-plus
+Temperature: 1.0
+======================================================================
+
+After analyzing the crash details and code, I can identify the root cause of the heap-use-after-free issue. The problem occurs because `fz_drop_pixmap(ctx, pixmap)` is called in the `fz_always` block even when `pixmap` was never allocated (i.e., when `fz_get_pixmap_from_image()` fails). This leads to a use-after-free condition.
+
+The fix needs to ensure we only drop the pixmap if it was successfully created. We should initialize `pixmap` to NULL and check this before attempting to drop it.
+
+```c
+### source/fitz/draw-device.c
+- start_line: 1928
+- end_line: 1930
+<<<<<<< SEARCH
+	fz_irect bbox;
+	fz_pixmap *scaled = NULL;
+	fz_pixmap *pixmap = NULL;
+	int dx, dy;
+=======
+	fz_irect bbox;
+	fz_pixmap *scaled = NULL;
+	fz_pixmap *pixmap = NULL;
+	int dx, dy;
+>>>>>>> REPLACE
+
+### source/fitz/draw-device.c
+- start_line: 2044
+- end_line: 2045
+<<<<<<< SEARCH
+	fz_always(ctx)
+		fz_drop_pixmap(ctx, pixmap);
+=======
+	fz_always(ctx) {
+		if (pixmap)
+			fz_drop_pixmap(ctx, pixmap);
+	}
+>>>>>>> REPLACE
+```
+
+The first edit preserves the existing initialization (which is already correct), and the second edit adds a null check before dropping the pixmap. This prevents the use-after-free by ensuring we only attempt to drop the pixmap if it was successfully allocated. The change is minimal and maintains all necessary macro pairings and variable dependencies.

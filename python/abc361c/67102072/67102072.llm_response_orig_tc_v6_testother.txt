@@ -1,0 +1,163 @@
+```python
+import sys
+
+def main():
+    import sys
+    input = sys.stdin.read
+    data = input().split()
+    
+    n = int(data[0])
+    k = int(data[1])
+    A = list(map(int, data[2:2+n]))
+    
+    # We are to remove exactly K elements, so we keep (n - k) elements.
+    # The goal is to minimize (max(B) - min(B)) for the remaining sequence B.
+    # Since we must preserve the original order, one optimal strategy is:
+    # Consider all contiguous subarrays of length (n - k), because removing K elements
+    # optimally to minimize range often involves keeping a contiguous block.
+    # However, note that we can remove any K elements arbitrarily (not necessarily from ends),
+    # but the key insight is: to minimize max - min, we want to exclude extreme values.
+    #
+    # Alternate approach:
+    # Sort the array along with original indices. Then try to pick a set of (n-k) elements
+    # such that their indices are in increasing order (to maintain order) and the value range
+    # (max - min) is minimized.
+    #
+    # Efficient solution:
+    # 1. Pair each element with its index and sort by value.
+    # 2. Use a sliding window over the sorted array of size (n - k). For each window,
+    #    check if the corresponding indices can form a valid subsequence (i.e., appear in increasing order).
+    #    But checking increasing order naively is expensive.
+    #
+    # Better idea: Instead, realize that after sorting by value, we consider windows of size (n-k).
+    # For each such window, the difference is A_sorted[right] - A_sorted[left].
+    # Now, we need to check whether there exists a subsequence of (n-k) elements within this value range
+    # that appears in the original array in order — i.e., their indices are increasing.
+    #
+    # How? For a fixed window [l, r], we have candidate values between A_sorted[l] and A_sorted[r].
+    # Extract all elements in this range and collect their original indices.
+    # Then check if we can select at least (n-k) elements from them such that indices are increasing?
+    # Actually, just check if there are at least (n-k) elements and the number of elements with indices
+    # forming an increasing sequence of length (n-k) — but actually, any subset of indices that are
+    # increasing in the original array is acceptable as long as we take them in order.
+    #
+    # Actually, simpler: if we extract the indices of the elements in the current window,
+    # then we can always pick them in increasing order of index (which corresponds to original order).
+    # So if the number of elements in the window is >= (n-k), we just need to know if we can choose (n-k)
+    # elements whose indices are in increasing order — which we always can, by selecting any (n-k) elements
+    # and then sorting them by index. But wait: we cannot reorder — but if we pick elements from the array
+    # that lie in the value window, and then take them in the original order (by traversing left to right),
+    # we get a valid B.
+    #
+    # Therefore, for a window [l, r] in sorted-by-value array, let S be the set of elements in that window.
+    # Collect their original indices, sort those indices, and see if we can find (n-k) elements in increasing
+    # index order. But since we can skip some, we only care about whether the total count >= (n-k)? No,
+    # even if count >= (n-k), they might not be arrangeable in increasing order without gaps — but they are!
+    # Because we can always go through the original array and pick up to (n-k) elements that fall in [l,r]
+    # values — just scan and greedily pick until we have (n-k) ones.
+    #
+    # So the condition is: in the current value window, are there at least (n-k) elements?
+    # But no: multiple elements can be in the window, but we need to ensure we can pick (n-k) of them
+    # in increasing index order — which is always possible if there are at least (n-k) elements in the window,
+    # because we can simply traverse the array from left to right and pick the first (n-k) that fall into the window.
+    #
+    # Therefore, algorithm:
+    # - Create list of (value, index), sort by value.
+    # - Use two pointers or sliding window over this sorted list to find minimum (max - min) such that
+    #   the number of elements in the window is >= (n-k), AND among these elements, we can pick (n-k)
+    #   in increasing index order — but again, existence of (n-k) elements in the window guarantees that.
+    #
+    # Wait: what if all (n-k) elements are clustered at the end? Doesn't matter — we can still pick them
+    # in order. So yes, any (n-k) elements from the window can be picked in increasing index order.
+    #
+    # BUT: we cannot change the relative order. But picking them in increasing index order preserves order.
+    # So it's valid.
+    #
+    # Therefore, we can do:
+    #   ans = infinity
+    #   sort A_with_index by value
+    #   for l in range(n):
+    #       r = l + (n-k) - 1
+    #       if r >= n: break
+    #       diff = A_sorted[r][0] - A_sorted[l][0]
+    #       ans = min(ans, diff)
+    #
+    # This is O(n) and correct? Yes! Because we're taking a window of size (n-k) in the sorted array.
+    # Each such window represents a candidate where we keep (n-k) elements with values in that range.
+    # And since we can always pick (n-k) elements from the array (in order) that fall in this value range
+    # (because there are at least (n-k) elements in the window), this gives a feasible solution.
+    #
+    # Why is this optimal? Because we're minimizing the difference between max and min of kept values.
+    # And any solution will have its min >= some A_sorted[i] and max <= some A_sorted[j] with j-i+1 >= (n-k).
+    # So the minimal such j-i+1 window gives the answer.
+    #
+    # However: we must be able to pick (n-k) elements in original order. But the above does not guarantee
+    # that the (n-k) elements in the value window appear in an order that allows us to pick them without violating
+    # the original sequence? Actually, we don't require them to be consecutive in the array — we can skip others.
+    # As long as we can find (n-k) elements in the entire array that have values in [A_sorted[l], A_sorted[r]]
+    # and we can pick them in increasing index order (which we always can by scanning left to right),
+    # it's valid.
+    #
+    # But note: the window has exactly (n-k) elements (if we take contiguous in sorted array), so we have
+    # exactly (n-k) elements in that value range. But they might not all be pickable in order? They are —
+    # we just iterate through the original array and whenever we see an element in the value range, we can choose
+    # to keep it (until we've kept (n-k)). So feasibility is guaranteed.
+    #
+    # However, caution: the same element might appear multiple times? But indices are unique.
+    #
+    # Therefore, simple solution:
+    #   sort the array
+    #   ans = min_{i=0}^{k} (A[i + (n-k) - 1] - A[i])
+    #
+    # Why from i=0 to k? Because we can remove k elements, so we can choose any (n-k) elements.
+    # The best way to minimize the range is to remove the k most extreme elements appropriately.
+    # But note: we cannot reorder. However, the above reasoning with sorting by value says that the optimal
+    # set of (n-k) elements to keep must lie within some interval of size (n-k) in the sorted array.
+    #
+    # Actually, we can prove: the optimal solution's kept elements must have values between A_sorted[i] and A_sorted[i + (n-k) - 1]
+    # for some i. And we can achieve any such set as long as we can pick them in order — which we can.
+    #
+    # But wait: what if the (n-k) smallest elements are scattered and we can't pick them without including
+    # larger ones? No, we can skip the large ones. When we scan the array, we can choose to keep only those
+    # that are in the desired value range.
+    #
+    # Example: A = [5,1,3,4,2], k=2 -> keep 3 elements.
+    # Sorted: [1,2,3,4,5]
+    # Candidate windows of size 3:
+    #   [1,2,3] -> diff=2
+    #   [2,3,4] -> diff=2
+    #   [3,4,5] -> diff=2
+    # But can we achieve diff=2?
+    # Try to keep values in [1,3]: elements 1,3,2 -> in array: 5(skip),1(keep),3(keep),4(skip),2(keep) -> B=[1,3,2] -> max=3,min=1 -> diff=2.
+    # Yes.
+    #
+    # But what if we could do better? Not in this case.
+    #
+    # However, consider: A = [1,5,2,6,3], k=2, keep 3.
+    # Sorted: [1,2,3,5,6]
+    # Windows:
+    #   [1,2,3] -> diff=2
+    #   [2,3,5] -> diff=3
+    #   [3,5,6] -> diff=3
+    # Can we achieve [1,2,3]? In array: 1(keep),5(skip),2(keep),6(skip),3(keep) -> B=[1,2,3] -> diff=2. Yes.
+    #
+    # So the algorithm works.
+    #
+    # But note: we are allowed to remove ANY K elements. So we can choose any (n-k) elements to keep.
+    # The constraint is only that their relative order remains.
+    # So the problem reduces to: choose (n-k) elements from A such that (max - min) is minimized.
+    # And that is equivalent to choosing a set of (n-k) numbers whose values are as close together as possible.
+    # Which is done by sorting and taking a sliding window of size (n-k).
+    #
+    # Therefore:
+    A.sort()
+    m = n - k
+    ans = float('inf')
+    for i in range(n - m + 1):
+        ans = min(ans, A[i + m - 1] - A[i])
+    
+    print(ans)
+
+if __name__ == '__main__':
+    main()
+```

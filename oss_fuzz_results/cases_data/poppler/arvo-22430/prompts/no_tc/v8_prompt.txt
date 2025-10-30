@@ -1,0 +1,450 @@
+=== Prompt for 无测试用例 (no_tc) version 8 ===
+Case ID: arvo-22430
+Target: poppler
+Model: qwen-plus
+Temperature: 1.0
+Use SEARCH/REPLACE: True
+======================================================================
+
+We are currently solving the following crash issue:
+--- BEGIN ISSUE ---
+Crash in unknown
+
+### Crash Details
+- Type: Container-overflow WRITE 4
+- Function: unknown
+- Severity: High
+- Sanitizer: asan
+
+### Crash Stack Trace
+```
+poppler::page::text_list
+pdf_fuzzer.cc
+```
+
+### Crash Log
+
+--- END ISSUE ---
+
+
+🎯 **EXACT BUG LOCATION**:
+- File: `cpp/poppler-page.cpp`, Lines 393-494
+
+Below are the source files that contain the bug:
+--- BEGIN FILES ---
+### cpp/poppler-page.cpp
+**Function containing the bug** (lines 393-494):
+
+```cpp
+std::vector<text_box> page::text_list(int opt_flag) const
+{  // <-- ⚠️ BUG IS HERE (Line 394)
+    std::vector<text_box>  output_list;  // <-- ⚠️ BUG IS HERE (Line 395)
+  // <-- ⚠️ BUG IS HERE (Line 396)
+    /* config values are same with Qt5 Page::TextList() */  // <-- ⚠️ BUG IS HERE (Line 397)
+    auto output_dev = std::make_unique<TextOutputDev>(  // <-- ⚠️ BUG IS HERE (Line 398)
+	nullptr, /* char* fileName */  // <-- ⚠️ BUG IS HERE (Line 399)
+	false,   /* bool physLayoutA */  // <-- ⚠️ BUG IS HERE (Line 400)
+	0,       /* double fixedPitchA */  // <-- ⚠️ BUG IS HERE (Line 401)
+	false,   /* bool rawOrderA */  // <-- ⚠️ BUG IS HERE (Line 402)
+	false    /* bool append */  // <-- ⚠️ BUG IS HERE (Line 403)
+    );  // <-- ⚠️ BUG IS HERE (Line 404)
+  // <-- ⚠️ BUG IS HERE (Line 405)
+    /*  // <-- ⚠️ BUG IS HERE (Line 406)
+     * config values are same with Qt5 Page::TextList(),  // <-- ⚠️ BUG IS HERE (Line 407)
+     * but rotation is fixed to zero.  // <-- ⚠️ BUG IS HERE (Line 408)
+     * Few people use non-zero values.  // <-- ⚠️ BUG IS HERE (Line 409)
+     */  // <-- ⚠️ BUG IS HERE (Line 410)
+    d->doc->doc->displayPageSlice(output_dev.get(),  // <-- ⚠️ BUG IS HERE (Line 411)
+                                  d->index + 1,           /* page */  // <-- ⚠️ BUG IS HERE (Line 412)
+                                  72, 72, 0,              /* hDPI, vDPI, rot */  // <-- ⚠️ BUG IS HERE (Line 413)
+                                  false, false, false,    /* useMediaBox, crop, printing */  // <-- ⚠️ BUG IS HERE (Line 414)
+                                  -1, -1, -1, -1,         /* sliceX, sliceY, sliceW, sliceH */  // <-- ⚠️ BUG IS HERE (Line 415)
+                                  nullptr, nullptr,       /* abortCheckCbk(), abortCheckCbkData */  // <-- ⚠️ BUG IS HERE (Line 416)
+                                  nullptr, nullptr,       /* annotDisplayDecideCbk(), annotDisplayDecideCbkData */  // <-- ⚠️ BUG IS HERE (Line 417)
+                                  true);                  /* copyXRef */  // <-- ⚠️ BUG IS HERE (Line 418)
+  // <-- ⚠️ BUG IS HERE (Line 419)
+    if (std::unique_ptr< TextWordList > word_list{output_dev->makeWordList()}) {  // <-- ⚠️ BUG IS HERE (Line 420)
+  // <-- ⚠️ BUG IS HERE (Line 421)
+        output_list.reserve(word_list->getLength());  // <-- ⚠️ BUG IS HERE (Line 422)
+        for (int i = 0; i < word_list->getLength(); i ++) {  // <-- ⚠️ BUG IS HERE (Line 423)
+            TextWord *word = word_list->get(i);  // <-- ⚠️ BUG IS HERE (Line 424)
+  // <-- ⚠️ BUG IS HERE (Line 425)
+            std::unique_ptr<GooString> gooWord{word->getText()};  // <-- ⚠️ BUG IS HERE (Line 426)
+            ustring ustr = ustring::from_utf8(gooWord->c_str());  // <-- ⚠️ BUG IS HERE (Line 427)
+  // <-- ⚠️ BUG IS HERE (Line 428)
+            double xMin, yMin, xMax, yMax;  // <-- ⚠️ BUG IS HERE (Line 429)
+            word->getBBox(&xMin, &yMin, &xMax, &yMax);  // <-- ⚠️ BUG IS HERE (Line 430)
+  // <-- ⚠️ BUG IS HERE (Line 431)
+            text_box tb{new text_box_data{  // <-- ⚠️ BUG IS HERE (Line 432)
+                ustr,  // <-- ⚠️ BUG IS HERE (Line 433)
+                {xMin, yMin, xMax-xMin, yMax-yMin},  // <-- ⚠️ BUG IS HERE (Line 434)
+                word->getRotation(),  // <-- ⚠️ BUG IS HERE (Line 435)
+                {},  // <-- ⚠️ BUG IS HERE (Line 436)
+                word->hasSpaceAfter() == true,  // <-- ⚠️ BUG IS HERE (Line 437)
+                nullptr  // <-- ⚠️ BUG IS HERE (Line 438)
+            }};  // <-- ⚠️ BUG IS HERE (Line 439)
+  // <-- ⚠️ BUG IS HERE (Line 440)
+            std::unique_ptr<text_box_font_info_data> tb_font_info = nullptr;  // <-- ⚠️ BUG IS HERE (Line 441)
+            if (opt_flag & page::text_list_include_font) {  // <-- ⚠️ BUG IS HERE (Line 442)
+                d->init_font_info_cache();  // <-- ⚠️ BUG IS HERE (Line 443)
+  // <-- ⚠️ BUG IS HERE (Line 444)
+                std::unique_ptr<text_box_font_info_data> tb_font{new text_box_font_info_data{  // <-- ⚠️ BUG IS HERE (Line 445)
+                    word->getFontSize(), // double font_size  // <-- ⚠️ BUG IS HERE (Line 446)
+                    {},                  // std::vector<text_box::writing_mode> wmodes;  // <-- ⚠️ BUG IS HERE (Line 447)
+                    d->font_info_cache,  // std::vector<font_info> font_info_cache;  // <-- ⚠️ BUG IS HERE (Line 448)
+                    {}                   // std::vector<int> glyph_to_cache_index;  // <-- ⚠️ BUG IS HERE (Line 449)
+                }};  // <-- ⚠️ BUG IS HERE (Line 450)
+  // <-- ⚠️ BUG IS HERE (Line 451)
+                tb_font_info = std::move(tb_font);  // <-- ⚠️ BUG IS HERE (Line 452)
+            };  // <-- ⚠️ BUG IS HERE (Line 453)
+  // <-- ⚠️ BUG IS HERE (Line 454)
+            tb.m_data->char_bboxes.reserve(word->getLength());  // <-- ⚠️ BUG IS HERE (Line 455)
+            for (int j = 0; j < word->getLength(); j ++) {  // <-- ⚠️ BUG IS HERE (Line 456)
+                word->getCharBBox(j, &xMin, &yMin, &xMax, &yMax);  // <-- ⚠️ BUG IS HERE (Line 457)
+                tb.m_data->char_bboxes.emplace_back(xMin, yMin, xMax-xMin, yMax-yMin);  // <-- ⚠️ BUG IS HERE (Line 458)
+            }  // <-- ⚠️ BUG IS HERE (Line 459)
+  // <-- ⚠️ BUG IS HERE (Line 460)
+            if (tb_font_info && d->font_info_cache_initialized) {  // <-- ⚠️ BUG IS HERE (Line 461)
+                tb_font_info->glyph_to_cache_index.reserve(word->getLength());  // <-- ⚠️ BUG IS HERE (Line 462)
+                for (int j = 0; j < word->getLength(); j++) {  // <-- ⚠️ BUG IS HERE (Line 463)
+                    const TextFontInfo* cur_text_font_info = word->getFontInfo(j);  // <-- ⚠️ BUG IS HERE (Line 464)
+  // <-- ⚠️ BUG IS HERE (Line 465)
+                    // filter-out the invalid WMode value here.  // <-- ⚠️ BUG IS HERE (Line 466)
+                    switch (cur_text_font_info->getWMode()) {  // <-- ⚠️ BUG IS HERE (Line 467)
+                    case 0:  // <-- ⚠️ BUG IS HERE (Line 468)
+                        tb_font_info->wmodes.push_back(text_box::horizontal_wmode);  // <-- ⚠️ BUG IS HERE (Line 469)
+                        break;  // <-- ⚠️ BUG IS HERE (Line 470)
+                    case 1:  // <-- ⚠️ BUG IS HERE (Line 471)
+                        tb_font_info->wmodes.push_back(text_box::vertical_wmode);  // <-- ⚠️ BUG IS HERE (Line 472)
+                        break;  // <-- ⚠️ BUG IS HERE (Line 473)
+                    default:  // <-- ⚠️ BUG IS HERE (Line 474)
+                        tb_font_info->wmodes.push_back(text_box::invalid_wmode);  // <-- ⚠️ BUG IS HERE (Line 475)
+                    };  // <-- ⚠️ BUG IS HERE (Line 476)
+  // <-- ⚠️ BUG IS HERE (Line 477)
+                    tb_font_info->glyph_to_cache_index[j] = -1;  // <-- ⚠️ BUG IS HERE (Line 478)
+                    for (size_t k = 0; k < tb_font_info->font_info_cache.size(); k++) {  // <-- ⚠️ BUG IS HERE (Line 479)
+                        if (cur_text_font_info->matches(&(tb_font_info->font_info_cache[k].d->ref))) {  // <-- ⚠️ BUG IS HERE (Line 480)
+                            tb_font_info->glyph_to_cache_index[j] = k;  // <-- ⚠️ BUG IS HERE (Line 481)
+                            break;  // <-- ⚠️ BUG IS HERE (Line 482)
+                        }  // <-- ⚠️ BUG IS HERE (Line 483)
+                    }  // <-- ⚠️ BUG IS HERE (Line 484)
+                }  // <-- ⚠️ BUG IS HERE (Line 485)
+                tb.m_data->text_box_font = std::move(tb_font_info);  // <-- ⚠️ BUG IS HERE (Line 486)
+            }  // <-- ⚠️ BUG IS HERE (Line 487)
+  // <-- ⚠️ BUG IS HERE (Line 488)
+            output_list.push_back(std::move(tb));  // <-- ⚠️ BUG IS HERE (Line 489)
+        }  // <-- ⚠️ BUG IS HERE (Line 490)
+    }  // <-- ⚠️ BUG IS HERE (Line 491)
+  // <-- ⚠️ BUG IS HERE (Line 492)
+    return output_list;  // <-- ⚠️ BUG IS HERE (Line 493)
+}  // <-- ⚠️ BUG IS HERE (Line 494)
+```
+
+**🎯 Bug Location** (lines 393-494):
+```cpp
+{
+    std::vector<text_box>  output_list;
+
+    /* config values are same with Qt5 Page::TextList() */
+    auto output_dev = std::make_unique<TextOutputDev>(
+	nullptr, /* char* fileName */
+	false,   /* bool physLayoutA */
+	0,       /* double fixedPitchA */
+	false,   /* bool rawOrderA */
+	false    /* bool append */
+    );
+
+    /*
+     * config values are same with Qt5 Page::TextList(),
+     * but rotation is fixed to zero.
+     * Few people use non-zero values.
+     */
+    d->doc->doc->displayPageSlice(output_dev.get(),
+                                  d->index + 1,           /* page */
+                                  72, 72, 0,              /* hDPI, vDPI, rot */
+                                  false, false, false,    /* useMediaBox, crop, printing */
+                                  -1, -1, -1, -1,         /* sliceX, sliceY, sliceW, sliceH */
+                                  nullptr, nullptr,       /* abortCheckCbk(), abortCheckCbkData */
+                                  nullptr, nullptr,       /* annotDisplayDecideCbk(), annotDisplayDecideCbkData */
+                                  true);                  /* copyXRef */
+
+    if (std::unique_ptr< TextWordList > word_list{output_dev->makeWordList()}) {
+
+        output_list.reserve(word_list->getLength());
+        for (int i = 0; i < word_list->getLength(); i ++) {
+            TextWord *word = word_list->get(i);
+
+            std::unique_ptr<GooString> gooWord{word->getText()};
+            ustring ustr = ustring::from_utf8(gooWord->c_str());
+
+            double xMin, yMin, xMax, yMax;
+            word->getBBox(&xMin, &yMin, &xMax, &yMax);
+
+            text_box tb{new text_box_data{
+                ustr,
+                {xMin, yMin, xMax-xMin, yMax-yMin},
+                word->getRotation(),
+                {},
+                word->hasSpaceAfter() == true,
+                nullptr
+            }};
+
+            std::unique_ptr<text_box_font_info_data> tb_font_info = nullptr;
+            if (opt_flag & page::text_list_include_font) {
+                d->init_font_info_cache();
+
+                std::unique_ptr<text_box_font_info_data> tb_font{new text_box_font_info_data{
+                    word->getFontSize(), // double font_size
+                    {},                  // std::vector<text_box::writing_mode> wmodes;
+                    d->font_info_cache,  // std::vector<font_info> font_info_cache;
+                    {}                   // std::vector<int> glyph_to_cache_index;
+                }};
+
+                tb_font_info = std::move(tb_font);
+            };
+
+            tb.m_data->char_bboxes.reserve(word->getLength());
+            for (int j = 0; j < word->getLength(); j ++) {
+                word->getCharBBox(j, &xMin, &yMin, &xMax, &yMax);
+                tb.m_data->char_bboxes.emplace_back(xMin, yMin, xMax-xMin, yMax-yMin);
+            }
+
+            if (tb_font_info && d->font_info_cache_initialized) {
+                tb_font_info->glyph_to_cache_index.reserve(word->getLength());
+                for (int j = 0; j < word->getLength(); j++) {
+                    const TextFontInfo* cur_text_font_info = word->getFontInfo(j);
+
+                    // filter-out the invalid WMode value here.
+                    switch (cur_text_font_info->getWMode()) {
+                    case 0:
+                        tb_font_info->wmodes.push_back(text_box::horizontal_wmode);
+                        break;
+                    case 1:
+                        tb_font_info->wmodes.push_back(text_box::vertical_wmode);
+                        break;
+                    default:
+                        tb_font_info->wmodes.push_back(text_box::invalid_wmode);
+                    };
+
+                    tb_font_info->glyph_to_cache_index[j] = -1;
+                    for (size_t k = 0; k < tb_font_info->font_info_cache.size(); k++) {
+                        if (cur_text_font_info->matches(&(tb_font_info->font_info_cache[k].d->ref))) {
+                            tb_font_info->glyph_to_cache_index[j] = k;
+                            break;
+                        }
+                    }
+                }
+                tb.m_data->text_box_font = std::move(tb_font_info);
+            }
+
+            output_list.push_back(std::move(tb));
+        }
+    }
+
+    return output_list;
+}
+```
+
+**⚠️ IMPORTANT**: When generating your SEARCH/REPLACE edit:
+- The shown function has 102 lines total
+- Bug is at lines 393-494
+- Variables declared before the bug MUST NOT be removed (they may be used after)
+- Check for paired macros (fz_try/always/catch, do/while) - keep them balanced
+- Only edit the MINIMAL lines needed to fix the bug
+
+--- END FILES ---
+
+### Buggy Code Snippet
+- **File**: `cpp/poppler-page.cpp`, **Lines**: 393-494
+
+```cpp
+// File: cpp/poppler-page.cpp (lines 393-494)
+// This code needs to be fixed:
+std::vector<text_box> page::text_list(int opt_flag) const
+{
+    std::vector<text_box>  output_list;
+
+    /* config values are same with Qt5 Page::TextList() */
+    auto output_dev = std::make_unique<TextOutputDev>(
+	nullptr, /* char* fileName */
+	false,   /* bool physLayoutA */
+	0,       /* double fixedPitchA */
+	false,   /* bool rawOrderA */
+	false    /* bool append */
+    );
+
+    /*
+     * config values are same with Qt5 Page::TextList(),
+     * but rotation is fixed to zero.
+     * Few people use non-zero values.
+     */
+    d->doc->doc->displayPageSlice(output_dev.get(),
+                                  d->index + 1,           /* page */
+                                  72, 72, 0,              /* hDPI, vDPI, rot */
+                                  false, false, false,    /* useMediaBox, crop, printing */
+                                  -1, -1, -1, -1,         /* sliceX, sliceY, sliceW, sliceH */
+                                  nullptr, nullptr,       /* abortCheckCbk(), abortCheckCbkData */
+                                  nullptr, nullptr,       /* annotDisplayDecideCbk(), annotDisplayDecideCbkData */
+                                  true);                  /* copyXRef */
+
+    if (std::unique_ptr< TextWordList > word_list{output_dev->makeWordList()}) {
+
+        output_list.reserve(word_list->getLength());
+        for (int i = 0; i < word_list->getLength(); i ++) {
+            TextWord *word = word_list->get(i);
+
+            std::unique_ptr<GooString> gooWord{word->getText()};
+            ustring ustr = ustring::from_utf8(gooWord->c_str());
+
+            double xMin, yMin, xMax, yMax;
+            word->getBBox(&xMin, &yMin, &xMax, &yMax);
+
+            text_box tb{new text_box_data{
+                ustr,
+                {xMin, yMin, xMax-xMin, yMax-yMin},
+                word->getRotation(),
+                {},
+                word->hasSpaceAfter() == true,
+                nullptr
+            }};
+
+            std::unique_ptr<text_box_font_info_data> tb_font_info = nullptr;
+            if (opt_flag & page::text_list_include_font) {
+                d->init_font_info_cache();
+
+                std::unique_ptr<text_box_font_info_data> tb_font{new text_box_font_info_data{
+                    word->getFontSize(), // double font_size
+                    {},                  // std::vector<text_box::writing_mode> wmodes;
+                    d->font_info_cache,  // std::vector<font_info> font_info_cache;
+                    {}                   // std::vector<int> glyph_to_cache_index;
+                }};
+
+                tb_font_info = std::move(tb_font);
+            };
+
+            tb.m_data->char_bboxes.reserve(word->getLength());
+            for (int j = 0; j < word->getLength(); j ++) {
+                word->getCharBBox(j, &xMin, &yMin, &xMax, &yMax);
+                tb.m_data->char_bboxes.emplace_back(xMin, yMin, xMax-xMin, yMax-yMin);
+            }
+
+            if (tb_font_info && d->font_info_cache_initialized) {
+                tb_font_info->glyph_to_cache_index.reserve(word->getLength());
+                for (int j = 0; j < word->getLength(); j++) {
+                    const TextFontInfo* cur_text_font_info = word->getFontInfo(j);
+
+                    // filter-out the invalid WMode value here.
+                    switch (cur_text_font_info->getWMode()) {
+                    case 0:
+                        tb_font_info->wmodes.push_back(text_box::horizontal_wmode);
+                        break;
+                    case 1:
+                        tb_font_info->wmodes.push_back(text_box::vertical_wmode);
+                        break;
+                    default:
+                        tb_font_info->wmodes.push_back(text_box::invalid_wmode);
+                    };
+
+                    tb_font_info->glyph_to_cache_index[j] = -1;
+                    for (size_t k = 0; k < tb_font_info->font_info_cache.size(); k++) {
+                        if (cur_text_font_info->matches(&(tb_font_info->font_info_cache[k].d->ref))) {
+                            tb_font_info->glyph_to_cache_index[j] = k;
+                            break;
+                        }
+                    }
+                }
+                tb.m_data->text_box_font = std::move(tb_font_info);
+            }
+
+            output_list.push_back(std::move(tb));
+        }
+    }
+
+    return output_list;
+}
+```
+
+### Your Task
+Analyze the crash and generate a patch to fix the bug.
+
+**Instructions**:
+1. Identify the root cause based on crash information and code
+2. Generate a minimal fix targeting the buggy lines
+3. Ensure the fix handles edge cases properly
+4. Do not over-engineer - focus on the specific issue
+
+### Output Format
+Please first localize the bug, then generate *SEARCH/REPLACE* edits to fix the issue.
+
+Every *SEARCH/REPLACE* edit must use this format:
+1. The file path wrapped in ### (e.g., ### src/file.cpp)
+2. The start and end line numbers (- start_line: N, - end_line: M)
+3. The start of search block: <<<<<<< SEARCH
+4. A contiguous chunk of lines to search for in the existing source code
+5. The dividing line: =======
+6. The lines to replace into the source code
+7. The end of the replace block: >>>>>>> REPLACE
+
+Example (MINIMAL edit with context awareness):
+```cpp
+### src/memory/allocator.cpp
+- start_line: 145
+- end_line: 149
+<<<<<<< SEARCH
+	if (size > 0) {
+		ptr = malloc(size);
+		use_memory(ptr);
+	}
+=======
+	if (size > 0) {
+		ptr = malloc(size);
+		if (ptr != NULL)
+			use_memory(ptr);
+	}
+>>>>>>> REPLACE
+```
+
+**CRITICAL COMPILATION SAFETY REQUIREMENTS**:
+
+1. **MINIMAL edits ONLY** - Include only 3-8 lines in SEARCH block (bug line + 1-3 context lines)
+   - More lines = higher risk of breaking dependencies
+   - Focus ONLY on the buggy statement and immediate neighbors
+
+2. **Variable Dependency Check** - Before removing/modifying any line, verify:
+   - ❌ NEVER remove variable declarations if they're used later
+   - ❌ NEVER remove assignments if the variable is referenced afterwards
+   - ✅ Check if variables in your SEARCH block are used outside it
+
+3. **Macro Pairing Safety** - Special macros MUST stay paired:
+   - `fz_try(ctx) { ... } fz_always(ctx) { ... } fz_catch(ctx) { ... }` → NEVER break this chain
+   - `do { ... } while(...)` → NEVER remove the `while` if you keep the `do`
+   - `if (...) { ... } else { ... }` → Be careful not to create dangling else
+
+4. **Code Block Integrity**:
+   - ❌ NEVER remove opening/closing braces unless removing entire block
+   - ❌ NEVER remove function declarations/definitions
+   - ✅ Preserve the structural indentation and nesting
+
+5. **Indentation**:
+   - **Use TAB characters (\t)** for indentation, NOT spaces - the codebase uses tabs
+   - The SEARCH block must match EXACTLY (preserve all tabs and spacing)
+
+6. **Context Awareness** - When editing, mentally visualize:
+   ```
+   [Lines before SEARCH - you don't see these, assume they exist]
+   <<<<<<< SEARCH
+   your visible edit zone (3-8 lines)
+   =======
+   your proposed changes
+   >>>>>>> REPLACE
+   [Lines after SEARCH - you don't see these, assume they exist]
+   ```
+   Your edit should work correctly with unknown context before and after!
+
+**Common Compilation Errors to AVOID**:
+- ❌ "use of undeclared identifier 'X'" → You removed the declaration of X
+- ❌ "expected 'while' in do/while loop" → You broke a macro pairing
+- ❌ "function definition not allowed here" → You accidentally removed a closing brace
+- ❌ "extraneous closing brace" → You removed code but left its closing brace
+
+**Golden Rule**: If unsure whether a line is safe to remove, KEEP IT. Only modify the absolute minimum needed to fix the bug.

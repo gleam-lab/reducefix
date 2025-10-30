@@ -1,0 +1,75 @@
+### 1. 为什么这个输入会触发崩溃
+
+根据崩溃信息，崩溃发生在 `hb_vector_t<CFF::dict_val_t>::resize` 函数中，具体是在调用 `__msan_memset` 函数时发生段错误。这表明在尝试访问或修改内存地址 `0x0000000e680b` 时出现了问题。
+
+从堆栈跟踪来看，崩溃的原因可能是由于 `hb_vector_t<CFF::dict_val_t>::resize` 函数试图分配或扩展内存空间，但在实际操作过程中，由于某种原因导致了内存越界或无效指针的使用。这种情况下，内存保护机制（如 AddressSanitizer 或 MemorySanitizer）会检测到非法内存访问并报告错误。
+
+### 2. 修复策略
+
+修复这种崩溃通常需要确保在调整向量大小时不会出现内存越界的情况。可能的修复策略包括：
+
+- 检查向量的容量和大小，确保在调整大小之前有足够的可用内存。
+- 使用智能指针或自动管理内存的容器来避免手动内存管理中的错误。
+- 添加边界检查以确保所有内存操作都在有效范围内进行。
+
+### 3. 具体的代码修复建议
+
+以下是一些具体的代码修复建议：
+
+#### 在 `hb_vector_t<CFF::dict_val_t>::resize` 中添加边界检查
+
+```cpp
+template <typename T>
+void hb_vector_t<T>::resize(int new_size) {
+    if (new_size < 0 || new_size > INT_MAX / sizeof(T)) {
+        // Handle invalid size, e.g., throw an exception or log an error
+        return;
+    }
+
+    T* new_data = static_cast<T*>(realloc(data_, new_size * sizeof(T)));
+    if (!new_data) {
+        // Handle allocation failure, e.g., throw an exception or log an error
+        return;
+    }
+
+    if (new_size > capacity_) {
+        memset(new_data + capacity_, 0, (new_size - capacity_) * sizeof(T));
+    }
+
+    data_ = new_data;
+    capacity_ = new_size;
+}
+```
+
+#### 确保在调用 `push` 方法时不会超出向量大小
+
+```cpp
+template <typename T>
+void hb_vector_t<T>::push(const T& value) {
+    if (size_ >= capacity_) {
+        resize(capacity_ == 0 ? 1 : capacity_ * 2);
+    }
+    data_[size_] = value;
+    ++size_;
+}
+```
+
+#### 使用智能指针管理内存
+
+如果适用，可以考虑使用 `std::vector` 来替代自定义的向量实现，因为 `std::vector` 内部已经包含了内存管理的逻辑，并且更不容易出错。
+
+```cpp
+#include <vector>
+
+class hb_vector_t {
+public:
+    void push_back(const dict_val_t& value) {
+        data_.push_back(value);
+    }
+
+private:
+    std::vector<dict_val_t> data_;
+};
+```
+
+通过这些改进，可以减少内存越界和非法内存访问的风险，从而避免崩溃的发生。

@@ -1,0 +1,81 @@
+### 问题分析
+
+从崩溃信息来看，程序在执行 `hb_vector_t<CFF::op_str_t>::resize` 时出现了 segmentation-fault。具体来说，问题出在调用了 `__asan_memset` 函数时，尝试写入一个未知地址（`0x000000094e08`）。这通常意味着堆上分配的内存被错误地释放或访问，导致指针变得无效。
+
+### 可能的原因
+
+1. **内存越界**：在 `hb_vector_t` 的 `resize` 方法中，可能没有正确处理内存重新分配的情况，导致新的内存块没有正确初始化。
+2. **指针错误**：在某些情况下，指针可能被错误地设置为无效值，导致后续操作失败。
+
+### 代码修复建议
+
+为了修复这个问题，我们需要确保在 `resize` 方法中正确处理内存重新分配，并且检查所有涉及指针的操作是否正确。以下是一些具体的修复建议：
+
+#### 1. 检查内存分配和释放
+
+确保在 `resize` 方法中正确分配和释放内存。可以使用标准库中的 `new[]` 和 `delete[]` 来管理动态数组。
+
+```cpp
+template <typename T>
+class hb_vector_t {
+public:
+    void resize(int new_size) {
+        if (new_size > capacity) {
+            capacity = std::max(capacity * 2, new_size);
+            T* new_data = new T[capacity];
+            if (data) {
+                std::copy(data, data + size, new_data);
+                delete[] data;
+            }
+            data = new_data;
+        }
+        size = new_size;
+    }
+
+private:
+    T* data = nullptr;
+    int size = 0;
+    int capacity = 0;
+};
+```
+
+#### 2. 添加边界检查
+
+在 `resize` 方法中添加边界检查，确保新分配的内存块不会超出有效范围。
+
+```cpp
+template <typename T>
+void hb_vector_t<T>::resize(int new_size) {
+    if (new_size < 0) {
+        throw std::invalid_argument("Negative size");
+    }
+    if (new_size > capacity) {
+        capacity = std::max(capacity * 2, new_size);
+        T* new_data = new T[capacity];
+        if (data) {
+            std::copy(data, data + size, new_data);
+            delete[] data;
+        }
+        data = new_data;
+    }
+    size = new_size;
+}
+```
+
+#### 3. 确保指针有效性
+
+在每次操作指针之前，确保它们是有效的。可以在调试版本中添加额外的检查。
+
+```cpp
+template <typename T>
+void hb_vector_t<T>::push(const T& value) {
+    if (size >= capacity) {
+        resize(capacity + 1);
+    }
+    data[size++] = value;
+}
+```
+
+### 结论
+
+通过上述修复措施，我们可以确保 `hb_vector_t` 类在进行内存重新分配时不会出现 segmentation-fault。关键在于正确管理动态内存，确保所有指针都是有效的，并且在操作这些指针之前进行适当的检查。

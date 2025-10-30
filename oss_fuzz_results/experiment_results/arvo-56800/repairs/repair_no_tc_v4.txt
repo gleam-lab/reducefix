@@ -1,0 +1,87 @@
+### 崩溃原因分析
+
+根据崩溃日志，错误类型是`global-buffer-overflow`，这意味着程序试图读取超出全局变量边界的数据。具体来说，在调用`BEInt<unsigned short, 2>::operator unsigned short()`时，尝试从地址`0x0000009de494`读取2字节数据。然而，该地址超出了当前栈帧的合法范围。
+
+崩溃发生在以下代码行：
+
+```cpp
+#0 0x59ed1e in BEInt<unsigned short, 2>::operator unsigned short() const /work/build/../../src/harfbuzz/src/hb-algs.hh:120:56
+```
+
+这表明问题可能出在`hb-algs.hh`文件中的某个操作上，尝试访问超出已分配内存范围的数据。
+
+### 修复策略
+
+1. **验证缓冲区大小**：确保所有对数组、缓冲区的访问都在有效范围内。
+2. **使用安全的库函数**：如果使用第三方库，确保这些库是经过充分测试的，或者自己实现安全版本。
+3. **增加调试信息**：通过添加日志或调试信息来跟踪变量的值，特别是在涉及到指针和数组的操作时。
+
+### 具体的代码修复建议
+
+假设问题出现在`hb-algs.hh`文件中，我们需要确保对`BEInt<unsigned short, 2>`类型的对象进行正确的初始化和访问。以下是一些可能的修复措施：
+
+1. **确保构造函数正确初始化**：
+   确保`BEInt<unsigned short, 2>`类型的对象在构造时正确初始化。
+
+   ```cpp
+   // 在hb-algs.hh文件中
+   template <typename T, unsigned N>
+   class BEInt {
+   public:
+       BEInt(const T* data) : data_(data) {}
+
+       operator T() const {
+           if (N > sizeof(T)) {
+               throw std::out_of_range("Buffer overflow detected");
+           }
+           T value = 0;
+           for (unsigned i = 0; i < N; ++i) {
+               value <<= 8;
+               value |= static_cast<unsigned char>(data_[i]);
+           }
+           return value;
+       }
+
+   private:
+       const T* data_;
+   };
+   ```
+
+2. **增加边界检查**：
+   在访问`BEInt<unsigned short, 2>`类型的数据之前，增加边界检查。
+
+   ```cpp
+   // 在hb-algs.hh文件中
+   template <typename T, unsigned N>
+   class BEInt {
+   public:
+       BEInt(const T* data) : data_(data) {}
+
+       operator T() const {
+           if (N > sizeof(T)) {
+               throw std::out_of_range("Buffer overflow detected");
+           }
+           T value = 0;
+           for (unsigned i = 0; i < N; ++i) {
+               value <<= 8;
+               value |= static_cast<unsigned char>(data_[i]);
+           }
+           return value;
+       }
+
+   private:
+       const T* data_;
+   };
+   ```
+
+3. **更新调用代码**：
+   确保在调用`BEInt<unsigned short, 2>::operator unsigned short()`时，传递的指针指向有效的数据。
+
+   ```cpp
+   // 在调用处
+   const uint8_t* buffer = ...; // 确保这是一个有效的缓冲区指针
+   BEInt<uint16_t, 2> be_int(buffer);
+   uint16_t value = static_cast<uint16_t>(be_int);
+   ```
+
+通过这些修复措施，可以有效地防止全局缓冲区溢出，从而避免类似崩溃的发生。

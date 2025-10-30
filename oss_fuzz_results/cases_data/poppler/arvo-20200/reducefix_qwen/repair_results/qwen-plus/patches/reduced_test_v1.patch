@@ -1,0 +1,110 @@
+diff --git a/poppler/SecurityHandler.cc b/poppler/SecurityHandler.cc
+index bdfd89f..2b235e7 100644
+--- a/poppler/SecurityHandler.cc
++++ b/poppler/SecurityHandler.cc
+@@ -257,6 +257,93 @@ StandardSecurityHandler::StandardSecurityHandler(PDFDoc *docA,
+       userKey = userKeyObj.getString()->copy();
+       if (encVersion >= 1 && encVersion <= 2 &&
+ 	  encRevision >= 2 && encRevision <= 3) {
++	if (fileIDObj.isDict() || fileIDObj.isArray()) {
++      revisionObj.isInt() &&
++      permObj.isInt() &&
++      ownerKeyObj.isString() &&
++      userKeyObj.isString()) {
++    encVersion = versionObj.getInt();
++    encRevision = revisionObj.getInt();
++    if ((encRevision <= 4 &&
++	 ownerKeyObj.getString()->getLength() == 32 &&
++	 userKeyObj.getString()->getLength() == 32) ||
++	((encRevision == 5 || encRevision == 6) &&
++	 // the spec says 48 bytes, but Acrobat pads them out longer
++	 ownerKeyObj.getString()->getLength() >= 48 &&
++	 userKeyObj.getString()->getLength() >= 48 &&
++	 ownerEncObj.isString() &&
++	 ownerEncObj.getString()->getLength() == 32 &&
++	 userEncObj.isString() &&
++	 userEncObj.getString()->getLength() == 32)) {
++      encAlgorithm = cryptRC4;
++      // revision 2 forces a 40-bit key - some buggy PDF generators
++      // set the Length value incorrectly
++      if (encRevision == 2 || !lengthObj.isInt()) {
++	fileKeyLength = 5;
++      } else {
++	fileKeyLength = lengthObj.getInt() / 8;
++      }
++      encryptMetadata = gTrue;
++      //~ this currently only handles a subset of crypt filter functionality
++      //~ (in particular, it ignores the EFF entry in encryptDictA, and
++      //~ doesn't handle the case where StmF, StrF, and EFF are not all the
++      //~ same)
++      if ((encVersion == 4 || encVersion == 5) &&
++	  (encRevision == 4 || encRevision == 5 || encRevision == 6)) {
++	Object cryptFiltersObj = encryptDictA->dictLookup("CF");
++	Object streamFilterObj = encryptDictA->dictLookup("StmF");
++	Object stringFilterObj = encryptDictA->dictLookup("StrF");
++	if (cryptFiltersObj.isDict() &&
++	    streamFilterObj.isName() &&
++	    stringFilterObj.isName() &&
++	    !strcmp(streamFilterObj.getName(), stringFilterObj.getName())) {
++	  if (!strcmp(streamFilterObj.getName(), "Identity")) {
++	    // no encryption on streams or strings
++	    encVersion = encRevision = -1;
++	  } else {
++	    Object cryptFilterObj = cryptFiltersObj.dictLookup(streamFilterObj.getName());
++	    if (cryptFilterObj.isDict()) {
++	      Object cfmObj = cryptFilterObj.dictLookup("CFM");
++	      if (cfmObj.isName("V2")) {
++		encVersion = 2;
++		encRevision = 3;
++		Object cfLengthObj = cryptFilterObj.dictLookup("Length");
++		if (cfLengthObj.isInt()) {
++		  //~ according to the spec, this should be cfLengthObj / 8
++		  fileKeyLength = cfLengthObj.getInt();
++		}
++	      } else if (cfmObj.isName("AESV2")) {
++		encVersion = 2;
++		encRevision = 3;
++		encAlgorithm = cryptAES;
++		Object cfLengthObj = cryptFilterObj.dictLookup("Length");
++		if (cfLengthObj.isInt()) {
++		  //~ according to the spec, this should be cfLengthObj / 8
++		  fileKeyLength = cfLengthObj.getInt();
++		}
++	      } else if (cfmObj.isName("AESV3")) {
++		encVersion = 5;
++		// let encRevision be 5 or 6
++		encAlgorithm = cryptAES256;
++		Object cfLengthObj = cryptFilterObj.dictLookup("Length");
++		if (cfLengthObj.isInt()) {
++		  //~ according to the spec, this should be cfLengthObj / 8
++		  fileKeyLength = cfLengthObj.getInt();
++		}
++	      }
++	    }
++	  }
++	}
++	Object encryptMetadataObj = encryptDictA->dictLookup("EncryptMetadata");
++	if (encryptMetadataObj.isBool()) {
++	  encryptMetadata = encryptMetadataObj.getBool();
++	}
++      }
++      permFlags = permObj.getInt();
++      ownerKey = ownerKeyObj.getString()->copy();
++      userKey = userKeyObj.getString()->copy();
++      if (encVersion >= 1 && encVersion <= 2 &&
++	  encRevision >= 2 && encRevision <= 3) {
+ 	if (fileIDObj.isArray()) {
+ 	  Object fileIDObj1 = fileIDObj.arrayGet(0);
+ 	  if (fileIDObj1.isString()) {
+@@ -267,7 +354,10 @@ StandardSecurityHandler::StandardSecurityHandler(PDFDoc *docA,
+ 	} else {
+ 	  fileID = new GooString();
+ 	}
+-	if (fileKeyLength > 16 || fileKeyLength < 0) {
++      } else {
++	fileID = new GooString();
++      }
++      if (fileKeyLength > 16 || fileKeyLength < 0) {
+ 	  fileKeyLength = 16;
+ 	}
+ 	ok = gTrue;

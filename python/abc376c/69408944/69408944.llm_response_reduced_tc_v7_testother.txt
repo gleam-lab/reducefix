@@ -1,0 +1,339 @@
+```python
+import heapq
+
+N = int(input())
+A = sorted(map(int, input().split()), reverse=True)  # Sort toys in descending order
+B = sorted(map(int, input().split()), reverse=True)  # Sort boxes in descending order
+
+# We need to check if we can assign N-1 toys to the existing N-1 boxes
+# such that the largest remaining toy fits in the new box x (minimizing x)
+
+# Try greedy matching: assign largest available box to largest toy it can fit
+box_idx = 0
+unfit_toys = []
+
+for toy_size in A:
+    if box_idx < len(B) and B[box_idx] >= toy_size:
+        box_idx += 1  # This box can handle this toy
+    else:
+        unfit_toys.append(toy_size)
+
+# If more than one toy doesn't fit existing boxes, we cannot store all toys
+# because we only have one new box
+if len(unfit_toys) > 1:
+    print(-1)
+else:
+    # If all toys fit, we don't need a large box; but we must buy a positive-sized box
+    # However, since we want minimal x and one box is required, x must be at least the smallest toy
+    # But actually, if all toys are assigned, then the new box just needs to exist (but no toy goes there?)
+    # Wait: we have N toys and N boxes -> every box gets exactly one toy.
+    # So one toy *must* go into the new box.
+
+    # Therefore, we must leave one toy for the new box.
+    # Our strategy: try to use the existing boxes for as many toys as possible,
+    # and put the smallest possible leftover toy in the new box.
+
+    # Actually, our above loop greedily matches largest boxes with largest toys they can fit.
+    # The unmatched toys will go into the new box. Only one can be left.
+
+    if len(unfit_toys) == 0:
+        # Then we must "free" one toy from being boxed to put into the new box
+        # That means we skip one assignment even if it fits, so that the smallest possible toy goes to new box
+        # How? We should instead simulate: what is the minimum size x such that after optimally assigning
+        # N-1 toys to existing boxes, the last toy <= x?
+
+        # We want to minimize x => minimize the size of the toy placed in the new box
+        # So we want to maximize the number of toys we can assign to old boxes, and among those,
+        # leave the smallest possible toy for the new box.
+
+        # Alternate approach: try to assign each toy as candidate for new box, and see if rest can be assigned
+        # But N up to 200,000 -> O(N log N) needed
+
+        # Better: greedy with heap
+        # Sort toys ascending, boxes ascending
+        # For smallest possible x, we want the toy in the new box to be as small as possible
+        # So try to assign all toys except one to the boxes, and minimize the unassigned toy
+
+        # We can do: sort both arrays ascending
+        # Use greedy: for each box (smallest first), assign the smallest toy that fits and hasn't been used
+        # But we want to save a small toy for the new box
+
+        # Instead: we can binary search on x? Or use matching logic
+
+        # Known technique: to minimize the maximum or minimize the value used, we can try to avoid using large boxes unnecessarily
+
+        # Revised plan:
+        # Let's sort toys and boxes in ascending order
+        # We want to know: what is the minimum size x such that there exists a toy t with size <= x, 
+        # and the other N-1 toys can be packed into the N-1 boxes?
+
+        # So iterate over which toy to exclude (i.e., put in new box), and check if the rest can be matched
+        # But that's O(N^2)
+
+        # Efficient way: 
+        # Sort toys: T[0..N-1] ascending
+        # Sort boxes: B[0..N-2] ascending
+        # We want to find the smallest toy that can be excluded such that the rest can be matched.
+
+        # How to check if a set of N-1 toys can be matched to N-1 boxes?
+        # Classic greedy: sort both, and for each box in increasing order, assign the smallest toy that fits and is not taken.
+
+        # But we want to try excluding each toy? That would be O(N^2)
+
+        # Alternative: 
+        # Let’s try to match all toys to boxes assuming we have N boxes — but we only have N-1.
+        # We can compute the maximum number of toys we can assign to the existing boxes.
+
+        # Actually, we already did a greedy in descending order and found 0 unfit — meaning all could be assigned?
+        # But we only have N-1 boxes! So we can assign at most N-1 toys.
+
+        # Correction: our earlier logic was flawed.
+
+        # Let's restart with correct logic:
+
+        # We have N-1 boxes. We can assign at most N-1 toys to them.
+        # So at least one toy must go to the new box.
+        # We want to minimize x, so we want to minimize the size of the toy that goes into the new box.
+
+        # So: find the smallest possible toy size that can be left out such that the remaining N-1 toys
+        # can be assigned to the N-1 boxes (each box one toy, toy size <= box size).
+
+        # How?
+        # Sort toys: ascending -> T
+        # Sort boxes: ascending -> U
+        # For each i in range(N): try leaving out toy T[i], and check if the other N-1 toys can be matched to the boxes.
+
+        # To check matching: 
+        #   Take the N-1 toys (all except T[i]), sort them.
+        #   Then try greedy: for each box j from 0 to N-2, assign the smallest toy that fits in U[j]
+        # But doing this for each i is O(N^2) -> too slow.
+
+        # We need an efficient method.
+
+        # Idea: 
+        # Precompute:
+        #   left_match[j]: whether the first j boxes can match the first j+1 toys (excluding one) ??? 
+
+        # Standard solution for this type of problem:
+        #   Let’s try to compute the maximum number of toys that can be matched to the boxes.
+        #   If max matching < N-1, then impossible -> output -1.
+        #   But we know we can always match at most N-1.
+
+        # Actually, we want to know: what is the minimum size of a toy that can be excluded so that the rest are matchable.
+
+        # Known trick:
+        #   Sort toys and boxes in ascending order.
+        #   Use greedy matching from smallest box to largest: 
+        #       maintain a pointer for toys.
+        #   But also, we can precompute:
+        #       prefix[i] = maximum number of toys from T[0:i] that can be matched to boxes[0:i]? Not exactly.
+
+        # Another known solution: 
+        #   Step 1: Check if we can match N-1 toys to N-1 boxes (without worrying about which one is left).
+        #   But we need to know *which* ones can be left.
+
+        # Efficient method:
+        #   Sort A and B.
+        #   Try to match as many toys as possible to boxes in increasing order.
+        #   We want to know: for each toy, can it be the one left out?
+
+        # Algorithm:
+        #   Sort A -> a_sorted
+        #   Sort B -> b_sorted
+        #   Use two pointers or a heap.
+
+        #   We want to compute:
+        #     Let f(i) = the number of toys among a_sorted[0:i] that can be matched to boxes[0:i] 
+        #     But not exactly.
+
+        #   Instead, traverse boxes in increasing order and greedily assign the smallest toy that fits.
+
+        #   But we want to allow skipping one toy (the one to be put in new box) to maximize matching.
+
+        #   Actually, we can do:
+        #       Try to match as many toys as possible using the boxes. Since we have N-1 boxes, we need to match exactly N-1.
+        #       If we can match N-1 toys, then the minimal x is the size of the smallest toy that can be the unmatched one.
+        #       But multiple choices may exist.
+
+        #   So:
+        #       We want to find the minimum toy size such that when we remove that toy, the rest can be matched to the boxes.
+
+        #   How?
+        #       We can simulate the matching while allowing one skip.
+
+        #   Known solution: 
+        #       Use greedy with heap:
+        #         Sort by toy size.
+        #         For each box in increasing order, collect all toys that are <= box size.
+        #         Then choose the largest among them to assign? No, to maximize future matches, choose the largest? 
+        #         Actually, to save small toys for small boxes, we should assign the largest possible toy that fits? 
+        #         No: to maximize count, assign the smallest toy that fits.
+
+        #   But we want to know which toy can be skipped.
+
+        #   Alternate idea from known problems (e.g., Matching against boxes with one skip):
+        #       Step 1: try to match without skipping: 
+        #           use a min-heap for candidate toys.
+        #           sort boxes and toys.
+        #           j = 0
+        #           for each box b in sorted_boxes:
+        #               while j < N and A[j] <= b:
+        #                   heapq.heappush(heap, A[j])
+        #                   j += 1
+        #               if heap:
+        #                   heapq.heappop(heap)  -> match smallest available toy to this box
+        #           Then the number of matches is the number of pops.
+        #
+        #       But we need exactly N-1 matches.
+        #       So if total matches >= N-1, then possible.
+        #       But we want the minimum x, which is the minimum size of a toy that can be left out.
+
+        #   However, note: we are allowed to skip exactly one toy arbitrarily.
+
+        #   So we want to know: is there a toy we can skip so that the rest can be matched to the N-1 boxes?
+
+        #   We can do:
+        #       Let base_matching = maximum matching of all N toys to N-1 boxes? -> at most N-1.
+        #       We need base_matching == N-1.
+
+        #   But how to compute the minimum skipped toy?
+
+        #   We can try: 
+        #       What is the minimum toy size that can be skipped such that the remaining N-1 toys can be matched to the N-1 boxes?
+
+        #   We can binary search on the candidate toy to skip? But we have discrete values.
+
+        #   Instead, iterate candidate skips over toys in increasing order, and stop at first that works.
+
+        #   But worst-case O(N^2) -> 200000^2 = 40e9, too slow.
+
+        #   Need O(N log N).
+
+        #   Insight:
+        #       We can compute the maximum matching size when skipping a particular toy using a sweep.
+
+        #   Known technique: 
+        #       First, compute the maximum matching size M when we can skip any one toy.
+        #       But we need M = N-1.
+
+        #   Actually, we can compute:
+        #       Let’s compute the maximum number of toys that can be matched to the boxes, with the freedom to skip one toy.
+        #       But we want to know if we can achieve N-1.
+
+        #   However, without skipping, the maximum matching might be less than N-1, then even with skipping one, we can't get N-1.
+
+        #   Actually, skipping a toy can only help if that toy was blocking others? No, skipping a toy removes one element.
+
+        #   The maximum matching size with skipping one toy is: 
+        #       either the maximum matching of all N toys (which is at most N-1), or possibly more? No, still at most N-1.
+
+        #   But wait: if we skip a toy that is very large and blocks nothing, it doesn't change anything.
+        #   The matching size is determined by the bipartite matching between toys and boxes.
+
+        #   So the maximum number of toys we can match to the N-1 boxes is fixed, call it M.
+        #   We require M = N-1.
+        #   And then we can choose any toy that is not matched to be the one in the new box, and we want the smallest such toy.
+
+        #   But wait: if multiple sets of N-1 matches exist, we want the minimum over all possible unmatched toys.
+
+        #   So algorithm:
+        #       Step 1: Find the maximum matching size M between the N toys and N-1 boxes (each box can take one toy, toy<=box).
+        #               If M < N-1, return -1.
+        #       Step 2: Among all toys that can be left unmatched in some matching of size N-1, find the minimum size.
+
+        #   How to do step 1 and 2 efficiently?
+
+        #   We can use greedy matching to compute M:
+        #       Sort toys: ascending
+        #       Sort boxes: ascending
+        #       Use a pointer for toys, and a min-heap for candidate toys.
+        #       matches = 0
+        #       j = 0
+        #       for b in sorted_boxes:
+        #           while j < N and A[j] <= b:
+        #               heapq.heappush(heap, A[j])
+        #               j += 1
+        #           if heap:
+        #               heapq.heappop(heap)
+        #               matches += 1
+        #       If matches < N-1: print -1
+        #       Else: we know it's possible.
+
+        #   Now, for step 2: find the minimum toy that can be left out.
+
+        #   Note: In the above greedy, we always pop the smallest toy. This gives one valid matching.
+
+        #   But there might be other matchings where a different toy is left out.
+
+        #   We want the minimum possible size of a toy that can be left out.
+
+        #   Claim: we can try to leave out a toy of size s if and only if the remaining N-1 toys can be matched to the N-1 boxes.
+
+        #   So we want min{ s in A | the set A \ {s} can be matched to B }
+
+        #   How to check for a given s quickly? We can do the greedy matching on A without s.
+
+        #   But doing that for each s is O(N^2).
+
+        #   Alternative: 
+        #       We can try to simulate the matching and see which toys are "critical".
+
+        #   Known idea: 
+        #       Run the greedy matching (with smallest toy chosen) and record which toys are matched.
+        #       The unmatched toy in this run is one candidate.
+        #       But there might be a smaller toy that can be unmatched in a different matching.
+
+        #   However, consider: we want to leave out a small toy. But if we leave out a small toy, we might be forced to use a larger toy in a small box that it doesn't fit.
+
+        #   Example: 
+        #       Toys: [1,2,3], Boxes: [2,3]
+        #       If we leave out 1: match 2->2, 3->3 -> works.
+        #       If we leave out 2: match 1->2, 3->3 -> works.
+        #       If we leave out 3: match 1->2, 2->3 -> works.
+        #       So we can leave out 1, which is smallest.
+
+        #   But can we always leave out the smallest toy? Not necessarily.
+
+        #   Example: 
+        #       Toys: [1,2,3], Boxes: [1,2]
+        #       Can we leave out 1? Then we have [2,3] to match to [1,2]: 
+        #           box1=1: can only take toy<=1 -> none of [2,3] -> fail.
+        #       Leave out 2: [1,3] -> 1->1, 3 needs box>=3 -> fail.
+        #       Leave out 3: [1,2] -> 1->1, 2->2 -> works.
+        #       So only 3 can be left out.
+
+        #   Therefore, we cannot simply leave out the smallest.
+
+        #   How to find the minimum possible toy that can be left out?
+
+        #   Insight: 
+        #       We can binary search on the candidate value of the toy to leave out.
+        #       But the candidate must be in A.
+
+        #   Alternatively, we can try to find the minimum s such that the matching of A\{s} to B has size N-1.
+
+        #   We can try iterating s over sorted A, and break at the first that works.
+
+        #   But worst-case O(N^2) -> 200000 * 200000 = 40e9 operations -> too slow.
+
+        #   We need a faster method.
+
+        #   Another idea: 
+        #       Let’s compute the maximum matching size M for the full set.
+        #       We know M <= N-1.
+        #       If M < N-1, then even after removing one toy, we can have at most M < N-1 matches -> impossible.
+
+        #       But wait: removing a toy might allow a different matching that has more matches? 
+        #       No, because we only have N-1 boxes, so maximum is N-1.
+        #       And if originally we could only match M < N-1, then after removing one toy, we still have N-1 toys and N-1 boxes, 
+        #       but the matching might improve? 
+        #       Example: 
+        #           Toys: [3,3,1], Boxes: [2,2]
+        #           Without removal: no toy<=2 can be matched? 
+        #               box1=2: can take toy=1 -> match 1->2
+        #               box2=2: no other toy<=2 -> only 1 match.
+        #           Remove a 3: then we have [3,1] -> only one match (1->2), still not enough.
+        #           Remove the 1: then we have [3,3] -> no match -> 0.
+        #           So M=1 < 2 -> impossible.
+
+        #       Therefore, necessary condition: the maximum matching size of the full set must be at

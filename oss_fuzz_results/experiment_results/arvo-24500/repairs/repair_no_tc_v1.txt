@@ -1,0 +1,63 @@
+### 崩溃原因分析
+根据崩溃日志中的栈跟踪信息，可以推断出问题发生在 `hb_vector_t<CFF::op_str_t>::resize` 函数中。具体来说，崩溃的原因是访问了一个未知地址（0x000000094e08），这通常是由野指针写操作引起的。`__asan_memset` 是由 AddressSanitizer 插入的代码，用于检测内存访问错误，因此怀疑问题与内存管理有关。
+
+从崩溃日志中的堆栈跟踪可以看出，问题出现在以下调用链中：
+1. `hb_vector_t<CFF::op_str_t>::resize(int)`
+2. `hb_vector_t<CFF::op_str_t>::push()`
+
+这些调用都是对 `hb_vector_t` 类的成员函数进行的操作，可能是由于在向向量中添加元素时，没有正确处理内存分配或释放导致的。
+
+### 修复策略
+修复这个问题的关键在于确保在进行内存分配和释放操作时不会出现野指针或未初始化的指针。可以通过以下步骤来修复：
+
+1. **检查向量大小**：确保在增加元素之前，向量有足够的空间。
+2. **动态内存管理**：使用智能指针或其他自动内存管理机制来避免手动管理内存的复杂性和潜在的错误。
+3. **边界条件检查**：在向量操作过程中，始终检查索引是否越界。
+
+### 具体的代码修复建议
+假设 `hb_vector_t` 类的实现如下：
+
+```cpp
+template <typename T>
+class hb_vector_t {
+public:
+    void push(const T& value);
+private:
+    void resize(int new_size);
+    T* data_;
+    int capacity_;
+    int size_;
+};
+```
+
+以下是具体的修复建议：
+
+```cpp
+template <typename T>
+void hb_vector_t<T>::resize(int new_capacity) {
+    if (new_capacity <= capacity_) {
+        return; // No need to resize
+    }
+
+    T* new_data = new T[new_capacity]; // Allocate new memory
+
+    for (int i = 0; i < size_; ++i) {
+        new_data[i] = std::move(data_[i]); // Move existing elements to new location
+    }
+
+    delete[] data_; // Free old memory
+    data_ = new_data;
+    capacity_ = new_capacity;
+}
+
+template <typename T>
+void hb_vector_t<T>::push(const T& value) {
+    if (size_ >= capacity_) {
+        resize(capacity_ * 2); // Double the capacity if needed
+    }
+    data_[size_] = value; // Add new element
+    ++size_;
+}
+```
+
+在这个修复中，我们确保了在调整向量容量时，会分配新的内存并移动现有元素到新位置，然后释放旧的内存。这样可以避免野指针和内存泄漏的问题。同时，在 `push` 方法中，我们也检查了当前容量是否足够，如果不足则调整容量，以确保在添加元素时不会出现问题。

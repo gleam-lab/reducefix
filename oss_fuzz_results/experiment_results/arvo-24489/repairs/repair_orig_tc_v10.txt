@@ -1,0 +1,68 @@
+ ### 1. 为什么这个输入会触发崩溃
+
+根据崩溃信息，问题出在 `hb_vector_t<CFF::dict_val_t>::resize` 函数中。具体来说，崩溃发生在 `__msan_memset` 调用时，这意味着在尝试设置内存时发生了段错误（segmentation fault）。这通常是由于试图访问未分配或无效的内存地址引起的。
+
+### 2. 修复策略
+
+为了修复这个问题，我们需要确保在调整向量大小时，分配的内存是有效的，并且不会超出允许的范围。可能的原因包括：
+
+- 向量大小计算错误。
+- 内存分配失败后没有正确处理。
+- 访问越界。
+
+### 3. 具体的代码修复建议
+
+以下是针对 `hb_vector_t<CFF::dict_val_t>::resize` 函数的一些具体修复建议：
+
+```cpp
+template <typename T>
+void hb_vector_t<T>::resize(int new_size) {
+    if (new_size == size_) {
+        return;
+    }
+
+    // 确保新的大小不小于当前大小
+    if (new_size < 0) {
+        throw std::invalid_argument("Invalid new size");
+    }
+
+    // 计算新的容量
+    int new_capacity = calculate_new_capacity(new_size);
+
+    // 分配新内存
+    T* new_data = allocate_memory(new_capacity);
+    if (!new_data) {
+        throw std::bad_alloc();
+    }
+
+    // 复制现有数据到新内存
+    if (size_ > 0) {
+        memcpy(new_data, data_, size_ * sizeof(T));
+    }
+
+    // 清理旧内存
+    deallocate_memory(data_);
+
+    // 更新指针和大小
+    data_ = new_data;
+    capacity_ = new_capacity;
+    size_ = new_size;
+
+    // 初始化新增加的空间
+    if (new_size > old_size) {
+        memset(&data_[old_size], 0, (new_size - old_size) * sizeof(T));
+    }
+}
+```
+
+### 关键点解释
+
+1. **检查新的大小是否有效**：在调整大小之前，确保新的大小不为负数。
+2. **计算新的容量**：根据需要调整向量的容量。
+3. **分配新内存**：使用 `allocate_memory` 函数分配新的内存块。如果分配失败，抛出 `std::bad_alloc` 异常。
+4. **复制现有数据**：将现有的数据从旧内存块复制到新内存块。
+5. **清理旧内存**：释放旧的内存块。
+6. **更新指针和大小**：更新向量的数据指针、容量和大小。
+7. **初始化新增加的空间**：如果新增加了空间，使用 `memset` 将其初始化为零。
+
+通过这些步骤，可以确保在调整向量大小时不会发生内存越界或访问无效内存的问题，从而避免段错误。

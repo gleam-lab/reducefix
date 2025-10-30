@@ -1,0 +1,43 @@
+### 崩溃原因分析
+根据崩溃信息，错误发生在 `__interceptor_free` 函数中，这意味着程序尝试释放一个已经被释放过的内存块。具体来说，这个错误发生在 `hb_vector_t<CFF::OpStr, 8u>::fini()` 和 `hb_vector_t<CFF::CFF1FontDictValues, 8u>::~hb_vector_t()` 中。这表明在对象析构过程中，向量（vector）中的元素被多次释放。
+
+### 修复策略
+为了解决这个问题，我们需要确保在对象析构时不会重复释放内存。通常，这种问题可能是由于向量内部管理的内存没有正确初始化或者在某个地方被提前释放导致的。
+
+### 具体的代码修复建议
+假设 `hb_vector_t` 是一个模板类，并且它内部有一个成员变量来管理内存，我们可以通过以下步骤来修复这个问题：
+
+1. **确保向量在析构时只释放一次内存**。
+2. **添加一个标志位来标记内存是否已经被释放**。
+
+以下是一个可能的修复方案：
+
+```cpp
+template <typename T, size_t N>
+class hb_vector_t {
+public:
+    ~hb_vector_t() {
+        fini();
+    }
+
+    void fini() {
+        if (!is_fini_) {
+            // Free the memory here
+            for (size_t i = 0; i < length_; ++i) {
+                elements_[i].~T(); // Explicitly call destructor for each element
+            }
+            free(elements_);
+            is_fini_ = true;
+        }
+    }
+
+private:
+    T* elements_ = nullptr;
+    size_t length_ = 0;
+    bool is_fini_ = false; // Flag to ensure memory is only freed once
+};
+```
+
+在这个修复方案中，我们添加了一个布尔类型的 `is_fini_` 标志位，用于跟踪内存是否已经被释放。在 `fini` 方法中，我们首先检查这个标志位，如果内存还没有被释放，则进行内存释放操作，并将标志位设置为 `true`。这样可以确保在对象析构时只会释放一次内存。
+
+通过这种方式，我们可以避免双释放的问题，并提高代码的健壮性。

@@ -1,0 +1,83 @@
+### 1. 崩溃原因分析
+
+从崩溃信息来看，问题出在 `hb_array_t<OT::IntType<unsigned char, 1u> const>` 类的 `copy` 方法中。具体来说，在地址 `0x633000034f0d` 处发生了一个堆缓冲区溢出（heap-buffer-overflow）。这个错误发生在尝试读取一个字节时。
+
+根据栈跟踪信息，调用链如下：
+
+- `hb_array_t<OT::IntType<unsigned char, 1u> const>::copy<hb_serialize_context_t>`
+- `OT::UnsizedArrayOf<OT::IntType<unsigned char, 1u> >::copy`
+- `OT::SBIXGlyph::copy`
+- `OT::SBIXStrike::subset`
+- `OT::sbix::add_strike`
+- `OT::sbix::serialize_strike_offsets`
+
+这些方法涉及到对数组进行复制操作，而具体的复制逻辑可能没有正确处理边界条件，导致越界访问。
+
+### 2. 修复策略
+
+为了修复这个问题，需要确保在进行数组复制时，不会超出数组的实际边界。这可以通过以下步骤来实现：
+
+1. **检查数组长度**：在复制数组之前，检查目标数组是否有足够的空间。
+2. **正确的边界处理**：确保在复制过程中不会访问到数组之外的内存。
+
+### 3. 具体的代码修复建议
+
+假设 `hb_array_t<OT::IntType<unsigned char, 1u> const>` 的 `copy` 方法如下：
+
+```cpp
+template<typename T>
+class hb_array_t {
+public:
+    hb_array_t(const hb_array_t& other) : data_(nullptr), length_(0) {
+        copy(other);
+    }
+
+private:
+    void* data_;
+    size_t length_;
+
+    template<typename S>
+    void copy(const hb_array_t<S>& other) {
+        // 假设这里有一个错误的复制逻辑
+        memcpy(data_, other.data_, other.length_);
+        length_ = other.length_;
+    }
+};
+```
+
+修复后的代码应该是这样的：
+
+```cpp
+template<typename T>
+class hb_array_t {
+public:
+    hb_array_t(const hb_array_t& other) : data_(nullptr), length_(0) {
+        copy(other);
+    }
+
+private:
+    void* data_;
+    size_t length_;
+
+    template<typename S>
+    void copy(const hb_array_t<S>& other) {
+        if (other.length_ > 0) {
+            data_ = malloc(other.length_);
+            if (data_) {
+                memcpy(data_, other.data_, other.length_);
+                length_ = other.length_;
+            } else {
+                // Handle memory allocation failure
+                throw std::bad_alloc();
+            }
+        } else {
+            data_ = nullptr;
+            length_ = 0;
+        }
+    }
+};
+```
+
+在这个修复建议中，我们添加了对 `other.length_` 的检查，并且只在 `other.length_ > 0` 的情况下才分配内存并进行复制。如果内存分配失败，则抛出异常。这样可以避免在没有足够空间的情况下进行复制操作，从而防止堆缓冲区溢出。
+
+通过这种方式，可以有效避免堆缓冲区溢出的问题，并提高代码的安全性。

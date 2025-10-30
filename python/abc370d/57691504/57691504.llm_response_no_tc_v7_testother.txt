@@ -1,0 +1,213 @@
+```python
+import sys
+from collections import defaultdict
+
+def main():
+    data = sys.stdin.read().split()
+    H = int(data[0]); W = int(data[1]); Q = int(data[2])
+    queries = []
+    index = 3
+    for i in range(Q):
+        r = int(data[index]); c = int(data[index+1]); index += 2
+        queries.append((r, c))
+    
+    # We'll maintain for each row the set of remaining columns with walls, and for each column the set of remaining rows with walls.
+    # But we can use union-find like structure (DSU) for next existing wall in each direction.
+    # Alternatively, use linked list style pointers: for each cell, we want to quickly find the nearest wall in each direction.
+    
+    # Instead, we can maintain:
+    # For each row r: a sorted list of columns that still have walls? -> too slow for deletion and query.
+    # Better: use dictionaries or arrays with "next" pointers. We can use union-find path compression.
+    
+    # Let's define:
+    # up[r][c]: the next row above r in column c that has a wall, or 0 if none
+    # down[r][c]: the next row below r in column c that has a wall, or H+1 if none
+    # left[r][c]: the next column to the left of c in row r that has a wall, or 0 if none
+    # right[r][c]: the next column to the right of c in row r that has a wall, or W+1 if none
+    
+    # But storing per cell is too heavy. Instead, we can store for each column c: 
+    #   parent_up[c][r] = the next wall above r in column c
+    #   parent_down[c][r] = the next wall below r in column c
+    # Similarly for rows.
+    
+    # Actually, we can use DSU-like path compression only for each column and each row independently.
+    
+    # Initialize for each column c: for all r in [1,H], initially each r points to itself.
+    # When we remove a wall at (r,c), we set up pointer of r to the next wall above, which is the result of querying r-1.
+    # Similarly for down.
+    
+    # We'll maintain:
+    # col_prev[c][r] = the largest row < r in column c that has a wall, using path compression
+    # col_next[c][r] = the smallest row > r in column c that has a wall, using path compression
+    # row_prev[r][c] = the largest col < c in row r that has a wall
+    # row_next[r][c] = the smallest col > c in row r that has a wall
+    
+    # But note: H*W <= 400000, so we can allocate dictionaries for each row and column.
+    
+    # However, we can do better: we don't need to store for every cell, but only for cells that are destroyed?
+    # We can use union-find style with dictionaries.
+    
+    # Let's define:
+    # up[c][r] = the highest row <= r in column c that has a wall, but we want the immediate next wall above when looking from a position.
+    # Actually, we want: given a position (r,c), what is the closest wall above in column c? That is the maximum row < r such that wall exists.
+    # We can maintain for each column c: a structure that supports: given r, find the predecessor of r (largest value < r that is present).
+    # But we also need to remove elements.
+    
+    # Alternative efficient approach: use linked lists with arrays.
+    # Precompute for each column c: create an array for prev_row and next_row.
+    # Initially: for each column c, for r from 1 to H:
+    #   prev_row[c][r] = r-1
+    #   next_row[c][r] = r+1
+    # Then when we remove (r,c), we do:
+    #   prev_row[c][next_row[c][r]] = prev_row[c][r]
+    #   next_row[c][prev_row[c][r]] = next_row[c][r]
+    # And similarly for columns in each row.
+    
+    # But memory: H*W <= 400000, so we can create arrays of size H+2 for each column, and W+2 for each row.
+    # Total memory: W*(H+2) + H*(W+2) = 2*H*W + 2*H + 2*W ~ 800000 + 2*H + 2*W, which is acceptable.
+    
+    # However, we cannot create 2D arrays of size H x W because H and W individually can be up to 400000, but H*W <= 400000, so H and W are not both large.
+    # Actually, since H*W <= 400000, then max(H,W) could be 400000 only if min is 1. So worst-case H=400000, W=1.
+    # So we can have up to 400000 columns? No: if W=400000, then H=1.
+    # So we can safely create arrays for each column and each row.
+    
+    # Plan:
+    # Create:
+    #   col_prev = [ [0]*(H+2) for _ in range(W+1) ] -> no, we need for each column, an array of length H+2
+    # But we can do: col_prev[c] = list of length H+2 for column c
+    # But total memory would be sum_{c=1}^{W} (H+2) = W*(H+2) = W*H + 2*W <= 400000 + 2*W
+    # Since W <= 400000, this could be 400000 + 800000 = 1.2e6 integers, which is about 9.6 MB, acceptable.
+    # Similarly for col_next: same size.
+    # For rows: row_prev[r] for r in 1..H: each of length W+2 -> total H*(W+2) = H*W + 2*H <= 400000 + 2*H
+    # Total memory: WH + 2W + WH + 2H = 2*WH + 2*H + 2*W <= 800000 + 2*(H+W)
+    # Since H*W<=400000, H+W <= 400000+1 (if one is 400000 and other 1), so total integers <= 800000 + 800000 = 1.6e6, acceptable.
+    
+    # But note: we have 4 arrays, each with about 400000 to 800000 integers, total around 3.2e6 integers, about 25 MB, acceptable.
+    
+    # However, we can avoid creating 2D arrays by using 1D arrays indexed appropriately? Or use dictionaries for sparse? 
+    # But it's not sparse initially. We'll go with arrays.
+    
+    # But wait: if H=1, W=400000, then for columns: we need W arrays each of length H+2=3 -> total 3*400000=1.2e6
+    # for rows: H=1, so one array of length W+2=400002 -> total about 1.2e6 + 400002 ~ 1.6e6 integers.
+    # Similarly if H=400000, W=1: columns: 1 array of length 400002; rows: 400000 arrays of length 3 -> 400000*3=1.2e6; total ~1.6e6.
+    # So worst-case about 1.6 million integers, which is fine.
+    
+    # Initialize arrays:
+    # For each column c from 1 to W:
+    #   col_prev[c][r] for r in range(0, H+2): 
+    #       for r=0: doesn't matter, but we set col_prev[c][0]=0, col_next[c][0]=1
+    #       for r=1..H: col_prev[c][r] = r-1, col_next[c][r] = r+1
+    #       for r=H+1: col_prev[c][H+1]=H, col_next[c][H+1]=H+1
+    # But we don't need r=0 and r=H+1 as nodes? We can use sentinels.
+    
+    # Actually, we can define:
+    #   col_prev = [ [0]*(H+2) for _ in range(W+1) ]
+    #   col_next = [ [0]*(H+2) for _ in range(W+1) ]
+    # But indexing: we'll use 1-indexing.
+    
+    # Alternatively, we can use:
+    #   col_prev = [[0] * (H+2) for _ in range(W+1)]
+    #   col_next = [[0] * (H+2) for _ in range(W+1)]
+    #   row_prev = [[0] * (W+2) for _ in range(H+1)]
+    #   row_next = [[0] * (W+2) for _ in range(H+1)]
+    
+    # But note: we have H and W, and H*W <= 400000, but H and W can be up to 400000, so we cannot create a list of W+1 lists if W is 400000? 
+    # Yes we can, because W+1 is 400001, and each inner list has H+2 elements. But if W=400000 and H=1, then we are creating 400001 lists each of size 3 -> 1.2e6 integers, acceptable.
+    
+    # But in Python, creating a list of 400000 lists might be heavy in terms of object overhead? 
+    # Each list has some overhead. 400000 lists might be heavy. We should try to avoid.
+    
+    # Alternative: use 1D arrays and index by c*(H+2)+r? But then we need to know H and W.
+    # Or use dictionary of dictionaries? But worst-case we have 400000 cells, so we can do.
+    
+    # Actually, let's use a different approach: we only store the linked list for columns and rows, but we use arrays of size (H+2) for each column that we actually use? 
+    # But we use all columns 1..W.
+    
+    # Given constraints, we'll proceed with the list of lists, but we note that total number of integers is bounded by about 2*W*(H+2) + 2*H*(W+2) = 2WH+4W + 2WH+4H = 4WH+4H+4W <= 4*400000 + 4*(H+W)
+    # H+W <= H*W + 1 <= 400001, so total integers <= 1.6e6 + 1.6e6 = 3.2e6? Actually 4*400000=1.6e6, plus 4*(H+W) <= 4*800000? No, H+W <= 400000+1? Not exactly: if H=400000, W=1, then H+W=400001.
+    # So 4WH+4H+4W = 1.6e6 + 4*400001 + 4*1 ~ 1.6e6+1.6e6=3.2e6, which is acceptable.
+    
+    # But wait: we have two structures: columns and rows.
+    # Columns: for each column c in [1,W], we have two arrays of length H+2 -> total integers: W * (H+2) * 2
+    # Rows: for each row r in [1,H], we have two arrays of length W+2 -> total integers: H * (W+2) * 2
+    # Total = 2W(H+2) + 2H(W+2) = 2WH + 4W + 2WH + 4H = 4WH + 4H + 4W
+    # Since WH <= 400000, then 4WH <= 1.6e6, and 4H+4W <= 4*(H+W). What is max H+W given WH<=400000?
+    # By AM-GM, H+W >= 2*sqrt(HW) ~ 1264, but upper bound: if H=400000, W=1, then H+W=400001.
+    # So 4H+4W <= 4*400001 = 1.6e6, so total integers <= 1.6e6 + 1.6e6 = 3.2e6, which is about 25.6 MB, acceptable.
+    
+    # But creating 400000+1 lists in Python might be slow due to allocation? We can try to use a single 2D array via numpy? But we can't use numpy.
+    # We'll do it carefully.
+    
+    # However, note that H and W might be large in one dimension. We can avoid by using only necessary arrays.
+    
+    # Actually, we can use:
+    #   col_prev = [None] * (W+1)
+    #   col_next = [None] * (W+1)
+    #   for c in range(1, W+1):
+    #       col_prev[c] = [0] * (H+2)
+    #       col_next[c] = [0] * (H+2)
+    #       for r in range(0, H+2):
+    #           if r == 0:
+    #               col_prev[c][r] = 0
+    #               col_next[c][r] = 1
+    #           elif r == H+1:
+    #               col_prev[c][r] = H
+    #               col_next[c][r] = H+1
+    #           else:
+    #               col_prev[c][r] = r-1
+    #               col_next[c][r] = r+1
+    #
+    # But we don't need to initialize for r=0 and r=H+1 separately? We can do:
+    #   for r in range(1, H+1):
+    #       col_prev[c][r] = r-1
+    #       col_next[c][r] = r+1
+    #   col_prev[c][0] = 0
+    #   col_next[c][0] = 1
+    #   col_prev[c][H+1] = H
+    #   col_next[c][H+1] = H+1
+    # But actually, we won't query r=0 or r=H+1? We will: when we look for next wall above from row 1, we go to row 0? 
+    # We can set sentinel values.
+    
+    # Actually, we can avoid initializing every element by using a smarter method: we only need to update when we destroy a wall.
+    # But initially, all walls exist, so we need the linked list to be complete.
+    
+    # We'll do:
+    col_prev = [None] * (W+1)
+    col_next = [None] * (W+1)
+    for c in range(1, W+1):
+        # create arrays of size H+2 (index 0 to H+1)
+        prev_arr = [0] * (H+2)
+        next_arr = [0] * (H+2)
+        for r in range(1, H+1):
+            prev_arr[r] = r-1
+            next_arr[r] = r+1
+        # sentinel: for r=0, next is 1; for r=H+1, prev is H
+        prev_arr[0] = 0
+        next_arr[0] = 1
+        prev_arr[H+1] = H
+        next_arr[H+1] = H+1
+        col_prev[c] = prev_arr
+        col_next[c] = next_arr
+
+    row_prev = [None] * (H+1)
+    row_next = [None] * (H+1)
+    for r in range(1, H+1):
+        prev_arr = [0] * (W+2)
+        next_arr = [0] * (W+2)
+        for c in range(1, W+1):
+            prev_arr[c] = c-1
+            next_arr[c] = c+1
+        prev_arr[0] = 0
+        next_arr[0] = 1
+        prev_arr[W+1] = W
+        next_arr[W+1] = W+1
+        row_prev[r] = prev_arr
+        row_next[r] = next_arr
+
+    # Now, we process queries.
+    # We also need to know if a wall exists at (r,c). How? 
+    # Actually, if the wall at (r,c) is destroyed, then in the linked list, we have bypassed it.
+    # But we don't have a direct flag. However, we can check: if col_prev[c][r] == r-1 and col_next[c][r] == r+1, that doesn't mean it exists because intermediate deletions might not affect?
+    # Actually, no: once we delete (r,c), we link r-1 to r+1, so col_next[c][r-1] becomes r+1, and col_prev[c][r+1] becomes r-1.
+    # But the values at col_prev[c][r] and col_next[c][r] are not updated? They remain r-1 and r+1? 
+    # We don't

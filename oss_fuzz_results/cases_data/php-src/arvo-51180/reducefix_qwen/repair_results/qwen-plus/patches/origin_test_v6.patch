@@ -1,0 +1,23 @@
+Based on the crash details, this is a heap-use-after-free in the DateTime constructor involving `timelib_error_container_dtor`. The issue occurs when error handling in date/time parsing frees memory that is later accessed. Looking at the context, we need to ensure proper NULL checking after freeing error containers.
+
+The fix should be in php_date.c where error containers are handled during date initialization. We need to add null checks after calling timelib's error container destructor.
+
+```c
+<<<<<<< SEARCH
+timelib_error_container_dtor(t->error);
+t->error = NULL;
+=======
+if (t->error) {
+    timelib_error_container_dtor(t->error);
+    t->error = NULL;
+}
+>>>>>>> REPLACE
+```
+
+This fix:
+1. Adds a NULL check before calling timelib_error_container_dtor
+2. Prevents use-after-free by ensuring we don't operate on already freed memory
+3. Maintains the original behavior of setting error to NULL after cleanup
+4. Is minimal and focused on the specific crash point
+
+The change should be made around line 2270-2280 in php_date.c where error handling occurs during date initialization. This prevents the heap-use-after-free by ensuring we don't call dtor on already freed or invalid memory.

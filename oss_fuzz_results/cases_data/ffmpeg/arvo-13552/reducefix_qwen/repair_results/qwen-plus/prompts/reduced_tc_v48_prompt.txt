@@ -1,0 +1,291 @@
+=== Prompt for reduced_tc version 48 ===
+Model: qwen-plus
+Temperature: 1.0
+Use SEARCH/REPLACE: True
+======================================================================
+
+We are currently solving the following crash issue:
+--- BEGIN ISSUE ---
+# Crash in ffmpeg
+
+Function: copy_block16
+Type: Heap-buffer-overflow READ 8
+
+
+Buggy Files (from patch):
+- tests/lavf-regression.sh
+
+⚠️  Note: The patch modifies build scripts or configuration files (not C/C++ source).
+   The bug may be caused by build configuration, dependency versions, or compiler flags.
+   You need to modify the build/config to prevent the runtime vulnerability.
+
+This is a memory safety bug that needs to be fixed.
+
+
+⚠️  **Note: The buggy file is a TEST SCRIPT**, not application source code.
+   This means the crash is in a **test harness**, not necessarily in production code.
+   
+   **Valid fix strategies for test scripts:**
+   1. **Disable problematic test cases** (if the underlying feature is known to be broken):
+      - Skip CRC/checksum verification: add `disable_crc` parameter
+      - Comment out broken test assertions: `#do_avconv_crc ...`
+      - Add conditional skip: `test ${condition} = "disable" || run_test`
+   
+   2. **Adjust test configuration** (if test setup is incorrect):
+      - Change codec parameters: `-c:v`, `-c:a`
+      - Modify test input/output format
+      - Add error handling or timeouts
+   
+   3. **Workaround known bugs** (if fixing the actual code is too complex):
+      - Add comments explaining why tests are disabled
+      - Example: `# The RealMedia muxer is broken - skip verification`
+   
+   **⚠️  IMPORTANT**: 
+   - Fixing a test script is **acceptable** if the underlying bug is too complex
+   - Focus on making the **test pass**, even if the underlying issue isn't fixed
+   - Document your workaround with clear comments
+
+### Crash Details
+- Type: Heap-buffer-overflow READ 8
+- Function: copy_block16
+- Severity: Medium
+- Sanitizer: asan
+
+### Crash Stack Trace
+```
+copy_block16
+decode_inter
+decode_frame
+```
+
+### Crash Log
+
+--- END ISSUE ---
+
+
+🎯 **EXACT BUG LOCATION**:
+- File: `tests/lavf-regression.sh`, Lines 73-81
+
+Below are the source files that contain the bug:
+--- BEGIN FILES ---
+### tests/lavf-regression.sh
+**Function containing the bug** (lines 24-29):
+
+```bash
+do_lavf()
+{  // <-- ⚠️ BUG IS HERE (Line 25)
+    file=${outfile}lavf.$1  // <-- ⚠️ BUG IS HERE (Line 26)
+    do_avconv $file $DEC_OPTS -f image2 -vcodec pgmyuv -i $raw_src $DEC_OPTS -ar 44100 -f s16le $2 -i $pcm_src $ENC_OPTS -b:a 64k -t 1 -qscale:v 10 $3  // <-- ⚠️ BUG IS HERE (Line 27)
+    do_avconv_crc $file $DEC_OPTS -i $target_path/$file $4  // <-- ⚠️ BUG IS HERE (Line 28)
+}  // <-- ⚠️ BUG IS HERE (Line 29)
+```
+
+**🎯 Bug Location** (lines 73-81):
+```bash
+{
+    file=${outfile}lavf.$1
+    do_avconv $file $DEC_OPTS -f image2 -vcodec pgmyuv -i $raw_src $DEC_OPTS -ar 44100 -f s16le $2 -i $pcm_src $ENC_OPTS -b:a 64k -t 1 -qscale:v 10 $3
+    do_avconv_crc $file $DEC_OPTS -i $target_path/$file $4
+}
+```
+
+**⚠️ IMPORTANT**: When generating your SEARCH/REPLACE edit:
+- The shown function has 6 lines total
+- Bug is at lines 73-81
+- Variables declared before the bug MUST NOT be removed (they may be used after)
+- Check for paired macros (fz_try/always/catch, do/while) - keep them balanced
+- Only edit the MINIMAL lines needed to fix the bug
+
+--- END FILES ---
+
+
+## 📋 Supporting Files (Reference Only - Already Provided)
+
+The following files are also modified in this fix, but you **DO NOT need to generate** patches for them.
+They are provided here for **context only** to help you understand the complete fix.
+
+**Your task is ONLY to fix the core source code files shown above.**
+
+
+### tests/lavf-regression.sh (Build Script)
+
+**SEARCH:**
+```bash
+do_lavf()
+{
+    file=${outfile}lavf.$1
+    do_avconv $file $DEC_OPTS -f image2 -vcodec pgmyuv -i $raw_src $DEC_OPTS -ar 44100 -f s16le $2 -i $pcm_src $ENC_OPTS -b:a 64k -t 1 -qscale:v 10 $3
+    do_avconv_crc $file $DEC_OPTS -i $target_path/$file $4
+}
+
+do_lavf_timecode_nodrop() { do_lavf $1 "" "$2 -timecode 02:56:14:13"; }
+
+if [ -n "$do_rm" ] ; then
+file=${outfile}lavf.rm
+do_avconv $file $DEC_OPTS -f image2 -vcodec pgmyuv -i $raw_src $DEC_OPTS -ar 44100 -f s16le -i $pcm_src $ENC_OPTS -t 1 -qscale 10 -acodec ac3_fixed -ab 64k
+# broken
+#do_avconv_crc $file -i $target_path/$file
+fi
+
+if [ -n "$do_mpg" ] ; then
+```
+
+**REPLACE:**
+```bash
+do_lavf()
+{
+    file=${outfile}lavf.$1
+    do_avconv $file $DEC_OPTS -f image2 -c:v pgmyuv -i $raw_src $DEC_OPTS -ar 44100 -f s16le $2 -i $pcm_src $ENC_OPTS -b:a 64k -t 1 -qscale:v 10 $3
+    test $5 = "disable_crc" ||
+        do_avconv_crc $file $DEC_OPTS -i $target_path/$file $4
+}
+
+do_lavf_timecode_nodrop() { do_lavf $1 "" "$2 -timecode 02:56:14:13"; }
+
+if [ -n "$do_rm" ] ; then
+file=${outfile}lavf.rm
+# The RealMedia muxer is broken.
+do_lavf rm "" "-c:a ac3_fixed" "" disable_crc
+fi
+
+if [ -n "$do_mpg" ] ; then
+```
+
+---
+
+
+**⚠️ REMINDER**: The above files are already handled. Focus on fixing the **core source code** only.
+
+### Failing Test Case (Minimized by Automated Reduction)
+
+**Minimization Summary**:
+Original: 6,190 bytes → Minimized: 6,127 bytes (1.0% reduction)
+
+**Purpose of Minimization**:
+The test case has been automatically reduced using delta debugging to identify the MINIMAL input 
+that still triggers the crash. This helps reveal the specific pattern or edge case that causes the bug.
+
+**How to use this information**:
+1. The minimized input reveals a specific triggering pattern (not just random data)
+2. Consider: What makes this particular input trigger the bug? (boundary condition, special character, size, structure)
+3. Your fix should handle this pattern and similar edge cases gracefully
+
+**Input Characteristics**:
+- Contains null bytes → may test string termination
+
+**Note**: Showing first 1KB (1024 bytes) of minimized input for analysis. Full input is 6,127 bytes.
+
+**Minimized Input** (hex format):
+```
+0000000000000000002001202020202000000000000000007719781920202020f9f9f9ff202020f9f9f9ffff202020f9f9f9ffff2020f920f920ff2020f920202020ff202020ff202020fff92020f920202020202020ffff2020ff20202020202020202020ffffff20ffffff20ffffff202020f920ff202020ff2020f9202020202020f9f9f9ffff2020f9f9f920ff20202020ff202020ff202020ff202020ffffff202020202020202020202020202020202020ff2060202020ff202020202020202020202020202020ff2020202020202020202020ff202020ff2020202020202020206020ffff2020202060202020202020202020202020ff20202060202020206020202020206020602060206060602020602060206064202020202060202020202020ff202020ffff2060ff20606020ff20ff2060602060202020ff20202060206020ffff2060206020602060602020202060206020ff206020202060206020606020206020202020ff6020ff2020206020202020206020606020206020202060ff602060202020606060202060206020606020206020202060ff20602020ff20202060206020602060606020606020202020ff2060202060206020606020206020202020ff6020ff20202060202020202060205dff2020ff20202060606020ff2020206020202060ff6020ff202020ff202020206060206020ffff20206020ff20602060202020602060202020ff2060206020602060202020206020ff2060ff202060202020606020202060206020ff2020206020202060ff6020602020ff2060202060206020606020206020202020ff6020ff20202060602020202020ff206060202060ff2020206020602060ff2020ff202020ff2060202060202020ff2020206020602060ff2020ff202020ff2060202060206020ff2020206020202060ff6020ff202020ff202020206060206020ffff20206020ff20602060202020602060202020ff2060206020602060202020206020ff2060ff202060202020606020202060206020ff2020206020202060ff6020602020ff2060202060206020606020206020202020ff6020ff20202060602020202020ff206060202060ff2020206020602060ff2020ff202020ff2060202060202020ff2020206020602060ff2020ff202020ff2060202060206020ff2020206020202060ff6020ff202020ff202020206060206020ffff20206020ff20602060202020602060202020ff2060206020602060202020206020ff2060ff202060202020606020202060206020ff2020206020202060ff6020602020ff2060202060206020606020206020202020ff6020ff20202060602020202020ff20606020206060202020206020602060602020ff2020206020602060ff2020602020602060602020202060206020
+```
+
+**Expected Behavior After Fix**:
+- The program should handle this input without crashing
+- Focus on preventing Heap-buffer-overflow READ 8
+
+### Your Task
+Analyze the crash and generate a patch to fix the bug.
+
+**Instructions**:
+1. Identify the root cause based on crash information and code
+2. Generate a minimal fix targeting the buggy lines
+3. Ensure the fix handles edge cases properly
+4. Do not over-engineer - focus on the specific issue
+
+**🔍 Special Analysis for Build Scripts**:
+
+Before generating the fix, consider these questions:
+1. **Does the crash indicate a linking/dependency issue?**
+   - Undefined references, symbol conflicts, or version mismatches
+   - Consider disabling problematic features rather than adding flags
+
+2. **Is the crash in a library that's being built?**
+   - The fix might be in how that library is configured (CMake flags, configure options)
+   - Check if similar libraries in the build script use different flags
+
+3. **What features are currently enabled?**
+   - Look for `-DWITH_XXX=on` or `--enable-xxx` that might trigger bugs
+   - Try disabling optional features: `-DWITH_JPEG_DECODER=off`, `-DENABLE_PLUGIN_LOADING=off`
+
+4. **Are all dependencies built consistently?**
+   - Do other libraries use `-DCMAKE_C_FLAGS="$CFLAGS"`? Should this one too?
+   - Or is adding sanitizer flags unnecessary/harmful in this case?
+
+**💡 Tip**: For oss-fuzz builds, disabling non-essential features is often the right fix, not adding flags.
+
+### Output Format
+Please first localize the bug, then generate *SEARCH/REPLACE* edits to fix the issue.
+
+Every *SEARCH/REPLACE* edit must use this format:
+1. The file path wrapped in ### (e.g., ### src/file.cpp)
+2. The start and end line numbers (- start_line: N, - end_line: M)
+3. The start of search block: <<<<<<< SEARCH
+4. A contiguous chunk of lines to search for in the existing source code
+5. The dividing line: =======
+6. The lines to replace into the source code
+7. The end of the replace block: >>>>>>> REPLACE
+
+Example (MINIMAL edit with context awareness):
+```cpp
+### src/memory/allocator.cpp
+- start_line: 145
+- end_line: 149
+<<<<<<< SEARCH
+	if (size > 0) {
+		ptr = malloc(size);
+		use_memory(ptr);
+	}
+=======
+	if (size > 0) {
+		ptr = malloc(size);
+		if (ptr != NULL)
+			use_memory(ptr);
+	}
+>>>>>>> REPLACE
+```
+
+**CRITICAL COMPILATION SAFETY REQUIREMENTS**:
+
+1. **MINIMAL edits ONLY** - Include only 3-8 lines in SEARCH block (bug line + 1-3 context lines)
+   - More lines = higher risk of breaking dependencies
+   - Focus ONLY on the buggy statement and immediate neighbors
+
+2. **Variable Dependency Check** - Before removing/modifying any line, verify:
+   - ❌ NEVER remove variable declarations if they're used later
+   - ❌ NEVER remove assignments if the variable is referenced afterwards
+   - ✅ Check if variables in your SEARCH block are used outside it
+
+3. **Macro Pairing Safety** - Special macros MUST stay paired:
+   - `fz_try(ctx) { ... } fz_always(ctx) { ... } fz_catch(ctx) { ... }` → NEVER break this chain
+   - `do { ... } while(...)` → NEVER remove the `while` if you keep the `do`
+   - `if (...) { ... } else { ... }` → Be careful not to create dangling else
+
+4. **Code Block Integrity**:
+   - ❌ NEVER remove opening/closing braces unless removing entire block
+   - ❌ NEVER remove function declarations/definitions
+   - ✅ Preserve the structural indentation and nesting
+
+5. **Indentation**:
+   - **Use TAB characters (\t)** for indentation, NOT spaces - the codebase uses tabs
+   - The SEARCH block must match EXACTLY (preserve all tabs and spacing)
+
+6. **Context Awareness** - When editing, mentally visualize:
+   ```
+   [Lines before SEARCH - you don't see these, assume they exist]
+   <<<<<<< SEARCH
+   your visible edit zone (3-8 lines)
+   =======
+   your proposed changes
+   >>>>>>> REPLACE
+   [Lines after SEARCH - you don't see these, assume they exist]
+   ```
+   Your edit should work correctly with unknown context before and after!
+
+**Common Compilation Errors to AVOID**:
+- ❌ "use of undeclared identifier 'X'" → You removed the declaration of X
+- ❌ "expected 'while' in do/while loop" → You broke a macro pairing
+- ❌ "function definition not allowed here" → You accidentally removed a closing brace
+- ❌ "extraneous closing brace" → You removed code but left its closing brace
+
+**Golden Rule**: If unsure whether a line is safe to remove, KEEP IT. Only modify the absolute minimum needed to fix the bug.

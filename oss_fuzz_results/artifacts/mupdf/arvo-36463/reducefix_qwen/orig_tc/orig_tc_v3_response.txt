@@ -1,0 +1,38 @@
+=== LLM Response for orig_tc version 3 ===
+Model: qwen-plus
+Temperature: 1.0
+======================================================================
+
+Based on the crash details (heap-use-after-free in `fz_paint_pixmap_with_mask`), stack trace, and code analysis, the bug occurs when accessing `pixmap` after it may have been freed. The issue is in the error handling block where `fz_drop_pixmap(ctx, pixmap)` is called unconditionally in `fz_always`, but the pixmap might not have been properly initialized or could be accessed afterward.
+
+The root cause is that `pixmap` is used after being dropped in the `fz_always` block without proper null checking or scope management. We need to ensure we don't access a potentially freed pixmap.
+
+```cpp
+### source/fitz/draw-device.c
+- start_line: 2043
+- end_line: 2048
+<<<<<<< SEARCH
+	}
+	fz_always(ctx) 
+		fz_drop_pixmap(ctx, pixmap);
+	fz_catch(ctx)
+		fz_rethrow(ctx);
+=======
+	}
+	fz_always(ctx)
+	{
+		if (pixmap)
+			fz_drop_pixmap(ctx, pixmap);
+	}
+	fz_catch(ctx)
+		fz_rethrow(ctx);
+>>>>>>> REPLACE
+```
+
+This fix:
+1. Adds proper conditional check before dropping pixmap
+2. Maintains the fz_try/fz_always/fz_catch macro pairing
+3. Prevents use-after-free by only dropping if pixmap is valid
+4. Uses minimal changes (only wraps existing drop call with null check)
+5. Preserves all variable declarations and code structure
+6. Follows indentation with tabs as required

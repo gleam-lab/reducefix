@@ -1,0 +1,61 @@
+### 为什么这个输入会触发崩溃
+
+从崩溃日志来看，崩溃发生在 `BEInt<unsigned short, 2>::operator unsigned short()` 函数中，具体原因是访问了一个全局缓冲区越界读取。崩溃地址是 `0x0000009de494`，在崩溃时尝试读取大小为2字节的数据。根据栈跟踪信息，崩溃发生在以下步骤：
+
+1. 调用 `BEInt<unsigned short, 2>::operator unsigned short()`。
+2. 进一步调用 `OT::IntType<unsigned short, 2u>::operator unsigned int()`。
+3. 再次调用 `OT::gvar::get_offset(unsigned int, unsigned int)`。
+4. 最终在 `OT::gvar::accelerator_t::apply_deltas_to_points(unsigned int, hb_array_t<int>, hb_array_t<OT::contour_point_t>)` 中触发了崩溃。
+
+崩溃的原因可能是由于传递给 `OT::gvar::get_offset` 或其他相关函数的参数值超出了有效范围，导致读取了超出边界的数据。
+
+### 修复策略
+
+修复此类问题通常需要以下几个步骤：
+
+1. **验证输入数据的有效性**：确保所有传入的参数都在允许的范围内。
+2. **增加边界检查**：在关键位置增加边界检查，以防止越界访问。
+3. **更新数据结构**：如果可能，更新数据结构以更好地管理内存和边界条件。
+
+### 具体的代码修复建议
+
+1. **增加边界检查**：
+
+   在 `OT::gvar::get_offset` 和 `OT::gvar::get_glyph_var_data_bytes` 函数中添加边界检查，确保传入的索引值在有效范围内。
+
+   ```cpp
+   uint32_t OT::gvar::get_offset(uint32_t glyph_index, uint32_t var_index) const {
+       if (glyph_index >= num_glyphs || var_index >= num_vars) {
+           // Handle error or return an appropriate value
+           return 0; // Example: Return 0 for invalid index
+       }
+       // Proceed with normal operation
+       return offsets[glyph_index][var_index];
+   }
+
+   void OT::gvar::get_glyph_var_data_bytes(hb_blob_t* blob, uint32_t glyph_index, uint32_t var_index) const {
+       if (glyph_index >= num_glyphs || var_index >= num_vars) {
+           // Handle error or return an appropriate value
+           return; // Example: Early return for invalid index
+       }
+       // Proceed with normal operation
+       // ...
+   }
+   ```
+
+2. **验证输入数据**：
+
+   在调用这些函数之前，验证输入数据是否有效。例如，在 `OT::gvar::accelerator_t::apply_deltas_to_points` 中增加输入验证。
+
+   ```cpp
+   bool OT::gvar::accelerator_t::apply_deltas_to_points(uint32_t glyph_index, hb_array_t<int> deltas, hb_array_t<OT::contour_point_t> points) const {
+       if (glyph_index >= num_glyphs || deltas.length() != num_contours || points.length() != num_contours) {
+           // Handle error or return false
+           return false; // Example: Return false for invalid input
+       }
+       // Proceed with normal operation
+       // ...
+   }
+   ```
+
+通过这些修改，可以有效地避免全局缓冲区溢出，并提高代码的健壮性。

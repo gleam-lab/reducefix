@@ -1,0 +1,266 @@
+```python
+def main():
+    import sys
+    input = sys.stdin.read
+    data = input().split()
+    
+    N = int(data[0])
+    M = int(data[1])
+    
+    pieces = []
+    index = 2
+    for _ in range(M):
+        a = int(data[index])
+        b = int(data[index + 1])
+        index += 2
+        pieces.append((a, b))
+    
+    if M == 0:
+        print(N * N)
+        return
+    
+    # Sets to store occupied lines
+    rows = set()
+    cols = set()
+    diag1 = set()  # i + j
+    diag2 = set()  # i - j
+    
+    for a, b in pieces:
+        rows.add(a)
+        cols.add(b)
+        diag1.add(a + b)
+        diag2.add(a - b)
+    
+    # Total squares under attack (union of all lines covered by any piece)
+    total_attacked = 0
+    
+    # Add contribution from each unique row
+    total_attacked += len(rows) * N
+    
+    # Add contribution from each unique column
+    total_attacked += len(cols) * N
+    
+    # Add contribution from each unique diagonal (i+j)
+    for s in diag1:
+        # Number of cells where i + j = s, with 1 <= i <= N, 1 <= j <= N
+        if s < 2:
+            count = 0
+        elif s <= N + 1:
+            count = s - 1
+        else:
+            count = 2 * N - s + 1
+        total_attacked += count
+    
+    # Add contribution from each unique anti-diagonal (i-j)
+    for d in diag2:
+        # Number of cells where i - j = d
+        if d >= 0:
+            # i = j + d => j >= 1, i <= N => j <= N - d
+            if d < N:
+                count = N - d
+            else:
+                count = 0 if d >= N else N
+        else:
+            # d < 0: j = i - d => i >= 1, j <= N => i <= N + d
+            d_abs = -d
+            if d_abs < N:
+                count = N - d_abs
+            else:
+                count = 0
+        total_attacked += count
+    
+    # Now subtract overcounted intersections
+    # We use inclusion-exclusion: subtract pairwise intersections, add back triple, etc.
+    # But easier: subtract overlaps between every pair of line types
+    
+    # Intersections between row and col
+    for r in rows:
+        for c in cols:
+            total_attacked -= 1  # cell (r,c) counted twice
+    
+    # Intersections between row and diag1 (r + j = s => j = s - r)
+    for r in rows:
+        for s in diag1:
+            j = s - r
+            if 1 <= j <= N:
+                total_attacked -= 1
+    
+    # Intersections between row and diag2 (r - j = d => j = r - d)
+    for r in rows:
+        for d in diag2:
+            j = r - d
+            if 1 <= j <= N:
+                total_attacked -= 1
+    
+    # Intersections between col and diag1 (i + c = s => i = s - c)
+    for c in cols:
+        for s in diag1:
+            i = s - c
+            if 1 <= i <= N:
+                total_attacked -= 1
+    
+    # Intersections between col and diag2 (i - c = d => i = d + c)
+    for c in cols:
+        for d in diag2:
+            i = d + c
+            if 1 <= i <= N:
+                total_attacked -= 1
+    
+    # Intersections between diag1 and diag2
+    # Solve: i + j = s, i - j = d  =>  i = (s+d)/2, j = (s-d)/2
+    for s in diag1:
+        for d in diag2:
+            if (s + d) % 2 == 0:
+                i = (s + d) // 2
+                j = (s - d) // 2
+                if 1 <= i <= N and 1 <= j <= N:
+                    total_attacked -= 1
+    
+    # Now add back the triple intersections that were subtracted too many times
+    # Every original piece position was:
+    #   added 4 times (row, col, diag1, diag2)
+    #   subtracted 6 times (all pairs: C(4,2)=6)
+    #   so far counted: 4 - 6 = -2
+    # So we need to add 3 times each piece to make it counted exactly once
+    
+    for a, b in pieces:
+        total_attacked += 3
+    
+    # But actually, we want the union — each attacked cell should be counted once.
+    # However, our total_attacked is now the size of the union due to inclusion-exclusion.
+    
+    # However, note: the above inclusion-exclusion is complex. Alternatively, we can realize:
+    # The set of attacked cells is the union of:
+    #   R: all cells in rows `rows`
+    #   C: all cells in cols `cols`
+    #   D1: all cells in diag1 `diag1`
+    #   D2: all cells in diag2 `diag2`
+    #
+    # |R ∪ C ∪ D1 ∪ D2| = |R|+|C|+|D1|+|D2|
+    #                   - |R∩C| - |R∩D1| - |R∩D2| - |C∩D1| - |C∩D2| - |D1∩D2|
+    #                   + |R∩C∩D1| + |R∩C∩D2| + |R∩D1∩D2| + |C∩D1∩D2|
+    #                   - |R∩C∩D1∩D2|
+    #
+    # We have done up to double intersections and then added 3*M, which isn't standard.
+    #
+    # Let's do proper inclusion-exclusion.
+
+    # Recompute using proper inclusion-exclusion
+
+    total_union = 0
+
+    # Single sets
+    total_union += len(rows) * N
+    total_union += len(cols) * N
+    for s in diag1:
+        if s < 2:
+            count = 0
+        elif s <= N + 1:
+            count = s - 1
+        else:
+            count = 2 * N - s + 1
+        total_union += count
+    for d in diag2:
+        if d >= 0:
+            count = N - d if d < N else 0
+        else:
+            count = N + d if d > -N else 0
+        total_union += count
+
+    # Subtract pairwise intersections
+    # R ∩ C
+    for r in rows:
+        for c in cols:
+            total_union -= 1
+
+    # R ∩ D1: (r, j) such that r + j = s -> j = s - r
+    for r in rows:
+        for s in diag1:
+            j = s - r
+            if 1 <= j <= N:
+                total_union -= 1
+
+    # R ∩ D2: (r, j) such that r - j = d -> j = r - d
+    for r in rows:
+        for d in diag2:
+            j = r - d
+            if 1 <= j <= N:
+                total_union -= 1
+
+    # C ∩ D1: (i, c) such that i + c = s -> i = s - c
+    for c in cols:
+        for s in diag1:
+            i = s - c
+            if 1 <= i <= N:
+                total_union -= 1
+
+    # C ∩ D2: (i, c) such that i - c = d -> i = d + c
+    for c in cols:
+        for d in diag2:
+            i = d + c
+            if 1 <= i <= N:
+                total_union -= 1
+
+    # D1 ∩ D2: solve i+j=s, i-j=d -> i=(s+d)/2, j=(s-d)/2
+    for s in diag1:
+        for d in diag2:
+            if (s + d) % 2 == 0:
+                i = (s + d) // 2
+                j = (s - d) // 2
+                if 1 <= i <= N and 1 <= j <= N:
+                    total_union -= 1
+
+    # Add back triple intersections
+    # R ∩ C ∩ D1: (r,c) such that r+c = s
+    for r in rows:
+        for c in cols:
+            s = r + c
+            if s in diag1:
+                total_union += 1
+
+    # R ∩ C ∩ D2: (r,c) such that r - c = d
+    for r in rows:
+        for c in cols:
+            d = r - c
+            if d in diag2:
+                total_union += 1
+
+    # R ∩ D1 ∩ D2: fix r, then from D1 and D2: j = s - r, and r - j = d -> must satisfy
+    # Actually: given r, s, d: j = s - r, and also j = r - d -> so s - r = r - d -> s + d = 2r
+    for r in rows:
+        for s in diag1:
+            for d in diag2:
+                if s + d == 2 * r:
+                    j = s - r
+                    if 1 <= j <= N:
+                        total_union += 1
+
+    # C ∩ D1 ∩ D2: fix c, then i = s - c, and i - c = d -> s - c - c = d -> s - 2c = d
+    for c in cols:
+        for s in diag1:
+            for d in diag2:
+                if s - 2 * c == d:
+                    i = s - c
+                    if 1 <= i <= N:
+                        total_union += 1
+
+    # Subtract quadruple intersections: R ∩ C ∩ D1 ∩ D2
+    # Cell (r,c) such that r+c in diag1 and r-c in diag2
+    for r in rows:
+        for c in cols:
+            if (r + c) in diag1 and (r - c) in diag2:
+                total_union -= 1
+
+    # Now total_union is the number of distinct attacked cells
+    safe_squares = N * N - total_union
+
+    # But we cannot place on occupied squares
+    # All M pieces are on attacked cells, but we must not count them as available
+    # However, the attacked set already includes occupied squares, and safe_squares = total grid - attacked
+    # So we don't need further adjustment
+
+    print(safe_squares)
+
+if __name__ == "__main__":
+    main()
+```

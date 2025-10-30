@@ -1,0 +1,72 @@
+ ### 分析与问题定位
+
+根据提供的崩溃日志和输入数据，我们可以推断出以下几点：
+
+1. **崩溃原因**：`AddressSanitizer: global-buffer-overflow`
+   - 这表明程序尝试读取一个全局缓冲区之外的内存区域。具体来说，是在 `BEInt<unsigned short, 2>::operator unsigned short()` 函数中发生的问题。
+
+2. **触发条件**：
+   - 输入数据是 `00`，这是一个非常短的数据片段。
+   - 崩溃发生在 `OT::gvar::accelerator_t::apply_deltas_to_points` 函数中，这表明这个函数可能没有正确处理输入数据的长度或内容。
+
+3. **关键差异分析**：
+   - `OT::gvar::accelerator_t::apply_deltas_to_points` 函数中存在对 `unsigned int` 类型的操作，但没有足够的检查来确保输入数据的有效性。
+   - 具体来说，在调用 `OT::gvar::get_glyph_var_data_bytes` 时，传入的参数可能导致缓冲区溢出。
+
+### 代码修复建议
+
+为了修复这个问题，我们需要确保在处理输入数据时进行适当的边界检查，并避免对无效内存区域进行操作。以下是具体的修复建议：
+
+1. **增加输入数据长度检查**：
+   - 在 `OT::gvar::accelerator_t::apply_deltas_to_points` 函数中，添加对输入数据长度的检查，确保其足够长以支持预期的操作。
+
+2. **改进 `BEInt` 类的实现**：
+   - 确保 `BEInt` 类的实现能够正确处理边界情况，避免读取超出缓冲区范围的内存。
+
+3. **修改 `OT::gvar::get_glyph_var_data_bytes` 函数**：
+   - 在该函数中增加边界检查，确保传入的参数不会导致缓冲区溢出。
+
+以下是一个示例修复：
+
+```cpp
+// 假设 BEInt 类的定义如下
+template <typename T, unsigned N>
+class BEInt {
+public:
+    operator T() const {
+        // 增加边界检查
+        if (N == sizeof(T)) {
+            return *reinterpret_cast<const T*>(data);
+        } else {
+            throw std::out_of_range("Buffer overflow");
+        }
+    }
+
+private:
+    uint8_t data[N];
+};
+
+// 修改 OT::gvar::accelerator_t::apply_deltas_to_points 函数
+void OT::gvar::accelerator_t::apply_deltas_to_points(...) {
+    // 增加输入数据长度检查
+    if (input_length < expected_length) {
+        throw std::invalid_argument("Input data too short");
+    }
+
+    // 调用其他函数时也增加检查
+    OT::gvar::get_glyph_var_data_bytes(input_buffer, input_length, index);
+}
+
+// 修改 OT::gvar::get_glyph_var_data_bytes 函数
+hb_blob_t* OT::gvar::get_glyph_var_data_bytes(const uint8_t* input_buffer, size_t input_length, unsigned int index) {
+    // 增加边界检查
+    if (index * sizeof(uint16_t) >= input_length) {
+        throw std::out_of_range("Index out of bounds");
+    }
+
+    // 继续处理
+    // ...
+}
+```
+
+通过这些修改，我们可以在处理输入数据时进行适当的边界检查，从而避免缓冲区溢出错误。这样可以提高程序的健壮性和安全性。

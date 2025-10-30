@@ -1,0 +1,34 @@
+After analyzing the crash details and code, I can see that this is a use-of-uninitialized-value bug in the `pdf_load_embedded_font` function. The issue occurs when loading embedded fonts where a buffer is used before being properly initialized.
+
+Looking at the stack trace (`fz_drop_buffer` -> `pdf_load_embedded_font` -> `pdf_load_font_descriptor`) and the code around lines 551-587, I need to identify where an uninitialized buffer might be used.
+
+The problem appears to be in the font loading process where a buffer is allocated but not properly initialized before use. The fix should ensure proper initialization of the buffer.
+
+```c
+<<<<<<< SEARCH
+		fz_try(ctx)
+		{
+			fontdesc->font = pdf_load_embedded_font(ctx, doc, dict, fontbuf);
+			pdf_set_buffer_writing_system(ctx, fontdesc->font, writing_system);
+		}
+		fz_always(ctx)
+		{
+			fz_drop_buffer(ctx, fontbuf);
+		}
+		fz_catch(ctx)
+=======
+		fz_try(ctx)
+		{
+			fontdesc->font = pdf_load_embedded_font(ctx, doc, dict, fontbuf);
+			if (fontdesc->font)
+				pdf_set_buffer_writing_system(ctx, fontdesc->font, writing_system);
+		}
+		fz_always(ctx)
+		{
+			fz_drop_buffer(ctx, fontbuf);
+		}
+		fz_catch(ctx)
+>>>>>>> REPLACE
+```
+
+This fix adds a null check before calling `pdf_set_buffer_writing_system`, which prevents using the buffer if the font failed to load. The original code was attempting to set the writing system even when the font loading failed, which could lead to using an uninitialized or corrupted buffer state. This change ensures we only modify the buffer when we have a valid font object.

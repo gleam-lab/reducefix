@@ -1,0 +1,51 @@
+根据提供的崩溃日志和关键差异分析，问题似乎与 `OT::gvar::accelerator_t::apply_deltas_to_points` 函数中的缓冲区溢出有关。具体来说，错误发生在尝试读取一个超出全局缓冲区范围的字节时。
+
+### 输入特征触发崩溃
+- 输入数据为 `00`，这是一个非常简化的测试用例。
+- 可能是由于 `OT::gvar::accelerator_t::apply_deltas_to_points` 在处理这个简化的输入时没有正确处理边界情况，导致缓冲区溢出。
+
+### 为什么出现未知崩溃
+- 从崩溃日志来看，问题出在 `BEInt<unsigned short, 2>::operator unsigned short()` 调用中，尝试读取了一个超出缓冲区范围的字节。
+- 这可能是因为在调用 `get_offset` 或 `get_glyph_var_data_bytes` 时，传入的参数不正确或未经过充分验证，导致计算出的偏移量超出了有效范围。
+
+### 修复建议
+为了修复这个问题，可以采取以下步骤：
+
+1. **验证输入参数**：确保所有传递给 `OT::gvar::accelerator_t::apply_deltas_to_points` 的参数都是有效的，并且没有超出预期范围。
+2. **添加边界检查**：在关键操作之前添加边界检查，确保不会访问无效的内存地址。
+3. **更新代码逻辑**：确保在计算偏移量和处理数据时，始终考虑到边界情况。
+
+以下是一个可能的代码修复示例：
+
+```cpp
+// 假设 get_offset 和 get_glyph_var_data_bytes 是相关的成员函数
+unsigned int OT::gvar::get_offset(unsigned int glyph_index, unsigned int var_index) const {
+    // 添加边界检查
+    if (glyph_index >= num_glyphs || var_index >= num_variations) {
+        return 0; // 或者抛出异常
+    }
+    // 继续原来的逻辑
+    return offset_table[glyph_index * num_variations + var_index];
+}
+
+bool OT::gvar::accelerator_t::apply_deltas_to_points(unsigned int glyph_index, hb_array_t<int> deltas, hb_array_t<OT::contour_point_t> points) const {
+    // 添加边界检查
+    if (glyph_index >= num_glyphs) {
+        return false; // 或者抛出异常
+    }
+
+    // 获取变体数据字节数
+    unsigned int data_size = accelerator.get_glyph_var_data_bytes(glyph_index, 0); // 假设这里需要第二个参数
+
+    // 添加边界检查
+    if (data_size == 0) {
+        return false; // 或者处理特殊情况
+    }
+
+    // 继续原来的逻辑
+    // ...
+}
+```
+
+### 总结
+通过添加边界检查和验证输入参数，可以有效地避免缓冲区溢出问题。确保在关键操作之前进行充分的验证和边界检查，可以显著提高代码的健壮性和安全性。

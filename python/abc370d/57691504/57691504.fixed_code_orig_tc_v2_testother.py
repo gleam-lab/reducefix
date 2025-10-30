@@ -1,0 +1,223 @@
+import sys
+
+def main():
+    H, W, Q = map(int, input().split())
+    
+    # Use dictionaries to store next existing wall in each direction
+    # For each row, maintain left and right walls using a set or union-find like structure
+    # For each column, maintain up and down walls
+    
+    # We'll use union-find style path compression for efficiency
+    # next_left[r][c] = the next column to the left that has a wall, or 0 if none
+    # next_right[r][c] = the next column to the right that has a wall, or W+1 if none
+    # next_up[c][r] = the next row above that has a wall, or 0 if none  
+    # next_down[c][r] = the next row below that has a wall, or H+1 if none
+    
+    # Initialize data structures
+    next_left = [dict() for _ in range(H+1)]  # next_left[r][c] = prev col with wall
+    next_right = [dict() for _ in range(H+1)]  # next_right[r][c] = next col with wall
+    next_up = [dict() for _ in range(W+1)]     # next_up[c][r] = prev row with wall
+    next_down = [dict() for _ in range(W+1)]   # next_down[c][r] = next row with wall
+    
+    # Initially all cells have walls, so we need to initialize neighbors
+    # For efficiency, we'll use path compression during queries
+    
+    total_walls = H * W
+    
+    def find_next_left(row, col):
+        if col <= 1:
+            return 0
+        if col not in next_left[row]:
+            return col - 1
+        if next_left[row][col] == col - 1:
+            return col - 1
+        next_left[row][col] = find_next_left(row, next_left[row][col])
+        return next_left[row][col]
+    
+    def find_next_right(row, col):
+        if col >= W:
+            return W + 1
+        if col not in next_right[row]:
+            return col + 1
+        if next_right[row][col] == col + 1:
+            return col + 1
+        next_right[row][col] = find_next_right(row, next_right[row][col])
+        return next_right[row][col]
+    
+    def find_next_up(col, row):
+        if row <= 1:
+            return 0
+        if row not in next_up[col]:
+            return row - 1
+        if next_up[col][row] == row - 1:
+            return row - 1
+        next_up[col][row] = find_next_up(col, next_up[col][row])
+        return next_up[col][row]
+    
+    def find_next_down(col, row):
+        if row >= H:
+            return H + 1
+        if row not in next_down[col]:
+            return row + 1
+        if next_down[col][row] == row + 1:
+            return row + 1
+        next_down[col][row] = find_next_down(col, next_down[col][row])
+        return next_down[col][row]
+    
+    # Process each query
+    for _ in range(Q):
+        R, C = map(int, input().split())
+        
+        # Check if there's a wall at (R, C)
+        # If no wall exists at (R,C), then either it was destroyed directly
+        # or it's between two destroyed walls. We can check by seeing if 
+        # the next_left[R][C] != C-1 or next_right[R][C] != C+1 etc.
+        
+        has_wall = True
+        
+        # Check horizontally - if both neighbors are not direct, then no wall
+        if C > 1 and C in next_left[R] and next_left[R][C] != C-1:
+            has_wall = False
+        elif C < W and C in next_right[R] and next_right[R][C] != C+1:
+            has_wall = False
+        elif C == 1 and C in next_left[R]:
+            has_wall = False
+        elif C == W and C in next_right[R]:
+            has_wall = False
+            
+        # Check vertically similarly
+        if R > 1 and R in next_up[C] and next_up[C][R] != R-1:
+            has_wall = False
+        elif R < H and R in next_down[C] and next_down[C][R] != R+1:
+            has_wall = False
+        elif R == 1 and R in next_up[C]:
+            has_wall = False
+        elif R == H and R in next_down[C]:
+            has_wall = False
+        
+        if has_wall:
+            # Destroy the wall at (R, C)
+            total_walls -= 1
+            
+            # Update horizontal connections for row R
+            if C > 1:
+                next_right[R][C-1] = find_next_right(R, C)
+            if C < W:
+                next_left[R][C+1] = find_next_left(R, C)
+                
+            # Update vertical connections for column C
+            if R > 1:
+                next_down[C][R-1] = find_next_down(C, R)
+            if R < H:
+                next_up[C][R+1] = find_next_up(C, R)
+                
+        else:
+            # No wall at (R, C) - destroy first walls in each direction
+            destroyed = 0
+            
+            # Up
+            r_up = find_next_up(C, R)
+            if r_up > 0:
+                # Verify there's no wall between r_up and R
+                valid = True
+                if r_up < R-1:
+                    if r_up+1 in next_down[C] and next_down[C][r_up+1] < R:
+                        valid = False
+                if valid:
+                    total_walls -= 1
+                    destroyed += 1
+                    # Update connections
+                    if r_up > 1:
+                        next_down[C][r_up-1] = find_next_down(C, r_up)
+                    if r_up < H:
+                        next_up[C][r_up+1] = find_next_up(C, r_up)
+            
+            # Down
+            r_down = find_next_down(C, R)
+            if r_down <= H:
+                valid = True
+                if r_down > R+1:
+                    if r_down-1 in next_up[C] and next_up[C][r_down-1] > R:
+                        valid = False
+                if valid:
+                    # Avoid double destruction
+                    already_destroyed = False
+                    if destroyed > 0:
+                        # Check if this wall was already destroyed
+                        if r_down > 1 and r_down-1 in next_down[C]:
+                            already_destroyed = True
+                        elif r_down < H and r_down+1 in next_up[C]:
+                            already_destroyed = True
+                        elif r_down == 1 and 1 in next_down[C]:
+                            already_destroyed = True
+                        elif r_down == H and H in next_up[C]:
+                            already_destroyed = True
+                    if not already_destroyed:
+                        total_walls -= 1
+                        destroyed += 1
+                        # Update connections
+                        if r_down > 1:
+                            next_down[C][r_down-1] = find_next_down(C, r_down)
+                        if r_down < H:
+                            next_up[C][r_down+1] = find_next_up(C, r_down)
+            
+            # Left
+            c_left = find_next_left(R, C)
+            if c_left > 0:
+                valid = True
+                if c_left < C-1:
+                    if c_left+1 in next_right[R] and next_right[R][c_left+1] < C:
+                        valid = False
+                if valid:
+                    # Check if already destroyed
+                    already_destroyed = False
+                    if destroyed > 0:
+                        if c_left > 1 and c_left-1 in next_right[R]:
+                            already_destroyed = True
+                        elif c_left < W and c_left+1 in next_left[R]:
+                            already_destroyed = True
+                        elif c_left == 1 and 1 in next_right[R]:
+                            already_destroyed = True
+                        elif c_left == W and W in next_left[R]:
+                            already_destroyed = True
+                    if not already_destroyed:
+                        total_walls -= 1
+                        destroyed += 1
+                        # Update connections
+                        if c_left > 1:
+                            next_right[R][c_left-1] = find_next_right(R, c_left)
+                        if c_left < W:
+                            next_left[R][c_left+1] = find_next_left(R, c_left)
+            
+            # Right
+            c_right = find_next_right(R, C)
+            if c_right <= W:
+                valid = True
+                if c_right > C+1:
+                    if c_right-1 in next_left[R] and next_left[R][c_right-1] > C:
+                        valid = False
+                if valid:
+                    # Check if already destroyed
+                    already_destroyed = False
+                    if destroyed > 0:
+                        if c_right > 1 and c_right-1 in next_right[R]:
+                            already_destroyed = True
+                        elif c_right < W and c_right+1 in next_left[R]:
+                            already_destroyed = True
+                        elif c_right == 1 and 1 in next_right[R]:
+                            already_destroyed = True
+                        elif c_right == W and W in next_left[R]:
+                            already_destroyed = True
+                    if not already_destroyed:
+                        total_walls -= 1
+                        destroyed += 1
+                        # Update connections
+                        if c_right > 1:
+                            next_right[R][c_right-1] = find_next_right(R, c_right)
+                        if c_right < W:
+                            next_left[R][c_right+1] = find_next_left(R, c_right)
+    
+    print(total_walls)
+
+if __name__ == "__main__":
+    main()

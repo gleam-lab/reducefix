@@ -1,0 +1,111 @@
+import sys
+from collections import defaultdict
+
+def main():
+    H, W, Q = map(int, input().split())
+    
+    # Use dictionaries to store next existing wall in each direction
+    # For each column, store the next wall above and below for each row
+    up = [dict() for _ in range(W + 1)]
+    down = [dict() for _ in range(W + 1)]
+    left = [dict() for _ in range(H + 1)]
+    right = [dict() for _ in range(H + 1)]
+    
+    # Initialize: each cell has a wall, so each cell points to itself
+    for r in range(1, H + 1):
+        for c in range(1, W + 1):
+            up[c][r] = r
+            down[c][r] = r
+            left[r][c] = c
+            right[r][c] = c
+    
+    total_walls = H * W
+    
+    def find_next(d, pos, key):
+        if key not in d[pos]:
+            return key
+        if d[pos][key] != key:
+            d[pos][key] = find_next(d, pos, d[pos][key])
+        return d[pos][key]
+    
+    for _ in range(Q):
+        R_q, C_q = map(int, input().split())
+        
+        # Check if there's a wall at (R_q, C_q)
+        if find_next(up, C_q, R_q) == R_q:
+            # Wall exists, destroy it
+            total_walls -= 1
+            
+            # Update the union-find structures
+            # For vertical (column C_q)
+            if R_q > 1:
+                up[C_q][R_q] = find_next(up, C_q, R_q - 1)
+            if R_q < H:
+                down[C_q][R_q] = find_next(down, C_q, R_q + 1)
+                
+            # For horizontal (row R_q)
+            if C_q > 1:
+                left[R_q][C_q] = find_next(left, R_q, C_q - 1)
+            if C_q < W:
+                right[R_q][C_q] = find_next(right, R_q, C_q + 1)
+        else:
+            # No wall at (R_q, C_q), destroy first walls in each direction
+            destroyed = 0
+            
+            # Up direction
+            if R_q > 1:
+                up_pos = find_next(up, C_q, R_q - 1)
+                if up_pos >= 1 and up_pos not in up[C_q]:  # This check ensures we don't double-count
+                    # Check if this wall is directly reachable (no walls between up_pos and R_q)
+                    if find_next(down, C_q, up_pos) == R_q:
+                        total_walls -= 1
+                        destroyed += 1
+                        # Remove this wall
+                        if up_pos > 1:
+                            up[C_q][up_pos] = find_next(up, C_q, up_pos - 1)
+                        if up_pos < H:
+                            down[C_q][up_pos] = find_next(down, C_q, up_pos + 1)
+            
+            # Down direction
+            if R_q < H:
+                down_pos = find_next(down, C_q, R_q + 1)
+                if down_pos <= H and down_pos not in down[C_q]:
+                    if find_next(up, C_q, down_pos) == R_q:
+                        total_walls -= 1
+                        destroyed += 1
+                        # Remove this wall
+                        if down_pos > 1:
+                            up[C_q][down_pos] = find_next(up, C_q, down_pos - 1)
+                        if down_pos < H:
+                            down[C_q][down_pos] = find_next(down, C_q, down_pos + 1)
+            
+            # Left direction
+            if C_q > 1:
+                left_pos = find_next(left, R_q, C_q - 1)
+                if left_pos >= 1 and left_pos not in left[R_q]:
+                    if find_next(right, R_q, left_pos) == C_q:
+                        total_walls -= 1
+                        destroyed += 1
+                        # Remove this wall
+                        if left_pos > 1:
+                            left[R_q][left_pos] = find_next(left, R_q, left_pos - 1)
+                        if left_pos < W:
+                            right[R_q][left_pos] = find_next(right, R_q, left_pos + 1)
+            
+            # Right direction
+            if C_q < W:
+                right_pos = find_next(right, R_q, C_q + 1)
+                if right_pos <= W and right_pos not in right[R_q]:
+                    if find_next(left, R_q, right_pos) == C_q:
+                        total_walls -= 1
+                        destroyed += 1
+                        # Remove this wall
+                        if right_pos > 1:
+                            left[R_q][right_pos] = find_next(left, R_q, right_pos - 1)
+                        if right_pos < W:
+                            right[R_q][right_pos] = find_next(right, R_q, right_pos + 1)
+    
+    print(total_walls)
+
+if __name__ == "__main__":
+    main()

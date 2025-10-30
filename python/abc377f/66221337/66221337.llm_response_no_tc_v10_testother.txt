@@ -1,0 +1,418 @@
+```python
+python
+N, M = map(int, input().split())
+pieces = [tuple(map(int, input().split())) for _ in range(M)]
+
+# Sets to store unique lines threatened by existing pieces
+rows = set()
+cols = set()
+diag1 = set()  # i + j = constant (anti-diagonal)
+diag2 = set()  # i - j = constant (main diagonal)
+
+# Mark all rows, columns, and diagonals that are under attack
+for a, b in pieces:
+    rows.add(a)
+    cols.add(b)
+    diag1.add(a + b)
+    diag2.add(a - b)
+
+# Total number of squares that are under attack
+attacked = 0
+
+# Add contribution from each unique row: N squares per row
+attacked += len(rows) * N
+# Add contribution from each unique column: N squares per column
+attacked += len(cols) * N
+# Add contribution from each unique anti-diagonal (i + j = c)
+for s in diag1:
+    # Number of valid (i,j) such that i+j = s, 1<=i<=N, 1<=j<=N
+    if s < 2:
+        count = 0
+    elif s <= N + 1:
+        count = s - 1
+    else:
+        count = 2 * N - s + 1
+    attacked += count
+# Add contribution from each unique main diagonal (i - j = d)
+for d in diag2:
+    # Number of valid (i,j) such that i-j = d, 1<=i<=N, 1<=j<=N
+    if d < 1 - N:
+        count = 0
+    elif d <= 0:
+        count = N + d
+    elif d <= N - 1:
+        count = N - d
+    else:
+        count = 0
+    attacked += count
+
+# Now subtract overcounts: each piece lies at intersection of its row, col, diag1, diag2
+# Each piece is counted multiple times in the above sum
+
+# We use inclusion-exclusion: we have added intersections multiple times.
+# Instead, let's calculate total attacked squares via union of all threats.
+
+# But simpler: we can compute total attacked as:
+# |Union| = Sum of individual sets - Sum of pairwise intersections
+#       + Sum of triple intersections - quadruple intersections
+
+# However, easier approach: since M <= 1000, iterate over all pieces and collect all attacked squares?
+# But N up to 1e9 => cannot iterate over grid.
+
+# Instead, we must use inclusion exclusion on the sets.
+
+# Let R = union of all rows, C = union of cols, D1 = union of diag1, D2 = union of diag2
+# Then |R ∪ C ∪ D1 ∪ D2| = 
+#   |R| + |C| + |D1| + |D2|
+# - |R∩C| - |R∩D1| - |R∩D2| - |C∩D1| - |C∩D2| - |D1∩D2|
+# + |R∩C∩D1| + |R∩C∩D2| + |R∩D1∩D2| + |C∩D1∩D2|
+# - |R∩C∩D1∩D2|
+
+from collections import defaultdict
+
+# Precompute pairwise overlaps and higher-order overlaps using the actual positions
+
+# But note: every square attacked is one that lies in any row in `rows`, or any col in `cols`, or any diag1 in `diag1`, or any diag2 in `diag2`
+
+# We can compute:
+# A = |R ∪ C ∪ D1 ∪ D2| = ?
+
+# Use inclusion-exclusion:
+
+total = 0
+
+# Single sets
+total += len(rows) * N
+total += len(cols) * N
+for s in diag1:
+    if s >= 2 and s <= 2*N:
+        if s <= N+1:
+            total += s-1
+        else:
+            total += 2*N - s + 1
+for d in diag2:
+    low = max(1, 1 + d)
+    high = min(N, N + d)
+    if low <= high:
+        total += high - low + 1
+
+# Subtract pairwise intersections
+
+# R ∩ C: all (r, c) where r in rows, c in cols => len(rows)*len(cols)
+total -= len(rows) * len(cols)
+
+# R ∩ D1: (r, j) such that r in rows, and r+j = s for some s in diag1 => j = s - r, must be in [1,N]
+count = 0
+for r in rows:
+    for s in diag1:
+        j = s - r
+        if 1 <= j <= N:
+            count += 1
+total -= count
+
+# R ∩ D2: (r, j) such that r in rows, r - j = d for some d in diag2 => j = r - d
+count = 0
+for r in rows:
+    for d in diag2:
+        j = r - d
+        if 1 <= j <= N:
+            count += 1
+total -= count
+
+# C ∩ D1: (i, c) such that c in cols, i+c = s => i = s - c
+count = 0
+for c in cols:
+    for s in diag1:
+        i = s - c
+        if 1 <= i <= N:
+            count += 1
+total -= count
+
+# C ∩ D2: (i, c) such that c in cols, i - c = d => i = d + c
+count = 0
+for c in cols:
+    for d in diag2:
+        i = d + c
+        if 1 <= i <= N:
+            count += 1
+total -= count
+
+# D1 ∩ D2: (i,j) such that i+j=s and i-j=d => i=(s+d)/2, j=(s-d)/2 must be integer and in range
+count = 0
+for s in diag1:
+    for d in diag2:
+        if (s + d) % 2 == 0:
+            i = (s + d) // 2
+            j = (s - d) // 2
+            if 1 <= i <= N and 1 <= j <= N:
+                count += 1
+total -= count
+
+# Add back triple intersections
+
+# R ∩ C ∩ D1: (r,c) with r in rows, c in cols, and r+c = s for some s in diag1
+count = 0
+for r in rows:
+    for c in cols:
+        if (r + c) in diag1:
+            count += 1
+total += count
+
+# R ∩ C ∩ D2: (r,c) with r in rows, c in cols, r-c = d for some d in diag2
+count = 0
+for r in rows:
+    for c in cols:
+        if (r - c) in diag2:
+            count += 1
+total += count
+
+# R ∩ D1 ∩ D2: (r,j) such that r in rows, and j satisfies: r+j = s and r-j = d => j = s - r = r - d => s + d = 2r
+# So for fixed r, we need s in diag1, d in diag2 such that s + d = 2r, and j = s - r = r - d in [1,N]
+count = 0
+for r in rows:
+    for s in diag1:
+        for d in diag2:
+            if s + d == 2 * r:
+                j = s - r
+                if 1 <= j <= N:
+                    count += 1
+total += count
+
+# C ∩ D1 ∩ D2: (i,c) such that c in cols, i+c=s, i-c=d => i = (s+d)/2, c = (s-d)/2 => must have (s-d)/2 = c
+# So for fixed c, we need s in diag1, d in diag2 such that s - d == 2*c, and i = (s+d)//2 in [1,N] when integer
+count = 0
+for c in cols:
+    for s in diag1:
+        for d in diag2:
+            if s - d == 2 * c:
+                if (s + d) % 2 == 0:
+                    i = (s + d) // 2
+                    if 1 <= i <= N:
+                        count += 1
+total += count
+
+# D1 ∩ D2 ∩ R and D1 ∩ D2 ∩ C already covered? We did R ∩ D1 ∩ D2 and C ∩ D1 ∩ D2
+
+# But we also need: R ∩ C ∩ D1 ∩ D2? Wait, we haven't done all triples.
+
+# Actually we missed:
+# R ∩ D1 ∩ D2 — done
+# C ∩ D1 ∩ D2 — done
+# But what about: R ∩ C ∩ D1 — done, R ∩ C ∩ D2 — done
+# What about: R ∩ D1 ∩ C? That's same as R ∩ C ∩ D1 — already included.
+
+# And D1 ∩ D2 ∩ R — same as R ∩ D1 ∩ D2.
+
+# But there is also: D1 ∩ R ∩ C — same.
+
+# So all triple combinations:
+# R,C,D1
+# R,C,D2
+# R,D1,D2
+# C,D1,D2
+# -> All covered.
+
+# Now subtract quadruple intersection: R ∩ C ∩ D1 ∩ D2
+count = 0
+for r in rows:
+    for c in cols:
+        s = r + c
+        d = r - c
+        if s in diag1 and d in diag2:
+            count += 1
+total -= count
+
+# However, this inclusion-exclusion counts every attacked square exactly once?
+
+# But wait: inclusion-exclusion formula:
+# |A∪B∪C∪D| = Σ|A| - Σ|A∩B| + Σ|A∩B∩C| - |A∩B∩C∩D|
+
+# So we have:
+# total = S1 - S2 + S3 - S4
+
+# But above we computed:
+# total = (R + C + D1 + D2) 
+#        - (R∩C + R∩D1 + R∩D2 + C∩D1 + C∩D2 + D1∩D2)
+#        + (R∩C∩D1 + R∩C∩D2 + R∩D1∩D2 + C∩D1∩D2)
+#        - (R∩C∩D1∩D2)
+
+# But note: the triple terms we added are only four of the four possible? Actually there are C(4,3)=4 terms, yes.
+
+# So now `total` is the number of distinct squares under attack.
+
+# But wait: is that correct? The inclusion-exclusion applies to the union of four sets:
+# Set1: all squares in rows in `rows`
+# Set2: all squares in cols in `cols`
+# Set3: all squares in diag1 in `diag1`
+# Set4: all squares in diag2 in `diag2`
+
+# Yes, so |Set1 ∪ Set2 ∪ Set3 ∪ Set4| = total (as computed above)
+
+# However, the above calculation is O(M^3) in the worst case (because of loops over rows, diag1, diag2), and |rows|, |diag1|, etc. <= M <= 1000
+# So maximum operations: about 1000*1000*1000 = 1e9 which might be borderline in Pyton.
+
+# We need to optimize.
+
+# Let's recompute without heavy loops.
+
+# Alternative: instead of iterating over sets, precompute frequencies and use formulas.
+
+# But given M <= 1000, and the sets `rows`, `cols`, `diag1`, `diag2` have size at most M, the nested loops will be over at most M elements.
+
+# Worst-case: |rows| = M, |diag1| = M, |diag2| = M → triple loop would be M^3 = 1e9, which is too slow in Python.
+
+# We must optimize the pairwise and triple counting.
+
+# Let's recast all counts with efficient methods.
+
+# We'll recompute everything step by step with optimized counting.
+
+# Reset total
+
+# Step 1: single sets
+S1 = 0
+S1 += len(rows) * N
+S1 += len(cols) * N
+for s in diag1:
+    if 2 <= s <= N+1:
+        S1 += s-1
+    elif N+2 <= s <= 2*N:
+        S1 += 2*N - s + 1
+for d in diag2:
+    low = max(1, 1 + d)
+    high = min(N, N + d)
+    if low <= high:
+        S1 += high - low + 1
+
+# Step 2: pairwise intersections (S2)
+S2 = 0
+
+# R ∩ C: all (r,c) with r in rows, c in cols
+S2 += len(rows) * len(cols)
+
+# R ∩ D1: for each r in rows, number of s in diag1 such that j = s - r is in [1, N]
+# => s in [r+1, r+N] and s in diag1
+# We can pre-store diag1 as a set
+diag1_set = diag1
+count = 0
+for r in rows:
+    for s in diag1:
+        if r+1 <= s <= r+N:
+            count += 1
+S2 += count
+
+# R ∩ D2: for each r in rows, j = r - d must be in [1,N] => d in [r-N, r-1]
+# so for each r, count number of d in diag2 such that r-N <= d <= r-1
+count = 0
+for r in rows:
+    for d in diag2:
+        if r - N <= d <= r - 1:
+            count += 1
+S2 += count
+
+# C ∩ D1: for each c in cols, i = s - c in [1,N] => s in [c+1, c+N]
+count = 0
+for c in cols:
+    for s in diag1:
+        if c+1 <= s <= c+N:
+            count += 1
+S2 += count
+
+# C ∩ D2: for each c in cols, i = d + c in [1,N] => d in [1-c, N-c]
+count = 0
+for c in cols:
+    for d in diag2:
+        if 1 - c <= d <= N - c:
+            count += 1
+S2 += count
+
+# D1 ∩ D2: number of (s,d) such that the solution (i,j) is integral and in bounds
+count = 0
+for s in diag1:
+    for d in diag2:
+        if (s + d) % 2 == 0:
+            i = (s + d) // 2
+            j = (s - d) // 2
+            if 1 <= i <= N and 1 <= j <= N:
+                count += 1
+S2 += count
+
+# Step 3: triple intersections (S3)
+S3 = 0
+
+# R ∩ C ∩ D1: (r,c) such that r in rows, c in cols, and r+c in diag1
+count = 0
+for r in rows:
+    for c in cols:
+        if r + c in diag1_set:
+            count += 1
+S3 += count
+
+# R ∩ C ∩ D2: (r,c) such that r - c in diag2
+count = 0
+for r in rows:
+    for c in cols:
+        if r - c in diag2:
+            count += 1
+S3 += count
+
+# R ∩ D1 ∩ D2: for fixed r, find (s,d) in diag1×diag2 such that:
+#   j = s - r = r - d  => s + d = 2r, and 1 <= j <= N
+count = 0
+for r in rows:
+    for s in diag1:
+        d = 2*r - s
+        if d in diag2:
+            j = s - r
+            if 1 <= j <= N:
+                count += 1
+S3 += count
+
+# C ∩ D1 ∩ D2: for fixed c, find (s,d) such that:
+#   i = s - c = d + c  => s - d = 2c, and 1 <= i <= N
+count = 0
+for c in cols:
+    for s in diag1:
+        d = s - 2*c
+        if d in diag2:
+            i = s - c
+            if 1 <= i <= N:
+                count += 1
+S3 += count
+
+# Step 4: quadruple intersection (S4)
+S4 = 0
+# R ∩ C ∩ D1 ∩ D2: (r,c) such that r in rows, c in cols, r+c in diag1, r-c in diag2
+count = 0
+for r in rows:
+    for c in cols:
+        if (r + c) in diag1_set and (r - c) in diag2:
+            count += 1
+S4 += count
+
+# Inclusion-Exclusion:
+attacked_squares = S1 - S2 + S3 - S4
+
+# But wait: this counts the total number of distinct squares that are under attack.
+
+# However, note: the original problem says a piece threatens:
+# - entire row
+# - entire column
+# - entire diagonal (i+j=const)
+# - entire anti-diagonal (i-j=const)
+
+# So yes, the union is correctly modeled.
+
+# But we must remember: the existing pieces are on the board, and they threaten these lines.
+
+# So any square in the union is threatened.
+
+# Therefore, the number of safe empty squares = total empty squares - (attacked_squares minus the squares that are both attacked and occupied?)
+
+# No: we want squares that are:
+# - empty
+# - not attacked
+
+# Total squares: N*N
+# Occupied squares: M
+# But some occupied squares are attacked (all of

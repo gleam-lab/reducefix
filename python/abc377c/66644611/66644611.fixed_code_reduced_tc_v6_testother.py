@@ -1,0 +1,49 @@
+n, m = map(int, input().split())
+captured = set()
+
+# Define the 8 possible knight move offsets
+moves = [(2,1), (1,2), (-1,2), (-2,1), (-2,-1), (-1,-2), (1,-2), (2,-1)]
+
+for _ in range(m):
+    a, b = map(int, input().split())
+    # For each existing piece, mark all squares it can capture
+    for dx, dy in moves:
+        x, y = a + dx, b + dy
+        if 1 <= x <= n and 1 <= y <= n:
+            captured.add((x, y))
+
+# Total empty squares that are not under capture
+ans = n * n - len(captured)
+
+# But we must subtract the squares where pieces are already placed
+# because they are not empty and cannot be used
+# However, note: captured set does not include original piece positions
+# So we need to ensure we don't double count or miss anything
+
+# Actually, the captured set only contains squares that are attacked
+# The M pieces occupy M squares, which are not available for placement
+# But those occupied squares might also be in captured? No — unless another piece attacks them
+# Important: We are only counting empty squares that are NOT captured
+
+# Our answer should be: total squares - (squares occupied by pieces) - (empty squares that are captured)
+# But note: captured squares may overlap with occupied squares, so we must avoid double subtraction
+
+# Let's collect all occupied or invalid squares: the M given pieces
+occupied = set()
+for _ in range(m):
+    a, b = map(int, input().split())
+    occupied.add((a, b))
+    for dx, dy in moves:
+        x, y = a + dx, b + dy
+        if 1 <= x <= n and 1 <= y <= n:
+            captured.add((x, y))
+
+# Now compute: total squares - occupied squares - captured squares that are not occupied
+# Because if a captured square is occupied, we already subtracted it
+ans = n * n - len(occupied) - len([sq for sq in captured if sq not in occupied])
+
+# But this list comprehension could be inefficient; better:
+# captured_only = captured - occupied
+ans = n * n - len(occupied) - len(captured - occupied)
+
+print(ans)

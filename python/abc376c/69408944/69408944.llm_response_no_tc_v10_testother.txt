@@ -1,0 +1,352 @@
+```python
+import bisect
+
+N = int(input())
+A = list(map(int, input().split()))
+B = list(map(int, input().split()))
+
+# Sort both toy sizes and box sizes in ascending order
+A.sort()
+B.sort()
+
+# We are going to try to assign the smallest possible toys to boxes greedily
+# The idea: use existing N-1 boxes for the best-fitting toys, then the largest remaining toy will require the new box
+
+# Try to match the smallest N-1 toys with available boxes as efficiently as possible
+# But actually: we want to minimize x, so we should use the existing boxes for the hardest-to-fit toys?
+
+# Correct strategy:
+# We have N toys and N-1 existing boxes. One toy must go into the new box of size x.
+# We want the minimal x such that the other N-1 toys can be packed into the N-1 existing boxes.
+
+# For a candidate x, the toy that goes into the new box must have size <= x.
+# The remaining N-1 toys must be assignable to the N-1 boxes (each toy <= its box).
+
+# So: try each toy i as candidate for the new box (requiring x >= A[i])
+# Then check whether the remaining N-1 toys can fit into the N-1 boxes.
+
+# How to check if a set of toys T fits into boxes B?
+# Greedy: sort both, and assign smallest available box that fits each toy (or better: assign smallest toy to smallest box that fits)
+
+# Actually: standard matching: sort toys and boxes, then try to assign in increasing order.
+
+# Efficient plan:
+# Precompute: if we remove one toy, can the rest be matched with the boxes?
+
+# Sort everything
+A.sort()
+B.sort()
+
+# Try removing each toy and see if the rest can be assigned to boxes
+min_x = float('inf')
+
+# Instead of trying all, we can do binary search on x? But x must be at least some A[i], and we have only N choices.
+
+# Alternative efficient method:
+# Let’s try to simulate greedy assignment of all toys to boxes assuming we can skip one toy.
+
+# We can use greedy with two pointers:
+# Process boxes from small to large, and for each box, assign the smallest toy that fits but hasn't been used.
+# But we are allowed to leave out exactly one toy.
+
+# Better: 
+# For each possible toy skipped, check if the rest can be assigned to B.
+
+# But N up to 200,000 -> O(N^2) is too slow.
+
+# Efficient approach:
+# Precompute the maximum number of toys (from sorted list) that can be matched with boxes using greedy.
+
+# Standard greedy for matching:
+#   Sort toys and boxes.
+#   Use two pointers: for each box in increasing order, assign the smallest unmatched toy that fits.
+
+# But we want: for each i, can we match all toys except A[i]?
+
+# We can precompute:
+#   left[i]: maximum number of toys among A[0:i] that can be matched with first j boxes (but not directly)
+
+# Alternate known solution idea:
+#   Try to match all N toys with the N-1 boxes — obviously fails, but find how many can be matched.
+#   But we need exact matching of N-1.
+
+# Known technique: 
+#   Let's compute the "matching capacity" when skipping one toy.
+
+# Insight:
+#   Sort A and B.
+#   Try to greedily assign toys to boxes without skipping any — how many can we assign?
+#   But we must assign exactly N-1.
+
+# Actually: we can simulate the following:
+#   We want to know, for each position i (toy A[i] being put in new box), whether the other toys can be assigned.
+
+# We can do:
+#   Precompute an array dp_left where dp_left[i] = whether the first i toys can be matched with some i boxes from B
+#   But more precisely: use greedy forward and backward.
+
+# Standard solution for this problem:
+#   Step 1: sort A and B.
+#   Step 2: Try to match the N-1 boxes with N-1 of the N toys.
+#   We can use a greedy algorithm that goes from smallest box to largest, and for each box, pick the smallest toy that fits and hasn't been taken.
+#   But we are allowed to skip one toy.
+
+# Efficient method using heap:
+#   Traverse boxes in increasing order.
+#   Among all toys that fit in the current box (A[i] <= B[j]), choose the largest one? No, choose the largest? 
+#   Actually: to maximize matching, we should assign the largest toy that fits? No — to save small boxes for small toys, we should assign the smallest toy that fits.
+
+# But here's a twist: we are allowed to skip one toy. We want to know if we can match N-1.
+
+# Alternate known approach (from similar problems):
+#   Use greedy: 
+#     - sort A and B
+#     - try to match as many toys as possible with boxes, but we can skip one toy arbitrarily.
+#   However, we need to ensure N-1 matches.
+
+# Better idea:
+#   Simulate matching while allowing one skip.
+#   But we want to know, for which skips it works.
+
+# Actually, optimal solution:
+#   Sort A and B.
+#   Use a max-heap (priority queue) to store toys that could be potentially skipped.
+
+# Algorithm:
+#   We traverse boxes in increasing order.
+#   Also consider toys in increasing order.
+#   Maintain a pointer for toys.
+#   For each box b:
+#       Add all toys <= b into a max-heap (we can skip any one, but we want to postpone hard-to-skip decisions)
+#       If the heap is empty -> cannot assign this box -> fail
+#       Otherwise, pop the largest toy from the heap and assign it to this box? 
+#       Why largest? Because smaller toys are more flexible (can fit in smaller boxes), so we prefer to use large toys now and keep small ones for later.
+#
+#   This way, we maximize flexibility.
+
+# Steps:
+#   sort A, B
+#   j = 0 (toy index)
+#   heap = [] (max-heap, so store negative)
+#   for each box b in B (sorted):
+#       while j < N and A[j] <= b:
+#           heapq.heappush(heap, -A[j])
+#           j += 1
+#       if not heap: return impossible
+#       else: heapq.heappop(heap)  # assign the largest eligible toy to this box
+#
+#   After processing all boxes, if we have assigned N-1 toys, then the remaining toys (in heap or unprocessed) — but we only need one left.
+#   Actually, after processing, the heap may contain the toys that were never added or popped.
+#   But we only care that we could assign N-1 toys.
+
+# However, in this greedy:
+#   We assign exactly one toy per box -> total N-1 assignments.
+#   So if we successfully process all boxes, then we have assigned N-1 toys, and one toy remains (which will go to the new box).
+#   The size of the new box must be at least the size of that remaining toy.
+
+# But wait: what is the remaining toy?
+#   The toys that were never pushed into the heap? Or the ones left in the heap?
+
+# Actually:
+#   At the end, the heap contains toys that were eligible for some boxes but not chosen (because we chose larger ones).
+#   And the unprocessed toys (j to N-1) are those > all remaining boxes, so they couldn't be assigned to any box.
+
+# But note: we only add a toy to the heap when we encounter a box it fits.
+#   So toys that are never added are those that don't fit in any box -> must go to new box.
+
+# However, our greedy might have skipped a large toy early even if it doesn't fit in any box?
+
+# Correction:
+#   We add a toy to the heap only when we see a box it fits.
+#   So if a toy is very large and doesn't fit in any box, it never gets added to the heap.
+
+# Therefore, the set of toys that can possibly be assigned is only those <= some box.
+
+# But in the algorithm above, we process boxes in increasing order, and for each box, we add all toys <= current box that haven't been added.
+
+# After processing all boxes, the toys that were never added to the heap are those > all boxes -> they cannot be assigned to any existing box -> must go to new box.
+
+# Also, the heap at the end contains toys that were eligible but not selected for any box.
+
+# So total unassigned toys = (toys never added to heap) + (toys still in heap)
+
+# But we only need one unassigned toy.
+
+# Actually, during the loop:
+#   We start with 0 assigned.
+#   For each box, we assign one toy -> total N-1 assigned.
+#   So exactly one toy is unassigned.
+
+# Which one?
+#   Either:
+#     - a toy that was never pushed (too big for all boxes), OR
+#     - a toy that was pushed but not popped (remains in heap)
+
+# But note: we push a toy only once, and we pop exactly N-1 times (one per box).
+#   Total pushes = number of toys that fit in at least one box.
+#   So if we have K such toys, then heap ends with K - (N-1) toys.
+
+# But we only have N toys.
+#   Let U = toys that never get pushed (too big for all boxes)
+#   Then |U| = N - K
+#   And after popping N-1 times, heap has K - (N-1) = K - N + 1 toys.
+
+# Total unassigned = |U| + (K - N + 1) = (N-K) + (K-N+1) = 1.
+
+# Perfect.
+
+# So the unassigned toy is either:
+#   - one from U (if U non-empty), or
+#   - one from the heap (if U empty, then heap has exactly one element at the end)
+
+# But wait: if U has more than one toy? Then |U|>=2 -> total unassigned >=2 -> contradiction.
+
+# Actually: we assign exactly N-1 toys, so unassigned is always one.
+
+# But if |U| >=2, then we cannot assign those |U| toys to existing boxes, and we can only leave one unassigned -> impossible.
+
+# Therefore, the algorithm:
+#   Use greedy with max-heap to assign N-1 toys to N-1 boxes.
+#   During assignment:
+#       sort A, B
+#       j = 0
+#       heap = []
+#       for each b in B:
+#           while j < N and A[j] <= b:
+#               heapq.heappush(heap, -A[j])   # max-heap
+#               j += 1
+#           if not heap: 
+#               # no toy available for this box -> fail
+#               print(-1)
+#               exit(0)
+#           else:
+#               heapq.heappop(heap)   # assign the largest eligible toy
+#
+#   After loop, we have one unassigned toy.
+#   The unassigned toy is:
+#       if j < N: then there are toys A[j:] that were never pushed -> they are all > b_max (largest box)
+#           and since we only have one unassigned, |A[j:]| must be 1? Not necessarily: we might have pushed some and popped N-1.
+#
+#   Actually, the unassigned toy is:
+#       - if there are toys not pushed (j < N), then these are all unassigned? But we only have one unassigned.
+#         But we already assigned N-1, so only one unassigned in total.
+#         So if j < N, then the number of unassigned is (N - j) + len(heap) = 1.
+#         But after the loop, we have processed all boxes, so we don't push anymore.
+#         And we popped N-1 times.
+#         So: 
+#             pushes = j (all toys from 0 to j-1)
+#             pops = N-1
+#             heap size = j - (N-1)
+#             unassigned = (N - j) + (j - (N-1)) = N - j + j - N + 1 = 1 -> correct.
+#
+#   Therefore, the unassigned toy could be:
+#       - one of the toys from index j to N-1 (not pushed), OR
+#       - one of the toys in the heap (pushed but not popped)
+#
+#   But we don't know which one specifically? Actually, we don't care: the new box must accommodate whichever toy is left.
+#   However, the algorithm does not tell us which toy is left.
+
+#   But we need the minimum x such that x >= size of the unassigned toy.
+
+#   However, the unassigned toy depends on the assignment!
+
+#   But note: we want the minimal possible x over all valid assignments.
+
+#   Our greedy maximizes flexibility by assigning the largest eligible toy to each box, thus preserving smaller toys for future (smaller) boxes.
+
+#   This greedy is known to work for "matching with one skip" type problems.
+
+#   But here's the catch: the unassigned toy is not uniquely determined. We want the minimal possible x, meaning we want to leave behind the smallest possible toy.
+
+#   However, our greedy might leave behind a large toy? 
+
+#   Actually, we want to minimize the size of the leftover toy.
+
+#   Therefore, we should try to assign the toys in a way that leaves behind the smallest possible toy.
+
+#   But the above greedy (assigning the largest eligible toy) aims to preserve small toys, so it should leave behind a small toy.
+
+#   In fact, this greedy minimizes the size of the leftover toy.
+
+#   Why? Because by removing large toys early, we keep small toys which are more flexible, and at the end, the leftover toy is as small as possible.
+
+#   However, we are forced to leave one toy. The greedy ensures that we can complete the assignment if possible, and leaves the smallest possible maximum requirement.
+
+#   But actually: we are not choosing which toy to leave; the process determines it.
+
+#   However, we can prove that this greedy leaves behind the smallest possible toy size among all valid strategies.
+
+#   Alternatively, we can try every toy as candidate for the new box, and check if the rest can be assigned.
+
+#   But that would be O(N^2). We need O(N log N).
+
+#   Known solution: use the greedy with max-heap to simulate the assignment, and then the required x is the size of the leftover toy.
+
+#   But how do we know the size of the leftover toy?
+
+#   After the loop:
+#       The leftover toy is:
+#         - if the heap is not empty: then the heap contains one toy? No, heap contains j - (N-1) toys, but j - (N-1) = ? 
+#           total pushes = j, pops = N-1, so heap size = j - (N-1)
+#           and unassigned from not pushed = N - j
+#           total unassigned = 1 => (N - j) + (j - (N-1)) = 1 -> always holds.
+#         - but we have multiple candidates: any one of the (N-j) unpushed or any one of the (j-(N-1)) in heap?
+#           NO: we have already made assignment decisions. The assignment is fixed by the greedy.
+
+#   Actually, the greedy completely determines which toys are assigned and which are not.
+
+#   The toys that are not pushed (A[j:]) are definitely unassigned.
+#   The toys in the heap are unassigned.
+
+#   But we have more than one unassigned? Only if (N-j) + (j-(N-1)) > 1? But we proved it's 1.
+
+#   So exactly one unassigned toy.
+
+#   But wait: j-(N-1) might be negative? No, because we pop only if heap is non-empty, and we have N-1 boxes.
+
+#   However, if at any box the heap is empty, we break and output -1.
+
+#   So if we complete the loop, then we have popped N-1 times, and pushes = j, so heap size = j - (N-1) >= 0.
+
+#   And unassigned count = (N - j) + (j - (N-1)) = 1.
+
+#   So we have one unassigned toy.
+
+#   But which one? It could be any of the N-j unpushed, or any of the j-(N-1) in the heap? 
+#   But we don't know which specific toy — but we need the size.
+
+#   Actually, we don't need to know which toy, but we need the size of the unassigned toy.
+
+#   But the unassigned toy is not a single value: there are multiple possibilities?
+
+#   No: the assignment is deterministic.
+
+#   The unassigned toy is:
+#       - if N - j > 0: then there is at least one unpushed toy. But we have only one unassigned, so N-j must be 1 and j-(N-1)=0.
+#       - similarly, if j-(N-1) > 0, then N-j must be 0.
+
+#   So two cases:
+#       Case 1: N - j == 1 and j == N-1 -> then heap size = (N-1) - (N-1) = 0 -> the unassigned toy is the last toy A[N-1] (since j=N-1, so A[N-1] not pushed)
+#       Case 2: N - j == 0 and j - (N-1) == 1 -> then unassigned toy is the one remaining in the heap.
+
+#   But wait: j - (N-1) = 1 -> j = N, so N-j=0 -> consistent.
+
+#   So:
+#       if j == N-1: then unassigned = A[N-1]
+#       if j == N: then unassigned = the last element in the heap (which is the smallest in the max-heap? no: the heap is a max-heap, but we don't know the order)
+
+#   But the heap contains j - (N-1) = N - (N-1) = 1 element -> only one element left.
+
+#   So we can get it.
+
+#   However, what if j > N? No, j<=N.
+
+#   But wait: j starts at 0, and we increment for each toy pushed -> j<=N.
+
+#   So algorithm:
+
+#       sort A, B
+#       j = 0
+#       heap = []
+#       for b in B:
+#           while j < N and A

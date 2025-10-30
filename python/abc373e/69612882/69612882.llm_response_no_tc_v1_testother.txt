@@ -1,0 +1,146 @@
+```python
+import sys
+
+def solve():
+    N, M, K = map(int, input().split())
+    A = list(map(int, input().split()))
+    
+    total_counted = sum(A)
+    remaining_votes = K - total_counted
+    
+    # If there are no remaining votes, we just check current state
+    if remaining_votes == 0:
+        # Count how many have more votes than candidate i
+        ans = []
+        for i in range(N):
+            count_better = sum(1 for j in range(N) if A[j] > A[i])
+            if count_better < M:
+                ans.append(0)
+            else:
+                ans.append(-1)
+        print(*ans)
+        return
+    
+    # Special case: if M == N, then at most N-1 can have more votes, so everyone wins
+    if M >= N:
+        print(*[0] * N)
+        return
+    
+    # We'll compute for each candidate the minimum additional votes needed
+    ans = [0] * N
+    
+    # Create list of (votes, original_index) and sort by votes descending
+    candidates = [(A[i], i) for i in range(N)]
+    candidates.sort(reverse=True)
+    
+    # For each candidate in descending order of current votes
+    for votes, orig_idx in candidates:
+        # We want candidate orig_idx to be elected
+        # That means at most M-1 candidates should have more votes than them
+        
+        # How many candidates currently have strictly more votes than this candidate?
+        current_votes = A[orig_idx]
+        
+        # We will simulate giving x additional votes to candidate orig_idx
+        # Then determine the minimum x such that no matter how the other remaining votes are distributed,
+        # at most M-1 candidates can have more votes than candidate orig_idx.
+        
+        # Worst case: other candidates get as many votes as possible to surpass our candidate
+        
+        # We need to ensure that at most M-1 candidates can end up with > (current_votes + x)
+        
+        # Consider all other candidates. In worst case, they can get up to:
+        #   min(remaining_votes_allocated_to_them, ...) but we must consider strategic allocation
+        
+        # Idea: To prevent too many candidates from exceeding (current_votes + x),
+        # we assume adversary will try to make as many candidates as possible exceed (current_votes + x)
+        
+        # Let T = current_votes + x (our final vote total)
+        # For each other candidate j:
+        #   If A[j] > T, they already beat us
+        #   If A[j] <= T, they need at least (T - A[j] + 1) votes to beat us
+        
+        # We want at most M-1 candidates to be able to beat us.
+        # So we need to make sure that it's impossible for M or more candidates to get enough votes to beat us.
+        
+        # But note: only candidates who can possibly get enough votes from the remaining pool matter.
+        
+        # Alternate approach:
+        # What is the minimal x such that even if the remaining votes (except the x we give to candidate i)
+        # are distributed optimally to make others beat candidate i, still at most M-1 can do so?
+        
+        # Let R = remaining_votes - x  (votes available for others)
+        # We want to know: can at least M candidates (other than i) get enough votes to exceed (A[i] + x)?
+        
+        # For each candidate j != i, define needed_j = max(0, A[i] + x - A[j] + 1)
+        # But x is what we're solving for, so this is circular.
+        
+        # Instead, we can binary search on x for each candidate, but N up to 2e5 and K up to 1e12 makes this risky.
+        
+        # Better idea: fix candidate i and determine minimum x.
+        
+        def min_votes_needed(i):
+            current = A[i]
+            # If already at most M-1 candidates have more votes, we need 0
+            count_more = 0
+            for j in range(N):
+                if j != i and A[j] > current:
+                    count_more += 1
+            if count_more < M:
+                return 0
+            
+            # We need to "overtake" some of the candidates above us, or raise our bar so high
+            # that not enough remaining votes exist to let M candidates surpass us.
+            
+            # Consider: after we add x votes, our total is T = current + x
+            # For any other candidate j, they need at least max(0, T - A[j] + 1) votes to beat us.
+            # The adversary has R = remaining_votes - x votes to distribute (excluding our x votes)
+            # We want that at most M-1 candidates can receive their required amount.
+            
+            # Equivalently: if we sort the required votes for all j != i to beat us (as a function of x),
+            # and sum the smallest M requirements, if that sum > R, then it's impossible for M candidates to beat us.
+            
+            # But x is in both T and R, so we can try to find minimal x such that:
+            #   sum of min over M smallest (max(0, (current+x) - A[j] + 1)) > (remaining_votes - x)
+            
+            # Let f(x) = sum of smallest M values among { max(0, current + x - A[j] + 1) for j != i }
+            # We want f(x) > remaining_votes - x
+            # => f(x) + x > remaining_votes
+            
+            # Note: f(x) is piecewise linear and non-decreasing.
+            
+            # We can binary search on x in range [0, remaining_votes+1]
+            
+            lo, hi = 0, remaining_votes + 1
+            best = -1
+            
+            while lo <= hi:
+                mid = (lo + hi) // 2
+                T = current + mid  # our total votes
+                required = []
+                for j in range(N):
+                    if j == i:
+                        continue
+                    need = max(0, T - A[j] + 1)
+                    required.append(need)
+                
+                required.sort()
+                total_needed_for_M = sum(required[:M])  # smallest M requirements
+                
+                if total_needed_for_M + mid > remaining_votes:
+                    best = mid
+                    hi = mid - 1
+                else:
+                    lo = mid + 1
+            
+            if best == -1:
+                return -1
+            return best
+        
+        result = min_votes_needed(orig_idx)
+        ans[orig_idx] = result
+    
+    print(*ans)
+
+solve()
+```

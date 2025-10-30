@@ -1,0 +1,267 @@
+```python
+python
+N, M = map(int, input().split())
+pieces = [tuple(map(int, input().split())) for _ in range(M)]
+
+# Sets to store occupied rows, columns, and diagonals
+rows = set()
+cols = set()
+diag1 = set()  # i + j (sum diagonal)
+diag2 = set()  # i - j (diff diagonal)
+
+# Mark all lines threatened by existing pieces
+for a, b in pieces:
+    rows.add(a)
+    cols.add(b)
+    diag1.add(a + b)
+    diag2.add(a - b)
+
+# Total squares under attack
+attacked = 0
+
+# Add contribution from each unique row
+attacked += len(rows) * N
+# Add contribution from each unique column
+attacked += len(cols) * N
+# Add contribution from each unique diagonal (i+j)
+for s in diag1:
+    # Number of cells where i + j = s, with 1 <= i, j <= N
+    if s < 2:
+        count = 0
+    elif s <= N + 1:
+        count = s - 1
+    else:
+        count = 2 * N - s + 1
+    attacked += count
+# Add contribution from each unique diagonal (i-j)
+for d in diag2:
+    # Number of cells where i - j = d, with 1 <= i, j <= N
+    # i = j + d => 1 <= j+d <= N and 1 <= j <= N
+    # => max(1, 1-d) <= j <= min(N, N-d)
+    low_j = max(1, 1 - d)
+    high_j = min(N, N - d)
+    if low_j <= high_j:
+        count = high_j - low_j + 1
+    else:
+        count = 0
+    attacked += count
+
+# Now subtract overcounted intersections: each piece is counted multiple times
+# Each piece lies on 1 row, 1 col, 1 diag1, 1 diag2 -> it's included in 4 sets
+# But we need to subtract overlaps: pairwise intersections, then add back triple, etc.
+# Instead, use inclusion-exclusion via direct counting of overlapping regions.
+
+# We have overcounted the intersections. Use inclusion-exclusion properly.
+# Total = R + C + D1 + D2
+# Subtract pairwise overlaps: R∩C, R∩D1, R∩D2, C∩D1, C∩D2, D1∩D2
+# Add back triple overlaps, subtract quadruple.
+
+# But easier: since M ≤ 1000, we can collect all unique cells that are attacked.
+
+if M == 0:
+    print(N * N)
+else:
+    attacked_cells = set()
+    for a, b in pieces:
+        # Add entire row a
+        # We cannot iterate if N is large, so instead we must avoid building huge sets
+        pass
+
+    # The above idea fails for large N. So we go back to math.
+
+    # We already computed total attacked counts with overcounts.
+    # Now subtract overcounts using inclusion exclusion.
+
+    # Let’s compute intersections:
+    from collections import defaultdict
+
+    # We'll compute how many times each cell is counted in our "attacked" sum.
+    # But again, we can't iterate over grid.
+
+    # Instead: use inclusion exclusion formula:
+
+    # |R ∪ C ∪ D1 ∪ D2| = 
+    #   |R| + |C| + |D1| + |D2|
+    # - |R∩C| - |R∩D1| - |R∩D2| - |C∩D1| - |C∩D2| - |D1∩D2|
+    # + |R∩C∩D1| + |R∩C∩D2| + |R∩D1∩D2| + |C∩D1∩D2|
+    # - |R∩C∩D1∩D2|
+
+    total = 0
+    total += len(rows) * N
+    total += len(cols) * N
+    for s in diag1:
+        if s >= 2 and s <= 2*N:
+            if s <= N+1:
+                total += s-1
+            else:
+                total += 2*N - s + 1
+    for d in diag2:
+        low_j = max(1, 1 - d)
+        high_j = min(N, N - d)
+        if low_j <= high_j:
+            total += high_j - low_j + 1
+
+    # Now subtract pairwise intersections
+
+    # R ∩ C: cells (r,c) with r in rows, c in cols
+    total -= len(rows) * len(cols)
+
+    # R ∩ D1: row r and diag1 s => c = s - r, must be in [1,N]
+    for r in rows:
+        for s in diag1:
+            c = s - r
+            if 1 <= c <= N:
+                total -= 1
+
+    # R ∩ D2: row r and diag2 d => c = r - d, must be in [1,N]
+    for r in rows:
+        for d in diag2:
+            c = r - d
+            if 1 <= c <= N:
+                total -= 1
+
+    # C ∩ D1: col c and diag1 s => r = s - c, must be in [1,N]
+    for c in cols:
+        for s in diag1:
+            r = s - c
+            if 1 <= r <= N:
+                total -= 1
+
+    # C ∩ D2: col c and diag2 d => r = c + d, must be in [1,N]
+    for c in cols:
+        for d in diag2:
+            r = c + d
+            if 1 <= r <= N:
+                total -= 1
+
+    # D1 ∩ D2: diag1 s and diag2 d => solve: r+c=s, r-c=d => 2r = s+d => r=(s+d)/2, c=(s-d)/2
+    # must be integers and in [1,N]
+    for s in diag1:
+        for d in diag2:
+            if (s + d) % 2 == 0:
+                r = (s + d) // 2
+                c = (s - d) // 2
+                if 1 <= r <= N and 1 <= c <= N:
+                    total -= 1
+
+    # Add back triple intersections
+
+    # R ∩ C ∩ D1: fixed r,c; check if r+c in diag1
+    for r in rows:
+        for c in cols:
+            if (r + c) in diag1:
+                total += 1
+
+    # R ∩ C ∩ D2: fixed r,c; check if r-c in diag2
+    for r in rows:
+        for c in cols:
+            if (r - c) in diag2:
+                total += 1
+
+    # R ∩ D1 ∩ D2: fixed r, s, d => c = s - r, and also r - c = d => d = r - (s - r) = 2r - s
+    # So for given r,s,d: must have d == 2*r - s
+    for r in rows:
+        for s in diag1:
+            for d in diag2:
+                if d == 2*r - s:
+                    c = s - r
+                    if 1 <= c <= N:
+                        total += 1
+
+    # C ∩ D1 ∩ D2: fixed c, s, d => r = s - c, and r - c = d => s - c - c = d => s - 2c = d
+    for c in cols:
+        for s in diag1:
+            for d in diag2:
+                if d == s - 2*c:
+                    r = s - c
+                    if 1 <= r <= N:
+                        total += 1
+
+    # D1 ∩ D2 ∩ R: same as R ∩ D1 ∩ D2
+    # Already added
+
+    # D1 ∩ D2 ∩ C: same as C ∩ D1 ∩ D2
+    # Already added
+
+    # Now subtract quadruple intersections: R ∩ C ∩ D1 ∩ D2
+    # Cells (r,c) such that r in rows, c in cols, r+c in diag1, r-c in diag2
+    for r in rows:
+        for c in cols:
+            if (r + c) in diag1 and (r - c) in diag2:
+                total -= 1
+
+    # Now total is the number of distinct attacked cells
+    safe = N * N - total
+
+    # But note: some of the attacked cells might be occupied by existing pieces,
+    # but we are only allowed to place on empty squares. However, our "attacked" count includes all cells
+    # under threat, regardless of occupancy. And the question asks for empty squares not under attack.
+    #
+    # However, the existing pieces themselves are not available for placement, but they may be counted
+    # in the attacked set. But we don't want to subtract them again because:
+    # - They are already part of the grid of N^2
+    # - Our safe squares = total grid - attacked cells
+    # - This automatically excludes any cell that is attacked (including occupied ones)
+    # - And we are only allowed to place on empty squares, which is enforced because if a square is occupied,
+    #   it's not in the available pool — but actually, an occupied square might still be attacked or not,
+    #   but we cannot place there anyway.
+    #
+    # However, our calculation of attacked cells does NOT depend on occupancy — it's purely geometric.
+    # And the problem says: place on an empty square that is not capturable.
+    #
+    # So answer = (number of empty squares) - (number of empty attacked squares)
+    # But wait: no. Answer = number of empty squares that are not attacked.
+    #
+    # Which is: (total squares - occupied) - (attacked squares - occupied_and_attacked)
+    # But simpler: total non-attacked squares = N^2 - |attacked|
+    # Among these, some may be occupied. So safe placement squares = (N^2 - |attacked|) minus the number of occupied squares that are not attacked?
+    # No: we want empty AND not attacked.
+    #
+    # So: safe_placement = (all squares not attacked) minus (occupied squares that are not attacked)
+    # But easier: iterate over pieces and check if a piece is not in the attacked set? 
+    # But we didn't build the set of attacked cells.
+    #
+    # Alternatively: our inclusion-exclusion gives |attacked| = number of distinct cells under attack.
+    # The number of unattacked cells is N^2 - |attacked|.
+    # From these unattacked cells, we must subtract the ones that are occupied (because we can't place on occupied squares).
+    #
+    # But are any occupied squares unattacked? Possibly not — because a piece doesn't capture itself?
+    #
+    # Let's read: "A piece placed on square (i,j) can capture pieces that satisfy..." — does it capture itself?
+    # In chess, a piece doesn't capture itself. The conditions say "placed in row i" — that would include (i,j) itself.
+    # But logically, a piece cannot capture itself. The problem likely implies other pieces.
+    #
+    # Check example: if only one piece at (1,1), then can it capture anything? It threatens the whole row, col, diags.
+    # But the piece itself is not capturable by itself? The problem says "cannot be captured by any of the existing pieces".
+    # So when we place a new piece, we care about being captured by existing ones.
+    # The existing pieces do threaten their own row, etc., including their own square.
+    #
+    # But if we place a piece on a square threatened by an existing piece, even if that square is currently empty, it can be captured.
+    # So the threat coverage includes every square on the row/col/diag of an enemy piece, regardless of whether it's occupied.
+    #
+    # Therefore, the entire row of an existing piece is under attack — including possibly other pieces' positions.
+    #
+    # Now, are the existing pieces themselves under attack? Yes, by their own kind — but that doesn't matter.
+    # What matters for us is: which squares are under attack by at least one existing piece.
+    # Our set "attacked" should include all squares that lie in the same row, col, diag1, diag2 as at least one existing piece.
+    #
+    # Does this include the piece's own square? Yes. For example, (a,b) is in row a, so it's attacked.
+    #
+    # Therefore, all existing pieces are in the attacked set.
+    #
+    # Then, the number of empty squares that are not attacked is:
+    #   (N^2 - |attacked|) 
+    # Why? Because |attacked| includes all squares under threat (both empty and occupied). The complement is safe from capture.
+    # And among the complement, none are occupied? Not necessarily — but if an occupied square were not attacked, it would be in the complement.
+    # But we just argued that every occupied square (i.e., piece position) is attacked (by its own row/col/etc.), so all M pieces are in |attacked|.
+    #
+    # Therefore, the unattacked region contains no pieces — all those squares are empty.
+    #
+    # So answer = N^2 - |attacked|
+    #
+    # But wait: what if two pieces share the same row? Then that row is only counted once in `rows`, so no double count issue — our inclusion-exclusion handles it.
+    #
+    # Therefore, final answer is N*N - total, where total is the inclusion-exclusion result.
+
+    print(safe)
+```

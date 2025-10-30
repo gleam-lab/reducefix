@@ -1,0 +1,79 @@
+import sys
+from typing import List, Tuple
+
+def solve_case(n: int, k: int, a: List[int], b: List[int]) -> int:
+    # Create list of (A_i, B_i, index) and sort by A_i
+    items = [(a[i], b[i], i) for i in range(n)]
+    items.sort()
+    
+    # We'll use a two-pointer/sliding window approach
+    # For each possible maximum A_i (which will be the rightmost element),
+    # we want to choose k-1 other elements from the left with smallest sum of B_i
+    
+    min_cost = float('inf')
+    
+    # Use a max-heap to maintain the largest B_i values in our current selection
+    # This allows us to efficiently replace the largest B_i when we find a smaller one
+    import heapq
+    
+    # Try each position as the maximum A_i
+    for right in range(k-1, n):
+        # We must include items[right] since it's the maximum A_i
+        current_a = items[right][0]
+        
+        # Select k-1 items from [0, right-1] with smallest sum of B_i
+        # Use a max-heap to keep track of the largest B_i in our selection
+        heap = []
+        b_sum = 0
+        
+        # First, add the first k-1 items from the left part
+        for i in range(min(k-1, right)):
+            b_val = items[i][1]
+            b_sum += b_val
+            heapq.heappush(heap, -b_val)  # negative for max-heap
+        
+        # Then process remaining items from left part
+        for i in range(k-1, right):
+            b_val = items[i][1]
+            if not heap or -heap[0] > b_val:
+                # Replace the largest B_i in our selection with this smaller one
+                if heap:
+                    removed = -heapq.heappop(heap)
+                    b_sum -= removed
+                b_sum += b_val
+                heapq.heappush(heap, -b_val)
+        
+        # Add the B_i value of the current item (the one with max A_i)
+        b_sum += items[right][1]
+        
+        cost = current_a * b_sum
+        min_cost = min(min_cost, cost)
+    
+    return min_cost
+
+def main():
+    input = sys.stdin.read
+    data = input().split()
+    
+    t = int(data[0])
+    index = 1
+    results = []
+    
+    for _ in range(t):
+        n = int(data[index])
+        k = int(data[index + 1])
+        index += 2
+        
+        a = list(map(int, data[index:index + n]))
+        index += n
+        
+        b = list(map(int, data[index:index + n]))
+        index += n
+        
+        result = solve_case(n, k, a, b)
+        results.append(str(result))
+    
+    print('\n'.join(results))
+
+if __name__ == "__main__":
+    main()

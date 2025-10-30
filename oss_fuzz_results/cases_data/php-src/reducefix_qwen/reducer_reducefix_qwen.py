@@ -1,0 +1,171 @@
+import time
+
+def generated_reduce(input_bytes: bytes, test_fn, verbose: bool = True) -> bytes:
+    """
+    通用的 php-src 测试用例缩减器
+    
+    Args:
+      - input_bytes: 原始输入数据（二进制文件）
+      - test_fn: 测试函数，接受 bytes 参数，返回 bool（True 表示仍能复现 bug）
+      - verbose: 是否输出详细的进度信息（默认 True）
+    
+    Requirements:
+      - 实现多阶段缩减策略：块级贪心 -> 粒度加倍搜索 -> 行级微调
+      - 每一步都必须通过 test_fn 验证
+      - 纯 Python 实现，无外部依赖
+      - 返回最短的仍能复现 bug 的输入
+      - **通用性**：适用于所有 php-src 测试用例，不针对特定案例
+      - **详细输出**：使用 print() 输出每个阶段的进度、测试数、当前大小、耗时等信息
+        - 使用 [ReduceFix] 前缀标识输出
+        - 显示每个阶段的开始和完成状态
+        - 定期显示进度（如每10次测试）
+        - 最后显示总结统计（总测试数、总耗时、缩减率）
+    """
+    start_time = time.time()
+    total_tests = 0
+    current_data = input_bytes
+    original_size = len(input_bytes)
+    
+    if verbose:
+        print(f"[ReduceFix] 开始缩减")
+        print(f"[ReduceFix] 原始大小: {original_size} bytes")
+    
+    # 阶段1: 块级贪心移除
+    if verbose:
+        print(f"[ReduceFix] 阶段 1: 块级贪心移除")
+    
+    block_size = max(1, original_size // 64)  # 初始块大小约为总大小的1/64
+    step = 1
+    progress_counter = 0
+    
+    while block_size >= 1:
+        if verbose and step == 1:
+            num_blocks = (len(current_data) + block_size - 1) // block_size
+            print(f"[ReduceFix] 分割为 {num_blocks} 个块 (块大小={block_size})")
+        
+        modified = True
+        while modified:
+            modified = False
+            i = 0
+            while i * block_size < len(current_data):
+                start = i * block_size
+                end = min(start + block_size, len(current_data))
+                candidate = current_data[:start] + current_data[end:]
+                
+                if len(candidate) == 0:
+                    i += 1
+                    continue
+                
+                progress_counter += 1
+                total_tests += 1
+                if test_fn(candidate):
+                    current_data = candidate
+                    modified = True
+                    if verbose and progress_counter % 10 == 0:
+                        elapsed = time.time() - start_time
+                        print(f"  [ReduceFix] 已测试 {progress_counter} 个候选，当前: {len(current_data)} bytes, 耗时={elapsed:.1f}s")
+                    if verbose:
+                        print(f"  [ReduceFix] ✓ 成功删除块 {i}, 新大小: {len(current_data)} bytes")
+                    # 不增加 i，因为后续块已前移
+                else:
+                    i += 1
+        
+        block_size //= 2
+        step += 1
+    
+    if verbose:
+        reduction1 = (original_size - len(current_data)) / original_size * 100
+        print(f"[ReduceFix] 阶段 1 完成: {original_size} → {len(current_data)} bytes ({reduction1:.1f}% 缩减)")
+    
+    # 阶段2: 粒度加倍搜索（尝试更小的删除单位）
+    if verbose:
+        print(f"[ReduceFix] 阶段 2: 粒度加倍搜索")
+    
+    granular_step = 1
+    offset = 0
+    progress_counter = 0
+    modified = True
+    
+    while granular_step <= 8 and modified:
+        if verbose:
+            print(f"[ReduceFix] 粒度加倍搜索: 步长={granular_step}")
+        modified = False
+        i = offset
+        while i < len(current_data):
+            start = i
+            end = min(i + granular_step, len(current_data))
+            candidate = current_data[:start] + current_data[end:]
+            
+            if len(candidate) == 0:
+                i += 1
+                continue
+            
+            progress_counter += 1
+            total_tests += 1
+            if test_fn(candidate):
+                current_data = candidate
+                modified = True
+                if verbose and progress_counter % 10 == 0:
+                    elapsed = time.time() - start_time
+                    print(f"  [ReduceFix] 已测试 {progress_counter} 个候选，当前: {len(current_data)} bytes, 耗时={elapsed:.1f}s")
+                if verbose:
+                    print(f"  [ReduceFix] ✓ 成功删除 {granular_step} 字节 @ {start}, 新大小: {len(current_data)} bytes")
+                # 回退索引以检查新位置
+                i = max(0, i - granular_step)
+            else:
+                i += 1
+        
+        granular_step *= 2
+        offset = (offset + 1) % 2  # 尝试不同偏移
+    
+    if verbose:
+        reduction2 = (original_size - len(current_data)) / original_size * 100
+        print(f"[ReduceFix] 阶段 2 完成: {original_size} → {len(current_data)} bytes ({reduction2:.1f}% 缩减)")
+    
+    # 阶段3: 行级微调（仅用于包含文本内容的二进制文件，如PHP脚本）
+    if verbose:
+        print(f"[ReduceFix] 阶段 3: 行级微调")
+    
+    lines = current_data.split(b'\n')
+    if len(lines) > 1:
+        i = 0
+        progress_counter = 0
+        modified = True
+        while modified:
+            modified = False
+            i = 0
+            while i < len(lines):
+                candidate_lines = lines[:i] + lines[i+1:]
+                if not candidate_lines:
+                    i += 1
+                    continue
+                candidate = b'\n'.join(candidate_lines)
+                if candidate and not candidate.endswith(b'\n'):
+                    candidate += b'\n'
+                
+                progress_counter += 1
+                total_tests += 1
+                if test_fn(candidate):
+                    lines = candidate_lines
+                    current_data = candidate
+                    modified = True
+                    if verbose and progress_counter % 10 == 0:
+                        elapsed = time.time() - start_time
+                        print(f"  [ReduceFix] 已测试 {progress_counter} 个候选，当前: {len(current_data)} bytes, 耗时={elapsed:.1f}s")
+                    if verbose:
+                        print(f"  [ReduceFix] ✓ 成功删除行 {i}, 新大小: {len(current_data)} bytes")
+                else:
+                    i += 1
+    else:
+        if verbose:
+            print("  [ReduceFix] 跳过行级微调（非文本格式或单行）")
+    
+    final_size = len(current_data)
+    total_reduction = (original_size - final_size) / original_size * 100
+    total_time = time.time() - start_time
+    
+    if verbose:
+        print(f"[ReduceFix] 完成: {original_size} → {final_size} bytes ({total_reduction:.1f}% 缩减)")
+        print(f"[ReduceFix] 总测试数: {total_tests}, 总耗时: {total_time:.1f}s")
+    
+    return current_data

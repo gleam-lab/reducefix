@@ -1,0 +1,162 @@
+```python
+import sys
+
+def main():
+    data = sys.stdin.read().split()
+    if not data:
+        print(0)
+        return
+    
+    N = int(data[0])
+    M = int(data[1])
+    
+    # Sets to store occupied lines
+    rows = set()
+    cols = set()
+    diag1 = set()  # i + j
+    diag2 = set()  # i - j
+    
+    index = 2
+    for _ in range(M):
+        a = int(data[index])
+        b = int(data[index + 1])
+        index += 2
+        
+        rows.add(a)
+        cols.add(b)
+        diag1.add(a + b)
+        diag2.add(a - b)
+    
+    # Total squares that are under attack or occupied
+    total_attacked = 0
+    
+    # Add all rows covered
+    total_attacked += len(rows) * N
+    # Add all columns covered
+    total_attacked += len(cols) * N
+    # Add all diagonal (i+j) covered
+    for s in diag1:
+        # Number of cells where i + j = s, with 1 <= i <= N, 1 <= j <= N
+        if s < 2:
+            count = 0
+        elif s <= N + 1:
+            count = s - 1
+        else:
+            count = 2 * N - s + 1
+        total_attacked += count
+    # Add all anti-diagonal (i-j) covered
+    for d in diag2:
+        # Number of cells where i - j = d
+        if d >= 0:
+            # i = j + d, j >= 1, i <= N => j <= N - d
+            count = N - d if d < N else 1 if d == N else 0
+        else:
+            # j = i - d, i >= 1, j <= N => i <= N + d (since d is negative)
+            count = N + d
+        total_attacked += count
+    
+    # Now subtract overcounted intersections
+    # We use inclusion-exclusion: subtract pairwise intersections, add back triple, subtract quadruple
+    
+    # Intersections between two sets
+    # Rows ∩ Cols
+    for r in rows:
+        for c in cols:
+            total_attacked -= 1
+    
+    # Rows ∩ Diag1 (r, s-r) must be valid
+    for r in rows:
+        for s in diag1:
+            c = s - r
+            if 1 <= c <= N:
+                total_attacked -= 1
+    
+    # Rows ∩ Diag2 (r, r-d) must be valid
+    for r in rows:
+        for d in diag2:
+            c = r - d
+            if 1 <= c <= N:
+                total_attacked -= 1
+    
+    # Cols ∩ Diag1 (s-c, c) must be valid
+    for c in cols:
+        for s in diag1:
+            r = s - c
+            if 1 <= r <= N:
+                total_attacked -= 1
+    
+    # Cols ∩ Diag2 (c+d, c) must be valid
+    for c in cols:
+        for d in diag2:
+            r = c + d
+            if 1 <= r <= N:
+                total_attacked -= 1
+    
+    # Diag1 ∩ Diag2: intersection of i+j=s and i-j=d -> i=(s+d)/2, j=(s-d)/2
+    for s in diag1:
+        for d in diag2:
+            if (s + d) % 2 == 0:
+                r = (s + d) // 2
+                c = (s - d) // 2
+                if 1 <= r <= N and 1 <= c <= N:
+                    total_attacked -= 1
+    
+    # Add back triple intersections (added 3 times, subtracted 3 times, so add once)
+    # Rows ∩ Cols ∩ Diag1
+    for r in rows:
+        for c in cols:
+            s = r + c
+            if s in diag1:
+                total_attacked += 1
+    
+    # Rows ∩ Cols ∩ Diag2
+    for r in rows:
+        for c in cols:
+            d = r - c
+            if d in diag2:
+                total_attacked += 1
+    
+    # Rows ∩ Diag1 ∩ Diag2
+    for r in rows:
+        for s in diag1:
+            for d in diag2:
+                if (s + d) % 2 == 0:
+                    rr = (s + d) // 2
+                    cc = (s - d) // 2
+                    if rr == r and 1 <= cc <= N:
+                        total_attacked += 1
+    
+    # Cols ∩ Diag1 ∩ Diag2
+    for c in cols:
+        for s in diag1:
+            for d in diag2:
+                if (s + d) % 2 == 0:
+                    rr = (s + d) // 2
+                    cc = (s - d) // 2
+                    if cc == c and 1 <= rr <= N:
+                        total_attacked += 1
+    
+    # Subtract quadruple intersections (inclusion-exclusion: added 4 times, subtracted 6 times, added 4 times, so subtract once)
+    for r in rows:
+        for c in cols:
+            s = r + c
+            d = r - c
+            if s in diag1 and d in diag2:
+                total_attacked -= 1
+    
+    # But we have counted the original M pieces exactly once in the final set?
+    # Actually, our inclusion-exclusion counts attacked squares including occupied ones.
+    # The problem asks for empty squares that are safe.
+    # So we compute: total_safe_empty = N*N - total_attacked_squares
+    # However, note: total_attacked computed above counts every square that is attacked (including overlaps corrected),
+    # so it should be the number of distinct squares under attack.
+    
+    # But wait: our inclusion-exclusion was applied on the union of all attacked squares.
+    # So total_attacked now should be |R ∪ C ∪ D1 ∪ D2|
+    
+    result = N * N - total_attacked
+    print(max(0, result))
+
+if __name__ == '__main__':
+    main()
+```

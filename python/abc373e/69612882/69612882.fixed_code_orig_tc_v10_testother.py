@@ -1,0 +1,313 @@
+import sys
+
+def solve():
+    input = sys.stdin.read
+    data = input().split()
+    
+    N = int(data[0])
+    M = int(data[1])
+    K = int(data[2])
+    A = list(map(int, data[3:3+N]))
+    
+    total_votes_so_far = sum(A)
+    remaining_votes = K - total_votes_so_far
+    
+    # If M == N, everyone is elected regardless
+    if M == N:
+        print(' '.join(['0'] * N))
+        return
+    
+    # Create array of (votes, original_index) and sort in descending order
+    candidates = [(A[i], i) for i in range(N)]
+    candidates.sort(reverse=True)
+    
+    # Result array for each candidate's answer
+    ans = [-1] * N
+    
+    # For each candidate, calculate minimum additional votes needed
+    for votes, orig_idx in candidates:
+        # We need to ensure that at most M-1 candidates have more votes than this candidate
+        # So we want this candidate to be at least the M-th highest
+        
+        # Count how many candidates currently have more votes than this one
+        current_rank = 0
+        for v, _ in candidates:
+            if v > votes:
+                current_rank += 1
+        
+        # If already in top M, no votes needed
+        if current_rank < M:
+            ans[orig_idx] = 0
+            continue
+        
+        # We need to surpass at least (current_rank - M + 1) candidates
+        # Find the vote count of the M-th highest candidate after we add our votes
+        # We need to have more votes than the M-th candidate from the top
+        
+        # The threshold is the vote count of the M-th candidate (0-indexed M-1)
+        # But we need to consider that we're adding votes to our candidate
+        threshold_idx = M - 1
+        if threshold_idx >= N:
+            threshold_idx = N - 1
+            
+        threshold_votes = candidates[threshold_idx][0]
+        
+        # If we're trying to pass the threshold, we need votes > threshold_votes
+        # But also consider that multiple candidates might have the same vote count
+        # We need to be strictly better than enough candidates
+        
+        # Find the smallest vote count among the top M candidates
+        min_top_m_votes = float('inf')
+        count_in_top_m = 0
+        
+        for i in range(N):
+            if count_in_top_m >= M:
+                break
+            if candidates[i][0] > votes:
+                min_top_m_votes = min(min_top_m_votes, candidates[i][0])
+                count_in_top_m += 1
+            elif candidates[i][0] == votes and candidates[i][1] != orig_idx:
+                # Same vote count, but different candidate
+                min_top_m_votes = min(min_top_m_votes, candidates[i][0])
+                count_in_top_m += 1
+        
+        # If we don't have M candidates with >= our current votes, we're already good
+        if count_in_top_m < M:
+            ans[orig_idx] = 0
+            continue
+            
+        # We need to have more votes than the min_top_m_votes
+        # Or tie but be counted favorably (but since we want guarantee, we need strictly more)
+        target_votes = min_top_m_votes
+        
+        # However, we might need to consider that multiple candidates have the same score
+        # We need to surpass enough candidates to be in top M
+        
+        # Let's find how many candidates have votes >= threshold_votes
+        # We need to be higher than the (M-1)-th highest distinct vote value
+        
+        # Alternative approach: we need to have more votes than the M-th best candidate
+        # Sort by votes descending, then the M-th candidate sets the bar
+        if M <= len(candidates):
+            target_votes = candidates[M-1][0]
+            
+            # If there are ties at position M-1, we need to handle carefully
+            # Count how many have votes > target_votes
+            strictly_better = 0
+            equal_to_target = 0
+            
+            for v, idx in candidates:
+                if v > target_votes:
+                    strictly_better += 1
+                elif v == target_votes:
+                    equal_to_target += 1
+            
+            # If we're already strictly better than M-1 candidates, we're good
+            if strictly_better >= M:
+                ans[orig_idx] = 0
+                continue
+                
+            # We need to reach at least target_votes + 1 to surpass those with target_votes
+            # But if we're already at target_votes, we just need to break the tie
+            needed = max(0, target_votes + 1 - votes)
+            
+            # Check if this is achievable
+            if needed <= remaining_votes:
+                ans[orig_idx] = needed
+            else:
+                ans[orig_idx] = -1
+        else:
+            # Not enough candidates, impossible scenario
+            ans[orig_idx] = 0
+    
+    # More robust solution
+    # For each candidate i, we want to find minimum X such that even in worst case,
+    # candidate i is elected.
+    
+    # Reset ans array
+    ans = [-1] * N
+    
+    # Sort by votes descending
+    sorted_candidates = sorted([(A[i], i) for i in range(N)], reverse=True)
+    
+    for orig_votes, orig_idx in sorted_candidates:
+        # Check if already guaranteed to win
+        # Count candidates with strictly more votes
+        strictly_ahead = 0
+        for votes, idx in sorted_candidates:
+            if votes > orig_votes:
+                strictly_ahead += 1
+            elif votes == orig_votes and idx < orig_idx:
+                # In case of tie, assume unfavorable ordering
+                # This is conservative - we assume others with same votes are ranked higher
+                strictly_ahead += 1
+        
+        if strictly_ahead < M:
+            ans[orig_idx] = 0
+            continue
+        
+        # We need to get ahead of at least (strictly_ahead - M + 1) candidates
+        # Find the vote count we need to reach
+        
+        # The target is to have more votes than the M-th highest vote count
+        if M == 0:
+            target_pos = 0
+        else:
+            target_pos = min(M - 1, N - 1)
+        
+        target_votes = sorted_candidates[target_pos][0]
+        
+        # But we also need to account for ties
+        # Find the largest vote count such that there are at most M-1 candidates with strictly higher votes
+        # Binary search on the number of additional votes needed
+        left, right = 0, remaining_votes + 1
+        
+        while left < right:
+            mid = (left + right) // 2
+            new_vote_count = orig_votes + mid
+            
+            # Count how many candidates can have >= new_vote_count in the worst case
+            # Other candidates can get all remaining votes except what we took
+            other_remaining = remaining_votes - mid
+            
+            # Assume other candidates get votes optimally to block us
+            # Candidates with current votes > new_vote_count will still be ahead
+            # Candidates with current votes == new_vote_count might be tied
+            # Candidates with current votes < new_vote_count could potentially reach new_vote_count
+            
+            # Count candidates that will definitely have >= new_vote_count
+            # 1. Those with current votes >= new_vote_count
+            # 2. Those who can receive enough votes to reach new_vote_count
+            
+            def can_be_at_least(vote_count, current_vote):
+                return current_vote <= vote_count
+            
+            # Actually simulate worst case: distribute remaining votes to maximize number of candidates >= new_vote_count
+            # But exclude our candidate
+            candidates_other = [votes for votes, idx in sorted_candidates if idx != orig_idx]
+            
+            # How many can reach at least new_vote_count?
+            can_reach = 0
+            deficit = 0
+            
+            for v in candidates_other:
+                if v >= new_vote_count:
+                    can_reach += 1
+                else:
+                    needed = new_vote_count - v
+                    if needed <= other_remaining:
+                        # This candidate can be boosted
+                        deficit += needed
+                        if deficit <= other_remaining:
+                            can_reach += 1
+                        else:
+                            deficit -= needed  # backtrack
+                            break
+            
+            # Total candidates with >= new_vote_count (including us)
+            total_at_least = can_reach + 1  # +1 for our candidate
+            
+            # Number of candidates with strictly more votes than us
+            # In worst case, as many as possible have > new_vote_count
+            strictly_more = 0
+            deficit_strict = 0
+            
+            for v in candidates_other:
+                if v > new_vote_count:
+                    strictly_more += 1
+                else:
+                    needed = (new_vote_count + 1) - v
+                    if v < new_vote_count + 1 and needed <= other_remaining:
+                        deficit_strict += needed
+                        if deficit_strict <= other_remaining:
+                            strictly_more += 1
+                        else:
+                            deficit_strict -= needed
+                            break
+            
+            if strictly_more < M:
+                right = mid
+            else:
+                left = mid + 1
+        
+        if left <= remaining_votes:
+            ans[orig_idx] = left
+        else:
+            ans[orig_idx] = -1
+    
+    # Simplified correct approach
+    ans = [-1] * N
+    
+    # For each candidate, determine minimum votes needed
+    for i in range(N):
+        my_votes = A[i]
+        
+        # Count how many candidates currently have more votes than us
+        ahead = 0
+        for j in range(N):
+            if A[j] > my_votes:
+                ahead += 1
+            elif A[j] == my_votes and j < i:
+                # Tie-breaking: assume others with same votes and lower index are ahead
+                ahead += 1
+        
+        if ahead < M:
+            ans[i] = 0
+            continue
+        
+        # We need to surpass some candidates
+        # Consider all possible vote distributions
+        
+        # The key insight: we need to ensure that at most M-1 candidates have more votes than us
+        # In the worst case, all remaining votes go to other candidates to try to keep us out
+        
+        # We'll binary search on the number of additional votes we need
+        lo, hi = 0, remaining_votes + 1
+        
+        while lo < hi:
+            mid = (lo + hi) // 2
+            new_my_votes = my_votes + mid
+            other_remaining = remaining_votes - mid
+            
+            if other_remaining < 0:
+                lo = mid + 1
+                continue
+            
+            # Can opponents prevent us from winning?
+            # They will try to make as many candidates as possible have > new_my_votes
+            count_can_exceed = 0
+            deficit = 0
+            
+            for j in range(N):
+                if j == i:
+                    continue
+                # How many votes does candidate j need to exceed new_my_votes?
+                need = new_my_votes - A[j] + 1  # to have strictly more
+                if need <= 0:
+                    # Already exceeds
+                    count_can_exceed += 1
+                elif need <= other_remaining:
+                    # Could be given enough votes
+                    # But we need to check if total available is enough
+                    deficit += need
+                    if deficit <= other_remaining:
+                        count_can_exceed += 1
+                    else:
+                        # Can't boost this candidate due to lack of votes
+                        deficit -= need
+                        break
+            
+            # If fewer than M candidates can have > new_my_votes, then we win
+            if count_can_exceed < M:
+                hi = mid
+            else:
+                lo = mid + 1
+        
+        if lo <= remaining_votes:
+            ans[i] = lo
+        else:
+            ans[i] = -1
+    
+    print(' '.join(map(str, ans)))
+
+solve()

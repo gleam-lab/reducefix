@@ -1,0 +1,253 @@
+```python
+from collections import defaultdict
+
+N, M = map(int, input().split())
+A = list(map(int, input().split()))
+
+# 累積和（時計回りの距離）
+cum = [0] * (N + 1)
+for i in range(N):
+    cum[i + 1] = cum[i] + A[i]
+
+# mod M の値の出現回数をカウント
+count_mod = defaultdict(int)
+answer = 0
+
+# 累積和の各値に対して、同じ mod M の値とのペアを数える
+for val in cum:
+    mod = val % M
+    answer += count_mod[mod]
+    count_mod[mod] += 1
+
+# 全体の合計距離（= cum[N]）が M の倍数の場合、
+# 同じ累積和を持つインデックス間の距離が M の倍数になるが、
+# s != t かつ 経路が時計回りであることから、
+# 開始点と終了点が同じ位置になるような「0歩」の移動は除く必要がある。
+# しかし、問題は「s → t の最短時計回り距離が M の倍数」という条件。
+
+# 実際には、累積和の差が M の倍数であれば、その区間の距離は M の倍数。
+# ただし、反時計回りの方が短い場合、「最短」経路が時計回りとは限らない。
+# 問題文：「時計回りに s から t まで行くのに必要な最小ステップ数が M の倍数」
+
+# 重要な点：時計回りの距離が「最小」となるのは、時計回りの距離 ≤ 反時計回りの距離 のとき。
+# つまり、時計回りの距離 d について、d <= total - d → d <= total / 2.
+
+# 上のコードは、単に累積和の mod が等しいペアを数えているが、
+# それだと「時計回りの距離が最短」という条件を満たさない場合も含んでしまう。
+
+# 修正：すべての (s,t) ペアについて、時計回りの距離が M の倍数 **かつ** それが最短経路であることを保証する必要がある。
+# しかし、問題文をよく読むと：
+# 「The minimum number of steps required to walk clockwise from rest area s to rest area t (s ≠ t) is a multiple of M.」
+# これは紛らわしい。実際の意味は、
+# 「s から t への最短経路（双方向考慮）のステップ数が、時計回りの経路で達成され、かつそのステップ数が M の倍数」
+# という意味ではなく、
+# 「s から t へ時計回りに進むときの距離が M の倍数であり、かつそれが最短経路である（＝反時計回りより短いか等しい）」
+# という解釈が必要。
+
+# しかしサンプルを見ると、どうやら問題文の意図は：
+# 「時計回りに s から t までの距離が M の倍数である」
+# という条件のみを要求しており、「最短経路であること」は「時計回りで歩く」という前提の中での定義。
+# だが、サンプル入力: "1 1\n136872" で N=1 なので、s≠t を満たすペアは存在しない。よって答えは 0。
+
+# 問題は N=1 のとき、s≠t となるペアがないので、答えは 0。
+# しかし、上記のコードでは cum = [0, 136872], mod 1 では両方 0%1=0, 136872%1=0 → count_mod[0] で 1+1 = 2 ペア？→ 実際は初期 {0:1} で 0 -> answer+=1, 次に 136872 -> answer+=1 → total 2? 
+# 実際のコードでは:
+#   val=0: mod=0, count_mod[0]=0 → answer=0, then count_mod[0]=1
+#   val=136872: mod=0, answer += 1 → answer=1, then count_mod[0]=2
+# よって出力1。しかし N=1 なので可能な (s,t) ペアは 0 個。なぜなら s≠t かつ 1つの休憩所しかない。
+
+# よって、このコードは論理的に誤っている。
+# 正しいアプローチ：
+
+# 条件:
+# - s ≠ t
+# - s から t へ時計回りに進む距離を d(s,t) とすると、d(s,t) は M の倍数
+# - そして、d(s,t) が「最短経路」である必要がある。つまり d(s,t) <= total_distance - d(s,t) → d(s,t) <= total/2
+
+# つまり、時計回りの距離 d が M の倍数かつ d <= total/2 を満たす (s,t) ペアを数える。
+
+# したがって、単に mod が一致するペアを数えるだけでは不十分。
+# なぜなら、d(s,t) = |cum[t] - cum[s]| が M の倍数であっても、
+# d(s,t) > total/2 なら最短経路は反時計回りなので、「時計回りの最短距離」とは言えない。
+
+# しかし問題文: "The minimum number of steps required to walk clockwise from rest area s to rest area t"
+# この表現は曖昧。おそらく意味は、
+# 「s から t へ時計回りに進むときのステップ数（必ずしも最短ではない）が M の倍数」ではなく、
+# 「s から t への最短経路が時計回りで、かつそのステップ数が M の倍数」
+# と解釈すべき。
+
+# つまり、条件は:
+#   d_clockwise(s,t) <= d_counter(s,t) かつ d_clockwise(s,t) ≡ 0 (mod M)
+
+# d_clockwise(s,t) = (cum[t] - cum[s]) % total （ただし s < t の連続部分和）
+# 一般的には、i < j に対して d(i,j) = cum[j] - cum[i]
+# total = cum[N]
+
+# 条件:
+#   d = cum[j] - cum[i] が M の倍数
+#   かつ d <= total - d → d <= total // 2
+
+# また、i == j は s≠t より除外。
+
+# アルゴリズム:
+# 1. 累積和 cum[0..N] を計算（cum[0]=0, cum[i] = A0+...+A{i-1}）
+# 2. total = cum[N]
+# 3. 各 i < j に対して、d = cum[j] - cum[i]
+#    - d % M == 0 かつ d <= total - d → d <= total//2 ならカウント
+# 4. しかし O(N^2) は N=2e5 では TLE
+
+# 別の方法:
+# mod M ごとに累積和の値をグループ化 → しかし距離 d = cum[j]-cum[i] ≡ 0 mod M ⇔ cum[j] ≡ cum[i] mod M
+# なので、同じ mod M の累積和同士は候補。
+
+# しかし、d = cum[j] - cum[i] <= total//2 を満たすものだけを数える必要。
+
+# 方針:
+# 各 mod M のグループ内で、累積和の値をソート。
+# その中で、差が <= total//2 かつ M の倍数（自動的に満たされる）なペア (i,j) を数える。
+# ただし、累積和の値自体は順不同なので、値の差を見る。
+
+# さらに、全体として d > total//2 の場合はカウントしない。
+
+# 例: cum[i] < cum[j] なら d = cum[j]-cum[i]
+# cum[i] > cum[j] でも、円環なので？いや、累積和は 0 から始まり単調増加（非減少）なので cum[i] <= cum[j] for i<j.
+
+# したがって、累積和配列はソート済み（0 <= cum[0] <= ... <= cum[N]）
+
+# そこで:
+# - 各 mod r について、cum の中で mod M == r の値を集め、ソート（既にインデックス順に cum は増加）
+# - そのリスト内の全てのペア (i,j) (i<j) に対して、d = cum[j]-cum[i] <= total//2 を満たすものをカウント
+
+# 二分探索 or 尺取り法で O(n log n)
+
+# ただし、total//2 の制約があるので、尺取り可能。
+
+# ステップ:
+# total = cum[-1]
+# half = total / 2  # 実数だが、整数比較で問題なし
+# for each mod group:
+#   arr = sorted list of cum values with this mod (but already increasing)
+#   use two pointers: for left index l, find the largest r such that arr[r] - arr[l] <= half
+#   then add (r - l) to answer
+
+# これで O(N log N) または O(N) per group? 合計 O(N)
+
+# しかし注意: d = cum[j] - cum[i] が時計回りの距離だが、これが最短経路となるのは d <= total - d のとき。
+# つまり d <= total//2
+
+# 逆に、d > total//2 なら最短経路は反時計回りなので、条件不満足。
+
+# また、d = total//2 かつ total が偶数のときは、両方が最短。問題文はどうか？
+# 「minimum number of steps required to walk clockwise」→ clockwise に歩いて到達するステップ数が最短。
+# つまり、反時計回りと同じ長さでも、時計回りで歩けるのであれば、それは「時計回りの最短距離」として成立？
+# はい、等しければ時計回りでも最短の一つ。
+
+# よって、d <= total//2 でよい。
+
+# 特別なケース: total==0? あり得ない。A_i>=1, N>=2 → total>=2
+
+# ただし N=1 の場合もある（制約 N>=2？）→ 問題の制約: 2<=N<=2e5
+# 入力例: "1 1\n136872" → N=1 だが、制約は N>=2。テストケースが制約違反？
+
+# 再確認: Constraints: 2<=N<=2e5
+# しかし入力例: N=1 → これは制約違反。しかし問題が提供している失敗ケースがこれ。
+# → 提供された失敗ケースが制約を満たしていない可能性。しかし現実には、制約内でのみ動作保証。
+
+# しかし、提出システムがこのテストケースを使うなら、それに合わせる必要。
+
+# 制約に 2<=N とあるが、テストケースに N=1 がある → 多分ミス。しかし対応。
+
+# 実際、Constraints に 2<=N とあるので、N=1 の入力は来ないはず。
+# しかし、失敗ケースとして与えられている → おそらく問題の説明ミス。あるいは制約が間違っている。
+
+# 再確認: 問題文の制約: 2<=N<=2e5
+# 入力例: N=1 → これは無視すべき？しかしジャッジがこれで落としている。
+
+# おそらく、制約が間違っていて、N=1 も許容されている可能性。
+
+# 問題文: "There are N rest areas" and "rest areas are numbered 1,2,...,N", and N>=2.
+# しかし失敗ケースがある以上、N=1 をサポートする必要がある。
+
+# N=1 のとき: s≠t を満たすペアは存在しない → 答えは 0。
+
+# 一方、元のコードは N=1 で 1 を出力 → 誤り。
+
+# なぜなら、累積和: [0, A0] → 2要素。mod M が同じなら 1ペア。
+# しかし、このペアに対応するのは s=1, t=1? いや。
+
+# 累積和 cum[i] は rest area i までの距離（cum[0]=0 は area 1 開始前？）
+# 通常、cum[i] = area 1 から area i+1 までの距離？いや。
+
+# 定義:
+# A_i: area i から area i+1 へ時計回りに進むステップ数
+# cum[0] = 0
+# cum[1] = A0 → area1 から area2 への距離
+# cum[2] = A0+A1 → area1 から area3 への距離
+
+# 一般に、area s から area t への時計回り距離（s < t）は cum[t-1] - cum[s-1]
+# 例えば area1→area2: cum[1]-cum[0] = A0
+
+# しかし、area2→area1 は？ cum[0] - cum[1] は負 → 代わりに total - A0
+
+# この手法では、累積和の差を使うが、s>t の場合は直接扱えない。
+
+# そこで、円環を線形化: cum を 0 から total まで、N+1 点。
+# area i に対応するのは cum[i-1] （i=1,...,N）、そして cum[N] = total
+
+# area s から area t への時計回り距離（s≠t）は:
+# if s < t: d = cum[t-1] - cum[s-1]
+# if s > t: d = (total - cum[s-1]) + cum[t-1] = cum[t-1] - cum[s-1] + total
+# これは統一できない。
+
+# しかし、累積和配列を拡張して、cum[i] for i=0..N-1 とし、
+# 距離 d(s,t) = (cum[t-1] - cum[s-1]) % total
+# しかし、時計回り距離は正の値。
+
+# 別のモデル:
+# 累積和 cum[0]=0, cum[1]=A0, cum[2]=A0+A1, ..., cum[N]=total
+# area i は位置 cum[i-1] にあると見なす（0-indexed）
+# すると、area s から area t への時計回り距離は:
+#   if cum[s-1] <= cum[t-1]: d = cum[t-1] - cum[s-1]
+#   else: d = total - (cum[s-1] - cum[t-1]) = cum[t-1] - cum[s-1] + total
+
+# しかし、この距離が常に >=0 だが、最短距離は min(d, total-d)
+
+# しかし、問題は「時計回りの距離」が M の倍数かつそれが最短経路。
+
+# つまり、min(d_clock, d_counter) = d_clock かつ d_clock ≡ 0 mod M
+
+# ここで d_clock = 
+#   if s < t: cum[t-1] - cum[s-1]
+#   if s > t: cum[t-1] - cum[s-1] + total
+# または、cum_index を area i に対応する cum[i] とする（cum[0] for area1, cum[1] for area2, ..., cum[N-1] for areaN）
+
+# 簡単のため、pos[i] = cum[i] for i in 0..N-1, where cum[0]=A0? いや。
+
+# 最初の cum 定義を維持:
+# cum[0] = 0
+# cum[1] = A0
+# cum[2] = A0+A1
+# ...
+# cum[i] = sum_{k=0}^{i-1} A_k
+
+# すると、area i の位置は cum[i-1] （i=1,...,N）
+
+# area s から area t への時計回り距離:
+# d = (cum[t-1] - cum[s-1]) % total
+# ただし、正の距離として、
+# if s <= t: d = cum[t-1] - cum[s-1]
+# if s > t: d = total - (cum[s-1] - cum[t-1]) = total + cum[t-1] - cum[s-1]
+
+# これを cum_diff = cum[t-1] - cum[s-1] とすると、
+# d = cum_diff if cum_diff >= 0, else cum_diff + total
+
+# しかし、この d が M の倍数かつ d <= total - d → d <= total//2
+
+# 注意: d は常に正（s≠t）
+
+# 今、d = (cum[t-1] - cum[s-1]) mod total, but in [0, total)
+# そして d <= total//2
+
+# ここで、d ≡ 0 mod M
+
+# また、d = (cum[t-1]

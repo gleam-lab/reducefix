@@ -1,0 +1,82 @@
+ ### 为什么这个输入会触发崩溃
+
+根据崩溃信息和触发条件，我们可以分析出以下几点：
+
+1. **内存越界访问**：在 `__asan_memset` 函数中，程序试图向地址 `0x000000094e08` 写入数据，但该地址超出了有效内存范围，导致段错误。
+2. **数组越界**：在 `hb_vector_t<CFF::op_str_t>::resize` 函数中，程序尝试调整数组大小时，由于数组边界未正确处理，导致越界访问。
+3. **无效指针操作**：在 `CFF::parsed_values_t<CFF::op_str_t>::add_op` 函数中，程序可能使用了无效的指针或未初始化的对象，进一步引发了崩溃。
+
+### 修复策略
+
+为了修复这个问题，我们需要确保在进行内存操作时，不会超出有效范围，并且正确管理数组边界。
+
+### 具体的代码修复建议
+
+1. **检查数组边界**：在 `hb_vector_t<CFF::op_str_t>::resize` 函数中，添加边界检查以确保新的大小不会超出数组的有效范围。
+2. **初始化对象**：在 `CFF::parsed_values_t<CFF::op_str_t>::add_op` 函数中，确保所有使用的对象都已正确初始化。
+3. **使用智能指针**：考虑使用智能指针（如 `std::unique_ptr` 或 `std::shared_ptr`）来管理动态分配的内存，避免手动释放内存时出现错误。
+
+以下是具体的代码修复建议：
+
+#### 1. 检查数组边界
+
+```cpp
+template <typename T>
+void hb_vector_t<T>::resize(int new_size) {
+    if (new_size < 0) {
+        throw std::invalid_argument("Negative size");
+    }
+    if (new_size > capacity()) {
+        // 确保新容量足够大
+        while (capacity() < new_size) {
+            grow();
+        }
+    } else if (new_size < length()) {
+        shrink(new_size);
+    }
+}
+```
+
+#### 2. 初始化对象
+
+```cpp
+template <typename T>
+void CFF::parsed_values_t<T>::add_op(unsigned int index, const CFF::byte_str_ref_t& value) {
+    if (index >= max_ops) {
+        throw std::out_of_range("Index out of range");
+    }
+    ops[index] = value;
+}
+```
+
+#### 3. 使用智能指针
+
+```cpp
+#include <memory>
+
+class hb_vector_t {
+public:
+    void resize(int new_size);
+private:
+    std::unique_ptr<T[]> data;
+    int length_;
+    int capacity_;
+};
+
+template <typename T>
+void hb_vector_t<T>::resize(int new_size) {
+    if (new_size < 0) {
+        throw std::invalid_argument("Negative size");
+    }
+    if (new_size > capacity_) {
+        // 确保新容量足够大
+        while (capacity_ < new_size) {
+            grow();
+        }
+    } else if (new_size < length_) {
+        shrink(new_size);
+    }
+}
+```
+
+通过这些修改，可以有效地防止内存越界访问和其他相关问题，从而避免程序崩溃。
