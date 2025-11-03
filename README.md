@@ -38,7 +38,7 @@ The pipeline receives five inputs: the task description P, a correct reference s
 
 ## Repository Structure
 
-```
+```bash
 ReduceFix/
 ├── lftbench/                  # LFTBench dataset
 │   ├── data/                  # Ground truth and submissions
