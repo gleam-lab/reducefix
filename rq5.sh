@@ -118,26 +118,9 @@ print(f"{'Project':<15} {'Samples':>8} | {'Baseline':^24} | {'Origin Test':^24} 
 print(f"{'':15} {'':>8} | {'@1':>7} {'@5':>7} {'@10':>7} | {'@1':>7} {'@5':>7} {'@10':>7} | {'@1':>7} {'@5':>7} {'@10':>7}")
 print("-"*80)
 
-# Helper function to calculate pass@k from unbiased estimator
-from math import comb
-
-def calculate_passk_unbiased(versions, k):
-    """Calculate unbiased pass@k"""
-    if not versions:
-        return 0.0
-    
-    n = len(versions)
-    c = sum(1 for v in versions if v.get('passed', False))
-    
-    if c == 0:
-        return 0.0
-    if n - c < k:
-        return 1.0
-    
-    try:
-        return 1.0 - (comb(n - c, k) / comb(n, k))
-    except (ValueError, ZeroDivisionError):
-        return 0.0
+# Note: pass@k values are pre-calculated in experiment_overview.json
+# using the unbiased estimator: pass@k = 1 - C(n-c, k) / C(n, k)
+# See compute_experiment_stats.py for the calculation details
 
 # Collect overall statistics for pass@k
 overall_repair_stats = {

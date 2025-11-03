@@ -1,0 +1,83 @@
+#include <bits/stdc++.h>
+using namespace std;
+struct Init {
+    Init() {
+        ios::sync_with_stdio(false);
+        cin.tie(nullptr);
+        cout << fixed << setprecision(12);
+    }
+} init;
+
+using i64 = int64_t;
+using vi = vector<int>;
+using vvi = vector<vi>;
+using Pi = pair<int, int>;
+
+#define rep(i, n) for (int i = 0; i < (n); ++i)
+#define rep3(i, l, r) for (int i = (l); i < (r); ++i)
+#define pb push_back
+#define el '\n'
+
+int main() {
+    int H, W, Y;
+    cin >> H >> W >> Y;
+    vvi A(H, vi(W));
+    rep(i, H) rep(j, W) cin >> A[i][j];
+
+    // We'll use a priority queue to simulate rising sea level
+    // Min-heap: {elevation, row, col}
+    priority_queue<Pi, vector<Pi>, greater<Pi>> pq;
+    vvi visited(H, vi(W, false));
+
+    // Add all border cells to the priority queue
+    rep(i, H) {
+        pq.push({A[i][0], i * W + 0});
+        pq.push({A[i][W-1], i * W + (W-1)});
+        visited[i][0] = true;
+        visited[i][W-1] = true;
+    }
+    rep3(j, 1, W-1) {
+        pq.push({A[0][j], 0 * W + j});
+        pq.push({A[H-1][j], (H-1) * W + j});
+        visited[0][j] = true;
+        visited[H-1][j] = true;
+    }
+
+    int remaining = H * W;
+    vi result;
+
+    int dx[] = {1, 0, -1, 0};
+    int dy[] = {0, 1, 0, -1};
+
+    // Process each year from 1 to Y
+    rep3(year, 1, Y+1) {
+        // Remove all cells with elevation <= current sea level
+        while (!pq.empty() && pq.top().first <= year) {
+            auto [elev, pos] = pq.top();
+            pq.pop();
+            
+            int r = pos / W;
+            int c = pos % W;
+            
+            // This cell is submerged
+            remaining--;
+            
+            // Check neighbors
+            rep(d, 4) {
+                int nr = r + dx[d];
+                int nc = c + dy[d];
+                
+                if (nr >= 0 && nr < H && nc >= 0 && nc < W && !visited[nr][nc]) {
+                    visited[nr][nc] = true;
+                    pq.push({A[nr][nc], nr * W + nc});
+                }
+            }
+        }
+        result.pb(remaining);
+    }
+
+    // Output results for each year
+    for (int area : result) {
+        cout << area << el;
+    }
+}

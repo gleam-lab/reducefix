@@ -1,0 +1,70 @@
+#include <bits/stdc++.h>
+using namespace std;
+struct Init {
+    Init() {
+        ios::sync_with_stdio(false);
+        cin.tie(nullptr);
+        cout << fixed << setprecision(12);
+    }
+} init;
+
+using i64 = int64_t;
+using vi = vector<int>;
+using vvi = vector<vi>;
+using Pi = pair<int, int>;
+
+#define rep(i,n) for(int i = 0; i < (n); ++i)
+#define rep3(i,l,r) for(int i = (l); i < (r); ++i)
+#define el '\n'
+
+int main(){
+    int H, W, Y;
+    cin >> H >> W >> Y;
+    vvi A(H, vi(W));
+    vvi used(H, vi(W, 0));
+    priority_queue<tuple<int, int, int>, vector<tuple<int, int, int>>, greater<tuple<int, int, int>>> pq;
+
+    // Add all border cells to the priority queue
+    rep(i, H) {
+        pq.push({A[i][0], i, 0});
+        used[i][0] = 1;
+        if (W > 1) {
+            pq.push({A[i][W-1], i, W-1});
+            used[i][W-1] = 1;
+        }
+    }
+    rep3(i, 1, W-1) {
+        pq.push({A[0][i], 0, i});
+        used[0][i] = 1;
+        if (H > 1) {
+            pq.push({A[H-1][i], H-1, i});
+            used[H-1][i] = 1;
+        }
+    }
+
+    int remaining = H * W;
+    vi result;
+    vi dx = {1, 0, -1, 0}, dy = {0, 1, 0, -1};
+
+    // Process each year
+    rep3(year, 1, Y + 1) {
+        // Remove all cells that are submerged at current sea level (<= year)
+        while (!pq.empty()) {
+            auto [elev, y, x] = pq.top();
+            if (elev > year) break;
+            pq.pop();
+            --remaining;
+            
+            // Check neighbors
+            rep(d, 4) {
+                int ny = y + dy[d], nx = x + dx[d];
+                if (ny < 0 || nx < 0 || ny >= H || nx >= W) continue;
+                if (!used[ny][nx]) {
+                    used[ny][nx] = 1;
+                    pq.push({A[ny][nx], ny, nx});
+                }
+            }
+        }
+        cout << remaining << el;
+    }
+}

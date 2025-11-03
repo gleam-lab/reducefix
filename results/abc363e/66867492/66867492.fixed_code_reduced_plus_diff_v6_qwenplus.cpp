@@ -1,0 +1,104 @@
+#include <bits/stdc++.h>
+using namespace std;
+struct Init { 
+    Init() { 
+        ios::sync_with_stdio(false); 
+        cin.tie(nullptr); 
+        cout << fixed << setprecision(12); 
+    } 
+} init;
+
+using i64 = int64_t;
+using ld = long double;
+template<typename T> using vc = vector<T>;
+template<typename T> using vv = vc<vc<T>>;
+template<typename T> using vvi = vector<vector<T>>;
+template<typename T> using P = pair<T,T>;
+using vi = vc<int>; 
+using Pi = pair<int, int>;
+
+#define pb push_back
+#define em emplace
+#define eb emplace_back
+#define el '\n'
+#define all(a)  a.begin(),a.end()
+#define rall(a) a.rbegin(),a.rend()
+#define rep(i,n)     for(int i = 0; i < (n); ++i)
+#define rep3(i,l,r)  for(int i = (l); i < (r); ++i)
+#define rrep(i,n)    for(int i = (n)-1; i >= 0; --i)
+#define rrep3(i,l,r) for(int i = (r)-1; i >= (l); --i)
+
+template<typename T> inline bool chmin(T &a, T b){if(a > b){a = b; return true;}return false;}
+template<typename T> inline bool chmax(T &a, T b){if(a < b){a = b; return true;}return false;}
+
+int INF = 1e9+10;
+i64 INFi64 = (i64)2e18+10;
+
+int main(){
+    int H, W, Y;
+    cin >> H >> W >> Y;
+    vvi A(H, vi(W));
+    for (auto& row : A) {
+        for (int& x : row) {
+            cin >> x;
+        }
+    }
+
+    // We'll use a priority queue to simulate the rising sea level
+    // Store {elevation, row, col}
+    priority_queue<Pi, vector<Pi>, greater<Pi>> pq;
+    vvi used(H, vi(W, 0));
+
+    // Add all border cells to the priority queue
+    rep(i, H) {
+        pq.push({A[i][0], i * W + 0});
+        pq.push({A[i][W-1], i * W + (W-1)});
+        used[i][0] = 1;
+        used[i][W-1] = 1;
+    }
+    rep3(j, 1, W-1) {
+        pq.push({A[0][j], 0 * W + j});
+        pq.push({A[H-1][j], (H-1) * W + j});
+        used[0][j] = 1;
+        used[H-1][j] = 1;
+    }
+
+    int ans = H * W;
+    vi result(Y);
+
+    // Directions: up, right, down, left
+    vi dx = {-1, 0, 1, 0};
+    vi dy = {0, 1, 0, -1};
+
+    rep3(year, 1, Y+1) {
+        // Process all cells that will sink at this sea level
+        while (!pq.empty() && pq.top().first <= year) {
+            auto [elev, pos] = pq.top();
+            pq.pop();
+            
+            int r = pos / W;
+            int c = pos % W;
+            
+            // This cell sinks
+            ans--;
+            
+            // Check neighbors
+            rep(d, 4) {
+                int nr = r + dx[d];
+                int nc = c + dy[d];
+                
+                if (nr < 0 || nr >= H || nc < 0 || nc >= W) continue;
+                if (used[nr][nc]) continue;
+                
+                used[nr][nc] = 1;
+                pq.push({A[nr][nc], nr * W + nc});
+            }
+        }
+        result[year-1] = ans;
+    }
+
+    // Output results for each year
+    rep(i, Y) {
+        cout << result[i] << el;
+    }
+}
