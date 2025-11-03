@@ -1,0 +1,97 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+
+constexpr int dx[] = {-1, 1, 0, 0};
+constexpr int dy[] = {0, 0, -1, 1};
+
+int main()
+{
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int H, W, Y;
+    cin >> H >> W >> Y;
+
+    vector<vector<int>> A(H, vector<int>(W));
+    for (int i = 0; i < H; i++)
+    {
+        for (int j = 0; j < W; j++)
+        {
+            cin >> A[i][j];
+        }
+    }
+
+    vector<vector<bool>> island(H, vector<bool>(W, true));
+    queue<pair<int, int>> q;
+    
+    // Initialize: add all border cells that will sink at their elevation year
+    for (int i = 0; i < H; i++)
+    {
+        for (int j = 0; j < W; j++)
+        {
+            if ((i == 0) || (i == H - 1) || (j == 0) || (j == W - 1))
+            {
+                q.push({i, j});
+                island[i][j] = false;
+            }
+        }
+    }
+
+    // Create events: for each year, which cells become submerged
+    vector<vector<pair<int, int>>> events(1e5 + 5);
+    for (int i = 0; i < H; i++)
+    {
+        for (int j = 0; j < W; j++)
+        {
+            if ((i == 0) || (i == H - 1) || (j == 0) || (j == W - 1))
+            {
+                events[A[i][j]].push_back({i, j});
+            }
+        }
+    }
+
+    int ans = H * W;
+
+    // Process each year from 1 to Y
+    for (int year = 1; year <= Y; year++)
+    {
+        // Add all cells that start sinking at this year
+        for (auto [x, y] : events[year])
+        {
+            if (island[x][y])  // Only process if not already sunk
+            {
+                q.push({x, y});
+                island[x][y] = false;
+                ans--;
+            }
+        }
+
+        // Flood fill: propagate sinking to connected low-elevation areas
+        while (!q.empty())
+        {
+            auto [x, y] = q.front();
+            q.pop();
+
+            for (int d = 0; d < 4; d++)
+            {
+                int nx = x + dx[d];
+                int ny = y + dy[d];
+
+                if (nx < 0 || ny < 0 || nx >= H || ny >= W)
+                    continue;
+
+                if (island[nx][ny] && A[nx][ny] <= year)
+                {
+                    island[nx][ny] = false;
+                    ans--;
+                    q.push({nx, ny});
+                }
+            }
+        }
+
+        cout << ans << endl;
+    }
+
+    return 0;
+}

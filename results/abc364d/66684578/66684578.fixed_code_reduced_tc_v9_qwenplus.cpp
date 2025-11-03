@@ -1,0 +1,50 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define ll long long
+#define rep(i,n) for(int i=0;i<(int)n;i++)
+#define vi vector<int>
+#define vll vector<ll>
+
+int main(){
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+    
+    int N, Q;
+    cin >> N >> Q;
+    vector<ll> a(N);
+    rep(i,N) cin >> a[i];
+    
+    sort(a.begin(), a.end());
+    
+    rep(qi, Q) {
+        ll b;
+        int k;
+        cin >> b >> k;
+        k--; // 0-indexed k
+        
+        // We'll find the smallest radius r such that there are at least k+1 points within distance r from b
+        // But instead, we can binary search on the answer (distance)
+        
+        ll left = -1;
+        ll right = 2e9 + 10; // max possible distance is around 2e8, so 2e9 is safe
+        
+        while (right - left > 1) {
+            ll mid = (left + right) / 2;
+            // Count how many A_i are within distance <= mid from b
+            ll low = b - mid;
+            ll high = b + mid;
+            
+            auto it1 = lower_bound(a.begin(), a.end(), low);
+            auto it2 = upper_bound(a.begin(), a.end(), high);
+            int cnt = it2 - it1;
+            
+            if (cnt >= k+1) {
+                right = mid;
+            } else {
+                left = mid;
+            }
+        }
+        
+        cout << right << '\n';
+    }
+}

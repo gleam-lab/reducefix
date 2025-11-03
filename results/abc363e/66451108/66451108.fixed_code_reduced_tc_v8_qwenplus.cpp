@@ -1,0 +1,72 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define int long long
+#define close ios::sync_with_stdio(false); cin.tie(0); cout.tie(0);
+const int dx[] = {0, 0, 1, -1};
+const int dy[] = {1, -1, 0, 0};
+
+struct Node {
+    int x, y, val;
+    bool operator<(const Node& a) const {
+        return val > a.val;
+    }
+};
+
+signed main() {
+    close;
+    int H, W, Y;
+    cin >> H >> W >> Y;
+    vector<vector<int>> grid(H, vector<int>(W));
+    for (int i = 0; i < H; i++) {
+        for (int j = 0; j < W; j++) {
+            cin >> grid[i][j];
+        }
+    }
+
+    vector<vector<bool>> vis(H, vector<bool>(W, false));
+    priority_queue<Node> q;
+    
+    // Initialize the boundary cells
+    for (int i = 0; i < H; i++) {
+        q.push({i, 0, grid[i][0]});
+        q.push({i, W-1, grid[i][W-1]});
+        vis[i][0] = true;
+        vis[i][W-1] = true;
+    }
+    for (int j = 1; j < W-1; j++) {
+        q.push({0, j, grid[0][j]});
+        q.push({H-1, j, grid[H-1][j]});
+        vis[0][j] = true;
+        vis[H-1][j] = true;
+    }
+
+    int remaining = H * W;
+    vector<int> result(Y + 1);
+
+    for (int year = 1; year <= Y; year++) {
+        // Process all cells that sink at this sea level
+        while (!q.empty() && q.top().val <= year) {
+            Node cur = q.top();
+            q.pop();
+            remaining--;
+
+            // Check neighbors
+            for (int d = 0; d < 4; d++) {
+                int nx = cur.x + dx[d];
+                int ny = cur.y + dy[d];
+                if (nx >= 0 && nx < H && ny >= 0 && ny < W && !vis[nx][ny]) {
+                    vis[nx][ny] = true;
+                    q.push({nx, ny, grid[nx][ny]});
+                }
+            }
+        }
+        result[year] = remaining;
+    }
+
+    // Output results for each year
+    for (int i = 1; i <= Y; i++) {
+        cout << result[i] << '\n';
+    }
+
+    return 0;
+}

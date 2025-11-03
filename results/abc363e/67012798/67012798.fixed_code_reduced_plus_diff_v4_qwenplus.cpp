@@ -1,0 +1,111 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+
+constexpr int dx[] = {-1, 1, 0, 0};
+constexpr int dy[] = {0, 0, -1, 1};
+
+int main()
+{
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int H, W, Y;
+    cin >> H >> W >> Y;
+
+    vector<vector<int>> A(H, vector<int>(W));
+    for (int i = 0; i < H; i++)
+    {
+        for (int j = 0; j < W; j++)
+        {
+            cin >> A[i][j];
+        }
+    }
+
+    // Create a list of all cells with their elevations
+    vector<tuple<int, int, int>> cells;
+    for (int i = 0; i < H; i++)
+    {
+        for (int j = 0; j < W; j++)
+        {
+            cells.emplace_back(A[i][j], i, j);
+        }
+    }
+
+    // Sort by elevation in ascending order
+    sort(cells.begin(), cells.end());
+
+    vector<vector<bool>> submerged(H, vector<bool>(W, false));
+    int remaining = H * W;
+    int idx = 0;
+
+    for (int year = 1; year <= Y; year++)
+    {
+        // Add all cells with elevation <= current sea level that are on the border or adjacent to already submerged cells
+        queue<pair<int, int>> q;
+        
+        // Check all cells with elevation <= year
+        while (idx < cells.size() && get<0>(cells[idx]) <= year)
+        {
+            int x = get<1>(cells[idx]);
+            int y = get<2>(cells[idx]);
+            
+            if (!submerged[x][y])
+            {
+                bool is_border_or_adjacent = false;
+                
+                // Check if it's on the border
+                if (x == 0 || x == H-1 || y == 0 || y == W-1)
+                {
+                    is_border_or_adjacent = true;
+                }
+                else
+                {
+                    // Check if adjacent to any submerged cell
+                    for (int d = 0; d < 4; d++)
+                    {
+                        int nx = x + dx[d];
+                        int ny = y + dy[d];
+                        if (nx >= 0 && nx < H && ny >= 0 && ny < W && submerged[nx][ny])
+                        {
+                            is_border_or_adjacent = true;
+                            break;
+                        }
+                    }
+                }
+                
+                if (is_border_or_adjacent)
+                {
+                    submerged[x][y] = true;
+                    remaining--;
+                    q.push({x, y});
+                }
+            }
+            idx++;
+        }
+        
+        // Flood fill from newly submerged cells
+        while (!q.empty())
+        {
+            auto [x, y] = q.front();
+            q.pop();
+            
+            for (int d = 0; d < 4; d++)
+            {
+                int nx = x + dx[d];
+                int ny = y + dy[d];
+                
+                if (nx >= 0 && nx < H && ny >= 0 && ny < W && !submerged[nx][ny] && A[nx][ny] <= year)
+                {
+                    submerged[nx][ny] = true;
+                    remaining--;
+                    q.push({nx, ny});
+                }
+            }
+        }
+        
+        cout << remaining << '\n';
+    }
+
+    return 0;
+}

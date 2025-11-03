@@ -1,0 +1,141 @@
+#include<bits/stdc++.h>
+using namespace std;
+#include<atcoder/all>
+using namespace atcoder;
+using ll=int64_t;
+using ld=long double;
+int inf=1000000001;
+ll INF=1e18;
+#define rep(i,n) for(int i=0;i<n;i++)
+#define all(x) x.begin(),x.end()
+#define pb push_back
+#define sz(x) (ll)x.size()
+template<typename T>bool chmin(T& a,T b){if(a>b){a=b;return true;}return false;}
+template<typename T>bool chmax(T& a,T b){if(a<b){a=b;return true;}return false;}
+
+int dx[]={1,0,-1,0};
+int dy[]={0,1,0,-1};
+
+int main(){
+    cin.tie(0)->sync_with_stdio(0);
+    
+    int H,W,Y;
+    cin>>H>>W>>Y;
+    vector<vector<int>>A(H,vector<int>(W));
+    rep(i,H)rep(j,W)cin>>A[i][j];
+    
+    // Create events: when each cell gets submerged
+    vector<vector<int>> Q(Y+2); // Q[y] = list of cells that get submerged at year y
+    
+    // Initially, all border cells will be submerged at time A[i][j]
+    // But we need to process them in order of elevation
+    vector<tuple<int,int,int>> events;
+    vector<vector<bool>> submerged(H, vector<bool>(W, false));
+    
+    // Add all border cells
+    rep(i,H) {
+        events.emplace_back(A[i][0], i, 0);
+        events.emplace_back(A[i][W-1], i, W-1);
+        submerged[i][0] = true;
+        if(W > 1) submerged[i][W-1] = true;
+    }
+    rep(j,W) {
+        if(H > 1) {
+            events.emplace_back(A[0][j], 0, j);
+            events.emplace_back(A[H-1][j], H-1, j);
+            if(j > 0 && j < W-1) { // avoid double counting corners
+                submerged[0][j] = true;
+                submerged[H-1][j] = true;
+            }
+        }
+    }
+    
+    // Sort by elevation (submersion time)
+    sort(all(events));
+    
+    int remaining = H * W;
+    
+    // Process events in order of increasing year
+    vector<int> ans(Y+1);
+    int event_idx = 0;
+    
+    for(int y = 1; y <= Y; y++) {
+        // Process all cells with elevation <= y
+        while(event_idx < events.size() && get<0>(events[event_idx]) <= y) {
+            auto [elev, i, j] = events[event_idx];
+            if(!submerged[i][j]) {
+                // This cell wasn't processed yet
+                submerged[i][j] = true;
+                remaining--;
+                
+                // Check neighbors - they might now be connected to sea
+                // But only if their elevation <= current sea level
+                rep(k,4) {
+                    int ni = i + dx[k];
+                    int nj = j + dy[k];
+                    if(ni >= 0 && ni < H && nj >= 0 && nj < W) {
+                        if(!submerged[ni][nj] && A[ni][nj] <= y) {
+                            events.emplace_back(A[ni][nj], ni, nj);
+                        }
+                    }
+                }
+            }
+            event_idx++;
+        }
+        
+        // Sort newly added events to maintain order
+        // Instead of sorting repeatedly, we can use a priority queue
+        
+        ans[y] = remaining;
+    }
+    
+    // Redo with priority queue for better performance
+    remaining = H * W;
+    vector<vector<bool>> visited(H, vector<bool>(W, false));
+    priority_queue<tuple<int,int,int>, vector<tuple<int,int,int>>, greater<tuple<int,int,int>>> pq;
+    
+    // Reset and use PQ
+    rep(i,H) {
+        pq.emplace(A[i][0], i, 0);
+        pq.emplace(A[i][W-1], i, W-1);
+        visited[i][0] = true;
+        if(W > 1) visited[i][W-1] = true;
+    }
+    rep(j,W) {
+        if(H > 1) {
+            if(!visited[0][j]) {
+                pq.emplace(A[0][j], 0, j);
+                visited[0][j] = true;
+            }
+            if(j > 0 && j < W-1 && !visited[H-1][j]) {
+                pq.emplace(A[H-1][j], H-1, j);
+                visited[H-1][j] = true;
+            }
+        }
+    }
+    
+    vector<int> result;
+    int prev_remaining = remaining;
+    
+    for(int y = 1; y <= Y; y++) {
+        // Process all cells with elevation <= y
+        while(!pq.empty() && get<0>(pq.top()) <= y) {
+            auto [elev, i, j] = pq.top();
+            pq.pop();
+            
+            remaining--;
+            
+            // Check neighbors
+            rep(k,4) {
+                int ni = i + dx[k];
+                int nj = j + dy[k];
+                if(ni >= 0 && ni < H && nj >= 0 && nj < W && !visited[ni][nj]) {
+                    visited[ni][nj] = true;
+                    pq.emplace(A[ni][nj], ni, nj);
+                }
+            }
+        }
+        
+        cout << remaining << '\n';
+    }
+}

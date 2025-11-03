@@ -1,0 +1,65 @@
+#include<bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+
+void solve() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int N, Q;
+    cin >> N >> Q;
+    
+    vector<ll> a(N);
+    for (int i = 0; i < N; i++) {
+        cin >> a[i];
+    }
+    
+    // Sort the A points for binary search
+    sort(a.begin(), a.end());
+    
+    for (int q = 0; q < Q; q++) {
+        ll b;
+        int k;
+        cin >> b >> k;
+        
+        // We'll use binary search on the answer (distance)
+        ll left = 0, right = 2e8;
+        
+        // But note: max possible distance could be up to 2e8, but we need to handle large values correctly.
+        // Actually, maximum distance can be up to 2 * 1e8 = 200000000, so right is okay.
+        
+        // However, instead of binary search on distance, we can find the k-th smallest distance by checking candidates.
+        // Alternative approach: find how many points are within distance d from b.
+        // Count(A_i such that |a_i - b| <= d) >= k
+        
+        auto count_points_within = [&](ll d) -> int {
+            ll low = b - d;
+            ll high = b + d;
+            auto it1 = lower_bound(a.begin(), a.end(), low);
+            auto it2 = upper_bound(a.begin(), a.end(), high);
+            return it2 - it1;
+        };
+        
+        ll l = 0, r = 200000000; // maximum possible distance
+        ll ans = r;
+        
+        while (l <= r) {
+            ll mid = (l + r) / 2;
+            if (count_points_within(mid) >= k) {
+                ans = mid;
+                r = mid - 1;
+            } else {
+                l = mid + 1;
+            }
+        }
+        
+        cout << ans << '\n';
+    }
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    solve();
+    return 0;
+}

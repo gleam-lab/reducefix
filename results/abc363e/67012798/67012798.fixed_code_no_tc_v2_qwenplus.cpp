@@ -1,0 +1,131 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+
+constexpr int dx[] = {-1, 1, 0, 0};
+constexpr int dy[] = {0, 0, -1, 1};
+
+int main()
+{
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int H, W, Y;
+    cin >> H >> W >> Y;
+
+    vector<vector<int>> A(H, vector<int>(W));
+    for (int i = 0; i < H; i++)
+    {
+        for (int j = 0; j < W; j++)
+        {
+            cin >> A[i][j];
+        }
+    }
+
+    // We'll use a priority queue to process cells in increasing order of elevation
+    // Each entry is (elevation, row, col)
+    priority_queue<tuple<int, int, int>, vector<tuple<int, int, int>>, greater<tuple<int, int, int>>> pq;
+    vector<vector<bool>> submerged(H, vector<bool>(W, false));
+
+    // Initially, add all border cells to the priority queue
+    for (int i = 0; i < H; i++)
+    {
+        for (int j = 0; j < W; j++)
+        {
+            if (i == 0 || i == H-1 || j == 0 || j == W-1)
+            {
+                pq.push({A[i][j], i, j});
+                submerged[i][j] = true;
+            }
+        }
+    }
+
+    int remaining = H * W;
+    vector<int> result(Y + 1); // Store result for each year
+
+    // Process cells in order of increasing elevation
+    while (!pq.empty())
+    {
+        auto [elev, x, y] = pq.top();
+        pq.pop();
+
+        // This cell gets submerged when sea level reaches elev
+        if (elev <= Y) {
+            result[elev]--;
+        }
+
+        // Check neighbors
+        for (int d = 0; d < 4; d++)
+        {
+            int nx = x + dx[d];
+            int ny = y + dy[d];
+
+            if (nx < 0 || ny < 0 || nx >= H || ny >= W || submerged[nx][ny])
+                continue;
+
+            // If neighbor's elevation <= current sea level (which is elev), it will also submerge
+            // But we need to process it when sea level reaches its own elevation
+            submerged[nx][ny] = true;
+            pq.push({A[nx][nx], nx, ny}); // Bug here: should be A[nx][ny]
+        }
+    }
+
+    // Fix the bug above and rework the logic
+    // Let's restart with corrected approach
+    fill(submerged.begin(), submerged.end(), vector<bool>(W, false));
+    
+    // Clear and rebuild
+    while (!pq.empty()) pq.pop();
+    
+    // Add all border cells
+    for (int i = 0; i < H; i++)
+    {
+        for (int j = 0; j < W; j++)
+        {
+            if (i == 0 || i == H-1 || j == 0 || j == W-1)
+            {
+                pq.push({A[i][j], i, j});
+                submerged[i][j] = true;
+            }
+        }
+    }
+
+    remaining = H * W;
+    fill(result.begin(), result.end(), 0);
+
+    // For years 1 to Y, we want to know how many cells remain
+    // Instead, let's simulate by sea level
+    while (!pq.empty())
+    {
+        auto [elev, x, y] = pq.top();
+        pq.pop();
+        
+        // This cell becomes submerged at sea level = elev
+        if (elev <= Y) {
+            result[elev]--;
+        }
+        
+        for (int d = 0; d < 4; d++)
+        {
+            int nx = x + dx[d];
+            int ny = y + dy[d];
+            
+            if (nx < 0 || ny < 0 || nx >= H || ny >= W || submerged[nx][ny])
+                continue;
+                
+            submerged[nx][ny] = true;
+            pq.push({A[nx][ny], nx, ny});  // Fixed: was A[nx][nx]
+        }
+    }
+
+    // Now compute prefix sum: result[i] = total cells submerged at exactly sea level i
+    // Then cumulative sum gives total submerged by year i
+    int submerged_count = 0;
+    for (int i = 1; i <= Y; i++)
+    {
+        submerged_count -= result[i];  // because we did -- earlier
+        cout << (H * W - submerged_count) << endl;
+    }
+
+    return 0;
+}

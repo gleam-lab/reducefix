@@ -1,0 +1,66 @@
+#include<bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+
+const int MAX_N = 1e5 + 5;
+
+int a[MAX_N];
+
+void solve() {
+    int n, q;
+    cin >> n >> q;
+    
+    // Read the coordinates of points A
+    for (int i = 0; i < n; i++) {
+        cin >> a[i];
+    }
+    
+    // Sort the A array to enable binary search around B_j
+    sort(a, a + n);
+    
+    // Process each query
+    for (int i = 0; i < q; i++) {
+        int b, k;
+        cin >> b >> k;
+        
+        // We need to find the k-th smallest distance from B to any A_i
+        // Instead of computing all distances, we can binary search on the answer (distance)
+        int left = 0, right = 2e8;
+        int ans = right;
+        
+        while (left <= right) {
+            int mid = left + (right - left) / 2;
+            
+            // Count how many points A_i are within distance 'mid' from point b
+            // That is: |a_i - b| <= mid  =>  b - mid <= a_i <= b + mid
+            int low_bound = b - mid;
+            int high_bound = b + mid;
+            
+            // Find the first index where a[i] >= low_bound
+            auto it1 = lower_bound(a, a + n, low_bound);
+            // Find the first index where a[i] > high_bound
+            auto it2 = upper_bound(a, a + n, high_bound);
+            
+            int count = it2 - it1; // number of points within [b-mid, b+mid]
+            
+            if (count >= k) {
+                ans = mid;
+                right = mid - 1;
+            } else {
+                left = mid + 1;
+            }
+        }
+        
+        cout << ans << endl;
+    }
+}
+
+int main() {
+    ios::sync_with_stdio(0);
+    cin.tie(0);
+    cout.tie(0);
+    
+    solve();
+    
+    return 0;
+}

@@ -1,0 +1,56 @@
+#include <iostream>
+#include <algorithm>
+#include <vector>
+using namespace std;
+#define int long long
+#define endl '\n'
+
+const int inf = 1e18;
+
+signed main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int N, Q;
+    cin >> N >> Q;
+    vector<int> a(N);
+    for (int i = 0; i < N; i++) {
+        cin >> a[i];
+    }
+    sort(a.begin(), a.end());
+
+    while (Q--) {
+        int b, k;
+        cin >> b >> k;
+        
+        // We want to find the k-th smallest distance from b to any point in a
+        // Instead of binary search on answer, we can collect distances around b
+        
+        // Find the position where b would be inserted
+        auto it = lower_bound(a.begin(), a.end(), b);
+        
+        vector<int> candidates;
+        
+        // Collect positions: include elements around the lower bound
+        // At most we need k elements on left and k elements on right
+        if (it != a.end()) {
+            auto right_it = it;
+            for (int i = 0; i < k && right_it != a.end(); ++i, ++right_it) {
+                candidates.push_back(abs(*right_it - b));
+            }
+        }
+        if (it != a.begin()) {
+            auto left_it = prev(it);
+            for (int i = 0; i < k && left_it >= a.begin(); ++i, --left_it) {
+                candidates.push_back(abs(*left_it - b));
+                if (left_it == a.begin()) break;
+            }
+        }
+        
+        // Sort the candidate distances and pick the k-th smallest (1-indexed)
+        sort(candidates.begin(), candidates.end());
+        cout << candidates[k-1] << endl;
+    }
+
+    return 0;
+}

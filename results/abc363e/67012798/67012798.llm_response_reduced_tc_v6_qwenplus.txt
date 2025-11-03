@@ -1,0 +1,126 @@
+Looking at the problem and the failing case, I can see that the current code has a fundamental flaw in its approach. The issue is with how the sinking process is modeled.
+
+The current code assumes that only border cells sink first, but according to the problem statement, any section that is vertically or horizontally adjacent to the sea OR a section that has sunk into the sea will sink if its elevation is not greater than the sea level. This means water can propagate inward from multiple points.
+
+The key insight is that we need to simulate the rising sea level year by year, and for each year, perform a flood fill from all already submerged areas to find newly submerged areas.
+
+Here's the corrected approach:
+
+1. Start with all cells above water
+2. For each year, check all cells with elevation <= current sea level that are adjacent to already submerged cells
+3. Use BFS/DFS to flood all connected cells that should be submerged
+4. Track the remaining area
+
+```cpp
+#include <bits/stdc++.h>
+
+using namespace std;
+
+constexpr int dx[] = {-1, 1, 0, 0};
+constexpr int dy[] = {0, 0, -1, 1};
+
+int main()
+{
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int H, W, Y;
+    cin >> H >> W >> Y;
+
+    vector<vector<int>> A(H, vector<int>(W));
+    for (int i = 0; i < H; i++)
+    {
+        for (int j = 0; j < W; j++)
+        {
+            cin >> A[i][j];
+        }
+    }
+
+    vector<vector<bool>> submerged(H, vector<bool>(W, false));
+    queue<pair<int, int>> q;
+    
+    // Initially, add all border cells to the queue if they would be submerged at sea level 0
+    // But since sea level starts at 0 and rises, we'll handle this incrementally
+    int remaining = H * W;
+
+    for (int year = 1; year <= Y; year++)
+    {
+        // Add new cells that become vulnerable at this sea level
+        // Check all non-submerged cells with elevation <= year
+        for (int i = 0; i < H; i++)
+        {
+            for (int j = 0; j < W; j++)
+            {
+                if (!submerged[i][j] && A[i][j] <= year)
+                {
+                    // Check if this cell is adjacent to any submerged cell or on the border
+                    bool should_submerge = false;
+                    
+                    // Check if on border
+                    if (i == 0 || i == H-1 || j == 0 || j == W-1)
+                    {
+                        should_submerge = true;
+                    }
+                    else
+                    {
+                        // Check if adjacent to submerged cell
+                        for (int d = 0; d < 4; d++)
+                        {
+                            int ni = i + dx[d];
+                            int nj = j + dy[d];
+                            if (ni >= 0 && ni < H && nj >= 0 && nj < W && submerged[ni][nj])
+                            {
+                                should_submerge = true;
+                                break;
+                            }
+                        }
+                    }
+                    
+                    if (should_submerge)
+                    {
+                        submerged[i][j] = true;
+                        q.push({i, j});
+                    }
+                }
+            }
+        }
+        
+        // Propagate the submersion using BFS
+        while (!q.empty())
+        {
+            auto [x, y] = q.front();
+            q.pop();
+            
+            // Check all four adjacent cells
+            for (int d = 0; d < 4; d++)
+            {
+                int nx = x + dx[d];
+                int ny = y + dy[d];
+                
+                if (nx >= 0 && nx < H && ny >= 0 && ny < W && !submerged[nx][ny] && A[nx][ny] <= year)
+                {
+                    submerged[nx][ny] = true;
+                    q.push({nx, ny});
+                }
+            }
+        }
+        
+        // Count remaining cells (could also maintain a running count)
+        int current_remaining = 0;
+        for (int i = 0; i < H; i++)
+        {
+            for (int j = 0; j < W; j++)
+            {
+                if (!submerged[i][j])
+                {
+                    current_remaining++;
+                }
+            }
+        }
+        
+        cout << current_remaining << endl;
+    }
+
+    return 0;
+}
+```

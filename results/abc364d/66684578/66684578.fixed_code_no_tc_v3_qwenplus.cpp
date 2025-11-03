@@ -1,0 +1,59 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define ll long long
+#define rep(i,n) for(int i=0;i<(int)n;i++)
+#define vi vector<int>
+#define vll vector<ll>
+
+int main(){
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+    
+    int N, Q;
+    cin >> N >> Q;
+    vi a(N);
+    rep(i, N) {
+        cin >> a[i];
+    }
+    
+    // Sort the A points for binary search and distance calculation
+    sort(a.begin(), a.end());
+    
+    rep(qi, Q) {
+        int b, k;
+        cin >> b >> k;
+        k--; // Convert to 0-indexed
+        
+        // We'll find the smallest distance d such that there are at least k+1 points within distance d from b
+        // But instead of binary searching on distance, we can find the k-th closest point directly
+        
+        // Find the position where b would be inserted
+        auto it = lower_bound(a.begin(), a.end(), b);
+        
+        // Create a list of distances by expanding left and right from the insertion point
+        vll distances;
+        
+        // Two pointers: left starting from element before b, right starting from element at or after b
+        int left = -1, right = -1;
+        if (it != a.begin()) left = it - a.begin() - 1;
+        if (it != a.end()) right = it - a.begin();
+        
+        // Merge the two sorted sequences (distances to the left, distances to the right)
+        while (distances.size() <= (size_t)k) {
+            ll dist_left = (left >= 0) ? (ll)b - a[left] : LLONG_MAX;
+            ll dist_right = (right < N) ? (ll)a[right] - b : LLONG_MAX;
+            
+            if (dist_left <= dist_right) {
+                distances.push_back(dist_left);
+                left--;
+            } else {
+                distances.push_back(dist_right);
+                right++;
+            }
+        }
+        
+        cout << distances[k] << '\n';
+    }
+    
+    return 0;
+}

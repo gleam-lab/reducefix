@@ -1,0 +1,218 @@
+```cpp
+#include <bits/stdc++.h>
+
+using namespace std;
+
+constexpr int dx[] = {-1, 1, 0, 0};
+constexpr int dy[] = {0, 0, -1, 1};
+
+int main()
+{
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int H, W, Y;
+    cin >> H >> W >> Y;
+
+    vector<vector<int>> A(H, vector<int>(W));
+    for (int i = 0; i < H; i++)
+    {
+        for (int j = 0; j < W; j++)
+        {
+            cin >> A[i][j];
+        }
+    }
+
+    // Instead of pre-adding all border cells to queues, we'll simulate rising sea level
+    // and use BFS from the sea each year. But that would be too slow.
+
+    // Better approach: Process sinking events in increasing order of elevation.
+    // We know that a cell sinks when sea level >= its elevation AND it's connected to the sea.
+    // So we can sort cells by elevation and simulate water spreading using union-find or multi-source Dijkstra-like BFS.
+
+    // Alternate efficient idea: Use priority queue (min-heap) where we start from all border cells,
+    // and expand inward. The "time" when a cell sinks is max(elevation[cell], min_time_from_sea).
+    // Actually, a cell becomes submerged at sea_level = max(its_elevation, minimum_sea_level_required_to_reach_it_from_border)
+    // But since water flows only through cells with elevation <= current sea level, we can model this as:
+    // The effective time a cell sinks is the minimum value T such that there exists a path from outside to the cell
+    // where every cell on the path has elevation <= T. This is equivalent to the maximum elevation along the minimal-max path.
+    // This is a classic "minimum maximum edge weight" path problem -> solved with modified Dijkstra.
+
+    // Let sink_time[i][j] = minimum value of maximum elevation along any path from border to (i,j)
+    // Then cell (i,j) will sink at year = min(A[i][j], sink_time[i][j])? No.
+
+    // Actually, the cell sinks at year = max(A[i][j], ???)
+
+    // Correction: The cell sinks when the sea level reaches a point where:
+    // - The sea level is >= A[i][j] (otherwise it wouldn't sink even if connected)
+    // - And there exists a path from the sea to this cell through cells with elevation <= current sea level
+
+    // So the earliest year when (i,j) sinks is the smallest k such that:
+    //   k >= A[i][j] AND there exists a path from border to (i,j) with all elevations <= k.
+
+    // Therefore, define dist[i][j] = minimum possible maximum elevation along any path from border to (i,j)
+    // Then cell (i,j) sinks at year = max(A[i][j], dist[i][j])
+
+    // However, note: if dist[i][j] > A[i][j], then once sea level reaches A[i][j], the cell is already reachable?
+    // No — we need both conditions: sea level must be >= A[i][j] and also >= every cell on the path.
+    // So the limiting factor is max(A[i][j], min_over_paths(max_on_path))
+
+    // Actually, the correct condition is: cell (i,j) sinks at year = max(A[i][j], dist[i][j])
+    // BUT wait: if dist[i][j] is the minimum over paths of the maximum elevation on the path, then yes.
+    // Because when sea level reaches dist[i][j], there exists a path from border to (i,j) where all cells have elevation <= dist[i][j].
+    // And if dist[i][j] >= A[i][j], then at year = dist[i][j], both (i,j) and the path are submerged.
+    // If dist[i][j] < A[i][j], then we need to wait until sea level reaches A[i][j] so that (i,j) itself submerges.
+    // So actually, the sinking year is max(A[i][j], dist[i][j])? That doesn't make sense because dist[i][j] is always >= some values.
+
+    // Actually, think: the cell (i,j) will be submerged when the sea level reaches T where:
+    //   T >= A[i][j]
+    //   AND T >= (minimum over all paths P from border to (i,j)) [ max_{u in P} A[u] ]
+    // So T must be at least max( A[i][j], min_P max_u A[u] ) = max(A[i][j], dist[i][j])
+    // But note: min_P max_u A[u] might be less than A[i][j]. For example, if the cell is high but accessible via low path.
+    // But still, you need T >= A[i][j] to submerge the cell itself.
+
+    // Therefore, the sinking year for cell (i,j) is max(A[i][j], dist[i][j])? 
+    // Actually no: it's max( dist[i][j], A[i][j] ) — same thing.
+
+    // But wait: consider if dist[i][j] = 5, A[i][j] = 10. Then at year 5, the path is open but the cell is still above water.
+    // At year 10, the cell goes under → sinks at year 10.
+    // If dist[i][j] = 10, A[i][j] = 5 → at year 10, both path and cell are submerged → sinks at year 10.
+    // So sinking year = max(dist[i][j], A[i][j])
+
+    // However, what if dist[i][j] = 8, A[i][j] = 6? Then at year 8, the path is open and A[i][j]=6 <= 8 → sinks at year 8.
+
+    // So actually, the condition is: sinks at year = max( A[i][j], ??? )
+    // But note: we don't require the entire path to have max <= T, we just need connectivity when sea level is T.
+    // And dist[i][j] is defined as the minimal possible maximum elevation along any path from border to (i,j).
+    // So when sea level T >= dist[i][j], there exists a path from border to (i,j) with all elevations <= T.
+    // And we also need T >= A[i][j] for the cell itself to be submerged.
+    // Therefore, the cell sinks at year = max(A[i][j], dist[i][j])? No: it's max(T such that ...) → the minimal T satisfying both is max(A[i][j], dist[i][j])
+
+    // But wait: if dist[i][j] = 5, A[i][j] = 3, then at year 5, T=5 >= 3 and path exists → sinks at year 5.
+    // So sinking year = max(dist[i][j], A[i][j])? In this case max(5,3)=5 → correct.
+    // If dist[i][j]=3, A[i][j]=5 → max=5 → correct.
+    // If dist[i][j]=4, A[i][j]=4 → max=4 → correct.
+
+    // Therefore, sinking_year[i][j] = max(A[i][j], dist[i][j]) is not right because dist[i][j] is already the bottleneck.
+
+    // Actually: the cell sinks at year = max(dist[i][j], A[i][j]) → but note: dist[i][j] might be less than A[i][j], then we need A[i][j].
+    // But if dist[i][j] >= A[i][j], then we need dist[i][j].
+    // So sinking_year[i][j] = max(A[i][j], dist[i][j]) = max(A[i][j], min_path_max_elevation)
+
+    // However, wait: is it possible that min_path_max_elevation < A[i][j]? Yes, but then the path becomes available earlier, but the cell itself is still dry until sea level >= A[i][j].
+    // So the cell sinks at max(A[i][j], min_path_max_elevation)? That would be A[i][j] in that case.
+
+    // But consider: if min_path_max_elevation = 3, A[i][j]=5. Then at year 3, the path up to neighbors might be open, but (i,j) is still above water.
+    // However, once sea level reaches 5, then (i,j) becomes submerged, and since it's adjacent to submerged areas (via the path), it sinks.
+    // So yes, it sinks at year 5.
+
+    // But what if the path max is 6 and A[i][j]=5? Then at year 6, both the path and the cell (since 5<=6) become submerged.
+
+    // Therefore, sinking_year[i][j] = max(A[i][j], min_path_max_elevation_from_border_to_ij)
+
+    // But note: min_path_max_elevation_from_border_to_ij is exactly what we compute with a variant of Dijkstra:
+    //   dist[i][j] = minimum over all paths from border to (i,j) of (maximum elevation along the path)
+    // This is a standard problem: use priority_queue, initialize border cells with dist = A[i][j]? 
+    // Actually, for a border cell, the path is just itself, so dist[i][j] = A[i][j]? 
+    // But wait: we start from outside. The sea is at elevation 0 initially? But we don't have a node for sea.
+
+    // We can model: add all border cells to PQ with initial distance = A[i][j]? 
+    // But consider moving from one cell to another: when going from u to v, the new max is max(dist[u], A[v]).
+    // So algorithm:
+    //   dist[i][j] = INF
+    //   for all border cells: dist[i][j] = A[i][j], push (A[i][j], i, j)
+    //   while PQ not empty:
+    //      pop (d, i, j)
+    //      if d != dist[i][j] skip
+    //      for each neighbor (ni, nj):
+    //          nd = max(d, A[ni][nj])
+    //          if nd < dist[ni][nj]:
+    //             dist[ni][nj] = nd
+    //             push (nd, ni, nj)
+
+    // Then sinking_year[i][j] = max(A[i][j], dist[i][j])? 
+    // But wait: dist[i][j] is already at least A[i][j] for border cells, and for inner cells, dist[i][j] = max(..., A[i][j])? 
+    // Actually, in the relaxation: nd = max(d, A[ni][nj]), so dist[ni][nj] is always >= A[ni][nj].
+    // Therefore, max(A[i][j], dist[i][j]) = dist[i][j] for all cells.
+
+    // So sinking_year[i][j] = dist[i][j]
+
+    // Why? Because:
+    // - For the cell to be reached, the path must have max elevation <= T, which requires T >= dist[i][j]
+    // - And since dist[i][j] >= A[i][j] (because the path includes the cell itself), then T >= dist[i][j] implies T >= A[i][j]
+    // Therefore, the cell sinks at year = dist[i][j]
+
+    // Example: border cell: dist = A[i][j], sinks at year A[i][j] → correct.
+    // Inner cell: if the path has max 5, then dist=5, and if A[i][j]=3, then at year 5, 5>=3 and path exists → sinks.
+
+    // Therefore, we can compute for each cell the minimal maximum elevation along any path from border, call it risk[i][j].
+    // Then the cell sinks at year = risk[i][j].
+
+    // Steps:
+    // 1. Compute risk[i][j] for all cells using modified Dijkstra (minimizing the maximum elevation on path)
+    // 2. Create an array `sink_year_count` where sink_year_count[t] = number of cells that sink at year t
+    // 3. Total area starts at H*W, and each year we subtract the number of cells sinking at that year.
+
+    // Note: t can be up to 10^5, and Y up to 10^5.
+
+    vector<vector<int>> risk(H, vector<int>(W, INT_MAX));
+    priority_queue<tuple<int, int, int>, vector<tuple<int, int, int>>, greater<tuple<int, int, int>>> pq;
+
+    // Initialize border cells
+    for (int i = 0; i < H; i++)
+    {
+        for (int j = 0; j < W; j++)
+        {
+            if (i == 0 || i == H-1 || j == 0 || j == W-1)
+            {
+                risk[i][j] = A[i][j];
+                pq.push({A[i][j], i, j});
+            }
+        }
+    }
+
+    while (!pq.empty())
+    {
+        auto [d, i, j] = pq.top();
+        pq.pop();
+        if (d != risk[i][j]) continue;
+
+        for (int dir = 0; dir < 4; dir++)
+        {
+            int ni = i + dx[dir];
+            int nj = j + dy[dir];
+            if (ni < 0 || ni >= H || nj < 0 || nj >= W) continue;
+
+            int new_risk = max(d, A[ni][nj]);
+            if (new_risk < risk[ni][nj])
+            {
+                risk[ni][nj] = new_risk;
+                pq.push({new_risk, ni, nj});
+            }
+        }
+    }
+
+    // Count how many cells sink at each year
+    vector<int> sink_count(Y + 1, 0);  // sink_count[t] for t in [1, Y]
+    for (int i = 0; i < H; i++)
+    {
+        for (int j = 0; j < W; j++)
+        {
+            int year = risk[i][j];
+            if (year <= Y)
+            {
+                sink_count[year]++;
+            }
+        }
+    }
+
+    int remaining = H * W;
+    for (int year = 1; year <= Y; year++)
+    {
+        remaining -= sink_count[year];
+        cout << remaining << '\n';
+    }
+
+    return 0;
+}
+```

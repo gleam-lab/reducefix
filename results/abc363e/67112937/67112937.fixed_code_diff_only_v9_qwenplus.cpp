@@ -1,0 +1,76 @@
+#include <bits/stdc++.h>
+
+using u32 = unsigned;
+using i64 = long long;
+using u64 = unsigned long long;
+
+constexpr int d[4][2] = {{0, 1}, {0, -1}, {1, 0}, {-1, 0}};
+
+int32_t main() {
+    std::ios::sync_with_stdio(false);
+    std::cin.tie(nullptr);
+
+    int H, W, Y;
+    std::cin >> H >> W >> Y;
+
+    std::vector A(H, std::vector<int>(W));
+    for (int i = 0; i < H; i++) {
+        for (int j = 0; j < W; j++) {
+            std::cin >> A[i][j];
+        }
+    }
+
+    // We want to simulate rising sea level from year 1 to Y.
+    // Instead of simulating each year separately with BFS/DFS,
+    // we can use a priority queue to process cells in increasing order of elevation.
+
+    std::priority_queue<std::array<int, 3>, std::vector<std::array<int, 3>>, std::greater<std::array<int, 3>>> pq;
+    std::vector vis(H, std::vector<char>(W, 0));
+
+    // Initially, all border cells are adjacent to the sea.
+    // At time t = A[i][j], cell (i,j) will sink if it hasn't already.
+    for (int i = 0; i < H; i++) {
+        for (int j = 0; j < W; j++) {
+            if (i == 0 || i == H-1 || j == 0 || j == W-1) {
+                pq.push({A[i][j], i, j});
+                vis[i][j] = 1;
+            }
+        }
+    }
+
+    int remaining = H * W;
+    std::vector<int> result(Y + 1); // result[t] = area after t years
+
+    // Process events in order of elevation (which corresponds to sinking time)
+    for (int year = 1; year <= Y; year++) {
+        // All cells with elevation <= 'year' that are connected to the sea will sink
+        while (!pq.empty()) {
+            auto [elev, x, y] = pq.top();
+            if (elev > year) break;
+            pq.pop();
+
+            // This cell sinks at this year (or earlier)
+            if (vis[x][y]) { // It might have been processed already via another path
+                vis[x][y] = 0; // Mark as sunk (no longer part of island)
+                remaining--;
+                
+                // Check neighbors and add them to consideration if not yet processed
+                for (int k = 0; k < 4; k++) {
+                    int nx = x + d[k][0], ny = y + d[k][1];
+                    if (nx >= 0 && nx < H && ny >= 0 && ny < W && vis[nx][ny] == 0) {
+                        vis[nx][ny] = 1; // Mark as "in queue or to be considered"
+                        pq.push({A[nx][ny], nx, ny});
+                    }
+                }
+            }
+        }
+        result[year] = remaining;
+    }
+
+    // Output for each year from 1 to Y
+    for (int i = 1; i <= Y; i++) {
+        std::cout << result[i] << '\n';
+    }
+
+    return 0;
+}

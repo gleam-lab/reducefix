@@ -1,0 +1,53 @@
+#include <iostream>
+#include <algorithm>
+#include <vector>
+using namespace std;
+
+#define int long long
+#define endl '\n'
+
+const int N = 2e5 + 9;
+int n, q;
+int a[N];
+
+signed main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    cin >> n >> q;
+    for (int i = 1; i <= n; i++) {
+        cin >> a[i];
+    }
+    sort(a + 1, a + n + 1);
+
+    while (q--) {
+        int b, k;
+        cin >> b >> k;
+        
+        // Binary search on the answer (distance)
+        int left = 0, right = 2e16;
+        int ans = right;
+        
+        while (left <= right) {
+            int mid = (left + right) / 2;
+            
+            // Find the range of A points within distance 'mid' from point B
+            int l = lower_bound(a + 1, a + n + 1, b - mid) - a;
+            int r = upper_bound(a + 1, a + n + 1, b + mid) - a - 1;
+            
+            // Count points in [l, r]
+            int count = r - l + 1;
+            
+            if (count >= k) {
+                ans = mid;
+                right = mid - 1;
+            } else {
+                left = mid + 1;
+            }
+        }
+        
+        cout << ans << endl;
+    }
+    
+    return 0;
+}

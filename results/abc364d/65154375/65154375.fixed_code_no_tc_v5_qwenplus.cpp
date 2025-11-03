@@ -1,0 +1,56 @@
+#include<bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+
+const int MAX_N = 1e5 + 5;
+
+vector<int> a;
+int n, q;
+
+void solve() {
+    cin >> n >> q;
+    a.resize(n);
+    for (int i = 0; i < n; i++) {
+        cin >> a[i];
+    }
+    
+    // Sort the A points for binary search later
+    sort(a.begin(), a.end());
+    
+    for (int j = 0; j < q; j++) {
+        int b, k;
+        cin >> b >> k;
+        
+        // Binary search on the distance
+        int left = 0, right = 2e8;
+        int ans = right;
+        
+        while (left <= right) {
+            int mid = left + (right - left) / 2;
+            
+            // Count how many points in A are within distance 'mid' from B
+            int left_bound = b - mid;
+            int right_bound = b + mid;
+            
+            auto it1 = lower_bound(a.begin(), a.end(), left_bound);
+            auto it2 = upper_bound(a.begin(), a.end(), right_bound);
+            int count = distance(it1, it2);
+            
+            if (count >= k) {
+                ans = mid;
+                right = mid - 1;
+            } else {
+                left = mid + 1;
+            }
+        }
+        
+        cout << ans << '\n';
+    }
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    solve();
+    return 0;
+}

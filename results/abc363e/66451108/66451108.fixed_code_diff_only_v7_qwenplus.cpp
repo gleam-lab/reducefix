@@ -1,0 +1,76 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define int long long
+#define close ios::sync_with_stdio(false); cin.tie(0); cout.tie(0);
+const int dx[] = {0, 0, 1, -1};
+const int dy[] = {1, -1, 0, 0};
+
+struct Node {
+    int x, y, val;
+    bool operator<(const Node& a) const {
+        return val > a.val; // Min-heap: smaller elevation comes first
+    }
+};
+
+signed main() {
+    close;
+    int H, W, Y;
+    cin >> H >> W >> Y;
+    
+    vector<vector<int>> grid(H, vector<int>(W));
+    for (int i = 0; i < H; i++) {
+        for (int j = 0; j < W; j++) {
+            cin >> grid[i][j];
+        }
+    }
+
+    // Visited array to mark cells that have been flooded or processed
+    vector<vector<bool>> vis(H, vector<bool>(W, false));
+    priority_queue<Node> pq;
+    int remaining = H * W;
+
+    // Initialize the priority queue with all border cells (they are adjacent to the sea)
+    for (int i = 0; i < H; i++) {
+        if (!vis[i][0]) {
+            vis[i][0] = true;
+            pq.push({i, 0, grid[i][0]});
+        }
+        if (W > 1 && !vis[i][W-1]) {
+            vis[i][W-1] = true;
+            pq.push({i, W-1, grid[i][W-1]});
+        }
+    }
+    for (int j = 1; j < W - 1; j++) {
+        if (!vis[0][j]) {
+            vis[0][j] = true;
+            pq.push({0, j, grid[0][j]});
+        }
+        if (H > 1 && !vis[H-1][j]) {
+            vis[H-1][j] = true;
+            pq.push({H-1, j, grid[H-1][j]});
+        }
+    }
+
+    // Process each year from 1 to Y
+    for (int year = 1; year <= Y; year++) {
+        // Flood all cells with elevation <= current sea level (year)
+        while (!pq.empty() && pq.top().val <= year) {
+            Node cur = pq.top();
+            pq.pop();
+            remaining--;
+
+            // Check neighbors and add them to the priority queue if not visited
+            for (int d = 0; d < 4; d++) {
+                int nx = cur.x + dx[d];
+                int ny = cur.y + dy[d];
+                if (nx >= 0 && nx < H && ny >= 0 && ny < W && !vis[nx][ny]) {
+                    vis[nx][ny] = true;
+                    pq.push({nx, ny, grid[nx][ny]});
+                }
+            }
+        }
+        cout << remaining << '\n';
+    }
+
+    return 0;
+}

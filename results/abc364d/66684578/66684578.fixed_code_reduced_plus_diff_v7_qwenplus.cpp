@@ -1,0 +1,49 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define ll long long
+#define rep(i,n) for(int i=0;i<(int)n;i++)
+#define vi vector<int>
+#define vll vector<ll>
+
+int main(){
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int N, Q;
+    cin >> N >> Q;
+    
+    vll A(N);
+    rep(i, N) cin >> A[i];
+    
+    sort(A.begin(), A.end());
+    
+    rep(qi, Q) {
+        ll b;
+        int k;
+        cin >> b >> k;
+        
+        // Binary search on the answer (distance)
+        ll left = 0, right = 2e9;
+        while (left < right) {
+            ll mid = (left + right) / 2;
+            
+            // Count how many points in A are within distance 'mid' from b
+            ll left_bound = b - mid;
+            ll right_bound = b + mid;
+            
+            auto it1 = lower_bound(A.begin(), A.end(), left_bound);
+            auto it2 = upper_bound(A.begin(), A.end(), right_bound);
+            int count = it2 - it1;
+            
+            if (count >= k) {
+                right = mid;
+            } else {
+                left = mid + 1;
+            }
+        }
+        
+        cout << left << '\n';
+    }
+    
+    return 0;
+}

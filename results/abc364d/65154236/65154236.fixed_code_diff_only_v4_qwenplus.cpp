@@ -1,0 +1,59 @@
+#include<bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+
+const int INF = 0x3f3f3f3f;
+const ll mod = 1e9 + 7;
+
+void solve() {
+    int n, q;
+    cin >> n >> q;
+    
+    vector<int> a(n);
+    for (int i = 0; i < n; i++) {
+        cin >> a[i];
+    }
+    
+    // Sort the A points for efficient binary search around B_j
+    sort(a.begin(), a.end());
+    
+    for (int j = 0; j < q; j++) {
+        int b, k;
+        cin >> b >> k;
+        
+        // We'll use binary search on the answer (distance)
+        int left = 0, right = 2e8;
+        int ans = right;
+        
+        while (left <= right) {
+            int mid = left + (right - left) / 2;
+            
+            // Count how many points in A are within distance 'mid' from b
+            int low_bound = b - mid;
+            int high_bound = b + mid;
+            
+            // Find the first index where a[i] >= low_bound
+            auto it1 = lower_bound(a.begin(), a.end(), low_bound);
+            // Find the first index where a[i] > high_bound
+            auto it2 = upper_bound(a.begin(), a.end(), high_bound);
+            
+            int count = it2 - it1; // number of points within [b-mid, b+mid]
+            
+            if (count >= k) {
+                ans = mid;
+                right = mid - 1;
+            } else {
+                left = mid + 1;
+            }
+        }
+        
+        cout << ans << endl;
+    }
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    solve();
+    return 0;
+}

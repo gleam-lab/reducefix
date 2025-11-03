@@ -1,0 +1,33 @@
+#include<bits/stdc++.h>
+using namespace std;
+const int N=1e5+5;
+int n,q;
+long long a[N];
+
+int main()
+{
+    ios::sync_with_stdio(0),cin.tie(0),cout.tie(0);
+    cin>>n>>q;
+    for(int i=0;i<n;i++)
+        cin>>a[i];
+    sort(a,a+n);
+    
+    while(q--)
+    {
+        long long b;
+        int k;
+        cin>>b>>k;
+        
+        // Create vector of distances from each A_i to B_j
+        vector<long long> dist;
+        for(int i=0;i<n;i++)
+        {
+            dist.push_back(abs(a[i]-b));
+        }
+        
+        // Sort distances and get the k-th smallest
+        sort(dist.begin(), dist.end());
+        cout<<dist[k-1]<<"\n";
+    }
+    return 0;
+}

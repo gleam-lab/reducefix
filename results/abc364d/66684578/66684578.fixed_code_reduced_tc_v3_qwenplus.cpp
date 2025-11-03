@@ -1,0 +1,71 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define ll long long
+#define rep(i,n) for(int i=0;i<(int)n;i++)
+#define vi vector<int>
+#define vll vector<ll>
+
+int main(){
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+    
+    int N, Q;
+    cin >> N >> Q;
+    vector<ll> a(N);
+    rep(i,N) cin >> a[i];
+    
+    sort(a.begin(), a.end());
+    
+    rep(qi, Q) {
+        ll b;
+        int k;
+        cin >> b >> k;
+        k--; // convert to 0-indexed
+        
+        // We'll consider distances from B_j to all A_i
+        // Instead of computing all distances, we can binary search on the answer (distance)
+        // But note: we need the k-th smallest distance
+        
+        // Alternate approach: find candidate positions around b
+        // Find the position where b would be inserted in sorted a
+        auto it = lower_bound(a.begin(), a.end(), b);
+        
+        // Create a list of distances by expanding left and right from the insertion point
+        // We only need up to k+1 elements on each side potentially
+        vll distances;
+        
+        // Left side: from it-1 down to beginning
+        if (it != a.begin()) {
+            auto lit = prev(it);
+            while (lit >= a.begin() && distances.size() <= k + 20) {
+                distances.push_back(abs(b - *lit));
+                if (lit == a.begin()) break;
+                --lit;
+            }
+        }
+        
+        // Right side: from it to end
+        auto rit = it;
+        while (rit != a.end() && distances.size() <= k + 20) {
+            distances.push_back(abs(b - *rit));
+            ++rit;
+        }
+        
+        // Sort distances to get the k-th smallest
+        sort(distances.begin(), distances.end());
+        
+        // If we have at least k+1 elements, output the k-th (0-indexed)
+        if ((int)distances.size() > k) {
+            cout << distances[k] << '\n';
+        } else {
+            // This should not happen if we took enough points
+            // But just in case, fall back to full computation (should not occur with proper expansion)
+            vll all_distances;
+            rep(i, N) {
+                all_distances.push_back(abs(b - a[i]));
+            }
+            sort(all_distances.begin(), all_distances.end());
+            cout << all_distances[k] << '\n';
+        }
+    }
+}

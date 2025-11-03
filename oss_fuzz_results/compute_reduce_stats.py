@@ -227,7 +227,7 @@ def print_report(results: Dict[str, Dict], show_details: bool = True):
 def main():
     import argparse
     parser = argparse.ArgumentParser(description="统计各 project 的 reduce 平均效果（ddmin/reducefix/llm-generated）")
-    parser.add_argument("--model-tag", default="reducefix_qwen", help="artifacts 下的模型标签目录名，默认 reducefix_qwen")
+    parser.add_argument("--model-tag", default="reducefix_qwen", help="cases_data 下的模型标签目录名，默认 reducefix_qwen")
     parser.add_argument("--no-details", action="store_true", help="不显示每个样本的详细信息")
     args = parser.parse_args()
 

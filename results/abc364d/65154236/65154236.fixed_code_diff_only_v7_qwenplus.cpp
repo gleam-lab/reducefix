@@ -1,0 +1,64 @@
+#include<bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+
+void solve() {
+    int N, Q;
+    cin >> N >> Q;
+    
+    vector<int> a(N);
+    for (int i = 0; i < N; i++) {
+        cin >> a[i];
+    }
+    
+    // Sort the A points for binary search and proximity queries
+    sort(a.begin(), a.end());
+    
+    for (int j = 0; j < Q; j++) {
+        int b, k;
+        cin >> b >> k;
+        
+        // We want to find the k-th smallest distance from B_j to any A_i
+        // Instead of computing all distances, we can use binary search on the answer (distance)
+        // But easier: find the candidate positions around b and get k-th closest
+        
+        // Find the position where b would be inserted
+        auto it = lower_bound(a.begin(), a.end(), b);
+        vector<int> candidates;
+        
+        // Collect indices from both sides around b
+        // We only need up to k elements from left and right
+        if (it != a.end()) {
+            auto right_it = it;
+            for (int i = 0; i < k && right_it != a.end(); i++) {
+                candidates.push_back(*right_it);
+                right_it++;
+            }
+        }
+        if (it != a.begin()) {
+            auto left_it = prev(it);
+            for (int i = 0; i < k && left_it >= a.begin(); i++) {
+                candidates.push_back(*left_it);
+                if (left_it == a.begin()) break;
+                left_it--;
+            }
+        }
+        
+        // Compute distances and sort them
+        vector<int> distances;
+        for (int x : candidates) {
+            distances.push_back(abs(x - b));
+        }
+        sort(distances.begin(), distances.end());
+        
+        // Output the k-th smallest distance (1-indexed)
+        cout << distances[k-1] << '\n';
+    }
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    solve();
+    return 0;
+}

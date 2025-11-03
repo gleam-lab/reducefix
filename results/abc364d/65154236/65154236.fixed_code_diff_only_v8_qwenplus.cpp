@@ -1,0 +1,55 @@
+#include<bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+
+const int INF = 0x3f3f3f3f;
+const ll mod = 1e9 + 7;
+
+void solve() {
+    int N, Q;
+    cin >> N >> Q;
+    
+    vector<int> a(N);
+    for (int i = 0; i < N; i++) {
+        cin >> a[i];
+    }
+    
+    // Sort the A points for binary search
+    sort(a.begin(), a.end());
+    
+    for (int j = 0; j < Q; j++) {
+        int b, k;
+        cin >> b >> k;
+        
+        // Find the position where b would be inserted
+        auto it = lower_bound(a.begin(), a.end(), b);
+        int pos = it - a.begin();
+        
+        // We'll collect distances from nearby points around b
+        // We need at most k-th closest, so we consider candidates from left and right
+        vector<int> distances;
+        
+        // Add distances from points to the left of b (from closest to farthest)
+        for (int i = pos - 1; i >= max(0, pos - k); i--) {
+            distances.push_back(abs(a[i] - b));
+        }
+        
+        // Add distances from points to the right of b (including possibly at b)
+        for (int i = pos; i < min(N, pos + k); i++) {
+            distances.push_back(abs(a[i] - b));
+        }
+        
+        // Sort distances to find the k-th smallest
+        sort(distances.begin(), distances.end());
+        
+        // The answer is the k-th smallest distance (1-indexed)
+        cout << distances[k - 1] << '\n';
+    }
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    solve();
+    return 0;
+}

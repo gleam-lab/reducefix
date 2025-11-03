@@ -1,0 +1,143 @@
+#include<bits/stdc++.h>
+using namespace std;
+#include<atcoder/all>
+using namespace atcoder;
+using ll=int64_t;
+using ld=long double;
+int inf=1000000001;
+ll INF=1e18;
+#define rep(i,n) for(int i=0;i<n;i++)
+#define all(x) x.begin(),x.end()
+#define pb push_back
+#define sz(x) (ll)x.size()
+template<typename T>bool chmin(T& a,T b){if(a>b){a=b;return true;}return false;}
+template<typename T>bool chmax(T& a,T b){if(a<b){a=b;return true;}return false;}
+
+int dx[]={1,0,-1,0};
+int dy[]={0,1,0,-1};
+
+int main(){
+    cin.tie(0)->sync_with_stdio(0);
+
+    int H,W,Y;
+    cin>>H>>W>>Y;
+    vector<vector<int>>A(H,vector<int>(W));
+    rep(i,H)rep(j,W)cin>>A[i][j];
+    
+    // Store cells by their elevation
+    vector<vector<pair<int,int>>> cells(100002); // max elevation is 10^5
+    rep(i,H)rep(j,W){
+        cells[A[i][j]].pb({i,j});
+    }
+    
+    vector<vector<bool>> submerged(H, vector<bool>(W, false));
+    int remaining = H * W;
+    
+    // Process each year from 1 to Y
+    for(int y = 1; y <= Y; y++){
+        // Add all cells with elevation <= y that haven't been processed yet
+        for(auto [i,j] : cells[y]){
+            if(!submerged[i][j]){
+                // Check if this cell is on the border or connected to the sea
+                // We'll use BFS to flood from this cell if it's exposed
+                queue<pair<int,int>> q;
+                if((i == 0 || i == H-1 || j == 0 || j == W-1) || 
+                   any_of(submerged, [&](const vector<bool>& row){ return false; })){
+                    // Actually, we need to check connectivity properly
+                    // Instead, let's do: mark all border cells first, then propagate
+                    // But our approach needs rework - simpler: process in reverse order
+                }
+            }
+        }
+    }
+    
+    // Let's change strategy: simulate rising sea level using BFS from borders
+    // Reset
+    remaining = H * W;
+    fill(all(submerged), vector<bool>(W, false));
+    queue<tuple<int,int,int>> q; // (i, j, threshold) - will be submerged when sea >= threshold
+    
+    // Start from all border cells
+    rep(i,H)rep(j,W){
+        if(i == 0 || i == H-1 || j == 0 || j == W-1){
+            if(A[i][j] <= Y){ // only if it will eventually submerge
+                q.push({i, j, A[i][j]});
+            }
+            submerged[i][j] = true;
+            remaining--;
+        }
+    }
+    
+    // Also add non-border cells that are on the boundary of being submerged
+    // But better: use event-based simulation
+    
+    // Even better approach: sort all cells by elevation, and simulate flooding from outside
+    // Clear state
+    remaining = H * W;
+    vector<vector<bool>> visited(H, vector<bool>(W, false));
+    priority_queue<tuple<int,int,int>, vector<tuple<int,int,int>>, greater<tuple<int,int,int>>> pq;
+    
+    // Initialize with all border cells
+    rep(i,H)rep(j,W){
+        if(i == 0 || i == H-1 || j == 0 || j == W-1){
+            pq.push({A[i][j], i, j});
+            visited[i][j] = true;
+        }
+    }
+    
+    vector<int> ans(Y+1, remaining);
+    int idx = 1;
+    
+    while(!pq.empty() && idx <= Y){
+        auto [elev, i, j] = pq.top();
+        pq.pop();
+        
+        // This cell gets submerged at year = elev
+        if(elev < idx){
+            // Already should have been processed
+            continue;
+        }
+        
+        // Process all years from current idx up to elev
+        while(idx < elev && idx <= Y){
+            ans[idx] = remaining;
+            idx++;
+        }
+        
+        if(elev > Y) break;
+        
+        // Process year elev
+        while(!pq.empty() && get<0>(pq.top()) == elev){
+            auto [e, i2, j2] = pq.top();
+            pq.pop();
+            if(!visited[i2][j2]) continue; // might have duplicates
+            
+            if(e == elev){
+                remaining--;
+                // Spread to neighbors
+                rep(d,4){
+                    int ni = i2 + dx[d];
+                    int nj = j2 + dy[d];
+                    if(ni >= 0 && ni < H && nj >= 0 && nj < W && !visited[ni][nj]){
+                        visited[ni][nj] = true;
+                        pq.push({A[ni][nj], ni, nj});
+                    }
+                }
+            }
+        }
+        
+        ans[elev] = remaining;
+        idx = elev + 1;
+    }
+    
+    // Fill remaining years
+    while(idx <= Y){
+        ans[idx] = remaining;
+        idx++;
+    }
+    
+    rep(i,Y){
+        cout << ans[i+1] << endl;
+    }
+    
+}

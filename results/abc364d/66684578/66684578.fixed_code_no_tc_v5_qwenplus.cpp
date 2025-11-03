@@ -1,0 +1,101 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define ll long long
+#define rep(i,n) for(int i=0;i<(int)n;i++)
+#define vi vector<int>
+#define vll vector<ll>
+
+int main(){
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+    
+    int N, Q;
+    cin >> N >> Q;
+    vi a(N);
+    rep(i, N) {
+        cin >> a[i];
+    }
+    
+    // Sort the A points for binary search and distance computation
+    sort(a.begin(), a.end());
+    
+    rep(q_idx, Q) {
+        int b, k;
+        cin >> b >> k;
+        k--; // Convert to 0-indexed
+        
+        // We'll find the k-th smallest distance from B to any A point
+        // Instead of computing all distances, we can use binary search on the answer (distance)
+        // But simpler: find all distances? -> O(NQ) which is too slow (10^10)
+        
+        // Better approach: use binary search over possible positions around b
+        
+        // Alternative: use two pointers or lower_bound to get nearby elements
+        // Since array is sorted, we can find the position where b would be inserted
+        auto it = lower_bound(a.begin(), a.end(), b);
+        
+        // Create a list of distances from b to nearby points in order of increasing distance
+        // We don't need to sort all N points every time (O(N log N) per query -> too slow)
+        // Instead, we can do a merge-like traversal from center outward
+        
+        vector<ll> dists;
+        if (it != a.end()) {
+            // Points >= b
+            auto right = it;
+            // Points < b
+            auto left = it;
+            if (left != a.begin()) left--;
+            else left = a.end();
+            
+            bool use_left = true, use_right = true;
+            while ((left != a.end() || right != a.end()) && dists.size() <= k) {
+                ll d_left = (left == a.end()) ? LLONG_MAX : abs((ll)(*left) - b);
+                ll d_right = (right == a.end()) ? LLONG_MAX : abs((ll)(*right) - b);
+                
+                if (d_left <= d_right) {
+                    dists.push_back(d_left);
+                    if (left == a.begin()) left = a.end();
+                    else {
+                        --left;
+                        if (left == a.begin() && *left >= b) left = a.end(); // safety
+                    }
+                } else {
+                    dists.push_back(d_right);
+                    ++right;
+                    if (right == a.end()) break;
+                }
+            }
+            while (right != a.end() && dists.size() <= k) {
+                dists.push_back(abs((ll)(*right) - b));
+                ++right;
+            }
+            while (left != a.end() && dists.size() <= k) {
+                dists.push_back(abs((ll)(*left) - b));
+                if (left == a.begin()) left = a.end();
+                else --left;
+            }
+        } else {
+            // All points are < b
+            for (int i = N-1; i >= 0; i--) {
+                dists.push_back(abs((ll)a[i] - b));
+            }
+        }
+        
+        // If we didn't collect enough points
+        if (dists.size() <= k) {
+            // Continue filling
+            if (it != a.begin()) {
+                auto left = prev(it);
+                while (left >= a.begin() && dists.size() <= k) {
+                    dists.push_back(abs((ll)(*left) - b));
+                    if (left == a.begin()) break;
+                    --left;
+                }
+            }
+        }
+        
+        // Sort only the collected distances up to what we need
+        sort(dists.begin(), dists.end());
+        cout << dists[k] << '\n';
+    }
+}

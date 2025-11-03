@@ -1,0 +1,51 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int N, Q;
+    cin >> N >> Q;
+    
+    vector<long long> a(N);
+    for (int i = 0; i < N; i++) {
+        cin >> a[i];
+    }
+    
+    sort(a.begin(), a.end());
+    
+    while (Q--) {
+        long long b;
+        int k;
+        cin >> b >> k;
+        
+        // We need to find the k-th smallest distance from b to points in a
+        // Instead of computing all distances, we can binary search on the answer
+        // For a given distance d, count how many points in a are within distance d from b
+        
+        auto count_points_within_distance = [&](long long d) -> int {
+            // Find the range [b-d, b+d] in array a
+            auto it1 = lower_bound(a.begin(), a.end(), b - d);
+            auto it2 = upper_bound(a.begin(), a.end(), b + d);
+            return it2 - it1;
+        };
+        
+        // Binary search on the answer
+        long long left = 0;
+        long long right = 2e9; // Maximum possible distance is 2*10^8, but use 2e9 to be safe
+        
+        while (left < right) {
+            long long mid = (left + right) / 2;
+            if (count_points_within_distance(mid) >= k) {
+                right = mid;
+            } else {
+                left = mid + 1;
+            }
+        }
+        
+        cout << left << '\n';
+    }
+    
+    return 0;
+}

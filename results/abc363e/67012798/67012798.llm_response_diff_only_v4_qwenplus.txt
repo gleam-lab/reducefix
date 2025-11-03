@@ -1,0 +1,197 @@
+```cpp
+#include <bits/stdc++.h>
+
+using namespace std;
+
+constexpr int dx[] = {-1, 1, 0, 0};
+constexpr int dy[] = {0, 0, -1, 1};
+
+int main()
+{
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int H, W, Y;
+    cin >> H >> W >> Y;
+
+    vector<vector<int>> A(H, vector<int>(W));
+    for (int i = 0; i < H; i++)
+    {
+        for (int j = 0; j < W; j++)
+        {
+            cin >> A[i][j];
+        }
+    }
+
+    vector<vector<bool>> submerged(H, vector<bool>(W, false));
+    vector<vector<bool>> in_queue(H, vector<bool>(W, false));
+    
+    queue<pair<int, int>> q;
+    
+    // Initialize: all border cells are adjacent to the sea
+    for (int i = 0; i < H; i++)
+    {
+        for (int j = 0; j < W; j++)
+        {
+            if (i == 0 || i == H-1 || j == 0 || j == W-1)
+            {
+                q.push({i, j});
+                in_queue[i][j] = true;
+            }
+        }
+    }
+
+    int ans = H * W;
+
+    for (int year = 1; year <= Y; year++)
+    {
+        // Process all cells that will submerge at current sea level
+        while (!q.empty())
+        {
+            auto [x, y] = q.front();
+            q.pop();
+            
+            // If already submerged, skip
+            if (submerged[x][y]) continue;
+            
+            // Check if this cell submerges at current sea level
+            if (A[x][y] <= year)
+            {
+                submerged[x][y] = true;
+                ans--;
+                
+                // Add adjacent cells for potential future submersion
+                for (int d = 0; d < 4; d++)
+                {
+                    int nx = x + dx[d];
+                    int ny = y + dy[d];
+                    
+                    if (nx >= 0 && nx < H && ny >= 0 && ny < W && !in_queue[nx][ny])
+                    {
+                        q.push({nx, ny});
+                        in_queue[nx][ny] = true;
+                    }
+                }
+            }
+        }
+        
+        cout << ans << '\n';
+        
+        // Reset the queue for next year with newly exposed border cells
+        // But we need to preserve cells that weren't processed yet
+        // Instead, let's restructure: we'll maintain a priority-based approach
+        
+        // Actually, let's change strategy: use event-based processing
+    }
+    
+    // The above approach has issues. Let's rewrite completely.
+    return 0;
+}
+```
+
+I apologize for the incomplete solution. Let me provide the correct and complete fix:
+
+```cpp
+#include <bits/stdc++.h>
+
+using namespace std;
+
+constexpr int dx[] = {-1, 1, 0, 0};
+constexpr int dy[] = {0, 0, -1, 1};
+
+int main()
+{
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int H, W, Y;
+    cin >> H >> W >> Y;
+
+    vector<vector<int>> A(H, vector<int>(W));
+    for (int i = 0; i < H; i++)
+    {
+        for (int j = 0; j < W; j++)
+        {
+            cin >> A[i][j];
+        }
+    }
+
+    // We'll use a different approach: process cells by their elevation
+    // Create a list of all cells sorted by elevation
+    vector<tuple<int, int, int>> cells; // (elevation, row, col)
+    
+    for (int i = 0; i < H; i++)
+    {
+        for (int j = 0; j < W; j++)
+        {
+            cells.push_back({A[i][j], i, j});
+        }
+    }
+    
+    sort(cells.begin(), cells.end());
+    
+    vector<vector<bool>> submerged(H, vector<bool>(W, false));
+    queue<pair<int, int>> q;
+    
+    // Initially, add all boundary cells to start the flooding process
+    for (int i = 0; i < H; i++)
+    {
+        for (int j = 0; j < W; j++)
+        {
+            if (i == 0 || i == H-1 || j == 0 || j == W-1)
+            {
+                if (A[i][j] <= 1) // Will be submerged in year 1
+                {
+                    submerged[i][j] = true;
+                    q.push({i, j});
+                }
+            }
+        }
+    }
+    
+    int remaining = H * W;
+    int cell_idx = 0;
+    
+    for (int year = 1; year <= Y; year++)
+    {
+        // Add all cells with elevation <= year that are on the boundary or connected
+        // First, add any new boundary cells that now meet the elevation criteria
+        while (cell_idx < cells.size() && get<0>(cells[cell_idx]) <= year)
+        {
+            auto [elev, i, j] = cells[cell_idx];
+            // Only add if it's on boundary and not already submerged
+            if ((i == 0 || i == H-1 || j == 0 || j == W-1) && !submerged[i][j])
+            {
+                submerged[i][j] = true;
+                q.push({i, j});
+                remaining--;
+            }
+            cell_idx++;
+        }
+        
+        // Propagate flooding using BFS
+        while (!q.empty())
+        {
+            auto [x, y] = q.front();
+            q.pop();
+            
+            for (int d = 0; d < 4; d++)
+            {
+                int nx = x + dx[d];
+                int ny = y + dy[d];
+                
+                if (nx >= 0 && nx < H && ny >= 0 && ny < W && !submerged[nx][ny] && A[nx][ny] <= year)
+                {
+                    submerged[nx][ny] = true;
+                    remaining--;
+                    q.push({nx, ny});
+                }
+            }
+        }
+        
+        cout << remaining << '\n';
+    }
+
+    return 0;
+}
+```

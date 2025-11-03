@@ -1,0 +1,74 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+
+constexpr int dx[] = {-1, 1, 0, 0};
+constexpr int dy[] = {0, 0, -1, 1};
+
+int main()
+{
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int H, W, Y;
+    cin >> H >> W >> Y;
+
+    vector<vector<int>> A(H, vector<int>(W));
+    for (int i = 0; i < H; i++)
+    {
+        for (int j = 0; j < W; j++)
+        {
+            cin >> A[i][j];
+        }
+    }
+
+    vector<vector<bool>> submerged(H, vector<bool>(W, false));
+    vector<queue<pair<int, int>>> q(1e5 + 5);
+    
+    // Add all border cells to their respective year's queue
+    for (int i = 0; i < H; i++)
+    {
+        for (int j = 0; j < W; j++)
+        {
+            if (i == 0 || i == H - 1 || j == 0 || j == W - 1)
+            {
+                q[A[i][j]].push({i, j});
+                submerged[i][j] = true;
+            }
+        }
+    }
+
+    int remaining = H * W;
+
+    for (int year = 1; year <= Y; year++)
+    {
+        // Process all cells that get submerged at exactly this sea level
+        while (!q[year].empty())
+        {
+            auto [x, y] = q[year].front();
+            q[year].pop();
+            remaining--;
+
+            // Check neighbors for potential submersion
+            for (int d = 0; d < 4; d++)
+            {
+                int nx = x + dx[d];
+                int ny = y + dy[d];
+
+                if (nx < 0 || ny < 0 || nx >= H || ny >= W)
+                    continue;
+
+                // If neighbor is still above water and its elevation <= current sea level
+                if (!submerged[nx][ny] && A[nx][ny] <= year)
+                {
+                    submerged[nx][ny] = true;
+                    q[year].push({nx, ny});
+                }
+            }
+        }
+
+        cout << remaining << '\n';
+    }
+
+    return 0;
+}

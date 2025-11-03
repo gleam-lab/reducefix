@@ -1,0 +1,86 @@
+#include<bits/stdc++.h>
+using namespace std;
+#include<atcoder/all>
+using namespace atcoder;
+using ll=int64_t;
+using ld=long double;
+int inf=1000000001;
+ll INF=1e18;
+#define rep(i,n) for(int i=0;i<n;i++)
+#define all(x) x.begin(),x.end()
+#define pb push_back
+#define sz(x) (ll)x.size()
+template<typename T>bool chmin(T& a,T b){if(a>b){a=b;return true;}return false;}
+template<typename T>bool chmax(T& a,T b){if(a<b){a=b;return true;}return false;}
+
+int dx[]={1,0,-1,0};
+int dy[]={0,1,0,-1};
+
+int main(){
+    cin.tie(0)->sync_with_stdio(0);
+    
+    int H,W,Y;
+    cin>>H>>W>>Y;
+    vector<vector<int>>A(H,vector<int>(W));
+    rep(i,H)rep(j,W)cin>>A[i][j];
+    
+    // Current area above sea level
+    int ans = H*W;
+    // Visited marker - true means still above water
+    vector<vector<bool>> F(H, vector<bool>(W, true));
+    
+    // For each elevation, store coordinates that will sink when sea level reaches that height
+    vector<vector<pair<int,int>>> events(100010); // max A[i][j] is 10^5
+    
+    // Initially, all border cells are exposed to the sea
+    rep(i,H) rep(j,W) {
+        if(i == 0 || i == H-1 || j == 0 || j == W-1) {
+            events[A[i][j]].push_back({i,j});
+            F[i][j] = false;
+            ans--;
+        }
+    }
+    
+    // Process year by year
+    for(int y = 1; y <= Y; y++) {
+        // Use BFS for all cells that sink at sea level y
+        queue<pair<int,int>> q;
+        
+        // Add all cells with elevation <= y that are connected to the sea
+        for(auto [i,j] : events[y]) {
+            if(F[i][j]) { // Only process if not already sunk
+                F[i][j] = false;
+                q.push({i,j});
+                ans--;
+            }
+        }
+        
+        // Flood fill from newly sunk cells
+        while(!q.empty()) {
+            auto [i,j] = q.front(); q.pop();
+            
+            rep(k,4) {
+                int ni = i + dx[k];
+                int nj = j + dy[k];
+                if(ni >= 0 && ni < H && nj >= 0 && nj < W && F[ni][nj]) {
+                    // If adjacent cell has elevation <= current sea level, it sinks
+                    if(A[ni][nj] <= y) {
+                        F[ni][nj] = false;
+                        q.push({ni,nj});
+                        ans--;
+                    } else {
+                        // Otherwise, this cell will sink when sea level reaches its elevation
+                        events[A[ni][nj]].push_back({ni,nj});
+                        // Mark as scheduled to avoid duplicates
+                        F[ni][nj] = false;
+                        // Note: we don't decrease ans here because it will be counted later
+                    }
+                }
+            }
+        }
+        
+        cout << ans << endl;
+    }
+
+    return 0;
+}

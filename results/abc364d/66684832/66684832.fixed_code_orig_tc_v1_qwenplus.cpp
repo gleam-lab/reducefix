@@ -1,0 +1,59 @@
+#include <iostream>
+#include <algorithm>
+#include <vector>
+using namespace std;
+
+#define int long long
+#define endl '\n'
+
+const int inf = 0x3f3f3f3f3f3f3f3f;
+
+int n, q;
+vector<int> a;
+
+// Binary search on answer: find minimum distance d such that at least k points are within distance d from pos
+bool check(int pos, int d, int k) {
+    // Find the range [pos-d, pos+d] in sorted array a
+    int left = lower_bound(a.begin(), a.end(), pos - d) - a.begin();
+    int right = upper_bound(a.begin(), a.end(), pos + d) - a.begin();
+    return (right - left) >= k;
+}
+
+int findans(int pos, int k) {
+    int l = 0, r = 2e8; // Maximum possible distance is 2*10^8
+    int ans = r;
+    
+    while (l <= r) {
+        int mid = (l + r) / 2;
+        if (check(pos, mid, k)) {
+            ans = mid;
+            r = mid - 1;
+        } else {
+            l = mid + 1;
+        }
+    }
+    
+    return ans;
+}
+
+signed main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    cin >> n >> q;
+    a.resize(n);
+    
+    for (int i = 0; i < n; i++) {
+        cin >> a[i];
+    }
+    
+    sort(a.begin(), a.end());
+    
+    while (q--) {
+        int x, k;
+        cin >> x >> k;
+        cout << findans(x, k) << endl;
+    }
+    
+    return 0;
+}

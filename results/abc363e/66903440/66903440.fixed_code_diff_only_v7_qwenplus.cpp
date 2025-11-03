@@ -1,0 +1,87 @@
+#include<bits/stdc++.h>
+using namespace std;
+#include<atcoder/all>
+using namespace atcoder;
+using ll=int64_t;
+using ld=long double;
+int inf=1000000001;
+ll INF=1e18;
+#define rep(i,n) for(int i=0;i<n;i++)
+#define all(x) x.begin(),x.end()
+#define pb push_back
+#define sz(x) (ll)x.size()
+template<typename T>bool chmin(T& a,T b){if(a>b){a=b;return true;}return false;}
+template<typename T>bool chmax(T& a,T b){if(a<b){a=b;return true;}return false;}
+
+int dx[]={1,0,-1,0};
+int dy[]={0,1,0,-1};
+
+int main(){
+    cin.tie(0)->sync_with_stdio(0);
+    
+    int H,W,Y;
+    cin>>H>>W>>Y;
+    vector<vector<int>>A(H,vector<int>(W));
+    rep(i,H)rep(j,W)cin>>A[i][j];
+    
+    // We'll process cells in increasing order of elevation using events or priority queue
+    // Instead of multiple queues, we use one simulation with proper flooding
+    
+    // Create list of border cells sorted by elevation
+    vector<tuple<int,int,int>> events; // (elevation, i, j)
+    
+    vector<vector<bool>> submerged(H, vector<bool>(W, false));
+    int remaining = H * W;
+    
+    // Add all border cells to initial events
+    rep(i,H) {
+        rep(j,W) {
+            if (i == 0 || i == H-1 || j == 0 || j == W-1) {
+                events.emplace_back(A[i][j], i, j);
+                submerged[i][j] = true;
+                remaining--;
+            }
+        }
+    }
+    
+    // Sort events by elevation (when they get submerged)
+    sort(all(events));
+    
+    // We'll simulate year by year and check which new cells are submerged
+    int event_idx = 0;
+    
+    // For each year from 1 to Y
+    for (int year = 1; year <= Y; year++) {
+        // Process all cells that submerge at sea level <= year
+        while (event_idx < (int)events.size()) {
+            auto [elev, i, j] = events[event_idx];
+            if (elev > year) break;
+            
+            // This cell is already submerged when added, now propagate
+            queue<pair<int,int>> q;
+            q.push({i, j});
+            
+            // We need to do BFS from this cell only if it hasn't been processed yet
+            // But note: we might have added same cell multiple times? Avoid with flag.
+            // Actually, we mark submerged early so we skip later.
+            while (!q.empty()) {
+                auto [ci, cj] = q.front(); q.pop();
+                
+                rep(k,4) {
+                    int ni = ci + dx[k];
+                    int nj = cj + dy[k];
+                    if (ni >= 0 && ni < H && nj >= 0 && nj < W && !submerged[ni][nj]) {
+                        if (A[ni][nj] <= year) {
+                            submerged[ni][nj] = true;
+                            remaining--;
+                            q.push({ni, nj});
+                        }
+                    }
+                }
+            }
+            event_idx++;
+        }
+        
+        cout << remaining << '\n';
+    }
+}

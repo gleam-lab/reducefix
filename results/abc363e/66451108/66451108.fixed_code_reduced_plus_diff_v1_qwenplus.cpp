@@ -1,0 +1,86 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define int long long
+#define close ios::sync_with_stdio(false); cin.tie(0); cout.tie(0);
+const int dx[] = {0, 0, 1, -1};
+const int dy[] = {1, -1, 0, 0};
+
+struct Node {
+    int x, y, val;
+    bool operator<(const Node& a) const {
+        return val > a.val;
+    }
+};
+
+signed main() {
+    close;
+    int h, w, y;
+    cin >> h >> w >> y;
+    
+    vector<vector<int>> grid(h, vector<int>(w));
+    for (int i = 0; i < h; i++) {
+        for (int j = 0; j < w; j++) {
+            cin >> grid[i][j];
+        }
+    }
+    
+    priority_queue<Node> pq;
+    vector<vector<bool>> visited(h, vector<bool>(w, false));
+    int remaining = h * w;
+    
+    // Initialize the border cells
+    for (int i = 0; i < h; i++) {
+        pq.push({i, 0, grid[i][0]});
+        pq.push({i, w-1, grid[i][w-1]});
+        visited[i][0] = true;
+        visited[i][w-1] = true;
+        
+        if (w == 1) break; // Handle single column case
+    }
+    
+    for (int j = 1; j < w-1; j++) {
+        pq.push({0, j, grid[0][j]});
+        pq.push({h-1, j, grid[h-1][j]});
+        visited[0][j] = true;
+        visited[h-1][j] = true;
+        
+        if (h == 1) break; // Handle single row case
+    }
+    
+    // Special case: if the island is 1x1
+    if (h == 1 && w == 1) {
+        for (int year = 1; year <= y; year++) {
+            if (year >= grid[0][0]) {
+                remaining = 0;
+            }
+            cout << remaining << '\n';
+        }
+        return 0;
+    }
+    
+    // Process each year
+    for (int sea_level = 1; sea_level <= y; sea_level++) {
+        // Remove all cells that are now submerged
+        while (!pq.empty() && pq.top().val <= sea_level) {
+            Node current = pq.top();
+            pq.pop();
+            
+            remaining--;
+            
+            // Check neighbors
+            for (int d = 0; d < 4; d++) {
+                int nx = current.x + dx[d];
+                int ny = current.y + dy[d];
+                
+                if (nx >= 0 && nx < h && ny >= 0 && ny < w && !visited[nx][ny]) {
+                    visited[nx][ny] = true;
+                    pq.push({nx, ny, grid[nx][ny]});
+                }
+            }
+        }
+        
+        cout << remaining << '\n';
+    }
+    
+    return 0;
+}

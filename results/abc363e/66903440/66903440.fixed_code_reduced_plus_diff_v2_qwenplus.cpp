@@ -1,0 +1,76 @@
+#include<bits/stdc++.h>
+using namespace std;
+#include<atcoder/all>
+using namespace atcoder;
+using ll=int64_t;
+using ld=long double;
+int inf=1000000001;
+ll INF=1e18;
+#define rep(i,n) for(int i=0;i<n;i++)
+#define all(x) x.begin(),x.end()
+#define pb push_back
+#define sz(x) (ll)x.size()
+template<typename T>bool chmin(T& a,T b){if(a>b){a=b;return true;}return false;}
+template<typename T>bool chmax(T& a,T b){if(a<b){a=b;return true;}return false;}
+
+int dx[]={1,0,-1,0};
+int dy[]={0,1,0,-1};
+
+int main(){
+    cin.tie(0)->sync_with_stdio(0);
+    
+    int H,W,Y;
+    cin>>H>>W>>Y;
+    vector<vector<int>>A(H,vector<int>(W));
+    rep(i,H)rep(j,W)cin>>A[i][j];
+    
+    // Create a list of all cells with their elevations
+    vector<tuple<int,int,int>> cells;
+    rep(i,H)rep(j,W){
+        cells.emplace_back(A[i][j], i, j);
+    }
+    
+    // Sort by elevation in ascending order
+    sort(all(cells));
+    
+    vector<vector<bool>> submerged(H, vector<bool>(W, false));
+    int remaining = H * W;
+    
+    // Process year by year
+    int cell_idx = 0;
+    
+    for(int y = 1; y <= Y; y++){
+        // Add all cells with elevation <= y that haven't been processed yet
+        while(cell_idx < cells.size() && get<0>(cells[cell_idx]) <= y){
+            auto [elev, i, j] = cells[cell_idx];
+            if(!submerged[i][j]){
+                submerged[i][j] = true;
+                remaining--;
+                
+                // Use BFS to flood any connected cells that should also be submerged
+                queue<pair<int,int>> q;
+                q.push({i,j});
+                
+                while(!q.empty()){
+                    auto [ci, cj] = q.front(); q.pop();
+                    
+                    rep(d,4){
+                        int ni = ci + dx[d];
+                        int nj = cj + dy[d];
+                        
+                        if(ni >= 0 && ni < H && nj >= 0 && nj < W){
+                            if(!submerged[ni][nj] && A[ni][nj] <= y){
+                                submerged[ni][nj] = true;
+                                remaining--;
+                                q.push({ni,nj});
+                            }
+                        }
+                    }
+                }
+            }
+            cell_idx++;
+        }
+        
+        cout << remaining << '\n';
+    }
+}

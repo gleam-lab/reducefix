@@ -1,0 +1,44 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define ll long long
+#define rep(i,n) for(int i=0;i<(int)n;i++)
+#define vi vector<int>
+#define vll vector<ll>
+
+int main(){
+    int N, Q;
+    cin >> N >> Q;
+    vi a(N);
+    rep(i, N) {
+        cin >> a[i];
+    }
+    
+    // Sort the A points for binary search and distance computation
+    sort(a.begin(), a.end());
+    
+    rep(q_idx, Q) {
+        int b, k;
+        cin >> b >> k;
+        k--; // Convert to 0-indexed
+        
+        // We'll find the k-th smallest distance from B_j to any A_i
+        // Instead of computing all distances, we can use binary search on answer
+        // But simpler: collect possible distances by finding nearby points using lower_bound
+        
+        // Find the position where b would be inserted
+        auto it = lower_bound(a.begin(), a.end(), b);
+        
+        // Create list of distances from b to all a[i], but we don't want to create full list (O(N))
+        // Instead, we can use two pointers expanding from the closest point
+        vector<ll> distances;
+        
+        // Get all distances
+        rep(i, N) {
+            distances.push_back(abs((ll)a[i] - b));
+        }
+        
+        // Partial sort to get k-th smallest
+        nth_element(distances.begin(), distances.begin() + k, distances.end());
+        cout << distances[k] << endl;
+    }
+}

@@ -1,0 +1,92 @@
+Looking at the problem and the failing case, I can see that the issue is with the flooding simulation. The current code has several problems:
+
+1. The queue array size is too small (202020) for elevations up to 10^5
+2. The logic for when to add cells to the queue is incorrect - it should be based on the sea level rising each year
+3. The condition for checking bounds has a bug (`ni>=0&&ni<H&&ni>=0&&ni<W` checks ni twice instead of nj)
+
+The correct approach is to simulate the rising sea level year by year, and for each year, perform a flood fill from all border cells that are now at or below the current sea level.
+
+Here's the fixed solution:
+
+```cpp
+#include<bits/stdc++.h>
+using namespace std;
+#include<atcoder/all>
+using namespace atcoder;
+using ll=int64_t;
+using ld=long double;
+int inf=1000000001;
+ll INF=1e18;
+#define rep(i,n) for(int i=0;i<n;i++)
+#define all(x) x.begin(),x.end()
+#define pb push_back
+#define sz(x) (ll)x.size()
+template<typename T>bool chmin(T& a,T b){if(a>b){a=b;return true;}return false;}
+template<typename T>bool chmax(T& a,T b){if(a<b){a=b;return true;}return false;}
+
+int dx[]={1,0,-1,0};
+int dy[]={0,1,0,-1};
+
+int main(){
+    cin.tie(0)->sync_with_stdio(0);
+    
+    int H,W,Y;
+    cin>>H>>W>>Y;
+    vector<vector<int>>A(H,vector<int>(W));
+    rep(i,H)rep(j,W)cin>>A[i][j];
+    
+    // Track which cells are submerged
+    vector<vector<bool>>submerged(H,vector<bool>(W,false));
+    queue<pair<int,int>>q;
+    
+    // Initially, add all border cells that will eventually submerge
+    // But we'll process them as sea level rises
+    rep(i,H){
+        rep(j,W){
+            if(i==0||i==H-1||j==0||j==W-1){
+                // These border cells will start affecting when sea level reaches their elevation
+                if(A[i][j] <= 1) {
+                    submerged[i][j] = true;
+                    q.push({i,j});
+                }
+            }
+        }
+    }
+    
+    int remaining = H*W;
+    
+    // Process each year
+    for(int year=1; year<=Y; year++){
+        // Add new border cells that become vulnerable at this sea level
+        if(year > 1) {
+            rep(i,H){
+                rep(j,W){
+                    if((i==0||i==H-1||j==0||j==W-1) && !submerged[i][j] && A[i][j] <= year) {
+                        submerged[i][j] = true;
+                        q.push({i,j});
+                        remaining--;
+                    }
+                }
+            }
+        }
+        
+        // Flood fill from all currently submerged cells
+        while(!q.empty()){
+            auto [r,c] = q.front();
+            q.pop();
+            
+            rep(dir,4){
+                int nr = r + dx[dir];
+                int nc = c + dy[dir];
+                if(nr >= 0 && nr < H && nc >= 0 && nc < W && !submerged[nr][nc] && A[nr][nc] <= year){
+                    submerged[nr][nc] = true;
+                    q.push({nr,nc});
+                    remaining--;
+                }
+            }
+        }
+        
+        cout << remaining << endl;
+    }
+}
+```

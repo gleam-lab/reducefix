@@ -1,0 +1,90 @@
+#include<bits/stdc++.h>
+using namespace std;
+#include<atcoder/all>
+using namespace atcoder;
+using ll=int64_t;
+using ld=long double;
+int inf=1000000001;
+ll INF=1e18;
+#define rep(i,n) for(int i=0;i<n;i++)
+#define all(x) x.begin(),x.end()
+#define pb push_back
+#define sz(x) (ll)x.size()
+template<typename T>bool chmin(T& a,T b){if(a>b){a=b;return true;}return false;}
+template<typename T>bool chmax(T& a,T b){if(a<b){a=b;return true;}return false;}
+
+int dx[]={1,0,-1,0};
+int dy[]={0,1,0,-1};
+
+int main(){
+    cin.tie(0)->sync_with_stdio(0);
+    
+    int H,W,Y;
+    cin>>H>>W>>Y;
+    vector<vector<int>>A(H,vector<int>(W));
+    rep(i,H)rep(j,W)cin>>A[i][j];
+    
+    // Create list of all cells with their elevations
+    vector<tuple<int,int,int>> cells;
+    rep(i,H)rep(j,W){
+        cells.push_back({A[i][j], i, j});
+    }
+    
+    // Sort by elevation in ascending order
+    sort(all(cells));
+    
+    vector<vector<bool>> submerged(H, vector<bool>(W, false));
+    int remaining = H * W;
+    
+    // Process each year
+    auto it = cells.begin();
+    for(int y = 1; y <= Y; y++){
+        // Submerge all cells with elevation <= y that are connected to the sea
+        queue<pair<int,int>> q;
+        
+        // Add newly submerged boundary cells
+        while(it != cells.end() && get<0>(*it) <= y){
+            int h = get<1>(*it);
+            int w = get<2>(*it);
+            if(!submerged[h][w]){
+                // Check if this cell is on the boundary or adjacent to already submerged cell
+                bool is_boundary = (h == 0 || h == H-1 || w == 0 || w == W-1);
+                bool is_adjacent = false;
+                
+                for(int d = 0; d < 4; d++){
+                    int nh = h + dx[d];
+                    int nw = w + dy[d];
+                    if(nh >= 0 && nh < H && nw >= 0 && nw < W && submerged[nh][nw]){
+                        is_adjacent = true;
+                        break;
+                    }
+                }
+                
+                if(is_boundary || is_adjacent){
+                    submerged[h][w] = true;
+                    q.push({h, w});
+                    remaining--;
+                }
+            }
+            it++;
+        }
+        
+        // Flood fill from newly submerged cells
+        while(!q.empty()){
+            auto [i, j] = q.front(); q.pop();
+            
+            for(int d = 0; d < 4; d++){
+                int ni = i + dx[d];
+                int nj = j + dy[d];
+                
+                if(ni >= 0 && ni < H && nj >= 0 && nj < W && !submerged[ni][nj] && A[ni][nj] <= y){
+                    submerged[ni][nj] = true;
+                    q.push({ni, nj});
+                    remaining--;
+                }
+            }
+        }
+        
+        cout << remaining << endl;
+    }
+}

@@ -1,0 +1,88 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+
+constexpr int dx[] = {-1, 1, 0, 0};
+constexpr int dy[] = {0, 0, -1, 1};
+
+int main()
+{
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int H, W, Y;
+    cin >> H >> W >> Y;
+
+    vector<vector<int>> A(H, vector<int>(W));
+    for (int i = 0; i < H; i++)
+    {
+        for (int j = 0; j < W; j++)
+        {
+            cin >> A[i][j];
+        }
+    }
+
+    vector<vector<bool>> submerged(H, vector<bool>(W, false));
+    vector<queue<pair<int, int>>> q(100005); // Max elevation is 10^5
+
+    // Initially, add all boundary cells to their respective year's queue
+    for (int i = 0; i < H; i++)
+    {
+        for (int j = 0; j < W; j++)
+        {
+            if (i == 0 || i == H - 1 || j == 0 || j == W - 1)
+            {
+                q[A[i][j]].push({i, j});
+            }
+        }
+    }
+
+    int remaining = H * W;
+
+    // We'll use a BFS that processes rising sea levels year by year
+    for (int year = 1; year <= Y; year++)
+    {
+        // Use a temporary queue for BFS propagation at current sea level
+        queue<pair<int, int>> bfs_queue;
+
+        // Add all cells with elevation <= current sea level that are on the boundary
+        while (!q[year].empty())
+        {
+            auto [x, y] = q[year].front();
+            q[year].pop();
+            if (!submerged[x][y])
+            {
+                submerged[x][y] = true;
+                bfs_queue.push({x, y});
+                remaining--;
+            }
+        }
+
+        // Propagate the submersion to adjacent cells with elevation <= current sea level
+        while (!bfs_queue.empty())
+        {
+            auto [x, y] = bfs_queue.front();
+            bfs_queue.pop();
+
+            for (int d = 0; d < 4; d++)
+            {
+                int nx = x + dx[d];
+                int ny = y + dy[d];
+
+                if (nx < 0 || ny < 0 || nx >= H || ny >= W || submerged[nx][ny])
+                    continue;
+
+                if (A[nx][ny] <= year)
+                {
+                    submerged[nx][ny] = true;
+                    bfs_queue.push({nx, ny});
+                    remaining--;
+                }
+            }
+        }
+
+        cout << remaining << '\n';
+    }
+
+    return 0;
+}

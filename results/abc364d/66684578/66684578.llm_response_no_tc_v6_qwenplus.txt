@@ -1,0 +1,112 @@
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+#define ll long long
+#define rep(i,n) for(int i=0;i<(int)n;i++)
+#define vi vector<int>
+#define vll vector<ll>
+
+int main(){
+    int N, Q;
+    cin >> N >> Q;
+    vi a(N);
+    rep(i, N) cin >> a[i];
+    
+    // Sort the A points for binary search / lower_bound usage
+    sort(a.begin(), a.end());
+    
+    rep(qi, Q) {
+        int b, k;
+        cin >> b >> k;
+        k--; // convert to 0-indexed
+        
+        // We'll collect distances from B_j to all A_i, then find the k-th smallest
+        // But doing it naively would be O(NQ), which is too slow (10^10)
+        // Instead, we can use binary search on the answer (distance)
+        
+        // Binary search on the distance d such that there are at least k+1 points within distance d
+        // Actually, we want the k-th smallest distance
+        
+        // We can't easily binary search on count of distances <= X because distances are absolute values
+        // Alternative: find the k-th closest point by checking candidates around b
+        
+        // Since A is sorted, we can find the position where b would be inserted
+        auto it = lower_bound(a.begin(), a.end(), b);
+        
+        // We consider points around b: left and right
+        // Use two pointers expanding from the insertion point
+        vector<ll> candidates;
+        
+        // Get indices of points in sorted order by distance to b
+        // Left side: [0, it) in reverse
+        // Right side: [it, end)
+        int left = it - a.begin();
+        int right = left; // first >= b
+        
+        // We'll merge two sorted lists: distances from left part (decreasing index) and right part (increasing index)
+        // But we only need the k-th smallest
+        priority_queue<pair<ll, int>, vector<pair<ll, int>>, greater<pair<ll, int>>> pq;
+        
+        // Add left neighbor if exists
+        if (left > 0) {
+            pq.push({abs((ll)a[left-1] - b), left-1});
+        }
+        // Add right neighbor if exists
+        if (right < N) {
+            pq.push({abs((ll)a[right] - b), right});
+        }
+        
+        ll ans = 0;
+        rep(i, k+1) {
+            auto p = pq.top(); pq.pop();
+            ans = p.first;
+            int idx = p.second;
+            
+            // Expand left from this point if not already added
+            if (idx > 0 && (pq.empty() || pq.top().second != idx-1)) {
+                // Check if idx-1 is not in pq? Actually we might add duplicates
+                // Better: only add each once. We can keep track or just risk duplicates?
+                // But worst case k up to 1e5, so even with duplicates it's acceptable?
+                // But we must avoid infinite loop.
+                // Instead: only expand from a point when we pop it, and only add neighbors that haven't been added?
+                // But no easy way without visited array.
+                
+                // Alternatively, since we're going in increasing distance, we can ensure that we add left and right properly
+                // Standard technique: when popping an element from left side, add next left
+                // But our pq doesn't know direction.
+                
+                // Better approach: instead of pq, use two pointers
+                // Because the array is sorted, the closest points are around the insertion point
+                // We can do:
+                //   left_ptr = left - 1, right_ptr = right
+                //   then expand outward one by one
+            }
+        }
+        
+        // Let's switch to two pointers method
+        if (k == 0 && N == 1) {
+            ans = abs((ll)a[0] - b);
+        } else {
+            // Two pointers: start from the split point
+            int l_ptr = left - 1;  // last element < b
+            int r_ptr = right;     // first element >= b
+            ans = 0;
+            
+            rep(i, k+1) {
+                ll left_dist = (l_ptr >= 0) ? abs((ll)a[l_ptr] - b) : (ll)2e18;
+                ll right_dist = (r_ptr < N) ? abs((ll)a[r_ptr] - b) : (ll)2e18;
+                
+                if (left_dist <= right_dist) {
+                    ans = left_dist;
+                    l_ptr--;
+                } else {
+                    ans = right_dist;
+                    r_ptr++;
+                }
+            }
+        }
+        
+        cout << ans << endl;
+    }
+}
+```

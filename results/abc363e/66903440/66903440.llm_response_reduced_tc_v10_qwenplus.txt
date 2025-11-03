@@ -1,0 +1,261 @@
+```cpp
+#include<bits/stdc++.h>
+using namespace std;
+#include<atcoder/all>
+using namespace atcoder;
+using ll=int64_t;
+using ld=long double;
+int inf=1000000001;
+ll INF=1e18;
+#define rep(i,n) for(int i=0;i<n;i++)
+#define all(x) x.begin(),x.end()
+#define pb push_back
+#define sz(x) (ll)x.size()
+template<typename T>bool chmin(T& a,T b){if(a>b){a=b;return true;}return false;}
+template<typename T>bool chmax(T& a,T b){if(a<b){a=b;return true;}return false;}
+
+int dx[]={1,0,-1,0};
+int dy[]={0,1,0,-1};
+
+int main(){
+    cin.tie(0)->sync_with_stdio(0);
+    
+    int H,W,Y;
+    cin>>H>>W>>Y;
+    vector<vector<int>>A(H,vector<int>(W));
+    rep(i,H)rep(j,W)cin>>A[i][j];
+    
+    // Create list of cells with their elevations
+    vector<tuple<int,int,int>> cells;
+    rep(i,H)rep(j,W){
+        cells.push_back({A[i][j], i, j});
+    }
+    sort(all(cells));
+    
+    vector<vector<bool>> submerged(H, vector<bool>(W, false));
+    int remaining = H * W;
+    
+    int idx = 0;
+    for(int year = 1; year <= Y; year++){
+        // Add all cells with elevation <= current sea level
+        while(idx < sz(cells) && get<0>(cells[idx]) <= year){
+            auto [elev, i, j] = cells[idx];
+            if(!submerged[i][j]){
+                submerged[i][j] = true;
+                remaining--;
+                
+                // Use BFS to flood from this cell if it's connected to the sea
+                // But we need to check connectivity properly - instead, we'll use multi-source BFS from all border cells
+            }
+            idx++;
+        }
+        
+        // However, the above doesn't handle flooding propagation correctly.
+        // Let's change approach: simulate from the borders using priority queue
+        
+        // Actually, let's reset and use a better approach:
+        // We'll process in increasing order of elevation, but maintain connectivity from borders
+    }
+    
+    // Reset approach: use event-based simulation with priority queue
+    // Instead, let's do this: start from perimeter and expand inward as sea level rises
+    
+    priority_queue<tuple<int,int,int>, vector<tuple<int,int,int>>, greater<tuple<int,int,int>>> pq;
+    vector<vector<bool>> visited(H, vector<bool>(W, false));
+    
+    // Initialize with all border cells
+    rep(i,H){
+        rep(j,W){
+            if(i == 0 || i == H-1 || j == 0 || j == W-1){
+                pq.push({A[i][j], i, j});
+                visited[i][j] = true;
+            }
+        }
+    }
+    
+    vector<int> result(Y+1, H*W);
+    int processed = 0;
+    
+    while(!pq.empty() && processed < Y){
+        auto [elev, i, j] = pq.top();
+        pq.pop();
+        
+        // This cell gets submerged when sea level reaches 'elev'
+        if(elev > Y) break;
+        
+        result[elev]--;
+        
+        rep(d,4){
+            int ni = i + dx[d];
+            int nj = j + dy[d];
+            if(ni >= 0 && ni < H && nj >= 0 && nj < W && !visited[ni][nj]){
+                visited[ni][nj] = true;
+                pq.push({A[ni][nj], ni, nj});
+            }
+        }
+    }
+    
+    // Accumulate the results - once a cell is gone, it stays gone
+    for(int y = 1; y <= Y; y++){
+        result[y] = min(result[y], result[y-1]);
+    }
+    
+    for(int y = 1; y <= Y; y++){
+        cout << result[y] << '\n';
+    }
+}
+```
+
+Wait, there's still an issue with the above approach. Let me fix it completely:
+
+```cpp
+#include<bits/stdc++.h>
+using namespace std;
+using ll=int64_t;
+#define rep(i,n) for(int i=0;i<n;i++)
+#define all(x) x.begin(),x.end()
+
+int dx[]={1,0,-1,0};
+int dy[]={0,1,0,-1};
+
+int main(){
+    cin.tie(0)->sync_with_stdio(0);
+    
+    int H,W,Y;
+    cin>>H>>W>>Y;
+    vector<vector<int>>A(H,vector<int>(W));
+    rep(i,H)rep(j,W)cin>>A[i][j];
+    
+    // We'll use a different approach: process cells in increasing order of elevation
+    // Starting from the perimeter, water flows inward through low-elevation paths
+    
+    vector<tuple<int,int,int>> cells;
+    rep(i,H)rep(j,W){
+        cells.push_back({A[i][j], i, j});
+    }
+    sort(all(cells));
+    
+    vector<vector<bool>> submerged(H, vector<bool>(W, false));
+    int remaining = H * W;
+    
+    // Priority queue for Dijkstra-like flood fill - minimum elevation first
+    priority_queue<tuple<int,int,int>, vector<tuple<int,int,int>>, greater<>> pq;
+    
+    // Start from all border cells
+    rep(i,H) rep(j,W) {
+        if(i == 0 || i == H-1 || j == 0 || j == W-1) {
+            pq.push({A[i][j], i, j});
+            submerged[i][j] = true;
+            remaining--;
+        }
+    }
+    
+    // For each year, we want to know how many cells remain
+    vector<int> ans(Y+1);
+    ans[0] = remaining;
+    
+    while(!pq.empty()) {
+        auto [elev, i, j] = pq.top();
+        pq.pop();
+        
+        // Propagate to neighbors
+        rep(d,4) {
+            int ni = i + dx[d], nj = j + dy[d];
+            if(ni >= 0 && ni < H && nj >= 0 && nj < W && !submerged[ni][nj]) {
+                // This cell will be submerged when sea level reaches A[ni][nj]
+                if(A[ni][nj] <= elev) {
+                    // Can flow immediately
+                    submerged[ni][nj] = true;
+                    remaining--;
+                    pq.push({A[ni][nj], ni, nj});
+                } else {
+                    // Higher cell, add to queue with its own elevation
+                    submerged[ni][nj] = true;
+                    remaining--;
+                    pq.push({A[ni][nj], ni, nj});
+                }
+            }
+        }
+        
+        // Record state after sea level reaches 'elev'
+        if(elev <= Y) {
+            ans[elev] = remaining;
+        }
+    }
+    
+    // Fill in intermediate years - area can only decrease
+    for(int y = 1; y <= Y; y++) {
+        ans[y] = min(ans[y], ans[y-1]);
+        cout << ans[y] << '\n';
+    }
+}
+```
+
+Actually, let me implement the correct solution from scratch:
+
+```cpp
+#include<bits/stdc++.h>
+using namespace std;
+using ll=int64_t;
+#define rep(i,n) for(int i=0;i<n;i++)
+#define all(x) x.begin(),x.end()
+
+int dx[]={1,0,-1,0};
+int dy[]={0,1,0,-1};
+
+int main(){
+    cin.tie(0)->sync_with_stdio(0);
+    
+    int H,W,Y;
+    cin>>H>>W>>Y;
+    vector<vector<int>>A(H,vector<int>(W));
+    rep(i,H)rep(j,W)cin>>A[i][j];
+    
+    // Use union-find or rather: process by elevation threshold
+    // Key insight: at year y, any cell with elevation <= y that is connected to the sea (border) via cells of elevation <= y will be submerged
+    
+    // Instead: simulate backwards or use event processing
+    // Better: use priority queue starting from borders, like Dijkstra
+    
+    priority_queue<tuple<int,int,int>, vector<tuple<int,int,int>>, greater<tuple<int,int,int>>> pq;
+    vector<vector<bool>> visited(H, vector<bool>(W, false));
+    
+    // Start from all border cells
+    rep(i,H) {
+        rep(j,W) {
+            if(i == 0 || i == H-1 || j == 0 || j == W-1) {
+                pq.push({A[i][j], i, j});
+                visited[i][j] = true;
+            }
+        }
+    }
+    
+    vector<int> result(Y+1, H*W);
+    int count = H*W;
+    
+    while(!pq.empty()) {
+        auto [elev, i, j] = pq.top();
+        pq.pop();
+        
+        count--;
+        // This cell gets submerged when sea level reaches 'elev'
+        if(elev <= Y) {
+            result[elev] = min(result[elev], count);
+        }
+        
+        rep(d,4) {
+            int ni = i + dx[d], nj = j + dy[d];
+            if(ni >= 0 && ni < H && nj >= 0 && nj < W && !visited[ni][nj]) {
+                visited[ni][nj] = true;
+                pq.push({A[ni][nj], ni, nj});
+            }
+        }
+    }
+    
+    // Propagate the results forward - area can't increase
+    for(int y = 1; y <= Y; y++) {
+        result[y] = min(result[y], result[y-1]);
+        cout << result[y] << '\n';
+    }
+}
+```

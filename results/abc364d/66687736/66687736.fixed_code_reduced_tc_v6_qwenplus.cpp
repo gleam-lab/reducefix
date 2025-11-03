@@ -1,0 +1,54 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define ll long long
+#define rep(i,n) for(int i=0;i<(int)n;i++)
+#define vi vector<int>
+#define vll vector<ll>
+
+int main(){
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+
+    int N, Q;
+    cin >> N >> Q;
+    vector<ll> a(N);
+    rep(i, N) cin >> a[i];
+
+    sort(a.begin(), a.end());
+
+    rep(qi, Q) {
+        ll b;
+        int k;
+        cin >> b >> k;
+
+        // We want to find the k-th smallest distance from B_j to any A_i
+        // Instead of computing all distances, we can binary search on the answer (distance)
+        // For a given distance d, count how many points A_i are within distance d from b
+        // That is: count of i such that |a_i - b| <= d
+
+        // But note: we want the k-th smallest distance, so we're looking for the smallest d
+        // such that there are at least k points within distance d.
+
+        ll low = 0;
+        ll high = 2e8 + 10; // max possible coordinate difference
+
+        while (low < high) {
+            ll mid = (low + high) / 2;
+            // Count number of a[i] such that |a[i] - b| <= mid
+            ll left_bound = b - mid;
+            ll right_bound = b + mid;
+
+            auto it1 = lower_bound(a.begin(), a.end(), left_bound);
+            auto it2 = upper_bound(a.begin(), a.end(), right_bound);
+            int cnt = it2 - it1;
+
+            if (cnt >= k) {
+                high = mid;
+            } else {
+                low = mid + 1;
+            }
+        }
+
+        cout << low << '\n';
+    }
+}

@@ -1,0 +1,77 @@
+#include<bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+
+const int MAXN = 1e5 + 5;
+
+int a[MAXN];
+
+void solve() {
+    int N, Q;
+    cin >> N >> Q;
+    
+    // Read the A points
+    for (int i = 0; i < N; i++) {
+        cin >> a[i];
+    }
+    
+    // Sort A points to enable binary search and distance calculation
+    sort(a, a + N);
+    
+    // Process each query
+    for (int j = 0; j < Q; j++) {
+        int b, k;
+        cin >> b >> k;
+        
+        // Find the position where B_j would be inserted in sorted A array
+        auto it = lower_bound(a, a + N, b);
+        int pos = it - a;
+        
+        // We'll collect distances from nearby points around b
+        // We need at most k closest points, so consider up to k points to left and right
+        vector<int> distances;
+        
+        // Add distances from points to the left of b (from closest to farthest)
+        for (int i = pos - 1; i >= 0 && distances.size() < k; i--) {
+            distances.push_back(abs(a[i] - b));
+        }
+        
+        // Add distances from points at or to the right of b (from closest to farthest)
+        for (int i = pos; i < N && distances.size() < k; i++) {
+            distances.push_back(abs(a[i] - b));
+        }
+        
+        // If we have more than k elements, we need to maintain only k smallest
+        // But since we're adding in order of increasing distance from b,
+        // we might not have them fully sorted.
+        // So let's make sure we have all possible candidates and then get k-th smallest.
+        
+        // Actually, better approach: we can use two pointers expanding from pos
+        distances.clear();
+        
+        int left = pos - 1, right = pos;
+        while (distances.size() < k && (left >= 0 || right < N)) {
+            int dist_left = (left >= 0) ? abs(a[left] - b) : INT_MAX;
+            int dist_right = (right < N) ? abs(a[right] - b) : INT_MAX;
+            
+            if (dist_left <= dist_right) {
+                distances.push_back(dist_left);
+                left--;
+            } else {
+                distances.push_back(dist_right);
+                right++;
+            }
+        }
+        
+        // The k-th closest distance is the last one added if we stopped exactly at k
+        // But note: distances are collected in increasing order
+        cout << distances[k - 1] << '\n';
+    }
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    solve();
+    return 0;
+}

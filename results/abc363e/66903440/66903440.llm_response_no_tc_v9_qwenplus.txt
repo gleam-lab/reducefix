@@ -1,0 +1,165 @@
+```cpp
+#include<bits/stdc++.h>
+using namespace std;
+#include<atcoder/all>
+using namespace atcoder;
+using ll=int64_t;
+using ld=long double;
+int inf=1000000001;
+ll INF=1e18;
+#define rep(i,n) for(int i=0;i<n;i++)
+#define all(x) x.begin(),x.end()
+#define pb push_back
+#define sz(x) (ll)x.size()
+template<typename T>bool chmin(T& a,T b){if(a>b){a=b;return true;}return false;}
+template<typename T>bool chmax(T& a,T b){if(a<b){a=b;return true;}return false;}
+
+int dx[]={1,0,-1,0};
+int dy[]={0,1,0,-1};
+
+int main(){
+    cin.tie(0)->sync_with_stdio(0);
+    
+    int H,W,Y;
+    cin>>H>>W>>Y;
+    vector<vector<int>>A(H,vector<int>(W));
+    rep(i,H)rep(j,W)cin>>A[i][j];
+    
+    // We'll simulate from sea level 1 to Y
+    // Instead of processing events per year, collect all border cells and process in increasing order of elevation
+    vector<vector<bool>> submerged(H, vector<bool>(W, false));
+    priority_queue<pair<int, pair<int, int>>, vector<pair<int, pair<int, int>>>, greater<pair<int, pair<int, int>>>> pq;
+    
+    // Initialize: all edge cells are adjacent to the sea
+    rep(i,H) {
+        rep(j,W) {
+            if (i == 0 || i == H-1 || j == 0 || j == W-1) {
+                pq.push({A[i][j], {i, j}});
+                submerged[i][j] = true;
+            }
+        }
+    }
+    
+    int remaining = H * W;
+    vector<int> ans(Y + 1, remaining); // ans[y] = area after y years
+    
+    while (!pq.empty()) {
+        auto [elev, pos] = pq.top(); pq.pop();
+        int i = pos.first, j = pos.second;
+        
+        // This cell gets submerged when sea level reaches elev
+        if (elev <= Y) {
+            if (ans[elev] == remaining) {
+                // First time reaching this elevation
+                ans[elev] = --remaining;
+            } else {
+                ans[elev] = --remaining;
+            }
+        } else {
+            // Even if elev > Y, we still need to process for propagation
+            remaining--;
+        }
+        
+        // Propagate to neighbors
+        rep(d,4) {
+            int ni = i + dx[d];
+            int nj = j + dy[d];
+            if (ni >= 0 && ni < H && nj >= 0 && nj < W && !submerged[ni][nj]) {
+                // If neighbor's elevation <= current sea level (which is 'elev'), it will also submerge
+                if (A[ni][nj] <= elev) {
+                    submerged[ni][nj] = true;
+                    pq.push({A[ni][nj], {ni, nj}});
+                }
+            }
+        }
+    }
+    
+    // Fill in the answer array: area at year y is the minimum area from year 1 to y
+    // Because once submerged, it stays submerged
+    int cur = H * W;
+    for (int y = 1; y <= Y; y++) {
+        if (y <= Y) {
+            // Use previously computed value or carry forward
+            if (y < (int)ans.size() && ans[y] < cur) {
+                cur = ans[y];
+            }
+            cout << cur << '\n';
+        }
+    }
+    
+    return 0;
+}
+```
+
+Wait, there's a flaw in the above logic. Let me correct it properly.
+
+```cpp
+#include<bits/stdc++.h>
+using namespace std;
+using ll=int64_t;
+#define rep(i,n) for(int i=0;i<n;i++)
+#define all(x) x.begin(),x.end()
+
+int dx[]={1,0,-1,0};
+int dy[]={0,1,0,-1};
+
+int main(){
+    cin.tie(0)->sync_with_stdio(0);
+    
+    int H,W,Y;
+    cin>>H>>W>>Y;
+    vector<vector<int>>A(H,vector<int>(W));
+    rep(i,H)rep(j,W)cin>>A[i][j];
+    
+    vector<vector<bool>> submerged(H, vector<bool>(W, false));
+    priority_queue<tuple<int, int, int>, vector<tuple<int, int, int>>, greater<tuple<int, int, int>>> pq;
+    
+    // Add all boundary cells
+    rep(i,H) {
+        rep(j,W) {
+            if (i == 0 || i == H-1 || j == 0 || j == W-1) {
+                pq.push({A[i][j], i, j});
+                submerged[i][j] = true;
+            }
+        }
+    }
+    
+    vector<int> result(Y+1, H*W); // result[t] = area after t years
+    int count = H*W;
+    
+    while (!pq.empty()) {
+        auto [elev, i, j] = pq.top(); pq.pop();
+        
+        // This cell gets submerged when sea level reaches elev
+        if (elev <= Y) {
+            result[elev] = --count;
+        } else {
+            count--;
+        }
+        
+        // Try to propagate
+        rep(d,4) {
+            int ni = i + dx[d];
+            int nj = j + dy[d];
+            if (ni >= 0 && ni < H && nj >= 0 && nj < W && !submerged[ni][nj]) {
+                // If this neighbor can be submerged at current effective sea level
+                if (A[ni][nj] <= elev) {
+                    submerged[ni][nj] = true;
+                    pq.push({A[ni][nj], ni, nj});
+                }
+            }
+        }
+    }
+    
+    // Now, ensure monotonicity: area can't increase
+    int cur = H*W;
+    for (int y = 1; y <= Y; y++) {
+        if (result[y] < cur) {
+            cur = result[y];
+        }
+        cout << cur << '\n';
+    }
+    
+    return 0;
+}
+```

@@ -1,0 +1,49 @@
+#include<bits/stdc++.h>
+using namespace std;
+
+const int N = 1e5 + 5;
+int n, q;
+long long a[N];
+
+int main() {
+    ios::sync_with_stdio(0);
+    cin.tie(0);
+    cout.tie(0);
+    
+    cin >> n >> q;
+    for (int i = 0; i < n; i++) {
+        cin >> a[i];
+    }
+    
+    sort(a, a + n);
+    
+    while (q--) {
+        long long b;
+        int k;
+        cin >> b >> k;
+        
+        // Find the position where b would be inserted
+        auto it = lower_bound(a, a + n, b);
+        int pos = it - a;
+        
+        // We'll collect distances from candidates around position pos
+        vector<long long> distances;
+        
+        // Add elements from left of pos (in reverse order: closer first)
+        for (int i = pos - 1; i >= max(0, pos - k); i--) {
+            distances.push_back(b - a[i]);
+        }
+        
+        // Add elements from right of pos (in order: closer first)
+        for (int i = pos; i < min(n, pos + k); i++) {
+            distances.push_back(a[i] - b);
+        }
+        
+        // Sort distances to find the k-th smallest
+        sort(distances.begin(), distances.end());
+        
+        cout << distances[k - 1] << '\n';
+    }
+    
+    return 0;
+}

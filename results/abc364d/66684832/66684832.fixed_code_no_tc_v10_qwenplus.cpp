@@ -1,0 +1,59 @@
+#include <iostream>
+#include <algorithm>
+#include <vector>
+using namespace std;
+
+#define int long long
+const int N = 1e5 + 9;
+
+int n, q;
+int a[N];
+
+// Check if there are at least k points within distance 'dist' from point 'pos'
+bool check(int pos, int dist, int k) {
+    // Find the leftmost index where coordinate >= (pos - dist)
+    int left_idx = lower_bound(a + 1, a + n + 1, pos - dist) - a;
+    // Find the rightmost index where coordinate <= (pos + dist)
+    int right_idx = upper_bound(a + 1, a + n + 1, pos + dist) - a - 1;
+    
+    int count = right_idx - left_idx + 1;
+    return count >= k;
+}
+
+// Binary search on the distance to find the k-th smallest distance
+int find_kth_distance(int pos, int k) {
+    int left = 0, right = 2e8; // Max possible distance is 2 * 10^8
+    int result = right;
+    
+    while (left <= right) {
+        int mid = (left + right) / 2;
+        if (check(pos, mid, k)) {
+            result = mid;
+            right = mid - 1;
+        } else {
+            left = mid + 1;
+        }
+    }
+    
+    return result;
+}
+
+signed main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    cin >> n >> q;
+    for (int i = 1; i <= n; i++) {
+        cin >> a[i];
+    }
+    
+    sort(a + 1, a + n + 1);
+    
+    for (int i = 0; i < q; i++) {
+        int b, k;
+        cin >> b >> k;
+        cout << find_kth_distance(b, k) << '\n';
+    }
+    
+    return 0;
+}

@@ -1,0 +1,58 @@
+#include <iostream>
+#include <algorithm>
+#include <vector>
+using namespace std;
+
+#define int long long
+const int N = 2e5 + 9;
+
+int n, q;
+int a[N];
+
+// Check if there are at least k points within distance 'd' from position 'pos'
+bool check(int pos, int d, int k) {
+    // Find the leftmost index where coordinate >= (pos - d)
+    int left_idx = lower_bound(a + 1, a + n + 1, pos - d) - a;
+    // Find the rightmost index where coordinate <= (pos + d)
+    int right_idx = upper_bound(a + 1, a + n + 1, pos + d) - a - 1;
+    
+    return (right_idx - left_idx + 1) >= k;
+}
+
+// Binary search on the distance
+int findans(int pos, int k) {
+    int l = 0, r = 2e8; // Maximum possible distance is 2*10^8
+    int ans = r;
+    
+    while (l <= r) {
+        int mid = (l + r) / 2;
+        if (check(pos, mid, k)) {
+            ans = mid;
+            r = mid - 1;
+        } else {
+            l = mid + 1;
+        }
+    }
+    
+    return ans;
+}
+
+signed main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    cin >> n >> q;
+    for (int i = 1; i <= n; i++) {
+        cin >> a[i];
+    }
+    
+    sort(a + 1, a + n + 1);
+    
+    for (int i = 0; i < q; i++) {
+        int x, k;
+        cin >> x >> k;
+        cout << findans(x, k) << '\n';
+    }
+    
+    return 0;
+}

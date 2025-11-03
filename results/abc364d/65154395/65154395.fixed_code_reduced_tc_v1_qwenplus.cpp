@@ -1,0 +1,113 @@
+#include<bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+
+void solve() {
+    int N, Q;
+    cin >> N >> Q;
+    vector<ll> a(N);
+    for (int i = 0; i < N; i++) {
+        cin >> a[i];
+    }
+    
+    // Sort the A points to enable binary search
+    sort(a.begin(), a.end());
+    
+    for (int q = 0; q < Q; q++) {
+        ll b;
+        int k;
+        cin >> b >> k;
+        k--; // convert to 0-indexed: we want the k-th smallest distance (k from 1..N)
+        
+        // We'll collect distances from B to all A points? -> too slow O(NQ)
+        // Instead: use binary search on the answer (distance)
+        // But we need to find the k-th smallest distance without storing all
+        
+        // Alternate idea: find the k-th closest point by checking candidates around b
+        
+        // Find position where b would be inserted
+        auto it = lower_bound(a.begin(), a.end(), b);
+        vector<ll> candidates;
+        
+        // Collect up to N points but we only need to consider nearby ones?
+        // Actually worst-case we may need to look at many points.
+        // Instead: create a list of absolute differences and get k-th smallest?
+        // But that is O(N) per query -> worst-case O(NQ) = 10^10 -> too slow
+        
+        // Better: use binary search on the distance value
+        // Let f(d) = number of points A_i such that |a_i - b| <= d
+        // f(d) is monotonic. We want smallest d such that f(d) >= k+1? 
+        // Actually: we want the k-th smallest distance -> find smallest d such that count of distances <= d is at least k
+        
+        ll left = 0, right = 2e8 + 10;
+        while (left < right) {
+            ll mid = (left + right) / 2;
+            // Count how many a[i] satisfy |a[i] - b| <= mid
+            ll low = b - mid;
+            ll high = b + mid;
+            auto lit = lower_bound(a.begin(), a.end(), low);
+            auto rit = upper_bound(a.begin(), a.end(), high);
+            int cnt = distance(lit, rit);
+            
+            if (cnt >= k + 1) { // we can have at least (k+1) points within mid -> mid might be too big
+                right = mid;
+            } else {
+                left = mid + 1;
+            }
+        }
+        
+        // Now left is the smallest distance such that at least k+1 points are within it?
+        // But wait: k is 1-indexed input, we did k--
+        // So now we want the k-th smallest (0-indexed k-th) => we want smallest d with at least k+1 points within d?
+        // No: if k=1 (then k-- => 0), we want first smallest -> need at least 1 point with dist <= d
+        // So condition: f(d) >= k+1? no: k was decremented so original k becomes k_index = k-1 (0-based rank)
+        // We want the (k)-th smallest element (1-indexed) -> in sorted distances, index k-1
+        // So we want smallest d such that number of points with |a_i - b| <= d is at least k (the k-th one is included)
+        
+        // Correction: don't decrement k
+    }
+}
+
+// Revised version without k--
+void solve_fixed() {
+    int N, Q;
+    cin >> N >> Q;
+    vector<ll> a(N);
+    for (int i = 0; i < N; i++) {
+        cin >> a[i];
+    }
+    
+    sort(a.begin(), a.end());
+    
+    for (int q = 0; q < Q; q++) {
+        ll b;
+        int k;
+        cin >> b >> k;
+        
+        // Binary search on the distance d
+        ll left = 0, right = 2e8 + 10;
+        while (left < right) {
+            ll mid = (left + right) / 2;
+            ll low = b - mid;
+            ll high = b + mid;
+            auto lit = lower_bound(a.begin(), a.end(), low);
+            auto rit = upper_bound(a.begin(), a.end(), high);
+            int cnt = distance(lit, rit); // number of points within distance mid
+            
+            if (cnt >= k) {
+                right = mid;
+            } else {
+                left = mid + 1;
+            }
+        }
+        
+        cout << left << '\n';
+    }
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    solve_fixed();
+    return 0;
+}
