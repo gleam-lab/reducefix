@@ -1,0 +1,36 @@
+n, m = map(int, input().split())
+captured = set()
+
+# Define the 8 possible capture positions relative to a piece
+capture_offsets = [
+    (2, 1), (1, 2), (-1, 2), (-2, 1),
+    (-2, -1), (-1, -2), (1, -2), (2, -1)
+]
+
+for _ in range(m):
+    a, b = map(int, input().split())
+    # For each existing piece, mark all squares it can capture
+    for dx, dy in capture_offsets:
+        x, y = a + dx, b + dy
+        if 1 <= x <= n and 1 <= y <= n:
+            captured.add((x, y))
+
+# Count total empty squares minus captured squares
+total_squares = n * n
+occupied_or_captured = captured.copy()
+
+# Add all existing pieces to the occupied set
+for _ in range(m):
+    # We need to re-read the input since we consumed it earlier
+    pass
+
+# Re-process input to add existing pieces
+existing_pieces = []
+for _ in range(m):
+    a, b = map(int, input().split())
+    existing_pieces.append((a, b))
+    occupied_or_captured.add((a, b))
+
+ans = total_squares - len(occupied_or_captured)
+
+print(ans)

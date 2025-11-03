@@ -1,0 +1,57 @@
+import sys
+import heapq
+
+def solve():
+    T = int(sys.stdin.readline())
+    
+    for _ in range(T):
+        N, K = map(int, sys.stdin.readline().split())
+        A = list(map(int, sys.stdin.readline().split()))
+        B = list(map(int, sys.stdin.readline().split()))
+        
+        # Create list of (A_i, B_i, index) and sort by A_i
+        items = [(A[i], B[i], i) for i in range(N)]
+        items.sort()
+        
+        # We'll consider each element as the maximum A_i in the subset
+        min_result = float('inf')
+        
+        # Use a min-heap to maintain the smallest B_i values when we need to remove elements
+        # We want to keep exactly K elements with smallest possible sum of B_i
+        
+        # Process from largest A_i downwards, maintaining a candidate set
+        # But better: iterate such that current A_i is the max in subset
+        
+        # We'll try each item as the one providing max A_i
+        # For items[0..i], if we pick current item (which has max A_i among selected),
+        # then we can only choose from indices 0 to i
+        
+        # Use a max-heap (simulated with negative values) to keep track of largest B_i in current selection
+        # so we can remove them if needed
+        
+        heap = []  # max-heap for B_i values (store negative)
+        b_sum = 0
+        
+        # Process items in increasing order of A_i
+        for i in range(N):
+            a_val, b_val, idx = items[i]
+            
+            # Include current item
+            heapq.heappush(heap, -b_val)
+            b_sum += b_val
+            
+            # If we have more than K items, remove the one with largest B_i
+            if len(heap) > K:
+                max_b_neg = heapq.heappop(heap)
+                b_sum += max_b_neg  # since max_b_neg is negative
+            
+            # If we have exactly K items, update answer
+            if len(heap) == K:
+                # Current a_val is the maximum A_i among selected items
+                # because items are sorted by A_i
+                result = a_val * b_sum
+                min_result = min(min_result, result)
+        
+        print(min_result)
+
+solve()

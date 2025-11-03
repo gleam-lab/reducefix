@@ -1,0 +1,42 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    int n, k;
+    cin >> n >> k;
+    vector<int> a(n);
+    for (int i = 0; i < n; i++) {
+        cin >> a[i];
+    }
+    
+    sort(a.begin(), a.end());
+    
+    // We are removing exactly K elements, leaving N-K elements
+    int remaining = n - k;
+    int ans = INT_MAX;
+    
+    // Try all possible ways to remove K elements from the ends
+    // We can remove i elements from the left and (k-i) elements from the right
+    for (int i = 0; i <= k; i++) {
+        int left_remove = i;
+        int right_remove = k - i;
+        
+        // Check if we have enough elements to remove
+        if (left_remove + right_remove > n || left_remove > n || right_remove > n) {
+            continue;
+        }
+        
+        // After removing 'left_remove' from left and 'right_remove' from right
+        // The remaining array is from index [left_remove] to [n-1-right_remove]
+        int left_idx = left_remove;
+        int right_idx = n - 1 - right_remove;
+        
+        // Make sure we have valid indices and correct number of remaining elements
+        if (left_idx <= right_idx && right_idx - left_idx + 1 == remaining) {
+            ans = min(ans, a[right_idx] - a[left_idx]);
+        }
+    }
+    
+    cout << ans << endl;
+    return 0;
+}

@@ -1,0 +1,109 @@
+class UnionFind:
+    def __init__(self, n):
+        self.par = list(range(n))
+        self.size = [1] * n
+
+    def find(self, x):
+        if self.par[x] != x:
+            self.par[x] = self.find(self.par[x])
+        return self.par[x]
+
+    def unite(self, x, y):
+        x = self.find(x)
+        y = self.find(y)
+        if x == y:
+            return False
+        if self.size[x] < self.size[y]:
+            x, y = y, x
+        self.par[y] = x
+        self.size[x] += self.size[y]
+        return True
+
+    def same(self, x, y):
+        return self.find(x) == self.find(y)
+
+    def get_size(self, x):
+        return self.size[self.find(x)]
+
+import sys
+
+def main():
+    data = sys.stdin.read().split()
+    if not data:
+        return
+    
+    n = int(data[0])
+    q = int(data[1])
+    
+    # Store the connected component for each root
+    components = [[] for _ in range(n+1)]
+    for i in range(1, n+1):
+        components[i] = [i]
+    
+    uf = UnionFind(n+1)
+    queries = []
+    index = 2
+    for i in range(q):
+        t = int(data[index]); index += 1
+        if t == 1:
+            u = int(data[index]); v = int(data[index+1]); index += 2
+            queries.append((1, u, v))
+        else:
+            v = int(data[index]); k = int(data[index+1]); index += 2
+            queries.append((2, v, k))
+    
+    ans = []
+    
+    for query in queries:
+        if query[0] == 1:
+            u, v = query[1], query[2]
+            if not uf.same(u, v):
+                root_u = uf.find(u)
+                root_v = uf.find(v)
+                
+                # Always merge smaller into larger
+                if uf.size[root_u] < uf.size[root_v]:
+                    u, v = v, u
+                    root_u, root_v = root_v, root_u
+                
+                # Merge components
+                comp_u = components[root_u]
+                comp_v = components[root_v]
+                
+                # Combine and sort in descending order, keep at most 10 largest
+                merged = []
+                i, j = 0, 0
+                # Merge two sorted lists (both are in descending order)
+                while len(merged) < 10 and (i < len(comp_u) or j < len(comp_v)):
+                    if i >= len(comp_u):
+                        merged.append(comp_v[j])
+                        j += 1
+                    elif j >= len(comp_v):
+                        merged.append(comp_u[i])
+                        i += 1
+                    else:
+                        if comp_u[i] > comp_v[j]:
+                            merged.append(comp_u[i])
+                            i += 1
+                        else:
+                            merged.append(comp_v[j])
+                            j += 1
+                
+                # Update the root of the merged component
+                uf.unite(u, v)
+                new_root = uf.find(u)
+                components[new_root] = merged
+                
+        else:  # Type 2 query
+            v, k = query[1], query[2]
+            root = uf.find(v)
+            comp = components[root]
+            if k <= len(comp):
+                ans.append(str(comp[k-1]))
+            else:
+                ans.append("-1")
+    
+    print("\n".join(ans))
+
+if __name__ == "__main__":
+    main()

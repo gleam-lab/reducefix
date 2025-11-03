@@ -1,0 +1,60 @@
+n, m = map(int, input().split())
+captured = set()
+
+# Knight moves: all 8 possible L-shaped moves
+moves = [(2,1), (1,2), (-1,2), (-2,1), (-2,-1), (-1,-2), (1,-2), (2,-1)]
+
+for _ in range(m):
+    a, b = map(int, input().split())
+    # For each existing piece, mark all squares it can capture
+    for dx, dy in moves:
+        x, y = a + dx, b + dy
+        if 1 <= x <= n and 1 <= y <= n:
+            captured.add((x, y))
+
+# Total empty squares that are NOT under threat
+ans = n * n - len(captured)
+
+# But we must not count occupied squares as available
+# However, captured set only includes squares that are threatened (and may or may not be occupied)
+# The problem asks for placing on EMPTY squares that are NOT capturable
+# So total safe empty squares = total grid - (occupied + threatened but not occupied)
+# But note: a square might be both occupied and threatened — we must avoid double counting
+
+# We need to subtract:
+# 1. All occupied squares (they're not empty)
+# 2. All threatened squares that are empty
+
+# So: answer = total squares - occupied squares - (threatened squares that are not occupied)
+
+# Let's collect occupied squares
+occupied = set()
+for _ in range(m):
+    # We already read them once, so re-read or store earlier
+    pass
+
+# Rewind and reprocess
+occupied = set()
+import sys
+input_lines = sys.stdin.read().splitlines()
+n, m = map(int, input_lines[0].split())
+pieces = []
+for i in range(1, m+1):
+    a, b = map(int, input_lines[i].split())
+    occupied.add((a, b))
+    pieces.append((a, b))
+
+captured.clear()
+for a, b in pieces:
+    for dx, dy in moves:
+        x, y = a + dx, b + dy
+        if 1 <= x <= n and 1 <= y <= n:
+            captured.add((x, y))
+
+# Threatened squares that are NOT occupied
+threatened_empty = captured - occupied
+
+# Total available = total squares - occupied - threatened_empty
+ans = n * n - len(occupied) - len(threatened_empty)
+
+print(ans)

@@ -1,0 +1,35 @@
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int N, K;
+    cin >> N >> K;
+    vector<int> A(N);
+    for (int i = 0; i < N; ++i) {
+        cin >> A[i];
+    }
+
+    sort(A.begin(), A.end());
+
+    // We are removing exactly K elements, so we keep (N - K) elements.
+    // To minimize (max - min) of the remaining sequence,
+    // we should consider all possible contiguous subarrays of length (N - K)
+    // in the sorted array, because the optimal remaining elements must be consecutive
+    // in the sorted order (otherwise we could get a smaller range).
+
+    int ans = A[N - 1] - A[0]; // worst case: no removal benefit
+    int keep = N - K;
+
+    // Check all contiguous segments of length 'keep'
+    for (int i = 0; i + keep - 1 < N; ++i) {
+        ans = min(ans, A[i + keep - 1] - A[i]);
+    }
+
+    cout << ans << endl;
+
+    return 0;
+}

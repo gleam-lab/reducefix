@@ -1,0 +1,247 @@
+```python
+n, k = map(int, input().split())
+A = list(map(int, input().split()))
+
+# We are removing exactly K elements, so we keep (n - k) elements.
+# We want to minimize (max(B) - min(B)) where B is the remaining subsequence in original order.
+
+# Since we must preserve the original order, one optimal strategy is to consider contiguous segments
+# of length (n - k) in the sorted array, but we must ensure that the indices in the original array
+# allow such a segment to be selected without violating order.
+
+# However, note: we can choose any K elements to remove, so the remaining elements stay in order.
+# The key insight: to minimize max - min, we should aim for the smallest range.
+# So sort the array along with keeping original indices.
+
+# Alternate approach:
+# After sorting by value, we can try all possible contiguous subarrays of length (n-k) in the sorted array,
+# and check if the corresponding indices in the original array can form a valid subsequence (i.e., appear in increasing order).
+# But checking each contiguous group for index-increasing property would be O(n) per group -> O(n^2), too slow.
+
+# Better idea:
+# Instead, realize that the optimal B will consist of a prefix of some length i, 
+# then a suffix of length (n-k-i), because removing K elements optimally to minimize range often involves
+# removing from both ends. But not necessarily — however, due to ordering constraint, the best candidates
+# are those where we remove some number from the left and some from the right.
+
+# Actually: we can only remove K elements arbitrarily, but the remaining must be in original order.
+# So one efficient solution: try all splits where we keep the first i elements and last (n-k-i) elements,
+# such that total kept is n-k. That is, remove a middle segment of length K.
+
+# Specifically: we can keep [0:i] and [j:n] such that i + (n - j) == n - k  => j = i + k
+# So we let i go from 0 to n-k, and j = i + k, then the kept elements are A[0:i] + A[j:n]
+# But these kept elements are in order, since they are prefix and suffix.
+
+# Then B = A[0:i] concatenated with A[i+k:n], and we need min(B) and max(B).
+# min(B) = min(A[0:i] + A[i+k:n])
+# max(B) = max(A[0:i] + A[i+k:n])
+
+# But wait: this assumes we remove a contiguous block from the middle. Is that sufficient?
+
+# Yes! Because we are free to remove any K elements. To minimize the range of the remaining sequence,
+# it's always optimal to remove a contiguous block in the middle? Not exactly — but note:
+# We cannot reorder. However, if we sort the array, the smallest ranges come from consecutive values.
+# But we are constrained by the original positions.
+
+# However, here's a known similar problem: we fix the set of remaining elements to be as close in value as possible,
+# but their indices must be increasing.
+
+# Known solution: 
+# Sort the array with indices. Then for each contiguous segment of length (n-k) in the sorted array,
+# check if the indices of these elements are in increasing order. If yes, update the answer.
+
+# But worst-case O(n^2), which is too slow for n=2e5.
+
+# Alternative known solution: 
+# We can instead fix the leftmost and rightmost elements of B. Suppose min(B)=x and max(B)=y.
+# Then all elements between x and y in the array (by index) must be included or not? Not necessarily.
+
+# Another idea: 
+# We can use two pointers or sliding window on the sorted array, but we need to verify that the indices 
+# of the chosen (n-k) elements are in increasing order.
+
+# But note: we don't require the values to be consecutive, just the final sequence to be in original order.
+
+# Insight: 
+# The remaining elements form a subsequence of the original array. We want to minimize (max - min).
+# We can do: sort by value, then use a sliding window of size (n-k) and check if the indices in the window 
+# can form an increasing sequence (i.e., the minimum index in the window is less than the next, etc.? No, we need the entire set to appear in increasing order of indices).
+
+# Actually, we don't need them to be consecutive in index, just increasing. So we can take a window of (n-k) 
+# consecutive elements in sorted order, and then check if there exists a subsequence of length (n-k) in the original array using only these values and in increasing index order.
+
+# But how to check quickly?
+
+# Alternatively, we can precompute the minimum number of removals needed to leave a subsequence consisting of values in [L,R]. 
+# But that might be complex.
+
+# Let's go back: known similar problems suggest that the optimal solution is achieved by keeping a prefix and a suffix.
+# Why? Because if we are to minimize max-min, we likely want to exclude extreme values. And since the array has fixed order, 
+# the simplest way is to remove a contiguous block from the middle.
+
+# In fact, many accepted solutions for this problem (from known contests) use:
+# ans = min_{i=0}^{n-k} ( max(A[0:i] + A[i+k:n]) - min(A[0:i] + A[i+k:n]) )
+
+# But wait: what if the optimal removal is not a contiguous block? Example: 
+# A = [1, 3, 2, 4], K=2, N=4 -> keep 2 elements.
+# Possibilities:
+# Keep [1,3]: range=2
+# Keep [1,2]: range=1
+# Keep [1,4]: range=3
+# Keep [3,2]: range=1
+# Keep [3,4]: range=1
+# Keep [2,4]: range=2
+# Best is 1.
+
+# Now try with prefix+suffix:
+# i=0: keep A[0:0] + A[2:4] = [2,4] -> range=2
+# i=1: keep A[0:1] + A[3:4] = [1] + [4] = [1,4] -> range=3
+# i=2: keep A[0:2] + A[4:4] = [1,3] -> range=2
+# Minimum = 2, but expected is 1.
+
+# So this method fails.
+
+# Therefore, we must consider non-contiguous removals.
+
+# But note: in the example above, the optimal kept elements [1,2] are at indices 0 and 2. 
+# This corresponds to removing indices 1 and 3. The removed elements are not contiguous.
+
+# How can we handle this?
+
+# Correct approach:
+
+# Step 1: sort the array by value, keeping track of indices.
+# Step 2: use a sliding window of length (n-k) over the sorted array. For each window, we have a candidate set of values.
+#         The range is A_sorted[r] - A_sorted[l].
+# Step 3: check whether the indices of the elements in the current window can form an increasing subsequence (i.e., there exists a subsequence in the original array that uses exactly these elements in order). 
+#         But actually, we don't need to use exactly these elements — we can use any subset? No, we are forced to use exactly the elements in the window? 
+#         No: the window gives us a set of values that are close, but we are allowed to skip some of them as long as we keep (n-k) elements.
+
+# Actually, no: the window is a contiguous segment in sorted order of length (n-k). We are considering: can we select (n-k) elements all within this value range such that their indices are increasing?
+
+# But we want the minimal range, so we try all windows.
+
+# However, we are not restricted to taking exactly the elements in the window — but if we take elements outside the window, the range would be larger.
+
+# So for a fixed window [l, r] with values from A_sorted[l] to A_sorted[r], if we can find a subsequence of length (n-k) in the original array that uses only elements with values in [A_sorted[l], A_sorted[r]], then the range is at most A_sorted[r]-A_sorted[l].
+
+# But we want exactly the minimal possible range.
+
+# So algorithm:
+#   Sort A with indices: arr = sorted((A[i], i) for i in range(n))
+#   Use two pointers l, r. For each l, extend r until we have at least (n-k) elements in [l,r].
+#   Then, for the current window [l, r], check if there exists an increasing subsequence of length (n-k) among the elements in this window (by index).
+#   But "increasing subsequence" here just means we can pick (n-k) elements from the window whose indices are in increasing order.
+
+# How to check that quickly? 
+#   We can extract all indices from the window, sort them, and see if the longest increasing subsequence is >= (n-k)? 
+#   But LIS on up to (n) elements for each window is O(n^2 log n) worst-case.
+
+# Alternatively, note: any set of indices can be ordered increasingly, so the question is: can we pick (n-k) elements from the window such that their indices are in increasing order? 
+#   The answer is always YES if we have at least (n-k) elements in the window — because we can sort the indices and pick them in increasing order. 
+#   BUT: we are constrained by the original array: we cannot change the order. However, when we extract the elements from the original array, we take them in the order they appear. 
+#   So if we have a set S of elements (with values in [l,r]), we can form a subsequence from the original array by taking the elements of S in the order of appearance (i.e., increasing index). 
+#   So as long as |S| >= (n-k), we can choose any (n-k) of them? But we must preserve order — but since we are going to take them in increasing index order, that matches the original order.
+
+# However, we are not required to take contiguous elements. We can skip around. So if we have a set of elements (at least n-k) whose values are in [min_val, max_val], then we can always form a subsequence of length (n-k) by picking any (n-k) of them in increasing index order.
+
+# But wait: we are allowed to skip arbitrarily. So if there are at least (n-k) elements in the value range [L,R], then we can form such a subsequence.
+
+# Therefore, the condition is simply: count of elements in [L,R] >= (n-k).
+
+# But that is always true for our window since we are taking a window of size at least (n-k). 
+
+# So then the minimal range is the minimal (arr[r][0] - arr[l][0]) over all l,r such that r-l+1 >= (n-k)? 
+# But that would be the minimal difference between the smallest and largest in any (n-k) consecutive elements in sorted order.
+
+# However, that does not consider the possibility that even if there are enough elements in the range, they might not be selectable without violating something? 
+# But we just argued: if there are at least (n-k) elements in the value range [arr[l][0], arr[r][0]], then we can select (n-k) of them in increasing index order to form a valid B.
+
+# Therefore, the answer is: min_{i=0}^{n-(n-k)} (arr[i+n-k-1][0] - arr[i][0])
+
+# But wait: in the earlier example: A = [1,3,2,4], K=2, so n-k=2.
+# Sorted: [(1,0), (2,2), (3,1), (4,3)]
+# Contiguous windows of length 2:
+#   [1,2]: range=1 -> and there are 2 elements -> we can form a subsequence of length 2? 
+#       Elements: 1 at index0, 2 at index2 -> we can take them in order: [1,2] -> valid.
+#   [2,3]: range=1 -> elements: 2 at index2, 3 at index1 -> but index1 < index2, so we cannot take 3 then 2? 
+#       But we can skip 3? No, we are restricted to values in [2,3]? 
+#       But we don't have to take both. We need to take 2 elements from the entire array that are in [2,3]. 
+#       The elements are: 3 (index1), 2 (index2). We can take 3 then 2? But in the original array, 3 comes before 2? 
+#       No: 3 is at index1, 2 is at index2 -> so we can take 3 then 2? But that would be [3,2] which is valid and in order.
+#       So [3,2] has range 1.
+#   [3,4]: range=1 -> elements: 3 at index1, 4 at index3 -> [3,4] -> range=1.
+
+# So the minimal range is 1.
+
+# But the algorithm: min over i of (arr[i+1][0]-arr[i][0]) for windows of length 2? 
+#   i=0: 2-1=1
+#   i=1: 3-2=1
+#   i=2: 4-3=1
+# So answer=1.
+
+# But wait: what if the minimal range window does not have enough elements? 
+#   We are taking contiguous windows in sorted order of length exactly (n-k). So it has exactly (n-k) elements.
+
+# But note: there might be duplicate values. But the window is over the sorted array, so duplicates are adjacent.
+
+# However, what if we have: A = [1, 100, 2, 101], K=2, n-k=2.
+# Sorted: [(1,0),(2,2),(100,1),(101,3)]
+# Windows:
+#   [1,2]: range=1 -> elements: 1(index0), 2(index2) -> can form [1,2] -> valid.
+#   [2,100]: range=98
+#   [100,101]: range=1 -> elements: 100(index1), 101(index3) -> [100,101] -> valid.
+# So answer=1.
+
+# But what if we have: A = [10, 1, 2, 20], K=2, n-k=2.
+# We want to keep two elements. Best: [1,2] -> range=1.
+# Sorted: [(1,1),(2,2),(10,0),(20,3)]
+# Window [1,2]: range=1 -> indices 1 and 2 -> increasing -> valid.
+
+# So it works.
+
+# But wait: what if the (n-k) closest values are not consecutive in the sorted array? 
+#   No, because we are looking for the minimal range, and the minimal range for (n-k) elements is achieved by a contiguous block in sorted order.
+
+# Therefore, the answer is: 
+#   sort the array with indices
+#   ans = min_{i=0}^{k} (arr[i+n-k-1][0] - arr[i][0])
+
+# Why i from 0 to k? 
+#   We have n elements. We want a contiguous block of length L = n-k.
+#   The starting index i can go from 0 to n - (n-k) = k.
+
+# Example: n=4, k=2, then i from 0 to 2 (inclusive) -> 3 windows.
+
+# But wait: in the failing case:
+# Input: "2 0" -> n=2, k=0, so we remove 0 elements, keep 2.
+# A = [780031076, 658404808]
+# Then n-k = 2.
+# Sorted: [(658404808,1), (780031076,0)]
+# Then we take window from i=0 to i=k=0 (only one window):
+#   arr[0+2-1][0] - arr[0][0] = arr[1][0] - arr[0][0] = 780031076 - 658404808 = 121626268 -> matches expected.
+
+# But what about the order? 
+#   We are allowed to keep all elements. The resulting sequence B is the entire array: [780031076, 658404808]
+#   max(B)=780031076, min(B)=658404808, difference=121626268.
+
+# So it matches.
+
+# But what about the earlier counterexample to the prefix-suffix method? It now works.
+
+# However, wait: what if the minimal range window has elements that are not in increasing index order? 
+#   We don't care about the order of selection — we can always pick the elements in increasing index order. 
+#   The resulting sequence B will be the elements of the window sorted by index (in increasing order). 
+#   But is that allowed? 
+#   Yes, because we are allowed to remove any K elements arbitrarily. The remaining elements will appear in the original order, which is by increasing index.
+
+# Therefore, we can always form a subsequence from the window by taking the elements in increasing index order.
+
+# But note: the window gives us a set of (n-k) elements (if we take a contiguous block of (n-k) in sorted order). 
+#   We are not forced to take exactly those (n-k) elements? 
+#   Actually, we are considering every contiguous block of (n-k) elements in sorted order. 
+#   And we are computing the range for that block. 
+#   And we know that we can form a valid B from any such block (by taking the elements in increasing index order). 
+#   And the range of B will be at most (max_value - min_value) of the block.
+
+# But could there be

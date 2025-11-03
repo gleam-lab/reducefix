@@ -1,0 +1,75 @@
+n = int(input())
+a = list(map(int, input().split()))
+
+# dp[i][0]: maximum exp up to i-th monster where the last defeated monster was at an odd position (1st, 3rd, ...)
+# dp[i][1]: maximum exp up to i-th monster where the last defeated monster was at an even position (2nd, 4th, ...)
+# However, note: the "even-numbered defeated monster" means the 2nd, 4th, ... among the ones he defeats, not in the original sequence.
+# So we need to track whether the next defeat will be odd or even in the defeating order.
+
+# Let's redefine:
+# dp[i][0]: max exp after considering first i monsters, with an even number of defeats so far (so next defeat gets normal XP)
+# dp[i][1]: max exp after considering first i monsters, with an odd number of defeats so far (so next defeat gets double XP)
+
+dp = [[0, 0] for _ in range(n+1)]
+
+for i in range(1, n+1):
+    # Option 1: skip the i-th monster
+    dp[i][0] = max(dp[i-1][0], dp[i-1][1])
+    dp[i][1] = max(dp[i-1][0], dp[i-1][1])
+    
+    # Option 2: defeat the i-th monster
+    # If current number of defeats is even (state 0), then this defeat is the (odd)th -> no bonus
+    # But wait: if we are in state 0 (even count), then next defeat is 1st, 3rd, 5th... -> odd-numbered -> no bonus? 
+    # Actually: 
+    # - state 0: even number of defeats -> next defeat is (even+1)=odd-numbered in defeat order -> gains X only
+    # - state 1: odd number of defeats -> next defeat is (odd+1)=even-numbered in defeat order -> gains 2X
+    
+    # So defeating from state 0: gain a[i-1], move to state 1 (odd count)
+    # Defeating from state 1: gain 2*a[i-1], move to state 0 (even count)
+    
+    # Thus:
+    # We can update by considering transitions
+    # But we need to compute both states properly
+    
+    # Instead, let's do:
+    # From previous state 0: defeat -> new state 1, add a[i-1]
+    # From previous state 1: defeat -> new state 0, add 2*a[i-1]
+    
+    candidate0_from_prev1 = dp[i-1][1] + 2 * a[i-1]  # was odd count, now even after defeat (even-numbered defeat)
+    candidate1_from_prev0 = dp[i-1][0] + a[i-1]      # was even count, now odd after defeat (odd-numbered defeat)
+    
+    # But skipping doesn't change the state, so we already set both states to max(prev)
+    # Now update only the state that changes due to defeating
+    
+    # Actually, we should consider both actions independently
+    # After skipping: both states carry forward the best of previous
+    # After defeating: we have two possibilities
+    
+    # So better approach:
+    # dp[i][0] = max( dp[i-1][0], dp[i-1][1], dp[i-1][1] + 2*a[i-1] )? No, because state must reflect parity
+    
+    # Correct way:
+    # We maintain two states: [even_count_of_defeats, odd_count_of_defeats]
+    
+    # Skip: state carries over
+    skip_even = max(dp[i-1][0], dp[i-1][1])  # but we don't know which state we're in? No, we preserve both
+    # Actually, skipping preserves the state. So:
+    #   dp[i][0] = max(dp[i][0], dp[i-1][0])  # skip while being in even state
+    #   dp[i][1] = max(dp[i][1], dp[i-1][1])  # skip while being in odd state
+    # But above we set both to max(...), which is wrong.
+    
+    # Reset:
+    dp[i][0] = 0
+    dp[i][1] = 0
+    
+    # Option: skip monster i
+    dp[i][0] = max(dp[i][0], dp[i-1][0])
+    dp[i][1] = max(dp[i][1], dp[i-1][1])
+    
+    # Option: defeat monster i
+    # From state 0 (even defeats): after defeat -> odd defeats, gain A[i-1]
+    dp[i][1] = max(dp[i][1], dp[i-1][0] + a[i-1])
+    # From state 1 (odd defeats): after defeat -> even defeats, gain 2*A[i-1]
+    dp[i][0] = max(dp[i][0], dp[i-1][1] + 2 * a[i-1])
+
+print(max(dp[n]))

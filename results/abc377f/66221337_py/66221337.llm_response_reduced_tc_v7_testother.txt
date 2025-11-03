@@ -1,0 +1,290 @@
+```python
+import sys
+
+def main():
+    data = sys.stdin.read().split()
+    if not data:
+        print(0)
+        return
+        
+    N = int(data[0])
+    M = int(data[1])
+    
+    # Sets to store attacked lines and diagonals
+    rows = set()
+    cols = set()
+    diag1 = set()  # i + j
+    diag2 = set()  # i - j
+    
+    pieces = []
+    index = 2
+    for i in range(M):
+        a = int(data[index]); b = int(data[index+1]); index += 2
+        pieces.append((a, b))
+        rows.add(a)
+        cols.add(b)
+        diag1.add(a + b)
+        diag2.add(a - b)
+    
+    # Total squares under attack from all pieces (union of all attacks)
+    total_attacked = set()
+    
+    for a, b in pieces:
+        # Add entire row
+        # We don't need to add every cell if we're just counting
+        pass
+    
+    # Instead of enumerating all attacked cells (impossible for large N), 
+    # use inclusion-exclusion principle via sets of lines
+    total_covered = 0
+    
+    # All cells in attacked rows
+    total_covered += len(rows) * N
+    # All cells in attacked cols
+    total_covered += len(cols) * N
+    # All cells in attacked diag1 (i+j = c)
+    for s in diag1:
+        # number of solutions to i+j=s with 1<=i,j<=N
+        if s < 2 or s > 2*N:
+            count = 0
+        else:
+            low = max(1, s - N)
+            high = min(N, s - 1)
+            count = high - low + 1
+        total_covered += count
+    # All cells in attacked diag2 (i-j = d)
+    for d in diag2:
+        # number of solutions to i-j=d with 1<=i,j<=N
+        # i = j + d
+        j_low = max(1, 1 - d)
+        j_high = min(N, N - d)
+        if j_low <= j_high:
+            count = j_high - j_low + 1
+        else:
+            count = 0
+        total_covered += count
+
+    # Now subtract overcounts: intersections of two lines
+    # We'll use a set to track pairwise intersections that were double-counted
+    from collections import defaultdict
+    point_count = defaultdict(int)
+
+    for a, b in pieces:
+        # Each piece contributes to one row, one col, one diag1, one diag2
+        # But the intersections between these are overcounted
+        # Instead, let's directly compute union using inclusion exclusion on geometric lines
+        pass
+
+    # Better approach: instead of trying to compute union through inclusion-exclusion,
+    # realize that for M up to 1000, we can collect all attacked positions that are
+    # within the "influence" of the pieces, but only if they are near enough.
+    # However, N can be up to 1e9 so we cannot iterate over grid.
+
+    # Alternate correct approach:
+    # The attacked region is union of:
+    # - all rows containing pieces
+    # - all cols containing pieces
+    # - all diag1 (sum) containing pieces
+    # - all diag2 (diff) containing pieces
+    #
+    # We want |Union| = ?
+    # Use inclusion exclusion:
+    # |R ∪ C ∪ D1 ∪ D2| = 
+    #   |R| + |C| + |D1| + |D2|
+    # - |R∩C| - |R∩D1| - |R∩D2| - |C∩D1| - |C∩D2| - |D1∩D2|
+    # + |R∩C∩D1| + |R∩C∩D2| + |R∩D1∩D2| + |C∩D1∩D2|
+    # - |R∩C∩D1∩D2|
+
+    # But this is complicated. Instead, note that any square (i,j) is attacked if:
+    # i in rows OR j in cols OR (i+j) in diag1 OR (i-j) in diag2
+    #
+    # So safe squares are those with:
+    # i not in rows AND j not in cols AND (i+j) not in diag1 AND (i-j) not in diag2
+    #
+    # Let A = complement of rows -> size = N - len(rows)
+    # B = complement of cols -> size = N - len(cols)
+    # But they are not independent because of diagonals.
+    #
+    # We cannot iterate over all safe candidate rows/cols because N is huge.
+    #
+    # Insight: Only the constraints from the M=1000 pieces matter.
+    # The set of forbidden rows, cols, diag1, diag2 are small.
+    #
+    # However, the safe squares must avoid:
+    # - specific rows (at most 1000)
+    # - specific cols (at most 1000)
+    # - specific diag1 (at most 1000)
+    # - specific diag2 (at most 1000)
+    #
+    # So the number of safe squares is:
+    # Sum_{i not in rows} Sum_{j not in cols} [ (i+j) not in diag1 and (i-j) not in diag2 ]
+    #
+    # But we cannot loop over i and j because N is huge.
+    #
+    # Instead, we can iterate over possible i in safe_rows (which are O(N) but we don't want to loop)
+    # Alternative: total_safe = 0
+    # total_safe = (N - len(rows)) * (N - len(cols))   --> this would be if no diagonal constraints
+    # then subtract those that are in bad diagonals?
+    # But no, because even if i not in rows and j not in cols, it might still be attacked by diagonal
+    #
+    # Actually, a square is safe iff:
+    # i not in rows AND j not in cols AND (i+j) not in diag1 AND (i-j) not in diag2
+    #
+    # So:
+    # safe = 0
+    # But we cannot iterate over i,j.
+    #
+    # New idea: the only way a square can be safe is if it avoids the forbidden values.
+    # But since the forbidden sets are small, the safe squares are almost (N - |rows|)*(N - |cols|),
+    # minus those that fall on forbidden diagonals, but even that is hard.
+    #
+    # Even better: realize that if there is at least one piece, then its row, col, diag1, diag2 cover many squares.
+    # But in the failing case, output is 0, meaning no safe square exists.
+    #
+    # How can we check whether there exists ANY safe square?
+    # We need to know if there exists (i,j) such that:
+    # i not in rows, j not in cols, i+j not in diag1, i-j not in diag2.
+    #
+    # Since |rows|,|cols|,|diag1|,|diag2| <= M <= 1000, the number of forbidden i is <= 1000, same for others.
+    # So the number of allowed i is >= N - 1000, which for N=32 is 32-? but in example N=32, M=1000 but only 32 rows.
+    #
+    # Wait: in the input, N=32, M=1000, but there are only 32x32=1024 squares. And M=1000 pieces.
+    # So at most 24 empty squares.
+    #
+    # Therefore, when N is small (like 32), we can simply iterate over all squares.
+    # When N is large (up to 1e9), but M <= 1000, then the number of potentially safe squares is limited
+    # by the fact that they must lie outside the attacked rows/cols/diags.
+    #
+    # However, note: if N > 4*M, then possibly there are safe squares, but we need to count them.
+    #
+    # But observe: a square is attacked if it shares row, col, diag1, or diag2 with any piece.
+    # So safe squares must be in:
+    #   i not in any piece's row
+    #   j not in any piece's col
+    #   i+j not in {a_k+b_k}
+    #   i-j not in {a_k-b_k}
+    #
+    # The number of such (i,j) could be very large, but note that if the union of all attacked lines covers everything,
+    # then answer is 0.
+    #
+    # However, for large N, we cannot iterate over all i,j.
+    #
+    # BUT: here's the key: if N is large (say > 4*M), then there are likely safe squares, but we need to count them.
+    # But consider: the total number of forbidden rows is at most M, so available rows: N - |rows| >= N - M
+    # similarly for cols: N - |cols| >= N - M
+    # For diag1: at most M different sums, each sum covers at most N cells, but we care about coverage.
+    #
+    # Actually, we can use the inclusion-exclusion to compute the size of the union of all attacked cells.
+    # But with four types of lines, inclusion-exclusion has 2^4 - 1 = 15 terms.
+    #
+    # Let R = set of attacked rows
+    # C = set of attacked cols
+    # D1 = set of attacked diag1 (sums)
+    # D2 = set of attacked diag2 (diffs)
+    #
+    # Then attacked cells = 
+    #   Union_{r in R} row_r 
+    #   ∪ Union_{c in C} col_c 
+    #   ∪ Union_{s in D1} diag1_s 
+    #   ∪ Union_{d in D2} diag2_d
+    #
+    # |attacked| = ?
+    #
+    # Inclusion Exclusion:
+    # S1 = sum of sizes of individual lines
+    # S2 = sum of sizes of intersections of every pair of lines
+    # S3 = sum of sizes of intersections of every triple
+    # S4 = sum of sizes of intersections of all four
+    # |U| = S1 - S2 + S3 - S4
+    #
+    # But the problem: two lines of same type don't intersect (e.g., two rows are disjoint), 
+    # but we are taking union over multiple rows, so actually:
+    # |∪ row_r| = |R| * N  (since each row has N cells and rows are disjoint)
+    # Similarly |∪ col_c| = |C| * N
+    # But row and col intersect at one cell.
+    #
+    # Actually, the sets are not disjoint across types.
+    #
+    # Standard inclusion exclusion for multiple sets:
+    # Let A1...A_{k} be the lines (each line is a set of cells)
+    # k = |R| + |C| + |D1| + |D2| <= 4*M = 4000
+    # Since M<=1000, k<=4000, so we can do inclusion exclusion over k sets? 
+    # But 2^k is too big.
+    #
+    # Alternative: group by type.
+    #
+    # Let A = ∪_{r∈R} row_r
+    # B = ∪_{c∈C} col_c
+    # C = ∪_{s∈D1} diag1_s
+    # D = ∪_{d∈D2} diag2_d
+    #
+    # Then |A ∪ B ∪ C ∪ D| = 
+    # |A| + |B| + |C| + |D| 
+    # - |A∩B| - |A∩C| - |A∩D| - |B∩C| - |B∩D| - |C∩D|
+    # + |A∩B∩C| + |A∩B∩D| + |A∩C∩D| + |B∩C∩D|
+    # - |A∩B∩C∩D|
+    #
+    # Now compute each term:
+    # |A| = |R| * N
+    # |B| = |C| * N
+    # |C| = sum_{s in D1} |diag1_s| 
+    #     where |diag1_s| = number of (i,j) with i+j=s, 1<=i,j<=N
+    #     = max(0, min(s-1, 2*N+1-s, N)) 
+    #     actually: low_i = max(1, s-N), high_i = min(N, s-1), so count = max(0, high_i - low_i + 1)
+    # |D| = sum_{d in D2} |diag2_d| 
+    #     where |diag2_d| = number of (i,j) with i-j=d, 1<=i,j<=N
+    #     i = j + d, j>=1 => i>=1+d, j<=N => i<=N+d, but also i>=1, i<=N
+    #     so j >= max(1, 1-d), j <= min(N, N-d)
+    #     count = max(0, min(N, N-d) - max(1, 1-d) + 1)
+    #
+    # Now intersections:
+    # |A ∩ B| = |R| * |C|   (each row r and col c intersect at (r,c))
+    # |A ∩ C| = for each r in R, for each s in D1: the cell (r, s-r) exists if 1<=s-r<=N
+    #         = sum_{r in R} sum_{s in D1} [1 <= s-r <= N]
+    #         = sum_{r in R} |{s in D1: r+1 <= s <= r+N}|
+    # Similarly, |A ∩ D| = for each r in R, for each d in D2: cell (r, r-d) exists if 1<=r-d<=N
+    #                   = sum_{r in R} |{d in D2: r-N <= d <= r-1}|
+    # |B ∩ C| = for each c in C, for each s in D1: cell (s-c, c) exists if 1<=s-c<=N
+    #         = sum_{c in C} |{s in D1: c+1 <= s <= c+N}|
+    # |B ∩ D| = for each c in C, for each d in D2: cell (c+d, c) exists if 1<=c+d<=N
+    #         = sum_{c in C} |{d in D2: 1-c <= d <= N-c}|
+    # |C ∩ D| = for each s in D1, for each d in D2: solve i+j=s, i-j=d -> i=(s+d)/2, j=(s-d)/2
+    #         exists if i,j integers in [1,N]
+    #         = sum_{s in D1} sum_{d in D2} [ (s+d) % 2 == 0 and 1<=(s+d)//2<=N and 1<=(s-d)//2<=N ]
+    #
+    # Then triple intersections:
+    # |A ∩ B ∩ C| = for each r in R, c in C, s in D1: does (r,c) satisfy r+c=s? 
+    #             = number of triples (r,c,s) with r in R, c in C, s in D1, and r+c=s
+    # |A ∩ B ∩ D| = number of (r,c,d) with r in R, c in C, d in D2, and r-c=d
+    # |A ∩ C ∩ D| = for each r in R, s in D1, d in D2: 
+    #               i=r, j=s-r, and we require i-j = r - (s-r) = 2*r - s = d
+    #               so if 2*r - s = d and 1<=s-r<=N, then count 1
+    #             = sum_{r in R} sum_{s in D1} sum_{d in D2} [d == 2*r - s and 1<=s-r<=N]
+    #             = sum_{r in R} sum_{s in D1} [ (2*r - s) in D2 and 1<=s-r<=N ]
+    # |B ∩ C ∩ D| = for each c in C, s in D1, d in D2:
+    #               j=c, i=s-c, and i-j = (s-c)-c = s-2*c = d
+    #             = sum_{c in C} sum_{s in D1} [ (s-2*c) in D2 and 1<=s-c<=N ]
+    #
+    # Finally:
+    # |A ∩ B ∩ C ∩ D| = number of (r,c,s,d) with r in R, c in C, s in D1, d in D2, and r+c=s, r-c=d
+    #                 which implies s = r+c, d = r-c, so for each r,c, if s=r+c in D1 and d=r-c in D2, then count 1
+    #                 = number of (r,c) in R×C such that (r+c) in D1 and (r-c) in D2
+    #
+    # This is computable since |R|,|C|,|D1|,|D2| <= M <= 1000.
+    #
+    # Steps:
+    R = rows
+    C = cols
+    D1 = diag1
+    D2 = diag2
+    
+    # S1
+    A_size = len(R) * N
+    B_size = len(C) * N
+    
+    C_size = 0
+    for s in D1:
+        low_i = max(1, s - N)
+        high_i = min(N, s - 1)
+        if low_i <= high_i:
+            C_size += high_i

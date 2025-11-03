@@ -1,0 +1,29 @@
+import math
+
+N = int(input())
+X = 0
+Y = 0
+total_cost = 0.0
+
+# Store the points
+points = []
+for _ in range(N):
+    x, y = map(int, input().split())
+    points.append((x, y))
+
+# Start from origin (0, 0)
+prev_x, prev_y = 0, 0
+
+# Go through each point in order
+for x, y in points:
+    dx = prev_x - x
+    dy = prev_y - y
+    total_cost += math.sqrt(dx * dx + dy * dy)
+    prev_x, prev_y = x, y
+
+# Return to origin
+dx = prev_x - 0
+dy = prev_y - 0
+total_cost += math.sqrt(dx * dx + dy * dy)
+
+print(total_cost)

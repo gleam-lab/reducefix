@@ -1,0 +1,37 @@
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int N, K;
+    cin >> N >> K;
+    vector<int> A(N);
+    for (int i = 0; i < N; ++i) {
+        cin >> A[i];
+    }
+
+    sort(A.begin(), A.end());
+
+    // We are removing exactly K elements, so we keep (N - K) elements.
+    int keep = N - K;
+    if (keep == 1) {
+        cout << 0 << endl;
+        return 0;
+    }
+
+    // Try all possible contiguous segments of length 'keep'
+    // Since the array is sorted, the optimal remaining sequence will be a contiguous block
+    // in the sorted array (otherwise we could always get a better range by moving to a contiguous block)
+    ll min_diff = LLONG_MAX;
+    for (int i = 0; i + keep - 1 < N; ++i) {
+        int j = i + keep - 1;
+        min_diff = min(min_diff, (ll)A[j] - A[i]);
+    }
+
+    cout << min_diff << endl;
+
+    return 0;
+}

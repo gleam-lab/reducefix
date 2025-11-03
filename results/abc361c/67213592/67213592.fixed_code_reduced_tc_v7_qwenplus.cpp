@@ -1,0 +1,41 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int n, k;
+    cin >> n >> k;
+    vector<int> v(n);
+    for (auto& val : v) {
+        cin >> val;
+    }
+    
+    sort(v.begin(), v.end());
+    
+    // We are removing exactly K elements, so we keep (n - k) elements.
+    // The optimal way is to remove some prefix and suffix such that total removed = k.
+    // Try all possible splits: remove i from left, k-i from right, for i in [0, k]
+    long long min_diff = 1e18;
+    
+    for (int left_removed = 0; left_removed <= k; left_removed++) {
+        int right_removed = k - left_removed;
+        if (left_removed + right_removed > n) continue;
+        if (n - left_removed - right_removed == 0) continue; // must have at least one element
+        
+        int left_idx = left_removed;
+        int right_idx = n - 1 - right_removed;
+        
+        long long diff = v[right_idx] - v[left_idx];
+        if (diff < min_diff) {
+            min_diff = diff;
+        }
+    }
+    
+    cout << min_diff << endl;
+    
+    return 0;
+}

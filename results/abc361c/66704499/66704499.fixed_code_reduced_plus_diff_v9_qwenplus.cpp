@@ -1,0 +1,32 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    int n, k;
+    cin >> n >> k;
+    
+    vector<int> a(n);
+    for (int i = 0; i < n; i++) {
+        cin >> a[i];
+    }
+    
+    sort(a.begin(), a.end());
+    
+    // We are removing exactly K elements
+    // So we will keep (n - k) elements
+    int keep = n - k;
+    int min_diff = a[n-1] - a[0]; // worst case: no removal helps
+    
+    // Try all possible contiguous segments of length 'keep'
+    // in the sorted array. Since we want to minimize max-min,
+    // the optimal remaining elements must form a contiguous block
+    // in the sorted array (because otherwise we could get a smaller range)
+    for (int i = 0; i + keep - 1 < n; i++) {
+        int j = i + keep - 1;
+        min_diff = min(min_diff, a[j] - a[i]);
+    }
+    
+    cout << min_diff << endl;
+    
+    return 0;
+}

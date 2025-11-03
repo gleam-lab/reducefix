@@ -8,6 +8,36 @@ from typing import Optional, List, Dict
 import json
 import requests
 
+# Import configurations from config.py
+try:
+    # Add current script directory to FRONT of path to avoid conflicts
+    _script_dir = os.path.dirname(os.path.abspath(__file__))
+    # Remove any existing entries and add to front
+    sys.path = [p for p in sys.path if p != _script_dir]
+    sys.path.insert(0, _script_dir)
+    
+    # Force reload if already imported
+    if 'config' in sys.modules:
+        import importlib
+        importlib.reload(sys.modules['config'])
+    
+    from config import (
+        DEFAULT_MODEL, DEFAULT_MAX_TOKENS, DEFAULT_TEMPERATURE, DEFAULT_TIMEOUT,
+        BAIDU_QIANFAN_URL, BAIDU_QIANFAN_TOKEN,
+        MAX_BAIDU_TOKENS, BAIDU_RATE_LIMIT_BACKOFF, BAIDU_RATE_LIMIT_RETRIES
+    )
+except ImportError as e:
+    print(f"[LLM Init Warning] config.py not found ({e}), using default values", file=sys.stderr)
+    DEFAULT_MODEL = "qwen-plus"
+    DEFAULT_MAX_TOKENS = 4096
+    DEFAULT_TEMPERATURE = 0.0
+    DEFAULT_TIMEOUT = 300
+    BAIDU_QIANFAN_URL = "https://qianfan.baidubce.com/v2/chat/completions"
+    BAIDU_QIANFAN_TOKEN = ""
+    MAX_BAIDU_TOKENS = 3000
+    BAIDU_RATE_LIMIT_BACKOFF = 30
+    BAIDU_RATE_LIMIT_RETRIES = 5
+
 # Attempt to import the client from tutor.py
 try:
     import tutor
@@ -24,22 +54,6 @@ except Exception as e:
     print(f"[LLM Init Error] Unexpected error importing/accessing tutor client: {e}", file=sys.stderr)
     traceback.print_exc()
     qwen_client = None
-
-
-DEFAULT_MODEL = "qwen-plus"
-DEFAULT_MAX_TOKENS = 4096
-DEFAULT_TEMPERATURE = 0.0
-DEFAULT_TIMEOUT = 300 # 5 minutes
-
-# Baidu Qianfan API (ERNIE) configuration
-BAIDU_QIANFAN_URL = "https://qianfan.baidubce.com/v2/chat/completions"
-# Access token should be provided via environment variable to avoid hard-coding credentials
-BAIDU_QIANFAN_TOKEN = ""
-
-# --- Rate limiting and retry parameters ---
-MAX_BAIDU_TOKENS = 3000  # Input token limit
-BAIDU_RATE_LIMIT_BACKOFF = 30  # seconds
-BAIDU_RATE_LIMIT_RETRIES = 5
 
 
 def _rough_token_count(text: str) -> int:

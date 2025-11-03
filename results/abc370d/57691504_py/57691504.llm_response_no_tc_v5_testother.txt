@@ -1,0 +1,132 @@
+```python
+import sys
+from collections import defaultdict
+
+def main():
+    data = sys.stdin.read().split()
+    H = int(data[0])
+    W = int(data[1])
+    Q = int(data[2])
+    
+    # Initialize union-find like structures for each row and column
+    # For each row, maintain left and right next wall positions
+    # For each column, maintain up and down next wall positions
+    left_parent = [dict() for _ in range(H+1)]  # left_parent[r][c] = next existing wall to the left in row r
+    right_parent = [dict() for _ in range(H+1)]  # right_parent[r][c] = next existing wall to the right in row r
+    up_parent = [dict() for _ in range(W+1)]    # up_parent[c][r] = next existing wall above in column c
+    down_parent = [dict() for _ in range(W+1)]  # down_parent[c][r] = next existing wall below in column c
+    
+    def find_left(r, c):
+        if c <= 0:
+            return 0
+        if c not in left_parent[r]:
+            return c
+        left_parent[r][c] = find_left(r, left_parent[r][c])
+        return left_parent[r][c]
+    
+    def find_right(r, c):
+        if c > W:
+            return W + 1
+        if c not in right_parent[r]:
+            return c
+        right_parent[r][c] = find_right(r, right_parent[r][c])
+        return right_parent[r][c]
+    
+    def find_up(c, r):
+        if r <= 0:
+            return 0
+        if r not in up_parent[c]:
+            return r
+        up_parent[c][r] = find_up(c, up_parent[c][r])
+        return up_parent[c][r]
+    
+    def find_down(c, r):
+        if r > H:
+            return H + 1
+        if r not in down_parent[c]:
+            return r
+        down_parent[c][r] = find_down(c, down_parent[c][r])
+        return down_parent[c][r]
+    
+    total_walls = H * W
+    index = 3
+    
+    for _ in range(Q):
+        r = int(data[index])
+        c = int(data[index + 1])
+        index += 2
+        
+        # Check if there's a wall at (r,c)
+        # In row r, is c reachable from itself to the left?
+        left_c = find_left(r, c)
+        right_c = find_right(r, c)
+        up_r = find_up(c, r)
+        down_r = find_down(c, r)
+        
+        if left_c == c and right_c == c and up_r == r and down_r == r:
+            # Wall exists at (r,c), destroy it
+            total_walls -= 1
+            
+            # Update the parent pointers
+            # For row r: connect c to its neighbors
+            left_neighbor = find_left(r, c - 1)
+            right_neighbor = find_right(r, c + 1)
+            left_parent[r][c] = left_neighbor
+            right_parent[r][c] = right_neighbor
+            
+            # For column c: connect r to its neighbors
+            up_neighbor = find_up(c, r - 1)
+            down_neighbor = find_down(c, r + 1)
+            up_parent[c][r] = up_neighbor
+            down_parent[c][r] = down_neighbor
+        else:
+            # No wall at (r,c), try to destroy first walls in each direction
+            destroyed = set()
+            
+            # Up direction
+            pos = find_up(c, r - 1)
+            if pos > 0:
+                # Check if path is clear: should be adjacent or all intermediate cells have no walls
+                # The next wall above should be at r-1 if we can destroy it
+                if pos == r - 1:
+                    destroyed.add((pos, c))
+            
+            # Down direction
+            pos = find_down(c, r + 1)
+            if pos <= H:
+                if pos == r + 1:
+                    destroyed.add((pos, c))
+            
+            # Left direction
+            pos = find_left(r, c - 1)
+            if pos > 0:
+                if pos == c - 1:
+                    destroyed.add((r, pos))
+            
+            # Right direction
+            pos = find_right(r, c + 1)
+            if pos <= W:
+                if pos == c + 1:
+                    destroyed.add((r, pos))
+            
+            total_walls -= len(destroyed)
+            
+            # Update the union-find structures for each destroyed wall
+            for dr, dc in destroyed:
+                # Update row dr
+                left_neighbor = find_left(dr, dc - 1)
+                right_neighbor = find_right(dr, dc + 1)
+                left_parent[dr][dc] = left_neighbor
+                right_parent[dr][dc] = right_neighbor
+                
+                # Update column dc
+                up_neighbor = find_up(dc, dr - 1)
+                down_neighbor = find_down(dc, dr + 1)
+                up_parent[dc][dr] = up_neighbor
+                down_parent[dc][dr] = down_neighbor
+    
+    print(total_walls)
+
+if __name__ == "__main__":
+    main()
+```

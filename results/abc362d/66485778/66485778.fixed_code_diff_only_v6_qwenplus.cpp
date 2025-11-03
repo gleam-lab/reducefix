@@ -1,0 +1,70 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+using i64 = long long;
+
+struct Node {
+    int x;
+    i64 w;
+    bool operator < (const Node& u) const {
+        return w > u.w; // min-heap: smaller weight has higher priority
+    }
+};
+
+constexpr i64 INF = 1e18;
+
+void solve() {
+    int n, m;
+    cin >> n >> m;
+    
+    vector<i64> a(n + 1);
+    for (int i = 1; i <= n; ++i) {
+        cin >> a[i];
+    }
+    
+    vector<vector<pair<int, int>>> g(n + 1);
+    for (int i = 0; i < m; ++i) {
+        int x, y, c;
+        cin >> x >> y >> c;
+        g[x].emplace_back(y, c);
+        g[y].emplace_back(x, c);
+    }
+    
+    vector<i64> dist(n + 1, INF);
+    vector<bool> visited(n + 1, false);
+    
+    // Initialize distance for vertex 1
+    dist[1] = a[1]; // Start with the weight of vertex 1
+    
+    priority_queue<Node> pq;
+    pq.push({1, dist[1]});
+    
+    while (!pq.empty()) {
+        auto [u, d] = pq.top();
+        pq.pop();
+        
+        if (visited[u]) continue;
+        visited[u] = true;
+        
+        for (const auto& [v, edge_weight] : g[u]) {
+            i64 new_dist = dist[u] + edge_weight + a[v];
+            if (new_dist < dist[v]) {
+                dist[v] = new_dist;
+                pq.push({v, dist[v]});
+            }
+        }
+    }
+    
+    // Output results for vertices 2 to N
+    for (int i = 2; i <= n; ++i) {
+        cout << dist[i];
+        if (i < n) cout << ' ';
+        else cout << '\n';
+    }
+}
+
+int main() {
+    cin.tie(nullptr)->sync_with_stdio(false);
+    solve();
+    return 0;
+}

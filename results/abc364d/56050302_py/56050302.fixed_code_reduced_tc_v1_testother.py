@@ -1,0 +1,49 @@
+import bisect
+
+n, q = map(int, input().split())
+a = list(map(int, input().split()))
+a.sort()
+
+for _ in range(q):
+    b, k = map(int, input().split())
+    
+    # Find the position where b would be inserted in sorted array a
+    pos = bisect.bisect_left(a, b)
+    
+    # We'll collect distances from candidate A points around the target B_j
+    # Use two pointers expanding from the insertion point
+    left = pos - 1
+    right = pos
+    distances = []
+    
+    # Instead of collecting all distances (which is O(N)), we only need up to k-th smallest
+    # But k can be large, so we need to consider an efficient way
+    # However, since N and Q up to 10^5, we cannot sort all distances for each query
+    
+    # Alternate approach: collect all distances? That would be O(N*Q) -> too slow
+    
+    # Correct approach: realize that we don't need to sort all distances
+    # We can use binary search on answer (the distance)
+    
+    # Let's change strategy: binary search on the distance d such that there are at least k points within distance d from b
+    
+    def count_points_within_radius(radius):
+        # Count how many points in a are within [b-radius, b+radius]
+        left_bound = b - radius
+        right_bound = b + radius
+        l_idx = bisect.bisect_left(a, left_bound)
+        r_idx = bisect.bisect_right(a, right_bound)
+        return r_idx - l_idx
+    
+    # Binary search on the minimum distance d such that at least k points are within distance d
+    lo = 0
+    hi = 2 * 10**8  # max possible distance
+    
+    while lo < hi:
+        mid = (lo + hi) // 2
+        if count_points_within_radius(mid) >= k:
+            hi = mid
+        else:
+            lo = mid + 1
+    
+    print(lo)

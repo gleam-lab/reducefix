@@ -1,0 +1,32 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int n, k;
+    cin >> n >> k;
+    
+    vector<int> a(n);
+    for (int i = 0; i < n; i++) {
+        cin >> a[i];
+    }
+    
+    sort(a.begin(), a.end());
+    
+    // We need to remove exactly K elements, so we keep (n - k) elements.
+    // The optimal solution will be a contiguous subarray of length (n - k) in the sorted array.
+    // Why? Because if we skip non-consecutive elements, we could get a smaller range by taking a contiguous block.
+    
+    int min_range = INT_MAX;
+    int keep = n - k;
+    
+    for (int i = 0; i + keep - 1 < n; i++) {
+        min_range = min(min_range, a[i + keep - 1] - a[i]);
+    }
+    
+    cout << min_range << endl;
+    
+    return 0;
+}

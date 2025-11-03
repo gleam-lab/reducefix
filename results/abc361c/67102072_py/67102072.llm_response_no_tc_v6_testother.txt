@@ -1,0 +1,152 @@
+```python
+n, k = map(int, input().split())
+a = list(map(int, input().split()))
+
+# We need to remove exactly K elements, so we keep (n - k) elements.
+# To minimize (max(B) - min(B)), we should choose a contiguous subsequence of the sorted array,
+# because if values are spread out, the difference will be larger.
+
+# Sort the array along with original indices to consider order? 
+# But note: we must preserve original order when forming B. However, since we can choose any K elements to remove,
+# the best strategy is to decide which (n-k) elements to keep such that they are as close in value as possible,
+# and their relative order in the original array is preserved.
+
+# Important insight:
+# Since we can only remove elements and concatenate the rest in original order,
+# the remaining elements must appear in the same order as in A.
+# So B is a subsequence of A (not necessarily contiguous in A, but in order).
+
+# However, to minimize (max - min), we want the kept values to be as close as possible.
+# Optimal approach:
+# 1. Consider sorting the array by value, but track original indices.
+# 2. Then, among all possible sets of (n-k) elements that can be kept (i.e., whose indices are increasing),
+#    find the one with minimal (max - min).
+# But checking all such sets is too expensive.
+
+# Alternate idea:
+# Since we want to minimize max - min, we can try to fix the smallest and largest values in B.
+# But more efficient idea:
+# Use sliding window on sorted array, but ensure that the selected elements can appear in increasing index order.
+
+# Actually, here's a better idea:
+# We are allowed to remove any K elements. So we are choosing a subsequence of length (n-k).
+# We want to minimize (max - min) of this subsequence.
+
+# How about this:
+# Sort by value, and then for every possible contiguous segment of length (n-k) in the sorted array,
+# check whether the corresponding indices form an increasing sequence (i.e., can be a valid subsequence in order).
+# But that would be O(n^2) in worst case.
+
+# Another known solution for this problem:
+# We can use two pointers or sliding window on the sorted array, and use a data structure to check if the indices of 
+# the current window can form an increasing sequence (i.e., there exists a subsequence of the original array of these values in order).
+
+# Actually, simpler idea:
+# Instead, note that the remaining elements must be in the original order. So we can try all possible left and right boundaries?
+# But that would be O(n^2).
+
+# Known efficient solution:
+# Sort the array by value, and then use a greedy / two-pointer method with a condition on indices.
+
+# Insight from known problems: 
+# The optimal answer is achieved when the kept elements form a contiguous range in the sorted array AND their indices are increasing.
+# So we can do:
+# - Create list of (value, index), sort by value.
+# - Use a sliding window of size (n-k) over this sorted list.
+# - For each window, check if the indices in that window can form an increasing subsequence (i.e., if we extract those indices, are they in increasing order?).
+#   But actually, we don't need them to be consecutive, just increasing — which they are if the minimum index in the window appears before the maximum index in the original array? 
+#   No, we need all indices to be in increasing order as per original positions.
+
+# Actually, no: within the window, we have a set of indices. We can always pick them in increasing order of index? 
+# But wait: the subsequence must appear in the original order. So if we have a set of indices, we can form a subsequence from them if we take them in increasing index order. 
+# And that will preserve the original order.
+
+# BUT: the values in the subsequence won't necessarily be in sorted order! But that doesn't matter — we only care about the min and max of the values.
+
+# However, the catch: when we form B, it's the values at those indices in the original order. But the min and max of B are just the min and max of the chosen values — regardless of order.
+
+# Therefore, the min and max of the kept elements depend only on which values we choose, not their order.
+
+# So: we can choose any set of (n-k) elements as long as their indices are in increasing order? 
+# But actually, we can choose any set of (n-k) elements — because we can remove others arbitrarily — and the resulting B will be in original order.
+
+# In fact, **any** subset of (n-k) elements can be made into a subsequence in original order — just by removing the others.
+
+# Therefore, the constraint of "original order" does not restrict which elements we can choose — it only determines the order in B, but since min and max are order-independent, we can ignore the order for the purpose of computing min and max.
+
+# So the problem reduces to:
+# Choose any (n-k) elements from A such that (max(chosen) - min(chosen)) is minimized.
+
+# And this is equivalent to: 
+# Sort the array, and find the minimum difference between the first and last element of any contiguous subarray of length (n-k) in the sorted array.
+
+# Why contiguous? Because if you skip an element in the middle, you could potentially get a smaller range by including a closer one.
+
+# Example: [1,3,5], n-k=2. 
+# Options: [1,3] -> diff=2, [1,5]->4, [3,5]->2. 
+# The minimal is 2, and both [1,3] and [3,5] are contiguous in sorted order.
+
+# So algorithm:
+# 1. Sort A.
+# 2. Slide a window of length (n-k) over the sorted array.
+# 3. For each window, compute (last - first) and take the minimum.
+
+# But wait: what if the same value appears multiple times? Still works.
+
+# Example from sample inputs (if provided) — but none given.
+
+# Let's test with: N=4, K=1, A=[1, 3, 5, 7]
+# We remove 1 element, keep 3.
+# Sorted: [1,3,5,7]
+# Windows of size 3:
+#   [1,3,5] -> 5-1=4
+#   [3,5,7] -> 7-3=4
+# Answer = 4.
+
+# Is that minimal? Yes.
+
+# Another: N=5, K=2, A=[1, 2, 3, 4, 5]
+# Keep 3 elements.
+# Windows:
+# [1,2,3] -> 2
+# [2,3,4] -> 2
+# [3,4,5] -> 2
+# Answer = 2.
+
+# But what if: A = [5, 1, 3, 2, 4], K=2, N=5
+# Sorted: [1,2,3,4,5]
+# Same as above — answer = 2.
+# Can we achieve 2? Yes: remove 5 and 1 -> keep [3,2,4] -> B = [3,2,4] -> max=4, min=2 -> diff=2.
+# Or remove 5 and 4 -> keep [1,3,2] -> max=3,min=1 -> diff=2.
+# But can we get lower? 1? Only if we have three numbers within 1, like [1,2,2] but we don't.
+# So yes.
+
+# However, wait: is it always safe to assume that we can pick any (n-k) elements regardless of position?
+# YES — because we can remove any K elements arbitrarily. There is no restriction that the kept elements must be contiguous in the original array — only that their relative order is preserved, which happens automatically when we remove others.
+
+# Therefore, the answer is simply:
+# sort(A)
+# ans = min( A[i + (n-k) - 1] - A[i] for i in range(0, k+1) )
+
+# Why k+1? Because we have n elements, window size = n-k, so number of windows = n - (n-k) + 1 = k+1.
+
+# Example: n=5, k=2, n-k=3, windows: i=0,1,2 -> 3 windows, k+1=3.
+
+# So code:
+
+n, k = map(int, input().split())
+a = list(map(int, input().split()))
+
+a.sort()
+window_size = n - k
+ans = float('inf')
+
+for i in range(k + 1):  # i from 0 to k inclusive
+    j = i + window_size - 1
+    if j < n:
+        diff = a[j] - a[i]
+        if diff < ans:
+            ans = diff
+
+print(ans)
+```

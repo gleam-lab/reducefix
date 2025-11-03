@@ -1,0 +1,37 @@
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int N, K;
+    cin >> N >> K;
+    vector<int> A(N);
+    for (int i = 0; i < N; ++i) {
+        cin >> A[i];
+    }
+
+    sort(A.begin(), A.end());
+
+    // We are removing exactly K elements, so we keep (N - K) elements.
+    // The optimal strategy is to remove some prefix and suffix elements.
+    // Try all possible ways: remove i elements from the left and (K - i) from the right.
+    ll min_diff = LLONG_MAX;
+    for (int i = 0; i <= K; ++i) {
+        int left_removed = i;
+        int right_removed = K - i;
+        int remaining_start = left_removed;
+        int remaining_end = N - 1 - right_removed;
+
+        if (remaining_start <= remaining_end) {
+            ll current_diff = A[remaining_end] - A[remaining_start];
+            min_diff = min(min_diff, current_diff);
+        }
+    }
+
+    cout << min_diff << endl;
+
+    return 0;
+}

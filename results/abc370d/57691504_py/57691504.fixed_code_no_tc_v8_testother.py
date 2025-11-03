@@ -1,0 +1,119 @@
+import sys
+from typing import Dict, List
+
+def main():
+    data = sys.stdin.read().split()
+    H = int(data[0]); W = int(data[1]); Q = int(data[2])
+    total_walls = H * W
+    
+    # Use union-find style path compression for next existing wall in each direction
+    # next_up[r][c] = the next row above r (including r) that has a wall in column c, or 0 if none
+    # We'll maintain for each column c: an array (or dict) pointing to the next wall upward/downward
+    # Similarly for rows: next_left/right
+    
+    # For vertical directions: per column, we track the next wall above and below
+    parent_up = [dict() for _ in range(W+1)]  # parent_up[c][r] = highest row <= r with wall, using path compression
+    parent_down = [dict() for _ in range(W+1)] # parent_down[c][r] = lowest row >= r with wall
+    
+    # For horizontal directions: per row, track next wall left and right
+    parent_left = [dict() for _ in range(H+1)] # parent_left[r][c] = highest col <= c with wall
+    parent_right = [dict() for _ in range(H+1)] # parent_right[r][c] = lowest col >= c with wall
+    
+    def find_up(c: int, r: int) -> int:
+        if r <= 0:
+            return 0
+        if r not in parent_up[c]:
+            return r
+        parent_up[c][r] = find_up(c, parent_up[c][r])
+        return parent_up[c][r]
+    
+    def find_down(c: int, r: int) -> int:
+        if r > H:
+            return H + 1
+        if r not in parent_down[c]:
+            return r
+        parent_down[c][r] = find_down(c, parent_down[c][r])
+        return parent_down[c][r]
+    
+    def find_left(r: int, c: int) -> int:
+        if c <= 0:
+            return 0
+        if c not in parent_left[r]:
+            return c
+        parent_left[r][c] = find_left(r, parent_left[r][c])
+        return parent_left[r][c]
+    
+    def find_right(r: int, c: int) -> int:
+        if c > W:
+            return W + 1
+        if c not in parent_right[r]:
+            return c
+        parent_right[r][c] = find_right(r, parent_right[r][c])
+        return parent_right[r][c]
+    
+    index = 3
+    for _ in range(Q):
+        R = int(data[index]); C = int(data[index+1]); index += 2
+        
+        # Check if there's a wall at (R, C)
+        # A wall exists at (R,C) if it hasn't been destroyed, i.e., 
+        # find_up(C, R) == R and find_down(C, R) == R (same for row)
+        # Actually, we only need one: if find_up(C, R) == R, then wall exists
+        
+        if find_up(C, R) == R:
+            # Wall exists at (R,C), destroy it
+            total_walls -= 1
+            
+            # Update the DSU structures
+            # In column C: connect R to R-1 for up, and R to R+1 for down
+            parent_up[C][R] = find_up(C, R-1)
+            parent_down[C][R] = find_down(C, R+1)
+            
+            # In row R: connect C to C-1 for left, and C to C+1 for right
+            parent_left[R][C] = find_left(R, C-1)
+            parent_right[R][C] = find_right(R, C+1)
+        else:
+            # No wall at (R,C), so try to destroy first wall in each direction
+            destroyed = set()
+            
+            # Up: find the highest wall below R in column C
+            up_wall = find_up(C, R-1)
+            if up_wall > 0 and up_wall == R-1:  # must be adjacent with no walls in between
+                # But we need to check if all cells between up_wall and R are empty
+                # Since we use path compression, if find_down(C, up_wall) >= R, then no wall in between
+                if find_down(C, up_wall) >= R:
+                    destroyed.add((up_wall, C))
+            
+            # Down: find the lowest wall above R in column C
+            down_wall = find_down(C, R+1)
+            if down_wall <= H and down_wall == R+1:
+                if find_up(C, down_wall) <= R:
+                    destroyed.add((down_wall, C))
+            
+            # Left: find the rightmost wall left of C in row R
+            left_wall = find_left(R, C-1)
+            if left_wall > 0 and left_wall == C-1:
+                if find_right(R, left_wall) >= C:
+                    destroyed.add((R, left_wall))
+            
+            # Right: find the leftmost wall right of C in row R
+            right_wall = find_right(R, C+1)
+            if right_wall <= W and right_wall == C+1:
+                if find_left(R, right_wall) <= C:
+                    destroyed.add((R, right_wall))
+            
+            # Destroy all valid walls (avoid double counting)
+            total_walls -= len(destroyed)
+            
+            # Update the structures for each destroyed wall
+            for r, c in destroyed:
+                # Only update if not already destroyed (shouldn't happen due to set)
+                parent_up[c][r] = find_up(c, r-1)
+                parent_down[c][r] = find_down(c, r+1)
+                parent_left[r][c] = find_left(r, c-1)
+                parent_right[r][c] = find_right(r, c+1)
+    
+    print(total_walls)
+
+if __name__ == "__main__":
+    main()

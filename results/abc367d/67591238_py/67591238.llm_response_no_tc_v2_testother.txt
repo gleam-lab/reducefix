@@ -1,0 +1,242 @@
+```python
+from collections import defaultdict
+
+N, M = map(int, input().split())
+A = list(map(int, input().split()))
+
+# 累積和（時計回りの距離）
+cum = [0] * (N + 1)
+for i in range(N):
+    cum[i + 1] = cum[i] + A[i]
+
+# 全体の周長
+total = cum[N]
+
+# mod M の値の出現回数をカウント
+count_mod = defaultdict(int)
+answer = 0
+
+for val in cum:
+    mod = val % M
+    answer += count_mod[mod]
+    count_mod[mod] += 1
+
+# 反時計回り経路が短くなる場合を除外する必要がある
+# つまり、s -> t の時計回り距離 d が total/2 より大きい場合は、実際には反時計回りが最短なので条件を満たさない
+# ただし問題文は「時計回りに進んだときの最小ステップ数」ではなく、
+# 「時計回りに s から t に行くのに必要なステップ数が M の倍数」と読める。
+# しかしよく読むと、「The minimum number of steps required to walk clockwise from rest area s to rest area t is a multiple of M」とある。
+# ここで "minimum" とは、s から t への時計回りと反時計回りのうち短い方を指す。
+
+# 実は問題文の意図は：
+# 「s から t への最短距離（時計回りまたは反時計回りのうち小さい方）が M の倍数であるような (s,t) のペア数」を求めよ。
+
+# しかし、元のコードは「時計回りの距離が M の倍数」であるペアを数えている。
+# これは誤解。
+
+# 正しい解釈：
+# 最短距離は min(d, total - d) であり、これが M の倍数であればよい。
+# ただし、d を cum[t] - cum[s] として累積和で扱う。
+
+# しかし、この問題では実は公式解説のように、
+# 「時計回りの距離が M の倍数」かつ「その距離が total/2 以下」
+# または
+# 「反時計回りの距離が M の倍数」かつ「その距離が total/2 以下」
+# という条件になるが、重複や複雑さがある。
+
+# でもよく問題文を読むと：
+# "The minimum number of steps required to walk clockwise from rest area s to rest area t"
+# という表現は変。"walk clockwise" なのに "minimum"？
+# おそらく意味は「s から t への最短経路（双方向許容）の歩数が M の倍数」
+
+# 実際の AtCoder 問題（ABC256D 類似）では、
+# 「円形の道があり、s から t への最短距離が M の倍数となる (s,t) ペアの数」
+# というのが典型問題。
+
+# しかし、制約上 total が M よりも遥かに大きい可能性があり、単純な mod 数え上げでは不十分。
+
+# だが、よく考えると、最短距離が M の倍数ということは、
+# 時計回り距離を d とすると、min(d, total - d) ≡ 0 (mod M) ということ。
+# つまり d ≡ 0 (mod M) または d ≡ 0 (mod M) つまり total - d ≡ 0 → d ≡ total (mod M)
+
+# よって、最短距離が M の倍数 ⇔ d ≡ 0 (mod M) または d ≡ total (mod M)
+# ただし、d <= total - d のとき d ≡ 0 (mod M)
+#       d > total - d のとき total - d ≡ 0 → d ≡ total (mod M)
+
+# さらに、d = total のときは s=t なので除く（s≠t）
+
+# しかし、d ≡ 0 (mod M) かつ d <= total/2 のとき有効
+# d ≡ total (mod M) かつ d >= ceil((total+1)/2) のとき有効（このとき最短距離は total-d ≡0）
+
+# したがって、累積和の差分 d = cum[t] - cum[s] （>=0）として、
+# d % M == 0 かつ d <= total//2 → 有効
+# (d % M) == (total % M) かつ d >= (total+1)//2 → 有効（このとき total-d が最短で、それが M の倍数）
+
+# ただし、total が偶数で d = total/2 のときは、時計回りと反時計回りが同じ。どちらでも数えてはいけない（重複？）
+# しかし、最短距離は total/2 なので、M で割り切れるかどうかだけ見ればよく、
+# このとき d ≡ 0 (mod M) かつ d ≡ total (mod M) → 0 ≡ total (mod M) → total ≡ 0 (mod M)
+# よって、total ≡ 0 (mod M) かつ d = total/2 のとき、両条件を満たすので重複カウントの危険あり。
+
+# しかし、一つのペア(s,t)に対して最短距離は一意なので、
+# 条件としては「min(d, total-d) ≡ 0 mod M」を直接チェックすべき。
+
+# ところが、d を全列挙すると O(N^2) になり N=2e5 では無理。
+
+# 別解法：AtCoder 類似問題のテクニック
+# 実は、ほとんどのコンテスト解説では、
+# 「円環上で、距離が M の倍数になるペア」ではなく、
+# 「最短距離が M の倍数」は難しいため、多くの場合、問題文の解釈が異なる。
+
+# 再確認：問題文
+# "The minimum number of steps required to walk clockwise from rest area s to rest area t (s ≠ t) is a multiple of M."
+
+# "walk clockwise" なのに "minimum" とある。これは紛らわしい。
+# もしかしたら、「時計回りに進む場合の距離」が M の倍数という意味かもしれない。
+# つまり、反時計回りは考慮せず、純粋に cum[t]-cum[s] が M の倍数。
+
+# しかし「minimum」とある。なぜ minimum？
+
+# おそらく typo ではなく、意味は「s から t へ時計回りに進む最短経路の距離が M の倍数」
+# だが、時計回りに進むなら一周以上は無駄なので、通常は cum[t]-cum[s] (正規化) が距離。
+
+# しかし、時計回りに進む場合、s→t は一方向なので、距離は d = (cum[t] - cum[s]) % total
+# そして、これが M の倍数。
+
+# でも「minimum」だから、一周より短い方？ つまり min(d, total-d) ではなく、
+# 時計回りに進むなら d が自然。
+
+# しかし、時計回りに進むなら、s→t は d = cum[t]-cum[s] if t>s, or cum[t]+total-cum[s] if t<s
+# それは累積和の差 mod total の範囲で [0, total) の値。
+
+# そして、その値が M の倍数であればよい。
+
+# しかし、最短経路が反時計回りかもしれないが、問題は「時計回りに進む場合の最小ステップ数」と言っている。
+# つまり、時計回りに進むことを強制している。
+
+# ならば、時計回りに進む場合の距離は d = (cum[t] - cum[s]) % total
+# そして、その d が M の倍数であればよい。
+
+# しかし、「minimum」は冗長？ いや、時計回りに進む場合でも、複数周できるが、最小ステップ数なので、1周未満。
+
+# よって、d = (cum[t] - cum[s]) mod total, 0 < d < total, かつ d % M == 0.
+
+# したがって、累積和の差が M の倍数になるペア (s,t) で、差が 0 でないもの。
+
+# つまり、元のコードはほぼ正しい！
+# ただし、cum[i] と cum[j] の差が total の倍数のとき、d=0（同じ地点）になるが、
+# その場合は s=t なので除くべき。
+
+# 元のコードは cum 配列の mod M での重複カウントをしている。
+# これは、(i,j) で cum[i] ≡ cum[j] mod M なら cum[j]-cum[i] ≡0 mod M.
+# しかし、これが M の倍数であっても、実際の距離 d = cum[j]-cum[i] が total を超えることはない（i<j なら d<total）
+# また、i>j の場合は、d = cum[j] + total - cum[i] = total - (cum[i]-cum[j])
+# これは別のペアとして累積和配列では扱っていない。
+
+# 元のコードは cum[0..N] の中で mod M が等しいもののペアを数えている。
+# これは、時計回りの距離が M の倍数になる (s,t) ペア（s≠t）を数えているように見える。
+
+# しかし、s=1, t=3 の距離は cum[3]-cum[1] = A1+A2
+# s=3, t=1 の距離は cum[1] + total - cum[3] = A3+...+AN+A1 （もし N>3）
+
+# この距離が M の倍数かどうかを知るには、cum[1] ≡ cum[3] mod M であれば、
+# cum[3]-cum[1] ≡0 mod M → s=1→t=3 は対象
+# また、cum[1] ≡ cum[3] mod M なら、s=3→t=1 の距離は total - (cum[3]-cum[1]) ≡ total mod M
+# これが M の倍数かどうかは別。
+
+# よって、元のコードは「時計回りの距離が M の倍数」になるペアのみを数えている。
+
+# しかし、s=3→t=1 の時計回り距離が M の倍数になる条件は、
+# total - (cum[3]-cum[1]) ≡ 0 mod M → cum[1] - cum[3] ≡ total mod M → cum[1] ≡ cum[3] + total mod M
+
+# つまり、一般的に、s=i, t=j の時計回り距離 d が M の倍数 ⇔ cum[j] - cum[i] ≡ 0 mod M
+
+# ただし、j>i のとき d = cum[j]-cum[i]
+# j<=i のとき d = cum[j] + total - cum[i] = (cum[j] - cum[i]) + total
+
+# よって、d ≡ 0 mod M ⇔ 
+#   j>i: cum[j] ≡ cum[i] mod M
+#   j<i: cum[j] - cum[i] + total ≡ 0 → cum[j] ≡ cum[i] - total mod M
+
+# したがって、単に cum[i] % M の頻度を数えるだけでは足りない。
+
+# 正しい方法：
+# 全ての i,j (i≠j) について、時計回り距離 d が M の倍数になるものを数える。
+# d = (cum[j] - cum[i]) % total  # ただし0以上total未満
+# そして d % M == 0 かつ d != 0.
+
+# あるいは、d = (cum[j] - cum[i]) mod total が M の倍数。
+
+# しかし、d は非負整数で、d = (cum[j] - cum[i]) if cum[j] >= cum[i], else cum[j]-cum[i]+total
+
+# よって、d ≡ 0 mod M ⇔ cum[j] - cum[i] ≡ 0 mod gcd(M, total)? ではない。
+
+# 別の視点：すべての rest area からの累積和 cum[0..N-1] を持つ（cum[0]=0, cum[1]=A0, ..., cum[N]=total）
+# そして、各 i に対して、
+#   j>i で cum[j] ≡ cum[i] mod M なる j を数える
+#   j<i で cum[j] ≡ cum[i] - total mod M なる j を数える
+
+# これは、走査しながら前計算すれば O(N)
+
+# しかし、total が大きいので、mod M で処理。
+
+# アルゴリズム：
+# 1. cum[0..N] を計算（cum[0]=0, cum[N]=total）
+# 2. フレーズ1: 差が正の方向（j>i）で cum[j]-cum[i] ≡0 mod M → cum[j]≡cum[i] mod M
+# 3. フレーズ2: j<i で cum[j] - cum[i] + total ≡0 mod M → cum[j] ≡ cum[i] - total mod M
+
+# つまり、全体で、
+# answer = sum_{i} [ freq_i(cum[i] mod M) + freq_i((cum[i] - total) mod M) ]
+# ただし freq_i(x) は i より前の index で mod M が x の cum の個数
+
+# しかし、注意：j>i のケースと j<i のケースは互いに排他的。
+
+# 実装：
+#   count = defaultdict(int)
+#   ans = 0
+#   for i in range(N+1):  # cum[0] から cum[N] まで
+#       target1 = cum[i] % M
+#       target2 = (cum[i] - total) % M  # j < i で s=j, t=i の時計回り距離が M の倍数
+#       ans += count[target1]  # j < i で cum[j] % M == target1 → j>i のペアではない、逆
+#
+# ここが混乱。
+
+# 正しくは：
+# i を cum のインデックスとして、s に対応する累積和インデックスを i, t を j とする。
+# s=i の rest area は cum[i] に対応（i=0,...,N-1）、ただし cum[N] = total は cum[0] と同じ位置。
+
+# 実際、rest area k は cum[k] に対応（k=1..N）だが、cum[0]=0, cum[1]=A0, ..., cum[N]=total
+# rest area 1: cum[0]=0
+# rest area 2: cum[1]=A0
+# ...
+# rest area N: cum[N-1]=A0+...+A_{N-2}
+# cum[N] = total は rest area 1 の次の位置。
+
+# したがって、s が rest area i なら、累積和のインデックスは i-1 を使う。
+# s = rest area i → cum[i-1]
+# t = rest area j → cum[j-1]
+
+# 時計回り距離：
+#   if j > i: d = cum[j-1] - cum[i-1]
+#   if j < i: d = cum[j-1] + total - cum[i-1]
+
+# d ≡ 0 mod M かつ d > 0.
+
+# そこで、すべての i-1, j-1 を 0..N-1 のインデックスとし、
+# 配列 B = cum[0..N-1] を用いる。
+
+# そして、すべての i≠j について、
+#   if j > i: B[j] - B[i] ≡ 0 mod M
+#   if j < i: B[j] - B[i] + total ≡ 0 mod M → B[j] ≡ B[i] - total mod M
+
+# したがって、B[i] を順に見ていき、
+#   - それ以前の B[j] (j < i) で B[j] ≡ B[i] mod M なら、j>i ではないので無関係
+#   - それ以前の B[j] (j < i) で B[j] ≡ B[i] - total mod M なら、s=i+1, t=j+1 のとき j < i → s>t で、時計回り距離 d = B[j] - B[i] + total ≡0 mod M
+
+# また、それ以前の B[j] で B[i] ≡ B[j] mod M なら、j < i なので s=j+1, t=i+1 で j+1 < i+1 → s<t で、d = B[i] - B[j] ≡0 mod M
+
+# よって、走査中に、
+#   ans += count[B[i] % M]   # j < i で B[j] ≡ B[i] mod M → s=j+1, t=i+1 のペア
+#   ans += count[(B[i] - total) % M]  # j < i で B[j] ≡ B[i] - total mod M → s=i+1, t=j+1 のペア（s>t）
+#   count[B[i] % M] += 1
+
+# しかし、これだと

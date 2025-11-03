@@ -1,0 +1,29 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    int n, k;
+    cin >> n >> k;
+    
+    vector<int> a(n);
+    for (int i = 0; i < n; i++) {
+        cin >> a[i];
+    }
+    
+    sort(a.begin(), a.end());
+    
+    // We are removing exactly K elements, so we keep (n - k) elements.
+    int keep = n - k;
+    long long min_diff = 1e18;
+    
+    // Try all possible contiguous subarrays of length (n - k)
+    // This corresponds to removing some prefix and suffix
+    for (int left = 0; left + keep <= n; left++) {
+        int right = left + keep - 1;
+        min_diff = min(min_diff, (long long)(a[right] - a[left]));
+    }
+    
+    cout << min_diff << endl;
+    
+    return 0;
+}

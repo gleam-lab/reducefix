@@ -1,0 +1,29 @@
+import bisect
+
+n, q = map(int, input().split())
+a = list(map(int, input().split()))
+a.sort()
+
+for _ in range(q):
+    b, k = map(int, input().split())
+    
+    # Find the position where b would be inserted in sorted array a
+    pos = bisect.bisect_left(a, b)
+    
+    # We'll collect distances from candidates around the insertion point
+    # But we can't collect all N distances (inefficient), so use two pointers
+    left = pos - 1   # largest element <= b
+    right = pos      # smallest element >= b
+    
+    # We want to find the k-th smallest distance without computing all distances
+    for i in range(k):
+        if left >= 0 and (right >= n or abs(a[left] - b) <= abs(a[right] - b)):
+            # Choose left
+            if i == k - 1:
+                print(abs(a[left] - b))
+            left -= 1
+        else:
+            # Choose right
+            if i == k - 1:
+                print(abs(a[right] - b))
+            right += 1

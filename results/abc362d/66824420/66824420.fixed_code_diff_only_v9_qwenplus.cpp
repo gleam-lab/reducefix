@@ -1,0 +1,51 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int n, m;
+    cin >> n >> m;
+    vector<long long> a(n + 1);
+    for (int i = 1; i <= n; i++) {
+        cin >> a[i];
+    }
+
+    vector<vector<pair<int, long long>>> adj(n + 1);
+    for (int j = 0; j < m; j++) {
+        int u, v;
+        long long w;
+        cin >> u >> v >> w;
+        adj[u].push_back({v, w});
+        adj[v].push_back({u, w});
+    }
+
+    vector<long long> dist(n + 1, 1e18);
+    dist[1] = a[1]; // We include vertex 1's weight as starting cost
+
+    priority_queue<pair<long long, int>, vector<pair<long long, int>>, greater<pair<long long, int>>> pq;
+    pq.push({a[1], 1});
+
+    while (!pq.empty()) {
+        auto [d, node] = pq.top();
+        pq.pop();
+
+        if (d != dist[node]) continue; // Skip outdated entries
+
+        for (auto [neighbor, edge_weight] : adj[node]) {
+            long long new_dist = dist[node] + edge_weight + a[neighbor];
+            if (new_dist < dist[neighbor]) {
+                dist[neighbor] = new_dist;
+                pq.push({new_dist, neighbor});
+            }
+        }
+    }
+
+    for (int i = 2; i <= n; i++) {
+        cout << dist[i] << " ";
+    }
+    cout << endl;
+
+    return 0;
+}

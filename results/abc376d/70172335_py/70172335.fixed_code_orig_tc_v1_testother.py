@@ -1,0 +1,39 @@
+from collections import defaultdict, deque
+
+def main():
+    n, m = map(int, input().split())
+    edge = defaultdict(list)
+    
+    for _ in range(m):
+        a, b = map(lambda x: int(x) - 1, input().split())
+        edge[a].append(b)
+    
+    # BFS from vertex 0 (vertex 1 in 1-indexed)
+    INF = float("inf")
+    dist = [INF] * n
+    dist[0] = 0
+    q = deque()
+    q.append(0)
+    
+    while q:
+        u = q.popleft()
+        for v in edge[u]:
+            if dist[v] == INF:
+                dist[v] = dist[u] + 1
+                q.append(v)
+    
+    # Find minimum cycle containing vertex 0
+    ans = INF
+    
+    # Check all edges that can form a cycle with vertex 0
+    for u in range(n):
+        if dist[u] != INF:
+            for v in edge[u]:
+                if v == 0:
+                    # Edge from u to 0 forms a cycle of length dist[u] + 1
+                    ans = min(ans, dist[u] + 1)
+    
+    print(ans if ans != INF else -1)
+
+if __name__ == "__main__":
+    main()

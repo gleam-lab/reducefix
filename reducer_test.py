@@ -316,7 +316,7 @@ def main():
         epilog="Example: python reducer_test.py abc375c --model-tag qwen-coder7b"
     )
     parser.add_argument("problem_id", help="Target AtCoder problem ID (e.g., abc375c)")
-    parser.add_argument("--model-tag", required=True, help="Tag for result file naming")
+    parser.add_argument("--model-tag", default="default", help="Tag for result file naming (optional, default: 'default')")
     parser.add_argument("--reducer-model", default="qwen-plus", help="LLM model name for reducer generation")
     parser.add_argument('--force', action='store_true', help='Force re-testing of submissions from lftbench')
     parser.add_argument('--retry-failed', action='store_true', help='Retry previously failed reduction attempts')

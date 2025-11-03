@@ -1,0 +1,37 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define fi first
+#define se second
+#define pb push_back
+#define chmin(x, y) x = min(x, y)
+using ll = long long;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int n, k;
+    cin >> n >> k;
+    vector<int> a(n);
+    for (int i = 0; i < n; i++) {
+        cin >> a[i];
+    }
+    
+    sort(a.begin(), a.end());
+    
+    // We need to remove exactly K elements, leaving (n - k) elements
+    // The remaining elements must be contiguous in the sorted array to minimize max - min
+    // Try all possible contiguous segments of length (n - k)
+    
+    int ans = a[n - 1] - a[0]; // Initialize with worst case
+    
+    int remaining = n - k;
+    for (int i = 0; i + remaining - 1 < n; i++) {
+        int j = i + remaining - 1;
+        chmin(ans, a[j] - a[i]);
+    }
+    
+    cout << ans << endl;
+    
+    return 0;
+}

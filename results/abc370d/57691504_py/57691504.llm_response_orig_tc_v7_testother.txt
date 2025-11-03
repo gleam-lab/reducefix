@@ -1,0 +1,219 @@
+```python
+H, W, Q = map(int, input().split())
+
+# Use dictionaries to store the next existing wall in each direction
+# For each row, maintain left and right pointers
+# For each column, maintain up and down pointers
+
+# Initialize: each cell has a wall, so each points to itself initially
+# But we'll use union-find style path compression to track next existing walls
+
+from collections import defaultdict
+
+# For rows: for each row r, left[j] = the next existing wall to the left of column j
+#           right[j] = the next existing wall to the right of column j
+row_left = [dict() for _ in range(H+1)]  # row_left[r][j] = furthest col <= j that has wall (or None)
+row_right = [dict() for _ in range(H+1)]
+
+# For cols: for each col c, up[i] = next existing wall above row i
+#           down[i] = next existing wall below row i
+col_up = [dict() for _ in range(W+1)]
+col_down = [dict() for _ in range(W+1)]
+
+def find_next_left(r, c):
+    if c < 1:
+        return 0
+    if c not in row_left[r]:
+        return c
+    row_left[r][c] = find_next_left(r, row_left[r][c])
+    return row_left[r][c]
+
+def find_next_right(r, c):
+    if c > W:
+        return W+1
+    if c not in row_right[r]:
+        return c
+    row_right[r][c] = find_next_right(r, row_right[r][c])
+    return row_right[r][c]
+
+def find_next_up(c, r):
+    if r < 1:
+        return 0
+    if r not in col_up[c]:
+        return r
+    col_up[c][r] = find_next_up(c, col_up[c][r])
+    return col_up[c][r]
+
+def find_next_down(c, r):
+    if r > H:
+        return H+1
+    if r not in col_down[c]:
+        return r
+    col_down[c][r] = find_next_down(c, col_down[c][r])
+    return col_down[c][r]
+
+total_walls = H * W
+
+for _ in range(Q):
+    R, C = map(int, input().split())
+    
+    # Check if there's a wall at (R, C)
+    left_c = find_next_left(R, C)
+    right_c = find_next_right(R, C)
+    up_r = find_next_up(C, R)
+    down_r = find_next_down(C, R)
+    
+    if left_c == C and right_c == C and up_r == R and down_r == R:
+        # Wall exists at (R,C), destroy it
+        total_walls -= 1
+        
+        # Update neighbors: now the adjacent cells point to further away
+        # Left: the cell to the left of C should now point to what C pointed to on the left
+        if C > 1:
+            prev_left = find_next_left(R, C-1)
+            if prev_left == C-1:
+                # Only update if this was directly pointing to itself
+                # Otherwise it already skips over destroyed walls
+                row_left[R][C-1] = find_next_left(R, C-2)
+        
+        # Right
+        if C < W:
+            prev_right = find_next_right(R, C+1)
+            if prev_right == C+1:
+                row_right[R][C+1] = find_next_right(R, C+2)
+        
+        # Up
+        if R > 1:
+            prev_up = find_next_up(C, R-1)
+            if prev_up == R-1:
+                col_up[C][R-1] = find_next_up(C, R-2)
+        
+        # Down
+        if R < H:
+            prev_down = find_next_down(C, R+1)
+            if prev_down == R+1:
+                col_down[C][R+1] = find_next_down(C, R+2)
+                
+        # Remove the current cell from being a reference point
+        # Mark that (R,C) is gone by updating its own pointers
+        # Actually, we don't need to store anything for (R,C) anymore
+        # But we do need to merge the gaps
+        
+        # Merge left and right in row R
+        left_neighbor = find_next_left(R, C-1)
+        right_neighbor = find_next_right(R, C+1)
+        if left_neighbor >= 1:
+            row_right[R][left_neighbor] = right_neighbor
+        if right_neighbor <= W:
+            row_left[R][right_neighbor] = left_neighbor
+            
+        # Merge up and down in col C
+        up_neighbor = find_next_up(C, R-1)
+        down_neighbor = find_next_down(C, R+1)
+        if up_neighbor >= 1:
+            col_down[C][up_neighbor] = down_neighbor
+        if down_neighbor <= H:
+            col_up[C][down_neighbor] = up_neighbor
+            
+    else:
+        # No wall at (R,C). Destroy first wall in each direction if exists and adjacent
+        destroyed = 0
+        
+        # Look up: first wall above R in column C
+        up_wall = find_next_up(C, R-1)
+        if up_wall == R-1:  # adjacent
+            # Destroy wall at (up_wall, C)
+            total_walls -= 1
+            destroyed += 1
+            
+            # Update the chain
+            up_neighbor = find_next_up(C, up_wall-1)
+            down_neighbor = find_next_down(C, up_wall+1)
+            if up_neighbor >= 1:
+                col_down[C][up_neighbor] = down_neighbor
+            if down_neighbor <= H:
+                col_up[C][down_neighbor] = up_neighbor
+                
+            # Also update the row pointers for row up_wall
+            row_left[up_wall][C] = find_next_left(up_wall, C-1)
+            row_right[up_wall][C] = find_next_right(up_wall, C+1)
+            
+            # And update neighbors in the same row
+            left_in_row = find_next_left(up_wall, C-1)
+            right_in_row = find_next_right(up_wall, C+1)
+            if left_in_row >= 1:
+                row_right[up_wall][left_in_row] = right_in_row
+            if right_in_row <= W:
+                row_left[up_wall][right_in_row] = left_in_row
+                
+        # Look down
+        down_wall = find_next_down(C, R+1)
+        if down_wall == R+1:
+            total_walls -= 1
+            destroyed += 1
+            
+            down_neighbor = find_next_down(C, down_wall+1)
+            up_neighbor = find_next_up(C, down_wall-1)
+            if up_neighbor >= 1:
+                col_down[C][up_neighbor] = down_neighbor
+            if down_neighbor <= H:
+                col_up[C][down_neighbor] = up_neighbor
+                
+            row_left[down_wall][C] = find_next_left(down_wall, C-1)
+            row_right[down_wall][C] = find_next_right(down_wall, C+1)
+            
+            left_in_row = find_next_left(down_wall, C-1)
+            right_in_row = find_next_right(down_wall, C+1)
+            if left_in_row >= 1:
+                row_right[down_wall][left_in_row] = right_in_row
+            if right_in_row <= W:
+                row_left[down_wall][right_in_row] = left_in_row
+                
+        # Look left
+        left_wall = find_next_left(R, C-1)
+        if left_wall == C-1:
+            total_walls -= 1
+            destroyed += 1
+            
+            left_neighbor = find_next_left(R, left_wall-1)
+            right_neighbor = find_next_right(R, left_wall+1)
+            if left_neighbor >= 1:
+                row_right[R][left_neighbor] = right_neighbor
+            if right_neighbor <= W:
+                row_left[R][right_neighbor] = left_neighbor
+                
+            col_up[left_wall][R] = find_next_up(left_wall, R-1)
+            col_down[left_wall][R] = find_next_down(left_wall, R+1)
+            
+            up_in_col = find_next_up(left_wall, R-1)
+            down_in_col = find_next_down(left_wall, R+1)
+            if up_in_col >= 1:
+                col_down[left_wall][up_in_col] = down_in_col
+            if down_in_col <= H:
+                col_up[left_wall][down_in_col] = up_in_col
+                
+        # Look right
+        right_wall = find_next_right(R, C+1)
+        if right_wall == C+1:
+            total_walls -= 1
+            destroyed += 1
+            
+            right_neighbor = find_next_right(R, right_wall+1)
+            left_neighbor = find_next_left(R, right_wall-1)
+            if left_neighbor >= 1:
+                row_right[R][left_neighbor] = right_neighbor
+            if right_neighbor <= W:
+                row_left[R][right_neighbor] = left_neighbor
+                
+            col_up[right_wall][R] = find_next_up(right_wall, R-1)
+            col_down[right_wall][R] = find_next_down(right_wall, R+1)
+            
+            up_in_col = find_next_up(right_wall, R-1)
+            down_in_col = find_next_down(right_wall, R+1)
+            if up_in_col >= 1:
+                col_down[right_wall][up_in_col] = down_in_col
+            if down_in_col <= H:
+                col_up[right_wall][down_in_col] = up_in_col
+
+print(total_walls)
+```

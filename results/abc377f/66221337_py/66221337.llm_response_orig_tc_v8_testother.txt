@@ -1,0 +1,360 @@
+```python
+N, M = map(int, input().split())
+pieces = [tuple(map(int, input().split())) for _ in range(M)]
+
+if M == 0:
+    print(N * N)
+else:
+    # Sets to store attacked lines/diagonals
+    rows = set()
+    cols = set()
+    diag1 = set()  # i + j
+    diag2 = set()  # i - j
+
+    for a, b in pieces:
+        rows.add(a)
+        cols.add(b)
+        diag1.add(a + b)
+        diag2.add(a - b)
+
+    total_attacked = 0
+    # Count union of all attacked squares using inclusion-exclusion is too complex,
+    # Instead, we calculate total attacked via contribution from each piece's row/col/diag
+    # But need to avoid overcounting intersections.
+
+    # Use set to collect all attacked positions if N is small? But N can be up to 1e9.
+    # So we must use mathematical formula.
+
+    # Total attacked = |union of all rows ∪ cols ∪ diag1 ∪ diag2 covered by any piece|
+
+    # We compute: |R ∪ C ∪ D1 ∪ D2| using inclusion exclusion:
+    # |R| + |C| + |D1| + |D2|
+    # - |R∩C| - |R∩D1| - |R∩D2| - |C∩D1| - |C∩D2| - |D1∩D2|
+    # + |R∩C∩D1| + |R∩C∩D2| + |R∩D1∩D2| + |C∩D1∩D2|
+    # - |R∩C∩D1∩D2|
+
+    # But this becomes very messy.
+
+    # Alternative idea: since M <= 1000, we can collect all candidate safe squares?
+    # No, because N is huge.
+
+    # Better: iterate over the constraints and compute total attacked area with coordinate compression?
+    # But the attacked regions are full rows, cols, and diagonals.
+
+    # Instead: total attacked = number of distinct squares that lie in any attacked row, col, or diagonal.
+
+    # Let:
+    #   R = set of rows with pieces
+    #   C = set of cols with pieces
+    #   D1 = {i+j for (i,j) in pieces}
+    #   D2 = {i-j for (i,j) in pieces}
+
+    # Then attacked squares are:
+    #   A = { (i,j) | i ∈ R or j ∈ C or (i+j) ∈ D1 or (i-j) ∈ D2 }
+
+    # We want |A|.
+
+    # Use inclusion exclusion:
+
+    # |A| = |R_rows| + |C_cols| + |D1_diag| + |D2_diag|
+    #     - |R_rows ∩ C_cols| - |R_rows ∩ D1_diag| - |R_rows ∩ D2_diag| - |C_cols ∩ D1_diag| - |C_cols ∩ D2_diag| - |D1_diag ∩ D2_diag|
+    #     + ... (triples)
+    #     - |R_rows ∩ C_cols ∩ D1_diag ∩ D2_diag|
+
+    # Where:
+    #   |R_rows| = |R| * N
+    #   |C_cols| = |C| * N
+    #   |D1_diag| = sum_{d in D1} length_of_diagonal(d) 
+    #   |D2_diag| = sum_{d in D2} length_of_diagonal(d)
+
+    # For diagonal sums:
+    def get_diag_len_1(s):  # i+j = s, 1<=i<=N, 1<=j<=N
+        if s < 2: return 0
+        if s > 2*N: return 0
+        return s - 1 if s <= N + 1 else 2 * N - s + 1
+
+    def get_diag_len_2(d):  # i-j = d
+        # i = j + d, 1<=j+d<=N, 1<=j<=N
+        # => max(1, 1-d) <= j <= min(N, N-d)
+        low_j = max(1, 1 - d)
+        high_j = min(N, N - d)
+        if low_j > high_j:
+            return 0
+        return high_j - low_j + 1
+
+    r_count = len(rows)
+    c_count = len(cols)
+    d1_count = len(diag1)
+    d2_count = len(diag2)
+
+    total = 0
+    total += r_count * N
+    total += c_count * N
+    total += sum(get_diag_len_1(s) for s in diag1)
+    total += sum(get_diag_len_2(d) for d in diag2)
+
+    # subtract pairwise intersections
+    # R ∩ C: cells in both an attacked row and attacked col -> |R| * |C|
+    total -= r_count * c_count
+
+    # R ∩ D1: cells in attacked row i and diagonal i+j=s => j = s-i, must be in [1,N]
+    for i in rows:
+        for s in diag1:
+            j = s - i
+            if 1 <= j <= N:
+                total -= 1
+
+    # R ∩ D2: cells in attacked row i and diagonal i-j=d => j = i-d
+    for i in rows:
+        for d in diag2:
+            j = i - d
+            if 1 <= j <= N:
+                total -= 1
+
+    # C ∩ D1: cells in attacked col j and diagonal i+j=s => i = s-j
+    for j in cols:
+        for s in diag1:
+            i = s - j
+            if 1 <= i <= N:
+                total -= 1
+
+    # C ∩ D2: cells in attacked col j and diagonal i-j=d => i = d+j
+    for j in cols:
+        for d in diag2:
+            i = d + j
+            if 1 <= i <= N:
+                total -= 1
+
+    # D1 ∩ D2: cells on diagonal s=i+j and d=i-j
+    # Solve: i=(s+d)/2, j=(s-d)/2. Must be integers and in range.
+    for s in diag1:
+        for d in diag2:
+            if (s + d) % 2 == 0:
+                i = (s + d) // 2
+                j = (s - d) // 2
+                if 1 <= i <= N and 1 <= j <= N:
+                    total -= 1
+
+    # Add back triple intersections
+    # R ∩ C ∩ D1: (i,j) with i∈R, j∈C, i+j∈D1
+    for i in rows:
+        for j in cols:
+            if i + j in diag1:
+                total += 1
+
+    # R ∩ C ∩ D2: (i,j) with i∈R, j∈C, i-j∈D2
+    for i in rows:
+        for j in cols:
+            if i - j in diag2:
+                total += 1
+
+    # R ∩ D1 ∩ D2: (i,j) with i∈R, i+j∈D1, i-j∈D2
+    for i in rows:
+        for s in diag1:
+            j = s - i
+            if 1 <= j <= N:
+                d = i - j
+                if d in diag2:
+                    total += 1
+
+    # C ∩ D1 ∩ D2: (i,j) with j∈C, i+j∈D1, i-j∈D2
+    for j in cols:
+        for s in diag1:
+            i = s - j
+            if 1 <= i <= N:
+                d = i - j
+                if d in diag2:
+                    total += 1
+
+    # D1 ∩ D2 ∩ R: already done above as R ∩ D1 ∩ D2
+    # D1 ∩ D2 ∩ C: already done above as C ∩ D1 ∩ D2
+
+    # Now quadruple: R ∩ C ∩ D1 ∩ D2
+    for i in rows:
+        for j in cols:
+            if (i + j) in diag1 and (i - j) in diag2:
+                total += 1
+
+    # But wait: we subtracted R∩C once, but now added it twice in two triple terms?
+    # Actually inclusion-exclusion formula:
+    # |A∪B∪C∪D| = A+B+C+D 
+    #   - AB-AC-AD-BC-BD-CD 
+    #   + ABC+ABD+ACD+BCD 
+    #   - ABCD
+
+    # We did:
+    # + ABC (R∩C∩D1), ABD (R∩C∩D2), ACD (R∩D1∩D2), BCD (C∩D1∩D2)
+    # But we haven't done ABCD yet.
+
+    # Subtract the quadruple intersection
+    for i in rows:
+        for j in cols:
+            if (i + j) in diag1 and (i - j) in diag2:
+                total -= 1
+
+    # However, note: the above method counts the entire union.
+
+    # But wait: our calculation may still have issues due to how we computed pairwise.
+    # Alternatively, since M is only 1000, we can compute the union of attacked squares by iterating over pieces and their lines,
+    # but we cannot enumerate all squares.
+
+    # Actually, there's a simpler way: the number of safe squares = total squares - |attacked squares|
+    # And |attacked squares| can be computed by the inclusion-exclusion above.
+
+    # But the above inclusion-exclusion has time complexity O(|R|*|D1| + ...) which is at most O(M^2) and M<=1000, so acceptable.
+
+    # However, note: rows, cols, diag1, diag2 sets have size at most M.
+
+    # But we did multiple nested loops: worst-case M*M for each pair, and we have several pairs -> about 5*M^2 which is 5e6, acceptable.
+
+    # However, let me recheck the inclusion-exclusion signs.
+
+    # Correction: the standard inclusion-exclusion for four sets:
+    # |A∪B∪C∪D| = 
+    #   S1 = |A|+|B|+|C|+|D|
+    #   S2 = |A∩B|+|A∩C|+|A∩D|+|B∩C|+|B∩D|+|C∩D|
+    #   S3 = |A∩B∩C|+|A∩B∩D|+|A∩C∩D|+|B∩C∩D|
+    #   S4 = |A∩B∩C∩D|
+    # Then |A∪B∪C∪D| = S1 - S2 + S3 - S4
+
+    # In our case:
+    # A = R_rows, B = C_cols, C = D1_diag, D = D2_diag
+
+    # We have:
+    # S1 = r_count*N + c_count*N + sum_diag1 + sum_diag2
+    # S2 = 
+    #   |R∩C| = r_count * c_count
+    #   |R∩D1| = sum_{i in R, s in D1} [1 if 1<=s-i<=N] = count of valid j
+    #   |R∩D2| = sum_{i in R, d in D2} [1 if 1<=i-d<=N]
+    #   |C∩D1| = sum_{j in C, s in D1} [1 if 1<=s-j<=N]
+    #   |C∩D2| = sum_{j in C, d in D2} [1 if 1<=d+j<=N]
+    #   |D1∩D2| = sum_{s in D1, d in D2} [1 if (s+d) even and i=(s+d)//2 in [1,N] and j=(s-d)//2 in [1,N]]
+
+    # S3 = 
+    #   |R∩C∩D1| = sum_{i in R, j in C} [1 if i+j in D1]
+    #   |R∩C∩D2| = sum_{i in R, j in C} [1 if i-j in D2]
+    #   |R∩D1∩D2| = sum_{i in R} sum_{s in D1} [1 if j=s-i in [1,N] and i-j in D2]
+    #   |C∩D1∩D2| = sum_{j in C} sum_{s in D1} [1 if i=s-j in [1,N] and i-j in D2]
+
+    # S4 = |R∩C∩D1∩D2| = sum_{i in R, j in C} [1 if i+j in D1 and i-j in D2]
+
+    # Then answer = N*N - (S1 - S2 + S3 - S4)
+
+    # But note: we have to make sure not to double count.
+
+    # Let's recast:
+
+    S1 = r_count * N + c_count * N + \
+         sum(get_diag_len_1(s) for s in diag1) + \
+         sum(get_diag_len_2(d) for d in diag2)
+
+    S2 = 0
+    # R ∩ C
+    S2 += r_count * c_count
+    # R ∩ D1
+    for i in rows:
+        for s in diag1:
+            j = s - i
+            if 1 <= j <= N:
+                S2 += 1
+    # R ∩ D2
+    for i in rows:
+        for d in diag2:
+            j = i - d
+            if 1 <= j <= N:
+                S2 += 1
+    # C ∩ D1
+    for j in cols:
+        for s in diag1:
+            i = s - j
+            if 1 <= i <= N:
+                S2 += 1
+    # C ∩ D2
+    for j in cols:
+        for d in diag2:
+            i = d + j
+            if 1 <= i <= N:
+                S2 += 1
+    # D1 ∩ D2
+    for s in diag1:
+        for d in diag2:
+            if (s + d) % 2 == 0:
+                i = (s + d) // 2
+                j = (s - d) // 2
+                if 1 <= i <= N and 1 <= j <= N:
+                    S2 += 1
+
+    S3 = 0
+    # R ∩ C ∩ D1
+    for i in rows:
+        for j in cols:
+            if i + j in diag1:
+                S3 += 1
+    # R ∩ C ∩ D2
+    for i in rows:
+        for j in cols:
+            if i - j in diag2:
+                S3 += 1
+    # R ∩ D1 ∩ D2
+    for i in rows:
+        for s in diag1:
+            j = s - i
+            if 1 <= j <= N:
+                d_val = i - j
+                if d_val in diag2:
+                    S3 += 1
+    # C ∩ D1 ∩ D2
+    for j in cols:
+        for s in diag1:
+            i = s - j
+            if 1 <= i <= N:
+                d_val = i - j
+                if d_val in diag2:
+                    S3 += 1
+
+    S4 = 0
+    # R ∩ C ∩ D1 ∩ D2
+    for i in rows:
+        for j in cols:
+            if (i + j) in diag1 and (i - j) in diag2:
+                S4 += 1
+
+    attacked = S1 - S2 + S3 - S4
+    safe = N * N - attacked
+
+    # However, the existing pieces are already placed and cannot be used, but they are included in attacked?
+    # But we are counting attacked squares — which includes the piece squares.
+    # And we are not allowed to place on non-empty squares anyway.
+    # But our "safe" squares are empty and not attacked.
+    # However, the problem says: place on an empty square that is not attacked.
+    # Our calculation of `attacked` includes all squares that are attacked (regardless of occupancy).
+    # And total empty squares = N*N - M.
+    # But the safe placement must be both empty and not attacked.
+    # So: answer = (N*N - attacked) 
+    # BUT: if a piece's own square is not considered as capturing itself? 
+    # The problem says: "cannot be captured by any of the existing pieces"
+    # And capture condition is defined as being in same row/col/diag.
+    # So a piece can attack its own position? But we are placing on empty squares.
+    # The existing pieces are fixed. We are placing on an empty square.
+    # The condition is: our piece should not be capturable by any existing piece.
+    # That means: our piece's square must not be in the same row, col, or diagonal as any existing piece.
+
+    # Therefore, the set of forbidden squares is exactly the union of:
+    #   all rows that have a piece
+    #   all columns that have a piece
+    #   all diagonals (i+j=const) that have a piece
+    #   all diagonals (i-j=const) that have a piece
+
+    # This is what we computed.
+
+    # However, note: the piece squares themselves are in this set, but they are not available anyway.
+
+    # So the number of squares that are not attacked is (N*N - attacked), and among these, they are automatically empty (because attacked includes piece squares) but wait: 
+    # Actually, some non-attacked squares might be occupied? No, because if a square has a piece, then:
+    #   its row is attacked, so the square is in an attacked row -> it is in the attacked set.
+    # Similarly for col and diagonals.
+    # Therefore, every piece's square is in the attacked set.
+
+    # Thus, the set of non-attacked squares is a subset of empty squares.
+
+    # So the

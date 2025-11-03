@@ -1,0 +1,91 @@
+import sys
+
+def main():
+    import heapq
+    
+    data = sys.stdin.read().split()
+    it = iter(data)
+    N = int(next(it)); Q = int(next(it))
+    
+    # For each vertex, maintain a max-heap (using negative values) of the largest up to 10 vertex numbers in its component
+    # Also maintain which component root each vertex belongs to
+    parent = list(range(N+1))
+    size = [1] * (N+1)
+    # Store up to 10 largest vertices in the component, as negative values for min-heap usage
+    top_k = [[-i] for i in range(N+1)]  # top_k[i] is a min-heap of negative values
+    
+    def find(x):
+        if parent[x] != x:
+            parent[x] = find(parent[x])
+        return parent[x]
+    
+    def union(u, v):
+        u = find(u)
+        v = find(v)
+        if u == v:
+            return
+        
+        # Always attach smaller tree to larger one
+        if size[u] < size[v]:
+            u, v = v, u
+        # Merge v into u
+        parent[v] = u
+        size[u] += size[v]
+        
+        # Merge the heaps: move all elements from v's heap to u's heap
+        # We only need at most 10 largest values
+        merged = []
+        # Extract all values from both heaps
+        while top_k[u]:
+            merged.append(-heapq.heappop(top_k[u]))
+        while top_k[v]:
+            merged.append(-heapq.heappop(top_k[v]))
+        
+        # Sort in descending order and take top 10
+        merged.sort(reverse=True)
+        top_10 = merged[:10]
+        
+        # Push back as negatives into min-heap
+        for val in top_10:
+            heapq.heappush(top_k[u], -val)
+    
+    output = []
+    index = 0
+    for _ in range(Q):
+        t = int(next(it))
+        if t == 1:
+            u = int(next(it)); v = int(next(it))
+            if find(u) != find(v):
+                union(u, v)
+        else:
+            v = int(next(it)); k = int(next(it))
+            root = find(v)
+            if len(top_k[root]) < k:
+                output.append("-1")
+            else:
+                # The k-th largest is the k-th element in sorted descending order,
+                # which corresponds to the k-th smallest in our negative min-heap.
+                # We need to extract temporarily or store differently.
+                temp = []
+                vals = []
+                while top_k[root]:
+                    val = heapq.heappop(top_k[root])
+                    temp.append(val)
+                    vals.append(-val)
+                
+                # Restore the heap
+                for val in temp:
+                    heapq.heappush(top_k[root], val)
+                
+                if len(vals) < k:
+                    output.append("-1")
+                else:
+                    # vals is sorted ascending (because we popped from min-heap of negatives)
+                    # so reverse to get descending and pick k-th largest
+                    vals.sort(reverse=True)
+                    output.append(str(vals[k-1]))
+    
+    print("\n".join(output))
+
+if __name__ == "__main__":
+    main()

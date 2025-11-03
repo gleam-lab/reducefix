@@ -1,0 +1,57 @@
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+const ll inf = 1e18;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    ll N, M;
+    cin >> N >> M;
+
+    vector<ll> A(N);
+    for (int i = 0; i < N; i++) {
+        cin >> A[i];
+    }
+
+    vector<vector<pair<int, ll>>> G(N);
+    for (int i = 0; i < M; i++) {
+        int u, v;
+        ll b;
+        cin >> u >> v >> b;
+        u--; v--;
+        G[u].push_back({v, b});
+        G[v].push_back({u, b});
+    }
+
+    vector<ll> dist(N, inf);
+    priority_queue<pair<ll, int>, vector<pair<ll, int>>, greater<pair<ll, int>>> pq;
+
+    // Start from vertex 0 (vertex 1 in 1-indexing)
+    // Initial cost includes the starting vertex weight A[0]
+    dist[0] = A[0];
+    pq.push({dist[0], 0});
+
+    while (!pq.empty()) {
+        auto [d, u] = pq.top();
+        pq.pop();
+
+        if (d > dist[u]) continue;
+
+        for (auto [v, edge_weight] : G[u]) {
+            ll new_cost = dist[u] + edge_weight + A[v];
+            if (new_cost < dist[v]) {
+                dist[v] = new_cost;
+                pq.push({dist[v], v});
+            }
+        }
+    }
+
+    // Output answers for vertices 2 to N (i.e., indices 1 to N-1)
+    for (int i = 1; i < N; i++) {
+        cout << dist[i] << (i == N-1 ? "\n" : " ");
+    }
+
+    return 0;
+}

@@ -1,0 +1,104 @@
+def solve():
+    N = int(input())
+    A = list(map(int, input().split()))
+    B = list(map(int, input().split()))
+    
+    # Sort toys in descending order (largest first)
+    A.sort(reverse=True)
+    # Sort boxes in descending order (largest first)
+    B.sort(reverse=True)
+    
+    # We are going to try to assign the largest unassigned toy to a box
+    # Use two pointers: one for toys, one for boxes
+    toy_idx = 0
+    box_idx = 0
+    
+    # Try to assign using existing boxes as much as possible
+    while toy_idx < N and box_idx < N - 1:
+        if A[toy_idx] <= B[box_idx]:
+            # This box can hold this toy
+            toy_idx += 1
+            box_idx += 1
+        else:
+            # This toy is too big for the current largest available box
+            # So it must go into the new box we purchase
+            break
+    
+    # If all toys are assigned, no new box needed? But we must use exactly one new box.
+    # Actually, we have N-1 boxes and N toys -> we must use exactly one new box.
+    # So at least one toy must go into the new box.
+    
+    # We want to minimize x (size of new box), so ideally we put the smallest possible toy in the new box?
+    # But we need to check if remaining assignment is possible.
+    
+    # Instead: simulate that one toy will be placed in the new box.
+    # We want to find minimum x such that the rest can be assigned to existing boxes.
+    
+    # Try each toy as candidate for the new box
+    # But N up to 200,000 -> O(N log N) solution needed
+    
+    # Alternate approach:
+    # We sort both toys and boxes in ascending order.
+    # Then use greedy matching from smallest to largest?
+    # But we can only skip one toy (the one going into new box).
+    
+    # Better idea:
+    # Sort A in increasing order, B in increasing order.
+    # Precompute: can we match first k toys (smallest k) with some k boxes?
+    # But we want to know: if we remove one toy, can the remaining N-1 toys be matched with N-1 boxes?
+    
+    # Standard approach for such problems:
+    # Sort both arrays in increasing order.
+    # For each i from 0 to N-1, check whether we can assign all toys except A[i] to the boxes.
+    # How to check quickly? Precompute prefix and suffix matches.
+    
+    A.sort()  # ascending
+    B.sort()  # ascending
+    
+    # Check if it's possible to assign N-1 toys (excluding one) to N-1 boxes
+    # We'll precompute:
+    # prefix[i]: True if first i toys (A[0..i-1]) can be matched with first i boxes (B[0..i-1])
+    prefix_ok = [True] * (N + 1)
+    for i in range(1, N):
+        if i > len(B):  # more toys than boxes
+            prefix_ok[i] = False
+        else:
+            # we need A[i-1] <= B[i-1] and prefix_ok[i-1]
+            prefix_ok[i] = prefix_ok[i-1] and (A[i-1] <= B[i-1])
+    
+    # Suffix[j]: True if last j toys (A[N-j .. N-1]) can be matched with last j boxes (B[N-1-j .. N-2])
+    suffix_ok = [True] * (N + 1)
+    for j in range(1, N):
+        if j > len(B):
+            suffix_ok[j] = False
+        else:
+            # last j toys: A[N-j] ... A[N-1]
+            # last j boxes: B[N-1-j] ... B[N-2]
+            suffix_ok[j] = suffix_ok[j-1] and (A[N-j] <= B[N-1-j])
+    
+    # Now try removing each toy i
+    min_x = float('inf')
+    possible = False
+    
+    for i in range(N):
+        # Remove toy A[i]
+        # Left part: toys [0, i-1] -> boxes [0, i-1]
+        left_count = i
+        right_count = N - 1 - i
+        
+        if left_count + right_count != N - 1:
+            continue
+            
+        left_ok = prefix_ok[left_count]
+        right_ok = suffix_ok[right_count]
+        
+        if left_ok and right_ok:
+            possible = True
+            min_x = min(min_x, A[i])
+    
+    if possible:
+        print(min_x)
+    else:
+        print(-1)
+
+solve()

@@ -1,0 +1,124 @@
+```python
+from collections import defaultdict
+
+N, M = map(int, input().split())
+A = list(map(int, input().split()))
+
+# 累積和
+cum = [0] * (N + 1)
+for i in range(N):
+    cum[i + 1] = cum[i] + A[i]
+
+# mod M の値の出現回数
+count_mod = defaultdict(int)
+answer = 0
+
+# 全ての累積和に対して処理
+for val in cum:
+    mod = val % M
+    answer += count_mod[mod]
+    count_mod[mod] += 1
+
+# s < t の条件を満たす場合のみカウントする必要があるが、
+# 上記の方法では時計回りの距離が M の倍数になる全ての (s,t) ペア（s != t）をカウントしている。
+# 問題は「時計回りに s から t へ行く最小ステップ数が M の倍数」であるペアを求める。
+# これは cum[t] - cum[s] ≡ 0 (mod M) → cum[t] ≡ cum[s] (mod M) を意味する。
+# ただし、s ≠ t で、かつ s から t への時計回りの経路が最短である必要がある。
+
+# 実際には、湖を一周する全長 total = cum[N] がある。
+# s から t への時計回りの距離が d のとき、反時計回りの距離は total - d であり、
+# 最小距離は min(d, total - d) となる。
+# しかし問題文では「時計回りに歩いたときのステップ数」と明言されているため、
+# 「時計回りに s から t へ行く」ことが前提であり、それが最小距離かどうかは関係ない？
+# いや、問題文: "The minimum number of steps required to walk clockwise from rest area s to rest area t"
+# とある。つまり、「時計回りに進む場合の最小ステップ数」ではなく、
+# 「s から t へ行く最小ステップ数（どちら回りでもよい）」が、時計回りに進んだ場合のステップ数と等しい（＝時計回りの方が短いか同値）ということ。
+
+# 重要なポイント：最小ステップ数が「時計回りの距離」になるのは、時計回りの距離 ≤ 反時計回りの距離 のとき。
+# つまり d <= total - d → d <= total/2.
+
+# よって、単に cum[t] ≡ cum[s] (mod M) なペアを数えるだけでは不十分。
+# さらに、時計回りの距離 d = cum[t] - cum[s] （ただし t > s）が d <= total - d を満たす必要がある。
+
+# しかし、上記のコードでは、s > t の場合も cum[s] ≡ cum[t] (mod M) でカウントしている。
+# 例えば s=3, t=1 で cum[3] ≡ cum[1] (mod M) ならカウントされるが、
+# このとき時計回りの距離は cum[1] + (total - cum[3]) ではなく、実際には cum[3] - cum[1] ではない。
+
+# 正しいアプローチ：
+# すべての s < t について、d = cum[t] - cum[s] が M の倍数かつ d <= total - d であればよい。
+# あるいは、s > t の場合は d = cum[t] + total - cum[s] だが、これは反時計回りの距離と同じなので、
+# 時計回りの距離としては採用されない。
+
+# したがって、有効なペアは s < t かつ d = cum[t] - cum[s] ≡ 0 (mod M) かつ d <= total / 2 の場合。
+
+# しかし、total が奇数のときは total/2 は整数でないが、d は整数なので d <= total//2 でよい。
+
+# しかし、この制約のもとで O(N^2) は N=2e5 で TLE。
+
+# 別のアプローチ：
+# 条件 cum[t] ≡ cum[s] (mod M) を満たす s < t であって、cum[t] - cum[s] <= total/2 なるものを数えたい。
+
+# まず、各 mod M のグループ内で、cum 値をソートしておき、尺取り法か二分探索で範囲を数える。
+
+# total = cum[N]
+# 各 mod r について、cum[i] ≡ r (mod M) なるインデックス i を cum[i] の昇順に並べる。
+# そして、各 j に対して、cum[j] - cum[i] <= total/2 かつ cum[i] ≡ cum[j] (mod M) なる i < j を数える。
+
+# これは、同じ mod グループ内で、cum[j] - M*floor(cum[j]/M) = cum[i] - M*floor(cum[i]/M) なので、
+# cum[j] - cum[i] は M の倍数だが、値そのものは cum[j] - cum[i] <= total/2 でなければならない。
+
+# さらに、i < j という条件もあるが、cum 値の順序とインデックスの順序は一致しないので注意。
+
+# しかし、問題は「s から t へ時計回りに進む」距離が cum[t] - cum[s] となるのは s < t のとき。
+# s > t のときは cum[t] + total - cum[s] となり、これは通常、反時計回りの距離。
+# したがって、時計回りの距離が最小となるのは、cum[t] - cum[s] <= total - (cum[t] - cum[s]) → cum[t] - cum[s] <= total/2.
+# つまり、s < t かつ cum[t] - cum[s] <= total/2 かつ cum[t] ≡ cum[s] (mod M).
+
+# ただし、s > t の場合、時計回りに進む距離は cum[t] + total - cum[s] であり、
+# これが最小距離となるのは cum[t] + total - cum[s] <= total - (cum[t] + total - cum[s]) = cum[s] - cum[t]
+# → cum[t] + total - cum[s] <= cum[s] - cum[t] → 2*(cum[t] - cum[s]) + total <= 0 → cum[t] - cum[s] <= -total/2
+# これは負の数なので、通常は成り立たない。つまり、s > t のとき時計回りの距離が最小になることはない。
+
+# よって、s < t かつ cum[t] - cum[s] <= total/2 かつ (cum[t] - cum[s]) % M == 0 を満たすペアを数える。
+
+# しかし、(cum[t] - cum[s]) % M == 0 は cum[t] % M == cum[s] % M と同値。
+
+# したがって、方針：
+# 1. total = cum[N]
+# 2. 各 mod r に対して、cum[i] (i=0..N-1) を mod M でグループ化し、cum[i] の値でソート。
+# 3. 各グループ内で、尺取り法または二分探索を使って、cum[j] - cum[i] <= total/2 かつ i < j を満たすペアを数える。
+#    ただし、ここで i,j は累積和配列のインデックス（0からNまで）だが、s=i, t=j+1? いや、rest area i+1 に対応するのが cum[i] なので、
+#    s = i+1, t = j+1 で s < t → i < j.
+#    距離は cum[j] - cum[i].
+#    よって、i < j かつ cum[j] - cum[i] <= total/2 かつ cum[i]%M == cum[j]%M.
+
+# 4. すべてのグループについて合計。
+
+# ただし、N=2e5 なので、各グループ内で O(k log k) なら大丈夫。
+
+# 実装：
+
+total = cum[N]
+half_total = total / 2.0  # float で比較
+
+from collections import defaultdict
+import bisect
+
+mod_groups = defaultdict(list)
+for i in range(N + 1):
+    mod_val = cum[i] % M
+    mod_groups[mod_val].append(cum[i])
+
+answer = 0
+for mod_val, vals in mod_groups.items():
+    vals.sort()
+    # 尺取り法で、j を動かしながら、vals[j] - vals[i] <= half_total なる i の範囲を管理
+    left = 0
+    for right in range(len(vals)):
+        while left < right and vals[right] - vals[left] > half_total:
+            left += 1
+        # left から right-1 までの i が条件を満たす
+        answer += right - left
+
+print(answer)
+```

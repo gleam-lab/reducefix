@@ -1,0 +1,72 @@
+import bisect
+
+n, q = map(int, input().split())
+a = list(map(int, input().split()))
+a.sort()
+
+for _ in range(q):
+    b, k = map(int, input().split())
+    
+    # Find the position where b would be inserted in sorted array a
+    pos = bisect.bisect_left(a, b)
+    
+    # We'll collect distances from candidates around the insertion point
+    # But instead of just two points, we need to consider more for larger k
+    left = pos - 1
+    right = pos
+    
+    # Use two pointers to expand outward from the target b
+    # We'll simulate merging two sorted lists: distances to the left and right
+    distances = []
+    
+    # Add all possible distances by expanding from the center
+    # Instead of generating all distances (which is O(N)), we can use binary search on answer
+    # But simpler approach: since N and Q up to 1e5, we cannot sort all distances per query
+    
+    # Alternative efficient approach: we don't need full sort, just k-th smallest distance
+    # However, with constraints up to 1e5 queries and 1e5 points, we need an efficient solution
+    
+    # Actually, let's reconsider: worst-case we might need to look at many points
+    # But note: we only need the k-th closest. We can use two pointers expanding from pos
+    
+    # Generate candidate distances by expanding left and right until we have enough
+    candidates = []
+    
+    # Collect distances from both sides up to reasonable limit
+    # We'll take at most k elements from each side? Not exactly, but we can expand until we have 2*k candidates
+    
+    l, r = pos - 1, pos
+    while len(candidates) < 2 * k and (l >= 0 or r < n):
+        if l >= 0 and r < n:
+            if abs(a[l] - b) <= abs(a[r] - b):
+                candidates.append(abs(a[l] - b))
+                l -= 1
+            else:
+                candidates.append(abs(a[r] - b))
+                r += 1
+        elif l >= 0:
+            candidates.append(abs(a[l] - b))
+            l -= 1
+        elif r < n:
+            candidates.append(abs(a[r] - b))
+            r += 1
+    
+    # If we didn't get enough candidates, continue until we have at least k
+    while len(candidates) < k and (l >= 0 or r < n):
+        if l >= 0 and r < n:
+            if abs(a[l] - b) <= abs(a[r] - b):
+                candidates.append(abs(a[l] - b))
+                l -= 1
+            else:
+                candidates.append(abs(a[r] - b))
+                r += 1
+        elif l >= 0:
+            candidates.append(abs(a[l] - b))
+            l -= 1
+        elif r < n:
+            candidates.append(abs(a[r] - b))
+            r += 1
+    
+    # Sort candidates and pick k-th smallest (1-indexed)
+    candidates.sort()
+    print(candidates[k - 1])

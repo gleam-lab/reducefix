@@ -1,0 +1,214 @@
+import heapq
+
+N = int(input())
+A = list(map(int, input().split()))
+B = list(map(int, input().split()))
+
+# Sort toys in descending order to try to place the largest ones first
+A.sort(reverse=True)
+# Use a max-heap for available boxes (using negative values for min-heap as max-heap)
+box_heap = [-b for b in B]
+heapq.heapify(box_heap)
+
+# Try to assign each toy to an existing box
+for size in A:
+    if box_heap:
+        max_box = -heapq.heappop(box_heap)  # Get the largest available box
+        if size > max_box:
+            # Even the largest box is too small for this toy
+            # We would need a new box of at least `size`, but we must check if all other toys can be placed
+            # However, since we're processing largest toy first and it doesn't fit anywhere, we fail
+            # But wait: maybe we can use the new box for this large toy and rearrange others?
+            # Our greedy approach fails here — we need a different strategy.
+
+            # Actually, we need to simulate: can we assign N-1 toys to N-1 boxes?
+            # If yes, then x = size of unassigned toy is answer.
+            # If not, then impossible (-1).
+
+            # Let's reconsider: We want minimum x such that we can pack all.
+            # Idea: For a candidate x, we can assign each toy to either an existing box or the new box of size x.
+            # We want minimal x such that assignment exists.
+
+            # Alternate approach:
+            # We must assign exactly one toy to the new box. Try each toy as candidate for new box.
+            # For each candidate toy i with size a_i, check whether remaining N-1 toys can fit into N-1 boxes.
+            # Then minimal valid a_i is answer.
+
+            # But N up to 200,000 — trying each candidate naively O(N^2) is too slow.
+
+            # Efficient method:
+            # Sort both toys and boxes.
+            # Precompute whether first k toys can be matched to first k boxes (after sorting).
+            # Specifically:
+            #   Sort toys ascending: T[0] <= T[1] <= ... <= T[N-1]
+            #   Sort boxes ascending: C[0] <= C[1] <= ... <= C[N-2]
+            # For each i (toy excluded), check if we can match the other toys to boxes.
+
+            # How? 
+            # Let’s sort A and B.
+            A_sorted = sorted(A)
+            B_sorted = sorted(B)
+
+            # Check if we can match all toys except one (which goes to new box)
+            # We try each toy as the one to be put in new box (in increasing order to find minimum x)
+
+            # Precompute prefix: can the smallest i toys be assigned to the smallest i boxes?
+            prefix_ok = [True] * (N)
+            if N > 1:
+                for i in range(N-1):
+                    if i < len(B_sorted) and A_sorted[i] <= B_sorted[i]:
+                        continue
+                    else:
+                        # From this point on, prefix fails
+                        for j in range(i, N):
+                            prefix_ok[j+1] = False
+                        break
+            # But actually, we need more: when skipping one toy, the rest must match.
+
+            # Better: 
+            # For each possible toy skipped (say the one with size s), remove it from A_sorted,
+            # then check if remaining toys can be matched to B_sorted (both sorted increasingly).
+
+            # We can do this efficiently with two arrays:
+            #   left[i]: can the first i toys (A_sorted[0..i-1]) be matched to first i boxes (B_sorted[0..i-1])?
+            #   right[i]: can the last (N-1-i) toys (A_sorted[i+1..N-1]) be matched to last (N-1-i) boxes (B_sorted[i..N-2])?
+
+            left = [True] * (N)
+            # left[i] = True means first i toys can go into first i boxes
+            for i in range(1, N):
+                if i <= N-1 and i-1 < len(B_sorted) and left[i-1] and A_sorted[i-1] <= B_sorted[i-1]:
+                    left[i] = True
+                else:
+                    left[i] = False
+
+            right = [True] * (N)
+            # right[i] = True means from index i+1 to end, the toys can be matched to boxes from index i to end
+            for i in range(N-2, -1, -1):
+                idx_toy = i+1  # first toy in the segment
+                idx_box = i   # first box in the segment (since we have N-1 boxes)
+                num_boxes = N-1 - i
+                num_toys = N-1 - i
+                if num_toys == 0:
+                    right[i] = True
+                else:
+                    # Check if A_sorted[idx_toy] <= B_sorted[idx_box] and right[i+1] holds
+                    # But careful: we need to match sorted lists
+                    # Since both segments are sorted, we can compare element-wise
+                    if i == N-2:
+                        right[i] = (A_sorted[i+1] <= B_sorted[i])
+                    else:
+                        # The matching: j-th toy in segment (A_sorted[i+1+j]) vs j-th box (B_sorted[i+j])
+                        # We only need to know if all satisfy A_sorted[i+1+j] <= B_sorted[i+j] for j=0,...,num_toys-1
+                        # But we can't recompute each time.
+                        # Instead, we propagate: right[i] = (A_sorted[i+1] <= B_sorted[i]) and right[i+1]
+                        # Is that correct?
+                        # Not exactly: because right[i+1] checks A_sorted[i+2:] with B_sorted[i+1:], 
+                        # so together: A_sorted[i+1] <= B_sorted[i], and A_sorted[i+2:] <= B_sorted[i+1:] element-wise.
+                        # This implies full matching.
+                        right[i] = right[i+1] and (A_sorted[i+1] <= B_sorted[i])
+
+            # Now try skipping each toy at position i in A_sorted
+            min_x = float('inf')
+            found = False
+            for i in range(N):
+                # Skip toy A_sorted[i]
+                # Check if first i toys can go to first i boxes AND last (N-1-i) toys to last (N-1-i) boxes
+                left_ok = left[i]   # first i toys (0..i-1) -> first i boxes (0..i-1)
+                right_ok = True
+                if i < N-1:
+                    right_ok = right[i]  # toys i+1..N-1 -> boxes i..N-2
+                else:
+                    # i == N-1, no right part
+                    right_ok = True
+
+                if left_ok and right_ok:
+                    found = True
+                    min_x = min(min_x, A_sorted[i])
+
+            if found:
+                print(min_x)
+            else:
+                print(-1)
+            exit()
+
+    else:
+        # No more boxes — this toy must go to new box
+        x = size
+        # But we need to check if this works: we already used all boxes, so only this toy remains
+        # So x = size is sufficient
+        # However, our earlier logic should have handled this in the loop above
+        pass
+
+# If we get here, all toys were placed in existing boxes — meaning we don't need a new box?
+# But problem says "purchase one box", so we still must buy one, but it can be of any positive size.
+# However, we have N toys and N-1 existing boxes + 1 new box = N boxes.
+# So we must use the new box for at least one toy.
+# Therefore, we cannot avoid using the new box.
+# So even if all toys fit in existing boxes, we must "waste" one box — we have to use the new one for one toy.
+
+# But we want minimal x. So we can choose which toy to put in the new box.
+# We can put the smallest toy in the new box, so x just needs to be >= that toy's size.
+
+# However, the above simulation did not account for this case.
+
+# Actually, the above code exits early only when we hit the failure branch.
+# We need to handle the case where all toys fit in existing boxes.
+
+# Let's refactor: always do the efficient method.
+
+# Actually, the initial greedy was flawed. We should always do the skip-one-toy method.
+
+# Revised plan: do the efficient method regardless.
+
+# Remove the initial greedy and do:
+
+A_sorted = sorted(A)
+B_sorted = sorted(B)
+
+# Edge: if N==2, then one box, two toys
+# We'll do general method.
+
+# Special case: if N == 1? But constraint N>=2.
+
+# Precompute left and right arrays
+left = [True] * (N)
+# left[i]: can assign A_sorted[0:i] to B_sorted[0:i]?
+for i in range(1, N):
+    if i <= N-1 and i-1 < len(B_sorted) and left[i-1] and A_sorted[i-1] <= B_sorted[i-1]:
+        left[i] = True
+    else:
+        left[i] = False
+
+right = [True] * (N)
+# right[i]: can assign A_sorted[i+1:N] to B_sorted[i:N-1]?
+# For i from N-1 down to 0
+# When i = N-1: no toys to assign -> True
+# When i = N-2: assign A_sorted[N-1] to B_sorted[N-2] -> A_sorted[N-1] <= B_sorted[N-2]
+# ...
+right[N-1] = True
+if N >= 2:
+    for i in range(N-2, -1, -1):
+        # Check if we can assign A_sorted[i+1] to B_sorted[i], and the rest recursively
+        if i+1 < N and i < N-1:
+            # Number of toys from i+1 to end: N-1-i
+            # Number of boxes from i to end: N-1-i
+            # We need A_sorted[i+1] <= B_sorted[i] and the rest matches (which is right[i+1])
+            right[i] = right[i+1] and (A_sorted[i+1] <= B_sorted[i])
+        else:
+            right[i] = True
+
+min_x = float('inf')
+found = False
+for i in range(N):
+    # Skip toy A_sorted[i]
+    left_ok = left[i]   # first i toys to first i boxes
+    right_ok = right[i] # last (N-1-i) toys to last (N-1-i) boxes
+    if left_ok and right_ok:
+        found = True
+        if A_sorted[i] < min_x:
+            min_x = A_sorted[i]
+
+if found:
+    print(min_x)
+else:
+    print(-1)

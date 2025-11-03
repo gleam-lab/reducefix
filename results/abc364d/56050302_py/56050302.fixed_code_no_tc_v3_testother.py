@@ -1,0 +1,31 @@
+import bisect
+
+n, q = map(int, input().split())
+a = list(map(int, input().split()))
+a.sort()
+
+for _ in range(q):
+    b, k = map(int, input().split())
+    
+    # Find the position where b would be inserted in sorted array a
+    pos = bisect.bisect_left(a, b)
+    
+    # We'll collect distances from points around the insertion point
+    # We need to consider candidates from both left and right of pos
+    candidates = []
+    
+    # Add points from the left side (decreasing index)
+    left = pos - 1
+    for i in range(min(left + 1, k)):
+        if left - i >= 0:
+            candidates.append(abs(a[left - i] - b))
+    
+    # Add points from the right side (increasing index)
+    right = pos
+    for i in range(min(n - right, k)):
+        if right + i < n:
+            candidates.append(abs(a[right + i] - b))
+    
+    # Sort the candidate distances and pick the k-th smallest (1-indexed)
+    candidates.sort()
+    print(candidates[k-1])

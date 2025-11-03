@@ -1,0 +1,279 @@
+import sys
+
+def main():
+    data = sys.stdin.read().split()
+    if not data:
+        return
+    
+    N = int(data[0])
+    M = int(data[1])
+    
+    # Sets to store occupied lines (row, col, diag1, diag2)
+    rows = set()
+    cols = set()
+    diag1 = set()  # i + j
+    diag2 = set()  # i - j
+    
+    pieces = []
+    index = 2
+    for _ in range(M):
+        a = int(data[index])
+        b = int(data[index + 1])
+        index += 2
+        pieces.append((a, b))
+        rows.add(a)
+        cols.add(b)
+        diag1.add(a + b)
+        diag2.add(a - b)
+    
+    # Total squares that are under attack
+    total_attacked = set()
+    
+    for a, b in pieces:
+        # Add all squares in the same row
+        # We don't need to add all explicitly; we'll calculate intersections later
+        pass
+    
+    # Instead of enumerating all attacked squares (impossible for large N), 
+    # we use inclusion-exclusion principle
+    
+    # Total attacked cells = union of all rows, cols, diag1, diag2 covered by pieces
+    # |R ∪ C ∪ D1 ∪ D2| = ?
+    
+    # But we must subtract overlaps and also ensure we don't count non-existent cells
+    
+    # However, simpler approach: since M <= 1000, we can collect all attacked cells
+    # BUT N can be up to 1e9, so we cannot iterate over grid.
+    
+    # Instead, compute using inclusion exclusion with sets of lines.
+    
+    # Let R = set of rows with pieces
+    # Let C = set of cols with pieces
+    # Let D1 = set of diag1 (i+j) with pieces
+    # Let D2 = set of diag2 (i-j) with pieces
+    
+    # The attacked cells are:
+    # A = { (i,j) | i ∈ R or j ∈ C or (i+j) ∈ D1 or (i-j) ∈ D2 }
+    
+    # We want |A|, then answer = N*N - |A|, but also need to subtract already occupied cells?
+    # No: because occupied cells are already included in A, and we want empty safe squares.
+    # So total safe empty squares = N*N - |A|
+    
+    # Now compute |A| by inclusion-exclusion:
+    
+    total = 0
+    
+    # Single sets
+    total += len(rows) * N  # all rows
+    total += len(cols) * N  # all cols
+    for s in diag1:
+        # number of cells where i+j = s
+        if s < 2 or s > 2*N:
+            continue
+        cnt = s - 1 if s <= N + 1 else 2*N - s + 1
+        total += cnt
+    for d in diag2:
+        # number of cells where i-j = d
+        # i = j + d, 1<=j+d<=N, 1<=j<=N
+        # => max(1,1-d) <= j <= min(N,N-d)
+        low_j = max(1, 1 - d)
+        high_j = min(N, N - d)
+        if low_j <= high_j:
+            total += high_j - low_j + 1
+    
+    # Subtract pairwise intersections
+    from itertools import combinations
+    
+    # R ∩ C
+    for r in rows:
+        for c in cols:
+            total -= 1  # cell (r,c) counted twice
+    
+    # R ∩ D1: cells in row r and diag1 s -> (r, s-r), valid if 1<=s-r<=N
+    for r in rows:
+        for s in diag1:
+            j = s - r
+            if 1 <= j <= N:
+                total -= 1
+    
+    # R ∩ D2: cells in row r and diag2 d -> (r, r-d), valid if 1<=r-d<=N
+    for r in rows:
+        for d in diag2:
+            j = r - d
+            if 1 <= j <= N:
+                total -= 1
+    
+    # C ∩ D1: cells in col c and diag1 s -> (s-c, c), valid if 1<=s-c<=N
+    for c in cols:
+        for s in diag1:
+            i = s - c
+            if 1 <= i <= N:
+                total -= 1
+    
+    # C ∩ D2: cells in col c and diag2 d -> (c+d, c), valid if 1<=c+d<=N
+    for c in cols:
+        for d in diag2:
+            i = c + d
+            if 1 <= i <= N:
+                total -= 1
+    
+    # D1 ∩ D2: cells on diag1 s and diag2 d -> solve i+j=s, i-j=d -> i=(s+d)/2, j=(s-d)/2
+    # exists only if (s+d) even and both i,j in [1,N]
+    for s in diag1:
+        for d in diag2:
+            if (s + d) % 2 == 0:
+                i = (s + d) // 2
+                j = (s - d) // 2
+                if 1 <= i <= N and 1 <= j <= N:
+                    total -= 1
+    
+    # Add back triple intersections
+    # R ∩ C ∩ D1: (r,c) with r+c in D1
+    for r in rows:
+        for c in cols:
+            if (r + c) in diag1:
+                total += 1
+    
+    # R ∩ C ∩ D2: (r,c) with r-c in D2
+    for r in rows:
+        for c in cols:
+            if (r - c) in diag2:
+                total += 1
+    
+    # R ∩ D1 ∩ D2: row r, diag1 s, diag2 d -> j = s-r, and j = r-d -> so s-r = r-d -> s+d=2r
+    # then j = s-r, i = r, must have 1<=j<=N
+    for r in rows:
+        for s in diag1:
+            for d in diag2:
+                if s + d == 2 * r:
+                    j = s - r
+                    if 1 <= j <= N:
+                        total += 1
+    
+    # C ∩ D1 ∩ D2: col c, diag1 s, diag2 d -> i = s-c, and i = c+d -> so s-c = c+d -> s-d=2c
+    # then i = s-c, must have 1<=i<=N
+    for c in cols:
+        for s in diag1:
+            for d in diag2:
+                if s - d == 2 * c:
+                    i = s - c
+                    if 1 <= i <= N:
+                        total += 1
+    
+    # Subtract quadruple intersection
+    # R ∩ C ∩ D1 ∩ D2: (r,c) such that r+c in D1 and r-c in D2
+    for r in rows:
+        for c in cols:
+            if (r + c) in diag1 and (r - c) in diag2:
+                total -= 1
+    
+    # But wait: this inclusion-exclusion is overcounting because we're not accounting for
+    # the fact that some intersections might not exist. Actually the standard formula:
+    #
+    # |R ∪ C ∪ D1 ∪ D2| = 
+    #   Σ|single| - Σ|pairs| + Σ|triples| - |quadruple|
+    #
+    # But our "sets" are:
+    # S1 = all cells in rows R
+    # S2 = all cells in cols C
+    # S3 = all cells in diag1 D1
+    # S4 = all cells in diag2 D2
+    #
+    # So:
+    total_size = 0
+    # singles
+    total_size += len(rows) * N
+    total_size += len(cols) * N
+    total_size += sum(s - 1 if s <= N + 1 else 2 * N - s + 1 for s in diag1 if 2 <= s <= 2 * N)
+    total_size += sum(
+        max(0, min(N, N - d) - max(1, 1 - d) + 1) 
+        for d in diag2
+    )
+    
+    # pairs
+    pair_sub = 0
+    # R-C
+    pair_sub += len(rows) * len(cols)
+    # R-D1
+    for r in rows:
+        for s in diag1:
+            j = s - r
+            if 1 <= j <= N:
+                pair_sub += 1
+    # R-D2
+    for r in rows:
+        for d in diag2:
+            j = r - d
+            if 1 <= j <= N:
+                pair_sub += 1
+    # C-D1
+    for c in cols:
+        for s in diag1:
+            i = s - c
+            if 1 <= i <= N:
+                pair_sub += 1
+    # C-D2
+    for c in cols:
+        for d in diag2:
+            i = c + d
+            if 1 <= i <= N:
+                pair_sub += 1
+    # D1-D2
+    for s in diag1:
+        for d in diag2:
+            if (s + d) % 2 == 0:
+                i = (s + d) // 2
+                j = (s - d) // 2
+                if 1 <= i <= N and 1 <= j <= N:
+                    pair_sub += 1
+    total_size -= pair_sub
+    
+    # triples
+    triple_add = 0
+    # R-C-D1
+    for r in rows:
+        for c in cols:
+            if (r + c) in diag1:
+                triple_add += 1
+    # R-C-D2
+    for r in rows:
+        for c in cols:
+            if (r - c) in diag2:
+                triple_add += 1
+    # R-D1-D2
+    for r in rows:
+        for s in diag1:
+            for d in diag2:
+                if s + d == 2 * r:
+                    j = s - r
+                    if 1 <= j <= N:
+                        triple_add += 1
+    # C-D1-D2
+    for c in cols:
+        for s in diag1:
+            for d in diag2:
+                if s - d == 2 * c:
+                    i = s - c
+                    if 1 <= i <= N:
+                        triple_add += 1
+    total_size += triple_add
+    
+    # quadruple
+    quad_sub = 0
+    for r in rows:
+        for c in cols:
+            if (r + c) in diag1 and (r - c) in diag2:
+                quad_sub += 1
+    total_size -= quad_sub
+    
+    # The result might be negative due to over-subtraction? But mathematically it should be fine.
+    # Clamp to [0, N*N]
+    total_size = max(0, min(total_size, N*N))
+    
+    result = N * N - total_size
+    result = max(0, result)
+    
+    print(result)
+
+if __name__ == '__main__':
+    main()

@@ -1,0 +1,20 @@
+n, m = map(int, input().split())
+captured_or_occupied = set()
+
+# The 8 possible knight-like moves that can capture a piece
+moves = [(2,1), (1,2), (-1,2), (-2,1), (-2,-1), (-1,-2), (1,-2), (2,-1)]
+
+for _ in range(m):
+    a, b = map(int, input().split())
+    # Mark the current piece's position as occupied
+    captured_or_occupied.add((a, b))
+    # For each of the 8 directions, mark the square that would be captured by this piece
+    for dx, dy in moves:
+        x, y = a + dx, b + dy
+        if 1 <= x <= n and 1 <= y <= n:
+            captured_or_occupied.add((x, y))
+
+# Total empty squares minus those that are either occupied or capturable
+ans = n * n - len(captured_or_occupied)
+
+print(ans)

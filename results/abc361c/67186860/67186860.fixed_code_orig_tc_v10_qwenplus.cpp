@@ -1,0 +1,29 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    int n, k;
+    cin >> n >> k;
+    vector<int> a(n);
+    for (int i = 0; i < n; i++) {
+        cin >> a[i];
+    }
+    sort(a.begin(), a.end());
+    
+    // We remove exactly K elements, so we keep (n - k) elements.
+    int keep = n - k;
+    if (keep <= 0) {
+        cout << 0 << endl;
+        return 0;
+    }
+    
+    // Try all possible contiguous segments of length 'keep' in the sorted array.
+    // The optimal answer must be a contiguous segment because we want to minimize (max - min).
+    long long ans = 1e18;
+    for (int i = 0; i + keep - 1 < n; i++) {
+        ans = min(ans, (long long)a[i + keep - 1] - a[i]);
+    }
+    
+    cout << ans << endl;
+    return 0;
+}

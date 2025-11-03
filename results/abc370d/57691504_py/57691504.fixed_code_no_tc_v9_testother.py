@@ -1,0 +1,155 @@
+import sys
+from typing import Dict, List
+
+def main():
+    data = sys.stdin.read().split()
+    H = int(data[0])
+    W = int(data[1])
+    Q = int(data[2])
+    
+    # Union-Find style structure for each row and column to track next existing wall
+    # For each row, we maintain left and right neighbors
+    # For each column, we maintain up and down neighbors
+    
+    # next_left[r][c] = the next column to the left in row r that has a wall (or 0 if none)
+    # next_right[r][c] = the next column to the right in row r that has a wall (or W+1 if none)
+    # next_up[c][r] = the next row above in column c that has a wall (or 0 if none)
+    # next_down[c][r] = the next row below in column c that has a wall (or H+1 if none)
+    
+    next_left: List[Dict[int, int]] = [{} for _ in range(H + 1)]
+    next_right: List[Dict[int, int]] = [{} for _ in range(H + 1)]
+    next_up: List[Dict[int, int]] = [{} for _ in range(W + 1)]
+    next_down: List[Dict[int, int]] = [{} for _ in range(W + 1)]
+    
+    # Initialize: initially every cell has a wall
+    # For each row r, set up neighbors for columns
+    for r in range(1, H + 1):
+        for c in range(1, W + 1):
+            next_left[r][c] = c - 1
+            next_right[r][c] = c + 1
+    # For each column c, set up neighbors for rows
+    for c in range(1, W + 1):
+        for r in range(1, H + 1):
+            next_up[c][r] = r - 1
+            next_down[c][r] = r + 1
+            
+    total_walls = H * W
+    index = 3
+    
+    for _ in range(Q):
+        R_q = int(data[index])
+        C_q = int(data[index + 1])
+        index += 2
+        
+        # Check if there's a wall at (R_q, C_q)
+        # If next_right[R_q][C_q] != C_q + 1 or next_left[R_q][C_q] != C_q - 1, 
+        # it means this cell has been removed
+        has_wall = (C_q in next_left[R_q] and 
+                   next_left[R_q][C_q] == C_q - 1 and 
+                   next_right[R_q][C_q] == C_q + 1)
+        
+        if has_wall:
+            # Destroy the wall at (R_q, C_q)
+            total_walls -= 1
+            
+            # Remove from row R_q: update left and right pointers
+            left_neighbor = next_left[R_q][C_q]  # C_q - 1
+            right_neighbor = next_right[R_q][C_q]  # C_q + 1
+            
+            if left_neighbor >= 1:
+                next_right[R_q][left_neighbor] = right_neighbor
+            if right_neighbor <= W:
+                next_left[R_q][right_neighbor] = left_neighbor
+                
+            # Remove from column C_q: update up and down pointers
+            up_neighbor = next_up[C_q][R_q]  # R_q - 1
+            down_neighbor = next_down[C_q][R_q]  # R_q + 1
+            
+            if up_neighbor >= 1:
+                next_down[C_q][up_neighbor] = down_neighbor
+            if down_neighbor <= H:
+                next_up[C_q][down_neighbor] = up_neighbor
+                
+            # Remove the entry for this cell
+            if C_q in next_left[R_q]:
+                del next_left[R_q][C_q]
+            if C_q in next_right[R_q]:
+                del next_right[R_q][C_q]
+            if R_q in next_up[C_q]:
+                del next_up[C_q][R_q]
+            if R_q in next_down[C_q]:
+                del next_down[C_q][R_q]
+                
+        else:
+            # No wall at (R_q, C_q), try to destroy first wall in each direction
+            destroyed = set()
+            
+            # Look up: find the highest wall below R_q in column C_q
+            r = next_up[C_q][R_q] if R_q in next_down[C_q] else 0
+            while r > 0 and r not in next_down[C_q]:
+                r = next_up[C_q].get(r, 0)
+            if r > 0 and r < R_q:
+                # Check if path is clear (no walls between r and R_q)
+                if next_down[C_q][r] == R_q:
+                    destroyed.add((r, C_q))
+            
+            # Look down: find the lowest wall above R_q in column C_q
+            r = next_down[C_q][R_q] if R_q in next_up[C_q] else H + 1
+            while r <= H and r not in next_up[C_q]:
+                r = next_down[C_q].get(r, H + 1)
+            if r <= H and r > R_q:
+                if next_up[C_q][r] == R_q:
+                    destroyed.add((r, C_q))
+            
+            # Look left: find the rightmost wall to the left of C_q in row R_q
+            c = next_left[R_q][C_q] if C_q in next_right[R_q] else 0
+            while c > 0 and c not in next_right[R_q]:
+                c = next_left[R_q].get(c, 0)
+            if c > 0 and c < C_q:
+                if next_right[R_q][c] == C_q:
+                    destroyed.add((R_q, c))
+            
+            # Look right: find the leftmost wall to the right of C_q in row R_q
+            c = next_right[R_q][C_q] if C_q in next_left[R_q] else W + 1
+            while c <= W and c not in next_left[R_q]:
+                c = next_right[R_q].get(c, W + 1)
+            if c <= W and c > C_q:
+                if next_left[R_q][c] == C_q:
+                    destroyed.add((R_q, c))
+            
+            # Destroy all valid walls found
+            for r, c in destroyed:
+                total_walls -= 1
+                
+                # Update row r
+                left_neighbor = next_left[r][c] if c in next_left[r] else c - 1
+                right_neighbor = next_right[r][c] if c in next_right[r] else c + 1
+                
+                if left_neighbor >= 1 and left_neighbor in next_right[r]:
+                    next_right[r][left_neighbor] = right_neighbor
+                if right_neighbor <= W and right_neighbor in next_left[r]:
+                    next_left[r][right_neighbor] = left_neighbor
+                
+                # Update column c
+                up_neighbor = next_up[c][r] if r in next_up[c] else r - 1
+                down_neighbor = next_down[c][r] if r in next_down[c] else r + 1
+                
+                if up_neighbor >= 1 and up_neighbor in next_down[c]:
+                    next_down[c][up_neighbor] = down_neighbor
+                if down_neighbor <= H and down_neighbor in next_up[c]:
+                    next_up[c][down_neighbor] = up_neighbor
+                
+                # Remove the cell from structures
+                if c in next_left[r]:
+                    del next_left[r][c]
+                if c in next_right[r]:
+                    del next_right[r][c]
+                if r in next_up[c]:
+                    del next_up[c][r]
+                if r in next_down[c]:
+                    del next_down[c][r]
+    
+    print(total_walls)
+
+if __name__ == "__main__":
+    main()

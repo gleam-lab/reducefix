@@ -1,0 +1,74 @@
+def main():
+    import sys
+    input = sys.stdin.read
+    data = input().split()
+    
+    N = int(data[0])
+    M = int(data[1])
+    
+    if M == 0:
+        print(N * N)
+        return
+    
+    pieces = []
+    index = 2
+    for _ in range(M):
+        a = int(data[index])
+        b = int(data[index + 1])
+        index += 2
+        pieces.append((a, b))
+    
+    # Sets to store attacked lines
+    rows = set()
+    cols = set()
+    diag1 = set()  # i + j
+    diag2 = set()  # i - j
+    
+    for a, b in pieces:
+        rows.add(a)
+        cols.add(b)
+        diag1.add(a + b)
+        diag2.add(a - b)
+    
+    # Total squares under attack
+    total_attacked = set()
+    
+    for a, b in pieces:
+        # Add entire row
+        for c in range(1, N + 1):
+            total_attacked.add((a, c))
+        # Add entire column
+        for r in range(1, N + 1):
+            total_attacked.add((r, b))
+        # Add diagonal: i + j = a + b
+        # i ranges from max(1, a+b-N) to min(N, a+b-1)
+        start_i = max(1, a + b - N)
+        end_i = min(N, a + b - 1)
+        for i in range(start_i, end_i + 1):
+            j = a + b - i
+            if 1 <= j <= N:
+                total_attacked.add((i, j))
+        # Add anti-diagonal: i - j = a - b
+        # i = j + (a - b), j from max(1, 1 - (a-b)) to min(N, N - (a-b))
+        diff = a - b
+        start_j = max(1, 1 - diff)
+        end_j = min(N, N - diff)
+        for j in range(start_j, end_j + 1):
+            i = j + diff
+            if 1 <= i <= N:
+                total_attacked.add((i, j))
+    
+    # Count safe empty squares
+    occupied = set(pieces)
+    safe_count = 0
+    
+    for r in range(1, N + 1):
+        for c in range(1, N + 1):
+            pos = (r, c)
+            if pos not in occupied and pos not in total_attacked:
+                safe_count += 1
+    
+    print(safe_count)
+
+if __name__ == "__main__":
+    main()

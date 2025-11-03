@@ -1,0 +1,119 @@
+```python
+n, k = map(int, input().split())
+A = list(map(int, input().split()))
+
+# We need to remove exactly K elements, so we keep (N - K) elements.
+# To minimize (max(B) - min(B)), we should choose a contiguous subsequence of the sorted array
+# because the optimal remaining elements will be consecutive in sorted order.
+
+# Sort the array along with original indices to consider ordering? 
+# But note: we must preserve original order when forming B. However, since we are allowed to remove any K elements,
+# the key insight is that the best B will consist of a set of elements that are close in value.
+# So we can sort A, but we must remember that the relative order in the original array matters for concatenation?
+# Actually, no: the problem says "concatenate the remaining elements in their original order".
+# However, we are allowed to choose *which* K elements to remove arbitrarily.
+
+# Important: The resulting sequence B must maintain the original order of the unremoved elements.
+# But to minimize max - min, we want the values to be as close as possible.
+
+# Alternate approach:
+# Since we can choose any K elements to remove, we are effectively choosing a subsequence of N-K elements in order.
+# We want to minimize (max(chosen values) - min(chosen values)).
+
+# How?
+# Sort the array by value, but track index.
+# Then, notice: if we fix the smallest and largest element in B, then all elements between them (in value) could be included.
+# But they must appear in increasing index order?
+
+# Better idea:
+# After sorting by value, any valid selection of N-K elements corresponds to picking some values, but their indices must allow them to appear in original order.
+
+# However, here's a key observation:
+# We can always rearrange removals such that the remaining elements form a subsequence of the original array.
+# And among all possible subsequences of length N-K, we want the one where (max - min) is minimized.
+
+# But checking all subsequences is too expensive.
+
+# Another idea:
+# Suppose we decide that the minimum value in B is x and maximum is y. Then we want y - x to be small.
+# Also, we must be able to pick at least (N-K) elements with values in [x,y] such that their indices are increasing.
+
+# But how to enforce increasing indices?
+
+# Insight: Instead, try all possible contiguous segments **in the sorted order** and check whether the corresponding indices can form an increasing sequence of length >= N-K?
+# Not exactly.
+
+# Even better idea from known problems:
+# We can fix the leftmost element we keep and the rightmost in sorted order, but again ordering matters.
+
+# Known similar problem: minimize max-min after removing K elements, but preserving order -> use sliding window on sorted array, but ensure that selected elements can appear in order.
+
+# Correct solution:
+# Step 1: pair each element with its index, then sort by value.
+# Step 2: Use two pointers or sliding window over the sorted array to find the shortest range [L,R] such that there are at least (N-K) elements in A[L..R] whose indices form an increasing sequence? 
+# But that's not efficient.
+
+# Actually, we don't care about the actual sequence — we only care whether we can pick at least (N-K) elements from a value interval [x,y] such that their original indices are in increasing order? 
+# But any set of elements can be taken in increasing index order as long as we take them in that order.
+
+# Wait: if we select a set S of elements, we can always arrange them in B in increasing index order — that's the "original order". So as long as we pick a set of (N-K) elements, their values will appear in B in the order of increasing index.
+
+# BUT: we cannot reorder them — they must stay in the original positions. So if we pick non-consecutive elements, their relative order is preserved.
+
+# So the constraint is automatically satisfied: any subset of elements, when kept, will appear in B in increasing index order.
+
+# Therefore, the only constraint is that we pick exactly (N-K) elements.
+
+# Then the problem reduces to: choose (N-K) elements from A such that (max(selected) - min(selected)) is minimized.
+
+# This is classical: sort the array, then try every contiguous block of (N-K) elements in the sorted array.
+
+# Why contiguous? Because if you skip an element inside the range, you could potentially reduce the difference.
+
+# So algorithm:
+# 1. Sort A.
+# 2. Consider every contiguous subarray of length (N-K) in the sorted A.
+# 3. Compute the difference between last and first in that subarray.
+# 4. Answer is the minimum such difference.
+
+# But wait: does this work even though we are breaking the original order? 
+# Example: A = [10, 1, 2], K=1 -> remove one, keep two.
+# Sorted: [1,2,10]. Contiguous blocks of size 2: [1,2] -> diff=1; [2,10] -> diff=8. Min=1.
+# Can we achieve diff=1? Yes: remove 10, keep [1,2] -> B=[1,2] -> max-min=1.
+# But what if the two small values were not removable together due to ordering? In this case, they are not adjacent in original array, but we can still keep both — their order in B will be [1,2] which is correct.
+
+# So yes, we can always keep any set of elements — their order in B is just the order they appear in the original array.
+
+# However, here's a catch: when we sort by value, we lose index information, but since we're only concerned with values for min and max, and we can pick any set of (N-K) elements regardless of position (as long as we respect original order upon concatenation, which happens automatically), it's fine.
+
+# But wait: what if the smallest and largest in the chosen set are far apart in value, but we could get a smaller range by taking non-contiguous values in sorted order? 
+# No — because if you take values that are not consecutive in sorted order, you can always shrink the range by replacing an endpoint with a closer one.
+
+# Thus, the minimal range must come from a contiguous segment in the sorted array.
+
+# Therefore:
+# Sort A
+# Let m = N - K
+# ans = min(A[i + m - 1] - A[i] for i in range(0, N - m + 1))
+
+# Example: N=4, K=1 -> m=3
+# A = [1,5,3,9] -> sorted: [1,3,5,9]
+# i=0: A[2]-A[0] = 5-1 = 4
+# i=1: A[3]-A[1] = 9-3 = 6
+# min = 4
+
+# Is it possible? Remove one element. To get [1,3,5] -> remove 9 -> B=[1,3,5] in order? Original: [1,5,3,9] -> if we remove 9 and say... we keep 1,5,3 -> B=[1,5,3] -> values {1,3,5}, min=1,max=5,diff=4. Yes.
+
+# But note: the values in B are not sorted — but min and max are still 1 and 5.
+
+# So the answer depends only on the set of values, not their order.
+
+# Therefore, the code:
+
+n, k = map(int, input().split())
+A = list(map(int, input().split()))
+m = n - k
+A.sort()
+ans = min(A[i + m - 1] - A[i] for i in range(n - m + 1))
+print(ans)
+```

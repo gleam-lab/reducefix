@@ -1,0 +1,210 @@
+```python
+n, k = map(int, input().split())
+a = list(map(int, input().split()))
+
+# We need to remove exactly K elements, so we keep (N - K) elements.
+# To minimize (max(B) - min(B)), we should choose a contiguous segment of (N-K) elements
+# from the sorted array, because the optimal B will consist of values close to each other.
+
+# Sort the array along with original indices to preserve order? 
+# Actually, we can only take elements in original order, but note:
+# Since we are allowed to remove any K elements arbitrarily, the best way is to keep a subsequence
+# of N-K elements in original order. However, to minimize max-min, ideally these kept elements
+# should be as close in value as possible.
+
+# Key idea: 
+# After sorting A, the best candidate values for B must lie within some window of size (N-K).
+# But we also need to ensure that the chosen values appear in the original array in an order 
+# that allows them to form a valid subsequence (i.e., their indices are increasing).
+
+# Alternate approach:
+# Sort the array while keeping track of original indices.
+# Then, for every contiguous segment of length (N-K) in the sorted array,
+# check whether the corresponding indices form an increasing sequence (i.e., can be selected in order).
+# If yes, then update the answer with (last - first in the segment).
+
+# However, checking increasing indices for every segment would be O(N^2), which may be too slow.
+
+# Better idea:
+# Instead, notice that we can always rearrange removals so that the remaining elements are consecutive 
+# in the sorted order **if** their original indices are in increasing order. But we cannot reorder them.
+
+# Insight:
+# The remaining elements must appear in the original order. So we can't just pick arbitrary values.
+
+# Alternate known solution:
+# Try all possible splits where we remove x from left and (K-x) from right.
+# That is, suppose we keep a contiguous block in the middle: remove i elements from the left and (K-i) from the right.
+# Then the remaining elements are A[i : N - (K-i)] = A[i : N-K+i]
+# Then the difference is max(A[i:N-K+i]) - min(A[i:N-K+i])
+
+# But wait — this assumes we remove only from ends. Is that sufficient?
+
+# Yes! Why?
+# Claim: There exists an optimal solution where the remaining elements form a contiguous segment in the original array.
+# Proof sketch: Suppose in an optimal solution, we have non-contiguous elements. 
+# But since we care only about max and min, if skipping an element doesn't help reduce the range, 
+# we could include it or exclude others. However, actually skipping middle elements might allow us to skip outliers.
+
+# But counterexample: [1, 5, 3, 4, 2], K=2, N=5, keep 3 elements.
+# Best: remove 1 and 5 -> [3,4,2] -> range=4-2=2? No, max=4,min=2 => 2.
+# Or remove 5 and 2 -> [1,3,4] -> range=3
+# Or remove 1 and 2 -> [5,3,4] -> range=2
+# Or remove 1 and 4 -> [5,3,2] -> range=3
+# Or remove 5 and 3 -> [1,4,2] -> range=3
+# Or remove 3 and 2 -> [1,5,4] -> range=4
+# Best is 2.
+
+# But what if we remove one from left and one from right: 
+#   remove 1 (left) and 2 (right): [5,3,4] -> range=2
+#   remove 1 and 4: not symmetric
+# How about removing from both ends only?
+
+# Actually, consider: we can simulate removing from left and right only.
+# Specifically, try all i from 0 to K:
+#   remove i elements from the beginning and (K - i) from the end.
+#   then the remaining array is A[i : N - (K-i)] = A[i : N-K+i]
+#   compute max(remaining) - min(remaining)
+
+# Does this cover all possibilities? 
+# Not necessarily — we might remove an element from the middle and still get a better range.
+
+# But here's the key: 
+# Since we want to minimize (max - min), we want to avoid large and small values.
+# The best candidates to keep are those in the middle range.
+# However, they must remain in order.
+
+# Known similar problems: use two pointers or sliding window after sorting with index?
+
+# Actually, there's a well-known trick:
+# Because we are only concerned with the final min and max of B, and we can remove any K elements,
+# the optimal solution involves keeping a set of N-K elements whose values are as close together as possible.
+# So we sort by value, and consider every contiguous block of size (N-K) in the sorted array.
+# For each such block, we check whether the indices of these elements are in increasing order (so they can appear in B in original order).
+# How to check quickly? We can record the indices and check if max(index) > min(index) doesn't tell us.
+
+# Actually, we need the entire sequence of indices to be increasing — which they are if we extract them in order.
+# But since we are taking elements from the array in original positions, as long as the indices of the selected elements 
+# (when taken in sorted-by-value order) are increasing, then they appear in the array from left to right, so we can keep them.
+
+# But wait: we don't require the values to be increasing, only the positions. So if in the sorted array we pick a contiguous
+# segment of (N-K) elements, and their original indices are in increasing order, then we can form B by keeping them in place.
+
+# However, the condition "indices are increasing" is automatically satisfied if we process the array in index order?
+# No — when we sort by value, the indices get scrambled.
+
+# But we don't need to keep them in sorted-by-value order in B — B preserves original order. So if we pick a set S of (N-K) elements,
+# then B is formed by going through A and including elements in S in their original positions.
+
+# Therefore, the only requirement is that we can select (N-K) elements such that their values lie in a narrow range, 
+# and we don't care about their relative order beyond being able to skip the others.
+
+# BUT: we can always select any subset of (N-K) elements regardless of position — the only constraint is that their relative order is preserved.
+# So the feasibility of selecting a set S depends only on the fact that we can skip the others.
+
+# So for a given set S of (N-K) elements, it is always possible to form B by removing the K elements not in S.
+
+# Therefore, the problem reduces to: 
+# Find a subset S of (N-K) elements such that (max(S) - min(S)) is minimized.
+
+# And since we can choose any subset (because removal is free), the answer is simply:
+# min over all contiguous segments of length (N-K) in the sorted array of (A_sorted[i+N-K-1] - A_sorted[i])
+
+# But wait: is that correct? 
+# Example: [1, 5, 3, 4, 2], K=2, so keep 3 elements.
+# Sort: [1,2,3,4,5]
+# Contiguous segments of length 3:
+#   [1,2,3] -> diff=2
+#   [2,3,4] -> diff=2
+#   [3,4,5] -> diff=2
+# So answer=2, which matches our earlier calculation.
+
+# But can we actually pick [1,2,3]? 
+# Positions: 
+#   1 at index0, 2 at index4, 3 at index2.
+# In the array: we need to keep 1 (index0), 3 (index2), 2 (index4). 
+# But in B, they will appear as [1,3,2] — which is fine, and min=1, max=3 -> range=2.
+# Similarly, [2,3,4]: 2@index4, 3@index2, 4@index3 -> we cannot take 3 then 4 then 2? 
+# But we go in order: 
+#   index0: 1 -> skip
+#   index1: 5 -> skip
+#   index2: 3 -> keep
+#   index3: 4 -> keep
+#   index4: 2 -> keep
+# So B = [3,4,2] -> min=2, max=4 -> range=2.
+
+# So even though 2 appears last, it's included. The values in S are {2,3,4}, min=2, max=4, diff=2.
+
+# So the actual min and max of the *values* in S is what matters, not their order.
+
+# Therefore, the answer is indeed the minimum difference between the smallest and largest in any set of (N-K) elements.
+# And the minimal such difference is achieved by a contiguous segment in the sorted array.
+
+# So algorithm:
+#   sort A
+#   ans = min{ A[i + (N-K) - 1] - A[i] for i in range(0, K+1) }   ??? 
+
+# Wait: number of contiguous segments of length L = N-K in an array of length N is N - (N-K) + 1 = K+1.
+# So i from 0 to K (inclusive).
+
+# Example: N=5, K=2, L=3, segments: i=0,1,2 -> 3 segments, which is K+1=3.
+
+# So:
+#   sort A
+#   L = N - K
+#   ans = min(A[i+L-1] - A[i] for i in range(0, N-L+1))
+
+# But N-L+1 = N - (N-K) + 1 = K+1.
+
+# Let's test with example: A=[1,5,3,4,2] -> sorted=[1,2,3,4,5], L=3
+# i=0: A[2]-A[0] = 3-1 = 2
+# i=1: A[3]-A[1] = 4-2 = 2
+# i=2: A[4]-A[2] = 5-3 = 2
+# min = 2 -> correct.
+
+# Another test: N=4, K=1, A=[1,4,2,3] -> keep 3 elements.
+# sorted: [1,2,3,4], L=3
+# i=0: 3-1=2
+# i=1: 4-2=2
+# min=2.
+# Can we achieve 2? 
+#   Remove 4: [1,2,3] -> range=2
+#   Remove 1: [4,2,3] -> range=2
+#   etc. -> yes.
+
+# But what if A=[1, 100, 2, 101], K=2, keep 2 elements.
+# sorted: [1,2,100,101]
+# L=2
+# segments:
+#   [1,2] -> 1
+#   [2,100] -> 98
+#   [100,101] -> 1
+# min = 1.
+# Can we achieve 1? 
+#   Pick 1 and 2: indices 0 and 2 -> B=[1,2] -> range=1 -> yes.
+#   Or pick 100 and 101: indices 1 and 3 -> B=[100,101] -> range=1 -> yes.
+
+# So the algorithm works.
+
+# Therefore, fix:
+#   Read N, K
+#   Read A
+#   Sort A
+#   L = N - K
+#   ans = min(A[i+L-1] - A[i] for i in range(N-L+1))
+
+# But note: constraints say N up to 200,000 -> O(N log N) is acceptable.
+
+# However, the original code was completely unrelated — it was generating a fractal-like pattern.
+
+# So the fixed code:
+
+```python
+n, k = map(int, input().split())
+a = list(map(int, input().split()))
+
+a.sort()
+l = n - k
+ans = min(a[i + l - 1] - a[i] for i in range(n - l + 1))
+print(ans)
+```

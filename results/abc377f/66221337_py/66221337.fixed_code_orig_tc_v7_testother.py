@@ -1,0 +1,304 @@
+python
+N, M = map(int, input().split())
+pieces = [tuple(map(int, input().split())) for _ in range(M)]
+
+if M == 0:
+    print(N * N)
+else:
+    # Sets to store occupied lines
+    rows = set()
+    cols = set()
+    diag1 = set()  # i + j
+    diag2 = set()  # i - j
+
+    for a, b in pieces:
+        rows.add(a)
+        cols.add(b)
+        diag1.add(a + b)
+        diag2.add(a - b)
+
+    # Total squares under attack
+    total_attacked = 0
+
+    # Add contributions from each unique row, column, and diagonal
+    total_attacked += len(rows) * N
+    total_attacked += len(cols) * N
+    total_attacked += sum(min(a + b - 1, 2 * N - (a + b) + 1) for a, b in pieces if a + b in diag1)
+    total_attacked -= len(diag1) * 1  # This line is wrong in logic, so we recast completely.
+
+    # We need inclusion-exclusion: simply summing leads to overcount.
+    # Instead, calculate total attacked by union of all lines.
+    # But note: N can be up to 1e9, M only up to 1000 -> iterate over pieces' lines and use set of attacked squares? No, too big.
+
+    # Alternate: use inclusion exclusion over the 4 types of lines.
+    # But better: compute total attacked as |R ∪ C ∪ D1 ∪ D2| where:
+    # R = all squares in any occupied row
+    # C = all squares in any occupied col
+    # D1 = all squares in any diag a+b = const
+    # D2 = all squares in any diag a-b = const
+
+    # Use inclusion-exclusion:
+    # |R ∪ C ∪ D1 ∪ D2| = 
+    #   |R| + |C| + |D1| + |D2|
+    # - |R∩C| - |R∩D1| - |R∩D2| - |C∩D1| - |C∩D2| - |D1∩D2|
+    # + |R∩C∩D1| + |R∩C∩D2| + |R∩D1∩D2| + |C∩D1∩D2|
+    # - |R∩C∩D1∩D2|
+
+    # But this is complex. Instead, we can collect all attacked squares via the lines,
+    # but we cannot iterate over N.
+
+    # Instead: compute total attacked using inclusion-exclusion with sets of lines.
+
+    # Let:
+    total = 0
+
+    # Single sets
+    total += len(rows) * N
+    total += len(cols) * N
+    total += sum(N - abs(d - (N+1)) for d in diag1)  # number of cells on diag1: a+b=d. Range of d: 2 to 2N. Length = N - |d - (N+1)|
+    total += sum(N - abs(d - (N+1)) for d in diag2)  # diag2: a-b=d, d from -(N-1) to N-1 -> length = N - |d|
+
+    # Subtract pairwise intersections
+    # R ∩ C: pieces at intersections of occupied row and col -> |rows| * |cols| but not exactly: each (r,c) for r in rows, c in cols
+    total -= len(rows) * len(cols)
+
+    # R ∩ D1: for each row r and each diag1 d, intersection is (r, d-r) if 1<=d-r<=N
+    for r in rows:
+        for d in diag1:
+            c = d - r
+            if 1 <= c <= N:
+                total -= 1
+
+    # R ∩ D2: for each row r and diag2 d: (r, r-d), must have 1<=r-d<=N -> r-N<=d<=r-1
+    for r in rows:
+        for d in diag2:
+            c = r - d
+            if 1 <= c <= N:
+                total -= 1
+
+    # C ∩ D1: for each col c and diag1 d: (d-c, c), need 1<=d-c<=N -> c+1<=d<=c+N
+    for c in cols:
+        for d in diag1:
+            r = d - c
+            if 1 <= r <= N:
+                total -= 1
+
+    # C ∩ D2: for each col c and diag2 d: (c+d, c), need 1<=c+d<=N -> 1-c<=d<=N-c
+    for c in cols:
+        for d in diag2:
+            r = c + d
+            if 1 <= r <= N:
+                total -= 1
+
+    # D1 ∩ D2: for each d1 in diag1, d2 in diag2: solve r+c=d1, r-c=d2 -> r=(d1+d2)/2, c=(d1-d2)/2
+    # valid only if both even/odd and in range
+    for d1 in diag1:
+        for d2 in diag2:
+            if (d1 + d2) % 2 == 0:
+                r = (d1 + d2) // 2
+                c = (d1 - d2) // 2
+                if 1 <= r <= N and 1 <= c <= N:
+                    total -= 1
+
+    # Add back triple intersections
+    for r in rows:
+        for c in cols:
+            # R,C,D1: (r,c) with d1=r+c
+            d1 = r + c
+            if d1 in diag1:
+                total += 1
+            # R,C,D2: (r,c) with d2=r-c
+            d2 = r - c
+            if d2 in diag2:
+                total += 1
+
+    # R,D1,D2: for fixed r, and d1,d2: c = d1 - r, also c = r - d2 -> d1 - r = r - d2 -> d1 + d2 = 2r
+    for r in rows:
+        for d1 in diag1:
+            for d2 in diag2:
+                if d1 + d2 == 2 * r:
+                    c = d1 - r
+                    if 1 <= c <= N:
+                        total += 1
+
+    # C,D1,D2: for fixed c, d1,d2: r = d1 - c, r = c + d2 -> d1 - c = c + d2 -> d1 - d2 = 2c
+    for c in cols:
+        for d1 in diag1:
+            for d2 in diag2:
+                if d1 - d2 == 2 * c:
+                    r = d1 - c
+                    if 1 <= r <= N:
+                        total += 1
+
+    # Subtract quadruple intersections: R,C,D1,D2: cell (r,c) that is in given row, col, and diags
+    for r in rows:
+        for c in cols:
+            d1 = r + c
+            d2 = r - c
+            if d1 in diag1 and d2 in diag2:
+                total -= 1
+
+    # But wait: the above inclusion-exclusion counts every attacked square exactly once?
+    # However, note: a square may be attacked by multiple pieces, but we are taking union of all lines.
+    # The above computes |R ∪ C ∪ D1 ∪ D2| correctly by inclusion-exclusion.
+
+    # However, there's a flaw: the sets R, C, D1, D2 are defined by the pieces, so:
+    # R = { r | exists piece at (r,*) }
+    # Then |R| = number of distinct rows with pieces, etc.
+
+    # And the formula is standard inclusion exclusion.
+
+    # But note: the above loops are O(M^2) or O(M^3), and M<=1000, so worst-case 10^6 or 10^9? 
+    # Actually: 
+    # - rows, cols, diag1, diag2 have at most M elements.
+    # - Pairwise subtractions: 
+    #   R∩C: already done as |rows|*|cols|, but we did it implicitly above? 
+    #   Actually we subtracted len(rows)*len(cols) at start, then later added back some triples.
+
+    # Let me recompute cleanly with inclusion-exclusion:
+
+    # Let A = union of all rows that have pieces
+    # B = union of all cols that have pieces
+    # C = union of all diag1 (a+b=const) that have pieces
+    # D = union of all diag2 (a-b=const) that have pieces
+
+    # |A ∪ B ∪ C ∪ D| = 
+    #   |A|+|B|+|C|+|D|
+    # - |A∩B| - |A∩C| - |A∩D| - |B∩C| - |B∩D| - |C∩D|
+    # + |A∩B∩C| + |A∩B∩D| + |A∩C∩D| + |B∩C∩D|
+    # - |A∩B∩C∩D|
+
+    # Compute each term:
+
+    A = len(rows) * N
+    B = len(cols) * N
+    # For diag1: for each s in diag1, number of cells with i+j=s is:
+    #   if s <= N+1: s-1
+    #   else: 2*N - s + 1
+    C = 0
+    for s in diag1:
+        if s <= N + 1:
+            C += s - 1
+        else:
+            C += 2 * N - s + 1
+
+    # For diag2: for each d in diag2, number of cells with i-j=d is:
+    #   i = j + d, 1<=j+d<=N, 1<=j<=N -> max(1,1-d) <= j <= min(N, N-d)
+    #   length = min(N, N-d) - max(1,1-d) + 1
+    # But simpler: 
+    #   if d >= 0: j from 1 to N-d -> count = N - d
+    #   if d < 0: j from 1-d to N -> count = N + d
+    # So: count = N - abs(d)
+    D = 0
+    for d in diag2:
+        D += N - abs(d)
+
+    AB = 0  # |A ∩ B| = cells in occupied row AND occupied col
+    for r in rows:
+        for c in cols:
+            AB += 1
+    # But note: this counts every (r,c) for r in rows, c in cols
+
+    AC = 0  # A ∩ C: cells in an occupied row and on a diag1 that has a piece
+    for r in rows:
+        for s in diag1:
+            c = s - r
+            if 1 <= c <= N:
+                AC += 1
+
+    AD = 0  # A ∩ D: cells in occupied row and on diag2 (i-j=d)
+    for r in rows:
+        for d in diag2:
+            c = r - d
+            if 1 <= c <= N:
+                AD += 1
+
+    BC = 0  # B ∩ C: occupied col and diag1
+    for c in cols:
+        for s in diag1:
+            r = s - c
+            if 1 <= r <= N:
+                BC += 1
+
+    BD = 0  # B ∩ D: occupied col and diag2
+    for c in cols:
+        for d in diag2:
+            r = c + d
+            if 1 <= r <= N:
+                BD += 1
+
+    CD = 0  # C ∩ D: cells on a diag1 that has a piece and a diag2 that has a piece
+    for s in diag1:
+        for d in diag2:
+            # r+c = s, r-c = d -> r=(s+d)/2, c=(s-d)/2
+            if (s + d) % 2 == 0:
+                r = (s + d) // 2
+                c = (s - d) // 2
+                if 1 <= r <= N and 1 <= c <= N:
+                    CD += 1
+
+    ABC = 0  # A∩B∩C: cells in occupied row, col, and on a diag1 with piece
+    for r in rows:
+        for c in cols:
+            s = r + c
+            if s in diag1:
+                ABC += 1
+
+    ABD = 0  # A∩B∩D
+    for r in rows:
+        for c in cols:
+            d = r - c
+            if d in diag2:
+                ABD += 1
+
+    ACD = 0  # A∩C∩D: for each r in rows, and s in diag1, d in diag2: solve c = s - r, and c = r - d -> s - r = r - d -> s + d = 2r
+    for r in rows:
+        for s in diag1:
+            for d in diag2:
+                if s + d == 2 * r:
+                    c = s - r
+                    if 1 <= c <= N:
+                        ACD += 1
+
+    BCD = 0  # B∩C∩D: for each c in cols, s in diag1, d in diag2: r = s - c = c + d -> s - c = c + d -> s - d = 2c
+    for c in cols:
+        for s in diag1:
+            for d in diag2:
+                if s - d == 2 * c:
+                    r = s - c
+                    if 1 <= r <= N:
+                        BCD += 1
+
+    ABCD = 0  # A∩B∩C∩D: cell (r,c) such that r in rows, c in cols, r+c in diag1, r-c in diag2
+    for r in rows:
+        for c in cols:
+            if (r + c) in diag1 and (r - c) in diag2:
+                ABCD += 1
+
+    total_attacked = (A + B + C + D) - (AB + AC + AD + BC + BD + CD) + (ABC + ABD + ACD + BCD) - ABCD
+
+    # But wait: this counts attacked squares, but some squares might be empty but still attacked.
+    # We want: total empty squares that are NOT attacked.
+    # First, total squares: N*N
+    # Squares that are occupied: M
+    # Squares that are attacked: total_attacked (including possibly occupied ones)
+    # But we can only place on empty squares that are not attacked.
+
+    # However, note: the attacked set includes all squares in the same row, col, diag1, diag2 as any piece.
+    # And the occupied squares are included in the attacked set.
+
+    # So the safe empty squares = total squares - (occupied + attacked - occupied_and_attacked)
+    # But actually: we want: empty squares that are not attacked = (N*N - M) - (attacked squares that are empty)
+    # = N*N - M - (total_attacked - |attacked ∩ occupied|)
+    # But note: every occupied square is attacked (by itself at least), so |attacked ∩ occupied| = M
+    # So empty attacked = total_attacked - M
+    # Then safe = N*N - M - (total_attacked - M) = N*N - total_attacked
+
+    # Therefore: answer = N*N - total_attacked
+
+    answer = N * N - total_attacked
+
+    # However, it's possible that total_attacked > N*N, so clamp at 0?
+    answer = max(0, answer)
+
+    print(answer)

@@ -1,0 +1,316 @@
+```python
+from collections import defaultdict
+
+def main():
+    import sys
+    input = sys.stdin.read
+    data = input().split()
+    
+    N = int(data[0])
+    M = int(data[1])
+    
+    if M == 0:
+        print(N * N)
+        return
+    
+    # Sets to store occupied lines (row, col, diag1: i-j, diag2: i+j)
+    rows = set()
+    cols = set()
+    diag1 = set()  # i - j
+    diag2 = set()  # i + j
+    
+    pieces = []
+    index = 2
+    for _ in range(M):
+        a = int(data[index])
+        b = int(data[index + 1])
+        index += 2
+        pieces.append((a, b))
+        rows.add(a)
+        cols.add(b)
+        diag1.add(a - b)
+        diag2.add(a + b)
+    
+    # Count total attacked cells by union of all lines
+    total_attacked = set()
+    
+    for a, b in pieces:
+        # Add all cells in the same row
+        # We don't need to add all explicitly, but we'll compute overlaps carefully
+        pass
+    
+    # Instead: compute using inclusion-exclusion isn't efficient here.
+    # Better: realize that any cell on same row/col/diag as any piece is attacked.
+    # So safe cell must be NOT in any row, col, diag covered by existing pieces.
+    
+    # But note: a cell (i,j) is attacked if:
+    # i in rows OR j in cols OR (i-j) in diag1 OR (i+j) in diag2
+    
+    # So safe cells: i not in rows AND j not in cols AND (i-j) not in diag1 AND (i+j) not in diag2
+    # However, these conditions are not independent, so we can't just multiply.
+    
+    # Since M <= 1000, we can try to compute the union of all attacked cells?
+    # But N up to 1e9 -> cannot iterate over grid.
+    
+    # Alternate: use inclusion exclusion over the M pieces? Too complex.
+    
+    # Correct idea: A cell is unsafe if it lies on any row, col, or diagonal covered by any piece.
+    # So attacked cells = union over all pieces of:
+    #   row(a_k), col(b_k), diag1(a_k - b_k), diag2(a_k + b_k)
+    
+    # But sets overlap heavily. Use principle of inclusion exclusion across the four types.
+    
+    # Let R = union of all rows present
+    # C = union of all cols present
+    # D1 = union of all diag1 (i-j = c)
+    # D2 = union of all diag2 (i+j = c)
+    
+    # Then |attacked| = |R ∪ C ∪ D1 ∪ D2|
+    # By inclusion exclusion:
+    # = |R| + |C| + |D1| + |D2|
+    #   - |R∩C| - |R∩D1| - |R∩D2| - |C∩D1| - |C∩D2| - |D1∩D2|
+    #   + |R∩C∩D1| + |R∩C∩D2| + |R∩D1∩D2| + |C∩D1∩D2|
+    #   - |R∩C∩D1∩D2|
+    
+    # But this is messy because intersections are hard to compute.
+    
+    # Simpler: since M is only 1000, we can collect all unique rows, cols, d1, d2,
+    # and then estimate the size of the union using a sweep won't work due to large N.
+    
+    # Another idea: count safe cells directly?
+    # Safe cell (i,j) must satisfy:
+    #   i not in rows, j not in cols, i-j not in diag1, i+j not in diag2
+    #
+    # How many such (i,j)?
+    # We can't iterate over N=1e9.
+    
+    # But note: the constraints on i and j are independent except through the diagonals.
+    
+    # However, the number of forbidden rows is at most M, same for cols, diag1, diag2.
+    # So allowed rows = N - len(rows), allowed cols = N - len(cols)
+    # But we can't just multiply because of diagonal constraints.
+    
+    # Key insight: The total number of attacked cells can be computed by considering each type and subtracting overlaps.
+    # But overlaps between different types are complex.
+    
+    # Alternative approach: iterate over the "events" or use coordinate compression? 
+    # But coordinates go up to 1e9.
+    
+    # Instead, we can use the fact that the number of distinct rows, cols, d1s, d2s is at most M (<=1000).
+    # So we can compute the union of all attacked cells by doing:
+    #   attacked = set()
+    #   for each piece, add its entire row, col, diag1, diag2? -> too big.
+    
+    # We need a formula.
+    
+    # Standard solution idea:
+    # Total attacked = 
+    #   sum over r in rows: N (for full row) 
+    #   + sum over c in cols: N 
+    #   + sum over d in diag1: length of diagonal d 
+    #   + sum over d in diag2: length of diagonal d
+    #   - adjustments for overlaps (double/triple counting)
+    
+    # But overlaps are complicated.
+    
+    # Actually, known technique: use dictionary to count how many times each cell is attacked?
+    # No, grid too big.
+    
+    # Correct known solution pattern for this problem:
+    # Use sets for rows, cols, d1, d2.
+    # Then total attacked = 0
+    # But we must account for overlaps.
+    
+    # We can use inclusion exclusion with the four sets:
+    R = rows
+    C = cols
+    D1 = diag1
+    D2 = diag2
+    
+    # |R ∪ C ∪ D1 ∪ D2| = 
+    # |R|*N + |C|*N + sum_{d in D1} len_diag1(d) + sum_{d in D2} len_diag2(d)
+    # - |R ∩ C|*1 ... no, not like that.
+    
+    # Actually, think differently:
+    # Each row in R contributes N cells.
+    # Each col in C contributes N cells.
+    # Each diag1 d: the number of cells (i,j) with i-j = d and 1<=i<=N, 1<=j<=N
+    #   i from max(1,1+d) to min(N,N+d) => length = min(N, N-d) - max(1,1-d) + 1
+    #   = N - |d| if |d| < N else 0
+    # Similarly for diag2 s = i+j: ranges from 2 to 2N
+    #   length = s-1 if s <= N+1, else 2N-s+1 -> min(s-1, 2*N-s+1, N)
+    #   actually: for s in [2, 2*N], length = min(s-1, 2*N-s+1, N) -> but simpler: 
+    #   length = s-1 for s=2..N+1, 2*N-s+1 for s=N+2..2*N
+    #   = N - |s - (N+1)| = N - |s - N - 1|? 
+    #   Actually: length = min(s-1, 2*N-s+1)
+    
+    # But now we have overcounted intersections.
+    
+    # We must subtract:
+    #   intersections between R and C: cells (r,c) where r in R, c in C -> |R|*|C|
+    #   intersections between R and D1: for each r in R, d in D1: cell (r, r-d) exists? if 1<=r-d<=N
+    #   similarly for other pairs.
+    
+    # This becomes very complex.
+    
+    # Known similar problems (queen attack) use:
+    #   total_attacked = 0
+    #   total_attacked += len(R) * N
+    #   total_attacked += len(C) * N
+    #   total_attacked += sum(len_diag1(d) for d in D1)
+    #   total_attacked += sum(len_diag2(s) for s in D2)
+    #   Then subtract pairwise intersections, add triple, subtract quadruple.
+    
+    # Pairwise:
+    # R & C: |R| * |C|  [each (r,c) counted twice: in row r and col c]
+    # R & D1: for each r in R, d in D1: if j = r - d is in [1,N], then cell (r, r-d) is in both -> count 1
+    #   so = sum_{r in R} sum_{d in D1} [1 if 1<= r-d <=N else 0]
+    # R & D2: for each r in R, s in D2: i=r, j=s-r, so 1<=s-r<=N -> s-N<=r<=s-1
+    #   = sum_{r in R} sum_{s in D2} [1 if 1<=s-r<=N else 0]
+    # C & D1: for each c in C, d in D1: i = c + d, so 1<=c+d<=N -> 1-d<=c<=N-d
+    #   = sum_{c in C} sum_{d in D1} [1 if 1<=c+d<=N else 0]
+    # C & D2: for each c in C, s in D2: j=c, i=s-c, so 1<=s-c<=N -> s-N<=c<=s-1
+    #   = sum_{c in C} sum_{s in D2} [1 if 1<=s-c<=N else 0]
+    # D1 & D2: for each d in D1, s in D2: solve i-j=d, i+j=s -> i=(s+d)/2, j=(s-d)/2
+    #   valid if (s+d) even and 1<=i<=N, 1<=j<=N
+    #   = sum_{d in D1} sum_{s in D2} [1 if (s+d)%2==0 and 1<=(s+d)//2<=N and 1<=(s-d)//2<=N]
+    
+    # Triple intersections:
+    # R & C & D1: (r,c) with r in R, c in C, and r-c in D1 -> if (r-c) in D1 then cell (r,c) is in all three
+    #   = sum_{r in R} sum_{c in C} [1 if (r-c) in D1]
+    # R & C & D2: (r,c) with r+c in D2 -> [1 if (r+c) in D2]
+    # R & D1 & D2: (r, j) with j = r - d, and also r+j = s -> j = s - r -> so r-d = s-r -> 2r = s+d
+    #   for fixed r,d,s: need 2r = s+d and j=r-d in [1,N] -> so for each r,d,s: check
+    #   = sum_{r in R} sum_{d in D1} sum_{s in D2} [1 if 2*r == s+d and 1<=r-d<=N]
+    # But this is O(|R|*|D1|*|D2|) ~ 1e9 worst-case.
+    
+    # Alternatively, for R&D1&D2: fix r, then d and s must satisfy s = 2*r - d, and s in D2, d in D1, and 1<=r-d<=N
+    #   so for each r in R: for each d in D1: if 1<=r-d<=N and (2*r - d) in D2, then count 1
+    #   O(|R|*|D1|) ~ 1e6 worst-case -> acceptable.
+    # Similarly for C&D1&D2: fix c in C, then for each d in D1: i = c+d, j = c, and i+j = c+d+c = 2*c+d must be in D2, and 1<=c+d<=N
+    #   = sum_{c in C} sum_{d in D1} [1 if 1<=c+d<=N and (2*c+d) in D2]
+    
+    # Quadruple: R&C&D1&D2: (r,c) with r in R, c in C, r-c in D1, r+c in D2
+    #   = sum_{r in R} sum_{c in C} [1 if (r-c) in D1 and (r+c) in D2]
+    
+    # Now compute:
+    
+    def len_diag1(d):
+        # number of (i,j) with i-j = d, 1<=i<=N, 1<=j<=N
+        # i = j + d
+        # 1 <= j+d <= N  => 1-d <= j <= N-d
+        # 1 <= j <= N
+        low_j = max(1, 1 - d)
+        high_j = min(N, N - d)
+        if low_j > high_j:
+            return 0
+        return high_j - low_j + 1
+    
+    def len_diag2(s):
+        # i+j = s, 1<=i<=N, 1<=j<=N
+        # i from max(1, s-N) to min(N, s-1)
+        low_i = max(1, s - N)
+        high_i = min(N, s - 1)
+        if low_i > high_i:
+            return 0
+        return high_i - low_i + 1
+    
+    total = 0
+    total += len(R) * N
+    total += len(C) * N
+    total += sum(len_diag1(d) for d in D1)
+    total += sum(len_diag2(s) for s in D2)
+    
+    # Subtract pairwise intersections
+    pairwise = 0
+    
+    # R & C
+    pairwise += len(R) * len(C)
+    
+    # R & D1: for each r in R, d in D1: cell (r, r-d) exists?
+    for r in R:
+        for d in D1:
+            j = r - d
+            if 1 <= j <= N:
+                pairwise += 1
+    
+    # R & D2: for each r in R, s in D2: j = s - r, valid if 1<=s-r<=N
+    for r in R:
+        for s in D2:
+            j = s - r
+            if 1 <= j <= N:
+                pairwise += 1
+    
+    # C & D1: for each c in C, d in D1: i = c + d, valid if 1<=c+d<=N
+    for c in C:
+        for d in D1:
+            i = c + d
+            if 1 <= i <= N:
+                pairwise += 1
+    
+    # C & D2: for each c in C, s in D2: i = s - c, valid if 1<=s-c<=N
+    for c in C:
+        for s in D2:
+            i = s - c
+            if 1 <= i <= N:
+                pairwise += 1
+    
+    # D1 & D2: for each d in D1, s in D2: (i,j) = ((s+d)//2, (s-d)//2) valid if integer and in bounds
+    for d in D1:
+        for s in D2:
+            if (s + d) % 2 == 0:
+                i = (s + d) // 2
+                j = (s - d) // 2
+                if 1 <= i <= N and 1 <= j <= N:
+                    pairwise += 1
+    
+    total -= pairwise
+    
+    # Add back triple intersections
+    triple = 0
+    
+    # R & C & D1: (r,c) with r in R, c in C, and r-c in D1
+    for r in R:
+        for c in C:
+            if (r - c) in D1:
+                triple += 1
+    
+    # R & C & D2: (r,c) with r+c in D2
+    for r in R:
+        for c in C:
+            if (r + c) in D2:
+                triple += 1
+    
+    # R & D1 & D2: for each r in R, d in D1: j = r - d, and s = r + j = r + (r-d) = 2*r - d; need s in D2 and 1<=j<=N
+    for r in R:
+        for d in D1:
+            j = r - d
+            if 1 <= j <= N:
+                s = r + j
+                if s in D2:
+                    triple += 1
+    
+    # C & D1 & D2: for each c in C, d in D1: i = c + d, then s = i + c = c+d+c = 2*c + d; need 1<=i<=N and s in D2
+    for c in C:
+        for d in D1:
+            i = c + d
+            if 1 <= i <= N:
+                s = i + c
+                if s in D2:
+                    triple += 1
+    
+    total += triple
+    
+    # Subtract quadruple: R & C & D1 & D2: (r,c) with r in R, c in C, r-c in D1, r+c in D2
+    quadruple = 0
+    for r in R:
+        for c in C:
+            if (r - c) in D1 and (r + c) in D2:
+                quadruple += 1
+    total -= quadruple
+    
+    # But wait: this counts the union of the attacked cells? 
+    # However, note: a cell might be attacked by multiple pieces, but we are counting the union.
+    # This inclusion-exclusion computes |R_rows ∪ R_cols ∪ R_diag1 ∪ R_diag2|, which is exactly the attacked cells.
+    
+   

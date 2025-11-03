@@ -1,0 +1,40 @@
+N = int(input())
+S = input().strip()
+
+# Map opponent's move to the winning move for Takahashi
+win_move = {'R': 'P', 'P': 'S', 'S': 'R'}
+lose_move = {'R': 'S', 'P': 'R', 'S': 'P'}
+
+# dp[i][move] = maximum wins up to game i, where move is last move (0=R, 1=P, 2=S)
+dp = [[-1] * 3 for _ in range(N)]
+
+# Initialize first game
+for move_idx, move_char in enumerate("RPS"):
+    if move_char == lose_move[S[0]]:
+        # This move would lose, not allowed
+        continue
+    dp[0][move_idx] = 1 if move_char == win_move[S[0]] else 0
+
+# Fill DP table
+for i in range(1, N):
+    for curr in range(3):
+        curr_char = "RPS"[curr]
+        opp_char = S[i]
+        
+        # Check if current move loses
+        if curr_char == lose_move[opp_char]:
+            continue  # Invalid: Takahashi cannot lose
+        
+        # Calculate win for this move
+        win_add = 1 if curr_char == win_move[opp_char] else 0
+        
+        # Transition from previous state with different move
+        best_prev = -1
+        for prev in range(3):
+            if prev != curr and dp[i-1][prev] != -1:
+                best_prev = max(best_prev, dp[i-1][prev])
+        
+        if best_prev != -1:
+            dp[i][curr] = best_prev + win_add
+
+print(max(dp[N-1]))

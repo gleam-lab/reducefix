@@ -1,0 +1,75 @@
+```python
+import sys
+from collections import deque
+
+def main():
+    H, W, Y = map(int, sys.stdin.readline().split())
+    
+    # Read the elevation matrix
+    A = []
+    for _ in range(H):
+        row = list(map(int, sys.stdin.readline().split()))
+        A.append(row)
+    
+    # Initialize the result array
+    result = [H * W] * (Y + 1)  # result[i] will store area after i years
+    
+    # Create a list of all cells with their elevations
+    cells = []
+    for i in range(H):
+        for j in range(W):
+            cells.append((A[i][j], i, j))
+    
+    # Sort cells by elevation in ascending order
+    cells.sort()
+    
+    # Track which cells are submerged
+    submerged = [[False] * W for _ in range(H)]
+    
+    # Directions for adjacent cells (up, down, left, right)
+    directions = [(-1, 0), (1, 0), (0, -1), (0, 1)]
+    
+    # Process cells in order of increasing elevation
+    cell_idx = 0
+    current_area = H * W
+    
+    for year in range(1, Y + 1):
+        # Add all cells with elevation <= current sea level (year)
+        while cell_idx < len(cells) and cells[cell_idx][0] <= year:
+            _, i, j = cells[cell_idx]
+            cell_idx += 1
+            
+            if submerged[i][j]:
+                continue
+                
+            # If this cell is on the border or adjacent to a submerged cell,
+            # it will be submerged (use BFS to find all connected cells that sink)
+            if (i == 0 or i == H-1 or j == 0 or j == W-1 or 
+                any(0 <= i+di < H and 0 <= j+dj < W and submerged[i+di][j+dj] 
+                    for di, dj in directions)):
+                
+                # BFS to find all connected cells with elevation <= year
+                queue = deque([(i, j)])
+                submerged[i][j] = True
+                current_area -= 1
+                
+                while queue:
+                    ci, cj = queue.popleft()
+                    
+                    for di, dj in directions:
+                        ni, nj = ci + di, cj + dj
+                        if (0 <= ni < H and 0 <= nj < W and 
+                            not submerged[ni][nj] and A[ni][nj] <= year):
+                            submerged[ni][nj] = True
+                            current_area -= 1
+                            queue.append((ni, nj))
+        
+        result[year] = current_area
+    
+    # Output the results for years 1 to Y
+    for i in range(1, Y + 1):
+        print(result[i])
+
+if __name__ == "__main__":
+    main()
+```

@@ -1,0 +1,36 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+int main(){
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int n, k;
+    cin >> n >> k;
+    vector<int> v(n);
+    for (auto& val : v){
+        cin >> val;
+    }
+    
+    sort(v.begin(), v.end());
+    
+    // We need to remove exactly K elements, so we keep (n - K) elements
+    int keep = n - k;
+    long long min_diff = v[keep - 1] - v[0]; // First window: [0, keep-1]
+    
+    // Try all possible contiguous subarrays of length 'keep'
+    // The optimal solution will always be a contiguous segment in sorted array
+    for (int left = 1; left + keep - 1 < n; left++) {
+        int right = left + keep - 1;
+        long long diff = v[right] - v[left];
+        if (diff < min_diff) {
+            min_diff = diff;
+        }
+    }
+    
+    cout << min_diff << endl;
+    
+    return 0;
+}

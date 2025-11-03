@@ -1,0 +1,74 @@
+import sys
+from collections import deque
+
+def main():
+    H, W, Y = map(int, sys.stdin.readline().split())
+    
+    # Read the elevation matrix
+    A = []
+    for _ in range(H):
+        row = list(map(int, sys.stdin.readline().split()))
+        A.append(row)
+    
+    # Initialize result array
+    result = [0] * (Y + 1)
+    total_cells = H * W
+    
+    # Initially all cells are above water
+    result[0] = total_cells
+    
+    # Create a list of all cells with their elevations and positions
+    cells = []
+    for i in range(H):
+        for j in range(W):
+            cells.append((A[i][j], i, j))
+    
+    # Sort cells by elevation in ascending order
+    cells.sort()
+    
+    # Track which cells are submerged
+    submerged = [[False] * W for _ in range(H)]
+    
+    # Directions for adjacent cells (up, down, left, right)
+    directions = [(-1, 0), (1, 0), (0, -1), (0, 1)]
+    
+    # Process each year from 1 to Y
+    cell_idx = 0
+    
+    for year in range(1, Y + 1):
+        # Sea level rises to 'year'
+        sea_level = year
+        
+        # Submerge all cells with elevation <= sea_level that haven't been submerged yet
+        # and are connected to the ocean (directly or through other submerged cells)
+        new_submerged = []
+        
+        while cell_idx < len(cells) and cells[cell_idx][0] <= sea_level:
+            elev, i, j = cells[cell_idx]
+            if not submerged[i][j]:
+                submerged[i][j] = True
+                new_submerged.append((i, j))
+            cell_idx += 1
+        
+        # Use BFS to ensure all connected cells at or below sea level are submerged
+        if new_submerged:
+            queue = deque(new_submerged)
+            while queue:
+                i, j = queue.popleft()
+                
+                for di, dj in directions:
+                    ni, nj = i + di, j + dj
+                    if 0 <= ni < H and 0 <= nj < W and not submerged[ni][nj] and A[ni][nj] <= sea_level:
+                        submerged[ni][nj] = True
+                        queue.append((ni, nj))
+        
+        # Count remaining land area
+        remaining = total_cells - sum(sum(row) for row in submerged)
+        result[year] = remaining
+    
+    # Output results for years 1 to Y
+    for i in range(1, Y + 1):
+        print(result[i])
+
+if __name__ == "__main__":
+    main()

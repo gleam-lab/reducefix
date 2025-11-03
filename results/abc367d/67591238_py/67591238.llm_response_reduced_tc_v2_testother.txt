@@ -1,0 +1,247 @@
+```python
+from collections import defaultdict
+
+N, M = map(int, input().split())
+A = list(map(int, input().split()))
+
+# 累積和
+cum = [0] * (N + 1)
+for i in range(N):
+    cum[i + 1] = cum[i] + A[i]
+
+# mod M の値の出現回数
+count_mod = defaultdict(int)
+answer = 0
+
+for val in cum:
+    mod = val % M
+    answer += count_mod[mod]  # すでに同じmodのものとペアになれる
+    count_mod[mod] += 1
+
+# 同じ頂点からの移動（s == t）を除外するため、
+# 累積和の各位置は「rest area 1 から rest area i までの距離」として解釈される。
+# ペア(s,t)で s != t を条件としているが、この方法では cum[j] - cum[i] ≡ 0 (mod M) となる i < j のペアがカウントされる。
+# このとき、i は s-1、j は t-1 を表し、s = i+1, t = j+1 で s != t だが、
+# 実際には累積和のインデックスの差が0になる場合（つまり同じ位置）は含まれない（i < j）ので問題ない。
+# ただし、問題は N >= 2 とあるが、サンプルに N=1 がある。
+
+# 問題文の制約は N >= 2 だが、テストケースに N=1 がある模様。
+# よって、s != t の条件から、N=1 の場合はペアが存在しない。
+
+# 上記のコードは論理的には正しいが、N=1 の場合、
+# cum = [0, A0], その差は A0。これが M で割り切れるかどうかではなく、
+# 「時計回りに s から t へ行く最小ステップ数が M の倍数」である必要がある。
+# しかし、N=1 の場合、s と t は異なる必要があるが、rest area が1つしかないので s != t を満たすペアは存在しない。
+
+# 従って、答えは常に0。
+
+# しかし、上記のコードは N=1 のとき、
+# cum = [0, A0]
+# mod0: 初めに0 -> count_mod[0]=0 → answer+=0 → count_mod[0]=1
+# 次に A0%M → もし A0%M==0 なら answer += 1 → answer=1
+# つまり、(s,t) = (1,1) を間接的にカウントしている可能性がある。
+
+# 重要な点：累積和の差 cum[j] - cum[i] は、rest area i+1 から j+1 への距離。
+# i < j のとき、s = i+1, t = j+1 で s != t（j>=i+1 なので t>s）。
+# しかし、j が N を超える？　→ いいえ、円形ではない処理。
+
+# 実は、この問題は円形なので、時計回りの距離だけを考えるが、
+# 距離は cum[t] - cum[s] ではなく、(cum[t] - cum[s]) % total ではない。
+# いや、ここでは単に「時計回りに進む」だけなので、s <= t なら cum[t]-cum[s]、
+# s > t なら cum[N] + cum[t] - cum[s]？　→ いや、そうではなく、
+# 円形の経路に対して、s から t への時計回り距離は：
+#   if s <= t: cum[t] - cum[s]
+#   else: cum[N] - cum[s] + cum[t]
+# だが、累積和の配列は線形に伸びている。
+
+# 正しいアプローチ：円形なので、すべての s,t (s≠t) について、時計回り距離が M の倍数か？
+# しかし、Nが大きいので O(N^2) は不可能。
+
+# 別の視点：s から t への時計回り距離 d(s,t) ≡ 0 (mod M) となる (s,t) を数える。
+
+# d(s,t) = (cum[t] - cum[s]) mod ???  
+# 実は、d(s,t) = cum[t] - cum[s] （s < t のとき）
+# s > t のとき、d(s,t) = cum[N] - cum[s] + cum[t] = total - (cum[s] - cum[t])
+
+# しかし、d(s,t) が M の倍数 ⇔ d(s,t) ≡ 0 (mod M)
+
+# ここで、d(s,t) ≡ 0 (mod M) ⇔ cum[t] ≡ cum[s] (mod M) とは限らない。
+# s < t のとき：d(s,t)=cum[t]-cum[s] ≡0 ⇒ cum[t]≡cum[s] (mod M)
+# s > t のとき：d(s,t)=total - (cum[s]-cum[t]) = total - cum[s] + cum[t]
+#               ≡0 ⇒ cum[t] - cum[s] ≡ -total (mod M) ⇒ cum[t] ≡ cum[s] - total (mod M)
+
+# したがって、二種類の条件がある。
+
+# しかし、問題文の「minimum number of steps required to walk clockwise from rest area s to rest area t (s ≠ t) is a multiple of M」
+# これは、時計回りの距離が M の倍数ということ。
+
+# 全ての s≠t について、clockwise_distance(s,t) ≡ 0 (mod M) を満たすか？
+
+# でも、N=1 のときは rest area が一つしかない。s≠t を満たすペアは存在しない。よって答えは0。
+
+# 上記のコードが N=1 で1を出力するのは、
+# cum = [0, A0]
+# 0 % M == A0 % M かつ A0 % M == 0 なら、0とA0が同じmodクラスに属し、ペアとしてカウントされる。
+# これは、s=1, t=1? いや、i=0,j=1 → s=i+1=1, t=j+1=2 → だがN=1なのでt=2は存在しない。
+
+# 間違い：累積和のインデックスが rest area を直接表していない。
+# cum[0] = 0 → rest area 1 まで0歩（出発点）
+# cum[1] = A0 → rest area 2 まで？ だがN=1なのでrest area 2は存在しない。
+
+# アルゴリズムの前提：N個の区間 A_1..A_N があり、
+# rest area 1 → 2: A_1
+# ...
+# rest area N → 1: A_N
+
+# cum[i] は rest area 1 から rest area i+1 までの時計回り距離。
+# よって、s = i+1, t = j+1 としたとき、i<j なら d(s,t)=cum[j]-cum[i]
+# そして、これがMの倍数 ⇔ cum[j] ≡ cum[i] (mod M)
+
+# しかし、i>j の場合（つまりs>t）は、
+# d(s,t) = (cum[N] - cum[i]) + cum[j] = total - cum[i] + cum[j]
+# これが M の倍数 ⇔ total + cum[j] - cum[i] ≡ 0 (mod M) ⇔ cum[j] ≡ cum[i] - total (mod M)
+
+# したがって、単に同じmodの累積和を見るだけでは不十分。
+
+# しかし、よく考えると、d(s,t) は累積和の差（または補数）であり、
+# 円周全体を total = cum[N] とする。
+
+# 重要な観察：d(s,t) ≡ 0 (mod M) となる (s,t) (s≠t) の個数。
+
+# しかし、s≠t なので、d(s,t) は正の整数。
+
+# 方法：全ての s,t (s≠t) を考える代わりに、
+# d(s,t) ≡ 0 (mod M) を満たすペアを効率的に数える。
+
+# しかし、O(N^2) はできない。
+
+# 別のアイデア：円形なので、距離 d(s,t) は、
+#   d(s,t) = (cum[t-1] - cum[s-1]) % total   だが、mod total は使えない。
+
+# 正しいアプローチ：多くの円形問題では、累積和を M で割った余りの頻度を使って、
+# 差が M の倍数になるペアを数えるが、それは直線的な場合。
+
+# ここでは、s から t への時計回り距離が M の倍数になる。
+# それは、cum[t-1] - cum[s-1] ≡ 0 (mod M) かつ s < t の場合。
+# または、total - (cum[s-1] - cum[t-1]) ≡ 0 (mod M) かつ s > t の場合。
+
+# しかし、後者は cum[t-1] - cum[s-1] ≡ -total (mod M)
+
+# したがって、
+# ペア (i,j) (i<j) で cum[j] ≡ cum[i] (mod M) → s=i+1, t=j+1 (s<t)
+# ペア (i,j) (i>j) で cum[j] ≡ cum[i] - total (mod M) → s=i+1, t=j+1 (s>t)
+
+# しかし、j < i なので、i>j。
+
+# そこで、
+# freq[x] = cum[i] % M の出現回数
+
+# 前者：各 x について C(freq[x],2)
+# 後者：各 i,j で cum[j] ≡ (cum[i] - total) % M かつ j < i
+
+# これも O(N^2) になる。
+
+# しかし、後者も累積的にできる：
+# 左から見ていって、(cum[i] - total) % M が過去に何回出てきたかを数える。
+
+# つまり、
+# ans = 0
+# freq = defaultdict(int)
+# for i in range(N+1):
+#   x = cum[i] % M
+#   y = (cum[i] - total) % M   # これが過去に出てくる cum[j]%M (j<i) があれば、s=i+1, t=j+1 で s>t かつ d(s,t)≡0
+#   ans += freq[y]
+#   freq[x] += 1
+
+# そして前者は、同じ mod のペアを freq[x]*(freq[x]-1)//2 で足す？
+# いや、それだと重複する。
+
+# 実は、前者（s<t）は、cum[j] ≡ cum[i] (mod M), i<j なので、
+# freq[x] を左から更新しながら、x が現れるたびに freq[x] の現在の値を足せば良い（自分の前に何個あるか）→ それが元のコード。
+
+# しかし元のコードは s<t のみをカウントしている。
+
+# したがって、s>t の分を別にカウントする必要がある。
+
+# つまり、
+# total = cum[N]
+# ans = 0
+# freq = defaultdict(int)
+# for i in range(N+1):
+#   # s>t のパターン：今見ている cum[i] を s-1 とすると、t-1 < i で cum[t-1] ≡ (cum[i] - total) % M
+#   target = (cum[i] - total) % M
+#   ans += freq[target]
+#   # s<t のパターン：cum[i] と同じ mod を持つ過去の累積和の数
+#   # いや、s<t は別のループでやるべき？
+#   # 実は、s<t は元の方法で cum[j] ≡ cum[i] (mod M), j<i を足せばよい。
+#   # だが、今やっているのは s>t の分。
+
+# あるいは、
+# s<t: d(s,t)=cum[t-1]-cum[s-1] ≡0 → cum[t-1]≡cum[s-1] (mod M)
+# s>t: d(s,t)=total - (cum[s-1]-cum[t-1]) ≡0 → cum[t-1] ≡ cum[s-1] - total (mod M)
+
+# どちらも、t-1 < s-1 のとき（つまり index_j < index_i）に、
+# 条件に応じてペアになる。
+
+# しかし、s<t は index_s = s-1, index_t = t-1, index_s < index_t
+# s>t は index_s > index_t
+
+# したがって、両方とも index_j < index_i を条件にできる。
+
+# そこで、
+# ans = 0
+# freq = defaultdict(int)
+# for i in range(N+1):
+#   # i は cum[i] のインデックス（rest area i+1 までの距離）
+#   # s>t の場合：s = i+1, t = j+1 (j < i) で d(s,t)≡0 → cum[j] ≡ (cum[i] - total) % M
+#   target1 = (cum[i] - total) % M
+#   ans += freq.get(target1, 0)
+#   # s<t の場合：s = j+1, t = i+1 (j < i) で d(s,t)≡0 → cum[i] ≡ cum[j] (mod M) → cum[j] % M == cum[i] % M
+#   current_mod = cum[i] % M
+#   ans += freq.get(current_mod, 0)  # これは s<t の分
+#   # しかし、これだと二重に加算してしまう？ いや、target1 と current_mod は一般に異なる。
+#   # でも、freq は cum[j] % M をカウントしている。
+#   # まず target1 を見て、次に current_mod を見て、最後に freq[current_mod] をインクリメント。
+#   # しかし、current_mod を freq に加えるのは、次のループのため。
+#   freq[current_mod] = freq.get(current_mod, 0) + 1
+
+# でも、これだと s<t の分を freq[current_mod] で足しているが、
+# freq[current_mod] には、これまでに出てきた cum[j]%M (j<i) が入っている。
+# そして、target1 の方も freq[target1] を足している。
+# しかし、target1 と current_mod が偶然同じ値の場合、
+# freq[target1] と freq[current_mod] は同じ値を指すが、
+# それは正しい。なぜなら、cum[j]%M が target1 に等しいものが freq[target1] 通りあり、
+# それが s>t のペアを作る。
+# 同時に、cum[j]%M が current_mod に等しいものが freq[current_mod] 通りあり、
+# それが s<t のペアを作る。
+# これらは排他的ではないが、ペアの条件が異なるので問題ない。
+
+# しかし、total が M で割り切れる場合、target1 = (cum[i]-total)%M = (cum[i]%M - total%M) % M
+# そして、もし total % M == 0 なら target1 = cum[i] % M
+# つまり、target1 == current_mod
+# すると、ans += freq[target1] と ans += freq[current_mod] で二倍になっている！
+
+# つまり、s>t と s<t の両方の条件が同じ mod 値を参照する場合、
+# 一回の freq[mod] のカウントを二回足している。
+
+# 例：total ≡0 mod M かつ cum[i]%M = x
+# すると、s>t の条件：cum[j]%M == (x - 0) % M = x
+# s<t の条件：cum[j]%M == x
+# 両方とも同じ集合を指している。
+# しかし、一つの j に対して、s=i+1, t=j+1 で s>t か s<t かは決まっている。
+# j < i なので、t=j+1, s=i+1 で s>t ならば、s>t のペア。
+# s<t は s=j+1, t=i+1 という意味で、今 i を固定して j<i を見るとき、
+# s=j+1, t=i+1 は s<t だが、今 i を t-1 としている。
+
+# つまり、ループで i を固定して、j < i を見るとき、
+# - s>t パターン：s=i+1, t=j+1 → s>t because i>j → この条件は cum[j] ≡ (cum[i]-total)%M
+# - s<t パターン：s=j+1, t=i+1 → s<t because j<i → この条件は cum[i] ≡ cum[j] (mod M) → cum[j]%M == cum[i]%M
+
+# したがって、同じ j が両方に該当することはない。なぜなら、一つの j に対して、
+# s>t パターンでは (s,t)=(i+1,j+1)
+# s<t パターンでは (s,t)=(j+1,i+1)
+# 異なるペア。
+
+# 例えば、i=2, j=1 のとき、
+# s>t: (3,2)
+# s<t:

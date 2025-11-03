@@ -1,0 +1,43 @@
+#include <bits/stdc++.h>
+
+#define all(x) x.begin(), x.end()
+
+using namespace std;
+
+using ll = long long int;
+using vi = vector<int>;
+
+template<typename T> inline bool chmin(T &a, T b) {
+    if (a > b) {
+        a = b;
+        return true;
+    }
+    return false;
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int N, K;
+    cin >> N >> K;
+    vi A(N);
+    for (int i = 0; i < N; i++) {
+        cin >> A[i];
+    }
+    
+    sort(all(A));
+    
+    // We are going to remove exactly K elements
+    // So we keep M = N - K elements
+    int M = N - K;
+    ll ans = 1e18;
+    
+    // Try all possible contiguous segments of length M in the sorted array
+    for (int i = 0; i + M - 1 < N; i++) {
+        chmin(ans, (ll)A[i + M - 1] - A[i]);
+    }
+    
+    cout << ans << endl;
+    return 0;
+}

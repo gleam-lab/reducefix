@@ -1,0 +1,33 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int n, k;
+    cin >> n >> k;
+    vector<int> v(n);
+    for (auto& val : v) {
+        cin >> val;
+    }
+    
+    sort(v.begin(), v.end());
+    
+    // We remove exactly K elements, so we keep (n - k) elements.
+    // The optimal remaining segment must be a contiguous subarray of the sorted array.
+    // Try all possible contiguous subarrays of length (n - k)
+    long long min_diff = 1e18;
+    int window_size = n - k;
+    
+    for (int i = 0; i + window_size - 1 < n; i++) {
+        int j = i + window_size - 1;
+        min_diff = min(min_diff, (long long)(v[j] - v[i]));
+    }
+    
+    cout << min_diff << endl;
+    
+    return 0;
+}

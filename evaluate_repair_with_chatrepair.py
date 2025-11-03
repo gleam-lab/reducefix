@@ -26,8 +26,9 @@ import markdownify
 import llm 
 
 # --- Configuration ---
-# Must match base path used in reduce.py/reducer_test.py
-BASE_TESTCASE_PATH = "/home/barty/research/atcoder-testcases/test/"
+# Use relative paths for portability
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+BASE_TESTCASE_PATH = os.path.join(SCRIPT_DIR, "lftbench", "tests")  # Use tests from lftbench
 COMPILE_TIMEOUT = 10 # Timeout for compilation
 RUN_TIMEOUT = 5      # Timeout for running code on one test case
 REDUCE_TIMEOUT = 30  # Timeout for reduction process in seconds

@@ -1,0 +1,44 @@
+N = int(input())
+S = input().strip()
+
+# Map Aoki's move to the winning and losing moves for Takahashi
+# For each of Aoki's move, determine what Takahashi should play to win or draw
+win_move = {'R': 'P', 'P': 'S', 'S': 'R'}  # Takahashi's move to win
+lose_move = {'R': 'S', 'P': 'R', 'S': 'P'}  # Takahashi's move to lose (not allowed since he never loses)
+
+# We'll use DP where dp[i][j] = maximum wins up to game i, with Takahashi playing move j at step i
+# Represent moves: 0 = R, 1 = P, 2 = S
+move_to_idx = {'R': 0, 'P': 1, 'S': 2}
+idx_to_move = ['R', 'P', 'S']
+
+# Initialize DP table
+dp = [[-1] * 3 for _ in range(N)]
+
+# Base case: first move
+aoki_first = S[0]
+for j in range(3):
+    move = idx_to_move[j]
+    if move == win_move[aoki_first]:
+        dp[0][j] = 1  # Win
+    elif move != lose_move[aoki_first]:  # Then it's a draw (valid, since no loss)
+        dp[0][j] = 0
+
+# Transition: for each subsequent game
+for i in range(1, N):
+    aoki_move = S[i]
+    winning_move = win_move[aoki_move]
+    for curr in range(3):
+        curr_move = idx_to_move[curr]
+        # Must be different from previous move
+        for prev in range(3):
+            if prev == curr:
+                continue
+            if dp[i-1][prev] == -1:
+                continue
+            # Check current move outcome
+            if curr_move == winning_move:
+                dp[i][curr] = max(dp[i][curr], dp[i-1][prev] + 1)
+            elif curr_move != lose_move[aoki_move]:  # It's a draw
+                dp[i][curr] = max(dp[i][curr], dp[i-1][prev])
+
+print(max(dp[N-1]))

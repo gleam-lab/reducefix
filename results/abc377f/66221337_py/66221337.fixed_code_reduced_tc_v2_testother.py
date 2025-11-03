@@ -1,0 +1,84 @@
+import sys
+
+def main():
+    data = sys.stdin.read().split()
+    if not data:
+        print(0)
+        return
+        
+    N = int(data[0])
+    M = int(data[1])
+    
+    # Sets to store attacked lines and diagonals
+    rows = set()
+    cols = set()
+    diag1 = set()  # i + j
+    diag2 = set()  # i - j
+    
+    pieces = []
+    index = 2
+    for _ in range(M):
+        a = int(data[index])
+        b = int(data[index + 1])
+        index += 2
+        pieces.append((a, b))
+        rows.add(a)
+        cols.add(b)
+        diag1.add(a + b)
+        diag2.add(a - b)
+    
+    # Total squares under attack (union of all attacked lines/diagonals)
+    total_attacked = set()
+    
+    for a, b in pieces:
+        # Add entire row
+        for r in [a]:
+            if r >= 1 and r <= N:
+                for c in range(1, N + 1):
+                    total_attacked.add((r, c))
+        
+        # Add entire column
+        for c in [b]:
+            if c >= 1 and c <= N:
+                for r in range(1, N + 1):
+                    total_attacked.add((r, c))
+        
+        # Add main diagonal (i + j = const)
+        s = a + b
+        # All (i,j) such that i+j = s, 1<=i<=N, 1<=j<=N
+        i_start = max(1, s - N)
+        i_end = min(N, s - 1)
+        for i in range(i_start, i_end + 1):
+            j = s - i
+            if 1 <= j <= N:
+                total_attacked.add((i, j))
+        
+        # Add anti-diagonal (i - j = const)
+        d = a - b
+        # All (i,j) such that i-j = d, 1<=i<=N, 1<=j<=N
+        if d >= 0:
+            i_start = d + 1
+            i_end = N
+        else:
+            i_start = 1
+            i_end = N + d
+        for i in range(i_start, i_end + 1):
+            j = i - d
+            if 1 <= j <= N:
+                total_attacked.add((i, j))
+    
+    # Remove the piece positions themselves (they are occupied but not available for placing)
+    for a, b in pieces:
+        total_attacked.discard((a, b))
+    
+    # Count safe empty squares
+    safe_squares = 0
+    for r in range(1, N + 1):
+        for c in range(1, N + 1):
+            if (r, c) not in total_attacked and (r, c) not in pieces:
+                safe_squares += 1
+    
+    print(safe_squares)
+
+if __name__ == "__main__":
+    main()

@@ -1,0 +1,127 @@
+```python
+python
+import sys
+
+def solve():
+    N, M, K = map(int, input().split())
+    A = list(map(int, input().split()))
+    
+    total_counted = sum(A)
+    remaining_votes = K - total_counted
+    
+    # If there are no remaining votes, check current state
+    if remaining_votes == 0:
+        # Count how many candidates have more votes than candidate i
+        ans = []
+        for i in range(N):
+            more_votes = sum(1 for j in range(N) if A[j] > A[i])
+            if more_votes < M:
+                ans.append(0)
+            else:
+                ans.append(-1)
+        print(*ans)
+        return
+    
+    # Special case: if M == N, then everyone is elected (since less than N people can't have more votes)
+    if M == N:
+        print(' '.join(['0'] * N))
+        return
+    
+    # We need to compute for each candidate the minimum additional votes needed
+    ans = [0] * N
+    
+    # Create list of (votes, original_index) and sort in descending order
+    candidates = [(A[i], i) for i in range(N)]
+    candidates.sort(reverse=True)
+    
+    # Precompute prefix sums for efficiency
+    # For each position in sorted order, we want to know the sum of top M votes
+    # But we need to simulate adding votes to candidate i and see what's required
+    
+    for idx in range(N):
+        votes, orig_idx = candidates[idx]
+        needed = 0
+        
+        # We are considering candidate with original index `orig_idx`
+        # Try to find minimum X such that even in worst-case distribution of other remaining votes,
+        # candidate `orig_idx` is elected.
+        
+        # Candidate i is elected iff fewer than M candidates have strictly more votes than them.
+        # So at most M-1 candidates can have more votes than candidate i.
+        
+        # Strategy:
+        # Give X votes to candidate `orig_idx`, making their total = A[orig_idx] + X.
+        # Then, an adversary will try to make as many other candidates as possible exceed this value.
+        # To prevent election, the adversary would try to get M candidates to have > A[orig_idx]+X.
+        #
+        # To guarantee election, we must ensure that it's impossible for M or more candidates 
+        # to end up with more votes than A[orig_idx]+X, even if the remaining votes (except X given to i)
+        # are distributed adversarially.
+        
+        # Let’s assume we give X votes to candidate `orig_idx`.
+        # Remaining votes to distribute among others: R = remaining_votes - X
+        # We want that at most M-1 candidates can have > (A[orig_idx] + X)
+        
+        # How many candidates currently have > (A[orig_idx] + X)? None initially because X >= 0.
+        # But after adding votes, some might exceed.
+        
+        # Instead, think greedily:
+        # To block candidate `orig_idx`, the adversary would try to push M different candidates 
+        # (excluding orig_idx) to exceed A[orig_idx] + X.
+        # The cheapest way is to pick the M candidates that require the least extra votes to surpass A[orig_idx]+X.
+        
+        # But note: we don’t know X. We want the minimal X such that the total extra votes required 
+        # to get M candidates above A[orig_idx]+X exceeds the available remaining votes (R = remaining_votes - X).
+        
+        # Alternatively, binary search on X for each candidate? But N up to 2e5, so O(N log K) might be acceptable?
+        # But K up to 1e12, so log K ~ 40, total 8e6 operations which is acceptable in Pyton?
+        # However, worst-case might be tight. Let's try a direct computation.
+        
+        # Insight: For candidate i, suppose we give them X votes.
+        # Then, define threshold = A[i] + X.
+        # For any other candidate j != i, the number of additional votes needed for j to exceed threshold is:
+        #   max(0, threshold - A[j] + 1)   [because needs to be strictly greater]
+        # But only if this is <= remaining_votes - X (the votes left for others)
+        
+        # We want that the sum of the smallest M values of "votes needed to exceed threshold" over j ≠ i 
+        # is greater than (remaining_votes - X). Then, it's impossible to have M candidates above threshold.
+        
+        # But this depends on X in a nonlinear way. We can binary search on X in [0, remaining_votes+1].
+        
+        lo, hi = 0, remaining_votes + 1
+        best = -1
+        
+        while lo <= hi:
+            mid = (lo + hi) // 2
+            threshold = A[orig_idx] + mid
+            # Compute min total votes needed to get M candidates (other than orig_idx) above threshold
+            costs = []
+            for j in range(N):
+                if j == orig_idx:
+                    continue
+                # votes needed for candidate j to exceed threshold
+                need = threshold - A[j] + 1
+                if need > 0:
+                    costs.append(need)
+                # else: already above or equal -> cost 0 to exceed (but they already do if A[j] > threshold, but need strictly more)
+                # Actually, if A[j] > threshold, then no vote needed -> cost 0
+                # But if A[j] <= threshold, need (threshold - A[j] + 1)
+            costs.sort()
+            total_cost = sum(costs[:M]) if len(costs) >= M else sum(costs)
+            
+            # The adversary has (remaining_votes - mid) votes to distribute
+            if total_cost > remaining_votes - mid:
+                best = mid
+                hi = mid - 1
+            else:
+                lo = mid + 1
+        
+        if best == -1:
+            ans[orig_idx] = -1
+        else:
+            ans[orig_idx] = best
+    
+    print(*ans)
+
+solve()
+```

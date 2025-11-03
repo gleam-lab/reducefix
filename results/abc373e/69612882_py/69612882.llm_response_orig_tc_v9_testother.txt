@@ -1,0 +1,138 @@
+```python
+import sys
+
+def solve():
+    input = sys.stdin.read
+    data = input().split()
+    
+    n = int(data[0])
+    m = int(data[1])
+    k = int(data[2])
+    A = list(map(int, data[3:3+n]))
+    
+    total_votes_so_far = sum(A)
+    remaining_votes = k - total_votes_so_far
+    
+    # If M == N, then every candidate will be elected (since number of candidates with more votes is < N)
+    if m == n:
+        print(' '.join(['0'] * n))
+        return
+    
+    # Create list of (votes, original_index) for sorting
+    candidates = [(A[i], i) for i in range(n)]
+    
+    # Sort by votes descending
+    candidates.sort(key=lambda x: x[0], reverse=True)
+    
+    # Result array for each candidate's answer
+    ans = [-1] * n
+    
+    # For each candidate, we need to find minimum additional votes to guarantee victory
+    for orig_idx in range(n):
+        current_votes = A[orig_idx]
+        
+        # We'll try to simulate adding x votes to candidate orig_idx
+        # and check if they are guaranteed to win
+        
+        # Binary search on the number of additional votes needed
+        left, right = 0, remaining_votes + 1
+        result = -1
+        
+        while left <= right:
+            mid = (left + right) // 2
+            new_votes = current_votes + mid
+            
+            # Check if giving this candidate 'mid' additional votes guarantees victory
+            # We need to see if at most M-1 candidates can have strictly more votes than this candidate
+            
+            # Count how many candidates could potentially have more votes than new_votes
+            # Other candidates can get at most their current votes + remaining_votes - mid
+            # But we need to be pessimistic: assume other candidates get as many votes as possible
+            
+            # Create a list of maximum possible votes for other candidates
+            max_possible = []
+            for i in range(n):
+                if i == orig_idx:
+                    continue
+                # Candidate i can get at most A[i] + (remaining_votes - mid) votes
+                max_possible.append(A[i])
+            
+            # Sort in descending order
+            max_possible.sort(reverse=True)
+            
+            # We need to check if we can assign the remaining votes (excluding what we gave to orig_idx)
+            # such that at most M-1 candidates have more votes than new_votes
+            
+            # How many candidates currently have more than new_votes?
+            # But after redistribution, others might surpass
+            
+            # Greedy approach: try to minimize the number of candidates exceeding new_votes
+            # Actually, we should check if it's possible for >= M candidates to have > new_votes
+            # If yes, then mid is not enough. If no, then mid is sufficient.
+            
+            # Let's calculate the minimum number of candidates that must have <= new_votes
+            # Or equivalently, the maximum number of candidates that could have > new_votes
+            
+            available_votes = remaining_votes - mid
+            if available_votes < 0:
+                # Not enough votes, so this mid is impossible
+                left = mid + 1
+                continue
+                
+            # Can we make at least M candidates have > new_votes?
+            # We want to know if it's possible for M or more candidates to exceed new_votes
+            # If yes, then our candidate is not guaranteed to win
+            # If no, then our candidate is guaranteed to win
+            
+            # Count how many candidates already have > new_votes
+            # Plus how many can be boosted to > new_votes with the available votes
+            
+            boost_needed = []
+            for i in range(n):
+                if i == orig_idx:
+                    continue
+                if A[i] > new_votes:
+                    # Already exceeds, no boost needed
+                    boost_needed.append(0)
+                elif A[i] <= new_votes:
+                    # Need at least (new_votes - A[i] + 1) votes to exceed
+                    need = new_votes - A[i] + 1
+                    if need > 0:
+                        boost_needed.append(need)
+            
+            # Sort boost needs ascending (greedy: help those who need least first)
+            boost_needed.sort()
+            
+            # Try to make as many candidates as possible exceed new_votes
+            count_exceeding = 0
+            votes_used = 0
+            for need in boost_needed:
+                if votes_used + need <= available_votes:
+                    votes_used += need
+                    count_exceeding += 1
+                else:
+                    break
+            
+            # Add those who already exceed
+            already_exceeding = sum(1 for i in range(n) if i != orig_idx and A[i] > new_votes)
+            total_exceeding = already_exceeding + count_exceeding
+            
+            if total_exceeding >= m:
+                # It's possible for M or more candidates to have more votes
+                # So this candidate is not guaranteed to win with 'mid' additional votes
+                left = mid + 1
+            else:
+                # Even in the worst case, fewer than M candidates have more votes
+                # So this candidate is guaranteed to win
+                result = mid
+                right = mid - 1
+        
+        if result == -1:
+            ans[orig_idx] = -1
+        else:
+            ans[orig_idx] = result
+    
+    print(' '.join(map(str, ans)))
+
+solve()
+```

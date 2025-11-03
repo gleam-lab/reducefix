@@ -1,0 +1,382 @@
+```python
+N, M = map(int, input().split())
+pieces = [tuple(map(int, input().split())) for _ in range(M)]
+
+# Sets to store attacked lines (to avoid double counting)
+rows = set()
+cols = set()
+diag1 = set()  # i + j = const
+diag2 = set()  # i - j = const
+
+# Total number of squares under attack (with deduplication)
+attacked = 0
+
+for a, b in pieces:
+    # Row a
+    if a not in rows:
+        attacked += N
+        rows.add(a)
+    
+    # Column b
+    if b not in cols:
+        attacked += N
+        cols.add(b)
+    
+    # Diagonal: i + j = a + b
+    d1 = a + b
+    if d1 not in diag1:
+        # Number of squares on diagonal i+j = d1
+        # i from max(1, d1-N) to min(N, d1-1)
+        low = max(1, d1 - N)
+        high = min(N, d1 - 1)
+        if low <= high:
+            attacked += high - low + 1
+        diag1.add(d1)
+    
+    # Diagonal: i - j = a - b
+    d2 = a - b
+    if d2 not in diag2:
+        # i - j = d2 => i = j + d2
+        # j from max(1, 1 - d2) to min(N, N - d2)
+        low_j = max(1, 1 - d2)
+        high_j = min(N, N - d2)
+        if low_j <= high_j:
+            attacked += high_j - low_j + 1
+        diag2.add(d2)
+
+# But we have overcounted: each piece is counted in multiple lines
+# We need to subtract the intersections that were counted multiple times
+
+# Use inclusion-exclusion: we've added overlaps multiple times, but we only want to count each attacked square once.
+# However, instead of trying to compute union via inclusion-exclusion (complex with 4D), we can't easily reverse it.
+
+# Alternative approach: since M <= 1000, we can collect all attacked squares in a set?
+# But N up to 1e9 -> can't iterate over squares.
+
+# So we must use geometric method with deduplication via sets for lines, which we did.
+
+# However, the above counts entire lines. The problem is that some squares are covered by multiple lines,
+# but we only want to count them once. Our method using sets for lines avoids adding same line twice,
+# but still counts intersecting squares multiple times.
+
+# Actually: our calculation of `attacked` is wrong because it just sums the sizes of each unique line,
+# without removing overlaps between different types of lines.
+
+# Example: if a row and a column intersect, their intersection is counted twice.
+
+# We cannot compute exact union of all these lines efficiently in general.
+
+# But note: M <= 1000, so at most 1000 rows, 1000 cols, 1000 diag1, 1000 diag2.
+# The total number of distinct lines is at most 4000.
+# The total number of **intersection points** between these lines is O(M^2) = 1e6, which is acceptable.
+
+# Better idea:
+# Total attacked squares = |Union of all rows ∪ cols ∪ diag1 ∪ diag2|
+# We can use inclusion-exclusion, but it's complex.
+
+# Alternatively: 
+#   Let U = set()
+#   But we can't store coordinates because N is huge.
+
+# Instead, we can compute the size of the union using:
+# |R ∪ C ∪ D1 ∪ D2| = Σ|line| - Σ|pairwise intersections| + Σ|triple intersections| - |quadruple|
+
+# But this requires iterating over all combinations, which is O(M^4) worst-case — too expensive.
+
+# Another idea: since M is small (<=1000), we can collect all **distinct attacked squares** by considering:
+#   Each piece attacks:
+#     - its row: N squares
+#     - its col: N squares
+#     - its diag1: up to N squares
+#     - its diag2: up to N squares
+#   But total per piece is O(N), and M*N = 1e3 * 1e9 = 1e12, too big.
+
+# We need a smarter way.
+
+# Insight: The union of attacked squares is the union of:
+#   R: all rows with a piece
+#   C: all cols with a piece
+#   D1: all diag1 (i+j=const) with a piece
+#   D2: all diag2 (i-j=const) with a piece
+
+# And we already collected the unique lines.
+
+# Now, we can compute:
+#   |R ∪ C ∪ D1 ∪ D2| = 
+#       |R| + |C| + |D1| + |D2| 
+#     - |R∩C| - |R∩D1| - |R∩D2| - |C∩D1| - |C∩D2| - |D1∩D2|
+#     + |R∩C∩D1| + |R∩C∩D2| + |R∩D1∩D2| + |C∩D1∩D2|
+#     - |R∩C∩D1∩D2|
+
+# But these terms are hard to compute.
+
+# Alternate plan: iterate over all pieces and record the lines, then use a set to record only the **intersection points** where multiple lines meet, but that doesn't help.
+
+# Actually, we can use the fact that any square that is attacked lies on at least one of the lines from the pieces.
+# But again, we can't iterate over all attacked squares.
+
+# Known trick: the total number of distinct attacked squares can be computed by:
+#   Start with sum of sizes of all unique lines.
+#   Then subtract the pairwise intersections that were double-counted.
+#   But only if we know how many times each point is counted.
+
+# However, a point may lie on up to 4 lines, and we would need to know exactly how many lines pass through each point? Impossible.
+
+# Simpler: since M is only 1000, the total number of **grid points** that lie on more than one line is at most O(M^2), because:
+#   Each pair of lines (from different categories or same) can intersect in at most one point.
+#   And there are O(M^2) pairs.
+
+# So we can:
+#   Step 1: Compute S = sum of lengths of all unique lines (rows, cols, diag1, diag2)
+#   Step 2: Find all pairwise intersections between different lines and count how many times they are overcounted.
+
+# But actually, we can use:
+#   |Union| = sum_{lines} |line| - sum_{p: p in >=2 lines} (multiplicity(p) - 1)
+#   But we don't know multiplicity.
+
+# Even better: use inclusion-exclusion with Möbius on lines? Too complex.
+
+# Practical solution: 
+#   We know that the total number of distinct attacked squares = 
+#       (# of unique rows)*N + (# of unique cols)*N + ... 
+#   but minus the overlaps.
+
+# Standard formula for union of sets:
+#   |A ∪ B ∪ C ∪ D| = 
+#       |A|+|B|+|C|+|D|
+#     - |A∩B| - |A∩C| - |A∩D| - |B∩C| - |B∩D| - |C∩D|
+#     + |A∩B∩C| + |A∩B∩D| + |A∩C∩D| + |B∩C∩D|
+#     - |A∩B∩C∩D|
+
+# Here A = union of all attacked rows, etc.
+
+# But these are unions themselves. We need the size of the union of several geometric lines.
+
+# Let:
+#   R = set of attacked rows
+#   C = set of attacked cols
+#   D1 = set of attacked diag1 (i+j=c)
+#   D2 = set of attacked diag2 (i-j=c)
+
+# Then:
+#   |U| = 
+#     Σ_{r in R} N + 
+#     Σ_{c in C} N + 
+#     Σ_{d in D1} len_diag1(d) + 
+#     Σ_{d in D2} len_diag2(d)
+#     - [intersections between every two types]
+#     + [intersections between every three types]
+#     - [intersections of all four]
+
+# But note: the intersection between a row r and a col c is the cell (r,c) — one cell.
+# Similarly, row r and diag1 d: solve i=r, i+j=d => j = d-r, so if 1<=d-r<=N, then (r,d-r) is intersection.
+# So we can compute:
+
+# Let’s define:
+#   A = set(R) × all columns → |A| = |R| * N
+#   B = all rows × set(C) → |B| = |C| * N
+#   C = {(i,j) | i+j ∈ D1}
+#   D = {(i,j) | i-j ∈ D2}
+
+# Then |A ∪ B ∪ C ∪ D| = ?
+
+# This is complicated.
+
+# There is a known solution pattern for "queen moves" coverage with multiple queens.
+
+# Given M <= 1000, we can collect all attacked positions by storing only the coordinates that are intersections of lines, but we can't store all attacked squares.
+
+# Alternative efficient method:
+
+# We can compute the size of the union using:
+#   result = 0
+#   events or something?
+
+# Actually, common solution in competitive programming:
+
+#   total_attacked = 0
+#   lines = []
+
+#   For each unique row r: lines.append(('row', r, N))
+#   For each unique col c: lines.append(('col', c, N))
+#   For each unique d1: lines.append(('d1', d1, len_diag1(d1)))
+#   For each unique d2: lines.append(('d2', d2, len_diag2(d2)))
+
+#   Then total_attacked = sum(len for type, key, len in lines)
+
+#   Then subtract the duplicates: for every pair of lines, if they intersect at a valid grid point, then that point was counted twice, so subtract 1 for each such intersection.
+
+#   But wait: a point may be at intersection of 3 or 4 lines, so if we subtract every pairwise intersection, we over-subtract.
+
+#   Example: a point on 3 lines: counted 3 times initially, we subtract C(3,2)=3 times, so now 0, but should be 1. So we need to add back triple intersections, etc.
+
+#   So inclusion-exclusion:
+
+#   Let S1 = sum of sizes of all lines
+#   Let S2 = number of pairs of lines that intersect at a valid grid point
+#   Let S3 = number of triples of lines that intersect at a valid grid point
+#   Let S4 = number of quadruples of lines that intersect at a valid grid point
+
+#   Then |Union| = S1 - S2 + S3 - S4
+
+#   Why? Inclusion-exclusion: each point is counted (number of lines through it) times in S1, 
+#   then subtracted C(k,2) times in S2, added C(k,3) in S3, subtracted C(k,4) in S4.
+#   So total count = k - C(k,2) + C(k,3) - C(k,4)
+#   But we want it to be 1.
+
+#   Note: k - C(k,2) + C(k,3) - C(k,4) = 
+#         k - k(k-1)/2 + k(k-1)(k-2)/6 - k(k-1)(k-2)(k-3)/24
+#   For k=1: 1
+#   For k=2: 2 - 1 = 1
+#   For k=3: 3 - 3 + 1 = 1
+#   For k=4: 4 - 6 + 4 - 1 = 1
+#   For k>=5: ??? But maximum lines through a point is 4 (one row, one col, one d1, one d2). So k<=4.
+
+#   Therefore, this works.
+
+# Steps:
+#   S1 = sum of lengths of all unique lines (we already have this as `attacked` in the first version, but we'll recompute cleanly)
+
+#   S2 = 0
+#   For every pair of distinct lines (l1, l2), if they intersect at a grid point (i,j) within [1,N]x[1,N], then S2 += 1
+
+#   S3 = 0
+#   For every triple of distinct lines (l1,l2,l3), if they intersect at a common grid point (i,j) in bounds, then S3 += 1
+
+#   S4 = 0
+#   For every quadruple of distinct lines (l1,l2,l3,l4), if they intersect at a common grid point (i,j) in bounds, then S4 += 1
+
+#   total_attacked = S1 - S2 + S3 - S4
+
+# How to represent a line?
+#   We can store:
+#     ('row', r) -> represents row r
+#     ('col', c) -> represents col c
+#     ('d1', s) -> represents i+j = s
+#     ('d2', d) -> represents i-j = d
+
+# How to find intersection of two lines?
+#   - row r and col c: (r, c)
+#   - row r and d1 s: (r, s - r), valid if 1<=s-r<=N
+#   - row r and d2 d: (r, r - d), valid if 1<=r-d<=N
+#   - col c and d1 s: (s - c, c), valid if 1<=s-c<=N
+#   - col c and d2 d: (c + d, c), valid if 1<=c+d<=N
+#   - d1 s and d2 d: solve i+j=s, i-j=d -> 2i = s+d => i=(s+d)/2, j=(s-d)/2; valid if integer and in [1,N]
+
+# Similarly for three or four: the intersection point must satisfy all equations.
+
+# But note: three lines intersect only if the pairwise intersections agree.
+
+# Implementation:
+
+# Step 1: Collect unique lines
+unique_rows = set()
+unique_cols = set()
+unique_d1 = set()  # i+j
+unique_d2 = set()  # i-j
+
+# Also store the actual values to later build list of lines
+rows_list = []
+cols_list = []
+d1_list = []
+d2_list = []
+
+for a, b in pieces:
+    unique_rows.add(a)
+    unique_cols.add(b)
+    unique_d1.add(a+b)
+    unique_d2.add(a-b)
+
+# Build list of line descriptors
+lines = []
+S1 = 0
+
+for r in unique_rows:
+    lines.append(('row', r))
+    S1 += N
+
+for c in unique_cols:
+    lines.append(('col', c))
+    S1 += N
+
+for s in unique_d1:
+    # length of diagonal i+j = s
+    low_i = max(1, s - N)
+    high_i = min(N, s - 1)
+    if low_i <= high_i:
+        L = high_i - low_i + 1
+    else:
+        L = 0
+    lines.append(('d1', s))
+    S1 += L
+
+for d in unique_d2:
+    # i - j = d => j = i - d, 1<=i<=N, 1<=j<=N
+    # => 1<=i-d<=N => d+1<=i<=d+N, and 1<=i<=N
+    low_i = max(1, d+1)
+    high_i = min(N, d+N)
+    if low_i <= high_i:
+        L = high_i - low_i + 1
+    else:
+        L = 0
+    lines.append(('d2', d))
+    S1 += L
+
+# Now compute S2, S3, S4
+S2 = 0
+S3 = 0
+S4 = 0
+
+# We'll also keep a dictionary to count how many times we see a point in pairwise intersections? 
+# But we need for inclusion-exclusion, so better to do nested loops.
+
+# Convert lines to list
+L = len(lines)
+
+# To avoid recomputation, we write a function to compute intersection of two lines
+def intersect_two(line1, line2):
+    t1, val1 = line1
+    t2, val2 = line2
+    if t1 > t2:
+        return intersect_two(line2, line1)
+    if t1 == 'row' and t2 == 'col':
+        r = val1
+        c = val2
+        if 1 <= r <= N and 1 <= c <= N:
+            return (r, c)
+        else:
+            return None
+    if t1 == 'row' and t2 == 'd1':
+        r = val1
+        s = val2
+        c = s - r
+        if 1 <= c <= N:
+            return (r, c)
+        else:
+            return None
+    if t1 == 'row' and t2 == 'd2':
+        r = val1
+        d = val2
+        c = r - d
+        if 1 <= c <= N:
+            return (r, c)
+        else:
+            return None
+    if t1 == 'col' and t2 == 'd1':
+        c = val1
+        s = val2
+        r = s - c
+        if 1 <= r <= N:
+            return (r, c)
+        else:
+            return None
+    if t1 == 'col' and t2 == 'd2':
+        c = val1
+        d = val2
+        r = c + d
+        if 1 <= r <= N:
+            return (r, c)
+        else:
+            return None
+    if t1 == 'd1' and t2 == 'd2':
+        s = val1

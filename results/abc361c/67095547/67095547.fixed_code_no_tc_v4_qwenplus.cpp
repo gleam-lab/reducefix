@@ -1,0 +1,52 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+#define endl "\n"
+#define pb push_back
+#define mp make_pair
+#define ff first
+#define ss second 
+#define all(v) v.begin(), v.end()
+#define rep(i,x) for(int i=0;i<(int)(x);i++)
+#define int long long
+
+typedef long long ll;
+typedef pair<int, int> pii;
+
+void solve(){
+    int n, k;
+    cin >> n >> k;
+    vector<int> a(n);
+    rep(i, n) cin >> a[i];
+    
+    sort(all(a));
+    
+    // We are removing exactly K elements, so we keep (n - k) elements.
+    // The optimal way is to remove some prefix and/or suffix.
+    // Try all possible splits: remove i elements from left and (k-i) from right.
+    int min_diff = a[n-1] - a[0]; // worst case: no removal benefit
+    
+    for (int i = 0; i <= k; i++) {
+        int left_remove = i;
+        int right_remove = k - i;
+        
+        // Remaining elements: from index [left_remove, n-1-right_remove]
+        int left_idx = left_remove;
+        int right_idx = n - 1 - right_remove;
+        
+        if (left_idx <= right_idx) {
+            int diff = a[right_idx] - a[left_idx];
+            min_diff = min(min_diff, diff);
+        }
+    }
+    
+    cout << min_diff << endl;
+}
+
+signed main()
+{
+    ios_base::sync_with_stdio(false);
+    cin.tie(NULL);
+    solve();
+    return 0;
+}

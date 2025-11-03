@@ -1,0 +1,68 @@
+class UnionFind:
+    def __init__(self, n):
+        self.par = list(range(n))
+        self.size = [1] * n
+
+    def find(self, x):
+        if self.par[x] != x:
+            self.par[x] = self.find(self.par[x])
+        return self.par[x]
+
+    def unite(self, x, y):
+        x = self.find(x)
+        y = self.find(y)
+        if x == y:
+            return False
+        if self.size[x] < self.size[y]:
+            x, y = y, x
+        self.par[y] = x
+        self.size[x] += self.size[y]
+        return True
+
+    def same(self, x, y):
+        return self.find(x) == self.find(y)
+
+N, Q = map(int, input().split())
+
+# Store the set of vertices in each component, keeping only up to 10 largest vertex numbers
+components = [set([i]) for i in range(N+1)]
+
+uf = UnionFind(N+1)
+
+ans = []
+
+for _ in range(Q):
+    query = list(map(int, input().split()))
+    if query[0] == 1:
+        u, v = query[1], query[2]
+        if not uf.same(u, v):
+            root_u = uf.find(u)
+            root_v = uf.find(v)
+            # Always attach smaller tree to larger one (by size)
+            if uf.size[root_u] < uf.size[root_v]:
+                u, v = v, u
+                root_u, root_v = root_v, root_u
+            
+            # Merge components: move all elements from smaller component to larger
+            # But we only care about top 10 largest values
+            combined = components[root_u].union(components[root_v])
+            # Keep only the 10 largest vertex numbers
+            top_k = sorted(combined, reverse=True)[:10]
+            components[root_u] = set(top_k)
+            
+            uf.unite(u, v)
+            new_root = uf.find(u)
+            if new_root != root_u:
+                # In case union changed the root due to path compression + union logic
+                components[new_root] = components[root_u]
+    else:
+        v, k = query[1], query[2]
+        root = uf.find(v)
+        comp = sorted(components[root], reverse=True)
+        if k <= len(comp):
+            ans.append(comp[k-1])
+        else:
+            ans.append(-1)
+
+for a in ans:
+    print(a)

@@ -1,0 +1,38 @@
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int N, K;
+    cin >> N >> K;
+    vector<int> A(N);
+    for (int i = 0; i < N; i++) {
+        cin >> A[i];
+    }
+    
+    sort(A.begin(), A.end());
+    
+    // We need to remove exactly K elements, so we keep (N - K) elements.
+    // The remaining elements must be contiguous in the sorted array to minimize the range.
+    // Try all possible contiguous segments of length (N - K) and compute the difference.
+    
+    int min_range = A[N-1] - A[0]; // worst case: keep everything
+    
+    for (int i = 0; i <= K; i++) {
+        // Remove i elements from the left and (K - i) elements from the right
+        int left_index = i;
+        int right_index = N - 1 - (K - i);
+        
+        if (left_index <= right_index) {
+            int range = A[right_index] - A[left_index];
+            min_range = min(min_range, range);
+        }
+    }
+    
+    cout << min_range << endl;
+    
+    return 0;
+}

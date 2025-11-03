@@ -1,0 +1,45 @@
+n = int(input())
+a = list(map(int, input().split()))
+
+# dp[i][0]: maximum points up to i-th monster where the i-th is NOT taken as a double
+# dp[i][1]: maximum points up to i-th monster where the i-th is taken as a double
+# But we need to track whether the previous was taken as double or not
+
+# Let's use:
+# dp[i][0]: max total exp ending at i with even number of defeats (so next can be double)
+# dp[i][1]: max total exp ending at i with odd number of defeats (so next cannot be double)
+
+# Actually, simpler: we track the state based on parity of count of defeated monsters
+# We'll use two states:
+# dp_even: maximum exp when the number of defeated monsters so far is even
+# dp_odd: maximum exp when the number of defeated monsters so far is odd
+
+# Initialize:
+dp_even = 0  # 0 defeats (even)
+dp_odd = float('-inf')  # impossible to have odd defeats initially
+
+for i in range(n):
+    strength = a[i]
+    new_dp_even = dp_even
+    new_dp_odd = dp_odd
+    
+    # Option 1: skip the monster
+    # state remains same
+    
+    # Option 2: defeat the monster
+    # If current count is even (dp_even), defeating makes it odd -> add strength only
+    if dp_even != float('-inf'):
+        new_dp_odd = max(new_dp_odd, dp_even + strength)
+    
+    # If current count is odd (dp_odd), defeating makes it even -> add 2*strength
+    if dp_odd != float('-inf'):
+        new_dp_even = max(new_dp_even, dp_odd + 2 * strength)
+    
+    # Also, we can start from 0 defeats and defeat this monster
+    # That would make 1 defeat (odd)
+    new_dp_odd = max(new_dp_odd, strength)
+    
+    dp_even = new_dp_even
+    dp_odd = new_dp_odd
+
+print(max(dp_even, dp_odd))

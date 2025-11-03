@@ -1,0 +1,100 @@
+```python
+import sys
+
+def solve():
+    data = sys.stdin.read().split()
+    N = int(data[0])
+    M = int(data[1])
+    K = int(data[2])
+    A = list(map(int, data[3:3+N]))
+    
+    total_counted = sum(A)
+    remaining_votes = K - total_counted
+    
+    # If there are no remaining votes, we just check current state
+    if remaining_votes == 0:
+        # Count how many have strictly more votes than candidate i
+        ans = []
+        for i in range(N):
+            more_votes = sum(1 for j in range(N) if A[j] > A[i])
+            if more_votes < M:
+                ans.append(0)
+            else:
+                ans.append(-1)
+        print(*ans)
+        return
+    
+    # Special case: if M >= N, then at most N-1 people can have more votes, so everyone wins with 0
+    if M >= N:
+        print(*[0] * N)
+        return
+    
+    # We want to compute for each candidate i the minimum X such that 
+    # even in the worst-case distribution of the other remaining votes (excluding X given to i),
+    # candidate i is elected (i.e., fewer than M candidates have more votes than i).
+    
+    ans = [0] * N
+    
+    # For each candidate, we'll determine the minimal additional votes needed
+    for i in range(N):
+        # We give x additional votes to candidate i, and the rest (remaining_votes - x) 
+        # can be distributed arbitrarily among others to try to defeat i.
+        
+        # We need to ensure that no matter how the other (remaining_votes - x) votes are distributed,
+        # at most M-1 candidates end up with more votes than (A[i] + x).
+        
+        # How many candidates already have more than A[i]? And can we prevent too many from exceeding?
+        
+        # Let’s suppose we give x votes to candidate i -> total = A[i] + x
+        # The adversary will try to maximize the number of candidates j != i with final_votes[j] > A[i] + x
+        # They can assign at most (remaining_votes - x) extra votes to other candidates.
+        
+        # For each candidate j != i, let deficit_j = max(0, A[i] + x - A[j] + 1)
+        # That is, how many votes candidate j needs to get to exceed candidate i's new total.
+        # But if A[j] > A[i] + x, then deficit_j = 0 (already above).
+        
+        # However, we want to know: what is the maximum number of candidates that can be pushed above A[i]+x?
+        # This is equivalent to: what is the maximum k such that the sum of the k smallest deficits 
+        # (over j ≠ i) is ≤ (remaining_votes - x)?
+        
+        # We can binary search on x (number of votes to give to candidate i).
+        
+        lo, hi = 0, remaining_votes + 1
+        res_x = -1
+        
+        while lo <= hi:
+            x = (lo + hi) // 2
+            target = A[i] + x
+            deficits = []
+            for j in range(N):
+                if j == i:
+                    continue
+                need = max(0, target - A[j] + 1)
+                deficits.append(need)
+            
+            deficits.sort()
+            total_needed = 0
+            count_can_exceed = 0
+            for d in deficits:
+                if total_needed + d <= remaining_votes - x:
+                    total_needed += d
+                    count_can_exceed += 1
+                else:
+                    break
+            
+            # count_can_exceed is the max number of other candidates that can be made to exceed target
+            if count_can_exceed < M:  # then at most count_can_exceed < M have more votes → candidate i wins
+                res_x = x
+                hi = x - 1
+            else:
+                lo = x + 1
+        
+        if res_x == -1:
+            ans[i] = -1
+        else:
+            ans[i] = res_x
+    
+    print(*ans)
+
+solve()
+```

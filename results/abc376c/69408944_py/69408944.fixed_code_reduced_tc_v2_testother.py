@@ -1,0 +1,85 @@
+import heapq
+
+N = int(input())
+A = sorted(map(int, input().split()), reverse=True)  # Sort toys in descending order
+B = list(map(int, input().split()))
+
+# Use a max-heap (using negative values)
+box_heap = [-b for b in B]
+heapq.heapify(box_heap)
+
+# Try to assign the largest toys first to existing boxes
+for a in A:
+    if box_heap:
+        max_box = -heapq.heappop(box_heap)  # Get the largest available box
+        if a > max_box:
+            # Even the largest box is too small for this toy -> impossible
+            print(-1)
+            exit()
+    else:
+        # No more boxes left -> we need a new one, so answer is 'a' (this toy's size)
+        print(a)
+        exit()
+
+# If all toys fit in existing boxes, no new box is needed? But we must use exactly N boxes.
+# However, there are N toys and only N-1 existing boxes, so we must use the new box.
+# That means one toy will go into the new box. We want the smallest possible x.
+
+# Since all toys were able to be assigned using the N-1 boxes in the greedy assignment,
+# we can instead choose to leave the *smallest necessary* toy for the new box.
+
+# Actually, our greedy above used all boxes optimally. But we must use the new box.
+# So we need to find the minimal x such that we can reassign one toy to the new box.
+
+# How? We simulate: what is the minimum size x such that if we reserve the existing boxes
+# for the other N-1 toys, the leftover toy fits in the new box?
+
+# We want to minimize x, so we want to put the *smallest possible* toy in the new box.
+# But not every toy can be put in the new box — we must check whether the remaining N-1 toys
+# can be packed into the N-1 existing boxes.
+
+# Strategy:
+# Try to see if we can avoid using the new box for a large toy.
+# We want to know: what is the minimal x such that there exists one toy (of size s) that we can
+# put in the new box of size x (so x >= s), and the other N-1 toys can be packed into the N-1 boxes.
+
+# We can binary search on x? But simpler: try to greedily assign the N-1 largest toys that can fit.
+
+# Instead: sort both toys and boxes
+A_sorted = sorted(A, reverse=True)
+B_sorted = sorted(B)
+
+# We try to assign the N-1 largest toys to the boxes, but we are allowed to skip one toy (put it in new box)
+# We want to minimize the skipped toy's size? Not exactly: we can skip a larger toy if it allows smaller x?
+# No: x must be at least the size of the toy we skip. So to minimize x, we want to skip the smallest possible toy
+# such that the rest can be packed.
+
+# So: iterate over which toy to skip (from smallest to largest), and check if the remaining N-1 toys
+# can be packed into the N-1 boxes (both sorted increasingly).
+
+# But N up to 200,000 — O(N log N) is acceptable.
+
+# Sort toys and boxes in ascending order for matching
+toys_asc = sorted(A)
+boxes_asc = sorted(B)
+
+# We'll try skipping each toy, starting from the smallest, and see if the rest can be matched
+# We want the minimum x, which is the size of the skipped toy, provided the rest can be packed.
+
+def can_pack(toys, boxes):
+    # toys and boxes are sorted in increasing order
+    j = 0
+    for box in boxes:
+        if j < len(toys) and toys[j] <= box:
+            j += 1
+    return j == len(toys)
+
+# Try skipping each toy in increasing order of size
+for i in range(len(toys_asc)):
+    remaining_toys = toys_asc[:i] + toys_asc[i+1:]
+    if can_pack(remaining_toys, boxes_asc):
+        print(toys_asc[i])
+        exit()
+
+# If no single toy can be skipped such that others fit, then impossible
+print(-1)

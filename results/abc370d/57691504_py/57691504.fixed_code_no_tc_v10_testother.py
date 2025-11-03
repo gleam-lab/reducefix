@@ -1,0 +1,118 @@
+import sys
+from typing import Dict, List
+
+def main():
+    data = sys.stdin.read().split()
+    H = int(data[0])
+    W = int(data[1])
+    Q = int(data[2])
+    
+    # Use union-find style dictionaries to track next existing wall in each direction
+    # For vertical (up/down): key is column, value is DSU for rows
+    up_dsu = [dict() for _ in range(W + 1)]  # up_dsu[c][r] = next row with wall above r in col c
+    down_dsu = [dict() for _ in range(W + 1)]  # down_dsu[c][r] = next row with wall below r in col c
+    
+    # For horizontal (left/right): key is row, value is DSU for columns
+    left_dsu = [dict() for _ in range(H + 1)]  # left_dsu[r][c] = next col with wall left of c in row r
+    right_dsu = [dict() for _ in range(H + 1)]  # right_dsu[r][c] = next col with wall right of c in row r
+    
+    def find_up(c: int, r: int) -> int:
+        if r <= 0:
+            return 0
+        if r not in up_dsu[c]:
+            return r
+        up_dsu[c][r] = find_up(c, up_dsu[c][r])
+        return up_dsu[c][r]
+    
+    def find_down(c: int, r: int) -> int:
+        if r > H:
+            return H + 1
+        if r not in down_dsu[c]:
+            return r
+        down_dsu[c][r] = find_down(c, down_dsu[c][r])
+        return down_dsu[c][r]
+    
+    def find_left(r: int, c: int) -> int:
+        if c <= 0:
+            return 0
+        if c not in left_dsu[r]:
+            return c
+        left_dsu[r][c] = find_left(r, left_dsu[r][c])
+        return left_dsu[r][c]
+    
+    def find_right(r: int, c: int) -> int:
+        if c > W:
+            return W + 1
+        if c not in right_dsu[r]:
+            return c
+        right_dsu[r][c] = find_right(r, right_dsu[r][c])
+        return right_dsu[r][c]
+    
+    total_walls = H * W
+    index = 3
+    
+    for _ in range(Q):
+        R_q = int(data[index])
+        C_q = int(data[index + 1])
+        index += 2
+        
+        # Check if there's a wall at (R_q, C_q)
+        has_wall = (find_up(C_q, R_q) == R_q)
+        
+        if has_wall:
+            # Destroy the wall at (R_q, C_q)
+            total_walls -= 1
+            
+            # Update DSU structures
+            # In column C_q: connect R_q to the next wall above and below
+            up_dsu[C_q][R_q] = find_up(C_q, R_q - 1)
+            down_dsu[C_q][R_q] = find_down(C_q, R_q + 1)
+            
+            # In row R_q: connect C_q to the next wall left and right
+            left_dsu[R_q][C_q] = find_left(R_q, C_q - 1)
+            right_dsu[R_q][C_q] = find_right(R_q, C_q + 1)
+        else:
+            # No wall at (R_q, C_q), so try to destroy first wall in each direction
+            destroyed = set()
+            
+            # Up direction: find first wall above R_q in column C_q
+            up_wall = find_up(C_q, R_q - 1)
+            if up_wall > 0:
+                # Verify that there are no walls between up_wall and R_q
+                if find_down(C_q, up_wall) == R_q:
+                    destroyed.add((up_wall, C_q))
+            
+            # Down direction: find first wall below R_q in column C_q
+            down_wall = find_down(C_q, R_q + 1)
+            if down_wall <= H:
+                if find_up(C_q, down_wall) == R_q:
+                    destroyed.add((down_wall, C_q))
+            
+            # Left direction: find first wall left of C_q in row R_q
+            left_wall = find_left(R_q, C_q - 1)
+            if left_wall > 0:
+                if find_right(R_q, left_wall) == C_q:
+                    destroyed.add((R_q, left_wall))
+            
+            # Right direction: find first wall right of C_q in row R_q
+            right_wall = find_right(R_q, C_q + 1)
+            if right_wall <= W:
+                if find_left(R_q, right_wall) == C_q:
+                    destroyed.add((R_q, right_wall))
+            
+            # Destroy all valid walls found
+            total_walls -= len(destroyed)
+            
+            # Update DSU for each destroyed wall
+            for r, c in destroyed:
+                # Update vertical DSU
+                up_dsu[c][r] = find_up(c, r - 1)
+                down_dsu[c][r] = find_down(c, r + 1)
+                # Update horizontal DSU
+                left_dsu[r][c] = find_left(r, c - 1)
+                right_dsu[r][c] = find_right(r, c + 1)
+    
+    print(total_walls)
+
+if __name__ == "__main__":
+    main()

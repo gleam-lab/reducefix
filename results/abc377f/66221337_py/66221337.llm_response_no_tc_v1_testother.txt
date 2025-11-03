@@ -1,0 +1,339 @@
+```python
+python
+N, M = map(int, input().split())
+pieces = [tuple(map(int, input().split())) for _ in range(M)]
+
+if M == 0:
+    print(N * N)
+else:
+    # Sets to store occupied lines
+    rows = set()
+    cols = set()
+    diag1 = set()  # i + j = const
+    diag2 = set()  # i - j = const
+
+    for a, b in pieces:
+        rows.add(a)
+        cols.add(b)
+        diag1.add(a + b)
+        diag2.add(a - b)
+
+    # Count total squares under attack (union of all lines)
+    total_attacked = 0
+
+    # Add contribution from each unique row
+    total_attacked += len(rows) * N
+
+    # Add contribution from each unique column
+    total_attacked += len(cols) * N
+
+    # Add contribution from each unique diagonal (i+j = c)
+    for s in diag1:
+        # Number of cells where i + j = s, with 1<=i,j<=N
+        if s < 2:
+            count = 0
+        elif s <= N + 1:
+            count = s - 1
+        else:
+            count = 2 * N - s + 1
+        total_attacked += count
+
+    # Add contribution from each unique diagonal (i-j = d)
+    for d in diag2:
+        # Number of cells where i - j = d
+        if d >= 0:
+            # i = j + d => j >= 1, i <= N => j <= N - d
+            if d < N:
+                count = N - d
+            else:
+                count = 1 if d == N else 0
+        else:
+            # d < 0: j = i - d => i >= 1, j <= N => i <= N + d (since d is negative)
+            d_abs = -d
+            if d_abs < N:
+                count = N - d_abs
+            else:
+                count = 1 if d_abs == N else 0
+        total_attacked += count
+
+    # Subtract overcounted intersections: every pair of lines intersects at one point
+    # We use inclusion-exclusion: subtract double-counts at intersections
+
+    # Each piece's row and column intersect -> counted twice, should be once
+    # But we need to subtract all pairwise overlaps between different line types
+
+    # Use a set to record which cells are attacked (only feasible if we can't do math due to M small)
+    # Since M <= 1000, we can collect all attacked cells via union of lines, but N up to 1e9 so can't iterate grid.
+
+    # Instead: use inclusion exclusion over the four sets: R ∪ C ∪ D1 ∪ D2
+    # |R ∪ C ∪ D1 ∪ D2| = |R| + |C| + |D1| + |D2|
+    #                   - |R∩C| - |R∩D1| - |R∩D2| - |C∩D1| - |C∩D2| - |D1∩D2|
+    #                   + |R∩C∩D1| + |R∩C∩D2| + |R∩D1∩D2| + |C∩D1∩D2|
+    #                   - |R∩C∩D1∩D2|
+
+    # But easier: since M is small (<=1000), the total number of distinct lines is small.
+    # However, the union of attacked cells is large, but we can compute it using inclusion-exclusion
+    # Alternatively, we can iterate over all pieces' lines and merge overlapping counts carefully.
+
+    # Actually, simpler approach: the attacked cells are all cells that lie on any row, col, diag1, or diag2 of any piece.
+    # So we want |∪_{p∈pieces} (row_p ∪ col_p ∪ diag1_p ∪ diag2_p)|
+
+    # We can compute this union by iterating over each piece's four lines and combining them,
+    # but we must avoid double counting.
+
+    # Instead, we use: 
+    # Let U = set()
+    # But N is huge, so we cannot store cells.
+
+    # Therefore, we must use inclusion-exclusion formula across all line groups.
+
+    # But note: M is only up to 1000. So total lines: at most 4*M = 4000.
+    # But the union of their cell coverage is huge, but we can compute the size of the union using inclusion-exclusion
+    # only if we group identical lines.
+
+    # We already grouped by row, col, diag1, diag2.
+
+    # So now:
+    # A = union of all rows in `rows`
+    # B = union of all cols in `cols`
+    # C = union of all diag1 in `diag1`
+    # D = union of all diag2 in `diag2`
+
+    # Then |A ∪ B ∪ C ∪ D| = 
+    #   |A| + |B| + |C| + |D|
+    # - |A∩B| - |A∩C| - |A∩D| - |B∩C| - |B∩D| - |C∩D|
+    # + |A∩B∩C| + |A∩B∩D| + |A∩C∩D| + |B∩C∩D|
+    # - |A∩B∩C∩D|
+
+    # Where:
+    # |A| = len(rows) * N
+    # |B| = len(cols) * N
+    # |C| = sum over s in diag1: number of cells with i+j=s in grid
+    # |D| = sum over d in diag2: number of cells with i-j=d in grid
+
+    # |A∩B| = number of intersections between any row in rows and any col in cols = len(rows) * len(cols)
+    #   because each row and each col intersect exactly once.
+
+    # |A∩C| = for each row r and each diag1 s: does (r, s-r) exist? and 1<=s-r<=N?
+    #   => for fixed r and s, cell (r, s-r) is valid iff 1 <= s-r <= N => s-N <= r <= s-1
+    #   So for each r in rows, and each s in diag1, count 1 if s-N <= r <= s-1
+    #   But this is O(|rows|*|diag1|) <= 10^3 * 10^3 = 1e6, acceptable.
+
+    # Similarly for others.
+
+    # But note: we already have |A|+|B|+|C|+|D| computed above as total_attacked (but actually that was sum, not union).
+
+    # Let's recompute properly:
+
+    from itertools import combinations
+
+    # Precompute sizes
+    size_A = len(rows) * N
+    size_B = len(cols) * N
+
+    size_C = 0
+    for s in diag1:
+        if 2 <= s <= N+1:
+            size_C += s - 1
+        elif N+2 <= s <= 2*N:
+            size_C += 2*N - s + 1
+
+    size_D = 0
+    for d in diag2:
+        if d >= 0:
+            if d < N:
+                size_D += N - d
+            elif d == N:
+                size_D += 1
+        else:
+            d_abs = -d
+            if d_abs < N:
+                size_D += N - d_abs
+            elif d_abs == N:
+                size_D += 1
+
+    total_union = size_A + size_B + size_C + size_D
+
+    # Subtract pairwise intersections
+
+    # A ∩ B: every row in A and col in B intersect at (r,c) — one cell per pair
+    AB = len(rows) * len(cols)
+    total_union -= AB
+
+    # A ∩ C: for each row r and each diag1 s, cell (r, s-r) exists and lies in grid?
+    AC = 0
+    for r in rows:
+        for s in diag1:
+            c = s - r
+            if 1 <= c <= N:
+                AC += 1
+    total_union -= AC
+
+    # A ∩ D: for each row r and each diag2 d, cell (r, r-d) exists? (since i-j=d => j=i-d)
+    AD = 0
+    for r in rows:
+        for d in diag2:
+            c = r - d
+            if 1 <= c <= N:
+                AD += 1
+    total_union -= AD
+
+    # B ∩ C: for each col c and each diag1 s, cell (s-c, c) exists? (i = s - c)
+    BC = 0
+    for c in cols:
+        for s in diag1:
+            r = s - c
+            if 1 <= r <= N:
+                BC += 1
+    total_union -= BC
+
+    # B ∩ D: for each col c and each diag2 d, cell (c+d, c) exists? (i = j + d = c + d)
+    BD = 0
+    for c in cols:
+        for d in diag2:
+            r = c + d
+            if 1 <= r <= N:
+                BD += 1
+    total_union -= BD
+
+    # C ∩ D: for each diag1 s and diag2 d, intersection: solve i+j=s, i-j=d -> 2i = s+d => i=(s+d)/2, j=(s-d)/2
+    CD = 0
+    for s in diag1:
+        for d in diag2:
+            if (s + d) % 2 == 0:
+                i = (s + d) // 2
+                j = (s - d) // 2
+                if 1 <= i <= N and 1 <= j <= N:
+                    CD += 1
+    total_union -= CD
+
+    # Add back triple intersections
+
+    # A ∩ B ∩ C: cells (r,c) such that r in rows, c in cols, and r+c in diag1
+    ABC = 0
+    for r in rows:
+        for c in cols:
+            if (r + c) in diag1:
+                ABC += 1
+    total_union += ABC
+
+    # A ∩ B ∩ D: (r,c) with r in rows, c in cols, r-c in diag2
+    ABD = 0
+    for r in rows:
+        for c in cols:
+            if (r - c) in diag2:
+                ABD += 1
+    total_union += ABD
+
+    # A ∩ C ∩ D: for each r in rows, and each s in diag1, d in diag2: does (r,?) satisfy both diags?
+    # From C: j = s - r, from D: j = r - d => so s - r = r - d => 2r = s + d
+    # So for fixed r,s,d: if 2r == s+d and j = s - r is in [1,N], then count
+    ACD = 0
+    for r in rows:
+        for s in diag1:
+            for d in diag2:
+                if 2 * r == s + d:
+                    c = s - r
+                    if 1 <= c <= N:
+                        ACD += 1
+    total_union += ACD
+
+    # B ∩ C ∩ D: for each c in cols, s in diag1, d in diag2: 
+    # From C: i = s - c, from D: i = c + d => s - c = c + d => s - d = 2c
+    BCD = 0
+    for c in cols:
+        for s in diag1:
+            for d in diag2:
+                if 2 * c == s - d:
+                    r = s - c
+                    if 1 <= r <= N:
+                        BCD += 1
+    total_union += BCD
+
+    # Subtract quadruple intersection: A ∩ B ∩ C ∩ D
+    # Cells (r,c) such that r in rows, c in cols, r+c in diag1, r-c in diag2
+    ABCD = 0
+    for r in rows:
+        for c in cols:
+            if (r + c) in diag1 and (r - c) in diag2:
+                ABCD += 1
+    total_union -= ABCD
+
+    # Now, total_union is the number of distinct attacked cells
+
+    # The answer is total grid cells minus attacked cells minus already occupied cells?
+    # Wait: attacked cells include the existing pieces? Yes, because they are on their own lines.
+    # But we cannot place on occupied cells anyway. However, our "attacked" definition includes being on same row/col/diag.
+    # And the problem says: place on an empty square that cannot be captured.
+    # So safe = empty squares that are not attacked.
+
+    # But note: a square is attacked if it shares row, col, diag1, or diag2 with ANY existing piece.
+    # Our total_union is exactly the set of all squares that are attacked (including occupied ones).
+
+    # The occupied squares are part of the attacked set, and they are not available.
+
+    # So available safe squares = total squares - (attacked squares)
+    # Because even if a square is empty but attacked, you cannot place there.
+
+    # But wait: is a piece able to capture another on the same square? No, but the rule says "placed on row i", etc.
+    # So yes, the entire row of an enemy piece is dangerous.
+
+    # However, note: the existing pieces occupy M squares. These are included in the attacked set.
+    # But our calculation of total_union already includes them.
+
+    # Therefore, the number of safe empty squares = N*N - total_union
+
+    # But wait: what if two pieces share a row? Our grouping avoids double counting via inclusion-exclusion.
+
+    # Example: N=1, M=1: piece at (1,1)
+    # rows={1}, cols={1}, diag1={2}, diag2={0}
+    # size_A = 1, size_B=1, size_C: s=2 -> 2<=2<=2 -> 2N-s+1 = 2-2+1=1, size_D: d=0 -> N-0=1
+    # total_union = 1+1+1+1 = 4
+    # AB=1*1=1, AC: r=1,s=2 -> c=1 -> valid -> 1, AD: r=1,d=0 -> c=1 -> valid -> 1, BC: c=1,s=2 -> r=1 -> 1, BD: c=1,d=0 -> r=1 -> 1, CD: s=2,d=0 -> i=1,j=1 -> valid -> 1
+    # subtract: 4 - (1+1+1+1+1+1) = 4-6 = -2
+    # ABC: r=1,c=1: 1+1=2 in diag1 -> 1, ABD: 1-1=0 in diag2 -> 1, ACD: r=1,s=2,d=0: 2*1==2+0 -> yes, c=2-1=1 -> valid -> 1, BCD: c=1,s=2,d=0: 2*1==2-0 -> 2==2 -> r=2-1=1 -> valid -> 1
+    # add: -2 + (1+1+1+1) = 2
+    # ABCD: r=1,c=1: 1+1=2 in diag1, 1-1=0 in diag2 -> 1
+    # final = 2 - 1 = 1
+    # But expected: only (1,1) is attacked, so safe = 0.
+    # We got 1, which is wrong.
+
+    # Clearly inclusion-exclusion over groups is too complex and error-prone.
+
+    # Alternative idea: since M <= 1000, the total number of attacked cells might be huge, but the structure is defined by at most 4*M lines.
+    # However, we can compute the union of all attacked cells by processing each line and merging, but we need the size of the union.
+
+    # Standard way: use inclusion-exclusion over the M pieces, but that would be 2^M.
+
+    # Better: the attacked region is the union of:
+    #   R = all rows that have pieces
+    #   C = all columns that have pieces
+    #   D1 = all diagonals (i+j) that have pieces
+    #   D2 = all anti-diagonals (i-j) that have pieces
+    #
+    # And we already did that! But our inclusion-exclusion had a bug in signs?
+
+    # Let me recast: we have four sets:
+    # A = ∪_{r in rows} row_r
+    # B = ∪_{c in cols} col_c
+    # C = ∪_{s in diag1} diag1_s
+    # D = ∪_{d in diag2} diag2_d
+    #
+    # Then |A ∪ B ∪ C ∪ D| = 
+    #   |A| + |B| + |C| + |D|
+    # - |A∩B| - |A∩C| - |A∩D| - |B∩C| - |B∩D| - |C∩D|
+    # + |A∩B∩C| + |A∩B∩D| + |A∩C∩D| + |B∩C∩D|
+    # - |A∩B∩C∩D|
+
+    # This is correct.
+
+    # But in the N=1,M=1 example:
+    # |A|=1, |B|=1, |C|=1, |D|=1 -> sum=4
+    # |A∩B| = |{(1,1)}| = 1
+    # |A∩C| = |{(1,1)}| = 1  (because row1 and diag1_2 intersect at (1,1))
+    # |A∩D| = 1
+    # |B∩C| = 1
+    # |B∩D| = 1
+    # |C∩D| = 1
+    # sum of pairwise = 6
+    # triples:

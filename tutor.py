@@ -16,11 +16,37 @@ from typing import Dict, Any, Optional, Tuple
 from tools import get_next_cookie_path, load_session_with_cookie_file
 from tools import read_cache, write_cache, _get_problem_cache_path
 
-DEEPSEEK_API_KEY = 'YOUR_DEEPSEEK_API_KEY'
-DEEPSEEK_BASE_URL = 'https://dashscope.aliyuncs.com/compatible-mode/v1'
-
-QWEN_API_KEY = 'YOUR_QWEN_API_KEY'
-QWEN_BASE_URL = 'https://dashscope.aliyuncs.com/compatible-mode/v1'
+# Import API configurations from config.py
+try:
+    # Add current script directory to FRONT of path to avoid conflicts
+    import sys
+    _script_dir = os.path.dirname(os.path.abspath(__file__))
+    # Remove any existing entries and add to front
+    sys.path = [p for p in sys.path if p != _script_dir]
+    sys.path.insert(0, _script_dir)
+    
+    # Force reload if already imported
+    if 'config' in sys.modules:
+        import importlib
+        importlib.reload(sys.modules['config'])
+    
+    from config import (
+        DEEPSEEK_API_KEY, DEEPSEEK_BASE_URL,
+        QWEN_API_KEY, QWEN_BASE_URL,
+        DEFAULT_LANGUAGE, ATCODER_CPP_LANG_ID,
+        LLM_REQUEST_COUNT, JUDGE_POLL_ATTEMPTS, JUDGE_POLL_WAIT
+    )
+except ImportError as e:
+    print(f"[Warning] config.py not found ({e}), using default values")
+    DEEPSEEK_API_KEY = 'YOUR_DEEPSEEK_API_KEY'
+    DEEPSEEK_BASE_URL = 'https://dashscope.aliyuncs.com/compatible-mode/v1'
+    QWEN_API_KEY = 'YOUR_QWEN_API_KEY'
+    QWEN_BASE_URL = 'https://dashscope.aliyuncs.com/compatible-mode/v1'
+    DEFAULT_LANGUAGE = 'cpp'
+    ATCODER_CPP_LANG_ID = '5001'
+    LLM_REQUEST_COUNT = 2
+    JUDGE_POLL_ATTEMPTS = 60
+    JUDGE_POLL_WAIT = 5
 
 deepseek_client = None
 qwen_client = None
@@ -48,12 +74,6 @@ else:
         print("Qwen API key is missing or still a placeholder in the code. Please replace 'YOUR_QWEN_API_KEY'.")
     if not QWEN_BASE_URL:
         print("Qwen Base URL is missing in the code.")
-
-DEFAULT_LANGUAGE = 'cpp'
-ATCODER_CPP_LANG_ID = '5001'
-LLM_REQUEST_COUNT = 2
-JUDGE_POLL_ATTEMPTS = 60
-JUDGE_POLL_WAIT = 5
 
 def extract_longest_code_block(text):
     if not text:

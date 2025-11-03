@@ -1,0 +1,108 @@
+{
+  "abc361c": {
+    "reducer_code": "import os\nimport subprocess\nfrom typing import List, Optional\nimport sys\n\ndef run_program(program_path: str, input_data: bytes) -> bytes:\n    result = subprocess.run(\n        [program_path], \n        input=input_data,\n        capture_output=True,\n        check=True,  \n        timeout=10   \n    )\n    return result.stdout\n\ndef create_input_bytes(subsequence: List[int]) -> bytes:\n    if not subsequence:\n        return b\"0 0\\n\\n\"\n    N = len(subsequence)\n    K = 0  # Since we're testing reduced cases, K is adjusted accordingly in reduce_input\n    line = f\"{N} {K}\\n\"\n    line += \" \".join(map(str, subsequence)) + \"\\n\"\n    return line.encode(\"utf-8\")\n\ndef test_interesting(subseq: List[int]) -> bool:\n    if not subseq:\n        return False\n    input_data = create_input_bytes(subseq)\n    try:\n        wa_output = run_program(\"./wa\", input_data)\n        ac_output = run_program(\"./ac\", input_data)\n        return (wa_output.strip() != ac_output.strip())\n    except Exception as e:\n        print(f\"[Error] 执行程序时出错: {e}\")\n        return False\n\ndef reduce_ddmin(original_seq: List[int]) -> List[int]:\n    N = len(original_seq)\n    current_indices = list(range(N))\n    granularity = 2\n\n    while len(current_indices) > 1:\n        print(f\"[Reduce] 当前下标集大小={len(current_indices)}: {current_indices}\")\n        print(f\"         尝试粒度: {granularity}\")\n        subset_size = max(1, len(current_indices) // granularity)\n        made_progress = False\n\n        # Try removing a block\n        start_idx = 0\n        print(f\"         1) 尝试『移除』大小约={subset_size} 的分块...\")\n        while start_idx < len(current_indices):\n            block = current_indices[start_idx:start_idx + subset_size]\n            candidate = [x for x in current_indices if x not in block]\n            if len(candidate) < 2:\n                start_idx += subset_size\n                continue\n            subseq = [original_seq[i] for i in candidate]\n            print(f\"            - 移除索引 {block} ... \", end=\"\")\n            if test_interesting(subseq):\n                print(f\"成功! 新下标集大小={len(candidate)}\")\n                current_indices = candidate\n                granularity = 2\n                made_progress = True\n                break\n            else:\n                print(\"失败\")\n            start_idx += subset_size\n        if made_progress:\n            continue\n\n        # Try keeping only a block\n        start_idx = 0\n        print(f\"         2) 尝试『只保留』大小约={subset_size} 的分块...\")\n        while start_idx < len(current_indices):\n            block = current_indices[start_idx:start_idx + subset_size]\n            candidate = block\n            if len(candidate) == len(current_indices) or len(candidate) < 2:\n                start_idx += subset_size\n                continue\n            subseq = [original_seq[i] for i in candidate]\n            print(f\"            - 只保留索引 {block} ... \", end=\"\")\n            if test_interesting(subseq):\n                print(f\"成功! 新下标集大小={len(candidate)}\")\n                current_indices = candidate\n                granularity = 2\n                made_progress = True\n                break\n            else:\n                print(\"失败\")\n            start_idx += subset_size\n        if made_progress:\n            continue\n\n        # Increase granularity\n        if granularity < len(current_indices):\n            new_gran = min(granularity * 2, len(current_indices))\n            print(f\"         -> 无进展，增大粒度至 {new_gran}\\n\")\n            granularity = new_gran\n        else:\n            print(\"\\n[Reduce] 已无法进一步缩减 —— 到达 1-minimal。\")\n            break\n\n    reduced_seq = [original_seq[i] for i in current_indices]\n    print(f\"\\n[Result] 缩减后序列为: {reduced_seq}\")\n    return reduced_seq\n\ndef reduce_input(input_file: str, output_file: str):\n    if not os.path.exists(input_file):\n        print(f\"[Error] 输入文件不存在: {input_file}\", file=sys.stderr)\n        return\n\n    with open(input_file, \"r\", encoding=\"utf-8\") as f:\n        lines = [line.strip() for line in f]\n\n    if not lines:\n        raise ValueError(\"输入文件为空\")\n\n    header = lines[0].split()\n    if len(header) != 2:\n        raise ValueError(f\"第一行应包含 N 和 K: {lines[0]}\")\n\n    N_str, K_str = header\n    if not N_str.isdigit() or not K_str.isdigit():\n        raise ValueError(f\"非数字的 N 或 K: {lines[0]}\")\n\n    N = int(N_str)\n    K = int(K_str)\n\n    if N <= K:\n        raise ValueError(f\"无效输入: K >= N\")\n\n    A_line = lines[1].split()\n    if len(A_line) != N:\n        raise ValueError(f\"数组 A 长度不匹配: 期望 {N}, 实际 {len(A_line)}\")\n\n    A = list(map(int, A_line))\n\n    reduced_seq = reduce_ddmin(A)\n\n    M = len(reduced_seq)\n    K_reduced = max(0, K - (N - M))  # Adjust K accordingly\n\n    output_lines = [f\"{M} {K_reduced}\", \" \".join(map(str, reduced_seq))]\n    output_bytes = \"\\n\".join(output_lines).encode(\"utf-8\")\n\n    with open(output_file, \"wb\") as f:\n        f.write(output_bytes)\n\n    print(f\"[Info] 缩减过程完成，结果已写入: {output_file}\")",
+    "results": [
+      {
+        "submission_id": "67213592",
+        "status_code": 404,
+        "message": "Reducer module not found for problem 'abc361C'. Looked for 'abc361c.reducer.py'.",
+        "original_size_bytes": null,
+        "reduced_size_bytes": null,
+        "failing_case_name": null,
+        "wa_code_path": "abc361c/67213592/wa_67213592.cpp",
+        "execution_time_seconds": 0.0
+      },
+      {
+        "submission_id": "67186860",
+        "status_code": 404,
+        "message": "Reducer module not found for problem 'abc361C'. Looked for 'abc361c.reducer.py'.",
+        "original_size_bytes": null,
+        "reduced_size_bytes": null,
+        "failing_case_name": null,
+        "wa_code_path": "abc361c/67186860/wa_67186860.cpp",
+        "execution_time_seconds": 0.0
+      },
+      {
+        "submission_id": "67182020",
+        "status_code": 404,
+        "message": "Reducer module not found for problem 'abc361C'. Looked for 'abc361c.reducer.py'.",
+        "original_size_bytes": null,
+        "reduced_size_bytes": null,
+        "failing_case_name": null,
+        "wa_code_path": "abc361c/67182020/wa_67182020.cpp",
+        "execution_time_seconds": 0.0
+      },
+      {
+        "submission_id": "67107765",
+        "status_code": 404,
+        "message": "Reducer module not found for problem 'abc361C'. Looked for 'abc361c.reducer.py'.",
+        "original_size_bytes": null,
+        "reduced_size_bytes": null,
+        "failing_case_name": null,
+        "wa_code_path": "abc361c/67107765/wa_67107765.cpp",
+        "execution_time_seconds": 0.0
+      },
+      {
+        "submission_id": "67095560",
+        "status_code": 404,
+        "message": "Reducer module not found for problem 'abc361C'. Looked for 'abc361c.reducer.py'.",
+        "original_size_bytes": null,
+        "reduced_size_bytes": null,
+        "failing_case_name": null,
+        "wa_code_path": "abc361c/67095560/wa_67095560.cpp",
+        "execution_time_seconds": 0.0
+      },
+      {
+        "submission_id": "67095547",
+        "status_code": 404,
+        "message": "Reducer module not found for problem 'abc361C'. Looked for 'abc361c.reducer.py'.",
+        "original_size_bytes": null,
+        "reduced_size_bytes": null,
+        "failing_case_name": null,
+        "wa_code_path": "abc361c/67095547/wa_67095547.cpp",
+        "execution_time_seconds": 0.0
+      },
+      {
+        "submission_id": "67030359",
+        "status_code": 404,
+        "message": "Reducer module not found for problem 'abc361C'. Looked for 'abc361c.reducer.py'.",
+        "original_size_bytes": null,
+        "reduced_size_bytes": null,
+        "failing_case_name": null,
+        "wa_code_path": "abc361c/67030359/wa_67030359.cpp",
+        "execution_time_seconds": 0.0
+      },
+      {
+        "submission_id": "67026479",
+        "status_code": 404,
+        "message": "Reducer module not found for problem 'abc361C'. Looked for 'abc361c.reducer.py'.",
+        "original_size_bytes": null,
+        "reduced_size_bytes": null,
+        "failing_case_name": null,
+        "wa_code_path": "abc361c/67026479/wa_67026479.cpp",
+        "execution_time_seconds": 0.01
+      },
+      {
+        "submission_id": "66894391",
+        "status_code": 404,
+        "message": "Reducer module not found for problem 'abc361C'. Looked for 'abc361c.reducer.py'.",
+        "original_size_bytes": null,
+        "reduced_size_bytes": null,
+        "failing_case_name": null,
+        "wa_code_path": "abc361c/66894391/wa_66894391.cpp",
+        "execution_time_seconds": 0.0
+      },
+      {
+        "submission_id": "66704499",
+        "status_code": 404,
+        "message": "Reducer module not found for problem 'abc361C'. Looked for 'abc361c.reducer.py'.",
+        "original_size_bytes": null,
+        "reduced_size_bytes": null,
+        "failing_case_name": null,
+        "wa_code_path": "abc361c/66704499/wa_66704499.cpp",
+        "execution_time_seconds": 0.0
+      }
+    ],
+    "problem_description": "Score : 250 points\n\n### Problem Statement\n\nYou are given a sequence A of length N.  \nFreely choose exactly K elements from A and remove them, then concatenate the remaining elements in their original order to form a new sequence B.  \nFind the minimum possible value of this: the maximum value of B minus the minimum value of B.\n\n### Constraints\n\n* All inputs are integers.\n* 1 \\le K < N \\le 2 \\times 10^5\n* 1 \\le A\\_i \\le 10^9\n\n---\n\n### Input\n\nThe input is given from Standard Input in the following format:\n\n```\nN K\nA_1 A_2 \\dots A_N\n\n```\n\n### Output\n\nPrint the answer as an integer.\n\n---"
+  }
+}

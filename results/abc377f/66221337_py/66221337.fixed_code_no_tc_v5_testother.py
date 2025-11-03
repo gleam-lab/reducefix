@@ -1,0 +1,264 @@
+N, M = map(int, input().split())
+pieces = [tuple(map(int, input().split())) for _ in range(M)]
+
+# If there are no pieces, every empty square is valid
+if M == 0:
+    print(N * N)
+    exit()
+
+# Sets to store attacked lines (row, col, diag1, diag2)
+rows = set()
+cols = set()
+diag1 = set()  # i + j = constant
+diag2 = set()  # i - j = constant
+
+# Mark all lines attacked by existing pieces
+for a, b in pieces:
+    rows.add(a)
+    cols.add(b)
+    diag1.add(a + b)
+    diag2.add(a - b)
+
+# Start with total grid size
+total_attacked = 0
+
+# Add contributions from unique rows
+total_attacked += len(rows) * N
+
+# Add contributions from unique columns
+total_attacked += len(cols) * N
+
+# Add contributions from diagonal (a + b)
+for s in diag1:
+    # Number of cells where i + j = s
+    if s < 2:
+        count = 0
+    elif s <= N + 1:
+        count = s - 1
+    else:
+        count = 2 * N - s + 1
+    total_attacked += count
+
+# Add contributions from anti-diagonal (a - b)
+for d in diag2:
+    # Number of cells where i - j = d
+    if d < 1 - N or d > N - 1:
+        count = 0
+    elif d >= 0:
+        count = N - d
+    else:
+        count = N + d
+    total_attacked += count
+
+# Now subtract overcounted intersections: each piece's position has been counted multiple times
+# Each piece lies on one row, one column, one diag1, one diag2 -> it was counted 4 times
+# But we need to subtract duplicates: pairwise overlaps between row/col/diag1/diag2
+
+from collections import defaultdict
+point_count = defaultdict(int)
+
+# For each piece, we consider the intersections of its row, col, diag1, diag2
+# But actually, we want to compute inclusion-exclusion properly? 
+# Instead, simpler: use inclusion exclusion on the sets.
+
+# However, better approach: we have overcounted cells that lie in multiple attacked lines.
+# We used: |R ∪ C ∪ D1 ∪ D2| = |R| + |C| + |D1| + |D2| 
+#                            - |R∩C| - |R∩D1| - |R∩D2| - |C∩D1| - |C∩D2| - |D1∩D2|
+#                            + |R∩C∩D1| + |R∩C∩D2| + |R∩D1∩D2| + |C∩D1∩D2|
+#                            - |R∩C∩D1∩D2|
+
+# But this is complex. Instead, note that:
+# We added all attacked rows, cols, diag1, diag2 independently → overcounting occurs at intersections.
+
+# Alternative idea: use set of attacked positions? Not possible because N up to 1e9.
+
+# Instead, use inclusion-exclusion with care.
+
+# Let A = attacked cells via rows
+# B = via cols
+# C = via diag1
+# D = via diag2
+
+# |A ∪ B ∪ C ∪ D| = |A| + |B| + |C| + |D|
+#                  - |A∩B| - |A∩C| - |A∩D| - |B∩C| - |B∩D| - |C∩D|
+#                  + |A∩B∩C| + |A∩B∩D| + |A∩C∩D| + |B∩C∩D|
+#                  - |A∩B∩C∩D|
+
+# But |A∩B| = cells in both some attacked row and some attacked col → |rows| * |cols| ? NO!
+# Actually, A is union of full rows → A = {(i,j) | i in rows}
+# Similarly B = {(i,j) | j in cols}
+# So A∩B = {(i,j) | i in rows and j in cols} → size = |rows| * |cols|
+
+# Similarly:
+# A∩C = {(i,j) | i in rows and i+j in diag1} → for each row r in rows, number of j such that j in [1,N] and r+j in diag1 → j = s - r, so valid if 1<=s-r<=N → s in [r+1, r+N]
+# This becomes messy.
+
+# Alternate practical method given M <= 1000:
+# The only overcounts happen at intersections of lines. But since M is small, the number of distinct lines is small.
+
+# We can compute the union using inclusion-exclusion over the four sets.
+
+# But even better: use the principle that:
+# |A ∪ B ∪ C ∪ D| = sum |single| - sum |pairwise intersections| + sum |triple| - |quadruple|
+
+# Define:
+A_size = len(rows) * N
+B_size = len(cols) * N
+
+C_size = 0
+for s in diag1:
+    if 2 <= s <= N+1:
+        C_size += s - 1
+    elif N+2 <= s <= 2*N:
+        C_size += 2*N - s + 1
+
+D_size = 0
+for d in diag2:
+    if -(N-1) <= d <= N-1:
+        D_size += N - abs(d)
+
+total_union = A_size + B_size + C_size + D_size
+
+# Subtract pairwise intersections
+
+# A ∩ B: cells in attacked row and attacked col → |rows| * |cols|
+AB = len(rows) * len(cols)
+total_union -= AB
+
+# A ∩ C: cells in attacked row and attacked diag1 (i+j=s)
+AC = 0
+for r in rows:
+    for s in diag1:
+        j = s - r
+        if 1 <= j <= N:
+            AC += 1
+total_union -= AC
+
+# A ∩ D: cells in attacked row and attacked diag2 (i-j=d => j = i-d = r-d)
+AD = 0
+for r in rows:
+    for d in diag2:
+        j = r - d
+        if 1 <= j <= N:
+            AD += 1
+total_union -= AD
+
+# B ∩ C: cells in attacked col and attacked diag1 (i+j=s => i = s-j)
+BC = 0
+for c in cols:
+    for s in diag1:
+        i = s - c
+        if 1 <= i <= N:
+            BC += 1
+total_union -= BC
+
+# B ∩ D: cells in attacked col and attacked diag2 (i-j=d => i = d+j = d+c)
+BD = 0
+for c in cols:
+    for d in diag2:
+        i = d + c
+        if 1 <= i <= N:
+            BD += 1
+total_union -= BD
+
+# C ∩ D: cells in both diag1 and diag2 → each such cell is determined uniquely by solving:
+# i+j = s, i-j = d → i=(s+d)/2, j=(s-d)/2 → must be integer and within bounds
+CD = 0
+for s in diag1:
+    for d in diag2:
+        if (s + d) % 2 == 0:
+            i = (s + d) // 2
+            j = (s - d) // 2
+            if 1 <= i <= N and 1 <= j <= N:
+                CD += 1
+total_union -= CD
+
+# Add back triple intersections
+
+# A ∩ B ∩ C: attacked row, col, and diag1 → i in rows, j in cols, i+j in diag1
+ABC = 0
+for r in rows:
+    for c in cols:
+        if (r + c) in diag1:
+            ABC += 1
+total_union += ABC
+
+# A ∩ B ∩ D: i in rows, j in cols, i-j in diag2
+ABD = 0
+for r in rows:
+    for c in cols:
+        if (r - c) in diag2:
+            ABD += 1
+total_union += ABD
+
+# A ∩ C ∩ D: i in rows, and (i,j) on some diag1 and some diag2
+# But diag1 and diag2 intersect at one point per pair (s,d): i=(s+d)/2, j=(s-d)/2 → so for fixed i=r, we require:
+# j = s - r and j = r - d → so s = r+j, d = r-j → but we need s in diag1 and d in diag2
+# Alternatively: for each s in diag1, d in diag2: if (s+d)//2 == r and (s-d)//2 == j and j in [1,N], then count
+ACD = 0
+for r in rows:
+    for s in diag1:
+        j = s - r
+        if 1 <= j <= N:
+            d = r - j
+            if d in diag2:
+                ACD += 1
+total_union += ACD
+
+# B ∩ C ∩ D: j in cols, and (i,j) on some diag1 and diag2
+# For fixed j=c, and s in diag1: i = s - c, must be in [1,N], and d = i - c = s - 2c → check if d in diag2
+BCD = 0
+for c in cols:
+    for s in diag1:
+        i = s - c
+        if 1 <= i <= N:
+            d = i - c
+            if d in diag2:
+                BCD += 1
+total_union += BCD
+
+# Subtract quadruple intersection: A ∩ B ∩ C ∩ D
+# i in rows, j in cols, i+j in diag1, i-j in diag2
+ABCD = 0
+for r in rows:
+    for c in cols:
+        if (r + c) in diag1 and (r - c) in diag2:
+            ABCD += 1
+total_union -= ABCD
+
+# But wait: we have computed the size of the union of all attacked cells?
+# However, this inclusion-exclusion is over sets defined by lines — correct.
+
+# However, note: the above calculation counts **all** cells that are in any attacked row, col, diag1, or diag2.
+# That is exactly what we want: the set of squares under attack.
+
+# But now we must remember: some of these attacked squares may already contain pieces, and we cannot place on occupied squares anyway.
+# However, our goal is to count **empty** squares that are **not attacked**.
+
+# Total safe empty squares = Total empty squares - (attacked empty squares)
+# But easier: total available = total squares - (occupied + attacked_but_not_occupied)?
+# Actually: we want squares that are (empty) AND (not attacked)
+
+# So: answer = (N*N - M) - (number of empty attacked squares)
+# But: number of empty attacked squares = (total attacked squares) - (number of occupied squares that are attacked)
+
+# But every piece is on an attacked line (its own), so all M pieces are in the attacked set.
+
+# Therefore: number of attacked empty squares = total_union - M
+
+# Then safe empty squares = total_empty_squares - attacked_empty_squares
+# = (N*N - M) - (total_union - M) = N*N - total_union
+
+# So answer = N*N - total_union
+
+# But wait: is that right? Let's see:
+# We want: empty and not attacked = (all squares) - (occupied OR attacked)
+# By De Morgan: empty and not attacked = total - (occupied ∪ attacked)
+# And |occupied ∪ attacked| = |occupied| + |attacked| - |occupied ∩ attacked|
+# Since every occupied square is attacked (each piece attacks its own square via its row/col/etc.), |occupied ∩ attacked| = M
+# So |occupied ∪ attacked| = M + total_union - M = total_union
+# Thus, safe squares = N*N - total_union
+
+# Therefore, final answer is N*N - total_union
+
+print(N*N - total_union)

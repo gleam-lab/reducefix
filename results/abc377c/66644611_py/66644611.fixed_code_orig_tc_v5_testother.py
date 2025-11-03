@@ -1,0 +1,45 @@
+n, m = map(int, input().split())
+captured = set()
+
+# Define the 8 possible capture positions relative to a piece
+capture_offsets = [
+    (2, 1), (1, 2), (-1, 2), (-2, 1),
+    (-2, -1), (-1, -2), (1, -2), (2, -1)
+]
+
+for _ in range(m):
+    a, b = map(int, input().split())
+    # For each existing piece, mark all squares it can capture
+    for dx, dy in capture_offsets:
+        x, y = a + dx, b + dy
+        if 1 <= x <= n and 1 <= y <= n:
+            captured.add((x, y))
+
+# Count total empty squares minus those that are capturable
+total_squares = n * n
+occupied_or_captured = set()
+
+# Add all existing pieces
+for _ in range(m):
+    # We need to read the input again since we consumed it
+    pass
+
+# Re-read input to get the occupied squares
+pieces = []
+captured.clear()
+for _ in range(m):
+    a, b = map(int, input().split())
+    pieces.append((a, b))
+    occupied_or_captured.add((a, b))
+    for dx, dy in capture_offsets:
+        x, y = a + dx, b + dy
+        if 1 <= x <= n and 1 <= y <= n:
+            captured.add((x, y))
+
+# Add captured squares
+for square in captured:
+    occupied_or_captured.add(square)
+
+# The answer is total squares minus occupied/captured squares
+ans = total_squares - len(occupied_or_captured)
+print(ans)

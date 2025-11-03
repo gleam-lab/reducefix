@@ -1,0 +1,23 @@
+n, m = map(int, input().split())
+blocked = set()
+
+# Directions for the 8 possible capture moves
+capture_deltas = [
+    (2, 1), (1, 2), (-1, 2), (-2, 1),
+    (-2, -1), (-1, -2), (1, -2), (2, -1)
+]
+
+for _ in range(m):
+    a, b = map(int, input().split())
+    # The existing piece occupies (a, b), so we can't place there
+    blocked.add((a, b))
+    # For each square that this piece can capture, mark it as unsafe
+    for da, db in capture_deltas:
+        na, nb = a + da, b + db
+        if 1 <= na <= n and 1 <= nb <= n:
+            blocked.add((na, nb))
+
+# Total empty squares minus the unsafe ones (but only count valid grid positions)
+total_safe = n * n - len(blocked)
+
+print(total_safe)

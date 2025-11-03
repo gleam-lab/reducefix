@@ -1,0 +1,241 @@
+```python
+from collections import defaultdict
+
+N, M = map(int, input().split())
+A = list(map(int, input().split()))
+
+# 累積和
+cum = [0] * (N + 1)
+for i in range(N):
+    cum[i + 1] = cum[i] + A[i]
+
+# mod M の値の出現回数
+count_mod = defaultdict(int)
+answer = 0
+
+# 全ての累積和に対して処理
+for val in cum:
+    mod = val % M
+    answer += count_mod[mod]
+    count_mod[mod] += 1
+
+# 同じ頂点からの移動（s == t）は除く必要がある
+# 上の計算では、同じmodを持つ異なるi,j（i < j）について、
+# cum[j] - cum[i] ≡ 0 (mod M) → 頂点i+1からjまでの距離がMの倍数
+# このとき、s = i+1, t = j でs ≠ tが条件
+
+# ただし、問題文では「s ≠ t」かつ時計回りにsからtへ行く距離がMの倍数であるペアを数える
+# 上の方法はそれらを正しく数えているが、
+# 特殊ケース：N=1のとき、rest areaは1つだけなのでs ≠ tとなるペアは存在しない
+
+# 実際、上のコードは累積和の同じmodのペアを数えているが、
+# それは「区間和がMの倍数」となる連続部分列の個数に対応し、
+# それがまさに「時計回りにs→tの距離がMの倍数」となる(s,t)ペアの数（s≠t）に等しい。
+
+# しかし、サンプル入力: N=1, M=1, A=[136872]
+# cum = [0, 136872]
+# mod 1 では両方とも0 → count_mod[0]が2なので、answer = 1（0と0のペア）
+# つまり、s=1, t=1？ → だがs≠tが必要。このペアは s=1, t=1 を意味する？
+# 実は、cum[1]-cum[0] = A0 → rest area 1から1への時計回り？ → それは一周ではなく、次の1へ。
+# しかし、N=1なので、rest area 1から1へは「一周」ではなく、単に次の1（自分自身）へ。
+
+# 問題文：「時計回りに rest area s から rest area t (s≠t) まで」
+# よって、s==t は許されない。
+
+# しかし、累積和の差 cum[r] - cum[l] は、rest area l+1 から r までの距離。
+# よって、l+1 ≠ r であればよい？いや、l+1 == r でも、頂点が違うならOKだが、
+# 例えば l=0, r=1 → s=1, t=1（N=1のとき）→ s=t → 不可。
+
+# したがって、N=1のとき、可能なs,tのペアは存在しない（s≠tが不可能）
+
+# しかし、上記のアルゴリズムは、累積和配列の長さが2（index 0と1）で、
+# その差はA[0]、つまり1→1の距離。これはs=tなので無効。
+
+# 問題は、**s≠t**という条件が満たされていないペアを含んでしまうか？
+
+# 実際、cum[r] - cum[l] が表すのは、rest area (l+1) から (r) までの距離（時計回り）。
+# ここで、l < r であり、rest area番号は1-indexed。
+# s = l+1, t = r（ただし、r=Nのときt=N、r>N? なし）
+
+# しかし、rは1..Nまで。lは0..N-1まで。
+# 例: l=0, r=1 → s=1, t=1（N=1）→ s=t → 無効
+#     l=0, r=2 → s=1, t=2 → 有効（N>=2）
+
+# つまり、s = l+1, t = r で、s≠t とは、l+1 ≠ r を意味する？
+# いや、違う。rest area番号は1..N。rがN+1になることはない。r<=N。
+# そして、l+1 と r が同じ番号になることもある。特に、l+1 > N? いいえ。
+
+# 正確には、s = l+1, t = r だが、rは累積和のindexで、rest area番号そのものではない。
+# 実は、cum[r] - cum[l] は、rest area l+1 から rest area r までの距離（時計回り）。
+# ここで、l+1 と r は1以上N以下の整数。
+# よって、l+1 == r のとき、s=t？ → いいえ！s = l+1, t = r → s=t となる。
+# 例えば、l=0, r=1 → s=1, t=1 → s=t → 無効。
+
+# しかし、wait：rest area 1 から rest area 1 へ？それは「移動しない」または「一周」？
+# ここでの定義：「時計回りにsからtへ」は、sから出発して時計回りに進みtに到着。
+# s=1, t=1：これは「一周」することを意味する？問題文の説明を見ると、
+# 「clockwise from rest area i to rest area i+1」があるので、
+# 一般的に、sからtへ時計回りに進むとき、s==t ならば一周することになる。
+
+# しかし、問題文に「s≠t」と明記されているので、s=tは一切除外。
+
+# したがって、我々が数えるべきは、l < r かつ (l+1) ≠ r？ いや、l+1 と r が同じ番号であっても、
+# 移動距離が一周分なら良い？ → いいえ、sとtの番号が同じならs=tなので不可。
+
+# つまり、s = l+1, t = r （番号として）で、s ≠ t が必要。
+
+# しかし、l+1 と r が同じ番号になるのは、l+1 == r かつ r <= N のとき。
+# 例えば、l=0, r=1 → s=1, t=1 → s=t → 不可。
+# l=1, r=2 → s=2, t=2 → 不可。
+
+# ということは、すべての l < r に対して、s = l+1, t = r で、s ≠ t とは、l+1 ≠ r を意味する？
+# いや、l+1 と r が同じ値かどうかは番号の話。
+# 例えば、l=0, r=2 → s=1, t=2 → OK（s≠t）
+# l=1, r=3 → s=2, t=3 → OK
+# l=0, r=0 → 無し（l<r）
+# l=0, r=1 → s=1, t=1 → NG
+
+# したがって、l+1 == r のとき、s=t となりNG。
+
+# しかし、これだと、「rest area 1 から rest area 2」への移動は、l=0, r=2？ いや、違う。
+
+# 正しい対応：
+# cum[r] - cum[l] = sum_{i=l}^{r-1} A_i
+# これは、rest area (l+1) から rest area (l+2), ..., rest area r までの距離？ 違う。
+
+# 定義：A_i は rest area i から i+1 へのステップ数。
+# cum[1] = A_0 → rest area 1 から 2 まで
+# cum[2] = A_0 + A_1 → rest area 1 から 3 まで
+# よって、cum[r] - cum[l] = rest area (l+1) から (r+1) まで？ 違う。
+
+# cum[i] は、rest area 1 から rest area i+1 までの距離。
+# なぜなら、cum[0]=0（rest area 1 にいる）
+# cum[1]=A0 → rest area 1 → 2
+# cum[2]=A0+A1 → rest area 1 → 3
+
+# よって、cum[r] - cum[l] は、rest area (l+1) から rest area (r+1) までの距離？ 
+# いや、rest area (l+1) から rest area (r+1) までは、sum_{i=l}^{r} A_i = cum[r+1]-cum[l]
+
+# ああ！間違いがここにある！
+
+# 正しくは：
+# cum[0] = 0 → rest area 1
+# cum[1] = A0 → rest area 2 に至るまでの距離（1→2）
+# cum[2] = A0+A1 → rest area 3 に至るまでの距離（1→3）
+
+# よって、rest area i から rest area j への時計回りの距離（i<j）は、cum[j-1] - cum[i-1]
+
+# 一般に、s から t への距離（時計回り、s≠t）は？
+# s < t のとき：cum[t-1] - cum[s-1]
+# s > t のとき：一周分 - (cum[s-1] - cum[t-1])？いや、時計回りなので、s>tなら s→s+1→...→N→1→...→t
+# その距離は total - (cum[t-1] - cum[s-1])？ いや、逆。
+
+# しかし、問題文では「時計回りにsからtへ」は、sから出発して時計回りに進んでtに到着。
+# s < t なら cum[t-1]-cum[s-1]
+# s > t なら (total - cum[s-1]) + cum[t-1] = cum[t-1] - cum[s-1] + total
+
+# つまり、時計回りの距離は (cum[t-1] - cum[s-1]) mod total ではない。
+# しかし、問題では「時計回り」に進むことを強制しているので、s>tなら長い方の経路。
+
+# ところが、問題文の最初の部分：「It takes A_i steps to walk clockwise from rest area i to rest area i+1」
+# そして、「minimum number of steps required to walk clockwise from rest area s to rest area t」
+# 「minimum」？ いや、原文：「The minimum number of steps required to walk clockwise from rest area s to rest area t (s ≠ t) is a multiple of M.」
+
+# ちょっと待って、"minimum number of steps required to walk clockwise"？ 時計回りしか歩けない？
+# それとも「時計回りまたは反時計回りのうち最小」？
+
+# 原文：「walk clockwise」→ 時計回りに歩く。
+# そして「minimum number of steps required to walk clockwise」→ 時計回りに歩く場合の最小ステップ数？
+# しかし、時計回りにしか歩けなければ、sからtへの距離は一意に決まる（s<tなら短い方、s>tなら長い方？）
+
+# いや、時計回りに歩く＝常に時計回り方向に進む。
+# だから、sからtへ時計回りに進むには、s→s+1→...→N→1→...→t という経路。
+# その距離は、
+#   if s < t: cum[t-1] - cum[s-1]
+#   if s > t: (cum[N] - cum[s-1]) + cum[t-1] = total - cum[s-1] + cum[t-1]
+
+# これを一つの式で書くと、(cum[t-1] - cum[s-1]) % total？ いや、負の場合があるので、
+# dist = (cum[t-1] - cum[s-1]) % total
+# しかし、% total は正の剰余を返す。
+
+# 実際、sからtへの時計回り距離は (cum[t-1] - cum[s-1]) % total と書ける。
+# なぜなら、cumは0から始まり、cum[N] = total。
+
+# そして、この距離がMの倍数であればよい。
+
+# つまり、(cum[t-1] - cum[s-1]) % total ≡ 0 (mod M)？ いや、距離自体がMの倍数。
+
+# つまり、dist ≡ 0 (mod M)
+
+# しかし、dist = (cum[t-1] - cum[s-1]) % total
+# そして、dist ≡ 0 (mod M) とは、distがMの倍数であること。
+
+# ここで重要なこと：distは0以上total未満の整数。
+# dist ≡ 0 (mod M) とは、dist = k*M for some integer k>=0.
+
+# しかし、s≠t なので dist>0。
+
+# さて、dist = (cum[t-1] - cum[s-1]) % total
+# これは、cum[t-1] - cum[s-1] が負なら total を足して正にする。
+
+# よって、
+#   if cum[t-1] >= cum[s-1]: dist = cum[t-1] - cum[s-1]
+#   else: dist = cum[t-1] - cum[s-1] + total
+
+# 条件：dist ≡ 0 (mod M)
+
+# つまり、
+#   case 1: cum[t-1] >= cum[s-1] かつ (cum[t-1] - cum[s-1]) % M == 0
+#   case 2: cum[t-1] < cum[s-1] かつ (cum[t-1] - cum[s-1] + total) % M == 0
+
+# これは扱いにくい。
+
+# 別の視点：時計回り距離がMの倍数 ⇔ cum[t-1] ≡ cum[s-1] (mod M) ではない。
+# なぜなら、case 1: cum[t-1] - cum[s-1] ≡ 0 (mod M)
+#      case 2: cum[t-1] - cum[s-1] + total ≡ 0 (mod M) → cum[t-1] - cum[s-1] ≡ -total (mod M)
+
+# つまり、二つの条件に分かれる。
+
+# しかし、よく読むと、問題文の「minimum number of steps required to walk clockwise」の「minimum」は誤解？
+# 英語：「The minimum number of steps required to walk clockwise from rest area s to rest area t」
+# これは、「時計回りに歩く場合の最短距離」という意味か？ しかし、時計回りにしか歩けなければ、経路は一意。
+
+# おそらく、「walk clockwise」は「時計回りに進む」という動作を意味し、その距離は固定。
+# そして、その距離がMの倍数かどうか。
+
+# したがって、sからtへの時計回り距離は、
+#   D(s,t) = (cum[t-1] - cum[s-1]) % total
+# ただし、% は正の剰余。
+
+# そして、D(s,t) > 0 かつ D(s,t) ≡ 0 (mod M)
+
+# 今、cum[0], cum[1], ..., cum[N] を持っている。cum[N] = total.
+
+# D(s,t) = (cum[t-1] - cum[s-1]) % total
+# この値がMの倍数。
+
+# 注意：cum[i] は total 未満（i<N）だが、cum[N]=total。
+
+# ここで、sとtは1..Nの整数で、s≠t。
+
+# 我々の累積和配列 cum[0..N] を使う。
+
+# sに対応するのは cum[s-1]、tに対応するのは cum[t-1]。
+
+# そして、D(s,t) = (cum[t-1] - cum[s-1]) % total
+
+# これを変形：
+#   Let X = cum[s-1], Y = cum[t-1]
+#   Then D = (Y - X) % total
+
+# 条件：D % M == 0 かつ D > 0.
+
+# D > 0 とは、Y ≠ X (mod total) だが、cumの値は重複する可能性あり。
+
+# しかし、D=0 となるのは Y-X が total の倍数のとき。
+# cumは0からtotalまで増加するので、|Y-X| < total なら D = Y-X if Y>=X, Y-X+total if Y<X.
+# D=0 となるのは Y=X のとき（このとき D=0）→ s=t の場合に相当？ いや、s≠tでも cum[s-1]=cum[t-1] なら D=0？
+
+# 例えば、A_iに0がある場合、cumが同じ値になることがある。
+# しかし、A_i>=1 なので cumは狭義単調増加。
+# cum[0]=0, cum[1]=A0>=1, cum[2]>=cum[1]+1, etc.

@@ -1,0 +1,276 @@
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int N, K;
+    cin >> N >> K;
+    vector<int> A(N);
+    for (int i = 0; i < N; ++i) {
+        cin >> A[i];
+    }
+
+    sort(A.begin(), A.end());
+
+    // We are removing exactly K elements.
+    // The remaining sequence has length M = N - K.
+    // We want to minimize (max - min) of the remaining elements.
+    // Since array is sorted, any valid subsequence must be a contiguous block of M elements?
+    // But note: we can only remove elements arbitrarily, but order is preserved.
+    // So the remaining elements form a subsequence in original order — however, since we sorted,
+    // we need to think differently.
+
+    // Important: After sorting, the optimal solution will always be a contiguous segment of length (N-K)
+    // Why? Because if we choose non-contiguous values from the sorted array, we could always shift
+    // the endpoints inward to reduce the range.
+
+    // Actually: When we sort, we lose original positions. But note:
+    // We are allowed to remove any K elements arbitrarily. Then concatenate the rest in original order.
+    // However, after sorting, we cannot reconstruct the original order.
+
+    // BUT: key insight — since we can remove arbitrary elements, the best way to minimize (max - min)
+    // is to pick a set of (N-K) numbers that are as close together as possible.
+    // And because we can choose any subset (and they will appear in increasing order in B only if their indices were increasing),
+    // but wait: we must preserve original order.
+
+    // Correction: We **cannot** reorder. But we can skip arbitrary elements.
+    // So the resulting sequence B must be a subsequence (not necessarily contiguous) of A, preserving order.
+
+    // However, here's the catch: we sorted the array! That destroys the order.
+
+    // Therefore: our current approach is flawed.
+
+    // Let's rethink:
+
+    // But wait — the problem does NOT require us to output the sequence, only the minimum possible value of (max - min).
+    // And it turns out that even though we must preserve order, the minimal range is achieved by some interval [L,R]
+    // such that there are at least (N-K) values in A within [L,R], and they appear in increasing index order?
+
+    // Actually, no: consider if all small values come at the end and large ones at beginning — then we cannot take both.
+
+    // However, here's an important observation: we are free to choose which K elements to remove.
+    // The final sequence B must be a subsequence of A in original order.
+
+    // Alternate approach:
+    // Sort won't help directly because of order constraint.
+
+    // But note: if we fix the smallest and largest element in B, say x and y, then we must be able to find a subsequence
+    // of length (N-K) with min=x, max=y, and all values in [x,y], and appearing in increasing index order.
+
+    // This seems complex.
+
+    // Insight from known problems: "Minimum Difference" when removing K elements — often solved by trying all possible
+    // contiguous windows of size (N-K) in the sorted array, **but only if we are allowed to reorder**.
+
+    // But we are not allowed to reorder. However, there is a known fact: 
+    // The answer is the minimum over i of (A[i + (N-K) - 1] - A[i]) for i from 0 to K?
+    // Wait — no, that would be if we could reorder.
+
+    // Actually, let me reconsider: even though we must preserve order, the **value** of (max - min) depends only on which values we keep.
+    // To minimize (max - min), we want to keep values that are close together numerically.
+
+    // Moreover, if we decide to keep only values in the range [L, R], then we need to check whether there exists a subsequence
+    // of length (N-K) consisting of values in [L,R] in the original order.
+
+    // How to do that fast?
+
+    // Alternatively, note that we can use two pointers on the sorted array, but track original indices.
+
+    // Known solution for similar problems (e.g., CodeForces): 
+    // Sort the array along with original indices. Then try every possible left pointer, and for each left,
+    // find the smallest right such that the number of elements in [left,right] that can form an increasing-index subsequence of length >= (N-K).
+
+    // But that’s complicated.
+
+    // Another idea: 
+    // Since we can remove K elements, the remaining sequence has length M = N-K.
+    // We want to find a subsequence of length M such that (max - min) is minimized.
+
+    // We can do: 
+    //   Sort by value, keeping index.
+    //   Then use two pointers or sliding window on the sorted array, and for each window, check if the elements in the window 
+    //   contain a subsequence (in terms of original indices) of length M.
+
+    // How to check if a set of elements (with indices) contains an increasing subsequence of length M? 
+    // Actually, we just need to know if we can pick M elements from the window such that their indices are increasing.
+    // That is equivalent to: the longest increasing subsequence (by index) in the window >= M.
+    // But LIS by index is just the length of the longest subsequence with increasing indices — which is the same as 
+    // the length of the longest increasing sequence of positions — i.e., we can just extract the indices from the window and compute LIS on them.
+
+    // But that would be O(M log M) per window, and overall O(N^2 log N) — too slow for 2e5.
+
+    // Alternative idea: 
+    // It turns out that the optimal solution can be found by considering only windows of size M = N-K in the sorted array, 
+    // and checking whether the elements in the window have indices that allow a subsequence of length M (which they always do, if we don't care about gaps?).
+
+    // But no: even if we have M elements in a value window, they might be in decreasing index order, so we cannot pick all.
+
+    // However, here's a crucial realization: 
+    // We are allowed to skip arbitrarily. So from a set of elements (with indices), the maximum number of elements we can pick in increasing index order 
+    // is simply the size of the set if we could reorder — but we can’t. Actually, it's the length of the longest increasing subsequence of indices.
+
+    // But we want to know if we can pick at least M elements.
+
+    // This is still expensive.
+
+    // Known similar problem: "Array Restoration" or "Minimal Range" — actually, a well-known trick:
+
+    // After reading discussions of similar problems, the correct solution is:
+    //   Sort the array by value.
+    //   Then, the answer is the minimum over i of (A[i + (N-K-1)] - A[i]), 
+    //   but only among those i for which the corresponding elements include a valid subsequence of length (N-K) in original order.
+
+    // But how to ensure the order?
+
+    // Actually, there is a simpler solution: 
+    //   We can use a different approach: 
+    //   Let M = N - K.
+    //   We want to find a subsequence of length M with minimal (max - min).
+    //   We can iterate over the possible minimum elements in the subsequence.
+    //   For a fixed minimum at position i (in original array), we want to extend to the right to find the earliest position where we can get M elements starting from i, 
+    //   and take the one that minimizes (value - A[i]).
+
+    // But that’s O(N^2).
+
+    // Better idea: 
+    //   Use binary search on the answer X.
+    //   For a given X, can we find a subsequence of length M such that max - min <= X?
+    //   How to check for a fixed X?
+    //     We can do: for each starting element A[i], we consider it as the minimum.
+    //     Then we want to greedily pick as many elements as possible (>= A[i], <= A[i]+X) in increasing index order.
+    //     We can do a greedy scan: start at i, then go to next index j>i with A[j] in [A[i], A[i]+X], and so on until we have M elements.
+    //     If we can, then X is achievable.
+    //   We do this for every i, and if any i works, X is achievable.
+    //   Complexity: O(N^2) per check, total O(N^2 log(maxA)) — too slow.
+
+    // We can optimize the check: 
+    //   Precompute next pointer for each i: next[i] = smallest j>i such that A[j] in [A[i], A[i]+X] — but X changes in binary search.
+
+    // Alternatively, we can use two pointers and a deque? 
+
+    // Actually, known accepted solution for this exact problem (from AtCoder):
+
+    // Sort the array by value, but keep track of indices.
+    // Then, use a sliding window of length M = N-K on the sorted array.
+    // For each window, we have a set of elements. We need to check if we can pick a subsequence of length M from the original array using only elements in this window.
+    // But note: if we have a window of M consecutive elements in sorted order, we can always pick them in increasing index order? Not necessarily.
+
+    // But here's the key: 
+    //   The condition is that the elements in the window must contain an increasing sequence of indices of length M.
+    //   But that is equivalent to: the minimum number of removals needed to make the subsequence increasing in index is <= K? No.
+
+    // Actually, no: we are restricted to only use elements in the window.
+
+    // Instead, we can do: 
+    //   For a fixed window [l, r] in the sorted array (by value), let S be the list of indices of elements in this window, sorted by position in original array.
+    //   Then, the longest increasing subsequence of these indices is just the length of the longest subsequence that appears in order — but since the indices are positions, 
+    //   an increasing sequence of indices means we can pick them in order.
+
+    //   But we want to know if we can pick at least M elements from the window in increasing index order.
+    //   That is: the length of the longest increasing subsequence of the indices in the window >= M.
+
+    //   But computing LIS for each window is O(M log M) and there are O(N) windows -> O(N * M log M) ~ 2e5 * 2e5 * log(2e5) which is 4e10, too slow.
+
+    // There is a better way: 
+    //   We can use a two-pointer technique and maintain a data structure for the LIS of a dynamic set of indices? 
+    //   That’s very complex.
+
+    // After research, the intended solution is much simpler: 
+    //   The answer is min_{i=0}^{K} (A[i + (N-K-1)] - A[i]) 
+    //   BUT ONLY IF we sort the array and then take contiguous segments.
+
+    // Why is that valid? 
+    //   Even though we cannot reorder, it turns out that there always exists an optimal solution that consists of a contiguous segment in the sorted array.
+    //   Why? Because if you have a solution with min=x and max=y, you can replace any kept element outside [x,y] — but they are inside.
+    //   And if you have gaps in the sorted array, you can sometimes shift to fill gaps without increasing the range.
+
+    //   More precisely: suppose we have a valid subsequence B of length M with values not forming a contiguous segment in sorted A.
+    //   Then there exists a value v in sorted A between min(B) and max(B) that is not in B.
+    //   Can we replace some element in B with v to potentially allow a smaller range later? Not directly.
+
+    //   But note: we are minimizing (max - min). The actual values in between don't matter for the range.
+    //   So having gaps doesn't hurt the range.
+
+    //   However, the issue is feasibility: even if a value v is between min and max, we might not be able to include it because of index constraints.
+
+    //   But here's the critical insight: 
+    //   The minimal possible range is always achieved by a set of M elements that are consecutive in the sorted array.
+    //   Proof sketch: suppose the optimal set has values that are not consecutive in sorted order. Then there is a gap. 
+    //   We can try to shift the left bound right or the right bound left to reduce the range, unless doing so would make it impossible to find M elements.
+    //   But if there is a gap, we might be able to shift.
+
+    //   Actually, the standard solution for this problem is:
+    //       sort(A);
+    //       int ans = A[N-1] - A[0];
+    //       for (int i = 0; i <= K; i++) {
+    //           ans = min(ans, A[i + (N-K-1)] - A[i]);
+    //       }
+    //
+    //   Why i from 0 to K?
+    //   Explanation: we are going to remove K elements. In the sorted array, the remaining M = N-K elements must be a subsequence of the sorted array.
+    //   But we also have to respect the original order. However, note that we are allowed to remove any K elements, so we can choose any M elements.
+    //   BUT WAIT: we cannot reorder, so we cannot take elements that appear in the wrong order.
+
+    //   However, here's the catch: when we sort, we break the order. But the above solution is used in many contests for the same problem.
+
+    //   Example: 
+    //       N=4, K=1, A = [1, 3, 2, 4]
+    //       Sorted: [1,2,3,4], M=3.
+    //       Try i=0: A[0+2]-A[0] = 3-1=2 -> elements [1,2,3]
+    //       Try i=1: A[1+2]-A[1]=4-2=2 -> elements [2,3,4]
+    //       Answer = 2.
+    //       Can we achieve 2? 
+    //           Remove one element:
+    //             Remove A[0]: [3,2,4] -> min=2, max=4, diff=2.
+    //             Remove A[1]: [1,2,4] -> min=1, max=4, diff=3.
+    //             Remove A[2]: [1,3,4] -> min=1, max=4, diff=3.
+    //             Remove A[3]: [1,3,2] -> min=1, max=3, diff=2.
+    //           So minimum diff is 2. Matches.
+    //       But can we get a subsequence with values [1,2,3]? 
+    //           In order: 1 (index0), then 2 (index2), then 3 (index1) -> but index1<index2, so we cannot take 3 after 2.
+    //           So [1,2,3] is not available in order.
+    //       Similarly, [2,3,4]: 2 at index2, 3 at index1 -> cannot take 3 before 2.
+    //       So neither contiguous segment in sorted array is feasible!
+
+    //   But we got diff=2 from other choices.
+
+    //   So the answer 2 is correct, but not because of a contiguous segment in sorted array.
+
+    //   However, the method still gave the correct numerical answer.
+
+    //   Why? Because the minimal difference is 2, and there exists a set of 3 elements with difference 2, even if not contiguous in sorted order.
+
+    //   But the formula checks all windows of size M in the sorted array, and takes the minimal difference.
+
+    //   Is it possible that the minimal difference overall is less than the minimal difference of any contiguous window in sorted array? 
+    //   No, because any set of M elements has a minimum and maximum, and in the sorted array, the elements between min and max include at least the M elements, 
+    //   so there is a window from the global min of the set to the global max of the set, and the difference is (max-min).
+    //   But the contiguous windows we try are only of length M, while the actual span might be larger.
+
+    //   Actually, the method tries every possible contiguous block of M elements in sorted order.
+
+    //   But the optimal set might not be contiguous in sorted order, but its (max-min) is at least the difference of some contiguous block of M elements? 
+    //   Not necessarily.
+
+    //   However, note: if we have a set S of M elements, let a = min(S), b = max(S). In the sorted array, between a and b there are at least M elements (namely S), 
+    //   so there exists a contiguous block of M elements somewhere between a and b. But that block might have a smaller difference than (b-a)? 
+    //   Only if the block is tighter.
+
+    //   Actually, the difference of the block [a, ..., b] is (b-a), and any contiguous block within [a,b] has difference <= (b-a). 
+    //   But we are scanning all contiguous blocks of size M, including ones that are inside [a,b] and might have smaller difference.
+
+    //   Therefore, the minimal difference among contiguous blocks of size M is <= (b-a).
+
+    //   So the answer from the contiguous block scan is a lower bound on the optimal answer.
+
+    //   But is it achievable? Only if there is a contiguous block of M elements in sorted array that can be selected in increasing index order.
+
+    //   In the earlier example, the contiguous block [1,2,3] has difference 2, but we couldn't select it. However, we could achieve difference 2 by [1,3,2] (diff=2) or [3,2,4] (diff=2).
+
+    //   So the minimal difference is 2, and the scan found 2.
+
+    //   But what if no contiguous block of M elements can be selected, but a non-contiguous set has difference D, and there is a contiguous block with difference D' < D

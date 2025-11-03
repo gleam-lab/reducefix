@@ -1,0 +1,86 @@
+#include <bits/stdc++.h>
+
+#define all(x) x.begin(), x.end()
+#define rall(x) x.rbegin(), x.rend()
+
+#define mp make_pair
+#define mt make_tuple
+#define eb emplace_back
+#define g(i,t) get<i>(t)
+
+#define tos(n) to_string(n)
+#define toc(n) '0' + n
+#define toi(s) stoi(s)
+#define btoi(b) static_cast<int>(b.to_ulong())
+
+using namespace std;
+
+using ll=long long int;
+using pi=pair<int,int>;
+using qi=queue<int>;
+using qp=queue<pi>;
+using si=set<int>;
+
+using vi=vector<int>;
+using vll=vector<ll>;
+using vs=vector<string>;
+using vc=vector<char>;
+using vb=vector<bool>;
+
+using vvi=vector<vi>;
+using vvll=vector<vll>;
+
+template<typename T> inline bool chmin(T &a, T b) {
+  if (a > b) {
+    a = b;
+    return true;
+  }
+  return false;
+}
+
+template<typename T> inline bool chmax(T &a, T b) {
+  if (a < b) {
+    a = b;
+    return true;
+  }
+  return false;
+}
+
+int main()
+{
+  ios_base::sync_with_stdio(0);
+  cin.tie(0);
+  cout.tie(0);
+  int N,K;
+  cin>>N>>K;
+  vi A(N);
+  for(int i=0;i<N;i++) {
+    cin>>A[i];
+  }
+  sort(all(A));
+
+  // We are going to remove exactly K elements.
+  // The remaining sequence will be a contiguous subarray of the sorted array?
+  // Actually no: we can choose any K elements to remove, so the remaining elements
+  // don't have to be contiguous in the original array. But since we want to minimize
+  // (max - min), and we can reorder by sorting, the optimal solution is to keep a set
+  // of values that are as close together as possible.
+  //
+  // Therefore, after sorting, the best remaining elements must form a contiguous block
+  // in the sorted array? Yes! Because if we skip some element inside the range, we could
+  // potentially include it without increasing the range, or even reduce gaps.
+  // But more importantly: the minimum and maximum of the kept elements define the range.
+  // So we can try all possibilities where we keep a contiguous segment of (N-K) elements
+  // in the sorted array.
+
+  int ans = A[N-1] - A[0]; // worst case: keep everything
+  int remain = N - K;
+
+  // Try every contiguous block of 'remain' elements
+  for (int i = 0; i + remain - 1 < N; i++) {
+    chmin(ans, A[i + remain - 1] - A[i]);
+  }
+
+  cout << ans << endl;
+  return 0;
+}

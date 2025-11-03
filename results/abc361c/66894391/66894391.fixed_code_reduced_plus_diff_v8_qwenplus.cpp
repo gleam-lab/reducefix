@@ -1,0 +1,28 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    int n, k;
+    cin >> n >> k;
+    
+    vector<int> a(n);
+    for (int i = 0; i < n; i++) {
+        cin >> a[i];
+    }
+    
+    sort(a.begin(), a.end());
+    
+    // We are removing exactly K elements, so we keep (n - k) elements.
+    int keep = n - k;
+    int min_diff = a[keep - 1] - a[0];  // First window: [0, keep-1]
+    
+    // Try all possible contiguous subarrays of length 'keep'
+    for (int i = 1; i + keep - 1 < n; i++) {
+        int diff = a[i + keep - 1] - a[i];
+        min_diff = min(min_diff, diff);
+    }
+    
+    cout << min_diff << endl;
+    
+    return 0;
+}

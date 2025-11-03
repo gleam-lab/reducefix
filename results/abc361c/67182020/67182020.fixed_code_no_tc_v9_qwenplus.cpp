@@ -1,0 +1,33 @@
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int N, K;
+    cin >> N >> K;
+    vector<int> A(N);
+    for (int i = 0; i < N; ++i) {
+        cin >> A[i];
+    }
+
+    sort(A.begin(), A.end());
+
+    // We are removing exactly K elements, so we keep (N - K) elements.
+    // To minimize (max - min) of the remaining sequence,
+    // we should consider all possible contiguous subarrays of length (N - K)
+    // in the sorted array, because rearrangement isn't allowed but sorting helps us
+    // find optimal removals.
+
+    int ans = A[N - 1 - K] - A[0]; // initial candidate: remove last K
+    for (int i = 1; i + (N - K) - 1 < N; ++i) {
+        int j = i + (N - K) - 1;
+        ans = min(ans, A[j] - A[i]);
+    }
+
+    cout << ans << endl;
+
+    return 0;
+}

@@ -1,0 +1,28 @@
+import math
+
+N = int(input())
+X, Y = 0, 0
+result = 0.0
+
+# Store all points
+points = []
+for _ in range(N):
+    x, y = map(int, input().split())
+    points.append((x, y))
+
+# Start from origin (0,0)
+current_x, current_y = 0, 0
+
+# Go to each point in order
+for x, y in points:
+    dx = current_x - x
+    dy = current_y - y
+    result += math.sqrt(dx * dx + dy * dy)
+    current_x, current_y = x, y
+
+# Return to origin
+dx = current_x - 0
+dy = current_y - 0
+result += math.sqrt(dx * dx + dy * dy)
+
+print(result)

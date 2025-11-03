@@ -1,0 +1,33 @@
+from collections import defaultdict, deque
+
+def main():
+    n, m = map(int, input().split())
+    graph = defaultdict(list)
+    
+    for _ in range(m):
+        a, b = map(int, input().split())
+        graph[a].append(b)
+    
+    # BFS from vertex 1 to find shortest cycle containing vertex 1
+    # We want the shortest path from 1 back to 1 (cycle)
+    INF = float('inf')
+    dist = [INF] * (n + 1)  # 1-indexed
+    dist[1] = 0
+    q = deque([1])
+    
+    while q:
+        u = q.popleft()
+        for v in graph[u]:
+            if dist[v] == INF:  # Not visited yet
+                dist[v] = dist[u] + 1
+                q.append(v)
+            # If we can reach vertex 1 again, that forms a cycle
+            if v == 1:
+                print(dist[u] + 1)
+                return
+    
+    # If we never returned above, no cycle containing vertex 1 was found
+    print(-1)
+
+if __name__ == "__main__":
+    main()

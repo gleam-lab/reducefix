@@ -1,0 +1,220 @@
+import sys
+from collections import deque
+
+def main():
+    H, W, Y = map(int, sys.stdin.readline().split())
+    
+    # Read the elevation matrix
+    A = []
+    for _ in range(H):
+        row = list(map(int, sys.stdin.readline().split()))
+        A.append(row)
+    
+    # Initialize result array for each year
+    result = [H * W] * Y  # Initially full area, will decrease over time
+    
+    # We'll simulate the flooding using BFS from the borders, but in reverse order of sea level rise
+    # Instead of simulating each year forward, we process cells by increasing elevation
+    # and determine in which year they get submerged.
+    
+    # Priority queue (min-heap) to process cells by elevation
+    heap = []
+    
+    # Directions for adjacent cells (up, down, left, right)
+    directions = [(-1,0), (1,0), (0,-1), (0,1)]
+    
+    # Mark which cells are already in the heap or processed
+    visited = [[False] * W for _ in range(H)]
+    
+    # Add all border cells to the heap
+    for i in range(H):
+        for j in range(W):
+            if i == 0 or i == H-1 or j == 0 or j == W-1:
+                heap.append((A[i][j], i, j))
+                visited[i][j] = True
+    
+    # Heapify the list
+    import heapq
+    heapq.heapify(heap)
+    
+    # Process cells in order of increasing elevation
+    # Each cell will be flooded at sea_level = min(elevation, max_from_border_path)
+    # But since we propagate from borders with max(min_elevation_along_path), we use Dijkstra-like approach
+    current_area = H * W
+    
+    while heap:
+        elev, i, j = heapq.heappop(heap)
+        
+        # This cell gets flooded when sea level reaches 'elev'
+        # So for all years >= elev, this cell is underwater
+        if elev <= Y:
+            # All years from elev onward lose this cell
+            for year in range(elev - 1, Y):
+                result[year] -= 1
+        
+        # Propagate to neighbors
+        for di, dj in directions:
+            ni, nj = i + di, j + dj
+            if 0 <= ni < H and 0 <= nj < W and not visited[ni][nj]:
+                visited[ni][nj] = True
+                # The water can reach this cell at level = max(A[ni][nj], elev)
+                # But actually, per problem: a cell sinks when sea level >= its elevation AND connected to sea
+                # However, our propagation ensures connectivity. So we push with effective elevation
+                # Actually, we should push with max(elev, A[ni][nj])? 
+                # No — the rule is: a cell sinks when sea level >= its own elevation, provided it's connected.
+                # So we just need to ensure we process cells in order of when they become reachable and their elevation.
+                # But to maintain correct ordering, we must consider that water at level L can flood any adjacent cell with elevation <= L.
+                # Therefore, we can think: the time when water reaches a cell is max(path_max, A[cell])
+                # However, simpler: we know water spreads to adjacent cells with elevation <= current sea level.
+                # So we can do a multi-source Dijkstra where "distance" is the minimum sea level at which the cell gets flooded.
+                # That value is max(flood_level_of_parent, A[cell])? Not exactly.
+                # Actually, once water reaches a cell at sea level L, then any adjacent cell with elevation <= L will also flood.
+                # So we want to assign to each cell the minimum sea level at which it becomes flooded.
+                new_level = max(elev, A[ni][nj])
+                heapq.heappush(heap, (new_level, ni, nj))
+    
+    # However, the above logic has an issue: we're using max(elev, A[ni][nj]), but actually,
+    # if A[ni][nj] <= elev, then it floods immediately at level elev.
+    # If A[ni][nj] > elev, then it will flood only when sea level reaches A[ni][nj].
+    # So the flooding level for neighbor is max(elev, A[ni][nj]) only if we're propagating the "waterfront",
+    # but actually the true flooding level for a cell is A[ni][nj] — because it sinks when sea level >= A[ni][nj],
+    # as long as it's connected. And our BFS ensures connectivity.
+    # So we don't need to take max — we can just use A[ni][nj] as the key?
+    # But then we might process a high-elevation interior cell too early if there's a low-elevation path.
+    # Actually, no: the cell won't flood until the water can reach it AND the sea level is >= its elevation.
+    # The water can reach it when the entire path from border has been flooded up to some level.
+    # The limiting factor is the highest elevation along the path from border? No — water flows over lower areas.
+    # Actually, water can flow through any cell with elevation <= current sea level.
+    # So a cell is flooded at sea level = max( min_sea_level_to_reach_it, A[cell] )
+    # But min_sea_level_to_reach it is the minimum L such that there's a path from border where all cells on path have elevation <= L.
+    # That is equivalent to the maximum elevation along the minimal-maximum-elevation path from border — classic "bottleneck shortest path".
+    # So we need to compute for each cell the minimum value of the maximum elevation along any path from border.
+    # Then the cell floods at sea level = max( bottleneck_value, A[cell] )? No.
+    # Actually, once the bottleneck value is L, then at sea level L, water can reach this cell.
+    # Then, if A[cell] <= L, it floods at level L.
+    # If A[cell] > L, then even though water reaches it at level L, it doesn't sink until sea level >= A[cell].
+    # So flooding level = max(L, A[cell]) is incorrect — it's actually max(L, A[cell]) only if we define L differently.
+    # Let F(cell) = minimum over all paths P from border to cell of (max_{u in P} A[u])
+    # Then the water can reach the cell when sea level >= F(cell).
+    # The cell sinks when sea level >= A[cell] AND water has reached it.
+    # So overall, cell sinks at sea level = max(F(cell), A[cell])? No — wait:
+    # It sinks when both conditions hold: connected to sea (which happens at sea level >= F(cell)) AND sea level >= A[cell].
+    # So it sinks at sea level = max(F(cell), A[cell])? Actually no: it sinks at the first sea level where both are true.
+    # That is: sea level >= max(F(cell), A[cell])? No — consider:
+    # Suppose F(cell)=5, A[cell]=10. Then at sea level 5, water reaches it but cell doesn't sink (10>5). At level 10, it sinks.
+    # So sinking level = max(F(cell), A[cell]) = 10.
+    # Suppose F(cell)=10, A[cell]=5. Then at level 10, water reaches it and 5<=10, so it sinks at level 10.
+    # So yes, sinking level = max(F(cell), A[cell]).
+    #
+    # But note: F(cell) is defined as the minimum over paths of the maximum elevation on the path.
+    # And we can compute F(cell) using Dijkstra-like algorithm with "distance" being the max elevation along path.
+    #
+    # However, in our case, we can simplify: since the cell sinks at level = max(F(cell), A[cell]),
+    # and F(cell) is at least the maximum of border elevation and path max, but we can compute it.
+    #
+    # Let's redefine:
+    #   flood_level[i][j] = minimum over all border-to-(i,j) paths of (maximum A[u][v] along the path)
+    # Then the cell (i,j) disappears at year = max(flood_level[i][j], A[i][j])
+    #
+    # But wait: is that correct?
+    # Example: cell has A[i][j]=8. There's a path from border with max elevation 6. Then F(cell)=6.
+    # At sea level 6, water reaches the cell. But since 8>6, it doesn't sink yet.
+    # At sea level 8, since water is already there (and still there), it sinks.
+    # So sinks at year 8 = max(6,8)=8.
+    #
+    # Another: A[i][j]=4, F(cell)=6. At year 6, water reaches it and 4<=6 → sinks at year 6 = max(6,4)=6.
+    #
+    # So yes, sinking year = max(F(i,j), A[i][j])
+    #
+    # But note: F(i,j) is computed as the minimum possible maximum elevation along any path from border.
+    #
+    # How to compute F(i,j)? Use Dijkstra with edge weight being max(current_max, neighbor_A).
+    #
+    # We initialize border cells: F(i,j) = A[i][j] ? No — for a border cell, the path is just itself, so F(i,j)=A[i][j].
+    # But actually, we can start from all border cells with initial F = A[i][j].
+    #
+    # Algorithm:
+    #   Let dist[i][j] = minimum possible maximum elevation along any path from border to (i,j)
+    #   Initialize: for all border cells, dist[i][j] = A[i][j], and add to heap.
+    #   For non-border, dist[i][j] = infinity.
+    #   While heap not empty:
+    #       pop cell (i,j) with smallest dist[i][j]
+    #       for each neighbor (ni,nj):
+    #           new_dist = max(dist[i][j], A[ni][nj])
+    #           if new_dist < dist[ni][nj]:
+    #               dist[ni][nj] = new_dist
+    #               push (new_dist, ni, nj)
+    #
+    # Then for each cell, sinking_year = max(dist[i][j], A[i][j]) = dist[i][j]? No — wait:
+    # dist[i][j] = max along path from border to (i,j), which includes A[i][j] at the end.
+    # Because new_dist = max(dist[i][j], A[ni][nj]), and when we go from (i,j) to (ni,nj), we include A[ni][nj].
+    # So dist[i][j] for any cell is at least A[i][j], and in fact >= A[i][j].
+    # Therefore, max(dist[i][j], A[i][j]) = dist[i][j].
+    #
+    # Is that true?
+    # Consider border cell: dist[i][j] = A[i][j] → max = A[i][j] = dist[i][j].
+    # Interior cell: dist[ni][nj] = max(dist[i][j], A[ni][nj]) ≥ A[ni][nj] → so max(dist[ni][nj], A[ni][nj]) = dist[ni][nj].
+    #
+    # Therefore, sinking year for cell (i,j) is dist[i][j].
+    #
+    # But let's verify with example:
+    #   Cell with A=8, path max=6 → then dist would be max(6,8)=8 → sinks at year 8. Correct.
+    #   But wait: if the path to it has max 6, but the cell itself is 8, then when we traverse to it, new_dist = max(6,8)=8.
+    #   So dist[i][j]=8.
+    #   Similarly, if A=4 and path max=6, then new_dist = max(6,4)=6.
+    #   So in both cases, dist[i][j] captures the correct sinking year.
+    #
+    # Therefore, we only need to compute dist[i][j] as described, and that is the year when the cell sinks.
+    #
+    # Steps:
+    #   Use Dijkstra variant to compute for each cell the minimum possible maximum elevation along any path from border.
+    #   This value is the year when the cell sinks.
+    #   Then, for each year y from 1 to Y, the remaining area is total cells minus number of cells with sinking_year <= y.
+    #
+    
+    # Reset visited and use proper Dijkstra
+    INF = 10**9
+    dist = [[INF] * W for _ in range(H)]
+    heap = []
+    
+    # Directions
+    dirs = [(0,1), (0,-1), (1,0), (-1,0)]
+    
+    # Initialize border cells
+    for i in range(H):
+        for j in range(W):
+            if i == 0 or i == H-1 or j == 0 or j == W-1:
+                dist[i][j] = A[i][j]
+                heapq.heappush(heap, (A[i][j], i, j))
+    
+    # Dijkstra for bottleneck shortest path
+    while heap:
+        d, i, j = heapq.heappop(heap)
+        if d != dist[i][j]:
+            continue
+        for di, dj in dirs:
+            ni, nj = i + di, j + dj
+            if 0 <= ni < H and 0 <= nj < W:
+                new_dist = max(d, A[ni][nj])
+                if new_dist < dist[ni][nj]:
+                    dist[ni][nj] = new_dist
+                    heapq.heappush(heap, (new_dist, ni, nj))
+    
+    # Count how many cells sink at each year
+    sink_count = [0] * (10**5 + 2)  # index up to 10^5+1
+    
+    for i in range(H):
+        for j in range(W):
+            year_sank = dist[i][j]
+            if year_sank <= 10**5:
+                sink_count[year_sank] += 1
+    
+    # Now compute remaining area for each year
+    total_cells = H * W
+    remaining = total_cells
+    for year in range(1, Y+1):
+        remaining -= sink_count[year]
+        print(remaining)
+
+if __name__ == '__main__':
+    main()

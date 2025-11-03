@@ -1,0 +1,78 @@
+```python
+import sys
+
+def solve():
+    input = sys.stdin.read
+    data = input().split()
+    
+    N = int(data[0])
+    M = int(data[1])
+    K = int(data[2])
+    A = list(map(int, data[3:3+N]))
+    
+    total_votes = sum(A)
+    remaining_votes = K - total_votes
+    
+    # If M == N, everyone is elected regardless
+    if M == N:
+        print(' '.join(['0'] * N))
+        return
+    
+    # Create list of (votes, original_index) and sort by votes descending
+    candidates = [(A[i], i) for i in range(N)]
+    candidates.sort(reverse=True)
+    
+    # Result array
+    result = [-1] * N
+    
+    # For each candidate, calculate minimum additional votes needed
+    for votes, orig_idx in candidates:
+        # We need to ensure that at most M-1 candidates have more votes than us
+        
+        # Try binary search on the number of additional votes needed
+        left, right = 0, remaining_votes + 1
+        answer = -1
+        
+        while left < right:
+            mid = (left + right) // 2
+            my_final_votes = votes + mid
+            
+            # Count how many candidates can have more votes than me
+            # We assume other candidates get as many votes as possible to beat me
+            excess_votes = remaining_votes - mid  # Votes available for others
+            count_beating_me = 0
+            effective_excess = excess_votes
+            
+            # Check each other candidate
+            for other_votes, other_idx in candidates:
+                if other_idx == orig_idx:
+                    continue
+                    
+                # How many votes can this candidate get?
+                # They can get at most min(other_votes + excess_votes_allocated, my_final_votes)
+                # But we want to maximize the number of candidates beating me
+                if other_votes >= my_final_votes:
+                    count_beating_me += 1
+                else:
+                    # This candidate needs (my_final_votes - other_votes) votes to tie or beat me
+                    needed = my_final_votes - other_votes
+                    if effective_excess >= needed:
+                        count_beating_me += 1
+                        effective_excess -= needed
+            
+            # If fewer than M candidates can beat me, I'm safe
+            if count_beating_me < M:
+                answer = mid
+                right = mid
+            else:
+                left = mid + 1
+        
+        if answer != -1 and answer <= remaining_votes:
+            result[orig_idx] = answer
+        else:
+            result[orig_idx] = -1
+    
+    print(' '.join(map(str, result)))
+
+solve()
+```

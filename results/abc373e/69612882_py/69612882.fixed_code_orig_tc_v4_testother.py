@@ -1,0 +1,72 @@
+N, M, K = map(int, input().split())
+A = list(map(int, input().split()))
+
+total_votes = sum(A)
+remaining_votes = K - total_votes
+
+# If M == N, everyone is elected
+if M == N:
+    print(*[0] * N)
+    exit()
+
+# Create list of (votes, original_index) and sort in descending order
+candidates = [(A[i], i) for i in range(N)]
+candidates.sort(reverse=True)
+
+# We need to ensure that candidate i has at most M-1 candidates with more votes
+# For each candidate, we want to find the minimum additional votes needed
+result = [0] * N
+
+for orig_idx in range(N):
+    current_votes = A[orig_idx]
+    
+    # Count how many candidates currently have more votes than this candidate
+    stronger_count = 0
+    for votes, idx in candidates:
+        if votes > current_votes:
+            stronger_count += 1
+    
+    # If already has less than M candidates with more votes, no additional votes needed
+    if stronger_count < M:
+        result[orig_idx] = 0
+        continue
+    
+    # We need to surpass at least (stronger_count - M + 1) candidates
+    # Find the vote count of the (M-1)th strongest candidate after we improve
+    # We need to have at most M-1 candidates with more votes than us
+    
+    # Create a temporary array of votes
+    temp_votes = A[:]
+    
+    # Binary search on the number of additional votes needed
+    left, right = 0, remaining_votes + 1
+    answer = -1
+    
+    while left <= right:
+        mid = (left + right) // 2
+        new_vote = current_votes + mid
+        
+        # Count how many candidates would have strictly more votes than us
+        # After we get 'mid' additional votes
+        stronger_after = 0
+        for i in range(N):
+            if i == orig_idx:
+                continue
+            # Other candidates can get at most their current votes + any remaining votes
+            # But to be conservative, we assume they don't get any more votes
+            # because we want to guarantee victory regardless of distribution
+            if A[i] > new_vote:
+                stronger_after += 1
+        
+        if stronger_after < M:
+            answer = mid
+            right = mid - 1
+        else:
+            left = mid + 1
+    
+    if answer == -1 or answer > remaining_votes:
+        result[orig_idx] = -1
+    else:
+        result[orig_idx] = answer
+
+print(*result)

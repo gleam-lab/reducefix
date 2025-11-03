@@ -1,0 +1,65 @@
+n, k = map(int, input().split())
+a = list(map(int, input().split()))
+
+# We need to remove exactly K elements, so we keep (n - k) elements.
+# To minimize (max(B) - min(B)), we should choose a contiguous segment of (n-k) elements
+# from the sorted array, but note: we must preserve original order? 
+# However, since we can choose any K elements to remove, the optimal set of remaining elements
+# will be a subsequence of the original array. But to minimize the range (max - min),
+# it's best to have values close together. So idea:
+# Sort the array along with original indices, then consider all contiguous segments of length (n-k)
+# in the sorted array and check if the corresponding indices in the original array can form a valid
+# subsequence (i.e., appear in increasing order). However, that would be complex.
+
+# Alternate approach:
+# Since we are allowed to remove arbitrary elements, the only constraint is that the remaining elements
+# stay in their original order. Therefore, the resulting sequence B is a subsequence of A of length (n-k).
+# We want to minimize (max(B) - min(B)).
+
+# Key insight: The optimal solution will have B's minimum and maximum come from some pair in A.
+# We can try to fix the smallest and largest values in B. But better:
+# Sort the array, and notice that the optimal B will consist of values in a small interval.
+# So: sort A with indices, then slide a window of size (n-k) over the sorted array.
+# For each window [L, R], we get candidate min = a_sorted[L], max = a_sorted[R], range = a_sorted[R] - a_sorted[L].
+# But we must check whether the elements in this window can be selected while preserving original order.
+# That is, do the original indices of these (n-k) elements form an increasing sequence?
+
+# Actually, even simpler: since we can remove arbitrary elements, as long as there exists a subsequence
+# of length (n-k) whose values lie in [x, y], then range y-x is achievable.
+# But checking existence for each window is expensive.
+
+# Better insight: Instead of checking feasibility, we can use two pointers or sliding window on sorted values,
+# and for each left index, find the minimal right such that the number of elements in [left, right] is at least (n-k),
+# AND they can form a subsequence of length (n-k) in the original array.
+
+# But note: if we select a set S of (n-k) elements with values in sorted order, we can always pick them in increasing
+# index order to maintain the original order. So the only requirement is that the indices of the selected elements
+# are increasing. But if we choose any set of (n-k) elements, we can always arrange to pick them in increasing index
+# order — because we're just removing others. So any subset of (n-k) elements can be made into a valid subsequence
+# simply by keeping them in the order they appear.
+
+# Therefore, the only constraint is that we can pick (n-k) elements whose values span a small range.
+
+# So algorithm:
+# 1. Pair each element with its index.
+# 2. Sort by value.
+# 3. Use a sliding window of length (n-k) over the sorted array.
+# 4. For each contiguous block of (n-k) elements in the sorted array, compute the difference between last and first.
+# 5. Answer is the minimum such difference.
+
+# Why contiguous in sorted order? Because if you skip some values, you could potentially reduce the range
+# by including a middle value and excluding an extreme one. The classic "minimum range covering k elements"
+# problem.
+
+# Therefore:
+if n - k == 0:
+    print(0)
+else:
+    a_sorted = sorted(a)
+    min_range = float('inf')
+    m = n - k
+    for i in range(len(a_sorted) - m + 1):
+        current_range = a_sorted[i + m - 1] - a_sorted[i]
+        if current_range < min_range:
+            min_range = current_range
+    print(min_range)

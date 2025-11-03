@@ -1,0 +1,49 @@
+import sys
+import heapq
+
+def main():
+    H, W, Y = map(int, sys.stdin.readline().split())
+    
+    # Read the elevation matrix
+    A = []
+    for _ in range(H):
+        row = list(map(int, sys.stdin.readline().split()))
+        A.append(row)
+    
+    # Initialize priority queue with border cells
+    heap = []
+    visited = [[False] * W for _ in range(H)]
+    
+    # Add all border cells to the heap
+    for i in range(H):
+        for j in range(W):
+            if i == 0 or i == H-1 or j == 0 or j == W-1:
+                heapq.heappush(heap, (A[i][j], i, j))
+                visited[i][j] = True
+    
+    # Count of remaining cells above sea level
+    remaining = H * W
+    results = []
+    
+    # Process cells in order of increasing elevation
+    for year in range(1, Y + 1):
+        # Remove all cells with elevation <= current sea level (year)
+        while heap and heap[0][0] <= year:
+            elev, i, j = heapq.heappop(heap)
+            remaining -= 1
+            
+            # Check all 4 adjacent cells
+            for di, dj in [(0, 1), (0, -1), (1, 0), (-1, 0)]:
+                ni, nj = i + di, j + dj
+                if 0 <= ni < H and 0 <= nj < W and not visited[ni][nj]:
+                    visited[ni][nj] = True
+                    heapq.heappush(heap, (A[ni][nj], ni, nj))
+        
+        results.append(remaining)
+    
+    # Output results
+    for result in results:
+        print(result)
+
+if __name__ == "__main__":
+    main()

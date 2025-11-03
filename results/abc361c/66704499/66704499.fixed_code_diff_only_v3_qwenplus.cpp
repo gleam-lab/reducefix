@@ -1,0 +1,35 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    int n, k;
+    cin >> n >> k;
+    
+    vector<int> a(n);
+    for (int i = 0; i < n; i++) {
+        cin >> a[i];
+    }
+    
+    sort(a.begin(), a.end());
+    
+    // We need to remove exactly K elements
+    // The remaining sequence will have n-k elements
+    // We want to minimize (max - min) of the remaining elements
+    // Since the array is sorted, we can consider all possible contiguous subarrays of length n-k
+    // That means we can take a window of size n-k and slide it from left to right
+    
+    int min_diff = a[n - 1] - a[0]; // Initialize with worst case
+    
+    // Try all possible windows of length (n-k)
+    // Window starting at i will end at i + (n-k) - 1
+    for (int i = 0; i <= k; i++) {
+        int j = i + (n - k) - 1;
+        if (j < n) {
+            min_diff = min(min_diff, a[j] - a[i]);
+        }
+    }
+    
+    cout << min_diff << endl;
+    
+    return 0;
+}

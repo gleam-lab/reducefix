@@ -1,0 +1,129 @@
+```python
+import sys
+from collections import deque
+
+def main():
+    H, W, Y = map(int, sys.stdin.readline().split())
+    
+    # Read elevation matrix
+    A = []
+    for _ in range(H):
+        row = list(map(int, sys.stdin.readline().split()))
+        A.append(row)
+    
+    # Directions for adjacent cells (up, down, left, right)
+    directions = [(-1, 0), (1, 0), (0, -1), (0, 1)]
+    
+    # Initialize result array for each year
+    result = [H * W] * Y  # Initially full area, will decrease over time
+    
+    # Create list of all cells with their elevations
+    cells = []
+    for i in range(H):
+        for j in range(W):
+            cells.append((A[i][j], i, j))
+    
+    # Sort cells by elevation in ascending order
+    cells.sort()
+    
+    # Track which cells are submerged
+    submerged = [[False] * W for _ in range(H)]
+    
+    # Use BFS to simulate flooding from the edges inward
+    queue = deque()
+    
+    # First, mark all border cells that are <= current sea level as submerged
+    # We'll process year by year, but use sorted cells for efficiency
+    
+    cell_idx = 0
+    for year in range(1, Y + 1):
+        sea_level = year
+        
+        # Add all cells with elevation <= sea_level that haven't been processed
+        while cell_idx < len(cells) and cells[cell_idx][0] <= sea_level:
+            elev, i, j = cells[cell_idx]
+            if not submerged[i][j]:
+                # Check if this cell is connected to the sea (on border or adjacent to submerged cell)
+                # For efficiency, we'll use the fact that water flows continuously
+                # So we add it to queue for BFS flooding
+                queue.append((i, j))
+                submerged[i][j] = True
+                result[year-1] -= 1
+            cell_idx += 1
+        
+        # Propagate flooding using BFS from newly submerged cells
+        # But we need to ensure connectivity to the sea
+        # Let's rework: instead, we do a multi-source BFS starting from all border cells
+        # However, the above approach has issues with connectivity
+        
+    # Let's change strategy: simulate flooding properly with connectivity
+    
+    # Reset
+    submerged = [[False] * W for _ in range(H)]
+    queue = deque()
+    
+    # Start with all border cells that can be flooded at appropriate times
+    # We'll use event-based simulation
+    
+    # Instead, let's do this: for each year, flood everything that's connected to sea and <= sea level
+    # But that would be too slow O(Y*H*W)
+    
+    # Better approach: sort all cells by elevation, and use union-find or BFS from borders with priority
+    
+    # Correct approach: use Dijkstra-like algorithm where "time to flood" is determined by 
+    # maximum elevation along path from border
+    
+    # For each cell, the time it gets flooded is the minimum value T such that 
+    # there exists a path from border to cell where all elevations on path are <= T
+    # And T >= cell's elevation
+    
+    # So effective flood time = max(cell_elevation, min_max_path_value_from_border)
+    
+    # Initialize flood_time for each cell
+    flood_time = [[float('inf')] * W for _ in range(H)]
+    pq = []
+    
+    # All border cells can be reached directly from sea
+    for i in range(H):
+        for j in range(W):
+            if i == 0 or i == H-1 or j == 0 or j == W-1:
+                flood_time[i][j] = A[i][j]
+                pq.append((A[i][j], i, j))
+    
+    # Heapq for Dijkstra variant
+    import heapq
+    heapq.heapify(pq)
+    
+    while pq:
+        t, i, j = heapq.heappop(pq)
+        if t > flood_time[i][j]:
+            continue
+            
+        for di, dj in directions:
+            ni, nj = i + di, j + dj
+            if 0 <= ni < H and 0 <= nj < W:
+                # New time is max of current path time and neighbor's elevation
+                new_time = max(t, A[ni][nj])
+                if new_time < flood_time[ni][nj]:
+                    flood_time[ni][nj] = new_time
+                    heapq.heappush(pq, (new_time, ni, nj))
+    
+    # Count how many cells remain at each year
+    cnt = [0] * (10**5 + 2)  # up to max possible flood time
+    
+    total_cells = H * W
+    for i in range(H):
+        for j in range(W):
+            t = flood_time[i][j]
+            cnt[t] += 1
+    
+    # Cumulative sum of flooded cells
+    flooded_so_far = 0
+    for year in range(1, Y + 1):
+        if year < len(cnt):
+            flooded_so_far += cnt[year]
+        print(total_cells - flooded_so_far)
+
+if __name__ == '__main__':
+    main()
+```

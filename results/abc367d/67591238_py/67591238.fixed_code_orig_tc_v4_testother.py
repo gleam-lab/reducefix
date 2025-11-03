@@ -1,0 +1,21 @@
+from collections import defaultdict
+
+N, M = map(int, input().split())
+A = list(map(int, input().split()))
+
+# 累積和
+cum = [0] * (N + 1)
+for i in range(N):
+    cum[i + 1] = cum[i] + A[i]
+
+# mod M の値の出現回数
+count_mod = defaultdict(int)
+answer = 0
+
+# 各累積和のmodを計算し、同じmodを持つものとのペアをカウント
+for val in cum:
+    mod = val % M
+    answer += count_mod[mod]
+    count_mod[mod] += 1
+
+print(answer)

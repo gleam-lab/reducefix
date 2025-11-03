@@ -1,0 +1,19 @@
+import math
+
+N = int(input())
+x, y = 0, 0
+total_cost = 0.0
+
+# Start from origin (0,0), visit all N points in order, then return to origin
+for _ in range(N):
+    X, Y = map(int, input().split())
+    # Distance from current point to next point
+    distance = math.sqrt((x - X)**2 + (y - Y)**2)
+    total_cost += distance
+    x, y = X, Y
+
+# Add distance from last point back to origin
+distance_to_origin = math.sqrt(x**2 + y**2)
+total_cost += distance_to_origin
+
+print(total_cost)

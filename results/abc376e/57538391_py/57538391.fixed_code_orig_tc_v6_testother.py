@@ -1,0 +1,49 @@
+import sys
+
+def solve():
+    n, k = map(int, input().split())
+    A = list(map(int, input().split()))
+    B = list(map(int, input().split()))
+    
+    # Create list of (A_i, B_i, index) and sort by A_i
+    items = [(A[i], B[i], i) for i in range(n)]
+    items.sort()
+    
+    # We'll try each possible maximum A_i value
+    # For a fixed max_A = items[i][0], we can only use items from 0 to i
+    # We want to choose k items from [0, i] with minimum sum of B_i
+    # Use a min-heap to maintain the k smallest B values
+    
+    import heapq
+    heap = []
+    current_sum = 0
+    best = float('inf')
+    
+    for i in range(n):
+        a_val, b_val, idx = items[i]
+        
+        # Add current item to our selection
+        if len(heap) < k:
+            heapq.heappush(heap, -b_val)  # negative because heapq is min-heap
+            current_sum += b_val
+        else:
+            # If current B value is smaller than the largest in our heap
+            if b_val < -heap[0]:
+                removed = -heapq.heappop(heap)
+                heapq.heappush(heap, -b_val)
+                current_sum = current_sum - removed + b_val
+            # Otherwise we can't include this item in optimal selection
+        
+        # If we have k items, update answer
+        if len(heap) == k:
+            best = min(best, a_val * current_sum)
+    
+    return best
+
+def main():
+    t = int(input())
+    for _ in range(t):
+        print(solve())
+
+if __name__ == "__main__":
+    main()

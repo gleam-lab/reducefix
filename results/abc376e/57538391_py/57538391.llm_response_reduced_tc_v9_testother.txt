@@ -1,0 +1,92 @@
+```python
+import sys
+
+def solve():
+    N, K = map(int, input().split())
+    A = list(map(int, input().split()))
+    B = list(map(int, input().split()))
+    
+    # Pair A_i and B_i and sort by A_i
+    items = sorted(zip(A, B), key=lambda x: x[0])
+    
+    # We want to minimize (max_A_in_S) * (sum_B_in_S)
+    # Idea: Fix the maximum A_i in the subset S, then choose up to K-1 smaller elements optimally
+    
+    min_cost = float('inf')
+    # Use a min-heap to maintain the smallest B values when selecting K elements
+    import heapq
+    
+    # Precompute suffix sums of B for largest K elements? 
+    # Instead: iterate from left to right, but fix max A as items[i][0] for i >= K-1
+    
+    # Try each possible maximum element at index i (must pick at least K elements from [0..i])
+    # So i must be at least K-1
+    if K == 0:
+        return 0
+        
+    # We'll try every item as candidate for max(A_i in S)
+    # For a fixed max at index i (so A_max = items[i][0]), we can choose any K-1 items from [0, i-1] plus this one
+    # To minimize sum(B), we should pick the K-1 smallest B values from [0, i], including possibly this one
+    
+    # But note: we must include at least one item with A_i = current max? Actually, we fix that the max is items[i][0]
+    # So we consider all indices j <= i. We need to select K items among 0..i such that the max A is items[i][0]
+    # This means we must include at least one item with A = items[i][0]? Not necessarily — but if no item with A=items[i][0] is included, then max < items[i][0]
+    # So to have max exactly = items[i][0], we must include at least one item with A_j = items[i][0]. However, since we are iterating i,
+    # we can enforce that we require the selected set to include index i (then max >= items[i][0]), but because sorted, max = items[i][0]
+    
+    # So strategy: for each i from K-1 to N-1:
+    #   Consider taking item i (so max A will be items[i][0])
+    #   Then we need to pick K-1 more items from indices 0 to i-1, minimizing sum of B
+    #   BUT: there might be multiple items with same A value — so we cannot just skip them
+    #   Actually, we can do: group by A? Or better: process all items with same A together?
+    
+    # Alternate idea: iterate i from 0 to N-1, maintain a max-heap (or min-heap for B) of size K
+    # However, known technique: use heap to keep K smallest B values among first i+1 items
+    
+    # Let's do:
+    #   Traverse i from 0 to N-1:
+    #       Add B_i to a max-heap (to keep track of largest B in current selection, so we can pop if needed)
+    #       Maintain sum of current heap (which holds up to K smallest B values seen so far)
+    #       If we have at least K items, then we can form a valid set ending at i -> cost = A[i] * (sum of K smallest B in [0..i])
+    #       Update min_cost
+    #
+    # Why is this correct?
+    #   At position i (after sorting by A), the maximum A in any subset chosen from [0..i] is A[i]
+    #   To minimize the product, for fixed A[i], we want to minimize sum of B -> take K smallest B values in [0..i]
+    #   So candidate cost = A[i] * (sum of K smallest B in [0..i])
+    #   And we try all i from K-1 to N-1 (since we need at least K items)
+    
+    # Use a max-heap to store the K smallest B values (we store negative values for max-heap behavior)
+    heap = []
+    b_sum = 0
+    
+    for i in range(N):
+        a_val, b_val = items[i]
+        
+        # Push current B value
+        if len(heap) < K:
+            heapq.heappush(heap, -b_val)
+            b_sum += b_val
+        else:
+            # If current B is smaller than the largest in our K smallest, replace it
+            if b_val < -heap[0]:
+                removed = -heapq.heappop(heap)
+                heapq.heappush(heap, -b_val)
+                b_sum = b_sum - removed + b_val
+            else:
+                # Do nothing, current B is not among the K smallest
+                pass
+        
+        # If we have collected at least K items, update answer
+        if len(heap) == K:
+            cost = a_val * b_sum
+            if cost < min_cost:
+                min_cost = cost
+                
+    return min_cost
+
+T = int(input())
+for _ in range(T):
+    result = solve()
+    print(result)
+```

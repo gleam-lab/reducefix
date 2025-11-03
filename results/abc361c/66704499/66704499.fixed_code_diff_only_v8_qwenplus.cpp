@@ -1,0 +1,34 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int nums[200000];
+
+int main() {
+    int n, k;
+    cin >> n >> k;
+    
+    for (int i = 0; i < n; i++) {
+        cin >> nums[i];
+    }
+    
+    sort(nums, nums + n);
+    
+    // We need to remove exactly K elements
+    // The remaining sequence will have n-k elements
+    // We want to minimize (max - min) of the remaining elements
+    // Since array is sorted, we can consider all possible contiguous subarrays of length n-k
+    // That means we choose a window of size (n-k) from the sorted array
+    
+    int min_diff = nums[n-1] - nums[0]; // worst case: keep everything
+    
+    // Try all possible windows of length (n-k)
+    // Window starting at i goes from i to i + (n-k) - 1
+    for (int i = 0; i + (n - k) - 1 < n; i++) {
+        int j = i + (n - k) - 1;
+        min_diff = min(min_diff, nums[j] - nums[i]);
+    }
+    
+    cout << min_diff << endl;
+    
+    return 0;
+}

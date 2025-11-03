@@ -1,0 +1,45 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+#define endl "\n"
+#define pb push_back
+#define mp make_pair
+#define ff first
+#define ss second 
+#define rep(i,x) for(int i=0;i<(int)(x);i++)
+#define all(v) v.begin(), v.end()
+#define int long long
+
+typedef long long ll;
+typedef pair<int, int> pii;
+
+void solve(){
+    int n, k;
+    cin >> n >> k;
+    vector<int> a(n);
+    rep(i, n) cin >> a[i];
+    
+    sort(all(a));
+    
+    int ans = a[n-1] - a[0];
+    
+    // We remove exactly k elements
+    // So we keep (n-k) elements
+    int keep = n - k;
+    
+    // Try all possible contiguous subarrays of length 'keep'
+    // in the sorted array
+    for (int i = 0; i + keep - 1 < n; i++) {
+        int j = i + keep - 1;
+        ans = min(ans, a[j] - a[i]);
+    }
+    
+    cout << ans << endl;
+}
+
+signed main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(NULL);
+    solve();
+    return 0;
+}

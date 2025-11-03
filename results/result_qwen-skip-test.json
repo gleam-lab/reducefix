@@ -1,0 +1,1062 @@
+{
+  "abc361c": {
+    "reducer_code": "import os\nimport subprocess\nfrom typing import List, Optional\nimport sys\n\ndef run_program(program_path: str, input_data: bytes) -> bytes:\n    result = subprocess.run(\n        [program_path], \n        input=input_data,\n        capture_output=True,\n        check=True,  \n        timeout=10   \n    )\n    return result.stdout\n\ndef create_input_bytes(subsequence: List[int]) -> bytes:\n    if not subsequence:\n        return b\"0 0\\n\\n\"\n    N = len(subsequence)\n    K = 0  # Since we're testing reduced cases, K is adjusted accordingly in reduce_input\n    line = f\"{N} {K}\\n\"\n    line += \" \".join(map(str, subsequence)) + \"\\n\"\n    return line.encode(\"utf-8\")\n\ndef test_interesting(subseq: List[int]) -> bool:\n    if not subseq:\n        return False\n    input_data = create_input_bytes(subseq)\n    try:\n        wa_output = run_program(\"./wa\", input_data)\n        ac_output = run_program(\"./ac\", input_data)\n        return (wa_output.strip() != ac_output.strip())\n    except Exception as e:\n        print(f\"[Error] 执行程序时出错: {e}\")\n        return False\n\ndef reduce_ddmin(original_seq: List[int]) -> List[int]:\n    N = len(original_seq)\n    current_indices = list(range(N))\n    granularity = 2\n\n    while len(current_indices) > 1:\n        print(f\"[Reduce] 当前下标集大小={len(current_indices)}: {current_indices}\")\n        print(f\"         尝试粒度: {granularity}\")\n        subset_size = max(1, len(current_indices) // granularity)\n        made_progress = False\n\n        # Try removing a block\n        start_idx = 0\n        print(f\"         1) 尝试『移除』大小约={subset_size} 的分块...\")\n        while start_idx < len(current_indices):\n            block = current_indices[start_idx:start_idx + subset_size]\n            candidate = [x for x in current_indices if x not in block]\n            if len(candidate) < 2:\n                start_idx += subset_size\n                continue\n            subseq = [original_seq[i] for i in candidate]\n            print(f\"            - 移除索引 {block} ... \", end=\"\")\n            if test_interesting(subseq):\n                print(f\"成功! 新下标集大小={len(candidate)}\")\n                current_indices = candidate\n                granularity = 2\n                made_progress = True\n                break\n            else:\n                print(\"失败\")\n            start_idx += subset_size\n        if made_progress:\n            continue\n\n        # Try keeping only a block\n        start_idx = 0\n        print(f\"         2) 尝试『只保留』大小约={subset_size} 的分块...\")\n        while start_idx < len(current_indices):\n            block = current_indices[start_idx:start_idx + subset_size]\n            candidate = block\n            if len(candidate) == len(current_indices) or len(candidate) < 2:\n                start_idx += subset_size\n                continue\n            subseq = [original_seq[i] for i in candidate]\n            print(f\"            - 只保留索引 {block} ... \", end=\"\")\n            if test_interesting(subseq):\n                print(f\"成功! 新下标集大小={len(candidate)}\")\n                current_indices = candidate\n                granularity = 2\n                made_progress = True\n                break\n            else:\n                print(\"失败\")\n            start_idx += subset_size\n        if made_progress:\n            continue\n\n        # Increase granularity\n        if granularity < len(current_indices):\n            new_gran = min(granularity * 2, len(current_indices))\n            print(f\"         -> 无进展，增大粒度至 {new_gran}\\n\")\n            granularity = new_gran\n        else:\n            print(\"\\n[Reduce] 已无法进一步缩减 —— 到达 1-minimal。\")\n            break\n\n    reduced_seq = [original_seq[i] for i in current_indices]\n    print(f\"\\n[Result] 缩减后序列为: {reduced_seq}\")\n    return reduced_seq\n\ndef reduce_input(input_file: str, output_file: str):\n    if not os.path.exists(input_file):\n        print(f\"[Error] 输入文件不存在: {input_file}\", file=sys.stderr)\n        return\n\n    with open(input_file, \"r\", encoding=\"utf-8\") as f:\n        lines = [line.strip() for line in f]\n\n    if not lines:\n        raise ValueError(\"输入文件为空\")\n\n    header = lines[0].split()\n    if len(header) != 2:\n        raise ValueError(f\"第一行应包含 N 和 K: {lines[0]}\")\n\n    N_str, K_str = header\n    if not N_str.isdigit() or not K_str.isdigit():\n        raise ValueError(f\"非数字的 N 或 K: {lines[0]}\")\n\n    N = int(N_str)\n    K = int(K_str)\n\n    if N <= K:\n        raise ValueError(f\"无效输入: K >= N\")\n\n    A_line = lines[1].split()\n    if len(A_line) != N:\n        raise ValueError(f\"数组 A 长度不匹配: 期望 {N}, 实际 {len(A_line)}\")\n\n    A = list(map(int, A_line))\n\n    reduced_seq = reduce_ddmin(A)\n\n    M = len(reduced_seq)\n    K_reduced = max(0, K - (N - M))  # Adjust K accordingly\n\n    output_lines = [f\"{M} {K_reduced}\", \" \".join(map(str, reduced_seq))]\n    output_bytes = \"\\n\".join(output_lines).encode(\"utf-8\")\n\n    with open(output_file, \"wb\") as f:\n        f.write(output_bytes)\n\n    print(f\"[Info] 缩减过程完成，结果已写入: {output_file}\")",
+    "results": [
+      {
+        "submission_id": "67213592",
+        "status_code": 404,
+        "message": "Reducer module not found for problem 'abc361C'. Looked for 'abc361c.reducer.py'.",
+        "original_size_bytes": null,
+        "reduced_size_bytes": null,
+        "failing_case_name": null,
+        "wa_code_path": "abc361c/67213592/wa_67213592.cpp",
+        "execution_time_seconds": 0.0
+      },
+      {
+        "submission_id": "67186860",
+        "status_code": 404,
+        "message": "Reducer module not found for problem 'abc361C'. Looked for 'abc361c.reducer.py'.",
+        "original_size_bytes": null,
+        "reduced_size_bytes": null,
+        "failing_case_name": null,
+        "wa_code_path": "abc361c/67186860/wa_67186860.cpp",
+        "execution_time_seconds": 0.0
+      },
+      {
+        "submission_id": "67182020",
+        "status_code": 404,
+        "message": "Reducer module not found for problem 'abc361C'. Looked for 'abc361c.reducer.py'.",
+        "original_size_bytes": null,
+        "reduced_size_bytes": null,
+        "failing_case_name": null,
+        "wa_code_path": "abc361c/67182020/wa_67182020.cpp",
+        "execution_time_seconds": 0.0
+      },
+      {
+        "submission_id": "67107765",
+        "status_code": 404,
+        "message": "Reducer module not found for problem 'abc361C'. Looked for 'abc361c.reducer.py'.",
+        "original_size_bytes": null,
+        "reduced_size_bytes": null,
+        "failing_case_name": null,
+        "wa_code_path": "abc361c/67107765/wa_67107765.cpp",
+        "execution_time_seconds": 0.0
+      },
+      {
+        "submission_id": "67095560",
+        "status_code": 404,
+        "message": "Reducer module not found for problem 'abc361C'. Looked for 'abc361c.reducer.py'.",
+        "original_size_bytes": null,
+        "reduced_size_bytes": null,
+        "failing_case_name": null,
+        "wa_code_path": "abc361c/67095560/wa_67095560.cpp",
+        "execution_time_seconds": 0.0
+      },
+      {
+        "submission_id": "67095547",
+        "status_code": 404,
+        "message": "Reducer module not found for problem 'abc361C'. Looked for 'abc361c.reducer.py'.",
+        "original_size_bytes": null,
+        "reduced_size_bytes": null,
+        "failing_case_name": null,
+        "wa_code_path": "abc361c/67095547/wa_67095547.cpp",
+        "execution_time_seconds": 0.0
+      },
+      {
+        "submission_id": "67030359",
+        "status_code": 404,
+        "message": "Reducer module not found for problem 'abc361C'. Looked for 'abc361c.reducer.py'.",
+        "original_size_bytes": null,
+        "reduced_size_bytes": null,
+        "failing_case_name": null,
+        "wa_code_path": "abc361c/67030359/wa_67030359.cpp",
+        "execution_time_seconds": 0.0
+      },
+      {
+        "submission_id": "67026479",
+        "status_code": 404,
+        "message": "Reducer module not found for problem 'abc361C'. Looked for 'abc361c.reducer.py'.",
+        "original_size_bytes": null,
+        "reduced_size_bytes": null,
+        "failing_case_name": null,
+        "wa_code_path": "abc361c/67026479/wa_67026479.cpp",
+        "execution_time_seconds": 0.0
+      },
+      {
+        "submission_id": "66894391",
+        "status_code": 404,
+        "message": "Reducer module not found for problem 'abc361C'. Looked for 'abc361c.reducer.py'.",
+        "original_size_bytes": null,
+        "reduced_size_bytes": null,
+        "failing_case_name": null,
+        "wa_code_path": "abc361c/66894391/wa_66894391.cpp",
+        "execution_time_seconds": 0.0
+      },
+      {
+        "submission_id": "66704499",
+        "status_code": 404,
+        "message": "Reducer module not found for problem 'abc361C'. Looked for 'abc361c.reducer.py'.",
+        "original_size_bytes": null,
+        "reduced_size_bytes": null,
+        "failing_case_name": null,
+        "wa_code_path": "abc361c/66704499/wa_66704499.cpp",
+        "execution_time_seconds": 0.0
+      }
+    ],
+    "problem_description": "Score : 250 points\n\n### Problem Statement\n\nYou are given a sequence A of length N.  \nFreely choose exactly K elements from A and remove them, then concatenate the remaining elements in their original order to form a new sequence B.  \nFind the minimum possible value of this: the maximum value of B minus the minimum value of B.\n\n### Constraints\n\n* All inputs are integers.\n* 1 \\le K < N \\le 2 \\times 10^5\n* 1 \\le A\\_i \\le 10^9\n\n---\n\n### Input\n\nThe input is given from Standard Input in the following format:\n\n```\nN K\nA_1 A_2 \\dots A_N\n\n```\n\n### Output\n\nPrint the answer as an integer.\n\n---"
+  },
+  "abc362d": {
+    "reducer_code": "# START --- abc362d/reducer.py --- START\nimport os\nimport subprocess\nfrom typing import List, Tuple, Optional, Set, Dict\nimport sys\n\ndef run_program(program_path: str, input_data: bytes) -> bytes:\n    result = subprocess.run(\n        [program_path], \n        input=input_data,\n        capture_output=True,\n        check=True,  \n        timeout=10   \n    )\n    return result.stdout\n\ndef parse_input(lines: List[str]) -> Tuple[int, List[int], List[Tuple[int, int, int]]]:\n    if len(lines) < 3:\n        raise ValueError(f\"输入行数不足，期望至少3行，实际{len(lines)}行\")\n    \n    n_m = lines[0].strip().split()\n    if len(n_m) != 2:\n        raise ValueError(f\"第一行应包含两个整数 N M，实际得到 {n_m}\")\n    \n    N = int(n_m[0])\n    M = int(n_m[1])\n    \n    A_line = lines[1].strip().split()\n    if len(A_line) != N:\n        raise ValueError(f\"A数组长度应为{N}，实际为{len(A_line)}\")\n    \n    A = [int(x) for x in A_line]\n    \n    edges = []\n    for i in range(1, M+1):\n        if i + 1 >= len(lines):\n            break\n        parts = lines[i+1].strip().split()\n        if len(parts) != 3:\n            continue\n        u, v, b = map(int, parts)\n        edges.append((u, v, b))\n    \n    return N, A, edges\n\ndef create_subgraph(N: int, A: List[int], edges: List[Tuple[int, int, int]], kept_nodes: Set[int]) -> Tuple[List[int], List[Tuple[int, int, int]]]:\n    sub_A = [A[i-1] for i in sorted(kept_nodes)]\n    \n    sub_edges = []\n    for u, v, b in edges:\n        if u in kept_nodes and v in kept_nodes:\n            new_u = sorted(kept_nodes).index(u) + 1\n            new_v = sorted(kept_nodes).index(v) + 1\n            sub_edges.append((new_u, new_v, b))\n    \n    return sub_A, sub_edges\n\ndef create_input_bytes(N: int, A: List[int], edges: List[Tuple[int, int, int]]) -> bytes:\n    lines = [f\"{N} {len(edges)}\\n\"]\n    lines.append(\" \".join(map(str, A)) + \"\\n\")\n    for u, v, b in edges:\n        lines.append(f\"{u} {v} {b}\\n\")\n    return \"\".join(lines).encode(\"utf-8\")\n\ndef test_interesting(original_N: int, original_A: List[int], original_edges: List[Tuple[int, int, int]], kept_nodes: Set[int]) -> bool:\n    if not kept_nodes:\n        return False\n    \n    # Create subgraph\n    sub_A, sub_edges = create_subgraph(original_N, original_A, original_edges, kept_nodes)\n    \n    # Generate input\n    input_data = create_input_bytes(len(sub_A), sub_A, sub_edges)\n    \n    try:\n        wa_output = run_program(\"./wa\", input_data)\n        ac_output = run_program(\"./ac\", input_data)\n        return (wa_output.strip() != ac_output.strip())\n    except Exception as e:\n        print(f\"[Error] 测试有趣性时发生错误: {e}\", file=sys.stderr)\n        return False\n\ndef reduce_graph_ddmin(original_N: int, original_A: List[int], original_edges: List[Tuple[int, int, int]]) -> Tuple[List[int], List[Tuple[int, int, int]]]:\n    all_nodes = set(range(1, original_N + 1))\n    \n    if not test_interesting(original_N, original_A, original_edges, all_nodes):\n        print(\"[Error] 初始输入并未造成 WA 与 AC 不一致，无法缩减。\")\n        return original_A, original_edges\n    \n    print(f\"[Info] 初始网格 N={original_N} 已确认导致输出差异，开始 ddmin 缩减...\\n\")\n    current_nodes = set(range(1, original_N + 1))\n    granularity = 2\n    \n    while len(current_nodes) > 1:\n        print(f\"[Reduce] 当前节点集大小={len(current_nodes)}: {sorted(current_nodes)}\")\n        print(f\"         尝试粒度: {granularity}\")\n        num_nodes = len(current_nodes)\n        subset_size = max(1, num_nodes // granularity)\n        \n        node_list = sorted(current_nodes)\n        made_progress = False\n        \n        def check_candidate(candidate_nodes: Set[int]) -> bool:\n            return test_interesting(original_N, original_A, original_edges, candidate_nodes)\n        \n        print(f\"         1) 尝试『移除』大小约={subset_size} 的分块...\")\n        start_idx = 0\n        while start_idx < num_nodes:\n            block = set(node_list[start_idx:start_idx + subset_size])\n            candidate_nodes = current_nodes - block\n            \n            if not candidate_nodes:\n                start_idx += subset_size\n                continue\n                \n            print(f\"            - 移除 {sorted(block)} ... \", end=\"\")\n            if check_candidate(candidate_nodes):\n                print(f\"成功! 新节点集大小={len(candidate_nodes)}\")\n                current_nodes = candidate_nodes\n                granularity = 2\n                made_progress = True\n                break\n            else:\n                print(\"失败\")\n                start_idx += subset_size\n        \n        if made_progress:\n            continue\n        \n        print(f\"         2) 尝试『只保留』大小约={subset_size} 的分块...\")\n        start_idx = 0\n        while start_idx < num_nodes:\n            block = set(node_list[start_idx:start_idx + subset_size])\n            candidate_nodes = block\n            \n            if len(candidate_nodes) == 0 or len(candidate_nodes) == num_nodes:\n                start_idx += subset_size\n                continue\n                \n            print(f\"            - 只保留 {sorted(block)} ... \", end=\"\")\n            if check_candidate(candidate_nodes):\n                print(f\"成功! 新节点集大小={len(candidate_nodes)}\")\n                current_nodes = candidate_nodes\n                granularity = 2\n                made_progress = True\n                break\n            else:\n                print(\"失败\")\n                start_idx += subset_size\n        \n        if made_progress:\n            continue\n        \n        if granularity < num_nodes:\n            new_gran = min(granularity * 2, num_nodes)\n            print(f\"         -> 无进展，增大粒度至 {new_gran}\\n\")\n            granularity = new_gran\n        else:\n            print(\"\\n[Reduce] 已无法进一步缩减 —— 到达 1-minimal。\")\n            break\n    \n    final_A, final_edges = create_subgraph(original_N, original_A, original_edges, current_nodes)\n    print(f\"\\n[Result] 缩减后图有 {len(final_A)} 个顶点\")\n    return final_A, final_edges\n\ndef reduce_input(input_file: str, output_file: str):\n    if not os.path.exists(input_file):\n        print(f\"[Error] 输入文件不存在: {input_file}\", file=sys.stderr)\n        return\n    \n    with open(input_file, \"r\", encoding=\"utf-8\") as f:\n        lines = [line.rstrip(\"\\n\") for line in f]\n    \n    if not lines:\n        raise ValueError(\"输入文件为空\")\n    \n    try:\n        N, A, edges = parse_input(lines)\n    except Exception as e:\n        raise ValueError(f\"解析输入时出错: {e}\")\n    \n    reduced_A, reduced_edges = reduce_graph_ddmin(N, A, edges)\n    \n    output_lines = [f\"{len(reduced_A)} {len(reduced_edges)}\\n\"]\n    output_lines.append(\" \".join(map(str, reduced_A)) + \"\\n\")\n    for u, v, b in reduced_edges:\n        output_lines.append(f\"{u} {v} {b}\\n\")\n    \n    output_bytes = \"\".join(output_lines).encode(\"utf-8\")\n    \n    with open(output_file, \"wb\") as f:\n        f.write(output_bytes)\n    \n    print(f\"[Info] 缩减过程完成，结果已写入: {output_file}\")\n# END --- abc362d/reducer.py --- END",
+    "results": [
+      {
+        "submission_id": "67088863",
+        "status_code": 404,
+        "message": "Reducer module not found for problem 'abc362D'. Looked for 'abc362d.reducer.py'.",
+        "original_size_bytes": null,
+        "reduced_size_bytes": null,
+        "failing_case_name": null,
+        "wa_code_path": "abc362d/67088863/wa_67088863.cpp",
+        "execution_time_seconds": 0.0
+      },
+      {
+        "submission_id": "67055151",
+        "status_code": 404,
+        "message": "Reducer module not found for problem 'abc362D'. Looked for 'abc362d.reducer.py'.",
+        "original_size_bytes": null,
+        "reduced_size_bytes": null,
+        "failing_case_name": null,
+        "wa_code_path": "abc362d/67055151/wa_67055151.cpp",
+        "execution_time_seconds": 0.01
+      },
+      {
+        "submission_id": "66901805",
+        "status_code": 404,
+        "message": "Reducer module not found for problem 'abc362D'. Looked for 'abc362d.reducer.py'.",
+        "original_size_bytes": null,
+        "reduced_size_bytes": null,
+        "failing_case_name": null,
+        "wa_code_path": "abc362d/66901805/wa_66901805.cpp",
+        "execution_time_seconds": 0.01
+      },
+      {
+        "submission_id": "66901765",
+        "status_code": 404,
+        "message": "Reducer module not found for problem 'abc362D'. Looked for 'abc362d.reducer.py'.",
+        "original_size_bytes": null,
+        "reduced_size_bytes": null,
+        "failing_case_name": null,
+        "wa_code_path": "abc362d/66901765/wa_66901765.cpp",
+        "execution_time_seconds": 0.01
+      },
+      {
+        "submission_id": "66824420",
+        "status_code": 404,
+        "message": "Reducer module not found for problem 'abc362D'. Looked for 'abc362d.reducer.py'.",
+        "original_size_bytes": null,
+        "reduced_size_bytes": null,
+        "failing_case_name": null,
+        "wa_code_path": "abc362d/66824420/wa_66824420.cpp",
+        "execution_time_seconds": 0.0
+      },
+      {
+        "submission_id": "66485839",
+        "status_code": 404,
+        "message": "Reducer module not found for problem 'abc362D'. Looked for 'abc362d.reducer.py'.",
+        "original_size_bytes": null,
+        "reduced_size_bytes": null,
+        "failing_case_name": null,
+        "wa_code_path": "abc362d/66485839/wa_66485839.cpp",
+        "execution_time_seconds": 0.0
+      },
+      {
+        "submission_id": "66485778",
+        "status_code": 404,
+        "message": "Reducer module not found for problem 'abc362D'. Looked for 'abc362d.reducer.py'.",
+        "original_size_bytes": null,
+        "reduced_size_bytes": null,
+        "failing_case_name": null,
+        "wa_code_path": "abc362d/66485778/wa_66485778.cpp",
+        "execution_time_seconds": 0.01
+      },
+      {
+        "submission_id": "66485717",
+        "status_code": 404,
+        "message": "Reducer module not found for problem 'abc362D'. Looked for 'abc362d.reducer.py'.",
+        "original_size_bytes": null,
+        "reduced_size_bytes": null,
+        "failing_case_name": null,
+        "wa_code_path": "abc362d/66485717/wa_66485717.cpp",
+        "execution_time_seconds": 0.01
+      },
+      {
+        "submission_id": "66246685",
+        "status_code": 404,
+        "message": "Reducer module not found for problem 'abc362D'. Looked for 'abc362d.reducer.py'.",
+        "original_size_bytes": null,
+        "reduced_size_bytes": null,
+        "failing_case_name": null,
+        "wa_code_path": "abc362d/66246685/wa_66246685.cpp",
+        "execution_time_seconds": 0.01
+      },
+      {
+        "submission_id": "65947516",
+        "status_code": 404,
+        "message": "Reducer module not found for problem 'abc362D'. Looked for 'abc362d.reducer.py'.",
+        "original_size_bytes": null,
+        "reduced_size_bytes": null,
+        "failing_case_name": null,
+        "wa_code_path": "abc362d/65947516/wa_65947516.cpp",
+        "execution_time_seconds": 0.0
+      }
+    ],
+    "problem_description": "Score : 425 points\n\n### Problem Statement\n\nYou are given a simple connected undirected graph with N vertices and M edges. Each vertex i\\,(1\\leq i \\leq N) has a weight A\\_i. Each edge j\\,(1\\leq j \\leq M) connects vertices U\\_j and V\\_j bidirectionally and has a weight B\\_j.\n\nThe weight of a path in this graph is defined as the sum of the weights of the vertices and edges that appear on the path.\n\nFor each i=2,3,\\dots,N, solve the following problem:\n\n* Find the minimum weight of a path from vertex 1 to vertex i.\n\n### Constraints\n\n* 2 \\leq N \\leq 2 \\times 10^5\n* N-1 \\leq M \\leq 2 \\times 10^5\n* 1 \\leq U\\_j < V\\_j \\leq N\n* (U\\_i, V\\_i) \\neq (U\\_j, V\\_j) if i \\neq j.\n* The graph is connected.\n* 0 \\leq A\\_i \\leq 10^9\n* 0 \\leq B\\_j \\leq 10^9\n* All input values are integers.\n\n---\n\n### Input\n\nThe input is given from Standard Input in the following format:\n\n```\nN M\nA_1 A_2 \\dots A_N\nU_1 V_1 B_1\nU_2 V_2 B_2\n\\vdots\nU_M V_M B_M\n\n```\n\n### Output\n\nPrint the answers for i=2,3,\\dots,N in a single line, separated by spaces.\n\n---"
+  },
+  "abc363e": {
+    "reducer_code": "import os\nimport subprocess\nfrom typing import List, Tuple, Set\nimport sys\n\ndef run_program(program_path: str, input_data: bytes) -> bytes:\n    result = subprocess.run(\n        [program_path], \n        input=input_data,\n        capture_output=True,\n        check=True,  \n        timeout=10   \n    )\n    return result.stdout\n\ndef create_input_bytes(H: int, W: int, Y: int, grid: List[List[int]], years: List[int]) -> bytes:\n    lines = []\n    lines.append(f\"{H} {W} {Y}\\n\")\n    for row in grid:\n        lines.append(\" \".join(map(str, row)) + \"\\n\")\n    return \"\".join(lines).encode(\"utf-8\")\n\ndef test_interesting(params: Tuple[int, int, int, List[List[int]], List[int]]) -> bool:\n    H, W, Y, grid, years = params\n    input_data = create_input_bytes(H, W, Y, grid, years)\n    try:\n        wa_output = run_program(\"./wa\", input_data)\n        ac_output = run_program(\"./ac\", input_data)\n        return (wa_output.strip() != ac_output.strip())\n    except Exception as e:\n        print(f\"[Error] Running programs: {e}\")\n        return False\n\ndef get_subgrid(grid: List[List[int]], kept_rows: List[int], kept_cols: List[int]) -> List[List[int]]:\n    subgrid = []\n    for i in kept_rows:\n        if i < 0 or i >= len(grid):\n            continue\n        row = []\n        for j in kept_cols:\n            if j < 0 or j >= len(grid[i]):\n                continue\n            row.append(grid[i][j])\n        if row:\n            subgrid.append(row)\n    return subgrid\n\ndef reduce_input(input_file: str, output_file: str):\n    if not os.path.exists(input_file):\n        print(f\"[Error] Input file not found: {input_file}\", file=sys.stderr)\n        return\n    \n    with open(input_file, \"r\", encoding=\"utf-8\") as f:\n        lines = [line.rstrip(\"\\n\") for line in f]\n    \n    if not lines:\n        raise ValueError(\"Input file is empty\")\n    \n    first_line = lines[0].split()\n    if len(first_line) != 3:\n        raise ValueError(\"First line must contain H W Y\")\n    \n    H, W, Y = map(int, first_line)\n    grid = []\n    for i in range(1, H + 1):\n        if i >= len(lines):\n            break\n        row = list(map(int, lines[i].split()))\n        if len(row) != W:\n            raise ValueError(f\"Row {i} has incorrect number of elements\")\n        grid.append(row)\n    \n    original_H = H\n    original_W = W\n    original_grid = [row[:] for row in grid]\n    original_years = list(range(1, Y + 1))\n    full_params = (H, W, Y, grid, original_years)\n    \n    if not test_interesting(full_params):\n        print(\"[Error] Initial input does not produce differing outputs\")\n        return\n    \n    print(f\"[Info] Starting ddmin reduction for H={H}, W={W}, Y={Y}\")\n    current_rows = list(range(H))\n    current_cols = list(range(W))\n    granularity = 2\n    \n    while True:\n        print(f\"[Reduce] Current rows: {len(current_rows)}, cols: {len(current_cols)} | Granularity: {granularity}\")\n        \n        # Try removing a block of rows\n        made_progress = False\n        chunk_size = max(1, len(current_rows) // granularity)\n        start_idx = 0\n        \n        print(f\"   1) Trying to remove row chunks (size ~{chunk_size})...\")\n        while start_idx < len(current_rows):\n            chunk = current_rows[start_idx:start_idx+chunk_size]\n            new_rows = [r for r in current_rows if r not in chunk]\n            reduced_grid = get_subgrid(original_grid, new_rows, current_cols)\n            if len(reduced_grid) == 0 or any(len(row) == 0 for row in reduced_grid):\n                start_idx += chunk_size\n                continue\n            \n            params = (len(reduced_grid), len(reduced_grid[0]), Y, reduced_grid, original_years)\n            if test_interesting(params):\n                print(f\"      Success! Removed rows {chunk}, new size: {len(reduced_grid)}x{len(reduced_grid[0])}\")\n                current_rows = new_rows\n                granularity = 2\n                made_progress = True\n                break\n            start_idx += chunk_size\n        \n        if made_progress:\n            continue\n        \n        # Try keeping only a block of rows\n        print(f\"   2) Trying to keep only row chunks (size ~{chunk_size})...\")\n        start_idx = 0\n        while start_idx < len(current_rows):\n            chunk = current_rows[start_idx:start_idx+chunk_size]\n            if not chunk or chunk == current_rows:\n                start_idx += chunk_size\n                continue\n            \n            params = (len(chunk), W, Y, get_subgrid(original_grid, chunk, current_cols), original_years)\n            if test_interesting(params):\n                print(f\"      Success! Keeping only rows {chunk}, new size: {len(chunk)}x{W}\")\n                current_rows = chunk\n                granularity = 2\n                made_progress = True\n                break\n            start_idx += chunk_size\n        \n        if made_progress:\n            continue\n        \n        # Try removing a block of columns\n        chunk_size = max(1, len(current_cols) // granularity)\n        print(f\"   3) Trying to remove column chunks (size ~{chunk_size})...\")\n        start_idx = 0\n        while start_idx < len(current_cols):\n            chunk = current_cols[start_idx:start_idx+chunk_size]\n            new_cols = [c for c in current_cols if c not in chunk]\n            reduced_grid = get_subgrid(original_grid, current_rows, new_cols)\n            if len(reduced_grid) == 0 or any(len(row) == 0 for row in reduced_grid):\n                start_idx += chunk_size\n                continue\n            \n            params = (H, len(reduced_grid[0]), Y, reduced_grid, original_years)\n            if test_interesting(params):\n                print(f\"      Success! Removed columns {chunk}, new size: {len(reduced_grid)}x{len(reduced_grid[0])}\")\n                current_cols = new_cols\n                granularity = 2\n                made_progress = True\n                break\n            start_idx += chunk_size\n        \n        if made_progress:\n            continue\n        \n        # Try keeping only a block of columns\n        print(f\"   4) Trying to keep only column chunks (size ~{chunk_size})...\")\n        start_idx = 0\n        while start_idx < len(current_cols):\n            chunk = current_cols[start_idx:start_idx+chunk_size]\n            if not chunk or chunk == current_cols:\n                start_idx += chunk_size\n                continue\n            \n            params = (H, len(chunk), Y, get_subgrid(original_grid, current_rows, chunk), original_years)\n            if test_interesting(params):\n                print(f\"      Success! Keeping only columns {chunk}, new size: {H}x{len(chunk)}\")\n                current_cols = chunk\n                granularity = 2\n                made_progress = True\n                break\n            start_idx += chunk_size\n        \n        if made_progress:\n            continue\n        \n        # Increase granularity if no progress\n        if granularity < max(len(current_rows), len(current_cols)):\n            granularity = min(granularity * 2, max(len(current_rows), len(current_cols)))\n            print(f\"   No progress. Increasing granularity to {granularity}\")\n        else:\n            print(\"[Info] Reached minimal input\")\n            break\n    \n    final_grid = get_subgrid(original_grid, current_rows, current_cols)\n    H_final = len(final_grid)\n    W_final = len(final_grid[0]) if final_grid else 0\n    Y_final = Y\n    \n    output_data = create_input_bytes(H_final, W_final, Y_final, final_grid, [])\n    \n    with open(output_file, \"wb\") as f:\n        f.write(output_data)\n    \n    print(f\"[Done] Reduced input written to {output_file}: {H_final}x{W_final} grid\")",
+    "results": [
+      {
+        "submission_id": "67112937",
+        "status_code": 404,
+        "message": "Reducer module not found for problem 'abc363E'. Looked for 'abc363e.reducer.py'.",
+        "original_size_bytes": null,
+        "reduced_size_bytes": null,
+        "failing_case_name": null,
+        "wa_code_path": "abc363e/67112937/wa_67112937.cpp",
+        "execution_time_seconds": 0.0
+      },
+      {
+        "submission_id": "67112907",
+        "status_code": 404,
+        "message": "Reducer module not found for problem 'abc363E'. Looked for 'abc363e.reducer.py'.",
+        "original_size_bytes": null,
+        "reduced_size_bytes": null,
+        "failing_case_name": null,
+        "wa_code_path": "abc363e/67112907/wa_67112907.cpp",
+        "execution_time_seconds": 0.0
+      },
+      {
+        "submission_id": "67012798",
+        "status_code": 404,
+        "message": "Reducer module not found for problem 'abc363E'. Looked for 'abc363e.reducer.py'.",
+        "original_size_bytes": null,
+        "reduced_size_bytes": null,
+        "failing_case_name": null,
+        "wa_code_path": "abc363e/67012798/wa_67012798.cpp",
+        "execution_time_seconds": 0.0
+      },
+      {
+        "submission_id": "66903504",
+        "status_code": 404,
+        "message": "Reducer module not found for problem 'abc363E'. Looked for 'abc363e.reducer.py'.",
+        "original_size_bytes": null,
+        "reduced_size_bytes": null,
+        "failing_case_name": null,
+        "wa_code_path": "abc363e/66903504/wa_66903504.cpp",
+        "execution_time_seconds": 0.0
+      },
+      {
+        "submission_id": "66903440",
+        "status_code": 404,
+        "message": "Reducer module not found for problem 'abc363E'. Looked for 'abc363e.reducer.py'.",
+        "original_size_bytes": null,
+        "reduced_size_bytes": null,
+        "failing_case_name": null,
+        "wa_code_path": "abc363e/66903440/wa_66903440.cpp",
+        "execution_time_seconds": 0.0
+      },
+      {
+        "submission_id": "66879782",
+        "status_code": 404,
+        "message": "Reducer module not found for problem 'abc363E'. Looked for 'abc363e.reducer.py'.",
+        "original_size_bytes": null,
+        "reduced_size_bytes": null,
+        "failing_case_name": null,
+        "wa_code_path": "abc363e/66879782/wa_66879782.cpp",
+        "execution_time_seconds": 0.0
+      },
+      {
+        "submission_id": "66867492",
+        "status_code": 404,
+        "message": "Reducer module not found for problem 'abc363E'. Looked for 'abc363e.reducer.py'.",
+        "original_size_bytes": null,
+        "reduced_size_bytes": null,
+        "failing_case_name": null,
+        "wa_code_path": "abc363e/66867492/wa_66867492.cpp",
+        "execution_time_seconds": 0.0
+      },
+      {
+        "submission_id": "66698060",
+        "status_code": 404,
+        "message": "Reducer module not found for problem 'abc363E'. Looked for 'abc363e.reducer.py'.",
+        "original_size_bytes": null,
+        "reduced_size_bytes": null,
+        "failing_case_name": null,
+        "wa_code_path": "abc363e/66698060/wa_66698060.cpp",
+        "execution_time_seconds": 0.0
+      },
+      {
+        "submission_id": "66451108",
+        "status_code": 404,
+        "message": "Reducer module not found for problem 'abc363E'. Looked for 'abc363e.reducer.py'.",
+        "original_size_bytes": null,
+        "reduced_size_bytes": null,
+        "failing_case_name": null,
+        "wa_code_path": "abc363e/66451108/wa_66451108.cpp",
+        "execution_time_seconds": 0.0
+      },
+      {
+        "submission_id": "66451062",
+        "status_code": 404,
+        "message": "Reducer module not found for problem 'abc363E'. Looked for 'abc363e.reducer.py'.",
+        "original_size_bytes": null,
+        "reduced_size_bytes": null,
+        "failing_case_name": null,
+        "wa_code_path": "abc363e/66451062/wa_66451062.cpp",
+        "execution_time_seconds": 0.0
+      }
+    ],
+    "problem_description": "Score : 450 points\n\n### Problem Statement\n\nThere is an island of size H \\times W, surrounded by the sea.  \nThe island is divided into H rows and W columns of 1 \\times 1 sections, and the elevation of the section at the i-th row from the top and the j-th column from the left (relative to the current sea level) is A\\_{i,j}.\n\nStarting from now, the sea level rises by 1 each year.  \nHere, a section that is vertically or horizontally adjacent to the sea or a section sunk into the sea and has an elevation **not greater than** the sea level will sink into the sea.  \nHere, when a section newly sinks into the sea, any vertically or horizontally adjacent section with an elevation not greater than the sea level will also sink into the sea simultaneously, and this process repeats for the newly sunk sections.\n\nFor each i=1,2,\\ldots, Y, find the area of the island that remains above sea level i years from now.\n\n### Constraints\n\n* 1 \\leq H, W \\leq 1000\n* 1 \\leq Y \\leq 10^5\n* 1 \\leq A\\_{i,j} \\leq 10^5\n* All input values are integers.\n\n---\n\n### Input\n\nThe input is given from Standard Input in the following format:\n\n```\nH W Y\nA_{1,1} A_{1,2} \\ldots A_{1,W}\nA_{2,1} A_{2,2} \\ldots A_{2,W}\n\\vdots\nA_{H,1} A_{H,2} \\ldots A_{H,W}\n\n```\n\n### Output\n\nPrint Y lines.\nThe i-th line (1 \\leq i \\leq Y) should contain the area of the island that remains above sea level i years from now.\n\n---"
+  },
+  "abc364d": {
+    "reducer_code": "import os\nimport subprocess\nfrom typing import List, Tuple, Optional\nimport sys\n\ndef run_program(program_path: str, input_data: bytes) -> bytes:\n    result = subprocess.run(\n        [program_path], \n        input=input_data,\n        capture_output=True,\n        check=True,  \n        timeout=10   \n    )\n    return result.stdout\n\ndef create_input_bytes(a_list: List[int], queries: List[Tuple[int, int]]) -> bytes:\n    if not a_list and not queries:\n        return b\"0 0\\n\\n\"\n    \n    lines = [f\"{len(a_list)} {len(queries)}\\n\"]\n    lines.append(\" \".join(map(str, a_list)) + \"\\n\")\n    for b_val, k_val in queries:\n        lines.append(f\"{b_val} {k_val}\\n\")\n    \n    return \"\".join(lines).encode(\"utf-8\")\n\ndef test_interesting(a_list: List[int], queries: List[Tuple[int, int]]) -> bool:\n    if not a_list or not queries:\n        return False\n    \n    input_data = create_input_bytes(a_list, queries)\n    try:\n        wa_output = run_program(\"./wa\", input_data)\n        ac_output = run_program(\"./ac\", input_data)\n        return (wa_output.strip() != ac_output.strip())\n    except:\n        return True  # Assume interesting on error\n\ndef reduce_queries_ddmin(original_queries: List[Tuple[int, int]], a_list: List[int]) -> List[Tuple[int, int]]:\n    if not test_interesting(a_list, original_queries):\n        print(\"[Error] 初始输入并未造成 WA 与 AC 不一致，无法缩减。\")\n        return original_queries\n    \n    print(f\"[Info] 初始查询数量={len(original_queries)}，开始 ddmin 缩减...\\n\")\n    current_indices = list(range(len(original_queries)))\n    granularity = 2\n    \n    while len(current_indices) >= 1:\n        print(f\"[Reduce] 当前查询索引数={len(current_indices)}: {current_indices}\")\n        print(f\"         尝试粒度: {granularity}\")\n        num_indices = len(current_indices)\n        subset_size = max(1, num_indices // granularity)\n        start_idx = 0\n        made_progress = False\n        \n        def check_candidate(candidate_indices: List[int]) -> bool:\n            if not candidate_indices:\n                return False\n            reduced_queries = [original_queries[i] for i in candidate_indices]\n            return test_interesting(a_list, reduced_queries)\n        \n        print(f\"         1) 尝试『移除』大小约={subset_size} 的分块...\")\n        while start_idx < num_indices:\n            block = current_indices[start_idx:start_idx + subset_size]\n            candidate_indices = [i for i in current_indices if i not in block]\n            print(f\"            - 移除 {block} ... \", end=\"\")\n            if check_candidate(candidate_indices):\n                print(f\"成功! 新查询索引数={len(candidate_indices)}\")\n                current_indices = candidate_indices\n                granularity = 2\n                made_progress = True\n                break\n            else:\n                print(\"失败\")\n                start_idx += subset_size\n        \n        if made_progress:\n            continue\n        \n        print(f\"         2) 尝试『只保留』大小约={subset_size} 的分块...\")\n        start_idx = 0\n        while start_idx < num_indices:\n            block = current_indices[start_idx:start_idx + subset_size]\n            candidate_indices = block\n            if len(candidate_indices) == 0 or len(candidate_indices) == num_indices:\n                start_idx += subset_size\n                continue\n            print(f\"            - 只保留 {block} ... \", end=\"\")\n            if check_candidate(candidate_indices):\n                print(f\"成功! 新查询索引数={len(candidate_indices)}\")\n                current_indices = candidate_indices\n                granularity = 2\n                made_progress = True\n                break\n            else:\n                print(\"失败\")\n            start_idx += subset_size\n        \n        if made_progress:\n            continue\n        \n        if granularity < num_indices:\n            new_gran = min(granularity * 2, num_indices)\n            print(f\"         -> 无进展，增大粒度至 {new_gran}\\n\")\n            granularity = new_gran\n        else:\n            print(\"\\n[Reduce] 已无法进一步缩减 —— 到达 1-minimal。\")\n            break\n    \n    reduced_queries = [original_queries[i] for i in current_indices]\n    print(f\"\\n[Result] 缩减后查询数={len(reduced_queries)}，保留下标: {current_indices}\")\n    return reduced_queries\n\ndef reduce_input(input_file: str, output_file: str):\n    if not os.path.exists(input_file):\n        print(f\"[Error] 输入文件不存在: {input_file}\", file=sys.stderr)\n        return\n    \n    with open(input_file, \"r\", encoding=\"utf-8\") as f:\n        lines = [line.rstrip(\"\\n\") for line in f]\n    \n    if not lines:\n        raise ValueError(\"输入文件为空\")\n    \n    header = lines[0].split()\n    if len(header) != 2:\n        raise ValueError(f\"首行格式错误: {header}\")\n    \n    N, Q = map(int, header)\n    a_line = lines[1].split()\n    \n    if len(a_line) != N:\n        raise ValueError(f\"A数组长度不匹配: 预期 {N}, 实际 {len(a_line)}\")\n    \n    a_list = list(map(int, a_line))\n    query_lines = lines[2:2+Q]\n    \n    if len(query_lines) != Q:\n        raise ValueError(f\"查询行数不匹配: 预期 {Q}, 实际 {len(query_lines)}\")\n    \n    queries = []\n    for line in query_lines:\n        parts = line.split()\n        if len(parts) != 2:\n            raise ValueError(f\"查询行格式错误: {line}\")\n        b_val, k_val = map(int, parts)\n        queries.append((b_val, k_val))\n    \n    reduced_queries = reduce_queries_ddmin(queries, a_list)\n    \n    output_bytes = create_input_bytes(a_list, reduced_queries)\n    \n    with open(output_file, \"wb\") as f:\n        f.write(output_bytes)\n    \n    print(f\"[Info] 缩减过程完成，结果已写入: {output_file}\")",
+    "results": [
+      {
+        "submission_id": "67175419",
+        "status_code": 404,
+        "message": "Reducer module not found for problem 'abc364D'. Looked for 'abc364d.reducer.py'.",
+        "original_size_bytes": null,
+        "reduced_size_bytes": null,
+        "failing_case_name": null,
+        "wa_code_path": "abc364d/67175419/wa_67175419.cpp",
+        "execution_time_seconds": 0.0
+      },
+      {
+        "submission_id": "66949397",
+        "status_code": 404,
+        "message": "Reducer module not found for problem 'abc364D'. Looked for 'abc364d.reducer.py'.",
+        "original_size_bytes": null,
+        "reduced_size_bytes": null,
+        "failing_case_name": null,
+        "wa_code_path": "abc364d/66949397/wa_66949397.cpp",
+        "execution_time_seconds": 0.0
+      },
+      {
+        "submission_id": "66687736",
+        "status_code": 404,
+        "message": "Reducer module not found for problem 'abc364D'. Looked for 'abc364d.reducer.py'.",
+        "original_size_bytes": null,
+        "reduced_size_bytes": null,
+        "failing_case_name": null,
+        "wa_code_path": "abc364d/66687736/wa_66687736.cpp",
+        "execution_time_seconds": 0.0
+      },
+      {
+        "submission_id": "66684832",
+        "status_code": 404,
+        "message": "Reducer module not found for problem 'abc364D'. Looked for 'abc364d.reducer.py'.",
+        "original_size_bytes": null,
+        "reduced_size_bytes": null,
+        "failing_case_name": null,
+        "wa_code_path": "abc364d/66684832/wa_66684832.cpp",
+        "execution_time_seconds": 0.0
+      },
+      {
+        "submission_id": "66684578",
+        "status_code": 404,
+        "message": "Reducer module not found for problem 'abc364D'. Looked for 'abc364d.reducer.py'.",
+        "original_size_bytes": null,
+        "reduced_size_bytes": null,
+        "failing_case_name": null,
+        "wa_code_path": "abc364d/66684578/wa_66684578.cpp",
+        "execution_time_seconds": 0.0
+      },
+      {
+        "submission_id": "65154558",
+        "status_code": 404,
+        "message": "Reducer module not found for problem 'abc364D'. Looked for 'abc364d.reducer.py'.",
+        "original_size_bytes": null,
+        "reduced_size_bytes": null,
+        "failing_case_name": null,
+        "wa_code_path": "abc364d/65154558/wa_65154558.cpp",
+        "execution_time_seconds": 0.0
+      },
+      {
+        "submission_id": "65154456",
+        "status_code": 404,
+        "message": "Reducer module not found for problem 'abc364D'. Looked for 'abc364d.reducer.py'.",
+        "original_size_bytes": null,
+        "reduced_size_bytes": null,
+        "failing_case_name": null,
+        "wa_code_path": "abc364d/65154456/wa_65154456.cpp",
+        "execution_time_seconds": 0.0
+      },
+      {
+        "submission_id": "65154395",
+        "status_code": 404,
+        "message": "Reducer module not found for problem 'abc364D'. Looked for 'abc364d.reducer.py'.",
+        "original_size_bytes": null,
+        "reduced_size_bytes": null,
+        "failing_case_name": null,
+        "wa_code_path": "abc364d/65154395/wa_65154395.cpp",
+        "execution_time_seconds": 0.01
+      },
+      {
+        "submission_id": "65154375",
+        "status_code": 404,
+        "message": "Reducer module not found for problem 'abc364D'. Looked for 'abc364d.reducer.py'.",
+        "original_size_bytes": null,
+        "reduced_size_bytes": null,
+        "failing_case_name": null,
+        "wa_code_path": "abc364d/65154375/wa_65154375.cpp",
+        "execution_time_seconds": 0.0
+      },
+      {
+        "submission_id": "65154236",
+        "status_code": 404,
+        "message": "Reducer module not found for problem 'abc364D'. Looked for 'abc364d.reducer.py'.",
+        "original_size_bytes": null,
+        "reduced_size_bytes": null,
+        "failing_case_name": null,
+        "wa_code_path": "abc364d/65154236/wa_65154236.cpp",
+        "execution_time_seconds": 0.0
+      }
+    ],
+    "problem_description": "Score : 425 points\n\n### Problem Statement\n\nThere are N+Q points A\\_1,\\dots,A\\_N,B\\_1,\\dots,B\\_Q on a number line, where point A\\_i has a coordinate a\\_i and point B\\_j has a coordinate b\\_j.\n\nFor each j=1,2,\\dots,Q, answer the following question:\n\n* Let X be the point among A\\_1,A\\_2,\\dots,A\\_N that is the k\\_j-th closest to point B\\_j. Find the distance between points X and B\\_j.\n  More formally, let d\\_i be the distance between points A\\_i and B\\_j. Sort (d\\_1,d\\_2,\\dots,d\\_N) in ascending order to get the sequence (d\\_1',d\\_2',\\dots,d\\_N'). Find d\\_{k\\_j}'.\n\n### Constraints\n\n* 1 \\leq N, Q \\leq 10^5\n* -10^8 \\leq a\\_i, b\\_j \\leq 10^8\n* 1 \\leq k\\_j \\leq N\n* All input values are integers.\n\n---\n\n### Input\n\nThe input is given from Standard Input in the following format:\n\n```\nN Q\na_1 a_2 \\dots a_N\nb_1 k_1\nb_2 k_2\n\\vdots\nb_Q k_Q\n\n```\n\n### Output\n\nPrint Q lines.\nThe l-th line (1 \\leq l \\leq Q) should contain the answer to the question for j=l as an integer.\n\n---"
+  },
+  "abc365d": {
+    "reducer_code": "import os\nimport subprocess\nfrom typing import List, Optional\nimport sys\n\ndef run_program(program_path: str, input_data: bytes) -> bytes:\n    result = subprocess.run(\n        [program_path], \n        input=input_data,\n        capture_output=True,\n        check=True,  \n        timeout=10   \n    )\n    return result.stdout\n\ndef create_input_bytes(s: str) -> bytes:\n    return f\"{len(s)}\\n{s}\\n\".encode(\"utf-8\")\n\ndef test_interesting(s: str) -> bool:\n    if not s:\n        return False\n    input_data = create_input_bytes(s)\n    try:\n        wa_output = run_program(\"./wa\", input_data)\n        ac_output = run_program(\"./ac\", input_data)\n        return (wa_output.strip() != ac_output.strip())\n    except subprocess.CalledProcessError:\n        return True  # Assume interesting if either program fails\n\ndef reduce_string_ddmin(original_s: str) -> str:\n    if not test_interesting(original_s):\n        print(\"[Error] 初始输入并未造成 WA 与 AC 不一致，无法缩减。\")\n        return original_s\n    print(f\"[Info] 初始字符串长度={len(original_s)} 已确认导致输出差异，开始 ddmin 缩减...\\n\")\n    \n    current_indices = list(range(len(original_s)))\n    granularity = 2\n    \n    while len(current_indices) >= 1:\n        print(f\"[Reduce] 当前索引集大小={len(current_indices)}\")\n        print(f\"         尝试粒度: {granularity}\")\n        num_indices = len(current_indices)\n        subset_size = max(1, num_indices // granularity)\n        start_idx = 0\n        made_progress = False\n        \n        def indices_to_str(indices: List[int]) -> str:\n            return ''.join(original_s[i] for i in sorted(indices))\n        \n        def check_candidate(candidate_indices: List[int]) -> bool:\n            if not candidate_indices:\n                return False\n            candidate_str = indices_to_str(candidate_indices)\n            return test_interesting(candidate_str)\n        \n        print(f\"         1) 尝试『移除』大小约={subset_size} 的分块...\")\n        while start_idx < num_indices:\n            block = current_indices[start_idx:start_idx + subset_size]\n            candidate_indices = [x for x in current_indices if x not in block]\n            print(f\"            - 移除 {block} ... \", end=\"\")\n            if check_candidate(candidate_indices):\n                print(f\"成功! 新索引集大小={len(candidate_indices)}\")\n                current_indices = candidate_indices\n                granularity = 2\n                made_progress = True\n                break\n            else:\n                print(\"失败\")\n                start_idx += subset_size\n        \n        if made_progress:\n            continue\n        \n        print(f\"         2) 尝试『只保留』大小约={subset_size} 的分块...\")\n        start_idx = 0\n        while start_idx < num_indices:\n            block = current_indices[start_idx:start_idx + subset_size]\n            candidate_indices = block\n            if len(candidate_indices) == 0 or len(candidate_indices) == num_indices:\n                start_idx += subset_size\n                continue\n            print(f\"            - 只保留 {block} ... \", end=\"\")\n            if check_candidate(candidate_indices):\n                print(f\"成功! 新索引集大小={len(candidate_indices)}\")\n                current_indices = candidate_indices\n                granularity = 2\n                made_progress = True\n                break\n            else:\n                print(\"失败\")\n            start_idx += subset_size\n        \n        if made_progress:\n            continue\n        \n        if granularity < num_indices:\n            new_gran = min(granularity * 2, num_indices)\n            print(f\"         -> 无进展，增大粒度至 {new_gran}\\n\")\n            granularity = new_gran\n        else:\n            print(\"\\n[Reduce] 已无法进一步缩减 —— 到达 1-minimal。\")\n            break\n    \n    final_str = indices_to_str(current_indices)\n    print(f\"\\n[Result] 缩减后字符串长度={len(final_str)}\")\n    print(f\"         内容: {final_str}\")\n    return final_str\n\ndef reduce_input(input_file: str, output_file: str):\n    if not os.path.exists(input_file):\n        print(f\"[Error] 输入文件不存在: {input_file}\", file=sys.stderr)\n        return\n    \n    with open(input_file, \"r\", encoding=\"utf-8\") as f:\n        lines = [line.rstrip('\\n') for line in f]\n    \n    if len(lines) < 2:\n        raise ValueError(\"输入数据不完整\")\n    \n    N_str = lines[0].strip()\n    if not N_str.isdigit():\n        raise ValueError(f\"第一行不是有效整数: {N_str}\")\n    \n    N = int(N_str)\n    S = lines[1]\n    \n    if len(S) != N:\n        raise ValueError(f\"字符串长度不匹配: 应为 {N}, 实为 {len(S)}\")\n    \n    reduced_S = reduce_string_ddmin(S)\n    \n    output_bytes = create_input_bytes(reduced_S)\n    \n    with open(output_file, \"wb\") as f:\n        f.write(output_bytes)\n    \n    print(f\"[Info] 缩减过程完成，结果已写入: {output_file}\")",
+    "results": [
+      {
+        "submission_id": "67283559",
+        "status_code": 404,
+        "message": "Reducer module not found for problem 'abc365D'. Looked for 'abc365d.reducer.py'.",
+        "original_size_bytes": null,
+        "reduced_size_bytes": null,
+        "failing_case_name": null,
+        "wa_code_path": "abc365d/67283559/wa_67283559.cpp",
+        "execution_time_seconds": 0.01
+      },
+      {
+        "submission_id": "67228375",
+        "status_code": 404,
+        "message": "Reducer module not found for problem 'abc365D'. Looked for 'abc365d.reducer.py'.",
+        "original_size_bytes": null,
+        "reduced_size_bytes": null,
+        "failing_case_name": null,
+        "wa_code_path": "abc365d/67228375/wa_67228375.cpp",
+        "execution_time_seconds": 0.0
+      },
+      {
+        "submission_id": "67228302",
+        "status_code": 404,
+        "message": "Reducer module not found for problem 'abc365D'. Looked for 'abc365d.reducer.py'.",
+        "original_size_bytes": null,
+        "reduced_size_bytes": null,
+        "failing_case_name": null,
+        "wa_code_path": "abc365d/67228302/wa_67228302.cpp",
+        "execution_time_seconds": 0.01
+      },
+      {
+        "submission_id": "67225698",
+        "status_code": 404,
+        "message": "Reducer module not found for problem 'abc365D'. Looked for 'abc365d.reducer.py'.",
+        "original_size_bytes": null,
+        "reduced_size_bytes": null,
+        "failing_case_name": null,
+        "wa_code_path": "abc365d/67225698/wa_67225698.cpp",
+        "execution_time_seconds": 0.01
+      },
+      {
+        "submission_id": "67113943",
+        "status_code": 404,
+        "message": "Reducer module not found for problem 'abc365D'. Looked for 'abc365d.reducer.py'.",
+        "original_size_bytes": null,
+        "reduced_size_bytes": null,
+        "failing_case_name": null,
+        "wa_code_path": "abc365d/67113943/wa_67113943.cpp",
+        "execution_time_seconds": 0.0
+      },
+      {
+        "submission_id": "67113921",
+        "status_code": 404,
+        "message": "Reducer module not found for problem 'abc365D'. Looked for 'abc365d.reducer.py'.",
+        "original_size_bytes": null,
+        "reduced_size_bytes": null,
+        "failing_case_name": null,
+        "wa_code_path": "abc365d/67113921/wa_67113921.cpp",
+        "execution_time_seconds": 0.0
+      },
+      {
+        "submission_id": "67035548",
+        "status_code": 404,
+        "message": "Reducer module not found for problem 'abc365D'. Looked for 'abc365d.reducer.py'.",
+        "original_size_bytes": null,
+        "reduced_size_bytes": null,
+        "failing_case_name": null,
+        "wa_code_path": "abc365d/67035548/wa_67035548.cpp",
+        "execution_time_seconds": 0.0
+      },
+      {
+        "submission_id": "67035523",
+        "status_code": 404,
+        "message": "Reducer module not found for problem 'abc365D'. Looked for 'abc365d.reducer.py'.",
+        "original_size_bytes": null,
+        "reduced_size_bytes": null,
+        "failing_case_name": null,
+        "wa_code_path": "abc365d/67035523/wa_67035523.cpp",
+        "execution_time_seconds": 0.0
+      },
+      {
+        "submission_id": "66993696",
+        "status_code": 404,
+        "message": "Reducer module not found for problem 'abc365D'. Looked for 'abc365d.reducer.py'.",
+        "original_size_bytes": null,
+        "reduced_size_bytes": null,
+        "failing_case_name": null,
+        "wa_code_path": "abc365d/66993696/wa_66993696.cpp",
+        "execution_time_seconds": 0.0
+      },
+      {
+        "submission_id": "66992050",
+        "status_code": 404,
+        "message": "Reducer module not found for problem 'abc365D'. Looked for 'abc365d.reducer.py'.",
+        "original_size_bytes": null,
+        "reduced_size_bytes": null,
+        "failing_case_name": null,
+        "wa_code_path": "abc365d/66992050/wa_66992050.cpp",
+        "execution_time_seconds": 0.01
+      }
+    ],
+    "problem_description": "patched placeholder"
+  },
+  "abc366c": {
+    "reducer_code": "import os\nimport subprocess\nfrom typing import List, Tuple, Optional, Set\nimport sys\n\ndef run_program(program_path: str, input_data: bytes) -> bytes:\n    result = subprocess.run(\n        [program_path], \n        input=input_data,\n        capture_output=True,\n        check=True,  \n        timeout=10   \n    )\n    return result.stdout\n\ndef parse_input(lines: List[str]) -> Tuple[int, List[Tuple]]:\n    Q = int(lines[0])\n    queries = []\n    for line in lines[1:]:\n        parts = line.strip().split()\n        if parts[0] == '3':\n            queries.append((3,))\n        else:\n            t, x = parts\n            queries.append((int(t), int(x)))\n    return Q, queries\n\ndef create_input_bytes(Q: int, queries: List[Tuple]) -> bytes:\n    lines = [f\"{Q}\\n\"]\n    for q in queries:\n        if q[0] == 3:\n            lines.append(\"3\\n\")\n        else:\n            lines.append(f\"{q[0]} {q[1]}\\n\")\n    return \"\".join(lines).encode(\"utf-8\")\n\ndef test_interesting(data: Tuple[int, List[Tuple]]) -> bool:\n    Q, queries = data\n    input_data = create_input_bytes(Q, queries)\n    try:\n        wa_output = run_program(\"./wa\", input_data)\n        ac_output = run_program(\"./ac\", input_data)\n        return wa_output.strip() != ac_output.strip()\n    except:\n        return True\n\ndef reduce_queries_ddmin(original_Q: int, original_queries: List[Tuple]) -> List[Tuple]:\n    current_indices = set(range(original_Q))\n    granularity = 2\n    \n    while len(current_indices) >= 1:\n        print(f\"[Reduce] 当前下标集大小={len(current_indices)}: {sorted(list(current_indices))}\")\n        print(f\"         尝试粒度: {granularity}\")\n        num_indices = len(current_indices)\n        subset_size = max(1, num_indices // granularity)\n        made_progress = False\n        \n        candidate_indices_list = list(current_indices)\n        \n        # Try removing a subset\n        print(f\"         1) 尝试『移除』大小约={subset_size} 的分块...\")\n        for start_idx in range(0, num_indices, subset_size):\n            block = candidate_indices_list[start_idx:start_idx + subset_size]\n            candidate_indices = set([i for i in current_indices if i not in block])\n            \n            if not candidate_indices:\n                continue\n                \n            candidate_queries = [original_queries[i] for i in sorted(candidate_indices)]\n            if test_interesting((len(candidate_indices), candidate_queries)):\n                print(f\"成功! 新下标集大小={len(candidate_indices)}\")\n                current_indices = candidate_indices\n                granularity = 2\n                made_progress = True\n                break\n        \n        if made_progress:\n            continue\n        \n        # Try keeping only a subset\n        print(f\"         2) 尝试『只保留』大小约={subset_size} 的分块...\")\n        for start_idx in range(0, num_indices, subset_size):\n            block = candidate_indices_list[start_idx:start_idx + subset_size]\n            candidate_indices = set(block)\n            \n            if not candidate_indices or len(candidate_indices) == num_indices:\n                continue\n                \n            candidate_queries = [original_queries[i] for i in sorted(candidate_indices)]\n            if test_interesting((len(candidate_indices), candidate_queries)):\n                print(f\"成功! 新下标集大小={len(candidate_indices)}\")\n                current_indices = candidate_indices\n                granularity = 2\n                made_progress = True\n                break\n        \n        if made_progress:\n            continue\n        \n        # If no progress, increase granularity\n        if granularity < num_indices:\n            new_gran = min(granularity * 2, num_indices)\n            print(f\"         -> 无进展，增大粒度至 {new_gran}\\n\")\n            granularity = new_gran\n        else:\n            print(\"\\n[Reduce] 已无法进一步缩减 —— 到达 1-minimal。\")\n            break\n    \n    final_queries = [original_queries[i] for i in sorted(current_indices)]\n    print(f\"\\n[Result] 缩减后查询数 M={len(final_queries)}，保留下标: {sorted(list(current_indices))}\")\n    return len(final_queries), final_queries\n\ndef reduce_input(input_file: str, output_file: str):\n    if not os.path.exists(input_file):\n        print(f\"[Error] 输入文件不存在: {input_file}\", file=sys.stderr)\n        return \n    \n    with open(input_file, \"r\", encoding=\"utf-8\") as f:\n        lines = [line.rstrip(\"\\n\") for line in f]\n    \n    if not lines:\n        raise ValueError(\"输入文件为空\")\n    \n    Q, queries = parse_input(lines)\n    \n    print(f\"[Info] 初始查询数 Q={Q} 已确认导致输出差异，开始 ddmin 缩减...\\n\")\n    reduced_Q, reduced_queries = reduce_queries_ddmin(Q, queries)\n    \n    output_bytes = create_input_bytes(reduced_Q, reduced_queries)\n    \n    with open(output_file, \"wb\") as f:\n        f.write(output_bytes)\n    \n    print(f\"[Info] 缩减过程完成，结果已写入: {output_file}\")",
+    "results": [
+      {
+        "submission_id": "67028599",
+        "status_code": 404,
+        "message": "Reducer module not found for problem 'abc366C'. Looked for 'abc366c.reducer.py'.",
+        "original_size_bytes": null,
+        "reduced_size_bytes": null,
+        "failing_case_name": null,
+        "wa_code_path": "abc366c/67028599/wa_67028599.cpp",
+        "execution_time_seconds": 0.0
+      },
+      {
+        "submission_id": "66889857",
+        "status_code": 404,
+        "message": "Reducer module not found for problem 'abc366C'. Looked for 'abc366c.reducer.py'.",
+        "original_size_bytes": null,
+        "reduced_size_bytes": null,
+        "failing_case_name": null,
+        "wa_code_path": "abc366c/66889857/wa_66889857.cpp",
+        "execution_time_seconds": 0.0
+      },
+      {
+        "submission_id": "66889844",
+        "status_code": 404,
+        "message": "Reducer module not found for problem 'abc366C'. Looked for 'abc366c.reducer.py'.",
+        "original_size_bytes": null,
+        "reduced_size_bytes": null,
+        "failing_case_name": null,
+        "wa_code_path": "abc366c/66889844/wa_66889844.cpp",
+        "execution_time_seconds": 0.0
+      },
+      {
+        "submission_id": "66875780",
+        "status_code": 404,
+        "message": "Reducer module not found for problem 'abc366C'. Looked for 'abc366c.reducer.py'.",
+        "original_size_bytes": null,
+        "reduced_size_bytes": null,
+        "failing_case_name": null,
+        "wa_code_path": "abc366c/66875780/wa_66875780.cpp",
+        "execution_time_seconds": 0.0
+      },
+      {
+        "submission_id": "66808962",
+        "status_code": 404,
+        "message": "Reducer module not found for problem 'abc366C'. Looked for 'abc366c.reducer.py'.",
+        "original_size_bytes": null,
+        "reduced_size_bytes": null,
+        "failing_case_name": null,
+        "wa_code_path": "abc366c/66808962/wa_66808962.cpp",
+        "execution_time_seconds": 0.01
+      },
+      {
+        "submission_id": "66658547",
+        "status_code": 404,
+        "message": "Reducer module not found for problem 'abc366C'. Looked for 'abc366c.reducer.py'.",
+        "original_size_bytes": null,
+        "reduced_size_bytes": null,
+        "failing_case_name": null,
+        "wa_code_path": "abc366c/66658547/wa_66658547.cpp",
+        "execution_time_seconds": 0.01
+      },
+      {
+        "submission_id": "66290391",
+        "status_code": 404,
+        "message": "Reducer module not found for problem 'abc366C'. Looked for 'abc366c.reducer.py'.",
+        "original_size_bytes": null,
+        "reduced_size_bytes": null,
+        "failing_case_name": null,
+        "wa_code_path": "abc366c/66290391/wa_66290391.cpp",
+        "execution_time_seconds": 0.0
+      },
+      {
+        "submission_id": "66053042",
+        "status_code": 404,
+        "message": "Reducer module not found for problem 'abc366C'. Looked for 'abc366c.reducer.py'.",
+        "original_size_bytes": null,
+        "reduced_size_bytes": null,
+        "failing_case_name": null,
+        "wa_code_path": "abc366c/66053042/wa_66053042.cpp",
+        "execution_time_seconds": 0.0
+      },
+      {
+        "submission_id": "65549527",
+        "status_code": 404,
+        "message": "Reducer module not found for problem 'abc366C'. Looked for 'abc366c.reducer.py'.",
+        "original_size_bytes": null,
+        "reduced_size_bytes": null,
+        "failing_case_name": null,
+        "wa_code_path": "abc366c/65549527/wa_65549527.cpp",
+        "execution_time_seconds": 0.0
+      },
+      {
+        "submission_id": "65541312",
+        "status_code": 404,
+        "message": "Reducer module not found for problem 'abc366C'. Looked for 'abc366c.reducer.py'.",
+        "original_size_bytes": null,
+        "reduced_size_bytes": null,
+        "failing_case_name": null,
+        "wa_code_path": "abc366c/65541312/wa_65541312.cpp",
+        "execution_time_seconds": 0.0
+      }
+    ],
+    "problem_description": "Score : 300 points\n\n### Problem Statement\n\nYou have an empty bag.\nYou are given Q queries, which must be processed in order.\n\nThere are three types of queries.\n\n* `1 x` : Put one ball with the integer x written on it into the bag.\n* `2 x` : Remove one ball with the integer x written on it from the bag and discard it. It is guaranteed that the bag has a ball with the integer x written on it when this query is given.\n* `3` : Print the number of different integers written on the balls in the bag.\n\n### Constraints\n\n* 1 \\leq Q \\leq 2 \\times 10^{5}\n* 1 \\leq x \\leq 10^{6}\n* When a query of the second type is given, the bag has a ball with the integer x written on it.\n* There is at least one query of the third type.\n* All input values are integers.\n\n---\n\n### Input\n\nThe input is given from Standard Input in the following format:\n\n```\nQ\n\\text{query}_1\n\\text{query}_2\n\\vdots\n\\text{query}_Q\n\n```\n\nThe i-th query \\text{query}\\_i is given in one of the following three formats:\n\n```\n1 x\n\n```\n\n```\n2 x\n\n```\n\n```\n3\n\n```\n\n### Output\n\nIf there are K queries of the third type, print K lines.\nThe i-th line (1 \\leq i \\leq K) should contain the answer to the i-th query of the third type.\n\n---"
+  },
+  "abc367d": {
+    "reducer_code": "# START --- abc367d/reducer.py --- START\nimport os\nimport subprocess\nfrom typing import List, Optional\nimport sys\n\ndef run_program(program_path: str, input_data: bytes) -> bytes:\n    result = subprocess.run(\n        [program_path], \n        input=input_data,\n        capture_output=True,\n        check=True,  \n        timeout=10   \n    )\n    return result.stdout\n\ndef create_input_bytes(reduced_A: List[int]) -> bytes:\n    if not reduced_A:\n        return b\"0 0\\n\"\n    N = len(reduced_A)\n    M = 1  # Placeholder; actual M will be determined from original input\n    lines = [f\"{N} {M}\\n\", \" \".join(map(str, reduced_A)) + \"\\n\"]\n    return \"\".join(lines).encode(\"utf-8\")\n\ndef test_interesting(reduced_A: List[int]) -> bool:\n    if not reduced_A:\n        return False\n    input_data = create_input_bytes(reduced_A)\n    try:\n        wa_output = run_program(\"./wa\", input_data)\n        ac_output = run_program(\"./ac\", input_data)\n        return (wa_output.strip() != ac_output.strip())\n    except subprocess.CalledProcessError as e:\n        print(f\"[Error] Program execution failed: {e}\")\n        return False\n\ndef reduce_array_ddmin(original_A: List[int]) -> List[int]:\n    if not test_interesting(original_A):\n        print(\"[Error] 初始输入并未造成 WA 与 AC 不一致，无法缩减。\")\n        return original_A\n    \n    print(f\"[Info] 初始数组长度={len(original_A)} 已确认导致输出差异，开始 ddmin 缩减...\\n\")\n    current_indices = list(range(len(original_A)))\n    granularity = 2\n    \n    while len(current_indices) >= 1:\n        print(f\"[Reduce] 当前下标集大小={len(current_indices)}: {current_indices}\")\n        print(f\"         尝试粒度: {granularity}\")\n        num_indices = len(current_indices)\n        subset_size = max(1, num_indices // granularity)\n        start_idx = 0\n        made_progress = False\n        \n        def check_candidate(candidate_indices: List[int]) -> bool:\n            if not candidate_indices:\n                return False\n            reduced_A = [original_A[i] for i in sorted(candidate_indices)]\n            return test_interesting(reduced_A)\n        \n        print(f\"         1) 尝试『移除』大小约={subset_size} 的分块...\")\n        while start_idx < num_indices:\n            block = current_indices[start_idx:start_idx + subset_size]\n            candidate_indices = [i for i in current_indices if i not in block]\n            print(f\"            - 移除 {block} ... \", end=\"\")\n            if check_candidate(candidate_indices):\n                print(f\"成功! 新下标集大小={len(candidate_indices)}\")\n                current_indices = candidate_indices\n                granularity = 2  \n                made_progress = True\n                break  \n            else:\n                print(\"失败\")\n                start_idx += subset_size\n        \n        if made_progress:\n            continue\n        \n        print(f\"         2) 尝试『只保留』大小约={subset_size} 的分块...\")\n        start_idx = 0\n        while start_idx < num_indices:\n            block = current_indices[start_idx:start_idx + subset_size]\n            candidate_indices = block\n            if len(candidate_indices) == 0 or len(candidate_indices) == num_indices:\n                start_idx += subset_size\n                continue\n            print(f\"            - 只保留 {block} ... \", end=\"\")\n            if check_candidate(candidate_indices):\n                print(f\"成功! 新下标集大小={len(candidate_indices)}\")\n                current_indices = candidate_indices\n                granularity = 2  \n                made_progress = True\n                break\n            else:\n                print(\"失败\")\n            start_idx += subset_size\n        \n        if made_progress:\n            continue\n        \n        if granularity < num_indices:\n            new_gran = min(granularity * 2, num_indices)\n            print(f\"         -> 无进展，增大粒度至 {new_gran}\\n\")\n            granularity = new_gran\n        else:\n            print(\"\\n[Reduce] 已无法进一步缩减 —— 到达 1-minimal。\")\n            break\n    \n    reduced_A = [original_A[i] for i in sorted(current_indices)]\n    print(f\"\\n[Result] 缩减后数组长度={len(reduced_A)}，保留下标: {current_indices}\")\n    return reduced_A\n\ndef reduce_input(input_file: str, output_file: str):\n    if not os.path.exists(input_file):\n        print(f\"[Error] 输入文件不存在: {input_file}\", file=sys.stderr)\n        return \n    \n    with open(input_file, \"r\", encoding=\"utf-8\") as f:\n        lines = [line.rstrip(\"\\n\") for line in f]\n    \n    if not lines:\n        raise ValueError(\"输入文件为空\")\n    \n    header = lines[0].strip().split()\n    if len(header) != 2 or not header[0].isdigit() or not header[1].isdigit():\n        raise ValueError(f\"首行为非有效数字: {header}\")\n    \n    N = int(header[0])\n    A_strs = lines[1].strip().split()\n    if len(A_strs) != N:\n        raise ValueError(f\"A 数组长度不匹配: 期望 {N}, 实际 {len(A_strs)}\")\n    \n    try:\n        A = list(map(int, A_strs))\n    except ValueError:\n        raise ValueError(\"A 数组包含非整数值\")\n    \n    reduced_A = reduce_array_ddmin(A)\n    \n    # Write reduced input\n    with open(output_file, \"w\", encoding=\"utf-8\") as f:\n        f.write(f\"{len(reduced_A)} 1\\n\")  # M is placeholder 1\n        f.write(\" \".join(map(str, reduced_A)) + \"\\n\")\n    \n    print(f\"[Info] 缩减过程完成，结果已写入: {output_file}\")\n# END --- abc367d/reducer.py --- END",
+    "results": [
+      {
+        "submission_id": "67202273",
+        "status_code": 404,
+        "message": "Reducer module not found for problem 'abc367D'. Looked for 'abc367d.reducer.py'.",
+        "original_size_bytes": null,
+        "reduced_size_bytes": null,
+        "failing_case_name": null,
+        "wa_code_path": "abc367d/67202273/wa_67202273.cpp",
+        "execution_time_seconds": 0.0
+      },
+      {
+        "submission_id": "67193160",
+        "status_code": 404,
+        "message": "Reducer module not found for problem 'abc367D'. Looked for 'abc367d.reducer.py'.",
+        "original_size_bytes": null,
+        "reduced_size_bytes": null,
+        "failing_case_name": null,
+        "wa_code_path": "abc367d/67193160/wa_67193160.cpp",
+        "execution_time_seconds": 0.0
+      },
+      {
+        "submission_id": "67193151",
+        "status_code": 404,
+        "message": "Reducer module not found for problem 'abc367D'. Looked for 'abc367d.reducer.py'.",
+        "original_size_bytes": null,
+        "reduced_size_bytes": null,
+        "failing_case_name": null,
+        "wa_code_path": "abc367d/67193151/wa_67193151.cpp",
+        "execution_time_seconds": 0.0
+      },
+      {
+        "submission_id": "66250755",
+        "status_code": 404,
+        "message": "Reducer module not found for problem 'abc367D'. Looked for 'abc367d.reducer.py'.",
+        "original_size_bytes": null,
+        "reduced_size_bytes": null,
+        "failing_case_name": null,
+        "wa_code_path": "abc367d/66250755/wa_66250755.cpp",
+        "execution_time_seconds": 0.0
+      },
+      {
+        "submission_id": "66154485",
+        "status_code": 404,
+        "message": "Reducer module not found for problem 'abc367D'. Looked for 'abc367d.reducer.py'.",
+        "original_size_bytes": null,
+        "reduced_size_bytes": null,
+        "failing_case_name": null,
+        "wa_code_path": "abc367d/66154485/wa_66154485.cpp",
+        "execution_time_seconds": 0.0
+      },
+      {
+        "submission_id": "65761143",
+        "status_code": 404,
+        "message": "Reducer module not found for problem 'abc367D'. Looked for 'abc367d.reducer.py'.",
+        "original_size_bytes": null,
+        "reduced_size_bytes": null,
+        "failing_case_name": null,
+        "wa_code_path": "abc367d/65761143/wa_65761143.cpp",
+        "execution_time_seconds": 0.01
+      },
+      {
+        "submission_id": "63618307",
+        "status_code": 404,
+        "message": "Reducer module not found for problem 'abc367D'. Looked for 'abc367d.reducer.py'.",
+        "original_size_bytes": null,
+        "reduced_size_bytes": null,
+        "failing_case_name": null,
+        "wa_code_path": "abc367d/63618307/wa_63618307.cpp",
+        "execution_time_seconds": 0.0
+      },
+      {
+        "submission_id": "63618273",
+        "status_code": 404,
+        "message": "Reducer module not found for problem 'abc367D'. Looked for 'abc367d.reducer.py'.",
+        "original_size_bytes": null,
+        "reduced_size_bytes": null,
+        "failing_case_name": null,
+        "wa_code_path": "abc367d/63618273/wa_63618273.cpp",
+        "execution_time_seconds": 0.0
+      },
+      {
+        "submission_id": "63618182",
+        "status_code": 404,
+        "message": "Reducer module not found for problem 'abc367D'. Looked for 'abc367d.reducer.py'.",
+        "original_size_bytes": null,
+        "reduced_size_bytes": null,
+        "failing_case_name": null,
+        "wa_code_path": "abc367d/63618182/wa_63618182.cpp",
+        "execution_time_seconds": 0.01
+      },
+      {
+        "submission_id": "63090199",
+        "status_code": 404,
+        "message": "Reducer module not found for problem 'abc367D'. Looked for 'abc367d.reducer.py'.",
+        "original_size_bytes": null,
+        "reduced_size_bytes": null,
+        "failing_case_name": null,
+        "wa_code_path": "abc367d/63090199/wa_63090199.cpp",
+        "execution_time_seconds": 0.0
+      }
+    ],
+    "problem_description": "patched placeholder"
+  },
+  "abc368c": {
+    "reducer_code": "# START --- abc368c/reducer.py --- START\nimport os\nimport subprocess\nfrom typing import List, Optional\nimport sys\n\ndef run_program(program_path: str, input_data: bytes) -> bytes:\n    result = subprocess.run(\n        [program_path], \n        input=input_data,\n        capture_output=True,\n        check=True,  \n        timeout=10   \n    )\n    return result.stdout\n\ndef create_input_bytes(reduced_healths: List[int]) -> bytes:\n    if not reduced_healths:\n        return b\"0\\n0\\n\"\n    n = len(reduced_healths)\n    lines = [f\"{n}\\n\", \" \".join(map(str, reduced_healths)) + \"\\n\"]\n    return \"\".join(lines).encode(\"utf-8\")\n\ndef test_interesting(reduced_healths: List[int]) -> bool:\n    input_data = create_input_bytes(reduced_healths)\n    try:\n        wa_output = run_program(\"./wa\", input_data)\n        ac_output = run_program(\"./ac\", input_data)\n        return (wa_output.strip() != ac_output.strip())\n    except subprocess.CalledProcessError:\n        return False\n\ndef reduce_healths_ddmin(original_healths: List[int]) -> List[int]:\n    original_n = len(original_healths)\n    if not test_interesting(original_healths):\n        print(\"[Error] 初始输入并未造成 WA 与 AC 不一致，无法缩减。\")\n        return original_healths\n    print(f\"[Info] 初始敌人数量 N={original_n} 已确认导致输出差异，开始 ddmin 缩减...\\n\")\n    \n    current_indices = list(range(len(original_healths)))\n    granularity = 2\n    \n    while len(current_indices) >= 1:\n        print(f\"[Reduce] 当前下标集大小={len(current_indices)}: {current_indices}\")\n        print(f\"         尝试粒度: {granularity}\")\n        num_indices = len(current_indices)\n        subset_size = max(1, num_indices // granularity)\n        start_idx = 0\n        made_progress = False\n        \n        def check_candidate(candidate_indices: List[int]) -> bool:\n            if not candidate_indices:\n                return False\n            reduced_healths = [original_healths[i] for i in candidate_indices]\n            return test_interesting(reduced_healths)\n        \n        print(f\"         1) 尝试『移除』大小约={subset_size} 的分块...\")\n        while start_idx < num_indices:\n            block = current_indices[start_idx:start_idx + subset_size]\n            candidate_indices = [x for x in current_indices if x not in block]\n            print(f\"            - 移除 {block} ... \", end=\"\")\n            if check_candidate(candidate_indices):\n                print(f\"成功! 新下标集大小={len(candidate_indices)}\")\n                current_indices = candidate_indices\n                granularity = 2  \n                made_progress = True\n                break  \n            else:\n                print(\"失败\")\n                start_idx += subset_size\n        \n        if made_progress:\n            continue\n        \n        print(f\"         2) 尝试『只保留』大小约={subset_size} 的分块...\")\n        start_idx = 0\n        while start_idx < num_indices:\n            block = current_indices[start_idx:start_idx + subset_size]\n            candidate_indices = block\n            if len(candidate_indices) == 0 or len(candidate_indices) == num_indices:\n                start_idx += subset_size\n                continue\n            print(f\"            - 只保留 {block} ... \", end=\"\")\n            if check_candidate(candidate_indices):\n                print(f\"成功! 新下标集大小={len(candidate_indices)}\")\n                current_indices = candidate_indices\n                granularity = 2  \n                made_progress = True\n                break\n            else:\n                print(\"失败\")\n            start_idx += subset_size\n        \n        if made_progress:\n            continue\n        \n        if granularity < num_indices:\n            new_gran = min(granularity * 2, num_indices)\n            print(f\"         -> 无进展，增大粒度至 {new_gran}\\n\")\n            granularity = new_gran\n        else:\n            print(\"\\n[Reduce] 已无法进一步缩减 —— 到达 1-minimal。\")\n            break\n    \n    final_healths = [original_healths[i] for i in current_indices]\n    print(f\"\\n[Result] 缩减后敌人数量 M={len(final_healths)}，保留下标: {current_indices}\")\n    return final_healths\n\ndef reduce_input(input_file: str, output_file: str):\n    if not os.path.exists(input_file):\n        print(f\"[Error] 输入文件不存在: {input_file}\", file=sys.stderr)\n        return \n    \n    with open(input_file, \"r\", encoding=\"utf-8\") as f:\n        lines = [line.rstrip(\"\\n\") for line in f]\n    \n    if not lines:\n        raise ValueError(\"输入文件为空\")\n    \n    n_str = lines[0].strip()\n    if not n_str.isdigit():\n        raise ValueError(f\"第一行为非数字: {n_str}\")\n    \n    N = int(n_str)\n    \n    if len(lines) < 2:\n        raise ValueError(f\"输入行数不足: 至少需要 2 行, 实际只有 {len(lines)} 行.\")\n    \n    health_line = lines[1].strip().split()\n    if len(health_line) != N:\n        raise ValueError(f\"健康值个数不匹配: 应该为 {N} 个, 实际有 {len(health_line)} 个.\")\n    \n    healths = list(map(int, health_line))\n    \n    reduced_healths = reduce_healths_ddmin(healths)\n    \n    output_bytes = create_input_bytes(reduced_healths)\n    \n    with open(output_file, \"wb\") as f:\n        f.write(output_bytes)\n    \n    print(f\"[Info] 缩减过程完成，结果已写入: {output_file}\")\n# END --- abc368c/reducer.py --- END",
+    "results": [
+      {
+        "submission_id": "67191225",
+        "status_code": 404,
+        "message": "Reducer module not found for problem 'abc368C'. Looked for 'abc368c.reducer.py'.",
+        "original_size_bytes": null,
+        "reduced_size_bytes": null,
+        "failing_case_name": null,
+        "wa_code_path": "abc368c/67191225/wa_67191225.cpp",
+        "execution_time_seconds": 0.0
+      },
+      {
+        "submission_id": "67188516",
+        "status_code": 404,
+        "message": "Reducer module not found for problem 'abc368C'. Looked for 'abc368c.reducer.py'.",
+        "original_size_bytes": null,
+        "reduced_size_bytes": null,
+        "failing_case_name": null,
+        "wa_code_path": "abc368c/67188516/wa_67188516.cpp",
+        "execution_time_seconds": 0.0
+      },
+      {
+        "submission_id": "67112272",
+        "status_code": 404,
+        "message": "Reducer module not found for problem 'abc368C'. Looked for 'abc368c.reducer.py'.",
+        "original_size_bytes": null,
+        "reduced_size_bytes": null,
+        "failing_case_name": null,
+        "wa_code_path": "abc368c/67112272/wa_67112272.cpp",
+        "execution_time_seconds": 0.0
+      },
+      {
+        "submission_id": "67109122",
+        "status_code": 404,
+        "message": "Reducer module not found for problem 'abc368C'. Looked for 'abc368c.reducer.py'.",
+        "original_size_bytes": null,
+        "reduced_size_bytes": null,
+        "failing_case_name": null,
+        "wa_code_path": "abc368c/67109122/wa_67109122.cpp",
+        "execution_time_seconds": 0.0
+      },
+      {
+        "submission_id": "67109097",
+        "status_code": 404,
+        "message": "Reducer module not found for problem 'abc368C'. Looked for 'abc368c.reducer.py'.",
+        "original_size_bytes": null,
+        "reduced_size_bytes": null,
+        "failing_case_name": null,
+        "wa_code_path": "abc368c/67109097/wa_67109097.cpp",
+        "execution_time_seconds": 0.0
+      },
+      {
+        "submission_id": "67108987",
+        "status_code": 404,
+        "message": "Reducer module not found for problem 'abc368C'. Looked for 'abc368c.reducer.py'.",
+        "original_size_bytes": null,
+        "reduced_size_bytes": null,
+        "failing_case_name": null,
+        "wa_code_path": "abc368c/67108987/wa_67108987.cpp",
+        "execution_time_seconds": 0.0
+      },
+      {
+        "submission_id": "67014332",
+        "status_code": 404,
+        "message": "Reducer module not found for problem 'abc368C'. Looked for 'abc368c.reducer.py'.",
+        "original_size_bytes": null,
+        "reduced_size_bytes": null,
+        "failing_case_name": null,
+        "wa_code_path": "abc368c/67014332/wa_67014332.cpp",
+        "execution_time_seconds": 0.0
+      },
+      {
+        "submission_id": "66662246",
+        "status_code": 404,
+        "message": "Reducer module not found for problem 'abc368C'. Looked for 'abc368c.reducer.py'.",
+        "original_size_bytes": null,
+        "reduced_size_bytes": null,
+        "failing_case_name": null,
+        "wa_code_path": "abc368c/66662246/wa_66662246.cpp",
+        "execution_time_seconds": 0.0
+      },
+      {
+        "submission_id": "66662226",
+        "status_code": 404,
+        "message": "Reducer module not found for problem 'abc368C'. Looked for 'abc368c.reducer.py'.",
+        "original_size_bytes": null,
+        "reduced_size_bytes": null,
+        "failing_case_name": null,
+        "wa_code_path": "abc368c/66662226/wa_66662226.cpp",
+        "execution_time_seconds": 0.0
+      },
+      {
+        "submission_id": "66495377",
+        "status_code": 404,
+        "message": "Reducer module not found for problem 'abc368C'. Looked for 'abc368c.reducer.py'.",
+        "original_size_bytes": null,
+        "reduced_size_bytes": null,
+        "failing_case_name": null,
+        "wa_code_path": "abc368c/66495377/wa_66495377.cpp",
+        "execution_time_seconds": 0.0
+      }
+    ],
+    "problem_description": "Score : 300 points\n\n### Problem Statement\n\nYou are playing a game.\n\nThere are N enemies lined up in a row, and the i-th enemy from the front has a health of H\\_i.\n\nYou will repeat the following action until the healths of all enemies become 0 or less, using a variable T initialized to 0.\n\n* Increase T by 1. Then, attack the frontmost enemy with health 1 or more. If T is a multiple of 3, the enemy's health decreases by 3; otherwise, it decreases by 1.\n\nFind the value of T when the healths of all enemies become 0 or less.\n\n### Constraints\n\n* 1 \\leq N \\leq 2\\times 10^5\n* 1 \\leq H\\_i \\leq 10^9\n* All input values are integers.\n\n---\n\n### Input\n\nThe input is given from Standard Input in the following format:\n\n```\nN\nH_1 H_2 \\ldots H_N\n\n```\n\n### Output\n\nPrint the answer.\n\n---"
+  },
+  "abc369d": {
+    "reducer_code": "# START --- abc369d/reducer.py --- START\nimport os\nimport subprocess\nfrom typing import List, Optional\nimport sys\n\ndef run_program(program_path: str, input_data: bytes) -> bytes:\n    result = subprocess.run(\n        [program_path], \n        input=input_data,\n        capture_output=True,\n        check=True,  \n        timeout=10   \n    )\n    return result.stdout\n\ndef create_input_bytes(values: List[int]) -> bytes:\n    if not values:\n        return b\"0\\n\\n\"\n    N = len(values)\n    a_line = \" \".join(map(str, values))\n    return f\"{N}\\n{a_line}\\n\".encode(\"utf-8\")\n\ndef test_interesting(values: List[int]) -> bool:\n    if not values:\n        return False\n    input_data = create_input_bytes(values)\n    try:\n        wa_output = run_program(\"./wa\", input_data)\n        ac_output = run_program(\"./ac\", input_data)\n        return (wa_output.strip() != ac_output.strip())\n    except Exception as e:\n        print(f\"[Error] 测试有趣性时发生异常: {e}\")\n        return False\n\ndef reduce_array_ddmin(original_values: List[int]) -> List[int]:\n    if not test_interesting(original_values):\n        print(\"[Error] 初始输入并未造成 WA 与 AC 不一致，无法缩减。\")\n        return original_values\n    print(f\"[Info] 初始数组长度={len(original_values)} 已确认导致输出差异，开始 ddmin 缩减...\\n\")\n    \n    current_indices = list(range(len(original_values)))\n    granularity = 2\n    \n    while len(current_indices) >= 1:\n        print(f\"[Reduce] 当前索引集大小={len(current_indices)}: {current_indices}\")\n        print(f\"         尝试粒度: {granularity}\")\n        num_indices = len(current_indices)\n        subset_size = max(1, num_indices // granularity)\n        start_idx = 0\n        made_progress = False\n        \n        def check_candidate(candidate_indices: List[int]) -> bool:\n            if not candidate_indices:\n                return False\n            values = [original_values[i] for i in candidate_indices]\n            return test_interesting(values)\n        \n        print(f\"         1) 尝试『移除』大小约={subset_size} 的分块...\")\n        while start_idx < num_indices:\n            block_start = start_idx\n            block_end = min(start_idx + subset_size, num_indices)\n            block = current_indices[block_start:block_end]\n            candidate_indices = [x for x in current_indices if x not in block]\n            print(f\"            - 移除 {block} ... \", end=\"\")\n            if check_candidate(candidate_indices):\n                print(f\"成功! 新索引集大小={len(candidate_indices)}\")\n                current_indices = candidate_indices\n                granularity = 2  \n                made_progress = True\n                break  \n            else:\n                print(\"失败\")\n                start_idx += subset_size\n        \n        if made_progress:\n            continue\n        \n        print(f\"         2) 尝试『只保留』大小约={subset_size} 的分块...\")\n        start_idx = 0\n        while start_idx < num_indices:\n            block_start = start_idx\n            block_end = min(start_idx + subset_size, num_indices)\n            block = current_indices[block_start:block_end]\n            candidate_indices = block\n            if len(candidate_indices) == 0 or len(candidate_indices) == num_indices:\n                start_idx += subset_size\n                continue\n            print(f\"            - 只保留 {block} ... \", end=\"\")\n            if check_candidate(candidate_indices):\n                print(f\"成功! 新索引集大小={len(candidate_indices)}\")\n                current_indices = candidate_indices\n                granularity = 2  \n                made_progress = True\n                break\n            else:\n                print(\"失败\")\n            start_idx += subset_size\n        \n        if made_progress:\n            continue\n        \n        if granularity < num_indices:\n            new_gran = min(granularity * 2, num_indices)\n            print(f\"         -> 无进展，增大粒度至 {new_gran}\\n\")\n            granularity = new_gran\n        else:\n            print(\"\\n[Reduce] 已无法进一步缩减 —— 到达 1-minimal。\")\n            break\n    \n    final_values = [original_values[i] for i in current_indices]\n    print(f\"\\n[Result] 缩减后数组大小 M={len(final_values)}，保留下标: {current_indices}\")\n    return final_values\n\ndef reduce_input(input_file: str, output_file: str):\n    if not os.path.exists(input_file):\n        print(f\"[Error] 输入文件不存在: {input_file}\", file=sys.stderr)\n        return \n    \n    with open(input_file, \"r\", encoding=\"utf-8\") as f:\n        lines = [line.rstrip(\"\\n\") for line in f]\n    \n    if not lines:\n        raise ValueError(\"输入文件为空\")\n    \n    n_str = lines[0].strip()\n    if not n_str.isdigit():\n        raise ValueError(f\"第一行为非数字: {n_str}\")\n    \n    N = int(n_str)\n    \n    if len(lines) < 2:\n        raise ValueError(f\"输入行数不足: 至少需要 2 行, 实际只有 {len(lines)} 行.\")\n    \n    A_line = lines[1].split()\n    if len(A_line) != N:\n        raise ValueError(f\"A 数组长度不匹配: 期望 {N}, 实际 {len(A_line)}\")\n    \n    try:\n        A = list(map(int, A_line))\n    except ValueError:\n        raise ValueError(\"A 数组包含非整数值\")\n    \n    reduced_A = reduce_array_ddmin(A)\n    \n    output_bytes = create_input_bytes(reduced_A)\n    \n    with open(output_file, \"wb\") as f:\n        f.write(output_bytes)\n    \n    print(f\"[Info] 缩减过程完成，结果已写入: {output_file}\")\n# END --- abc369d/reducer.py --- END",
+    "results": [
+      {
+        "submission_id": "67265264",
+        "status_code": 404,
+        "message": "Reducer module not found for problem 'abc369D'. Looked for 'abc369d.reducer.py'.",
+        "original_size_bytes": null,
+        "reduced_size_bytes": null,
+        "failing_case_name": null,
+        "wa_code_path": "abc369d/67265264/wa_67265264.cpp",
+        "execution_time_seconds": 0.01
+      },
+      {
+        "submission_id": "67240077",
+        "status_code": 404,
+        "message": "Reducer module not found for problem 'abc369D'. Looked for 'abc369d.reducer.py'.",
+        "original_size_bytes": null,
+        "reduced_size_bytes": null,
+        "failing_case_name": null,
+        "wa_code_path": "abc369d/67240077/wa_67240077.cpp",
+        "execution_time_seconds": 0.0
+      },
+      {
+        "submission_id": "67111720",
+        "status_code": 404,
+        "message": "Reducer module not found for problem 'abc369D'. Looked for 'abc369d.reducer.py'.",
+        "original_size_bytes": null,
+        "reduced_size_bytes": null,
+        "failing_case_name": null,
+        "wa_code_path": "abc369d/67111720/wa_67111720.cpp",
+        "execution_time_seconds": 0.0
+      },
+      {
+        "submission_id": "66698094",
+        "status_code": 404,
+        "message": "Reducer module not found for problem 'abc369D'. Looked for 'abc369d.reducer.py'.",
+        "original_size_bytes": null,
+        "reduced_size_bytes": null,
+        "failing_case_name": null,
+        "wa_code_path": "abc369d/66698094/wa_66698094.cpp",
+        "execution_time_seconds": 0.0
+      },
+      {
+        "submission_id": "66602018",
+        "status_code": 404,
+        "message": "Reducer module not found for problem 'abc369D'. Looked for 'abc369d.reducer.py'.",
+        "original_size_bytes": null,
+        "reduced_size_bytes": null,
+        "failing_case_name": null,
+        "wa_code_path": "abc369d/66602018/wa_66602018.cpp",
+        "execution_time_seconds": 0.0
+      },
+      {
+        "submission_id": "66601916",
+        "status_code": 404,
+        "message": "Reducer module not found for problem 'abc369D'. Looked for 'abc369d.reducer.py'.",
+        "original_size_bytes": null,
+        "reduced_size_bytes": null,
+        "failing_case_name": null,
+        "wa_code_path": "abc369d/66601916/wa_66601916.cpp",
+        "execution_time_seconds": 0.0
+      },
+      {
+        "submission_id": "66452865",
+        "status_code": 404,
+        "message": "Reducer module not found for problem 'abc369D'. Looked for 'abc369d.reducer.py'.",
+        "original_size_bytes": null,
+        "reduced_size_bytes": null,
+        "failing_case_name": null,
+        "wa_code_path": "abc369d/66452865/wa_66452865.cpp",
+        "execution_time_seconds": 0.0
+      },
+      {
+        "submission_id": "66381795",
+        "status_code": 404,
+        "message": "Reducer module not found for problem 'abc369D'. Looked for 'abc369d.reducer.py'.",
+        "original_size_bytes": null,
+        "reduced_size_bytes": null,
+        "failing_case_name": null,
+        "wa_code_path": "abc369d/66381795/wa_66381795.cpp",
+        "execution_time_seconds": 0.0
+      },
+      {
+        "submission_id": "66291076",
+        "status_code": 404,
+        "message": "Reducer module not found for problem 'abc369D'. Looked for 'abc369d.reducer.py'.",
+        "original_size_bytes": null,
+        "reduced_size_bytes": null,
+        "failing_case_name": null,
+        "wa_code_path": "abc369d/66291076/wa_66291076.cpp",
+        "execution_time_seconds": 0.0
+      },
+      {
+        "submission_id": "66290467",
+        "status_code": 404,
+        "message": "Reducer module not found for problem 'abc369D'. Looked for 'abc369d.reducer.py'.",
+        "original_size_bytes": null,
+        "reduced_size_bytes": null,
+        "failing_case_name": null,
+        "wa_code_path": "abc369d/66290467/wa_66290467.cpp",
+        "execution_time_seconds": 0.0
+      }
+    ],
+    "problem_description": "patched placeholder"
+  },
+  "abc370d": {
+    "reducer_code": "import os\nimport subprocess\nfrom typing import List, Tuple, Set, Optional\nimport sys\n\ndef run_program(program_path: str, input_data: bytes) -> bytes:\n    result = subprocess.run(\n        [program_path],\n        input=input_data,\n        capture_output=True,\n        check=True,\n        timeout=10\n    )\n    return result.stdout\n\ndef create_input_bytes(H: int, W: int, queries: List[Tuple[int, int]], kept_H: Optional[Set[int]] = None, kept_W: Optional[Set[int]] = None) -> bytes:\n    if kept_H is not None and kept_W is not None:\n        new_H = len(kept_H)\n        new_W = len(kept_W)\n        new_queries = []\n        for r, c in queries:\n            if r in kept_H and c in kept_W:\n                new_r = sorted(kept_H).index(r) + 1\n                new_c = sorted(kept_W).index(c) + 1\n                new_queries.append((new_r, new_c))\n        lines = [f\"{new_H} {new_W} {len(new_queries)}\\n\"] + [f\"{r} {c}\\n\" for r, c in new_queries]\n    else:\n        lines = [f\"{H} {W} {len(queries)}\\n\"] + [f\"{r} {c}\\n\" for r, c in queries]\n    return \"\".join(lines).encode(\"utf-8\")\n\ndef test_interesting(H: int, W: int, queries: List[Tuple[int, int]], kept_H: Optional[Set[int]] = None, kept_W: Optional[Set[int]] = None) -> bool:\n    input_data = create_input_bytes(H, W, queries, kept_H, kept_W)\n    try:\n        wa_output = run_program(\"./wa\", input_data).strip()\n        ac_output = run_program(\"./ac\", input_data).strip()\n        return wa_output != ac_output\n    except:\n        return True\n\ndef reduce_input(input_file: str, output_file: str):\n    if not os.path.exists(input_file):\n        print(f\"[Error] 输入文件不存在: {input_file}\", file=sys.stderr)\n        return\n    \n    with open(input_file, \"r\", encoding=\"utf-8\") as f:\n        lines = [line.rstrip(\"\\n\") for line in f]\n    \n    if not lines:\n        raise ValueError(\"输入文件为空\")\n    \n    header = lines[0].split()\n    if len(header) != 3:\n        raise ValueError(f\"第一行格式错误: {header}\")\n    \n    H, W, Q = map(int, header)\n    queries = []\n    for line in lines[1:]:\n        if not line.strip():\n            continue\n        r, c = map(int, line.split())\n        queries.append((r, c))\n    \n    if not queries or len(queries) != Q:\n        raise ValueError(f\"查询数量不匹配: 期望 {Q}, 实际 {len(queries)}\")\n\n    # Reduce rows\n    row_indices = set(range(1, H + 1))\n    granularity = 2\n    while granularity <= len(row_indices):\n        subset_size = max(1, len(row_indices) // granularity)\n        row_removed = False\n        sorted_rows = sorted(row_indices)\n        \n        # Try removing blocks\n        for i in range(0, len(sorted_rows), subset_size):\n            block = set(sorted_rows[i:i+subset_size])\n            candidate_rows = row_indices - block\n            if candidate_rows and test_interesting(H, W, queries, candidate_rows, set(range(1, W+1))):\n                row_indices = candidate_rows\n                granularity = 2\n                row_removed = True\n                break\n        if row_removed:\n            continue\n        \n        # Try keeping only blocks\n        for i in range(0, len(sorted_rows), subset_size):\n            block = set(sorted_rows[i:i+subset_size])\n            if len(block) == 0 or len(block) == len(row_indices):\n                continue\n            if test_interesting(H, W, queries, block, set(range(1, W+1))):\n                row_indices = block\n                granularity = 2\n                row_removed = True\n                break\n        if row_removed:\n            continue\n        \n        granularity *= 2\n\n    # Reduce columns\n    col_indices = set(range(1, W + 1))\n    granularity = 2\n    while granularity <= len(col_indices):\n        subset_size = max(1, len(col_indices) // granularity)\n        col_removed = False\n        sorted_cols = sorted(col_indices)\n        \n        # Try removing blocks\n        for i in range(0, len(sorted_cols), subset_size):\n            block = set(sorted_cols[i:i+subset_size])\n            candidate_cols = col_indices - block\n            if candidate_cols and test_interesting(H, W, queries, row_indices, candidate_cols):\n                col_indices = candidate_cols\n                granularity = 2\n                col_removed = True\n                break\n        if col_removed:\n            continue\n        \n        # Try keeping only blocks\n        for i in range(0, len(sorted_cols), subset_size):\n            block = set(sorted_cols[i:i+subset_size])\n            if len(block) == 0 or len(block) == len(col_indices):\n                continue\n            if test_interesting(H, W, queries, row_indices, block):\n                col_indices = block\n                granularity = 2\n                col_removed = True\n                break\n        if col_removed:\n            continue\n        \n        granularity *= 2\n\n    # Generate reduced input\n    output_bytes = create_input_bytes(H, W, queries, row_indices, col_indices)\n    with open(output_file, \"wb\") as f:\n        f.write(output_bytes)\n    print(f\"[Info] 缩减过程完成，结果已写入: {output_file}\")",
+    "results": [
+      {
+        "submission_id": "67283761",
+        "status_code": 404,
+        "message": "Reducer module not found for problem 'abc370D'. Looked for 'abc370d.reducer.py'.",
+        "original_size_bytes": null,
+        "reduced_size_bytes": null,
+        "failing_case_name": null,
+        "wa_code_path": "abc370d/67283761/wa_67283761.cpp",
+        "execution_time_seconds": 0.0
+      },
+      {
+        "submission_id": "67044691",
+        "status_code": 404,
+        "message": "Reducer module not found for problem 'abc370D'. Looked for 'abc370d.reducer.py'.",
+        "original_size_bytes": null,
+        "reduced_size_bytes": null,
+        "failing_case_name": null,
+        "wa_code_path": "abc370d/67044691/wa_67044691.cpp",
+        "execution_time_seconds": 0.0
+      },
+      {
+        "submission_id": "66200722",
+        "status_code": 404,
+        "message": "Reducer module not found for problem 'abc370D'. Looked for 'abc370d.reducer.py'.",
+        "original_size_bytes": null,
+        "reduced_size_bytes": null,
+        "failing_case_name": null,
+        "wa_code_path": "abc370d/66200722/wa_66200722.cpp",
+        "execution_time_seconds": 0.0
+      },
+      {
+        "submission_id": "65578854",
+        "status_code": 404,
+        "message": "Reducer module not found for problem 'abc370D'. Looked for 'abc370d.reducer.py'.",
+        "original_size_bytes": null,
+        "reduced_size_bytes": null,
+        "failing_case_name": null,
+        "wa_code_path": "abc370d/65578854/wa_65578854.cpp",
+        "execution_time_seconds": 0.0
+      },
+      {
+        "submission_id": "65527153",
+        "status_code": 404,
+        "message": "Reducer module not found for problem 'abc370D'. Looked for 'abc370d.reducer.py'.",
+        "original_size_bytes": null,
+        "reduced_size_bytes": null,
+        "failing_case_name": null,
+        "wa_code_path": "abc370d/65527153/wa_65527153.cpp",
+        "execution_time_seconds": 0.0
+      },
+      {
+        "submission_id": "65496614",
+        "status_code": 404,
+        "message": "Reducer module not found for problem 'abc370D'. Looked for 'abc370d.reducer.py'.",
+        "original_size_bytes": null,
+        "reduced_size_bytes": null,
+        "failing_case_name": null,
+        "wa_code_path": "abc370d/65496614/wa_65496614.cpp",
+        "execution_time_seconds": 0.01
+      },
+      {
+        "submission_id": "65350419",
+        "status_code": 404,
+        "message": "Reducer module not found for problem 'abc370D'. Looked for 'abc370d.reducer.py'.",
+        "original_size_bytes": null,
+        "reduced_size_bytes": null,
+        "failing_case_name": null,
+        "wa_code_path": "abc370d/65350419/wa_65350419.cpp",
+        "execution_time_seconds": 0.0
+      },
+      {
+        "submission_id": "65350386",
+        "status_code": 404,
+        "message": "Reducer module not found for problem 'abc370D'. Looked for 'abc370d.reducer.py'.",
+        "original_size_bytes": null,
+        "reduced_size_bytes": null,
+        "failing_case_name": null,
+        "wa_code_path": "abc370d/65350386/wa_65350386.cpp",
+        "execution_time_seconds": 0.01
+      },
+      {
+        "submission_id": "65350266",
+        "status_code": 404,
+        "message": "Reducer module not found for problem 'abc370D'. Looked for 'abc370d.reducer.py'.",
+        "original_size_bytes": null,
+        "reduced_size_bytes": null,
+        "failing_case_name": null,
+        "wa_code_path": "abc370d/65350266/wa_65350266.cpp",
+        "execution_time_seconds": 0.0
+      },
+      {
+        "submission_id": "65350192",
+        "status_code": 404,
+        "message": "Reducer module not found for problem 'abc370D'. Looked for 'abc370d.reducer.py'.",
+        "original_size_bytes": null,
+        "reduced_size_bytes": null,
+        "failing_case_name": null,
+        "wa_code_path": "abc370d/65350192/wa_65350192.cpp",
+        "execution_time_seconds": 0.0
+      }
+    ],
+    "problem_description": "Score : 400 points\n\n### Problem Statement\n\nThere is a grid with H rows and W columns. Let (i, j) denote the cell at the i-th row from the top and j-th column from the left.  \nInitially, there is one wall in each cell.  \nAfter processing Q queries explained below in the order they are given, find the number of remaining walls.\n\nIn the q-th query, you are given two integers R\\_q and C\\_q.  \nYou place a bomb at (R\\_q, C\\_q) to destroy walls. As a result, the following process occurs.\n\n* If there is a wall at (R\\_q, C\\_q), destroy that wall and end the process.\n* If there is no wall at (R\\_q, C\\_q), destroy the first walls that appear when looking up, down, left, and right from (R\\_q, C\\_q). More precisely, the following four processes occur simultaneously:\n  + If there exists an i \\lt R\\_q such that a wall exists at (i, C\\_q) and no wall exists at (k, C\\_q) for all i \\lt k \\lt R\\_q, destroy the wall at (i, C\\_q).\n  + If there exists an i \\gt R\\_q such that a wall exists at (i, C\\_q) and no wall exists at (k, C\\_q) for all R\\_q \\lt k \\lt i, destroy the wall at (i, C\\_q).\n  + If there exists a j \\lt C\\_q such that a wall exists at (R\\_q, j) and no wall exists at (R\\_q, k) for all j \\lt k \\lt C\\_q, destroy the wall at (R\\_q, j).\n  + If there exists a j \\gt C\\_q such that a wall exists at (R\\_q, j) and no wall exists at (R\\_q, k) for all C\\_q \\lt k \\lt j, destroy the wall at (R\\_q, j).\n\n### Constraints\n\n* 1 \\leq H, W\n* H \\times W \\leq 4 \\times 10^5\n* 1 \\leq Q \\leq 2 \\times 10^5\n* 1 \\leq R\\_q \\leq H\n* 1 \\leq C\\_q \\leq W\n* All input values are integers.\n\n---\n\n### Input\n\nThe input is given from Standard Input in the following format:\n\n```\nH W Q\nR_1 C_1\nR_2 C_2\n\\vdots\nR_Q C_Q\n\n```\n\n### Output\n\nPrint the number of remaining walls after processing all queries.\n\n---"
+  }
+}

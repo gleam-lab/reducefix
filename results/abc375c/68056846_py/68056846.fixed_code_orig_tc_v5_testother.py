@@ -1,0 +1,29 @@
+import math
+
+N = int(input())
+X = 0
+Y = 0
+result = 0.0
+
+# Start from origin (0,0), visit all N points in order, then return to origin
+prev_x, prev_y = 0, 0
+
+for i in range(N):
+    line = input().split()
+    curr_x = int(line[0])
+    curr_y = int(line[1])
+    
+    # Add distance from previous point to current point
+    dx = curr_x - prev_x
+    dy = curr_y - prev_y
+    result += math.sqrt(dx*dx + dy*dy)
+    
+    # Update previous point to current point
+    prev_x, prev_y = curr_x, curr_y
+
+# Add distance from last point back to origin
+dx = 0 - prev_x
+dy = 0 - prev_y
+result += math.sqrt(dx*dx + dy*dy)
+
+print(result)

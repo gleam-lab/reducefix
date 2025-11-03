@@ -16,7 +16,7 @@ def submit_and_get_results(contest_id: str,
                            problem_id: str,
                            code_str: str,
                            language_id: LanguageId = '5001', # 5001: C++, 5055: Python
-                           cookie_file_path: str = "/home/barty/.local/share/online-judge-tools/cookie.jar",
+                           cookie_file_path: str = None,  # Default to None, will use environment variable
                            max_poll_attempts: int = 30,
                            poll_wait_seconds: int = 3) -> dict:
     result = {
@@ -28,6 +28,10 @@ def submit_and_get_results(contest_id: str,
         "ac_count": None,
         "error_message": None
     }
+    # Use default cookie path if not provided
+    if cookie_file_path is None:
+        cookie_file_path = os.path.expanduser("~/.local/share/online-judge-tools/cookie.jar")
+    
     print(f"[Core] Attempting to load session from {cookie_file_path}...")
     session = load_session_with_cookie_file(cookie_file_path)
     if session is None:
@@ -136,7 +140,8 @@ def main():
     contest_id = "abc330"
     problem_id = "abc330_d"
     code_file_path = "my_solution.cc"
-    cookie_file = "/home/barty/.local/share/online-judge-tools/cookie.jar"
+    # Use default cookie file path
+    cookie_file = os.path.expanduser("~/.local/share/online-judge-tools/cookie.jar")
     
     print(f"Test configuration:")
     print(f"  Contest: {contest_id}")

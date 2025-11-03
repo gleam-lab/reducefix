@@ -1,0 +1,64 @@
+```python
+import sys
+
+def solve():
+    N, K = map(int, input().split())
+    A = list(map(int, input().split()))
+    B = list(map(int, input().split()))
+    
+    # Pair elements with their indices and sort by A_i
+    pairs = sorted([(A[i], B[i], i) for i in range(N)])
+    
+    # We'll try each element as candidate for max_A in the subset
+    ans = float('inf')
+    
+    # Use a min-heap to maintain the smallest B values among selected items
+    import heapq
+    
+    # Precompute suffix sums of B for largest K elements? Not exactly.
+    # Instead: iterate from left to right in sorted order, consider current A as max
+    # Then we need to pick K-1 other elements from the ones with A_i <= current A_i (i.e., to the left including current)
+    # But we want to minimize sum(B_i), so we keep track of the smallest K B-values seen so far?
+    # Actually: if we fix current element as having max A, then we can choose up to K elements from all those with A_i <= current A_i
+    # To minimize the product, we want minimal sum of B_i, so we should take the K smallest B_i among these?
+    # BUT: we must include at least one element with A_i == current A_i to ensure max is current A_i? 
+    # However, multiple elements can have same A_i. So when we process an element, all previous ones have A_i <= current.
+    # Idea: traverse in increasing order of A_i. For each position i (0-indexed), consider using pairs[0..i] as candidates.
+    # If i+1 >= K, we can form a valid set.
+    # We maintain a max-heap (simulated with negative values) of size K to track the K smallest B values in the prefix.
+    
+    heap = []  # max-heap for B values (store negative to simulate max-heap)
+    total_b = 0
+    
+    for i in range(N):
+        a_val, b_val, orig_idx = pairs[i]
+        
+        # Add current B value
+        if len(heap) < K:
+            heapq.heappush(heap, -b_val)
+            total_b += b_val
+        else:
+            # If current B is smaller than the largest in heap, replace
+            if b_val < -heap[0]:
+                removed = -heapq.heappop(heap)
+                heapq.heappush(heap, -b_val)
+                total_b = total_b - removed + b_val
+            # else: skip this B (not beneficial)
+        
+        # Can only form a subset of size K if we have processed at least K elements
+        if i + 1 >= K:
+            # Current a_val is the maximum A in the selected subset (since sorted)
+            product = a_val * total_b
+            if product < ans:
+                ans = product
+                
+    return ans
+
+def main():
+    T = int(input())
+    for _ in range(T):
+        print(solve())
+
+if __name__ == "__main__":
+    main()
+```

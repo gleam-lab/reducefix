@@ -1,0 +1,178 @@
+```python
+import sys
+from collections import defaultdict
+
+def main():
+    data = sys.stdin.read().split()
+    H = int(data[0])
+    W = int(data[1])
+    Q = int(data[2])
+    
+    # Use union-find style structures to track next existing wall in each direction
+    # For each row, maintain left and right neighbors for columns
+    # For each col, maintain up and down neighbors for rows
+    row_prev = [list(range(W+1)) for _ in range(H+1)]  # row_prev[r][c] = previous existing column in row r
+    row_next = [list(range(W+1)) for _ in range(H+1)]  # row_next[r][c] = next existing column in row r
+    col_prev = [list(range(H+1)) for _ in range(W+1)]  # col_prev[c][r] = previous existing row in col c
+    col_next = [list(range(H+1)) for _ in range(W+1)]  # col_next[c][r] = next existing row in col c
+    
+    # Initialize: each cell points to itself initially
+    for r in range(1, H+1):
+        for c in range(1, W+1):
+            row_prev[r][c] = c-1
+            row_next[r][c] = c+1
+            col_prev[c][r] = r-1
+            col_next[c][r] = r+1
+    
+    total_walls = H * W
+    index = 3
+    
+    def find_row_prev(r, c):
+        if row_prev[r][c] == c:
+            return c
+        row_prev[r][c] = find_row_prev(r, row_prev[r][c])
+        return row_prev[r][c]
+    
+    def find_row_next(r, c):
+        if row_next[r][c] == c:
+            return c
+        row_next[r][c] = find_row_next(r, row_next[r][c])
+        return row_next[r][c]
+    
+    def find_col_prev(c, r):
+        if col_prev[c][r] == r:
+            return r
+        col_prev[c][r] = find_col_prev(c, col_prev[c][r])
+        return col_prev[c][r]
+    
+    def find_col_next(c, r):
+        if col_next[c][r] == r:
+            return r
+        col_next[c][r] = find_col_next(c, col_next[c][r])
+        return col_next[c][r]
+    
+    for _ in range(Q):
+        R_q = int(data[index])
+        C_q = int(data[index + 1])
+        index += 2
+        
+        # Check if there's a wall at (R_q, C_q)
+        # In our structure, if the cell hasn't been destroyed, it should be reachable
+        # We check by seeing if C_q is between the previous and next in its row
+        prev_c = find_row_prev(R_q, C_q)
+        next_c = find_row_next(R_q, C_q)
+        
+        if prev_c < C_q and next_c > C_q:
+            # Wall exists at (R_q, C_q), destroy it
+            total_walls -= 1
+            
+            # Update row R_q: remove C_q
+            row_prev[R_q][C_q] = prev_c
+            row_next[R_q][prev_c] = next_c
+            row_next[R_q][C_q] = next_c
+            row_prev[R_q][next_c] = prev_c
+            
+            # Update col C_q: remove R_q
+            prev_r = find_col_prev(C_q, R_q)
+            next_r = find_col_next(C_q, R_q)
+            col_prev[C_q][R_q] = prev_r
+            col_next[C_q][prev_r] = next_r
+            col_next[C_q][R_q] = next_r
+            col_prev[C_q][next_r] = prev_r
+        else:
+            # No wall at (R_q, C_q), destroy first walls in each direction
+            directions_destroyed = set()
+            
+            # Up: find first wall above R_q in column C_q
+            prev_r = find_col_prev(C_q, R_q)
+            if prev_r >= 1:
+                if (prev_r, C_q) not in directions_destroyed:
+                    total_walls -= 1
+                    directions_destroyed.add((prev_r, C_q))
+                    
+                    # Remove from row and col structures
+                    prev_c = find_row_prev(prev_r, C_q)
+                    next_c = find_row_next(prev_r, C_q)
+                    row_prev[prev_r][C_q] = prev_c
+                    row_next[prev_r][prev_c] = next_c
+                    row_next[prev_r][C_q] = next_c
+                    row_prev[prev_r][next_c] = prev_c
+                    
+                    prev_rr = find_col_prev(C_q, prev_r)
+                    next_rr = find_col_next(C_q, prev_r)
+                    col_prev[C_q][prev_r] = prev_rr
+                    col_next[C_q][prev_rr] = next_rr
+                    col_next[C_q][prev_r] = next_rr
+                    col_prev[C_q][next_rr] = prev_rr
+            
+            # Down: find first wall below R_q in column C_q
+            next_r = find_col_next(C_q, R_q)
+            if next_r <= H:
+                if (next_r, C_q) not in directions_destroyed:
+                    total_walls -= 1
+                    directions_destroyed.add((next_r, C_q))
+                    
+                    # Remove from row and col structures
+                    prev_c = find_row_prev(next_r, C_q)
+                    next_c = find_row_next(next_r, C_q)
+                    row_prev[next_r][C_q] = prev_c
+                    row_next[next_r][prev_c] = next_c
+                    row_next[next_r][C_q] = next_c
+                    row_prev[next_r][next_c] = prev_c
+                    
+                    prev_rr = find_col_prev(C_q, next_r)
+                    next_rr = find_col_next(C_q, next_r)
+                    col_prev[C_q][next_r] = prev_rr
+                    col_next[C_q][prev_rr] = next_rr
+                    col_next[C_q][next_r] = next_rr
+                    col_prev[C_q][next_rr] = prev_rr
+            
+            # Left: find first wall to the left of C_q in row R_q
+            prev_c = find_row_prev(R_q, C_q)
+            if prev_c >= 1:
+                if (R_q, prev_c) not in directions_destroyed:
+                    total_walls -= 1
+                    directions_destroyed.add((R_q, prev_c))
+                    
+                    # Remove from row and col structures
+                    prev_cc = find_row_prev(R_q, prev_c)
+                    next_cc = find_row_next(R_q, prev_c)
+                    row_prev[R_q][prev_c] = prev_cc
+                    row_next[R_q][prev_cc] = next_cc
+                    row_next[R_q][prev_c] = next_cc
+                    row_prev[R_q][next_cc] = prev_cc
+                    
+                    prev_r = find_col_prev(prev_c, R_q)
+                    next_r = find_col_next(prev_c, R_q)
+                    col_prev[prev_c][R_q] = prev_r
+                    col_next[prev_c][prev_r] = next_r
+                    col_next[prev_c][R_q] = next_r
+                    col_prev[prev_c][next_r] = prev_r
+            
+            # Right: find first wall to the right of C_q in row R_q
+            next_c = find_row_next(R_q, C_q)
+            if next_c <= W:
+                if (R_q, next_c) not in directions_destroyed:
+                    total_walls -= 1
+                    directions_destroyed.add((R_q, next_c))
+                    
+                    # Remove from row and col structures
+                    prev_cc = find_row_prev(R_q, next_c)
+                    next_cc = find_row_next(R_q, next_c)
+                    row_prev[R_q][next_c] = prev_cc
+                    row_next[R_q][prev_cc] = next_cc
+                    row_next[R_q][next_c] = next_cc
+                    row_prev[R_q][next_cc] = prev_cc
+                    
+                    prev_r = find_col_prev(next_c, R_q)
+                    next_r = find_col_next(next_c, R_q)
+                    col_prev[next_c][R_q] = prev_r
+                    col_next[next_c][prev_r] = next_r
+                    col_next[next_c][R_q] = next_r
+                    col_prev[next_c][next_r] = prev_r
+    
+    print(total_walls)
+
+if __name__ == "__main__":
+    main()
+```

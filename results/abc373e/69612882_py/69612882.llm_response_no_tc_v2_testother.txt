@@ -1,0 +1,340 @@
+```python
+```python
+N, M, K = map(int, input().split())
+A = list(map(int, input().split()))
+
+total_counted = sum(A)
+remaining_votes = K - total_counted
+
+# If there are no remaining votes, we just need to check current status
+if remaining_votes == 0:
+    # Count how many candidates have more votes than candidate i
+    ans = []
+    for i in range(N):
+        count_better = 0
+        for j in range(N):
+            if A[j] > A[i]:
+                count_better += 1
+        if count_better < M:
+            ans.append(0)
+        else:
+            ans.append(-1)
+    print(*ans)
+    exit()
+
+# We want to compute for each candidate the minimum additional votes needed
+ans = []
+
+# Sort candidates by current votes in descending order, keeping original indices
+candidates = [(A[i], i) for i in range(N)]
+candidates.sort(reverse=True)
+
+# Extract sorted votes
+sorted_votes = [vote for vote, idx in candidates]
+
+for orig_idx in range(N):
+    current_votes = A[orig_idx]
+    needed = 0
+    
+    # We'll try to find the minimal X such that even in the worst-case distribution of other votes,
+    # candidate orig_idx is elected (i.e., fewer than M candidates have more votes than them).
+    
+    # Worst case: all other candidates get as many of the remaining votes as possible,
+    # except we can give X extra votes to candidate orig_idx.
+    
+    # We need to ensure that at most M-1 candidates have more votes than (current_votes + X).
+    
+    # Try binary search on X in [0, remaining_votes], but we can do greedy instead.
+    
+    # Alternative idea: simulate how many candidates could end up above candidate orig_idx.
+    
+    # For a fixed X, after adding X to candidate orig_idx, their total is T = current_votes + X.
+    # Each other candidate j can get at most A[j] + (remaining_votes - X) votes (since X votes go to orig_idx).
+    # But actually, only (remaining_votes - X) votes are available for others in total.
+    # So we should distribute optimally to maximize number of candidates > T.
+    
+    # To maximize the number of candidates with > T votes, assign as many votes as possible
+    # to the top candidates who can exceed T.
+    
+    # How many candidates can possibly have > T?
+    # For each candidate j != orig_idx, max_final_votes[j] = A[j] + (possibly some of remaining_votes - X)
+    # But total extra for others is (remaining_votes - X).
+    
+    # We want to know: what's the maximum number of candidates (excluding orig_idx) 
+    # that can have final votes > T?
+    
+    # We can model this: sort other candidates by A[j], and greedily try to push them above T.
+    
+    # Instead of binary search per candidate (which would be O(N^2 log K)), we can use a direct method.
+    
+    # Insight: We want the smallest X such that at most M-1 candidates can surpass T = current_votes + X.
+    
+    # Let’s suppose we fix X. Then T = current_votes + X.
+    # The number of candidates that can end up with > T votes is at most:
+    #   Count how many candidates already have > T? Not exactly — they can gain votes.
+    #
+    # Actually, consider: we want to minimize the number of candidates that can exceed T.
+    # But adversary wants to maximize it.
+    #
+    # Adversary has R = remaining_votes - X votes to distribute arbitrarily among the other N-1 candidates.
+    # Candidate j can reach A[j] + x_j, where sum x_j = R, x_j >= 0.
+    # How many j (j ≠ orig_idx) can satisfy A[j] + x_j > T?
+    #
+    # To maximize the count, the adversary will try to "just barely" push as many candidates above T as possible.
+    # For a candidate j, the minimum extra votes needed to exceed T is:
+    #   needed_j = max(0, T - A[j] + 1)   if A[j] <= T, else 0.
+    #
+    # But if A[j] > T, then no extra votes needed.
+    #
+    # So the maximum number of candidates that can exceed T is:
+    #   base_count = number of j ≠ orig_idx with A[j] > T
+    #   Then, from the rest (A[j] <= T), we can choose as many as possible such that the sum of needed_j <= R.
+    #
+    # This is a greedy knapsack-like problem: sort the candidates with A[j] <= T by needed_j (ascending),
+    # and see how many can be pushed over T within budget R.
+    #
+    # However, doing this for every candidate and every X would be too slow.
+    #
+    # Alternate approach: we can binary search on X for each candidate.
+    # Since X in [0, remaining_votes], and remaining_votes <= 1e12, log factor ~40, and N up to 2e5 -> 8e6 operations worst-case.
+    # But inner simulation requires sorting or scanning — we need to optimize.
+    #
+    # Let's try to avoid binary search if possible.
+    #
+    # Another idea: what is the worst-case number of candidates that can beat candidate i?
+    # We can think: we want to assign the remaining votes to minimize the rank of candidate i.
+    # But we control X for candidate i.
+    #
+    # Known trick in voting problems:
+    # To guarantee election, candidate i needs to have a score such that at most M-1 candidates can surpass it.
+    #
+    # Let’s define:
+    #   T = current_votes + X
+    #   R = remaining_votes - X
+    #
+    # We want: the maximum number of other candidates that can achieve > T is <= M-1.
+    #
+    # How to compute max_possible_beaters(T, R, orig_idx)?
+    #   Step 1: Count how many j ≠ orig_idx already have A[j] > T → these are automatic beaters.
+    #   Step 2: From those with A[j] <= T, we can boost them. The cost to boost candidate j to T+1 is (T + 1 - A[j]).
+    #   Step 3: Sort these by cost, and greedily pick as many as possible without exceeding R.
+    #
+    # Then total beaters = step1 + step3_count.
+    # We want this <= M-1.
+    #
+    # We can binary search on X in [0, remaining_votes] for each candidate.
+    #
+    # But worst-case complexity: O(N * (N log N) * log K) → 2e5 * 2e5 * log(1e12) ≈ 2e5 * 2e5 * 40 = 1.6e12 → too slow.
+    #
+    # Need a better approach.
+    #
+    # Insight: Instead of iterating over candidates and binary searching, we can precompute something.
+    #
+    # Alternatively, note that X must be large enough so that:
+    #   Let F(X) = maximum number of other candidates that can have > (current_votes + X)
+    #   We want F(X) <= M-1.
+    #
+    # F(X) is non-increasing in X: as X increases, T increases, so harder to beat.
+    #
+    # So we can binary search on X for each candidate.
+    #
+    # But we must make the evaluation of F(X) fast.
+    #
+    # How to compute F(X) quickly?
+    #   T = current_votes + X
+    #   R = remaining_votes - X
+    #
+    #   Let beater_count = 0
+    #   Let deficits = []
+    #   for j in range(N):
+    #       if j == orig_idx: continue
+    #       if A[j] > T:
+    #           beater_count += 1
+    #       else:
+    #           need = T + 1 - A[j]
+    #           if need > 0:
+    #               deficits.append(need)
+    #
+    #   Sort deficits → then greedy: take smallest until sum exceeds R.
+    #
+    #   Then total beaters = beater_count + (number we can afford to boost)
+    #
+    # Complexity of F(X): O(N log N) due to sorting → too slow for binary search per candidate.
+    #
+    # But note: we are doing this for each candidate, and binary search takes O(log K) iterations → total O(N^2 log N log K) → way too slow.
+    #
+    # We need to optimize F(X).
+    #
+    # Alternative idea: sort all candidates by A[j]. Then for a fixed candidate i and value T, 
+    # the set of j with A[j] <= T is a prefix/suffix depending on order.
+    #
+    # Pre-sort the array.
+    #
+    # Let's sort the entire array once.
+    #
+    # But each candidate i has different current_votes, so T = A[i] + X varies.
+    #
+    # Another known solution idea from similar problems (e.g., ARC elections):
+    #
+    # Observation:
+    # Candidate i is elected iff at most M-1 candidates have strictly more votes.
+    # So we want to ensure that at least N-M candidates have <= (A[i] + X).
+    #
+    # But the adversary controls the distribution.
+    #
+    # Known efficient solution:
+    #   For each candidate i, consider the scenario where we allocate X votes to i, and the remaining R = rem - X votes
+    #   are used adversarially to promote other candidates above T = A[i] + X.
+    #
+    #   The minimal X such that it's impossible for M or more candidates to have > T.
+    #
+    # Efficient computation:
+    #   Let’s collect all other candidates' current votes.
+    #   We want to prevent M candidates from exceeding T.
+    #
+    #   The total "excess" capacity of the system to create beaters is limited by R.
+    #
+    #   Consider: if we want to prevent M beaters, then even if we try to create M beaters, we need a certain amount of votes.
+    #
+    #   Specifically, to have M candidates with > T, we need:
+    #       Sum over the M candidates with smallest "cost to exceed T" of their costs ≤ R.
+    #
+    #   But which M candidates? The ones easiest to boost (lowest cost).
+    #
+    #   However, some may already exceed T.
+    #
+    #   So: let C be the list of cost for each j ≠ i to exceed T:
+    #       cost_j = max(0, T - A[j] + 1)
+    #   Then sort C, take the smallest M values, and sum them. If sum > R, then impossible to have M beaters → safe.
+    #
+    #   So condition: sum of smallest M costs > R → candidate i is safe.
+    #
+    #   We want the smallest X such that:
+    #       sum_{smallest M costs in {cost_j}} > remaining_votes - X
+    #
+    #   Note: T = A[i] + X, so cost_j depends on X.
+    #
+    #   We can binary search on X in [0, remaining_votes].
+    #
+    #   For fixed X, computing the sum of smallest M costs:
+    #       Create list of cost_j for j≠i: O(N)
+    #       Partial sort to get smallest M? O(N log M) or O(N) with quickselect.
+    #       But M can be up to 2e5, so O(N log N) per evaluation.
+    #
+    #   Total per candidate: O(log K * N log N) → overall O(N^2 log N log K) → still too slow.
+    #
+    # Need linear or near-linear per candidate.
+    #
+    # Insight: Can we reframe the condition?
+    #
+    # After reading known problems: similar to "Election" in AtCoder.
+    #
+    # Alternate efficient solution:
+    #
+    # Step 1: Sort candidates by votes descending: v[0] >= v[1] >= ... >= v[N-1]
+    #
+    # For a candidate currently at position p (with vote count A[i]), we want to ensure that not too many can surpass them.
+    #
+    # But here's a better idea from known solutions:
+    #
+    # Let’s assume we give X votes to candidate i. Then their total is S = A[i] + X.
+    # The remaining R = rem - X votes go to others.
+    #
+    # The number of candidates that can have > S is maximized when we use the R votes to push as many candidates as possible above S.
+    #
+    # To compute the maximum number of candidates that can exceed S:
+    #   - All candidates with current votes > S are already above.
+    #   - Among others (<= S), we can push a candidate j above S with cost = S - A[j] + 1.
+    #   - We want to maximize count, so we choose the ones with smallest cost.
+    #
+    # So:
+    #   count_already = number of j ≠ i with A[j] > S
+    #   If count_already >= M, then even without using any votes, there are already M beaters → not safe.
+    #   Otherwise, we have M - count_already "slots" to fill, and we need to see if we can fill them with the budget R.
+    #
+    #   But wait: we want to know if it's possible to have >= M beaters. We need to check if we can have at least M beaters.
+    #   Actually, we want to prevent >= M beaters, so we require that it's impossible to have M beaters.
+    #
+    #   So: the minimal cost to create M beaters (including those already above) is:
+    #       Take the M candidates j ≠ i with smallest cost_j, where cost_j = max(0, S - A[j] + 1)
+    #       Sum of these M smallest cost_j > R
+    #
+    #   Why M? Because if we can't even create M beaters, then candidate i is safe.
+    #
+    #   But note: if there are already >= M candidates with A[j] > S, then cost_j=0 for those, so sum of smallest M cost_j = 0 <= R → condition fails.
+    #
+    #   So condition: sum of smallest M cost_j > R → safe.
+    #
+    #   We want the smallest X such that:
+    #       sum_{j in J} cost_j > remaining_votes - X
+    #       where J is the set of M candidates j≠i with smallest cost_j, cost_j = max(0, (A[i]+X) - A[j] + 1)
+    #
+    #   Rearranged:
+    #       sum_{j in J} max(0, A[i]+X - A[j] + 1) + X > remaining_votes
+    #
+    #   But the set J depends on X, because cost_j depends on X.
+    #
+    #   This is still complex.
+    #
+    # Given time, we implement a binary search per candidate with optimization.
+    #
+    # But worst-case might be borderline in Pyton, but constraints say N=2e5, and we cannot do O(N^2).
+    #
+    # There is a known efficient solution:
+    #
+    # From known AC codes for similar problems:
+    #   For each candidate i, the answer is determined by considering the top M candidates other than i.
+    #
+    # Insight: 
+    #   In the worst case, the adversary will try to boost the M candidates that are most threatening to i.
+    #   The most threatening are those with high current votes.
+    #
+    #   Specifically, consider the following:
+    #       Even if we give X to i, we need to make sure that at least one of the top M candidates (by potential) cannot surpass i.
+    #
+    #   But another idea: 
+    #       Let’s assume that the remaining votes are distributed optimally to harm i.
+    #       The best strategy is to give as many votes as possible to the candidates that can potentially surpass i.
+    #
+    #   Known solution approach:
+    #       Sort the candidates in decreasing order of A[i].
+    #       For candidate i, let r be its index in the sorted order.
+    #       If r < M, then currently in top M, but may drop.
+    #
+    #   Actually, after research, a common solution is:
+    #       ans[i] = max(0, min(
+    #           [max(0, (sum_of_top_M_others_excluding_i + remaining_votes) // M - A[i] + 1)] 
+    #       ))
+    #
+    #   But I recall a solution like:
+    #       Let B = sorted(A, reverse=True)
+    #       Let S = sum(B[:M])
+    #       Then for candidate i:
+    #         if A[i] > B[M-1]:  # already in top M
+    #             ans = 0
+    #         else:
+    #             needed = (S + remaining_votes + M - 1) // M - A[i]
+    #             if needed <= remaining_votes:
+    #                 ans = needed
+    #             else:
+    #                 ans = -1
+    #
+    #   But this is not correct for this problem because the condition is not being in top M, but having fewer than M above you.
+    #
+    #   Having fewer than M above you means you are in the top M (counting ties properly).
+    #
+    #   Specifically, if there are k candidates with votes > A[i], then i is elected iff k < M.
+    #   This means i is at least (k+1)-th, and k+1 <= M, so i is in the top M.
+    #
+    #   But ties: if multiple have the same votes, then if A[j] = A[i] and j≠i, then j does NOT have more votes, so doesn't count toward k.
+    #
+    #   So i is elected iff the number of candidates with votes > A[i] is < M.
+    #
+    #   This is equivalent to: i is not worse than (M+1)-th place? Not exactly.
+    #
+    #   Example: M=2, votes [5,5,5,4]: 
+    #       For a candidate with 5: number of candidates with >5 is 0 < 2 → elected.
+    #       For a candidate with 4: number with >4 is 3 >=2 → not elected.
+    #
+    #   So the threshold is: if you have vote count V, then you are elected iff less than M candidates have > V.
+   

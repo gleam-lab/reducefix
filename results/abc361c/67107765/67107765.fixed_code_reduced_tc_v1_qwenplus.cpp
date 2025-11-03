@@ -1,0 +1,34 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define fi first
+#define se second
+#define pb push_back
+using ll = long long;
+using P = pair<int, int>;
+const ll LINF = 1001002003004005006ll;
+const int INF = 1001001001;
+#define chmin(x,y) x = min(x,y)
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int n, k;
+    cin >> n >> k;
+    vector<int> a(n);
+    for (int i = 0; i < n; i++) {
+        cin >> a[i];
+    }
+    sort(a.begin(), a.end());
+    
+    // We are removing exactly K elements, so we keep (n - k) elements.
+    int keep = n - k;
+    int ans = a[keep - 1] - a[0]; // Initial candidate: take first 'keep' elements
+    
+    // Try all possible windows of length 'keep'
+    // The idea is that the optimal remaining sequence must be a contiguous segment in sorted order
+    for (int i = 1; i + keep - 1 < n; i++) {
+        chmin(ans, a[i + keep - 1] - a[i]);
+    }
+    
+    cout << ans << endl;
+}

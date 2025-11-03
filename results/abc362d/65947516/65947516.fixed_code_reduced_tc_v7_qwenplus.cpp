@@ -1,0 +1,74 @@
+#include<queue>
+#include<vector>
+#include<cstdio>
+#include<cstring>
+#include<climits>
+#include<algorithm>
+using namespace std;
+typedef long long ll;
+typedef pair<int,int> pii;
+
+const int N=200005;
+int n,m;
+ll a[N];
+ll dis[N];
+bool vis[N];
+vector<pii>g[N];
+
+struct node {
+    int id;
+    ll dis;
+    bool operator<(const node& x)const {
+        return dis > x.dis;
+    }
+};
+
+void dijkstra() {
+    for(int i=1; i<=n; i++)
+        dis[i] = LLONG_MAX;
+    memset(vis, false, sizeof(vis));
+    
+    dis[1] = a[1]; // include starting vertex weight
+    priority_queue<node> q;
+    q.push({1, dis[1]});
+    
+    while(!q.empty()) {
+        node now = q.top();
+        q.pop();
+        if(vis[now.id]) continue;
+        vis[now.id] = true;
+        
+        for(pii edge : g[now.id]) {
+            int v = edge.first;
+            ll w = edge.second;
+            ll newDist = now.dis + w + a[v]; // current path cost + edge weight + destination vertex weight
+            if(newDist < dis[v]) {
+                dis[v] = newDist;
+                if(!vis[v]) {
+                    q.push({v, dis[v]});
+                }
+            }
+        }
+    }
+}
+
+int main() {
+    scanf("%d%d", &n, &m);
+    for(int i=1; i<=n; i++) {
+        scanf("%lld", &a[i]);
+    }
+    
+    for(int i=1; i<=m; i++) {
+        int u,v,w;
+        scanf("%d%d%d", &u, &v, &w);
+        g[u].push_back({v, w});
+        g[v].push_back({u, w});
+    }
+    
+    dijkstra();
+    
+    for(int i=2; i<=n; i++) {
+        printf("%lld ", dis[i]);
+    }
+    return 0;
+}

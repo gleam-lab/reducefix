@@ -1,0 +1,33 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int n, k;
+    cin >> n >> k;
+    vector<int> v(n);
+    for (auto& val : v) {
+        cin >> val;
+    }
+    
+    sort(v.begin(), v.end());
+    
+    // We are removing exactly K elements, so we keep (n - k) elements.
+    // The remaining elements must be contiguous in the sorted array to minimize the range.
+    // Try all possible contiguous subarrays of length (n - k)
+    long long min_range = 1e18;
+    int keep = n - k;
+    
+    for (int i = 0; i + keep - 1 < n; i++) {
+        int j = i + keep - 1;
+        min_range = min(min_range, (long long)v[j] - v[i]);
+    }
+    
+    cout << min_range << endl;
+    
+    return 0;
+}

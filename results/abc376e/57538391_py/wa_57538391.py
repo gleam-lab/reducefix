@@ -1,0 +1,20 @@
+H,W,Q=map(int,input().split())
+grid = [[1]*W for _ in range(H)]
+
+directions=[(-1,0),(1,0),(0,-1),(0,1)]
+
+def bomb(i,j):
+  if grid[i][j]==1:
+    grid[i][j]=0
+  else:
+    for di,dj in directions:
+      ni,nj=i+di,j+dj
+      if 0<=ni<H and 0<=nj <W and grid[ni][nj]==1:
+        grid[ni][nj]=0
+  
+for q in range(Q):
+  i,j=map(int,input().split())
+  i-=1
+  j-=1
+  bomb(i,j)
+print(sum(sum(r) for r in grid))

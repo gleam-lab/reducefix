@@ -1,0 +1,34 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int n, k;
+    cin >> n >> k;
+    
+    vector<int> a(n);
+    for (int i = 0; i < n; i++) {
+        cin >> a[i];
+    }
+    
+    sort(a.begin(), a.end());
+    
+    int min_diff = a[n-1] - a[0];
+    
+    // Try removing k elements from the ends
+    // We can remove i elements from the left and (k-i) from the right
+    for (int i = 0; i <= k; i++) {
+        int left_idx = i;
+        int right_idx = n - 1 - (k - i);
+        
+        if (left_idx <= right_idx) {
+            min_diff = min(min_diff, a[right_idx] - a[left_idx]);
+        }
+    }
+    
+    cout << min_diff << endl;
+    
+    return 0;
+}

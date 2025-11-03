@@ -1,0 +1,47 @@
+N = int(input())
+S = input().strip()
+
+# Map moves to indices: 0=R, 1=P, 2=S
+# Winning move against Aoki's move:
+# If Aoki plays R (rock), Takahashi must play P (paper) to win -> index 1
+# If Aoki plays P (paper), Takahashi must play S (scissors) to win -> index 2
+# If Aoki plays S (scissors), Takahashi must play R (rock) to win -> index 0
+win_move = {'R': 1, 'P': 2, 'S': 0}
+lose_move = {'R': 2, 'P': 0, 'S': 1}  # This would make Takahashi lose, so we avoid it
+
+# dp[i][j] = maximum wins up to game i when Takahashi plays move j in game i
+# We'll use only the previous state, so we can optimize space
+prev_dp = [-1, -1, -1]  # -1 means unreachable
+
+# Initialize first game
+for move in range(3):
+    if move == win_move[S[0]]:
+        prev_dp[move] = 1  # win
+    elif move != lose_move[S[0]]:  # not losing => must be draw
+        prev_dp[move] = 0  # draw
+
+# Process each subsequent game
+for i in range(1, N):
+    curr_dp = [-1, -1, -1]
+    for curr_move in range(3):
+        # Check if this move is valid (doesn't lose)
+        if curr_move == lose_move[S[i]]:
+            continue  # This move would lose, not allowed
+        
+        # Determine outcome of current move
+        if curr_move == win_move[S[i]]:
+            win_bonus = 1
+        else:
+            win_bonus = 0
+        
+        # Try transitioning from each previous move
+        for prev_move in range(3):
+            if prev_move == curr_move:  # consecutive same move not allowed
+                continue
+            if prev_dp[prev_move] == -1:  # unreachable state
+                continue
+            curr_dp[curr_move] = max(curr_dp[curr_move], prev_dp[prev_move] + win_bonus)
+    
+    prev_dp = curr_dp
+
+print(max(prev_dp))

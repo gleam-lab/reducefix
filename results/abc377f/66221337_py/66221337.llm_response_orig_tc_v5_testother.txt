@@ -1,0 +1,363 @@
+```python
+N, M = map(int, input().split())
+pieces = [tuple(map(int, input().split())) for _ in range(M)]
+
+# If there are no pieces, every empty square is valid
+if M == 0:
+    print(N * N)
+else:
+    # Use sets to store occupied lines (to avoid double counting)
+    rows = set()
+    cols = set()
+    diag1 = set()  # i + j
+    diag2 = set()  # i - j
+
+    for a, b in pieces:
+        rows.add(a)
+        cols.add(b)
+        diag1.add(a + b)
+        diag2.add(a - b)
+
+    # Total squares under attack (union of all lines covered by any piece)
+    total_attacked = 0
+
+    # Add contribution from each unique row
+    total_attacked += len(rows) * N
+    # Add contribution from each unique column
+    total_attacked += len(cols) * N
+    # Add contribution from each unique diagonal (i+j)
+    for s in diag1:
+        # Number of cells where i+j = s, with 1<=i<=N, 1<=j<=N
+        if s < 2:
+            count = 0
+        elif s <= N + 1:
+            count = s - 1
+        else:
+            count = 2 * N - s + 1
+        total_attacked += count
+    # Add contribution from each unique diagonal (i-j)
+    for d in diag2:
+        # Number of cells where i-j = d
+        if d >= 0:
+            # i >= j + d => i from d+1 to N, j = i - d from 1 to N-d
+            count = N - d
+        else:
+            # j > i => j = i - d, i from 1 to N+d
+            count = N + d
+        total_attacked += count
+
+    # Now subtract overcounted intersections: each piece lies at intersection of its row, col, and two diagonals
+    # Each piece is counted multiple times in the above sum
+    for a, b in pieces:
+        # This cell was counted once for its row, once for its col, once for diag1, once for diag2 -> 4 times
+        # But it should be counted only once in the union, so we subtract 3 copies
+        # However, we need to subtract overlaps: pairwise intersections
+        pass
+
+    # Instead, use inclusion-exclusion properly via set of attacked cells? Not possible for N up to 1e9.
+    # Alternative: use formula with inclusion exclusion:
+
+    # But note: we cannot iterate over grid. So use math.
+
+    # We already added: R*N + C*N + sum_diag1 + sum_diag2
+    # Now subtract pairwise intersections that were double-counted
+
+    # We'll compute |R ∪ C ∪ D1 ∪ D2| using inclusion-exclusion:
+    # |R ∪ C ∪ D1 ∪ D2| = Σ|A| - Σ|A∩B| + Σ|A∩B∩C| - |R∩C∩D1∩D2|
+
+    # But this becomes very complex.
+
+    # Alternate idea: The set of attacked cells is the union of:
+    #   all rows with pieces, all cols with pieces, all diag1 with pieces, all diag2 with pieces.
+    #
+    # We can compute the size of the union by iterating over pieces' lines and using inclusion-exclusion
+    # between the four types.
+
+    # However, note that M <= 1000, but the number of distinct rows/cols/diags is also <= 1000.
+    # But we cannot iterate on cells.
+
+    # Let's use:
+    # |U| = |rows|*N + |cols|*N + sum_diag1 + sum_diag2
+    #      - |(rows × cols) ∩ (diag1 ∪ diag2)| ??? Not helpful.
+
+    # Actually standard approach:
+    # |A∪B∪C∪D| = |A|+|B|+|C|+|D|
+    #   - |A∩B| - |A∩C| - |A∩D| - |B∩C| - |B∩D| - |C∩D|
+    #   + |A∩B∩C| + |A∩B∩D| + |A∩C∩D| + |B∩C∩D|
+    #   - |A∩B∩C∩D|
+
+    # Where A = all cells in occupied rows
+    #       B = all cells in occupied cols
+    #       C = all cells in occupied diag1 (i+j=s)
+    #       D = all cells in occupied diag2 (i-j=d)
+
+    # But computing all pairwise intersections etc. is complicated.
+
+    # Instead, note that the total number of attacked cells can be computed by:
+    # For each cell (i,j), it is attacked if:
+    #   i in rows OR j in cols OR (i+j) in diag1 OR (i-j) in diag2
+    # But we can't iterate over N^2.
+
+    # Insight: The number of non-attacked cells = 
+    #   Total cells 
+    #   - (cells in any occupied row or col or diag1 or diag2)
+
+    # But again, we need union.
+
+    # Since M is small (<=1000), we can consider that the number of distinct lines is small.
+    # We can compute the union size using inclusion-exclusion over the set of lines.
+
+    # However, there is a simpler way: the attacked region is the union of several lines.
+    # The complement is the set of cells not in any occupied row, not in any occupied col, not in any occupied diag1, not in any occupied diag2.
+
+    # Let:
+    #   safe_rows = N - len(rows)
+    #   safe_cols = N - len(cols)
+    # Then the number of cells not in any occupied row or col is safe_rows * safe_cols.
+    # But among these, some may still be attacked by diag1 or diag2.
+
+    # So:
+    #   candidate_cells = (safe_rows * safe_cols)
+    #   Now subtract those candidate cells that lie on an occupied diag1 or diag2.
+
+    # But wait: a cell might be in an occupied diag1 even if its row and col are safe.
+
+    # So:
+    #   Step 1: Start with all cells: N*N
+    #   Step 2: Remove all cells in occupied rows: remove len(rows)*N
+    #   Step 3: Remove all cells in occupied cols that are not in occupied rows: remove len(cols)*(N - len(rows))
+    #   But then diagonals?
+
+    # Alternatively:
+    #   Let U = set of cells that are in at least one of: occupied row, occupied col, occupied diag1, occupied diag2.
+    #   We want |U|.
+
+    # We can compute |U| as:
+    #   |U| = |A ∪ B ∪ C ∪ D|
+    # where A = union of occupied rows, etc.
+
+    # But we do inclusion-exclusion:
+
+    from itertools import combinations
+
+    # We label the four types:
+    # A: rows
+    # B: cols
+    # C: diag1 (i+j)
+    # D: diag2 (i-j)
+
+    total = 0
+
+    # Single sets
+    total += len(rows) * N
+    total += len(cols) * N
+    for s in diag1:
+        if s < 2:
+            cnt = 0
+        elif s <= N+1:
+            cnt = s-1
+        else:
+            cnt = 2*N - s + 1
+        total += cnt
+    for d in diag2:
+        if d >= 0:
+            cnt = N - d
+        else:
+            cnt = N + d
+        total += cnt
+
+    # Subtract pairwise intersections
+
+    # A ∩ B: cells in specific row and specific col -> single cell, but we need total over all pairs?
+    # Actually: |A ∩ B| = len(rows) * len(cols)  [because each row has len(cols) cells in the occupied cols]
+    total -= len(rows) * len(cols)
+
+    # A ∩ C: cells in a given row and a given diag1 (i+j=s)
+    # For a fixed row i and diag1 s, j = s-i must be in [1,N]
+    ac = 0
+    for i in rows:
+        for s in diag1:
+            j = s - i
+            if 1 <= j <= N:
+                ac += 1
+    total -= ac
+
+    # A ∩ D: row i and diag2 d: i-j=d => j = i-d
+    ad = 0
+    for i in rows:
+        for d in diag2:
+            j = i - d
+            if 1 <= j <= N:
+                ad += 1
+    total -= ad
+
+    # B ∩ C: col j and diag1 s: i = s-j
+    bc = 0
+    for j in cols:
+        for s in diag1:
+            i = s - j
+            if 1 <= i <= N:
+                bc += 1
+    total -= bc
+
+    # B ∩ D: col j and diag2 d: i-j=d => i = j+d
+    bd = 0
+    for j in cols:
+        for d in diag2:
+            i = j + d
+            if 1 <= i <= N:
+                bd += 1
+    total -= bd
+
+    # C ∩ D: diag1 s and diag2 d: solve i+j=s, i-j=d -> i=(s+d)/2, j=(s-d)/2
+    # Must be integers and in range
+    cd = 0
+    for s in diag1:
+        for d in diag2:
+            if (s + d) % 2 == 0:
+                i = (s + d) // 2
+                j = (s - d) // 2
+                if 1 <= i <= N and 1 <= j <= N:
+                    cd += 1
+    total -= cd
+
+    # Add back triple intersections
+
+    # A ∩ B ∩ C: row i, col j, diag1 s -> j is fixed by i and s: j = s-i, and also j in cols
+    abc = 0
+    for i in rows:
+        for s in diag1:
+            j = s - i
+            if 1 <= j <= N and j in cols:
+                abc += 1
+    total += abc
+
+    # A ∩ B ∩ D: row i, col j, diag2 d: j = i-d, and j in cols
+    abd = 0
+    for i in rows:
+        for d in diag2:
+            j = i - d
+            if 1 <= j <= N and j in cols:
+                abd += 1
+    total += abd
+
+    # A ∩ C ∩ D: row i, diag1 s, diag2 d: 
+    # From s and d: i = (s+d)//2, j = (s-d)//2, and we require i fixed
+    acd = 0
+    for s in diag1:
+        for d in diag2:
+            if (s + d) % 2 == 0:
+                ii = (s + d) // 2
+                jj = (s - d) // 2
+                if 1 <= ii <= N and 1 <= jj <= N and ii in rows:
+                    acd += 1
+    total += acd
+
+    # B ∩ C ∩ D: col j, diag1 s, diag2 d:
+    bcd = 0
+    for s in diag1:
+        for d in diag2:
+            if (s + d) % 2 == 0:
+                ii = (s + d) // 2
+                jj = (s - d) // 2
+                if 1 <= ii <= N and 1 <= jj <= N and jj in cols:
+                    bcd += 1
+    total += bcd
+
+    # Subtract quadruple intersection: A ∩ B ∩ C ∩ D
+    abcd = 0
+    for s in diag1:
+        for d in diag2:
+            if (s + d) % 2 == 0:
+                i_val = (s + d) // 2
+                j_val = (s - d) // 2
+                if 1 <= i_val <= N and 1 <= j_val <= N and i_val in rows and j_val in cols:
+                    abcd += 1
+    total -= abcd
+
+    # But wait: this inclusion-exclusion counts the union of the four sets: |A ∪ B ∪ C ∪ D|
+    # So total is the number of attacked cells.
+
+    # However, note: the above inclusion-exclusion formula is:
+    # |A∪B∪C∪D| = A+B+C+D - AB-AC-AD-BC-BD-CD + ABC+ABD+ACD+BCD - ABCD
+    # which is what we did.
+
+    attacked = total
+
+    # But note: we must ensure that we are not counting non-existent cells.
+
+    # However, there is a possibility of overkill: the inclusion-exclusion is correct.
+
+    # But wait: our "sets" A, B, C, D are unions of lines. The inclusion-exclusion over the entire sets (not per line) is valid.
+
+    # Therefore, the number of non-attacked cells is:
+    result = N * N - attacked
+
+    # However, we must also remember that the original pieces occupy M cells, and those are definitely not available.
+    # But are they included in the attacked set? Yes, because each piece is in its own row, col, etc.
+    # And we are computing the total attacked cells including the pieces.
+
+    # But the problem asks: place on an **empty square** that is not attacked.
+    # Our computation of `attacked` includes all cells that are in the same row/col/diag as any piece — including the piece positions.
+    # And the empty squares are N*N - M.
+    # But we want empty squares that are not attacked.
+
+    # However, note: if a square is attacked, it doesn't matter if it's empty or not — we cannot place there.
+    # And if it's not attacked, and empty, we can place.
+
+    # But wait: is a piece's own position considered "attacked"? Yes, but we cannot place there anyway because it's not empty.
+    # Our `attacked` set includes the piece positions, but we are going to subtract them by considering only empty squares.
+
+    # Actually, our result = N*N - attacked gives the number of squares that are NOT attacked (regardless of emptiness).
+    # But we can only place on empty squares that are not attacked.
+
+    # However, the set of non-attacked squares is disjoint from the attacked set.
+    # And the non-attacked squares are automatically empty? Not necessarily: a non-attacked square could have a piece?
+    # But if a piece is placed at (i,j), then the entire row i is attacked, so (i,j) is in attacked set.
+    # Therefore, no piece lies in the non-attacked region.
+
+    # So all non-attacked squares are empty.
+
+    # Hence, the answer is simply: max(0, N*N - attacked)
+
+    # But wait: let's test with small example.
+    # N=1, M=1, piece at (1,1)
+    # Then attacked = ?
+    # rows = {1} -> 1*1 = 1
+    # cols = {1} -> 1*1 = 1
+    # diag1: {2} -> count = 1 (since 1+1=2, and 2<=1+1 -> 2-1=1)
+    # diag2: {0} -> count = 1 (N-0=1)
+    # total singles = 1+1+1+1 = 4
+    # subtract pairwise:
+    #   AB: 1*1=1
+    #   AC: for i=1,s=2: j=1 -> 1
+    #   AD: i=1,d=0: j=1 -> 1
+    #   BC: j=1,s=2: i=1 -> 1
+    #   BD: j=1,d=0: i=1 -> 1
+    #   CD: s=2,d=0: i=(2+0)/2=1, j=(2-0)/2=1 -> 1
+    #   total sub = 6
+    # add triples:
+    #   ABC: i=1,s=2,j=1 in cols -> 1
+    #   ABD: i=1,d=0,j=1 in cols -> 1
+    #   ACD: s=2,d=0,i=1 in rows -> 1
+    #   BCD: s=2,d=0,j=1 in cols -> 1
+    #   total add = 4
+    # subtract abcd: 1
+    # total = 4 - 6 + 4 - 1 = 1
+    # result = 1 - 1 = 0 -> correct.
+
+    # Another: N=2, M=1, piece at (1,1)
+    # attacked cells: row1: (1,1),(1,2); col1: (1,1),(2,1); diag1: 1+1=2 -> (1,1); diag2: 1-1=0 -> (1,1),(2,2)
+    # so attacked = {(1,1),(1,2),(2,1),(2,2)} -> all 4 cells.
+    # Compute:
+    # rows={1} -> 2
+    # cols={1} -> 2
+    # diag1: {2} -> count: 2-1=1 (since 2<=3) -> 1
+    # diag2: {0} -> N-0=2
+    # total singles = 2+2+1+2 = 7
+    # AB: 1*1=1
+    # AC: i=1,s=2: j=1 -> 1
+    # AD: i=1,d=0: j=1 -> 1
+    # BC: j=1,s=2: i=1 -> 1
+    # BD: j=1,d=0: i=1+0=1 -> 1
+    # CD: s=2,d=

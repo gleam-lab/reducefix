@@ -1,0 +1,46 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define fi first
+#define se second
+#define pb push_back
+#define chmin(x, y) x = min(x, y)
+using ll = long long;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int n, k;
+    cin >> n >> k;
+    vector<int> a(n);
+    for (int i = 0; i < n; i++) {
+        cin >> a[i];
+    }
+    
+    sort(a.begin(), a.end());
+    
+    // We need to remove exactly K elements, leaving (n - k) elements
+    // To minimize (max - min) of remaining sequence, we should consider
+    // removing some prefix and some suffix of the sorted array
+    // Try all possible ways: remove i from left, (k-i) from right
+    int ans = INT_MAX;
+    int remain = n - k;
+    
+    for (int i = 0; i <= k; i++) {
+        int left_remove = i;
+        int right_remove = k - i;
+        
+        // Check if valid: after removals, we have at least one element
+        if (left_remove + right_remove > n || n - left_remove - right_remove < 1) 
+            continue;
+            
+        int left_idx = left_remove;
+        int right_idx = n - 1 - right_remove;
+        
+        if (left_idx <= right_idx) {
+            chmin(ans, a[right_idx] - a[left_idx]);
+        }
+    }
+    
+    cout << ans << endl;
+}

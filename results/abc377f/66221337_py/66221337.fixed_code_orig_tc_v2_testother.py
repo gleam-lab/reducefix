@@ -1,0 +1,136 @@
+N, M = map(int, input().split())
+pieces = [tuple(map(int, input().split())) for _ in range(M)]
+
+if M == 0:
+    print(N * N)
+else:
+    # Sets to store attacked lines/diagonals
+    rows = set()
+    cols = set()
+    diag1 = set()  # i + j
+    diag2 = set()  # i - j
+
+    for a, b in pieces:
+        rows.add(a)
+        cols.add(b)
+        diag1.add(a + b)
+        diag2.add(a - b)
+
+    total_attacked = 0
+    # Use inclusion-exclusion to count attacked cells without overcounting
+
+    # Add all cells in attacked rows
+    total_attacked += len(rows) * N
+    # Add all cells in attacked cols
+    total_attacked += len(cols) * N
+    # Add all cells in attacked diagonal (a+b)
+    for s in diag1:
+        if s <= N + 1:
+            cnt = s - 1
+        else:
+            cnt = 2 * N - s + 1
+        total_attacked += cnt
+    # Add all cells in attacked diagonal (a-b)
+    for d in diag2:
+        if d >= 0:
+            cnt = N - d
+        else:
+            cnt = N + d
+        total_attacked += cnt
+
+    # Subtract overlaps: row ∩ col
+    for r in rows:
+        for c in cols:
+            total_attacked -= 1
+
+    # Subtract overlaps: row ∩ diag1
+    for r in rows:
+        for s in diag1:
+            c = s - r
+            if 1 <= c <= N:
+                total_attacked -= 1
+
+    # Subtract overlaps: row ∩ diag2
+    for r in rows:
+        for d in diag2:
+            c = r - d
+            if 1 <= c <= N:
+                total_attacked -= 1
+
+    # Subtract overlaps: col ∩ diag1
+    for c in cols:
+        for s in diag1:
+            r = s - c
+            if 1 <= r <= N:
+                total_attacked -= 1
+
+    # Subtract overlaps: col ∩ diag2
+    for c in cols:
+        for d in diag2:
+            r = c + d
+            if 1 <= r <= N:
+                total_attacked -= 1
+
+    # Subtract overlaps: diag1 ∩ diag2
+    for s in diag1:
+        for d in diag2:
+            # r + c = s, r - c = d  =>  r = (s + d)/2, c = (s - d)/2
+            if (s + d) % 2 == 0:
+                r = (s + d) // 2
+                c = (s - d) // 2
+                if 1 <= r <= N and 1 <= c <= N:
+                    total_attacked -= 1
+
+    # Add back triple intersections: row ∩ col ∩ diag1
+    for r in rows:
+        for c in cols:
+            s = r + c
+            if s in diag1:
+                total_attacked += 1
+
+    # Add back triple intersections: row ∩ col ∩ diag2
+    for r in rows:
+        for c in cols:
+            d = r - c
+            if d in diag2:
+                total_attacked += 1
+
+    # Add back triple intersections: row ∩ diag1 ∩ diag2
+    for r in rows:
+        for s in diag1:
+            for d in diag2:
+                if (s + d) % 2 == 0:
+                    r2 = (s + d) // 2
+                    c = (s - d) // 2
+                    if r2 == r and 1 <= c <= N:
+                        total_attacked += 1
+
+    # Add back triple intersections: col ∩ diag1 ∩ diag2
+    for c in cols:
+        for s in diag1:
+            for d in diag2:
+                if (s + d) % 2 == 0:
+                    r = (s + d) // 2
+                    c2 = (s - d) // 2
+                    if c2 == c and 1 <= r <= N:
+                        total_attacked += 1
+
+    # Subtract quadruple intersection: row ∩ col ∩ diag1 ∩ diag2
+    for r in rows:
+        for c in cols:
+            s = r + c
+            d = r - c
+            if s in diag1 and d in diag2:
+                total_attacked -= 1
+
+    # Now subtract the original piece positions because they are not empty
+    total_attacked -= M
+
+    # The safe squares are total grid minus attacked (including occupied)
+    safe_squares = N * N - total_attacked
+
+    # But we must ensure we don't count occupied squares as safe
+    # Since we already subtracted M (pieces), and attacked includes them,
+    # our calculation should be correct as long as inclusion-exclusion is right.
+
+    print(max(0, safe_squares))

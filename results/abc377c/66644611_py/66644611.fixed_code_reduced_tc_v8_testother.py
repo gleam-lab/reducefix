@@ -1,0 +1,21 @@
+n, m = map(int, input().split())
+captured = set()
+
+# The 8 possible capture moves (knight moves)
+moves = [(2,1), (1,2), (-1,2), (-2,1), (-2,-1), (-1,-2), (1,-2), (2,-1)]
+
+for _ in range(m):
+    a, b = map(int, input().split())
+    # For each existing piece, mark all squares it can capture
+    for dx, dy in moves:
+        x, y = a + dx, b + dy
+        if 1 <= x <= n and 1 <= y <= n:
+            captured.add((x, y))
+
+# Total empty squares that are NOT under capture
+ans = n * n - len(captured)
+
+# But we must not count occupied squares as available
+# However, captured set only includes empty squares that are under threat
+# The original pieces are not in captured, so no double counting
+print(ans)

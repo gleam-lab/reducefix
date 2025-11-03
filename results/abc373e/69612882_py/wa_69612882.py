@@ -1,0 +1,27 @@
+N, M, K = map(int, input().split())
+A = list(map(int, input().split()))
+
+if N == M:
+    ans = [0]*N
+    print(*ans)
+    exit()
+
+B = [None]*N
+for i, a in enumerate(A):
+    B[i] = [a, i]
+A.sort(reverse=True)
+S = sum(A[:M])
+res = K-sum(A)
+B.sort(reverse=True)
+ans = [-1]*N
+for i in range(N):
+    if i < M:
+        k = (S+A[M]+res+1)//(M+1)
+    else:
+        k = (S+A[i]+res+1)//(M+1)
+    t = k-A[i]
+    if t < 0:
+        ans[B[i][1]] = 0
+    elif t <= res:
+        ans[B[i][1]] = t
+print(*ans)

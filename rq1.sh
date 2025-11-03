@@ -3,9 +3,15 @@
 # RQ1: How reliable are LLM-generated reducers at shrinking failure-inducing inputs?
 # Evaluates reducer generation and input reduction phases through success rate and compression ratio
 # Compares LLM-generated reducers (with ddmin) against pure LLM-based input reduction
-# Usage: ./rq1.sh <result_tag> [--force]
-#   <result_tag>   Results file suffix, e.g., qwen-baseline -> result_qwen-baseline.json
-#   --force        (Optional) Force re-testing existing records in reducer_test.py
+# 
+# Usage: 
+#   ./rq1.sh [--force]                              # Run all problems, force re-test if --force
+#   ./rq1.sh --retest <problem_id> <submission_id>  # Test single submission with all 3 methods
+#
+# Examples:
+#   ./rq1.sh                                # Normal run (skip existing results)
+#   ./rq1.sh --force                        # Force re-test all
+#   ./rq1.sh --retest abc361c 67213592     # Test single submission with 3 methods
 
 set -e
 
@@ -32,16 +38,24 @@ problems=(
     "abc377f"
 )
 
-if [[ $# -lt 1 ]]; then
-  echo "Usage: $0 <result_tag> [--force]" >&2
-  echo "Example: $0 qwen-baseline" >&2
-  echo "         $0 qwen-regenerate --force" >&2
-  exit 1
+# Check for --retest mode
+if [ "$1" = "--retest" ]; then
+    if [ $# -lt 3 ]; then
+        echo "Error: --retest requires problem_id and submission_id" >&2
+        echo "Usage: $0 --retest <problem_id> <submission_id>" >&2
+        echo "Example: $0 --retest abc361c 67213592" >&2
+        exit 1
+    fi
+    
+    RETEST_MODE=true
+    RETEST_PROBLEM="$2"
+    RETEST_SUBMISSION="$3"
+    shift 3
+    EXTRA_TEST_ARGS="$@"
+else
+    RETEST_MODE=false
+    EXTRA_TEST_ARGS="$@"
 fi
-
-RESULT_TAG="$1"
-shift
-EXTRA_TEST_ARGS="$@"   # Pass additional args to reducer_test.py
 
 LLM_MODEL="qwen-plus"
 LOG_DIR="rq1_logs"
@@ -49,11 +63,21 @@ mkdir -p "$LOG_DIR"
 
 start_time=$(date +%s)
 
+# ============================================================================
+# RETEST MODE: Test single submission with all 3 methods
+# ============================================================================
+if [ "$RETEST_MODE" = true ]; then
+    python3 retest_single.py "$RETEST_PROBLEM" "$RETEST_SUBMISSION" "$LLM_MODEL"
+    exit 0
+fi
+
+# ============================================================================
+# NORMAL MODE: Run all problems
+# ============================================================================
 echo "=============================================="
 echo "RQ1: Effectiveness of LLM-generated Reducers"
 echo "=============================================="
 echo "Model: $LLM_MODEL"
-echo "Result tag: $RESULT_TAG"
 echo "Log directory: $LOG_DIR"
 echo "Problems: ${#problems[@]} total"
 echo "------------------------------------------"
@@ -75,8 +99,8 @@ for idx in "${!problems[@]}"; do
   else
     # Generate reducer.py
     echo "  Phase 1: Generating reducer..." | tee -a "$log_file"
-    echo "python3 reducer_builder.py $problem --llm-model $LLM_MODEL --model-tag $RESULT_TAG" | tee -a "$log_file"
-    if python3 reducer_builder.py "$problem" --llm-model "$LLM_MODEL" --model-tag "$RESULT_TAG" >> "$log_file" 2>&1; then
+    echo "python3 reducer_builder.py $problem --llm-model $LLM_MODEL" | tee -a "$log_file"
+    if python3 reducer_builder.py "$problem" --llm-model "$LLM_MODEL" >> "$log_file" 2>&1; then
       echo "    ✓ Reducer generation successful" | tee -a "$log_file"
     else
       echo "    ✗ Reducer generation failed, skipping testing phase" | tee -a "$log_file"
@@ -109,9 +133,9 @@ except:
   if [ "$skip_testing" = false ]; then
     # Run testing
     echo "  Phase 2: Testing reducer and collecting WA submissions..." | tee -a "$log_file"
-    echo "python3 reducer_test.py $problem --model-tag $RESULT_TAG --reducer-model $LLM_MODEL $EXTRA_TEST_ARGS" | tee -a "$log_file"
+    echo "python3 reducer_test.py $problem --reducer-model $LLM_MODEL $EXTRA_TEST_ARGS" | tee -a "$log_file"
     cd results && \
-    if python3 ../reducer_test.py "$problem" --model-tag "$RESULT_TAG" --reducer-model "$LLM_MODEL" $EXTRA_TEST_ARGS >> "../$log_file" 2>&1; then
+    if python3 ../reducer_test.py "$problem" --reducer-model "$LLM_MODEL" $EXTRA_TEST_ARGS >> "../$log_file" 2>&1; then
       cd ..
       echo "    ✓ Reducer testing successful" | tee -a "$log_file"
     else
@@ -137,58 +161,14 @@ else
   echo "  ✓ All baseline results present"
 fi
 
-# Step 4: Consolidate ReduceFix results for analysis
+# Step 4: Generate comparative RQ1 statistical analysis
 echo ""
-echo "Step 4: Consolidating ReduceFix reducer results..."
-python3 consolidate_reducer_results.py --incremental
-
-# Step 5: Generate comparative RQ1 statistical analysis
-echo ""
-echo "Step 5: Generating RQ1 comparative statistical analysis..."
+echo "Step 4: Generating RQ1 comparative statistical analysis..."
 
 if [ -f "result_reducer_reducefix.json" ] && [ -f "result_reducer_ddmin.json" ]; then
   python3 compare_rq1_methods.py
-  echo ""
-  echo "=============================================="
-  echo "RQ1 Comparative Analysis Complete!"
-  echo "=============================================="
-  echo "Results summary:"
-  echo "  ✓ ReduceFix: 95.0% success rate (190/200)"
-  echo "  ✓ DDmin-only: 35.5% success rate (71/200)"
-  echo "  ✓ ReduceFix is 2.68x more reliable"
-  echo "=============================================="
 else
   echo "Warning: Missing result files for comparison"
   [ ! -f "result_reducer_reducefix.json" ] && echo "  - result_reducer_reducefix.json not found"
   [ ! -f "result_reducer_ddmin.json" ] && echo "  - result_reducer_ddmin.json not found"
 fi
-
-end_time=$(date +%s)
-cost=$((end_time - start_time))
-hours=$((cost / 3600))
-minutes=$(((cost % 3600) / 60))
-seconds=$((cost % 60))
-
-echo ""
-echo "=============================================="
-echo "RQ1 Batch Processing Complete!"
-echo "=============================================="
-echo "Total time: ${hours}h ${minutes}m ${seconds}s"
-echo ""
-echo "Results files:"
-echo "  - result_reducer_reducefix.json (ReduceFix: LLM+ddmin)"
-echo "  - result_reducer_ddmin.json (DDmin-only baseline)"
-echo "  - result_reducer_llm.json (Pure LLM baseline)"
-echo "  - result_${RESULT_TAG}.json (individual problem results)"
-echo ""
-echo "Analysis outputs:"
-echo "  ✓ Comparison table for paper (RQ1)"
-echo "  ✓ Success rate by difficulty (Easy/Medium/Hard)"
-echo "  ✓ Compression ratio statistics"
-echo "  ✓ Violin plot data for visualization"
-echo ""
-echo "Next steps:"
-echo "  1. Use comparison table for paper Table 1"
-echo "  2. Generate violin plots from raw compression data"
-echo "  3. Run RQ2/RQ3/RQ4 experiments"
-echo "==============================================" 

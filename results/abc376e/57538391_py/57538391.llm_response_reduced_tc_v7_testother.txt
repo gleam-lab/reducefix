@@ -1,0 +1,220 @@
+```python
+import sys
+
+def solve():
+    N, K = map(int, input().split())
+    A = list(map(int, input().split()))
+    B = list(map(int, input().split()))
+    
+    # Create list of (A_i, B_i) and sort by A_i
+    items = [(A[i], B[i]) for i in range(N)]
+    items.sort()
+    
+    # We'll try each possible max A_i value as the candidate for max_{i in S} A_i
+    # Since we want to minimize (max_A) * (sum_B), we can fix the maximum A value
+    # and then pick K-1 other elements with smallest indices (so A_j <= current A)
+    # but we want to minimize sum of B_i, so we should pick the ones with smallest B_i?
+    # Actually: once we fix the maximum A (say = x), we must include at least one item with A_i = x
+    # and all other items must have A_i <= x. To minimize the total sum of B_i, we want to pick 
+    # the K items (including at least one with A_i = x) that have the smallest B_i values among those with A_i <= x.
+    
+    # But note: we can use a sliding window / two pointers approach with a data structure to maintain smallest B values.
+    
+    # Alternate idea: iterate through items sorted by A, and maintain a data structure of up to K items
+    # with smallest B values seen so far. When we are at position i, we consider items[0..i] and if we have >= K items,
+    # then we can form a set S using K of them (and max A is items[i][0]).
+    
+    # Use a max-heap to maintain the K smallest B values
+    import heapq
+    
+    heap = []  # max-heap: store negative B values
+    total_b = 0
+    ans = float('inf')
+    
+    for i in range(N):
+        a_val, b_val = items[i]
+        
+        # Add current item
+        if len(heap) < K:
+            heapq.heappush(heap, -b_val)
+            total_b += b_val
+        else:
+            # If current b_val is smaller than the largest in our heap, replace
+            if b_val < -heap[0]:
+                removed = -heapq.heappop(heap)
+                heapq.heappush(heap, -b_val)
+                total_b = total_b - removed + b_val
+            # else: skip this item for now (but it's still available via earlier selections?)
+        
+        # We can only form a valid set when we have exactly K items
+        if len(heap) == K:
+            # The max A in our selected set is at most a_val (current item's A)
+            # But note: we must ensure that the current item is included? Not necessarily.
+            # However, since we're iterating by increasing A, and we want to consider sets where max A = a_val,
+            # we need to make sure that we have considered including an item with A = a_val.
+            # But our heap might not contain the current item!
+            
+            # So we need to enforce that the set includes at least one item with A_i >= some threshold?
+            # Actually, we want to consider sets whose maximum A is exactly a_val.
+            # Therefore, we must include at least one item with A_i = a_val (or more precisely, we're fixing the max to be a_val).
+            # How about: instead, we require that we process all items with the same A together?
+            
+            # Revised plan: group by distinct A values? Or simply ensure that after processing all items with A <= a_val,
+            # we have a candidate answer whenever we have K items.
+            
+            # But here's the catch: the maximum A in the selected set could be less than a_val even if we're at a_val.
+            # However, we will eventually reach that lower value earlier in the loop.
+            # But we are trying to compute min{ (max_A) * (sum_B) }, and when we are at index i,
+            # we are considering sets formed from items[0..i] with size K, and the max_A is items[i][0].
+            # However, if our heap doesn't include any item with A = items[i][0], then the actual max_A of the set is less than items[i][0],
+            # and would have been considered earlier.
+            
+            # Therefore, to ensure that we cover the case where max_A = items[i][0], we must force inclusion of at least one item with A = items[i][0]?
+            # Actually no: because we want to consider every possible set. The key insight is that the optimal set has some maximum A value, say M.
+            # When we reach the last item with A <= M (in sorted order), we will have all items available, and if we have K items,
+            # then we can form a candidate solution with max_A = M and sum_B = (sum of smallest K B's among items with A<=M).
+            # But wait: we don't want the smallest K B's regardless — we need to make sure that at least one of them has A=M?
+            # Otherwise, the max_A would be less than M.
+            
+            # Correction: if we take the K smallest B values among all items with A <= M, and none of them has A=M, then the max_A is actually less than M.
+            # So that set would have been considered earlier when we reached the true maximum A in that set.
+            
+            # Therefore, we do not need to force inclusion. Every valid set S will be considered when we reach the item with max_A in S.
+            # Because at that point, all items in S are already processed (since their A_i <= max_A), and if our heap contained the K smallest B values,
+            # then our total_b would be at most the sum of B_i in S (possibly smaller if there are other items with smaller B).
+            # But wait: our heap maintains the K smallest B values seen so far. So total_b <= sum of B_i in S.
+            # Then (a_val) * total_b <= (max_A) * (sum_B_in_S)? No, because total_b could be smaller, but a_val = max_A, so the product could be smaller.
+            # But that's okay because we are looking for minimum over all sets.
+            
+            # However, there's a flaw: our heap might not contain the actual set S. It contains the globally K smallest B values among first i+1 items.
+            # But that gives us a candidate that is at least as good as S (smaller or equal sum_B), so (a_val)*(total_b) <= (max_A)*(sum_B_in_S).
+            # And since we are taking min over all candidates, we will get a value that is <= the optimal.
+            # But we need to get the exact optimal.
+            
+            # Actually, the candidate we compute at step i is: use the K items with smallest B values among items[0..i].
+            # This set has max_A <= items[i][0], and sum_B = total_b.
+            # Then the expression value is at most items[i][0] * total_b.
+            # But we want to consider sets where the max_A is exactly items[i][0]? Not necessarily.
+            
+            # The key is: the optimal set S* has a maximum A value, call it M. Let j be the largest index such that items[j][0] = M.
+            # Then when we process index j, all items in S* are available (because their A_i <= M = items[j][0]), and our heap contains the K smallest B values among items[0..j].
+            # Therefore, the sum of B_i in our heap is <= sum of B_i in S*.
+            # Thus, items[j][0] * (our_total_b) <= M * (sum_B_in_S*) = value of S*.
+            # But that means our candidate is smaller than the optimal? That can't be.
+            
+            # Unless our candidate set is actually better than S*, which contradicts optimality of S*.
+            # So either S* is not optimal, or our reasoning is flawed.
+            
+            # The issue: our candidate set might have max_A < items[j][0], so the multiplier should be that smaller value, not items[j][0].
+            # But in our calculation, we are using items[j][0] as the multiplier, which is too big.
+            
+            # Therefore, we cannot use the current a_val as the multiplier unless the set actually contains an item with A = a_val.
+            
+            # How to fix?
+            # We must ensure that the set we consider at step i has at least one item with A_i = a_val (if we are to use a_val as the max).
+            # But note: we might have multiple items with the same A value. We should process all items with the same A value together?
+            
+            # Alternative approach:
+            # For each item i, consider it as the one that provides the maximum A value in the set.
+            # Then we need to pick K-1 additional items from items j with A_j <= A_i, and we want to minimize the sum of B_j (over the K items).
+            # But we also include item i itself.
+            # So: fix i, then find the K-1 items among {j: A_j <= A_i, j != i} with smallest B_j, and add B_i.
+            # Then candidate = A_i * (B_i + sum of those K-1 smallest B_j).
+            #
+            # However, what if there are multiple items with the same A_i? Then we might have several candidates.
+            # But also, the maximum A might come from an item that is not i, but another item with the same A_i.
+            # But since they have the same A_i, it doesn't matter which one we designate as the "maximum".
+            #
+            # But note: we might not need to designate any particular item. The condition is just that max_{i in S} A_i = some value.
+            #
+            # So algorithm:
+            # Sort by A_i.
+            # Use a data structure that supports adding items and querying the smallest K B values.
+            # But we need to ensure that when we are at item i, we consider sets that include item i and have max_A = A_i.
+            # Why must the set include item i? Because otherwise, the set would have been considered when we processed an earlier item.
+            # But wait: if there are multiple items with A_i = x, and we don't include the current one, but include another with A=x, then we should consider it when we process that other one.
+            # So we can do: for each item i, we assume it is in the set and provides the maximum A value.
+            # Then we need to select K-1 items from items j with A_j <= A_i and j < i? But what about j>i with A_j <= A_i? They haven't been processed.
+            #
+            # Instead, sort by A_i, and then process in increasing order. When we are at item i, all items j with A_j < A_i have been processed, and items with A_j = A_i and index < i have been processed.
+            # But items with A_j = A_i and index > i have not been processed.
+            #
+            # So we need to handle equal A_i values together.
+            #
+            # Revised plan:
+            # Group items by A_i. For each distinct A value, process all items with that A together.
+            # Maintain a data structure (min-heap or sorted list) of all items with A_j < current A, and also the ones with A_j = current A that we've seen.
+            # But we want to pick K-1 items from items with A_j <= current A (excluding the current item we are designating as the maximum).
+            #
+            # Actually, simpler: since we are iterating in increasing A, when we finish processing all items with A <= x, we can form sets with max_A = x.
+            # And to form such a set, we need to pick K items from the pool of items with A <= x.
+            # But to ensure that the maximum is exactly x, we must include at least one item with A = x.
+            # So: let P be the multiset of all items with A <= x.
+            # We want to choose a subset S of size K from P such that at least one item has A = x, and minimize (x) * (sum of B_i in S).
+            # Since x is fixed, we want to minimize the sum of B_i in S, subject to S containing at least one item with A = x.
+            #
+            # How to compute the minimum sum?
+            # Option 1: take the K smallest B values in P. If this set contains at least one item with A = x, then we're done.
+            # Option 2: if the K smallest B values in P do not include any item with A = x, then we need to force inclusion of one item with A = x.
+            #   So: take the K-1 smallest B values from P that are not required to be from A=x, and then the smallest B value among items with A=x.
+            #   But wait, we can do: total_sum = (sum of K smallest in P) - (largest B in the K smallest) + (smallest B among items with A=x that is not in the K smallest)?
+            #   Actually: we remove the largest B in the K smallest set and replace it with the smallest B among items with A=x that is not in the set.
+            #   But only if that replacement reduces the sum? No, we have to include at least one with A=x.
+            #
+            # So: candidate1: if the global K smallest in P include at least one with A=x -> sum1 = sum of K smallest.
+            # candidate2: take the K-1 smallest in P (from all items with A<=x) and add the smallest B among items with A=x.
+            # But wait, candidate2 might not be valid if the smallest B among A=x is already in the K-1 smallest? Then we might double count.
+            #
+            # Actually, we can do:
+            # Let S0 = the set of K smallest B values in P.
+            # If S0 contains at least one item with A=x, then candidate_sum = sum(S0).
+            # Else, let s = sum of the K-1 smallest in P, and t = min{ B_i | item i has A_i = x }.
+            # Then candidate_sum = s + t.
+            #
+            # But is that correct?
+            # Example: K=2, P has items: (A=1,B=1), (A=1,B=2), (A=2,B=3), (A=2,B=4). Current x=2.
+            # Global K smallest: [1,2] -> sum=3, but does not include any with A=2 -> invalid.
+            # Then s = smallest K-1=1 -> sum=1, t=min B with A=2 -> 3, candidate_sum=4.
+            # But we could take (A=1,B=1) and (A=2,B=3) -> sum=4, or (A=1,B=2) and (A=2,B=3) -> sum=5, etc. So 4 is correct.
+            #
+            # But what if there is an item with A=x and very small B? 
+            # Example: K=2, P: (A=1,B=10), (A=1,B=20), (A=2,B=1), (A=2,B=2). x=2.
+            # Global K smallest: [1,2] -> sum=3, and they both have A=2 -> valid. So candidate_sum=3.
+            #
+            # Another example: K=2, P: (A=1,B=1), (A=1,B=10), (A=2,B=2), (A=2,B=20). x=2.
+            # Global K smallest: [1,2] -> sum=3. Does it include an item with A=2? Yes, the one with B=2. So valid.
+            #
+            # But what if: K=2, P: (A=1,B=1), (A=1,B=2), (A=2,B=3), (A=2,B=100). x=2.
+            # Global K smallest: [1,2] -> sum=3, no item with A=2 -> invalid.
+            # Then s = smallest K-1=1 -> sum=1, t=min B with A=2 -> 3, candidate_sum=4.
+            # But we could also take (1,1) and (2,3) -> sum=4, or (1,2) and (2,3) -> sum=5. So 4 is correct.
+            #
+            # However, is it possible that we can get a smaller sum by taking more than one item with A=x? 
+            # Only if they have very small B, but then they would be in the global K smallest.
+            #
+            # Therefore, the procedure for a given x is:
+            #   Let P = all items with A_i <= x.
+            #   If |P| < K: skip.
+            #   Let S0 = the K items in P with smallest B_i.
+            #   Let sum0 = sum of B_i in S0.
+            #   If there exists at least one item in S0 with A_i = x, then candidate = x * sum0.
+            #   Else:
+            #       Let sum1 = sum of the K-1 smallest B_i in P.
+            #       Let min_x = min{ B_i | A_i = x }
+            #       candidate = x * (sum1 + min_x)
+            #
+            # But wait: what if the K-1 smallest include an item with A=x? Then we are allowed to use it, and then we add min_x, but min_x might be the same item?
+            # We must avoid double counting.
+            #
+            # Actually, we want: the smallest sum of K items in P that includes at least one item with A=x.
+            # This is equivalent to: 
+            #   min( 
+            #       sum0  [if S0 contains an item with A=x],
+            #       (sum of K-1 smallest in P excluding the constraint) + min_x   [but this might reuse min_x if it's already in the K-1 smallest?]
+            #   )
+            # But if min_x is in the K-1 smallest, then sum1 already includes min_x, so sum1 + min_x counts it twice.
+            #
+            # Correct approach:
+            #   candidate_sum = min over {
+            #       option1: sum of K smallest in P, if that set contains at least one item with A=x;
+            #      

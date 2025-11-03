@@ -1,0 +1,33 @@
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int N, K;
+    cin >> N >> K;
+    vector<int> A(N);
+    for (int i = 0; i < N; ++i) {
+        cin >> A[i];
+    }
+
+    sort(A.begin(), A.end());
+
+    // We are removing exactly K elements, so we keep (N - K) elements.
+    // The optimal remaining segment must be a contiguous subarray of length (N-K) in the sorted array.
+    // Why? Because if we skip some element in the middle, we can always get a smaller or equal range
+    // by taking a contiguous block.
+
+    int min_diff = INT_MAX;
+    int len = N - K;
+
+    for (int i = 0; i + len - 1 < N; ++i) {
+        min_diff = min(min_diff, A[i + len - 1] - A[i]);
+    }
+
+    cout << min_diff << endl;
+
+    return 0;
+}

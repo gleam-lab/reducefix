@@ -1,0 +1,126 @@
+import sys
+
+def solve():
+    data = sys.stdin.read().split()
+    N = int(data[0])
+    M = int(data[1])
+    K = int(data[2])
+    A = list(map(int, data[3:3+N]))
+    
+    total_counted = sum(A)
+    remaining_votes = K - total_counted
+    
+    # If there are no remaining votes, just check current state
+    if remaining_votes == 0:
+        # Count how many have more votes than candidate i
+        ans = [0] * N
+        for i in range(N):
+            count_more = 0
+            for j in range(N):
+                if A[j] > A[i]:
+                    count_more += 1
+            if count_more >= M:
+                ans[i] = -1
+            else:
+                ans[i] = 0
+        print(*ans)
+        return
+    
+    # Special case: if M == N, then everyone wins (since less than N people can't have more votes)
+    if M == N:
+        print(' '.join(['0'] * N))
+        return
+    
+    ans = [0] * N
+    
+    # For each candidate, compute minimum additional votes needed
+    for i in range(N):
+        current_votes = A[i]
+        
+        # Simulate giving x additional votes to candidate i
+        # We need to ensure that at most M-1 candidates have more votes than candidate i
+        
+        # We'll binary search on the number of additional votes needed
+        lo = 0
+        hi = remaining_votes + 1
+        
+        result = -1
+        
+        while lo <= hi:
+            mid = (lo + hi) // 2
+            total_i = current_votes + mid
+            
+            # Check if candidate i can be guaranteed victory with 'mid' additional votes
+            # Worst case: other candidates get as many votes as possible to beat candidate i
+            # We assume that the remaining votes (except what we give to i) are distributed optimally to maximize the number of candidates > total_i
+            
+            # How many votes are left for others?
+            votes_for_others = remaining_votes - mid
+            if votes_for_others < 0:
+                hi = mid - 1
+                continue
+                
+            # Count how many candidates could possibly have more votes than total_i
+            # For each candidate j != i, compute maximum votes they can get
+            opponents = []
+            for j in range(N):
+                if j == i:
+                    continue
+                # Candidate j starts with A[j], and can get up to A[j] + some of the votes_for_others
+                opponents.append(A[j])
+            
+            opponents.sort(reverse=True)
+            
+            # Greedily assign votes to opponents to make as many as possible exceed total_i
+            # But we can only distribute votes_for_others votes
+            can_exceed = 0
+            votes_needed = 0
+            
+            for opp_votes in opponents:
+                if opp_votes >= total_i:
+                    can_exceed += 1
+                else:
+                    needed = total_i - opp_votes  # votes needed for this opponent to reach total_i+1
+                    if needed > 0:
+                        votes_needed += needed
+            
+            # If we don't have enough votes to make all these opponents exceed total_i,
+            # then not all of them can surpass candidate i
+            # We want to know the maximum number of opponents that can exceed total_i
+            
+            # Alternate approach: simulate greedy assignment
+            # Sort opponents by current votes descending
+            max_can_beat_i = 0
+            temp_votes = votes_for_others
+            opp_list = [(A[j], j) for j in range(N) if j != i]
+            opp_list.sort(reverse=True)
+            
+            for opp_vote, _ in opp_list:
+                if temp_votes <= 0:
+                    break
+                if opp_vote >= total_i:
+                    max_can_beat_i += 1
+                else:
+                    needed = total_i - opp_vote
+                    if needed > 0 and temp_votes >= needed:
+                        temp_votes -= needed
+                        max_can_beat_i += 1
+                    elif needed > 0:
+                        # Not enough to push this one over
+                        pass
+            
+            # max_can_beat_i is the maximum number of candidates that can have more votes than i
+            if max_can_beat_i < M:
+                result = mid
+                hi = mid - 1
+            else:
+                lo = mid + 1
+        
+        if result == -1:
+            ans[i] = -1
+        else:
+            ans[i] = result
+    
+    print(*ans)
+
+solve()

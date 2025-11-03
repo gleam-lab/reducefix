@@ -167,7 +167,7 @@ def main():
     parser = argparse.ArgumentParser(description="Generate a problem-specific reducer.py using an LLM.")
     parser.add_argument("problem_id", help="Target AtCoder problem ID (e.g., abc123x, arc177a)")
     parser.add_argument("--llm-model", default="qwen-plus", help="LLM model name for generating reducer (default: qwen-plus)")
-    parser.add_argument("--model-tag", required=True, help="Tag for result file naming (e.g., 'qwen-coder7b' -> result_qwen-coder7b.json)")
+    parser.add_argument("--model-tag", default="default", help="Tag for result file naming (optional, default: 'default')")
     args = parser.parse_args()
     target_problem_id_input = args.problem_id.strip().lower()
     llm_model_name = args.llm_model

@@ -1,0 +1,32 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    int n, k;
+    cin >> n >> k;
+    
+    vector<int> a(n);
+    for (int i = 0; i < n; i++) {
+        cin >> a[i];
+    }
+    
+    sort(a.begin(), a.end());
+    
+    long long ans = 1e18;
+    // Try removing k elements: left l elements and right r elements, where l + r = k
+    for (int l = 0; l <= k; l++) {
+        int r = k - l;
+        if (l + r > n) continue;
+        if (l + r == n) {
+            ans = 0;
+            break;
+        }
+        int left_idx = l;
+        int right_idx = n - 1 - r;
+        ans = min(ans, (long long)a[right_idx] - a[left_idx]);
+    }
+    
+    cout << ans << endl;
+    
+    return 0;
+}

@@ -1,0 +1,31 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    int n, k;
+    cin >> n >> k;
+    vector<int> a(n);
+    for (int i = 0; i < n; i++) {
+        cin >> a[i];
+    }
+    sort(a.begin(), a.end());
+    
+    // We remove exactly K elements, so we keep (n - k) elements.
+    // The optimal way is to remove some prefix and suffix from the sorted array.
+    // Try all possible ways: remove i elements from left and (k-i) from right.
+    long long ans = 1e18;
+    for (int i = 0; i <= k; i++) {
+        int left_removed = i;
+        int right_removed = k - i;
+        if (left_removed + right_removed > n) continue;
+        if (n - k == 0) break;
+        int left_index = left_removed;
+        int right_index = n - 1 - right_removed;
+        if (left_index <= right_index) {
+            ans = min(ans, (long long)a[right_index] - a[left_index]);
+        }
+    }
+    
+    cout << ans << endl;
+    return 0;
+}

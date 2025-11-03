@@ -1,0 +1,317 @@
+```python
+import sys
+
+def main():
+    data = sys.stdin.read().split()
+    N = int(data[0])
+    M = int(data[1])
+    K = int(data[2])
+    A = list(map(int, data[3:3+N]))
+    
+    total_counted = sum(A)
+    remaining_votes = K - total_counted
+    
+    # If there are no remaining votes, we can only check current state
+    if remaining_votes == 0:
+        # Count how many have strictly more votes than candidate i
+        ans = []
+        for i in range(N):
+            count_more = 0
+            for j in range(N):
+                if A[j] > A[i]:
+                    count_more += 1
+            if count_more < M:
+                ans.append(0)
+            else:
+                ans.append(-1)
+        print(*ans)
+        return
+    
+    # Special case: if M >= N, then condition "less than M candidates have more votes" is always true
+    # because at most N-1 candidates can have more votes than any one candidate.
+    if M >= N:
+        print(' '.join(['0'] * N))
+        return
+    
+    # We'll compute for each candidate the minimum additional votes needed
+    ans = [0] * N
+    
+    # Sort candidates by current votes in descending order
+    candidates = sorted([(A[i], i) for i in range(N)], reverse=True)
+    votes = [a for a, _ in candidates]
+    
+    # For each candidate, determine the minimum X such that even in the worst-case distribution
+    # of the remaining votes (excluding the X votes given to candidate i), 
+    # fewer than M candidates have more votes than candidate i.
+    
+    for orig_idx in range(N):
+        a_i = A[orig_idx]
+        needed = 0
+        
+        # We try to find minimal X (from 0 upwards, but smarter) such that 
+        # after giving X votes to candidate orig_idx, we can ensure that 
+        # at most M-1 candidates can have more votes than a_i + X.
+        
+        # Consider: After adding X to candidate orig_idx, their total is a_i + X.
+        # The adversary will try to maximize the number of candidates with > a_i+X.
+        # They can assign the remaining (remaining_votes - X) votes arbitrarily to other candidates.
+        
+        # How many candidates could possibly exceed a_i + X?
+        # For each other candidate j, they currently have A[j]. 
+        # They can get up to A[j] + (remaining_votes - X) votes in total (if all leftover go to them),
+        # but actually the remaining votes are shared among all others.
+        
+        # Instead: simulate worst-case assignment.
+        # We want to know: what's the maximum number of candidates that could end up with > a_i+X?
+        # The adversary would try to boost as many candidates as possible above a_i+X.
+        
+        # For a fixed X, we can check whether it's safe:
+        # Let target = a_i + X
+        # For every candidate j != orig_idx, the maximum votes they can get is A[j] + (remaining_votes - X)
+        # But since only (remaining_votes - X) votes are available for others, we need to see how many 
+        # candidates can be raised above target.
+        
+        # However, we can do better: binary search on X per candidate? But N up to 2e5 -> too slow.
+        
+        # Alternate idea:
+        # To prevent k candidates from exceeding target, we need to make sure that even if we distribute 
+        # optimally to promote k candidates, we cannot make k of them exceed target.
+        
+        # But simpler: 
+        # Suppose we want to ensure that at most M-1 candidates can surpass a_i + X.
+        # Then, consider trying to boost M candidates (other than i) to exceed a_i+X.
+        # What's the minimal extra votes required to make M candidates have > a_i+X?
+        #
+        # For each candidate j != i, the votes needed to bring j to a_i+X+1 is max(0, a_i + X + 1 - A[j])
+        # But we can't give votes to candidate i in this calculation.
+        #
+        # So, collect the cost for each j != i to reach a_i+X+1.
+        # Then take the smallest M such costs and sum them. If this sum > (remaining_votes - X), 
+        # then it's impossible for M candidates to surpass a_i+X, so candidate i is safe.
+        #
+        # We want the smallest X such that:
+        #   sum_{smallest M values of max(0, a_i+X+1 - A[j]) for j != i} > remaining_votes - X
+        #
+        # This condition ensures that even in the worst case, at most M-1 candidates can beat candidate i.
+        #
+        # But note: if there are already M or more candidates with A[j] > a_i + X, then even without 
+        # additional votes, those candidates are already above, so we must account for that.
+        #
+        # Actually, we can reframe: we require that fewer than M candidates have more votes than a_i+X.
+        # That means at most M-1 candidates can have more.
+        # So we must prevent M candidates from getting > a_i+X.
+        #
+        # Therefore, we need:
+        #   min_total_needed_to_make_M_candidates_exceed(a_i+X) > remaining_votes - X
+        #
+        # How to compute min_total_needed_to_make_M_candidates_exceed(T)?
+        # T = a_i + X
+        # For each j != i, cost_j = max(0, T + 1 - A[j])
+        # Take the smallest M costs and sum them.
+        #
+        # But X appears in T, so it's nonlinear.
+        #
+        # We can binary search on X for each candidate.
+        # X in [0, remaining_votes] or maybe even higher? But if X > remaining_votes, impossible.
+        # And if X = remaining_votes, then no votes left for others.
+        #
+        # Since remaining_votes can be up to 1e12, we cannot iterate. But we can binary search over X.
+        # For each candidate, binary search over X in [0, remaining_votes] -> log(1e12) ~ 40 iterations.
+        # Total: 2e5 * 40 = 8e6, acceptable in Pyton? Maybe borderline, but let's try to optimize.
+        #
+        # Alternatively, we can solve it analytically.
+        #
+        # Insight: We can precompute something?
+        #
+        # Let’s define for candidate i:
+        #   Let T = a_i + X
+        #   We need: sum of min(M, [max(0, T+1 - A[j]) for j != i]) sorted and take M smallest > rem - X
+        #
+        # But note: when T increases, the costs increase, so the sum increases, while rem-X decreases.
+        # So overall, LHS increases and RHS decreases => the inequality becomes easier to satisfy.
+        # So the function is monotonic in X.
+        #
+        # So binary search on X for each candidate i.
+        #
+        # However, worst-case 2e5 * 40 = 8e6, which might be acceptable in Pyton in C++ but in Python?
+        # We need to compute the sum of M smallest values among (T+1 - A[j])_+ for j != i.
+        # We can pre-sort the array of A.
+        #
+        # Precomputation: sort the entire list of votes.
+        #
+        # For a fixed candidate i and threshold T, we want:
+        #   S(T) = sum of min(M, [max(0, T+1 - A[j]) for j != i]) for the M smallest
+        #
+        # We can do:
+        #   Find all j != i such that A[j] < T+1.
+        #   Among those, we take the M smallest values of (T+1 - A[j]), but if less than M, then sum all.
+        #
+        # How to do it fast?
+        # Idea: sort indices by A[j]. Precompute prefix sums.
+        #
+        # Let's create a sorted list of all votes, and also keep track of indices.
+        #
+        # But for each candidate i, we exclude A[i]. So we need to remove one element.
+        #
+        # We can precompute:
+        #   sorted_A = sorted(A)
+        #   prefix_sum for sorted_A
+        #
+        # Then for candidate i, we can consider the array without A[i].
+        # We can use bisect to find where T+1 falls.
+        #
+        # Specifically:
+        #   Let B = sorted_A, but we need to remove one occurrence of A[i].
+        #   We can do: create a list without A[i]? But that would be O(N) per candidate -> O(N^2).
+        #
+        # Alternative: precompute the full sorted array and prefix sums.
+        # Then for candidate i, we can simulate removal of one occurrence of A[i].
+        #
+        # Steps:
+        #   Find pos = index of A[i] in sorted_A (one of them)
+        #   Then the array without A[i] is: sorted_A[0:pos] + sorted_A[pos+1:]
+        #   But we don't want to build it.
+        #
+        # Instead, we can use the full prefix sum and adjust.
+        #
+        # Let F(x) = sum of max(0, x - A[j]) for j != i, but only the smallest M terms.
+        #
+        # Actually, we want sum of min(M, values) where values = [max(0, T+1 - A[j]) for j != i]
+        #
+        # We can do:
+        #   Use bisect_left on sorted_A to find the first index where A[j] >= T+1.
+        #   Then all A[j] < T+1 contribute (T+1 - A[j]).
+        #   But we need to skip one occurrence of A[i] if A[i] < T+1.
+        #
+        # Let idx = bisect.bisect_left(sorted_A, T+1)  --> number of elements < T+1 is idx
+        # Then the contributing elements are sorted_A[0:idx]
+        # But if A[i] < T+1, then we need to remove one occurrence of A[i] from this segment.
+        #
+        # How many times does A[i] appear in sorted_A[0:idx]? At least once.
+        #
+        # Let’s say we have:
+        #   total_sum_up_to_idx = prefix[idx]
+        #   If A[i] < T+1:
+        #       Then the sum for j != i is: (T+1)* (idx-1) - (prefix[idx] - A[i])
+        #   Else:
+        #       Sum = (T+1)*idx - prefix[idx]
+        #
+        # But wait: we only want the M smallest. So if idx <= M, then we take all.
+        # If idx > M, then we take the smallest M of these.
+        #
+        # So:
+        #   If the number of candidates j != i with A[j] < T+1 is L, then:
+        #       If L <= M: then sum = sum_{j != i, A[j] < T+1} (T+1 - A[j])
+        #       Else: we take the M smallest (T+1 - A[j]) for j != i with A[j] < T+1.
+        #             = M*(T+1) - sum of the largest M values among the small A[j]? 
+        #             No: smallest (T+1 - A[j]) corresponds to largest A[j].
+        #             So we want the M largest A[j] that are < T+1 and j != i.
+        #
+        # Actually: 
+        #   (T+1 - A[j]) is smaller when A[j] is larger.
+        #   So the smallest M values of (T+1 - A[j]) come from the largest M values of A[j] that are < T+1.
+        #
+        # Therefore:
+        #   Let L = number of j (including i?) with A[j] < T+1 -> we get from bisect_left
+        #   We want the largest min(M, L') values of A[j] for j != i and A[j] < T+1, where L' = L if A[i] >= T+1 else L-1.
+        #
+        #   But we have the sorted_A array. The largest values < T+1 are sorted_A[L-1], sorted_A[L-2], ... 
+        #   But if A[i] is among them, we need to skip one occurrence.
+        #
+        # This is getting complicated.
+        #
+        # Given constraints, perhaps a simpler approach: for each candidate i, we can collect all A[j] for j != i, sort them? 
+        # That would be O(N^2 log N) -> too slow.
+        #
+        # Alternative efficient solution from known problems: "Election" type.
+        #
+        # Known idea: 
+        #   Candidate i needs X such that:
+        #       a_i + X > V, where V is the M-th highest vote total among others after optimal allocation.
+        #
+        # But the adversary controls the allocation.
+        #
+        # Another known solution:
+        #   We want: number of candidates j with final_votes[j] > a_i + X < M.
+        #   <=> at most M-1 candidates can have > a_i+X.
+        #
+        #   So we must have:
+        #       a_i + X >= the M-th largest possible vote total among other candidates after allocation?
+        #
+        #   Actually, no: we want to prevent M candidates from exceeding a_i+X.
+        #
+        #   The minimal X such that the sum of the increases needed to push M different candidates (other than i) 
+        #   to exceed a_i+X is greater than the available votes (rem - X).
+        #
+        #   Define f(X) = sum_{j != i} min( max(0, a_i+X+1 - A[j]), \infty ) but take only M smallest terms.
+        #   More precisely: let cost(j) = max(0, a_i+X+1 - A[j]) for j != i.
+        #   Let S(X) = sum of the M smallest cost(j).
+        #   We need S(X) > remaining_votes - X.
+        #
+        #   We can binary search X in [0, remaining_votes + 1].
+        #
+        #   How to compute S(X) fast?
+        #       We fix candidate i and X.
+        #       We need the M smallest values among { max(0, a_i+X+1 - A[j]) for j != i }.
+        #
+        #   We can pre-sort the entire array A, and also store it as a list.
+        #
+        #   Let T = a_i + X + 1
+        #   Then cost(j) = max(0, T - A[j]) for j != i.
+        #
+        #   We want the M smallest such costs.
+        #
+        #   Note: cost(j) = 0 if A[j] >= T.
+        #   Otherwise, T - A[j].
+        #
+        #   So the non-zero costs are for A[j] < T.
+        #
+        #   The smallest costs are the ones with largest A[j] (since T - A[j] is smaller when A[j] is close to T).
+        #
+        #   So we want the M largest values of A[j] (for j != i) that are < T, and then cost = T - A[j].
+        #
+        #   But if there are fewer than M such j (with A[j] < T), then we take all, and the rest of the M smallest are 0.
+        #   So S(X) = sum_{j in top-M largest A[j] < T, j != i} (T - A[j])
+        #
+        #   How to get the top-M largest A[j] < T, excluding i?
+        #
+        #   Precomputation:
+        #       sorted_A = sorted(A)
+        #       prefix_sum = [0]
+        #       for x in sorted_A:
+        #           prefix_sum.append(prefix_sum[-1] + x)
+        #
+        #   But we need to exclude A[i].
+        #
+        #   We can do:
+        #       Find the rightmost position where A[j] < T -> that's bisect_left(sorted_A, T)
+        #       Let pos = bisect.bisect_left(sorted_A, T)  # first index >= T
+        #       So indices [0, pos-1] are < T.
+        #
+        #       Now, if A[i] < T, then among these pos elements, one is A[i], so we have pos-1 others.
+        #       We want the largest min(M, pos-1) values among these pos-1 values? 
+        #       But the largest values are at the end: sorted_A[pos-1], sorted_A[pos-2], ... 
+        #       However, if A[i] is one of them, we need to remove it.
+        #
+        #       Let's get the largest up to M values from sorted_A[0:pos], but skip one occurrence of A[i].
+        #
+        #       We can find the position of A[i] in sorted_A: use bisect_left for the first occurrence, but there might be duplicates.
+        #
+        #       We can do: 
+        #           Create a list of indices in [0, pos) that are not the specific occurrence of A[i]? 
+        #           But we don't know which occurrence.
+        #
+        #       Instead: 
+        #           Let arr = sorted_A[0:pos]   # all values < T
+        #           We want to remove one occurrence of A[i] if A[i] < T.
+        #           Then take the last min(M, len(arr)- (1 if A[i]<T else 0)) values.
+        #
+        #       But we don't want to build the list.
+        #
+        #       We can compute the sum of the largest min(M, L) values in sorted_A[0:pos] where L = pos - (1 if A[i]<T else 0)
+        #       But we need to remove A[i] if present.
+        #
+        #       The largest values in sorted_A[0:pos] are: sorted_A[pos-1], sorted_A[pos-2], ..., sorted_A[pos-k] for k=min(M, pos)
+        #       But if A[i] is in the last min(M, pos) values, we need to skip it and take one more from the front?
+        #
+        #       This is very messy.

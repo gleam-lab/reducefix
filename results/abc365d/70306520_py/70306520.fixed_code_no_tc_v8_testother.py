@@ -1,0 +1,48 @@
+N = int(input())
+S = input().strip()
+
+# Map opponent's move to the move that beats it (Takahashi's winning move)
+win_move = {'R': 'P', 'P': 'S', 'S': 'R'}
+# Map opponent's move to the move that loses to it (Takahashi's losing move)
+lose_move = {'R': 'S', 'P': 'R', 'S': 'P'}
+
+# dp[i][j] where j=0,1,2 represents last move being R,P,S respectively
+# We'll use 0=R, 1=P, 2=S
+dp = [[-1] * 3 for _ in range(N)]
+
+# Initialize first round
+for j in range(3):
+    move = "RPS"[j]
+    opp_move = S[0]
+    
+    # Takahashi cannot use a move that loses
+    if move == lose_move[opp_move]:
+        continue
+        
+    dp[0][j] = 1 if move == win_move[opp_move] else 0
+
+# Fill DP table
+for i in range(1, N):
+    for last in range(3):  # last move index
+        if dp[i-1][last] == -1:
+            continue
+            
+        opp_move = S[i]
+        last_move = "RPS"[last]
+        
+        for curr in range(3):
+            if curr == last:  # consecutive moves must be different
+                continue
+                
+            curr_move = "RPS"[curr]
+            # Check if current move is valid against opponent
+            if curr_move == lose_move[opp_move]:
+                continue
+                
+            win = 1 if curr_move == win_move[opp_move] else 0
+            new_score = dp[i-1][last] + win
+            
+            if new_score > dp[i][curr]:
+                dp[i][curr] = new_score
+
+print(max(dp[N-1]))

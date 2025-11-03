@@ -1,0 +1,72 @@
+```python
+class UnionFind:
+    def __init__(self, n):
+        self.par = list(range(n))
+        self.size = [1] * n
+
+    def find(self, x):
+        if self.par[x] != x:
+            self.par[x] = self.find(self.par[x])
+        return self.par[x]
+
+    def unite(self, x, y):
+        x = self.find(x)
+        y = self.find(y)
+        if x == y:
+            return False
+        if self.size[x] < self.size[y]:
+            x, y = y, x
+        self.par[y] = x
+        self.size[x] += self.size[y]
+        return True
+
+    def same(self, x, y):
+        return self.find(x) == self.find(y)
+
+N, Q = map(int, input().split())
+
+# mem[i] will store the sorted list (descending) of at most 10 largest vertices in the component containing i
+mem = [[] for _ in range(N + 1)]
+for i in range(1, N + 1):
+    mem[i] = [i]  # Each vertex starts as its own component with only itself
+
+uf = UnionFind(N + 1)
+ans = []
+
+for _ in range(Q):
+    query = list(map(int, input().split()))
+    if query[0] == 1:
+        u, v = query[1], query[2]
+        if not uf.same(u, v):
+            root_u = uf.find(u)
+            root_v = uf.find(v)
+            # Always merge smaller into larger (union by size)
+            if uf.size[root_u] < uf.size[root_v]:
+                u, v = v, u
+                root_u, root_v = root_v, root_u
+            
+            # Merge the components: add all vertices from smaller component to larger one
+            combined = mem[root_u] + mem[root_v]
+            # Sort in descending order and keep at most 10 largest
+            combined = sorted(combined, reverse=True)[:10]
+            uf.unite(u, v)
+            new_root = uf.find(u)
+            mem[new_root] = combined
+            
+            # Clear the old root's list to avoid reuse
+            if root_u != new_root:
+                mem[root_u] = []
+            if root_v != new_root:
+                mem[root_v] = []
+    else:  # query[0] == 2
+        v, k = query[1], query[2]
+        root = uf.find(v)
+        component = mem[root]
+        if k <= len(component):
+            ans.append(component[k - 1])  # k-th largest is at index k-1
+        else:
+            ans.append(-1)
+
+for a in ans:
+    print(a)
+```

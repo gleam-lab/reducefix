@@ -1,0 +1,55 @@
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+using VL = vector<ll>;
+using P = pair<ll, ll>;
+
+int main() {
+  
+  ll N, M;
+  cin >> N >> M;
+  
+  vector<ll> A(N);
+  vector<vector<pair<ll,ll>>> G(N);
+  
+  for(int i=0;i<N;i++){
+    cin >> A.at(i);
+  }
+  
+  for(int i=0;i<M;i++){
+    int u, v;
+    ll b;
+    cin >> u >> v >> b;
+    u--;
+    v--;
+    G.at(u).push_back(make_pair(v,b));
+    G.at(v).push_back(make_pair(u,b));
+  }
+  
+  vector<ll> ans(N, LLONG_MAX);
+  priority_queue<P, vector<P>, greater<P>> pq;
+  
+  ans[0] = A[0];
+  pq.push({A[0], 0});
+  
+  while(!pq.empty()){
+    ll cost = pq.top().first;
+    ll x = pq.top().second;
+    pq.pop();
+    
+    if(cost > ans[x]) continue;
+    
+    for(auto [v, d] : G[x]){
+      ll new_cost = cost + d + A[v];
+      if(new_cost < ans[v]){
+        ans[v] = new_cost;
+        pq.push({new_cost, v});
+      }
+    }
+  }
+  
+  for(int i=1; i<N; i++){
+    cout << ans[i] << " ";
+  }
+  cout << endl;
+}

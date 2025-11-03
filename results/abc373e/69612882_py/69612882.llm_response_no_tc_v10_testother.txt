@@ -1,0 +1,154 @@
+```python
+python
+import sys
+
+def solve():
+    N, M, K = map(int, input().split())
+    A = list(map(int, input().split()))
+    
+    total_counted = sum(A)
+    remaining_votes = K - total_counted
+    
+    # If there are no remaining votes, we just check current state
+    if remaining_votes == 0:
+        # Count how many have more votes than candidate i
+        ans = [0] * N
+        for i in range(N):
+            count_more = 0
+            for j in range(N):
+                if A[j] > A[i]:
+                    count_more += 1
+            if count_more >= M:
+                ans[i] = -1
+            else:
+                ans[i] = 0
+        print(*ans)
+        return
+    
+    # Special case: if M == N, then everyone is elected (since less than N people can't have more votes)
+    if M == N:
+        print(' '.join(['0'] * N))
+        return
+    
+    # We'll compute for each candidate the minimum additional votes needed
+    ans = [0] * N
+    
+    # Create list of (votes, original_index) for sorting
+    candidates = [(A[i], i) for i in range(N)]
+    candidates.sort(reverse=True)
+    
+    # For each candidate, determine minimum additional votes needed
+    for votes, orig_idx in candidates:
+        # We want candidate orig_idx to have value = votes + x
+        # We need at most M-1 candidates to have strictly more votes than this candidate
+        # So we can allow at most M-1 candidates to be above (votes + x)
+        
+        x = 0
+        # If already safe, x = 0
+        # Count how many currently have more votes than A[orig_idx]
+        count_more = 0
+        for j in range(N):
+            if A[j] > A[orig_idx]:
+                count_more += 1
+        
+        if count_more < M:
+            ans[orig_idx] = 0
+            continue
+        
+        # We need to "overtake" some candidates
+        # Strategy: simulate giving x additional votes to candidate orig_idx
+        # Then see what's the worst-case distribution of remaining votes to others
+        
+        # We need to ensure that at most M-1 candidates end up with > (A[orig_idx] + x)
+        # Adversary will try to maximize the number of candidates > (A[orig_idx] + x)
+        # So they will give as many votes as possible to candidates just below or at threshold
+        
+        # Let target = A[orig_idx] + x
+        # We want at most M-1 candidates to exceed target
+        
+        # How many candidates currently have > A[orig_idx]? We know it's >= M
+        # We need to raise our vote so that at least (count_more - (M-1)) candidates are overtaken
+        
+        # Consider all other candidates. The adversary controls the remaining votes (except x we assign to orig_idx)
+        # But we control only x for our candidate; the rest of the remaining votes can go to others adversarially
+        
+        # We binary search on x
+        lo, hi = 0, remaining_votes + 1
+        found = False
+        
+        while lo < hi:
+            mid = (lo + hi) // 2
+            target = A[orig_idx] + mid
+            
+            # Now, assume we use mid votes for candidate orig_idx
+            # Remaining adversary votes: rem = remaining_votes - mid
+            rem = remaining_votes - mid
+            if rem < 0:
+                lo = mid + 1
+                continue
+                
+            # How many candidates can the adversary make exceed target?
+            # For each candidate j != orig_idx, how many votes do they need to exceed target?
+            # They need max(0, target - A[j] + 1) votes to go from A[j] to at least target+1
+            # But if A[j] > target, they already exceed
+            exceed_count = 0
+            needed_votes = 0
+            
+            for j in range(N):
+                if j == orig_idx:
+                    continue
+                if A[j] > target:
+                    exceed_count += 1
+                elif A[j] <= target:
+                    need = target - A[j] + 1
+                    if need > 0:
+                        needed_votes += need
+            
+            # If exceed_count >= M, even without using any votes, too many already exceed
+            if exceed_count >= M:
+                lo = mid + 1
+                continue
+            
+            # Can the adversary use at most 'rem' votes to create at least M - exceed_count new candidates exceeding target?
+            # Actually, we want to know: can the adversary make the total exceeding candidates >= M?
+            # That is, can they make at least (M - exceed_count) additional candidates exceed target?
+            # But note: we want to prevent that. We want that no matter how adversary distributes, exceeding < M
+            
+            # So we ask: what's the maximum number of candidates the adversary can push above target?
+            # This is equivalent to: given budget rem, how many candidates (that are <= target) can be pushed to > target?
+            
+            gains = []
+            for j in range(N):
+                if j != orig_idx and A[j] <= target:
+                    need = target - A[j] + 1
+                    if need > 0:
+                        gains.append(need)
+            
+            gains.sort()  # smallest first
+            can_push = 0
+            budget = rem
+            for g in gains:
+                if budget >= g:
+                    can_push += 1
+                    budget -= g
+                else:
+                    break
+            
+            total_exceed = exceed_count + can_push
+            
+            if total_exceed >= M:
+                # Even after we add mid votes, adversary can still make >= M candidates have more votes
+                lo = mid + 1
+            else:
+                found = True
+                hi = mid
+        
+        if lo <= remaining_votes:
+            ans[orig_idx] = lo
+        else:
+            ans[orig_idx] = -1
+    
+    print(*ans)
+
+solve()
+```

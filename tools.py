@@ -77,7 +77,12 @@ def write_cache(cache_path: str, data: Any, is_json: bool = True):
     except Exception as e:
         print(f"  [Cache Warning] Failed to write cache file {cache_path}: {e}", file=sys.stderr)
 
-COOKIE_DIR_PATH = "/home/barty/.local/share/online-judge-tools"
+# Use environment variable or default path for cookie files
+# For portability, users should set COOKIE_DIR_PATH environment variable
+COOKIE_DIR_PATH = os.environ.get(
+    "COOKIE_DIR_PATH", 
+    os.path.expanduser("~/.local/share/online-judge-tools")
+)
 AVAILABLE_COOKIE_FILES = []
 current_cookie_index = 0
 cookie_load_lock = threading.Lock()
@@ -89,6 +94,7 @@ def load_cookie_files():
         AVAILABLE_COOKIE_FILES = glob.glob(cookie_pattern)
         if not AVAILABLE_COOKIE_FILES:
             print(f"Warning: No '*-cookie.jar' files found in directory '{COOKIE_DIR_PATH}'. Judge and scraping functions may not work with authentication.")
+            print(f"Tip: Set COOKIE_DIR_PATH environment variable or place cookie files in {COOKIE_DIR_PATH}")
         else:
             AVAILABLE_COOKIE_FILES.sort()
             print(f"[Cookie] Found {len(AVAILABLE_COOKIE_FILES)} cookie files: {', '.join(os.path.basename(f) for f in AVAILABLE_COOKIE_FILES)}") 

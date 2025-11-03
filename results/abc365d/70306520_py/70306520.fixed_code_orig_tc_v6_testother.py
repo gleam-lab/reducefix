@@ -1,0 +1,49 @@
+N = int(input())
+S = input().strip()
+
+# Define winning moves: what move beats each of Aoki's moves
+# Rock (R) is beaten by Paper (P)
+# Paper (P) is beaten by Scissors (S)
+# Scissors (S) is beaten by Rock (R)
+win_move = {'R': 'P', 'P': 'S', 'S': 'R'}
+
+# dp[i][j] will store the maximum wins up to game i, where j represents Takahashi's move in game i
+# 0 = Rock, 1 = Paper, 2 = Scissors
+dp = [[-1] * 3 for _ in range(N)]
+
+# Initialize first game
+for j, move in enumerate(['R', 'P', 'S']):
+    if move == win_move[S[0]]:
+        dp[0][j] = 1  # Win
+    elif move == S[0]:
+        dp[0][j] = 0  # Draw
+    # Losing move not allowed, so remains -1 (invalid)
+
+# Fill DP table
+for i in range(1, N):
+    current_win = win_move[S[i]]
+    current_same = S[i]
+    
+    for curr in range(3):
+        move_char = ['R', 'P', 'S'][curr]
+        # Skip invalid (losing) moves
+        if move_char != current_win and move_char != current_same:
+            continue
+            
+        best_prev = -1
+        for prev in range(3):
+            if prev == curr:  # Consecutive same move not allowed
+                continue
+            if dp[i-1][prev] != -1:
+                best_prev = max(best_prev, dp[i-1][prev])
+        
+        if best_prev == -1:
+            continue  # No valid previous sequence
+            
+        # Add win or draw
+        if move_char == current_win:
+            dp[i][curr] = best_prev + 1
+        else:  # draw
+            dp[i][curr] = best_prev
+
+print(max(dp[N-1]))

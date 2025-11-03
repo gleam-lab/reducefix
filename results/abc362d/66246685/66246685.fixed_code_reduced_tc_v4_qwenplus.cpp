@@ -1,0 +1,58 @@
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+using P = pair<ll, int>;
+const ll inf = 1e18;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int N, M;
+    cin >> N >> M;
+
+    vector<ll> A(N);
+    for (int i = 0; i < N; i++) {
+        cin >> A[i];
+    }
+
+    vector<vector<pair<int, ll>>> G(N);
+    for (int i = 0; i < M; i++) {
+        int u, v;
+        ll b;
+        cin >> u >> v >> b;
+        u--; v--;
+        G[u].push_back({v, b});
+        G[v].push_back({u, b});
+    }
+
+    vector<ll> dist(N, inf);
+    priority_queue<P, vector<P>, greater<P>> pq;
+
+    // Start from vertex 0 (vertex 1 in 1-indexing)
+    dist[0] = A[0];  // Include starting vertex weight
+    pq.push({A[0], 0});
+
+    while (!pq.empty()) {
+        auto [d, u] = pq.top();
+        pq.pop();
+
+        if (d != dist[u]) continue;
+
+        for (auto [v, w] : G[u]) {
+            ll newDist = dist[u] + w + A[v];
+            if (newDist < dist[v]) {
+                dist[v] = newDist;
+                pq.push({newDist, v});
+            }
+        }
+    }
+
+    for (int i = 1; i < N; i++) {
+        cout << dist[i];
+        if (i < N - 1) cout << " ";
+    }
+    cout << endl;
+
+    return 0;
+}

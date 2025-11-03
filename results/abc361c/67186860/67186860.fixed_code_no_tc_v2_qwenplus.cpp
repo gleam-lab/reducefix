@@ -1,0 +1,33 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    int n, k;
+    cin >> n >> k;
+    vector<int> a(n);
+    for (int i = 0; i < n; i++) {
+        cin >> a[i];
+    }
+    sort(a.begin(), a.end());
+    
+    // We need to remove exactly K elements
+    // The remaining sequence has length n-k
+    // To minimize max - min, we should consider removing elements from both ends
+    // Try all possible ways: remove i elements from left and (k-i) elements from right
+    int ans = INT_MAX;
+    int remaining = n - k;
+    
+    for (int i = 0; i <= k; i++) {
+        int left_remove = i;
+        int right_remove = k - i;
+        
+        if (left_remove + right_remove <= n && n - left_remove - right_remove >= 1) {
+            int left_idx = left_remove;
+            int right_idx = n - 1 - right_remove;
+            ans = min(ans, a[right_idx] - a[left_idx]);
+        }
+    }
+    
+    cout << ans << endl;
+    return 0;
+}

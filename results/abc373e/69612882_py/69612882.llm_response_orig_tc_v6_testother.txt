@@ -1,0 +1,126 @@
+```python
+import sys
+
+def solve():
+    N, M, K = map(int, input().split())
+    A = list(map(int, input().split()))
+    
+    if N == M:
+        print(' '.join(['0'] * N))
+        return
+        
+    total_votes = sum(A)
+    remaining_votes = K - total_votes
+    
+    # Create list of (votes, original_index) and sort in descending order
+    candidates = [(A[i], i) for i in range(N)]
+    candidates.sort(reverse=True)
+    
+    # For each candidate, we need to calculate minimum additional votes needed
+    result = [0] * N
+    
+    # We'll process each candidate
+    for orig_idx in range(N):
+        current_votes = A[orig_idx]
+        
+        # If already guaranteed to win, no additional votes needed
+        # Count how many candidates currently have more votes than us
+        better_count = 0
+        for i in range(N):
+            if A[i] > current_votes:
+                better_count += 1
+                
+        if better_count < M:
+            result[orig_idx] = 0
+            continue
+            
+        # We need to get enough votes so that at most M-1 candidates have more votes than us
+        # Strategy: We need to surpass at least (better_count - M + 1) candidates who currently have more votes
+        # But we must consider that other candidates might also gain votes
+        
+        # Find the threshold: we need to have more votes than the M-th highest candidate after voting
+        # After we vote, we want our rank to be at least (M+1)-th from top (0-indexed: <= M-1)
+        
+        # Sort all candidates by current votes
+        sorted_votes = sorted(A, reverse=True)
+        
+        # The critical threshold is the M-th highest vote count (if we can match or exceed this, 
+        # then at most M-1 candidates can have strictly more votes than us)
+        threshold = sorted_votes[M-1] if M <= N else 0
+        
+        # If we're already at or above threshold, we're good
+        if current_votes >= threshold:
+            result[orig_idx] = 0
+            continue
+            
+        # We need to reach at least threshold + 1 votes to ensure we're not beaten by M candidates
+        # But we also need to account for the fact that other candidates might gain votes
+        
+        # Worst case: the remaining votes go to the strongest competitors
+        # We need to find minimum X such that even if all other remaining votes go to others,
+        # we still have fewer than M candidates with more votes than us
+        
+        # Binary search on the number of additional votes needed
+        left, right = 0, remaining_votes + 1
+        
+        while left < right:
+            mid = (left + right) // 2
+            my_final_votes = current_votes + mid
+            
+            # Simulate worst-case distribution of remaining votes
+            # Give as many as possible to candidates who would otherwise be below my_final_votes
+            # but could potentially beat me
+            
+            # Create a copy of current votes
+            temp_votes = A[:]
+            temp_votes[orig_idx] = my_final_votes
+            
+            # Distribute remaining_votes - mid votes optimally to hurt our chances
+            # Give them to candidates with highest current votes (but not exceeding my_final_votes if possible)
+            available_votes = remaining_votes - mid
+            if available_votes < 0:
+                # Not enough votes, this mid is too large
+                right = mid
+                continue
+                
+            # Create list of other candidates' votes
+            other_votes = []
+            for i in range(N):
+                if i != orig_idx:
+                    other_votes.append(temp_votes[i])
+                    
+            other_votes.sort(reverse=True)
+            
+            # Try to maximize the number of candidates with votes > my_final_votes
+            # First, give votes to candidates who are closest to my_final_votes
+            distributed = 0
+            for i in range(len(other_votes)):
+                if distributed >= available_votes:
+                    break
+                # How many votes can we add to this candidate?
+                # We can add up to available_votes - distributed
+                add_votes = min(available_votes - distributed, 10**18)  # No upper limit really
+                new_vote_count = other_votes[i] + add_votes
+                other_votes[i] = new_vote_count
+                distributed += add_votes
+                
+            # Count how many candidates have more votes than us
+            better_count = 0
+            for votes in other_votes:
+                if votes > my_final_votes:
+                    better_count += 1
+                    
+            if better_count < M:
+                right = mid
+            else:
+                left = mid + 1
+                
+        if left <= remaining_votes:
+            result[orig_idx] = left
+        else:
+            result[orig_idx] = -1
+    
+    print(' '.join(map(str, result)))
+
+solve()
+```

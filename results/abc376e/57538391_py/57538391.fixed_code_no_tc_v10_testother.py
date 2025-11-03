@@ -1,0 +1,72 @@
+import sys
+
+def solve():
+    data = sys.stdin.read().split()
+    t = int(data[0])
+    index = 1
+    results = []
+    
+    for _ in range(t):
+        N = int(data[index]); K = int(data[index+1]); index += 2
+        A = list(map(int, data[index:index+N])); index += N
+        B = list(map(int, data[index:index+N])); index += N
+        
+        # Create list of (A_i, B_i) and sort by A_i
+        items = sorted(zip(A, B), key=lambda x: x[0])
+        
+        min_cost = float('inf')
+        b_sum = 0
+        window = []
+        
+        # Use a sliding window of size K
+        for i in range(N):
+            ai, bi = items[i]
+            b_sum += bi
+            window.append(bi)
+            
+            # If we have more than K elements, remove the smallest A_i that was added earliest
+            # But since we're iterating by increasing A_i, we just need to maintain last K elements
+            if len(window) > K:
+                # Remove the element with smallest B_i? No, we remove the oldest in the window
+                # Actually, we want to keep the K most recent (largest A_i so far) but minimize sum of B_i
+                # So when we exceed K, remove the one with largest B_i among the first i-K+1?
+                # Instead: maintain a min-heap for B values in current window?
+                
+                # Correction: We are going from left to right in sorted A.
+                # At position i, max_A = items[i][0], and we need to pick K elements from [0..i]
+                # To minimize sum_B, we should keep the K-1 smallest B_i from [0..i-1] and add current
+                if len(window) > K:
+                    # Remove the largest B value among the current window to keep sum minimal
+                    # But we can't just remove any — we need to maintain K elements including current
+                    # So we maintain a max-heap or simply use sorting?
+                    
+                    # Instead: use a max-heap (using negative values) to track largest B in window
+                    pass
+        
+        # Better approach: maintain a max-heap for B values in current valid window
+        import heapq
+        
+        b_sum = 0
+        heap = []  # max-heap using negative values
+        
+        for i in range(N):
+            ai, bi = items[i]
+            # Push current B_i
+            heapq.heappush(heap, -bi)
+            b_sum += bi
+            
+            # If we have more than K elements in the heap, remove the one with largest B_i
+            if len(heap) > K:
+                max_b_neg = heapq.heappop(heap)
+                b_sum += max_b_neg  # because max_b_neg is negative
+            
+            # If we have exactly K elements, update answer
+            if len(heap) == K:
+                cost = ai * b_sum
+                min_cost = min(min_cost, cost)
+        
+        results.append(str(min_cost))
+    
+    print("\n".join(results))
+
+solve()

@@ -1,0 +1,53 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    int n, m;
+    cin >> n >> m;
+    vector<long long> a(n);
+    for (int i = 0; i < n; i++) {
+        cin >> a[i];
+    }
+    
+    vector<vector<pair<int, long long>>> adj(n + 1);
+    for (int j = 0; j < m; j++) {
+        int x, y;
+        long long w;
+        cin >> x >> y >> w;
+        adj[x].push_back({y, w});
+        adj[y].push_back({x, w});
+    }
+    
+    vector<long long> dist(n + 1, LLONG_MAX);
+    priority_queue<pair<long long, int>, vector<pair<long long, int>>, greater<pair<long long, int>>> q;
+    
+    // Start from vertex 1: include vertex weight A[0] in initial distance
+    dist[1] = a[0];
+    q.push({a[0], 1});
+    
+    while (!q.empty()) {
+        auto [d, node] = q.top();
+        q.pop();
+        
+        // Skip if we have found a better distance already
+        if (d > dist[node]) continue;
+        
+        for (auto [neighbor, edge_weight] : adj[node]) {
+            // Calculate new distance: current distance + edge weight + neighbor's vertex weight
+            long long new_dist = d + edge_weight + a[neighbor - 1];
+            
+            if (new_dist < dist[neighbor]) {
+                dist[neighbor] = new_dist;
+                q.push({new_dist, neighbor});
+            }
+        }
+    }
+    
+    // Output distances for vertices 2 to N
+    for (int i = 2; i <= n; i++) {
+        cout << dist[i] << " ";
+    }
+    cout << endl;
+    
+    return 0;
+}

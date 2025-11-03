@@ -1,0 +1,47 @@
+N = int(input())
+S = input().strip()
+
+# Map each move to its winning counter
+win_map = {'R': 'P', 'P': 'S', 'S': 'R'}
+
+# dp[i][j] will store the maximum wins up to game i, where j represents the move in the last game
+# 0: Rock (R), 1: Paper (P), 2: Scissors (S)
+dp = [[-1] * 3 for _ in range(N)]
+
+# Initialize first game
+for move_idx, move_char in enumerate("RPS"):
+    if move_char == win_map[S[0]]:
+        dp[0][move_idx] = 1  # Win
+    elif move_char == S[0]:
+        dp[0][move_idx] = 0  # Draw
+    # Losing moves are invalid (Takahashi never loses), so remain -1
+
+# Fill DP table
+for i in range(1, N):
+    current_opponent = S[i]
+    winning_move = win_map[current_opponent]
+    
+    for curr in range(3):
+        move_char = "RPS"[curr]
+        # Skip invalid (losing) moves
+        if (move_char != winning_move and move_char != current_opponent):
+            continue
+            
+        best_prev = -1
+        for prev in range(3):
+            if prev == curr:  # Consecutive same moves not allowed
+                continue
+            if dp[i-1][prev] != -1:
+                best_prev = max(best_prev, dp[i-1][prev])
+        
+        if best_prev == -1:
+            continue  # No valid previous sequence
+            
+        # Add win or draw
+        if move_char == winning_move:
+            dp[i][curr] = best_prev + 1
+        else:  # Draw
+            dp[i][curr] = best_prev
+
+result = max(dp[N-1])
+print(result)

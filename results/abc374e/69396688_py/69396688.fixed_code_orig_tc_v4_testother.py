@@ -1,0 +1,42 @@
+def can_achieve(capacity):
+    total_cost = 0
+    for i in range(n):
+        a, p, b, q = machines[i]
+        min_cost = float('inf')
+        
+        # Max units of S_i needed
+        max_s_units = (capacity + a - 1) // a if a > 0 else 0
+        # Try all possible numbers of machine S_i from 0 to max_s_units
+        # and fill the rest with T_i
+        for s_units in range(max_s_units + 1):
+            processed_by_s = s_units * a
+            remaining = max(0, capacity - processed_by_s)
+            t_units = (remaining + b - 1) // b if b > 0 else 0
+            cost = s_units * p + t_units * q
+            if cost < min_cost:
+                min_cost = cost
+            # Early break if cost already exceeds budget
+            if cost > x:
+                continue
+        total_cost += min_cost
+        if total_cost > x:
+            return False
+    return total_cost <= x
+
+# Read input
+n, x = map(int, input().split())
+machines = []
+for _ in range(n):
+    machines.append(list(map(int, input().split())))
+
+# Binary search on the production capacity
+left, right = 0, 2 * 10**7  # Upper bound: even with worst efficiency, X yen can buy some capacity
+
+while left < right:
+    mid = (left + right + 1) // 2
+    if can_achieve(mid):
+        left = mid
+    else:
+        right = mid - 1
+
+print(left)

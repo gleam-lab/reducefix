@@ -445,7 +445,9 @@ if __name__ == "__main__":
     # Example call parameters
     test_problem_id = "abc330d" 
     test_submission_id = "50974933" # Example ID
-    test_base_path = "/home/barty/research/atcoder-testcases/test/" # Matches webapp config
+    # Use relative path for portability
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    test_base_path = os.path.join(script_dir, "lftbench", "tests")
     
     print(f"Running reduction for Problem: {test_problem_id}, Submission: {test_submission_id}")
     if not tools:

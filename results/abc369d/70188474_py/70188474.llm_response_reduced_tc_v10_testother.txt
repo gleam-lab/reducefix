@@ -1,0 +1,69 @@
+```python
+n = int(input())
+a = list(map(int, input().split()))
+
+# dp[i][0]: maximum experience up to i-th monster where the last defeated monster was at an odd position (1st, 3rd, ...)
+# dp[i][1]: maximum experience up to i-th monster where the last defeated monster was at an even position (2nd, 4th, ...)
+dp = [[0, 0] for _ in range(n + 1)]
+
+for i in range(1, n + 1):
+    # Option 1: skip the current monster
+    skip = max(dp[i-1][0], dp[i-1][1])
+    
+    # Option 2: defeat the current monster
+    # If we defeat it, the sequence of defeats matters:
+    # - If previous defeat was at an odd position (index 0 in state), then this becomes even -> bonus
+    # - If previous defeat was at an even position (index 1 in state), then this becomes odd -> no bonus
+    # But we can also start a new sequence (defeat as first one)
+    
+    # We can always start a new sequence (treat current as first defeat)
+    take_as_odd = skip + a[i-1]  # This defeat counts as odd-positioned in the defeat sequence
+    
+    # Or we can make it even-positioned only if we had a previous defeat that ended on odd
+    take_as_even = dp[i-1][0] + 2 * a[i-1]  # Only valid if last defeat was odd (so this is even)
+    
+    # However, note: we don't need to track whether the next will be even or odd based on global count,
+    # but rather based on the parity of the number of defeats so far.
+    # Actually, our state should represent:
+    #   dp[i][0]: best score ending with an ODD number of defeats (i.e., last defeat gives normal XP)
+    #   dp[i][1]: best score ending with an EVEN number of defeats (i.e., last defeat gave bonus XP)
+    #
+    # But actually, simpler interpretation:
+    # Let's redefine:
+    #   dp[i][0] = max total XP after processing i monsters with an even number of defeats so far
+    #   dp[i][1] = max total XP after processing i monsters with an odd number of defeats so far
+    #
+    # Wait, no — better: let's use:
+    #   dp[i][0]: max XP using first i monsters where the number of defeated monsters is even
+    #   dp[i][1]: max XP using first i monsters where the number of defeated monsters is odd
+    #
+    # Then when adding a new defeat:
+    #   from even count -> odd count: add a[i-1]
+    #   from odd count -> even count: add 2*a[i-1]
+    #
+    # And skipping doesn't change the count.
+
+# Redefine meaning of dp[i][0] and dp[i][1]:
+# dp[i][0]: max experience after i monsters with even number of defeats
+# dp[i][1]: max experience after i monsters with odd number of defeats
+
+# Initialize: 0 monsters -> 0 defeats (even) -> dp[0][0]=0, dp[0][1]=-inf (impossible)
+dp = [[0, -10**18] for _ in range(n+1)]  # dp[0][1] is invalid initially
+
+for i in range(1, n+1):
+    # Skip monster i
+    no_defeat_even = dp[i-1][0]
+    no_defeat_odd = dp[i-1][1]
+    
+    # Defeat monster i
+    # From even count (odd-numbered defeat in sequence): gain A[i-1]
+    defeat_from_even = dp[i-1][0] + a[i-1]
+    # From odd count (even-numbered defeat in sequence): gain 2*A[i-1]
+    defeat_from_odd = dp[i-1][1] + 2 * a[i-1]
+    
+    # Update states
+    dp[i][0] = max(no_defeat_even, defeat_from_odd)   # either skip and stay even, or defeat (from odd -> even)
+    dp[i][1] = max(no_defeat_odd, defeat_from_even)  # either skip and stay odd, or defeat (from even -> odd)
+
+print(max(dp[n][0], dp[n][1]))
+```

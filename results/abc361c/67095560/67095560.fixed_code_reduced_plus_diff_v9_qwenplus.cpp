@@ -1,0 +1,47 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+#define endl "\n"
+#define pb push_back
+#define mp make_pair
+#define eb emplace_back
+#define ff first
+#define ss second 
+#define inf INT_MAX
+#define all(v) v.begin(), v.end()
+#define rep(i,x) for(int i=0;i<(int)(x);i++)
+#define repn(i,x) for(int i=1;i<=(int)(x);i++)
+#define repo(i,x) for(int i=x-1;i>=0;i--)
+#define int long long
+
+typedef long long ll;
+typedef pair<int, int> pii;
+
+void solve(){
+    int n, k;
+    cin >> n >> k;
+    vector<int> a(n);
+    rep(i,n) cin >> a[i];
+    sort(all(a));
+    
+    // We are removing exactly K elements, so we keep (n - k) elements.
+    // The remaining elements must be contiguous in the sorted array to minimize range.
+    int keep = n - k;
+    int min_range = a[keep - 1] - a[0]; // First window
+    
+    // Slide window of size 'keep' over the sorted array
+    for (int i = 1; i + keep - 1 < n; i++) {
+        int current_range = a[i + keep - 1] - a[i];
+        min_range = min(min_range, current_range);
+    }
+    
+    cout << min_range << endl;
+}
+
+signed main()
+{
+    ios_base::sync_with_stdio(false);
+    cin.tie(NULL);
+    solve();
+    return 0;
+}

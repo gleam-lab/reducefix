@@ -1,0 +1,37 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    int n, k;
+    cin >> n >> k;
+    vector<int> a(n);
+    for (int i = 0; i < n; i++) {
+        cin >> a[i];
+    }
+    
+    sort(a.begin(), a.end());
+    
+    // We need to remove exactly K elements
+    // The remaining sequence will have n-k elements
+    // Since we want to minimize (max - min) of the remaining elements,
+    // we should consider removing some number of smallest elements and some number of largest elements.
+    //
+    // Let's try removing i smallest elements and (k-i) largest elements, for i from 0 to k.
+    // Then the remaining array is a[i] to a[n-1-(k-i)] = a[n-k+i-1]
+    // The difference is a[n-k+i-1] - a[i]
+    
+    int ans = INT_MAX;
+    for (int i = 0; i <= k; i++) {
+        int left = i;                    // remove i smallest elements
+        int right = k - i;               // remove (k-i) largest elements
+        int remaining_start = left;
+        int remaining_end = n - 1 - right;
+        
+        if (remaining_start <= remaining_end) {
+            ans = min(ans, a[remaining_end] - a[remaining_start]);
+        }
+    }
+    
+    cout << ans << endl;
+    return 0;
+}

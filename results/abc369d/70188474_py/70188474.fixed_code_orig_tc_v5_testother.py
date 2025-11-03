@@ -1,0 +1,55 @@
+n = int(input())
+a = list(map(int, input().split()))
+
+# dp[i][0]: maximum points up to i-th monster where the i-th monster is not doubled
+# dp[i][1]: maximum points up to i-th monster where the i-th monster is doubled
+dp = [[0, 0] for _ in range(n + 1)]
+
+for i in range(1, n + 1):
+    # Option 1: Take monster i without doubling (can follow either state)
+    dp[i][0] = max(dp[i-1][0], dp[i-1][1]) + a[i-1]
+    
+    # Option 2: Take monster i with doubling (must be even-numbered defeat, so previous must not be doubled)
+    # This means we can only double if we're making an even-numbered defeat
+    # But note: we need to track whether the current defeat is even or odd in sequence
+    
+    # Actually, the issue is that we cannot simply use [0] as "not doubled"
+    # We need to consider the count of defeats, not just the last action
+    
+    # Let's rethink: the problem is our state definition.
+    # Our current DP doesn't properly account for the sequential nature of even/odd defeats.
+    # We need to know if the next defeat will be even-numbered.
+
+pass
+
+# Let me restart with a correct approach:
+
+n = int(input())
+a = list(map(int, input().split()))
+
+# We'll use a different DP approach
+# Let dp[i][j] = maximum experience after processing first i monsters,
+# where j is the number of monsters defeated so far (mod 2)
+# j=0 means even number of defeats (so next defeat would be odd-numbered)
+# j=1 means odd number of defeats (so next defeat would be even-numbered)
+
+dp = [[0, 0] for _ in range(n + 1)]
+# dp[0][0] = 0, dp[0][1] = -infinity (impossible)
+
+for i in range(n):
+    # Option 1: skip monster i+1
+    dp[i+1][0] = max(dp[i+1][0], dp[i][0])
+    dp[i+1][1] = max(dp[i+1][1], dp[i][1])
+    
+    # Option 2: defeat monster i+1
+    # If current count mod 2 is 0 (even defeats so far), then this will be 1st, 3rd, 5th, ... defeat
+    # So no bonus
+    new_val_0 = dp[i][0] + a[i]  # was even count, now becomes odd count
+    dp[i+1][1] = max(dp[i+1][1], new_val_0)
+    
+    # If current count mod 2 is 1 (odd defeats so far), then this will be 2nd, 4th, 6th, ... defeat
+    # So bonus applies
+    new_val_1 = dp[i][1] + 2 * a[i]  # was odd count, now becomes even count
+    dp[i+1][0] = max(dp[i+1][0], new_val_1)
+
+print(max(dp[n][0], dp[n][1]))
