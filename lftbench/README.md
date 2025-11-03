@@ -152,10 +152,6 @@ with open(sub['ac_code_path'], 'r') as f:
 with open(sub['original_test_input_path'], 'r') as f:
     original_input = f.read()
 
-# Read reduced test input
-with open(sub['reduced_test_input_path'], 'r') as f:
-    reduced_input = f.read()
-
 # Get problem description
 description = problems[problem_id]['description']
 

@@ -7,14 +7,11 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 import shlex
 import time
 import judge
-import requests
-from bs4 import BeautifulSoup
 import traceback
 import Levenshtein
 from typing import Dict, Any, Optional, Tuple
 
-from tools import get_next_cookie_path, load_session_with_cookie_file
-from tools import read_cache, write_cache, _get_problem_cache_path
+from tools import get_next_cookie_path
 
 # Import API configurations from config.py
 try:
@@ -391,115 +388,4 @@ def process_debug_request(data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
         response_payload["message"] = "All suggestions failed to judge successfully or pass any test cases (or encountered compile errors)."
         return response_payload, 200
 
-def fetch_problem_details(contest_id: str, problem_id: str) -> Tuple[Dict[str, Any], int]:
-    if not contest_id or not problem_id:
-        return {"error": "Missing contest_id or problem_id parameter"}, 400
-
-    cache_path = _get_problem_cache_path(contest_id, problem_id)
-    cached_data = read_cache(cache_path, is_json=True)
-    if cached_data is not None:
-        return cached_data, 200 
-
-    problem_url = f"https://atcoder.jp/contests/{contest_id}/tasks/{problem_id}"
-    print(f"Fetching problem details from: {problem_url} (Cache Miss)")
-
-    try:
-        current_cookie_path = get_next_cookie_path()
-        if not current_cookie_path:
-             print("[Warning] No Cookie file found, will attempt to scrape problem information without authentication.")
-             session = requests.Session()
-        else:
-             session = load_session_with_cookie_file(current_cookie_path)
-             if not session:
-                 print(f"[Warning] Unable to load Session from {os.path.basename(current_cookie_path)}, will attempt unauthenticated scraping.")
-                 session = requests.Session()
-
-        headers = {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
-        }
-        response = session.get(problem_url, headers=headers, timeout=15)
-        response.raise_for_status() 
-
-        soup = BeautifulSoup(response.text, 'lxml')
-
-        title_span = soup.select_one('#main-container .h2')
-        problem_title = title_span.get_text(strip=True) if title_span else f"Title not found for {problem_id}"
-
-        statement_div = soup.select_one('#task-statement')
-        if not statement_div:
-            return {"error": f"Could not find problem statement div (#task-statement) at {problem_url}"}, 500
-
-        english_statement_span = statement_div.select_one('span.lang-en')
-        if english_statement_span:
-            print("Found English statement span (.lang-en).")
-            target_html_content = str(english_statement_span)
-        else:
-            print("Warning: Did not find English statement span (.lang-en). Using the whole #task-statement.")
-            target_html_content = str(statement_div)
-
-        try:
-            h = html2text.HTML2Text()
-            h.ignore_links = True 
-            problem_description_markdown = h.handle(target_html_content)
-        except Exception as e:
-            print(f"html2text conversion failed: {e}")
-            problem_description_markdown = "Error converting problem description to Markdown." 
-
-        samples = []
-        sections = statement_div.select('.part > section')
-        input_text = None
-        output_text = None
-        sample_count = 0
-
-        for section in sections:
-            h3 = section.find('h3')
-            pre = section.find('pre')
-            if h3 and pre:
-                header_text = h3.get_text(strip=True).lower()
-                pre_text = pre.get_text()
-
-                if "sample input" in header_text:
-                    if input_text is not None and output_text is not None:
-                        sample_count += 1
-                        samples.append({"input": input_text, "output": output_text})
-                        output_text = None 
-                    input_text = pre_text
-                elif "sample output" in header_text:
-                    output_text = pre_text
-        if input_text is not None and output_text is not None:
-             sample_count += 1
-             samples.append({"input": input_text, "output": output_text})
-
-        if not samples:
-             print(f"Warning: Could not find samples using selectors at {problem_url}")
-
-        print(f"Successfully fetched: Title='{problem_title}', Samples Found={len(samples)}")
-
-        try:
-            samples_json = json.dumps(samples, ensure_ascii=False, indent=2)
-        except TypeError:
-            print("[Warning] Failed to serialize samples to JSON.")
-            samples_json = "[]"
-
-        result_data = {
-            "title": problem_title,
-            "description_markdown": problem_description_markdown,
-            "samples_json": samples_json,
-        }
-        
-        write_cache(cache_path, result_data, is_json=True)
-
-        return result_data, 200
-
-    except requests.exceptions.HTTPError as e:
-         error_msg = f"HTTP error fetching problem: {e.response.status_code} for URL: {problem_url}"
-         print(error_msg)
-         return {"error": error_msg}, e.response.status_code
-    except requests.exceptions.RequestException as e:
-        error_msg = f"Error fetching problem details from {problem_url}: {e}"
-        print(error_msg)
-        return {"error": error_msg}, 500
-    except Exception as e:
-        error_msg = f"Error parsing problem details from {problem_url}: {e}"
-        print(traceback.format_exc())
-        return {"error": error_msg}, 500
+# fetch_problem_details() has been removed - use lftbench_utils instead

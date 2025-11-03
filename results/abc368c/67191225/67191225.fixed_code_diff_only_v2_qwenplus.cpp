@@ -1,0 +1,37 @@
+#include<iostream>
+#include<vector>
+
+using namespace std;
+using ll = long long;
+
+int main()
+{
+    int N;
+    cin >> N;
+    vector<ll> H(N);
+    for (int i = 0; i < N; i++)
+    {
+        cin >> H[i];
+    }
+    
+    ll T = 0;
+    int current_enemy = 0;
+    
+    while (current_enemy < N) {
+        T++;
+        
+        // Check if current T is multiple of 3 -> deal 3 damage, otherwise 1 damage
+        ll damage = (T % 3 == 0) ? 3 : 1;
+        
+        // Attack the frontmost alive enemy
+        H[current_enemy] -= damage;
+        
+        // If this enemy's health drops to 0 or below, move to next enemy
+        if (H[current_enemy] <= 0) {
+            current_enemy++;
+        }
+    }
+    
+    cout << T << endl;
+    return 0;
+}

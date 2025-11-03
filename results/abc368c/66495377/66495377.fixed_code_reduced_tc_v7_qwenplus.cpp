@@ -1,0 +1,45 @@
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+
+ll num_attack(ll t, ll h) {
+    if (h == 0) return 0;
+    
+    // We want to find the minimum number of attacks needed starting from time T
+    // Each attack at time t does: 3 damage if t % 3 == 0, else 1 damage.
+    // The pattern of damage over 3 consecutive attacks: 1 + 1 + 3 = 5 damage every 3 turns.
+    
+    ll cycle_damage = 5;  // damage per 3 attacks (at times not divisible by 3, not div, then div)
+    ll full_cycles = h / cycle_damage;
+    ll remainder = h % cycle_damage;
+    
+    ll attacks = full_cycles * 3;
+    ll current_time = t + attacks;
+    
+    // Simulate remaining damage
+    while (remainder > 0) {
+        current_time++;
+        attacks++;
+        if (current_time % 3 == 0) {
+            remainder -= 3;
+        } else {
+            remainder--;
+        }
+    }
+    
+    return attacks;
+}
+
+int main() {
+    int n;
+    cin >> n;
+    ll t = 0;
+    for (int i = 0; i < n; ++i) {
+        ll h;
+        cin >> h;
+        ll attacks_needed = num_attack(t, h);
+        t += attacks_needed;
+    }
+
+    cout << t << endl;
+}

@@ -25,7 +25,6 @@ AC_FILENAME = "ac.cpp"
 WA_FILENAME_PREFIX = "wa_"
 REDUCER_FILENAME = "reducer.py"
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
-BASE_TESTCASE_PATH = os.path.join(SCRIPT_DIR, "lftbench", "tests")
 MIN_INPUT_SIZE_KB = 1
 MAX_WA_SUBMISSIONS = 10
 SEARCH_MULTIPLIER = 2
@@ -295,13 +294,12 @@ def select_best_submissions(all_results: List[Dict], target_count: int, problem_
     return selected
 
 
-def run_reduction_with_timeout(q, submission_id, problem_id_input, base_testcase_path, artifact_dir):
+def run_reduction_with_timeout(q, submission_id, problem_id_input, artifact_dir):
     """Run reduction in a separate process"""
     try:
         result = root_reducer.reduce_submission(
             submission_id=submission_id,
             problem_id_input=problem_id_input,
-            base_testcase_path=base_testcase_path,
             artifact_dir=artifact_dir
         )
         q.put(result)
@@ -321,25 +319,18 @@ def main():
     parser.add_argument('--force', action='store_true', help='Force re-testing of submissions from lftbench')
     parser.add_argument('--retry-failed', action='store_true', help='Retry previously failed reduction attempts')
     parser.add_argument('--lftbench-path', default=None, help='Path to lftbench directory')
-    parser.add_argument('--testcase-path', default=None, help='Path to test cases directory')
     args = parser.parse_args()
     
-    global LFTBENCH_PATH, BASE_TESTCASE_PATH, RESULT_JSON_PATH
+    global LFTBENCH_PATH, RESULT_JSON_PATH
     if args.lftbench_path:
         LFTBENCH_PATH = os.path.abspath(args.lftbench_path)
-    if args.testcase_path:
-        BASE_TESTCASE_PATH = os.path.abspath(args.testcase_path)
     
     if not os.path.exists(LFTBENCH_PATH):
         print(f"[Error] lftbench directory not found: {LFTBENCH_PATH}", file=sys.stderr)
         sys.exit(1)
     
-    if not os.path.exists(BASE_TESTCASE_PATH):
-        print(f"[Error] Test cases directory not found: {BASE_TESTCASE_PATH}", file=sys.stderr)
-        sys.exit(1)
-    
     print(f"[Info] Using lftbench path: {LFTBENCH_PATH}")
-    print(f"[Info] Using testcase path: {BASE_TESTCASE_PATH}")
+    print(f"[Info] All data will be loaded from lftbench metadata")
     
     RESULT_JSON_PATH = f"result_{args.model_tag}.json"
     target_problem_id_input = args.problem_id.strip().lower()
@@ -522,7 +513,7 @@ def main():
             result_queue = multiprocessing.Queue()
             reduction_process = multiprocessing.Process(
                 target=run_reduction_with_timeout,
-                args=(result_queue, submission_id, target_problem_id_input, BASE_TESTCASE_PATH, artifact_dir)
+                args=(result_queue, submission_id, target_problem_id_input, artifact_dir)
             )
 
             start_time = time.time()
@@ -586,7 +577,7 @@ def main():
             result_queue = multiprocessing.Queue()
             reduction_process = multiprocessing.Process(
                 target=run_reduction_with_timeout,
-                args=(result_queue, submission_id, target_problem_id_input, BASE_TESTCASE_PATH, artifact_dir)
+                args=(result_queue, submission_id, target_problem_id_input, artifact_dir)
             )
 
             start_time = time.time()

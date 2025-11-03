@@ -1,0 +1,31 @@
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+
+// Simulate attacks starting from time T until health H becomes 0 or less
+ll simulate_attacks(ll t, ll h) {
+    while (h > 0) {
+        t++;
+        if (t % 3 == 0) {
+            h -= 3;
+        } else {
+            h--;
+        }
+    }
+    return t;
+}
+
+int main() {
+    int n;
+    cin >> n;
+    ll current_time = 0;
+    
+    for (int i = 0; i < n; ++i) {
+        ll health;
+        cin >> health;
+        current_time = simulate_attacks(current_time, health);
+    }
+
+    cout << current_time << endl;
+    return 0;
+}

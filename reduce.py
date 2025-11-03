@@ -8,18 +8,13 @@ import importlib # For dynamic imports
 from typing import List, Optional, Tuple, Dict, Any, Callable
 import subprocess # Needed for compile_program
 
-# --- Import AtCoder tools --- 
+# --- Import lftbench utilities ---
 try:
-    import tools
-    from tools import load_session # Import the unified session loader
-    print("[Info] Successfully imported tools module and load_session.")
-except ImportError:
-    print("[Error] Failed to import 'tools' module. Make sure tools.py is in the Python path.", file=sys.stderr)
-    tools = None # Set to None to indicate failure
-except Exception as e:
-    print(f"[Error] Unexpected error importing 'tools' module: {e}", file=sys.stderr)
-    traceback.print_exc()
-    tools = None
+    import json
+    print("[Info] Importing json module for metadata parsing.")
+except ImportError as e:
+    print(f"[Error] Failed to import json module: {e}", file=sys.stderr)
+    sys.exit(1)
 
 # --- Helper: Compile C++ Code (Moved from abc330d/reducer.py) ---
 def compile_program(source_path: str, output_path: str, work_dir: str) -> bool:
@@ -68,109 +63,106 @@ def _parse_problem_id(problem_id_input: str) -> Optional[Tuple[str, str]]:
         print(f"[Error] Failed to parse problem_id_input: '{problem_id_input}'", file=sys.stderr)
         return None
 
-# --- Helper: Get Failing Case Info (Using tools.py) --- 
+# --- Helper: Get Failing Case Info (From lftbench metadata) --- 
 def _get_failing_case_info(submission_id: str, 
-                           problem_dir_name: str, 
-                           contest_id: str # Needed for URL
-                           ) -> Dict[str, Any]: # Return Any to allow status key
+                           problem_id: str
+                           ) -> Dict[str, Any]:
     """
-    Retrieves AC code from local file, and WA code + failing case name 
-    from AtCoder submission page using the tools module.
-    Uses a session loaded via tools.load_session() which handles cookie rotation.
+    Retrieves AC code, WA code, and original test input path from lftbench metadata.
+    Args:
+        submission_id: The submission ID to look up
+        problem_id: The problem ID (e.g., 'abc361c')
+    Returns:
+        Dict with keys: ac_code, wa_code, original_input_path
     """
-    print(f"[_get_failing_case_info] Fetching submission {submission_id} for {contest_id} using rotated cookie session.")
+    print(f"[_get_failing_case_info] Loading submission {submission_id} for {problem_id} from lftbench metadata.")
     
-    if not tools:
-         return {"status": "error", "message": "Tools module failed to import.", "status_code": 500}
-
-    # Get the session using the new unified function
-    session = tools.load_session()
-    if not session:
-         # Error if session loading failed (e.g., no cookies, load error)
-         # tools.load_session() already prints specific errors
-         error_msg = "Failed to obtain authenticated session via tools.load_session(). Check previous log messages."
-         print(f"  [Error] {error_msg}", file=sys.stderr)
-         return {"status": "error", "message": error_msg, "status_code": 500} # Use 500 for session issues
-
-    # --- Read AC Code from local file --- 
-    ac_code_content = None
-    ac_code_path = os.path.join(problem_dir_name, "ac.cpp") 
-    try:
-        if not os.path.exists(ac_code_path):
-            print(f"  [Error] AC code file not found at relative path: {ac_code_path}", file=sys.stderr)
-            # Decide if this is fatal or just a warning if AC code isn't strictly needed later
-        else:
-            with open(ac_code_path, "r", encoding="utf-8") as f:
-                ac_code_content = f.read()
-            print(f"  [Info] Successfully read local AC code from {ac_code_path}.")
-    except Exception as e:
-        print(f"  [Error] Failed to read local AC code file {ac_code_path}: {e}", file=sys.stderr)
-        ac_code_content = None 
-        
-    # --- Fetch WA Code and Failing Case from AtCoder --- 
-    wa_code_content = None
-    failing_case_name = None
+    # Get script directory and construct lftbench path
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    lftbench_dir = os.path.join(script_dir, "lftbench")
+    metadata_file = os.path.join(lftbench_dir, "metadata", "cpp_submissions.jsonl")
     
+    # Check if metadata file exists
+    if not os.path.exists(metadata_file):
+        error_msg = f"Metadata file not found: {metadata_file}"
+        print(f"  [Error] {error_msg}", file=sys.stderr)
+        return {"status": "error", "message": error_msg, "status_code": 404}
+    
+    # Search for the submission in metadata
+    submission_data = None
     try:
-        submission_url = f"https://atcoder.jp/contests/{contest_id}/submissions/{submission_id}"
-        print(f"  [Info] Fetching details from URL: {submission_url} using loaded session.")
-        
-        # Call the function from tools.py using the loaded session
-        case_name, case_status, wa_source, ac_count = tools.get_first_failed_case_info(submission_url, session)
-        
-        print(f"  [Info] tools.get_first_failed_case_info result: case='{case_name}', status='{case_status}', ac_count={ac_count}, source_len={len(wa_source) if wa_source else 0}")
-
-        if case_name == "All Passed" or case_status == "AC":
-             print(f"  [Error] Submission {submission_id} did not fail or all cases passed.", file=sys.stderr)
-             # Return specific error? For now, treat as failure to find necessary info.
-             wa_code_content = None
-             failing_case_name = None
-        elif case_name is None or wa_source is None:
-             print(f"  [Error] Failed to retrieve case name or WA source code from {submission_url}. Check tools.py logs.", file=sys.stderr)
-             wa_code_content = None
-             failing_case_name = None
-        else:
-             # Success!
-             wa_code_content = wa_source
-             failing_case_name = case_name
-             # Remove potential .txt extension if present (though tools.py likely handles this)
-             if failing_case_name.lower().endswith('.txt'):
-                  failing_case_name = failing_case_name[:-4]
-             print(f"  [Success] Found failing case: '{failing_case_name}' with status '{case_status}'. WA code length: {len(wa_code_content)}")
-             
+        with open(metadata_file, 'r', encoding='utf-8') as f:
+            for line in f:
+                data = json.loads(line)
+                if data.get('problem_id') == problem_id and data.get('submission_id') == submission_id:
+                    submission_data = data
+                    break
     except Exception as e:
-        print(f"  [Error] Exception while fetching/processing submission details: {e}", file=sys.stderr)
+        error_msg = f"Error reading metadata file: {e}"
+        print(f"  [Error] {error_msg}", file=sys.stderr)
         traceback.print_exc()
-        # Ensure wa_code and case_name are None on error
-        wa_code_content = None
-        failing_case_name = None
-
+        return {"status": "error", "message": error_msg, "status_code": 500}
+    
+    if not submission_data:
+        error_msg = f"Submission {submission_id} for problem {problem_id} not found in metadata"
+        print(f"  [Error] {error_msg}", file=sys.stderr)
+        return {"status": "error", "message": error_msg, "status_code": 404}
+    
+    print(f"  [Info] Found submission metadata in lftbench.")
+    
+    # Read AC code
+    ac_code_content = None
+    ac_code_rel_path = submission_data.get('ac_code_path')
+    if ac_code_rel_path:
+        ac_code_path = os.path.join(lftbench_dir, ac_code_rel_path)
+        try:
+            with open(ac_code_path, 'r', encoding='utf-8') as f:
+                ac_code_content = f.read()
+            print(f"  [Info] Successfully read AC code from {ac_code_rel_path}")
+        except Exception as e:
+            print(f"  [Warning] Failed to read AC code from {ac_code_path}: {e}", file=sys.stderr)
+    
+    # Read WA code
+    wa_code_content = None
+    wa_code_rel_path = submission_data.get('wa_code_path')
+    if wa_code_rel_path:
+        wa_code_path = os.path.join(lftbench_dir, wa_code_rel_path)
+        try:
+            with open(wa_code_path, 'r', encoding='utf-8') as f:
+                wa_code_content = f.read()
+            print(f"  [Info] Successfully read WA code from {wa_code_rel_path}")
+        except Exception as e:
+            error_msg = f"Failed to read WA code from {wa_code_path}: {e}"
+            print(f"  [Error] {error_msg}", file=sys.stderr)
+            return {"status": "error", "message": error_msg, "status_code": 500}
+    else:
+        error_msg = "WA code path not found in metadata"
+        print(f"  [Error] {error_msg}", file=sys.stderr)
+        return {"status": "error", "message": error_msg, "status_code": 500}
+    
+    # Get original test input path
+    original_input_rel_path = submission_data.get('original_test_input_path')
+    if not original_input_rel_path:
+        error_msg = "Original test input path not found in metadata"
+        print(f"  [Error] {error_msg}", file=sys.stderr)
+        return {"status": "error", "message": error_msg, "status_code": 500}
+    
+    # Construct absolute path
+    original_input_path = os.path.join(lftbench_dir, original_input_rel_path)
+    if not os.path.exists(original_input_path):
+        error_msg = f"Original test input file not found: {original_input_path}"
+        print(f"  [Error] {error_msg}", file=sys.stderr)
+        return {"status": "error", "message": error_msg, "status_code": 404}
+    
+    print(f"  [Info] Original test input path: {original_input_rel_path}")
+    
     return {
-        "ac_code": ac_code_content,    # From local file
-        "wa_code": wa_code_content,    # Fetched from AtCoder
-        "case_name": failing_case_name # Fetched from AtCoder
+        "ac_code": ac_code_content,
+        "wa_code": wa_code_content,
+        "original_input_path": original_input_path  # Return absolute path
     }
 
-# --- Helper function to GET test case path --- (Renamed and modified)
-def _get_original_input_path(base_testcase_path: str, contest_id: str, problem_letter: str, case_name: str) -> Optional[str]:
-    """Constructs the path for a specific test case input file and checks existence."""
-    try:
-        # Construct path assuming structure like /base/abc330/D/in/test_05
-        # Ensure case name doesn't have .txt extension if passed in
-        if case_name.lower().endswith('.txt'):
-             case_name = case_name[:-4]
-             
-        input_file_path = os.path.join(base_testcase_path, contest_id, problem_letter.upper(), "in", case_name)
-        print(f"[Info] Checking input file path: {input_file_path}")
-        if not os.path.exists(input_file_path):
-            print(f"[Error] Input file not found at: {input_file_path}", file=sys.stderr)
-            return None # Return None if path doesn't exist
-        else:
-            print(f"[Info] Input file path exists.")
-            return input_file_path # Return the VALIDATED path
-    except Exception as e:
-        print(f"[Error] Failed to construct or check input file path: {e}", file=sys.stderr)
-        return None
+# _get_original_input_path() removed - now using paths from lftbench metadata
 
 # --- Generic Test Case Reduction Runner (Moved from abc330d/reducer.py and Modified) ---
 def reduce_test_case(ac_code_str: str, 
@@ -267,13 +259,13 @@ def reduce_test_case(ac_code_str: str,
     return reduced_content
 
 # --- Main Orchestration Function (Modified Return Value) ---
-def reduce_submission(submission_id: str, problem_id_input: str, base_testcase_path: str, artifact_dir: Optional[str] = None) -> Tuple[int, str, Optional[int], Optional[int], Optional[str], Optional[str]]:
+def reduce_submission(submission_id: str, problem_id_input: str, artifact_dir: Optional[str] = None) -> Tuple[int, str, Optional[int], Optional[int], Optional[str], Optional[str]]:
     """
     Orchestrates the test case reduction process for a given submission ID.
+    Data is loaded from lftbench metadata instead of fetching from AtCoder.
     Args:
         submission_id: The ID of the submission to reduce.
-        problem_id_input: The problem ID string (e.g., 'abc330d').
-        base_testcase_path: The base directory containing the AtCoder testcases.
+        problem_id_input: The problem ID string (e.g., 'abc361c').
         artifact_dir: Optional path to a directory where original and reduced 
                       input files should be saved.
     Returns:
@@ -283,7 +275,7 @@ def reduce_submission(submission_id: str, problem_id_input: str, base_testcase_p
     reduced_input_size = None
     reduced_content_str = None # Initialize reduced content
     failing_case_name = None # Initialize failing case name
-    print(f"[Orchestrate] Received problem_id: '{problem_id_input}', submission_id: {submission_id}, base_path: '{base_testcase_path}'")
+    print(f"[Orchestrate] Received problem_id: '{problem_id_input}', submission_id: {submission_id}")
     parsed_ids = _parse_problem_id(problem_id_input)
     if not parsed_ids:
         return 400, f"Invalid problem ID format: {problem_id_input}", None, None, None, None # Added None for case_name
@@ -319,37 +311,33 @@ def reduce_submission(submission_id: str, problem_id_input: str, base_testcase_p
     else:
          reducer_code_content = "# Reducer source file path not found."
 
-    # 2. Get Failing Case Info (AC/WA Code, Case Name)
-    print(f"[Orchestrate] Fetching info for submission {submission_id}...")
-    case_info = _get_failing_case_info(submission_id, f"{contest_id}{problem_letter.lower()}", contest_id)
+    # 2. Get Failing Case Info from lftbench metadata
+    print(f"[Orchestrate] Loading submission info for {submission_id} from lftbench...")
+    case_info = _get_failing_case_info(submission_id, problem_id_input)
     
     # Check for errors reported by the helper
     if case_info.get("status") == "error":
-         return case_info["status_code"], case_info["message"], None, None, None, None # Added None
+         return case_info["status_code"], case_info["message"], None, None, None, None
          
-    # Retrieve data (error checked inside helper now)
+    # Retrieve data
     ac_code_str = case_info.get("ac_code")
     wa_code_str = case_info.get("wa_code")
-    failing_case_name = case_info.get("case_name") # Assign to variable
+    original_input_path = case_info.get("original_input_path")
     
-    # Simplified check: If helper succeeded, wa_code and case_name should exist
-    if not wa_code_str or not failing_case_name:
-         # This case should ideally be caught by the error check above
+    # Simplified check: If helper succeeded, wa_code and input path should exist
+    if not wa_code_str or not original_input_path:
          error_msg = f"Internal error: _get_failing_case_info succeeded but returned invalid data for submission {submission_id}."
          print(f"[Error] {error_msg}", file=sys.stderr)
-         return 500, error_msg, None, None, None, None # Added None
+         return 500, error_msg, None, None, None, None
          
     # Check for AC code (optional)
     if ac_code_str is None:
-        print(f"[Warning] Failed to read local AC code file: {os.path.join(f'{contest_id}{problem_letter.lower()}', 'ac.cpp')}. Proceeding without it.")
+        print(f"[Warning] Failed to read AC code from lftbench. Proceeding without it.")
 
-    print(f"[Orchestrate] Using info: Local AC Code (len={len(ac_code_str) if ac_code_str else 0}), Fetched WA Code (len={len(wa_code_str)}), Fetched Case={failing_case_name}")
+    print(f"[Orchestrate] Loaded from lftbench: AC Code (len={len(ac_code_str) if ac_code_str else 0}), WA Code (len={len(wa_code_str)}), Input Path={original_input_path}")
 
-    # 3. Get the original input file PATH
-    original_input_path = _get_original_input_path(base_testcase_path, contest_id, problem_letter, failing_case_name)
-    if not original_input_path: # Path finding/validation failed
-        err_msg = f"Original input file not found or path invalid for case '{failing_case_name}'."
-        return 404, err_msg, None, None, None, failing_case_name # Return case_name even on error
+    # Extract a simplified case name for logging/artifact purposes
+    failing_case_name = os.path.basename(original_input_path).replace('.txt', '')
 
     # Now, read the content using the validated path
     try:
@@ -443,30 +431,25 @@ def reduce_submission(submission_id: str, problem_id_input: str, base_testcase_p
 if __name__ == "__main__":
     print("Testing root reduce.py orchestration...")
     # Example call parameters
-    test_problem_id = "abc330d" 
-    test_submission_id = "50974933" # Example ID
-    # Use relative path for portability
-    script_dir = os.path.dirname(os.path.abspath(__file__))
-    test_base_path = os.path.join(script_dir, "lftbench", "tests")
+    test_problem_id = "abc361c" 
+    test_submission_id = "67213592" # Example ID
     
     print(f"Running reduction for Problem: {test_problem_id}, Submission: {test_submission_id}")
-    if not tools:
-         print("ERROR: tools module not imported, cannot run test.")
+    print("Note: Data will be loaded from lftbench metadata")
+    
+    # Call with updated signature (no base_testcase_path)
+    result = reduce_submission(test_submission_id, test_problem_id, artifact_dir=None)
+    
+    print("\n--- Orchestration Result ---")
+    if result[0] == 200:
+        print(f"Status: Success")
+        print(f"Message: {result[1]}")
+        print(f"Original Size: {result[2]} bytes")
+        print(f"Reduced Size: {result[3]} bytes")
+        print(f"Reduced Content:\n{result[4]}") # Print content in test
+        print(f"Failing Case: {result[5]}")
     else:
-        # Call without cookie_path (comment outdated)
-        # Add artifact_dir=None to the call signature
-        result = reduce_submission(test_submission_id, test_problem_id, test_base_path, artifact_dir=None)
-        
-        print("\n--- Orchestration Result ---")
-        if result[0] == 200:
-            print(f"Status: Success")
-            print(f"Message: {result[1]}")
-            print(f"Original Size: {result[2]} bytes")
-            print(f"Reduced Size: {result[3]} bytes")
-            print(f"Reduced Content:\n{result[4]}") # Print content in test
-            print(f"Failing Case: {result[5]}")
-        else:
-            print(f"Status: Error")
-            print(f"Message: {result[1]}")
-            print(f"Status Code: {result[0]}")
-        print("---------------------------") 
+        print(f"Status: Error")
+        print(f"Message: {result[1]}")
+        print(f"Status Code: {result[0]}")
+    print("---------------------------") 

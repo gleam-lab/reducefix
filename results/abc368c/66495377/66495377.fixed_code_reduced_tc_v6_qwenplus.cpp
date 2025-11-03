@@ -1,0 +1,104 @@
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+
+ll num_attack(ll t, ll h) {
+    if (h == 0) return 0;
+    
+    // Each block of 5 attacks deals 7 damage: positions with T ≡ 1,2,4,5,7 mod 9? Let's re-analyze.
+    // Actually, over 3 consecutive T values:
+    //   If T ≡ 1 mod 3 -> 1 damage
+    //   T ≡ 2 mod 3 -> 1 damage
+    //   T ≡ 0 mod 3 -> 3 damage
+    // So every 3 attacks deal 1 + 1 + 3 = 5 damage in 3 time units? But not aligned.
+
+    // Instead, let’s simulate cycles. But we need an efficient way.
+
+    // Observation:
+    // The attack pattern is periodic with period 3: damage [1, 1, 3], repeating.
+    // So in each full cycle of 3 attacks: total damage = 5.
+
+    // Suppose we do k full cycles (i.e., 3k attacks), then some extra attacks (0, 1, or 2).
+    // Total damage from k cycles: 5k.
+    // Then we may need up to 2 more attacks.
+
+    // But the starting point matters: what is (t+1) mod 3?
+
+    ll start_t = t + 1; // first attack will be at T = t+1
+    ll rem = h;
+    ll attacks = 0;
+
+    // First, handle full cycles of 3 attacks that give 5 damage.
+    // But depending on start_t mod 3, the sequence changes.
+
+    // Let base = number of complete 3-attack cycles we can apply
+    // We want to avoid simulating one-by-one when h is large.
+
+    // Instead: compute how many full cycles we can skip.
+    ll cycle_damage = 5;
+    ll cycle_length = 3;
+
+    // How many full cycles needed? Not exactly, because alignment matters.
+
+    // Alternative idea: binary search on number of attacks?
+    // But we are already inside a loop per enemy — must be O(1) or O(log H).
+
+    // Let's define f(attacks) = total damage dealt in 'attacks' moves starting from time t+1.
+
+    auto damage = [&](ll num_att) -> ll {
+        if (num_att == 0) return 0;
+        ll d = 0;
+        ll s = start_t;
+
+        // Number of complete cycles of 3 in the attack sequence
+        ll full_cycles = num_att / 3;
+        ll remainder = num_att % 3;
+
+        // In each full cycle of 3 consecutive attacks:
+        // The one where T ≡ 0 mod 3 does 3 damage, others 1 → total 5 per 3 attacks.
+        d += full_cycles * 5;
+
+        // Now for the remaining 'remainder' attacks, check their T values
+        ll curr_t = s + full_cycles * 3;
+        for (ll i = 0; i < remainder; ++i) {
+            if ((curr_t + i) % 3 == 0) {
+                d += 3;
+            } else {
+                d += 1;
+            }
+        }
+        return d;
+    };
+
+    // Binary search on number of attacks required
+    ll low = 0, high = h * 2; // safe upper bound: even if all 1-damage, h attacks enough, but 3-damage helps
+    if (high < h) high = h;
+
+    while (low < high) {
+        ll mid = (low + high) / 2;
+        if (damage(mid) >= h) {
+            high = mid;
+        } else {
+            low = mid + 1;
+        }
+    }
+
+    return low;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int n;
+    cin >> n;
+    ll t = 0;
+    for (int i = 0; i < n; ++i) {
+        ll h;
+        cin >> h;
+        ll attacks_needed = num_attack(t, h);
+        t += attacks_needed;
+    }
+
+    cout << t << endl;
+}

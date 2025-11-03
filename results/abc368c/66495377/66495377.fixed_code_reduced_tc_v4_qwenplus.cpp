@@ -1,0 +1,54 @@
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+
+// Function to compute the number of attacks needed for an enemy with health h, starting at time t
+ll num_attacks_needed(ll t, ll h) {
+    if (h <= 0) return 0;
+    
+    // We'll simulate in cycles of 3: positions T mod 3 matter
+    // In each block of 3 consecutive attacks, damage is 1 + 1 + 3 = 5
+    ll full_cycles = h / 5;
+    ll remainder = h % 5;
+    
+    ll attacks = full_cycles * 3;
+    ll current_t = t + attacks;
+    
+    // Handle remaining health
+    while (remainder > 0) {
+        current_t++;
+        if (current_t % 3 == 0) {
+            remainder -= 3;
+        } else {
+            remainder--;
+        }
+        attacks++;
+    }
+    
+    return attacks;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int n;
+    cin >> n;
+    
+    ll total_time = 0;
+    
+    for (int i = 0; i < n; ++i) {
+        ll h;
+        cin >> h;
+        
+        // Compute how many attacks are needed for current enemy
+        ll attacks_needed = num_attacks_needed(total_time, h);
+        
+        // Advance total time by the number of attacks
+        total_time += attacks_needed;
+    }
+    
+    cout << total_time << endl;
+    
+    return 0;
+}
