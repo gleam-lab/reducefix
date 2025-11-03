@@ -79,21 +79,12 @@ Each line contains a JSON object with the following fields:
   "wa_code_path": "data/submissions/cpp/abc361c_67213592.cpp",
   "ac_code_path": "data/ground_truth/cpp/abc361c.cpp",
   "original_test_input_path": "data/test_inputs/original/abc361c_67213592.txt",
-  "reduced_test_input_path": "data/test_inputs/reduced/abc361c_67213592.txt",
   
   "original_input_size_bytes": 6904,
-  "reduced_input_size_bytes": 6903,
-  
   "test_input_summary": {
     "first_line": "698 91",
     "total_lines": 2,
     "size_bytes": 6904
-  },
-  
-  "repair_strategies": {
-    "no_tc": {"passed": false, "successful_version": null},
-    "orig_tc": {"passed": true, "successful_version": 3},
-    "reduced_tc": {"passed": false, "successful_version": null}
   }
 }
 ```
