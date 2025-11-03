@@ -48,10 +48,16 @@ The pipeline receives five inputs: the task description P, a correct reference s
 ### RQ-1: Effectiveness of LLM-generated Reducers
 
 ```bash
-./rq1.sh qwen-baseline
+./rq1.sh
 ```
 
 For details and options, see the script content.
+
+You can run a demo for RQ-1:
+
+```bash
+./rq1.sh --retest abc376e 66915962
+```
 
 ### RQ-2: Effectiveness of Reduced Test Cases for Repair
 
