@@ -1,0 +1,35 @@
+#include<bits/stdc++.h>
+using namespace std;
+using ll = long long;
+
+int main() {
+    ll n;
+    cin >> n;
+    vector<ll> h(n);
+    for (int i = 0; i < n; i++) {
+        cin >> h[i];
+    }
+    
+    ll T = 0;
+    int idx = 0; // current enemy index
+    
+    while (idx < n) {
+        T++;
+        // Find the next enemy with health > 0
+        while (idx < n && h[idx] <= 0) {
+            idx++;
+        }
+        
+        if (idx >= n) break;
+        
+        // Attack the frontmost alive enemy
+        if (T % 3 == 0) {
+            h[idx] -= 3;
+        } else {
+            h[idx] -= 1;
+        }
+    }
+    
+    cout << T << endl;
+    return 0;
+}

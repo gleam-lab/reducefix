@@ -1,0 +1,39 @@
+#include<bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+const int MAXN = 4e5 + 10;
+
+ll a[MAXN], sum[MAXN];
+map<ll, ll> cnt;
+
+int main() {
+    ll n, m;
+    scanf("%lld %lld", &n, &m);
+    
+    for (ll i = 1; i <= n; i++) {
+        scanf("%lld", &a[i]);
+        a[i + n] = a[i];
+    }
+    
+    sum[0] = 0;
+    cnt[0] = 1; // Important: empty prefix has sum 0
+    
+    ll ans = 0;
+    for (ll i = 1; i <= 2 * n; i++) {
+        sum[i] = (sum[i-1] + a[i]) % m;
+        
+        // For positions beyond the first n, start removing old prefixes
+        if (i > n) {
+            cnt[sum[i - n]]--;
+        }
+        
+        // Count how many previous valid prefixes have same remainder
+        ans += cnt[sum[i]];
+        
+        // Add current prefix to count
+        cnt[sum[i]]++;
+    }
+    
+    printf("%lld", ans);
+    return 0;
+}

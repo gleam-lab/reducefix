@@ -1,0 +1,39 @@
+#include<bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+const int MAXN = 4e5 + 10;
+
+ll a[MAXN], sum[MAXN];
+map<ll, ll> cnt;
+
+int main() {
+    ll n, m;
+    scanf("%lld %lld", &n, &m);
+    
+    for (ll i = 1; i <= n; i++) {
+        scanf("%lld", &a[i]);
+        a[i + n] = a[i];
+    }
+    
+    sum[0] = 0;
+    cnt[0] = 1; // sum[0] = 0
+    
+    ll ans = 0;
+    for (ll i = 1; i <= 2 * n; i++) {
+        sum[i] = (sum[i-1] + a[i]) % m;
+        
+        // For positions i > n, remove the contribution of sum[i-n-1]
+        if (i > n) {
+            cnt[sum[i - n - 1]]--;
+        }
+        
+        // Count how many valid subarrays ending at position i have sum divisible by m
+        ans += cnt[sum[i]];
+        
+        // Add current prefix sum to the map
+        cnt[sum[i]]++;
+    }
+    
+    printf("%lld\n", ans);
+    return 0;
+}

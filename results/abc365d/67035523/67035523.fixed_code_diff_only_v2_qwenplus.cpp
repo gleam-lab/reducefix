@@ -1,0 +1,37 @@
+#include <iostream>
+#include <string>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+char win(char x) {
+    if (x == 'R') return 'P';
+    if (x == 'S') return 'R';
+    if (x == 'P') return 'S';
+    return 'X';
+}
+
+int main() {
+    int n;
+    string s;
+    cin >> n >> s;
+    
+    if (n == 0) {
+        cout << 0 << endl;
+        return 0;
+    }
+    
+    int ans = 1; // Start with first gesture requiring a change
+    char current_hand = win(s[0]); // First move must use winning gesture
+    
+    for (int i = 1; i < n; i++) {
+        char needed = win(s[i]);
+        if (needed != current_hand) {
+            ans++;
+            current_hand = needed;
+        }
+    }
+    
+    cout << ans << endl;
+    return 0;
+}

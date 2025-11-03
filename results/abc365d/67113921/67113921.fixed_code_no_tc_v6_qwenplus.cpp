@@ -1,0 +1,32 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main(){
+    ios_base::sync_with_stdio(false);
+    cin.tie(NULL);
+
+    int N;
+    string S;
+    cin >> N >> S;
+    
+    int wins = 0;
+    char prev = ' '; // Use space or any character not in {R, P, S} to indicate no previous move
+    
+    for (char c : S){
+        char winmove;
+        if (c == 'R'){
+            winmove = 'P';
+        } else if (c == 'P'){
+            winmove = 'S';
+        } else { // c == 'S'
+            winmove = 'R';
+        }
+        
+        if (prev != winmove) {
+            wins++;
+        }
+        prev = c; // Chef shows move c, so opponent sees c and must react to it in the next round
+    }   
+    cout << wins;
+    return 0;
+}

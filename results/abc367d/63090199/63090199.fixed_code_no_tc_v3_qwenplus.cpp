@@ -1,0 +1,40 @@
+#include<bits/stdc++.h>
+using namespace std;
+
+int main(){
+    int n, m;
+    cin >> n >> m;
+    vector<int> nums(n);
+    for(int i = 0; i < n; i++){
+        cin >> nums[i];
+    }
+    
+    vector<int> prefixsum(n+1, 0);
+    for(int i = 0; i < n; i++){
+        prefixsum[i+1] = prefixsum[i] + nums[i];
+    }
+    
+    long long count = 0;
+    
+    // For each pair (s,t) where s != t
+    for(int s = 0; s < n; s++){
+        for(int t = 0; t < n; t++){
+            if(s == t) continue;
+            
+            int step = 0;
+            if(s < t){
+                step = prefixsum[t+1] - prefixsum[s+1];
+            } else {
+                // s > t: go from s to end, then from start to t
+                step = (prefixsum[n] - prefixsum[s+1]) + prefixsum[t+1];
+            }
+            
+            if(step % m == 0){
+                count++;
+            }
+        }
+    }
+    
+    cout << count << endl;
+    return 0;
+}

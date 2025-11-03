@@ -1,0 +1,48 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define endl "\n"
+#define MOD 1000000007
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(0);
+
+    map<char, char> beats = {{'R', 'P'}, {'P', 'S'}, {'S', 'R'}};
+    int n;
+    cin >> n;
+    string s;
+    cin >> s;
+
+    if (n == 0) {
+        cout << 0 << endl;
+        return 0;
+    }
+
+    // dp[i][move] = maximum rounds won ending with move at position i
+    // move: 0 = R, 1 = P, 2 = S
+    vector<vector<int>> dp(n, vector<int>(3, 0));
+    
+    // Initialize first round
+    dp[0][0] = (beats['R'] == s[0]) ? 1 : 0; // We play R
+    dp[0][1] = (beats['P'] == s[0]) ? 1 : 0; // We play P
+    dp[0][2] = (beats['S'] == s[0]) ? 1 : 0; // We play S
+
+    for (int i = 1; i < n; i++) {
+        // Try playing Rock at position i
+        dp[i][0] = max({dp[i-1][0], dp[i-1][1], dp[i-1][2]}) + 
+                   ((beats['R'] == s[i]) ? 1 : 0);
+        
+        // Try playing Paper at position i
+        dp[i][1] = max({dp[i-1][0], dp[i-1][1], dp[i-1][2]}) + 
+                   ((beats['P'] == s[i]) ? 1 : 0);
+        
+        // Try playing Scissors at position i
+        dp[i][2] = max({dp[i-1][0], dp[i-1][1], dp[i-1][2]}) + 
+                   ((beats['S'] == s[i]) ? 1 : 0);
+    }
+
+    int result = max({dp[n-1][0], dp[n-1][1], dp[n-1][2]});
+    cout << result << endl;
+
+    return 0;
+}

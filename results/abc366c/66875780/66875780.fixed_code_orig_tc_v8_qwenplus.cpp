@@ -1,0 +1,51 @@
+#include <iostream>
+#include <set>
+
+using namespace std;
+
+// Fast IO
+void fastIO()
+{
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    cout.tie(nullptr);
+}
+
+int main()
+{
+    fastIO();
+    
+    int Q;
+    cin >> Q;
+    
+    multiset<int> bag;
+    
+    while (Q--) {
+        int type;
+        cin >> type;
+        
+        if (type == 1) {
+            int x;
+            cin >> x;
+            bag.insert(x);
+        }
+        else if (type == 2) {
+            int x;
+            cin >> x;
+            auto it = bag.find(x);
+            if (it != bag.end()) {
+                bag.erase(it);
+            }
+        }
+        else if (type == 3) {
+            // Use a set to count distinct elements
+            set<int> distinct;
+            for (int ball : bag) {
+                distinct.insert(ball);
+            }
+            cout << distinct.size() << '\n';
+        }
+    }
+    
+    return 0;
+}

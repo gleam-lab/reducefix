@@ -1,0 +1,269 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int N;
+    string S;
+    cin >> N >> S;
+
+    // Rock beats Scissors, Paper beats Rock, Scissors beats Paper
+    auto beats = [](char a, char b) {
+        return (a == 'R' && b == 'S') || 
+               (a == 'P' && b == 'R') || 
+               (a == 'S' && b == 'P');
+    };
+
+    // Try all 3 possible starting moves
+    int max_score = 0;
+    
+    for (char first_move : {'R', 'P', 'S'}) {
+        vector<char> available = {'R', 'P', 'S'};
+        int score = 0;
+        
+        // Remove the first move from available
+        available.erase(remove(available.begin(), available.end(), first_move), available.end());
+        
+        for (int i = 0; i < N; i++) {
+            char opponent = S[i];
+            char chosen = first_move;
+            
+            if (i > 0) {
+                // For subsequent rounds, choose from remaining two options
+                bool found_winning = false;
+                for (char move : available) {
+                    if (beats(move, opponent)) {
+                        chosen = move;
+                        found_winning = true;
+                        break;
+                    }
+                }
+                if (!found_winning) {
+                    // If no winning move is available, choose any (will lose or tie)
+                    chosen = available[0];
+                }
+            }
+            
+            if (beats(chosen, opponent)) {
+                score++;
+            }
+            
+            // Update available moves for next round - remove the one we just used
+            if (i < N - 1) {  // No need to update after last round
+                auto it = remove(available.begin(), available.end(), chosen);
+                if (it != available.end()) {
+                    available.erase(it, available.end());
+                }
+                
+                // Add back the move that was played two rounds ago (if applicable)
+                if (i >= 1) {
+                    char prev_move = (i == 1) ? first_move : S[i-2]; // This is not correct
+                    
+                    // We need to reconstruct the actual move sequence
+                    // Let's refactor to track moves properly
+                }
+            }
+        }
+    }
+
+    // Correct approach: simulate each possible starting state fully
+    max_score = 0;
+    
+    for (char initial_move : {'R', 'P', 'S'}) {
+        vector<char> hand = {'R', 'P', 'S'};
+        hand.erase(remove(hand.begin(), hand.end(), initial_move), hand.end());
+        
+        int score = 0;
+        char last_move = initial_move;
+        
+        for (int i = 0; i < N; i++) {
+            char opponent = S[i];
+            char current_move = last_move;
+            
+            if (i > 0) {
+                // Find best move from available options
+                char best_move = hand[0];
+                bool can_win = false;
+                
+                for (char m : hand) {
+                    if (beats(m, opponent)) {
+                        best_move = m;
+                        can_win = true;
+                        break;
+                    }
+                }
+                
+                current_move = best_move;
+            }
+            
+            if (beats(current_move, opponent)) {
+                score++;
+            }
+            
+            // Update hand for next round
+            if (i < N - 1) {
+                // Remove current move from hand
+                hand.erase(remove(hand.begin(), hand.end(), current_move), hand.end());
+                
+                // Add back the move that was unavailable two rounds ago
+                if (i >= 1) {
+                    // The move to add back is the one that wasn't used in the previous round
+                    // and wasn't the one we started with
+                    set<char> all_moves = {'R', 'P', 'S'};
+                    if (i == 1) {
+                        all_moves.erase(initial_move);
+                        all_moves.erase(current_move);
+                    } else {
+                        // We need to know what move was used two rounds ago
+                        // This approach is getting complex - let's simplify
+                    }
+                }
+            }
+            
+            last_move = current_move;
+        }
+        
+        max_score = max(max_score, score);
+    }
+
+    // Even better approach - properly track the state
+    max_score = 0;
+    
+    for (int start_idx = 0; start_idx < 3; start_idx++) {
+        for (int second_idx = 0; second_idx < 3; second_idx++) {
+            if (start_idx == second_idx) continue;
+            
+            vector<char> moves = {'R', 'P', 'S'};
+            char first_move = moves[start_idx];
+            char second_move = moves[second_idx];
+            
+            int score = 0;
+            vector<char> available = {'R', 'P', 'S'};
+            available.erase(remove(available.begin(), available.end(), first_move), available.end());
+            
+            for (int i = 0; i < N; i++) {
+                char opponent = S[i];
+                char chosen_move;
+                
+                if (i == 0) {
+                    chosen_move = first_move;
+                } else if (i == 1) {
+                    // Available now has two moves, but we want to use second_move if possible
+                    auto it = find(available.begin(), available.end(), second_move);
+                    if (it != available.end()) {
+                        chosen_move = second_move;
+                    } else {
+                        chosen_move = available[0];
+                    }
+                } else {
+                    // From round 2 onwards, we cycle through moves
+                    // The available moves are the two we haven't used in the previous round
+                    vector<char> curr_available = {'R', 'P', 'S'};
+                    char prev_move = (i == 1) ? second_move : ((i-2 == 0) ? first_move : S[i-2]); // Wrong logic
+                    
+                    // This is getting too convoluted. Let's rethink.
+                }
+                
+                if ((chosen_move == 'R' && opponent == 'S') ||
+                    (chosen_move == 'P' && opponent == 'R') ||
+                    (chosen_move == 'S' && opponent == 'P')) {
+                    score++;
+                }
+                
+                if (i < N-1) {
+                    if (i == 0) {
+                        // After first move, we remove it from available
+                        available.erase(remove(available.begin(), available.end(), first_move), available.end());
+                    } else if (i == 1) {
+                        available.erase(remove(available.begin(), available.end(), chosen_move), available.end());
+                    } else {
+                        // For i >= 2, we need to add back the move from i-2 and remove current
+                        char move_from_two_ago = (i-2 == 0) ? first_move : /* wrong */ 'R';
+                        available.push_back(move_from_two_ago);
+                        available.erase(remove(available.begin(), available.end(), chosen_move), available.end());
+                    }
+                }
+            }
+            
+            max_score = max(max_score, score);
+        }
+    }
+
+    // Final correct approach
+    max_score = 0;
+    
+    // There are only 6 possible sequences of moves (3 choices for first, 2 for second)
+    vector<vector<char>> sequences;
+    vector<char> base = {'R', 'P', 'S'};
+    
+    do {
+        sequences.push_back(base);
+    } while (next_permutation(base.begin(), base.end()));
+    
+    // But we only care about order, not full permutation
+    for (char a : {'R', 'P', 'S'}) {
+        for (char b : {'R', 'P', 'S'}) {
+            if (a == b) continue;
+            
+            int score = 0;
+            char move_two_ago = a;
+            char move_one_ago = b;
+            
+            for (int i = 0; i < N; i++) {
+                char opponent = S[i];
+                char my_move;
+                
+                if (i == 0) {
+                    my_move = a;
+                } else if (i == 1) {
+                    my_move = b;
+                } else {
+                    // On round i >= 2, I can use any move except the one I used i-1 rounds ago
+                    // So available moves are all except move_one_ago
+                    // Which means I can use move_two_ago or the third move
+                    vector<char> available;
+                    for (char c : {'R', 'P', 'S'}) {
+                        if (c != move_one_ago) {
+                            available.push_back(c);
+                        }
+                    }
+                    
+                    // Choose the best among available
+                    my_move = available[0];
+                    bool found_winner = false;
+                    for (char m : available) {
+                        if ((m == 'R' && opponent == 'S') ||
+                            (m == 'P' && opponent == 'R') ||
+                            (m == 'S' && opponent == 'P')) {
+                            my_move = m;
+                            found_winner = true;
+                            break;
+                        }
+                    }
+                }
+                
+                if ((my_move == 'R' && opponent == 'S') ||
+                    (my_move == 'P' && opponent == 'R') ||
+                    (my_move == 'S' && opponent == 'P')) {
+                    score++;
+                }
+                
+                // Update for next iteration
+                if (i >= 1) {
+                    move_two_ago = move_one_ago;
+                }
+                if (i >= 0) {
+                    move_one_ago = my_move;
+                }
+            }
+            
+            max_score = max(max_score, score);
+        }
+    }
+    
+    cout << max_score << endl;
+    
+    return 0;
+}

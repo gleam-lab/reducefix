@@ -1,0 +1,48 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main(){
+    ios_base::sync_with_stdio(false);
+    cin.tie(NULL);
+
+    int N;
+    string S;
+    cin >> N;
+    cin >> S;
+    int wins = 0;
+    char prev = 'a'; // previous move we made
+    
+    for (char c : S){
+        char winmove;
+        if (c == 'R'){
+            winmove = 'P';
+        } else if (c == 'P'){
+            winmove = 'S';
+        } else { // c == 'S'
+            winmove = 'R';
+        }
+        
+        // If our winning move is different from what we played last time, we can use it
+        if (winmove != prev){
+            wins++;
+            prev = winmove;
+        } else {
+            // We cannot play the same move twice in a row
+            // So we have to pick a non-winning move (or losing/draw move)
+            // But we still need to choose something different from prev
+            // The key is: we don't win this round, but we set up for future rounds
+            // We can pick any move except prev and ideally minimize future conflicts
+            // Since we lost or drew this round, we just need to pick a valid move
+            
+            // Choose a move that is not prev and doesn't matter for winning (since we can't win anyway)
+            if (prev == 'R') {
+                prev = 'P'; // arbitrary choice between P and S
+            } else if (prev == 'P') {
+                prev = 'S';
+            } else {
+                prev = 'R';
+            }
+        }
+    }   
+    cout << wins;
+}

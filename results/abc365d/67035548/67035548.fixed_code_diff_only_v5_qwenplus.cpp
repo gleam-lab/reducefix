@@ -1,0 +1,45 @@
+#include <iostream>
+#include <string>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+char win(char x) {
+    if (x == 'R') return 'P';
+    if (x == 'S') return 'R';
+    if (x == 'P') return 'S';
+    return 'X';
+}
+
+int main() {
+    int n;
+    string s;
+    cin >> n >> s;
+    
+    // Calculate maximum wins by starting with each possible initial move
+    int max_wins = 0;
+    
+    // Try all possible starting moves: 'R', 'P', 'S'
+    vector<char> starts = {'R', 'P', 'S'};
+    
+    for (char start : starts) {
+        char current_move = start;
+        int wins = 0;
+        
+        for (int i = 0; i < n; i++) {
+            if (current_move == win(s[i])) {
+                // We win this round
+                wins++;
+                // Continue with the same move
+            } else {
+                // We lose or tie, so we switch to the winning move against opponent's move
+                current_move = win(s[i]);
+                wins++;
+            }
+        }
+        max_wins = max(max_wins, wins);
+    }
+    
+    cout << max_wins << endl;
+    return 0;
+}

@@ -1,0 +1,54 @@
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+
+int main(){
+    int N;
+    string S;
+    cin >> N >> S;
+    
+    // We want to minimize the number of hand changes
+    // This is equivalent to maximizing consecutive same moves
+    // We can use dynamic programming where:
+    // dp[i][c] = minimum moves needed up to i-th character ending with move c
+    
+    const int INF = 1e9;
+    vector<vector<int>> dp(N+1, vector<int>(3, INF));
+    
+    // Map: R->0, P->1, S->2
+    auto charToIdx = [](char c) {
+        if (c == 'R') return 0;
+        if (c == 'P') return 1;
+        return 2;
+    };
+    
+    // Initialize first move
+    for (int c = 0; c < 3; c++) {
+        dp[1][c] = 1; // First move always costs 1
+    }
+    
+    for (int i = 2; i <= N; i++) {
+        int target = charToIdx(S[i-1]); // current required move
+        
+        for (int prev = 0; prev < 3; prev++) {
+            if (dp[i-1][prev] == INF) continue;
+            
+            // Option 1: Use the target move (may or may not require a change)
+            int cost = (prev == target) ? 0 : 1;
+            dp[i][target] = min(dp[i][target], dp[i-1][prev] + cost);
+            
+            // Option 2: Use a different move that beats the target (allowed by game rules)
+            // Rock(0) beats Scissors(2), Paper(1) beats Rock(0), Scissors(2) beats Paper(1)
+            int winner = (target + 1) % 3;
+            dp[i][winner] = min(dp[i][winner], dp[i-1][prev] + (prev == winner ? 0 : 1));
+        }
+    }
+    
+    int ans = INF;
+    for (int c = 0; c < 3; c++) {
+        ans = min(ans, dp[N][c]);
+    }
+    
+    cout << ans;
+    return 0;
+}

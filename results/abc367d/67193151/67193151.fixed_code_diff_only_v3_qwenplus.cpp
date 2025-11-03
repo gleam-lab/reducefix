@@ -1,0 +1,30 @@
+#include<bits/stdc++.h>
+using namespace std;
+const int N=1e6+5;
+int n,m,a[N*2];
+long long sum;
+map<int,int> cnt;
+
+int main()
+{
+    ios::sync_with_stdio(0),cin.tie(0),cout.tie(0);
+    cin>>n>>m;
+    
+    for(int i=1;i<=n;i++)
+        cin>>a[i], a[i+n]=a[i];
+    
+    cnt[0]=1;
+    long long prefix=0;
+    
+    for(int i=1;i<2*n;i++)
+    {
+        prefix=(prefix+a[i])%m;
+        if(prefix<0) prefix+=m; // Handle negative modulo
+        
+        sum+=cnt[prefix];
+        if(i<n) cnt[prefix]++; // Only add prefixes from first n elements
+    }
+    
+    cout<<sum;
+    return 0;
+}

@@ -1,0 +1,70 @@
+```cpp
+#include <iostream>
+#include <string>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+char win(char x) {
+    if (x == 'R') return 'P';
+    if (x == 'S') return 'R';
+    if (x == 'P') return 'S';
+    return 'X'; // shouldn't happen
+}
+
+int main() {
+    int n;
+    string s;
+    cin >> n >> s;
+
+    // dp[i][c] = minimum number of changes needed for prefix [0:i] ending with character c
+    // We only need previous state, so use two arrays
+    vector<int> prev(3, 1e9);
+    
+    // Map: R->0, P->1, S->2
+    auto to_idx = [](char c) {
+        if (c == 'R') return 0;
+        if (c == 'P') return 1;
+        return 2;
+    };
+    
+    auto from_idx = [](int idx) {
+        if (idx == 0) return 'R';
+        if (idx == 1) return 'P';
+        return 'S';
+    };
+
+    // Initialize base case
+    prev[to_idx(win(s[0]))] = 0; // change s[0] to beat it
+    prev[to_idx(s[0])] = 1;      // keep s[0]
+
+    for (int i = 1; i < n; i++) {
+        vector<int> curr(3, 1e9);
+        char target_win = win(s[i]);
+        
+        // Try all possible previous ending characters
+        for (int j = 0; j < 3; j++) {
+            if (prev[j] == 1e9) continue;
+            
+            char prev_char = from_idx(j);
+            char curr_keep = s[i];
+            char curr_change = target_win;
+            
+            // Option 1: Keep current char
+            if (curr_keep != prev_char) {
+                curr[to_idx(curr_keep)] = min(curr[to_idx(curr_keep)], prev[j] + 1);
+            }
+            
+            // Option 2: Change current char to winning one
+            if (curr_change != prev_char) {
+                curr[to_idx(curr_change)] = min(curr[to_idx(curr_change)], prev[j] + 0);
+            }
+        }
+        
+        prev = curr;
+    }
+    
+    int ans = *min_element(prev.begin(), prev.end());
+    cout << ans << endl;
+}
+```

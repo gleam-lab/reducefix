@@ -1,0 +1,48 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main(){
+    ios_base::sync_with_stdio(false);
+    cin.tie(NULL);
+
+    int N;
+    string S;
+    cin >> N;
+    cin >> S;
+    int wins = 0;
+    char prev = 'a';
+    
+    for (char c : S){
+        char winmove;
+        if (c == 'R'){
+            winmove = 'P';
+        } else if (c == 'P'){
+            winmove = 'S';
+        } else { // c == 'S'
+            winmove = 'R';
+        }
+        
+        if (winmove != prev) {
+            wins++;
+            prev = winmove;
+        } else {
+            // If we used the same winning move, opponent will counter it,
+            // so we must switch to a different move (even if not optimal)
+            // We can use any move different from both current opponent move and previous move
+            // But since we want to maximize wins, after a repeated winmove,
+            // we should reset strategy - meaning next time we can win again
+            // Actually, we don't need to simulate the non-winning move.
+            // The key insight: we only count wins, and we can always win when our winmove != prev
+            // So we just keep track of what our last move was
+            // When winmove == prev, we cannot win this round (because opponent will counter our repeated move),
+            // so we make a non-winning move (doesn't matter which), and set prev to something that allows
+            // us to potentially win next time.
+            // To maximize future wins, we should set prev to c (the opponent's move) or anything except winmove
+            // Because if we set prev to winmove, then next time even if winmove changes, it might still equal prev
+            // Instead, by setting prev to c (opponent's move), we ensure that next winmove will be different from prev
+            // unless the opponent repeats and our response is same as their move - but that's rare
+            prev = c; // This ensures we break the repetition and can win next time if possible
+        }
+    }   
+    cout << wins;
+}

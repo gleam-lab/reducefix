@@ -1,0 +1,146 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define endl "\n"
+#define MOD 1000000007
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(0);
+
+    map<char, char> beats = {{'R', 'P'}, {'P', 'S'}, {'S', 'R'}};
+    int n;
+    cin >> n;
+    string s;
+    cin >> s;
+
+    // Two strategies: start with move that beats first opponent move, or start with same as first opponent move
+    int total_1 = 0;
+    char last_move_1 = beats[s[0]]; // Player starts by beating opponent's first move
+    
+    for (int i = 0; i < n; i++) {
+        if (i == 0) {
+            // First round: we play beats[s[0]], opponent plays s[0]
+            // Since our move beats opponent's move, we win
+            total_1++;
+            last_move_1 = beats[s[0]];
+        } else {
+            // Try to beat current opponent move
+            char desired_move = beats[s[i]];
+            
+            // If we can make the desired move (it doesn't lose to our previous move)
+            if (beats[last_move_1] != desired_move) {
+                total_1++;
+                last_move_1 = desired_move;
+            } else {
+                // We have to play a move that doesn't lose to our previous move
+                // We can play either the same move or the one that loses to it
+                // To maximize wins, try to play a winning move if possible
+                if (beats[s[i]] == last_move_1) {
+                    // Our previous move already beats current opponent move
+                    total_1++;
+                    // Keep same move
+                } else {
+                    // We can't win this round, play safely
+                    // Find a valid move (not beaten by last_move_1)
+                    for (char c : {'R', 'P', 'S'}) {
+                        if (beats[last_move_1] != c) {
+                            last_move_1 = c;
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    int total_2 = 0;
+    char last_move_2 = s[0]; // Player starts with same move as opponent's first move
+    
+    for (int i = 0; i < n; i++) {
+        if (i == 0) {
+            // First round: we play s[0], opponent plays s[0] - tie
+            // Check if we win or tie
+            if (beats[s[0]] == s[0]) {
+                // This never happens due to mapping
+                // Actually, we need to check if our move beats opponent's move
+                // Our move is s[0], opponent's move is s[0] - tie, so no win
+            }
+            // It's a tie, so no point counting as win
+            // But let's reconsider the strategy
+            
+            // Actually, let's reframe: we want to maximize wins
+            // Strategy 1: start with move that beats s[0]
+            // Strategy 2: start with s[0] itself (tie)
+            
+            // For strategy 2, first move is s[0], which ties with s[0], so no win
+            last_move_2 = s[0];
+        } else {
+            char desired_move = beats[s[i]];
+            if (beats[last_move_2] != desired_move) {
+                total_2++;
+                last_move_2 = desired_move;
+            } else {
+                if (beats[s[i]] == last_move_2) {
+                    total_2++;
+                } else {
+                    for (char c : {'R', 'P', 'S'}) {
+                        if (beats[last_move_2] != c) {
+                            last_move_2 = c;
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    // Let's take a different approach - simulate both starting moves properly
+    auto simulate = [&](char start_move) -> int {
+        if (n == 0) return 0;
+        
+        int wins = 0;
+        char last = start_move;
+        
+        // Round 0
+        if (beats[s[0]] == start_move) wins++; // we win if our move beats opponent's move
+        
+        for (int i = 1; i < n; i++) {
+            // Choose move to beat s[i] if possible
+            char desired = beats[s[i]];
+            if (beats[last] != desired) {
+                // We can play desired move
+                last = desired;
+                wins++;
+            } else {
+                // Cannot play desired move
+                // Check if our last move already beats current opponent move
+                if (beats[s[i]] == last) {
+                    // We win with same move
+                    wins++;
+                    // last stays the same
+                } else {
+                    // We can't win, play any valid move
+                    for (char c : {'R', 'P', 'S'}) {
+                        if (beats[last] != c) {
+                            last = c;
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+        
+        return wins;
+    };
+    
+    int result = 0;
+    // Try all possible starting moves that are valid
+    // For first move, no restriction
+    for (char start : {'R', 'P', 'S'}) {
+        result = max(result, simulate(start));
+    }
+    
+    cout << result << endl;
+
+    return 0;
+}

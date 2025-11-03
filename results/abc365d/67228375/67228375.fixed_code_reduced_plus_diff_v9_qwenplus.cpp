@@ -1,0 +1,59 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define endl "\n"
+#define MOD 100007
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(0);
+
+    map<char, char> beats = {{'R', 'P'}, {'P', 'S'}, {'S', 'R'}};
+    int n;
+    cin >> n;
+    string s;
+    cin >> s;
+
+    if (n == 0) {
+        cout << 0 << endl;
+        return 0;
+    }
+
+    // dp[i][move] = max wins up to index i ending with move
+    map<char, int> dp;
+    dp[s[0]] = 1;
+
+    for (int i = 1; i < n; i++) {
+        map<char, int> new_dp;
+        char curr = s[i];
+        
+        // Initialize all possible moves
+        new_dp[curr] = 1;
+        new_dp[beats[curr]] = 1;
+        
+        // Transition from previous state
+        for (auto &[prev_move, wins] : dp) {
+            // If current symbol can beat the previous chosen move
+            if (beats[curr] == prev_move) {
+                new_dp[curr] = max(new_dp[curr], wins + 1);
+            }
+            // If the beaten version of current symbol equals previous move
+            if (curr == prev_move) {
+                new_dp[beats[curr]] = max(new_dp[beats[curr]], wins + 1);
+            }
+            // Carry over existing values
+            if (new_dp.find(prev_move) != new_dp.end()) {
+                new_dp[prev_move] = max(new_dp[prev_move], wins);
+            }
+        }
+        
+        dp = new_dp;
+    }
+
+    int ans = 0;
+    for (auto &[move, wins] : dp) {
+        ans = max(ans, wins);
+    }
+    cout << ans << endl;
+
+    return 0;
+}

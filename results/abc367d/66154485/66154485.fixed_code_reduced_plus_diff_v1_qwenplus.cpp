@@ -1,0 +1,43 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int n, m;
+    cin >> n >> m;
+    
+    vector<int> arr(n);
+    for (int i = 0; i < n; i++) {
+        cin >> arr[i];
+    }
+    
+    long long ans = 0;
+    vector<long long> prefix(2 * n + 1, 0);
+    
+    // Build prefix sum array of size 2n to handle circular subarrays
+    for (int i = 0; i < 2 * n; i++) {
+        prefix[i + 1] = prefix[i] + arr[i % n];
+    }
+    
+    // For each starting position, count valid subarrays
+    for (int start = 0; start < n; start++) {
+        map<long long, int> mod_count;
+        mod_count[0] = 1; // Empty prefix has sum 0
+        
+        for (int len = 1; len <= n; len++) {
+            long long current_sum = prefix[start + len] - prefix[start];
+            long long mod_val = ((current_sum % m) + m) % m; // Handle negative mod
+            
+            if (mod_count.find(mod_val) != mod_count.end()) {
+                ans += mod_count[mod_val];
+            }
+            
+            mod_count[mod_val]++;
+        }
+    }
+    
+    cout << ans;
+    return 0;
+}

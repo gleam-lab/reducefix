@@ -1,0 +1,40 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main(){
+    ios_base::sync_with_stdio(false);
+    cin.tie(NULL);
+
+    int N;
+    string S;
+    cin >> N >> S;
+    
+    int wins = 0;
+    char opponent_move, my_move, prev_my_move = 'X'; // X indicates no previous move
+    
+    for (int i = 0; i < N; i++) {
+        opponent_move = S[i];
+        
+        // Determine the move that would beat the opponent's current move
+        if (opponent_move == 'R') {
+            my_move = 'P';
+        } else if (opponent_move == 'P') {
+            my_move = 'S';
+        } else { // opponent_move == 'S'
+            my_move = 'R';
+        }
+        
+        // Check if we can use the winning move (i.e., it's different from our previous move)
+        if (prev_my_move != my_move) {
+            wins++;
+            prev_my_move = my_move;
+        } else {
+            // We can't use the same move twice in a row, so we must choose a non-winning move
+            // This means we don't win this round, and our move becomes the same as opponent's (or any non-winning)
+            prev_my_move = opponent_move; // or any move except the winning one, but tracking winning moves is what matters
+        }
+    }
+    
+    cout << wins;
+    return 0;
+}

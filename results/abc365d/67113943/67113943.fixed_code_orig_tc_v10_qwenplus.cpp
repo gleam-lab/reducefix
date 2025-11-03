@@ -1,0 +1,35 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main(){
+    ios_base::sync_with_stdio(false);
+    cin.tie(NULL);
+
+    int N;
+    string S;
+    cin >> N;
+    cin >> S;
+    
+    int wins = 0;
+    char prev = ' '; // Use space to indicate no previous move
+    
+    for (char c : S) {
+        char winmove;
+        if (c == 'R') {
+            winmove = 'P';
+        } else if (c == 'P') {
+            winmove = 'S';
+        } else { // c == 'S'
+            winmove = 'R';
+        }
+        
+        if (prev != winmove) {
+            wins++;
+            prev = winmove;
+        } else {
+            // We can keep the same winning move, so no need to change
+            // prev remains the same
+        }
+    }   
+    cout << wins;
+}

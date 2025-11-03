@@ -1,0 +1,35 @@
+#include<bits/stdc++.h>
+using namespace std;
+using ll = long long;
+
+int main() {
+    ll n;
+    cin >> n;
+    vector<ll> h(n);
+    for (int i = 0; i < n; i++) {
+        cin >> h[i];
+    }
+    
+    ll t = 0;
+    int front = 0;
+    
+    while (front < n) {
+        t++;
+        // Attack the frontmost enemy with health > 0
+        if (h[front] > 0) {
+            if (t % 3 == 0) {
+                h[front] -= 3;
+            } else {
+                h[front] -= 1;
+            }
+        }
+        
+        // Move to next enemy if current one is defeated
+        while (front < n && h[front] <= 0) {
+            front++;
+        }
+    }
+    
+    cout << t;
+    return 0;
+}

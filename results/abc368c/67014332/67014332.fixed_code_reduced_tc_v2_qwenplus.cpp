@@ -1,0 +1,30 @@
+#include<bits/stdc++.h>
+using namespace std;
+using ll = long long;
+
+int main() {
+    ll n;
+    cin >> n;
+    ll T = 0;
+    ll cycle_count = 0; // counts how many full cycles of 3 have been completed
+
+    for (int i = 0; i < n; i++) {
+        ll h;
+        cin >> h;
+
+        while (h > 0) {
+            T++;
+            cycle_count++;
+
+            // Check if current T is multiple of 3 -> deal 3 damage, else 1 damage
+            if (cycle_count % 3 == 0) {
+                h -= 3;
+            } else {
+                h -= 1;
+            }
+        }
+    }
+
+    cout << T << endl;
+    return 0;
+}

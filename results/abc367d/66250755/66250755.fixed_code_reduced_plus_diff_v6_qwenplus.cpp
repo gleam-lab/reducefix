@@ -1,0 +1,48 @@
+#include<bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int n, m;
+    cin >> n >> m;
+    
+    vector<int> a(2 * n);
+    for (int i = 0; i < n; i++) {
+        cin >> a[i];
+        a[i] %= m;
+        a[i + n] = a[i];
+    }
+    
+    long long ans = 0;
+    map<int, int> count;
+    vector<long long> prefix(2 * n + 1, 0);
+    
+    // Calculate prefix sums modulo m
+    for (int i = 0; i < 2 * n; i++) {
+        prefix[i + 1] = (prefix[i] + a[i]) % m;
+    }
+    
+    // Initialize with prefix[0] = 0
+    count[0] = 1;
+    
+    for (int i = 1; i <= 2 * n; i++) {
+        // Remove the element that's now out of the sliding window of size n
+        if (i > n) {
+            count[prefix[i - n]]--;
+            if (count[prefix[i - n]] == 0) {
+                count.erase(prefix[i - n]);
+            }
+        }
+        
+        // Add to answer the number of times we've seen this prefix sum
+        ans += count[prefix[i]];
+        
+        // Add current prefix to the map
+        count[prefix[i]]++;
+    }
+    
+    cout << ans;
+    return 0;
+}

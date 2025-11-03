@@ -1,0 +1,39 @@
+#include<bits/stdc++.h>
+using namespace std;
+using ll = long long;
+
+int main() {
+    ll n;
+    cin >> n;
+    vector<ll> H(n);
+    for (int i = 0; i < n; i++) {
+        cin >> H[i];
+    }
+
+    ll T = 0;
+    int pos = 0; // current enemy index
+
+    while (pos < n) {
+        T++;
+        // Check if current frontmost enemy (pos) still has health > 0
+        if (H[pos] <= 0) {
+            pos++;
+            continue;
+        }
+
+        // Attack the frontmost enemy
+        if (T % 3 == 0) {
+            H[pos] -= 3;
+        } else {
+            H[pos] -= 1;
+        }
+
+        // If this enemy's health drops to 0 or below, move to next
+        if (H[pos] <= 0) {
+            pos++;
+        }
+    }
+
+    cout << T << endl;
+    return 0;
+}

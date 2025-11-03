@@ -1,0 +1,42 @@
+#include <iostream>
+#include <string>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+char win(char x) {
+    if (x == 'R') return 'P';
+    if (x == 'S') return 'R';
+    if (x == 'P') return 'S';
+    return 'X';
+}
+
+int main() {
+    int n;
+    string s;
+    cin >> n >> s;
+    
+    int ans = 0;
+    char current = 'X'; // no active champion
+    
+    for (int i = 0; i < n; i++) {
+        if (current == 'X') {
+            // No current winner, start with the winner of this round
+            current = win(s[i]);
+            ans++;
+        } else if (current == s[i]) {
+            // Same as current, continue
+            continue;
+        } else if (win(s[i]) == current) {
+            // This move beats the previous winner, so update champion
+            current = win(s[i]);
+            ans++;
+        } else {
+            // The current champion remains, nothing changes
+            continue;
+        }
+    }
+    
+    cout << ans << endl;
+    return 0;
+}

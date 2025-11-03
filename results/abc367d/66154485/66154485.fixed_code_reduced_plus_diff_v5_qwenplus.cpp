@@ -1,0 +1,49 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int n, m;
+    cin >> n >> m;
+    vector<int> arr(n);
+    for (int i = 0; i < n; i++) {
+        cin >> arr[i];
+    }
+    
+    // Precompute prefix sums modulo m
+    vector<long long> prefix(n + 1, 0);
+    for (int i = 0; i < n; i++) {
+        prefix[i + 1] = (prefix[i] + arr[i]) % m;
+    }
+    
+    long long ans = 0;
+    
+    // For each starting position
+    for (int start = 0; start < n; start++) {
+        // Map to count frequency of remainders
+        map<long long, int> remainder_count;
+        remainder_count[0] = 1; // Empty prefix has remainder 0
+        
+        long long current_sum = 0;
+        
+        // Extend the subarray from this start
+        for (int len = 1; len < n; len++) {
+            int idx = (start + len - 1) % n;
+            current_sum = (current_sum + arr[idx]) % m;
+            
+            // We want (current_sum + x) % m == 0, so x = (-current_sum) % m
+            long long target = (m - current_sum) % m;
+            
+            if (remainder_count.find(target) != remainder_count.end()) {
+                ans += remainder_count[target];
+            }
+            
+            remainder_count[current_sum]++;
+        }
+    }
+    
+    cout << ans;
+    return 0;
+}

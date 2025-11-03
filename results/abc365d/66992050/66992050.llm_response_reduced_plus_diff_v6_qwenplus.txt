@@ -1,0 +1,237 @@
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+
+int main(){
+    int N;
+    string S;
+    cin >> N >> S;
+    
+    // We need to simulate the process of replacing adjacent pairs
+    // The key insight: we can use a stack-based approach or simulate reductions
+    // But simpler idea: count how many transformations occur
+    
+    // Actually, the problem is about repeatedly replacing "PR", "RP", "PS", etc.
+    // But looking at the pattern: it's similar to a bracket matching / reduction problem
+    
+    // Alternate approach: think greedily
+    // Each operation reduces two characters to one, so total operations = N - final_length
+    // But we need to maximize the number of operations?
+    
+    // Actually, from sample: "PPR" -> should give 2
+    // Let's trace:
+    // PPR: 
+    //   If we replace PR -> S, we get PS
+    //   Then replace PS -> R, we get R. Total 2 operations.
+    //
+    // So we want the maximum number of operations possible.
+    
+    // This is equivalent to: what's the maximum number of reductions we can do?
+    // Known similar problem: "RGB" string reduction.
+    
+    // Insight: the result only depends on counts and modulo 3.
+    // Let cP, cR, cS be counts.
+    // When two different adjacent chars meet, they become the third.
+    // This is like the game where you combine different types.
+    
+    // Known fact: if all counts are positive, you can keep reducing until only one type remains.
+    // The final character is determined by (cP - cS) % 3, etc., but we don't need final char.
+    
+    // However, maximum operations is always N - 1 if we can fully reduce? Not exactly.
+    // But in this problem, we can choose the order of operations.
+    
+    // Key observation from known problems: 
+    // Maximum operations = N - (minimum possible length after all reductions)
+    // And minimum length depends on the counts mod 3.
+    
+    // Actually, there's a known solution for such rock-paper-scissors string reduction:
+    // The answer is N - f(cP, cR, cS), where f returns the minimum remaining length.
+    
+    // From known problems: 
+    // If two of the counts are zero, then no moves possible.
+    // Otherwise, we can reduce until we reach a cycle or fixed point.
+    
+    // But actually, we can use this theorem:
+    // In such ternary reduction systems, the minimum length is:
+    //   if all counts are equal modulo 2, then 2, else 1? No.
+    
+    // After checking known problems (e.g. CodeForces "String Reduction"):
+    // For three letters with rules a+b->c, etc., the minimal length is:
+    // - If all characters are same: n
+    // - Else if all counts have same parity: 2
+    // - Else: 1
+    
+    // But wait, our rules:
+    // P+R -> S, R+P -> S
+    // R+S -> P, S+R -> P  
+    // S+P -> R, P+S -> R
+    
+    // This is symmetric.
+    
+    // Known result: the invariant is the difference of counts modulo 3.
+    // But simpler: we can simulate using a stack-based greedy that always reduces when possible,
+    // but the maximum number of operations is independent of order!
+    
+    // Actually, the total number of operations is always N - final_length, and final_length
+    // depends only on the counts.
+    
+    // From known solutions to similar problems:
+    // final_length = 
+    //   if (cP == n || cR == n || cS == n): n
+    //   elif (cP % 2 == cR % 2 == cS % 2): 2
+    //   else: 1
+    //
+    // But let's test with "PPR": cP=2, cR=1, cS=0
+    // parities: P:even, R:odd, S:even -> not all same -> final_length=1 -> operations=3-1=2 ✓
+    //
+    // Another: "PR" -> cP=1,cR=1,cS=0 -> parities: odd,odd,even -> not all same -> final=1 -> ops=1 ✓
+    // "PP": cP=2,others=0 -> all non-zero counts? no, only P -> so final_length=2 -> ops=0? but expected?
+    // But "PP" cannot be reduced -> ops=0.
+    //
+    // So algorithm:
+    // if all chars same -> ops = 0
+    // else:
+    //   count parities
+    //   if all non-zero counts have same parity -> final_length=2 -> ops = n-2
+    //   else -> final_length=1 -> ops = n-1
+    //
+    // But wait: "PPP" -> all same -> ops=0? but we can't reduce -> yes.
+    // "PPR" -> not all same, non-zero counts: P(2→even), R(1→odd), S(0→skip) -> parities differ -> ops=3-1=2 ✓
+    // "PR" -> P(1,odd), R(1,odd) -> both odd -> same parity -> ops=2-2=0? but we can do 1 op!
+    //
+    // Contradiction.
+    
+    // Alternative known solution from "String reduction" problems:
+    // The answer is:
+    //   if all same: n
+    //   else if all counts are even: 2
+    //   else: 1
+    // -> then operations = n - final_length
+    //
+    // Test "PR": counts: P=1(odd), R=1(odd), S=0(even) -> not all even -> final_length=1 -> ops=1 ✓
+    // "PPRR": P=2(even), R=2(even), S=0(even) -> all even? but S is zero, does it count?
+    // Should we consider only non-zero counts?
+    //
+    // "PPRR": can we reduce to 2? 
+    // PP RR -> say reduce P+R somewhere: e.g. PPRR -> PSR -> ? 
+    // PPRR: positions: 0:P,1:P,2:R,3:R
+    // Can't reduce PP or RR. But if we could rearrange? No, adjacent only.
+    // But we can choose order? In some versions you can choose any adjacent pair.
+    // Assume we can choose any adjacent pair arbitrarily.
+    //
+    // PPRR: no adjacent PR? only if we have PR or RP.
+    // So if string is "PPRR", and no PR/RP adjacent, we cannot reduce.
+    // But if it's "PRPR", we can reduce.
+    //
+    // So my previous approach assumes we can reorder? But we cannot.
+    //
+    // Therefore, the stack-based simulation might be needed.
+    
+    // Let's go back to the original logic.
+    // The original code tried a greedy left-to-right:
+    // It kept a 'past' state and tried to extend.
+    // But it didn't work.
+    
+    // Alternative idea: use a stack.
+    // Traverse left to right, push each character.
+    // After pushing, while top two can be reduced, reduce them.
+    // But reduction produces a new character, which might then reduce with the next.
+    
+    // Example: "PPR"
+    // push P: [P]
+    // push P: [P,P]
+    // push R: [P,P,R]
+    //   top two: P,R -> reduce to S: [P,S]
+    //   now P,S -> reduce to R: [R]
+    // operations: 2 ✓
+    //
+    // How to count operations? Each reduction is one operation.
+    
+    // Algorithm:
+    // stack s
+    // ops = 0
+    // for each c in S:
+    //   s.push(c)
+    //   while s.size() >= 2:
+    //       let a = s.top(); s.pop();
+    //       let b = s.top(); s.pop();
+    //       if a == b: 
+    //           // cannot reduce same
+    //           s.push(b); s.push(a);
+    //           break;
+    //       else:
+    //           // determine the result
+    //           char res;
+    //           if (a=='P' && b=='R' || a=='R' && b=='P') res='S';
+    //           else if (a=='R' && b=='S' || a=='S' && b=='R') res='P';
+    //           else if (a=='S' && b=='P' || a=='P' && b=='S') res='R';
+    //           s.push(res);
+    //           ops++;
+    //           // continue loop to check if new top can reduce
+    //   }
+    // }
+    //
+    // But note: order matters. We pop last two: so the string is built left-to-right,
+    // and we reduce the most recent two.
+    //
+    // But is this optimal? Actually, in such reduction games, the total number of operations
+    // is invariant under the order of reductions (under certain conditions).
+    // But let's test "PRP":
+    // Option 1: reduce first PR -> S, then SP -> R: total 2 ops.
+    // Stack method:
+    // P: [P]
+    // R: [P,R] -> reduce to S: [S], ops=1
+    // P: [S,P] -> reduce to R: [R], ops=2 ✓
+    //
+    // Another: "PPR" as above works.
+    //
+    // But worst-case: N=200000, and we do up to N reductions, each while loop might be long?
+    // However, each character can be pushed and popped at most O(log N) times? 
+    // Actually, the total complexity is O(N) because each element enters once and the total number of reductions is at most N.
+    // But in the while loop, we might do multiple reductions per insertion.
+    // However, each reduction removes one element (two in, one out -> net -1), so total reductions is at most N-1.
+    // Therefore, the entire process is O(N).
+    //
+    // Let's implement the stack method.
+    
+    stack<char> st;
+    int ans = 0;
+    
+    for (char c : S) {
+        st.push(c);
+        // Keep reducing as long as possible
+        while (st.size() >= 2) {
+            char a = st.top(); st.pop();
+            char b = st.top(); st.pop();
+            
+            // If same, cannot reduce
+            if (a == b) {
+                st.push(b);
+                st.push(a);
+                break;
+            }
+            
+            // Determine the result of combining a and b
+            // Note: order? The rule doesn't depend on order: PR=RP=S, etc.
+            char res;
+            if ((a == 'P' && b == 'R') || (a == 'R' && b == 'P')) {
+                res = 'S';
+            } else if ((a == 'R' && b == 'S') || (a == 'S' && b == 'R')) {
+                res = 'P';
+            } else if ((a == 'S' && b == 'P') || (a == 'P' && b == 'S')) {
+                res = 'R';
+            } else {
+                // should not happen
+                res = 'X';
+            }
+            
+            st.push(res);
+            ans++;
+        }
+    }
+    
+    cout << ans;
+    return 0;
+}
+```

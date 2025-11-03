@@ -1,0 +1,25 @@
+#include <bits/stdc++.h>
+using namespace std;
+int main() {
+    int n, m;
+    cin >> n >> m;
+    vector<int> arr(n);
+    for (int i = 0; i < n; i++) {
+        cin >> arr[i];
+    }
+    
+    long long ans = 0;
+    vector<int> prefix_mod(m, 0);
+    prefix_mod[0] = 1; // Empty prefix has mod 0
+    
+    int current_sum = 0;
+    for (int i = 0; i < n; i++) {
+        current_sum = (current_sum + arr[i]) % m;
+        if (current_sum < 0) current_sum += m; // Handle negative mods
+        ans += prefix_mod[current_sum];
+        prefix_mod[current_sum]++;
+    }
+    
+    cout << ans;
+    return 0;
+}

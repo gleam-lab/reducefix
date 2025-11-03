@@ -1,0 +1,59 @@
+#include<bits/stdc++.h>
+using namespace std;
+
+char s[200011];
+char c[200011];
+
+int solve(int n, int start) {
+    // Apply transformation based on rule
+    for (int i = 1; i <= n; i++) {
+        if (s[i] == 'P') c[i] = 'S';
+        else if (s[i] == 'R') c[i] = 'P';
+        else c[i] = 'R';
+    }
+    
+    // Fix consecutive duplicates starting from position 'start'
+    int sum = n;
+    for (int i = start; i <= n; i++) {
+        if (i > 1 && c[i] == c[i-1]) {
+            c[i] = s[i];  // Revert to original character
+            sum--;
+        }
+    }
+    return sum;
+}
+
+int main() {
+    int n;
+    scanf("%d", &n);
+    scanf("%s", s + 1);
+    
+    int ans = 0;
+    
+    // Try starting from index 1 (normal case)
+    ans = max(ans, solve(n, 1));
+    
+    // Try starting from index 2 (allow first two to be same after transform)
+    // This handles cases where we might want to keep the chain going by not fixing early
+    if (n >= 2 && s[1] != s[2]) {
+        // Only try alternate strategy if first two are different
+        for (int i = 1; i <= n; i++) {
+            if (s[i] == 'P') c[i] = 'S';
+            else if (s[i] == 'R') c[i] = 'P';
+            else c[i] = 'R';
+        }
+        
+        // Skip fixing position 2 even if it matches position 1
+        int sum = n;
+        for (int i = 3; i <= n; i++) {
+            if (c[i] == c[i-1]) {
+                c[i] = s[i];
+                sum--;
+            }
+        }
+        ans = max(ans, sum);
+    }
+    
+    printf("%d\n", ans);
+    return 0;
+}

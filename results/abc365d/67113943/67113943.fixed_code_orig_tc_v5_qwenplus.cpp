@@ -1,0 +1,38 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main(){
+    ios_base::sync_with_stdio(false);
+    cin.tie(NULL);
+
+    int N;
+    string S;
+    cin >> N >> S;
+    
+    int wins = 0;
+    char prev = 'X'; // Use a placeholder that doesn't match any move
+    
+    for (char c : S) {
+        char winmove;
+        if (c == 'R') {
+            winmove = 'P';
+        } else if (c == 'P') {
+            winmove = 'S';
+        } else { // c == 'S'
+            winmove = 'R';
+        }
+        
+        if (winmove != prev) {
+            wins++;
+            prev = winmove;
+        } else {
+            // If we used the same winning move, we can choose any move, 
+            // but to maximize future wins, we should choose the losing move against current opponent
+            // so that next winning move will be different
+            prev = c; // Set to opponent's current move
+        }
+    }
+    
+    cout << wins;
+    return 0;
+}

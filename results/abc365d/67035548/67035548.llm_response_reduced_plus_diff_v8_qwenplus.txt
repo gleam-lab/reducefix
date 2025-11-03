@@ -1,0 +1,84 @@
+```cpp
+#include <iostream>
+#include <string>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+char beats(char c) {
+    if (c == 'R') return 'P';
+    if (c == 'P') return 'S';
+    if (c == 'S') return 'R';
+    return c;
+}
+
+int main() {
+    int n;
+    string s;
+    cin >> n >> s;
+    
+    // dp[i][c] = minimum removals needed for prefix ending at i with final char c
+    // We only need previous state, so use two arrays
+    vector<int> prev(3, 1e9);
+    vector<int> curr(3, 1e9);
+    
+    // Map characters to indices: R=0, P=1, S=2
+    auto to_idx = [](char c) {
+        if (c == 'R') return 0;
+        if (c == 'P') return 1;
+        return 2;
+    };
+    
+    auto to_char = [](int idx) {
+        if (idx == 0) return 'R';
+        if (idx == 1) return 'P';
+        return 'S';
+    };
+    
+    // Initialize first character
+    for (int i = 0; i < 3; i++) {
+        if (to_char(i) == s[0]) {
+            prev[i] = 0;  // keep it
+        } else {
+            prev[i] = 1;  // remove original, add this one
+        }
+    }
+    
+    for (int i = 1; i < n; i++) {
+        fill(curr.begin(), curr.end(), 1e9);
+        
+        int c_idx = to_idx(s[i]);
+        char c = s[i];
+        
+        // Try all possible previous final characters
+        for (int last = 0; last < 3; last++) {
+            if (prev[last] >= 1e9) continue;
+            
+            char last_char = to_char(last);
+            
+            // Option 1: Keep current character
+            // We can only do this if current doesn't beat previous
+            if (beats(c) != last_char) {
+                int& target = curr[to_idx(c)];
+                target = min(target, prev[last]);
+            }
+            
+            // Option 2: Remove current character and add any character
+            // The added character must not be beaten by previous
+            for (int new_c = 0; new_c < 3; new_c++) {
+                char new_char = to_char(new_c);
+                if (beats(new_char) != last_char) {
+                    curr[new_c] = min(curr[new_c], prev[last] + 1);
+                }
+            }
+        }
+        
+        prev = curr;
+    }
+    
+    int result = *min_element(prev.begin(), prev.end());
+    cout << result << endl;
+    
+    return 0;
+}
+```

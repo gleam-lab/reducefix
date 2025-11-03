@@ -1,0 +1,64 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    int N;
+    cin >> N;
+    string S;
+    cin >> S;
+    
+    vector<char> hand = {'R', 'P', 'S'};
+    auto getWinner = [](char player, char opponent) -> bool {
+        return (player == 'R' && opponent == 'S') ||
+               (player == 'P' && opponent == 'R') ||
+               (player == 'S' && opponent == 'P');
+    };
+    
+    int maxScore = 0;
+    
+    // Try all possible starting moves
+    for (char firstMove : hand) {
+        vector<char> available = hand;
+        // Remove the first move from available options for next rounds
+        available.erase(remove(available.begin(), available.end(), firstMove), available.end());
+        
+        int score = 0;
+        char currentMove = firstMove;
+        
+        for (int i = 0; i < N; i++) {
+            // Check if current move wins
+            if (getWinner(currentMove, S[i])) {
+                score++;
+            }
+            
+            // For the next round, choose the best move from remaining options
+            if (i < N - 1) {
+                char bestMove = available[0];
+                int bestOutcome = 0;
+                
+                for (char move : available) {
+                    int win = getWinner(move, S[i+1]) ? 1 : 0;
+                    if (win > bestOutcome) {
+                        bestOutcome = win;
+                        bestMove = move;
+                    }
+                }
+                
+                currentMove = bestMove;
+                // Update available moves for the next round
+                vector<char> newAvailable;
+                for (char move : hand) {
+                    if (move != currentMove) {
+                        newAvailable.push_back(move);
+                    }
+                }
+                available = newAvailable;
+            }
+        }
+        
+        maxScore = max(maxScore, score);
+    }
+    
+    cout << maxScore << endl;
+    return 0;
+}

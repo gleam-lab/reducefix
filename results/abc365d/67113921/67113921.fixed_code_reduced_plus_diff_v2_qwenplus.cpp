@@ -1,0 +1,55 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main(){
+    ios_base::sync_with_stdio(false);
+    cin.tie(NULL);
+
+    int N;
+    string S;
+    cin >> N >> S;
+    
+    int wins = 0;
+    char prev = 'a'; // No move made yet
+    
+    for (char c : S) {
+        char winmove;
+        if (c == 'R') {
+            winmove = 'P';
+        } else if (c == 'P') {
+            winmove = 'S';
+        } else { // c == 'S'
+            winmove = 'R';
+        }
+        
+        // If we can use the winning move without repeating the previous move
+        if (winmove != prev) {
+            wins++;
+            prev = winmove;
+        } else {
+            // We cannot repeat the same move, so we must choose a non-winning move
+            // The two options are the other two moves, one of which is the opponent's move
+            // We choose the one that is not the opponent's move and not the previous move
+            // But actually, we just need to avoid repeating; any different move is valid
+            // However, we want to maximize future wins, so we should pick a move that doesn't block us unnecessarily
+            // The optimal strategy: if we can't play the winning move, play the losing move (the one the opponent beats)
+            // This sets up for better future opportunities.
+            
+            // Available moves: all except prev
+            // We want to minimize damage to future options, so choose the non-winning, non-previous move
+            // That would be the move that loses to c
+            if (c == 'R') {
+                // winmove was 'P', so losing move is 'S'
+                prev = 'S';
+            } else if (c == 'P') {
+                // winmove was 'S', so losing move is 'R'
+                prev = 'R';
+            } else { // c == 'S'
+                // winmove was 'R', so losing move is 'P'
+                prev = 'P';
+            }
+        }
+    }
+    
+    cout << wins;
+}

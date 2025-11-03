@@ -1,0 +1,185 @@
+```cpp
+#include <iostream>
+#include <string>
+#include <vector>
+#include <algorithm>
+#include <utility>
+#include <tuple>
+#include <cstdint>
+#include <cstdio>
+#include <map>
+#include <queue>
+#include <set>
+#include <stack>
+#include <deque>
+#include <unordered_map>
+#include <unordered_set>
+#include <bitset>
+#include <cctype>
+#include <cmath>
+#include <iomanip>
+using namespace std;
+
+char win(char x) {
+    if (x == 'R') return 'P';
+    if (x == 'S') return 'R';
+    if (x == 'P') return 'S';
+    return 'X';
+}
+
+int main() {
+    int n;
+    string s;
+    cin >> n >> s;
+
+    // dp[i][last] = maximum rounds we can survive up to index i, where last is the move used at position i
+    // We'll use state: 0=P, 1=R, 2=S
+    vector<vector<int>> dp(n, vector<int>(3, 0));
+    
+    // Initialize first round
+    for (int j = 0; j < 3; j++) {
+        char move = "PRS"[j];
+        if (move == win(s[0])) {
+            dp[0][j] = 1; // We can win by playing the winning move
+        } else {
+            dp[0][j] = 1; // Even if we don't win immediately, we can still play and survive this round
+        }
+    }
+
+    // Fill DP table
+    for (int i = 1; i < n; i++) {
+        for (int curr = 0; curr < 3; curr++) {
+            char curr_move = "PRS"[curr];
+            // Check if current move loses to opponent's move -> then we die, so not allowed
+            // But actually, we are trying to maximize number of rounds survived.
+            // We assume we die only when our move is beaten by opponent's move.
+            // So if opponent beats us, we cannot have this state.
+
+            // Opponent plays s[i], we play curr_move
+            // We die if curr_move loses to s[i]
+            if ((curr_move == 'P' && s[i] == 'S') ||
+                (curr_move == 'R' && s[i] == 'P') ||
+                (curr_move == 'S' && s[i] == 'R')) {
+                // This move gets killed, so we cannot survive past this point with this move
+                // But we still want to consider that we could have played until here
+                dp[i][curr] = 0; // Cannot survive at this step with this move
+                continue;
+            }
+
+            // Otherwise, we survive this round
+            dp[i][curr] = 1; // At least this round
+
+            // Transition from previous state
+            int best_prev = 0;
+            for (int prev = 0; prev < 3; prev++) {
+                if (dp[i-1][prev] > 0) { // valid state
+                    best_prev = max(best_prev, dp[i-1][prev]);
+                }
+            }
+            dp[i][curr] += best_prev;
+        }
+    }
+
+    // Find maximum over last states
+    int ans = 0;
+    for (int j = 0; j < 3; j++) {
+        ans = max(ans, dp[n-1][j]);
+    }
+
+    // It's possible we can survive all rounds even if some individual paths die early
+    // But our DP should capture longest surviving path
+
+    // However, reconsider problem: we need to compute the maximum number of consecutive rounds 
+    // starting from the beginning that we can survive, possibly changing our strategy optimally.
+
+    // Actually, simpler greedy might work? But let's fix logic.
+
+    // Alternate interpretation: we choose a sequence of moves such that we never lose.
+    // We want the maximum number of rounds we can survive.
+
+    // Let's do forward simulation with optimal choices.
+
+    // Actually, the above DP has flaw: we don't require to survive all previous rounds necessarily?
+    // No — we want consecutive survival from start.
+
+    // Revised approach:
+    // We simulate from start. At each round, we can choose any move that doesn't lose.
+    // And we want to maximize total rounds survived.
+
+    // But note: choice affects future options because we must alternate? 
+    // Wait — rereading problem: it seems there is no restriction on consecutive same moves.
+    // The only rule: you lose if your move is beaten by opponent's move.
+
+    // So at each round i, we can choose any move except the one that loses to s[i].
+    // There are always at least two safe moves.
+
+    // But wait — the sample: PPRP -> answer is 3.
+
+    // How?
+    // Round 0: opp P -> we can play P (tie) or R (win), not S (lose)
+    // Round 1: opp P -> same
+    // Round 2: opp R -> we can play R or S, not P
+    // Round 3: opp P -> we can play P or R, not S
+
+    // So we can survive all 4? But expected is 3.
+
+    // Ah! Re-read problem statement (inferred): 
+    // "You follow a deterministic strategy: you always play the move that would beat your opponent's previous move."
+    // But initial move? You have no prior.
+
+    // Actually, based on common problems like this (e.g. Code Jam), the twist is:
+    // - You start with no history.
+    // - For the first move, you can choose anything.
+    // - From second move onward, you **must** play the move that would beat what your opponent just played.
+
+    // That makes sense.
+
+    // Strategy:
+    // - Move 0: choose freely
+    // - Move i (i>=1): you must play win(opponent[i-1])
+
+    // Then the only choice is the first move.
+
+    // So try both/all possibilities?
+
+    // But note: after first move, rest are determined.
+
+    // So simulate for each possible first move.
+
+    int max_survive = 0;
+
+    for (char first : string("PRS")) {
+        vector<char> moves(n);
+        moves[0] = first;
+
+        int rounds = 1;
+        bool valid = true;
+
+        // Check if first move loses
+        if ((first == 'P' && s[0] == 'S') ||
+            (first == 'R' && s[0] == 'P') ||
+            (first == 'S' && s[0] == 'R')) {
+            rounds = 0; // dies immediately
+            valid = false;
+        }
+
+        for (int i = 1; i < n && valid; i++) {
+            moves[i] = win(s[i-1]); // must play the move that beats opponent's previous move
+
+            // Check if this move loses to current opponent
+            if ((moves[i] == 'P' && s[i] == 'S') ||
+                (moves[i] == 'R' && s[i] == 'P') ||
+                (moves[i] == 'S' && s[i] == 'R')) {
+                break; // dies at round i+1, but survived i rounds
+            }
+            rounds++;
+        }
+
+        max_survive = max(max_survive, rounds);
+    }
+
+    cout << max_survive << endl;
+
+    return 0;
+}
+```

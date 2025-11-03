@@ -1,0 +1,28 @@
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+constexpr ll MOD  = 1000000007;
+constexpr int inf = 2000000000;
+constexpr ll INF = 9200000000000000000;
+
+int main(){
+    map<int, int> freq;
+    int q; cin >> q;
+    while(q--){
+        int type; cin >> type;
+        if(type == 1){
+            int x; cin >> x;
+            freq[x]++;
+        }
+        else if(type == 2){
+            int x; cin >> x;
+            freq[x]--;
+            if(freq[x] == 0){
+                freq.erase(x);
+            }
+        }
+        else if(type == 3){
+            cout << freq.size() << "\n";
+        }
+    }
+}

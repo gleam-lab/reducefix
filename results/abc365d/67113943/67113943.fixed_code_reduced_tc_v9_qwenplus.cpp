@@ -1,0 +1,48 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main(){
+    ios_base::sync_with_stdio(false);
+    cin.tie(NULL);
+
+    int N;
+    string S;
+    cin >> N;
+    cin >> S;
+    int wins = 0;
+    char prev = 'a'; // no move played yet
+
+    for (char c : S){
+        char winmove;
+        if (c == 'R'){
+            winmove = 'P';
+        } else if (c == 'P'){
+            winmove = 'S';
+        } else { // c == 'S'
+            winmove = 'R';
+        }
+        
+        // We can choose the winning move unless we used it in the previous round
+        if (winmove != prev) {
+            wins++;
+            prev = winmove; // we play the winning move
+        } else {
+            // We cannot play the winning move due to constraint, so we play something else
+            // Doesn't matter what we play as long as it's not the same as previous and doesn't win
+            // But we must update prev to this non-winning move
+            // We just need to pick any move different from both opponent's move and our previous move
+            // However, we don't get a win in this case
+            // Find a valid move that is not prev and not the winning one (but could be losing or tie)
+            // Actually, we only care about updating state, not recording outcome beyond win/loss
+            // We just need to set prev to something different than winmove (since we can't use winmove)
+            // Let's pick a dummy move: cycle through R, P, S to find one that's not winmove and not prev
+            for (char m : {'R', 'P', 'S'}) {
+                if (m != winmove && m != prev) {
+                    prev = m;
+                    break;
+                }
+            }
+        }
+    }   
+    cout << wins;
+}

@@ -1,0 +1,133 @@
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int n;
+    string s;
+    cin >> n >> s;
+
+    // Count frequency of each move
+    vector<int> count(3, 0); // R=0, P=1, S=2
+    for (char c : s) {
+        if (c == 'R') count[0]++;
+        else if (c == 'P') count[1]++;
+        else count[2]++;
+    }
+
+    // Best strategy: choose the move that beats the most frequent opponent move
+    // But we can also consider optimal arrangement to minimize conflicts
+    int ans = 0;
+    
+    // Try all three possible dominant responses
+    for (int response = 0; response < 3; response++) {
+        // What move would beat our response?
+        int beaten_by_me = (response + 1) % 3; // I win against this
+        
+        // We can keep all characters that are the beaten_by_me type
+        // And also handle consecutive same characters optimally
+        int current_score = 0;
+        char last = 0;
+        
+        for (int i = 0; i < n; i++) {
+            char want = 0;
+            if (s[i] == 'R') want = 0;
+            else if (s[i] == 'P') want = 1;
+            else want = 2;
+            
+            char play = (want + 1) % 3; // What we should play to beat opponent
+            
+            // If this matches our preferred response pattern, we can potentially use it
+            if (play == response) {
+                // We prefer this move
+                if (last != ('A' + response)) {
+                    current_score++;
+                    last = 'A' + response;
+                } else {
+                    // Conflict - same as previous, so we need to check if we can use original
+                    // Actually, we can always avoid conflict by using a different valid move when needed
+                    bool can_use_alternative = false;
+                    for (int alt = 0; alt < 3; alt++) {
+                        if (alt != response && ((want + 1) % 3 == alt)) {
+                            can_use_alternative = true;
+                            break;
+                        }
+                    }
+                    if (can_use_alternative) {
+                        // Use alternative winning move
+                        for (int alt = 0; alt < 3; alt++) {
+                            if (alt != response && ((want + 1) % 3 == alt)) {
+                                current_score++;
+                                last = 'A' + alt;
+                                break;
+                            }
+                        }
+                    }
+                    // Otherwise skip? Actually we must play something
+                }
+            } else {
+                // This character naturally maps to a non-preferred winning move
+                if (last != ('A' + play)) {
+                    current_score++;
+                    last = 'A' + play;
+                }
+            }
+        }
+        
+        ans = max(ans, current_score);
+    }
+
+    // Alternate approach: greedy with backtracking for first element
+    // The key insight is that we want to maximize wins while avoiding adjacent duplicates
+    
+    auto solve = [&](const string& s) -> int {
+        int n = s.size();
+        if (n == 0) return 0;
+        if (n == 1) return 1;
+        
+        // For each position, we know what moves would win
+        vector<vector<char>> choices(n);
+        for (int i = 0; i < n; i++) {
+            if (s[i] == 'R') {
+                choices[i] = {'P'}; // Paper beats Rock
+            } else if (s[i] == 'P') {
+                choices[i] = {'S'}; // Scissors beats Paper
+            } else { // s[i] == 'S'
+                choices[i] = {'R'}; // Rock beats Scissors
+            }
+        }
+        
+        // Dynamic programming: dp[i][c] = maximum wins up to position i ending with move c
+        vector<vector<int>> dp(n, vector<int>(3, 0));
+        
+        // Initialize first position
+        for (char c : choices[0]) {
+            int idx = (c == 'R' ? 0 : (c == 'P' ? 1 : 2));
+            dp[0][idx] = 1;
+        }
+        
+        for (int i = 1; i < n; i++) {
+            for (char choice : choices[i]) {
+                int c_idx = (choice == 'R' ? 0 : (choice == 'P' ? 1 : 2));
+                // Can come from any previous state with different move
+                for (int prev = 0; prev < 3; prev++) {
+                    if (prev != c_idx) {
+                        dp[i][c_idx] = max(dp[i][c_idx], dp[i-1][prev] + 1);
+                    }
+                }
+                // Also consider starting fresh from this position
+                dp[i][c_idx] = max(dp[i][c_idx], 1);
+            }
+        }
+        
+        return *max_element(dp[n-1].begin(), dp[n-1].end());
+    };
+
+    cout << solve(s) << endl;
+    
+    return 0;
+}
+```

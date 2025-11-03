@@ -1,0 +1,48 @@
+#include<bits/stdc++.h>
+using namespace std;
+
+int main() {
+    int n, m;
+    cin >> n >> m;
+    vector<int> a(2 * n + 1);
+    vector<int> prefixSum(2 * n + 1, 0);
+    vector<int> count(m, 0);
+    long long ans = 0;
+    
+    // Read input and create doubled array
+    for (int i = 1; i <= n; i++) {
+        cin >> a[i];
+        a[i] %= m;
+        a[i + n] = a[i];
+    }
+    
+    // Calculate prefix sums and count subarrays
+    for (int i = 1; i <= 2 * n; i++) {
+        prefixSum[i] = (prefixSum[i-1] + a[i]) % m;
+        
+        // Only consider valid window of length n or less
+        if (i > n) {
+            count[prefixSum[i - n]]--;
+        }
+        
+        // Add count of same prefix sum values within valid range
+        if (i >= n) {
+            ans += count[prefixSum[i]];
+        }
+        
+        // Include the empty prefix for subarrays starting at index 1
+        if (i < n) {
+            count[prefixSum[i]]++;
+        }
+    }
+    
+    // Add subarrays that start from the beginning
+    count[0]++;
+    for (int i = 1; i <= n; i++) {
+        ans += count[prefixSum[i]];
+        if (i < n) count[prefixSum[i]]++;
+    }
+    
+    cout << ans;
+    return 0;
+}

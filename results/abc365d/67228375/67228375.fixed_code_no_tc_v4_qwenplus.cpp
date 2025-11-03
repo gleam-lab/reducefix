@@ -1,0 +1,54 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define endl "\n"
+#define MOD 1000000007
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(0);
+
+    map<char, char> beats = {{'R', 'P'}, {'P', 'S'}, {'S', 'R'}};
+    int n;
+    cin >> n;
+    string s;
+    cin >> s;
+
+    // Count maximum number of wins by choosing optimal starting move
+    int max_wins = 0;
+
+    // Try all possible starting moves
+    for (char start : {'R', 'P', 'S'}) {
+        char opponent_move = s[0];
+        char my_move = start;
+        int wins = (beats[opponent_move] == my_move) ? 1 : 0;
+        char last_opponent = opponent_move;
+
+        for (int i = 1; i < n; i++) {
+            // Current opponent move
+            opponent_move = s[i];
+            
+            // Choose move that either continues the pattern or optimally responds
+            if (beats[opponent_move] == my_move) {
+                // We won last round, so we repeat our move
+                // This means our move stays the same
+                my_move = my_move;
+            } else {
+                // We didn't win last round, so we switch to beat current opponent move
+                my_move = beats[opponent_move];
+            }
+            
+            // Check if current move wins
+            if (beats[opponent_move] == my_move) {
+                wins++;
+            }
+            
+            last_opponent = opponent_move;
+        }
+        
+        max_wins = max(max_wins, wins);
+    }
+
+    cout << max_wins << endl;
+
+    return 0;
+}

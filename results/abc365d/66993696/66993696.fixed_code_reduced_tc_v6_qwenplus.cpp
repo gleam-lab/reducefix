@@ -1,0 +1,76 @@
+#include<bits/stdc++.h>
+using namespace std;
+
+char s[200011];
+char c[200011];
+
+int solve(int n) {
+    // Create the transformed string: beat the original move
+    for (int i = 1; i <= n; i++) {
+        if (s[i] == 'P') c[i] = 'S';
+        else if (s[i] == 'R') c[i] = 'P';
+        else c[i] = 'R';
+    }
+    
+    int count = n;
+    // Remove consecutive duplicates
+    for (int i = 2; i <= n; i++) {
+        if (c[i] == c[i-1]) {
+            count--;
+        }
+    }
+    return count;
+}
+
+int main() {
+    int n;
+    scanf("%d", &n);
+    scanf("%s", s+1);
+    
+    int ans = solve(n);
+    
+    // Try changing the first character to match original (might break the chain)
+    // But we need to consider alternative strategies
+    // Actually, the key is that we can choose any move, not just the winning one
+    
+    // We'll try all three possible choices for each position? -> too expensive
+    // Insight: We only need to consider two options per position in some cases
+    // Alternate approach: use greedy with tracking of last character
+    
+    // Let's reframe: We want to maximize number of distinct adjacent values
+    // We can choose any move at each position. The score is number of positions where current != previous.
+    // So total score = 1 + (# of i from 2 to n where choice[i] != choice[i-1])
+    
+    // We can use DP: dp[i][move] = max score for prefix ending at i with move at i
+    // move: 0=P, 1=R, 2=S
+    
+    if (n == 0) {
+        printf("0");
+        return 0;
+    }
+    
+    const int P = 0, R = 1, S = 2;
+    int dp[200011][3];
+    
+    // Initialize first position
+    dp[1][P] = 1;
+    dp[1][R] = 1;
+    dp[1][S] = 1;
+    
+    // For each position, we can choose any move
+    for (int i = 2; i <= n; i++) {
+        for (int move : {P, R, S}) {
+            dp[i][move] = 0;
+            // Check all possible previous moves
+            for (int prev : {P, R, S}) {
+                int add = (move != prev) ? 1 : 0;
+                dp[i][move] = max(dp[i][move], dp[i-1][prev] + add);
+            }
+        }
+    }
+    
+    int best = max({dp[n][P], dp[n][R], dp[n][S]});
+    printf("%d", best);
+    
+    return 0;
+}

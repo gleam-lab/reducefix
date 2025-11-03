@@ -1,0 +1,111 @@
+#include<bits/stdc++.h>
+using namespace std;
+
+int main() {
+    int n, m;
+    cin >> n >> m;
+    vector<int> a(2 * n + 1);
+    vector<int> t(m, 0);
+    long long an = 0;
+    int prefix = 0;
+    
+    for (int i = 1; i <= n; i++) {
+        cin >> a[i];
+        a[i] %= m;
+        a[i + n] = a[i];
+    }
+    
+    // Count empty prefix (sum = 0) initially
+    t[0] = 1;
+    
+    for (int i = 1; i < 2 * n; i++) {
+        prefix = (prefix + a[i]) % m;
+        
+        // Add number of previous prefixes that create valid subarray of length <= n
+        an += t[prefix];
+        
+        // Add current prefix to count
+        t[prefix]++;
+        
+        // Remove prefix that is now too far (more than n elements away)
+        if (i >= n) {
+            int old_prefix = (prefix - a[i - n + 1] + m) % m;
+            // We need to recalculate the prefix from i-n position
+            // Instead, we can maintain the sliding window by removing the contribution
+            // But simpler approach: just track when prefixes become invalid
+            
+            // Actually, let's use a different approach - calculate prefix properly
+        }
+    }
+    
+    // The above has issues. Let's fix with proper approach:
+    
+    t.assign(m, 0);
+    an = 0;
+    prefix = 0;
+    
+    // Start fresh with correct logic
+    t[0] = 1; // empty prefix at start
+    
+    for (int i = 1; i <= 2 * n; i++) {
+        prefix = (prefix + a[i]) % m;
+        
+        // Only consider prefixes that are within valid range (distance <= n)
+        an += t[prefix];
+        
+        // If we have passed n elements, start removing old prefixes
+        if (i >= n) {
+            // Remove the prefix that is exactly n positions back
+            int pos_to_remove = i - n;
+            int prefix_to_remove = 0;
+            
+            // Recalculate prefix at position i-n
+            if (pos_to_remove > 0) {
+                prefix_to_remove = 0;
+                for (int j = 1; j <= pos_to_remove; j++) {
+                    prefix_to_remove = (prefix_to_remove + a[j]) % m;
+                }
+                t[prefix_to_remove]--;
+            }
+        }
+        
+        t[prefix]++;
+    }
+    
+    // Even better approach - precompute all prefixes and use sliding window
+    // Final clean solution:
+    
+    cin >> n >> m;
+    vector<int> arr(n);
+    for (int i = 0; i < n; i++) {
+        cin >> arr[i];
+        arr[i] %= m;
+    }
+    
+    vector<int> double_arr(2 * n);
+    vector<int> prefix_sum(2 * n + 1, 0);
+    
+    for (int i = 0; i < 2 * n; i++) {
+        double_arr[i] = arr[i % n];
+        prefix_sum[i + 1] = (prefix_sum[i] + double_arr[i]) % m;
+    }
+    
+    long long result = 0;
+    vector<int> count(m, 0);
+    
+    count[0] = 1; // empty prefix
+    
+    for (int i = 1; i <= 2 * n; i++) {
+        // Remove prefix that is now out of range (more than n away)
+        if (i > n) {
+            count[prefix_sum[i - n - 1]]--;
+        }
+        
+        result += count[prefix_sum[i]];
+        count[prefix_sum[i]]++;
+    }
+    
+    cout << result << endl;
+    
+    return 0;
+}

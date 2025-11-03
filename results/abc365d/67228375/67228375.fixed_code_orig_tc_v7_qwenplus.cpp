@@ -1,0 +1,51 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define endl "\n"
+#define MOD 1000000007
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(0);
+
+    map<char, char> beats = {{'R', 'P'}, {'P', 'S'}, {'S', 'R'}};
+    int n;
+    cin >> n;
+    string s;
+    cin >> s;
+
+    if (n == 0) {
+        cout << 0 << endl;
+        return 0;
+    }
+
+    // Try both starting strategies:
+    // Strategy 1: Start by playing the move that beats the first opponent move
+    // Strategy 2: Start by playing the same as the first opponent move
+
+    auto simulate = [&](char initial_move) -> int {
+        int rounds_won = 0;
+        char last_own_move = initial_move;
+        
+        for (int i = 0; i < n; i++) {
+            char opponent_move = s[i];
+            // If our move beats opponent's move, we win this round
+            if (beats[last_own_move] == opponent_move) {
+                // Continue with same strategy - repeat our last move
+                continue;
+            } else {
+                // We didn't win, so we adapt: play the move that beats the current opponent move
+                last_own_move = beats[opponent_move];
+                rounds_won++;
+            }
+        }
+        return rounds_won;
+    };
+
+    // Try both possible starting moves
+    int result1 = simulate(beats[s[0]]);  // Start by beating first move
+    int result2 = simulate(s[0]);         // Start by playing same as first move
+    
+    cout << max(result1, result2) << endl;
+
+    return 0;
+}

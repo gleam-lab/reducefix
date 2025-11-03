@@ -214,93 +214,54 @@ def main():
         print(f"[Success] Using existing reducer for {target_problem_id_input}. No generation needed.")
         sys.exit(0)
 
-    # --- Fetch TARGET Problem Details (Title/Samples from Tutor, Description from Tools) --- 
-    target_details = None
-    target_problem_title = "Unknown Title"
-    target_samples_json_str = "[]"
-    target_problem_description_md = None
-
-    print(f"Fetching details for target problem {target_problem_id_input}...")
+    # --- Load TARGET Problem Details from lftbench --- 
+    print(f"Loading details for target problem {target_problem_id_input} from lftbench...")
     try:
-        tutor_problem_id_target = f"{contest_id}_{problem_letter.lower()}"
-        # Get Title/Samples from Tutor
-        target_details_dict, status_code = tutor.fetch_problem_details(contest_id, tutor_problem_id_target)
-        if status_code != 200:
-            print(f"[Warning] Failed to fetch target problem details (title/samples) from Tutor: {status_code} - {target_details_dict.get('error', 'Unknown error')}", file=sys.stderr)
-            # Continue anyway, try to get description from tools
-        else:
-            target_details = target_details_dict
-            target_problem_title = target_details.get("title", target_problem_title)
-            target_samples_json_str = target_details.get("samples_json", target_samples_json_str)
-            try: # Validate target samples JSON
-                json.loads(target_samples_json_str)
-            except json.JSONDecodeError:
-                print("[Warning] Fetched target samples_json is not valid JSON. Using '[]'.", file=sys.stderr)
-                target_samples_json_str = "[]"
-            print("[Info] Target problem title/samples fetched successfully via Tutor.")
-
-        # Get Description (Markdown) from Tools
-        print("Fetching target problem description (Markdown) via Tools...")
-        target_problem_url = f"https://atcoder.jp/contests/{contest_id}/tasks/{tutor_problem_id_target}"
-        session = tools.load_session() # Need session for tools
-        if session:
-             target_problem_description_md = tools.get_problem_description(target_problem_url, session)
-             if not target_problem_description_md or target_problem_description_md.startswith("# Error"):
-                  print(f"[Error] Failed to get target problem description from Tools: {target_problem_description_md or 'None returned'}", file=sys.stderr)
-                  # Decide whether to exit or proceed without description
-                  sys.exit(1) # Exit if description is critical
-             else:
-                 print("[Info] Target problem description fetched successfully via Tools.")
-        else:
-             print("[Error] Failed to get session via tools.load_session(). Cannot fetch description.", file=sys.stderr)
-             sys.exit(1)
+        import lftbench_utils
+        
+        target_problem_title = lftbench_utils.get_problem_title(target_problem_id_input)
+        target_samples_json_str = lftbench_utils.get_problem_samples_json(target_problem_id_input)
+        target_problem_description_md = lftbench_utils.get_problem_description(target_problem_id_input)
+        
+        if not target_problem_title or target_problem_title.startswith("Unknown"):
+            print(f"[Warning] Problem title not found in lftbench for {target_problem_id_input}", file=sys.stderr)
+        
+        if not target_samples_json_str or target_samples_json_str == "[]":
+            print(f"[Warning] No samples found in lftbench for {target_problem_id_input}", file=sys.stderr)
+        
+        if not target_problem_description_md or target_problem_description_md.startswith("# Error"):
+            print(f"[Error] Problem description not found in lftbench for {target_problem_id_input}", file=sys.stderr)
+            sys.exit(1)
+        
+        print(f"[Success] Loaded target problem details from lftbench")
+        print(f"  Title: {target_problem_title}")
+        print(f"  Samples: {len(json.loads(target_samples_json_str))} found")
+        print(f"  Description: {len(target_problem_description_md)} characters")
 
     except Exception as e:
-        print(f"[Error] Error during target problem detail fetching: {e}", file=sys.stderr)
+        print(f"[Error] Error loading target problem details from lftbench: {e}", file=sys.stderr)
         traceback.print_exc()
         sys.exit(1)
         
-    # --- Fetch EXAMPLE Problem Details (Title from Tutor, Description from Tools) --- 
-    example_details = None
-    example_problem_title = f"Title for {EXAMPLE_PROBLEM_ID_STR}"
-    example_problem_description_md = None
-
-    print(f"Fetching details for example problem {EXAMPLE_PROBLEM_ID_STR}...")
+    # --- Load EXAMPLE Problem Details from lftbench --- 
+    print(f"Loading details for example problem {EXAMPLE_PROBLEM_ID_STR} from lftbench...")
     try:
-        example_parsed_ids = _parse_problem_id(EXAMPLE_PROBLEM_ID_STR)
-        if not example_parsed_ids:
-             print(f"[Error] Failed to parse the hardcoded example problem ID: {EXAMPLE_PROBLEM_ID_STR}", file=sys.stderr)
-             sys.exit(1)
-        example_contest_id, example_problem_letter = example_parsed_ids
-        tutor_problem_id_example = f"{example_contest_id}_{example_problem_letter.lower()}"
+        example_problem_title = lftbench_utils.get_problem_title(EXAMPLE_PROBLEM_ID_STR)
+        example_problem_description_md = lftbench_utils.get_problem_description(EXAMPLE_PROBLEM_ID_STR)
         
-        # Get Title from Tutor
-        example_details_dict, status_code = tutor.fetch_problem_details(example_contest_id, tutor_problem_id_example)
-        if status_code != 200:
-            print(f"[Warning] Failed to fetch example problem details (title) from Tutor: {status_code} - {example_details_dict.get('error', 'Unknown error')}", file=sys.stderr)
-        else:
-            example_details = example_details_dict
-            example_problem_title = example_details.get("title", example_problem_title)
-            print("[Info] Example problem title fetched successfully via Tutor.")
-
-        # Get Description (Markdown) from Tools
-        print("Fetching example problem description (Markdown) via Tools...")
-        example_problem_url = f"https://atcoder.jp/contests/{example_contest_id}/tasks/{tutor_problem_id_example}"
-        # Reuse session if already loaded
-        if not session: session = tools.load_session()
-        if session:
-             example_problem_description_md = tools.get_problem_description(example_problem_url, session)
-             if not example_problem_description_md or example_problem_description_md.startswith("# Error"):
-                  print(f"[Error] Failed to get example problem description from Tools: {example_problem_description_md or 'None returned'}", file=sys.stderr)
-                  sys.exit(1) # Example description is critical
-             else:
-                  print("[Info] Example problem description fetched successfully via Tools.")
-        else:
-             print("[Error] Failed to get session via tools.load_session(). Cannot fetch example description.", file=sys.stderr)
-             sys.exit(1)
+        if not example_problem_title or example_problem_title.startswith("Unknown"):
+            print(f"[Warning] Example problem title not found in lftbench for {EXAMPLE_PROBLEM_ID_STR}", file=sys.stderr)
+        
+        if not example_problem_description_md or example_problem_description_md.startswith("# Error"):
+            print(f"[Error] Example problem description not found in lftbench for {EXAMPLE_PROBLEM_ID_STR}", file=sys.stderr)
+            sys.exit(1)
+        
+        print(f"[Success] Loaded example problem details from lftbench")
+        print(f"  Title: {example_problem_title}")
+        print(f"  Description: {len(example_problem_description_md)} characters")
 
     except Exception as e:
-        print(f"[Error] Error during example problem detail fetching: {e}", file=sys.stderr)
+        print(f"[Error] Error loading example problem details from lftbench: {e}", file=sys.stderr)
         traceback.print_exc()
         sys.exit(1)
         

@@ -1,0 +1,50 @@
+#include <iostream>
+#include <string>
+#include <vector>
+#include <algorithm>
+#include <utility>
+#include <tuple>
+#include <cstdint>
+#include <cstdio>
+#include <map>
+#include <queue>
+#include <set>
+#include <stack>
+#include <deque>
+#include <unordered_map>
+#include <unordered_set>
+#include <bitset>
+#include <cctype>
+#include<cmath>
+#include<iomanip>
+using namespace std;
+
+char win(char x){
+    if(x=='R') return 'P';
+    if(x=='S') return 'R';
+    if(x=='P') return 'S'; 
+    return 'X';
+}
+
+int main(){
+    int n;
+    string s;
+    cin >> n >> s;
+    
+    vector<int> dp(n + 1, 0);
+    char last = 'X'; // no valid move initially
+    
+    for (int i = 0; i < n; i++) {
+        char needed = win(s[i]);
+        
+        if (needed != last) {
+            dp[i + 1] = dp[i] + 1;
+            last = needed;
+        } else {
+            dp[i + 1] = dp[i];
+            // last remains same
+        }
+    }
+    
+    cout << dp[n] << endl;
+}

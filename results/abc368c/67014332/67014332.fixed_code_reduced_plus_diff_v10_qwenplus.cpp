@@ -1,0 +1,39 @@
+#include<bits/stdc++.h>
+using namespace std;
+using ll = long long;
+
+int main() {
+    ll n;
+    cin >> n;
+    vector<ll> h(n);
+    for(int i = 0; i < n; i++) {
+        cin >> h[i];
+    }
+    
+    ll ans = 0;
+    ll tri = 1;
+    
+    for(int i = 0; i < n; i++) {
+        ll remaining = h[i];
+        
+        // Process in chunks of 5: 3 attacks (3,1,1) deal 5 damage
+        ll full_cycles = remaining / 5;
+        ans += full_cycles * 3;
+        remaining %= 5;
+        
+        // Handle remaining health with simulation
+        while(remaining > 0) {
+            if(tri == 3) {
+                remaining -= 3;
+                tri = 1;
+            } else {
+                remaining -= 1;
+                tri++;
+            }
+            ans++;
+        }
+    }
+    
+    cout << ans;
+    return 0;
+}

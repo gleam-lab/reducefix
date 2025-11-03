@@ -1,0 +1,33 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int n, m;
+    cin >> n >> m;
+    vector<int> arr(n);
+    for (int i = 0; i < n; i++) {
+        cin >> arr[i];
+    }
+
+    long long ans = 0;
+    map<int, int> prefixCount;
+    prefixCount[0] = 1;
+
+    for (int rep = 0; rep < 2; rep++) {
+        int prefixSum = 0;
+        for (int i = 0; i < n; i++) {
+            prefixSum = (prefixSum + arr[i]) % m;
+            ans += prefixCount[prefixSum];
+            prefixCount[prefixSum]++;
+        }
+    }
+
+    // Subtract the overcounted full cycles
+    ans -= 2 * prefixCount[0]; 
+    cout << ans << endl;
+
+    return 0;
+}

@@ -1,0 +1,43 @@
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+
+int main() {
+    int N;
+    string S;
+    cin >> N >> S;
+    
+    char last_move = 'N'; // Last move played by Takahashi
+    int ans = 0;
+    
+    for (char c : S) {
+        if (c == 'P') {
+            // Opponent plays Paper, so we should play Scissors to win
+            if (last_move != 'S') {
+                ans++;
+                last_move = 'S';
+            } else {
+                last_move = 'P'; // Draw or avoid loss
+            }
+        } else if (c == 'R') {
+            // Opponent plays Rock, so we should play Paper to win
+            if (last_move != 'P') {
+                ans++;
+                last_move = 'P';
+            } else {
+                last_move = 'R';
+            }
+        } else if (c == 'S') {
+            // Opponent plays Scissors, so we should play Rock to win
+            if (last_move != 'R') {
+                ans++;
+                last_move = 'R';
+            } else {
+                last_move = 'S';
+            }
+        }
+    }
+    
+    cout << ans;
+    return 0;
+}

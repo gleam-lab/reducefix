@@ -1,0 +1,65 @@
+#include <iostream>
+#include <string>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+char win(char x) {
+    if (x == 'R') return 'P';
+    if (x == 'S') return 'R';
+    if (x == 'P') return 'S';
+    return 'X';
+}
+
+int main() {
+    int n;
+    string s;
+    cin >> n >> s;
+    
+    // dp[i][c] = minimum number of changes needed for prefix ending at i with last char c
+    // We only need previous state, so use two arrays
+    vector<int> prev(3, 1e9);
+    
+    // Map: R->0, P->1, S->2
+    auto getIdx = [](char c) {
+        if (c == 'R') return 0;
+        if (c == 'P') return 1;
+        return 2;
+    };
+    
+    auto getChar = [](int idx) {
+        if (idx == 0) return 'R';
+        if (idx == 1) return 'P';
+        return 'S';
+    };
+    
+    // Initialize first character
+    for (int i = 0; i < 3; i++) {
+        char c = getChar(i);
+        prev[i] = (c == s[0]) ? 0 : 1;
+    }
+    
+    for (int i = 1; i < n; i++) {
+        vector<int> curr(3, 1e9);
+        for (int last = 0; last < 3; last++) {
+            if (prev[last] == 1e9) continue;
+            char last_c = getChar(last);
+            char win_c = win(s[i]);
+            
+            // Option 1: change s[i] to beating character
+            for (int next = 0; next < 3; next++) {
+                char next_c = getChar(next);
+                if (next_c == win(s[i])) {  // must be winning move
+                    int cost = (next_c == s[i]) ? 0 : 1;
+                    curr[next] = min(curr[next], prev[last] + cost);
+                }
+            }
+        }
+        prev = curr;
+    }
+    
+    int result = *min_element(prev.begin(), prev.end());
+    cout << result << endl;
+    
+    return 0;
+}

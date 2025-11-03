@@ -1,0 +1,63 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define endl "\n"
+#define MOD 1000000007
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(0);
+
+    map<char, char> beats = {{'R', 'P'}, {'P', 'S'}, {'S', 'R'}};
+    int n;
+    cin >> n;
+    string s;
+    cin >> s;
+
+    if (n == 1) {
+        cout << 1 << endl;
+        return 0;
+    }
+
+    // dp[i][c] = maximum rounds we can win ending with move c at position i
+    vector<map<char, int>> dp(n);
+    
+    // Initialize first character
+    dp[0][beats[s[0]]] = 1; // We can beat opponent's first move
+    dp[0][s[0]] = 0;        // Draw - no point
+
+    for (int i = 1; i < n; i++) {
+        char opp_move = s[i];
+        char my_beat = beats[opp_move]; // Move that beats opponent
+        char my_lose = s[i-1];          // Move that loses to previous opponent move
+        
+        // Option 1: Play the move that beats current opponent
+        int best_prev = 0;
+        for (auto &[prev_move, score] : dp[i-1]) {
+            // Can transition if not playing the losing move
+            if (prev_move != my_lose) {
+                best_prev = max(best_prev, score);
+            }
+        }
+        dp[i][my_beat] = best_prev + 1;
+        
+        // Option 2: Play a move that doesn't win (draw or lose)
+        // We can always play the same move as before if it's not the losing one
+        for (auto &[prev_move, score] : dp[i-1]) {
+            if (prev_move != my_lose) {
+                // We can carry forward the score without incrementing (draw/loss)
+                if (dp[i].count(prev_move) == 0 || dp[i][prev_move] < score) {
+                    dp[i][prev_move] = score;
+                }
+            }
+        }
+    }
+
+    int result = 0;
+    for (auto &[move, score] : dp[n-1]) {
+        result = max(result, score);
+    }
+    
+    cout << result << endl;
+
+    return 0;
+}

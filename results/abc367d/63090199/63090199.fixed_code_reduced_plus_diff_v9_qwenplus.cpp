@@ -1,0 +1,51 @@
+#include<bits/stdc++.h>
+using namespace std;
+
+int n, m;
+int main() {
+    cin >> n >> m;
+    vector<int> nums(n);
+    for (int i = 0; i < n; i++) {
+        cin >> nums[i];
+    }
+    
+    vector<long long> prefixsum(n + 1, 0);
+    for (int i = 0; i < n; i++) {
+        prefixsum[i + 1] = prefixsum[i] + nums[i];
+    }
+    
+    long long count = 0;
+    
+    // For each starting position s, we want to find all t such that the sum from s to t (circular) is divisible by m
+    // The sum from s to t (not including s) in circular array can be calculated as:
+    // If s < t: sum = prefixsum[t] - prefixsum[s]
+    // If s > t: sum = prefixsum[n] - prefixsum[s] + prefixsum[t]
+    
+    // We'll use a map to store frequency of prefix sums modulo m
+    for (int s = 0; s < n; s++) {
+        unordered_map<int, int> mod_count;
+        
+        // Initialize with prefixsum[s] % m since we need (prefixsum[t] - prefixsum[s]) % m == 0
+        // or (prefixsum[n] - prefixsum[s] + prefixsum[t]) % m == 0
+        mod_count[prefixsum[s] % m] = 1;
+        
+        // Look at all positions t where t != s
+        for (int t = 0; t < n; t++) {
+            if (t == s) continue;
+            
+            long long step;
+            if (s < t) {
+                step = prefixsum[t] - prefixsum[s];
+            } else {
+                step = prefixsum[n] - prefixsum[s] + prefixsum[t];
+            }
+            
+            if (step % m == 0) {
+                count++;
+            }
+        }
+    }
+    
+    cout << count << endl;
+    return 0;
+}

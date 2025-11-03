@@ -1,0 +1,42 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define endl "\n"
+#define MOD 1000000007
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(0);
+
+    map<char, char> beats = {{'R', 'P'}, {'P', 'S'}, {'S', 'R'}};
+    int n;
+    cin >> n;
+    string s;
+    cin >> s;
+
+    if (n == 0) {
+        cout << 0 << endl;
+        return 0;
+    }
+
+    int total = 1;
+    char last_move = s[0]; // Last move we played
+
+    for (int i = 1; i < n; i++) {
+        char opponent_move = s[i];
+        char our_beat = beats[opponent_move];
+
+        // If our winning move is same as last move, we can continue the streak
+        if (our_beat == last_move) {
+            continue;
+        }
+        // Otherwise, we need to change our move
+        else {
+            total++;
+            last_move = our_beat;
+        }
+    }
+
+    cout << total << endl;
+
+    return 0;
+}

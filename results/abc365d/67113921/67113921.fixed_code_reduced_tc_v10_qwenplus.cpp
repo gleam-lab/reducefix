@@ -1,0 +1,48 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main(){
+    ios_base::sync_with_stdio(false);
+    cin.tie(NULL);
+
+    int N;
+    string S;
+    cin >> N;
+    cin >> S;
+    int wins = 0;
+    char prev = 'a'; // no move has been played initially
+
+    for (char c : S){
+        char winmove;
+        if (c == 'R'){
+            winmove = 'P';
+        } else if (c == 'P'){
+            winmove = 'S';
+        } else if (c == 'S'){
+            winmove = 'R';
+        }
+
+        // We can choose the winning move unless it was used in the previous round
+        if (winmove != prev) {
+            wins++;
+            prev = winmove; // we play the winning move
+        } else {
+            // We cannot repeat the same move, so we don't win this round
+            // We must pick a different move; to avoid conflict later, set prev to current opponent's move
+            // But actually, we can pick any non-winning and non-previous move, but it doesn't matter for future wins
+            // Just update prev to something that is not winmove (could be c or the third option)
+            // However, to minimize interference, we can just use the opponent's move as our choice? 
+            // Actually, we are free to choose any valid move. For maximizing future wins, we should choose the one that blocks future win if possible.
+            // But note: we only care about count of wins. And we only get blocked when winmove == prev.
+            // So if we can't play winmove, we must play something else, and that becomes prev.
+            // The optimal strategy: if winmove == prev, then we have two choices: either play c (tie) or the losing move (lose).
+            // But neither gives a win. So we just need to pick one that minimizes blocking future wins.
+            // To maximize future wins, we should pick the move that is NOT the next winmove (if known), but we don't know future.
+            // Instead, best is to pick the move that is least likely to interfere — i.e., not the winmove of next if possible.
+            // However, since we don't know the future, the safest is to pick the move that is not winmove and not going to block next win unnecessarily.
+            // Actually, we can choose arbitrarily. Let's choose the opponent's move (c) as our move when we can't win.
+            prev = c;
+        }
+    }   
+    cout << wins;
+}

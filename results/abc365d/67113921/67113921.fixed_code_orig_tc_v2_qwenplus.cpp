@@ -1,0 +1,40 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main(){
+    ios_base::sync_with_stdio(false);
+    cin.tie(NULL);
+
+    int N;
+    string S;
+    cin >> N >> S;
+    
+    long long wins = 0;
+    char prev = 'a'; // no move played initially
+    
+    for (char c : S) {
+        char winmove;
+        if (c == 'R') {
+            winmove = 'P';
+        } else if (c == 'P') {
+            winmove = 'S';
+        } else { // c == 'S'
+            winmove = 'R';
+        }
+        
+        // If we can use the winning move without repeating the previous move
+        if (winmove != prev) {
+            wins++;
+            prev = winmove;
+        } else {
+            // Otherwise, we must use the losing or same move, which doesn't win
+            // But we update prev to opponent's move (as per problem logic of what we play?)
+            // Actually: We are forced to play something different from prev, but it won't be a win
+            // So we play the opponent's move (or any non-winning non-prev), and no win
+            prev = c; // playing same as opponent is safe and avoids repetition
+        }
+    }
+    
+    cout << wins;
+    return 0;
+}

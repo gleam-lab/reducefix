@@ -1,0 +1,38 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main(){
+    ios_base::sync_with_stdio(false);
+    cin.tie(NULL);
+
+    int N;
+    string S;
+    cin >> N;
+    cin >> S;
+    int wins = 0;
+    char prev = 'a'; // previous move we made
+
+    for (char c : S){
+        char winmove;
+        if (c == 'R'){
+            winmove = 'P';
+        } else if (c == 'P'){
+            winmove = 'S';
+        } else { // c == 'S'
+            winmove = 'R';
+        }
+        
+        // We can win this round if our winning move is different from our previous move
+        // Or if it's the first move (prev == 'a')
+        if (prev == 'a' || winmove != prev) {
+            wins++;
+            prev = winmove;
+        } else {
+            // We can't use the winning move because it would be same as previous
+            // So we play the same move as opponent (or any non-winning move)
+            // This results in a tie or loss, but allows us to set up for next round
+            prev = c;
+        }
+    }   
+    cout << wins;
+}

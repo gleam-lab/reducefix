@@ -1,0 +1,34 @@
+#include<bits/stdc++.h>
+using namespace std;
+
+int main() {
+    int N;
+    cin >> N;
+    vector<long long> H(N);
+    for (int i = 0; i < N; i++) {
+        cin >> H[i];
+    }
+    
+    long long T = 0;
+    int current_enemy = 0;
+    
+    while (current_enemy < N) {
+        // Skip enemies that are already defeated
+        if (H[current_enemy] <= 0) {
+            current_enemy++;
+            continue;
+        }
+        
+        T++;
+        
+        // Attack the frontmost alive enemy
+        if (T % 3 == 0) {
+            H[current_enemy] -= 3;
+        } else {
+            H[current_enemy] -= 1;
+        }
+    }
+    
+    cout << T << endl;
+    return 0;
+}

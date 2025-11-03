@@ -1,0 +1,37 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main(){
+    ios_base::sync_with_stdio(false);
+    cin.tie(NULL);
+
+    int N;
+    string S;
+    cin >> N;
+    cin >> S;
+    
+    int wins = 0;
+    char prev = 'a'; // no move made yet
+    
+    for (char c : S) {
+        char winmove;
+        if (c == 'R') {
+            winmove = 'P';
+        } else if (c == 'P') {
+            winmove = 'S';
+        } else { // c == 'S'
+            winmove = 'R';
+        }
+        
+        if (winmove != prev) {
+            wins++;
+            prev = winmove;
+        } else {
+            // We can't use the same winning move consecutively.
+            // So we must play the current opponent's move (or any non-winning, non-conflicting move),
+            // which doesn't add to our win count and sets prev to something that might allow a win next time.
+            prev = c;
+        }
+    }   
+    cout << wins;
+}

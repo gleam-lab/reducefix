@@ -1,0 +1,279 @@
+```cpp
+#include<bits/stdc++.h>
+using namespace std;
+int n,m;
+int main(){
+    cin>>n>>m;
+    vector<int>nums(n);
+    for(int i=0;i<n;i++){
+        cin>>nums[i];
+    }
+    vector<int>prefixsum(n+1,0);
+    for(int i=0;i<n;i++){//求前缀和
+        prefixsum[i+1]=prefixsum[i]+nums[i];
+    }
+    long long count=0;
+    // 使用map记录每个前缀和模m的余数出现的次数
+    map<int,int> modCount;
+    // 初始化：前缀和为0（空前缀）的情况
+    modCount[0] = 1;
+
+    // 遍历前缀和，统计模m相同余数的个数
+    for(int i=1;i<=n;i++){
+        int mod = prefixsum[i] % m;
+        if(mod < 0) mod += m; // 处理负数取模
+        count += modCount[mod];
+        modCount[mod]++;
+    }
+
+    // 总共的合法(s,t)对是满足 (prefix[t] - prefix[s]) % m == 0 的对数
+    // 即 prefix[t] % m == prefix[s] % m，且 s < t
+    // 上面的循环已经统计了所有s < t且同余的情况
+
+    // 但是题目中s和t是位置，且s != t，且是环形？原题逻辑有歧义。
+    // 重新理解：原代码尝试枚举s和t，并计算从s到t（顺时针）的步数和是否被m整除。
+    // 但原意可能是：有多少对不同的索引(s,t)，使得从s+1到t（或绕行）的和能被m整除。
+
+    // 然而，根据输入输出样例：
+    // 输入: 1 1 \n 136872 -> 输出 0
+    // 我们的算法：n=1, m=1, prefix[0]=0, prefix[1]=136872
+    // modCount: 初始{0:1}
+    // i=1: mod = 136872 % 1 = 0, count += 1 => count=1, 然后 modCount[0]=2
+    // 所以会输出1，但期望是0。
+
+    // 问题：原题可能要求s != t，但在我们的方法中，我们统计的是s < t且同余的对数。
+    // 对于n=1，只有一对(s=0,t=1)，对应区间[1,1]，即整个数组。
+    // 但原代码中枚举的是s和t从1到n，表示位置，且s!=t。
+    // 在n=1时，没有满足s!=t的对，所以应为0。
+
+    // 因此，正确做法是：枚举所有s != t，其中s和t是1~n之间的位置（对应数组下标s-1, t-1）
+    // 并计算从s出发到t的顺时针路径上的和。
+
+    // 更高效的方法：
+    // 总和 S = prefixsum[n]
+    // 从s到t（s<t）: sum = prefixsum[t] - prefixsum[s]
+    // 从s到t（s>t）: sum = prefixsum[n] - prefixsum[s] + prefixsum[t]
+    // 要求 sum % m == 0
+
+    // 注意：s和t是1~n，且s != t。
+
+    // 暴力O(N^2)对于大n会超时。需要优化。
+
+    // 重新思考：
+    // 条件：sum_{i=s}^{t-1} nums[i] ≡ 0 (mod m)   [如果s<=t，则区间[s,t-1]；如果s>t，则是[s,n] + [1,t-1]]
+    // 这等价于：(prefixsum[t] - prefixsum[s]) % m == 0 当 s <= t
+    //           (prefixsum[n] - prefixsum[s] + prefixsum[t]) % m == 0 当 s > t
+    // 即 (prefixsum[t] - prefixsum[s] + (s>t ? prefixsum[n] : 0)) % m == 0
+
+    // 但注意：当s>t时，总和是 total - (prefixsum[s] - prefixsum[t])
+    // 所以条件变为：(total - (prefixsum[s] - prefixsum[t])) % m == 0
+    // 即 (prefixsum[t] - prefixsum[s] + total) % m == 0
+
+    // 所以分两种情况：
+    // case1: s < t: (prefixsum[t] - prefixsum[s]) % m == 0  => prefixsum[t] % m == prefixsum[s] % m
+    // case2: s > t: (total + prefixsum[t] - prefixsum[s]) % m == 0 => (prefixsum[t] - prefixsum[s]) % m == (-total) % m
+
+    // 因此，我们可以：
+    // 1. 统计所有前缀和模m的频率（prefixsum[0..n]）
+    // 2. 对于每一对(s,t) with s != t:
+    //    - 如果s < t: 贡献是 freq[x] 中 x 相同的对数（但要保证s在t前面）
+    //    - 如果s > t: 贡献是 freq[x] 和 freq[y] 满足 (y - x) % m == (-total) % m
+
+    // 但注意：prefixsum[s] 对应位置s（s从0到n），而s的位置是1~n，对应prefixsum[s]中的s=1..n
+    // 实际上，我们考虑的是 s,t ∈ {1,2,...,n}，对应前缀和下标s和t（即prefixsum[s], prefixsum[t]）
+
+    // 所以：
+    // 让 A[i] = prefixsum[i] for i in [0,n]
+    // 我们要统计：
+    //   count = 0
+    //   for s in [1,n]:
+    //     for t in [1,n]:
+    //        if s==t: continue
+    //        if s < t: condition: (A[t]-A[s]) % m == 0
+    //        if s > t: condition: (A[n] + A[t] - A[s]) % m == 0
+
+    // 可以拆成两部分：
+    // part1: s < t and (A[t] - A[s]) % m == 0
+    // part2: s > t and (A[t] - A[s] + A[n]) % m == 0
+
+    // part1: 对于所有 1<=s<t<=n，满足 A[t] % m == A[s] % m
+    //        我们可以遍历t从1到n，用map统计A[s] (s from 1 to t-1) 的模值频率
+    // part2: 对于所有 1<=t<s<=n，满足 (A[t] - A[s] + A[n]) % m == 0
+    //        即 (A[t] + A[n]) % m == A[s] % m
+    //        同样，可以固定s，然后看t in [1,s-1] 中有多少个满足 (A[t]+A[n])%m == A[s]%m
+
+    // 但是注意：A[n] 是总和，记为 total。
+
+    // 然而，n最大可能是1e5，O(n^2)会超时。我们需要O(n log n)
+
+    // 正确高效的做法：
+
+    // 先处理 part1: s < t
+    map<int, int> freq1;
+    long long result = 0;
+    // 注意：我们只考虑 s,t in [1, n]，即前缀和下标从1到n
+    // 但注意，prefixsum[0] 存在，但我们不把它作为s或t（因为s,t是位置1~n）
+
+    // part1: s < t, A[t] ≡ A[s] (mod m)
+    for (int t = 1; t <= n; t++) {
+        int mod_val = prefixsum[t] % m;
+        if (mod_val < 0) mod_val += m;
+        result += freq1[mod_val];
+        freq1[mod_val]++;
+    }
+
+    // part2: s > t, (A[t] - A[s] + total) % m == 0
+    // 即 A[s] % m == (A[t] + total) % m
+    // 但注意：这里s>t，所以我们遍历s从2到n，对于每个s，我们查看t in [1, s-1] 中有多少个满足 (A[t]+total)%m == A[s]%m
+    // 但我们已经有一个freq1包含了所有t in [1, s-1]的A[t]信息吗？不，因为我们之前统计的是单独的part1
+
+    // 所以我们需要重新统计，或者合并。
+
+    // 更好的方式：先收集所有 A[t] for t in [1, n]
+    map<int, int> freq2;
+    for (int t = 1; t <= n; t++) {
+        int mod_val = prefixsum[t] % m;
+        if (mod_val < 0) mod_val += m;
+        freq2[mod_val]++;
+    }
+
+    // 但这样不行，因为我们要确保 t < s
+
+    // 所以我们按顺序遍历s从1到n，在遍历过程中维护一个频率表，代表所有t < s的A[t]的模值
+    map<int, int> freq_t;
+    for (int s = 1; s <= n; s++) {
+        // 在处理s之前，freq_t包含所有t in [1, s-1] 的A[t]模值
+        int need_mod = (prefixsum[s] - (prefixsum[n] % m) % m;
+        // 条件： (A[t] + total) % m == A[s] % m
+        // => A[t] % m == (A[s] - total) % m
+        int target = (prefixsum[s] - prefixsum[n]) % m;
+        if (target < 0) target += m;
+        result += freq_t[target];
+
+        // 将当前s的A[s]加入freq_t，作为后续的t
+        int mod_val = prefixsum[s] % m;
+        if (mod_val < 0) mod_val += m;
+        freq_t[mod_val]++;
+    }
+
+    // 但是上面的part1和part2是独立的吗？
+    // 不，我们不能既做part1又做part2，因为part1已经用了freq1，part2又用了freq_t，而且它们都遍历了相同的点。
+
+    // 实际上，我们可以在一个循环中同时完成两个部分？
+
+    // 或者，更简单：我们意识到原题可能不需要这么复杂。
+
+    // 回顾：原代码暴力双重循环，O(n^2)，对于n=10^5会超时。
+
+    // 但测试用例 n=1，期望0，说明当n=1时，没有s!=t的对。
+
+    // 所以正确的做法是：只有n>=2时才可能有解。
+
+    // 然而，我们之前的part1方法（统计相同余数的对数）实际上就是统计所有 s < t 且 A[s] ≡ A[t] (mod m) 的对数。
+    // 这正好是 part1 的答案。
+
+    // part2 是 s > t 且 (A[t] - A[s] + total) % m == 0，即 A[s] ≡ A[t] + total (mod m)
+
+    // 所以我们可以：
+    //   result = 0;
+    //   map<int, int> freq;
+    //   for (int i = 1; i <= n; i++) {
+    //       // 先统计 part2：有多少个 t < i 使得 A[i] ≡ A[t] + total (mod m)
+    //       int target = (prefixsum[i] - prefixsum[n]) % m;
+    //       if (target < 0) target += m;
+    //       result += freq[target];
+    //
+    //       // 再统计 part1：有多少个 j < i 使得 A[j] ≡ A[i] (mod m) —— 但等等，这是反的
+    //       // part1 是 s < t，所以当我们到达t时，统计前面有多少个s满足A[s]==A[t]
+    //       // 所以我们应该先加 part1，再插入
+    //   }
+
+    // 所以正确的单次遍历：
+    // 我们想要：
+    //   part1: 对于每个t，统计s in [1, t-1] 满足 A[s] ≡ A[t] (mod m)
+    //   part2: 对于每个s，统计t in [1, s-1] 满足 A[t] ≡ A[s] - total (mod m)  [因为 A[s] ≡ A[t]+total => A[t] ≡ A[s]-total]
+    //
+    // 但注意：在 part2 中，s 是较大的索引，t 是较小的，所以当我们遍历到s时，我们可以用 freq 记录所有 t < s 的 A[t] 模值。
+    //
+    // 所以：
+    map<int, int> freq;
+    long long ans = 0;
+    for (int i = 1; i <= n; i++) {
+        int mod_val = prefixsum[i] % m;
+        if (mod_val < 0) mod_val += m;
+
+        // part1: find s < i such that A[s] ≡ A[i] (mod m)
+        ans += freq[mod_val];
+
+        // part2: find t < i such that A[t] ≡ (A[i] - total) (mod m)
+        int target = (prefixsum[i] - prefixsum[n]) % m;
+        if (target < 0) target += m;
+        ans += freq[target];
+
+        // 将当前的A[i]加入freq
+        freq[mod_val]++;
+    }
+
+    // 但是，这样对吗？
+    // 考虑 n=2, m=2, nums=[1,1]
+    // total = 2
+    // prefixsum = [0,1,2]
+    // i=1: 
+    //   mod_val = 1 % 2 = 1
+    //   part1: freq[1]=0
+    //   target = (1-2)%2 = (-1)%2 = 1 -> freq[1]=0
+    //   then freq[1] becomes 1
+    // i=2:
+    //   mod_val = 2%2=0
+    //   part1: freq[0]=0
+    //   target = (2-2)%2=0 -> freq[0]=0
+    //   then freq[0] becomes 1
+    // ans=0
+    // 但让我们手动计算：
+    // s=1,t=2: s<t, sum = prefix[2]-prefix[1]=2-1=1, 1%2!=0 -> not valid
+    // s=2,t=1: s>t, sum = total - (prefix[2]-prefix[1]) = 2-1=1, 1%2!=0 -> not valid
+    // 所以确实为0。
+
+    // 另一个例子：n=2, m=1, nums=[1,1]
+    // total=2
+    // any sum mod 1 is 0, so both pairs should be valid.
+    // s=1,t=2: step=1, 1%1=0 -> valid
+    // s=2,t=1: step=1, 1%1=0 -> valid
+    // count=2.
+
+    // Now run our algorithm:
+    // prefixsum=[0,1,2]
+    // m=1
+    // i=1:
+    //   mod_val = 1%1=0
+    //   part1: freq[0]=0
+    //   target = (1-2)%1 = (-1)%1=0 -> freq[0]=0
+    //   then freq[0]=1
+    // i=2:
+    //   mod_val=2%1=0
+    //   part1: freq[0]=1 -> ans+=1
+    //   target=(2-2)%1=0 -> freq[0]=1 -> ans+=1, now ans=2
+    //   then freq[0] becomes 2
+    // output 2 -> correct.
+
+    // But wait: what about the fact that in part1 we are counting s<i with same mod, which corresponds to s<t=i.
+    // And in part2 we are counting t<i such that A[t] ≡ A[i]-total (mod m), which corresponds to t<s=i in the s>t case.
+    // So it matches.
+
+    // However, note that in part2, the condition is for a fixed s=i, we want t<i such that the segment from s to t (s>t) has sum divisible by m.
+    // And we derived: (A[t] - A[s] + total) % m == 0  => A[t] % m == (A[s] - total) % m.
+
+    // Therefore, the code:
+
+    // But wait: in the derivation for s>t:
+    //   sum = total - (A[s] - A[t]) = total - A[s] + A[t]
+    //   we want (total - A[s] + A[t]) % m == 0
+    //   => (A[t] - A[s] + total) % m == 0
+    //   => A[t] % m == (A[s] - total) % m   ??? Let's check:
+    //        (A[t] - A[s] + total) ≡ 0 (mod m)
+    //        => A[t] ≡ A[s] - total (mod m)
+    //   Yes.
+
+    // So the code is correct.
+
+    // But note: we must use long long for count because n

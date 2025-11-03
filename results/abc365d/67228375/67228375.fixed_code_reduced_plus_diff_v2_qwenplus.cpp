@@ -1,0 +1,71 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define endl "\n"
+#define MOD 1000000007
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(0);
+
+    map<char, char> beats = {{'R', 'P'}, {'P', 'S'}, {'S', 'R'}};
+    int n;
+    cin >> n;
+    string s;
+    cin >> s;
+
+    if (n == 0) {
+        cout << 0 << endl;
+        return 0;
+    }
+
+    // dp[i][c] = maximum number of wins ending at position i with move c
+    vector<map<char, int>> dp(n);
+    
+    // Initialize first round
+    dp[0][beats[s[0]]] = 1;  // win by playing the move that beats opponent's move
+    dp[0][s[0]] = 0;         // draw by playing same move
+    // We don't consider losing moves as they can't be optimal
+
+    for (int i = 1; i < n; i++) {
+        char opp_move = s[i];
+        char winning_move = beats[opp_move];
+        char losing_move = beats[winning_move]; // what loses to opponent's move
+        
+        // Try all possible moves from previous state
+        int best_without_winning = 0;
+        for (auto& [prev_move, wins] : dp[i-1]) {
+            if (prev_move != winning_move) {
+                best_without_winning = max(best_without_winning, wins);
+            }
+        }
+        
+        // Current winning move gives us one more win
+        dp[i][winning_move] = best_without_winning + 1;
+        
+        // For non-winning moves (draw or loss), we can carry forward better sequences
+        int best_any = 0;
+        for (auto& [prev_move, wins] : dp[i-1]) {
+            best_any = max(best_any, wins);
+        }
+        
+        // Playing the same move as opponent (draw)
+        if (dp[i].count(opp_move) == 0 || dp[i][opp_move] < best_any) {
+            dp[i][opp_move] = best_any;
+        }
+        
+        // Playing the losing move (we avoid this as it doesn't help)
+        // But we include it for completeness
+        if (dp[i].count(losing_move) == 0 || dp[i][losing_move] < best_any) {
+            dp[i][losing_move] = best_any;
+        }
+    }
+
+    int result = 0;
+    for (auto& [move, wins] : dp[n-1]) {
+        result = max(result, wins);
+    }
+    
+    cout << result << endl;
+
+    return 0;
+}

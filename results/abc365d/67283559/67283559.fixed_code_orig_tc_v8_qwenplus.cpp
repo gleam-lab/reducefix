@@ -1,0 +1,55 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main(){
+    int N;
+    cin >> N;
+    string S;
+    cin >> S;
+    
+    // Score mapping: what beats what
+    auto wins = [](char a, char b) {
+        return (a == 'R' && b == 'S') || 
+               (a == 'P' && b == 'R') || 
+               (a == 'S' && b == 'P');
+    };
+    
+    // Try both possible starting hands
+    int max_score = 0;
+    
+    for (char first_hand : {'R', 'P', 'S'}) {
+        int score = 0;
+        char current_hand = first_hand;
+        
+        for (int i = 0; i < N; i++) {
+            // If current hand wins, keep it
+            if (wins(current_hand, S[i])) {
+                score++;
+            } else {
+                // Find the best hand that beats opponent's move
+                // and is different from current hand
+                vector<char> candidates = {'R', 'P', 'S'};
+                char best_hand = current_hand; // default: same hand
+                
+                for (char c : candidates) {
+                    if (c != current_hand && wins(c, S[i])) {
+                        best_hand = c;
+                        break;
+                    }
+                }
+                
+                // If we found a winning alternative, switch and score
+                if (best_hand != current_hand) {
+                    score++;
+                    current_hand = best_hand;
+                }
+                // Otherwise, we lose or tie, so just continue with same hand
+            }
+        }
+        
+        max_score = max(max_score, score);
+    }
+    
+    cout << max_score << endl;
+    return 0;
+}

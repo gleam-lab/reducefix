@@ -1,0 +1,60 @@
+#include <iostream>
+#include <string>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+char win(char x) {
+    if (x == 'R') return 'P';
+    if (x == 'S') return 'R';
+    if (x == 'P') return 'S';
+    return 'X';
+}
+
+int main() {
+    int n;
+    string s;
+    cin >> n >> s;
+
+    // Forward pass: start with the first move's winning counter
+    vector<int> forward(n + 1, 0);
+    char last = win(s[0]); // First action is countering the first throw
+    forward[1] = 1;
+    
+    for (int i = 1; i < n; i++) {
+        char wanted = win(s[i]);
+        if (wanted != last) {
+            // Need to switch
+            forward[i+1] = forward[i] + 1;
+            last = wanted;
+        } else {
+            // Can continue without switching
+            forward[i+1] = forward[i];
+        }
+    }
+
+    // Backward pass: start from the end
+    vector<int> backward(n + 1, 0);
+    last = win(s[n-1]);
+    backward[n-1] = 1;
+    
+    for (int i = n - 2; i >= 0; i--) {
+        char wanted = win(s[i]);
+        if (wanted != last) {
+            backward[i] = backward[i+1] + 1;
+            last = wanted;
+        } else {
+            backward[i] = backward[i+1];
+        }
+    }
+
+    int ans = 0;
+    // Try all split points: [0, i) forward, [i, n) backward
+    for (int i = 0; i <= n; i++) {
+        int cost = forward[i] + backward[i];
+        ans = max(ans, cost);
+    }
+
+    cout << ans << endl;
+    return 0;
+}

@@ -1,0 +1,32 @@
+#include<bits/stdc++.h>
+using namespace std;
+int n,m;
+int main(){
+    cin>>n>>m;
+    vector<int>nums(n);
+    for(int i=0;i<n;i++){
+        cin>>nums[i];
+    }
+    vector<int>prefixsum(n+1,0);
+    for(int i=0;i<n;i++){
+        prefixsum[i+1]=prefixsum[i]+nums[i];
+    }
+    long long count=0;
+    // 使用map统计每个余数出现的次数
+    map<int,int> remainder_count;
+    
+    // 首先统计所有前缀和对m取模的结果（包括prefixsum[0] = 0）
+    for(int i=0;i<=n;i++){
+        int r = prefixsum[i] % m;
+        remainder_count[r]++;
+    }
+    
+    // 对于每个余数r，如果有k个前缀和模m等于r，
+    // 那么可以构成k*(k-1)个满足条件的(s,t)对（s != t）
+    for(auto& [r, cnt] : remainder_count){
+        count += 1LL * cnt * (cnt - 1);
+    }
+    
+    cout<<count<<endl;
+    return 0;
+}

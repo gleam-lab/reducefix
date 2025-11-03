@@ -1,0 +1,258 @@
+```cpp
+#include<bits/stdc++.h>
+using namespace std;
+
+int main() {
+    int n, m;
+    cin >> n >> m;
+    vector<int> a(2 * n + 1);
+    vector<int> t(m, 0);
+    long long an = 0;
+    int prefix = 0;
+    
+    for (int i = 1; i <= n; i++) {
+        cin >> a[i];
+        a[i] %= m;
+        a[i + n] = a[i];
+    }
+    
+    t[0] = 1; // empty prefix has sum 0
+    
+    for (int i = 1; i <= 2 * n; i++) {
+        prefix = (prefix + a[i]) % m;
+        an += t[prefix];
+        t[prefix]++;
+        
+        // Remove the contribution of prefixes that are more than n elements away
+        if (i >= n) {
+            int old_prefix = (prefix - a[i - n + 1] + m) % m;
+            // We can't directly decrement here because we don't know which one to remove
+            // Instead, we maintain the sliding window by only considering valid prefixes
+        }
+    }
+    
+    // The above approach has issues with the sliding window.
+    // Let's use a different approach: process each starting position separately
+    // Actually, let's fix the original logic:
+    
+    // Reset
+    fill(t.begin(), t.end(), 0);
+    an = 0;
+    prefix = 0;
+    t[0] = 1;
+    
+    for (int i = 1; i <= 2 * n; i++) {
+        prefix = (prefix + a[i]) % m;
+        
+        // Add count of prefixes at position i-n (if exists)
+        if (i > n) {
+            // Remove the prefix that is now out of the n-length window
+            int prefix_to_remove = (prefix - ((long long)a[i] - a[i-n]) % m + m) % m;
+            // This approach is getting complex. Let's simplify.
+        }
+        
+        if (i >= n) {
+            an += t[prefix];
+        }
+        
+        t[prefix]++;
+        
+        // Remove prefix sum at position i-n+1 from consideration for future
+        if (i >= n) {
+            // The prefix sum at position i-n is no longer valid for windows of length <= n
+            // But our counting is off.
+        }
+    }
+    
+    // Correct approach: Use the fact that we want subarrays of length at most n
+    // But the problem seems to be about circular array and finding number of subarrays with sum divisible by m
+    
+    // After analysis, the original code has a flaw in the sliding window removal.
+    // Here's the corrected version:
+    
+    fill(t.begin(), t.end(), 0);
+    an = 0;
+    prefix = 0;
+    
+    // Count empty prefix at position 0
+    t[0] = 1;
+    
+    for (int i = 1; i <= 2 * n; i++) {
+        prefix = (prefix + a[i]) % m;
+        
+        // For positions beyond n, we need to remove the prefix that is now too far back
+        if (i > n) {
+            int prefix_to_remove = (prefix - a[i] + m) % m;
+            // Actually, we need to track the prefix at position i-n
+            // Let's recalculate prefix at i-n:
+            // This is complex. Instead, let's do:
+            int pos = i - n;
+            int p = 0;
+            for (int j = 1; j < pos; j++) {
+                p = (p + a[j]) % m;
+            }
+            t[p]--;
+        }
+        
+        an += t[prefix];
+        t[prefix]++;
+    }
+    
+    // The above is O(n^2). Let's go back to the original intent.
+    
+    // After careful thought, here's the correct solution:
+    fill(t.begin(), t.end(), 0);
+    an = 0;
+    prefix = 0;
+    
+    t[0] = 1;
+    
+    for (int i = 1; i <= 2 * n; i++) {
+        prefix = (prefix + a[i]) % m;
+        
+        // All prefixes from max(1, i-n+1) to i can form valid subarrays
+        // But we only have counts in t for prefixes within the last n positions
+        
+        an += t[prefix];
+        
+        t[prefix]++;
+        
+        // Remove the prefix sum that is now out of the n-window
+        if (i >= n) {
+            // The prefix sum at position i-n should be removed
+            // Calculate prefix at position i-n
+            int old_prefix = 0;
+            for (int j = 1; j <= i - n; j++) {
+                old_prefix = (old_prefix + a[j]) % m;
+            }
+            t[old_prefix]--;
+        }
+    }
+    
+    // This is still O(n^2). We need O(n).
+    
+    // Final correct approach:
+    // The error in original code is the order of operations and incorrect removal.
+    
+    fill(t.begin(), t.end(), 0);
+    an = 0;
+    prefix = 0;
+    
+    t[0] = 1; // empty prefix
+    
+    for (int i = 1; i <= 2 * n; i++) {
+        prefix = (prefix + a[i]) % m;
+        
+        // Before adding current prefix, remove the one that is now out of range
+        if (i > n) {
+            // Remove prefix at position i-n-1 (the one that was added when we were at position i-n)
+            int pos_to_remove = i - n - 1;
+            if (pos_to_remove >= 0) {
+                int p_remove = 0;
+                for (int j = 1; j <= pos_to_remove; j++) {
+                    p_remove = (p_remove + a[j]) % m;
+                }
+                t[p_remove]--;
+            }
+        }
+        
+        an += t[prefix];
+        t[prefix]++;
+    }
+    
+    // I'm overcomplicating. Let me write the clean correct solution.
+    
+    return 0;
+}
+```
+
+I apologize for the confusion in my thought process. Let me provide the correct fixed code:
+
+```cpp
+#include<bits/stdc++.h>
+using namespace std;
+
+int main() {
+    int n, m;
+    cin >> n >> m;
+    vector<int> a(2 * n + 1);
+    vector<int> t(m, 0);
+    long long an = 0;
+    int prefix = 0;
+    
+    for (int i = 1; i <= n; i++) {
+        cin >> a[i];
+        a[i] %= m;
+        a[i + n] = a[i];
+    }
+    
+    t[0] = 1; // empty prefix at position 0
+    
+    for (int i = 1; i <= 2 * n; i++) {
+        prefix = (prefix + a[i]) % m;
+        
+        // Remove the prefix sum that is now out of the valid range (more than n positions back)
+        if (i > n) {
+            // Calculate the prefix sum at position i-n-1
+            int old_prefix = 0;
+            for (int j = 1; j <= i - n - 1; j++) {
+                old_prefix = (old_prefix + a[j]) % m;
+            }
+            t[old_prefix]--;
+        }
+        
+        an += t[prefix];
+        t[prefix]++;
+    }
+    
+    cout << an;
+    return 0;
+}
+```
+
+Wait, this is still not optimal. Let me provide the truly correct solution:
+
+```cpp
+#include<bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+    
+    int n, m;
+    cin >> n >> m;
+    vector<int> a(2 * n + 1, 0);
+    vector<int> prefix_sum(2 * n + 1, 0);
+    vector<int> count(m, 0);
+    long long result = 0;
+    
+    // Read input and create doubled array for circular property
+    for (int i = 1; i <= n; i++) {
+        cin >> a[i];
+        a[i] %= m;
+        a[i + n] = a[i];
+    }
+    
+    // Calculate prefix sums
+    for (int i = 1; i <= 2 * n; i++) {
+        prefix_sum[i] = (prefix_sum[i-1] + a[i]) % m;
+    }
+    
+    // Initialize count for empty prefix
+    count[0] = 1;
+    
+    for (int i = 1; i <= 2 * n; i++) {
+        // Remove prefix sums that are more than n positions behind
+        if (i > n) {
+            count[prefix_sum[i - n - 1]]--;
+        }
+        
+        result += count[prefix_sum[i]];
+        count[prefix_sum[i]]++;
+    }
+    
+    cout << result;
+    return 0;
+}
+```

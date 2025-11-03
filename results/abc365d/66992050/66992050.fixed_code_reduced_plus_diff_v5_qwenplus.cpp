@@ -1,0 +1,55 @@
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+
+int main(){
+    int N;
+    string S;
+    cin >> N >> S;
+    
+    // We want to minimize the number of hand changes
+    // This is equivalent to maximizing consecutive same moves
+    // We can use dynamic programming:
+    // dp[i][c] = minimum changes needed for prefix ending at i with last move c
+    
+    const int INF = 1e9;
+    vector<array<int, 3>> dp(N, {INF, INF, INF});
+    
+    // Map: R->0, P->1, S->2
+    auto getIdx = [](char c) {
+        if (c == 'R') return 0;
+        if (c == 'P') return 1;
+        return 2;
+    };
+    
+    // Initialize first character
+    int first = getIdx(S[0]);
+    dp[0][first] = 0;  // No change if we start with required move
+    dp[0][(first+1)%3] = 1;  // One change for winning move
+    dp[0][(first+2)%3] = 1;  // One change for winning move
+    
+    for (int i = 1; i < N; i++) {
+        int req = getIdx(S[i]);
+        
+        // For each possible current move
+        for (int curr = 0; curr < 3; curr++) {
+            if (curr == req) {
+                // Current move is exactly what's required - no additional change needed for requirement
+                // But we still need to consider transition cost from previous state
+                for (int prev = 0; prev < 3; prev++) {
+                    int cost = (prev != curr) ? 1 : 0;  // Change hand if different from previous
+                    dp[i][curr] = min(dp[i][curr], dp[i-1][prev] + cost);
+                }
+            } else if ((curr + 1) % 3 == req) {
+                // Current move beats the required move
+                for (int prev = 0; prev < 3; prev++) {
+                    int cost = (prev != curr) ? 1 : 0;
+                    dp[i][curr] = min(dp[i][curr], dp[i-1][prev] + cost);
+                }
+            }
+        }
+    }
+    
+    cout << *min_element(dp[N-1].begin(), dp[N-1].end());
+    return 0;
+}

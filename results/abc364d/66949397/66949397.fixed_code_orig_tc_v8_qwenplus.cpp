@@ -1,0 +1,49 @@
+#include <vector>
+#include <iostream>
+#include <algorithm>
+
+using m_int = long long;
+using std::cin;
+using std::cout;
+using std::vector;
+
+int main() {
+	
+	m_int n,q; cin>>n>>q;
+	vector<m_int> a(n);
+	
+	for(m_int i=0;i<n;++i) {
+		cin >> a[i];
+	}
+	std::sort(a.begin(), a.end());
+
+	while(q--) {
+		
+		m_int b, k;cin>>b>>k;
+
+		auto f = [&](m_int x) -> bool {
+			
+			// count number of points within distance x from b
+			auto it_l = std::lower_bound(a.begin(), a.end(), b-x);
+			auto it_r = std::upper_bound(a.begin(), a.end(), b+x);
+			return (it_r - it_l) >= k;
+		};
+		
+		// The maximum possible distance is when b is at one extreme and the farthest point is at the other
+		m_int max_coord = 1e8;
+		m_int max_dist = 2 * max_coord; // Since coordinates can be from -1e8 to 1e8
+		
+		m_int l = -1; 
+		m_int r = max_dist + 1;
+		
+		while(l + 1 < r) {
+			m_int mid = (l+r)/2;
+			if (f(mid)) {
+				r = mid;
+			} else {
+				l = mid;
+			}
+		}
+		cout << r << "\n";
+	}
+}

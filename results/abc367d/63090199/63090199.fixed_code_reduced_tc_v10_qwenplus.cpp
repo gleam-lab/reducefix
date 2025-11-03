@@ -1,0 +1,36 @@
+#include<bits/stdc++.h>
+using namespace std;
+int n,m;
+int main(){
+    cin>>n>>m;
+    vector<int>nums(n);
+    for(int i=0;i<n;i++){
+        cin>>nums[i];
+    }
+    vector<int>prefixsum(n+1,0);
+    for(int i=0;i<n;i++){//求前缀和
+        prefixsum[i+1]=prefixsum[i]+nums[i];
+    }
+    long long count=0;
+    // 使用map记录每个余数出现的次数
+    unordered_map<int,int> remainderCount;
+    // 初始化：前缀和为0的情况（空前缀）
+    remainderCount[0] = 1;
+    
+    // 遍历前缀和数组（从1到n）
+    for(int i=1; i<=n; i++){
+        int rem = prefixsum[i] % m;
+        // 如果之前有相同的余数，那么它们之间的子数组和能被m整除
+        if(remainderCount.find(rem) != remainderCount.end()){
+            count += remainderCount[rem];
+        }
+        remainderCount[rem]++;
+    }
+    
+    // 减去单个位置的情况（s=t），题目要求s≠t
+    // 每个位置自己对自己的情况被计算了一次，共有n个这样的情况
+    count -= n;
+    
+    cout<<count<<endl;
+    return 0;
+}

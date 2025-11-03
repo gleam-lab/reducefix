@@ -1,0 +1,55 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    int N;
+    cin >> N;
+    string S;
+    cin >> S;
+    
+    // Define the winning moves
+    map<char, char> beat;
+    beat['R'] = 'P';
+    beat['P'] = 'S';
+    beat['S'] = 'R';
+    
+    // We can choose any starting move, then for each subsequent round,
+    // we must avoid the move used in the previous round.
+    // So at each step, we have two choices (all except the previous move).
+    
+    // We want to maximize wins. Use dynamic programming:
+    // dp[i][move] = maximum wins up to position i ending with 'move'
+    // But since we only need the previous state, we can use two variables.
+    
+    // Let's define states: at each position, we track the best score achievable 
+    // when ending with each of the three moves (though one is invalid due to constraint)
+    
+    vector<int> prev(3), curr(3);
+    vector<char> moves = {'R', 'P', 'S'};
+    
+    // Initialize first round: we can play any move
+    for (int i = 0; i < 3; i++) {
+        if (moves[i] == beat[S[0]]) {
+            prev[i] = 1;
+        } else {
+            prev[i] = 0;
+        }
+    }
+    
+    // For each subsequent round
+    for (int i = 1; i < N; i++) {
+        curr.assign(3, 0);
+        for (int j = 0; j < 3; j++) {  // current move
+            for (int k = 0; k < 3; k++) {  // previous move
+                if (j == k) continue;  // cannot repeat move
+                int win = (moves[j] == beat[S[i]]) ? 1 : 0;
+                curr[j] = max(curr[j], prev[k] + win);
+            }
+        }
+        prev = curr;
+    }
+    
+    cout << *max_element(prev.begin(), prev.end()) << endl;
+    
+    return 0;
+}

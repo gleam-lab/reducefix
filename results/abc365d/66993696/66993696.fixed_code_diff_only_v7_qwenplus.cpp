@@ -1,0 +1,54 @@
+#include<bits/stdc++.h>
+using namespace std;
+
+char s[200011];
+char c[200011];
+
+int solve(int n, char start) {
+    // Create mapping for what each original character becomes
+    for (int i = 1; i <= n; i++) {
+        if (s[i] == 'P') c[i] = 'S';
+        else if (s[i] == 'R') c[i] = 'P';
+        else c[i] = 'R';  // S -> R
+    }
+    
+    // Force the first character to be our chosen start
+    c[1] = start;
+    int changes = 0;
+    
+    // Count conflicts and resolve them greedily from left to right
+    for (int i = 2; i <= n; i++) {
+        if (c[i] == c[i-1]) {
+            c[i] = s[i];  // Revert to original character
+            changes++;
+        }
+    }
+    
+    return n - changes;
+}
+
+int main() {
+    int n;
+    scanf("%d", &n);
+    scanf("%s", s + 1);
+    
+    int ans = 0;
+    
+    // Try all possible values for the first character
+    // Only try values that are either the transformed or original of s[1]
+    vector<char> candidates;
+    char transformed;
+    if (s[1] == 'P') transformed = 'S';
+    else if (s[1] == 'R') transformed = 'P';
+    else transformed = 'R';
+    
+    candidates.push_back(transformed);  // The "normal" transformation
+    candidates.push_back(s[1]);         // The original character
+    
+    for (char cand : candidates) {
+        ans = max(ans, solve(n, cand));
+    }
+    
+    printf("%d\n", ans);
+    return 0;
+}

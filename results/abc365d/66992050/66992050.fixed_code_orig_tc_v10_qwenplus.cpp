@@ -1,0 +1,55 @@
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+
+int main(){
+    int N;
+    string S;
+    cin >> N >> S;
+    
+    // We are to count the number of times we switch from one state to another
+    // The idea is that at each step, we can choose any of the three moves: R, P, S
+    // But opponent plays fixed sequence S[i]
+    // We win if:
+    //   our P beats opponent's R
+    //   our R beats opponent's S
+    //   our S beats opponent's P
+    
+    // We use dynamic programming where dp[i][move] = maximum wins up to i-th round ending with 'move'
+    // move: 0=R, 1=P, 2=S
+    vector<array<int, 3>> dp(N+1, {0, 0, 0});
+    
+    auto getMove = [](char c) -> int {
+        if (c == 'R') return 0;
+        if (c == 'P') return 1;
+        return 2;
+    };
+    
+    auto getWinner = [](int myMove, int oppMove) -> bool {
+        // myMove beats oppMove?
+        return (myMove == 1 && oppMove == 0) || 
+               (myMove == 0 && oppMove == 2) || 
+               (myMove == 2 && oppMove == 1);
+    };
+    
+    for (int i = 0; i < N; i++) {
+        int opp = getMove(S[i]);
+        
+        for (int my = 0; my < 3; my++) {
+            int win = getWinner(my, opp) ? 1 : 0;
+            int best_prev = 0;
+            
+            // Transition from previous state
+            for (int prev = 0; prev < 3; prev++) {
+                best_prev = max(best_prev, dp[i][prev]);
+            }
+            
+            dp[i+1][my] = best_prev + win;
+        }
+    }
+    
+    int ans = *max_element(dp[N].begin(), dp[N].end());
+    cout << ans << endl;
+    
+    return 0;
+}

@@ -1,0 +1,55 @@
+#include <iostream>
+#include <string>
+#include <vector>
+#include <algorithm>
+#include <utility>
+#include <tuple>
+#include <cstdint>
+#include <cstdio>
+#include <map>
+#include <queue>
+#include <set>
+#include <stack>
+#include <deque>
+#include <unordered_map>
+#include <unordered_set>
+#include <bitset>
+#include <cctype>
+#include <cmath>
+#include <iomanip>
+using namespace std;
+
+char win(char x) {
+    if (x == 'R') return 'P';
+    if (x == 'S') return 'R';
+    if (x == 'P') return 'S';
+    return 'X';
+}
+
+int main() {
+    int n;
+    string s;
+    cin >> n >> s;
+    
+    if (n == 0) {
+        cout << 0 << endl;
+        return 0;
+    }
+    
+    int ans = 1; // Start with first gesture always counted
+    char last_played = win(s[0]); // What we played in response to first gesture
+    
+    for (int i = 1; i < n; i++) {
+        char would_play = win(s[i]);
+        // If we can use the same gesture as previous, do it
+        if (would_play == last_played) {
+            continue; // Same gesture works for current opponent move
+        } else {
+            ans++;
+            last_played = would_play;
+        }
+    }
+    
+    cout << ans << endl;
+    return 0;
+}

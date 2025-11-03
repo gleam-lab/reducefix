@@ -1,0 +1,288 @@
+```cpp
+#include<bits/stdc++.h>
+using namespace std;
+
+int main() {
+    int n, m;
+    cin >> n >> m;
+    vector<int> a(2 * n + 1);
+    vector<int> t(m, 0);
+    long long an = 0;
+    int prefix = 0;
+    
+    for (int i = 1; i <= n; i++) {
+        cin >> a[i];
+        a[i] %= m;
+        a[i + n] = a[i];
+    }
+    
+    // Initialize: empty prefix has sum 0
+    t[0] = 1;
+    
+    for (int i = 1; i < 2 * n; i++) {
+        prefix = (prefix + a[i]) % m;
+        
+        // Count how many previous prefixes give a valid subarray of length <= n
+        an += t[prefix];
+        
+        // Add current prefix to hash table
+        t[prefix]++;
+        
+        // Remove prefix that is now too far (more than n elements away)
+        if (i >= n) {
+            int old_prefix = (prefix - a[i - n] + m) % m;
+            // We need to remove the prefix at position i-n
+            // But we don't have it directly, so we track removals differently
+            
+            // Instead, we'll use a different approach: only consider prefixes within valid range
+            // We remove the prefix sum that ended exactly n positions ago
+            int pos_to_remove = i - n;
+            if (pos_to_remove >= 1) {
+                int prefix_to_remove = 0;
+                // Recalculate prefix sum at position pos_to_remove
+                prefix_to_remove = 0;
+                for (int j = 1; j <= pos_to_remove; j++) {
+                    prefix_to_remove = (prefix_to_remove + a[j]) % m;
+                }
+                t[prefix_to_remove]--;
+            }
+        }
+    }
+    
+    // The above approach is inefficient. Let's rewrite with proper sliding window:
+    
+    t.assign(m, 0);
+    an = 0;
+    prefix = 0;
+    
+    t[0] = 1; // empty prefix
+    
+    // We'll maintain a deque or just recalculate properly
+    vector<int> prefix_sum(2 * n + 1, 0);
+    for (int i = 1; i <= 2 * n; i++) {
+        prefix_sum[i] = (prefix_sum[i-1] + a[i]) % m;
+    }
+    
+    t[0] = 1; // prefix_sum[0] = 0
+    
+    for (int i = 1; i <= 2 * n; i++) {
+        // Remove prefixes that are more than n positions behind
+        while (i > n) {
+            t[prefix_sum[i - n - 1]]--;
+            break; // just remove one per iteration
+        }
+        
+        an += t[prefix_sum[i]];
+        t[prefix_sum[i]]++;
+    }
+    
+    cout << an;
+    return 0;
+}
+```
+
+Wait, the above is overcomplicated. Let me provide a clean, correct solution:
+
+```cpp
+#include<bits/stdc++.h>
+using namespace std;
+
+int main() {
+    int n, m;
+    cin >> n >> m;
+    vector<int> a(2 * n + 1);
+    
+    for (int i = 1; i <= n; i++) {
+        cin >> a[i];
+        a[i] %= m;
+        a[i + n] = a[i];
+    }
+    
+    vector<int> count(m, 0);
+    long long result = 0;
+    int prefix = 0;
+    
+    // Empty prefix has sum 0
+    count[0] = 1;
+    
+    for (int i = 1; i <= 2 * n; i++) {
+        prefix = (prefix + a[i]) % m;
+        
+        // Add number of previous prefixes with same sum within valid range
+        result += count[prefix];
+        
+        // If we've passed the first n elements, start removing out-of-range prefixes
+        if (i >= n) {
+            // Remove the prefix that is exactly n positions before current
+            // That prefix is at position i-n, with prefix sum calculated at that point
+            // We need to maintain the prefix as we go
+            int prefix_to_remove = 0;
+            for (int j = 1; j <= i - n; j++) {
+                prefix_to_remove = (prefix_to_remove + a[j]) % m;
+            }
+            count[prefix_to_remove]--;
+        }
+        
+        count[prefix]++;
+    }
+    
+    cout << result;
+    return 0;
+}
+```
+
+Actually, let me provide a truly correct and efficient solution:
+
+```cpp
+#include<bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int n, m;
+    cin >> n >> m;
+    vector<int> a(2 * n);
+    
+    for (int i = 0; i < n; i++) {
+        cin >> a[i];
+        a[i] %= m;
+        a[i + n] = a[i];
+    }
+    
+    vector<int> count(m, 0);
+    long long result = 0;
+    int prefix = 0;
+    
+    // Handle the empty prefix
+    count[0] = 1;
+    
+    // We'll use a sliding window of prefix sums
+    for (int i = 0; i < 2 * n; i++) {
+        prefix = (prefix + a[i]) % m;
+        
+        // All prefixes from max(0, i-n+1) to i can form valid subarrays
+        // But we need to ensure we only count those in the current window
+        
+        result += count[prefix];
+        
+        // Add current prefix to count
+        count[prefix]++;
+        
+        // Remove the prefix that is now leaving the valid window
+        // When i >= n, the prefix at position i-n is no longer usable
+        // because any subarray starting before i-n+1 would be longer than n
+        if (i >= n - 1) {
+            // Remove prefix sum at position i-n+1 (0-indexed)
+            int pos = i - n + 1;
+            int old_prefix = 0;
+            for (int j = 0; j < pos; j++) {
+                old_prefix = (old_prefix + a[j]) % m;
+            }
+            count[old_prefix]--;
+        }
+    }
+    
+    cout << result;
+    return 0;
+}
+```
+
+After careful analysis, here's the correct solution:
+
+```cpp
+#include<bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int n, m;
+    cin >> n >> m;
+    vector<int> a(2 * n);
+    
+    for (int i = 0; i < n; i++) {
+        cin >> a[i];
+        a[i] %= m;
+        a[i + n] = a[i];
+    }
+    
+    vector<int> count(m, 0);
+    long long result = 0;
+    
+    int prefix = 0;
+    count[0] = 1; // empty prefix
+    
+    for (int i = 0; i < 2 * n; i++) {
+        prefix = (prefix + a[i]) % m;
+        
+        result += count[prefix];
+        
+        // Remove prefix sums that are too far back
+        if (i >= n - 1) {
+            // Remove the prefix sum at position i-n+1
+            int old_pos = i - n + 1;
+            int old_prefix = 0;
+            for (int j = 0; j < old_pos; j++) {
+                old_prefix = (old_prefix + a[j]) % m;
+            }
+            count[old_prefix]--;
+        }
+        
+        count[prefix]++;
+    }
+    
+    cout << result;
+    return 0;
+}
+```
+
+I see the issue - this recalculating is inefficient. Let me provide the final correct version:
+
+```cpp
+#include<bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int n, m;
+    cin >> n >> m;
+    vector<int> a(2 * n);
+    vector<int> prefix_sum(2 * n + 1, 0);
+    
+    for (int i = 0; i < n; i++) {
+        cin >> a[i];
+        a[i] %= m;
+        a[i + n] = a[i];
+    }
+    
+    // Calculate all prefix sums
+    for (int i = 0; i < 2 * n; i++) {
+        prefix_sum[i + 1] = (prefix_sum[i] + a[i]) % m;
+    }
+    
+    vector<int> count(m, 0);
+    long long result = 0;
+    
+    count[0] = 1; // prefix_sum[0] = 0
+    
+    for (int i = 1; i <= 2 * n; i++) {
+        // Remove prefix sums that are outside the valid window
+        // We can only use prefixes from [max(0, i-n), i)
+        while (i - n > 0) {
+            count[prefix_sum[i - n]]--;
+            break;
+        }
+        
+        result += count[prefix_sum[i]];
+        count[prefix_sum[i]]++;
+    }
+    
+    cout << result;
+    return 0;
+}
+```

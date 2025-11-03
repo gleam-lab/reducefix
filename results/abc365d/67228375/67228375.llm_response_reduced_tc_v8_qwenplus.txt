@@ -1,0 +1,327 @@
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+#define endl "\n"
+#define MOD 1000000007
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(0);
+
+    map<char, char> beats = {{'R', 'P'}, {'P', 'S'}, {'S', 'R'}};
+    int n;
+    cin >> n;
+    string s;
+    cin >> s;
+
+    if (n == 0) {
+        cout << 0 << endl;
+        return 0;
+    }
+
+    // Try all possible starting moves for the player
+    int max_rounds = 1;
+    
+    // For each possible initial move the player could make
+    for (char start : {'R', 'P', 'S'}) {
+        char player_move = start;
+        int rounds_won = 0;
+        
+        for (int i = 0; i < n; i++) {
+            char opponent_move = s[i];
+            
+            // Check if player wins this round
+            if (beats[player_move] == opponent_move) {
+                rounds_won++;
+                // After winning, player can choose the move that would beat the opponent's next move
+                // But we don't know future, so we just update strategy
+                // Player will use the move that beats current opponent move in subsequent rounds
+                // Actually, after winning, player can maintain advantage
+                // The key insight: after winning, player should switch to the move that beats what they just saw
+                // But actually, optimal strategy is to play what beats opponent's move when you want to win
+                // When you don't need to win, you can play to set up future wins
+            }
+            
+            // Update player's next move - the optimal strategy is to always play
+            // what would beat the opponent's current move, so you're ready to win next time
+            // But if you just won, you might want to change...
+            // Actually, the correct approach: 
+            // We simulate: at each step, if our current move beats opponent, we win and keep same move
+            // Otherwise, we switch to the move that beats opponent's current move
+            // But this isn't quite right.
+            
+            // Let's reconsider: 
+            // Actually, simpler approach: try both possibilities at each step would be exponential.
+            // Insight from rock-paper-scissors tournament problems:
+            // We can use dynamic programming or greedy.
+            
+            // Correction: The above logic was flawed. Let's implement a correct simulation.
+            // If our current move beats opponent's move, we win and we can keep the same move
+            // Otherwise, we must change our move to beat the opponent's current move (so we lose this round but prepare for future)
+            // But wait - we are trying to maximize total wins.
+            
+            // Actually, let's do it differently: 
+            // At each round, we have a current move. We win if our move beats opponent's move.
+            // Then for the next round, we can either keep our move or change it.
+            // But changing has no cost, so after any round, we can switch to any move.
+            // However, switching doesn't affect past rounds.
+            // The key insight: since we can change freely between rounds, our move in round i only depends on maximizing wins.
+            // Therefore, in each round, we should play the move that beats the opponent's move IF WE WANT TO WIN THIS ROUND.
+            // But sometimes it might be better to lose now to win more later? 
+            // No, because there's no constraint on move changes. We can always switch to the winning move next round regardless.
+            // Therefore, the optimal strategy is greedy: win every round where possible.
+            // But wait - we don't know the future. Actually, we do - we're given the entire sequence.
+            
+            // Since we know the entire opponent sequence, we can plan optimally.
+            // But note: our move carries over between rounds unless we explicitly change it.
+            // Wait, rereading problem... Actually, the problem statement is missing.
+            // Based on code structure, it seems like: 
+            // - You start with some move
+            // - You win a round if your move beats opponent's move
+            // - After each round, you can change your move arbitrarily for free
+            // So the state is only your current move.
+            
+            // Therefore, at each round, if your current move beats opponent's move, you win and can keep the same move
+            // If not, you can change to the move that beats opponent's move BEFORE the round, thus winning
+            // But you can change before each round at no cost!
+            
+            // This means you can win EVERY round by simply choosing the right move each time.
+            // That can't be, because then answer would always be n.
+            
+            // Alternative interpretation: you must announce your move sequence in advance? 
+            // Or your move persists until you change it?
+            
+            // Looking at original code: it tracks "last_move" and conditionally updates.
+            // This suggests that you start with a move, and then decide when to change.
+            // And you can only change your move between rounds.
+            // But crucially, when you change, you can change to any move.
+            
+            // So the state is your current move. At each round:
+            // - You play with your current move against opponent's move
+            // - You win if yours beats theirs
+            // - Then you can change to any move for the next round
+            
+            // Therefore, you can win a round if and only if your current move beats opponent's move.
+            // And after each round, you can set your move to anything for the next round.
+            
+            // So the algorithm:
+            // Start with some initial move
+            // For each round i:
+            //   if current_move beats s[i]: win, count++
+            //   else: lose
+            //   then set current_move to whatever you want for next round (optimally, to beat s[i+1] if possible)
+            
+            // But since you can set it to anything, for maximum wins, after each round you should set your move
+            // to the one that will beat the next opponent move (if you want to win next round).
+            
+            // Therefore, the only constraint is your initial move.
+            // For a fixed initial move, simulation is:
+            char current = player_move;
+            int wins = 0;
+            char next_move;
+            
+            // We'll resimulate inside the loop properly
+        }
+        
+        // Let's restart with proper simulation for this start
+        char current = start;
+        int wins = 0;
+        for (int i = 0; i < n; i++) {
+            // Play round i
+            if (beats[current] == s[i]) {
+                wins++;
+                // After winning, we can choose optimal next move
+                // We want to win as many future rounds as possible
+                // So we should set our move to beat the next opponent move, if known
+                if (i + 1 < n) {
+                    // Set current to the move that will beat s[i+1]
+                    // But we may not be able to do that directly
+                    // We can set it to anything, so yes we can
+                    current = beats[s[i+1]];
+                }
+            } else {
+                // We lost this round, so we can change our move freely
+                // We should change to beat the next opponent move
+                if (i + 1 < n) {
+                    current = beats[s[i+1]];
+                }
+                // Note: even though we lost, we get to change our move
+                // The loss is already counted (or rather, not counted as win)
+            }
+        }
+        max_rounds = max(max_rounds, wins);
+    }
+    
+    // But wait, the above simulation has an issue: when we win, we still need to set our move for next round
+    // And when we lose, we also set it.
+    // However, there's a flaw: after winning, we don't necessarily want to set our move to beat the next opponent move,
+    // because that might not be the best long-term strategy.
+    // Actually, since we can change freely after each round, the only thing that matters is our move going into each round.
+    // And we can control it completely except for the first round.
+    
+    // Revised insight:
+    // Let dp[i][m] = maximum wins from round i onwards, given that our move going into round i is m
+    // But n can be large? Problem doesn't specify, but likely O(n) acceptable.
+    // However, since |moves| = 3, we can do O(n).
+    
+    // But looking at expected output for "RPPRS" is 3, and n=5.
+    // Let's try a different approach.
+    
+    // Actually, simpler: since we can change our move after every round at no cost, 
+    // the only round we cannot win is if we start with a bad move AND we could have done better.
+    // But we try all three starting moves.
+    
+    // However, our simulation above is flawed because:
+    // After round i, we set current to beats[s[i+1]], but what if s[i+1] is such that we can't beat it from current?
+    // No, we can set it to anything, so we can always set it to the move that beats s[i+1].
+    
+    // But wait: we don't need to beat s[i+1], we just want to maximize total wins.
+    // The optimal strategy after any round is to set our move to the one that will beat the next opponent move,
+    // so that we can win the next round.
+    
+    // Therefore, for a fixed start, the number of wins is:
+    // win on round 0 if start beats s[0]
+    // then for each subsequent round i (>=1), we will win if we set our move to beat s[i], which we can do
+    // because after round i-1 we can change to whatever we want.
+    
+    // This means we can win every round except possibly the first one!
+    
+    // So total wins = (1 if start beats s[0] else 0) + (n-1)
+    // Then max over start would be: max over start of [indicator(start beats s[0]) + n - 1]
+    // Which is either n-1 or n.
+    // For s="RPPRS", n=5, so answer would be 4 or 5, but expected is 3.
+    
+    // This contradicts.
+    
+    // Therefore, my assumption must be wrong.
+    
+    // Re-examining the original code:
+    // It has two strategies:
+    // Strategy 1: last_move starts as beats[s[0]], total_1 = 1
+    // Then for i=1 to n-1: if beats[s[i]] == last_move, then last_move = s[i] and continue
+    // else last_move = beats[s[i]], total_1 += 1
+    
+    // Strategy 2: last_move starts as s[0], total_2 = 0
+    // Then similar.
+    
+    // The variable name "last_move" suggests it's the opponent's last move or something.
+    
+    // Another possibility: perhaps "last_move" is the player's current move.
+    // In strategy 1: player starts with move = beats[s[0]] (which beats opponent's first move)
+    // so player wins first round -> total_1 starts at 1.
+    // Then for i=1: if beats[s[1]] == last_move, i.e., if the move that beats opponent's move s[1] is equal to our current move
+    // then we win this round without changing move.
+    // But then it sets last_move = s[1] -- that seems like opponent's move, not ours.
+    
+    // This is confusing.
+    
+    // Let me trace through the failing case:
+    // n=5, s="RPPRS"
+    // Strategy 1:
+    // beats: R->P, P->S, S->R
+    // total_1 = 1
+    // last_move = beats[s[0]] = beats['R'] = 'P'
+    // i=1: s[1]='P', beats['P']='S'. Is 'S' == last_move ('P')? No.
+    // so last_move = beats['P'] = 'S', total_1 = 2
+    // i=2: s[2]='P', beats['P']='S'. Is 'S' == last_move ('S')? Yes.
+    // so last_move = s[2] = 'P', continue (total unchanged)
+    // i=3: s[3]='R', beats['R']='P'. Is 'P' == last_move ('P')? Yes.
+    // so last_move = s[3] = 'R', continue
+    // i=4: s[4]='S', beats['S']='R'. Is 'R' == last_move ('R')? Yes.
+    // so last_move = s[4] = 'S', continue
+    // total_1 = 2
+    
+    // Strategy 2:
+    // total_2 = 0
+    // last_move = s[0] = 'R'
+    // i=1: s[1]='P', beats['P']='S'. Is 'S' == 'R'? No.
+    // last_move = beats['P'] = 'S', total_2 = 1
+    // i=2: s[2]='P', beats['P']='S'. Is 'S' == 'S'? Yes.
+    // last_move = s[2] = 'P', continue
+    // i=3: s[3]='R', beats['R']='P'. Is 'P' == 'P'? Yes.
+    // last_move = s[3] = 'R', continue
+    // i=4: s[4]='S', beats['S']='R'. Is 'R' == 'R'? Yes.
+    // last_move = s[4] = 'S', continue
+    // total_2 = 1
+    // max = 2, but expected is 3.
+    
+    // Clearly the approach is not working.
+    
+    // After reading online or thinking about similar problems, I recall that in some RPS problems,
+    // you are trying to find the minimum number of times you need to change your move to win all rounds,
+    // but here it's different.
+    
+    // Alternative interpretation from the code's logic:
+    // Perhaps "last_move" is not the player's move, but something else.
+    // Notice that when the condition is true, it does last_move = s[i], otherwise last_move = beats[s[i]]
+    // and increments total when it takes the else branch.
+    
+    // total counts the number of times we enter the else branch.
+    
+    // What could this represent?
+    
+    // Insight: maybe this is related to grouping consecutive identical opponent moves.
+    
+    // Let me think of a correct solution.
+    
+    // After research, I recall a similar problem: 
+    // You want to win every round. You start with any move. Each time you lose, you must change your move.
+    // But you can change at any time. The question is to minimize changes or maximize wins.
+    
+    // But here, the goal is to maximize wins.
+    
+    // Another idea: use dynamic programming.
+    // Let dp[i][move] = maximum wins in first i rounds, ending with player using 'move'
+    // move in {'R','P','S'}
+    
+    // Transition:
+    // dp[i][m] = max over prev_m of {
+    //   dp[i-1][prev_m] + (1 if m beats s[i-1] else 0)
+    // }
+    // But we can change move freely, so we don't penalize changing.
+    // Therefore, for each round i, for each move m, we can come from any previous state.
+    
+    // So dp[i][m] = max_{prev_m} dp[i-1][prev_m] + (1 if m beats s[i-1] else 0)
+    
+    // Then answer is max_{m} dp[n][m]
+    
+    // Base case: dp[0][m] = 0 for all m.
+    
+    // Let's test with "RPPRS":
+    // n=5, s="RPPRS"
+    
+    // Round 0 (i=1), s[0]='R'
+    // dp[1]['R'] = 0 + (beats['R']=='P', so 'R' vs 'R': tie? or lose? 
+    // We need to define: who wins?
+    // Standard: R beats S, S beats P, P beats R.
+    // So 'R' vs 'R': draw, not win. So win only if move beats s[i]
+    // So for move m to win against c: beats[m] == c
+    
+    // So for s[0]='R', wins if m='P' (because beats['P']='S'? wait no.
+    
+    // Our beats map is defined as: beats['R'] = 'P', meaning R is beaten by P.
+    // So to beat 'R', you need 'P'.
+    // So player wins if their move m satisfies: beats[m] == opponent_move.
+    // No: if player plays 'P', and opponent plays 'R', then player wins because P beats R.
+    // How do we check? We have a function: player_move wins against opponent_move if beats[player_move] == opponent_move?
+    // Let's see: if player_move='P', beats['P']='S', which should be what P beats, but 'S' != 'R'.
+    // This is backwards.
+    
+    // Our map is misdefined.
+    // Currently: beats['R'] = 'P'  -- this suggests that R is beaten by P, or that P beats R.
+    // But in the condition, we want to know if player's move beats opponent's move.
+    // So we should have a map: what does each move beat?
+    // Let's redefine: 
+    //   'R' beats 'S'
+    //   'P' beats 'R' 
+    //   'S' beats 'P'
+    // So beats['R'] = 'S', beats['P'] = 'R', beats['S'] = 'P'
+    
+    // But in the original code, it's defined as the opposite.
+    
+    // In the original code: beats = {{'R', 'P'}, {'P', 'S'}, {'S', 'R'}}
+    // This means: to beat 'R', use 'P'; to beat 'P', use 'S'; to beat 'S', use 'R'.
+    // So it's a map from opponent's move to the move that beats it.
+    // So if opponent plays 'R', you should play 'P' to win.
+    
+    // So to win against opponent move c, you need to play beats[c].

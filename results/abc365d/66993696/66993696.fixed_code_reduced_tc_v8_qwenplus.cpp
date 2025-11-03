@@ -1,0 +1,89 @@
+#include<bits/stdc++.h>
+using namespace std;
+
+char s[200011];
+char c[200011];
+
+int solve(int n, char start_override, int start_pos) {
+    for (int i = 1; i <= n; i++) {
+        if (s[i] == 'P') c[i] = 'S';
+        else if (s[i] == 'R') c[i] = 'P';
+        else c[i] = 'R';
+    }
+    
+    if (start_pos >= 1 && start_pos <= n) {
+        c[start_pos] = start_override;
+    }
+    
+    int sum = n;
+    for (int i = 2; i <= n; i++) {
+        if (c[i] == c[i-1]) {
+            c[i] = s[i]; // revert to original character to break the tie
+            sum--;
+        }
+    }
+    return sum;
+}
+
+int main() {
+    int n;
+    scanf("%d", &n);
+    scanf("%s", s+1);
+    
+    if (n == 1) {
+        printf("1");
+        return 0;
+    }
+    
+    int ans = 0;
+    
+    // Try no override
+    ans = max(ans, solve(n, 0, -1));
+    
+    // Try overriding position 1 with original char
+    ans = max(ans, solve(n, s[1], 1));
+    
+    // Try overriding position n with original char
+    ans = max(ans, solve(n, s[n], n));
+    
+    // Also try both ends being changed if needed
+    // But more systematically: we can try key positions
+    
+    // Actually, we should consider that sometimes breaking a run requires changing one of the duplicates
+    // Alternate approach: simulate from left to right with possibility of choosing optimal first char
+    
+    // Let's do DP or greedy? But constraints are high.
+    // Insight: We only need to avoid adjacent equal in transformed string.
+    // Each position has two choices: transformed char or original char.
+    // But we want to maximize remaining transformed chars.
+    
+    // However, simpler: try all possibilities where we change at most one prefix element?
+    // Actually, note: we can use greedy with restarts.
+    
+    // Revised idea: since changing a char reduces count by 1, we want as many transformed as possible without adjacent duplicates.
+    // For each starting choice at pos 1 (either transformed or original), simulate greedily.
+    
+    auto simulate = [&](char first) -> int {
+        c[1] = first;
+        int cnt = (first != s[1]) ? 1 : 0; // count of transformed chars
+        
+        for (int i = 2; i <= n; i++) {
+            char ideal = (s[i] == 'P') ? 'S' : (s[i] == 'R') ? 'P' : 'R';
+            if (ideal != c[i-1]) {
+                c[i] = ideal;
+                cnt++;
+            } else {
+                c[i] = s[i]; // forced to use original
+            }
+        }
+        return cnt;
+    };
+    
+    // Two options for first character
+    char trans1 = (s[1] == 'P') ? 'S' : (s[1] == 'R') ? 'P' : 'R';
+    ans = max(ans, simulate(trans1));  // use transformed at start
+    ans = max(ans, simulate(s[1]));     // use original at start
+    
+    printf("%d", ans);
+    return 0;
+}

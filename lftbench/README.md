@@ -106,7 +106,12 @@ Each line contains a JSON object with the following fields:
     "problem_id": "abc361c",
     "contest_id": "abc361",
     "problem_letter": "c",
+    "title": "C - Make Them Narrow",
     "description": "Full problem statement...",
+    "samples": [
+      {"input": "5 2\n3 1 5 4 9\n", "output": "2\n"},
+      {"input": "3 1\n1 2 3\n", "output": "1\n"}
+    ],
     "editorial_path": "metadata/editorials/abc361c.txt",
     "editorial_available": true,
     "editorial_length": 1984,

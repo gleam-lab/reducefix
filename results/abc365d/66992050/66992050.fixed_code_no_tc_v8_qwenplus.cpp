@@ -1,0 +1,34 @@
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+
+int main() {
+    int N;
+    string S;
+    cin >> N >> S;
+    
+    char last_move = 'N'; // Last move in the sequence we're building
+    int changes = 0;      // Number of times we need to change our move
+    
+    for (char c : S) {
+        if (c == 'P') { // Paper beats Rock, so we should play Scissors
+            if (last_move != 'S') {
+                changes++;
+                last_move = 'S';
+            }
+        } else if (c == 'R') { // Rock beats Scissors, so we should play Paper
+            if (last_move != 'P') {
+                changes++;
+                last_move = 'P';
+            }
+        } else if (c == 'S') { // Scissors beats Paper, so we should play Rock
+            if (last_move != 'R') {
+                changes++;
+                last_move = 'R';
+            }
+        }
+    }
+    
+    cout << changes;
+    return 0;
+}

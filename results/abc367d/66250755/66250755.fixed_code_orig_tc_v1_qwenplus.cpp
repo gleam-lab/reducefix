@@ -1,0 +1,43 @@
+#include<bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+
+int n, m;
+ll a[400005], w[400005];
+map<ll, int> cnt;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+    
+    cin >> n >> m;
+    for (int i = 1; i <= n; i++) {
+        cin >> a[i];
+        a[i] %= m;
+        a[i + n] = a[i];
+    }
+    
+    ll sum = 0;
+    ll ans = 0;
+    cnt[0] = 1; // empty prefix
+    
+    for (int i = 1; i <= 2 * n; i++) {
+        sum = (sum + a[i]) % m;
+        
+        // Remove prefixes that are now out of range (> n length)
+        if (i > n) {
+            ll prev_sum = (sum - a[i - n]) % m;
+            if (prev_sum < 0) prev_sum += m;
+            cnt[prev_sum]--;
+        }
+        
+        // Count how many previous prefixes have the same sum (would make subarray sum divisible by m)
+        ans += cnt[sum];
+        
+        // Add current prefix sum to map
+        cnt[sum]++;
+    }
+    
+    cout << ans;
+    return 0;
+}

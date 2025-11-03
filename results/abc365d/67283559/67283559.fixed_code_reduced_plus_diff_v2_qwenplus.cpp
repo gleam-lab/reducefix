@@ -1,0 +1,65 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int N;
+    string S;
+    cin >> N >> S;
+
+    // For rock-paper-scissors: R beats S, P beats R, S beats P
+    auto getWinningMove = [](char opponent) -> char {
+        if (opponent == 'R') return 'P';
+        if (opponent == 'P') return 'S';
+        return 'R';
+    };
+
+    // Try both possible starting moves (we can choose any of the three, but only two will be optimal in different scenarios)
+    vector<char> choices = {'R', 'P', 'S'};
+    int maxScore = 0;
+
+    // We'll try all three starting moves to find the maximum possible score
+    for (char firstMove : choices) {
+        int score = 0;
+        char currentMove = firstMove;
+
+        for (int i = 0; i < N; i++) {
+            // If our current move beats the opponent's move, we win
+            if ((currentMove == 'R' && S[i] == 'S') ||
+                (currentMove == 'P' && S[i] == 'R') ||
+                (currentMove == 'S' && S[i] == 'P')) {
+                score++;
+            }
+            
+            // Update next move: avoid the move we just used
+            // We can use either of the other two moves for the next round
+            // Choose optimally: pick the one that could potentially win in the next round
+            if (i < N - 1) {
+                // Get the two possible moves (excluding currentMove)
+                vector<char> available;
+                for (char c : choices) {
+                    if (c != currentMove) {
+                        available.push_back(c);
+                    }
+                }
+                
+                // Prefer the move that would beat the next opponent's move if possible
+                char preferred = getWinningMove(S[i+1]);
+                if (preferred != currentMove && find(available.begin(), available.end(), preferred) != available.end()) {
+                    currentMove = preferred;
+                } else {
+                    // Otherwise pick the first available move
+                    currentMove = available[0];
+                }
+            }
+        }
+        
+        maxScore = max(maxScore, score);
+    }
+
+    cout << maxScore << endl;
+    
+    return 0;
+}

@@ -1,0 +1,93 @@
+#include<bits/stdc++.h>
+using namespace std;
+
+char s[200011];
+char c[200011];
+
+int solve(int n, int start_char) {
+    for (int i = 1; i <= n; i++) {
+        if (s[i] == 'P') c[i] = 'S';
+        else if (s[i] == 'R') c[i] = 'P';
+        else c[i] = 'R';
+    }
+    
+    // Try fixing starting character
+    if (start_char != -1) {
+        c[1] = "PRSP"[start_char]; // P=0, R=1, S=2
+    }
+    
+    int changes = 0;
+    for (int i = 2; i <= n; i++) {
+        if (c[i] == c[i-1]) {
+            c[i] = s[i];  // Revert to original
+            changes++;
+        }
+    }
+    
+    return n - changes;
+}
+
+int main() {
+    int n;
+    scanf("%d", &n);
+    scanf("%s", s+1);
+    
+    if (n == 1) {
+        printf("1");
+        return 0;
+    }
+    
+    int ans = 0;
+    
+    // Try three possibilities: keep optimal transformation, or force first char to each type
+    // Option 1: Standard transformation
+    ans = max(ans, solve(n, -1));
+    
+    // Option 2,3,4: Force first character to be P, R, or S (but only if it helps break conflicts)
+    for (int choice = 0; choice < 3; choice++) {
+        char forced = "PRS"[choice];
+        // Only consider forcing if it's different from the transformed one
+        char orig_transformed;
+        if (s[1] == 'P') orig_transformed = 'S';
+        else if (s[1] == 'R') orig_transformed = 'P';
+        else orig_transformed = 'R';
+        
+        if (forced != orig_transformed) {
+            // Make a copy and modify first character
+            for (int i = 1; i <= n; i++) {
+                if (s[i] == 'P') c[i] = 'S';
+                else if (s[i] == 'R') c[i] = 'P';
+                else c[i] = 'R';
+            }
+            c[1] = forced;
+            
+            int sum = n;
+            for (int i = 2; i <= n; i++) {
+                if (c[i] == c[i-1]) {
+                    c[i] = s[i];
+                    sum--;
+                }
+            }
+            ans = max(ans, sum);
+        }
+    }
+    
+    // Special case: try keeping first char as original
+    for (int i = 1; i <= n; i++) {
+        if (s[i] == 'P') c[i] = 'S';
+        else if (s[i] == 'R') c[i] = 'P';
+        else c[i] = 'R';
+    }
+    c[1] = s[1];
+    int sum = n;
+    for (int i = 2; i <= n; i++) {
+        if (c[i] == c[i-1]) {
+            c[i] = s[i];
+            sum--;
+        }
+    }
+    ans = max(ans, sum);
+    
+    printf("%d", ans);
+    return 0;
+}

@@ -1,0 +1,46 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define endl "\n"
+#define MOD 1000000007
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(0);
+
+    map<char, char> beats = {{'R', 'P'}, {'P', 'S'}, {'S', 'R'}};
+    int n;
+    cin >> n;
+    string s;
+    cin >> s;
+
+    if (n == 0) {
+        cout << 0 << endl;
+        return 0;
+    }
+
+    // dp[i][move] = maximum rounds we can win up to index i, ending with move
+    // move: 0 for R, 1 for P, 2 for S
+    vector<vector<int>> dp(n, vector<int>(3, 0));
+    
+    // Initialize first round
+    dp[0][0] = (beats['R'] == s[0]) ? 1 : 0;  // if we play R, we win if R beats s[0]
+    dp[0][1] = (beats['P'] == s[0]) ? 1 : 0;  // if we play P
+    dp[0][2] = (beats['S'] == s[0]) ? 1 : 0;  // if we play S
+
+    // Transition for remaining rounds
+    for (int i = 1; i < n; i++) {
+        char opponent = s[i];
+        // Try each possible move we can make at position i
+        for (int move = 0; move < 3; move++) {
+            char my_move = "RPS"[move];
+            int win = (beats[my_move] == opponent) ? 1 : 0;
+            
+            // We can transition from any previous state
+            dp[i][move] = win + *max_element(dp[i-1].begin(), dp[i-1].end());
+        }
+    }
+
+    cout << *max_element(dp[n-1].begin(), dp[n-1].end()) << endl;
+
+    return 0;
+}

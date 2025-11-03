@@ -1,0 +1,112 @@
+#include<bits/stdc++.h>
+using namespace std;
+
+char s[200011];
+char c[200011];
+
+// Function to get the winning move
+char win(char ch) {
+    if (ch == 'P') return 'S';
+    if (ch == 'R') return 'P';
+    if (ch == 'S') return 'R';
+    return ch;
+}
+
+int main() {
+    int n;
+    scanf("%d", &n);
+    scanf("%s", s + 1);
+    
+    // Try two strategies:
+    // 1. Start with optimal move for each character
+    // 2. Fix conflicts greedily from left to right
+    
+    int best = 0;
+    
+    // Strategy: Always play the winning move initially
+    for (int i = 1; i <= n; i++) {
+        c[i] = win(s[i]);
+    }
+    
+    // Count consecutive duplicates and resolve by possibly reverting to original
+    int count = n;
+    for (int i = 2; i <= n; i++) {
+        if (c[i] == c[i-1]) {
+            // We can avoid this conflict by playing s[i] instead of c[i]
+            // But only if it doesn't create another conflict
+            if (i == n || s[i] != c[i+1]) {
+                c[i] = s[i];
+                count--;
+            }
+        }
+    }
+    best = max(best, count);
+    
+    // Try alternative strategy: fix first conflict differently
+    for (int i = 1; i <= n; i++) {
+        c[i] = win(s[i]);
+    }
+    count = n;
+    
+    // If first two are same, try changing the first one
+    if (n > 1 && c[1] == c[2]) {
+        c[1] = s[1];  // Use original move for first character
+        count--;
+        
+        // Now resolve remaining conflicts
+        for (int i = 2; i <= n; i++) {
+            if (c[i] == c[i-1]) {
+                if (i == n || s[i] != c[i+1]) {
+                    c[i] = s[i];
+                    count--;
+                }
+            }
+        }
+    }
+    best = max(best, count);
+    
+    // One more strategy: try to resolve conflicts by looking ahead
+    // Instead of greedy, use dynamic programming approach
+    
+    // Let's use a DP where dp[i][move] = maximum valid sequence ending at position i with move
+    // move: 0 = win(s[i]), 1 = s[i]
+    vector<vector<int>> dp(n+1, vector<int>(2, 0));
+    
+    // Initialize base case
+    dp[1][0] = 1; // use winning move
+    dp[1][1] = 1; // use own move
+    
+    char moves[2];
+    moves[0] = win(s[1]); // optimal move
+    moves[1] = s[1];      // original move
+    
+    for (int i = 2; i <= n; i++) {
+        char opt_i = win(s[i]);
+        char orig_i = s[i];
+        
+        // For current position, try both choices
+        for (int cur = 0; cur < 2; cur++) {
+            char choice_i = (cur == 0) ? opt_i : orig_i;
+            
+            // Check against previous position choices
+            for (int prev = 0; prev < 2; prev++) {
+                char choice_prev = (prev == 0) ? win(s[i-1]) : s[i-1];
+                
+                // If no conflict, we can extend
+                if (choice_i != choice_prev) {
+                    dp[i][cur] = max(dp[i][cur], dp[i-1][prev] + 1);
+                }
+            }
+            
+            // At minimum, we can always have 1 (starting fresh)
+            if (dp[i][cur] == 0) {
+                dp[i][cur] = 1;
+            }
+        }
+    }
+    
+    best = max({best, dp[n][0], dp[n][1]});
+    
+    printf("%d", best);
+    return 0;
+}

@@ -1,0 +1,88 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    int N;
+    cin >> N;
+    string S;
+    cin >> S;
+    
+    vector<char> hand = {'R', 'P', 'S'};
+    auto getWinner = [](char move) -> char {
+        if (move == 'R') return 'P';
+        if (move == 'P') return 'S';
+        return 'R';
+    };
+    
+    auto getLoser = [](char move) -> char {
+        if (move == 'R') return 'S';
+        if (move == 'P') return 'R';
+        return 'P';
+    };
+    
+    // Try all three possible starting moves
+    int maxScore = 0;
+    
+    for (char firstMove : hand) {
+        vector<char> available = hand;
+        int score = 0;
+        
+        // Remove the first move from available options
+        auto it = find(available.begin(), available.end(), firstMove);
+        if (it != available.end()) {
+            available.erase(it);
+        }
+        
+        for (int i = 0; i < N; i++) {
+            char opponent = S[i];
+            char ourMove = firstMove;
+            if (i > 0) {
+                // For subsequent moves, we can choose any of the remaining two
+                // We should choose the one that beats the opponent if possible
+                bool foundWinning = false;
+                for (char candidate : available) {
+                    if ((candidate == 'R' && opponent == 'S') ||
+                        (candidate == 'P' && opponent == 'R') ||
+                        (candidate == 'S' && opponent == 'P')) {
+                        ourMove = candidate;
+                        foundWinning = true;
+                        break;
+                    }
+                }
+                if (!foundWinning) {
+                    // Just pick the first available (doesn't matter which one)
+                    ourMove = available[0];
+                }
+            }
+            
+            // Score point if we win
+            if ((ourMove == 'R' && opponent == 'S') ||
+                (ourMove == 'P' && opponent == 'R') ||
+                (ourMove == 'S' && opponent == 'P')) {
+                score++;
+            }
+            
+            // Update available moves for next round - remove the one we just used
+            if (i < N - 1) { // No need to update after last move
+                auto it2 = find(available.begin(), available.end(), ourMove);
+                if (it2 != available.end()) {
+                    available.erase(it2);
+                }
+                // Add back the move we didn't use in the first round
+                if (i == 0) {
+                    // After first move, we have only one move left in available
+                    // But we need two moves for subsequent rounds, so add back the losing move
+                    char loser = getLoser(firstMove);
+                    if (find(available.begin(), available.end(), loser) == available.end()) {
+                        available.push_back(loser);
+                    }
+                }
+            }
+        }
+        
+        maxScore = max(maxScore, score);
+    }
+    
+    cout << maxScore << endl;
+    return 0;
+}

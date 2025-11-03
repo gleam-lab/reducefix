@@ -1,0 +1,101 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main(){
+    int N;
+    cin >> N;
+    string S;
+    cin >> S;
+    
+    // The key insight: we can model this as a DP where state is the set of allowed moves
+    // But note: we start with all 3 moves, then after each move, we remove the move we used
+    // However, if we lose or tie, we keep only the two that weren't used by opponent
+    
+    // Actually, let's rethink: 
+    // We want to maximize wins. At each step, we can choose any move not previously eliminated.
+    // After we make a move, that move becomes unavailable for future rounds.
+    // But if our move would lose against opponent's move, we still eliminate our move.
+    
+    // Important: We are allowed to choose any move from the current available set.
+    // We win if: our R beats their S, our P beats their R, our S beats their P.
+    
+    vector<char> hand = {'R', 'P', 'S'};
+    auto getWinner = [](char a, char b) {
+        if ((a == 'R' && b == 'S') || (a == 'P' && b == 'R') || (a == 'S' && b == 'P'))
+            return 1; // win
+        if ((b == 'R' && a == 'S') || (b == 'P' && a == 'R') || (b == 'S' && a == 'P'))
+            return -1; // loss
+        return 0; // tie
+    };
+    
+    // Try both possible starting strategies:
+    // Strategy 1: Start with full set {R,P,S}
+    // Strategy 2: Start with two moves (but which two?) - actually the problem doesn't specify
+    // But looking at the logic, we always start with all three
+    
+    int maxScore = 0;
+    
+    // We need to try all possible orders of using the initial three moves?
+    // Actually no - at each step, we can greedily choose the best move from available ones
+    
+    for (int start = 0; start < 6; start++) {
+        // Try different permutations of priority for the first choice
+        vector<char> order = {'R','P','S'};
+        if (start == 1) order = {'R','S','P'};
+        else if (start == 2) order = {'P','R','S'};
+        else if (start == 3) order = {'P','S','R'};
+        else if (start == 4) order = {'S','R','P'};
+        else if (start == 5) order = {'S','P','R'};
+        
+        vector<char> available = {'R','P','S'};
+        int score = 0;
+        
+        for (int i = 0; i < N; i++) {
+            char opp = S[i];
+            char chosen = 0;
+            int result = -2;
+            
+            // Try moves in priority order
+            for (char move : order) {
+                // Only consider available moves
+                if (find(available.begin(), available.end(), move) == available.end()) 
+                    continue;
+                    
+                int res = getWinner(move, opp);
+                if (res == 1) {
+                    chosen = move;
+                    result = res;
+                    break;
+                }
+            }
+            
+            // If no winning move, try any available move
+            if (result == -2) {
+                for (char move : order) {
+                    if (find(available.begin(), available.end(), move) != available.end()) {
+                        chosen = move;
+                        result = getWinner(move, opp);
+                        break;
+                    }
+                }
+            }
+            
+            if (result == 1) score++;
+            
+            // Remove the move we just used
+            available.erase(remove(available.begin(), available.end(), chosen), available.end());
+            
+            // If we've used all moves, reset to all moves except the one opponent just played
+            if (available.empty()) {
+                available = {'R','P','S'};
+                available.erase(remove(available.begin(), available.end(), opp), available.end());
+            }
+        }
+        
+        maxScore = max(maxScore, score);
+    }
+    
+    cout << maxScore << endl;
+    
+    return 0;
+}

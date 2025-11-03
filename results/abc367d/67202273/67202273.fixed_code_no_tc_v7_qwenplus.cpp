@@ -1,0 +1,49 @@
+#include<bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+const int MAXN = 8e5 + 10;
+
+int main(){
+    ll n, m;
+    scanf("%lld %lld", &n, &m);
+    vector<ll> a(2 * n + 1), sum(2 * n + 1);
+    map<ll, ll> cnt;
+    
+    for(ll i = 1; i <= n; i++){
+        scanf("%lld", &a[i]);
+        a[i + n] = a[i];
+    }
+    
+    // Calculate prefix sums modulo m
+    for(ll i = 1; i <= 2 * n; i++){
+        sum[i] = (sum[i-1] + a[i]) % m;
+        // Normalize to non-negative
+        if(sum[i] < 0) sum[i] += m;
+    }
+    
+    // Initialize count with sum[0] which corresponds to empty prefix
+    cnt[0] = 1;
+    ll ans = 0;
+    
+    // Process the first n positions
+    for(ll i = 1; i <= n; i++){
+        cnt[sum[i]]++;
+    }
+    
+    // Use sliding window of size n
+    for(ll i = n + 1; i <= 2 * n; i++){
+        // Remove contribution of prefix that's now out of window
+        cnt[sum[i - n]]--;
+        
+        // Count how many previous prefixes have same sum (which means subarray sum divisible by m)
+        ans += cnt[sum[i]];
+        
+        // Add current prefix to consideration if it's within the original array bounds
+        if(i <= 2 * n) {
+            cnt[sum[i]]++;
+        }
+    }
+    
+    printf("%lld\n", ans);
+    return 0;
+}

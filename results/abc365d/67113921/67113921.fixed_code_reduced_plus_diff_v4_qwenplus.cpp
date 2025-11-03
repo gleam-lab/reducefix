@@ -1,0 +1,37 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main(){
+    ios_base::sync_with_stdio(false);
+    cin.tie(NULL);
+
+    int N;
+    string S;
+    cin >> N;
+    cin >> S;
+    
+    int wins = 0;
+    char prev = 'a'; // No move made yet
+    
+    for (char c : S) {
+        char winmove;
+        if (c == 'R') {
+            winmove = 'P';
+        } else if (c == 'P') {
+            winmove = 'S';
+        } else { // c == 'S'
+            winmove = 'R';
+        }
+        
+        // If we can use the winning move (i.e., different from previous move), use it and count a win
+        if (winmove != prev) {
+            wins++;
+            prev = winmove;
+        } else {
+            // Otherwise, we have to play the same as opponent to avoid losing, so no win
+            prev = c;
+        }
+    }
+    
+    cout << wins;
+}

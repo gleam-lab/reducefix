@@ -1,0 +1,53 @@
+#include <iostream>
+#include <set>
+
+using namespace std;
+
+typedef long long ll;
+
+void fastIO()
+{
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    cout.tie(nullptr);
+}
+
+void Solve()
+{
+    ll Q;
+    cin >> Q;
+    multiset<ll> s;  // Use multiset to allow multiple balls with the same number
+    while (Q--)
+    {
+        ll a;
+        cin >> a;
+        if (a == 1)
+        {
+            ll tp;
+            cin >> tp;
+            s.insert(tp);
+        }
+        else if (a == 2)
+        {
+            ll tp;
+            cin >> tp;
+            auto it = s.find(tp);  // Find one occurrence
+            if (it != s.end()) {
+                s.erase(it);  // Erase only one occurrence
+            }
+        }
+        else
+        {
+            // Count distinct integers
+            set<ll> distinct(s.begin(), s.end());
+            cout << distinct.size() << "\n";
+        }
+    }
+}
+
+int main()
+{
+    fastIO();
+    Solve();
+    return 0;
+}

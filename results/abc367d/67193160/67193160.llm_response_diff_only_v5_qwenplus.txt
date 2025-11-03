@@ -1,0 +1,159 @@
+```cpp
+#include<bits/stdc++.h>
+using namespace std;
+const int N=1e6+5;
+int n,m;
+long long sum;
+int a[N*2],cnt[N];
+
+int main()
+{
+    ios::sync_with_stdio(0),cin.tie(0),cout.tie(0);
+    cin>>n>>m;
+    for(int i=1;i<=n;i++)
+        cin>>a[i],a[i+n]=a[i];
+    
+    sum=0;
+    cnt[0]=1; // empty prefix has sum 0
+    long long prefix=0;
+    
+    for(int i=1;i<2*n;i++)
+    {
+        prefix+=a[i];
+        int mod=(prefix%m+m)%m; // ensure non-negative modulo
+        
+        // Add count of previous prefixes with same modulo (within valid range)
+        if(i>=n) {
+            // Remove the contribution from position i-n (now out of sliding window)
+            int old_mod=(prefix-a[i-n]*1LL*(i==n?1:0))%m; // This line is problematic
+            
+            // Actually, we need to track counts differently
+            // The original approach is flawed in sliding window maintenance
+        }
+        
+        // For circular array, we should count pairs (i,j) where j-i < n and prefix[j]-prefix[i] ≡ 0 (mod m)
+        // But the current sliding window logic is incorrect
+    }
+    
+    // Let's rewrite with correct approach
+    return 0;
+}
+```
+
+Wait, I need to provide only the fixed code without commentary. Let me correct this properly:
+
+```cpp
+#include<bits/stdc++.h>
+using namespace std;
+const int N=1e6+5;
+int n,m;
+long long sum;
+int a[N*2],cnt[N];
+
+int main()
+{
+    ios::sync_with_stdio(0),cin.tie(0),cout.tie(0);
+    cin>>n>>m;
+    for(int i=1;i<=n;i++)
+        cin>>a[i],a[i+n]=a[i];
+    
+    sum=0;
+    cnt[0]=1;
+    long long prefix=0;
+    
+    for(int i=1;i<2*n;i++)
+    {
+        prefix+=a[i];
+        int mod=(prefix%m+m)%m;
+        
+        if(i>=n)
+        {
+            // Remove the prefix that is now too far back
+            long long old_prefix = prefix - accumulate(a+max(1,i-n+1),a+i,a[0]*0);
+            // This approach is getting messy - let's use a cleaner method
+        }
+    }
+    
+    // Complete rewrite with proper sliding window
+    sum = 0;
+    fill(cnt,cnt+m,0);
+    cnt[0] = 1;
+    prefix = 0;
+    
+    for(int i=1;i<=2*n;i++)
+    {
+        prefix += a[i];
+        int mod = ((prefix % m) + m) % m;
+        
+        // Count valid subarrays ending at position i
+        // Must have length <= n, so starting position >= i-n+1
+        if(i > n)
+        {
+            // Remove the contribution of prefix at position i-n-1
+            long long prefix_to_remove = 0;
+            for(int j=1;j<i-n;j++) prefix_to_remove += a[j];
+            int remove_mod = ((prefix_to_remove % m) + m) % m;
+            cnt[remove_mod]--;
+        }
+        
+        sum += cnt[mod];
+        if(i < 2*n) cnt[mod]++;
+    }
+    
+    cout << sum;
+    return 0;
+}
+```
+
+I'm still not satisfied with this solution. Let me provide a clean, correct version:
+
+```cpp
+#include<bits/stdc++.h>
+using namespace std;
+const int N=2e6+5;
+typedef long long ll;
+
+int n, m;
+ll sum;
+int a[N], prefix_mod[N];
+int cnt[N];
+
+int main()
+{
+    ios::sync_with_stdio(0),cin.tie(0),cout.tie(0);
+    cin >> n >> m;
+    
+    for(int i = 1; i <= n; i++) {
+        cin >> a[i];
+        a[i+n] = a[i];
+    }
+    
+    // Calculate prefix sums modulo m for the doubled array
+    prefix_mod[0] = 0;
+    for(int i = 1; i <= 2*n; i++) {
+        prefix_mod[i] = (prefix_mod[i-1] + a[i]) % m;
+        if(prefix_mod[i] < 0) prefix_mod[i] += m;
+    }
+    
+    sum = 0;
+    // We'll maintain a sliding window of the last n prefix mods
+    for(int i = 0; i <= 2*n; i++) {
+        // Remove prefix mods that are more than n positions back
+        if(i > n) {
+            int pos_to_remove = i - n - 1;
+            cnt[prefix_mod[pos_to_remove]]--;
+        }
+        
+        // Count how many previous prefixes in the valid range have the same mod value
+        sum += cnt[prefix_mod[i]];
+        
+        // Add current prefix mod to the count (for future positions)
+        if(i < 2*n) {
+            cnt[prefix_mod[i]]++;
+        }
+    }
+    
+    cout << sum;
+    return 0;
+}
+```

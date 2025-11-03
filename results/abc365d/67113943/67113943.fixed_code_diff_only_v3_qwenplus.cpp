@@ -1,0 +1,37 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main(){
+    ios_base::sync_with_stdio(false);
+    cin.tie(NULL);
+
+    int N;
+    string S;
+    cin >> N >> S;
+    
+    int wins = 0;
+    char opponent_move, my_move, prev_my_move = 'X'; // Use 'X' as initial placeholder
+    
+    for (int i = 0; i < N; i++) {
+        opponent_move = S[i];
+        
+        // Determine the move that beats the opponent's move
+        if (opponent_move == 'R') {
+            my_move = 'P';
+        } else if (opponent_move == 'P') {
+            my_move = 'S';
+        } else { // opponent_move == 'S'
+            my_move = 'R';
+        }
+        
+        // Check if we need to change our move
+        if (my_move != prev_my_move) {
+            wins++;
+        }
+        
+        prev_my_move = my_move;
+    }
+    
+    cout << wins;
+    return 0;
+}

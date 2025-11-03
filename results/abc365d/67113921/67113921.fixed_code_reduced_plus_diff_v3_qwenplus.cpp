@@ -1,0 +1,36 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main(){
+    ios_base::sync_with_stdio(false);
+    cin.tie(NULL);
+
+    int N;
+    string S;
+    cin >> N >> S;
+
+    int wins = 0;
+    char last_move = ' '; // No move has been made initially
+
+    for (char c : S) {
+        char best_move;
+        if (c == 'R') {
+            best_move = 'P';
+        } else if (c == 'P') {
+            best_move = 'S';
+        } else { // c == 'S'
+            best_move = 'R';
+        }
+
+        // If we can use the best move (i.e., it's different from the last move), use it and win
+        if (best_move != last_move) {
+            wins++;
+            last_move = best_move;
+        } else {
+            // Otherwise, we must choose a move that loses or ties, but we want to set up for future wins
+            // We choose the losing move (which is the same as opponent's move) to maximize future options
+            last_move = c;
+        }
+    }   
+    cout << wins;
+}

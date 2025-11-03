@@ -1,0 +1,43 @@
+#include<bits/stdc++.h>
+using namespace std;
+int n,m;
+int main(){
+    cin>>n>>m;
+    vector<int>nums(n);
+    for(int i=0;i<n;i++){
+        cin>>nums[i];
+    }
+    vector<int>prefixsum(n+1,0);
+    for(int i=0;i<n;i++){//求前缀和
+        prefixsum[i+1]=prefixsum[i]+nums[i];
+    }
+    long long count=0;
+    // 使用map统计每个余数出现的次数
+    map<int,int> remainder_count;
+    
+    // 初始化：前缀和为0的情况（空区间）
+    remainder_count[0] = 1;
+    
+    // 遍历所有位置作为右端点
+    for(int r=1; r<=n; r++){
+        int rem = prefixsum[r] % m;
+        // 如果之前有相同余数的位置，说明中间这段区间的和能被m整除
+        if(remainder_count.find(rem) != remainder_count.end()){
+            count += remainder_count[rem];
+        }
+        remainder_count[rem]++;
+    }
+    
+    // 减去单个点的情况（s=t的情况），题目要求s≠t
+    // 但我们上面的方法统计的是所有s<=t且和%m==0的情况
+    // 所以需要减去s=t的情况，即每个位置自己构成的区间
+    // 对于每个位置i，如果nums[i]%m==0，则这个单元素区间会被计入
+    for(int i=0; i<n; i++){
+        if(nums[i] % m == 0){
+            count--;
+        }
+    }
+    
+    cout<<count<<endl;
+    return 0;
+}

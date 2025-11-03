@@ -1,0 +1,38 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main(){
+    ios_base::sync_with_stdio(false);
+    cin.tie(NULL);
+
+    int N;
+    string S;
+    cin >> N >> S;
+
+    int wins = 0;
+    char last_move = 'X'; // Use 'X' to indicate no previous move
+
+    for (char c : S) {
+        char winmove;
+        if (c == 'R') {
+            winmove = 'P';
+        } else if (c == 'P') {
+            winmove = 'S';
+        } else { // c == 'S'
+            winmove = 'R';
+        }
+
+        // If the winning move is different from the last move we made, we can use it
+        if (winmove != last_move) {
+            wins++;
+            last_move = winmove;
+        } else {
+            // Otherwise, we are forced to play the opponent's move (or any move that doesn't win)
+            // But note: we don't get a win in this case, and we update our last move to opponent's move
+            // because we can assume optimal play where we avoid repeating winning moves unnecessarily
+            last_move = c;
+        }
+    }
+
+    cout << wins;
+}

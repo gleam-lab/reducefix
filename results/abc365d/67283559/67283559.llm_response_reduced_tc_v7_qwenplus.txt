@@ -1,0 +1,350 @@
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+int main(){
+    int N;
+    cin >> N;
+    string S;
+    cin >> S;
+
+    vector<char> hand = {'R','P','S'};
+    auto getScore = [&](const string& s) {
+        vector<char> next = hand;
+        int total = 0;
+        for (int i = 0; i < s.size(); i++) {
+            int score = 0;
+            char use = ' ';
+            // Try to pick a move that beats opponent's move
+            for (char n : next) {
+                if ((n == 'R' && s[i] == 'S') ||
+                    (n == 'P' && s[i] == 'R') ||
+                    (n == 'S' && s[i] == 'P')) {
+                    score = 1;
+                    use = n;
+                    break;
+                }
+            }
+            // If no winning move available, pick any (even losing is fine, but avoid invalid)
+            if (score == 0) {
+                use = next[0]; // Just pick first available
+            }
+            total += score;
+            // Update next moves: remove the one we used
+            vector<char> newNext;
+            for (char h : hand) {
+                if (h != use) {
+                    newNext.push_back(h);
+                }
+            }
+            next = newNext;
+        }
+        return total;
+    };
+
+    // Two possibilities: start with full set or skip first opponent move?
+    // Actually, we always start with all three, but the issue was in logic.
+    // The original code tried two different strategies, but incorrectly.
+    // We should simulate only once: starting with all three options.
+
+    // However, note: after each round, we eliminate the move we used.
+    // So we must simulate correctly from the beginning.
+
+    // But wait: the problem may allow choosing initial state? 
+    // Let's re-read implied rules: we begin with R,P,S available.
+
+    // The error in original code: it ran two simulations:
+    //   total: started with full hand, then updated per move
+    //   total2: started by removing S[0], which makes no sense
+
+    // Correction: only one simulation needed, starting with all three.
+
+    // However, why did they try two? Maybe misunderstanding.
+
+    // Actually, let's think: is there a choice in the first move? 
+    // Yes — but our simulation already considers all valid choices via the loop over `next`.
+
+    // The real bug: in the second simulation, it starts by eliminating S[0], which is wrong.
+    // We should not do that. Only one pass is needed.
+
+    // But wait: the original code does:
+    //   First pass: uses correct logic but maybe suboptimal choice?
+    //   Second pass: starts with next containing everything except S[0] — why?
+
+    // There is no reason to do that. We always start with R, P, S.
+
+    // Therefore, we only need one simulation.
+
+    // However, let's test on "RPPRS":
+    //   Move 0: S[0]='R'. We can use 'P' -> win, score=1, remove 'P', now next={R,S}
+    //   Move 1: S[1]='P'. From {R,S}: 'S' beats 'P' -> win, score=1, remove 'S', now next={R}
+    //   Move 2: S[2]='P'. Only 'R' left. 'R' loses to 'P' -> score=0, remove 'R', now next={P,S} ??? Wait!
+
+    // Wait! This is the key: when we use a move, we remove it **from the current available set**, but the available set evolves as:
+    //   Initially: {R, P, S}
+    //   After using a move, we are left with the other two.
+    //   Then after using another, we are left with one.
+    //   Then after using the last one, we have none — but that can't happen.
+
+    // But note: the rule is: after using a move, you cannot use it again. So we maintain a set of unused moves.
+
+    // However, in the example above:
+    //   After move 0: used 'P', so remaining: {'R','S'}
+    //   After move 1: used 'S', so remaining: {'R'}
+    //   After move 2: must use 'R', which loses to 'P', score 0
+    //   After move 3: used 'R', so now remaining: {'P','S'} — wait, no! We already used 'P' and 'S' earlier?
+
+    // Ah! Here’s the confusion: once a move is used, it's gone forever. So we cannot reuse 'P' or 'S'.
+
+    // But in move 3: we have already used P and S, and now R — so after move 2, we have used P, S, R — all gone.
+    // Then move 3: no moves left? That can't be.
+
+    // But the input is length 5. We need 5 moves. But we only have 3 distinct moves.
+
+    // This suggests: the rule is not that we retire a move after using it, but rather that at each step, we choose from the remaining unused ones, and once used, it's gone.
+
+    // So maximum 3 moves possible? But N can be up to 100.
+
+    // Rethink problem statement (implied): "You have three moves: Rock, Paper, Scissors. Each move can be used only once."
+
+    // So we can use at most 3 moves in total. But N can be larger than 3.
+
+    // Then what happens after 3 moves? We have no moves left? But the game continues.
+
+    // This doesn't make sense.
+
+    // Alternative interpretation: perhaps "hand" means something else.
+
+    // Looking back at code: 
+    //   next.clear();
+    //   for(auto d : hand){
+    //     if(d!=use) next.push_back(d);
+    //   }
+
+    // So after using a move, we remove it from future use. So we can use each move at most once.
+
+    // Therefore, we can play at most 3 rounds? But N=5.
+
+    // This implies: we must have misunderstood the problem.
+
+    // But the sample input is N=5.
+
+    // Another possibility: the "hand" reset? Or maybe we get to keep using moves?
+
+    // But the code clearly removes the used move permanently.
+
+    // Unless... the problem allows using a move multiple times? Then why remove it?
+
+    // The key: the original code has a bug in strategy: it breaks too early.
+
+    // In the inner loop:
+    //   for(int j=0;j<next.size();j++){
+    //     char n=next[j];
+    //     if(n=='R'&&S[i]=='S'){
+    //         score++;
+    //         use='R';
+    //         break;
+    //     }
+    //     ...
+    //   }
+    // It breaks at the first winning move. But what if skipping a winning move leads to better overall score?
+
+    // Example: maybe using a winning move now prevents us from winning more later.
+
+    // But since each move can be used only once, and we want to maximize wins, we should save powerful moves for harder opponents?
+
+    // However, in rock-paper-scissors, no move is universally stronger.
+
+    // But consider: if we have two winning options now, which one to pick?
+
+    // The greedy choice (first one) may not be optimal.
+
+    // Example: S = "RRS"
+    //   Option 1: use P on first R -> win, then for second R: we have R,S left. Use S? lose. Then third: use R? lose. Total=1.
+    //   Option 2: use S on first R? lose. Then second R: we have P,R. Use P -> win. Third: use R -> lose. Total=1.
+    //   Option 3: use R on first R? lose. Then second R: P,S. Use P -> win. Third: use S -> win. Total=2.
+
+    // So we can get 2 by losing the first.
+
+    // Therefore: we should not always try to win if possible. Sometimes it's better to lose now to win twice later.
+
+    // Hence, the greedy approach is flawed.
+
+    // We need dynamic programming or brute-force over permutations.
+
+    // Since we have only 3 moves, we can try all 6 orders of using them.
+
+    // Idea: we have to assign each move (R,P,S) to a position where we use it, or not use it at all.
+
+    // But we can choose which move to use in which round, but each move at most once.
+
+    // And we wish to maximize the number of rounds we win.
+
+    // We can skip using a move in a round? No, we must use exactly one move per round.
+
+    // But we have N rounds and only 3 moves. So for N>3, we cannot play? That can't be.
+
+    // This is the core issue.
+
+    // Re-read the problem: likely misinterpreted.
+
+    // Given the expected output for "RPPRS" is 3, and we only have 3 moves, it's possible we can win at most 3.
+
+    // But with N=5, we must play 5 rounds.
+
+    // How can we play 5 rounds with only 3 moves?
+
+    // Unless: the rule is not that we retire a move after using, but something else.
+
+    // Looking at the code: after using a move, it is removed from `next`, and never added back.
+
+    // So indeed, each move can be used only once.
+
+    // Therefore, we can only actively choose for the first 3 rounds. For the remaining rounds, we have no moves left? 
+
+    // But the code still runs for i=3 and i=4.
+
+    // At i=3: next is empty? Then the loop over next does nothing, score=0, then use=S[i] — but S[i] might not be in next.
+
+    // Then it tries to remove `use` from hand — but if use is 'R', and we already removed 'R', then next will be {P,S} minus R -> {P,S}, but we already used them?
+
+    // This is logically inconsistent.
+
+    // The flaw: after using a move, we remove it from the available pool. But when the pool is empty, we fall back to `use = S[i]`, which could be a move we already used.
+
+    // And then we remove that move again — but it's already gone.
+
+    // Moreover, we add back moves that were previously used? No, because `hand` is fixed, and we do `if(d != use)` — so if `use` is 'R', we include 'P' and 'S', regardless of past usage.
+
+    // This means: the `next` vector is rebuilt every time from `hand` excluding the *current* `use`, not considering history.
+
+    // That is the bug.
+
+    // The line: `for(auto d : hand){ if(d!=use) next.push_back(d); }` 
+    // This does not respect that some moves were used in previous rounds.
+
+    // Instead, it only excludes the currently used move.
+
+    // But we need to exclude all previously used moves.
+
+    // So we must maintain a set (or boolean array) of used moves.
+
+    // Alternatively, maintain the available moves and remove one when used.
+
+    // Correct approach:
+    //   Start with available = {R, P, S}
+    //   For each round i:
+    //      Choose a move from available that beats S[i] if possible, else choose any.
+    //      But to maximize total wins, we may want to sometimes not win even if we can.
+    //      However, since there are only 3 moves, we can try all 3! = 6 possible orders of using the moves.
+
+    // Because N can be up to 100, but we only have 3 moves, we can iterate over all 6 permutations of {R,P,S}, and for each permutation, decide in which rounds to use which move.
+
+    // But we must assign each move to at most one round.
+
+    // And we want to maximize the number of wins.
+
+    // Algorithm:
+    //   Let moves = ['R','P','S']
+    //   For each permutation p of moves:
+    //        available_moves = p (in order)
+    //        wins = 0
+    //        use_index = 0  // next move in permutation to use
+    //        For i from 0 to N-1:
+    //           if use_index < 3:
+    //               we can choose to use available_moves[use_index] OR skip using a new move?
+    //           But we must use a move each round.
+    //           However, once a move is used, it's gone.
+    //           But we can use a move only when we "activate" it in order.
+    //        Actually, the permutation defines the order in which we are allowed to use the moves.
+    //        But we can choose when to use each move.
+
+    //   Alternatively: we decide for each move, in which round to use it (at most one round per move), and in rounds where no move is assigned, we cannot play? 
+
+    //   But the problem requires playing every round.
+
+    //   And if we don't have a move, we must use something.
+
+    //   The original code falls back to `use = S[i]` when no winning move is found, but that might be a move already used.
+
+    //   And then it rebuilds next from scratch excluding only the current use.
+
+    //   This is fundamentally broken.
+
+    // After reevaluating: the intended solution is likely that you start with all three moves available, and each move can be used only once. So you can win at most 3 rounds. For the other rounds, you either draw or lose.
+
+    // But you still have to make a move. What move do you make in a round after you've used all three? 
+
+    // The problem doesn't specify. But in the code, when next is empty, it sets `use = S[i]`, which is the opponent's move, and then rebuilds next as all moves except that one — which brings back moves that were used before.
+
+    // That is incorrect.
+
+    // The fix: maintain a set of used moves. Once used, a move is gone forever.
+
+    // But then after 3 rounds, you have no moves left. You cannot make a fourth move.
+
+    // This suggests: the model is wrong.
+
+    // Alternative interpretation from common problems: this resembles "Rock-Paper-Scissors" with a twist that you cannot use the same move consecutively? But the code doesn't suggest that.
+
+    // Or: you have an unlimited supply, but the `next` vector is something else.
+
+    // Looking at the variable name: `next` might mean the move you are going to use next, but the initialization is three moves.
+
+    // Given the complexity and the fact that expected answer for "RPPRS" is 3, and we have 3 moves, likely we can win at most 3.
+
+    // But let's calculate manually for "RPPRS":
+
+    //   We want to win 3 times.
+
+    //   To beat 'R': use 'P'
+    //   To beat 'P': use 'S'
+    //   To beat 'S': use 'R'
+
+    //   String: R P P R S
+    //   Index:  0 1 2 3 4
+
+    //   We need to assign:
+    //      'P' to beat one of the 'R's (index 0 or 3)
+    //      'S' to beat one of the 'P's (index 1 or 2)
+    //      'R' to beat the 'S' at index 4
+
+    //   Can we do that? Yes:
+    //      Round 0: use 'S' -> lose (R vs S)
+    //      Round 1: use 'P' -> draw (P vs P)
+    //      Round 2: use 'S' -> win (S vs P)  -> use move 'S'
+    //      Round 3: use 'P' -> win (P vs R)  -> use move 'P'
+    //      Round 4: use 'R' -> win (R vs S)  -> use move 'R'
+    //   Wins: 3
+
+    //   But we used 'S' at round 2, 'P' at round 3, 'R' at round 4.
+
+    //   Is that allowed? Yes, as long as each move is used only once.
+
+    //   So the order of using moves is arbitrary.
+
+    //   Therefore, the algorithm should be: try all possible ways to assign the three moves to three of the five rounds.
+
+    //   Since C(5,3)=10 and 3!=6, total 60 possibilities, and N<=100, but 3 moves only, we can do:
+
+    //   For each subset of 3 rounds out of N (but N can be up to 100, C(100,3) ~ 1e6, acceptable? 100 choose 3 = 100*99*98/6 = 161700, and for each subset, 6 permutations, total ~ 1e6, acceptable for C++)
+
+    //   But worst-case N=100, 1e6 * constant might be borderline in Pyton but in C++ it's fine.
+
+    //   However, the problem might expect a greedy or DP solution.
+
+    //   Alternatively, since only 3 moves, we can iterate over which move goes to which round, independently.
+
+    //   Specifically, we can decide for move 'R': which round to use it (or never), similarly for 'P' and 'S', with the constraint that no two moves in the same round.
+
+    //   Total: 100^3 = 1e6, acceptable.
+
+    //   But simpler: iterate over all 6 permutations of the three moves, and for each permutation, decide the round in which to use the first move, then the round for the second move (after the first), then the third move (after the second)? 
+
+    //   But the rounds don't have to be in increasing order of move type.
+
+    //   Better: iterate over all injective mappings from {R,P,S} to {0..N-1} (the round indices), i.e., assign each move to a distinct round.
+
+    //   Number of such assignments: P(N,3) = N*(N-1)*(N-2). For N=100, that's about 1e6, acceptable.
+
+    //  

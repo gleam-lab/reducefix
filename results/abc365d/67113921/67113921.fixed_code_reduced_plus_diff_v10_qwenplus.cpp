@@ -1,0 +1,46 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main(){
+    ios_base::sync_with_stdio(false);
+    cin.tie(NULL);
+
+    int N;
+    string S;
+    cin >> N;
+    cin >> S;
+    
+    int wins = 0;
+    char prev = 'a'; // No move made yet
+    
+    for (char c : S) {
+        char winmove;
+        if (c == 'R') {
+            winmove = 'P';
+        } else if (c == 'P') {
+            winmove = 'S';
+        } else { // c == 'S'
+            winmove = 'R';
+        }
+        
+        // If we can use the winning move without repeating the previous move
+        if (winmove != prev) {
+            wins++;
+            prev = winmove;
+        } else {
+            // We cannot use winmove because it would repeat
+            // So we must choose a non-winning move, which doesn't give a win
+            // But we still need to update prev to something different from winmove
+            // Choose any move except winmove and prev (but since winmove == prev, just avoid that)
+            if (winmove == 'R') {
+                // Choose between 'P' and 'S'. Prefer one consistently.
+                prev = 'P'; // arbitrary choice, but consistent
+            } else if (winmove == 'P') {
+                prev = 'S';
+            } else { // winmove == 'S'
+                prev = 'R';
+            }
+        }
+    }   
+    cout << wins;
+}

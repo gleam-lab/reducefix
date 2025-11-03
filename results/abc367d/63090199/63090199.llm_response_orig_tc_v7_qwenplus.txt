@@ -1,0 +1,73 @@
+```cpp
+#include<bits/stdc++.h>
+using namespace std;
+int n,m;
+int main(){
+    cin>>n>>m;
+    vector<int>nums(n);
+    for(int i=0;i<n;i++){
+        cin>>nums[i];
+    }
+    vector<int>prefixsum(n+1,0);
+    for(int i=0;i<n;i++){
+        prefixsum[i+1]=prefixsum[i]+nums[i];
+    }
+    long long count=0;
+    // 使用map统计每个余数出现的次数
+    map<int,int> remainder_count;
+    
+    // 预处理：对于从位置0开始的前缀和，它们的余数需要被记录
+    // 注意：我们考虑的是环形数组中路径的和模m为0的情况
+    for(int i=1; i<=n; i++) {
+        int r = prefixsum[i] % m;
+        remainder_count[r]++;
+    }
+    
+    // 对于每个起点s，计算有多少个终点t(s != t)使得路径和模m为0
+    // 路径和可以是两种情况：
+    // 1. s < t: sum = prefixsum[t] - prefixsum[s]
+    // 2. s > t: sum = prefixsum[n] - prefixsum[s] + prefixsum[t]
+    //
+    // 我们需要 sum % m == 0
+    // 情况1: (prefixsum[t] - prefixsum[s]) % m == 0
+    //       => prefixsum[t] % m == prefixsum[s] % m
+    // 情况2: (prefixsum[n] - prefixsum[s] + prefixsum[t]) % m == 0
+    //       => (prefixsum[t] - prefixsum[s] + prefixsum[n]) % m == 0
+    //       => prefixsum[t] % m == (prefixsum[s] - prefixsum[n]) % m
+    //       => prefixsum[t] % m == (prefixsum[s] + (m - prefixsum[n]%m)) % m
+    
+    for(int s=1; s<=n; s++) {
+        int rs = prefixsum[s] % m;
+        
+        // 情况1: s < t，需要找到t>s且prefixsum[t]%m == rs
+        // 但我们不能简单地用map，因为需要确保t>s
+        // 所以我们换个思路：总的满足条件的t数量减去t<=s的数量
+        
+        // 先计算所有满足余数条件的t总数
+        int target_r1 = rs; // 情况1的目标余数
+        int target_r2 = (rs + m - (prefixsum[n] % m)) % m; // 情况2的目标余数
+        
+        int total_t1 = remainder_count[target_r1];
+        int total_t2 = remainder_count[target_r2];
+        
+        // 减去t<=s的情况
+        if(s >= 1) {
+            // 在t<=s范围内，检查有多少个t满足条件
+            int exclude_t1 = 0, exclude_t2 = 0;
+            for(int t=1; t<=s; t++) {
+                if(t == s) continue; // t不能等于s
+                
+                int rt = prefixsum[t] % m;
+                if(rt == target_r1) exclude_t1++;
+                if(rt == target_r2) exclude_t2++;
+            }
+            
+            count += (total_t1 - exclude_t1); // 情况1的有效t数量
+            count += (total_t2 - exclude_t2); // 情况2的有效t数量
+        }
+    }
+    
+    cout<<count<<endl;
+    return 0;
+}
+```

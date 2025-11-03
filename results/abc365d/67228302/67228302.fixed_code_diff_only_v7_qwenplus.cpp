@@ -1,0 +1,41 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define endl "\n"
+#define MOD 1000000007
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(0);
+
+    map<char, char> beats = {{'R', 'P'}, {'P', 'S'}, {'S', 'R'}};
+    int n;
+    cin >> n;
+    string s;
+    cin >> s;
+    
+    if (n == 0) {
+        cout << 0 << endl;
+        return 0;
+    }
+    
+    int total = 1;
+    char last_winner = s[0]; // The winner of the current round
+    
+    for (int i = 1; i < n; i++) {
+        // If current move beats the previous winner, then current move becomes winner
+        if (beats[last_winner] == s[i]) {
+            last_winner = s[i];
+        }
+        // If current move is beaten by previous winner, previous winner continues
+        // If current move is same as what beats previous winner, then we start a new round
+        else if (s[i] != last_winner) {
+            total++;
+            last_winner = s[i];
+        }
+        // If moves are the same, the winner remains the same, no new round
+    }
+    
+    cout << total << endl;
+    
+    return 0;
+}

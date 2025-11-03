@@ -1,0 +1,71 @@
+#include<bits/stdc++.h>
+using namespace std;
+
+char s[200011];
+char c[200011];
+
+int solve(int n, bool change_first) {
+    for (int i = 1; i <= n; i++) {
+        if (s[i] == 'P') c[i] = 'S';
+        else if (s[i] == 'R') c[i] = 'P';
+        else c[i] = 'R';
+    }
+    
+    int sum = n;
+    
+    // If we are allowed to change the first element when needed
+    if (change_first && n >= 2 && c[1] == c[2]) {
+        c[1] = s[1];
+        sum--;
+    }
+    
+    for (int i = 2; i <= n; i++) {
+        if (c[i] == c[i-1]) {
+            c[i] = s[i];
+            sum--;
+        }
+    }
+    
+    return sum;
+}
+
+int main() {
+    int n;
+    scanf("%d", &n);
+    scanf("%s", s + 1);
+    
+    if (n == 1) {
+        printf("1");
+        return 0;
+    }
+    
+    int ans = 0;
+    
+    // Try without forcing change on first element
+    ans = max(ans, solve(n, false));
+    
+    // Try with possibly changing first element
+    ans = max(ans, solve(n, true));
+    
+    // Also try the reverse: start by setting c[1] = s[1] initially
+    for (int i = 1; i <= n; i++) {
+        if (s[i] == 'P') c[i] = 'S';
+        else if (s[i] == 'R') c[i] = 'P';
+        else c[i] = 'R';
+    }
+    
+    c[1] = s[1];
+    int sum = n - 1;
+    
+    for (int i = 2; i <= n; i++) {
+        if (c[i] == c[i-1]) {
+            c[i] = s[i];
+            sum--;
+        }
+    }
+    
+    ans = max(ans, sum);
+    
+    printf("%d", ans);
+    return 0;
+}

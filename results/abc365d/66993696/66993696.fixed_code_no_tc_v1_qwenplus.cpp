@@ -1,0 +1,39 @@
+#include<bits/stdc++.h>
+using namespace std;
+
+char s[200011];
+char c[200011];
+
+int solve(int n, int start_change) {
+    for (int i = 1; i <= n; i++) {
+        if (s[i] == 'P') c[i] = 'S';
+        else if (s[i] == 'R') c[i] = 'P';
+        else c[i] = 'R';
+    }
+    
+    int changes = 0;
+    if (start_change) {
+        c[1] = s[1];
+        changes++;
+    }
+    
+    for (int i = 2; i <= n; i++) {
+        if (c[i] == c[i-1]) {
+            c[i] = s[i];
+            changes++;
+        }
+    }
+    
+    return n - changes;
+}
+
+int main() {
+    int n;
+    scanf("%d", &n);
+    scanf("%s", s+1);
+    
+    int ans = max(solve(n, 0), solve(n, 1));
+    printf("%d\n", ans);
+    
+    return 0;
+}

@@ -1,0 +1,46 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define endl "\n"
+#define MOD 1000000007
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(0);
+
+    map<char, char> beats = {{'R', 'P'}, {'P', 'S'}, {'S', 'R'}};
+    int n;
+    cin >> n;
+    string s;
+    cin >> s;
+
+    // Count the number of times we need to switch strategies
+    // We need to simulate both starting with a win and starting with a loss/draw
+    int total_1 = 1; // Starting by playing the move that beats first opponent move
+    char current_move = beats[s[0]];
+    
+    for (int i = 1; i < n; i++) {
+        // If our current move loses to or draws with the next opponent move,
+        // we need to change our strategy
+        if (beats[s[i]] == current_move) {
+            // Our current move is beaten by opponent's next move, so we must switch
+            current_move = beats[s[i]];
+            total_1++;
+        }
+        // Otherwise, we can keep our current move
+    }
+
+    int total_2 = 1; // Starting by playing the same move as opponent's first move
+    current_move = s[0];
+    
+    for (int i = 1; i < n; i++) {
+        // If our current move loses to the next opponent move, we need to change
+        if (beats[s[i]] == current_move) {
+            current_move = beats[s[i]];
+            total_2++;
+        }
+    }
+
+    cout << min(total_1, total_2) << endl;
+
+    return 0;
+}

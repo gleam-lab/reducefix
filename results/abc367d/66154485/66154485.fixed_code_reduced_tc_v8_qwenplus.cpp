@@ -1,0 +1,31 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int n, m;
+    cin >> n >> m;
+    vector<int> arr(n);
+    for (int i = 0; i < n; i++) {
+        cin >> arr[i];
+    }
+
+    long long ans = 0;
+    map<int, int> prefixCount;
+    prefixCount[0] = 1; // Empty prefix has sum 0
+
+    for (int i = 0; i < n; i++) {
+        int sum = 0;
+        for (int j = 0; j < n - 1; j++) {
+            sum = (sum + arr[(i + j) % n]) % m;
+            if (sum == 0) {
+                ans++;
+            }
+        }
+    }
+
+    cout << ans << endl;
+    return 0;
+}

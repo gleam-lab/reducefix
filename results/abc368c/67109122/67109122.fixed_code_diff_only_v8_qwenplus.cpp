@@ -1,0 +1,34 @@
+#include<bits/stdc++.h>
+using namespace std;
+
+int main() {
+    int N;
+    cin >> N;
+    vector<long long> H(N);
+    for (int i = 0; i < N; i++) {
+        cin >> H[i];
+    }
+    
+    long long T = 0;
+    int current_enemy = 0;
+    
+    while (current_enemy < N) {
+        T++;
+        // Check if current enemy is still alive
+        if (H[current_enemy] > 0) {
+            if (T % 3 == 0) {
+                H[current_enemy] -= 3;
+            } else {
+                H[current_enemy] -= 1;
+            }
+        }
+        
+        // Move to next enemy if current one is defeated
+        while (current_enemy < N && H[current_enemy] <= 0) {
+            current_enemy++;
+        }
+    }
+    
+    cout << T << endl;
+    return 0;
+}

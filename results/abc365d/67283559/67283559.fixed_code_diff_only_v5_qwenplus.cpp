@@ -1,0 +1,73 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    int N;
+    cin >> N;
+    string S;
+    cin >> S;
+    
+    vector<char> choices = {'R', 'P', 'S'};
+    auto getWinner = [](char player, char opponent) {
+        if ((player == 'R' && opponent == 'S') ||
+            (player == 'P' && opponent == 'R') ||
+            (player == 'S' && opponent == 'P')) {
+            return 1;
+        }
+        return 0;
+    };
+    
+    int maxScore = 0;
+    
+    // Try all possible starting moves
+    for (char firstMove : choices) {
+        vector<char> available = choices;
+        // Remove the chosen move
+        available.erase(remove(available.begin(), available.end(), firstMove), available.end());
+        
+        int score = 0;
+        char currentMove = firstMove;
+        
+        for (int i = 0; i < N; i++) {
+            // Calculate score for current move against opponent's move
+            score += getWinner(currentMove, S[i]);
+            
+            // Update available moves for next round (can't use current move)
+            if (i < N - 1) {
+                // For next move, we can choose any except the one we just used
+                char nextMove = currentMove;
+                
+                // Choose the best move from remaining options
+                bool foundBetter = false;
+                for (char move : available) {
+                    if (getWinner(move, S[i+1]) > getWinner(nextMove, S[i+1])) {
+                        nextMove = move;
+                    }
+                }
+                
+                // Also consider if any move in the full set (except current) gives better future result
+                vector<char> allExceptCurrent;
+                for (char c : choices) {
+                    if (c != currentMove) {
+                        allExceptCurrent.push_back(c);
+                    }
+                }
+                
+                nextMove = allExceptCurrent[0];
+                for (char move : allExceptCurrent) {
+                    if (getWinner(move, S[i+1]) > getWinner(nextMove, S[i+1])) {
+                        nextMove = move;
+                    }
+                }
+                
+                currentMove = nextMove;
+                available = allExceptCurrent;
+            }
+        }
+        
+        maxScore = max(maxScore, score);
+    }
+    
+    cout << maxScore << endl;
+    return 0;
+}

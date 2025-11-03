@@ -1,0 +1,45 @@
+#include<bits/stdc++.h>
+using namespace std;
+const int MAXN = 400005;
+const int MAXM = 1000005;
+
+int n, m;
+long long a[MAXN], t[MAXM], ans, w[MAXN];
+map<long long, long long> cnt;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+    
+    cin >> n >> m;
+    for (int i = 1; i <= n; i++) {
+        cin >> a[i];
+        a[i] %= m;
+        a[i + n] = a[i];
+    }
+    
+    w[0] = 0;
+    for (int i = 1; i <= 2 * n; i++) {
+        w[i] = (w[i-1] + a[i]) % m;
+    }
+    
+    cnt[0] = n; // For positions where prefix sum mod m is 0
+    
+    for (int i = n + 1; i <= 2 * n; i++) {
+        // Remove the contribution of window that's now out of range
+        if (i > n) {
+            cnt[w[i - n]]--;
+        }
+        
+        // Add to answer: number of valid starting positions with same prefix sum
+        ans += cnt[w[i]];
+        
+        // Add current position to possible starting positions
+        if (i < 2 * n) {
+            cnt[w[i]]++;
+        }
+    }
+    
+    cout << ans;
+    return 0;
+}

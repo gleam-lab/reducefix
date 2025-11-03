@@ -1,0 +1,36 @@
+#include<bits/stdc++.h>
+using namespace std;
+int n,m;
+int main(){
+    cin>>n>>m;
+    vector<int>nums(n);
+    for(int i=0;i<n;i++){
+        cin>>nums[i];
+    }
+    vector<int>prefixsum(n+1,0);
+    for(int i=0;i<n;i++){//求前缀和
+        prefixsum[i+1]=prefixsum[i]+nums[i];
+    }
+    long long count=0;
+    // 使用map记录每个余数出现的次数
+    map<int,int> remainder_count;
+    
+    // 初始化：前缀和为0的情况（空前缀）
+    remainder_count[0] = 1;
+    
+    // 遍历所有位置，计算以该位置结尾的子数组
+    for(int i=1; i<=n; i++){
+        int r = prefixsum[i] % m;
+        if(r < 0) r += m; // 处理负数取模
+        
+        // 如果之前有相同余数的前缀和，则它们之间的子数组和能被m整除
+        if(remainder_count.find(r) != remainder_count.end()){
+            count += remainder_count[r];
+        }
+        
+        remainder_count[r]++;
+    }
+    
+    cout<<count<<endl;
+    return 0;
+}

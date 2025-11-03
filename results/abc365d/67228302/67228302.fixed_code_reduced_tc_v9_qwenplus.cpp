@@ -1,0 +1,39 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define endl "\n"
+#define MOD 1000000007
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(0);
+
+    map<char, char> beats = {{'R', 'P'}, {'P', 'S'}, {'S', 'R'}};
+    int n;
+    cin >> n;
+    string s;
+    cin >> s;
+
+    if (n == 0) {
+        cout << 0 << endl;
+        return 0;
+    }
+
+    int total = 1;
+    char last_win = beats[s[0]]; // the move that would beat the first opponent's move
+
+    for (int i = 1; i < n; i++) {
+        char current_beat = beats[s[i]];
+        // If the same winning move beats current opponent move, we don't need new strategy
+        if (current_beat == last_win) {
+            continue;
+        } else {
+            // We need a new strategy
+            total++;
+            last_win = current_beat;
+        }
+    }
+
+    cout << total << endl;
+
+    return 0;
+}

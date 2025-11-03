@@ -1,0 +1,36 @@
+#include <iostream>
+#include <string>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+char win(char x) {
+    if (x == 'R') return 'P';
+    if (x == 'S') return 'R';
+    if (x == 'P') return 'S';
+    return 'X';
+}
+
+int main() {
+    int n;
+    string s;
+    cin >> n >> s;
+    
+    vector<int> dp(n + 1, 0);
+    char last = 'X'; // no move initially
+    
+    for (int i = 0; i < n; i++) {
+        char want = win(s[i]);
+        
+        if (last != want) {
+            dp[i + 1] = dp[i] + 1;
+            last = want;
+        } else {
+            dp[i + 1] = dp[i];
+            // last remains same
+        }
+    }
+    
+    cout << dp[n] << endl;
+    return 0;
+}

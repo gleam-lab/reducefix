@@ -1,0 +1,35 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int n, m;
+    cin >> n >> m;
+    vector<int> arr(n);
+    for (int i = 0; i < n; i++) {
+        cin >> arr[i];
+    }
+
+    // We need to count the number of contiguous subarrays (in circular manner) 
+    // such that the sum of elements in the subarray is divisible by m.
+    
+    long long ans = 0;
+    
+    // For each starting position
+    for (int start = 0; start < n; start++) {
+        long long sum = 0;
+        // Consider all lengths from 1 to n-1 (since full circle is not considered as per problem)
+        for (int len = 1; len < n; len++) {
+            int idx = (start + len) % n;
+            sum += arr[idx];
+            if (sum % m == 0) {
+                ans++;
+            }
+        }
+    }
+    
+    cout << ans;
+    return 0;
+}

@@ -1,0 +1,72 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    int N;
+    cin >> N;
+    string S;
+    cin >> S;
+    
+    vector<char> hand = {'R', 'P', 'S'};
+    auto getWinner = [](char player, char opponent) -> bool {
+        return (player == 'R' && opponent == 'S') ||
+               (player == 'P' && opponent == 'R') ||
+               (player == 'S' && opponent == 'P');
+    };
+    
+    // Try all 3 possible starting moves
+    int maxScore = 0;
+    
+    for (char firstMove : hand) {
+        vector<char> available = hand;
+        // Remove the first move from available options for next rounds
+        vector<char> next;
+        for (char c : available) {
+            if (c != firstMove) {
+                next.push_back(c);
+            }
+        }
+        
+        int score = 0;
+        char currentMove = firstMove;
+        
+        for (int i = 0; i < N; i++) {
+            // Check if current move wins
+            if (getWinner(currentMove, S[i])) {
+                score++;
+            }
+            
+            // For the next round, we can only use the two moves that are not the current one
+            if (i < N - 1) {
+                vector<char> newNext;
+                for (char c : hand) {
+                    if (c != currentMove) {
+                        newNext.push_back(c);
+                    }
+                }
+                next = newNext;
+                
+                // Choose the best move from the available ones for next round
+                currentMove = next[0]; // We'll determine which one to use in the next iteration
+                // But we need to pick optimally - check which of the two remaining moves gives better chance
+                if (next.size() == 2) {
+                    // Look ahead: which move gives us a win against S[i+1]?
+                    if (getWinner(next[0], S[i+1])) {
+                        currentMove = next[0];
+                    } else if (getWinner(next[1], S[i+1])) {
+                        currentMove = next[1];
+                    } else {
+                        // If neither wins, pick any (we'll lose or tie anyway)
+                        currentMove = next[0];
+                    }
+                }
+            }
+        }
+        
+        maxScore = max(maxScore, score);
+    }
+    
+    cout << maxScore << endl;
+    
+    return 0;
+}

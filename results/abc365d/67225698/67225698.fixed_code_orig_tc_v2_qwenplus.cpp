@@ -1,0 +1,138 @@
+#include <bits/stdc++.h>
+#include <ext/pb_ds/assoc_container.hpp>
+#include <ext/pb_ds/tree_policy.hpp>
+using namespace std;
+using namespace __gnu_pbds;
+typedef tree<long long, null_type, less_equal<long long>, rb_tree_tag, tree_order_statistics_node_update> pbds;
+#define fast_io()                     \
+    ios_base::sync_with_stdio(false); \
+    cin.tie(NULL);                    \
+    cout.tie(NULL)
+#define ll long long
+#define ull unsigned long long
+#define pb push_back
+#define eb emplace_back
+#define mp make_pair
+#define fi first
+#define se second
+#define pii pair<int, int>
+#define pll pair<long long, long long>
+#define vi vector<int>
+#define vll vector<long long>
+#define vb vector<bool>
+#define vpii vector<pair<int, int>>
+#define vpll vector<pair<long long, long long>>
+#define all(v) (v).begin(), (v).end()
+#define rall(v) (v).rbegin(), (v).rend()
+#define vsort(v) sort(v.begin(), v.end())
+#define min_heap priority_queue<ll, vll, greater<ll>>
+#define min_heap_pll priority_queue<pll, vector<pll>, greater<pll>>
+#define max_heap priority_queue<ll>
+#define max_heap_pll priority_queue<pll>
+const ll MOD = 1e9 + 7;
+const ll INF = 1e18;
+vll row{0, 1, 0, -1};
+vll col{1, 0, -1, 0};
+vector<char> s{'<', '^', '>', 'v'};
+ll gcd(ll a, ll b)
+{
+    while (b)
+    {
+        a %= b;
+        swap(a, b);
+    }
+    return a;
+}
+ll lcm(ll a, ll b)
+{
+    return a / gcd(a, b) * b;
+}
+
+void solve();
+void compute();
+int main()
+{
+    fast_io();
+#ifndef ONLINE_JUDGE
+    freopen("input.txt", "r", stdin);
+    freopen("output.txt", "w", stdout);
+#endif
+    int t = 1;
+    // cin >> t;
+    // compute();
+    while (t--)
+    {
+        solve();
+    }
+    return 0;
+}
+// ****************************** ACTUAL CODE ****************************** //
+void solve()
+{
+    ll n;
+    cin >> n;
+    string str;
+    cin >> str;
+    
+    if (n == 0) {
+        cout << 0 << "\n";
+        return;
+    }
+    
+    ll ans = 0;
+    vector<ll> groups;
+    ll count = 1;
+    
+    // Group consecutive identical characters
+    for (ll i = 1; i < n; i++) {
+        if (str[i] == str[i-1]) {
+            count++;
+        } else {
+            groups.push_back(count);
+            ans += (count + 1) / 2;
+            count = 1;
+        }
+    }
+    groups.push_back(count);
+    ans += (count + 1) / 2;
+    
+    // Handle the special case where two adjacent groups of size > 1 can be optimized
+    // We can reduce the answer by 1 only once when we have pattern like [>1, >1, ...] 
+    // But we need to be careful about multiple such patterns
+    bool used = false;
+    for (ll i = 0; i < (ll)groups.size() - 1; i++) {
+        if (groups[i] > 1 && groups[i+1] > 1 && !used) {
+            ans--;
+            used = true;
+        } else if (groups[i] > 1 && groups[i+1] > 1 && used) {
+            // Reset the flag if there's a single group in between
+            if (i > 0 && groups[i] > 1 && groups[i-1] == 1) {
+                // This handles cases where we have multiple separate opportunities
+                // Actually, we should allow one reduction per isolated pair
+                // But based on problem logic, it seems only one reduction is allowed overall
+                // So we keep used = true
+            }
+        }
+    }
+    
+    // Alternative approach: The issue might be that we can only save one operation total
+    // across the entire string when we have consecutive groups of length > 1
+    // So we just check if there exists at least one adjacent pair of groups with size > 1
+    
+    // Let's simplify: We can save at most one operation when there are two consecutive 
+    // groups both having length > 1
+    bool can_reduce = false;
+    for (ll i = 0; i < (ll)groups.size() - 1; i++) {
+        if (groups[i] > 1 && groups[i+1] > 1) {
+            can_reduce = true;
+            break;
+        }
+    }
+    
+    // We can reduce by at most 1
+    if (can_reduce) {
+        ans--;
+    }
+    
+    cout << ans << "\n";
+}

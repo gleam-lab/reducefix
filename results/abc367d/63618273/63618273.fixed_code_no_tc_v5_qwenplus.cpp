@@ -1,0 +1,40 @@
+#include<bits/stdc++.h>
+using namespace std;
+using ll = long long;
+const int N = 2e5 + 10, mod = 1e9 + 7;
+
+void solve() {
+    int n, M;
+    cin >> n >> M;
+    vector<int> a(n + 1);
+    for (int i = 1; i <= n; i++) {
+        cin >> a[i];
+    }
+
+    vector<int> prefix(n + 1);
+    for (int i = 1; i <= n; i++) {
+        prefix[i] = (prefix[i - 1] + a[i]) % M;
+    }
+
+    map<int, int> count;
+    ll ans = 0;
+    count[0] = 1; // Empty prefix has sum 0
+
+    for (int i = 1; i <= n; i++) {
+        int r = prefix[i];
+        ans += count[r];
+        count[r]++;
+    }
+
+    cout << ans << '\n';
+}
+
+int main() {
+    cin.tie(0);
+    ios::sync_with_stdio(0);
+    ll t = 1;
+    while (t--) {
+        solve();
+    }
+    return 0;
+}

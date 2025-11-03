@@ -1,0 +1,307 @@
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+#define endl "\n"
+#define MOD 1000000007
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(0);
+
+    map<char, char> beats = {{'R', 'P'}, {'P', 'S'}, {'S', 'R'}};
+    int n;
+    cin >> n;
+    string s;
+    cin >> s;
+
+    if (n == 0) {
+        cout << 0 << endl;
+        return 0;
+    }
+
+    int total = 1;
+    char last_winner = s[0]; // The winner of the current round
+
+    for (int i = 1; i < n; i++) {
+        // If current player's move beats the previous winner, then they become the new winner
+        if (beats[s[i]] == last_winner) {
+            last_winner = s[i];
+        }
+        // If current player loses to the previous winner, nothing changes
+        else if (beats[last_winner] == s[i]) {
+            // last_winner stays the same
+            continue;
+        }
+        // If it's a tie (same move), then no change in winner, but we don't start a new round
+        else if (s[i] == last_winner) {
+            // Same type, so still dominated by same type
+            continue;
+        }
+        // Otherwise, if this player can beat the current leader, but isn't already doing so,
+        // actually this case is covered above. The only remaining case is when we have a new independent chain.
+        else {
+            // This should not happen given the rules, but if we encounter a situation where
+            // the moves are different and neither beats the other directly in our logic,
+            // we need to start a new round.
+            total++;
+            last_winner = s[i];
+        }
+    }
+
+    // Actually, simpler approach: each time the current player cannot be beaten by the current leader,
+    // and isn't the same as the leader, we might need a new tournament? Let's reconsider.
+
+    // Correct logic: We want to minimize the number of tournaments.
+    // A tournament can include consecutive players as long as there's a single winner emerging.
+    // At each step, if the current character would lose to the current tournament's winner, 
+    // then they can join without creating a new tournament.
+    // But if they beat the current winner, then they take over as winner (still one tournament).
+    // Only when they are different and don't interact (but they always do), wait...
+
+    // Actually, re-read: We need the minimum number of tournaments such that in each tournament,
+    // every non-winner player loses to someone later in the tournament.
+
+    // Better approach from known similar problems:
+    // We traverse left to right, maintaining the current "dominant" move in the current tournament.
+    // We start a new tournament whenever the current character cannot be eliminated by any future character
+    // in the current tournament. But since we go left to right, we use greedy:
+    
+    // Known solution for "Rock-Paper-Scissors Tournament" minimization:
+    // Start a new tournament if current move beats the current tournament's winning move.
+    // But our initial code was wrong.
+
+    // Let's think again with example "PPR":
+    // P, P, R
+    // Tournament 1: first P wins initially.
+    // Second P: same as winner -> can be eliminated by first P? No, same. But second P could be eliminated by someone who beats P (i.e., S). But we don't have S.
+    // However, third is R. R loses to P. So both P's can eliminate R.
+    // But can two P's coexist? Only one can win. So one P must eliminate the other? But they tie.
+    // Therefore, two P's cannot eliminate each other. So we need separate tournaments?
+
+    // Actually, known problem: the answer for "PPR" is 2.
+    // Why? Because in one tournament with P,P,R:
+    // - First P cannot eliminate second P (tie)
+    // - Second P cannot eliminate first P (tie)
+    // - Both P's can eliminate R
+    // But we still have two P's at the end. We need a single winner.
+    // So unless there's a way for one P to eliminate the other, we can't have a single winner.
+    // Since they tie, neither eliminates the other. So we end up with multiple winners.
+    // Therefore, we must structure so that only one tournament has the P's? But how?
+
+    // Insight: The tournament bracket matters. We can arrange matches arbitrarily.
+    // In "PPR": 
+    //   Option: First match: P vs R -> P wins (since R loses to P)
+    //           Then P (winner) vs P -> tie, both advance? No, only one winner.
+    //   But rules: when two players play, if one beats the other, the loser is eliminated.
+    //   If they tie, BOTH are eliminated? Or both survive? Problem doesn't specify.
+
+    // Looking at expected output: "PPR" needs 2 tournaments.
+    // Standard solution for this class of problem: 
+    //   We simulate from left to right, keeping the current set of possible winners in the current tournament.
+    //   But simpler: greedy with stack or state.
+
+    // Actually, known solution pattern:
+    //   total = 1
+    //   last = s[0]
+    //   for i from 1 to n-1:
+    //       if s[i] beats last:
+    //           total += 1
+    //           last = s[i]
+    //       else:
+    //           last = max(last, s[i]) ? No.
+
+    // But our original code did:
+    //   if (beats[s[i]] == last_move) {  // if current move is beaten by last_move
+    //       continue;
+    //   } else {
+    //       last_move = beats[s[i]];
+    //       total += 1;
+    //   }
+    // That seems backwards.
+
+    // Let's analyze "PPR":
+    //   n=3, s="PPR"
+    //   beats: R->P, P->S, S->R
+    //   total=1, last_move = beats['P'] = 'S'
+    //   i=1: s[1]='P', beats['P']='S' == last_move -> condition true
+    //        so last_move = 'P', continue
+    //   i=2: s[2]='R', beats['R']='P', which equals last_move ('P') -> true
+    //        so last_move = 'R', continue
+    //   total=1 -> wrong.
+
+    // The logic in the original code is flawed.
+
+    // Correct approach:
+    // We want to minimize the number of tournaments.
+    // In each tournament, we can choose the order of matches.
+    // A tournament can have multiple players, but must result in one winner.
+    // Key insight: In any tournament, the winner must be a move that appears in the sequence,
+    // and all other moves must be eliminable by some move that comes after them in the tournament.
+
+    // Greedy algorithm from known problems (e.g., CodeForces "Tournament"):
+    //   We traverse left to right, and maintain the current "champion" of the ongoing tournament.
+    //   We start a new tournament if the current player can beat the current champion.
+    //   BUT: if the current player can beat the current champion, then the current champion cannot eliminate this player,
+    //   so we need a separate tournament for this strong player.
+
+    // However, let's test "PPR":
+    //   Start: tournament 1, champion = 'P'
+    //   i=1: 'P' -> same as champion, so can be eliminated by champion? No, tie.
+    //         But in tournament, two P's: they tie, so both survive? Then we have two winners.
+    //         To have single winner, we need one to be eliminated, but they can't eliminate each other.
+    //         So we must not allow two identical moves that can't be eliminated?
+    //
+    // Alternative known solution for "Minimum Number of Tournaments" in Rock Paper Scissors:
+    //   Use a stack-based simulation:
+    //   For each character c in the string:
+    //     While stack is not empty and c beats the top of stack, pop the stack.
+    //     If stack is empty or c != top, push c.
+    //   Answer is stack size.
+    //
+    // But let's test "PPR":
+    //   c='P': stack empty -> push P: [P]
+    //   c='P': stack not empty, c='P', top='P', does 'P' beat 'P'? No (tie). So don't pop.
+    //         c == top? Yes, so don't push.
+    //         stack remains [P]
+    //   c='R': stack not empty, c='R', top='P'. Does 'R' beat 'P'? No, 'P' beats 'R' (because paper covers rock).
+    //         So condition fails. Now, is stack empty? No. Is c != top? R != P -> true, so push R.
+    //         stack becomes [P, R], size=2 -> correct.
+    //
+    // Test with "PR":
+    //   P: push -> [P]
+    //   R: R vs P -> P beats R, so R does NOT beat P -> don't pop.
+    //      R != P -> push -> [P,R] -> size=2.
+    // But is that correct?
+    //   Can "PR" be done in one tournament?
+    //   P and R: if they fight, P beats R -> P wins. So only one tournament needed.
+    //   So expected answer is 1, but we got 2.
+    //
+    // So that algorithm is wrong.
+
+    // Another idea: 
+    //   We can simulate the tournament outcome greedily from left to right:
+    //   Let current_winner be the winner of the current tournament.
+    //   For each new player:
+    //     If the new player beats current_winner, then the current_winner cannot eliminate this player,
+    //     so we must either start a new tournament OR this player takes over (but then previous players might not be eliminable).
+    //
+    // Actually, reverse traversal is common:
+    //   Process from right to left, maintaining the current dominating move.
+    //   When moving left, if the current move beats the dominating move, then it becomes the new dominator.
+    //   But if it is beaten by the dominator, it can be eliminated.
+    //   If it's the same, it doesn't change.
+    //   And we only start a new tournament when we cannot eliminate the current player by any future player.
+    //
+    // However, we want minimum tournaments, so we try to include as many as possible in one tournament.
+    //
+    // Known solution for similar problems: 
+    //   https://codeforces.com/contest/1789/problem/B
+    //   But not exactly the same.
+    //
+    // After research, a known solution for "minimum tournaments" in RPS:
+    //   Use a stack, but different rule:
+    //   For each move c:
+    //     while stack is not empty and the top of stack is beaten by c:
+    //         pop the stack
+    //     if stack is empty or top != c:
+    //         push c
+    //
+    // Let's test "PR":
+    //   c='P': stack empty -> push P -> [P]
+    //   c='R': R beats P? No, P beats R. So condition "top is beaten by c" -> is P beaten by R? No.
+    //         So don't pop. Now, stack not empty, top='P', c='R' != 'P', so push R -> [P,R] -> size=2, but expected 1.
+    //
+    // Reverse the condition: while stack not empty and c beats top: pop
+    //   "PR":
+    //     P: push -> [P]
+    //     R: does R beat P? No -> don't pop. R != P -> push -> [P,R] -> 2, still wrong.
+    //
+    // Try: while stack not empty and top beats c: pop
+    //   This means: if current element is beaten by top, then it gets eliminated, so we don't need to keep it.
+    //   But we're building a stack of necessary tournaments.
+    //
+    //   "PR":
+    //     P: push -> [P]
+    //     R: does top 'P' beat 'R'? Yes -> so we pop? But popping means we remove the P? That doesn't make sense.
+    //         Then stack becomes empty, so we push R -> [R] -> size=1 -> correct.
+    //   "PPR":
+    //     P: push -> [P]
+    //     P: does top 'P' beat 'P'? No (tie) -> don't pop. P == P -> don't push. -> [P]
+    //     R: does top 'P' beat 'R'? Yes -> pop -> stack empty -> push R -> [R] -> size=1, but expected 2.
+    //   Not correct.
+    //
+    // Another idea: 
+    //   We want to find the minimum number of tournaments such that in each tournament, 
+    //   the winner is determined and all others are eliminated.
+    //   In one tournament, the winner must be able to beat everyone else, either directly or indirectly.
+    //   But because of ties, two identical moves cannot eliminate each other.
+    //   Therefore, in one tournament, you can have at most one of each move type? No, because if you have multiple P's,
+    //   they can all be eliminated by an S, but if there's no S, then they can't eliminate each other.
+    //
+    //   So in a tournament, if there are multiple occurrences of the same move, and no move that can eliminate them,
+    //   then we need more than one tournament.
+    //
+    //   Specifically, the winner of a tournament must be a move that appears, and it must beat all other move types present.
+    //   But also, for duplicate moves of the winner's type, they can't be eliminated by anyone (since only the winner's type can eliminate them? No, the winner's type ties with them).
+    //   So duplicates of the winner's type cannot be eliminated by anyone in the tournament.
+    //   Therefore, in a single tournament, you can have only ONE occurrence of the winner's move type.
+    //
+    //   Wait, that can't be, because then "PP" would require 2 tournaments, which makes sense because two P's tie and neither eliminates the other.
+    //
+    //   So rule: In a valid tournament, there can be at most one instance of the winning move, and zero instances of moves that beat the winner, and any number of moves that are beaten by the winner.
+    //   But the winner's move can appear only once, because additional copies cannot be eliminated.
+    //
+    //   Therefore, the entire string can be partitioned into tournaments, each containing exactly one occurrence of its winner move, and any number of losing moves (that are beaten by the winner), and no move that beats the winner.
+    //
+    //   So for "PPR": 
+    //     We have two P's and one R.
+    //     Could we have a tournament with winner=P? It can include the R (since P beats R), and one P (the winner), but the other P cannot be included because it would survive (tie with winner).
+    //     So one tournament can take one P and the R.
+    //     The other P must be in its own tournament.
+    //     Total = 2.
+    //
+    //   For "PR":
+    //     Tournament with winner=P: can include P and R (since P beats R), and only one P -> valid.
+    //     So only one tournament.
+    //
+    //   Algorithm:
+    //     We want to minimize the number of tournaments.
+    //     We can use a greedy covering from left to right.
+    //     But note: the winner's move must appear in the tournament, and only once.
+    //     So each tournament is defined by its winner's move and the winner's position.
+    //
+    //     Alternatively, we can use a state machine that tracks what moves are "active" (not yet eliminated) in the current tournament.
+    //     But simpler: 
+    //         Count frequency of each move.
+    //         But that won't work because order matters for elimination possibility.
+    //
+    //     Another idea: 
+    //         We can simulate by trying to extend the current tournament as much as possible.
+    //         In the current tournament, we have a winner move (which must be one of R,P,S) and it can eliminate the opposite move.
+    //         But we can have only one instance of the winner move.
+    //         So when we see a move, we can include it in the current tournament if:
+    //             - it is not the winner move (because we can have only one winner)
+    //             - OR if it is the winner move, but we haven't seen the winner yet.
+    //         But we don't know the winner in advance.
+    //
+    //     Instead, we can decide the winner of a tournament as the first occurrence of a move that we use as winner.
+    //     Then, after that, we can include any move that is beaten by the winner, until we encounter another instance of the winner move or a move that beats the winner.
+    //     When we encounter a move that beats the winner, we cannot include it (because it would eliminate the winner), so we must close the tournament before it.
+    //     When we encounter a second instance of the winner move, we cannot include it (because it would survive), so we close the tournament before it.
+    //
+    //     But what if we haven't started a tournament? We start with the first move as winner.
+    //
+    //     Algorithm:
+    //         total = 0
+    //         i = 0
+    //         while i < n:
+    //             start a new tournament with s[i] as winner
+    //             total += 1
+    //             let win = s[i]
+    //             let lose = beats[win]  // the move that wins beats
+    //             let beaten_by_win = the move that is beaten by win, i.e., the one that loses to win
+    //                 Actually, if win=R, then beats R is P, and R beats S.
+    //                 So beaten_by_win = the move that loses to win.
+    //                 How to compute? We have beats[char] = what beats char.
+    //                 So what is beaten by win? It's the char such that beats[char] = win.
+   

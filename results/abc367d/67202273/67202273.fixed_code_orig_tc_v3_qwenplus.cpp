@@ -1,0 +1,40 @@
+#include<bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+const int MAXN=4e5+10;
+ll a[MAXN],sum[MAXN];
+map<ll,ll> cnt;
+
+int main(){
+    ll n,m,ans=0;
+    scanf("%lld %lld",&n,&m);
+    for(ll i=1;i<=n;i++){
+        scanf("%lld",&a[i]);
+        a[i+n]=a[i];
+    }
+    sum[0] = 0;
+    for(ll i=1;i<=2*n;i++){
+        sum[i]=(sum[i-1]+a[i])%m;
+    }
+    
+    // Initialize frequency of prefix sums in the first window
+    for(ll i=0;i<n;i++){
+        cnt[sum[i]]++;
+    }
+    
+    // Sliding window: remove leftmost, add new rightmost
+    for(ll i=n;i<=2*n;i++){
+        // Remove sum[i-n] from consideration
+        cnt[sum[i-n]]--;
+        
+        // Count how many previous prefix sums equal current sum[i]
+        ans += cnt[sum[i]];
+        
+        // Add current prefix sum to frequency map if within valid range
+        if(i < 2*n) {
+            cnt[sum[i+1]]++;
+        }
+    }
+    printf("%lld",ans);
+    return 0;
+}

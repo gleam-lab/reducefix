@@ -62,10 +62,7 @@ You can run a demo for RQ-1:
 ### RQ-2: Effectiveness of Reduced Test Cases for Repair
 
 ```bash
-./rq2.sh qwen25-coder7b qwen2.5-coder-7b-instruct
-./rq2.sh glm4-9b glm4-9b-chat  
-./rq2.sh qwenplus qwen-plus
-./rq2.sh deepseekv3 deepseek-v3
+./rq2.sh
 ```
 
 For details and options, see the script content.
@@ -73,22 +70,30 @@ For details and options, see the script content.
 ### RQ-3: Influence of Prompt Composition
 
 ```bash
-./rq3.sh qwen25-ablation
+./rq3.sh
 ```
 
 For details and options, see the script content.
 
-### RQ-4: Integration with ChatRepair
+### RQ-4: Integration with ChatRepair and CREF
 
 ```bash
-./rq4.sh chatrepair-baseline
+./rq4.sh
+```
+
+For details and options, see the script content.
+
+### RQ-5: Evaluation on OSS-Fuzz
+
+```bash
+./rq5.sh
 ```
 
 For details and options, see the script content.
 
 ## Directory Structure
 
-```
+```bash
 ReduceFix/
 ├── results/                    # Problem-specific directories
 │   ├── abc361c/               # AC code, WA submissions, reducers
@@ -118,11 +123,3 @@ ReduceFix/
 - `result_chatrepair_<model_tag>.json`: ChatRepair evaluation results (RQ4)
 - `<problem>/reducer.py`: Generated reducer for each problem
 - `<problem>/<submission_id>.*`: Individual submission artifacts
-
-## Troubleshooting
-
-1. **API Key Issues**: Ensure your API keys are correctly configured in `tutor.py`
-2. **Missing Test Cases**: Download AtCoder test cases and place in `tests/` directory
-3. **Memory Issues**: Reduce `--max-threads` parameter for repair evaluation
-4. **Timeout Issues**: Increase timeout values in configuration files
-5. **Missing Analysis Scripts**: Some analysis scripts referenced in RQ scripts may need to be implemented or use the existing `summarize_*.py` scripts for result analysis

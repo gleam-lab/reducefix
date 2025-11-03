@@ -1,0 +1,73 @@
+#include<bits/stdc++.h>
+using namespace std;
+
+char s[200011];
+char c[200011];
+
+int solve(int n, int start) {
+    // Create the transformed string based on rules
+    for (int i = 1; i <= n; i++) {
+        if (s[i] == 'P') c[i] = 'S';
+        else if (s[i] == 'R') c[i] = 'P';
+        else c[i] = 'R';
+    }
+    
+    // Start fixing from the given position
+    int sum = n;
+    c[start] = s[start]; // Force change at start position
+    sum--;
+    
+    // Propagate changes forward
+    for (int i = start + 1; i <= n; i++) {
+        if (c[i] == c[i-1]) {
+            c[i] = s[i];
+            sum--;
+        }
+    }
+    
+    // Propagate changes backward
+    for (int i = start - 1; i >= 1; i--) {
+        if (c[i] == c[i+1]) {
+            c[i] = s[i];
+            sum--;
+        }
+    }
+    
+    return sum;
+}
+
+int main() {
+    int n;
+    scanf("%d", &n);
+    scanf("%s", s + 1);
+    
+    // Base case: no changes
+    for (int i = 1; i <= n; i++) {
+        if (s[i] == 'P') c[i] = 'S';
+        else if (s[i] == 'R') c[i] = 'P';
+        else c[i] = 'R';
+    }
+    
+    int ans = n;
+    // Check if any adjacent characters are the same in transformed string
+    bool has_adjacent = false;
+    for (int i = 2; i <= n; i++) {
+        if (c[i] == c[i-1]) {
+            has_adjacent = true;
+            break;
+        }
+    }
+    
+    if (!has_adjacent) {
+        printf("%d", n);
+        return 0;
+    }
+    
+    // Try changing each position and find maximum result
+    for (int i = 1; i <= n; i++) {
+        ans = max(ans, solve(n, i));
+    }
+    
+    printf("%d", ans);
+    return 0;
+}

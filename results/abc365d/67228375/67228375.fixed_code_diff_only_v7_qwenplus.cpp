@@ -1,0 +1,60 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define endl "\n"
+#define MOD 1000000007
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(0);
+
+    map<char, char> beats = {{'R', 'P'}, {'P', 'S'}, {'S', 'R'}};
+    int n;
+    cin >> n;
+    string s;
+    cin >> s;
+
+    // Count the number of times we need to change our move
+    // We start by choosing a move that beats the first opponent's move
+    int total_1 = 1; // Starting with a move that beats s[0]
+    char current_own_move = beats[s[0]];
+
+    for (int i = 1; i < n; i++) {
+        // If our current move loses to the next opponent move,
+        // we must switch to a move that beats the next opponent move
+        if (beats[s[i]] == current_own_move) {
+            // Our current move is beaten by opponent's next move
+            // So we need to switch
+            current_own_move = beats[s[i]];
+            total_1++;
+        }
+        // Otherwise, we keep the same move
+    }
+
+    // Second possibility: maybe we start differently?
+    // Actually, we should consider that we can choose any starting move
+    // But the optimal strategy is to minimize switches
+    // Let's try all three possible starting moves
+
+    int min_switches = n; // upper bound
+
+    vector<char> moves = {'R', 'P', 'S'};
+    for (char start_move : moves) {
+        int switches = 1; // one "choice" at start counts as part of strategy
+        char current_move = start_move;
+
+        for (int i = 0; i < n; i++) {
+            // Check if current move loses to opponent's move
+            if (beats[s[i]] == current_move) {
+                // We are losing, so we must switch to beat opponent
+                current_move = beats[s[i]];
+                switches++;
+            }
+            // If we win or tie, we can continue with same move
+        }
+        min_switches = min(min_switches, switches);
+    }
+
+    cout << min_switches << endl;
+
+    return 0;
+}

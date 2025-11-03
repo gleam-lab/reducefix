@@ -1,0 +1,45 @@
+#include <iostream>
+#include <string>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+char win(char x) {
+    if (x == 'R') return 'P';
+    if (x == 'S') return 'R';
+    if (x == 'P') return 'S';
+    return 'X';
+}
+
+int main() {
+    int n;
+    string s;
+    cin >> n >> s;
+    
+    // Forward pass: start with first move as winner
+    int forward = 1;
+    char current_winner = win(s[0]);
+    
+    for (int i = 1; i < n; i++) {
+        if (current_winner != win(s[i])) {
+            forward++;
+            current_winner = win(s[i]);
+        }
+        // If same, continue with current_winner (no change)
+    }
+    
+    // Backward pass: start from end
+    int backward = 1;
+    current_winner = win(s[n-1]);
+    
+    for (int i = n-2; i >= 0; i--) {
+        if (current_winner != win(s[i])) {
+            backward++;
+            current_winner = win(s[i]);
+        }
+    }
+    
+    cout << max(forward, backward) << endl;
+    
+    return 0;
+}

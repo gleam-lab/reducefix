@@ -1,0 +1,40 @@
+#include<bits/stdc++.h>
+using namespace std;
+using ll = long long;
+
+int main() {
+    ll n;
+    cin >> n;
+    vector<ll> h(n);
+    for (int i = 0; i < n; i++) {
+        cin >> h[i];
+    }
+    
+    ll T = 0;
+    int enemy_idx = 0;
+    
+    while (enemy_idx < n) {
+        T++;
+        
+        // Check if current frontmost enemy is still alive
+        if (h[enemy_idx] <= 0) {
+            enemy_idx++;
+            continue;
+        }
+        
+        // Attack the frontmost living enemy
+        if (T % 3 == 0) {
+            h[enemy_idx] -= 3;
+        } else {
+            h[enemy_idx] -= 1;
+        }
+        
+        // If this enemy is defeated, move to next
+        if (h[enemy_idx] <= 0) {
+            enemy_idx++;
+        }
+    }
+    
+    cout << T << endl;
+    return 0;
+}

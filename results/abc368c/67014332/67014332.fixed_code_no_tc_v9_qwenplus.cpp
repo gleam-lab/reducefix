@@ -1,0 +1,34 @@
+#include<bits/stdc++.h>
+using namespace std;
+using ll = long long;
+
+int main() {
+    ll n;
+    cin >> n;
+    vector<ll> H(n);
+    for (int i = 0; i < n; i++) {
+        cin >> H[i];
+    }
+
+    ll T = 0;
+    int enemy_idx = 0;
+
+    while (enemy_idx < n) {
+        T++;
+        // Determine damage: -3 if T is multiple of 3, else -1
+        ll damage = (T % 3 == 0) ? 3 : 1;
+
+        // Attack the frontmost alive enemy
+        if (H[enemy_idx] > 0) {
+            H[enemy_idx] -= damage;
+        }
+
+        // If current enemy is defeated, move to next
+        if (H[enemy_idx] <= 0) {
+            enemy_idx++;
+        }
+    }
+
+    cout << T << endl;
+    return 0;
+}

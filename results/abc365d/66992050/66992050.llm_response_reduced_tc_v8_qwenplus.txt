@@ -1,0 +1,151 @@
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+
+int main(){
+    int N;
+    string S;
+    cin >> N >> S;
+    
+    char past = 'N'; // No previous move
+    int ans = 0;
+    
+    for(char c : S){
+        if(c == 'P'){
+            if(past != 'S'){
+                ans++;
+                past = 'S'; // After playing P, we need to set past to the move that beats it or follow logic
+            }
+            else{
+                past = 'P';
+            }
+        }
+        else if(c == 'R'){
+            if(past != 'P'){
+                ans++;
+                past = 'P';
+            }
+            else{
+                past = 'R';
+            }
+        }
+        else if(c == 'S'){
+            if(past != 'R'){
+                ans++;
+                past = 'R';
+            }
+            else{
+                past = 'S';
+            }
+        }
+    }
+    
+    cout << ans;
+    return 0;
+}
+```
+
+Wait, the logic in the original code is flawed. Let me reconsider: the problem seems to be about counting minimal moves such that no two consecutive moves are the same in a rock-paper-scissors sequence, or simulating a strategy.
+
+But based on input "PPR" expecting output 2, and step-by-step:
+
+- First 'P': we can play something that isn't invalid. But the state machine suggests we're tracking what *we* last played.
+
+Actually, re-analyzing: likely this is the "Handstand 2" or similar type problem — but given the characters P, R, S, and the transitions, it's more likely about ensuring that we change our move whenever needed to beat the opponent.
+
+But wait — common problem: minimize number of times you have to *change* your move when facing a sequence of opponent moves (P, R, S), where you must always play a move that beats the opponent.
+
+But then:
+- To beat 'P' (paper), you play 'S' (scissors)
+- To beat 'R' (rock), you play 'P' (paper)
+- To beat 'S' (scissors), you play 'R' (rock)
+
+So desired outputs: you want to count how many times you have to *switch* your move.
+
+But the answer is the total number of changes + 1? Or just changes?
+
+Given:
+Input: 3, "PPR"
+Opponent: P -> P -> R
+
+To beat P: play S
+To beat P: play S (same as before, no change)
+To beat R: play P (different from S → change)
+
+So you play: S, S, P → 1 change → output 2? That doesn't match.
+
+Wait — maybe `ans` counts number of times you make a move, but you start with nothing.
+
+Ah! The variable `ans` is counting the number of times you *start a new streak* — i.e., number of segments where you use the same move.
+
+Each time you can continue using the same move, you do; otherwise, you switch and increment `ans`.
+
+But initially, you haven't played anything.
+
+For "PPR":
+- Opponent plays 'P': we must play 'S'. We haven't played anything → new move → ans=1, past='S'
+- Opponent plays 'P': we must play 'S'. Current move is 'S' → same → no change, past remains 'S'
+- Opponent plays 'R': we must play 'P'. Now different from 'S' → need to change → ans=2, past='P'
+
+So answer is 2.
+
+So the intended logic: 
+- For each character in S, determine what move we must play to beat it.
+- If our last move is not that required move, we have to switch → increment ans
+- Update last move to current required move
+
+But in the code, the logic is backwards.
+
+Let me fix:
+
+Required mapping:
+- If opponent plays 'P', we play 'S'
+- If opponent plays 'R', we play 'P'
+- If opponent plays 'S', we play 'R'
+
+So instead of checking `if(c=='P') { if(past != 'S')... }`, it should be:
+
+We need to play move M(c):
+- M('P') = 'S'
+- M('R') = 'P'
+- M('S') = 'R'
+
+Then:
+- If past != M(c), then we need to switch → ans++, and set past = M(c)
+- Else, we keep past
+
+So rewrite accordingly.
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+
+int main(){
+    int N;
+    string S;
+    cin >> N >> S;
+    
+    char last = 'X'; // No move yet
+    int ans = 0;
+    
+    auto required = [](char c) {
+        if(c == 'P') return 'S';
+        if(c == 'R') return 'P';
+        if(c == 'S') return 'R';
+        return 'X';
+    };
+    
+    for(char c : S){
+        char need = required(c);
+        if(last != need){
+            ans++;
+            last = need;
+        }
+    }
+    
+    cout << ans;
+    return 0;
+}
+```

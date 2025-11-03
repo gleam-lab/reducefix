@@ -1,0 +1,51 @@
+#include<bits/stdc++.h>
+
+using namespace std;
+using ll=long long;
+typedef pair<int, int>PII;
+const int N=2e5+10,mod=1e9+7;
+
+void solve()
+{
+	int n, M;
+	cin >> n >> M;
+	vector<int> a(n+1);
+	for(int i = 1; i <= n; i++){
+		cin >> a[i];
+	}
+	
+	vector<int> s(n+1);
+	for(int i = 1; i <= n; i++){
+		s[i] = s[i-1] + a[i];
+	}
+	
+	map<int, int> mp;
+	ll ans = 0;
+	
+	// Initialize with prefix sum 0 to account for subarrays starting at index 1
+	mp[0] = 1;
+	
+	for(int i = 1; i <= n; i++){
+		int remainder = s[i] % M;
+		if (remainder < 0) remainder += M;
+		
+		// Count how many previous prefix sums have the same remainder
+		// These form subarrays whose sum is divisible by M
+		ans += mp[remainder];
+		
+		mp[remainder]++;
+	}
+	
+	cout << ans << '\n';
+}
+
+int main()
+{
+	cin.tie(0);
+	ios::sync_with_stdio(0);
+	ll t = 1;
+	while(t--){
+		solve();
+	}
+	return 0;
+}

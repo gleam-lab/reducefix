@@ -1,0 +1,36 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main(){
+    ios_base::sync_with_stdio(false);
+    cin.tie(NULL);
+
+    int N;
+    string S;
+    cin >> N;
+    cin >> S;
+    int wins = 0;
+    char prev = 'a'; // Initialize to a non-RPS character
+    
+    for (char c : S){
+        char winmove;
+        if (c == 'R'){
+            winmove = 'P';
+        } else if (c == 'P'){
+            winmove = 'S';
+        } else { // c == 'S'
+            winmove = 'R';
+        }
+        
+        if (winmove != prev) {
+            wins++;
+            prev = winmove;
+        } else {
+            // If we used the winning move previously, we can't use it again
+            // So we must use the current opponent's move (or any non-winning move)
+            prev = c;
+        }
+    }   
+    cout << wins;
+    return 0;
+}

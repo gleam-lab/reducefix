@@ -1,0 +1,34 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main(){
+    ios_base::sync_with_stdio(false);
+    cin.tie(NULL);
+
+    int N;
+    string S;
+    cin >> N >> S;
+    
+    int wins = 0;
+    char prev = ' '; // Use space or any character not in {R,P,S}
+    
+    for (char c : S){
+        char winmove;
+        if (c == 'R'){
+            winmove = 'P';
+        } else if (c == 'P'){
+            winmove = 'S';
+        } else { // c == 'S'
+            winmove = 'R';
+        }
+        
+        if (winmove != prev){
+            wins++;
+            prev = winmove;
+        } else {
+            prev = c; // Opponent will play the same move we just saw
+        }
+    }   
+    cout << wins;
+    return 0;
+}

@@ -1,0 +1,40 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main(){
+    ios_base::sync_with_stdio(false);
+    cin.tie(NULL);
+
+    int N;
+    string S;
+    cin >> N >> S;
+    
+    int wins = 0;
+    char last_played = ' '; // No move played initially
+    
+    for (char opponent_move : S) {
+        char best_response;
+        
+        // Determine the move that beats the opponent's move
+        if (opponent_move == 'R') {
+            best_response = 'P'; // Paper beats Rock
+        } else if (opponent_move == 'P') {
+            best_response = 'S'; // Scissors beats Paper
+        } else { // opponent_move == 'S'
+            best_response = 'R'; // Rock beats Scissors
+        }
+        
+        // If we can play the winning move (i.e., it's different from our last move)
+        if (best_response != last_played) {
+            wins++;
+            last_played = best_response;
+        } 
+        // Otherwise, we have to play the opponent's move (or any move, but playing their move is safe)
+        else {
+            last_played = opponent_move;
+        }
+    }
+    
+    cout << wins;
+    return 0;
+}

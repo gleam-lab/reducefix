@@ -1,0 +1,200 @@
+#include<bits/stdc++.h>
+using namespace std;
+
+char s[200011];
+char c[200011];
+
+int main()
+{
+    int n;
+    scanf("%d", &n);
+    scanf("%s", s + 1);
+    
+    // Function to compute the maximum possible wins
+    auto solve = [&](int start_override) -> int {
+        for (int i = 1; i <= n; i++) {
+            if (s[i] == 'P') c[i] = 'S';
+            else if (s[i] == 'R') c[i] = 'P';
+            else c[i] = 'R';
+        }
+        
+        int sum = n;
+        
+        // Override decision at position 1 if needed
+        if (start_override != -1) {
+            c[1] = s[1];
+            sum--;
+        }
+        
+        for (int i = 2; i <= n; i++) {
+            if (c[i] == c[i-1]) {
+                c[i] = s[i];
+                sum--;
+            }
+        }
+        
+        return sum;
+    };
+    
+    int ans = 0;
+    
+    // Try three strategies:
+    // 1. Don't override any move
+    ans = max(ans, solve(-1));
+    
+    // 2. Override first move only if it helps avoid conflict
+    if (n >= 2) {
+        // Check if overriding first move could help with second
+        for (int i = 1; i <= 1; i++) {
+            if (s[i] == 'P') c[i] = 'S';
+            else if (s[i] == 'R') c[i] = 'P';
+            else c[i] = 'R';
+        }
+        
+        char orig_c1 = c[1];
+        char forced_c1 = s[1];
+        
+        // Only override if it prevents a conflict and doesn't create worse situation
+        if (forced_c1 != c[2]) {
+            ans = max(ans, solve(1));
+        }
+    }
+    
+    // Try all possibilities: sometimes we need to break chain early
+    // More systematic approach: try overriding each position when conflict occurs
+    for (int attempt = 0; attempt <= 1; attempt++) {
+        for (int i = 1; i <= n; i++) {
+            if (s[i] == 'P') c[i] = 'S';
+            else if (s[i] == 'R') c[i] = 'P';
+            else c[i] = 'R';
+        }
+        
+        int sum = n;
+        bool changed = false;
+        
+        for (int i = 1; i <= n; i++) {
+            if (i > 1 && c[i] == c[i-1] && !changed && attempt == 1) {
+                // Try overriding this position
+                c[i] = s[i];
+                sum--;
+                changed = true;
+            } else if (i > 1 && c[i] == c[i-1]) {
+                if (attempt == 0 || (attempt == 1 && changed)) {
+                    c[i] = s[i];
+                    sum--;
+                }
+            }
+        }
+        
+        ans = max(ans, sum);
+    }
+    
+    // Greedy forward pass with potential restart
+    for (int fix_pos = 0; fix_pos <= min(2, n); fix_pos++) {
+        for (int i = 1; i <= n; i++) {
+            if (s[i] == 'P') c[i] = 'S';
+            else if (s[i] == 'R') c[i] = 'P';
+            else c[i] = 'R';
+        }
+        
+        int sum = n;
+        vector<int> fixes;
+        
+        if (fix_pos >= 1 && fix_pos <= n) {
+            c[fix_pos] = s[fix_pos];
+            sum--;
+            fixes.push_back(fix_pos);
+        }
+        
+        bool valid = true;
+        for (int i = 2; i <= n; i++) {
+            if (c[i] == c[i-1]) {
+                // If we haven't fixed anything yet and this is early, try fixing here
+                if (find(fixes.begin(), fixes.end(), i) == fixes.end()) {
+                    c[i] = s[i];
+                    sum--;
+                    fixes.push_back(i);
+                } else {
+                    valid = false;
+                    break;
+                }
+            }
+        }
+        
+        if (valid) {
+            ans = max(ans, sum);
+        }
+    }
+    
+    // Final optimized greedy
+    ans = 0;
+    for (int skip_first = 0; skip_first < 2; skip_first++) {
+        for (int i = 1; i <= n; i++) {
+            if (s[i] == 'P') c[i] = 'S';
+            else if (s[i] == 'R') c[i] = 'P';
+            else c[i] = 'R';
+        }
+        
+        int sum = n;
+        if (skip_first && n >= 1) {
+            c[1] = s[1];
+            sum--;
+        }
+        
+        for (int i = 2; i <= n; i++) {
+            if (c[i] == c[i-1]) {
+                c[i] = s[i];
+                sum--;
+            }
+        }
+        
+        ans = max(ans, sum);
+    }
+    
+    // Consider case where we might want to break chain optimally
+    // The key insight: we can simulate both strategies independently
+    
+    // Strategy 1: Always play optimally unless it causes duplicate
+    // Strategy 2: At position 1, if playing optimally leads to conflict with position 2, consider not optimizing position 1
+    
+    int sum1 = 0, sum2 = 0;
+    vector<char> c1(n+1), c2(n+1);
+    
+    // Strategy 1: Play optimally throughout
+    for (int i = 1; i <= n; i++) {
+        if (s[i] == 'P') c1[i] = 'S';
+        else if (s[i] == 'R') c1[i] = 'P';
+        else c1[i] = 'R';
+    }
+    sum1 = n;
+    for (int i = 2; i <= n; i++) {
+        if (c1[i] == c1[i-1]) {
+            c1[i] = s[i];
+            sum1--;
+        }
+    }
+    
+    // Strategy 2: At position 1, play same as opponent if it helps avoid future conflict
+    for (int i = 1; i <= n; i++) {
+        if (s[i] == 'P') c2[i] = 'S';
+        else if (s[i] == 'R') c2[i] = 'P';
+        else c2[i] = 'R';
+    }
+    sum2 = n;
+    if (n >= 1) {
+        c2[1] = s[1];
+        sum2--;
+    }
+    for (int i = 2; i <= n; i++) {
+        if (c2[i] == c2[i-1]) {
+            c2[i] = s[i];
+            sum2--;
+        }
+    }
+    
+    ans = max(sum1, sum2);
+    
+    printf("%d", ans);
+    
+    return 0;
+}

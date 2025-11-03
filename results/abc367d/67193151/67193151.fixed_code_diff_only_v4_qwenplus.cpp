@@ -1,0 +1,44 @@
+#include<bits/stdc++.h>
+using namespace std;
+const int N=1e6+5;
+int n,m,k,sum,cnt,a[N],b[N],d[N];
+int main()
+{
+	ios::sync_with_stdio(0),cin.tie(0),cout.tie(0); 
+	int i,j,x,y,z,t;
+	cin>>n>>m;
+	for(i=1;i<=n;i++)
+		cin>>a[i];
+	
+	sum = 0;
+	memset(b, 0, sizeof(b));
+	d[0] = 0;
+	b[0] = 1; // Important: empty prefix has sum 0
+	
+	// Calculate prefix sums for the doubled array
+	for(i=1;i<=n*2;i++) {
+		if(i <= n) {
+			d[i] = d[i-1] + a[i];
+		} else {
+			d[i] = d[i-1] + a[i-n];
+		}
+		
+		// Only count valid subarrays of length <= n
+		if(i > 1) {
+			int pos = (i-1) - n; // The position that is now out of range
+			if(pos >= 1) {
+				b[d[pos] % m]--;
+			}
+			
+			sum += b[d[i] % m];
+		}
+		
+		// Add current prefix to frequency array if it's within first n positions
+		if(i <= n) {
+			b[d[i] % m]++;
+		}
+	}
+	
+	cout<<sum;
+	return 0;
+}

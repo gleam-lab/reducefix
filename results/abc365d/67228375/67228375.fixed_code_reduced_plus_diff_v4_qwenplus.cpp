@@ -1,0 +1,54 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define endl "\n"
+#define MOD 1000000007
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(0);
+
+    map<char, char> beats = {{'R', 'P'}, {'P', 'S'}, {'S', 'R'}};
+    int n;
+    cin >> n;
+    string s;
+    cin >> s;
+
+    if (n == 1) {
+        cout << 1 << endl;
+        return 0;
+    }
+
+    // Try both possible starting moves
+    auto simulate = [&](char first_move) {
+        int rounds = 1;
+        char last_opponent = s[0];
+        char current_winner = (beats[s[0]] == first_move) ? first_move : s[0];
+
+        for (int i = 1; i < n; i++) {
+            char opponent = s[i];
+            char beat_opponent = beats[opponent];
+            
+            // If current winner can beat the new opponent, continue
+            if (beats[opponent] == current_winner) {
+                current_winner = opponent;
+                last_opponent = opponent;
+                continue;
+            }
+            
+            // Otherwise, we need to change our move
+            rounds++;
+            current_winner = beat_opponent;
+            last_opponent = opponent;
+        }
+        return rounds;
+    };
+
+    // Try starting with beating the first move and starting with matching the first move
+    char beat_first = beats[s[0]];
+    int result1 = simulate(beat_first);
+    int result2 = simulate(s[0]);
+    
+    cout << max(result1, result2) << endl;
+
+    return 0;
+}

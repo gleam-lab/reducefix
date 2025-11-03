@@ -1,0 +1,45 @@
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+
+int main(){
+    int N;
+    string S;
+    cin >> N >> S;
+    
+    char past = 'N'; // 'N' means no previous move
+    int ans = 0;
+    
+    for(char c : S){
+        if(c == 'P'){
+            if(past != 'S'){
+                ans++;
+                past = 'S'; // To beat P, we need S
+            }
+            else{
+                past = 'P';
+            }
+        }
+        else if(c == 'R'){
+            if(past != 'P'){
+                ans++;
+                past = 'P'; // To beat R, we need P
+            }
+            else{
+                past = 'R';
+            }
+        }
+        else if(c == 'S'){
+            if(past != 'R'){
+                ans++;
+                past = 'R'; // To beat S, we need R
+            }
+            else{
+                past = 'S';
+            }
+        }
+    }
+    
+    cout << ans;
+    return 0;
+}

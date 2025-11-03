@@ -1,0 +1,46 @@
+#include<bits/stdc++.h>
+using namespace std;
+
+char s[200011];
+char c[200011];
+
+int solve(int n, int start_change) {
+    for (int i = 1; i <= n; i++) {
+        if (s[i] == 'P') c[i] = 'S';
+        else if (s[i] == 'R') c[i] = 'P';
+        else c[i] = 'R';
+    }
+    
+    if (start_change == 1) {
+        c[1] = s[1];
+    } else if (start_change == 2) {
+        c[2] = s[2];
+    }
+    
+    int changes = 0;
+    if (start_change != 0) changes++;
+    
+    for (int i = 2; i <= n; i++) {
+        if (c[i] == c[i-1]) {
+            c[i] = s[i];
+            changes++;
+        }
+    }
+    
+    return n - changes;
+}
+
+int main() {
+    int n;
+    scanf("%d", &n);
+    scanf("%s", s + 1);
+    
+    int ans = 0;
+    // Try three strategies: no initial change, change position 1, change position 2
+    ans = max(ans, solve(n, 0));
+    if (n >= 1) ans = max(ans, solve(n, 1));
+    if (n >= 2) ans = max(ans, solve(n, 2));
+    
+    printf("%d\n", ans);
+    return 0;
+}

@@ -1,0 +1,51 @@
+#include <iostream>
+#include <string>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+char beats(char c) {
+    if (c == 'R') return 'P';
+    if (c == 'S') return 'R';
+    if (c == 'P') return 'S';
+    return c;
+}
+
+int solve(const string& s) {
+    int n = s.size();
+    if (n == 0) return 0;
+    
+    // Forward pass: start with beating the first gesture
+    int forward = 1;
+    char current = beats(s[0]);
+    for (int i = 1; i < n; i++) {
+        if (current != beats(s[i])) {
+            forward++;
+            current = beats(s[i]);
+        } else {
+            current = s[i];
+        }
+    }
+    
+    // Backward pass: start with beating the last gesture
+    int backward = 1;
+    current = beats(s[n-1]);
+    for (int i = n-2; i >= 0; i--) {
+        if (current != beats(s[i])) {
+            backward++;
+            current = beats(s[i]);
+        } else {
+            current = s[i];
+        }
+    }
+    
+    return max(forward, backward);
+}
+
+int main() {
+    int n;
+    string s;
+    cin >> n >> s;
+    cout << solve(s) << endl;
+    return 0;
+}

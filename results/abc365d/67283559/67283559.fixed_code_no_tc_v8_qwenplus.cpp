@@ -1,0 +1,72 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    int N;
+    string S;
+    cin >> N >> S;
+    
+    vector<char> moves = {'R', 'P', 'S'};
+    auto getWinner = [](char player, char opponent) {
+        if ((player == 'R' && opponent == 'S') ||
+            (player == 'P' && opponent == 'R') ||
+            (player == 'S' && opponent == 'P')) {
+            return 1;
+        }
+        return 0;
+    };
+    
+    int maxScore = 0;
+    
+    // Try all possible starting hands
+    for (char firstMove : moves) {
+        vector<char> available = moves;
+        // Remove the first move from available options for future rounds
+        available.erase(remove(available.begin(), available.end(), firstMove), available.end());
+        
+        int score = 0;
+        char currentHand = firstMove;
+        
+        for (int i = 0; i < N; i++) {
+            // Calculate score for current move
+            score += getWinner(currentHand, S[i]);
+            
+            // If this is not the last round, choose next move
+            if (i < N - 1) {
+                // Choose the best move from remaining options for next round
+                char bestNext = available[0];
+                int bestScore = 0;
+                
+                for (char nextMove : available) {
+                    int futureScore = getWinner(nextMove, S[i + 1]);
+                    if (futureScore > bestScore) {
+                        bestScore = futureScore;
+                        bestNext = nextMove;
+                    }
+                }
+                
+                currentHand = bestNext;
+                // Update available moves: remove current hand, keep the other
+                available.clear();
+                for (char m : moves) {
+                    if (m != currentHand && m != firstMove) {
+                        available.push_back(m);
+                    }
+                }
+                // Add back the move we just removed (cycling through)
+                if (available.empty()) {
+                    for (char m : moves) {
+                        if (m != currentHand) {
+                            available.push_back(m);
+                        }
+                    }
+                }
+            }
+        }
+        
+        maxScore = max(maxScore, score);
+    }
+    
+    cout << maxScore << endl;
+    return 0;
+}

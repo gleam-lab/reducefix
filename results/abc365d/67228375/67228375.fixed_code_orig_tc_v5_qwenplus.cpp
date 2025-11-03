@@ -1,0 +1,51 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define endl "\n"
+#define MOD 1000000007
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(0);
+
+    map<char, char> beats = {{'R', 'P'}, {'P', 'S'}, {'S', 'R'}};
+    int n;
+    cin >> n;
+    string s;
+    cin >> s;
+
+    if (n == 0) {
+        cout << 0 << endl;
+        return 0;
+    }
+
+    // Try both starting strategies:
+    // Strategy 1: Start by playing the move that beats the first opponent move
+    // Strategy 2: Start by playing the same as the first opponent move
+
+    auto solve = [&](char first_move) {
+        int total = 1;
+        char last_move = first_move;
+        for (int i = 1; i < n; i++) {
+            // If our last move beats current opponent move, we can continue the streak
+            if (beats[last_move] == s[i]) {
+                // We win again with the same move
+                continue;
+            } else {
+                // We need to change our move to beat the current opponent move
+                last_move = beats[s[i]];
+                total++;
+            }
+        }
+        return total;
+    };
+
+    // Strategy 1: First move beats s[0]
+    int total1 = solve(beats[s[0]]);
+    
+    // Strategy 2: First move is same as s[0]
+    int total2 = solve(s[0]);
+
+    cout << max(total1, total2) << endl;
+
+    return 0;
+}

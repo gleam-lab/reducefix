@@ -814,21 +814,19 @@ def main():
             except Exception as e:
                 print(f"[Warning] Failed to read cached description: {e}", file=sys.stderr)
         
-        # Fallback 2: Try to fetch it dynamically
+        # Fallback 2: Try to load from lftbench
         if not problem_description:
-            print("[Info] Problem description not found, attempting to fetch...")
+            print("[Info] Problem description not found, attempting to load from lftbench...")
             try:
-                import tools
-                session = tools.load_session()
-                if session:
-                    problem_url = f"https://atcoder.jp/contests/{contest_id}/tasks/{contest_id}_{problem_letter.lower()}"
-                    problem_description = tools.get_problem_description(problem_url, session)
-                    if problem_description:
-                        print("[Info] Successfully fetched problem description")
-                    else:
-                        print("[Warning] Failed to fetch problem description")
+                import lftbench_utils
+                problem_description = lftbench_utils.get_problem_description(target_problem_id_input)
+                if problem_description and not problem_description.startswith("# Error"):
+                    print("[Info] Successfully loaded problem description from lftbench")
+                else:
+                    print("[Warning] Failed to load problem description from lftbench")
+                    problem_description = None
             except Exception as e:
-                print(f"[Warning] Failed to fetch problem description: {e}", file=sys.stderr)
+                print(f"[Warning] Failed to load from lftbench: {e}", file=sys.stderr)
         
         if not problem_description:
             print(f"[Error] Could not obtain problem description for '{target_problem_id_input}'.")

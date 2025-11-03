@@ -1,0 +1,39 @@
+#include<bits/stdc++.h>
+using namespace std;
+
+int main() {
+    int n, m;
+    cin >> n >> m;
+    vector<int> a(2 * n + 1);
+    vector<int> t(m, 0);
+    long long an = 0;
+    
+    for (int i = 1; i <= n; i++) {
+        cin >> a[i];
+        a[i] %= m;
+        a[i + n] = a[i];
+    }
+    
+    vector<int> w(2 * n + 1, 0);
+    
+    for (int i = 1; i <= 2 * n; i++) {
+        w[i] = (w[i-1] + a[i]) % m;
+        
+        // For the first n elements, we don't have complete window of size n yet
+        if (i > n) {
+            // Remove the contribution of the prefix that's now out of the sliding window
+            t[w[i - n]]--;
+        }
+        
+        // If we have at least n elements, we can count valid subarrays ending at position i
+        if (i >= n) {
+            an += t[w[i]];
+        }
+        
+        // Add current prefix sum to frequency table
+        t[w[i]]++;
+    }
+    
+    cout << an;
+    return 0;
+}
