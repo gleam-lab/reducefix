@@ -462,26 +462,12 @@ def test_pure_llm(problem_id, submission_id, llm_model):
     orig_size = os.path.getsize(original_input_path)
     print(f"✓ Found original input: {orig_size:,} bytes")
     
-    # Load problem description
+    # Load problem description from lftbench
     try:
-        with open("lftbench/metadata/problems.json", 'r') as f:
-            problems_data = json.load(f)
+        import lftbench_utils
+        problem_desc = lftbench_utils.get_problem_description(problem_id)
         
-        # problems.json is a list or dict, handle both cases
-        if isinstance(problems_data, list):
-            problems = problems_data
-        elif isinstance(problems_data, dict):
-            problems = list(problems_data.values()) if problems_data else []
-        else:
-            problems = []
-        
-        problem_desc = None
-        for p in problems:
-            if isinstance(p, dict) and p.get('problem_id') == problem_id:
-                problem_desc = p.get('description', '')
-                break
-        
-        if not problem_desc:
+        if not problem_desc or problem_desc.startswith("# Error"):
             print(f"✗ Problem description not found, using pre-run result")
             return get_existing_llm_result(problem_id, submission_id)
     except Exception as e:

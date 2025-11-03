@@ -1,0 +1,34 @@
+#include<bits/stdc++.h>
+using namespace std;
+
+int main() {
+    int N;
+    cin >> N;
+    vector<long long> H(N);
+    for (int i = 0; i < N; i++) {
+        cin >> H[i];
+    }
+
+    long long T = 0;
+    int current_enemy = 0;
+
+    while (current_enemy < N) {
+        T++;
+        // Determine damage based on T
+        long long damage = (T % 3 == 0) ? 3 : 1;
+        
+        // Attack the frontmost enemy with health > 0
+        if (H[current_enemy] > 0) {
+            H[current_enemy] -= damage;
+            // If current enemy is defeated, move to next
+            if (H[current_enemy] <= 0) {
+                current_enemy++;
+            }
+        }
+        // If all enemies are defeated, break
+        if (current_enemy >= N) break;
+    }
+
+    cout << T << endl;
+    return 0;
+}

@@ -1,0 +1,35 @@
+#include<bits/stdc++.h>
+
+using namespace std;
+
+int main() {
+    int N;
+    cin >> N;
+    vector<long long> H(N);
+    for (int i = 0; i < N; i++) cin >> H[i];
+    
+    long long T = 0;
+    int i = 0;
+    
+    while (i < N) {
+        // Skip enemies that are already dead
+        if (H[i] <= 0) {
+            i++;
+            continue;
+        }
+        
+        T++;
+        
+        // If T is multiple of 3, deal 3 damage, otherwise deal 1 damage
+        long long damage = (T % 3 == 0) ? 3 : 1;
+        H[i] -= damage;
+        
+        // If current enemy is defeated, move to next
+        if (H[i] <= 0) {
+            i++;
+        }
+    }
+    
+    cout << T << endl;
+    return 0;
+}

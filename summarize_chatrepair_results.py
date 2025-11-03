@@ -1,9 +1,7 @@
 #!/usr/bin/env python3
-"""summarize_chatrepair_results.py
+"""Summarize ChatRepair results with unbiased pass@k calculation
 
-专门用于统计ChatRepair结果的脚本，能够正确解析ChatRepair的数据格式并重新计算pass@k
-
-用法：
+Usage:
     python3 summarize_chatrepair_results.py chatrepair_coder7b-reuse-coder7b_qwen2.5-coder-7b-instruct
 """
 import argparse, json, os, sys, collections, statistics, math
@@ -17,7 +15,7 @@ def load_json(path: str) -> Dict:
         return json.load(f)
 
 def get_difficulty(problem_id: str) -> str:
-    """根据题号后缀字母判断难度"""
+    """Get difficulty level based on problem suffix"""
     if problem_id and len(problem_id) > 0:
         suffix = problem_id[-1].lower()
         if suffix in ['b', 'c']:
@@ -30,21 +28,18 @@ def get_difficulty(problem_id: str) -> str:
 
 def pass_at_k(n: int, c: int, k:int) -> float:
     """
-    正确计算pass@k - 从n个版本中随机选择k个，至少有一个通过的概率
-    pass@k = 1 - C(n-c, k) / C(n, k)
-    其中n是总版本数，c是通过的版本数
+    Calculate unbiased pass@k: probability that at least one of k randomly sampled versions passes
+    Formula: pass@k = 1 - C(n-c, k) / C(n, k)
+    where n is total versions, c is number of passing versions
     """
     if n < k:
-        # 如果总版本数小于k，但有成功版本，则pass@k为1
         return 1.0 if c > 0 else 0.0
     if c == 0:
         return 0.0
     if n - c < k:
-        # 如果失败的版本数小于k，那么选k个必然包含成功版本
         return 1.0
     
     try:
-        # 1 - (从失败版本中选k个的组合数) / (从所有版本中选k个的组合数)
         return 1.0 - math.comb(n - c, k) / math.comb(n, k)
     except (ValueError, ZeroDivisionError):
         return 0.0
@@ -62,14 +57,13 @@ def summarize_problem_pass_at_k(problem_data: Dict, strategies: List[str], k: in
         for strat in strategies:
             strat_res = eval_data.get(strat)
             
-            # 如果策略不存在，跳过
             if not strat_res:
                 continue
 
-            # 从version_results或versions重新计算pass@k (兼容两种格式)
+            # Recalculate pass@k from version_results or versions (compatible with both formats)
             version_results = strat_res.get("version_results") or strat_res.get("versions", [])
             if not version_results:
-                counters[strat]["count"] += 1 # 计为运行了，但失败
+                counters[strat]["count"] += 1
                 continue
 
             n = len(version_results)
@@ -98,7 +92,7 @@ def main():
     json_path = f"result_{args.model_tag}.json"
     data = load_json(json_path)
 
-    # --- 自动检测策略 ---
+    # Auto-detect strategies
     strategies_to_summarize = args.strategies
     if not strategies_to_summarize:
         detected_strategies = set()
@@ -117,11 +111,10 @@ def main():
             
         strategies_to_summarize = sorted(list(detected_strategies))
         print(f"[Info] No strategies specified via --strategies. Auto-detected and using: {', '.join(strategies_to_summarize)}")
-    # --- 结束自动检测 ---
 
-    print(f"\n=== ChatRepair Summary (Corrected pass@k using combinatorics) for {json_path} ===\n")
+    print(f"\n=== ChatRepair Summary (Unbiased pass@k) for {json_path} ===\n")
     
-    # 计算表头宽度
+    # Calculate column widths
     col_width = 10
     count_width = 6
     header_parts = ["Problem".ljust(9)]
@@ -140,10 +133,10 @@ def main():
     print(" ".join(subheader_parts))
     print("-" * (9 + len(strategies_to_summarize) * (col_width * 3 + count_width + 4)))
     
-    # 总体统计
+    # Overall statistics
     overall_results = {s: {f"pass@{k}": {"pass_sum": 0.0, "count": 0} for k in [1, 5, 10]} for s in strategies_to_summarize}
     
-    # 按难度统计
+    # Statistics by difficulty
     difficulty_results = {
         'Easy': {s: {f"pass@{k}": {"pass_sum": 0.0, "count": 0} for k in [1, 5, 10]} for s in strategies_to_summarize},
         'Medium': {s: {f"pass@{k}": {"pass_sum": 0.0, "count": 0} for k in [1, 5, 10]} for s in strategies_to_summarize},
@@ -153,7 +146,7 @@ def main():
     for problem_id, problem_data in sorted(data.items()):
         line_parts = [f"{problem_id:9}"]
         
-        # 计算所有k值的counters
+        # Calculate counters for all k values
         all_counters = {}
         for k in [1, 5, 10]:
             all_counters[k] = summarize_problem_pass_at_k(problem_data, strategies_to_summarize, k)
@@ -161,7 +154,6 @@ def main():
         difficulty = get_difficulty(problem_id)
         
         for strat in strategies_to_summarize:
-            # 显示结果
             pass_1_counter = all_counters[1][strat]
             pass_5_counter = all_counters[5][strat]
             pass_10_counter = all_counters[10][strat]
@@ -171,12 +163,12 @@ def main():
             line_parts.append(f"{format_rate(pass_10_counter['pass_sum'], pass_10_counter['count'])[:9]}".rjust(col_width))
             line_parts.append(f"({pass_1_counter['count']})".rjust(count_width))
             
-            # 累积到总体统计
+            # Accumulate to overall statistics
             for k, counter in all_counters.items():
                 overall_results[strat][f"pass@{k}"]["pass_sum"] += counter[strat]["pass_sum"]
                 overall_results[strat][f"pass@{k}"]["count"] += counter[strat]["count"]
             
-            # 累积到难度统计
+            # Accumulate to difficulty statistics
             if difficulty in difficulty_results:
                 for k, counter in all_counters.items():
                     difficulty_results[difficulty][strat][f"pass@{k}"]["pass_sum"] += counter[strat]["pass_sum"]
@@ -184,7 +176,7 @@ def main():
         
         print(" ".join(line_parts))
 
-    # 输出总体统计
+    # Print overall summary
     print("\n" + "=" * (9 + len(strategies_to_summarize) * (col_width * 3 + count_width + 4)))
     print("OVERALL SUMMARY")
     print("=" * (9 + len(strategies_to_summarize) * (col_width * 3 + count_width + 4)))
@@ -202,12 +194,12 @@ def main():
     
     print("=" * 70)
     
-    # 输出按难度统计
+    # Print difficulty-based summary
     print("\n" + "=" * (10 + len(strategies_to_summarize) * (col_width * 3 + count_width + 4)))
     print("DIFFICULTY-BASED SUMMARY")
     print("=" * (10 + len(strategies_to_summarize) * (col_width * 3 + count_width + 4)))
     
-    # 表头
+    # Header
     header_parts = ["Difficulty".ljust(10)]
     subheader_parts = ["".ljust(10)]
     
@@ -224,7 +216,7 @@ def main():
     print(" ".join(subheader_parts))
     print("-" * (10 + len(strategies_to_summarize) * (col_width * 3 + count_width + 4)))
     
-    # 显示各难度结果
+    # Display results for each difficulty
     difficulty_labels = {'Easy': 'Easy (bc)', 'Medium': 'Medium (d)', 'Hard': 'Hard (ef)'}
     
     for diff in ['Easy', 'Medium', 'Hard']:
