@@ -1,0 +1,127 @@
+# ABC376C Editorial
+
+Contest Duration:
+[2024-10-19 21:00:00+0900](http://www.timeanddate.com/worldclock/fixedtime.html?iso=20241019T2100&p1=248) - [2024-10-19 22:40:00+0900](http://www.timeanddate.com/worldclock/fixedtime.html?iso=20241019T2240&p1=248) (local time)
+(100 minutes)
+[Back to Home](/home)
+
+- [Top](/contests/abc376)
+- [Tasks](/contests/abc376/tasks)
+- [Clarifications](/contests/abc376/clarifications)
+- [Results](#)
+  - [All Submissions](/contests/abc376/submissions)
+- [Standings](/contests/abc376/standings)
+- [Virtual Standings](/contests/abc376/standings/virtual)
+- [Editorial](/contests/abc376/editorial)
+- [Discuss](https://codeforces.com/blog/entry/135246)
+
+Official
+
+## [C - Prepare Another Box](/contests/abc376/tasks/abc376_c) Editorial by [en\_translator](/users/en_translator)
+
+---
+
+Let us first consider, when we fix a size \(x\) of the box to newly purchase, how we can determine if step 2 is feasible.
+
+In conclusion, the following proposition can be used:
+
+> Sort \(A\) in ascending order to obtain \(a=(a\_1,a\_2,\dots,a\_N)\). Insert \(x\) to \(B\) and sort it in ascending order to obtain \(b=(b\_1,b\_2,\dots,b\_N)\). Then Step \(2\) is feasible if and only if \(a\_i \leq b\_i\) for all \(i\ (1\leq i\leq N)\).
+
+Proof
+
+The sufficiency is obvious, so we will show the necessity: “if step 2 is feasible, then \(a\_i \leq b\_i\) for all \(i\ (1\leq i\leq N)\).”
+
+Renumber the toys and boxes, so that the toy corresponding to \(a\_i\) is called toy \(i\), and the box for \(b\_i\) as box \(i\). When step 2 is feasible, there exists a permutation \(p=(p\_1,p\_2,\dots,p\_N)\) of \((1,2\dots,N)\) such that “\(a\_i \leq b\_{p\_i}\) for all \(i\ (1\leq i\leq N)\)” (*).*
+
+Assume that there exists \(i\ (1\leq i < N)\) with \(p\_i > p\_{i+1}\). Then we have \(a\_i\leq a\_{i+1}\leq b\_{p\_{i+1}}\leq b\_{p\_i}\), thus \(a\_i\leq b\_{p\_{i+1}}\) and \(a\_{i+1}\leq b\_{p\_i}\); then () still holds after swapping \(p\_i\) and \(p\_{i+1}\). By repeating this operation while \(i\ (1\leq i < N)\) with \(p\_i > p\_{i+1}\) exists, one can make \(p=(1,2,\dots,N)\) while maintaining (*). When \(p=(1,2,\dots,N)\), (*) means \(a\_i \leq b\_i\) for all \(i\ (1\leq i\leq N)\), which is what we want (end of proof).
+  
+Therefore, this criteria allows us to use **binary search** to find the minimum \(x\) that satisfies the condition. If you sort the sequence \(a\) and \(b\) for every decision, it costs a total of \(O(N\log (\max A\_i)\log N)\) time, which does finish within the execution time limit; one can also tweak it to optimize it to \(O(N\log (\max A\_i))\).
+
+One can also solve this problem without binary search, by the greedy algorithm below instead. (The validity follows from the discussion for a fixed \(x\) above.) The complexity is \(O(N\log N)\), where sorting is the bottleneck.
+
+1. Let toy \(i\) and box \(j\) be the largest remaining toy and box, respectively.
+2. If \(A\_i\leq B\_j\): it is optimal to place toy \(i\) into box \(j\). Remove toy \(i\) from the toy set and box \(j\) from the box set; go back to step 1.
+3. If \(A\_i> B\_j\): you cannot place toy \(i\) to any of the remaining boxes, so you need to buy a new box of size at least \(A\_i\). Buying a box of size exceeding \(A\_i\) is useless, so set \(x=A\_i\) to apply the criteria above. If it is met, the answer is \(A\_i\); otherwise it is \(-1\).
+
+Inspecting the behavior of this greedy algorithm, one can come up with an even simpler algorithm as follows. The complexity remains \(O(N\log N)\).
+
+1. Sort \(A\) and \(B\) in ascending order.
+2. If there exists \(i\ (1\leq i\leq N-1)\) with \(A\_i > B\_i\): the answer is \(-1\).
+3. Otherwise: the answer is \(A\_{i'+1}\), where \(i'\) is the maximum \(i\ (1\leq i\leq N-1)\) with \(A\_{i+1} > B\_i\) (or \(0\) if nothing applies).
+
+Sample code (C++, binary search, \(O(N\log (\max A\_i)\log N)\)):
+
+```
+#include <bits/stdc++.h>
+
+using namespace std;
+
+int main() {
+    int n;
+    cin >> n;
+    vector<int> a(n), b(n - 1);
+    for (int &i: a) cin >> i;
+    for (int &i: b) cin >> i;
+    sort(a.begin(), a.end());
+    int ok = 1 << 30, ng = 0;
+    auto f = [&](int x) -> bool {
+        vector<int> nb = b;
+        nb.push_back(x);
+        sort(nb.begin(), nb.end());
+        for (int i = 0; i < n; i++) {
+            if (a[i] > nb[i]) return false;
+        }
+        return true;
+    };
+    if(!f(ok)) {
+        cout << -1 << endl;
+        return 0;
+    }
+    while (ok - ng > 1) {
+        int mid = (ok + ng) / 2;
+        if (f(mid)) ok = mid;
+        else ng = mid;
+    }
+    cout << ok << endl;
+}
+
+```
+
+Sample code (C++, \(O(N\log N)\)) :
+
+```
+#include <bits/stdc++.h>
+
+using namespace std;
+
+int main() {
+    int n;
+    cin >> n;
+    vector<int> a(n), b(n - 1);
+    for (int &i: a) cin >> i;
+    for (int &i: b) cin >> i;
+    sort(a.begin(), a.end());
+    sort(b.begin(), b.end());
+    for (int i = 0; i < n - 1; i++) {
+        if (a[i] > b[i]) {
+            cout << -1 << endl;
+            return 0;
+        }
+    }
+    for (int i = n - 2; i >= 0; i--) {
+        if (a[i + 1] > b[i]) {
+            cout << a[i + 1] << endl;
+            return 0;
+        }
+    }
+    cout << a[0] << endl;
+}
+
+```
+
+posted:
+
+  
+last update:
+
+---

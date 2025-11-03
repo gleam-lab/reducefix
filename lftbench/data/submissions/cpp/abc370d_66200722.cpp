@@ -1,0 +1,194 @@
+#line 2 "template.hpp"
+// #pragma GCC target("avx2")
+// #pragma GCC optimize("O3")
+// #pragma GCC optimize("unroll-loops")
+#include <bits/stdc++.h>
+using namespace std;
+#ifdef LOCAL
+#include <debug.hpp>
+#else
+template <class T>
+concept Streamable = requires(ostream os, T &x) { os << x; };
+template <class mint>
+concept is_modint = requires(mint &x) {
+    { x.val() } -> std::convertible_to<int>;
+};
+#define debug(...)
+#endif
+template <Streamable T> void print_one(const T &value) { cout << value; }
+template <is_modint T> void print_one(const T &value) { cout << value.val(); }
+void print() { cout << '\n'; }
+template <class T, class... Ts> void print(const T &a, const Ts &...b) {
+    print_one(a);
+    ((cout << ' ', print_one(b)), ...);
+    cout << '\n';
+}
+template <ranges::range Iterable>
+    requires(!Streamable<Iterable>)
+void print(const Iterable &v) {
+    for(auto it = v.begin(); it != v.end(); ++it) {
+        if(it != v.begin())
+            cout << " ";
+        print_one(*it);
+    }
+    cout << '\n';
+}
+using vi = vector<int>;
+using vii = vector<vector<int>>;
+using pii = pair<int, int>;
+using ll = long long;
+using vl = vector<ll>;
+using vll = vector<vl>;
+using pll = pair<ll, ll>;
+#define all(v) begin(v), end(v)
+template <class T> void UNIQUE(T &v) {
+    ranges::sort(v);
+    v.erase(unique(all(v)), end(v));
+}
+template <typename T> inline bool chmax(T &a, T b) {
+    return ((a < b) ? (a = b, true) : (false));
+}
+template <typename T> inline bool chmin(T &a, T b) {
+    return ((a > b) ? (a = b, true) : (false));
+}
+// https://trap.jp/post/1224/
+template <class... T> constexpr auto min(T... a) {
+    return min(initializer_list<common_type_t<T...>>{a...});
+}
+template <class... T> constexpr auto max(T... a) {
+    return max(initializer_list<common_type_t<T...>>{a...});
+}
+template <class... T> void input(T &...a) { (cin >> ... >> a); }
+template <class T> void input(vector<T> &a) {
+    for(T &x : a)
+        cin >> x;
+}
+#define INT(...)                                                               \
+    int __VA_ARGS__;                                                           \
+    input(__VA_ARGS__)
+#define LL(...)                                                                \
+    long long __VA_ARGS__;                                                     \
+    input(__VA_ARGS__)
+#define STR(...)                                                               \
+    string __VA_ARGS__;                                                        \
+    input(__VA_ARGS__)
+#define REP1_0(n, c) REP1_1(n, c)
+#define REP1_1(n, c)                                                           \
+    for(ll REP_COUNTER_##c = 0; REP_COUNTER_##c < (ll)(n); REP_COUNTER_##c++)
+#define REP1(n) REP1_0(n, __COUNTER__)
+#define REP2(i, a) for(ll i = 0; i < (ll)(a); i++)
+#define REP3(i, a, b) for(ll i = (ll)(a); i < (ll)(b); i++)
+#define REP4(i, a, b, c) for(ll i = (ll)(a); i < (ll)(b); i += (ll)(c))
+#define overload4(a, b, c, d, e, ...) e
+#define rep(...) overload4(__VA_ARGS__, REP4, REP3, REP2, REP1)(__VA_ARGS__)
+ll inf = 3e18;
+vl dx = {1, -1, 0, 0};
+vl dy = {0, 0, 1, -1};
+template <class T> constexpr T floor(T x, T y) noexcept {
+    return x / y - ((x ^ y) < 0 and x % y);
+}
+template <class T> constexpr T ceil(T x, T y) noexcept {
+    return x / y + ((x ^ y) >= 0 and x % y);
+}
+// yの符号に関わらず非負で定義 \bmod:texコマンド
+template <class T> constexpr T bmod(T x, T y) noexcept {
+    T m = x % y;
+    return (m < 0) ? m + (y > 0 ? y : -y) : m;
+}
+template <std::signed_integral T> constexpr int bit_width(T x) noexcept {
+    return std::bit_width((uint64_t)x);
+}
+template <std::signed_integral T> constexpr int popcount(T x) noexcept {
+    return std::popcount((uint64_t)x);
+}
+constexpr bool kth_bit(auto n, auto k) { return (n >> k) & 1; }
+#line 3 "data-structure/union-find.hpp"
+struct UnionFind {
+    int n, num_groups;
+    vector<int> p;
+    UnionFind(int n) : n(n), num_groups(n), p(n, -1) {}
+    int leader(int x) {
+        if(p[x] < 0)
+            return x;
+        return p[x] = leader(p[x]);
+    }
+    int merge(int x, int y) {
+        x = leader(x), y = leader(y);
+        if(x == y)
+            return x;
+        if(-p[x] < -p[y])
+            swap(x, y);
+        p[x] += p[y];
+        p[y] = x;
+        num_groups--;
+        return x;
+    }
+    int size(int x) { return -p[leader(x)]; }
+    bool same(int x, int y) { return leader(x) == leader(y); }
+};
+#line 3 "/home/y_midori/cp/a.cpp"
+void solve();
+int main() {
+    cin.tie(nullptr);
+    ios::sync_with_stdio(false);
+    solve();
+}
+void solve() {
+    INT(h, w, q);
+    vector<map<int, int>> s(h), t(w);
+    int b = 8;
+    UnionFind uf(b * q);
+    int idx = 0;
+    vi mini(b * q, 1e9), maxi(b * q, -1);
+    auto ins = [&](map<int, int> &mp, int c) {
+        mp[c] = idx;
+        mini[idx] = maxi[idx] = c;
+        if(mp.contains(c - 1)) {
+            int x = uf.leader(mp[c - 1]);
+            int lead = uf.merge(x, idx);
+            chmin(mini[lead], min(mini[idx], mini[x]));
+            chmax(maxi[lead], max(maxi[idx], maxi[x]));
+        }
+        if(mp.contains(c + 1)) {
+            int x = uf.leader(mp[c + 1]);
+            int lead = uf.merge(x, idx);
+            chmin(mini[lead], min(mini[idx], mini[x]));
+            chmax(maxi[lead], max(maxi[idx], maxi[x]));
+        }
+        ++idx;
+    };
+    rep(q) {
+        debug("");
+        INT(r, c);
+        --r, --c;
+        if(!s[r].contains(c)) {
+            ins(s[r], c);
+            ins(t[c], r);
+            // rep(i, h) debug(i, s[i]);
+            continue;
+        }
+        rep(2) {
+            int x = uf.leader(s[r][c]);
+            int c2 = mini[x] - 1;
+            debug(x, mini[x], maxi[x]);
+            if(c2 >= 0) {
+                ins(s[r], c2);
+                ins(t[c2], r);
+            }
+            c2 = maxi[x] + 1;
+            if(c2 < w) {
+                ins(s[r], c2);
+                ins(t[c2], r);
+            }
+            debug(r, s[r]);
+            swap(r, c);
+            swap(h, w);
+            swap(s, t);
+        }
+        // rep(i, h) debug(i, s[i]);
+    }
+    ll ans = h * w;
+    // debug(s, t);
+    rep(i, h) ans -= ssize(s[i]);
+    print(ans);
+}
