@@ -8,7 +8,7 @@ configs:
     path: "data/submissions/python/*.py"
 ---
 
-# LFTBench: A Benchmark for LLM-based Fault Localization and Test Case Reduction
+# LFTBench: A Long-Failure Inducing Test Input Program Repair Benchmark
 
 ## Overview
 
@@ -229,18 +229,11 @@ Python submissions use C++ AC code as ground truth. This is due to the original 
 
 Editorial files are available for all problems in the `metadata/editorials/` directory. These contain detailed explanations of the solution approach, algorithm analysis, and sample code.
 
-### Test Input Reduction
-
-- Original test inputs range from 23 bytes to 7 KB
-- Reduced test inputs are typically < 100 bytes
-- Average reduction rate: > 95%
-
 ## Data Source
 
 - **Platform**: AtCoder (https://atcoder.jp)
 - **Contests**: ABC (AtCoder Beginner Contest) 361-377
 - **Submission Type**: Wrong Answer (WA)
-- **Reduction Method**: LLM-based test case reduction
 - **Repair Method**: LLM-based automated program repair
 
 ## Applications
@@ -256,16 +249,3 @@ This benchmark is suitable for research in:
 ## License
 
 This dataset follows the usage terms of the original data source (AtCoder).
-
-## Citation
-
-If you use this dataset in your research, please cite:
-
-```bibtex
-@dataset{lftbench_2025,
-  title={LFTBench: A Benchmark for LLM-based Fault Localization and Test Case Reduction},
-  author={Anonymous},
-  year={2025},
-  publisher={Hugging Face}
-}
-```
