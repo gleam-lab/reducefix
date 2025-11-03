@@ -1,11 +1,11 @@
 #!/bin/bash
 
 # RQ4: Can reduced-input prompting complement existing LLM-based APR pipelines?
-# Integrates ReduceFix into ChatRepair without modifying its logic
+# Integrates ReduceFix into ChatRepair and CREF without modifying their logic
 # Compares augmented version against original to measure drop-in boost for third-party APR systems
-# Usage: ./rq4.sh <result_tag> [--regenerate]
-#   <result_tag>    Results file suffix
-#   --regenerate    (Optional) Force regenerate all repair attempts
+# Usage: 
+#   ./rq4.sh                    Display analysis results only (default)
+#   ./rq4.sh <result_tag> [--regenerate]  Run experiments
 
 set -e
 
@@ -32,12 +32,56 @@ problems=(
     "abc377f"
 )
 
-if [[ $# -lt 1 ]]; then
-  echo "Usage: $0 <result_tag> [--regenerate]" >&2
-  echo "Examples:" >&2
-  echo "  $0 chatrepair-baseline" >&2
-  echo "  $0 chatrepair-baseline --regenerate" >&2
-  exit 1
+# If no arguments, just show analysis
+if [[ $# -eq 0 ]]; then
+  echo ""
+  echo "=============================================="
+  echo "RQ4: APR Pipeline Integration with ReduceFix"
+  echo "=============================================="
+  echo ""
+  
+  # ChatRepair results
+  echo "ChatRepair Results:"
+  echo "-------------------------------------------"
+  if [[ -f "result_chatrepair.json" ]]; then
+    python3 summarize_chatrepair_results.py "chatrepair" --strategies chatrepair_from_orig chatrepair_from_reduced || echo "  ✗ ChatRepair result summarization failed"
+  else
+    echo "  WARNING: result_chatrepair.json not found"
+  fi
+
+  echo ""
+  echo "-------------------------------------------"
+  echo ""
+
+  # CRef results
+  echo "CRef Results:"
+  echo "-------------------------------------------"
+  if [[ -f "result_cref.json" ]]; then
+    python3 summarize_chatrepair_results.py "cref" --strategies cref_from_orig cref_from_reduced || echo "  ✗ CRef result summarization failed"
+  else
+    echo "  WARNING: result_cref.json not found"
+  fi
+
+  echo ""
+  echo "=============================================="
+  echo "Expected Results (from paper)"
+  echo "=============================================="
+  echo ""
+  echo "ChatRepair (Original vs. + ReduceFix):"
+  echo "  - Overall pass@10: 30.5% → 37.0% (+21.3% relative)"
+  echo "  - C-difficulty: 41.7% → 45.0% (+7.9% relative)"
+  echo "  - D-difficulty: 37.5% → 46.2% (+23.2% relative)"
+  echo "  - E&F-difficulty: 10.0% → 16.7% (+67.0% relative)"
+  echo ""
+  echo "CRef (Original vs. + ReduceFix):"
+  echo "  - Overall pass@10: 39.0% → 40.0% (+2.6% relative)"
+  echo "  - C-difficulty: 45.0% → 46.7% (+3.8% relative)"
+  echo "  - D-difficulty: 47.5% → 47.5% (0% relative)"
+  echo "  - E&F-difficulty: 21.7% → 23.3% (+7.4% relative)"
+  echo "=============================================="
+  echo ""
+  
+  exit 0
 fi
 
 RESULT_TAG="$1"
@@ -53,7 +97,7 @@ mkdir -p "$LOG_DIR"
 start_time=$(date +%s)
 
 echo "=============================================="
-echo "RQ4: ChatRepair Integration with ReduceFix"
+echo "RQ4: APR Pipeline Integration with ReduceFix"
 echo "=============================================="
 echo "ChatRepair model: $CHATREPAIR_MODEL"
 echo "Reducer model: $REDUCER_MODEL"
@@ -61,11 +105,15 @@ echo "Result tag: $RESULT_TAG"
 echo "Log directory: $LOG_DIR"
 echo "Problems: ${#problems[@]} total"
 echo ""
-echo "This experiment evaluates ChatRepair under two conditions:"
-echo "  1. ChatRepair (Original) - using full failure-inducing input"
-echo "  2. ChatRepair + ReduceFix - using reduced counterexample"
+echo "This experiment evaluates APR systems under two conditions:"
+echo "  1. Original - using full failure-inducing input"
+echo "  2. + ReduceFix - using reduced counterexample"
 echo ""
-echo "ChatRepair Parameters:"
+echo "APR Systems evaluated:"
+echo "  • ChatRepair - conversational repair with feedback"
+echo "  • CRef - context-aware reference-based repair"
+echo ""
+echo "Parameters:"
 echo "  - MAX_RETRY = 1 (one feedback round)"
 echo "  - length = 2 (conversation window size)"
 echo "  - Sampling: 10 candidate patches per bug"
@@ -122,22 +170,49 @@ echo "Results file:"
 echo "  - result_chatrepair_${RESULT_TAG}.json (contains both ChatRepair original and reduced modes)"
 
 echo ""
-echo "Analyzing ChatRepair results..."
-if [[ -f "summarize_chatrepair_results.py" ]]; then
-  echo "python3 summarize_chatrepair_results.py result_chatrepair_${RESULT_TAG}.json"
-  python3 summarize_chatrepair_results.py "result_chatrepair_${RESULT_TAG}.json" || echo "  ✗ Result summarization failed"
+echo "=============================================="
+echo "Analyzing Results"
+echo "=============================================="
+echo ""
+
+# ChatRepair results
+echo "ChatRepair Results:"
+echo "-------------------------------------------"
+if [[ -f "result_chatrepair.json" ]]; then
+  echo "python3 summarize_chatrepair_results.py chatrepair"
+  python3 summarize_chatrepair_results.py "chatrepair" || echo "  ✗ ChatRepair result summarization failed"
 else
-  echo "  WARNING: summarize_chatrepair_results.py not found, skipping result analysis"
+  echo "  WARNING: result_chatrepair.json not found"
 fi
 
 echo ""
-echo "Expected improvements (ChatRepair + ReduceFix vs. ChatRepair Original):"
+echo "-------------------------------------------"
+echo ""
+
+# CRef results
+echo "CRef Results:"
+echo "-------------------------------------------"
+if [[ -f "result_cref.json" ]]; then
+  echo "python3 summarize_chatrepair_results.py cref"
+  python3 summarize_chatrepair_results.py "cref" || echo "  ✗ CRef result summarization failed"
+else
+  echo "  WARNING: result_cref.json not found"
+fi
+
+echo ""
+echo "=============================================="
+echo "Expected Results (from paper)"
+echo "=============================================="
+echo ""
+echo "ChatRepair (Original vs. + ReduceFix):"
 echo "  - Overall pass@10: 30.5% → 37.0% (+21.3% relative)"
 echo "  - C-difficulty: 41.7% → 45.0% (+7.9% relative)"
 echo "  - D-difficulty: 37.5% → 46.2% (+23.2% relative)"
 echo "  - E&F-difficulty: 10.0% → 16.7% (+67.0% relative)"
 echo ""
-echo "Next steps for RQ4 analysis:"
-echo "  python3 analyze_repair_stats.py result_chatrepair_${RESULT_TAG}.json --model chatrepair-${RESULT_TAG}"
-echo "  python3 compare_chatrepair_modes.py result_chatrepair_${RESULT_TAG}.json"
+echo "CRef (Original vs. + ReduceFix):"
+echo "  - Overall pass@10: 39.0% → 40.0% (+2.6% relative)"
+echo "  - C-difficulty: 45.0% → 46.7% (+3.8% relative)"
+echo "  - D-difficulty: 47.5% → 47.5% (0% relative)"
+echo "  - E&F-difficulty: 21.7% → 23.3% (+7.4% relative)"
 echo "==============================================" 

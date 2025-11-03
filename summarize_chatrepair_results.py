@@ -66,8 +66,8 @@ def summarize_problem_pass_at_k(problem_data: Dict, strategies: List[str], k: in
             if not strat_res:
                 continue
 
-            # 从version_results重新计算pass@k
-            version_results = strat_res.get("version_results", [])
+            # 从version_results或versions重新计算pass@k (兼容两种格式)
+            version_results = strat_res.get("version_results") or strat_res.get("versions", [])
             if not version_results:
                 counters[strat]["count"] += 1 # 计为运行了，但失败
                 continue

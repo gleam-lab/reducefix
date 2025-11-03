@@ -1,0 +1,69 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+#define int long long
+#define pb push_back
+template <class T>
+using V = vector<T>;
+template <class T>
+using VV = vector<vector<T>>;
+
+struct Node {
+    int x, w;
+    bool operator < (const Node& u) const {
+        return w > u.w;
+    }
+};
+
+void solve() {
+    int n, m;
+    cin >> n >> m;
+    V<int> a(n + 1);
+    for (int i = 1; i <= n; ++i) {
+        cin >> a[i];
+    }
+    
+    vector<vector<pair<int, int>>> g(n + 1);
+    for (int i = 0; i < m; ++i) {
+        int x, y, c;
+        cin >> x >> y >> c;
+        g[x].pb({y, c});
+        g[y].pb({x, c});
+    }
+    
+    const int inf = 1e18;
+    V<int> d(n + 1, inf);
+    V<bool> vis(n + 1, false);
+    
+    priority_queue<Node> pq;
+    d[1] = a[1];
+    pq.push({1, d[1]});
+    
+    while (!pq.empty()) {
+        auto [x, w] = pq.top();
+        pq.pop();
+        
+        if (vis[x]) continue;
+        vis[x] = true;
+        
+        for (auto [y, dw] : g[x]) {
+            if (d[x] + dw + a[y] < d[y]) {
+                d[y] = d[x] + dw + a[y];
+                pq.push({y, d[y]});
+            }
+        }
+    }
+    
+    for (int i = 2; i <= n; ++i) {
+        cout << d[i] << " \n"[i == n];
+    }
+}
+
+signed main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    solve();
+    
+    return 0;
+}

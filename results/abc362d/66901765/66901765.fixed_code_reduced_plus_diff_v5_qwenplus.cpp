@@ -1,0 +1,53 @@
+#include<bits/stdc++.h>
+using namespace std;
+#define int long long
+
+vector<pair<int,int>> G[200005];
+int dis[200005], a[200005], n, m;
+const int INF = 9223372036854775807;
+
+void dij(int u) {
+    priority_queue<pair<int,int>, vector<pair<int,int>>, greater<pair<int,int>>> q;
+    for (int i = 1; i <= n; i++) {
+        dis[i] = INF;
+    }
+    dis[u] = a[u];
+    q.push({dis[u], u});
+    
+    while (!q.empty()) {
+        int d = q.top().first;
+        int u = q.top().second;
+        q.pop();
+        
+        if (d != dis[u]) continue;
+        
+        for (auto [v, w] : G[u]) {
+            int new_cost = dis[u] + w + a[v];
+            if (new_cost < dis[v]) {
+                dis[v] = new_cost;
+                q.push({dis[v], v});
+            }
+        }
+    }
+}
+
+signed main() {
+    scanf("%lld%lld", &n, &m);
+    for (int i = 1; i <= n; i++) {
+        cin >> a[i];
+    }
+    for (int i = 1; i <= m; i++) {
+        int u, v, w;
+        scanf("%lld%lld%lld", &u, &v, &w);
+        G[u].push_back({v, w});
+        G[v].push_back({u, w});
+    }
+    
+    dij(1);
+    
+    for (int i = 2; i <= n; i++) {
+        cout << dis[i] << ' ';
+    }
+    cout << "\n";
+    return 0;
+}

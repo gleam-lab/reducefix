@@ -1,0 +1,82 @@
+#include<bits/stdc++.h>
+using namespace std;
+#include<atcoder/all>
+using namespace atcoder;
+using ll=int64_t;
+using ld=long double;
+int inf=1000000001;
+ll INF=1e18;
+#define rep(i,n) for(int i=0;i<n;i++)
+#define all(x) x.begin(),x.end()
+#define pb push_back
+#define sz(x) (ll)x.size()
+template<typename T>bool chmin(T& a,T b){if(a>b){a=b;return true;}return false;}
+template<typename T>bool chmax(T& a,T b){if(a<b){a=b;return true;}return false;}
+
+int dx[]={1,0,-1,0};
+int dy[]={0,1,0,-1};
+
+int main(){
+    cin.tie(0)->sync_with_stdio(0);
+
+    int H,W,Y;
+    cin>>H>>W>>Y;
+    vector<vector<int>>A(H,vector<int>(W));
+    rep(i,H)rep(j,W)cin>>A[i][j];
+    
+    // Current area above sea level
+    int ans = H*W;
+    // Visited array to mark sunken cells
+    vector<vector<bool>> sunk(H, vector<bool>(W, false));
+    
+    // We'll use a priority queue (min-heap) to process cells in order of elevation
+    // But since elevations are up to 1e5 and Y up to 1e5, we can use bucketing
+    vector<vector<pair<int,int>>> buckets(200001); // buckets[elevation] = list of (i,j)
+    
+    // Initialize: all border cells are adjacent to sea, so they will sink when sea level >= their elevation
+    queue<pair<int,int>> q;
+    rep(i,H) rep(j,W) {
+        if(i==0 || i==H-1 || j==0 || j==W-1) {
+            if(!sunk[i][j]) {
+                sunk[i][j] = true;
+                buckets[A[i][j]].push_back({i,j});
+            }
+        }
+    }
+    
+    // Process year by year
+    for(int y = 1; y <= Y; y++) {
+        // Add all cells with elevation <= y that haven't been processed yet
+        while (!buckets[y].empty()) {
+            auto [i,j] = buckets[y].back();
+            buckets[y].pop_back();
+            q.push({i,j});
+        }
+        
+        // Flood fill from all cells that became submerged at this sea level
+        while(!q.empty()) {
+            auto [i,j] = q.front(); q.pop();
+            ans--;
+            
+            rep(k,4) {
+                int ni = i + dx[k];
+                int nj = j + dy[k];
+                if(ni >= 0 && ni < H && nj >= 0 && nj < W && !sunk[ni][nj]) {
+                    // If neighbor's elevation <= current sea level, it will sink
+                    if(A[ni][nj] <= y) {
+                        sunk[ni][nj] = true;
+                        q.push({ni,nj});
+                    } else {
+                        // Otherwise, add it to its bucket for future years
+                        buckets[A[ni][nj]].push_back({ni,nj});
+                        sunk[ni][nj] = true; // Mark as "will sink eventually" to avoid duplicates
+                    }
+                }
+            }
+        }
+        
+        cout << ans << endl;
+    }
+
+    return 0;
+}

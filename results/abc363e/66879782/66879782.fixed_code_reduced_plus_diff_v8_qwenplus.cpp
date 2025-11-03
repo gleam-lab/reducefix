@@ -1,0 +1,67 @@
+#include <bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+#define all(x) (x).begin(), (x).end()
+
+int main()
+{
+    ios_base::sync_with_stdio(0);
+    cin.tie(0);
+    int h, w, y;
+    cin >> h >> w >> y;
+    
+    vector<vector<int>> height(h, vector<int>(w));
+    vector<vector<bool>> sunk(h, vector<bool>(w, false));
+    priority_queue<tuple<int, int, int>, vector<tuple<int, int, int>>, greater<tuple<int, int, int>>> pq;
+    int di[4][2] = {{-1,0},{1,0},{0,-1},{0,1}};
+    
+    // Initialize with border cells
+    for(int i = 0; i < h; i++) {
+        for(int j = 0; j < w; j++) {
+            cin >> height[i][j];
+            if(i == 0 || i == h-1 || j == 0 || j == w-1) {
+                pq.push({height[i][j], i, j});
+                sunk[i][j] = true;
+            }
+        }
+    }
+    
+    // For each year, store how many new cells sink
+    vector<int> area_remaining(h * w);
+    iota(area_remaining.begin(), area_remaining.end(), h * w);
+    
+    // Process cells in increasing order of elevation
+    while(!pq.empty()) {
+        auto [elevation, r, c] = pq.top();
+        pq.pop();
+        
+        // If this cell's sinking time is later than its current elevation, skip
+        if(elevation > y) continue;
+        
+        // Sink all adjacent cells with elevation <= current sea level
+        for(int d = 0; d < 4; d++) {
+            int nr = r + di[d][0];
+            int nc = c + di[d][1];
+            
+            if(nr < 0 || nr >= h || nc < 0 || nc >= w) continue;
+            if(!sunk[nr][nc] && height[nr][nc] <= elevation) {
+                sunk[nr][nc] = true;
+                pq.push({height[nr][nc], nr, nc});
+                
+                // This cell sinks at 'elevation' years
+                if(elevation <= y) {
+                    for(int i = elevation; i <= y; i++) {
+                        area_remaining[i]--;
+                    }
+                }
+            }
+        }
+    }
+    
+    // Output the remaining area for each year
+    for(int i = 1; i <= y; i++) {
+        cout << area_remaining[i] << '\n';
+    }
+    
+    return 0;
+}

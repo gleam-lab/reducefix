@@ -1,0 +1,139 @@
+#include<bits/stdc++.h>
+using namespace std;
+#include<atcoder/all>
+using namespace atcoder;
+using ll=int64_t;
+using ld=long double;
+int inf=1000000001;
+ll INF=1e18;
+#define rep(i,n) for(int i=0;i<n;i++)
+#define all(x) x.begin(),x.end()
+#define pb push_back
+#define sz(x) (ll)x.size()
+template<typename T>bool chmin(T& a,T b){if(a>b){a=b;return true;}return false;}
+template<typename T>bool chmax(T& a,T b){if(a<b){a=b;return true;}return false;}
+
+int dx[]={1,0,-1,0};
+int dy[]={0,1,0,-1};
+
+int main(){
+    cin.tie(0)->sync_with_stdio(0);
+    
+    int H,W,Y;
+    cin>>H>>W>>Y;
+    vector<vector<int>>A(H,vector<int>(W));
+    rep(i,H)rep(j,W)cin>>A[i][j];
+    
+    // Current area of the island above water
+    int ans = H*W;
+    
+    // F[i][j]: true if cell (i,j) is still above water
+    vector<vector<bool>>F(H,vector<bool>(W,true));
+    
+    // We'll use events: for each sea level y, store cells that get submerged when sea level reaches y
+    // But instead of precomputing all, we do a multi-source BFS from borders with priority by elevation
+    // Alternatively: process cells in increasing order of elevation using priority queue or offline queries
+    
+    // Better approach: simulate rising sea level from 1 to Y
+    // Use a min-heap (priority_queue) to process cells in order of when they submerge
+    // But note: submersion spreads: once a border cell with elev <= y submerges, neighbors may follow even if their elev > current?
+    // Correction: rule says a section sinks if it's adjacent to sea or sunk section AND its elevation <= current sea level
+    
+    // Alternate idea: Offline processing
+    // Instead of simulating year-by-year, collect all cells and sort by elevation
+    // Then for each year y, all cells with elevation <= y that are connected to the boundary will be submerged
+    
+    // However, the spreading effect makes it tricky. We can do:
+    // - Start from perimeter cells, and whenever sea level >= A[i][j], they sink
+    // - Then any neighbor with A[ni][nj] <= current_sea_level also sinks, etc.
+    
+    // We can use union-find? Not really. Use BFS per year? That would be O(Y * H * W) worst-case -> 10^5 * 10^6 = 10^11, too slow.
+    
+    // Instead: process cells in increasing order of elevation.
+    // Idea: maintain a priority queue (min-heap) of cells that are "exposed" to the sea (adjacent to already submerged cells)
+    // Initially, all border cells are exposed.
+    
+    priority_queue<pair<int, pair<int, int>>, vector<pair<int, pair<int, int>>>, greater<>> pq;
+    vector<vector<bool>> submerged(H, vector<bool>(W, false));
+    
+    // Initialize: all border cells are candidates to sink when sea level >= their elevation
+    rep(i,H) rep(j,W) {
+        if (i == 0 || i == H-1 || j == 0 || j == W-1) {
+            pq.push({A[i][j], {i, j}});
+            submerged[i][j] = true; // mark as scheduled or submerged?
+        }
+    }
+    
+    // We need to output area remaining after year y (sea level = y)
+    // So we simulate sea level from 1 up to Y, and at each level, sink all cells with elevation <= y that are connected via <=y path to border
+    // The pq will contain cells that are adjacent to submerged region and haven't been processed yet, keyed by their elevation (when they will sink)
+    
+    // But note: a cell might be added multiple times? Avoid that.
+    // Mark as pushed into pq?
+    
+    vector<bool> pushed(H*W, false);
+    auto index = [&](int i, int j) { return i*W + j; };
+    
+    rep(i,H) rep(j,W) {
+        if (i == 0 || i == H-1 || j == 0 || j == W-1) {
+            pushed[index(i,j)] = true;
+        }
+    }
+    
+    // We'll process events as sea level rises
+    // For each year y from 1 to Y:
+    //   While pq has elements with elevation <= y, pop and sink them, add their unpushed neighbors to pq
+    //   Output current area (H*W - number of submerged cells so far)
+    
+    // But we need to count how many have been submerged cumulatively
+    int submerged_count = 0;
+    
+    // Reinitialize submerged and pushed properly
+    fill(submerged.begin(), submerged.end(), vector<bool>(W, false));
+    fill(pushed.begin(), pushed.end(), false);
+    
+    // Start by pushing all border cells
+    rep(i,H) rep(j,W) {
+        if (i == 0 || i == H-1 || j == 0 || j == W-1) {
+            pq.push({A[i][j], {i, j}});
+            pushed[index(i,j)] = true;
+        }
+    }
+    
+    // Process each year
+    rep(y, Y) {
+        int sea_level = y + 1; // after y years, sea level is y+1? Wait: problem says "i years from now", sea level rises by 1 each year.
+        // Initially sea level is 0? Or 1?
+        // Problem: "Starting from now, the sea level rises by 1 each year."
+        // And a cell sinks if elevation <= sea level.
+        // At year 1: sea level = 1.
+        // So after i years, sea level = i.
+        
+        // So for i-th line (i from 1 to Y): sea level = i.
+        
+        while (!pq.empty() && pq.top().first <= y+1) {
+            auto [elev, pos] = pq.top(); pq.pop();
+            int i = pos.first, j = pos.second;
+            
+            // This cell should sink now
+            if (!submerged[i][j]) {
+                submerged[i][j] = true;
+                submerged_count++;
+                
+                // Check neighbors
+                rep(d,4) {
+                    int ni = i + dx[d];
+                    int nj = j + dy[d];
+                    if (ni >= 0 && ni < H && nj >= 0 && nj < W) {
+                        if (!pushed[index(ni,nj)]) {
+                            pq.push({A[ni][nj], {ni, nj}});
+                            pushed[index(ni,nj)] = true;
+                        }
+                    }
+                }
+            }
+        }
+        
+        cout << H*W - submerged_count << '\n';
+    }
+}

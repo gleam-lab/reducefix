@@ -1,0 +1,81 @@
+#include <bits/stdc++.h>
+
+using u32 = unsigned;
+using i64 = long long;
+using u64 = unsigned long long;
+
+constexpr int d[4][2] = {{0, 1}, {0, -1}, {1, 0}, {-1, 0}};
+
+int32_t main() {
+    std::ios::sync_with_stdio(false);
+    std::cin.tie(nullptr);
+
+    int H, W, Y;
+    std::cin >> H >> W >> Y;
+
+    std::vector A(H, std::vector<int>(W));
+    for (int i = 0; i < H; i++) {
+        for (int j = 0; j < W; j++) {
+            std::cin >> A[i][j];
+        }
+    }
+
+    // We want to simulate rising sea level from year 1 to Y
+    // Instead of simulating each year separately, we can process cells in increasing order of elevation
+    // using a priority queue. But the key is: when sea level reaches 'year', all cells with elevation <= year
+    // that are connected to the boundary will be submerged.
+
+    // However, the original code incorrectly decrements all elevations and has flawed logic:
+    // - It pushes boundary cells initially, but doesn't consider that submersion spreads from any adjacent submerged cell.
+    // - The condition `if (h > i)` breaks too early because multiple entries for same cell might exist.
+    // - It uses `--A[i][j]` which shifts all elevations down unnecessarily.
+
+    // Fixed approach:
+    // Use a min-heap to process cells by elevation.
+    // Start from all border cells (they are exposed to the sea).
+    // For each sea level rise from 1 to Y, we add all new cells that get submerged at this level.
+
+    std::priority_queue<std::array<int, 3>, std::vector<std::array<int, 3>>, std::greater<>> pq;
+    std::vector vis(H, std::vector<bool>(W, false));
+
+    // Push all border cells
+    for (int i = 0; i < H; i++) {
+        for (int j = 0; j < W; j++) {
+            if (i == 0 || i == H-1 || j == 0 || j == W-1) {
+                pq.push({A[i][j], i, j});
+                vis[i][j] = true;
+            }
+        }
+    }
+
+    int remaining = H * W;
+    std::vector<int> result(Y + 1); // result[i] = area after i years
+
+    // Process each year from 1 to Y
+    for (int year = 1; year <= Y; year++) {
+        // Remove all cells that get submerged at this sea level (elevation <= year)
+        while (!pq.empty() && pq.top()[0] <= year) {
+            auto [h, x, y] = pq.top();
+            pq.pop();
+            remaining--;
+
+            // Check neighbors
+            for (int k = 0; k < 4; k++) {
+                int nx = x + d[k][0];
+                int ny = y + d[k][1];
+                if (nx >= 0 && nx < H && ny >= 0 && ny < W && !vis[nx][ny]) {
+                    vis[nx][ny] = true;
+                    pq.push({A[nx][ny], nx, ny});
+                }
+            }
+        }
+        result[year] = remaining;
+    }
+
+    // Output for each year from 1 to Y
+    for (int i = 1; i <= Y; i++) {
+        std::cout << result[i] << '\n';
+    }
+
+    return 0;
+}

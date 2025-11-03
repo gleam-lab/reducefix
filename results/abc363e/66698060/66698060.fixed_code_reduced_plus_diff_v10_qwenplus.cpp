@@ -1,0 +1,61 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define ll long long
+#define rep(i,n) for(ll i=0;i<(ll)n;i++)
+
+ll dx[4]={0,1,0,-1},dy[4]={1,0,-1,0};
+
+int main(){
+    ll h,w,y;cin >> h >> w >> y;
+    vector<vector<ll>> room(h,vector<ll>(w));
+    rep(i,h) rep(j,w) cin >> room[i][j];
+    
+    vector<vector<bool>> sunk(h,vector<bool>(w,false));
+    priority_queue<tuple<ll,ll,ll>,vector<tuple<ll,ll,ll>>,greater<tuple<ll,ll,ll>>> pq;
+    
+    // Add all border cells to the priority queue
+    rep(i,h){
+        pq.push({room[i][0],i,0});
+        sunk[i][0] = true;
+        if(w > 1){
+            pq.push({room[i][w-1],i,w-1});
+            sunk[i][w-1] = true;
+        }
+    }
+    rep(j,1,w-1){
+        pq.push({room[0][j],0,j});
+        sunk[0][j] = true;
+        if(h > 1){
+            pq.push({room[h-1][j],h-1,j});
+            sunk[h-1][j] = true;
+        }
+    }
+    
+    ll remaining = h * w;
+    vector<ll> ans(y+1);
+    
+    for(ll year = 1; year <= y; year++){
+        // Process all cells with elevation <= current sea level
+        while(!pq.empty() && get<0>(pq.top()) <= year){
+            auto [elev, i, j] = pq.top();
+            pq.pop();
+            
+            // This cell sinks
+            remaining--;
+            
+            // Check neighbors
+            rep(k,4){
+                ll ni = i + dx[k], nj = j + dy[k];
+                if(ni >= 0 && ni < h && nj >= 0 && nj < w && !sunk[ni][nj]){
+                    sunk[ni][nj] = true;
+                    pq.push({room[ni][nj], ni, nj});
+                }
+            }
+        }
+        ans[year] = remaining;
+    }
+    
+    for(ll i = 1; i <= y; i++){
+        cout << ans[i] << endl;
+    }
+}

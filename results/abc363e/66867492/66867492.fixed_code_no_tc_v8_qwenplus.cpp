@@ -1,0 +1,90 @@
+#include <bits/stdc++.h>
+using namespace std;
+struct Init {
+    Init() {
+        ios::sync_with_stdio(false);
+        cin.tie(nullptr);
+        cout << fixed << setprecision(12);
+    }
+} init;
+
+using i64 = int64_t;
+using vi = vector<int>;
+using vvi = vector<vi>;
+using Pi = pair<int, int>;
+template<typename T> using pq_c = priority_queue<T, vector<T>, greater<T>>;
+
+#define rep(i, n) for (int i = 0; i < (n); ++i)
+#define rep3(i, l, r) for (int i = (l); i < (r); ++i)
+#define el '\n'
+
+int main() {
+    int H, W, Y;
+    cin >> H >> W >> Y;
+    vvi A(H, vi(W));
+    for (auto& row : A) {
+        for (int& x : row) {
+            cin >> x;
+        }
+    }
+
+    // We'll simulate rising sea level from year 1 to Y
+    // Use a min-heap to process cells in order of elevation
+    priority_queue<array<int, 3>, vector<array<int, 3>>, greater<array<int, 3>>> pq;
+    vvi visited(H, vi(W, 0));
+
+    // Add all border cells to the priority queue
+    rep(i, H) {
+        pq.push({A[i][0], i, 0});
+        visited[i][0] = 1;
+        if (W > 1) {
+            pq.push({A[i][W-1], i, W-1});
+            visited[i][W-1] = 1;
+        }
+    }
+    rep3(j, 1, W-1) {
+        pq.push({A[0][j], 0, j});
+        visited[0][j] = 1;
+        if (H > 1) {
+            pq.push({A[H-1][j], H-1, j});
+            visited[H-1][j] = 1;
+        }
+    }
+
+    int remaining = H * W;
+    vi result(Y + 1); // result[i] = area after i years
+
+    // Directions for adjacent cells
+    const int dx[] = {1, 0, -1, 0};
+    const int dy[] = {0, 1, 0, -1};
+
+    // Process cells in order of increasing elevation
+    while (!pq.empty()) {
+        auto [elev, i, j] = pq.top();
+        pq.pop();
+
+        // This cell gets submerged when sea level reaches elev
+        if (elev <= Y) {
+            result[elev]++;
+        }
+
+        // Propagate to unvisited neighbors
+        rep(d, 4) {
+            int ni = i + dx[d];
+            int nj = j + dy[d];
+            if (ni >= 0 && ni < H && nj >= 0 && nj < W && !visited[ni][nj]) {
+                visited[ni][nj] = 1;
+                pq.push({A[ni][nj], ni, nj});
+            }
+        }
+    }
+
+    // Convert counts per year to cumulative submerged area
+    vi submerged(Y + 1, 0);
+    for (int y = 1; y <= Y; y++) {
+        submerged[y] = submerged[y-1] + result[y];
+        cout << (H * W - submerged[y]) << el;
+    }
+
+    return 0;
+}

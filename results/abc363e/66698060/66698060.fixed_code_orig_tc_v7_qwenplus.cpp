@@ -1,0 +1,62 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define ll long long
+#define rep(i,n) for(ll i=0;i<(ll)n;i++)
+#define vi vector<int>
+#define vl vector<ll>
+#define vd vector<double>
+#define vb vector<bool>
+#define vs vector<string>
+#define vc vector<char>
+#define ull unsigned long long
+#define chmax(a,b) a=max(a,b)
+#define chmin(a,b) a=min(a,b)
+
+ll dx[4]={0,1,0,-1},dy[4]={1,0,-1,0};
+
+int main(){
+    ll h,w,y;cin >> h >> w >> y;
+    vector<vl> room(h,vl(w));
+    rep(i,h) rep(j,w) cin >> room[i][j];
+    
+    // Create events: when each cell gets submerged
+    vector<tuple<ll,ll,ll>> events;
+    rep(i,h) rep(j,w) {
+        events.push_back({room[i][j], i, j});
+    }
+    sort(events.begin(), events.end());
+    
+    // Track which cells are submerged
+    vector<vb> submerged(h, vb(w, false));
+    ll remaining = h * w;
+    
+    // Process year by year
+    ll event_idx = 0;
+    for (ll year = 1; year <= y; year++) {
+        // Add all cells that get submerged at this sea level
+        while (event_idx < events.size() && get<0>(events[event_idx]) <= year) {
+            auto [elev, i, j] = events[event_idx];
+            if (!submerged[i][j]) {
+                // Use BFS to flood fill from this cell if it's on the border or adjacent to submerged area
+                queue<pair<ll,ll>> q;
+                q.push({i,j});
+                submerged[i][j] = true;
+                remaining--;
+                
+                while (!q.empty()) {
+                    auto [ci, cj] = q.front(); q.pop();
+                    rep(k,4) {
+                        ll ni = ci + dx[k], nj = cj + dy[k];
+                        if (ni >= 0 && ni < h && nj >= 0 && nj < w && !submerged[ni][nj] && room[ni][nj] <= year) {
+                            submerged[ni][nj] = true;
+                            remaining--;
+                            q.push({ni,nj});
+                        }
+                    }
+                }
+            }
+            event_idx++;
+        }
+        cout << remaining << endl;
+    }
+}

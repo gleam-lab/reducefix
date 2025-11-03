@@ -1,0 +1,58 @@
+#include<bits/stdc++.h>
+using namespace std;
+#define int long long
+
+const int INF = 1e18;
+vector<pair<int, int>> G[200005];
+int dis[200005];
+int a[200005];
+int n, m;
+
+void dijkstra(int start) {
+    priority_queue<pair<int, int>, vector<pair<int, int>>, greater<pair<int, int>>> pq;
+    dis[start] = a[start];
+    pq.push({dis[start], start});
+    
+    while (!pq.empty()) {
+        auto [d, u] = pq.top();
+        pq.pop();
+        
+        if (d != dis[u]) continue;
+        
+        for (auto [v, w] : G[u]) {
+            int new_cost = dis[u] + w + a[v];
+            if (new_cost < dis[v]) {
+                dis[v] = new_cost;
+                pq.push({dis[v], v});
+            }
+        }
+    }
+}
+
+signed main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+    
+    cin >> n >> m;
+    for (int i = 1; i <= n; i++) {
+        cin >> a[i];
+    }
+    
+    for (int i = 1; i <= m; i++) {
+        int u, v, w;
+        cin >> u >> v >> w;
+        G[u].push_back({v, w});
+        G[v].push_back({u, w});
+    }
+    
+    fill(dis, dis + n + 1, INF);
+    
+    dijkstra(1);
+    
+    for (int i = 2; i <= n; i++) {
+        cout << dis[i] << " ";
+    }
+    cout << "\n";
+    
+    return 0;
+}

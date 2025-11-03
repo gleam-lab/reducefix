@@ -1,0 +1,79 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define INT signed
+#define pbk push_back
+template <class T>
+using V = vector<T>;
+
+struct Node {
+    int x;
+    long long w;
+    bool operator < (const Node& u) const {
+        return w > u.w; // Min-heap: smaller weight has higher priority
+    }
+};
+
+using i64 = long long;
+
+constexpr int MAXN = 200010;
+constexpr i64 inf = 1e18;
+
+priority_queue<Node> pq;
+vector<pair<int, int>> g[MAXN];
+
+void solve() {
+    int n, m;
+    cin >> n >> m;
+    vector<i64> a(n + 1);
+    vector<i64> d(n + 1, inf);
+    vector<bool> vis(n + 1, false);
+
+    for (int i = 1; i <= n; ++i) {
+        cin >> a[i];
+    }
+
+    for (int i = 0; i < m; ++i) {
+        int x, y, c;
+        cin >> x >> y >> c;
+        g[x].emplace_back(y, c);
+        g[y].emplace_back(x, c);
+    }
+
+    // Dijkstra from vertex 1
+    d[1] = a[1]; // Starting at vertex 1, we pay its vertex weight
+    pq.push({1, d[1]});
+
+    while (!pq.empty()) {
+        auto node = pq.top();
+        pq.pop();
+        int x = node.x;
+
+        if (vis[x]) continue;
+        vis[x] = true;
+
+        for (const auto& edge : g[x]) {
+            int y = edge.first;
+            int edge_weight = edge.second;
+
+            // When moving from x to y, we add the edge weight and the vertex weight of y
+            i64 new_dist = d[x] + edge_weight + a[y];
+            if (new_dist < d[y]) {
+                d[y] = new_dist;
+                pq.push({y, d[y]});
+            }
+        }
+    }
+
+    // Output distances for vertices 2 to N
+    for (int i = 2; i <= n; ++i) {
+        cout << d[i];
+        if (i < n) cout << ' ';
+        else cout << '\n';
+    }
+}
+
+INT main() {
+    cin.tie(nullptr)->sync_with_stdio(false);
+    solve();
+    return 0;
+}

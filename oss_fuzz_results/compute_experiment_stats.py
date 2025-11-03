@@ -17,6 +17,7 @@ import json
 import os
 from pathlib import Path
 from typing import Dict, List, Tuple
+from math import comb
 
 CASES_JSON = Path("oss_fuzz/cases.json")
 CASES_DATA_DIR = Path("oss_fuzz/cases_data")
@@ -198,13 +199,13 @@ def calculate_pass_at_k(versions: List[Dict], k: int) -> float:
     if n - c < k:
         return 1.0  # 失败版本数 < k，必然至少选到 1 个通过的
     
-    # 计算组合数 C(n-c, k) / C(n, k)
-    # 使用连乘形式避免大数计算：∏(i=0 to k-1) [(n-c-i) / (n-i)]
-    prob_none_pass = 1.0
-    for i in range(k):
-        prob_none_pass *= (n - c - i) / (n - i)
-    
-    return 1.0 - prob_none_pass
+    # 使用 comb 计算组合数（与其他 RQ 保持一致）
+    try:
+        numerator = comb(n - c, k)  # 从失败版本中选 k 个的组合数
+        denominator = comb(n, k)     # 从所有版本中选 k 个的组合数
+        return 1.0 - (numerator / denominator)
+    except (ValueError, ZeroDivisionError):
+        return 0.0
 
 
 def summarize_repair(project: str, case_results_list: List[Tuple[str, Dict]]) -> Dict:

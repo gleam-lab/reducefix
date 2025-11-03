@@ -1,0 +1,63 @@
+#include<bits/stdc++.h>
+using namespace std;
+#define int long long
+
+vector<pair<int, int>> G[200005];
+int dist[200005];
+int a[200005];
+bool visited[200005];
+
+void dijkstra(int start) {
+    priority_queue<pair<int, int>, vector<pair<int, int>>, greater<pair<int, int>>> pq;
+    dist[start] = a[start];
+    pq.push({dist[start], start});
+    
+    while (!pq.empty()) {
+        int u = pq.top().second;
+        pq.pop();
+        
+        if (visited[u]) continue;
+        visited[u] = true;
+        
+        for (auto [v, w] : G[u]) {
+            int newDist = dist[u] + w + a[v];
+            if (newDist < dist[v]) {
+                dist[v] = newDist;
+                pq.push({dist[v], v});
+            }
+        }
+    }
+}
+
+signed main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+    
+    int n, m;
+    cin >> n >> m;
+    
+    for (int i = 1; i <= n; i++) {
+        cin >> a[i];
+    }
+    
+    for (int i = 1; i <= m; i++) {
+        int u, v, w;
+        cin >> u >> v >> w;
+        G[u].push_back({v, w});
+        G[v].push_back({u, w});
+    }
+    
+    // Initialize distances to infinity
+    for (int i = 1; i <= n; i++) {
+        dist[i] = LLONG_MAX;
+    }
+    
+    dijkstra(1);
+    
+    for (int i = 2; i <= n; i++) {
+        cout << dist[i] << " ";
+    }
+    cout << "\n";
+    
+    return 0;
+}

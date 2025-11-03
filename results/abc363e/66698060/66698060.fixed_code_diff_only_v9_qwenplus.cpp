@@ -1,0 +1,86 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define ll long long
+#define rep(i,n) for(ll i=0;i<(ll)n;i++)
+#define vi vector<int>
+#define vl vector<ll>
+#define vb vector<bool>
+
+ll dx[4]={0,1,0,-1},dy[4]={1,0,-1,0};
+
+int main(){
+    ll h,w,y;cin >> h >> w >> y;
+    vector<vl> room(h,vl(w));
+    rep(i,h) rep(j,w) cin >> room[i][j];
+    
+    // Create a list of all cells with their elevations
+    vector<tuple<ll,ll,ll>> cells;
+    rep(i,h) rep(j,w) {
+        cells.push_back({room[i][j], i, j});
+    }
+    
+    // Sort cells by elevation in ascending order
+    sort(cells.begin(), cells.end());
+    
+    // Union-Find or simply use BFS from the borders with priority queue
+    // Instead, we process year by year and simulate flooding from the outside
+    // But better approach: process in increasing order of elevation
+    
+    vb used(h*w, false);
+    auto idx = [&](ll i, ll j) { return i * w + j; };
+    
+    // We'll use DSU-like idea but simpler: just mark flooded cells
+    // Actually, let's use a different approach: for each year, we want to know how many cells remain
+    // Instead, we can simulate the flooding in increasing order of elevation
+    
+    priority_queue<tuple<ll,ll,ll>, vector<tuple<ll,ll,ll>>, greater<tuple<ll,ll,ll>>> pq;
+    vb is_used(h, vb(w, false));
+    
+    // Add all border cells to the priority queue
+    rep(i,h) {
+        pq.push({room[i][0], i, 0});
+        is_used[i][0] = true;
+        if (w > 1) {
+            pq.push({room[i][w-1], i, w-1});
+            is_used[i][w-1] = true;
+        }
+    }
+    rep(j, w) {
+        if (h > 1) {
+            if (!is_used[0][j]) {
+                pq.push({room[0][j], 0, j});
+                is_used[0][j] = true;
+            }
+            if (!is_used[h-1][j]) {
+                pq.push({room[h-1][j], h-1, j});
+                is_used[h-1][j] = true;
+            }
+        }
+    }
+    
+    ll remaining = h * w;
+    vector<ll> ans(y+1);
+    
+    for (ll year = 1; year <= y; year++) {
+        // Flood all cells with elevation <= year
+        while (!pq.empty() && get<0>(pq.top()) <= year) {
+            auto [elev, i, j] = pq.top();
+            pq.pop();
+            remaining--;
+            
+            // Check neighbors
+            rep(k,4) {
+                ll ni = i + dx[k], nj = j + dy[k];
+                if (ni >= 0 && ni < h && nj >= 0 && nj < w && !is_used[ni][nj]) {
+                    is_used[ni][nj] = true;
+                    pq.push({room[ni][nj], ni, nj});
+                }
+            }
+        }
+        ans[year] = remaining;
+    }
+    
+    rep(i,y) {
+        cout << ans[i+1] << endl;
+    }
+}

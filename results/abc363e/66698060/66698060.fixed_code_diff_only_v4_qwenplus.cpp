@@ -1,0 +1,76 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define ll long long
+#define rep(i,n) for(ll i=0;i<(ll)n;i++)
+#define vi vector<int>
+#define vl vector<ll>
+#define vd vector<double>
+#define vb vector<bool>
+#define vs vector<string>
+#define vc vector<char>
+#define ull unsigned long long
+#define chmax(a,b) a=max(a,b)
+#define chmin(a,b) a=min(a,b)
+
+ll dx[4] = {0, 1, 0, -1};
+ll dy[4] = {1, 0, -1, 0};
+
+int main() {
+    ll h, w, y;
+    cin >> h >> w >> y;
+    
+    vector<vl> room(h, vl(w));
+    rep(i, h) rep(j, w) cin >> room[i][j];
+    
+    // We'll process the sinking in increasing order of elevation using a priority queue
+    priority_queue<vl, vector<vl>, greater<vl>> pq;
+    vector<vb> visited(h, vb(w, false));
+    
+    // Initially, all border cells are adjacent to the sea
+    rep(i, h) {
+        pq.push({room[i][0], i, 0});
+        visited[i][0] = true;
+        if (w > 1) {
+            pq.push({room[i][w-1], i, w-1});
+            visited[i][w-1] = true;
+        }
+    }
+    rep(j, w) {
+        if (!visited[0][j]) {
+            pq.push({room[0][j], 0, j});
+            visited[0][j] = true;
+        }
+        if (h > 1 && !visited[h-1][j]) {
+            pq.push({room[h-1][j], h-1, j});
+            visited[h-1][j] = true;
+        }
+    }
+    
+    ll remaining = h * w;
+    
+    // For each year from 1 to Y
+    for (ll year = 1; year <= y; year++) {
+        // Process all cells with elevation <= current sea level (year)
+        while (!pq.empty() && pq.top()[0] <= year) {
+            auto cell = pq.top();
+            pq.pop();
+            ll r = cell[1], c = cell[2];
+            
+            // This cell sinks
+            remaining--;
+            
+            // Check neighbors
+            rep(k, 4) {
+                ll nr = r + dx[k];
+                ll nc = c + dy[k];
+                
+                if (nr >= 0 && nr < h && nc >= 0 && nc < w && !visited[nr][nc]) {
+                    visited[nr][nc] = true;
+                    pq.push({room[nr][nc], nr, nc});
+                }
+            }
+        }
+        
+        cout << remaining << endl;
+    }
+}

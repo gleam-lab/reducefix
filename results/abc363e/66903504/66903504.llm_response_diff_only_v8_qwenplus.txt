@@ -1,0 +1,121 @@
+```cpp
+#include<bits/stdc++.h>
+using namespace std;
+#include<atcoder/all>
+using namespace atcoder;
+using ll=int64_t;
+using ld=long double;
+int inf=1000000001;
+ll INF=1e18;
+#define rep(i,n) for(int i=0;i<n;i++)
+#define all(x) x.begin(),x.end()
+#define pb push_back
+#define sz(x) (ll)x.size()
+template<typename T>bool chmin(T& a,T b){if(a>b){a=b;return true;}return false;}
+template<typename T>bool chmax(T& a,T b){if(a<b){a=b;return true;}return false;}
+
+int dx[]={1,0,-1,0};
+int dy[]={0,1,0,-1};
+
+int main(){
+    cin.tie(0)->sync_with_stdio(0);
+    
+    int H,W,Y;
+    cin>>H>>W>>Y;
+    vector<vector<int>>A(H,vector<int>(W));
+    rep(i,H)rep(j,W)cin>>A[i][j];
+    
+    // Current area of the island above sea level
+    int ans = H * W;
+    // Visited array to track which cells are submerged
+    vector<vector<bool>> submerged(H, vector<bool>(W, false));
+    
+    // For each year, we want to simulate rising sea level
+    // Instead of processing events per year in separate queues,
+    // use a priority queue or process by elevation using events.
+    
+    // We'll use offline approach: collect all border cells and process by elevation
+    // Use min-heap (priority_queue) to process cells in increasing order of elevation
+    priority_queue<tuple<int,int,int>, vector<tuple<int,int,int>>, greater<tuple<int,int,int>>> pq;
+    
+    // Initialize: all edge cells are adjacent to sea, so they can sink when sea level >= their elevation
+    rep(i,H)rep(j,W){
+        if(i==0 || i==H-1 || j==0 || j==W-1){
+            pq.push({A[i][j], i, j});
+            submerged[i][j] = true;
+        }
+    }
+    
+    // Array to store answer for each year
+    vector<int> res(Y+1);
+    for(int y = 1; y <= Y; y++) res[y] = ans;
+    
+    // Process cells in order of elevation (simulate flooding)
+    while(!pq.empty()){
+        auto [elev, i, j] = pq.top();
+        pq.pop();
+        
+        // This cell sinks when sea level reaches 'elev'
+        if(elev <= Y){
+            res[elev]--;
+        }
+        
+        // Propagate to neighbors
+        rep(k,4){
+            int ni = i + dx[k];
+            int nj = j + dy[k];
+            if(ni >= 0 && ni < H && nj >= 0 && nj < W && !submerged[ni][nj]){
+                submerged[ni][nj] = true;
+                // Neighbor will be submerged when sea level reaches max(current_sea_level_needed, its_elevation)
+                // But actually, it gets submerged when sea level >= A[ni][nj], and it becomes exposed to sea via this path
+                pq.push({A[ni][nj], ni, nj});
+            }
+        }
+        
+        // Update remaining area for future years
+        if(elev < Y){
+            for(int y = elev + 1; y <= Y; y++){
+                res[y] = res[elev];
+            }
+        }
+        // If current elevation is beyond Y, no need to update further
+        if(elev > Y) break;
+    }
+    
+    // However, the above propagation of res[] is inefficient and incorrect
+    
+    // Let's do it differently: simulate year by year using BFS with events sorted by elevation
+    // Reset everything
+    ans = H * W;
+    fill(all(submerged), vector<bool>(W, false));
+    // Clear pq and refill only borders
+    while(!pq.empty()) pq.pop();
+    
+    rep(i,H)rep(j,W){
+        if(i==0 || i==H-1 || j==0 || j==W-1){
+            pq.push({A[i][j], i, j});
+            submerged[i][j] = true;
+        }
+    }
+    
+    // Now process year by year
+    for(int y = 1; y <= Y; y++){
+        // Handle all cells with elevation <= y that haven't been processed yet
+        while(!pq.empty() && get<0>(pq.top()) <= y){
+            auto [elev, i, j] = pq.top();
+            pq.pop();
+            ans--; // This cell sinks
+            
+            rep(k,4){
+                int ni = i + dx[k];
+                int nj = j + dy[k];
+                if(ni >= 0 && ni < H && nj >= 0 && nj < W && !submerged[ni][nj]){
+                    submerged[ni][nj] = true;
+                    pq.push({A[ni][nj], ni, nj});
+                }
+            }
+        }
+        cout << ans << '\n';
+    }
+}
+```

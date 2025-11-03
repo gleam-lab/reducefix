@@ -1,0 +1,82 @@
+#include<bits/stdc++.h>
+using namespace std;
+#include<atcoder/all>
+using namespace atcoder;
+using ll=int64_t;
+using ld=long double;
+int inf=1000000001;
+ll INF=1e18;
+#define rep(i,n) for(int i=0;i<n;i++)
+#define all(x) x.begin(),x.end()
+#define pb push_back
+#define sz(x) (ll)x.size()
+template<typename T>bool chmin(T& a,T b){if(a>b){a=b;return true;}return false;}
+template<typename T>bool chmax(T& a,T b){if(a<b){a=b;return true;}return false;}
+
+int dx[]={1,0,-1,0};
+int dy[]={0,1,0,-1};
+
+int main(){
+    cin.tie(0)->sync_with_stdio(0);
+    
+    int H,W,Y;
+    cin>>H>>W>>Y;
+    vector<vector<int>>A(H,vector<int>(W));
+    rep(i,H)rep(j,W)cin>>A[i][j];
+    
+    // Initialize answer and visited array
+    int ans = H*W;
+    vector<vector<bool>> visited(H, vector<bool>(W, false));
+    
+    // We'll process cells in increasing order of elevation using events per year
+    vector<vector<pair<int,int>>> events(Y+1); // events[sea_level] = list of (i,j) to check
+    
+    // Add all border cells to their respective event lists
+    rep(i,H) {
+        rep(j,W) {
+            if (i == 0 || i == H-1 || j == 0 || j == W-1) {
+                if (A[i][j] <= Y) {
+                    events[A[i][j]].push_back({i,j});
+                } else {
+                    // Even if A[i][j] > Y, we still need to consider it when sea level reaches A[i][j], but that's beyond Y
+                    // So we ignore since we only care up to year Y
+                }
+                visited[i][j] = true;
+                ans--;
+            }
+        }
+    }
+    
+    // BFS-like propagation for each year
+    queue<pair<int,int>> q;
+    
+    for (int y = 1; y <= Y; y++) {
+        // Add all new border cells that become submerged at exactly year y
+        for (auto [i,j] : events[y]) {
+            if (!visited[i][j]) {
+                visited[i][j] = true;
+                q.push({i,j});
+                ans--;
+            }
+        }
+        
+        // Propagate from current queue: any unvisited neighbor with elevation <= y will also sink
+        while (!q.empty()) {
+            auto [i,j] = q.front(); q.pop();
+            
+            rep(k,4) {
+                int ni = i + dx[k];
+                int nj = j + dy[k];
+                if (ni >= 0 && ni < H && nj >= 0 && nj < W && !visited[ni][nj] && A[ni][nj] <= y) {
+                    visited[ni][nj] = true;
+                    q.push({ni,nj});
+                    ans--;
+                }
+            }
+        }
+        
+        cout << ans + (int)events[y].size() << endl;
+    }
+    
+    return 0;
+}

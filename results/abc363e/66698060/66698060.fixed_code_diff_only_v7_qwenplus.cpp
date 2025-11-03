@@ -1,0 +1,89 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define ll long long
+#define rep(i,n) for(ll i=0;i<(ll)n;i++)
+#define vi vector<int>
+#define vl vector<ll>
+#define vb vector<bool>
+
+ll dx[4] = {0, 1, 0, -1};
+ll dy[4] = {1, 0, -1, 0};
+
+int main() {
+    ll h, w, y;
+    cin >> h >> w >> y;
+    
+    vector<vl> room(h, vl(w));
+    rep(i, h) rep(j, w) cin >> room[i][j];
+    
+    // Store cells by their elevation
+    vector<vector<pair<ll, ll>>> cells_by_elevation(100001); // A_{i,j} <= 10^5
+    rep(i, h) rep(j, w) {
+        cells_by_elevation[room[i][j]].push_back({i, j});
+    }
+    
+    ll remaining = h * w;
+    vb visited(h * w, false); // flattened 2D grid to 1D: (i, j) -> i * w + j
+    
+    // Process each year from 1 to Y
+    for (ll year = 1; year <= y; year++) {
+        // Add all cells with elevation <= current sea level (which is 'year')
+        // that haven't been processed yet
+        for (auto& p : cells_by_elevation[year]) {
+            ll i = p.first, j = p.second;
+            ll idx = i * w + j;
+            if (visited[idx]) continue;
+            
+            // Check if this cell is connected to the sea (i.e., on border or adjacent to already submerged cell)
+            // But instead, we do a BFS from the borders and simulate flooding properly
+            
+            // Actually, we need to reverse approach: start from borders at time 0 and simulate rising sea
+            // The above method won't work correctly because connectivity matters
+        }
+    }
+    
+    // Let's change strategy: use priority queue to simulate flooding from edges
+    priority_queue<tuple<ll, ll, ll>, vector<tuple<ll, ll, ll>>, greater<tuple<ll, ll, ll>>> pq;
+    vector<vb> used(h, vb(w, false));
+    
+    // Initialize: all border cells are adjacent to sea
+    rep(i, h) {
+        pq.push({room[i][0], i, 0});
+        used[i][0] = true;
+        if (w > 1) {
+            pq.push({room[i][w-1], i, w-1});
+            used[i][w-1] = true;
+        }
+    }
+    rep(j, w) {
+        if (!used[0][j]) {
+            pq.push({room[0][j], 0, j});
+            used[0][j] = true;
+        }
+        if (h > 1 && !used[h-1][j]) {
+            pq.push({room[h-1][j], h-1, j});
+            used[h-1][j] = true;
+        }
+    }
+    
+    ll ans = h * w;
+    
+    for (ll year = 1; year <= y; year++) {
+        // Flood all cells with elevation <= year
+        while (!pq.empty() && get<0>(pq.top()) <= year) {
+            auto [elev, i, j] = pq.top();
+            pq.pop();
+            ans--;
+            
+            // Check neighbors
+            rep(k, 4) {
+                ll ni = i + dx[k], nj = j + dy[k];
+                if (ni >= 0 && ni < h && nj >= 0 && nj < w && !used[ni][nj]) {
+                    used[ni][nj] = true;
+                    pq.push({room[ni][nj], ni, nj});
+                }
+            }
+        }
+        cout << ans << endl;
+    }
+}

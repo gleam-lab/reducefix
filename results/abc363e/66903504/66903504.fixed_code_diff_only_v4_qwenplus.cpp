@@ -1,0 +1,279 @@
+#include<bits/stdc++.h>
+using namespace std;
+#include<atcoder/all>
+using namespace atcoder;
+using ll=int64_t;
+using ld=long double;
+int inf=1000000001;
+ll INF=1e18;
+#define rep(i,n) for(int i=0;i<n;i++)
+#define all(x) x.begin(),x.end()
+#define pb push_back
+#define sz(x) (ll)x.size()
+template<typename T>bool chmin(T& a,T b){if(a>b){a=b;return true;}return false;}
+template<typename T>bool chmax(T& a,T b){if(a<b){a=b;return true;}return false;}
+
+int dx[]={1,0,-1,0};
+int dy[]={0,1,0,-1};
+
+int main(){
+    cin.tie(0)->sync_with_stdio(0);
+
+    int H,W,Y;
+    cin>>H>>W>>Y;
+    vector<vector<int>>A(H,vector<int>(W));
+    rep(i,H)rep(j,W)cin>>A[i][j];
+    
+    // Current area of island above water
+    int ans = H * W;
+    // Visited/flooded marker
+    vector<vector<bool>> flooded(H, vector<bool>(W, false));
+    
+    // Instead of having a huge array of queues, use one priority or event-based approach
+    // But since sea level increases from 1 to Y, we can process by elevation
+    // Use a queue for BFS, and process cells in increasing order of required sea level
+    
+    queue<pair<int,int>> q;
+    
+    // Initialize: all border cells will be flooded when sea level >= their elevation
+    rep(i,H) rep(j,W) {
+        if(i == 0 || i == H-1 || j == 0 || j == W-1) {
+            if(A[i][j] <= 1 && !flooded[i][j]) {
+                flooded[i][j] = true;
+                q.push({i,j});
+                ans--;
+            }
+        }
+    }
+    
+    // We'll maintain a list of cells that are going to flood at each year
+    // But better: simulate year-by-year, and use the fact that once a cell is flooded,
+    // it can trigger adjacent ones if their elevation <= current sea level
+    
+    // However, multiple years: we need to simulate y=1 to Y
+    // Key idea: when sea level is y, any unflooded cell with elevation <= y that is adjacent to a flooded cell gets flooded
+    // But flooding propagates: so we do BFS starting from initially flooded borders, but only allow flooding when A[i][j] <= current_sea_level
+    
+    // Revised plan: instead of pre-queueing everything, simulate year by year and use BFS as sea level rises
+    
+    // Let's maintain a single BFS queue that accumulates over time
+    // But clear the queue at each year? No, carry forward.
+    
+    // Actually, we can do offline: sort all cells by elevation, and use union-find or just simulate increasing sea level with BFS
+    
+    // Better: process in increasing sea level. At sea level y, we can flood:
+    // - any border cell with A[i][j] <= y that hasn't been flooded yet
+    // - and then propagate inward via BFS (but only through cells with elevation <= y)
+    
+    // But propagation is automatic: once a cell is adjacent to flooded and has elev <= y, it floods
+    
+    // So: we maintain a queue of currently flooded cells (active front)
+    // Start with all border cells that have A[i][j] <= 1, at y=1
+    // Then at each year y, we may have new border cells becoming vulnerable, but also internal propagation?
+    
+    // Actually, the problem says: when sea level is y, any cell with elevation <= y that is adjacent to sea (or already flooded) sinks
+    // And this happens simultaneously in a cascading way.
+    
+    // So we can do:
+    // Use a BFS queue that persists across years
+    // Also, at year y, we check if any new border cell with A[i][j] == y becomes flooded? Not exactly: if A[i][j] <= y and not flooded and adjacent to sea or flooded, then flood.
+    // But borders are always adjacent to sea.
+    
+    // Therefore, at year y, every border cell with A[i][j] <= y that isn't already flooded should start flooding
+    // So we can do:
+    //   For each year y from 1 to Y:
+    //      Add all border cells with A[i][j] == y (and not flooded) -> but wait, what if A[i][j] < y? They should have been added earlier!
+    
+    // Correction: we must add all border cells when y reaches A[i][j], but if they haven't been flooded due to propagation, we still need to add them.
+    // But actually, if a border cell has A[i][j] <= y, it should be flooded by year y at latest.
+    // So we can precompute for each border cell the year it gets flooded: max(1, A[i][j])? No: it gets flooded at year A[i][j] at latest? Actually, if A[i][j] <= y, it floods at year min(y such that y >= A[i][j])
+    
+    // So we can do:
+    //   Create events: for each border cell, at year = A[i][j], we try to flood it (if not already flooded)
+    //   But propagation might have already flooded it earlier? No, because propagation only happens from already flooded cells.
+    //   So border cells are independent entry points.
+    
+    // Revised algorithm:
+    //   Let's have a vector of vectors: add to year y all border cells with A[i][j] == y
+    //   But also, internal cells get flooded via propagation from neighbors
+    //   We maintain a global BFS queue
+    
+    vector<vector<pair<int,int>>> borderAtYear(Y+1); // borderAtYear[y] contains border cells that have elevation y
+    rep(i,H) rep(j,W) {
+        if(i==0 || i==H-1 || j==0 || j==W-1) {
+            if(A[i][j] <= Y) {
+                borderAtYear[A[i][j]].push_back({i,j});
+            }
+            // Even if A[i][j] > Y, we don't care until later
+        }
+    }
+    
+    queue<pair<int,int>> active;
+    
+    // Flood initial border cells with elevation 1
+    for(auto [i,j] : borderAtYear[1]) {
+        if(!flooded[i][j]) {
+            flooded[i][j] = true;
+            active.push({i,j});
+            ans--;
+        }
+    }
+    
+    cout << ans << endl;
+    
+    // For years 2 to Y
+    for(int y = 2; y <= Y; y++) {
+        // Add all border cells with elevation exactly y (since now sea level y covers them)
+        for(auto [i,j] : borderAtYear[y]) {
+            if(!flooded[i][j]) {
+                flooded[i][j] = true;
+                active.push({i,j});
+                ans--;
+            }
+        }
+        
+        // Now propagate from all currently active flooded cells to neighbors that can be flooded at this sea level y
+        // But note: propagation can chain, so we do BFS until no more can be flooded at this sea level
+        // However, the problem says "simultaneously" — so we should process all possible flooding at year y
+        
+        // We do BFS using the active queue, but we need to process all newly flooded cells in this year
+        // But our active queue contains cells flooded in previous years too? 
+        // Actually, we want to use the entire frontier accumulated so far, but we are processing year-by-year.
+        
+        // Actually, we should not rely on carrying the queue — instead, each year we start from all cells that were flooded in previous years OR become flooded at this year from border,
+        // and then propagate to any unflooded neighbor with A[ni][nj] <= y
+        
+        // But the propagation condition is: if a flooded cell (at any time before or during year y) has a neighbor with elevation <= y and not flooded, then it floods
+        
+        // How to do it efficiently? We can do a BFS that continues until no more cells can be flooded at sea level y.
+        // But note: a cell might be reachable from multiple paths, so we use visited array.
+        
+        // However, we cannot do full BFS from scratch each year (too slow).
+        
+        // Alternative idea: maintain the active frontier (all flooded cells that are on the boundary of the island)
+        // Each year, we add new border cells with A[i][j] == y, then run BFS from the entire active set (including new ones) to flood all reachable cells with A[][] <= y
+        
+        // But we must avoid reprocessing.
+        
+        // Let's change strategy: use a single BFS that progresses over years.
+        // We keep a queue of cells that are flooded and can cause further flooding.
+        // At year y, we first add all border cells with A[i][j] == y (if not already flooded).
+        // Then, we process the entire queue (which includes old frontier) and for each, check neighbors: if neighbor not flooded and A[ni][nj] <= y, then flood it and add to queue.
+        // But wait: we might have processed some of these neighbors in previous years.
+        
+        // Actually, we should process propagation at each year incrementally.
+        // Important: once a cell is flooded, it stays flooded.
+        
+        // We do:
+        //   At year y:
+        //     1. Add all border cells with A[i][j] == y (that haven't been flooded)
+        //     2. Then, do a BFS from all currently active frontier (the queue) but only allowing moves to cells with A[][] <= y
+        //     3. But we must continue BFS until no more cells can be flooded at this sea level y
+        
+        // However, the queue may contain cells from previous years. When we process them again, we might revisit neighbors.
+        // So we need to store the entire frontier? Or we can re-process the whole thing.
+        
+        // Actually, we can do a multi-source BFS that runs to completion at each year.
+        // But worst-case, each year we scan entire grid -> O(Y*H*W) = 10^5 * 10^6 = 10^11, too slow.
+        
+        // Better: we maintain a queue that holds all cells that are flooded and have unflooded neighbors (potential to flood more in future).
+        // But at year y, we can only flood a neighbor if A[neighbor] <= y.
+        // So we can store all frontier cells, and at year y, we check their neighbors: if A[ni][nj] <= y and not flooded, flood it.
+        
+        // But then we need to check all frontier cells every year -> O(Y * (number of frontier cells)) which could be large.
+        
+        // Alternatively, we can store for each unflooded cell, its minimum sea level needed to flood it (which is max(elevation, min_sea_level_from_border)), but complicated.
+        
+        // Standard solution: offline by elevation.
+        // Sort all cells by elevation.
+        // Use DSU or BFS in increasing order of elevation.
+        
+        // Actually, known technique: "flooding from borders" with increasing water level.
+        // We can do a BFS starting from all borders, prioritized by max(current_water_level, cell_elevation).
+        // Use Dijkstra-like: state is (max_level_required, i, j)
+        // The earliest year when cell (i,j) is flooded is the minimum value of max(path) from border to (i,j), where path is sequence of cells, and max(path) is max of elevations along path.
+        // Why? Because to flood an internal cell, water must flow from border through a path, and the bottleneck is the highest elevation along the path.
+        // But actually, the water level must reach that maximum elevation to cover the entire path.
+        
+        // So: define dist[i][j] = minimum value of maximum elevation along any path from border to (i,j)
+        // Then cell (i,j) gets flooded at year = dist[i][j]
+        
+        // We can compute this with a variant of Dijkstra:
+        //   Priority queue: (max_elev_so_far, i, j)
+        //   Start with all border cells: (A[i][j], i, j)
+        //   Then for a cell (i,j), go to neighbor (ni,nj): new_max = max(max_elev_so_far, A[ni][nj])
+        //   If we can get a smaller new_max, update.
+        
+        // Then, after computing f[i][j] = earliest year when (i,j) is flooded, we can compute:
+        //   For year y, number of cells not flooded = total cells - number of cells with f[i][j] <= y
+        
+        // This is efficient: O(HW log(HW))
+        
+        // Let's switch to this method.
+        
+        // We'll break out and re-implement.
+    }
+    
+    // Since we already started differently, let's restart cleanly.
+    
+    // But we are inside the loop... so better to rewrite the entire logic.
+}
+
+// Redefine main properly
+#undef main
+int main() {
+    cin.tie(0)->sync_with_stdio(0);
+    
+    int H, W, Y;
+    cin >> H >> W >> Y;
+    vector<vector<int>> A(H, vector<int>(W));
+    rep(i,H) rep(j,W) cin >> A[i][j];
+    
+    // dist[i][j] = minimum possible value of maximum elevation along any path from border to (i,j)
+    vector<vector<int>> dist(H, vector<int>(W, inf));
+    priority_queue<tuple<int, int, int>, vector<tuple<int, int, int>>, greater<tuple<int, int, int>>> pq;
+    
+    // Directions: only up, down, left, right
+    int dx[] = {1, 0, -1, 0};
+    int dy[] = {0, 1, 0, -1};
+    
+    // Initialize: all border cells
+    rep(i,H) rep(j,W) {
+        if(i == 0 || i == H-1 || j == 0 || j == W-1) {
+            dist[i][j] = A[i][j];
+            pq.push({A[i][j], i, j});
+        }
+    }
+    
+    while(!pq.empty()) {
+        auto [d, i, j] = pq.top(); pq.pop();
+        if(d != dist[i][j]) continue;
+        
+        rep(k,4) {
+            int ni = i + dx[k];
+            int nj = j + dy[k];
+            if(ni >= 0 && ni < H && nj >= 0 && nj < W) {
+                int nd = max(d, A[ni][nj]);
+                if(nd < dist[ni][nj]) {
+                    dist[ni][nj] = nd;
+                    pq.push({nd, ni, nj});
+                }
+            }
+        }
+    }
+    
+    // Now, for each year y from 1 to Y, count number of cells with dist[i][j] > y
+    vector<int> cnt(Y+1, 0); // cnt[y] = number of cells flooded at year y
+    rep(i,H) rep(j,W) {
+        if(dist[i][j] <= Y) {
+            cnt[dist[i][j]]++;
+        }
+        // else, it never floods within Y years
+    }
+    
+    int remaining = H * W;
+    for(int y = 1; y <= Y; y++) {
+        remaining -= cnt[y];
+        cout << remaining << '\n';
+    }
+}

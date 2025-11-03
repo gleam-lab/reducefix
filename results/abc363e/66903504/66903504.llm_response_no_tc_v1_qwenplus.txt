@@ -1,0 +1,98 @@
+```cpp
+#include<bits/stdc++.h>
+using namespace std;
+#include<atcoder/all>
+using namespace atcoder;
+using ll=int64_t;
+using ld=long double;
+int inf=1000000001;
+ll INF=1e18;
+#define rep(i,n) for(int i=0;i<n;i++)
+#define all(x) x.begin(),x.end()
+#define pb push_back
+#define sz(x) (ll)x.size()
+template<typename T>bool chmin(T& a,T b){if(a>b){a=b;return true;}return false;}
+template<typename T>bool chmax(T& a,T b){if(a<b){a=b;return true;}return false;}
+
+int dx[]={1,0,-1,0};
+int dy[]={0,1,0,-1};
+
+int main(){
+    cin.tie(0)->sync_with_stdio(0);
+    
+    int H,W,Y;
+    cin>>H>>W>>Y;
+    vector<vector<int>>A(H,vector<int>(W));
+    rep(i,H)rep(j,W)cin>>A[i][j];
+    
+    // We'll simulate the flooding in increasing order of sea level
+    // Instead of processing year-by-year independently, we collect all boundary cells
+    // and use a priority queue (or bucket sort) to process cells in order of elevation
+    
+    // Use bucketing since A[i][j] <= 10^5 and Y <= 10^5
+    vector<vector<pair<int,int>>> buckets(100001);
+    vector<vector<bool>> submerged(H, vector<bool>(W, false));
+    int remaining = H * W;
+    
+    // Initialize: add all border cells to their respective buckets
+    rep(i,H) {
+        rep(j,W) {
+            if (i == 0 || i == H-1 || j == 0 || j == W-1) {
+                buckets[A[i][j]].push_back({i, j});
+                submerged[i][j] = true;
+                remaining--;
+            }
+        }
+    }
+    
+    // For each year from 1 to Y, simulate sea level = year
+    // We need to propagate flooding: any cell with elevation <= current sea level
+    // that is connected (via adjacent submerged cells) to the sea will be flooded
+    // We use BFS-like propagation using buckets for efficiency
+    
+    vector<int> result;
+    
+    // We'll maintain a queue for current propagation within the same sea level
+    queue<pair<int,int>> q;
+    
+    for (int y = 1; y <= Y; y++) {
+        // Add all cells with elevation exactly y on the border (but not yet processed)
+        for (auto &p : buckets[y]) {
+            if (!submerged[p.first][p.second]) continue; // already processed via propagation
+            q.push(p);
+        }
+        
+        // Clear the bucket since we've handled them
+        buckets[y].clear();
+        
+        // Propagate from all cells that are now submerged at this sea level
+        while (!q.empty()) {
+            auto [i, j] = q.front(); q.pop();
+            
+            // Check neighbors
+            rep(k,4) {
+                int ni = i + dx[k], nj = j + dy[k];
+                if (ni >= 0 && ni < H && nj >= 0 && nj < W && !submerged[ni][nj]) {
+                    // If neighbor's elevation <= current sea level, it gets flooded
+                    if (A[ni][nj] <= y) {
+                        submerged[ni][nj] = true;
+                        remaining--;
+                        q.push({ni, nj});
+                    } else {
+                        // Otherwise, we schedule it for future when sea level reaches its elevation
+                        buckets[A[ni][nj]].push_back({ni, nj});
+                        submerged[ni][nj] = true; // mark as scheduled to avoid duplicate
+                    }
+                }
+            }
+        }
+        
+        result.push_back(remaining);
+    }
+    
+    // Output results for each year
+    for (int i = 0; i < Y; i++) {
+        cout << result[i] << '\n';
+    }
+}
+```

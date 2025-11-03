@@ -1,0 +1,45 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define ll long long
+#define rep(i,n) for(ll i=0;i<(ll)n;i++)
+#define vi vector<int>
+#define vl vector<ll>
+#define vd vector<double>
+#define vb vector<bool>
+#define vs vector<string>
+#define vc vector<char>
+#define ull unsigned long long
+#define chmax(a,b) a=max(a,b)
+#define chmin(a,b) a=min(a,b)
+
+ll dx[4]={0,1,0,-1},dy[4]={1,0,-1,0};
+
+int main(){
+    ll h,w,y;cin >> h >> w >> y;
+    vector room(h,vl(w));
+    rep(i,h) rep(j,w) cin >> room[i][j];
+    
+    // Store all cells with their elevation
+    vector<tuple<ll,ll,ll>> cells;
+    rep(i,h) rep(j,w) {
+        cells.push_back({room[i][j], i, j});
+    }
+    sort(cells.begin(), cells.end());
+    
+    ll area = h * w;
+    vector used(h, vb(w, false));
+    ll idx = 0;
+    
+    for(ll year = 1; year <= y; year++) {
+        // Add all cells with elevation <= current sea level
+        while(idx < cells.size() && get<0>(cells[idx]) <= year) {
+            auto [elev, i, j] = cells[idx];
+            if (!used[i][j]) {
+                used[i][j] = true;
+                area--;
+            }
+            idx++;
+        }
+        cout << area << endl;
+    }
+}

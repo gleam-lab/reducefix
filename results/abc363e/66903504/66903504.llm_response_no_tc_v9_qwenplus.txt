@@ -1,0 +1,119 @@
+```cpp
+#include<bits/stdc++.h>
+using namespace std;
+#include<atcoder/all>
+using namespace atcoder;
+using ll=int64_t;
+using ld=long double;
+int inf=1000000001;
+ll INF=1e18;
+#define rep(i,n) for(int i=0;i<n;i++)
+#define all(x) x.begin(),x.end()
+#define pb push_back
+#define sz(x) (ll)x.size()
+template<typename T>bool chmin(T& a,T b){if(a>b){a=b;return true;}return false;}
+template<typename T>bool chmax(T& a,T b){if(a<b){a=b;return true;}return false;}
+
+int dx[]={1,0,-1,0};
+int dy[]={0,1,0,-1};
+
+int main(){
+    cin.tie(0)->sync_with_stdio(0);
+    
+    int H,W,Y;
+    cin>>H>>W>>Y;
+    vector<vector<int>>A(H,vector<int>(W));
+    rep(i,H)rep(j,W)cin>>A[i][j];
+    
+    // Current sea level starts at 0 and rises each year
+    // We simulate the flooding using BFS from the borders
+    // Instead of processing per year in increasing order naively,
+    // we use events: when a cell gets flooded at sea level = A[i][j]
+    // But note: flooding propagates only if adjacent to already flooded area and elevation <= current sea level
+    
+    // Better approach: process cells in increasing order of elevation
+    // Use union-find or simply simulate with priority queue?
+    // Actually, we can do offline: sort all cells by elevation, then simulate flooding from outside inward.
+    
+    // Alternate idea:
+    // Start with all border cells. They will flood at time = A[i][j] (but actually when sea level reaches A[i][j])
+    // However, propagation: a cell floods when sea level >= its elevation AND it is connected to the sea via flooded cells.
+    
+    // We can simulate with a min-heap (priority_queue): store {elevation, i, j}
+    // Initially add all border cells.
+    // Then, while heap not empty, pop smallest elevation. If this cell hasn't been processed and elevation <= current sea level, flood it.
+    // But we need answer for each year from 1 to Y.
+    
+    // Instead: precompute the time (year) when each cell gets flooded.
+    // A cell gets flooded at year = min(its own elevation, max over path from border of min_elevation_along_path?) 
+    // Actually: flooding spreads such that a cell (i,j) gets flooded at year = the minimum value T such that there exists a path from outside to (i,j) where every cell on the path has elevation <= T.
+    // This is equivalent to: the minimal maximum elevation along any path from the boundary to (i,j).
+    
+    // We can use Dijkstra-like algorithm:
+    // Let dist[i][j] = minimal maximum elevation along any path from boundary to (i][j)
+    // Initialize: for all border cells, dist[i][j] = A[i][j], and push them into priority queue.
+    // Then run relaxation: for neighbor (ni,nj), new_cost = max(dist[i][j], A[ni][nj])
+    // If we can relax, update.
+    
+    vector<vector<int>> dist(H, vector<int>(W, inf));
+    priority_queue<tuple<int,int,int>, vector<tuple<int,int,int>>, greater<tuple<int,int,int>>> pq;
+    
+    // Initialize border cells
+    rep(i,H) {
+        dist[i][0] = A[i][0];
+        pq.push({dist[i][0], i, 0});
+        
+        if (W > 1) {
+            dist[i][W-1] = A[i][W-1];
+            pq.push({dist[i][W-1], i, W-1});
+        }
+    }
+    rep(j,W) {
+        if (H > 1) {
+            dist[0][j] = A[0][j];
+            pq.push({dist[0][j], 0, j});
+            
+            dist[H-1][j] = A[H-1][j];
+            pq.push({dist[H-1][j], H-1, j});
+        }
+    }
+    // Fix duplicate corner cells
+    // It's okay to have duplicates in pq, we'll handle with visited or check on pop
+    
+    while (!pq.empty()) {
+        auto [d, i, j] = pq.top(); pq.pop();
+        if (d != dist[i][j]) continue; // outdated
+        
+        rep(k,4) {
+            int ni = i + dx[k];
+            int nj = j + dy[k];
+            if (ni >= 0 && ni < H && nj >= 0 && nj < W) {
+                int new_d = max(d, A[ni][nj]);
+                if (new_d < dist[ni][nj]) {
+                    dist[ni][nj] = new_d;
+                    pq.push({new_d, ni, nj});
+                }
+            }
+        }
+    }
+    
+    // Now, dist[i][j] = the year when cell (i,j) gets flooded (sea level reaches that value)
+    // At year y, a cell remains above water if dist[i][j] > y
+    vector<int> area(Y+1, H*W); // area[y] = area remaining at year y
+    
+    rep(i,H) rep(j,W) {
+        int flood_year = dist[i][j];
+        if (flood_year <= Y) {
+            for (int y = flood_year; y <= Y; y++) {
+                area[y]--;
+            }
+        }
+    }
+    
+    rep(y,Y) {
+        cout << area[y+1] << endl;
+    }
+    
+    return 0;
+}
+```

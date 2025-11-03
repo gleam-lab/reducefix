@@ -1,0 +1,95 @@
+#include<bits/stdc++.h>
+using namespace std;
+#include<atcoder/all>
+using namespace atcoder;
+using ll=int64_t;
+using ld=long double;
+int inf=1000000001;
+ll INF=1e18;
+#define rep(i,n) for(int i=0;i<n;i++)
+#define all(x) x.begin(),x.end()
+#define pb push_back
+#define sz(x) (ll)x.size()
+template<typename T>bool chmin(T& a,T b){if(a>b){a=b;return true;}return false;}
+template<typename T>bool chmax(T& a,T b){if(a<b){a=b;return true;}return false;}
+
+int dx[]={1,0,-1,0};
+int dy[]={0,1,0,-1};
+
+int main(){
+    cin.tie(0)->sync_with_stdio(0);
+    
+    int H,W,Y;
+    cin>>H>>W>>Y;
+    vector<vector<int>>A(H,vector<int>(W));
+    rep(i,H)rep(j,W)cin>>A[i][j];
+    
+    // Create events: when a cell gets submerged
+    vector<vector<int>> events(Y+1);
+    
+    // Initialize: all border cells will be the starting points
+    vector<vector<bool>> submerged(H,vector<bool>(W,false));
+    queue<pair<int,int>> q;
+    
+    // Add all border cells to initial queue
+    rep(i,H){
+        rep(j,W){
+            if(i==0 || i==H-1 || j==0 || j==W-1){
+                submerged[i][j] = true;
+                if(A[i][j] <= Y){
+                    events[A[i][j]].push_back({i,j});
+                }
+            }
+        }
+    }
+    
+    // Process each year in order
+    int remaining = H*W;
+    
+    // We'll use a BFS approach with priority based on elevation
+    // Instead of processing by year directly, we process cells in order of their elevation
+    vector<queue<pair<int,int>>> Q(Y+2); // Q[y] contains cells that get submerged at sea level y
+    
+    // Initialize Q with border cells
+    rep(i,H) {
+        rep(j,W) {
+            if(i==0 || i==H-1 || j==0 || j==W-1) {
+                Q[A[i][j]].push({i,j});
+            }
+        }
+    }
+    
+    for(int y=1; y<=Y; y++) {
+        // Process all cells that submerge at sea level y
+        while(!Q[y].empty()) {
+            auto [i,j] = Q[y].front();
+            Q[y].pop();
+            
+            // This cell is already processed
+            if(!submerged[i][j]) {
+                submerged[i][j] = true;
+                remaining--;
+                
+                // Check neighbors
+                rep(k,4) {
+                    int ni = i + dx[k];
+                    int nj = j + dy[k];
+                    
+                    if(ni >= 0 && ni < H && nj >= 0 && nj < W && !submerged[ni][nj]) {
+                        // If neighbor's elevation <= current sea level, it also gets submerged
+                        if(A[ni][nj] <= y) {
+                            submerged[ni][nj] = true;
+                            remaining--;
+                            Q[y].push({ni,nj}); // Process immediately in this while loop
+                        } else {
+                            // Otherwise, it will be submerged when sea level reaches its elevation
+                            Q[A[ni][nj]].push({ni,nj});
+                        }
+                    }
+                }
+            }
+        }
+        
+        cout << remaining << '\n';
+    }
+}

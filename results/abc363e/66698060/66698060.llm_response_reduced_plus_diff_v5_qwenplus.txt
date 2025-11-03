@@ -1,0 +1,100 @@
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+#define ll long long
+#define rep(i,n) for(ll i=0;i<(ll)n;i++)
+
+ll dx[4]={0,1,0,-1},dy[4]={1,0,-1,0};
+
+int main(){
+    ll h,w,y;cin >> h >> w >> y;
+    vector<vector<ll>> room(h,vector<ll>(w));
+    rep(i,h) rep(j,w) cin >> room[i][j];
+    
+    // Create a list of all cells with their elevation and position
+    vector<tuple<ll,ll,ll>> cells;
+    rep(i,h) rep(j,w) {
+        cells.push_back({room[i][j], i, j});
+    }
+    
+    // Sort by elevation in ascending order
+    sort(cells.begin(), cells.end());
+    
+    vector<vector<bool>> submerged(h, vector<bool>(w, false));
+    ll remaining = h * w;
+    ll idx = 0;
+    
+    // Process each year
+    for (ll year = 1; year <= y; year++) {
+        // Submerge all cells with elevation <= current sea level
+        while (idx < cells.size() && get<0>(cells[idx]) <= year) {
+            auto [elev, i, j] = cells[idx];
+            if (!submerged[i][j]) {
+                submerged[i][j] = true;
+                remaining--;
+                
+                // Use BFS to propagate submersion from border-connected cells
+                // But we'll handle propagation via priority queue later
+            }
+            idx++;
+        }
+        
+        // However, the above doesn't handle connectivity properly.
+        // Let's use a different approach: simulate from borders using min-heap
+        
+        // Actually, let's reset our approach: use a priority queue starting from all boundary cells
+        // But we need to do it incrementally per year.
+    }
+    
+    // Correct approach: use event-based simulation with priority queue
+    priority_queue<tuple<ll,ll,ll>, vector<tuple<ll,ll,ll>>, greater<tuple<ll,ll,ll>>> pq;
+    vector<vector<bool>> visited(h, vector<bool>(w, false));
+    
+    // Initialize with all border cells
+    rep(i,h) {
+        pq.push({room[i][0], i, 0});
+        visited[i][0] = true;
+        if (w > 1) {
+            pq.push({room[i][w-1], i, w-1});
+            visited[i][w-1] = true;
+        }
+    }
+    rep(j,w) {
+        if (!visited[0][j]) {
+            pq.push({room[0][j], 0, j});
+            visited[0][j] = true;
+        }
+        if (h > 1 && !visited[h-1][j]) {
+            pq.push({room[h-1][j], h-1, j});
+            visited[h-1][j] = true;
+        }
+    }
+    
+    remaining = h * w;
+    vector<ll> ans(y);
+    
+    for (ll year = 1; year <= y; year++) {
+        // Process all cells that can be submerged at this sea level
+        while (!pq.empty()) {
+            auto [elev, i, j] = pq.top();
+            if (elev > year) break;
+            pq.pop();
+            
+            // This cell gets submerged
+            remaining--;
+            
+            // Check neighbors
+            rep(k,4) {
+                ll ni = i + dx[k], nj = j + dy[k];
+                if (ni >= 0 && ni < h && nj >= 0 && nj < w && !visited[ni][nj]) {
+                    visited[ni][nj] = true;
+                    pq.push({room[ni][nj], ni, nj});
+                }
+            }
+        }
+        ans[year-1] = remaining;
+    }
+    
+    rep(i,y) cout << ans[i] << endl;
+}
+```

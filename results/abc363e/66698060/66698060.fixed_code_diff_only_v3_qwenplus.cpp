@@ -1,0 +1,49 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define ll long long
+#define rep(i,n) for(ll i=0;i<(ll)n;i++)
+#define vi vector<int>
+#define vl vector<ll>
+#define vb vector<bool>
+
+ll dx[4] = {0, 1, 0, -1};
+ll dy[4] = {1, 0, -1, 0};
+
+int main() {
+    ll h, w, y;
+    cin >> h >> w >> y;
+    
+    vector<vl> room(h, vl(w));
+    rep(i, h) rep(j, w) cin >> room[i][j];
+    
+    // Store cells by their elevation
+    vector<vector<pair<ll, ll>>> cells_by_elev(100001); // max elevation is 10^5
+    rep(i, h) rep(j, w) {
+        cells_by_elev[room[i][j]].push_back({i, j});
+    }
+    
+    ll remaining = h * w;
+    vb visited(h * w, false); // flattened 2D grid to 1D for simplicity
+    
+    auto idx = [&](ll i, ll j) { return i * w + j; };
+    
+    // Process each year from 1 to Y
+    for (ll year = 1; year <= y; year++) {
+        // Add all cells with elevation <= current sea level (which is 'year')
+        if (year <= 100000) {
+            for (auto &p : cells_by_elev[year]) {
+                ll i = p.first, j = p.second;
+                if (!visited[idx(i, j)]) {
+                    visited[idx(i, j)] = true;
+                    remaining--;
+                    
+                    // We don't flood neighbors here because they'll be processed when their elevation <= sea level
+                    // The key insight: a cell sinks when sea level >= its elevation
+                    // No need for BFS-style propagation because the condition is purely based on elevation vs sea level
+                }
+            }
+        }
+        
+        cout << remaining << endl;
+    }
+}

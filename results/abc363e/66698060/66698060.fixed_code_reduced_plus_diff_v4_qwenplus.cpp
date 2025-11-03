@@ -1,0 +1,110 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define ll long long
+#define rep(i,n) for(ll i=0;i<(ll)n;i++)
+#define vi vector<int>
+#define vl vector<ll>
+#define vd vector<double>
+#define vb vector<bool>
+#define vs vector<string>
+#define vc vector<char>
+#define ull unsigned long long
+#define chmax(a,b) a=max(a,b)
+#define chmin(a,b) a=min(a,b)
+
+ll dx[4]={0,1,0,-1},dy[4]={1,0,-1,0};
+
+int main(){
+    ll h,w,y;cin >> h >> w >> y;
+    vector room(h,vl(w));
+    rep(i,h) rep(j,w) cin >> room[i][j];
+    
+    // Create list of all cells with their heights
+    vector<tuple<ll,ll,ll>> cells;
+    rep(i,h) rep(j,w) {
+        cells.push_back({room[i][j], i, j});
+    }
+    
+    // Sort by elevation in ascending order
+    sort(cells.begin(), cells.end());
+    
+    // Union-Find or visited array to track connected components
+    vector used(h, vb(w, false));
+    ll remaining = h * w;
+    
+    // We'll process each year sequentially
+    // Instead of simulating from edge, we simulate from low points inward
+    auto isValid = [&](ll x, ll y) {
+        return x >= 0 && x < h && y >= 0 && y < w;
+    };
+    
+    // Priority queue for BFS-like expansion from already submerged cells
+    priority_queue<tuple<ll,ll,ll>, vector<tuple<ll,ll,ll>>, greater<tuple<ll,ll,ll>>> pq;
+    
+    // Initially mark all border cells as potentially sinking
+    // But instead, we start by adding all cells that will sink at some point
+    // Better approach: simulate year-by-year using events
+    
+    // Alternative efficient method:
+    // Process cells in increasing order of height
+    // For each year y, all cells with height <= y that are connected to the sea will be submerged
+    
+    // Instead, let's do this: 
+    // Start from perimeter and use Dijkstra-like approach where "time" is the sea level needed to flood
+    
+    // Reset
+    used.assign(h, vb(w, false));
+    while(!pq.empty()) pq.pop();
+    
+    // Initialize PQ with all boundary cells
+    rep(i,h) {
+        pq.push({room[i][0], i, 0});
+        used[i][0] = true;
+        if (w > 1) {
+            pq.push({room[i][w-1], i, w-1});
+            used[i][w-1] = true;
+        }
+    }
+    rep(j, w) {
+        if (!used[0][j]) {
+            pq.push({room[0][j], 0, j});
+            used[0][j] = true;
+        }
+        if (h > 1 && !used[h-1][j]) {
+            pq.push({room[h-1][j], h-1, j});
+            used[h-1][j] = true;
+        }
+    }
+    
+    vector<ll> ans(y+1);
+    rep(i, y+1) ans[i] = h * w;
+    
+    ll idx = 0;
+    rep(year, y) {
+        ll sea_level = year + 1;
+        
+        // Add all cells with height <= sea_level from priority queue
+        while (!pq.empty() && get<0>(pq.top()) <= sea_level) {
+            auto [height, x, y] = pq.top(); pq.pop();
+            ans[sea_level-1]--;
+            
+            rep(d,4) {
+                ll nx = x + dx[d], ny = y + dy[d];
+                if (isValid(nx, ny) && !used[nx][ny]) {
+                    used[nx][ny] = true;
+                    pq.push({room[nx][ny], nx, ny});
+                }
+            }
+        }
+        
+        // For subsequent years, carry over previous result if no new sinking
+        if (sea_level < y) {
+            ans[sea_level] = ans[sea_level-1];
+        }
+    }
+    
+    // Output for each year
+    rep(i, y) {
+        cout << ans[i] << endl;
+    }
+}

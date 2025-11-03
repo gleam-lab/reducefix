@@ -1,0 +1,69 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define ll long long
+#define rep(i,n) for(ll i=0;i<(ll)n;i++)
+#define vi vector<int>
+#define vl vector<ll>
+#define vd vector<double>
+#define vb vector<bool>
+#define vs vector<string>
+#define vc vector<char>
+#define ull unsigned long long
+#define chmax(a,b) a=max(a,b)
+#define chmin(a,b) a=min(a,b)
+
+ll dx[4]={0,1,0,-1},dy[4]={1,0,-1,0};
+
+int main(){
+    ll h,w,y;cin >> h >> w >> y;
+    vector<vl> room(h,vl(w));
+    rep(i,h) rep(j,w) cin >> room[i][j];
+    
+    // Create list of all cells with their elevations
+    vector<tuple<ll,ll,ll>> cells;
+    rep(i,h) rep(j,w) {
+        cells.push_back({room[i][j], i, j});
+    }
+    sort(cells.begin(), cells.end());
+    
+    // Track which cells are submerged
+    vector<vb> submerged(h, vb(w, false));
+    ll remaining = h * w;
+    
+    // Process each year from 1 to Y
+    auto it = cells.begin();
+    for(ll year = 1; year <= y; year++) {
+        // Submerge all cells with elevation <= current sea level (year)
+        while(it != cells.end() && get<0>(*it) <= year) {
+            ll elev = get<0>(*it);
+            ll i = get<1>(*it);
+            ll j = get<2>(*it);
+            it++;
+            
+            // Skip if already submerged
+            if(submerged[i][j]) continue;
+            
+            // Use BFS to find connected component that gets submerged
+            queue<pair<ll,ll>> q;
+            q.push({i,j});
+            submerged[i][j] = true;
+            remaining--;
+            
+            while(!q.empty()) {
+                auto [ci, cj] = q.front(); q.pop();
+                
+                // Check all 4 adjacent cells
+                rep(k,4) {
+                    ll ni = ci + dx[k], nj = cj + dy[k];
+                    if(ni >= 0 && ni < h && nj >= 0 && nj < w && !submerged[ni][nj] && room[ni][nj] <= year) {
+                        submerged[ni][nj] = true;
+                        remaining--;
+                        q.push({ni,nj});
+                    }
+                }
+            }
+        }
+        
+        cout << remaining << endl;
+    }
+}
