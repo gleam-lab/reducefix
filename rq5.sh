@@ -2,9 +2,26 @@
 
 # RQ5: Experiments on OSS-Fuzz
 # Evaluates ReduceFix on real OSS-Fuzz crash instances
-# Usage: ./rq5.sh
+# Usage: ./rq5.sh [--regenerate]
 
 set -e
+
+REGENERATE_FLAG=""
+
+# Parse arguments
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        --regenerate)
+            REGENERATE_FLAG="--regenerate"
+            shift
+            ;;
+        *)
+            echo "Unknown option: $1" >&2
+            echo "Usage: $0 [--regenerate]" >&2
+            exit 1
+            ;;
+    esac
+done
 
 echo ""
 echo "=============================================="
@@ -12,15 +29,39 @@ echo "RQ5: OSS-Fuzz Evaluation Results"
 echo "=============================================="
 echo ""
 
-# Check if experiment results exist
-if [[ ! -f "oss_fuzz_results/experiment_results/experiment_overview.json" ]]; then
-    echo "✗ Error: experiment_overview.json not found"
-    echo "  Please ensure OSS-Fuzz experiments have been run."
-    exit 1
+# Check if experiment overview exists
+OVERVIEW_FILE="oss_fuzz_results/experiment_results/experiment_overview.json"
+
+if [[ -f "$OVERVIEW_FILE" ]] && [[ -z "$REGENERATE_FLAG" ]]; then
+    echo "Mode: Analysis only (using existing experiment_overview.json)"
+    echo "=============================================="
+    echo ""
+else
+    if [[ -n "$REGENERATE_FLAG" ]]; then
+        echo "Mode: Regenerate statistics"
+    else
+        echo "Mode: Generate statistics (experiment_overview.json not found)"
+    fi
+    echo "=============================================="
+    echo ""
+    
+    # Run experiment statistics generation
+    echo "Generating experiment statistics..."
+    echo ""
+    
+    cd oss_fuzz_results
+    python3 compute_experiment_stats.py --model-tag reducefix_qwen
+    cd ..
+    
+    echo ""
+    echo "Statistics generation complete."
+    echo ""
 fi
 
-# Run the analysis script
-echo "Generating RQ5 analysis tables..."
+# Display results using the embedded Python script
+echo "=============================================="
+echo "Displaying RQ5 Results"
+echo "=============================================="
 echo ""
 
 python3 << 'PYTHON_SCRIPT'
@@ -195,26 +236,6 @@ print(f"{'Overall':<15} {overall_repair_stats['total_samples']:>8} | {overall_bl
 
 print()
 print("="*80)
-print("Expected Results (from paper)")
-print("="*80)
-print()
-print("Table 1 - Test Case Reduction:")
-print("  FFMPEG:      ddmin=0.0%/0.0%,    ReduceFix=100.0%/35.4%,  LLM=0.0%/0.0%")
-print("  IMAGEMAGICK: ddmin=100.0%/4.6%,  ReduceFix=100.0%/5.0%,   LLM=0.0%/0.0%")
-print("  MUPDF:       ddmin=100.0%/88.1%, ReduceFix=100.0%/87.4%,  LLM=0.0%/0.0%")
-print("  PHP-SRC:     ddmin=100.0%/85.6%, ReduceFix=100.0%/97.7%,  LLM=0.0%/0.0%")
-print("  POPPLER:     ddmin=50.0%/22.8%,  ReduceFix=75.0%/25.4%,   LLM=0.0%/0.0%")
-print("  Overall:     ddmin=75.0%/51.8%,  ReduceFix=91.7%/56.4%,   LLM=0.0%/0.0%")
-print()
-print("Table 2 - Repair Success Rate:")
-print("  FFMPEG:      Baseline=0.0%/0.0%/0.0%,     Origin=0.0%/0.0%/0.0%,     Reduced=10.0%/50.0%/100.0%")
-print("  IMAGEMAGICK: Baseline=0.0%/0.0%/0.0%,     Origin=0.0%/0.0%/0.0%,     Reduced=0.0%/0.0%/0.0%")
-print("  MUPDF:       Baseline=10.0%/19.9%/20.0%,  Origin=4.0%/15.6%/20.0%,   Reduced=4.0%/20.0%/40.0%")
-print("  PHP-SRC:     Baseline=60.0%/100.0%/100.0%, Origin=0.0%/0.0%/0.0%,    Reduced=100.0%/100.0%/100.0%")
-print("  POPPLER:     Baseline=25.0%/25.0%/25.0%,  Origin=22.5%/25.0%/25.0%,  Reduced=25.0%/25.0%/25.0%")
-print("  Overall:     Baseline=17.5%/25.0%/25.0%,  Origin=9.2%/14.8%/16.7%,   Reduced=19.2%/29.2%/41.7%")
-print("="*80)
-print()
 
 PYTHON_SCRIPT
 
