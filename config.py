@@ -1,33 +1,33 @@
 """
-配置文件 - 统一管理所有 API token 和敏感信息
-使用前请确保不将此文件提交到公开仓库
+Configuration file - Centralized management of all API tokens and sensitive information
+Ensure this file is not committed to public repositories
 """
 
 # ============================================================================
-# LLM API 配置
+# LLM API Configuration
 # ============================================================================
 
 # DeepSeek API
 DEEPSEEK_API_KEY = ''
 DEEPSEEK_BASE_URL = 'https://dashscope.aliyuncs.com/compatible-mode/v1'
 
-# Qwen API (阿里云通义千问)
+# Qwen API (Alibaba Cloud Tongyi Qianwen)
 QWEN_API_KEY = ''
 QWEN_BASE_URL = 'https://dashscope.aliyuncs.com/compatible-mode/v1'
 
 # Baidu Qianfan API (ERNIE)
 BAIDU_QIANFAN_URL = "https://qianfan.baidubce.com/v2/chat/completions"
-BAIDU_QIANFAN_TOKEN = ""  # 如需使用请填写
+BAIDU_QIANFAN_TOKEN = ""  # Fill in if needed
 
 # ============================================================================
-# AtCoder 配置
+# AtCoder Configuration
 # ============================================================================
 
 DEFAULT_LANGUAGE = 'cpp'
 ATCODER_CPP_LANG_ID = '5001'
 
 # ============================================================================
-# LLM 请求配置
+# LLM Request Configuration
 # ============================================================================
 
 LLM_REQUEST_COUNT = 2
@@ -42,16 +42,16 @@ BAIDU_RATE_LIMIT_BACKOFF = 30  # seconds
 BAIDU_RATE_LIMIT_RETRIES = 5
 
 # ============================================================================
-# 评测配置
+# Evaluation Configuration
 # ============================================================================
 
 JUDGE_POLL_ATTEMPTS = 60
 JUDGE_POLL_WAIT = 5
 
 # ============================================================================
-# 注意事项
+# Important Notes
 # ============================================================================
-# 1. 请勿将此文件提交到公开的 Git 仓库
-# 2. 建议将 config.py 添加到 .gitignore
-# 3. 可以创建 config.example.py 作为模板，不包含真实 token
+# 1. Do not commit this file to public Git repositories
+# 2. It is recommended to add config.py to .gitignore
+# 3. Create config.example.py as a template without real tokens
 

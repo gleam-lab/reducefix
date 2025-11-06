@@ -146,7 +146,7 @@ def save_results_with_lock(json_path: str, results_data: dict) -> bool:
                 print(f"[Success] Saved updated evaluation results to {json_path}")
                 return True
         except TimeoutError as e:
-            wait_time = base_wait_time * (2 ** attempt)  # 指数退避
+            wait_time = base_wait_time * (2 ** attempt)  # Exponential backoff
             print(f"[Warning] Lock timeout on attempt {attempt + 1}/{max_retries}: {e}")
             if attempt < max_retries - 1:
                 print(f"[Retry] Waiting {wait_time} seconds before retry...")
@@ -728,12 +728,12 @@ def get_diff_lines(actual_output: str, expected_output: str, max_lines: int = 20
     return "\n".join(diffs)
 
 def truncate_smart(text: str, max_length: int, label: str = "") -> tuple:
-    """Hard truncation: simply return the first `max_length` characters to ensure更多上下文。"""
-    # 若文本长度已在限制以内，直接返回
+    """Hard truncation: simply return the first `max_length` characters to provide more context."""
+    # Return as-is if within limit
     if len(text) <= max_length:
         return text, ""
 
-    # 直接硬截断前 max_length 个字符
+    # Hard truncate to first max_length characters
     truncated = text[:max_length]
     note = f" (truncated from {len(text)} chars)"
     return truncated, note
@@ -812,11 +812,11 @@ def main():
     target_problem_id_input = args.problem_id.strip().lower()
     max_threads = args.max_threads
 
-    # Repair 结果保存到 model_tag 对应的文件中
+    # Save repair results to file corresponding to model_tag
     global RESULT_JSON_PATH
     RESULT_JSON_PATH = f"result_{args.model_tag}.json"
 
-    # 如果指定了 --repair-model，覆盖默认的repair模型
+    # Override default repair model if --repair-model is specified
     if args.repair_model:
         global REPAIR_MODEL_NAME
         REPAIR_MODEL_NAME = args.repair_model
@@ -1001,7 +1001,7 @@ def main():
             strategies_labels = ["no_tc", "orig_tc", "diff_only", "reduced_tc", "reduced_plus_diff"]
             all_versions_done = True
             for label in strategies_labels:
-                # 确保始终从 results/abc* 目录下检索已生成的修复版本，而不是 abc* 目录
+                # Always retrieve generated repair versions from results/abc* directory, not abc* directory
                 wa_code_relative_path = wa_result.get("wa_code_path", "")  # e.g. "abc123a/wa.cpp"
                 wa_code_full_path = os.path.join("results", wa_code_relative_path)  # e.g. "results/abc123a/wa.cpp"
                 wa_dir = os.path.dirname(wa_code_full_path)  # e.g. "results/abc123a"
@@ -1360,9 +1360,9 @@ def main():
                     wa_output=reduced_wa_out,
                     expected_output=reduced_ac_out,
                     # Secondary: original test case with full outputs for comprehensive context
-                    secondary_input=original_input,          # 附原始用例
-                    secondary_wa_output=original_wa_out,     # 原始用例的WA输出
-                    secondary_expected_output=original_ac_out,  # 原始用例的期望输出
+                    secondary_input=original_input,          # Attach original test case
+                    secondary_wa_output=original_wa_out,     # WA output on original test case
+                    secondary_expected_output=original_ac_out,  # Expected output on original test case
                     model_tag=args.model_tag,
                     max_threads=max_threads
                 )
