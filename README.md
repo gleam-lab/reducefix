@@ -119,11 +119,14 @@ ReduceFix/
 
 ### RQ-1: Effectiveness of LLM-generated Reducers
 
+Run the command of RQ-1:
+
 ```bash
 ./rq1.sh
 ```
 
 For details and options, see the script content.
+
 
 You can run a demo for RQ-1:
 
@@ -131,7 +134,44 @@ You can run a demo for RQ-1:
 ./rq1.sh --retest abc376e 66915962
 ```
 
+#### Figure: Statistics of Compression Rate.
+![](violin.png)
+
+
 ### RQ-2: Effectiveness of Reduced Test Cases for Repair
+
+#### Prompt Format of _ReduceFix_
+
+~~~
+### Your Incorrect Code
+```cpp
+{wa_code}
+```
+### Failing Case
+Input:
+```
+{reduced_failing_input}
+```
+Your Output:
+```
+{wa_output}
+```
+Expected Output:
+```
+{expected_output}
+```
+### Your Task
+Fix the C++ code to pass ALL test cases (including hidden ones).
+### Critical Guidelines
+1. Focus on algorithmic correctness - NO hard-coded values
+2. Keep complexity reasonable (target $O(N\log N)$ where possible)
+3. Handle edge cases (empty input, single element, max constraints)
+4. Use standard C++20 and avoid non-portable extensions
+### Output Format
+Provide ONLY the complete fixed C++ program inside a single cpp block.
+~~~
+
+Run the command of RQ-2:
 
 ```bash
 ./rq2.sh
@@ -141,6 +181,26 @@ For details and options, see the script content.
 
 ### RQ-3: Influence of Prompt Composition
 
+#### Prompt Format of _Diff Only_
+
+~~~
+### Problem Description
+{full problem text}
+### Your Incorrect Code
+```cpp
+{buggy code here}
+````
+### Error Summary (diff only)
+Line 1: Got '42', Expected '43'
+Line 2: Got '...', Expected '...'
+...
+### Your Task
+Fix the code so that the diff disappears on all tests.
+Return only the complete corrected C++ program in a ```cpp block.
+~~~
+
+Run the command of RQ-3:
+
 ```bash
 ./rq3.sh
 ```
@@ -149,6 +209,8 @@ For details and options, see the script content.
 
 ### RQ-4: Integration with ChatRepair and CREF
 
+Run the command of RQ-4:
+
 ```bash
 ./rq4.sh
 ```
@@ -156,6 +218,8 @@ For details and options, see the script content.
 For details and options, see the script content.
 
 ### RQ-5: Evaluation on OSS-Fuzz
+
+Run the command of RQ-5:
 
 ```bash
 ./rq5.sh
