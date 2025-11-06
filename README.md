@@ -119,6 +119,16 @@ ReduceFix/
 
 ### RQ-1: Effectiveness of LLM-generated Reducers
 
+This research question evaluates the reliability and effectiveness of LLM-generated reducers at shrinking failure-inducing inputs. We compare three reduction approaches:
+
+1. **ReduceFix** (LLM-generated reducer + ddmin): Our approach that generates task-specific reducers
+2. **DDmin-only**: Pure ddmin baseline without custom reduction logic
+3. **Pure LLM**: Direct LLM-based reduction without ddmin refinement
+
+**Key metrics:**
+- **Success Rate**: Percentage of cases where reduction succeeds (reduced size < original size)
+- **Compression Ratio**: Average reduction in input size (higher = better compression)
+
 Run the command of RQ-1:
 
 ```bash
@@ -135,12 +145,41 @@ You can run a demo for RQ-1:
 ```
 
 #### Figure: Statistics of Compression Rate.
+
+The violin plot in the following figure confirms this pattern: most points cluster near the median (100%), while a long lower tail for hard tasks (i.e., difficulty group E and F) highlights a few cases with modest shrinkage that lower the mean.
+
 ![](violin.png)
 
 
 ### RQ-2: Effectiveness of Reduced Test Cases for Repair
 
+This research question evaluates whether reduced test cases can improve automated program repair effectiveness. We test ReduceFix's repair approach across four different LLM models on C++ submissions, and validate cross-language portability on Python submissions.
+
+**Models evaluated:**
+- **Qwen2.5-Coder-7B-instruct**: Small open-source model (7B parameters)
+- **GLM-4-9B-chat**: Another small open-source model (9B parameters)
+- **Qwen-Plus**: Large commercial model (cloud API)
+- **DeepSeek-V3**: State-of-the-art commercial model (cloud API)
+
+**Prompting strategies compared:**
+1. **Baseline** (no test case): Only problem description and buggy code
+2. **Origin Test**: Full failure-inducing input/output pair
+3. **Reduced Test** (ReduceFix): Reduced input/output pair from our reducer
+
+**Datasets:**
+- **LFTBench (C++)**: 200 buggy C++ submissions across 20 problems, evaluated with all 4 LLMs
+- **LFTBench (Python)**: 20 buggy Python submissions, evaluated with Qwen-Plus for cross-language validation
+
+**Evaluation metric:** pass@k (k ∈ {1, 5, 10}) - probability that at least one of k generated patches is correct
+
+**Baseline comparison:** We also evaluate an end-to-end ddmin-only baseline that uses the reduced input when ddmin succeeds, otherwise falls back to the original failing test
+
 #### Prompt Format of _ReduceFix_
+
+The following prompt format shows the exact prompt template. If truncation occurred,
+the ellipsis token appears inside the fenced block to signal omitted
+lines. No other explanatory text is added, keeping the prompt well
+below typical context limits even on compact LLMs.
 
 ~~~
 ### Your Incorrect Code
@@ -181,7 +220,19 @@ For details and options, see the script content.
 
 ### RQ-3: Influence of Prompt Composition
 
-#### Prompt Format of _Diff Only_
+This research question investigates the distinct influence of two factors within ReduceFix: (i) **length reduction** (fewer tokens to keep bug-relevant text within the model's attention span) and (ii) **information selection** (retaining minimal concrete evidence that still exposes the defect). We compare five prompt strategies on Qwen2.5-Coder-7B-instruct:
+
+1. **Baseline** (~3.2KB, ~130 lines): Problem + buggy code only
+2. **Origin Test** (~30.5KB, ~2381 lines): + full failure-inducing input/output pair
+3. **Diff Lines** (~3.2KB, ~133 lines): + up to 10 mismatched output lines (sparse evidence, same length as Baseline)
+4. **Reduced Test** (~6.6KB, ~514 lines): + reduced input/output pair (ReduceFix's default, joint action of length control and full information)
+5. **Reduced + Origin** (~36.4KB, ~2638 lines): + both reduced and full tests (redundant information, maximum length)
+
+**Key insight:** The conjunction of compact length and complete counterexample information is essential; either ingredient alone (Diff Lines or Origin Test) is insufficient. Reduced Test achieves the best overall pass@10 (25.5%), outperforming both Diff Lines (20.0%) and Origin Test (19.0%).
+
+#### Prompt Format of _Diff Lines_
+
+The **Diff Lines** strategy stays the same length as Baseline but appends up to 10 mismatched output lines, providing sparse evidence without increasing prompt size. This tests whether minimal error information alone (without full input/output) can guide repair.
 
 ~~~
 ### Problem Description
@@ -189,7 +240,7 @@ For details and options, see the script content.
 ### Your Incorrect Code
 ```cpp
 {buggy code here}
-````
+```
 ### Error Summary (diff only)
 Line 1: Got '42', Expected '43'
 Line 2: Got '...', Expected '...'
@@ -207,7 +258,28 @@ Run the command of RQ-3:
 
 For details and options, see the script content.
 
-### RQ-4: Integration with ChatRepair and CREF
+### RQ-4: Integration with ChatRepair and CRef
+
+This research question validates the extensibility of ReduceFix by integrating it as a plug-in to state-of-the-art APR systems. We replace only the failing test input while keeping all other logic unchanged, using k=10 samples across all settings to equalize token budgets.
+
+**Systems evaluated:**
+1. **ChatRepair**: Conversational repair framework that alternates between user proxy and LLM with feedback
+   - **Settings**: MAX_RETRY=1 (one feedback round), length=2 (conversation window)
+   - First turn: task description + buggy code + failing test
+   - Second turn: test verdict (pass/fail) from harness
+   
+2. **CRef**: Context-aware reference-based repair with retrieval augmentation
+   - **Settings**: Two-turn setup using AtCoder editorial
+   - First turn: official editorial as high-level solution description
+   - Second turn: failure-inducing test case after validating first-turn patch
+
+**Comparison:**
+- **Original**: Using full failure-inducing input (Origin Test)
+- **+ ReduceFix**: Using reduced input from our reducer (Reduced Test)
+
+**Key results:** 
+- **ChatRepair**: Overall pass@10 improves from 30.5% to 37.0% (+21.3% relative), with strongest gains on E&F-difficulty tasks (+67.0% relative)
+- **CRef**: Overall pass@10 improves from 39.0% to 40.0% (+2.6% relative), demonstrating robustness across different APR architectures
 
 Run the command of RQ-4:
 
@@ -218,6 +290,21 @@ Run the command of RQ-4:
 For details and options, see the script content.
 
 ### RQ-5: Evaluation on OSS-Fuzz
+
+This research question evaluates ReduceFix on real-world crash-inducing inputs from OSS-Fuzz, a continuous fuzzing service for open-source software. We test on 12 crash cases from 5 real-world C/C++ projects to assess generalizability beyond competitive programming.
+
+**Projects evaluated:**
+- **FFMPEG**: Multimedia processing library
+- **ImageMagick**: Image manipulation tool
+- **MuPDF**: PDF rendering library
+- **PHP**: Programming language interpreter
+- **Poppler**: PDF rendering library
+
+**Evaluation dimensions:**
+1. **Test case reduction**: Success rate and compression ratio across three approaches (DDmin-only, ReduceFix, Pure LLM)
+2. **Repair effectiveness**: pass@k (k ∈ {1, 5, 10}) for three prompting strategies (Baseline, Origin Test, Reduced Test)
+
+**Key findings:** ReduceFix achieves 91.7% success rate with 56.4% average compression on OSS-Fuzz inputs, significantly outperforming DDmin-only (75.0% success, 51.8% compression). The reduced inputs also improve repair effectiveness, with pass@10 reaching 41.7% compared to 16.7% for origin tests.
 
 Run the command of RQ-5:
 
