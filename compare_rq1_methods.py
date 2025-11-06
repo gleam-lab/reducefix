@@ -22,6 +22,24 @@ def parse_problem_difficulty(problem_id):
             return 'Hard'
     return None
 
+def get_input_format_category(problem_id):
+    """Map problem ID to input format category"""
+    # Based on Table 3 in the paper
+    categories = {
+        'Sequence': ['abc361c', 'abc367d', 'abc368c', 'abc369d', 
+                     'abc370d', 'abc373e', 'abc377c', 'abc377f'],
+        'Multiple sequences': ['abc374e', 'abc376c', 'abc376e'],
+        'Sequence with dependencies': ['abc364d', 'abc366c', 'abc372e', 'abc371d'],
+        '2-D matrix': ['abc363e', 'abc375c'],
+        'Graph': ['abc362d', 'abc376d'],
+        'String': ['abc365d']
+    }
+    
+    for category, problems in categories.items():
+        if problem_id in problems:
+            return category
+    return None
+
 def calculate_compression_ratio(original_size, reduced_size):
     """Calculate compression ratio as (1 - reduced/original)"""
     if original_size == 0:
@@ -46,6 +64,11 @@ def analyze_results(file_path, method_name):
             'attempts': 0,
             'successful': 0,
             'compression_ratios': []
+        }),
+        'format_stats': defaultdict(lambda: {
+            'attempts': 0,
+            'successful': 0,
+            'compression_ratios': []
         })
     }
     
@@ -54,12 +77,15 @@ def analyze_results(file_path, method_name):
             continue
         
         difficulty = parse_problem_difficulty(problem_id)
+        input_format = get_input_format_category(problem_id)
         results = problem_data.get('results', [])
         
         for result in results:
             stats['total_attempts'] += 1
             if difficulty:
                 stats['difficulty_stats'][difficulty]['attempts'] += 1
+            if input_format:
+                stats['format_stats'][input_format]['attempts'] += 1
             
             status_code = result.get('status_code', 0)
             original_size = result.get('original_size_bytes')
@@ -70,11 +96,15 @@ def analyze_results(file_path, method_name):
                     stats['successful_reductions'] += 1
                     if difficulty:
                         stats['difficulty_stats'][difficulty]['successful'] += 1
+                    if input_format:
+                        stats['format_stats'][input_format]['successful'] += 1
                     
                     compression_ratio = calculate_compression_ratio(original_size, reduced_size)
                     stats['compression_ratios'].append(compression_ratio)
                     if difficulty:
                         stats['difficulty_stats'][difficulty]['compression_ratios'].append(compression_ratio)
+                    if input_format:
+                        stats['format_stats'][input_format]['compression_ratios'].append(compression_ratio)
     
     return stats
 
@@ -128,6 +158,43 @@ def print_comparison_table_three(reducefix_stats, ddmin_stats, llm_stats):
             
             print(f"{method:<25} {success_rate:>6.1f}% ({successful}/{total}){' '*4} "
                   f"{avg_compression:>6.1%}")
+    
+    print("-" * 120)
+    print()
+    
+    # By input format
+    print("Performance by Input Format:")
+    print("-" * 120)
+    
+    # Define order of categories as in the paper
+    format_order = [
+        'Sequence',
+        'Multiple sequences',
+        'Sequence with dependencies',
+        '2-D matrix',
+        'Graph',
+        'String'
+    ]
+    
+    for input_format in format_order:
+        print(f"\n{input_format}:")
+        print(f"{'Method':<25} {'Success Rate':<20} {'Avg Compression':<25}")
+        print("-" * 120)
+        
+        for stats in [reducefix_stats, llm_stats, ddmin_stats]:
+            method = stats['method']
+            format_stats = stats['format_stats'].get(input_format, {})
+            
+            total = format_stats.get('attempts', 0)
+            successful = format_stats.get('successful', 0)
+            success_rate = (successful / total * 100) if total > 0 else 0
+            
+            ratios = format_stats.get('compression_ratios', [])
+            avg_compression = statistics.mean(ratios) if ratios else 0
+            
+            if total > 0:
+                print(f"{method:<25} {success_rate:>6.1f}% ({successful}/{total}){' '*4} "
+                      f"{avg_compression:>6.1%}")
     
     print("-" * 120)
     print()
@@ -200,6 +267,43 @@ def print_comparison_table(reducefix_stats, ddmin_stats):
             
             print(f"{method:<25} {success_rate:>6.1f}% ({successful}/{total}){' '*4} "
                   f"{avg_compression:>6.1%}")
+    
+    print("-" * 100)
+    print()
+    
+    # By input format
+    print("Performance by Input Format:")
+    print("-" * 100)
+    
+    # Define order of categories as in the paper
+    format_order = [
+        'Sequence',
+        'Multiple sequences',
+        'Sequence with dependencies',
+        '2-D matrix',
+        'Graph',
+        'String'
+    ]
+    
+    for input_format in format_order:
+        print(f"\n{input_format}:")
+        print(f"{'Method':<25} {'Success Rate':<20} {'Avg Compression':<25}")
+        print("-" * 100)
+        
+        for stats in [reducefix_stats, ddmin_stats]:
+            method = stats['method']
+            format_stats = stats['format_stats'].get(input_format, {})
+            
+            total = format_stats.get('attempts', 0)
+            successful = format_stats.get('successful', 0)
+            success_rate = (successful / total * 100) if total > 0 else 0
+            
+            ratios = format_stats.get('compression_ratios', [])
+            avg_compression = statistics.mean(ratios) if ratios else 0
+            
+            if total > 0:
+                print(f"{method:<25} {success_rate:>6.1f}% ({successful}/{total}){' '*4} "
+                      f"{avg_compression:>6.1%}")
     
     print("-" * 100)
     print()

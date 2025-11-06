@@ -480,7 +480,31 @@ def generate_llm_repair(
     expected_output_for_llm_str = None
     prompt_context_type = "no_tc"
     
-    if failing_input:
+    # --- Special handling for diff_only strategy ---
+    if repair_context_label.startswith("diff_only") and wa_output is not None and expected_output is not None:
+        # For diff_only strategy: no input, only first diff line with char limit
+        prompt_context_type = "diff_only"
+        
+        # Only show first diff line with 64 chars per output (total 128 chars)
+        diff_info = get_diff_lines(wa_output, expected_output, max_lines=1, max_chars_per_output=64)
+        prompt += f"""
+### Error Summary (diff only)
+{diff_info}
+
+### Your Task
+Analyze and fix the algorithmic errors in the C++ code to make the diff disappear.
+
+### Guidelines
+1. Focus on correctness and efficiency
+2. Consider edge cases and constraint limits
+3. Use clean, readable code structure
+
+### Output Format
+Provide ONLY the complete fixed C++ code in a single ```cpp block.
+"""
+    
+    elif failing_input:
+        # Regular strategies with test case input
         prompt_context_type = "with_tc"
         
         # Smart truncation for primary input
@@ -532,15 +556,8 @@ Input:
             if exp_note:
                 print(f"  [Smart Truncation] Expected output{exp_note}")
             
-            # Different strategies for different repair contexts
-            if repair_context_label.startswith("diff_only"):
-                # For diff-only strategy, only show diff information
-                diff_info = get_diff_lines(wa_output_for_llm_str, expected_output_for_llm_str, max_lines=10)
-                prompt += f"""
-Error: {diff_info}"""
-            else:
-                # For full context strategies (orig_tc, reduced_tc, reduced_plus_diff), show full outputs
-                prompt += f"""
+            # For full context strategies (orig_tc, reduced_tc, reduced_plus_diff), show full outputs
+            prompt += f"""
 Your Output:
 ```
 {wa_output_for_llm_str}
@@ -549,10 +566,10 @@ Expected Output:
 ```
 {expected_output_for_llm_str}
 ```"""
-                
-                # Also include diff info for clarity, but after showing full outputs
-                diff_info = get_diff_lines(wa_output_for_llm_str, expected_output_for_llm_str, max_lines=10)
-                prompt += f"""
+            
+            # Also include diff info for clarity, but after showing full outputs
+            diff_info = get_diff_lines(wa_output_for_llm_str, expected_output_for_llm_str, max_lines=10)
+            prompt += f"""
 Error Analysis: {diff_info}"""
         
         # Add dual case information
@@ -574,7 +591,7 @@ Fix the C++ code to pass ALL test cases (including hidden ones).
 Provide ONLY the complete fixed C++ code in a single ```cpp block.
 """
     else:
-        # No test case provided
+        # No test case provided (baseline strategy)
         prompt += f"""### Your Task
 Analyze and fix the algorithmic errors in the C++ code.
 
@@ -681,9 +698,10 @@ Provide ONLY the complete fixed C++ code in a single ```cpp block.
 # --- Add new prompt optimization helpers ---
 # extract_problem_essentials function removed - using full problem description instead
 
-def get_diff_lines(actual_output: str, expected_output: str, max_lines: int = 20) -> str:
+def get_diff_lines(actual_output: str, expected_output: str, max_lines: int = 20, max_chars_per_output: int = None) -> str:
     """Return up to `max_lines` lines where actual and expected outputs differ.
     Format: "Line i: Got '...', Expected '...'". If line counts differ, note that too.
+    If max_chars_per_output is specified, truncate each output to that length.
     """
     if not actual_output or not expected_output:
         return "Missing output data"
@@ -696,6 +714,12 @@ def get_diff_lines(actual_output: str, expected_output: str, max_lines: int = 20
         a_line = actual_lines[i].rstrip() if i < len(actual_lines) else "<EOF>"
         e_line = expected_lines[i].rstrip() if i < len(expected_lines) else "<EOF>"
         if a_line != e_line:
+            # Apply character limit if specified (including "..." within the limit)
+            if max_chars_per_output:
+                if a_line != "<EOF>" and len(a_line) > max_chars_per_output:
+                    a_line = a_line[:max_chars_per_output - 3] + "..."
+                if e_line != "<EOF>" and len(e_line) > max_chars_per_output:
+                    e_line = e_line[:max_chars_per_output - 3] + "..."
             diffs.append(f"Line {i+1}: Got '{a_line}', Expected '{e_line}'")
             if len(diffs) >= max_lines:
                 break
@@ -1251,19 +1275,19 @@ def main():
                     else:
                         break
             
-            # Generate missing versions in parallel - Only provide diff info
+            # Generate missing versions in parallel - Only provide first diff line
             missing_count = TOP_K - len(fixed_codes_3)
             if missing_count > 0:
                 start_version = len(fixed_codes_3) + 1  # Start from next version number
-                # For diff-only strategy, we provide ONLY the diff information, no input
-                diff_info = get_diff_lines(original_wa_out, original_ac_out, max_lines=10)
+                # For diff-only strategy, provide raw outputs to generate_llm_repair
+                # which will extract only the first diff line with char limits
                 new_versions = generate_versions_parallel(
                     problem_description, wa_code, submission_id=submission_id,
                     base_context_label="diff_only", artifact_dir=artifact_dir,
                     num_versions=missing_count, start_version=start_version,
-                    failing_input=None,  # No input for diff-only strategy to keep prompt minimal
-                    wa_output=diff_info,  # Use diff info instead of full output
-                    expected_output="(See diff above)",
+                    failing_input=None,  # No input for diff-only strategy
+                    wa_output=original_wa_out,  # Pass raw outputs
+                    expected_output=original_ac_out,  # Pass raw outputs
                     model_tag=args.model_tag,
                     max_threads=max_threads
                 )

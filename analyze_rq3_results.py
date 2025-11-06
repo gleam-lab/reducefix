@@ -3,13 +3,17 @@
 Analyze RQ3 prompt composition results
 """
 import json
+import os
+import glob
+import statistics
 from math import comb
 from collections import defaultdict
 
-# Difficulty mapping
+# Difficulty mapping (b and c are both Easy)
 DIFFICULTY_MAP = {
+    'b': 'C',  # Easy (includes both b and c)
     'c': 'C',
-    'd': 'D', 
+    'd': 'D',
     'e': 'E&F',
     'f': 'E&F'
 }
@@ -36,6 +40,44 @@ def get_difficulty(problem_id):
     """Extract difficulty from problem ID"""
     letter = problem_id[-1]
     return DIFFICULTY_MAP.get(letter, 'Unknown')
+
+def measure_prompt_stats(strategy_key, sample_size=None):
+    """
+    Measure actual prompt file statistics using mean (unified rule).
+    """
+    pattern = f"results/*/*/*.prompt_{strategy_key}_*coder7b*.txt"
+    all_files = glob.glob(pattern)
+    
+    # Use all files if sample_size is None, otherwise sample
+    files = all_files if sample_size is None else all_files[:sample_size]
+    
+    if not files:
+        return 0.0, 0.0
+    
+    all_lines = []
+    all_sizes = []
+    
+    for fpath in files:
+        try:
+            with open(fpath, 'r', encoding='utf-8') as f:
+                content = f.read()
+                lines = content.split('\n')
+                # Use total lines (including empty lines)
+                all_lines.append(len(lines))
+            
+            # Get file size
+            all_sizes.append(os.path.getsize(fpath))
+        except Exception:
+            continue
+    
+    if len(all_lines) == 0:
+        return 0.0, 0.0
+    
+    # Use mean for all strategies (unified rule)
+    mean_lines = statistics.mean(all_lines)
+    mean_kb = statistics.mean(all_sizes) / 1024
+    
+    return mean_lines, mean_kb
 
 def analyze_strategy_results(data, strategy_key):
     """Analyze results for a single strategy"""
@@ -112,8 +154,11 @@ def main():
     print("="*80)
     print()
     
-    # Load data
-    with open('temp/result_coder7b_qwen2.5-coder-7b-instruct.json', 'r') as f:
+    # Load data (RQ3 uses its own ablation study dataset)
+    # Note: This file contains all 5 strategies but only 5 C-difficulty problems
+    # (abc361c, abc366c, abc368c, abc376c, abc377c - does NOT include abc375c)
+    # This is the correct dataset for RQ3 ablation study as used in the paper
+    with open('result_ablation.json', 'r') as f:
         data = json.load(f)
     
     # Strategy mappings
@@ -134,23 +179,27 @@ def main():
         all_results[strategy_name] = results
         all_lengths[strategy_name] = avg_length
     
-    # Print prompt lengths (theoretical values from paper)
-    # Note: prompt_length is not stored in result JSON, these are calculated averages
-    theoretical_lengths = {
-        'Baseline': 3.1,
-        'Origin Test': 30.6,
-        'Diff Lines': 3.1,
-        'Reduced Test': 6.4,
-        'Reduced + Origin': 36.4
+    # Measure prompt lengths from actual files
+    print("Table 1: Prompt Length Statistics")
+    print("Note: Statistics calculated from all actual prompt files using mean.")
+    print("-"*80)
+    print(f"{'Strategy':<25} {'Mean Lines':>16} {'Mean (KB)':>12}")
+    print("-"*80)
+    
+    prompt_stats = {}
+    strategy_keys = {
+        'Baseline': 'no_tc',
+        'Origin Test': 'orig_tc',
+        'Diff Lines': 'diff_only',
+        'Reduced Test': 'reduced_tc',
+        'Reduced + Origin': 'reduced_plus_diff'
     }
     
-    print("Table 1: Prompt Length Statistics")
-    print("-"*80)
-    print(f"{'Strategy':<25} {'Mean (KB)':>12}")
-    print("-"*80)
     for strategy_name in ['Baseline', 'Origin Test', 'Diff Lines', 'Reduced Test', 'Reduced + Origin']:
-        length_kb = theoretical_lengths.get(strategy_name, 0)
-        print(f"{strategy_name:<25} {length_kb:>11.1f}")
+        strategy_key = strategy_keys[strategy_name]
+        avg_lines, avg_kb = measure_prompt_stats(strategy_key)
+        prompt_stats[strategy_name] = {'lines': avg_lines, 'kb': avg_kb}
+        print(f"{strategy_name:<25} {avg_lines:>16.1f} {avg_kb:>11.1f}")
     print()
     
     # Print pass@k results
@@ -191,34 +240,23 @@ def main():
     
     print()
     print("="*80)
-    print("Expected Results (from paper)")
+    print("Summary Statistics")
     print("="*80)
     print()
-    print("Table 1 - Prompt Lengths:")
-    print("  Baseline:              3.1 KB")
-    print("  Origin Test:          30.6 KB")
-    print("  Diff Lines:            3.1 KB")
-    print("  Reduced Test:          6.4 KB")
-    print("  Reduced + Origin:     36.4 KB")
+    print("Table 1 - Prompt Lengths (mean of all actual prompt files):")
+    for strategy_name in ['Baseline', 'Origin Test', 'Diff Lines', 'Reduced Test', 'Reduced + Origin']:
+        stats = prompt_stats.get(strategy_name, {'lines': 0.0, 'kb': 0.0})
+        print(f"  {strategy_name:<20} {stats['lines']:>5.1f} lines, {stats['kb']:>5.1f} KB")
     print()
     print("Table 2 - Pass@k by Difficulty:")
-    print("  Reduced Test:")
-    print("    C:       5.5% / 16.7% / 25.0%")
-    print("    D:       9.9% / 26.0% / 36.2%")
-    print("    E&F:     2.3% /  8.5% / 11.7%")
-    print("    Overall: 6.3% / 17.9% / 25.5%")
-    print()
-    print("  Diff Lines:")
-    print("    C:       6.7% / 20.7% / 26.7%")
-    print("    D:       6.6% / 17.7% / 25.0%")
-    print("    E&F:     1.5% /  5.1% /  6.7%")
-    print("    Overall: 5.1% / 14.8% / 20.0%")
-    print()
-    print("  Reduced + Origin:")
-    print("    C:       4.7% / 16.7% / 23.3%")
-    print("    D:       6.2% / 19.1% / 27.5%")
-    print("    E&F:     0.5% /  2.1% /  3.3%")
-    print("    Overall: 4.0% / 13.3% / 19.0%")
+    for strategy in main_strategies:
+        if strategy in all_results:
+            print(f"  {strategy}:")
+            for diff in difficulties:
+                if diff in all_results[strategy]:
+                    stats = all_results[strategy][diff]
+                    print(f"    {diff:<8} {stats['pass@1']:>5.1f}% / {stats['pass@5']:>5.1f}% / {stats['pass@10']:>5.1f}%")
+            print()
     print("="*80)
 
 if __name__ == '__main__':
