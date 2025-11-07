@@ -35,8 +35,8 @@ def ddmin_reduce(data: bytes, test_fn: TestFn, *, by_lines: bool = True, verbose
         original_size = len(data)
         original_units = len(units)
         if verbose:
-            print(f"[DDMin] 开始缩减（基于行）")
-            print(f"[DDMin] 原始: {original_units} 行, {original_size} bytes")
+            print(f"[DDMin] Starting reduction (line-based)")
+            print(f"[DDMin] Original: {original_units} lines, {original_size} bytes")
         
         granularity = 2
         iteration = 0
@@ -51,10 +51,10 @@ def ddmin_reduce(data: bytes, test_fn: TestFn, *, by_lines: bool = True, verbose
             if verbose:
                 current_size = len(b"".join(units))
                 elapsed = time.time() - start_time
-                print(f"[DDMin] 迭代 #{iteration}: {n} 单位, {current_size} bytes, "
-                      f"粒度={granularity}, 测试数={test_count}, 耗时={elapsed:.1f}s")
+                print(f"[DDMin] Iteration #{iteration}: {n} units, {current_size} bytes, "
+                      f"granularity={granularity}, tests={test_count}, elapsed={elapsed:.1f}s")
             
-            # Phase 1: 尝试删除子集（减法）
+            # Phase 1: try removing subsets (deletion)
             for part in _partition_indices(n, granularity):
                 candidate = units[: part.start] + units[part.stop :]
                 candidate_bytes = b"".join(candidate)
@@ -63,13 +63,13 @@ def ddmin_reduce(data: bytes, test_fn: TestFn, *, by_lines: bool = True, verbose
                 
                 test_count += 1
                 if verbose and test_count % 10 == 0:
-                    print(f"  [DDMin] 已测试 {test_count} 个候选...")
+                    print(f"  [DDMin] Tested {test_count} candidates...")
                 
                 if test_fn(candidate_bytes):
                     removed = part.stop - part.start
                     new_size = len(candidate_bytes)
                     if verbose:
-                        print(f"  [DDMin] ✓ 减法成功: 删除 {removed} 单位 "
+                        print(f"  [DDMin] ✓ Deletion succeeded: removed {removed} units "
                               f"({n} → {len(candidate)}), {new_size} bytes")
                     units = candidate
                     granularity = 2
@@ -79,26 +79,26 @@ def ddmin_reduce(data: bytes, test_fn: TestFn, *, by_lines: bool = True, verbose
             if made_progress:
                 continue
             
-            # Phase 2: 尝试仅保留子集（保留）
+            # Phase 2: try keeping subsets (retention)
             for part in _partition_indices(n, granularity):
                 candidate = units[part.start : part.stop]
                 candidate_bytes = b"".join(candidate)
                 if not candidate_bytes:
                     continue
                 
-                # 避免无限循环：如果保留的就是全部，跳过
+                # Avoid infinite loops: skip if the subset is the entire input
                 if part.start == 0 and part.stop == n:
                     continue
                 
                 test_count += 1
                 if verbose and test_count % 10 == 0:
-                    print(f"  [DDMin] 已测试 {test_count} 个候选...")
+                    print(f"  [DDMin] Tested {test_count} candidates...")
                 
                 if test_fn(candidate_bytes):
                     kept = part.stop - part.start
                     new_size = len(candidate_bytes)
                     if verbose:
-                        print(f"  [DDMin] ✓ 保留成功: 保留 {kept}/{n} 单位, {new_size} bytes")
+                        print(f"  [DDMin] ✓ Retention succeeded: kept {kept}/{n} units, {new_size} bytes")
                     units = candidate
                     granularity = 2
                     made_progress = True
@@ -107,20 +107,20 @@ def ddmin_reduce(data: bytes, test_fn: TestFn, *, by_lines: bool = True, verbose
             if not made_progress:
                 if granularity >= n:
                     if verbose:
-                        print(f"  [DDMin] 粒度 {granularity} >= 单位数 {n}，算法结束")
+                        print(f"  [DDMin] Granularity {granularity} >= unit count {n}, stopping")
                     break
                 granularity = min(n, granularity * 2)
                 if verbose:
-                    print(f"  [DDMin] 无进展，增加粒度: {granularity//2} → {granularity}")
+                    print(f"  [DDMin] No progress, increasing granularity: {granularity//2} → {granularity}")
         
         final_size = len(b"".join(units))
         reduction = (1 - final_size / original_size) * 100
         elapsed = time.time() - start_time
         
         if verbose:
-            print(f"[DDMin] 完成: {original_units} 行 → {len(units)} 行")
-            print(f"[DDMin] 大小: {original_size} → {final_size} bytes ({reduction:.1f}% 缩减)")
-            print(f"[DDMin] 总测试数: {test_count}, 总耗时: {elapsed:.1f}s")
+            print(f"[DDMin] Finished: {original_units} lines → {len(units)} lines")
+            print(f"[DDMin] Size: {original_size} → {final_size} bytes ({reduction:.1f}% reduction)")
+            print(f"[DDMin] Total tests: {test_count}, total time: {elapsed:.1f}s")
         
         return b"".join(units)
     else:
@@ -133,8 +133,8 @@ def ddmin_reduce(data: bytes, test_fn: TestFn, *, by_lines: bool = True, verbose
         original_size = len(data)
         original_units = len(units)
         if verbose:
-            print(f"[DDMin] 开始缩减（基于块, 块大小={chunk_size}bytes）")
-            print(f"[DDMin] 原始: {original_units} 块, {original_size} bytes")
+            print(f"[DDMin] Starting reduction (chunk-based, chunk size={chunk_size} bytes)")
+            print(f"[DDMin] Original: {original_units} chunks, {original_size} bytes")
         
         granularity = 2
         iteration = 0
@@ -149,10 +149,10 @@ def ddmin_reduce(data: bytes, test_fn: TestFn, *, by_lines: bool = True, verbose
             if verbose:
                 current_size = len(b"".join(units))
                 elapsed = time.time() - start_time
-                print(f"[DDMin] 迭代 #{iteration}: {n} 单位, {current_size} bytes, "
-                      f"粒度={granularity}, 测试数={test_count}, 耗时={elapsed:.1f}s")
+                print(f"[DDMin] Iteration #{iteration}: {n} units, {current_size} bytes, "
+                      f"granularity={granularity}, tests={test_count}, elapsed={elapsed:.1f}s")
             
-            # Phase 1: 尝试删除子集（减法）
+            # Phase 1: try removing subsets (deletion)
             for part in _partition_indices(n, granularity):
                 candidate = units[: part.start] + units[part.stop :]
                 candidate_bytes = b"".join(candidate)
@@ -161,13 +161,13 @@ def ddmin_reduce(data: bytes, test_fn: TestFn, *, by_lines: bool = True, verbose
                 
                 test_count += 1
                 if verbose and test_count % 10 == 0:
-                    print(f"  [DDMin] 已测试 {test_count} 个候选...")
+                    print(f"  [DDMin] Tested {test_count} candidates...")
                 
                 if test_fn(candidate_bytes):
                     removed = part.stop - part.start
                     new_size = len(candidate_bytes)
                     if verbose:
-                        print(f"  [DDMin] ✓ 减法成功: 删除 {removed} 单位 "
+                        print(f"  [DDMin] ✓ Deletion succeeded: removed {removed} units "
                               f"({n} → {len(candidate)}), {new_size} bytes")
                     units = candidate
                     granularity = 2
@@ -177,26 +177,26 @@ def ddmin_reduce(data: bytes, test_fn: TestFn, *, by_lines: bool = True, verbose
             if made_progress:
                 continue
             
-            # Phase 2: 尝试仅保留子集（保留）
+            # Phase 2: try keeping subsets (retention)
             for part in _partition_indices(n, granularity):
                 candidate = units[part.start : part.stop]
                 candidate_bytes = b"".join(candidate)
                 if not candidate_bytes:
                     continue
                 
-                # 避免无限循环：如果保留的就是全部，跳过
+                # Avoid infinite loops: skip if the subset is the entire input
                 if part.start == 0 and part.stop == n:
                     continue
                 
                 test_count += 1
                 if verbose and test_count % 10 == 0:
-                    print(f"  [DDMin] 已测试 {test_count} 个候选...")
+                    print(f"  [DDMin] Tested {test_count} candidates...")
                 
                 if test_fn(candidate_bytes):
                     kept = part.stop - part.start
                     new_size = len(candidate_bytes)
                     if verbose:
-                        print(f"  [DDMin] ✓ 保留成功: 保留 {kept}/{n} 单位, {new_size} bytes")
+                        print(f"  [DDMin] ✓ Retention succeeded: kept {kept}/{n} units, {new_size} bytes")
                     units = candidate
                     granularity = 2
                     made_progress = True
@@ -205,20 +205,20 @@ def ddmin_reduce(data: bytes, test_fn: TestFn, *, by_lines: bool = True, verbose
             if not made_progress:
                 if granularity >= n:
                     if verbose:
-                        print(f"  [DDMin] 粒度 {granularity} >= 单位数 {n}，算法结束")
+                        print(f"  [DDMin] Granularity {granularity} >= unit count {n}, stopping")
                     break
                 granularity = min(n, granularity * 2)
                 if verbose:
-                    print(f"  [DDMin] 无进展，增加粒度: {granularity//2} → {granularity}")
+                    print(f"  [DDMin] No progress, increasing granularity: {granularity//2} → {granularity}")
         
         final_size = len(b"".join(units))
         reduction = (1 - final_size / original_size) * 100
         elapsed = time.time() - start_time
         
         if verbose:
-            print(f"[DDMin] 完成: {original_units} 块 → {len(units)} 块")
-            print(f"[DDMin] 大小: {original_size} → {final_size} bytes ({reduction:.1f}% 缩减)")
-            print(f"[DDMin] 总测试数: {test_count}, 总耗时: {elapsed:.1f}s")
+            print(f"[DDMin] Finished: {original_units} chunks → {len(units)} chunks")
+            print(f"[DDMin] Size: {original_size} → {final_size} bytes ({reduction:.1f}% reduction)")
+            print(f"[DDMin] Total tests: {test_count}, total time: {elapsed:.1f}s")
         
         return b"".join(units)
 
