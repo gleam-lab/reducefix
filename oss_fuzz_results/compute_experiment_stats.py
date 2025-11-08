@@ -19,9 +19,9 @@ from pathlib import Path
 from typing import Dict, List, Tuple
 from math import comb
 
-CASES_JSON = Path("oss_fuzz/cases.json")
-CASES_DATA_DIR = Path("oss_fuzz/cases_data")
-OUT_DIR = Path("oss_fuzz/experiment_results")
+CASES_JSON = Path("cases.json")
+CASES_DATA_DIR = Path("cases_data")
+OUT_DIR = Path("experiment_results")
 OUT_FILE = OUT_DIR / "experiment_overview.json"
 
 
@@ -409,29 +409,193 @@ def print_report(reduce_results: Dict, repair_results: Dict, show_details: bool 
             print(f"\n▶ Repair 成功率统计: 无数据")
 
 
+def print_paper_tables(reduce_results: Dict, repair_results: Dict):
+    """Print paper-format tables (English)"""
+    
+    # Table 1: Test Case Reduction Comparison
+    print("="*80)
+    print("Table 1: Test Case Reduction Comparison")
+    print("="*80)
+    print()
+    print(f"{'Project':<15} {'Samples':>8} | {'ddmin-only':^16} | {'ReduceFix':^16} | {'Pure LLM':^16}")
+    print(f"{'':15} {'':>8} | {'SR':>7} {'CR':>7} | {'SR':>7} {'CR':>7} | {'SR':>7} {'CR':>7}")
+    print("-"*80)
+    
+    # Project ordering as in paper
+    project_order = ['ffmpeg', 'imagemagick', 'mupdf', 'php-src', 'poppler']
+    
+    # Collect overall statistics
+    overall_stats = {
+        'total_samples': 0,
+        'ddmin': {'success': 0, 'total': 0, 'compression_sum': 0.0, 'count': 0},
+        'reducefix': {'success': 0, 'total': 0, 'compression_sum': 0.0, 'count': 0},
+        'llm': {'success': 0, 'total': 0, 'compression_sum': 0.0, 'count': 0},
+    }
+    
+    for project in project_order:
+        if project not in reduce_results:
+            continue
+        
+        proj_data = reduce_results[project]
+        samples = proj_data.get('samples_eligible', 0)
+        
+        if samples == 0:
+            continue
+        
+        overall_stats['total_samples'] += samples
+        
+        # Get data for each strategy
+        dd = proj_data.get('ddmin', {})
+        rf = proj_data.get('reducefix', {})
+        lg = proj_data.get('llm_generated', {})
+        
+        # Update overall stats
+        for strategy_name, strategy_data in [('ddmin', dd), ('reducefix', rf), ('llm', lg)]:
+            overall_stats[strategy_name]['success'] += strategy_data.get('success', 0)
+            overall_stats[strategy_name]['total'] += strategy_data.get('total', 0)
+            
+            # Sum compression ratios from case details
+            case_details = proj_data.get('case_details', [])
+            strategy_key = 'llm_generated' if strategy_name == 'llm' else strategy_name
+            for detail in case_details:
+                compression_ratio = detail.get(strategy_key, {}).get('compression_ratio', 0.0)
+                overall_stats[strategy_name]['compression_sum'] += compression_ratio
+                overall_stats[strategy_name]['count'] += 1
+        
+        dd_sr = dd.get('success_rate', 0.0) * 100
+        dd_cr = dd.get('avg_compression_ratio', 0.0) * 100
+        rf_sr = rf.get('success_rate', 0.0) * 100
+        rf_cr = rf.get('avg_compression_ratio', 0.0) * 100
+        lg_sr = lg.get('success_rate', 0.0) * 100
+        lg_cr = lg.get('avg_compression_ratio', 0.0) * 100
+        
+        print(f"{project.upper():<15} {samples:>8} | {dd_sr:>6.1f}% {dd_cr:>6.1f}% | {rf_sr:>6.1f}% {rf_cr:>6.1f}% | {lg_sr:>6.1f}% {lg_cr:>6.1f}%")
+    
+    # Calculate overall percentages
+    print("-"*80)
+    
+    overall_dd_sr = (overall_stats['ddmin']['success'] / overall_stats['ddmin']['total'] * 100) if overall_stats['ddmin']['total'] > 0 else 0.0
+    overall_dd_cr = (overall_stats['ddmin']['compression_sum'] / overall_stats['ddmin']['count'] * 100) if overall_stats['ddmin']['count'] > 0 else 0.0
+    
+    overall_rf_sr = (overall_stats['reducefix']['success'] / overall_stats['reducefix']['total'] * 100) if overall_stats['reducefix']['total'] > 0 else 0.0
+    overall_rf_cr = (overall_stats['reducefix']['compression_sum'] / overall_stats['reducefix']['count'] * 100) if overall_stats['reducefix']['count'] > 0 else 0.0
+    
+    overall_lg_sr = (overall_stats['llm']['success'] / overall_stats['llm']['total'] * 100) if overall_stats['llm']['total'] > 0 else 0.0
+    overall_lg_cr = (overall_stats['llm']['compression_sum'] / overall_stats['llm']['count'] * 100) if overall_stats['llm']['count'] > 0 else 0.0
+    
+    print(f"{'Overall':<15} {overall_stats['total_samples']:>8} | {overall_dd_sr:>6.1f}% {overall_dd_cr:>6.1f}% | {overall_rf_sr:>6.1f}% {overall_rf_cr:>6.1f}% | {overall_lg_sr:>6.1f}% {overall_lg_cr:>6.1f}%")
+    
+    print()
+    print("="*80)
+    print("Table 2: Repair Success Rate (Pass@K)")
+    print("="*80)
+    print()
+    print(f"{'Project':<15} {'Samples':>8} | {'Baseline':^24} | {'Origin Test':^24} | {'Reduced Test':^24}")
+    print(f"{'':15} {'':>8} | {'@1':>7} {'@5':>7} {'@10':>7} | {'@1':>7} {'@5':>7} {'@10':>7} | {'@1':>7} {'@5':>7} {'@10':>7}")
+    print("-"*80)
+    
+    # Collect overall statistics for pass@k
+    overall_repair_stats = {
+        'total_samples': 0,
+        'baseline': {1: {'pass_sum': 0.0, 'count': 0}, 5: {'pass_sum': 0.0, 'count': 0}, 10: {'pass_sum': 0.0, 'count': 0}},
+        'origin': {1: {'pass_sum': 0.0, 'count': 0}, 5: {'pass_sum': 0.0, 'count': 0}, 10: {'pass_sum': 0.0, 'count': 0}},
+        'reduced': {1: {'pass_sum': 0.0, 'count': 0}, 5: {'pass_sum': 0.0, 'count': 0}, 10: {'pass_sum': 0.0, 'count': 0}},
+    }
+    
+    for project in project_order:
+        if project not in repair_results:
+            continue
+        
+        proj_data = repair_results[project]
+        samples = proj_data.get('samples_total', 0)
+        
+        if samples == 0:
+            continue
+        
+        overall_repair_stats['total_samples'] += samples
+        
+        # Get case details
+        case_details = proj_data.get('case_details', [])
+        
+        # Calculate pass@k for each strategy from case details
+        for detail in case_details:
+            for strategy in ['without_test', 'origin_test', 'reduced_test']:
+                strategy_key = 'baseline' if strategy == 'without_test' else ('origin' if strategy == 'origin_test' else 'reduced')
+                strategy_data = detail.get(strategy, {})
+                
+                # Use pre-calculated pass@k values
+                for k in [1, 5, 10]:
+                    passk = strategy_data.get(f'pass_at_{k}', 0.0)
+                    overall_repair_stats[strategy_key][k]['pass_sum'] += passk
+                    overall_repair_stats[strategy_key][k]['count'] += 1
+        
+        # Get project-level pass@k
+        baseline = proj_data.get('without_test', {})
+        origin = proj_data.get('origin_test', {})
+        reduced = proj_data.get('reduced_test', {})
+        
+        bl_p1 = baseline.get('pass_at_1', 0.0) * 100
+        bl_p5 = baseline.get('pass_at_5', 0.0) * 100
+        bl_p10 = baseline.get('pass_at_10', 0.0) * 100
+        
+        or_p1 = origin.get('pass_at_1', 0.0) * 100
+        or_p5 = origin.get('pass_at_5', 0.0) * 100
+        or_p10 = origin.get('pass_at_10', 0.0) * 100
+        
+        rd_p1 = reduced.get('pass_at_1', 0.0) * 100
+        rd_p5 = reduced.get('pass_at_5', 0.0) * 100
+        rd_p10 = reduced.get('pass_at_10', 0.0) * 100
+        
+        print(f"{project.upper():<15} {samples:>8} | {bl_p1:>6.1f}% {bl_p5:>6.1f}% {bl_p10:>6.1f}% | {or_p1:>6.1f}% {or_p5:>6.1f}% {or_p10:>6.1f}% | {rd_p1:>6.1f}% {rd_p5:>6.1f}% {rd_p10:>6.1f}%")
+    
+    # Calculate overall pass@k percentages
+    print("-"*80)
+    
+    overall_bl_p1 = (overall_repair_stats['baseline'][1]['pass_sum'] / overall_repair_stats['baseline'][1]['count'] * 100) if overall_repair_stats['baseline'][1]['count'] > 0 else 0.0
+    overall_bl_p5 = (overall_repair_stats['baseline'][5]['pass_sum'] / overall_repair_stats['baseline'][5]['count'] * 100) if overall_repair_stats['baseline'][5]['count'] > 0 else 0.0
+    overall_bl_p10 = (overall_repair_stats['baseline'][10]['pass_sum'] / overall_repair_stats['baseline'][10]['count'] * 100) if overall_repair_stats['baseline'][10]['count'] > 0 else 0.0
+    
+    overall_or_p1 = (overall_repair_stats['origin'][1]['pass_sum'] / overall_repair_stats['origin'][1]['count'] * 100) if overall_repair_stats['origin'][1]['count'] > 0 else 0.0
+    overall_or_p5 = (overall_repair_stats['origin'][5]['pass_sum'] / overall_repair_stats['origin'][5]['count'] * 100) if overall_repair_stats['origin'][5]['count'] > 0 else 0.0
+    overall_or_p10 = (overall_repair_stats['origin'][10]['pass_sum'] / overall_repair_stats['origin'][10]['count'] * 100) if overall_repair_stats['origin'][10]['count'] > 0 else 0.0
+    
+    overall_rd_p1 = (overall_repair_stats['reduced'][1]['pass_sum'] / overall_repair_stats['reduced'][1]['count'] * 100) if overall_repair_stats['reduced'][1]['count'] > 0 else 0.0
+    overall_rd_p5 = (overall_repair_stats['reduced'][5]['pass_sum'] / overall_repair_stats['reduced'][5]['count'] * 100) if overall_repair_stats['reduced'][5]['count'] > 0 else 0.0
+    overall_rd_p10 = (overall_repair_stats['reduced'][10]['pass_sum'] / overall_repair_stats['reduced'][10]['count'] * 100) if overall_repair_stats['reduced'][10]['count'] > 0 else 0.0
+    
+    print(f"{'Overall':<15} {overall_repair_stats['total_samples']:>8} | {overall_bl_p1:>6.1f}% {overall_bl_p5:>6.1f}% {overall_bl_p10:>6.1f}% | {overall_or_p1:>6.1f}% {overall_or_p5:>6.1f}% {overall_or_p10:>6.1f}% | {overall_rd_p1:>6.1f}% {overall_rd_p5:>6.1f}% {overall_rd_p10:>6.1f}%")
+    
+    print()
+    print("="*80)
+
+
 def main():
     import argparse
-    parser = argparse.ArgumentParser(description="统计完整的 ReduceFix 实验结果（Reduce + Repair）")
-    parser.add_argument("--model-tag", default="reducefix_qwen", help="模型标签目录名，默认 reducefix_qwen")
-    parser.add_argument("--no-details", action="store_true", help="不显示每个样本的详细信息")
+    parser = argparse.ArgumentParser(description="Statistics for complete ReduceFix experiment (Reduce + Repair)")
+    parser.add_argument("--model-tag", default="reducefix_qwen", help="Model tag directory name, default: reducefix_qwen")
+    parser.add_argument("--no-details", action="store_true", help="Don't show per-sample details")
+    parser.add_argument("--paper-format", action="store_true", help="Display paper-format tables (English)")
     args = parser.parse_args()
 
-    # 收集 Reduce 统计
+    # Collect Reduce statistics
     per_project_reduce = collect_reduce_stats(args.model_tag)
     reduce_results: Dict[str, Dict] = {}
     for project, case_stats_list in per_project_reduce.items():
         reduce_results[project] = summarize_reduce(project, case_stats_list)
 
-    # 收集 Repair 统计
+    # Collect Repair statistics
     per_project_repair = collect_repair_results(args.model_tag)
     repair_results: Dict[str, Dict] = {}
     for project, case_results_list in per_project_repair.items():
         repair_results[project] = summarize_repair(project, case_results_list)
 
-    # 打印报告
-    print_report(reduce_results, repair_results, show_details=not args.no_details)
+    # Print report
+    if args.paper_format:
+        print_paper_tables(reduce_results, repair_results)
+    else:
+        print_report(reduce_results, repair_results, show_details=not args.no_details)
 
-    # 保存 JSON
+    # Save JSON
     OUT_DIR.mkdir(parents=True, exist_ok=True)
     output_data = {
         "model_tag": args.model_tag,
@@ -441,9 +605,10 @@ def main():
     with open(OUT_FILE, "w", encoding="utf-8") as f:
         json.dump(output_data, f, ensure_ascii=False, indent=2)
     
-    print(f"\n{'='*70}")
-    print(f"[Info] 统计结果已保存: {OUT_FILE}")
-    print(f"{'='*70}\n")
+    if not args.paper_format:
+        print(f"\n{'='*70}")
+        print(f"[Info] Statistics saved to: {OUT_FILE}")
+        print(f"{'='*70}\n")
 
 
 if __name__ == "__main__":

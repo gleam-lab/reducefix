@@ -132,7 +132,7 @@ else
     echo ""
     
     cd oss_fuzz_results
-    python3 compute_experiment_stats.py --model-tag reducefix_${MODEL//-/_}
+    python3 compute_experiment_stats.py --model-tag reducefix_${MODEL//-/_} --no-details
     cd ..
     
     echo ""
@@ -140,13 +140,15 @@ else
     echo ""
 fi
 
-# Step 3: Display results
+# Step 3: Display results (recalculate pass@k from scratch)
 echo "=============================================="
-echo "Displaying RQ5 Results"
+echo "Displaying RQ5 Results (Recalculating Pass@K)"
 echo "=============================================="
 echo ""
 
-python3 oss_fuzz_results/display_rq5_results.py
+cd oss_fuzz_results
+python3 compute_experiment_stats.py --model-tag reducefix_${MODEL//-/_} --paper-format --no-details
+cd ..
 
 echo ""
 echo "RQ5 analysis complete."
