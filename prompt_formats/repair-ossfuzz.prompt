@@ -1,0 +1,100 @@
+### Issue Description
+Crash Type: {crash_type}
+Stack Top Function: {stack_top}
+
+### Crash Log
+{stderr}
+--- END ISSUE ---
+
+🎯 **EXACT BUG LOCATION**:
+- File: `{file_path}`, Lines {line_start}-{line_end}
+
+### {file_path}
+**Function containing the bug** (lines {func_start}-{func_end}):
+
+```{lang}
+{buggy_code_with_annotations}
+```
+
+**🎯 Bug Location** (lines {line_start}-{line_end}):
+```{lang}
+{bug_lines}
+```
+
+**⚠️ IMPORTANT**: When generating your SEARCH/REPLACE edit:
+- The shown function has N lines total
+- Bug is at lines {line_start}-{line_end}
+- Variables declared before the bug MUST NOT be removed (they may be used after)
+- Check for paired macros (fz_try/always/catch, do/while) - keep them balanced
+- Only edit the MINIMAL lines needed to fix the bug
+
+### Failing Test Case (Reduced by ReduceFix)
+**Minimized Input** (hex format):
+```
+{reduced_testcase_hex}
+```
+
+**Expected Behavior After Fix**:
+- The program should handle this input without crashing
+- Focus on preventing {crash_type}
+
+### Your Task
+Analyze the crash and generate a patch to fix the bug.
+
+**Instructions**:
+1. Identify the root cause based on crash information and code
+2. Generate a minimal fix targeting the buggy lines
+3. Ensure the fix handles edge cases properly
+4. Do not over-engineer - focus on the specific issue
+
+### Output Format
+Please first localize the bug, then generate *SEARCH/REPLACE* edits to fix the issue.
+
+Every *SEARCH/REPLACE* edit must use this format:
+1. The file path wrapped in ### (e.g., ### src/file.cpp)
+2. The start and end line numbers (- start_line: N, - end_line: M)
+3. The start of search block: <<<<<<< SEARCH
+4. A contiguous chunk of lines to search for in the existing source code
+5. The dividing line: =======
+6. The lines to replace into the source code
+7. The end of the replace block: >>>>>>> REPLACE
+
+Example (MINIMAL edit with context awareness):
+```cpp
+### src/memory/allocator.cpp
+- start_line: 145
+- end_line: 149
+<<<<<<< SEARCH
+	if (size > 0) {
+		ptr = malloc(size);
+		use_memory(ptr);
+	}
+=======
+	if (size > 0) {
+		ptr = malloc(size);
+		if (ptr != NULL)
+			use_memory(ptr);
+	}
+>>>>>>> REPLACE
+```
+
+**CRITICAL COMPILATION SAFETY REQUIREMENTS**:
+
+1. **MINIMAL edits ONLY** - Include only 3-8 lines in SEARCH block (bug line + 1-3 context lines)
+   - More lines = higher risk of breaking dependencies
+   - Focus ONLY on the buggy statement and immediate neighbors
+
+2. **Variable Dependency Check** - Before removing/modifying any line, verify:
+   - ❌ NEVER remove variable declarations if they're used later
+   - ❌ NEVER remove assignments if the variable is referenced afterwards
+   - ✅ Check if variables in your SEARCH block are used outside it
+
+3. **Macro Pairing Safety** - Special macros MUST stay paired:
+   - `fz_try(ctx) { ... } fz_always(ctx) { ... } fz_catch(ctx) { ... }` → NEVER break this chain
+   - `do { ... } while(...)` → NEVER remove the `while` if you keep the `do`
+
+4. **Code Block Integrity**:
+   - ❌ NEVER remove opening/closing braces unless removing entire block
+   - ❌ NEVER remove function declarations/definitions
+   - ✅ Preserve the structural indentation and nesting
+

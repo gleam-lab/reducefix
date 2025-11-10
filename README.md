@@ -2,6 +2,8 @@
 
 ReduceFix is an automated program repair (APR) system that leverages LLM-generated reducers to minimize failure-inducing test inputs before using them to guide repair generation. This repository contains the implementation and experimental scripts for reproducing the results presented in our paper.
 
+> **Prompt Formats**: We have organized all prompt formats used in the paper into the `prompt_formats/` directory for easy reference. See [Prompt Formats](#prompt-formats) for details.
+
 ## Overview
 
 ReduceFix consists of three main phases:
@@ -69,11 +71,13 @@ ReduceFix/
 │   ├── cases_data/            # Case-by-case data
 │   ├── experiment_results/    # Experiment statistics
 │   └── compute_*.py           # OSS-Fuzz analysis scripts
-│
-├── temp/                      # Full result backups
-│   ├── result_reducer_reducefix_full.json
-│   └── ...
-│
+├── prompt_formats/
+│   ├── repair.prompt          # Prompt format of repair on LFTBench (C++)
+│   ├── repair-py.prompt       # Prompt format of repair on LFTBench-Py (Python)
+│   ├── repair-ossfuzz.prompt  # Prompt format of repair on OSS-Fuzz
+│   ├── repair-diffline.prompt # Prompt format of repair with Diff Lines strategy
+│   ├── reducer.prompt         # Prompt format of reducer generation for LFTBench
+│   ├── reducer-ossfuzz.prompt # Prompt format of reducer generation for OSS-Fuzz
 ├── result_reducer_*.json      # Minimized reduction results (RQ1)
 ├── result_repair_*.json       # Minimized repair results (RQ2, RQ3)
 ├── result_chatrepair.json     # ChatRepair results (RQ4)
@@ -114,6 +118,50 @@ ReduceFix/
 - **`temp/`**: Full-version result files with detailed metadata (not for distribution)
 - **Core scripts**: `reducer_builder.py`, `reducer_test.py`, `evaluate_repair*.py`
 - **Analysis scripts**: `analyze_*.py`, `summarize_*.py` for statistical analysis
+- **`prompt_formats/`**: Prompt templates used in the paper (see [Prompt Formats](#prompt-formats))
+
+## Prompt Formats
+
+The `prompt_formats/` directory contains all prompt format templates used in the paper for easy reference and reproduction:
+
+### Repair Prompts
+
+1. **`repair.prompt`** - Standard repair prompt for LFTBench (C++)
+   - Contains: problem description, buggy code, reduced test case (input/output)
+   - Used in: RQ2 as ReduceFix's main repair strategy
+
+2. **`repair-py.prompt`** - Repair prompt for LFTBench-Py (Python)
+   - Same structure as `repair.prompt`, but for Python code
+   - Used in: RQ2 for cross-language validation
+
+3. **`repair-ossfuzz.prompt`** - Repair prompt for OSS-Fuzz
+   - Contains: crash info, stack trace, annotated source code, reduced test case (hex format)
+   - Output format: SEARCH/REPLACE style patches
+   - Used in: RQ5 for real-world project repairs
+
+4. **`repair-diffline.prompt`** - Prompt for Diff Lines strategy
+   - Shows only the first 10 lines of output differences, without full input
+   - Used in: RQ3 to test the impact of information selection
+
+### Reducer Generation Prompts
+
+5. **`reducer.prompt`** - LFTBench reducer generation prompt
+   - Input: problem description, example reducer code
+   - Output: problem-specific reducer.py script
+   - Used in: RQ1, RQ2, RQ3, RQ4 to generate reducers for LFTBench problems
+
+6. **`reducer-ossfuzz.prompt`** - OSS-Fuzz reducer generation prompt
+   - Input: project info, file format analysis, example reducer code
+   - Output: format-aware `generated_reduce()` function
+   - Used in: RQ5 to generate reducers for various file formats (PDF, fonts, images, etc.)
+
+### Usage Notes
+
+- All `{variable_name}` placeholders in prompt files will be replaced with actual values during execution
+- For complete prompt construction logic, refer to:
+  - Repair: `generate_llm_repair()` function in `evaluate_repair.py`
+  - Reducer (LFTBench): `build_generation_prompt()` function in `reducer_builder.py`
+  - Reducer (OSS-Fuzz): `build_generation_prompt()` function in `oss_fuzz_results/reducer_builder.py`
 
 ## Reproducing Research Questions
 
