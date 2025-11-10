@@ -128,6 +128,18 @@ if [ "$all_exist" = true ] && [ -z "$REGENERATE_FLAG" ]; then
     
     echo ""
     echo "=============================================="
+    echo "DDMin-based ReduceFix Results (Qwen2.5-Coder)"
+    echo "=============================================="
+    
+    if [ -f "result_ddmin_repair_qwen2.5-coder-7b.json" ]; then
+        python3 analyze_ddmin_results.py
+    else
+        echo "  ⚠  DDMin results not found: result_ddmin_repair_qwen2.5-coder-7b.json"
+        echo "     (Optional) DDMin-based reduction results can be added separately"
+    fi
+    
+    echo ""
+    echo "=============================================="
     echo "Analyzing Python Dataset (Qwen-Plus)"
     echo "=============================================="
     
@@ -248,6 +260,18 @@ echo "Generating RQ2 Analysis"
 echo "=============================================="
 
 python3 analyze_rq2_table.py
+
+echo ""
+echo "=============================================="
+echo "DDMin-based ReduceFix Results (Qwen2.5-Coder)"
+echo "=============================================="
+
+if [ -f "result_ddmin_repair_qwen2.5-coder-7b.json" ]; then
+    python3 analyze_ddmin_results.py
+else
+    echo "  ⚠  DDMin results not found: result_ddmin_repair_qwen2.5-coder-7b.json"
+    echo "     (Optional) DDMin-based reduction results can be added separately"
+fi
 
 echo ""
 echo "=============================================="
