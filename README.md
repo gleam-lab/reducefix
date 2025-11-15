@@ -198,6 +198,11 @@ The violin plot in the following figure confirms this pattern: most points clust
 
 ![](violin.png)
 
+#### Figure: Summary of Generated Reducers.
+
+The figure below is a summary chart of all 20 automatically synthesized task-specific reducers, highlighting for each one the structural decomposition it applies and the semantic invariants it enforces beyond plain ddmin.
+
+![](reducers.png)
 
 ### RQ-2: Effectiveness of Reduced Test Cases for Repair
 

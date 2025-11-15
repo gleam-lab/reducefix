@@ -28,9 +28,9 @@ def get_input_format_category(problem_id):
     categories = {
         'Sequence': ['abc361c', 'abc367d', 'abc368c', 'abc369d', 
                      'abc370d', 'abc373e', 'abc377c', 'abc377f'],
-        'Multiple sequences': ['abc374e', 'abc376c', 'abc376e'],
+        'Multiple sequences': ['abc374e', 'abc375c', 'abc376c', 'abc376e'],
         'Sequence with dependencies': ['abc364d', 'abc366c', 'abc372e', 'abc371d'],
-        '2-D matrix': ['abc363e', 'abc375c'],
+        '2-D matrix': ['abc363e'],
         'Graph': ['abc362d', 'abc376d'],
         'String': ['abc365d']
     }
@@ -118,7 +118,7 @@ def print_comparison_table_three(reducefix_stats, ddmin_stats, llm_stats):
     # Overall comparison
     print("Overall Performance:")
     print("-" * 120)
-    print(f"{'Method':<25} {'Success Rate':<20} {'Avg Compression':<25} {'Total':<20}")
+    print(f"{'Method':<25} {'Success Rate':<20} {'Compression (avg/med)':<35} {'Total':<20}")
     print("-" * 120)
     
     for stats in [reducefix_stats, llm_stats, ddmin_stats]:
@@ -129,9 +129,11 @@ def print_comparison_table_three(reducefix_stats, ddmin_stats, llm_stats):
         
         ratios = stats['compression_ratios']
         avg_compression = statistics.mean(ratios) if ratios else 0
+        median_compression = statistics.median(ratios) if ratios else 0
+        compression_text = f"{avg_compression:>6.1%} / {median_compression:>6.1%}"
         
-        print(f"{method:<25} {success_rate:>6.1f}% ({successful}/{total}){' '*4} "
-              f"{avg_compression:>6.1%}{' '*18} {total} attempts")
+        print(f"{method:<25} {success_rate:>6.1f}% ({successful}/{total}){' '*4}"
+              f"{compression_text:<35} {total} attempts")
     
     print("-" * 120)
     print()
@@ -142,7 +144,7 @@ def print_comparison_table_three(reducefix_stats, ddmin_stats, llm_stats):
     
     for difficulty in ['Easy', 'Medium', 'Hard']:
         print(f"\n{difficulty} Problems:")
-        print(f"{'Method':<25} {'Success Rate':<20} {'Avg Compression':<25}")
+        print(f"{'Method':<25} {'Success Rate':<20} {'Compression (avg/med)':<35}")
         print("-" * 120)
         
         for stats in [reducefix_stats, llm_stats, ddmin_stats]:
@@ -155,9 +157,11 @@ def print_comparison_table_three(reducefix_stats, ddmin_stats, llm_stats):
             
             ratios = diff_stats.get('compression_ratios', [])
             avg_compression = statistics.mean(ratios) if ratios else 0
+            median_compression = statistics.median(ratios) if ratios else 0
+            compression_text = f"{avg_compression:>6.1%} / {median_compression:>6.1%}"
             
-            print(f"{method:<25} {success_rate:>6.1f}% ({successful}/{total}){' '*4} "
-                  f"{avg_compression:>6.1%}")
+            print(f"{method:<25} {success_rate:>6.1f}% ({successful}/{total}){' '*4}"
+                  f"{compression_text:<35}")
     
     print("-" * 120)
     print()
@@ -178,7 +182,7 @@ def print_comparison_table_three(reducefix_stats, ddmin_stats, llm_stats):
     
     for input_format in format_order:
         print(f"\n{input_format}:")
-        print(f"{'Method':<25} {'Success Rate':<20} {'Avg Compression':<25}")
+        print(f"{'Method':<25} {'Success Rate':<20} {'Compression (avg/med)':<35}")
         print("-" * 120)
         
         for stats in [reducefix_stats, llm_stats, ddmin_stats]:
@@ -191,10 +195,12 @@ def print_comparison_table_three(reducefix_stats, ddmin_stats, llm_stats):
             
             ratios = format_stats.get('compression_ratios', [])
             avg_compression = statistics.mean(ratios) if ratios else 0
+            median_compression = statistics.median(ratios) if ratios else 0
+            compression_text = f"{avg_compression:>6.1%} / {median_compression:>6.1%}"
             
             if total > 0:
-                print(f"{method:<25} {success_rate:>6.1f}% ({successful}/{total}){' '*4} "
-                      f"{avg_compression:>6.1%}")
+                print(f"{method:<25} {success_rate:>6.1f}% ({successful}/{total}){' '*4}"
+                      f"{compression_text:<35}")
     
     print("-" * 120)
     print()
@@ -227,7 +233,7 @@ def print_comparison_table(reducefix_stats, ddmin_stats):
     # Overall comparison
     print("Overall Performance:")
     print("-" * 100)
-    print(f"{'Method':<25} {'Success Rate':<20} {'Avg Compression':<25} {'Total':<20}")
+    print(f"{'Method':<25} {'Success Rate':<20} {'Compression (avg/med)':<35} {'Total':<20}")
     print("-" * 100)
     
     for stats in [reducefix_stats, ddmin_stats]:
@@ -238,9 +244,11 @@ def print_comparison_table(reducefix_stats, ddmin_stats):
         
         ratios = stats['compression_ratios']
         avg_compression = statistics.mean(ratios) if ratios else 0
+        median_compression = statistics.median(ratios) if ratios else 0
+        compression_text = f"{avg_compression:>6.1%} / {median_compression:>6.1%}"
         
-        print(f"{method:<25} {success_rate:>6.1f}% ({successful}/{total}){' '*4} "
-              f"{avg_compression:>6.1%}{' '*18} {total} attempts")
+        print(f"{method:<25} {success_rate:>6.1f}% ({successful}/{total}){' '*4}"
+              f"{compression_text:<35} {total} attempts")
     
     print("-" * 100)
     print()
@@ -251,7 +259,7 @@ def print_comparison_table(reducefix_stats, ddmin_stats):
     
     for difficulty in ['Easy', 'Medium', 'Hard']:
         print(f"\n{difficulty} Problems:")
-        print(f"{'Method':<25} {'Success Rate':<20} {'Avg Compression':<25}")
+        print(f"{'Method':<25} {'Success Rate':<20} {'Compression (avg/med)':<35}")
         print("-" * 100)
         
         for stats in [reducefix_stats, ddmin_stats]:
@@ -264,9 +272,11 @@ def print_comparison_table(reducefix_stats, ddmin_stats):
             
             ratios = diff_stats.get('compression_ratios', [])
             avg_compression = statistics.mean(ratios) if ratios else 0
+            median_compression = statistics.median(ratios) if ratios else 0
+            compression_text = f"{avg_compression:>6.1%} / {median_compression:>6.1%}"
             
-            print(f"{method:<25} {success_rate:>6.1f}% ({successful}/{total}){' '*4} "
-                  f"{avg_compression:>6.1%}")
+            print(f"{method:<25} {success_rate:>6.1f}% ({successful}/{total}){' '*4}"
+                  f"{compression_text:<35}")
     
     print("-" * 100)
     print()
@@ -287,7 +297,7 @@ def print_comparison_table(reducefix_stats, ddmin_stats):
     
     for input_format in format_order:
         print(f"\n{input_format}:")
-        print(f"{'Method':<25} {'Success Rate':<20} {'Avg Compression':<25}")
+        print(f"{'Method':<25} {'Success Rate':<20} {'Compression (avg/med)':<35}")
         print("-" * 100)
         
         for stats in [reducefix_stats, ddmin_stats]:
@@ -300,10 +310,12 @@ def print_comparison_table(reducefix_stats, ddmin_stats):
             
             ratios = format_stats.get('compression_ratios', [])
             avg_compression = statistics.mean(ratios) if ratios else 0
+            median_compression = statistics.median(ratios) if ratios else 0
+            compression_text = f"{avg_compression:>6.1%} / {median_compression:>6.1%}"
             
             if total > 0:
-                print(f"{method:<25} {success_rate:>6.1f}% ({successful}/{total}){' '*4} "
-                      f"{avg_compression:>6.1%}")
+                print(f"{method:<25} {success_rate:>6.1f}% ({successful}/{total}){' '*4}"
+                      f"{compression_text:<35}")
     
     print("-" * 100)
     print()
