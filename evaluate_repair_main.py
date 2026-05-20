@@ -10,6 +10,7 @@ import shutil
 import time
 import traceback # Needed for traceback.print_exc()
 import hashlib # For code hashing
+import difflib
 from typing import Optional, Tuple, List, Dict, Any
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import threading
@@ -446,6 +447,7 @@ def generate_llm_repair(
     artifact_dir: Optional[str] = None,
     wa_output: Optional[str] = None, 
     expected_output: Optional[str] = None,
+    repair_location_hint: Optional[str] = None,
     model_tag: str = ""
 ) -> Optional[str]:
     """
@@ -466,6 +468,13 @@ def generate_llm_repair(
 ```cpp
 {wa_code}
 ```
+
+"""
+
+    if repair_location_hint:
+        prompt += f"""### Shared Repair-Location Hint
+The following buggy-code locations are provided to every repair strategy in this experiment. They are derived from the ground-truth/accepted reference only as locations; no replacement code from the reference is revealed.
+{repair_location_hint}
 
 """
 
@@ -564,6 +573,7 @@ Provide ONLY the complete fixed C++ code in a single ```cpp block.
         # --- Modify filenames to include repair_context_label --- 
         context_suffix = f"_{repair_context_label}_{model_tag}" # e.g., "_no_tc_qwen-plus", "_orig_tc_llama3"
         save_component(f"{submission_id}.prompt{context_suffix}.txt", prompt)
+        save_component(f"{submission_id}.repair_location_hint{context_suffix}.txt", repair_location_hint)
         save_component(f"{submission_id}.llm_input{context_suffix}.txt", input_for_llm_str)
         save_component(f"{submission_id}.actual_output{context_suffix}.txt", wa_output_for_llm_str)
         save_component(f"{submission_id}.expected_output{context_suffix}.txt", expected_output_for_llm_str)
@@ -663,6 +673,64 @@ def get_diff_lines(actual_output: str, expected_output: str, max_lines: int = 20
         return "Outputs appear identical (possibly whitespace issue)"
     return "\n".join(diffs)
 
+
+def _merge_line_ranges(ranges: List[Tuple[int, int]], max_gap: int = 2) -> List[Tuple[int, int]]:
+    if not ranges:
+        return []
+    merged: List[Tuple[int, int]] = []
+    for start, end in sorted(ranges):
+        if not merged or start > merged[-1][1] + max_gap + 1:
+            merged.append((start, end))
+        else:
+            merged[-1] = (merged[-1][0], max(merged[-1][1], end))
+    return merged
+
+
+def _numbered_snippet(lines: List[str], start: int, end: int) -> str:
+    width = len(str(end))
+    return "\n".join(f"{idx:>{width}} | {lines[idx - 1]}" for idx in range(start, end + 1))
+
+
+def build_repair_location_hint(wa_code: str, reference_code: Optional[str], max_hunks: int = 5, context: int = 2) -> Optional[str]:
+    """Build a buggy-side location hint from the accepted reference.
+
+    The prompt receives only line ranges and snippets from the submitted wrong
+    code. Replacement lines from the accepted reference are deliberately not
+    exposed, so all prompt variants receive equal localization help without
+    leaking the patch content.
+    """
+    if not reference_code:
+        return None
+
+    wa_lines = wa_code.splitlines()
+    ref_lines = reference_code.splitlines()
+    if not wa_lines or not ref_lines:
+        return None
+
+    ranges: List[Tuple[int, int]] = []
+    matcher = difflib.SequenceMatcher(None, wa_lines, ref_lines, autojunk=False)
+    for tag, i1, i2, _j1, _j2 in matcher.get_opcodes():
+        if tag == "equal":
+            continue
+        if i1 == i2:
+            anchor = min(max(i1 + 1, 1), len(wa_lines))
+            start = max(1, anchor - context)
+            end = min(len(wa_lines), anchor + context)
+        else:
+            start = max(1, i1 + 1 - context)
+            end = min(len(wa_lines), i2 + context)
+        ranges.append((start, end))
+
+    ranges = _merge_line_ranges(ranges)[:max_hunks]
+    if not ranges:
+        return None
+
+    sections = []
+    for start, end in ranges:
+        sections.append(f"Buggy code lines {start}-{end}:\n```text\n{_numbered_snippet(wa_lines, start, end)}\n```")
+    return "\n\n".join(sections)
+
+
 def truncate_smart(text: str, max_length: int, label: str = "") -> tuple:
     """Hard truncation: simply return the first `max_length` characters to ensure更多上下文。"""
     # 若文本长度已在限制以内，直接返回
@@ -681,6 +749,7 @@ def generate_versions_parallel(problem_description: str, wa_code: str, submissio
                              failing_input: Optional[str] = None,
                              wa_output: Optional[str] = None, 
                              expected_output: Optional[str] = None,
+                             repair_location_hint: Optional[str] = None,
                              model_tag: str = "",
                              max_threads: int = DEFAULT_MAX_THREADS) -> List[str]:
     """
@@ -697,6 +766,7 @@ def generate_versions_parallel(problem_description: str, wa_code: str, submissio
                 repair_context_label=context_label, artifact_dir=artifact_dir,
                 failing_input=failing_input, wa_output=wa_output, 
                 expected_output=expected_output,
+                repair_location_hint=repair_location_hint,
                 model_tag=model_tag
             )
             return version_num, result
@@ -738,6 +808,8 @@ def main():
                        help="Force regenerate all repair codes instead of loading cached versions (default: load cached)")
     parser.add_argument("--max-threads", type=int, default=DEFAULT_MAX_THREADS,
                        help=f"Maximum number of parallel threads for LLM generation (default: {DEFAULT_MAX_THREADS})")
+    parser.add_argument("--use-repair-location-hint", action="store_true",
+                       help="Opt in to shared buggy-line location hints. Disabled by default to match the reported repair prompts.")
     args = parser.parse_args()
     target_problem_id_input = args.problem_id.strip().lower()
     max_threads = args.max_threads
@@ -863,6 +935,15 @@ def main():
          print(f"[Error] Test case directory '{test_case_dir}' not found.", file=sys.stderr)
          sys.exit(1)
 
+    reference_code_for_location = None
+    if args.use_repair_location_hint:
+        try:
+            with open(ac_path, "r", encoding="utf-8") as f:
+                reference_code_for_location = f.read()
+        except Exception as e:
+            print(f"[Warning] Failed to read AC code for repair-location hints: {e}", file=sys.stderr)
+            reference_code_for_location = None
+
     # --- Prepare AC Code and Reference Outputs --- 
     print("\n--- Preparing Reference AC Execution ---")
     ac_work_dir = tempfile.mkdtemp(prefix="eval_ac_")
@@ -984,6 +1065,13 @@ def main():
                     print(f"  Using successfully reduced input (size: {len(reduced_input)} chars vs original: {len(original_input)} chars).")
                 
                 print("  Successfully read WA code, original input, and reduced input.")
+                repair_location_hint = None
+                if args.use_repair_location_hint:
+                    repair_location_hint = build_repair_location_hint(wa_code, reference_code_for_location)
+                    if repair_location_hint:
+                        print("  Built shared repair-location hint from accepted reference.")
+                    else:
+                        print("  [Warning] No repair-location hint could be built for this submission.")
             except Exception as e:
                  print(f"  Skipping evaluation: Error reading code/input files: {e}", file=sys.stderr)
                  # Store skip reason if not already evaluated
@@ -1130,6 +1218,7 @@ def main():
                     problem_description, wa_code, submission_id=submission_id,
                     base_context_label="no_tc", artifact_dir=artifact_dir,
                     num_versions=missing_count, start_version=start_version,
+                    repair_location_hint=repair_location_hint,
                     model_tag=args.model_tag,
                     max_threads=max_threads
                 )
@@ -1165,6 +1254,7 @@ def main():
                     failing_input=original_input, 
                     wa_output=original_wa_out, 
                     expected_output=original_ac_out,
+                    repair_location_hint=repair_location_hint,
                     model_tag=args.model_tag,
                     max_threads=max_threads
                 )
@@ -1200,6 +1290,7 @@ def main():
                     failing_input=reduced_input, 
                     wa_output=reduced_wa_out, 
                     expected_output=reduced_ac_out,
+                    repair_location_hint=repair_location_hint,
                     model_tag=args.model_tag,
                     max_threads=max_threads
                 )
