@@ -81,12 +81,12 @@ ReduceFix/
 ├── result_reducer_*.json      # Minimized reduction results (RQ1)
 ├── result_repair_*.json       # Minimized repair results (RQ2, RQ3)
 ├── result_chatrepair.json     # ChatRepair results (RQ4)
-├── result_cref.json           # CRef results (RQ4)
+├── result_cref.json           # CREF results (RQ4)
 │
 ├── rq1.sh                     # RQ1: Reducer effectiveness
 ├── rq2.sh                     # RQ2: Repair with reduced tests
 ├── rq3.sh                     # RQ3: Prompt composition
-├── rq4.sh                     # RQ4: ChatRepair & CRef integration
+├── rq4.sh                     # RQ4: ChatRepair & CREF integration
 ├── rq5.sh                     # RQ5: OSS-Fuzz evaluation
 │
 ├── reducer_builder.py         # Generate problem-specific reducers
@@ -281,7 +281,7 @@ This research question investigates the distinct influence of two factors within
 4. **Reduced Test** (~6.6KB, ~514 lines): + reduced input/output pair (ReduceFix's default, joint action of length control and full information)
 5. **Reduced + Origin** (~36.4KB, ~2638 lines): + both reduced and full tests (redundant information, maximum length)
 
-**Key insight:** The conjunction of compact length and complete counterexample information is essential; either ingredient alone (Diff Lines or Origin Test) is insufficient. Reduced Test achieves the best overall pass@10 (25.5%), outperforming both Diff Lines (20.0%) and Origin Test (19.0%).
+**Key insight:** The conjunction of compact length and complete counterexample information is essential in this setting. Reduced Test achieves the highest overall pass@10 among these variants (25.5%), compared with Diff Lines (20.0%) and Origin Test (19.0%).
 
 #### Prompt Format of _Diff Lines_
 
@@ -311,9 +311,9 @@ Run the command of RQ-3:
 
 For details and options, see the script content.
 
-### RQ-4: Integration with ChatRepair and CRef
+### RQ-4: Integration with ChatRepair and CREF
 
-This research question validates the extensibility of ReduceFix by integrating it as a plug-in to state-of-the-art APR systems. We replace only the failing test input while keeping all other logic unchanged, using k=10 samples across all settings to equalize token budgets.
+This research question checks whether ReduceFix can be inserted into existing APR pipelines as a pre-repair evidence step. We replace only the failing test input while keeping patch generation and validation unchanged, using the same 10-sample budget across settings.
 
 **Systems evaluated:**
 1. **ChatRepair**: Conversational repair framework that alternates between user proxy and LLM with feedback
@@ -321,7 +321,7 @@ This research question validates the extensibility of ReduceFix by integrating i
    - First turn: task description + buggy code + failing test
    - Second turn: test verdict (pass/fail) from harness
    
-2. **CRef**: Context-aware reference-based repair with retrieval augmentation
+2. **CREF**: Context-aware reference-based repair with retrieval augmentation
    - **Settings**: Two-turn setup using AtCoder editorial
    - First turn: official editorial as high-level solution description
    - Second turn: failure-inducing test case after validating first-turn patch
@@ -331,8 +331,8 @@ This research question validates the extensibility of ReduceFix by integrating i
 - **+ ReduceFix**: Using reduced input from our reducer (Reduced Test)
 
 **Key results:** 
-- **ChatRepair**: Overall pass@10 improves from 30.5% to 37.0% (+21.3% relative), with strongest gains on E&F-difficulty tasks (+67.0% relative)
-- **CRef**: Overall pass@10 improves from 39.0% to 40.0% (+2.6% relative), demonstrating robustness across different APR architectures
+- **ChatRepair**: Overall pass@1/5/10 changes from 9.2/22.6/30.5 to 12.1/29.0/37.0.
+- **CREF**: Overall pass@1/5/10 changes from 13.9/31.6/39.0 to 14.7/32.7/40.0.
 
 Run the command of RQ-4:
 
@@ -344,25 +344,18 @@ For details and options, see the script content.
 
 ### RQ-5: Evaluation on OSS-Fuzz
 
-This research question evaluates ReduceFix on real-world crash-inducing inputs from OSS-Fuzz, a continuous fuzzing service for open-source software. We test on 12 crash cases from 5 real-world C/C++ projects to assess generalizability beyond competitive programming.
-
-**Projects evaluated:**
-- **FFMPEG**: Multimedia processing library
-- **ImageMagick**: Image manipulation tool
-- **MuPDF**: PDF rendering library
-- **PHP**: Programming language interpreter
-- **Poppler**: PDF rendering library
+This research question evaluates ReduceFix on repository-level crash-inducing inputs from OSS-Fuzz. The journal experiment uses a 167-case complete-run subset from the frozen >=4KB manifest where Baseline, Origin Test, and Reduced Test all have the same 10-candidate repair budget.
 
 **Evaluation dimensions:**
 1. **Test case reduction**: Success rate and compression ratio across three approaches (DDmin-only, ReduceFix, Pure LLM)
 2. **Repair effectiveness**: pass@k (k ∈ {1, 5, 10}) for three prompting strategies (Baseline, Origin Test, Reduced Test)
 
-**Key findings:** ReduceFix achieves 91.7% success rate with 56.4% average compression on OSS-Fuzz inputs, significantly outperforming DDmin-only (75.0% success, 51.8% compression). The reduced inputs also improve repair effectiveness, with pass@10 reaching 41.7% compared to 16.7% for origin tests.
+**Key findings:** ReduceFix successfully reduces 83.2% of crash inputs, with 46.5%/51.3% average/median end-to-end compression rate when failed reductions count as 0. DDmin-only reaches 43.7% success and 37.5%/0.0% average/median end-to-end compression rate; Pure LLM reduction reaches 37.1% success and 33.2%/0.0%. Under Docker-grounded Qwen2.5-Plus validation, Reduced Test reaches 14.4% pass@10, compared with 11.4% for Origin Test and 12.0% for Baseline.
 
-Run the command of RQ-5:
+Legacy pilot command:
 
 ```bash
 ./rq5.sh
 ```
 
-For details and options, see the script content.
+This command belongs to the earlier small OSS-Fuzz pilot. The journal-scale RQ-5 reported in the manuscript is the 167-case complete-run cohort summarized above; use the journal OSS-Fuzz artifact bundle when reproducing the current tables.
