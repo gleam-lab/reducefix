@@ -212,7 +212,7 @@ This research question evaluates whether reduced test cases can improve automate
 - **Qwen2.5-Coder-7B-instruct**: Small open-source model (7B parameters)
 - **GLM-4-9B-chat**: Another small open-source model (9B parameters)
 - **Qwen-Plus**: Large commercial model (cloud API)
-- **DeepSeek-V3**: State-of-the-art commercial model (cloud API)
+- **DeepSeek-V3**: Large commercial model (cloud API)
 
 **Prompting strategies compared:**
 1. **Baseline** (no test case): Only problem description and buggy code
@@ -281,7 +281,7 @@ This research question investigates the distinct influence of two factors within
 4. **Reduced Test** (~6.6KB, ~514 lines): + reduced input/output pair (ReduceFix's default, joint action of length control and full information)
 5. **Reduced + Origin** (~36.4KB, ~2638 lines): + both reduced and full tests (redundant information, maximum length)
 
-**Key insight:** The conjunction of compact length and complete counterexample information is essential in this setting. Reduced Test achieves the highest overall pass@10 among these variants (25.5%), compared with Diff Lines (20.0%) and Origin Test (19.0%).
+**Key insight:** The conjunction of compact length and complete counterexample information is important in this setting. Reduced Test has the highest observed overall pass@10 among these variants (25.5%), compared with Diff Lines (20.0%) and Origin Test (19.0%).
 
 #### Prompt Format of _Diff Lines_
 
@@ -350,7 +350,7 @@ This research question evaluates ReduceFix on repository-level crash-inducing in
 1. **Test case reduction**: Success rate and compression ratio across three approaches (DDmin-only, ReduceFix, Pure LLM)
 2. **Repair effectiveness**: pass@k (k ∈ {1, 5, 10}) for three prompting strategies (Baseline, Origin Test, Reduced Test)
 
-**Key findings:** ReduceFix successfully reduces 83.2% of crash inputs, with 46.5%/51.3% average/median end-to-end compression rate when failed reductions count as 0. DDmin-only reaches 43.7% success and 37.5%/0.0% average/median end-to-end compression rate; Pure LLM reduction reaches 37.1% success and 33.2%/0.0%. Under Docker-grounded Qwen2.5-Plus validation, Reduced Test reaches 14.4% pass@10, compared with 11.4% for Origin Test and 12.0% for Baseline.
+**Key findings:** ReduceFix reduces 83.2% of crash inputs, with 46.5%/51.3% average/median end-to-end compression rate when failed reductions count as 0. DDmin-only reaches 43.7% success and 37.5%/0.0% average/median end-to-end compression rate; Pure LLM reduction reaches 37.1% success and 33.2%/0.0%. Under Docker-grounded Qwen2.5-Plus validation, Reduced Test reaches 14.4% observed pass@10, compared with 11.4% for Origin Test and 12.0% for Baseline.
 
 Legacy pilot command:
 
