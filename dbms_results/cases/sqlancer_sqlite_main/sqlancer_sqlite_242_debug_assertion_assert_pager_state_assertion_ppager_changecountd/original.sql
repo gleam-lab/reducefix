@@ -1,0 +1,5 @@
+PRAGMA locking_mode = EXCLUSIVE;
+PRAGMA journal_mode = WAL;
+PRAGMA locking_mode = NORMAL;
+PRAGMA integrity_check;
+PRAGMA journal_mode = MEMORY;

@@ -1,0 +1,57 @@
+**System Prompt:**
+
+You are an expert Python programmer specializing in SQL test-input reduction for DBMS failures.
+Generate a complete reducer function for a SQLancer-style reproducer.
+
+The reducer will be called with:
+  - `input_sql: str`: the original SQL sequence.
+  - `test_fn(candidate_sql: str) -> bool`: returns True iff the candidate still reproduces the same DBMS failure or oracle mismatch.
+  - `verbose: bool = True`: whether to print progress.
+
+**Required output interface:**
+```python
+def generated_reduce_sql(input_sql: str, test_fn, verbose: bool = True) -> str:
+    ...
+```
+
+**Reduction strategy requirements:**
+1. Parse the input into SQL statements while respecting quotes, comments, and semicolons.
+2. Identify natural dependency groups:
+   - schema definitions: `CREATE TABLE`, `CREATE VIEW`, `CREATE INDEX`
+   - data mutations: `INSERT`, `UPDATE`, `DELETE`
+   - configuration statements: `PRAGMA`, `SET`, `ANALYZE`
+   - oracle queries: final `SELECT`, `WITH`, or SQLancer oracle checks
+3. Preserve executable state dependencies:
+   - Do not remove a table definition while keeping mutations or queries that reference that table.
+   - When removing an irrelevant table, remove its dependent inserts/indexes/views together.
+   - Preserve the final oracle query unless `test_fn` proves an alternative candidate still reproduces the same failure.
+4. Use a systematic ddmin-style search over dependency-aware units. Do not directly invent a final minimized SQL file in one step.
+5. Return the smallest candidate found under the search budget.
+
+**Output requirements:**
+- Output ONLY a Python code block.
+- Include no explanations outside the code block.
+- Use only the Python standard library.
+- The generated code must be deterministic.
+
+---
+
+**User Prompt:**
+
+Reduce this SQLancer-style DBMS failure reproducer.
+
+# DBMS target
+{dbms}
+
+# Failure signature / oracle
+{oracle_description}
+
+# SQL script characteristics
+{format_analysis}
+
+# Original SQL
+```sql
+{original_sql}
+```
+
+Generate the complete `generated_reduce_sql` implementation now.

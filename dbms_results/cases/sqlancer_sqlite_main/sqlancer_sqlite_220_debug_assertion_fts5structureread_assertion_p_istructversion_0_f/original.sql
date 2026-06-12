@@ -1,0 +1,5 @@
+PRAGMA locking_mode = EXCLUSIVE;
+PRAGMA journal_mode = PERSIST;
+CREATE VIRTUAL TABLE vt0 USING fts5(c0);
+INSERT INTO vt0(vt0) VALUES('integrity-check');
+INSERT INTO vt0(vt0, rank) VALUES('usermerge', 2);

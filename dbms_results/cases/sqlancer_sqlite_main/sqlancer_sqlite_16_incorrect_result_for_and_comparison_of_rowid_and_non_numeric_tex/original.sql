@@ -1,0 +1,6 @@
+CREATE TABLE t0(c0);
+CREATE TABLE t1(c0 INTEGER PRIMARY KEY);
+PRAGMA reverse_unordered_selects=true;
+INSERT INTO t1(c0) VALUES (0);
+INSERT INTO t0(c0) VALUES ('a');
+SELECT * FROM t1, t0 WHERE t1.c0 < t0.c0;

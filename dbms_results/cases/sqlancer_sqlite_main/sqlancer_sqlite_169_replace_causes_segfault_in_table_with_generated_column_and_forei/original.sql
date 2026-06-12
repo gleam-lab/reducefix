@@ -1,0 +1,5 @@
+CREATE TABLE t0 (c0, c1 a UNIQUE AS (1), c2, c3, FOREIGN KEY(c3) REFERENCES t0(c1));
+CREATE VIRTUAL TABLE vt0 USING fts4(c0);
+PRAGMA foreign_keys = true;
+INSERT INTO vt0 VALUES (0);
+REPLACE INTO t0(c3, c2, c0) VALUES (0, 0, 0), (0, 0, 0);

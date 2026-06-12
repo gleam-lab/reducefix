@@ -1,0 +1,5 @@
+CREATE TABLE test (c0, c1 REAL);
+CREATE UNIQUE INDEX index_1 ON test(c0 GLOB c1);
+INSERT INTO test(c0, c1) VALUES ('1', '1');
+INSERT INTO test(c0, c1) VALUES ('0', '1');
+REINDEX;

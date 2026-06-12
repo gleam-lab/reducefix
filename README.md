@@ -11,7 +11,7 @@ ReduceFix consists of three main phases:
 2. **Input Reduction**: Executes the generated reducer script to shrink the failure-inducing input i₀ into a reduced test input i* while preserving the failure
 3. **Patch Generation**: Embeds ⟨P, $s_w$, i*⟩ in a repair prompt, samples candidate patches, and validates each one against the entire test suite until a correct program is found
 
-The pipeline receives five inputs: the task description P, a correct reference solution A, a buggy submission $s_w$, the hidden test suite I, and one failure-inducing input i₀.
+The pipeline receives five inputs: the task description P, a correct reference solution A, a faulty submission $s_w$, the hidden test suite I, and one failure-inducing input i₀.
 
 ## Prerequisites
 
@@ -37,6 +37,13 @@ The pipeline receives five inputs: the task description P, a correct reference s
 ```
 
 3. The LFTBench (including C++ and Python versions) is located in the `lftbench` sub-directory.
+
+For the current journal manuscript, the compact result snapshots used to check
+the reported tables are in `artifact_snapshot/`:
+
+```bash
+python3 artifact_snapshot/check_snapshot_numbers.py
+```
 
 ## Repository Structure
 
@@ -71,6 +78,8 @@ ReduceFix/
 │   ├── cases_data/            # Case-by-case data
 │   ├── experiment_results/    # Experiment statistics
 │   └── compute_*.py           # OSS-Fuzz analysis scripts
+├── dbms_results/              # SQLancer SQLite compact-reproducer experiment
+├── artifact_snapshot/         # Compact snapshots and checker for manuscript numbers
 ├── prompt_formats/
 │   ├── repair.prompt          # Prompt format of repair on LFTBench (C++)
 │   ├── repair-py.prompt       # Prompt format of repair on LFTBench-Py (Python)
@@ -115,6 +124,8 @@ ReduceFix/
 - **`results/`**: Generated reducers and per-problem/per-submission artifacts
 - **`rq*.sh`**: Main entry points for reproducing each research question
 - **`result_*.json`**: Consolidated experimental results (minimized for portability)
+- **`artifact_snapshot/`**: Compact machine-readable snapshots for the current manuscript tables
+- **`dbms_results/`**: SQLancer SQLite reduction harness, data, and current result summaries
 - **`temp/`**: Full-version result files with detailed metadata (not for distribution)
 - **Core scripts**: `reducer_builder.py`, `reducer_test.py`, `evaluate_repair*.py`
 - **Analysis scripts**: `analyze_*.py`, `summarize_*.py` for statistical analysis
@@ -127,7 +138,7 @@ The `prompt_formats/` directory contains all prompt format templates used in the
 ### Repair Prompts
 
 1. **`repair.prompt`** - Standard repair prompt for LFTBench (C++)
-   - Contains: problem description, buggy code, reduced test case (input/output)
+   - Contains: problem description, faulty code, reduced test case (input/output)
    - Used in: RQ2 as ReduceFix's main repair strategy
 
 2. **`repair-py.prompt`** - Repair prompt for LFTBench-Py (Python)
@@ -215,17 +226,17 @@ This research question evaluates whether reduced test cases can improve automate
 - **DeepSeek-V3**: Large commercial model (cloud API)
 
 **Prompting strategies compared:**
-1. **Baseline** (no test case): Only problem description and buggy code
+1. **Baseline** (no test case): Only problem description and faulty code
 2. **Origin Test**: Full failure-inducing input/output pair
 3. **Reduced Test** (ReduceFix): Reduced input/output pair from our reducer
 
 **Datasets:**
-- **LFTBench (C++)**: 200 buggy C++ submissions across 20 problems, evaluated with all 4 LLMs
-- **LFTBench (Python)**: 20 buggy Python submissions, evaluated with Qwen-Plus for cross-language validation
+- **LFTBench (C++)**: 200 faulty C++ submissions across 20 problems, evaluated with all 4 LLMs
+- **LFTBench (Python)**: 20 faulty Python submissions, evaluated with Qwen-Plus for cross-language validation
 
 **Evaluation metric:** pass@k (k ∈ {1, 5, 10}) - probability that at least one of k generated patches is correct
 
-**Baseline comparison:** We also evaluate an end-to-end ddmin-only baseline that uses the reduced input when ddmin succeeds, otherwise falls back to the original failing test
+**Baseline comparison:** We also evaluate an end-to-end ddmin-only baseline that uses the reduced input when ddmin succeeds, otherwise falls back to the original failure-inducing test
 
 #### Prompt Format of _ReduceFix_
 
@@ -273,9 +284,9 @@ For details and options, see the script content.
 
 ### RQ-3: Influence of Prompt Composition
 
-This research question investigates the distinct influence of two factors within ReduceFix: (i) **length reduction** (fewer tokens to keep bug-relevant text within the model's attention span) and (ii) **information selection** (retaining minimal concrete evidence that still exposes the defect). We compare five prompt strategies on Qwen2.5-Coder-7B-instruct:
+This research question investigates the distinct influence of two factors within ReduceFix: (i) **length reduction** (fewer tokens to keep fault-relevant text within the model's attention span) and (ii) **information selection** (retaining minimal concrete evidence that still exposes the fault). We compare five prompt strategies on Qwen2.5-Coder-7B-instruct:
 
-1. **Baseline** (~3.2KB, ~130 lines): Problem + buggy code only
+1. **Baseline** (~3.2KB, ~130 lines): Problem + faulty code only
 2. **Origin Test** (~30.5KB, ~2381 lines): + full failure-inducing input/output pair
 3. **Diff Lines** (~3.2KB, ~133 lines): + up to 10 mismatched output lines (sparse evidence, same length as Baseline)
 4. **Reduced Test** (~6.6KB, ~514 lines): + reduced input/output pair (ReduceFix's default, joint action of length control and full information)
@@ -285,16 +296,16 @@ This research question investigates the distinct influence of two factors within
 
 #### Prompt Format of _Diff Lines_
 
-The **Diff Lines** strategy stays the same length as Baseline but appends up to 10 mismatched output lines, providing sparse evidence without increasing prompt size. This tests whether minimal error information alone (without full input/output) can guide repair.
+The **Diff Lines** strategy stays the same length as Baseline but appends up to 10 mismatched output lines, providing sparse evidence without increasing prompt size. This comparison evaluates whether minimal failure information alone (without full input/output) can guide repair.
 
 ~~~
 ### Problem Description
 {full problem text}
 ### Your Incorrect Code
 ```cpp
-{buggy code here}
+{faulty code here}
 ```
-### Error Summary (diff only)
+### Failure Evidence (diff only)
 Line 1: Got '42', Expected '43'
 Line 2: Got '...', Expected '...'
 ...
@@ -313,12 +324,12 @@ For details and options, see the script content.
 
 ### RQ-4: Integration with ChatRepair and CREF
 
-This research question checks whether ReduceFix can be inserted into existing APR pipelines as a pre-repair evidence step. We replace only the failing test input while keeping patch generation and validation unchanged, using the same 10-sample budget across settings.
+This research question checks whether ReduceFix can be inserted into existing APR pipelines as a pre-repair evidence step. We replace only the failure-inducing test input while keeping patch generation and validation unchanged, using the same 10-sample budget across settings.
 
 **Systems evaluated:**
 1. **ChatRepair**: Conversational repair framework that alternates between user proxy and LLM with feedback
    - **Settings**: MAX_RETRY=1 (one feedback round), length=2 (conversation window)
-   - First turn: task description + buggy code + failing test
+   - First turn: task description + faulty code + failure-inducing test
    - Second turn: test verdict (pass/fail) from harness
    
 2. **CREF**: Context-aware reference-based repair with retrieval augmentation
@@ -350,7 +361,7 @@ This research question evaluates ReduceFix on repository-level crash-inducing in
 1. **Test case reduction**: Success rate and compression ratio across three approaches (DDmin-only, ReduceFix, Pure LLM)
 2. **Repair effectiveness**: pass@k (k ∈ {1, 5, 10}) for three prompting strategies (Baseline, Origin Test, Reduced Test)
 
-**Key findings:** ReduceFix reduces 83.2% of crash inputs, with 46.5%/51.3% average/median end-to-end compression rate when failed reductions count as 0. DDmin-only reaches 43.7% success and 37.5%/0.0% average/median end-to-end compression rate; Pure LLM reduction reaches 37.1% success and 33.2%/0.0%. Under Docker-grounded Qwen2.5-Plus validation, Reduced Test reaches 14.4% observed pass@10, compared with 11.4% for Origin Test and 12.0% for Baseline.
+**Key findings:** ReduceFix reduces 83.2% of crash inputs, with 46.5%/51.3% average/median end-to-end compression rate when unsuccessful reductions count as 0. DDmin-only reaches 43.7% success and 37.5%/0.0% average/median end-to-end compression rate; Pure LLM reduction reaches 37.1% success and 33.2%/0.0%. Under Docker-grounded Qwen2.5-Plus validation, Reduced Test reaches 14.4% observed pass@10, compared with 11.4% for Origin Test and 12.0% for Baseline.
 
 Legacy pilot command:
 
@@ -358,4 +369,4 @@ Legacy pilot command:
 ./rq5.sh
 ```
 
-This command belongs to the earlier small OSS-Fuzz pilot. The journal-scale RQ-5 reported in the manuscript is the 167-case complete-run cohort summarized above; use the journal OSS-Fuzz artifact bundle when reproducing the current tables.
+This command belongs to the earlier small OSS-Fuzz pilot. The journal-scale RQ-5 reported in the manuscript is the 167-case complete-run cohort summarized above. Use `artifact_snapshot/oss_fuzz_ge4k_complete10_deep_stats.json` to check the reported tables and `oss_fuzz_results/journal_manifests/ossfuzz_journal_ge4k_cases_filtered_reviewer_v1.json` for the fixed 167-case cohort.

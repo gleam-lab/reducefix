@@ -1,0 +1,3 @@
+CREATE VIRTUAL TABLE rt0 USING rtree(c0, c1, c2);
+INSERT INTO rt0(c1) VALUES(0);
+SELECT * FROM rt0 WHERE rt0.c1 > '-1';

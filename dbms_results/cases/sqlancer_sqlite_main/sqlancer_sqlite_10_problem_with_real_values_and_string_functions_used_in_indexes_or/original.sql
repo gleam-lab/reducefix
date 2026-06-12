@@ -1,0 +1,4 @@
+CREATE TABLE test (c0 REAL);
+CREATE UNIQUE INDEX index_0 ON test(LENGTH(-c0));
+INSERT INTO test(c0) VALUES (0.0), ('10:');
+REINDEX;
